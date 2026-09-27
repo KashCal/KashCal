@@ -42,12 +42,14 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Diagnostic: compare current schema vs proposed schema on real iCloud pull.
+ * Compares two schema variants by pulling real iCloud calendars into each, plus local orphan
+ * and migration dedup checks that need no credentials.
  *
- * Current:  UNIQUE(original_event_id, original_instance_time)
- * Proposed: UNIQUE(calendar_id, uid, original_instance_time)
- *
- * Simulates schema change via raw SQL — no Room entity changes needed.
+ * The variants are labeled for UNIQUE(original_event_id, original_instance_time) ("current")
+ * and UNIQUE(calendar_id, uid, original_instance_time) ("proposed"). Room's schema ([Event])
+ * has the second as its only unique exception index, and "proposed" rebuilds that same shape
+ * with raw SQL, so both variants match; the printed "Current:" line and the orphan test's
+ * "Expected:" line don't describe Room's schema.
  *
  * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*ConstraintDiagnosticTest*"
  */
@@ -124,11 +126,12 @@ class ConstraintDiagnosticTest {
     }
 
     /**
-     * Build a fresh DB + PullStrategy with the given schema variant.
+     * Builds a fresh database and PullStrategy with the given schema variant.
      *
-     * @param variant "current" keeps Room's schema as-is.
-     *                "proposed" drops UNIQUE(original_event_id, original_instance_time)
-     *                and creates UNIQUE(calendar_id, uid, original_instance_time).
+     * @param variant "current" keeps Room's schema. "proposed" drops and recreates both
+     *   exception indexes with raw SQL: (original_event_id, original_instance_time)
+     *   non-unique and UNIQUE(calendar_id, uid, original_instance_time), the shape Room's
+     *   schema already has.
      */
     private fun buildEnv(variant: String): TestEnv {
         val context: Context = ApplicationProvider.getApplicationContext()
@@ -138,16 +141,16 @@ class ConstraintDiagnosticTest {
             .build()
 
         if (variant == "proposed") {
-            // Swap unique indexes via raw SQL
+            // Rebuild both exception indexes via raw SQL
             val sqlDb = db.openHelper.writableDatabase
-            // Drop current wrong unique index
+            // Drop the (original_event_id, original_instance_time) index
             // Room names it: index_events_original_event_id_original_instance_time
             sqlDb.execSQL("DROP INDEX IF EXISTS index_events_original_event_id_original_instance_time")
-            // Add non-unique replacement (still useful for FK lookups)
+            // Recreate it non-unique (useful for FK lookups)
             sqlDb.execSQL("CREATE INDEX IF NOT EXISTS index_events_original_event_id_original_instance_time ON events(original_event_id, original_instance_time)")
-            // Drop current non-unique composite
+            // Drop the (calendar_id, uid, original_instance_time) index, unique in Room's schema
             sqlDb.execSQL("DROP INDEX IF EXISTS index_events_calendar_id_uid_original_instance_time")
-            // Create the RFC-correct unique index
+            // Recreate it unique: UID with RECURRENCE-ID names one instance (RFC 5545 §3.8.4.4)
             sqlDb.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_events_calendar_id_uid_original_instance_time ON events(calendar_id, uid, original_instance_time)")
         }
 
@@ -282,11 +285,12 @@ class ConstraintDiagnosticTest {
     // ========== Test: Multi-session overlap (ctag reset) ==========
 
     /**
-     * Simulates WorkManager session interruption: first pull writes all events,
-     * then ctag is reset (as if the session crashed before saving sync state).
-     * Second pull re-fetches everything — etag-based skipping should handle it.
+     * Simulates an interrupted sync session: the first pull writes all events, then the
+     * sync-token and ctag are cleared (as if the session crashed before saving sync state).
+     * The second pull re-fetches everything and relies on etag skipping; the test asserts the
+     * event count doesn't change, and skips without credentials or discovered calendars.
      *
-     * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*ConstraintDiagnosticTest.multi-session*"
+     * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*ConstraintDiagnosticTest.multi*"
      */
     @Test
     fun `multi-session overlap - ctag reset re-pull`() = runBlocking {
@@ -336,11 +340,12 @@ class ConstraintDiagnosticTest {
     // ========== Test: Multi-session overlap (ctag + etag reset) ==========
 
     /**
-     * Most aggressive re-processing test: reset ctag AND clear all etags,
-     * forcing every event through the full upsert path (no etag shortcut).
-     * This stresses the UID-based lookup + @Upsert conflict resolution.
+     * Clears the sync-token, ctag and every etag, forcing every event through the full upsert
+     * path (no etag shortcut). This exercises the UID-based lookup and @Upsert conflict
+     * resolution; the test asserts the event count doesn't change, and skips without
+ * credentials or discovered calendars.
      *
-     * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*ConstraintDiagnosticTest.multi-session*"
+     * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*ConstraintDiagnosticTest.multi*"
      */
     @Test
     fun `multi-session overlap - ctag and etag reset full re-processing`() = runBlocking {
@@ -393,19 +398,19 @@ class ConstraintDiagnosticTest {
     // ========== Test: Orphan exception dedup (local, no credentials) ==========
 
     /**
-     * Tests the unique index correctness gap for orphan exceptions.
+     * Prints whether the unique index blocks an orphan duplicate of an exception.
      *
-     * Scenario: A properly linked exception exists (original_event_id = masterId).
-     * Then an orphan duplicate with the same (calendar_id, uid, original_instance_time)
-     * but original_event_id = NULL is inserted.
+     * A linked exception exists (original_event_id = masterId); then an orphan with the same
+     * (calendar_id, uid, original_instance_time) but original_event_id = NULL is inserted.
      *
-     * Current schema: UNIQUE(original_event_id, original_instance_time)
-     *   → (masterId, T) vs (NULL, T) are distinct → allows duplicate
+     * - UNIQUE(original_event_id, original_instance_time): (masterId, T) and (NULL, T) differ,
+     *   so the duplicate is allowed.
+     * - UNIQUE(calendar_id, uid, original_instance_time): the keys match, so it is blocked.
      *
-     * Proposed schema: UNIQUE(calendar_id, uid, original_instance_time)
-     *   → (calId, uid, T) vs (calId, uid, T) are identical → blocks duplicate
+     * Both variants carry the second index (see the class doc), so both should print BLOCKED.
+     * Asserts nothing.
      *
-     * Run: ./gradlew testDebugUnitTest --tests "*ConstraintDiagnosticTest.orphan*"
+     * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*ConstraintDiagnosticTest.orphan*"
      */
     @Test
     fun `orphan exception dedup - current allows duplicate, proposed blocks`() = runBlocking {
@@ -431,7 +436,7 @@ class ConstraintDiagnosticTest {
                 dtstamp = now
             ))
 
-            // Insert properly linked exception via DAO
+            // Insert a linked exception via the DAO
             env.eventsDao.upsert(Event(
                 uid = uid,
                 calendarId = calId,
@@ -482,8 +487,9 @@ class ConstraintDiagnosticTest {
     // ========== Test: Migration dedup robustness (local, no credentials) ==========
 
     /**
-     * Tests that the two-step migration dedup handles all duplicate patterns
-     * and that CREATE UNIQUE INDEX succeeds afterward.
+     * Checks that the two-step migration dedup handles every duplicate pattern and that
+     * CREATE UNIQUE INDEX succeeds afterward. Ignored: the shipped unique index refuses the
+     * duplicate rows it inserts.
      *
      * Patterns tested:
      *   1. Orphan + linked (same uid, instanceTime) → keeps linked
@@ -492,7 +498,7 @@ class ConstraintDiagnosticTest {
      *   4. No duplicates (single exception) → untouched
      *   5. Master events (original_instance_time IS NULL) → untouched
      *
-     * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*ConstraintDiagnosticTest.migration dedup*"
+     * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*ConstraintDiagnosticTest.migration*"
      */
     @Test
     @Ignore(
@@ -608,7 +614,7 @@ class ConstraintDiagnosticTest {
             )
         """)
 
-        // Step 2: Generic dedup — keep MAX(id) per group
+        // Step 2: Generic dedup, keeping MAX(id) per group
         sqlDb.execSQL("""
             DELETE FROM events
             WHERE original_instance_time IS NOT NULL

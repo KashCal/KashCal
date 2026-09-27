@@ -24,43 +24,37 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Attendee-persistence integration tests parameterized across all
- * configured CalDAV servers.
+ * Tests attendee persistence across all configured CalDAV servers.
  *
- * Verifies the end-to-end pull path with attendees: server emits
- * ATTENDEE lines → ical4j parses them → ICalEventMapper.toEntity
- * produces the right MappedEntity → an idempotent re-pull doesn't
- * duplicate. The DAO write itself is unit-tested in AttendeesDaoTest;
- * this test exercises the upstream wire-to-mapper path against real
- * server quirks.
+ * Covers the pull path with attendees (the server emits ATTENDEE lines, ical4j parses them,
+ * [ICalEventMapper.toEntity] maps them, and a second fetch maps the same set), the organizer
+ * push path ([IcsPatcher.generateFresh]) with synthetic and real organizers, and the iTIP
+ * message's SCHEDULE-AGENT and SCHEDULE-FORCE-SEND stripping. The DAO write is unit-tested in
+ * `AttendeesDaoTest`; this exercises the wire-to-mapper path against real server quirks.
  *
- * Auto-skips per-server via assumeTrue when credentials missing or
- * server unreachable. Run: `./gradlew testDebugUnitTest -Pintegration
- * --tests "*MultiServerAttendeePersistenceTest*"`.
+ * Skips a server via assumeTrue when credentials are missing or it's unreachable. Run:
+ * `./gradlew testDebugUnitTest -Pintegration --tests "*MultiServerAttendeePersistenceTest*"`.
  *
- * Test creates its own VEVENT with synthetic attendees (to keep real
- * accounts un-spammed and to avoid leaking PII across server-side
- * scheduling delivery on Apple's servers). Cleanup deletes the event
- * after each test.
+ * Most tests create their own VEVENT with synthetic attendees, to keep real accounts unspammed
+ * and avoid leaking PII through iCloud's server-side scheduling delivery. Cleanup deletes the
+ * event after each test.
  *
  * Server-side scheduling quirks observed on real servers (2026-05-17):
- * - iCloud / Radicale / SOGo / Stalwart: emit RFC 5545 §3.1 line-folded
- *   ATTENDEE lines (logical line split with CRLF + leading space at the
- *   75-octet boundary). Attendees themselves are preserved verbatim —
- *   the test unfolds before filtering. ical4j unfolds automatically on
+ * - iCloud / Radicale / SOGo / Stalwart: emit RFC 5545 §3.1 line-folded ATTENDEE lines (a
+ *   logical line split with CRLF and a leading space at the 75-octet boundary). Attendees
+ *   themselves are preserved verbatim; the test unfolds before filtering. ical4j unfolds on
  *   the parse path, so the mapper sees the original logical line.
- * - Zoho: rewrites ORGANIZER to the account holder's email and strips
- *   ALL ATTENDEE lines when the supplied ORGANIZER's mailto doesn't
- *   match the authenticated account. This is a real strip, not folding.
+ * - Zoho: rewrites ORGANIZER to the account holder's email and strips all ATTENDEE lines when
+ *   the supplied ORGANIZER's mailto doesn't match the authenticated account. This is a real
+ *   strip, not folding.
  * - Nextcloud, Baikal: preserve attendees verbatim, no folding observed.
  *
- * Use `stalwartlabs/stalwart:v0.13.4` (NOT `:latest` / 0.16+ which
- * boots into interactive setup-wizard mode).
+ * Use `stalwartlabs/stalwart:v0.13.4`, not `:latest` (0.16+ boots into interactive
+ * setup-wizard mode).
  *
- * The assertions below tolerate these strips and verify only the
- * server→parser→mapper→Room chain works for *whatever* the server
- * returns. PII redaction (non-synthetic emails masked) keeps junit-xml
- * output safe from leaking real account addresses on Zoho-class servers.
+ * The assertions tolerate these strips and check only that the server, parser and mapper chain
+ * works for whatever the server returns. PII redaction (non-synthetic emails masked) keeps
+ * real account addresses out of junit-xml on Zoho-class servers.
  */
 @RunWith(Parameterized::class)
 class MultiServerAttendeePersistenceTest(
@@ -126,10 +120,9 @@ class MultiServerAttendeePersistenceTest(
     }
 
     /**
-     * Synthetic ATTENDEE-bearing VEVENT. ORGANIZER required: iCloud silently
-     * strips ATTENDEE lines when ORGANIZER is absent. Other servers tolerate
-     * either form, but ORGANIZER-present is the more realistic wire shape
-     * since real CalDAV scheduling always includes one.
+     * Returns a VEVENT with three synthetic attendees. ORGANIZER is required: iCloud silently
+     * strips ATTENDEE lines when ORGANIZER is absent. Other servers tolerate either form, but
+     * an ORGANIZER is the realistic wire shape, since CalDAV scheduling always includes one.
      */
     private fun createTestIcsWithAttendees(uid: String, summary: String): String = """
 BEGIN:VCALENDAR
@@ -155,10 +148,9 @@ END:VCALENDAR
     }
 
     /**
-     * Redact non-synthetic email addresses before letting an ICS body land in a
-     * test failure message / junit XML. Some servers (Zoho) rewrite ORGANIZER
-     * to the authenticated account holder's email — without this scrub, a real
-     * account address would surface in CI output and leak PII.
+     * Masks non-synthetic email addresses before an ICS body lands in a failure message or
+     * junit XML. Zoho rewrites ORGANIZER to the authenticated account holder's email, so
+     * without this a real account address would surface in CI output.
      */
     private fun redactPii(text: String): String {
         val emailRegex = Regex("""[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}""")
@@ -169,10 +161,9 @@ END:VCALENDAR
     }
 
     /**
-     * True when the email is one of the synthetic addresses in the fixture.
-     * Used to decide whether to *expect* an attendee survived a roundtrip;
-     * server-side rewrites (Zoho) replace these with the account holder's
-     * email which is fine but neither identifiable nor expected.
+     * Returns true when [line] holds a synthetic `@example.test` fixture address. Only these are
+     * expected to survive a round trip; a server-side rewrite (Zoho) replaces them with the
+     * account holder's email, which is fine but not asserted on.
      */
     private fun isSyntheticAttendee(line: String): Boolean =
         line.contains("@example.test")
@@ -195,25 +186,22 @@ END:VCALENDAR
         val (url, etag) = createResult.getOrNull()!!
         trackEvent(url, etag)
 
-        // Fetch back and verify attendee lines survived round-trip.
+        // Fetch back and check the attendee lines survived the round trip.
         val fetchResult = client!!.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch on ${config.name}" }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
 
-        // RFC 5545 §3.1 line folding: lines >75 octets are split with CRLF +
-        // leading space. iCloud/SOGo/Radicale/Stalwart all fold ATTENDEE
-        // lines around the mailto boundary, so a naive line-by-line filter
-        // sees `ATTENDEE;...:m` and a continuation `\n ailto:alice@...`.
-        // Unfold before filtering so wire-shape assertions see logical lines.
+        // RFC 5545 §3.1 line folding: lines over 75 octets are split with CRLF and a leading
+        // space. iCloud, SOGo, Radicale and Stalwart all fold ATTENDEE lines around the mailto
+        // boundary, so a naive line-by-line filter sees `ATTENDEE;...:m` and a continuation
+        // `\n ailto:alice@...`. Unfold before filtering so assertions see logical lines.
         val unfoldedIcs = fetchedIcs.replace(Regex("""\r?\n[ \t]"""), "")
         val attendeeLines = unfoldedIcs.lines().filter { it.startsWith("ATTENDEE") }
         val syntheticLines = attendeeLines.filter { isSyntheticAttendee(it) }
 
-        // Some servers (Zoho-class) strip every ATTENDEE when ORGANIZER mailto
-        // doesn't match the account holder. That is a server-side scheduling
-        // policy, not a bug in our parse path — log it and skip downstream
-        // assertions (the ICS contains zero synthetic attendees so there is
-        // nothing to verify the wire-shape against).
+        // Zoho-class servers strip every ATTENDEE when the ORGANIZER mailto doesn't match the
+        // account holder. That is server-side scheduling policy, not a parse-path bug: log it
+        // and skip the rest, since no synthetic attendee is left to check.
         if (syntheticLines.isEmpty()) {
             println(
                 "[${config.name}] Server stripped all synthetic ATTENDEEs " +
@@ -224,9 +212,8 @@ END:VCALENDAR
             return@runBlocking
         }
 
-        // For each surviving synthetic attendee, the server must not have
-        // mangled its mailto value. We assert only on what survived — see
-        // the class kdoc for documented per-server stripping behavior.
+        // At least one synthetic address must survive unmangled. Only survivors are asserted
+        // on; the per-server stripping is in the class doc.
         val survivors = listOf(
             "alice.synthetic@example.test",
             "bob.synthetic@example.test",
@@ -272,7 +259,7 @@ END:VCALENDAR
         assert(fetchResult.isSuccess()) { "Failed to fetch on ${config.name}" }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
 
-        // Parse via icaldav-core
+        // Parse via icaldav-core.
         val parseResult = parser.parse(fetchedIcs)
         assert(parseResult is ParseResult.Success) {
             "${config.name}: parser failed: $parseResult"
@@ -281,7 +268,7 @@ END:VCALENDAR
         val event = cal.events.singleOrNull()
         assert(event != null) { "${config.name}: expected exactly 1 VEVENT in fetched ICS" }
 
-        // Run through ICalEventMapper.toEntity — exercises the attendee translation layer
+        // ICalEventMapper.toEntity is the attendee translation layer under test.
         val mapped = ICalEventMapper.toEntity(
             icalEvent = event!!,
             rawIcal = fetchedIcs,
@@ -290,9 +277,8 @@ END:VCALENDAR
             etag = etag
         )
 
-        // Filter to synthetic attendees only — server-side scheduling on
-        // Zoho-class servers replaces ORGANIZER+ATTENDEEs with the account
-        // holder; we assert only on the attendees we put there.
+        // Only synthetic attendees: server-side scheduling on Zoho-class servers replaces
+        // ORGANIZER and ATTENDEEs with the account holder, so assert only on the fixture's own.
         val synthetic = mapped.attendees.filter {
             it.address.contains("@example.test")
         }.sortedBy { it.sortOrder }
@@ -306,18 +292,16 @@ END:VCALENDAR
             return@runBlocking
         }
 
-        // Each synthetic address must carry mailto: prefix per the mapper's
-        // convention. This is what we wrote and the mapper keeps it intact.
+        // The mapper keeps the mailto: prefix the fixture wrote on each synthetic address.
         synthetic.forEach {
             assert(it.address.startsWith("mailto:")) {
                 "${config.name}: synthetic address should start with mailto:; got ${it.address}"
             }
         }
 
-        // For each synthetic attendee that survived, verify partstat/role
-        // round-tripped as RFC TEXT (hyphen-form). The fixture sets distinct
-        // partstats per attendee, so a survivor uniquely identifies which
-        // partstat must appear.
+        // Each surviving synthetic attendee's partstat and role must round-trip as RFC text
+        // (hyphen form). The fixture gives each attendee a distinct partstat, so a survivor
+        // identifies which one must appear.
         val byAddress = synthetic.associateBy { it.address }
         byAddress["mailto:alice.synthetic@example.test"]?.let {
             assert(it.partstat == "ACCEPTED") {
@@ -341,7 +325,8 @@ END:VCALENDAR
             }
         }
 
-        // sortOrder is monotonic across whatever survived.
+        // sortOrder values are unique across whatever survived (the list is already sorted by
+        // them).
         val orders = synthetic.map { it.sortOrder }
         assert(orders == orders.sorted() && orders.toSet().size == orders.size) {
             "${config.name}: sortOrder not monotonic-unique — got $orders"
@@ -372,9 +357,8 @@ END:VCALENDAR
         val (url, etag) = createResult.getOrNull()!!
         trackEvent(url, etag)
 
-        // Fetch + map twice; assertion is on the resulting Attendee rows, not on
-        // server etag (Apple's CDN can return slightly different etags on
-        // immediate re-fetch but the content is identical).
+        // Fetch and map twice, asserting on the resulting Attendee rows, not the etag (iCloud's
+        // CDN can return slightly different etags on an immediate re-fetch of identical content).
         val mapped1 = mapEvent(url)
         val mapped2 = mapEvent(url)
 
@@ -408,10 +392,9 @@ END:VCALENDAR
     // ========== Organizer outbound write path (KashCal serializer) ==========
 
     /**
-     * Build a KashCal Event + Attendee rows and serialize via the production
-     * organizer push path (IcsPatcher.generateFresh, no rawIcal), then create
-     * on the server and re-fetch. Validates end-to-end that the attendee
-     * set KashCal emits round-trips through a real server.
+     * Builds a KashCal Event and Attendee rows, serializes them via the production organizer
+     * push path (IcsPatcher.generateFresh, no rawIcal), creates on the server and re-fetches.
+     * Checks that the attendee set KashCal emits round-trips through a real server.
      */
     @Test
     fun `organizer push serializes attendees that round-trip`() = runBlocking {
@@ -441,7 +424,7 @@ END:VCALENDAR
                 displayName = "Carol", partstat = "NEEDS-ACTION", role = "OPT-PARTICIPANT"),
         )
 
-        // Production serialization path for a locally-created organizer event.
+        // Production serialization path for a locally created organizer event.
         val ics = IcsPatcher.generateFresh(event, attendees)
         assert(ics.contains("alice.synthetic@example.test")) {
             "serializer dropped attendees before push:\n${redactPii(ics)}"
@@ -461,10 +444,9 @@ END:VCALENDAR
         val syntheticAttendees = unfolded.lines()
             .filter { it.startsWith("ATTENDEE") && it.contains("@example.test") }
 
-        // Servers that route NEEDS-ACTION attendees through their scheduling
-        // pipeline (iCloud/Radicale/Stalwart with a synthetic ORGANIZER) strip
-        // them server-side — documented quirk, not a client bug. Skip the
-        // downstream assertion when nothing survived.
+        // Servers that route NEEDS-ACTION attendees through their scheduling pipeline (iCloud,
+        // Radicale, Stalwart with a synthetic ORGANIZER) strip them server-side, a server quirk
+        // and not a client bug. Skip the assertion when nothing survived.
         if (config.stripsAttendeesOnSyntheticOrganizer && syntheticAttendees.isEmpty()) {
             println(
                 "[${config.name}] synthetic-organizer scheduling strip — " +
@@ -480,10 +462,11 @@ END:VCALENDAR
     }
 
     /**
-     * A METHOD-bearing iTIP message generated by KashCal must NOT carry
-     * SCHEDULE-AGENT / SCHEDULE-FORCE-SEND on ORGANIZER or ATTENDEE (RFC 6638
-     * §7.1/§7.2). Pure local wire-shape check — no server round-trip needed,
-     * but parameterized here so it runs in the same gated suite.
+     * Checks that an iTIP message KashCal generates (one with a METHOD) carries no
+     * SCHEDULE-AGENT or SCHEDULE-FORCE-SEND on ORGANIZER or ATTENDEE: clients must not include
+     * them in scheduling messages they send (RFC 6638 §7.1, §7.2). A local wire-shape check
+     * with no server round trip; it lives here so it runs in the same gated suite, once per
+     * server.
      */
     @Test
     fun `iTIP message carries no SCHEDULE-AGENT or FORCE-SEND on either line`() {
@@ -522,9 +505,9 @@ END:VCALENDAR
     // ========== Real-organizer cross-account round-trip ==========
 
     /**
-     * Discover this account's OWN calendar-user-address (the value
-     * EventCoordinator emits as ORGANIZER on locally authored events), or
-     * null when the server doesn't expose one.
+     * Returns the account's first discovered calendar-user-address, the set EventCoordinator
+     * picks the ORGANIZER of a locally authored event from, or null when the server exposes
+     * none.
      */
     private suspend fun discoverOwnOrganizerAddress(): String? {
         val c = client!!
@@ -537,31 +520,32 @@ END:VCALENDAR
     }
 
     /**
-     * A REAL attendee address the user controls, drawn from a DIFFERENT owned
-     * account than the one under test (iCloud→Zoho→mailbox→iCloud rotation), so
-     * any server-side iTIP delivery lands in an owned inbox and exercises real
-     * cross-provider delivery. Optional TEST_ATTENDEE_<PROVIDER> override.
-     * Falls back to the account's own login (self-invite) when no cross
-     * address is available; null when nothing usable resolves.
+     * Returns a real attendee address the user controls, from an owned account other than the
+     * one under test (iCloud -> Zoho -> Mailbox -> iCloud rotation), so any server-side iTIP
+     * delivery lands in an owned inbox and exercises cross-provider delivery. A
+     * TEST_ATTENDEE_<PROVIDER> property overrides it. Falls back to the account's own login
+     * (self-invite) when no cross address is available; null when the login isn't an address.
      */
     private fun resolveCrossAccountAttendee(): String? {
         CalDavTestServerLoader.property("TEST_ATTENDEE_${config.name.uppercase()}")
             ?.takeIf { it.isNotBlank() }?.let { return it }
-        // Owned email-shaped account logins, by provider name.
+        // Owned account logins that are addresses, by config name.
         val owned = mapOf(
             "iCloud" to CalDavTestServerLoader.property("caldav.username"),
             "Zoho" to CalDavTestServerLoader.property("ZOHO_USERNAME"),
-            "mailbox" to CalDavTestServerLoader.property("MAILBOX_USERNAME"),
+            "Mailbox" to CalDavTestServerLoader.property("MAILBOX_USERNAME"),
         ).filterValues { it != null && it.contains("@") }
-        // Rotate to a DIFFERENT owned account than the one under test.
-        val rotation = listOf("iCloud", "Zoho", "mailbox")
+        // Rotate to an owned account other than the one under test. Names must match
+        // CalDavServerConfig.name exactly, or the server falls through to a self-invite.
+        val rotation = listOf("iCloud", "Zoho", "Mailbox")
         val idx = rotation.indexOf(config.name)
         if (idx >= 0) {
             for (step in 1 until rotation.size) {
                 owned[rotation[(idx + step) % rotation.size]]?.let { return it }
             }
         }
-        // Non-rotation server (Docker/Nextcloud): self-invite if email-shaped.
+        // No cross address (a server outside the rotation, or no other login set): self-invite
+        // if the login is an address.
         return creds?.username?.takeIf { it.contains("@") }
     }
 
@@ -578,20 +562,17 @@ END:VCALENDAR
 
         val uid = "realorg-roundtrip-${config.name.lowercase()}-${UUID.randomUUID()}"
         val now = System.currentTimeMillis()
-        // Resolve organizerEmail the SAME WAY production does — via the real
-        // Account.effectiveAddresses() + EventCoordinator.resolveOrganizer rule:
-        // pick the bare, email-shaped address. Feeding the raw discovered value
-        // (which carries a "mailto:" prefix on discovered-address accounts)
-        // through this is what would have caught the double-mailto bug had the
-        // test driven it before.
+        // Resolve organizerEmail the way production does, through Account.effectiveAddresses()
+        // and the EventCoordinator.resolveOrganizer rule: the bare, email-shaped address. The raw
+        // discovered value carries a "mailto:" prefix, so feeding it through here catches a
+        // double mailto: prefix.
         val resolverAccount = org.onekash.kashcal.data.db.entity.Account(
             id = 1L, provider = org.onekash.kashcal.domain.model.AccountProvider.CALDAV,
             email = AddressNormalizer.stripMailto(organizer!!),
             calendarUserAddresses = listOf(organizer)
         )
-        // Mirror production EventCoordinator.resolveOrganizer EXACTLY (same
-        // AddressNormalizer.isEmailShaped predicate) so the test can't pass on
-        // an address production would reject (e.g. a dotless internal host).
+        // Same AddressNormalizer.isEmailShaped predicate as resolveOrganizer, so the test can't
+        // pass on an address production would reject (e.g. a dotless internal host).
         val resolvedOrganizer = resolverAccount.effectiveAddresses()
             .firstOrNull { AddressNormalizer.isEmailShaped(it) }
             ?.let { AddressNormalizer.stripMailto(it) }
@@ -614,9 +595,8 @@ END:VCALENDAR
         )
 
         val ics = IcsPatcher.generateFresh(event, attendees)
-        // Regression guard for the double-prefix bug: the generator prepends
-        // "mailto:", so organizerEmail must be BARE. A "mailto:mailto:" on the
-        // wire = the bug is back.
+        // The generator prepends "mailto:", so organizerEmail must be bare; a "mailto:mailto:"
+        // on the wire means it wasn't.
         assert(!ics.contains("mailto:mailto:")) {
             "double mailto: prefix in serialized ICS — organizer stored non-bare:\n${redactPii(ics)}"
         }
@@ -633,13 +613,12 @@ END:VCALENDAR
         val unfolded = fetchedIcs.replace(Regex("""\r?\n[ \t]"""), "")
         val attendeeLines = unfolded.lines().filter { it.startsWith("ATTENDEE") }
 
-        // Servers with a full RFC 6638 scheduling pipeline may transform a
-        // real-organizer event on store: Zoho rewrites ORGANIZER; iCloud routes
-        // attendees to the inbox; OX/mailbox strips ORGANIZER+ATTENDEE entirely
-        // when it can't reconcile them. These are conformant server policies,
-        // not client defects — the production serialize path emitted a valid
-        // ORGANIZER+ATTENDEE (asserted below pre-push). Tolerate the strip on
-        // servers flagged for it; require round-trip only on servers that inline.
+        // Servers with a full RFC 6638 scheduling pipeline may transform a real-organizer event
+        // on store: Zoho rewrites ORGANIZER; iCloud routes attendees to the inbox; OX/mailbox
+        // strips ORGANIZER and ATTENDEE entirely when it can't reconcile them. These are
+        // conformant server policies, not client defects: the serialized body carried both
+        // (asserted next). Tolerate the strip on servers flagged
+        // stripsAttendeesOnSyntheticOrganizer; require the round trip on the rest.
         assert(ics.contains("ORGANIZER") && ics.contains("ATTENDEE")) {
             "client must SERIALIZE a real ORGANIZER + ATTENDEE before push:\n${redactPii(ics)}"
         }

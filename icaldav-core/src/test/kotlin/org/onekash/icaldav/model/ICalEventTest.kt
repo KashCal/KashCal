@@ -12,15 +12,16 @@ import java.time.Duration
 import java.time.ZoneId
 
 /**
- * Comprehensive tests for ICalEvent model.
- *
- * Tests cover:
- * - Event construction and validation
- * - ImportId generation and parsing
- * - Effective end time calculation
- * - Recurrence detection
- * - Modified instance detection
- * - Enum parsing (EventStatus, Transparency, Classification)
+ * Tests the ICalEvent model:
+ * - importId generation and parsing
+ * - effectiveEnd from DTEND, DURATION (keeping the start's zone), an all-day start alone and a
+ *   timed start alone
+ * - recurrence detection from RRULE and RDATE, modified-occurrence detection and masterUid
+ * - parsing of EventStatus, Transparency, Classification, PartStat, AttendeeRole and CUType,
+ *   and the iCalendar strings of all but CUType
+ * - equality and copy
+ * - edge cases: an empty summary, null optional fields, the RFC 7986 and RFC 9253
+ *   properties, attendees, organizer and rawProperties
  */
 class ICalEventTest {
 

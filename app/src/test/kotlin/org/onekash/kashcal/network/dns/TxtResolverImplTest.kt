@@ -10,10 +10,11 @@ import org.onekash.kashcal.network.dns.DnsWireTestFixtures.question
 import org.onekash.kashcal.network.dns.DnsWireTestFixtures.u16
 
 /**
- * Unit tests for [TxtResolverImpl] — the RFC 6764 §6 step-3 TXT `path=` lookup. Like
- * [SrvResolverImplTest], every case drives a fake [RawDnsChannel] with canned bytes.
- * The contract: build the right query name for TYPE 16, and reduce the decoded TXT
- * strings to Path / NoPath / Error using the parser's `pathValue` semantics.
+ * Tests [TxtResolverImpl], the RFC 6764 §6 step 3 TXT `path` lookup, over a fake [RawDnsChannel]
+ * that returns canned bytes or throws, like [SrvResolverImplTest]. Covers the query name and
+ * TYPE 16, the reduction of decoded strings to Path or NoPath by [TxtRecordParser.pathValue]
+ * (no TXT and NXDOMAIN are NoPath), parser failures (SERVFAIL, short bytes) mapped to Error,
+ * and a throwing channel mapped to Error with its message.
  */
 class TxtResolverImplTest {
 
@@ -63,15 +64,15 @@ class TxtResolverImplTest {
 
     @Test
     fun `present-but-empty path value is still Path`() = runTest {
-        // RFC 6763 §6.4 keys on the presence of the key; "path=" with an empty value
-        // is a real (if degenerate) context path, distinct from the key being absent.
+        // RFC 6763 §6.4 treats a key present with an empty value as distinct from an absent
+        // key, so "path=" is an empty context path, not NoPath.
         val result = TxtResolverImpl(CannedChannel(txtPacket("path="))).resolvePath("carddavs", "tcp", "x.com")
         assertEquals(TxtResult.Path(""), result)
     }
 
     @Test
     fun `bare boolean path token with no equals is NoPath`() = runTest {
-        // A key with no '=' is a boolean attribute carrying no value (§6.4) — no path.
+        // A key with no '=' is a boolean attribute with no value (§6.4), so no path.
         val result = TxtResolverImpl(CannedChannel(txtPacket("path"))).resolvePath("carddavs", "tcp", "x.com")
         assertEquals(TxtResult.NoPath, result)
     }

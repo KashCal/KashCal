@@ -20,12 +20,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for LocalCalendarInitializer.
+ * Tests [LocalCalendarInitializer] over an in-memory Room database.
  *
- * Verifies that:
- * - Local calendar is created on first call
- * - Subsequent calls return same calendar (idempotent)
- * - Local account/calendar identification works
+ * Covers:
+ * - the first call creates the local account and calendar, leaving other calendars untouched
+ * - later calls, and [LocalCalendarInitializer.getLocalCalendarId], return the same calendar
+ * - [LocalCalendarInitializer.isLocalAccount] needs both the LOCAL provider and the local email
+ * - [LocalCalendarInitializer.isLocalCalendar] matches the local calendar only
+ * - the calendar's color, default, writable and sort-order values, and an enabled account
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -247,10 +249,11 @@ class LocalCalendarInitializerTest {
         val calendar = database.calendarsDao().getById(calendarId)!!
 
         // Assert specific properties for local calendar
-        assertEquals(LocalCalendarInitializer.LOCAL_CALENDAR_COLOR, calendar.color) // Material Green
-        assertTrue(calendar.isDefault) // Should be default calendar
+        // Material Gray 500
+        assertEquals(LocalCalendarInitializer.LOCAL_CALENDAR_COLOR, calendar.color)
+        assertTrue(calendar.isDefault)
         assertFalse(calendar.isReadOnly) // Users can always write to local
-        assertEquals(0, calendar.sortOrder) // Appears first in list
+        assertEquals(0, calendar.sortOrder) // 0 is also the Calendar default
     }
 
     @Test

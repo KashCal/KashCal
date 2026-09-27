@@ -19,14 +19,10 @@ import javax.inject.Singleton
 private const val TAG = "IcsExporter"
 
 /**
- * Utility for exporting events to ICS files.
+ * Exports one event, with its exceptions, or a whole calendar to an ICS file.
  *
- * Uses FileProvider for secure sharing via content:// URIs.
- * Files are written to cache directory and cleaned up by system when needed.
- *
- * Supports:
- * - Single event export (with exceptions for recurring)
- * - Full calendar export (all events bundled)
+ * Files go to the cache directory, which the system clears when it needs space, and are
+ * shared as FileProvider content:// URIs.
  */
 @Singleton
 class IcsExporter @Inject constructor() {
@@ -42,10 +38,8 @@ class IcsExporter @Inject constructor() {
     )
 
     /**
-     * Export a single event to an ICS file.
-     *
-     * For recurring events with exceptions, all VEVENTs are bundled
-     * into a single VCALENDAR per RFC 5545.
+     * Exports [event] to an ICS file. A recurring event's [exceptions] go into the same
+     * VCALENDAR as its master, per RFC 5545.
      */
     fun exportEvent(
         context: Context,
@@ -70,11 +64,8 @@ class IcsExporter @Inject constructor() {
     }
 
     /**
-     * Export multiple events to a single ICS file.
-     *
-     * Creates a single VCALENDAR containing all master events and their
-     * exceptions. Exceptions share the master's UID and carry RECURRENCE-ID
-     * per RFC 5545.
+     * Exports every master in [events] with its exceptions to one VCALENDAR file. Exceptions
+     * share the master's UID and carry RECURRENCE-ID, per RFC 5545. An empty list fails.
      */
     fun exportCalendar(
         context: Context,
@@ -98,9 +89,8 @@ class IcsExporter @Inject constructor() {
     }
 
     /**
-     * Build a single VCALENDAR containing all master events and their exceptions
-     * via `ICalGenerator.generate(ICalCalendar)`. VTIMEZONE blocks are emitted
-     * for every distinct non-UTC timezone referenced across the bundle.
+     * Builds one VCALENDAR of every master and exception with `ICalGenerator.generate`, with a
+     * VTIMEZONE for each distinct non-UTC timezone referenced across the bundle.
      */
     private fun buildCalendarIcs(
         events: List<Pair<Event, List<Event>>>,
@@ -112,7 +102,7 @@ class IcsExporter @Inject constructor() {
         }
         return generator.generate(
             ICalCalendar(
-                prodId = null, // falls back to instance prodId
+                prodId = null, // falls back to the generator's prodId
                 xWrCalname = calendarName,
                 events = icalEvents
             ),
@@ -120,20 +110,14 @@ class IcsExporter @Inject constructor() {
         )
     }
 
-    /**
-     * Generate a sanitized filename for the ICS export.
-     *
-     * Format: {sanitized-name}_{YYYYMMDD}.ics
-     */
+    /** Returns `{sanitized-name}_{YYYYMMDD}.ics`, dated today; see [sanitizeExportBaseName]. */
     private fun generateFileName(baseName: String): String {
         val sanitized = sanitizeExportBaseName(baseName, fallback = "event", maxLength = MAX_FILENAME_LENGTH)
         val dateStr = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
         return "${sanitized}_${dateStr}.ics"
     }
 
-    /**
-     * Write ICS content to cache directory and return FileProvider URI.
-     */
+    /** Writes [content] to the cache's shared directory and returns its FileProvider URI. */
     private fun writeToCache(context: Context, fileName: String, content: String): Uri {
         val cacheDir = File(context.cacheDir, SHARED_DIR)
         if (!cacheDir.exists()) {

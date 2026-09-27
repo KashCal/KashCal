@@ -21,16 +21,14 @@ import org.onekash.kashcal.ui.screens.settings.AccountsScreen
 import org.onekash.kashcal.ui.screens.settings.SubscriptionsScreen
 
 /**
- * Runs the Accessibility Test Framework (the engine behind Accessibility
- * Scanner) against individual composables outside the calendar home surface:
- * the color picker, the settings sub-screens, and the event form body. Flags
- * low contrast, small touch targets, missing labels, and traversal-order
- * problems.
+ * Runs the Accessibility Test Framework (the engine behind Accessibility Scanner) against
+ * composables outside the calendar home surface: the color picker, the Accounts and
+ * Subscriptions settings screens, and the event form body. It flags low contrast, small touch
+ * targets, missing labels and traversal-order problems.
  *
- * These render non-modal content directly (no [androidx.compose.material3.ModalBottomSheet]
- * wrapper) to avoid the animation-timing flakiness the rest of the compose
- * suite avoids for the same reason. The event form is covered via
- * [EventFormContent], the wrapper-free body of the event form sheet.
+ * Each renders its content without a [androidx.compose.material3.ModalBottomSheet] or dialog
+ * wrapper, which avoids sheet animation-timing flakiness. The event form is covered through
+ * [EventFormContent], the body [EventFormSheet] hosts in a full-screen dialog.
  */
 @RunWith(AndroidJUnit4::class)
 class ComponentAccessibilityTest {
@@ -94,10 +92,10 @@ class ComponentAccessibilityTest {
     fun eventFormCreate_passesAccessibilityChecks() {
         renderAndCheck {
             EventFormContent(
-                // The form's root Column gives its scrollable field region
-                // weight(1f); without a bounded height that region collapses to
-                // zero and the checks would run against an empty layout. In
-                // production the sheet supplies the height via the modifier.
+                // The form's root Column gives its scrollable field region weight(1f);
+                // without a bounded height that region collapses to zero and the checks
+                // run against an empty layout. In production the full-screen dialog in
+                // EventFormSheet passes fillMaxSize() through this modifier.
                 modifier = Modifier.fillMaxSize(),
                 onSavingChange = {},
                 calendars = eventFormCalendars,

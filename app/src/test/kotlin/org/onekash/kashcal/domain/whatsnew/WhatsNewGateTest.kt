@@ -4,18 +4,13 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Tests for the pure release-filter logic that decides which release-notes
- * entries to surface in the What's New sheet.
+ * Tests [WhatsNewGate.releasesToShow], which picks the release notes the What's New sheet shows.
  *
- * Gate contract:
- *   - Fresh install (lastShown == 0) returns empty so the caller can record
- *     current and stay silent on first launch.
- *   - Otherwise returns every release whose versionCode is strictly greater
- *     than lastShown AND less than or equal to currentVersion, sorted
- *     ascending so the sheet reads oldest-to-newest.
+ * - A lastShown of 0 (nothing stored or seeded) returns empty, so a first launch shows nothing.
+ * - Otherwise it returns every release with a versionCode above lastShown and at most
+ *   currentVersion, ascending so the sheet reads oldest to newest.
  *
- * Caller is responsible for persisting lastShown after dismissal (or on
- * fresh install when this returns empty).
+ * The caller seeds lastShown before the check ([WhatsNewSeeder]) and stores it on dismissal.
  */
 class WhatsNewGateTest {
 
@@ -43,8 +38,7 @@ class WhatsNewGateTest {
 
     @Test
     fun `fresh install suppresses content even when releases authored`() {
-        // lastShown == 0 sentinel: never pester first-launch users with
-        // history they have no context for.
+        // lastShown == 0: never show first-launch users history they have no context for.
         val out = WhatsNewGate.releasesToShow(
             releases = listOf(rel(295)),
             lastShownVersion = 0,
@@ -78,8 +72,8 @@ class WhatsNewGateTest {
 
     @Test
     fun `upgrade past versions still shows skipped releases`() {
-        // User updated 290 -> 300 directly, releases existed at 294 and 295.
-        // Both should still be surfaced even though current is 300.
+        // The user updated 290 -> 300 directly; notes exist for 294 and 295. Both show
+        // even though current is 300.
         val r294 = rel(294)
         val r295 = rel(295)
         val out = WhatsNewGate.releasesToShow(
@@ -125,8 +119,8 @@ class WhatsNewGateTest {
 
     @Test
     fun `release with versionCode above current is hidden`() {
-        // Author added Release(300, ...) but the user is on 295. Don't show
-        // release notes for a version the user isn't running yet.
+        // Notes exist for 300 but the user is on 295. Notes for a version the user
+        // isn't running yet stay hidden.
         val out = WhatsNewGate.releasesToShow(
             releases = listOf(rel(300)),
             lastShownVersion = 290,

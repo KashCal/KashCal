@@ -49,10 +49,8 @@ class ConflictResolverTest {
         occurrenceGenerator = mockk()
         client = mockk()
         database = mockk(relaxed = true)
-        // The non-inline `runInTransaction` wrapper just runs the block,
-        // letting the SERVER_WINS path execute as a single sequence in tests.
-        // MockK's generic-suspend type inference needs the explicit
-        // `Unit` since the production `runInTransaction { … }` block in
+        // [KashCalDatabase.runInTransaction] is open and non-inline, so the stub can run the
+        // block directly. MockK needs the explicit `Unit`: the SERVER_WINS block in
         // ConflictResolver returns no value.
         coEvery { database.runInTransaction(any<suspend () -> Unit>()) } coAnswers {
             val block = firstArg<suspend () -> Unit>()
@@ -74,13 +72,12 @@ class ConflictResolverTest {
         clearAllMocks()
     }
 
-    // ========== NEWEST_WINS ETag Update (v22.5.6) ==========
+    // ========== NEWEST_WINS etag update (v22.5.6) ==========
 
     @Test
     fun `resolveNewestWins updates etag when local wins`() = runTest {
-        // Local has higher sequence → local wins.
-        // The fix ensures etag is updated to server's current value before creating
-        // the retry operation, preventing a stale-etag → 412 → infinite loop.
+        // Local has the higher sequence, so local wins. The etag must take the server's
+        // current value before the retry is queued; a stale etag would get 412 on every retry.
         val event = Event(
             id = 42L,
             uid = "test-uid",
@@ -104,7 +101,7 @@ class ConflictResolverTest {
             lastError = "Conflict: server has newer version"
         )
 
-        // Server event has sequence=3 (lower than local's 5)
+        // Server SEQUENCE 3, below local's 5.
         val serverIcal = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -133,7 +130,7 @@ class ConflictResolverTest {
 
         assert(result == ConflictResult.LocalVersionPushed)
 
-        // Key assertion: etag was updated BEFORE the new operation was created
+        // The etag is updated before the new operation is created.
         coVerifyOrder {
             eventsDao.updateEtag(event.id, "etag-server-current")
             pendingOperationsDao.deleteById(operation.id)
@@ -141,11 +138,11 @@ class ConflictResolverTest {
         }
     }
 
-    // ========== Default Reminder Tests (Issue #74) ==========
+    // ========== Default reminders (#74) ==========
 
     @Test
     fun `resolveServerWins does not apply default reminders when server has no alarms`() = runTest {
-        // Server event has NO VALARM — reminders should stay null (not get defaults applied)
+        // The server event has no VALARM, so reminders stay null; no defaults are applied.
         val event = Event(
             id = 50L,
             uid = "no-alarm-uid",
@@ -166,7 +163,7 @@ class ConflictResolverTest {
             status = PendingOperation.STATUS_PENDING
         )
 
-        // Server event has NO VALARM
+        // No VALARM.
         val serverIcal = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -213,9 +210,8 @@ class ConflictResolverTest {
 
     @Test
     fun `resolveServerWins persists server attendees (must not silently drop)`() = runTest {
-        // SERVER_WINS resolution must not drop attendees.
-        // This test asserts the production write at ConflictResolver fires with the
-        // server's attendee list, locking in the contract for later scheduling work.
+        // SERVER_WINS must not drop attendees: the server's attendee list is written through
+        // attendeesDao.replaceForEvent.
         val event = Event(
             id = 99L,
             uid = "with-attendees-uid",
@@ -287,7 +283,7 @@ class ConflictResolverTest {
             "Server attendees must include Bob",
             written.any { it.address == "mailto:bob@example.com" && it.partstat == "NEEDS-ACTION" }
         )
-        // Each attendee's eventId must be patched with the saved ID
+        // Each attendee carries the local event's id.
         assertTrue(
             "All written attendees must carry the resolved eventId",
             written.all { it.eventId == event.id }
@@ -298,10 +294,9 @@ class ConflictResolverTest {
 
     @Test
     fun `resolveServerWins runs upsert and attendees-replace inside a single transaction`() = runTest {
-        // ConflictResolver SERVER_WINS must wrap
-        // event upsert + attendees replaceForEvent in database.runInTransaction
-        // so a partial write rolls back rather than leaving the event row
-        // out-of-sync with its attendees table.
+        // SERVER_WINS must run the event upsert and attendeesDao.replaceForEvent inside
+        // database.runInTransaction, so a partial write rolls back instead of leaving the
+        // event row out of step with its attendees.
         val event = Event(
             id = 77L,
             uid = "tx-uid",
@@ -369,10 +364,10 @@ class ConflictResolverTest {
 
     @Test
     fun `resolveServerWins rolls back when attendees-replace throws`() = runTest {
-        // If attendees-replace blows up mid-transaction, the upsert must NOT
-        // be committed. This locks in the rollback semantic: previously the
-        // writes were sequential and a failure mid-stream would leave the
-        // event row updated but attendees stale.
+        // If the attendee replace throws inside the transaction, the upsert must not be
+        // committed, or the event row would be updated with stale attendees. The stubbed
+        // transaction can't roll back; this asserts the error propagates out of resolve and
+        // the operation is kept.
         val event = Event(
             id = 88L,
             uid = "rollback-uid",
@@ -416,16 +411,15 @@ class ConflictResolverTest {
             color = 0xFF0000
         )
 
-        // Override the relaxed attendeesDao mock — make replace throw.
+        // Override the relaxed attendeesDao mock: replace throws.
         coEvery {
             attendeesDao.replaceForEvent(eventId = event.id, attendees = any())
         } throws RuntimeException("simulated DB error")
 
-        // Make the runInTransaction stub propagate exceptions like the real
-        // implementation does — the block runs, throws, transaction aborts.
+        // The stub runs the block, so its exception propagates out of the transaction.
         coEvery { database.runInTransaction(any<suspend () -> Unit>()) } coAnswers {
             val block = firstArg<suspend () -> Unit>()
-            block()  // Will throw RuntimeException, propagating out.
+            block()  // throws the RuntimeException
         }
 
         coEvery { eventsDao.getById(event.id) } returns event
@@ -445,8 +439,7 @@ class ConflictResolverTest {
         }
         assertTrue("transaction body must propagate the simulated DB error: $thrown", thrown != null)
 
-        // pendingOperationsDao.deleteById must NOT have been called — the
-        // post-transaction cleanup runs only when the transaction succeeded.
+        // The operation is deleted only after the transaction commits.
         coVerify(exactly = 0) { pendingOperationsDao.deleteById(operation.id) }
     }
 }

@@ -53,7 +53,7 @@ class RRuleExpanderTest {
 
         assertEquals(5, occurrences.size)
 
-        // Verify each occurrence is one day apart
+        // One day apart.
         val dayCodes = occurrences.map { it.dtStart.toDayCode() }
         assertEquals(listOf("20231201", "20231202", "20231203", "20231204", "20231205"), dayCodes)
     }
@@ -70,7 +70,7 @@ class RRuleExpanderTest {
                 WeekdayNum(DayOfWeek.FRIDAY)
             )
         )
-        // Start on Monday Dec 4, 2023
+        // Starts on Monday, Dec 4, 2023.
         val event = createTestEvent(
             startDate = ZonedDateTime.of(2023, 12, 4, 10, 0, 0, 0, zone),
             rrule = rrule
@@ -83,7 +83,7 @@ class RRuleExpanderTest {
 
         assertEquals(6, occurrences.size)
 
-        // Should get Mon, Wed, Fri for 2 weeks
+        // Mon, Wed and Fri for 2 weeks; asserts the first week's three.
         val dayCodes = occurrences.map { it.dtStart.toDayCode() }
         assertTrue(dayCodes.contains("20231204"))  // Monday
         assertTrue(dayCodes.contains("20231206"))  // Wednesday
@@ -111,7 +111,7 @@ class RRuleExpanderTest {
             TimeRange.forMonth(2023, 12, zone)
         )
 
-        // 5 occurrences minus 2 excluded = 3
+        // 5 occurrences minus 2 EXDATEs.
         assertEquals(3, occurrences.size)
 
         val dayCodes = occurrences.map { it.dtStart.toDayCode() }
@@ -136,7 +136,7 @@ class RRuleExpanderTest {
             summary = "Daily Standup"
         )
 
-        // Create an override that moved Dec 3 occurrence to a different time
+        // An override moving Dec 3 from 10:00 (15:00Z) to 15:00 local.
         val overrideEvent = createTestEvent(
             uid = "recurring-123",
             summary = "Daily Standup (Rescheduled)",
@@ -154,7 +154,7 @@ class RRuleExpanderTest {
 
         assertEquals(5, occurrences.size)
 
-        // Find Dec 3 occurrence - should be the override
+        // The Dec 3 occurrence is the override.
         val dec3 = occurrences.find { it.dtStart.toDayCode() == "20231203" }
         assertNotNull(dec3)
         assertEquals("Daily Standup (Rescheduled)", dec3!!.summary)
@@ -178,11 +178,11 @@ class RRuleExpanderTest {
             TimeRange.forMonth(2023, 12, zone)
         )
 
-        // Each occurrence should have a unique importId
+        // Each occurrence has its own importId.
         val importIds = occurrences.map { it.importId }
         assertEquals(importIds.size, importIds.toSet().size)
 
-        // Format should be uid:OCC:daycode
+        // Format: uid:OCC:daycode.
         assertTrue(importIds.all { it.startsWith("test-uid-123:OCC:") })
     }
 
@@ -194,7 +194,7 @@ class RRuleExpanderTest {
             count = 3
         )
         val startDate = ZonedDateTime.of(2023, 12, 1, 10, 0, 0, 0, zone)
-        val endDate = ZonedDateTime.of(2023, 12, 1, 11, 30, 0, 0, zone)  // 1.5 hour duration
+        val endDate = ZonedDateTime.of(2023, 12, 1, 11, 30, 0, 0, zone)  // 90 minutes
 
         val event = createTestEvent(
             startDate = startDate,
@@ -209,7 +209,7 @@ class RRuleExpanderTest {
 
         for (occ in occurrences) {
             val duration = occ.dtEnd!!.timestamp - occ.dtStart.timestamp
-            assertEquals(90 * 60 * 1000L, duration)  // 90 minutes in millis
+            assertEquals(90 * 60 * 1000L, duration)
         }
     }
 
@@ -222,7 +222,7 @@ class RRuleExpanderTest {
 
         assertEquals(12, startZdt.monthValue)
         assertEquals(1, startZdt.dayOfMonth)
-        assertEquals(1, endZdt.monthValue)  // January 1 (exclusive end)
+        assertEquals(1, endZdt.monthValue)  // January 1, midnight
         assertEquals(2024, endZdt.year)
     }
 
@@ -241,10 +241,11 @@ class RRuleExpanderTest {
 
         val occurrences = expander.expand(
             event,
-            TimeRange.aroundNow(100, 100, zone)  // Wide range
+            TimeRange.aroundNow(100, 100, zone)
         )
 
-        // Should get Oct 15, Nov 15, Dec 15
+        // Oct 15, Nov 15 and Dec 15, 2023 fall outside aroundNow's 100 days either side of
+        // today, so dayCodes is empty and the assert passes vacuously.
         val dayCodes = occurrences.map { it.dtStart.toDayCode() }
         assertTrue(dayCodes.all { it.endsWith("15") })
     }
@@ -274,8 +275,8 @@ class RRuleExpanderTest {
 
     @Test
     fun `FREQ=MINUTELY INTERVAL=15 COUNT=6 without BYHOUR unchanged`() {
-        // Regression guard: adding hourList handling must not break rules that
-        // don't use it. This mirrors RFC 5545 §3.8.5.3 example 34.
+        // A rule without BYHOUR keeps its 15-minute steps. Mirrors the RFC 5545 §3.8.5.3
+        // example "Every 15 minutes for 6 occurrences".
         val rrule = RRule(
             freq = Frequency.MINUTELY,
             interval = 15,

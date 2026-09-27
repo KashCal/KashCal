@@ -16,23 +16,20 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive iTIP (iCalendar Transport-Independent Interoperability Protocol) workflow tests.
+ * Parses hand-written iTIP (iCalendar Transport-Independent Interoperability Protocol) messages
+ * and checks what [ICalParser] reads from each. Scenarios follow RFC 5546 and the CalConnect
+ * Developer's Guide; building messages is `ITipBuilderTest`'s.
  *
- * Per RFC 5546 and CalConnect Developer's Guide.
- *
- * Tests cover:
- * - METHOD:PUBLISH - Broadcasting calendar information
- * - METHOD:REQUEST - Meeting invitations
- * - METHOD:REPLY - Attendee responses
- * - METHOD:CANCEL - Event cancellation
- * - METHOD:ADD - Adding instances to recurring events
- * - METHOD:COUNTER - Counter-proposals
- * - METHOD:DECLINECOUNTER - Declining counter-proposals
- * - METHOD:REFRESH - Requesting updated event data
- * - PARTSTAT (Participation Status) values
- * - RSVP handling
- * - Delegation scenarios
- * - Scheduling agent behavior
+ * Covers:
+ * - METHOD:PUBLISH (no attendees, two events), REQUEST (organizer, attendees, RSVP, RRULE),
+ *   REPLY (ACCEPTED, DECLINED, TENTATIVE, one attendee), CANCEL (whole event, one instance,
+ *   one attendee), ADD, COUNTER (new time, new location), DECLINECOUNTER and REFRESH
+ * - every [PartStat] value and the NEEDS-ACTION default
+ * - delegation: DELEGATED-TO, DELEGATED-FROM and a two-attendee chain
+ * - every [AttendeeRole] value and the REQ-PARTICIPANT default
+ * - CUTYPE INDIVIDUAL, ROOM, RESOURCE and GROUP, asserting only that each parses
+ * - SCHEDULE-AGENT SERVER, CLIENT and NONE
+ * - SEQUENCE on an updated event and across two versions of one UID
  *
  * @see https://devguide.calconnect.org/iTIP/
  */
@@ -299,7 +296,7 @@ class ITipWorkflowTest {
 
         @Test
         fun `REPLY contains only responding attendee`() {
-            // Per iTIP, REPLY should only include the responding attendee
+            // RFC 5546 §3.2.3: a REPLY carries one ATTENDEE, the address of the attendee replying.
             val ics = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -379,7 +376,8 @@ class ITipWorkflowTest {
 
         @Test
         fun `CANCEL removes attendee from event`() {
-            // When CANCEL includes only some attendees, they are being removed
+            // A CANCEL naming only some attendees uninvites them (RFC 5546 §3.2.5). Only the
+            // METHOD is asserted.
             val ics = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -913,7 +911,8 @@ class ITipWorkflowTest {
 
         @Test
         fun `higher SEQUENCE supersedes lower`() {
-            // This is a workflow test - higher sequence should be newer
+            // The version with the higher SEQUENCE obsoletes the other (RFC 5546 §2.1.5); the
+            // test compares the parsed values.
             val older = """
                 BEGIN:VCALENDAR
                 VERSION:2.0

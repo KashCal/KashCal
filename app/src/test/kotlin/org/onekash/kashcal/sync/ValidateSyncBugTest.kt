@@ -19,11 +19,13 @@ import java.util.concurrent.TimeUnit
 import okhttp3.Credentials as OkHttpCredentials
 
 /**
- * Test to validate the incremental sync bug AND verify the fix works.
+ * Live iCloud probe of a sync-collection delta that asks only for getetag.
  *
- * This test:
- * 1. Shows current broken behavior (extractICalData returns empty)
- * 2. Shows what the FIX would return (extractChangedItems returns hrefs/etags)
+ * It creates one event, then asks for changes since the token taken before the create. The
+ * request names no calendar-data, so the reply is expected to carry only hrefs and etags; the
+ * test prints how many items [ICloudQuirks.extractICalData] and [extractChangedItems] each
+ * find, and asserts nothing. Skips without iCloud credentials, and deletes only the event it
+ * created, by its own URL.
  *
  * Run with: ./gradlew testDebugUnitTest --tests "*ValidateSyncBugTest*"
  */
@@ -77,10 +79,9 @@ class ValidateSyncBugTest {
     }
 
     private fun loadCredentials() {
-        // Read the SPECIFIC iCloud keys. A previous fuzzy substring matcher
-        // silently picked up the LAST username/password key in local.properties,
-        // which became another provider's credentials once more servers were
-        // added — making this iCloud test skip on a discovery failure.
+        // Read the iCloud keys by exact name. local.properties holds other providers'
+        // username/password keys too; picking one of those makes discovery fail and the test
+        // skip.
         val possiblePaths = listOf(
             "local.properties",
             "../local.properties",
@@ -99,9 +100,7 @@ class ValidateSyncBugTest {
         }
     }
 
-    /**
-     * PROPOSED FIX: Extract hrefs and etags without requiring calendar-data
-     */
+    /** Returns the href and etag of each changed .ics response, skipping 404 (deleted) ones. */
     private fun extractChangedItems(responseBody: String): List<Pair<String, String?>> {
         val items = mutableListOf<Pair<String, String?>>()
 
@@ -189,12 +188,12 @@ class ValidateSyncBugTest {
 
         println("\n=== COMPARING PARSING METHODS ===")
 
-        // Current broken method
+        // The parser that needs calendar-data
         val iCalData = quirks.extractICalData(rawResponse)
         println("\nCURRENT (broken) - extractICalData():")
         println("  Items found: ${iCalData.size}")
 
-        // Proposed fix
+        // The href and etag parser
         val changedItems = extractChangedItems(rawResponse)
         println("\nFIXED - extractChangedItems():")
         println("  Items found: ${changedItems.size}")
@@ -315,9 +314,7 @@ class ValidateSyncBugTest {
         )
     }
 
-    /**
-     * Make raw sync-collection request to get the XML response
-     */
+    /** Sends a sync-collection REPORT for getetag only; returns the 207 body, or null. */
     private suspend fun callSyncCollectionRaw(calendarUrl: String, syncToken: String?): String? =
         withContext(Dispatchers.IO) {
             val tokenElement = if (syncToken != null) {

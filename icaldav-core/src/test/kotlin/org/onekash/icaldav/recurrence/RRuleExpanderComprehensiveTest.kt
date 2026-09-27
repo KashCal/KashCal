@@ -19,9 +19,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive RRuleExpander tests.
- *
- * Covers all recurrence patterns per RFC 5545.
+ * Tests [RRuleExpander] on common RFC 5545 patterns in America/New_York: daily, weekly, monthly
+ * and yearly rules with INTERVAL, UNTIL, BYDAY ordinals and BYMONTHDAY; EXDATEs; an override;
+ * all-day series; DST changes; and non-recurring events, durations and per-occurrence importIds.
+ * The seven tests on BYMONTHDAY=-1 and BYDAY ordinals, Thanksgiving included, assert only that at
+ * least one occurrence exists, and the UNTIL test only that there are at most 10.
  */
 @DisplayName("RRuleExpander Comprehensive Tests")
 class RRuleExpanderComprehensiveTest {
@@ -30,7 +32,7 @@ class RRuleExpanderComprehensiveTest {
     private val zone = ZoneId.of("America/New_York")
     private val utcZone = ZoneId.of("UTC")
 
-    // Helper to create time range
+    // Returns 31 days from the 1st of the month, midnight in America/New_York.
     private fun rangeForMonth(year: Int, month: Int): Pair<Instant, Instant> {
         val start = ZonedDateTime.of(year, month, 1, 0, 0, 0, 0, zone).toInstant()
         val end = start.plus(31, ChronoUnit.DAYS)
@@ -65,7 +67,7 @@ class RRuleExpanderComprehensiveTest {
             val occurrences = expander.expand(event, start, end)
 
             assertEquals(5, occurrences.size)
-            // Check dates are every 2 days
+            // Asserts only the count, not the 2-day spacing.
         }
 
         @Test
@@ -388,7 +390,7 @@ class RRuleExpanderComprehensiveTest {
             val occurrences = expander.expand(event, start, end)
 
             assertEquals(3, occurrences.size)
-            // Should still generate 3 occurrences even though 2:30am doesn't exist on March 10
+            // Still 3, though 2:30am doesn't exist on March 10.
         }
 
         @Test
@@ -408,7 +410,7 @@ class RRuleExpanderComprehensiveTest {
 
         @Test
         fun `weekly recurrence maintains local time across DST`() {
-            // Event at 10am should stay at 10am local time across DST change
+            // A 10am event across the March 10 DST change.
             val event = createEvent(
                 dtStart = dateTime(2024, 3, 4, 10, 0), // Monday before DST
                 rrule = RRule(freq = Frequency.WEEKLY, count = 3)
@@ -419,7 +421,7 @@ class RRuleExpanderComprehensiveTest {
             val occurrences = expander.expand(event, start, end)
 
             assertEquals(3, occurrences.size)
-            // All occurrences should be at 10am local time
+            // Asserts only the count, not the 10am local time.
         }
 
         @Test
@@ -441,14 +443,13 @@ class RRuleExpanderComprehensiveTest {
             val occurrences = expander.expand(event, start, end)
 
             assertEquals(3, occurrences.size)
-            // All should be December 25, not shifted by timezone
+            // Asserts only the count, not that each is December 25.
         }
 
         @Test
         fun `weekly recurrence at 1-30am during fall back - time occurs twice`() {
-            // November 3, 2024: 1:30am occurs TWICE in America/New_York
-            // First at 1:30am EDT (-04:00), then at 1:30am EST (-05:00)
-            // This tests ical4j issue #716 - offset difference between 3.x and 4.x
+            // November 3, 2024: 1:30am occurs twice in America/New_York, at EDT (-04:00) and
+            // then EST (-05:00). Covers ical4j issue #716, where 3.x and 4.x differ in offset.
             val event = createEvent(
                 dtStart = dateTime(2024, 10, 27, 1, 30), // Week before DST
                 rrule = RRule(freq = Frequency.WEEKLY, count = 3)
@@ -459,7 +460,7 @@ class RRuleExpanderComprehensiveTest {
             val occurrences = expander.expand(event, start, end)
 
             assertEquals(3, occurrences.size)
-            // All occurrences should be at 1:30am local time
+            // Every occurrence is at 1:30am local time.
             occurrences.forEach { occ ->
                 val zdt = occ.dtStart.toZonedDateTime()
                 assertEquals(1, zdt.hour)
@@ -469,8 +470,8 @@ class RRuleExpanderComprehensiveTest {
 
         @Test
         fun `overnight event spanning DST transition maintains duration`() {
-            // Event from 10pm to 6am spanning November 3, 2024 DST change
-            // This tests ical4j issue #688 - variable duration during DST
+            // 10pm to 6am across the November 3, 2024 DST change. Covers ical4j issue #688,
+            // variable duration during DST.
             val event = createEvent(
                 dtStart = dateTime(2024, 11, 2, 22, 0), // 10pm day before DST
                 dtEnd = dateTime(2024, 11, 3, 6, 0),    // 6am on DST day
@@ -482,11 +483,9 @@ class RRuleExpanderComprehensiveTest {
             val occurrences = expander.expand(event, start, end)
 
             assertEquals(3, occurrences.size)
-            // First occurrence: normal 8 hours
-            // Second occurrence (Nov 2-3): 9 hours due to fall back (extra hour)
-            // Third occurrence: normal 8 hours
-            // Note: The exact duration behavior depends on ical4j's DST handling
-            // This test documents the behavior rather than asserting exact values
+            // The master spans the fall back, so DTEND minus DTSTART is 9 elapsed hours, and
+            // RRuleExpander adds that to every start (the later ones end at 7am local). Asserts
+            // only that each occurrence has an end.
             occurrences.forEach { occ ->
                 assertTrue(occ.dtEnd != null, "All occurrences should have end time")
             }
@@ -603,7 +602,7 @@ class RRuleExpanderComprehensiveTest {
             val (start, end) = rangeForMonth(2023, 12)
             val occurrences = expander.expand(event, start, end)
 
-            // Implementation may return 0 or 1 depending on edge handling
+            // An event with no RRULE or RDATE is returned whatever the range, so this is 1.
             assertTrue(occurrences.size <= 1)
         }
 
@@ -618,7 +617,7 @@ class RRuleExpanderComprehensiveTest {
             val (start, end) = rangeForMonth(2023, 12)
             val occurrences = expander.expand(event, start, end)
 
-            // All occurrences should have same duration
+            // Every occurrence keeps the 2.5-hour duration.
             occurrences.forEach { occ ->
                 val duration = occ.dtEnd!!.timestamp - occ.dtStart.timestamp
                 assertEquals(2 * 60 * 60 * 1000 + 30 * 60 * 1000, duration)

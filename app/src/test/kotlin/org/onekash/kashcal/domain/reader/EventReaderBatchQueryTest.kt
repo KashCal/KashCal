@@ -26,13 +26,12 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Tests for EventReader batch query optimizations (H2 fix).
- *
- * Verifies that batch loading methods work correctly:
- * - getEventsByIds() batch helper
- * - getOccurrencesWithEventsInRangeFlow() uses batch loading
- * - getEventsForDay() handles exception events correctly
- * - Large result sets work within SQLite IN clause limits
+ * Tests the batch-loading reads of [EventReader] over an in-memory Room database:
+ * - [EventReader.getEventsByIds] with empty, missing and duplicate IDs
+ * - [EventReader.getOccurrencesWithEventsInRangeFlow] with calendars attached, an exception, an
+ *   empty range, and 50 events in one query
+ * - [EventReader.getEventsForDay] with an exception and with calendar info
+ * - [EventReader.getOccurrencesWithEventsInRange] with calendar info, over one calendar and two
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -106,7 +105,7 @@ class EventReaderBatchQueryTest {
         val id = database.eventsDao().insert(event)
         val created = event.copy(id = id)
 
-        // Generate occurrences
+        // Occurrences from 30 days before the start to a year after.
         val rangeStart = startTs - 86400000L * 30
         val rangeEnd = startTs + 86400000L * 365
         occurrenceGenerator.generateOccurrences(created, rangeStart, rangeEnd)
@@ -135,7 +134,7 @@ class EventReaderBatchQueryTest {
         val id = database.eventsDao().insert(exception)
         val created = exception.copy(id = id)
 
-        // Link the exception to the occurrence
+        // Link the exception to the master's occurrence.
         database.occurrencesDao().linkException(
             master.id,
             instanceTime,
@@ -222,7 +221,8 @@ class EventReaderBatchQueryTest {
             now + 86400000L * 3 // 3 days
         ).first()
 
-        // Should include occurrences for original and modified instances
+        // The master's occurrences and the exception, through its linked occurrence, are
+        // both returned.
         assertTrue(results.any { it.event.title == "Master" })
         assertTrue(results.any { it.event.title == "Modified Instance" })
     }
@@ -252,31 +252,32 @@ class EventReaderBatchQueryTest {
 
         val results = eventReader.getEventsForDay(dayCode)
 
-        // Should include the modified version, not master for this occurrence
+        // The exception replaces the master for today's occurrence; only its presence is
+        // asserted.
         assertTrue(results.any { it.event.title == "Modified Today" })
     }
 
     @Test
     fun `getEventsForDay uses batch queries and preserves sort order`() = runTest {
-        // Create events at known times
+        // Three events an hour apart; the order of the results isn't asserted.
         val now = System.currentTimeMillis()
         createEvent(title = "First Event", startTs = now)
         createEvent(title = "Second Event", startTs = now + 3600000) // +1 hour
         createEvent(title = "Third Event", startTs = now + 7200000) // +2 hours
 
-        // Query using range method to verify batch loading works
+        // Reads through the range method, not getEventsForDay.
         val results = eventReader.getOccurrencesWithEventsInRange(
             now - 3600000,
             now + 86400000
         )
 
-        // Verify we got all events with their data
+        // All three events are returned.
         assertTrue(results.size >= 3)
         assertTrue(results.any { it.event.title == "First Event" })
         assertTrue(results.any { it.event.title == "Second Event" })
         assertTrue(results.any { it.event.title == "Third Event" })
 
-        // Verify each result has calendar info populated (batch loaded)
+        // Each result carries its calendar.
         results.forEach { owp ->
             assertNotNull(owp.calendar)
             assertEquals(calendarId, owp.calendar?.id)
@@ -306,7 +307,7 @@ class EventReaderBatchQueryTest {
     fun `batch queries work with 100+ occurrences`() = runTest {
         val now = System.currentTimeMillis()
 
-        // Create 50 events (will generate multiple occurrences each)
+        // 50 one-off events, one occurrence each, alternating between the two calendars.
         repeat(50) { i ->
             createEvent(
                 title = "Event $i",
@@ -320,10 +321,10 @@ class EventReaderBatchQueryTest {
             now + 86400000L * 7 // 1 week
         ).first()
 
-        // Should return all events in the range
+        // All 50 fall inside the week.
         assertTrue(results.size >= 50)
 
-        // Verify each result has proper data
+        // Each result carries its event and occurrence.
         results.forEach { owp ->
             assertNotNull(owp.event)
             assertNotNull(owp.occurrence)
@@ -335,7 +336,7 @@ class EventReaderBatchQueryTest {
     fun `getOccurrencesWithEventsInRange handles many calendars`() = runTest {
         val now = System.currentTimeMillis()
 
-        // Create events in both calendars
+        // Ten events in each calendar.
         repeat(10) { i ->
             createEvent(
                 calendarId = calendarId,
@@ -356,7 +357,7 @@ class EventReaderBatchQueryTest {
 
         assertEquals(20, results.size)
 
-        // Verify correct calendar mapping
+        // Each result maps to its own calendar.
         val personalEvents = results.filter { it.calendar?.displayName == "Personal" }
         val workEvents = results.filter { it.calendar?.displayName == "Work" }
 

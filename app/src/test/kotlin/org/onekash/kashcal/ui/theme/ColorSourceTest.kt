@@ -5,9 +5,10 @@ import org.junit.Test
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 
 /**
- * The color source decides whether the app colors itself from the user's chosen accent seed
- * or from the platform's Material You / baseline (dynamic). It is resolved from an explicit
- * stored value, with a migration path for users who had picked the retired "teal" theme.
+ * Tests [ColorSource.fromPrefValue], which decides whether the app colors itself from the user's
+ * accent seed or from the platform's Material You or baseline scheme (dynamic). An explicit stored
+ * value wins; without one, users of the retired "teal" theme get the seed and everyone else,
+ * unknown values included, gets dynamic.
  */
 class ColorSourceTest {
 
@@ -20,7 +21,8 @@ class ColorSourceTest {
 
     @Test
     fun `default when nothing stored is DYNAMIC`() {
-        // Existing users (and fresh installs) keep Material You / baseline until they opt into an accent.
+        // Existing users and fresh installs keep Material You or baseline until they pick an
+        // accent.
         assertEquals(ColorSource.DYNAMIC, ColorSource.fromPrefValue(explicit = null, legacyTheme = null))
         assertEquals(
             ColorSource.DYNAMIC,
@@ -30,8 +32,8 @@ class ColorSourceTest {
 
     @Test
     fun `legacy teal theme migrates to SEED (brand-teal accent) when no explicit source stored`() {
-        // A user who had picked the old "KashCal Teal" theme should land on the seed path so their
-        // brand color is preserved (the accent seed defaults to brand teal).
+        // A user of the retired "KashCal Teal" theme lands on the seed path and keeps the brand
+        // color, since the accent seed defaults to brand teal.
         assertEquals(
             ColorSource.SEED,
             ColorSource.fromPrefValue(explicit = null, legacyTheme = KashCalDataStore.THEME_TEAL),
@@ -40,7 +42,7 @@ class ColorSourceTest {
 
     @Test
     fun `explicit stored source wins over legacy teal`() {
-        // Once the user has explicitly chosen, the legacy value is ignored.
+        // Once the user has chosen explicitly, the legacy value is ignored.
         assertEquals(
             ColorSource.DYNAMIC,
             ColorSource.fromPrefValue(explicit = ColorSource.DYNAMIC.prefValue, legacyTheme = KashCalDataStore.THEME_TEAL),

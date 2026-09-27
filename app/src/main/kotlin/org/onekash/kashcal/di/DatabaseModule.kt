@@ -30,10 +30,9 @@ import org.onekash.kashcal.data.db.migration.Migrations
 import javax.inject.Singleton
 
 /**
- * Hilt module providing database dependencies.
+ * Provides the Room database, every DAO, the app [ContentResolver] and [WorkManager].
  *
- * Provides singleton instances of the database and all DAOs.
- * DAOs should be injected into repositories, not ViewModels directly.
+ * Inject DAOs below the UI layer, never into ViewModels.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -42,14 +41,14 @@ object DatabaseModule {
     private const val TAG = "DatabaseModule"
 
     /**
-     * Database callback to create triggers for master event duplicate prevention.
+     * Creates the master-uniqueness triggers and seeds the starter tags on a fresh install.
+     * Upgrades get both from [Migrations.ALL_MIGRATIONS] instead.
      *
-     * Uses triggers instead of partial unique index because Room doesn't support
-     * partial indexes in @Index annotations, causing schema validation failures.
-     *
-     * The triggers enforce RFC 5545: master events must have unique UIDs within a calendar.
-     * This prevents duplicates during iCloud sync (multiple servers may send same data).
-     * Exception events share the master's UID and are allowed (original_event_id IS NOT NULL).
+     * Triggers stand in for a partial unique index: Room can't declare one in `@Index`, so its
+     * schema validation fails on it. They enforce one master per UID in a calendar (RFC 4791
+     * §4.1), which stops duplicate masters during iCloud sync (multiple servers may send the
+     * same data). Exceptions share the master's UID (`original_event_id IS NOT NULL`) and pass.
+     * [KashCalDatabase.testCallback] carries a copy for tests; change both.
      */
     private val databaseCallback = object : RoomDatabase.Callback() {
         override fun onCreate(db: SupportSQLiteDatabase) {
@@ -61,10 +60,9 @@ object DatabaseModule {
     }
 
     /**
-     * Seed the curated starter tags on a fresh install so a new user sees the
-     * same Work/Personal/Family set an upgrading user gets from the v21→v22
-     * migration. `INSERT OR IGNORE` keeps it idempotent and lets any name the
-     * user has already used keep its own row.
+     * Seeds the curated starter tags so a new user gets the same [Category.DEFAULT_SEEDS] an
+     * upgrading user gets from `MIGRATION_21_22`. `INSERT OR IGNORE` keeps it idempotent and
+     * leaves an existing row for the same name alone.
      */
     private fun seedDefaultCategories(db: SupportSQLiteDatabase) {
         val now = System.currentTimeMillis()
@@ -76,9 +74,7 @@ object DatabaseModule {
         }
     }
 
-    /**
-     * Creates triggers to enforce unique (uid, calendar_id) for master events.
-     */
+    /** Creates the triggers that keep (uid, calendar_id) unique among masters. */
     private fun createMasterEventUniqueTriggers(db: SupportSQLiteDatabase) {
         db.execSQL("""
             CREATE TRIGGER IF NOT EXISTS trigger_master_event_unique_insert
@@ -112,9 +108,6 @@ object DatabaseModule {
         """.trimIndent())
     }
 
-    /**
-     * Provide singleton database instance.
-     */
     @Provides
     @Singleton
     fun provideDatabase(
@@ -125,126 +118,86 @@ object DatabaseModule {
             KashCalDatabase::class.java,
             KashCalDatabase.DATABASE_NAME
         )
-            // Enable WAL mode for better write performance
+            // WAL mode, for write performance.
             .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
-            // Add migrations
             .addMigrations(*Migrations.ALL_MIGRATIONS)
-            // Add callback for trigger creation on fresh install
             .addCallback(databaseCallback)
             .build()
     }
 
-    /**
-     * Provide AccountsDao.
-     */
     @Provides
     @Singleton
     fun provideAccountsDao(database: KashCalDatabase): AccountsDao {
         return database.accountsDao()
     }
 
-    /**
-     * Provide AddressBookDao.
-     */
     @Provides
     @Singleton
     fun provideAddressBookDao(database: KashCalDatabase): AddressBookDao {
         return database.addressBookDao()
     }
 
-    /**
-     * Provide CalendarsDao.
-     */
     @Provides
     @Singleton
     fun provideCalendarsDao(database: KashCalDatabase): CalendarsDao {
         return database.calendarsDao()
     }
 
-    /**
-     * Provide EventsDao.
-     */
     @Provides
     @Singleton
     fun provideEventsDao(database: KashCalDatabase): EventsDao {
         return database.eventsDao()
     }
 
-    /**
-     * Provide OccurrencesDao.
-     */
     @Provides
     @Singleton
     fun provideOccurrencesDao(database: KashCalDatabase): OccurrencesDao {
         return database.occurrencesDao()
     }
 
-    /**
-     * Provide CategoryDao.
-     */
     @Provides
     @Singleton
     fun provideCategoryDao(database: KashCalDatabase): CategoryDao {
         return database.categoryDao()
     }
 
-    /**
-     * Provide AttendeesDao.
-     */
     @Provides
     @Singleton
     fun provideAttendeesDao(database: KashCalDatabase): AttendeesDao {
         return database.attendeesDao()
     }
 
-    /**
-     * Provide PendingOperationsDao.
-     */
     @Provides
     @Singleton
     fun providePendingOperationsDao(database: KashCalDatabase): PendingOperationsDao {
         return database.pendingOperationsDao()
     }
 
-    /**
-     * Provide PendingCancelsDao.
-     */
     @Provides
     @Singleton
     fun providePendingCancelsDao(database: KashCalDatabase): PendingCancelsDao {
         return database.pendingCancelsDao()
     }
 
-    /**
-     * Provide SyncLogsDao.
-     */
     @Provides
     @Singleton
     fun provideSyncLogsDao(database: KashCalDatabase): SyncLogsDao {
         return database.syncLogsDao()
     }
 
-    /**
-     * Provide IcsSubscriptionsDao.
-     */
     @Provides
     @Singleton
     fun provideIcsSubscriptionsDao(database: KashCalDatabase): IcsSubscriptionsDao {
         return database.icsSubscriptionsDao()
     }
 
-    /**
-     * Provide ScheduledRemindersDao.
-     */
     @Provides
     @Singleton
     fun provideScheduledRemindersDao(database: KashCalDatabase): ScheduledRemindersDao {
         return database.scheduledRemindersDao()
     }
 
-    /**
-     * Provide ContentResolver for contact queries.
-     */
+    /** Provides the app [ContentResolver] for Contacts and Calendar provider access. */
     @Provides
     @Singleton
     fun provideContentResolver(
@@ -253,10 +206,7 @@ object DatabaseModule {
         return context.contentResolver
     }
 
-    /**
-     * Provide WorkManager for sync job cancellation.
-     * Used by AccountRepository.deleteAccount() to cancel sync jobs when account is deleted.
-     */
+    /** Provides [WorkManager]; `AccountRepositoryImpl.deleteAccount` cancels sync jobs with it. */
     @Provides
     @Singleton
     fun provideWorkManager(

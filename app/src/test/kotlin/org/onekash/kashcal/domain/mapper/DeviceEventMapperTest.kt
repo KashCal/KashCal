@@ -1,5 +1,7 @@
 package org.onekash.kashcal.domain.mapper
 
+import org.onekash.kashcal.testutil.phoneLocalDate
+import org.onekash.kashcal.testutil.withDeviceTimeZone
 import android.provider.CalendarContract
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -12,16 +14,23 @@ import org.onekash.kashcal.data.calendar_provider.DeviceEvent
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 
 /**
- * Tests for DeviceEventMapper.toFormState().
+ * Tests the device event mappers `toFormState` and `toExportEvent` in DeviceEventMapper.kt.
  *
- * Covers:
- * - Basic field mapping (title, description, location, isAllDay)
- * - Duration parsing for recurring events
- * - endTs fallback for non-recurring events
- * - Device calendar state flags
- * - All-day UTC to local conversion
- * - Reminder mapping (first 5 only)
- * - Color precedence (eventColor over calendarColor)
+ * toFormState:
+ * - basic fields, tags, edit-mode and device flags; an exception edits through its master's id
+ * - reminders: the first 5 are kept and the rest counted
+ * - the calendar color and the event color stay on separate fields
+ * - the start shown: occurrenceTs, except for an exception, which shows its own start
+ * - all-day end dates from an inclusive endTs or from a DURATION
+ * - availability mapped to TRANSP
+ * - timed events edited in the event's own timezone; blank, unrecognised and all-day cases
+ *
+ * toExportEvent:
+ * - UID `device-{masterId}@kashcal` shared by master and exceptions; an exception's RRULE nulled
+ *   and its originalEventId and originalInstanceTime kept
+ * - STATUS, AVAILABILITY, color, all-day end, timezone and reminders (ISO durations) mapped;
+ *   dtstamp, createdAt and updatedAt set to the current time
+ * - serialization through [IcsPatcher.serialize] and [IcsPatcher.serializeWithExceptions]
  */
 class DeviceEventMapperTest {
 
@@ -77,12 +86,12 @@ class DeviceEventMapperTest {
 
     @Test
     fun `toFormState parses duration for recurring events`() {
-        // Recurring event with 1 hour duration
-        val startTs = 1700000000000L // Some timestamp
+        // Recurring event with a 1 hour duration
+        val startTs = 1700000000000L
         val event = createDeviceEvent(
             startTs = startTs,
-            endTs = null, // No endTs for recurring
-            duration = "PT1H", // 1 hour
+            endTs = null, // A recurring event has DURATION, no endTs
+            duration = "PT1H",
             rrule = "FREQ=WEEKLY;BYDAY=MO"
         )
 
@@ -93,9 +102,8 @@ class DeviceEventMapperTest {
             deviceCalendarGroups = emptyList()
         )
 
-        // End time should be start + 1 hour
+        // The end is start + 1 hour (not asserted here; only the rrule is checked)
         val expectedEndTs = startTs + 3600000L
-        // Check that end hour/minute reflect 1 hour after start
         assertEquals(event.rrule, formState.rrule)
     }
 
@@ -117,7 +125,7 @@ class DeviceEventMapperTest {
             deviceCalendarGroups = emptyList()
         )
 
-        // Form state should derive times from endTs
+        // The times come from endTs (not asserted here; only the null rrule is checked)
         assertNull(formState.rrule)
     }
 
@@ -215,9 +223,9 @@ class DeviceEventMapperTest {
             deviceCalendarGroups = emptyList()
         )
 
-        // Calendar picker dot labels which calendar the event is on — identity.
+        // The calendar picker dot shows which calendar the event is on.
         assertEquals(0xFF0000, formState.selectedCalendarColor)
-        // Override lives on its own field.
+        // The per-event override has its own field.
         assertEquals(0x00FF00, formState.eventColor)
     }
 
@@ -258,9 +266,11 @@ class DeviceEventMapperTest {
 
     @Test
     fun `toFormState sets editingDeviceEventId to originalId for exception event`() {
-        // Exception event: id=200 (exception), originalId=100 (master)
-        // editingDeviceEventId must be the MASTER event ID (100), not exception ID (200)
-        // because saveDeviceEvent() uses it for findExceptionEventId() and createException()
+        // Exception event: id=200 (exception), originalId=100 (master).
+        // editingDeviceEventId must be the master's id (100), not the exception's (200):
+        // saveDeviceEvent passes it to the writer call of every edit scope as the series id;
+        // editSingleOccurrence looks up or creates the exception under that master
+        // (findExceptionEventId, createException).
         val event = createDeviceEvent(id = 200L, originalId = 100L)
 
         val formState = event.toFormState(
@@ -292,8 +302,8 @@ class DeviceEventMapperTest {
 
     @Test
     fun `toFormState uses occurrenceTs for recurring event date`() {
-        // Master starts Jan 1 10:00 AM with weekly RRULE
-        val jan1_10am = 1735729200000L // 2025-01-01 10:00:00 UTC
+        // Master starts Jan 1 with a weekly RRULE
+        val jan1_10am = 1735729200000L // 2025-01-01 11:00:00 UTC
         val jan8_10am = jan1_10am + 7 * 24 * 3600 * 1000L // Jan 8
 
         val event = createDeviceEvent(
@@ -312,7 +322,8 @@ class DeviceEventMapperTest {
         )
 
         // Form should show Jan 8 date, not Jan 1
-        assertEquals(jan8_10am, formState.dateMillis)
+        assertEquals(jan8_10am, formState.startOffsetHintTs)
+        assertDisplays(jan8_10am, formState.dateMillis, formState.startHour)
     }
 
     @Test
@@ -338,7 +349,8 @@ class DeviceEventMapperTest {
         )
 
         // Form should show exception's own startTs, not occurrenceTs
-        assertEquals(modifiedTs, formState.dateMillis)
+        assertEquals(modifiedTs, formState.startOffsetHintTs)
+        assertDisplays(modifiedTs, formState.dateMillis, formState.startHour)
     }
 
     @Test
@@ -358,13 +370,13 @@ class DeviceEventMapperTest {
             calendarColor = 0xFF0000,
             calendarName = "Work",
             deviceCalendarGroups = emptyList(),
-            occurrenceTs = differentTs // Should be used (no originalId check for non-recurring)
+            occurrenceTs = differentTs // Used: only an originalId makes the mapper ignore it
         )
 
-        // Non-recurring events with occurrenceTs: occurrenceTs is used because
-        // the mapper uses occurrenceTs ?? startTs regardless of rrule presence.
-        // This is safe — for non-recurring events, occurrenceTs == startTs in practice.
-        assertEquals(differentTs, formState.dateMillis)
+        // The mapper takes occurrenceTs ?: startTs for any non-exception, with or without an
+        // rrule. For a non-recurring event, occurrenceTs == startTs in practice.
+        assertEquals(differentTs, formState.startOffsetHintTs)
+        assertDisplays(differentTs, formState.dateMillis, formState.startHour)
     }
 
     @Test
@@ -390,7 +402,8 @@ class DeviceEventMapperTest {
 
         // End should be occurrence + 1 hour
         val expectedEndTs = jan8_10am + 3600000L
-        assertEquals(expectedEndTs, formState.endDateMillis)
+        assertEquals(expectedEndTs, formState.endOffsetHintTs)
+        assertDisplays(expectedEndTs, formState.endDateMillis, formState.endHour)
 
         // Verify end hour is 1 hour after start
         val startHour = formState.startHour
@@ -400,13 +413,12 @@ class DeviceEventMapperTest {
 
     // ==================== All-day end-date round-trip ====================
     //
-    // DeviceEvent.endTs is the inclusive last-ms-of-last-day for all-day events
-    // (matching Room Event.endTs convention). Both AndroidCalendarProviderRepository
-    // read paths (mapToInstances + mapToDeviceEvent) must apply the exclusive→inclusive
-    // conversion before constructing a DeviceEvent. These tests assert the form-state
-    // side: given a properly inclusive endTs, the date picker shows the correct end
-    // date for a 1-day event (no spurious +1 day) and a multi-day event (Feb 17, not
-    // Feb 18 for a 3-day event spanning Feb 15-17).
+    // An all-day DeviceEvent.endTs is the inclusive last ms of the last day, the Room
+    // Event.endTs convention. AndroidCalendarProviderRepository's read paths convert the
+    // provider's exclusive end (mapToInstances inline, mapToDeviceEvent through
+    // inclusiveEndForDeviceEvent). These tests start from an inclusive endTs or a DURATION
+    // and assert the form's end date: the start day for a 1-day event, Feb 17 (not Feb 18)
+    // for a 3-day event spanning Feb 15-17.
 
     @Test
     fun `toFormState all-day single-day event renders end date same as start`() {
@@ -431,7 +443,7 @@ class DeviceEventMapperTest {
             deviceCalendarGroups = emptyList()
         )
 
-        // Both pickers should resolve to Feb 15 in the local zone
+        // Both pickers resolve to Feb 15 in the local zone
         val startDate = java.time.Instant.ofEpochMilli(formState.dateMillis)
             .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
         val endDate = java.time.Instant.ofEpochMilli(formState.endDateMillis)
@@ -467,16 +479,16 @@ class DeviceEventMapperTest {
         val endDate = java.time.Instant.ofEpochMilli(formState.endDateMillis)
             .atZone(java.time.ZoneId.systemDefault()).toLocalDate()
 
-        // Feb 17, NOT Feb 18 — the user-visible last day is the inclusive end
+        // Feb 17, not Feb 18: the last day shown is the inclusive end
         assertEquals(java.time.LocalDate.of(2026, 2, 17), endDate)
     }
 
     @Test
     fun `toFormState recurring all-day event with P1D duration renders end date same as start`() {
         // Recurring all-day event: CalendarProvider stores DURATION="P1D", endTs=null.
-        // computeEndTs returns startTs + 86_400_000 (exclusive next-day midnight).
-        // The form must roll that back by 1ms before utcMidnightToLocalDate, otherwise
-        // the picker shows the next day — the sibling of the mapToDeviceEvent bug.
+        // startTs + P1D is the exclusive next-day midnight; `computeEndTs` takes 1 ms off
+        // before the form converts it with utcMidnightToLocalDate, or the picker shows the
+        // next day.
         val startTs = java.time.LocalDate.of(2026, 2, 15)
             .atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
 
@@ -503,8 +515,8 @@ class DeviceEventMapperTest {
 
     @Test
     fun `toFormState recurring all-day event with P3D duration renders end as last inclusive day`() {
-        // 3-day recurring all-day event: DURATION="P3D" → exclusive end = Feb 18 00:00 UTC.
-        // Picker should show Feb 17, not Feb 18.
+        // 3-day recurring all-day event: DURATION="P3D" gives an exclusive end of Feb 18
+        // 00:00 UTC. The picker shows Feb 17, not Feb 18.
         val startTs = java.time.LocalDate.of(2026, 2, 15)
             .atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
 
@@ -631,17 +643,17 @@ class DeviceEventMapperTest {
             deviceCalendarGroups = emptyList()
         )
 
-        // selectedCalendarColor labels the picker dot — calendar identity only.
+        // selectedCalendarColor is the calendar picker dot: which calendar, never the override.
         assertEquals(0xFF0000, formState.selectedCalendarColor)
-        // eventColor is the raw per-event override for the form's "More options" section
+        // eventColor is the raw per-event override, shown by the form's event color row
         assertEquals(0x00FF00, formState.eventColor)
     }
 
-    // ==================== toExportEvent() — synthetic Event bridge for ICS export ====================
+    // ==================== toExportEvent(): synthetic Event for ICS export ====================
 
     @Test
     fun `toExportEvent non-recurring event produces minimal synthetic Event`() {
-        val start = 1735729200000L // 2025-01-01 10:00:00 UTC
+        val start = 1735729200000L // 2025-01-01 11:00:00 UTC
         val end = start + 3600_000L
         val event = createDeviceEvent(
             id = 42L,
@@ -696,18 +708,17 @@ class DeviceEventMapperTest {
 
         val exception = createDeviceEvent(
             id = exceptionId,
-            rrule = "FREQ=WEEKLY;BYDAY=MO", // Exception rows may carry this — must be nulled
+            rrule = "FREQ=WEEKLY;BYDAY=MO", // Nulled for an exception even when the input has one
             originalId = masterId,
             originalInstanceTime = origInstanceTime
         )
 
         val synthetic = exception.toExportEvent()
 
-        // UID must reference MASTER's id (RFC 5545: shared UID for master + all exceptions)
+        // The UID uses the master's id (RFC 5545: master and exceptions share one UID)
         assertEquals("device-$masterId@kashcal", synthetic.uid)
-        // Exception must not carry RRULE
         assertNull(synthetic.rrule)
-        // originalEventId signals "this is an exception" to EventToICalEventMapper
+        // originalEventId marks the row as an exception, as on a Room exception row
         assertEquals(masterId, synthetic.originalEventId)
         // originalInstanceTime preserved for RECURRENCE-ID emission
         assertEquals(origInstanceTime, synthetic.originalInstanceTime)
@@ -731,8 +742,9 @@ class DeviceEventMapperTest {
         val masterSynthetic = master.toExportEvent()
         val exceptionSynthetic = exception.toExportEvent()
 
-        // The UID-shared invariant: this equality is what makes EventToICalEventMapper
-        // emit both VEVENTs with the same UID in the output VCALENDAR.
+        // Master and exception rows share one UID, as RFC 5545 requires of a series.
+        // serializeWithExceptions takes each exception VEVENT's UID from the master regardless
+        // (EventToICalEventMapper.toICalEvent(master, exception)).
         assertEquals(masterSynthetic.uid, exceptionSynthetic.uid)
         assertEquals("device-$masterId@kashcal", masterSynthetic.uid)
     }
@@ -797,7 +809,7 @@ class DeviceEventMapperTest {
     @Test
     fun `toExportEvent default reminder parameter is empty list`() {
         val event = createDeviceEvent()
-        // Calling without reminders arg should work and produce null reminders
+        // Without the reminderMinutes argument, reminders are null
         assertNull(event.toExportEvent().reminders)
     }
 
@@ -898,14 +910,14 @@ class DeviceEventMapperTest {
         val uidOccurrences = Regex("UID:device-$masterId@kashcal").findAll(ics).count()
         assertTrue("Shared UID should appear at least twice (master + exception): $uidOccurrences", uidOccurrences >= 2)
 
-        // RRULE for the event's own recurrence should only appear once (on the master,
-        // never the exception). Filter by FREQ=WEEKLY to exclude VTIMEZONE's DST RRULEs
-        // (those use FREQ=YEARLY and are part of every America/Los_Angeles VTIMEZONE block).
+        // The event's own RRULE appears once, on the master, never on the exception. Matching
+        // FREQ=WEEKLY skips the VTIMEZONE's DST RRULEs, which are FREQ=YEARLY in every
+        // America/Los_Angeles VTIMEZONE block.
         val eventRruleOccurrences = Regex("RRULE:FREQ=WEEKLY").findAll(ics).count()
         assertEquals("Event RRULE should appear exactly once (on master, not on exception)", 1, eventRruleOccurrences)
 
-        // Exception's VEVENT must not reopen any event-level RRULE
-        // (we already verify total count == 1; this makes the intent explicit)
+        // The exception's VEVENT has no event-level RRULE. The count above already implies
+        // it; this names the intent.
         val masterVEventEnd = ics.indexOf("END:VEVENT")
         val exceptionVEventStart = ics.indexOf("BEGIN:VEVENT", masterVEventEnd)
         assertTrue("Both VEVENTs must be present", exceptionVEventStart > 0)
@@ -942,7 +954,7 @@ class DeviceEventMapperTest {
     fun `toExportEvent exception uses master id for UID even when instance id differs`() {
         val masterId = 42L
         val exception = createDeviceEvent(
-            id = 9_999_999L, // Very different row id — UID must still use masterId
+            id = 9_999_999L, // A very different row id; the UID still uses masterId
             rrule = null,
             originalId = masterId,
             originalInstanceTime = 1700000000000L
@@ -955,8 +967,8 @@ class DeviceEventMapperTest {
 
     @Test
     fun `toExportEvent originalEventId is non-null for exceptions (signals to mapper)`() {
-        // EventToICalEventMapper keys exception handling on originalEventId nullness.
-        // The value itself isn't dereferenced as a Room FK — only the nullness matters.
+        // Export never dereferences originalEventId as a Room FK. IcsPatcher reads only its
+        // nullness, and only for a row with rawIcal, which a synthetic event lacks.
         val exception = createDeviceEvent(
             id = 200L,
             rrule = null,
@@ -969,7 +981,117 @@ class DeviceEventMapperTest {
         assertNotEquals(0L, synthetic.originalEventId)
     }
 
+    // ==================== Timezone of the loaded event ====================
+
+    private val newYork10am = 1_709_650_800_000L // 2024-03-05 10:00 America/New_York (15:00Z)
+
+    /** Loads the event into a form the way the edit sheet does. */
+    private fun DeviceEvent.load() = toFormState(
+        reminders = emptyList(),
+        calendarColor = null,
+        calendarName = "Work",
+        deviceCalendarGroups = emptyList(),
+    )
+
+    @Test
+    fun `form shows the event's own clock time when its timezone differs from the device`() {
+        val formState = withDeviceTimeZone("America/Los_Angeles") {
+            createDeviceEvent(
+                startTs = newYork10am,
+                endTs = newYork10am + 3_600_000L,
+                timezone = "America/New_York",
+            ).load()
+        }
+
+        assertEquals("America/New_York", formState.timezone)
+        assertEquals(10, formState.startHour)
+        assertEquals(0, formState.startMinute)
+        assertEquals(11, formState.endHour)
+    }
+
+    @Test
+    fun `form shows the device clock time when the event is in the device timezone`() {
+        val formState = withDeviceTimeZone("America/New_York") {
+            createDeviceEvent(
+                startTs = newYork10am,
+                endTs = newYork10am + 3_600_000L,
+                timezone = "America/New_York",
+            ).load()
+        }
+
+        assertEquals(10, formState.startHour)
+        assertEquals(11, formState.endHour)
+    }
+
+    @Test
+    fun `form treats a blank event timezone as the device timezone`() {
+        val formState = withDeviceTimeZone("America/Los_Angeles") {
+            createDeviceEvent(
+                startTs = newYork10am,
+                endTs = newYork10am + 3_600_000L,
+                timezone = "",
+            ).load()
+        }
+
+        assertNull(formState.timezone)
+        assertNull(formState.sourceTimezoneId)
+        assertEquals(7, formState.startHour) // 15:00Z in Los Angeles
+    }
+
+    @Test
+    fun `form leaves the timezone unset for an all-day event`() {
+        val formState = withDeviceTimeZone("America/Los_Angeles") {
+            createDeviceEvent(
+                startTs = 1_709_596_800_000L, // 2024-03-05 00:00 UTC
+                endTs = 1_709_683_199_999L,
+                isAllDay = true,
+                timezone = "UTC",
+            ).load()
+        }
+
+        assertNull(formState.timezone)
+        assertNull(formState.sourceTimezoneId)
+    }
+
+    @Test
+    fun `form keeps an unrecognised event timezone aside and shows device clock time`() {
+        val formState = withDeviceTimeZone("America/Los_Angeles") {
+            createDeviceEvent(
+                startTs = newYork10am,
+                endTs = newYork10am + 3_600_000L,
+                timezone = "Eastern Standard Time",
+            ).load()
+        }
+
+        assertNull(formState.timezone)
+        assertEquals("Eastern Standard Time", formState.sourceTimezoneId)
+        assertEquals(7, formState.startHour)
+    }
+
+    @Test
+    fun `form shows the event's own date when it differs from the device date`() {
+        withDeviceTimeZone("America/Los_Angeles") {
+            val start = 1_709_704_800_000L // 2024-03-06 01:00 New York, 22:00 Mar 5 in Los Angeles
+            val formState = createDeviceEvent(
+                startTs = start,
+                endTs = start + 3_600_000L,
+                timezone = "America/New_York",
+            ).load()
+
+            assertEquals(java.time.LocalDate.of(2024, 3, 6), phoneLocalDate(formState.dateMillis))
+            assertEquals(1, formState.startHour)
+            assertEquals(start, formState.startOffsetHintTs)
+        }
+    }
+
     // ==================== Helper ====================
+
+    /** The form shows [instant]'s date and hour in the fixture's New York zone. */
+    private fun assertDisplays(instant: Long, dateMillis: Long, hour: Int) {
+        val inNewYork = java.time.Instant.ofEpochMilli(instant).atZone(java.time.ZoneId.of("America/New_York"))
+        assertEquals(inNewYork.toLocalDate(), phoneLocalDate(dateMillis))
+        assertEquals(inNewYork.hour, hour)
+    }
 
     private fun createDeviceEvent(
         id: Long = 1L,

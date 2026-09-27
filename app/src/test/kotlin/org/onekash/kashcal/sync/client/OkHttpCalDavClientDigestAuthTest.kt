@@ -19,7 +19,7 @@ import org.onekash.kashcal.sync.quirks.DefaultQuirks
 /**
  * Tests verifying HTTP Digest authentication support (RFC 2617/7616).
  *
- * KashCal sends HTTP Basic auth preemptively via NetworkInterceptor. When a server
+ * KashCal sends HTTP Basic auth preemptively from a network interceptor. When a server
  * (e.g., Baikal configured for Digest auth) rejects Basic with 401 + WWW-Authenticate: Digest,
  * the DigestAuthenticator handles the challenge-response and retries automatically.
  *
@@ -301,7 +301,7 @@ class OkHttpCalDavClientDigestAuthTest {
             2, mockWebServer.requestCount
         )
 
-        // First request has Basic (preemptive from NetworkInterceptor)
+        // First request has Basic (preemptive, from the network interceptor)
         val firstRequest = mockWebServer.takeRequest()
         assertTrue(
             "First request should have Basic auth",

@@ -4,21 +4,13 @@ import android.content.res.Resources
 import org.onekash.kashcal.data.db.entity.Event
 
 /**
- * Formats contact event titles (birthdays and anniversaries) with age/year info.
+ * Formats birthday and anniversary titles with the year count, such as "Name's 30th Birthday".
  *
- * Birthday events get formatted as "Name's 30th Birthday".
- * Anniversary events get formatted as "Name's 10th Anniversary".
- * Non-contact events are returned unchanged.
+ * Returns the stored title unchanged for a non-contact event or a null occurrence time.
  */
 object ContactEventTitleFormatter {
 
-    /**
-     * Format an event title, adding age/year info for contact events.
-     *
-     * @param event The event to format
-     * @param occurrenceTs Occurrence timestamp for year calculation (null returns raw title)
-     * @return Formatted title
-     */
+    /** Returns the title built from hardcoded English text. */
     fun format(event: Event, occurrenceTs: Long?): String {
         val eventType = ContactEventType.fromCaldavUrl(event.caldavUrl) ?: return event.title
         if (occurrenceTs == null) return event.title
@@ -26,6 +18,7 @@ object ContactEventTitleFormatter {
         return eventType.formatTitle(event.title, year, occurrenceTs)
     }
 
+    /** Returns the title from localized string resources. */
     fun format(event: Event, occurrenceTs: Long?, resources: Resources): String {
         val eventType = ContactEventType.fromCaldavUrl(event.caldavUrl) ?: return event.title
         if (occurrenceTs == null) return event.title

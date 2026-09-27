@@ -3,13 +3,11 @@ package org.onekash.kashcal.util
 import org.onekash.kashcal.reminder.scheduler.parseIsoDuration
 
 /**
- * Convert ISO 8601 reminder durations to minutes.
+ * Converts ISO 8601 reminder durations ("-PT15M", "-P1D") to CalendarProvider reminder minutes.
  *
- * Event.reminders stores ISO durations like "-PT15M", "-PT1H", "-P1D".
- * CalendarProvider expects reminder minutes as List<Int>.
+ * A leading `-` is dropped, so "PT15M" also gives 15. Unparseable entries are skipped.
  *
- * @param isoReminders List of ISO 8601 duration strings (e.g., ["-PT15M", "-P1D"])
- * @return Sorted, deduplicated list of minutes (e.g., [15, 1440])
+ * @return sorted, deduplicated minutes, e.g. [15, 1440]
  */
 fun isoRemindersToMinutes(isoReminders: List<String>?): List<Int> {
     if (isoReminders.isNullOrEmpty()) return emptyList()

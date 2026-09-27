@@ -8,12 +8,14 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Malformed input tests for ICalParser.
+ * Tests [ICalParser] on malformed input: missing properties, bad date-times, odd text, bad
+ * RRULEs and VALARMs, broken structure and encoding, plus exceptions, EXDATE, COLOR and blank
+ * categories.
  *
- * Based on real-world issues discovered in production:
- * - Malformed iCal from various servers
- * - Edge cases in property parsing
- * - Error recovery scenarios
+ * parseAllEvents catches every exception into an error result, so a test asserting only
+ * `assertNotNull(result)` checks that nothing escapes, whatever the outcome. The VALUE=DATE,
+ * folded SUMMARY, long DESCRIPTION, LOCATION, importId, EXDATE and COLOR checks run only when
+ * the event parsed, so they also pass when it is dropped.
  */
 @DisplayName("ICalParser Malformed Input Tests")
 class ICalParserMalformedInputTest {
@@ -40,7 +42,7 @@ class ICalParserMalformedInputTest {
 
             val result = parser.parseAllEvents(ical)
             val events = result.getOrNull()
-            // Should either generate a UID or skip the event
+            // The parser gives it a random UUID; the assertion also accepts a dropped event.
             assertTrue(events == null || events.isEmpty() || events.all { it.uid.isNotEmpty() })
         }
 
@@ -60,7 +62,7 @@ class ICalParserMalformedInputTest {
 
             val result = parser.parseAllEvents(ical)
             val events = result.getOrNull()
-            // Should skip events without DTSTART or handle them somehow
+            // DTEND stands in for the missing DTSTART; only a non-null result is asserted.
             assertNotNull(result)
         }
 
@@ -104,7 +106,7 @@ class ICalParserMalformedInputTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Should handle gracefully - either skip or report error
+            // Only a non-null result is asserted: the parse must not throw.
             assertNotNull(result)
         }
 
@@ -133,8 +135,8 @@ class ICalParserMalformedInputTest {
 
         @Test
         fun `date without time is handled gracefully`() {
-            // Non-standard format without VALUE=DATE (some servers use this)
-            // ical4j 3.x normalizes this to midnight DateTime, which is acceptable
+            // A DATE value without VALUE=DATE, which some servers send. The parser reads an
+            // 8-digit value as a date.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -148,7 +150,7 @@ class ICalParserMalformedInputTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Should parse without error (ical4j normalizes to midnight)
+            // The parse must succeed; the event itself isn't checked.
             assertNotNull(result.getOrNull())
         }
 
@@ -167,7 +169,7 @@ class ICalParserMalformedInputTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Should handle invalid timezone gracefully
+            // An unknown TZID must not throw; only a non-null result is asserted.
             assertNotNull(result)
         }
     }
@@ -193,7 +195,7 @@ class ICalParserMalformedInputTest {
 
             val result = parser.parseAllEvents(ical)
             val events = result.getOrNull()
-            // Folded lines should be unfolded
+            // The folded continuation line joins the SUMMARY.
             if (events != null && events.isNotEmpty()) {
                 assertTrue(events[0].summary?.contains("continuation") == true)
             }
@@ -251,7 +253,7 @@ class ICalParserMalformedInputTest {
                 "SUMMARY:Test\u0000Event\r\nEND:VEVENT\r\nEND:VCALENDAR"
 
             val result = parser.parseAllEvents(ical)
-            // Should handle null bytes without crashing
+            // A null byte must not throw; only a non-null result is asserted.
             assertNotNull(result)
         }
     }
@@ -275,7 +277,7 @@ class ICalParserMalformedInputTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Should skip invalid RRULE or fail parsing
+            // Must not throw; only a non-null result is asserted.
             assertNotNull(result)
         }
 
@@ -338,7 +340,8 @@ class ICalParserMalformedInputTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Should handle missing trigger gracefully
+            // A missing TRIGGER defaults to 15 minutes before; only a non-null result is
+            // asserted, not the alarm.
             assertNotNull(result)
         }
 
@@ -382,7 +385,7 @@ class ICalParserMalformedInputTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Should handle unclosed component
+            // Must not throw; only a non-null result is asserted.
             assertNotNull(result)
         }
 
@@ -404,7 +407,7 @@ class ICalParserMalformedInputTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Should handle nested components
+            // Must not throw; only a non-null result is asserted.
             assertNotNull(result)
         }
 
@@ -444,7 +447,7 @@ class ICalParserMalformedInputTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Should parse at least the first calendar
+            // Only a non-null result is asserted, not which calendars' events are kept.
             assertNotNull(result)
         }
     }
@@ -488,7 +491,7 @@ class ICalParserMalformedInputTest {
 
         @Test
         fun `RECURRENCE-ID with modified instance is parsed correctly`() {
-            // Modified recurring instances with RECURRENCE-ID
+            // A master and one exception with a RECURRENCE-ID, sharing the UID
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -599,9 +602,8 @@ class ICalParserMalformedInputTest {
 
         @Test
         fun `empty category elements are dropped, not carried into the event`() {
-            // A malformed "foo,,bar" (and a trailing comma) must not yield blank
-            // categories — those would render as blank chips and round-trip back
-            // to the server on the next save.
+            // A malformed "foo,,bar" with a trailing comma must not yield blank categories:
+            // they would render as blank chips and go back to the server on the next save.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0

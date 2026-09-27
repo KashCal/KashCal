@@ -23,37 +23,35 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Live characterization of how each configured CardDAV server round-trips a
- * contact PHOTO, across the two shapes the vCard spec allows:
- *  - **URI** (`PHOTO;VALUE=URI:` in 3.0, bare-URL in 4.0) — the photo is a remote
- *    reference the sync layer must fetch out-of-band. Maps to
- *    [org.onekash.kashcal.data.contacts.MappedContact.photoUrl] (deferred fetch).
- *  - **Inline** (`PHOTO;ENCODING=b`) — the bytes are embedded. Maps to a blob row
- *    with no deferred fetch.
+ * Records how each configured CardDAV server round-trips a contact PHOTO, in the two shapes
+ * vCard allows:
+ *  - URI (`PHOTO;VALUE=URI:` in 3.0, a bare URL in 4.0): a remote reference the sync layer
+ *    fetches out-of-band. Maps to [org.onekash.kashcal.data.contacts.MappedContact.photoUrl]
+ *    (deferred fetch).
+ *  - Inline (`PHOTO;ENCODING=b`): embedded bytes. Maps to a Photo row with no deferred fetch.
  *
- * This answers the load-bearing question the URL-photo fetch step depends on:
- * does a server preserve a URI photo as a URI (so we get a URL to fetch), or does
- * it inline / drop / rewrite it? Local Sabre-family servers are passthroughs and
- * mostly confirm the read path carries the bytes/URL intact end-to-end; iCloud is
- * the one server that exercises a real photo pipeline.
+ * The URL-photo fetch depends on whether a server keeps a URI photo as a URI (so there is a URL
+ * to fetch) or inlines, drops or rewrites it. The local servers mostly confirm the read path
+ * carries the bytes or URL intact end to end; iCloud is the one server with a real photo
+ * pipeline.
  *
- * Method: seed each writable book with a synthetic URI-photo and inline-photo
- * vCard (idempotent raw authenticated PUT — TEST SETUP only, never an app write
- * path), read them back through the production [CardDavClient] +
- * [CardDavContactReader], run each through [VCardContactMapper], and assert the
- * mapped shape. The probe PRINTS the observed per-server outcome so the wire
- * behavior is recorded even when the assertion tolerates it.
+ * Method: seed the first writable book with a synthetic URI-photo and inline-photo vCard
+ * (idempotent raw authenticated PUT, test setup, never an app write path), read them back
+ * through the production [CardDavClient] and [CardDavContactReader], run each through
+ * [VCardContactMapper], and assert the mapped shape. The probe prints the observed per-server
+ * outcome so the wire behavior is recorded even when the assertion tolerates it.
  *
- * The seeds are entirely synthetic — RFC 6761 reserved `@example.test`,
- * RFC 3849-style `+1-555-01xx` unassigned numbers, and `photos.example.test` photo
- * URLs that resolve to nothing — so no real person or asset is ever contacted.
+ * The seeds are synthetic (RFC 6761 reserved `@example.test`, unassigned `+1-555-01xx`
+ * numbers, and `photos.example.test` photo URLs that resolve to nothing), so no real person or
+ * asset is ever contacted.
  *
- * PII discipline: assertions key only on the seeds' own UIDs and the photo
- * shape; any body surfaced for debugging goes through [redactContactBody] (which
- * masks PHOTO alongside FN/N/TEL/ADR/EMAIL). No non-seed body is printed raw.
+ * PII: assertions key only on the seeds' own UIDs and the photo shape, and printed photo URLs
+ * go through [redactPhotoUrl]. [redactContactBody] (which masks PHOTO alongside FN, N, TEL, ADR
+ * and EMAIL) exists for any body that must surface for debugging. No non-seed body is printed
+ * raw.
  *
- * Skips (never fails) servers without credentials, unreachable, or without
- * CardDAV — with a logged reason.
+ * Skips (never fails) servers without credentials, unreachable ones, and ones without CardDAV,
+ * with a logged reason.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -118,7 +116,7 @@ class MultiServerCardDavPhotoProbeTest(
         val book = resolveWritableBook(c, cr)
         assumeTrue("${config.name}: no writable address book to seed a photo into", book != null)
 
-        // --- Idempotent seed of both photo shapes (TEST SETUP — raw PUT) ---
+        // --- Idempotent seed of both photo shapes (test setup: raw PUT) ---
         val urlSeedUrl = book!!.url.trimEnd('/') + "/" + URL_FILENAME
         val inlineSeedUrl = book.url.trimEnd('/') + "/" + INLINE_FILENAME
         assumeTrue(
@@ -142,9 +140,9 @@ class MultiServerCardDavPhotoProbeTest(
         assertNotNull("${config.name}: inline-photo seed $INLINE_UID not read back", inlineSeed)
 
         // --- Characterize + assert the URI-photo shape ---
-        // A conformant passthrough keeps VALUE=URI a URI; the mapper then routes it
-        // to photoUrl (deferred fetch) and emits no inline blob. Some servers may
-        // inline or drop it — we record which.
+        // A conformant passthrough keeps VALUE=URI a URI; the mapper then routes it to
+        // photoUrl (deferred fetch) and emits no inline blob. A server may inline or drop it
+        // instead; the print records which.
         val urlPhoto = urlSeed!!.contact.photo
         val urlMapped = VCardContactMapper.toEntity(urlSeed.contact)
         println(
@@ -163,12 +161,11 @@ class MultiServerCardDavPhotoProbeTest(
                 "mappedPhotoUrl=${redactPhotoUrl(inlineMapped.photoUrl)} ===",
         )
 
-        // The seed carried a PHOTO in each case; assert the server did not silently
-        // drop it. (A server that legitimately does not support PHOTO would surface
-        // as no photo on BOTH — caught here and worth recording, not tolerating.)
-        // Exception: a server that accepts a contact but strips an external-URL
-        // photo (PHOTO;VALUE=URI) while keeping inline base64 is characterized via
-        // [dropsUriPhoto] and recorded, not failed — Open-Xchange does exactly this.
+        // Each seed carried a PHOTO; assert the server didn't silently drop it. A server
+        // without PHOTO support would show no photo on both, which fails here on purpose.
+        // A server that keeps inline base64 but strips an external-URL photo
+        // (PHOTO;VALUE=URI) is marked [CardDavServerConfig.dropsUriPhoto] and recorded, not
+        // failed; Open-Xchange does this.
         if (config.dropsUriPhoto) {
             println("=== ${config.name}: URI-photo dropped on round-trip (known server policy; inline photo still asserted) ===")
         } else {
@@ -182,11 +179,10 @@ class MultiServerCardDavPhotoProbeTest(
             inlinePhoto != null,
         )
 
-        // When the server preserved the URI as a URI (the passthrough case), the
-        // mapper contract must hold: photoUrl carries the URL and no inline blob is
-        // emitted. If a server inlined the URI photo instead, photoUrl is null and
-        // that's recorded above rather than asserted false. A server that dropped it
-        // outright (dropsUriPhoto) has a null urlPhoto and skips this block.
+        // When the server kept the URI as a URI (the passthrough case), the mapper contract
+        // must hold: photoUrl carries the URL and no inline blob is emitted. A server that
+        // inlined the URI photo has no URL, which the print above records. A server that
+        // dropped it (dropsUriPhoto) has a null urlPhoto; both skip this block.
         if (urlPhoto?.url != null) {
             assertEquals(
                 "${config.name}: preserved URI photo should round-trip verbatim",
@@ -218,20 +214,18 @@ class MultiServerCardDavPhotoProbeTest(
     }
 
     /**
-     * Characterize the auth model of a *server-minted* photo URL — the case that
-     * actually matters for the deferred URL-photo fetcher. iCloud rewrites an
-     * inline photo to a `gateway.icloud.com` URL on read; that URL is NOT public,
-     * so the fetcher must know how to authenticate it. This probes the returned
-     * URL three ways and records the outcome:
-     *   1. GET with no auth — does the gateway 401/403, or serve it open?
-     *   2. GET with the CardDAV basic credentials — does it accept them (200)?
-     *   3. redirects disabled — does it 30x to a signed/cookied URL first?
+     * Records the auth model of a server-minted photo URL, the case the deferred URL-photo
+     * fetcher depends on. iCloud rewrites an inline photo to a `gateway.icloud.com` URL on read;
+     * that URL isn't public, so the fetcher must know how to authenticate it. This probes the
+     * first non-seed photo URL in the book three ways and prints the outcomes:
+     *   1. GET with no auth: does the gateway 401/403, or serve it open?
+     *   2. GET with the CardDAV basic credentials: does it accept them (200)?
+     *   3. GET with redirects disabled: does it 30x to a signed or cookied URL first?
      *
-     * Servers that don't mint a photo URL (every passthrough server keeps our
-     * synthetic `*.example.test` URI, which resolves to nothing) skip via
-     * assumeTrue — this is meaningful only where the server owns the photo host.
-     * The probe never prints response bytes; only status, content-type,
-     * content-length, and a host-redacted redirect target.
+     * Only the first is asserted: an unauthenticated GET must not return an image. Servers
+     * that mint no photo URL (a passthrough server keeps the synthetic `*.example.test` URI)
+     * skip. The probe never prints response bytes; only status, content-type, content-length,
+     * and a host-only redirect target.
      */
     @Test
     fun `characterizes auth model of a server-minted photo URL`() = runBlocking {
@@ -242,8 +236,8 @@ class MultiServerCardDavPhotoProbeTest(
         val book = resolveWritableBook(c, cr)
         assumeTrue("${config.name}: no writable address book to seed a photo into", book != null)
 
-        // Seed the inline-photo contact — the server-mint case (iCloud turns inline
-        // bytes into a gateway URL); seeding is idempotent so re-runs are cheap.
+        // Seed the inline-photo contact, the server-mint case (iCloud turns inline bytes into a
+        // gateway URL). Seeding is idempotent, so re-runs are cheap.
         val inlineSeedUrl = book!!.url.trimEnd('/') + "/" + INLINE_FILENAME
         assumeTrue(
             "${config.name}: could not seed inline-photo contact",
@@ -254,8 +248,8 @@ class MultiServerCardDavPhotoProbeTest(
         val read = (reader.readContacts(book.url, hrefs, book.vcardVersion) as? CalDavResult.Success)
             ?.data?.contacts.orEmpty()
 
-        // Find any read-back contact whose photo is a server-minted URL (not one of
-        // our synthetic example.test seed URLs, which resolve to nothing).
+        // Find any read-back contact whose photo is a server-minted URL, not one of the
+        // synthetic example.test seed URLs.
         val mintedUrl = read
             .mapNotNull { it.contact.photo?.url }
             .firstOrNull { !isSyntheticSeedUrl(it) }
@@ -275,9 +269,9 @@ class MultiServerCardDavPhotoProbeTest(
                 "    no-redirect   -> $noRedirect ===",
         )
 
-        // The load-bearing fact for the fetcher: a server-minted photo URL is NOT
-        // openly readable — an unauthenticated GET must not return image bytes. If
-        // this ever fails (gateway serves photos open), the fetcher can skip auth.
+        // The fact the fetcher relies on: a server-minted photo URL isn't openly readable, so
+        // an unauthenticated GET must not return an image. If this fails (the gateway serves
+        // photos open), the fetcher could skip auth.
         assertTrue(
             "${config.name}: unauthenticated GET unexpectedly returned an image " +
                 "(${noAuth.code}, ${noAuth.contentType}) — fetcher auth assumptions need revisiting",
@@ -285,7 +279,7 @@ class MultiServerCardDavPhotoProbeTest(
         )
     }
 
-    /** Outcome of a single GET probe — no response bytes retained, only metadata. */
+    /** Holds the metadata of one GET probe; no response bytes are kept. */
     private data class GetOutcome(
         val code: Int,
         val contentType: String?,
@@ -297,7 +291,10 @@ class MultiServerCardDavPhotoProbeTest(
                 (redirectHost?.let { ", redirect->$it/<redacted>" } ?: "")
     }
 
-    /** GET [url], optionally with basic auth and/or following redirects; metadata only. */
+    /**
+     * GETs [url], optionally with basic auth and following redirects, and returns metadata
+     * only. An exception becomes code -1 with the exception type as the content type.
+     */
     private fun probeGet(
         url: String,
         cr: ServerCredentials,
@@ -327,23 +324,24 @@ class MultiServerCardDavPhotoProbeTest(
         GetOutcome(code = -1, contentType = "exception:${e.javaClass.simpleName}", contentLength = -1L, redirectHost = null)
     }
 
-    /** Scheme+host of a URL for logging, without the account-identifying path. */
+    /** Returns the scheme and host of [url] for logging, without the account-identifying path. */
     private fun hostOf(url: String): String =
         Regex("""^(\w+://[^/]+)""").find(url)?.groupValues?.get(1) ?: "<opaque>"
 
     /**
-     * True when [url]'s host is under the RFC 6761 reserved `example.test` TLD —
-     * i.e. one of our synthetic seed photo URLs (`photos.example.test`, bare
-     * `example.test`, …) that resolves to nothing. A server-minted URL (a real
-     * photo host the server owns) returns false. Matches the host only, so a
-     * `example.test` path segment on a real host can't be mistaken for a seed.
+     * Returns true when [url]'s host is `example.test` or under it (RFC 6761 reserves `.test`),
+     * as the synthetic seed photo URLs are. A server-minted URL returns false. Matches the host
+     * only, so an `example.test` path segment on a real host can't be mistaken for a seed.
      */
     private fun isSyntheticSeedUrl(url: String): Boolean {
         val host = Regex("""^\w+://([^/:]+)""").find(url)?.groupValues?.get(1) ?: return false
         return host == "example.test" || host.endsWith(".example.test")
     }
 
-    /** Discover the login's first writable address book (else the first book), or null. */
+    /**
+     * Returns the first writable address book in the login's first home (else its first book),
+     * or null when discovery finds none.
+     */
     private suspend fun resolveWritableBook(c: CardDavClient, cr: ServerCredentials) = run {
         val root = if (config.usesWellKnownDiscovery) {
             c.discoverWellKnown(cr.serverUrl).getOrNull() ?: cr.serverUrl
@@ -358,7 +356,7 @@ class MultiServerCardDavPhotoProbeTest(
         books.firstOrNull { !it.isReadOnly } ?: books.first()
     }
 
-    /** Idempotent PUT of a body with the harness credentials. Returns true on 2xx / 412 / 204. */
+    /** PUTs [body] with the harness credentials (idempotent). Returns true on 2xx or 412. */
     private fun putSeed(url: String, body: String, cr: ServerCredentials): Boolean = try {
         val request = Request.Builder()
             .url(url)
@@ -370,7 +368,7 @@ class MultiServerCardDavPhotoProbeTest(
         false
     }
 
-    /** Read hrefs via sync-collection when available, else the full PROPFIND listing. */
+    /** Returns the book's hrefs from sync-collection when it lists any, else a full listing. */
     private suspend fun collectHrefs(c: CardDavClient, bookUrl: String): List<String> {
         (c.syncCollection(bookUrl, null) as? CalDavResult.Success)?.data?.let { report ->
             if (report.changed.isNotEmpty()) return report.changed.map { it.href }
@@ -379,12 +377,10 @@ class MultiServerCardDavPhotoProbeTest(
     }
 
     /**
-     * Photo-URL redactor for printed characterization. The synthetic
-     * `*.example.test` seed URLs are safe to print verbatim (they identify no one
-     * and confirm passthrough). Anything else is a real server-minted URL that can
-     * embed an account identifier (e.g. an iCloud gateway URL carries the numeric
-     * DSID), so it is reduced to `scheme://host/<redacted>` — enough to record the
-     * shape without leaking the account.
+     * Redacts a photo URL for printing. The synthetic `*.example.test` seed URLs print verbatim
+     * (they identify no one and confirm passthrough). Any other URL is server-minted and can
+     * embed an account identifier (an iCloud gateway URL carries the numeric DSID), so it is
+     * reduced to `scheme://host/<redacted>`.
      */
     private fun redactPhotoUrl(url: String?): String? {
         if (url == null) return null
@@ -395,9 +391,8 @@ class MultiServerCardDavPhotoProbeTest(
     }
 
     /**
-     * Contact-aware redactor for debug output — masks the identity-bearing vCard
-     * properties the calendar-side email-only redactor would leak. Kept for any
-     * diagnostic that must print a non-seed body.
+     * Masks the identity-bearing vCard properties the calendar-side email-only redactor would
+     * leak. Nothing calls it; it is kept for any diagnostic that must print a non-seed body.
      */
     @Suppress("unused")
     private fun redactContactBody(body: String): String =

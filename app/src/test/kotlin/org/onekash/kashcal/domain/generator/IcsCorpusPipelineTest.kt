@@ -23,16 +23,16 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Replays the entire on-disk ICS corpus (every *.ics under test resources) through
- * the post-parser half of the pull pipeline — map → Room insert → occurrence
- * generation — and asserts none of it throws and every stored occurrence is
- * well-formed. SogoUrlaubPipelineTest pins one hand-built far-future event; this
- * widens the same path to ~190 real fixtures (basic, recurring, exceptions,
- * reminders, edge cases, rfc5545/7986) so a mapper/generator regression on any
- * shape a real server can return fails here rather than on a user's device.
+ * Replays the ICS corpus (every *.ics under the `ical/` test resources) through the steps after the
+ * parser: map, Room insert and occurrence generation. Asserts at least 100 files are found, none of
+ * the steps throws, each stored occurrence ends at or after its start with well-formed day codes,
+ * and at least one event maps. `SogoUrlaubPipelineTest` pins one hand-built event; this widens the
+ * same path to ~190 fixtures (basic, datetime, edge_cases, exceptions, extra_properties, recurring,
+ * reminders, rfc5545, rfc7986), so a mapper or generator regression on a fixture shape fails here
+ * instead of on a user's device. A file the parser rejects is skipped.
  *
- * The corpus is walked from the classpath root (a file: dir at test runtime), so
- * a newly-added fixture is covered automatically — no whitelist to keep in sync.
+ * The corpus is walked from the `ical/` classpath directory, so a new fixture there is covered
+ * without a list to keep in sync.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -43,8 +43,7 @@ class IcsCorpusPipelineTest {
     private lateinit var parser: ICalParser
     private var testCalendarId: Long = 0
 
-    // A wide window straddling past and far future so recurring + far-future
-    // fixtures actually materialize occurrences.
+    // A window wide enough that recurring and far-future fixtures materialize occurrences.
     private val rangeStartMs = isoUtc("1990-01-01 00:00")
     private val rangeEndMs = isoUtc("2200-01-01 00:00")
 
@@ -95,7 +94,8 @@ class IcsCorpusPipelineTest {
         for (file in files) {
             val ics = file.readText()
             val result = parser.parseAllEvents(ics)
-            if (result !is ParseResult.Success) continue // parser-level rejection is not this test's concern
+            // A parser-level rejection is not this test's concern.
+            if (result !is ParseResult.Success) continue
 
             for (event in result.value) {
                 val mappedRaw = try {
@@ -103,13 +103,11 @@ class IcsCorpusPipelineTest {
                 } catch (t: Throwable) {
                     throw AssertionError("toEntity threw on corpus file ${file.name}", t)
                 }
-                // This test proves each event's shape survives map -> insert ->
-                // occurrence-gen independently; it is NOT modeling exception linkage
-                // (occurrences are generated per event in isolation). Fixtures reuse
-                // UIDs and RECURRENCE-IDs across and within files, which would trip
-                // the unique (calendar_id, uid, original_instance_time) index that a
-                // real server's globally-unique UIDs never hit. Give each a distinct
-                // UID so the insert reflects the real single-event condition.
+                // Each event goes through map, insert and occurrence generation on its own;
+                // exception linkage isn't modeled. Fixtures reuse UIDs and RECURRENCE-IDs
+                // across and within files, which would trip the unique (calendar_id, uid,
+                // original_instance_time) index that a server's globally unique UIDs never
+                // hit, so each gets a distinct UID.
                 val mapped = mappedRaw.copy(
                     uid = "corpus-${uidSeq++}::${mappedRaw.uid}",
                     calendarId = testCalendarId,
@@ -152,7 +150,7 @@ class IcsCorpusPipelineTest {
         return year in 1900..2300 && month in 1..12 && day in 1..31
     }
 
-    /** Walk every *.ics under the `ical/` resource root via the classpath dir. */
+    /** Returns every *.ics under the `ical/` classpath directory, or none if it's missing. */
     private fun corpusFiles(): List<File> {
         val root = javaClass.classLoader?.getResource("ical") ?: return emptyList()
         val dir = File(root.toURI())

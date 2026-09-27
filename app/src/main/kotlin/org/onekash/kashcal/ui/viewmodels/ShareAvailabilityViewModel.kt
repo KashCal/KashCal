@@ -56,9 +56,9 @@ class ShareAvailabilityViewModel(
         context = context,
         zoneProvider = { ZoneId.systemDefault() },
         nowProvider = { System.currentTimeMillis() },
-        // Resolved against the cached app TIME_FORMAT preference (loaded into
-        // UI state on init/refresh). Falls back to device-only setting if the
-        // preference hasn't been read yet.
+        // The device setting alone. resolveIs24Hour and recomputeNow combine it with the app
+        // time-format preference loaded on init and refresh; until then that is "system", so
+        // the device setting decides.
         is24HourProvider = { DateFormat.is24HourFormat(context) },
         localeProvider = { Locale.getDefault() }
     )
@@ -69,13 +69,14 @@ class ShareAvailabilityViewModel(
     val shareIntentText: String?
         get() = if (_uiState.value.isShareEnabled) _uiState.value.previewText else null
 
-    /** Effective 24h flag combining app preference + device setting. */
+    /**
+     * Returns whether to show 24h times: the app time-format preference over the device setting.
+     */
     fun resolveIs24Hour(): Boolean =
         DateTimeUtils.isUse24Hour(_uiState.value.timeFormatPref, is24HourProvider())
 
-    // Init runs the initial DataStore read + first recompute. User-input
-    // handlers .join() this so a fast tap doesn't get clobbered by a late
-    // init.copy().
+    // The first DataStore read and recompute. refresh and the persisting handlers join it so a
+    // fast tap isn't overwritten by a late init copy; the preview handlers don't.
     private val initJob: Job = viewModelScope.launch {
         loadPersisted()
         recomputeNow()
@@ -98,21 +99,19 @@ class ShareAvailabilityViewModel(
         }
     }
 
-    // Tracks the in-flight recompute so a fast user input cancels the stale
-    // computation before launching a fresh one.
+    // The in-flight recompute, cancelled when a newer input starts a fresh one.
     private var recomputeJob: Job? = null
 
     /**
-     * Re-read live system inputs (now, locale, 24h preference) and recompute
-     * the preview from the latest persisted controls. Sheet reopen calls this
-     * because hiltViewModel() returns the activity-scoped instance whose
-     * init only ran once.
+     * Re-reads the persisted controls and recomputes the preview with the current time, locale
+     * and 24h setting. The sheet calls this on each open because `hiltViewModel()` returns the
+     * activity-scoped instance, whose init ran only once.
      */
     fun refresh() {
         viewModelScope.launch {
             initJob.join()
-            // Re-read persisted state in case it changed while the sheet was
-            // closed (e.g. backup restore).
+            // The persisted state may have changed while the sheet was closed, for example by a
+            // backup restore.
             loadPersisted()
             recompute()
         }
@@ -144,9 +143,8 @@ class ShareAvailabilityViewModel(
     }
 
     /**
-     * In-memory-only update used while a slider is actively dragging; persists
-     * to DataStore on [commitWorkHoursChange] — avoids disk I/O on every
-     * onValueChange tick.
+     * Updates the work hours in memory while a slider drags, without disk I/O on every
+     * onValueChange tick. [commitPersistence] persists them.
      */
     fun previewWorkHoursChange(startMin: Int, endMin: Int) {
         if (startMin < 0 || endMin > SHARE_AVAILABILITY_MAX_MINUTES) return
@@ -165,8 +163,8 @@ class ShareAvailabilityViewModel(
     }
 
     /**
-     * Persist whatever is in the current uiState. Called by the sheet on
-     * onValueChangeFinished after a drag preview pass.
+     * Persists the current days and work hours. The sheet calls it from a slider's
+     * onValueChangeFinished after the preview updates.
      */
     fun commitPersistence() {
         val snapshot = _uiState.value
@@ -219,10 +217,9 @@ class ShareAvailabilityViewModel(
             zone = zone
         )
 
-        // Resolve the effective 24h-or-not from cached app preference + device
-        // setting (so users with TIME_FORMAT=24h on a 12h device get 24h here).
-        // Read is24Hour and locale at format-time so config changes mid-session
-        // are reflected on the next recompute.
+        // The app preference wins over the device setting, so a 24h preference on a 12h device
+        // gives 24h. The 24h setting and locale are read here so a mid-session config change
+        // shows on the next recompute.
         val effectiveIs24Hour = DateTimeUtils.isUse24Hour(state.timeFormatPref, is24HourProvider())
         val previewText = availabilityFormatter.format(
             blocks = blocks,

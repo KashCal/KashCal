@@ -11,19 +11,16 @@ import org.onekash.kashcal.data.calendar_provider.parseDurationMs
 import java.time.Duration
 
 /**
- * Side-by-side parity tests comparing KashCal's three hand-rolled duration helpers
- * (`EventDurationFormatter.computeDurationString`, `AndroidCalendarProviderRepository.calculateDuration`
- * [unreachable from tests — file-private], `AndroidCalendarProviderRepository.parseDurationMs`)
- * against the canonical icaldav-core `DurationUtils`.
+ * Compares the app's hand-rolled duration helpers, [computeDurationString] and [parseDurationMs],
+ * with icaldav-core's [DurationUtils]. A third helper, `calculateDuration` in
+ * AndroidCalendarProviderRepository.kt, is file-private and not tested here.
  *
- * Goal: find every input where the two implementations disagree BEFORE swapping call sites.
- * Any divergence must either
- *   (a) be documented and accepted as a behavior change, OR
- *   (b) be paved over by a thin wrapper at the swap site.
+ * Records every input where they disagree, so a swap of call sites to DurationUtils knows which
+ * differences to accept as a behavior change and which to keep with a wrapper at the call site.
  *
- * Not a test of either implementation's correctness in isolation — only of their relative
- * behavior. Correctness is covered by `EventDurationFormatterTest`, the `parseDurationMs`
- * block of `AndroidCalendarProviderRepositoryTest`, and icaldav-core's `DurationUtilsTest`.
+ * Tests only the helpers' relative behavior. Correctness is covered by
+ * `EventDurationFormatterTest`, the `parseDurationMs` tests in
+ * `AndroidCalendarProviderRepositoryTest`, and icaldav-core's `DurationUtilsTest`.
  */
 class DurationParityTest {
 
@@ -74,14 +71,14 @@ class DurationParityTest {
     }
 
     // ========================================================================
-    // FORMAT divergence: the four documented differences
+    // FORMAT divergence: four differences
     // ========================================================================
 
     /**
-     * DIVERGENCE 1: all-day zero duration.
+     * Divergence 1: all-day zero duration.
      * - `computeDurationString` coerces to `P1D` via `coerceAtLeast(1)`.
      * - `DurationUtils.format(Duration.ZERO)` emits `PT0S`.
-     * Swap site MUST preserve the coerce (single-day all-day events with start==end).
+     * A swapped call site must keep the coerce, for single-day all-day events with start == end.
      */
     @Test
     fun `format DIVERGENCE - all-day zero duration`() {
@@ -93,10 +90,11 @@ class DurationParityTest {
     }
 
     /**
-     * DIVERGENCE 2: timed zero duration.
-     * - `computeDurationString` emits `PT0M` (reached via `when { hours == 0 && minutes == 0 -> "PT${minutes}M" }`).
+     * Divergence 2: timed zero duration.
+     * - `computeDurationString` emits `PT0M` from its `else -> "PT${minutes}M"` branch.
      * - `DurationUtils.format(Duration.ZERO)` emits `PT0S`.
-     * Low-impact — CalendarProvider accepts both — but callers that assert exact strings will break.
+     * Low impact, since CalendarProvider accepts both, but callers that assert exact strings will
+     * break.
      */
     @Test
     fun `format DIVERGENCE - timed zero duration`() {
@@ -108,11 +106,11 @@ class DurationParityTest {
     }
 
     /**
-     * DIVERGENCE 3: sub-minute timed durations.
+     * Divergence 3: sub-minute timed durations.
      * - `computeDurationString` divides by 60_000 and discards seconds: 45 seconds -> "PT0M".
-     * - `DurationUtils.format` preserves seconds: 45 seconds -> "PT45S".
-     * Local behavior is lossy; canonical is correct. After swap, ICS output becomes more accurate
-     * for edge events with sub-minute precision (rare in practice, but e.g. scientific schedules).
+     * - `DurationUtils.format` keeps seconds: 45 seconds -> "PT45S".
+     * The app helper is lossy, so a swap would make the DURATION written to CalendarProvider
+     * exact for events with sub-minute precision.
      */
     @Test
     fun `format DIVERGENCE - sub-minute precision`() {
@@ -125,11 +123,11 @@ class DurationParityTest {
     }
 
     /**
-     * DIVERGENCE 4: durations beyond 24h for non-all-day.
-     * - `computeDurationString` uses minute-based breakdown: 25h → "PT25H".
+     * Divergence 4: timed durations beyond 24h.
+     * - `computeDurationString` breaks down by minutes: 25h → "PT25H".
      * - `DurationUtils.format` rolls over to days: 25h → "P1DT1H".
-     * Semantically equivalent (both valid RFC 5545 P-forms for the same duration) but byte-different.
-     * Round-trip via any parser normalizes them, so this is a cosmetic change only.
+     * Both are valid RFC 5545 durations and DurationUtils parses both to the same millis. Under
+     * RFC 5545 §3.3.6 a day is nominal, though, so across a DST change "P1DT1H" isn't 25 hours.
      */
     @Test
     fun `format DIVERGENCE - 25 hours timed`() {
@@ -140,7 +138,7 @@ class DurationParityTest {
         assertEquals("local emits PT25H", "PT25H", local)
         assertEquals("canonical rolls to P1DT1H", "P1DT1H", canonical)
 
-        // Both parse to the same Duration though - proof of semantic equivalence
+        // DurationUtils reads a day as 24 hours, so both parse to the same Duration.
         assertEquals(
             "both encode the same duration",
             DurationUtils.parse(local),
@@ -149,7 +147,7 @@ class DurationParityTest {
     }
 
     // ========================================================================
-    // PARSE parity: parseDurationMs(s, isAllDay) vs DurationUtils.parse(s)?.toMillis() with fallback
+    // PARSE parity: parseDurationMs vs DurationUtils.parse(s)?.toMillis() with fallback
     // ========================================================================
 
     @Test
@@ -189,8 +187,8 @@ class DurationParityTest {
     @Test
     fun `parse parity - complex P1DT2H30M`() {
         val expectedMs = Duration.ofDays(1).plusHours(2).plusMinutes(30).toMillis()
-        // Local parser: the parseDurationMs function's "no T" branch handles P1D, but when there's
-        // a T it routes through Duration.parse which handles P1DT2H30M fine.
+        // parseDurationMs's "no T" branch handles P1D; with a T it routes through
+        // java.time Duration.parse, which handles P1DT2H30M.
         assertEquals(expectedMs, parseDurationMs("P1DT2H30M", isAllDay = false))
         assertEquals(expectedMs, DurationUtils.parse("P1DT2H30M")!!.toMillis())
     }
@@ -199,7 +197,8 @@ class DurationParityTest {
     fun `parse parity - negative triggers`() {
         // Alarm-style negative triggers
         val expected = -15L * 60_000L
-        // Local: Duration.parse handles this - no custom path
+        // parseDurationMs has no custom path for this and hands it to java.time Duration.parse,
+        // which this test calls directly.
         assertEquals(expected, Duration.parse("-PT15M").toMillis())
         assertEquals(expected, DurationUtils.parse("-PT15M")!!.toMillis())
     }
@@ -211,12 +210,12 @@ class DurationParityTest {
     @Test
     fun `parse fallback parity - null input`() {
         // Local: returns defaults (1d for all-day, 1h for timed).
-        // Canonical: returns null — caller must supply default.
+        // Canonical: returns null; the caller must supply the default.
         assertEquals(86_400_000L, parseDurationMs(null, isAllDay = true))
         assertEquals(3_600_000L, parseDurationMs(null, isAllDay = false))
         assertNull("canonical returns null", DurationUtils.parse(null))
 
-        // After swap, caller uses DurationUtils.parseOrDefault with same defaults:
+        // A swapped caller would use DurationUtils.parseOrDefault with the same defaults:
         assertEquals(
             86_400_000L,
             DurationUtils.parseOrDefault(null, Duration.ofDays(1)).toMillis()
@@ -255,22 +254,21 @@ class DurationParityTest {
     // ========================================================================
 
     /**
-     * Mixed-case iCalendar durations are NON-standard per RFC 5545 (grammar uses uppercase),
-     * but some servers/tools emit them. DurationUtils tolerates; parseDurationMs also tolerates
-     * because P1D, PT1H etc. go through Duration.parse (case-insensitive) or the "P...D" branch
-     * which uppercases via `startsWith("P")` check... actually no, the local helper doesn't
-     * uppercase. Let's see.
+     * Lowercase durations are non-standard (RFC 5545 §3.1 makes non-enumerated property values
+     * case-sensitive), but some servers and tools emit them. DurationUtils accepts them.
+     * parseDurationMs uppercases nothing: a value that doesn't start with "P" or contains "T"
+     * goes to java.time Duration.parse, which accepts lowercase, but any other value must end in
+     * an uppercase "W" or "D".
      */
     @Test
     fun `adversarial - lowercase PT15M - AGREEMENT`() {
-        // DurationUtils.parse uppercases internally — handles it.
+        // DurationUtils.parse hands it to java.time Duration.parse, which accepts lowercase.
         val canonical = DurationUtils.parse("pt15m")
         assertNotNull("canonical handles lowercase", canonical)
         assertEquals(15 * 60_000L, canonical!!.toMillis())
 
-        // parseDurationMs: `pt15m` doesn't start with uppercase "P", so routes to the else
-        // branch → Duration.parse. Java's Duration.parse IS case-insensitive per javadoc,
-        // so it accepts lowercase. Both agree at 15 min.
+        // parseDurationMs: `pt15m` doesn't start with uppercase "P", so it takes the else
+        // branch to Duration.parse, which accepts lowercase. Both agree at 15 min.
         assertEquals(15 * 60_000L, parseDurationMs("pt15m", isAllDay = false))
     }
 
@@ -279,7 +277,7 @@ class DurationParityTest {
         val canonical = DurationUtils.parse("P1d")
         assertNotNull("canonical handles mixed case", canonical)
 
-        // Local: fails because "d" (lowercase) doesn't match endsWith("D")
+        // Local: falls back to the default because lowercase "d" doesn't match endsWith("D")
         assertEquals(
             "local returns default on mixed case",
             3_600_000L,
@@ -293,11 +291,9 @@ class DurationParityTest {
         assertNotNull("canonical handles +", canonical)
         assertEquals(15 * 60_000L, canonical!!.toMillis())
 
-        // Local: Duration.parse rejects leading + on positive durations (sort of — depends on JDK)
-        // Will fall through to default.
-        // Result unknown, but won't crash. Document whichever happens.
+        // Local: "+PT15M" doesn't start with "P", so it goes to java.time Duration.parse, which
+        // accepts a leading sign and gives 15 minutes. The assert also accepts the default.
         val local = parseDurationMs("+PT15M", isAllDay = false)
-        // Either parses correctly or returns default. Both are acceptable.
         assertTrue(
             "local either parses or returns default",
             local == 15 * 60_000L || local == 3_600_000L
@@ -310,8 +306,8 @@ class DurationParityTest {
         assertNotNull("canonical trims whitespace", canonical)
         assertEquals(15 * 60_000L, canonical!!.toMillis())
 
-        // Local: Duration.parse does NOT trim. Falls through.
-        // The "no T" branch removes "P" then checks endsWith("D"/"W") — won't match.
+        // Local: the value starts with a space, not "P", so it goes to Duration.parse, which
+        // doesn't trim and throws, giving the default.
         assertEquals(
             "local returns default on whitespace",
             3_600_000L,
@@ -325,7 +321,7 @@ class DurationParityTest {
         assertNotNull(canonical)
         assertEquals(30_000L, canonical!!.toMillis())
 
-        // Local: Duration.parse("PT30S") works — PT30S has a T.
+        // Local: PT30S has a T, so it goes to Duration.parse, which accepts it.
         assertEquals(30_000L, parseDurationMs("PT30S", isAllDay = false))
     }
 
@@ -344,20 +340,20 @@ class DurationParityTest {
 
     @Test
     fun `adversarial - only P no body`() {
-        // RFC 5545 requires at least one component. Behavior is undefined.
-        // Document what each does without asserting correctness.
+        // The RFC 5545 §3.3.6 grammar requires at least one component. This records what each
+        // helper does without asserting correctness.
         val localResult = parseDurationMs("P", isAllDay = false)
         val canonicalResult = DurationUtils.parse("P")
         // Local: "P" has no T, removePrefix("P") gives "", no match on D/W → default.
         assertEquals("local falls back to default", 3_600_000L, localResult)
-        // Canonical: doc says either null or zero; both acceptable.
+        // Canonical: every component is missing, so it gives zero; the check also allows null.
         if (canonicalResult != null) {
             assertEquals(0L, canonicalResult.toSeconds())
         }
     }
 
     /**
-     * DIVERGENCE 5: mixed weeks+days (RFC 5545 §3.3.6 disallows this — `dur-week` is exclusive).
+     * Mixed weeks and days, which RFC 5545 §3.3.6 disallows (`dur-week` stands alone).
      *
      * Local `parseDurationMs("P1W1D")` goes through the "no T" branch:
      *   1. startsWith("P") = true, !contains("T") = true
@@ -366,13 +362,14 @@ class DurationParityTest {
      *   4. endsWith("D")? Yes.
      *   5. removeSuffix("D") → "1W1"
      *   6. "1W1".toLongOrNull() → null → `days = 1` (silent fallback)
-     *   7. Returns 86,400,000 ms (1 day) — silently corrupting the input.
+     *   7. Returns 86,400,000 ms (1 day), silently losing the week.
      *
-     * Canonical `DurationUtils.parse("P1W1D")`: endsWith("W") is false, falls through to
-     * day/hour/minute regex: finds 1D via regex, ignores the W. Returns 1 day.
+     * Canonical `DurationUtils.parse("P1W1D")`: java.time rejects it; in the iCalendar fallback
+     * endsWith("W") is false, so the day/hour/minute regex finds 1D and ignores the W. Returns
+     * 1 day.
      *
-     * Both produce 1 day for this malformed input — by coincidence. Worth documenting because
-     * the local helper's `?: 1` silent fallback is a lurking footgun on other malformed inputs.
+     * Both give 1 day for this malformed input by coincidence. The local helper's `?: 1` fallback
+     * reads any other non-numeric count as 1 too.
      */
     @Test
     fun `adversarial - mixed weeks and days P1W1D - both silently accept as 1 day`() {
@@ -384,23 +381,20 @@ class DurationParityTest {
 
     @Test
     fun `adversarial - negative P prefix`() {
-        // Local: Duration.parse handles "-PT15M" directly. But "-P1D"?
+        // parseDurationMs sends "-P1D" to java.time Duration.parse because it doesn't start with
+        // "P"; the test calls Duration.parse directly.
         val localNegDay = try {
             Duration.parse("-P1D").toMillis()
         } catch (e: Exception) {
             null
         }
         val canonicalNegDay = DurationUtils.parse("-P1D")?.toMillis()
-        // If local can parse it, both should agree.
+        // If local can parse it, both must agree.
         if (localNegDay != null) {
             assertEquals(localNegDay, canonicalNegDay)
         } else {
-            // Local can't — parseDurationMs has its own -P1D handling? Check.
-            // Reading the code: parseDurationMs for "-P1D" — no T — removePrefix("P")
-            // gives "-P1D" (wait, -P1D has leading -, removePrefix("P") on "-P1D" removes
-            // nothing because it doesn't START with P). Actually the if guards on
-            // startsWith("P") so "-P1D" takes the else branch (Duration.parse), which
-            // handles it if ISO compliant.
+            // Reached only on a JDK whose Duration.parse rejects "-P1D"; the JDK this runs on
+            // accepts it (-24 hours).
             assertNotNull("canonical handles -P1D", canonicalNegDay)
         }
     }
@@ -410,9 +404,9 @@ class DurationParityTest {
     // ========================================================================
 
     /**
-     * The critical property: for every duration we actually emit via computeDurationString,
-     * DurationUtils.parse must round-trip it to the same milliseconds. If this holds, the
-     * swap is safe even if the output bytes differ (divergences 1-4).
+     * DurationUtils.parse must read every listed computeDurationString output back to the same
+     * milliseconds. If this holds, a swap keeps the durations even where the bytes differ
+     * (divergences 1-4).
      */
     @Test
     fun `round-trip - every computeDurationString output parses back correctly`() {

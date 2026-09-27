@@ -7,24 +7,17 @@ import java.net.UnknownHostException
 import javax.net.ssl.SSLHandshakeException
 
 /**
- * Maps CalendarError to user-friendly ErrorPresentation.
+ * Maps a [CalendarError] to the [ErrorPresentation] the UI shows, and HTTP codes and exceptions
+ * to a [CalendarError]. Every error-to-UI decision lives in [toPresentation].
  *
- * Central location for all error -> UI mapping logic.
- * Ensures consistent error handling across the app.
- *
- * Usage:
  * ```
- * val error = CalendarError.Network.Timeout
- * val presentation = ErrorMapper.toPresentation(error)
- * // presentation is ErrorPresentation.Snackbar with retry action
+ * val presentation = ErrorMapper.toPresentation(CalendarError.Network.Timeout)
+ * // a Snackbar with a Retry action
  * ```
  */
 object ErrorMapper {
 
-    /**
-     * Convert CalendarError to ErrorPresentation.
-     * Determines which UI component should display the error.
-     */
+    /** Returns how [error] is shown: snackbar, dialog, banner, or only logged. */
     fun toPresentation(error: CalendarError): ErrorPresentation = when (error) {
 
         // ==================== AUTH ERRORS -> DIALOG ====================
@@ -265,7 +258,7 @@ object ErrorMapper {
             dismissible = false
         )
 
-        // ==================== PERMISSION ERRORS -> DIALOG ====================
+        // ==================== PERMISSION ERRORS ====================
 
         is CalendarError.Permission.NotificationDenied -> ErrorPresentation.Dialog(
             titleResId = R.string.error_permission_notification_title,
@@ -299,7 +292,7 @@ object ErrorMapper {
             messageResId = R.string.error_permission_storage
         )
 
-        // ==================== DEVICE CALENDAR ERRORS -> DIALOG ====================
+        // ==================== DEVICE CALENDAR ERRORS ====================
 
         is CalendarError.DeviceCalendar.WriteFailed -> ErrorPresentation.Dialog(
             titleResId = R.string.error_device_calendar_title,
@@ -378,10 +371,11 @@ object ErrorMapper {
     }
 
     /**
-     * Convert HTTP status code to CalendarError.
+     * Returns the [CalendarError] for HTTP status [code]; an unmapped code becomes
+     * [CalendarError.Unknown].
      *
-     * @param code HTTP status code
-     * @param message Optional context message (e.g., resource name, event title)
+     * @param message the resource for 403 and 404, the event title for 412, and part of the
+     *   [CalendarError.Unknown] message for an unmapped code; other codes drop it
      */
     fun fromHttpCode(code: Int, message: String? = null): CalendarError = when (code) {
         401 -> CalendarError.Auth.InvalidCredentials
@@ -394,9 +388,8 @@ object ErrorMapper {
     }
 
     /**
-     * Convert Exception to CalendarError.
-     *
-     * @param e The exception to convert
+     * Returns the [CalendarError] for [e]. An [java.io.IOException] of no mapped subtype is
+     * classified by its message; anything unmapped becomes [CalendarError.Unknown].
      */
     fun fromException(e: Throwable): CalendarError = when (e) {
         is SocketTimeoutException -> CalendarError.Network.Timeout
@@ -404,7 +397,7 @@ object ErrorMapper {
         is SSLHandshakeException -> CalendarError.Network.SslError
         is ConnectException -> CalendarError.Network.ConnectionFailed(e.message)
         is java.io.IOException -> {
-            // Check for common IO error patterns
+            // Any other I/O failure is classified by its message text.
             when {
                 e.message?.contains("timeout", ignoreCase = true) == true ->
                     CalendarError.Network.Timeout
@@ -420,9 +413,7 @@ object ErrorMapper {
         else -> CalendarError.Unknown(e.message ?: e.javaClass.simpleName, e)
     }
 
-    /**
-     * Check if an error is retryable (transient).
-     */
+    /** Returns whether [error] is transient, so retrying may succeed. */
     fun isRetryable(error: CalendarError): Boolean = when (error) {
         is CalendarError.Network.Offline,
         is CalendarError.Network.Timeout,

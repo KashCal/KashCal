@@ -18,14 +18,11 @@ import org.junit.runner.RunWith
 import org.onekash.kashcal.data.db.entity.Calendar
 
 /**
- * Compose UI tests verifying recomposition optimization.
+ * Tests keyed `remember` on standalone content: the block reruns when a key changes and not when
+ * unrelated state does.
  *
- * Tests that memoized calculations (using remember with keys) don't cause
- * unnecessary recalculations when unrelated state changes.
- *
- * These tests verify the pattern used in AccountSettingsScreen:
- * - visibleCalendarCount = remember(calendars) { calendars.count { it.isVisible } }
- * - defaultCalendar = remember(calendars, defaultCalendarId) { calendars.find { ... } }
+ * AccountSettingsScreen memoizes lookups over its calendar list this way (`defaultCalendarName`,
+ * `localCalendar`), but these tests don't render that screen.
  */
 @RunWith(AndroidJUnit4::class)
 class AccountSettingsScreenRecompositionTest {
@@ -33,10 +30,7 @@ class AccountSettingsScreenRecompositionTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    /**
-     * Test that visibleCalendarCount is memoized correctly.
-     * When unrelated state changes, the calculation should NOT be repeated.
-     */
+    /** Tests that a block keyed on the calendar list doesn't rerun when unrelated state changes. */
     @Test
     fun visibleCalendarCount_notRecomputed_whenUnrelatedStateChanges() {
         var calculationCount = 0
@@ -54,7 +48,7 @@ class AccountSettingsScreenRecompositionTest {
                 )
             }
 
-            // Memoized calculation - should only run once
+            // Runs once, on the initial composition.
             val visibleCount = remember(calendars) {
                 calculationCount++
                 calendars.count { it.isVisible }
@@ -76,7 +70,7 @@ class AccountSettingsScreenRecompositionTest {
             composeTestRule.waitForIdle()
         }
 
-        // Calculation should only have run once (during initial composition)
+        // No reruns after the initial composition.
         assertEquals(
             "Expected calculation to run only once, but ran $calculationCount times",
             initialCount,
@@ -85,8 +79,8 @@ class AccountSettingsScreenRecompositionTest {
     }
 
     /**
-     * Test that defaultCalendar find is memoized with correct keys.
-     * Should recalculate only when keys change.
+     * Tests that a block keyed on the list and a default calendar id reruns once when the id
+     * changes and not when unrelated state does.
      */
     @Test
     fun defaultCalendar_recomputed_onlyWhenKeysChange() {
@@ -121,7 +115,7 @@ class AccountSettingsScreenRecompositionTest {
         composeTestRule.waitForIdle()
         val afterInitial = calculationCount
 
-        // Click unrelated button - should NOT recalculate
+        // The unrelated button doesn't change a key, so no rerun.
         repeat(3) {
             composeTestRule.onNodeWithText("Unrelated:", substring = true).performClick()
             composeTestRule.waitForIdle()
@@ -133,7 +127,7 @@ class AccountSettingsScreenRecompositionTest {
             calculationCount
         )
 
-        // Click default calendar button - SHOULD recalculate (key changed)
+        // The default calendar button changes a key, so one rerun.
         composeTestRule.onNodeWithText("Default:", substring = true).performClick()
         composeTestRule.waitForIdle()
 
@@ -144,11 +138,9 @@ class AccountSettingsScreenRecompositionTest {
     }
 
     /**
-     * Test that memoized calculations work correctly with list keys.
-     * Verifies the remember(calendars) pattern renders the correct count.
-     *
-     * Note: This test verifies the pattern works, not strict recomposition timing
-     * (which is unreliable on slow CI emulators).
+     * Tests that assigning a new calendar list reruns the keyed block, so the rendered count goes
+     * from 2 to 1. It checks the rendered text, not recomposition timing (which is unreliable on
+     * slow CI emulators).
      */
     @Test
     fun memoization_usesReferenceEquality() {
@@ -168,7 +160,7 @@ class AccountSettingsScreenRecompositionTest {
 
             androidx.compose.material3.Button(
                 onClick = {
-                    // Create new list with one invisible - should update count
+                    // A new list with one hidden calendar, so the count drops to 1.
                     calendars = listOf(
                         createTestCalendar(1, isVisible = true),
                         createTestCalendar(2, isVisible = false)
@@ -188,7 +180,7 @@ class AccountSettingsScreenRecompositionTest {
         composeTestRule.onNodeWithText("Visible: 2").performClick()
         composeTestRule.waitForIdle()
 
-        // Should now show 1 visible (verifies memoization recalculated)
+        // "Visible: 1" shows the keyed block reran.
         assert(composeTestRule.onAllNodesWithText("Visible: 1").fetchSemanticsNodes().isNotEmpty()) {
             "Expected 'Visible: 1' after clicking button"
         }

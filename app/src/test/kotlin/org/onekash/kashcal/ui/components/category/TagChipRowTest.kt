@@ -16,9 +16,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Compose UI tests for [TagChipRow] (Robolectric, unit-test source set).
- * Verifies the collapsed/engaged contract: resting affordances, chip removal,
- * type-to-filter picker, "Create" commit + validation error, and read-only.
+ * Tests [TagChipRow] under Robolectric: the resting row, chip removal, the engaged picker with
+ * prefix filtering and suggestion taps, a commit from the "Create" row or the Done action, the
+ * comma error, and read-only mode.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h720dp-mdpi")
@@ -39,8 +39,8 @@ class TagChipRowTest {
                 )
             }
         }
-        // At rest with no tags, only the add affordance shows — suggestions
-        // stay hidden until the row is engaged.
+        // At rest with no tags the add affordance shows and suggestions stay hidden until the
+        // row is engaged.
         composeTestRule.onNodeWithText("New tag").assertIsDisplayed()
         assertEquals(0, composeTestRule.countNodesWithText("Personal"))
     }
@@ -92,7 +92,7 @@ class TagChipRowTest {
             }
         }
         composeTestRule.onNodeWithText("New tag").performClick()
-        // Field revealed and the suggestion now appears in the picker.
+        // The field opens and the suggestion appears in the picker.
         composeTestRule.onNodeWithText("Personal").assertIsDisplayed()
     }
 
@@ -110,7 +110,7 @@ class TagChipRowTest {
         }
         composeTestRule.onNodeWithText("New tag").performClick()
         composeTestRule.onNodeWithText("New tag").performTextInput("fa")
-        // Prefix "fa" keeps Family + Fasting, drops Work.
+        // Prefix "fa" keeps Family and Fasting and drops Work.
         composeTestRule.onNodeWithText("Family").assertIsDisplayed()
         composeTestRule.onNodeWithText("Fasting").assertIsDisplayed()
         assertEquals(0, composeTestRule.countNodesWithText("Work"))
@@ -149,7 +149,7 @@ class TagChipRowTest {
         }
         composeTestRule.onNodeWithText("New tag").performClick()
         composeTestRule.onNodeWithText("New tag").performTextInput("Travel")
-        // The "Create" row is offered for the typed name; tap it to commit.
+        // The "Create" row is offered for the typed name; a tap commits it.
         composeTestRule.onNodeWithText("Create \"Travel\"").performClick()
         assertEquals("Travel", added)
     }
@@ -207,8 +207,8 @@ class TagChipRowTest {
         }
         composeTestRule.onNodeWithText("New tag").performClick()
         composeTestRule.onNodeWithText("New tag").performTextInput("gym")
-        // With no suggestions, only the Create row shows — never a bare empty
-        // dropdown.
+        // With no suggestions the typed name still gets a Create row, so the picker is never
+        // an empty dropdown (only the Create row is asserted).
         composeTestRule.onNodeWithText("Create \"gym\"").assertIsDisplayed()
     }
 

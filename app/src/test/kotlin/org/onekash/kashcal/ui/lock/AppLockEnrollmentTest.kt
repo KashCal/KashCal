@@ -5,8 +5,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Maps the result of `BiometricManager.canAuthenticate(...)` to the action the
- * Settings layer should take when the user turns the app lock on.
+ * Tests [decideEnrollmentAction] and [decideDisableAction], which map a
+ * `BiometricManager.canAuthenticate(...)` result to what the app does when the user turns the
+ * app lock on or off.
  */
 class AppLockEnrollmentTest {
 
@@ -66,9 +67,9 @@ class AppLockEnrollmentTest {
         )
     }
 
-    // Disabling the lock removes protection, so it must be challenged — the only
-    // exception is a now-unsecured device (nothing enrolled), where a challenge
-    // would be unsatisfiable and trap the user with an unremovable lock.
+    // Disabling the lock removes protection, so it is challenged. The only exception is a
+    // device with nothing enrolled, where a challenge can't be satisfied and would leave a
+    // lock the user can never turn off.
 
     @Test
     fun `disable with a credential present challenges`() {
@@ -88,8 +89,8 @@ class AppLockEnrollmentTest {
 
     @Test
     fun `disable still challenges when hardware is temporarily unavailable`() {
-        // A transient HW_UNAVAILABLE must NOT silently drop the lock — the
-        // credential still exists, so keep protecting and challenge.
+        // A transient HW_UNAVAILABLE must not silently drop the lock: the credential still
+        // exists, so it challenges.
         assertEquals(
             AppLockDisableAction.Challenge,
             decideDisableAction(BiometricManager.BIOMETRIC_ERROR_HW_UNAVAILABLE),

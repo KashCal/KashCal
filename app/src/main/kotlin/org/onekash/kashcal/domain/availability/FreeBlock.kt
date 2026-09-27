@@ -6,8 +6,7 @@ import java.time.LocalTime
 /**
  * A contiguous block of free time inside the user's working-hours window.
  *
- * Pure value type with no Android dependencies; safe to share between
- * domain logic and UI state.
+ * An [end] of `LocalTime.MAX` means end of day (24:00); see [FreeBlockFinder].
  */
 data class FreeBlock(
     val day: LocalDate,

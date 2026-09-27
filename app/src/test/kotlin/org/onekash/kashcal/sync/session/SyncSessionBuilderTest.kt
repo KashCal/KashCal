@@ -7,17 +7,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for SyncSessionBuilder.
- *
- * Tests:
- * - Default build produces all-zero session
- * - Pipeline setters (hrefsReported, eventsFetched)
- * - Increment methods accumulate
- * - Push stats
- * - Skip increment methods
- * - Error and truncated fields
- * - hasMissingEvents / missingCount derived fields
- * - Fluent chaining
+ * Tests [SyncSessionBuilder]:
+ * - the default build (all counts zero, no warnings, non-negative duration)
+ * - pipeline setters (hrefsReported, eventsFetched), increments and push stats
+ * - skip counters, abandoned parse errors and the tokenAdvanced override
+ * - error and truncated fields
+ * - the derived hasMissingEvents and missingCount
+ * - warnings, capped at 20
+ * - fluent chaining
  */
 class SyncSessionBuilderTest {
 
@@ -255,7 +252,7 @@ class SyncSessionBuilderTest {
             .setError(ErrorType.NETWORK, "test")
             .setTruncated(false)
 
-        // All setters return the builder for chaining
+        // Every setter returns the same builder.
         assertTrue(result === builder)
     }
 
@@ -265,7 +262,7 @@ class SyncSessionBuilderTest {
         assertTrue("durationMs should be >= 0", session.durationMs >= 0)
     }
 
-    // Warning tests
+    // Warnings
 
     @Test
     fun `default build has empty warnings`() {

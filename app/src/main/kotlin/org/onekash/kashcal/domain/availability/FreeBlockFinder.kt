@@ -9,30 +9,26 @@ import java.time.ZoneId
 import javax.inject.Inject
 
 /**
- * Pure-logic free-block computation for the share-availability feature.
+ * Computes the free blocks for share availability.
  *
- * Generalizes the algorithm in NextFreeBlockGenerator.findNextFreeBlock to
- * return ALL qualifying free blocks across a span of days, with caller-supplied
- * working-hours window, minimum block length, and zone. Holds no state and
- * never reads DataStore or system clock — every input is explicit so the same
- * logic is testable from a fresh ZoneId without monkey-patching.
+ * Like the next-free-block insight (`NextFreeBlockGenerator`), but returns every qualifying
+ * block across a span of days, with the caller's working hours, minimum block length and zone.
+ * It holds no state and never reads DataStore or the system clock, so every input is explicit
+ * and tests can pass any ZoneId.
  *
- * Working hours are expressed as **minutes from midnight**, where 1440 is the
- * end-of-day sentinel (= the next day's 00:00). LocalTime cannot represent
- * 24:00 directly, so we never round-trip the boundary through a single
- * LocalTime instance — the day-end timestamp is computed as
- * date.plusDays(1).atStartOfDay(zone) when workEndMin == 1440.
+ * Working hours are minutes from midnight, where 1440 is end of day (the next day's 00:00).
+ * LocalTime can't represent 24:00, so the boundary never goes through a LocalTime: the day-end
+ * timestamp is `date.plusDays(1).atStartOfDay(zone)` when workEndMin is 1440. A block ending
+ * there has an end of `LocalTime.MAX`.
  *
- * Caller responsibility: pre-filter the occurrence list for visibility,
- * cancellation, and pending-delete status. The upstream insights query
- * (getOccurrencesWithEventsForInsights) already does this.
+ * The caller must pre-filter the occurrences for visibility, cancellation and pending delete;
+ * [org.onekash.kashcal.domain.insights.InsightsRepository.getOccurrencesForRange] does this.
+ * Transparent occurrences and zero-length timed ones never make time busy.
  *
- * Zone semantics: `zone` governs the per-day work window, today/now clipping,
- * and timed-event boundaries. All-day matching is zone-independent and uses
- * the occurrence's pre-computed startDay/endDay codes, which producers populate
- * via DateTimeUtils.eventTsToDayCode(isAllDay = true) (UTC-derived). This is
- * what aligns the user's perceived calendar date with the day-code regardless
- * of viewer timezone.
+ * `zone` governs the per-day work window, clipping today to now, and timed-event boundaries.
+ * All-day matching is zone-independent: it uses the occurrence's startDay/endDay codes, which
+ * producers compute in UTC for all-day events (`DateTimeUtils.eventTsToDayCode` with
+ * `isAllDay = true`), so the date matches the user's calendar date in any viewer zone.
  */
 class FreeBlockFinder @Inject constructor() {
 
@@ -60,16 +56,14 @@ class FreeBlockFinder @Inject constructor() {
             val dayWindowStartMs = atTime(date, workStartMin, zone)
             val dayWindowEndMs = atTime(date, workEndMin, zone)
 
-            // Today's window is clipped to max(now, workStart). If now is past
-            // workEnd, the day is omitted entirely.
+            // Today's window starts at max(now, workStart); past workEnd the day is omitted.
             val effectiveStartMs = if (date == today) maxOf(dayWindowStartMs, now) else dayWindowStartMs
             if (effectiveStartMs >= dayWindowEndMs) continue
 
-            // All-day handling. When the toggle is on, an all-day occurrence
-            // covering this date makes the day fully busy. startDay..endDay
-            // is the inclusive YYYYMMDD range the producer baked in (see
-            // DateTimeUtils.eventTsToEndDayCode); endDay is the last covered
-            // day, NOT the RFC-exclusive DTEND.
+            // With the toggle on, a busy all-day occurrence covering this date makes the day
+            // fully busy. startDay..endDay is the inclusive YYYYMMDD range the producer stored
+            // (`DateTimeUtils.eventTsToEndDayCode`): endDay is the last covered day, not the
+            // RFC-exclusive DTEND.
             val dateCode = localDateToDayCode(date)
             if (includeAllDayAsBusy && occurrences.any {
                     it.isAllDay && it.isBusy() && dateCode in it.startDay..it.endDay
@@ -116,8 +110,8 @@ class FreeBlockFinder @Inject constructor() {
         workEndMin: Int,
         minBlockMinutes: Long
     ) {
-        // Convert epoch ms back to minutes-of-day in the same zone, clamped to
-        // the work window. Using minutes (Int) avoids the LocalTime 24:00 trap.
+        // Convert back to minutes of day in the same zone, clamped to the work window. Minutes
+        // can hold 1440, which LocalTime can't.
         val startZdt = Instant.ofEpochMilli(startMs).atZone(zone)
         val endZdt = Instant.ofEpochMilli(endMs).atZone(zone)
         val rawStartMin = startZdt.toLocalTime().toMinuteOfDay()
@@ -131,10 +125,9 @@ class FreeBlockFinder @Inject constructor() {
             FreeBlock(
                 day = date,
                 start = LocalTime.of(clampedStart / 60, clampedStart % 60),
-                // 1440 is the end-of-day sentinel; LocalTime can't represent 24:00,
-                // so we encode it as 23:59:59.999999999. Formatters print that as
-                // 24:00 / midnight via formatMinutesAsClock; consumers comparing
-                // FreeBlock.end to LocalTime should know about the sentinel.
+                // End of day (1440) is encoded as LocalTime.MAX (23:59:59.999999999).
+                // [AvailabilityFormatter] prints it as 24:00 / midnight; any other reader
+                // comparing FreeBlock.end must handle it.
                 end = if (clampedEnd == END_OF_DAY_MIN) LocalTime.MAX else LocalTime.of(clampedEnd / 60, clampedEnd % 60),
                 durationMinutes = durationMinutes
             )

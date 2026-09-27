@@ -22,16 +22,15 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Database migration tests for KashCalDatabase.
+ * Runs the manual KashCalDatabase migrations from 1→2 to 22→23 against an in-memory SQLite
+ * database (through Robolectric) and checks tables, columns, indexes, triggers and data. The 3→4
+ * AutoMigration and 23→24 aren't run here; [MigrationHashValidationTest] and the Room test in
+ * [MigrationGoldenTest] run them.
  *
- * These tests actually execute migration SQL against a real SQLite database
- * (via Robolectric) and verify schema changes, column presence, indexes,
- * and data integrity.
- *
- * Each test:
- * 1. Creates the prerequisite schema (tables the migration depends on)
- * 2. Runs the migration via migration.migrate(db)
- * 3. Verifies schema changes using PRAGMA queries
+ * Each test builds the schema the migration needs, runs `migrate(db)` and inspects the result
+ * through `sqlite_master`, PRAGMA and queries. The registry tests at the end check
+ * `Migrations.ALL_MIGRATIONS`. [MigrationHashValidationTest] checks the results against Room's
+ * exported schemas.
  *
  * Reference: https://developer.android.com/training/data-storage/room/migrating-db-versions
  */
@@ -56,7 +55,7 @@ class MigrationTest {
             .name(null) // in-memory database
             .callback(object : SupportSQLiteOpenHelper.Callback(1) {
                 override fun onCreate(db: SupportSQLiteDatabase) {
-                    // Empty - we'll create tables manually per test
+                    // Each test creates its own tables
                 }
                 override fun onUpgrade(db: SupportSQLiteDatabase, oldVersion: Int, newVersion: Int) {}
             })
@@ -124,8 +123,8 @@ class MigrationTest {
     }
 
     /**
-     * Creates the base v1 schema (6 tables: accounts, calendars, events, occurrences,
-     * pending_operations, sync_logs) with all indexes.
+     * Creates the six v1 tables (accounts, calendars, events, occurrences, pending_operations,
+     * sync_logs) with a subset of the v1 indexes; tests that need another one create it.
      */
     private fun createV1Schema() {
         db.execSQL("""CREATE TABLE IF NOT EXISTS accounts (id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, provider TEXT NOT NULL, email TEXT NOT NULL, display_name TEXT, principal_url TEXT, home_set_url TEXT, credential_key TEXT, is_enabled INTEGER NOT NULL DEFAULT 1, last_sync_at INTEGER, last_successful_sync_at INTEGER, consecutive_sync_failures INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)""")
@@ -240,7 +239,7 @@ class MigrationTest {
     @Test
     fun `migration 4 to 5 adds target_url and target_calendar_id columns`() {
         createV1Schema()
-        // Skip 1→2, 2→3 (not needed for pending_operations schema)
+        // 1→2 and 2→3 skipped: pending_operations doesn't depend on them
         assertFalse(columnExists("pending_operations", "target_url"))
 
         Migrations.MIGRATION_4_5.migrate(db)
@@ -437,12 +436,12 @@ class MigrationTest {
         Migrations.MIGRATION_7_8.migrate(db)
         Migrations.MIGRATION_8_9.migrate(db)
 
-        // Insert test data with duplicates
+        // Two identical occurrence rows for one event
         db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'ICLOUD', 'test@test.com', 0)")
         db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://cal.example.com/', 'Cal', -1)")
         db.execSQL("INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at) VALUES (1, 'uid-1', 1, 'Test', 1000, 2000, 0, 0, 0)")
         db.execSQL("INSERT INTO occurrences (event_id, calendar_id, start_ts, end_ts, start_day, end_day) VALUES (1, 1, 1000, 2000, 20240101, 20240101)")
-        db.execSQL("INSERT INTO occurrences (event_id, calendar_id, start_ts, end_ts, start_day, end_day) VALUES (1, 1, 1000, 2000, 20240101, 20240101)")  // duplicate
+        db.execSQL("INSERT INTO occurrences (event_id, calendar_id, start_ts, end_ts, start_day, end_day) VALUES (1, 1, 1000, 2000, 20240101, 20240101)")
 
         db.query("SELECT COUNT(*) FROM occurrences").use { cursor ->
             cursor.moveToFirst()
@@ -575,11 +574,11 @@ class MigrationTest {
         }
     }
 
-    // ==================== Migration 13 to 14: exception event unique index swap ====================
+    // ==================== Migration 13 to 14: exception unique index swap ====================
 
     /**
-     * Chains all migrations 1→13 and creates the unique index that createV1Schema() omits.
-     * Migration 13→14 expects index_events_original_event_id_original_instance_time to exist.
+     * Runs every manual migration from 1 to 13, after creating the unique index createV1Schema()
+     * omits: migration 13→14 drops index_events_original_event_id_original_instance_time.
      */
     private fun setupV13Schema() {
         createV1Schema()
@@ -602,10 +601,10 @@ class MigrationTest {
     }
 
     /**
-     * Minimal v13 schema for dedup tests: base tables + both target indices, but
-     * WITHOUT the master dedup trigger (created by migration 6→7). This simulates
-     * pre-v6 databases that may have orphan exceptions with original_event_id = NULL
-     * coexisting with masters of the same UID — the exact pattern the dedup cleans.
+     * Builds a minimal v13 schema for the dedup tests: the v1 tables and both indexes 13→14
+     * replaces, without the master uniqueness trigger from migration 6→7. That trigger would refuse
+     * an orphan exception (original_event_id = NULL) sharing its master's UID, which is the row the
+     * dedup removes and which a database from before the trigger may hold.
      */
     private fun setupV13SchemaMinimal() {
         createV1Schema()
@@ -619,7 +618,7 @@ class MigrationTest {
         )
     }
 
-    /** Insert test account + calendar for migration 13→14 tests. Returns calendar id. */
+    /** Inserts account 1 and calendar 1 for the migration 13→14 tests; returns the calendar id. */
     private fun insertTestAccountAndCalendar(): Long {
         db.execSQL("INSERT INTO accounts (id, provider, email, home_set_url, created_at) VALUES (1, 'ICLOUD', 'test@test.com', 'https://caldav.icloud.com/', 0)")
         db.execSQL("INSERT INTO calendars (id, account_id, caldav_url, display_name, color) VALUES (1, 1, 'https://caldav.icloud.com/cal/', 'Test', -1)")
@@ -647,9 +646,8 @@ class MigrationTest {
 
     @Test
     fun `migration 13 to 14 dedup removes orphan when linked exists`() {
-        // Use minimal schema (no master dedup trigger from migration 6→7) to allow
-        // inserting orphan exceptions. This simulates pre-v6 databases that may have
-        // accumulated orphan duplicates before the trigger existed.
+        // The minimal schema has no master uniqueness trigger, so orphan exceptions can be
+        // inserted, as in a database from before migration 6→7.
         setupV13SchemaMinimal()
         val calId = insertTestAccountAndCalendar()
 
@@ -688,7 +686,7 @@ class MigrationTest {
 
     @Test
     fun `migration 13 to 14 dedup keeps highest id for duplicate orphans`() {
-        // Use minimal schema (no master dedup trigger) — see dedup orphan test above.
+        // Minimal schema so orphans can be inserted; see setupV13SchemaMinimal
         setupV13SchemaMinimal()
         val calId = insertTestAccountAndCalendar()
 
@@ -725,7 +723,7 @@ class MigrationTest {
         setupV13Schema()
         val calId = insertTestAccountAndCalendar()
 
-        // Insert 3 masters (original_instance_time IS NULL — protected by dedup filter)
+        // Three masters: original_instance_time IS NULL, which both dedup steps exclude
         db.execSQL(
             "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at) " +
             "VALUES (1, 'uid-a', $calId, 'Master A', 1000, 2000, 0, 0, 0)"
@@ -785,13 +783,13 @@ class MigrationTest {
             "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at) " +
             "VALUES (1, 'master-uid', $calId, 'Master', 1000, 2000, 0, 0, 0)"
         )
-        // First exception — succeeds
+        // First exception succeeds
         db.execSQL(
             "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at, " +
             "original_event_id, original_instance_time) " +
             "VALUES (2, 'master-uid', $calId, 'Exception', 3000, 4000, 0, 0, 0, 1, 3000)"
         )
-        // Second exception with same (calendar_id, uid, original_instance_time) — must throw
+        // Second exception with the same (calendar_id, uid, original_instance_time) must throw
         db.execSQL(
             "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, dtstamp, created_at, updated_at, " +
             "original_event_id, original_instance_time) " +
@@ -799,7 +797,7 @@ class MigrationTest {
         )
     }
 
-    // ==================== Migration 15 to 16: calendar mute/color/reminder + event end_timezone ====================
+    // ==================== Migration 15 to 16: calendar columns + end_timezone ====================
 
     @Test
     fun `migration 15 to 16 adds calendar columns`() {
@@ -889,9 +887,8 @@ class MigrationTest {
     // ==================== Migration 16 to 17: scheduling schema bundle ====================
 
     /**
-     * Walk the v1→v16 migration chain to land us at the v16 starting state for
-     * MIGRATION_16_17 tests. Mirrors the chain executed by `full migration chain
-     * 1 to 16 executes without error` but without the assertions.
+     * Runs the v1→v16 chain for the MIGRATION_16_17 tests: the same chain as `full migration
+     * chain 1 to 16 executes without error`, without its assertions.
      */
     private fun migrateUpToV16() {
         createV1Schema()
@@ -923,7 +920,7 @@ class MigrationTest {
 
         assertTrue(columnExists("accounts", "calendar_user_addresses"))
 
-        // Insert an account without specifying the new column — verify default fires.
+        // An insert that omits the new column gets the default
         db.execSQL("INSERT INTO accounts (provider, email, created_at) VALUES ('CALDAV', 'a@example.com', 0)")
         db.query("SELECT calendar_user_addresses FROM accounts WHERE email = 'a@example.com'").use { cursor ->
             assertTrue(cursor.moveToFirst())
@@ -1046,7 +1043,7 @@ class MigrationTest {
     fun `migration 16 to 17 is idempotent`() {
         migrateUpToV16()
         Migrations.MIGRATION_16_17.migrate(db)
-        // Second run must be a no-op — no exception, schema unchanged.
+        // The second run must be a no-op: no exception, schema unchanged
         Migrations.MIGRATION_16_17.migrate(db)
 
         assertTrue(columnExists("accounts", "calendar_user_addresses"))
@@ -1117,7 +1114,7 @@ class MigrationTest {
 
         Migrations.MIGRATION_16_17.migrate(db)
 
-        // Row from before the migration must still be present — table was not dropped.
+        // The row from before the migration is still there, so the table wasn't dropped
         db.query("SELECT address FROM attendees WHERE event_id = 1").use { cursor ->
             assertTrue(cursor.moveToFirst())
             assertEquals("mailto:keep@example.com", cursor.getString(0))
@@ -1199,9 +1196,9 @@ class MigrationTest {
         assertTrue(indexExists("index_attendees_address"))
     }
 
-    // ==================== Migration 17 to 18: T2 RSVP/notification dedup state ====================
+    // ==================== Migration 17 to 18: RSVP/notification dedup state ====================
 
-    /** Walk the v1→v17 migration chain to land at the v17 starting state for v18 tests. */
+    /** Runs the v1→v17 chain for the v18 tests. */
     private fun migrateUpToV17() {
         migrateUpToV16()
         Migrations.MIGRATION_16_17.migrate(db)
@@ -1316,27 +1313,20 @@ class MigrationTest {
     fun `migration 17 to 18 pre-migration shape check rejects wrong-type partstat_only`() {
         migrateUpToV17()
 
-        // Hand-add partstat_only as TEXT instead of INTEGER (forked dev DB scenario).
+        // partstat_only hand-added as TEXT, as in a forked dev DB
         db.execSQL("ALTER TABLE pending_operations ADD COLUMN partstat_only TEXT")
 
-        // Migration must throw IllegalStateException, NOT silently leave a mis-typed column.
+        // The migration must throw IllegalStateException, not silently keep a mis-typed column
         Migrations.MIGRATION_17_18.migrate(db)
     }
 
     @Test
     fun `migration 17 to 18 post-migration validation block enumerates each missing column`() {
-        // The post-validation block uses `buildList { ... }` to collect missing
-        // columns and throws IllegalStateException with the missing list if any
-        // failed to apply. We exercise this directly by running the validation
-        // logic against a v17 schema (where none of the new columns exist yet)
-        // and asserting all three would surface as missing.
-        //
-        // We can't easily corrupt a partial ADD COLUMN inside the running
-        // migration (SQLite ALTER TABLE ADD COLUMN is itself transactional and
-        // either completes or rolls back), so this test instead validates the
-        // *shape* of the post-validation block: that all three column names
-        // are spelled correctly and would be caught if they did somehow not
-        // apply.
+        // The migration's validation block collects missing columns with `buildList` and throws
+        // IllegalStateException listing them. A partial ADD COLUMN can't be forced here (SQLite
+        // ALTER TABLE ADD COLUMN completes or rolls back), so the block's throw isn't exercised.
+        // The test checks that none of the three columns exist at v17 and all three exist after
+        // the migration.
         migrateUpToV17()
 
         // Sanity: at v17 none of the new columns exist yet.
@@ -1344,10 +1334,10 @@ class MigrationTest {
         assertFalse(columnExists("pending_operations", "partstat_target"))
         assertFalse(columnExists("attendees", "notified_at"))
 
-        // Run the migration normally — it must succeed.
+        // The migration must succeed
         Migrations.MIGRATION_17_18.migrate(db)
 
-        // All three columns must now exist (post-validation passed).
+        // All three columns now exist
         assertTrue(columnExists("pending_operations", "partstat_only"))
         assertTrue(columnExists("pending_operations", "partstat_target"))
         assertTrue(columnExists("attendees", "notified_at"))
@@ -1370,9 +1360,9 @@ class MigrationTest {
         assertTrue(indexExists("index_attendees_event_id"))
     }
 
-    // ==================== Migration 18 to 19: scheduling-capability + outbox discovery ====================
+    // ==================== Migration 18 to 19: scheduling capability + outbox ====================
 
-    /** Walk the v1→v18 migration chain to land at the v18 starting state for v19 tests. */
+    /** Runs the v1→v18 chain for the v19 tests. */
     private fun migrateUpToV18() {
         migrateUpToV17()
         Migrations.MIGRATION_17_18.migrate(db)
@@ -1495,9 +1485,9 @@ class MigrationTest {
         assertTrue(tableExists("attendees"))
     }
 
-    // ==================== Migration 19 to 20: client-outbox iTIP send tracking ====================
+    // ==================== Migrations 19 to 23: iTIP, pending_cancels, address_books ==============
 
-    /** Walk the v1→v19 migration chain to land at the v19 starting state for v20 tests. */
+    /** Runs the v1→v19 chain for the v20 tests. */
     private fun migrateUpToV19() {
         migrateUpToV18()
         Migrations.MIGRATION_18_19.migrate(db)
@@ -1768,7 +1758,7 @@ class MigrationTest {
 
     // ==================== Migration 21 to 22 (categories) ====================
 
-    /** Read a single category row's color (null if none or the row is absent). */
+    /** Reads a category row's color, or null if the color is null or the row is absent. */
     private fun categoryColor(name: String): Int? {
         db.query("SELECT color FROM categories WHERE name = ?", arrayOf(name)).use { cursor ->
             if (!cursor.moveToFirst() || cursor.isNull(0)) return null
@@ -1815,7 +1805,7 @@ class MigrationTest {
         migrateUpToV21()
         Migrations.MIGRATION_21_22.migrate(db)
 
-        // Insert "Chores", then "chores" — a NOCASE PK collapses them to one row.
+        // "Chores", then "chores": a NOCASE PK collapses them to one row
         db.execSQL("INSERT OR IGNORE INTO categories (name, color, last_used_at) VALUES ('Chores', 100, 1)")
         db.execSQL("INSERT OR IGNORE INTO categories (name, color, last_used_at) VALUES ('chores', 200, 2)")
 
@@ -2022,7 +2012,7 @@ class MigrationTest {
     @Test
     fun `migration versions form valid chain with gaps`() {
         val migrations = Migrations.ALL_MIGRATIONS.toList()
-        // Manual: 1→2, 2→3, 4→5, ..., 12→13, 13→14 (AutoMigration: 3→4)
+        // Manual: 1→2, 2→3, then 4→5 through 23→24 (3→4 is the AutoMigration)
         assertTrue(migrations[0].endVersion == migrations[1].startVersion) // 2
         assertTrue(migrations[2].startVersion == 4) // gap at 3→4
         for (i in 2 until migrations.size - 1) {

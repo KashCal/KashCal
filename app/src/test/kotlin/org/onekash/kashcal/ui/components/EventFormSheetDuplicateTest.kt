@@ -29,11 +29,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Duplicating an event must carry its tags (RFC 5545 CATEGORIES) into the new
- * event. Renders the wrapper-free [EventFormContent] with a `duplicateFrom`
- * source and asserts (1) the tag chips are seeded and visible before the user
- * saves, and (2) the saved [EventFormState] carries them. Both Room and device
- * duplicates flow through the same `duplicateFrom` branch, so this guards both.
+ * Renders [EventFormContent] with a `duplicateFrom` source and checks what the duplicate
+ * carries into the saved [EventFormState].
+ *
+ * Tags (RFC 5545 CATEGORIES): the source's tag chips show before save and the save carries
+ * them; a tagless source seeds none. Room and device duplicates take the same `duplicateFrom`
+ * branch. Calendar: a device duplicate opens on its source device calendar, also when the
+ * device groups load after the first frame (without reporting unsaved changes); a Room
+ * duplicate keeps the Room path; a gone source device calendar falls back to the Room
+ * default.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h9999dp-mdpi")
@@ -87,7 +91,7 @@ class EventFormSheetDuplicateTest {
                         accountName = "test@example.com",
                         accountType = "com.google",
                         visible = true,
-                        accessLevel = 700, // >= CONTRIBUTOR (500) -> writable
+                        accessLevel = 700, // At least CONTRIBUTOR (500), so writable.
                     )
                 )
             ),
@@ -159,8 +163,8 @@ class EventFormSheetDuplicateTest {
     @Test
     fun `duplicate of a device event defaults to its source device calendar`() {
         var captured: EventFormState? = null
-        // A device duplicate zeroes calendarId and carries the source device
-        // calendar id on the dedicated channel (as toEventForDuplicate + MainActivity do).
+        // A device duplicate zeroes calendarId and passes the source device calendar
+        // id separately, as toEventForDuplicate and MainActivity do.
         renderDuplicate(
             source = sourceEvent(calendarId = 0L),
             duplicateFromDeviceCalendarId = 10L,
@@ -191,11 +195,10 @@ class EventFormSheetDuplicateTest {
 
     @Test
     fun `device duplicate recovers its source calendar when device groups load late`() {
-        // Cold-start race: the duplicate form opens before deviceCalendarGroups
-        // has loaded, so the source device calendar isn't resolvable yet and the
-        // form falls back to the Room default. Once the groups arrive, the
-        // reconciliation effect must re-resolve to the source device calendar
-        // rather than leaving the user stranded on the Room path.
+        // Cold start: the form opens before deviceCalendarGroups loads, so the
+        // source device calendar isn't resolvable and the form falls back to the
+        // Room default. Once the groups arrive, the form must re-resolve to the
+        // source device calendar, or the user stays on the Room path.
         var captured: EventFormState? = null
         var reportedChanges: Boolean? = null
         composeTestRule.setContent {
@@ -225,9 +228,9 @@ class EventFormSheetDuplicateTest {
         }
         composeTestRule.waitForIdle()
 
-        // The async device-source upgrade is not a user edit, so it must fold into
-        // the baseline: a form the user never touched must report no unsaved changes
-        // (otherwise closing it triggers a spurious discard confirmation).
+        // The late switch to the device source isn't a user edit, so it goes into
+        // the baseline: an untouched form reports no unsaved changes, or closing it
+        // asks to discard.
         assertEquals(
             "late device-source upgrade must re-baseline, not read as an edit",
             false,

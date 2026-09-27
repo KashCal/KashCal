@@ -4,15 +4,15 @@ import android.content.Intent
 import org.onekash.kashcal.ui.viewmodels.PendingAction
 
 /**
- * Maps an `Intent.ACTION_SEND` `text/plain` intent to the right `PendingAction`:
+ * Maps an `Intent.ACTION_SEND` `text/plain` intent to a [PendingAction]:
  *
- *  - Short input → [PendingAction.QuickAddFromText] (Quick Add dialog seed)
- *  - Long input  → [PendingAction.CreateEventFromCalendarIntent] (full event form,
- *                  whole text in description)
- *  - Anything else (wrong action/type, blank, unreadable extras) → null
+ *  - Short input → [PendingAction.QuickAddFromText], seeding the Quick Add dialog.
+ *  - Long input → [PendingAction.CreateEventFromCalendarIntent], the full event form with the
+ *    whole text in the description.
+ *  - Anything else (wrong action or type, blank, unreadable extras) → null.
  *
- * Reference time is stamped at routing time so "tomorrow" in the shared text
- * resolves relative to share-arrival, not whatever date the user was browsing.
+ * The Quick Add action carries `nowMs` as its reference time, so "tomorrow" in the shared text
+ * resolves against the share's arrival, not the date the user was browsing.
  */
 object ShareIntentRouter {
 
@@ -30,7 +30,7 @@ object ShareIntentRouter {
                     description = result.description,
                     location = result.location
                 ),
-                // Shares carry no invitees — empty by contract.
+                // Shares carry no invitees.
                 invitees = emptyList()
             )
         }

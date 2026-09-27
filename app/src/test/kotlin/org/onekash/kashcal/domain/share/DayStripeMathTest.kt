@@ -97,7 +97,7 @@ class DayStripeMathTest {
 
     @Test
     fun `exactly 24-hour event hides the stripe (multi-day boundary)`() {
-        // Midnight May 31 to midnight Jun 1 — boundary case, must not paint
+        // Midnight May 31 to midnight Jun 1: the 24-hour boundary must not paint.
         val start = LocalDateTime.of(day, LocalTime.MIDNIGHT).atZone(nyc).toInstant().toEpochMilli()
         val end = LocalDateTime.of(day.plusDays(1), LocalTime.MIDNIGHT).atZone(nyc).toInstant().toEpochMilli()
         val pos = DayStripeMath.compute(
@@ -126,15 +126,14 @@ class DayStripeMathTest {
 
     @Test
     fun `start clamps to 0 if before midnight in zone (boundary safety)`() {
-        // Defensive: malformed event with end before start. Stripe should
-        // render at 0 width or simply not panic.
+        // A malformed event with its end before its start.
         val pos = DayStripeMath.compute(
             startTs = ts(LocalTime.of(13, 0)),
             endTs = ts(LocalTime.of(11, 30)),
             isAllDay = false,
             zone = nyc,
         )
-        // End before start: stripe is invisible (defensive).
+        // The stripe is hidden.
         assertFalse(pos.visible)
     }
 }

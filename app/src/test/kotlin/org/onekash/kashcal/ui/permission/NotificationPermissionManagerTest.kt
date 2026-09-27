@@ -27,16 +27,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for NotificationPermissionManager.
- *
- * Tests verify:
- * - Pre-Android 13 returns NotRequired
- * - Permission granted returns Granted
- * - First request returns NotYetRequested
- * - After first denial returns ShouldShowRationale
- * - After 2+ denials returns PermanentlyDenied
- * - onPermissionGranted resets denial count
- * - onPermissionDenied increments denial count
+ * Tests [NotificationPermissionManager]:
+ * - checkPermissionState returns NotRequired below Android 13 and Granted when granted.
+ * - Not granted, it returns ShouldShowRationale when the system offers a rationale,
+ *   PermanentlyDenied with no rationale and 2 or more stored denials, and NotYetRequested with
+ *   no rationale and 0 denials.
+ * - onPermissionGranted resets the denial count; onPermissionDenied increments it.
+ * - isPermissionRequired is true from Android 13 and false below it; isPermissionGranted is
+ *   true below it and follows the grant from it.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -58,7 +56,7 @@ class NotificationPermissionManagerTest {
         MockKAnnotations.init(this, relaxed = true)
         manager = NotificationPermissionManager(context, userPreferences)
 
-        // Mock static methods for permission checking
+        // Static mocks for the permission checks.
         mockkStatic(ContextCompat::class)
         mockkStatic(ActivityCompat::class)
     }
@@ -73,7 +71,7 @@ class NotificationPermissionManagerTest {
     @Test
     @Config(sdk = [31]) // Android 12
     fun `returns NotRequired for pre-Android 13`() = runTest {
-        // On Android 12 (SDK 31), POST_NOTIFICATIONS permission is not needed
+        // On Android 12 (SDK 31) POST_NOTIFICATIONS isn't a runtime permission.
         val state = manager.checkPermissionState(activity)
         assertEquals(PermissionState.NotRequired, state)
     }
@@ -189,7 +187,8 @@ class NotificationPermissionManagerTest {
     @Test
     @Config(sdk = [33])
     fun `returns PermanentlyDenied after 2+ denials`() = runTest {
-        // Given: Permission denied, no rationale (user checked "Don't ask again"), denial count >= 2
+        // Given: permission denied, no rationale (user checked "Don't ask again"), and a denial
+        // count of 2 or more.
         every {
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS)
         } returns PackageManager.PERMISSION_DENIED
@@ -265,7 +264,7 @@ class NotificationPermissionManagerTest {
     @Test
     @Config(sdk = [31])
     fun `isPermissionGranted returns true for pre-Android 13`() {
-        // Pre-Android 13, permission is always "granted" (not required)
+        // Below Android 13 the permission isn't required, so it reads as granted.
         assertTrue(manager.isPermissionGranted())
     }
 

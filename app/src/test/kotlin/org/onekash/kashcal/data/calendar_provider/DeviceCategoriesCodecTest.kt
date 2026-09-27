@@ -5,13 +5,13 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * Tests for the device-calendar categories codec.
+ * Tests the device-calendar categories codec ([encodeCategories], [decodeCategories],
+ * [cleanCategoryNames]).
  *
- * The stored VALUE joins tag names with a SINGLE backslash character (byte
- * 0x5C). In Kotlin literals that one character is written `"\\"`, so a stored
- * value of three tags is the 20-char string `Work\Personal\Errands`, written
- * `"Work\\Personal\\Errands"` here. Asserting against the doubled form would be
- * a two-backslash bug — these tests pin the single-char boundary deliberately.
+ * The stored VALUE joins tag names with a single backslash character (0x5C). A Kotlin literal
+ * writes that one character as `"\\"`, so three tags store as the 21-char string
+ * `Work\Personal\Errands`, written `"Work\\Personal\\Errands"` here. Asserting against a
+ * doubled separator would hide a two-backslash bug, so these tests pin the single character.
  */
 class DeviceCategoriesCodecTest {
 
@@ -35,9 +35,8 @@ class DeviceCategoriesCodecTest {
 
     @Test
     fun `encode strips a backslash inside a name so the separator stays unambiguous`() {
-        // "Work\Personal" is ONE name containing a literal backslash. Stripping
-        // it yields "WorkPersonal" so the join delimiter can't be confused with
-        // an in-name character.
+        // "Work\Personal" is one name containing a literal backslash. Stripping it gives
+        // "WorkPersonal", so the separator can't be confused with an in-name character.
         val encoded = encodeCategories(listOf("Work\\Personal", "Home"))
         assertEquals("WorkPersonal\\Home", encoded)
         assertEquals(listOf("WorkPersonal", "Home"), decodeCategories(encoded))
@@ -60,8 +59,8 @@ class DeviceCategoriesCodecTest {
 
     @Test
     fun `encode dedups case-insensitively keeping first-seen casing`() {
-        // "Work" and "home" are first-seen; the later "WORK"/"Home" collapse
-        // into them and don't change the stored casing.
+        // "Work" and "home" come first; the later "WORK" and "Home" collapse into them and
+        // don't change the stored casing.
         assertEquals("Work\\home", encodeCategories(listOf("Work", "home", "WORK", "Home")))
     }
 
@@ -77,8 +76,8 @@ class DeviceCategoriesCodecTest {
 
     @Test
     fun `decode tolerates foreign mixed-case content without rewriting casing`() {
-        // A value written by another app: unknown names, arbitrary casing.
-        // The read path must surface them verbatim, never crash.
+        // A value written by another app, with unknown names and arbitrary casing. The read
+        // must return them verbatim and never crash.
         assertEquals(listOf("WORK", "home"), decodeCategories("WORK\\home"))
     }
 
@@ -89,13 +88,13 @@ class DeviceCategoriesCodecTest {
 
     @Test
     fun `cleanCategoryNames yields the same names encode would store`() {
-        // The registry records these names, so they must match what the provider
-        // stores: backslash stripped, blanks dropped, dupes collapsed. A tag like
-        // "a\b" persists as "ab", so it must be recorded as "ab".
+        // The tag registry records these names, so they must match what the provider stores:
+        // backslashes stripped, blanks dropped, duplicates collapsed. "a\b" is stored as "ab",
+        // so it must be recorded as "ab".
         val raw = listOf("  Work ", "a\\b", "", "WORK")
         val cleaned = cleanCategoryNames(raw)
         assertEquals(listOf("Work", "ab"), cleaned)
-        // Same shape encodeCategories would produce for the survivors.
+        // The same names encodeCategories stores.
         assertEquals(cleaned, decodeCategories(encodeCategories(raw)))
     }
 

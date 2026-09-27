@@ -4,23 +4,20 @@ import androidx.biometric.BiometricManager
 
 /** What to do when the user tries to enable the app lock. */
 enum class AppLockEnrollmentAction {
-    /** A biometric or device credential is available — turn the lock on. */
+    /** A strong biometric or device credential is available: turn the lock on. */
     Enable,
 
     /**
-     * The device can authenticate but nothing is enrolled — send the user to the
-     * system enrollment flow rather than enabling a lock nothing can satisfy.
+     * Nothing is enrolled: send the user to the system enrollment flow instead of enabling a
+     * lock nothing can satisfy.
      */
     RouteToEnroll,
 
-    /** No usable authentication on this device — don't enable; tell the user. */
+    /** Any other result, such as no or unavailable hardware: don't enable; tell the user. */
     Unsupported,
 }
 
-/**
- * Translate a `BiometricManager.canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)`
- * result into the action to take.
- */
+/** Maps a `canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)` result to the enable action. */
 fun decideEnrollmentAction(canAuthenticateResult: Int): AppLockEnrollmentAction =
     when (canAuthenticateResult) {
         BiometricManager.BIOMETRIC_SUCCESS -> AppLockEnrollmentAction.Enable
@@ -30,23 +27,22 @@ fun decideEnrollmentAction(canAuthenticateResult: Int): AppLockEnrollmentAction 
 
 /** What to do when the user tries to disable the app lock. */
 enum class AppLockDisableAction {
-    /** A credential exists — challenge before turning the lock off. */
+    /** Challenge before turning the lock off. */
     Challenge,
 
     /**
-     * No credential is enrolled, so a challenge is unsatisfiable. The device is
-     * already unsecured and there is nothing left to gate on, so disable directly
-     * rather than trapping the user with a lock they can never turn off.
+     * No credential is enrolled, so a challenge can't be satisfied. The device is already
+     * unsecured, so disable directly; a challenge would leave a lock the user can never turn off.
      */
     DisableDirectly,
 }
 
 /**
- * Translate a `BiometricManager.canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)`
- * result into the action to take when DISABLING the lock. Only the
- * nothing-enrolled case skips the challenge; every other result (including
- * transient hardware-unavailable) keeps the protection and challenges, since
- * the lock is already on and must not be droppable without authentication.
+ * Maps a `canAuthenticate(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)` result to the disable action.
+ *
+ * Only the nothing-enrolled case skips the challenge. Every other result, a transient
+ * hardware-unavailable included, challenges: the lock is on and must not be dropped without
+ * authentication.
  */
 fun decideDisableAction(canAuthenticateResult: Int): AppLockDisableAction =
     when (canAuthenticateResult) {

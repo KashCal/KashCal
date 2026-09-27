@@ -37,18 +37,18 @@ import org.onekash.kashcal.ui.util.DayPagerUtils
 import java.time.LocalDate
 
 /**
- * A pinned week strip for the Agenda view: a row of locale-aware single-letter
- * weekday labels above a row of that week's day-of-month numbers. Column order
- * and the first column follow the caller's first-day-of-week setting (the caller
- * builds [weekDates] via [AgendaWeekBarLogic.weekDates], so this composable is
- * order-agnostic).
+ * Shows a pinned week strip for the Agenda view: a row of the locale's
+ * single-letter weekday labels above a row of that week's day-of-month numbers.
+ * Column order follows [weekDates], which the caller builds with
+ * [AgendaWeekBarLogic.weekDates] from the first-day-of-week setting.
  *
- * Cell states (matching the date picker's day-cell convention via [dayCellStyle],
- * so the two surfaces read alike):
+ * Cell states follow the date picker's day-cell convention ([dayCellStyle]):
  * - selected: filled [MaterialTheme.colorScheme.inverseSurface] circle
- * - today (not selected): filled [MaterialTheme.colorScheme.primaryContainer] circle
- * - today AND selected: the selected fill wins (selection takes precedence)
- * Weekend day numbers are tinted with the error color like the week view.
+ * - today, not selected: filled [MaterialTheme.colorScheme.primaryContainer] circle
+ * - today and selected: the selected fill wins
+ *
+ * Weekend letters and plain weekend day numbers are tinted with the error color,
+ * like the week view.
  *
  * @param selectedDayCode currently selected day (YYYYMMDD), or null when nothing
  *   in the shown week is selected
@@ -62,14 +62,13 @@ internal fun AgendaWeekBar(
     onDayClick: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Narrow weekday letter per column, derived from each shown date so the
-    // letters always line up with the numbers below them regardless of order.
+    // Derived from each shown date so the letters line up with the numbers below
+    // them in any order.
     val letters = remember(weekDates) {
         weekDates.map { AgendaWeekBarLogic.narrowWeekdayLetter(it.dayOfWeek) }
     }
 
     Column(modifier = modifier.padding(horizontal = 8.dp, vertical = 4.dp)) {
-        // Weekday letters row.
         Row(modifier = Modifier) {
             weekDates.forEachIndexed { i, date ->
                 Text(
@@ -85,9 +84,9 @@ internal fun AgendaWeekBar(
                 )
             }
         }
-        // Date numbers row. Cross-fades + slides when the shown week changes, so a
-        // scroll into a new week reads as "moved weeks" rather than a hard cut.
-        // Forward weeks slide in from the right, earlier weeks from the left.
+        // Date numbers. Fades and slides when the shown week changes, so a scroll
+        // into a new week reads as a move, not a hard cut. Later weeks slide in
+        // from the right, earlier ones from the left.
         AnimatedContent(
             targetState = weekDates,
             transitionSpec = {
@@ -122,9 +121,6 @@ private fun DateCell(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Reuse the date picker's day-cell convention so the two surfaces match:
-    // selected = inverseSurface (dark), today = primaryContainer (accent),
-    // selection taking precedence over today.
     val style = dayCellStyle(isToday = isToday, isSelected = isSelected)
     val fill = when (style) {
         DayCellStyle.SELECTED -> MaterialTheme.colorScheme.inverseSurface
@@ -141,10 +137,10 @@ private fun DateCell(
         }
     }
 
-    // The bare day number is meaningless to a screen reader; describe the full
-    // date + state on the cell and label the tap action ("Go to date"). Merging
-    // semantics keeps the clickable's click action while overriding the spoken
-    // text, so TalkBack reads e.g. "Saturday, July 18, Today" instead of "18".
+    // The bare day number means nothing to a screen reader, so the cell carries
+    // the full date and state and labels the tap action ("Go to date"). Merged
+    // semantics keep the clickable's action while overriding the spoken text, so
+    // TalkBack reads e.g. "Saturday, July 18, Today" instead of "18".
     val cellDescription = AgendaWeekBarLogic.cellContentDescription(
         date = date,
         isToday = isToday,
@@ -161,8 +157,8 @@ private fun DateCell(
                 .clip(CircleShape)
                 .then(if (fill != null) Modifier.background(fill, CircleShape) else Modifier)
                 // Today's tonal fill can wash out against the surface for pale accent
-                // seeds; a hairline outline keeps the ring visible on any theme. Selected
-                // uses inverseSurface (already high-contrast) so it needs no border.
+                // seeds, so a hairline outline keeps the ring visible on any theme. The
+                // high-contrast inverseSurface fill of the selected cell needs none.
                 .then(
                     if (style == DayCellStyle.TODAY) {
                         Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)

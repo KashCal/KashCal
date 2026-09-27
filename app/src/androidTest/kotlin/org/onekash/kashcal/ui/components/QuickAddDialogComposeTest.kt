@@ -221,7 +221,8 @@ class QuickAddDialogComposeTest {
                 startTime = LocalTime.of(17, 0)
             )
         )
-        // Substring match — the preview text is "Today   17:00" (or similar)
+        // The time is its own Text node ("17:00" with no end time); the substring match
+        // still passes if that node gains more text, such as an end time.
         composeTestRule.onNode(hasText("17:00", substring = true)).assertIsDisplayed()
         assertTrue(
             "Preview must not show 12-hour AM/PM marker when timeFormat='24h'",
@@ -240,7 +241,7 @@ class QuickAddDialogComposeTest {
                 startTime = LocalTime.of(17, 0)
             )
         )
-        // 12h form shows "5:00 PM" (or locale equivalent); must NOT show literal "17:00"
+        // 12h shows "5:00 PM" (or the locale's equivalent) and never the literal "17:00".
         composeTestRule.onNode(hasText("5:00", substring = true)).assertIsDisplayed()
         assertTrue(
             "Preview must not show 24-hour 17:00 when timeFormat='12h'",

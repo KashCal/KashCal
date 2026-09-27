@@ -13,9 +13,8 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Robolectric tests for [AttendeesDao.getNeedsActionAttendeesForEvents].
- * Asserts SQL filter: only rows with partstat = 'NEEDS-ACTION', scoped
- * to the requested event IDs.
+ * Tests the SQL filter of [AttendeesDao.getNeedsActionAttendeesForEvents]: only rows with
+ * partstat 'NEEDS-ACTION', only for the requested event IDs, and none for an empty ID list.
  */
 class AttendeesDaoNeedsActionTest : BaseDaoTest() {
 

@@ -1,26 +1,22 @@
 package org.onekash.kashcal.sync.carddav
 
 /**
- * CardDAV (RFC 6352) XML namespaces and element/property local-names used to
- * build request bodies and match streamed response elements.
+ * Names the CardDAV (RFC 6352) element and property local-names and vCard versions that
+ * [CardDavXmlParser] matches. The client's request bodies spell their element names inline and
+ * don't read these.
  *
- * Centralized so the client's wire bodies and the parser's element matching
- * share one source of truth instead of scattering literals. This mirrors the
- * intent of the CalDAV stack while staying entirely inside `sync/carddav/`: it
- * borrows no CalDAV symbol, and the WebDAV / CalendarServer namespaces here are
- * the same wire constants the CalDAV side happens to use — protocol facts, not
- * a shared dependency.
+ * It borrows no CalDAV symbol; the WebDAV and CalendarServer names here are wire constants the
+ * CalDAV side also uses, protocol facts rather than a shared dependency.
  *
- * The parser runs namespace-aware, so element matching keys on the local-name
- * (`XmlPullParser.name` with a prefix-agnostic parser); these are those
- * local-names. The client's request bodies carry the namespace URIs inline with
- * explicit prefixes (`xmlns:card="urn:ietf:params:xml:ns:carddav"` etc.).
+ * The parser runs namespace-aware and matches on the local-name (`XmlPullParser.name`), so
+ * these are local-names only. The client's request bodies carry the namespace URIs inline with
+ * explicit prefixes (e.g. `xmlns:card="urn:ietf:params:xml:ns:carddav"`).
  */
 internal object CardDavXmlNamespaces {
 
     // ----- Element / property local-names (namespace-aware matching) -----
 
-    /** `CARDDAV:addressbook-home-set` — principal property (RFC 6352 §7.1.1). */
+    /** `CARDDAV:addressbook-home-set` principal property (RFC 6352 §7.1.1). */
     const val ADDRESSBOOK_HOME_SET = "addressbook-home-set"
 
     /** `CARDDAV:addressbook` resourcetype marking an address book collection (RFC 6352 §5.2). */
@@ -38,7 +34,7 @@ internal object CardDavXmlNamespaces {
      */
     const val ADDRESS_DATA_TYPE = "address-data-type"
 
-    /** `CARDDAV:address-data` — the vCard payload element (RFC 6352 §10.4). */
+    /** `CARDDAV:address-data`, the vCard payload element (RFC 6352 §10.4). */
     const val ADDRESS_DATA = "address-data"
 
     /** `CS:getctag` collection-tag property (CalendarServer extension). */

@@ -71,18 +71,16 @@ import org.onekash.kashcal.ui.permission.ContactsPermissionState
 import org.onekash.kashcal.util.AddressNormalizer
 
 /**
- * The attendee picker: a [ModalBottomSheet] off the event form's Attendees
- * row. Search field always on top (usable without any permission); selected
- * attendees as removable chips; debounced contact suggestions; an
- * "Add 'x@y'" row for a typed email; an inline contacts-permission banner
- * (never a popup) that disappears on permanent denial.
+ * Shows the attendee picker, a bottom sheet opened from the event form's Attendees row.
  *
- * The selection model holds [Attendee] ENTITIES, seeded from the event's
- * existing rows, so editing preserves wire fields the UI projection drops.
- * Selections auto-commit: every add/remove fires [onSelectionChanged] with the
- * merged entities, so there's no confirm step — back or swipe just closes
- * (consistent with the settings/event search surfaces). Mirrors how Signal's
- * contact picker commits live.
+ * A search field on top works without any permission. Below it: the selected attendees as
+ * removable chips, an inline contacts-permission banner (never a popup), an "Add 'x@y'" row for
+ * a typed email, and debounced contact suggestions.
+ *
+ * The selection is an [AttendeeSelection] seeded from [seed], the event's [Attendee] rows, so
+ * editing keeps the wire fields the UI projection drops. Every add or remove calls
+ * [onSelectionChanged] with the merged rows, so there is no confirm step and closing loses
+ * nothing.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, FlowPreview::class)
 @Composable
@@ -103,12 +101,9 @@ fun AttendeePickerSheet(
     var query by remember { mutableStateOf("") }
     var suggestions by remember { mutableStateOf<List<ContactEmail>>(emptyList()) }
 
-    // Auto-focus the search field on open so the keyboard is up immediately —
-    // the picker is a search-first surface, so a second tap to focus is wasted.
-    // The field isn't attached during the sheet's enter animation, so a
-    // one-shot requestFocus() can no-op on slower devices (the keyboard never
-    // appears). Retry across frames until focus takes (or we give up), so the
-    // behavior is deterministic regardless of animation timing.
+    // Focuses the search field on open so the keyboard is up at once. The field isn't attached
+    // during the sheet's enter animation, so a one-shot requestFocus() can fail on slower
+    // devices and the keyboard never appears; retry once per frame, up to 20 frames.
     val searchFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) {
         repeat(20) {
@@ -116,17 +111,16 @@ fun AttendeePickerSheet(
                 searchFocus.requestFocus()
                 true
             } catch (_: IllegalStateException) {
-                false // FocusRequester not attached yet — wait a frame and retry.
+                false // Not attached yet; wait a frame and retry.
             }
             if (focused) return@LaunchedEffect
             withFrameNanos {}
         }
     }
 
-    // Apply a selection change and auto-commit it to the caller. add/remove
-    // return the same instance on a no-op (duplicate add / absent remove), so
-    // referential inequality is the precise "something actually changed" test —
-    // avoids a redundant callback when nothing did.
+    // Commits a selection change to the caller. add and remove return the same instance on a
+    // no-op (a duplicate add, an absent remove), so referential inequality means something
+    // changed and a no-op fires no callback.
     fun applySelection(next: AttendeeSelection) {
         if (next !== selection) {
             selection = next
@@ -134,18 +128,16 @@ fun AttendeePickerSheet(
         }
     }
 
-    // Pin the sheet to a near-full-screen fixed height (matching EventFormSheet)
-    // so it opens tall like the Signal contact picker and — crucially — does
-    // NOT resize when the search keyboard opens/closes (a fillMaxHeight sheet
-    // recomputes against the IME-shrunk window and visibly hops). Computed once
-    // per configuration so rotation still resizes correctly.
+    // A fixed near-full-screen height, so the sheet opens tall and doesn't resize when the
+    // keyboard opens or closes: a fillMaxHeight sheet recomputes against the IME-shrunk window
+    // and visibly hops. Keyed on the configuration so rotation still resizes it.
     val configuration = LocalConfiguration.current
     val sheetHeight = remember(configuration.orientation, configuration.screenWidthDp) {
         (configuration.screenHeightDp * 0.95f).dp
     }
 
-    // Debounced contact lookup. Re-queries only when granted; otherwise the
-    // suggestion list stays empty and the user types a full email instead.
+    // Debounced contact lookup, only while the permission is granted; otherwise the list stays
+    // empty and the user types a full email.
     LaunchedEffect(permissionState) {
         snapshotFlow { query }
             .debounce(300)
@@ -163,10 +155,8 @@ fun AttendeePickerSheet(
         selection.attendees.map { AddressNormalizer.canonical(it.address) }.toSet()
     }
 
-    // Pinned like EventFormSheet: no drag handle, gestures disabled, fixed tall
-    // height. It opens full like the Signal picker and stays put while the
-    // search keyboard opens/closes. The back button (and scrim tap) closes it;
-    // selections auto-commit, so nothing is lost on close.
+    // No drag handle and no sheet gestures, so it stays put while the keyboard opens or closes.
+    // Back and a scrim tap close it.
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -178,8 +168,7 @@ fun AttendeePickerSheet(
                 .fillMaxWidth()
                 .height(sheetHeight)
         ) {
-        // Back-button header (back closes), matching the settings/event-search
-        // search surfaces — no confirm/cancel buttons since edits auto-commit.
+        // A back-button header and no confirm or cancel buttons, since edits commit at once.
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -229,10 +218,8 @@ fun AttendeePickerSheet(
                 .padding(horizontal = 16.dp, vertical = 4.dp),
         )
 
-        // Everything below the pinned header + search scrolls as one region —
-        // selected chips, the optional permission banner, and the suggestion
-        // list — so a long list of added attendees stays reachable instead of
-        // overflowing off the bottom. Header + search stay on screen.
+        // Everything below the header and search scrolls as one region, so a long list of added
+        // attendees stays reachable instead of overflowing off the bottom.
         val canOfferContacts = permissionState is ContactsPermissionState.NotRequested ||
             permissionState is ContactsPermissionState.ShouldShowRationale
         val showBanner = canOfferContacts && !bannerDismissed && query.isBlank()
@@ -243,7 +230,6 @@ fun AttendeePickerSheet(
                 .weight(1f)
                 .padding(bottom = 8.dp),
         ) {
-            // Selected attendees as removable chips.
             if (selection.attendees.isNotEmpty()) {
                 item(key = "selected_chips") {
                     FlowRow(
@@ -257,8 +243,8 @@ fun AttendeePickerSheet(
                             val label = att.displayName?.takeIf { it.isNotBlank() }
                                 ?: AddressNormalizer.stripMailto(att.address)
                             val isYou = account?.matchesAttendee(att.address) == true
-                            // Every guest is removable — uninviting a seeded
-                            // guest sends them an iTIP CANCEL on save.
+                            // Every guest is removable; saving queues an iTIP CANCEL for a
+                            // removed guest of an event already on the server.
                             val removable = selection.isRemovable(att)
                             FilterChip(
                                 selected = true,
@@ -298,10 +284,9 @@ fun AttendeePickerSheet(
                 }
             }
 
-            // Inline permission banner — shown only when contacts could help,
-            // the user hasn't dismissed it this session, and there's no active
-            // query. Permanent denial hides it too (no settings redirect —
-            // manual entry remains).
+            // Only while the permission can still be asked for, the banner isn't dismissed or
+            // declined, and the query is empty. A permanent denial hides it with no settings
+            // redirect; typed entry still works.
             if (showBanner) {
                 item(key = "perm_banner") {
                     ContactsPermissionBanner(
@@ -346,9 +331,8 @@ fun AttendeePickerSheet(
 }
 
 /**
- * Compact read-only chip used on the event form's editable Attendees row to
- * preview a selected invitee (avatar dot + label). Removal happens inside the
- * picker, so this chip has no close affordance.
+ * Shows a selected invitee on the event form's Attendees row: an initials avatar and [label].
+ * Removal happens in the picker, so the chip has no close button.
  */
 @Composable
 fun AttendeePickChip(label: String, address: String, initialsSource: String = label) {
@@ -368,9 +352,8 @@ fun AttendeePickChip(label: String, address: String, initialsSource: String = la
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
-                    // Initials come from the person's real name, not the visible
-                    // label — when the label is the "You" marker the avatar must
-                    // still show the user's own initials, not "Y".
+                    // From the real name, not the label: when the label is "You" the avatar
+                    // still shows the user's initials, not "Y".
                     text = avatarInitials(initialsSource),
                     style = MaterialTheme.typography.labelSmall,
                     color = contrastForegroundOn(avatarColorFor(address)),
@@ -388,10 +371,9 @@ fun AttendeePickChip(label: String, address: String, initialsSource: String = la
 }
 
 /**
- * Inline contacts-permission card, shaped like an Android-settings grouped
- * card. [onAllow] fires the system dialog; [onDeny] permanently declines (the
- * banner never returns); the top-right ✕ ([onDismiss]) hides it for this
- * session only.
+ * Shows the inline contacts-permission card. [onAllow] opens the system dialog, [onDeny]
+ * declines for good so the banner never returns, and the top-right ✕ ([onDismiss]) hides it
+ * while the form stays open.
  */
 @Composable
 private fun ContactsPermissionBanner(
@@ -411,7 +393,7 @@ private fun ContactsPermissionBanner(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         Icons.Default.PersonAdd,
-                        contentDescription = null, // decorative; title carries the meaning
+                        contentDescription = null, // decorative; the text carries the meaning
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.width(14.dp))

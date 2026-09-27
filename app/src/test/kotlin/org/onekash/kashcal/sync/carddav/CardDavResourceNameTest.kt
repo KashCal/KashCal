@@ -6,13 +6,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for the contact resource-naming policy.
- *
- * When a contact's UID is a safe URL path segment we name the resource after it
- * (`<uid>.vcf`) — one server (Zoho) rejects arbitrary resource names with a
- * misleading 401, so biasing to the UID form keeps writes working there. When
- * the UID would not be a safe path segment we fall back to a random UUID name so
- * the URL is always well-formed and needs no escaping.
+ * Tests [contactResourceName]: a UID that is a safe path segment names the resource
+ * (`<uid>.vcf`), which keeps writes working on Zoho (it rejects arbitrary names with a
+ * misleading 401). Any other UID gets a random UUID name, so the URL is always well-formed and
+ * needs no escaping.
  */
 class CardDavResourceNameTest {
 
@@ -78,9 +75,9 @@ class CardDavResourceNameTest {
 
     @Test
     fun `a synthesized UUID uid names the resource by itself`() {
-        // A device-created contact carries no UID; its caller synthesizes a globally-unique
-        // UUID and passes it here. A bare UUID is a safe path segment, so it names the file
-        // directly — no random re-derivation, so a re-attempt hits the same resource.
+        // A device-created contact has no UID, so its caller synthesizes a UUID and passes it
+        // here. A bare UUID is a safe path segment, so it names the file with no random name,
+        // and a re-attempt hits the same resource.
         val uid = "11111111-2222-3333-4444-555555555555"
         assertEquals("$uid.vcf", contactResourceName(uid))
         assertEquals("the same uid always yields the same name", contactResourceName(uid), contactResourceName(uid))

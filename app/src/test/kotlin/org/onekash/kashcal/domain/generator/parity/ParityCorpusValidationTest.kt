@@ -13,24 +13,20 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 /**
- * Hygiene enforcement for the parity fixture corpus.
+ * Checks the four parity corpus pools for authoring errors, which would otherwise show up in the
+ * parity runs as false divergences that turn out to be transcription errors.
  *
- * These assertions exist to catch corpus-authoring errors before they reach
- * the engine-level parity runs. A malformed fixture case produces
- * a false divergence that wastes analyst time triaging what turns out to be
- * a transcription error.
- *
- * Rules enforced:
- * - No two cases share a `name` (global uniqueness, across all pools).
- * - `rangeEndMs > rangeStartMs` for every case.
- * - `dtstartMs` falls within a sane epoch range (1990..2050).
- * - `rangeStartMs` and `rangeEndMs` both within the same sane epoch range.
- * - For Pool A (rfc): `name` matches `RFC 5545 §3.8.5.3 example \d+.*`.
- * - Every case with a non-null `rfcExpected`: sorted ascending, unique,
- *   each timestamp within `[rangeStartMs, rangeEndMs)`.
- * - Every case with a non-null `knownDivergenceReason` has a non-blank reason.
- * - Pool identifiers match their expected category tag.
- * - Total corpus size within the 85..120 band.
+ * Rules:
+ * - Total corpus size is in 85..120, and Pool B has exactly 6 cases.
+ * - Case names are non-blank and unique across all pools.
+ * - The rrule is non-blank, except in the adversarial pool.
+ * - `rangeEndMs > rangeStartMs`.
+ * - `dtstartMs` and `rangeStartMs` fall in [1990, 2050), `rangeEndMs` in [1990, 2050].
+ * - Pool A (rfc) names match `RFC 5545 §3.8.5.3 example \d+.*`.
+ * - Each pool's cases carry that pool's category tag.
+ * - `rfcExpected` is set on every Pool A case and on no other; when set it is sorted
+ *   ascending, has no duplicates and lies within `[rangeStartMs, rangeEndMs)`.
+ * - A `knownDivergenceReason`, when set, is non-blank.
  */
 class ParityCorpusValidationTest {
 
@@ -74,8 +70,8 @@ class ParityCorpusValidationTest {
 
     @Test
     fun `every case has a non-blank rrule`() {
-        // Exception: adversarial pool may include cases that TEST parser robustness
-        // with empty/blank rrule inputs. We allow blank only for the "adversarial" category.
+        // The adversarial pool may test parser robustness with a blank rrule; no other
+        // pool may.
         val bad = allCases.filter { it.rrule.isBlank() && it.category != "adversarial" }
         bad.forEach { println("blank-rrule non-adversarial: ${it.name}") }
         assertTrue("non-adversarial cases must have non-blank rrule", bad.isEmpty())
@@ -180,9 +176,8 @@ class ParityCorpusValidationTest {
 
     @Test
     fun `rfcExpected is absent on non-Pool-A cases`() {
-        // Non-RFC pools are input-only; ground truth comes from engine comparison, not from transcription.
-        // If someone populates rfcExpected on a Pool B/C/D case, that's a red flag — the RFC is not
-        // authority over those cases.
+        // The other pools are input-only: their ground truth comes from comparing the engines,
+        // and the RFC is no authority over them.
         val wronglyPopulated = allCases.filter {
             it.category != "rfc" && it.rfcExpected != null
         }

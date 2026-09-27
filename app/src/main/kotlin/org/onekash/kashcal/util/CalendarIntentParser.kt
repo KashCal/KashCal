@@ -8,11 +8,11 @@ import org.onekash.kashcal.util.CalendarIntentParser.parse
 import org.onekash.kashcal.util.CalendarIntentParser.parseCalendarContractUri
 
 /**
- * Parsed data from a calendar intent (ACTION_INSERT).
- * All fields are nullable - intent may contain partial data.
+ * Event fields that pre-fill a new event in the event form.
  *
- * Used when other apps trigger "Add to Calendar" via standard Android intents.
- * Examples: calendar invites, browser event links, etc.
+ * Built from another app's calendar intent ([CalendarIntentParser]), from long shared text
+ * ([ShareIntentRouter]) or from Quick Add (`QuickAddViewModel.toCalendarIntentData`). Any field
+ * may be missing.
  */
 @Immutable
 data class CalendarIntentData(
@@ -26,11 +26,10 @@ data class CalendarIntentData(
     val categories: List<String> = emptyList()
 ) {
     /**
-     * Get description with invitees appended (if present in original intent).
-     * Called during EventFormSheet pre-fill.
+     * Returns the description with an "Invitees:" line appended, or the description alone
+     * when [invitees] is empty. Called by the event form's pre-fill.
      *
-     * @param invitees List of email addresses from Intent.EXTRA_EMAIL
-     * @return Description with invitees appended, or original description if no invitees
+     * @param invitees email addresses from `Intent.EXTRA_EMAIL`
      */
     fun getDescriptionWithInvitees(invitees: List<String>): String {
         val base = description.orEmpty()
@@ -41,41 +40,39 @@ data class CalendarIntentData(
 }
 
 /**
- * Actions parsed from CalendarContract content URIs (content://com.android.calendar/...).
- *
- * Used by launchers, clock widgets, and other apps that fire
- * ACTION_VIEW/ACTION_EDIT on standard CalendarContract URIs.
+ * Actions parsed from CalendarContract content URIs (content://com.android.calendar/...),
+ * which launchers, clock widgets and other apps fire with ACTION_VIEW or ACTION_EDIT.
  */
 sealed class CalendarContractAction {
-    /** Navigate to a specific date. From VIEW content://com.android.calendar/time/{millis}. */
+    /** Navigates to a date. From VIEW content://com.android.calendar/time/{millis}. */
     data class GoToDate(val dayCode: Int) : CalendarContractAction()
 
-    /** Create event with pre-filled data. From EDIT content://com.android.calendar/events with extras. */
+    /** Creates an event from the extras. From EDIT content://com.android.calendar/events. */
     data class CreateEvent(val data: CalendarIntentData, val invitees: List<String>) : CalendarContractAction()
 
     /**
-     * Open a device calendar event. From VIEW content://com.android.calendar/events/{id}
-     * (transit apps, notification taps, launchers).
+     * Opens a device event. From VIEW content://com.android.calendar/events/{id} (transit
+     * apps, notification taps, launchers).
      *
-     * @param eventId CalendarProvider event ID parsed from the URI path.
-     * @param beginTimeMillis The specific occurrence start (EXTRA_EVENT_BEGIN_TIME) when the
-     *   sender supplied a positive value, else null. Non-null routes straight to the
-     *   occurrence quick view; null routes to a navigate-to-the-event's-start-date fallback.
+     * @param eventId CalendarProvider event ID from the URI path.
+     * @param beginTimeMillis the occurrence start (EXTRA_EVENT_BEGIN_TIME) when the sender
+     *   supplied a positive value, else null. Non-null opens that occurrence's quick view;
+     *   null navigates to the event's start date.
      */
     data class OpenDeviceEvent(val eventId: Long, val beginTimeMillis: Long?) : CalendarContractAction()
 
-    /** Open the app normally (fallback for unresolvable paths). */
+    /** Opens the app with no action; the fallback for paths it can't resolve. */
     data object OpenApp : CalendarContractAction()
 }
 
 /**
- * Parser for CalendarContract intents.
+ * Parses CalendarContract intents from other apps:
+ * - ACTION_INSERT, or ACTION_EDIT with an event MIME type ("Add to Calendar" from email
+ *   clients and browsers)
+ * - ACTION_VIEW or ACTION_EDIT on content://com.android.calendar URIs (launchers, clock
+ *   widgets)
  *
- * Handles:
- * - ACTION_INSERT intents from other apps ("Add to Calendar" from email clients, browsers, etc.)
- * - ACTION_VIEW/EDIT on content://com.android.calendar URIs (launchers, clock widgets)
- *
- * @see [CalendarContract](https://developer.android.com/reference/android/provider/CalendarContract)
+ * @see CalendarContract
  */
 object CalendarIntentParser {
 
@@ -83,43 +80,33 @@ object CalendarIntentParser {
     private const val CALENDAR_AUTHORITY = "com.android.calendar"
 
     /**
-     * Upper bound for millis values from intent URIs (~year 2200).
-     * Prevents nonsensical dayCode from extreme timestamps.
+     * Upper bound (year 2200) on millis from intent URIs, so an extreme value can't yield a
+     * nonsense day code.
      */
     private const val MAX_REASONABLE_MILLIS = 7258118400000L
 
     /**
-     * Check if intent is a calendar event creation intent.
+     * Returns true for an ACTION_INSERT or ACTION_EDIT intent with an event MIME type (dir or
+     * item) or, lacking one, a content://com.android.calendar/events data URI.
      *
-     * Accepts both ACTION_INSERT and ACTION_EDIT — EDIT is treated as create because
-     * KashCal doesn't use CalendarProvider IDs. Matches both dir and item MIME variants.
-     *
-     * @param intent The incoming intent to check
-     * @return true if this is an ACTION_INSERT or ACTION_EDIT intent with calendar event MIME type
+     * EDIT is treated as a create: editing an existing device event through this intent isn't
+     * supported.
      */
     fun isCalendarInsertIntent(intent: Intent?): Boolean {
         if (intent == null) return false
         val action = intent.action
-        // Accept INSERT and EDIT (EDIT treated as create — KashCal doesn't use CalendarProvider IDs)
         if (action != Intent.ACTION_INSERT && action != Intent.ACTION_EDIT) return false
-        // Match explicit MIME type — both dir and item variants
         val type = intent.type
         if (type == "vnd.android.cursor.dir/event" || type == "vnd.android.cursor.item/event") return true
-        // Match CalendarContract data URI (apps using setData() — type resolved by
-        // ContentProvider during intent filter matching, but not stored on intent)
+        // An app that uses setData() leaves the type unset on the intent: the ContentProvider
+        // resolves it only during intent-filter matching.
         val uri = intent.data ?: return false
         return uri.authority == CALENDAR_AUTHORITY && uri.lastPathSegment == "events"
     }
 
     /**
-     * Check if intent is a CalendarContract content URI intent (VIEW/EDIT).
-     *
-     * Matches intents from launchers and clock widgets that fire:
-     * - ACTION_VIEW content://com.android.calendar/time/{millis}
-     * - ACTION_EDIT content://com.android.calendar/events
-     *
-     * @param intent The incoming intent to check
-     * @return true if this is a VIEW/EDIT intent targeting com.android.calendar
+     * Returns true for an ACTION_VIEW or ACTION_EDIT intent on any content://com.android.calendar
+     * URI, such as VIEW .../time/{millis} from a clock widget or EDIT .../events.
      */
     fun isCalendarContractIntent(intent: Intent?): Boolean {
         if (intent == null) return false
@@ -130,43 +117,27 @@ object CalendarIntentParser {
     }
 
     /**
-     * Parse CalendarContract extras from intent.
-     *
-     * Extracts standard calendar fields:
-     * - TITLE, DESCRIPTION, EVENT_LOCATION (strings)
-     * - EXTRA_EVENT_BEGIN_TIME, EXTRA_EVENT_END_TIME (millis)
-     * - EXTRA_EVENT_ALL_DAY (boolean)
-     * - RRULE (recurrence rule string)
-     * - EXTRA_EMAIL (comma-separated invitees)
-     *
-     * @param intent The incoming calendar intent
-     * @return Pair of (CalendarIntentData, invitees list), or null if not a valid calendar intent
+     * Returns the event fields and invitees of a calendar insert intent, or null when
+     * [isCalendarInsertIntent] rejects it. The fields read are listed on [extractCalendarExtras].
      */
     fun parse(intent: Intent?): Pair<CalendarIntentData, List<String>>? {
         if (!isCalendarInsertIntent(intent)) return null
-        // intent is guaranteed non-null after isCalendarInsertIntent check
         return extractCalendarExtras(intent!!)
     }
 
     /**
-     * Parse a CalendarContract content URI into an action.
+     * Maps a CalendarContract content URI intent to an action, or returns null when
+     * [isCalendarContractIntent] rejects it:
+     * - /time/{millis} with positive millis → [CalendarContractAction.GoToDate]
+     * - EDIT /events with a positive EXTRA_EVENT_BEGIN_TIME → [CalendarContractAction.CreateEvent]
+     * - VIEW /events/{id} with a positive id → [CalendarContractAction.OpenDeviceEvent]
+     * - anything else, EDIT /events/{id} included → [CalendarContractAction.OpenApp]
      *
-     * Handles standard CalendarContract URI patterns:
-     * - /time/{millis} → [CalendarContractAction.GoToDate]
-     * - /events (EDIT + extras) → [CalendarContractAction.CreateEvent]
-     * - /events/{id} (VIEW) → [CalendarContractAction.OpenDeviceEvent]
-     * - /events/{id} (EDIT), unknown paths → [CalendarContractAction.OpenApp]
-     *
-     * Design note: EDIT on /events (no ID) is treated as "create" because there is no
-     * event ID to resolve — only extras describing a new event. This is the standard
-     * behavior for third-party calendar apps.
-     *
-     * @param intent The incoming CalendarContract intent
-     * @return Parsed action, or null if not a CalendarContract intent
+     * EDIT on /events has no event ID to resolve, only extras describing a new event, so it
+     * is a create. This is the standard behavior for third-party calendar apps.
      */
     fun parseCalendarContractUri(intent: Intent?): CalendarContractAction? {
         if (!isCalendarContractIntent(intent)) return null
-        // intent is guaranteed non-null after isCalendarContractIntent check
         val safeIntent = intent!!
         val uri = safeIntent.data ?: return CalendarContractAction.OpenApp
         val pathSegments = uri.pathSegments
@@ -176,7 +147,6 @@ object CalendarIntentParser {
             pathSegments.size == 2 && pathSegments[0] == "time" -> {
                 val millis = pathSegments[1].toLongOrNull()
                 if (millis != null && millis > 0) {
-                    // Bound millis to reasonable range
                     val boundedMillis = millis.coerceIn(1, MAX_REASONABLE_MILLIS)
                     val dayCode = DayPagerUtils.msToDayCode(boundedMillis)
                     CalendarContractAction.GoToDate(dayCode)
@@ -197,9 +167,9 @@ object CalendarIntentParser {
                 }
             }
 
-            // content://com.android.calendar/events/{id} + ACTION_VIEW → open device event.
-            // EDIT on /events/{id} is intentionally NOT handled here (stays OpenApp) — editing
-            // an existing device event by CalendarProvider ID is out of scope.
+            // content://com.android.calendar/events/{id} + ACTION_VIEW. EDIT on /events/{id}
+            // falls to OpenApp: editing a device event by its CalendarProvider ID is out of
+            // scope.
             pathSegments.size == 2 && pathSegments[0] == "events" &&
                 safeIntent.action == Intent.ACTION_VIEW -> {
                 val eventId = pathSegments[1].toLongOrNull()
@@ -219,14 +189,12 @@ object CalendarIntentParser {
     }
 
     /**
-     * Extract CalendarContract extras from an intent.
+     * Reads the event extras shared by [parse] and [parseCalendarContractUri]: TITLE,
+     * DESCRIPTION, EVENT_LOCATION, EXTRA_EVENT_BEGIN_TIME and EXTRA_EVENT_END_TIME (kept only
+     * when positive), EXTRA_EVENT_ALL_DAY, RRULE, and EXTRA_EMAIL split on commas as invitees.
      *
-     * Shared helper used by both [parse] (ACTION_INSERT) and
-     * [parseCalendarContractUri] (ACTION_EDIT on /events).
-     *
-     * Note: getLongExtra returns -1 (default) when the extra is stored as Int
-     * instead of Long. This is a known Android limitation — some apps bundle
-     * EXTRA_EVENT_BEGIN_TIME as Int. No workaround without type-checking Bundle.
+     * getLongExtra returns the -1 default when an app bundles EXTRA_EVENT_BEGIN_TIME as an
+     * Int, so that start is lost; reading it would take type-checking the Bundle.
      */
     private fun extractCalendarExtras(intent: Intent): Pair<CalendarIntentData, List<String>> {
         val invitees = intent.getStringExtra(Intent.EXTRA_EMAIL)

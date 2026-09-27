@@ -5,38 +5,29 @@ import org.junit.Test
 import kotlin.random.Random
 
 /**
- * Differential fuzz oracle for RRULE expansion.
+ * Fuzzes RRULE expansion differentially: the production ical4j engine
+ * ([org.onekash.kashcal.domain.generator.IcalDavRRuleEngine]) against lib-recur, retired from
+ * production and kept in the tests as an independent reference.
  *
- * ical4j is the PRODUCTION engine (via [org.onekash.kashcal.domain.generator.IcalDavRRuleEngine]);
- * lib-recur is retired from production but kept as an independent second
- * implementation precisely so it can serve as a differential reference here.
- *
- * Feeds randomly-generated, well-formed [RRuleCase]s (see [RandomRRuleGenerator])
- * through both engines via the existing [ParityHarnessRunner] and treats any
- * *correctness-relevant* divergence as a finding:
- *  - [ParityResult.Divergence] — both engines succeeded but produced different
- *    occurrence sets.
- *  - asymmetric [ParityResult.OneErrored] — one engine expanded a well-formed
- *    rule while the other threw.
- *
- * Because the generator only emits DTSTART-synchronized rules (RFC 5545 §3.8.5.3
- * defined space), a divergence means the two engines disagree on input the spec
- * *does* define — a lead to triage against the RFC. It is not automatically a
- * production bug (the RFC may still be ambiguous on the specific rule), but in
- * this input space a divergence is the strongest possible signal that the
- * production engine may be wrong, so the test fails loudly and prints the case.
+ * Runs well-formed [RRuleCase]s from [RandomRRuleGenerator] through [ParityHarnessRunner] and
+ * fails on any finding:
+ *  - [ParityResult.Divergence]: both engines succeeded with different occurrence sets.
+ *    LibRecurEngine returns an empty list on failure, so a lib-recur error lands here, or in
+ *    BothAgree when ical4j is also empty.
+ *  - [ParityResult.OneErrored]: one engine expanded the rule while the other threw or timed out.
  *
  * [ParityResult.BothAgree] and [ParityResult.BothErrored] are not findings.
  *
- * This complements, rather than duplicates, the Jazzer `rrule-*` harnesses (in
- * the gitignored `fuzz/` workspace): those check a single engine never throws or
- * runs away; this checks that two independent engines *agree on the answer*.
+ * The generator emits only DTSTART-synchronized rules, the space RFC 5545 §3.8.5.3 defines, so a
+ * divergence is a disagreement on input the spec defines: a lead to triage against the RFC, not
+ * automatically a production bug (the RFC may be ambiguous on that rule).
  *
- * Reproducibility: the seed and iteration count are fixed constants, overridable
- * via `-Dfuzz.rrule.seed=` / `-Dfuzz.rrule.iterations=` so a nightly job can run
- * far more iterations. A failure prints the exact `RRuleCase` so it can be
- * promoted into [org.onekash.kashcal.domain.generator.parity.fixtures.AdversarialCorpus]
- * as a permanent regression test.
+ * The Jazzer `rrule-*` harnesses in the gitignored `fuzz/` workspace check that one engine never
+ * throws or runs away; this checks that two engines agree on the answer.
+ *
+ * The seed and iteration count are fixed, overridable with `-Dfuzz.rrule.seed=` and
+ * `-Dfuzz.rrule.iterations=` for a longer run. A failure prints each case to promote into
+ * [org.onekash.kashcal.domain.generator.parity.fixtures.AdversarialCorpus] as a regression test.
  */
 class RRuleDifferentialFuzzTest {
 
@@ -69,7 +60,7 @@ class RRuleDifferentialFuzzTest {
         }
     }
 
-    /** Returns a human-readable + reproducible description if [parity] is a finding, else null. */
+    /** Describes [parity] for reproduction if it is a finding, else returns null. */
     private fun describeFinding(case: RRuleCase, parity: ParityResult): String? = when (parity) {
         is ParityResult.BothAgree -> null
         is ParityResult.BothErrored -> null // both reject: not a correctness divergence

@@ -8,10 +8,9 @@ import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Event
 
 /**
- * Pure-JVM tests for [singleOccurrenceForShare]. The helper turns a master
- * event + the user-tapped occurrence's start/end timestamps into a synthetic
- * single-occurrence Event suitable for ICS export. The recipient should get
- * one standalone calendar entry — not the full recurring series.
+ * Tests [singleOccurrenceForShare], which turns a master event and the tapped occurrence's start
+ * and end into a standalone single-occurrence Event for ICS export, so the recipient gets one
+ * calendar entry, not the recurring series.
  */
 class SingleOccurrenceForShareTest {
 
@@ -48,8 +47,7 @@ class SingleOccurrenceForShareTest {
 
     @Test
     fun `single-occurrence strips the originalEventId and originalInstanceTime`() {
-        // Even if the input is an exception event with an originalEventId,
-        // the share-card export should be a standalone event.
+        // Even an exception event with an originalEventId exports as a standalone event.
         val exceptionEvent = masterEvent.copy(
             id = 43L,
             originalEventId = 42L,
@@ -96,9 +94,8 @@ class SingleOccurrenceForShareTest {
 
     @Test
     fun `rawIcal is cleared so IcsExporter takes the generateFresh path`() {
-        // Without this, IcsPatcher.patch would preserve ATTENDEE / ORGANIZER /
-        // X-* lines from the server's original ICS body and leak them to the
-        // share-card recipient.
+        // With rawIcal set, IcsPatcher.patch would keep the ATTENDEE, ORGANIZER and X-* lines
+        // from the server's original ICS body and leak them to the share-card recipient.
         val withRawIcal = masterEvent.copy(rawIcal = "BEGIN:VCALENDAR\r\n...END:VCALENDAR\r\n")
         val out = singleOccurrenceForShare(withRawIcal, withRawIcal.startTs, withRawIcal.endTs)
         assertNull(out.rawIcal)

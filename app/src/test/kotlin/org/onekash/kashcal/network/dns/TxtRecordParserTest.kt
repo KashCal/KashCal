@@ -13,17 +13,17 @@ import org.onekash.kashcal.network.dns.DnsWireTestFixtures.question
 import org.onekash.kashcal.network.dns.DnsWireTestFixtures.u16
 
 /**
- * Adversarial + real-fixture tests for the DNS TXT response wire decoder and the
- * RFC 6763 §6.4 `path` attribute extractor.
+ * Tests [TxtRecordParser.parse] on captured responses, RCODE handling, skipped non-TXT answers,
+ * multi-string records and malformed input, and [TxtRecordParser.pathValue], the RFC 6763 §6.4
+ * `path` extractor.
  *
- * After a successful SRV lookup, RFC 6764 §6 step 3 requires the client to also
- * query the same name for a TXT record and honour a `path=` key as the context
- * path (§4). The bytes come from an untrusted resolver, so — like the SRV
- * decoder — the parser must never throw, never loop, and never emit a half-built
- * result: it returns a typed [TxtParseResult] for every input.
+ * After a successful SRV lookup, RFC 6764 §6 step 3 has the client query the same name for TXT
+ * and use a `path` key as the initial context path (§4). The bytes come from an untrusted
+ * resolver, so, like the SRV decoder, the parser must never throw, never loop and never emit a
+ * half-built result; it returns a typed [TxtParseResult] for every input.
  *
- * The positive fixture is the exact wire bytes captured from a live query to a
- * real provider that publishes `_carddavs._tcp ... TXT "path=/.well-known/carddav"`.
+ * The first fixture is the exact wire bytes captured from a live query to a real provider that
+ * publishes `_carddavs._tcp ... TXT "path=/.well-known/carddav"`.
  */
 class TxtRecordParserTest {
 
@@ -52,12 +52,11 @@ class TxtRecordParserTest {
         assertEquals("/.well-known/carddav", TxtRecordParser.pathValue(result.strings))
     }
 
-    // ---- more real captured fixtures (train half: full wire → parse) --------
+    // ---- more real captured fixtures (full wire -> parse) -------------------
     //
-    // Exact UDP response bytes from live `_carddavs._tcp` / `_caldavs._tcp` TXT
-    // queries against real providers. These exercise the full decode path on
-    // genuine wire shapes; the validation half below feeds their decoded strings
-    // straight into pathValue() to lock the §6.4 extraction against real values.
+    // Exact UDP response bytes from live `_carddavs._tcp` / `_caldavs._tcp` TXT queries
+    // against real providers, run through the full decode path. The path-value section
+    // below feeds further live-captured strings straight into pathValue().
 
     /** gmx.net _caldavs: one string, `path=/begenda/dav/users/`. */
     private val GMX = hex(
@@ -121,16 +120,16 @@ class TxtRecordParserTest {
 
     @Test
     fun `yandex real fixture whose only answer is a CNAME is NoRecords`() {
-        // The provider aliases the service name; there is no TXT RR to honour, so
-        // the CNAME (type 5) is skipped by rdlength and the result is NoRecords.
+        // The provider aliases the service name, so there is no TXT RR: the CNAME (type 5)
+        // is skipped by rdlength and the result is NoRecords.
         assertEquals(TxtParseResult.NoRecords, TxtRecordParser.parse(YANDEX_CNAME))
     }
 
-    // ---- validation half: decoded real path values → §6.4 extraction --------
+    // ---- real path values -> §6.4 extraction ---------------------------------
     //
-    // These lock pathValue() against the exact strings other real providers
-    // publish today (captured live, held back from the parse fixtures above), so
-    // a regression in the key/value split shows up against real-world data.
+    // These lock pathValue() against the exact strings real providers publish (captured
+    // live; all but the last have no wire fixture here), so a regression in the key/value
+    // split shows up against real-world data.
 
     @Test
     fun `real provider path values extract correctly`() {
@@ -141,7 +140,7 @@ class TxtRecordParserTest {
         // bell.net publishes distinct card/cal paths.
         assertEquals("/carddav", TxtRecordParser.pathValue(listOf("path=/carddav")))
         assertEquals("/calendars", TxtRecordParser.pathValue(listOf("path=/calendars")))
-        // Google's well-known-style path.
+        // The well-known-style path the first wire fixture carries.
         assertEquals("/.well-known/carddav", TxtRecordParser.pathValue(listOf("path=/.well-known/carddav")))
     }
 
@@ -169,19 +168,16 @@ class TxtRecordParserTest {
 
     @Test
     fun `NXDOMAIN with a lying nonzero ANCOUNT still yields NoRecords`() {
-        // The name-error RCODE is authoritative: there are no answers regardless
-        // of what ANCOUNT claims. A hostile server that sets RCODE 3 but ANCOUNT 1
-        // (with no RR bytes following) must NOT make the parser walk past the
-        // question into garbage — the RCODE wins and the count is ignored.
+        // A hostile server sets RCODE 3 but ANCOUNT 1 with no RR bytes following. The RCODE
+        // wins and the count is ignored, so the parser doesn't walk past the question.
         val pkt = header(rcode = 3, qd = 1, an = 1) + QUESTION
         assertEquals(TxtParseResult.NoRecords, TxtRecordParser.parse(pkt))
     }
 
     @Test
     fun `NXDOMAIN with a malformed question is still NoRecords`() {
-        // RCODE 3 is authoritative and the body is not trusted or parsed. A
-        // garbled/truncated question on a name-error response must not flip "no TXT
-        // for this name" into a parse failure — the RCODE short-circuits the walk.
+        // RCODE 3 returns before the body is read, so a truncated question on a name-error
+        // response must not turn "no TXT for this name" into a parse failure.
         val pkt = header(rcode = 3, qd = 1, an = 0) + byteArrayOf(40, 0x61, 0x62, 0x63)
         assertEquals(TxtParseResult.NoRecords, TxtRecordParser.parse(pkt))
     }
@@ -197,7 +193,7 @@ class TxtRecordParserTest {
 
     @Test
     fun `answer holding only a non-TXT RR is NoRecords`() {
-        // A single A (type 1) RR, no TXT: a well-formed answer with nothing for us.
+        // A single A (type 1) RR and no TXT: a well-formed answer with no strings.
         val pkt = header(rcode = 0, qd = 1, an = 1) + QUESTION +
             otherRr(type = 1, rdata = byteArrayOf(1, 2, 3, 4))
         assertEquals(TxtParseResult.NoRecords, TxtRecordParser.parse(pkt))
@@ -206,7 +202,8 @@ class TxtRecordParserTest {
     @Test
     fun `non-TXT RRs before a TXT RR are skipped by rdlength`() {
         val a = otherRr(type = 1, rdata = byteArrayOf(1, 2, 3, 4))         // A
-        val srv = otherRr(type = 33, rdata = u16(0) + u16(0) + u16(443) + encodeName("x.test")) // SRV
+        // SRV
+        val srv = otherRr(type = 33, rdata = u16(0) + u16(0) + u16(443) + encodeName("x.test"))
         val txt = txtRr("path=/dav/")
         val pkt = header(rcode = 0, qd = 1, an = 3) + QUESTION + a + srv + txt
         val result = TxtRecordParser.parse(pkt)
@@ -244,8 +241,8 @@ class TxtRecordParserTest {
 
     @Test
     fun `a character-string that ends flush with rdlength parses`() {
-        // length octet 3 + exactly 3 bytes, rdlength 4: the last string ends
-        // precisely at the rdata boundary — the common off-by-one must not fail it.
+        // Length octet 3 + 3 bytes, rdlength 4: the last string ends at the rdata boundary,
+        // and an off-by-one in the bound would fail it.
         val rdata = byteArrayOf(3, 0x61, 0x62, 0x63)
         val pkt = header(rcode = 0, qd = 1, an = 1) + QUESTION +
             byteArrayOf(0xc0.toByte(), 0x0c) + u16(16) + u16(1) + TTL + u16(rdata.size) + rdata
@@ -255,8 +252,8 @@ class TxtRecordParserTest {
 
     @Test
     fun `rdlength zero TXT RR contributes no strings`() {
-        // RFC 6763 §6.1: a zero-length TXT record should be read as a single empty
-        // string / no record. We contribute nothing, so a lone empty TXT is NoRecords.
+        // RFC 6763 §6.1: a zero-length TXT record is to be treated like a single empty string
+        // or no TXT record. It adds no strings, so a lone empty TXT is NoRecords.
         val pkt = header(rcode = 0, qd = 1, an = 1) + QUESTION +
             byteArrayOf(0xc0.toByte(), 0x0c) + u16(16) + u16(1) + TTL + u16(0)
         assertEquals(TxtParseResult.NoRecords, TxtRecordParser.parse(pkt))
@@ -310,8 +307,8 @@ class TxtRecordParserTest {
 
     @Test
     fun `a bare path attribute with no equals has no value even before a valued one`() {
-        // A boolean "path" (no '=') is the first occurrence of the key, so §6.4
-        // makes it win — and a boolean attribute carries no value.
+        // A boolean "path" (no '=') is the first occurrence of the key, so §6.4 makes it
+        // win, and a boolean attribute carries no value.
         assertNull(TxtRecordParser.pathValue(listOf("path", "path=/late/")))
     }
 

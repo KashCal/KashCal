@@ -79,9 +79,9 @@ class ExportFileNamesTest {
 
     @Test
     fun `preserves decomposed NFD diacritics`() {
-        // Base 'u' (U+0075) plus combining diaeresis (U+0308) = NFD form, not the
-        // precomposed U+00FC. Proves the helper normalizes to NFC rather than
-        // dropping the accent (a combining mark is \p{M}, not \p{L}).
+        // Base 'u' (U+0075) plus combining diaeresis (U+0308) is the NFD form, not the
+        // precomposed U+00FC. The helper normalizes to NFC, so the result is the precomposed
+        // letter with its accent.
         val nfd = "Müller"
         val result = sanitizeExportBaseName(nfd, "event")
         assertEquals("Müller", result) // precomposed u-umlaut, accent retained

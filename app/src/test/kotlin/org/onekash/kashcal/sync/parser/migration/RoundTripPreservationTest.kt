@@ -13,15 +13,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Round-trip preservation tests for KashCal's icaldav integration.
- *
- * These tests verify that iCalendar data survives:
+ * Checks that iCalendar data survives the app's round trip:
  * 1. Parse → ICalEvent (icaldav)
- * 2. Map → Event (KashCal entity)
+ * 2. Map → Event (Room entity)
  * 3. IcsPatcher serialize → ICS string
  * 4. Parse → ICalEvent (icaldav)
- *
- * This is the core value proposition of N9 (Round-Trip Preservation).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -32,15 +28,13 @@ class RoundTripPreservationTest {
 
     @Test
     fun `recurring master with reminder does not trip hasContentChanged on round-trip`() {
-        // Reproduces the device-observed "2 alerts" bug: editing one occurrence
-        // bumps the whole resource etag, so PullStrategy re-processes the master
-        // and relies on hasContentChanged to suppress the master notification
-        // (only the sibling exception changed). If the map→serialize→map
-        // round-trip is not lossless for a NON-stripped field, hasContentChanged
-        // returns true and the master fires a spurious "updated" alert.
+        // Editing one occurrence changes the whole resource's etag, so PullStrategy
+        // re-processes the master and relies on hasContentChanged to suppress its
+        // notification. If map→serialize→map loses any field hasContentChanged compares, the
+        // master fires a spurious "updated" alert (seen on device as two alerts).
         //
-        // Models a real iCloud recurring master (TZID, VALARM reminder, STATUS/
-        // TRANSP/CLASS) — the shape that produced the extra alert on device.
+        // Models a real iCloud recurring master (TZID, VALARM reminder, STATUS, TRANSP,
+        // CLASS), the shape that produced the extra alert.
         val icloudMasterIcal = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -65,23 +59,22 @@ class RoundTripPreservationTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // What KashCal STORES after the first pull.
+        // What the app stores after the first pull.
         val stored = ICalEventMapper.toEntity(
             parser.parseAllEvents(icloudMasterIcal).getOrNull()!![0],
             icloudMasterIcal, 1L, null, null
         ).event
 
-        // What KashCal RE-DERIVES on a later pull: serialize (push path) then
-        // parse + map (pull path) — the same two serializers that run across a
-        // real edit-one-occurrence round-trip.
+        // What the app derives on a later pull: serialize (push path), then parse and map
+        // (pull path), as in a real edit-one-occurrence round trip.
         val regenerated = IcsPatcher.serialize(stored)
         val reparsed = ICalEventMapper.toEntity(
             parser.parseAllEvents(regenerated).getOrNull()!![0],
             regenerated, 1L, null, null
         ).event
 
-        // The master content is unchanged, so this must be false — otherwise the
-        // master emits a spurious SyncChange on every sibling-exception edit.
+        // The master is unchanged, so this must be false; otherwise it emits a spurious
+        // SyncChange on every edit to a sibling exception.
         assertEquals(
             "Round-trip must be lossless for hasContentChanged. reminders=${stored.reminders}->${reparsed.reminders} " +
                 "alarmCount=${stored.alarmCount}->${reparsed.alarmCount} duration=${stored.duration}->${reparsed.duration} " +
@@ -109,13 +102,11 @@ class RoundTripPreservationTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Parse → Map → Serialize → Parse
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
-        // Core fields preserved
         assertEquals(event1.uid, event2.uid)
         assertEquals(event1.summary, event2.summary)
         assertEquals(event1.description, event2.description)
@@ -143,27 +134,23 @@ class RoundTripPreservationTest {
 
         val event1 = parser.parseAllEvents(originalIcal).getOrNull()!![0]
 
-        // X-properties should be in rawProperties
         assertTrue(
             "X-APPLE properties should be preserved",
             event1.rawProperties.any { it.key.startsWith("X-APPLE") }
         )
 
-        // Map to entity with rawIcal for preservation
+        // rawIcal is passed so the patcher can keep what the entity doesn't model.
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
 
-        // extraProperties should contain X-properties
         assertNotNull("extraProperties should not be null", entity.extraProperties)
         assertTrue(
             "X-APPLE properties should be in extraProperties",
             entity.extraProperties!!.any { it.key.startsWith("X-APPLE") }
         )
 
-        // Serialize and parse again
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
-        // X-properties still present
         assertTrue(
             "X-APPLE properties should survive round-trip",
             event2.rawProperties.any { it.key.startsWith("X-APPLE") }
@@ -205,20 +192,20 @@ class RoundTripPreservationTest {
         assertEquals("Should parse 3 alarms", 3, event1.alarms.size)
 
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
-        // Note: ICalEventMapper.reminders only keeps first 3, but alarmCount tracks total
+        // reminders keeps at most the 5 alarms closest to DTSTART; alarmCount counts every
+        // alarm.
         assertEquals("alarmCount should be 3", 3, entity.alarmCount)
 
-        // Serialize with patching (preserves original alarms)
+        // Patching rawIcal keeps the original alarms.
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
-        // All 3 alarms preserved via patching
         assertEquals("All 3 alarms should survive round-trip", 3, event2.alarms.size)
     }
 
     @Test
     fun `VALARM with UID preserved on round-trip`() {
-        // RFC 9074: Alarms can have UID property
+        // RFC 9074: an alarm can have a UID.
         val originalIcal = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -248,7 +235,7 @@ class RoundTripPreservationTest {
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
-        // Alarm UID preserved via rawIcal patching
+        // The alarm UID survives through rawIcal patching.
         assertNotNull("Alarm uid should survive round-trip", event2.alarms[0].uid)
     }
 
@@ -279,7 +266,7 @@ class RoundTripPreservationTest {
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
-        // Attendees preserved via patching
+        // With no attendee rows passed, patching keeps the original attendees.
         assertEquals("Attendees should survive round-trip", 2, event2.attendees.size)
         assertNotNull("Organizer should survive round-trip", event2.organizer)
     }
@@ -308,7 +295,7 @@ class RoundTripPreservationTest {
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
-        // Categories preserved via rawProperties
+        // Categories go through the entity's categories field.
         assertEquals("Categories should survive round-trip", 3, event2.categories.size)
     }
 
@@ -402,7 +389,6 @@ class RoundTripPreservationTest {
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
-        // Timezone should be preserved
         assertEquals("America/New_York", event2.dtStart.timezone?.id)
         ParsedEventComparator.assertTimestampsEquivalent(
             event1.dtStart.timestamp,
@@ -431,14 +417,13 @@ class RoundTripPreservationTest {
         assertNotNull("Should have duration", event1.duration)
 
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
-        // Entity stores effective end time, not duration
+        // endTs is the effective end, DTSTART plus the DURATION.
         val expectedEndTs = event1.dtStart.timestamp + 90 * 60 * 1000
         assertEquals(expectedEndTs, entity.endTs)
 
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
-        // Effective end time should be equivalent
         ParsedEventComparator.assertTimestampsEquivalent(
             event1.effectiveEnd().timestamp,
             event2.effectiveEnd().timestamp,
@@ -556,18 +541,16 @@ class RoundTripPreservationTest {
         val entity = ICalEventMapper.toEntity(event1, originalIcal, 1L, null, null).event
         assertEquals(5, entity.sequence)
 
-        // IcsPatcher serializes SEQUENCE verbatim; the bump decision lives
-        // upstream in EventWriter (SequenceBumper), not in the serializer.
+        // IcsPatcher writes SEQUENCE as stored; EventWriter decides bumps (SequenceBumper).
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
-        // Sequence preserved through the serialize round-trip
         assertEquals(5, event2.sequence)
     }
 
     @Test
     fun `iCloud real event structure preserved`() {
-        // Simplified iCloud event structure
+        // Simplified iCloud event.
         val originalIcal = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -598,7 +581,6 @@ class RoundTripPreservationTest {
         val regeneratedIcal = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcal).getOrNull()!![0]
 
-        // All key fields preserved
         assertEquals(event1.uid, event2.uid)
         assertEquals(event1.summary, event2.summary)
         assertEquals(event1.description, event2.description)
@@ -606,7 +588,6 @@ class RoundTripPreservationTest {
         assertEquals("America/Los_Angeles", event2.dtStart.timezone?.id)
         assertEquals(1, event2.alarms.size)
 
-        // X-APPLE property preserved
         assertTrue(
             "X-APPLE-TRAVEL-ADVISORY-BEHAVIOR should be preserved",
             event2.rawProperties.containsKey("X-APPLE-TRAVEL-ADVISORY-BEHAVIOR")

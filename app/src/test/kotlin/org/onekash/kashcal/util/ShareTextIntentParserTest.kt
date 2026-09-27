@@ -95,8 +95,8 @@ class ShareTextIntentParserTest {
 
     @Test
     fun `falls back to EXTRA_SUBJECT when EXTRA_TEXT is whitespace`() {
-        // Some senders set EXTRA_TEXT="" or whitespace for header-only shares.
-        // Without this fallback, the subject is silently lost.
+        // Some senders set EXTRA_TEXT to "" or whitespace for header-only shares; without the
+        // fallback the subject is silently lost.
         val intent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, "   ")

@@ -16,7 +16,7 @@ import org.onekash.kashcal.error.ErrorActionCallback
 import org.onekash.kashcal.error.ErrorPresentation
 
 /**
- * Error dialog for critical errors requiring user action.
+ * Shows an [ErrorPresentation.Dialog] for an error the user must act on.
  *
  * Usage:
  * ```
@@ -29,17 +29,15 @@ import org.onekash.kashcal.error.ErrorPresentation
  * }
  * ```
  *
- * Design:
- * - Uses Material 3 AlertDialog
- * - Primary action is always shown (confirm button)
- * - Secondary action is optional (dismiss button)
- * - Non-dismissible dialogs block outside taps
+ * The primary action is always the confirm button; the secondary action, when present, is the
+ * dismiss button. A button also calls [onDismiss] only when its action is a dismiss action. A
+ * non-dismissible dialog ignores outside taps and says an action is required.
  *
- * Use cases:
- * - Authentication errors (Sign In / Cancel)
- * - Session expired (must re-authenticate)
- * - Storage full (Open Settings / Close)
- * - Sync conflicts (Force Sync / Cancel)
+ * Examples from [org.onekash.kashcal.error.ErrorMapper]:
+ * - invalid credentials (Try again / Cancel)
+ * - session expired (Sign in, non-dismissible)
+ * - storage full (Open settings / Close)
+ * - sync conflict (Force sync / Cancel)
  */
 @Composable
 fun ErrorDialog(
@@ -58,7 +56,6 @@ fun ErrorDialog(
             if (presentation.dismissible) {
                 onDismiss()
             }
-            // Non-dismissible dialogs ignore outside taps
         },
         title = {
             Text(
@@ -72,7 +69,6 @@ fun ErrorDialog(
                     text = message,
                     style = MaterialTheme.typography.bodyMedium
                 )
-                // Add hint about dismissibility for non-dismissible dialogs
                 if (!presentation.dismissible) {
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
@@ -113,9 +109,8 @@ fun ErrorDialog(
 }
 
 /**
- * Simplified error dialog for quick one-off dialogs.
- *
- * For complex dialogs with multiple actions, use ErrorDialog with ErrorPresentation.Dialog.
+ * Shows a one-off error dialog from plain strings; use [ErrorDialog] for an
+ * [ErrorPresentation.Dialog].
  */
 @Composable
 fun SimpleErrorDialog(

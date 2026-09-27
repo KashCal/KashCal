@@ -6,11 +6,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for SharedComponents.
- * Tests SectionHeader, SettingsCard, and related utility functions.
- *
- * Note: Composable UI tests require AndroidX Compose testing which runs as
- * instrumented tests. These unit tests verify the supporting logic and data.
+ * Tests the subscription UI constants and helpers in SubscriptionComponents.kt: [AccentColors]
+ * success greens, [SubscriptionColors], [subscriptionSyncIntervalOptions] and
+ * [normalizeSubscriptionUrl].
  */
 class SharedComponentsTest {
 
@@ -18,7 +16,7 @@ class SharedComponentsTest {
 
     @Test
     fun `AccentColors success light has correct value`() {
-        // System green: #34C759
+        // Green: #34C759
         assertEquals(0xFF34C759.toInt().toLong(), AccentColors.SuccessLight.value.toLong() shr 32)
     }
 

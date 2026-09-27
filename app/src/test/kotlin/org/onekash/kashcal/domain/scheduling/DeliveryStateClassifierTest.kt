@@ -4,10 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Truth table for [classifyDelivery] against the RFC 6638 §3.2.9 delivery
- * status codes and the §7.1 SCHEDULE-AGENT semantics. The classifier is the
- * single interpretation home for "what did the server decide about delivery,"
- * so every consumer agrees without re-deriving the code rules.
+ * Tests [classifyDelivery] against the RFC 6638 §3.2.9 delivery status codes and the §7.1
+ * SCHEDULE-AGENT values, plus malformed inputs. It is the one interpretation of what the server
+ * decided about delivery, so every consumer agrees without re-deriving the code rules.
  */
 class DeliveryStateClassifierTest {
 
@@ -25,19 +24,18 @@ class DeliveryStateClassifierTest {
 
     @Test
     fun `delivery failure 5x is delivered or attempted (the server tried)`() {
-        // 5.x = the server attempted delivery but the recipient was
-        // undeliverable. It is still a positive "the server owns delivery"
-        // signal — the client must NOT also send.
+        // 5.x: the server attempted delivery but the recipient was undeliverable. It still
+        // means the server owns delivery, so the client must not also send.
         assertEquals(DeliveryState.ServerOwnsDelivery, classifyDelivery("5.1", null))
         assertEquals(DeliveryState.ServerOwnsDelivery, classifyDelivery("5.0", null))
     }
 
     @Test
     fun `rejection 3x is server-owns-delivery, not no-receipt`() {
-        // 3.7 = "Invalid calendar user" (RFC 5545 §3.8.8.3). The server
-        // processed and rejected delivery; the client must NOT then try to
-        // send to the same bad address. Presence of any stamped code — not a
-        // 1/2/5 allowlist — is what makes this classify correctly.
+        // 3.7: "Invalid calendar user" (RFC 6638 §3.2.9; the RFC 5545 §3.8.8.3 example). The
+        // server processed and rejected delivery, so the client must not then send to the same
+        // bad address. Any stamped code counts, not a 1/2/5 allowlist, so this classifies as
+        // server-owned.
         assertEquals(DeliveryState.ServerOwnsDelivery, classifyDelivery("3.7", null))
     }
 
@@ -53,16 +51,16 @@ class DeliveryStateClassifierTest {
 
     @Test
     fun `schedule-agent SERVER or NONE with no status is no receipt`() {
-        // SERVER is the default and not itself a delivery receipt; NONE means
-        // store-only. Without a SCHEDULE-STATUS there is no positive signal.
+        // SERVER is the default and not itself a delivery receipt; NONE means store-only.
+        // Without a SCHEDULE-STATUS there is no positive signal.
         assertEquals(DeliveryState.NoReceipt, classifyDelivery(null, "SERVER"))
         assertEquals(DeliveryState.NoReceipt, classifyDelivery(null, "NONE"))
     }
 
     @Test
     fun `a delivering status wins over schedule-agent CLIENT`() {
-        // If the server both declined-by-agent and yet stamped a delivery
-        // status, the delivery receipt is authoritative — do not client-send.
+        // A server that declined by agent and yet stamped a delivery status: the receipt wins,
+        // so the client doesn't send.
         assertEquals(DeliveryState.ServerOwnsDelivery, classifyDelivery("1.2", "CLIENT"))
     }
 
@@ -89,11 +87,10 @@ class DeliveryStateClassifierTest {
     }
 
     // ========== Adversarial: hostile / malformed inputs ==========
-    // The columns are populated from whatever a server stamps on the wire, so
-    // the classifier must never crash and must degrade to a safe verdict on
-    // garbage. "Safe" = a present-but-junk status still reads as
-    // ServerOwnsDelivery (a stamp means the server processed it), and only a
-    // genuinely empty/absent status falls through to agent / NoReceipt.
+    // The columns hold whatever a server stamps on the wire, so the classifier must never
+    // crash and must degrade to a safe verdict on garbage: a present but junk status still
+    // reads as ServerOwnsDelivery (a stamp means the server processed it), and only an empty
+    // or absent leading code falls through to the agent check or NoReceipt.
 
     @Test
     fun `leading-comma status does not throw and is treated as empty`() {
@@ -108,8 +105,8 @@ class DeliveryStateClassifierTest {
 
     @Test
     fun `non-numeric junk status is still a present stamp`() {
-        // A server that stamps a non-numeric token still demonstrably processed
-        // the message; presence (not numeric validity) is the signal.
+        // A server that stamps a non-numeric token still processed the message; presence, not
+        // numeric validity, is the signal.
         assertEquals(DeliveryState.ServerOwnsDelivery, classifyDelivery("garbage", null))
     }
 
@@ -120,8 +117,8 @@ class DeliveryStateClassifierTest {
 
     @Test
     fun `agent value that merely contains CLIENT as substring is NOT a client decline`() {
-        // Exact-match (after trim), not contains — "CLIENTX" / "NOTCLIENT" are
-        // unknown agents, not an explicit client-delivery decline.
+        // An exact match after trim, not contains: "CLIENTX" and "NOT-CLIENT" are unknown
+        // agents, not a client-delivery decline.
         assertEquals(DeliveryState.NoReceipt, classifyDelivery(null, "CLIENTX"))
         assertEquals(DeliveryState.NoReceipt, classifyDelivery(null, "NOT-CLIENT"))
     }

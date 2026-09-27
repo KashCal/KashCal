@@ -13,15 +13,14 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 
 /**
- * Unit tests for [AttendeeBackfill] — the on-demand rawIcal-parse-and-persist
- * helper that closes the etag-unchanged-skip gap on the inbound persistence
- * path (events whose etag hasn't changed since the attendees table was
- * added have empty attendee rows; we backfill from `event.rawIcal` on first
- * chip render).
+ * Tests [AttendeeBackfill.backfillIfEmpty], which parses `event.rawIcal` and writes the master
+ * VEVENT's attendees when an event has no attendee rows or an unusable address.
  *
- * Idempotency contract: backfill is row-set idempotent via
- * [AttendeesDao.replaceForEvent]. Concurrent calls converge to the same
- * final state — no Mutex required.
+ * Covers the no-op returns (missing event, null, empty or ATTENDEE-less rawIcal, a header-only
+ * ICS, usable rows already stored), the re-parse of principal-href and bare-mailto rows, a
+ * re-parse with no usable address, which writes nothing, master selection over an exception,
+ * dropping a blank address, and repeat calls, which each write the same set through
+ * [AttendeesDao.replaceForEvent].
  */
 class AttendeeBackfillTest {
 
@@ -89,10 +88,9 @@ class AttendeeBackfillTest {
 
     @Test
     fun `re-parses when persisted address is iCloud principal-href (F6 self-heal)`() = runTest {
-        // Events synced under v23.7.16 stored Apple's principal-href as the
-        // attendee.address because the parser didn't fall back to EMAIL=
-        // parameter. Post-fix, on next chip render the backfill should
-        // detect the malformed address and re-parse from rawIcal.
+        // Events synced under v23.7.16 stored iCloud's principal href as the address, from a
+        // parser without the EMAIL= fallback. The backfill treats that row as unusable and
+        // re-parses rawIcal.
         coEvery { eventsDao.getById(1L) } returns event(rawIcal = ICS_WITH_ATTENDEES)
         coEvery { attendeesDao.getForEvent(1L) } returns kotlinx.coroutines.flow.flowOf(
             listOf(
@@ -101,7 +99,7 @@ class AttendeeBackfillTest {
             )
         )
         val result = backfill.backfillIfEmpty(1L)
-        // Re-parse fired — the new mailto rows replace the malformed ones.
+        // The re-parsed mailto rows replace the stored ones.
         assertEquals(2, result)
         coVerify(exactly = 1) { attendeesDao.replaceForEvent(1L, any()) }
     }
@@ -151,15 +149,15 @@ class AttendeeBackfillTest {
 
     @Test
     fun `picks master VEVENT when rawIcal contains exception (RECURRENCE-ID)`() = runTest {
-        // Master + exception in same VCALENDAR. Backfill must use the master's
-        // attendees (the no-RECURRENCE-ID variant), not the exception's.
+        // Master and exception in one VCALENDAR. The backfill uses the master's attendees (the
+        // VEVENT without RECURRENCE-ID), not the exception's.
         coEvery { eventsDao.getById(1L) } returns event(rawIcal = ICS_MASTER_PLUS_EXCEPTION)
         coEvery { attendeesDao.getForEvent(1L) } returns kotlinx.coroutines.flow.flowOf(emptyList())
         val result = backfill.backfillIfEmpty(1L)
         assertEquals(2, result)
         coVerify(exactly = 1) {
             attendeesDao.replaceForEvent(1L, match { written ->
-                // master had alice + bob; exception had alice + carol; we picked master
+                // The master has alice and bob; the exception has alice and carol.
                 written.size == 2 &&
                     written.any { it.address == "mailto:alice@example.test" } &&
                     written.any { it.address == "mailto:bob@example.test" } &&
@@ -170,6 +168,7 @@ class AttendeeBackfillTest {
 
     @Test
     fun `returns 0 when rawIcal parses successfully but yields zero VEVENTs`() = runTest {
+        // This body has no ATTENDEE text either, so the call returns before the parse.
         val headerOnly = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -183,7 +182,8 @@ class AttendeeBackfillTest {
 
     @Test
     fun `returns 0 when rawIcal parse throws — never propagates`() = runTest {
-        // Garbage that throws inside ical4j parser
+        // This body has no ATTENDEE text, so the call returns before the parse; the branch that
+        // catches a throwing parse isn't reached here.
         coEvery { eventsDao.getById(1L) } returns event(rawIcal = "definitely not ics")
         coEvery { attendeesDao.getForEvent(1L) } returns kotlinx.coroutines.flow.flowOf(emptyList())
         val result = backfill.backfillIfEmpty(1L)
@@ -193,9 +193,9 @@ class AttendeeBackfillTest {
 
     @Test
     fun `filters attendees with blank or whitespace address before insert`() = runTest {
-        // RFC 5545 §3.8.4.1 mandates a CAL-ADDRESS but malformed ICS may yield
-        // empty-mailto attendees that would violate Room's NOT NULL constraint
-        // on `address`. Defensive filter drops them.
+        // RFC 5545 §3.8.4.1 gives ATTENDEE a CAL-ADDRESS value, but a bare `mailto:` has no
+        // address. The parser skips an ATTENDEE with a blank address, and the backfill drops
+        // any left, so only alice is written.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -225,26 +225,23 @@ class AttendeeBackfillTest {
     @Test
     fun `idempotent on repeat call when table empty (replaceForEvent guarantees row-set convergence)`() = runTest {
         coEvery { eventsDao.getById(1L) } returns event(rawIcal = ICS_WITH_ATTENDEES)
-        // First call: empty. Second call: also empty (caller hasn't observed
-        // the write yet — simulates two concurrent screens).
+        // Both calls see no rows, as two screens opening at once would before either write.
         coEvery { attendeesDao.getForEvent(1L) } returns kotlinx.coroutines.flow.flowOf(emptyList())
         val a = backfill.backfillIfEmpty(1L)
         val b = backfill.backfillIfEmpty(1L)
         assertEquals(2, a)
         assertEquals(2, b)
-        // Both calls invoke replaceForEvent — that's fine; it's @Transaction
-        // delete-then-insert, so the final row set is identical.
+        // Both calls write; replaceForEvent replaces the whole set in one transaction, so the
+        // final row set is the same.
         coVerify(exactly = 2) { attendeesDao.replaceForEvent(1L, any()) }
     }
 
     @Test
     fun `does not write when re-parse yields same address-set as existing rows (F4 idempotent skip)`() = runTest {
-        // Pathological case: ATTENDEE with principal-href primary AND no
-        // EMAIL= parameter. Parser preserves the principal-href (no fallback
-        // succeeded). isUsableAddress rejects it again → re-parse triggered.
-        // But the new row set is identical to existing → skip the write.
-        // Without this guard, every sheet open re-runs replaceForEvent
-        // (delete-then-insert) for no observable change.
+        // The stored `mailto:/646691839/principal/` row is unusable, so the backfill re-parses.
+        // The re-parse yields only the bare principal href, which the usable-address filter
+        // drops, so the call returns 0 on the empty result, before the same-set comparison,
+        // and never writes. Without that, every sheet open would rewrite the set.
         coEvery { eventsDao.getById(1L) } returns event(rawIcal = ICS_PRINCIPAL_HREF_NO_EMAIL)
         coEvery { attendeesDao.getForEvent(1L) } returns kotlinx.coroutines.flow.flowOf(
             listOf(
@@ -294,12 +291,9 @@ class AttendeeBackfillTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Degenerate case: ATTENDEE primary value is a principal-href AND
-        // there is no EMAIL= parameter. Parser preserves the principal-href.
-        // Mapper persists `mailto:/646691839/principal/` which fails
-        // isUsableAddress on every render — but F4 idempotent-skip prevents
-        // the redundant transactional rewrite when the new set equals the
-        // existing one.
+        // ATTENDEE whose value is a principal href, with no EMAIL= parameter. The parser keeps
+        // the href, the mapper stores it without `mailto:` (it isn't email-shaped), and the
+        // backfill's usable-address filter drops it on every parse.
         val ICS_PRINCIPAL_HREF_NO_EMAIL = """
             BEGIN:VCALENDAR
             VERSION:2.0

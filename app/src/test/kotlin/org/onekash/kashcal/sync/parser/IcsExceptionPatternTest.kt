@@ -26,13 +26,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests that validate our code handles real ICS exception patterns correctly.
+ * Tests exception linking in [OccurrenceGenerator] against ICS exception patterns seen from
+ * iCloud and Nextcloud, plus hand-built series.
  *
- * These tests use ICS files that represent real-world patterns from iCloud and Nextcloud.
- * The tests verify:
- * - Unique constraint on occurrences (event_id, start_ts) works correctly
- * - linkException handles various exception scenarios
- * - No duplicate occurrences are created
+ * The tests check that:
+ * - the occurrences unique index on (event_id, start_ts) is never violated
+ * - [OccurrenceGenerator.linkException] links one, many and moved exceptions
+ * - no duplicate occurrences are created
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -75,10 +75,10 @@ class IcsExceptionPatternTest {
 
     @Test
     fun `iCloud pattern - multiple exceptions with same UID creates unique occurrences`() = runTest {
-        // This pattern is from multiple_exceptions_modified.ics
-        // Master: Weekly at 14:00
-        // Exception 1: Dec 23 moved to 10:00
-        // Exception 2: Dec 30 extended duration
+        // multiple_exceptions_modified.ics:
+        // Master: weekly at 14:00 UTC
+        // Dec 23: moved to 10:00 (SEQUENCE 1), then to 11:00 (SEQUENCE 2)
+        // Dec 30: extended to 1.5 hours
 
         val icsContent = loadIcsFixture("ical/exceptions/multiple_exceptions_modified.ics")
         assertNotNull("ICS fixture should exist", icsContent)
@@ -96,7 +96,7 @@ class IcsExceptionPatternTest {
         assertNotNull("Should have master event", master)
         assertTrue("Should have exceptions", exceptions.isNotEmpty())
 
-        // All should have same UID (RFC 5545 requirement)
+        // Exceptions share the master's UID (RFC 5545 §3.8.4.4)
         val masterUid = master!!.uid
         exceptions.forEach { exception ->
             assertEquals("Exception should have same UID as master", masterUid, exception.uid)
@@ -112,8 +112,8 @@ class IcsExceptionPatternTest {
         val occurrencesBefore = database.occurrencesDao().getForEvent(masterId)
         assertTrue("Should have occurrences", occurrencesBefore.isNotEmpty())
 
-        // Insert exceptions and link them
-        // RFC 5545: When multiple exceptions have the same RECURRENCE-ID, keep highest SEQUENCE
+        // Insert and link the exceptions. Two share the Dec 23 RECURRENCE-ID; keep the one
+        // with the highest SEQUENCE, the latest revision (RFC 5545 §3.8.7.4)
         val exceptionsByRecurrenceId = exceptions.groupBy { it.recurrenceId?.timestamp }
         val uniqueExceptions = exceptionsByRecurrenceId.mapNotNull { (_, excs) ->
             excs.maxByOrNull { it.sequence }
@@ -125,14 +125,14 @@ class IcsExceptionPatternTest {
             val exceptionId = database.eventsDao().insert(exceptionEvent)
             val savedExceptionEvent = exceptionEvent.copy(id = exceptionId)
 
-            // Link exception to master's occurrence using recurrenceId timestamp
+            // Link to the master's occurrence at the RECURRENCE-ID time
             val originalTime = exception.recurrenceId?.timestamp
             if (originalTime != null) {
                 occurrenceGenerator.linkException(masterId, originalTime, savedExceptionEvent)
             }
         }
 
-        // Verify no duplicate occurrences
+        // No duplicate occurrences
         val occurrencesAfter = database.occurrencesDao().getForEvent(masterId)
         val uniqueStartTimes = occurrencesAfter.map { it.startTs }.toSet()
 
@@ -178,7 +178,7 @@ class IcsExceptionPatternTest {
         assertNotNull("Exception should have recurrenceId", originalTime)
         occurrenceGenerator.linkException(masterId, originalTime!!, savedExceptionEvent)
 
-        // Occurrence count should remain the same (linked, not added)
+        // The count is unchanged: the occurrence is linked, not added
         val occurrencesAfter = database.occurrencesDao().getForEvent(masterId)
         assertEquals("Occurrence count should be same after linking", originalCount, occurrencesAfter.size)
 
@@ -189,10 +189,10 @@ class IcsExceptionPatternTest {
 
     @Test
     fun `exception moved to same time as another occurrence - conflict handled`() = runTest {
-        // This tests the edge case where an exception is moved to overlap with another occurrence
-        // Our unique constraint (event_id, start_ts) should handle this
+        // An exception moved onto another occurrence's start. linkException deletes the
+        // occurrence already there, so the (event_id, start_ts) unique index holds.
 
-        // Create a weekly event
+        // A weekly event
         val now = System.currentTimeMillis()
 
         val masterEvent = Event(
@@ -217,7 +217,7 @@ class IcsExceptionPatternTest {
         val occurrences = database.occurrencesDao().getForEvent(masterId)
         assertTrue("Should have at least 3 occurrences", occurrences.size >= 3)
 
-        // Create exception for occurrence[1], moving it to occurrence[2]'s time
+        // An exception for occurrence[1], moved to occurrence[2]'s time
         val originalOccurrence = occurrences[1]
         val targetTime = occurrences[2].startTs
 
@@ -225,7 +225,7 @@ class IcsExceptionPatternTest {
             calendarId = testCalendarId,
             uid = savedMaster.uid,
             title = "Moved Meeting",
-            startTs = targetTime,  // Intentionally same as occurrence[2]
+            startTs = targetTime,  // Same as occurrence[2]
             endTs = targetTime + 3600000,
             timezone = "UTC",
             originalEventId = masterId,
@@ -239,10 +239,10 @@ class IcsExceptionPatternTest {
         val exceptionId = database.eventsDao().insert(exceptionEvent)
         val savedExceptionEvent = exceptionEvent.copy(id = exceptionId)
 
-        // This should handle the conflict gracefully
+        // Must not throw on the unique index
         occurrenceGenerator.linkException(masterId, originalOccurrence.startTs, savedExceptionEvent)
 
-        // Verify no constraint violation and occurrences are valid
+        // No duplicate start times remain
         val occurrencesAfter = database.occurrencesDao().getForEvent(masterId)
         val uniqueStartTimes = occurrencesAfter.map { it.startTs }.toSet()
 
@@ -255,7 +255,7 @@ class IcsExceptionPatternTest {
 
     @Test
     fun `creating many exceptions preserves unique occurrences`() = runTest {
-        // Simulates sync scenario where multiple exceptions are pulled from server
+        // A sync that pulls five exceptions from the server
 
         val now = System.currentTimeMillis()
         val masterEvent = Event(
@@ -265,7 +265,7 @@ class IcsExceptionPatternTest {
             startTs = now,
             endTs = now + 1800000, // 30 min
             timezone = "UTC",
-            rrule = "FREQ=DAILY;COUNT=7",  // Use 7 to stay within expansion window
+            rrule = "FREQ=DAILY;COUNT=7",  // 7 days, all inside the expansion window
             syncStatus = SyncStatus.SYNCED,
             createdAt = now,
             updatedAt = now,
@@ -281,7 +281,7 @@ class IcsExceptionPatternTest {
         assertTrue("Should have at least 5 occurrences", occurrences.size >= 5)
         val occurrenceCount = occurrences.size
 
-        // Create exceptions for first 5 occurrences (title changes only, no time changes)
+        // Exceptions for the first 5 occurrences (title changes only, same times)
         val duration = savedMaster.endTs - savedMaster.startTs
         val exceptionCount = minOf(5, occurrences.size)
         repeat(exceptionCount) { i ->
@@ -306,14 +306,14 @@ class IcsExceptionPatternTest {
             occurrenceGenerator.linkException(masterId, occ.startTs, savedExceptionEvent)
         }
 
-        // Verify same occurrence count (linking doesn't change count)
+        // Linking doesn't change the occurrence count
         val finalOccurrences = database.occurrencesDao().getForEvent(masterId)
         assertEquals("Should have same occurrence count", occurrenceCount, finalOccurrences.size)
 
         val linkedCount = finalOccurrences.count { it.exceptionEventId != null }
         assertEquals("Should have $exceptionCount linked occurrences", exceptionCount, linkedCount)
 
-        // Verify no duplicates
+        // No duplicates
         val uniqueStartTimes = finalOccurrences.map { it.startTs }.toSet()
         assertEquals("All start times should be unique", finalOccurrences.size, uniqueStartTimes.size)
     }

@@ -9,10 +9,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Integration tests comparing SimpleTimeZoneRegistry vs TimeZoneRegistryImpl.
+ * Compares parsing with [SimpleTimeZoneRegistry] against ical4j's `TimeZoneRegistryImpl` on
+ * iCalendar data shaped like real sources, plus floating, EXDATE, attendee, far-east zone,
+ * VTODO and VJOURNAL cases.
  *
- * These tests verify that both registries produce equivalent parsing results
- * for real-world iCalendar data from various sources.
+ * Most tests assert both results against the same expected value or against each other; the
+ * Windows-zone test asserts only that both parse.
  */
 @DisplayName("ICalParser Registry Integration Tests")
 class ICalParserRegistryIntegrationTest {
@@ -120,8 +122,7 @@ class ICalParserRegistryIntegrationTest {
         @Test
         @DisplayName("Outlook event with Windows timezone name")
         fun `parse Outlook event with Windows timezone`() {
-            // Outlook sometimes uses Windows timezone names
-            // Both registries should handle this (or fail gracefully)
+            // Outlook sometimes uses Windows timezone names. Both registries must parse it.
             val ics = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -154,7 +155,7 @@ class ICalParserRegistryIntegrationTest {
             val simpleResult = simpleParser.parseAllEvents(ics)
             val fullResult = fullParser.parseAllEvents(ics)
 
-            // Both should parse successfully (embedded VTIMEZONE provides the rules)
+            // The embedded VTIMEZONE supplies the rules; the resolved zone isn't asserted.
             assertTrue(simpleResult is ParseResult.Success)
             assertTrue(fullResult is ParseResult.Success)
         }
@@ -311,7 +312,7 @@ class ICalParserRegistryIntegrationTest {
                 val simpleEvent = (simpleResult as ParseResult.Success).value[0]
                 val fullEvent = (fullResult as ParseResult.Success).value[0]
 
-                // Both should preserve the correct date regardless of device timezone
+                // With the device zone in Auckland, both keep the all-day date
                 assertEquals("20260315", simpleEvent.dtStart.toDayCode())
                 assertEquals("20260315", fullEvent.dtStart.toDayCode())
             } finally {

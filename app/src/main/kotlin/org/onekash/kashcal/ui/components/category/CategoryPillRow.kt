@@ -20,10 +20,10 @@ import androidx.compose.ui.unit.sp
 import org.onekash.kashcal.R
 
 /**
- * Compact, read-only tag pills for dense surfaces (event cards, week blocks).
- * Shows the first [maxVisible] tags as tiny filled pills and collapses the rest
- * into a "+N more" badge. Renders nothing when [categories] is empty, so
- * untagged events keep their exact prior layout.
+ * Shows read-only tag pills for dense surfaces (event cards, week blocks, the Quick Add preview).
+ *
+ * The first [maxVisible] non-blank tags render as small filled pills and the rest collapse into a
+ * "+N more" badge. Renders nothing when no tag is non-blank, so untagged events keep their layout.
  */
 @Composable
 fun CategoryPillRow(
@@ -31,16 +31,15 @@ fun CategoryPillRow(
     modifier: Modifier = Modifier,
     maxVisible: Int = 3,
 ) {
-    // Drop blank names — a malformed server value like "CATEGORIES:foo,,bar"
-    // can carry an empty element that would otherwise render as a blank chip.
+    // A malformed server value like "CATEGORIES:foo,,bar" carries an empty element that would
+    // render as a blank chip.
     val names = categories.filter { it.isNotBlank() }
     if (names.isEmpty()) return
 
     val visible = names.take(maxVisible)
     val overflow = names.size - visible.size
 
-    // Per-tag custom colors from the screen root; unprovided (previews/tests)
-    // it's empty and every pill falls back to its hash color.
+    // Empty when unprovided (previews, tests), so every pill falls back to its hash color.
     val tagColors = LocalTagColors.current
 
     Row(

@@ -15,36 +15,31 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Durable, offline replay of the multi-server collection-discovery safety proof.
+ * Replays the multi-server collection-discovery safety proof offline.
  *
- * The parameterized `*ResourceTypeProofTest` classes capture the invariant LIVE
- * (behind `-Pintegration`, needing real servers). This test replays the redacted
- * PROPFIND fixtures those runs committed under
- * `resources/{caldav,carddav}/resourcetype_proof/` so the proof stays green in the
- * ordinary PR-gated suite with no network. It is what stops a future edit to the
- * discovery / quirks filtering from silently regressing the guarantee.
+ * `MultiServerCalendarResourceTypeProofTest` and `MultiServerAddressBookResourceTypeProofTest`
+ * capture the invariant live (behind `-Pintegration`, against real servers). This test
+ * replays the redacted PROPFIND fixtures those runs committed under
+ * `resources/{caldav,carddav}/resourcetype_proof/`, so the proof runs in the ordinary suite
+ * with no network and an edit to the discovery or quirks filtering can't silently break it.
  *
- * The guarantee, per fixture:
- *   For every collection, if the PRODUCTION name filter skips it then the app would
- *   NOT have surfaced it anyway — because it lacks the `<calendar>` / `<addressbook>`
- *   resourcetype, or (for a real-but-VTODO-only calendar like iCloud's `tasks`) it
- *   fails the VEVENT component gate. So the resourcetype + component gates already
- *   exclude everything the name filter skips, making the name filter pure (safe)
- *   redundancy that can only ever add false-drops if it broadens back to a substring
- *   match.
+ * The guarantee, per fixture: every collection the production name filter skips is one the
+ * app wouldn't surface anyway, because it lacks the `<calendar>` or `<addressbook>`
+ * resourcetype or, for a VTODO-only calendar like iCloud's `tasks`, fails the VEVENT
+ * component gate. The name filter is then safe redundancy that can only add false drops if
+ * it widens back to substring matching.
  *
- * This test calls the REAL shipped predicates (`DefaultQuirks.shouldSkipCalendar`,
- * `ICloudQuirks.shouldSkipCalendar`, `DefaultCardDavQuirks.shouldSkipAddressBook`)
- * via [CollectionResourceTypeProof], never a reimplemented copy — so a regression in
- * the production filter (a revert to substring matching, a change to tasks/reminders
- * handling) makes this test fail.
+ * The test calls the shipped predicates (`DefaultQuirks.shouldSkipCalendar`,
+ * `ICloudQuirks.shouldSkipCalendar`, `DefaultCardDavQuirks.shouldSkipAddressBook`) through
+ * [CollectionResourceTypeProof], never a copy, so a regression in the production filter (a
+ * revert to substring matching, a change to tasks or reminders handling) fails it.
  *
- * Two captured server behaviours are pinned as named regression cases because they
- * are exactly what a naive gate would get wrong:
- *   - SOGo folds `schedule-outbox` onto its REAL primary calendar → the gate must
- *     be a POSITIVE `has <calendar>` test, never a negative `lacks scheduling` one.
- *   - Cyrus advertises a full `supported-calendar-component-set` (VEVENT…) on its
- *     Inbox/Outbox → the component set is NOT a safe discriminator; resourcetype is.
+ * Two captured server behaviours are pinned as named cases because a naive gate gets them
+ * wrong:
+ *   - SOGo folds `schedule-outbox` onto its real primary calendar, so the gate must be a
+ *     positive `has <calendar>` test, never a negative `lacks scheduling` one.
+ *   - Cyrus advertises a full `supported-calendar-component-set` (VEVENT and others) on its
+ *     Inbox/Outbox, so the component set isn't a safe discriminator; resourcetype is.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -115,20 +110,20 @@ class CollectionResourceTypeProofFixtureTest {
 
     @Test
     fun `production name filter still drops every scheduling collection each fixture exposes`() {
-        // Positive coverage: the redundancy must actually fire. Every fixture that
-        // exposes an inbox/outbox/notification collection must have the production
-        // name filter skip it — otherwise a broken filter that skips NOTHING would
-        // still pass the "only skips non-surfaced" invariant above.
+        // Positive coverage: the redundancy must fire. Every standalone scheduling or
+        // notification collection a fixture exposes must be skipped by the production name
+        // filter; otherwise a broken filter that skips nothing would still pass the
+        // "only skips non-surfaced" invariant above.
         val caldav = fixtures("caldav")
         var schedulingSeen = 0
         caldav.forEach { (server, xml) ->
             val isICloud = server.equals("icloud", ignoreCase = true)
             CollectionResourceTypeProof.parseCollections(xml)
                 .filter { row ->
-                    // STANDALONE scheduling collections only. A scheduling resourcetype
-                    // FOLDED onto a real calendar (SOGo puts schedule-outbox on its
-                    // primary calendar) is a collection the name filter must NOT skip —
-                    // that fold is covered by its own dedicated test below.
+                    // Standalone scheduling collections only. A scheduling resourcetype
+                    // folded onto a real calendar (SOGo puts schedule-outbox on its
+                    // primary calendar) must not be name-skipped; its own test below
+                    // covers that fold.
                     !row.isCalendar &&
                         row.resourceTypes.any { it.startsWith("schedule-") || it == "notification" }
                 }
@@ -151,7 +146,8 @@ class CollectionResourceTypeProofFixtureTest {
         folded.forEach {
             // Real calendar despite the folded scheduling resourcetype...
             assertTrue("SOGo folded collection should still be a real calendar: ${it.href}", it.isCalendar)
-            // ...and the production name filter must NOT skip it (segment 'personal' is not reserved).
+            // ...and the production name filter must not skip it (segment 'personal' isn't
+            // reserved).
             assertFalse(
                 "SOGo folded real calendar must not be name-skipped: ${it.href}",
                 CollectionResourceTypeProof.calDavNameFilterSkips(it, isICloud = false),
@@ -169,9 +165,8 @@ class CollectionResourceTypeProofFixtureTest {
             "Cyrus fixture no longer shows a scheduling collection advertising VEVENT",
             schedulingWithComps.isNotEmpty(),
         )
-        // These are precisely the collections the resourcetype gate must still
-        // exclude even though their component set looks calendar-like — and the
-        // production name filter also skips them (redundant belt-and-braces).
+        // The resourcetype gate must exclude these even though their component set looks
+        // calendar-like, and the production name filter skips them too (the redundancy).
         schedulingWithComps.forEach {
             assertFalse("Cyrus scheduling collection must not surface: ${it.href}", it.appSurfacesAsCalendar)
             assertTrue(
@@ -182,9 +177,10 @@ class CollectionResourceTypeProofFixtureTest {
     }
 
     companion object {
-        // Server fixture basenames per protocol, matching writeFixture()'s
-        // lowercased server names. Absent files are skipped (mapNotNull), so a
-        // server that was unreachable at capture time never fails this offline test.
+        // Fixture basenames per protocol, matching the lowercased server names
+        // `CollectionResourceTypeProof.writeFixture` writes. Only listed names are replayed;
+        // an absent file is skipped (mapNotNull), so a server unreachable at capture time
+        // never fails this offline test.
         private val SERVERS = mapOf(
             "caldav" to listOf(
                 "icloud", "baikal", "baikaldigest", "radicale",

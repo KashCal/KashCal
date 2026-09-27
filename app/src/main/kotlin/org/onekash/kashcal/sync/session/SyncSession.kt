@@ -4,39 +4,38 @@ import kotlinx.serialization.Serializable
 import java.util.UUID
 
 /**
- * Represents a completed sync operation for a single calendar.
- * Stores diagnostic information for the Sync History UI.
+ * Records one finished sync of a single calendar for the Sync History UI.
  *
- * Privacy: Only stores aggregate counts and calendar names (user-created).
- * Does NOT store: event titles, UIDs, sync tokens, or caldavUrls.
+ * Privacy: holds counts, the user-created calendar name and short diagnostic text, never event
+ * titles, sync-tokens or full event URLs. [warnings] name a resource by the last segment of its
+ * URL, which for an event this app created is `<UID>.ics`.
  */
 @Serializable
 data class SyncSession(
     val id: String = UUID.randomUUID().toString(),
     val timestamp: Long = System.currentTimeMillis(),
 
-    // Calendar info (safe: user-created names)
+    // Calendar names are user-created, so safe to store.
     val calendarId: Long,
     val calendarName: String,
 
-    // Sync metadata
     val syncType: SyncType,
     val triggerSource: SyncTrigger,
     val durationMs: Long,
 
-    // Pipeline numbers - the key diagnostic data
-    val hrefsReported: Int,        // From sync-collection
-    val eventsFetched: Int,        // From calendar-multiget
+    // Pipeline counts. [missingCount] is hrefsReported minus eventsFetched.
+    val hrefsReported: Int,        // Hrefs from sync-collection or the etag listing
+    val eventsFetched: Int,        // Events returned by calendar-multiget
     val eventsWritten: Int,        // New events persisted
     val eventsUpdated: Int,        // Existing events updated
-    val eventsDeleted: Int,        // Events deleted
+    val eventsDeleted: Int,
 
-    // Push statistics (local → server)
+    // Push counts (local to server)
     val eventsPushedCreated: Int = 0,
     val eventsPushedUpdated: Int = 0,
     val eventsPushedDeleted: Int = 0,
 
-    // Skip breakdown (categories only, no specific event info)
+    // Skip counts by reason; no per-event detail
     val skippedParseError: Int = 0,
     val skippedPendingLocal: Int = 0,
     val skippedEtagUnchanged: Int = 0,
@@ -44,33 +43,29 @@ data class SyncSession(
     val skippedAlreadySynced: Int = 0,
     val skippedRecentlyPushed: Int = 0,
 
-    // Issue tracking
     val hasMissingEvents: Boolean = false,
     val missingCount: Int = 0,
     val tokenAdvanced: Boolean = true,
 
-    // Parse failure retry tracking (v16.7.0)
-    // Events that couldn't be parsed after max retries and were abandoned
+    // Events still unparseable after the maximum parse retries; the sync-token advanced past them.
     val abandonedParseErrors: Int = 0,
 
-    // Error info (if failed)
+    // Set only when the sync failed
     val errorType: ErrorType? = null,
     val errorStage: String? = null,
-    val errorMessage: String? = null,  // Detailed error message (v16.8.0)
+    val errorMessage: String? = null,
 
-    // RFC 6578 Section 3.6: Server truncated results (507)
-    val truncated: Boolean = false,      // True if server returned 507 (will continue on next sync)
+    // The server truncated the sync-collection reply with 507 (RFC 6578 §3.6); the next sync
+    // continues from the returned token.
+    val truncated: Boolean = false,
 
-    // Diagnostic warnings for silently handled issues (v23.1.0)
-    // Privacy: Uses .ics filenames (opaque server IDs), never event titles or UIDs
-    // Nullable for backward compat: old session JSON files may omit this field
+    // Issues handled without failing the sync. Resources are named by URL filename, never by
+    // event title. Nullable with a null default so session files written without it still decode.
     val warnings: List<String>? = null
 ) {
     /**
-     * Overall status derived from session data.
-     * - FAILED: sync error occurred
-     * - PARTIAL: parse failures (events couldn't be read)
-     * - SUCCESS: everything else (fallback is transparent)
+     * Derives the session status: FAILED when [errorType] is set, PARTIAL when any event failed
+     * to parse, SUCCESS otherwise. Missing events and fallbacks don't lower it.
      */
     val status: SyncStatus get() = when {
         errorType != null -> SyncStatus.FAILED
@@ -78,86 +73,55 @@ data class SyncSession(
         else -> SyncStatus.SUCCESS
     }
 
-    /**
-     * Total events changed (for header summary).
-     */
+    /** Pulled events added, updated or deleted. */
     val totalChanges: Int get() = eventsWritten + eventsUpdated + eventsDeleted
 
-    /**
-     * Whether there are any changes to show.
-     */
     val hasChanges: Boolean get() = totalChanges > 0
 
-    /**
-     * Whether this session has parse failures worth showing.
-     */
     val hasParseFailures: Boolean get() = skippedParseError > 0
 
-    /**
-     * Whether this session skipped events that were already synced in a prior session.
-     */
+    /** Whether this session skipped events already stored by a prior session. */
     val hasAlreadySynced: Boolean get() = skippedAlreadySynced > 0
 
-    /**
-     * Whether this session has diagnostic warnings to show.
-     */
     val hasWarnings: Boolean get() = !warnings.isNullOrEmpty()
 
-    /**
-     * Total events pushed to server (local → server).
-     */
+    /** Events pushed to the server: created, updated and deleted. */
     val totalPushed: Int get() = eventsPushedCreated + eventsPushedUpdated + eventsPushedDeleted
 
-    /**
-     * Whether there are any push changes.
-     */
     val hasPushChanges: Boolean get() = totalPushed > 0
 
-    /**
-     * Alias for totalChanges (pull = server → local).
-     * Kept for clarity alongside push stats.
-     */
+    /** Same as [totalChanges]; named to pair with [totalPushed]. */
     val totalPullChanges: Int get() = totalChanges
 
-    /**
-     * Alias for hasChanges (pull = server → local).
-     * Kept for clarity alongside push stats.
-     */
+    /** Same as [hasChanges]; named to pair with [hasPushChanges]. */
     val hasPullChanges: Boolean get() = hasChanges
 
-    /**
-     * Whether there are any changes (push or pull).
-     */
     val hasAnyChanges: Boolean get() = hasChanges || hasPushChanges
 }
 
-/**
- * Type of sync operation.
- */
 @Serializable
 enum class SyncType {
-    INCREMENTAL,  // Uses sync-token for delta changes
-    FULL          // Fetches all events in time window
+    INCREMENTAL,  // sync-collection delta from the stored sync-token
+    FULL          // Lists the calendar's etags and fetches the changed events
 }
 
-/**
- * Overall sync status.
- */
+/** Session outcome; see [SyncSession.status] for how it is derived. */
 @Serializable
 enum class SyncStatus {
-    SUCCESS,   // All events synced successfully
-    PARTIAL,   // Some events missing or skipped
-    FAILED     // Sync failed with error
+    SUCCESS,
+    PARTIAL,   // Some events failed to parse
+    FAILED
 }
 
 /**
- * Category of sync error.
+ * Categorizes a failed sync. `CalDavSyncEngine` maps result codes and exceptions;
+ * `CalDavSyncWorker` also sets it for setup failures and exceptions outside a calendar sync.
  */
 @Serializable
 enum class ErrorType {
-    NETWORK,   // Connection failed, timeout
-    AUTH,      // 401/403 authentication error
-    PARSE,     // Failed to parse server response
-    TIMEOUT,   // Request timed out
-    SERVER     // 5xx server error
+    NETWORK,   // IOException, or a result code no other type claims
+    AUTH,      // 401/403, or missing credentials, credential provider or accounts
+    PARSE,     // Code -1, or a non-IO exception inside a calendar sync
+    TIMEOUT,   // Socket timeout, 408 or -408
+    SERVER     // 5xx, no calendars, missing provider quirks, or a non-IO exception in the worker
 }

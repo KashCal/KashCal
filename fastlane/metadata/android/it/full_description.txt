@@ -1,0 +1,36 @@
+I tuoi calendari sono ovunque. La famiglia su iCloud. Le festività da un sito qualunque. I compleanni sepolti nei contatti. Il lavoro sul calendario del telefono. KashCal li riunisce in un'unica app su Android.
+
+Scopri di più su https://kashcal.onekash.org
+
+• iCloud: sei passato ad Android ma la tua famiglia è ancora su Apple? Sincronizza i calendari iCloud direttamente. Nessun ponte, nessun espediente.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo e altri. Sincronizzazione bidirezionale nativa, senza intermediari. Compaiono anche i calendari Google e Outlook del telefono.
+
+• Sette viste: mese, mese a tutta altezza, agenda, giorno, 3 giorni, settimana e anno. Pizzica per ingrandire la linea del tempo, trascina un evento per spostarlo.
+
+• Pianificazione: invita persone, manda inviti a riunioni e rispondi agli inviti che ricevi.
+
+• Statistiche: guarda dove va il tuo tempo. Giorni più pieni, serie senza pause, spazi liberi. Calcolato sul dispositivo.
+
+• Widget: tieni la tua giornata sulla schermata Home senza aprire l'app. Agenda, data, settimana, mese e prossimi.
+
+• Abbonamenti ICS: segui qualsiasi feed di calendario. Festività, calendari scolastici, stagioni sportive.
+
+• Compleanni e anniversari: presi automaticamente dai tuoi contatti.
+
+• Colori per evento: da una palette curata o dalla ruota dei colori completa, così la tua settimana si legge a colpo d'occhio.
+
+• Personalizzala: tema chiaro, scuro o di sistema, più una palette KashCal Teal. Chi ci sostiene può passare a un'icona speciale.
+
+• Accessibilità: pieno supporto per screen reader (TalkBack) e imposti la lingua dell'app direttamente nelle impostazioni Android, in 67 lingue.
+
+• Funziona completamente offline fin da subito.
+
+Privato per impostazione predefinita
+
+Nessuna analisi. Nessuna telemetria. Nessun account KashCal. Non abbiamo server, quindi non c'è nulla da raccogliere.
+
+• Credenziali cifrate con Android Keystore
+• Blocco app: nascondi i tuoi eventi dietro impronta, volto o blocco schermo
+
+Libero come la libertà. E gratis per giunta.

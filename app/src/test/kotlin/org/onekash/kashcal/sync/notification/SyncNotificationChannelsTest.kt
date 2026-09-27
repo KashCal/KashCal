@@ -21,13 +21,8 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for SyncNotificationChannels.
- *
- * Tests:
- * - Channel creation
- * - Channel configuration
- * - Notification cancellation
- * - Notification status checks
+ * Tests [SyncNotificationChannels]: channel creation and configuration, notification and channel
+ * ID constants, notification status checks and cancellation.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -93,7 +88,7 @@ class SyncNotificationChannelsTest {
         val channel = notificationManager.getNotificationChannel(SyncNotificationChannels.CHANNEL_SYNC_PROGRESS)
         assertNotNull(channel)
         assertFalse(channel.canShowBadge())
-        // Note: Sound/vibration settings can't be verified in unit tests
+        // Sound and vibration settings can't be verified in unit tests
     }
 
     @Test

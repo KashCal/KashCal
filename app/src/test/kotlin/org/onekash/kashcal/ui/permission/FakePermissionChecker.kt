@@ -1,8 +1,8 @@
 package org.onekash.kashcal.ui.permission
 
 /**
- * Test fake for [PermissionChecker]. Each permission is a mutable boolean
- * (default `true`) that callers can flip to simulate grant state transitions.
+ * Fakes [PermissionChecker] with one mutable boolean per permission, `true` by default, that a
+ * test flips to simulate a grant or revoke.
  */
 class FakePermissionChecker(
     var notifications: Boolean = true,

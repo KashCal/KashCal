@@ -1,9 +1,6 @@
 package org.onekash.icaldav.model
 
-/**
- * iTIP methods per RFC 5546.
- * Used in METHOD property at VCALENDAR level for scheduling.
- */
+/** iTIP METHOD values (RFC 5546), written on the VCALENDAR of a scheduling message. */
 enum class ITipMethod(val value: String) {
     PUBLISH("PUBLISH"),           // Publish calendar data (no scheduling)
     REQUEST("REQUEST"),           // Request meeting attendance
@@ -11,7 +8,7 @@ enum class ITipMethod(val value: String) {
     ADD("ADD"),                   // Add instances to recurring event
     CANCEL("CANCEL"),             // Cancel event or remove attendee
     REFRESH("REFRESH"),           // Request latest event version
-    COUNTER("COUNTER"),           // Propose alternative time
+    COUNTER("COUNTER"),           // Propose changes, such as another time
     DECLINECOUNTER("DECLINECOUNTER"); // Decline proposed alternative
 
     companion object {
@@ -21,11 +18,11 @@ enum class ITipMethod(val value: String) {
 }
 
 /**
- * SCHEDULE-AGENT parameter per RFC 6638.
- * Controls who handles scheduling message delivery.
+ * SCHEDULE-AGENT parameter (RFC 6638 §7.1): who delivers scheduling messages. [fromString] maps
+ * an unrecognized value to SERVER, where the RFC says to treat it as NONE.
  */
 enum class ScheduleAgent(val value: String) {
-    SERVER("SERVER"),   // Server handles scheduling (default)
+    SERVER("SERVER"),   // Server handles scheduling (the RFC default when absent)
     CLIENT("CLIENT"),   // Client handles scheduling
     NONE("NONE");       // No scheduling (store-only)
 
@@ -36,8 +33,11 @@ enum class ScheduleAgent(val value: String) {
 }
 
 /**
- * SCHEDULE-STATUS delivery codes per RFC 6638 Section 3.2.9.
- * Reports the result of delivering a scheduling message.
+ * Holds one SCHEDULE-STATUS delivery code (RFC 6638 §3.2.9), the result of delivering a
+ * scheduling message, for example `1.2`.
+ *
+ * [category] buckets by the leading digit: every 1.x is PENDING, including 1.1 (sent) and 1.2
+ * (delivered).
  */
 data class ScheduleStatus(
     val code: String,
@@ -72,8 +72,8 @@ data class ScheduleStatus(
 }
 
 /**
- * SCHEDULE-FORCE-SEND parameter per RFC 6638.
- * Forces sending of scheduling message even when normally not required.
+ * SCHEDULE-FORCE-SEND parameter (RFC 6638 §7.2): asks the server to send a REQUEST or REPLY it
+ * wouldn't otherwise send. [fromString] returns null for anything else.
  */
 enum class ScheduleForceSend(val value: String) {
     REQUEST("REQUEST"),
@@ -85,10 +85,7 @@ enum class ScheduleForceSend(val value: String) {
     }
 }
 
-/**
- * REQUEST-STATUS codes per RFC 5546 Section 3.6.
- * Used in iTIP responses to indicate success/failure.
- */
+/** REQUEST-STATUS codes (RFC 5546 §3.6) that an iTIP reply uses to report its outcome. */
 enum class RequestStatus(val code: String, val description: String) {
     SUCCESS("2.0", "Success"),
     SUCCESS_FALLBACK("2.1", "Success, fallback taken on one or more property values"),
@@ -112,9 +109,7 @@ enum class RequestStatus(val code: String, val description: String) {
     }
 }
 
-/**
- * Result of a scheduling operation.
- */
+/** Holds the per-recipient outcome of a scheduling request. */
 data class SchedulingResult(
     val success: Boolean,
     val recipientResults: List<RecipientResult>,
@@ -129,9 +124,7 @@ data class SchedulingResult(
     )
 }
 
-/**
- * Scheduling URLs discovered from principal.
- */
+/** Holds a principal's schedule-inbox and schedule-outbox URLs; scheduling needs both. */
 data class SchedulingUrls(
     val scheduleInboxUrl: String?,
     val scheduleOutboxUrl: String?

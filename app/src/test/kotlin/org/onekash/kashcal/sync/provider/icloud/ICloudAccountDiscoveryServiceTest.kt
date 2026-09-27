@@ -29,19 +29,20 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.sync.discovery.DiscoveryErrorReason
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
 /**
- * Unit and integration tests for ICloudAccountDiscoveryService.
+ * Tests [ICloudAccountDiscoveryService] over a mocked [CalDavClient] and mocked repositories.
  *
- * Tests cover:
- * - Successful discovery flow (principal -> home -> calendars -> create entities)
- * - Authentication error handling
- * - Network error handling with user-friendly messages
- * - Calendar creation and update logic
- * - Exception handling for various network failures
+ * Covers the discovery flow (principal, home, calendars, then account and calendar rows), auth,
+ * server, rate-limit and exception errors with their user-facing messages, color parsing, account
+ * removal, credential-save failure (#55), persisting scheduling-delivery discovery, and
+ * [ICloudAccountDiscoveryService.refreshCalendars]: probing before removing an unlisted
+ * calendar, matching a regional listed URL to its canonical row, color refresh, and keeping the
+ * local ctag and sync-token (#249).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ICloudAccountDiscoveryServiceTest {
@@ -118,7 +119,6 @@ class ICloudAccountDiscoveryServiceTest {
         accountRepository = mockk(relaxed = true)
         calendarRepository = mockk(relaxed = true)
 
-        // Mock factory to return our mock client
         every { clientFactory.createClient(any(), any()) } returns calDavClient
 
         // Default: no existing account, credential save succeeds
@@ -128,8 +128,8 @@ class ICloudAccountDiscoveryServiceTest {
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
 
-        // Scheduling-delivery discovery (RFC 6638 §2 / §2.1.1) defaults —
-        // CalDavResult is sealed, so the relaxed mock needs explicit stubs.
+        // Scheduling-delivery discovery (RFC 6638 §2, §2.1.1) defaults. CalDavResult is sealed,
+        // so the relaxed mock needs explicit stubs.
         coEvery { calDavClient.discoverScheduleOutboxUrl(any()) } returns CalDavResult.success(null)
         coEvery { calDavClient.supportsAutoSchedule(any()) } returns CalDavResult.success(false)
     }
@@ -155,7 +155,6 @@ class ICloudAccountDiscoveryServiceTest {
 
     @Test
     fun `discovery flow creates account and calendars on success`() = runTest {
-        // Setup successful mocks
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
         coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
         coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(testCalDavCalendars)
@@ -168,10 +167,8 @@ class ICloudAccountDiscoveryServiceTest {
         assertEquals(testAppleId, success.account.email)
         assertEquals(2, success.calendars.size)
 
-        // Verify account was created
         coVerify { accountRepository.createAccount(match { it.email == testAppleId }) }
 
-        // Verify calendars were created
         coVerify(exactly = 2) { calendarRepository.createCalendar(any()) }
     }
 
@@ -201,13 +198,11 @@ class ICloudAccountDiscoveryServiceTest {
         val service = createService()
         service.discoverAndCreateAccount(testAppleId, testPassword)
 
-        // Verify client was created with credentials via factory
         io.mockk.verify { clientFactory.createClient(match { it.username == testAppleId && it.password == testPassword }, any()) }
     }
 
     @Test
     fun `discovery updates existing account if found`() = runTest {
-        // Setup existing account
         coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns testDbAccount
 
         coEvery { calDavClient.discoverPrincipal(any()) } returns CalDavResult.success(testPrincipalUrl)
@@ -219,7 +214,6 @@ class ICloudAccountDiscoveryServiceTest {
 
         assertTrue(result is DiscoveryResult.Success)
 
-        // Verify update was called instead of insert
         coVerify { accountRepository.updateAccount(any()) }
         coVerify(exactly = 0) { accountRepository.createAccount(any()) }
     }
@@ -243,7 +237,7 @@ class ICloudAccountDiscoveryServiceTest {
         val result = service.discoverAndCreateAccount(testAppleId, testPassword)
 
         assertTrue(result is DiscoveryResult.Success)
-        // Discovery service creates all listed calendars — filtering is done by quirks layer
+        // The service creates every calendar the client lists; [ICloudQuirks] does the filtering.
         coVerify(exactly = 3) { calendarRepository.createCalendar(any()) }
     }
 
@@ -357,7 +351,6 @@ class ICloudAccountDiscoveryServiceTest {
         val result = service.discoverAndCreateAccount(testAppleId, testPassword)
 
         assertTrue(result is DiscoveryResult.Success)
-        // Calendar should be created with parsed color
         coVerify { calendarRepository.createCalendar(any()) }
     }
 
@@ -382,7 +375,6 @@ class ICloudAccountDiscoveryServiceTest {
         val result = service.discoverAndCreateAccount(testAppleId, testPassword)
 
         assertTrue(result is DiscoveryResult.Success)
-        // Should still succeed with default color
         coVerify { calendarRepository.createCalendar(any()) }
     }
 
@@ -437,7 +429,7 @@ class ICloudAccountDiscoveryServiceTest {
         coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
         coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(testCalDavCalendars)
 
-        // Simulate EncryptedSharedPreferences failure (e.g., Android Keystore broken)
+        // An EncryptedSharedPreferences failure, e.g. a broken Android Keystore
         coEvery { accountRepository.saveCredentials(any(), any()) } returns false
 
         val service = createService()
@@ -465,7 +457,7 @@ class ICloudAccountDiscoveryServiceTest {
         val service = createService()
         service.discoverAndCreateAccount(testAppleId, testPassword)
 
-        // Account should be cleaned up since it can't sync without credentials
+        // The account can't sync without credentials, so it is deleted.
         coVerify { accountRepository.deleteAccount(1L) }
     }
 
@@ -481,6 +473,120 @@ class ICloudAccountDiscoveryServiceTest {
         assertTrue(result is DiscoveryResult.Error)
         val error = result as DiscoveryResult.Error
         assertTrue(error.message.contains("many requests") || error.message.contains("wait"))
+    }
+
+    // ==================== refreshCalendars: confirm before removing ====================
+
+    private fun icloudCalendar(id: Long, slug: String) = Calendar(
+        id = id,
+        accountId = 1L,
+        caldavUrl = "https://caldav.icloud.com/123/calendars/$slug/",
+        displayName = slug,
+        color = 0xFF4CAF50.toInt(),
+        ctag = "ctag",
+        isReadOnly = false,
+        isDefault = false,
+        isVisible = true
+    )
+
+    private fun stubICloudRefresh(existing: List<Calendar>, listed: List<CalDavCalendar>) {
+        coEvery { accountRepository.getAccountById(1L) } returns testDbAccount
+        coEvery { credentialProvider.getCredentials(1L) } returns
+            Credentials(testAppleId, testPassword, "https://caldav.icloud.com")
+        coEvery { calDavClient.discoverCalendarHome(any()) } returns CalDavResult.success(listOf(testHomeUrl))
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns existing
+        coEvery { calendarRepository.getCalendarByUrl(any()) } answers {
+            existing.firstOrNull { it.caldavUrl == firstArg<String>() }
+        }
+        coEvery { calDavClient.listCalendars(any()) } returns CalDavResult.success(listed)
+    }
+
+    @Test
+    fun `refreshCalendars keeps every iCloud calendar when the listing is empty and probes are unreadable`() = runTest {
+        val personal = icloudCalendar(1L, "personal")
+        val work = icloudCalendar(2L, "work")
+        stubICloudRefresh(listOf(personal, work), emptyList())
+        coEvery { calDavClient.probeCalendarCollection(any()) } returns
+            CalDavResult.error(500, "resourcetype not found in response")
+
+        val result = createService().refreshCalendars(1L)
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        coVerify(exactly = 0) { calendarRepository.deleteCalendar(any()) }
+        assertEquals(
+            setOf(personal.id, work.id),
+            (result as DiscoveryResult.Success).calendars.map { it.id }.toSet()
+        )
+    }
+
+    @Test
+    fun `refreshCalendars keeps an unlisted iCloud calendar the server says still exists`() = runTest {
+        val personal = icloudCalendar(1L, "personal")
+        stubICloudRefresh(listOf(personal), emptyList())
+        coEvery { calDavClient.probeCalendarCollection(personal.caldavUrl) } returns CalDavResult.success(true)
+
+        createService().refreshCalendars(1L)
+
+        coVerify(exactly = 0) { calendarRepository.deleteCalendar(any()) }
+    }
+
+    @Test
+    fun `refreshCalendars removes an unlisted iCloud calendar the server answers 404 for`() = runTest {
+        val deleted = icloudCalendar(1L, "old-trip")
+        stubICloudRefresh(listOf(deleted), emptyList())
+        coEvery { calDavClient.probeCalendarCollection(deleted.caldavUrl) } returns
+            CalDavResult.notFoundError("Resource not found")
+
+        createService().refreshCalendars(1L)
+
+        coVerify { calendarRepository.deleteCalendar(deleted.id) }
+    }
+
+    @Test
+    fun `an iCloud refresh whose listings were all refused says so`() = runTest {
+        val cal = icloudCalendar(1L, "home")
+        stubICloudRefresh(listOf(cal), emptyList())
+        coEvery { calDavClient.listCalendars(any()) } returns
+            CalDavResult.error(CalDavResult.CODE_TRANSPORT_REFUSED, "refused", isRetryable = true)
+
+        val result = createService().refreshCalendars(1L)
+
+        assertEquals(DiscoveryErrorReason.INSECURE_CONNECTION_REFUSED, (result as DiscoveryResult.Error).reason)
+    }
+
+    @Test
+    fun `refreshCalendars removes an unlisted iCloud calendar the server answers 403 for`() = runTest {
+        val deleted = icloudCalendar(1L, "old-share")
+        stubICloudRefresh(listOf(deleted), emptyList())
+        coEvery { calDavClient.probeCalendarCollection(deleted.caldavUrl) } returns
+            CalDavResult.error(403, "Permission denied")
+
+        createService().refreshCalendars(1L)
+
+        coVerify { calendarRepository.deleteCalendar(deleted.id) }
+    }
+
+    @Test
+    fun `refreshCalendars treats a regional listed URL as the stored canonical calendar and does not probe it`() = runTest {
+        val personal = icloudCalendar(1L, "personal")
+        stubICloudRefresh(
+            listOf(personal),
+            listOf(
+                CalDavCalendar(
+                    href = "/123/calendars/personal/",
+                    url = "https://p42-caldav.icloud.com/123/calendars/personal/",
+                    displayName = "personal",
+                    color = null,
+                    ctag = "ctag",
+                    isReadOnly = false
+                )
+            )
+        )
+
+        createService().refreshCalendars(1L)
+
+        coVerify(exactly = 0) { calDavClient.probeCalendarCollection(any()) }
+        coVerify(exactly = 0) { calendarRepository.deleteCalendar(any()) }
     }
 
     // ==================== refreshCalendars Color Refresh ====================
@@ -512,7 +618,7 @@ class ICloudAccountDiscoveryServiceTest {
                     href = "/123/calendars/personal",
                     url = "https://caldav.icloud.com/123/calendars/personal",
                     displayName = "Personal",
-                    color = "#FF0000FF", // iCloud #RRGGBBAA: RR=FF GG=00 BB=00 AA=FF — opaque red
+                    color = "#FF0000FF", // iCloud #RRGGBBAA: RR=FF GG=00 BB=00 AA=FF, opaque red
                     ctag = "new-ctag",
                     isReadOnly = false
                 )
@@ -522,7 +628,7 @@ class ICloudAccountDiscoveryServiceTest {
         val service = createService()
         service.refreshCalendars(1L)
 
-        // iCloud #FF0000FF (RRGGBBAA) → Android #FFFF0000 (AARRGGBB) — opaque red
+        // iCloud #FF0000FF (RRGGBBAA) becomes Android #FFFF0000 (AARRGGBB), opaque red
         coVerify { calendarRepository.updateCalendar(match { it.color == 0xFFFF0000.toInt() }) }
     }
 
@@ -567,7 +673,7 @@ class ICloudAccountDiscoveryServiceTest {
         coVerify { calendarRepository.updateCalendar(match { it.color == localColor }) }
     }
 
-    // ==================== refreshCalendars ctag/syncToken Preservation (issue #249) ====================
+    // ==================== refreshCalendars keeps ctag and sync-token (#249) ====================
 
     @Test
     fun `refreshCalendars preserves local ctag when server returns new ctag`() = runTest {
@@ -612,9 +718,8 @@ class ICloudAccountDiscoveryServiceTest {
 
     @Test
     fun `refreshCalendars preserves local syncToken when server returns new ctag`() = runTest {
-        // Defense-in-depth invariant: CalDavCalendar has no syncToken field, so .copy()
-        // already preserves it. Pins the contract so a refactor that adds syncToken to
-        // the discovery model can't silently overwrite it.
+        // CalDavCalendar has no syncToken field, so .copy() keeps it today. This pins the
+        // contract so adding syncToken to the discovery model can't silently overwrite it.
         val existingCalendar = Calendar(
             id = 1L,
             accountId = 1L,

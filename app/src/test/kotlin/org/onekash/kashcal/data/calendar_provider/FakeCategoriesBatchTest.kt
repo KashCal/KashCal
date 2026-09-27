@@ -6,11 +6,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for [FakeCalendarProviderRepository.getCategoriesForEvents] — documents
- * the batch-read contract [AndroidCalendarProviderRepository] must match:
- *  - keyed on the requested event ids (only events that have tags appear)
- *  - a denied read yields an empty map, never an exception
- *  - the display range still loads (tags are additive, not load-bearing)
+ * Tests [FakeCalendarProviderRepository.getCategoriesForEvents], pinning the batch-read contract
+ * [AndroidCalendarProviderRepository] must match:
+ *  - keyed on the requested event ids; only events that have tags appear
+ *  - a denied read returns an empty map, never an exception, so a range load still shows its
+ *    events without tags (not asserted here)
+ *  - an empty request returns an empty map
  */
 class FakeCategoriesBatchTest {
 

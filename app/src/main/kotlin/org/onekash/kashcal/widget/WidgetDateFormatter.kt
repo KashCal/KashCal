@@ -22,15 +22,15 @@ object WidgetDateFormatter {
     }
 
     /**
-     * Full weekday plus a year-less, locale-ordered month+day for the card layout.
+     * Returns the full weekday and a year-less, locale-ordered month and day for the card
+     * layout.
      *
-     * Month+day reuses the app-wide date helper: ICU decides only the field ordering
-     * (the "MMMMd" skeleton → a locale pattern), then java.time formats the date.
-     * This is the same round-trip already shipping for the week and agenda headers,
-     * so the card, the icon's day number, and the accessibility label all read the
-     * one Gregorian date rather than a locale's alternate default calendar. It gives
-     * CJK the single month marker (e.g. "9月19日") and Slavic locales the date
-     * (genitive) month form ("19 сентября"). The full weekday comes from java.time.
+     * The month and day use the app-wide date helper: ICU picks only the field order (the
+     * "MMMMd" skeleton to a locale pattern), then java.time formats the date, as the Week and
+     * Agenda headers do. So the card, the icon's day number and the accessibility label all read
+     * one Gregorian date, not a locale's alternate default calendar. CJK gets the single month
+     * marker ("9月19日") and Slavic locales the genitive month form ("19 сентября"). The full
+     * weekday comes from java.time.
      */
     fun buildFullDateWidgetLabels(today: LocalDate, locale: Locale): DateWidgetFullLabels {
         val weekdayFull = today.dayOfWeek.getDisplayName(TextStyle.FULL, locale)

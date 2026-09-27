@@ -14,54 +14,49 @@ import org.robolectric.annotation.Config
 import java.util.UUID
 
 /**
- * Regression probe across all 9 CalDAV servers: when an event is PUT in the
- * server-side scheduling wire format (matched ORGANIZER + one ATTENDEE,
- * NO METHOD — exactly what PushStrategy emits today), does the server actually
- * take ownership of delivering the invite, or does it just store the attendee
+ * Probes each server in [CalDavServerConfig.allServers]: when an event is PUT in the server-side
+ * scheduling wire format (matched ORGANIZER + one ATTENDEE, no METHOD, the shape PushStrategy
+ * PUTs), does the server take ownership of delivering the invite, or does it store the attendee
  * inertly and expect the client to send the iTIP itself?
  *
- * Why this is a permanent regression and not a one-off spike: the app relies on
- * server-side scheduling (it does not yet send client-side iTIP). Whether a
- * plain PUT actually invites the attendee is therefore a per-server property we
- * depend on. This pins the disposition we observed so a regression is caught in
- * either direction — a server we count on for delivery silently stopping, or a
- * server that needs client iTIP starting to auto-deliver (which would mean the
- * deferred client-iTIP work is no longer needed there).
+ * The app sends through the scheduling outbox only where the read-back after the PUT shows the
+ * server won't deliver (`PushStrategy.maybeSendViaOutbox`), so whether a plain PUT invites the
+ * attendee is a per-server property the app depends on. This pins the observed disposition so a
+ * change is caught in either direction: a server counted on for delivery silently stopping, or a
+ * server that needs client iTIP starting to auto-deliver.
  *
- * Classification — only a POSITIVE delivery signal counts as "the server
- * delivers". Preservation of the ATTENDEE line is NOT such a signal: a server
- * can store the attendee verbatim and still never email anyone (observed:
- * Mailbox/OX, which has a scheduling outbox but does nothing on a plain PUT).
- *   - SCHEDULE-AGENT=CLIENT on the stored ATTENDEE (RFC 6638 §7.1) -> the
- *     server explicitly declines; the client must send the iTIP. (Zoho.)
- *   - SCHEDULE-STATUS=N.N stamped on the stored ATTENDEE (RFC 6638 §3.2.5) ->
- *     the server took ownership and reported a delivery result (1.x =
- *     sent/queued, 5.x = it tried but the recipient was undeliverable, which
- *     is expected for our @example.test recipient). Positive signal.
- *   - the ATTENDEE was ROUTED OUT of the stored resource (the invitee line is
- *     gone although the organizer self-attendee may remain) -> the server's
- *     iSchedule pipeline took it. Positive signal. (iCloud-class behavior.)
- *   - ATTENDEE preserved verbatim, no SCHEDULE-STATUS, no SCHEDULE-AGENT=CLIENT
- *     -> NO positive signal. The server stored it but gave no evidence it will
- *     deliver. If the principal advertises a schedule-outbox-URL, delivery
- *     almost certainly requires an explicit outbox POST (client iTIP). We treat
- *     this as NEEDS_CLIENT_ITIP, NOT as server-schedules.
- *   - App emits NO ORGANIZER -> the account's calendar-user-address-set held no
- *     mailto: and the login is not email-shaped, so resolveOrganizer produces
- *     nothing and there is nothing to schedule. App-side limit, not a server
- *     stance. (Bare Radicale / Nextcloud test containers with no email.) Note
- *     this is the same empty-effectiveAddresses() condition the event form's
- *     isSchedulable gate keys off, so the UI blocks adding an attendee here;
- *     the probe exercises the wire path below that gate.
+ * Classification: only a positive delivery signal counts as "the server delivers". Keeping the
+ * ATTENDEE line is not such a signal: a server can store the attendee verbatim and still never
+ * email anyone (observed: Mailbox/OX, which has a scheduling outbox but does nothing on a plain
+ * PUT).
+ *  - SCHEDULE-AGENT=CLIENT on the stored ATTENDEE (RFC 6638 §7.1) -> the server explicitly
+ *    declines; the client must send the iTIP. (Zoho.)
+ *  - SCHEDULE-STATUS=N.N stamped on the stored ATTENDEE (RFC 6638 §7.3) -> the server took
+ *    ownership and reported a delivery result (1.x = sent/queued, 5.x = it tried but the
+ *    recipient was undeliverable, which is expected for the @example.test recipient). Positive
+ *    signal.
+ *  - The ATTENDEE was routed out of the stored resource (the invitee line is gone although the
+ *    organizer self-attendee may remain) -> the server's scheduling pipeline took it. Positive
+ *    signal. (iCloud-class behavior.)
+ *  - ATTENDEE kept verbatim, no SCHEDULE-STATUS, no SCHEDULE-AGENT=CLIENT -> no positive signal.
+ *    The server stored it but gave no evidence it will deliver. If the principal advertises a
+ *    schedule-outbox-URL, delivery almost certainly requires an explicit outbox POST (client
+ *    iTIP). This counts as NEEDS_CLIENT_ITIP, not as server-schedules.
+ *  - The app emits no ORGANIZER -> the account's `effectiveAddresses` hold no email-shaped
+ *    address (an address set with none, or an empty set and a login that isn't email-shaped),
+ *    so `resolveOrganizer` produces nothing and there is nothing to schedule. An app-side
+ *    limit, not a server stance. (Bare Radicale or Xandikos test containers with no email.)
+ *    The event form's isSchedulable gate keys off the same condition, so the UI blocks adding
+ *    an attendee here; the probe exercises the wire path below that gate.
  *
- * Note (NOT relied on): Schedule-Tag is absent on a PUT response across this
- * entire fleet — including servers that DO schedule (iCloud). So Schedule-Tag
- * is not a usable delivery signal here; SCHEDULE-STATUS is.
+ * Not relied on: Schedule-Tag is absent on a PUT response across this entire fleet, including
+ * servers that do schedule (iCloud). So Schedule-Tag isn't a usable delivery signal here;
+ * SCHEDULE-STATUS is.
  *
- * Disposition is asserted per server; unreachable / no-credential /
- * can't-inspect cases are skipped, not failed. Each run prints the observed
- * disposition and the evidence (SCHEDULE-STATUS / SCHEDULE-AGENT / routed-out),
- * so when a server's behavior shifts the failure message shows the new signal.
+ * Disposition is asserted per server; unreachable, no-credential and can't-inspect cases are
+ * skipped, not failed. Each run prints the observed disposition and the evidence
+ * (SCHEDULE-STATUS, SCHEDULE-AGENT or routed-out), so when a server's behavior shifts the
+ * failure message shows the new signal.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -72,23 +67,28 @@ import java.util.UUID
 class ServerSideSchedulingProbeTest(
     private val config: CalDavServerConfig
 ) {
-    /** What we expect each server to do with a matched-organizer plain PUT. */
+    /** What a server does with a matched-organizer plain PUT. */
     enum class Disposition {
-        /** Server stamps SCHEDULE-AGENT=CLIENT — it explicitly will not deliver. */
+        /** Server stamps SCHEDULE-AGENT=CLIENT: it explicitly won't deliver. */
         CLIENT_MUST_DELIVER,
 
-        /** Positive delivery signal: SCHEDULE-STATUS stamped, or the invitee
-         *  ATTENDEE was routed out of the stored resource. A plain PUT invites
-         *  the attendee. */
+        /**
+         * Positive delivery signal: SCHEDULE-STATUS stamped, or the invitee ATTENDEE was routed
+         * out of the stored resource. A plain PUT invites the attendee.
+         */
         SERVER_SCHEDULES,
 
-        /** ATTENDEE stored verbatim with no delivery signal. The server keeps
-         *  the data but gives no evidence it will deliver; with a scheduling
-         *  outbox present, delivery needs an explicit client-side iTIP POST. */
+        /**
+         * ATTENDEE stored verbatim with no delivery signal. The server keeps the data but gives
+         * no evidence it will deliver; with a scheduling outbox present, delivery needs an
+         * explicit client-side iTIP POST.
+         */
         NEEDS_CLIENT_ITIP,
 
-        /** App emits no ORGANIZER because the account exposes no mailto:
-         *  address; nothing to schedule (app-side limit, not a server stance). */
+        /**
+         * App emits no ORGANIZER because the account has no email-shaped address; nothing to
+         * schedule (app-side limit, not a server stance).
+         */
         NO_ORGANIZER,
     }
 
@@ -102,22 +102,19 @@ class ServerSideSchedulingProbeTest(
         private val START_MS = ((System.currentTimeMillis() / DAY_MS) + 28) * DAY_MS + 9 * 3_600_000L
 
         /**
-         * Observed disposition per server (probed live 2026-06-07, classified
-         * under the stricter "positive delivery signal required" rule — i.e.
-         * preserving the ATTENDEE line is NOT proof of delivery).
+         * Observed disposition per server, probed live 2026-06-07 under the "positive delivery
+         * signal required" rule (keeping the ATTENDEE line isn't proof of delivery). Nextcloud,
+         * Fastmail and Cyrus were probed later; see their entries.
          *
-         * SERVER_SCHEDULES — stamped a SCHEDULE-STATUS receipt: iCloud (5.1),
-         *   Baikal (1.1), BaikalDigest (1.1). Only these three gave positive
-         *   evidence of delivery.
-         * NEEDS_CLIENT_ITIP — stored the attendee verbatim with NO receipt, so
-         *   a plain PUT sends nothing; delivery needs a client-side iTIP outbox
-         *   POST: Stalwart, SOGo, Mailbox/OX (the last advertises a
-         *   schedule-outbox-URL but does nothing implicitly).
-         * CLIENT_MUST_DELIVER — explicit refusal: Zoho (SCHEDULE-AGENT=CLIENT).
-         * NO_ORGANIZER — bare test containers with no email on the principal;
-         *   a real account with a mailto: would land elsewhere. Radicale.
-         *   (Nextcloud was here while its container had no email; once an email
-         *   is configured on the principal it delivers implicitly — see below.)
+         * SERVER_SCHEDULES: stamped a SCHEDULE-STATUS receipt: iCloud (5.1), Baikal (1.1),
+         *   BaikalDigest (1.1) on 2026-06-07; Nextcloud, Fastmail and Cyrus since.
+         * NEEDS_CLIENT_ITIP: stored the attendee verbatim with no receipt, so a plain PUT sends
+         *   nothing; delivery needs a client-side iTIP outbox POST: Stalwart, SOGo, Mailbox/OX
+         *   (the last advertises a schedule-outbox-URL but does nothing implicitly).
+         * CLIENT_MUST_DELIVER: explicit refusal: Zoho (SCHEDULE-AGENT=CLIENT).
+         * NO_ORGANIZER: bare test containers with no email on the principal (Radicale,
+         *   Xandikos); a real account with a mailto: would land elsewhere. Nextcloud lands here
+         *   too when its principal has no email.
          */
         private val EXPECTED: Map<String, Disposition> = mapOf(
             "iCloud" to Disposition.SERVER_SCHEDULES,
@@ -125,25 +122,22 @@ class ServerSideSchedulingProbeTest(
             "Baikal" to Disposition.SERVER_SCHEDULES,
             "BaikalDigest" to Disposition.SERVER_SCHEDULES,
             "Radicale" to Disposition.NO_ORGANIZER,
-            // Nextcloud delivers implicitly (SCHEDULE-STATUS=5.0) once the
-            // principal has an email configured — verified live 2026-06-10,
-            // matching the expected server behavior. (Was NO_ORGANIZER on the
-            // bare, email-less container.)
+            // Nextcloud delivers implicitly (SCHEDULE-STATUS=5.0) when the principal has an
+            // email configured, verified live 2026-06-10. An email-less container is
+            // NO_ORGANIZER.
             "Nextcloud" to Disposition.SERVER_SCHEDULES,
             "Zoho" to Disposition.CLIENT_MUST_DELIVER,
-            // Xandikos exposes an empty calendar-user-address-set and the test
-            // login is not email-shaped, so the app emits no ORGANIZER — same
-            // bucket as the other bare, email-less container (Radicale).
+            // Xandikos exposes an empty calendar-user-address-set and the test login isn't
+            // email-shaped, so the app emits no ORGANIZER: the same bucket as Radicale.
             "Xandikos" to Disposition.NO_ORGANIZER,
             "SOGo" to Disposition.NEEDS_CLIENT_ITIP,
             "Mailbox" to Disposition.NEEDS_CLIENT_ITIP,
-            // Fastmail (Cyrus): plain PUT stamps SCHEDULE-STATUS=1.1 on the
-            // invitee — server-side scheduling, verified live 2026-06-10.
+            // Fastmail (Cyrus): a plain PUT stamps SCHEDULE-STATUS=1.1 on the invitee, so it
+            // schedules server-side; verified live 2026-06-10.
             "Fastmail" to Disposition.SERVER_SCHEDULES,
-            // Local Cyrus test container (the engine Fastmail runs): a plain PUT
-            // stamps SCHEDULE-STATUS=1.1 on the invitee, same server-side
-            // scheduling as hosted Fastmail — verified live against the
-            // kashcal-cyrus container.
+            // Local Cyrus test container (the engine Fastmail runs): a plain PUT stamps
+            // SCHEDULE-STATUS=1.1 on the invitee, the same server-side scheduling as hosted
+            // Fastmail; verified live against the kashcal-cyrus container.
             "Cyrus" to Disposition.SERVER_SCHEDULES,
         )
     }
@@ -210,9 +204,10 @@ class ServerSideSchedulingProbeTest(
         val principal = c.discoverPrincipal(caldavRoot).getOrNull()
         assumeTrue("${config.name}: principal discovery failed", principal != null)
 
-        // The account's authoritative calendar-user-address — what the app would
-        // emit as ORGANIZER. resolveOrganizer requires an email-shaped address;
-        // it falls back to an email-shaped login, else emits nothing.
+        // Approximates what the app would emit as ORGANIZER: the first email-shaped
+        // calendar-user-address, else an email-shaped login, else nothing. The app's
+        // resolveOrganizer (via effectiveAddresses) tries the login only when the address
+        // set is empty.
         val addrResult = c.discoverCalendarUserAddresses(principal!!)
         val discovered = (addrResult as? CalDavResult.Success)?.data.orEmpty()
         val organizer = discovered.map { it.substringAfter("mailto:") }
@@ -226,8 +221,8 @@ class ServerSideSchedulingProbeTest(
             verdict(expected, Disposition.NO_ORGANIZER, "no email-shaped address")
             return@runBlocking
         }
-        // An account that DID surface a mailto: must not be in the NO_ORGANIZER
-        // bucket — that would mean our recorded expectation has drifted.
+        // An account that surfaced an address must not be recorded NO_ORGANIZER; if it is,
+        // the recorded expectation has drifted.
         assertNotEquals(
             "${config.name} surfaced an address ($organizer) but was recorded NO_ORGANIZER",
             Disposition.NO_ORGANIZER, expected
@@ -267,18 +262,18 @@ class ServerSideSchedulingProbeTest(
         var etagForDelete = createEtag
 
         try {
-            // Re-fetch what the server stored. Prefer a direct GET on the PUT
-            // URL, but some servers (Stalwart) name the resource by their own
-            // scheme rather than the PUT path, so the GET 404s. Fall back to
-            // scanning the whole calendar (no range filter) and matching by UID.
+            // Re-fetch what the server stored. Prefer a direct GET on the PUT URL, but some
+            // servers (Stalwart) name the resource by their own scheme instead of the PUT path,
+            // so the GET 404s. Fall back to scanning the whole calendar (no range filter) and
+            // matching by UID.
             println("  created at: $eventUrl")
             val direct = c.fetchEvent(eventUrl)
             if (direct.isError()) println("  direct GET: ${(direct as CalDavResult.Error).code}")
             val stored = direct.getOrNull() ?: run {
                 val all = c.fetchAllEtags(calendarUrl).getOrNull().orEmpty()
-                // Match by UID prefix: some servers (Stalwart) truncate the
-                // stored UID at a length boundary, so an exact contains(uid)
-                // misses. The random run-id in our UID keeps the prefix unique.
+                // Match by UID prefix: some servers (Stalwart) truncate the stored UID at a
+                // length boundary, so an exact contains(uid) misses. The random run-id in the
+                // UID keeps the prefix unique.
                 val uidPrefix = uid.substringBefore('@')
                 all.mapNotNull { (href, _) ->
                     val full = if (href.startsWith("http")) href
@@ -324,14 +319,14 @@ class ServerSideSchedulingProbeTest(
                     detail = "SCHEDULE-STATUS=$scheduleStatus"
                 }
                 inviteeLine == null -> {
-                    // Invitee routed out of the stored resource by the server's
-                    // iSchedule pipeline -> server owns delivery.
+                    // The server's scheduling pipeline routed the invitee out of the stored
+                    // resource, so the server owns delivery.
                     actual = Disposition.SERVER_SCHEDULES
                     detail = "invitee routed out of resource"
                 }
                 else -> {
-                    // Stored verbatim, no delivery signal: no evidence the server
-                    // will email anyone. A plain PUT sends nothing here.
+                    // Stored verbatim with no delivery signal: no evidence the server will email
+                    // anyone, so a plain PUT sends nothing here.
                     actual = Disposition.NEEDS_CLIENT_ITIP
                     detail = "attendee stored, no SCHEDULE-STATUS receipt"
                 }

@@ -20,27 +20,34 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
+import org.onekash.kashcal.widget.WidgetUpdateManager
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Manager for device calendar integration lifecycle.
+ * Registers and unregisters the CalendarProvider observer and exposes [changeSignal] for
+ * device-event re-queries.
  *
- * Handles ContentObserver registration/unregistration and exposes a
- * [changeSignal] StateFlow that increments when CalendarProvider data changes.
- * HomeViewModel's combine() re-queries CalendarProvider when signal changes.
+ * The observer callback is the one place every device-calendar change arrives, whether KashCal
+ * wrote it or another app or sync adapter did, so it also reschedules device reminders and
+ * refreshes the home-screen widgets. Keep that fan-out here, so no consumer has to register its
+ * own observer.
  *
- * Key difference from ContactBirthdayManager: No WorkManager, no Room write.
- * Instead exposes [changeSignal] for reactive UI updates.
+ * Unlike [org.onekash.kashcal.data.contacts.ContactEventManager], it runs no sync worker and
+ * writes nothing to Room.
  */
 @Singleton
 class CalendarProviderManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val dataStore: KashCalDataStore,
-    private val deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
+    private val deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler,
+    private val widgetUpdateManager: WidgetUpdateManager
 ) {
     companion object {
         private const val TAG = "CalProviderManager"
+
+        /** How long the observer waits for a burst of provider changes to settle. */
+        internal const val OBSERVER_DEBOUNCE_MS = 3000L
     }
 
     private val contentResolver: ContentResolver = context.contentResolver
@@ -52,16 +59,14 @@ class CalendarProviderManager @Inject constructor(
     private val _changeSignal = MutableStateFlow(0)
 
     /**
-     * Incremented when CalendarProvider data changes.
-     * Consumers (e.g., DisplayEventRepository) combine this with Room Flow
-     * to re-query device events.
+     * Increments when CalendarProvider data changes. DisplayEventRepository's flows combine it
+     * with Room flows and re-query device events on each change.
      */
     val changeSignal: StateFlow<Int> = _changeSignal.asStateFlow()
 
     /**
-     * Initialize on app startup.
-     * Checks if device calendars are enabled and registers the observer if so.
-     * If permission was revoked since the feature was enabled, auto-disables it.
+     * Registers the observer at app startup when device calendars are on. If READ_CALENDAR was
+     * revoked since, switches the feature off instead.
      */
     fun initialize() {
         scope.launch {
@@ -79,8 +84,8 @@ class CalendarProviderManager @Inject constructor(
     }
 
     /**
-     * Called when user enables device calendars.
-     * Registers observer and increments changeSignal to trigger initial load.
+     * Starts observing and re-queries once device calendars are switched on. Without
+     * READ_CALENDAR it switches the feature back off instead of observing.
      */
     fun onEnabled() {
         registerObserver()
@@ -88,42 +93,65 @@ class CalendarProviderManager @Inject constructor(
     }
 
     /**
-     * Called when user disables device calendars.
-     * Unregisters observer, cancels pending reminder alarms.
-     * Device events stop appearing because DisplayEventRepository checks the enabled preference.
+     * Stops observing, cancels the pending device reminder alarm and re-queries once device
+     * calendars are switched off, by the user or by a settings restore
+     * ([applyDeviceCalendarsSetting]). Device events disappear because DisplayEventRepository
+     * checks the enabled preference.
      */
     fun onDisabled() {
         unregisterObserver()
         deviceCalendarReminderScheduler.cancelPendingAlarm()
-        _changeSignal.value++  // Trigger re-query so device events are removed from UI
+        _changeSignal.value++  // Re-query so device events leave the UI
     }
 
     /**
-     * Bump the change signal immediately for a write the app itself just made.
+     * Bumps [changeSignal] so device-event views re-query now.
      *
-     * The ContentObserver that normally drives [changeSignal] is debounced
-     * (to coalesce bursts of external edits), so relying on it to reflect our
-     * own create/edit/delete would leave the UI stale for the debounce window.
-     * Callers invoke this right after a successful CalendarProvider write so the
-     * reactive views re-query device events with no perceptible lag. Debouncing
-     * still applies to changes we don't originate.
+     * Call it right after the app writes to CalendarProvider, or when a settings change needs a
+     * re-query while device calendars are off. The observer is debounced to coalesce bursts of
+     * external edits, so waiting for it would leave the UI stale for the debounce window;
+     * changes the app doesn't originate still wait for it. It never starts or stops observing
+     * and runs no permission check.
      */
-    fun notifyLocalChange() {
+    fun notifyDeviceCalendarChanged() {
         _changeSignal.value++
     }
 
     /**
-     * Called when user disables device calendar reminders only.
-     * Cancels pending alarm but keeps observer running.
+     * Re-queries device events after a KashCal setting changed which are shown (a calendar
+     * ticked or unticked, declined events shown or hidden).
+     *
+     * When device calendars are on it goes through [onEnabled], so a stored "on" that isn't
+     * observed yet is healed. When they are off it only re-queries: the provider is observed only
+     * while the feature is on.
+     */
+    suspend fun onDeviceCalendarSettingsChanged() {
+        if (dataStore.deviceCalendarsEnabled.first()) {
+            onEnabled()
+        } else {
+            notifyDeviceCalendarChanged()
+        }
+    }
+
+    /**
+     * Makes observing match the stored device-calendars switch after something other than the
+     * switch changed it (restoring a settings backup): on runs [onEnabled], off [onDisabled].
+     * Safe when already in step: it then re-queries, and when off cancels the pending device
+     * reminder alarm again, which is harmless.
+     */
+    suspend fun applyDeviceCalendarsSetting() {
+        if (dataStore.deviceCalendarsEnabled.first()) onEnabled() else onDisabled()
+    }
+
+    /**
+     * Cancels the pending device reminder alarm but keeps observing. Nothing in the app calls it
+     * today; only tests do.
      */
     fun onRemindersDisabled() {
         deviceCalendarReminderScheduler.cancelPendingAlarm()
     }
 
-    /**
-     * Called when user enables device calendar reminders.
-     * Schedules the next upcoming reminder.
-     */
+    /** Schedules the next device reminder. Nothing in the app calls it today; only tests do. */
     fun onRemindersEnabled() {
         scope.launch {
             deviceCalendarReminderScheduler.scheduleNextReminder()
@@ -149,12 +177,17 @@ class CalendarProviderManager @Inject constructor(
         observer = CalendarProviderObserver(
             handler = handler,
             scope = scope,
-            debounceMs = 3000L
+            debounceMs = OBSERVER_DEBOUNCE_MS
         ) {
             _changeSignal.value++
-            // Reschedule reminders when calendar data changes (event added/modified/deleted)
             scope.launch {
                 deviceCalendarReminderScheduler.scheduleNextReminder()
+            }
+            // Widgets show device events too. A separate launch keeps a slow widget update from
+            // delaying the reminder reschedule; the debounce keeps a sync adapter's burst of
+            // writes down to one refresh.
+            scope.launch {
+                widgetUpdateManager.updateAllWidgets(reason = "device_calendar_changed")
             }
         }
 

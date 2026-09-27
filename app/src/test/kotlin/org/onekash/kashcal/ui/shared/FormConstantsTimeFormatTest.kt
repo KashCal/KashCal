@@ -9,10 +9,13 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Tests for time-format-aware reminder formatting (Issue #96).
+ * Tests the 9 AM reminder labels against the time format (#96).
  *
- * Verifies that formatReminderShort() and formatReminderOption() respect
- * the use24Hour parameter for the 540-minute (9 AM) all-day reminder option.
+ * For a timed value, [formatReminderShort] labels 540 "9AM" or "09:00" by `use24Hour`; the other
+ * values tested (off, at event, 1d, 1w) don't change with it. [formatReminderOption] takes no time
+ * format: the all-day -540 reads "Day of event" and a legacy all-day 540 reads by magnitude.
+ * [getAllDayReminderOptions] labels -540 "Day of event" and has one option per
+ * [ALL_DAY_REMINDER_MINUTES] entry.
  */
 @RunWith(RobolectricTestRunner::class)
 class FormConstantsTimeFormatTest {
@@ -51,8 +54,8 @@ class FormConstantsTimeFormatTest {
 
     @Test
     fun `formatReminderOption legacy 540 allDay renders by magnitude (matches fire time), not 9 AM day of`() {
-        // A legacy stored 540 now fires 9h BEFORE midnight; its label must reflect that,
-        // not the stale "9 AM day of event" (which would be a label/behavior mismatch).
+        // A legacy all-day 540 fires 9 hours before midnight, so its label must say that, not
+        // "9 AM day of event".
         assertEquals("9 hours before", formatReminderOption(540, isAllDay = true, resources = resources))
     }
 

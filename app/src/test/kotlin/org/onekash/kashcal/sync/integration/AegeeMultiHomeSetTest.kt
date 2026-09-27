@@ -24,14 +24,14 @@ import java.io.StringReader
 import java.util.concurrent.TimeUnit
 
 /**
- * Integration test: Verify multiple calendar-home-set support against cal.aegee.org (SOGo).
+ * Probes multiple calendar-home-set support against cal.aegee.org (SOGo), which returns 3
+ * calendar-home-set hrefs for this user (#70).
  *
- * This server returns 3 calendar-home-set hrefs (Issue #70).
- * Test validates that:
- * 1. The raw HTTP response actually contains multiple <href> inside <calendar-home-set>
- * 2. The proposed extractCalendarHomeUrls() pattern parses all of them
- * 3. The existing extractCalendarHomeUrl() only returns the first (current bug)
- * 4. Each discovered home set URL can be queried for calendars
+ * Checks that:
+ * 1. The raw response holds more than one `<href>` inside `<calendar-home-set>`.
+ * 2. A local multi-href parse ([extractCalendarHomeUrls] in this file) finds all of them.
+ * 3. [CalDavXmlParser.extractCalendarHomeUrl] returns only the first of them.
+ * 4. Each home set can be listed for calendars; this one prints counts and doesn't assert.
  *
  * Server details:
  * - well-known redirects: /.well-known/caldav → /dav/calendars/
@@ -46,7 +46,7 @@ class AegeeMultiHomeSetTest {
 
     companion object {
         private const val SERVER_URL = "https://cal.aegee.org"
-        // SOGo's CalDAV endpoint — well-known redirects here
+        // SOGo's CalDAV endpoint; well-known redirects here
         private const val DAV_URL = "https://cal.aegee.org/dav/"
         private const val USERNAME = "aaa"
         private const val PASSWORD = "abc"
@@ -88,7 +88,7 @@ class AegeeMultiHomeSetTest {
         unmockkAll()
     }
 
-    // ===== Proposed new method (inlined — does NOT touch production code) =====
+    // ===== Local multi-href parse, independent of CalDavXmlParser =====
 
     private fun extractCalendarHomeUrls(xml: String): List<String> {
         if (xml.isBlank()) return emptyList()
@@ -200,19 +200,19 @@ class AegeeMultiHomeSetTest {
         // Step 2: Get raw calendar-home-set response
         val homeSetResponse = discoverCalendarHomeSets(principalUrl)
 
-        // Step 3: Parse with EXISTING production parser (returns only first)
+        // Step 3: The production single-URL parse returns the first href
         val singleUrl = existingParser.extractCalendarHomeUrl(homeSetResponse)
         println("\n=== Existing parser (extractCalendarHomeUrl) ===")
         println("Single URL: $singleUrl")
         assertTrue("Existing parser returned null", singleUrl != null)
 
-        // Step 4: Parse with PROPOSED new method (returns all)
+        // Step 4: The local parse returns every href
         val allUrls = extractCalendarHomeUrls(homeSetResponse)
         println("\n=== Proposed parser (extractCalendarHomeUrls) ===")
         println("All URLs (${allUrls.size}):")
         allUrls.forEachIndexed { i, url -> println("  [$i] $url") }
 
-        // Step 5: Verify we found multiple home sets (this is the bug!)
+        // Step 5: The server lists more than one home set
         assertTrue(
             "Expected multiple home sets from cal.aegee.org but got ${allUrls.size}",
             allUrls.size > 1
@@ -222,7 +222,7 @@ class AegeeMultiHomeSetTest {
         println("BUG CONFIRMED: Server returns ${allUrls.size} home sets, existing parser only sees 1")
         println("Missing home sets with current parser: ${allUrls.drop(1)}")
 
-        // Backward compat: first URL matches existing parser
+        // The single-URL parse agrees with the first of the full list
         assertEquals(
             "Backward compat broken",
             singleUrl,
@@ -263,7 +263,7 @@ class AegeeMultiHomeSetTest {
                 println("Response code: $code")
 
                 if (code == 207 || code == 200) {
-                    // Use production parser to extract calendars
+                    // Production parser extracts the calendars
                     val calendars = existingParser.extractCalendars(body)
                     println("Calendars found: ${calendars.size}")
                     for (cal in calendars) {
@@ -302,8 +302,8 @@ class AegeeMultiHomeSetTest {
         val principalUrl = discoverPrincipal()
         val homeSetResponse = discoverCalendarHomeSets(principalUrl)
 
-        // Count href elements inside calendar-home-set using regex (NOT XML parser)
-        // This independently confirms the server behavior without relying on our parser
+        // Count hrefs inside calendar-home-set with a regex, so the server behavior is
+        // confirmed without any XML parser
         val homeSetBlock = Regex(
             """calendar-home-set.*?</[^>]*calendar-home-set>""",
             setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE)

@@ -20,10 +20,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Verifies the swipe-to-delete gesture on a subscription row has a Switch
- * Access / TalkBack equivalent: a "Delete" custom accessibility action wired to
- * the same onDelete callback. Android requires gesture-only functionality to
- * also be reachable as a selectable control or custom action.
+ * Verifies the swipe-to-delete gesture on a subscription row has a Switch Access and TalkBack
+ * equivalent: a "Delete" custom accessibility action that calls onDelete with the subscription
+ * id. Android requires gesture-only functionality to also be reachable as a selectable control
+ * or custom action. Also checks the row renders the subscription name.
  *
  * Runs under Robolectric in the unit source set (no emulator).
  */

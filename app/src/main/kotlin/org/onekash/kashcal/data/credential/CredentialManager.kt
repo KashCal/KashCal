@@ -1,70 +1,37 @@
 package org.onekash.kashcal.data.credential
 
 /**
- * Unified credential storage interface for all account types.
+ * Stores account credentials, keyed by Room account ID, for every account type.
  *
- * Uses a single account-keyed storage pattern. Credentials are stored using
- * EncryptedSharedPreferences with Android Keystore.
+ * Credentials live in EncryptedSharedPreferences backed by the Android Keystore, as
+ * `account_{id}_{field}` in the `unified_credentials` prefs file.
  *
- * Storage format: `account_{id}_{field}` in `unified_credentials` prefs file
- *
- * Usage:
  * ```kotlin
- * // Save credentials for account
  * credentialManager.saveCredentials(accountId, AccountCredentials(
  *     username = "user@example.com",
  *     password = "app-specific-password",
  *     serverUrl = "https://caldav.example.com"
  * ))
- *
- * // Retrieve credentials
  * val creds = credentialManager.getCredentials(accountId)
  * ```
  */
 interface CredentialManager {
 
-    /**
-     * Check if encryption is available on this device.
-     * Returns false if Android Keystore is unavailable or locked.
-     */
+    /** Returns false if the Android Keystore is unavailable or locked. */
     fun isEncryptionAvailable(): Boolean
 
-    /**
-     * Save credentials for an account.
-     *
-     * @param accountId Room database account ID
-     * @param credentials Complete credential data
-     * @return true if saved successfully, false on encryption failure
-     */
+    /** Saves [credentials] for [accountId]; returns false when encryption is unavailable. */
     suspend fun saveCredentials(accountId: Long, credentials: AccountCredentials): Boolean
 
-    /**
-     * Retrieve credentials for an account.
-     *
-     * @param accountId Room database account ID
-     * @return Credentials if found and decrypted, null otherwise
-     */
+    /** Returns the credentials for [accountId], or null if missing or the store is unavailable. */
     suspend fun getCredentials(accountId: Long): AccountCredentials?
 
-    /**
-     * Check if credentials exist for an account.
-     *
-     * @param accountId Room database account ID
-     * @return true if credentials are stored (may still fail decryption)
-     */
+    /** Returns true if credentials are stored for [accountId]; they may still fail to decrypt. */
     suspend fun hasCredentials(accountId: Long): Boolean
 
-    /**
-     * Delete credentials for an account.
-     * Silently succeeds if no credentials exist.
-     *
-     * @param accountId Room database account ID
-     */
+    /** Deletes the credentials for [accountId]; silently succeeds when none exist. */
     suspend fun deleteCredentials(accountId: Long)
 
-    /**
-     * Clear all stored credentials.
-     * Used for debugging or complete app reset.
-     */
+    /** Deletes every account's stored credentials. */
     suspend fun clearAllCredentials()
 }

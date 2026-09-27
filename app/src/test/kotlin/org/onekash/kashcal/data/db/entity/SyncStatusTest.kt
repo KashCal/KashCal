@@ -5,9 +5,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for SyncStatus enum.
+ * Pins [SyncStatus]'s names and ordinals.
  *
- * Ensures enum values and ordinals remain stable for database compatibility.
+ * The names are what the database stores (`Converters.fromSyncStatus`) and what DAO queries
+ * match as string literals; renaming one strands existing rows, which read back as SYNCED.
  */
 class SyncStatusTest {
 

@@ -14,10 +14,12 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /**
- * Unit tests for RDATE expansion in RRuleExpander.
+ * Tests RDATE expansion in [RRuleExpander]: RDATEs alone and with an RRULE, EXDATE removing RDATE
+ * and RRULE dates, range filtering, occurrence properties and sort order.
  *
- * Tests verify the RFC 5545 recurrence formula:
- * RecurrenceSet = (DTSTART ∪ RRULE ∪ RDATE) - EXDATE
+ * RFC 5545 §3.8.5.2 gathers the RRULE and RDATE dates and removes the EXDATE ones, with DTSTART
+ * defining the first instance. RRuleExpander doesn't add DTSTART on its own, so the RDATE-only
+ * tests expect only the RDATEs, which departs from the RFC's first instance.
  */
 @DisplayName("RRuleExpander RDATE Tests")
 class RRuleExpanderRdateTest {
@@ -26,7 +28,7 @@ class RRuleExpanderRdateTest {
     private val expander = RRuleExpander()
     private val zone = ZoneId.of("UTC")
 
-    // Helper to create time range
+    // Returns all of 2026 in UTC, ending at Dec 31 23:59:59.
     private fun rangeFor2026(): TimeRange {
         val start = ZonedDateTime.of(2026, 1, 1, 0, 0, 0, 0, zone).toInstant()
         val end = ZonedDateTime.of(2026, 12, 31, 23, 59, 59, 0, zone).toInstant()
@@ -60,10 +62,9 @@ class RRuleExpanderRdateTest {
 
             val occurrences = expander.expand(event, rangeFor2026())
 
-            // Should have 3 occurrences from RDATE
+            // Only the three RDATEs; DTSTART (Jan 15) isn't added.
             assertEquals(3, occurrences.size)
 
-            // Verify dates
             val dayCodes = occurrences.map { it.dtStart.toDayCode() }
             assertTrue(dayCodes.contains("20260120"))
             assertTrue(dayCodes.contains("20260125"))
@@ -151,9 +152,7 @@ class RRuleExpanderRdateTest {
 
             val occurrences = expander.expand(event, rangeFor2026())
 
-            // RRULE generates: Jan 15, Jan 22, Jan 29 (3 weekly)
-            // RDATE adds: Feb 10
-            // Total: 4 occurrences
+            // RRULE: Jan 15, Jan 22, Jan 29. RDATE: Feb 10.
             assertEquals(4, occurrences.size)
 
             val dayCodes = occurrences.map { it.dtStart.toDayCode() }
@@ -187,12 +186,9 @@ class RRuleExpanderRdateTest {
 
             val occurrences = expander.expand(event, rangeFor2026())
 
-            // RRULE: Jan 15, Jan 22, Jan 29
-            // RDATE: Jan 22 (duplicate - should be deduplicated)
-            // Total: 3 (not 4)
+            // RRULE: Jan 15, Jan 22, Jan 29. The Jan 22 RDATE is dropped as a duplicate.
             assertEquals(3, occurrences.size)
 
-            // Verify no duplicates
             val dayCodes = occurrences.map { it.dtStart.toDayCode() }
             assertEquals(dayCodes.distinct().size, dayCodes.size)
         }
@@ -226,7 +222,7 @@ class RRuleExpanderRdateTest {
 
             val occurrences = expander.expand(event, rangeFor2026())
 
-            // 3 RDATEs minus 1 EXDATE = 2 occurrences
+            // 3 RDATEs minus 1 EXDATE.
             assertEquals(2, occurrences.size)
 
             val dayCodes = occurrences.map { it.dtStart.toDayCode() }
@@ -260,9 +256,8 @@ class RRuleExpanderRdateTest {
 
             val occurrences = expander.expand(event, rangeFor2026())
 
-            // RRULE: Jan 15, Jan 22 (excluded), Jan 29
-            // RDATE: Feb 10
-            // Total: 3
+            // RRULE: Jan 15, Jan 22 (excluded), Jan 29. RDATE: Feb 10. The EXDATE hits only an
+            // RRULE date; no RDATE falls on Jan 22.
             assertEquals(3, occurrences.size)
 
             val dayCodes = occurrences.map { it.dtStart.toDayCode() }
@@ -300,7 +295,7 @@ class RRuleExpanderRdateTest {
 
             val occurrences = expander.expand(event, rangeFor2026())
 
-            // Only Jan 20, 2026 is in range; Jan 15, 2027 is not
+            // Only Jan 20, 2026 is in range; Jan 15, 2027 is not.
             assertEquals(1, occurrences.size)
             assertEquals("20260120", occurrences[0].dtStart.toDayCode())
         }
@@ -328,7 +323,7 @@ class RRuleExpanderRdateTest {
 
             val occurrences = expander.expand(event, rangeFor2026())
 
-            // Only Jan 20, 2026 is in range
+            // Only Jan 20, 2026 is in range.
             assertEquals(1, occurrences.size)
         }
     }
@@ -419,7 +414,7 @@ class RRuleExpanderRdateTest {
 
             val occurrences = expander.expand(event, rangeFor2026())
 
-            // All occurrences should have no RRULE/RDATE
+            // No occurrence carries an RRULE, RDATE or EXDATE.
             occurrences.forEach { occ ->
                 assertNull(occ.rrule)
                 assertTrue(occ.rdates.isEmpty())
@@ -453,10 +448,10 @@ class RRuleExpanderRdateTest {
             assertEquals(1, occurrences.size)
             val occ = occurrences[0]
 
-            // RDATE starts at 14:00, should end at 16:00 (2 hour duration)
+            // The RDATE starts at 14:00 and keeps the master's 2 hours.
             assertNotNull(occ.dtEnd)
             val duration = occ.dtEnd!!.timestamp - occ.dtStart.timestamp
-            assertEquals(2 * 60 * 60 * 1000L, duration) // 2 hours in ms
+            assertEquals(2 * 60 * 60 * 1000L, duration)
         }
     }
 
@@ -488,7 +483,7 @@ class RRuleExpanderRdateTest {
 
             val occurrences = expander.expand(event, rangeFor2026())
 
-            // Expected order: Jan 10 (RDATE), Jan 15 (RRULE), Feb 15 (RRULE), Feb 20 (RDATE)
+            // Jan 10 (RDATE), Jan 15 (RRULE), Feb 15 (RRULE), Feb 20 (RDATE).
             val dayCodes = occurrences.map { it.dtStart.toDayCode() }
             assertEquals(listOf("20260110", "20260115", "20260215", "20260220"), dayCodes)
         }

@@ -18,13 +18,11 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /**
- * RFC 6638 §7.1/§7.2: a client MUST NOT include SCHEDULE-AGENT or
- * SCHEDULE-FORCE-SEND in scheduling messages it sends (any METHOD-bearing
- * iTIP message). On plain resource-storage PUTs (no METHOD) the parameters
- * are legitimate server routing hints and must be preserved.
+ * Tests that SCHEDULE-AGENT and SCHEDULE-FORCE-SEND are dropped from a METHOD-bearing iTIP
+ * message and kept on a resource-storage PUT, on both ORGANIZER and ATTENDEE.
  *
- * Covers all four sites: ORGANIZER and ATTENDEE × SCHEDULE-AGENT and
- * SCHEDULE-FORCE-SEND.
+ * RFC 6638 §7.1 and §7.2: clients MUST NOT include them in any scheduling message they send.
+ * On a PUT without METHOD they are routing hints for the server and must be kept.
  */
 class ICalGeneratorSchedulingParamTest {
 
@@ -93,7 +91,7 @@ class ICalGeneratorSchedulingParamTest {
             ics.contains("SCHEDULE-FORCE-SEND"),
             "iTIP message must not echo SCHEDULE-FORCE-SEND (ORGANIZER or ATTENDEE)"
         )
-        // The properties themselves still go out — only the params are stripped.
+        // The properties still go out; only the parameters are dropped.
         assertTrue(ics.contains("ORGANIZER"), "ORGANIZER still emitted")
         assertTrue(ics.contains("ATTENDEE"), "ATTENDEE still emitted")
     }
@@ -103,7 +101,7 @@ class ICalGeneratorSchedulingParamTest {
         val ics = generator.generate(eventWithScheduleParams(), method = null)
 
         assertFalse(ics.contains("METHOD:"), "storage PUT has no METHOD")
-        // Two SCHEDULE-AGENT occurrences: ORGANIZER (SERVER) + ATTENDEE (CLIENT).
+        // Two SCHEDULE-AGENT values: ORGANIZER's SERVER and ATTENDEE's CLIENT.
         assertTrue(ics.contains("SCHEDULE-AGENT=SERVER"), "ORGANIZER SCHEDULE-AGENT preserved")
         assertTrue(ics.contains("SCHEDULE-AGENT=CLIENT"), "ATTENDEE SCHEDULE-AGENT preserved")
         assertTrue(ics.contains("SCHEDULE-FORCE-SEND=REQUEST"), "SCHEDULE-FORCE-SEND preserved")

@@ -17,21 +17,17 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Hash-validation tests for `KashCalDatabase` migrations.
+ * Validates [KashCalDatabase] migrations the way Room does after an upgrade.
  *
- * Where [MigrationTest] verifies what each migration does at the SQL/PRAGMA
- * level, this class verifies what Room actually checks at runtime: the
- * `identityHash` of the database after migration must match the hash Room
- * computes from its compile-time entity model. A mismatch makes Room throw
- * `IllegalStateException` the first time the app opens the DB — not at
- * migration time, and not in any of the targeted PRAGMA tests.
+ * [MigrationTest] checks what each migration does through SQL and PRAGMA. This class runs
+ * `MigrationTestHelper.runMigrationsAndValidate`, which compares every table of the migrated
+ * database with the exported schema JSON: columns with affinity, nullability and defaults,
+ * foreign keys and indexes. A mismatch the PRAGMA checks miss makes the app's first open after the
+ * upgrade throw `IllegalStateException`.
  *
- * `MigrationTestHelper.runMigrationsAndValidate` is what catches that.
- *
- * Conventions:
- * - Schemas live at `$projectDir/schemas` (per `app/build.gradle.kts:61`).
- * - We run inside Robolectric so the test is part of the unit-test gate
- *   (`./gradlew testDebugUnitTest`) — no emulator, no instrumented run.
+ * Schemas live at `$projectDir/schemas` (the `room.schemaLocation` argument in
+ * `app/build.gradle.kts`). The tests run under Robolectric, so they are part of
+ * `./gradlew testDebugUnitTest` with no emulator.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -64,22 +60,17 @@ class MigrationHashValidationTest {
     }
 
     /**
-     * Validates that the post-migration schema after running
-     * `MIGRATION_16_17` against a fresh v16 database matches Room's expected
-     * v17 identityHash exactly. A failure here means the migration's SQL
-     * has diverged (column order, defaults, FK clause, index DDL, etc.)
-     * from `app/schemas/.../17.json` — exactly the failure mode that would
-     * crash the app at first launch.
+     * Checks `MIGRATION_16_17` on a fresh v16 database against `17.json`. A failure means the
+     * migration's SQL differs from the export (defaults, a foreign key clause or an index, for
+     * example), which would crash the app's first launch after the upgrade.
      */
     @Test
     fun `MIGRATION_16_17 produces a schema whose identityHash matches Room's v17 export`() {
-        // 1. Create a v16 database — `MigrationTestHelper` reads `16.json`
-        //    and runs the corresponding CREATE TABLE statements.
+        // MigrationTestHelper builds the v16 database from the CREATE statements in 16.json
         helper.createDatabase(TEST_DB, 16).close()
 
-        // 2. Reopen at v17 and run the migration through Room's validator.
-        //    `validateDroppedTables = true` makes Room verify that no
-        //    expected table is missing post-migration.
+        // Reopen at v17 and run the migration through Room's validator. validateDroppedTables =
+        // true also fails on a table the v17 schema doesn't have.
         helper.runMigrationsAndValidate(
             TEST_DB,
             17,
@@ -89,11 +80,9 @@ class MigrationHashValidationTest {
     }
 
     /**
-     * Validates that the post-migration schema after running
-     * `MIGRATION_18_19` against a fresh v18 database matches Room's expected
-     * v19 identityHash exactly — i.e. the two new nullable columns
-     * (`accounts.schedule_outbox_url`, `calendars.auto_schedule_supported`)
-     * match `app/schemas/.../19.json` in name, affinity, and nullability.
+     * Checks `MIGRATION_18_19` on a fresh v18 database against `19.json`: the two new nullable
+     * columns `accounts.schedule_outbox_url` and `calendars.auto_schedule_supported` must match in
+     * name, affinity and nullability.
      */
     @Test
     fun `MIGRATION_18_19 produces a schema whose identityHash matches Room's v19 export`() {
@@ -108,11 +97,9 @@ class MigrationHashValidationTest {
     }
 
     /**
-     * Validates that running `MIGRATION_19_20` against a fresh v19 database
-     * matches Room's expected v20 identityHash exactly — i.e. the two new
-     * nullable `attendees` columns (`itip_request_sequence`,
-     * `itip_request_status`) match `app/schemas/.../20.json` in name,
-     * affinity, and nullability.
+     * Checks `MIGRATION_19_20` on a fresh v19 database against `20.json`: the two new nullable
+     * `attendees` columns `itip_request_sequence` and `itip_request_status` must match in name,
+     * affinity and nullability.
      */
     @Test
     fun `MIGRATION_19_20 produces a schema whose identityHash matches Room's v20 export`() {
@@ -127,10 +114,9 @@ class MigrationHashValidationTest {
     }
 
     /**
-     * Validates that running `MIGRATION_20_21` against a fresh v20 database
-     * matches Room's expected v21 identityHash exactly — i.e. the hand-written
-     * `CREATE TABLE pending_cancels` matches `app/schemas/.../21.json` in
-     * column names, affinities, nullability, and foreign keys.
+     * Checks `MIGRATION_20_21` on a fresh v20 database against `21.json`: the hand-written
+     * `CREATE TABLE pending_cancels` must match in column names, affinities, nullability and
+     * foreign keys.
      */
     @Test
     fun `MIGRATION_20_21 produces a schema whose identityHash matches Room's v21 export`() {
@@ -145,11 +131,10 @@ class MigrationHashValidationTest {
     }
 
     /**
-     * Validates that running `MIGRATION_21_22` against a fresh v21 database
-     * matches Room's expected v22 identityHash exactly — i.e. the hand-written
-     * `CREATE TABLE categories` (plus its `last_used_at` index) matches
-     * `app/schemas/.../22.json` in column names, affinities, nullability, the
-     * `COLLATE NOCASE` primary key, and index DDL.
+     * Checks `MIGRATION_21_22` on a fresh v21 database against `22.json`: the hand-written
+     * `CREATE TABLE categories` and its `last_used_at` index must match in column names,
+     * affinities, nullability, primary key and indexes. Room's check reads `PRAGMA table_info`,
+     * which has no collation, so it doesn't see the `COLLATE NOCASE` on the primary key.
      */
     @Test
     fun `MIGRATION_21_22 produces a schema whose identityHash matches Room's v22 export`() {
@@ -164,11 +149,9 @@ class MigrationHashValidationTest {
     }
 
     /**
-     * Validates that running `MIGRATION_22_23` against a fresh v22 database
-     * matches Room's expected v23 identityHash exactly — i.e. the hand-written
-     * `CREATE TABLE address_books` (plus its `account_id` index and the unique
-     * `(account_id, url)` index) matches `app/schemas/.../23.json` in column
-     * names, affinities, nullability, foreign keys, and index DDL.
+     * Checks `MIGRATION_22_23` on a fresh v22 database against `23.json`: the hand-written
+     * `CREATE TABLE address_books`, its `account_id` index and the unique `(account_id, url)` index
+     * must match in column names, affinities, nullability, foreign keys and indexes.
      */
     @Test
     fun `MIGRATION_22_23 produces a schema whose identityHash matches Room's v23 export`() {
@@ -183,11 +166,9 @@ class MigrationHashValidationTest {
     }
 
     /**
-     * Validates that running `MIGRATION_23_24` against a fresh v23 database
-     * matches Room's expected v24 identityHash exactly — i.e. the additive
-     * `accounts.contact_sync_enabled` column (`INTEGER NOT NULL DEFAULT 0`)
-     * matches `app/schemas/.../24.json` in name, affinity, nullability, and
-     * default.
+     * Checks `MIGRATION_23_24` on a fresh v23 database against `24.json`: the added
+     * `accounts.contact_sync_enabled` column (`INTEGER NOT NULL DEFAULT 0`) must match in name,
+     * affinity, nullability and default.
      */
     @Test
     fun `MIGRATION_23_24 produces a schema whose identityHash matches Room's v24 export`() {
@@ -202,10 +183,8 @@ class MigrationHashValidationTest {
     }
 
     /**
-     * Same validation but starting from a `v1` database — verifies the
-     * full migration chain produces a hash-equivalent schema all the way
-     * up to v24. Belt-and-braces against any earlier-migration drift that
-     * only matters once subsequent versions stack on top.
+     * Runs the whole chain from a v1 database and validates the result against `24.json`. This
+     * catches drift in an early migration that only shows once later versions build on it.
      */
     @Test
     fun `full migration chain v1 to v24 produces schema whose identityHash matches Room's export`() {
@@ -217,8 +196,8 @@ class MigrationHashValidationTest {
             true,
             Migrations.MIGRATION_1_2,
             Migrations.MIGRATION_2_3,
-            // 3 -> 4 is an AutoMigration; the helper picks it up from the
-            // database class metadata when no explicit migration is provided.
+            // 3 -> 4 is an AutoMigration; the helper takes it from the database class when no
+            // explicit migration is given.
             Migrations.MIGRATION_4_5,
             Migrations.MIGRATION_5_6,
             Migrations.MIGRATION_6_7,

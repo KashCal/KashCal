@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">このサーバーでカレンダーが見つかりませんでした。</string>
     <string name="caldav_error_unexpected">予期しないエラーが発生しました。もう一度お試しください。</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nこのサーバーがローカルネットワーク上にある場合は、接続するためにローカルネットワークへのアクセスを許可してください。</string>
+    <string name="caldav_error_connection_refused_insecure">サーバーが KashCal の追わない接続先（暗号化されていないアドレス、またはリダイレクトのループ）に転送したため、パスワードを送信する前に KashCal は中止しました。サーバーのアドレスを確認してください。</string>
     <string name="local_network_banner_title">ローカルネットワークへのアクセスが必要です</string>
     <string name="local_network_banner_body">このサーバーはローカルネットワーク上にあるようです。KashCal が接続できるように、ローカルネットワークへのアクセスを許可してください。</string>
     <string name="local_network_banner_allow">アクセスを許可</string>
@@ -792,6 +793,8 @@
     <string name="dialog_edit_recurring_title">変更の適用先</string>
     <string name="dialog_delete_recurring_title">削除</string>
     <string name="dialog_move_recurring_title">移動</string>
+    <string name="snackbar_event_rescheduled">予定を移動しました</string>
+    <string name="snackbar_reschedule_failed">予定を移動できませんでした</string>
     <string name="recurring_this_event">この予定のみ</string>
     <string name="recurring_all_events">すべての予定</string>
 

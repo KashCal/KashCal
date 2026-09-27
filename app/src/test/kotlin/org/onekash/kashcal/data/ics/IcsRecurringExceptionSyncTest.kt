@@ -26,23 +26,23 @@ import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 
 /**
- * Tests for ICS subscription sync with recurring events that have exceptions.
+ * Tests ICS subscription sync of recurring events with exceptions, over mocked DAOs.
  *
- * GitHub Issue #36: Outlook ICS sync fails with UNIQUE constraint failed
- * https://github.com/KashCal/KashCal/issues/36
+ * #36: a feed with a master and its exceptions failed with a UNIQUE constraint error
+ * (https://github.com/KashCal/KashCal/issues/36).
  *
- * RFC 5545 specifies that exception events (modified occurrences) share the same UID
- * as their master event and are distinguished by RECURRENCE-ID. The ICS subscription
- * sync must properly handle this by:
- * 1. Using importId (which includes RECURRENCE-ID) for deduplication, not UID alone
- * 2. Linking exception events to their master via originalEventId
+ * RFC 5545 exceptions share their master's UID and differ by RECURRENCE-ID, so the sync must
+ * match rows by importId (which includes the RECURRENCE-ID), not by UID alone, and link each
+ * exception to its master through originalEventId.
  *
- * Test cases:
- * - Outlook ICS with master + exceptions (exact reproduction of issue #36)
- * - Multiple exceptions for the same master
- * - Re-sync with modified exceptions
- * - Master event only (baseline)
- * - Exceptions with different summary/time than master
+ * Covers:
+ * - the #36 feed, several exceptions per master, and exceptions with their own properties
+ * - a master-only feed, and an exception linked to a master stored by an earlier sync
+ * - re-sync updates, deletes of rows gone from the feed, and caldavUrl uniqueness
+ * - occurrence generation and linkException calls
+ * - synthetic masters for exceptions whose master isn't in the feed (#227), their self-heal,
+ *   re-sync and reminders, and the sweep of legacy standalone rows
+ * - renaming duplicate-UID masters (#227)
  */
 class IcsRecurringExceptionSyncTest {
 
@@ -79,10 +79,7 @@ class IcsRecurringExceptionSyncTest {
         lastError = null
     )
 
-    /**
-     * Exact ICS content from GitHub issue #36.
-     * Outlook uses the same UID for master and exceptions (correct per RFC 5545).
-     */
+    /** The feed from #36: master and exceptions share one UID, as RFC 5545 requires. */
     private val outlookIcsFromIssue = """
         BEGIN:VCALENDAR
         VERSION:2.0
@@ -112,9 +109,7 @@ class IcsRecurringExceptionSyncTest {
         END:VCALENDAR
     """.trimIndent()
 
-    /**
-     * ICS with master + multiple exceptions (different scenarios).
-     */
+    /** A master with three exceptions: moved, room changed, and cancelled. */
     private val masterWithMultipleExceptions = """
         BEGIN:VCALENDAR
         VERSION:2.0
@@ -156,9 +151,7 @@ class IcsRecurringExceptionSyncTest {
         END:VCALENDAR
     """.trimIndent()
 
-    /**
-     * Simple ICS with only master event (no exceptions) - baseline test.
-     */
+    /** A recurring master with no exceptions. */
     private val masterOnlyIcs = """
         BEGIN:VCALENDAR
         VERSION:2.0
@@ -174,9 +167,7 @@ class IcsRecurringExceptionSyncTest {
         END:VCALENDAR
     """.trimIndent()
 
-    /**
-     * ICS with exception having significantly different properties than master.
-     */
+    /** An exception whose title, time, location and description all differ from its master. */
     private val exceptionWithDifferentProperties = """
         BEGIN:VCALENDAR
         VERSION:2.0
@@ -219,7 +210,7 @@ class IcsRecurringExceptionSyncTest {
         insertedEvents.clear()
         updatedEvents.clear()
 
-        // Mock database.runInTransaction to just execute the block
+        // Runs the transaction block inline.
         coEvery { database.runInTransaction(any<suspend () -> Any>()) } coAnswers {
             val block = firstArg<suspend () -> Any>()
             block()
@@ -238,7 +229,7 @@ class IcsRecurringExceptionSyncTest {
             context = mockk(relaxed = true)
         )
 
-        // Default: ICS account exists
+        // The ICS account exists.
         coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns Account(
             id = 1L,
             provider = AccountProvider.ICS,
@@ -246,16 +237,16 @@ class IcsRecurringExceptionSyncTest {
             isEnabled = true
         )
 
-        // Capture inserted events with proper ID assignment
+        // Captures inserted events with an assigned row id.
         var nextInsertId = 1000L
         coEvery { eventsDao.insert(any()) } answers {
             val event = firstArg<Event>()
             val assignedId = nextInsertId++
             insertedEvents.add(event.copy(id = assignedId))
-            assignedId  // Return the ID
+            assignedId
         }
 
-        // Capture updated events
+        // Captures updated events.
         coEvery { eventsDao.update(any()) } answers {
             val event = firstArg<Event>()
             updatedEvents.add(event)
@@ -265,16 +256,9 @@ class IcsRecurringExceptionSyncTest {
     // ==================== Issue #36 Reproduction ====================
 
     /**
-     * FAILING TEST: Exact reproduction of GitHub issue #36.
-     *
-     * When syncing an Outlook ICS feed with a recurring event that has exceptions,
-     * the sync should:
-     * 1. Create master event with RRULE
-     * 2. Create exception events linked to master via originalEventId
-     * 3. NOT fail with UNIQUE constraint error
-     *
-     * Current behavior: Fails because sync uses UID-only matching, causing
-     * exceptions to overwrite the master or fail with duplicate UID error.
+     * Reproduces #36: the feed syncs without a UNIQUE constraint error, creating the master with
+     * its RRULE and the exception linked through originalEventId, with one UID and distinct
+     * importIds.
      */
     @Test
     fun `issue 36 - Outlook ICS with recurring event exceptions should sync successfully`() = runTest {
@@ -288,14 +272,12 @@ class IcsRecurringExceptionSyncTest {
 
         val result = repository.refreshSubscription(1L)
 
-        // Should succeed, not fail with UNIQUE constraint
         assertTrue(
             "Sync should succeed for Outlook ICS with exceptions",
             result is IcsSubscriptionRepository.SyncResult.Success
         )
 
-        // Should have inserted 2 events (master + 1 non-cancelled exception)
-        // Note: CANCELLED exception is filtered out by IcsParserService
+        // Master and one exception: IcsParserService drops the CANCELLED exception.
         val success = result as IcsSubscriptionRepository.SyncResult.Success
         assertEquals(
             "Should add master + 1 exception (cancelled is filtered)",
@@ -303,33 +285,30 @@ class IcsRecurringExceptionSyncTest {
             success.count.added
         )
 
-        // Verify events were inserted with correct structure
         val master = insertedEvents.find { it.rrule != null }
         val exception = insertedEvents.find { it.originalInstanceTime != null }
 
         assertNotNull("Master event should be created", master)
         assertNotNull("Exception event should be created", exception)
 
-        // Master should have RRULE
         assertTrue(
             "Master should have RRULE",
             master!!.rrule?.contains("FREQ=WEEKLY") == true
         )
 
-        // Exception should be linked to master
         assertNotNull(
             "Exception should have originalEventId linking to master",
             exception!!.originalEventId
         )
 
-        // Both should have the same UID (RFC 5545 requirement)
+        // RFC 5545: an exception has its master's UID.
         assertEquals(
             "Master and exception should share same UID",
             master.uid,
             exception.uid
         )
 
-        // But different importIds (for database uniqueness)
+        // Distinct importIds keep the rows apart.
         assertNotEquals(
             "Master and exception should have different importIds",
             master.importId,
@@ -339,9 +318,7 @@ class IcsRecurringExceptionSyncTest {
 
     // ==================== Multiple Exceptions Tests ====================
 
-    /**
-     * FAILING TEST: Multiple exceptions for the same recurring master.
-     */
+    /** Links every exception of one master to that master's row. */
     @Test
     fun `multiple exceptions should each be linked to same master`() = runTest {
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
@@ -356,7 +333,7 @@ class IcsRecurringExceptionSyncTest {
 
         assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
 
-        // Should have master + 2 non-cancelled exceptions (1 cancelled is filtered)
+        // Master and two exceptions; the cancelled one is dropped.
         val success = result as IcsSubscriptionRepository.SyncResult.Success
         assertEquals(
             "Should add master + 2 exceptions (cancelled filtered)",
@@ -364,14 +341,12 @@ class IcsRecurringExceptionSyncTest {
             success.count.added
         )
 
-        // Verify structure
         val master = insertedEvents.find { it.rrule != null }
         val exceptions = insertedEvents.filter { it.originalInstanceTime != null }
 
         assertNotNull("Master event should exist", master)
         assertEquals("Should have 2 exception events", 2, exceptions.size)
 
-        // All exceptions should link to the same master
         exceptions.forEach { exception ->
             assertEquals(
                 "Exception should link to master",
@@ -385,7 +360,7 @@ class IcsRecurringExceptionSyncTest {
             )
         }
 
-        // Each exception should have unique importId
+        // Every row, master included, has its own importId.
         val importIds = insertedEvents.map { it.importId }.toSet()
         assertEquals(
             "Each event should have unique importId",
@@ -394,9 +369,7 @@ class IcsRecurringExceptionSyncTest {
         )
     }
 
-    /**
-     * FAILING TEST: Exception events should preserve their specific properties.
-     */
+    /** Stores an exception's own title, location and description, not its master's. */
     @Test
     fun `exception events should preserve their modified properties`() = runTest {
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
@@ -417,21 +390,17 @@ class IcsRecurringExceptionSyncTest {
         assertNotNull("Master should exist", master)
         assertNotNull("Exception should exist", exception)
 
-        // Exception should have its own properties, not master's
         assertEquals("Special Breakfast Meeting", exception!!.title)
         assertEquals("Main Conference Room", exception.location)
         assertEquals("Important client breakfast", exception.description)
 
-        // Master should have original properties
         assertEquals("Morning Coffee Chat", master!!.title)
         assertEquals("Kitchen", master.location)
     }
 
     // ==================== Baseline Tests ====================
 
-    /**
-     * PASSING TEST: Master-only recurring event (no exceptions) should work.
-     */
+    /** Stores a master-only feed as one master with no exception fields. */
     @Test
     fun `master-only recurring event should sync normally`() = runTest {
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
@@ -457,16 +426,12 @@ class IcsRecurringExceptionSyncTest {
     // ==================== Re-sync Tests ====================
 
     /**
-     * FAILING TEST: Re-syncing should update existing events correctly.
-     *
-     * When re-syncing, the repository should:
-     * 1. Match existing events by importId (not UID)
-     * 2. Update master and exceptions independently
-     * 3. Not create duplicates
+     * Matches stored rows by importId on re-sync, so the stored master and exception are updated
+     * and only the new exception is added.
      */
     @Test
     fun `re-sync should update existing master and exceptions independently`() = runTest {
-        // First sync creates initial events
+        // Rows from an earlier sync.
         val existingMaster = Event(
             id = 100L,
             uid = "recurring-master@kashcal.test",
@@ -484,7 +449,7 @@ class IcsRecurringExceptionSyncTest {
         val existingException = Event(
             id = 101L,
             uid = "recurring-master@kashcal.test",
-            importId = "recurring-master@kashcal.test:RECID:20250113T100000Z",  // iCal datetime format
+            importId = "recurring-master@kashcal.test:RECID:20250113T100000Z",
             calendarId = testSubscription.calendarId,
             title = "Weekly Team Meeting (Moved)",
             startTs = 1736780400000L, // 2025-01-13 14:00 UTC
@@ -492,7 +457,7 @@ class IcsRecurringExceptionSyncTest {
             dtstamp = 0L,
             originalEventId = 100L,
             originalInstanceTime = 1736762400000L, // 2025-01-13 10:00 UTC
-            caldavUrl = "ics_subscription:1:recurring-master@kashcal.test:RECID:20250113T100000Z",  // importId-based format
+            caldavUrl = "ics_subscription:1:recurring-master@kashcal.test:RECID:20250113T100000Z",
             syncStatus = SyncStatus.SYNCED
         )
 
@@ -512,20 +477,16 @@ class IcsRecurringExceptionSyncTest {
         assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
         val success = result as IcsSubscriptionRepository.SyncResult.Success
 
-        // Should update existing master and exception, add new exception
-        // Master + Exception1 = updated (2)
-        // Exception2 = added (1)
-        // Exception3 (cancelled) = filtered out
+        // Master and the moved exception are updated, the room-changed exception is added,
+        // and the cancelled one is dropped.
         assertEquals("Should update 2 existing events", 2, success.count.updated)
         assertEquals("Should add 1 new exception", 1, success.count.added)
     }
 
-    /**
-     * FAILING TEST: Orphaned exception should be deleted when master is removed.
-     */
+    /** Deletes a stored master and its exception when the feed no longer has them. */
     @Test
     fun `orphaned exceptions should be deleted when master is removed from feed`() = runTest {
-        // Existing events from previous sync
+        // Rows from an earlier sync.
         val existingMaster = Event(
             id = 100L,
             uid = "old-master@kashcal.test",
@@ -543,7 +504,7 @@ class IcsRecurringExceptionSyncTest {
         val existingException = Event(
             id = 101L,
             uid = "old-master@kashcal.test",
-            importId = "old-master@kashcal.test:RECID:20250113T100000Z",  // iCal datetime format
+            importId = "old-master@kashcal.test:RECID:20250113T100000Z",
             calendarId = testSubscription.calendarId,
             title = "Old Meeting (Moved)",
             startTs = 1736780400000L,
@@ -551,13 +512,13 @@ class IcsRecurringExceptionSyncTest {
             dtstamp = 0L,
             originalEventId = 100L,
             originalInstanceTime = 1736762400000L, // 2025-01-13 10:00 UTC
-            caldavUrl = "ics_subscription:1:old-master@kashcal.test:RECID:20250113T100000Z",  // importId-based format
+            caldavUrl = "ics_subscription:1:old-master@kashcal.test:RECID:20250113T100000Z",
             syncStatus = SyncStatus.SYNCED
         )
 
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
         coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
-            content = masterOnlyIcs, // Different event, old one removed
+            content = masterOnlyIcs, // A different event; the old one is gone
             etag = null,
             lastModified = null
         )
@@ -571,7 +532,6 @@ class IcsRecurringExceptionSyncTest {
         assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
         val success = result as IcsSubscriptionRepository.SyncResult.Success
 
-        // Both master and exception should be deleted (orphaned)
         assertEquals("Should delete orphaned master and exception", 2, success.count.deleted)
         coVerify { eventsDao.deleteById(100L) }
         coVerify { eventsDao.deleteById(101L) }
@@ -580,12 +540,12 @@ class IcsRecurringExceptionSyncTest {
     // ==================== Edge Cases ====================
 
     /**
-     * FAILING TEST: Exception-only feed (master in different sync) should work.
-     * Some calendar systems may send exceptions separately.
+     * Links a new exception to the master row stored by an earlier sync. The feed carries the
+     * master too, which updates that row in place.
      */
     @Test
     fun `exception referencing existing master should link correctly`() = runTest {
-        // Master already exists from previous sync
+        // Stored by an earlier sync.
         val existingMaster = Event(
             id = 100L,
             uid = "different-props@kashcal.test",
@@ -613,7 +573,6 @@ class IcsRecurringExceptionSyncTest {
 
         assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
 
-        // Exception should link to existing master
         val insertedExceptions = insertedEvents.filter { it.originalInstanceTime != null }
         assertEquals("Should insert 1 exception", 1, insertedExceptions.size)
         assertEquals(
@@ -623,9 +582,7 @@ class IcsRecurringExceptionSyncTest {
         )
     }
 
-    /**
-     * FAILING TEST: caldavUrl format should include RECURRENCE-ID for exceptions.
-     */
+    /** Gives the master and each exception its own caldavUrl. */
     @Test
     fun `caldavUrl should be unique for master and exceptions`() = runTest {
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
@@ -638,7 +595,6 @@ class IcsRecurringExceptionSyncTest {
 
         repository.refreshSubscription(1L)
 
-        // Each event should have a unique caldavUrl
         val caldavUrls = insertedEvents.map { it.caldavUrl }.toSet()
         assertEquals(
             "Each event (master + exceptions) should have unique caldavUrl",
@@ -649,10 +605,7 @@ class IcsRecurringExceptionSyncTest {
 
     // ==================== Occurrence Generation Tests ====================
 
-    /**
-     * Verify correct occurrence handling: regenerateOccurrences for master,
-     * linkException for exceptions (Model B occurrence-linking pattern).
-     */
+    /** Regenerates occurrences for the master and calls linkException once per exception. */
     @Test
     fun `occurrences should be generated correctly for masters and exceptions`() = runTest {
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
@@ -665,10 +618,9 @@ class IcsRecurringExceptionSyncTest {
 
         repository.refreshSubscription(1L)
 
-        // Master uses regenerateOccurrences (1 master)
         coVerify(exactly = 1) { occurrenceGenerator.regenerateOccurrences(any()) }
 
-        // Exceptions use linkException (Model B pattern) - 2 non-cancelled exceptions
+        // The two exceptions that aren't cancelled.
         coVerify(exactly = 2) {
             occurrenceGenerator.linkException(any(), any(), any<Event>())
         }
@@ -677,16 +629,12 @@ class IcsRecurringExceptionSyncTest {
     // ==================== Edge Case Tests ====================
 
     /**
-     * Issue #227: orphaned RECURRENCE-ID is linked to a synthetic master.
+     * Links an exception whose master isn't in the feed to a synthetic master (#227).
      *
-     * Google Calendar legitimately emits exception events with no master in
-     * the same feed (master sliced out of export window, or series deleted).
-     * The orphan must appear on the user's calendar — but as a properly-
-     * linked exception, not a fictional standalone. We synthesize a
-     * placeholder master per orphan UID with status=CANCELLED and zero
-     * duration so the master itself is invisible (no occurrences) while
-     * the linked exceptions render normally via linkException-driven
-     * occurrences.
+     * Google Calendar emits exception events with no master in the same feed (master outside
+     * the export window, or series deleted). The exception must show as a linked exception, not
+     * a standalone event. The synthetic master (CANCELLED, zero duration, no rrule) gets no
+     * regenerateOccurrences call, and the exception shows through its linkException occurrence.
      */
     @Test
     fun `orphaned RECURRENCE-ID is linked to synthetic master`() = runTest {
@@ -716,7 +664,6 @@ class IcsRecurringExceptionSyncTest {
         val result = repository.refreshSubscription(1L)
 
         assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
-        // 2 inserts: 1 synthetic master + 1 linked exception.
         assertEquals(
             "Synthesis adds synthetic master + linked exception",
             2,
@@ -727,7 +674,6 @@ class IcsRecurringExceptionSyncTest {
         val synthetic = insertedEvents.single { it.originalInstanceTime == null }
         val exception = insertedEvents.single { it.originalInstanceTime != null }
 
-        // Synthetic master shape.
         assertEquals("UID preserved on synthetic", "orphan@test", synthetic.uid)
         assertEquals(
             "Synthetic importId is the bare UID (no :RECID: marker)",
@@ -752,7 +698,6 @@ class IcsRecurringExceptionSyncTest {
             synthetic.extraProperties?.get(SYNTHETIC_MASTER_EXTRA_KEY)
         )
 
-        // Exception is linked to the synthetic.
         assertEquals("Exception shares UID", "orphan@test", exception.uid)
         assertEquals(
             "Exception's originalEventId points to the synthetic's row id",
@@ -764,8 +709,7 @@ class IcsRecurringExceptionSyncTest {
             exception.originalInstanceTime
         )
 
-        // regenerateOccurrences must NOT run for synthetic; linkException
-        // must run for the exception.
+        // No regenerateOccurrences for the synthetic; linkException for the exception.
         coVerify(exactly = 0) { occurrenceGenerator.regenerateOccurrences(any()) }
         coVerify(exactly = 1) {
             occurrenceGenerator.linkException(any(), any(), any<Event>())
@@ -773,18 +717,15 @@ class IcsRecurringExceptionSyncTest {
     }
 
     /**
-     * Issue #227 self-heal: in sync N, an orphan UID gets a synthetic
-     * master inserted. In sync N+1, the real master arrives in the feed.
-     * The synthetic row's importId == uid matches the inbound real
-     * master's importId == uid, so the upsert path mutates the synthetic
-     * IN PLACE into a real master — same row id, rrule populates, status
-     * flips to CONFIRMED, sentinel clears, and the previously-linked
-     * exception's `originalEventId` FK survives.
+     * Updates the synthetic master in place when the real master arrives (#227).
      *
-     * The row-id-stability invariant is the regression discriminator:
-     * a future regression that broke the importId=uid contract on
-     * synthetic masters would manifest as a fresh master row id and a
-     * dangling exception FK.
+     * Sync N inserts a synthetic master for an exception-only UID. In sync N+1 the real master is
+     * in the feed with the same importId (the UID), so the upsert updates the synthetic's row:
+     * same row id, rrule set, status CONFIRMED, sentinel gone, and the exception's
+     * `originalEventId` still points at it.
+     *
+     * The stable row id is what this pins: a synthetic master whose importId isn't its UID would
+     * give the real master a new row and leave the exception's FK dangling.
      */
     @Test
     fun `self-heal - real master arriving after synthesis upserts the synthetic in place`() = runTest {
@@ -828,14 +769,13 @@ class IcsRecurringExceptionSyncTest {
 
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
 
-        // Sync N: feed has only the orphan exception.
+        // Sync N: the feed has only the exception.
         coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
             content = orphanOnlyIcs,
             etag = null,
             lastModified = null
         )
-        // Mock returns the latest captured insertedEvents on each call so
-        // sync N+1 sees what sync N inserted.
+        // Returns the rows inserted so far, so sync N+1 sees what sync N inserted.
         coEvery {
             eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any())
         } answers {
@@ -864,7 +804,7 @@ class IcsRecurringExceptionSyncTest {
             priorException.originalEventId
         )
 
-        // Sync N+1: feed now contains the real master + the same exception.
+        // Sync N+1: the feed has the real master and the same exception.
         coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
             content = orphanPlusMasterIcs,
             etag = null,
@@ -875,13 +815,12 @@ class IcsRecurringExceptionSyncTest {
 
         assertTrue(secondResult is IcsSubscriptionRepository.SyncResult.Success)
         val syncCount = (secondResult as IcsSubscriptionRepository.SyncResult.Success).count
-        // No sweep: synthetic upserts in place; exception updates in place.
+        // Nothing deleted: both rows are updated in place.
         assertEquals("No deletes — self-heal upserts in place", 0, syncCount.deleted)
         assertEquals("No new rows — both pre-existing rows updated", 0, syncCount.added)
         assertEquals("Both rows updated", 2, syncCount.updated)
 
-        // The captured Event passed to update() for the master (rrule != null)
-        // must carry the SAME row id as the synthetic, proving in-place mutation.
+        // The master passed to update() (rrule != null) has the synthetic's row id.
         val updatedMaster = updatedEvents.single { it.rrule != null }
         assertEquals(
             "Self-heal must upsert the synthetic in place — row id stable",
@@ -898,7 +837,6 @@ class IcsRecurringExceptionSyncTest {
             updatedMaster.extraProperties?.get(SYNTHETIC_MASTER_EXTRA_KEY)
         )
 
-        // Exception's update should still link to the same master row id.
         val updatedException = updatedEvents.single { it.originalInstanceTime != null }
         assertEquals(
             "Exception's originalEventId still references the (now-real) master",
@@ -906,7 +844,7 @@ class IcsRecurringExceptionSyncTest {
             updatedException.originalEventId
         )
 
-        // linkException re-ran on the upserted exception with the same master id.
+        // linkException runs again for the exception with the same master id.
         coVerify {
             occurrenceGenerator.linkException(
                 masterEventId = priorSyntheticId,
@@ -917,20 +855,14 @@ class IcsRecurringExceptionSyncTest {
     }
 
     /**
-     * Issue #227: re-syncing the same orphan-only feed must be idempotent.
+     * Keeps the synthetic master and its exceptions across re-syncs of an exception-only feed
+     * (#227).
      *
-     * The orphan-cleanup sweep deletes any row in `existingByImportId`
-     * whose importId is not in the new feed. Synthetic masters carry an
-     * importId equal to their UID — that importId is not in the feed
-     * (orphan-only feeds have no master VEVENT), so unless synthesis
-     * folds the synthetic's importId into `newImportIds`, the synthetic
-     * is deleted on every refresh and FK CASCADE drops every linked
-     * exception. PASS 2 then no-ops because it tries to UPDATE deleted
-     * rows by stale id.
-     *
-     * Regression discriminator: sync N+1 of the same orphan-only feed
-     * must produce deleted=0 / added=0 (everything is the same row id
-     * as sync N, just touched again).
+     * The sweep deletes every stored row whose importId isn't in `newImportIds`. A synthetic
+     * master's importId is its UID, which an exception-only feed doesn't contain, so unless
+     * synthesis adds it to `newImportIds` the synthetic is deleted on every refresh and the FK
+     * cascade deletes its exceptions. PASS 2 would then update the deleted rows by their old ids,
+     * a no-op. Sync N+1 must report deleted=0 and added=0, with every row id unchanged.
      */
     @Test
     fun `re-sync of orphan-only feed preserves synthetic and exceptions across syncs`() = runTest {
@@ -961,8 +893,7 @@ class IcsRecurringExceptionSyncTest {
         coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
             content = orphanOnlyIcs, etag = null, lastModified = null
         )
-        // Mock returns latest captured insertedEvents on each call so
-        // sync N+1 sees what sync N inserted.
+        // Returns the rows inserted so far, so sync N+1 sees what sync N inserted.
         coEvery {
             eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any())
         } answers {
@@ -981,16 +912,16 @@ class IcsRecurringExceptionSyncTest {
             .map { it.id }
             .toSet()
 
-        // Sync N+1: identical feed.
+        // Sync N+1: the same feed.
         val secondResult = repository.refreshSubscription(1L)
         assertTrue(secondResult is IcsSubscriptionRepository.SyncResult.Success)
         val secondCount = (secondResult as IcsSubscriptionRepository.SyncResult.Success).count
 
-        // The crux — sweep must NOT delete the synthetic or its exceptions.
+        // The sweep must not delete the synthetic or its exceptions.
         assertEquals("No deletes on idempotent re-sync", 0, secondCount.deleted)
         assertEquals("No new rows on idempotent re-sync", 0, secondCount.added)
 
-        // Exception row ids stable across syncs (no CASCADE-drop + reinsert).
+        // No cascade delete and re-insert: the exception row ids are unchanged.
         val exceptionIdsAfter = insertedEvents
             .filter { it.originalInstanceTime != null }
             .map { it.id }
@@ -1001,16 +932,13 @@ class IcsRecurringExceptionSyncTest {
             exceptionIdsAfter
         )
 
-        // Synthetic row id stable.
         val syntheticIdAfter = insertedEvents.single { it.originalInstanceTime == null }.id
         assertEquals("Synthetic row id stable across syncs", syntheticIdN, syntheticIdAfter)
     }
 
     /**
-     * Verify linkException is called with correct parameters:
-     * - masterId from the linked master event
-     * - originalInstanceTime from the exception
-     * - the exception Event itself
+     * Gives each exception an originalEventId and originalInstanceTime and calls linkException
+     * once per exception. Argument values aren't matched here.
      */
     @Test
     fun `exception events should call linkException with correct parameters`() = runTest {
@@ -1024,17 +952,14 @@ class IcsRecurringExceptionSyncTest {
 
         repository.refreshSubscription(1L)
 
-        // Verify exceptions were inserted with correct structure
         val exceptions = insertedEvents.filter { it.originalInstanceTime != null }
         assertEquals(2, exceptions.size)
 
-        // Each exception should have originalEventId set (linked to master)
         exceptions.forEach { exception ->
             assertNotNull("Exception should have originalEventId", exception.originalEventId)
             assertNotNull("Exception should have originalInstanceTime", exception.originalInstanceTime)
         }
 
-        // Verify linkException was called for each exception (2 times)
         coVerify(exactly = 2) {
             occurrenceGenerator.linkException(any(), any(), any<Event>())
         }
@@ -1042,18 +967,15 @@ class IcsRecurringExceptionSyncTest {
 
     // ==================== Issue #227: Duplicate UID disambiguation ====================
 
-    /**
-     * Alias to the production constant — tests assert against the same key
-     * so a rename in production breaks them rather than silently diverging.
-     */
+    /** Aliases the production key, so a rename breaks compilation here instead of drifting. */
     private val originalUidExtraKey = ORIGINAL_UID_EXTRA_KEY
 
     /**
-     * Issue #227: Google's private ICS export sometimes emits two non-exception
-     * VEVENTs sharing the same UID (RFC 5545 §3.8.4.7 says UID should be
-     * unique, but Google does it). The fix mutates the uid column for both
-     * events in the duplicate group so trigger_master_event_unique_insert
-     * doesn't fire.
+     * Stores two masters sharing a UID under distinct renamed UIDs (#227).
+     *
+     * Google's private ICS export sometimes emits two non-exception VEVENTs with one UID, though
+     * RFC 5545 §3.8.4.7 says a UID MUST be globally unique. The sync renames the uid of every
+     * event in the group so trigger_master_event_unique_insert doesn't fire.
      */
     @Test
     fun `duplicate-UID masters in same feed are persisted with distinct disambiguated UIDs`() = runTest {
@@ -1119,10 +1041,8 @@ class IcsRecurringExceptionSyncTest {
     }
 
     /**
-     * Issue #227: re-syncing the same duplicate-UID feed must produce
-     * `updated=2, added=0` — proving the disambiguator (event.startTs) is
-     * stable across syncs, so existingByImportId matches and the upsert
-     * takes the update path, not the insert path.
+     * Re-syncing a duplicate-UID feed gives `updated=2, added=0` (#227): the disambiguator is
+     * the event's startTs, the same every sync, so the stored rows match by importId.
      */
     @Test
     fun `duplicate-UID disambiguation is idempotent across re-sync`() = runTest {
@@ -1151,12 +1071,8 @@ class IcsRecurringExceptionSyncTest {
         coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
             content = duplicateUidIcs, etag = null, lastModified = null
         )
-        // Returns dynamic state: empty on first call, the just-inserted rows
-        // on the second. The mock at insertedEvents captures rows with
-        // assigned ids and sets caldavUrl=null on the captured copy, so we
-        // re-derive caldavUrl from the inbound event's original caldavUrl
-        // which the production code mutates before insert. We approximate
-        // by returning insertedEvents directly.
+        // Returns the rows inserted so far: none on the first sync, the first sync's rows (with
+        // their renamed caldavUrls) on the second.
         coEvery {
             eventsDao.getByCalendarIdAndCaldavUrlPrefix(any(), any())
         } answers {
@@ -1177,13 +1093,13 @@ class IcsRecurringExceptionSyncTest {
         assertEquals("Both rows updated on re-sync", 2, secondCount.updated)
         assertEquals("No deletion on re-sync", 0, secondCount.deleted)
 
-        // Mutated UIDs must be deterministic across syncs (function of startTs).
+        // Renamed UIDs derive from startTs, so they match across syncs.
         val secondUids = updatedEvents.map { it.uid }.sorted()
         val secondImportIds = updatedEvents.mapNotNull { it.importId }.sorted()
         assertEquals("UIDs stable across re-sync", firstUids, secondUids)
         assertEquals("ImportIds stable across re-sync", firstImportIds, secondImportIds)
 
-        // X-KASHCAL-ORIGINAL-UID survives the upsert overwrite.
+        // X-KASHCAL-ORIGINAL-UID is still set after the update.
         updatedEvents.forEach { event ->
             assertEquals(
                 "Original UID marker must survive re-sync",
@@ -1193,11 +1109,7 @@ class IcsRecurringExceptionSyncTest {
         }
     }
 
-    /**
-     * Issue #227: a feed with a single VEVENT for a UID must NOT trigger
-     * disambiguation. The healthy single-event-per-UID path is the common
-     * case and must not regress.
-     */
+    /** Leaves a UID with one VEVENT unrenamed and without the original-UID key (#227). */
     @Test
     fun `single-occurrence UID is not mutated`() = runTest {
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
@@ -1222,11 +1134,9 @@ class IcsRecurringExceptionSyncTest {
     }
 
     /**
-     * Issue #227 degenerate case: two events sharing UID *and* DTSTART. After
-     * the disambiguator (startTs) is appended, the mutated UIDs still
-     * collide. The first persists, the second's INSERT trips the trigger
-     * and is caught at the existing catch site. Sync still returns Success
-     * with count.added==1. No crash.
+     * Stores only the first of two events sharing UID and DTSTART (#227). Appending startTs gives
+     * both the same renamed UID, so the second insert trips the trigger and the master loop's
+     * catch skips it. The sync still returns Success with count.added == 1.
      */
     @Test
     fun `same-UID same-DTSTART degenerate case persists first event without crash`() = runTest {
@@ -1256,10 +1166,9 @@ class IcsRecurringExceptionSyncTest {
             content = degenerateIcs, etag = null, lastModified = null
         )
         coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
-        // Simulate the master-uniqueness trigger firing on the second insert
-        // — production catches SQLiteConstraintException at the master-loop
-        // catch site (line 441-443). Real DB behavior is verified separately
-        // in IcsSubscriptionRepositoryDuplicateUidIntegrationTest.
+        // Simulates the master-uniqueness trigger on the second insert; the master loop catches
+        // any Exception. `IcsSubscriptionRepositoryDuplicateUidIntegrationTest` runs the real
+        // trigger.
         var insertCallCount = 0
         coEvery { eventsDao.insert(any()) } answers {
             insertCallCount++
@@ -1286,21 +1195,16 @@ class IcsRecurringExceptionSyncTest {
     }
 
     /**
-     * Issue #227 regression anchor: the literal feed pasted in the bug
-     * report. Combines Bug A (orphaned RECURRENCE-ID, `abc@google.com`)
-     * with Bug B (duplicate UID, `xxx@google.com`) in a single feed.
+     * Syncs the feed from the #227 report: an exception with no master (`abc@google.com`) and a
+     * duplicate UID (`xxx@google.com`).
      *
-     * Post-fix shape:
-     * - 4 rows inserted total: 1 synthetic master for `abc@google.com`
-     *   + 1 linked exception (the only `abc` event in the feed)
-     *   + 2 disambiguated `xxx@google.com#dup=*` masters.
-     * - 3 rows visible to the user: the synthetic produces no occurrences,
-     *   so only the linked exception (originating from the orphan) and
-     *   the two disambiguated masters render — preserving the user's
-     *   "Found 3 events" expectation while fixing the silent-drop bug.
+     * - 4 rows are inserted: a synthetic master for `abc@google.com`, its linked exception (the
+     *   only `abc` event in the feed), and 2 renamed `xxx@google.com#dup=` masters.
+     * - 3 events show, matching the report's "Found 3 events": the synthetic gets no
+     *   regenerateOccurrences call, which is what the last assertion checks.
      *
-     * The malformed Event 3 (duplicate DTSTART/DTEND/DTSTAMP lines per
-     * RFC 5545 §3.6.1) is tolerated by ical4j's existing parsing.
+     * The third VEVENT repeats DTSTART, DTEND and DTSTAMP, which RFC 5545 §3.6.1 forbids; ical4j
+     * parses it anyway.
      */
     @Test
     fun `issue 227 - Google ICS feed with orphaned exception and duplicate UID inserts 4 rows and renders 3`() = runTest {
@@ -1355,8 +1259,6 @@ class IcsRecurringExceptionSyncTest {
             "Sync must succeed without crashing on the malformed feed",
             result is IcsSubscriptionRepository.SyncResult.Success
         )
-        // 4 inserts: synthetic master for abc@google.com + linked
-        // exception + 2 disambiguated xxx masters.
         assertEquals(
             "All 4 rows inserted: synthetic + 1 linked exception + 2 disambiguated masters",
             4,
@@ -1364,7 +1266,6 @@ class IcsRecurringExceptionSyncTest {
         )
         assertEquals(4, insertedEvents.size)
 
-        // abc@google.com synthetic master + linked exception.
         val abcRows = insertedEvents.filter { it.uid == "abc@google.com" }
         assertEquals(
             "abc@google.com produces 1 synthetic + 1 linked exception",
@@ -1385,7 +1286,6 @@ class IcsRecurringExceptionSyncTest {
             abcException.originalEventId
         )
 
-        // 2 disambiguated xxx@google.com masters.
         val mutated = insertedEvents.filter { it.uid.startsWith("xxx@google.com#dup=") }
         assertEquals("Both xxx@google.com events imported with mutated UIDs", 2, mutated.size)
         assertEquals(
@@ -1401,8 +1301,7 @@ class IcsRecurringExceptionSyncTest {
             )
         }
 
-        // Visible-to-user count: synthetic produces no occurrences, so 3
-        // events render (1 abc exception + 2 xxx masters).
+        // The synthetic produces no occurrences, so 3 events show.
         coVerify(exactly = 0) {
             occurrenceGenerator.regenerateOccurrences(
                 match { it.extraProperties?.get(SYNTHETIC_MASTER_EXTRA_KEY) == "true" }
@@ -1411,11 +1310,8 @@ class IcsRecurringExceptionSyncTest {
     }
 
     /**
-     * Issue #227 invariant: a UID that already contains the literal
-     * `#dup=` substring must not double-mutate to collide with another
-     * such UID. If two such UIDs collide on the original UID, they get
-     * a second `#dup=` segment appended (e.g., `X#dup=T1#dup=T2`) — still
-     * distinct, still valid.
+     * Keeps two masters distinct when their shared UID already contains `#dup=` (#227). Each gets
+     * `#dup={startTs}` appended to the whole UID (`weird#dup=preexisting@test#dup={startTs}`).
      */
     @Test
     fun `UIDs containing literal hash-dup are not double-mutated to collide`() = runTest {
@@ -1458,14 +1354,11 @@ class IcsRecurringExceptionSyncTest {
         assertEquals("Mutated UIDs must remain distinct", 2, storedUids.size)
     }
 
-    // ==================== Issue #227: Synthetic master for orphan-exception feeds ====================
+    // ==================== Issue #227: Exception-only feeds ====================
 
     /**
-     * Issue #227: a feed with multiple same-UID orphan exceptions (master
-     * sliced out of Google's private export) inserts ONE synthetic master
-     * for the UID + every orphan linked to it. Pre-fix, only the first
-     * orphan-promoted-to-standalone survived; the rest were silently
-     * dropped at the master-uniqueness trigger.
+     * Inserts one synthetic master for a UID with several exceptions and no master, and links
+     * every exception to it (#227). Google's private export leaves the master out.
      */
     @Test
     fun `multiple orphan exceptions for same UID get one synthetic master with all linked`() = runTest {
@@ -1537,15 +1430,13 @@ class IcsRecurringExceptionSyncTest {
             )
         }
 
-        // 3 distinct RECURRENCE-IDs preserved.
         assertEquals(
             "Each exception keeps its own RECURRENCE-ID",
             3,
             exceptions.mapNotNull { it.originalInstanceTime }.toSet().size
         )
 
-        // No occurrence regeneration for the synthetic (it has no rrule
-        // and produces nothing). linkException runs once per exception.
+        // No regenerateOccurrences for the synthetic; linkException once per exception.
         coVerify(exactly = 0) { occurrenceGenerator.regenerateOccurrences(any()) }
         coVerify(exactly = 3) {
             occurrenceGenerator.linkException(any(), any(), any<Event>())
@@ -1553,12 +1444,8 @@ class IcsRecurringExceptionSyncTest {
     }
 
     /**
-     * Issue #227: synthetic masters must NOT have reminders scheduled.
-     * They have no occurrences and no real event semantics — calling
-     * scheduleRemindersForEvent on them would create alarms for a
-     * placeholder. The shape of the synthetic (reminders=null) makes
-     * this short-circuit naturally inside scheduleRemindersForEvent;
-     * this test pins the contract.
+     * Schedules no reminders for a synthetic master (#227): it is a placeholder with no
+     * occurrences, and the sync's synthetic loop never schedules reminders.
      */
     @Test
     fun `synthetic master is not passed to reminder scheduling`() = runTest {
@@ -1585,10 +1472,7 @@ class IcsRecurringExceptionSyncTest {
 
         repository.refreshSubscription(1L)
 
-        // No reminder scheduling call should have been made for the
-        // synthetic master (it has no reminders configured). The
-        // exception may or may not depending on its own reminders config
-        // — we don't pin that here.
+        // Only the synthetic is checked; the exception's reminders aren't asserted.
         coVerify(exactly = 0) {
             reminderScheduler.scheduleRemindersForEvent(
                 event = match { it.extraProperties?.get(SYNTHETIC_MASTER_EXTRA_KEY) == "true" },
@@ -1599,14 +1483,12 @@ class IcsRecurringExceptionSyncTest {
     }
 
     /**
-     * Issue #227 legacy migration: pre-v23.7.46 builds promoted orphans
-     * to standalone events with importId `{uid}:RECID:{datetime}`. When
-     * the next sync runs against the synthesis-aware code, those legacy
-     * rows must be swept (matched by the existing PASS-1 stale-orphan
-     * predicate, now extracted into `sweepLegacyOrphanStandalones`) so
-     * the synthetic master's INSERT doesn't trip the master-uniqueness
-     * trigger on the (uid, calendar_id, original_event_id IS NULL)
-     * collision.
+     * Deletes a legacy standalone row before inserting the synthetic master (#227).
+     *
+     * Builds up to v23.7.45 stored an exception with no master as a standalone event with
+     * importId `{uid}:RECID:{datetime}`. `sweepLegacyOrphanStandalones` deletes it so the
+     * synthetic master's insert doesn't trip the master-uniqueness trigger on the (uid,
+     * calendar_id, original_event_id IS NULL) collision.
      */
     @Test
     fun `legacy promoted-standalone row is swept when synthetic master is synthesized`() = runTest {
@@ -1625,7 +1507,7 @@ class IcsRecurringExceptionSyncTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Pre-populate DB with a v23.7.45-shape legacy standalone row.
+        // A standalone row as v23.7.45 stored it.
         val legacyStandalone = Event(
             id = 99L,
             uid = "legacy-orphan@test",
@@ -1635,8 +1517,7 @@ class IcsRecurringExceptionSyncTest {
             startTs = 1767693600000L, // 2026-01-06T10:00Z
             endTs = 1767697200000L,
             dtstamp = 0L,
-            // Legacy code stripped originalEventId/originalInstanceTime
-            // when promoting to standalone — these are null.
+            // Legacy standalone rows have no originalEventId or originalInstanceTime.
             originalEventId = null,
             originalInstanceTime = null,
             caldavUrl = "ics_subscription:1:legacy-orphan@test:RECID:20260106T100000Z",
@@ -1655,15 +1536,13 @@ class IcsRecurringExceptionSyncTest {
         assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
         val syncCount = (result as IcsSubscriptionRepository.SyncResult.Success).count
 
-        // Legacy row swept; synthetic + linked exception inserted.
         assertEquals("Legacy standalone deleted", 1, syncCount.deleted)
         assertEquals("Synthetic + linked exception inserted", 2, syncCount.added)
 
-        // Reminders cancelled for legacy row before deletion.
+        // Its reminders are cancelled and the row deleted.
         coVerify { reminderScheduler.cancelRemindersForEvent(99L) }
         coVerify { eventsDao.deleteById(99L) }
 
-        // Synthetic + linked exception present.
         val synthetic = insertedEvents.single { it.originalInstanceTime == null }
         val exception = insertedEvents.single { it.originalInstanceTime != null }
         assertEquals(

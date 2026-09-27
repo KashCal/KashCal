@@ -11,10 +11,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Base class for DAO tests using Room in-memory database.
- *
- * Uses Robolectric to provide Android context for unit tests.
- * Each test gets a fresh database instance.
+ * Gives each DAO test a fresh in-memory Room database, with Robolectric supplying the context.
+ * No create callback is added, so the master-uid triggers and default tags are absent.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])

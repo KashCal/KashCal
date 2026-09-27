@@ -7,28 +7,24 @@ import java.time.format.DateTimeFormatter
 import kotlin.random.Random
 
 /**
- * Generates random but WELL-FORMED and UNAMBIGUOUS [RRuleCase]s to drive the
- * two-engine differential oracle (see [RRuleDifferentialFuzzTest]).
+ * Generates random well-formed, unambiguous [RRuleCase]s for [RRuleDifferentialFuzzTest].
  *
- * Design intent: stay inside the valid, unambiguous, bounded RRULE space so any
- * cross-engine divergence is a genuine correctness finding rather than benign
- * noise. Specifically, generated rules:
- *  - use only DAILY/WEEKLY/MONTHLY/YEARLY (sub-daily frequencies add DST-fold
- *    ambiguity and iteration-cap divergence that both engines legitimately
- *    disagree on — those live in the curated AdversarialCorpus instead);
- *  - anchor in UTC on a whole second, so no DST gap/overlap and no sub-second
- *    truncation difference between engines;
- *  - **derive every BY-part from the chosen DTSTART** so DTSTART itself always
- *    satisfies the rule. RFC 5545 §3.8.5.3 states the recurrence set generated
- *    with a DTSTART "not synchronized with the recurrence rule is undefined" —
- *    so an unsynchronized DTSTART lets engines legitimately differ. Deriving the
- *    parts keeps every generated case in the spec-defined space.
- *  - terminate via COUNT, a UTC UNTIL, or the range clamp — never COUNT+UNTIL
- *    together (RFC 5545 §3.3.10 leaves that undefined too).
+ * Generation stays inside the valid, unambiguous, bounded RRULE space, so a cross-engine
+ * divergence is a correctness finding, not benign noise. Generated rules:
+ *  - use only DAILY, WEEKLY, MONTHLY or YEARLY. Sub-daily frequencies add DST-fold ambiguity
+ *    and iteration-cap divergence the engines legitimately disagree on; those cases live in the
+ *    curated AdversarialCorpus.
+ *  - anchor in UTC on a whole second, so there is no DST gap or overlap and no sub-second
+ *    truncation difference.
+ *  - derive every BY-part from the chosen DTSTART, so DTSTART always satisfies the rule. RFC 5545
+ *    §3.8.5.3: the recurrence set generated with a DTSTART "not synchronized with the recurrence
+ *    rule is undefined", so engines may legitimately differ on one.
+ *  - end by COUNT, a UTC UNTIL, or the range end, never COUNT and UNTIL together (RFC 5545
+ *    §3.3.10: they "MUST NOT occur in the same 'recur'").
  *
- * Malformed-input robustness is out of scope here by design; the Jazzer
- * never-throw harnesses and AdversarialCorpus cover that. This generator's job
- * is to find inputs where the two engines both succeed but *disagree*.
+ * Malformed-input robustness is out of scope; the Jazzer never-throw harnesses and
+ * AdversarialCorpus cover it. This generator looks for inputs where both engines succeed but
+ * disagree.
  */
 class RandomRRuleGenerator(private val random: Random) {
 
@@ -38,7 +34,7 @@ class RandomRRuleGenerator(private val random: Random) {
         val RANGE_END: Long = utc(2028, 1, 1) // 4-year window gives YEARLY rules room
         const val ONE_DAY_MS = 24L * 60 * 60 * 1000
 
-        // ical4j / lib-recur weekday tokens, indexed by DayOfWeek.value (1=MON..7=SUN).
+        // RFC 5545 weekday tokens, indexed by DayOfWeek.value - 1 (0=MO..6=SU).
         val WEEKDAY_TOKENS = listOf("MO", "TU", "WE", "TH", "FR", "SA", "SU")
         val UNTIL_FMT: DateTimeFormatter =
             DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
@@ -48,9 +44,9 @@ class RandomRRuleGenerator(private val random: Random) {
     }
 
     fun nextCase(index: Int): RRuleCase {
-        // DTSTART: whole-second UTC instant in the first year of the window, but
-        // constrained to day-of-month 1..28 so a monthly BYMONTHDAY derived from
-        // it exists in every month.
+        // DTSTART: a whole-second UTC instant in the first year of the window, with
+        // day-of-month clamped to 1..28 so a monthly BYMONTHDAY derived from it exists in
+        // every month.
         val startDay = random.nextLong(0, 300)
         val secondsIntoDay = random.nextLong(0, ONE_DAY_MS / 1000) * 1000
         val rawDtstart = RANGE_START + startDay * ONE_DAY_MS + secondsIntoDay
@@ -76,13 +72,12 @@ class RandomRRuleGenerator(private val random: Random) {
             "MONTHLY" -> when (random.nextInt(3)) {
                 0 -> parts += "BYMONTHDAY=${dtStart.dayOfMonth}"
                 1 -> {
-                    // Nth-weekday of dtStart's own weekday. DTSTART must satisfy the
-                    // rule or the recurrence set is undefined per RFC 5545 §3.8.5.3
-                    // and engines legitimately diverge (flaps). dom is clamped 1..28,
-                    // so the positional ordinal always matches; "last" (-1) only
-                    // matches when dtStart happens to BE the last <weekday> of its
-                    // month, so emit -1 solely in that case — this keeps -1FR-style
-                    // expansion in the differential oracle without introducing noise.
+                    // Nth weekday of dtStart's own weekday. DTSTART must satisfy the rule
+                    // or the recurrence set is undefined (RFC 5545 §3.8.5.3) and the test
+                    // flaps. The positional ordinal always matches; "last" (-1) matches
+                    // only when dtStart is the last <weekday> of its month, so -1 is
+                    // emitted only then. That keeps -1FR-style expansion in the oracle
+                    // without noise.
                     val positional = (dtStart.dayOfMonth - 1) / 7 + 1
                     val isLastOfWeekdayInMonth =
                         dtStart.dayOfMonth + 7 > dtStart.toLocalDate().lengthOfMonth()
@@ -95,7 +90,7 @@ class RandomRRuleGenerator(private val random: Random) {
             else -> {} // DAILY: no BY* part
         }
 
-        // Termination: COUNT | UNTIL | neither (range clamp). Never both.
+        // Termination: COUNT, UNTIL, or neither (the range end). Never both.
         when (random.nextInt(3)) {
             0 -> parts += "COUNT=${random.nextInt(1, 25)}"
             1 -> parts += "UNTIL=${randomUntil(dtstartMs)}"
@@ -117,7 +112,7 @@ class RandomRRuleGenerator(private val random: Random) {
     }
 
     private fun randomUntil(dtstartMs: Long): String {
-        // A UTC UNTIL strictly after dtstart, within the window.
+        // A UTC UNTIL at least a day after dtstart and before the window end.
         val span = (RANGE_END - dtstartMs).coerceAtLeast(ONE_DAY_MS + 1)
         val untilMs = dtstartMs + random.nextLong(ONE_DAY_MS, span)
         return ZonedDateTime.ofInstant(Instant.ofEpochMilli(untilMs), ZoneOffset.UTC)

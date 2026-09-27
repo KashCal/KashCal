@@ -27,18 +27,20 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Regression tests for critical invariants in the data and sync layers.
- *
- * These tests prevent regression of bugs that have caused real issues.
+ * Pins data-layer invariants through [EventWriter] and [OccurrenceGenerator] over an in-memory
+ * Room database.
  *
  * Areas covered:
- * - @Transaction for multi-step operations
- * - PendingOperation queue for sync
- * - Exception linking via FK
- * - SyncStatus enum transitions
- * - Time-based queries: use occurrences table
- * - Self-contained sync operations
- * - Exception events share master UID
+ * - Exceptions share the master's UID, link through `originalEventId`, have no caldavUrl, and
+ *   an edit queues an UPDATE on the master
+ * - A MOVE op carries the old URL and target calendar captured at queue time
+ * - Time-based queries go through the occurrences table, not `Event.endTs`
+ * - SyncStatus transitions on update, local calendars included
+ * - The PendingOperation queue: oldest first, one UPDATE for repeated edits
+ * - [EventWriter.editSingleOccurrence] writes the exception and links its occurrence
+ * - An exception has no RRULE; deleting an occurrence adds an EXDATE; moves between local and
+ *   iCloud calendars queue a DELETE or a CREATE
+ * - A moved exception doesn't duplicate after occurrence regeneration
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -144,11 +146,12 @@ class CriticalPatternsTest {
         assertTrue("Should have occurrences", occurrences.isNotEmpty())
         val firstOccurrenceTs = occurrences.first().startTs
 
-        // Edit single occurrence - creates exception
+        // Editing one occurrence creates an exception.
         val modifiedEvent = master.copy(title = "Modified Occurrence")
         val exception = eventWriter.editSingleOccurrence(master.id, firstOccurrenceTs, modifiedEvent)
 
-        // CRITICAL: Exception MUST have same UID as master (RFC 5545)
+        // The exception has the master's UID; RECURRENCE-ID picks the instance
+        // (RFC 5545 §3.8.4.4).
         assertEquals("Exception must have same UID as master", masterUid, exception.uid)
     }
 
@@ -162,8 +165,8 @@ class CriticalPatternsTest {
         val occurrences = database.occurrencesDao().getForEvent(master.id)
         assertTrue("Should have multiple occurrences", occurrences.size >= 3)
 
-        // Create three exceptions
-        // Must pass correct times for each occurrence (EventWriter is strict)
+        // Three exceptions, each given its own occurrence's times. `master.copy` alone keeps the
+        // first occurrence's start, which linkException reads as a move onto that occurrence.
         val duration = master.endTs - master.startTs
         val exception1 = eventWriter.editSingleOccurrence(
             master.id,
@@ -181,7 +184,7 @@ class CriticalPatternsTest {
             master.copy(title = "Exception 3", startTs = occurrences[2].startTs, endTs = occurrences[2].startTs + duration)
         )
 
-        // All exceptions MUST have same UID
+        // Every exception has the master's UID.
         assertEquals(masterUid, exception1.uid)
         assertEquals(masterUid, exception2.uid)
         assertEquals(masterUid, exception3.uid)
@@ -236,7 +239,7 @@ class CriticalPatternsTest {
     fun `editing exception queues UPDATE on master not CREATE on exception`() = runTest {
         val master = eventWriter.createEvent(createRecurringEvent(), isLocal = false)
 
-        // Simulate sync completed - event needs caldavUrl and SYNCED status for UPDATE queue
+        // Give it a caldavUrl: editSingleOccurrence queues the master's UPDATE only then.
         val syncedMaster = master.copy(
             caldavUrl = "https://caldav.icloud.com/personal/test.ics",
             etag = "\"abc123\"",
@@ -244,7 +247,7 @@ class CriticalPatternsTest {
         )
         database.eventsDao().update(syncedMaster)
 
-        // Clear any pending operations from create
+        // Clear the CREATE queued by createEvent.
         database.pendingOperationsDao().deleteAll()
 
         val occurrences = database.occurrencesDao().getForEvent(master.id)
@@ -256,7 +259,7 @@ class CriticalPatternsTest {
             syncedMaster.copy(title = "Exception")
         )
 
-        // Should queue UPDATE on MASTER (not CREATE on exception)
+        // One UPDATE on the master, no CREATE for the exception.
         val pendingOps = database.pendingOperationsDao().getAll()
         assertEquals(1, pendingOps.size)
         assertEquals(master.id, pendingOps[0].eventId)
@@ -276,7 +279,7 @@ class CriticalPatternsTest {
             master.copy(title = "Exception")
         )
 
-        // Exception never gets its own caldavUrl - bundled with master
+        // An exception never gets its own caldavUrl: it is pushed inside the master's resource.
         assertNull(exception.caldavUrl)
     }
 
@@ -284,11 +287,11 @@ class CriticalPatternsTest {
 
     @Test
     fun `MOVE operation stores targetUrl at queue time before clearing caldavUrl`() = runTest {
-        // Create event with caldavUrl
+        // Create an event, then give it a caldavUrl.
         val master = eventWriter.createEvent(createSingleEvent(), isLocal = false)
         val originalCaldavUrl = "https://caldav.icloud.com/personal/event123.ics"
 
-        // Simulate sync completed - set caldavUrl and etag
+        // As if a sync had stored its URL and etag.
         val syncedEvent = master.copy(
             caldavUrl = originalCaldavUrl,
             etag = "\"abc123\"",
@@ -296,24 +299,22 @@ class CriticalPatternsTest {
         )
         database.eventsDao().update(syncedEvent)
 
-        // Clear pending ops from create
+        // Clear the CREATE queued by createEvent.
         database.pendingOperationsDao().deleteAll()
 
-        // Move to different calendar
+        // Move to another calendar in the same account.
         eventWriter.moveEventToCalendar(syncedEvent.id, iCloudCalendar2Id)
 
-        // Get the pending operation
         val pendingOps = database.pendingOperationsDao().getAll()
         assertEquals(1, pendingOps.size)
 
         val moveOp = pendingOps[0]
         assertEquals(PendingOperation.OPERATION_MOVE, moveOp.operation)
 
-        // CRITICAL: targetUrl must be stored from BEFORE the move
-        // Context must be captured at queue time
+        // targetUrl is the URL from before the move, captured at queue time.
         assertEquals(originalCaldavUrl, moveOp.targetUrl)
 
-        // Verify the event's caldavUrl is now null (reset for new calendar)
+        // The event's caldavUrl is cleared for the new calendar.
         val updatedEvent = database.eventsDao().getById(syncedEvent.id)!!
         assertNull(updatedEvent.caldavUrl)
     }
@@ -335,7 +336,7 @@ class CriticalPatternsTest {
 
         val moveOp = database.pendingOperationsDao().getAll().first()
 
-        // All necessary context in operation:
+        // The op carries all the push needs.
         assertNotNull(moveOp.eventId)
         assertNotNull(moveOp.targetUrl) // Old URL for DELETE
         assertNotNull(moveOp.targetCalendarId) // New calendar ID
@@ -345,7 +346,7 @@ class CriticalPatternsTest {
 
     @Test
     fun `recurring event with future occurrences found despite Event endTs in past`() = runTest {
-        // Create a recurring event that "started" in the past
+        // A recurring event that started 30 days ago.
         val pastTime = System.currentTimeMillis() - 30L * 24 * 3600 * 1000 // 30 days ago
         val event = Event(
             id = 0,
@@ -353,7 +354,7 @@ class CriticalPatternsTest {
             calendarId = iCloudCalendarId,
             title = "Weekly Past Event",
             startTs = pastTime,
-            endTs = pastTime + 3600000, // Event.endTs is the FIRST occurrence's end time
+            endTs = pastTime + 3600000, // Event.endTs is the first occurrence's end
             rrule = "FREQ=WEEKLY;BYDAY=MO,WE,FR", // Generates future occurrences
             dtstamp = System.currentTimeMillis()
         )
@@ -375,7 +376,7 @@ class CriticalPatternsTest {
 
     @Test
     fun `time-range query uses occurrences table not Event endTs`() = runTest {
-        // Create recurring event starting in past
+        // A daily event that started 7 days ago.
         val pastTime = System.currentTimeMillis() - 7L * 24 * 3600 * 1000 // 7 days ago
         val event = Event(
             id = 0,
@@ -390,14 +391,13 @@ class CriticalPatternsTest {
 
         val created = eventWriter.createEvent(event, isLocal = false)
 
-        // Query for occurrences TODAY using occurrences table (not Event.endTs)
+        // Query the next 24 hours through the occurrences table.
         val now = System.currentTimeMillis()
         val endOfToday = now + 24 * 3600 * 1000
 
         val todayOccurrences = database.occurrencesDao().getInRangeOnce(now - 3600000, endOfToday)
             .filter { it.eventId == created.id }
 
-        // Should find today's occurrence via occurrences table
         assertTrue(
             "Should find occurrence for today via occurrences table",
             todayOccurrences.isNotEmpty()
@@ -414,7 +414,7 @@ class CriticalPatternsTest {
         // Update before sync completes
         val updated = eventWriter.updateEvent(event.copy(title = "Updated"), isLocal = false)
 
-        // Should stay PENDING_CREATE (not become PENDING_UPDATE)
+        // Stays PENDING_CREATE: the queued CREATE carries the edit.
         assertEquals(SyncStatus.PENDING_CREATE, updated.syncStatus)
     }
 
@@ -422,7 +422,7 @@ class CriticalPatternsTest {
     fun `SYNCED becomes PENDING_UPDATE on update`() = runTest {
         val event = eventWriter.createEvent(createSingleEvent(), isLocal = false)
 
-        // Simulate sync completed
+        // As if a sync had completed.
         val synced = event.copy(
             syncStatus = SyncStatus.SYNCED,
             caldavUrl = "https://caldav.icloud.com/test.ics",
@@ -430,7 +430,6 @@ class CriticalPatternsTest {
         )
         database.eventsDao().update(synced)
 
-        // Update after sync
         val updated = eventWriter.updateEvent(synced.copy(title = "Updated"), isLocal = false)
 
         assertEquals(SyncStatus.PENDING_UPDATE, updated.syncStatus)
@@ -470,14 +469,14 @@ class CriticalPatternsTest {
     fun `operations queued in FIFO order`() = runTest {
         database.pendingOperationsDao().deleteAll()
 
-        // Create multiple events
+        // Three creates, each queuing a CREATE.
         val event1 = eventWriter.createEvent(createSingleEvent().copy(title = "Event 1"), isLocal = false)
         val event2 = eventWriter.createEvent(createSingleEvent().copy(title = "Event 2"), isLocal = false)
         val event3 = eventWriter.createEvent(createSingleEvent().copy(title = "Event 3"), isLocal = false)
 
         val pendingOps = database.pendingOperationsDao().getAll()
 
-        // Should be in order by createdAt
+        // getAll returns them oldest first by createdAt.
         assertEquals(3, pendingOps.size)
         assertTrue("Operations should be ordered by creation time",
             pendingOps[0].createdAt <= pendingOps[1].createdAt &&
@@ -489,7 +488,7 @@ class CriticalPatternsTest {
     fun `no duplicate operations for same event and operation type`() = runTest {
         val event = eventWriter.createEvent(createSingleEvent(), isLocal = false)
 
-        // Simulate sync completed - operations only queued for non-PENDING_CREATE events
+        // Mark it synced: updateEvent queues no UPDATE for a PENDING_CREATE event.
         val syncedEvent = event.copy(
             caldavUrl = "https://caldav.icloud.com/personal/test.ics",
             etag = "\"abc123\"",
@@ -498,7 +497,7 @@ class CriticalPatternsTest {
         database.eventsDao().update(syncedEvent)
         database.pendingOperationsDao().deleteAll()
 
-        // Multiple updates - should not create duplicate pending ops
+        // Each update folds into the one pending UPDATE.
         eventWriter.updateEvent(syncedEvent.copy(title = "Update 1"), isLocal = false)
         eventWriter.updateEvent(syncedEvent.copy(title = "Update 2"), isLocal = false)
         eventWriter.updateEvent(syncedEvent.copy(title = "Update 3"), isLocal = false)
@@ -506,7 +505,6 @@ class CriticalPatternsTest {
         val pendingOps = database.pendingOperationsDao().getAll()
             .filter { it.eventId == event.id && it.operation == PendingOperation.OPERATION_UPDATE }
 
-        // Should only have one UPDATE operation (not three)
         assertEquals(1, pendingOps.size)
     }
 
@@ -525,19 +523,16 @@ class CriticalPatternsTest {
             master.copy(title = "Exception")
         )
 
-        // Both should exist (atomic operation)
+        // Both the exception and its linked occurrence exist.
         assertNotNull("Exception event should exist", database.eventsDao().getById(exception.id))
 
-        // v15.0.6: Find by exceptionEventId since occurrence times are updated to exception's times
+        // Look it up by exceptionEventId: linking moves the occurrence to the exception's times.
         val linkedOccurrence = database.occurrencesDao().getByExceptionEventId(exception.id)
         assertNotNull("Occurrence should still exist and be linked", linkedOccurrence)
         assertEquals("Exception should be linked", exception.id, linkedOccurrence?.exceptionEventId)
     }
 
-    // Note: editThisAndFuture is on EventCoordinator, not EventWriter
-    // This test is disabled until EventCoordinator test suite is created
-    // @Test
-    // fun `splitSeries truncates master and creates new event atomically`() = runTest { ... }
+    // The this-and-future split (`EventWriter.splitSeries`) is tested in `EventWriterTest`.
 
     // ==================== Additional Edge Cases ====================
 
@@ -554,7 +549,7 @@ class CriticalPatternsTest {
             master.copy(title = "Exception", rrule = null)
         )
 
-        // Exception should NOT have RRULE (it's a single instance)
+        // An exception is one instance, so it has no RRULE.
         assertNull("Exception should not have RRULE", exception.rrule)
         assertFalse("Exception should not be recurring", exception.isRecurring)
         assertTrue("Exception should be marked as exception", exception.isException)
@@ -564,7 +559,7 @@ class CriticalPatternsTest {
     fun `deleting occurrence adds EXDATE not separate operation`() = runTest {
         val master = eventWriter.createEvent(createRecurringEvent(), isLocal = false)
 
-        // Simulate sync completed - event needs caldavUrl and SYNCED status for UPDATE queue
+        // Mark it synced: deleteSingleOccurrence queues no UPDATE for a PENDING_CREATE master.
         val syncedMaster = master.copy(
             caldavUrl = "https://caldav.icloud.com/personal/test.ics",
             etag = "\"abc123\"",
@@ -578,13 +573,12 @@ class CriticalPatternsTest {
 
         eventWriter.deleteSingleOccurrence(master.id, occurrenceTs)
 
-        // Should have UPDATE on master (to add EXDATE), not DELETE
+        // One UPDATE on the master to push the EXDATE, no DELETE.
         val pendingOps = database.pendingOperationsDao().getAll()
         assertEquals(1, pendingOps.size)
         assertEquals(PendingOperation.OPERATION_UPDATE, pendingOps[0].operation)
         assertEquals(master.id, pendingOps[0].eventId)
 
-        // Master should have EXDATE
         val updatedMaster = database.eventsDao().getById(master.id)!!
         assertTrue("Master should have EXDATE", updatedMaster.exdate?.isNotEmpty() == true)
     }
@@ -600,10 +594,10 @@ class CriticalPatternsTest {
         database.eventsDao().update(synced)
         database.pendingOperationsDao().deleteAll()
 
-        // Move to local calendar (auto-detects synced→local)
+        // moveEventToCalendar reads synced-to-local from the two accounts.
         eventWriter.moveEventToCalendar(synced.id, localCalendarId)
 
-        // Should queue DELETE operation with sourceCalendarId
+        // One DELETE (it also carries sourceCalendarId, not asserted here).
         val pendingOps = database.pendingOperationsDao().getAll()
         assertEquals(1, pendingOps.size)
         assertEquals(PendingOperation.OPERATION_DELETE, pendingOps[0].operation)
@@ -615,22 +609,21 @@ class CriticalPatternsTest {
         val created = eventWriter.createEvent(event, isLocal = true)
         database.pendingOperationsDao().deleteAll()
 
-        // Move from local to iCloud (auto-detects local→synced)
+        // moveEventToCalendar reads local-to-synced from the two accounts.
         eventWriter.moveEventToCalendar(created.id, iCloudCalendarId)
 
         val pendingOps = database.pendingOperationsDao().getAll()
         assertEquals(1, pendingOps.size)
-        // Should be CREATE (new to server), not MOVE
+        // A CREATE, since the event is new to the server, not a MOVE.
         assertEquals(PendingOperation.OPERATION_CREATE, pendingOps[0].operation)
     }
 
-    // ==================== Exception Linking Bug Fix (v21.5.2) ====================
+    // ==================== Exception Linking After Regeneration ====================
 
     @Test
     fun `moved exception should not duplicate after RRULE regeneration`() = runTest {
-        // This test verifies the fix for a bug where regenerating occurrences after
-        // an exception was moved to a different time caused both the original and
-        // modified occurrences to appear.
+        // Regenerating occurrences after an exception moved to another time must not show
+        // both the original and the moved occurrence.
 
         val master = eventWriter.createEvent(createRecurringEvent(), isLocal = true)
         occurrenceGenerator.regenerateOccurrences(master)
@@ -638,11 +631,11 @@ class CriticalPatternsTest {
         val occurrencesBefore = database.occurrencesDao().getForEvent(master.id)
         assertTrue("Should have multiple occurrences", occurrencesBefore.size >= 3)
 
-        // Get the second occurrence
+        // The second occurrence
         val originalOccurrence = occurrencesBefore[1]
         val originalTime = originalOccurrence.startTs
 
-        // Move this occurrence to a different time (2 hours later)
+        // Move it 2 hours later.
         val newStartTime = originalTime + 2 * 60 * 60 * 1000  // +2 hours
         val newEndTime = newStartTime + 60 * 60 * 1000  // 1 hour duration
 
@@ -659,23 +652,21 @@ class CriticalPatternsTest {
             modifiedEvent
         )
 
-        // Verify exception was created correctly
         assertNotNull("Exception should be created", exception)
         assertEquals("Exception should link to master", master.id, exception.originalEventId)
         assertEquals("Exception should have originalInstanceTime", originalTime, exception.originalInstanceTime)
 
-        // Now simulate RRULE regeneration (e.g., master was updated from server)
+        // Regenerate, as when the server updates the master.
         occurrenceGenerator.regenerateOccurrences(master)
 
-        // Get occurrences after regeneration
         val occurrencesAfter = database.occurrencesDao().getForEvent(master.id)
 
-        // Count occurrences at the original time (should be 0 - replaced by exception)
+        // Occurrences within a minute of the original time: none, the exception replaced it.
         val atOriginalTime = occurrencesAfter.filter {
             kotlin.math.abs(it.startTs - originalTime) < 60000
         }
 
-        // Count occurrences at the new time (should be 1 - the exception)
+        // Occurrences within a minute of the new time: one, the exception's.
         val atNewTime = occurrencesAfter.filter {
             kotlin.math.abs(it.startTs - newStartTime) < 60000
         }
@@ -693,7 +684,7 @@ class CriticalPatternsTest {
             exception.id, atNewTime[0].exceptionEventId
         )
 
-        // Verify no duplicate start times overall
+        // No two occurrences share a start time.
         val uniqueStartTimes = occurrencesAfter.map { it.startTs }.toSet()
         assertEquals(
             "All occurrences should have unique start times",

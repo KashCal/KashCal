@@ -12,34 +12,26 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Empirical safety proof for CalDAV collection discovery, run live across every
- * configured server.
+ * Proves live, across every configured server, that the CalDAV collection name filter is
+ * redundant with the resourcetype and component gates.
  *
- * BACKGROUND. The generic and iCloud quirks drop scheduling collections (inbox /
- * outbox / notification) with a reserved-WORD name filter. A past bug in the
- * CardDAV sibling matched those words as a *substring* of the whole href and
- * silently hid a user's real collection whose path merely contained the letters
- * ("my-inbox-friends", or any account whose username contained "inbox"). Before
- * tightening the CalDAV filters to whole-segment matching — and to justify
- * treating the name filter as pure redundancy on top of the resourcetype gate —
- * this test proves the load-bearing invariant on real servers:
+ * The generic and iCloud quirks drop scheduling and notification collections (inbox, outbox,
+ * notification), and the generic quirks a final `/tasks/` segment, with a reserved-word filter
+ * matched on whole path segments
+ * ([org.onekash.kashcal.sync.quirks.DefaultQuirks.shouldSkipCalendar],
+ * [org.onekash.kashcal.sync.provider.icloud.ICloudQuirks.shouldSkipCalendar]). A substring match
+ * silently hides a real collection whose path merely contains the letters ("my-inbox-friends", or
+ * any account whose username contains "inbox"). This test pins the invariant that makes the strict
+ * filter safe: every collection the production name filter skips is one the app wouldn't surface
+ * anyway, because it lacks the `<calendar>` resourcetype or fails the VEVENT component gate. So the
+ * name filter can only add false drops, never prevent a real one.
  *
- *   (1) every collection the name filter would skip is ALSO excluded by the
- *       resourcetype gate (it lacks the `<calendar>` resourcetype), AND
- *   (2) no collection carrying `<calendar>` is skipped by the name filter
- *       (the gate never drops a real calendar).
+ * The proof reads the raw home-set PROPFIND (via [CollectionResourceTypeProof]), not the
+ * parser's filtered output, so the inbox and outbox the parser drops are visible and their
+ * resourcetype can be inspected. Each server's redacted raw XML is written as a fixture for the
+ * offline `CollectionResourceTypeProofFixtureTest`.
  *
- * Together these mean: resourcetype alone is a superset of the name filter's
- * exclusions and never over-includes a scheduling collection, so the name filter
- * can only ever ADD false-drops, never prevent a real one. That is why keeping it
- * strict (whole segment) is safe.
- *
- * The proof reads the RAW home-set PROPFIND (via [CollectionResourceTypeProof]),
- * not the parser's filtered output, so the inbox/outbox the parser drops are
- * visible and their resourcetype can be inspected. Each server's redacted raw XML
- * is written as a fixture for the offline companion test.
- *
- * Skips (never fails) servers without credentials / unreachable / no CalDAV.
+ * Skips (never fails) servers without credentials, unreachable ones, and ones without CalDAV.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -56,7 +48,7 @@ class MultiServerCalendarResourceTypeProofTest(
         fun servers(): List<Array<Any>> =
             CalDavServerConfig.allServers().map { arrayOf<Any>(it) }
 
-        /** Exact production `listCalendars` PROPFIND body (OkHttpCalDavClient). */
+        /** The production `listCalendars` PROPFIND body (`OkHttpCalDavClient`). */
         private val LIST_CALENDARS_BODY = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav"
@@ -123,11 +115,9 @@ class MultiServerCalendarResourceTypeProofTest(
         println("\n=== CalDAV resourcetype proof: ${config.name} (${rows.size} collections) ===")
         rows.forEach { println("  " + CollectionResourceTypeProof.matrixRow(config.name, it, "caldav")) }
 
-        // The invariant, calling the REAL production predicate: every collection the
-        // shipped name filter skips is one the app would NOT surface anyway (lacks
-        // <calendar>, or is VTODO-only and fails the VEVENT gate). So the name filter
-        // can only ever add false-drops, never prevent a real one — that is what makes
-        // tightening it to whole-segment safe.
+        // The invariant, through the production predicate: every collection the name filter
+        // skips is one the app wouldn't surface anyway (lacks <calendar>, or fails the VEVENT
+        // gate).
         val isICloud = config.name.equals("icloud", ignoreCase = true)
         val disagreements = rows.filter {
             CollectionResourceTypeProof.calDavNameFilterSkips(it, isICloud) && it.appSurfacesAsCalendar
@@ -139,8 +129,8 @@ class MultiServerCalendarResourceTypeProofTest(
             disagreements.isEmpty(),
         )
 
-        // Sanity: this server actually exposed at least one app-visible calendar, so the
-        // walk reached live data rather than an empty/misdiscovered home.
+        // At least one app-visible calendar, so the walk reached live data and not an empty or
+        // misdiscovered home.
         assumeTrue(
             "${config.name}: no app-visible calendar surfaced (discovery reached wrong home?)",
             rows.any { it.appSurfacesAsCalendar },

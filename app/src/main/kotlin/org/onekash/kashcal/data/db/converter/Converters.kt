@@ -6,27 +6,17 @@ import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
 
-/**
- * Room TypeConverters for complex types.
- *
- * Handles conversion between Kotlin types and SQLite-compatible types.
- */
+/** Converts enums, lists and maps to the TEXT columns Room stores them in. */
 class Converters {
 
     // ========== SyncStatus Enum ==========
 
-    /**
-     * Convert SyncStatus enum to String for storage.
-     */
     @TypeConverter
     fun fromSyncStatus(status: SyncStatus): String {
         return status.name
     }
 
-    /**
-     * Convert String to SyncStatus enum.
-     * Falls back to SYNCED if value is invalid (defensive).
-     */
+    /** Falls back to SYNCED for an unknown value. */
     @TypeConverter
     fun toSyncStatus(value: String): SyncStatus {
         return try {
@@ -38,18 +28,12 @@ class Converters {
 
     // ========== ReminderStatus Enum ==========
 
-    /**
-     * Convert ReminderStatus enum to String for storage.
-     */
     @TypeConverter
     fun fromReminderStatus(status: ReminderStatus): String {
         return status.name
     }
 
-    /**
-     * Convert String to ReminderStatus enum.
-     * Falls back to PENDING if value is invalid (defensive).
-     */
+    /** Falls back to PENDING for an unknown value. */
     @TypeConverter
     fun toReminderStatus(value: String): ReminderStatus {
         return try {
@@ -61,38 +45,26 @@ class Converters {
 
     // ========== AccountProvider Enum ==========
 
-    /**
-     * Convert AccountProvider enum to String for storage.
-     * Stores lowercase value for database compatibility (e.g., "icloud", "local").
-     */
+    /** Stores the lowercase name ("icloud", "local"), the form the database uses. */
     @TypeConverter
     fun fromAccountProvider(provider: AccountProvider): String {
         return provider.name.lowercase()
     }
 
-    /**
-     * Convert String to AccountProvider enum.
-     * Throws IllegalArgumentException for unknown values (fail-fast on data corruption).
-     */
+    /** Throws IllegalArgumentException for an unknown value, failing fast on corrupt data. */
     @TypeConverter
     fun toAccountProvider(value: String): AccountProvider {
         return AccountProvider.fromString(value)
     }
 
-    // ========== List<String> (for reminders, categories, etc.) ==========
+    // ========== List<String> as a JSON array (for example reminders, categories) ==========
 
-    /**
-     * Convert List<String> to JSON string for storage.
-     */
     @TypeConverter
     fun fromStringList(list: List<String>?): String? {
         return list?.let { Json.encodeToString(it) }
     }
 
-    /**
-     * Convert JSON string to List<String>.
-     * Returns empty list if null or malformed.
-     */
+    /** Returns an empty list for null, blank or malformed JSON. */
     @TypeConverter
     fun toStringList(value: String?): List<String> {
         if (value.isNullOrBlank()) return emptyList()
@@ -103,21 +75,16 @@ class Converters {
         }
     }
 
-    // ========== Map<String, String> (for extra_properties) ==========
+    // ========== Map<String, String> as a JSON object (extra_properties) ==========
+    // extra_properties holds unknown iCal properties (X-APPLE-* and the like) and the app's
+    // X-KASHCAL- markers ([org.onekash.kashcal.data.db.entity.Event.extraProperties]).
 
-    /**
-     * Convert Map<String, String> to JSON string for storage.
-     * Used for preserving unknown iCal properties (X-APPLE-*, etc.)
-     */
     @TypeConverter
     fun fromStringMap(map: Map<String, String>?): String? {
         return map?.let { Json.encodeToString(it) }
     }
 
-    /**
-     * Convert JSON string to Map<String, String>.
-     * Returns empty map if null or malformed.
-     */
+    /** Returns an empty map for null, blank or malformed JSON. */
     @TypeConverter
     fun toStringMap(value: String?): Map<String, String> {
         if (value.isNullOrBlank()) return emptyMap()

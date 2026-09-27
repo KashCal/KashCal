@@ -5,8 +5,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pure-logic tests for the AttendeeListSheet's grouping/sorting/filtering
- * helper. No Compose, no Robolectric needed.
+ * Tests [buildAttendeeListSections], the list sheet's grouping, ordering and search filter, as
+ * plain JVM logic. [AvatarInitialsTest] below covers [avatarInitials].
  */
 class AttendeeListSheetStateTest {
 

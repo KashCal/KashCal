@@ -14,20 +14,16 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Fresh-path end-form for recurring events: DTSTART+DTEND.
+ * Tests that the fresh path ([IcsPatcher.generateFresh]) ends every VEVENT with DTEND and never
+ * DURATION, with or without an RRULE.
  *
- * RFC 5545 §3.6.1 permits either DTEND or DURATION (never both) for any VEVENT,
- * recurring or not. KashCal emits DTEND for every event so that all serialization
- * paths agree: the patch path (IcsPatcher.patchToICalEvent) and the exception
- * overload already emit DTEND, and the fresh path now matches them. This also
- * keeps the wire form interoperable — at least one major server (iCloud) rejects
- * an EXDATE update on a bounded recurring scheduling object expressed with
- * DTSTART+DURATION, while DTEND is accepted everywhere.
+ * RFC 5545 §3.6.1 permits either DTEND or DURATION, never both. KashCal emits DTEND on every
+ * serialization path (fresh, patch and the exception overload) so they agree, and because at
+ * least one major server (iCloud) rejects an EXDATE update on a bounded recurring scheduling
+ * object written as DTSTART+DURATION, while DTEND is accepted everywhere.
  *
- * Rule:
- * - RRULE present or absent: emit DTEND, null DURATION.
- *
- * Exceptions never carry RRULE per RFC 5545 §3.8.5.1 and also emit DTEND.
+ * An exception describes one occurrence, so the exception overload clears its RRULE and also
+ * emits DTEND.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -43,9 +39,8 @@ class DurationFreshPathTest {
     // ---------- Helpers ----------
 
     /**
-     * Find lines starting with [prefix] inside the first VEVENT block.
-     * VTIMEZONE sub-components emit DTSTART/DTEND for DST transitions, so
-     * a plain top-level filter would match those too.
+     * Finds lines starting with [prefix] inside the first VEVENT block. VTIMEZONE
+     * sub-components emit DTSTART for DST transitions, which a whole-file filter would match.
      */
     private fun findLines(ics: String, prefix: String): List<String> {
         val lines = ics.lines()
@@ -121,8 +116,7 @@ class DurationFreshPathTest {
     @Test
     fun `fresh path ignores stored Event duration string and emits DTEND from endTs`() {
         // Stored Event.duration = "PT30M" but the window (startTs..endTs) is 1 hour.
-        // The end-form is now driven by endTs, not the duration column, so the
-        // emitted DTEND reflects the 1-hour window (PT30M is not consulted).
+        // The end form comes from endTs, never the duration column.
         val event = createEvent(
             rrule = "FREQ=DAILY",
             duration = "PT30M"
@@ -144,7 +138,7 @@ class DurationFreshPathTest {
     fun `fresh path emits exclusive next-day DTEND for single-day all-day recurring event`() {
         // Single all-day Dec 25: startTs = Dec 25 00:00 UTC, endTs = Dec 25 23:59:59.999 UTC.
         // exclusiveEndTs (endTs + 1) → Dec 26 00:00, so DTEND;VALUE=DATE:20251226.
-        // The DATE form avoids the sub-second PT23H59M59.999S artifact entirely.
+        // The DATE form avoids a sub-second PT23H59M59.999S duration.
         val startTs = 1_766_620_800_000L          // 2025-12-25T00:00:00Z
         val endTs = startTs + 86_400_000L - 1     // inclusive last-second
         val event = createEvent(
@@ -230,7 +224,7 @@ class DurationFreshPathTest {
 
     @Test
     fun `fresh path emits DTEND and no DURATION when event has no RRULE`() {
-        // Plain timed event, no RRULE. Today's behavior — must remain intact.
+        // Plain timed event, no RRULE.
         val event = createEvent(rrule = null, duration = null)
 
         val ics = IcsPatcher.generateFresh(event)
@@ -247,9 +241,8 @@ class DurationFreshPathTest {
 
     @Test
     fun `fresh path emits DTEND even when non-recurring event has Event duration populated`() {
-        // rrule=null but duration column happens to be set (rare inbound case).
-        // Per AOSP Calendar convention, stored column does NOT trigger DURATION
-        // without an RRULE — emit DTEND form.
+        // rrule=null but the duration column is set, as a pulled one-off written with
+        // DURATION leaves it. The stored column never drives the end form: DTEND.
         val event = createEvent(
             rrule = null,
             duration = "PT30M"
@@ -268,11 +261,10 @@ class DurationFreshPathTest {
 
     @Test
     fun `fresh path exception overload always emits DTEND no DURATION even when exception row has stale rrule`() {
-        // Master with RRULE, exception row ALSO has stale rrule = "FREQ=DAILY"
-        // (corrupt-but-possible; the exception mapper hardcodes rrule=null on
-        // emit regardless). Exception overload must emit DTEND form, not
-        // DURATION — discriminates against an over-application where someone
-        // mistakenly wires isRecurring = exception.rrule != null.
+        // Master with RRULE, and the exception row also has a stale rrule = "FREQ=DAILY"
+        // (corrupt but possible; the exception overload emits rrule=null regardless).
+        // The overload must still emit DTEND, which catches an end form keyed on
+        // exception.rrule != null.
         val masterUid = "bundle-master@kashcal.test"
         val master = createEvent(
             uid = masterUid,
@@ -280,7 +272,7 @@ class DurationFreshPathTest {
         )
         val exception = createEvent(
             uid = masterUid,
-            rrule = "FREQ=DAILY",   // stale — must not trigger DURATION form
+            rrule = "FREQ=DAILY",   // stale; must not trigger the DURATION form
             originalEventId = 1L,
             originalInstanceTime = master.startTs
         )
@@ -301,9 +293,8 @@ class DurationFreshPathTest {
 
     @Test
     fun `round-trip recurring event - DTEND wire form leaves Event duration null`() {
-        // Recurring event emits DTEND (not DURATION) on the wire, so the parser
-        // recovers dtEnd and the re-mapped Event.duration is null — the duration
-        // column is only populated when the source carried a DURATION property.
+        // A recurring event emits DTEND on the wire, so the re-mapped Event.duration is
+        // null: the duration column is set only when the source carried DURATION.
         val event = createEvent(
             rrule = "FREQ=WEEKLY",
             duration = null
@@ -323,8 +314,8 @@ class DurationFreshPathTest {
 
     @Test
     fun `round-trip recurring event endTs recovered correctly from DTEND`() {
-        // Emits DTEND on the wire; inbound mapper reconstructs Event.endTs from the
-        // explicit DTEND, which must equal the original window end.
+        // The pull mapper rebuilds Event.endTs from the emitted DTEND, which must equal
+        // the original window end.
         val event = createEvent(
             rrule = "FREQ=WEEKLY",
             duration = null

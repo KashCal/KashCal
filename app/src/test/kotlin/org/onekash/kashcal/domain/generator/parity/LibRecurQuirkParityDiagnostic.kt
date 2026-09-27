@@ -10,23 +10,17 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * Per-quirk regression protection for LibRecurEngine's 9 CRITICAL quirks.
+ * Pins, per quirk, how the two engines compare on `LibRecurEngine`'s nine quirks.
  *
- * The main parity report at `RRuleEngineParityReportTest` captures aggregate
- * agreement across 92 fixture cases. This test operates at finer granularity:
- * one isolated minimal fixture per quirk (labels a-i as documented in
- * LibRecurEngine.kt), with an EXPECTED verdict per quirk.
+ * Each quirk (labels a-i, defined in `LibRecurEngine`) gets one minimal fixture with an expected
+ * verdict (AGREE or DIVERGE) and each engine's expected count. If either engine changes
+ * behavior on a quirk shape (say the adapter stops stripping UNTIL when COUNT is present), the
+ * failure names the quirk. [RRuleEngineBaselineTest] reports a drift by corpus case name, not by
+ * quirk.
  *
- * If ical4j (or lib-recur) changes behavior on any specific quirk shape —
- * e.g., ical4j starts stripping UNTIL when COUNT is present, or adds
- * millisecond truncation — this test fails with a precise pointer to which
- * quirk broke. The main parity report would also catch a change, but via
- * baseline drift; this test fails with the quirk label directly in the
- * assertion message.
- *
- * Quirks exercised (labels from LibRecurEngine.kt):
+ * Quirks exercised:
  *   (a) All-day events force UTC regardless of TZID
- *   (b) COUNT+UNTIL both present → strip UNTIL
+ *   (b) COUNT+UNTIL both present: strip UNTIL
  *   (c) DATE-format UNTIL requires date-only DTSTART
  *   (d) FastForwarded optimization when rangeStart > DTSTART + 30d
  *   (e) MAX_ITERATIONS safety limit
@@ -35,22 +29,17 @@ import java.time.ZonedDateTime
  *   (h) Sub-second truncation on each occurrence
  *   (i) FastForwarded DateTime type matches DTSTART type
  *
- * Expected verdicts were captured 2026-04-30 (main @ 927cf8b5). See the
- * top-level doc comment in LibRecurEngine.kt for the quirk definitions and
- * the class-level KDoc below for migration implications per quirk.
+ * Each fixture's `migrationImplication` records what the quirk means for the production engine.
  */
 class LibRecurQuirkParityDiagnostic {
 
-    /** Expected per-quirk parity outcome captured against main @ 927cf8b5. */
+    /** Expected parity outcome for one quirk. */
     private enum class ExpectedVerdict { AGREE, DIVERGE }
 
     /**
-     * One quirk fixture. [expectedVerdict] locks in current behavior so a
-     * future engine change is caught with a precise diagnostic.
-     *
-     * For DIVERGE quirks, [expectedLibCount] and [expectedIcalCount] pin the
-     * exact count each engine currently returns. A change in either count
-     * flags a silent behavior shift even if the overall verdict stays DIVERGE.
+     * Holds one quirk fixture. [expectedVerdict] locks the current behavior, and
+     * [expectedLibCount] and [expectedIcalCount] pin the count each engine returns, so a
+     * changed count fails even when the verdict holds.
      */
     private data class QuirkFixture(
         val label: String,
@@ -125,9 +114,9 @@ class LibRecurQuirkParityDiagnostic {
             migrationImplication = "FREE_SWAP — IcalDavRRuleAdapter.resolveZone forces UTC for all-day; no adapter-layer work",
         ),
 
-        // (b) COUNT+UNTIL both present. lib-recur strips UNTIL (returns COUNT
-        // results); ical4j returns []. RFC §3.3.10 says these are mutually
-        // exclusive — input is malformed, so behavior is undefined.
+        // (b) COUNT+UNTIL both present. RFC 5545 §3.3.10 says they MUST NOT occur in the
+        // same rule, so the input is malformed. Both engines strip UNTIL and return
+        // COUNT results; ical4j through IcalDavRRuleAdapter.sanitizeRRule.
         fixture(
             label = "b",
             description = "COUNT=3 + UNTIL in past both present",
@@ -160,8 +149,8 @@ class LibRecurQuirkParityDiagnostic {
             migrationImplication = "LIB_RECUR_ONLY — ical4j has no isAllDay/isFloating assertion; quirk irrelevant post-migration",
         ),
 
-        // (d) FastForwarded only when range starts > DTSTART + 30d. ical4j has
-        // no FastForward optimization, so the branch is irrelevant.
+        // (d) FastForwarded only when the range starts > DTSTART + 30d. ical4j has no
+        // FastForward optimization, so the branch doesn't apply to it.
         fixture(
             label = "d",
             description = "range starts same day as DTSTART (no FastForward)",
@@ -177,10 +166,9 @@ class LibRecurQuirkParityDiagnostic {
             migrationImplication = "LIB_RECUR_ONLY — ical4j has no FastForward; quirk irrelevant post-migration",
         ),
 
-        // (e) MAX_ITERATIONS safety cap. This fixture uses a 2-hour MINUTELY
-        // range (120 iterations — well under both engines' caps). A case that
-        // actually hits the cap would cause one engine to truncate differently;
-        // that's tested by Pool D's SECONDLY case in the main corpus.
+        // (e) MAX_ITERATIONS safety cap. This fixture uses a 2-hour MINUTELY range, 120
+        // iterations, well under both engines' caps. A case that hits the cap could
+        // truncate differently per engine; Pool D's SECONDLY case in the corpus covers it.
         fixture(
             label = "e",
             description = "MINUTELY unbounded over 2-hour range",
@@ -196,9 +184,9 @@ class LibRecurQuirkParityDiagnostic {
             migrationImplication = "FREE_SWAP on this range — extreme unbounded shapes still need the Pool D SECONDLY case to confirm cap parity",
         ),
 
-        // (f) Second-boundary alignment on DTSTART. DTSTART at ...10:00:00.500Z.
-        // lib-recur divides by 1000 losing 500ms; ical4j preserves it through
-        // ICalDateTime.fromTimestamp.
+        // (f) Second-boundary alignment on DTSTART, at 10:00:00.500 local. lib-recur divides
+        // by 1000, losing the 500 ms; ICalDateTime.fromTimestamp keeps it, and
+        // IcalDavRRuleEngine then truncates every occurrence to the second.
         fixture(
             label = "f",
             description = "DTSTART with sub-second precision (500ms)",
@@ -214,10 +202,10 @@ class LibRecurQuirkParityDiagnostic {
             migrationImplication = "FREE_SWAP — quirk (f)/(h) ported to IcalDavRRuleEngine second-alignment step; sub-second DTSTART is truncated on every occurrence",
         ),
 
-        // (g) DATE-format EXDATE against timed DTSTART. RFC §3.8.5.1 says same
-        // VALUE type is required, so input is malformed. lib-recur inherits
-        // DTSTART's hour for matching; ical4j (via adapter) treats DATE as
-        // UTC-midnight so the exclusion misses.
+        // (g) DATE-format EXDATE against a timed DTSTART. RFC 5545 §3.8.5.1 allows a DATE
+        // EXDATE but doesn't say how it matches a timed occurrence. Both engines inherit
+        // DTSTART's hour for matching (ical4j through IcalDavRRuleAdapter.parseCsvDates),
+        // so the exclusion hits.
         fixture(
             label = "g",
             description = "timed DAILY + DATE-format EXDATE",
@@ -234,9 +222,9 @@ class LibRecurQuirkParityDiagnostic {
             migrationImplication = "FREE_SWAP — quirk (g) ported to IcalDavRRuleAdapter.parseCsvDates which inherits DTSTART hour/minute/second for DATE-format RDATE/EXDATE on timed events",
         ),
 
-        // (h) Sub-second truncation on each occurrence. Same root as (f) but
-        // tests that EVERY occurrence is second-aligned, not just DTSTART.
-        // lib-recur's occurrence generation goes through seconds-math.
+        // (h) Sub-second truncation on each occurrence. Same root as (f), but checks that
+        // every occurrence is second-aligned, not only DTSTART. lib-recur's occurrence
+        // generation goes through seconds-math.
         fixture(
             label = "h",
             description = "DAILY with sub-second DTSTART (per-occurrence alignment)",
@@ -252,9 +240,9 @@ class LibRecurQuirkParityDiagnostic {
             migrationImplication = "FREE_SWAP — same port as (f); IcalDavRRuleEngine applies (ts / 1000) * 1000 to every returned timestamp",
         ),
 
-        // (i) FastForwarded DateTime type matches DTSTART type. Combines (c) +
-        // (d): all-day + DATE-format UNTIL with rangeStart far after DTSTART.
-        // lib-recur-only self-protection.
+        // (i) FastForwarded DateTime type matches DTSTART type. Combines (c) and (d):
+        // all-day with a DATE-format UNTIL and rangeStart far after DTSTART. Only lib-recur
+        // needs this self-protection.
         fixture(
             label = "i",
             description = "all-day YEARLY with DATE-format UNTIL far-forwarded",
@@ -323,7 +311,7 @@ class LibRecurQuirkParityDiagnostic {
 
     @Test
     fun `every quirk label a through i is covered exactly once`() {
-        // Guards against accidental duplication or omission of a quirk label.
+        // Catches a duplicated or missing quirk label.
         val expectedLabels = ('a'..'i').map { it.toString() }.toSet()
         val actualLabels = fixtures.map { it.label }
         assertEquals(
@@ -340,9 +328,7 @@ class LibRecurQuirkParityDiagnostic {
 
     @Test
     fun `migration implication is non-blank for every quirk`() {
-        // Each quirk's verdict must carry human-readable rationale so the test
-        // failure message is actionable. Empty rationale would undermine the
-        // "precise diagnostic pointer" goal of this suite.
+        // Each quirk must carry a rationale so a failure message is actionable.
         val blank = fixtures.filter { it.migrationImplication.isBlank() }
         assertTrue(
             "every fixture must carry a non-blank migrationImplication: ${blank.map { it.label }}",

@@ -26,18 +26,16 @@ import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.notification.ReminderNotificationChannels
 
 /**
- * Verifies [ReminderScheduler.scheduleUpcomingReminders] suppresses
- * self-declined events before arming alarms (outcome 4: daily refresh
- * worker scan must not arm alarms for declined events).
+ * Tests that [ReminderScheduler.scheduleUpcomingReminders], the refresh scan, arms no reminder
+ * for an event the user declined, and still arms the accepted ones.
  *
- * Multi-account isolation and lookup-miss fail-open are exercised by the
- * shared `selfDeclinedEventIds` helper's test
- * (`SelfDeclinedDetectorTest`); this class verifies the scheduler's
- * wiring around it.
+ * Multi-account isolation and a lookup miss leaving the event's reminders armed are tested on
+ * the `selfDeclinedEventIds` helper the scheduler shares with the display path
+ * (`SelfDeclinedDetectorTest`); this class tests the scheduler's wiring around it, including
+ * that an empty scan makes none of the filter's lookups.
  *
- * Uses Robolectric for the application context — ReminderScheduler builds a
- * PendingIntent in `scheduleAlarm`, which is a no-op stub on the JVM but
- * works correctly under Robolectric's shadowed PendingIntent.
+ * Runs under Robolectric so the PendingIntent and AlarmManager that `scheduleAlarm` uses resolve
+ * through their shadows.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -57,8 +55,8 @@ class ReminderSchedulerDeclineFilterTest {
 
     @Before
     fun setup() {
-        // Real Robolectric application context so PendingIntent/AlarmManager
-        // resolve through their shadows. AlarmManager calls become no-ops.
+        // The Robolectric application context, so PendingIntent and AlarmManager resolve
+        // through their shadows and no alarm fires.
         context = ApplicationProvider.getApplicationContext()
 
         scheduledRemindersDao = mockk(relaxed = true)
@@ -125,8 +123,7 @@ class ReminderSchedulerDeclineFilterTest {
 
         newScheduler().scheduleUpcomingReminders()
 
-        // Filter dependencies must NOT be touched when there are no events
-        // (perf preservation — existing behavior).
+        // With no event in range, the filter's lookups aren't made.
         coVerify(exactly = 0) { attendeesDao.getDeclinedAttendeesForEvents(any()) }
         coVerify(exactly = 0) { accountsDao.getAllOnce() }
         coVerify(exactly = 0) { calendarsDao.getAllOnce() }
@@ -147,8 +144,8 @@ class ReminderSchedulerDeclineFilterTest {
 
         newScheduler().scheduleUpcomingReminders()
 
-        // No reminder insert should occur for the filtered-out event.
-        coVerify(exactly = 0) { scheduledRemindersDao.insert(any()) }
+        // No reminder row for the declined event.
+        coVerify(exactly = 0) { scheduledRemindersDao.insertIfAbsent(any()) }
     }
 
     @Test
@@ -158,17 +155,17 @@ class ReminderSchedulerDeclineFilterTest {
         val acceptedRow = row(eventId = 200L, calendarId = 10L)
 
         coEvery { eventReader.getEventsWithRemindersInRange(any(), any()) } returns listOf(acceptedRow)
-        // No DECLINED rows for event 200 — user accepted.
+        // No DECLINED rows for event 200: the user accepted.
         coEvery { attendeesDao.getDeclinedAttendeesForEvents(listOf(200L)) } returns emptyList()
         coEvery { accountsDao.getAllOnce() } returns listOf(acct)
         coEvery { calendarsDao.getAllOnce() } returns listOf(cal)
         coEvery { scheduledRemindersDao.findExisting(any(), any(), any()) } returns null
-        coEvery { scheduledRemindersDao.insert(any()) } returns 1L
+        coEvery { scheduledRemindersDao.insertIfAbsent(any()) } returns 1L
 
         newScheduler().scheduleUpcomingReminders()
 
-        // Insert path runs because filter kept the row.
-        coVerify(atLeast = 1) { scheduledRemindersDao.insert(any()) }
+        // The filter kept the row, so its reminder is inserted.
+        coVerify(atLeast = 1) { scheduledRemindersDao.insertIfAbsent(any()) }
     }
 
     @Test
@@ -187,13 +184,13 @@ class ReminderSchedulerDeclineFilterTest {
         coEvery { accountsDao.getAllOnce() } returns listOf(acct)
         coEvery { calendarsDao.getAllOnce() } returns listOf(cal)
         coEvery { scheduledRemindersDao.findExisting(any(), any(), any()) } returns null
-        coEvery { scheduledRemindersDao.insert(any()) } returns 1L
+        coEvery { scheduledRemindersDao.insertIfAbsent(any()) } returns 1L
 
         newScheduler().scheduleUpcomingReminders()
 
-        // Exactly one reminder inserted — for the accepted event 200.
-        // (one offset "-PT15M" × one occurrence = 1 insert)
-        coVerify(exactly = 1) { scheduledRemindersDao.insert(match { it.eventId == 200L }) }
-        coVerify(exactly = 0) { scheduledRemindersDao.insert(match { it.eventId == 100L }) }
+        // One reminder row, for the accepted event 200: one offset ("-PT15M") on one
+        // occurrence.
+        coVerify(exactly = 1) { scheduledRemindersDao.insertIfAbsent(match { it.eventId == 200L }) }
+        coVerify(exactly = 0) { scheduledRemindersDao.insertIfAbsent(match { it.eventId == 100L }) }
     }
 }

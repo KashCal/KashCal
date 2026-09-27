@@ -20,14 +20,11 @@ import java.io.IOException
 import java.net.SocketTimeoutException
 
 /**
- * Unit tests for WidgetRetryWorker.
+ * Tests [WidgetRetryWorker]'s private `isTransientError` classification through reflection: the
+ * choice between retry and failure.
  *
- * Tests the isTransientError() classification logic via reflection,
- * which is the core decision point for retry vs failure.
- *
- * Note: doWork() itself calls Glance updateAll() extension functions
- * which cannot be easily mocked in unit tests. The retry/failure
- * behavior is tested via the isTransientError classification.
+ * `doWork` itself isn't driven: it reaches Glance's `updateAll` extension functions through
+ * [refreshAllWidgets], which are hard to mock in unit tests. The attempt cap isn't tested here.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -59,9 +56,7 @@ class WidgetRetryWorkerTest {
         unmockkAll()
     }
 
-    /**
-     * Invoke the private isTransientError method via reflection.
-     */
+    /** Invokes the private `isTransientError` through reflection. */
     private fun invokeIsTransientError(e: Exception): Boolean {
         val method = WidgetRetryWorker::class.java.getDeclaredMethod("isTransientError", Exception::class.java)
         method.isAccessible = true

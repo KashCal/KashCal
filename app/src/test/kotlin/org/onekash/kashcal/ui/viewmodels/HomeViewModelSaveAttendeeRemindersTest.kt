@@ -19,6 +19,8 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -30,9 +32,12 @@ import org.onekash.kashcal.sync.scheduler.SyncStatus
 
 /**
  * Tests that [HomeViewModel.saveAttendeeReminders] forwards a list of
- * minute integers to [EventCoordinator.saveAttendeeReminders] without
- * touching DAOs directly. The actual local-only DAO write contract is
- * tested at the writer level in `EventWriterAttendeeRemindersTest`.
+ * minute integers, an empty one included, to
+ * [EventCoordinator.saveAttendeeReminders] without touching DAOs directly,
+ * and that [HomeViewModel.saveEvent] passes the form's edited attendees to the
+ * coordinator's create, or null when they weren't edited. The local-only DAO
+ * write contract is tested at the writer level in
+ * `EventWriterAttendeeRemindersTest`.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelSaveAttendeeRemindersTest {
@@ -98,7 +103,8 @@ class HomeViewModelSaveAttendeeRemindersTest {
         accountRepository = accountRepository,
         syncScheduler = syncScheduler,
         networkMonitor = networkMonitor,
-        calendarProviderRepository = fakeCalendarProviderRepository,
+        deviceEventReader = fakeCalendarProviderRepository.deviceEventReader(),
+        deviceEventWriter = fakeCalendarProviderRepository.deviceEventWriter(dataStore),
         attendeeBackfill = mockk(relaxed = true),
         contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),
@@ -113,8 +119,8 @@ class HomeViewModelSaveAttendeeRemindersTest {
         viewModel.saveAttendeeReminders(eventId = 42L, reminders = listOf(15, 30))
         advanceUntilIdle()
 
-        // List<Int> minutes flows through; the coordinator/writer layer
-        // is responsible for serializing to ISO-8601 List<String>.
+        // List<Int> minutes flow through; the coordinator converts them to
+        // ISO 8601 durations for the writer.
         coVerify { eventCoordinator.saveAttendeeReminders(42L, listOf(15, 30)) }
     }
 
@@ -129,7 +135,7 @@ class HomeViewModelSaveAttendeeRemindersTest {
         coVerify { eventCoordinator.saveAttendeeReminders(42L, emptyList()) }
     }
 
-    // ===== form attendees thread through saveEvent → coordinator =====
+    // ===== form attendees pass through saveEvent to the coordinator =====
 
     @Test
     fun `saveEvent forwards picked attendees as mapped entities`() = runTest {
@@ -178,8 +184,8 @@ class HomeViewModelSaveAttendeeRemindersTest {
         )
         advanceUntilIdle()
 
-        // Empty form attendees → coordinator receives null (table left untouched),
-        // never an empty list (which would clear).
+        // The form's attendees weren't edited, so the coordinator receives null
+        // and leaves the table alone; an edited empty list would clear it.
         coVerify { eventCoordinator.createEvent(any(), any(), attendees = null) }
     }
 }

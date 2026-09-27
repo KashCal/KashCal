@@ -6,10 +6,7 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.model.AccountProvider
 
-/**
- * Unified calendar representation for the calendar picker.
- * Wraps both Room Calendar and DeviceCalendar with common interface.
- */
+/** Wraps a Room [Calendar] or a [DeviceCalendar] in one shape for calendar pickers and lists. */
 @Immutable
 sealed class PickerCalendar {
     abstract val id: Long
@@ -17,16 +14,17 @@ sealed class PickerCalendar {
     abstract val color: Int
     abstract val isWritable: Boolean
 
-    /** Room calendar (KashCal-managed) */
+    /** A Room calendar (local, iCloud, CalDAV, ICS or contact events). */
     @Immutable
     data class Room(val calendar: Calendar) : PickerCalendar() {
         override val id: Long get() = calendar.id
         override val displayName: String get() = calendar.displayName
         override val color: Int get() = calendar.color
-        override val isWritable: Boolean get() = true // Room calendars are always writable
+        // Ignores calendar.isReadOnly; every isWritable reader reads device groups only.
+        override val isWritable: Boolean get() = true
     }
 
-    /** Device calendar (from CalendarProvider) */
+    /** A device calendar from CalendarProvider. */
     @Immutable
     data class Device(val calendar: DeviceCalendar) : PickerCalendar() {
         override val id: Long get() = calendar.id
@@ -37,13 +35,13 @@ sealed class PickerCalendar {
 }
 
 /**
- * Groups calendars by account for UI display.
- * Supports both Room and Device calendars via PickerCalendar.
+ * Holds one account's calendars under an account header.
  *
- * @param accountName Display name for the account header
- * @param accountId Account ID for grouping (Room) or synthetic ID (Device)
- * @param calendars List of calendars under this account
- * @param isDeviceSection True for device calendar groups (shows after separator)
+ * @param accountName the account header text
+ * @param accountId the Room account id, or -1 for a device group
+ * @param calendars the Room calendars; empty for a device group
+ * @param pickerCalendars the calendars as [PickerCalendar], Room or device
+ * @param isDeviceSection true for groups built by [fromDeviceCalendars]
  */
 @Immutable
 data class CalendarGroup(
@@ -56,19 +54,15 @@ data class CalendarGroup(
 ) {
     companion object {
         /**
-         * Groups calendars by account for UI display.
-         * Called from ViewModels to transform data layer output into UI state.
+         * Groups Room calendars by account, each group's calendars sorted by name.
          *
-         * @param calendars List of calendars to group
-         * @param accounts List of accounts for display names
-         * @param localLabel Localized header for the LOCAL account (e.g., "Offline")
-         * @param icsLabel Localized header for the ICS account (e.g., "Calendar Feeds")
-         * @param localizeCalendarName Maps a Calendar to its user-facing display name.
-         *   Lets the caller localize synthetic display names ("Local", "Contact
-         *   Birthdays", "Contact Anniversaries") that older installs persisted
-         *   to the DB in English. For all other calendars this should return
-         *   `calendar.displayName` unchanged.
-         * @return List of CalendarGroup sorted by account name
+         * @param accounts supply the header names; a group whose account is missing is "Unknown"
+         * @param localLabel the header for the LOCAL account, for example "Offline"
+         * @param icsLabel the header for the ICS account, for example "Calendar Feeds"
+         * @param localizeCalendarName maps a calendar to its user-facing name, for example
+         *   [localizedDisplayName], which localizes the local calendar's stored English name.
+         *   It should return `calendar.displayName` unchanged for other calendars.
+         * @return the groups sorted by account name, with contact event accounts last
          */
         fun fromCalendarsAndAccounts(
             calendars: List<Calendar>,
@@ -110,12 +104,12 @@ data class CalendarGroup(
         }
 
         /**
-         * Groups device calendars by account for UI display.
-         * Only includes writable calendars for event creation.
+         * Groups device calendars by account name, each group's calendars sorted by name.
          *
-         * @param deviceCalendars List of device calendars
-         * @param writableOnly If true, only include writable calendars
-         * @return List of CalendarGroup for device calendars, sorted by account name
+         * An empty account name shows as "Local".
+         *
+         * @param writableOnly keeps only writable calendars (the default)
+         * @return the groups sorted by account name
          */
         fun fromDeviceCalendars(
             deviceCalendars: List<DeviceCalendar>,

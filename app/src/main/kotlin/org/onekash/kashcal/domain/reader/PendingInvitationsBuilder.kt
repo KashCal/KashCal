@@ -8,35 +8,25 @@ import org.onekash.kashcal.domain.identity.matchesAttendee
 import org.onekash.kashcal.util.AddressNormalizer
 
 /**
- * Pure helper that materializes the inbox's [PendingInvitation] list from
- * already-Room-filtered inputs.
+ * Builds the inbox's [PendingInvitation] list, sorted by next occurrence start.
  *
- * Inputs:
- * - [eventsWithNext]: master events with at least one future, non-cancelled
- *   occurrence (SQL-filtered upstream by
- *   [org.onekash.kashcal.data.db.dao.EventsDao.getMasterEventsWithFutureOccurrenceFlow]).
- * - [needsActionAttendees]: ATTENDEE rows for those event IDs whose
- *   `partstat = NEEDS-ACTION` (SQL-filtered upstream by
- *   [org.onekash.kashcal.data.db.dao.AttendeesDao.getNeedsActionAttendeesForEvents]).
- * - [accountsById] / [calendarsById]: full snapshots at emission time.
+ * Inputs are already filtered in SQL:
+ * - [eventsWithNext]: masters and one-off events with an occurrence not yet ended and not
+ *   cancelled, excluding PENDING_DELETE rows
+ *   ([org.onekash.kashcal.data.db.dao.EventsDao.getMasterEventsWithFutureOccurrenceFlow]).
+ * - [needsActionAttendees]: those events' `partstat = NEEDS-ACTION` attendee rows
+ *   ([org.onekash.kashcal.data.db.dao.AttendeesDao.getNeedsActionAttendeesForEventsFlow]).
+ * - [accountsById] and [calendarsById]: every account and calendar at emission time.
  *
- * Decision policy applied here (Kotlin-side, since canonical-address
- * matching needs [Account.matchesAttendee]):
- * 1. Each event maps to its owning account via `event.calendarId →
- *    calendar.accountId`. Lookup misses are skipped.
- * 2. The owning account must have a NEEDS-ACTION attendee row for that
- *    event whose address canonicalizes to one of the account's addresses.
- * 3. Events the owning account organizes are excluded — that is, when
- *    `event.organizerEmail` is non-blank AND matches the owning account.
- *    Blank/null organizer is allowed through (defensive: a true invitation
- *    has ORGANIZER on the wire, but if the row is missing we still want
- *    the user's response surface to work).
- * 4. Output is sorted ascending by occurrence start.
+ * The rest needs canonical address matching ([Account.matchesAttendee]), so it runs here:
+ * 1. Each event maps to its owning account through its calendar; a lookup miss skips it.
+ * 2. The owning account must have a NEEDS-ACTION attendee row for the event.
+ * 3. Events the owning account organizes are excluded: a non-blank `organizerEmail` that
+ *    matches it. A blank or null organizer passes, so the RSVP surface still works for an
+ *    invitation whose ORGANIZER is missing.
  *
- * Multi-account scoping: an event in account B's calendar with an
- * attendee whose address happens to also be one of account A's addresses
- * does NOT show up in A's inbox — it is checked against B (the owning
- * account), and only B's identity matters.
+ * Only the owning account's identity counts: an event in account B's calendar whose attendee
+ * shares one of account A's addresses is checked against B and never shows in A's inbox.
  */
 fun buildPendingInvitations(
     eventsWithNext: List<EventWithNextOccurrence>,

@@ -11,11 +11,13 @@ import java.time.ZoneId
 import kotlin.random.Random
 
 /**
- * Property tests for the pure decision functions the pull path leans on for
- * every server event. These take raw timestamps — including hostile ones (huge,
- * negative, past the 32-bit time_t boundary that issue #326 turns on) — so they
- * must be total: never throw, always self-consistent. A seeded generator makes
- * failures reproducible (fuzz.predicate.seed / .iterations to override).
+ * Property tests for pure timestamp functions the pull path applies to every server event:
+ * [PullStrategy.hasValidTimestamps] and the occurrence end-day computation
+ * [DateTimeUtils.eventTsToEndDayCode]. They take raw server timestamps, so they must be total:
+ * never throw, always self-consistent. hasValidTimestamps gets hostile values (huge, negative,
+ * past the 32-bit time_t boundary behind issue #326); the end-day test stays between the epoch
+ * and about 2200, both sides of 2038. A seeded generator makes failures reproducible
+ * (`fuzz.predicate.seed` and `fuzz.predicate.iterations` override it).
  */
 class PullStrategyPredicatePropertyTest {
 
@@ -23,9 +25,8 @@ class PullStrategyPredicatePropertyTest {
         val SEED = System.getProperty("fuzz.predicate.seed")?.toLong() ?: 0xC0FFEEL
         val ITERATIONS = System.getProperty("fuzz.predicate.iterations")?.toInt() ?: 5_000
 
-        // 2038-01-19T03:14:07Z in ms — the signed 32-bit time_t ceiling that a
-        // SOGo-class server silently truncates past. The pull path must stay
-        // total on both sides of it.
+        // 2038-01-19T03:14:07Z in ms: the signed 32-bit time_t ceiling that a SOGo-class server
+        // silently truncates past. The pull path must stay total on both sides of it.
         const val TIME_RANGE_32BIT_MS = 2_147_483_647_000L
         const val YEAR_2100_MS = 4_102_444_800_000L
         val UTC: ZoneId = ZoneId.of("UTC")
@@ -67,7 +68,7 @@ class PullStrategyPredicatePropertyTest {
 
     @Test
     fun `hasValidTimestamps accepts far-future multi-day events surfaced past the 32-bit boundary`() {
-        // The class of event issue #326 unhid: starts before 2038, ends well after.
+        // The shape of event behind issue #326: starts before 2038, ends well after.
         val start = TIME_RANGE_32BIT_MS - 86_400_000L
         val end = YEAR_2100_MS
         assertTrue(PullStrategy.hasValidTimestamps(event(start, end)))
@@ -79,7 +80,7 @@ class PullStrategyPredicatePropertyTest {
     fun `eventTsToEndDayCode yields a well-formed YYYYMMDD for random far-future ranges`() {
         val rnd = Random(SEED xor 0x5A5AL)
         repeat(ITERATIONS) {
-            // Bound to a sane-but-wide window: epoch .. year ~2200, both sides of 2038.
+            // A wide but sane window: the epoch to about 2200, both sides of 2038.
             val start = rnd.nextLong(0L, 7_258_118_400_000L)
             val end = start + rnd.nextLong(0L, 400L * 24 * 60 * 60 * 1000)
             val code = DateTimeUtils.eventTsToEndDayCode(

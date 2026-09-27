@@ -16,13 +16,12 @@ import org.onekash.kashcal.ui.viewmodels.ViewMode
 import java.util.Calendar as JavaCalendar
 
 /**
- * Runs the Accessibility Test Framework (the same engine behind Accessibility
- * Scanner) against rendered HomeScreen states. Catches low color contrast,
- * small touch targets, missing labels, and traversal-order problems.
+ * Runs the Accessibility Test Framework (the same engine behind Accessibility Scanner) against
+ * HomeScreen in month view, agenda view and search mode. Catches low color contrast, small touch
+ * targets, missing labels, and traversal-order problems.
  *
- * A failing check throws with a description of the offending node, so adding
- * screens/states here widens automated a11y coverage without hand-writing
- * per-property assertions.
+ * A failing check throws with a description of the offending node, so adding a state here widens
+ * a11y coverage without hand-written per-property assertions.
  */
 @RunWith(AndroidJUnit4::class)
 class HomeScreenAccessibilityTest {

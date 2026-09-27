@@ -1,10 +1,9 @@
 package org.onekash.kashcal.ui.screens.settings
 
 /**
- * The screens reachable within the Settings surface. The root screen swaps to one
- * of the detail screens (and back) as the user drills in; [depth] and [isForwardTo]
- * drive the directional slide animation between them so drilling into a detail
- * slides the incoming screen in from the trailing edge and backing out reverses it.
+ * Lists the screens reachable within Settings. The root swaps to a detail screen and back as the
+ * user drills in; [depth] and [isForwardTo] pick the slide direction, so drilling in slides the
+ * incoming screen in from the trailing edge and backing out reverses it.
  */
 enum class SettingsDestination(val depth: Int) {
     Root(depth = 0),
@@ -19,9 +18,8 @@ enum class SettingsDestination(val depth: Int) {
 
     companion object {
         /**
-         * Resolves the active destination from the individual navigation flags. A
-         * detail flag wins over the root; if several were somehow set the first in
-         * declaration order is chosen, matching the `when` ordering in the caller.
+         * Resolves the active destination from the individual navigation flags. A detail flag
+         * wins over the root; if more than one is set, the first in parameter order wins.
          */
         fun from(
             accounts: Boolean,

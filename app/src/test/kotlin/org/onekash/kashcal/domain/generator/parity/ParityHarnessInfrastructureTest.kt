@@ -7,9 +7,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests the harness plumbing with synthetic fixtures — no real engines are invoked
- * here. Real engines are tested in IcalDavRRuleAdapterTest (adapter correctness)
- * and the RRuleEngineParityReportTest (full corpus run).
+ * Tests the harness plumbing ([ParityComparator], [ParityReportWriter]) with synthetic engine
+ * results. Only the last test runs the real engines, as a smoke test that asserts no outcome;
+ * the full corpus runs in [RRuleEngineParityReportTest] and [RRuleEngineBaselineTest].
  */
 class ParityHarnessInfrastructureTest {
 
@@ -190,19 +190,18 @@ class ParityHarnessInfrastructureTest {
         assertTrue("reports both-match count", report.contains("Both engines match RFC: 1"))
     }
 
-    // ========== End-to-end with stub engines ==========
+    // ========== End-to-end with the real engines ==========
 
     @Test
     fun `end-to-end with stub engines — both agree`() {
-        // Use the real engine implementations against a trivial case to verify the plumbing.
-        // COUNT=3 DAILY is the baseline LibRecurEngine smoke test — should be byte-equivalent
-        // across engines for a simple case like this.
+        // Runs the real engines on a trivial case to check the plumbing. DAILY;COUNT=3 should
+        // give the same output from both engines.
         val testCase = case("e2e-sanity")
         val libResult = LibRecurParityEngine.expand(testCase)
         val icalResult = ICal4jParityEngine.expand(testCase)
         val parity = ParityComparator.compare(libResult, icalResult)
         assertNotNull("parity result non-null", parity)
-        // We don't assert which outcome — this is a plumbing smoke test. The
-        // full-corpus parity report will surface any actual divergence.
+        // No outcome is asserted: this is a plumbing smoke test, and the full-corpus parity
+        // report surfaces any divergence.
     }
 }

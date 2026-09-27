@@ -1,0 +1,36 @@
+Tes agendas sont partout. La famille sur iCloud. Les jours fériés depuis un site web. Les anniversaires enfouis dans tes contacts. Le travail sur l'agenda du téléphone. KashCal les réunit dans une seule app sur Android.
+
+En savoir plus sur https://kashcal.onekash.org
+
+• iCloud : passé à Android mais ta famille est encore sur Apple ? Synchronise directement les agendas iCloud. Sans passerelle, sans bidouille.
+
+• CalDAV : Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo et plus encore. Synchronisation bidirectionnelle native, sans intermédiaire. Les agendas Google et Outlook de ton téléphone apparaissent aussi.
+
+• Sept vues : mois, mois pleine hauteur, agenda, jour, 3 jours, semaine et année. Pince pour zoomer la frise, fais glisser un événement pour le déplacer.
+
+• Planification : invite des personnes, envoie des invitations à des réunions et réponds aux invitations reçues.
+
+• Analyses : vois où passe ton temps. Journées chargées, séries d'affilée, créneaux libres. Calculé sur l'appareil.
+
+• Widgets : garde ta journée sur l'écran d'accueil sans ouvrir l'app. Agenda, date, semaine, mois et à venir.
+
+• Abonnements ICS : suis n'importe quel flux d'agenda. Jours fériés, calendriers scolaires, saisons sportives.
+
+• Anniversaires : récupérés automatiquement depuis tes contacts.
+
+• Couleurs par événement : depuis une palette choisie ou une roue chromatique complète, pour que ta semaine se lise d'un coup d'œil.
+
+• À ta façon : thème clair, sombre ou système, plus une palette KashCal Teal. Les soutiens peuvent choisir une icône spéciale.
+
+• Accessibilité : prise en charge complète du lecteur d'écran (TalkBack), et choisis la langue de l'app directement dans les réglages Android, en 67 langues.
+
+• Fonctionne entièrement hors ligne dès le départ.
+
+Privé par défaut
+
+Aucune analyse. Aucune télémétrie. Aucun compte KashCal. Nous n'avons aucun serveur, donc il n'y a rien à collecter.
+
+• Identifiants chiffrés avec l'Android Keystore
+• Verrouillage de l'app : cache tes événements derrière ton empreinte, ton visage ou le verrouillage de l'écran
+
+Libre comme la liberté. Et gratuit aussi.

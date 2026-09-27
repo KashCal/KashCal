@@ -33,14 +33,11 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Integration tests for ICloudUrlMigration.
+ * Tests [ICloudUrlMigration] over an in-memory Room database with a mocked done flag.
  *
- * Uses in-memory Room database to test actual migration logic.
- * Tests verify:
- * - Migration normalizes regional URLs to canonical form
- * - Migration only affects iCloud accounts/calendars/events
- * - Migration runs only once (idempotent)
- * - Migration handles edge cases (empty database, already-canonical URLs)
+ * Covers normalizing regional URLs on accounts, calendars, events and pending operations,
+ * leaving a non-iCloud account alone, running once per done flag, and the empty-database and
+ * already-canonical cases.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -92,7 +89,7 @@ class ICloudUrlMigrationTest {
 
     @Test
     fun `migration runs if not completed`() = runTest {
-        // Empty database, but migration should still mark as complete
+        // An empty database still marks the migration done.
         val result = migration.migrateIfNeeded()
 
         assertTrue(result)
@@ -111,7 +108,6 @@ class ICloudUrlMigrationTest {
 
     @Test
     fun `migration normalizes account homeSetUrl`() = runTest {
-        // Setup: Create account with regional URL
         val accountId = database.accountsDao().insert(
             createAccount(
                 homeSetUrl = "https://p180-caldav.icloud.com:443/12345/calendars/"
@@ -151,7 +147,6 @@ class ICloudUrlMigrationTest {
 
     @Test
     fun `migration skips non-icloud accounts`() = runTest {
-        // Create a local account (non-iCloud)
         val localAccountId = database.accountsDao().insert(
             Account(
                 provider = AccountProvider.LOCAL,
@@ -165,7 +160,6 @@ class ICloudUrlMigrationTest {
 
         migration.migrateIfNeeded()
 
-        // Local account should be unchanged
         val localAccount = database.accountsDao().getById(localAccountId)
         assertNotNull(localAccount)
         assertNull(localAccount?.homeSetUrl)
@@ -260,14 +254,13 @@ class ICloudUrlMigrationTest {
 
     @Test
     fun `migration runs only once`() = runTest {
-        // First call
         migration.migrateIfNeeded()
         coVerify(exactly = 1) { dataStore.setICloudUrlMigrationCompleted(true) }
 
-        // Simulate completion flag now set
+        // The done flag is now set.
         coEvery { dataStore.getICloudUrlMigrationCompleted() } returns true
 
-        // Second call should be a no-op
+        // The second call is a no-op.
         val result = migration.migrateIfNeeded()
         assertFalse(result)
     }

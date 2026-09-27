@@ -124,11 +124,11 @@ class AppLockViewModelTest {
         vm.onActivityCreated(enabled = true)
         assertTrue(vm.lockState.value)
 
-        // A failed/cancelled prompt leaves it locked.
+        // A failed or cancelled prompt leaves it locked.
         vm.onUnlockError()
         assertTrue(vm.lockState.value)
 
-        // A subsequent success reveals.
+        // A later success unlocks.
         vm.onUnlockSucceeded()
         assertFalse(vm.lockState.value)
     }

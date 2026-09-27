@@ -42,8 +42,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.onekash.kashcal.R
-import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
-import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.preferences.DefaultCalendar
@@ -55,8 +53,10 @@ import org.onekash.kashcal.domain.identity.effectiveAddresses
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.di.IoDispatcher
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
+import org.onekash.kashcal.domain.rrule.RruleShift
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
+import org.onekash.kashcal.domain.reader.DeviceEventReader
 import org.onekash.kashcal.domain.reader.DisplayEventRepository
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.error.CalendarError
@@ -68,6 +68,8 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.ui.components.EventFormState
+import org.onekash.kashcal.ui.components.occurrenceDateChanged
+import org.onekash.kashcal.ui.components.startEndAnchoredToSeries
 import org.onekash.kashcal.ui.components.toStartEndTs
 import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.components.attendees.AttendeeStatus
@@ -82,11 +84,12 @@ import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.domain.whatsnew.ALL_RELEASE_NOTES
 import org.onekash.kashcal.domain.whatsnew.WhatsNewGate
 import org.onekash.kashcal.domain.whatsnew.WhatsNewSeeder
+import org.onekash.kashcal.domain.writer.DeviceEventDraft
+import org.onekash.kashcal.domain.writer.DeviceEventWriter
 import org.onekash.kashcal.BuildConfig
 import org.onekash.kashcal.KashCalApplication
 import org.onekash.kashcal.util.DateTimeUtils
-import org.onekash.kashcal.util.computeDurationString
-import org.onekash.kashcal.util.importEventsToDeviceCalendar
+import org.onekash.kashcal.util.TimezoneUtils
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -108,16 +111,13 @@ private data class CalendarsSnapshot(
 )
 
 /**
- * A half-open date range in epoch millis, used as the reactive key for the
- * range-driven event StateFlows (time-grid and agenda). Null means no active
- * range (the view is not shown), which keeps the derived Flow idle.
+ * A range in epoch millis that keys the time-grid and agenda event StateFlows. The query treats
+ * both ends as inclusive ([DisplayEventRepository.getDisplayEventsForRange]). A null key keeps
+ * the derived Flow idle.
  */
 data class EpochRange(val startMs: Long, val endMs: Long)
 
-/**
- * Reactive UI state for the time-grid (week / 3-day / day) event surface.
- * Timed and all-day events are pre-split and sorted by start.
- */
+/** UI state for the week, 3-day and day grids: timed and all-day events, each sorted by start. */
 data class WeekEventsUiState(
     val timedEvents: ImmutableList<DisplayEvent> = persistentListOf(),
     val allDayEvents: ImmutableList<DisplayEvent> = persistentListOf(),
@@ -128,12 +128,10 @@ data class WeekEventsUiState(
         val EMPTY = WeekEventsUiState()
 
         /**
-         * Minimum duration for a day-crossing timed event to be treated as "multi-day"
-         * for the all-day strip, rather than left in the timed grid at its actual time.
-         * Per RFC 5545, `endDay > startDay` alone is also true for an ordinary event
-         * that merely spills a few minutes past midnight (e.g. 11pm-12:30am); without
-         * a duration floor, every such event would vanish from the grid and reappear
-         * as a same-width bar across two days.
+         * Minimum duration for a day-crossing timed event to move to the all-day strip.
+         * `endDay > startDay` alone also holds for an ordinary event that spills past midnight
+         * (11pm to 12:30am); without this floor every such event would leave the grid and show
+         * as a bar across two days.
          */
         private const val MIN_MULTIDAY_STRIP_DURATION_MS = 20L * 60 * 60 * 1000
 
@@ -170,10 +168,7 @@ private data class RawWeekEvents(
     }
 }
 
-/**
- * Reactive UI state for the agenda (flat upcoming-events list). Unlike the
- * time grid, agenda shows a spinner while loading, so [isLoading] is surfaced.
- */
+/** UI state for the agenda's upcoming-events list; [isLoading] drives its spinner. */
 data class AgendaUiState(
     val events: ImmutableList<DisplayEvent> = persistentListOf(),
     val isLoading: Boolean = false
@@ -188,9 +183,9 @@ data class AgendaUiState(
 data class MonthKey(val year: Int, val month: Int)
 
 /**
- * Day-code range covering the viewing month +/- 1 month (with grid in/out-date
- * padding), so adjacent month-pager pages have data mid-swipe. Returns
- * (startDayCode, endDayCode) in YYYYMMDD form.
+ * Returns the (startDayCode, endDayCode) range, YYYYMMDD, covering the viewing month and one
+ * month either side plus the grid's leading and trailing days, so adjacent month-pager pages have
+ * data mid-swipe.
  */
 private fun monthGridDayCodeRange(year: Int, month: Int): Pair<Int, Int> {
     val prevMonth = LocalDate.of(year, month + 1, 1).minusMonths(1)
@@ -203,20 +198,13 @@ private fun monthGridDayCodeRange(year: Int, month: Int): Pair<Int, Int> {
 }
 
 /**
- * ViewModel for the HomeScreen (main calendar view).
+ * Holds the state of the main calendar screen: the calendar views, search, sync status, sheets
+ * and the event forms' reads and writes.
  *
- * Architecture:
- * - Offline-first: All operations work locally first
- * - EventCoordinator: Single entry point for event operations
- * - EventReader: Efficient queries via occurrences table
- * - Flow-based: Reactive state with StateFlow
- *
- * Features:
- * - Month view with event dots
- * - Day selection with event list
- * - Calendar visibility filtering
- * - Search functionality
- * - Network-aware sync
+ * The calendar views read Room and device-calendar events together through
+ * [DisplayEventRepository]. Room events are written through [EventCoordinator] and read singly
+ * through [EventReader]; device-calendar events are written through [DeviceEventWriter] and read
+ * singly through [DeviceEventReader].
  */
 @HiltViewModel
 class HomeViewModel(
@@ -227,7 +215,8 @@ class HomeViewModel(
     private val accountRepository: AccountRepository,
     private val syncScheduler: SyncScheduler,
     private val networkMonitor: NetworkMonitor,
-    private val calendarProviderRepository: CalendarProviderRepository,
+    private val deviceEventReader: DeviceEventReader,
+    private val deviceEventWriter: DeviceEventWriter,
     private val attendeeBackfill: org.onekash.kashcal.domain.reader.AttendeeBackfill,
     private val contactEmailReader: org.onekash.kashcal.data.contacts.ContactEmailReader,
     private val context: Context,
@@ -244,7 +233,8 @@ class HomeViewModel(
         accountRepository: AccountRepository,
         syncScheduler: SyncScheduler,
         networkMonitor: NetworkMonitor,
-        calendarProviderRepository: CalendarProviderRepository,
+        deviceEventReader: DeviceEventReader,
+        deviceEventWriter: DeviceEventWriter,
         attendeeBackfill: org.onekash.kashcal.domain.reader.AttendeeBackfill,
         contactEmailReader: org.onekash.kashcal.data.contacts.ContactEmailReader,
         @ApplicationContext context: Context,
@@ -257,7 +247,8 @@ class HomeViewModel(
         accountRepository,
         syncScheduler,
         networkMonitor,
-        calendarProviderRepository,
+        deviceEventReader,
+        deviceEventWriter,
         attendeeBackfill,
         contactEmailReader,
         context,
@@ -269,60 +260,63 @@ class HomeViewModel(
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
     /**
-     * Pinch-zoom hour-heights awaiting persistence. A pinch gesture calls the setter many
-     * times per second; collecting this with a debounce persists only the settled zoom
-     * instead of hammering DataStore. DROP_OLDEST keeps only the latest pending value.
+     * Pinch-zoom hour-heights awaiting persistence. A pinch calls the setter many times per
+     * second; [observeHourHeightPersistence] debounces this so only the settled zoom is written.
+     * DROP_OLDEST keeps only the latest pending value.
      */
     private val hourHeightToPersist = MutableSharedFlow<Float>(
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
 
-    /** Network connectivity state for UI */
+    /** Network connectivity, for the UI. */
     val isOnline: StateFlow<Boolean> = networkMonitor.isOnline
 
-    /** Default reminder for timed events (minutes before) */
+    /** Default reminder for timed events, in minutes before the start. */
     val defaultReminderTimed: StateFlow<Int> = dataStore.defaultReminderMinutes
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 15)
 
-    /** Default reminder for all-day events (minutes before) */
+    /** Default reminder for all-day events, in minutes before the start. */
     val defaultReminderAllDay: StateFlow<Int> = dataStore.defaultAllDayReminder
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1440) // 1 day
 
-    /** Default event duration (minutes) */
+    /** Default event duration, in minutes. */
     val defaultEventDuration: StateFlow<Int> = dataStore.defaultEventDuration
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KashCalDataStore.DEFAULT_EVENT_DURATION_MINUTES)
 
-    /** Quick Add enabled state */
+    /** Whether Quick Add is enabled. */
     val quickAddEnabled: StateFlow<Boolean> = dataStore.quickAddEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     /**
-     * Suggest prior event titles matching [prefix] for the form autocomplete.
+     * Suggests prior event titles matching [prefix] for the form autocomplete.
      *
-     * Honors the `titleSuggestionsEnabled` user preference: when disabled,
-     * returns empty list regardless of history. UI doesn't know about this
-     * preference — enforcing it here keeps the composable preference-agnostic.
+     * Returns an empty list when the title-suggestions preference is off. The check lives here
+     * so the composable doesn't need to know about the preference.
      */
     suspend fun suggestTitles(prefix: String): List<org.onekash.kashcal.data.db.dao.TitleSuggestion> {
         if (!dataStore.getTitleSuggestionsEnabled()) return emptyList()
         return displayEventRepository.suggestTitles(prefix)
     }
 
-    /** Time format preference: "system", "12h", or "24h" */
+    /** Time format preference: "system", "12h" or "24h". */
     val timeFormat: StateFlow<String> = dataStore.timeFormat
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KashCalDataStore.TIME_FORMAT_SYSTEM)
 
     /**
-     * App theme choice, derived from the stored theme string. Drives KashCalTheme in MainActivity.
-     * A cold flow (not stateIn): the activity seeds the first frame with a synchronous read and
-     * collects this, whose first emission is the same stored value — so there's no flash of the
-     * default theme on cold start. Later writes propagate here to recolor live.
+     * App theme, derived from the stored theme string; drives KashCalTheme in MainActivity.
+     *
+     * A cold flow, not stateIn: the activity seeds the first frame with a synchronous read, and
+     * this flow's first emission is the same stored value, so the default theme never flashes on
+     * cold start. Later writes recolor the app live.
      */
     val themeMode: Flow<org.onekash.kashcal.ui.theme.ThemeMode> = dataStore.theme
         .map { org.onekash.kashcal.ui.theme.ThemeMode.fromPrefValue(it) }
 
-    /** Where app colors come from (dynamic vs. accent seed); migrates legacy teal to seed. */
+    /**
+     * Where app colors come from (dynamic or accent seed); with no explicit choice, the retired
+     * teal theme maps to the seed.
+     */
     val colorSource: Flow<org.onekash.kashcal.ui.theme.ColorSource> =
         combine(dataStore.colorSource, dataStore.theme) { explicit, legacyTheme ->
             org.onekash.kashcal.ui.theme.ColorSource.fromPrefValue(explicit, legacyTheme)
@@ -331,83 +325,80 @@ class HomeViewModel(
     /** Current accent seed color (packed ARGB); meaningful when [colorSource] is SEED. */
     val accentSeed: Flow<Int> = dataStore.accentSeed
 
-    /** First day of week preference: 0=system, 1=Sunday, 2=Monday, 7=Saturday */
+    /** First day of week preference: 0=system, 1=Sunday, 2=Monday, 7=Saturday. */
     val firstDayOfWeek: StateFlow<Int> = dataStore.firstDayOfWeek
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Calendar.SUNDAY)
 
     /**
-     * Whether the share-as-card top-right Share icon's first-time coach
-     * mark has been displayed. False until first appearance, then sticky
-     * true forever. Initial value matches the DataStore default (false) so
-     * a slow DataStore boot does NOT silently suppress the first-time
-     * tooltip on fresh installs.
+     * Whether the share-as-card Share icon's first-time coach mark has been shown. False until
+     * it first appears, then true for good. The initial value matches the DataStore default
+     * (false), so a slow DataStore start doesn't silently suppress the tooltip on a new install.
      */
     val shownShareCardTooltip: StateFlow<Boolean> = dataStore.shownShareCardTooltip
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
-    /** Persist that the share-card coach mark has been shown. */
+    /** Persists that the share-card coach mark has been shown. */
     fun markShareCardTooltipShown() {
         viewModelScope.launch { dataStore.setShownShareCardTooltip(true) }
     }
 
     /**
-     * Whether the user permanently declined contact suggestions in the
-     * attendee picker. When true, the picker's contacts-permission banner is
-     * never shown. Survives restart.
+     * Whether the user permanently declined contact suggestions in the attendee picker. When
+     * true, the picker's contacts-permission banner is never shown. Survives restart.
      */
     val contactSuggestionsDeclined: StateFlow<Boolean> = dataStore.contactSuggestionsDeclined
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
-    /** Persist that the user declined contact suggestions ("No thanks" or a system-dialog denial). */
+    /**
+     * Persists that the user declined contact suggestions: "No thanks", or a system-dialog denial
+     * that won't prompt again.
+     */
     fun declineContactSuggestions() {
         viewModelScope.launch { dataStore.setContactSuggestionsDeclined(true) }
     }
 
-    /** Persist whether the event form's tag row sits above the notes/attendees block. */
+    /** Persists whether the event form's tag row sits above the notes, not below them. */
     fun setTagsAboveNotes(above: Boolean) {
         viewModelScope.launch { dataStore.setTagsAboveNotes(above) }
     }
 
-    /** Persist whether the Agenda view's top week bar is expanded. */
+    /** Persists whether the Agenda view's top week bar is expanded. */
     fun setAgendaWeekBarExpanded(expanded: Boolean) {
         viewModelScope.launch { dataStore.setAgendaWeekBarExpanded(expanded) }
     }
 
-    /** Persist whether the Day view's top week-strip date picker is expanded. */
+    /** Persists whether the Day view's top week-strip date picker is expanded. */
     fun setDayWeekBarExpanded(expanded: Boolean) {
         viewModelScope.launch { dataStore.setDayWeekBarExpanded(expanded) }
     }
 
-    /** Persist whether the time-grid all-day strip is expanded (up to 3 rows). */
+    /** Persists whether the time-grid all-day strip is expanded (up to 3 rows). */
     fun setAllDayRowsExpanded(expanded: Boolean) {
         viewModelScope.launch { dataStore.setAllDayRowsExpanded(expanded) }
     }
 
     /**
-     * Persist the user's avatar initials, normalizing first so the stored value
-     * is always at most two uppercase letters (or empty to clear).
+     * Persists the user's avatar initials, normalized so the stored value is at most two
+     * uppercase letters, or empty to clear.
      */
     fun setUserInitials(raw: String) {
         viewModelScope.launch { dataStore.setUserInitials(normalizeInitials(raw)) }
     }
 
     /**
-     * Reactive list of pending CalDAV invitations rendered by
-     * `InvitationInboxSheet`. Backs both the count Flow below and the
-     * sheet's row list, so the badge can never disagree with the sheet.
+     * Pending CalDAV invitations, the rows of `InvitationInboxSheet`. [pendingInvitationsCount]
+     * derives from it, so the badge can't disagree with the sheet.
      */
     val pendingInvitations: StateFlow<List<org.onekash.kashcal.domain.reader.PendingInvitation>> =
         eventReader.getPendingInvitations()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     /**
-     * Single source of truth for the count of pending CalDAV invitations.
+     * Count of pending CalDAV invitations: the single source of truth for it.
      *
-     * The AppBar badge and the Invites overflow menu item both subscribe
-     * here so a sync-churn re-emission can never drift the two views
-     * apart. `distinctUntilChanged` collapses repeated same-size lists
-     * (common when sync writes attendees but the NEEDS-ACTION set is
-     * unchanged).
+     * The app-bar badge and the Invites overflow menu item both read it, so a re-emission during
+     * sync can't drift them apart. `distinctUntilChanged` collapses repeated same-size lists,
+     * common when sync writes attendees but the NEEDS-ACTION set is unchanged.
      */
     val pendingInvitationsCount: StateFlow<Int> = pendingInvitations
         .map { it.size }
@@ -420,36 +411,33 @@ class HomeViewModel(
     private val formEventId = MutableStateFlow<Long?>(null)
     private val dayVisibleEventIds = MutableStateFlow<List<Long>>(emptyList())
 
-    /** UI projection of attendees for the active QuickView event. Null when no event is active. */
+    /** Attendees of the active quick-view event, for its chips; null when no event is active. */
     val quickViewAttendees: StateFlow<EventAttendeeUiState?> =
         quickViewEventId
             .flatMapLatest { id -> if (id == null) flowOf(null) else buildAttendeeFlow(id) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     /**
-     * Live event body for the active QuickView, re-read reactively by id.
-     * The sheet renders this rather than the snapshot captured at tap time,
-     * so an edit's new title/time/location shows even when the on-screen
-     * list that produced the tapped snapshot was stale (e.g. search results,
-     * which don't re-run after an edit). Null when no event is active or the
-     * event was deleted.
+     * The active quick-view event, re-read by id whenever it changes. The sheet renders this over
+     * the snapshot taken at tap time, so an edit's new title, time or location shows even when
+     * the list that produced the snapshot is stale (search results don't re-run after an edit).
+     * Null when no event is active or the event was deleted.
      */
     val quickViewEventLive: StateFlow<Event?> =
         quickViewEventId
             .flatMapLatest { id -> if (id == null) flowOf(null) else eventReader.getEventByIdFlow(id) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
-    /** UI projection of attendees for the EventFormSheet's read-only chip row. */
+    /** Attendees of the event open in the EventFormSheet, for its read-only chip row. */
     val formAttendees: StateFlow<EventAttendeeUiState?> =
         formEventId
             .flatMapLatest { id -> if (id == null) flowOf(null) else buildAttendeeFlow(id) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     /**
-     * Drives the EventFormSheet's read-only banner + Save-disable gate.
-     * True when the editing event has an ORGANIZER that doesn't match the
-     * resolving account (single home of the rule via
-     * [org.onekash.kashcal.domain.identity.canEditAsOrganizer]).
+     * Drives the EventFormSheet's read-only banner and disabled Save. True when the event's
+     * ORGANIZER doesn't match its calendar's account, or no account resolves; the rule lives in
+     * [org.onekash.kashcal.domain.identity.canEditAsOrganizer].
      */
     @Suppress("OPT_IN_USAGE")
     val formIsReadOnly: StateFlow<Boolean> =
@@ -469,10 +457,9 @@ class HomeViewModel(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
     /**
-     * UI projection map for the day-view chip badges. One Flow per visible-
-     * event-set (no per-card subscription); slice by event ID at render time.
-     * Each slice carries the per-event resolved account so [AttendeeUiModel.isYou]
-     * is correct.
+     * Attendee models by event ID for the day view's card badges. One Flow for the whole visible
+     * set, no per-card subscription; each event's models are built with its own account, so
+     * [AttendeeUiModel.isYou] marks the right attendee.
      */
     val dayAttendees: StateFlow<Map<Long, List<AttendeeUiModel>>> =
         dayVisibleEventIds
@@ -491,35 +478,26 @@ class HomeViewModel(
         dayVisibleEventIds.value = ids
     }
 
-    // Time-grid (week / 3-day / day) reactive event surface.
-    //
-    // The visible date range is the single key; navigation SETS it, and the
-    // derived [weekEvents] StateFlow re-queries the reactive repository Flow
-    // whenever the key changes OR the underlying data changes. This removes the
-    // whole class of "a manual reload didn't fire" staleness (issue #297): a
-    // create/edit/delete/sync propagates automatically because
-    // [DisplayEventRepository.getDisplayEventsForRange] is itself reactive.
-    //
-    // A null key means "no time-grid range active" (the user is in another
-    // view), which keeps the upstream Flow idle — mirroring the null-key gate
-    // used by the attendee surfaces above.
+    // Time-grid (week, 3-day, day) events. The visible date range is the only key: navigation
+    // sets it, and [weekEvents] re-queries when the key or the data changes. A create, edit,
+    // delete or sync shows up without a manual reload because
+    // [DisplayEventRepository.getDisplayEventsForRange] is reactive (#297). The key is null, and
+    // the upstream Flow idle, only until the first time-grid load; leaving the view keeps it.
     private val timeGridRange = MutableStateFlow<EpochRange?>(null)
 
-    /** Sets/updates the visible time-grid range; null clears it (view left). */
+    /** Sets the visible time-grid range; no caller passes null. */
     private fun setTimeGridRange(range: EpochRange?) {
         timeGridRange.value = range
     }
 
     /**
-     * Reactive week / 3-day / day time-grid events, split into timed and
-     * all-day and sorted by start, with error folded in. Collected by the
-     * time-grid UI; stays live while subscribed and re-emits on any DB write
-     * within the active range.
+     * Week, 3-day and day grid events, split into timed and all-day, with any load error folded
+     * in. Re-emits while subscribed whenever a source of
+     * [DisplayEventRepository.getDisplayEventsForRange] changes.
      *
-     * Deliberately does NOT emit a loading/empty state on range change (unlike
-     * [agendaEvents]): the grid renders its structure immediately and keeps the
-     * last events visible until the new range resolves, so an intermediate
-     * empty emission would blank the grid mid-swipe.
+     * Emits no loading or empty state on a range change, unlike [agendaEvents]: the grid keeps
+     * the last events until the new range resolves, and an empty emission would blank it
+     * mid-swipe.
      */
     @Suppress("OPT_IN_USAGE")
     val weekEvents: StateFlow<WeekEventsUiState> =
@@ -537,9 +515,8 @@ class HomeViewModel(
                         }
                 }
             }
-            // Combined downstream of flatMapLatest so toggling the preference just
-            // re-partitions the events already in memory instead of cancelling and
-            // re-subscribing the whole DB query.
+            // Combined after flatMapLatest so toggling the preference re-partitions the events in
+            // memory; combined before it, a toggle would cancel and restart the DB query.
             .combine(dataStore.showMultiDayTimedInAllDayStrip) { raw, showMultiDayTimedInAllDayStrip ->
                 if (raw.error != null) {
                     WeekEventsUiState.ofError(raw.error)
@@ -549,22 +526,20 @@ class HomeViewModel(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WeekEventsUiState.EMPTY)
 
-    // Agenda reactive event surface — same range-key mechanism as the time
-    // grid, but a flat 90-day window set on entering the agenda view and
-    // nulled on leaving (so the upstream Flow — and any device-calendar query
-    // — goes idle when agenda isn't shown).
+    // Agenda events: the same range key as the time grid, a [AGENDA_WINDOW_MS] window set on
+    // entering the agenda and nulled on leaving, so the upstream Flow and its device-calendar
+    // queries go idle while the agenda isn't shown.
     private val agendaRange = MutableStateFlow<EpochRange?>(null)
 
-    /** Sets/updates the agenda window; null clears it (view left). */
+    /** Sets the agenda window; null clears it when the view is left. */
     private fun setAgendaRange(range: EpochRange?) {
         agendaRange.value = range
     }
 
     /**
-     * Reactive agenda events (upcoming [AGENDA_WINDOW_MS]). Emits a loading
-     * state while the query is in flight (agenda shows a spinner), then the
-     * merged Room + device list. Stays live while subscribed and re-emits on
-     * any DB write within the window.
+     * Agenda events for the next [AGENDA_WINDOW_MS]: a loading state while the query runs, then
+     * the merged Room and device list, or empty on an error. Re-emits while subscribed on the
+     * same sources as [weekEvents].
      */
     @Suppress("OPT_IN_USAGE")
     val agendaEvents: StateFlow<AgendaUiState> =
@@ -585,21 +560,20 @@ class HomeViewModel(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AgendaUiState.EMPTY)
 
-    // Full-height month grid reactive surface — key is the viewing (year,
-    // month), set only while MONTH_FULL is active and nulled otherwise. The
-    // repository returns events already grouped by day code. The month/year
-    // event DOTS are intentionally NOT reactive here: they use a one-shot
-    // grouped-by-day query and are refreshed via reloadCurrentView.
+    // Full-height month grid events, keyed by the viewing (year, month): set only while
+    // MONTH_FULL is active, null otherwise. The repository groups them by day code. The month and
+    // year dots aren't reactive: they come from one-shot queries rebuilt explicitly, for example
+    // by reloadCurrentView.
     private val monthGridKey = MutableStateFlow<MonthKey?>(null)
 
-    /** Sets/updates the full-height month grid key; null clears it (view left). */
+    /** Sets the full-height month grid key; null clears it when the view is left. */
     private fun setMonthGridKey(key: MonthKey?) {
         monthGridKey.value = key
     }
 
     /**
-     * Reactive full-height month grid events, grouped by day code. Stays live
-     * while subscribed and re-emits on any DB write within the 3-month window.
+     * Full-height month grid events for [monthGridDayCodeRange], grouped by day code. Re-emits
+     * while subscribed on the sources of [DisplayEventRepository.getDisplayEventsForDateRange].
      */
     @Suppress("OPT_IN_USAGE")
     val monthEvents: StateFlow<ImmutableMap<Int, ImmutableList<DisplayEvent>>> =
@@ -620,12 +594,12 @@ class HomeViewModel(
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), persistentMapOf())
 
     /**
-     * Resolve the active event → calendar → account, run one-shot
-     * `rawIcal` backfill (closes the etag-unchanged-skip gap from
-     * inbound persistence — when the table is empty but `rawIcal` has
-     * ATTENDEE lines, parse + persist), then subscribe to the attendees
-     * Flow with the resolved account so [AttendeeUiModel.fromRoom] can
-     * mark the current user as `isYou`.
+     * Emits the attendee state of [eventId] for the quick view and the form.
+     *
+     * Resolves the event's calendar and account, runs
+     * [org.onekash.kashcal.domain.reader.AttendeeBackfill.backfillIfEmpty] once (a failure is
+     * logged and skipped), then maps the attendees Flow through [AttendeeUiModel.fromRoom] with
+     * that account so the user is marked `isYou`.
      */
     private fun buildAttendeeFlow(eventId: Long): Flow<EventAttendeeUiState?> = flow {
         val event = eventReader.getEventById(eventId)
@@ -659,12 +633,12 @@ class HomeViewModel(
     }
 
     /**
-     * Bulk projection for the day pager. Fans out per-event account/organizer
-     * resolution once (synchronous on cached `uiState.calendars` + a small
-     * batched `accountsDao` lookup) and then maps every emission of the
-     * attendees Flow through [AttendeeUiModel.fromRoom] so the day-card
-     * badge can correctly show "Going / Pending / Hosting / off-list" per
-     * event without the consumer re-resolving identity.
+     * Emits attendee models by event ID for the day pager's card badges (`EventCardAttendeeBadge`).
+     *
+     * Resolves each event's account once, from the cached `uiState.calendars` and one
+     * [AccountRepository.getAccountById] call per distinct account, then maps every emission of
+     * the attendees Flow through [AttendeeUiModel.fromRoom], so the badge needn't resolve
+     * identity itself.
      */
     private fun buildDayAttendeesFlow(eventIds: List<Long>): Flow<Map<Long, List<AttendeeUiModel>>> = flow {
         if (eventIds.isEmpty()) {
@@ -696,39 +670,42 @@ class HomeViewModel(
         )
     }
 
-    // Track if startup sync has been triggered
+    // Set once the startup sync, or the first sync after account setup, has been requested.
     private var hasTriggeredStartupSync = false
 
-    // Job for search debouncing (cancel previous search when new query arrives)
+    // Debounced search; cancelled when a new query arrives.
     private var searchJob: Job? = null
 
-    // Job for on-demand dots loading (cancel previous on fast swipe)
+    /** Checks which series scopes a staged cross-day drop may offer. */
+    private var dragAvailabilityJob: Job? = null
+
+    // On-demand month dots load; cancelled by the next one on a fast swipe.
     private var loadDotsJob: Job? = null
 
-    // Job for occurrence extension (cancel previous on rapid swipe)
+    // Debounced occurrence extension; cancelled by the next one on a rapid swipe.
     private var extensionJob: Job? = null
     private var occurrenceRepairDone = false
 
-    // Job for day events cache loading (cancel previous when cache refresh needed)
+    // Day pager cache collection; cancelled when the cache is reloaded.
     private var dayEventsCacheJob: Job? = null
 
-    // Job for debounced day pager loading (cancel previous on fast swipe)
+    // Debounced day pager range load; cancelled by the next one on a fast swipe.
     private var dayPagerLoadJob: Job? = null
 
-    // Job for year dots loading (cancel previous on fast year swipe)
+    // Year dots load; cancelled by the next one on a fast year swipe.
     private var yearDotsJob: Job? = null
 
-    // Track current loaded date range to avoid redundant loads
+    // The time-grid range last loaded, so a page inside it doesn't reload; null forces a load.
     private var currentLoadedRange: Pair<LocalDate, LocalDate>? = null
 
-    // Null until the first resume, so the first resume is record-only —
-    // we only snap when we have a prior dayCode to compare against.
+    // Null until the first resume, which only records the day; later resumes snap to today when
+    // the day differs.
     private var lastResumeDayCode: Int? = null
 
     init {
         Log.d(TAG, "ViewModel init")
 
-        // Set initial viewing state to today
+        // Start the viewing month on today.
         val today = Calendar.getInstance()
         _uiState.update {
             it.copy(
@@ -737,46 +714,42 @@ class HomeViewModel(
             )
         }
 
-        // Initialize asynchronously
         viewModelScope.launch {
             initializeAsync()
         }
 
-        // Observe sync status for inline banner
+        // Sync status, for the inline banner.
         observeSyncStatus()
 
-        // Observe sync changes for snackbar notification
+        // Sync changes, for the snackbar.
         observeSyncChanges()
 
-        // Observe display settings
         observeDisplaySettings()
 
-        // Observe device calendar changes to invalidate event dots cache
+        // Device calendar changes, which invalidate the event dots.
         observeDeviceCalendarChanges()
 
-        // Persist the settled pinch-zoom level across restarts (debounced)
+        // Persists the settled pinch-zoom level across restarts.
         observeHourHeightPersistence()
     }
 
     /**
-     * Async initialization - Android recommended pattern.
-     * Avoids blocking main thread during startup.
+     * Loads the startup state off the constructor: calendars, account status, onboarding and
+     * What's New, the persisted view and time-grid position, then lands on today. A failure is
+     * logged and shown as the sync message.
      */
     private suspend fun initializeAsync() {
         try {
             Log.d(TAG, "initializeAsync - START")
 
-            // Start observing calendars (reactive Flow - auto-updates when calendars change)
-            // Note: Calendar visibility is derived from Calendar.isVisible (DB source of truth)
+            // Calendar visibility comes from Calendar.isVisible, the source of truth in the DB.
             observeCalendars()
 
-            // Observe device calendar drawer state (enabled, visible IDs, calendar list)
             observeDeviceCalendarDrawerState()
 
-            // Check if any sync-capable account is configured
             checkAccountStatus()
 
-            // Show onboarding sheet if: not configured AND not dismissed before
+            // Onboarding shows when no account is configured and it was never dismissed.
             if (!_uiState.value.isConfigured) {
                 val dismissed = dataStore.onboardingDismissed.first()
                 if (!dismissed) {
@@ -785,29 +758,25 @@ class HomeViewModel(
                 }
             }
 
-            // What's New: surface release notes the user hasn't acknowledged.
-            // Onboarding takes the screen on first launch — defer to it; the
-            // sheet will appear on the next cold start. Also silently records
-            // the current version on the very first launch (lastShown == 0)
-            // so future upgrades are detected.
+            // What's New: release notes the user hasn't acknowledged. MainActivity shows them only
+            // once onboarding is out of the way. A new install records the current version and
+            // shows nothing, so later upgrades are detected.
             initializeWhatsNew()
 
-            // Load persisted view from DataStore before building UI.
-            // Seed previousNonInsightsMode from the same persisted default so back-from-Insights
-            // (when Insights is the initial view) lands on the user's preferred view, not MONTH.
-            // DataStore's VALID_VIEWS rejects "insights", so this seed is guaranteed non-INSIGHTS.
+            // Seed previousNonInsightsMode from the same persisted default, so going back from
+            // Insights lands on the user's preferred view, not MONTH. DataStore's VALID_VIEWS
+            // refuses to store "insights", so the seed isn't INSIGHTS.
             val defaultView = ViewMode.fromKey(dataStore.getDefaultCalendarView())
-            // Seed the persisted time-grid scroll position in the SAME update that flips
-            // viewMode. viewMode starts at MONTH, so the time grid (WeekViewContent) can't
-            // compose until this update lands — meaning the restored value is already present
-            // on its first composition and the debounced scroll writer can't overwrite it first.
+            // Seed the persisted time-grid scroll position in the same update that sets viewMode.
+            // viewMode starts at MONTH, so the time grid (WeekViewContent) can't compose before
+            // this update: the restored value is there on its first composition, before the
+            // debounced scroll writer can overwrite it.
             val savedScrollMinutes = dataStore.getWeekViewScrollMinutes()
-            // Seed the persisted zoom in the SAME update as the scroll minutes. The grid's
-            // scroll restore converts saved clock-minutes to pixels using the hour-height, so
-            // the restored zoom must be present on the grid's first composition — otherwise
-            // the conversion runs against the default zoom and lands on the wrong time. Reject
-            // a non-finite stored value (coerceIn leaves NaN as NaN) and clamp the rest so a
-            // corrupt/out-of-range stored value can never render a degenerate grid.
+            // Seed the persisted zoom in the same update. The scroll restore converts the saved
+            // clock minutes to pixels with the hour-height, so the zoom must be there on the
+            // grid's first composition, or the restore lands on the wrong time. A non-finite
+            // stored value falls back to 60 (coerceIn leaves NaN as NaN), and the rest is clamped,
+            // so a corrupt value can't render a degenerate grid.
             val storedHourHeight = dataStore.getWeekViewHourHeight()
             val savedHourHeight = (if (storedHourHeight.isFinite()) storedHourHeight else 60f)
                 .coerceIn(WeekViewUtils.MIN_HOUR_HEIGHT_DP, WeekViewUtils.MAX_HOUR_HEIGHT_DP)
@@ -820,7 +789,6 @@ class HomeViewModel(
                 )
             }
 
-            // Load data for the default view
             when (defaultView) {
                 ViewMode.AGENDA -> {
                     val now = System.currentTimeMillis()
@@ -835,13 +803,12 @@ class HomeViewModel(
                 ViewMode.INSIGHTS -> {}
             }
 
-            // Build event dots for current month ±6 months
+            // Event dots for the current month +/- 6 months.
             val today = Calendar.getInstance()
             buildEventDots(today.get(Calendar.YEAR), today.get(Calendar.MONTH))
 
-            // Auto-select today (routes to correct view based on viewMode).
-            // Cold-start land is instant (no animation) so the month pager settles
-            // in one frame; the user-pressed Today button keeps its animation.
+            // Land on today in the current view. Cold start lands without animation so the month
+            // pager settles in one frame; the Today button keeps its animation.
             goToToday(animate = false)
 
             Log.d(TAG, "initializeAsync - COMPLETE")
@@ -856,8 +823,8 @@ class HomeViewModel(
     // ==================== Account Status ====================
 
     /**
-     * Check if any sync-capable account is configured and update state.
-     * Considers all providers with supportsCalDAV (iCloud, CalDAV).
+     * Sets `isConfigured` to whether an account of a provider with `supportsCalDAV` (iCloud,
+     * CalDAV) has credentials.
      */
     private suspend fun checkAccountStatus() {
         val allAccounts = withContext(ioDispatcher) {
@@ -881,26 +848,26 @@ class HomeViewModel(
     }
 
     /**
-     * Refresh account status (called when returning from settings).
-     * Also reloads calendars to pick up any newly discovered calendars.
+     * Refreshes the account status and the calendars; MainActivity calls it on every resume but
+     * the first. When an account is configured and no startup sync was requested yet, it starts
+     * a sync with the banner shown.
      */
     fun refreshAccountStatus() {
         viewModelScope.launch {
             checkAccountStatus()
 
-            // Reload calendars to pick up newly discovered calendars
-            // (observeCalendars Flow should auto-update, but force refresh for safety)
+            // observeCalendars follows the DB already; this one-shot reload is a fallback.
             loadCalendars()
 
             if (_uiState.value.isConfigured && !hasTriggeredStartupSync) {
-                // First sync after account setup - show banner for user feedback
+                // First sync after account setup: the banner confirms it to the user.
                 hasTriggeredStartupSync = true
-                syncScheduler.setShowBannerForSync(true)  // Initial setup - user expects confirmation
+                syncScheduler.setShowBannerForSync(true)
                 Log.d(TAG, "refreshAccountStatus: First sync after account setup (with banner)")
                 performSync()
             }
 
-            // Rebuild event dots with new calendars
+            // Rebuild the dots for any new calendars.
             reloadCurrentView()
         }
     }
@@ -908,8 +875,8 @@ class HomeViewModel(
     // ==================== Startup Sync ====================
 
     /**
-     * Trigger startup sync after UI is ready.
-     * Called from Activity's LaunchedEffect to ensure lifecycle is STARTED.
+     * Starts the silent startup sync once per ViewModel, when an account is configured. Called
+     * from MainActivity's LaunchedEffect, so the lifecycle is STARTED.
      */
     fun triggerStartupSync() {
         if (!_uiState.value.isConfigured) {
@@ -929,12 +896,12 @@ class HomeViewModel(
     // ==================== Sync Status Observation ====================
 
     /**
-     * Observe sync status from WorkManager and update banner state.
+     * Mirrors the immediate sync's WorkManager status into the sync flags and the banner.
      *
-     * Banner visibility is context-aware (controlled by syncScheduler.showBannerForSync):
-     * - Silent syncs (startup, pull-to-refresh): no banner shown
-     * - Verbose syncs (force full sync, iCloud setup): full banner shown
-     * - Errors: always shown regardless of flag
+     * The banner follows `syncScheduler.showBannerForSync`: set for a forced full sync and the
+     * first sync after account setup, clear for the startup, resume and pull-to-refresh syncs.
+     * A partial error shows the banner regardless. A failure shows it only with the flag; a
+     * failed pull-to-refresh goes to [showError] instead.
      */
     private fun observeSyncStatus() {
         viewModelScope.launch {
@@ -943,11 +910,10 @@ class HomeViewModel(
                 Log.d(TAG, "Sync status changed: $status (showBanner=$showBanner)")
                 when (status) {
                     is SyncStatus.Running, is SyncStatus.Enqueued -> {
-                        // isSyncing is the duplicate-sync guard, set true whenever work is
-                        // live. It is NOT the spinner: the spinner (showRefreshSpinner) is
-                        // driven solely by an in-session pull-to-refresh, so a persisted/
-                        // replayed status on a fresh process never resurfaces it.
-                        // Banner shows only when the flag is set (force sync, iCloud setup).
+                        // isSyncing is the duplicate-sync guard, true while work is live. It
+                        // isn't the spinner: showRefreshSpinner is set only by an in-session
+                        // pull-to-refresh, so a status replayed into a new process never shows
+                        // it. The banner shows only with the flag.
                         _uiState.update {
                             it.copy(
                                 isSyncing = true,
@@ -971,9 +937,8 @@ class HomeViewModel(
                                 syncErrorDetail = null
                             )
                         }
-                        // Reload events after successful sync
                         reloadCurrentView()
-                        // Auto-dismiss after delay
+                        // Auto-dismiss.
                         if (showBanner || hasPartialError) {
                             delay(if (hasPartialError) 3000 else 2000)
                             _uiState.update { it.copy(showSyncBanner = false) }
@@ -983,8 +948,8 @@ class HomeViewModel(
                     is SyncStatus.Failed -> {
                         val wasPull = _uiState.value.showRefreshSpinner
                         if (wasPull) {
-                            // A user-initiated pull-to-refresh failed: surface the error via
-                            // the normal error channel, no banner (the pull owns feedback).
+                            // A pull-to-refresh failed: report it through showError, with no
+                            // banner.
                             _uiState.update {
                                 it.copy(
                                     isSyncing = false,
@@ -994,15 +959,13 @@ class HomeViewModel(
                                     syncErrorDetail = null
                                 )
                             }
-                            // Clear any banner intent so a stale flag (e.g. set by a
-                            // concurrent force-sync on another screen) can't leak a banner
-                            // into the next silent startup/resume sync.
+                            // Clear the banner flag so a stale one (for example from a force sync
+                            // on another screen) can't leak a banner into the next silent sync.
                             syncScheduler.resetBannerFlag()
                             showError(CalendarError.Unknown(status.errorMessage ?: "Sync failed"))
                         } else {
-                            // Banner only for syncs the user asked for (force sync / first
-                            // setup set showBannerForSync). A silent background/startup failure
-                            // stays silent — no banner surfaces on a normal app open.
+                            // Banner only with the flag (force sync, first sync after setup); a
+                            // silent sync's failure shows nothing on a normal app open.
                             _uiState.update {
                                 it.copy(
                                     isSyncing = false,
@@ -1013,7 +976,6 @@ class HomeViewModel(
                                 )
                             }
                             if (showBanner) {
-                                // Auto-dismiss after 3 seconds
                                 delay(3000)
                                 _uiState.update { it.copy(showSyncBanner = false) }
                                 syncScheduler.resetBannerFlag()
@@ -1026,7 +988,7 @@ class HomeViewModel(
                                 showSyncBanner = false,
                                 showRefreshSpinner = false,
                                 isSyncing = false,
-                                syncBannerState = SyncBannerState.Syncing  // Reset to avoid stale Error flash
+                                syncBannerState = SyncBannerState.Syncing  // No stale Error flash
                             )
                         }
                     }
@@ -1036,10 +998,8 @@ class HomeViewModel(
     }
 
     /**
-     * Observe sync changes from SyncScheduler and show snackbar notification.
-     *
-     * Shows snackbar for ALL syncs (startup, pull-to-refresh, background) when changes are found.
-     * The snackbar includes a "View" action to open the bottom sheet with change details.
+     * Shows a snackbar for every worker sync that reports changes, whatever triggered it, with a
+     * "View" action that opens the sync-changes sheet. The changes are cleared once handled.
      */
     private fun observeSyncChanges() {
         viewModelScope.launch {
@@ -1048,15 +1008,12 @@ class HomeViewModel(
                     val message = generateSnackbarMessage(changes)
                     if (message != null) {
                         Log.d(TAG, "Sync changes notification: $message (${changes.size} changes)")
-                        // Store changes for bottom sheet
+                        // Kept for the sheet.
                         _uiState.update { it.copy(syncChanges = changes.toPersistentList()) }
-                        // Show snackbar with "View" action
                         showSnackbar(message) {
-                            // Open bottom sheet on "View" tap
                             _uiState.update { it.copy(showSyncChangesSheet = true) }
                         }
                     }
-                    // Clear after consumed
                     syncScheduler.clearSyncChanges()
                 }
             }
@@ -1064,8 +1021,9 @@ class HomeViewModel(
     }
 
     /**
-     * Observe display settings preferences.
-     * Updates uiState when showEventEmojis, timeFormat, or firstDayOfWeek preferences change.
+     * Copies the display preferences into uiState as they change (emojis, time format, first day
+     * of week, week numbers, the bars' expanded states, tag placement, initials), plus the recent
+     * tags and tag colors.
      */
     private fun observeDisplaySettings() {
         viewModelScope.launch {
@@ -1126,23 +1084,22 @@ class HomeViewModel(
     }
 
     /**
-     * Observe device calendar changes (ContentObserver signal from CalendarProviderManager).
-     * Invalidates event dots cache so dots rebuild with fresh device event data.
-     * Day pager, agenda, and week view auto-update via DisplayEventRepository's combine() flows.
+     * Rebuilds the event dots on each device calendar change signal (a ContentObserver signal
+     * from CalendarProviderManager). The day pager, agenda, time grid and month grid follow the
+     * signal themselves through DisplayEventRepository's combined flows.
      */
     private fun observeDeviceCalendarChanges() {
         viewModelScope.launch {
             displayEventRepository.deviceCalendarChangeSignal
                 .collect { signal ->
                     if (signal > 0) {
-                        // Clear loaded months so dots rebuild with fresh data
                         _uiState.update {
                             it.copy(
                                 loadedMonths = persistentSetOf(),
                                 eventDots = persistentMapOf()
                             )
                         }
-                        // Rebuild dots for current viewing month
+                        // Rebuild around the viewing month.
                         buildEventDots(
                             _uiState.value.viewingYear,
                             _uiState.value.viewingMonth
@@ -1155,7 +1112,9 @@ class HomeViewModel(
     // ==================== Sync Operations ====================
 
     /**
-     * Pull-to-refresh sync.
+     * Runs a pull-to-refresh sync, the only sync that shows the refresh spinner, and a contact
+     * sync. Unconfigured it shows a snackbar and offline an error; while a sync runs it does
+     * nothing.
      */
     fun refreshSync() {
         if (!_uiState.value.isConfigured) {
@@ -1172,18 +1131,18 @@ class HomeViewModel(
             showError(CalendarError.Network.Offline)
             return
         }
-        // User-initiated pull-to-refresh is the only path that shows the spinner.
         _uiState.update { it.copy(showRefreshSpinner = true) }
         syncScheduler.setShowBannerForSync(false)
         Log.d(TAG, "Pull-to-refresh: starting sync (with spinner)")
         performSync(SyncTrigger.FOREGROUND_PULL_TO_REFRESH)
-        // Pull-to-refresh also refreshes CardDAV contacts; the worker self-guards to
-        // contact-sync-enabled accounts, so an unconditional sweep here is cheap and safe.
+        // The contact worker syncs only accounts with contact sync enabled, so requesting it
+        // unconditionally is cheap.
         syncScheduler.requestImmediateContactSync()
     }
 
     /**
-     * Force full sync (clears sync tokens).
+     * Requests a full sync that ignores the ctag and sync-token, with the banner, unless a sync
+     * is running.
      */
     fun forceFullSync() {
         if (_uiState.value.isSyncing) {
@@ -1193,7 +1152,7 @@ class HomeViewModel(
         syncScheduler.setShowBannerForSync(true)
         Log.d(TAG, "Force full sync requested (with banner)")
 
-        // Clear parse failure retry state - force sync gives a fresh start (v16.7.0)
+        // A forced sync gives parse failures a fresh set of retries (v16.7.0).
         viewModelScope.launch {
             dataStore.clearAllParseFailureRetries()
         }
@@ -1206,13 +1165,13 @@ class HomeViewModel(
     }
 
     /**
-     * Sync on app resume if not already syncing.
-     * Called from Activity.onResume() for background-to-foreground transitions.
+     * Starts a silent sync unless one is running. MainActivity.onResume calls it on a return
+     * from outside the app.
      *
-     * No cooldown - syncs every time app resumes because:
+     * No cooldown; every resume syncs, because:
      * - Casual users have long gaps (hours) between app opens anyway
      * - The ctag check is lightweight (~50ms) if nothing changed
-     * - Shared calendar users need fresh data when returning to app
+     * - Shared calendar users need fresh data when returning to the app
      */
     fun syncOnResumeIfNeeded() {
         if (!_uiState.value.isConfigured) {
@@ -1229,36 +1188,31 @@ class HomeViewModel(
     }
 
     /**
-     * Perform sync operation.
+     * Requests an immediate sync, unless unconfigured or already syncing.
      *
-     * Sets isSyncing=true immediately for duplicate sync guard, then enqueues WorkManager work.
-     * All other state updates (isSyncing=false, reloadCurrentView) happen via observeSyncStatus()
-     * when WorkManager emits SyncStatus.Succeeded/Failed/etc.
+     * Sets isSyncing at once as the duplicate-sync guard, then enqueues the work. Every other
+     * state update (isSyncing false, reloadCurrentView) comes from [observeSyncStatus] as
+     * WorkManager reports the status.
      *
-     * @param trigger The sync trigger source for history tracking
+     * @param trigger the trigger recorded in the sync history
      */
     private fun performSync(trigger: SyncTrigger = SyncTrigger.FOREGROUND_MANUAL) {
         if (!_uiState.value.isConfigured) {
             Log.d(TAG, "performSync: Not configured, skipping")
             return
         }
-        // A sync is already live; a second enqueue here would REPLACE it and, worse,
-        // could attach an in-flight pull's spinner to a different silent sync (its
-        // failure would then be misread as a pull failure). Every other caller already
-        // guards on isSyncing; guard here too so no path can double-enqueue.
+        // A second enqueue would replace the live sync, and could attach an in-flight pull's
+        // spinner to a different silent sync, whose failure would then read as a pull failure.
+        // Not every caller checks isSyncing, so the guard lives here.
         if (_uiState.value.isSyncing) {
             Log.d(TAG, "performSync: Sync already in progress, skipping")
             return
         }
 
-        // Set isSyncing immediately to prevent duplicate sync requests (race condition guard).
-        // This closes the window between performSync() and observeSyncStatus() receiving Running
-        // status. The visible spinner (showRefreshSpinner) is controlled separately — only a
-        // pull-to-refresh sets it — so this guard never surfaces UI on its own.
+        // Closes the window before observeSyncStatus receives Running. Only a pull-to-refresh
+        // sets the spinner (showRefreshSpinner), so this guard shows nothing on its own.
         _uiState.update { it.copy(isSyncing = true) }
 
-        // Request sync - observeSyncStatus() handles all other state updates
-        // including calling reloadCurrentView() when sync succeeds
         Log.d(TAG, "performSync: Requesting immediate sync (trigger=${trigger.name})")
         syncScheduler.requestImmediateSync(trigger = trigger)
     }
@@ -1266,13 +1220,11 @@ class HomeViewModel(
     // ==================== Calendar Loading ====================
 
     /**
-     * Start observing calendars from database (reactive via Flow).
-     * Uses EventCoordinator for proper architecture pattern.
+     * Keeps the calendars, their drawer groups, the device calendar groups and the default
+     * calendar in uiState as the DB and preferences change.
      *
-     * Default calendar priority:
-     * 1. User preference from DataStore (set in Settings)
-     * 2. Database is_default column (server-side default)
-     * 3. First calendar in list
+     * The default is the user's preference from Settings: a device calendar as stored, a Room
+     * calendar only while it exists, otherwise null.
      */
     private fun observeCalendars() {
         viewModelScope.launch {
@@ -1299,7 +1251,7 @@ class HomeViewModel(
                         icsLabel = context.getString(R.string.subscriptions_title),
                         localizeCalendarName = { it.localizedDisplayName(context.resources) }
                     )
-                    val deviceCalendars = loadFilteredDeviceCalendars(deviceEnabled, enabledIds)
+                    val deviceCalendars = deviceEventReader.getEnabledDeviceCalendars(deviceEnabled, enabledIds)
                     val deviceGroups = CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
                     CalendarsSnapshot(calendars, groups, validatedDefault, deviceGroups)
                 }.collect { snap ->
@@ -1319,28 +1271,7 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Apply the user's device-calendar enable preference to the system list:
-     * returns empty unless the master toggle is on AND at least one calendar
-     * is enabled in DataStore. Mirrors the drawer's behavior so all surfaces
-     * stay symmetric.
-     */
-    private suspend fun loadFilteredDeviceCalendars(
-        enabled: Boolean,
-        enabledIds: Set<Long>
-    ): List<DeviceCalendar> {
-        if (!enabled || enabledIds.isEmpty()) return emptyList()
-        return try {
-            calendarProviderRepository.getDeviceCalendars().filter { it.id in enabledIds }
-        } catch (_: Exception) {
-            emptyList()
-        }
-    }
-
-    /**
-     * Load all calendars from database (one-shot for manual refresh).
-     * Uses same default calendar priority as observeCalendars().
-     */
+    /** Loads the same state as [observeCalendars] once, for a manual refresh. */
     private fun loadCalendars() {
         viewModelScope.launch {
             try {
@@ -1365,7 +1296,7 @@ class HomeViewModel(
                     )
                     val deviceEnabled = dataStore.getDeviceCalendarsEnabled()
                     val enabledIds = dataStore.getEnabledDeviceCalendarIds()
-                    val deviceCalendars = loadFilteredDeviceCalendars(deviceEnabled, enabledIds)
+                    val deviceCalendars = deviceEventReader.getEnabledDeviceCalendars(deviceEnabled, enabledIds)
                     val deviceGroups = CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
                     CalendarsSnapshot(cals, calGroups, validDefault, deviceGroups)
                 }
@@ -1386,12 +1317,11 @@ class HomeViewModel(
     }
 
     /**
-     * Observe device calendar drawer state: feature enabled, enabled IDs, hidden IDs.
-     * Loads device calendar list only when enabled/enabledIds change (ContentResolver query).
-     * Hidden IDs updates skip the query since only visibility state changes.
+     * Keeps the device calendar drawer state in uiState: the feature flag, the enabled calendars
+     * and the hidden IDs. Only a change to the flag or the enabled IDs queries the provider for
+     * the calendar list; a hidden-ID change only updates state.
      */
     private fun observeDeviceCalendarDrawerState() {
-        // Observe enabled state + enabled IDs — reload calendar list from ContentProvider
         viewModelScope.launch {
             combine(
                 dataStore.deviceCalendarsEnabled,
@@ -1399,7 +1329,7 @@ class HomeViewModel(
             ) { enabled, enabledIds ->
                 Pair(enabled, enabledIds)
             }.collect { (enabled, enabledIds) ->
-                val deviceCalendars = loadFilteredDeviceCalendars(enabled, enabledIds)
+                val deviceCalendars = deviceEventReader.getEnabledDeviceCalendars(enabled, enabledIds)
                 _uiState.update {
                     it.copy(
                         deviceCalendarsEnabled = enabled,
@@ -1408,7 +1338,6 @@ class HomeViewModel(
                 }
             }
         }
-        // Observe hidden IDs separately — lightweight state update, no ContentProvider query
         viewModelScope.launch {
             dataStore.hiddenDeviceCalendarIds.collect { hiddenIds ->
                 _uiState.update {
@@ -1418,53 +1347,42 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Refresh calendars list.
-     */
+    /** Reloads the calendars once. */
     fun refreshCalendars() {
         loadCalendars()
     }
 
     // ==================== Calendar Visibility ====================
 
-    /**
-     * Toggle calendar visibility.
-     * Uses DB Calendar.isVisible as source of truth.
-     */
+    /** Toggles a Room calendar's visibility, stored in Calendar.isVisible (the source of truth). */
     fun toggleCalendarVisibility(calendarId: Long) {
         viewModelScope.launch {
-            // Get current visibility from calendar entity
             val calendar = _uiState.value.calendars.find { it.id == calendarId }
             val newVisible = !(calendar?.isVisible ?: true)
 
-            // Update DB (source of truth) - UI updates automatically via calendars Flow observation
+            // The calendars Flow carries the change to the UI.
             eventCoordinator.setCalendarVisibility(calendarId, newVisible)
 
-            // Only rebuild dots (one-shot query needs explicit refresh)
-            // Week/agenda/pager/day views are now reactive via combine() - they auto-update
+            // Only the dots need a rebuild: they come from a one-shot query, and the other
+            // views follow the visibility through their Flows.
             buildEventDots(_uiState.value.viewingYear, _uiState.value.viewingMonth)
         }
     }
 
-    /**
-     * Show all calendars.
-     * Uses DB Calendar.isVisible as source of truth.
-     */
+    /** Makes every Room calendar visible (Calendar.isVisible). */
     fun showAllCalendars() {
         viewModelScope.launch {
-            // Update DB for each calendar (source of truth)
             _uiState.value.calendars.forEach { calendar ->
                 eventCoordinator.setCalendarVisibility(calendar.id, true)
             }
-            // Only rebuild dots (one-shot query needs explicit refresh)
-            // Week/agenda/pager/day views are now reactive via combine() - they auto-update
+            // Only the dots need a rebuild, as in toggleCalendarVisibility.
             buildEventDots(_uiState.value.viewingYear, _uiState.value.viewingMonth)
         }
     }
 
     /**
-     * Toggle device calendar visibility in the drawer.
-     * Uses hiddenDeviceCalendarIds preference — doesn't affect reminders or enablement.
+     * Toggles a device calendar's visibility in the drawer. It's stored in the hidden-IDs
+     * preference and doesn't affect reminders or which calendars are enabled.
      */
     fun toggleDeviceCalendarVisibility(calendarId: Long) {
         viewModelScope.launch {
@@ -1476,29 +1394,24 @@ class HomeViewModel(
     // ==================== Event Dots ====================
 
     /**
-     * Encode year and month into a single integer for range comparison.
-     * Format: year * 12 + month (handles year boundaries correctly)
+     * Encodes a year and 0-indexed month as `year * 12 + month`, so month ranges compare and step
+     * across year boundaries.
      */
     private fun encodeMonth(year: Int, month: Int): Int = year * 12 + month
 
-    /**
-     * Decode encoded month back to year and month.
-     */
+    /** Decodes [encodeMonth]'s value back to (year, 0-indexed month). */
     private fun decodeMonth(encoded: Int): Pair<Int, Int> = (encoded / 12) to (encoded % 12)
 
     /**
-     * Check if a month has actually loaded dots (not just requested).
-     * Uses Set-based tracking to avoid false cache hits from cancelled loads.
+     * Returns true when a month's dots finished loading. `loadedMonths` records only completed
+     * loads, so a cancelled one isn't a cache hit.
      */
     private fun isMonthCached(year: Int, month: Int): Boolean {
         val encoded = encodeMonth(year, month)
         return encoded in _uiState.value.loadedMonths
     }
 
-    /**
-     * Ensure dots are loaded for the given month.
-     * Loads on-demand if not cached.
-     */
+    /** Loads a month's dots unless they're cached. */
     private fun ensureDotsForMonth(year: Int, month: Int) {
         if (!isMonthCached(year, month)) {
             loadDotsForMonth(year, month)
@@ -1506,16 +1419,15 @@ class HomeViewModel(
     }
 
     /**
-     * Load dots for a single month (on-demand loading for months beyond initial cache).
-     * Cancels previous load if still running (handles fast swipe).
+     * Loads one month's dots on demand, for months outside the initial cache. Cancels a load
+     * still running, for a fast swipe.
      */
     private fun loadDotsForMonth(year: Int, month: Int) {
-        // Cancel previous load if still running (fast swipe scenario)
         loadDotsJob?.cancel()
 
         loadDotsJob = viewModelScope.launch {
             try {
-                // month is 0-indexed (Calendar.MONTH), LocalDate uses 1-indexed
+                // month is 0-indexed (Calendar.MONTH); LocalDate's is 1-indexed.
                 val firstDay = LocalDate.of(year, month + 1, 1)
                 val lastDay = firstDay.withDayOfMonth(firstDay.lengthOfMonth())
                 val startDayCode = firstDay.year * 10000 + firstDay.monthValue * 100 + firstDay.dayOfMonth
@@ -1544,12 +1456,10 @@ class HomeViewModel(
                     }
                 }
 
-                // Merge into existing cache
                 val currentDots = _uiState.value.eventDots.toMutableMap()
                 currentDots[monthKey] = monthDots.mapValues { it.value.toPersistentList() }.toPersistentMap()
 
-                // Mark month as actually loaded (not just requested)
-                // This ensures cancelled loads don't falsely mark months as cached
+                // Marked only once loaded, so a cancelled load leaves the month uncached.
                 val loadedMonthEncoded = encodeMonth(year, month)
                 _uiState.update {
                     it.copy(
@@ -1560,7 +1470,7 @@ class HomeViewModel(
 
                 Log.d(TAG, "Loaded dots for $year-${month + 1}, total cached months: ${_uiState.value.loadedMonths.size}")
             } catch (e: CancellationException) {
-                throw e  // Don't catch cancellation
+                throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Error loading dots for month $year-${month + 1}", e)
             }
@@ -1568,19 +1478,18 @@ class HomeViewModel(
     }
 
     /**
-     * Build event dots for ±6 months around the given month.
+     * Rebuilds the event dots for the given month +/- 6 months, replacing the cached dots and
+     * the loaded-months set.
      */
     private fun buildEventDots(year: Int, month: Int) {
         viewModelScope.launch {
             try {
                 val dots = mutableMapOf<String, MutableMap<Int, MutableList<Int>>>()
 
-                // Calculate cache range bounds
                 val centerEncoded = encodeMonth(year, month)
                 val startEncoded = centerEncoded - 6
                 val endEncoded = centerEncoded + 6
 
-                // Compute day code range from ±6 months
                 val (startYear, startMonth) = decodeMonth(startEncoded)
                 val (endYear, endMonth) = decodeMonth(endEncoded)
                 val firstDay = LocalDate.of(startYear, startMonth + 1, 1)
@@ -1589,12 +1498,12 @@ class HomeViewModel(
                 val startDayCode = firstDay.year * 10000 + firstDay.monthValue * 100 + firstDay.dayOfMonth
                 val endDayCode = lastDay.year * 10000 + lastDay.monthValue * 100 + lastDay.dayOfMonth
 
-                // Query merged Room + device events grouped by day
+                // Room and device events, grouped by day.
                 val eventsMap = withContext(ioDispatcher) {
                     displayEventRepository.getDisplayEventsGroupedByDayOnce(startDayCode, endDayCode)
                 }
 
-                // Build dots from pre-grouped events (multi-day expansion already handled)
+                // The repository already puts a multi-day event in each of its days.
                 for ((dayCode, events) in eventsMap) {
                     val (occYear, occMonth, day) = parseDayFormat(dayCode)
                     val key = String.format(java.util.Locale.ROOT, "%04d-%02d", occYear, occMonth + 1)
@@ -1609,17 +1518,14 @@ class HomeViewModel(
                     }
                 }
 
-                // Convert to persistent immutable collections
                 val immutableDots = dots.mapValues { (_, monthMap) ->
                     monthMap.mapValues { (_, dayColors) -> dayColors.toPersistentList() }.toPersistentMap()
                 }.toPersistentMap()
 
-                // Build set of loaded months (all months in the ±6 range)
                 val loadedMonthsSet = (startEncoded..endEncoded)
                     .toSet()
                     .toPersistentSet()
 
-                // Update state with dots and loaded months set
                 _uiState.update {
                     it.copy(
                         eventDots = immutableDots,
@@ -1629,7 +1535,7 @@ class HomeViewModel(
 
                 Log.d(TAG, "Built event dots for ${dots.size} months, loaded ${loadedMonthsSet.size} months: $startYear-${startMonth + 1} to $endYear-${endMonth + 1}")
             } catch (e: CancellationException) {
-                throw e  // Don't catch cancellation
+                throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Error building event dots", e)
             }
@@ -1639,9 +1545,8 @@ class HomeViewModel(
     // ==================== Year View Dots ====================
 
     /**
-     * Load event dots for an entire year (Jan 1 to Dec 31).
-     * Cancels previous load if still running (fast-swipe protection).
-     * Merges into existing eventDots map (additive, not replacement).
+     * Loads the event dots for a whole year and merges them into the cached dots. Cancels a
+     * load still running, for a fast swipe.
      */
     private fun loadYearDots(year: Int) {
         yearDotsJob?.cancel()
@@ -1671,7 +1576,7 @@ class HomeViewModel(
                     }
                 }
 
-                // Merge into existing cache (additive — month view dots unaffected)
+                // Merged per month: a month this load found no events in keeps its cached dots.
                 val currentDots = _uiState.value.eventDots.toMutableMap()
                 for ((key, monthMap) in dots) {
                     currentDots[key] = monthMap.mapValues { it.value.toPersistentList() }.toPersistentMap()
@@ -1693,10 +1598,7 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Ensure dots are loaded for the given year.
-     * Loads on-demand if not cached.
-     */
+    /** Loads a year's dots unless they're cached. */
     fun ensureDotsForYear(year: Int) {
         if (year !in _uiState.value.loadedYears) {
             loadYearDots(year)
@@ -1706,13 +1608,13 @@ class HomeViewModel(
     // ==================== Navigation ====================
 
     /**
-     * Navigate to today and select it.
-     * Context-aware: If in 3-day view, navigates week view to today.
+     * Moves the current view to today: the day and week pagers to today's page, the agenda to
+     * its top, the month views to today's month with today selected, the year view to this
+     * year. Insights is left alone.
      *
-     * @param animate when true (user-initiated, e.g. the Today button) the month
-     *   pager animates its scroll; when false (programmatic cold-start land) it
-     *   jumps instantly so the pager settles in a single frame. Only the
-     *   MONTH/MONTH_FULL branch distinguishes the two — other views are unaffected.
+     * @param animate true (the Today button) animates the month pager's scroll; false (the
+     *   cold-start landing) jumps so the pager settles in one frame. Only the month views read
+     *   it.
      */
     fun goToToday(animate: Boolean = true) {
         when (_uiState.value.viewMode) {
@@ -1749,29 +1651,22 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Clear the navigate to today flag (consumed by UI).
-     */
+    /** Clears the navigate-to-today flag once the UI has consumed it. */
     fun clearNavigateToToday() {
         _uiState.update { it.copy(pendingNavigateToToday = false) }
     }
 
-    /**
-     * Clear the instant navigate to today flag (consumed by UI).
-     */
+    /** Clears the instant navigate-to-today flag once the UI has consumed it. */
     fun clearNavigateToTodayInstant() {
         _uiState.update { it.copy(pendingNavigateToTodayInstant = false) }
     }
 
     /**
-     * Navigate calendar to a specific date.
-     * Updates viewing month/year and selects the date.
-     * Used by week widget for "go to date" action.
-     *
-     * @param date The target date to navigate to
+     * Moves the month pager to [date]'s month and selects [date]. MainActivity calls it for a
+     * GoToDate pending action (a widget's go-to-date), after a Quick Add save, and to land on a
+     * device event's start date when its occurrence doesn't resolve.
      */
     fun navigateToDate(date: LocalDate) {
-        // Update viewing month (handles cross-month navigation)
         _uiState.update {
             it.copy(
                 viewingYear = date.year,
@@ -1780,47 +1675,38 @@ class HomeViewModel(
             )
         }
 
-        // Select the date (triggers day events load)
         val dateMs = date.atStartOfDay(ZoneId.systemDefault())
             .toInstant()
             .toEpochMilli()
         selectDate(dateMs)
     }
 
-    /**
-     * Clear the scroll agenda to top flag (consumed by UI).
-     */
+    /** Clears the scroll-agenda-to-top flag once the UI has consumed it. */
     fun clearScrollAgendaToTop() {
         _uiState.update { it.copy(pendingScrollAgendaToTop = false) }
     }
 
-    /**
-     * Navigate to a specific month.
-     */
+    /** Moves the month pager to a month, closes the year overlay and loads its dots if needed. */
     fun navigateToMonth(year: Int, month: Int) {
         _uiState.update {
             it.copy(
                 viewingYear = year,
                 viewingMonth = month,
                 pendingNavigateToMonth = year to month,
-                showYearOverlay = false  // Auto-dismiss year overlay on month selection
+                showYearOverlay = false
             )
         }
 
-        // Only load if outside cached range (not full rebuild!)
+        // Loads only an uncached month, not a full rebuild.
         ensureDotsForMonth(year, month)
     }
 
-    /**
-     * Clear the navigate to month flag (consumed by UI).
-     */
+    /** Clears the navigate-to-month flag once the UI has consumed it. */
     fun clearNavigateToMonth() {
         _uiState.update { it.copy(pendingNavigateToMonth = null) }
     }
 
-    /**
-     * Set the viewing month/year (called on swipe).
-     */
+    /** Sets the viewing month after a month-pager swipe and loads what that month needs. */
     fun setViewingMonth(year: Int, month: Int) {
         _uiState.update {
             it.copy(
@@ -1829,31 +1715,28 @@ class HomeViewModel(
             )
         }
 
-        // Load dots if outside cached range (on-demand loading) — skip in MONTH_FULL mode (the month grid has full data)
+        // MONTH_FULL skips the dots: its grid has the full events.
         if (_uiState.value.viewMode != ViewMode.MONTH_FULL) {
             ensureDotsForMonth(year, month)
         }
 
-        // Load full month events for full-height grid
         if (_uiState.value.viewMode == ViewMode.MONTH_FULL) {
             setMonthGridKey(MonthKey(year, month))
         }
 
-        // Trigger occurrence extension if navigating far into future (debounced)
         triggerOccurrenceExtension(year, month)
     }
 
     /**
-     * Trigger on-demand occurrence extension with debouncing.
-     * When user navigates far into the future, extends occurrences for recurring events
-     * that don't have occurrences generated that far ahead.
-     *
-     * Debouncing prevents extension spam when user swipes rapidly through months.
+     * Extends recurring events' occurrences to reach the navigated month, forward or back, 500 ms
+     * after the last swipe. Each run also repairs events missing occurrences, until a run repairs
+     * nothing (reset after each successful sync). Reloads the month's dots when anything
+     * changed.
      */
     private fun triggerOccurrenceExtension(year: Int, month: Int) {
         extensionJob?.cancel()
         extensionJob = viewModelScope.launch {
-            delay(500L)  // Debounce rapid swipes
+            delay(500L)
 
             try {
                 val targetMs = Calendar.getInstance().apply {
@@ -1886,7 +1769,7 @@ class HomeViewModel(
 
     // ==================== Week View Navigation ====================
 
-    /** Navigate backward in the day/week pager (step depends on view mode). */
+    /** Moves the day or week pager back one step (the view mode's step); no-op at page 0. */
     fun navigateDaysPagerPrevious() {
         val currentPage = _uiState.value.weekViewPagerPosition
         if (currentPage <= 0) return
@@ -1896,7 +1779,7 @@ class HomeViewModel(
         onDayPagerPageChanged(targetPage)
     }
 
-    /** Navigate forward in the day/week pager (step depends on view mode). */
+    /** Moves the day or week pager forward one step (the view mode's step). */
     fun navigateDaysPagerNext() {
         val currentPage = _uiState.value.weekViewPagerPosition
         val step = _uiState.value.viewMode.pagerNextStep ?: return
@@ -1906,17 +1789,15 @@ class HomeViewModel(
     }
 
     /**
-     * Navigate week view to today.
-     * Uses CENTER_WEEK_PAGE for WEEK mode, CENTER_DAY_PAGE for THREE_DAYS.
+     * Moves the time grid to today: CENTER_WEEK_PAGE in WEEK mode, CENTER_DAY_PAGE in DAY and
+     * THREE_DAYS. Forces a reload.
      */
     fun goToTodayWeek() {
         val targetPage = if (_uiState.value.viewMode == ViewMode.WEEK)
             WeekViewUtils.CENTER_WEEK_PAGE else WeekViewUtils.CENTER_DAY_PAGE
 
-        // Clear cached range to force reload
         currentLoadedRange = null
 
-        // Set pending navigation and trigger load
         _uiState.update {
             it.copy(pendingWeekViewPagerPosition = targetPage)
         }
@@ -1926,22 +1807,20 @@ class HomeViewModel(
     // ==================== Infinite Day Pager Functions ====================
 
     /**
-     * Called when the day pager page changes (user swipes or animates).
-     * Debounces loading to avoid rapid API calls during fast swipes.
+     * Records the time-grid pager's page and, 300 ms after the last change, sets the load range
+     * around it unless the visible days are already loaded.
      *
-     * @param currentPage The current (leftmost visible) page in the pager
+     * @param currentPage the leftmost visible page
      */
     fun onDayPagerPageChanged(currentPage: Int) {
-        // Update pager position immediately for FAB context
+        // Updated at once for the context-aware FAB.
         _uiState.update { it.copy(weekViewPagerPosition = currentPage) }
 
-        // Cancel previous debounce job
         dayPagerLoadJob?.cancel()
         dayPagerLoadJob = viewModelScope.launch {
-            // Debounce: wait for scroll to settle
             delay(300)
 
-            // Get visible and loading date ranges (week mode uses week pages, day mode uses day pages)
+            // Week mode pages by week; the day and 3-day modes page by day.
             val isWeekMode = _uiState.value.viewMode == ViewMode.WEEK
             val firstDayOfWeek = _uiState.value.firstDayOfWeek
             val (visibleStart, visibleEnd) = if (isWeekMode) {
@@ -1951,14 +1830,13 @@ class HomeViewModel(
                 WeekViewUtils.getVisibleDateRange(currentPage)
             }
             val (loadStart, loadEnd) = if (isWeekMode) {
-                // Load current week + 1 week buffer on each side
+                // The week plus one week either side.
                 val start = WeekViewUtils.weekPageToStartDate(currentPage, firstDayOfWeek)
                 start.minusDays(7) to start.plusDays(13)
             } else {
                 WeekViewUtils.getLoadingDateRange(currentPage)
             }
 
-            // Skip if range already loaded
             currentLoadedRange?.let { (loadedStart, loadedEnd) ->
                 if (visibleStart >= loadedStart && visibleEnd <= loadedEnd) {
                     Log.d(TAG, "Day pager: range already loaded, skipping")
@@ -1966,7 +1844,6 @@ class HomeViewModel(
                 }
             }
 
-            // Load events for new range
             Log.d(TAG, "Day pager: loading range $loadStart to $loadEnd")
             loadEventsForDateRange(loadStart, loadEnd)
             currentLoadedRange = loadStart to loadEnd
@@ -1974,11 +1851,9 @@ class HomeViewModel(
     }
 
     /**
-     * Compute the start timestamp for a new event created from the time-grid
-     * FAB: today's date at the next hour (current hour + 1, on the hour),
-     * matching the non-time-grid FAB default. The grid's scroll position and
-     * zoom are view-state (they restore where the grid was looking) and are
-     * intentionally NOT used to seed a new event.
+     * Returns the start for a new event from the time-grid FAB: today at the next hour, the same
+     * default as the other FABs. The grid's scroll position and zoom only restore where the
+     * grid was looking; they deliberately don't seed the event.
      */
     fun computeTimeGridEventSeedTs(): Long {
         return Calendar.getInstance().apply {
@@ -1990,70 +1865,54 @@ class HomeViewModel(
     }
 
     /**
-     * Load events for a date range (used by infinite day pager).
-     * Accepts any date range. Sets the reactive time-grid range key; the
-     * [weekEvents] StateFlow does the actual (reactive) loading.
-     *
-     * @param startDate First day to load (inclusive)
-     * @param endDate Last day to load (inclusive)
+     * Sets the time-grid range key to [startDate]..[endDate], both inclusive; [weekEvents] does
+     * the loading.
      */
     private fun loadEventsForDateRange(startDate: LocalDate, endDate: LocalDate) {
         val startMs = WeekViewUtils.dateToEpochMs(startDate)
         val endMs = WeekViewUtils.dateToEpochMs(endDate.plusDays(1)) // exclusive end
 
-        // Drive the reactive time-grid surface (weekEvents StateFlow).
         setTimeGridRange(EpochRange(startMs, endMs))
     }
 
     /**
-     * Navigate infinite day pager to today (CENTER_DAY_PAGE).
-     * Returns the target page for the pager to scroll to.
+     * Loads today's range and returns today's page for the pager to scroll to: CENTER_WEEK_PAGE
+     * in WEEK mode, else CENTER_DAY_PAGE.
      */
     fun goToTodayInDayPager(): Int {
         val targetPage = if (_uiState.value.viewMode == ViewMode.WEEK)
             WeekViewUtils.CENTER_WEEK_PAGE else WeekViewUtils.CENTER_DAY_PAGE
 
-        // Clear cached range to force reload
         currentLoadedRange = null
 
-        // Trigger immediate load for today's range
         onDayPagerPageChanged(targetPage)
 
         return targetPage
     }
 
-    /**
-     * Navigate infinite day pager to a specific date.
-     * Returns the target page for the pager to scroll to.
-     *
-     * @param dateMs Date in epoch milliseconds
-     */
+    /** Loads [dateMs]'s range and returns its page (week page in WEEK mode) for the pager. */
     fun navigateDayPagerToDate(dateMs: Long): Int {
         val date = WeekViewUtils.epochMsToDate(dateMs)
         val targetPage = if (_uiState.value.viewMode == ViewMode.WEEK)
             WeekViewUtils.dateToWeekPage(date, _uiState.value.firstDayOfWeek)
         else WeekViewUtils.dateToPage(date)
 
-        // Clear cached range to force reload
         currentLoadedRange = null
 
-        // Trigger immediate load
         onDayPagerPageChanged(targetPage)
 
         return targetPage
     }
 
-    /**
-     * Save week view scroll position for in-session state preservation (pixels, in-memory only).
-     */
+    /** Keeps the time grid's scroll position for this session, in pixels, in memory only. */
     fun setWeekViewScrollPosition(position: Int) {
         _uiState.update { it.copy(weekViewScrollPosition = position) }
     }
 
     /**
-     * Persist the time-grid scroll position as minutes from midnight so it survives app
-     * restart. Stored as clock time (not pixels) so pinch-zoom between sessions still restores
-     * to the same time. Written on a longer debounce than the in-session pixel path.
+     * Persists the time-grid scroll position as minutes from midnight so it survives a restart.
+     * Clock time, unlike pixels, restores to the same time after a zoom change. The grid calls
+     * this on a longer debounce than the in-session pixel path.
      */
     fun setWeekViewScrollMinutes(minutesOfDay: Int) {
         viewModelScope.launch {
@@ -2064,14 +1923,13 @@ class HomeViewModel(
     fun setWeekViewHourHeight(height: Float) {
         val clamped = height.coerceIn(WeekViewUtils.MIN_HOUR_HEIGHT_DP, WeekViewUtils.MAX_HOUR_HEIGHT_DP)
         _uiState.update { it.copy(weekViewHourHeight = clamped) }
-        // Queue the clamped zoom for debounced persistence so it survives app restart.
+        // Queued for debounced persistence.
         hourHeightToPersist.tryEmit(clamped)
     }
 
     /**
-     * Persist the settled pinch-zoom level. Debounced so an active pinch (many emits/sec)
-     * results in one DataStore write of the final zoom rather than one per frame; the seed
-     * in [initializeAsync] restores it on cold launch.
+     * Persists the settled pinch-zoom level, debounced so a pinch writes DataStore once, not once
+     * per frame. [initializeAsync] restores it on cold launch.
      */
     private fun observeHourHeightPersistence() {
         viewModelScope.launch {
@@ -2083,44 +1941,32 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Save week view pager position for context-aware FAB.
-     */
+    /** Records the time-grid pager position, for the context-aware FAB. */
     fun setWeekViewPagerPosition(position: Int) {
         _uiState.update { it.copy(weekViewPagerPosition = position) }
     }
 
-    /**
-     * Show week view date picker dialog.
-     */
+    /** Shows the time grid's date picker. */
     fun showWeekViewDatePicker() {
         _uiState.update { it.copy(showWeekViewDatePicker = true) }
     }
 
-    /**
-     * Hide week view date picker dialog.
-     */
+    /** Hides the time grid's date picker. */
     fun hideWeekViewDatePicker() {
         _uiState.update { it.copy(showWeekViewDatePicker = false) }
     }
 
-    /**
-     * Handle date selection from week view date picker.
-     * Navigates the infinite day pager to the selected date.
-     */
+    /** Closes the time grid's date picker and moves the pager to the picked date. */
     fun onWeekViewDateSelected(dateMs: Long) {
         hideWeekViewDatePicker()
 
-        // Convert date to page in infinite pager (mode-aware)
         val date = WeekViewUtils.epochMsToDate(dateMs)
         val targetPage = if (_uiState.value.viewMode == ViewMode.WEEK)
             WeekViewUtils.dateToWeekPage(date, _uiState.value.firstDayOfWeek)
         else WeekViewUtils.dateToPage(date)
 
-        // Clear cached range to force reload
         currentLoadedRange = null
 
-        // Set pending navigation and trigger load
         _uiState.update {
             it.copy(pendingWeekViewPagerPosition = targetPage)
         }
@@ -2128,9 +1974,8 @@ class HomeViewModel(
     }
 
     /**
-     * Drill into a single day from a week/3-day column header. The mode switch
-     * must land first so the navigation resolves against the DAY pager rather
-     * than the week pager it was called from.
+     * Opens one day from a week or 3-day column header. The mode switch must land first, so
+     * the navigation resolves against the DAY pager, not the week pager it came from.
      */
     fun onWeekViewDayHeaderClick(date: LocalDate) {
         // Transient: drilling in shouldn't change what the app opens in.
@@ -2138,9 +1983,7 @@ class HomeViewModel(
         onWeekViewDateSelected(WeekViewUtils.dateToEpochMs(date))
     }
 
-    /**
-     * Clear pending pager position after it has been consumed by the UI.
-     */
+    /** Clears the pending pager position once the UI has consumed it. */
     fun clearPendingWeekViewPagerPosition() {
         _uiState.update { it.copy(pendingWeekViewPagerPosition = null) }
     }
@@ -2148,15 +1991,13 @@ class HomeViewModel(
     // ==================== Day Selection ====================
 
     /**
-     * Select a date and load its events.
+     * Selects a date and sets its label.
      *
-     * The incoming timestamp may carry a time-of-day (e.g. cold-start passes a
-     * wall-clock Calendar.getInstance(), an event start, etc.). We normalize to
-     * that calendar day's local midnight so every selectedDate writer agrees on
-     * one representation — the day pager's page math, month sync, and dot
-     * highlighting all key off the calendar day, and a time-bearing value would
-     * otherwise force a redundant rewrite when those midnight-based paths echo
-     * back. 0L is the "no selection" sentinel and is left untouched.
+     * The timestamp may carry a time of day (cold start passes Calendar.getInstance(), others an
+     * event start). It's normalized to that day's local midnight so every selectedDate writer
+     * agrees: the day pager's page math, month sync and dot highlighting key off the day, and a
+     * time-bearing value would force a redundant rewrite when those midnight-based paths echo
+     * back. 0L, "no selection", is kept as is.
      */
     fun selectDate(dateMillis: Long) {
         val normalized = if (dateMillis == 0L) {
@@ -2194,13 +2035,9 @@ class HomeViewModel(
     // ==================== Day Pager Cache ====================
 
     /**
-     * Load events for a 7-day range centered on the given date.
-     * Used by the day swipe pager for smooth scrolling.
-     *
-     * Groups events by dayCode for O(1) lookup per page.
-     * Uses Flow for reactive updates when events change.
-     *
-     * @param centerDateMs Center date of the range (epoch millis)
+     * Keeps the day pager cache filled with the events around [centerDateMs], grouped by day
+     * code ([DisplayEventRepository.getDisplayEventsForDayRange]), updating as they change.
+     * Marks the 7 days from 3 before to 3 after as loaded.
      */
     fun loadEventsForDayPagerRange(centerDateMs: Long) {
         dayEventsCacheJob?.cancel()
@@ -2209,11 +2046,10 @@ class HomeViewModel(
 
         dayEventsCacheJob = viewModelScope.launch {
             try {
-                // DisplayEventRepository merges Room + device calendar events,
-                // handles multi-day expansion, grouping by dayCode, and sorting
+                // Merged Room and device events; a multi-day event is in each of its days.
                 displayEventRepository.getDisplayEventsForDayRange(centerDateMs)
                     .collect { grouped ->
-                        // Track which dayCodes were loaded (even if empty)
+                        // Loaded days, empty ones included.
                         val loadedCodes = (-3..3).map { offset ->
                             DayPagerUtils.msToDayCode(centerDateMs + (offset * DayPagerUtils.DAY_MS))
                         }.toPersistentSet()
@@ -2236,30 +2072,22 @@ class HomeViewModel(
         }
     }
 
-    // ==================== Month Events (Full-Height Grid) ====================
+    // ==================== Day Pager Cache Refresh ====================
 
     /**
-     * Check if the day pager cache needs to be refreshed.
-     *
-     * Returns true if:
-     * - Cache is empty (cacheRangeCenter == 0)
-     * - Current date is more than 1 day from cache center
-     *
-     * @param currentDateMs Current page date (epoch millis)
-     * @return true if cache should be refreshed
+     * Returns true when the day pager cache needs a reload for the page at [currentDateMs]: the
+     * cache is empty, or the page is more than a day from its center.
      */
     fun shouldRefreshDayPagerCache(currentDateMs: Long): Boolean {
         val cacheCenter = _uiState.value.cacheRangeCenter
         if (cacheCenter == 0L) return true
 
         val distanceFromCenter = kotlin.math.abs(currentDateMs - cacheCenter)
-        // Refresh when more than 1 day from center (leaves 2-day buffer on each side)
+        // Leaves at least 2 loaded days either side of the page.
         return distanceFromCenter > DayPagerUtils.DAY_MS
     }
 
-    /**
-     * Format date for display (e.g., "December 17, 2024").
-     */
+    /** Formats a date in the locale's long form, e.g. "December 17, 2024" in English. */
     private fun formatDateLabel(dateMillis: Long): String {
         val format = SimpleDateFormat(DateTimeUtils.localizedPattern("yMMMMd"), Locale.getDefault())
         return format.format(dateMillis)
@@ -2267,9 +2095,7 @@ class HomeViewModel(
 
     // ==================== Search ====================
 
-    /**
-     * Activate search mode.
-     */
+    /** Opens search with an empty query and the Upcoming filter. */
     fun activateSearch() {
         _uiState.update {
             it.copy(
@@ -2283,10 +2109,7 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Deactivate search mode.
-     * Resets all search state including date filter.
-     */
+    /** Closes search and resets its state, the date filter included. */
     fun deactivateSearch() {
         _uiState.update {
             it.copy(
@@ -2301,18 +2124,17 @@ class HomeViewModel(
     }
 
     /**
-     * Update search query with debouncing.
-     * Cancels any pending search and waits 300ms before executing.
+     * Sets the search query and searches 300 ms later, cancelling a pending search. A query
+     * under 2 characters clears the results instead.
      */
     fun updateSearchQuery(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
 
-        // Cancel any pending search
         searchJob?.cancel()
 
         if (query.length >= 2) {
             searchJob = viewModelScope.launch {
-                delay(300)  // 300ms debounce
+                delay(300)
                 performSearch(query)
             }
         } else {
@@ -2323,74 +2145,61 @@ class HomeViewModel(
     // ==================== Search Date Filter ====================
 
     /**
-     * Set the search date filter and re-run search.
-     * Called when user taps a filter chip or selects a date from picker.
+     * Sets the search date filter, closes the date picker and re-runs a query of 2 or more
+     * characters. Called for a filter chip tap and a date picked in the picker.
      */
     fun setSearchDateFilter(filter: DateFilter) {
         _uiState.update {
             it.copy(
                 searchDateFilter = filter,
-                showSearchDatePicker = false,  // Auto-dismiss picker on selection
-                searchDateRangeStart = null    // Reset range selection
+                showSearchDatePicker = false,
+                searchDateRangeStart = null
             )
         }
 
-        // Re-run search with new filter
         if (_uiState.value.searchQuery.length >= 2) {
             performSearch(_uiState.value.searchQuery)
         }
     }
 
-    /**
-     * Show the search date picker bottom sheet.
-     */
+    /** Shows the search date picker sheet with no range started. */
     fun showSearchDatePicker() {
         _uiState.update {
             it.copy(
                 showSearchDatePicker = true,
-                searchDateRangeStart = null  // Reset range selection when opening
+                searchDateRangeStart = null
             )
         }
     }
 
-    /**
-     * Hide the search date picker bottom sheet.
-     */
+    /** Hides the search date picker sheet and drops a started range. */
     fun hideSearchDatePicker() {
         _uiState.update {
             it.copy(
                 showSearchDatePicker = false,
-                searchDateRangeStart = null  // Reset range selection
+                searchDateRangeStart = null
             )
         }
     }
 
     /**
-     * Handle date selection in the search date picker.
-     *
-     * Implements single-tap / double-tap behavior for date selection:
-     * - First tap: Stores date as range start
-     * - Second tap on same date: Creates SingleDay filter
-     * - Second tap on different date: Creates CustomRange filter
-     *
-     * @param dateMs Selected date in epoch milliseconds
+     * Handles a tap on a date in the search date picker:
+     * - First tap: stores the date as the range start
+     * - Second tap on the same day: applies a SingleDay filter
+     * - Second tap on another day: applies a CustomRange filter, earlier day first
      */
     fun onSearchDateSelected(dateMs: Long) {
         val rangeStart = _uiState.value.searchDateRangeStart
 
         if (rangeStart == null) {
-            // First tap - store as range start
             _uiState.update { it.copy(searchDateRangeStart = dateMs) }
         } else {
-            // Second tap - determine if single day or range
             val normalizedStart = normalizeToMidnight(rangeStart)
             val normalizedEnd = normalizeToMidnight(dateMs)
 
             val filter = if (normalizedStart == normalizedEnd) {
-                // Same day - single day filter
                 DateFilter.SingleDay(dateMs)
             } else {
-                // Different days - create range (ensure start <= end)
                 val (start, end) = if (normalizedStart <= normalizedEnd) {
                     normalizedStart to normalizedEnd
                 } else {
@@ -2403,9 +2212,7 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Normalize timestamp to midnight (start of day) in system timezone.
-     */
+    /** Returns the start of [epochMs]'s day in the system timezone. */
     private fun normalizeToMidnight(epochMs: Long): Long {
         val instant = Instant.ofEpochMilli(epochMs)
         val localDate = instant.atZone(ZoneId.systemDefault()).toLocalDate()
@@ -2413,14 +2220,13 @@ class HomeViewModel(
     }
 
     /**
-     * Perform search query.
+     * Searches Room and device events for [query] under the current date filter and shows the
+     * results from visible calendars. Errors are logged and leave the results as they were.
      *
-     * Uses occurrences table for time filtering (Android's recommended approach).
-     * An event is included if it has ANY occurrence that hasn't ended yet.
-     * This correctly handles multi-day events in progress and recurring events.
-     *
-     * When a date filter is active, uses searchEventsInRange() to combine FTS
-     * text matching with occurrence date range filtering.
+     * Room time filters use the occurrences table: the default Upcoming filter keeps events
+     * with an occurrence not yet ended, so a multi-day event in progress and a series both
+     * match; a filter with a time range keeps events with an occurrence in it; [DateFilter.AnyTime]
+     * keeps past events too.
      */
     private fun performSearch(query: String) {
         viewModelScope.launch {
@@ -2429,7 +2235,7 @@ class HomeViewModel(
                 val timeRange = dateFilter.getTimeRange(ZoneId.systemDefault(), _uiState.value.firstDayOfWeek)
                 val calendarMap = _uiState.value.calendars.associateBy { it.id }
 
-                // Compute day code range for device calendar search
+                // Day range for the device calendar search.
                 val today = LocalDate.now()
                 val todayCode = today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
                 val (searchStartDayCode, searchEndDayCode) = when {
@@ -2439,7 +2245,7 @@ class HomeViewModel(
                     dateFilter is DateFilter.AnyTime -> {
                         val syncPastDays = dataStore.syncPastDays.first()
                         val pastDate = if (syncPastDays == Int.MAX_VALUE) {
-                            today.minusYears(10)  // Practical upper bound for device calendar
+                            today.minusYears(10)  // A practical limit for the device search
                         } else {
                             today.minusDays(syncPastDays.toLong())
                         }
@@ -2453,7 +2259,7 @@ class HomeViewModel(
                     }
                 }
 
-                // Room search lambda: wraps EventReader methods, converts to SearchResult
+                // Room FTS search, each result shown at its next occurrence (or its own start).
                 val roomSearcher: suspend (String) -> List<SearchResult> = { q ->
                     val ewnoResults = when {
                         timeRange != null -> eventReader.searchEventsInRangeWithNextOccurrence(q, timeRange.first, timeRange.second)
@@ -2484,14 +2290,13 @@ class HomeViewModel(
                     }
                 }
 
-                // Merge Room + device results via DisplayEventRepository
                 val results = withContext(ioDispatcher) {
                     displayEventRepository.searchDisplayEvents(
                         query, searchStartDayCode, searchEndDayCode, roomSearcher
                     )
                 }
 
-                // Filter by visible calendars (using Calendar.isVisible as source of truth)
+                // Room results from visible calendars (Calendar.isVisible).
                 val visibleCalendarIds = _uiState.value.calendars
                     .filter { it.isVisible }
                     .map { it.id }
@@ -2499,7 +2304,7 @@ class HomeViewModel(
                 val filteredResults = results.filter { result ->
                     when (val de = result.displayEvent) {
                         is DisplayEvent.Room -> de.event.calendarId in visibleCalendarIds
-                        is DisplayEvent.Device -> true // already filtered by CalendarProviderRepository
+                        is DisplayEvent.Device -> true // only visible ones were searched
                     }
                 }
 
@@ -2540,8 +2345,8 @@ class HomeViewModel(
 
     fun dismissOnboardingSheet() {
         viewModelScope.launch {
-            // Persist first so a process death between UI clear and write
-            // can't re-show the sheet on next launch.
+            // Persist first, so a process death between the UI clear and the write can't
+            // re-show the sheet on the next launch.
             try {
                 dataStore.setOnboardingDismissed(true)
             } catch (e: CancellationException) {
@@ -2554,14 +2359,13 @@ class HomeViewModel(
     }
 
     /**
-     * If DataStore has no record yet (default 0), seed it from the
-     * application-level upgrade signal so existing users from before this
-     * feature shipped see release-note content for any release they
-     * upgraded into. True fresh installs still record current and stay
-     * silent. After seeding, run the gate against authored releases.
+     * Sets the release notes to show. With nothing stored yet (0), first seeds the last-shown
+     * version from KashCalApplication's previous-version record ([WhatsNewSeeder]): an upgrading
+     * user gets the notes since that version, a new install records the current version and
+     * sees none. Then [WhatsNewGate] picks the releases.
      *
-     * DataStore IO failures must never propagate from a viewModelScope.launch
-     * — they would escape to Looper.main and crash the app on cold start.
+     * DataStore IO failures must never propagate from a viewModelScope.launch: they would
+     * escape to Looper.main and crash the app on cold start.
      */
     private suspend fun initializeWhatsNew() {
         try {
@@ -2596,13 +2400,12 @@ class HomeViewModel(
     }
 
     fun dismissWhatsNewSheet() {
-        // Re-entry guard: ModalBottomSheet's onDismissRequest can fire
-        // multiple times during the dismiss animation. The empty-list check
-        // makes a second call a no-op so we don't launch duplicate writes.
+        // ModalBottomSheet's onDismissRequest can fire more than once during the dismiss
+        // animation; the empty-list check makes a second call a no-op, with no duplicate write.
         if (_uiState.value.whatsNewReleases.isEmpty()) return
         viewModelScope.launch {
-            // Persist first so a process death between UI clear and write
-            // can't re-show release notes on next launch.
+            // Persist first, so a process death between the UI clear and the write can't
+            // re-show the release notes on the next launch.
             try {
                 dataStore.setLastWhatsNewVersionShown(BuildConfig.VERSION_CODE)
             } catch (e: CancellationException) {
@@ -2618,9 +2421,7 @@ class HomeViewModel(
         _uiState.update { it.copy(showSyncChangesSheet = !it.showSyncChangesSheet) }
     }
 
-    /**
-     * Dismiss sync changes bottom sheet and clear sync changes.
-     */
+    /** Closes the sync-changes sheet and clears its changes. */
     fun dismissSyncChangesSheet() {
         _uiState.update {
             it.copy(
@@ -2631,11 +2432,12 @@ class HomeViewModel(
     }
 
     /**
-     * Switch calendar view mode and persist as default.
-     * Handles data loading for each view type and cancels unnecessary jobs.
+     * Switches the calendar view, persists it as the startup view, clears the agenda and
+     * month-grid keys when leaving those views, and sets the new view's key or loads its data.
+     * A switch to Insights only sets the mode: nothing is persisted, cleared or loaded.
      *
-     * @param persist write the new mode as the startup default. False for
-     *   transient switches, e.g. drilling into a day from a column header.
+     * @param persist write the new mode as the startup default. False for transient switches,
+     *   e.g. drilling into a day from a column header.
      */
     fun setViewMode(mode: ViewMode, persist: Boolean = true) {
         val oldMode = _uiState.value.viewMode
@@ -2651,7 +2453,7 @@ class HomeViewModel(
 
         if (mode == ViewMode.INSIGHTS) return
 
-        // Best-effort persistence; a DataStore setter throw must never crash Looper.main.
+        // Best effort: a DataStore setter throw must never crash Looper.main.
         if (persist) {
             viewModelScope.launch {
                 try {
@@ -2664,8 +2466,7 @@ class HomeViewModel(
             }
         }
 
-        // Leaving a reactive view? Null its key so the derived Flow goes idle
-        // (no background querying while another view is shown). Entering sets
+        // Null the key of a reactive view being left so its Flow stops querying; entering sets
         // it below.
         if (mode != ViewMode.AGENDA) {
             setAgendaRange(null)
@@ -2699,15 +2500,13 @@ class HomeViewModel(
     }
 
     /**
-     * Sync the month pager to match selectedDate's month on view switch.
-     * Prevents flicker when the user browsed to a different month in THREE_DAYS/WEEK
-     * view, then switches back to MONTH.
+     * Moves the month pager to the selected date's month on a switch to a month view, which
+     * stops a flicker after the user browsed another month in the day or week grids.
      */
     private fun syncPagerToSelectedDate() {
         val state = _uiState.value
-        // selectedDate is 0L until the user picks a day (e.g. arriving from the
-        // Agenda view, which never sets it). Treat "no selection" as "stay on the
-        // current viewing month" rather than syncing the pager to epoch (Dec 1969).
+        // selectedDate is 0L until a day is picked (the Agenda view never sets it). With no
+        // selection, stay on the viewing month; syncing to 0L would show December 1969.
         if (state.selectedDate == 0L) return
         val selectedCal = Calendar.getInstance().apply { timeInMillis = state.selectedDate }
         val year = selectedCal.get(Calendar.YEAR)
@@ -2724,10 +2523,7 @@ class HomeViewModel(
 
     // ==================== Snackbar ====================
 
-    /**
-     * Show a snackbar message.
-     * Internal visibility for testing.
-     */
+    /** Shows a snackbar, with an optional action. Internal, not private, for tests. */
     internal fun showSnackbar(message: String, action: (() -> Unit)? = null) {
         _uiState.update {
             it.copy(
@@ -2737,9 +2533,7 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Clear the snackbar (consumed by UI).
-     */
+    /** Clears the snackbar once the UI has consumed it. */
     fun clearSnackbar() {
         _uiState.update {
             it.copy(
@@ -2752,15 +2546,12 @@ class HomeViewModel(
     // ==================== Pending Actions (from intents) ====================
 
     /**
-     * Set a pending action to be processed by the UI.
-     * Called from Activity's handleIncomingIntent() when notification/widget/shortcut tapped.
+     * Sets an action for the UI to run; MainActivity.handleIncomingIntent calls it for a
+     * notification, widget or shortcut tap.
      *
-     * This follows Android's recommended pattern for UI events:
-     * - Convert events to state (not Channels)
-     * - ViewModel owns state, UI observes via LaunchedEffect
-     * - Clear after consumption (one-shot behavior)
+     * The event is held as state, not a Channel: the UI observes it in a LaunchedEffect and
+     * clears it with [clearPendingAction] once handled.
      *
-     * @param action The pending action to set
      * @see <a href="https://developer.android.com/topic/architecture/ui-layer/events">UI events</a>
      */
     fun setPendingAction(action: PendingAction) {
@@ -2768,10 +2559,7 @@ class HomeViewModel(
         _uiState.update { it.copy(pendingAction = action) }
     }
 
-    /**
-     * Clear the pending action after it's been processed by the UI.
-     * Called by UI (LaunchedEffect) after handling the action.
-     */
+    /** Clears the pending action; the UI's LaunchedEffect calls it after handling the action. */
     fun clearPendingAction() {
         Log.d(TAG, "clearPendingAction")
         _uiState.update { it.copy(pendingAction = null) }
@@ -2780,9 +2568,8 @@ class HomeViewModel(
     // ==================== Refresh ====================
 
     /**
-     * Handle app resume from background. Snaps to today if the calendar day
-     * has rolled over since the previous resume. All views are reactive
-     * (Room Flow / range-keyed StateFlows), so events auto-emit on resume.
+     * Snaps to today when the calendar day has changed since the previous resume. Events need
+     * no reload here: the range-keyed StateFlows and the day pager cache follow the data.
      */
     fun onAppResume() {
         val currentDayCode = currentDayCodeProvider()
@@ -2794,52 +2581,24 @@ class HomeViewModel(
     }
 
     /**
-     * Reload the current view (dots, day pager cache, and active view).
-     *
-     * Called for explicit refresh scenarios like:
-     * - Calendar visibility toggle
-     * - Event CRUD operations
-     * - Sync completion
+     * Rebuilds the one-shot state: the month dots, the day pager cache (outside MONTH_FULL, once
+     * loaded) and, in the year view, the year dots. Called after, for example, an event write, a
+     * device calendar visibility toggle or a successful sync.
      */
     private fun reloadCurrentView() {
         buildEventDots(_uiState.value.viewingYear, _uiState.value.viewingMonth)
-        // Month grid is reactive (monthEvents StateFlow) — no explicit reload needed.
-        // Reload day pager cache — skip in MONTH_FULL mode (uses monthEvents instead)
+        // The month grid (monthEvents), the agenda and the time grid follow the data themselves.
         if (_uiState.value.viewMode != ViewMode.MONTH_FULL && _uiState.value.cacheRangeCenter != 0L) {
             loadEventsForDayPagerRange(_uiState.value.cacheRangeCenter)
         }
-        // Agenda and the time-grid are reactive (agendaEvents / weekEvents
-        // StateFlows) — no explicit reload needed.
-        // Reload year dots if year view is active
         if (_uiState.value.viewMode == ViewMode.YEAR) {
             loadYearDots(_uiState.value.viewingYear)
         }
     }
 
-    /**
-     * Refresh the current view after a write the app just made to a device
-     * calendar (CalendarProvider).
-     *
-     * Device events aren't in Room, so the reactive views (agenda, week,
-     * month dots) only re-query them when the device change signal emits.
-     * That signal is otherwise driven by a debounced ContentObserver, so a
-     * device write we originate wouldn't surface until the debounce elapsed.
-     * Poke it directly here to reflect the change immediately. This mirrors
-     * what the debounced observer already does — invalidate the dot cache and
-     * re-run the device queries — just without the delay, and only for the
-     * app's own device writes (Room/sync refreshes keep using
-     * [reloadCurrentView] alone, which never triggered this invalidation).
-     */
-    private fun reloadAfterDeviceWrite() {
-        displayEventRepository.notifyDeviceCalendarChanged()
-        reloadCurrentView()
-    }
-
     // ==================== Event CRUD Operations ====================
 
-    /**
-     * Get event by ID for editing.
-     */
+    /** Returns the Room event to edit, or null when it doesn't exist. */
     suspend fun getEventForEdit(eventId: Long): org.onekash.kashcal.data.db.entity.Event? {
         return withContext(ioDispatcher) {
             eventCoordinator.getEventById(eventId)
@@ -2847,11 +2606,9 @@ class HomeViewModel(
     }
 
     /**
-     * One-shot read of an event's existing attendee ENTITIES, for the form's
-     * picker to seed from on edit. Returns Room rows (not the lossy
-     * [AttendeeUiModel] projection) so the picker preserves
-     * role/cutype/rsvp/delegation that would otherwise be stripped on the next
-     * push.
+     * Returns an event's attendee rows once, for the form's picker to seed from on edit. Room
+     * rows, not the lossy [AttendeeUiModel] projection, so the picker keeps the role, cutype,
+     * RSVP and delegation fields the next push would otherwise strip.
      */
     suspend fun getAttendeesForEdit(eventId: Long): List<org.onekash.kashcal.data.db.entity.Attendee> {
         return withContext(ioDispatcher) {
@@ -2859,25 +2616,24 @@ class HomeViewModel(
         }
     }
 
-    /** Debounced contact-email lookup for the attendee picker's type-ahead. */
+    /** Looks up contact emails for the attendee picker's type-ahead, which debounces the calls. */
     suspend fun queryContactEmails(prefix: String): List<org.onekash.kashcal.data.contacts.ContactEmail> =
         contactEmailReader.query(prefix)
 
     /**
-     * Resolve the account for a calendar plus whether it can send invitations.
-     * "Schedulable" means the account has at least one mailto-emittable
-     * address, so an ORGANIZER can be resolved; the picker uses this to gate
-     * editing and avoid creating an ATTENDEE-without-ORGANIZER event.
+     * Returns the account of a calendar and whether it can send invitations. Schedulable means
+     * the account has an email-shaped address, so an ORGANIZER can be resolved; the picker gates
+     * editing on it so it doesn't create an event with attendees and no ORGANIZER. A null
+     * [calendarId] is schedulable, with no account.
      */
     suspend fun getFormAttendeeContext(calendarId: Long?): FormAttendeeContext {
         if (calendarId == null) return FormAttendeeContext(account = null, isSchedulable = true)
         return withContext(ioDispatcher) {
             val calendar = uiState.value.calendars.firstOrNull { it.id == calendarId }
             val account = calendar?.accountId?.let { accountRepository.getAccountById(it) }
-            // Null account = a local-only calendar; treat as schedulable (the
-            // coordinator resolves no ORGANIZER but also stores no attendees on
-            // a non-CalDAV calendar, so the picker stays usable). A resolved
-            // account is schedulable only when it has a mailto-emittable address.
+            // No account resolves when no loaded Room calendar has this id (a device calendar,
+            // for example) or its account row is missing; that counts as schedulable so the
+            // picker stays usable.
             val schedulable = account == null ||
                 account.effectiveAddresses().any {
                     org.onekash.kashcal.util.AddressNormalizer.isEmailShaped(it)
@@ -2887,134 +2643,88 @@ class HomeViewModel(
     }
 
     /**
-     * Resolve the day code of a device event's start, looked up by CalendarProvider ID.
+     * Returns the day code (YYYYMMDD) of a device event's start, or null when the event is
+     * missing or can't be read.
      *
-     * Used when an external VIEW intent points at a device event but carries no occurrence
-     * timestamp: we can't open an exact occurrence, so we navigate to the event's start date
-     * instead of silently landing on today. Honors isAllDay so all-day events in negative UTC
-     * offsets resolve to the correct local day.
-     *
-     * @param eventId CalendarProvider event ID
-     * @return Day code in YYYYMMDD format, or null if the event can't be found
+     * For an external VIEW intent with no occurrence timestamp: no exact occurrence can open, so
+     * the calendar goes to the event's start date, not silently to today. All-day events
+     * resolve to the right local day in negative UTC offsets.
      */
     suspend fun getDeviceEventDayCode(eventId: Long): Int? {
         return withContext(ioDispatcher) {
-            val event = calendarProviderRepository.getDeviceEvent(eventId) ?: return@withContext null
-            DateTimeUtils.eventTsToDayCode(event.startTs, event.isAllDay)
+            deviceEventReader.getEventStartDayCode(eventId)
         }
     }
 
     /**
-     * Resolve a device event's guest list for the quick-view / form chip
-     * surfaces. Reads the `Attendees` rows on demand (never via the bulk grid
-     * query) and resolves the calendar's `OWNER_ACCOUNT` as the "you" /
-     * organizer identity, then maps via the pure [deviceAttendeeUiState].
+     * Returns a device event's guests for the quick-view and form chips. Reads the `Attendees`
+     * rows on demand, not through the grid's bulk query, takes the calendar's `OWNER_ACCOUNT` as
+     * the "you" identity, and maps them with [deviceAttendeeUiState].
      *
-     * Returns an empty state (no chips, not-on-list) when the event has no
-     * attendee rows or the read is denied — so the quick-view shows no guest
-     * section rather than an empty one.
+     * The state is empty (no chips, not on the list) when the event has no attendee rows or the
+     * read fails, so the quick view shows no guest section at all.
      *
-     * @param eventId the resolved CalendarProvider event id (master or
-     *   exception) whose guest list to load
-     * @param calendarId the event's calendar id, used to resolve the owner
-     *   email; null skips owner resolution (no one marked "you")
+     * @param eventId the CalendarProvider event id, master or exception
+     * @param calendarId the event's calendar, for the owner email; null marks no one "you"
      */
     suspend fun getDeviceEventAttendeeState(eventId: Long, calendarId: Long?): EventAttendeeUiState {
         return withContext(ioDispatcher) {
-            val attendees = calendarProviderRepository.getAttendees(eventId)
-            if (attendees.isEmpty()) return@withContext EventAttendeeUiState(emptyList(), false)
-            val ownerEmail = calendarId?.let { id ->
-                calendarProviderRepository.getDeviceCalendar(id)
-                    ?.ownerAccount
-                    ?.takeUnless { it.isBlank() }
-            }
-            deviceAttendeeUiState(attendees, ownerEmail)
+            val rows = deviceEventReader.getAttendeesWithOwner(eventId, calendarId)
+            deviceAttendeeUiState(rows.attendees, rows.ownerEmail)
         }
     }
 
     /**
-     * Write the current user's RSVP on a device event. Re-reads the attendee
-     * rows, finds the user's own row by canonically matching the calendar's
-     * owner email, and updates ONLY that row (by its provider `_ID`) — no other
-     * guest's status is touched. No-ops when the user has no self row
-     * (organizer-only, or simply not on the list) since there's nothing to
-     * update. On a LOCAL calendar the row is written but nothing is delivered.
+     * Writes the user's RSVP on a device event through [DeviceEventWriter.replyRsvp]. Reloads
+     * the view when a row was written and shows a write error when the write fails. Nothing
+     * written (no owner address, or the user isn't on the list) is still a success.
      *
-     * @param eventId the device event id
-     * @param calendarId the event's calendar id (resolves the owner "you" email)
-     * @param status the user's chosen response
+     * @param calendarId the event's calendar, whose owner email is "you"
      */
     suspend fun replyDeviceRsvp(eventId: Long, calendarId: Long, status: AttendeeStatus): Result<Unit> {
         return withContext(ioDispatcher) {
-            val ownerEmail = calendarProviderRepository.getDeviceCalendar(calendarId)
-                ?.ownerAccount
-                ?.takeUnless { it.isBlank() }
-                ?: return@withContext Result.success(Unit)
-            val canonicalOwner =
-                org.onekash.kashcal.data.calendar_provider.canonicalAttendeeEmail(ownerEmail)
-            val selfRow = calendarProviderRepository.getAttendees(eventId)
-                .firstOrNull { a ->
-                    !a.email.isNullOrBlank() &&
-                        org.onekash.kashcal.data.calendar_provider.canonicalAttendeeEmail(a.email) == canonicalOwner
-                }
-                ?: return@withContext Result.success(Unit) // No self row → nothing to update.
-            calendarProviderRepository.updateSelfAttendeeStatus(
-                eventId = eventId,
-                attendeeId = selfRow.id,
-                status = status.toDeviceStatus(),
-            ).also { result ->
-                result.onSuccess { reloadAfterDeviceWrite() }
-                result.onFailure { e ->
+            deviceEventWriter.replyRsvp(eventId, calendarId, status.toDeviceStatus())
+                .onSuccess { written -> if (written) reloadCurrentView() }
+                .onFailure { e ->
                     Log.e(TAG, "Failed to update device RSVP", e)
                     showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
                 }
-            }
+                .map { }
         }
     }
 
     /**
-     * Resolve a device event for quick view from just its CalendarProvider ID, with no
-     * occurrence timestamp — the case for external VIEW intents that carry only the event ID.
+     * Returns a device event for the quick view from its CalendarProvider ID alone, or null when
+     * no occurrence resolves. For an external VIEW intent that carries only the ID, and to
+     * re-read an open one-off event.
      *
-     * Picks the occurrence to show:
-     * - Recurring series: the next instance at or after now (read from the Instances view, so
-     *   RRULE/RDATE/EXDATE are honored). The master row's DTSTART is the first — possibly
-     *   long-past — occurrence and must not be used. A fully-ended series yields null.
-     * - Non-recurring event: its own DTSTART (the single instance, past or future).
-     *
-     * @param eventId CalendarProvider event ID
-     * @return The matched DisplayEvent.Device, or null if no occurrence can be resolved
+     * The occurrence shown ([DeviceEventReader.resolveQuickViewOccurrenceStart]):
+     * - A series: its first instance from a day before now, so today's is kept, read from the
+     *   Instances view so RRULE, RDATE and EXDATE apply. The master's DTSTART is the first,
+     *   possibly long past, occurrence and must not be used. An ended series gives null.
+     * - Anything else: its own DTSTART, past or future.
      */
     suspend fun getDeviceEventForQuickViewById(eventId: Long): DisplayEvent.Device? {
         return withContext(ioDispatcher) {
-            val event = calendarProviderRepository.getDeviceEvent(eventId) ?: return@withContext null
-            val occurrenceTs = if (!event.rrule.isNullOrEmpty()) {
-                calendarProviderRepository.getNextOccurrenceStart(eventId, System.currentTimeMillis())
-                    ?: return@withContext null
-            } else {
-                event.startTs
-            }
+            val occurrenceTs = deviceEventReader.resolveQuickViewOccurrenceStart(
+                eventId,
+                nowMs = System.currentTimeMillis(),
+            ) ?: return@withContext null
             getDeviceEventForQuickView(eventId, occurrenceTs)
         }
     }
 
     /**
-     * Get device event for quick view from widget tap.
-     *
-     * Queries CalendarProvider for instances on the day of occurrenceTs,
-     * then finds the instance matching eventId and startTs.
-     *
-     * @param eventId CalendarProvider event ID
-     * @param occurrenceTs Timestamp of the specific occurrence
-     * @return DisplayEvent.Device if found, null otherwise
+     * Returns the device event occurrence of [eventId] starting at [occurrenceTs], for the quick
+     * view (a ShowDeviceEventQuickView action, or a re-read of an open occurrence), or null when
+     * none matches or the read fails. Reads the instances on that day.
      */
     suspend fun getDeviceEventForQuickView(eventId: Long, occurrenceTs: Long): DisplayEvent.Device? {
         return withContext(ioDispatcher) {
             try {
-                // Compute day codes for both timed and all-day interpretations.
-                // All-day events use UTC midnight timestamps, which in negative UTC offsets
-                // map to the previous local day when interpreted as timed (isAllDay=false).
-                // Query both possible days to handle either case in a single call.
+                // All-day events use UTC midnight timestamps, which in negative UTC offsets map
+                // to the previous local day when read as timed. Query both possible days in one
+                // call.
                 val timedDayCode = DateTimeUtils.eventTsToDayCode(occurrenceTs, isAllDay = false)
                 val allDayDayCode = DateTimeUtils.eventTsToDayCode(occurrenceTs, isAllDay = true)
                 val startDay = minOf(timedDayCode, allDayDayCode)
@@ -3033,11 +2743,13 @@ class HomeViewModel(
     }
 
     /**
-     * Save event from form state.
-     * Creates new event or updates existing one.
+     * Saves a Room event from the form: creates it, or edits it at the chosen scope.
      *
-     * @param formState The form state with event data
-     * @return Result containing the created/updated event or error
+     * @param scope the scope picked in the scope sheet; null for a save that didn't ask. With no
+     *   scope, an occurrence timestamp in the form makes it a single-occurrence edit.
+     * @return the created or updated event (the new series for this and future), or a failure:
+     *   a missing event or master, a date change on a later occurrence for all events, or any
+     *   exception thrown, cancellation included
      */
     suspend fun saveEvent(
         formState: EventFormState,
@@ -3045,33 +2757,26 @@ class HomeViewModel(
     ): Result<org.onekash.kashcal.data.db.entity.Event> {
         return withContext(ioDispatcher) {
             try {
-                // Calculate timestamps from form state. The conversion (all-day
-                // → UTC midnight; timed → selected-timezone wall clock) lives in
-                // EventFormState.toStartEndTs so the edit-notify banner's change
-                // detection uses the exact same math as what gets persisted.
+                // toStartEndTs is shared with the Save-and-notify change detection, so both use
+                // the math that is persisted.
                 val (startTs, endTs) = formState.toStartEndTs()
 
-                // Build reminders list
                 val reminders = buildRemindersList(formState.reminders)
 
-                // Get calendar ID (use local if not specified)
+                // The local calendar when none is selected.
                 val calendarId = formState.selectedCalendarId
                     ?: eventCoordinator.getLocalCalendarId()
 
-                // Attendees the user edited in the form. null = the form isn't
-                // managing attendees (leave any existing/pulled rows alone); a
-                // non-null list is the authoritative set to persist. The picker
-                // hands back Room entities directly (it seeds from and mutates
-                // the real rows), so there's no lossy projection to convert —
-                // and an unedited open-and-save passes null even when the event
-                // already has attendees, preserving their wire fields.
+                // Attendees the user edited. null means the form isn't managing them, so stored or
+                // pulled rows stay as they are; a list is the set to persist. The picker hands
+                // back Room rows (it seeds from and edits the real rows), so nothing is lost in
+                // conversion, and an open-and-save without edits passes null even when the event
+                // has attendees, keeping their wire fields.
                 val attendeesArg = formState.attendees.takeIf { formState.attendeesEdited }
 
-                // Scope-aware route: when the form-save flow handed us an
-                // explicit scope, honor it. THIS_AND_FUTURE is the new
-                // path; THIS_EVENT and ALL_EVENTS map onto existing
-                // exception / update branches. Without a scope param
-                // the legacy editingOccurrenceTs heuristic still applies.
+                // THIS_AND_FUTURE splits the series here. THIS_EVENT and ALL_EVENTS take the
+                // exception and update branches below; with no scope, an editingOccurrenceTs
+                // makes it a single-occurrence edit.
                 if (
                     scope == EditScope.THIS_AND_FUTURE &&
                     formState.editingOccurrenceTs != null &&
@@ -3091,9 +2796,8 @@ class HomeViewModel(
                                 isAllDay = formState.isAllDay,
                                 location = formState.location.ifBlank { null },
                                 description = formState.description.ifBlank { null },
-                                // formState.rrule == null means user picked
-                                // "Does not repeat" — pass it through so the
-                                // new series row becomes non-recurring.
+                                // A null rrule is "Does not repeat": passed through, the new
+                                // series row becomes non-recurring.
                                 rrule = formState.rrule,
                                 reminders = reminders,
                                 calendarId = calendarId,
@@ -3110,16 +2814,13 @@ class HomeViewModel(
                     return@withContext Result.success(splitEvent)
                 }
 
-                // ALL_EVENTS scope on a recurring edit: treat as a master
-                // update even if the form was opened on an occurrence.
+                // ALL_EVENTS is a master update even when the form was opened on an occurrence.
                 val effectiveOccurrenceTs =
                     if (scope == EditScope.ALL_EVENTS) null else formState.editingOccurrenceTs
 
-                // Create or update event
                 val savedEvent = if (effectiveOccurrenceTs != null && formState.editingEventId != null) {
-                    // Editing a single occurrence of a recurring event - create exception
-                    // DEFENSIVE CHECK: If caller passed exception ID, resolve to master ID
-                    // This handles edge cases where MainActivity fix wasn't applied
+                    // One occurrence: create or update its exception. An exception's ID is
+                    // resolved to its master's.
                     val editingEvent = eventCoordinator.getEventById(formState.editingEventId)
                     val masterEventId = editingEvent?.originalEventId ?: formState.editingEventId
                     eventCoordinator.editSingleOccurrence(
@@ -3134,13 +2835,13 @@ class HomeViewModel(
                                 isAllDay = formState.isAllDay,
                                 location = formState.location.ifBlank { null },
                                 description = formState.description.ifBlank { null },
-                                rrule = null, // Exception events don't have RRULE
+                                rrule = null, // An exception has no RRULE
                                 reminders = reminders,
                                 calendarId = calendarId,
                                 transp = formState.transp,
                                 color = formState.eventColor,
                                 categories = formState.categories.ifEmpty { null },
-                                // Preserve these fields from master for round-trip fidelity:
+                                // Kept from the master so the exception round-trips:
                                 timezone = masterEvent.timezone,
                                 status = masterEvent.status,
                                 classification = masterEvent.classification,
@@ -3150,15 +2851,13 @@ class HomeViewModel(
                         }
                     )
                 } else if (formState.isEditMode && formState.editingEventId != null) {
-                    // Update entire event (or all occurrences for recurring)
+                    // The whole event, or every occurrence of a series.
                     val loadedEvent = eventCoordinator.getEventById(formState.editingEventId)
                         ?: return@withContext Result.failure(IllegalStateException("Event not found"))
 
-                    // ALL_EVENTS must rewrite the master series row. If the
-                    // form was opened on a detached exception, climb to its
-                    // master like the THIS_AND_FUTURE / exception branches do
-                    // — otherwise the rrule change lands on the exception row
-                    // instead of the series.
+                    // ALL_EVENTS must rewrite the master row. A form opened on a detached
+                    // exception climbs to its master, as the branches above do; otherwise an
+                    // rrule change would land on the exception row, not the series.
                     val existingEvent =
                         if (scope == EditScope.ALL_EVENTS && loadedEvent.originalEventId != null) {
                             eventCoordinator.getEventById(loadedEvent.originalEventId)
@@ -3168,26 +2867,42 @@ class HomeViewModel(
                         }
                     val targetEventId = existingEvent.id
 
-                    // Check if calendar is changing
+                    // "All events" from a form opened on a later occurrence: the
+                    // form holds that occurrence's date, but the series starts
+                    // earlier. Keep the series' own first date so no occurrence
+                    // before this one is cut; only a changed clock time moves it.
+                    // A changed date isn't offered for a later occurrence (the
+                    // scope sheet withholds All events), so it is refused here too.
+                    val laterOccurrence = formState.editingOccurrenceTs?.takeIf { openedOn ->
+                        scope == EditScope.ALL_EVENTS && loadedEvent.originalEventId == null &&
+                            !existingEvent.rrule.isNullOrEmpty() && openedOn > existingEvent.startTs
+                    }
+                    if (laterOccurrence != null && formState.occurrenceDateChanged(laterOccurrence, existingEvent.isAllDay)) {
+                        return@withContext Result.failure(
+                            IllegalStateException("Date change on a later occurrence can't apply to all events")
+                        )
+                    }
+                    val (seriesStartTs, seriesEndTs) = laterOccurrence?.let {
+                        formState.startEndAnchoredToSeries(it, existingEvent.startTs, existingEvent.isAllDay)
+                    } ?: (startTs to endTs)
+
                     val calendarChanged = existingEvent.calendarId != calendarId
 
-                    // Note: SEQUENCE increment is handled by EventWriter (domain layer),
-                    // following Android architecture best practices where business logic
-                    // belongs in Data/Domain layer, not ViewModel (UI layer).
+                    // EventWriter bumps SEQUENCE; the ViewModel doesn't.
 
                     if (calendarChanged) {
-                        // Calendar move requires DELETE + CREATE for CalDAV
-                        // moveEventToCalendar handles this properly
+                        // The coordinator queues the server side of the move (a MOVE, or a
+                        // CREATE and DELETE, depending on the accounts).
                         eventCoordinator.moveEventToCalendar(targetEventId, calendarId)
 
-                        // After move, get the updated event and apply other field changes
+                        // Then the other field changes apply to the moved event.
                         val movedEvent = eventCoordinator.getEventById(targetEventId)
                             ?: return@withContext Result.failure(IllegalStateException("Event not found after move"))
 
                         val finalEvent = movedEvent.copy(
                             title = formState.title.ifBlank { "Untitled" },
-                            startTs = startTs,
-                            endTs = endTs,
+                            startTs = seriesStartTs,
+                            endTs = seriesEndTs,
                             isAllDay = formState.isAllDay,
                             timezone = if (formState.isAllDay) null else (formState.timezone ?: movedEvent.timezone),
                             location = formState.location.ifBlank { null },
@@ -3201,11 +2916,10 @@ class HomeViewModel(
                         )
                         eventCoordinator.updateEvent(finalEvent, attendees = attendeesArg)
                     } else {
-                        // Same calendar - just update the event
                         val updatedEvent = existingEvent.copy(
                             title = formState.title.ifBlank { "Untitled" },
-                            startTs = startTs,
-                            endTs = endTs,
+                            startTs = seriesStartTs,
+                            endTs = seriesEndTs,
                             isAllDay = formState.isAllDay,
                             timezone = if (formState.isAllDay) null else (formState.timezone ?: existingEvent.timezone),
                             location = formState.location.ifBlank { null },
@@ -3221,19 +2935,17 @@ class HomeViewModel(
                         eventCoordinator.updateEvent(updatedEvent, attendees = attendeesArg)
                     }
                 } else {
-                    // Create new event
                     val now = System.currentTimeMillis()
                     val newEvent = org.onekash.kashcal.data.db.entity.Event(
-                        // Blank uid: EventWriter mints the canonical
-                        // @kashcal.onekash.org UID so the form isn't a second
-                        // minting authority.
+                        // Blank: EventWriter mints the @kashcal.onekash.org UID, so the form
+                        // isn't a second minting authority.
                         uid = "",
                         calendarId = calendarId,
                         title = formState.title.ifBlank { "Untitled" },
                         startTs = startTs,
                         endTs = endTs,
-                        // All-day events use null timezone (stored as UTC midnight)
-                        // Timed events use user-selected timezone (or device default if null)
+                        // All-day: no timezone (stored as UTC midnight). Timed: the selected
+                        // timezone, or the device's.
                         timezone = if (formState.isAllDay) null else (formState.timezone ?: java.util.TimeZone.getDefault().id),
                         isAllDay = formState.isAllDay,
                         location = formState.location.ifBlank { null },
@@ -3251,7 +2963,6 @@ class HomeViewModel(
                     eventCoordinator.createEvent(newEvent, calendarId, attendees = attendeesArg)
                 }
 
-                // Refresh the UI after save
                 reloadCurrentView()
 
                 Log.d(TAG, "Event saved: ${savedEvent.title} (id=${savedEvent.id})")
@@ -3275,9 +2986,17 @@ class HomeViewModel(
             is DisplayEvent.Device -> displayEvent.instance.hasRrule
         }
         if (isRecurringNeedingDialog && editScope == EditScope.THIS_EVENT) {
-            _uiState.update {
-                it.copy(pendingDragReschedule = PendingDragReschedule(displayEvent, targetDate, targetStartMinutes))
-            }
+            // A same-day drop blocks nothing and is known at once; a cross-day
+            // drop is checked off the main thread against the stored series,
+            // and the sheet greys the series scopes until the check lands.
+            val crossDay = isCrossDayMove(displayEvent, droppedStartTs(displayEvent, targetDate, targetStartMinutes))
+            val pending = PendingDragReschedule(
+                displayEvent, targetDate, targetStartMinutes,
+                blockedScopes = if (crossDay) null else emptySet(),
+            )
+            dragAvailabilityJob?.cancel()
+            _uiState.update { it.copy(pendingDragReschedule = pending) }
+            if (crossDay) resolveDragAvailability(pending)
             return
         }
 
@@ -3286,28 +3005,117 @@ class HomeViewModel(
 
     fun confirmReschedule(editScope: EditScope) {
         val pending = _uiState.value.pendingDragReschedule ?: return
+        dragAvailabilityJob?.cancel()
         _uiState.update { it.copy(pendingDragReschedule = null) }
         performReschedule(pending.displayEvent, pending.targetDate, pending.targetStartMinutes, editScope)
     }
 
     fun cancelPendingReschedule() {
+        dragAvailabilityJob?.cancel()
         _uiState.update { it.copy(pendingDragReschedule = null) }
     }
 
+    /** Returns a drop's new start: [targetDate] at the clamped minute, in the phone's zone. */
+    private fun droppedStartTs(displayEvent: DisplayEvent, targetDate: LocalDate, targetStartMinutes: Int): Long {
+        val durationMinutes = ((displayEvent.endTs - displayEvent.startTs) / 60000).toInt()
+        val clampedStart = WeekViewUtils.clampDragStartMinutes(targetStartMinutes, durationMinutes)
+        return WeekViewUtils.calculateNewTimestamps(targetDate, clampedStart, durationMinutes).first
+    }
+
+    /** Returns true when [droppedStartTs] is on another day than the occurrence, in its zone. */
+    private fun isCrossDayMove(displayEvent: DisplayEvent, droppedStartTs: Long): Boolean {
+        val (zone, occurrenceStartTs) = when (displayEvent) {
+            is DisplayEvent.Room ->
+                RruleShift.zoneFor(displayEvent.event.timezone, displayEvent.event.isAllDay) to displayEvent.occurrence.startTs
+            is DisplayEvent.Device ->
+                RruleShift.zoneFor(displayEvent.instance.timezone, displayEvent.instance.isAllDay) to displayEvent.instance.startTs
+        }
+        return Instant.ofEpochMilli(occurrenceStartTs).atZone(zone).toLocalDate() !=
+            Instant.ofEpochMilli(droppedStartTs).atZone(zone).toLocalDate()
+    }
+
+    private fun resolveDragAvailability(pending: PendingDragReschedule) {
+        val dropped = pending.displayEvent
+        dragAvailabilityJob = viewModelScope.launch {
+            val blocked = withContext(ioDispatcher) {
+                try {
+                    val droppedStartTs = droppedStartTs(dropped, pending.targetDate, pending.targetStartMinutes)
+                    when (dropped) {
+                        is DisplayEvent.Room -> blockedDragScopes(dropped, droppedStartTs)
+                        is DisplayEvent.Device -> blockedDeviceDragScopes(dropped, droppedStartTs)
+                    }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "Couldn't check the drop's scopes", e)
+                    setOf(EditScope.ALL_EVENTS, EditScope.THIS_AND_FUTURE)
+                }
+            }
+            _uiState.update { state ->
+                val current = state.pendingDragReschedule
+                if (current != null && current.isSameDropAs(pending)) {
+                    state.copy(pendingDragReschedule = current.copy(blockedScopes = blocked))
+                } else {
+                    state
+                }
+            }
+        }
+    }
+
     /**
-     * Stage a form-save awaiting scope selection. Recurring events
-     * surface the scope sheet; non-recurring and read-only paths
-     * commit directly via [saveEvent] / [saveDeviceEvent] (the form
-     * itself decides which path to take based on `formState.isReadOnly`).
+     * The series scopes a cross-day drop of [room] can't use, read from the
+     * stored series (not the snapshot the timeline showed).
      */
+    private suspend fun blockedDragScopes(room: DisplayEvent.Room, droppedStartTs: Long): Set<EditScope> {
+        val master = eventReader.getEventById(room.event.originalEventId ?: room.event.id)
+            ?: return setOf(EditScope.ALL_EVENTS, EditScope.THIS_AND_FUTURE)
+        val availability = RruleShift.dragAvailability(
+            master = master,
+            exceptions = eventReader.getExceptionsForMaster(master.id),
+            occurrenceStartMs = room.occurrence.startTs,
+            droppedStartMs = droppedStartTs,
+        )
+        return buildSet {
+            if (!availability.allEvents) add(EditScope.ALL_EVENTS)
+            if (!availability.thisAndFuture) add(EditScope.THIS_AND_FUTURE)
+        }
+    }
+
     /**
-     * Stage a deferred form-save awaiting scope selection.
+     * The series scopes a cross-day drop of [device] can't use. All events is
+     * never offered for a device series; this and future needs a repeat rule
+     * that can follow the move.
+     */
+    private suspend fun blockedDeviceDragScopes(device: DisplayEvent.Device, droppedStartTs: Long): Set<EditScope> =
+        if (shiftedDeviceRule(device, droppedStartTs) == null) {
+            setOf(EditScope.ALL_EVENTS, EditScope.THIS_AND_FUTURE)
+        } else {
+            setOf(EditScope.ALL_EVENTS)
+        }
+
+    /**
+     * The repeat rule for the part of [device]'s series from the dragged
+     * occurrence on, moved to [droppedStartTs] (a Tuesday series dropped on a
+     * Wednesday repeats on Wednesdays), or null when the rule can't follow the
+     * move or the series can't be read. Read from the stored series, not the
+     * snapshot the timeline showed.
+     */
+    private suspend fun shiftedDeviceRule(device: DisplayEvent.Device, droppedStartTs: Long): String? {
+        val series = deviceEventReader.getDeviceEvent(device.instance.eventId) ?: return null
+        val rule = series.rrule?.takeIf { it.isNotEmpty() } ?: return null
+        return RruleShift.shift(rule, device.instance.startTs, droppedStartTs, series.timezone, series.isAllDay)
+    }
+
+    /**
+     * Stages a form save until the user picks a scope in the scope sheet.
      *
-     * Captures `masterStartTs` and `isDetachedException` from the
-     * live event so the option-set rules don't have to derive them
-     * from the (possibly user-edited) form state. Caller passes the
-     * resolved values; for the typical edit-an-occurrence flow the
-     * MainActivity onEdit callback has both in hand.
+     * The event form decides when to defer: an edit opened on one occurrence of an event that
+     * was recurring when loaded, outside the read-only view. Other saves go straight to
+     * [saveEvent] or [saveDeviceEvent], and the read-only view saves only its reminders
+     * ([saveAttendeeReminders]).
+     *
+     * The form passes `masterStartTs`, `isDetachedException` and `loadedIsAllDay` from the
+     * event it loaded, so the scope rules don't derive them from the user-edited form state.
      */
     fun requestFormSave(
         formState: org.onekash.kashcal.ui.components.EventFormState,
@@ -3328,6 +3136,7 @@ class HomeViewModel(
                     isDetachedException = isDetachedException,
                     isRecurringDevice = isRecurringDevice,
                     loadedIsAllDay = loadedIsAllDay,
+                    occurrenceDateChanged = formState.occurrenceDateChanged(occurrenceTs, loadedIsAllDay),
                 )
             )
         }
@@ -3338,25 +3147,23 @@ class HomeViewModel(
     }
 
     /**
-     * Tick the failure counter so the form's LaunchedEffect resets
-     * its `isSaving = true` flag. Called after a deferred save
-     * fails OR after the user cancels from the scope sheet — both
-     * paths leave the form open with the user's edits, and the form
-     * needs the Save button re-enabled for retry.
+     * Ticks the failure counter, so the form's LaunchedEffect resets its `isSaving` flag.
+     * Called after a deferred save fails and after a cancel from the scope sheet: both leave the
+     * form open with the user's edits, and Save must be enabled again for a retry.
      */
     fun signalFormSaveFailed() {
         _uiState.update { it.copy(formSaveFailedTick = it.formSaveFailedTick + 1) }
     }
 
     /**
-     * Stage a recurring-event delete awaiting scope selection. Use
-     * one of the typed factories below — they capture the per-source
-     * fields (event row for Room, master id + calendar id for
-     * device) and the option-set context (masterStartTs,
+     * Stages a delete of a Room series occurrence until the user picks a scope;
+     * [requestDeleteDevice] is the device twin. Each captures its source's fields (the event row
+     * here, the master and calendar ids there) and the scope rules' context (masterStartTs,
      * isDetachedException).
      *
-     * Non-recurring deletes never set this state; the caller routes
-     * directly via `deleteEventOptimistic` / `deleteDeviceEvent`.
+     * Deletes of a non-recurring event or an exception don't stage: callers delete them
+     * directly, for example through [deleteEventOptimistic], [deleteSingleOccurrence] or
+     * [deleteDeviceEvent].
      */
     fun requestDeleteRoom(
         event: org.onekash.kashcal.data.db.entity.Event,
@@ -3405,8 +3212,8 @@ class HomeViewModel(
     }
 
     /**
-     * Apply a deferred delete with the user's chosen scope. Routes
-     * by sealed-type variant (Room vs Device).
+     * Applies the staged delete with the user's scope, through the Room or the device path by
+     * its type. The delete methods report their own failures.
      */
     fun confirmDelete(scope: EditScope) {
         val pending = _uiState.value.pendingDelete ?: return
@@ -3429,6 +3236,8 @@ class HomeViewModel(
                             )
                             EditScope.ALL_EVENTS -> deleteDeviceEvent(pending.masterEventId)
                         }
+                    } catch (e: CancellationException) {
+                        throw e
                     } catch (e: Exception) {
                         Log.e(TAG, "confirmDelete (device) failed", e)
                     }
@@ -3445,12 +3254,67 @@ class HomeViewModel(
         }
     }
 
+    /**
+     * Moves a Room series (all of it, or from the dragged occurrence on) to
+     * another day, rewriting its repeat rule so every moved occurrence lands on
+     * its new day at the dropped time in the event's zone. Checked again against
+     * the stored series first; a move the rule can't express, or one that would
+     * strand deleted, added or edited occurrences, throws before any write.
+     */
+    private suspend fun moveSeriesToAnotherDay(room: DisplayEvent.Room, newStartTs: Long, scope: EditScope) {
+        val masterId = room.event.originalEventId ?: room.event.id
+        val master = eventReader.getEventById(masterId) ?: throw IllegalStateException("Series not found")
+        val occurrenceTs = room.occurrence.startTs
+        if (scope in blockedDragScopes(room, newStartTs)) {
+            throw IllegalStateException("This move can't be applied to $scope")
+        }
+        val now = System.currentTimeMillis()
+        if (scope == EditScope.ALL_EVENTS) {
+            val start = RruleShift.movedStart(master, occurrenceTs, newStartTs)
+            val rule = master.rrule?.let { RruleShift.shift(it, master.startTs, start, master.timezone, master.isAllDay) }
+                ?: throw IllegalStateException("The repeat rule can't follow this move")
+            eventCoordinator.updateEvent(
+                master.copy(startTs = start, endTs = start + (master.endTs - master.startTs), rrule = rule, updatedAt = now)
+            )
+        } else {
+            val draggedDuration = room.endTs - room.startTs
+            eventCoordinator.editThisAndFuture(
+                masterEventId = masterId,
+                splitTimeMs = occurrenceTs,
+                changes = { fresh ->
+                    val rule = fresh.rrule?.let { RruleShift.shift(it, occurrenceTs, newStartTs, fresh.timezone, fresh.isAllDay) }
+                        ?: throw IllegalStateException("The repeat rule can't follow this move")
+                    // The check refused any deleted or added date from the split on, so the ones
+                    // left are all before it. Carried over they could hit a slot of the new series
+                    // (a move to an earlier day), so the new series starts without them.
+                    fresh.copy(
+                        startTs = newStartTs, endTs = newStartTs + draggedDuration, rrule = rule,
+                        exdate = null, rdate = null, updatedAt = now,
+                    )
+                },
+            )
+        }
+    }
+
     private fun performReschedule(
         displayEvent: DisplayEvent,
         targetDate: LocalDate,
         targetStartMinutes: Int,
         editScope: EditScope
     ) {
+        // The scope sheet never offers "All events" for a recurring device event:
+        // CalendarProvider can't split the series, so the only way to honour it is
+        // to move the master's DTSTART, which can leave it out of step with a BYDAY
+        // rule (RFC 5545 §3.8.5.3 leaves such a recurrence set undefined). Refuse it
+        // here too so a caller can't request it directly.
+        if (displayEvent is DisplayEvent.Device &&
+            displayEvent.instance.hasRrule &&
+            editScope == EditScope.ALL_EVENTS
+        ) {
+            Log.w(TAG, "Refusing all-events drag of recurring device event ${displayEvent.instance.eventId}")
+            return
+        }
+
         viewModelScope.launch {
             try {
                 val durationMs = displayEvent.endTs - displayEvent.startTs
@@ -3460,7 +3324,10 @@ class HomeViewModel(
                     targetDate, clampedStart, durationMinutes
                 )
 
-                withContext(ioDispatcher) {
+                // Device writes report failure through Result rather than throwing,
+                // so the device branch hands its Result back; Room writes throw and
+                // are handled by the catch below.
+                val deviceWriteResult: Result<*>? = withContext(ioDispatcher) {
                     when (displayEvent) {
                         is DisplayEvent.Room -> {
                             val event = displayEvent.event
@@ -3488,18 +3355,21 @@ class HomeViewModel(
                                         }
                                     )
                                 }
+                                // Another day, whole series or its future: move the repeat
+                                // rule with it (RFC 5545 section 3.8.5.3), or refuse.
+                                isCrossDayMove(displayEvent, newStartTs) ->
+                                    moveSeriesToAnotherDay(displayEvent, newStartTs, editScope)
                                 editScope == EditScope.THIS_AND_FUTURE -> {
                                     val masterEventId = event.originalEventId ?: event.id
                                     eventCoordinator.editThisAndFuture(
                                         masterEventId = masterEventId,
                                         splitTimeMs = displayEvent.occurrence.startTs,
                                         changes = { master ->
-                                            // Anchor endTs on the dragged occurrence's
-                                            // own duration. Adding delta to master.endTs
-                                            // would land endTs at master-time + delta,
-                                            // which sits days before the new startTs and
-                                            // violates RFC 5545 §3.6.1 (DTEND MUST be
-                                            // later than DTSTART).
+                                            // endTs follows the dragged occurrence's own
+                                            // duration. master.endTs + delta would sit
+                                            // days before the new startTs, and RFC 5545
+                                            // §3.8.2.2 says DTEND MUST be later than
+                                            // DTSTART.
                                             val draggedDuration =
                                                 displayEvent.endTs - displayEvent.startTs
                                             master.copy(
@@ -3521,79 +3391,86 @@ class HomeViewModel(
                                     )
                                 }
                             }
+                            null
                         }
                         is DisplayEvent.Device -> {
                             val instance = displayEvent.instance
-                            val tz = instance.timezone ?: java.util.TimeZone.getDefault().id
+                            // Provider writes set AVAILABILITY and EVENT_COLOR on every call,
+                            // and a new exception row otherwise gets the defaults, so carry the
+                            // instance's current values or the drag resets the event to busy and
+                            // strips its per-event colour. Guests and tags are not passed: an
+                            // existing row keeps its own, and a new exception or the future half
+                            // of a split copies the series'.
+                            // Reminders are null so the provider keeps them as stored, types
+                            // included: the instance only carries their minutes, and none at all
+                            // when the range load failed to read them.
+                            val draft = DeviceEventDraft(
+                                calendarId = instance.calendarId,
+                                title = instance.title,
+                                description = instance.description,
+                                location = instance.location,
+                                startTs = newStartTs,
+                                endTs = newEndTs,
+                                isAllDay = instance.isAllDay,
+                                rrule = instance.rrule,
+                                timezone = instance.timezone ?: TimezoneUtils.getDeviceTimezone(),
+                                reminders = null,
+                                availability = instance.availability,
+                                eventColor = instance.eventColor,
+                            )
                             when {
-                                instance.hasRrule && editScope == EditScope.THIS_EVENT -> {
-                                    calendarProviderRepository.createException(
-                                        calendarId = instance.calendarId,
+                                instance.hasRrule && editScope == EditScope.THIS_EVENT ->
+                                    deviceEventWriter.editSingleOccurrence(
                                         masterEventId = instance.eventId,
                                         originalInstanceTime = instance.startTs,
-                                        title = instance.title,
-                                        description = instance.description,
-                                        location = instance.location,
-                                        startTs = newStartTs,
-                                        endTs = newEndTs,
-                                        isAllDay = instance.isAllDay,
-                                        timezone = tz,
-                                        reminders = instance.reminders
+                                        draft = draft,
                                     )
-                                }
                                 instance.hasRrule && editScope == EditScope.THIS_AND_FUTURE -> {
-                                    calendarProviderRepository.editThisAndFuture(
-                                        masterEventId = instance.eventId,
-                                        fromTimeMs = instance.startTs,
-                                        isAllDay = instance.isAllDay,
-                                        calendarId = instance.calendarId,
-                                        title = instance.title,
-                                        description = instance.description,
-                                        location = instance.location,
-                                        startTs = newStartTs,
-                                        endTs = if (instance.rrule != null) null else newEndTs,
-                                        rrule = instance.rrule,
-                                        duration = if (instance.rrule != null) computeDurationString(newStartTs, newEndTs, instance.isAllDay) else null,
-                                        timezone = tz,
-                                        reminders = instance.reminders,
-                                    )
+                                    // Another day: the rule moves with the occurrence (RFC 5545
+                                    // section 3.8.5.3), or nothing is written. Checked again here,
+                                    // since the series can change between the drop and the pick.
+                                    val rule = if (isCrossDayMove(displayEvent, newStartTs)) {
+                                        shiftedDeviceRule(displayEvent, newStartTs)
+                                    } else {
+                                        instance.rrule
+                                    }
+                                    if (rule == null) {
+                                        Result.failure(IllegalStateException("The repeat rule can't follow this move"))
+                                    } else {
+                                        deviceEventWriter.editThisAndFuture(
+                                            masterEventId = instance.eventId,
+                                            fromTimeMs = instance.startTs,
+                                            draft = draft.copy(rrule = rule),
+                                        )
+                                    }
                                 }
-                                else -> {
-                                    calendarProviderRepository.updateEvent(
-                                        eventId = instance.eventId,
-                                        title = instance.title,
-                                        description = instance.description,
-                                        location = instance.location,
-                                        startTs = newStartTs,
-                                        endTs = newEndTs,
-                                        isAllDay = instance.isAllDay,
-                                        rrule = instance.rrule,
-                                        duration = null,
-                                        timezone = tz,
-                                        reminders = instance.reminders
-                                    )
-                                }
+                                // Non-recurring event or a modified occurrence: a single row.
+                                else -> deviceEventWriter.updateEvent(instance.eventId, draft)
                             }
                         }
                     }
                 }
 
-                if (displayEvent is DisplayEvent.Device) reloadAfterDeviceWrite() else reloadCurrentView()
-                showSnackbar("Event rescheduled")
+                deviceWriteResult?.exceptionOrNull()?.let { e ->
+                    Log.e(TAG, "Failed to reschedule device event", e)
+                    showSnackbar(context.getString(R.string.snackbar_reschedule_failed))
+                    return@launch
+                }
+
+                reloadCurrentView()
+                showSnackbar(context.getString(R.string.snackbar_event_rescheduled))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Error rescheduling event", e)
-                showSnackbar("Failed to reschedule: ${e.message}")
+                showSnackbar(context.getString(R.string.snackbar_reschedule_failed))
             }
         }
     }
 
     /**
-     * Delete an event.
-     *
-     * @param eventId The event ID to delete
-     * @return Result indicating success or failure
+     * Deletes a Room event and reloads the view; a failure, an exception row included, comes
+     * back as the Result.
      */
     suspend fun deleteEvent(eventId: Long): Result<Unit> {
         return withContext(ioDispatcher) {
@@ -3601,7 +3478,6 @@ class HomeViewModel(
                 eventCoordinator.deleteEvent(eventId)
                 Log.d(TAG, "Event deleted: $eventId")
 
-                // Refresh the UI after delete
                 withContext(kotlinx.coroutines.Dispatchers.Main) {
                     reloadCurrentView()
                 }
@@ -3615,19 +3491,14 @@ class HomeViewModel(
     }
 
     /**
-     * Route a Room delete fired from the event form's in-line Delete
-     * button based on the loaded event's shape — mirrors the
-     * QuickView Delete branching:
-     *
-     * - Exception (originalEventId != null) → coordinator's
-     *   deleteSingleOccurrence(masterId, originalInstanceTime). Going
-     *   through the public deleteEvent path would trip the
-     *   coordinator's exception guard.
-     * - Recurring master (rrule != null) → stage PendingDelete.Room
-     *   and return success-no-op. The form dismisses; the scope sheet
-     *   renders on top via uiState.pendingDelete and the user picks
-     *   THIS_EVENT / THIS_AND_FUTURE / ALL_EVENTS.
-     * - Non-recurring → coordinator.deleteEvent verbatim.
+     * Routes the event form's Delete for a Room event by the loaded event's shape, as the quick
+     * view's Delete does:
+     * - Exception: deletes that occurrence on its master
+     *   ([EventCoordinator.deleteSingleOccurrence]); [EventCoordinator.deleteEvent] refuses an
+     *   exception.
+     * - Recurring master: stages [requestDeleteRoom] and returns success. The form closes and
+     *   the scope sheet opens over it through uiState.pendingDelete.
+     * - Anything else: deletes the event.
      */
     suspend fun handleRoomEventFormDelete(eventId: Long, occurrenceTs: Long?): Result<Unit> {
         return withContext(ioDispatcher) {
@@ -3648,11 +3519,10 @@ class HomeViewModel(
                         Result.success(Unit)
                     }
                     event.rrule != null -> {
-                        // Use the form's occurrenceTs when present (form was
-                        // opened on a tapped occurrence), otherwise fall back
-                        // to the master's start. Without this, the scope sheet
-                        // disables THIS_AND_FUTURE on every form-Delete and
-                        // THIS_EVENT routes to the master's first occurrence.
+                        // The form's occurrenceTs when it was opened on an occurrence, else the
+                        // master's start. Always passing the master's start would make the
+                        // scope sheet disable THIS_AND_FUTURE and send THIS_EVENT to the first
+                        // occurrence.
                         val occ = occurrenceTs ?: event.startTs
                         requestDeleteRoom(
                             event = event,
@@ -3681,12 +3551,13 @@ class HomeViewModel(
     }
 
     /**
-     * Write the user's RSVP for an event they're attending.
+     * Writes the user's RSVP for a Room event they're attending ([EventCoordinator.replyRsvp]).
      *
-     * Optimistic-UI write path: the local attendee row's PARTSTAT is updated
-     * inside the coordinator, so the chip row's Flow re-emits with the new
-     * status before the network round-trip completes. The CalDAV PUT is
-     * queued via PendingOperation and processed by PushStrategy.
+     * The coordinator updates the local attendee row's PARTSTAT, so the chip row's Flow shows the
+     * new status before the network round trip; the CalDAV PUT is queued as a PendingOperation
+     * for PushStrategy. A status with no PARTSTAT is a no-op. A false reply (no attendee row
+     * matches, or the event, calendar or account is missing) is only logged; an exception shows
+     * a snackbar.
      */
     fun replyRsvp(
         eventId: Long,
@@ -3711,10 +3582,9 @@ class HomeViewModel(
     }
 
     /**
-     * Save the user's reminder set on an event they're an attendee of.
-     * Wraps [EventCoordinator.saveAttendeeReminders] for the read-only
-     * attendee form path. Local-only — no server PUT. Failure surfaces
-     * to the form sheet's `state.error` field via the [Result] return.
+     * Saves the user's reminders on an event they're an attendee of, for the read-only attendee
+     * form ([EventCoordinator.saveAttendeeReminders]). Local only, no server PUT. A failure comes
+     * back as the Result, which the form shows in its `state.error`.
      */
     suspend fun saveAttendeeReminders(eventId: Long, reminders: List<Int>): Result<Unit> {
         return withContext(ioDispatcher) {
@@ -3730,11 +3600,8 @@ class HomeViewModel(
     }
 
     /**
-     * Delete event (fire-and-forget for optimistic UI).
-     * Use this for QuickViewSheet where immediate dismissal is desired.
-     * Note: Keep existing suspend deleteEvent() for EventFormSheet compatibility.
-     *
-     * @param eventId The event ID to delete
+     * Deletes a Room event without waiting, so the quick view can close at once; also the
+     * ALL_EVENTS branch of [confirmDelete]. A failure shows a snackbar.
      */
     fun deleteEventOptimistic(eventId: Long) {
         viewModelScope.launch {
@@ -3754,11 +3621,8 @@ class HomeViewModel(
     }
 
     /**
-     * Delete a single occurrence of a recurring event (fire-and-forget for optimistic UI).
-     * Adds EXDATE to master event.
-     *
-     * @param masterEventId The master recurring event ID
-     * @param occurrenceTimeMs The occurrence timestamp to delete
+     * Deletes one occurrence of a Room series without waiting, by adding an EXDATE to the
+     * master. A failure shows a snackbar.
      */
     fun deleteSingleOccurrence(masterEventId: Long, occurrenceTimeMs: Long) {
         viewModelScope.launch {
@@ -3778,11 +3642,8 @@ class HomeViewModel(
     }
 
     /**
-     * Delete this and all future occurrences (fire-and-forget for optimistic UI).
-     * Truncates series with UNTIL.
-     *
-     * @param masterEventId The master recurring event ID
-     * @param fromTimeMs Delete occurrences from this time onwards
+     * Deletes the occurrences of a Room series from [fromTimeMs] on without waiting, by ending
+     * the series with an UNTIL. A failure shows a snackbar.
      */
     fun deleteThisAndFuture(masterEventId: Long, fromTimeMs: Long) {
         viewModelScope.launch {
@@ -3804,119 +3665,27 @@ class HomeViewModel(
     // ==================== Device Calendar Write Operations ====================
 
     /**
-     * Create a new event in a device calendar (CalendarProvider).
-     *
-     * @return Result containing created event ID on success
-     */
-    suspend fun createDeviceEvent(
-        calendarId: Long,
-        title: String,
-        description: String?,
-        location: String?,
-        startTs: Long,
-        endTs: Long,
-        isAllDay: Boolean,
-        rrule: String?,
-        timezone: String,
-        reminders: List<Int>
-    ): Result<Long> {
-        return withContext(ioDispatcher) {
-            // For recurring events, compute duration string
-            val duration = if (rrule != null) {
-                computeDurationString(startTs, endTs, isAllDay)
-            } else null
-
-            calendarProviderRepository.createEvent(
-                calendarId = calendarId,
-                title = title,
-                description = description,
-                location = location,
-                startTs = startTs,
-                endTs = if (rrule != null) null else endTs,
-                isAllDay = isAllDay,
-                rrule = rrule,
-                duration = duration,
-                timezone = timezone,
-                reminders = reminders
-            ).also { result ->
-                result.onFailure { e ->
-                    Log.e(TAG, "Failed to create device event", e)
-                    showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
-                }
-                result.onSuccess {
-                    Log.d(TAG, "Device event created: id=$it")
-                    reloadAfterDeviceWrite()
-                }
-            }
-        }
-    }
-
-    /**
-     * Update an existing event in a device calendar.
-     */
-    suspend fun updateDeviceEvent(
-        eventId: Long,
-        title: String,
-        description: String?,
-        location: String?,
-        startTs: Long,
-        endTs: Long,
-        isAllDay: Boolean,
-        rrule: String?,
-        timezone: String,
-        reminders: List<Int>
-    ): Result<Unit> {
-        return withContext(ioDispatcher) {
-            val duration = if (rrule != null) {
-                computeDurationString(startTs, endTs, isAllDay)
-            } else null
-
-            calendarProviderRepository.updateEvent(
-                eventId = eventId,
-                title = title,
-                description = description,
-                location = location,
-                startTs = startTs,
-                endTs = if (rrule != null) null else endTs,
-                isAllDay = isAllDay,
-                rrule = rrule,
-                duration = duration,
-                timezone = timezone,
-                reminders = reminders
-            ).also { result ->
-                result.onFailure { e ->
-                    Log.e(TAG, "Failed to update device event: $eventId", e)
-                    showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
-                }
-                result.onSuccess {
-                    Log.d(TAG, "Device event updated: id=$eventId")
-                    reloadAfterDeviceWrite()
-                }
-            }
-        }
-    }
-
-    /**
-     * Delete an event from a device calendar.
+     * Deletes a device event row, a one-off or a whole series. Shows a write error on failure
+     * and reloads the view on success, as the other device deletes below do.
      */
     suspend fun deleteDeviceEvent(eventId: Long): Result<Unit> {
         return withContext(ioDispatcher) {
-            calendarProviderRepository.deleteEvent(eventId).also { result ->
+            deviceEventWriter.deleteEvent(eventId).also { result ->
                 result.onFailure { e ->
                     Log.e(TAG, "Failed to delete device event: $eventId", e)
                     showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
                 }
                 result.onSuccess {
                     Log.d(TAG, "Device event deleted: id=$eventId")
-                    reloadAfterDeviceWrite()
+                    reloadCurrentView()
                 }
             }
         }
     }
 
     /**
-     * Delete a single occurrence of a recurring device calendar event.
-     * Adds EXDATE to master event in CalendarProvider to exclude the occurrence.
+     * Deletes one occurrence of a device series: a cancelled exception row, or the existing
+     * exception row cancelled.
      */
     suspend fun deleteDeviceSingleOccurrence(
         masterEventId: Long,
@@ -3924,7 +3693,7 @@ class HomeViewModel(
         isAllDay: Boolean = false
     ): Result<Unit> {
         return withContext(ioDispatcher) {
-            calendarProviderRepository.deleteSingleOccurrence(
+            deviceEventWriter.deleteSingleOccurrence(
                 masterEventId = masterEventId,
                 originalInstanceTime = originalInstanceTime,
                 isAllDay = isAllDay
@@ -3935,31 +3704,30 @@ class HomeViewModel(
                 }
                 result.onSuccess {
                     Log.d(TAG, "Device occurrence deleted: master=$masterEventId, ts=$originalInstanceTime")
-                    reloadAfterDeviceWrite()
+                    reloadCurrentView()
                 }
             }
         }
     }
 
     /**
-     * Route device event deletion from EventFormSheet based on form state.
-     * When editingOccurrenceTs is set, deletes single occurrence; otherwise deletes entire event.
-     * Mirrors the save routing logic at [saveDeviceEvent].
+     * Routes the event form's Delete for a device event by the stored event's shape, as
+     * [handleRoomEventFormDelete] does for Room: an exception deletes its occurrence, a series
+     * stages [requestDeleteDevice] at the form's occurrence (or the series start), and anything
+     * else is deleted.
      */
     suspend fun handleDeviceEventFormDelete(formState: EventFormState): Result<Unit> {
         val deviceEventId = formState.editingDeviceEventId
             ?: return Result.failure(IllegalStateException("No device event to delete"))
         return withContext(ioDispatcher) {
             try {
-                val event = calendarProviderRepository.getDeviceEvent(deviceEventId)
+                val event = deviceEventReader.getDeviceEvent(deviceEventId)
                     ?: return@withContext Result.failure(
                         IllegalStateException("Device event not found: $deviceEventId")
                     )
                 when {
-                    // Exception event — delete just this occurrence on
-                    // the master via EXDATE / cancel-tombstone. Don't
-                    // route through the master-delete path which would
-                    // wipe the entire series.
+                    // An exception deletes only its occurrence. The master delete would wipe
+                    // the whole series.
                     event.originalId != null -> {
                         val masterId = event.originalId
                         val originalInstance = event.originalInstanceTime
@@ -3972,9 +3740,6 @@ class HomeViewModel(
                             isAllDay = formState.isAllDay,
                         )
                     }
-                    // Recurring master — surface the scope sheet with
-                    // the form's tapped-occurrence anchor so the user
-                    // picks THIS_EVENT / THIS_AND_FUTURE / ALL_EVENTS.
                     event.rrule != null -> {
                         val occ = formState.editingOccurrenceTs ?: event.startTs
                         requestDeleteDevice(
@@ -3987,7 +3752,6 @@ class HomeViewModel(
                         )
                         Result.success(Unit)
                     }
-                    // Non-recurring — straight delete.
                     else -> deleteDeviceEvent(deviceEventId)
                 }
             } catch (e: CancellationException) {
@@ -4000,8 +3764,8 @@ class HomeViewModel(
     }
 
     /**
-     * Delete this and all future occurrences of a recurring device calendar event.
-     * Truncates the master event's RRULE with an UNTIL clause.
+     * Deletes the occurrences of a device series from [fromTimeMs] on by ending its RRULE with
+     * an UNTIL; at or before the series start, the whole event.
      */
     suspend fun deleteDeviceThisAndFuture(
         masterEventId: Long,
@@ -4009,7 +3773,7 @@ class HomeViewModel(
         isAllDay: Boolean = false
     ): Result<Unit> {
         return withContext(ioDispatcher) {
-            calendarProviderRepository.deleteThisAndFuture(
+            deviceEventWriter.deleteThisAndFuture(
                 masterEventId = masterEventId,
                 fromTimeMs = fromTimeMs,
                 isAllDay = isAllDay
@@ -4020,7 +3784,7 @@ class HomeViewModel(
                 }
                 result.onSuccess {
                     Log.d(TAG, "Device future occurrences deleted: master=$masterEventId, from=$fromTimeMs")
-                    reloadAfterDeviceWrite()
+                    reloadCurrentView()
                 }
             }
         }
@@ -4029,108 +3793,58 @@ class HomeViewModel(
     // ==================== Device Calendar Edit Support ====================
 
     /**
-     * Check if a device event can be edited.
+     * Returns a device event for the edit form, with its reminders, guests and calendar, or null
+     * when the event or its calendar is missing. When [occurrenceTs] names an occurrence that
+     * has an exception row, that row, with its own reminders and guests, is loaded instead of
+     * the master.
      *
-     * @param calendarId The calendar ID containing the event
-     * @return Pair of (canEdit, calendarName or null)
-     */
-    suspend fun canEditDeviceEvent(calendarId: Long): Pair<Boolean, String?> {
-        return withContext(ioDispatcher) {
-            val calendars = calendarProviderRepository.getDeviceCalendars()
-            val calendar = calendars.find { it.id == calendarId }
-            if (calendar != null && calendar.isWritable) {
-                true to calendar.displayName
-            } else {
-                false to null
-            }
-        }
-    }
-
-    /**
-     * Load a device event for editing.
-     *
-     * When occurrenceTs is provided, checks if an exception event exists for that occurrence.
-     * If so, loads the exception event (with its own reminders) instead of the master.
-     *
-     * @param eventId Event ID to load (master event ID for recurring)
-     * @param occurrenceTs Original occurrence timestamp (null for non-occurrence edits)
-     * @param isAllDay Whether the event is all-day (for UTC midnight normalization)
-     * @return DeviceEventEditData with event, reminders, and calendar info, or null if not found
+     * @param eventId the event, the master for a series
+     * @param occurrenceTs the occurrence's original start; null for an edit not opened on one
+     * @param isAllDay whether the event is all-day, for the UTC-midnight occurrence match
      */
     suspend fun getDeviceEventForEdit(eventId: Long, occurrenceTs: Long? = null, isAllDay: Boolean = false): DeviceEventEditData? {
         return withContext(ioDispatcher) {
-            val effectiveEventId = if (occurrenceTs != null) {
-                calendarProviderRepository.findExceptionEventId(eventId, occurrenceTs, isAllDay)
-                    ?: eventId
-            } else eventId
-            val event = calendarProviderRepository.getDeviceEvent(effectiveEventId) ?: return@withContext null
-            val calendars = calendarProviderRepository.getDeviceCalendars()
-            val calendar = calendars.find { it.id == event.calendarId } ?: return@withContext null
-            val reminders = calendarProviderRepository.getReminders(effectiveEventId)
-            val attendees = AttendeeUiModel.fromDevice(
-                calendarProviderRepository.getAttendees(effectiveEventId),
-                ownerEmail = calendar.ownerAccount.takeUnless { it.isBlank() },
-            )
-
+            val data = deviceEventReader.getEventForEdit(eventId, occurrenceTs, isAllDay)
+                ?: return@withContext null
+            val calendar = data.calendar
             DeviceEventEditData(
-                event = event,
-                reminders = reminders,
+                event = data.event,
+                reminders = data.reminders,
                 calendarName = calendar.displayName,
                 calendarColor = calendar.color,
                 isWritable = calendar.isWritable,
-                attendees = attendees,
+                attendees = AttendeeUiModel.fromDevice(
+                    data.attendees,
+                    ownerEmail = calendar.ownerAccount.takeUnless { it.isBlank() },
+                ),
             )
         }
     }
 
-    /**
-     * Find an existing exception event for an occurrence.
-     *
-     * @param masterEventId Master recurring event ID
-     * @param originalInstanceTime Original occurrence timestamp
-     * @return Exception event ID if exists, null otherwise
-     */
-    suspend fun findExceptionEventId(masterEventId: Long, originalInstanceTime: Long, isAllDay: Boolean = false): Long? {
-        return withContext(ioDispatcher) {
-            calendarProviderRepository.findExceptionEventId(masterEventId, originalInstanceTime, isAllDay)
-        }
-    }
-
-    /**
-     * Import ICS events into a device calendar via CalendarProvider.
-     *
-     * @param events Events parsed from ICS file
-     * @param calendarId Target device calendar ID
-     * @return Count of successfully imported events
-     */
+    /** Imports events parsed from an ICS file into a device calendar; returns the count created. */
     suspend fun importIcsToDeviceCalendar(events: List<Event>, calendarId: Long): Int {
         val count = withContext(ioDispatcher) {
-            importEventsToDeviceCalendar(
-                events = events,
-                calendarId = calendarId,
-                repo = calendarProviderRepository,
-                defaultTimedReminderMinutes = dataStore.defaultReminderMinutes.first(),
-                defaultAllDayReminderMinutes = dataStore.defaultAllDayReminder.first()
-            )
+            deviceEventWriter.importIcsEvents(events, calendarId)
         }
-        // Imported device events are CalendarProvider writes, so the reactive
-        // views need the same immediate refresh as the other device-write
-        // paths; the callers only reload calendar metadata + navigate, which
-        // doesn't re-query the newly imported events until the debounce fires.
-        if (count > 0) reloadAfterDeviceWrite()
+        // The writer has signalled the device change; the view is reloaded too, as after every
+        // other device write, since the caller only refreshes calendars and selects a date.
+        if (count > 0) reloadCurrentView()
         return count
     }
 
     /**
-     * Save a device event from EventFormState.
+     * Saves a device event from the form, picking the writer method for the edit scope the way
+     * [saveEvent] picks EventCoordinator's:
+     * - "This and future" on an occurrence: split the series there
+     * - One occurrence: create or update its exception row
+     * - A non-recurring event in another calendar: move it
+     * - An existing event: update it in place (a whole series for "All events")
+     * - Otherwise: create a new event
      *
-     * Routes to appropriate operation:
-     * - If editing occurrence (editingOccurrenceTs != null): create/update exception
-     * - If editing existing event: update event
-     * - Otherwise: create new event
+     * Records the saved tags and reloads the view on success; shows a write error when a writer
+     * call or the all-events series check fails. No selected calendar only returns a failure.
      *
-     * @param formState The form state to save
-     * @return Result containing event ID on success
+     * @return the saved event's ID
      */
     suspend fun saveDeviceEvent(
         formState: org.onekash.kashcal.ui.components.EventFormState,
@@ -4140,258 +3854,107 @@ class HomeViewModel(
             val calendarId = formState.selectedCalendarId
                 ?: return@withContext Result.failure(IllegalStateException("No calendar selected"))
 
-            // Compute timestamps from form state
-            val (startTs, endTs) = computeTimestampsFromFormState(formState)
+            val (startTs, endTs) = formState.toStartEndTs()
 
-            // Build reminders list (just minutes, not ISO format)
-            val reminders = buildDeviceReminders(formState.reminders)
+            // The user's zone, else the unresolvable zone the event arrived with, else the
+            // device zone.
+            val timezone = formState.timezone ?: formState.sourceTimezoneId ?: TimezoneUtils.getDeviceTimezone()
 
-            val timezone = formState.timezone ?: java.util.TimeZone.getDefault().id
-
-            // Guests the user edited, bridged to provider-shaped rows. null
-            // when the form isn't managing attendees (open-and-save, or a
-            // non-schedulable read-only path) so existing rows are left alone.
-            // Threaded ONLY through the create + whole-event update branches
-            // below: per-occurrence and this-and-future guest edits are out of
-            // scope (the provider doesn't store per-occurrence guest divergence
-            // we'd be writing), so those branches deliberately don't carry it.
+            // Guests the user edited, as provider rows; null when the form isn't managing
+            // attendees (open-and-save, or a read-only path), so stored rows are left alone.
+            // The writer applies them only on create, whole-event update and move. A new
+            // occurrence exception or the future half of a split copies the series' guests and
+            // organizer instead, and its tags unless the user edited them.
             val deviceAttendeesArg =
                 if (formState.attendeesEdited) pickerAttendeesToDevice(formState.attendees) else null
 
-            // Tags the user edited, or null when the form isn't managing them
-            // (open-and-save without touching the tag row) so the stored row is
-            // left untouched — mirroring deviceAttendeesArg. Per-occurrence and
-            // this-and-future edits stay out of scope (those branches pass null).
+            // Tags the user edited, or null when the tag row wasn't touched, so the stored row
+            // keeps its tags, as with deviceAttendeesArg.
             val deviceCategoriesArg =
                 if (formState.categoriesEdited) formState.categories else null
 
-            // Captured on the branches that actually persist tags, so the shared
-            // success handler can reconcile those names into the tag registry.
-            var recordedTags: List<String>? = null
+            var draft = DeviceEventDraft(
+                calendarId = calendarId,
+                title = formState.title,
+                description = formState.description.ifBlank { null },
+                location = formState.location.ifBlank { null },
+                startTs = startTs,
+                endTs = endTs,
+                isAllDay = formState.isAllDay,
+                rrule = formState.rrule,
+                timezone = timezone,
+                reminders = buildDeviceReminders(formState.reminders),
+                availability = transpToAvailability(formState.transp),
+                eventColor = formState.eventColor,
+                attendees = deviceAttendeesArg,
+                categories = deviceCategoriesArg,
+            )
 
-            // THIS_AND_FUTURE on a recurring device event splits the
-            // series via the new repository method. The form was
-            // opened on an occurrence, so editingOccurrenceTs carries
-            // the split point.
-            if (
-                scope == EditScope.THIS_AND_FUTURE &&
-                formState.editingDeviceEventId != null &&
-                formState.editingOccurrenceTs != null
-            ) {
-                return@withContext calendarProviderRepository.editThisAndFuture(
-                    masterEventId = formState.editingDeviceEventId,
-                    fromTimeMs = formState.editingOccurrenceTs,
-                    isAllDay = formState.isAllDay,
-                    calendarId = calendarId,
-                    title = formState.title,
-                    description = formState.description.ifBlank { null },
-                    location = formState.location.ifBlank { null },
-                    startTs = startTs,
-                    endTs = if (formState.rrule != null) null else endTs,
-                    rrule = formState.rrule,
-                    duration = if (formState.rrule != null) computeDurationString(startTs, endTs, formState.isAllDay) else null,
-                    timezone = timezone,
-                    reminders = reminders,
-                    availability = transpToAvailability(formState.transp),
-                    eventColor = formState.eventColor,
-                ).also { result ->
-                    result.onSuccess { reloadAfterDeviceWrite() }
-                }
-            }
-
-            // ALL_EVENTS scope on a recurring edit: treat as a master
-            // update even if the form was opened on an occurrence.
+            val editingEventId = formState.editingDeviceEventId
+            // ALL_EVENTS is a master update even when the form was opened on an occurrence.
             val effectiveOccurrenceTs =
                 if (scope == EditScope.ALL_EVENTS) null else formState.editingOccurrenceTs
 
-            // Determine operation based on form state
             when {
-                // Editing single occurrence of recurring event
-                formState.editingDeviceEventId != null && effectiveOccurrenceTs != null -> {
-                    val masterEventId = formState.editingDeviceEventId
-                    val originalInstanceTime = effectiveOccurrenceTs
+                // The form was opened on an occurrence, so editingOccurrenceTs
+                // carries the split point.
+                scope == EditScope.THIS_AND_FUTURE &&
+                    editingEventId != null &&
+                    formState.editingOccurrenceTs != null ->
+                    deviceEventWriter.editThisAndFuture(editingEventId, formState.editingOccurrenceTs, draft)
 
-                    // Check if exception already exists
-                    val existingExceptionId = calendarProviderRepository.findExceptionEventId(
-                        masterEventId, originalInstanceTime, formState.isAllDay
-                    )
+                editingEventId != null && effectiveOccurrenceTs != null ->
+                    deviceEventWriter.editSingleOccurrence(editingEventId, effectiveOccurrenceTs, draft)
 
-                    if (existingExceptionId != null) {
-                        // Update existing exception
-                        calendarProviderRepository.updateEvent(
-                            eventId = existingExceptionId,
-                            title = formState.title,
-                            description = formState.description.ifBlank { null },
-                            location = formState.location.ifBlank { null },
-                            startTs = startTs,
-                            endTs = endTs,
-                            isAllDay = formState.isAllDay,
-                            rrule = null, // Exceptions don't have RRULE
-                            duration = null,
-                            timezone = timezone,
-                            reminders = reminders,
-                            availability = transpToAvailability(formState.transp),
-                            eventColor = formState.eventColor
-                        ).map { existingExceptionId }
-                    } else {
-                        // Create new exception
-                        calendarProviderRepository.createException(
-                            calendarId = calendarId,
-                            masterEventId = masterEventId,
-                            originalInstanceTime = originalInstanceTime,
-                            title = formState.title,
-                            description = formState.description.ifBlank { null },
-                            location = formState.location.ifBlank { null },
-                            startTs = startTs,
-                            endTs = endTs,
-                            isAllDay = formState.isAllDay,
-                            timezone = timezone,
-                            reminders = reminders,
-                            availability = transpToAvailability(formState.transp),
-                            eventColor = formState.eventColor
-                        )
-                    }
-                }
-
-                // Editing existing event (not occurrence)
-                formState.editingDeviceEventId != null -> {
-                    val eventId = formState.editingDeviceEventId
-                    val existing = calendarProviderRepository.getDeviceEvent(eventId)
-
-                    // A calendar change is a move. Android treats CALENDAR_ID as
-                    // effectively create-time (an in-place change misbehaves on
-                    // synced calendars), so a move is delete-old + insert-new,
-                    // carrying the edited fields. Create first, delete second, so
-                    // a failed create leaves the event safe in its source.
-                    //
-                    // Gate on the SOURCE being non-recurring, not the form's rrule:
-                    // recurring device moves (exception cascade) are out of scope,
-                    // but a save that ADDS recurrence while also changing calendar
-                    // must still move — else the calendar change is silently
-                    // dropped by the in-place update. Already-recurring events
-                    // can't reach here anyway (the form disables the picker).
-                    val isMove = existing != null &&
-                        existing.calendarId != calendarId &&
-                        existing.rrule == null
-
-                    if (isMove) {
-                        // Carry the guest set into the recreated event. If the
-                        // user edited guests, use that set; otherwise preserve the
-                        // event's existing guests so the move doesn't uninvite
-                        // anyone. Drop the source ORGANIZER row: createEvent writes
-                        // a fresh organizer for the TARGET calendar's owner, and a
-                        // carried source-organizer (whose address differs on a
-                        // cross-account move) would otherwise land as a spurious
-                        // guest.
-                        val moveAttendees = (
-                            deviceAttendeesArg
-                                ?: calendarProviderRepository.getAttendees(eventId)
-                        ).orEmpty()
-                            .filter {
-                                it.relationship !=
-                                    android.provider.CalendarContract.Attendees.RELATIONSHIP_ORGANIZER
-                            }
-                            .takeIf { it.isNotEmpty() }
-
-                        // Carry the tags into the recreated event the same way as
-                        // guests: the edited set if the user touched the tag row,
-                        // else the source event's existing tags so the move
-                        // doesn't silently drop them (the source row is deleted
-                        // below). Recorded so the success handler reconciles them.
-                        val moveCategories = deviceCategoriesArg ?: existing.categories
-                        recordedTags = moveCategories
-
-                        // The move carries whatever recurrence the form now has
-                        // (adding recurrence while moving is supported).
-                        val moveRrule = formState.rrule
-                        calendarProviderRepository.createEvent(
-                            calendarId = calendarId,
-                            title = formState.title,
-                            description = formState.description.ifBlank { null },
-                            location = formState.location.ifBlank { null },
-                            startTs = startTs,
-                            endTs = if (moveRrule != null) null else endTs,
-                            isAllDay = formState.isAllDay,
-                            rrule = moveRrule,
-                            duration = if (moveRrule != null) computeDurationString(startTs, endTs, formState.isAllDay) else null,
-                            timezone = timezone,
-                            reminders = reminders,
-                            availability = transpToAvailability(formState.transp),
-                            eventColor = formState.eventColor,
-                            attendees = moveAttendees,
-                            categories = moveCategories,
-                        ).map { newId ->
-                            // The target copy exists, so the move has succeeded.
-                            // Deleting the source is best-effort cleanup: a failure
-                            // leaves a source orphan but must NOT fail the save (a
-                            // hard failure invites a duplicating retry).
-                            calendarProviderRepository.deleteEvent(eventId).onFailure { e ->
-                                Log.w(TAG, "Device move: created in target but source delete failed", e)
-                            }
-                            newId
+                editingEventId != null -> {
+                    val existing = deviceEventReader.getDeviceEvent(editingEventId)
+                    // "All events" from a form opened on an occurrence: the form
+                    // holds that occurrence's date, but the series starts earlier.
+                    // Keep the series' own first date so no occurrence before
+                    // this one is cut; only a changed clock time moves it. A
+                    // changed date isn't offered for a later occurrence (the scope
+                    // sheet withholds All events), so it is refused here too.
+                    val openedOn = formState.editingOccurrenceTs
+                    if (scope == EditScope.ALL_EVENTS && openedOn != null) {
+                        if (existing == null) {
+                            return@withContext Result.failure<Long>(IllegalStateException("Series not found"))
+                                .also { showError(CalendarError.DeviceCalendar.WriteFailed("Series not found")) }
                         }
+                        if (!existing.rrule.isNullOrEmpty() && openedOn > existing.startTs) {
+                            if (formState.occurrenceDateChanged(openedOn, existing.isAllDay)) {
+                                return@withContext Result.failure<Long>(
+                                    IllegalStateException("Date change on a later occurrence can't apply to all events")
+                                ).also { showError(CalendarError.DeviceCalendar.WriteFailed("Date change on a later occurrence")) }
+                            }
+                            val (seriesStart, seriesEnd) =
+                                formState.startEndAnchoredToSeries(openedOn, existing.startTs, existing.isAllDay)
+                            draft = draft.copy(startTs = seriesStart, endTs = seriesEnd)
+                        }
+                    }
+                    // A calendar change is a move, gated on the stored event being
+                    // non-recurring, not on the form's rrule: recurring device moves (with their
+                    // exceptions) aren't supported, but a save that adds recurrence while
+                    // changing calendar must still move, or the in-place update would silently
+                    // drop the calendar change. The form disables the calendar picker while a
+                    // device event being edited has a repeat rule.
+                    if (existing != null && existing.calendarId != calendarId && existing.rrule == null) {
+                        deviceEventWriter.moveEventToCalendar(existing, draft)
                     } else {
-                        recordedTags = deviceCategoriesArg
-                        calendarProviderRepository.updateEvent(
-                            eventId = eventId,
-                            title = formState.title,
-                            description = formState.description.ifBlank { null },
-                            location = formState.location.ifBlank { null },
-                            startTs = startTs,
-                            endTs = if (formState.rrule != null) null else endTs,
-                            isAllDay = formState.isAllDay,
-                            rrule = formState.rrule,
-                            duration = if (formState.rrule != null) computeDurationString(startTs, endTs, formState.isAllDay) else null,
-                            timezone = timezone,
-                            reminders = reminders,
-                            availability = transpToAvailability(formState.transp),
-                            eventColor = formState.eventColor,
-                            attendees = deviceAttendeesArg,
-                            categories = deviceCategoriesArg
-                        ).map { eventId }
+                        deviceEventWriter.updateEvent(editingEventId, draft)
                     }
                 }
 
-                // Creating new event
-                else -> {
-                    recordedTags = formState.categories
-                    calendarProviderRepository.createEvent(
-                        calendarId = calendarId,
-                        title = formState.title,
-                        description = formState.description.ifBlank { null },
-                        location = formState.location.ifBlank { null },
-                        startTs = startTs,
-                        endTs = if (formState.rrule != null) null else endTs,
-                        isAllDay = formState.isAllDay,
-                        rrule = formState.rrule,
-                        duration = if (formState.rrule != null) computeDurationString(startTs, endTs, formState.isAllDay) else null,
-                        timezone = timezone,
-                        reminders = reminders,
-                        availability = transpToAvailability(formState.transp),
-                        eventColor = formState.eventColor,
-                        attendees = deviceAttendeesArg,
-                        categories = formState.categories
-                    )
-                }
-            }.also { result ->
-                result.onSuccess {
-                    // Reconcile freshly-applied tags into the shared registry so
-                    // new names gain a suggestion entry and become colorable. Only
-                    // the create + whole-event-update branches set recordedTags.
-                    // Record the same cleaned names the provider stores (backslash
-                    // stripped, blanks/dupes dropped) so a suggestion resolves to
-                    // the tag that actually persisted, not the raw form value.
-                    recordedTags?.let { tags ->
-                        val cleaned = org.onekash.kashcal.data.calendar_provider.cleanCategoryNames(tags)
-                        if (cleaned.isNotEmpty()) eventCoordinator.recordTagUsage(cleaned)
-                    }
-                    reloadAfterDeviceWrite()
-                }
-                result.onFailure { e ->
-                    Log.e(TAG, "Failed to save device event", e)
-                    showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
-                }
-            }
+                // A new event always stores the form's tags.
+                else -> deviceEventWriter.createEvent(draft.copy(categories = formState.categories))
+            }.onSuccess { saved ->
+                // The stored tags go into the shared registry, so new names get a suggestion
+                // entry and become colorable.
+                if (saved.savedTags.isNotEmpty()) eventCoordinator.recordTagUsage(saved.savedTags)
+                reloadCurrentView()
+            }.onFailure { e ->
+                Log.e(TAG, "Failed to save device event", e)
+                showError(CalendarError.DeviceCalendar.WriteFailed(e.message ?: "Unknown error"))
+            }.map { it.eventId }
         }
     }
 
@@ -4399,52 +3962,20 @@ class HomeViewModel(
         if (transp == "TRANSPARENT") 1 else 0
 
     /**
-     * Compute start/end timestamps from form state.
-     * Handles all-day UTC conversion.
-     */
-    private fun computeTimestampsFromFormState(formState: org.onekash.kashcal.ui.components.EventFormState): Pair<Long, Long> {
-        return if (formState.isAllDay) {
-            // All-day: convert local date to UTC midnight
-            val startTs = DateTimeUtils.localDateToUtcMidnight(formState.dateMillis)
-            val endTs = DateTimeUtils.localDateToUtcMidnight(formState.endDateMillis)
-            // End is inclusive, so add end-of-day
-            startTs to DateTimeUtils.utcMidnightToEndOfDay(endTs)
-        } else {
-            // Timed: combine date and time
-            val startCal = java.util.Calendar.getInstance().apply {
-                timeInMillis = formState.dateMillis
-                set(java.util.Calendar.HOUR_OF_DAY, formState.startHour)
-                set(java.util.Calendar.MINUTE, formState.startMinute)
-                set(java.util.Calendar.SECOND, 0)
-                set(java.util.Calendar.MILLISECOND, 0)
-            }
-            val endCal = java.util.Calendar.getInstance().apply {
-                timeInMillis = formState.endDateMillis
-                set(java.util.Calendar.HOUR_OF_DAY, formState.endHour)
-                set(java.util.Calendar.MINUTE, formState.endMinute)
-                set(java.util.Calendar.SECOND, 0)
-                set(java.util.Calendar.MILLISECOND, 0)
-            }
-            startCal.timeInMillis to endCal.timeInMillis
-        }
-    }
-
-    /**
-     * Build device reminders list from form minutes.
+     * Returns the form's reminder minutes for the provider, deduplicated and sorted but
+     * otherwise unchanged.
      *
-     * Intentional pass-through: the form's signed "minutes before start" already matches
-     * Android CalendarContract.Reminders.MINUTES exactly (positive = before start, negative
-     * = after). So an all-day "9 AM day of" (Int -540) is stored as MINUTES = -540 verbatim,
-     * with no transform or clamping. Returns minutes (not ISO format like Room events).
+     * The form's signed "minutes before start" already matches CalendarContract.Reminders.MINUTES
+     * (positive before the start, negative after), so an all-day "9 AM day of" (-540) is
+     * stored as MINUTES = -540, with no clamping. Minutes, not the ISO durations Room stores.
      */
     private fun buildDeviceReminders(reminderMinutes: List<Int>): List<Int> {
         return deduplicateAndSortReminders(reminderMinutes)
     }
 
     /**
-     * Build reminders list from form values.
-     * Converts minutes to ISO 8601 duration format (e.g., -PT15M for 15 minutes before).
-     * Deduplicates and sorts before converting.
+     * Returns the form's reminders as ISO 8601 durations (-PT15M for 15 minutes before),
+     * deduplicated and sorted, or null when there are none.
      */
     private fun buildRemindersList(reminderMinutes: List<Int>): List<String>? {
         val deduplicated = deduplicateAndSortReminders(reminderMinutes)
@@ -4453,17 +3984,13 @@ class HomeViewModel(
     }
 
     /**
-     * Convert signed reminder minutes to an ISO 8601 duration trigger.
-     * Positive minutes = before start ("-PT..."), negative = after start ("PT..."),
-     * 0 = at start. Hour-form only (no period -P_D) for DST-stable exact durations.
-     * Delegates to the shared [ContactEventUtils.minutesToIsoDuration] encoder.
+     * Converts signed reminder minutes to an ISO 8601 trigger with
+     * [ContactEventUtils.minutesToIsoDuration], which documents the format.
      */
     private fun minutesToIsoDuration(minutes: Int): String =
         ContactEventUtils.minutesToIsoDuration(minutes)
 
-    /**
-     * Get local calendar ID for fallback.
-     */
+    /** Returns the local calendar's ID, the fallback target. */
     suspend fun getLocalCalendarId(): Long {
         return withContext(ioDispatcher) {
             eventCoordinator.getLocalCalendarId()
@@ -4473,22 +4000,15 @@ class HomeViewModel(
     // ==================== Error Handling ====================
 
     /**
-     * Show an error to the user.
+     * Maps [error] to its [ErrorPresentation] ([ErrorMapper.toPresentation]) and records it in
+     * uiState:
+     * - Snackbar: sets currentError
+     * - Dialog: sets currentError and showErrorDialog
+     * - Banner: sets currentError and showErrorBanner
+     * - Silent: logs only, no state change
      *
-     * Converts CalendarError to ErrorPresentation and displays appropriately:
-     * - Snackbar: Sets currentError, consumed by ErrorSnackbarHost
-     * - Dialog: Sets currentError + showErrorDialog
-     * - Banner: Sets currentError + showErrorBanner
-     * - Silent: Logs only, no UI change
-     *
-     * Usage:
-     * ```
-     * try {
-     *     syncEngine.sync()
-     * } catch (e: Exception) {
-     *     showError(ErrorMapper.fromException(e))
-     * }
-     * ```
+     * For a caught exception: `showError(ErrorMapper.fromException(e))`, as [showExceptionError]
+     * does.
      */
     fun showError(error: CalendarError) {
         val presentation = ErrorMapper.toPresentation(error)
@@ -4522,17 +4042,16 @@ class HomeViewModel(
                 }
             }
             is ErrorPresentation.Silent -> {
-                // Log only, no UI change
                 Log.d(TAG, "Silent error: ${presentation.logMessage}")
             }
         }
     }
 
     /**
-     * Handle error action callback from UI.
-     *
-     * Called when user taps action button on error Snackbar/Dialog/Banner.
-     * Dispatches to appropriate handler based on callback type.
+     * Runs the action of an error presentation's button, then clears the error. Retry syncs,
+     * ForceFullSync forces a full sync, ViewSyncDetails opens the sync-changes sheet, OpenUrl
+     * queues the URL for HomeScreen to open, and Custom runs its action. OpenSettings also
+     * clears the snackbar; the other variants only clear the error.
      */
     fun handleErrorAction(callback: ErrorActionCallback) {
         when (callback) {
@@ -4544,23 +4063,19 @@ class HomeViewModel(
             is ErrorActionCallback.OpenSettings -> {
                 Log.d(TAG, "Error action: OpenSettings")
                 clearError()
-                // Navigation handled by Activity (observes this state)
-                _uiState.update { it.copy(pendingSnackbarMessage = null) } // Clear any snackbar
+                _uiState.update { it.copy(pendingSnackbarMessage = null) }
             }
             is ErrorActionCallback.OpenAppSettings -> {
                 Log.d(TAG, "Error action: OpenAppSettings")
                 clearError()
-                // Open Android app settings - handled by Activity
             }
             is ErrorActionCallback.OpenAppleIdWebsite -> {
                 Log.d(TAG, "Error action: OpenAppleIdWebsite")
                 clearError()
-                // Open Apple ID website - handled by Activity
             }
             is ErrorActionCallback.ReAuthenticate -> {
                 Log.d(TAG, "Error action: ReAuthenticate")
                 clearError()
-                // Trigger re-authentication flow - handled by Activity
             }
             is ErrorActionCallback.ForceFullSync -> {
                 Log.d(TAG, "Error action: ForceFullSync")
@@ -4589,10 +4104,7 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Clear current error state.
-     * Called after error is dismissed or action is taken.
-     */
+    /** Clears the current error, after a dismissal or an action. */
     fun clearError() {
         _uiState.update {
             it.copy(
@@ -4603,48 +4115,36 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Clear pending URL after it has been opened.
-     */
+    /** Clears the pending URL once HomeScreen has opened it. */
     fun clearPendingUrl() {
         _uiState.update { it.copy(pendingUrlToOpen = null) }
     }
 
-    /**
-     * Show error from HTTP code.
-     * Convenience method for sync layer integration.
-     */
+    /** Shows the error for an HTTP status code ([ErrorMapper.fromHttpCode]). */
     fun showHttpError(code: Int, message: String? = null) {
         showError(ErrorMapper.fromHttpCode(code, message))
     }
 
-    /**
-     * Show error from exception.
-     * Convenience method for exception handling.
-     */
+    /** Shows the error for an exception ([ErrorMapper.fromException]). */
     fun showExceptionError(e: Throwable) {
         showError(ErrorMapper.fromException(e))
     }
 
     // ==================== Helper Functions ====================
 
-    /**
-     * Parse YYYYMMDD day format into (year, month, day) triple.
-     * Month is 0-indexed (January = 0) for Calendar compatibility.
-     */
+    /** Parses a YYYYMMDD day code into (year, month, day), the month 0-indexed as in Calendar. */
     private fun parseDayFormat(dayFormat: Int): Triple<Int, Int, Int> {
         val year = dayFormat / 10000
-        val month = (dayFormat % 10000) / 100 - 1  // 0-indexed for Calendar
+        val month = (dayFormat % 10000) / 100 - 1
         val day = dayFormat % 100
         return Triple(year, month, day)
     }
 }
 
 /**
- * Attendee state passed from [HomeViewModel] to chip surfaces (QuickView,
- * EventForm). Held in the ViewModel layer because the type ties the VM's
- * identity-resolution to the UI projection — no other layer should
- * construct it.
+ * Attendee state [HomeViewModel] hands the chip surfaces (quick view, event form). It lives in
+ * the ViewModel layer because it ties the ViewModel's identity resolution to the UI projection;
+ * no other layer should construct it.
  */
 data class EventAttendeeUiState(
     val models: List<AttendeeUiModel>,
@@ -4652,14 +4152,12 @@ data class EventAttendeeUiState(
 )
 
 /**
- * Pure projection of a device event's [DeviceAttendee] rows + the calendar's
- * owner email into the chip-surface [EventAttendeeUiState].
+ * Maps a device event's attendee rows and the calendar's owner email to the chips'
+ * [EventAttendeeUiState]. On the list means the owner email canonically matches a mapped
+ * attendee, the device notion of "you".
  *
- * Separated from the ViewModel's IO (getAttendees + getDeviceCalendars) so the
- * branch logic is unit-testable without a live ContentResolver, mirroring the
- * Room path's [AttendeeUiModel.fromRoom] boundary. "On list" is true when the
- * owner email canonically matches one of the mapped attendees (the device
- * notion of "you").
+ * Kept apart from the provider read ([DeviceEventReader.getAttendeesWithOwner]) so it's
+ * testable without a ContentResolver, like the Room path's [AttendeeUiModel.fromRoom].
  */
 fun deviceAttendeeUiState(
     attendees: List<org.onekash.kashcal.data.calendar_provider.DeviceAttendee>,
@@ -4673,18 +4171,15 @@ fun deviceAttendeeUiState(
 }
 
 /**
- * Bridge the attendee picker's Room [org.onekash.kashcal.data.db.entity.Attendee]
- * entities into provider-shaped
- * [org.onekash.kashcal.data.calendar_provider.DeviceAttendee] guest rows at the
- * device save boundary.
+ * Converts the attendee picker's Room [org.onekash.kashcal.data.db.entity.Attendee] rows to
+ * [org.onekash.kashcal.data.calendar_provider.DeviceAttendee] guest rows for a device save.
  *
- * This is the seam that keeps the device write path disjoint from the
- * Room/iTIP path: the device repository must never see the Room entity's wire
- * fields (scheduleAgent, scheduleStatus, sequence …), which are meaningless to
- * `CalendarContract.Attendees`. Each row becomes a `RELATIONSHIP_ATTENDEE`
- * guest with `ATTENDEE_STATUS_NONE`; the owner/organizer row is added by the
- * repository, not here. Picker rows whose address isn't email-shaped
- * (urn:uuid, principal paths) are dropped — the provider can't store them.
+ * This seam keeps the device write path apart from the Room and iTIP path: the device repository
+ * must never see the Room row's wire fields (scheduleAgent, scheduleStatus, sequence and the
+ * like), which mean nothing to `CalendarContract.Attendees`. Each row becomes a
+ * `RELATIONSHIP_ATTENDEE` guest with `ATTENDEE_STATUS_NONE`; the repository adds the owner's
+ * organizer row. Rows whose address isn't email-shaped (urn:uuid, principal paths) are dropped,
+ * since the provider can't store them.
  */
 fun pickerAttendeesToDevice(
     attendees: List<org.onekash.kashcal.data.db.entity.Attendee>
@@ -4702,12 +4197,11 @@ fun pickerAttendeesToDevice(
     }
 
 /**
- * Seed the attendee picker for a device event from its existing guest list,
- * so an edit diffs against the real set. Excludes the organizer chip (the
- * repository owns the owner row; it isn't a removable guest). Produces Room
- * [org.onekash.kashcal.data.db.entity.Attendee] entities because that's what
- * the shared picker operates on — but only the address/displayName are
- * meaningful; the device save re-bridges them via [pickerAttendeesToDevice].
+ * Seeds the attendee picker for a device event from its guest list, so an edit diffs against
+ * the real set. The organizer is left out: the repository owns that row, and it isn't a
+ * removable guest. The result is Room [org.onekash.kashcal.data.db.entity.Attendee] rows because
+ * the shared picker works on them, but only the address and display name mean anything; the
+ * device save converts them back with [pickerAttendeesToDevice].
  */
 fun deviceGuestsToPickerSeed(
     guests: List<AttendeeUiModel>
@@ -4721,9 +4215,9 @@ fun deviceGuestsToPickerSeed(
     }
 
 /**
- * The attendee-editing context for the event form: the resolving account (to
- * mark "You" and as ORGANIZER source) and whether the account can send
- * invitations. See [HomeViewModel.getFormAttendeeContext].
+ * The event form's attendee-editing context: the calendar's account, which marks "You" and
+ * supplies the ORGANIZER, and whether it can send invitations
+ * ([HomeViewModel.getFormAttendeeContext]).
  */
 data class FormAttendeeContext(
     val account: org.onekash.kashcal.data.db.entity.Account?,

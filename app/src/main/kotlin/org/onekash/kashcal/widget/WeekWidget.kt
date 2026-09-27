@@ -18,26 +18,19 @@ import dagger.hilt.components.SingletonComponent
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 
 /**
- * Week View widget showing events for the next 7 days (today + 6 days).
+ * Week View widget: a scrollable list of the 7 days from today.
  *
- * Features:
- * - Shows 7-day rolling week in a scrollable list
- * - Up to 5 events per day with overflow indicator
- * - Day headers with "Today" highlight
- * - Tap day header → navigate to that day in app
- * - Tap event → open event quick view
- * - Tap empty day → create event on that day
+ * - Each day shows up to the user's events-per-day setting (default 5), then an overflow row.
+ * - Day headers highlight today.
+ * - Tapping a day header or the overflow row opens that day in the app, an event opens its
+ *   quick view, and an empty day creates an event on that day.
  *
- * Updates:
- * - On event create/update/delete
- * - On sync completion
- * - At midnight (new day)
- * - Periodically (every 30 minutes)
+ * Refreshes on each [WidgetUpdateManager.updateAllWidgets] call (for example an event write, a
+ * sync, midnight or a settings change) and every 30 minutes.
  *
- * State management:
- * - [WIDGET_REFRESH_STAMP] stored in Glance PreferencesGlanceStateDefinition
- * - Data fetch lives inside [provideContent] via [fetchWeekData] so Glance 1.1's
- *   session-scoped recomposition actually re-runs the fetch (see MonthWidget KDoc)
+ * [WIDGET_REFRESH_STAMP] lives in the Glance preferences state. The fetch ([fetchWeekData])
+ * runs inside [provideContent], keyed on the stamp, because Glance 1.1's session-scoped
+ * recomposition re-runs only what is inside it ([MonthWidget] explains the session model).
  */
 class WeekWidget : GlanceAppWidget() {
 
@@ -57,19 +50,18 @@ class WeekWidget : GlanceAppWidget() {
         val entryPoint = EntryPointAccessors.fromApplication(context, WeekWidgetEntryPoint::class.java)
         val repository = entryPoint.widgetDataRepository()
         val dataStore = KashCalDataStore(context)
-        // Resolve the accent BEFORE provideContent so the very first RemoteViews already carry the
-        // picked seed. Seeding produceState with null would render one frame on the platform dynamic
-        // palette (null ?: GlanceTheme.colors) and only swap to the seed on a later push — which, if
-        // the host snapshots the widget before that push lands, leaves a SEED user showing wallpaper
-        // colors ("randomly didn't take the tint"). null here still means the genuine DYNAMIC source.
+        // Resolve the accent before provideContent so the first RemoteViews carry the picked
+        // seed. Seeding produceState with null would render one frame on the platform dynamic
+        // palette (null ?: GlanceTheme.colors); if the host snapshots the widget before the next
+        // push, a SEED user keeps wallpaper colors. A null here still means the DYNAMIC source.
         val initialAccent = resolveWidgetAccentColors(context, dataStore).colors
 
         provideContent {
             val prefs = currentState<Preferences>()
             val stamp = prefs[WIDGET_REFRESH_STAMP] ?: 0L
             val isRefreshing = isRefreshCueActive(prefs[WIDGET_REFRESHING_UNTIL], System.currentTimeMillis())
-            // Empty-events seed: empty week may flash briefly on cold start before
-            // fetchWeekData resolves — accepted trade-off, no dedicated loading UI.
+            // Empty-events seed: an empty week may flash on cold start before fetchWeekData
+            // resolves. Accepted; there is no dedicated loading UI.
             val data by produceState(
                 initialValue = WeekData(
                     weekEvents = emptyMap(),
@@ -99,8 +91,8 @@ class WeekWidget : GlanceAppWidget() {
     }
 
     /**
-     * Renders a sample week into the widget picker. Some sample days are deliberately
-     * empty so the preview also shows what a quiet day looks like.
+     * Renders a sample week into the widget picker. Some sample days are empty so the preview
+     * also shows a quiet day.
      */
     override suspend fun providePreview(context: Context, widgetCategory: Int) {
         provideContent { WeekPreviewContent(context) }

@@ -8,36 +8,27 @@ import org.onekash.kashcal.data.db.entity.PendingCancel
 import org.onekash.kashcal.util.AddressNormalizer
 
 /**
- * Queue of removed attendees awaiting an iTIP CANCEL.
+ * Queues attendees removed from a synced event until their iTIP CANCEL is resolved.
  *
- * Rows are inserted by the organizer write path on removal and drained by the
- * push after a successful PUT: outbox-class servers get a per-attendee
- * METHOD:CANCEL, the implicit fleet is skipped (the shrunk PUT already
- * cancelled), then the row is deleted. A transient failure leaves the row for
- * the next cycle.
+ * EventWriter inserts a row per removed guest; the push drains them after a successful PUT.
+ * `PushStrategy.drainPendingCancels` documents when a row is deleted; a transient failure keeps
+ * it for the next push, up to the attempt cap.
  */
 @Dao
 interface PendingCancelsDao {
 
     /**
-     * Enqueue (or refresh) a pending cancel, idempotent on
-     * (event_id, recurrence_id, canonical address). Re-removing the same guest
-     * keeps a single row carrying the latest sequence rather than spawning
-     * duplicate cancels.
+     * Enqueues or refreshes a pending cancel, idempotent on (event_id, recurrence_id, canonical
+     * address), so re-removing a guest keeps one row with the latest sequence.
      *
-     * Dedup compares the CANONICAL address ([AddressNormalizer.canonical] —
-     * `mailto:`-stripped, lower-cased), matching how the removal diff in
-     * EventWriter decides "this guest was removed". A raw string match would
-     * miss a re-removal when the address form drifted between enqueues — a
-     * server reforming `mailto:Bob@x` to bare `bob@x` on a pull between the two
-     * (servers legitimately do this) would leave two rows for one guest and
-     * send a duplicate CANCEL. The stored `address` stays RAW (verbatim), since
-     * the wire emit re-derives the form and non-email CAL-ADDRESS values
-     * (urn:uuid:, principal paths) must not be canonicalised.
+     * Dedup compares [AddressNormalizer.canonical], the form EventWriter's removal diff uses. A
+     * raw match would miss a re-removal after a server reformed `mailto:Bob@x` to bare `bob@x`
+     * on a pull in between (servers legitimately do this), leaving two rows and sending a
+     * duplicate CANCEL. The stored `address` stays raw: the wire emit re-derives the form, and
+     * non-email CAL-ADDRESS values (urn:uuid:, principal paths) must not be canonicalised.
      *
-     * Implemented as delete-matching-then-insert (not unique-index + REPLACE):
-     * SQLite treats NULL as distinct in a UNIQUE index, so two all-events rows
-     * (recurrence_id IS NULL) would not collide and REPLACE would never fire.
+     * A unique index with REPLACE can't do this: SQLite treats NULLs as distinct in a UNIQUE
+     * index, so two all-events rows (recurrence_id IS NULL) would never collide.
      */
     @Transaction
     suspend fun upsert(cancel: PendingCancel) {
@@ -54,15 +45,15 @@ interface PendingCancelsDao {
     @Insert
     suspend fun insert(cancel: PendingCancel)
 
-    /** All pending cancels for an event (both series-level and per-occurrence). */
+    /** Returns [eventId]'s pending cancels, series-level and per-occurrence. */
     @Query("SELECT * FROM pending_cancels WHERE event_id = :eventId")
     suspend fun getForEvent(eventId: Long): List<PendingCancel>
 
-    /** Remove a row once its CANCEL is resolved (delivered or abandoned). */
+    /** Deletes the row with [id]. */
     @Query("DELETE FROM pending_cancels WHERE id = :id")
     suspend fun deleteById(id: Long)
 
-    /** Advance the bounded-retry counter after a transient delivery failure. */
+    /** Counts one failed delivery attempt toward the retry cap. */
     @Query("UPDATE pending_cancels SET attempt_count = attempt_count + 1 WHERE id = :id")
     suspend fun incrementAttempt(id: Long)
 }

@@ -14,23 +14,21 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * RECURRENCE-ID value-type / timezone normalization.
+ * Tests that [RRuleExpander] matches overrides by the instant of their RECURRENCE-ID,
+ * independent of the JVM default timezone.
  *
- * Per RFC 5545 §3.8.4.4 a RECURRENCE-ID identifies the *instant* of the
- * original occurrence it overrides — not a calendar day. The prior expander
- * matched overrides by a "day code" (YYYYMMDD) derived from the RECURRENCE-ID.
- * For a UTC (`Z`-form) or floating RECURRENCE-ID the day code was computed in
- * the JVM's *default* timezone (ICalDateTime.toLocalDate falls back to
- * ZoneId.systemDefault() when there is no TZID), which can disagree with the
- * calendar day the master's RRULE expansion assigns the occurrence in the
- * master's own zone. The override was then dropped or applied to the wrong day
- * depending on where the process happened to run.
+ * RFC 5545 §3.8.4.4: a RECURRENCE-ID is the original occurrence's DTSTART, not a calendar day.
+ * A day code (YYYYMMDD) read from a Z-form or floating RECURRENCE-ID would use the JVM default
+ * zone ([ICalDateTime.toLocalDate] falls back to ZoneId.systemDefault() without a TZID), which
+ * can name a different day than the master's expansion in its own zone, so the override would be
+ * dropped or land on the wrong day depending on where the process runs.
  *
- * These tests pin the corrected behaviour:
- *  - matching is by normalized instant, independent of the machine timezone;
- *  - a value-type mismatch (DATE RECURRENCE-ID vs timed master, or DATE-TIME
- *    vs all-day master) is reconciled to the master's value type/zone before
- *    matching.
+ * These tests pin:
+ *  - matching by instant, whatever the machine timezone;
+ *  - a value-type mismatch (a DATE RECURRENCE-ID against a timed master, a DATE-TIME against an
+ *    all-day master) converted to the master's value type and zone first
+ *    ([RRuleExpander.normalizeToMasterValueType]);
+ *  - an override matching no occurrence adding nothing.
  */
 @DisplayName("RECURRENCE-ID normalization")
 class RecurrenceIdNormalizationTest {
@@ -72,8 +70,8 @@ class RecurrenceIdNormalizationTest {
             val normalized = RRuleExpander.normalizeToMasterValueType(recurrenceId, masterDtStart)
 
             assertFalse(normalized.isDate, "promoted value must be a DATE-TIME")
-            // Must land on Dec 3 10:00 in New York (== 15:00Z), the instant the
-            // master's expansion produces for that calendar day.
+            // Dec 3 10:00 in New York (15:00Z), the instant the master's expansion
+            // produces for that calendar day.
             val expected = ZonedDateTime.of(2023, 12, 3, 10, 0, 0, 0, nyZone).toInstant().toEpochMilli()
             assertEquals(expected, normalized.timestamp)
         }
@@ -123,11 +121,10 @@ class RecurrenceIdNormalizationTest {
     @DisplayName("Expansion matches overrides by instant")
     inner class ExpansionMatching {
 
-        // The canonical reproduction: a Z-form RECURRENCE-ID against a
-        // TZID master. The correct occurrence must be overridden regardless of
-        // the machine timezone. Under the old day-code logic the override
-        // landed on the wrong day (or was dropped) when the default zone pushed
-        // the UTC instant across a calendar boundary.
+        // A Z-form RECURRENCE-ID against a TZID master must override Dec 3 whatever
+        // the machine timezone. Matched by a day code in the default zone, the
+        // override lands on the wrong day, or is dropped, when that zone pushes the
+        // UTC instant across a calendar boundary.
         private val zFormOverrideIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -257,8 +254,8 @@ class RecurrenceIdNormalizationTest {
 
         @Test
         fun `unmatched override is not injected as an extra occurrence`() {
-            // RECURRENCE-ID points at a day with no generated occurrence (Dec 20,
-            // outside the COUNT=5 run). It must simply not apply — no phantom event.
+            // The RECURRENCE-ID names Dec 20, outside the COUNT=5 run, so the override
+            // matches nothing and adds no occurrence.
             val ics = """
                 BEGIN:VCALENDAR
                 VERSION:2.0

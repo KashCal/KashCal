@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">ଏହି ସର୍ଭରରେ କୌଣସି କ୍ୟାଲେଣ୍ଡର ମିଳିଲା ନାହିଁ।</string>
     <string name="caldav_error_unexpected">ଅପ୍ରତ୍ୟାଶିତ ତ୍ରୁଟି। ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nଏହା ଯଦି ଆପଣଙ୍କ ଲୋକାଲ ନେଟୱାର୍କରେ ଥିବା ଏକ ସର୍ଭର, ତେବେ ସଂଯୋଗ କରିବାକୁ ଲୋକାଲ ନେଟୱାର୍କ ଆକ୍ସେସ୍ ଅନୁମତି ଦିଅନ୍ତୁ।</string>
+    <string name="caldav_error_connection_refused_insecure">ସର୍ଭର ସଂଯୋଗକୁ ଏପରି ସ୍ଥାନକୁ ପଠାଇଲା ଯେଉଁଠାକୁ KashCal ଯାଏ ନାହିଁ (ଏନକ୍ରିପ୍ଟ ହୋଇନଥିବା ଠିକଣା, କିମ୍ବା ରିଡାଇରେକ୍ଟ ଲୁପ୍), ତେଣୁ ଆପଣଙ୍କ ପାସୱାର୍ଡ ପଠାଇବା ପୂର୍ବରୁ KashCal ବନ୍ଦ ହୋଇଗଲା। ସର୍ଭର ଠିକଣା ଯାଞ୍ଚ କରନ୍ତୁ।</string>
     <string name="local_network_banner_title">ଲୋକାଲ ନେଟୱାର୍କ ଆକ୍ସେସ୍ ଆବଶ୍ୟକ</string>
     <string name="local_network_banner_body">ଏହି ସର୍ଭର ଆପଣଙ୍କ ଲୋକାଲ ନେଟୱାର୍କରେ ଥିବା ପରି ଦେଖାଯାଉଛି। KashCal ଏହା ସହ ସଂଯୋଗ କରିପାରିବା ପାଇଁ ଲୋକାଲ ନେଟୱାର୍କ ଆକ୍ସେସ୍ ଅନୁମତି ଦିଅନ୍ତୁ।</string>
     <string name="local_network_banner_allow">ଆକ୍ସେସ୍ ଅନୁମତି ଦିଅନ୍ତୁ</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">ପରିବର୍ତ୍ତନ ସେଭ୍ କରନ୍ତୁ</string>
     <string name="dialog_delete_recurring_title">ଡିଲିଟ୍ କରନ୍ତୁ</string>
     <string name="dialog_move_recurring_title">ସ୍ଥାନାନ୍ତର</string>
+    <string name="snackbar_event_rescheduled">ଇଭେଣ୍ଟର ସମୟ ବଦଳାଗଲା</string>
+    <string name="snackbar_reschedule_failed">ଇଭେଣ୍ଟର ସମୟ ବଦଳାଯାଇପାରିଲା ନାହିଁ</string>
     <string name="recurring_this_event">ଏହି ଇଭେଣ୍ଟ</string>
     <string name="recurring_all_events">ସମସ୍ତ ଇଭେଣ୍ଟ</string>
 

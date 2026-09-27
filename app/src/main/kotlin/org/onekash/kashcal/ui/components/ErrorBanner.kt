@@ -29,7 +29,7 @@ import org.onekash.kashcal.error.ErrorActionCallback
 import org.onekash.kashcal.error.ErrorPresentation
 
 /**
- * Persistent error banner shown at top of screen.
+ * Shows an [ErrorPresentation.Banner] as a persistent full-width banner at the top of the screen.
  *
  * Usage:
  * ```
@@ -41,16 +41,9 @@ import org.onekash.kashcal.error.ErrorPresentation
  * }
  * ```
  *
- * Design:
- * - Color-coded by severity (Info, Warning, Error)
- * - Optional action button
- * - Edge-to-edge layout
- * - Icon indicates banner type
- *
- * Use cases:
- * - No accounts configured (Info with "Set Up" action)
- * - Offline mode (Warning)
- * - Sync blocked (Error with "Fix" action)
+ * The banner's color and icon follow its type (Info, Warning, Error); the action button is
+ * optional. [org.onekash.kashcal.error.ErrorMapper] produces a banner only for no accounts
+ * configured (Info, with a "Set up" action).
  */
 @Composable
 fun ErrorBanner(
@@ -127,11 +120,7 @@ fun ErrorBanner(
     }
 }
 
-/**
- * Simplified offline banner for common use case.
- *
- * Shows cloud-off icon with offline message.
- */
+/** Shows an offline banner with a cloud-off icon and an optional Retry button. */
 @Composable
 fun OfflineBanner(
     message: String = stringResource(R.string.status_youre_offline),
@@ -182,10 +171,8 @@ fun OfflineBanner(
 }
 
 /**
- * Generic status banner with customizable colors.
- *
- * Use ErrorBanner for error-specific banners with ErrorPresentation.
- * Use this for custom status messages.
+ * Shows a status banner with caller-chosen icon and colors, for messages that aren't an
+ * [ErrorPresentation]; use [ErrorBanner] for those.
  */
 @Composable
 fun StatusBanner(

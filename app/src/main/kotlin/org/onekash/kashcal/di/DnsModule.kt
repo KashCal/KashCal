@@ -14,13 +14,12 @@ import org.onekash.kashcal.sync.carddav.CardDavHostResolver
 import javax.inject.Singleton
 
 /**
- * Provides the RFC 6764 DNS discovery seam: the platform [RawDnsChannel] adapter
- * and the pure SRV/TXT resolvers layered over it.
+ * Provides the RFC 6764 DNS discovery seam: the platform [RawDnsChannel] adapter and the pure
+ * SRV and TXT resolvers over it.
  *
- * The resolver impls take plain (non-`@Inject`) constructors on purpose — they are
- * pure classes unit-tested against a fake channel and carry an injected `rng` /
- * default that Hilt shouldn't have to reason about — so they are wired here with
- * explicit `@Provides` rather than constructor injection.
+ * The resolvers have plain, non-`@Inject` constructors on purpose: they are pure classes
+ * unit-tested against a fake channel, and [SrvResolverImpl] takes a defaulted `rng` Hilt
+ * shouldn't have to reason about. So they are wired here with `@Provides`.
  */
 @Module
 @InstallIn(SingletonComponent::class)
@@ -39,10 +38,10 @@ object DnsModule {
     fun provideTxtResolver(channel: RawDnsChannel): TxtResolver = TxtResolverImpl(channel)
 
     /**
-     * Wired with `@Provides` (not constructor injection) for the same reason as the
-     * resolvers above: it takes a defaulted [org.onekash.kashcal.sync.carddav.RegistrableDomainResolver]
-     * function-type parameter that Hilt can't reason about, so the production default
-     * is supplied here and the class keeps a single test-friendly constructor.
+     * Wired with `@Provides` for the same reason as the resolvers: its defaulted
+     * [org.onekash.kashcal.sync.carddav.RegistrableDomainResolver] function-type parameter is
+     * one Hilt can't reason about. Leaving it out here takes the production default, and the
+     * class keeps a single test-friendly constructor.
      */
     @Provides
     @Singleton

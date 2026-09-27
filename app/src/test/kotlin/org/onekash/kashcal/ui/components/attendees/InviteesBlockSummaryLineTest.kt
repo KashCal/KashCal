@@ -4,9 +4,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Pure-logic tests for [formatSummaryLine] — the priority machine that
- * picks which [SummaryLine] variant to render. Compose-side resolution
- * lives in [composeSummaryLine] and is exercised by render tests.
+ * Tests [formatSummaryLine], the first-match-wins choice of the [SummaryLine] variant to render.
+ * The Compose-side resolution in [composeSummaryLine] isn't tested here.
  */
 class InviteesBlockSummaryLineTest {
 
@@ -28,9 +27,8 @@ class InviteesBlockSummaryLineTest {
 
     @Test
     fun `you organizing alone yields YouAlone`() {
-        // Organizer with only their own attendee row (rare — usually the
-        // organizer is synthesized off-list, but this branch fires when
-        // the user added themselves explicitly).
+        // The user's You row is also the organizer, whether the user's own attendee row or the
+        // chip fromRoom synthesizes, and no one else is listed.
         val line = formatSummaryLine(
             listOf(you().copy(isOrganizer = true)),
             isCurrentUserOnList = true,
@@ -111,8 +109,8 @@ class InviteesBlockSummaryLineTest {
 
     @Test
     fun `on-list-but-no-you with organizer yields OrganizerOtherMore`() {
-        // Edge case: caller said the user is on the list, but the
-        // attendee list has no isYou=true row (stale projection).
+        // The caller says the user is on the list, but no row has isYou true (for example a
+        // stale projection).
         val line = formatSummaryLine(
             listOf(host("Maria Chen"), other("a"), other("b")),
             isCurrentUserOnList = true,
@@ -133,10 +131,8 @@ class InviteesBlockSummaryLineTest {
 
     @Test
     fun `organizer flag uses isOrganizer-not-isYou for organizer detection`() {
-        // The user is on the list AS the organizer (rare; usually the
-        // organizer chip is synthesized off-list). isCurrentUserOrganizer
-        // = true forces YouOrganizing, even though attendees also has a
-        // separate isOrganizer chip we'd otherwise prefer for
+        // The You row carries isOrganizer. The organizer lookup skips You rows, and with
+        // isCurrentUserOrganizer true the first branch gives YouOrganizing, not
         // OrganizerPlusYou.
         val line = formatSummaryLine(
             listOf(you().copy(isOrganizer = true), other("a"), other("b")),

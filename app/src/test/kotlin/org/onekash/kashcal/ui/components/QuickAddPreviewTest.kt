@@ -15,9 +15,9 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 /**
- * Robolectric guards for the Quick Add preview's inline note line: it renders
- * the note verbatim when present and shows nothing when absent, including for a
- * note-only (blank-title) parse where the note is the only content.
+ * Robolectric tests for the Quick Add preview's note line: the note renders when present,
+ * including for a note-only parse with a blank title, and a null note renders no note text
+ * while the title still shows.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h720dp-mdpi")

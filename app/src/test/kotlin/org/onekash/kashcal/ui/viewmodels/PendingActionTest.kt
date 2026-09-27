@@ -10,19 +10,11 @@ import org.junit.Test
 import org.onekash.kashcal.util.CalendarIntentData
 
 /**
- * Unit tests for PendingAction sealed class and its variants.
+ * Tests the [PendingAction] variants: stored fields, defaults, equality and `copy`, the
+ * [PendingAction.ShowEventQuickView.Source] enum, and an exhaustive `when` over every variant.
  *
- * Tests verify:
- * - Data class equality and copy behavior
- * - All action types are properly constructed
- * - Source enum for ShowEventQuickView
- * - Deep link navigation intent handling
- *
- * These actions are triggered by:
- * - Notification clicks (reminder tap, snooze)
- * - Widget event taps
- * - App shortcuts (create event, go to today)
- * - ICS file imports
+ * MainActivity sets these from reminder notification taps, widget and app-shortcut actions,
+ * shared text and .ics files, calendar insert and edit intents, and CalendarContract URIs.
  */
 class PendingActionTest {
 

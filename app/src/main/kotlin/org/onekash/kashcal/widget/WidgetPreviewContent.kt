@@ -13,33 +13,31 @@ import java.time.LocalDate
 /**
  * The composable bodies rendered into the system widget picker.
  *
- * Each one calls the widget's real content composable with sample data, so a preview
- * cannot drift away from what the widget actually looks like. Unlike `provideGlance`,
- * `providePreview` is a single composition with no recomposition and no effects, so data
- * is passed in directly rather than produced asynchronously.
+ * Each one calls the widget's real content composable with sample data, so a preview can't
+ * drift from what the widget looks like. Unlike `provideGlance`, `providePreview` is a single
+ * composition with no recomposition and no effects, so data is passed in directly, not produced
+ * asynchronously.
  *
- * These are separate top-level composables rather than lambdas inside `providePreview`
- * because the Glance unit-test harness can drive a composable but cannot invoke
- * `providePreview` itself.
+ * They are top-level composables, not lambdas inside `providePreview`, because the Glance
+ * unit-test harness can drive a composable but can't invoke `providePreview` itself.
  */
 
 /**
- * The dp size a widget occupying [columns] x [rows] home-screen cells is estimated to get,
- * following the platform's own conversion: 70n - 30.
+ * Returns the estimated dp size of a widget occupying [columns] x [rows] home-screen cells,
+ * by the platform's own conversion: 70n - 30.
  */
 internal fun previewCellSize(columns: Int, rows: Int): DpSize =
     DpSize((70 * columns - 30).dp, (70 * rows - 30).dp)
 
 /**
- * The size to compose a preview at, for a widget occupying [columns] x [rows] cells whose
- * provider declares [minWidth] x [minHeight].
+ * Returns the size to compose a preview at, for a widget occupying [columns] x [rows] cells
+ * whose provider declares [minWidth] x [minHeight].
  *
- * Previews default to `SizeMode.Single`, which composes at the provider's declared minimum
- * and silently drops anything that doesn't fit, so each widget supplies a size explicitly.
- * That size is never smaller than the provider's declared minimum: the cell estimate falls
- * below it for a 1x1 widget and for any widget taller than its cells suggest, and composing
- * into a box smaller than the widget can ever actually be reintroduces the dropped-content
- * problem the explicit size exists to avoid.
+ * Previews default to `SizeMode.Single`, which composes at the provider's declared minimum and
+ * silently drops anything that doesn't fit, so each widget supplies a size. That size is never
+ * below the declared minimum: the cell estimate falls below it for a 1x1 widget and for any
+ * widget taller than its cells suggest, and a box smaller than the widget can ever be drops
+ * content again.
  */
 internal fun previewSize(columns: Int, rows: Int, minWidth: Dp, minHeight: Dp): DpSize {
     val cells = previewCellSize(columns, rows)
@@ -47,8 +45,8 @@ internal fun previewSize(columns: Int, rows: Int, minWidth: Dp, minHeight: Dp): 
 }
 
 /**
- * Preview size modes. The minimums mirror each provider's declared `minWidth`/`minHeight`;
- * a test reads the descriptors and fails if either side drifts.
+ * Preview size modes. The minimums mirror each provider's declared `minWidth` and `minHeight`;
+ * `WidgetPreviewContentTest` reads the descriptors and fails if either side drifts.
  */
 internal object WidgetPreviewSizes {
     val AGENDA = SizeMode.Responsive(setOf(previewSize(4, 2, 250.dp, 110.dp)))

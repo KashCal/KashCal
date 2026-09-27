@@ -215,8 +215,8 @@ class ExportablePreferencesTest {
 
     @Test
     fun `fromBackupValue returns null for legacy default_calendar key`() {
-        // A backup file produced before DEFAULT_CALENDAR was excluded may still carry the key.
-        // The importer must silently ignore it — the decoded pair is null so the write is skipped.
+        // Older backup files may carry DEFAULT_CALENDAR. The importer ignores it: the decoded
+        // pair is null, so the write is skipped.
         val result = ExportablePreferences.fromBackupValue(
             PreferencesKeys.DEFAULT_CALENDAR.name,
             BackupPreferenceValue.StringPref("room:1"),
@@ -248,17 +248,17 @@ class ExportablePreferencesTest {
 
     @Test
     fun `toBackupValue round-trips Long`() {
-        // Long-valued exportable keys don't currently exist in the allow-list (LAST_SYNC_TIME is excluded).
-        // We still need LongPref for forward compatibility; test via toBackupValue directly.
+        // The allow-list has no Long key (LAST_SYNC_TIME is excluded), but LongPref stays for
+        // forward compatibility. This builds a LongPref directly and decodes it against an Int
+        // key, so it checks the type-mismatch path, not a Long round trip.
         val original = 1_800_000L
         val backup = BackupPreferenceValue.LongPref(original)
         val (_, roundValue) = ExportablePreferences.fromBackupValue(
-            // an allowed int key — we're only testing decode of a LongPref value.
-            // fromBackupValue for a known int key receiving a LongPref returns null (type mismatch).
+            // An allowed Int key; given a LongPref, fromBackupValue returns null.
             PreferencesKeys.SYNC_INTERVAL_MINUTES.name,
             backup,
         ) ?: Pair(null, null)
-        // Value is null because the key expects Int but we passed Long. Expected behaviour.
+        // Null: the key expects an Int and got a Long.
         assertNull(roundValue)
     }
 
@@ -282,7 +282,7 @@ class ExportablePreferencesTest {
 
     @Test
     fun `fromBackupValue returns null on type mismatch`() {
-        // THEME is a String key. Supplying a BoolPref must decode to null.
+        // THEME is a String key, so a BoolPref decodes to null.
         val result = ExportablePreferences.fromBackupValue(
             PreferencesKeys.THEME.name,
             BackupPreferenceValue.BoolPref(true),

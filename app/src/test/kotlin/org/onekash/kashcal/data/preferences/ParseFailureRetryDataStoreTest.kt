@@ -22,10 +22,10 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Unit tests for parse failure retry tracking in KashCalDataStore.
+ * Tests the per-calendar parse failure retry count in [KashCalDataStore].
  *
- * Tests the retry count mechanism used to hold sync tokens when parse failures occur.
- * This prevents permanent data loss by allowing retries before advancing the sync token.
+ * `PullStrategy` holds a calendar's sync-token while this count is below its retry limit, so
+ * events that failed to parse are fetched again before the token advances past them.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -102,14 +102,11 @@ class ParseFailureRetryDataStoreTest {
     fun `resetParseFailureRetry clears count for calendar`() = runTest {
         val calendarId = 100L
 
-        // Increment a few times
         dataStore.incrementParseFailureRetry(calendarId)
         dataStore.incrementParseFailureRetry(calendarId)
 
-        // Reset
         dataStore.resetParseFailureRetry(calendarId)
 
-        // Verify reset
         val count = dataStore.getParseFailureRetryCount(calendarId)
         assertEquals(0, count)
     }
@@ -124,20 +121,17 @@ class ParseFailureRetryDataStoreTest {
         dataStore.incrementParseFailureRetry(calendarB)
         dataStore.incrementParseFailureRetry(calendarB)
 
-        // Reset only calendar A
         dataStore.resetParseFailureRetry(calendarA)
 
-        // Verify
         assertEquals(0, dataStore.getParseFailureRetryCount(calendarA))
         assertEquals(2, dataStore.getParseFailureRetryCount(calendarB))
     }
 
     @Test
     fun `resetParseFailureRetry on unknown calendar is safe`() = runTest {
-        // Should not throw
+        // Doesn't throw, and the count stays 0.
         dataStore.resetParseFailureRetry(999L)
 
-        // Verify still returns 0
         assertEquals(0, dataStore.getParseFailureRetryCount(999L))
     }
 
@@ -156,10 +150,8 @@ class ParseFailureRetryDataStoreTest {
         dataStore.incrementParseFailureRetry(calendarC)
         dataStore.incrementParseFailureRetry(calendarC)
 
-        // Clear all
         dataStore.clearAllParseFailureRetries()
 
-        // Verify all reset
         assertEquals(0, dataStore.getParseFailureRetryCount(calendarA))
         assertEquals(0, dataStore.getParseFailureRetryCount(calendarB))
         assertEquals(0, dataStore.getParseFailureRetryCount(calendarC))
@@ -212,12 +204,11 @@ class ParseFailureRetryDataStoreTest {
     fun `retry count persists after reloading DataStore`() = runTest {
         val calendarId = 100L
 
-        // Increment
         dataStore.incrementParseFailureRetry(calendarId)
         dataStore.incrementParseFailureRetry(calendarId)
 
-        // Cancel existing scope to flush writes, then create new DataStore on same file
-        // (simulates app restart)
+        // Simulates an app restart: cancel the scope to flush writes, then open a new DataStore on
+        // the same file.
         dataStoreScope.cancel()
         dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         val freshPrefsDataStore = PreferenceDataStoreFactory.create(
@@ -225,7 +216,6 @@ class ParseFailureRetryDataStoreTest {
         ) { testDataStoreFile }
         val newDataStore = KashCalDataStore(context, freshPrefsDataStore)
 
-        // Verify persistence
         val count = newDataStore.getParseFailureRetryCount(calendarId)
         assertEquals(2, count)
     }

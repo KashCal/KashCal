@@ -8,13 +8,15 @@ import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Attendee
 
 /**
- * Pure-logic tests for [AttendeeSelection] — the picker's selection model.
+ * Tests [AttendeeSelection], the picker's selection model.
  *
- * The load-bearing constraint (C1): the picker must edit `Attendee` ENTITIES,
- * never rebuild them from the lossy [AttendeeUiModel]. These tests pin that a
- * seeded attendee's wire fields (role / cutype / rsvp / delegation / schedule
- * params) survive untouched, and that a remove keyed on the canonical address
- * the chip displays still finds the seeded row.
+ * The picker must edit [Attendee] rows, never rebuild them from the lossy [AttendeeUiModel].
+ * These tests pin that a seeded attendee's wire fields (role, cutype, rsvp, delegation,
+ * schedule parameters) survive untouched and that a remove keyed on the canonical address the
+ * chip displays still finds the seeded row. They also cover [AttendeeSelection.isChanged],
+ * canonical dedup on add, the address form and sort order of an added row, remove
+ * canonicalizing its argument and ignoring an absent address, [AttendeeSelection.isRemovable]
+ * and [AttendeeSelection.removedFromSeed].
  */
 class AttendeeSelectionTest {
 
@@ -60,14 +62,22 @@ class AttendeeSelectionTest {
             id = 7L,
         )
         val selection = AttendeeSelection.seed(listOf(pulled))
-        // The entity must come back byte-identical — no round-trip through the
-        // lossy AttendeeUiModel, which would drop role/cutype/rsvp/delegation.
+        // The row comes back equal: a round trip through the lossy AttendeeUiModel would drop
+        // role, cutype, rsvp and delegation.
         assertEquals(pulled, selection.attendees.single())
     }
 
     @Test
     fun `a pure seed is not changed (C2)`() {
         val selection = AttendeeSelection.seed(listOf(attendee("mailto:a@example.test")))
+        assertFalse(selection.isChanged)
+    }
+
+    @Test
+    fun `addNew of a bare address differing only in case from a seeded guest is a no-op`() {
+        val seeded = attendee("mailto:alice@example.test")
+        val selection = AttendeeSelection.seed(listOf(seeded)).addNew(null, "Alice@Example.test")
+        assertEquals(listOf(seeded), selection.attendees)
         assertFalse(selection.isChanged)
     }
 
@@ -98,8 +108,8 @@ class AttendeeSelectionTest {
 
     @Test
     fun `addNew stores a non-email CAL-ADDRESS verbatim (no mailto prefix)`() {
-        // Defensive: the picker only adds emails, but the converter must not
-        // produce "mailto:urn:uuid:…" if a non-email form ever reaches it.
+        // Defensive: the picker only adds emails, but a non-email form that reaches addNew
+        // must not become "mailto:urn:uuid:...".
         val added = AttendeeSelection.seed(emptyList())
             .addNew(displayName = null, bareAddress = "urn:uuid:abc-123")
             .attendees.single()
@@ -126,12 +136,12 @@ class AttendeeSelectionTest {
 
     @Test
     fun `addNew of a canonical duplicate is a no-op and does not flip isChanged`() {
-        // mailto-vs-bare and case differ, but canonically the same person.
+        // mailto versus bare and the case differ, but canonically it is the same person.
         val selection = AttendeeSelection.seed(listOf(attendee("mailto:Alice@Example.test")))
             .addNew(displayName = "Alice Again", bareAddress = "alice@example.test")
         assertEquals(1, selection.attendees.size)
         assertFalse(selection.isChanged)
-        // The original (with its wire fields) is kept, not the new bare row.
+        // The seeded row and its wire fields stay; the new bare row isn't added.
         assertEquals("mailto:Alice@Example.test", selection.attendees.single().address)
     }
 
@@ -164,8 +174,8 @@ class AttendeeSelectionTest {
 
     @Test
     fun `a seeded attendee is removable (the add-only lock is lifted)`() {
-        // Removing an already-invited guest is now allowed; the dropped guest
-        // gets an iTIP CANCEL on save.
+        // An invited guest can be removed; a guest removed from an event already on the
+        // server is queued for an iTIP CANCEL on save (not asserted here).
         val selection = AttendeeSelection.seed(
             listOf(attendee("mailto:alice@example.test")),
         )
@@ -186,8 +196,8 @@ class AttendeeSelectionTest {
 
     @Test
     fun `removedFromSeed is non-empty after a recurring removal`() {
-        // Regression guard: the seed snapshot must be captured regardless of any
-        // lock flag, so the CANCEL target set does not silently vanish.
+        // seed snapshots every seeded address unconditionally, so a removed guest is never
+        // silently missing from removedFromSeed.
         val selection = AttendeeSelection.seed(
             listOf(attendee("mailto:alice@example.test")),
         ).remove("alice@example.test")
@@ -200,8 +210,7 @@ class AttendeeSelectionTest {
 
     @Test
     fun `removedFromSeed excludes a session-added-then-removed guest (never invited)`() {
-        // Adding then removing someone who was never on the seed nets to no
-        // removal — they were never invited, so no CANCEL is owed.
+        // A guest added and removed in one session was never invited, so nothing is reported.
         val selection = AttendeeSelection.seed(emptyList())
             .addNew(displayName = null, bareAddress = "bob@example.test")
             .remove("bob@example.test")
@@ -211,7 +220,7 @@ class AttendeeSelectionTest {
 
     @Test
     fun `removedFromSeed nets out a remove-then-readd of a seeded guest`() {
-        // Removing then re-adding a seeded guest leaves them invited; no CANCEL.
+        // Removing then re-adding a seeded guest leaves them invited, so nothing is reported.
         val selection = AttendeeSelection.seed(
             listOf(attendee("mailto:alice@example.test")),
         ).remove("alice@example.test")
@@ -222,8 +231,8 @@ class AttendeeSelectionTest {
 
     @Test
     fun `remove by the canonical address the chip displays finds the seeded row`() {
-        // The chip renders via AttendeeUiModel.fromRoom; its bareAddress is the
-        // canonical form. Removing by that exact string must hit the entity.
+        // The chip renders through AttendeeUiModel.fromRoom, whose bareAddress is the
+        // canonical form. Removing by that string must find the row.
         val pulled = attendee("mailto:Carol@Example.test", displayName = "Carol")
         val displayed = AttendeeUiModel.fromRoom(
             attendees = listOf(pulled),

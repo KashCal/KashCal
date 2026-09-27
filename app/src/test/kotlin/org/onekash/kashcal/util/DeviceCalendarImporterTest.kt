@@ -139,8 +139,7 @@ class DeviceCalendarImporterTest {
 
     @Test
     fun `event without reminders passes empty list when no default configured`() = runTest {
-        // Default args (REMINDER_OFF) → no fallback applied. Caller didn't
-        // pass user's preference so behavior matches the old contract.
+        // The default arguments are REMINDER_OFF, so no fallback reminder is added.
         val events = listOf(makeEvent(reminders = null))
 
         importEventsToDeviceCalendar(events, 5L, fakeRepo)
@@ -150,7 +149,7 @@ class DeviceCalendarImporterTest {
 
     @Test
     fun `timed event without reminders applies user's default timed reminder`() = runTest {
-        // Caller (a ViewModel) passed the user's configured default in.
+        // The caller (DeviceEventWriter.importIcsEvents) passes the user's configured default.
         val events = listOf(makeEvent(isAllDay = false, reminders = null))
 
         importEventsToDeviceCalendar(
@@ -193,7 +192,7 @@ class DeviceCalendarImporterTest {
             defaultAllDayReminderMinutes = 540
         )
 
-        // The ICS file's VALARMs win — default is not appended.
+        // The ICS file's VALARMs win; the default is not appended.
         assertEquals(listOf(30, 60), fakeRepo.createdEvents.single().reminders)
     }
 

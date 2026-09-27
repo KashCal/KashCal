@@ -3,19 +3,11 @@ package org.onekash.kashcal.error
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 
-/**
- * Defines how an error should be presented to the user.
- *
- * Determined by ErrorMapper based on error type and context.
- * UI layer uses this to decide which component to render.
- */
+/** Says how the UI shows an error; [ErrorMapper.toPresentation] picks one per [CalendarError]. */
 @Immutable
 sealed class ErrorPresentation {
 
-    /**
-     * Transient snackbar message.
-     * Use for recoverable errors that don't require immediate action.
-     */
+    /** A transient snackbar, for recoverable errors that need no immediate action. */
     @Immutable
     data class Snackbar(
         @StringRes val messageResId: Int,
@@ -27,10 +19,7 @@ sealed class ErrorPresentation {
         enum class SnackbarDuration { Short, Long, Indefinite }
     }
 
-    /**
-     * Blocking dialog requiring user action.
-     * Use for auth errors, critical failures, or confirmation.
-     */
+    /** A blocking dialog, for errors the user must act on. */
     @Immutable
     data class Dialog(
         @StringRes val titleResId: Int,
@@ -41,10 +30,7 @@ sealed class ErrorPresentation {
         val dismissible: Boolean = true
     ) : ErrorPresentation()
 
-    /**
-     * Persistent banner shown at top of screen.
-     * Use for ongoing conditions like offline mode.
-     */
+    /** A persistent banner at the top of the screen, for an ongoing condition. */
     @Immutable
     data class Banner(
         @StringRes val messageResId: Int,
@@ -56,10 +42,7 @@ sealed class ErrorPresentation {
         enum class BannerType { Info, Warning, Error }
     }
 
-    /**
-     * Silent logging without user notification.
-     * Use for expected/handled errors that don't affect UX.
-     */
+    /** Logged only, not shown, for expected errors that don't affect the user. */
     @Immutable
     data class Silent(
         val logMessage: String,
@@ -69,18 +52,14 @@ sealed class ErrorPresentation {
     }
 }
 
-/**
- * Action button for snackbar.
- */
+/** An action button on a [ErrorPresentation.Snackbar]. */
 @Immutable
 data class SnackbarAction(
     @StringRes val labelResId: Int,
     val callback: ErrorActionCallback
 )
 
-/**
- * Action button for dialog.
- */
+/** An action button on a [ErrorPresentation.Dialog]. */
 @Immutable
 data class DialogAction(
     @StringRes val labelResId: Int,
@@ -88,9 +67,7 @@ data class DialogAction(
     val isDismissAction: Boolean = false
 )
 
-/**
- * Action button for banner.
- */
+/** An action button on a [ErrorPresentation.Banner]. */
 @Immutable
 data class BannerAction(
     @StringRes val labelResId: Int,

@@ -5,11 +5,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Decision logic for the app-lock veil: when does the UI become locked?
+ * Tests [AppLockStateMachine], which decides when the app-lock veil covers the UI.
  *
- * The grace window is measured between backgrounding (onStop) and the next
- * foregrounding (onStart) using a monotonic elapsed clock supplied by the
- * caller, so these tests are deterministic without any Android dependency.
+ * The grace window runs from backgrounding (onStop) to the next foregrounding (onStart) on a
+ * monotonic elapsed clock the caller supplies, so these tests are deterministic with no Android
+ * dependency.
  */
 class AppLockStateMachineTest {
 
@@ -36,8 +36,8 @@ class AppLockStateMachineTest {
     @Test
     fun `enabled locks on cold start or process death`() {
         val m = machine()
-        // The first (and only) onActivityCreated of a process represents both a
-        // cold start and a return after process death.
+        // The first onActivityCreated this machine sees stands for a cold start and a return
+        // after process death alike.
         m.onActivityCreated(enabled = true)
         assertTrue(m.isLocked)
     }
@@ -91,8 +91,8 @@ class AppLockStateMachineTest {
         m.onUnlockSucceeded()
         assertFalse(m.isLocked)
 
-        // Config change: onStop then an immediate onStart (gap ~0). The VM
-        // survives; onActivityCreated re-runs but is a no-op (already init).
+        // Configuration change: onStop then an immediate onStart (gap about 0). The ViewModel
+        // survives, and the re-run onActivityCreated is a no-op.
         m.onBackground(5_000L)
         m.onActivityCreated(enabled = true)
         m.onForeground(enabled = true, nowElapsed = 5_000L)
@@ -117,7 +117,7 @@ class AppLockStateMachineTest {
         m.onActivityCreated(enabled = true)
         m.onUnlockSucceeded()
 
-        // Genuine background-to-home and return past grace.
+        // A background to the home screen and a return past grace.
         m.onBackground(10_000L)
         m.onForeground(enabled = true, nowElapsed = 10_000L + grace + 1)
         assertTrue(m.isLocked)
@@ -130,9 +130,9 @@ class AppLockStateMachineTest {
         m.onUnlockSucceeded()
         assertFalse(m.isLocked)
 
-        // Opening Settings (or the system enrollment screen) backgrounds the
-        // Activity; the user may linger well past the grace window. Returning
-        // from internal navigation must not challenge them.
+        // Opening Settings or the system enrollment screen backgrounds the Activity, and the
+        // user may linger past the grace window. Returning from internal navigation must not
+        // challenge them.
         m.onBackground(1_000L)
         m.onForeground(enabled = true, nowElapsed = 1_000L + grace * 5, suppressRelock = true)
         assertFalse(m.isLocked)
@@ -140,8 +140,8 @@ class AppLockStateMachineTest {
 
     @Test
     fun `cold start with no prior background never auto-locks via foreground alone`() {
-        // After onActivityCreated(enabled=true) locks, onStart fires with no
-        // recorded background — it must not flip the state either way.
+        // After onActivityCreated(enabled=true) locks, onStart fires with no recorded
+        // background; it must not change the lock.
         val m = machine()
         m.onActivityCreated(enabled = true)
         m.onForeground(enabled = true, nowElapsed = 0L)
@@ -150,12 +150,11 @@ class AppLockStateMachineTest {
 
     @Test
     fun `cold start stays locked when foreground sees a stale disabled flag`() {
-        // Reproduces the cold-start race: onActivityCreated reads the real pref
-        // synchronously (enabled=true) and locks, but onStart fires before the
-        // async enabled flag has loaded, so onForeground observes a stale false.
-        // With no prior background, that stale value must NOT clear the lock —
-        // otherwise the veil drops before the first frame and the unlock prompt
-        // never fires on a genuine cold start.
+        // The cold-start race: onActivityCreated reads the pref synchronously (enabled=true)
+        // and locks, but onStart fires before the async enabled flag has loaded, so
+        // onForeground sees a stale false. With no prior background that value must not clear
+        // the lock, or the veil drops before the first frame and the unlock prompt never
+        // fires on a cold start.
         val m = machine()
         m.onActivityCreated(enabled = true)
         assertTrue(m.isLocked)

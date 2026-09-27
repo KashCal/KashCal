@@ -1,0 +1,36 @@
+Kalenterisi ovat kaikkialla. Perhe iCloudissa. Pyhäpäivät joltain verkkosivustolta. Syntymäpäivät hukassa yhteystiedoissa. Työ puhelimen kalenterissa. KashCal kokoaa ne kaikki yhteen sovellukseen Androidilla.
+
+Lue lisää: https://kashcal.onekash.org
+
+• iCloud: vaihdoit Androidiin mutta perhe on yhä Applella? Synkronoi iCloud-kalenterit suoraan. Ei siltaa, ei kiertotietä.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo ja muut. Aito kaksisuuntainen synkronointi ilman välikerrosta. Myös puhelimesi Google- ja Outlook-kalenterit näkyvät.
+
+• Seitsemän näkymää: kuukausi, täyskorkuinen kuukausi, agenda, päivä, 3 päivää, viikko ja vuosi. Nipistä lähentääksesi aikajanaa, vedä tapahtumaa siirtääksesi sitä.
+
+• Ajoitus: kutsu ihmisiä, lähetä kokouskutsuja ja vastaa muiden kutsuihin.
+
+• Havainnot: näe mihin aikasi kuluu. Kiireisimmät päivät, tauottomat putket, vapaat lohkot. Kaikki lasketaan laitteella.
+
+• Widgetit: pidä päiväsi aloitusnäytöllä avaamatta sovellusta. Agenda, päivämäärä, viikko, kuukausi ja tulevat.
+
+• ICS-tilaukset: seuraa mitä tahansa kalenterisyötettä. Pyhäpäivät, lukukaudet, urheilukaudet.
+
+• Syntymäpäivät ja vuosipäivät: haetaan yhteystiedoistasi automaattisesti.
+
+• Värit tapahtumakohtaisesti: valikoidusta paletista tai koko väriympyrästä, jotta viikkosi on luettavissa yhdellä silmäyksellä.
+
+• Tee siitä omasi: vaalea, tumma tai järjestelmän teema sekä KashCal Teal -paletti. Tukijat voivat vaihtaa erityiseen sovelluskuvakkeeseen.
+
+• Saavutettavuus: täysi näytönlukijan (TalkBack) tuki, ja aseta sovelluksen kieli suoraan Androidin asetuksista, 67 kielellä.
+
+• Toimii täysin offline-tilassa heti.
+
+Yksityinen oletuksena
+
+Ei analytiikkaa. Ei telemetriaa. Ei KashCal-tiliä. Meillä ei ole palvelimia, joten kerättävää ei ole.
+
+• Tunnistetiedot salattu Android Keystorella
+• Sovelluslukko: piilota tapahtumasi sormenjäljen, kasvojen tai näytön lukituksen taakse
+
+Vapaa kuin vapaus. Ja ilmainen kaupan päälle.

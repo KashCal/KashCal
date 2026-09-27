@@ -15,14 +15,12 @@ import javax.inject.Inject
 /**
  * Owns the app-lock decision for the foreground UI.
  *
- * Hoisting the lock state in a ViewModel gives the exact lifetime the feature
- * needs: it survives a configuration change (rotation must not re-prompt) but
- * dies with the process (a cold start / return after process death must lock
- * when the feature is enabled).
+ * A ViewModel has the lifetime the lock needs: it survives a configuration change (rotation
+ * must not re-prompt) and dies with the process (a cold start or a return after process death
+ * must lock when the feature is on).
  *
- * The Activity supplies lifecycle edges and a monotonic elapsed-time value
- * (`SystemClock.elapsedRealtime()`); all timing policy lives in
- * [AppLockStateMachine], which is unit-tested independently.
+ * MainActivity supplies lifecycle edges and `SystemClock.elapsedRealtime()`; all timing policy
+ * lives in [AppLockStateMachine].
  */
 @HiltViewModel
 class AppLockViewModel @Inject constructor(
@@ -32,7 +30,7 @@ class AppLockViewModel @Inject constructor(
     private val machine = AppLockStateMachine()
 
     private val _lockState = MutableStateFlow(false)
-    /** True when the veil should cover the UI. */
+    /** True when the veil covers the UI. */
     val lockState: StateFlow<Boolean> = _lockState
 
     /** Whether the app-lock feature is turned on (off by default). */
@@ -40,12 +38,10 @@ class AppLockViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     /**
-     * Persist the app-lock flag. The capability / enrollment check (and any
-     * routing to the system enrollment flow, plus the authenticate-before-disable
-     * challenge) happens at the call site, which has the Android context — the
-     * ViewModel only stores the resolved value. Mirrors the former write path on
-     * the settings ViewModel; lives here because the account hub (its new home)
-     * is hosted where this ViewModel is injected, not the settings ViewModel.
+     * Persists the app-lock flag. MainActivity runs the capability and enrollment check, the
+     * route to system enrollment and the authenticate-before-disable challenge, since they
+     * need the Activity; this only stores the resolved value. It lives here because the
+     * account hub's toggle is hosted in MainActivity, where this ViewModel is injected.
      */
     fun setAppLockEnabled(enabled: Boolean) {
         viewModelScope.launch {
@@ -53,30 +49,33 @@ class AppLockViewModel @Inject constructor(
         }
     }
 
-    /** See [AppLockStateMachine.onActivityCreated]. Sets the no-flash initial lock. */
+    /**
+     * Sets the initial lock before any content frame shows; see
+     * [AppLockStateMachine.onActivityCreated].
+     */
     fun onActivityCreated(enabled: Boolean) {
         machine.onActivityCreated(enabled)
         publish()
     }
 
-    /** App went to background at [nowElapsed]. */
+    /** Records that the app went to the background at [nowElapsed]. */
     fun onBackground(nowElapsed: Long) {
         machine.onBackground(nowElapsed)
     }
 
-    /** App returned to foreground at [nowElapsed]. */
+    /** Updates the lock on a return at [nowElapsed]; see [AppLockStateMachine.onForeground]. */
     fun onForeground(enabled: Boolean, nowElapsed: Long, suppressRelock: Boolean = false) {
         machine.onForeground(enabled, nowElapsed, suppressRelock)
         publish()
     }
 
-    /** Authentication succeeded; reveal the UI. */
+    /** Reveals the UI after a successful authentication. */
     fun onUnlockSucceeded() {
         machine.onUnlockSucceeded()
         publish()
     }
 
-    /** Authentication was cancelled or failed; stay locked. */
+    /** Keeps the UI locked after a cancelled or failed authentication. */
     fun onUnlockError() {
         machine.onUnlockCancelled()
         publish()

@@ -6,16 +6,11 @@ import org.onekash.kashcal.testutil.resolveProjectRoot
 import java.io.File
 
 /**
- * Locks the declared dimensions in `upcoming_widget_info.xml`.
+ * Locks the sizing, resize, category and update attributes in `upcoming_widget_info.xml`.
  *
- * Reads the source XML directly (not via Android resources) so the assertions
- * match the literal text developers see in the file — Robolectric returns
- * formatted dimension strings ("180.0dip") which would make these tests
- * brittle. Plain JUnit, no Android runtime needed.
- *
- * The test asserts both the changed values (resize floor + minWidth/Height)
- * and the unchanged ones (targetCellWidth/Height, etc.) so accidental
- * regression of either is caught.
+ * Reads the source XML as text, not through Android resources, so the assertions match the
+ * file's literal values; Robolectric returns formatted dimension strings ("180.0dip"). Plain JUnit,
+ * no Android runtime needed.
  */
 class UpcomingWidgetMetadataTest {
 
@@ -40,7 +35,7 @@ class UpcomingWidgetMetadataTest {
     @Test
     fun `minResizeHeight is 80dp`() {
         // Floor sits below the 130dp default so users can shrink this
-        // scrolling LazyColumn widget; the list simply shows fewer rows.
+        // scrolling LazyColumn widget; the list shows fewer rows.
         assertContainsAttr("minResizeHeight", "80dp")
     }
 
@@ -56,12 +51,10 @@ class UpcomingWidgetMetadataTest {
 
     @Test
     fun `maxResizeWidth is 1100dp`() {
-        // Lawnchair (and other launchers with wide cell grids on tablet
-        // landscape) refused to resize the widget past the previous 400dp
-        // cap. The Glance layout uses fillMaxWidth() and defaultWeight()
-        // throughout, so it renders correctly at much wider sizes; the
-        // limit was purely metadata. 1100dp ≈ tablet-landscape 8-cell
-        // grid using the documented (142n - 15) formula. (issue #225)
+        // Launchers with wide cell grids in tablet landscape, Lawnchair among them, won't
+        // resize a widget past maxResizeWidth (#225). The Glance layout uses fillMaxWidth() and
+        // defaultWeight() throughout, so it renders at wider sizes and the cap is metadata
+        // only. 1100dp ≈ an 8-cell tablet-landscape grid by the documented (142n - 15) formula.
         assertContainsAttr("maxResizeWidth", "1100dp")
     }
 

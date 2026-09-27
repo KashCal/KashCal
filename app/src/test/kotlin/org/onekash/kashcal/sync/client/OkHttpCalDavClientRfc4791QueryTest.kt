@@ -19,15 +19,15 @@ import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import java.time.Instant
 
 /**
- * RFC 4791 compliance tests for CalDAV query operations.
+ * Tests [OkHttpCalDavClient]'s REPORT queries and single-event GET against RFC 4791.
  *
- * Tests REPORT-based queries against RFC 4791 requirements:
- * - Section 7.8: calendar-query REPORT (time-range filtering)
- * - Section 7.9: calendar-multiget REPORT (batch event retrieval)
- * - Section 9.9: time-range element format
+ * Covers:
+ * - §7.8: calendar-query REPORT with a time-range filter
+ * - §7.9: calendar-multiget REPORT for a list of hrefs
+ * - §9.9: the time-range element format
  *
- * Each test verifies BOTH outgoing request compliance (method, headers, XML body)
- * and response handling compliance (parsing multistatus responses).
+ * Each test checks the outgoing request (method, headers, XML body) or how the multistatus
+ * reply is parsed.
  */
 class OkHttpCalDavClientRfc4791QueryTest {
 
@@ -63,11 +63,11 @@ class OkHttpCalDavClientRfc4791QueryTest {
         unmockkAll()
     }
 
-    // ========== RFC 4791 Section 7.8: calendar-query REPORT ==========
+    // ========== calendar-query REPORT (RFC 4791 §7.8) ==========
 
     @Test
     fun `fetchEventsInRange sends REPORT method`() = runTest {
-        // RFC 4791 Section 7.8: calendar-query uses REPORT method
+        // RFC 4791 §7.8: calendar-query is a REPORT
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -83,7 +83,8 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsInRange sends Depth 1 header`() = runTest {
-        // RFC 4791 Section 7.8: Depth:1 for calendar-query on a collection
+        // RFC 4791 §7.8: a missing Depth header means Depth:0, so a query over a collection's
+        // members sends Depth: 1
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -99,7 +100,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsInRange uses calendar-query element in caldav namespace`() = runTest {
-        // RFC 4791 Section 7.8: Root element must be CALDAV:calendar-query
+        // RFC 4791 §7.8: the request body MUST be a CALDAV:calendar-query element
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -123,7 +124,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsInRange requests getetag and calendar-data properties`() = runTest {
-        // RFC 4791 Section 7.8: DAV:prop must include getetag and calendar-data
+        // The query asks for getetag and calendar-data
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -141,7 +142,8 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsInRange applies comp-filter for VCALENDAR and VEVENT`() = runTest {
-        // RFC 4791 Section 7.8.1: Filter must have nested comp-filter for VCALENDAR > VEVENT
+        // RFC 4791 §9.7: the filter holds a VCALENDAR comp-filter, with a VEVENT comp-filter
+        // nested in it
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -165,8 +167,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsInRange formats time-range start and end in UTC`() = runTest {
-        // RFC 4791 Section 9.9: time-range values MUST be in UTC (ending with Z)
-        // Format: yyyyMMdd'T'HHmmss'Z'
+        // RFC 4791 §9.9: time-range values MUST be date with UTC time, yyyyMMdd'T'HHmmss'Z'
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -193,11 +194,11 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsInRange omits end when upper bound exceeds 32-bit time_t`() = runTest {
-        // Some servers (SOGo/GNUstep) evaluate time-range bounds through 32-bit time
-        // functions and silently drop events past 2038-01-19T03:14:07Z from an otherwise
-        // successful 207 response. When we ask for "everything up to year 2100" they return
-        // only recurring/near-term events, so a plain future event vanishes. We send an
-        // open-ended range (start only) — RFC 4791 §9.9 permits it and it can't overflow.
+        // Some servers (SOGo/GNUstep) evaluate time-range bounds with 32-bit time and
+        // silently drop events past 2038-01-19T03:14:07Z from a successful 207 (#326). Asked
+        // for everything up to 2100, they return only recurring and near-term events, so a
+        // one-off future event vanishes. The client sends an open-ended range (start only),
+        // which RFC 4791 §9.9 permits and which can't overflow.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -206,7 +207,8 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
         val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
         val start = Instant.parse("2026-01-01T00:00:00Z").toEpochMilli()
-        val end = Instant.parse("2100-01-01T00:00:00Z").toEpochMilli()  // PullStrategy's FUTURE_END_MS
+        // PullStrategy's FUTURE_END_MS
+        val end = Instant.parse("2100-01-01T00:00:00Z").toEpochMilli()
         client.fetchEventsInRange(calendarUrl, start, end)
 
         val request = mockWebServer.takeRequest()
@@ -223,8 +225,8 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsInRange keeps end when upper bound is within 32-bit time_t`() = runTest {
-        // The open-ended behavior only kicks in past the 2038 boundary; a normal bounded
-        // window must still send both start and end so servers can index efficiently.
+        // The range is open-ended only past the 2038 boundary; a bounded window still sends
+        // both start and end.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -232,7 +234,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
         )
 
         val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
-        // 2037 end — below the 2038-01-19 boundary, so end is preserved.
+        // A 2037 end is below the 2038-01-19 boundary, so it is kept.
         val start = Instant.parse("2026-01-01T00:00:00Z").toEpochMilli()
         val end = Instant.parse("2037-01-01T00:00:00Z").toEpochMilli()
         client.fetchEventsInRange(calendarUrl, start, end)
@@ -245,9 +247,9 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEtagsInRange omits end when upper bound exceeds 32-bit time_t`() = runTest {
-        // Same 32-bit-time guard as fetchEventsInRange — this is the etag path PullStrategy
-        // actually drives on every incremental sync, so it's the one that stranded the
-        // reporter's future events on SOGo.
+        // Same 32-bit-time guard as fetchEventsInRange. PullStrategy's full pull and etag
+        // fallback call this etag query, so it is the path that lost far-future events on
+        // SOGo (#326).
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -267,7 +269,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsInRange parses multistatus response with events`() = runTest {
-        // RFC 4791 Section 7.8: Response is a DAV:multistatus with calendar-data
+        // RFC 4791 §7.8: the response is a DAV:multistatus carrying calendar-data
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -292,7 +294,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsInRange handles empty calendar`() = runTest {
-        // RFC 4791: Empty multistatus response for calendars with no events in range
+        // A calendar with no events in range answers with an empty multistatus
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -307,12 +309,12 @@ class OkHttpCalDavClientRfc4791QueryTest {
         assertTrue("Empty calendar should return empty list", events.isEmpty())
     }
 
-    // ========== RFC 4791 Section 7.8: calendar-query (etags-only variant) ==========
+    // ========== calendar-query, etags only (RFC 4791 §7.8) ==========
 
     @Test
     fun `fetchEtagsInRange omits calendar-data from request`() = runTest {
-        // Bandwidth optimization: Same calendar-query but without calendar-data property
-        // Saves ~96% bandwidth (33KB vs 834KB for 231 events)
+        // The same calendar-query without calendar-data, to save bandwidth: about 96% less
+        // (33KB vs 834KB for 231 events)
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -352,15 +354,15 @@ class OkHttpCalDavClientRfc4791QueryTest {
         assertTrue("Result should be success", result.isSuccess())
         val pairs = result.getOrNull()!!
         assertTrue("Should return href+etag pairs", pairs.isNotEmpty())
-        // Each pair has (href, etag?)
+        // Each pair is (href, etag or null)
         assertNotNull("Pair should have href", pairs[0].first)
     }
 
-    // ========== RFC 4791 Section 7.9: calendar-multiget REPORT ==========
+    // ========== calendar-multiget REPORT (RFC 4791 §7.9) ==========
 
     @Test
     fun `fetchEventsByHref sends calendar-multiget REPORT`() = runTest {
-        // RFC 4791 Section 7.9: calendar-multiget is a REPORT with specific hrefs
+        // RFC 4791 §7.9: calendar-multiget is a REPORT naming specific hrefs
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -381,7 +383,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsByHref includes all hrefs in request body`() = runTest {
-        // RFC 4791 Section 7.9: Each requested href must be in the REPORT body
+        // Each requested href is in the REPORT body
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -409,9 +411,9 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsByHref XML-escapes an href containing an ampersand`() = runTest {
-        // The parser XML-decodes hrefs on the way in, so an href carrying a literal
-        // & (or <, >) must be re-escaped before interpolation, or the multiget
-        // request XML is malformed and the server 400s.
+        // The parser XML-decodes hrefs on the way in, so an href carrying a literal &, < or >
+        // must be re-escaped before interpolation, or the multiget request XML is malformed
+        // and the server 400s.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -430,7 +432,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsByHref requests getetag and calendar-data`() = runTest {
-        // RFC 4791 Section 7.9: Must request both etag and calendar data
+        // The multiget asks for both getetag and calendar-data
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -448,7 +450,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsByHref parses multiple events from response`() = runTest {
-        // RFC 4791 Section 7.9: Response contains one DAV:response per requested href
+        // The response has one DAV:response per requested href
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -469,7 +471,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsByHref returns empty list for empty hrefs input`() = runTest {
-        // Edge case: No hrefs to fetch should short-circuit without HTTP request
+        // No hrefs returns an empty list without an HTTP request
         val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
         val result = client.fetchEventsByHref(calendarUrl, emptyList())
 
@@ -481,8 +483,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEventsByHref handles partial failure in multiget response`() = runTest {
-        // RFC 4791 Section 7.9: Server may return 404 for individual hrefs
-        // within the same multistatus response
+        // The server may answer 404 for single hrefs inside the same multistatus response
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -498,7 +499,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
         assertTrue("Result should be success overall", result.isSuccess())
         val events = result.getOrNull()!!
-        // Only events with actual calendar-data should be returned
+        // Only responses carrying calendar-data become events
         assertEquals(
             "Only events with 200 status and calendar-data should be returned",
             1,
@@ -514,7 +515,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEvent sends GET request`() = runTest {
-        // RFC 4791: Individual event retrieval uses plain HTTP GET
+        // A single event is fetched with a plain HTTP GET
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(200)
@@ -531,7 +532,7 @@ class OkHttpCalDavClientRfc4791QueryTest {
 
     @Test
     fun `fetchEvent extracts etag from response header`() = runTest {
-        // RFC 4791 Section 5.3.4: Server SHOULD return ETag header
+        // RFC 4791 §5.3.4: a GET response MUST carry an ETag header
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(200)

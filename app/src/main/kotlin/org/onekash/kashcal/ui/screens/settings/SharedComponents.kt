@@ -20,12 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.onekash.kashcal.R
 
-/**
- * Section header for settings screens.
- * Displays a title with consistent styling matching Android 15/16 Settings.
- *
- * @param title The section title text
- */
+/** Shows a settings section header styled after Android 15/16 Settings. */
 @Composable
 fun SectionHeader(title: String) {
     Text(
@@ -84,12 +79,8 @@ fun NewBadge(modifier: Modifier = Modifier) {
 }
 
 /**
- * Standard card container for settings items.
- * Provides consistent styling matching Android 15/16 Settings.
- * Uses 16dp rounded corners and horizontal margin.
- *
- * @param modifier Optional modifier
- * @param content The card content
+ * Wraps settings rows in a card styled after Android 15/16 Settings: 16dp rounded corners and a
+ * 16dp horizontal margin.
  */
 @Composable
 fun SettingsCard(

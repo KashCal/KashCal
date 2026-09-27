@@ -6,14 +6,12 @@ import org.onekash.kashcal.sync.carddav.ZohoCardDavQuirks
 import org.onekash.kashcal.sync.carddav.ICloudCardDavQuirks
 
 /**
- * Configuration for a CardDAV server used in parameterized read-path integration
- * tests.
+ * Describes one CardDAV server for the parameterized CardDAV integration tests.
  *
- * A deliberately SEPARATE type from [CalDavServerConfig] rather than an
- * extension of it: the two protocols share credential *keys* in local.properties
- * but not their endpoint shapes, discovery quirks, or quirks factories. Reusing
- * the same credential keys (BAIKAL_*, RADICALE_*, …) keeps a single set of
- * secrets; everything else is CardDAV-specific.
+ * A separate type from [CalDavServerConfig], not an extension of it: the protocols can share
+ * local.properties credential keys but not endpoint shapes, discovery quirks or quirks
+ * factories. Most entries reuse the CalDAV keys (BAIKAL_*, RADICALE_* and so on), so there is
+ * one set of secrets; iCloud uses its own ICLOUD_* keys.
  */
 data class CardDavServerConfig(
     val name: String,
@@ -24,32 +22,28 @@ data class CardDavServerConfig(
     /** Suffix appended to the server root to reach the CardDAV entry point. */
     val davEndpointSuffix: String? = null,
     val quirksFactory: (String) -> CardDavQuirks,
-    /** RFC 6764 `/.well-known/carddav` discovery vs. targeting the endpoint directly. */
+    /** True for RFC 6764 `/.well-known/carddav` discovery; false targets the endpoint directly. */
     val usesWellKnownDiscovery: Boolean = false,
     /**
-     * The server accepts a contact carrying an external-URL photo
-     * (`PHOTO;VALUE=URI`) on write but silently strips the PHOTO on read-back,
-     * while still preserving inline base64 photos. Server policy, not a client
-     * serialization bug — the identical push path preserves URL photos on
-     * conformant servers. Assertions on the URI-photo shape are characterized
-     * (recorded, not failed) for such a server. Open-Xchange (mailbox.org).
+     * True when the server accepts an external-URL photo (`PHOTO;VALUE=URI`) on write but
+     * silently strips it on read-back, while keeping inline base64 photos. This is server
+     * policy: the same push path keeps URL photos on conformant servers. URI-photo assertions
+     * are recorded, not failed, for such a server. Set for Open-Xchange (mailbox.org).
      */
     val dropsUriPhoto: Boolean = false,
     /**
-     * The server accepts a contact carrying a vCard `KIND` on write but does not
-     * persist it (reads back null), while preserving every other field. Server
-     * policy — `KIND` survives the identical push path on conformant servers — so
-     * the KIND field assertion is a characterized skip for this server rather than
-     * a lost-field failure. Open-Xchange (mailbox.org).
+     * True when the server accepts a vCard `KIND` on write but doesn't persist it (it reads
+     * back null), while keeping every other field. This is server policy: `KIND` survives the
+     * same push path on conformant servers, so the KIND assertion is skipped for such a server
+     * instead of failing as a lost field. Set for Open-Xchange (mailbox.org).
      */
     val dropsKind: Boolean = false,
     /**
-     * The host a real account of this provider has *stored* from CalDAV setup, when
-     * it differs from the CardDAV [defaultServerUrl]. Only split-host providers set
-     * it (Zoho: contacts on `contacts.zoho.com`, calendars on `calendar.zoho.com`).
-     * The well-known discovery probe uses it to answer whether contacts are reachable
-     * from the CalDAV host alone — i.e. whether the fix needs a bootstrap constant or
-     * can derive the contacts host from what the account already knows.
+     * The host a real account of this provider stores from CalDAV setup, when it differs from
+     * the CardDAV [defaultServerUrl]. Only split-host providers set it (Zoho: contacts on
+     * `contacts.zoho.com`, calendars on `calendar.zoho.com`; Fastmail likewise).
+     * `MultiServerCardDavWellKnownProbeTest` uses it to check whether contacts are reachable
+     * from the CalDAV host alone, or only through a bootstrap constant or another lookup.
      */
     val caldavHostUrl: String? = null,
 ) {
@@ -66,8 +60,8 @@ data class CardDavServerConfig(
             usesWellKnownDiscovery = false,
         )
 
-        // Radicale serves CardDAV from the same root as CalDAV (any credentials
-        // accepted in the local container).
+        // Radicale serves CardDAV from the same root as CalDAV; the local container accepts any
+        // credentials.
         val RADICALE = CardDavServerConfig(
             name = "Radicale",
             serverKey = "RADICALE_SERVER",
@@ -78,13 +72,12 @@ data class CardDavServerConfig(
             usesWellKnownDiscovery = false,
         )
 
-        // Xandikos serves CardDAV from the same root as CalDAV (local container
-        // launched with --current-user-principal /user/, so principal discovery
-        // resolves the addressbook-home-set from the bare root without well-known).
-        // It advertises the RFC 3744 aggregate <all> privilege rather than the
-        // granular <write>/<write-content>, so it is the live counterpart to the
-        // read-only-misdetection guard (issue #281): a parse regression that fails
-        // to map <all> to a write grant surfaces its book as read-only here.
+        // Xandikos serves CardDAV from the same root as CalDAV. The local container runs with
+        // --current-user-principal /user/, so principal discovery resolves the
+        // addressbook-home-set from the bare root without well-known. It grants the RFC 3744
+        // aggregate <all> privilege, not the leaf <write>/<write-content>, so a parser that
+        // fails to map <all> to a write grant shows its book as read-only here (#281,
+        // `MultiServerCardDavWritableBookDiscoveryTest`).
         val XANDIKOS = CardDavServerConfig(
             name = "Xandikos",
             serverKey = "XANDIKOS_SERVER",
@@ -95,9 +88,8 @@ data class CardDavServerConfig(
             usesWellKnownDiscovery = false,
         )
 
-        // Baikal (sabre/dav) exposes CardDAV under the same /dav.php/ entry point
-        // as its CalDAV; current-user-principal discovery resolves the
-        // addressbook-home-set from there.
+        // Baikal (sabre/dav) serves CardDAV under the same /dav.php/ entry point as CalDAV;
+        // current-user-principal discovery resolves the addressbook-home-set from there.
         val BAIKAL = CardDavServerConfig(
             name = "Baikal",
             serverKey = "BAIKAL_SERVER",
@@ -109,8 +101,7 @@ data class CardDavServerConfig(
             usesWellKnownDiscovery = false,
         )
 
-        // Nextcloud serves CardDAV under /remote.php/dav/; RFC 6764 well-known
-        // redirects there.
+        // Nextcloud serves CardDAV under /remote.php/dav/; RFC 6764 well-known redirects there.
         val NEXTCLOUD = CardDavServerConfig(
             name = "Nextcloud",
             serverKey = "NEXTCLOUD_SERVER",
@@ -121,7 +112,7 @@ data class CardDavServerConfig(
             quirksFactory = { url -> DefaultCardDavQuirks(url) },
         )
 
-        // SOGo exposes CardDAV under /SOGo/dav/, parallel to its CalDAV endpoint.
+        // SOGo serves CardDAV under /SOGo/dav/, the same entry point as its CalDAV.
         val SOGO = CardDavServerConfig(
             name = "SOGo",
             serverKey = "SOGO_SERVER",
@@ -133,9 +124,8 @@ data class CardDavServerConfig(
             usesWellKnownDiscovery = false,
         )
 
-        // Cyrus (the engine Fastmail runs) serves CardDAV under /dav/ with RFC
-        // 6764 well-known discovery; the addressbook home is
-        // /dav/addressbooks/user/<user>/.
+        // Cyrus (the engine Fastmail runs) serves CardDAV under /dav/ with RFC 6764 well-known
+        // discovery; the addressbook home is /dav/addressbooks/user/<user>/.
         val CYRUS = CardDavServerConfig(
             name = "Cyrus",
             serverKey = "CYRUS_SERVER",
@@ -147,14 +137,12 @@ data class CardDavServerConfig(
             usesWellKnownDiscovery = true,
         )
 
-        // Zoho serves CardDAV from a DIFFERENT host than its CalDAV endpoint
-        // (contacts.zoho.com, not calendar.zoho.com), so it reuses the ZOHO_*
-        // credentials but pins the contacts host via the production
-        // ZohoCardDavQuirks (which ignores the passed URL and pins its own host),
-        // mirroring iCloud's hosted default. serverKey = null keeps the calendar
-        // URL out of the CardDAV path. Only the characterization probe consumes
-        // this entry, so it is intentionally left OUT of allServers() (see
-        // MultiServerCardDavZohoProbeTest).
+        // Zoho serves CardDAV from a different host than CalDAV (contacts.zoho.com, not
+        // calendar.zoho.com). It reuses the ZOHO_* credentials but pins the contacts host through
+        // the production [ZohoCardDavQuirks], which ignores the passed URL, as iCloud's hosted
+        // default does. serverKey = null keeps the calendar URL out of the CardDAV path. Only the
+        // probes use this entry (`MultiServerCardDavZohoProbeTest` and the
+        // [allDiscoveryProbeServers] probes), so it stays out of [allServers].
         val ZOHO = CardDavServerConfig(
             name = "Zoho",
             serverKey = null,
@@ -166,12 +154,11 @@ data class CardDavServerConfig(
             usesWellKnownDiscovery = true,
         )
 
-        // Fastmail serves CardDAV from carddav.fastmail.com, distinct from its
-        // caldav.fastmail.com CalDAV host — a genuine split-host provider. It
-        // publishes a _carddavs._tcp SRV record, so a proper SRV client would
-        // reach it from the bare domain; the probe measures whether well-known
-        // alone (which is all the client does today) also gets there. App-specific
-        // password required, same as its CalDAV side.
+        // Fastmail serves CardDAV from carddav.fastmail.com, a different host from its
+        // caldav.fastmail.com CalDAV host. It publishes a _carddavs._tcp SRV record, so an SRV
+        // lookup ([org.onekash.kashcal.sync.carddav.CardDavHostResolver]) reaches it from the
+        // bare domain; the well-known probe measures whether well-known alone also gets there.
+        // It needs an app-specific password, as on its CalDAV side.
         val FASTMAIL = CardDavServerConfig(
             name = "Fastmail",
             serverKey = null,
@@ -183,10 +170,9 @@ data class CardDavServerConfig(
             usesWellKnownDiscovery = true,
         )
 
-        // mailbox.org (Open-Xchange) serves BOTH CalDAV and CardDAV from
-        // dav.mailbox.org — a same-host provider despite publishing SRV records.
-        // Included to characterize a same-host well-known path alongside the
-        // split-host ones. Reuses the MAILBOX_* CalDAV credentials.
+        // mailbox.org (Open-Xchange) serves both CalDAV and CardDAV from dav.mailbox.org: a
+        // same-host provider, though it publishes SRV records. It covers a same-host well-known
+        // path beside the split-host ones and reuses the MAILBOX_* CalDAV credentials.
         val MAILBOX = CardDavServerConfig(
             name = "Mailbox",
             serverKey = "MAILBOX_SERVER",
@@ -200,17 +186,22 @@ data class CardDavServerConfig(
             dropsKind = true,
         )
 
+        /** Returns the local Radicale behind a local TLS proxy, as in [CalDavServerConfig]. */
+        private fun proxied(name: String, url: String) = RADICALE.copy(name = name, serverKey = null, defaultServerUrl = url)
+        private val PROXIES get() = if (System.getenv("KASHCAL_TLS_PROXY") == "1") listOf(
+            proxied("RadicaleTLS", "https://localhost:9443"),
+            proxied("RadicaleHttpUpgrade", "http://localhost:9480"),
+            proxied("RadicaleAbsHttpHrefs", "https://localhost:9444"),
+        ) else emptyList()
+
         fun allServers(): List<CardDavServerConfig> = listOf(
             ICLOUD, RADICALE, XANDIKOS, BAIKAL, NEXTCLOUD, SOGO, CYRUS, MAILBOX
-        )
+        ) + PROXIES
 
         /**
-         * The full set the discovery-characterization probe walks, including the
-         * hosted providers deliberately kept out of [allServers] (which gates the
-         * assertion-bearing round-trip tests): Zoho and Fastmail. mailbox.org is
-         * now part of [allServers] (it serves CardDAV from the same host it serves
-         * CalDAV, and the assertion-bearing round-trip tests exercise it directly),
-         * so it is not re-added here.
+         * Returns [allServers] plus Zoho and Fastmail, the hosted providers kept out of it, for
+         * the probes that walk them too (`MultiServerCardDavWellKnownProbeTest`,
+         * `MultiServerCardDavPhotoPushProbeTest`). mailbox.org is already in [allServers].
          */
         fun allDiscoveryProbeServers(): List<CardDavServerConfig> =
             allServers() + listOf(ZOHO, FASTMAIL)

@@ -33,10 +33,10 @@ internal object WidgetPreviewRegistrar {
     private const val TAG = "WidgetPreviewRegistrar"
 
     /**
-     * Registration state lives in its own preferences file, deliberately excluded from
-     * backup. Sharing the app's general preferences would restore "already registered"
-     * onto a device that has never published a preview, leaving its picker showing
-     * placeholders until the next app update.
+     * Registration state lives in its own preferences file, excluded from backup. Sharing the
+     * app's general preferences would restore "already registered" onto a device that never
+     * published a preview, leaving its picker showing placeholders until the stamp next changes
+     * (an app update or a new month).
      */
     const val PREFS_NAME = "widget_previews"
 
@@ -71,13 +71,13 @@ internal object WidgetPreviewRegistrar {
      * by the system: their sample content is derived from the publish date, so previews
      * published in one month would otherwise go on advertising that month's grid, that
      * week's strip and that day's number indefinitely. Including the month re-publishes at
-     * each rollover — five calls a month against a budget of roughly two an hour.
+     * each rollover: five calls a month against a budget of roughly two an hour.
      */
     fun publishStamp(versionCode: Int, today: LocalDate): Int =
         versionCode * MONTH_SLOTS + (today.year * 12 + today.monthValue).mod(MONTH_SLOTS)
 
     /**
-     * Whether one widget needs publishing.
+     * Returns whether one widget needs publishing.
      *
      * Takes [sdkInt] as a parameter rather than reading it from the framework so the
      * Android 15 branch stays reachable in unit tests, which run pinned below it.
@@ -90,11 +90,11 @@ internal object WidgetPreviewRegistrar {
         sdkInt >= MIN_SDK && lastPublishedStamp != currentStamp
 
     /**
-     * Walk the widget list, publishing each widget that needs it.
+     * Walks the widget list, publishing each widget that needs it.
      *
-     * Stops at the first throttled call, leaving the rest for the next launch. A widget's
-     * version advances only after its own call reports success, so a throttle or a failure
-     * leaves that widget queued rather than silently marked done.
+     * Stops at the first throttled call, leaving the rest for the next launch. A widget's stamp
+     * advances only after its own call reports success, so a throttle or a failure leaves that
+     * widget queued, not silently marked done.
      *
      * State access and the platform call are injected so the walk is testable off-device.
      */
@@ -134,9 +134,9 @@ internal object WidgetPreviewRegistrar {
     }
 
     /**
-     * Publish previews for any widget that still needs it, keeping state in this object's
-     * own preferences file. Safe to call on any API level; below [MIN_SDK] it returns
-     * without touching the platform.
+     * Publishes previews for any widget that still needs it, keeping state in [PREFS_NAME].
+     * Safe to call on any API level; below [MIN_SDK] it returns without touching the platform.
+     * Any exception except cancellation is logged and returns an empty [Outcome].
      */
     suspend fun register(context: Context, versionCode: Int): Outcome {
         val nothingDone = Outcome(registered = 0, rateLimited = false)

@@ -33,22 +33,16 @@ import org.onekash.kashcal.util.DateTimeUtils
 import java.time.format.TextStyle
 import java.util.Calendar
 
-/**
- * First day of week option with value and label.
- */
+/** Pairs a first-day-of-week preference value with its label. */
 private data class FirstDayOption(
     val value: Int,
     val label: String
 )
 
 /**
- * Bottom sheet for selecting first day of week preference.
- *
- * Shows four options:
- * - System default: Follows device locale (shows resolved day in label)
- * - Sunday: Week starts on Sunday
- * - Monday: Week starts on Monday
- * - Saturday: Week starts on Saturday
+ * Shows the first-day-of-week picker: System default, which follows the locale and names the
+ * resolved day in its label, then Sunday, Monday and Saturday. Tapping one calls [onSelect],
+ * then [onDismiss].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,20 +52,19 @@ fun FirstDayOfWeekSheet(
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // Get locale's default first day for "System default" description.
-    // Reading LocalLocale.current triggers recomposition on locale change, which
-    // re-invokes getLocaleFirstDayOfWeek() and picks up the fresh Locale.getDefault().
+    // The locale's first day, for the System default label. Reading LocalLocale.current
+    // recomposes on a locale change, which re-runs getLocaleFirstDayOfWeek() against the new
+    // Locale.getDefault().
     val locale = LocalLocale.current.platformLocale
     val localeFirstDay = DateTimeUtils.getLocaleFirstDayOfWeek()
     val localeFirstDayName = localeFirstDay.getDisplayName(TextStyle.FULL, locale)
 
-    // Resolve string resources outside remember block
+    // Resolved outside remember, which can't call stringResource.
     val labelSystemDefault = stringResource(R.string.settings_system_default_with_value, localeFirstDayName ?: "")
     val labelSunday = stringResource(R.string.option_sunday)
     val labelMonday = stringResource(R.string.option_monday)
     val labelSaturday = stringResource(R.string.option_saturday)
 
-    // Build options with dynamic locale label
     val options = remember(localeFirstDayName, labelSystemDefault, labelSunday, labelMonday, labelSaturday) {
         listOf(
             FirstDayOption(
@@ -103,7 +96,6 @@ fun FirstDayOfWeekSheet(
                 .padding(bottom = 32.dp)
                 .selectableGroup()
         ) {
-            // Header
             Text(
                 text = stringResource(R.string.settings_start_week_on),
                 style = MaterialTheme.typography.titleLarge,
@@ -114,7 +106,6 @@ fun FirstDayOfWeekSheet(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            // Options
             options.forEach { option ->
                 FirstDayOptionRow(
                     option = option,

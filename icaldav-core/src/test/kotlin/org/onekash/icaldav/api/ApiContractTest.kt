@@ -29,13 +29,11 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * API Contract Tests
- *
- * These tests verify that the public API contract remains stable and behaves
- * as documented. Important for open source library consumers who depend on:
- * - Consistent API surface
- * - Predictable return types
- * - Exhaustive sealed class handling
+ * Pins the public API that library consumers depend on: the ParseResult sealed class and its
+ * accessors, ICalEvent's data-class behavior, the ICalDateTime forms, RRule construction, the
+ * EventStatus, Transparency and AlarmAction values, the parser, generator and RRuleExpander
+ * entry points, and the collection types on ICalEvent. Many of these tests fail only by not
+ * compiling or by throwing.
  */
 @DisplayName("API Contract Tests")
 class ApiContractTest {
@@ -62,7 +60,7 @@ class ApiContractTest {
 
             val result = parser.parseAllEvents(validIcal)
 
-            // This when expression must be exhaustive
+            // Compiles only while ParseResult has exactly these two subclasses.
             val outcome = when (result) {
                 is ParseResult.Success -> "success"
                 is ParseResult.Error -> "error"
@@ -96,7 +94,7 @@ class ApiContractTest {
         @Test
         fun `ParseResult Error contains error information`() {
             val parser = ICalParser()
-            // Missing required UID
+            // Missing the required UID.
             val invalidIcal = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -109,7 +107,7 @@ class ApiContractTest {
 
             val result = parser.parseAllEvents(invalidIcal)
 
-            // Should either succeed (lenient) or return error
+            // Either outcome passes; the test fails only if parsing throws.
             assertTrue(result is ParseResult.Success || result is ParseResult.Error)
         }
 
@@ -142,7 +140,7 @@ class ApiContractTest {
             val default = emptyList<ICalEvent>()
             val value = result.getOrDefault(default)
 
-            // Should return either parsed events or default
+            // Passes with either the parsed events or the default.
             assertNotNull(value)
         }
     }
@@ -155,7 +153,7 @@ class ApiContractTest {
         fun `ICalEvent has all required properties accessible`() {
             val event = createTestEvent("test-uid")
 
-            // Core properties must be accessible
+            // Core properties are non-null.
             assertNotNull(event.uid)
             assertNotNull(event.importId)
             assertNotNull(event.dtStart)
@@ -167,7 +165,7 @@ class ApiContractTest {
         fun `ICalEvent optional properties can be null`() {
             val event = createMinimalEvent()
 
-            // These should be nullable without throwing
+            // Compiles only while these properties are nullable.
             val description: String? = event.description
             val location: String? = event.location
             val dtEnd: ICalDateTime? = event.dtEnd
@@ -175,7 +173,7 @@ class ApiContractTest {
             val color: String? = event.color
             val url: String? = event.url
 
-            // Accessing nullable properties doesn't throw
+            // Reading them didn't throw.
             assertTrue(true)
         }
 
@@ -266,7 +264,7 @@ class ApiContractTest {
 
         @Test
         fun `RRule frequency enum is exhaustive`() {
-            // All frequency values must be handleable
+            // Every Frequency builds an RRule.
             Frequency.entries.forEach { freq ->
                 val rrule = RRule(freq = freq)
                 assertNotNull(rrule.freq)
@@ -374,9 +372,9 @@ class ApiContractTest {
 
         @Test
         fun `ensureConfigured is callable`() {
-            // Static configuration should be thread-safe and idempotent
+            // The global configuration is idempotent; thread safety isn't exercised here.
             ICalParser.ensureConfigured()
-            ICalParser.ensureConfigured() // Should not throw on second call
+            ICalParser.ensureConfigured() // Must not throw on a second call.
         }
     }
 
@@ -411,7 +409,7 @@ class ApiContractTest {
             val withMethod = generator.generate(event, method = ITipMethod.PUBLISH)
             val withoutMethod = generator.generate(event, method = null)
 
-            // Both should produce valid output
+            // Both start a VCALENDAR.
             assertTrue(withMethod.contains("BEGIN:VCALENDAR"))
             assertTrue(withoutMethod.contains("BEGIN:VCALENDAR"))
         }
@@ -520,7 +518,7 @@ class ApiContractTest {
     // Helper functions
 
     private fun createTestEvent(uid: String): ICalEvent {
-        // Use fixed timestamp for deterministic equality tests
+        // A fixed timestamp keeps two events built from one UID equal.
         val now = 1700000000000L
         return ICalEvent(
             uid = uid,

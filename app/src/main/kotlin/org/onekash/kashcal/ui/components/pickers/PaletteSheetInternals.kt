@@ -37,11 +37,9 @@ import org.onekash.kashcal.ui.shared.Css3ColorEntry
 import org.onekash.kashcal.ui.shared.contrastForegroundOn
 
 /**
- * Shared internals for [EventColorSheet] and [ColorPaletteSheet].
- *
- * Grid layout, swatch rendering, and wheel navigation are identical across
- * the two public sheets. Centralizing them here avoids sibling-formatter
- * drift when future edits touch one sheet but not the other.
+ * Grid, swatch and wheel pieces shared by [EventColorSheet], [ColorPaletteSheet],
+ * [AccentColorSheet] and [WidgetAccentColorSheet], kept in one place so an edit can't reach
+ * one sheet and miss the others.
  */
 
 @Composable
@@ -82,8 +80,8 @@ internal fun SwatchCell(
 }
 
 /**
- * Shared grid layout: renders [cells] in rows of 4 plus a footer row with the
- * current-selection label on the left and a "More colors" link on the right.
+ * Renders [cells] in rows of 4, then a footer with [rowLabelRes] on the left and a "More
+ * colors" link calling [onMoreColors] on the right.
  */
 @Composable
 internal fun GridContentImpl(
@@ -144,8 +142,8 @@ internal fun GridContentImpl(
 }
 
 /**
- * Shared wheel content: the 92-color CSS3 browser with Back + Done actions.
- * Parent owns the tentative selection; [onDone] commits it.
+ * Shows the 92-color CSS3 wheel with Back and Done buttons. The caller owns the tentative
+ * selection; [onDone] commits it.
  */
 @Composable
 internal fun WheelContent(

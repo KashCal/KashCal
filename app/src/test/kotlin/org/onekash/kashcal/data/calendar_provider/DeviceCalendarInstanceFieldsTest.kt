@@ -5,9 +5,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Tests for DeviceCalendarInstance RRULE and reminders fields.
- */
+/** Tests the RRULE and reminders fields of [DeviceCalendarInstance]. */
 class DeviceCalendarInstanceFieldsTest {
 
     private fun createInstance(

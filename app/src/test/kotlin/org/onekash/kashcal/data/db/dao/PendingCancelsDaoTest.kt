@@ -19,10 +19,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [PendingCancelsDao] — the queue of removed attendees awaiting an
- * iTIP CANCEL. A row records a guest dropped from an event's attendee set; the
- * push drain reads it, sends the CANCEL (or skips for the implicit fleet), and
- * deletes it.
+ * Tests [PendingCancelsDao], the queue of attendees removed from an event and awaiting an iTIP
+ * CANCEL. EventWriter enqueues one row per removed guest; the push drain
+ * (`PushStrategy.drainPendingCancels`) sends the CANCEL or leaves it to the server, and decides
+ * when a row is deleted.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -98,8 +98,8 @@ class PendingCancelsDaoTest {
 
     @Test
     fun `upsert dedups on canonical address despite mailto-prefix and case drift`() = runTest {
-        // A server reforming the address between enqueues (mailto: prefix /
-        // case) must not spawn a duplicate cancel for the same guest.
+        // A server reforming the address between enqueues (mailto: prefix or case) must not
+        // spawn a duplicate cancel for the same guest.
         dao.upsert(cancel(address = "mailto:Bob@Example.test", sequence = 0))
         dao.upsert(cancel(address = "bob@example.test", sequence = 1))
 

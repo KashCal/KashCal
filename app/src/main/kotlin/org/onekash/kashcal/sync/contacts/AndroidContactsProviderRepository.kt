@@ -24,22 +24,20 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Android Contacts Provider implementation of [ContactsProviderRepository].
+ * Implements [ContactsProviderRepository] over the Android Contacts Provider.
  *
- * The only class in the tree that WRITES synced contacts to `ContactsContract`
- * (enforced by `ContactsProviderWriteBoundaryTest`). It mirrors
- * [org.onekash.kashcal.data.calendar_provider.AndroidCalendarProviderRepository]'s
- * `applyBatch` + `Result`/catch shape.
+ * Holds every write of synced contacts to `ContactsContract`; `ContactsProviderWriteBoundaryTest`
+ * keeps Contacts Provider writes inside `sync/contacts/`. It follows
+ * [org.onekash.kashcal.data.calendar_provider.AndroidCalendarProviderRepository]'s `applyBatch`
+ * and `Result`/catch shape.
  *
  * All writes go through a sync-adapter URI ([syncAdapterUri]) carrying
- * `CALLER_IS_SYNCADAPTER=true` and the account name/type, so the provider
- * attributes rows to the login's account and does not raise a DIRTY flag that
- * would spin a write-back loop.
+ * `CALLER_IS_SYNCADAPTER=true` and the account name and type, so the provider attributes rows to
+ * the login's account and doesn't set a DIRTY flag that would spin a write-back loop.
  *
- * The account type is fixed to [KashCalContactsAuthenticator.ACCOUNT_TYPE]; the
- * caller supplies only the per-login account NAME (the email). Every write and
- * delete is scoped to both, which is what keeps one login's pull from touching
- * another login's — or the calendar account's — contacts.
+ * The account type is fixed to [KashCalContactsAuthenticator.ACCOUNT_TYPE]; the caller supplies
+ * only the per-login account name (the email). Every write and delete is scoped to both, which
+ * keeps one login's sync from touching another login's contacts or the calendar account's.
  */
 @Singleton
 class AndroidContactsProviderRepository @Inject constructor(
@@ -53,18 +51,17 @@ class AndroidContactsProviderRepository @Inject constructor(
     ): Result<Unit> = withContext(Dispatchers.IO) {
         if (contacts.isEmpty()) return@withContext Result.success(Unit)
 
-        // Provision a titled Group for every CATEGORY before the membership rows
-        // reference it: a GroupMembership keyed by GROUP_SOURCE_ID would otherwise
-        // make the provider auto-create an UNTITLED group, showing the label as blank.
+        // Create a titled Group for every CATEGORY before the membership rows reference it,
+        // or a GroupMembership keyed by GROUP_SOURCE_ID makes the provider auto-create an
+        // untitled group and the label shows blank.
         ensureGroups(accountName, contacts)
 
         val batches = buildBatches(accountName, contacts)
         for (batch in batches) {
             try {
-                // Robolectric's ShadowContentResolver returns an EMPTY result array
-                // (no provider registered), and a real sync-adapter insert doesn't
-                // need the returned ids — the RAW_CONTACT_ID back-references are
-                // resolved within the batch. So never dereference the result.
+                // Robolectric's ShadowContentResolver returns an empty result array (no
+                // provider registered), and the RAW_CONTACT_ID back-references resolve
+                // within the batch, so the ids aren't needed. Never dereference the result.
                 contentResolver.applyBatch(ContactsContract.AUTHORITY, ArrayList(batch))
             } catch (e: SecurityException) {
                 Log.w(TAG, "WRITE_CONTACTS revoked mid-sync; contact insert chunk skipped", e)
@@ -76,9 +73,9 @@ class AndroidContactsProviderRepository @Inject constructor(
                 Log.w(TAG, "Contacts Provider unavailable during insert chunk", e)
                 return@withContext Result.failure(e)
             } catch (e: Exception) {
-                // Honor the "does not throw" contract for unchecked runtimes the
-                // provider can still surface — e.g. IllegalArgumentException on an
-                // unresolvable URI, or a Binder-relayed RuntimeException.
+                // Keeps insertContacts from throwing (the interface contract) on unchecked
+                // provider errors, e.g. IllegalArgumentException on an unresolvable URI or a
+                // Binder-relayed RuntimeException.
                 Log.w(TAG, "Contact insert chunk failed unexpectedly", e)
                 return@withContext Result.failure(e)
             }
@@ -87,20 +84,15 @@ class AndroidContactsProviderRepository @Inject constructor(
     }
 
     /**
-     * Ensure a titled [Groups] row exists under [accountName] for every distinct
-     * CATEGORY the batch references, so a `GroupMembership` keyed by
-     * `GROUP_SOURCE_ID` resolves to a named group. Uses `SOURCE_ID = TITLE = the
-     * category name` — the category is both the display title and the stable key
-     * the membership rows point at.
+     * Ensures a titled [Groups] row exists under [accountName] for every CATEGORY in
+     * [contacts], so a `GroupMembership` keyed by `GROUP_SOURCE_ID` resolves to a named group.
+     * The category name is both `SOURCE_ID` (the key the membership rows point at) and `TITLE`.
      *
-     * Idempotent: only groups not already present (by SOURCE_ID) are inserted, so
-     * every re-pull is safe and cheap. Best-effort — a failure here is logged but
-     * not fatal, since the provider still auto-creates a (blank) group and the
-     * contact itself is not lost.
+     * Idempotent: only groups missing by SOURCE_ID are inserted. A failure is logged, not
+     * fatal: the provider still auto-creates a blank group and the contact isn't lost.
      */
     private fun ensureGroups(accountName: String, contacts: List<MappedContactWrite>) {
-        // Read categories off the source model directly — the same names the mapper
-        // emits as GROUP_SOURCE_ID rows — rather than re-scanning every Data row.
+        // The same names the mapper emits as GROUP_SOURCE_ID rows.
         val wanted = contacts
             .flatMap { it.mapped.contact.categories }
             .filter { it.isNotBlank() }
@@ -126,7 +118,7 @@ class AndroidContactsProviderRepository @Inject constructor(
         }
     }
 
-    /** SOURCE_IDs of groups already present under this account (blank-filtered). */
+    /** Returns the non-blank SOURCE_IDs of this account's existing groups. */
     private fun existingGroupSourceIds(groupsUri: Uri, accountName: String): Set<String> =
         querySourceIdSet(groupsUri, Groups.SOURCE_ID, accountName)
 
@@ -147,9 +139,8 @@ class AndroidContactsProviderRepository @Inject constructor(
     }
 
     /**
-     * Query the non-blank values of a single-column SOURCE_ID [projection] under this
-     * account's scope. The shared cursor loop behind both the RawContacts and Groups
-     * source-id reads; callers own their URI construction and error handling.
+     * Returns the non-blank values of the SOURCE_ID column [projection] at [uri] under this
+     * account, for both the RawContacts and Groups reads. Callers handle errors.
      */
     private fun querySourceIdSet(uri: Uri, projection: String, accountName: String): Set<String> =
         contentResolver.query(
@@ -171,14 +162,12 @@ class AndroidContactsProviderRepository @Inject constructor(
             contentResolver.query(
                 syncAdapterUri(RawContacts.CONTENT_URI, accountName),
                 arrayOf(RawContacts.SOURCE_ID, RawContacts.SYNC2),
-                // Include tombstones deliberately. A locally-deleted row (DELETED=1) is
-                // awaiting a DELETE push; keeping it in change-detection means an unchanged
-                // server etag is SKIPPED (the delete stays pending) rather than re-inserted
-                // as a fresh live row, and a device holding only tombstones is not misread
-                // as wiped and force-refetched. The etag-refresh hazard this read might
-                // otherwise arm is closed at the in-place-replace target lookup instead
-                // (resolveRawContactIdsByHref excludes DELETED), which is where the refresh
-                // would actually happen.
+                // Includes tombstones on purpose. A device-deleted row (DELETED=1) awaits a
+                // DELETE push; keeping it here means an unchanged server etag is skipped
+                // (the delete stays pending) and not re-inserted as a live row, and a device
+                // holding only tombstones isn't read as wiped. The etag refresh this could
+                // cause is stopped at the replace target lookup, where it would happen:
+                // resolveRawContactIdsByHref excludes DELETED rows.
                 accountScopeSelection(),
                 accountScopeArgs(accountName),
                 null,
@@ -186,8 +175,8 @@ class AndroidContactsProviderRepository @Inject constructor(
                 val out = HashMap<String, String?>(cursor.count)
                 while (cursor.moveToNext()) {
                     val href = cursor.getString(0)?.takeIf { it.isNotEmpty() } ?: continue
-                    // SYNC2 (etag) may be null/blank when the server omitted an ETag;
-                    // keep the null so the caller treats it as "no validator -> replace".
+                    // SYNC2 (etag) is blank when the server omitted an ETag; the null tells
+                    // the caller there's no validator, so it replaces.
                     out[href] = cursor.getString(1)?.takeIf { it.isNotEmpty() }
                 }
                 out
@@ -213,9 +202,9 @@ class AndroidContactsProviderRepository @Inject constructor(
                 val out = HashSet<String>()
                 while (cursor.moveToNext()) {
                     val href = cursor.getString(0)?.takeIf { it.isNotBlank() } ?: continue
-                    // SYNC4 is a nullable INTEGER; a null/absent flag column is "no
-                    // flags set". Filter the pending bit in code rather than a SQL
-                    // bitwise selection, which behaves inconsistently on a null column.
+                    // SYNC4 is a nullable INTEGER; null means no flags. The pending bit is
+                    // tested in code because a SQL bitwise selection behaves inconsistently on
+                    // a null column.
                     val flags = if (cursor.isNull(1)) 0 else cursor.getInt(1)
                     if (flags and FLAG_PHOTO_PENDING != 0) out.add(href)
                 }
@@ -242,11 +231,10 @@ class AndroidContactsProviderRepository @Inject constructor(
     ): Result<Unit> = applyPhotoPendingBatch(accountName, sourceId, bytes = null)
 
     /**
-     * Shared body for [writePhotoAndClearPending] (bytes != null) and
-     * [clearPhotoPending] (bytes == null): resolve the RawContact by [sourceId],
-     * build the batch via [buildPhotoWriteBatch], and apply it. A source id that
-     * no longer resolves (contact deleted between pull and fetch) is a no-op
-     * success; permission/provider failure is a graceful [Result.failure].
+     * Resolves the RawContact at [sourceId] and applies [buildPhotoWriteBatch] to it: the body
+     * of [writePhotoAndClearPending] (non-null [bytes]) and [clearPhotoPending] (null). A
+     * source id that no longer resolves (deleted between pull and fetch) is a no-op success;
+     * a permission or provider failure returns [Result.failure].
      */
     private suspend fun applyPhotoPendingBatch(
         accountName: String,
@@ -274,13 +262,13 @@ class AndroidContactsProviderRepository @Inject constructor(
         }
     }
 
-    /** The `_ID` and current `SYNC4` flags of a RawContact identified by SOURCE_ID. */
+    /** The `_ID` and current `SYNC4` flags of a RawContact found by SOURCE_ID. */
     private data class RawContactTarget(val rawContactId: Long, val flags: Int)
 
     /**
-     * Resolve the RawContact `_ID` + current `SYNC4` flags for [sourceId] under
-     * this account, or null when no such row exists. Account-scoped so a source id
-     * can never resolve a row belonging to another login (or the calendar type).
+     * Returns the RawContact `_ID` and `SYNC4` flags for [sourceId] under this account, or null
+     * when no row exists. Tombstones (`DELETED = 1`) match too. Account-scoped, so a source id
+     * never resolves another login's row or the calendar account's.
      */
     private fun resolveRawContact(accountName: String, sourceId: String): RawContactTarget? =
         contentResolver.query(
@@ -304,9 +292,8 @@ class AndroidContactsProviderRepository @Inject constructor(
 
         try {
             val uri = syncAdapterUri(RawContacts.CONTENT_URI, accountName)
-            // Chunk the SOURCE_ID IN (…) list so a large orphan sweep stays under
-            // SQLite's bound-variable ceiling; the two account-predicate args ride
-            // on every chunk, hence the cap leaves headroom below the limit.
+            // Chunk the SOURCE_ID IN list so a large orphan sweep stays under SQLite's
+            // bound-variable limit ([MAX_DELETE_IDS_PER_QUERY]).
             var deleted = 0
             for (chunk in hrefs.chunked(MAX_DELETE_IDS_PER_QUERY)) {
                 val placeholders = chunk.joinToString(",") { "?" }
@@ -332,16 +319,14 @@ class AndroidContactsProviderRepository @Inject constructor(
     ): Result<Unit> = withContext(Dispatchers.IO) {
         if (contacts.isEmpty()) return@withContext Result.success(Unit)
 
-        // In-place update preserves the RawContact _ID across a server edit, so the
-        // aggregate Contact id — and everything keyed on it: the user's starred flag,
-        // home-screen shortcuts, and the stable lookup key — survives. A delete+recreate
-        // would mint a new _ID and silently drop all of them. So resolve which hrefs
-        // already have a row, update those in place, and insert only the genuinely-new
-        // ones fresh.
+        // Update in place so the RawContact _ID survives a server edit, and with it the
+        // aggregate Contact id and everything keyed on it: the starred flag, home-screen
+        // shortcuts, the lookup key. A delete and re-insert would mint a new _ID and
+        // silently drop them. Hrefs without a live row are inserted.
         val existingIds = resolveRawContactIdsByHref(accountName, contacts.map { it.href })
 
-        // CATEGORY groups are provisioned for the whole set up front (idempotent), so a
-        // membership row on either path resolves to a titled group rather than a blank one.
+        // Groups for the whole set first, so a membership row on either path resolves to a
+        // titled group.
         ensureGroups(accountName, contacts)
 
         val (toUpdate, toInsert) = contacts.partition { existingIds.containsKey(it.href) }
@@ -371,10 +356,9 @@ class AndroidContactsProviderRepository @Inject constructor(
     }
 
     /**
-     * Map each href in [hrefs] that currently resolves to a RawContact under this
-     * account to its `_ID`. Absent hrefs are simply not in the map (nothing to
-     * preserve — they go through the fresh-insert path). Account-scoped so a href
-     * can never resolve a row belonging to another login or the calendar type.
+     * Maps each href in [hrefs] that has a live RawContact under this account to its `_ID`.
+     * Absent hrefs are left out and go to the insert path. Account-scoped, so an href never
+     * resolves another login's row or the calendar account's.
      */
     private fun resolveRawContactIdsByHref(
         accountName: String,
@@ -384,10 +368,9 @@ class AndroidContactsProviderRepository @Inject constructor(
         return contentResolver.query(
             syncAdapterUri(RawContacts.CONTENT_URI, accountName),
             arrayOf(RawContacts.SOURCE_ID, RawContacts._ID),
-            // Live rows only: never resolve a tombstone as the in-place replace target,
-            // or the replace would refresh its etag and arm the queued DELETE to destroy
-            // the concurrently-edited server copy. A delete-pending href falls through to
-            // a fresh insert instead.
+            // Live rows only. A tombstone as the replace target would get its etag
+            // refreshed, arming the queued DELETE to destroy the server copy someone just
+            // edited. A delete-pending href is inserted as a new row instead.
             "${accountScopeSelection()} AND ${RawContacts.DELETED} = 0",
             accountScopeArgs(accountName),
             null,
@@ -403,12 +386,11 @@ class AndroidContactsProviderRepository @Inject constructor(
     }
 
     /**
-     * Ops to replace one contact IN PLACE on the RawContact [rawContactId] (retaining
-     * its _ID): update the RawContact's own SYNC columns, delete all its existing Data
-     * rows, then re-insert the fresh mapped Data rows against the retained id. The
-     * mapper already emits the complete authoritative row set, so a wholesale Data-row
-     * replace is simpler and less error-prone than a per-field diff — while the parent
-     * RawContact row (and everything the aggregate Contact keys on it) survives.
+     * Builds the ops that replace one contact in place on [rawContactId], keeping its `_ID`:
+     * update the RawContact's SYNC columns, delete its Data rows, insert the mapped Data rows.
+     * The mapper emits the complete row set, so replacing every Data row is simpler than a
+     * per-field diff, and the RawContact row (and what the aggregate Contact keys on it)
+     * survives.
      */
     private fun buildInPlaceReplaceBatch(
         accountName: String,
@@ -419,14 +401,14 @@ class AndroidContactsProviderRepository @Inject constructor(
         val dataUri = syncAdapterUri(Data.CONTENT_URI, accountName)
         val ops = ArrayList<ContentProviderOperation>(2 + contact.mapped.dataRows.size)
 
-        // Refresh the RawContact's own sync columns (etag/hash/flags) on the retained row.
+        // The RawContact's sync columns: etag, hash, flags.
         ops.add(
             ContentProviderOperation.newUpdate(
                 ContentUris.withAppendedId(rawUri, rawContactId),
             ).withValues(rawContactValues(contact)).build(),
         )
-        // Clear the stale Data rows, then re-insert the current set. The blob-carrying
-        // Photo row rides in here too; a URL photo re-flags SYNC4 via rawContactValues.
+        // Delete the Data rows, then insert the current set, an inline Photo row included;
+        // a URL photo sets the SYNC4 pending flag through rawContactValues.
         ops.add(
             ContentProviderOperation.newDelete(dataUri)
                 .withSelection("${Data.RAW_CONTACT_ID} = ?", arrayOf(rawContactId.toString()))
@@ -471,7 +453,7 @@ class AndroidContactsProviderRepository @Inject constructor(
                 null,
             )?.use { it.count } ?: 0
         } catch (e: SecurityException) {
-            // A read failure must not report phantom leftovers; treat as "can't tell".
+            // A read failure must not report leftovers that may not exist; 0 means can't tell.
             Log.w(TAG, "READ_CONTACTS revoked; countRawContacts returns 0", e)
             0
         } catch (e: Exception) {
@@ -482,8 +464,8 @@ class AndroidContactsProviderRepository @Inject constructor(
 
     override suspend fun ensureContactVisibility(accountName: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // Contacts under a custom account type with no group-membership rows are
-            // hidden by default; UNGROUPED_VISIBLE overrides that so they always show.
+            // Contacts under a custom account type with no group membership are hidden by
+            // default; UNGROUPED_VISIBLE shows them.
             val values = ContentValues().apply {
                 put(ContactsContract.Settings.ACCOUNT_NAME, accountName)
                 put(ContactsContract.Settings.ACCOUNT_TYPE, KashCalContactsAuthenticator.ACCOUNT_TYPE)
@@ -512,9 +494,8 @@ class AndroidContactsProviderRepository @Inject constructor(
                 Log.w(TAG, "READ_CONTACTS revoked; pendingLocalChanges returns empty")
                 LocalContactChanges(emptyList(), emptyList())
             } catch (e: CancellationException) {
-                // The sync was cancelled mid-scan: propagate rather than reporting an
-                // empty pending set, which would let the run "succeed" having pushed
-                // nothing.
+                // Propagate: an empty pending set would let a cancelled run succeed having
+                // pushed nothing.
                 throw e
             } catch (e: Exception) {
                 Log.w(TAG, "pendingLocalChanges scan failed")
@@ -523,11 +504,10 @@ class AndroidContactsProviderRepository @Inject constructor(
         }
 
     /**
-     * Scan the account's `DIRTY = 1 AND DELETED = 0` RawContacts (a user edit — or a
-     * device-created contact) into [LocalContactEdit]s. The locators are read fully
-     * before the per-row Data reads so no cursor is held open across a nested query.
-     * `DELETED = 0` keeps a soft-deleted-yet-dirty row out of the edit set (it belongs
-     * to the tombstone scan).
+     * Reads the account's `DIRTY = 1 AND DELETED = 0` RawContacts (user edits and
+     * device-created contacts) as [LocalContactEdit]s. The locators are read in full before the
+     * per-row Data reads so no cursor stays open across a nested query. `DELETED = 0` leaves a
+     * soft-deleted dirty row to the tombstone scan.
      */
     private fun queryDirtyEdits(accountName: String): List<LocalContactEdit> {
         data class Locator(val id: Long, val href: String, val uid: String, val etag: String?)
@@ -555,9 +535,9 @@ class AndroidContactsProviderRepository @Inject constructor(
 
         if (locators.isEmpty()) return emptyList()
 
-        // Resolve the account's group titles ONCE per scan so a GroupMembership row that
-        // carries only a GROUP_ROW_ID (a People-app user label, GROUP_SOURCE_ID blank)
-        // maps back to its category instead of dropping silently.
+        // Group titles, once per scan, so a GroupMembership row with only a GROUP_ROW_ID (a
+        // label the user added in the Contacts app, GROUP_SOURCE_ID blank) maps back to its
+        // category instead of silently dropping.
         val groupTitles = queryGroupTitles(accountName)
 
         return locators.map { loc ->
@@ -570,25 +550,23 @@ class AndroidContactsProviderRepository @Inject constructor(
                 href = loc.href,
                 uid = loc.uid,
                 storedEtag = loc.etag,
-                // uid/version/rawVCard/kind aren't on Data rows; only the UID is known
-                // here (SYNC1). version + rawVCard are composed by the push strategy at
-                // the book's observed version, so the defaults are left in place.
-                // Normalize the photo (WebP/HEIF -> JPEG) so strict servers store it and
-                // its image type is labeled correctly; every other photo passes through.
+                // version, rawVCard and kind aren't on Data rows and keep their defaults; the
+                // push composes the body at the book's version. The UID comes from SYNC1.
+                // The photo is normalized ([ContactPhotoTranscoder]) so strict servers
+                // store it.
                 contact = mapped.copy(photo = photoTranscoder.normalize(mapped.photo)),
-                // The provider _ID: the only stable key a net-new contact (blank
-                // SOURCE_ID) can be written back against after its server create.
+                // The only stable key a net-new contact (blank SOURCE_ID) can be written back
+                // against after its server create.
                 localId = loc.id,
             )
         }
     }
 
     /**
-     * Map this account's `Groups._ID` -> `TITLE` (blank titles skipped) for resolving a
-     * [android.provider.ContactsContract.CommonDataKinds.GroupMembership] row that carries
-     * only a `GROUP_ROW_ID`. Failure-safe: a read failure degrades to an empty map
-     * (GROUP_SOURCE_ID-only categories) rather than aborting the whole edit scan; a
-     * cancellation propagates.
+     * Maps this account's `Groups._ID` to `TITLE` (blank titles skipped), for a
+     * [android.provider.ContactsContract.CommonDataKinds.GroupMembership] row that carries only a
+     * `GROUP_ROW_ID`. A read failure returns an empty map (only GROUP_SOURCE_ID categories
+     * resolve) and doesn't abort the edit scan; a cancellation propagates.
      */
     private fun queryGroupTitles(accountName: String): Map<Long, String> =
         try {
@@ -609,9 +587,9 @@ class AndroidContactsProviderRepository @Inject constructor(
         } catch (e: CancellationException) {
             throw e
         } catch (e: SecurityException) {
-            // Log the message only, never the throwable, so a provider exception that
-            // echoes the account-scoped URI can't leak the account name to logcat
-            // (matching the surrounding edit-scan guards).
+            // Log the message only, never the throwable: a provider exception that echoes
+            // the account-scoped URI would leak the account name to logcat. The other
+            // edit-scan guards do the same.
             Log.w(TAG, "READ_CONTACTS revoked; group titles unresolved (labels may drop)")
             emptyMap()
         } catch (e: Exception) {
@@ -619,7 +597,7 @@ class AndroidContactsProviderRepository @Inject constructor(
             emptyMap()
         }
 
-    /** Scan the account's `DELETED = 1` RawContacts into [LocalContactTombstone]s. */
+    /** Reads the account's `DELETED = 1` RawContacts as [LocalContactTombstone]s. */
     private fun queryTombstones(accountName: String): List<LocalContactTombstone> =
         contentResolver.query(
             syncAdapterUri(RawContacts.CONTENT_URI, accountName),
@@ -640,7 +618,7 @@ class AndroidContactsProviderRepository @Inject constructor(
             out
         }.orEmpty()
 
-    /** All Data rows of one RawContact as [ContentValues], for the reverse mapper. */
+    /** Reads every Data row of one RawContact as [ContentValues], for the reverse mapper. */
     private fun readDataRows(accountName: String, rawContactId: Long): List<ContentValues> =
         contentResolver.query(
             syncAdapterUri(Data.CONTENT_URI, accountName),
@@ -655,11 +633,10 @@ class AndroidContactsProviderRepository @Inject constructor(
         }.orEmpty()
 
     /**
-     * Materialize the current cursor row into [ContentValues], preserving each
-     * column's type. Type-aware (not the String-coercing
-     * `DatabaseUtils.cursorRowToContentValues`) so an INTEGER type column
-     * (`Email.TYPE`, `IS_PRIMARY`) and a BLOB photo survive intact for the reverse
-     * mapper's `getAsInteger` / `getAsByteArray` reads.
+     * Copies the current cursor row into [ContentValues], keeping each column's type. The
+     * platform `DatabaseUtils.cursorRowToContentValues` coerces to String, which would break an
+     * INTEGER column (`Email.TYPE`, `IS_PRIMARY`) or a BLOB photo for the reverse mapper's
+     * `getAsInteger` and `getAsByteArray` reads.
      */
     private fun cursorRowToValues(cursor: Cursor): ContentValues {
         val values = ContentValues(cursor.columnCount)
@@ -680,12 +657,14 @@ class AndroidContactsProviderRepository @Inject constructor(
         accountName: String,
         href: String,
         newEtag: String,
+        newHref: String?,
     ): Result<Unit> = applyScopedIdWrite("mark-uploaded", resolveRawContactId(accountName, href)) { id ->
         ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
+            .apply { if (newHref != null) withValue(RawContacts.SOURCE_ID, newHref) }
             .withValue(RawContacts.SYNC2, newEtag)
-            // Clear DIRTY in the SAME sync-adapter write. Sync-adapter mode is what
-            // stops the provider re-flagging DIRTY on our own write (which would spin
-            // the push forever); clearing it removes the row from the next scan.
+            // Clear DIRTY in the same sync-adapter write. Sync-adapter mode stops the
+            // provider setting DIRTY again on this write, which would spin the push
+            // forever; clearing it takes the row out of the next scan.
             .withValue(RawContacts.DIRTY, 0)
             .build()
     }
@@ -695,15 +674,13 @@ class AndroidContactsProviderRepository @Inject constructor(
         localId: Long,
         uid: String,
     ): Result<Unit> =
-        // Keyed by the provider _ID: a net-new row's SOURCE_ID is still blank, so it can
-        // only be reached by _ID. A 0L (unset) _ID no-ops rather than stamping a row.
+        // By _ID: a net-new row's SOURCE_ID is still blank. A 0L (unset) _ID is a no-op
+        // and stamps no row.
         applyScopedIdWrite("assign-uid", localId.takeIf { it > 0L }) { id ->
             ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
-                // Persist the synthesized UID so it names the resource and re-attempts reuse
-                // it. DIRTY is left SET: the row stays pending until the server create clears
-                // it. Sync-adapter mode (the rawContactByIdUri) stops this write from itself
-                // re-flagging DIRTY, so keeping DIRTY=1 here reflects the still-pending edit
-                // rather than a fresh one.
+                // Persist the generated UID so it names the resource and retries reuse it.
+                // DIRTY stays 1 so the row stays pending until the server create clears it;
+                // sync-adapter mode keeps this write from counting as a new edit.
                 .withValue(RawContacts.SYNC1, uid)
                 .withValue(RawContacts.DIRTY, 1)
                 .build()
@@ -715,25 +692,25 @@ class AndroidContactsProviderRepository @Inject constructor(
         href: String,
         newEtag: String,
     ): Result<Unit> =
-        // Keyed by the provider _ID, never a SOURCE_ID resolve: a net-new row's SOURCE_ID
-        // is still blank at this point, so an href lookup would find nothing. A 0L (unset)
-        // _ID passes null to applyScopedIdWrite, which no-ops rather than stamping a row.
+        // By _ID, never a SOURCE_ID lookup: a net-new row's SOURCE_ID is still blank, so an
+        // href lookup would find nothing. A 0L (unset) _ID passes null to
+        // applyScopedIdWrite, a no-op that stamps no row.
         applyScopedIdWrite("mark-new-uploaded", localId.takeIf { it > 0L }) { id ->
             ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
-                // Stamp the freshly-minted server href so the next pull matches this row
-                // (SOURCE_ID = server href) and skips it instead of inserting a duplicate.
+                // The new server href, so the next pull matches this row and skips it
+                // instead of inserting a duplicate.
                 .withValue(RawContacts.SOURCE_ID, href)
                 .withValue(RawContacts.SYNC2, newEtag)
-                // Clear DIRTY in the SAME sync-adapter write so our own write-back isn't
-                // re-detected as a fresh edit (which would spin the push forever).
+                // Clear DIRTY in the same sync-adapter write so this write-back isn't read as
+                // a new edit, which would spin the push forever.
                 .withValue(RawContacts.DIRTY, 0)
                 .build()
         }
 
     override suspend fun hardDeleteTombstone(accountName: String, href: String): Result<Unit> =
         applyScopedIdWrite("hard-delete-tombstone", resolveTombstoneId(accountName, href)) { id ->
-            // A delete via the sync-adapter URI is a HARD delete; a non-adapter delete
-            // would only re-set DELETED (soft), leaving the row forever.
+            // A delete through the sync-adapter URI is a hard delete; a non-adapter delete
+            // only sets DELETED again, leaving the row forever.
             ContentProviderOperation.newDelete(rawContactByIdUri(accountName, id)).build()
         }
 
@@ -741,20 +718,19 @@ class AndroidContactsProviderRepository @Inject constructor(
         applyScopedIdWrite("restore-tombstone", resolveTombstoneId(accountName, href)) { id ->
             ContentProviderOperation.newUpdate(rawContactByIdUri(accountName, id))
                 .withValue(RawContacts.DELETED, 0)
-                // Also clear DIRTY: a restored-but-still-dirty row would re-surface as a
-                // pending EDIT on the very next scan.
+                // Clear DIRTY too, or the restored row comes back as a pending edit on the
+                // next scan.
                 .withValue(RawContacts.DIRTY, 0)
                 .build()
         }
 
     /**
-     * Resolve [href] to a RawContact `_ID`, build a single op via [buildOp], and apply
-     * it, validating the applied-op count. A null [rawContactId] (href no longer
-     * resolves, or resolves to no matching row) is a no-op success. A short
-     * `applyBatch` result is a [Result.failure] — per-op counts can lie, but a short
-     * result array is the reliable at-op-granularity signal the write did not fully
-     * apply. Failures are classified as [ContactWriteFailure]; no provider message
-     * (which could embed a href/email/URL) reaches the log or the failure.
+     * Applies the single op [buildOp] builds for [rawContactId] and checks the applied-op count.
+     * A null [rawContactId] (no matching row, or an unset `_ID`) is a no-op success. A short
+     * `applyBatch` result is a [Result.failure]: per-op counts can lie, but a short result array
+     * reliably means the write didn't fully apply. Failures are classified as
+     * [ContactWriteFailure]; no provider message (which could embed an href, email or URL)
+     * reaches the log or the failure.
      */
     private suspend fun applyScopedIdWrite(
         label: String,
@@ -781,8 +757,8 @@ class AndroidContactsProviderRepository @Inject constructor(
             Log.w(TAG, "$label: Contacts Provider unavailable")
             Result.failure(ContactWriteException(ContactWriteFailure.PROVIDER_ERROR))
         } catch (e: CancellationException) {
-            // Cancellation is not a provider error: let it unwind so the write-back
-            // isn't reported as a recoverable failure that holds the sync token.
+            // Not a provider error: let it unwind, or the write-back reads as a recoverable
+            // failure that holds the sync-token.
             throw e
         } catch (e: Exception) {
             Log.w(TAG, "$label: batch failed unexpectedly")
@@ -790,14 +766,17 @@ class AndroidContactsProviderRepository @Inject constructor(
         }
     }
 
-    /** The `_ID` of a live RawContact at [href] under this account, or null. */
+    /**
+     * Returns the `_ID` of the RawContact at [href] under this account, or null. A tombstone
+     * matches too ([resolveRawContact] doesn't filter DELETED).
+     */
     private fun resolveRawContactId(accountName: String, href: String): Long? =
         resolveRawContact(accountName, href)?.rawContactId
 
     /**
-     * The `_ID` of a soft-deleted (`DELETED = 1`) RawContact at [href] under this
-     * account, or null. The `DELETED = 1` constraint is the safety fence: a
-     * tombstone verb can never touch a live row that merely shares the href.
+     * Returns the `_ID` of the soft-deleted (`DELETED = 1`) RawContact at [href] under this
+     * account, or null. The `DELETED = 1` filter keeps a tombstone write off a live row that
+     * shares the href.
      */
     private fun resolveTombstoneId(accountName: String, href: String): Long? =
         contentResolver.query(
@@ -808,30 +787,25 @@ class AndroidContactsProviderRepository @Inject constructor(
             null,
         )?.use { if (it.moveToFirst()) it.getLong(0) else null }
 
-    /** A sync-adapter, account-scoped URI addressing one RawContact by its `_ID`. */
+    /** Returns the sync-adapter, account-scoped URI of one RawContact by `_ID`. */
     private fun rawContactByIdUri(accountName: String, rawContactId: Long): Uri =
         ContentUris.withAppendedId(syncAdapterUri(RawContacts.CONTENT_URI, accountName), rawContactId)
 
     /**
-     * Build the [ContentProviderOperation] batches for [contacts]. Pure (no I/O)
-     * so the chunking and yield-boundary invariants are unit-testable without a
-     * provider.
+     * Builds the [ContentProviderOperation] batches for [contacts]. No I/O, so the chunking and
+     * yield invariants are unit-testable without a provider.
      *
      * Invariants:
-     * - A RawContact insert and all its Data rows sit in ONE batch (a contact is
-     *   never split across an `applyBatch` boundary), and the last op of each
-     *   contact is the yield point — so a partial failure can't commit a
-     *   nameless RawContact.
-     * - A batch is bounded by BOTH the op count ([MAX_OPS_PER_BATCH]) AND the
-     *   cumulative inline-blob bytes ([MAX_BATCH_BYTES]): an inline contact photo
-     *   can be hundreds of KB, so a handful of photo-carrying contacts fits well
-     *   under the op cap yet can still exceed the ~1MB Binder `applyBatch`
-     *   transaction limit and throw `TransactionTooLargeException`. A single
-     *   contact whose own blob exceeds the byte budget is still kept whole (it
-     *   takes a lone batch) — the byte ceiling never splits a contact mid-way.
-     * - Data rows back-reference their parent RawContact by its index WITHIN the
-     *   batch (back-references are batch-relative), so the base index resets to 0
-     *   at each new batch.
+     * - A RawContact insert and all its Data rows sit in one batch, never split across an
+     *   `applyBatch` boundary, and each contact's last op is its yield point, so a partial
+     *   failure can't commit a nameless RawContact.
+     * - A batch is bounded by both the op count ([MAX_OPS_PER_BATCH]) and the inline-blob bytes
+     *   ([MAX_BATCH_BYTES]). An inline photo can be hundreds of KB, so a few photo contacts fit
+     *   under the op cap yet exceed the ~1MB Binder `applyBatch` transaction limit and throw
+     *   `TransactionTooLargeException`. A contact whose own blob exceeds the budget takes a
+     *   batch alone; the byte limit never splits a contact.
+     * - Data rows back-reference their RawContact by its index within the batch, so the base
+     *   index restarts at 0 in each batch.
      */
     internal fun buildBatches(
         accountName: String,
@@ -845,7 +819,7 @@ class AndroidContactsProviderRepository @Inject constructor(
         var currentBytes = 0L
 
         for (contact in contacts) {
-            // opsForContact = 1 RawContact + its data rows; keep it whole.
+            // One RawContact plus its Data rows, kept whole.
             val contactOpCount = 1 + contact.mapped.dataRows.size
             val contactBytes = contactBlobBytes(contact)
             val overOps = current.size + contactOpCount > MAX_OPS_PER_BATCH
@@ -861,9 +835,8 @@ class AndroidContactsProviderRepository @Inject constructor(
             current.add(
                 ContentProviderOperation.newInsert(rawUri)
                     .withValues(rawContactValues(contact))
-                    // A contact with zero data rows makes the RawContact itself the
-                    // yield point so the boundary invariant still holds. Defensive:
-                    // the mapper always emits a StructuredName, so rows is non-empty.
+                    // With zero Data rows the RawContact is the yield point, so the invariant
+                    // holds. The mapper always emits a StructuredName, so rows isn't empty.
                     .withYieldAllowed(rows.isEmpty())
                     .build()
             )
@@ -874,8 +847,8 @@ class AndroidContactsProviderRepository @Inject constructor(
                     ContentProviderOperation.newInsert(dataUri)
                         .withValues(ContentValues(values))
                         .withValueBackReference(Data.RAW_CONTACT_ID, base)
-                        // Yield on the LAST op of each contact only — never after the
-                        // RawContact insert, which would let a nameless contact commit.
+                        // Yield only on each contact's last op, never after the RawContact
+                        // insert, which would let a nameless contact commit.
                         .withYieldAllowed(isLastRowOfContact)
                         .build()
                 )
@@ -887,11 +860,10 @@ class AndroidContactsProviderRepository @Inject constructor(
     }
 
     /**
-     * Estimate a contact's contribution to the `applyBatch` transaction size. The
-     * cost is dominated by inline blob columns (a contact PHOTO is up to hundreds of
-     * KB); the mimetype/text columns are comparatively negligible, so summing the
-     * `ByteArray` values across the contact's data rows is a safe lower bound that
-     * captures the term that actually trips the Binder limit.
+     * Estimates a contact's share of the `applyBatch` transaction size as the sum of its
+     * `ByteArray` Data values. Inline blobs (a photo can be hundreds of KB) dominate and are
+     * what trips the Binder limit; the text columns are negligible, so this lower bound is
+     * enough.
      */
     private fun contactBlobBytes(contact: MappedContactWrite): Long =
         contact.mapped.dataRows.sumOf { values ->
@@ -899,18 +871,16 @@ class AndroidContactsProviderRepository @Inject constructor(
         }
 
     /**
-     * Build the one-batch operation list that attaches a photo and/or clears the
-     * photo-pending flag on the RawContact [rawContactId] whose current SYNC4 is
-     * [currentFlags]. Pure (no I/O) so the ops shape is unit-testable without a
-     * live provider.
+     * Builds the one batch that attaches a photo and clears the photo-pending flag on
+     * [rawContactId], whose SYNC4 is [currentFlags]. No I/O, so the ops are unit-testable
+     * without a provider.
      *
-     * When [bytes] is non-null: delete any existing Photo Data row first, then
-     * insert the new blob — so blob and flag commit atomically and a retry cannot
-     * duplicate the photo. When [bytes] is null: no blob ops, only the flag clear
-     * (a pending contact whose re-read vCard dropped its URL photo).
+     * With [bytes]: delete any Photo Data row, then insert the new blob, so blob and flag
+     * commit together and a retry can't duplicate the photo. With null [bytes]: only the flag
+     * clear (the re-read vCard has no URL photo, or the fetch failed permanently).
      *
-     * The flag clear is a bitwise AND-NOT of [FLAG_PHOTO_PENDING] against the READ
-     * value of SYNC4 — it preserves every other bit and never zeroes the column.
+     * The flag clear ANDs [currentFlags] with the inverse of [FLAG_PHOTO_PENDING], keeping every
+     * other bit; it never zeroes the column.
      */
     internal fun buildPhotoWriteBatch(
         accountName: String,
@@ -923,8 +893,8 @@ class AndroidContactsProviderRepository @Inject constructor(
         val ops = ArrayList<ContentProviderOperation>()
 
         if (bytes != null) {
-            // Delete-then-insert the Photo row so a retry (or a changed photo) can
-            // never leave two Photo Data rows for the same RawContact.
+            // Delete, then insert, so a retry or a changed photo never leaves two Photo
+            // Data rows on one RawContact.
             ops.add(
                 ContentProviderOperation.newDelete(dataUri)
                     .withSelection(
@@ -952,34 +922,33 @@ class AndroidContactsProviderRepository @Inject constructor(
         return ops
     }
 
-    /** The SYNC columns + read-only flag for a contact's RawContact row. */
+    /** Builds the SYNC columns, read-only flag and aggregation mode of a contact's RawContact. */
     private fun rawContactValues(contact: MappedContactWrite): ContentValues =
         ContentValues().apply {
             put(RawContacts.SOURCE_ID, contact.href)
-            // Blank (not null) when the body carried no UID: a blank SYNC1 is never
-            // a reconciliation match key, so it must not collide with another blank.
+            // Blank, not null, when the body has no UID; a blank SYNC1 is never used to
+            // match rows ([MappedContactWrite]).
             put(RawContacts.SYNC1, contact.mapped.contact.uid)
             put(RawContacts.SYNC2, contact.etag)
             put(RawContacts.SYNC3, contentHash(contact))
             put(RawContacts.SYNC4, flagsFor(contact))
-            // Editable iff the owning book is writable: an editable row lets the
-            // provider flip DIRTY on a user edit (the push signal); a read-only book's
-            // contacts stay non-editable since they could never be pushed back.
+            // Editable only when the book is writable: an editable row lets the provider set
+            // DIRTY on a user edit (the push signal); a read-only book's contacts could
+            // never be pushed back.
             put(RawContacts.RAW_CONTACT_IS_READ_ONLY, if (contact.isReadOnly) 1 else 0)
-            // Fully isolate mirrored contacts from every other account. DISABLED (not
-            // SUSPENDED) is deliberate: SUSPENDED only stops *automatic* aggregation
-            // but still lets a RawContact join another account's contact via a manual
-            // merge, and once joined, removing our account can cascade into recomputing
-            // that aggregate and collapse the other account's contact. DISABLED keeps
-            // our row a standalone contact that never links to a Google/local contact,
-            // so purging or removing our account can only ever touch our own rows.
+            // Isolate synced contacts from every other account. DISABLED, not SUSPENDED:
+            // SUSPENDED only stops automatic aggregation and still lets a manual merge join
+            // the row to another account's contact, and once joined, removing this account
+            // can recompute that aggregate and collapse the other account's contact.
+            // DISABLED keeps the row a standalone contact that never links to another
+            // account's, so purging or removing this account only touches its own rows.
             put(RawContacts.AGGREGATION_MODE, RawContacts.AGGREGATION_MODE_DISABLED)
         }
 
     /**
-     * Content hash for cheap no-op detection on re-pull (and later local-dirty
-     * comparison). Hashes the verbatim vCard body — the full document the row was
-     * mapped from — not the row set, so it changes iff the server bytes change.
+     * Returns the SHA-256 of the verbatim vCard body the row was mapped from (not the row set),
+     * so it changes only when the server bytes change. Written to SYNC3; nothing reads SYNC3
+     * today.
      */
     private fun contentHash(contact: MappedContactWrite): String {
         val digest = MessageDigest.getInstance("SHA-256")
@@ -987,7 +956,7 @@ class AndroidContactsProviderRepository @Inject constructor(
         return digest.joinToString("") { "%02x".format(it) }
     }
 
-    /** SYNC4 flag bitset. Photo-pending is set when a remote-URL photo awaits fetch. */
+    /** Returns the SYNC4 bitset: [FLAG_PHOTO_PENDING] when a remote-URL photo awaits fetch. */
     private fun flagsFor(contact: MappedContactWrite): Int {
         var flags = 0
         if (contact.mapped.photoUrl != null) flags = flags or FLAG_PHOTO_PENDING
@@ -995,10 +964,9 @@ class AndroidContactsProviderRepository @Inject constructor(
     }
 
     /**
-     * Append the sync-adapter query params the provider reads off the URI:
-     * `CALLER_IS_SYNCADAPTER=true` plus the account name/type. Writing in
-     * sync-adapter mode is what lets us own the SOURCE_ID/SYNC columns and avoids
-     * a DIRTY write-back loop.
+     * Appends the sync-adapter query params the provider reads: `CALLER_IS_SYNCADAPTER=true` and
+     * the account name and type. Sync-adapter mode lets this class write the SOURCE_ID and SYNC
+     * columns and avoids a DIRTY write-back loop.
      */
     private fun syncAdapterUri(uri: Uri, accountName: String): Uri =
         uri.buildUpon()
@@ -1007,7 +975,7 @@ class AndroidContactsProviderRepository @Inject constructor(
             .appendQueryParameter(RawContacts.ACCOUNT_TYPE, KashCalContactsAuthenticator.ACCOUNT_TYPE)
             .build()
 
-    /** Selection scoping a query/delete to one login's account (name AND type). */
+    /** Returns the selection scoping a query or delete to one login's account name and type. */
     private fun accountScopeSelection(): String =
         "${RawContacts.ACCOUNT_NAME} = ? AND ${RawContacts.ACCOUNT_TYPE} = ?"
 
@@ -1018,19 +986,16 @@ class AndroidContactsProviderRepository @Inject constructor(
         private const val TAG = "ContactsProviderRepo"
 
         /**
-         * Ops per `applyBatch`. Kept well under the ~500-op practical Binder
-         * transaction ceiling; a contact is never split across this boundary.
+         * Ops per `applyBatch`, well under the practical Binder limit of about 500 ops; a
+         * contact is never split across this boundary.
          */
         const val MAX_OPS_PER_BATCH = 100
 
         /**
-         * Cumulative inline-blob byte ceiling per `applyBatch`. The Binder
-         * transaction buffer is ~1MB shared process-wide, so this stays well under
-         * it (an inline contact photo alone can be ~950KB — see the mapper's
-         * `MAX_PHOTO_SIZE_BYTES`). A handful of photo-carrying contacts fits under
-         * the op cap yet would overflow one transaction; this bound splits them.
-         * A single contact heavier than the budget is still kept whole in a lone
-         * batch — a contact is never split across an `applyBatch` boundary.
+         * Inline-blob bytes per `applyBatch`, well under the ~1MB process-wide Binder
+         * transaction buffer; one inline photo can be up to
+         * [org.onekash.kashcal.data.contacts.MAX_PHOTO_SIZE_BYTES] (950KB). A contact heavier
+         * than the budget takes a batch alone; rules on [buildBatches].
          */
         const val MAX_BATCH_BYTES = 512L * 1024
 
@@ -1038,9 +1003,8 @@ class AndroidContactsProviderRepository @Inject constructor(
         const val FLAG_PHOTO_PENDING = 1
 
         /**
-         * Max hrefs per `SOURCE_ID IN (…)` delete. Well under SQLite's
-         * SQLITE_MAX_VARIABLE_NUMBER (999 on old Androids); the two
-         * account-scope args ride on every chunk, so the cap leaves headroom.
+         * Max hrefs per `SOURCE_ID IN` delete, under SQLite's SQLITE_MAX_VARIABLE_NUMBER (999 on
+         * old Androids) with headroom for the two account-scope args on every chunk.
          */
         const val MAX_DELETE_IDS_PER_QUERY = 400
     }

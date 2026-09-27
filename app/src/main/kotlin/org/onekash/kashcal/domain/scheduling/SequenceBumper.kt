@@ -4,51 +4,39 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.util.RruleUtils
 
 /**
- * Decides when an organizer's edit must bump the iCalendar SEQUENCE.
+ * Decides when an organizer's edit bumps the iCalendar SEQUENCE; the source of truth for it.
  *
- * The single source of truth for this decision. When the organizer changes a
- * scheduling-significant property, attendees' calendars must treat the event
- * as a new revision; SEQUENCE is the monotonic counter that tells them so. A
- * change to a purely cosmetic property (notes, categories, colour) does NOT
- * invalidate a prior acceptance, so bumping SEQUENCE for it would make
- * attendee clients re-surface the invitation and re-notify for nothing.
+ * A scheduling-significant change makes attendees' calendars treat the event as a new revision,
+ * and SEQUENCE is the monotonic counter that tells them so. A cosmetic change (notes, categories,
+ * color) doesn't invalidate a prior acceptance, so bumping for it would make attendee clients
+ * re-surface the invitation and re-notify for nothing.
  *
- * Significant properties (bump): DTSTART, DTEND, DURATION, RRULE, RDATE,
- * EXDATE, a transition of STATUS to CANCELLED, and the attendee-facing SUMMARY
- * (title) and LOCATION. RFC 5546 §2.1.4 names LOCATION as an example of a
- * change that can jeopardize an attendee's participation status; a renamed
- * meeting is likewise attendee-facing, so both re-notify. Title and location
- * are compared trimmed so a no-op re-save that only changes whitespace (or
- * null-vs-blank location) does not spuriously re-notify.
+ * Significant (bump): DTSTART, DTEND, DURATION, the all-day flag, RRULE, RDATE, EXDATE, a
+ * transition of STATUS to CANCELLED, and the attendee-facing SUMMARY and LOCATION. RFC 5546
+ * §2.1.4 names LOCATION as a change that can jeopardize an attendee's participation status; a
+ * renamed meeting is likewise attendee-facing. Title and location compare trimmed, and a null
+ * location equals a blank one, so a whitespace-only re-save doesn't re-notify.
  *
- * STATUS scope: only the transition TO CANCELLED bumps. Un-cancelling
- * (CANCELLED back to CONFIRMED) and other STATUS transitions are rare flows
- * not handled here; they don't bump. This is a deliberate scope choice, not an
- * oversight.
+ * Only the transition to CANCELLED bumps. Un-cancelling and other STATUS transitions don't; this
+ * is a deliberate scope choice.
  *
- * KashCal events always carry an explicit start/end and timezone, and the
- * `Event` entity has no DUE field (DUE is a VTODO property), so the property
- * set below is the applicable subset of RFC 5546 §2.1.4 for VEVENTs.
+ * KashCal events always carry an explicit start, end and timezone, and `Event` has no DUE field
+ * (a VTODO property), so this is the applicable subset of RFC 5546 §2.1.4 for VEVENTs.
  */
 object SequenceBumper {
 
     private const val STATUS_CANCELLED = "CANCELLED"
 
-    /**
-     * True when the change from [old] to [new] is scheduling-significant and
-     * therefore requires a SEQUENCE bump.
-     */
+    /** Returns true when the change from [old] to [new] is scheduling-significant. */
     fun shouldBump(old: Event, new: Event): Boolean {
         val timingChanged = old.startTs != new.startTs ||
             old.endTs != new.endTs ||
             old.isAllDay != new.isAllDay ||
             old.duration != new.duration
-        // Compare the RRULE by meaning, not bytes: a picker that re-emits
-        // the same rule with reordered parts, different case, or extra
-        // whitespace is not a scheduling change, and bumping SEQUENCE for
-        // it would spuriously re-notify every attendee. RDATE/EXDATE stay
-        // on exact comparison — they are timestamp lists, not RRULEs, and
-        // any real add/remove always changes the string.
+        // Compare the RRULE by meaning: a picker that re-emits the same rule with reordered
+        // parts, other case or extra whitespace isn't a change, and a bump would re-notify every
+        // attendee. RDATE and EXDATE compare exactly: they are timestamp lists, and any real add
+        // or remove changes the string.
         val recurrenceChanged = !RruleUtils.rrulesEquivalent(old.rrule, new.rrule) ||
             old.rdate != new.rdate ||
             old.exdate != new.exdate
@@ -60,9 +48,8 @@ object SequenceBumper {
     }
 
     /**
-     * The SEQUENCE to persist for [new]: [new].sequence + 1 when the edit is
-     * significant, otherwise [new].sequence unchanged. Relative to the new
-     * event's own sequence so a caller that already advanced it isn't
+     * Returns the SEQUENCE to persist for [new]: its own sequence + 1 when the edit is
+     * significant, else unchanged. Relative to [new] so a caller that already advanced it isn't
      * clobbered.
      */
     fun nextSequence(old: Event, new: Event): Int =

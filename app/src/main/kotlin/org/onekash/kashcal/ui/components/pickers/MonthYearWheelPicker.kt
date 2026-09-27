@@ -28,16 +28,13 @@ import org.onekash.kashcal.ui.components.VerticalWheelPicker
 import java.text.DateFormatSymbols
 
 /**
- * Two side-by-side non-circular wheel pickers for month and year selection.
- * Used as an inline alternative to the calendar grid when the user taps the
- * month/year header in [InlineDatePickerContent].
+ * Shows side-by-side circular month and year wheels. [InlineDatePickerContent] swaps it in for
+ * the calendar grid when the month/year header is tapped; [YearOverlay] also uses it.
  *
- * @param selectedYear Current year (e.g. 2025)
- * @param selectedMonth Current month, 0-based (Calendar.JANUARY = 0)
- * @param onMonthYearSelected Called when either wheel settles on a new value
- * @param yearRange Range of years to display (default 1900..2200)
- * @param visibleItems Number of visible items per wheel (should be odd)
- * @param itemHeight Height of each item — 44dp fills the 220dp container exactly (5 × 44)
+ * @param selectedMonth 0-based (`Calendar.JANUARY` = 0); anything outside 0..11 throws
+ * @param onMonthYearSelected called when either wheel settles on a new value
+ * @param visibleItems items shown per wheel; should be odd
+ * @param itemHeight 44dp times 5 visible items fills the date picker's 220dp grid box
  */
 @Composable
 fun MonthYearWheelPicker(
@@ -68,7 +65,7 @@ fun MonthYearWheelPicker(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Month wheel (circular — 12 months is naturally cyclic)
+        // Circular: the 12 months are cyclic.
         VerticalWheelPicker(
             items = monthNames,
             selectedItem = monthIndexToName(currentMonth, monthNames),
@@ -94,8 +91,8 @@ fun MonthYearWheelPicker(
             )
         }
 
-        // Year wheel (circular — wrap point is 150+ years from any reasonable
-        // selection, so users won't encounter it in practice)
+        // Circular too: with the default range the wrap point is more than a century from any
+        // current year (126 years back, 174 ahead from 2026).
         VerticalWheelPicker(
             items = yearList,
             selectedItem = currentYear.coerceIn(yearRange),
@@ -123,21 +120,17 @@ fun MonthYearWheelPicker(
 }
 
 /**
- * Returns locale-aware month names, filtering out the 13th empty string
- * that some locales include in [DateFormatSymbols.getMonths].
+ * Returns the default locale's month names, dropping the empty 13th entry that
+ * [DateFormatSymbols.getMonths] can include.
  */
 internal fun getLocalizedMonthNames(): List<String> =
     DateFormatSymbols.getInstance().months.filter { it.isNotBlank() }
 
-/**
- * Maps a 0-based month index to the corresponding localized name.
- */
+/** Returns the name for a 0-based month index, clamping an out-of-range index into [names]. */
 internal fun monthIndexToName(index: Int, names: List<String>): String =
     names.getOrElse(index.coerceIn(0, names.lastIndex)) { names.first() }
 
-/**
- * Maps a year to its index within the given range.
- */
+/** Returns [year]'s index within [range], clamped to the range. */
 internal fun yearToIndex(year: Int, range: IntRange): Int =
     (year - range.first).coerceIn(0, range.last - range.first)
 

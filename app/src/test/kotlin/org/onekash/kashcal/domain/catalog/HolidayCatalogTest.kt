@@ -6,10 +6,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for the pure holiday-catalog logic: JSON parsing, search
- * filtering, and already-added marking. The Android resource loader
- * (loadHolidayCatalog) is verified by build + manual; this exercises the
- * total/pure functions it delegates to.
+ * Tests the pure holiday-catalog functions: [parseHolidayCatalog], [filterCatalog] and
+ * [markAlreadyAdded]. The resource loader [loadHolidayCatalog] isn't tested here.
  */
 class HolidayCatalogTest {
 
@@ -52,7 +50,7 @@ class HolidayCatalogTest {
 
     @Test
     fun `unknown top-level keys are ignored`() {
-        // source/license/license_url/license_note are all unknown to the model
+        // The model has no source, license, license_url or license_note field.
         val entries = parseHolidayCatalog(sampleJson)
         assertEquals(4, entries.size)
     }

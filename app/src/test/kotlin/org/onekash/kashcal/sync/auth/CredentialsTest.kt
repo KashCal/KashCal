@@ -6,14 +6,7 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Unit tests for Credentials data class.
- *
- * Tests:
- * - Construction
- * - Default values
- * - Password masking for safe logging
- */
+/** Tests [Credentials] construction, defaults, data-class behavior and log-safe masking. */
 class CredentialsTest {
 
     // ==================== Construction Tests ====================
@@ -61,7 +54,7 @@ class CredentialsTest {
 
         val safeString = creds.toSafeString()
 
-        // Password should be completely masked - no characters visible
+        // No password characters are visible
         assertFalse("Password should not be visible", safeString.contains("abcd"))
         assertFalse("Password should not be visible", safeString.contains("efgh"))
         assertFalse("Password should not be visible", safeString.contains("mnop"))
@@ -77,7 +70,7 @@ class CredentialsTest {
 
         val safeString = creds.toSafeString()
 
-        // Username should be masked - shows only first 3 chars + domain TLD
+        // The username keeps only its first 3 chars and the domain's TLD
         assertTrue("Username should be masked", safeString.contains("joh***@***.com"))
         assertFalse("Full username should not be visible", safeString.contains("john.doe@icloud.com"))
     }
@@ -91,7 +84,7 @@ class CredentialsTest {
 
         val safeString = creds.toSafeString()
 
-        // Short usernames (2 chars) show first char + ***
+        // A local part of 3 chars or fewer keeps only its first char
         assertTrue("Short username should be masked", safeString.contains("j***@***.com"))
     }
 
@@ -109,8 +102,7 @@ class CredentialsTest {
 
     @Test
     fun `toSafeString never reveals any password characters`() {
-        // Test various password lengths - none should reveal characters
-        // Use distinctive passwords that won't appear in other parts of the output
+        // Distinctive passwords of different lengths that can't appear elsewhere in the output
         val passwords = listOf("xyz123", "qwerty", "secretpassword", "p@ssw0rd!")
 
         for (password in passwords) {
@@ -137,7 +129,6 @@ class CredentialsTest {
 
         val safeString = creds.toSafeString()
 
-        // Should match exact format: Credentials(username=masked, password=****, trustInsecure=false)
         assertEquals(
             "Credentials(username=joh***@***.com, password=****, trustInsecure=false)",
             safeString

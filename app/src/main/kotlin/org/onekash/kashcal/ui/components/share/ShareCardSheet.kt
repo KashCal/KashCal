@@ -62,16 +62,15 @@ import org.onekash.kashcal.util.ShareCardIntentBuilder
 import org.onekash.kashcal.util.ShareChooser
 
 /**
- * Modal bottom sheet that previews and shares an event as a card image.
+ * Shows a bottom sheet that previews an event as a card image and shares it.
  *
- * Architecture (per 2026-05-31 docs research):
- *  - The on-screen preview composable IS the source of pixels for the share.
- *    `Modifier.drawWithContent { layer.record { drawContent() }; drawLayer(layer) }`
- *    captures the draw pass into a [GraphicsLayer] managed by [rememberGraphicsLayer].
- *  - Send tap calls [ShareCardRenderer.writePng] which converts the layer to a
- *    PNG via the FileProvider, then we fire `ACTION_SEND image/png` through
- *    [ShareChooser.createKashCalChooser] (excludes KashCal from its own outbound
- *    chooser per v23.7.69 pattern).
+ *  - The on-screen preview is the source of the shared pixels:
+ *    `Modifier.drawWithContent { layer.record { drawContent() }; drawLayer(layer) }` records
+ *    the draw pass into a [GraphicsLayer] from [rememberGraphicsLayer].
+ *  - Send calls [ShareCardRenderer.writePng], which writes the layer as a PNG and returns its
+ *    FileProvider URI, then starts the share (`ACTION_SEND` `image/png`, or
+ *    `ACTION_SEND_MULTIPLE` with an .ics, see [icsUriProvider]) through
+ *    [ShareChooser.createKashCalChooser], which keeps KashCal out of its own chooser.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,10 +90,9 @@ fun ShareCardSheet(
     renderer: ShareCardRenderer,
     fileNameHint: String,
     /**
-     * Optional .ics provider. When non-null and successful, the share intent
-     * carries BOTH the rendered PNG and the .ics file (ACTION_SEND_MULTIPLE)
-     * so recipients can tap the file to add the event to their calendar.
-     * On null result or thrown failure, the sheet falls back to image-only.
+     * Provides an .ics to attach. When it returns a URI, the share carries both the PNG and the
+     * .ics (`ACTION_SEND_MULTIPLE`) so recipients can tap the file to add the event. A null
+     * provider, a null result or a thrown failure shares the image only.
      */
     icsUriProvider: (suspend () -> Uri?)? = null,
 ) {
@@ -109,25 +107,17 @@ fun ShareCardSheet(
     val allDayLabel = stringResource(R.string.share_as_card_all_day)
     val sendFailedLabel = stringResource(R.string.share_as_card_share_failed)
 
-    // The card lays out at 420×525 dp at the device's native density (4:5
-    // aspect, big enough that the rotated silhouettes' corners fit inside
-    // the capture bounds). ShareCardRenderer.writePng scales the
-    // captured bitmap to a fixed 1080×1350 PNG via
-    // scaleToShareCardOutput so output is constant across DPIs.
+    // The card lays out at 420 × 525 dp at the device's density; ShareCardRenderer.writePng
+    // scales the capture to a fixed 1080 × 1350 PNG, so output is the same on every DPI.
     //
-    // Modifier.scale here is purely a visual transform on the preview —
-    // it does NOT change the measured size of the composable, so the
-    // GraphicsLayer continues to capture the full 420×525 dp content
-    // regardless of how big the on-screen preview appears. Visual preview
-    // is ~240 dp wide for a comfortable in-sheet size.
+    // Modifier.scale only transforms the preview visually; the measured size is unchanged, so
+    // the GraphicsLayer still captures the full 420 × 525 dp. The preview shows about 240 dp
+    // wide.
     val previewScale = 240f / 420f
 
-    // Lock fontScale = 1f for the capture — the share-card is a designed
-    // artifact, not a UI surface. With the user's system font scale
-    // applied, large-text users get a 28sp title that grows enough to push
-    // the attribution off the bottom of the 420dp content area. We keep
-    // the device's native density (which kept the v23.7.72 layout fix
-    // working) and only override fontScale.
+    // The card is a designed image, not UI, so fontScale is locked to 1 for the capture. With
+    // a large system font scale the title grows enough to push the attribution off the card.
+    // Only fontScale is overridden; the device's density stays.
     val deviceDensity = LocalDensity.current
     val captureDensity = remember(deviceDensity) {
         Density(density = deviceDensity.density, fontScale = 1f)
@@ -145,35 +135,17 @@ fun ShareCardSheet(
                 .fillMaxWidth()
                 .padding(bottom = 24.dp),
         ) {
-            // No sheet title — the live preview below makes the sheet's
-            // purpose obvious; an extra "Share as card" header would be
-            // redundant chrome.
+            // No sheet title: the live preview shows what the sheet is for.
 
-            // Live preview.
+            // Live preview. The host Box fits the scaled preview (240 × 5/4 = 300 dp tall). The
+            // capture host has .requiredSize(420, 525) so its bounds, and so the recorded
+            // layer's clip, are 420 × 525 dp whatever the parent allows; with plain sizing it
+            // would shrink to about 288 × 300 dp on a 360 dp wide phone and the capture would
+            // clip the silhouettes' corners. .scale(previewScale) applies after the record,
+            // so the layer keeps full-size content while the preview shows at 240 × 300 dp.
             //
-            // ShareCardComposable measures itself at 420×525 dp at the
-            // device's native density. The GraphicsLayer captures that
-            // size in the device's pixels; ShareCardRenderer.writePng
-            // scales to a fixed 1080×1350 px PNG.
-            //
-            // The host Box is sized to fit the 240-dp scaled preview
-            // (240 × 5/4 = 300) so the visible preview is comfortable
-            // in-sheet. The inner capture-host Box is given an EXPLICIT
-            // .requiredSize(420, 525) so its measured bounds — and
-            // therefore the GraphicsLayer.record clip rect — are exactly
-            // 420×525 dp regardless of the outer 288-dp-wide parent
-            // constraints. Without requiredSize the inner Box would
-            // collapse to ~288×300 dp on a 360-dp-wide phone (the
-            // outer container's max), the silhouettes would lose their
-            // peek margin, and the captured PNG would clip the rotated
-            // corners. .scale(previewScale) is purely a visual transform
-            // applied AFTER the layer record, so the layer holds full-
-            // size 420×525 content while the on-screen preview displays
-            // at 240×300 dp.
-            //
-            // No Crossfade between styles: switching is instantaneous so
-            // the captured layer is never an interpolated frame. Style
-            // change is marked by haptic feedback on chip tap.
+            // No Crossfade between styles: switching is instant so the captured layer is never
+            // an interpolated frame. A chip tap gives haptic feedback instead.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -211,9 +183,7 @@ fun ShareCardSheet(
                 }
             }
 
-            // Style chips. No "Style" label — two emoji chips and a
-            // selected state communicate "pick one of these" without
-            // narration.
+            // Two emoji chips with a selected state need no "Style" label.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -242,13 +212,10 @@ fun ShareCardSheet(
                 )
             }
 
-            // Generous breathing room above the primary action so the
-            // chips don't crowd the Send button — the spec called this
-            // out as needing more space.
+            // Room above the primary action so the chips don't crowd Send.
             Spacer(Modifier.height(32.dp))
 
-            // Send is the whole point of the sheet; treat it like the
-            // primary action with a full-width filled button + icon.
+            // Send is the sheet's primary action: a full-width filled button with an icon.
             Button(
                 onClick = {
                     if (isSending) return@Button
@@ -258,10 +225,8 @@ fun ShareCardSheet(
                         try {
                             val pngResult = renderer.writePng(context, fileNameHint, graphicsLayer)
                             pngResult.onSuccess { pngUri ->
-                                // Try to attach a single-occurrence .ics
-                                // alongside the image so recipients can
-                                // tap-to-add. Failure is non-fatal —
-                                // image-only fallback still works.
+                                // Attach the .ics when the provider gives one; a failure
+                                // is logged and the image is shared alone.
                                 val icsUri: Uri? = icsUriProvider?.let { provider ->
                                     runCatching { provider.invoke() }
                                         .onFailure { Log.w("ShareCardSheet", "ICS export failed", it) }

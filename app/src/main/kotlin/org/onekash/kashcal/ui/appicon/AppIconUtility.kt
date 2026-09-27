@@ -9,8 +9,8 @@ import android.util.Log
  *
  * There is no stored preference: the PackageManager component state is the source of truth.
  * Switching enables the target alias first, then disables the rest ([AppIconSwitchPlan]), all with
- * [PackageManager.DONT_KILL_APP] so the process is not force-killed. The launcher may still refresh
- * or briefly restart the app when the active alias changes — that is inherent to the platform.
+ * [PackageManager.DONT_KILL_APP] so the process isn't force-killed. The launcher may still refresh
+ * or briefly restart the app when the active alias changes; the platform does that.
  */
 class AppIconUtility(context: Context) {
 
@@ -18,12 +18,13 @@ class AppIconUtility(context: Context) {
     private val pm: PackageManager = appContext.packageManager
 
     /**
-     * Reads the currently active preset from component state. Pure — no writes, safe to call from
-     * composition. Returns [AppIconPreset.DEFAULT] if no alias reports enabled (an unexpected state
-     * an interrupted swap could leave); call [healIfNeeded] from an event handler to repair it.
+     * Returns the active preset from component state. Writes nothing, so it is safe to call from
+     * composition. Returns [AppIconPreset.DEFAULT] when no alias reports enabled, a state
+     * [setAppIcon]'s enable-first order doesn't produce; nothing repairs it.
      *
-     * [AppIconPreset.DEFAULT] is special-cased: its alias ships without `android:enabled`, so it
-     * reports [PackageManager.COMPONENT_ENABLED_STATE_DEFAULT] until it is ever explicitly toggled.
+     * [AppIconPreset.DEFAULT]'s alias ships without `android:enabled`, so it reports
+     * [PackageManager.COMPONENT_ENABLED_STATE_DEFAULT] until it is first toggled; that counts as
+     * enabled.
      */
     fun currentPreset(): AppIconPreset {
         val active = AppIconPreset.entries.firstOrNull { preset ->
@@ -38,7 +39,7 @@ class AppIconUtility(context: Context) {
         return active ?: AppIconPreset.DEFAULT
     }
 
-    /** Enables [target]'s alias and disables the others, keeping exactly one launcher entry live. */
+    /** Enables [target]'s alias, then disables the others, so one launcher entry stays live. */
     fun setAppIcon(target: AppIconPreset) {
         val plan = AppIconSwitchPlan.forTarget(target)
         pm.setComponentEnabledSetting(

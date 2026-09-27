@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Geen agenda\'s gevonden op deze server.</string>
     <string name="caldav_error_unexpected">Onverwachte fout. Probeer het opnieuw.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nAls dit een server op je lokale netwerk is, sta dan toegang tot het lokale netwerk toe om verbinding te maken.</string>
+    <string name="caldav_error_connection_refused_insecure">De server stuurde de verbinding door naar een plek waar KashCal niet naartoe gaat (een onversleuteld adres of een doorstuurlus), dus KashCal is gestopt voordat je wachtwoord werd verzonden. Controleer het serveradres.</string>
     <string name="local_network_banner_title">Toegang tot lokaal netwerk nodig</string>
     <string name="local_network_banner_body">Deze server lijkt op je lokale netwerk te staan. Sta toegang tot het lokale netwerk toe zodat KashCal er verbinding mee kan maken.</string>
     <string name="local_network_banner_allow">Toegang toestaan</string>
@@ -823,6 +824,8 @@
     <string name="dialog_edit_recurring_title">Wijzigingen opslaan in</string>
     <string name="dialog_delete_recurring_title">Verwijderen</string>
     <string name="dialog_move_recurring_title">Verplaatsen</string>
+    <string name="snackbar_event_rescheduled">Afspraak verplaatst</string>
+    <string name="snackbar_reschedule_failed">Kan afspraak niet verplaatsen</string>
     <string name="recurring_this_event">Deze afspraak</string>
     <string name="recurring_all_events">Alle afspraken</string>
 

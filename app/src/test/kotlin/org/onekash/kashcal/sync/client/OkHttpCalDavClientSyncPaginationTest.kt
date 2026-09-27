@@ -14,14 +14,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.sync.auth.Credentials
+import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * Tests for sync-collection pagination handling (RFC 6578 Section 3.6).
+ * Tests sync-collection truncation handling (RFC 6578 §3.6).
  *
- * When a server truncates sync-collection results due to storage constraints,
- * it MUST return 507 Insufficient Storage with partial results and a new sync-token.
- * Client MUST use the new token to continue syncing.
+ * A server that truncates the results marks it with a 507 Insufficient Storage status for the
+ * request-URI, inside a 207 with the partial results and a new sync-token; the client also
+ * accepts a top-level HTTP 507, which these tests send. The client continues from the new token.
  */
 class OkHttpCalDavClientSyncPaginationTest {
 
@@ -57,7 +58,7 @@ class OkHttpCalDavClientSyncPaginationTest {
 
     @Test
     fun `syncCollection handles 507 truncated response`() = runTest {
-        // Arrange: Server returns 507 with partial results
+        // Arrange: the server returns 507 with partial results
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(507)
@@ -94,7 +95,7 @@ class OkHttpCalDavClientSyncPaginationTest {
 
     @Test
     fun `syncCollection normal response is not truncated`() = runTest {
-        // Arrange: Normal 207 response
+        // Arrange: a 207 without a truncation marker
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -128,7 +129,7 @@ class OkHttpCalDavClientSyncPaginationTest {
 
     @Test
     fun `syncCollection 507 without valid response body returns error`() = runTest {
-        // Arrange: 507 without parseable response
+        // Arrange: a 507 whose body isn't a multistatus
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(507)
@@ -140,10 +141,12 @@ class OkHttpCalDavClientSyncPaginationTest {
         // Act
         val result = client.syncCollection(calendarUrl, "http://example.com/sync/start")
 
-        // Assert - should still succeed with empty results and truncated flag
-        // (per RFC, server SHOULD include partial results, but if not, we still know to retry)
-        assertTrue("Should handle 507 gracefully", result.isSuccess())
-        val report = result.getOrNull()!!
-        assertTrue("Should still be marked as truncated", report.truncated)
+        // Assert: RFC 6578 §3.6 has a truncated report carry a multistatus with the new
+        // sync-token. A body that isn't one says nothing about what changed and has no token
+        // to continue from, so it is a retryable error, not an empty report.
+        assertTrue("Should be an error", result is CalDavResult.Error)
+        result as CalDavResult.Error
+        assertEquals(CalDavResult.CODE_NOT_MULTISTATUS, result.code)
+        assertTrue(result.isRetryable)
     }
 }

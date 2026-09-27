@@ -18,16 +18,10 @@ import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 import javax.inject.Inject
 
 /**
- * Resolves conflicts when local and server versions differ (412 errors).
+ * Resolves a pending operation the server refused because its version differs (412).
  *
- * Conflict resolution strategies:
- * - SERVER_WINS: Server version overwrites local (default, safest for shared calendars)
- * - LOCAL_WINS: Force push local version (use with caution)
- * - NEWEST_WINS: Compare sequence/timestamps, keep newest
- * - MANUAL: Mark conflict for user to resolve
- *
- * Per Android Architecture recommendations, this is a domain-layer component
- * that coordinates between data sources without exposing implementation details.
+ * The strategies are described on [ConflictStrategy]. Production sync uses only the default,
+ * server wins (`CalDavSyncEngine`). As a sync-layer component it uses the DAOs directly.
  */
 class ConflictResolver @Inject constructor(
     private val calendarRepository: CalendarRepository,
@@ -44,13 +38,12 @@ class ConflictResolver @Inject constructor(
     }
 
     /**
-     * Resolve a conflict for a pending operation.
+     * Resolves the conflict behind [operation] with [strategy].
      *
-     * @param operation The pending operation that caused the conflict
-     * @param expectedCalendarId Optional calendar ID to validate against (prevents cross-calendar conflicts)
-     * @param strategy Resolution strategy to use
-     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
-     * @return ConflictResult indicating outcome
+     * @param expectedCalendarId when set, an event now in another calendar returns
+     *   [ConflictResult.CalendarMismatch] untouched, so one calendar's sync can't resolve
+     *   another's event.
+     * @param client the caller's per-account client.
      */
     suspend fun resolve(
         operation: PendingOperation,
@@ -61,7 +54,6 @@ class ConflictResolver @Inject constructor(
         val event = eventsDao.getById(operation.eventId)
             ?: return ConflictResult.EventNotFound
 
-        // Validate calendar context if provided
         if (expectedCalendarId != null && event.calendarId != expectedCalendarId) {
             Log.w(TAG, "Event ${event.id} moved to different calendar during conflict resolution")
             return ConflictResult.CalendarMismatch
@@ -76,13 +68,7 @@ class ConflictResolver @Inject constructor(
         }
     }
 
-    /**
-     * Resolve multiple conflicts at once.
-     *
-     * @param operations The pending operations that caused conflicts
-     * @param strategy Resolution strategy to use
-     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
-     */
+    /** Resolves each of [operations] in order with [strategy], without a calendar check. */
     suspend fun resolveAll(
         operations: List<PendingOperation>,
         strategy: ConflictStrategy = ConflictStrategy.SERVER_WINS,
@@ -92,26 +78,25 @@ class ConflictResolver @Inject constructor(
     }
 
     /**
-     * SERVER_WINS: Fetch server version and overwrite local.
-     * This is the safest option for shared calendars.
+     * Fetches the server version and overwrites the local event with it. A pending delete is
+     * cancelled instead, keeping the local event; a 404 or a calendar deleted meanwhile deletes
+     * the local event.
      */
     private suspend fun resolveServerWins(event: Event, operation: PendingOperation, client: CalDavClient): ConflictResult {
         Log.d(TAG, "Resolving conflict with SERVER_WINS for event: ${event.title}")
 
-        // For DELETE operations, just delete locally
+        // The server still has the event, so cancel the delete and keep the local copy.
         if (operation.operation == PendingOperation.OPERATION_DELETE) {
-            // Server version exists - cancel delete
             eventsDao.updateSyncStatus(event.id, SyncStatus.SYNCED, System.currentTimeMillis())
             pendingOperationsDao.deleteById(operation.id)
             Log.d(TAG, "DELETE cancelled - server version preserved")
             return ConflictResult.ServerVersionKept
         }
 
-        // For CREATE/UPDATE, fetch server version
         val caldavUrl = event.caldavUrl
         if (caldavUrl == null) {
-            // No URL means event was never on server
-            // Server wins = delete local if server doesn't have it
+            // No URL means the event was never on the server: no server version to take. The event
+            // and its operation are left as they are.
             Log.w(TAG, "Event has no caldavUrl, cannot fetch server version")
             return ConflictResult.Error("Event has no server URL")
         }
@@ -120,7 +105,6 @@ class ConflictResolver @Inject constructor(
         if (fetchResult.isError()) {
             val error = fetchResult as CalDavResult.Error
             if (error.code == 404) {
-                // Server deleted - delete local too
                 eventsDao.deleteById(event.id)
                 pendingOperationsDao.deleteById(operation.id)
                 Log.d(TAG, "Event deleted on server - removed locally")
@@ -131,7 +115,6 @@ class ConflictResolver @Inject constructor(
 
         val serverEvent = (fetchResult as CalDavResult.Success).data
 
-        // Parse server iCal
         val parseResult = icalParser.parseAllEvents(serverEvent.icalData)
         val parsedEvents = when (parseResult) {
             is ParseResult.Success -> parseResult.value
@@ -152,7 +135,7 @@ class ConflictResolver @Inject constructor(
 
         val parsedEvent = parsedEvents.first()
 
-        // Validate calendar still exists (prevents FK violation if deleted mid-sync)
+        // The calendar may have been deleted mid-sync; upserting into it would violate the FK.
         val calendar = calendarRepository.getCalendarById(event.calendarId)
         if (calendar == null) {
             Log.w(TAG, "Calendar ${event.calendarId} deleted during conflict resolution")
@@ -161,7 +144,6 @@ class ConflictResolver @Inject constructor(
             return ConflictResult.LocalDeleted
         }
 
-        // Update local event with server data using ICalEventMapper
         val mapped = ICalEventMapper.toEntity(
             icalEvent = parsedEvent,
             rawIcal = serverEvent.icalData,
@@ -169,19 +151,16 @@ class ConflictResolver @Inject constructor(
             caldavUrl = serverEvent.url,
             etag = serverEvent.etag
         )
-        // Preserve existing event ID and timestamps
+        // Keep the local row id and timestamps.
         var updatedEvent = mapped.event.copy(
             id = event.id,
             createdAt = event.createdAt,
             localModifiedAt = event.localModifiedAt
         )
 
-        // Server-authoritative: event upsert + attendees replace must run
-        // atomically. Without the transaction wrap, a mid-stream failure
-        // would leave the event row updated but attendees stale.
-        // Occurrence regeneration is included in the same transaction so
-        // a partial failure rolls back the entire post-conflict
-        // reconciliation.
+        // Upsert, attendee replace and occurrence regeneration must run in one transaction: a
+        // failure part way would otherwise leave the event row updated with stale attendees or
+        // occurrences.
         database.runInTransaction {
             eventsDao.upsert(updatedEvent)
             attendeesDao.replaceForEvent(
@@ -201,8 +180,7 @@ class ConflictResolver @Inject constructor(
             }
         }
 
-        // Delete the pending operation only after the reconciliation
-        // transaction committed.
+        // Delete the operation only after the transaction commits.
         pendingOperationsDao.deleteById(operation.id)
 
         Log.d(TAG, "Local event updated with server version")
@@ -210,24 +188,24 @@ class ConflictResolver @Inject constructor(
     }
 
     /**
-     * LOCAL_WINS: Force push local version, ignoring server ETag.
-     * Use with caution - can overwrite other users' changes.
+     * Deletes the server copy for a pending delete, then the local event. Any other operation
+     * returns [ConflictResult.Error]: overwriting without an etag check isn't implemented.
      */
     private suspend fun resolveLocalWins(event: Event, operation: PendingOperation, client: CalDavClient): ConflictResult {
         Log.d(TAG, "Resolving conflict with LOCAL_WINS for event: ${event.title}")
 
-        // For DELETE operations, force delete
         if (operation.operation == PendingOperation.OPERATION_DELETE) {
             val caldavUrl = event.caldavUrl
             if (caldavUrl != null) {
-                // Delete with empty etag (force)
+                // An empty etag sends `If-Match: ""`, which matches nothing, so this isn't a
+                // force delete ([CalDavClient.deleteEvent] wants null for that).
                 val deleteResult = client.deleteEvent(caldavUrl, "")
                 if (deleteResult.isError()) {
                     val error = deleteResult as CalDavResult.Error
                     if (error.code != 404) {
                         return ConflictResult.Error("Failed to force delete: ${error.message}")
                     }
-                    // 404 is OK - already deleted
+                    // 404: already gone from the server
                 }
             }
             eventsDao.deleteById(event.id)
@@ -236,32 +214,32 @@ class ConflictResolver @Inject constructor(
             return ConflictResult.LocalVersionPushed
         }
 
-        // LOCAL_WINS for CREATE/UPDATE requires server to support
-        // overwriting without ETag check. This is risky.
-        // Most CalDAV servers will reject this.
+        // Overwriting CREATE/UPDATE would need the server to accept a PUT without an etag
+        // check, which can overwrite other users' changes. Most CalDAV servers will reject this.
         Log.w(TAG, "LOCAL_WINS for UPDATE not implemented - use SERVER_WINS instead")
         return ConflictResult.Error("LOCAL_WINS for UPDATE not supported")
     }
 
     /**
-     * NEWEST_WINS: Compare sequence numbers and timestamps.
-     * Keep whichever version has higher sequence or more recent modification.
+     * Keeps the version with the higher SEQUENCE, or on a tie the later of the server DTSTAMP and
+     * the local modification time. A server win goes through [resolveServerWins]; a local win
+     * takes the server etag and re-queues an UPDATE for immediate push.
+     *
+     * With no caldavUrl or a server 404 this returns [ConflictResult.LocalVersionPushed] without
+     * touching the operation.
      */
     private suspend fun resolveNewestWins(event: Event, operation: PendingOperation, client: CalDavClient): ConflictResult {
         Log.d(TAG, "Resolving conflict with NEWEST_WINS for event: ${event.title}")
 
         val caldavUrl = event.caldavUrl
         if (caldavUrl == null) {
-            // New local event - local wins by default
             return ConflictResult.LocalVersionPushed
         }
 
-        // Fetch server version
         val fetchResult = client.fetchEvent(caldavUrl)
         if (fetchResult.isError()) {
             val error = fetchResult as CalDavResult.Error
             if (error.code == 404) {
-                // Server doesn't have it - local wins
                 return ConflictResult.LocalVersionPushed
             }
             return ConflictResult.Error("Failed to fetch server version: ${error.message}")
@@ -295,11 +273,11 @@ class ConflictResolver @Inject constructor(
         val serverWins = when {
             serverSequence > localSequence -> true
             serverSequence < localSequence -> false
-            // Equal sequence - compare modification times
+            // Equal sequence: compare modification times
             else -> {
                 val serverModified = parsedICalEvent.dtstamp?.timestamp ?: 0L
                 val localModified = event.localModifiedAt ?: event.updatedAt
-                serverModified > localModified // Both in milliseconds now
+                serverModified > localModified // Both epoch millis
             }
         }
 
@@ -308,14 +286,13 @@ class ConflictResolver @Inject constructor(
             resolveServerWins(event, operation, client)
         } else {
             Log.d(TAG, "Local version is newer (seq: $localSequence vs $serverSequence)")
-            // Update local etag to server's current value before creating retry.
-            // Without this, the retry uses the stale etag → 412 again → infinite loop.
+            // Take the server's current etag first; the retry would otherwise send the stale
+            // etag, get 412 again and loop forever.
             eventsDao.updateEtag(event.id, serverEvent.etag)
-            // Delete old operation and create a fresh one for immediate retry
-            // This ensures the local version actually gets pushed to server
+            // Replace the operation with a fresh one (retry count 0, due now) so the local
+            // version is pushed on the next drain.
             pendingOperationsDao.deleteById(operation.id)
 
-            // Create new operation with reset retry count for immediate push
             val newOperation = PendingOperation(
                 eventId = event.id,
                 operation = PendingOperation.OPERATION_UPDATE,
@@ -332,20 +309,18 @@ class ConflictResolver @Inject constructor(
     }
 
     /**
-     * MANUAL: Mark the event for user resolution.
-     * The user will see a conflict indicator and choose which version to keep.
+     * Marks the operation failed and records a conflict error on the event. No UI reads
+     * `lastSyncError` today, so the user isn't shown the conflict or offered a choice.
      */
     private suspend fun resolveManual(event: Event, operation: PendingOperation): ConflictResult {
         Log.d(TAG, "Marking event for manual conflict resolution: ${event.title}")
 
-        // Mark the pending operation as needing manual resolution
         pendingOperationsDao.markFailed(
             operation.id,
             "Conflict detected - manual resolution required",
             System.currentTimeMillis()
         )
 
-        // Record error on event
         eventsDao.recordSyncError(
             event.id,
             "Conflict: Server has a different version. Please resolve manually.",
@@ -357,71 +332,45 @@ class ConflictResolver @Inject constructor(
 
 }
 
-/**
- * Conflict resolution strategies.
- */
+/** Selects how [ConflictResolver] settles a 412; each strategy's details are on its resolver. */
 enum class ConflictStrategy {
-    /**
-     * Server version overwrites local changes.
-     * Safest for shared calendars.
-     */
+    /** The server version overwrites local changes. Safest for shared calendars; the default. */
     SERVER_WINS,
 
-    /**
-     * Force push local version to server.
-     * Can overwrite other users' changes.
-     */
+    /** Deletes the server copy for a pending delete; any other operation is refused. */
     LOCAL_WINS,
 
-    /**
-     * Compare sequence numbers and modification times.
-     * Keep whichever version is "newer".
-     */
+    /** Keeps whichever version has the higher SEQUENCE, then the later modification time. */
     NEWEST_WINS,
 
-    /**
-     * Mark for user to resolve manually.
-     */
+    /** Marks the operation failed and records the conflict on the event. */
     MANUAL
 }
 
-/**
- * Result of conflict resolution.
- */
+/** Outcome of [ConflictResolver.resolve]; [isSuccess] is true for the outcomes that settled it. */
 sealed class ConflictResult {
-    /**
-     * Server version was kept, local changes discarded.
-     */
+    /** The server version was kept and the local change discarded, or a delete cancelled. */
     data object ServerVersionKept : ConflictResult()
 
     /**
-     * Local version was pushed to server.
+     * The local version won: it was deleted on the server, re-queued for push, or left queued
+     * because the server has no copy. Nothing is pushed by the resolver itself except a delete.
      */
     data object LocalVersionPushed : ConflictResult()
 
-    /**
-     * Local event was deleted (server version doesn't exist).
-     */
+    /** The local event was deleted: the server returned 404 or its calendar was deleted. */
     data object LocalDeleted : ConflictResult()
 
-    /**
-     * Conflict marked for user to resolve.
-     */
+    /** The operation was marked failed for manual resolution. */
     data object MarkedForManualResolution : ConflictResult()
 
-    /**
-     * Event not found in local database.
-     */
+    /** The operation's event isn't in Room. */
     data object EventNotFound : ConflictResult()
 
-    /**
-     * Event moved to a different calendar during conflict resolution.
-     */
+    /** The event is now in a calendar other than the expected one. */
     data object CalendarMismatch : ConflictResult()
 
-    /**
-     * Error during resolution.
-     */
+    /** Resolution failed; the operation is left as it was. */
     data class Error(val message: String) : ConflictResult()
 
     fun isSuccess() = this is ServerVersionKept ||

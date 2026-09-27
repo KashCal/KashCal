@@ -10,16 +10,12 @@ import org.onekash.icaldav.model.EventStatus
 import org.onekash.icaldav.model.ParseResult
 
 /**
- * RFC 5545 compliance tests - ported from KashCal.
+ * Tests RFC 5545 parsing: common VEVENT properties, STATUS, SEQUENCE, DURATION, line folding,
+ * TEXT unescaping, RRULE, EXDATE, RECURRENCE-ID, VALARM, ORGANIZER, and events without
+ * DESCRIPTION or LOCATION.
  *
- * These tests verify compliance with iCalendar specifications:
- * - Property parsing (SUMMARY, DESCRIPTION, LOCATION, etc.)
- * - Duration parsing (ISO 8601 durations)
- * - Status handling (CONFIRMED, TENTATIVE, CANCELLED)
- * - SEQUENCE numbers
- * - ORGANIZER and ATTENDEE
- * - Line folding and unescaping
- * - RECURRENCE-ID for exceptions
+ * The two VALARM tests check only that the parse succeeds: one asserts `isNotEmpty() || true`,
+ * the other `assertTrue(true)`.
  */
 @DisplayName("ICalParser RFC 5545 Compliance Tests")
 class ICalParserRfc5545ComplianceTest {
@@ -152,7 +148,7 @@ class ICalParserRfc5545ComplianceTest {
         assertTrue(result is ParseResult.Success)
         val event = (result as ParseResult.Success).value.first()
 
-        // Duration should be 2h30m = 150 minutes = 9000 seconds
+        // 2h30m = 150 minutes = 9000 seconds
         val durationSeconds = event.duration?.seconds ?: 0
         assertEquals(9000L, durationSeconds, "Duration should be 2h30m")
     }
@@ -176,7 +172,8 @@ class ICalParserRfc5545ComplianceTest {
         assertTrue(result is ParseResult.Success)
         val event = (result as ParseResult.Success).value.first()
 
-        // 1 week + 2 days = 9 days = 777600 seconds
+        // 1 week + 2 days = 9 days = 777600 seconds. RFC 5545 §3.3.6 doesn't allow P1W2D (a
+        // dur-week stands alone); the parser accepts it.
         val durationSeconds = event.duration?.seconds ?: 0
         assertEquals(777600L, durationSeconds, "Duration should be 9 days")
     }
@@ -371,9 +368,8 @@ class ICalParserRfc5545ComplianceTest {
 
     @Test
     fun `unescape uppercase backslash-N as newline`() {
-        // RFC 5545 §3.3.11 defines \N (uppercase) as equivalent to \n. ical4j's
-        // own decoder only handles lowercase \n, so the parser must recognize the
-        // uppercase form too.
+        // RFC 5545 §3.3.11 allows \N (uppercase) as well as \n for a line break. ical4j's
+        // decoder handles only lowercase \n, so the parser must handle the uppercase form.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -394,10 +390,9 @@ class ICalParserRfc5545ComplianceTest {
 
     @Test
     fun `escaped backslash before N is not turned into a newline`() {
-        // A RFC-escaped backslash (\\) immediately followed by a literal N —
-        // e.g. a Windows path C:\Notes — decodes to the two characters
-        // backslash + N and must NOT be mangled into a newline. This is the
-        // corruption a naive post-decode replace("\\N","\n") introduces.
+        // An escaped backslash (\\) followed by a literal N, as in the Windows path C:\Notes,
+        // decodes to backslash + N and must not become a newline. A post-decode
+        // replace("\\N","\n") would make that corruption.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -693,7 +688,7 @@ class ICalParserRfc5545ComplianceTest {
         assertTrue(result is ParseResult.Success)
         val event = (result as ParseResult.Success).value.first()
 
-        // Library may expose alarms differently
+        // This assertion always holds because of `|| true`; the VALARM isn't checked.
         assertTrue(event.alarms.isNotEmpty() || true, "Should parse VALARM")
     }
 
@@ -728,7 +723,7 @@ class ICalParserRfc5545ComplianceTest {
         assertTrue(result is ParseResult.Success)
         val event = (result as ParseResult.Success).value.first()
 
-        // Library may limit number of alarms
+        // This assertion always holds; the alarms aren't checked.
         assertTrue(true, "Should handle multiple VALARMs")
     }
 
@@ -754,7 +749,7 @@ class ICalParserRfc5545ComplianceTest {
         assertTrue(result is ParseResult.Success)
         val event = (result as ParseResult.Success).value.first()
 
-        // Library may expose organizer differently
+        // Accepts the email with or without mailto:; the parser strips it.
         assertNotNull(event.organizer)
         assertTrue(event.organizer?.email?.contains("john@example.com") == true ||
             event.organizer?.email == "mailto:john@example.com")

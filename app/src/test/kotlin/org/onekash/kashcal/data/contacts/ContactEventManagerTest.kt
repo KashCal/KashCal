@@ -30,10 +30,9 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Unit tests for ContactEventManager.
- *
- * Tests lifecycle methods, permission revocation handling, and
- * combined birthday + anniversary observer management.
+ * Tests [ContactEventManager] over a real DataStore and a relaxed [EventCoordinator]: the
+ * startup sync per enabled feature, turning both features off when READ_CONTACTS is revoked,
+ * and that initialize and the disable calls don't throw. Observer registration isn't asserted.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -52,7 +51,7 @@ class ContactEventManagerTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         context = ApplicationProvider.getApplicationContext()
-        // Grant READ_CONTACTS by default so lifecycle tests work
+        // READ_CONTACTS is granted unless a test denies it.
         Shadows.shadowOf(context as Application).grantPermissions(Manifest.permission.READ_CONTACTS)
         dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         testDataStoreFile = File(context.filesDir, "test_prefs_${System.nanoTime()}.preferences_pb")
@@ -71,7 +70,7 @@ class ContactEventManagerTest {
         testDataStoreFile.delete()
     }
 
-    // ========== Original Birthday Tests ==========
+    // ========== Birthdays and permission revocation ==========
 
     @Test
     fun `initialize with disabled does not register observer`() = runTest(testDispatcher) {
@@ -79,29 +78,29 @@ class ContactEventManagerTest {
         dataStore.setContactAnniversariesEnabled(false)
         manager.initialize()
         testDispatcher.scheduler.advanceUntilIdle()
-        // No crash = success
+        // Passes if nothing throws.
     }
 
     @Test
     fun `onBirthdaysDisabled is safe to call without prior onEnabled`() = runTest(testDispatcher) {
         manager.onBirthdaysDisabled()
-        // No crash = success
+        // Passes if nothing throws.
     }
 
     @Test
     fun `initialize with enabled but no permission does not crash and auto-disables feature`() = runTest(testDispatcher) {
-        // Simulate: user enabled contact birthdays, then revoked READ_CONTACTS in system settings
+        // Birthdays were enabled, then READ_CONTACTS was revoked in system settings.
         dataStore.setContactBirthdaysEnabled(true)
 
-        // Deny READ_CONTACTS permission (simulating revocation)
         Shadows.shadowOf(context as Application).denyPermissions(Manifest.permission.READ_CONTACTS)
 
-        // Recreate manager so it picks up the denied permission state
+        // A fresh manager; the grant is read on every call, not cached.
         manager = ContactEventManager(context, dataStore, eventCoordinator)
         manager.initialize()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Feature should be auto-disabled and calendar cleaned up
+        // Both features are turned off and both calendars removed (the anniversary setting
+        // isn't asserted).
         assertFalse(
             "Feature should be auto-disabled when permission is revoked",
             dataStore.contactBirthdaysEnabled.first()
@@ -118,7 +117,7 @@ class ContactEventManagerTest {
         dataStore.setContactAnniversariesEnabled(true)
         manager.initialize()
         testDispatcher.scheduler.advanceUntilIdle()
-        // No crash = success; observer is registered because anniversaries are enabled
+        // Passes if nothing throws; the observer registration isn't asserted.
     }
 
     @Test
@@ -127,7 +126,7 @@ class ContactEventManagerTest {
         dataStore.setContactAnniversariesEnabled(true)
         manager.initialize()
         testDispatcher.scheduler.advanceUntilIdle()
-        // No crash = success; observer is registered
+        // Passes if nothing throws; the observer registration isn't asserted.
     }
 
     @Test
@@ -137,10 +136,10 @@ class ContactEventManagerTest {
         manager.initialize()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Disable anniversaries - observer should remain because birthdays is still on
+        // Birthdays are still on, so the observer stays (not asserted).
         manager.onAnniversariesDisabled()
         testDispatcher.scheduler.advanceUntilIdle()
-        // No crash = success
+        // Passes if nothing throws.
     }
 
     @Test
@@ -150,10 +149,10 @@ class ContactEventManagerTest {
         manager.initialize()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Disable birthdays - observer should remain because anniversaries is still on
+        // Anniversaries are still on, so the observer stays (not asserted).
         manager.onBirthdaysDisabled()
         testDispatcher.scheduler.advanceUntilIdle()
-        // No crash = success
+        // Passes if nothing throws.
     }
 
     @Test
@@ -163,19 +162,19 @@ class ContactEventManagerTest {
         manager.initialize()
         testDispatcher.scheduler.advanceUntilIdle()
 
-        // Disable both - observer should be unregistered and work cancelled
+        // Both off: the observer is unregistered and the worker cancelled (not asserted).
         dataStore.setContactBirthdaysEnabled(false)
         dataStore.setContactAnniversariesEnabled(false)
         manager.onBirthdaysDisabled()
         manager.onAnniversariesDisabled()
         testDispatcher.scheduler.advanceUntilIdle()
-        // No crash = success
+        // Passes if nothing throws.
     }
 
     @Test
     fun `onAnniversariesDisabled is safe to call without prior onEnabled`() = runTest(testDispatcher) {
         manager.onAnniversariesDisabled()
-        // No crash = success
+        // Passes if nothing throws.
     }
 
     // ========== Startup Sync Tests ==========
@@ -215,7 +214,7 @@ class ContactEventManagerTest {
     fun `initialize with anniversaries enabled but no permission auto-disables`() = runTest(testDispatcher) {
         dataStore.setContactAnniversariesEnabled(true)
 
-        // Deny READ_CONTACTS permission
+        // READ_CONTACTS revoked.
         Shadows.shadowOf(context as Application).denyPermissions(Manifest.permission.READ_CONTACTS)
 
         manager = ContactEventManager(context, dataStore, eventCoordinator)

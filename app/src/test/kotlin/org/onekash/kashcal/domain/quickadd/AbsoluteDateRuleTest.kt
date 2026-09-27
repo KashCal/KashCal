@@ -140,7 +140,7 @@ class AbsoluteDateRuleTest {
     @Test
     fun `february 29 2027 (not leap year) falls back to reference date`() {
         val ctx = parse("february 29 2027")
-        // Invalid date → date not set → falls back to reference
+        // A date that doesn't exist sets nothing, so the date is the reference date.
         assertEquals(reference.toLocalDate(), ctx.resolveDate())
     }
 

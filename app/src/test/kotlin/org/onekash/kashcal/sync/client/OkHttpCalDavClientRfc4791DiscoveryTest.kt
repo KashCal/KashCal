@@ -19,17 +19,16 @@ import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * RFC 4791 compliance tests for CalDAV discovery operations.
+ * Tests PROPFIND-based CalDAV discovery against the RFCs:
+ * - Principal discovery through DAV:current-user-principal (RFC 6764 §6).
+ * - Calendar listing with PROPFIND Depth:1 on the home, keeping resources whose resourcetype
+ *   holds CALDAV:calendar (RFC 4791 §4.2).
+ * - Parsing supported-calendar-component-set (RFC 4791 §5.2.3).
+ * - calendar-home-set discovery, several homes included (RFC 4791 §6.2.1).
+ * - The well-known URI (RFC 6764 §5).
  *
- * Tests PROPFIND-based discovery against RFC 4791 requirements:
- * - Section 5.1: Principal discovery via current-user-principal
- * - Section 5.2: Calendar collection enumeration via PROPFIND Depth:1
- * - Section 5.2.3: supported-calendar-component-set filtering
- * - Section 6.2.1: calendar-home-set discovery (multi-home-set)
- * - RFC 6764 Section 3: Well-known URI discovery
- *
- * Each test verifies BOTH outgoing request compliance (method, headers, XML body)
- * and response handling compliance (status codes, parsing).
+ * Tests check the outgoing request (method, headers, XML body) and the reply handling (status
+ * codes, parsing).
  */
 class OkHttpCalDavClientRfc4791DiscoveryTest {
 
@@ -65,11 +64,11 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
         unmockkAll()
     }
 
-    // ========== RFC 4791 Section 5.1: Principal Discovery ==========
+    // ========== Principal Discovery (RFC 6764 §6) ==========
 
     @Test
     fun `discoverPrincipal sends PROPFIND with Depth 0`() = runTest {
-        // RFC 4791 Section 5.1: Client uses PROPFIND with Depth:0 to discover principal
+        // The client asks for the principal with a PROPFIND at Depth:0.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -86,7 +85,7 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `discoverPrincipal requests current-user-principal property`() = runTest {
-        // RFC 4791 Section 5.1: PROPFIND must request DAV:current-user-principal
+        // RFC 6764 §6: the PROPFIND body SHOULD ask for DAV:current-user-principal.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -106,7 +105,7 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `discoverPrincipal sends Content-Type application xml`() = runTest {
-        // RFC 4791: PROPFIND requests carry XML body with application/xml Content-Type
+        // RFC 4918 §8.2: an XML request body SHOULD be sent as application/xml.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -127,7 +126,8 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `discoverPrincipal resolves relative principal path to absolute URL`() = runTest {
-        // RFC 4791: Server may return relative href; client must resolve to absolute URL
+        // RFC 4918 §8.3: an href may be relative (resolved against the request URL); the
+        // client returns an absolute URL.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -151,7 +151,7 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `discoverPrincipal passes through absolute principal URL`() = runTest {
-        // RFC 4791: Server may return absolute URL; client should use it as-is
+        // An absolute href is used as it is.
         val absoluteUrl = "https://caldav.example.com/principals/user/testuser/"
         mockWebServer.enqueue(
             MockResponse()
@@ -173,7 +173,7 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `discoverPrincipal returns error when principal not in response`() = runTest {
-        // RFC 4791: Client must handle missing principal gracefully
+        // A reply without the principal is an error, not a crash.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -213,7 +213,7 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `discoverCalendarHome sends PROPFIND with Depth 0`() = runTest {
-        // RFC 4791 Section 6.2.1: PROPFIND on principal URL with Depth:0
+        // The home-set is read with a Depth:0 PROPFIND on the principal URL.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -230,7 +230,8 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `discoverCalendarHome requests calendar-home-set in caldav namespace`() = runTest {
-        // RFC 4791 Section 6.2.1: Request must include urn:ietf:params:xml:ns:caldav:calendar-home-set
+        // The body asks for calendar-home-set in the CalDAV namespace
+        // (urn:ietf:params:xml:ns:caldav, RFC 4791 §6.2.1).
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -254,7 +255,7 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `discoverCalendarHome returns multiple home URLs per RFC 4791 Section 6-2-1`() = runTest {
-        // RFC 4791 Section 6.2.1: calendar-home-set MAY contain multiple href elements
+        // RFC 4791 §6.2.1: calendar-home-set holds any number of DAV:href elements.
         // Real-world: SOGo/AEGEE servers return 3+ home set URLs
         mockWebServer.enqueue(
             MockResponse()
@@ -293,7 +294,7 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `discoverCalendarHome resolves relative home paths to absolute`() = runTest {
-        // RFC 4791: Relative hrefs must be resolved against the request URL
+        // RFC 4918 §8.3: a relative href is resolved against the request URL.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -317,7 +318,7 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `discoverCalendarHome returns error for empty calendar-home-set`() = runTest {
-        // RFC 4791: calendar-home-set with no hrefs should be treated as error
+        // A calendar-home-set with no hrefs is an error: there is nowhere to list calendars.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -343,11 +344,11 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
         assertTrue("Should return error for empty calendar-home-set", result.isError())
     }
 
-    // ========== RFC 4791 Section 5.2: Calendar Collection Enumeration ==========
+    // ========== Calendar Collection Listing (RFC 4791 §4.2, §5.2) ==========
 
     @Test
     fun `listCalendars sends PROPFIND with Depth 1`() = runTest {
-        // RFC 4791 Section 5.2: Depth:1 PROPFIND to enumerate children of calendar home
+        // A Depth:1 PROPFIND lists the children of the calendar home.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -368,7 +369,7 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `listCalendars requests resourcetype property`() = runTest {
-        // RFC 4791 Section 5.2: resourcetype is REQUIRED to identify calendar collections
+        // RFC 4791 §4.2: a calendar collection is identified by its resourcetype.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -442,7 +443,7 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `listCalendars filters non-calendar resources`() = runTest {
-        // RFC 4791 Section 5.2: Only resources with DAV:calendar resourcetype are calendars
+        // RFC 4791 §4.2: only resources whose resourcetype holds CALDAV:calendar are calendars.
         // Response includes a calendar, a non-calendar collection, and the home collection itself
         mockWebServer.enqueue(
             MockResponse()
@@ -611,7 +612,8 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `listCalendars handles multi-propstat response per RFC 4918`() = runTest {
-        // RFC 4918: Server MAY return multiple propstat elements per response
+        // RFC 4918 §14.22: each propstat pairs a status with the props it applies to, so a
+        // response can hold several.
         // Real-world: Stalwart/Radicale return optional props in separate 404 propstat
         mockWebServer.enqueue(
             MockResponse()
@@ -665,7 +667,7 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `listCalendars rejects calendar when resourcetype in 404 propstat`() = runTest {
-        // RFC 4918: If resourcetype itself is in 404 propstat, resource is NOT a calendar
+        // A resourcetype in the 404 propstat was not found, so the resource isn't a calendar.
         // Real-world: Stalwart can return resourcetype in 404 for non-collection resources
         mockWebServer.enqueue(
             MockResponse()
@@ -705,11 +707,11 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
         )
     }
 
-    // ========== RFC 6764 Section 3: Well-Known URI Discovery ==========
+    // ========== Well-Known URI Discovery (RFC 6764 §5) ==========
 
     @Test
     fun `wellKnown sends PROPFIND to well-known caldav path`() = runTest {
-        // RFC 6764 Section 3: Client MUST use /.well-known/caldav as initial context path
+        // RFC 6764 §6: without a TXT path, the initial context path is /.well-known/caldav.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -728,9 +730,9 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `wellKnown returns final URL after redirects`() = runTest {
-        // RFC 6764: Server typically redirects from well-known to actual CalDAV endpoint
-        // MockWebServer doesn't follow redirects automatically, but we can verify
-        // the client handles non-redirect responses from well-known
+        // RFC 6764 §5: the server redirects well-known to the CalDAV endpoint. No redirect
+        // is enqueued here, so this covers a well-known that answers in place;
+        // OkHttpCalDavClientRedirectTest covers the redirect.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -747,7 +749,7 @@ class OkHttpCalDavClientRfc4791DiscoveryTest {
 
     @Test
     fun `wellKnown returns original URL when well-known returns 404`() = runTest {
-        // RFC 6764: If well-known is not supported (404), fall back to original URL
+        // A 404 on well-known falls back to the entered URL.
         mockWebServer.enqueue(MockResponse().setResponseCode(404))
 
         val serverUrl = mockWebServer.url("/").toString()

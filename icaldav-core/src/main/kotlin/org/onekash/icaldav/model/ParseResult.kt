@@ -1,9 +1,6 @@
 package org.onekash.icaldav.model
 
-/**
- * Result type for parsing operations.
- * Provides detailed error information for debugging.
- */
+/** Holds a parsed value or the [ParseError] that stopped the parse. */
 sealed class ParseResult<out T> {
     data class Success<T>(val value: T) : ParseResult<T>()
     data class Error(val error: ParseError) : ParseResult<Nothing>()
@@ -54,9 +51,7 @@ sealed class ParseResult<out T> {
     }
 }
 
-/**
- * Detailed parse error types.
- */
+/** Says why a parse failed; [toException] wraps it for [ParseResult.getOrThrow]. */
 sealed class ParseError {
     abstract val message: String
 

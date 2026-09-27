@@ -24,8 +24,9 @@ import java.io.File
 import java.util.Properties
 
 /**
- * Integration test for icaldav library migration.
- * Tests parsing and iCloud sync with real credentials.
+ * Checks the icaldav [ICalParser] on fixed ICS strings and, with iCloud credentials, runs
+ * discovery, calendar listing, and a fetch that parses up to 10 events from the first
+ * calendar. Without credentials the iCloud tests return early and pass.
  */
 class ICalDavMigrationTest {
 
@@ -49,8 +50,8 @@ class ICalDavMigrationTest {
 
         loadCredentials()
 
-        // Create client using factory pattern (replaces setCredentials)
-        // Client is created after loadCredentials so we have the values
+        // Created after loadCredentials, which supplies the values; placeholder
+        // credentials when none are found
         val quirks = ICloudQuirks()
         val credentials = if (username != null && password != null) {
             Credentials(
@@ -232,10 +233,7 @@ class ICalDavMigrationTest {
 
     // ==================== iCloud Sync Tests ====================
 
-    /**
-     * Helper to discover calendar home via principal.
-     * Returns null if discovery fails.
-     */
+    /** Returns the first calendar home found through the principal, or null on failure. */
     private suspend fun discoverCalendarHome(): String? {
         val principalResult = calDavClient.discoverPrincipal("https://caldav.icloud.com")
         if (principalResult !is CalDavResult.Success) {
@@ -259,7 +257,7 @@ class ICalDavMigrationTest {
             return@runTest
         }
 
-        // Client already created with credentials in setup()
+        // setup() created the client with the credentials
 
         try {
             val homeUrl = discoverCalendarHome()
@@ -282,10 +280,10 @@ class ICalDavMigrationTest {
             return@runTest
         }
 
-        // Client already created with credentials in setup()
+        // setup() created the client with the credentials
 
         try {
-            // First discover home via principal
+            // Discover the home through the principal
             val homeUrl = discoverCalendarHome()
             if (homeUrl == null) {
                 println("SKIPPED: Could not discover home")
@@ -321,10 +319,10 @@ class ICalDavMigrationTest {
             return@runTest
         }
 
-        // Client already created with credentials in setup()
+        // setup() created the client with the credentials
 
         try {
-            // Discover and list calendars via principal
+            // Discover the home through the principal, then list its calendars
             val homeUrl = discoverCalendarHome()
             if (homeUrl == null) {
                 println("SKIPPED: Could not discover home")
@@ -337,7 +335,7 @@ class ICalDavMigrationTest {
                 return@runTest
             }
 
-            // Fetch events from first calendar (last 30 days to next 30 days)
+            // Fetch the first calendar's events from 30 days back to 30 days ahead
             val calendar = calendarsResult.data.first()
             println("Fetching events from: ${calendar.displayName} (${calendar.url})")
 
@@ -352,7 +350,7 @@ class ICalDavMigrationTest {
                     val serverEvents = eventsResult.data
                     println("✓ Fetched ${serverEvents.size} events from server")
 
-                    // Parse each event with icaldav
+                    // Parse each fetched event with icaldav
                     var parseSuccess = 0
                     var parseFailed = 0
 

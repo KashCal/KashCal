@@ -12,7 +12,9 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Exhaustive tests for VJOURNAL parsing per RFC 5545 Section 3.6.3.
+ * Tests VJOURNAL parsing (RFC 5545 §3.6.3): text, STATUS, date-times, CATEGORIES, ORGANIZER
+ * and ATTENDEE, ATTACH, recurrence, more than one journal per calendar, [ICalParser.parse] filling
+ * ICalCalendar.journals, [JournalStatus], and a missing UID or empty calendar.
  */
 @DisplayName("ICalParser VJOURNAL Tests")
 class ICalParserVJournalTest {
@@ -45,7 +47,7 @@ class ICalParserVJournalTest {
             val journal = journals[0]
             assertEquals("simple-journal-123", journal.uid)
             assertEquals("Daily Log", journal.summary)
-            assertEquals(JournalStatus.DRAFT, journal.status)  // Default
+            assertEquals(JournalStatus.DRAFT, journal.status)  // An absent STATUS reads as DRAFT
         }
 
         @Test

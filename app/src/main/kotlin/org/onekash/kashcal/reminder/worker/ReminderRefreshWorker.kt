@@ -21,17 +21,16 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import java.util.concurrent.TimeUnit
 
 /**
- * Periodic worker that scans upcoming events and schedules missing reminders.
+ * Arms every reminder due within the scheduler's window
+ * ([ReminderScheduler.scheduleUpcomingReminders]), then schedules the next device calendar
+ * reminder.
  *
- * This catches events that:
- * - Were created outside the original scheduling window
- * - Entered the window since last check
- * - Had reminders missed due to app not running
+ * This catches reminders that:
+ * - Came into the window since the last check
+ * - Were left without an alarm by a reboot (only rows inside the window are re-armed)
+ * - Were missed because the refill after a fired reminder did not run
  *
- * Per Android WorkManager best practices:
- * - Runs daily with flexible window (battery efficient)
- * - Network not required (local operation)
- * - Respects battery constraints
+ * The periodic run ([schedule]) runs daily, needs no network and waits while the battery is low.
  */
 @HiltWorker
 class ReminderRefreshWorker @AssistedInject constructor(
@@ -48,26 +47,22 @@ class ReminderRefreshWorker @AssistedInject constructor(
         const val WORK_NAME = "reminder_refresh"
         const val TAG_REMINDER_REFRESH = "reminder_refresh"
 
-        // Scan 30 days ahead (must match SCHEDULE_WINDOW_DAYS to catch all gaps)
-        const val SCAN_WINDOW_DAYS = 30
-
-        // Run once per day
         const val REFRESH_INTERVAL_HOURS = 24L
 
-        // Attempts before a run gives up and leaves the next period to try again
+        // Retries before a run gives up and leaves the next period to try again
         private const val MAX_RETRY_ATTEMPTS = 3
 
-        // Migration versions
-        // v1: Timezone fix - recalculate all-day reminder trigger times
+        // Reminder migration version stored in the data store. v1 recalculates every pending
+        // all-day reminder's trigger time in the device zone.
         private const val MIGRATION_VERSION_TZ_FIX = 1
 
         /**
-         * Schedule periodic reminder refresh.
-         * Uses KEEP policy to avoid rescheduling if already scheduled.
+         * Enqueues the daily refresh. KEEP leaves an already enqueued spec, and its settings,
+         * in place.
          */
         fun schedule(context: Context) {
             val constraints = Constraints.Builder()
-                .setRequiresBatteryNotLow(true)  // Don't run on low battery
+                .setRequiresBatteryNotLow(true)
                 .build()
 
             val request = PeriodicWorkRequestBuilder<ReminderRefreshWorker>(
@@ -85,7 +80,7 @@ class ReminderRefreshWorker @AssistedInject constructor(
             WorkManager.getInstance(context)
                 .enqueueUniquePeriodicWork(
                     WORK_NAME,
-                    ExistingPeriodicWorkPolicy.KEEP,  // Don't replace existing
+                    ExistingPeriodicWorkPolicy.KEEP,
                     request
                 )
 
@@ -93,7 +88,8 @@ class ReminderRefreshWorker @AssistedInject constructor(
         }
 
         /**
-         * Run immediate one-time refresh (for testing or manual trigger).
+         * Enqueues a one-shot refresh with no constraints; called after boot, an app update, and
+         * a timezone or clock change.
          */
         fun runNow(context: Context) {
             val request = OneTimeWorkRequestBuilder<ReminderRefreshWorker>()
@@ -104,9 +100,7 @@ class ReminderRefreshWorker @AssistedInject constructor(
             Log.i(TAG, "Triggered immediate reminder refresh")
         }
 
-        /**
-         * Cancel periodic refresh.
-         */
+        /** Cancels the periodic refresh. */
         fun cancel(context: Context) {
             WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME)
             Log.i(TAG, "Cancelled periodic reminder refresh")
@@ -117,7 +111,7 @@ class ReminderRefreshWorker @AssistedInject constructor(
         Log.i(TAG, "Starting reminder refresh scan")
 
         return try {
-            // One-time migration: recalculate all-day reminder times with timezone fix
+            // Runs once per install; see MIGRATION_VERSION_TZ_FIX
             val migrationVersion = dataStore.getReminderMigrationVersion()
             if (migrationVersion < MIGRATION_VERSION_TZ_FIX) {
                 Log.i(TAG, "Running reminder timezone migration v$MIGRATION_VERSION_TZ_FIX")
@@ -125,9 +119,9 @@ class ReminderRefreshWorker @AssistedInject constructor(
                 dataStore.setReminderMigrationVersion(MIGRATION_VERSION_TZ_FIX)
             }
 
-            val scheduled = reminderScheduler.scheduleUpcomingReminders(SCAN_WINDOW_DAYS)
+            val scheduled = reminderScheduler.scheduleUpcomingReminders()
 
-            // Cleanup is best-effort - don't fail job if it throws
+            // Cleanup is best-effort: a failure doesn't fail the run
             try {
                 reminderScheduler.cleanupOldReminders()
             } catch (e: CancellationException) {
@@ -136,7 +130,7 @@ class ReminderRefreshWorker @AssistedInject constructor(
                 Log.w(TAG, "Cleanup failed, continuing", e)
             }
 
-            // Schedule device calendar reminders (single-alarm model)
+            // Device calendar reminders use one alarm for the next reminder; best-effort too
             try {
                 deviceCalendarReminderScheduler.scheduleNextReminder()
                 Log.d(TAG, "Device calendar reminder scheduled")
@@ -163,13 +157,12 @@ class ReminderRefreshWorker @AssistedInject constructor(
                 // it, so one stretch of bad runs would stop the reminder scan until the
                 // next app start. The next period is the retry.
                 //
-                // This applies to the boot and timezone one-shots from `runNow` too,
-                // even though failure would be the honest answer there, because no
-                // caller reads this worker's result. Telling the periodic run apart by
-                // tag — what the sync workers do — would be worse: `schedule` arms with
-                // KEEP, so a tag added now never reaches a spec that is already
-                // enqueued, and the installs still carrying an untagged one are exactly
-                // the ones this protects.
+                // This applies to the one-shots from `runNow` too, because no caller
+                // reads this worker's result. Telling the periodic run
+                // apart by tag, as the sync workers do, would be worse: `schedule` arms
+                // with KEEP, so a tag added now never reaches a spec that is already
+                // enqueued, and the installs still carrying an untagged one are the ones
+                // this protects.
                 Result.success()
             }
         }

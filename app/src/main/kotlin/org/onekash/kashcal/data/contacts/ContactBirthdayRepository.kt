@@ -14,11 +14,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Repository for managing contact birthday calendar.
- *
- * Thin subclass of [BaseContactEventRepository] for Hilt DI.
- * All logic lives in the base class; this class provides the birthday-specific
- * DataStore reminder accessor.
+ * Contact birthday calendar: supplies the birthday reminder setting; [BaseContactEventRepository]
+ * holds the rest.
  */
 @Singleton
 class ContactBirthdayRepository @Inject constructor(

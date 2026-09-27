@@ -33,11 +33,13 @@ import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PullStrategy
 
 /**
- * Tests for Zoho Calendar CalDAV compatibility (Issue #61).
+ * Tests Zoho Calendar CalDAV compatibility (#61).
  *
- * Zoho's CalDAV server has two quirks that caused 0 events to sync:
- * 1. Root cause 1 (v22.5.4): getctag not supported — sync aborted before fetching
- * 2. Root cause 2 (v22.5.8): calendar-data ignored in calendar-query — events silently dropped
+ * Two Zoho quirks each made a sync fetch 0 events:
+ * 1. getctag unsupported on some paths: the pull proceeds without a ctag (v22.5.4); a 401
+ *    or 403 from getctag still aborts it.
+ * 2. calendar-data ignored in calendar-query: the pull takes etags from calendar-query, then
+ *    fetches data by calendar-multiget (v22.5.8).
  *
  * Fixtures in app/src/test/resources/caldav/zoho/ are based on real Zoho responses
  * captured from calendar.zoho.com (2026-02-12), with personal data replaced by
@@ -100,15 +102,15 @@ class ZohoCalDavTest {
         every { dataStore.defaultAllDayReminder } returns flowOf(1440)
         // pullFull reads syncPastDays.first() to size the lookback window; the
         // relaxed mock would yield no value and the pull would abort with a
-        // generic error. Give it a concrete day count (the typical default).
+        // generic error. Give it a concrete day count.
         every { dataStore.syncPastDays } returns flowOf(30)
 
         // When the server doesn't support sync-token, pullFull tries fetchAllEtags
-        // (PROPFIND allprop) and, if that errors, falls back to fetchEtagsInRange.
-        // The relaxed client mock returns null for the unstubbed call; default it
-        // to an error so the documented fallback path runs (Zoho — the server
-        // these tests model — doesn't serve allprop etags on these paths). A test
-        // that wants the allprop path to succeed overrides this stub.
+        // (a Depth:1 PROPFIND for getetag) and, if that errors, falls back to
+        // fetchEtagsInRange. The relaxed client mock returns null for the unstubbed
+        // call; default it to an error so the fallback runs (Zoho, the server these
+        // tests model, doesn't answer that PROPFIND with etags on these paths). A test
+        // that wants the PROPFIND path to succeed overrides this stub.
         coEvery { client.fetchAllEtags(any()) } returns
             CalDavResult.error(500, "fetchAllEtags unsupported (default stub)")
 
@@ -167,7 +169,7 @@ class ZohoCalDavTest {
         assertEquals("My Calendar", cal.displayName)
         assertEquals("/caldav/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4/events/", cal.href)
         assertNull("Zoho doesn't provide calendar-color", cal.color)
-        // Zoho DOES support ctag (discovered during live testing 2026-02-12)
+        // Zoho serves getctag on this path (seen in live testing, 2026-02-12).
         assertEquals("1770859408092", cal.ctag)
     }
 
@@ -184,9 +186,8 @@ class ZohoCalDavTest {
 
     @Test
     fun `extractICalData returns empty list when Zoho omits calendar-data`() {
-        // THIS IS THE ROOT CAUSE of Issue #61.
-        // Zoho returns hrefs+etags in calendar-query but NO calendar-data.
-        // extractICalData silently drops responses without calendar-data.
+        // The root cause of #61: Zoho returns hrefs and etags in calendar-query but no
+        // calendar-data, and extractICalData silently drops responses without it.
         val xml = loadFixture("05_calendar_query_no_data.xml")
 
         val events = xmlParser.extractICalData(xml)
@@ -200,8 +201,8 @@ class ZohoCalDavTest {
 
     @Test
     fun `extractICalData parses Zoho multiget with B-prefixed calendar-data`() {
-        // calendar-multiget correctly returns calendar-data (the fix).
-        // Zoho uses non-standard "B:" prefix for CalDAV namespace.
+        // Zoho returns calendar-data in calendar-multiget, which the pull relies on.
+        // Zoho uses a non-standard "B:" prefix for the CalDAV namespace.
         val xml = loadFixture("06_calendar_multiget.xml")
 
         val events = xmlParser.extractICalData(xml)
@@ -273,7 +274,7 @@ class ZohoCalDavTest {
 
         assertTrue("Pull should proceed despite missing ctag", result is PullResult.Success)
 
-        // Verify sync actually ran (events were fetched)
+        // The sync ran: etags were fetched.
         coVerify { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
     }
 
@@ -320,7 +321,7 @@ class ZohoCalDavTest {
 
     @Test
     fun `pull still aborts on auth error from ctag`() = runTest {
-        // Auth errors (401) are systemic — abort immediately, don't proceed with sync
+        // Auth errors (401) are systemic: abort, don't proceed with sync.
         val calendar = createZohoCalendar()
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns
@@ -338,7 +339,7 @@ class ZohoCalDavTest {
 
     @Test
     fun `pull still aborts on 403 from ctag`() = runTest {
-        // Permission errors (403) are systemic — if PROPFIND is rejected, REPORT will be too
+        // Permission errors (403) are systemic: if PROPFIND is rejected, REPORT will be too.
         val calendar = createZohoCalendar()
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns
@@ -424,15 +425,15 @@ class ZohoCalDavTest {
         assertTrue("Should succeed with two-step fetch", result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
 
-        // Verify two-step: etags fetched, then multiget, never fetchEventsInRange
+        // Two-step: etags fetched, then multiget.
         coVerify { client.fetchEtagsInRange(calendarUrl, any(), any()) }
         coVerify { client.fetchEventsByHref(calendarUrl, any()) }
     }
 
-    // ==================== Batched Multiget with Empty-Response Fallback (v22.5.12) ====================
-    // Zoho returns HTTP 200 empty body for multi-href calendar-multiget (≥2 hrefs).
-    // Single-href multiget works fine. fetchEventsBatched detects the empty response
-    // and falls back to concurrent single-href fetches.
+    // ==================== Multiget Empty-Response Fallback (v22.5.12) ====================
+    // Zoho returns HTTP 200 with an empty body for a calendar-multiget of 2 or more hrefs; a
+    // single-href multiget works. fetchEventsBatched detects the empty response and falls back
+    // to concurrent single-href fetches.
 
     @Test
     fun `pullFull falls back to single-href when Zoho returns empty for multi-href multiget`() = runTest {
@@ -474,10 +475,8 @@ class ZohoCalDavTest {
         coVerify(exactly = 6) { client.fetchEventsByHref(calendarUrl, any()) }
     }
 
-    // (Removed a stale "batched multiget error fails fast" test: it asserted a
-    // superseded fail-fast design, but a batched multiget error intentionally
-    // falls back to per-href fetches — that resilient behavior is covered by the
-    // single-href fallback test above.)
+    // A batched multiget that errors also falls back to per-href fetches
+    // (PullStrategy.fetchEventsBatched); it doesn't fail fast.
 
     // ==================== Discovery: Trailing slash sensitivity ====================
 

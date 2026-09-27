@@ -23,21 +23,18 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Verifies [ReminderScheduler.shouldFireReminder] — the fire-time guard that
- * decides whether a reminder alarm should still post a notification.
+ * Tests [ReminderScheduler.shouldFireReminder], the fire-time guard that decides whether a
+ * reminder alarm still posts a notification.
  *
- * Bug: a reminder alarm armed for a Room-backed event keeps firing after the
- * event is deleted (row gone) or soft-deleted (PENDING_DELETE, e.g. a CalDAV
- * delete not yet pushed, or a server-side delete pulled in the background).
- * The notification is built from data denormalized onto the reminder row, so
- * it posts "blind." This guard mirrors the device path's
- * `DeviceCalendarReminderScheduler.shouldFireReminder` and covers all
- * Room-backed providers at once (local, iCloud, CalDAV, ICS, birthdays,
- * anniversaries — they all share the events table).
+ * An armed alarm for a Room-backed event fires even after the event is deleted (row gone, e.g. a
+ * server delete pulled in the background) or soft-deleted (PENDING_DELETE, e.g. a CalDAV delete not
+ * yet pushed), and the notification is built from data copied onto the reminder row, so without the
+ * guard it posts for an event that is gone. The guard is the Room counterpart of the device path's
+ * `DeviceCalendarReminderScheduler.shouldFireReminder` and covers every Room-backed source (local,
+ * iCloud, CalDAV, ICS, birthdays, anniversaries), since they share the events table.
  *
- * Robolectric application context: ReminderScheduler builds PendingIntents in
- * other methods; the context is required to construct it even though
- * shouldFireReminder itself only reads via EventReader.
+ * The scheduler is built over the Robolectric application context; shouldFireReminder reads
+ * only through [EventReader].
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])

@@ -8,15 +8,15 @@ import java.time.LocalDate
 import java.util.Locale
 
 /**
- * Unit tests for the date widget's full-form labels (the card layout).
+ * Tests [WidgetDateFormatter.buildFullDateWidgetLabels], the Date widget's card-layout labels.
  *
- * Robolectric-backed because locale-correct month+day ORDERING comes from ICU's
- * skeleton machinery (an Android API), unlike the short-form [WidgetDateFormatter]
- * labels which are pure JVM. The month+day string must:
- *  - order month and day per the locale (en "September 19" vs fr "19 septembre"),
- *  - carry NO year,
- *  - use the correct month form for the locale — CJK must not double the "月"
- *    suffix, and a Slavic locale must use the date (genitive) month form.
+ * Runs under Robolectric because the month and day order comes from the Android
+ * `DateFormat.getBestDateTimePattern` skeleton lookup, unlike the pure-JVM short-form labels.
+ * The month and day string must:
+ *  - order month and day per the locale (en "September 19", fr "19 septembre")
+ *  - carry no year
+ *  - use the locale's month form: Japanese doesn't double the "月" suffix, and Russian uses the
+ *    genitive month form of a date
  */
 @RunWith(RobolectricTestRunner::class)
 class WidgetFullDateFormatterTest {

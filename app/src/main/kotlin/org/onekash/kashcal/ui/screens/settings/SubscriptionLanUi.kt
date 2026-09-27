@@ -6,9 +6,7 @@ import org.onekash.kashcal.ui.permission.shouldShowLanBanner
 import org.onekash.kashcal.util.isLanHost
 
 /**
- * What the add-subscription dialog should surface for Android 17+ local-network
- * access, given the entered URL, whether the validation fetch just failed, and
- * the current permission state.
+ * Describes what the add-subscription dialog surfaces for Android 17+ local-network access.
  *
  * @property showBanner render the inline Allow-access banner.
  * @property appendLanHint wrap the fetch error with the local-network hint.
@@ -19,26 +17,22 @@ data class SubscriptionLanUi(
 )
 
 /**
- * Decide the local-network UI for the add-subscription dialog by composing the
- * shipped CalDAV helpers — no new policy lives here.
+ * Decides the local-network UI for the add-subscription dialog from the CalDAV helpers; no new
+ * policy lives here.
  *
- * Mirrors the CalDAV sign-in flow (SettingsRoute + AccountSettingsViewModel):
- * - The banner shows proactively for a recognizably-local URL, OR reactively
- *   after a connection-level fetch failure that looks like a blocked LAN socket.
- *   The reactive arm is fed as the `isLan` input to [shouldShowLanBanner] exactly
- *   as CalDAV feeds its `lanHintActive` flag, so it self-suppresses when already
- *   granted / permanently denied / not required.
- * - The hint is appended on a connection-level failure whenever the permission
- *   is required-but-ungranted. Deliberately NOT gated on [isLanHost]: on Android
- *   17 only local-network sockets are permission-blocked, so a connection failure
- *   while the permission is required and ungranted is itself the signal — this
- *   serves bare-hostname / custom-domain LAN servers string classification can't
- *   detect.
+ * It follows the CalDAV sign-in flow (SettingsRoute and AccountSettingsViewModel):
+ * - The banner shows for a recognizably local URL, or after a connection failure that looks
+ *   like a blocked LAN socket. That failure is fed as the `isLan` input to
+ *   [shouldShowLanBanner], as CalDAV feeds its `lanHintActive` flag, so the banner hides itself
+ *   when the permission is granted, permanently denied or not required.
+ * - The hint is appended on a connection failure whenever the permission is required but not
+ *   granted. It is deliberately not gated on [isLanHost]: on Android 17 only local-network
+ *   sockets are permission-blocked, so that failure is itself the signal, and it covers
+ *   bare-hostname and custom-domain LAN servers that string classification can't detect.
  *
- * @param connectionFailed the validation fetch failed at the socket layer (never
- *   reached the server). Only this arms the reactive signal — an HTTP error,
- *   empty body, or non-calendar response proves the socket connected and must
- *   not, mirroring CalDAV's DiscoveryResult.Error vs AuthError split.
+ * @param connectionFailed [FetchCalendarState.Error.connectionFailed]. Only this arms the
+ *   failure signal: an HTTP error, an empty body or a non-calendar response proves the socket
+ *   connected, so it must not.
  * @param bannerDismissed the user dismissed the banner for this dialog session.
  */
 fun resolveSubscriptionLanUi(

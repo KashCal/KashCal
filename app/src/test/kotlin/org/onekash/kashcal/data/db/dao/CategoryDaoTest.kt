@@ -18,10 +18,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [CategoryDao] — the tag metadata sidecar table. A row records a
- * tag's optional user-chosen color and the last time it was used (for
- * recency-ranked suggestions). The table is loosely coupled to events by name,
- * so a missing row is a valid state (the chip falls back to a hash color).
+ * Tests [CategoryDao], the tag metadata sidecar: a row holds a tag's optional color and its
+ * last-used time, which ranks suggestions. Events link to it by name, so a missing row is valid
+ * (the chip falls back to a hash color); the rename and delete tests cover the event strings.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -60,7 +59,7 @@ class CategoryDaoTest {
 
         val all = dao.observeAll().first()
         assertEquals("Work and work are one tag under the NOCASE PK", 1, all.size)
-        // First-seen row wins under IGNORE — casing and color preserved.
+        // The first-seen row wins under IGNORE, keeping its casing and color.
         assertEquals("Work", all[0].name)
         assertEquals(0xFF4457C9.toInt(), all[0].color)
     }
@@ -225,9 +224,8 @@ class CategoryDaoTest {
     @Test
     fun `renameTag omits an event whose rebuilt list is byte-identical`() = runTest {
         seedCalendar()
-        // Renaming "Work" onto itself with identical casing rewrites the same
-        // bytes: the event carries the tag but its stored list does not change,
-        // so it must not be reported as changed (nothing to re-upload).
+        // Renaming "Work" onto itself rewrites the same bytes, so the event isn't reported
+        // as changed and nothing is re-uploaded.
         seedEvent(1, "e1", "[\"Work\"]")
 
         val changed = dao.renameTag("Work", "Work")
@@ -307,9 +305,8 @@ class CategoryDaoTest {
     @Test
     fun `renameTag rewrites events carrying the tag in a different non-ASCII casing`() = runTest {
         seedCalendar()
-        // Cyrillic lower/upper differ outside ASCII, so a `LIKE '%"Работа"%'`
-        // prefilter (ASCII-only case folding on Android's SQLite) would miss the
-        // lowercased event. Both carrying events must still be renamed.
+        // Cyrillic cases differ outside ASCII, so a `LIKE '%"Работа"%'` prefilter (SQLite folds
+        // ASCII case only) would miss the lowercased event. Both events must be renamed.
         seedEvent(1, "e1", "[\"Работа\"]")
         seedEvent(2, "e2", "[\"работа\"]")
 
@@ -322,8 +319,8 @@ class CategoryDaoTest {
     @Test
     fun `renameTag rewrites a tag whose name contains a double quote`() = runTest {
         seedCalendar()
-        // A quote is legal in a tag name; stored JSON escapes it as \". The rename
-        // prefilter must search for the escaped form or the event is silently missed.
+        // A quote is legal in a tag name and stored JSON escapes it as \". The rename must
+        // still match it: it compares decoded names, so the escaping can't hide the event.
         seedEvent(1, "e1", "[\"My \\\"Q\\\" tag\"]")
 
         dao.renameTag("My \"Q\" tag", "Quarterly")

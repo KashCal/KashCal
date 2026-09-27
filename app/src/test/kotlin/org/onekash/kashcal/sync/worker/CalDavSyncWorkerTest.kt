@@ -58,14 +58,11 @@ import org.robolectric.annotation.Config
 import java.util.concurrent.TimeUnit
 
 /**
- * Unit tests for CalDavSyncWorker.
- *
- * Tests:
- * - Sync type routing (full/calendar/account)
- * - Success/failure result handling
- * - Input/output data handling
- * - Retry logic
- * - Error scenarios
+ * Tests [CalDavSyncWorker]: routing by sync type (full, calendar, account), getForegroundInfo, the
+ * foreground notification gate, the mapping of sync results and throws to WorkManager results
+ * (retry, failure, and success for the periodic run), input data, per-account credentials and
+ * failure recording, reminder scheduling for synced changes, and the pending-operation lifecycle
+ * (stale recovery, forced reset, expiry and its notification, 24-hour auto-reset).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -125,33 +122,32 @@ class CalDavSyncWorkerTest {
         eventsDao = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
 
-        // Default: dataStore returns reasonable default values
+        // Default reminder settings: 15 minutes for timed events, 720 for all-day.
         coEvery { dataStore.defaultReminderMinutes } returns kotlinx.coroutines.flow.flowOf(15)
         coEvery { dataStore.defaultAllDayReminder } returns kotlinx.coroutines.flow.flowOf(720)
 
-        // Default: iCloud URL migration returns false (already completed)
+        // The iCloud URL migration has already run.
         coEvery { iCloudUrlMigration.migrateIfNeeded() } returns false
 
-        // Default: return empty input data
         every { workerParams.inputData } returns Data.EMPTY
         every { workerParams.runAttemptCount } returns 0
 
-        // Make createForegroundInfo throw so setForeground is skipped in tests
-        // (setForeground doesn't work properly in unit tests without WorkManager test utilities)
+        // createForegroundInfo throws so doWork skips setForeground, which doesn't work in a
+        // unit test without the WorkManager test utilities.
         every { notificationManager.createForegroundInfo(any(), any()) } throws
             IllegalStateException("Test: foreground not available")
 
-        // Default: setup provider registry mocks (new API)
+        // The worker calls getQuirksForAccount, not getQuirks; the relaxed registry answers it
+        // with a quirks mock of its own.
         every { providerRegistry.getQuirks(any()) } returns mockQuirks
         every { providerRegistry.getCredentialProvider(any()) } returns mockCredentialProvider
 
-        // Default: return test credentials
         coEvery { mockCredentialProvider.getCredentials(any()) } returns Credentials(
             username = "test@icloud.com",
             password = "test-password"
         )
 
-        // Default: factory returns isolated client (the main calDavClient mock)
+        // Every per-account client the factory builds is calDavClient.
         every { calDavClientFactory.createClient(any(), any()) } returns calDavClient
     }
 
@@ -165,10 +161,9 @@ class CalDavSyncWorkerTest {
         periodic: Boolean = false,
     ): CalDavSyncWorker {
         every { workerParams.inputData } returns inputData
-        // Only the recurring request carries the periodic tag. The worker reads it
-        // to decide whether ending a run in failure is safe — the sync trigger
-        // can't answer that, since the expedited and per-calendar requests
-        // inherit the BACKGROUND_PERIODIC default.
+        // Only the recurring request carries the periodic tag. The worker reads it to decide
+        // whether ending a run in failure is safe; the sync trigger can't tell, since the
+        // expedited and per-calendar requests inherit the BACKGROUND_PERIODIC default.
         every { workerParams.tags } returns setOf(
             SyncScheduler.TAG_SYNC,
             if (periodic) SyncScheduler.TAG_PERIODIC else SyncScheduler.TAG_ONE_SHOT,
@@ -200,7 +195,8 @@ class CalDavSyncWorkerTest {
     @Test
     fun `getForegroundInfo returns valid ForegroundInfo for expedited fallback`() = runTest {
         // On API < 31, WorkManager calls getForegroundInfo() for setExpedited() fallback.
-        // Without this override, expedited sync silently fails on Android 10-11.
+        // Without this override, expedited sync silently fails on Android 10-11. At this app's
+        // minSdk 31, WorkManager 2.11.2 doesn't call it.
         val mockForegroundInfo = mockk<ForegroundInfo>()
         every { notificationManager.createForegroundInfo(any(), any()) } returns mockForegroundInfo
 
@@ -215,9 +211,9 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `silent sync does not post foreground progress notification but still completes`() = runTest {
-        // A silent app-open/resume/periodic sync (showNotification=false, the default
-        // for every non-force enqueue) must NOT surface the OS "Syncing…" foreground
-        // notification for an action the user didn't initiate.
+        // A silent app-open, resume or periodic sync (showNotification=false, the default)
+        // must not post the OS "Syncing…" foreground notification for an action the user
+        // didn't take.
         val inputData = CalDavSyncWorker.createFullSyncInput(showNotification = false)
         val worker = createWorker(inputData)
 
@@ -233,8 +229,8 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `user-initiated sync posts foreground progress notification`() = runTest {
-        // A force-full-sync opts in (showNotification=true) and does surface the
-        // progress foreground notification.
+        // A user-initiated forced sync opts in (showNotification=true) and posts the progress
+        // foreground notification.
         val inputData = CalDavSyncWorker.createFullSyncInput(showNotification = true)
         val worker = createWorker(inputData)
 
@@ -338,7 +334,7 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `calendar sync with missing calendar_id returns failure`() = runTest {
-        // Given - Calendar sync type but no calendar_id
+        // Given - calendar sync type but no calendar_id
         val inputData = Data.Builder()
             .putString(CalDavSyncWorker.KEY_SYNC_TYPE, CalDavSyncWorker.SYNC_TYPE_CALENDAR)
             .build()
@@ -378,7 +374,7 @@ class CalDavSyncWorkerTest {
         val account = createTestAccount(accountId)
 
         coEvery { accountRepository.getAccountById(accountId) } returns account
-        // Account sync uses same ProviderRegistry pattern as syncAll for consistency
+        // Like syncAll, account sync builds its client through the factory.
         coEvery { syncEngine.syncAccountWithQuirks(account, any(), false, any(), calDavClient, any()) } returns SyncResult.Success(
             calendarsSynced = 3,
             durationMs = 800
@@ -501,14 +497,14 @@ class CalDavSyncWorkerTest {
         // When
         val result = worker.doWork()
 
-        // Then - Auth errors are aggregated but don't fail the overall sync
-        // (Other accounts may succeed)
+        // Then - auth errors are aggregated and don't fail the sync; other accounts may
+        // succeed
         assertTrue(result is ListenableWorker.Result.Success)
     }
 
     @Test
     fun `SyncResult_Error is aggregated and returns success`() = runTest {
-        // Given - Single account error doesn't fail the whole sync
+        // Given - one account's error doesn't fail the whole sync
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val testAccount = createTestAccount()
@@ -524,13 +520,13 @@ class CalDavSyncWorkerTest {
         // When
         val result = worker.doWork()
 
-        // Then - Errors are aggregated but don't fail the overall sync
+        // Then - errors are aggregated and don't fail the sync
         assertTrue(result is ListenableWorker.Result.Success)
     }
 
     @Test
     fun `calendar sync - SyncResult_Error with retryable true produces retry`() = runTest {
-        // Given - Calendar-specific sync can still retry
+        // Given - a calendar sync can still retry
         val calendarId = 42L
         val inputData = CalDavSyncWorker.createCalendarSyncInput(calendarId)
         val worker = createWorker(inputData)
@@ -553,7 +549,7 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `exceeding max retries produces failure on calendar sync`() = runTest {
-        // Given - Simulate 4th attempt (0-indexed, so runAttemptCount = 3)
+        // Given - the 4th attempt (0-indexed, so runAttemptCount = 3)
         every { workerParams.runAttemptCount } returns 3
         val calendarId = 42L
         val inputData = CalDavSyncWorker.createCalendarSyncInput(calendarId)
@@ -571,7 +567,7 @@ class CalDavSyncWorkerTest {
         // When
         val result = worker.doWork()
 
-        // Then - Should fail after max retries even if retryable
+        // Then - fails after max retries even when retryable
         assertTrue(result is ListenableWorker.Result.Failure)
     }
 
@@ -579,8 +575,8 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `syncAll account exception records failure and continues`() = runTest {
-        // When syncEngine throws for one account, record failure and continue
-        // to next account instead of aborting the entire sync.
+        // A throw from syncEngine for one account records a failure and moves to the next
+        // account; the sync isn't aborted.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val testAccount = createTestAccount()
@@ -595,14 +591,15 @@ class CalDavSyncWorkerTest {
         // When
         val result = worker.doWork()
 
-        // Then - Exception is caught, failure recorded, result is success (with errors)
+        // Then - the throw is caught, the failure recorded, and the result is a success
+        // with errors
         assertTrue(result is ListenableWorker.Result.Success)
         coVerify { accountRepository.recordSyncFailure(1L, any()) }
     }
 
     @Test
     fun `syncAll first account exception does not block second account`() = runTest {
-        // Two accounts — first throws, second succeeds. Both should be processed.
+        // Two accounts: the first throws, the second succeeds. Both are processed.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val account1 = createTestAccount(id = 1L)
@@ -613,7 +610,7 @@ class CalDavSyncWorkerTest {
 
         coEvery { accountRepository.getEnabledAccounts() } returns listOf(account1, account2)
 
-        // Account 1 throws exception
+        // Account 1 throws
         coEvery { syncEngine.syncAccountWithQuirks(account1, any(), any(), any(), any(), any()) } throws
             RuntimeException("Account 1 crashed")
         // Account 2 succeeds
@@ -626,11 +623,11 @@ class CalDavSyncWorkerTest {
         // When
         val result = worker.doWork()
 
-        // Then - Both accounts processed, first failure recorded, second succeeds
+        // Then - both accounts processed, the first failure recorded, the second succeeds
         assertTrue(result is ListenableWorker.Result.Success)
         coVerify { accountRepository.recordSyncFailure(1L, any()) }
         coVerify { accountRepository.recordSyncSuccess(2L, any()) }
-        // Verify second account was actually synced (not skipped)
+        // The second account was synced, not skipped
         coVerify { syncEngine.syncAccountWithQuirks(account2, any(), any(), any(), any(), any()) }
     }
 
@@ -638,7 +635,7 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `top-level exception returns retry when under max attempts`() = runTest {
-        // Given - attempt 0 (first try), exception thrown before sync engine
+        // Given - attempt 0 (first try), a throw before the sync engine
         every { workerParams.runAttemptCount } returns 0
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
@@ -648,7 +645,7 @@ class CalDavSyncWorkerTest {
         // When
         val result = worker.doWork()
 
-        // Then - should retry (under max attempts)
+        // Then - retries (under max attempts)
         assertTrue(result is ListenableWorker.Result.Retry)
     }
 
@@ -664,21 +661,19 @@ class CalDavSyncWorkerTest {
         // When
         val result = worker.doWork()
 
-        // Then - should fail (not retry) with error message in output. A one-shot
-        // has no future run to protect, and the screen that asked for the sync
-        // shows SyncStatus.Failed, so the honest report is failure.
+        // Then - fails (no retry). A one-shot has no future run to protect, and the screen
+        // that asked for the sync shows SyncStatus.Failed, so the report is failure.
         assertTrue("Expected Failure but got ${result.javaClass.simpleName}",
             result is ListenableWorker.Result.Failure)
     }
 
     @Test
     fun `top-level exception on the periodic run succeeds rather than failing at max retries`() = runTest {
-        // A deterministic throw outside the per-account loop (the pending-operation
-        // lifecycle sweep, a reminder-scheduling limit) recurs on every attempt and
-        // walks the run to this branch. Failure is terminal for a periodic spec:
-        // WorkManager stops running it, and nothing re-arms periodic sync outside
-        // account creation, so background sync would be dead until the user added
-        // another account.
+        // A deterministic throw outside the per-account loop (the pending-operation lifecycle
+        // sweep, for example) recurs on every attempt and reaches this branch. Failure is
+        // terminal for a periodic spec: WorkManager stops running it, and only account
+        // creation re-arms periodic sync, so background sync would be dead until the user
+        // added another account.
         every { workerParams.runAttemptCount } returns 3
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData, periodic = true)
@@ -710,7 +705,7 @@ class CalDavSyncWorkerTest {
         // When
         val result = worker.doWork()
 
-        // Then - attempt 2 < MAX_RETRY_ATTEMPTS (3), should still retry
+        // Then - attempt 2 < MAX_RETRY_ATTEMPTS (3), so it still retries
         assertTrue(result is ListenableWorker.Result.Retry)
     }
 
@@ -726,7 +721,7 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - notification should show "NullPointerException" not "Unknown error"
+        // Then - the notification shows "NullPointerException"
         verify { notificationManager.showErrorNotification("Sync Failed", "NullPointerException") }
     }
 
@@ -782,7 +777,7 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `sync without credentials skips account`() = runTest {
-        // Given - No credentials available for account
+        // Given - no credentials for the account
         coEvery { mockCredentialProvider.getCredentials(any()) } returns null
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
@@ -792,7 +787,7 @@ class CalDavSyncWorkerTest {
         // When
         val result = worker.doWork()
 
-        // Then - Returns success but skips account with no credentials
+        // Then - succeeds and skips the account
         assertTrue(result is ListenableWorker.Result.Success)
         coVerify(exactly = 0) { syncEngine.syncAccountWithQuirks(any(), any(), any(), any(), any(), any()) }
         verify(exactly = 0) { calDavClientFactory.createClient(any(), any()) }
@@ -817,7 +812,7 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - Factory creates client with credentials (instead of mutating singleton)
+        // Then - the factory builds a client from the account's credentials
         verify { calDavClientFactory.createClient(testCredentials, any()) }
         coVerify { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), calDavClient, any()) }
     }
@@ -842,7 +837,7 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - Factory creates client (server URL is part of credentials for discovery)
+        // Then - the factory gets the credentials, server URL included
         verify { calDavClientFactory.createClient(testCredentials, any()) }
     }
 
@@ -874,7 +869,7 @@ class CalDavSyncWorkerTest {
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
         coEvery { eventReader.getEventById(eventId) } returns testEvent
         coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
 
         // When
         worker.doWork()
@@ -909,12 +904,12 @@ class CalDavSyncWorkerTest {
         coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns syncResult
         coEvery { eventReader.getEventById(eventId) } returns testEvent
         coEvery { eventReader.getCalendarById(calendarId) } returns testCalendar
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
 
         // When
         worker.doWork()
 
-        // Then - For MODIFIED events, cancel first, then schedule
+        // Then - a MODIFIED event has its reminders cancelled and rescheduled
         coVerify { reminderScheduler.cancelRemindersForEvent(eventId) }
         coVerify { reminderScheduler.scheduleRemindersForEvent(testEvent, listOf(testOccurrence), any()) }
     }
@@ -941,7 +936,7 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - No reminder scheduling for deleted events
+        // Then - no reminder scheduling for a deleted event
         coVerify(exactly = 0) { eventReader.getEventById(any()) }
         coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }
@@ -955,8 +950,8 @@ class CalDavSyncWorkerTest {
         val eventId = 100L
         val calendarId = 1L
 
-        // Use isFromInitialSync = true to test the skip behavior
-        // (on initial sync, no defaults are applied, so events without reminders are skipped)
+        // An initial sync applies no default reminder, so an event without reminders is
+        // skipped.
         val syncChange = createTestSyncChange(ChangeType.NEW, eventId).copy(isFromInitialSync = true)
         val syncResult = SyncResult.Success(
             calendarsSynced = 1,
@@ -965,7 +960,6 @@ class CalDavSyncWorkerTest {
             changes = listOf(syncChange)
         )
 
-        // Event with no reminders
         val testEvent = createTestEvent(eventId, calendarId, reminders = null)
 
         coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
@@ -975,7 +969,7 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - No reminder scheduling for events without reminders on initial sync
+        // Then - no calendar lookup and no scheduling
         coVerify(exactly = 0) { eventReader.getCalendarById(any()) }
         coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }
@@ -998,7 +992,7 @@ class CalDavSyncWorkerTest {
             changes = listOf(syncChange)
         )
 
-        // Exception event (has originalEventId)
+        // An exception (has originalEventId)
         val testEvent = createTestEvent(
             eventId,
             calendarId,
@@ -1017,17 +1011,16 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - Uses getOccurrenceByExceptionEventId for exception events
+        // Then - an exception uses getOccurrenceByExceptionEventId, not the schedule window
         coVerify { eventReader.getOccurrenceByExceptionEventId(eventId) }
-        coVerify(exactly = 0) { eventReader.getOccurrencesForEventInScheduleWindow(any()) }
+        coVerify(exactly = 0) { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) }
         coVerify { reminderScheduler.scheduleRemindersForEvent(testEvent, listOf(testOccurrence), any()) }
     }
 
     @Test
     fun `sync cancels reminders for MODIFIED events that now have no reminders`() = runTest {
-        // Regression test: When an event transitions from having reminders to no reminders
-        // (e.g., after removing default reminder application from sync), the old AlarmManager
-        // alarms must be cancelled. Without this fix, phantom notifications would fire.
+        // A MODIFIED event whose reminders were all removed still has AlarmManager alarms
+        // from before; they must be cancelled, or phantom notifications fire.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val testAccount = createTestAccount()
@@ -1042,7 +1035,7 @@ class CalDavSyncWorkerTest {
             changes = listOf(syncChange)
         )
 
-        // MODIFIED event now has NO reminders (previously had defaults applied)
+        // The MODIFIED event has no reminders now.
         val testEvent = createTestEvent(eventId, calendarId, reminders = null)
 
         coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
@@ -1052,9 +1045,9 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - Old reminders MUST be cancelled even though new reminders are null
+        // Then - the old reminders are cancelled even though the new ones are null
         coVerify { reminderScheduler.cancelRemindersForEvent(eventId) }
-        // No new reminders should be scheduled
+        // Nothing new is scheduled
         coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }
 
@@ -1120,7 +1113,7 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `doWork abandons operations exceeding 30-day lifetime and shows notification`() = runTest {
-        // Given - one expired op whose event resolves to a single calendar
+        // Given - one expired op whose event is in one calendar
         val expiredOp = PendingOperation(
             id = 1L,
             eventId = 100L,
@@ -1141,7 +1134,7 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - operation abandoned and user notified with the calendar name
+        // Then - the op is abandoned and the notification names the calendar
         coVerify { pendingOperationsDao.abandonOperation(1L, any(), any()) }
         verify {
             notificationManager.showOperationExpiredNotification(
@@ -1152,7 +1145,7 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `doWork reports calendar count when expired ops span multiple calendars`() = runTest {
-        // Given - two expired ops resolving to two different calendars
+        // Given - two expired ops in two calendars
         val op1 = PendingOperation(id = 1L, eventId = 100L, operation = PendingOperation.OPERATION_CREATE)
         val op2 = PendingOperation(id = 2L, eventId = 200L, operation = PendingOperation.OPERATION_CREATE)
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns listOf(op1, op2)
@@ -1170,7 +1163,7 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - names the number of calendars affected, not a single one
+        // Then - names the number of calendars
         verify {
             notificationManager.showOperationExpiredNotification(
                 2, ExpiredCalendarScope.Multiple(2)
@@ -1180,21 +1173,21 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `doWork names the source calendar for an expired move-related operation`() = runTest {
-        // For MOVE / synced->local DELETE ops the event's calendarId has already
-        // advanced to the move target, while the stuck operation concerns the
-        // source calendar it carries. The notification must name the source.
+        // For a MOVE or synced-to-local DELETE op the event's calendarId is already the move
+        // target, while the stuck operation concerns the source calendar it carries. The
+        // notification must name the source.
         val expiredOp = PendingOperation(
             id = 1L,
             eventId = 100L,
             operation = PendingOperation.OPERATION_DELETE,
-            sourceCalendarId = 7L, // stuck DELETE is against calendar 7 (source)
+            sourceCalendarId = 7L, // the stuck DELETE is against the source, calendar 7
             lifetimeResetAt = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(31)
         )
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns listOf(expiredOp)
         coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } returns 1
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
         coEvery { pendingOperationsDao.resetStaleInProgress(any(), any()) } returns 0
-        // Event row has already moved to the target calendar (8L).
+        // The event row is already in the target calendar (8L).
         coEvery { eventsDao.getById(100L) } returns createTestEvent(id = 100L, calendarId = 8L)
         coEvery { calendarRepository.getCalendarById(7L) } returns createTestCalendar(id = 7L).copy(displayName = "Source Cal")
         coEvery { calendarRepository.getCalendarById(8L) } returns createTestCalendar(id = 8L).copy(displayName = "Target Cal")
@@ -1229,7 +1222,7 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - unresolvable event collapses to count-only fallback
+        // Then - an unresolvable event falls back to the count only
         verify {
             notificationManager.showOperationExpiredNotification(
                 1, ExpiredCalendarScope.Unknown
@@ -1239,15 +1232,15 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `doWork does not re-notify on second sync after operations abandoned`() = runTest {
-        // The core bug: dismissing must stick. Once abandoned, the next sync's
-        // getExpiredOperations returns empty, so no second notify.
+        // Abandoning must stick: the next sync's getExpiredOperations returns nothing, so the
+        // notification isn't posted again.
         val expiredOp = PendingOperation(
             id = 1L,
             eventId = 100L,
             operation = PendingOperation.OPERATION_CREATE,
             lifetimeResetAt = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(31)
         )
-        // First sync finds it expired; second sync finds nothing (now ABANDONED).
+        // The first sync finds it expired; the second finds nothing (it is ABANDONED).
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returnsMany
             listOf(listOf(expiredOp), emptyList())
         coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } returns 1
@@ -1267,18 +1260,17 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `doWork does not notify for ops a concurrent sync already abandoned`() = runTest {
-        // getExpiredOperations is global and this block runs on every sync, so an
-        // overlapping sync can read the same expired op. abandonOperation is a
-        // compare-and-set: the run that loses the race transitions 0 rows and
-        // must stay silent instead of firing a duplicate alert on the same op.
+        // getExpiredOperations is global and runs on every sync, so an overlapping sync can
+        // read the same expired op. abandonOperation is a compare-and-set: the run that loses
+        // the race transitions 0 rows and must stay silent, or the op is notified twice.
         val expiredOp = PendingOperation(
             id = 1L,
             eventId = 100L,
             operation = PendingOperation.OPERATION_CREATE,
             lifetimeResetAt = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(31)
         )
-        // Still visible to this run's read, but already abandoned by a concurrent
-        // run — so the compare-and-set update transitions no rows.
+        // Still visible to this run's read but already abandoned by a concurrent run, so the
+        // compare-and-set transitions no rows.
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns listOf(expiredOp)
         coEvery { pendingOperationsDao.abandonOperation(any(), any(), any()) } returns 0
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 0
@@ -1307,7 +1299,7 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - auto-reset was called
+        // Then - auto-reset ran
         coVerify { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) }
     }
 
@@ -1326,7 +1318,7 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - A runs before D (reset before expiry check)
+        // Then - the forced reset runs before the expiry check
         coVerifyOrder {
             pendingOperationsDao.resetAllFailed(any())
             pendingOperationsDao.getExpiredOperations(any())
@@ -1353,7 +1345,7 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `doWork executes retry lifecycle in correct order A then D then B`() = runTest {
-        // Given - force sync with operations to process
+        // Given - a forced sync with operations to process
         coEvery { pendingOperationsDao.resetAllFailed(any()) } returns 1
         coEvery { pendingOperationsDao.getExpiredOperations(any()) } returns emptyList()
         coEvery { pendingOperationsDao.autoResetOldFailed(any(), any(), any()) } returns 2
@@ -1366,11 +1358,11 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - Full A→D→B sequence verified
+        // Then - forced reset, expiry check, 24h auto-reset, in that order
         coVerifyOrder {
-            pendingOperationsDao.resetAllFailed(any())           // A: Force reset
-            pendingOperationsDao.getExpiredOperations(any())     // D: Expiry check
-            pendingOperationsDao.autoResetOldFailed(any(), any(), any()) // B: 24h auto-reset
+            pendingOperationsDao.resetAllFailed(any())
+            pendingOperationsDao.getExpiredOperations(any())
+            pendingOperationsDao.autoResetOldFailed(any(), any(), any())
         }
     }
 
@@ -1443,7 +1435,7 @@ class CalDavSyncWorkerTest {
             calendarId = calendarId,
             startTs = now + 3600_000,
             endTs = now + 7200_000,
-            startDay = 20250108,  // Today's date in YYYYMMDD format
+            startDay = 20250108,  // A fixed YYYYMMDD day; the tests don't read it
             endDay = 20250108,
             isCancelled = false
         )
@@ -1479,7 +1471,7 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - stale recovery was called with ~1hr cutoff
+        // Then - stale recovery ran (the 1-hour cutoff isn't asserted)
         coVerify { pendingOperationsDao.resetStaleInProgress(any(), any()) }
     }
 
@@ -1508,9 +1500,9 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `syncAll records failure but posts no system notification when an account fails repeatedly`() = runTest {
-        // Repeated background sync failures are self-healing and surfaced in-app
-        // (Accounts warning indicator + on-open error banner), so no system
-        // notification is posted for the repeated-failure condition.
+        // Repeated background sync failures are self-healing and surfaced in-app (Accounts
+        // warning indicator, on-open error banner), so no system notification is posted for
+        // them.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val testAccount = createTestAccount()
@@ -1522,9 +1514,8 @@ class CalDavSyncWorkerTest {
         // When
         worker.doWork()
 
-        // Then - failure counter still advances (in-app surfaces depend on it),
-        // but the repeated background failure stays silent: no completion or
-        // error notification is posted.
+        // Then - the failure counter advances (the in-app surfaces depend on it), but no
+        // completion or error notification is posted.
         coVerify { accountRepository.recordSyncFailure(1L, any()) }
         verify(exactly = 0) { notificationManager.showCompletionNotification(any(), any()) }
         verify(exactly = 0) { notificationManager.showErrorNotification(any<String>(), any<String>()) }
@@ -1552,23 +1543,23 @@ class CalDavSyncWorkerTest {
         coEvery { syncEngine.syncAccountWithQuirks(account2, any(), any(), any(), any(), any()) } returns
             SyncResult.Error(-1, "Connection refused", true)
 
-        // Account 2 after failure has 1 consecutive failure
+        // Account 2 after its failure: 1 consecutive failure
         coEvery { accountRepository.getAccountById(2L) } returns account2.copy(consecutiveSyncFailures = 1)
 
         // When
         worker.doWork()
 
-        // Then - BOTH accounts get their metadata recorded
+        // Then - both accounts get their outcome recorded
         coVerify { accountRepository.recordSyncSuccess(1L, any()) }
         coVerify { accountRepository.recordSyncFailure(2L, any()) }
     }
 
-    // ==================== Adverse Tests — All Accounts Fail ====================
+    // ==================== All Accounts Fail ====================
 
     @Test
     fun `syncAll all accounts throw exceptions — returns success with errors`() = runTest {
-        // When EVERY account throws an exception, syncAll should still
-        // return Result.Success (with error data) — not crash or return Failure.
+        // When every account throws, syncAll still returns Result.Success with error data,
+        // not a crash or Failure.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val account1 = createTestAccount(id = 1L)
@@ -1592,19 +1583,20 @@ class CalDavSyncWorkerTest {
         // When
         val result = worker.doWork()
 
-        // Then — returns success (with errors in output data), not Failure
+        // Then - success with errors in the output data, not Failure
         assertTrue("Should be Result.Success even when all accounts fail", result is ListenableWorker.Result.Success)
         // Both failures recorded
         coVerify { accountRepository.recordSyncFailure(1L, any()) }
         coVerify { accountRepository.recordSyncFailure(2L, any()) }
-        // Both accounts were attempted (second wasn't skipped)
+        // Both accounts were attempted (the second wasn't skipped)
         coVerify { syncEngine.syncAccountWithQuirks(account2, any(), any(), any(), any(), any()) }
     }
 
     @Test
     fun `syncAll exception message propagates to error output`() = runTest {
-        // Verify the exception message is captured in the allErrors list
-        // so it surfaces in the home banner via PartialSuccess.
+        // The worker adds the exception message to the merged PartialSuccess errors. This test
+        // asserts only the success result and the recorded failure; the output data carries
+        // only the error count.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val testAccount = createTestAccount()
@@ -1617,16 +1609,16 @@ class CalDavSyncWorkerTest {
 
         val result = worker.doWork()
 
-        // Result should be Success (PartialSuccess maps to Result.success with error in output)
+        // PartialSuccess maps to Result.success with the error count in the output
         assertTrue(result is ListenableWorker.Result.Success)
-        // Verify failure was recorded (the exception path records failure metadata)
+        // The exception path records the failure
         coVerify { accountRepository.recordSyncFailure(1L, any()) }
     }
 
     @Test
     fun `syncAll exception records failure without posting a system notification`() = runTest {
-        // After an exception the failure counter advances (in-app surfaces depend
-        // on it), but no repeated-failure system notification is posted.
+        // After a throw the failure counter advances (the in-app surfaces depend on it), but
+        // no system notification is posted.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val testAccount = createTestAccount()
@@ -1645,7 +1637,7 @@ class CalDavSyncWorkerTest {
 
     @Test
     fun `syncAll three accounts — first and third throw, second succeeds`() = runTest {
-        // Verify isolation with 3 accounts — exceptions don't affect other accounts.
+        // With 3 accounts, a throw doesn't affect the other accounts.
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
         val account1 = createTestAccount(id = 1L)
@@ -1671,7 +1663,7 @@ class CalDavSyncWorkerTest {
         coVerify { accountRepository.recordSyncFailure(1L, any()) }
         // Account 2: success recorded
         coVerify { accountRepository.recordSyncSuccess(2L, any()) }
-        // Account 3: failure recorded (was not skipped despite account 1 failing)
+        // Account 3: failure recorded (not skipped after account 1 failed)
         coVerify { accountRepository.recordSyncFailure(3L, any()) }
         // All three accounts were attempted
         coVerify { syncEngine.syncAccountWithQuirks(account1, any(), any(), any(), any(), any()) }
@@ -1679,7 +1671,7 @@ class CalDavSyncWorkerTest {
         coVerify { syncEngine.syncAccountWithQuirks(account3, any(), any(), any(), any(), any()) }
     }
 
-    // ==================== Account Detail: Sync Recording & isEnabled Guard ====================
+    // ==================== syncAccount: Outcome Recording and isEnabled Guard ====================
 
     @Test
     fun `syncAccount calls recordSyncSuccess on Success`() = runTest {
@@ -1760,9 +1752,9 @@ class CalDavSyncWorkerTest {
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
-        // Sync engine should never be called
+        // The sync engine isn't called
         coVerify(exactly = 0) { syncEngine.syncAccountWithQuirks(any(), any(), any(), any(), any(), any()) }
-        // No sync metadata should be recorded
+        // No outcome is recorded
         coVerify(exactly = 0) { accountRepository.recordSyncSuccess(any(), any()) }
         coVerify(exactly = 0) { accountRepository.recordSyncFailure(any(), any()) }
     }

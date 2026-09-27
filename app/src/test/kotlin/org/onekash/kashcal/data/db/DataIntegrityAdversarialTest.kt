@@ -25,17 +25,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Adversarial tests for database integrity.
- *
- * Tests probe edge cases that could corrupt data:
- * - Foreign key violations
- * - Cascade delete behavior
- * - Unique constraint violations
- * - Orphaned record prevention
- * - Null handling edge cases
- * - Transaction atomicity
- *
- * These tests verify the database schema enforces data integrity.
+ * Probes what the schema enforces on its own, with no create callback installed:
+ * - foreign keys, and the cascades when an account, a calendar, a master or an event with
+ *   occurrences is deleted
+ * - the unique (calendar_id, uid, original_instance_time) index, which allows one exception per
+ *   master instance
+ * - what it allows: a shared UID for a master and its exception, pending operations without
+ *   an event, several operations per event, an occurrence whose calendarId differs from its
+ *   event's
+ * - null optional fields, every [SyncStatus] value and very long text
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -62,7 +60,7 @@ class DataIntegrityAdversarialTest {
     fun `event with non-existent calendarId fails FK constraint`() = runTest {
         val event = Event(
             uid = "test@example.com",
-            calendarId = 999999L, // Doesn't exist
+            calendarId = 999999L, // doesn't exist
             title = "Orphan Event",
             startTs = System.currentTimeMillis(),
             endTs = System.currentTimeMillis() + 3600000,
@@ -79,7 +77,7 @@ class DataIntegrityAdversarialTest {
 
     @Test
     fun `deleting calendar cascades to events`() = runTest {
-        // Create account -> calendar -> event hierarchy
+        // Account, calendar, event.
         val accountId = database.accountsDao().insert(
             Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
@@ -102,13 +100,10 @@ class DataIntegrityAdversarialTest {
             )
         )
 
-        // Verify event exists
         assertNotNull(database.eventsDao().getById(eventId))
 
-        // Delete calendar
         database.calendarsDao().deleteById(calendarId)
 
-        // Event should be cascade deleted
         assertNull("Event should be deleted when calendar is deleted",
             database.eventsDao().getById(eventId))
     }
@@ -118,7 +113,7 @@ class DataIntegrityAdversarialTest {
     @Test
     fun `calendar with non-existent accountId fails FK constraint`() = runTest {
         val calendar = Calendar(
-            accountId = 999999L, // Doesn't exist
+            accountId = 999999L, // doesn't exist
             caldavUrl = "https://test.com/cal/",
             displayName = "Orphan Calendar",
             color = 0xFF2196F3.toInt()
@@ -156,10 +151,8 @@ class DataIntegrityAdversarialTest {
             )
         )
 
-        // Delete account
         database.accountsDao().deleteById(accountId)
 
-        // Calendar and event should be cascade deleted
         assertNull(database.calendarsDao().getById(calendarId))
         assertNull(database.eventsDao().getById(eventId))
     }
@@ -187,7 +180,7 @@ class DataIntegrityAdversarialTest {
             startTs = System.currentTimeMillis(),
             endTs = System.currentTimeMillis() + 3600000,
             dtstamp = System.currentTimeMillis(),
-            originalEventId = 999999L, // Non-existent master
+            originalEventId = 999999L, // no such master
             originalInstanceTime = System.currentTimeMillis()
         )
 
@@ -213,7 +206,6 @@ class DataIntegrityAdversarialTest {
             )
         )
 
-        // Create master event
         val masterId = database.eventsDao().insert(
             Event(
                 uid = "master@test.com",
@@ -226,7 +218,6 @@ class DataIntegrityAdversarialTest {
             )
         )
 
-        // Create exception event
         val exceptionId = database.eventsDao().insert(
             Event(
                 uid = "master@test.com", // Same UID as master
@@ -240,13 +231,10 @@ class DataIntegrityAdversarialTest {
             )
         )
 
-        // Verify exception exists
         assertNotNull(database.eventsDao().getById(exceptionId))
 
-        // Delete master
         database.eventsDao().deleteById(masterId)
 
-        // Exception should be cascade deleted
         assertNull("Exception should be deleted when master is deleted",
             database.eventsDao().getById(exceptionId))
     }
@@ -268,7 +256,7 @@ class DataIntegrityAdversarialTest {
         )
 
         val occurrence = Occurrence(
-            eventId = 999999L, // Non-existent
+            eventId = 999999L, // no such event
             calendarId = calendarId,
             startTs = System.currentTimeMillis(),
             endTs = System.currentTimeMillis() + 3600000,
@@ -308,7 +296,6 @@ class DataIntegrityAdversarialTest {
             )
         )
 
-        // Create occurrences
         database.occurrencesDao().insert(
             Occurrence(
                 eventId = eventId,
@@ -323,10 +310,8 @@ class DataIntegrityAdversarialTest {
         val occsBefore = database.occurrencesDao().getForEvent(eventId)
         assertEquals(1, occsBefore.size)
 
-        // Delete event
         database.eventsDao().deleteById(eventId)
 
-        // Occurrences should be cascade deleted
         val occsAfter = database.occurrencesDao().getForEvent(eventId)
         assertTrue("Occurrences should be deleted", occsAfter.isEmpty())
     }
@@ -335,8 +320,8 @@ class DataIntegrityAdversarialTest {
 
     @Test
     fun `duplicate UID in same calendar is allowed`() = runTest {
-        // RFC 5545: UID is unique globally, but we use it with originalEventId
-        // for exceptions which share the same UID as master
+        // An exception shares its master's UID (RFC 5545 RECURRENCE-ID); the unique
+        // (calendar_id, uid, original_instance_time) index tells them apart.
         val accountId = database.accountsDao().insert(
             Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
@@ -351,7 +336,6 @@ class DataIntegrityAdversarialTest {
 
         val uid = "shared-uid@test.com"
 
-        // Master event
         val masterId = database.eventsDao().insert(
             Event(
                 uid = uid,
@@ -364,7 +348,7 @@ class DataIntegrityAdversarialTest {
             )
         )
 
-        // Exception with same UID (allowed, linked via originalEventId)
+        // The exception, same UID, linked through originalEventId.
         val exceptionId = database.eventsDao().insert(
             Event(
                 uid = uid,
@@ -378,7 +362,6 @@ class DataIntegrityAdversarialTest {
             )
         )
 
-        // Both should exist
         assertNotNull(database.eventsDao().getById(masterId))
         assertNotNull(database.eventsDao().getById(exceptionId))
     }
@@ -411,7 +394,6 @@ class DataIntegrityAdversarialTest {
 
         val instanceTime = System.currentTimeMillis() + 86400000
 
-        // First exception
         database.eventsDao().insert(
             Event(
                 uid = "master@test.com",
@@ -425,7 +407,8 @@ class DataIntegrityAdversarialTest {
             )
         )
 
-        // Second exception for SAME instance time - should fail unique constraint
+        // A second exception for the same instance time breaks the unique
+        // (calendar_id, uid, original_instance_time) index.
         try {
             database.eventsDao().insert(
                 Event(
@@ -449,7 +432,7 @@ class DataIntegrityAdversarialTest {
 
     @Test
     fun `pendingOperation with non-existent eventId is allowed`() = runTest {
-        // eventId is NOT a FK - allows operations for deleted events
+        // eventId isn't a foreign key, so an operation outlives its deleted event.
         val op = PendingOperation(
             eventId = 999999L,
             operation = PendingOperation.OPERATION_DELETE
@@ -483,7 +466,6 @@ class DataIntegrityAdversarialTest {
             )
         )
 
-        // Insert multiple operations for same event
         database.pendingOperationsDao().insert(
             PendingOperation(eventId = eventId, operation = "UPDATE")
         )
@@ -518,7 +500,7 @@ class DataIntegrityAdversarialTest {
             startTs = System.currentTimeMillis(),
             endTs = System.currentTimeMillis() + 3600000,
             dtstamp = System.currentTimeMillis(),
-            // All optional fields null
+            // Every optional field null.
             location = null,
             description = null,
             timezone = null,
@@ -580,12 +562,12 @@ class DataIntegrityAdversarialTest {
             )
         )
 
-        // Creating occurrence with wrong calendarId succeeds (no FK)
-        // but this is a data integrity issue the app should prevent
+        // An occurrence with another calendar's calendarId inserts: occurrences.calendar_id
+        // has no foreign key, so keeping it equal to the event's is up to the app.
         val occId = database.occurrencesDao().insert(
             Occurrence(
                 eventId = eventId,
-                calendarId = calendar2Id, // Wrong calendar!
+                calendarId = calendar2Id, // not the event's calendar
                 startTs = System.currentTimeMillis(),
                 endTs = System.currentTimeMillis() + 3600000,
                 startDay = 20240615,
@@ -593,11 +575,9 @@ class DataIntegrityAdversarialTest {
             )
         )
 
-        // This is allowed by schema but app logic should prevent it
         val occurrences = database.occurrencesDao().getForEvent(eventId)
         val occurrence = occurrences.find { it.id == occId }
         assertNotNull(occurrence)
-        // App should validate this doesn't happen
     }
 
     // ==================== SyncStatus Enum Handling ====================

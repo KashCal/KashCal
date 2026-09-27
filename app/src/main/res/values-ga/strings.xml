@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Níor aimsíodh aon fhéilirí ar an bhfreastalaí seo.</string>
     <string name="caldav_error_unexpected">Earráid gan choinne. Bain triail eile as.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nMás freastalaí ar do líonra áitiúil é seo, ceadaigh rochtain ar an líonra áitiúil chun ceangal.</string>
+    <string name="caldav_error_connection_refused_insecure">D\'atreoraigh an freastalaí an ceangal chuig áit nach leanann KashCal (seoladh neamhchriptithe, nó lúb atreoraithe), mar sin stop KashCal sular seoladh do phasfhocal. Seiceáil seoladh an fhreastalaí.</string>
     <string name="local_network_banner_title">Rochtain ar an líonra áitiúil de dhíth</string>
     <string name="local_network_banner_body">Is cosúil go bhfuil an freastalaí seo ar do líonra áitiúil. Ceadaigh rochtain ar an líonra áitiúil ionas gur féidir le KashCal ceangal leis.</string>
     <string name="local_network_banner_allow">Ceadaigh rochtain</string>
@@ -920,6 +921,8 @@
     <string name="dialog_edit_recurring_title">Sábháil athruithe</string>
     <string name="dialog_delete_recurring_title">Scrios</string>
     <string name="dialog_move_recurring_title">Bog</string>
+    <string name="snackbar_event_rescheduled">Athsceidealaíodh an t-imeacht</string>
+    <string name="snackbar_reschedule_failed">Níorbh fhéidir an t-imeacht a athsceidealú</string>
     <string name="recurring_this_event">An t-imeacht seo</string>
     <string name="recurring_all_events">Gach imeacht</string>
 

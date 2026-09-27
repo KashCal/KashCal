@@ -18,9 +18,9 @@ import org.onekash.kashcal.ui.components.category.colorForTag
 import javax.inject.Inject
 
 /**
- * One tag as shown on the management screen: its stored name, the color to paint
- * its swatch (a resolved value — the user's custom color, or the name-hash
- * fallback when none is stored), and whether that color was user-chosen.
+ * Holds one tag as the management screen shows it: its stored name, its swatch color (the
+ * user's custom color, or the name-hash fallback when none is stored), and whether that color
+ * was user-chosen.
  */
 data class TagUiItem(
     val name: String,
@@ -29,11 +29,11 @@ data class TagUiItem(
 )
 
 /**
- * State holder for the tag-management screen. Observes the tag metadata table
- * (already name-sorted) and resolves each row's swatch color. Color, delete, and
- * undo are local-only metadata edits that go to [CategoryRepository]; rename goes
- * through [EventCoordinator] because it must re-upload every affected syncable
- * event so the new tag reaches the server and the user's other devices.
+ * Holds the tag-management screen's state. Observes the tag metadata table (already
+ * name-sorted) and resolves each row's swatch color. Color, delete and undo are local-only
+ * metadata edits through [CategoryRepository]. Rename goes through [EventCoordinator] because it
+ * must re-upload every affected syncable event so the new tag reaches the server and the user's
+ * other devices.
  */
 @HiltViewModel
 class TagsViewModel @Inject constructor(
@@ -56,7 +56,7 @@ class TagsViewModel @Inject constructor(
             }
             .stateIn(viewModelScope, SharingStarted.Eagerly, persistentListOf())
 
-    /** Set (or clear) a tag's custom color. */
+    /** Sets a tag's custom color, or clears it when [color] is null. */
     fun onSetColor(name: String, color: Int?) {
         viewModelScope.launch {
             categoryRepository.setColor(name, color, System.currentTimeMillis())
@@ -64,21 +64,20 @@ class TagsViewModel @Inject constructor(
     }
 
     /**
-     * Rename [from] to [to] across every carrying event and the metadata row,
-     * then re-upload the affected syncable events so the rename reaches the
-     * server. Goes through the coordinator (not the repository) for the sync.
+     * Renames [from] to [to] on every event that carries it and on the metadata row, then
+     * re-uploads the affected syncable events ([EventCoordinator.renameTag]).
      */
     fun onRename(from: String, to: String) {
         viewModelScope.launch { eventCoordinator.renameTag(from, to) }
     }
 
-    // Snapshot of the last deleted row, held only for the undo window so a restore
-    // brings back the exact custom color and recency rather than a bare row.
+    // The last deleted row, kept for the undo window so a restore brings back its custom color
+    // and recency, not a bare row.
     private var lastDeleted: Category? = null
 
     /**
-     * Drop a tag's metadata row; events keep their labels via the hash fallback.
-     * The row is snapshotted first so [onUndoDelete] can restore it verbatim.
+     * Deletes a tag's metadata row; events keep their labels, painted with the hash fallback.
+     * The row is saved first so [onUndoDelete] can restore it as it was.
      */
     fun onDelete(name: String) {
         viewModelScope.launch {
@@ -87,7 +86,7 @@ class TagsViewModel @Inject constructor(
         }
     }
 
-    /** Restore the row removed by the most recent [onDelete], if any. */
+    /** Restores the row removed by the most recent [onDelete], if any. */
     fun onUndoDelete() {
         val deleted = lastDeleted ?: return
         lastDeleted = null

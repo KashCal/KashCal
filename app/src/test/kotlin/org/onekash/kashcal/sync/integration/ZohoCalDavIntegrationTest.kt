@@ -30,18 +30,20 @@ import java.util.UUID
 import okhttp3.Credentials as OkCredentials
 
 /**
- * Exhaustive live integration test for Zoho CalDAV.
- *
- * Tests the full CalDAV lifecycle against a real Zoho Calendar account:
+ * Runs the CalDAV lifecycle against a real Zoho Calendar account, in method-name order:
  * - Discovery (principal, calendar home, list calendars)
- * - Change detection (ctag, sync token)
+ * - Change detection (ctag, sync-token)
  * - Two-step fetch (etags → multiget, Zoho-specific pattern)
  * - Single event CRUD (create → fetch → update → fetch → delete)
  * - All-day event lifecycle
- * - Recurring event (RRULE) create → fetch → delete
+ * - Recurring event (RRULE) create → fetch → update → delete
  * - Recurring event with exception (RECURRENCE-ID)
- * - Batch create/fetch/delete of multiple events
- * - Etag handling across all mutation operations
+ * - Batch create/fetch/delete of multiple events, and the ctag change after it
+ * - Round-trip of extra properties, VALARM, special characters and RRULE variants
+ * - Etag handling: change on update, stale-etag update, duplicate-UID create
+ * - sync-collection, when the server supports it
+ *
+ * Every test deletes only events it created; test99 deletes any left in [createdEventUrls].
  *
  * Requires ZOHO_SERVER, ZOHO_USERNAME, ZOHO_PASSWORD in local.properties.
  *
@@ -116,8 +118,8 @@ class ZohoCalDavIntegrationTest {
             serverUrl = "https://$serverUrl"
         }
 
-        // Zoho's CalDAV entry point is /caldav — a PROPFIND on the bare root
-        // returns 501. Discovery and the client must target the DAV endpoint.
+        // Zoho's CalDAV entry point is /caldav; a PROPFIND on the bare root returns 501.
+        // Discovery and the client must target the DAV endpoint.
         davEndpoint = serverUrl!!.trimEnd('/') + "/caldav"
 
         val quirks = DefaultQuirks(serverUrl!!)
@@ -129,10 +131,10 @@ class ZohoCalDavIntegrationTest {
 
     @After
     fun teardown() {
-        // Intentionally empty — cleanup happens in test99
+        // Empty: cleanup happens in test99.
     }
 
-    // ==================== 01: Discovery ====================
+    // ==================== 01-03: Discovery ====================
 
     @Test
     fun `test01 discover principal`() = runBlocking {
@@ -190,7 +192,7 @@ class ZohoCalDavIntegrationTest {
         assumeTrue("Calendar not discovered", calendarUrl != null)
 
         val result = client.getCtag(calendarUrl!!)
-        // Zoho may or may not support ctag — log either way
+        // Zoho may or may not support ctag; log either way.
         if (result.isSuccess()) {
             val ctag = result.getOrNull()?.ctag
             println("Ctag: $ctag")
@@ -264,7 +266,7 @@ class ZohoCalDavIntegrationTest {
         val hrefs = etags.map { it.first }
         val result = client.fetchEventsByHref(calendarUrl!!, hrefs.take(10))
 
-        // Zoho may return empty for multi-href multiget — that's the known behavior
+        // Zoho may return nothing for a multi-href multiget; that is known behavior.
         if (result.isSuccess()) {
             val events = result.getOrNull()!!
             println("Multiget returned ${events.size} event(s) for ${hrefs.take(10).size} href(s)")
@@ -374,13 +376,13 @@ class ZohoCalDavIntegrationTest {
         println("\n===== TEST 12: Update Single Event =====")
         assumeTrue("Event not created", singleEventUrl != null && singleEventEtag != null)
 
-        // Fetch current ICS to get server-canonical version
+        // Refresh the etag from the server's copy.
         val fetchResult = client.fetchEvent(singleEventUrl!!)
         assertSuccess("fetchEvent for update", fetchResult)
         val currentIcs = fetchResult.getOrNull()!!.icalData
         singleEventEtag = fetchResult.getOrNull()!!.etag ?: singleEventEtag
 
-        // Build updated ICS — change summary, add description, extend end time
+        // Change summary, description and location, and extend the end time.
         val now = System.currentTimeMillis()
         val startTs = now + (3 * 60 * 60 * 1000)
         val endTs = startTs + (2 * 60 * 60 * 1000) // 2 hours instead of 1
@@ -412,7 +414,7 @@ class ZohoCalDavIntegrationTest {
             val err = result as CalDavResult.Error
             println("Update failed (code=${err.code}): ${err.message}")
 
-            // Zoho may not honor If-Match — try raw PUT
+            // Zoho may not honor If-Match; on 412 or 400, try a raw PUT.
             if (err.code == 412 || err.code == 400) {
                 println("Attempting raw PUT without If-Match...")
                 val rawStatus = rawPut(singleEventUrl!!, updatedIcal)
@@ -484,8 +486,7 @@ class ZohoCalDavIntegrationTest {
 
         assertTrue("DELETE should return success (200/204/404)", deleteSucceeded)
 
-        // Verify deletion with eventual consistency tolerance
-        // Zoho may still return the event briefly after a successful DELETE
+        // Zoho may still return the event briefly after a successful DELETE, so retry.
         var gone = false
         for (attempt in 1..5) {
             val verifyResult = client.fetchEvent(singleEventUrl!!)
@@ -737,7 +738,7 @@ END:VCALENDAR
         recurringEventEtag = null
     }
 
-    // ==================== 40-44: Recurring Event with Exception (RECURRENCE-ID) ====================
+    // ==================== 40-43: Recurring Exception (RECURRENCE-ID) ====================
 
     @Test
     fun `test40 create recurring event for exception test`() = runBlocking {
@@ -793,14 +794,14 @@ END:VCALENDAR
         recurExcEventEtag = fetchResult.getOrNull()!!.etag ?: recurExcEventEtag
         val currentIcs = fetchResult.getOrNull()!!.icalData
 
-        // Parse the DTSTART from the fetched ICS to calculate occurrence times
+        // Recompute test40's occurrence times from the clock; the fetched ICS isn't parsed.
         val now = System.currentTimeMillis()
         val tomorrowMidnight = now - (now % 86400000) + 86400000
         val firstOccurrenceStart = tomorrowMidnight + (10 * 60 * 60 * 1000)
         val secondOccurrenceStart = firstOccurrenceStart + 86400000 // +1 day
         val secondOccurrenceEnd = secondOccurrenceStart + (60 * 60 * 1000)
 
-        // The modified 2nd occurrence — different time and summary
+        // The modified 2nd occurrence: different time and summary.
         val modifiedStart = secondOccurrenceStart + (2 * 60 * 60 * 1000) // 12:00 instead of 10:00
         val modifiedEnd = modifiedStart + (90 * 60 * 1000) // 1.5 hours instead of 1
 
@@ -1499,7 +1500,7 @@ END:VCALENDAR
         val (url, _) = result1.getOrNull()!!
         createdEventUrls.add(url)
 
-        // Second create with same UID — should fail (PUT If-None-Match: *)
+        // A second create with the same UID should fail (PUT with If-None-Match: *).
         println("Attempting duplicate create with same UID: $uid")
         val result2 = client.createEvent(calendarUrl!!, uid, ical)
 

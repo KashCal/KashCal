@@ -17,6 +17,8 @@ import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
+import org.onekash.kashcal.sync.discovery.RefusalRecordingClient
+import org.onekash.kashcal.sync.discovery.confirmUnlistedCalendars
 import org.onekash.kashcal.sync.discovery.persistCalendarUserAddresses
 import org.onekash.kashcal.sync.discovery.persistSchedulingDiscovery
 import org.onekash.kashcal.sync.parser.ServerColorParser
@@ -30,23 +32,23 @@ import javax.inject.Singleton
 import javax.net.ssl.SSLHandshakeException
 
 /**
- * Discovery service for generic CalDAV servers (Nextcloud, Baikal, Radicale, Fastmail).
+ * Discovers and sets up accounts on generic CalDAV servers (Nextcloud, Baikal, Radicale,
+ * Fastmail and others).
  *
- * Unlike ICloudAccountDiscoveryService which uses a fixed server URL and singleton client,
- * this service:
- * - Accepts user-provided server URL
- * - Creates isolated clients via CalDavClientFactory for each discovery
- * - Supports self-signed certificates via trustInsecure flag
- * - Saves credentials per-account via AccountRepository.saveCredentials()
+ * Unlike [org.onekash.kashcal.sync.provider.icloud.ICloudAccountDiscoveryService], which
+ * always talks to one fixed server, this takes a user-entered server URL, builds a
+ * [DefaultQuirks] for it, and honors `trustInsecure` for self-signed certificates. Each run
+ * gets its own client from [CalDavClientFactory].
  *
  * Discovery flow:
- * 1. Normalize and validate server URL
- * 2. Create isolated CalDavClient with credentials
- * 3. Discover principal URL (validates credentials)
- * 4. Discover calendar home URL
- * 5. List available calendars
- * 6. Create Account and Calendar entities in Room
- * 7. Save credentials to encrypted storage
+ * 1. Normalize and validate the server URL.
+ * 2. Discover the principal (this validates the credentials), falling back to
+ *    [probeCaldavPaths].
+ * 3. Discover the calendar home sets and list the calendars in each.
+ * 4. Create or update the Account row in Room.
+ * 5. Save the credentials to encrypted storage; if that fails, delete the account.
+ * 6. Create or update the Calendar rows, and discover the calendar-user addresses and
+ *    scheduling facts (non-fatal).
  */
 @Singleton
 class CalDavAccountDiscoveryService @Inject constructor(
@@ -58,23 +60,23 @@ class CalDavAccountDiscoveryService @Inject constructor(
         private const val TAG = "CalDavAccountDiscovery"
         private const val PROVIDER_CALDAV = "caldav"
 
-        // Delay between path probes to avoid rate limiting (Issue #54)
+        // Delay between path probes, so probing doesn't trip rate limiting (Issue #54).
         private const val PROBE_DELAY_MS = 150L
 
-        // Known CalDAV server paths for fallback probing (Issue #54).
-        // Trailing slashes required by Davis/Symfony, harmless for others.
+        // Server paths [probeCaldavPaths] tries (Issue #54). Davis/Symfony require
+        // the trailing slashes; other servers accept them.
         private val KNOWN_CALDAV_PATHS = listOf(
             "/dav/",              // Davis, generic sabre/dav
             "/remote.php/dav/",   // Nextcloud
             "/dav.php/",          // Baikal
-            "/caldav",            // Zoho (no trailing slash — Zoho returns 501 for /caldav/)
+            "/caldav",            // Zoho (no trailing slash: Zoho returns 501 for /caldav/)
             "/caldav/",           // Open-Xchange (mailbox.org)
             "/dav/cal/",          // Stalwart
             "/caldav.php/",       // Some servers
             "/cal.php/"           // Some servers
         )
 
-        // Default calendar colors if server doesn't provide one
+        // Calendar colors used when the server sends none or one that doesn't parse.
         private val DEFAULT_COLORS = listOf(
             0xFF4CAF50.toInt(), // Green
             0xFF2196F3.toInt(), // Blue
@@ -90,13 +92,14 @@ class CalDavAccountDiscoveryService @Inject constructor(
     val providerId: String = PROVIDER_CALDAV
 
     /**
-     * Discover and create a CalDAV account with all its calendars.
+     * Discovers a CalDAV account and creates it with all its calendars.
+     *
+     * Skips RFC 6764 well-known discovery; [discoverCalendars] tries it first. Only tests call
+     * this; the app uses [discoverCalendars] then [createAccountWithSelectedCalendars].
      *
      * @param serverUrl CalDAV server URL (e.g., "https://nextcloud.example.com")
-     * @param username Username for authentication
-     * @param password Password for authentication
-     * @param trustInsecure Whether to trust self-signed certificates
-     * @return DiscoveryResult with created Account and Calendars, or error
+     * @param trustInsecure whether to trust self-signed certificates
+     * @return [DiscoveryResult.Success] with the account and calendars, or an error
      */
     suspend fun discoverAndCreateAccount(
         serverUrl: String,
@@ -117,7 +120,6 @@ class CalDavAccountDiscoveryService @Inject constructor(
         }
         Log.d(TAG, "Normalized URL: $normalizedUrl")
 
-        // Create credentials for the client factory
         val credentials = Credentials(
             username = username,
             password = password,
@@ -125,9 +127,8 @@ class CalDavAccountDiscoveryService @Inject constructor(
             trustInsecure = trustInsecure
         )
 
-        // Create isolated client with credentials and DefaultQuirks
         val quirks = DefaultQuirks(normalizedUrl)
-        val client = calDavClientFactory.createClient(credentials, quirks)
+        val client = RefusalRecordingClient(calDavClientFactory.createClient(credentials, quirks))
 
         try {
             // Step 1: Discover principal URL (this validates credentials)
@@ -149,9 +150,9 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 val error = principalResult as CalDavResult.Error
                 Log.e(TAG, "Principal discovery failed: ${error.message}")
 
-                // Check for SSL errors specifically — no probing will help
+                // Probing other paths can't fix a certificate failure.
                 if (isSSLError(error)) {
-                    return@withContext DiscoveryResult.Error(
+                    return@withContext client.error(
                         if (!trustInsecure) {
                             "Certificate verification failed. Enable 'Trust insecure connection' to continue."
                         } else {
@@ -170,7 +171,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 }
 
                 if (principalUrl == null) {
-                    return@withContext DiscoveryResult.Error(
+                    return@withContext client.error(
                         if (urlContainsKnownCaldavPath(normalizedUrl)) {
                             getErrorMessageForCalDavError(error, "connect to server", trustInsecure)
                         } else {
@@ -189,7 +190,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
             if (homeResult.isError()) {
                 val error = homeResult as CalDavResult.Error
                 Log.e(TAG, "Calendar home discovery failed: ${error.message}")
-                return@withContext DiscoveryResult.Error(
+                return@withContext client.error(
                     getErrorMessageForCalDavError(error, "find calendar home", trustInsecure)
                 )
             }
@@ -218,13 +219,13 @@ class CalDavAccountDiscoveryService @Inject constructor(
             Log.i(TAG, "Discovered ${discoveredCalendars.size} calendars across ${calendarHomeUrls.size} home set(s)")
 
             if (discoveredCalendars.isEmpty()) {
-                return@withContext DiscoveryResult.Error(
+                return@withContext client.error(
                     "No calendars found on server. Please check your account settings."
                 )
             }
 
-            // Step 4: Create or update Account in Room
-            // Use 3-param lookup so same username on different servers creates separate accounts
+            // Step 4: Create or update Account in Room. The lookup includes the home set so
+            // the same username on different servers gets separate accounts.
             val existingAccount = accountRepository.getAccountByProviderEmailAndHomeSetUrl(
                 AccountProvider.CALDAV, username, normalizedHomeUrl
             )
@@ -232,7 +233,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 Log.d(TAG, "Updating existing account: ${existingAccount.id}")
                 val updated = existingAccount.copy(
                     principalUrl = principalUrl,
-                    homeSetUrl = normalizedHomeUrl,  // CRITICAL: Required for DefaultQuirks
+                    homeSetUrl = normalizedHomeUrl,  // Sync builds DefaultQuirks from it
                     isEnabled = true
                 )
                 accountRepository.updateAccount(updated)
@@ -245,14 +246,15 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     email = username,
                     displayName = displayName,
                     principalUrl = principalUrl,
-                    homeSetUrl = normalizedHomeUrl,  // CRITICAL: Required for DefaultQuirks
+                    homeSetUrl = normalizedHomeUrl,  // Sync builds DefaultQuirks from it
                     isEnabled = true
                 )
                 val accountId = accountRepository.createAccount(newAccount)
                 newAccount.copy(id = accountId)
             }
 
-            // Step 5: Save credentials to encrypted storage
+            // Step 5: Save credentials to encrypted storage. Without them the account can't
+            // sync, so a failed save deletes it.
             val accountCredentials = AccountCredentials(
                 username = username,
                 password = password,
@@ -270,8 +272,8 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 )
             }
 
-            // Step 5b: Discover and persist calendar-user-address-set
-            // (RFC 6638 §2.4.1). Failures are non-fatal.
+            // Step 5b: Discover and persist the calendar-user-address-set (RFC 6638 §2.4.1).
+            // Failures are non-fatal.
             persistCalendarUserAddresses(client, principalUrl, account.id, accountRepository, TAG)
 
             // Step 6: Create Calendar entities for each discovered calendar
@@ -298,7 +300,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                         color = parseColor(calDavCalendar.color, index),
                         ctag = null,  // Don't store ctag - first sync must fetch events
                         isReadOnly = calDavCalendar.isReadOnly,
-                        isDefault = isFirst, // First calendar is default
+                        isDefault = isFirst, // The first created calendar is the default
                         isVisible = true
                     )
                     val calendarId = calendarRepository.createCalendar(newCalendar)
@@ -308,9 +310,9 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 createdCalendars.add(calendar)
             }
 
-            // Step 7: Discover scheduling-delivery facts (RFC 6638 §2 / §2.1.1):
-            // the principal's outbox URL + each collection's auto-schedule
-            // capability. Failures are non-fatal.
+            // Step 7: Discover scheduling-delivery facts (RFC 6638 §2, §2.1.1): the
+            // principal's outbox URL and each collection's auto-schedule capability.
+            // Failures are non-fatal.
             persistSchedulingDiscovery(
                 client, principalUrl, account.id, createdCalendars,
                 accountRepository, calendarRepository, TAG
@@ -324,16 +326,15 @@ class CalDavAccountDiscoveryService @Inject constructor(
             )
         } catch (e: Exception) {
             Log.e(TAG, "Discovery failed with exception", e)
-            DiscoveryResult.Error(getErrorMessageForException(e, trustInsecure))
+            client.error(getErrorMessageForException(e, trustInsecure))
         }
     }
 
     /**
-     * Refresh calendar list for an existing account.
-     * Adds new calendars, updates existing ones, removes deleted ones.
+     * Refreshes an existing account's calendar list: adds new calendars, updates listed ones,
+     * and deletes unlisted ones the server confirms are gone ([confirmUnlistedCalendars]).
      *
-     * @param accountId The account ID to refresh
-     * @return DiscoveryResult with updated Account and Calendars
+     * @return [DiscoveryResult.Success] with the listed and the kept unlisted calendars
      */
     suspend fun refreshCalendars(accountId: Long): DiscoveryResult = withContext(Dispatchers.IO) {
         Log.i(TAG, "Refreshing calendars for account: $accountId")
@@ -348,7 +349,6 @@ class CalDavAccountDiscoveryService @Inject constructor(
             return@withContext DiscoveryResult.Error("Calendar home URL not configured")
         }
 
-        // Load credentials for this account
         val accountCredentials = accountRepository.getCredentials(accountId)
         if (accountCredentials == null) {
             return@withContext DiscoveryResult.AuthError(
@@ -363,12 +363,12 @@ class CalDavAccountDiscoveryService @Inject constructor(
             trustInsecure = accountCredentials.trustInsecure
         )
 
-        // Create isolated client
         val quirks = DefaultQuirks(account.homeSetUrl)
-        val client = calDavClientFactory.createClient(credentials, quirks)
+        val client = RefusalRecordingClient(calDavClientFactory.createClient(credentials, quirks))
 
         try {
-            // Re-discover home sets from principal (handles added/removed home sets)
+            // Re-discover home sets from the principal so added or removed home sets are
+            // picked up; falls back to the stored one.
             val calendarHomeUrls = if (account.principalUrl != null) {
                 val homeResult = client.discoverCalendarHome(account.principalUrl)
                 if (homeResult.isSuccess()) {
@@ -382,14 +382,14 @@ class CalDavAccountDiscoveryService @Inject constructor(
             }
             Log.d(TAG, "Calendar home URLs for refresh: $calendarHomeUrls")
 
-            // Refresh calendar-user-address-set (RFC 6638 §2.4.1) so the
-            // user's identity stays current with any aliases added/
-            // removed server-side. Failures are non-fatal.
+            // Refresh the calendar-user-address-set (RFC 6638 §2.4.1) so aliases added or
+            // removed on the server are picked up. Failures are non-fatal.
             if (account.principalUrl != null) {
                 persistCalendarUserAddresses(client, account.principalUrl, accountId, accountRepository, TAG)
             }
 
-            // List calendars from all home sets
+            // List calendars from all home sets. An auth error ends the refresh; other
+            // failures skip that home set, and at least one must list.
             val allCalendars = mutableListOf<CalDavCalendar>()
             val seenUrls = mutableSetOf<String>()
             var anyHomeSetSucceeded = false
@@ -410,22 +410,24 @@ class CalDavAccountDiscoveryService @Inject constructor(
             }
 
             if (!anyHomeSetSucceeded) {
-                return@withContext DiscoveryResult.Error("Could not refresh calendars from any home set")
+                return@withContext client.error("Could not refresh calendars from any home set")
             }
 
             val discoveredCalendars = allCalendars
             val existingCalendars = calendarRepository.getCalendarsForAccountOnce(accountId)
             val discoveredUrls = discoveredCalendars.map { it.url }.toSet()
 
-            // Remove calendars no longer on server
-            for (existing in existingCalendars) {
-                if (existing.caldavUrl !in discoveredUrls) {
-                    Log.d(TAG, "Removing deleted calendar: ${existing.displayName}")
-                    calendarRepository.deleteCalendar(existing.id)
-                }
+            // Remove calendars no longer on the server. Missing from the listing isn't enough:
+            // each one is confirmed gone by asking the server about it directly.
+            val unlisted = existingCalendars.filter { it.caldavUrl !in discoveredUrls }
+            val verdict = confirmUnlistedCalendars(client, unlisted, TAG)
+            for (gone in verdict.gone) {
+                Log.d(TAG, "Removing deleted calendar: ${gone.displayName}")
+                calendarRepository.deleteCalendar(gone.id)
             }
 
-            // Add/update calendars from server
+            // Add or update listed calendars. An existing calendar keeps its color when the
+            // server sends none that [ServerColorParser] reads.
             val createdCalendars = mutableListOf<Calendar>()
             for ((index, calDavCalendar) in discoveredCalendars.withIndex()) {
                 val existingCalendar = calendarRepository.getCalendarByUrl(calDavCalendar.url)
@@ -455,8 +457,8 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 createdCalendars.add(calendar)
             }
 
-            // Re-probe scheduling-delivery facts (RFC 6638 §2 / §2.1.1) so they
-            // stay current with server-side changes. Failures are non-fatal.
+            // Re-probe scheduling-delivery facts (RFC 6638 §2, §2.1.1) so they follow
+            // server-side changes. Failures are non-fatal.
             if (account.principalUrl != null) {
                 persistSchedulingDiscovery(
                     client, account.principalUrl, accountId, createdCalendars,
@@ -464,7 +466,9 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 )
             }
 
-            DiscoveryResult.Success(account, createdCalendars)
+            // Kept calendars are still the account's calendars, so they count toward
+            // the result (scheduling discovery above only re-probes listed ones).
+            DiscoveryResult.Success(account, createdCalendars + verdict.kept)
         } catch (e: Exception) {
             Log.e(TAG, "Refresh failed", e)
             DiscoveryResult.Error("Refresh failed: ${e.message}")
@@ -472,16 +476,8 @@ class CalDavAccountDiscoveryService @Inject constructor(
     }
 
     /**
-     * Remove all data for an account (used during sign-out).
-     *
-     * Uses AccountRepository.deleteAccount() which properly cleans up:
-     * - WorkManager sync jobs
-     * - Scheduled reminders
-     * - Pending operations
-     * - Encrypted credentials
-     * - Cascade deletes calendars/events
-     *
-     * @param accountId The account ID to remove
+     * Removes all data for an account (sign-out); [AccountRepository.deleteAccount] lists the
+     * cleanup.
      */
     suspend fun removeAccount(accountId: Long) = withContext(Dispatchers.IO) {
         Log.i(TAG, "Removing account: $accountId")
@@ -489,13 +485,10 @@ class CalDavAccountDiscoveryService @Inject constructor(
     }
 
     /**
-     * Remove CalDAV account by email.
+     * Removes a CalDAV account by email.
      *
-     * @deprecated This method is ambiguous when multiple CalDAV accounts share the same
-     * email on different servers. Use [removeAccount] with accountId instead.
-     * CalDAV account removal in production goes through removeAccount(accountId).
-     *
-     * @param email The email address of the account to remove
+     * @deprecated Ambiguous when CalDAV accounts on different servers share an email. The app
+     * removes CalDAV accounts through [removeAccount].
      */
     @Deprecated(
         message = "Ambiguous for multi-server CalDAV. Use removeAccount(accountId) instead.",
@@ -512,12 +505,10 @@ class CalDavAccountDiscoveryService @Inject constructor(
     // ==================== Validation ====================
 
     /**
-     * Check if a display name is available (not already in use).
-     * Used for uniqueness validation when creating/editing accounts.
+     * Returns true if no account uses [displayName], ignoring case, so account names stay
+     * unique.
      *
-     * @param displayName Display name to check
-     * @param excludeAccountId Account ID to exclude from check (for edit mode)
-     * @return true if name is available, false if already in use
+     * @param excludeAccountId account left out of the check, so an edit can keep its own name
      */
     suspend fun isDisplayNameAvailable(displayName: String, excludeAccountId: Long? = null): Boolean {
         return accountRepository.countByDisplayName(displayName, excludeAccountId) == 0
@@ -526,14 +517,14 @@ class CalDavAccountDiscoveryService @Inject constructor(
     // ==================== Two-Phase Discovery ====================
 
     /**
-     * Discover calendars without creating account.
-     * Used for two-phase flow where user selects which calendars to sync.
+     * Discovers calendars without creating the account, so the user can pick which ones to
+     * sync before [createAccountWithSelectedCalendars].
      *
-     * @param serverUrl CalDAV server URL
-     * @param username Username for authentication
-     * @param password Password for authentication
-     * @param trustInsecure Whether to trust self-signed certificates
-     * @return DiscoveryResult.CalendarsFound with discovered calendars, or error
+     * Tries RFC 6764 well-known discovery first; [DiscoveryResult.CalendarsFound.serverUrl] is
+     * the endpoint it found, or the normalized entered URL.
+     *
+     * @param trustInsecure whether to trust self-signed certificates
+     * @return [DiscoveryResult.CalendarsFound], or an error
      */
     suspend fun discoverCalendars(
         serverUrl: String,
@@ -554,7 +545,6 @@ class CalDavAccountDiscoveryService @Inject constructor(
         }
         Log.d(TAG, "Normalized URL: $normalizedUrl")
 
-        // Create credentials for the client factory
         val credentials = Credentials(
             username = username,
             password = password,
@@ -562,9 +552,8 @@ class CalDavAccountDiscoveryService @Inject constructor(
             trustInsecure = trustInsecure
         )
 
-        // Create isolated client with credentials and DefaultQuirks
         val quirks = DefaultQuirks(normalizedUrl)
-        val client = calDavClientFactory.createClient(credentials, quirks)
+        val client = RefusalRecordingClient(calDavClientFactory.createClient(credentials, quirks))
 
         try {
             // Step 0.5: Try RFC 6764 well-known discovery
@@ -599,9 +588,9 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 val error = principalResult as CalDavResult.Error
                 Log.e(TAG, "Principal discovery failed: ${error.message}")
 
-                // Check for SSL errors specifically — no probing will help
+                // Probing other paths can't fix a certificate failure.
                 if (isSSLError(error)) {
-                    return@withContext DiscoveryResult.Error(
+                    return@withContext client.error(
                         if (!trustInsecure) {
                             "Certificate verification failed. Enable 'Trust insecure connection' to continue."
                         } else {
@@ -610,10 +599,9 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     )
                 }
 
-                // Probe known CalDAV paths (Issue #54).
-                // Use original user URL as base, not well-known redirect URL.
-                // Skip probing only if the user's original URL already has a known CalDAV path
-                // AND wasn't redirected somewhere else via well-known.
+                // Probe known CalDAV paths on the entered URL's host, not the well-known
+                // redirect's (Issue #54). Skip probing only when the entered URL already has a
+                // known CalDAV path and well-known didn't redirect elsewhere.
                 val wasRedirected = caldavUrl.trimEnd('/') != normalizedUrl.trimEnd('/')
                 val shouldProbe = wasRedirected || !urlContainsKnownCaldavPath(normalizedUrl)
 
@@ -626,7 +614,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 }
 
                 if (principalUrl == null) {
-                    return@withContext DiscoveryResult.Error(
+                    return@withContext client.error(
                         if (!shouldProbe) {
                             getErrorMessageForCalDavError(error, "connect to server", trustInsecure)
                         } else {
@@ -645,7 +633,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
             if (homeResult.isError()) {
                 val error = homeResult as CalDavResult.Error
                 Log.e(TAG, "Calendar home discovery failed: ${error.message}")
-                return@withContext DiscoveryResult.Error(
+                return@withContext client.error(
                     getErrorMessageForCalDavError(error, "find calendar home", trustInsecure)
                 )
             }
@@ -673,12 +661,11 @@ class CalDavAccountDiscoveryService @Inject constructor(
             Log.i(TAG, "Discovered ${discoveredCalendars.size} calendars across ${calendarHomeUrls.size} home set(s)")
 
             if (discoveredCalendars.isEmpty()) {
-                return@withContext DiscoveryResult.Error(
+                return@withContext client.error(
                     "No calendars found on server. Please check your account settings."
                 )
             }
 
-            // Convert to DiscoveredCalendar objects
             val calendarList = discoveredCalendars.mapIndexed { index, calDavCalendar ->
                 org.onekash.kashcal.sync.discovery.DiscoveredCalendar(
                     href = calDavCalendar.url,
@@ -690,7 +677,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
             }
 
             if (calendarList.isEmpty()) {
-                return@withContext DiscoveryResult.Error(
+                return@withContext client.error(
                     "No event calendars found on server."
                 )
             }
@@ -698,7 +685,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
             Log.i(TAG, "Calendar discovery complete: ${calendarList.size} calendars available")
 
             DiscoveryResult.CalendarsFound(
-                serverUrl = caldavUrl,  // Use well-known discovered URL
+                serverUrl = caldavUrl,  // The well-known endpoint, or the entered URL
                 username = username,
                 calendarHomeUrl = calendarHomeUrl,
                 principalUrl = principalUrl,
@@ -706,23 +693,17 @@ class CalDavAccountDiscoveryService @Inject constructor(
             )
         } catch (e: Exception) {
             Log.e(TAG, "Calendar discovery failed with exception", e)
-            DiscoveryResult.Error(getErrorMessageForException(e, trustInsecure))
+            client.error(getErrorMessageForException(e, trustInsecure))
         }
     }
 
     /**
-     * Create account with only selected calendars.
-     * Second phase of two-phase discovery flow.
+     * Creates the account with only the calendars the user picked from [discoverCalendars].
+     * [serverUrl], [principalUrl] and [calendarHomeUrl] are the values from
+     * [DiscoveryResult.CalendarsFound].
      *
-     * @param serverUrl Normalized server URL (from CalendarsFound)
-     * @param username Username for authentication
-     * @param password Password for authentication
-     * @param trustInsecure Whether to trust self-signed certificates
-     * @param principalUrl Principal URL (from CalendarsFound)
-     * @param calendarHomeUrl Calendar home URL (from CalendarsFound)
-     * @param selectedCalendars List of selected calendars to create
-     * @param displayName User-provided display name (optional, falls back to server hostname)
-     * @return DiscoveryResult.Success with created Account and Calendars
+     * @param displayName user-entered account name; blank falls back to the server hostname
+     * @return [DiscoveryResult.Success] with the account and created calendars, or an error
      */
     suspend fun createAccountWithSelectedCalendars(
         serverUrl: String,
@@ -741,8 +722,8 @@ class CalDavAccountDiscoveryService @Inject constructor(
         }
 
         try {
-            // Step 1: Create or update Account in Room
-            // Use 3-param lookup so same username on different servers creates separate accounts
+            // Step 1: Create or update Account in Room. The lookup includes the home set so
+            // the same username on different servers gets separate accounts.
             val normalizedHomeUrl = normalizeHomeSetUrl(calendarHomeUrl)
             val existingAccount = accountRepository.getAccountByProviderEmailAndHomeSetUrl(
                 AccountProvider.CALDAV, username, normalizedHomeUrl
@@ -751,14 +732,13 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 Log.d(TAG, "Updating existing account: ${existingAccount.id}")
                 val updated = existingAccount.copy(
                     principalUrl = principalUrl,
-                    homeSetUrl = normalizedHomeUrl,  // CRITICAL: Required for DefaultQuirks
+                    homeSetUrl = normalizedHomeUrl,  // Sync builds DefaultQuirks from it
                     isEnabled = true
                 )
                 accountRepository.updateAccount(updated)
                 updated
             } else {
                 Log.d(TAG, "Creating new account")
-                // Use provided displayName if not blank, otherwise fall back to server hostname
                 val accountDisplayName = displayName?.takeIf { it.isNotBlank() }
                     ?: extractServerDisplayName(serverUrl)
                 val newAccount = Account(
@@ -766,14 +746,15 @@ class CalDavAccountDiscoveryService @Inject constructor(
                     email = username,
                     displayName = accountDisplayName,
                     principalUrl = principalUrl,
-                    homeSetUrl = normalizedHomeUrl,  // CRITICAL: Required for DefaultQuirks
+                    homeSetUrl = normalizedHomeUrl,  // Sync builds DefaultQuirks from it
                     isEnabled = true
                 )
                 val accountId = accountRepository.createAccount(newAccount)
                 newAccount.copy(id = accountId)
             }
 
-            // Step 2: Save credentials to encrypted storage
+            // Step 2: Save credentials to encrypted storage. Without them the account can't
+            // sync, so a failed save deletes it.
             val accountCredentials = AccountCredentials(
                 username = username,
                 password = password,
@@ -791,8 +772,8 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 )
             }
 
-            // Step 2b: Discover calendar-user-address-set (RFC 6638 §2.4.1).
-            // Failures non-fatal.
+            // Step 2b: Discover the calendar-user-address-set (RFC 6638 §2.4.1). Failures are
+            // non-fatal.
             val addressClient = calDavClientFactory.createClient(
                 Credentials(username, password, serverUrl, trustInsecure),
                 DefaultQuirks(serverUrl)
@@ -833,8 +814,8 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 createdCalendars.add(calendar)
             }
 
-            // Discover scheduling-delivery facts (RFC 6638 §2 / §2.1.1) on the
-            // same client used for address-set discovery. Failures are non-fatal.
+            // Discover scheduling-delivery facts (RFC 6638 §2, §2.1.1) on the client used for
+            // address-set discovery. Failures are non-fatal.
             persistSchedulingDiscovery(
                 addressClient, principalUrl, account.id, createdCalendars,
                 accountRepository, calendarRepository, TAG
@@ -855,28 +836,24 @@ class CalDavAccountDiscoveryService @Inject constructor(
     // ==================== Helper Methods ====================
 
     /**
-     * Normalize server URL to standard format.
-     * - Adds https:// if missing
-     * - Removes trailing slash on root-only URLs (preserves on paths for Issue #54)
-     * - Validates URL structure
+     * Normalizes an entered server URL: adds https:// when no scheme is given and drops a
+     * trailing slash from a root URL.
+     *
+     * @throws IllegalArgumentException if the URL has no host
      */
     private fun normalizeServerUrl(serverUrl: String): String {
         var url = serverUrl.trim()
 
-        // Add protocol if missing
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             url = "https://$url"
         }
 
-        // Remove trailing slash only on root URLs.
-        // Preserve trailing slashes on paths (e.g., /dav/) because some servers
-        // like Davis/Symfony require them (Issue #54).
+        // Keep a trailing slash on a path (e.g. /dav/): Davis/Symfony require it (Issue #54).
         val parsed = URI(url)
         if (parsed.path.isNullOrBlank() || parsed.path == "/") {
             url = url.trimEnd('/')
         }
 
-        // Validate URL
         val uri = URI(url)
         require(!uri.host.isNullOrBlank()) { "Invalid URL: missing host" }
 
@@ -884,18 +861,13 @@ class CalDavAccountDiscoveryService @Inject constructor(
     }
 
     /**
-     * Normalize a calendar home set URL for consistent storage and lookup.
+     * Normalizes a calendar home set URL so one server always yields one stored value, even
+     * when discoveries differ by a trailing slash, an explicit default port or host case.
      *
-     * Ensures the same logical server always produces the same stored value,
-     * even if the server returns minor variations between discoveries (trailing
-     * slash, explicit default port, mixed case host).
-     *
-     * Applied at two points:
-     * 1. Before storing in Account.homeSetUrl
-     * 2. Before lookup via getAccountByProviderEmailAndHomeSetUrl()
-     *
-     * Uses java.net.URI for consistency with normalizeServerUrl() and to
-     * work in plain JUnit tests without Robolectric.
+     * Applied both before storing [Account.homeSetUrl] and before the lookup by
+     * [AccountRepository.getAccountByProviderEmailAndHomeSetUrl]; if the two differ, a
+     * re-login creates a duplicate account. Uses java.net.URI so plain JUnit tests can call it
+     * without Robolectric.
      */
     internal fun normalizeHomeSetUrl(url: String): String {
         val uri = URI(url)
@@ -909,20 +881,14 @@ class CalDavAccountDiscoveryService @Inject constructor(
         return "$scheme://$host$port$path/"
     }
 
-    /**
-     * Extract base host (scheme://host:port) from a URL.
-     * E.g., "https://example.com:8080/dav/" -> "https://example.com:8080"
-     */
+    /** Returns scheme://host:port, "https://ex.com:8080/dav/" -> "https://ex.com:8080". */
     private fun extractBaseHost(url: String): String {
         val uri = URI(url)
         val port = if (uri.port != -1) ":${uri.port}" else ""
         return "${uri.scheme}://${uri.host}$port"
     }
 
-    /**
-     * Check if the URL path already contains a known CalDAV path.
-     * Uses slash-insensitive comparison so both "/dav" and "/dav/" match.
-     */
+    /** Returns true if the URL path starts with a known CalDAV path, "/dav" and "/dav/" alike. */
     private fun urlContainsKnownCaldavPath(url: String): Boolean {
         val uri = URI(url)
         val path = uri.path?.trimEnd('/') ?: return false
@@ -931,9 +897,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
         }
     }
 
-    /**
-     * Check if a CalDavResult error is SSL-related.
-     */
+    /** Returns true if the error message mentions SSL, TLS or a certificate. */
     private fun isSSLError(error: CalDavResult.Error): Boolean {
         return error.message.contains("SSL", ignoreCase = true) ||
             error.message.contains("certificate", ignoreCase = true) ||
@@ -941,15 +905,15 @@ class CalDavAccountDiscoveryService @Inject constructor(
     }
 
     /**
-     * Probe known CalDAV paths to discover the server endpoint (Issue #54).
+     * Probes [KNOWN_CALDAV_PATHS] on the host of [baseUrl] for a principal (Issue #54).
      *
-     * When well-known discovery fails and the user entered a root URL, tries
-     * common CalDAV paths (/dav/, /remote.php/dav/, /dav.php/, etc.).
+     * Callers probe after principal discovery fails with neither an auth nor a certificate
+     * error, when the entered URL has no known CalDAV path; [discoverCalendars] also probes
+     * when well-known discovery pointed elsewhere.
      *
-     * @param client CalDAV client with credentials
-     * @param baseUrl URL to extract host from for probing
-     * @param triedUrl URL already tried (skipped during probing)
-     * @return Pair of (probed URL, principal URL) on success, null if all fail
+     * @param triedUrl URL already tried, skipped here
+     * @return (probed URL, principal URL), or null if every path fails or one returns an auth
+     *   error
      */
     private suspend fun probeCaldavPaths(
         client: CalDavClient,
@@ -962,7 +926,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
         for ((index, path) in KNOWN_CALDAV_PATHS.withIndex()) {
             val probeUrl = "$baseHost$path"
 
-            // Skip if same as already-tried URL (slash-insensitive)
+            // Skip the already-tried URL (slash-insensitive).
             if (probeUrl.trimEnd('/') == triedNormalized) continue
 
             if (index > 0) {
@@ -978,7 +942,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
                 return Pair(probeUrl, principalUrl)
             }
 
-            // Stop probing on auth errors — systemic, won't succeed on other paths
+            // Bad credentials fail on every path, so stop probing.
             if (result is CalDavResult.Error && result.isAuthError()) {
                 Log.d(TAG, "Auth error during probing, stopping: ${result.message}")
                 return null
@@ -991,16 +955,14 @@ class CalDavAccountDiscoveryService @Inject constructor(
     }
 
     /**
-     * Extract a display name from the server URL.
-     * Examples:
-     * - "https://nextcloud.example.com" -> "nextcloud.example.com"
-     * - "https://caldav.fastmail.com" -> "Fastmail"
+     * Returns a default account name from the server URL: a known provider's name, else the
+     * host. "https://caldav.fastmail.com" -> "Fastmail", "https://nextcloud.example.com" ->
+     * "nextcloud.example.com".
      */
     private fun extractServerDisplayName(serverUrl: String): String {
         val uri = URI(serverUrl)
         val host = uri.host ?: return "CalDAV"
 
-        // Known server display names
         return when {
             host.contains("fastmail", ignoreCase = true) -> "Fastmail"
             host.contains("icloud", ignoreCase = true) -> "iCloud"
@@ -1012,8 +974,8 @@ class CalDavAccountDiscoveryService @Inject constructor(
     }
 
     /**
-     * Parse color string from CalDAV server to ARGB int.
-     * Handles various formats: #RRGGBB, #RRGGBBAA, etc.
+     * Parses a server calendar color (#RRGGBBAA, #RRGGBB, or RRGGBB without #) to ARGB. A
+     * missing or unparseable color falls back to [DEFAULT_COLORS] by [index].
      */
     private fun parseColor(colorString: String?, index: Int): Int {
         if (colorString.isNullOrBlank()) {
@@ -1042,9 +1004,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
         }
     }
 
-    /**
-     * Convert exception to user-friendly error message.
-     */
+    /** Maps a discovery exception to a user-facing error message. */
     private fun getErrorMessageForException(e: Exception, trustInsecure: Boolean): String {
         return when (e) {
             is SocketTimeoutException ->
@@ -1081,9 +1041,7 @@ class CalDavAccountDiscoveryService @Inject constructor(
         }
     }
 
-    /**
-     * Convert CalDavResult.Error to user-friendly error message.
-     */
+    /** Maps a CalDAV error to a user-facing message; [action] fills "Could not <action>". */
     private fun getErrorMessageForCalDavError(error: CalDavResult.Error, action: String, trustInsecure: Boolean = false): String {
         val message = error.message.lowercase()
         return when {

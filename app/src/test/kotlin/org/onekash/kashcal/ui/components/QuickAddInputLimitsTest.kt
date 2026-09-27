@@ -7,14 +7,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Pure-logic tests for [QuickAddInputLimits], the single source of truth for the
- * Quick Add field's hard character cap and its "N/500" counter treatment.
+ * Tests [QuickAddInputLimits], the single source of truth for the Quick Add field's hard
+ * cap and its "N/500" counter treatment: grapheme counting, cutting at the cap without
+ * splitting a cluster, the counter thresholds and the cap constant.
  *
- * Runs under Robolectric so [android.icu.text.BreakIterator] resolves to the real
- * ICU4J implementation (UAX #29 extended grapheme clusters). The host JVM's
- * `java.text.BreakIterator` uses a legacy model that miscounts emoji ZWJ
- * sequences / flags / skin-tone modifiers, so it cannot back the "emoji = 1"
- * requirement — hence ICU + Robolectric here.
+ * Runs under Robolectric so [android.icu.text.BreakIterator], which the production code uses,
+ * resolves to a real ICU implementation (UAX #29 extended grapheme clusters); the plain JVM
+ * has only the android.jar stub.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE)
@@ -60,7 +59,7 @@ class QuickAddInputLimitsTest {
 
     @Test
     fun graphemeCount_mixedContent() {
-        // "hi" + family + "!" = 2 + 1 + 1 = 4 graphemes (across 12 chars)
+        // "hi" + family + "!" = 2 + 1 + 1 = 4 graphemes (across 14 UTF-16 chars)
         val s = "hi$familyZwj!"
         assertEquals(4, QuickAddInputLimits.graphemeCount(s))
     }
@@ -107,7 +106,7 @@ class QuickAddInputLimitsTest {
 
     @Test
     fun takeGraphemes_countsEmojiAsOneTowardLimit() {
-        // 500 family emoji = 500 graphemes (well under the char length), all kept.
+        // 500 family emoji = 500 graphemes (5,500 UTF-16 chars), all kept.
         val s = familyZwj.repeat(500)
         val result = QuickAddInputLimits.takeGraphemes(s, 500)
         assertEquals(500, QuickAddInputLimits.graphemeCount(result))
@@ -148,8 +147,8 @@ class QuickAddInputLimitsTest {
 
     @Test
     fun counterState_above500IsAtLimit() {
-        // Defensive: the cap makes >500 impossible through the field, but the
-        // state function must still classify it as at-limit, never crash.
+        // The cap keeps the field from exceeding 500, but the state function must still
+        // classify a larger count as at-limit, never crash.
         assertEquals(QuickAddCounterState.AT_LIMIT, QuickAddInputLimits.counterState(501))
     }
 

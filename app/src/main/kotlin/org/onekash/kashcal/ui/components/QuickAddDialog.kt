@@ -49,11 +49,10 @@ import org.onekash.kashcal.ui.theme.WarningAmberDark
 import org.onekash.kashcal.ui.theme.WarningAmberLight
 
 /**
- * Enforces the field's two input invariants on every edit (typing and paste):
- * strip newlines so Enter can't insert a line break (it triggers Save instead,
- * and the input stays one logical line), then hard-cap the buffer at
- * [QuickAddInputLimits.MAX_LENGTH] graphemes so a large paste fills to the limit
- * and drops the remainder. Only rewrites the buffer when it actually changed.
+ * Enforces the field's two invariants on every edit, typed or pasted: strips newlines so the
+ * input stays one logical line (the IME action saves instead), then caps the buffer at
+ * [QuickAddInputLimits.MAX_LENGTH] graphemes, so a large paste fills to the limit and drops the
+ * rest. Rewrites the buffer only when it changed.
  */
 private val quickAddInputTransformation = InputTransformation {
     val current = asCharSequence().toString()
@@ -98,9 +97,9 @@ private val placeholderExamples = listOf(
 )
 
 /**
- * Stateless host for Quick Add input. All state and behavior are hoisted to the caller;
- * the caller owns the input state, parse preview, and save/expand/dismiss handlers.
- * See `QuickAddDialogContent` for the pure content composable used in previews/tests.
+ * Shows the Quick Add dialog over a dismissing scrim. Stateless: the caller owns the input
+ * state, the parse preview and the save, expand and dismiss handlers. The card itself is
+ * [QuickAddDialogContent], which tests drive directly.
  */
 @Composable
 fun QuickAddDialog(
@@ -135,13 +134,12 @@ fun QuickAddDialog(
                     indication = null
                 ) { onDismiss() }
         ) {
-            // Card region, top-anchored. safeDrawingPadding() keeps it clear of the
-            // status bar and the keyboard / nav bar in one shot (decorFitsSystemWindows
-            // = false, so the window won't resize for the IME on its own; safeDrawing
-            // is the union of those insets, so stacking imePadding + navigationBarsPadding
-            // would double-count the nav bar). The scroll is scoped here, not on the
-            // scrim, so if the card is taller than the safe region (landscape, large
-            // font, a tall parse preview) Save scrolls into reach instead of clipping.
+            // Card region, top-anchored. With decorFitsSystemWindows = false the window
+            // doesn't resize for the IME, so safeDrawingPadding() keeps the card clear of the
+            // status bar, keyboard and nav bar; it is the union of those insets, so stacking
+            // imePadding and navigationBarsPadding would count the nav bar twice. The scroll
+            // sits here, not on the scrim, so a card taller than the safe region (landscape,
+            // large font, a tall preview) scrolls Save into reach instead of clipping it.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -264,11 +262,8 @@ internal fun QuickAddDialogContent(
 }
 
 /**
- * Left-aligned "N/500" caption under the Quick Add field. Occupies a fixed
- * min-height row at all times so revealing it never shifts the layout: hidden
- * below the reveal threshold, amber as the cap approaches, and a muted, bold
- * "at limit" treatment (never red — input is hard-capped, so over-limit can't
- * occur) once the cap is reached.
+ * Shows the "N/500" caption under the Quick Add field in a fixed min-height row, so revealing it
+ * never shifts the layout. Styling follows [QuickAddCounterState].
  */
 @Composable
 private fun QuickAddCharCounter(count: Int) {

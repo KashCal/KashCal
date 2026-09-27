@@ -39,17 +39,16 @@ import java.util.concurrent.TimeUnit
 import okhttp3.Credentials as OkHttpCredentials
 
 /**
- * End-to-end integration test for incremental sync with real iCloud.
+ * Runs the delta pull against real iCloud through [PullStrategy] over mocked DAOs:
+ * 1. A first pull from the calendar's current ctag and sync-token sets the baseline.
+ * 2. An event is created on iCloud by a raw PUT.
+ * 3. A second pull from the old ctag and the baseline token should see the event.
  *
- * This test validates the COMPLETE sync flow:
- * 1. First sync (full) - establish baseline ctag/syncToken
- * 2. Create event on iCloud via API
- * 3. Second sync - should detect the new event
- * 4. Verify the production extractChangedItems() works
+ * Two more tests run syncCollection with [ICloudQuirks] on a real reply and read the
+ * sync-token. The first two print whether the new event was seen; the main test asserts only
+ * that the second pull returns Success or NoChanges.
  *
- * This specifically tests for the bug where incremental sync wasn't detecting changes.
- *
- * Run with: ./gradlew testDebugUnitTest --tests "*RealIncrementalSyncE2ETest*"
+ * Run with: ./gradlew testDebugUnitTest -Pintegration --tests "*RealIncrementalSyncE2ETest*"
  */
 class RealIncrementalSyncE2ETest {
 
@@ -59,7 +58,7 @@ class RealIncrementalSyncE2ETest {
     private lateinit var rawHttpClient: OkHttpClient
     private val factory = OkHttpCalDavClientFactory()
 
-    // Mocked DAOs (we capture what gets saved)
+    // Mocked persistence; upserted events are captured in savedEvents.
     private lateinit var database: KashCalDatabase
     private lateinit var calendarRepository: CalendarRepository
     private lateinit var eventsDao: EventsDao
@@ -71,7 +70,6 @@ class RealIncrementalSyncE2ETest {
     private var password: String? = null
     private val serverUrl = "https://caldav.icloud.com"
 
-    // Track events that get "saved"
     private val savedEvents = mutableListOf<Event>()
 
     @Before
@@ -88,7 +86,7 @@ class RealIncrementalSyncE2ETest {
             )
             client = factory.createClient(credentials, quirks)
         } else {
-            // Create a minimal client for tests that check credential availability
+            // Blank credentials; every test skips without real ones.
             val credentials = Credentials(
                 username = "",
                 password = "",
@@ -97,7 +95,7 @@ class RealIncrementalSyncE2ETest {
             client = factory.createClient(credentials, quirks)
         }
 
-        // Raw HTTP client for direct API calls
+        // Creates and deletes the test event directly, outside the app's client.
         rawHttpClient = OkHttpClient.Builder()
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(60, TimeUnit.SECONDS)
@@ -111,7 +109,6 @@ class RealIncrementalSyncE2ETest {
             }
             .build()
 
-        // Mock DAOs to capture what gets saved
         database = mockk(relaxed = true)
         calendarRepository = mockk(relaxed = true)
         eventsDao = mockk(relaxed = true)
@@ -119,7 +116,7 @@ class RealIncrementalSyncE2ETest {
         dataStore = mockk(relaxed = true)
         syncSessionStore = mockk(relaxed = true)
 
-        // Mock database.runInTransaction to execute the block directly
+        // runInTransaction runs the block directly.
         coEvery {
             database.runInTransaction(any<suspend () -> Any>())
         } coAnswers {
@@ -128,14 +125,12 @@ class RealIncrementalSyncE2ETest {
             block()
         }
 
-        // Capture events that are upserted
         savedEvents.clear()
         coEvery { eventsDao.upsert(capture(savedEvents)) } returns 1L
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
         coEvery { eventsDao.getByUid(any()) } returns emptyList()
         coEvery { eventsDao.getByCalendarIdInRange(any(), any(), any()) } returns emptyList()
 
-        // DataStore defaults
         every { dataStore.defaultReminderMinutes } returns flowOf(15)
         every { dataStore.defaultAllDayReminder } returns flowOf(1440)
         // PullStrategy reads the sync-lookback window during pull; without this
@@ -162,11 +157,9 @@ class RealIncrementalSyncE2ETest {
     }
 
     private fun loadCredentials() {
-        // Read the SPECIFIC iCloud keys. A previous fuzzy substring matcher
-        // (any key containing "username"/"password") silently picked up the
-        // LAST such key in local.properties — which, once other servers were
-        // added, became another provider's credentials and made these iCloud
-        // tests skip on a discovery failure. Match the documented keys exactly.
+        // Read the exact iCloud keys. A substring match on "username" or "password" would pick
+        // up another server's credentials from local.properties, and these tests would skip
+        // on a discovery failure.
         val possiblePaths = listOf(
             "local.properties",
             "../local.properties",
@@ -190,11 +183,9 @@ class RealIncrementalSyncE2ETest {
     }
 
     /**
-     * MAIN TEST: Validates the complete incremental sync flow
-     *
-     * This is the critical test that was missing - it validates:
-     * 1. Production extractChangedItems() works with real iCloud XML
-     * 2. The full flow: ctag check → pullIncremental → fetchEventsByHref → processEvents
+     * Runs the delta flow on real iCloud XML: ctag check, pullIncremental, multiget fetch,
+     * processEvents. Prints whether the new event was saved; asserts only that the second
+     * pull returns Success or NoChanges.
      */
     @Test
     fun `CRITICAL - end to end incremental sync detects new events`() = runBlocking {
@@ -210,14 +201,13 @@ class RealIncrementalSyncE2ETest {
         println("  Calendar: ${caldavCalendar.displayName}")
         println("  URL: ${caldavCalendar.url}")
 
-        // Step 2: Get initial ctag and sync token
+        // Step 2: the initial ctag and sync-token.
         println("\nStep 2: Getting initial ctag and sync token...")
         val initialCtag = client.getCtag(caldavCalendar.url).getOrNull()?.ctag
         val initialSyncToken = client.getSyncToken(caldavCalendar.url).getOrNull()
         println("  Initial ctag: $initialCtag")
         println("  Initial syncToken: ${initialSyncToken?.take(50) ?: "NULL"}...")
 
-        // Create calendar entity with initial state
         val calendar = Calendar(
             id = 1L,
             accountId = 1L,
@@ -232,7 +222,7 @@ class RealIncrementalSyncE2ETest {
             sortOrder = 0
         )
 
-        // Step 3: Do initial sync to establish baseline
+        // Step 3: the baseline pull.
         println("\nStep 3: Initial sync to establish baseline...")
         savedEvents.clear()
         val initialResult = pullStrategy.pull(calendar, forceFullSync = false, client = client)
@@ -247,7 +237,6 @@ class RealIncrementalSyncE2ETest {
             is PullResult.Error -> println("  Error: ${initialResult.message}")
         }
 
-        // Get the new sync token after initial sync
         val afterFirstSyncToken = when (initialResult) {
             is PullResult.Success -> initialResult.newSyncToken ?: initialSyncToken
             else -> initialSyncToken
@@ -263,7 +252,7 @@ class RealIncrementalSyncE2ETest {
         }
         println("  Event created successfully!")
 
-        // Step 5: Get NEW ctag (should be different now)
+        // Step 5: the ctag should have changed.
         println("\nStep 5: Checking if ctag changed...")
         val newCtag = client.getCtag(caldavCalendar.url).getOrNull()?.ctag
         println("  Old ctag: $initialCtag")
@@ -274,10 +263,10 @@ class RealIncrementalSyncE2ETest {
             println("  WARNING: Ctag did not change - iCloud may have caching")
         }
 
-        // Step 6: Do incremental sync with OLD ctag/token
+        // Step 6: pull again from the old ctag and the baseline token.
         println("\nStep 6: Incremental sync to detect new event...")
         val calendarForIncremental = calendar.copy(
-            ctag = initialCtag,  // Old ctag - should trigger sync
+            ctag = initialCtag,  // The old ctag, so the ctag check doesn't end the pull.
             syncToken = afterFirstSyncToken
         )
         savedEvents.clear()
@@ -293,7 +282,6 @@ class RealIncrementalSyncE2ETest {
                 println("  Events deleted: ${incrementalResult.eventsDeleted}")
                 println("  Changes tracked: ${incrementalResult.changes.size}")
 
-                // Check if our test event was found
                 testEventFound = savedEvents.any { it.uid == testUid } ||
                     incrementalResult.changes.any { it.eventTitle.contains("E2E Sync Test") }
 
@@ -333,7 +321,6 @@ class RealIncrementalSyncE2ETest {
             println("? INCONCLUSIVE: Could not determine if test event was detected")
         }
 
-        // Assert for CI
         assertTrue(
             "Incremental sync should detect new events",
             incrementalResult is PullResult.Success || incrementalResult is PullResult.NoChanges
@@ -341,7 +328,9 @@ class RealIncrementalSyncE2ETest {
     }
 
     /**
-     * Test that extractChangedItems actually works with production ICloudQuirks
+     * Runs syncCollection with [ICloudQuirks] on a real reply after creating an event, and
+     * prints whether the event is among the changed items. The reply is parsed by
+     * ICloudQuirks.extractSyncCollectionData.
      */
     @Test
     fun `production extractChangedItems parses real iCloud sync-collection response`() = runBlocking {
@@ -349,24 +338,20 @@ class RealIncrementalSyncE2ETest {
 
         println("=== TESTING PRODUCTION extractChangedItems() ===\n")
 
-        // Get calendar URL
         val caldavCalendar = discoverFirstCalendar()
         assumeTrue("Should discover a calendar", caldavCalendar != null)
 
-        // Get sync token
         val syncToken = client.getSyncToken(caldavCalendar!!.url).getOrNull()
         if (syncToken == null) {
             println("Server does not return sync token - skipping")
             return@runBlocking
         }
 
-        // Create test event
         val testUid = "kashcal-extract-test-${System.currentTimeMillis()}"
         println("Creating test event: $testUid")
         val created = createTestEvent(caldavCalendar.url, testUid)
         assumeTrue("Should create test event", created)
 
-        // Call sync-collection through production client
         println("\nCalling production syncCollection()...")
         val result = client.syncCollection(caldavCalendar.url, syncToken)
 
@@ -398,13 +383,10 @@ class RealIncrementalSyncE2ETest {
             }
         }
 
-        // Cleanup
         deleteTestEvent(caldavCalendar.url, testUid)
     }
 
-    /**
-     * Test getSyncToken works with iCloud
-     */
+    /** Checks that getSyncToken succeeds on iCloud, and a returned token isn't empty. */
     @Test
     fun `getSyncToken returns valid token for iCloud`() = runBlocking {
         assumeCredentialsAvailable()

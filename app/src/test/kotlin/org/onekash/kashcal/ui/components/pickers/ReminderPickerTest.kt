@@ -9,15 +9,13 @@ import org.onekash.kashcal.ui.shared.REMINDER_OFF
 import org.onekash.kashcal.ui.shared.TIMED_REMINDER_MINUTES
 
 /**
- * Unit tests for ReminderPicker component.
- *
- * These tests verify the BUG FIX: EventFormSheet was previously showing
- * ALL reminder options regardless of event type. Now the correct options
- * are shown based on isAllDay.
+ * Tests the reminder picker's offset lists, [TIMED_REMINDER_MINUTES] and
+ * [ALL_DAY_REMINDER_MINUTES]: the offsets each list offers, the other type's offsets and legacy
+ * ones each leaves out, [REMINDER_OFF] first in both, and the timed list in ascending order.
  */
 class ReminderPickerTest {
 
-    // ==================== BUG REGRESSION TESTS ====================
+    // ==================== Offsets that differ by event type ====================
 
     @Test
     fun `BUG REGRESSION - timed event should NOT show 9 AM day of event option`() {
@@ -51,7 +49,7 @@ class ReminderPickerTest {
         )
     }
 
-    // ==================== TIMED EVENT OPTIONS ====================
+    // ==================== Timed event options ====================
 
     @Test
     fun `timed event has No reminder option`() {
@@ -99,7 +97,7 @@ class ReminderPickerTest {
         assertFalse("120 (2 hours) removed from picker", TIMED_REMINDER_MINUTES.contains(120))
     }
 
-    // ==================== ALL-DAY EVENT OPTIONS ====================
+    // ==================== All-day event options ====================
 
     @Test
     fun `all-day event has No reminder option`() {
@@ -133,7 +131,7 @@ class ReminderPickerTest {
         assertFalse("legacy 720 removed", ALL_DAY_REMINDER_MINUTES.contains(720))
     }
 
-    // ==================== OPTIONS LISTS VERIFICATION ====================
+    // ==================== Both lists ====================
 
     @Test
     fun `timed and all-day options are different`() {
@@ -149,7 +147,7 @@ class ReminderPickerTest {
         assertEquals(withoutOff, withoutOff.sorted())
     }
 
-    // ==================== EDGE CASES ====================
+    // ==================== Switching event type ====================
 
     @Test
     fun `switching from all-day to timed should invalidate 9 AM option`() {

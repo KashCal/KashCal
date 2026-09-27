@@ -5,28 +5,23 @@ import org.junit.Test
 import java.time.ZoneId
 
 /**
- * Contract: the share-card preview chooses the same zone the .ics
- * generator chooses, so the rendered date chip and the recipient's
- * .ics agree on the calendar day.
+ * Tests [shareCardZone], the zone the share-card preview reads an event's times in.
  *
- * For all-day events, that zone is always UTC — regardless of what
- * Event.timezone holds. ICS / CalDAV imports store all-day startTs
- * as UTC midnight with a null timezone (per ICalDateTime.parse), and
- * device-event all-day rows are also UTC-anchored ms (per Android's
- * CalendarProvider convention). Reading either through the user's
- * system zone shifts the displayed date by a day for users in zones
- * west of UTC.
+ * For all-day events it is always UTC, whatever Event.timezone holds, so the date chip and the
+ * recipient's .ics agree on the calendar day. ICS and CalDAV imports store an all-day startTs as
+ * UTC midnight with a null timezone (per ICalDateTime.parse), and device-event all-day rows are
+ * also UTC-anchored ms (per Android's CalendarProvider convention). Reading either in the user's
+ * system zone shows the previous day for users west of UTC.
  *
- * For timed events, the zone is the event's own IANA zone — falling
- * back to system default for null / blank / non-IANA values, matching
- * the existing inline behavior in MainActivity.
+ * For timed events it is the event's own IANA zone, falling back to the system default for a
+ * null, blank or non-IANA value.
  */
 class ShareCardZoneTest {
 
     @Test
     fun `all-day with null timezone resolves to UTC, not system default`() {
-        // ICS-imported all-day events: timezone=null, startTs=UTC midnight.
-        // Falling back to system default would day-shift in zones west of UTC.
+        // ICS-imported all-day events: timezone=null, startTs=UTC midnight. Falling back to
+        // the system default would shift the day in zones west of UTC.
         assertEquals(ZoneId.of("UTC"), shareCardZone(timezone = null, isAllDay = true))
     }
 
@@ -37,9 +32,9 @@ class ShareCardZoneTest {
 
     @Test
     fun `all-day with non-UTC IANA timezone resolves to UTC anyway`() {
-        // Some sync adapters write a non-UTC EVENT_TIMEZONE on UTC-anchored
-        // all-day rows. The stored ms is still UTC midnight, so the chip
-        // must read it as UTC — never as the event's claimed zone.
+        // Some sync adapters write a non-UTC EVENT_TIMEZONE on UTC-anchored all-day rows. The
+        // stored ms is still UTC midnight, so the chip must read it as UTC, never as the
+        // event's claimed zone.
         assertEquals(
             ZoneId.of("UTC"),
             shareCardZone(timezone = "America/New_York", isAllDay = true),
@@ -61,11 +56,8 @@ class ShareCardZoneTest {
 
     @Test
     fun `timed event with non-IANA timezone falls back to system default`() {
-        // "Pacific Standard Time" is an Outlook-style label; ZoneId.of rejects it.
-        // Match the existing inline behavior: fall back to systemDefault rather
-        // than crash. We can't pin "system default" without knowing the test
-        // host's zone, so just assert it's NOT the rejected string and is a
-        // valid ZoneId — i.e., didn't throw and didn't pick UTC by accident.
+        // "Pacific Standard Time" is a Windows-style zone name that ZoneId.of rejects; the
+        // zone falls back to the system default instead of crashing.
         val resolved = shareCardZone(timezone = "Pacific Standard Time", isAllDay = false)
         assertEquals(ZoneId.systemDefault(), resolved)
     }

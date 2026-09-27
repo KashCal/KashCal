@@ -18,19 +18,16 @@ import java.util.concurrent.TimeUnit
 import kotlin.test.assertTrue
 
 /**
- * Resource exhaustion tests for recurrence expansion.
+ * Tests that [RRuleExpander] stays within time and memory bounds on adversarial rules
+ * (CWE-400, uncontrolled resource consumption). Each test has a JUnit timeout, most assert an
+ * elapsed-time bound, and some bound the count; printed counts aren't asserted.
  *
- * These tests verify that the RRuleExpander does not consume excessive
- * memory or CPU time with adversarial recurrence rules.
- *
- * OWASP Reference: CWE-400 (Uncontrolled Resource Consumption)
- *
- * Scenarios tested:
- * - Infinite recurrence without COUNT or UNTIL
- * - Very high frequency (SECONDLY, MINUTELY) over long ranges
- * - Very long time ranges (1000 years)
- * - Combinations that generate millions of potential occurrences
- * - Memory exhaustion from storing too many occurrences
+ * Scenarios:
+ * - rules without COUNT or UNTIL: SECONDLY over an hour, MINUTELY over a day, HOURLY over 100
+ *   years (about 876,000 occurrences), DAILY over 1000 years
+ * - COUNT=50000 under a 200 MB memory delta, and 5000 EXDATEs or 5000 overrides
+ * - BYSETPOS, BYWEEKNO and BYYEARDAY combinations, and a 5000-count SECONDLY rule
+ * - zero-width, past, after-UNTIL and year-9999 ranges
  */
 @DisplayName("Recurrence Resource Exhaustion Tests")
 class RecurrenceResourceExhaustionTest {
@@ -46,11 +43,11 @@ class RecurrenceResourceExhaustionTest {
         @Test
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
         fun `SECONDLY without limit completes in reasonable time over 1 hour`() {
-            // FREQ=SECONDLY over 1 hour = 3,600 potential occurrences
+            // FREQ=SECONDLY over 1 hour: 3601 occurrences, since both range ends are kept.
             val rrule = RRule(
                 freq = Frequency.SECONDLY,
                 interval = 1
-                // No COUNT or UNTIL - infinite
+                // No COUNT or UNTIL.
             )
             val event = createTestEvent(rrule = rrule)
 
@@ -59,26 +56,24 @@ class RecurrenceResourceExhaustionTest {
                 defaultStart.plusHours(1).toInstant()
             )
 
-            // Should complete without hanging
             val startTime = System.currentTimeMillis()
             val occurrences = expander.expand(event, oneHourRange)
             val duration = System.currentTimeMillis() - startTime
 
-            // ical4j may limit this internally or it may generate all
-            // The key is that it completes in reasonable time
+            // ical4j generates every one; the bound is on time and count.
             assertTrue(duration < 10000,
                 "Should complete in under 10 seconds, took ${duration}ms")
             assertTrue(occurrences.size <= 3601,
                 "Should have at most 3601 occurrences (1 hour of seconds)")
 
-            // Log the count for informational purposes
+            // Printed for information, not asserted.
             println("SECONDLY over 1 hour generated ${occurrences.size} occurrences in ${duration}ms")
         }
 
         @Test
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
         fun `MINUTELY without limit completes over 1 day`() {
-            // FREQ=MINUTELY over 1 day = 1,440 potential occurrences
+            // FREQ=MINUTELY over 1 day: 1441 occurrences with both range ends kept.
             val rrule = RRule(
                 freq = Frequency.MINUTELY,
                 interval = 1
@@ -105,7 +100,7 @@ class RecurrenceResourceExhaustionTest {
         @Test
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
         fun `HOURLY without limit completes over 100 years`() {
-            // FREQ=HOURLY over 100 years = ~876,000 potential occurrences
+            // FREQ=HOURLY over 100 years: about 876,000 occurrences.
             val rrule = RRule(
                 freq = Frequency.HOURLY,
                 interval = 1
@@ -130,7 +125,7 @@ class RecurrenceResourceExhaustionTest {
         @Test
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
         fun `DAILY over 1000 years completes`() {
-            // FREQ=DAILY over 1000 years = ~365,000 occurrences
+            // FREQ=DAILY over 1000 years: about 365,000 occurrences.
             val rrule = RRule(
                 freq = Frequency.DAILY,
                 interval = 1
@@ -160,7 +155,7 @@ class RecurrenceResourceExhaustionTest {
         @Test
         @Timeout(value = 30, unit = TimeUnit.SECONDS)
         fun `high count limit does not cause OOM`() {
-            // COUNT=50000 to test memory usage without excessive time
+            // COUNT=50000 measures memory without taking long.
             val rrule = RRule(
                 freq = Frequency.DAILY,
                 interval = 1,
@@ -168,13 +163,13 @@ class RecurrenceResourceExhaustionTest {
             )
             val event = createTestEvent(rrule = rrule)
 
-            // Range that would include all 50K occurrences
+            // A range long enough for all 50000 occurrences.
             val range = TimeRange(
                 defaultStart.toInstant(),
-                defaultStart.plusYears(150).toInstant()  // ~50K days
+                defaultStart.plusYears(150).toInstant()  // about 54,800 days
             )
 
-            // Get memory before
+            // Heap in use before expanding.
             val runtime = Runtime.getRuntime()
             runtime.gc()
             val memBefore = runtime.totalMemory() - runtime.freeMemory()
@@ -185,7 +180,7 @@ class RecurrenceResourceExhaustionTest {
             val memAfter = runtime.totalMemory() - runtime.freeMemory()
             val memUsed = memAfter - memBefore
 
-            // Should not use more than 200MB for 50K events
+            // Under 200 MB for 50000 occurrences.
             assertTrue(memUsed < 200_000_000L,
                 "Memory usage should be reasonable: ${memUsed / 1_000_000}MB used")
 
@@ -195,14 +190,14 @@ class RecurrenceResourceExhaustionTest {
         @Test
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
         fun `expansion with many EXDATE entries completes`() {
-            // Many EXDATEs could slow down exclusion checking
+            // Many EXDATEs could slow exclusion checking.
             val rrule = RRule(
                 freq = Frequency.DAILY,
                 interval = 1,
                 count = 10000
             )
 
-            // Generate 5000 EXDATE entries
+            // 5000 EXDATEs, every other day.
             val exdates = (1..5000).map { day ->
                 ICalDateTime.fromZonedDateTime(defaultStart.plusDays(day.toLong() * 2))
             }
@@ -230,7 +225,7 @@ class RecurrenceResourceExhaustionTest {
         @Test
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
         fun `expansion with many overrides completes`() {
-            // Many override events could slow down override checking
+            // Many overrides could slow override matching.
             val rrule = RRule(
                 freq = Frequency.DAILY,
                 interval = 1,
@@ -238,7 +233,7 @@ class RecurrenceResourceExhaustionTest {
             )
             val masterEvent = createTestEvent(rrule = rrule)
 
-            // Generate 5000 override events
+            // 5000 overrides, each moved 2 hours later.
             val overrides = (1..5000).map { day ->
                 createTestEvent(
                     uid = masterEvent.uid,
@@ -271,7 +266,7 @@ class RecurrenceResourceExhaustionTest {
         @Test
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
         fun `YEARLY with BYMONTH BYMONTHDAY BYDAY completes`() {
-            // Complex rule: 2nd Tuesday of every month
+            // MONTHLY on weekdays, taking the first five and the last two of each month.
             val rrule = RRule(
                 freq = Frequency.MONTHLY,
                 interval = 1,
@@ -282,7 +277,7 @@ class RecurrenceResourceExhaustionTest {
                     WeekdayNum(DayOfWeek.THURSDAY),
                     WeekdayNum(DayOfWeek.FRIDAY)
                 ),
-                bySetPos = listOf(1, 2, 3, 4, 5, -1, -2)  // Multiple positions
+                bySetPos = listOf(1, 2, 3, 4, 5, -1, -2)
             )
             val event = createTestEvent(rrule = rrule)
 
@@ -304,11 +299,11 @@ class RecurrenceResourceExhaustionTest {
         @Test
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
         fun `YEARLY BYWEEKNO BYDAY combination completes`() {
-            // Week number + day combination
+            // Week number plus day.
             val rrule = RRule(
                 freq = Frequency.YEARLY,
                 interval = 1,
-                byWeekNo = (1..53).toList(),  // All weeks
+                byWeekNo = (1..53).toList(),
                 byDay = listOf(
                     WeekdayNum(DayOfWeek.MONDAY),
                     WeekdayNum(DayOfWeek.FRIDAY)
@@ -334,11 +329,11 @@ class RecurrenceResourceExhaustionTest {
         @Test
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
         fun `YEARLY BYYEARDAY with all days completes`() {
-            // All days of year specified
+            // Every day of the year.
             val rrule = RRule(
                 freq = Frequency.YEARLY,
                 interval = 1,
-                byYearDay = (1..366).toList()  // All days
+                byYearDay = (1..366).toList()
             )
             val event = createTestEvent(rrule = rrule)
 
@@ -360,11 +355,11 @@ class RecurrenceResourceExhaustionTest {
         @Test
         @Timeout(value = 10, unit = TimeUnit.SECONDS)
         fun `interval of 1 second with moderate range completes`() {
-            // Interval=1 with SECONDLY over 1 hour
+            // SECONDLY with INTERVAL=1 over 2 hours, capped by COUNT.
             val rrule = RRule(
                 freq = Frequency.SECONDLY,
                 interval = 1,
-                count = 5000  // Limit to reasonable count
+                count = 5000
             )
             val event = createTestEvent(rrule = rrule)
 
@@ -402,12 +397,12 @@ class RecurrenceResourceExhaustionTest {
 
             val zeroRange = TimeRange(
                 defaultStart.toInstant(),
-                defaultStart.toInstant()  // Same instant
+                defaultStart.toInstant()
             )
 
             val occurrences = expander.expand(event, zeroRange)
 
-            // Zero-width range should have 0 or 1 occurrence
+            // A zero-width range has at most the occurrence at that instant.
             assertTrue(occurrences.size <= 1,
                 "Zero-width range should have at most 1 occurrence")
         }
@@ -463,7 +458,7 @@ class RecurrenceResourceExhaustionTest {
             )
             val event = createTestEvent(rrule = rrule)
 
-            // Year 9999
+            // Years 9990 to 9999.
             val farFutureRange = TimeRange(
                 ZonedDateTime.of(9990, 1, 1, 0, 0, 0, 0, zone).toInstant(),
                 ZonedDateTime.of(9999, 12, 31, 23, 59, 59, 0, zone).toInstant()
@@ -471,7 +466,7 @@ class RecurrenceResourceExhaustionTest {
 
             val occurrences = expander.expand(event, farFutureRange)
 
-            // Should complete (may have 10 occurrences or empty depending on impl)
+            // May hold 10 occurrences or none; asserts at most 10.
             assertTrue(occurrences.size <= 10,
                 "Far future range should work")
         }

@@ -17,15 +17,14 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * Tests for OkHttpCalDavClient ETag handling with PROPFIND fallback.
+ * Tests [OkHttpCalDavClient] ETag handling over MockWebServer:
+ *  1. The ETag from the PUT response header.
+ *  2. A PROPFIND when the header is missing (Nextcloud behavior), then a calendar-multiget
+ *     when the PROPFIND fails.
+ *  3. ETag formats: quoted, weak, unquoted, XML-encoded, other namespace prefixes.
+ *  4. What each call returns when the header, PROPFIND and multiget all fail.
  *
- * These tests verify:
- * 1. ETag extraction from PUT response headers (primary path)
- * 2. PROPFIND fallback when ETag header is missing (Nextcloud behavior)
- * 3. Various ETag formats (quoted, weak, XML-encoded, etc.)
- * 4. Error handling when both header and PROPFIND fail
- *
- * Uses MockWebServer to simulate CalDAV server responses.
+ * Also covers 413, the 403 UID conflict and a 201 answer to an update.
  */
 class OkHttpCalDavClientEtagTest {
 
@@ -514,10 +513,9 @@ class OkHttpCalDavClientEtagTest {
 
     @Test
     fun `fetchEtag multiget fallback XML-escapes an href containing an ampersand`() = runTest {
-        // fetchEtagViaMultiget derives the href via URI(eventUrl).path, which
-        // percent-DECODES the path — so a %26 in the URL becomes a literal & in
-        // the href. That must be re-escaped before interpolation, or the multiget
-        // request XML is malformed and the server 400s.
+        // fetchEtagViaMultiget derives the href with URI(eventUrl).path, which
+        // percent-decodes it, so a %26 in the URL becomes a literal & in the href. It must
+        // be XML-escaped, or the multiget body is malformed and the server 400s.
         mockWebServer.enqueue(MockResponse().setResponseCode(501)) // PROPFIND fails → fallback
         mockWebServer.enqueue(
             MockResponse()
@@ -539,7 +537,7 @@ class OkHttpCalDavClientEtagTest {
 
     @Test
     fun `fetchEtag does not try multiget on 404`() = runTest {
-        // Arrange: PROPFIND returns 404 — event doesn't exist, multiget won't help
+        // Arrange: PROPFIND returns 404: the event doesn't exist, so multiget won't help
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(404)
@@ -649,7 +647,7 @@ class OkHttpCalDavClientEtagTest {
 
     @Test
     fun `PROPFIND success short-circuits multiget fallback`() = runTest {
-        // Arrange: PUT 201 (no ETag), PROPFIND 207 succeeds — multiget not needed
+        // Arrange: PUT 201 (no ETag), PROPFIND 207 succeeds, so multiget is not needed
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -765,7 +763,8 @@ class OkHttpCalDavClientEtagTest {
 
     @Test
     fun `createEvent returns UID conflict error with Location header`() = runTest {
-        // RFC 4791: 403 with Location header indicates UID already exists
+        // RFC 4791 §5.3.2.1 no-uid-conflict is a 403; the client reads the existing
+        // resource from a Location header (the RFC names it in a DAV:href element).
         val existingEventUrl = mockWebServer.url("/calendars/test/existing-event.ics").toString()
         mockWebServer.enqueue(
             MockResponse()
@@ -792,7 +791,7 @@ class OkHttpCalDavClientEtagTest {
 
     @Test
     fun `createEvent returns permission denied for 403 without Location header`() = runTest {
-        // 403 without Location is just permission denied
+        // A 403 without Location is permission denied
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(403)

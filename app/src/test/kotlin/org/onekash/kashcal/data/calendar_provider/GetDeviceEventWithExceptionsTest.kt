@@ -9,17 +9,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for [CalendarProviderRepository.getDeviceEventWithExceptions] via the
- * fake implementation. The fake is the contract — any production impl must match
- * these behaviors.
- *
- * Contract:
- * - Returns null when master event ID doesn't exist.
- * - Returns (master, emptyList()) when master exists but has no exceptions.
- * - Returns exceptions sorted by originalInstanceTime ASC.
- * - Preserves STATUS_CANCELED exceptions (not filtered out — key difference from the
- *   Instances view, which suppresses them).
- * - Returns null when permission is revoked (SecurityException surface).
+ * Tests [CalendarProviderRepository.getDeviceEventWithExceptions] through the fake. The fake is
+ * the contract; a production implementation must match it:
+ * - null when the master doesn't exist
+ * - (master, emptyList()) when the master has no exceptions
+ * - exceptions sorted by originalInstanceTime ascending, only the given master's
+ * - STATUS_CANCELED exceptions kept, unlike the Instances view, which leaves them out
+ * - null when permission is revoked
  */
 class GetDeviceEventWithExceptionsTest {
 
@@ -63,9 +59,8 @@ class GetDeviceEventWithExceptionsTest {
 
     @Test
     fun `preserves STATUS_CANCELED exceptions in the exceptions list`() = runTest {
-        // The entire point of this method vs fetching from Instances: STATUS_CANCELED
-        // exception rows represent deleted occurrences and MUST survive to be exported
-        // as cancelled VEVENTs.
+        // Why this reads Events and not Instances: a STATUS_CANCELED exception is a deleted
+        // occurrence, and export must keep it as a cancelled VEVENT.
         val fake = FakeCalendarProviderRepository()
         val master = createDeviceEvent(id = 100L, rrule = "FREQ=DAILY")
         val canceledException = createDeviceEvent(

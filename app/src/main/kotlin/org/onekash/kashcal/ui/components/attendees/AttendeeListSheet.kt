@@ -43,29 +43,16 @@ import org.onekash.kashcal.R
 
 private val WHITESPACE_REGEX = Regex("\\s+")
 
-/** Below this attendee count, no search field is rendered. */
+/** Below this attendee count the sheet shows no search field. */
 private const val SEARCH_THRESHOLD = 6
 
 /**
- * Full attendee list opened from [InviteesBlock]'s caret affordance.
- * Replaces the older inline FlowRow that expanded below the chip row —
- * for events with many attendees the FlowRow sprawled past the action
- * buttons and pushed Edit/Delete off-screen.
+ * Shows an event's full attendee list as a bottom sheet over the quick view or event form,
+ * opened from [InviteesBlock]'s drill-in. A separate sheet, because an inline list of many
+ * attendees pushes the Edit and Delete buttons off-screen.
  *
- * Composes a nested [ModalBottomSheet] over the underlying QuickView /
- * Form sheet (same Material 3 pattern already used by the timezone,
- * color, and recurring-scope picker sheets).
- *
- * Body is a [LazyColumn] whose items are produced by
- * [buildAttendeeListSections] — a pure function that groups by
- * [AttendeeStatus] in display order (Going / Maybe / Pending /
- * Declined / Delegated) and pins You to the top of each group.
- *
- * The search field above the list does a case-insensitive substring
- * match against [AttendeeUiModel.displayName] and
- * [AttendeeUiModel.bareAddress]. Sections whose group empties under
- * the filter drop their header; section headers stick to the top of
- * the viewport while their group is in view.
+ * Rows are grouped by status as [buildAttendeeListSections] orders and filters them, under
+ * sticky section headers. From [SEARCH_THRESHOLD] attendees up, a search field filters them.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -77,9 +64,8 @@ fun AttendeeListSheet(
     var query by remember { mutableStateOf("") }
     val totalCount = attendees.size
     val canSearch = totalCount >= SEARCH_THRESHOLD
-    // If the list shrinks below the search threshold while a query is
-    // active (e.g. live Flow update), the OutlinedTextField unmounts —
-    // clear the query so the user isn't left with a hidden filter.
+    // When the list drops below the threshold with a query active (a live update, for example),
+    // the search field goes away, so clear the query or a hidden filter stays applied.
     LaunchedEffect(canSearch) {
         if (!canSearch) query = ""
     }
@@ -87,9 +73,8 @@ fun AttendeeListSheet(
         buildAttendeeListSections(attendees, query)
     }
 
-    // Pin to a tall fixed height so the viewer opens consistently (matching the
-    // picker) instead of wrapping to a handful of rows. Read-only, so it stays
-    // swipe-dismissable — there's nothing in progress to lose.
+    // A tall fixed height, like the picker's, so the sheet doesn't open wrapped to a few rows.
+    // Read-only, so it stays swipe-dismissable: there is nothing in progress to lose.
     val configuration = LocalConfiguration.current
     val sheetHeight = remember(configuration.orientation, configuration.screenWidthDp) {
         (configuration.screenHeightDp * 0.95f).dp
@@ -160,10 +145,9 @@ fun AttendeeListSheet(
                     }
                     items(
                         items = section.rows,
-                        // bareAddress is unique per attendee within the
-                        // event; section name disambiguates synthesized
-                        // organizer rows that share an address with a
-                        // real attendee row.
+                        // bareAddress alone can repeat: two rows can canonicalize to one
+                        // address, and every device guest with no email has an empty one.
+                        // The section and sortOrder keep the keys apart.
                         key = { row -> "row_${section.status.name}_${row.bareAddress}_${row.sortOrder}" },
                     ) { row ->
                         AttendeeRow(row)
@@ -184,8 +168,8 @@ private fun SectionHeader(status: AttendeeStatus, count: Int) {
         AttendeeStatus.Declined -> stringResource(R.string.attendee_section_declined)
         AttendeeStatus.Delegated -> stringResource(R.string.attendee_section_delegated)
     }
-    // Sticky headers float over the rows behind them — paint a solid
-    // surface bg so they don't read translucent against scrolled rows.
+    // A sticky header floats over the rows, so it needs a solid background or it reads as
+    // translucent over them.
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -228,9 +212,8 @@ private fun AttendeeRow(model: AttendeeUiModel) {
     }
     val showAddressLine = !model.isYou &&
         !model.bareAddress.equals(model.displayName, ignoreCase = true)
-    // Surface the current user as "You" (matching AttendeeChip), so their own
-    // organizer/attendee row doesn't read as the account label (e.g. "iCloud").
-    // Avatar initials stay on the real name, not the word "You".
+    // The current user shows as "You", so their row doesn't read as the account label (for
+    // example "iCloud"). The avatar initials stay on the real name.
     val nameLabel = if (model.isYou) stringResource(R.string.attendee_you_marker) else model.displayName
     Row(
         modifier = Modifier

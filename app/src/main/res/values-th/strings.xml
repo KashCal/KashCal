@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">ไม่พบปฏิทินบนเซิร์ฟเวอร์นี้</string>
     <string name="caldav_error_unexpected">เกิดข้อผิดพลาดที่ไม่คาดคิด โปรดลองอีกครั้ง</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nหากนี่คือเซิร์ฟเวอร์บนเครือข่ายภายในของคุณ ให้อนุญาตการเข้าถึงเครือข่ายภายในเพื่อเชื่อมต่อ</string>
+    <string name="caldav_error_connection_refused_insecure">เซิร์ฟเวอร์เปลี่ยนเส้นทางการเชื่อมต่อไปยังที่ที่ KashCal ไม่ตามไป (ที่อยู่ที่ไม่เข้ารหัส หรือการเปลี่ยนเส้นทางวนซ้ำ) KashCal จึงหยุดก่อนส่งรหัสผ่านของคุณ โปรดตรวจสอบที่อยู่เซิร์ฟเวอร์</string>
     <string name="local_network_banner_title">ต้องอนุญาตการเข้าถึงเครือข่ายภายใน</string>
     <string name="local_network_banner_body">เซิร์ฟเวอร์นี้ดูเหมือนจะอยู่บนเครือข่ายภายในของคุณ อนุญาตการเข้าถึงเครือข่ายภายในเพื่อให้ KashCal เชื่อมต่อได้</string>
     <string name="local_network_banner_allow">อนุญาตการเข้าถึง</string>
@@ -792,6 +793,8 @@
     <string name="dialog_edit_recurring_title">บันทึกการเปลี่ยนแปลงที่</string>
     <string name="dialog_delete_recurring_title">ลบ</string>
     <string name="dialog_move_recurring_title">ย้าย</string>
+    <string name="snackbar_event_rescheduled">เลื่อนกิจกรรมแล้ว</string>
+    <string name="snackbar_reschedule_failed">เลื่อนกิจกรรมไม่สำเร็จ</string>
     <string name="recurring_this_event">กิจกรรมนี้เท่านั้น</string>
     <string name="recurring_all_events">กิจกรรมทั้งหมด</string>
 

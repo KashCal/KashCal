@@ -13,33 +13,31 @@ import org.onekash.kashcal.ui.theme.KashCalTheme
 import org.onekash.kashcal.ui.theme.ThemeMode
 
 /**
- * Shared harness for JVM screenshot tests (Robolectric native graphics, no
- * device). Renders a composable across a deterministic variant matrix and
- * writes/verifies PNGs. Record mode: `-Proborazzi.test.record=true`; verify (the
- * CI gate): `-Proborazzi.test.verify=true`. Capture is a no-op without one of
- * those, so these tests are inert in the normal test sweep.
+ * Renders a composable across a fixed variant matrix and records or verifies PNGs, for JVM
+ * screenshot tests (Robolectric native graphics, no device). Record mode:
+ * `-Proborazzi.test.record=true`; verify (the CI gate): `-Proborazzi.test.verify=true`.
+ * Capture is a no-op unless a Roborazzi task mode is set, so these tests are inert in the
+ * normal test sweep.
  *
- * Determinism: theme is pinned (LIGHT + SEED scheme + a fixed accent seed) —
- * never dynamic Material You, which is device-derived and cannot be reproduced
- * off-device. A small changeThreshold absorbs sub-pixel text anti-aliasing noise
- * between the record host and the CI runner (both must be Linux x86_64; see
- * src/test/screenshots/README.md).
+ * The theme is pinned (LIGHT, SEED scheme, a fixed accent seed), never dynamic Material You,
+ * which is device-derived and can't be reproduced off-device. A small changeThreshold absorbs
+ * sub-pixel text anti-aliasing noise between the record host and the CI runner (both must be
+ * Linux x86_64; see src/test/screenshots/README.md).
  *
- * Each [Variant] labels only the dimensions that actually vary — font scale and
- * layout direction. Theme is deliberately NOT a matrix dimension here: the
- * surfaces captured so far are self-styled (a share card's colors come from its
- * own style, not MaterialTheme.colorScheme), so a light/dark split would produce
- * byte-identical duplicates. A theme-responsive surface should add its own themed
- * variant set rather than forcing every caller to carry a theme axis.
+ * A [Variant] varies only font scale and layout direction. Theme isn't a matrix dimension:
+ * the surfaces captured so far are self-styled (a share card's colors come from its own style,
+ * not MaterialTheme.colorScheme), so a light/dark split would give byte-identical duplicates.
+ * A theme-responsive surface should add its own themed variant set rather than make every
+ * caller carry a theme axis.
  */
 object ScreenshotMatrix {
 
-    /** Goldens are committed here (a tracked dir — NOT under build/). */
+    /** Directory of the committed goldens; tracked, so never under build/. */
     private const val GOLDEN_DIR = "src/test/screenshots"
 
     /**
-     * Fixed accent seed for every golden. A literal (not the app's runtime
-     * default) so a change to the app default can't silently invalidate goldens.
+     * Fixed accent seed for every golden. A literal, not the app's runtime default, so a
+     * change to that default can't silently invalidate goldens.
      */
     private const val ACCENT_SEED: Int = 0xFF6750A4.toInt()
 
@@ -67,7 +65,7 @@ object ScreenshotMatrix {
     /** Single representative cell for content states we don't need the full matrix on. */
     val CANONICAL = Variant(fontScale = 1.0f, rtl = false)
 
-    /** Capture [content] once per variant in [variants], to `<name>__<label>.png`. */
+    /** Captures [content] once per variant in [variants], to `<name>__<label>.png`. */
     fun captureMatrix(
         name: String,
         variants: List<Variant> = FONT_AND_DIRECTION,
@@ -76,7 +74,7 @@ object ScreenshotMatrix {
         variants.forEach { variant -> capture(name, variant, content) }
     }
 
-    /** Capture [content] for a single [variant]. */
+    /** Captures [content] for a single [variant]. */
     fun capture(
         name: String,
         variant: Variant = CANONICAL,

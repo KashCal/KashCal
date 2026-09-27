@@ -19,29 +19,26 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Integration test for Stalwart CalDAV server workflows.
+ * Runs the CalDAV client with [DefaultQuirks] against a Stalwart server: well-known discovery,
+ * event create, update and delete, a recurring event with an exception, a cancelled
+ * occurrence (EXDATE), the sync-token and a sync-collection delta, and VALARMs.
  *
- * Stalwart is a modern, Rust-based mail server with full CalDAV/CardDAV support.
- * It uses RFC 6764 well-known discovery and standard CalDAV endpoints.
+ * Stalwart is a Rust mail server with CalDAV and CardDAV. It uses RFC 6764 well-known
+ * discovery and standard CalDAV endpoints.
  *
- * Run: ./gradlew testDebugUnitTest --tests "*StalwartCalDavIntegrationTest*"
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*StalwartCalDavIntegrationTest*"
  *
- * Prerequisites:
- * - Stalwart server running at localhost:8080
- * - Credentials in local.properties:
+ * Needs a Stalwart server at localhost:8080 and these keys in local.properties:
  *   STALWART_SERVER=http://localhost:8080
  *   STALWART_USERNAME=testuser@example.com
  *   STALWART_PASSWORD=testpass123
  *
  * Start Stalwart:
  *   docker run -d --name stalwart-caldav-test -p 8080:8080 stalwartlabs/mail-server
- *   Then setup admin account at http://localhost:8080/login
+ *   Then set up the admin account at http://localhost:8080/login
  *
- * Stalwart features:
- * - RFC 6764 well-known discovery (.well-known/caldav)
- * - CalDAV Scheduling (RFC 6638)
- * - JMAP for Calendars
- * - WebDAV sync-collection
+ * Stalwart also offers CalDAV Scheduling (RFC 6638), JMAP for Calendars and WebDAV
+ * sync-collection.
  */
 class StalwartCalDavIntegrationTest {
 
@@ -51,14 +48,13 @@ class StalwartCalDavIntegrationTest {
     private var username: String? = null
     private var password: String? = null
 
-    // Test state
+    // The discovered calendar and the event the running test created, which cleanup deletes.
     private var calendarUrl: String? = null
     private var testEventUrl: String? = null
     private var testEventEtag: String? = null
-    // Use UUID-only format to avoid URL encoding issues with '@' character
+    // No '@' in the UID, so the resource URL needs no percent-encoding.
     private val testUid = "test-stalwart-${UUID.randomUUID()}"
 
-    // Date formatter for ICS
     private val icsDateFormat = SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'").apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
@@ -67,11 +63,9 @@ class StalwartCalDavIntegrationTest {
     fun setup() {
         loadCredentials()
 
-        // Use DefaultQuirks for generic CalDAV
         val quirks = DefaultQuirks(serverUrl)
         clientFactory = OkHttpCalDavClientFactory()
 
-        // Create client using factory pattern
         if (username != null && password != null) {
             val credentials = Credentials(
                 username = username!!,
@@ -80,7 +74,7 @@ class StalwartCalDavIntegrationTest {
             )
             client = clientFactory.createClient(credentials, quirks)
         } else {
-            // Create a dummy client for cases where credentials aren't available
+            // Dummy credentials; every test skips without real ones.
             val dummyCredentials = Credentials(
                 username = "dummy",
                 password = "dummy",
@@ -146,7 +140,7 @@ class StalwartCalDavIntegrationTest {
     }
 
     private suspend fun getCaldavUrl(): String {
-        // Stalwart requires well-known discovery to get /dav/cal URL
+        // Stalwart needs well-known discovery to find the /dav/cal URL; falls back to serverUrl.
         val wellKnownResult = client.discoverWellKnown(serverUrl)
         return if (wellKnownResult.isSuccess()) {
             wellKnownResult.getOrNull()!!
@@ -156,7 +150,7 @@ class StalwartCalDavIntegrationTest {
     }
 
     private suspend fun discoverCalendar(): String? {
-        // Try well-known discovery first (RFC 6764)
+        // Well-known discovery first (RFC 6764), else serverUrl.
         val wellKnownResult = client.discoverWellKnown(serverUrl)
         val caldavUrl = if (wellKnownResult.isSuccess()) {
             val discoveredUrl = wellKnownResult.getOrNull()!!
@@ -174,9 +168,8 @@ class StalwartCalDavIntegrationTest {
             !cal.url.contains("inbox") && !cal.url.contains("outbox")
         }?.url
 
-        // NOTE: Fallback no longer needed after RFC 4918 multi-propstat fix (v21.5.8)
-        // Parser now correctly handles 404 propstat for missing optional properties.
-        // Keeping fallback as safety net but it should not be reached.
+        // The parser keeps a calendar whose optional properties sit in a 404 propstat
+        // (RFC 4918), so this fallback isn't expected to run; if it does, the parser regressed.
         if (calendar == null && home.contains("dav/cal")) {
             println("WARNING: Fallback triggered - parser may have regressed")
             val fallbackUrl = serverUrl.trimEnd('/') + "/dav/cal/_4294967295/test-calendar/"
@@ -200,7 +193,7 @@ class StalwartCalDavIntegrationTest {
             assert(discoveredUrl.isNotEmpty()) { "Well-known URL should not be empty" }
         } else {
             println("Well-known discovery not available (falling back to direct discovery)")
-            // Not a failure - some Stalwart configs may not have well-known
+            // Not a failure: some Stalwart configs have no well-known.
         }
     }
 
@@ -257,7 +250,8 @@ class StalwartCalDavIntegrationTest {
             println("  - ${cal.displayName}: ${cal.url} (readOnly=${cal.isReadOnly}, color=${cal.color})")
         }
 
-        // After RFC 4918 multi-propstat fix (v21.5.8), calendars should be discovered
+        // Stalwart splits properties over several propstats (RFC 4918); the calendars must
+        // still be found.
         assert(calendars.isNotEmpty()) {
             "Should find at least one calendar on Stalwart (RFC 4918 multi-propstat fix)"
         }
@@ -297,7 +291,6 @@ END:VCALENDAR
 
         println("Created event on Stalwart: $url (etag: $etag)")
 
-        // Verify by fetching
         val fetchResult = client.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch event" }
 
@@ -318,7 +311,6 @@ END:VCALENDAR
 
         val updateUid = "test-update-stalwart-${UUID.randomUUID()}"
 
-        // Create initial event
         val initialIcs = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -340,7 +332,6 @@ END:VCALENDAR
         testEventUrl = url
         testEventEtag = etag
 
-        // Update event
         val updatedIcs = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -362,7 +353,6 @@ END:VCALENDAR
         testEventEtag = updateResult.getOrNull()!!
         println("Updated event, new etag: $testEventEtag")
 
-        // Verify update
         val fetchResult = client.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch updated event" }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
@@ -379,7 +369,6 @@ END:VCALENDAR
 
         val deleteUid = "test-delete-stalwart-${UUID.randomUUID()}"
 
-        // Create event
         val icsContent = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -399,16 +388,14 @@ END:VCALENDAR
 
         val (url, etag) = createResult.getOrNull()!!
 
-        // Delete event
         val deleteResult = client.deleteEvent(url, etag)
         assert(deleteResult.isSuccess()) { "Failed to delete event: ${(deleteResult as? CalDavResult.Error)?.message}" }
         println("Deleted event successfully")
 
-        // Verify deletion (should get 404)
         val fetchResult = client.fetchEvent(url)
         assert(fetchResult.isNotFound()) { "Event should be deleted (404)" }
 
-        // Clear tracking since we deleted it ourselves
+        // Already deleted, so cleanup has nothing to do.
         testEventUrl = null
         testEventEtag = null
     }
@@ -427,7 +414,7 @@ END:VCALENDAR
         println("STALWART RECURRING EVENT EXCEPTION WORKFLOW")
         println("=".repeat(60) + "\n")
 
-        // Calculate dates
+        // 10:00 UTC on the next Monday, or today if it is Monday.
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         cal.set(Calendar.HOUR_OF_DAY, 10)
         cal.set(Calendar.MINUTE, 0)
@@ -539,7 +526,7 @@ END:VCALENDAR
 
         val exdateUid = "test-exdate-stalwart-${UUID.randomUUID()}"
 
-        // Calculate dates
+        // 10:00 UTC on the next Monday, or today if it is Monday.
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         cal.set(Calendar.HOUR_OF_DAY, 10)
         cal.set(Calendar.MINUTE, 0)
@@ -551,11 +538,10 @@ END:VCALENDAR
         }
         val firstOccurrenceStr = icsDateFormat.format(cal.time)
 
-        // Third occurrence (2 weeks later) - will be cancelled
+        // The third occurrence, two weeks later, is cancelled by EXDATE.
         cal.add(Calendar.WEEK_OF_YEAR, 2)
         val thirdOccurrenceStr = icsDateFormat.format(cal.time)
 
-        // Create recurring event with EXDATE
         val icsContent = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -580,7 +566,6 @@ END:VCALENDAR
         testEventUrl = url
         testEventEtag = etag
 
-        // Verify EXDATE is preserved
         val fetchResult = client.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch event" }
 
@@ -618,13 +603,11 @@ END:VCALENDAR
         calendarUrl = discoverCalendar()
         assumeTrue("No calendar found on Stalwart", calendarUrl != null)
 
-        // Get initial sync token
         val tokenResult = client.getSyncToken(calendarUrl!!)
         assumeTrue("Could not get sync token", tokenResult.isSuccess())
         val initialToken = tokenResult.getOrNull()!!
         println("Initial sync token: $initialToken")
 
-        // Create an event
         val deltaUid = "test-delta-stalwart-${UUID.randomUUID()}"
         val icsContent = """
 BEGIN:VCALENDAR
@@ -647,7 +630,6 @@ END:VCALENDAR
         testEventUrl = url
         testEventEtag = etag
 
-        // Get changes since initial token
         val syncResult = client.syncCollection(calendarUrl!!, initialToken)
         assert(syncResult.isSuccess()) { "Failed to sync collection: ${(syncResult as? CalDavResult.Error)?.message}" }
 
@@ -657,7 +639,7 @@ END:VCALENDAR
         println("  Deleted: ${syncReport.deleted.size}")
         println("  New token: ${syncReport.syncToken}")
 
-        // Should have at least our new event
+        // Either the new event is among the changes or the token moved.
         assert(syncReport.changed.isNotEmpty() || syncReport.syncToken != initialToken) {
             "Sync should detect our new event or provide new token"
         }
@@ -706,7 +688,6 @@ END:VCALENDAR
         testEventUrl = url
         testEventEtag = etag
 
-        // Verify alarms are preserved
         val fetchResult = client.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch event" }
 

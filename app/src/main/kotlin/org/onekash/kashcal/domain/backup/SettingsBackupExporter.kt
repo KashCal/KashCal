@@ -12,10 +12,10 @@ import javax.inject.Singleton
 /**
  * Produces a KashCal settings backup JSON.
  *
- * The envelope carries only items that can't be recovered elsewhere: exportable preferences
- * and ICS subscription URLs (plus their user-chosen metadata). CalDAV/iCloud/LOCAL accounts
- * and calendars are rebuilt on restore via first-launch initialization and server sync, so
- * they are deliberately not part of the file.
+ * The envelope carries only items that can't be recovered elsewhere: the [ExportablePreferences]
+ * keys, ICS subscriptions with their user-chosen metadata, and tags with a user-chosen color.
+ * CalDAV, iCloud and local accounts and calendars are rebuilt on restore through first-launch
+ * initialization and server sync, so they are deliberately not part of the file.
  */
 @Singleton
 class SettingsBackupExporter(
@@ -70,8 +70,7 @@ class SettingsBackupExporter(
             username = username,
         )
 
-    // getColoredOnce only returns rows with a non-null color, so the non-null
-    // BackupCategory.color assertion here always holds.
+    // getColoredOnce returns only rows with a non-null color, so this `!!` always holds.
     private fun org.onekash.kashcal.data.db.entity.Category.toBackupCategory(): BackupCategory =
         BackupCategory(name = name, color = color!!, lastUsedAt = lastUsedAt)
 }

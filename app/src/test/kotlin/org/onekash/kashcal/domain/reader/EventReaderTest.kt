@@ -28,14 +28,14 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Tests for EventReader - the read-only query layer.
- *
- * EventReader is critical for all UI data loading. These tests ensure:
- * - Event retrieval by various keys (id, uid, caldavUrl)
- * - Calendar visibility filtering
- * - Occurrence queries for time ranges
- * - Search functionality
- * - Exception/master event relationships
+ * Tests [EventReader] over an in-memory Room database with a visible and a hidden iCloud
+ * calendar and a local one:
+ * - event lookup by id, UID and caldavUrl
+ * - master and exception lookups
+ * - calendar reads, filtering by provider, and the one write, [EventReader.setCalendarVisibility]
+ * - occurrence queries by range and day, with hidden calendars excluded
+ * - search by title and location, case-insensitive
+ * - pending-sync and sync-error events, and event counts
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -124,7 +124,7 @@ class EventReaderTest {
         val id = database.eventsDao().insert(event)
         val created = event.copy(id = id)
 
-        // Generate occurrences
+        // Occurrences from 30 days before the start to a year after.
         val rangeStart = startTs - 86400000L * 30
         val rangeEnd = startTs + 86400000L * 365
         occurrenceGenerator.generateOccurrences(created, rangeStart, rangeEnd)

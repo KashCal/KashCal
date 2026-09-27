@@ -7,11 +7,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Documents the categories write contract [AndroidCalendarProviderRepository]
- * must honour: create/update carry the tag set through, and the nullable
- * parameter distinguishes "manage tags" (non-null, authoritative) from "leave
- * tags alone" (null). The null case is the load-bearing guard: reschedule and
- * single-occurrence exception edits pass null so they never wipe existing tags.
+ * Pins the tag write contract [AndroidCalendarProviderRepository] must honour: create and update
+ * carry the tag set through, and the nullable parameter separates "manage tags" (non-null, the
+ * full set; empty clears them) from "leave tags alone" (null). Reschedules and single-occurrence
+ * exception edits pass null so they never wipe existing tags.
  */
 class FakeCategoriesWriteTest {
 

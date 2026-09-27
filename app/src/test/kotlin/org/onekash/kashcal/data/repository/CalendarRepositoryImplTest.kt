@@ -23,15 +23,12 @@ import org.onekash.kashcal.data.db.dao.CalendarsDao
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.model.AccountProvider
 
-/**
- * Unit tests for CalendarRepositoryImpl.
- */
+/** Tests that [CalendarRepositoryImpl] delegates each read and write to [CalendarsDao]. */
 class CalendarRepositoryImplTest {
 
     private lateinit var calendarRepository: CalendarRepositoryImpl
     private lateinit var calendarsDao: CalendarsDao
 
-    // Helper to create test Calendar with required fields
     private fun testCalendar(
         id: Long = 0L,
         accountId: Long = 1L,
@@ -59,9 +56,8 @@ class CalendarRepositoryImplTest {
         every { Log.e(any(), any()) } returns 0
         every { Log.e(any(), any(), any()) } returns 0
 
-        // Explicit (not relaxed) so an unexpected query throws instead of
-        // silently returning null/empty. Defaults reproduce the previous
-        // relaxed behavior; per-test stubs override them.
+        // Explicit stubs, not relaxed, so an unstubbed call throws instead of silently returning
+        // null or empty. These are the defaults; per-test stubs override them.
         calendarsDao = mockk()
         coEvery { calendarsDao.getById(any()) } returns null
         coEvery { calendarsDao.getByCaldavUrl(any()) } returns null
@@ -91,41 +87,32 @@ class CalendarRepositoryImplTest {
 
     @Test
     fun `getAllCalendarsFlow returns flow from DAO`() = runBlocking {
-        // Setup
         val calendars = listOf(testCalendar(id = 1L, displayName = "Cal 1"))
         every { calendarsDao.getAll() } returns flowOf(calendars)
 
-        // Execute
         val flow = calendarRepository.getAllCalendarsFlow()
 
-        // Verify
         assertNotNull(flow)
     }
 
     @Test
     fun `getVisibleCalendarsFlow filters by is_visible`() = runBlocking {
-        // Setup
         val visibleCalendars = listOf(testCalendar(id = 1L, displayName = "Visible", isVisible = true))
         every { calendarsDao.getVisibleCalendars() } returns flowOf(visibleCalendars)
 
-        // Execute
         val flow = calendarRepository.getVisibleCalendarsFlow()
 
-        // Verify
         assertNotNull(flow)
         verify { calendarsDao.getVisibleCalendars() }
     }
 
     @Test
     fun `getCalendarsForAccountFlow returns account calendars`() = runBlocking {
-        // Setup
         val calendars = listOf(testCalendar(id = 1L, accountId = 5L, displayName = "Account Cal"))
         every { calendarsDao.getByAccountId(5L) } returns flowOf(calendars)
 
-        // Execute
         val flow = calendarRepository.getCalendarsForAccountFlow(5L)
 
-        // Verify
         assertNotNull(flow)
         verify { calendarsDao.getByAccountId(5L) }
     }
@@ -134,44 +121,35 @@ class CalendarRepositoryImplTest {
 
     @Test
     fun `getCalendarById returns correct calendar`() = runBlocking {
-        // Setup
         val calendar = testCalendar(id = 1L, displayName = "Test")
         coEvery { calendarsDao.getById(1L) } returns calendar
 
-        // Execute
         val result = calendarRepository.getCalendarById(1L)
 
-        // Verify
         assertEquals(calendar, result)
     }
 
     @Test
     fun `getCalendarByUrl returns correct calendar`() = runBlocking {
-        // Setup
         val url = "https://caldav.icloud.com/12345/calendar/"
         val calendar = testCalendar(id = 1L, displayName = "Test", caldavUrl = url)
         coEvery { calendarsDao.getByCaldavUrl(url) } returns calendar
 
-        // Execute
         val result = calendarRepository.getCalendarByUrl(url)
 
-        // Verify
         assertEquals(calendar, result)
     }
 
     @Test
     fun `getCalendarsForAccountOnce returns only account calendars`() = runBlocking {
-        // Setup
         val calendars = listOf(
             testCalendar(id = 1L, accountId = 5L, displayName = "Cal 1", caldavUrl = "https://a/1"),
             testCalendar(id = 2L, accountId = 5L, displayName = "Cal 2", caldavUrl = "https://a/2")
         )
         coEvery { calendarsDao.getByAccountIdOnce(5L) } returns calendars
 
-        // Execute
         val result = calendarRepository.getCalendarsForAccountOnce(5L)
 
-        // Verify
         assertEquals(2, result.size)
         assertTrue(result.all { it.accountId == 5L })
     }
@@ -180,53 +158,42 @@ class CalendarRepositoryImplTest {
 
     @Test
     fun `createCalendar returns generated ID`() = runBlocking {
-        // Setup
         val calendar = testCalendar(id = 0L, displayName = "New Cal")
         coEvery { calendarsDao.insert(calendar) } returns 42L
 
-        // Execute
         val result = calendarRepository.createCalendar(calendar)
 
-        // Verify
         assertEquals(42L, result)
     }
 
     @Test
     fun `updateCalendar calls DAO update`() = runBlocking {
-        // Setup
         val calendar = testCalendar(id = 1L, displayName = "Updated")
 
-        // Execute
         calendarRepository.updateCalendar(calendar)
 
-        // Verify
         coVerify { calendarsDao.update(calendar) }
     }
 
     @Test
     fun `deleteCalendar removes calendar from database`() = runBlocking {
-        // Execute
         calendarRepository.deleteCalendar(1L)
 
-        // Verify
         coVerify { calendarsDao.deleteById(1L) }
     }
 
     @Test
     fun `setVisibility updates calendar visibility`() = runBlocking {
-        // Execute
         calendarRepository.setVisibility(1L, false)
 
-        // Verify
         coVerify { calendarsDao.setVisible(1L, false) }
     }
 
     @Test
     fun `setAllVisible updates all calendars for account`() = runBlocking {
-        // Execute
         calendarRepository.setAllVisible(5L, false)
 
-        // Verify single batch UPDATE instead of N+1 queries
+        // One account-wide UPDATE, not one per calendar.
         coVerify { calendarsDao.setVisibleForAccount(5L, false) }
     }
 
@@ -234,19 +201,15 @@ class CalendarRepositoryImplTest {
 
     @Test
     fun `updateSyncToken persists both syncToken and ctag`() = runBlocking {
-        // Execute
         calendarRepository.updateSyncToken(1L, "sync-token-123", "ctag-456")
 
-        // Verify
         coVerify { calendarsDao.updateSyncToken(1L, "sync-token-123", "ctag-456") }
     }
 
     @Test
     fun `updateCtag persists ctag only`() = runBlocking {
-        // Execute
         calendarRepository.updateCtag(1L, "ctag-789")
 
-        // Verify
         coVerify { calendarsDao.updateCtag(1L, "ctag-789") }
     }
 
@@ -254,13 +217,10 @@ class CalendarRepositoryImplTest {
 
     @Test
     fun `getCalendarCountByProviderFlow uses provider name`() = runBlocking {
-        // Setup
         every { calendarsDao.getCalendarCountByProvider("CALDAV") } returns flowOf(3)
 
-        // Execute
         val flow = calendarRepository.getCalendarCountByProviderFlow(AccountProvider.CALDAV)
 
-        // Verify
         assertNotNull(flow)
         verify { calendarsDao.getCalendarCountByProvider("CALDAV") }
     }
@@ -269,97 +229,78 @@ class CalendarRepositoryImplTest {
 
     @Test
     fun `getCalendarById returns null for non-existent ID`() = runBlocking {
-        // Setup
         coEvery { calendarsDao.getById(999L) } returns null
 
-        // Execute
         val result = calendarRepository.getCalendarById(999L)
 
-        // Verify
         assertNull(result)
     }
 
     @Test
     fun `deleteCalendar on non-existent ID is no-op`() = runBlocking {
-        // Setup - DAO delete silently succeeds even if ID doesn't exist
+        // The DAO delete succeeds for a missing ID.
         coEvery { calendarsDao.deleteById(999L) } just runs
 
-        // Execute - should NOT throw
+        // Doesn't throw.
         calendarRepository.deleteCalendar(999L)
 
-        // Verify delete was called (Room handles non-existent gracefully)
         coVerify { calendarsDao.deleteById(999L) }
     }
 
     @Test
     fun `getCalendarsForAccountOnce returns empty list for non-existent account`() = runBlocking {
-        // Setup
         coEvery { calendarsDao.getByAccountIdOnce(999L) } returns emptyList()
 
-        // Execute
         val result = calendarRepository.getCalendarsForAccountOnce(999L)
 
-        // Verify
         assertTrue(result.isEmpty())
     }
 
     @Test
     fun `getAllCalendars returns empty list when no calendars exist`() = runBlocking {
-        // Setup
         coEvery { calendarsDao.getAllOnce() } returns emptyList()
 
-        // Execute
         val result = calendarRepository.getAllCalendars()
 
-        // Verify
         assertTrue(result.isEmpty())
     }
 
     @Test
     fun `getEnabledCalendars returns only enabled calendars`() = runBlocking {
-        // Setup
         val enabledCalendars = listOf(
             testCalendar(id = 1L, displayName = "Enabled Cal")
         )
         coEvery { calendarsDao.getEnabledCalendars() } returns enabledCalendars
 
-        // Execute
         val result = calendarRepository.getEnabledCalendars()
 
-        // Verify
         assertEquals(1, result.size)
     }
 
     @Test
     fun `setAllVisible with empty calendar list is no-op`() = runBlocking {
-        // Setup - account has no calendars
         coEvery { calendarsDao.getByAccountIdOnce(5L) } returns emptyList()
 
-        // Execute
         calendarRepository.setAllVisible(5L, true)
 
-        // Verify setVisible never called (no calendars to update)
+        // setAllVisible issues setVisibleForAccount, never a per-calendar setVisible.
         coVerify(exactly = 0) { calendarsDao.setVisible(any(), any()) }
     }
 
     @Test
     fun `updateSyncToken with null values clears tokens`() = runBlocking {
-        // Execute
         calendarRepository.updateSyncToken(1L, null, null)
 
-        // Verify null values passed through
+        // Nulls are passed through to the DAO.
         coVerify { calendarsDao.updateSyncToken(1L, null, null) }
     }
 
     @Test
     fun `getCalendarByUrl returns null for non-existent URL`() = runBlocking {
-        // Setup
         coEvery { calendarsDao.getByCaldavUrl("https://nonexistent.com/cal/") } returns null
 
-        // Execute
         val result = calendarRepository.getCalendarByUrl("https://nonexistent.com/cal/")
 
-        // Verify
         assertNull(result)
     }
 }

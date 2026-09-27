@@ -7,10 +7,10 @@ import org.onekash.kashcal.widget.WidgetUpdateManager
 import javax.inject.Inject
 
 /**
- * Handles reminder recovery after device boot or app update.
+ * Re-arms reminders and the widget midnight alarm after device boot or app update.
  *
- * Extracted from BootCompletedReceiver to enable unit testing without
- * Hilt injection or Android framework dependencies.
+ * Kept out of [BootCompletedReceiver] so it can be unit tested without Hilt injection or a
+ * BroadcastReceiver.
  */
 class BootRecoveryHandler @Inject constructor(
     private val reminderScheduler: ReminderScheduler,
@@ -22,12 +22,13 @@ class BootRecoveryHandler @Inject constructor(
     }
 
     /**
-     * Reschedule all pending reminders and the widget midnight alarm, and clean up old reminders.
+     * Re-arms the reminder and widget alarms that boot or an app update cleared.
      *
-     * Called after device boot or app update when Android clears all AlarmManager alarms.
-     * Re-registers alarms for ScheduledReminder rows that already exist in the DB.
-     * Also reschedules device calendar reminders (single-alarm model) and the
-     * widget day-rollover alarm (also cleared by boot/update).
+     * Re-arms the existing Room reminder rows due within the scheduler's window
+     * ([ReminderScheduler.rescheduleAllPending]) and deletes old fired and dismissed rows, then
+     * schedules the next device calendar reminder (one alarm at a time) and the widget
+     * day-rollover alarm. A device calendar failure is logged and skipped; a Room failure throws
+     * before the device calendar and widget alarms are set.
      */
     suspend fun rescheduleReminders() {
         // Room reminders: reschedule from database
@@ -43,7 +44,7 @@ class BootRecoveryHandler @Inject constructor(
             Log.e(TAG, "Failed to reschedule device calendar reminders", e)
         }
 
-        // Widget midnight alarm: AlarmManager clears all alarms on reboot / package replace
+        // Widget midnight alarm
         widgetUpdateManager.scheduleMidnightUpdate()
         Log.d(TAG, "Rescheduled widget midnight alarm")
     }

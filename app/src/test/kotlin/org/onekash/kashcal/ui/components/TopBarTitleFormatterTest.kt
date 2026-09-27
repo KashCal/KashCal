@@ -85,7 +85,7 @@ class TopBarTitleFormatterTest {
             yearLabel = yearLabel,
             locale = Locale.US,
         )
-        // Month/year only — the week number now lives in the grid header, not the top bar.
+        // Month and year only; the week number is in the week grid's header.
         assertTrue("Should match 'Mmm yyyy', got: $result", result.matches(Regex("\\w+ \\d{4}")))
         assertFalse("Should not contain a 'W##' week suffix, got: $result", result.contains("W"))
     }
@@ -96,8 +96,8 @@ class TopBarTitleFormatterTest {
         val week = TopBarTitleFormatter.format(
             ViewMode.WEEK, 2026, 0, centerPage, Calendar.MONDAY, yearLabel, Locale.US,
         )
-        // Both views label by the center date's month/year, so a week and its start-day
-        // 3-day page render an identical top-bar title.
+        // WEEK labels by its start date's month and year, THREE_DAYS by its middle day's.
+        // Only the week title's "Mmm yyyy" shape is asserted; no 3-day title is built.
         assertTrue("Should match 'Mmm yyyy', got: $week", week.matches(Regex("\\w+ \\d{4}")))
     }
 

@@ -12,19 +12,15 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Unit tests for day events cache behavior.
- *
- * Tests cache grouping by dayCode and refresh logic.
- * These are pure unit tests that don't require Android context.
+ * Tests the day pager cache's pieces: inline copies of the refresh rule and the day-code walk
+ * (neither calls production), [DayPagerUtils.msToDayCode], and the cache fields of [HomeUiState].
+ * Plain JVM tests with no Android context.
  */
 class DayEventsCacheTest {
 
     // ==================== Cache Refresh Logic Tests ====================
 
-    /**
-     * Tests the cache refresh logic: should refresh when current date
-     * is more than 1 day from the cache center.
-     */
+    // Refresh when the cache is empty or the page is more than a day from the cache center.
     @Test
     fun `shouldRefresh returns true when cache is empty`() {
         val cacheCenter = 0L
@@ -128,7 +124,7 @@ class DayEventsCacheTest {
 
     @Test
     fun `month boundary has consecutive dayCodes`() {
-        // Jan 31 -> Feb 1
+        // Jan 31 to Feb 1, packed inline as YYYYMMDD; no production call.
         val jan31 = LocalDate.of(2026, 1, 31)
         val feb1 = LocalDate.of(2026, 2, 1)
 
@@ -137,8 +133,8 @@ class DayEventsCacheTest {
 
         assertEquals(20260131, jan31Code)
         assertEquals(20260201, feb1Code)
-        // Note: These are not consecutive integers (131 -> 201), but that's expected
-        // The dayCode is a human-readable format, not meant for arithmetic
+        // The codes aren't consecutive integers (131 to 201): a dayCode is YYYYMMDD, not meant
+        // for arithmetic.
     }
 
     // ==================== Cache Range Tests ====================
@@ -153,7 +149,7 @@ class DayEventsCacheTest {
         val endDayCode = DayPagerUtils.msToDayCode(rangeEnd)
         val centerDayCode = DayPagerUtils.msToDayCode(centerMs)
 
-        // Center should be in the middle
+        // The center falls strictly between the ends.
         assertTrue("Start dayCode should be <= center", startDayCode < centerDayCode)
         assertTrue("End dayCode should be >= center", endDayCode > centerDayCode)
     }
@@ -227,16 +223,14 @@ class DayEventsCacheTest {
             loadedDayCodes = persistentSetOf()  // Nothing loaded yet
         )
 
-        // Can check if a specific day was loaded
+        // An empty cache still tells a loaded day from one not loaded.
         assertTrue(emptyButLoaded.loadedDayCodes.contains(20260115))
         assertFalse(notYetLoaded.loadedDayCodes.contains(20260115))
     }
 
     // ==================== Helper Functions ====================
 
-    /**
-     * Get today at midnight in system timezone.
-     */
+    /** Returns today's midnight in the system zone. */
     private fun getTodayMs(): Long {
         return LocalDate.now()
             .atStartOfDay(ZoneId.systemDefault())
@@ -245,8 +239,8 @@ class DayEventsCacheTest {
     }
 
     /**
-     * Replicates the cache refresh logic from HomeViewModel.shouldRefreshDayPagerCache().
-     * Extracted here for pure unit testing without ViewModel dependencies.
+     * Copies the rule of [HomeViewModel.shouldRefreshDayPagerCache] so it runs without a
+     * ViewModel; the tests don't call the production method.
      */
     private fun shouldRefreshLogic(cacheCenter: Long, currentDateMs: Long): Boolean {
         if (cacheCenter == 0L) return true
@@ -255,8 +249,9 @@ class DayEventsCacheTest {
     }
 
     /**
-     * Copy of generateDayCodesInRange from HomeViewModel for testing.
-     * Uses Occurrence.incrementDayCode for calendar-correct month/year boundaries.
+     * Walks day codes with [Occurrence.incrementDayCode], which crosses month and year
+     * boundaries. The production `generateDayCodesInRange` in DisplayEventRepository walks
+     * LocalDate and also rejects invalid codes and spans over 366 days; these tests don't call it.
      */
     private fun generateDayCodesInRange(startDay: Int, endDay: Int): List<Int> {
         if (startDay == endDay) return listOf(startDay)

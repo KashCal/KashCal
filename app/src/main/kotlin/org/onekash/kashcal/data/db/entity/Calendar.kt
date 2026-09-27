@@ -7,10 +7,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Calendar collection entity.
+ * Stores one calendar of an account, such as "Work" or "Holidays".
  *
- * Represents a calendar within an account (e.g., "Work", "Personal", "Holidays").
- * Maps to a CalDAV calendar collection.
+ * For iCloud and CalDAV accounts it is one CalDAV calendar collection. Local, ICS-subscription
+ * and contact birthday or anniversary calendars keep a `local://` or feed URL in [caldavUrl].
  */
 @Entity(
     tableName = "calendars",
@@ -32,109 +32,76 @@ data class Calendar(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
 
-    /**
-     * Parent account ID.
-     * CASCADE delete: when account is deleted, all its calendars are deleted.
-     */
+    /** Owning account; deleting the account cascades to its calendars. */
     @ColumnInfo(name = "account_id")
     val accountId: Long,
 
     /**
-     * CalDAV URL for this calendar collection.
-     * Example: https://caldav.icloud.com/123456789/calendars/home/
+     * Collection URL, unique across all accounts, e.g.
+     * `https://caldav.icloud.com/123456789/calendars/home/`.
      */
     @ColumnInfo(name = "caldav_url")
     val caldavUrl: String,
 
-    /**
-     * Display name shown in UI.
-     */
     @ColumnInfo(name = "display_name")
     val displayName: String,
 
-    /**
-     * Calendar color as ARGB integer.
-     * Used for event display in UI.
-     */
+    /** ARGB color, synced from the server for iCloud and CalDAV calendars. */
     @ColumnInfo(name = "color")
     val color: Int,
 
-    /**
-     * CalDAV ctag (collection tag).
-     * Changes when any event in calendar is modified.
-     * Used for quick "has anything changed?" check.
-     */
+    /** CalDAV ctag: changes when any event in the calendar changes, a cheap change check. */
     @ColumnInfo(name = "ctag")
     val ctag: String? = null,
 
-    /**
-     * RFC 6578 sync-token for incremental sync.
-     * More efficient than ctag for large calendars.
-     */
+    /** RFC 6578 sync-token for delta sync. */
     @ColumnInfo(name = "sync_token")
     val syncToken: String? = null,
 
-    /**
-     * Whether calendar is visible in UI.
-     * User can hide calendars without removing them.
-     */
+    /** Whether the calendar shows in the UI; hiding keeps its events. */
     @ColumnInfo(name = "is_visible", defaultValue = "1")
     val isVisible: Boolean = true,
 
-    /**
-     * Whether this is the default calendar for new events.
-     * Only one calendar per account should be default.
-     */
+    /** Whether this is the default calendar for new events; at most one per account. */
     @ColumnInfo(name = "is_default", defaultValue = "0")
     val isDefault: Boolean = false,
 
-    /**
-     * Whether calendar is read-only (e.g., subscribed calendars).
-     */
+    /** Whether the calendar is read-only, e.g. an ICS subscription. */
     @ColumnInfo(name = "is_read_only", defaultValue = "0")
     val isReadOnly: Boolean = false,
 
-    /**
-     * Sort order for UI display.
-     * Lower values appear first.
-     */
+    /** Display order; lower values come first. */
     @ColumnInfo(name = "sort_order", defaultValue = "0")
     val sortOrder: Int = 0,
 
     /**
-     * Whether notifications are muted for this calendar.
-     * When true, reminders are not scheduled for events in this calendar.
-     * Issue #137: Per-calendar notification control.
+     * Per-calendar notification mute (#137). Nothing reads it yet: reminders are scheduled
+     * whatever its value.
      */
     @ColumnInfo(name = "is_notification_muted", defaultValue = "0")
     val isNotificationMuted: Boolean = false,
 
     /**
-     * User's local color override for this calendar (ARGB integer).
-     * When set, overrides the server-synced color for UI display.
-     * Sync updates calendars.color without touching this field.
-     * Issue #102: Change color for CalDAV calendars.
+     * A user ARGB color for this calendar (#102). Nothing sets it yet; pending invitations and
+     * insights show it over [color] when set. Sync updates [color] and never touches this field.
      */
     @ColumnInfo(name = "local_color_override")
     val localColorOverride: Int? = null,
 
     /**
-     * Default reminder offset for new events in this calendar.
-     * ISO 8601 duration format (e.g., "-PT15M" for 15 minutes before).
-     * Null means no default reminder.
+     * Default reminder offset for new events in this calendar as an ISO 8601 duration
+     * ("-PT15M" is 15 minutes before); null for none. Nothing reads it yet.
      */
     @ColumnInfo(name = "default_reminder")
     val defaultReminder: String? = null,
 
     /**
-     * Whether this calendar collection advertises support for server-side
-     * auto-scheduling (RFC 6638 §2 "calendar-auto-schedule" in the DAV
-     * response header from an OPTIONS request on the collection).
+     * Whether the collection advertises server-side auto-scheduling (RFC 6638 §2
+     * "calendar-auto-schedule" in the DAV header of an OPTIONS reply on the collection).
      *
-     * Tri-state: null = unknown (not yet probed, or the probe failed);
-     * false = probed, not advertised; true = probed, advertised. The flag is
-     * advisory only — the authoritative delivery signal is read back at
-     * runtime, not derived from this capability.
+     * Null when not yet probed or the probe failed; false when probed and not advertised;
+     * true when advertised. Nothing reads it; the authoritative delivery signal is read back
+     * at runtime.
      */
     @ColumnInfo(name = "auto_schedule_supported")
     val autoScheduleSupported: Boolean? = null

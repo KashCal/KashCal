@@ -18,12 +18,9 @@ import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * Tests for OkHttpCalDavClient connection and capability checking.
- *
- * These tests verify:
- * 1. OPTIONS request is sent correctly
- * 2. DAV header is parsed for CalDAV capabilities (RFC 4791)
- * 3. Proper error messages for non-CalDAV servers
+ * Tests [OkHttpCalDavClient.checkConnection]: it sends OPTIONS, requires `calendar-access` in the
+ * DAV header (RFC 4791), names CalDAV in the error for a server without it, fails on auth and
+ * server errors, and closes every response, retried ones included.
  */
 class OkHttpCalDavClientConnectionTest {
 
@@ -159,5 +156,52 @@ class OkHttpCalDavClientConnectionTest {
         // Assert
         val request = mockWebServer.takeRequest()
         assertEquals("Should use OPTIONS method", "OPTIONS", request.method)
+    }
+
+    // ========== RESPONSES ARE CLOSED ==========
+
+    /** Counts calls whose response was closed: OkHttp fires callEnd only then. */
+    private class ClosedCalls : okhttp3.EventListener() {
+        val started = java.util.concurrent.atomic.AtomicInteger()
+        val ended = java.util.concurrent.atomic.AtomicInteger()
+        override fun callStart(call: okhttp3.Call) { started.incrementAndGet() }
+        override fun callEnd(call: okhttp3.Call) { ended.incrementAndGet() }
+        override fun callFailed(call: okhttp3.Call, ioe: java.io.IOException) { ended.incrementAndGet() }
+    }
+
+    @Test
+    fun `checkConnection closes every response, including the retried 429 and 5xx`() = runTest {
+        for (first in listOf(429, 503, 500)) {
+            val closed = ClosedCalls()
+            val counted = OkHttpCalDavClient(
+                DefaultQuirks(mockWebServer.url("/").toString()),
+                okhttp3.OkHttpClient.Builder().eventListener(closed).build()
+            )
+            // Retry-After only on the 429: on a 503 with "Retry-After: 0" OkHttp retries
+            // inside the same call, and the client's own retry is what is under test.
+            val busy = MockResponse().setResponseCode(first).setBody("busy")
+            mockWebServer.enqueue(if (first == 429) busy.setHeader("Retry-After", "0") else busy)
+            mockWebServer.enqueue(MockResponse().setResponseCode(200).setHeader("DAV", "1, calendar-access").setBody("ok"))
+
+            val result = counted.checkConnection(mockWebServer.url("/").toString())
+
+            assertTrue("$first then 200: $result", result.isSuccess())
+            assertEquals("$first: two calls made", 2, closed.started.get())
+            assertEquals("$first: both responses closed", 2, closed.ended.get())
+        }
+    }
+
+    @Test
+    fun `checkConnection closes the response it returns an error for`() = runTest {
+        val closed = ClosedCalls()
+        val counted = OkHttpCalDavClient(
+            DefaultQuirks(mockWebServer.url("/").toString()),
+            okhttp3.OkHttpClient.Builder().eventListener(closed).build()
+        )
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setHeader("DAV", "1, 2").setBody("<html/>"))
+
+        counted.checkConnection(mockWebServer.url("/").toString())
+
+        assertEquals(1, closed.ended.get())
     }
 }

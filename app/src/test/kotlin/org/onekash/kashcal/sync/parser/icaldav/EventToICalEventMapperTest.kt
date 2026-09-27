@@ -13,11 +13,9 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import java.time.ZoneId
 
 /**
- * Tests for `EventToICalEventMapper` — the shared Event -> ICalEvent mapping used
- * by IcsPatcher (sync push) and IcsExporter (export).
- *
- * Mapper preserves behavior of the previously-inline construction in
- * IcsPatcher.generateFresh and IcsPatcher.generateException.
+ * Tests [EventToICalEventMapper], the Room Event -> ICalEvent mapping that push and export
+ * share: the standalone and exception overloads, the ORGANIZER gate on attendees, and
+ * [EventToICalEventMapper.dtStartOf].
  */
 class EventToICalEventMapperTest {
 
@@ -265,7 +263,7 @@ class EventToICalEventMapperTest {
 
     @Test
     fun `exception mapper originalInstanceTime null produces null-token importId (pre-existing behavior)`() {
-        // Preserve the existing null-token importId behavior exactly — not a bug to 'fix' here.
+        // The null token is kept deliberately (see the overload's KDoc); don't 'fix' it here.
         val master = baseEvent(uid = "master-def")
         val exception = baseEvent(importId = null, originalInstanceTime = null)
         val ical = EventToICalEventMapper.toICalEvent(master, exception)
@@ -284,8 +282,8 @@ class EventToICalEventMapperTest {
 
     @Test
     fun `exception mapper attendees default empty preserves existing callers`() {
-        // No `attendees =` argument: default-empty keeps IcsExporter and any
-        // existing call sites compiling and behaving as they did before.
+        // No `attendees =` argument, as IcsExporter calls it: the exception emits no
+        // ATTENDEEs.
         val master = baseEvent(uid = "m-default")
         val exception = baseEvent(originalInstanceTime = 1709740800000L)
         val ical = EventToICalEventMapper.toICalEvent(master, exception)
@@ -297,13 +295,11 @@ class EventToICalEventMapperTest {
 
     @Test
     fun `exception mapper emits passed-through attendees`() {
-        // Fix for the attendee-loss bug: when callers pass attendees,
-        // they must reach the emitted ICalEvent so per-exception attendee
-        // lists survive recurring-event push.
-        // A real schedulable exception inherits the master's resolved
-        // ORGANIZER (EventWriter builds it from modifiedEvent.copy), so the
-        // fixture carries one — emitting ATTENDEE without ORGANIZER violates
-        // RFC 6638 §3.1 and is now blocked by the generator guard.
+        // Attendees a caller passes must reach the emitted ICalEvent, so each exception's
+        // attendee list survives a recurring-event push. A real schedulable exception
+        // inherits the master's resolved ORGANIZER (EventWriter builds it from
+        // modifiedEvent.copy), so the fixture carries one: the mapper drops ATTENDEEs
+        // without an ORGANIZER, which RFC 5545 §3.8.4.3 requires on a group-scheduled event.
         val master = baseEvent(uid = "m-with-attendees", organizerEmail = "host@example.test")
         val exception = baseEvent(
             originalInstanceTime = 1709740800000L,
@@ -348,7 +344,7 @@ class EventToICalEventMapperTest {
             originalInstanceTime = 1709740800000L,
             organizerEmail = "host@example.test"
         )
-        // Pass in reverse sortOrder; emitter must respect order, not list position.
+        // Passed in reverse sortOrder; the mapper keeps list position and ignores sortOrder.
         val attendees = listOf(
             org.onekash.kashcal.data.db.entity.Attendee(
                 eventId = 99L, address = "mailto:second@example.test",
@@ -360,26 +356,26 @@ class EventToICalEventMapperTest {
             )
         )
         val ical = EventToICalEventMapper.toICalEvent(master, exception, attendees)
-        // Emitted in input order — caller controls ordering.
+        // Emitted in input order: the caller controls ordering.
         assertEquals("second@example.test", ical.attendees[0].email)
         assertEquals("first@example.test", ical.attendees[1].email)
     }
 
     @Test
     fun `non-exception mapper attendees default empty preserves existing callers`() {
-        // The single-arg overload also gets a defaulted attendees parameter.
+        // The standalone overload also defaults to no attendees.
         val event = baseEvent(uid = "single")
         val ical = EventToICalEventMapper.toICalEvent(event)
         assertTrue(ical.attendees.isEmpty())
     }
 
-    // ===== ATTENDEE requires ORGANIZER (RFC 6638 §3.1) =====
+    // ===== ATTENDEE requires ORGANIZER (RFC 5545 §3.8.4.3) =====
 
     @Test
     fun `standalone mapper drops attendees when organizer is null`() {
-        // A non-mailto-schedulable account (non-email login) resolves no
-        // ORGANIZER. Emitting ATTENDEE without ORGANIZER violates RFC 6638 §3.1
-        // and conformant servers reject the PUT — so the guard drops them.
+        // An account that can't schedule (non-email login) resolves no ORGANIZER.
+        // ATTENDEE without ORGANIZER breaks RFC 5545 §3.8.4.3 and conformant servers
+        // reject the PUT, so the mapper drops the attendees.
         val event = baseEvent(uid = "no-org", organizerEmail = null)
         val attendees = listOf(
             org.onekash.kashcal.data.db.entity.Attendee(
@@ -430,12 +426,12 @@ class EventToICalEventMapperTest {
         assertTrue(ical.attendees.isEmpty())
     }
 
-    // ========== dtStartOf — shared Room-Event → DTSTART reconstruction ==========
+    // ========== dtStartOf: Room Event → DTSTART ==========
 
     @Test
     fun `dtStartOf reconstructs a timed TZID DTSTART to known values`() {
-        // Pin against expected literals, NOT against toICalEvent (which is
-        // implemented via dtStartOf, so comparing the two would be tautological).
+        // Pinned against literals, not toICalEvent: toICalEvent calls dtStartOf, so
+        // comparing the two would be tautological.
         val event = baseEvent(
             startTs = 1709740800000L,
             timezone = "America/Chicago",

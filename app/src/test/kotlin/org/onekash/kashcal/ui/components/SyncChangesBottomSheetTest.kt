@@ -12,19 +12,17 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * Unit tests for SyncChangesBottomSheet date formatting.
- *
- * Tests the formatEventTime() function which:
- * - Shows year only when different from current year (Android DateUtils pattern)
- * - Uses UTC for all-day events to prevent timezone shift
- * - Uses local timezone for timed events
+ * Tests [formatEventTime], the sync-changes sheet's date formatter, which:
+ * - shows the year only when it isn't the current year,
+ * - formats an all-day event's UTC date with no time, so the date doesn't shift by zone,
+ * - formats a timed event in the device zone with a 12-hour time.
  */
 @RunWith(RobolectricTestRunner::class)
 class SyncChangesBottomSheetTest {
 
     private val currentYear = Year.now().value
 
-    // Helper to create timestamp for all-day event (UTC midnight)
+    // All-day timestamps are UTC midnight.
     private fun allDayTimestamp(year: Int, month: Int, day: Int): Long {
         return LocalDate.of(year, month, day)
             .atStartOfDay(ZoneOffset.UTC)
@@ -32,7 +30,7 @@ class SyncChangesBottomSheetTest {
             .toEpochMilli()
     }
 
-    // Helper to create timestamp for timed event (local timezone)
+    // Timed timestamps are in the host's default zone.
     private fun timedTimestamp(year: Int, month: Int, day: Int, hour: Int, minute: Int): Long {
         return LocalDateTime.of(year, month, day, hour, minute)
             .atZone(ZoneId.systemDefault())
@@ -47,7 +45,7 @@ class SyncChangesBottomSheetTest {
         val ts = allDayTimestamp(currentYear, 1, 6) // Jan 6
         val result = formatEventTime(ts, isAllDay = true)
 
-        // Should NOT contain year
+        // Should not contain year
         assertFalse("Should not contain year for current year", result.contains(currentYear.toString()))
         // Should contain day
         assertTrue("Should contain 'Jan'", result.contains("Jan"))
@@ -81,7 +79,7 @@ class SyncChangesBottomSheetTest {
         val ts = allDayTimestamp(currentYear, 12, 31)
         val result = formatEventTime(ts, isAllDay = true)
 
-        // Should NOT contain year (still current year)
+        // Should not contain year (still current year)
         assertFalse("Dec 31 of current year should not show year", result.contains(currentYear.toString()))
     }
 
@@ -102,7 +100,7 @@ class SyncChangesBottomSheetTest {
         val ts = timedTimestamp(currentYear, 3, 15, 14, 30) // March 15 at 2:30 PM
         val result = formatEventTime(ts, isAllDay = false)
 
-        // Should NOT contain year
+        // Should not contain year
         assertFalse("Should not contain year for current year", result.contains(currentYear.toString()))
         // Should contain time
         assertTrue("Should contain AM or PM", result.contains("AM") || result.contains("PM"))
@@ -142,7 +140,7 @@ class SyncChangesBottomSheetTest {
         // Expected format: "Mon, Jan 6" (no year if current) or "Mon, Jan 6, 2025" (with year)
         assertTrue("Should start with day of week", result.matches(Regex("^[A-Z][a-z]{2},.*")))
         assertTrue("Should contain month abbreviation", result.contains("Jan"))
-        // Should NOT contain time indicator for all-day
+        // Should not contain time indicator for all-day
         assertFalse("All-day should not contain AM/PM", result.contains("AM") || result.contains("PM"))
     }
 
@@ -163,7 +161,7 @@ class SyncChangesBottomSheetTest {
         val ts = allDayTimestamp(currentYear, 1, 6)
         val result = formatEventTime(ts, isAllDay = true)
 
-        // Regardless of local timezone, should show Jan 6
+        // Formatted in UTC, so Jan 6 in any zone (this run uses the host zone only)
         assertTrue("Should show Jan 6 regardless of timezone", result.contains("Jan") && result.contains("6"))
     }
 }

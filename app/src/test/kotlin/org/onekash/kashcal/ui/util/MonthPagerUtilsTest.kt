@@ -6,10 +6,8 @@ import org.junit.Test
 import java.util.Calendar
 
 /**
- * Unit tests for MonthPagerUtils.
- *
- * Tests constants, page ↔ year/month conversions, and boundary scenarios
- * including the Issue #53 regression (years before 1976 not accessible).
+ * Tests [MonthPagerUtils]: its constants, page and year/month conversions, and the range bounds,
+ * including distant years such as 1976 and 1930 staying reachable (#53).
  */
 class MonthPagerUtilsTest {
 
@@ -29,10 +27,9 @@ class MonthPagerUtilsTest {
 
     @Test
     fun `range matches day pager range`() {
-        // Month pager should cover the same ~100 year range as day pager
+        // The month pager covers the day pager's ~100-year range.
         val dayPagerYears = DayPagerUtils.INITIAL_PAGE / 365  // ~100
         val monthPagerYears = MonthPagerUtils.INITIAL_PAGE / 12  // 100
-        // Month pager should be at least as wide as day pager
         assertTrue(
             "Month pager ($monthPagerYears yr) should cover at least as much as day pager ($dayPagerYears yr)",
             monthPagerYears >= dayPagerYears
@@ -123,7 +120,7 @@ class MonthPagerUtilsTest {
         }
     }
 
-    // ==================== Issue #53 Regression Tests ====================
+    // ==================== Distant years (#53) ====================
 
     @Test
     fun `February 1976 is reachable from February 2026`() {
@@ -141,7 +138,7 @@ class MonthPagerUtilsTest {
 
     @Test
     fun `January 1930 is within range from February 2026`() {
-        // 96 years back - within 100-year range
+        // 96 years back, inside the 100-year range.
         val page = MonthPagerUtils.yearMonthToPage(1930, Calendar.JANUARY, 2026, Calendar.FEBRUARY)
         assertTrue("Page $page should be >= 0 (1930 should be reachable)", page >= 0)
         assertTrue("Page $page should be < TOTAL_PAGES", page < MonthPagerUtils.TOTAL_PAGES)
@@ -149,17 +146,16 @@ class MonthPagerUtilsTest {
 
     @Test
     fun `year 1926 is at boundary from 2026`() {
-        // Exactly 100 years back from Feb 2026 = Feb 1926
+        // 100 years back from Feb 2026 is Feb 1926.
         val page = MonthPagerUtils.yearMonthToPage(1926, Calendar.FEBRUARY, 2026, Calendar.FEBRUARY)
         assertEquals("100 years back should be page 0", 0, page)
     }
 
     @Test
     fun `year 2126 is at boundary from 2026`() {
-        // Exactly 100 years forward from Feb 2026 = Feb 2126
+        // 100 years forward from Feb 2026 is Feb 2126.
         val page = MonthPagerUtils.yearMonthToPage(2126, Calendar.FEBRUARY, 2026, Calendar.FEBRUARY)
-        // Page 2400 is out of bounds (0-indexed, max is 2399), but Feb 2126 = page 2400
-        // The last valid page is Jan 2126 = page 2399
+        // Feb 2126 is page 2400, one past the last page; the last page, 2399, is Jan 2126.
         assertEquals(MonthPagerUtils.TOTAL_PAGES, page)
     }
 

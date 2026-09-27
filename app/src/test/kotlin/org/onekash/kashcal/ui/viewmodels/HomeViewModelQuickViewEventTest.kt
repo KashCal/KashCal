@@ -17,6 +17,8 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
@@ -28,15 +30,14 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 
 /**
- * Pins the quick-view sheet's live-by-id behavior.
+ * Tests the quick-view sheet's live-by-id behavior.
  *
- * The Room quick-view sheet must render the event re-read reactively by
- * its id ([HomeViewModel.quickViewEventLive]) rather than the immutable
- * snapshot captured at tap time. That way an edit's new title/time is
- * reflected even when the on-screen list that produced the tapped
- * snapshot was stale (e.g. search results, which never re-run after an
- * edit). Only the event id has to be right — and it never changes on an
- * edit.
+ * The Room quick-view sheet must render the event re-read by its id
+ * ([HomeViewModel.quickViewEventLive]), not the snapshot captured at tap time,
+ * so an edit's new title or time shows even when the list that produced the
+ * snapshot is stale (search results don't re-run after an edit). Only the
+ * event id has to be right, and an edit never changes it. The flow is null
+ * with no active event, re-emits on an edit and follows a new active id.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelQuickViewEventTest {
@@ -101,7 +102,8 @@ class HomeViewModelQuickViewEventTest {
         accountRepository = accountRepository,
         syncScheduler = syncScheduler,
         networkMonitor = networkMonitor,
-        calendarProviderRepository = fakeCalendarProviderRepository,
+        deviceEventReader = fakeCalendarProviderRepository.deviceEventReader(),
+        deviceEventWriter = fakeCalendarProviderRepository.deviceEventWriter(dataStore),
         attendeeBackfill = mockk(relaxed = true),
         contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),
@@ -143,7 +145,7 @@ class HomeViewModelQuickViewEventTest {
             viewModel.setQuickViewEventId(7L)
             assertEquals("Old title", awaitItem()?.title)
 
-            // Simulate an edit persisting a new title to the source of truth.
+            // An edit persists a new title to the source of truth.
             backing.value = event(7L, "New title")
             assertEquals("New title", awaitItem()?.title)
 

@@ -5,10 +5,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for DeviceCalendar data class.
+ * Tests [DeviceCalendar.isWritable], which gates writes, and [DeviceCalendar.canDeliverInvites].
  *
- * Tests the computed `isWritable` property which gates write operations.
- * Access level constants from CalendarContract.Calendars:
+ * Access levels from `CalendarContract.Calendars`:
  * - CAL_ACCESS_NONE = 0
  * - CAL_ACCESS_FREEBUSY = 100
  * - CAL_ACCESS_READ = 200
@@ -99,8 +98,8 @@ class DeviceCalendarTest {
     }
 
     // ========== canDeliverInvites Tests ==========
-    // A device calendar can deliver invitations only when its account has a
-    // sync adapter — i.e. the account type is NOT the provider's LOCAL type.
+    // A device calendar can deliver invitations only when its account has a sync adapter,
+    // that is, when the account type isn't the provider's LOCAL type.
 
     @Test
     fun `LOCAL account cannot deliver invites`() {

@@ -19,19 +19,14 @@ import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Unit tests for [ContactSyncScheduleReconciler].
+ * Tests [ContactSyncScheduleReconciler], which re-arms the periodic contact-sync job at app start
+ * from the accounts in the database and the global sync-interval preference, so a login whose job
+ * was never armed or was lost heals without a user toggle.
  *
- * The reconciler is the single place that answers "should the periodic
- * contact-sync job be armed right now, and at what interval?", derived from the
- * accounts in the database and the global sync-interval preference. App start
- * drives it so a login enrolled before contact sync shipped — or an install whose
- * job was lost — heals itself rather than depending on a user toggle.
- *
- * [accountRepository] and [userPreferences] are deliberately NOT relaxed: a
- * data-bearing mock that defaulted to an empty account list or a null interval
- * would silently exercise the "do nothing" branch and pass a test that had stopped
- * covering the real path. [syncScheduler] is a Unit-returning side-effect
- * collaborator (a scheduler), so a relaxed mock is the sanctioned choice there.
+ * [accountRepository] and [userPreferences] are deliberately not relaxed: a data-bearing mock
+ * that defaulted to an empty account list or a null interval would silently exercise the "do
+ * nothing" branch and pass a test that had stopped covering the real path. [syncScheduler] is a
+ * Unit-returning side-effect collaborator, so a relaxed mock is fine there.
  */
 class ContactSyncScheduleReconcilerTest {
 
@@ -71,8 +66,8 @@ class ContactSyncScheduleReconcilerTest {
 
     @Test
     fun `no contact-sync account arms nothing and never cancels`() = runTest {
-        // A calendar-only login: enabled, but contact sync is off. The shared job is
-        // not ours to touch here (calendar sync's lifecycle owns cancellation).
+        // A calendar-only login: enabled, but contact sync is off. Cancelling the shared job
+        // is left to calendar sync's disable and purge path.
         givenAccounts(account(1, contactSyncEnabled = false))
 
         reconciler.reconcile()
@@ -83,8 +78,8 @@ class ContactSyncScheduleReconcilerTest {
 
     @Test
     fun `a contact-sync account on a non-CardDAV provider does not arm the job`() = runTest {
-        // contactSyncEnabled can only mean CardDAV contacts; guard against a stray
-        // flag on a provider that has no CardDAV to sync.
+        // contactSyncEnabled can only mean CardDAV contacts, so a stray flag on a provider
+        // without CardDAV arms nothing.
         givenAccounts(account(1, provider = AccountProvider.LOCAL, contactSyncEnabled = true))
 
         reconciler.reconcile()
@@ -138,7 +133,7 @@ class ContactSyncScheduleReconcilerTest {
 
     @Test
     fun `a failing scheduler does not propagate out of reconcile`() = runTest {
-        // Callers are bare application-scope launches with no exception handler, so a
+        // The caller is a bare application-scope launch with no exception handler, so a
         // throw here would crash the process on a recoverable WorkManager failure.
         givenAccounts(account(1))
         every { syncScheduler.ensureContactSyncScheduled(any()) } throws IllegalStateException("WorkManager unavailable")
@@ -171,9 +166,9 @@ class ContactSyncScheduleReconcilerTest {
 
     @Test
     fun `concurrent reconciles are serialized`() = runTest {
-        // Mutations and app start can overlap, so read-decide-apply must be one step;
-        // otherwise a stale read could win. The account read yields mid-flight so an
-        // unlocked pass would interleave its enter/exit markers.
+        // Overlapping passes must not act on a stale read, so read-decide-apply is one step.
+        // The account read yields mid-flight so an unlocked pass would interleave its
+        // enter/exit markers.
         val callLog = mutableListOf<String>()
         coEvery { accountRepository.getEnabledAccounts() } coAnswers {
             callLog += "enter"

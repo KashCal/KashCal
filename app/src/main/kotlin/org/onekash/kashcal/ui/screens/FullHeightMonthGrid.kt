@@ -49,10 +49,12 @@ import org.onekash.kashcal.ui.screens.monthfull.spanStyleFor
 import java.util.Calendar as JavaCalendar
 
 /**
- * Full-height month grid with event title snippets in day cells.
+ * Draws the full-height month grid, with event title snippets and multi-day span bars in the day
+ * cells.
  *
- * @param monthEventsMap Events grouped by dayCode (YYYYMMDD), from HomeViewModel.monthEvents.
- * @param onDateSelected Called when a day cell is tapped, with the date as epoch millis
+ * @param monthEventsMap events keyed by dayCode (YYYYMMDD), from HomeViewModel.monthEvents.
+ * @param onDateSelected called with the day as epoch millis when its date header, a snippet, its
+ *   "+N more" row or an empty slot is tapped; span bars aren't clickable.
  */
 @Composable
 internal fun FullHeightMonthGrid(
@@ -465,9 +467,8 @@ private val SPAN_SHAPE = RoundedCornerShape(SPAN_CORNER)
 private val STRIPE_SHAPE = RoundedCornerShape(1.dp)
 
 /**
- * Slot height tracks `labelSmall`'s line height (16sp) so descenders fit
- * at any user font scale (accessibility settings). Returns the lineHeight
- * resolved to dp at the current density.
+ * Returns `labelSmall`'s line height (16sp) in dp at the current density, so descenders fit at
+ * any user font scale.
  */
 @Composable
 private fun slotHeight(): androidx.compose.ui.unit.Dp {

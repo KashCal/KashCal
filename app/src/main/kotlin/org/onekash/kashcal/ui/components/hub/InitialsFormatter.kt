@@ -3,17 +3,14 @@ package org.onekash.kashcal.ui.components.hub
 import java.util.Locale
 
 /**
- * Normalizes free-form input into a display monogram of at most two letters:
- * keep only letters, uppercase them locale-independently, and take the first
- * two. A blank/letter-free input yields an empty string, which callers render
- * as the avatar's generic glyph rather than a monogram.
+ * Normalizes free-form input into a monogram of at most two letters: keeps only letters,
+ * uppercases them locale-independently and takes the first two. Input with no letter yields an
+ * empty string, which [AccountAvatar] renders as its generic glyph.
  *
- * Iterates by Unicode code point (not by `Char`) so an astral-plane letter is
- * never split into a broken half of a surrogate pair. Uppercasing uses
- * [Locale.ROOT] so casing is stable across device locales (e.g. it avoids the
- * Turkish dotless-i mapping "i" -> "İ"), and is applied per letter BEFORE the
- * take-two so a letter whose uppercase expands (e.g. German "ß" -> "SS") still
- * counts as one and the result never exceeds two source letters.
+ * Iterates by code point, not `Char`, so an astral-plane letter is never split into half a
+ * surrogate pair. [Locale.ROOT] keeps casing stable across device locales (no Turkish
+ * "i" -> "İ"). Each letter is uppercased as it is taken, so one whose uppercase expands
+ * (German "ß" -> "SS") still counts once and the result never exceeds two source letters.
  */
 fun normalizeInitials(raw: String): String {
     val letters = StringBuilder()

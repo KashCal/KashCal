@@ -35,23 +35,18 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.viewmodels.EditScope
 
 /**
- * Visual weighting for a [ScopeOption]. Drives the card's icon-tile
- * tint and label color.
+ * Visual weight of a [ScopeOption]: its icon tile, label and border colors.
  *
- * - [Neutral] — default treatment.
- * - [Warn] — "All events" on the edit/move flow. Broad change but
- *   not destructive; the warm tint is a subtle brake on misclicks.
- * - [Destructive] — "All events" on the delete flow, where the
- *   action is genuinely destructive. The destructive card sits in
- *   its own visual group separated from the safe options.
+ * - [Neutral]: the default.
+ * - [Warn]: "All events" when editing or moving. Broad but not destructive; the warm tint is a
+ *   brake on misclicks.
+ * - [Destructive]: "All events" when deleting. The card sits apart from the safe options.
  */
 enum class ScopeTint { Neutral, Warn, Destructive }
 
 /**
- * One card in [RecurringScopeSheet]. Computed by callers so the
- * sheet itself stays stateless. Disabled options stay visible at
- * reduced opacity — the user infers from context why they don't
- * apply.
+ * One card in [RecurringScopeSheet], built by the caller. A disabled option stays visible at
+ * reduced opacity; the context shows why it doesn't apply.
  */
 data class ScopeOption(
     val scope: EditScope,
@@ -62,12 +57,9 @@ data class ScopeOption(
 )
 
 /**
- * Pure handler for a scope-option tap. Commits the option's scope
- * if enabled; never invokes a cancel callback. The host is
- * responsible for dismissing the sheet by clearing the pending
- * state when the select callback fires — adding a parallel cancel
- * call here used to race the host's cancel handler against an
- * in-flight save and re-enable the Save button mid-flight.
+ * Commits an enabled option's scope through [onSelect]; never calls a cancel callback. The host
+ * dismisses the sheet by clearing its pending state when [onSelect] fires. A cancel call here
+ * would race the host's cancel handler against an in-flight save and re-enable Save mid-flight.
  */
 internal fun scopeOptionTap(option: ScopeOption, onSelect: (EditScope) -> Unit) {
     if (!option.enabled) return
@@ -75,14 +67,12 @@ internal fun scopeOptionTap(option: ScopeOption, onSelect: (EditScope) -> Unit) 
 }
 
 /**
- * Bottom sheet that asks the user how broadly an edit, delete, or
- * drag-reschedule should apply across a recurring series. Single-tap
- * commits — picking a card fires [onSelect] and dismisses the
- * sheet, no second confirmation. Cancel returns to whatever screen
- * triggered the sheet without applying the change.
+ * Asks how far an edit, delete or drag-reschedule applies across a recurring series. One tap
+ * commits: a card fires [onSelect] with no second confirmation, and the host dismisses the
+ * sheet. Cancel, or a tap outside, calls [onCancel] without applying the change.
  *
- * Stateless aside from the sheet state itself; the option list and
- * its enabled / tinted attributes come entirely from the caller.
+ * Stateless apart from the sheet state; the options, enabled flags and tints come from the
+ * caller.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,8 +111,7 @@ fun RecurringScopeSheet(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 options.forEachIndexed { index, option ->
-                    // Insert a small gap above the destructive card so
-                    // it visually separates from the safe options.
+                    // A gap sets the destructive card apart from the safe options.
                     if (option.tint == ScopeTint.Destructive && index > 0) {
                         Spacer(Modifier.height(4.dp))
                     }
@@ -138,9 +127,7 @@ fun RecurringScopeSheet(
 
             Spacer(Modifier.height(8.dp))
 
-            // Cancel sits below the cards as a centered text-button.
-            // It's clearly its own visual category — not a fourth
-            // scope.
+            // A centered text button below the cards, so it doesn't read as another scope.
             Text(
                 text = stringResource(R.string.action_cancel),
                 style = MaterialTheme.typography.bodyLarge,

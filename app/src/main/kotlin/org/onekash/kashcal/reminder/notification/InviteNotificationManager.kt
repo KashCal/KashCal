@@ -12,19 +12,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Builds and shows the per-invite system notification fired when the
- * sync engine pulls an event with the user's PARTSTAT=NEEDS-ACTION.
+ * Shows the notification for an invitation: a pulled event where the user's attendee row is
+ * PARTSTAT=NEEDS-ACTION (the caller, `InviteNotifier`, picks the rows).
  *
- * Mirrors [ReminderNotificationManager] in shape; the differences are:
- *
- * - **Lower priority.** PRIORITY_DEFAULT — invites aren't time-sensitive
- *   like reminders.
- * - **No actions.** Tapping opens the event detail surface (Respond
- *   buttons live there). Inline Accept/Decline-from-notification is
- *   deferred to v2 once the broadcast-receiver write path is paid for.
- * - **Tap intent reuses [ReminderNotificationManager.ACTION_SHOW_EVENT]**
- *   — the existing MainActivity handler already deep-links to the event
- *   quick-view sheet; no new intent route needed.
+ * Parallels [ReminderNotificationManager], except:
+ * - PRIORITY_DEFAULT: invites aren't time-sensitive like reminders.
+ * - No actions. Tapping opens the event, where the Respond buttons live.
+ * - The tap intent uses [ReminderNotificationManager.ACTION_SHOW_EVENT], which MainActivity
+ *   already routes to the event quick view.
  */
 @Singleton
 class InviteNotificationManager @Inject constructor(
@@ -32,15 +27,11 @@ class InviteNotificationManager @Inject constructor(
     private val channels: InviteNotificationChannels
 ) {
     /**
-     * Build and show an invitation notification for [event]. The
-     * notification ID is keyed on the attendee row so multiple
-     * invitations for distinct events stack rather than overwrite,
-     * and so the ViewModel can cancel by event ID later.
+     * Shows an invitation notification for [event], unless notifications or the channel are off.
+     * The ID is keyed on the attendee row, so invitations for distinct events stack.
      *
-     * @param attendeeRowId The Room row ID of the user's ATTENDEE row,
-     *   used to key the notification ID for stacking.
-     * @param organizerLabel A human-readable label for the organizer
-     *   (CN if set, else the bare address).
+     * @param attendeeRowId the Room ID of the user's attendee row
+     * @param organizerLabel the organizer's name, or the bare address when it has none
      */
     fun showInvite(event: Event, attendeeRowId: Long, organizerLabel: String) {
         if (!areNotificationsEnabled()) return
@@ -65,19 +56,15 @@ class InviteNotificationManager @Inject constructor(
         nm.notify(notificationId, notification)
     }
 
-    /**
-     * Cancel a notification keyed on attendee row.
-     */
+    /** Cancels the notification of an attendee row. */
     fun cancel(attendeeRowId: Long) {
         channels.cancel(channels.getNotificationId(attendeeRowId))
     }
 
     /**
-     * Cancel any invite notification that may exist for [eventId]. Used
-     * by `EventCoordinator.replyRsvp` so the system notification clears
-     * when the user responds from any in-app surface. Cancels both the
-     * per-row ID and the per-event ID since the caller doesn't know
-     * which form was used.
+     * Cancels [eventId]'s invite notification: the one for [attendeeRowId] when given, and the
+     * per-event ID. `InviteNotifier.cancelForEvent` calls it for each of the event's attendee
+     * rows once an RSVP is recorded. Notifications are only ever posted under per-row IDs.
      */
     fun cancelForEvent(eventId: Long, attendeeRowId: Long? = null) {
         if (attendeeRowId != null) {
@@ -90,16 +77,11 @@ class InviteNotificationManager @Inject constructor(
         channels.areNotificationsEnabled() && channels.isChannelEnabled()
 
     private fun createOpenIntent(event: Event): PendingIntent {
-        // Reuse the existing event-detail deep link path defined by
-        // ReminderNotificationManager. MainActivity's onNewIntent already
-        // handles ACTION_SHOW_EVENT, so the notification tap lands on
-        // the quick-view sheet (where the Respond buttons live).
         val intent = Intent(context, MainActivity::class.java).apply {
             action = ReminderNotificationManager.ACTION_SHOW_EVENT
             putExtra(ReminderNotificationManager.EXTRA_EVENT_ID, event.id)
-            // Treat the event's startTs as the occurrence time — invitations
-            // are series-level on every fixture-tested server; per-instance
-            // is a T4 concern.
+            // The event's start stands in for the occurrence: invitations are for the whole
+            // series on every fixture-tested server.
             putExtra(ReminderNotificationManager.EXTRA_OCCURRENCE_TS, event.startTs)
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }

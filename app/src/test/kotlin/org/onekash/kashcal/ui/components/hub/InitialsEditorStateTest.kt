@@ -6,9 +6,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for [InitialsEditorState], the state holder behind the hub's
- * inline initials editor. Extracted from the composable so its enter/type/
- * cancel/save transitions are verifiable off-device.
+ * Unit tests for the transitions of [InitialsEditorState], the hub's inline initials editor:
+ * start, type, cancel, save (including clearing to blank) and [InitialsEditorState.syncCurrent]
+ * while idle and mid-edit.
  */
 class InitialsEditorStateTest {
 
@@ -85,7 +85,7 @@ class InitialsEditorStateTest {
         val state = InitialsEditorState(current = "KC")
         state.start()
         state.onType("ZZ")
-        // An external re-emit (sync/backup) must not disturb the active draft.
+        // An external re-emit of the stored value (sync or backup) must not touch the draft.
         state.syncCurrent("AB")
         assertEquals("ZZ", state.draft)
         assertTrue(state.isEditing)

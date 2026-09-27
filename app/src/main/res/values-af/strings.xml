@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Geen kalenders op hierdie bediener gevind nie.</string>
     <string name="caldav_error_unexpected">Onverwagte fout. Probeer asseblief weer.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nAs dit \'n bediener op jou plaaslike netwerk is, laat plaaslike netwerktoegang toe om te verbind.</string>
+    <string name="caldav_error_connection_refused_insecure">Die bediener het die verbinding na ’n plek herlei waarheen KashCal nie volg nie (’n onversleutelde adres of ’n herleidingslus), dus het KashCal gestop voordat jou wagwoord gestuur is. Gaan die bedieneradres na.</string>
     <string name="local_network_banner_title">Plaaslike netwerktoegang benodig</string>
     <string name="local_network_banner_body">Hierdie bediener lyk of dit op jou plaaslike netwerk is. Laat plaaslike netwerktoegang toe sodat KashCal daaraan kan verbind.</string>
     <string name="local_network_banner_allow">Laat toegang toe</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Stoor veranderinge na</string>
     <string name="dialog_delete_recurring_title">Vee uit</string>
     <string name="dialog_move_recurring_title">Skuif</string>
+    <string name="snackbar_event_rescheduled">Gebeurtenis is herskeduleer</string>
+    <string name="snackbar_reschedule_failed">Kon nie gebeurtenis herskeduleer nie</string>
     <string name="recurring_this_event">Hierdie gebeurtenis</string>
     <string name="recurring_all_events">Alle gebeurtenisse</string>
 

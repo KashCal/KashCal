@@ -1,39 +1,36 @@
 package org.onekash.kashcal.ui.permission
 
 /**
- * Local-network-permission state for the CalDAV sign-in sheet's inline banner.
+ * Holds the local-network permission state behind the inline banners of CalDAV sign-in and the
+ * add-subscription dialog.
  *
- * Mirrors [ContactsPermissionState]: the banner never blocks the primary task
- * (manual server entry works in every state), and permanent denial is detected
- * via the rationale-flip signal the Android docs recommend rather than a
- * denial-count heuristic.
+ * Mirrors [ContactsPermissionState]: the banner never blocks the primary task (manual server
+ * entry works in every state), and permanent denial is detected from the post-request rationale
+ * signal, not a denial count.
  *
- * Adds [NotRequired] for OS versions below Android 17 (API 37), where apps with
- * INTERNET implicitly retain local-network access and there is no runtime
- * prompt — the banner is never shown in that case.
+ * Adds [NotRequired] below Android 17 (API 37), where apps with INTERNET keep implicit
+ * local-network access and there is no runtime prompt; the banner never shows then.
  */
 sealed interface LocalNetworkPermissionState {
-    /** Permission granted — LAN sync will work. */
+    /** Granted: LAN sync works. */
     data object Granted : LocalNetworkPermissionState
 
-    /** Pre-Android 17 — no runtime permission needed. */
+    /** Below Android 17: no runtime permission needed. */
     data object NotRequired : LocalNetworkPermissionState
 
-    /** Not yet requested — show the educational banner for LAN servers. */
+    /** Not granted and no rationale due: shows the educational banner for LAN servers. */
     data object NotRequested : LocalNetworkPermissionState
 
-    /** Denied without "don't ask again" — the banner can offer the ask again. */
+    /** Denied without "don't ask again": the banner can offer the ask again. */
     data object ShouldShowRationale : LocalNetworkPermissionState
 
-    /** Denied with "don't ask again" — hide the banner; manual entry remains. */
+    /** Denied with "don't ask again": the banner hides; manual entry remains. */
     data object PermanentlyDenied : LocalNetworkPermissionState
 }
 
 /**
- * Classify the outcome of a permission request from the grant result and the
- * `shouldShowRequestPermissionRationale()` value sampled before and after.
- * See [classifyAfterRequest] in the contacts variant for the rationale-flip
- * reasoning; semantics are identical.
+ * Classifies a permission request's outcome the same way [classifyAfterRequest] does for
+ * contacts.
  */
 fun classifyLocalNetworkAfterRequest(
     granted: Boolean,
@@ -46,13 +43,14 @@ fun classifyLocalNetworkAfterRequest(
 }
 
 /**
- * Resolve the current permission state from a fresh reading, used each time the
- * sign-in sheet opens so a grant/revoke performed in system Settings is
- * reflected. Like the contacts variant, the ambiguous "not granted, no
- * rationale" resolves to [LocalNetworkPermissionState.NotRequested] (never
- * PermanentlyDenied), and a revoked permission never resolves to Granted.
+ * Resolves the state from a fresh reading, so a grant or revoke made in system settings shows.
  *
- * @param permissionRequired false on API < 37 → [LocalNetworkPermissionState.NotRequired].
+ * Like [resolveContactsPermissionState], "not granted, no rationale" resolves to
+ * [LocalNetworkPermissionState.NotRequested], never PermanentlyDenied, and a revoked permission
+ * never resolves to Granted.
+ *
+ * @param permissionRequired false below API 37, which resolves to
+ *   [LocalNetworkPermissionState.NotRequired]
  */
 fun resolveLocalNetworkPermissionState(
     permissionRequired: Boolean,
@@ -66,11 +64,12 @@ fun resolveLocalNetworkPermissionState(
 }
 
 /**
- * Whether the proactive local-network banner should be shown: only for a LAN
- * server whose permission is still actionable. Hidden for public hosts, when
- * already granted, when not required (old OS), and when permanently denied
- * (nagging adds nothing — manual entry is unaffected and the reactive hint
- * still fires if a blocked sync is attempted).
+ * Returns whether the local-network banner shows: only when [isLan] and the permission can still
+ * be asked for.
+ *
+ * Hidden when not [isLan], granted, not required (old OS) or permanently denied. Nagging then
+ * adds nothing: manual entry is unaffected and the failure hint still fires if a blocked
+ * connection is attempted.
  */
 fun shouldShowLanBanner(
     isLan: Boolean,
@@ -84,14 +83,13 @@ fun shouldShowLanBanner(
 }
 
 /**
- * Whether to append the "allow local network access" hint after a CalDAV
- * connection failure. Unlike [shouldShowLanBanner], this is deliberately NOT
- * gated on [isLanHost]: on Android 17 only local-network sockets are
- * permission-blocked, so a connection failure while the permission is required
- * and ungranted is itself the signal — and this must serve bare-hostname /
- * custom-domain LAN servers that string classification cannot detect. The hint
- * is additive (kept alongside the server's real error), so a genuinely-down
- * public server is not mislabeled.
+ * Returns whether to append the "allow local network access" hint after a connection failure.
+ *
+ * Unlike the banner, this is deliberately not gated on [org.onekash.kashcal.util.isLanHost]: on
+ * Android 17 only local-network sockets are permission-blocked, so a failure while the permission
+ * is required and not granted is itself the signal. It must cover bare-hostname and custom-domain
+ * LAN servers string classification can't detect. The hint is added next to the server's own error,
+ * so a public server that is down isn't mislabeled.
  */
 fun shouldShowLanHintOnFailure(
     permissionRequired: Boolean,
@@ -99,11 +97,11 @@ fun shouldShowLanHintOnFailure(
 ): Boolean = permissionRequired && !granted
 
 /**
- * Whether a just-failed network request looks like a blocked local-network
- * socket for this state: the permission is required (API 37+) but not granted.
- * Encapsulates the sealed-state → ([shouldShowLanHintOnFailure] inputs) mapping
- * so callers (CalDAV discovery + ICS subscription fetch) don't re-encode which
- * states mean "required" / "granted".
+ * Returns whether a failed request looks like a blocked local-network socket in this state: the
+ * permission is required (API 37 and later) but not granted.
+ *
+ * Holds the state to [shouldShowLanHintOnFailure] mapping so its callers, CalDAV discovery and
+ * the ICS subscription fetch, don't re-encode which states mean required and granted.
  */
 fun LocalNetworkPermissionState.failureIndicatesBlockedLan(): Boolean =
     shouldShowLanHintOnFailure(
@@ -112,17 +110,15 @@ fun LocalNetworkPermissionState.failureIndicatesBlockedLan(): Boolean =
     )
 
 /**
- * Reconcile the stored permission state with a fresh live read taken on resume
- * (e.g. after the user may have changed it in system Settings). Upgrade-only:
+ * Merges the stored state with a live read taken on resume, for example after a change in
+ * system settings.
  *
- * A live read via [resolveLocalNetworkPermissionState] can never return
- * [LocalNetworkPermissionState.PermanentlyDenied] — that is produced only by
- * [classifyLocalNetworkAfterRequest]'s rationale-flip after an in-app request.
- * So blindly overwriting with the live read would downgrade a PermanentlyDenied
- * to a banner-showing state and the banner would nag on every resume. This
- * applies a newly-detected grant (or the pre-37 NotRequired), and otherwise
- * only clears a now-stale [LocalNetworkPermissionState.Granted]; it never
- * overwrites PermanentlyDenied.
+ * A live read ([resolveLocalNetworkPermissionState]) never returns
+ * [LocalNetworkPermissionState.PermanentlyDenied]; only [classifyLocalNetworkAfterRequest]
+ * produces it, after an in-app request. Overwriting with the live read would turn a
+ * PermanentlyDenied back into a banner-showing state that nags on every resume. So a live
+ * Granted or NotRequired always applies; any other live read replaces only a stale
+ * [LocalNetworkPermissionState.Granted], so PermanentlyDenied stays until a live grant.
  */
 fun reconcileOnResume(
     current: LocalNetworkPermissionState,

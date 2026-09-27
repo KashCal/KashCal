@@ -12,12 +12,11 @@ object TimeRule : ParseRule {
     override fun apply(tokens: List<Token>, context: ParseContext) {
         if (handleQuarterHalfPattern(tokens, context)) return
 
-        // "at HHMM" compact 24h time (e.g. "at 1500", "at 0930"). A 4-digit run
-        // tokenizes as YEAR or NUMBER, so we only reinterpret it as a clock time
-        // when an "at" lead-in makes the intent unambiguous.
+        // "at HHMM" 24-hour time ("at 1500", "at 0930"). A 4-digit run tokenizes as YEAR or
+        // NUMBER, so it is read as a time only after "at".
         if (handleCompactAtTime(tokens, context)) return
 
-        // Two-pass: explicit times + precise keywords first, fuzzy keywords second
+        // Explicit times and precise keywords (noon) win over fuzzy ones (evening).
         if (handleExplicitTime(tokens, context)) return
         handleFuzzyTimeKeyword(tokens, context)
     }
@@ -26,12 +25,10 @@ object TimeRule : ParseRule {
         for ((index, token) in tokens.withIndex()) {
             if (context.isConsumed(index)) continue
             if (token.type != TokenType.YEAR && token.type != TokenType.NUMBER) continue
-            // Require a genuine "at" lead-in (not "this") — a 4-digit run is far more
-            // often a year than a clock time, so only an explicit "at" disambiguates.
+            // Only "at", not "this": a 4-digit run is far more often a year than a time.
             if (!isPrecededByAtKeyword(tokens, index, context)) continue
 
-            // Read the ORIGINAL 4-char text; NUMBER("0930").value == 930 loses the
-            // leading zero, so parse the digits string directly.
+            // Parse the text: NUMBER("0930").value is 930, which lost the leading zero.
             val digits = token.text
             if (digits.length != 4 || !digits.all { it.isDigit() }) continue
             val hour = digits.substring(0, 2).toIntOrNull() ?: continue
@@ -65,7 +62,7 @@ object TimeRule : ParseRule {
                 }
                 TokenType.TIME -> {
                     var time = token.value as? LocalTime ?: continue
-                    // Check for following MERIDIEM token (e.g., "3:30 PM")
+                    // A separate meridiem after the time, as in "3:30 PM".
                     val nextIdx = index + 1
                     if (nextIdx < tokens.size && !context.isConsumed(nextIdx)) {
                         val nextToken = tokens[nextIdx]
@@ -75,14 +72,13 @@ object TimeRule : ParseRule {
                             if (adjusted != null) {
                                 time = adjusted
                             }
-                            // Consume the MERIDIEM either way — an adjacent am/pm after a time
-                            // belongs to the time, not the title, even when the conversion
-                            // couldn't apply (e.g. "15:00 pm" — already 24h).
+                            // An am/pm right after a time belongs to it, not the title, so
+                            // it is consumed even when it can't apply ("15:00 pm").
                             context.consume(nextIdx)
                         }
                     }
 
-                    // Check for "TIME to TIME" pattern (e.g., "2pm to 4pm")
+                    // "TIME to TIME", as in "2pm to 4pm".
                     val toIdx = context.findNextUnconsumed(tokens, index + 1)
                     if (toIdx != null && tokens[toIdx].type == TokenType.KEYWORD && tokens[toIdx].value == "TO") {
                         val endTimeIdx = context.findNextUnconsumed(tokens, toIdx + 1)
@@ -143,7 +139,7 @@ object TimeRule : ParseRule {
                     if (nextIndex < tokens.size && !context.isConsumed(nextIndex)) {
                         val nextToken = tokens[nextIndex]
 
-                        // "NUMBER MERIDIEM" pattern (e.g., "3 pm")
+                        // "NUMBER MERIDIEM", as in "3 pm".
                         if (nextToken.type == TokenType.MERIDIEM) {
                             val meridiem = nextToken.text.lowercase().replace(".", "")
                             val time = resolveWithMeridiem(hour, 0, meridiem) ?: continue
@@ -156,7 +152,7 @@ object TimeRule : ParseRule {
                             return true
                         }
 
-                        // "NUMBER NUMBER [MERIDIEM]" pattern (e.g., "2 30 pm", "10 15")
+                        // "NUMBER NUMBER [MERIDIEM]", as in "2 30 pm" or "at 10 15".
                         if (nextToken.type == TokenType.NUMBER) {
                             val minute = nextToken.value as? Int ?: continue
                             if (minute > 59) continue
@@ -164,7 +160,6 @@ object TimeRule : ParseRule {
                             if (meridiemIndex < tokens.size && !context.isConsumed(meridiemIndex)
                                 && tokens[meridiemIndex].type == TokenType.MERIDIEM
                             ) {
-                                // "2 30 pm" → 14:30
                                 val meridiem = tokens[meridiemIndex].text.lowercase().replace(".", "")
                                 val time = resolveWithMeridiem(hour, minute, meridiem) ?: continue
                                 context.time = time
@@ -176,7 +171,8 @@ object TimeRule : ParseRule {
                                 consumePrecedingModifier(tokens, index, context)
                                 return true
                             } else if (hour in 0..23 && hasPrecedingAt(tokens, index, context)) {
-                                // "at 10 15" → 10:15 (24h, requires "at" prefix)
+                                // Without a meridiem it is 24-hour and needs "at" or "this"
+                                // right before it: "at 10 15" is 10:15.
                                 context.time = LocalTime.of(hour, minute)
                                 context.timeSet = true
                                 context.consume(index)
@@ -254,7 +250,7 @@ object TimeRule : ParseRule {
         return false
     }
 
-    /** True only when the immediately preceding unconsumed token is the "at" keyword. */
+    /** Returns true when the token right before [currentIndex] is an unconsumed "at". */
     private fun isPrecededByAtKeyword(tokens: List<Token>, currentIndex: Int, context: ParseContext): Boolean {
         if (currentIndex == 0) return false
         val prev = tokens[currentIndex - 1]

@@ -18,10 +18,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [CategoryRepository] — the domain-facing wrapper over the tag
- * metadata table. ViewModels, the event writer, and the sync pull path use this
- * seam so they never touch [org.onekash.kashcal.data.db.dao.CategoryDao]
- * directly. Backed by a real in-memory Room DB for fidelity.
+ * Tests [CategoryRepository], the wrapper over the tag metadata table that ViewModels use so they
+ * never touch [org.onekash.kashcal.data.db.dao.CategoryDao]; domain code uses the DAO directly.
+ * Runs on an in-memory Room database.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])

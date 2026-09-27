@@ -5,18 +5,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pure-logic tests for [isLanHost].
+ * Tests [isLanHost], which decides from the URL string alone whether a server is on the local
+ * network (rule and callers on the function).
  *
- * Android 17 gates local-network socket traffic behind the ACCESS_LOCAL_NETWORK
- * runtime permission. This classifier decides — from the Server URL string alone
- * — whether a CalDAV target is on the local network, so the sign-in sheet can
- * proactively surface the permission ask for LAN hosts and never prompt for
- * public-internet ones.
- *
- * Deliberate limitation, encoded as tests below: a bare hostname or a custom
- * domain that resolves to a private IP CANNOT be proven LAN from the string, so
- * it classifies false. That gap is covered at runtime by the reactive
- * connection-failure hint, not here.
+ * The bare-hostname test pins an intended limit: a bare hostname can't be proven LAN from the
+ * string, so it classifies false and the reactive connection-failure hint covers it at runtime.
  */
 class LocalNetworkAddressTest {
 
@@ -67,7 +60,7 @@ class LocalNetworkAddressTest {
         assertFalse(isLanHost("https://raspberrypi/dav"))
     }
 
-    // ===== Robustness: parsing edge cases must not throw =====
+    // ===== Parsing edge cases (no scheme, blank, garbage) must not throw =====
 
     @Test fun `no scheme still classifies host`() = assertTrue(isLanHost("192.168.0.1/dav"))
     @Test fun `blank input is NOT LAN`() = assertFalse(isLanHost("   "))

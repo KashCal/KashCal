@@ -23,17 +23,13 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import java.util.Calendar as JavaCalendar
 
 /**
- * Compose UI tests for EventFormSheet component.
+ * Compose UI tests over a stand-in for the event form, the private [EventFormSheetContent] at
+ * the end of this file, not the production [EventFormContent].
  *
- * Tests cover:
- * - Form field rendering and validation
- * - All-day toggle behavior
- * - Calendar picker functionality
- * - Reminder picker functionality
- * - Recurrence picker functionality
- * - Save button state management
- * - More options expansion
- * - Edit mode vs Create mode UI differences
+ * They check the stand-in's labels (Title, All day, Start, End, Calendar, Reminder, Repeat,
+ * Location, Notes), the selected calendar name, an existing title and an error message,
+ * the Save and Cancel buttons and their callbacks, and Save disabled while saving. The
+ * title-input, all-day tap and loading tests perform no assertion.
  *
  * Reference: Android Testing Guide for Compose
  * https://developer.android.com/jetpack/compose/testing
@@ -100,7 +96,7 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // Title field should have placeholder text
+        // The title field's label.
         composeTestRule.onNodeWithText("Title").assertIsDisplayed()
     }
 
@@ -117,7 +113,7 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // Find and click on title field, then input text
+        // Types into the empty title field; nothing is asserted afterwards.
         composeTestRule.onNode(hasSetTextAction() and hasText("")).performTextInput("Team Meeting")
     }
 
@@ -148,8 +144,7 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // Find the switch and verify it's off
-        // The text "All day" should be visible
+        // Only the "All day" label is asserted, not the switch's state.
         composeTestRule.onNodeWithText("All day").assertIsDisplayed()
     }
 
@@ -166,7 +161,7 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // Click on "All day" row to toggle
+        // Taps the "All day" row; nothing is asserted afterwards.
         composeTestRule.onNodeWithText("All day").performClick()
     }
 
@@ -183,7 +178,6 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // Should show "Start" section
         composeTestRule.onNodeWithText("Start").assertIsDisplayed()
     }
 
@@ -198,7 +192,6 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // Should show "End" section
         composeTestRule.onNodeWithText("End").assertIsDisplayed()
     }
 
@@ -215,7 +208,6 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // Should show "Calendar" section
         composeTestRule.onNodeWithText("Calendar").assertIsDisplayed()
     }
 
@@ -249,7 +241,6 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // Should show "Reminder" section
         composeTestRule.onNodeWithText("Reminder").assertIsDisplayed()
     }
 
@@ -266,7 +257,7 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // Location field should always be visible (no longer hidden behind "More options")
+        // Location shows without a "More options" tap.
         composeTestRule.onNodeWithText("Location").assertIsDisplayed()
     }
 
@@ -281,7 +272,7 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // Notes field should always be visible (no longer hidden behind "More options")
+        // Notes shows without a "More options" tap.
         composeTestRule.onNodeWithText("Notes").assertIsDisplayed()
     }
 
@@ -343,7 +334,6 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // When saving, button should be disabled
         composeTestRule.onNodeWithText("Save").assertIsNotEnabled()
     }
 
@@ -364,8 +354,7 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // In edit mode, button might say "Update" instead of "Save"
-        // or Save button should still work
+        // The stand-in shows "Save" in edit mode too.
         composeTestRule.onNodeWithText("Save").assertIsDisplayed()
     }
 
@@ -400,8 +389,8 @@ class EventFormSheetComposeTest {
             )
         }
 
-        // When loading, a progress indicator should be shown
-        // The form fields might not be visible
+        // No assertion: the stand-in renders no progress indicator. The production form
+        // shows one in place of the fields while loading.
     }
 
     // ==================== Error State Tests ====================
@@ -455,16 +444,15 @@ class EventFormSheetComposeTest {
 }
 
 /**
- * A stand-in that mimics the form's structure. The tests in this class render
- * THIS composable, not the production form — so they exercise the stand-in's
- * layout and this file's hoisted-state plumbing, not the real fields.
+ * Renders a stand-in that mimics the form's structure. The tests above render this, not the
+ * production form, so they exercise the stand-in's layout and hoisted-state plumbing, not the
+ * real fields.
  *
- * The production body is now available as [org.onekash.kashcal.ui.components.EventFormContent]
- * (wrapper-free, rendered by ComponentAccessibilityTest). Migrating these tests
- * to render it directly turns them into real UI coverage; that migration needs
- * a device in the loop because EventFormContent is stateful (it owns its form
- * state and loads via LaunchedEffect), so the assertions and their timing must
- * be verified against the real render rather than swapped mechanically.
+ * The production body is [org.onekash.kashcal.ui.components.EventFormContent], which
+ * `ComponentAccessibilityTest` renders without a wrapper. Moving these tests onto it makes
+ * them real UI coverage, but needs a device in the loop: EventFormContent owns its form state
+ * and loads in a LaunchedEffect, so each assertion and its timing must be checked against the
+ * real render, not swapped mechanically.
  */
 @Composable
 private fun EventFormSheetContent(
@@ -473,7 +461,6 @@ private fun EventFormSheetContent(
     onSave: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    // Simplified stand-in content that mimics the real form structure
     androidx.compose.foundation.layout.Column(
         modifier = androidx.compose.ui.Modifier
             .fillMaxWidth()

@@ -11,11 +11,10 @@ import org.onekash.kashcal.network.dns.DnsWireTestFixtures.question
 import org.onekash.kashcal.network.dns.DnsWireTestFixtures.u16
 
 /**
- * Unit tests for [SrvResolverImpl] — the pure sequencing layer over a
- * [RawDnsChannel]. Every case drives a fake channel with canned bytes (or a canned
- * throw), so no network is touched. The resolver's contract is threefold: it builds
- * the right query name, maps each [SrvParseResult] to the corresponding [SrvResult],
- * and orders Found records through [SrvSelection]. Channel failures fold to Error.
+ * Tests [SrvResolverImpl] over a fake [RawDnsChannel] that returns canned bytes or a canned throw,
+ * so no network is touched. Covers the query name and TYPE, the mapping of each [SrvParseResult] to
+ * its [SrvResult] (a short body fails in the parser and maps to Error), a throwing channel mapped
+ * to Error with its message or exception type, and Found records ordered through [SrvSelection].
  */
 class SrvResolverImplTest {
 
@@ -27,7 +26,7 @@ class SrvResolverImplTest {
         return byteArrayOf(0xc0.toByte(), 0x0c) + u16(33) + u16(1) + TTL + u16(rdata.size) + rdata
     }
 
-    /** A channel that returns the same canned response for any query, recording the fqdn/type asked. */
+    /** Returns the same canned response for any query, recording the fqdn and type asked. */
     private class CannedChannel(private val response: ByteArray) : RawDnsChannel {
         var askedFqdn: String? = null
         var askedType: Int = -1
@@ -116,11 +115,12 @@ class SrvResolverImplTest {
 
     @Test
     fun `Found records come back ordered by ascending priority`() = runTest {
-        // Two priorities: the resolver must return them low-priority-first, matching
-        // SrvSelection.order (proving Found is not just raw wire order). A fixed rng
-        // makes weighted selection deterministic within a bucket.
+        // Wire order is priority 20 then 10; Found must come back priority 10 first, as
+        // SrvSelection.order returns it. Each priority holds one record, so the fixed rng is
+        // never drawn.
         val pkt = header(rcode = 0, qd = 1, an = 2) + QUESTION +
-            srvRr(20, 0, 443, encodeName("low.example.com")) +     // higher number = lower preference
+            // A higher priority number means lower preference.
+            srvRr(20, 0, 443, encodeName("low.example.com")) +
             srvRr(10, 0, 443, encodeName("high.example.com"))
         val result = SrvResolverImpl(CannedChannel(pkt), rng = { 0.0 })
             .resolve("carddavs", "tcp", "example.com")

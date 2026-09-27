@@ -17,13 +17,16 @@ import java.io.File
 import java.util.concurrent.TimeUnit
 
 /**
- * Integration test comparing sync approaches:
- * 1. Current: sync-collection + multiget
- * 2. Alternative: calendar-query (etags only) + multiget (sabre.io recommendation)
+ * Compares two ways to find changes on iCloud, printing sizes and timings:
+ * 1. sync-collection plus multiget, the delta path
+ * 2. calendar-query for etags only plus multiget (sabre.io recommendation), the path the
+ *    full pull and the etag fallback take
  *
- * Run with: ./gradlew testDebugUnitTest --tests "*EtagBasedSyncTest*"
+ * Read-only: it creates, changes and deletes nothing.
  *
- * Requires: local.properties with:
+ * Run with: ./gradlew testDebugUnitTest -Pintegration --tests "*EtagBasedSyncTest*"
+ *
+ * Requires local.properties with ICLOUD_USERNAME and ICLOUD_APP_PASSWORD, or:
  *   caldav.username=your_apple_id@icloud.com
  *   caldav.app_password=xxxx-xxxx-xxxx-xxxx
  */
@@ -65,7 +68,7 @@ class EtagBasedSyncTest {
             val factory = OkHttpCalDavClientFactory()
             client = factory.createClient(credentials, quirks)
         } else {
-            // Create a client with dummy credentials for tests that will be skipped
+            // Dummy credentials: every test is skipped without real ones
             val dummyCredentials = Credentials(
                 username = "test@example.com",
                 password = "test-password",
@@ -114,7 +117,7 @@ class EtagBasedSyncTest {
         )
     }
 
-    // ========== Test: Calendar Query with ETags Only ==========
+    // ========== calendar-query with etags only ==========
 
     @Test
     fun `calendar-query fetching etags only - bandwidth comparison`() = runBlocking {
@@ -128,7 +131,7 @@ class EtagBasedSyncTest {
         val startMs = now - (90L * 24 * 60 * 60 * 1000)  // 90 days back
         val endMs = now + (365L * 24 * 60 * 60 * 1000)   // 1 year forward
 
-        // Method 1: Full calendar-query (current approach for full sync)
+        // Method 1: calendar-query with full iCal data
         println("\n--- Method 1: calendar-query with FULL iCal data ---")
         val fullStartTime = System.currentTimeMillis()
         val fullResult = client.fetchEventsInRange(calendarUrl, startMs, endMs)
@@ -142,7 +145,7 @@ class EtagBasedSyncTest {
         println("  Total iCal data size: ${fullDataSize / 1024} KB")
         println("  Duration: ${fullDuration}ms")
 
-        // Method 2: ETags-only calendar-query (sabre.io recommendation)
+        // Method 2: calendar-query for etags only (sabre.io recommendation)
         println("\n--- Method 2: calendar-query with ETags ONLY ---")
         val etagStartTime = System.currentTimeMillis()
         val etagResult = fetchEtagsOnly(calendarUrl, startMs, endMs)
@@ -158,7 +161,7 @@ class EtagBasedSyncTest {
         println("ETags only:  ${etagResult.size} events, ~${etagResult.size * 150 / 1024} KB, ${etagDuration}ms")
         println("Bandwidth saved: ~${(fullDataSize - etagResult.size * 150) / 1024} KB (${100 - (etagResult.size * 150 * 100 / fullDataSize)}%)")
 
-        // Verify we got the same hrefs
+        // Whether both queries listed the same hrefs
         val fullHrefs = fullEvents.map { it.href }.toSet()
         val etagHrefs = etagResult.map { it.first }.toSet()
         println("\nHref match: ${fullHrefs == etagHrefs}")
@@ -181,22 +184,22 @@ class EtagBasedSyncTest {
         val startMs = now - (90L * 24 * 60 * 60 * 1000)
         val endMs = now + (365L * 24 * 60 * 60 * 1000)
 
-        // Step 1: Fetch all etags (simulating local cache)
+        // Step 1: fetch every etag, standing in for the local cache
         println("\n--- Step 1: Initial sync - fetch all etags ---")
         val initialEtags = fetchEtagsOnly(calendarUrl, startMs, endMs)
         println("  Cached ${initialEtags.size} event etags")
 
-        // Build local cache simulation
+        // The simulated local cache
         val localCache = initialEtags.associate { (href, etag) -> href to etag }.toMutableMap()
 
-        // Step 2: Simulate time passing and re-fetch etags
+        // Step 2: fetch the etags again, as a later sync would
         println("\n--- Step 2: Check for changes (etags only) ---")
         val checkStartTime = System.currentTimeMillis()
         val currentEtags = fetchEtagsOnly(calendarUrl, startMs, endMs)
         val checkDuration = System.currentTimeMillis() - checkStartTime
         println("  Fetched ${currentEtags.size} etags in ${checkDuration}ms")
 
-        // Step 3: Compare etags to find changes
+        // Step 3: compare etags to find changes
         println("\n--- Step 3: Local comparison ---")
         val currentEtagMap = currentEtags.associate { (href, etag) -> href to etag }
 
@@ -204,7 +207,7 @@ class EtagBasedSyncTest {
         val changedEvents = mutableListOf<String>()
         val deletedEvents = mutableListOf<String>()
 
-        // Find new and changed
+        // New and changed hrefs
         for ((href, etag) in currentEtagMap) {
             when {
                 href !in localCache -> newEvents.add(href)
@@ -212,7 +215,7 @@ class EtagBasedSyncTest {
             }
         }
 
-        // Find deleted
+        // Deleted hrefs
         for (href in localCache.keys) {
             if (href !in currentEtagMap) {
                 deletedEvents.add(href)
@@ -223,7 +226,7 @@ class EtagBasedSyncTest {
         println("  Changed events: ${changedEvents.size}")
         println("  Deleted events: ${deletedEvents.size}")
 
-        // Step 4: Fetch only changed/new events via multiget
+        // Step 4: multiget only the new and changed events
         val toFetch = newEvents + changedEvents
         if (toFetch.isNotEmpty()) {
             println("\n--- Step 4: Fetch changed events via multiget ---")
@@ -258,7 +261,7 @@ class EtagBasedSyncTest {
         val startMs = now - (90L * 24 * 60 * 60 * 1000)
         val endMs = now + (365L * 24 * 60 * 60 * 1000)
 
-        // Approach 1: sync-collection (current KashCal approach)
+        // Approach 1: sync-collection, the delta path
         println("\n--- Approach 1: sync-collection ---")
         val syncTokenResult = client.getSyncToken(calendarUrl)
         if (syncTokenResult.isSuccess() && syncTokenResult.getOrNull() != null) {
@@ -280,7 +283,7 @@ class EtagBasedSyncTest {
             println("  Sync token not available")
         }
 
-        // Approach 2: ETags-based (sabre.io recommendation)
+        // Approach 2: calendar-query for etags (sabre.io recommendation)
         println("\n--- Approach 2: calendar-query (etags) ---")
         val etagStartTime = System.currentTimeMillis()
         val etags = fetchEtagsOnly(calendarUrl, startMs, endMs)
@@ -303,11 +306,12 @@ class EtagBasedSyncTest {
         """.trimMargin())
     }
 
-    // ========== Helper: Fetch ETags Only ==========
+    // ========== Helper: fetch etags only ==========
 
     /**
-     * Fetch only etags (not iCal data) using calendar-query.
-     * This is the sabre.io recommended approach for change detection.
+     * Fetches etags, without iCal data, with a calendar-query over the window, through a raw
+     * OkHttp client. This is the change detection sabre.io recommends. Returns an empty list
+     * on a non-2xx reply; a network error throws.
      */
     private suspend fun fetchEtagsOnly(
         calendarUrl: String,
@@ -318,7 +322,7 @@ class EtagBasedSyncTest {
         val startDate = quirks.formatDateForQuery(startMs)
         val endDate = quirks.formatDateForQuery(endMs)
 
-        // Note: NO <c:calendar-data/> - only requesting getetag
+        // No <c:calendar-data/>: only getetag
         val body = """
             <?xml version="1.0" encoding="utf-8"?>
             <c:calendar-query xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
@@ -349,17 +353,15 @@ class EtagBasedSyncTest {
             return emptyList()
         }
 
-        // Parse response to extract href + etag pairs
+        // href and etag pairs
         return parseEtagResponse(responseBody)
     }
 
-    /**
-     * Parse WebDAV multistatus response for href + etag pairs.
-     */
+    /** Returns the href and etag pairs of a multistatus, keeping only hrefs ending in `.ics`. */
     private fun parseEtagResponse(xml: String): List<Pair<String, String>> {
         val results = mutableListOf<Pair<String, String>>()
 
-        // Simple regex parsing (production would use XML parser)
+        // Regex parsing is enough for this probe; the client parses with `CalDavXmlParser`
         val responsePattern = Regex(
             """<(?:d:|D:)?response[^>]*>(.*?)</(?:d:|D:)?response>""",
             setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE)
@@ -386,7 +388,7 @@ class EtagBasedSyncTest {
         return results
     }
 
-    // ========== Helper: Get Calendar URL ==========
+    // ========== Helper: first calendar URL ==========
 
     private suspend fun getFirstCalendarUrl(): String? {
         val principal = client.discoverPrincipal(serverUrl).getOrNull()

@@ -1,0 +1,36 @@
+Deine Kalender sind überall verstreut. Die Familie auf iCloud. Feiertage von irgendeiner Website. Geburtstage in deinen Kontakten vergraben. Arbeit im Telefonkalender. KashCal holt sie alle in eine App auf Android.
+
+Mehr erfährst du auf https://kashcal.onekash.org
+
+• iCloud: Von Apple zu Android gewechselt, aber deine Familie ist noch auf Apple? Synchronisiere iCloud-Kalender direkt. Keine Brücke, kein Workaround.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo und mehr. Echte Zwei-Wege-Synchronisierung, ohne Middleware. Auch die Google- und Outlook-Kalender deines Telefons erscheinen hier.
+
+• Sieben Ansichten: Monat, Monat in voller Höhe, Agenda, Tag, 3 Tage, Woche und Jahr. Zum Zoomen der Zeitleiste zusammenziehen, Termin zum Verschieben ziehen.
+
+• Planung: Lade Leute ein, verschicke Besprechungseinladungen und antworte auf Einladungen anderer.
+
+• Einblicke: Sieh, wohin deine Zeit fließt. Vollste Tage, lückenlose Serien, freie Blöcke. Alles auf dem Gerät berechnet.
+
+• Widgets: Behalte deinen Tag auf dem Startbildschirm, ohne die App zu öffnen. Agenda, Datum, Woche, Monat und Anstehendes.
+
+• ICS-Abos: Folge jedem Kalender-Feed. Feiertage, Schulzeiten, Sportsaisons.
+
+• Geburtstage & Jahrestage: automatisch aus deinen Kontakten.
+
+• Farben pro Termin: aus einer kuratierten Palette oder dem vollen Farbrad, damit deine Woche auf einen Blick lesbar ist.
+
+• Mach sie zu deiner: helles, dunkles oder Systemdesign, plus eine KashCal-Teal-Palette. Unterstützer können auf ein besonderes App-Symbol wechseln.
+
+• Barrierefreiheit: volle Screenreader-Unterstützung (TalkBack), und stelle die Sprache der App direkt in den Android-Einstellungen ein, in 67 Sprachen.
+
+• Funktioniert von Haus aus komplett offline.
+
+Privat von Haus aus
+
+Keine Analyse. Keine Telemetrie. Kein KashCal-Konto. Wir haben keine Server, also gibt es nichts zu sammeln.
+
+• Zugangsdaten mit dem Android Keystore verschlüsselt
+• App-Sperre: Verbirg deine Termine hinter Fingerabdruck, Gesicht oder Bildschirmsperre
+
+Frei wie in Freiheit. Und kostenlos obendrein.

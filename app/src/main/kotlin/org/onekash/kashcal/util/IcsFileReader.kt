@@ -13,12 +13,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Utility for reading ICS calendar files from content:// or file:// URIs.
+ * Reads ICS files from content:// or file:// URIs through the ContentResolver.
  *
- * Uses ContentResolver for secure file access per Android best practices.
- * All I/O operations are main-safe via internal dispatcher switching.
+ * Every method is main-safe: blocking I/O runs on the injected IO dispatcher.
  *
- * @see <a href="https://developer.android.com/training/secure-file-sharing/retrieve-info">Android Docs</a>
+ * @see <a href="https://developer.android.com/training/secure-file-sharing/retrieve-info">docs</a>
  */
 @Singleton
 class IcsFileReader @Inject constructor(
@@ -27,12 +26,10 @@ class IcsFileReader @Inject constructor(
 ) {
 
     /**
-     * Read ICS content from a content:// or file:// URI.
+     * Reads the file at [uri] as text.
      *
-     * Main-safe: internally switches to IO dispatcher for blocking I/O.
-     *
-     * @param uri The content:// or file:// URI to read from
-     * @return Result containing ICS content string, or failure with exception
+     * Fails when the stream can't be opened, the text has no `BEGIN:VCALENDAR`, or the read
+     * throws an [IOException] or [SecurityException]; other exceptions propagate.
      */
     suspend fun readIcsContent(uri: Uri): Result<String> = withContext(ioDispatcher) {
         try {
@@ -40,7 +37,7 @@ class IcsFileReader @Inject constructor(
                 inputStream.bufferedReader().use { it.readText() }
             } ?: return@withContext Result.failure(IOException("Could not open file"))
 
-            // Basic validation - must contain VCALENDAR
+            // A presence check only; anything with the marker passes.
             if (!content.contains("BEGIN:VCALENDAR")) {
                 return@withContext Result.failure(IllegalArgumentException("Invalid ICS file: missing VCALENDAR"))
             }
@@ -56,12 +53,8 @@ class IcsFileReader @Inject constructor(
     }
 
     /**
-     * Get display name of the file from its URI.
-     *
-     * Main-safe: internally switches to IO dispatcher for blocking I/O.
-     *
-     * @param uri The content:// URI to query
-     * @return Filename if available, null otherwise
+     * Returns the file's `OpenableColumns.DISPLAY_NAME`, or null when the provider has none or
+     * the query fails.
      */
     suspend fun getFileName(uri: Uri): String? = withContext(ioDispatcher) {
         try {

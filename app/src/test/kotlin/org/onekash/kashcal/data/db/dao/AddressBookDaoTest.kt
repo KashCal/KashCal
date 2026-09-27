@@ -13,10 +13,9 @@ import org.onekash.kashcal.data.db.entity.AddressBook
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Integration tests for AddressBookDao.
- *
- * Tests CRUD operations, per-account URL uniqueness, FK constraints, and
- * cascade deletes for the CardDAV address-book collection table.
+ * Tests [AddressBookDao] on the CardDAV address-book table: CRUD, per-account URL uniqueness,
+ * the account foreign key and its cascade delete, sync-token and ctag updates, and the id-stable
+ * upsert.
  */
 class AddressBookDaoTest : BaseDaoTest() {
 
@@ -60,7 +59,7 @@ class AddressBookDaoTest : BaseDaoTest() {
         assertNotNull(retrieved)
         assertEquals("Work Contacts", retrieved!!.displayName)
         assertEquals(testAccountId, retrieved.accountId)
-        // Defaults from §2b: vCard 3.0 fallback, read-only MVP, sync enabled.
+        // Defaults: vCard 3.0, read-only, sync enabled.
         assertEquals("3.0", retrieved.vcardVersion)
         assertTrue(retrieved.isReadOnly)
         assertTrue(retrieved.isSyncEnabled)
@@ -137,7 +136,7 @@ class AddressBookDaoTest : BaseDaoTest() {
         assertEquals(1, addressBookDao.getByAccountIdOnce(otherAccountId).size)
     }
 
-    // ========== Sync-cursor updates ==========
+    // ========== Sync-token and ctag updates ==========
 
     @Test
     fun `updateSyncToken and updateCtag persist cursors`() = runTest {
@@ -167,9 +166,8 @@ class AddressBookDaoTest : BaseDaoTest() {
         val url = "https://contacts.example.test/books/stable/"
         val originalId = addressBookDao.upsert(createBook(url = url, displayName = "Before"))
 
-        // Re-sync the same collection with refreshed metadata. The id must NOT
-        // change (a child table will FK-reference it), so a fresh-id REPLACE
-        // would silently break those links on every pull.
+        // Re-sync the same collection with refreshed metadata. The id must not change: a
+        // REPLACE would mint a new one on every pull and break any table referencing it.
         val returnedId = addressBookDao.upsert(
             createBook(url = url, displayName = "After").copy(ctag = "ctag-2")
         )

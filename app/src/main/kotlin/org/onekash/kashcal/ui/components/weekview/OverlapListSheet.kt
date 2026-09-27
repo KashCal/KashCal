@@ -21,14 +21,12 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.DisplayEvent
 
 /**
- * Bottom sheet showing a list of overlapping events.
+ * Shows [events] as a list of [CompactEventBlock]s in a bottom sheet.
  *
- * Displayed when user taps "+N more" badge on overlapping events.
- * Shows all events in the overlap group with compact format.
+ * [WeekViewContent] opens it from a "+N" badge with the events that badge hides: the hidden part
+ * of a time-grid overlap group, or an all-day column's overflow.
  *
- * @param events List of DisplayEvent to display
- * @param onDismiss Called when sheet is dismissed
- * @param onEventClick Called when an event is tapped (dismisses sheet)
+ * @param onEventClick called when an event is tapped, followed by [onDismiss]
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +49,6 @@ fun OverlapListSheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
-            // Header
             Text(
                 text = stringResource(R.string.status_events_count, events.size),
                 style = MaterialTheme.typography.titleMedium,
@@ -59,7 +56,6 @@ fun OverlapListSheet(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
             )
 
-            // Event list
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)

@@ -38,11 +38,13 @@ import androidx.glance.semantics.semantics
 import androidx.glance.state.PreferencesGlanceStateDefinition
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
+import androidx.glance.text.TextAlign
 import androidx.glance.text.TextStyle
 import org.onekash.kashcal.MainActivity
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.model.MonthGrid
 import org.onekash.kashcal.ui.shared.contrastForegroundOn
+import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.LocalDate
 import java.time.Month
@@ -51,53 +53,45 @@ import java.time.format.TextStyle as JavaTextStyle
 
 /**
  * Padding around today's day number that forms the solid accent marker, in dp.
- * The marker wraps the number via padding rather than a fixed size, so it grows
- * with the number at large system font-scale instead of clipping it — the number
- * always fits, and the marker reads as a circle at normal scale and a rounded
- * pill when the text is scaled up. Horizontal padding is a touch wider than
- * vertical so a single digit still looks round.
  *
- * Vertical padding is kept minimal on purpose: today's number-block sits in the
- * same fixed-height cell column as the event dots below it, so any extra height
- * here eats into the dots' space and clips them off the bottom of the cell. At
- * ~1dp the marker stays close to a bare number's height, so today shows its dots
- * just like every other day, and the horizontal padding still carries the round
- * shape.
+ * The marker wraps the number with padding, not a fixed size, so it grows with the number at a
+ * large font scale instead of clipping it: a circle at normal scale, a rounded pill when scaled
+ * up. Horizontal padding is wider than vertical so a single digit still looks round.
+ *
+ * Vertical padding stays at 1dp because today's number shares the fixed-height cell with the
+ * event dots below it; any extra height clips the dots off the bottom of the cell.
  */
 internal const val TODAY_MARKER_HORIZONTAL_PADDING_DP = 6
 internal const val TODAY_MARKER_VERTICAL_PADDING_DP = 1
 
 /**
- * Corner radius of today's accent marker, in dp. Larger than half the marker's
- * height at normal scale, so the marker is fully rounded (a circle/capsule); at
- * large font-scale it degrades gracefully to a rounded rectangle rather than
- * clipping the number.
+ * Corner radius of today's accent marker, in dp. Larger than half the marker's height at normal
+ * scale, so the marker is fully rounded; at a large font scale it becomes a rounded rectangle
+ * instead of clipping the number.
  */
 internal const val TODAY_MARKER_CORNER_RADIUS_DP = 12
 
 /**
- * Gap between the month-navigation cluster (title + next arrow) and the "+"
- * button in the month widget header, in dp — keeps a "next month" tap from
- * landing on "add event".
+ * Gap between the month-navigation cluster (title and next arrow) and the "+" button in the
+ * header, in dp, so a "next month" tap can't land on "add event".
  */
 internal const val MONTH_HEADER_ADD_GAP_DP = 12
 
-/** Number of week rows the month grid always renders (fixed 6x7 grid). */
+/** Number of week rows in the fixed 6x7 [MonthGrid]; the widget renders only [visibleWeeks]. */
 internal const val MONTH_GRID_WEEK_ROWS = 6
 
 /**
  * Width of the optional leading week-number gutter, in dp. Narrower than the in-app grid's 24dp
- * gutter because the widget is space-constrained and a week number is at most two digits; the
- * day-of-week header row reserves the same width so its columns stay aligned with the grid below.
+ * gutter because the widget is small and a week number is at most two digits. The day-of-week
+ * header reserves the same width so its columns line up with the grid below.
  */
 internal const val WEEK_NUMBER_GUTTER_WIDTH_DP = 18
 
 // ==================== Event-title rows (optional month day-cell style) ====================
 
 /**
- * Vertical space the month-widget header occupies, in dp. The nav-arrow / "+" boxes are
- * 48dp touch targets, but the header's visual row is shorter; for sizing event-title rows
- * we budget the visual row, not the touch target, so the grid doesn't under-fill.
+ * Header height budgeted when sizing event-title rows, in dp. It is below the 48dp of the
+ * nav-arrow and "+" touch targets so the grid doesn't under-fill.
  */
 internal const val MONTH_HEADER_HEIGHT_DP = 40
 
@@ -108,24 +102,21 @@ internal const val MONTH_HEADER_HEIGHT_DP = 40
 internal const val MONTH_DOW_ROW_HEIGHT_DP = 21
 
 /**
- * Vertical space the day-number block reserves at the top of a day cell, in dp — the 14sp
- * number (≈17dp at font-scale 1.0) plus the today marker's vertical padding.
+ * Vertical space the day-number block reserves at the top of a day cell, in dp: the 14sp number
+ * (about 17dp at font scale 1.0) plus the today marker's vertical padding.
  *
- * This must not under-budget the number's real height: the day-number row and the event
- * rows below it share the cell's fixed height, so if this value is too small, [maxEventRows]
- * reports a row that fits when it does not, and the number ends up shoving that row off the
- * cell's bottom — the "numbers show but events don't" failure at small widget sizes.
+ * It must not under-budget the number's real height. The number and the event rows share the
+ * cell's fixed height, so a value too small makes [maxEventRows] report a row that doesn't fit,
+ * and the number pushes it off the cell: day numbers show but events don't at small sizes.
  */
 internal const val DAY_NUMBER_BLOCK_HEIGHT_DP = 19
 
 /**
- * Real rendered height of one event title row at font-scale 1.0, in dp: the 11sp text line
- * (≈14dp) plus the pill's vertical padding. This is a font-scale-1.0 baseline — [maxEventRows]
- * and [minWidgetHeightForTitlesDp] multiply it by the system font scale so a scaled-up font
- * counts each row taller and the layout backs off (fewer rows / a higher titles threshold)
- * instead of shoving a row off the cell bottom. An earlier under-estimate (13dp) let the fitter
- * claim a row that the scaled text then clipped mid-glyph — the cramped, cut-off single line at
- * small sizes. Being honest here trades an occasional extra row for never clipping.
+ * Rendered height of one event title row at font scale 1.0, in dp: the 11sp text line (about
+ * 14dp) plus the pill's vertical padding. [maxEventRows] and [minWidgetHeightForTitlesDp]
+ * multiply it by the system font scale, so a larger font yields fewer rows and a higher titles
+ * threshold instead of a row pushed off the cell. An under-estimate lets the fitter claim a row
+ * that the text then clips mid-glyph; over-estimating costs an occasional row but never clips.
  */
 internal const val TIMED_TITLE_ROW_HEIGHT_DP = 16
 
@@ -133,47 +124,42 @@ internal const val TIMED_TITLE_ROW_HEIGHT_DP = 16
 internal const val EVENT_ROW_GAP_DP = 1
 
 /**
- * Hard cap on event slot rows per week in titles mode. Deliberately small: a widget is rendered as
- * RemoteViews, and each widget can allocate at most 500 views total (Glance's fixed view-ID pool).
- * Every element in every one of the 7 day columns across all 6 week rows draws from that one pool,
- * so the row count is the dominant multiplier — an unbounded count lets a busy month overrun the
- * pool and the host shows "Can't show content" instead of the grid.
+ * Hard cap on event slot rows per week in titles mode, and the number that keeps the widget inside
+ * its view-ID budget. Glance translates each widget size from a fixed pool of 500 view IDs; a
+ * composition that needs more throws during translation and the host shows "Can't show content".
+ * Each element costs one ID, and each element with a tap action costs three, because Glance wraps
+ * it in a box plus a ripple image (a background color costs nothing extra).
  *
- * The value that fits depends on how many views each event costs: while each row cell was two views
- * (a Box wrapping a Text) three rows overran the pool on large widgets; collapsing every event to a
- * single Text (see [EventTitleRow]) roughly halved that, so a fully-booked six-week month at three
- * rows now measures well inside the pool at any size. Crucially the pool is spent per element, not
- * per pixel, so this cap — not the widget's size — bounds the view count: a large widget at the cap
- * costs the same as a medium one. Row count grows with widget height only up to this cap; beyond it
- * the extra height is absorbed by the weighted week rows (each stretches to an equal share of the
- * grid, its content top-aligned) instead of adding event rows, so the view count never climbs with
- * size past the cap.
+ * A titles-mode slot row is therefore bounded at 12 IDs regardless of how many events a month has:
+ * one row container, at most seven elements ([slotRowRuns] merges bars and blank runs), and at most
+ * two tap actions (the row's first pill and first bar). Each week adds a fixed ~35 (week and
+ * content containers, seven day tap targets, seven day numbers, the optional week-number gutter),
+ * so a week costs about 35 + rows x 12, and six weeks at three rows plus the header come to about
+ * 464. A "+n" heavy row costs at most 10, below the 12-ID pill/bar row. A fourth row would
+ * overflow, which is why this stays at three: past the cap, extra widget height stretches the
+ * weighted week rows instead of adding rows, so the cost never grows with size.
  */
 internal const val MAX_EVENT_ROWS = 3
 
 /**
  * Weeks a month can span in the worst case (a 31-day month whose first day lands late in the
- * week). The titles-vs-dots threshold ([minWidgetHeightForTitlesDp]) is derived against this
- * fixed count, never the current month's actual week count, so the SAME widget shows the same
- * mode every month. Deriving against the variable count instead makes a widget sized in the
- * narrow band around the threshold flip between dots and titles as the month rolls from 5 to 6
- * weeks — the cell height, and with it the fitter's answer, changes underneath a fixed widget.
+ * week). The titles-vs-dots threshold ([minWidgetHeightForTitlesDp]) uses this fixed count, never
+ * the current month's week count, so one widget shows the same mode every month. With the
+ * month's own count, a widget sized near the threshold flips between dots and titles as the
+ * month rolls from 5 to 6 weeks.
  */
 internal const val WORST_CASE_MONTH_WEEKS = 6
 
 /**
- * Event rows a day cell must have room for — in the worst-case 6-week month — before the widget
- * renders titles instead of the compact dots. The dots are the small-widget floor: only the
- * smallest resizes show them, and titles take over as soon as a cell fits this many honest rows.
- * One row is the floor: dots are the compact minimum, and any extra height becomes a title. A cell
- * that fits a single row shows the top event's title (a day with more collapses the rest, like the
- * dots cap) rather than three anonymous dots — more informative, and the widget is lossy by design.
+ * Event rows a day cell must fit, in the worst-case 6-week month, before the widget renders
+ * titles instead of the compact dots. Dots are the small-widget floor; titles take over as soon
+ * as a cell fits this many rows. A cell with one row shows the top event's title and hides the
+ * rest, like the dots cap, which tells more than three anonymous dots.
  *
- * A single row does NOT clip: the threshold and the row-fitter ([maxEventRows]) share the same
- * honest row-height baseline ([TIMED_TITLE_ROW_HEIGHT_DP], font-scale-multiplied), so a widget at
- * the threshold fits its row with none shoved off the cell. Requiring two rows only buys room for a
- * "+n" marker beside the title, at the cost of holding the whole titles mode back until the widget
- * is dragged much larger — a poor trade when a placed 4x4 widget already has room for one.
+ * A single row doesn't clip: the threshold and [maxEventRows] use the same font-scaled row height
+ * ([TIMED_TITLE_ROW_HEIGHT_DP]), so a widget at the threshold fits its row. Two rows would only
+ * add room for a "+n" marker beside the title, and would hold titles back until the widget is
+ * dragged much larger, though a placed 4x4 widget already has room for one.
  */
 internal const val TITLES_MIN_ROWS = 1
 
@@ -181,8 +167,8 @@ internal const val TITLES_MIN_ROWS = 1
 internal const val TIMED_SPAN_TINT_ALPHA = 0.18f
 
 /**
- * Tint alpha for an all-day FREE event chip's background, mirroring the in-app month view's
- * AllDayFree style (same hue as the event, quiet enough to read as "not busy").
+ * Tint alpha for an all-day free event's background, matching the in-app month view's
+ * AllDayFree style: the event's hue, quiet enough to read as "not busy".
  */
 internal const val ALL_DAY_FREE_TINT_ALPHA = 0.2f
 
@@ -197,18 +183,17 @@ internal const val EVENT_CHIP_CORNER_RADIUS_DP = 3
 internal const val EVENT_ROW_TEXT_CHROME_DP = 8
 
 /**
- * Estimated average advance width per character at [WidgetTypography.label] (11sp) and
- * font-scale 1.0, in dp. Used to pre-truncate titles with an ellipsis because Glance's Text
- * clips overflow mid-glyph instead of ellipsizing. Slightly generous on purpose: a touch too
- * short beats a clipped glyph.
+ * Estimated average advance width per character at [WidgetTypography.label] (11sp) and font scale
+ * 1.0, in dp. [maxTitleChars] uses it to size pre-truncated titles, because Glance's Text clips
+ * overflow mid-glyph instead of ellipsizing. Slightly generous: a touch too short beats a clipped
+ * glyph.
  */
 internal const val TITLE_CHAR_WIDTH_DP = 6
 
 /**
- * The weeks the widget should actually render: [MonthGrid.compute] always returns 6 rows (fixed
- * for the full-size view's paging), but a month usually spans 5 (sometimes 4 or 6). Drop trailing
- * rows that are entirely next-month padding so the widget shows only the weeks the month needs —
- * no stray empty row, less wasted height. Never drops a row containing a day of this month.
+ * Returns the weeks the widget renders. [MonthGrid.compute] always returns 6 rows (fixed for the
+ * full-size view's paging), but a month spans 4 to 6; trailing rows that are all next-month
+ * padding are dropped. Never drops a row containing a day of this month.
  */
 internal fun visibleWeeks(grid: org.onekash.kashcal.ui.model.MonthGrid): List<List<org.onekash.kashcal.ui.model.MonthGrid.DayCell>> {
     val weeks = grid.weeks
@@ -220,14 +205,11 @@ internal fun visibleWeeks(grid: org.onekash.kashcal.ui.model.MonthGrid): List<Li
 }
 
 /**
- * Format month header text for the widget.
- * For the current year the month stands alone, so use the full month name (there's room without
- * the year suffix). Other years append the year, so fall back to the abbreviated name to fit.
+ * Formats the month header: the full month name in the current year, else the abbreviated name
+ * plus the year so it fits, e.g. "April" or "Sep 2025".
  *
- * @param year Calendar year of the displayed month
  * @param month0 0-indexed month (January = 0)
- * @param currentYear Current year, injectable for testability
- * @return Formatted header string, e.g. "April" or "Sep 2025"
+ * @param currentYear injectable for tests
  */
 internal fun formatMonthHeader(
     year: Int,
@@ -243,18 +225,18 @@ internal fun formatMonthHeader(
 }
 
 /**
- * Main content composable for the month widget.
- * Shows a 6x7 calendar grid with day numbers and event indicator dots.
+ * Renders the month widget: header, day-of-week row and the month's [visibleWeeks], each week as
+ * event titles or dots depending on the widget's size.
  *
- * @param monthGrid The computed 6x7 month grid
- * @param monthEvents Map of day code to events for that day
- * @param monthOffset Current month offset (0 = current month)
- * @param targetYear Year of the displayed month
+ * @param monthEvents events keyed by day code
+ * @param monthOffset months from the current month (0 = current)
  * @param targetMonth0 0-indexed month of the displayed month
- * @param firstDayOfWeek java.util.Calendar constant for first day of week
- * @param showWeekNumbers whether to render the leading week-of-year gutter column
- * @param forcedDark the widget's light/dark pin (null = follow system) — used for the static
+ * @param firstDayOfWeek java.util.Calendar constant for the first day of the week
+ * @param showWeekNumbers whether to render the leading week-of-year gutter
+ * @param forcedDark the widget's light/dark pin (null = follow system), for the static
  *   adjacent-month text color, which lives outside the Glance scheme and can't see a pinned face
+ * @param today the current date, for the today marker, past-day dimming and the header's year
+ *   suffix; injectable so tests are date-independent
  */
 @Composable
 fun MonthWidgetContent(
@@ -265,13 +247,11 @@ fun MonthWidgetContent(
     targetMonth0: Int,
     firstDayOfWeek: Int,
     showWeekNumbers: Boolean = false,
-    forcedDark: Boolean? = null
+    forcedDark: Boolean? = null,
+    today: LocalDate = LocalDate.now()
 ) {
-    val headerText = formatMonthHeader(targetYear, targetMonth0)
-    val todayDayCode = run {
-        val today = LocalDate.now()
-        today.year * 10000 + today.monthValue * 100 + today.dayOfMonth
-    }
+    val headerText = formatMonthHeader(targetYear, targetMonth0, currentYear = today.year)
+    val todayDayCode = DayPagerUtils.localDateToDayCode(today)
 
     Column(
         modifier = GlanceModifier
@@ -285,63 +265,41 @@ fun MonthWidgetContent(
         // Day-of-week headers
         DayOfWeekRow(firstDayOfWeek, showWeekNumbers)
 
-        // Only the weeks this month spans (drops trailing all-next-month padding rows). Each week
-        // Row takes equal vertical weight so the rows fill the widget height evenly regardless of
-        // how many weeks the month spans — consistent look at any widget size, no dead space.
+        // Each week row takes equal vertical weight, so the rows fill the widget height evenly
+        // however many weeks the month spans.
         val weeks = visibleWeeks(monthGrid)
         val gutterLabels = weekNumberGutterLabels(monthGrid, showWeekNumbers)
 
-        // Titles vs. dots is driven purely by the ACTUAL widget size (SizeMode.Exact), no setting:
-        // the dots are the small-widget floor, and titles appear once the widget is tall enough
-        // that a worst-case 6-week month fits TITLES_MIN_ROWS rows per cell. The threshold is
-        // derived from the real element heights AND the system font scale (a bigger font grows the
-        // text, so the threshold rises with it), so a widget that shows titles always has room for
-        // them — never the cramped, cut-off single line. Keying the threshold to widget height (not
-        // the per-month cell height) keeps the same widget in the same mode as the month rolls from
-        // 5 to 6 weeks. Row COUNT and character width still track the actual stretched cell, so a
-        // taller widget shows more rows; only the dots/titles decision is month-stable.
+        // Titles vs. dots follows the widget size (SizeMode.Exact), not a setting: titles appear
+        // once a worst-case 6-week month fits TITLES_MIN_ROWS rows per cell at the current font
+        // scale ([minWidgetHeightForTitlesDp]). Keying it to widget height, not this month's cell
+        // height, keeps a widget in one mode as the month rolls from 5 to 6 weeks. Row count and
+        // character width track the actual cell, so a taller widget shows more rows.
         val widgetSize = LocalSize.current
         val fontScale = LocalContext.current.resources.configuration.fontScale
         val widgetHeightDp = widgetSize.height.value
         val cellHeightDp = (widgetHeightDp - MONTH_HEADER_HEIGHT_DP - MONTH_DOW_ROW_HEIGHT_DP) / weeks.size
-        val cellWidthDp = (widgetSize.width.value - gridHorizontalPaddingDp(showWeekNumbers)) / 7f
+        val cellWidthDp = weekColumnWidthDp(widgetSize.width.value, showWeekNumbers)
         val showTitles = widgetHeightDp >= minWidgetHeightForTitlesDp(TITLES_MIN_ROWS, fontScale)
-        // Per-week day codes, computed once for both the row-count budget and the render loop.
+        // Per-week day codes, computed once for both render branches.
         val weekDayCodesList = weeks.map { wk -> wk.map { MonthGrid.computeDayCodeForCell(it, targetYear, targetMonth0) } }
-        val hasTodayInMonth = (todayDayCode / 100) == (targetYear * 100 + targetMonth0 + 1)
-        // Rows that fit by height (floor of 1 is a rounding-edge guard so titles mode never renders
-        // bare day numbers with no room for events), then narrowed so a dense month's translated
-        // tree stays inside the widget's view-ID pool: the chooser steps the whole month down — or
-        // to 0, meaning render dots — rather than letting a busy month overrun the pool and show the
-        // host's "content can't be displayed" error. A normal month stays at its full height.
-        val heightDerivedMax = if (showTitles) maxEventRows(cellHeightDp, fontScale).coerceAtLeast(1) else 0
-        val rowChoice = if (showTitles) {
-            chooseMonthWidgetRowCount(weekDayCodesList, monthEvents, heightDerivedMax, showWeekNumbers, hasTodayInMonth)
-        } else {
-            MonthWidgetRowChoice(0, emptyList())
-        }
-        val eventRowCount = rowChoice.rows
+        // Rows that fit by height, capped at MAX_EVENT_ROWS. The floor of 1 guards the rounding
+        // edge so titles mode never renders bare day numbers. No density check is needed: the
+        // titles layout's view-ID cost is bounded by construction ([MAX_EVENT_ROWS]).
+        val eventRowCount = if (showTitles) maxEventRows(cellHeightDp, fontScale).coerceAtLeast(1) else 0
         val titleChars = maxTitleChars(cellWidthDp)
 
         weeks.forEachIndexed { weekIndex, week ->
             val weekDayCodes = weekDayCodesList[weekIndex]
-            // A week row is always 7 strictly-increasing day codes. If that ever breaks
-            // (grid/cell mismatch), fall back to dots rather than render bars anchored on
-            // wrong columns — degrade gracefully instead of blanking the widget.
+            // A week row is 7 strictly increasing day codes. If a grid/cell mismatch breaks
+            // that, fall back to dots instead of drawing bars on the wrong columns.
             val dayCodesValid = weekDayCodes.size == 7 && weekDayCodes.zipWithNext().all { (a, b) -> b > a }
-            // eventRowCount is 0 both when the widget is too short for titles and when the chooser
-            // stepped a dense month all the way down to dots; either way, render the dots grid.
             if (eventRowCount > 0 && dayCodesValid) {
-                // Titles mode: week slot layout — multi-day events span their columns as
-                // continuous bars, single-day events fill the remaining per-cell slots. Reuse the
-                // layout the chooser already built for the winning row count (no recompute).
-                val weekRender = rowChoice.weekRenders[weekIndex]
+                val weekRender = computeMonthWidgetWeekRender(weekDayCodes, monthEvents, eventRowCount)
                 TitlesWeekRow(
-                    // Weighted like the dots rows: every week shares the grid height evenly, so
-                    // a week without events still fills its cell — no "stacked from the top,
-                    // cramped empty days" look. The slot CONTENT stays top-aligned inside the
-                    // stretched cell (see TitlesWeekRow's Column), so the spare height pads the
-                    // bottom of each week rather than pulling the event rows apart.
+                    // Weighted like the dots rows, so a week without events still fills its
+                    // share. The slot content stays top-aligned in the stretched cell
+                    // ([TitlesWeekRow]), so spare height pads the bottom of each week.
                     modifier = GlanceModifier.fillMaxWidth().defaultWeight(),
                     week = week,
                     weekDayCodes = weekDayCodes,
@@ -384,9 +342,14 @@ fun MonthWidgetContent(
 }
 
 /**
- * One week in titles mode: a day-number row (same treatment as the dots-mode cells, minus
- * the dots), then the week's slot rows — spanning bars for multi-day events, snippets for
- * single-day events, "+n" overflow markers where a cell's events did not fit.
+ * Renders one week in titles mode: a day-number row, then the week's slot rows (bars for
+ * multi-day events, pills for single-day events, "+n" where a day's events didn't fit).
+ *
+ * The week is a Box whose first child is a row of seven transparent tap targets, one per day,
+ * drawn under the content. Content without its own tap action (day numbers, blank space, "+n"
+ * markers, pills and bars other than a row's first) lets the touch fall through, so a tap anywhere
+ * in a day opens that day. One target per day, not per slot, keeps the week inside the view-ID
+ * budget ([MAX_EVENT_ROWS]).
  */
 @Composable
 private fun TitlesWeekRow(
@@ -401,113 +364,119 @@ private fun TitlesWeekRow(
     gutterLabel: String?,
     forcedDark: Boolean?
 ) {
+    val resources = LocalContext.current.resources
+    // Adjacent-month days announce no events, as in dots mode, though titles mode still draws
+    // their events.
+    val dayDescriptions = week.mapIndexed { col, cell ->
+        val count = if (cell.position != MonthGrid.DayPosition.MonthDate) 0 else monthEvents[weekDayCodes[col]].orEmpty().size
+        buildAccessibilityDescription(resources, weekDayCodes[col], count)
+    }
     Row(modifier = modifier) {
         if (gutterLabel != null) {
             WeekNumberGutterCell(gutterLabel)
         }
-        // Top-aligned content inside the (possibly stretched) week cell: the day numbers and
-        // event rows pack at the top, spare height gathers below them — matching how the
-        // dots-mode DayCell pins its number+dot column to the top of its weighted cell.
-        Column(
-            modifier = GlanceModifier.defaultWeight().fillMaxHeight(),
-            verticalAlignment = Alignment.Top
-        ) {
-            // Day-number row, identical in look to the dots-mode cells.
-            Row(modifier = GlanceModifier.fillMaxWidth()) {
-                week.forEachIndexed { col, cell ->
-                    val dayCode = weekDayCodes[col]
-                    DayNumberCell(
-                        modifier = GlanceModifier.defaultWeight(),
-                        cell = cell,
-                        dayCode = dayCode,
-                        isToday = dayCode == todayDayCode,
-                        isPast = dayCode < todayDayCode,
-                        eventCount = monthEvents[dayCode].orEmpty().size,
-                        forcedDark = forcedDark
-                    )
+        Box(modifier = GlanceModifier.defaultWeight().fillMaxHeight()) {
+            // Underneath: the week's day tap targets.
+            Row(modifier = GlanceModifier.fillMaxSize()) {
+                weekDayCodes.forEachIndexed { col, dayCode ->
+                    Box(
+                        modifier = GlanceModifier
+                            .defaultWeight()
+                            .fillMaxHeight()
+                            .clickable(dayClickAction(dayCode))
+                            .semantics { contentDescription = dayDescriptions[col] }
+                    ) {}
                 }
             }
-            // Slot rows (bars + snippets + overflow). Only as many rows as fit the cell
-            // height were computed, so nothing clips off the week row's bottom.
-            weekRender.slots.forEach { slotRow ->
-                SlotRow(
-                    slotRow = slotRow,
-                    weekDayCodes = weekDayCodes,
-                    cellWidthDp = cellWidthDp,
-                    maxTitleChars = maxTitleChars
-                )
+            // On top: day numbers and event rows, packed at the top of the stretched week cell so
+            // spare height gathers below them.
+            Column(
+                modifier = GlanceModifier.fillMaxSize(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Row(modifier = GlanceModifier.fillMaxWidth()) {
+                    week.forEachIndexed { col, cell ->
+                        val dayCode = weekDayCodes[col]
+                        DayNumberCell(
+                            modifier = GlanceModifier.defaultWeight(),
+                            cell = cell,
+                            isToday = dayCode == todayDayCode,
+                            isPast = dayCode < todayDayCode,
+                            forcedDark = forcedDark
+                        )
+                    }
+                }
+                // weekRender holds only the rows that fit the cell height ([maxEventRows]).
+                weekRender.slots.forEach { slotRow ->
+                    SlotRow(
+                        runs = slotRowRuns(slotRow),
+                        cellWidthDp = cellWidthDp,
+                        maxTitleChars = maxTitleChars
+                    )
+                }
             }
         }
     }
 }
 
 /**
- * The day-number cell of a titles-mode week row: centered number with the today marker and
- * past/adjacent-month dimming, tappable to open the day — the dots-mode cell minus the dots.
+ * Renders a titles-mode day number: centered, with the today marker and past or adjacent-month
+ * dimming. It has no tap action and no description: the day's target underneath takes the tap
+ * and carries the description, so TalkBack reads it once and the number as a plain number.
  */
 @Composable
 private fun DayNumberCell(
     modifier: GlanceModifier,
     cell: MonthGrid.DayCell,
-    dayCode: Int,
     isToday: Boolean,
     isPast: Boolean,
-    eventCount: Int,
     forcedDark: Boolean?
 ) {
     val isAdjacentMonth = cell.position != MonthGrid.DayPosition.MonthDate
-    val accessibilityDesc = buildAccessibilityDescription(
-        LocalContext.current.resources, dayCode, if (isAdjacentMonth) 0 else eventCount
-    )
     val textColor = when {
         isAdjacentMonth -> WidgetTheme.adjacentMonthText(forcedDark)
         isToday -> WidgetTheme.onTodayMarker
         isPast -> WidgetTheme.pastEventText
         else -> WidgetTheme.primaryText
     }
-    val isTodayMarker = isToday && !isAdjacentMonth
-    Box(
-        modifier = modifier
-            .clickable(dayClickAction(dayCode))
-            .semantics { contentDescription = accessibilityDesc },
-        contentAlignment = Alignment.Center
-    ) {
-        // Only today wraps the number in a marker Box; every other day puts the number straight
-        // into the cell. Skipping the wrapper on the other 6 cells per row keeps each week's
-        // day-number row light on the widget's shared view-ID pool (see [MAX_EVENT_ROWS]).
-        if (isTodayMarker) {
-            Box(
+    if (isToday && !isAdjacentMonth) {
+        // The marker sits on the number itself, centered in the cell, so it stays a circle
+        // instead of stretching to the cell's width.
+        Box(modifier = modifier, contentAlignment = Alignment.Center) {
+            DayNumberText(
+                cell.dayOfMonth, textColor, bold = true,
                 modifier = GlanceModifier
                     .cornerRadius(TODAY_MARKER_CORNER_RADIUS_DP.dp)
                     .background(WidgetTheme.todayMarkerBackground)
-                    .padding(
-                        horizontal = TODAY_MARKER_HORIZONTAL_PADDING_DP.dp,
-                        vertical = TODAY_MARKER_VERTICAL_PADDING_DP.dp
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                DayNumberText(cell.dayOfMonth, textColor, bold = true)
-            }
-        } else {
-            DayNumberText(cell.dayOfMonth, textColor, bold = false)
+                    .padding(horizontal = TODAY_MARKER_HORIZONTAL_PADDING_DP.dp, vertical = TODAY_MARKER_VERTICAL_PADDING_DP.dp)
+            )
         }
+    } else {
+        DayNumberText(cell.dayOfMonth, textColor, bold = false, modifier = modifier)
     }
 }
 
-/** The day-of-month number as a single Text — the sole view a non-today day cell needs. */
+/** The day-of-month number as a single Text. */
 @Composable
-private fun DayNumberText(dayOfMonth: Int, color: ColorProvider, bold: Boolean) {
+private fun DayNumberText(
+    dayOfMonth: Int,
+    color: ColorProvider,
+    bold: Boolean,
+    modifier: GlanceModifier = GlanceModifier
+) {
     Text(
         text = "$dayOfMonth",
         style = TextStyle(
             color = color,
             fontSize = WidgetTypography.monthDayNumber,
-            fontWeight = if (bold) FontWeight.Bold else FontWeight.Medium
-        )
+            fontWeight = if (bold) FontWeight.Bold else FontWeight.Medium,
+            textAlign = TextAlign.Center
+        ),
+        modifier = modifier
     )
 }
 
-/** Tap action shared by every day-cell surface: open the app at that day. */
+/** Opens the app at [dayCode]; the tap action of every day-cell surface. */
 private fun dayClickAction(dayCode: Int) = actionStartActivity<MainActivity>(
     parameters = actionParametersOf(
         ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_GO_TO_DATE,
@@ -516,10 +485,9 @@ private fun dayClickAction(dayCode: Int) = actionStartActivity<MainActivity>(
 )
 
 /**
- * The deep-link extras for an event title row / span bar tap: open the event's Quick View in
- * the app — the same [ACTION_SHOW_EVENT] payload the agenda, week, and upcoming widgets send.
- * Extracted as a testable helper (mirroring `footerActionParameters` in the upcoming widget)
- * so the click-wiring is unit-tested, not just compile-checked.
+ * Returns the extras a pill or bar tap sends to open the event's Quick View: the same
+ * [ACTION_SHOW_EVENT] payload the agenda, week and upcoming widgets send. A separate function,
+ * like [footerActionParameters], so `MonthWidgetContentTest` can test the click wiring.
  */
 internal fun eventActionParameters(event: WidgetDataRepository.WidgetEvent): ActionParameters =
     actionParametersOf(
@@ -529,132 +497,131 @@ internal fun eventActionParameters(event: WidgetDataRepository.WidgetEvent): Act
         ActionParameters.Key<Boolean>(EXTRA_IS_DEVICE_EVENT) to event.isDeviceEvent
     )
 
-/** Tap action for an event title row / span bar: open the event's Quick View in the app. */
+/** Opens [event]'s Quick View; the tap action of a row's first pill or bar. */
 private fun eventClickAction(event: WidgetDataRepository.WidgetEvent) = actionStartActivity<MainActivity>(
     parameters = eventActionParameters(event)
 )
 
 /**
- * True when the slot at [col] is the first [MonthWidgetSlot.CellEvent] in its lane. Only that pill
- * deep-links to its Quick View; the rest are non-interactive, because one clickable per pill across
- * a busy month would exhaust the widget's view-ID pool (see [MAX_EVENT_ROWS]). Extracted so the
- * gating is unit-tested rather than left as an inline predicate the tests can't reach.
+ * One rendered element of a titles-mode slot row, spanning [width] day columns from [startCol].
+ * [slotRowRuns] produces them so a row renders at most seven elements with at most two tap
+ * targets, which bounds the widget's view-ID cost ([MAX_EVENT_ROWS]).
  */
-internal fun isFirstCellEventInLane(slotRow: List<MonthWidgetSlot>, col: Int): Boolean =
-    (0 until col).none { slotRow[it] is MonthWidgetSlot.CellEvent }
+internal sealed interface SlotRun {
+    val startCol: Int
+    val width: Int
+
+    /** A multi-day bar; one run covers all of its columns in this row. */
+    data class Bar(val span: MonthWidgetSpan, override val startCol: Int, override val width: Int, val deepLink: Boolean) : SlotRun
+
+    /** A single-day event pill. */
+    data class Pill(val event: WidgetDataRepository.WidgetEvent, override val startCol: Int, val deepLink: Boolean) : SlotRun {
+        override val width: Int get() = 1
+    }
+
+    /** A "+n more" marker; never a tap target, so taps reach the day underneath. */
+    data class Overflow(val count: Int, override val startCol: Int) : SlotRun {
+        override val width: Int get() = 1
+    }
+
+    /** A run of empty columns, drawn as one spacer. */
+    data class Blank(override val startCol: Int, override val width: Int) : SlotRun
+}
 
 /**
- * True when the slot at [col] is the first [MonthWidgetSlot.BarSegment] in its lane. Every bar is
- * tappable (the first deep-links, the rest open the day), so this only chooses the deep-link target
- * — never whether a bar has an action. Extracted alongside [isFirstCellEventInLane] for testing.
+ * Turns a seven-column slot row into ordered [SlotRun]s that cover columns 0..6 once each.
+ * Consecutive empty columns merge into one [SlotRun.Blank], and consecutive segments of one bar
+ * into one [SlotRun.Bar]. Merging follows span identity: [computeMonthWidgetWeekRender] fills
+ * every column of a bar with the same [MonthWidgetSpan] instance, so two bars with equal fields
+ * are never joined.
+ *
+ * Only the row's first pill and first bar deep-link to their event; a tap on any other element
+ * falls through to the day's target underneath. Each tap action costs three view IDs, so this cap
+ * keeps a row bounded.
  */
-internal fun isFirstBarSegmentInLane(slotRow: List<MonthWidgetSlot>, col: Int): Boolean =
-    (0 until col).none { slotRow[it] is MonthWidgetSlot.BarSegment }
+internal fun slotRowRuns(slotRow: List<MonthWidgetSlot>): List<SlotRun> {
+    require(slotRow.size == 7) { "a slot row must have 7 columns, got ${slotRow.size}" }
+    val runs = mutableListOf<SlotRun>()
+    var pillLinked = false
+    var barLinked = false
+    var col = 0
+    while (col < 7) {
+        when (val slot = slotRow[col]) {
+            is MonthWidgetSlot.BarSegment -> {
+                var end = col
+                while (end + 1 < 7 && (slotRow[end + 1] as? MonthWidgetSlot.BarSegment)?.span === slot.span) end++
+                runs += SlotRun.Bar(slot.span, col, end - col + 1, deepLink = !barLinked)
+                barLinked = true
+                col = end + 1
+            }
+            is MonthWidgetSlot.CellEvent -> {
+                runs += SlotRun.Pill(slot.event, col, deepLink = !pillLinked)
+                pillLinked = true
+                col++
+            }
+            is MonthWidgetSlot.Overflow -> {
+                runs += SlotRun.Overflow(slot.count, col)
+                col++
+            }
+            MonthWidgetSlot.Empty -> {
+                var end = col
+                while (end + 1 < 7 && slotRow[end + 1] === MonthWidgetSlot.Empty) end++
+                runs += SlotRun.Blank(col, end - col + 1)
+                col = end + 1
+            }
+        }
+    }
+    return runs
+}
 
 /**
- * One slot row of a titles-mode week: consecutive [MonthWidgetSlot.BarSegment]s of the same
- * span merge into one continuous bar across their columns; single-day snippets, overflow
- * markers, and empty cells take one column each.
+ * Renders one titles-mode slot row from its [SlotRun]s. Blank runs are one spacer and "+n"
+ * markers plain text; taps on either fall through to the day target underneath ([TitlesWeekRow]).
  */
 @Composable
 private fun SlotRow(
-    slotRow: List<MonthWidgetSlot>,
-    weekDayCodes: List<Int>,
+    runs: List<SlotRun>,
     cellWidthDp: Float,
     maxTitleChars: Int
 ) {
     Row(modifier = GlanceModifier.fillMaxWidth().padding(top = EVENT_ROW_GAP_DP.dp)) {
-        var col = 0
-        while (col < 7) {
-            // The last item in the row stretches to fill whatever rounding the fixed cell
-            // widths left over, so the 7 columns always span the full grid width exactly.
-            val isLastItem = run {
-                var next = col + 1
-                if (slotRow[col] is MonthWidgetSlot.BarSegment) {
-                    val span = (slotRow[col] as MonthWidgetSlot.BarSegment).span
-                    while (next < 7 && (slotRow[next] as? MonthWidgetSlot.BarSegment)?.span == span) next++
-                }
-                next >= 7
-            }
-            val cellModifier = if (isLastItem) {
+        runs.forEachIndexed { index, run ->
+            // Fixed widths, not defaultWeight(): Glance's defaultWeight() is always weight(1f), so
+            // a weighted multi-column run would collapse to one column. The last run stretches to
+            // absorb the fixed widths' rounding, so the row spans the full grid.
+            val runModifier = if (index == runs.lastIndex) {
                 GlanceModifier.defaultWeight()
             } else {
-                GlanceModifier.width(cellWidthDp.dp)
+                GlanceModifier.width((cellWidthDp * run.width).dp)
             }
-            when (val content = slotRow[col]) {
-                is MonthWidgetSlot.BarSegment -> {
-                    // Merge the whole run of this span's segments into one bar.
-                    var endCol = col
-                    while (endCol + 1 < 7 &&
-                        (slotRow[endCol + 1] as? MonthWidgetSlot.BarSegment)?.span == content.span
-                    ) {
-                        endCol++
-                    }
-                    val width = endCol - col + 1
-                    // The first bar in this lane deep-links to its Quick View; every other bar
-                    // opens the day (all bars carry a tap, as they did before deep-linking — one
-                    // clickable per bar stays within the view-ID pool). Only the deep-link target
-                    // is gated to the lane's first bar.
-                    val isFirstInCell = isFirstBarSegmentInLane(slotRow, col)
-                    SpanBar(
-                        span = content.span,
-                        width = width,
-                        maxTitleChars = maxTitleChars,
-                        deepLink = isFirstInCell,
-                        dayCode = weekDayCodes[col],
-                        // Fixed width, not defaultWeight(): Glance's defaultWeight() is always
-                        // weight(1f) — there is no weight(n) — so a weighted bar collapses to a
-                        // single column no matter how many days it spans. The widget knows the
-                        // real cell width from LocalSize, so the bar takes width × cellWidth.
-                        modifier = if (isLastItem) cellModifier else GlanceModifier.width((cellWidthDp * width).dp)
-                    )
-                    col = endCol + 1
-                }
-                is MonthWidgetSlot.CellEvent -> {
-                    // Only the FIRST event pill in this lane carries a tap target (deep-link to its
-                    // Quick View); the rest are non-interactive. A Glance clickable wraps each pill
-                    // in an extra view, and one per pill across a busy month exhausts the widget's
-                    // view-ID pool (see [MAX_EVENT_ROWS]) — the failure the translation test guards.
-                    val isFirstInCell = isFirstCellEventInLane(slotRow, col)
-                    EventTitleRow(content.event, maxTitleChars, cellModifier, deepLink = isFirstInCell)
-                    col++
-                }
-                is MonthWidgetSlot.Overflow -> {
-                    // The "+n" marker opens the day so the tap most tied to "show me the ones that
-                    // did not fit" lands on the full list. A per-event tap is intentionally not
-                    // wired: a Glance clickable wraps each pill in an extra view, and one per pill
-                    // across a busy month exhausts the widget's view-ID pool (see [MAX_EVENT_ROWS]).
-                    Box(modifier = cellModifier.clickable(dayClickAction(weekDayCodes[col]))) {
-                        Text(
-                            text = LocalContext.current.getString(R.string.status_more_events_compact, content.count),
-                            style = TextStyle(
-                                color = WidgetTheme.secondaryText,
-                                fontSize = WidgetTypography.label
-                            ),
-                            maxLines = 1,
-                            modifier = GlanceModifier.padding(start = 3.dp)
-                        )
-                    }
-                    col++
-                }
-                MonthWidgetSlot.Empty -> {
-                    // Transparent tap surface so empty parts of a day column still open the day.
-                    Box(
-                        modifier = cellModifier
-                            .clickable(dayClickAction(weekDayCodes[col]))
-                    ) {}
-                    col++
-                }
+            when (run) {
+                is SlotRun.Bar -> SpanBar(
+                    span = run.span,
+                    width = run.width,
+                    maxTitleChars = maxTitleChars,
+                    deepLink = run.deepLink,
+                    modifier = runModifier
+                )
+                is SlotRun.Pill -> EventTitleRow(run.event, maxTitleChars, runModifier, deepLink = run.deepLink)
+                is SlotRun.Overflow -> Text(
+                    text = LocalContext.current.getString(R.string.status_more_events_compact, run.count),
+                    style = TextStyle(
+                        color = WidgetTheme.secondaryText,
+                        fontSize = WidgetTypography.label
+                    ),
+                    maxLines = 1,
+                    modifier = runModifier.padding(start = 3.dp)
+                )
+                is SlotRun.Blank -> Spacer(modifier = runModifier)
             }
         }
     }
 }
 
 /**
- * A multi-day event's continuous bar across [width] day columns: all-day busy = solid fill
- * with a contrasting title, all-day free = quiet tint with a colored title, timed multi-day =
- * quiet tint with the title in the cell's own text color. The title shows only at the bar's
- * first segment of this week row; continuation segments (flush edges) keep the bar bare, like
+ * Renders a multi-day event's bar across [width] day columns: all-day busy is a solid fill with a
+ * contrasting title, all-day free a quiet tint with a colored title, timed a quiet tint with the
+ * title in the cell's text color. A bar continuing from the previous week shows no title, like
  * the app's flush span caps.
  */
 @Composable
@@ -663,18 +630,15 @@ private fun SpanBar(
     width: Int,
     maxTitleChars: Int,
     deepLink: Boolean,
-    dayCode: Int,
     modifier: GlanceModifier
 ) {
     val event = span.event
     val color = Color(event.calendarColor)
-    // The title only fits across the bar's full span, so it earns roughly `width` times the
-    // per-cell character budget (minus the chrome the single-cell rows already deduct).
+    // The title runs across the bar's full span, so it gets `width` times the per-cell character
+    // budget, which already has the per-cell chrome deducted.
     val spanChars = (maxTitleChars * width).coerceAtLeast(maxTitleChars)
     val title = truncateTitle(event.title, spanChars)
 
-    // Corner radius per edge: flush (continuing) edges stay square so the bar reads as one
-    // unbroken band across week boundaries; capped edges round off.
     val capRadius = EVENT_CHIP_CORNER_RADIUS_DP.dp
 
     val isTimed = !event.isAllDay
@@ -691,21 +655,20 @@ private fun SpanBar(
         else -> ColorProvider(day = contrastForegroundOn(color), night = contrastForegroundOn(color))
     }
 
-    // Corner radii per edge via two nested boxes is not possible in Glance — the modifier
-    // applies one radius to all corners. The bar therefore uses the full radius when both
-    // ends cap here, and none while either edge continues into an adjacent week.
+    // Glance's cornerRadius applies one radius to all corners, and nested boxes can't give
+    // per-edge radii. So the bar is rounded only when both ends cap in this week, and square
+    // when either edge continues into an adjacent week, so it reads as one unbroken band.
     val radiusModifier = if (!span.leftFlush && !span.rightFlush) {
         GlanceModifier.cornerRadius(capRadius)
     } else {
         GlanceModifier
     }
 
-    // A single Text is the whole bar: it carries the fill, per-edge corners, tap target, and
-    // padding, with the title as its content. One view instead of a Row wrapping a Text halves the
-    // per-bar cost against the widget's shared view-ID pool (see [MAX_EVENT_ROWS]). A segment that
-    // continues from the previous week shows no title (the flush-cap convention), so it renders a
-    // single space to keep the bar's height uniform with titled segments. Height comes from the
-    // text line plus vertical padding, not a fixed chip height, so it never clips mid-glyph.
+    // A single Text is the whole bar (fill, corners, padding and title), so a bar costs one view
+    // ID, three for the row's first bar with its tap action ([MAX_EVENT_ROWS]). A bar continuing
+    // from the previous week renders a single space so its height matches a titled bar. Height
+    // comes from the text line plus vertical padding, not a fixed chip height, so a tall line is
+    // never clipped vertically.
     Text(
         text = if (span.leftFlush) " " else title,
         style = TextStyle(
@@ -716,16 +679,14 @@ private fun SpanBar(
         modifier = modifier
             .then(radiusModifier)
             .background(ColorProvider(day = fill, night = fill))
-            // The day's first event bar deep-links to its Quick View; every other bar falls back
-            // to opening the day (as all bars did before deep-linking), so no bar is a dead tap.
-            .clickable(if (deepLink) eventClickAction(event) else dayClickAction(dayCode))
+            // Only the row's first bar opens its Quick View; a tap on another falls through to
+            // the day target underneath.
+            .let { m -> if (deepLink) m.clickable(eventClickAction(event)) else m }
             .padding(horizontal = 3.dp, vertical = 1.dp)
     )
 }
 
-/**
- * Month widget header with navigation arrows, month/year title, and "+" button.
- */
+/** Renders the header: previous and next arrows, the month title and the "+" button. */
 @Composable
 private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
     Row(
@@ -736,7 +697,7 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         val prevMonthDesc = LocalContext.current.getString(R.string.cd_previous_month)
-        // Back arrow — 48dp minimum touch target
+        // Back arrow, 48dp minimum touch target
         Box(
             modifier = GlanceModifier
                 .size(48.dp)
@@ -756,12 +717,10 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
             )
         }
 
-        // Month/Year title — conditional tap behavior
+        // The title returns to the current month when navigated away, else opens the app at today
         val headerAction = if (monthOffset != 0) {
-            // Return to current month (stay in widget)
             actionRunCallback<MonthNavResetAction>()
         } else {
-            // Open app at today
             actionStartActivity<MainActivity>(
                 parameters = actionParametersOf(
                     ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_GO_TO_TODAY
@@ -787,7 +746,7 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
         }
 
         val nextMonthDesc = LocalContext.current.getString(R.string.cd_next_month)
-        // Forward arrow — 48dp minimum touch target
+        // Forward arrow, 48dp minimum touch target
         Box(
             modifier = GlanceModifier
                 .size(48.dp)
@@ -807,20 +766,18 @@ private fun MonthWidgetHeader(headerText: String, monthOffset: Int) {
             )
         }
 
-        // Separate the "add" action from the month-navigation cluster so a tap
-        // meant for "next month" can't land on "+". The header has ample width.
+        // Keeps a "next month" tap from landing on "+". The header has ample width.
         Spacer(modifier = GlanceModifier.width(MONTH_HEADER_ADD_GAP_DP.dp))
 
-        // Plain "+" glyph, 48dp touch target — matches the nav arrows' size
+        // Plain "+" glyph with a 48dp touch target, the nav arrows' size
         WidgetAddButton()
     }
 }
 
 /**
- * Row of single-letter (CLDR NARROW) day-of-week headers, with a leading gutter spacer when
- * [showWeekNumbers] is on so the columns line up with the week-numbered grid below. Each letter
- * carries the full day name as its accessibility label so TalkBack announces "Monday" rather than
- * the ambiguous bare letter.
+ * Renders the single-letter (CLDR NARROW) day-of-week headers, with a leading gutter spacer when
+ * [showWeekNumbers] is on so the columns line up with the grid below. Each letter carries the full
+ * day name as its accessibility label, so TalkBack announces "Monday", not an ambiguous letter.
  */
 @Composable
 private fun DayOfWeekRow(firstDayOfWeek: Int, showWeekNumbers: Boolean) {
@@ -855,17 +812,14 @@ private fun DayOfWeekRow(firstDayOfWeek: Int, showWeekNumbers: Boolean) {
 }
 
 /**
- * Leading gutter cell showing a week-of-year number, matching the fixed [WEEK_NUMBER_GUTTER_WIDTH_DP]
- * width reserved in the day-of-week header. Rendered in the same muted secondary text as the
- * day-of-week letters so it reads as a quiet index, not a day.
+ * Renders the leading week-of-year cell, [WEEK_NUMBER_GUTTER_WIDTH_DP] wide like the space the
+ * day-of-week header reserves, in the day-of-week letters' muted text so it reads as an index,
+ * not a day.
  *
- * The cell sizes to its own text height and top-aligns, so the number sits on the same line as the
- * day numbers beside it. It deliberately does NOT `fillMaxHeight`: back when titles-mode rows were
- * content-height, a fillMaxHeight gutter forced the (weightless) row to measure against the whole
- * remaining widget height and ballooned the first week until the rest clipped off the bottom — the
- * "one visible week" bug. The rows are weighted now, so the row height no longer depends on the
- * gutter, but sizing the gutter to its text still keeps the number top-aligned in both modes; in
- * dots mode the sibling day cells define the row height.
+ * The cell sizes to its text and top-aligns, so the number sits on the line of the day numbers
+ * beside it, in both modes; in dots mode the day cells set the row height. It doesn't
+ * `fillMaxHeight`: in a row without weight, that measures the row against the whole remaining
+ * widget height, so the first week balloons and the rest clip off the bottom.
  */
 @Composable
 private fun WeekNumberGutterCell(label: String) {
@@ -886,9 +840,8 @@ private fun WeekNumberGutterCell(label: String) {
 }
 
 /**
- * Single day cell in dots mode: centered day number (with today marker) plus up to 3
- * colored event indicator dots. Titles mode renders week-based slot rows instead — see
- * [TitlesWeekRow] — and never reaches this composable.
+ * Renders a dots-mode day cell: the centered day number, with the today marker, and up to 3
+ * event dots. Titles mode renders [TitlesWeekRow] instead.
  */
 @Composable
 private fun DayCell(
@@ -918,23 +871,19 @@ private fun DayCell(
             .fillMaxHeight()
             .clickable(dayClickAction(dayCode))
             .semantics { contentDescription = accessibilityDesc },
-        // Center the number+dot cluster vertically rather than pinning it to the top. Top-anchoring
-        // dumps any vertical overflow onto the bottom, so when a larger font/display scale makes the
-        // day number taller the dot below it is the first thing shaved off the cell's edge. Centered,
-        // the overflow is shared with the number's own line-box slack and the dot stays visible.
+        // Centered, not top-aligned: top alignment puts all vertical overflow at the bottom, so a
+        // larger font or display scale shaves the dots off the cell's edge first. Centered, the
+        // overflow shares the number's line-box slack and the dots stay visible.
         contentAlignment = Alignment.Center
     ) {
         Column(
             modifier = GlanceModifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Day number, centered by the Column. Today is marked with a solid accent circle
-            // around the number (the number flips to the on-accent color) — the Material /
-            // Google Calendar "today" treatment; other days show a bare number. Only today
-            // wraps the number in a marker Box; every other day puts the number straight into
-            // the Column. Skipping the wrapper (and the old centering Box) on non-today cells
-            // keeps each cell light on the widget's shared view-ID pool (see [MAX_EVENT_ROWS]),
-            // which a busy month's dots would otherwise exhaust.
+            // Today's number sits in a solid accent circle and flips to the on-accent color
+            // (the Material "today" treatment). Only today wraps the number in a marker Box;
+            // other days put it straight into the Column, which keeps each cell light on the
+            // shared view-ID pool ([MAX_EVENT_ROWS]) that a busy month's dots would exhaust.
             if (isTodayMarker) {
                 Box(
                     modifier = GlanceModifier
@@ -952,19 +901,17 @@ private fun DayCell(
                 DayNumberText(cell.dayOfMonth, textColor, bold = false)
             }
 
-            // Adjacent-month cells stay bare — a faded number only.
+            // Adjacent-month cells stay bare: a faded number only.
             if (!isAdjacentMonth && dotColors.isNotEmpty()) {
-                // Event indicator dots (up to 3)
                 Spacer(modifier = GlanceModifier.height(1.dp))
                 Row(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = GlanceModifier.fillMaxWidth()
                 ) {
                     dotColors.forEachIndexed { index, color ->
-                        // The gap between dots is left padding on the dot itself rather than a
-                        // separate Spacer view: identical 2dp gap, one fewer view per dot. On a
-                        // busy month those saved views add up across all 7 columns and 6 weeks,
-                        // keeping dots mode inside the widget's shared view-ID pool (see [MAX_EVENT_ROWS]).
+                        // The 2dp gap is start padding on the dot, not a Spacer: one fewer view
+                        // per dot, which across 7 columns and 6 weeks keeps a busy month's dots
+                        // inside the shared view-ID pool ([MAX_EVENT_ROWS]).
                         Box(
                             modifier = GlanceModifier
                                 .padding(start = if (index > 0) 2.dp else 0.dp)
@@ -980,16 +927,17 @@ private fun DayCell(
 }
 
 /**
- * One single-day event as a filled pill in a day cell, styled to match [SpanBar] so a day's
- * multi-day bars and single-day pills read as one family:
- * - timed event: quiet tint + title in the cell's text color
- * - all-day busy: solid fill in the event color + WCAG-contrasting title
- * - all-day free: quiet tint + title in the event color
+ * Renders a single-day event as a filled pill, styled like [SpanBar] so bars and pills read as
+ * one family:
+ * - timed: quiet tint, title in the cell's text color
+ * - all-day busy: solid fill in the event color, WCAG-contrasting title
+ * - all-day free: quiet tint, title in the event color
  *
- * Deliberately a single Text — no wrapping Box, leading stripe, or inner spacer. Every extra
- * element here is multiplied across up to 7 columns and [MAX_EVENT_ROWS] rows in each of the 6 week
- * rows, and it was that per-event overhead, not the row count alone, that overflowed the widget's
- * view-ID pool and showed "Can't show content" on larger widgets.
+ * A single Text carrying the background, corner and padding, with no wrapping Box, stripe or
+ * spacer. Each extra element multiplies across 7 columns, [MAX_EVENT_ROWS] rows and 6 weeks, so a
+ * pill stays one view ID, three for the row's first pill with its tap action (Glance wraps a
+ * tappable element in a box plus a ripple image). Height comes from the text line plus vertical
+ * padding, not a fixed chip height, so a tall line is never clipped vertically.
  */
 @Composable
 private fun EventTitleRow(
@@ -1011,13 +959,8 @@ private fun EventTitleRow(
         event.isFree -> ColorProvider(day = color, night = color)
         else -> contrastForegroundOn(color).let { ColorProvider(day = it, night = it) }
     }
-    // A single Text carries the pill background, corner, and padding — no wrapping Box. One view
-    // instead of two, multiplied across every cell/row/week, is what lets the grid fit another
-    // event row inside the widget's shared view-ID pool (see [MAX_EVENT_ROWS]). The height comes
-    // from the text line plus vertical padding rather than a fixed chip height, so the title is
-    // never clipped mid-glyph when its line is taller than a fixed slot. Only the day's first
-    // pill carries a clickable (deepLink): each clickable wraps the pill in an extra view, and
-    // one per pill across a busy month would exhaust the view-ID pool.
+    // Only the row's first pill (deepLink) has a tap action; others fall through to the day
+    // target underneath.
     Text(
         text = title,
         style = TextStyle(
@@ -1035,9 +978,7 @@ private fun EventTitleRow(
 
 // ==================== Action Callbacks for Month Navigation ====================
 
-/**
- * Navigate to previous month (decrement offset).
- */
+/** Moves the widget to the previous month. */
 class MonthNavPreviousAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         try {
@@ -1054,9 +995,7 @@ class MonthNavPreviousAction : ActionCallback {
     }
 }
 
-/**
- * Navigate to next month (increment offset).
- */
+/** Moves the widget to the next month. */
 class MonthNavNextAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         try {
@@ -1073,9 +1012,7 @@ class MonthNavNextAction : ActionCallback {
     }
 }
 
-/**
- * Reset to current month (offset = 0). Used when tapping header while navigated away.
- */
+/** Returns the widget to the current month; the header tap while navigated away. */
 class MonthNavResetAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
         try {
@@ -1093,12 +1030,9 @@ class MonthNavResetAction : ActionCallback {
 
 private const val TAG = "MonthWidgetNav"
 
-// ==================== Pure Helper Functions (Tested) ====================
+// ==================== Pure helper functions ====================
 
-/**
- * Extract unique calendar colors from events, capped at [maxDots].
- * Preserves order of first appearance.
- */
+/** Returns the events' distinct colors in order of first appearance, capped at [maxDots]. */
 internal fun extractDotColors(
     events: List<WidgetDataRepository.WidgetEvent>,
     maxDots: Int = 3
@@ -1110,35 +1044,32 @@ internal fun extractDotColors(
 }
 
 /**
- * Horizontal padding the month grid keeps on each side (the day-of-week header row pads by
- * 2dp on both ends; the week-number gutter takes its fixed width off the grid). Subtracted
- * from the widget width before dividing into the 7 day columns.
+ * Returns the width of one day column in a week row, in dp: the widget width less the optional
+ * week-number gutter, split seven ways. Week rows have no side padding (only the day-of-week
+ * header does), so none is subtracted.
+ *
+ * Event runs use this as a fixed width while day numbers and tap targets use equal weights; they
+ * agree only when seven columns fill the row exactly. Any extra inset would shift runs left of
+ * their day, so a tap near a run's edge would open the neighbour. A host that draws the widget at a
+ * width other than the one it reports causes a small drift, which fixed-width runs can't avoid
+ * because Glance weights are always 1.
  */
-internal fun gridHorizontalPaddingDp(showWeekNumbers: Boolean): Int =
-    (if (showWeekNumbers) WEEK_NUMBER_GUTTER_WIDTH_DP else 0) + 4
+internal fun weekColumnWidthDp(widgetWidthDp: Float, showWeekNumbers: Boolean): Float =
+    (widgetWidthDp - (if (showWeekNumbers) WEEK_NUMBER_GUTTER_WIDTH_DP else 0)) / 7f
 
 /**
- * How many event slot rows fit a week row of [cellHeightDp] below the day-number block —
- * the budget the titles mode fills, capped by [MAX_EVENT_ROWS]. Each rendered slot row occupies
- * [TIMED_TITLE_ROW_HEIGHT_DP] (scaled by [fontScale]) plus one [EVENT_ROW_GAP_DP] of top padding,
- * so a row costs the same whether it is the first or a later one. Returns 0 when not even one
- * row fits below an honest day-number budget.
+ * Returns how many event slot rows fit a week row of [cellHeightDp] below the day-number block,
+ * capped at [MAX_EVENT_ROWS], or 0 when not even one fits.
  *
- * Both the row height and the day-number block scale with [fontScale]: text grows with the
- * system font setting, so at a larger scale each row and the number take more of the cell and
- * the fitter returns fewer rows — the layout backs off instead of clipping. Pass the current
- * [android.content.res.Configuration.fontScale]; the default of 1f is the unscaled baseline.
+ * Every slot row, the first included, costs [TIMED_TITLE_ROW_HEIGHT_DP] plus one
+ * [EVENT_ROW_GAP_DP] of top padding. The row height and [DAY_NUMBER_BLOCK_HEIGHT_DP] scale with
+ * [fontScale], so a larger font returns fewer rows instead of clipping. Pass the current
+ * `Configuration.fontScale`; 1f is the unscaled baseline.
  *
- * The count must be exact, not an over-estimate: each titles-mode week row is a fixed weighted
- * share of the grid height, so a row the fitter claims but the cell can't hold is clipped, not
- * absorbed.
+ * The count must not over-estimate: each titles-mode week is a fixed weighted share of the grid
+ * height, so a row the cell can't hold is clipped, not absorbed.
  */
 internal fun maxEventRows(cellHeightDp: Float, fontScale: Float = 1f): Int {
-    // A day cell holds the day-number block plus as many event rows as fit. Every slot row —
-    // including the first — carries a leading gap (SlotRow's top padding), so each costs the
-    // same (font-scaled) height plus one gap. The day-number budget is sized to the real
-    // (font-scaled) number height so a returned row actually clears the number instead of being
-    // shoved off the cell — the "numbers show but events don't" failure at small sizes.
     val perRow = TIMED_TITLE_ROW_HEIGHT_DP * fontScale + EVENT_ROW_GAP_DP
     val numberBlock = DAY_NUMBER_BLOCK_HEIGHT_DP * fontScale
     val usable = cellHeightDp - numberBlock
@@ -1146,174 +1077,15 @@ internal fun maxEventRows(cellHeightDp: Float, fontScale: Float = 1f): Int {
     return (usable / perRow).toInt().coerceAtMost(MAX_EVENT_ROWS)
 }
 
-// ==================== View-budget estimation (adaptive row count) ====================
-
-/*
- * A widget is translated to RemoteViews from a fixed pool of view IDs; a composition that allocates
- * more IDs than the pool throws IllegalStateException("There are too many views") during translation
- * and the host shows "content can't be displayed". [maxEventRows] caps rows by widget size, but that
- * cap alone is not enough: a fully-booked six-week month at the row cap can still exceed the pool.
- * The weights and budget below let the widget estimate a month's cost BEFORE rendering and step the
- * row count down (see the chooser) so a dense month degrades to fewer rows / dots instead of erroring.
- *
- * Calibration (measured on the worst case: a real six-week month, week numbers on, large size, by
- * translating fixtures through the real GlanceRemoteViews path and recording which overflow):
- * the density-varying element cost, weighted as below, measured 144 units for a month fully packed
- * with single-day pills and 198 units for a bar-dense month — both translated fine — while a
- * pills + bars + "+n"-overflow MIX measured 234 units and overflowed. The overflow markers and the
- * backgrounded span bars are the heavy elements (a background makes the translator emit a wrapper
- * plus a backing image; the "+n" marker is a tap-target box wrapping a text), which is why an equal
- * count of plain pills is cheaper than a bars/overflow mix. Adding the fixed header + day-number +
- * gutter cost (constant for a given week count) puts those three at 252 / 306 / 342 absolute units.
- *
- * NOTE: the weights track the CURRENT widget layout's per-element view-ID cost under the current
- * Glance version. A layout change or Glance upgrade can shift the real overflow boundary; the
- * no-overflow translation gate test is the tripwire that catches such a drift.
- */
-
-/** A backgrounded multi-day span bar (wrapper + backing image + text). Merged run counts once. */
-internal const val VIEW_UNITS_BAR = 3
-
-/** A single-day event pill (a backgrounded text; only the lane's first is a tap target). */
-internal const val VIEW_UNITS_PILL = 1
-
-/** A "+n more" overflow marker (a tap-target box wrapping a text) — as heavy as a bar. */
-internal const val VIEW_UNITS_OVERFLOW = 3
-
-/** An empty-but-tappable slot cell. */
-internal const val VIEW_UNITS_EMPTY = 1
-
-/** The row container holding one slot row's seven columns. */
-internal const val VIEW_UNITS_SLOT_ROW = 1
-
-/** One day-number cell (box + number text); seven per week row. */
-internal const val VIEW_UNITS_DAY_CELL = 2
-
-/** The optional leading week-of-year gutter cell; one per week row when week numbers are on. */
-internal const val VIEW_UNITS_WEEK_GUTTER = 2
-
-/** Today's accent-marker box, present once when the displayed month contains today. */
-internal const val VIEW_UNITS_TODAY_MARKER = 1
-
-/** Fixed header + day-of-week row + root container cost, independent of month or size. */
-internal const val VIEW_UNITS_CHROME_BASE = 12
-
 /**
- * Budget, in [estimateMonthWidgetViewUnits] units, at or under which the titles grid is safe to
- * translate. Calibrated to the top of the confirmed-safe range on the worst-case six-week month
- * (a fully pill-packed month at 252 units and a bar-dense month at 306 both translated without
- * overflowing; a pills+bars+overflow mix at 342 overflowed). The chooser steps rows down until the
- * estimate is at or under this, so the densest confirmed-safe month keeps its rows while a denser
- * month degrades. Sits 36 units below the measured overflow boundary for margin.
- */
-internal const val MONTH_WIDGET_VIEW_BUDGET = 306
-
-/**
- * Estimate the view-ID cost of rendering [weekRenders] as a titles-mode month grid, in the abstract
- * units defined by the VIEW_UNITS_* weights, for comparison against [MONTH_WIDGET_VIEW_BUDGET].
- * Sums the density-varying slot elements (bars — each merged run once — pills, overflow markers,
- * empty cells, and the per-row container) plus the fixed per-week chrome (seven day-number cells,
- * the week-number gutter when [showWeekNumbers]), the base header/day-of-week chrome, and today's
- * marker when [hasTodayInMonth]. Font scale is deliberately not an input: a larger scale only
- * reduces the row count upstream (via [maxEventRows]), which lowers this estimate, so it never
- * pushes the cost UP.
- */
-internal fun estimateMonthWidgetViewUnits(
-    weekRenders: List<MonthWidgetWeekRender>,
-    showWeekNumbers: Boolean,
-    hasTodayInMonth: Boolean
-): Int {
-    var units = VIEW_UNITS_CHROME_BASE
-    if (hasTodayInMonth) units += VIEW_UNITS_TODAY_MARKER
-    val perWeekChrome = 7 * VIEW_UNITS_DAY_CELL + if (showWeekNumbers) VIEW_UNITS_WEEK_GUTTER else 0
-    units += weekRenders.size * perWeekChrome
-    for (render in weekRenders) {
-        for (row in render.slots) {
-            units += VIEW_UNITS_SLOT_ROW
-            var col = 0
-            while (col < row.size) {
-                when (val slot = row[col]) {
-                    is MonthWidgetSlot.BarSegment -> {
-                        // One SpanBar spans the whole run of same-span segments, so count it once.
-                        // Identity (===) is safe and matches the render path: computeMonthWidgetWeekRender
-                        // fills every column of a bar with the SAME MonthWidgetSpan instance, and distinct
-                        // lane entries are always different events (deduped by spanKey), so no two
-                        // structurally-equal-but-distinct spans are ever adjacent.
-                        units += VIEW_UNITS_BAR
-                        var end = col
-                        while (end + 1 < row.size &&
-                            (row[end + 1] as? MonthWidgetSlot.BarSegment)?.span === slot.span
-                        ) {
-                            end++
-                        }
-                        col = end + 1
-                        continue
-                    }
-                    is MonthWidgetSlot.CellEvent -> units += VIEW_UNITS_PILL
-                    is MonthWidgetSlot.Overflow -> units += VIEW_UNITS_OVERFLOW
-                    MonthWidgetSlot.Empty -> units += VIEW_UNITS_EMPTY
-                }
-                col++
-            }
-        }
-    }
-    return units
-}
-
-/**
- * The month-wide row-count decision plus the week layouts that produced it. Returning the layouts
- * lets the caller render from them directly instead of rebuilding them, so a titles-mode
- * composition runs [computeMonthWidgetWeekRender] once per week, not twice. [rows] is 0 when the
- * month must fall back to dots, in which case [weekRenders] is empty.
- */
-internal data class MonthWidgetRowChoice(val rows: Int, val weekRenders: List<MonthWidgetWeekRender>)
-
-/**
- * Pick how many event rows the titles-mode month grid can render without overflowing the widget's
- * view-ID pool, given [heightDerivedMax] rows would fit by widget height alone (from [maxEventRows]).
+ * Returns the smallest widget height, in dp, at which the month renders titles instead of dots:
+ * the height a [WORST_CASE_MONTH_WEEKS]-week month needs for every cell to fit [titleRows] event
+ * rows below the day number.
  *
- * Steps the row count down uniformly across the whole month — for each candidate from
- * [heightDerivedMax] down to 1 it builds that month's week layouts via [computeMonthWidgetWeekRender]
- * and estimates their cost with [estimateMonthWidgetViewUnits] — and returns the HIGHEST candidate
- * whose estimate is within [MONTH_WIDGET_VIEW_BUDGET], along with that candidate's built layouts.
- * Returns [rows] 0 to signal "render dots instead" when even a single title row would exceed the
- * budget (the guaranteed-safe floor).
- *
- * Each candidate is estimated independently rather than assuming cost falls monotonically as rows
- * drop: dropping a row can turn fitting events into "+n" overflow markers, which are not free, so
- * the highest-fitting count is found by checking each, not by stopping at the first miss.
- *
- * Month-wide (one row count for every week) keeps the grid visually uniform; the step-down only
- * engages on a month dense enough to otherwise error, leaving normal months at their full height.
- */
-internal fun chooseMonthWidgetRowCount(
-    weekDayCodesList: List<List<Int>>,
-    monthEvents: Map<Int, List<WidgetDataRepository.WidgetEvent>>,
-    heightDerivedMax: Int,
-    showWeekNumbers: Boolean,
-    hasTodayInMonth: Boolean
-): MonthWidgetRowChoice {
-    for (rows in heightDerivedMax downTo 1) {
-        val weekRenders = weekDayCodesList.map { computeMonthWidgetWeekRender(it, monthEvents, rows) }
-        if (estimateMonthWidgetViewUnits(weekRenders, showWeekNumbers, hasTodayInMonth) <= MONTH_WIDGET_VIEW_BUDGET) {
-            return MonthWidgetRowChoice(rows, weekRenders)
-        }
-    }
-    return MonthWidgetRowChoice(0, emptyList())
-}
-
-/**
- * Smallest widget HEIGHT (dp) at which the month renders titles instead of dots — the height a
- * worst-case [WORST_CASE_MONTH_WEEKS]-week month needs so every cell fits [titleRows] event rows
- * below the day number. At or above this the widget shows titles; below it, dots.
- *
- * Derived from the real chrome ([MONTH_HEADER_HEIGHT_DP] + [MONTH_DOW_ROW_HEIGHT_DP]) plus, per
- * week, the day-number block and [titleRows] rows each with their leading gap — the exact height
- * a titles-mode week row renders at ([maxEventRows] fits against the same per-row cost), so the
- * threshold equals the rendered content height rather than under-counting it. Keying off the
- * fixed 6-week count (not the current month) makes the decision month-stable: the same widget
- * never flips dots<->titles as the month rolls between 5 and 6 weeks. Because it matches the real
- * rendered heights, a widget past the threshold provably fits [titleRows] rows with none clipped.
+ * It adds [MONTH_HEADER_HEIGHT_DP] and [MONTH_DOW_ROW_HEIGHT_DP] to, per week, the day-number
+ * block and [titleRows] rows with their gaps: the same per-row cost [maxEventRows] fits against,
+ * so a widget at or above the threshold fits [titleRows] rows. The fixed week count keeps the
+ * decision month-stable ([WORST_CASE_MONTH_WEEKS]).
  */
 internal fun minWidgetHeightForTitlesDp(titleRows: Int, fontScale: Float = 1f): Float {
     val perRow = TIMED_TITLE_ROW_HEIGHT_DP * fontScale + EVENT_ROW_GAP_DP
@@ -1323,9 +1095,9 @@ internal fun minWidgetHeightForTitlesDp(titleRows: Int, fontScale: Float = 1f): 
 }
 
 /**
- * How many title characters fit a day cell of [cellWidthDp] after the row chrome (stripe or
- * chip padding), at [TITLE_CHAR_WIDTH_DP] per character. Minimum 4 so a clipped title still
- * leaves something readable.
+ * Returns how many title characters fit a day cell of [cellWidthDp] after the pill padding
+ * ([EVENT_ROW_TEXT_CHROME_DP]), at [TITLE_CHAR_WIDTH_DP] per character. At least 4, so a clipped
+ * title still leaves something readable.
  */
 internal fun maxTitleChars(cellWidthDp: Float): Int =
     ((cellWidthDp - EVENT_ROW_TEXT_CHROME_DP) / TITLE_CHAR_WIDTH_DP)
@@ -1333,11 +1105,10 @@ internal fun maxTitleChars(cellWidthDp: Float): Int =
         .coerceAtLeast(4)
 
 /**
- * Truncate [title] to [maxChars] whole characters, with no trailing ellipsis. Glance's Text clips
- * overflow mid-glyph, so titles are pre-shortened on a character boundary; [maxTitleChars] estimates
- * how much actually fits the cell. The trailing "…" is deliberately omitted so the narrow widget
- * cell spends every character on the title itself — the cell edge already signals there is more.
- * A trailing space left at the clip boundary is trimmed so the title never ends on a blank glyph.
+ * Cuts [title] to its first [maxChars] chars, trimming a trailing space at the cut. Glance's Text
+ * clips overflow mid-glyph, so titles are pre-shortened to what [maxTitleChars] estimates fits.
+ * There is no trailing "…" so the narrow cell spends every character on the title; the cell edge
+ * already signals there is more.
  */
 internal fun truncateTitle(title: String, maxChars: Int): String {
     if (maxChars <= 0 || title.length <= maxChars) return title
@@ -1345,18 +1116,16 @@ internal fun truncateTitle(title: String, maxChars: Int): String {
 }
 
 /**
- * Get localized single-letter (CLDR NARROW) day-of-week headers starting from [firstDayOfWeek].
+ * Returns the 7 localized single-letter (CLDR NARROW) day-of-week headers starting from
+ * [firstDayOfWeek], e.g. English "S M T W T F S".
  *
- * NARROW gives one letter per day (e.g. English "S M T W T F S"), sized to match the day-of-month
- * numbers in the grid below — the Material / Google Calendar month-grid treatment. The repeats
- * (Sun/Sat both "S", Tue/Thu both "T") are disambiguated for sighted users by column position and
- * for screen-reader users by [dayOfWeekAccessibilityLabels], which supplies the full day name.
+ * Repeated letters (Sun/Sat "S", Tue/Thu "T") are told apart by column position and, for screen
+ * readers, by [dayOfWeekAccessibilityLabels]. The order comes from
+ * [DateTimeUtils.getOrderedDaysOfWeek], the helper [MonthGrid.compute] orders the grid rows with,
+ * so the header can't drift from the grid.
  *
- * Ordering comes from [DateTimeUtils.getOrderedDaysOfWeek] — the same helper the grid rows below
- * use — so the header columns can never drift from the grid's day ordering.
- *
- * @param firstDayOfWeek java.util.Calendar constant (1=Sun, 2=Mon, ..., 7=Sat) or 0=system default
- * @return List of 7 single-letter day names
+ * @param firstDayOfWeek java.util.Calendar constant (1=Sun, 2=Mon, ..., 7=Sat) or 0 for the
+ *   system default
  */
 internal fun getDayOfWeekHeaders(firstDayOfWeek: Int): List<String> {
     val locale = Locale.getDefault()
@@ -1364,12 +1133,10 @@ internal fun getDayOfWeekHeaders(firstDayOfWeek: Int): List<String> {
 }
 
 /**
- * Full localized day names (e.g. "Sunday") in the same order as [getDayOfWeekHeaders], used as the
- * accessibility label for each single-letter header so TalkBack announces the day rather than a
- * bare, ambiguous letter.
+ * Returns the 7 full localized day names (e.g. "Sunday") in [getDayOfWeekHeaders]' order, the
+ * accessibility labels of the single-letter headers.
  *
- * @param firstDayOfWeek java.util.Calendar constant (1=Sun, 2=Mon, ..., 7=Sat) or 0=system default
- * @return List of 7 full day names
+ * @param firstDayOfWeek as in [getDayOfWeekHeaders]
  */
 internal fun dayOfWeekAccessibilityLabels(firstDayOfWeek: Int): List<String> {
     val locale = Locale.getDefault()
@@ -1377,12 +1144,9 @@ internal fun dayOfWeekAccessibilityLabels(firstDayOfWeek: Int): List<String> {
 }
 
 /**
- * Week-of-year labels for the gutter column, one per rendered week, or empty when the
- * "show week numbers" setting is off.
- *
- * Mirrors the in-app month grid's optional leading week-number column. Labels come from each
- * [visibleWeeks] row's first cell so they never include a trailing all-next-month padding row,
- * and the number is the locale-aware [MonthGrid.DayCell.weekNumber] the grid already computed.
+ * Returns the week-of-year gutter labels, one per [visibleWeeks] row, or empty when "show week
+ * numbers" is off. Each is the row's [MonthGrid.DayCell.weekNumber], locale-aware, as in the
+ * in-app month grid's week-number column.
  */
 internal fun weekNumberGutterLabels(grid: MonthGrid, showWeekNumbers: Boolean): List<String> {
     if (!showWeekNumbers) return emptyList()
@@ -1390,13 +1154,8 @@ internal fun weekNumberGutterLabels(grid: MonthGrid, showWeekNumbers: Boolean): 
 }
 
 /**
- * Build accessibility description for a day cell using a dayCode.
- * Extracts year/month from the dayCode so adjacent-month cells get the correct month name.
- * Format: "March 15, 2 events" or "March 15, no events"
- *
- * @param resources Android resources for localized strings
- * @param dayCode YYYYMMDD format day code
- * @param eventCount Number of events on this day
+ * Builds a day cell's accessibility description from its YYYYMMDD [dayCode], such as
+ * "March 15, 2 events". The month comes from the day code, so adjacent-month cells get theirs.
  */
 internal fun buildAccessibilityDescription(
     resources: Resources,
@@ -1410,14 +1169,9 @@ internal fun buildAccessibilityDescription(
 }
 
 /**
- * Build accessibility description for a day cell.
- * Format: "March 15, 2 events" or "March 15, no events"
+ * Builds a day cell's accessibility description, "March 15, 2 events" or "March 15, no events".
  *
- * @param resources Android resources for localized strings
- * @param year Calendar year
  * @param month0 0-indexed month (January = 0)
- * @param dayOfMonth Day of month (1-31)
- * @param eventCount Number of events on this day
  */
 internal fun buildAccessibilityDescription(
     resources: Resources,

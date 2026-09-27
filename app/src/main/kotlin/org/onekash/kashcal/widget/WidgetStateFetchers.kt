@@ -10,38 +10,32 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.util.DateTimeUtils
 
 /**
- * Pure suspend functions that encapsulate each widget's data-fetch step.
- *
- * Extracted from the widget classes so the refactor (moving fetches inside `provideContent`
- * via `produceState`) stays unit-testable without a Glance/Compose test harness. Each
- * function catches exceptions internally and maps to an Error or empty-result state —
- * callers never need to handle throws.
+ * Each widget's data-fetch step, which the widget runs inside `provideContent` through
+ * `produceState`. Kept out of the widget classes so it is unit-testable without a Glance or
+ * Compose harness. Every fetch maps a failure to an Error or empty state and throws only
+ * cancellation.
  */
 
 private const val TAG = "WidgetStateFetchers"
 
 /**
- * Upper bound for a widget's data fetch. A fetch that exceeds this is abandoned and the
- * caller falls back to its empty/error state — the widget's Glance session must never be
- * parked inside a fetch for minutes, because actionRunCallback taps (month navigation,
- * refresh) are processed on that same session and would appear frozen. The prime suspect
- * for multi-minute stalls is a CalendarProvider Instances query while the system's sync
- * adapter holds the provider (contentResolver.query has no timeout of its own).
+ * Bounds a widget's data fetch; a slower fetch is abandoned for the empty or error state. The
+ * Glance session must never sit in a fetch for minutes: actionRunCallback taps (month
+ * navigation, refresh) run on that same session and would look frozen. The prime suspect for
+ * multi-minute stalls is a CalendarProvider Instances query while the system's sync adapter
+ * holds the provider (contentResolver.query has no timeout of its own).
  */
 internal const val WIDGET_FETCH_TIMEOUT_MS = 10_000L
 
 /**
- * Thrown when a widget data fetch exceeds [WIDGET_FETCH_TIMEOUT_MS]. Distinct from
- * [kotlinx.coroutines.TimeoutCancellationException] (a [CancellationException] subclass)
- * so the generic `catch (e: Exception)` fallback below handles it — a fetch timeout must
- * degrade to the widget's empty/error state, not cancel the session's producer coroutine.
+ * Signals a fetch that exceeded [WIDGET_FETCH_TIMEOUT_MS]. It is not a
+ * [kotlinx.coroutines.TimeoutCancellationException] (a [CancellationException]), so the fetchers'
+ * `catch (e: Exception)` turns it into the empty or error state instead of cancelling the
+ * session's producer coroutine.
  */
 internal class WidgetFetchTimeoutException(message: String) : Exception(message)
 
-/**
- * Sealed state for [UpcomingWidget]. The scaffold composable branches on this to render
- * loading, error, or the content composable.
- */
+/** Holds [UpcomingWidget]'s state; the scaffold renders loading, error or the content from it. */
 internal sealed interface UpcomingState {
     data object Loading : UpcomingState
     data object Error : UpcomingState
@@ -54,10 +48,7 @@ internal sealed interface UpcomingState {
     ) : UpcomingState
 }
 
-/**
- * Fetch the Upcoming widget's state for the next [horizonDays] days.
- * Returns [UpcomingState.Error] on any failure so the caller never sees a throw.
- */
+/** Fetches Upcoming's state for the next [horizonDays] days, or [UpcomingState.Error]. */
 internal suspend fun fetchUpcomingState(
     repository: WidgetDataRepository,
     dataStore: KashCalDataStore,
@@ -103,8 +94,8 @@ internal data class AgendaData(
 )
 
 /**
- * The agenda header's date line, localized for the current locale. Shared with the
- * widget-picker preview so a preview header can't drift from the real one.
+ * Formats the agenda header's date line for the current locale. The widget-picker preview uses
+ * it too, so its header can't drift from the real one.
  */
 internal fun widgetHeaderDate(nowMs: Long = System.currentTimeMillis()): String =
     DateTimeUtils.formatEventDate(
@@ -114,8 +105,8 @@ internal fun widgetHeaderDate(nowMs: Long = System.currentTimeMillis()): String 
     )
 
 /**
- * Fetch the Agenda widget's data. Returns an empty-events shape with default prefs
- * on any failure so the existing "no events today" UI renders gracefully.
+ * Fetches the Agenda widget's data. On failure returns no events with default settings, so the
+ * widget shows its "no events today" state.
  */
 internal suspend fun fetchAgendaData(
     repository: WidgetDataRepository,
@@ -158,8 +149,8 @@ internal data class WeekData(
 )
 
 /**
- * Fetch the Week widget's data. Returns an empty weekly map with default prefs
- * on any failure so existing empty-state UI renders gracefully.
+ * Fetches the Week widget's data. On failure returns an empty week with default settings, so the
+ * widget shows its empty state.
  */
 internal suspend fun fetchWeekData(
     repository: WidgetDataRepository,
@@ -192,9 +183,9 @@ internal suspend fun fetchWeekData(
 }
 
 /**
- * Fetch the Month widget's events for the given dayCode range.
- * MonthWidget's other preferences (MONTH_OFFSET, firstDayOfWeek, grid) stay widget-side
- * because they drive the composable's render logic, not just the data fetch.
+ * Fetches the Month widget's events for a dayCode range, or an empty map on failure or timeout.
+ * The month offset, first day of week and grid stay in [MonthWidget] because they drive its
+ * rendering, not only this fetch.
  */
 internal suspend fun fetchMonthEvents(
     repository: WidgetDataRepository,

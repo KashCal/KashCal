@@ -8,9 +8,12 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * Unit tests for DayPagerUtils.
+ * Tests [DayPagerUtils]: its constants, page and date conversions, day codes, year boundaries,
+ * DST reference days and pre-1970 dates (#53).
  *
- * Tests page ↔ date conversions, DST handling, and year boundary scenarios.
+ * The conversions read the system time zone. The DST tests pin the reference to midnight in
+ * America/New_York, so the 23- and 25-hour days apply only on a host in that zone; on a UTC host
+ * they check plain day arithmetic.
  */
 class DayPagerUtilsTest {
 
@@ -24,7 +27,7 @@ class DayPagerUtilsTest {
     @Test
     fun `TOTAL_PAGES allows ~100 years each direction`() {
         assertEquals(73000, DayPagerUtils.TOTAL_PAGES)
-        // 36500 days = 100 years
+        // 36500 days is about 100 years.
         val yearsEachDirection = DayPagerUtils.INITIAL_PAGE / 365
         assertTrue(yearsEachDirection >= 99) // ~100 years
     }
@@ -83,7 +86,6 @@ class DayPagerUtilsTest {
     fun `pageToDateMs and dateToPage are inverse operations`() {
         val todayMs = getFixedTodayMs()
 
-        // Test several offsets
         listOf(-365, -30, -7, -1, 0, 1, 7, 30, 365).forEach { offset ->
             val page = DayPagerUtils.INITIAL_PAGE + offset
             val dateMs = DayPagerUtils.pageToDateMs(page, todayMs)
@@ -205,13 +207,11 @@ class DayPagerUtilsTest {
         assertTrue("Year range should span at least 100 years", endYear - startYear >= 100)
     }
 
-    // ==================== Bug Regression Tests ====================
+    // ==================== Negative partial days and DST days ====================
 
     /**
-     * Bug #1: Integer division truncation for negative partial days.
-     * Input: 6 hours before midnight (yesterday at 6 PM)
-     * Expected: page for yesterday
-     * Bug: Truncation gave page for today (truncates -0.25 to 0)
+     * Checks that 6 hours before today's midnight (yesterday at 6 PM) maps to yesterday's page;
+     * integer division would truncate -0.25 days to 0 and give today.
      */
     @Test
     fun `dateToPage handles evening timestamp - negative partial day regression`() {
@@ -238,62 +238,56 @@ class DayPagerUtilsTest {
     }
 
     /**
-     * Bug #2: DST spring forward (23-hour day).
-     * March 10, 2024 = DST starts in US, day has only 23 hours.
-     * Using millisecond arithmetic would give wrong day.
+     * Checks going back 2 days from March 10, 2024, the US DST start day (23 hours). The reference
+     * is midnight, before the 2 AM change, so the 2 days back cross no DST change.
      */
     @Test
     fun `pageToDateMs handles DST spring forward - 23 hour day regression`() {
-        // March 10, 2024 is DST start day in US (23 hours)
         val march10_2024 = LocalDate.of(2024, 3, 10)
             .atStartOfDay(ZoneId.of("America/New_York"))
             .toInstant()
             .toEpochMilli()
 
-        // Go back 2 days from March 10 -> should be March 8
+        // 2 days back from March 10 is March 8.
         val march8Page = DayPagerUtils.INITIAL_PAGE - 2
         val result = DayPagerUtils.pageToDateMs(march8Page, march10_2024)
 
-        // Verify we got March 8, not March 7 (which would happen with ms arithmetic)
+        // Checks LocalDate arithmetic only, not result; the dayCode check below covers result.
         val resultDate = LocalDate.of(2024, 3, 10).minusDays(2)
         assertEquals(LocalDate.of(2024, 3, 8), resultDate)
 
-        // Verify via dayCode
         val resultDayCode = DayPagerUtils.msToDayCode(result)
         assertEquals(20240308, resultDayCode)
     }
 
     /**
-     * Bug #2: DST fall back (25-hour day).
-     * Nov 3, 2024 = DST ends in US, day has 25 hours.
-     * Using millisecond arithmetic would give wrong day.
+     * Checks going back 2 days from Nov 3, 2024, the US DST end day (25 hours). The reference is
+     * midnight, before the 2 AM change, so the 2 days back cross no DST change.
      */
     @Test
     fun `pageToDateMs handles DST fall back - 25 hour day regression`() {
-        // Nov 3, 2024 is DST end day in US (25 hours)
         val nov3_2024 = LocalDate.of(2024, 11, 3)
             .atStartOfDay(ZoneId.of("America/New_York"))
             .toInstant()
             .toEpochMilli()
 
-        // Go back 2 days from Nov 3 -> should be Nov 1
+        // 2 days back from Nov 3 is Nov 1.
         val nov1Page = DayPagerUtils.INITIAL_PAGE - 2
         val result = DayPagerUtils.pageToDateMs(nov1Page, nov3_2024)
 
-        // Verify via dayCode
         val resultDayCode = DayPagerUtils.msToDayCode(result)
         assertEquals(20241101, resultDayCode)
     }
 
     @Test
     fun `dateToPage and pageToDateMs round trip across DST boundary`() {
-        // Test round trip across DST spring forward
+        // Reference: midnight on the US DST start day, before the 2 AM change.
         val march10_2024 = LocalDate.of(2024, 3, 10)
             .atStartOfDay(ZoneId.of("America/New_York"))
             .toInstant()
             .toEpochMilli()
 
-        // Go back 5 days and verify round trip
+        // 5 days back and round trip.
         val targetPage = DayPagerUtils.INITIAL_PAGE - 5
         val targetMs = DayPagerUtils.pageToDateMs(targetPage, march10_2024)
         val recoveredPage = DayPagerUtils.dateToPage(targetMs, march10_2024)
@@ -307,7 +301,7 @@ class DayPagerUtilsTest {
     fun `dateToPage handles pre-1970 date with negative epoch millis`() {
         val todayMs = getFixedTodayMs()
 
-        // Apollo 11 — July 20, 1969
+        // Apollo 11, July 20, 1969
         val apollo11 = LocalDate.of(1969, 7, 20)
             .atStartOfDay(ZoneId.systemDefault())
             .toInstant()
@@ -318,7 +312,6 @@ class DayPagerUtilsTest {
         val page = DayPagerUtils.dateToPage(apollo11, todayMs)
         assertTrue("Pre-1970 page should be before INITIAL_PAGE", page < DayPagerUtils.INITIAL_PAGE)
 
-        // Round-trip
         val recoveredMs = DayPagerUtils.pageToDateMs(page, todayMs)
         val recoveredPage = DayPagerUtils.dateToPage(recoveredMs, todayMs)
         assertEquals("Round trip failed for pre-1970 date", page, recoveredPage)
@@ -339,7 +332,6 @@ class DayPagerUtilsTest {
     fun `pageToDateMs and dateToPage round trip for pre-1970 dates`() {
         val todayMs = getFixedTodayMs()
 
-        // Test several pre-1970 dates: 1969, 1960, 1940, 1926
         listOf(
             LocalDate.of(1969, 7, 20),
             LocalDate.of(1960, 1, 1),
@@ -356,7 +348,6 @@ class DayPagerUtilsTest {
 
             assertEquals("Round trip failed for $date", page, recoveredPage)
 
-            // Verify dayCode is correct
             val dayCode = DayPagerUtils.msToDayCode(recoveredMs)
             val expectedDayCode = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
             assertEquals("DayCode mismatch for $date", expectedDayCode, dayCode)
@@ -365,10 +356,7 @@ class DayPagerUtilsTest {
 
     // ==================== Helper Functions ====================
 
-    /**
-     * Get a fixed "today" timestamp for deterministic tests.
-     * Jan 15, 2026 00:00:00 local time.
-     */
+    /** Returns the fixed "today" reference: Jan 15, 2026 00:00:00 in the system time zone. */
     private fun getFixedTodayMs(): Long {
         return LocalDate.of(2026, 1, 15)
             .atStartOfDay(ZoneId.systemDefault())

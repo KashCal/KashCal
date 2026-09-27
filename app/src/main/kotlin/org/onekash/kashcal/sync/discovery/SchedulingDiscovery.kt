@@ -9,22 +9,18 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
 /**
- * Discover and persist the two RFC 6638 scheduling-delivery facts for an
- * account so the later delivery-routing logic can decide how to deliver
- * invitations:
- *  - the principal's scheduling Outbox URL (§2.1.1, one per account), and
- *  - each calendar collection's auto-schedule capability (§2, per collection).
+ * Discovers and persists two RFC 6638 scheduling facts for an account:
+ *  - the principal's scheduling Outbox URL (§2.1.1, one per account), which the push's
+ *    outbox POST reads, and
+ *  - each calendar collection's auto-schedule capability (§2), stored in
+ *    [Calendar.autoScheduleSupported], which nothing reads today.
  *
- * Discovery only — it does not send invitations, POST to the outbox, or read
- * back SCHEDULE-STATUS.
+ * Discovery only: it sends no invitations, doesn't POST to the outbox, and reads no
+ * SCHEDULE-STATUS.
  *
- * Both probes are non-fatal, mirroring [persistCalendarUserAddresses]: any
- * HTTP, network, timeout, or malformed-response failure logs a warning and
- * persists null (= unknown / not advertised), never aborting the sync.
- *
- * The routing rule is left to a later step; this helper carries no
- * server-specific branching — server deviations live as data in the quirks
- * layer, not as control flow here.
+ * Neither probe fails the sync, as in [persistCalendarUserAddresses]: a failed request (HTTP,
+ * network, timeout, malformed reply) logs a warning and persists null (unknown or not
+ * advertised). Server deviations belong as data in the quirks layer, not as branches here.
  */
 internal suspend fun persistSchedulingDiscovery(
     client: CalDavClient,
@@ -35,9 +31,9 @@ internal suspend fun persistSchedulingDiscovery(
     calendarRepository: CalendarRepository,
     tag: String
 ) {
-    // 1. Per-principal: schedule-outbox-URL (RFC 6638 §2.1.1). Wrapped so an
-    //    unexpected throw (e.g. a DAO write failing) can't abort the sync — the
-    //    client call returns a CalDavResult, but the repository write can throw.
+    // 1. Per principal: schedule-outbox-URL (RFC 6638 §2.1.1). The client call returns a
+    //    CalDavResult, but the repository write can throw; the catch keeps that from
+    //    aborting the sync.
     try {
         val outboxResult = client.discoverScheduleOutboxUrl(principalUrl)
         val outboxUrl = if (outboxResult.isSuccess()) {
@@ -55,8 +51,8 @@ internal suspend fun persistSchedulingDiscovery(
         Log.w(tag, "Outbox discovery failed for account $accountId: ${e.message}")
     }
 
-    // 2. Per-collection: calendar-auto-schedule capability (RFC 6638 §2). Each
-    //    collection is isolated so one calendar's failure doesn't skip the rest.
+    // 2. Per collection: calendar-auto-schedule capability (RFC 6638 §2). Each calendar has
+    //    its own catch so one failure doesn't skip the rest.
     for (calendar in calendars) {
         try {
             val capabilityResult = client.supportsAutoSchedule(calendar.caldavUrl)

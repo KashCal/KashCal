@@ -19,27 +19,19 @@ import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import org.onekash.kashcal.sync.util.CaldavUrlNormalizer
 
 /**
- * Identity contract for the URL *builders* that produce and reconstruct CalDAV
- * resource URLs. [CaldavUrlNormalizerTest] pins the comparison-only canonicalizer;
- * this pins the two surfaces that FEED it:
+ * Tests the builders that mint and rebuild CalDAV resource URLs, which feed the comparison-only
+ * canonicalizer pinned by [CaldavUrlNormalizerTest]:
  *
- *  1. [OkHttpCalDavClient.createEvent] / [OkHttpCalDavClient.moveEvent] — the raw
- *     `"${calendarUrl.trimEnd('/')}/$uid.ics"` interpolation that mints the resource
- *     URL the app then stores as `caldav_url`. Driven here through the REAL client +
- *     [MockWebServer] (not a re-implementation of the string logic), so the assertion
- *     tracks what actually goes on the wire, encoding included.
- *  2. [DefaultQuirks.buildEventUrl] / [ICloudQuirks.buildEventUrl] — reconstruction of
- *     an absolute URL from an echoed href + calendar URL (absolute-href passthrough,
- *     relative-href host-join, leading-slash normalization).
+ *  1. [OkHttpCalDavClient.createEvent] and [OkHttpCalDavClient.moveEvent]: the calendar URL
+ *     (trailing '/' trimmed) plus `<uid>.ics` encoded as one path segment, stored as
+ *     `caldav_url`; a move reuses the source's resource name. Driven through the real client
+ *     and [MockWebServer], so assertions track what goes on the wire, encoding included.
+ *  2. [DefaultQuirks.buildEventUrl] and [ICloudQuirks.buildEventUrl]: an absolute URL rebuilt
+ *     from an echoed href and the calendar URL (absolute href kept, relative href joined to the
+ *     host, leading slash added).
  *
- * Grounded in RFC 3986 §3.3 (`pchar` — '@' is pchar-legal in a path segment, '/' is a
- * segment delimiter) and the reference client's URL-identity behavior: it stores a
- * decoded file-name segment and canonically percent-encodes on append (a literal '/'
- * in a name becomes `%2F`, never a new segment). KashCal instead interpolates raw, so
- * this test *characterizes* where KashCal's builder diverges from that model and ties
- * the builder output to the normalizer that has to reconcile it.
- *
- * All assertions are on existing behavior — no production change is implied.
+ * RFC 3986 §3.3: '@' is legal in a path segment and stays literal; '/' delimits segments, so a
+ * '/' in a UID is sent as `%2F` and never starts a new segment.
  */
 class CalDavUrlBuilderIdentityTest {
 
@@ -93,8 +85,8 @@ class CalDavUrlBuilderIdentityTest {
 
     @Test
     fun `createEvent keeps a literal at-sign UID as a single path segment`() = runTest {
-        // KashCal UIDs are "<uuid>@kashcal.onekash.org". '@' is pchar-legal (RFC 3986
-        // §3.3), so it must stay literal AND stay inside one segment — the resource is
+        // KashCal UIDs are "<uuid>@kashcal.onekash.org". '@' is legal in a path segment
+        // (RFC 3986 §3.3), so it must stay literal and inside one segment: the resource is
         // "<uuid>@kashcal.onekash.org.ics", not a nested path.
         mockWebServer.enqueue(MockResponse().setResponseCode(201).setHeader("ETag", "\"e\""))
 
@@ -109,7 +101,7 @@ class CalDavUrlBuilderIdentityTest {
             "wire path must end with the literal-@ segment, got ${request.path}",
             request.path!!.endsWith("/$uid.ics")
         )
-        // Exactly one segment past the collection — no boundary crossing.
+        // One segment past the collection, no boundary crossing.
         assertEquals(
             "/calendars/testuser/personal/$uid.ics",
             request.path
@@ -146,13 +138,9 @@ class CalDavUrlBuilderIdentityTest {
     }
 
     @Test
-    fun `createEvent does NOT encode a slash-bearing UID - documents segment-boundary crossing`() = runTest {
-        // CHARACTERIZATION (not endorsement): the raw interpolation means a '/' inside a
-        // UID becomes a real path separator, unlike the reference client which encodes it
-        // as %2F to keep one segment. This is latent-only: KashCal-generated UIDs are
-        // "<uuid>@<domain>" and never contain '/'. If a UID source ever admits '/', the
-        // resource identity would silently split across a boundary — this test is the
-        // tripwire that would flag such a change.
+    fun `createEvent keeps a slash-bearing UID in one path segment`() = runTest {
+        // The UID is one resource name: a '/' in another client's UID is sent as %2F
+        // instead of becoming a path separator that would put the event somewhere else.
         mockWebServer.enqueue(MockResponse().setResponseCode(201).setHeader("ETag", "\"e\""))
 
         val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
@@ -160,16 +148,36 @@ class CalDavUrlBuilderIdentityTest {
         client.createEvent(calendarUrl, uid, testIcal(uid))
 
         val request = mockWebServer.takeRequest()
-        // Current behavior: the '/' is a live separator, NOT %2F. Pin it so a future
-        // change to encoding (deliberate or accidental) is visible in the diff.
-        assertEquals("/calendars/testuser/personal/a/b@kashcal.onekash.org.ics", request.path)
-        assertFalse("current builder does not encode '/' as %2F", request.path!!.contains("%2F"))
+        assertEquals("/calendars/testuser/personal/a%2Fb@kashcal.onekash.org.ics", request.path)
+    }
+
+    @Test
+    fun `createEvent encodes query and fragment characters and spaces in a UID`() = runTest {
+        mockWebServer.enqueue(MockResponse().setResponseCode(201).setHeader("ETag", "\"e\""))
+
+        val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
+        val uid = "x?y#z w"
+        client.createEvent(calendarUrl, uid, testIcal(uid))
+
+        assertEquals("/calendars/testuser/personal/x%3Fy%23z%20w.ics", mockWebServer.takeRequest().path)
+    }
+
+    @Test
+    fun `createEvent leaves a KashCal UID exactly as it was`() = runTest {
+        mockWebServer.enqueue(MockResponse().setResponseCode(201).setHeader("ETag", "\"e\""))
+
+        val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
+        val uid = "0b7c2a9e-1111-4c2d-9f00-abcdef012345@kashcal.onekash.org"
+        val result = client.createEvent(calendarUrl, uid, testIcal(uid))
+
+        assertEquals("${calendarUrl}$uid.ics", result.getOrNull()!!.first)
     }
 
     @Test
     fun `moveEvent builds the destination header the same way createEvent builds its URL`() = runTest {
-        // The MOVE Destination header is minted by the identical interpolation. It must
-        // land the resource at the same {calendar}/{uid}.ics as a create would.
+        // The MOVE Destination reuses the source's resource name. For an event KashCal
+        // created that name is {uid}.ics, so the moved resource lands where a create
+        // in the destination calendar would have put it.
         mockWebServer.enqueue(MockResponse().setResponseCode(201).setHeader("ETag", "\"moved\""))
 
         val sourceUrl = mockWebServer.url("/calendars/testuser/work/abc@kashcal.onekash.org.ics").toString()
@@ -196,7 +204,7 @@ class CalDavUrlBuilderIdentityTest {
         val quirks = DefaultQuirks("https://s.example")
         val calendarUrl = "https://s.example/cal/"
 
-        // A server that echoes an absolute href — in either encoding — is trusted verbatim.
+        // An absolute echoed href, in either encoding, is kept verbatim.
         val literal = "https://s.example/cal/uuid@kashcal.onekash.org.ics"
         val encoded = "https://s.example/cal/uuid%40kashcal.onekash.org.ics"
         assertEquals(literal, quirks.buildEventUrl(literal, calendarUrl))
@@ -205,8 +213,8 @@ class CalDavUrlBuilderIdentityTest {
 
     @Test
     fun `DefaultQuirks buildEventUrl output canonicalizes-equal for literal-at and percent-40 echoes`() {
-        // The builder⇄normalizer tie: whichever encoding the server echoes, the
-        // reconstructed URL must canonicalize to the same identity the create path stored.
+        // Whichever encoding the server echoes, the rebuilt URL must canonicalize to the
+        // same identity the create path stored.
         val quirks = DefaultQuirks("https://s.example")
         val calendarUrl = "https://s.example/cal/"
 
@@ -271,7 +279,7 @@ class CalDavUrlBuilderIdentityTest {
         val quirks = ICloudQuirks()
         val calendarUrl = "https://caldav.icloud.com/123456/calendars/home/"
 
-        // Even a fully-absolute echoed href gets host-normalized (regional → canonical).
+        // An absolute echoed href is host-normalized too (regional → canonical).
         assertEquals(
             "https://caldav.icloud.com/123456/calendars/home/evt.ics",
             quirks.buildEventUrl("https://p42-caldav.icloud.com/123456/calendars/home/evt.ics", calendarUrl)

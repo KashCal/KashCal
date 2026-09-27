@@ -11,54 +11,34 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Data Access Object for Account operations.
- *
- * Provides CRUD operations and queries for CalDAV accounts.
- * All suspend functions run on IO dispatcher via Room.
+ * Reads and writes the accounts table, for every provider. Room runs the suspend functions off
+ * the main thread.
  */
 @Dao
 interface AccountsDao {
 
     // ========== Read Operations ==========
 
-    /**
-     * Get all accounts as reactive Flow.
-     * Emits new list when accounts change.
-     */
     @Query("SELECT * FROM accounts ORDER BY created_at ASC")
     fun getAll(): Flow<List<Account>>
 
-    /**
-     * Get all accounts as one-shot query.
-     */
     @Query("SELECT * FROM accounts ORDER BY created_at ASC")
     suspend fun getAllOnce(): List<Account>
 
-    /**
-     * Get account by ID.
-     */
     @Query("SELECT * FROM accounts WHERE id = :id")
     suspend fun getById(id: Long): Account?
 
-    /**
-     * Get account by ID as reactive Flow.
-     * Emits new value when the account row changes.
-     */
     @Query("SELECT * FROM accounts WHERE id = :id")
     fun getByIdFlow(id: Long): Flow<Account?>
 
     /**
-     * Get account by provider and email (unique constraint).
-     * Room TypeConverter handles AccountProvider → String conversion.
+     * Returns an account with this provider and email. The unique index also includes
+     * `home_set_url`, so for CalDAV, where one username can exist on different servers, use
+     * [getByProviderEmailAndHomeSetUrl].
      */
     @Query("SELECT * FROM accounts WHERE provider = :provider AND email = :email")
     suspend fun getByProviderAndEmail(provider: AccountProvider, email: String): Account?
 
-    /**
-     * Get account by provider, email, and calendar home set URL.
-     * Used for CalDAV where the same username can exist on different servers.
-     * For iCloud/ICS/CONTACTS, use [getByProviderAndEmail] instead.
-     */
     @Query("SELECT * FROM accounts WHERE provider = :provider AND email = :email AND home_set_url = :homeSetUrl")
     suspend fun getByProviderEmailAndHomeSetUrl(
         provider: AccountProvider,
@@ -66,39 +46,24 @@ interface AccountsDao {
         homeSetUrl: String
     ): Account?
 
-    /**
-     * Get accounts by provider type.
-     * Used to list all CalDAV accounts, all iCloud accounts, etc.
-     */
     @Query("SELECT * FROM accounts WHERE provider = :provider ORDER BY created_at ASC")
     suspend fun getByProvider(provider: AccountProvider): List<Account>
 
-    /**
-     * Get count of accounts by provider type as Flow.
-     * Used for Settings UI to show account count badges.
-     */
+    /** Account settings collect this for the CalDAV account count. */
     @Query("SELECT COUNT(*) FROM accounts WHERE provider = :provider")
     fun getAccountCountByProvider(provider: AccountProvider): Flow<Int>
 
-    /**
-     * Get all enabled accounts for sync.
-     */
     @Query("SELECT * FROM accounts WHERE is_enabled = 1 ORDER BY created_at ASC")
     suspend fun getEnabledAccounts(): List<Account>
 
-    /**
-     * Get accounts with sync errors (consecutive failures > 0).
-     */
     @Query("SELECT * FROM accounts WHERE consecutive_sync_failures > 0")
     suspend fun getAccountsWithSyncErrors(): List<Account>
 
     /**
-     * Count accounts with matching display name (case-insensitive).
-     * Used for uniqueness validation when creating/editing accounts.
+     * Counts accounts whose display name matches case-insensitively, for the uniqueness check
+     * on create and edit.
      *
-     * @param displayName Display name to check
-     * @param excludeAccountId Account ID to exclude (for edit mode, null for new accounts)
-     * @return Number of accounts with matching display name
+     * @param excludeAccountId the account being edited, or null for a new account
      */
     @Query("""
         SELECT COUNT(*) FROM accounts
@@ -109,42 +74,27 @@ interface AccountsDao {
 
     // ========== Write Operations ==========
 
-    /**
-     * Insert new account. Returns row ID.
-     */
+    /** Returns the new row ID. */
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(account: Account): Long
 
-    /**
-     * Update existing account.
-     */
     @Update
     suspend fun update(account: Account)
 
-    /**
-     * Delete account.
-     * CASCADE: All calendars and their events will be deleted.
-     */
+    /** Deletes the account; its calendars (with their events) and address books cascade. */
     @Delete
     suspend fun delete(account: Account)
 
-    /**
-     * Delete account by ID.
-     */
+    /** Deletes the account like [delete]. */
     @Query("DELETE FROM accounts WHERE id = :id")
     suspend fun deleteById(id: Long)
 
     // ========== Sync Metadata Updates ==========
 
-    /**
-     * Update last sync timestamp.
-     */
     @Query("UPDATE accounts SET last_sync_at = :timestamp WHERE id = :id")
     suspend fun updateLastSyncAt(id: Long, timestamp: Long)
 
-    /**
-     * Record successful sync.
-     */
+    /** Sets both sync timestamps and resets the failure count. */
     @Query("""
         UPDATE accounts
         SET last_sync_at = :timestamp,
@@ -154,9 +104,7 @@ interface AccountsDao {
     """)
     suspend fun recordSyncSuccess(id: Long, timestamp: Long)
 
-    /**
-     * Record sync failure with increment.
-     */
+    /** Sets the last sync time and increments the failure count. */
     @Query("""
         UPDATE accounts
         SET last_sync_at = :timestamp,
@@ -165,9 +113,7 @@ interface AccountsDao {
     """)
     suspend fun recordSyncFailure(id: Long, timestamp: Long)
 
-    /**
-     * Update CalDAV URLs after discovery.
-     */
+    /** Stores the discovered CalDAV URLs; a null clears the column. */
     @Query("""
         UPDATE accounts
         SET principal_url = :principalUrl,
@@ -177,37 +123,27 @@ interface AccountsDao {
     suspend fun updateCalDavUrls(id: Long, principalUrl: String?, homeSetUrl: String?)
 
     /**
-     * Update the user's calendar-user-address-set (RFC 6638 §2.4.1) for
-     * this account. Targeted UPDATE so concurrent sync writes to other
-     * columns can't lose this update via read-modify-write races.
+     * Stores the account's calendar-user-address-set (RFC 6638 §2.4.1). It writes one column, so
+     * it and concurrent sync writes to other columns can't overwrite each other, as a
+     * read-modify-write of the whole row could.
      */
     @Query("UPDATE accounts SET calendar_user_addresses = :addresses WHERE id = :id")
     suspend fun updateCalendarUserAddresses(id: Long, addresses: List<String>)
 
     /**
-     * Update the principal's scheduling Outbox URL (RFC 6638 §2.1.1).
-     * Targeted UPDATE so concurrent sync writes to other columns can't lose
-     * this update via read-modify-write races. Null clears it.
+     * Stores the principal's scheduling Outbox URL (RFC 6638 §2.1.1); null clears it. Writes
+     * one column for the reason on [updateCalendarUserAddresses].
      */
     @Query("UPDATE accounts SET schedule_outbox_url = :outboxUrl WHERE id = :id")
     suspend fun updateScheduleOutboxUrl(id: Long, outboxUrl: String?)
 
-    /**
-     * Update account enabled state.
-     */
     @Query("UPDATE accounts SET is_enabled = :enabled WHERE id = :id")
     suspend fun setEnabled(id: Long, enabled: Boolean)
 
-    /**
-     * Set the per-login CardDAV contact-sync opt-in flag.
-     */
+    /** Sets the per-login CardDAV contact-sync opt-in. */
     @Query("UPDATE accounts SET contact_sync_enabled = :enabled WHERE id = :id")
     suspend fun setContactSyncEnabled(id: Long, enabled: Boolean)
 
-    /**
-     * Get accounts by provider as reactive Flow.
-     * Emits new list when accounts change.
-     */
     @Query("SELECT * FROM accounts WHERE provider = :provider ORDER BY created_at ASC")
     fun getByProviderFlow(provider: AccountProvider): Flow<List<Account>>
 }

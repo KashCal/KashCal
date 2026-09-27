@@ -16,36 +16,28 @@ import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import java.util.UUID
 
 /**
- * Exhaustive serialize -> PUT -> GET -> parse round-trip against a real
- * mailbox.org (Open-Xchange / OX App Suite) account.
+ * Round-trips KashCal events (serialize, PUT, GET, parse) against a real mailbox.org
+ * (Open-Xchange / OX App Suite) account.
  *
- * Why this test exists: a user reported pull breaking on mailbox.org on a
- * recent build. The pull-path source is byte-identical across the suspect
- * releases, and the clean MultiServerCalDavWorkflowTest (which PUTs raw,
- * hand-written ICS) passes. That test never exercises KashCal's OWN
- * serializer. The realistic failure shape is:
+ * A user reported pull breaking on mailbox.org. [MultiServerCalDavWorkflowTest] PUTs
+ * hand-written ICS, so it never exercises KashCal's own serializer. The failure this looks for:
+ * KashCal serializes an event, OX stores and normalizes it, and KashCal's pull parser chokes on
+ * its own output coming back.
  *
- *   KashCal serializes an event entity -> PUT to OX -> OX stores/normalizes
- *   it -> KashCal's pull parser chokes reading its own output back.
+ * Every case builds a KashCal [Event] and [Attendee] rows, serializes through the production
+ * write path ([IcsPatcher.serialize], [IcsPatcher.generateFresh] or
+ * [IcsPatcher.serializeWithExceptions]; PushStrategy reaches `generateFresh` through `serialize`
+ * for an event with no raw ICS), PUTs to OX, fetches back, and parses with the production pull
+ * path ([ICalParser] and [ICalEventMapper.toEntity]). A case fails if the stored body doesn't
+ * parse or the event's UID or title changed.
  *
- * So every case here builds a KashCal [Event] (+ [Attendee] rows), runs it
- * through the PRODUCTION write path ([IcsPatcher.serialize] /
- * [IcsPatcher.generateFresh] / [IcsPatcher.serializeWithExceptions] — the
- * same calls PushStrategy makes), PUTs to OX, fetches it back, and parses
- * with the production pull path ([ICalParser] + [ICalEventMapper.toEntity]).
- * A case fails if the server stores something our own parser can't read or
- * that loses the event's identifying semantics.
+ * The matrix: plain timed, all-day, multi-day, location and description with special chars and
+ * newlines, organizer and attendees, categories, color, priority, reminders, transparency and
+ * status, a non-UTC timezone, recurring masters (daily, weekly, monthly; COUNT, UNTIL, EXDATE),
+ * and recurring series with a per-occurrence exception VEVENT, with and without attendees.
  *
- * Covers a broad matrix: plain timed, all-day, multi-day, location/
- * description with special chars + newlines, organizer + attendees,
- * categories, color, priority, reminders, transparency/status, recurring
- * masters (daily/weekly/monthly, COUNT + UNTIL), and recurring series with
- * a per-occurrence exception VEVENT (the path that previously dropped
- * exception attendees).
- *
- * Events are intentionally LEFT on the account (no cleanup) so they can be
- * inspected in any client. UIDs are prefixed `kc-exhaustive-` for easy
- * identification. Synthetic `@example.test` addresses only.
+ * Events are left on the account (no cleanup) for inspection in any client. UIDs are prefixed
+ * `kc-exhaustive-`. Addresses are synthetic `@example.test` only.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -59,8 +51,8 @@ class MailboxExhaustiveRoundTripTest {
     private var calendarUrl: String? = null
     private val parser = ICalParser()
 
-    // Fixed base instant so DTSTART/DTEND are deterministic across a run.
-    // 2026-06-08 09:00 UTC (a Monday — useful for BYDAY=MO weekly cases).
+    // Fixed base instant so DTSTART and DTEND are deterministic: 2026-06-08 09:00 UTC, a Monday
+    // (for the BYDAY=MO weekly cases). Per-case day and time comments are in UTC.
     private val base = 1_780_909_200_000L
     private val hour = 3_600_000L
     private val day = 86_400_000L
@@ -116,13 +108,12 @@ class MailboxExhaustiveRoundTripTest {
     )
 
     /**
-     * The core assertion: serialize [event] (+attendees, +exceptions) through
-     * the production write path, PUT it, fetch it back, and parse with the
-     * production pull path. Fails if create/fetch fails OR the server stores
-     * something the parser can't read OR the parsed event loses its UID/title.
+     * Serializes [event] with its attendees and exceptions through the production write path,
+     * PUTs it, fetches it back and parses it with the production pull path. Fails if the create
+     * or fetch fails, the stored body doesn't parse or has no VEVENT, or the parsed master's UID
+     * or title changed.
      *
-     * Returns the re-parsed master Event so individual cases can assert
-     * field-level round-trip semantics.
+     * Returns the re-parsed master so cases can assert individual fields.
      */
     private fun roundTrip(
         event: Event,
@@ -138,7 +129,7 @@ class MailboxExhaustiveRoundTripTest {
                 IcsPatcher.serialize(event)
         }
 
-        // Sanity: our serializer must at least emit the UID + summary we asked for.
+        // The serializer must at least emit a UID.
         assert(ics.contains("UID:")) {
             "[${event.title}] serializer produced no UID:\n" + redactPii(ics)
         }
@@ -157,7 +148,7 @@ class MailboxExhaustiveRoundTripTest {
         }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
 
-        // PRODUCTION PULL PATH — this is what "pull failing" means.
+        // The production pull parse: this is what "pull failing" means.
         val parseResult = parser.parse(fetchedIcs)
         assert(parseResult is ParseResult.Success) {
             "[${event.title}] PULL PARSE FAILED on server-stored body: $parseResult\n" +
@@ -168,7 +159,7 @@ class MailboxExhaustiveRoundTripTest {
             "[${event.title}] parser produced zero VEVENTs from:\n" + redactPii(fetchedIcs)
         }
 
-        // Map the master (the non-exception VEVENT, i.e. no RECURRENCE-ID).
+        // Map the master: the VEVENT with no RECURRENCE-ID, else the first.
         val masterICal = cal.events.firstOrNull { it.recurrenceId == null } ?: cal.events.first()
         val mapped = ICalEventMapper.toEntity(
             icalEvent = masterICal,
@@ -178,7 +169,7 @@ class MailboxExhaustiveRoundTripTest {
             etag = etag,
         )
 
-        // Identity must survive the round-trip — the bare minimum for "pull works".
+        // Identity must survive the round-trip: the minimum for "pull works".
         assert(mapped.event.uid == event.uid) {
             "[${event.title}] UID changed across round-trip: " +
                 "sent ${event.uid}, got ${mapped.event.uid}"
@@ -197,10 +188,9 @@ class MailboxExhaustiveRoundTripTest {
     private fun uid(slug: String) = "kc-exhaustive-$slug-${UUID.randomUUID()}"
 
     /**
-     * Defense-in-depth: OX rewrites ORGANIZER to the authenticated account on
-     * PUT, so any server-returned body interpolated into a failure message
-     * could carry a real address into junit-xml / CI logs. Mask everything that
-     * isn't a synthetic `@example.test` fixture address before it surfaces.
+     * Masks every address that isn't a synthetic `@example.test` one. OX rewrites ORGANIZER to
+     * the authenticated account on PUT, so a server body in a failure message could carry a real
+     * address into junit-xml or CI logs.
      */
     private fun redactPii(text: String): String {
         val emailRegex = Regex("""[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}""")
@@ -356,8 +346,8 @@ class MailboxExhaustiveRoundTripTest {
         val master = baseEvent(masterUid, "Exhaustive 14 series").copy(
             rrule = "FREQ=DAILY;COUNT=5",
         )
-        // Second occurrence (base + 1 day) moved +2h and retitled — a real
-        // RECURRENCE-ID exception VEVENT sharing the master UID.
+        // The second occurrence (base + 1 day) moved 2h later and retitled: a RECURRENCE-ID
+        // exception VEVENT sharing the master UID.
         val exception = baseEvent(masterUid, "Exhaustive 14 occurrence override",
             startOffset = day + 2 * hour).copy(
             originalInstanceTime = base + day,

@@ -13,11 +13,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for [ServerColorParser.parseCaldavColorToArgb].
+ * Tests [ServerColorParser.parseCaldavColorToArgb], which returns null for unparseable input.
  *
- * Null-returning parser used by the calendar-metadata refresh path in
- * [PullStrategy]. Distinct from the discovery-services' parseColor which falls
- * back to a default — the refresh path must preserve local on unparseable input.
+ * The calendar-metadata refresh in `PullStrategy` and the discovery services' update of an
+ * existing calendar keep the local color on null. It differs from the discovery services'
+ * private parseColor, which falls back to a default color.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -56,23 +56,23 @@ class ServerColorParserTest {
     @Test
     fun `three-digit hex is expanded to six-digit`() {
         val result = ServerColorParser.parseCaldavColorToArgb("#F53")
-        // #F53 → #FF5533 → ARGB 0xFFFF5533
+        // #F53 expands to #FF5533, ARGB 0xFFFF5533
         assertEquals(0xFFFF5533.toInt(), result)
     }
 
     @Test
     fun `eight-digit iCloud RRGGBBAA is converted to AARRGGBB`() {
         // iCloud returns #RRGGBBAA; Android's Color.parseColor expects #AARRGGBB.
-        // Input: RR=FF, GG=57, BB=33, AA=CC → output: AA=CC, RR=FF, GG=57, BB=33
+        // Input RR=FF, GG=57, BB=33, AA=CC gives AA=CC, RR=FF, GG=57, BB=33
         val result = ServerColorParser.parseCaldavColorToArgb("#FF5733CC")
         assertEquals(0xCCFF5733.toInt(), result)
     }
 
     @Test
     fun `CSS3 named color resolves via EventColorPalette`() {
-        // "red" is a common CSS3 name. EventColorPalette.hexForName is used to
-        // resolve it because Android's Color.parseColor supports only the 17
-        // W3C basic colors, not the full CSS3 set.
+        // "red" is a CSS3 name. EventColorPalette.hexForName resolves it because
+        // Android's Color.parseColor supports only the 17 W3C basic colors, not the
+        // full CSS3 set.
         val expected = EventColorPalette.hexForName("red")
         assertEquals(expected, ServerColorParser.parseCaldavColorToArgb("red"))
     }
@@ -105,8 +105,8 @@ class ServerColorParserTest {
 
     @Test
     fun `hex without leading hash is not accepted`() {
-        // Strict: reject bare "FF5733" to avoid false positives.
-        // Servers that respect RFC 7986 §5.9 always include the leading #.
+        // A bare "FF5733" is rejected to avoid false positives: a hex value must
+        // start with #. RFC 7986 §5.9 defines COLOR as a CSS3 color name, with no hex form.
         assertNull(ServerColorParser.parseCaldavColorToArgb("FF5733"))
     }
 
@@ -117,15 +117,14 @@ class ServerColorParserTest {
 
     @Test
     fun `never throws on weird input`() {
-        // Property-style smoke test: a grab bag of weird inputs must all
-        // return null, never throw. Protects the sync loop from crashes on
-        // malformed server responses.
+        // Property-style smoke test: each odd input must return null, never throw,
+        // so a malformed server response can't crash the sync loop.
         val weird = listOf(
             "#",
             "##FF5733",
             "#FF57",
-            "#FF57331",       // 7 digits — invalid length
-            "#FF5733CCAA",    // 10 digits — invalid length
+            "#FF57331",       // 7 digits, invalid length
+            "#FF5733CCAA",    // 10 digits, invalid length
             "rgba(255,87,51,0.8)",
             "hsl(9, 100%, 60%)",
             "\u0000\u0001",  // raw control chars, escaped for a text-clean file
@@ -162,7 +161,7 @@ class ServerColorParserTest {
 
     @Test
     fun `eight-digit color with zero alpha yields fully transparent ARGB`() {
-        // AA=00 yields a fully transparent color; boundary distinct from CC-alpha.
+        // AA=00 gives a fully transparent color, a boundary apart from the CC-alpha case.
         assertEquals(0x00FF5733, ServerColorParser.parseCaldavColorToArgb("#FF573300"))
     }
 
@@ -176,8 +175,8 @@ class ServerColorParserTest {
 
     @Test
     fun `hash-prefixed CSS name is not resolved as a named color`() {
-        // The palette lookup runs on the raw (trimmed) string before the '#'
-        // check, so "#red" never matches a name and then fails hex parsing.
+        // The palette lookup runs on the trimmed string before the '#' check, so
+        // "#red" matches no name and then fails hex parsing.
         assertNull(ServerColorParser.parseCaldavColorToArgb("#red"))
     }
 }

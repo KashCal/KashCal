@@ -4,26 +4,19 @@ import android.content.ContentValues
 import org.onekash.vcard.model.Contact
 
 /**
- * Result of mapping a neutral [Contact] onto Android Contacts Provider Data rows.
+ * Result of mapping a neutral [Contact] onto Android Contacts Provider Data rows, in the same
+ * carrier shape as the calendar side's [org.onekash.kashcal.sync.parser.icaldav.MappedEntity].
  *
- * Mirrors the inbound-mapping shape used on the calendar side
- * ([org.onekash.kashcal.sync.parser.icaldav.MappedEntity]): the mapper returns a
- * value that *carries* the row set rather than a bare list, so a caller destructures
- * cleanly and the write layer has the extra context it needs at hand.
+ * [dataRows] are the mimetype-tagged rows of one RawContact (StructuredName, Email, Phone and
+ * so on) with no `RAW_CONTACT_ID`: the write layer sets it when it writes the RawContact,
+ * because a pure mapper can't know the id.
  *
- * [dataRows] are mimetype-tagged [ContentValues] for a single RawContact — one row per
- * StructuredName / Email / Phone / … — with **no** `RAW_CONTACT_ID` set. The write
- * layer supplies that back-reference when it inserts the parent RawContact; a pure
- * mapper can't know the id, which is exactly why this stays a plain row set and not a
- * live provider write.
+ * [photoUrl] carries a remote-URL `PHOTO`, which can't become a Photo row without network
+ * I/O, to the later photo fetch. It is set only when the photo has a URL and no Photo row was
+ * emitted ([VCardContactMapper.toEntity]).
  *
- * [photoUrl] is the deferred-fetch handoff: a vCard whose `PHOTO` is a remote URL (not
- * inline bytes) can't become a Photo blob row here without network I/O, so the URL rides
- * along for the photo-fetch step to resolve later. It is null when the contact had no
- * photo or when the photo was inline (already emitted as a Photo Data row in [dataRows]).
- *
- * [contact] is the source neutral model, retained so the write layer can read identity
- * fields (UID, version, raw vCard) for the RawContact SYNC columns without re-parsing.
+ * [contact] is the source model, kept so the write layer reads the UID and raw vCard for the
+ * RawContact SYNC columns without re-parsing.
  */
 data class MappedContact(
     val contact: Contact,

@@ -6,31 +6,28 @@ import org.onekash.kashcal.domain.rrule.MonthlyPattern
 import org.onekash.kashcal.domain.rrule.ParsedRecurrence
 import org.onekash.kashcal.domain.rrule.RecurrenceFrequency
 import org.onekash.kashcal.domain.rrule.RruleBuilder
+import org.onekash.kashcal.util.RruleUtils
+import org.onekash.kashcal.util.TimezoneUtils
 import java.time.DayOfWeek
 
 /**
- * Unit dimension for the Custom recurrence builder.
- *
- * Drives the segmented Day/Week/Month/Year control and selects
- * which auxiliary selectors are visible (weekday picker for WEEK,
- * monthly pattern picker for MONTH).
+ * Lists the Custom builder's Day/Week/Month/Year units. WEEK also shows the weekday picker and
+ * MONTH the monthly pattern picker.
  */
 enum class CustomRecurrenceUnit { DAY, WEEK, MONTH, YEAR }
 
 /**
- * Decides which chip to highlight when the picker opens.
+ * Returns the chip to highlight when the picker opens.
  *
- * INTERVAL=1 (or absent) canonicalises to the matching preset; any
- * INTERVAL>1 lands on CUSTOM so the original interval survives an
- * unedited save. RecurrenceFrequency.CUSTOM is the parse-sentinel
- * for rules that don't fit a simple bucket and always opens CUSTOM.
+ * INTERVAL=1 or absent maps to the matching preset; INTERVAL>1 opens CUSTOM so the interval
+ * survives an unedited save. [RecurrenceFrequency.CUSTOM] is the parse result for rules that fit
+ * no simple bucket and always opens CUSTOM.
  */
 fun selectInitialFrequencyOption(parsed: ParsedRecurrence): FrequencyOption {
     if (parsed.frequency == RecurrenceFrequency.NONE) return FrequencyOption.NEVER
     if (parsed.frequency == RecurrenceFrequency.CUSTOM) return FrequencyOption.CUSTOM
-    // BY*-extras (BYMONTH/BYWEEKNO/BYYEARDAY/BYSETPOS) don't fit the
-    // preset model — route to CUSTOM so emission goes through verbatim
-    // re-append of the captured tokens instead of preset coercion.
+    // BYMONTH, BYWEEKNO, BYYEARDAY and BYSETPOS don't fit a preset, so open CUSTOM, whose
+    // emission re-appends the captured tokens verbatim.
     if (parsed.extraTokens.isNotEmpty()) return FrequencyOption.CUSTOM
     val effectiveInterval = if (parsed.interval <= 0) 1 else parsed.interval
     if (effectiveInterval > 1) return FrequencyOption.CUSTOM
@@ -53,23 +50,14 @@ fun mapFrequencyToCustomUnit(freq: RecurrenceFrequency): CustomRecurrenceUnit = 
 }
 
 /**
- * Single source of truth for the picker's editable state.
+ * Holds the recurrence picker's editable state; the source of truth for what it emits. Kept
+ * outside the composable so it can be unit-tested without Robolectric.
  *
- * Lives outside the composable so it can be unit-tested without
- * Robolectric. Replaces the previous eight `var by remember(parsed)`
- * cells, which leaked a tri-state interval (originalInterval +
- * customInterval + userTouchedStepper) and let the chip detour path
- * silently reset an inbound `INTERVAL=200` to 1.
+ * [interval] is the parsed INTERVAL, floored at 1 and never capped. The stepper caps new
+ * input at 99 by disabling '+', so an inbound `INTERVAL=200` round-trips a no-op save and
+ * survives a Custom, preset, Custom chip detour.
  *
- * Single [interval] field: stored verbatim from the parsed RRULE
- * (clamped to >= 1 only as a safety floor). The stepper UI clamps the
- * upper bound at 99 by disabling its '+' button — the holder never
- * does so, which is how `INTERVAL=200` round-trips a no-op save and
- * survives a Custom→preset→Custom chip detour.
- *
- * [startDayOfWeek] and [startDayOfMonth] are stored on the holder so
- * [toRrule] can fall back to a sensible default when the user opens a
- * MONTHLY rule whose monthlyPattern hasn't been picked yet.
+ * [startDayOfMonth] is the day [toRrule] uses for a monthly rule when [monthlyPattern] is null.
  */
 data class RecurrencePickerSelections(
     val frequencyOption: FrequencyOption,
@@ -81,30 +69,25 @@ data class RecurrencePickerSelections(
     val startDayOfWeek: DayOfWeek,
     val startDayOfMonth: Int,
     /**
-     * WKST extracted from the inbound rule (null = rule omitted WKST). Stored
-     * verbatim so a CalDAV-pulled `WKST=SU` survives a no-op edit. Without
-     * this, opening such a rule on a Monday-week device and saving silently
-     * rewrites it to `WKST=MO`, shifting occurrences for biweekly multi-day
-     * rules where Sunday and Monday land in different ISO weeks.
+     * WKST from the inbound rule, or null if it had none. Kept so a synced `WKST=SU` survives
+     * a save; dropping it would fall back to the default `WKST=MO`, shifting occurrences of
+     * biweekly multi-day rules where Sunday and Monday land in different weeks. [toRrule] emits
+     * it only where [RruleBuilder.weekly] writes a WKST: a Custom weekly rule with an interval
+     * over 1 and two or more days.
      */
     val parsedWkst: DayOfWeek? = null,
     /**
-     * RRULE parts the picker UI doesn't model directly (BYMONTH, BYWEEKNO,
-     * BYYEARDAY, BYSETPOS). Captured verbatim from the inbound rule and
-     * re-appended in [toRrule] so a CalDAV-pulled rule like `FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15`
-     * round-trips through a no-op save without losing the BY* qualifier.
-     * Empty for new rules and rules built entirely from picker state.
+     * RRULE parts the picker doesn't model (BYMONTH, BYWEEKNO, BYYEARDAY, BYSETPOS), captured
+     * verbatim and re-appended by [toRrule] so a synced rule like
+     * `FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15` survives a no-op save. Empty for new rules.
      */
     val extraTokens: List<String> = emptyList(),
 ) {
-    fun toRrule(deviceWkst: DayOfWeek?): String? {
-        // Prefer the inbound rule's WKST so an unedited save round-trips
-        // exactly. The caller passes deviceWkst only for brand-new rules; for
-        // loaded rules that omitted WKST it passes null so the omission is
-        // preserved (RFC §3.3.10 default-MO anchoring stays intact). Without
-        // that distinction, opening a CalDAV-pulled WEEKLY;INTERVAL=2;BYDAY=SA,SU
-        // rule on a Sunday-first-day device would silently inject WKST=SU on
-        // save and shift occurrence dates.
+    fun toRrule(deviceWkst: DayOfWeek?, isAllDay: Boolean = false): String? {
+        // The inbound rule's WKST wins so an unedited save round-trips. The caller passes
+        // deviceWkst only for new rules; a loaded rule without WKST gets null and keeps the
+        // RFC 5545 §3.3.10 default of MO. Otherwise a synced WEEKLY;INTERVAL=2;BYDAY=SA,SU
+        // rule saved on a Sunday-first device would silently gain WKST=SU and shift dates.
         val effectiveWkst = parsedWkst ?: deviceWkst
         val base = when (frequencyOption) {
             FrequencyOption.NEVER -> return null
@@ -119,17 +102,19 @@ data class RecurrencePickerSelections(
                 CustomRecurrenceUnit.YEAR -> RruleBuilder.yearly(interval)
             }
         }
-        // Append captured extras (BYMONTH/BYWEEKNO/BYYEARDAY/BYSETPOS) before
-        // COUNT/UNTIL so a CalDAV-pulled rule round-trips with its qualifier
-        // intact. The picker doesn't expose these as editable controls, so a
-        // user who interacts with the rule keeps the same extras unless they
-        // explicitly start over via Never.
+        // Append the captured extras before COUNT/UNTIL. The picker has no controls for them,
+        // so every rule it emits for this holder keeps them, including one picked after Never.
         val withExtras = if (extraTokens.isEmpty()) base
         else "$base;${extraTokens.joinToString(";")}"
         return when (endCondition) {
             EndCondition.Never -> withExtras
             is EndCondition.Count -> RruleBuilder.withCount(withExtras, endCondition.count)
-            is EndCondition.Until -> RruleBuilder.withUntil(withExtras, endCondition.dateMillis)
+            is EndCondition.Until -> if (isAllDay) {
+                // An all-day DTSTART is a DATE, so UNTIL is a DATE too (RFC 5545 section 3.3.10).
+                "$withExtras;UNTIL=${RruleUtils.formatUntilDate(endCondition.dateMillis, isAllDay = true)}"
+            } else {
+                RruleBuilder.withUntil(withExtras, endCondition.dateMillis)
+            }
         }
     }
 
@@ -161,18 +146,11 @@ private fun buildMonthly(pattern: MonthlyPattern?, interval: Int, startDayOfMont
 }
 
 /**
- * Reconciles weekday/monthly state when the user flips the segmented
- * unit control.
+ * Returns the weekdays and monthly pattern to keep when the user switches the Custom unit.
  *
- * Non-destructive: weekdays and monthlyPattern are preserved across
- * transitions so toggling the unit (e.g. MONTH→WEEK→MONTH) doesn't
- * silently lose user selections. The only mutation is the WEEK
- * seeding case — switching INTO WEEK with no current selection seeds
- * [startDayOfWeek] so the weekday picker isn't empty.
- *
- * The null-monthlyPattern fallback for the MONTH unit lives in
- * [RecurrencePickerSelections.toRrule] (uses startDayOfMonth there),
- * not here, so this function doesn't need startDayOfMonth.
+ * Both are kept, so MONTH to WEEK to MONTH loses no selection. The one change: switching into
+ * WEEK with no weekdays seeds [startDayOfWeek] so the weekday picker isn't empty. A null
+ * pattern for MONTH is resolved by [RecurrencePickerSelections.toRrule].
  */
 fun applyUnitTransition(
     previous: CustomRecurrenceUnit,
@@ -188,4 +166,48 @@ fun applyUnitTransition(
         weekdays
     }
     return newWeekdays to monthlyPattern
+}
+
+/**
+ * Returns the UNTIL value for an end date the user picked (a device-local date, as the
+ * picker's grid returns it). UNTIL bounds the rule inclusively and matches DTSTART's value
+ * type (RFC 5545 section 3.3.10), and the picked date means that day in the event's own
+ * timezone:
+ * - timed: the last second of that day in [timezone], as an instant (written as UTC);
+ * - all-day: that date's last second in UTC, which [RecurrencePickerSelections.toRrule]
+ *   writes as a date.
+ */
+internal fun untilForPickedDate(dateMillis: Long, isAllDay: Boolean, timezone: String?): Long {
+    val day = java.time.Instant.ofEpochMilli(dateMillis).atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+    val zone = if (isAllDay) java.time.ZoneOffset.UTC else TimezoneUtils.resolveZone(timezone)
+    return day.plusDays(1).atStartOfDay(zone).minusSeconds(1).toInstant().toEpochMilli()
+}
+
+/**
+ * Returns the date an UNTIL value ends on, as a device-local midnight for the picker's
+ * grid and label: the UTC date for all-day rules, else the date in [timezone].
+ */
+internal fun untilDisplayMillis(untilMillis: Long, isAllDay: Boolean, timezone: String?): Long {
+    val zone = if (isAllDay) java.time.ZoneOffset.UTC else TimezoneUtils.resolveZone(timezone)
+    val day = java.time.Instant.ofEpochMilli(untilMillis).atZone(zone).toLocalDate()
+    return day.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+}
+
+/** Returns the default UNTIL: the end of the day one year after the start date (a form date). */
+internal fun defaultUntilMillis(startDateMillis: Long, isAllDay: Boolean, timezone: String?): Long {
+    val zone = java.time.ZoneId.systemDefault()
+    val start = java.time.Instant.ofEpochMilli(startDateMillis).atZone(zone).toLocalDate()
+    val yearLater = start.plusYears(1).atStartOfDay(zone).toInstant().toEpochMilli()
+    return untilForPickedDate(yearLater, isAllDay, timezone)
+}
+
+/**
+ * Returns true when two rules differ only in their UNTIL value, as when an all-day toggle
+ * re-expresses the end date. Both must have an UNTIL.
+ */
+internal fun onlyUntilDiffers(a: String?, b: String?): Boolean {
+    if (a == null || b == null || a == b) return false
+    val until = Regex("UNTIL=[^;]*")
+    if (!until.containsMatchIn(a) || !until.containsMatchIn(b)) return false
+    return until.replace(a, "UNTIL=") == until.replace(b, "UNTIL=")
 }

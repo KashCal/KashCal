@@ -1,17 +1,16 @@
 package org.onekash.icaldav.model
 
 /**
- * Information extracted from a VTIMEZONE component.
+ * Holds a VTIMEZONE's TZID, its optional TZURL and its standard and daylight UTC offsets.
  *
- * Contains parsed VTIMEZONE data including the optional TZURL property
- * for timezone distribution service integration.
+ * No parser fills it: [fromTzid] and the constructor are the only ways to build one.
  *
- * @property tzid The TZID (timezone identifier), e.g., "America/New_York"
- * @property tzurl Optional TZURL property pointing to authoritative timezone definition
- * @property standardOffsetSec Standard time UTC offset in seconds (optional, parsed from VTIMEZONE)
- * @property daylightOffsetSec Daylight saving time UTC offset in seconds (optional)
+ * @property tzid the TZID, for example "America/New_York"
+ * @property tzurl the TZURL pointing to an authoritative definition of the zone
+ * @property standardOffsetSec standard-time UTC offset in seconds
+ * @property daylightOffsetSec daylight-saving-time UTC offset in seconds
  *
- * @see <a href="https://tools.ietf.org/html/rfc5545#section-3.6.5">RFC 5545 Section 3.6.5 - Time Zone Component</a>
+ * @see <a href="https://tools.ietf.org/html/rfc5545#section-3.6.5">RFC 5545 §3.6.5</a>
  * @see <a href="https://www.calconnect.org/resources/tzurl">CalConnect TZURL Service</a>
  */
 data class VTimezoneInfo(
@@ -20,31 +19,24 @@ data class VTimezoneInfo(
     val standardOffsetSec: Int? = null,
     val daylightOffsetSec: Int? = null
 ) {
-    /**
-     * Check if this timezone has a TZURL for fetching authoritative data.
-     */
+    /** Returns whether this timezone carries a TZURL. */
     fun hasTzurl(): Boolean = tzurl != null
 
     /**
-     * Check if this is a standard IANA timezone ID.
+     * Returns whether [tzid] looks like an IANA ID: it contains "/" and has no "X-" or "x-" prefix,
+     * so "UTC" counts as not IANA.
      */
     fun isIanaTimezone(): Boolean {
         return tzid.contains("/") && !tzid.startsWith("X-") && !tzid.startsWith("x-")
     }
 
-    /**
-     * Get the TZURL for this timezone from tzurl.org.
-     *
-     * @return URL to fetch the timezone definition
-     */
+    /** Returns the tzurl.org URL of this zone's definition, whether or not [tzurl] is set. */
     fun getDefaultTzurl(): String {
         return "https://www.tzurl.org/zoneinfo/$tzid.ics"
     }
 
     companion object {
-        /**
-         * Create VTimezoneInfo from just a TZID.
-         */
+        /** Creates a VTimezoneInfo with only a TZID. */
         fun fromTzid(tzid: String): VTimezoneInfo {
             return VTimezoneInfo(tzid = tzid)
         }

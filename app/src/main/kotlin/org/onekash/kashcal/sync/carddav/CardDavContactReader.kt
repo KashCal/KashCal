@@ -6,11 +6,10 @@ import org.onekash.vcard.VCardParser
 import org.onekash.vcard.model.Contact
 
 /**
- * A parsed contact paired with its CardDAV source coordinates.
+ * Pairs a parsed contact with the CardDAV resource it came from.
  *
- * [href] and [etag] come from the addressbook-multiget response (not the vCard
- * body) so downstream sync can track the resource; [contact] is the neutral
- * model whose `version` reflects the body's own `VERSION:` line.
+ * [href] and [etag] come from the addressbook-multiget response, not the vCard body. The
+ * `version` of [contact] is the body's own `VERSION:` line.
  */
 data class ReadContact(
     val href: String,
@@ -19,17 +18,15 @@ data class ReadContact(
 )
 
 /**
- * Outcome of a [CardDavContactReader.readContacts] call.
+ * Holds the result of [CardDavContactReader.readContacts].
  *
- * @property contacts every contact successfully parsed from the fetched bodies.
- * @property unreadableHrefs requested hrefs the read could NOT confirm — a body
- *   that threw while parsing, one that yielded no vCard at all, or an href the
- *   server omitted from the multiget response. A `KIND:group` href is NOT here:
- *   it was deliberately dropped, not failed. This set is the signal the caller
- *   uses to avoid advancing a book's sync cursor past contacts it never saw — an
- *   href that failed to parse on this run (e.g. a stripped reflective ctor before
- *   the R8 keep rules, or a genuinely malformed server card) must be re-fetched on
- *   the next run rather than orphaned by a cursor that claims it's already synced.
+ * @property contacts every contact parsed from the fetched bodies.
+ * @property unreadableHrefs requested hrefs the read couldn't confirm: a body that threw while
+ *   parsing, one that yielded no vCard, or an href the server omitted from the multiget
+ *   response. A dropped `KIND:group` href isn't here. The caller holds the book's sync-token
+ *   while this is non-empty, so an href that failed to parse this run (a malformed server card,
+ *   or an R8-stripped parser constructor) is re-fetched next run instead of skipped by a token
+ *   that claims it synced.
  */
 data class ReadContactsResult(
     val contacts: List<ReadContact>,
@@ -37,37 +34,28 @@ data class ReadContactsResult(
 )
 
 /**
- * Composes the CardDAV read path end-to-end: fetch raw vCard bodies via
- * [CardDavClient.fetchContactsByHref], then parse each through [VCardParser] into
- * the neutral [Contact] model.
+ * Reads contacts end to end: fetches raw vCard bodies via [CardDavClient.fetchContactsByHref]
+ * and parses each through [VCardParser] into the [Contact] model.
  *
- * This is the seam where transport meets the format layer. Importing vcard-core
- * here is firewall-permitted; the reader touches no CalDAV client symbol.
+ * This is where transport meets the format layer; it may import vcard-core but touches no
+ * CalDAV client symbol (`CardDavCalDavIsolationTest`).
  *
- * Not a Hilt-managed singleton: the [client] carries per-account credentials
- * (built by [CardDavClientFactory.createClient]), so the sync layer constructs a
- * reader per account with a freshly-created client — mirroring how the CalDAV
- * pull path takes a per-account client rather than injecting a bare one. The
- * pure-JVM [VCardParser] (vcard-core, no Hilt) is instantiated internally, the
- * same way `PullStrategy` holds its own `ICalParser`.
+ * Not a Hilt singleton: [client] carries one account's credentials
+ * ([CardDavClientFactory.createClient]), so the sync layer builds a reader per account, as the
+ * CalDAV pull path takes a per-account client. It holds its own [VCardParser], as `PullStrategy`
+ * holds its own `ICalParser`.
  *
- * Robustness contract:
- * - Empty [hrefs] short-circuits to an empty result (no network round-trip).
- * - Hrefs are fetched in bounded batches of [MULTIGET_BATCH_SIZE]: iCloud does not
- *   return a usable single oversized addressbook-multiget, so an unbounded fetch of
- *   a large book comes back empty. The cap mirrors the CalDAV pull path.
- * - A single unparseable body is logged and skipped — it never aborts the parse
- *   of the other hrefs in the batch — but its href is reported in
- *   [ReadContactsResult.unreadableHrefs] so the caller can decline to advance its
- *   sync cursor past a contact it couldn't actually read.
- * - A `KIND:group` vCard (RFC 6350 §6.1.4, or the 3.0 Apple
- *   `X-ADDRESSBOOKSERVER-KIND:group` form) is a distribution list, not a person, so
- *   it is dropped here rather than mirrored to the device as a phantom empty contact.
- *   A group drop is deliberate, so it is NOT reported as unreadable.
- * - A transport error on any batch is returned verbatim (no partial success): the
- *   caller retries the whole read rather than acting on a truncated set.
- * - The parsed version is driven entirely by each body's `VERSION:` line; the
- *   negotiated [vcardVersion] is only what the client *requested* over the wire.
+ * Contract:
+ * - Hrefs are fetched in batches of [MULTIGET_BATCH_SIZE].
+ * - An unparseable body is logged and skipped without aborting the batch, and its href is
+ *   reported in [ReadContactsResult.unreadableHrefs].
+ * - A `KIND:group` vCard (RFC 6350 §6.1.4, or the vCard 3.0 `X-ADDRESSBOOKSERVER-KIND:group`
+ *   form) is a distribution list, not a person, so it is dropped instead of written to the
+ *   device as an empty contact. The drop is intended, so it isn't reported as unreadable.
+ * - A transport error on any batch is returned as is, with no partial success, so the caller
+ *   never acts on a truncated set.
+ * - Each body's `VERSION:` line sets the parse version; `vcardVersion` is only what the client
+ *   requests.
  */
 class CardDavContactReader(
     private val client: CardDavClient,
@@ -76,15 +64,12 @@ class CardDavContactReader(
 
 
     /**
-     * Fetch and parse the contacts at [hrefs] within the collection at
-     * [addressBookUrl]. [vcardVersion] is the version to request over the wire
-     * (RFC 6352 §10.4); the actual parse version comes from each returned body.
+     * Fetches and parses the contacts at [hrefs] in the collection at [addressBookUrl],
+     * requesting [vcardVersion] (RFC 6352 §10.4).
      *
-     * Returns the parsed contacts plus the requested hrefs that could NOT be
-     * confirmed (see [ReadContactsResult.unreadableHrefs]), or the client's
-     * transport error verbatim. Bodies that fail to parse are dropped from the
-     * result rather than aborting the batch, but their hrefs are reported as
-     * unreadable so the caller can hold its sync cursor instead of orphaning them.
+     * Returns the parsed contacts and the hrefs that couldn't be confirmed
+     * ([ReadContactsResult.unreadableHrefs]), or the client's transport error. Empty [hrefs]
+     * returns an empty result without a request.
      */
     suspend fun readContacts(
         addressBookUrl: String,
@@ -93,46 +78,35 @@ class CardDavContactReader(
     ): CalDavResult<ReadContactsResult> {
         if (hrefs.isEmpty()) return CalDavResult.success(ReadContactsResult(emptyList(), emptySet()))
 
-        // Drop the collection self-href before anything else. iCloud's sync-collection
-        // REPORT lists the collection itself with no trailing slash and no
-        // resourcetype, so it slips past the shared parser's self-row filter and into
-        // the requested href set — but the client's multiget deliberately drops it (a
-        // non-contact collection href 400s the whole batch). If we still counted it as
-        // "requested", it could never be confirmed and would falsely report unreadable,
-        // permanently holding the caller's sync cursor. Compare on the decoded,
-        // slash-normalized path so the slashless self-href collapses onto the
-        // collection URL — mirrors the same self-href drop the client's multiget does.
-        // This exclusion never touches a real member (its path always carries a segment
-        // beyond the collection), so it cannot suppress a genuine contact.
+        // Drop the collection self-href first. iCloud's sync-collection REPORT lists the
+        // collection with no trailing slash and no resourcetype, so it passes the shared
+        // parser's self-row filter; the client's multiget drops it too (a collection href
+        // 400s the whole batch). Counted as requested, it could never be confirmed and would
+        // hold the caller's sync-token forever. Comparing decoded, slash-trimmed paths
+        // matches the slashless self-href to the collection URL. A member's path always has
+        // a segment beyond the collection, so no real contact is excluded.
         val collectionPath = pathKey(addressBookUrl)
         val memberHrefs = hrefs.filter { pathKey(it) != collectionPath }
         if (memberHrefs.isEmpty()) return CalDavResult.success(ReadContactsResult(emptyList(), emptySet()))
 
         val contacts = ArrayList<ReadContact>(memberHrefs.size)
-        // Hrefs we positively accounted for, keyed on the RAW href string — the same
-        // identity the caller's write path (writesByHref), device-etag map, and
-        // delete-by-href all use. Keeping this consistent with the write path is the
-        // point: if a server ever spelled an href differently between the enumeration
-        // and the multiget response, the contact wouldn't be written AND wouldn't be
-        // confirmed, so the book stays not-ok and its cursor is HELD for a retry
-        // rather than advancing past a contact that was never mirrored. Every
-        // requested member NOT confirmed — a body that threw, one that parsed to zero
-        // vCards, or an href the server omitted — is reported unreadable.
+        // Hrefs accounted for, keyed on the raw href string: the identity the caller's
+        // writesByHref, device-etag map and delete-by-href use. If a server spelled an href
+        // differently in the listing and the multiget response, the contact would be neither
+        // written nor confirmed, so the book isn't ok and its sync-token is held for a retry
+        // instead of advancing past a contact never written. Every requested member not
+        // confirmed is reported unreadable.
         val confirmed = HashSet<String>()
         for (batch in memberHrefs.chunked(MULTIGET_BATCH_SIZE)) {
             when (val fetched = client.fetchContactsByHref(addressBookUrl, batch, vcardVersion)) {
                 is CalDavResult.Success -> fetched.data.forEach { data ->
                     try {
-                        // CardDAV serves one vCard per resource, but a body could
-                        // technically hold several; associate each with the source
-                        // href/etag. Never trust the requested version — parse from
-                        // the body's own VERSION line.
+                        // CardDAV serves one vCard per resource, but a body can hold
+                        // several; each gets the source href and etag. The parse uses the
+                        // body's own VERSION line, never the requested version.
                         parser.parse(data.vcardBody).forEach { contact ->
-                            // A KIND:group vCard is a distribution list, not a person;
-                            // mirroring it would create a phantom empty contact on the
-                            // device. Drop it here so it never reaches the write path.
-                            // A group drop is deliberate, so the href IS confirmed —
-                            // it must not be re-fetched forever as if it had failed.
+                            // A group is dropped before the write path but its href is
+                            // confirmed, or it would be re-fetched forever as a failure.
                             if (contact.kind.equals("group", ignoreCase = true)) {
                                 Log.d(TAG, "Skipping a KIND:group vCard (distribution list, not a person)")
                                 confirmed += data.href
@@ -142,16 +116,15 @@ class CardDavContactReader(
                             confirmed += data.href
                         }
                     } catch (e: Exception) {
-                        // Isolate a malformed body: skip it, keep the rest of the batch.
-                        // Leaving data.href out of `confirmed` reports it unreadable so
-                        // the caller holds its cursor and retries the fetch next run.
-                        // Log the exception type only: neither the href nor e.message
-                        // (which can embed the vCard body) may reach a log.
+                        // Skip a malformed body and keep the rest of the batch; leaving
+                        // data.href out of `confirmed` reports it unreadable, so the caller
+                        // holds its sync-token and re-fetches next run. Log the exception
+                        // type only: neither the href nor e.message (which can embed the
+                        // vCard body) may reach a log.
                         Log.w(TAG, "Skipping an unparseable contact: ${e.javaClass.simpleName}")
                     }
                 }
-                // Surface a transport error verbatim rather than returning a truncated
-                // set the caller would mistake for a complete read.
+                // Returned as is: a truncated set would read as a complete one.
                 is CalDavResult.Error -> return fetched
             }
         }
@@ -160,12 +133,11 @@ class CardDavContactReader(
     }
 
     /**
-     * Path key for the collection self-href compare ONLY: the URL's path with any
-     * trailing slash removed, so iCloud's slashless self-href collapses onto the
-     * collection URL that carries a trailing slash. Used solely to exclude the
-     * self-href — never to match member contacts, which are keyed on their raw href
-     * string to stay consistent with the caller's write path. Falls back to the raw
-     * input (slash-trimmed) if it can't be parsed as a URI.
+     * Returns the URL's decoded path without a trailing slash, or the slash-trimmed input when
+     * it isn't a URI.
+     *
+     * Only for the collection self-href check; never match member contacts with it, since
+     * they are keyed on the raw href to agree with the caller's write path.
      */
     private fun pathKey(urlOrHref: String): String {
         val path = try {
@@ -180,9 +152,8 @@ class CardDavContactReader(
         private const val TAG = "CardDavContactReader"
 
         /**
-         * Max hrefs per addressbook-multiget. iCloud returns an empty/unusable
-         * response to a single oversized multiget, so the read is chunked. Mirrors
-         * the CalDAV pull path's batch size.
+         * Caps hrefs per addressbook-multiget: iCloud answers an oversized multiget with an
+         * empty or unusable response. Same as the CalDAV pull path's batch size.
          */
         private const val MULTIGET_BATCH_SIZE = 20
     }

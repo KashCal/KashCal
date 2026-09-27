@@ -21,19 +21,18 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [EventsDao.suggestTitlesByPrefix].
+ * Tests [EventsDao.suggestTitlesByPrefix].
  *
- * Recency is derived from `start_ts` (the event's actual time), not `created_at`
- * (DB-row insert time). See issue-v23.6.3-autocomplete: freshly-imported old
- * events would otherwise pollute suggestions because sync sets created_at to now.
+ * The window is on `start_ts` (the event's time), not `created_at` (the row's insert time):
+ * a sync sets created_at to now, so old imported events would otherwise flood suggestions
+ * (seen in v23.6.3).
  *
- * Recurring events (rrule != null) bypass the start_ts window — the master row's
- * DTSTART is the first occurrence, which may be years old even if the series is
- * still active weekly.
+ * A series (non-empty rrule) skips the window: the master's DTSTART is the first occurrence,
+ * which can be years old while the series still runs.
  *
- * Ranking uses MAX(COALESCE(local_modified_at, start_ts)): user-edited events
- * (localModifiedAt=now) rank above untouched sync imports (localModifiedAt=null
- * → fall back to start_ts, already bounded by the window).
+ * Results rank by frequency, then by MAX(COALESCE(local_modified_at, start_ts)), so at equal
+ * frequency user-edited events rank above untouched sync imports, whose null
+ * local_modified_at falls back to start_ts.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -177,7 +176,7 @@ class EventsDaoTitleSuggestionTest {
 
     @Test
     fun `excludes non-recurring events with start_ts beyond untilMs`() = runTest {
-        // Events scheduled 30 days in the future — beyond the 7-day future window.
+        // Events 30 days ahead, beyond the 7-day future window.
         insertEvents("Far Future", count = 5, startTsBase = now + 30 * dayMs)
 
         val results = eventsDao.suggestTitlesByPrefix(
@@ -189,7 +188,7 @@ class EventsDaoTitleSuggestionTest {
 
     @Test
     fun `includes non-recurring events with start_ts within future window`() = runTest {
-        // Event scheduled 3 days from now — within the 7-day future window.
+        // Events 3 days ahead, within the 7-day future window.
         insertEvents("Upcoming", count = 2, startTsBase = now + 3 * dayMs)
 
         val results = eventsDao.suggestTitlesByPrefix(
@@ -202,10 +201,8 @@ class EventsDaoTitleSuggestionTest {
 
     @Test
     fun `import scenario - old start_ts with fresh created_at is excluded`() = runTest {
-        // Simulates the v23.6.3 bug: CalDAV sync imports an event from 2019.
-        // Room row gets created_at = now (sync time), but start_ts stays 2019.
-        // Under the old created_at filter, this would leak. Under the new
-        // start_ts filter, it must be excluded.
+        // A sync imports events from a year ago: created_at is now (sync time) but start_ts
+        // is a year old, so the start_ts window excludes them (v23.6.3).
         val oldStart = now - 365 * dayMs
         insertEvent("Imported Old", startTs = oldStart, createdAt = now)
         insertEvent("Imported Old", startTs = oldStart + 1_000, createdAt = now)
@@ -219,8 +216,8 @@ class EventsDaoTitleSuggestionTest {
 
     @Test
     fun `includes recurring events even when start_ts is older than sinceMs`() = runTest {
-        // Weekly standup created 2 years ago — master DTSTART is old, but the series
-        // is still active. Must be included even though start_ts < sinceMs.
+        // A weekly standup from 2 years ago: the master's DTSTART is old but the series
+        // still runs, so it's included although start_ts < sinceMs.
         insertEvent("Weekly Standup", startTs = now - 2 * 365 * dayMs, rrule = "FREQ=WEEKLY")
 
         val results = eventsDao.suggestTitlesByPrefix(
@@ -233,8 +230,8 @@ class EventsDaoTitleSuggestionTest {
 
     @Test
     fun `excludes recurring events with empty rrule string`() = runTest {
-        // Defensive: some providers emit empty string instead of null.
-        // Old start_ts + empty rrule must NOT bypass the window.
+        // Some providers emit an empty string instead of null. An old start_ts with an empty
+        // rrule must not bypass the window.
         insertEvents("Empty RRule", count = 3, startTsBase = now - 200 * dayMs, rrule = "")
 
         val results = eventsDao.suggestTitlesByPrefix(
@@ -314,11 +311,9 @@ class EventsDaoTitleSuggestionTest {
 
     @Test
     fun `user-edited event ranks above sync-imported event with same freq`() = runTest {
-        // Both titles: freq=2, same start_ts.
-        // "Edited" has localModifiedAt = now-dayMs (user edited it yesterday).
-        // "Imported" has localModifiedAt = null (sync insert, never edited).
-        // Expected ranking: Edited first (COALESCE(localModifiedAt=yesterday) >
-        // COALESCE(null, start_ts=10 days ago)).
+        // Both titles: freq=2, same start_ts. "Edited" has localModifiedAt yesterday (a user
+        // edit); "Imported" has it null (a sync insert). Edited's last_used (yesterday) beats
+        // Imported's start_ts fallback (10 days ago).
         val oldStart = now - 10 * dayMs
         insertEvent("Edited", startTs = oldStart, localModifiedAt = now - dayMs)
         insertEvent("Edited", startTs = oldStart + 1_000, localModifiedAt = now - dayMs)

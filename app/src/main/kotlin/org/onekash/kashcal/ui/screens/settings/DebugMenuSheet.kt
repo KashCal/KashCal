@@ -32,17 +32,11 @@ import androidx.compose.ui.unit.sp
 import org.onekash.kashcal.R
 
 /**
- * Debug menu bottom sheet.
+ * Shows the developer options, opened by a long press on the settings version footer:
+ * - Force Full Sync, which asks for confirmation before calling [onForceFullSync]
+ * - Sync History, which calls [onShowSyncLogs]
  *
- * Accessed via long-press on version footer.
- * Contains developer options not shown to regular users:
- * - Force Full Sync
- * - Sync Log viewer
- *
- * @param sheetState Material3 sheet state for controlling visibility
- * @param onForceFullSync Callback to trigger full sync
- * @param onShowSyncLogs Callback to navigate to sync logs
- * @param onDismiss Callback when sheet is dismissed
+ * Each closes the sheet through [onDismiss] once it acts; cancelling the confirmation doesn't.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +57,6 @@ fun DebugMenuSheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
-            // Header
             Text(
                 stringResource(R.string.settings_developer_options),
                 style = MaterialTheme.typography.titleMedium,
@@ -74,7 +67,6 @@ fun DebugMenuSheet(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            // Force Full Sync
             DebugMenuItem(
                 icon = Icons.Default.Refresh,
                 label = stringResource(R.string.settings_force_sync),
@@ -87,7 +79,6 @@ fun DebugMenuSheet(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            // Sync History
             DebugMenuItem(
                 emoji = "📊",
                 label = stringResource(R.string.settings_sync_history),
@@ -100,7 +91,6 @@ fun DebugMenuSheet(
         }
     }
 
-    // Force Full Sync confirmation dialog
     if (showForceFullSyncDialog) {
         AlertDialog(
             onDismissRequest = { showForceFullSyncDialog = false },
@@ -124,9 +114,7 @@ fun DebugMenuSheet(
     }
 }
 
-/**
- * Single menu item in the debug menu.
- */
+/** Draws one item of the debug menu. */
 @Composable
 private fun DebugMenuItem(
     label: String,

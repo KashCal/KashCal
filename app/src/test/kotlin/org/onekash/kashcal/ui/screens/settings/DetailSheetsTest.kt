@@ -15,18 +15,20 @@ import org.onekash.kashcal.ui.shared.formatReminderShort
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Unit tests for detail selection sheets (Checkpoint 8).
+ * Tests settings summary formats and picker option lists: [formatReminderShort] and
+ * [formatDurationShort] inside summary strings the tests build inline, the sizes of
+ * [TIMED_REMINDER_MINUTES] and [ALL_DAY_REMINDER_MINUTES], and the size and values of
+ * [EVENT_DURATION_MINUTES].
  *
- * Note: Composable UI interaction tests require AndroidX Compose testing
- * which runs as instrumented tests. These unit tests verify the supporting
- * logic and data.
+ * The visible-calendars count and add-calendar option tests assert inline literals and call no
+ * production code.
  */
 @RunWith(RobolectricTestRunner::class)
 class DetailSheetsTest {
 
     private val resources: Resources = ApplicationProvider.getApplicationContext<Context>().resources
 
-    // ==================== CalendarSheets Tests ====================
+    // ==================== Visible Calendars Count ====================
 
     @Test
     fun `visible calendars count format is correct`() {
@@ -36,7 +38,7 @@ class DetailSheetsTest {
         assertEquals("3 / 5", expected)
     }
 
-    // ==================== AlertsSheet Tests ====================
+    // ==================== Alerts Summary and Presets ====================
 
     @Test
     fun `alerts summary format is correct`() {
@@ -55,15 +57,14 @@ class DetailSheetsTest {
     @Test
     fun `ALL_DAY_REMINDER_MINUTES available for picker`() {
         assertTrue(ALL_DAY_REMINDER_MINUTES.isNotEmpty())
-        assertEquals(5, ALL_DAY_REMINDER_MINUTES.size) // None, 9AM, 12h, 1d, 1w
+        assertEquals(5, ALL_DAY_REMINDER_MINUTES.size) // None, 9 AM day of, 1d, 2d, 1w before
     }
 
-    // ==================== AddCalendarSheet Tests ====================
+    // ==================== Add Calendar Options ====================
 
     @Test
     fun `add calendar has two options`() {
-        // Design requirement: Subscribe to URL + Import file
-        // "Coming Soon" option removed
+        // Subscribe to a URL and import a file.
         val options = listOf("Calendar Subscription", "Import Calendar File")
         assertEquals(2, options.size)
     }
@@ -81,7 +82,7 @@ class DetailSheetsTest {
         assertTrue(description.contains(".ics"))
     }
 
-    // ==================== DisplayOptionsSheet Tests ====================
+    // ==================== Display Options Subtitle ====================
 
     @Test
     fun `display options subtitle with emojis enabled`() {

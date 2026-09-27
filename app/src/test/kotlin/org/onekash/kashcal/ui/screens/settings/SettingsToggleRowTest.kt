@@ -19,9 +19,9 @@ import org.robolectric.annotation.Config
 /**
  * Compose tests for [SettingsToggleRow].
  *
- * Verifies the switch-height fix (single-line toggle row matches a single-line
- * [SettingsRow]), that the whole row toggles, and that the optional info
- * tooltip reveals its explanation without toggling the row.
+ * Verifies that a single-line toggle row, with or without an info button, is as tall as a
+ * single-line [SettingsRow]; that the whole row toggles, info button or not; that the info
+ * button reveals its explanation without toggling the row; and that a badge renders.
  *
  * Runs under Robolectric; run in isolation given the repo's multi-class
  * native-crash flake.
@@ -134,8 +134,8 @@ class SettingsToggleRowTest {
                 )
             }
         }
-        // Tapping the ⓘ (content description "About <setting name>") shows the
-        // explanation and must NOT toggle the row.
+        // Tapping the ⓘ (content description "About <info title>") shows the explanation and
+        // must not toggle the row.
         composeTestRule.onNodeWithContentDescription("About Smart add").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("Type naturally to fill in the details.")

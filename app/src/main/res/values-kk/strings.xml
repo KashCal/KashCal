@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Бұл серверде күнтізбелер табылмады.</string>
     <string name="caldav_error_unexpected">Күтпеген қате. Қайталап көріңіз.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nЕгер бұл жергілікті желідегі сервер болса, қосылу үшін жергілікті желіге кіруге рұқсат етіңіз.</string>
+    <string name="caldav_error_connection_refused_insecure">Сервер қосылымды KashCal бармайтын жерге бағыттады (шифрланбаған мекенжайға немесе қайта бағыттау циклына), сондықтан KashCal құпия сөзіңізді жібермей тұрып тоқтады. Сервер мекенжайын тексеріңіз.</string>
     <string name="local_network_banner_title">Жергілікті желіге кіру қажет</string>
     <string name="local_network_banner_body">Бұл сервер жергілікті желіде тұрған сияқты. KashCal оған қосыла алуы үшін жергілікті желіге кіруге рұқсат етіңіз.</string>
     <string name="local_network_banner_allow">Кіруге рұқсат ету</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Өзгерістерді сақтау</string>
     <string name="dialog_delete_recurring_title">Жою</string>
     <string name="dialog_move_recurring_title">Жылжыту</string>
+    <string name="snackbar_event_rescheduled">Оқиға уақыты өзгертілді</string>
+    <string name="snackbar_reschedule_failed">Оқиға уақытын өзгерту мүмкін болмады</string>
     <string name="recurring_this_event">Бұл оқиға</string>
     <string name="recurring_all_events">Барлық оқиғалар</string>
 

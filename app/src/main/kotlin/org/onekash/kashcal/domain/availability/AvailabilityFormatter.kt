@@ -10,15 +10,14 @@ import java.util.Locale
 import javax.inject.Inject
 
 /**
- * Converts a list of [FreeBlock]s to a plain-text availability summary suitable
- * for Intent.ACTION_SEND / EXTRA_TEXT.
+ * Converts [FreeBlock]s to a plain-text availability summary for `Intent.ACTION_SEND` /
+ * `EXTRA_TEXT`.
  *
- * Working hours are passed as minutes from midnight (0..1440). 1440 represents
- * end-of-day and is rendered specially because LocalTime cannot encode 24:00.
+ * Working hours are minutes from midnight (0..1440). 1440 is end of day and is rendered
+ * specially because LocalTime can't encode 24:00.
  *
- * All output strings come from string resources; day-of-week labels use the
- * caller-supplied [Locale] short style. Time formatting follows the 12h/24h
- * preference passed in by the caller.
+ * All output text comes from string resources; day-of-week labels use the caller's [Locale] in
+ * short style, and times follow the caller's 12h/24h choice.
  */
 class AvailabilityFormatter @Inject constructor() {
 
@@ -82,19 +81,17 @@ class AvailabilityFormatter @Inject constructor() {
     }
 
     private fun formatLocalTime(time: LocalTime, is24Hour: Boolean, locale: Locale): String {
-        // FreeBlockFinder uses LocalTime.MAX as the end-of-day sentinel because
-        // LocalTime can't represent 24:00. Render it explicitly so the user
-        // doesn't see a deceptive "11:59 PM" / "23:59".
+        // [FreeBlockFinder] encodes end of day as LocalTime.MAX, since LocalTime can't hold
+        // 24:00. Render it as end of day so the user doesn't see "11:59 PM" / "23:59".
         val effectiveMinutes = if (time == LocalTime.MAX) 24 * 60 else time.hour * 60 + time.minute
         return formatMinutes(effectiveMinutes, is24Hour, locale)
     }
 
     private fun formatMinutes(minutes: Int, is24Hour: Boolean, locale: Locale): String {
         val safe = minutes.coerceIn(0, 24 * 60)
-        // 1440 (end-of-day) renders as "24:00" in 24h mode (universal). In 12h
-        // mode there's no clean equivalent, so render midnight via the locale's
-        // own AM/PM formatter — yields "12:00 AM" in English, "12:00 a. m." in
-        // Spanish, etc., instead of a hardcoded English literal.
+        // 1440 (end of day) renders as "24:00" in 24h mode. 12h mode has no equivalent, so
+        // midnight goes through the locale's own AM/PM formatter ("12:00 AM" in English,
+        // "12:00 a. m." in Spanish) instead of a hardcoded English literal.
         if (safe == 24 * 60) {
             return if (is24Hour) "24:00"
             else DateTimeFormatter.ofPattern("h:mm a", locale).format(LocalTime.MIDNIGHT)

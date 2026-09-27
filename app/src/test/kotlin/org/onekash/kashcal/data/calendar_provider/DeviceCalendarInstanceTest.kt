@@ -7,8 +7,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for DeviceCalendarInstance computed properties and
- * FakeCalendarProviderRepository exception-aware deletion behavior.
+ * Tests [DeviceCalendarInstance.isPartOfRecurringSeries] and that
+ * [FakeCalendarProviderRepository.deleteSingleOccurrence] records the delete with or without an
+ * existing exception.
  */
 class DeviceCalendarInstanceTest {
 
@@ -28,8 +29,7 @@ class DeviceCalendarInstanceTest {
 
     @Test
     fun `isPartOfRecurringSeries returns true for exception occurrence`() {
-        // Exception: hasRrule is false (exception events have no RRULE),
-        // but originalId is set (points to master event)
+        // An exception has no RRULE, so hasRrule is false, but originalId points to the master.
         val instance = createInstance(hasRrule = false, originalId = 100L)
         assertTrue(instance.isPartOfRecurringSeries)
     }
@@ -40,7 +40,7 @@ class DeviceCalendarInstanceTest {
         assertTrue(instance.isPartOfRecurringSeries)
     }
 
-    // ==================== FakeCalendarProviderRepository.deleteSingleOccurrence ====================
+    // ==================== Fake deleteSingleOccurrence ====================
 
     @Test
     fun `deleteSingleOccurrence succeeds when no exception exists`() = runTest {
@@ -61,7 +61,7 @@ class DeviceCalendarInstanceTest {
     @Test
     fun `deleteSingleOccurrence succeeds when exception already exists`() = runTest {
         val fake = FakeCalendarProviderRepository()
-        // Pre-populate an existing exception for this occurrence
+        // An existing exception for this occurrence.
         fake.exceptionEvents[200L to 1709280000000L] = 500L
 
         val result = fake.deleteSingleOccurrence(

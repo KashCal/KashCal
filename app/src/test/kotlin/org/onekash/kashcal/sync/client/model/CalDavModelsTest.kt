@@ -5,9 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Tests for CalDavResult error factories.
- */
+/** Pins the code and retryability of each [CalDavResult] error factory. */
 class CalDavModelsTest {
 
     @Test

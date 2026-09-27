@@ -10,9 +10,10 @@ import org.robolectric.RobolectricTestRunner
 import java.time.DayOfWeek
 
 /**
- * Unit tests for RRULE builder utility.
+ * Tests [RruleBuilder]: building RRULE strings, [RruleBuilder.parseFrequency], display
+ * strings, day abbreviations and build-then-parse round trips.
  *
- * RFC 5545 RRULE format: "FREQ=frequency;...additional params"
+ * The builders put FREQ first, which RFC 5545 §3.3.10 requires for backward compatibility.
  */
 @RunWith(RobolectricTestRunner::class)
 class RruleBuilderTest {
@@ -119,7 +120,7 @@ class RruleBuilderTest {
         val untilMillis = 1735689599000L
         val rrule = RruleBuilder.withUntil(base, untilMillis)
         assertTrue("Should contain UNTIL", rrule.contains("UNTIL="))
-        // Format should be YYYYMMDDTHHMMSSZ
+        // The format is yyyyMMddTHHmmssZ; only the UTC Z is asserted
         assertTrue("Should be UTC format", rrule.contains("Z"))
     }
 
@@ -157,7 +158,7 @@ class RruleBuilderTest {
 
     @Test
     fun `parse complex rrule returns CUSTOM`() {
-        // Interval or BYSETPOS makes it custom
+        // Any INTERVAL, COUNT, UNTIL or BYSETPOS part makes it custom
         val frequency = RruleBuilder.parseFrequency("FREQ=WEEKLY;INTERVAL=2;BYDAY=MO")
         assertEquals(RecurrenceFrequency.CUSTOM, frequency)
     }

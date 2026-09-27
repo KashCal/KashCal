@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Walang kalendaryong natagpuan sa server na ito.</string>
     <string name="caldav_error_unexpected">Hindi inaasahang error. Subukan ulit.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nKung ito ay isang server sa iyong lokal na network, payagan ang access sa lokal na network para makakonekta.</string>
+    <string name="caldav_error_connection_refused_insecure">Inilipat ng server ang koneksyon sa lugar na hindi sinusundan ng KashCal (isang address na walang encryption, o paulit-ulit na redirect), kaya huminto ang KashCal bago ipadala ang iyong password. Suriin ang address ng server.</string>
     <string name="local_network_banner_title">Kailangan ng access sa lokal na network</string>
     <string name="local_network_banner_body">Mukhang nasa iyong lokal na network ang server na ito. Payagan ang access sa lokal na network para makakonekta dito ang KashCal.</string>
     <string name="local_network_banner_allow">Payagan ang access</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">I-save ang mga pagbabago sa</string>
     <string name="dialog_delete_recurring_title">Tanggalin</string>
     <string name="dialog_move_recurring_title">Ilipat</string>
+    <string name="snackbar_event_rescheduled">Na-iskedyul muli ang event</string>
+    <string name="snackbar_reschedule_failed">Hindi ma-iskedyul muli ang event</string>
     <string name="recurring_this_event">Event na ito</string>
     <string name="recurring_all_events">Lahat ng event</string>
 

@@ -1,28 +1,16 @@
 package org.onekash.kashcal.data.db.entity
 
-/**
- * Status of a scheduled reminder alarm.
- *
- * Tracks the lifecycle of a reminder from scheduling to dismissal.
- */
+/** Lifecycle state of a [ScheduledReminder], from scheduling to dismissal. */
 enum class ReminderStatus {
-    /**
-     * Alarm scheduled with AlarmManager, waiting to fire.
-     */
+    /** Alarm set with AlarmManager, waiting to fire. */
     PENDING,
 
-    /**
-     * Alarm fired, notification shown to user.
-     */
+    /** Alarm fired and the notification is shown. */
     FIRED,
 
-    /**
-     * User snoozed the reminder, alarm rescheduled.
-     */
+    /** User snoozed the reminder; the alarm is set again. */
     SNOOZED,
 
-    /**
-     * User dismissed the reminder, no further action needed.
-     */
+    /** User dismissed the reminder; nothing more to do. */
     DISMISSED
 }

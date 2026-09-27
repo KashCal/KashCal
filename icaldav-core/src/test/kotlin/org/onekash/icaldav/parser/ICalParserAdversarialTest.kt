@@ -8,21 +8,19 @@ import org.junit.jupiter.api.Test
 import org.onekash.icaldav.model.ParseResult
 
 /**
- * Adversarial tests for ICS parser - ported from KashCal.
+ * Probes ICalParser with input that could crash it or be misread:
+ * - empty and malformed VCALENDAR structures, and a VTIMEZONE RRULE next to an event
+ * - missing UID, DTSTART or DTSTAMP
+ * - very long values and many attendees or VALARMs
+ * - line folding with SPACE or TAB, LF-only line endings
+ * - SQL and script injection, null bytes and control characters
+ * - invalid dates and durations, invalid RRULEs
+ * - a master with its exception, and 100 events in one calendar
+ * - UTF-8 text and escaped characters
  *
- * Tests probe edge cases that could crash or compromise security:
- * - Malformed VCALENDAR structures
- * - Missing required properties
- * - Extremely long property values
- * - Line folding edge cases
- * - SQL injection attempts
- * - Null bytes and control characters
- * - Invalid date/time formats
- * - Invalid RRULE values
- * - Multiple VEVENT handling
- * - UTF-8 and special characters
- *
- * These tests verify defensive coding in ICalParser.
+ * The empty-input tests assert no events. Most others fail only if parsing throws; those that
+ * check content do so only on a successful parse, most only when it has an event, so an Error
+ * passes them too.
  */
 @DisplayName("ICalParser Adversarial Tests")
 class ICalParserAdversarialTest {
@@ -68,7 +66,7 @@ class ICalParserAdversarialTest {
         """.trimIndent()
 
         val result = parser.parseAllEvents(ical)
-        // Should either parse gracefully or return empty - no crash
+        // Any result passes; only a throw fails.
         assertTrue(true, "Should not crash on missing BEGIN:VCALENDAR")
     }
 
@@ -322,7 +320,7 @@ class ICalParserAdversarialTest {
             "END:VCALENDAR\r\n"
 
         val result = parser.parseAllEvents(ical)
-        // TAB is also valid for line folding per RFC 5545
+        // RFC 5545 §3.1 allows a TAB as the fold character.
         assertTrue(true, "Should handle TAB line folding")
     }
 
@@ -366,7 +364,7 @@ class ICalParserAdversarialTest {
         """.trimIndent()
 
         val result = parser.parseAllEvents(ical)
-        // SQL injection should be treated as literal strings
+        // SQL text stays a literal string.
         if (result is ParseResult.Success && result.value.isNotEmpty()) {
             val event = result.value.first()
             assertTrue(
@@ -426,7 +424,7 @@ class ICalParserAdversarialTest {
         val result = parser.parseAllEvents(ical)
         if (result is ParseResult.Success && result.value.isNotEmpty()) {
             val event = result.value.first()
-            // Should preserve script as literal (UI must escape for display)
+            // The script stays literal; the UI must escape it for display.
             assertTrue(
                 event.description?.contains("<script>") == true,
                 "Script should be literal"
@@ -528,7 +526,7 @@ class ICalParserAdversarialTest {
         """.trimIndent()
 
         val result = parser.parseAllEvents(ical)
-        // BIWEEKLY is not valid
+        // BIWEEKLY isn't an RFC 5545 FREQ value.
         assertTrue(true, "Should handle invalid FREQ")
     }
 
@@ -548,7 +546,7 @@ class ICalParserAdversarialTest {
         """.trimIndent()
 
         val result = parser.parseAllEvents(ical)
-        // COUNT and UNTIL together is invalid per RFC
+        // RFC 5545 §3.3.10: COUNT and UNTIL MUST NOT occur in the same rule.
         assertTrue(true, "Should handle COUNT + UNTIL")
     }
 
@@ -575,7 +573,7 @@ class ICalParserAdversarialTest {
         """.trimIndent()
 
         val result = parser.parseAllEvents(ical)
-        // Multiple VEVENTs with same UID (master + exception) is valid RFC 5545
+        // A master and its exception share a UID, which RFC 5545 allows.
         if (result is ParseResult.Success) {
             assertTrue(result.value.isNotEmpty(), "Should parse master and/or exception")
         }
@@ -651,7 +649,7 @@ class ICalParserAdversarialTest {
         val result = parser.parseAllEvents(ical)
         if (result is ParseResult.Success && result.value.isNotEmpty()) {
             val event = result.value.first()
-            // Escaped chars should be unescaped
+            // Passes whether the comma comes back unescaped or still escaped.
             assertTrue(
                 event.summary?.contains(",") == true || event.summary?.contains("\\,") == true,
                 "Should unescape comma (or preserve as library choice)"
@@ -694,10 +692,10 @@ class ICalParserAdversarialTest {
 
     @Test
     fun `parse event with long folded description`() {
-        // Real-world: Exchange/Outlook generates very long folded descriptions
+        // Some clients write very long folded descriptions.
         val longDesc = "This is a very long meeting description that contains important details about the meeting agenda and will be split across multiple folded lines in the ICS file according to RFC 5545 specifications which limit lines to 75 octets and then continuation lines start with a space or tab character."
 
-        // Simulate proper folding
+        // Fold every 70 characters.
         val foldedDesc = longDesc.chunked(70).joinToString("\r\n ")
 
         val ical = "BEGIN:VCALENDAR\r\n" +

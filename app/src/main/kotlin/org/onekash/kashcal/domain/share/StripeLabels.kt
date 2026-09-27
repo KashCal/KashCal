@@ -1,9 +1,8 @@
 package org.onekash.kashcal.domain.share
 
 /**
- * Hour labels for the day stripe on a share card. Five labels at the
- * 0/6/12/18/24 marks. 12h locales use AM/PM compact forms; 24h locales use
- * zero-padded hours.
+ * Hour labels for the share card's day stripe, at the 0, 6, 12, 18 and 24 hour marks: compact
+ * "12a"/"6p" forms in 12-hour format, zero-padded hours in 24-hour format.
  */
 object StripeLabels {
     fun labelsFor(is24Hour: Boolean): List<String> =

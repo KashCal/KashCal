@@ -17,14 +17,11 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Edge case tests for credential storage and AccountCredentials data class.
+ * Tests edge cases of [AccountCredentials] (empty and whitespace fields, destructuring, copy
+ * with discovery URLs, equality) and of [UnifiedCredentialManager] with encryption unavailable
+ * (missing accounts, repeated delete and clear, save-then-read, updateDiscoveryUrls).
  *
- * Tests empty/boundary field values, sequential operation consistency,
- * idempotent delete/clear, discovery URL update patterns, and data class
- * destructuring.
- *
- * Complements UnifiedCredentialManagerTest (25 tests) and
- * CredentialMigrationTest (12 tests).
+ * Complements `UnifiedCredentialManagerTest` and `CredentialMigrationTest`.
  */
 class CredentialEdgeCaseTest {
 
@@ -135,7 +132,7 @@ class CredentialEdgeCaseTest {
 
     @Test
     fun `AccountCredentials copy with discovery URLs simulates post-discovery update`() {
-        // Initial credentials before discovery
+        // Before discovery.
         val initial = AccountCredentials(
             username = "user",
             password = "pass",
@@ -144,18 +141,17 @@ class CredentialEdgeCaseTest {
         assertNull(initial.principalUrl)
         assertNull(initial.calendarHomeSet)
 
-        // After discovery, update with discovered URLs
+        // After discovery, with the discovered URLs.
         val discovered = initial.copy(
             principalUrl = "https://caldav.example.com/principals/user/",
             calendarHomeSet = "https://caldav.example.com/calendars/user/"
         )
 
-        // Original unchanged
+        // The original is unchanged.
         assertNull(initial.principalUrl)
-        // Discovered has URLs
         assertEquals("https://caldav.example.com/principals/user/", discovered.principalUrl)
         assertEquals("https://caldav.example.com/calendars/user/", discovered.calendarHomeSet)
-        // Original fields preserved
+        // The other fields are carried over.
         assertEquals(initial.username, discovered.username)
         assertEquals(initial.password, discovered.password)
         assertEquals(initial.serverUrl, discovered.serverUrl)
@@ -196,7 +192,7 @@ class CredentialEdgeCaseTest {
         assertFalse(cred.serverUrl.endsWith("/"))
     }
 
-    // ========== CredentialManager Sequential Operations (Graceful Degradation) ==========
+    // ========== Manager calls with encryption unavailable ==========
 
     @Test
     fun `getCredentials for non-existent account returns null`() = runBlocking {
@@ -212,13 +208,13 @@ class CredentialEdgeCaseTest {
 
     @Test
     fun `deleteCredentials for non-existent account does not throw`() = runBlocking {
-        // Should complete without exception
+        // Passes if it doesn't throw.
         credentialManager.deleteCredentials(999L)
     }
 
     @Test
     fun `consecutive deleteCredentials same account is idempotent`() = runBlocking {
-        // Should not throw on repeated delete
+        // Passes if the repeated delete doesn't throw.
         credentialManager.deleteCredentials(1L)
         credentialManager.deleteCredentials(1L)
         credentialManager.deleteCredentials(1L)
@@ -239,8 +235,8 @@ class CredentialEdgeCaseTest {
         credentialManager.deleteCredentials(1L)
         val result = credentialManager.getCredentials(1L)
 
-        // In test env, encryption unavailable so all return null/false anyway
-        // But the operation sequence should not throw
+        // With a mocked Context encryption is unavailable, so the read is null regardless;
+        // this checks the sequence doesn't throw.
         assertNull(result)
     }
 
@@ -249,7 +245,7 @@ class CredentialEdgeCaseTest {
         val cred = AccountCredentials("user", "pass", "https://server.com")
         credentialManager.saveCredentials(1L, cred)
 
-        // In test env, encryption unavailable
+        // With a mocked Context encryption is unavailable, so the save stores nothing.
         val has = credentialManager.hasCredentials(1L)
         assertFalse("Test env has no encryption, should return false", has)
     }
@@ -258,7 +254,7 @@ class CredentialEdgeCaseTest {
 
     @Test
     fun `updateDiscoveryUrls with null values`() = runBlocking {
-        // Should not throw when both URLs are null
+        // Passes if it doesn't throw with both URLs null.
         credentialManager.updateDiscoveryUrls(
             accountId = 1L,
             principalUrl = null,
@@ -278,7 +274,7 @@ class CredentialEdgeCaseTest {
 
     @Test
     fun `updateDiscoveryUrls for non-existent account`() = runBlocking {
-        // Should not throw even for account that was never saved
+        // Passes if it doesn't throw for an account never saved.
         credentialManager.updateDiscoveryUrls(
             accountId = Long.MAX_VALUE,
             principalUrl = "https://server.com/principal/",

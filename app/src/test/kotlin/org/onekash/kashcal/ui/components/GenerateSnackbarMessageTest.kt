@@ -7,19 +7,10 @@ import org.onekash.kashcal.sync.model.ChangeType
 import org.onekash.kashcal.sync.model.SyncChange
 
 /**
- * Unit tests for generateSnackbarMessage().
- *
- * Tests all message generation scenarios:
- * - Empty list
- * - Single new event (shows title)
- * - Multiple new events
- * - Single update
- * - Multiple updates
- * - Single deletion
- * - Multiple deletions
- * - Mixed changes
- * - Long title truncation
- * - Special characters in title
+ * Tests the English [generateSnackbarMessage] (the overload without resources): null for no
+ * changes, the title for one new event (cut at 30 characters, special and emoji characters
+ * kept), a count for more than one of a kind, singular for one update or deletion, and a total
+ * for any mix.
  */
 class GenerateSnackbarMessageTest {
 

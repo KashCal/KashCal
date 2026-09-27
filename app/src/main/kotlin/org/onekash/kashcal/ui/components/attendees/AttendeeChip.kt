@@ -46,22 +46,20 @@ import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
 
 /**
- * Single attendee chip. Tap toggles inline expansion revealing email +
- * Copy/Email actions. Status indicator dot left of the name; optional
- * organizer pill ahead of name; for the current user the name is replaced
- * by the literal "You" (the user already knows their own name, and the
- * server-supplied CN can be a noisy account login like "rkash").
+ * Shows one attendee as a chip: a status icon, an organizer pill when
+ * [AttendeeUiModel.isOrganizer], and the name. A tap expands it to show the email with copy and
+ * email actions.
  *
- * Uses Material 3 theme tokens — no hardcoded hex.
+ * The current user's name shows as "You": they know their own name, and the server-supplied CN
+ * can be a noisy account login. Colors come from Material 3 theme tokens, never hex values.
  */
 @Composable
 fun AttendeeChip(
     model: AttendeeUiModel,
     modifier: Modifier = Modifier
 ) {
-    // Slot identity is pinned by the caller's `key(bareAddress, isSynthesized)`
-    // for any chip-row surface, so a plain remember is sufficient — the
-    // slot itself is invariant per chip.
+    // Positional state: a caller showing a row of chips must key each one by attendee, or the
+    // expansion moves to another attendee when the list changes.
     var expanded by remember { mutableStateOf(false) }
     val statusColor = model.status.color()
     val statusIcon = model.status.icon()
@@ -73,7 +71,7 @@ fun AttendeeChip(
     val youLabel = stringResource(R.string.attendee_you_marker)
     val visibleName = if (model.isYou) youLabel else model.displayName
     val statusLabel = stringResource(model.status.labelResId)
-    // Talkback announces "<name>, <status>" (and the email when expanded).
+    // TalkBack announces "<name>, <status>", plus the email when expanded.
     val a11yDescription = if (expanded) {
         "$visibleName, $statusLabel, ${model.bareAddress}"
     } else {
@@ -101,7 +99,7 @@ fun AttendeeChip(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Status indicator — colored dot + status icon overlay
+                // Status icon tinted by status
                 Icon(
                     imageVector = statusIcon,
                     contentDescription = null,

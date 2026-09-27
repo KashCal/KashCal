@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Neniu kalendaro trovita sur ĉi tiu servilo.</string>
     <string name="caldav_error_unexpected">Neatendita eraro. Bonvolu reprovi.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nSe ĉi tio estas servilo en via loka reto, permesu aliron al la loka reto por konektiĝi.</string>
+    <string name="caldav_error_connection_refused_insecure">La servilo alidirektis la konekton al loko, kien KashCal ne sekvas (neĉifrita adreso aŭ alidirekta buklo), do KashCal haltis antaŭ ol sendi vian pasvorton. Kontrolu la adreson de la servilo.</string>
     <string name="local_network_banner_title">Necesas aliro al la loka reto</string>
     <string name="local_network_banner_body">Ĉi tiu servilo ŝajnas esti en via loka reto. Permesu aliron al la loka reto por ke KashCal povu konektiĝi al ĝi.</string>
     <string name="local_network_banner_allow">Permesi aliron</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Konservi ŝanĝojn en</string>
     <string name="dialog_delete_recurring_title">Forigi</string>
     <string name="dialog_move_recurring_title">Movi</string>
+    <string name="snackbar_event_rescheduled">Evento replanita</string>
+    <string name="snackbar_reschedule_failed">Ne eblis replani la eventon</string>
     <string name="recurring_this_event">Ĉi tiu evento</string>
     <string name="recurring_all_events">Ĉiuj eventoj</string>
 

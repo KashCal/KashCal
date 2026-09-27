@@ -43,10 +43,10 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Integration test for PullStrategy with real iCloud data and real Room DB.
+ * Runs PullStrategy against real iCloud data and a real Room database.
  *
- * Uses real CalDavClient, Parser, Room in-memory database, and OccurrenceGenerator.
- * Only SyncNotificationManager-type components are absent (not needed for pull).
+ * Uses the real CalDavClient, parser, in-memory Room database and OccurrenceGenerator. The
+ * invite notifier, account repository and reminder scheduler are relaxed mocks.
  *
  * Run with: ./gradlew testDebugUnitTest -Pintegration --tests "*RealICloudPullStrategyTest*"
  *
@@ -178,8 +178,8 @@ class RealICloudPullStrategyTest {
     }
 
     /**
-     * Insert account + calendar into real Room DB. Must be called after
-     * discovering the real iCloud calendar URL.
+     * Inserts an account and calendar into the Room database. Call after discovering the real
+     * iCloud calendar URL.
      */
     private suspend fun setupDbCalendar(caldavUrl: String, displayName: String): Calendar {
         testAccountId = database.accountsDao().insert(
@@ -222,7 +222,7 @@ class RealICloudPullStrategyTest {
                 println("New sync token: ${result.newSyncToken}")
                 println("New ctag: ${result.newCtag}")
 
-                // Verify events were actually persisted in the real DB
+                // Verify events were persisted in the real DB
                 val now = System.currentTimeMillis()
                 val farFuture = now + 365L * 24 * 60 * 60 * 1000 * 10  // 10 years
                 val farPast = now - 365L * 24 * 60 * 60 * 1000 * 10
@@ -253,7 +253,7 @@ class RealICloudPullStrategyTest {
         val currentCtag = ctagResult.getOrNull()!!.ctag
 
         val calendar = setupDbCalendar(caldavCalendar.url, caldavCalendar.displayName)
-        // Update ctag in DB to match server — simulates "already synced"
+        // Store the server's ctag in the DB to simulate "already synced"
         database.calendarsDao().updateCtag(testCalendarId, currentCtag)
         val updatedCalendar = database.calendarsDao().getById(testCalendarId)!!
 
@@ -353,7 +353,7 @@ class RealICloudPullStrategyTest {
         }
 
         val calendar = setupDbCalendar(caldavCalendar.url, caldavCalendar.displayName)
-        // Set sync token in DB — simulates "already synced"
+        // Store the sync token in the DB to simulate "already synced"
         database.calendarsDao().updateSyncToken(testCalendarId, syncToken, null)
         val updatedCalendar = database.calendarsDao().getById(testCalendarId)!!
 
@@ -421,8 +421,9 @@ class RealICloudPullStrategyTest {
 
     @Test
     fun `pull full sync uses batched multiget for large calendar`() = runBlocking {
-        // Verifies that batched multiget works against real iCloud with many events.
-        // iCloud personal calendar has ~693 events — split into ~35 batches of 20.
+        // Pulls a large real iCloud calendar through the batched multiget; asserts only that
+        // events reach the DB on success. iCloud personal calendar has ~693 events, split
+        // into ~35 batches of 20.
         assumeCredentialsAvailable()
 
         val caldavCalendar = discoverTestCalendar()
@@ -542,15 +543,16 @@ class RealICloudPullStrategyTest {
     }
 
     /**
-     * Regression guard for the attendee persistence path against real iCloud:
+     * Guards the attendee persistence path against real iCloud:
      *   1. Create an event with 3 synthetic attendees on a real iCloud calendar
      *   2. Pull the calendar
      *   3. Assert the `attendees` table has rows for the new event
-     *   4. Re-pull and assert the count is still the same (idempotent)
+     *   4. Re-pull and assert the count and address set are unchanged (idempotent)
      *
-     * iCloud's iTIP scheduling routing may drop NEEDS-ACTION attendees when
-     * the ORGANIZER mailto doesn't match the authenticated account — so we
-     * assert ≥1 attendee survives the roundtrip rather than exactly 3.
+     * iCloud's iTIP scheduling routing may drop NEEDS-ACTION attendees when the ORGANIZER
+     * mailto doesn't match the authenticated account, so the test asserts at least one
+     * attendee survives the round trip, not exactly 3. Skips without credentials, or when
+     * discovery, the create, either pull or the DB lookup fails.
      */
     @Test
     fun `attendees persist on real iCloud pull and re-pull idempotently`() = runBlocking {
@@ -599,7 +601,7 @@ END:VCALENDAR
             )
             val firstCount = firstAttendees.size
 
-            // Second pull — idempotent at row-set level
+            // Second pull: idempotent at the row-set level
             val second = pullStrategy.pull(calendar, forceFullSync = true, client = client)
             assumeTrue("second pull should succeed", second is PullResult.Success)
             val secondAttendees = database.attendeesDao().getForEvent(event.id).first()
@@ -613,7 +615,7 @@ END:VCALENDAR
                 secondAttendees.map { it.address }.toSet()
             )
         } finally {
-            // Cleanup — best-effort
+            // Best-effort cleanup of the event this test created
             try { client.deleteEvent(eventUrl, createEtag) } catch (_: Exception) { /* ignore */ }
         }
     }

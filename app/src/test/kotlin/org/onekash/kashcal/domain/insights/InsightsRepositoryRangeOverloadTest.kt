@@ -29,11 +29,11 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Tests for InsightsRepository.getOccurrencesForRange.
- *
- * Adds an explicit-range overload that returns merged Room+device occurrences
- * for an arbitrary [startTs, endTs) window. The existing
- * getStatsWithOccurrences path remains unchanged.
+ * Tests [InsightsRepository.getOccurrencesForRange], which merges Room and device occurrences for a
+ * half-open `[startTs, endTs)` window: hidden Room calendars excluded, nothing for a range before
+ * the event, a device SecurityException swallowed to Room-only, device day codes taken in the
+ * caller's zone. One test checks that [InsightsRepository.getStatsWithOccurrences] still totals a
+ * week.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -193,7 +193,7 @@ class InsightsRepositoryRangeOverloadTest {
 
     @Test
     fun `getOccurrencesForRange excludes event starting exactly at endTs`() = runTest(testDispatcher) {
-        // Event starts at exactly endTs; should NOT be in result (half-open range).
+        // An event starting exactly at endTs is outside the half-open range.
         val startTs = mon.atStartOfDay(zone).toInstant().toEpochMilli()
         val endTs = mon.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli()
         // Event at exactly the upper bound:

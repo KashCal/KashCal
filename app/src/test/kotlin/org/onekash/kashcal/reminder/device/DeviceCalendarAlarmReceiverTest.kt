@@ -17,13 +17,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for DeviceCalendarAlarmReceiver.
+ * Tests [DeviceCalendarAlarmReceiver].
  *
- * Tests cover:
- * - Ignores intents with wrong action
- * - Extracts event data from intent extras
- * - Validates event still exists before showing notification
- * - Reschedules for next reminder after handling
+ * - `onReceive` with a null intent, a null or wrong action, a full set of extras or only the
+ *   required ones: each checks only that it doesn't throw. Hilt's generated `onReceive`
+ *   injects the receiver's fields on every dispatch, overwriting any a test sets, and the work
+ *   runs on a coroutine the test doesn't wait for.
+ * - `handleAlarm` with mocked collaborators: it shows the notification with the given fields
+ *   when [DeviceCalendarReminderScheduler.shouldFireReminder] is true, shows none when it is
+ *   false, and calls `rescheduleAfterFire` either way.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -43,21 +45,18 @@ class DeviceCalendarAlarmReceiverTest {
 
     @Test
     fun `onReceive ignores null intent`() {
-        // Should not crash
         receiver.onReceive(context, null)
     }
 
     @Test
     fun `onReceive ignores intent with wrong action`() {
         val intent = Intent("com.example.WRONG_ACTION")
-        // Should not crash, just return early
         receiver.onReceive(context, intent)
     }
 
     @Test
     fun `onReceive ignores intent with null action`() {
         val intent = Intent()
-        // Should not crash
         receiver.onReceive(context, intent)
     }
 
@@ -67,10 +66,10 @@ class DeviceCalendarAlarmReceiverTest {
     fun `onReceive extracts eventId from intent extras`() {
         val intent = createValidIntent(eventId = 123L)
 
-        // For now, just verify no crash - actual behavior tested via integration
+        // Only checks that onReceive doesn't throw.
         receiver.onReceive(context, intent)
 
-        // TODO: Add assertion when notification manager is injected
+        // TODO: assert the extracted extras; onReceive's injection overwrites fields a test sets.
         assertTrue("Intent should be processed without crash", true)
     }
 
@@ -96,7 +95,7 @@ class DeviceCalendarAlarmReceiverTest {
             putExtra(DeviceCalendarReminderScheduler.EXTRA_EVENT_ID, 123L)
             putExtra(DeviceCalendarReminderScheduler.EXTRA_OCCURRENCE_TS, 1709251200000L)
             putExtra(DeviceCalendarReminderScheduler.EXTRA_TITLE, "Test Event")
-            // No location, calendar color, etc.
+            // No location, all-day flag, calendar color, calendar id or trigger time.
         }
 
         receiver.onReceive(context, intent)
@@ -142,8 +141,8 @@ class DeviceCalendarAlarmReceiverTest {
 
     @Test
     fun `handleAlarm does NOT show notification when shouldFireReminder is false`() = runTest {
-        // User's bug: event was deleted after alarm was scheduled. scheduler
-        // returns false → receiver must NOT show the stale notification.
+        // The event was deleted after its alarm was set: shouldFireReminder is false, so the
+        // receiver must not show the stale notification.
         val scheduler = mockk<DeviceCalendarReminderScheduler>()
         val notificationManager = mockk<DeviceCalendarReminderNotificationManager>()
         coEvery { scheduler.shouldFireReminder(any()) } returns false
@@ -174,14 +173,14 @@ class DeviceCalendarAlarmReceiverTest {
         coJustRun { scheduler.rescheduleAfterFire() }
         coEvery { notificationManager.showNotification(any(), any(), any(), any(), any(), any(), any(), any()) } returns 20001
 
-        // Branch A: shouldFire=true
+        // shouldFireReminder true.
         coEvery { scheduler.shouldFireReminder(any()) } returns true
         receiver.handleAlarm(
             scheduler, notificationManager, 123L, 1709251200000L, "A", null,
             false, 0, 1L, 1709250300000L,
         )
 
-        // Branch B: shouldFire=false
+        // shouldFireReminder false.
         coEvery { scheduler.shouldFireReminder(any()) } returns false
         receiver.handleAlarm(
             scheduler, notificationManager, 124L, 1709251300000L, "B", null,

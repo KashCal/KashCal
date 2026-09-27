@@ -11,14 +11,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for [deviceAttendeeUiState] — the pure projection that turns a
- * device event's `Attendees` rows + owner email into the [EventAttendeeUiState]
- * the quick-view / form chip surfaces consume.
+ * Tests [deviceAttendeeUiState], which maps a device event's `Attendees` rows and the calendar's
+ * owner email to the [EventAttendeeUiState] behind the quick-view and form chips: no rows give no
+ * chips, every row gives a chip, and the owner is on the list only when a row's email matches it.
+ * A null owner email is never on the list.
  *
- * The IO orchestration (getAttendees + getDeviceCalendars) lives in the
- * ViewModel and is exercised end-to-end; this isolates the branch logic
- * (empty → empty, else map + derive isCurrentUserOnList). Robolectric is
- * required for the `Attendees.*` relationship/status constants.
+ * The provider read, [org.onekash.kashcal.domain.reader.DeviceEventReader.getAttendeesWithOwner],
+ * isn't called here.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])

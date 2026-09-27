@@ -11,10 +11,10 @@ import org.onekash.kashcal.R
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Unit tests for [WidgetRefreshButton] — the header "refresh" control, sibling of
- * [WidgetAddButton]. Like the add button it is a plain glyph with no chip behind it, so its
- * accessibility rests on a content description and a click action; both must survive whether the
- * button is idle or showing the dimmed "syncing" cue.
+ * Tests [WidgetRefreshButton], the header refresh control beside [WidgetAddButton]. Like the add
+ * button it is a plain glyph with no chip behind it, so its accessibility rests on a content
+ * description and a click action; both must survive whether the button is idle or showing the
+ * dimmed syncing cue.
  */
 @RunWith(RobolectricTestRunner::class)
 class WidgetRefreshButtonTest {

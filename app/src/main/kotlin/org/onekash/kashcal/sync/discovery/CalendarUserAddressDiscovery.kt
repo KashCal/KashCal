@@ -7,15 +7,14 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
 /**
- * Discover and persist the user's `calendar-user-address-set` (RFC 6638
- * §2.4.1) for the given account. Non-fatal: any HTTP, network, timeout,
- * malformed-XML, or empty-response failure logs a Pattern-15 warning and
- * persists an empty list. The helper's email-shape fallback in
- * `Account.matchesAttendee` covers the empty-set case for accounts where
- * the login is itself an email.
+ * Discovers and persists the account's `calendar-user-address-set` (RFC 6638 §2.4.1).
  *
- * Pattern-15 logging: count + masked first-4-chars sample only; never
- * the full address-set (PII).
+ * Never fails the sync. A failed request (HTTP, network, timeout, malformed XML, empty reply)
+ * logs a warning and persists an empty list; an empty list falls back to an email-shaped login
+ * in [org.onekash.kashcal.domain.identity.effectiveAddresses]. A throw, such as a failed write,
+ * is logged and persists nothing.
+ *
+ * Logs only the count and the first 4 characters of one address, never the full set (PII).
  */
 internal suspend fun persistCalendarUserAddresses(
     client: CalDavClient,
@@ -39,7 +38,7 @@ internal suspend fun persistCalendarUserAddresses(
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        // Non-fatal: a write failure (e.g. SQLiteException) must not abort the sync.
+        // A write failure (e.g. SQLiteException) must not abort the sync.
         Log.w(tag, "calendar-user-address-set discovery failed for account $accountId: ${e.message}")
     }
 }

@@ -13,22 +13,23 @@ import org.onekash.kashcal.ui.theme.WIDGET_ACCENT_CONTRAST_LEVEL
 import org.onekash.kashcal.ui.theme.accentColorScheme
 
 /**
- * Unit tests for the pure (non-@Composable) parts of [WidgetTheme].
+ * Tests the widget color contract: the day-header token selector, WCAG AA contrast of the header,
+ * today-marker and body text pairs, body tint, dark header luminance, and the monochrome snap for
+ * pure black and white seeds.
  *
- * The selector returns enum-typed token names so the contrast contract can be
- * asserted at the unit-test layer; the composable hop from token -> ColorProvider
- * lives at WidgetTheme.kt as a small `when` block.
+ * [dayHeaderColors] returns [WidgetThemeColor] tokens so contrast is asserted without a render
+ * harness; the token to ColorProvider step is the `when` in [provider].
  *
- * Every scheme here is built at [WIDGET_ACCENT_CONTRAST_LEVEL] — the level widgets actually
- * render at (via accentColorProviders), NOT the app default. Building at 0.0 would verify colors
- * the widget never shows and miss a regression that only bites at the widget level.
+ * Every scheme here is built at [WIDGET_ACCENT_CONTRAST_LEVEL], the level widgets render at
+ * ([accentColorProviders]), not the app default. Building at 0.0 would verify colors the widget
+ * never shows and miss a regression that only appears at the widget level.
  */
 class WidgetThemeTest {
 
     /**
-     * The scheme a widget actually renders — built at the widget contrast level with the achromatic
-     * container snap OFF, mirroring accentColorProviders. Building it any other way would verify
-     * colors the widget never shows.
+     * Builds the raw scheme a widget renders: the widget contrast level with the achromatic
+     * container snap off, as [accentColorProviders] builds it. Any other build would verify colors
+     * the widget never shows.
      */
     private fun widgetScheme(seed: Int, dark: Boolean): ColorScheme =
         accentColorScheme(
@@ -39,23 +40,22 @@ class WidgetThemeTest {
 
     @Test
     fun `every day header uses the header background with its matching on-color`() {
-        // All day headers share the header background so the list reads as one
-        // uniform banner; today is distinguished by bold text and a "today"
-        // label, not a different background color.
+        // All day headers share the header background so the list reads as one banner; today
+        // is set apart by bold text and a "today" label, not a different background.
         for (isToday in listOf(true, false)) {
             val colors = dayHeaderColors(isToday)
             assertEquals(WidgetThemeColor.HeaderBackground, colors.background)
-            // Must be the on-header token (onSecondaryContainer), NOT onSurface:
-            // onSurface is not a guaranteed-contrast pair against a secondaryContainer header for
-            // an arbitrary accent seed. This regressed once and made today headers unreadable.
+            // Must be the on-header token (onSecondaryContainer), not onSurface: onSurface isn't a
+            // guaranteed-contrast pair with a secondaryContainer header, and for some accent seeds
+            // makes today headers unreadable.
             assertEquals(WidgetThemeColor.OnHeaderBackground, colors.text)
         }
     }
 
     /**
-     * The [WidgetThemeColor] token -> M3 role mapping the composable [provider] resolves to.
-     * Kept in sync with WidgetTheme by intent; this is what lets the pairing be contrast-checked
-     * without a Glance/Compose render harness.
+     * Maps a [WidgetThemeColor] token to the M3 role [provider] resolves it to, so the pairing is
+     * contrast-checked without a Glance or Compose harness. A copy of [provider]'s mapping through
+     * [WidgetTheme], so it can drift; keep the two in step.
      */
     private fun role(scheme: ColorScheme, token: WidgetThemeColor): Color = when (token) {
         WidgetThemeColor.HeaderBackground -> scheme.secondaryContainer
@@ -64,12 +64,11 @@ class WidgetThemeTest {
 
     @Test
     fun `add-button glyph on the header clears WCAG AA for every accent seed`() {
-        // WidgetAddButton draws a plain "+" glyph directly on the secondaryContainer header, with
-        // no filled chip behind it. The glyph is tinted onSecondaryContainer — the header's own
-        // on-role — so it must clear AA against secondaryContainer for every selectable seed.
-        // Pure black/white are omitted: the widget renders those through the monochrome snap
-        // (a flat 21:1), not this raw scheme, and the snap's header pair is covered by the
-        // achromatic-snap tests below. Silver stays — it is a raw-scheme seed, not snapped.
+        // WidgetAddButton draws a plain "+" on the secondaryContainer header with no chip behind
+        // it, tinted onSecondaryContainer, the header's own on-role, so the pair must clear AA
+        // for every selectable seed. Pure black and white are omitted: the widget renders them
+        // through the monochrome snap (a flat 21:1), not this raw scheme, and the snap's header
+        // pair is covered by the achromatic-snap tests below. Silver stays; it isn't snapped.
         val seeds = listOf(
             0xFF0E6E62.toInt(), 0xFFC0C0C0.toInt(),
             0xFFFFD700.toInt(), 0xFF1E90FF.toInt(), 0xFFFF69B4.toInt(),
@@ -89,12 +88,11 @@ class WidgetThemeTest {
 
     @Test
     fun `month today-marker number on its accent circle clears WCAG AA for every accent seed`() {
-        // The month widget marks today with a solid accent circle (primary) and
-        // draws the day number in onPrimary. That pair must clear AA for every
-        // selectable seed, or today's number is unreadable on its own highlight.
-        // Pure black/white are omitted: the widget renders those through the monochrome snap
-        // (onPrimary/primary become panel/ink, a flat 21:1) rather than this raw scheme; the snap's
-        // marker pair is covered by the achromatic-snap tests below. Silver stays (not snapped).
+        // The Month widget marks today with a solid primary circle and draws the day number in
+        // onPrimary. That pair must clear AA for every selectable seed, or today's number is
+        // unreadable on its own highlight. Pure black and white are omitted: the monochrome snap
+        // renders them (onPrimary and primary become panel and ink, a flat 21:1), and the snap's
+        // marker pair is covered by the achromatic-snap tests below. Silver isn't snapped.
         val seeds = listOf(
             0xFF0E6E62.toInt(), 0xFFC0C0C0.toInt(),
             0xFFFFD700.toInt(), 0xFF1E90FF.toInt(), 0xFFFF69B4.toInt(),
@@ -114,12 +112,11 @@ class WidgetThemeTest {
 
     @Test
     fun `refresh-button glyph on the header clears WCAG AA for every accent seed`() {
-        // WidgetRefreshButton draws its glyph directly on the secondaryContainer header with the
-        // same onSecondaryContainer tint as the add button when idle, so it must clear AA against
-        // secondaryContainer for every selectable seed. (The transient dimmed cue uses `outline`
-        // and is deliberately exempt — it is a brief de-emphasis, not persistent readable content.)
-        // Pure black/white are omitted: they render through the monochrome snap (a flat 21:1), not
-        // this raw scheme; the snap's header pair is covered by the achromatic-snap tests below.
+        // WidgetRefreshButton, when idle, draws its glyph on the secondaryContainer header with the
+        // add button's onSecondaryContainer tint, so it must clear AA for every selectable seed.
+        // The dimmed cue uses `outline` and is deliberately exempt: a brief de-emphasis, not
+        // persistent content. Pure black and white are omitted: they render through the
+        // monochrome snap (a flat 21:1), covered by the achromatic-snap tests below.
         val seeds = listOf(
             0xFF0E6E62.toInt(), 0xFFC0C0C0.toInt(),
             0xFFFFD700.toInt(), 0xFF1E90FF.toInt(), 0xFFFF69B4.toInt(),
@@ -137,23 +134,20 @@ class WidgetThemeTest {
         }
     }
 
-    /** Resolves a Glance [ColorProvider]'s concrete color for the light (false) or dark (true) face. */
+    /**
+     * Resolves a Glance [ColorProvider]'s concrete color for the light (false) or dark (true) face.
+     */
     private fun ColorProvider.resolve(dark: Boolean): Color =
         (this as DayNightColorProvider).getColor(dark)
 
     @Test
     fun `event item text is legible on the widget body for every accent seed including achromatic`() {
-        // Drives the REAL providers a SEED widget renders — accentColorProviders(seed) — not a
-        // stand-in scheme, so it trips if the override is ever removed. contentBackground reads the
-        // active providers' `widgetBackground` role, which accentColorProviders overrides to
-        // `surfaceVariant` — the most-tinted body role that stays a guaranteed-contrast pair with
-        // both text roles. Item title AND time read `onSurface`; secondary copy reads
-        // `onSurfaceVariant`. Both clear AA on surfaceVariant for every seed (this is why the body
-        // is surfaceVariant and not the more-chromatic secondaryContainer, whose non-guaranteed
-        // pairing drops below AA for saturated seeds). Assert on the real providers so reverting the
-        // override to a less-safe role trips this. (The companion chroma test guards the other axis —
-        // that the body is still visibly tinted; the luminance test guards that the dark header
-        // stays dark.)
+        // Drives the providers a seed widget renders, accentColorProviders(seed), not a stand-in
+        // scheme, so reverting the body override to a less safe role trips it. contentBackground
+        // reads `widgetBackground`, which accentColorProviders sets to `surfaceVariant`; its KDoc
+        // says why not secondaryContainer. Item title and time read `onSurface`, secondary copy
+        // `onSurfaceVariant`; both must clear AA on the body for every seed. The chroma test below
+        // guards that the body is still tinted, the luminance test that the dark header stays dark.
         val seeds = listOf(
             0xFF0E6E62.toInt(), 0xFFC0C0C0.toInt(), 0xFF000000.toInt(),
             0xFFFFFFFF.toInt(), 0xFFFFD700.toInt(), 0xFF1E90FF.toInt(), 0xFFFF69B4.toInt(),
@@ -162,14 +156,14 @@ class WidgetThemeTest {
         for (seed in seeds) for (dark in listOf(false, true)) {
             val p: ColorProviders = accentColorProviders(seed)
             val body = p.widgetBackground.resolve(dark)          // WidgetTheme.contentBackground
-            // Primary item text (title + time) on the body.
+            // Item title and time on the body.
             val itemOnBody = contrastRatio(p.onSurface.resolve(dark), body)
             if (itemOnBody < 4.5) {
                 failures += "item(onSurface) seed=%06X dark=%s ratio=%.2f".format(seed and 0xFFFFFF, dark, itemOnBody)
             }
-            // Secondary body text — empty-state copy, week day-of-week headers, upcoming subtitles,
-            // month day-of-week labels all paint onSurfaceVariant (WidgetTheme.secondaryText) on the
-            // same body and must also stay legible at the widget contrast level.
+            // Secondary text (WidgetTheme.secondaryText, onSurfaceVariant) on the same body: the
+            // empty, loading and error copy, and the Month widget's day-of-week labels, week
+            // numbers and overflow counts.
             val secondaryOnBody = contrastRatio(p.onSurfaceVariant.resolve(dark), body)
             if (secondaryOnBody < 4.5) {
                 failures += "secondary(onSurfaceVariant) seed=%06X dark=%s ratio=%.2f".format(seed and 0xFFFFFF, dark, secondaryOnBody)
@@ -180,23 +174,21 @@ class WidgetThemeTest {
         }
     }
 
-    /** Chroma proxy: RGB max-min channel spread (0 = perfectly neutral/gray, higher = more colorful). */
+    /** Returns a chroma proxy: the RGB max-min channel spread, 0 for a neutral gray. */
     private fun chroma(c: Color): Float =
         maxOf(c.red, c.green, c.blue) - minOf(c.red, c.green, c.blue)
 
     @Test
     fun `widget body is visibly accent-tinted for chromatic seeds, not flat neutral`() {
-        // The legibility test above passes for a PURE-GRAY body too (onSurface-on-gray is ~19:1), so
-        // it cannot catch the real bug the user hit twice: a body that reads flat with no accent.
-        // This guards the OTHER axis — the body actually carries chroma. contentBackground -> the
-        // providers' widgetBackground role (overridden to surfaceVariant); compare its chroma against
-        // the bare `surface` role, which is near-neutral by M3 design. For a chromatic seed the body
-        // must be meaningfully more colorful than surface, or the accent is invisible. surfaceVariant
-        // carries a real accent tint (chroma ~0.04–0.15 for these seeds) while staying a
-        // guaranteed-contrast pair with the text roles — the safe most-tinted body.
+        // The legibility test above passes for a pure-gray body too (onSurface on gray is ~19:1),
+        // so it can't catch a body that reads flat with no accent. This guards that the body
+        // carries chroma: the widgetBackground role (surfaceVariant) is compared against bare
+        // `surface`, near-neutral by M3 design. For a chromatic seed the body must be more colorful
+        // than surface, or the accent is invisible; surfaceVariant measures chroma ~0.04 to 0.15
+        // for these seeds.
         //
-        // Achromatic seeds (white/black/silver) are excluded on purpose: they have no hue to show, so
-        // their container is legitimately near-neutral and a chroma floor would be meaningless.
+        // Achromatic seeds (white, black, silver) are excluded: they have no hue to show, so their
+        // container is near-neutral and a chroma floor would be meaningless.
         val chromaticSeeds = listOf(
             0xFF0E6E62.toInt(), // brand teal
             0xFFFFD700.toInt(), // gold
@@ -206,12 +198,13 @@ class WidgetThemeTest {
         val failures = mutableListOf<String>()
         for (seed in chromaticSeeds) for (dark in listOf(false, true)) {
             val p: ColorProviders = accentColorProviders(seed)
-            val bodyChroma = chroma(p.widgetBackground.resolve(dark))   // WidgetTheme.contentBackground
+            // The body: WidgetTheme.contentBackground.
+            val bodyChroma = chroma(p.widgetBackground.resolve(dark))
             val surfaceChroma = chroma(p.surface.resolve(dark))
-            // Body must clear a chroma floor AND out-tint bare surface. The floor sits below every
-            // measured surfaceVariant value (min ~0.04 for teal) but above near-neutral surface, so
-            // reverting the body to the flat `surface`/`background` role (the regression the user hit)
-            // trips it via one branch or the other.
+            // The body must clear a chroma floor and out-tint bare surface. The floor sits below
+            // every measured surfaceVariant value (min ~0.04 for teal) but above near-neutral
+            // surface, so reverting the body to the flat `surface` or `background` role trips one
+            // branch or the other.
             if (bodyChroma < 0.04f || bodyChroma <= surfaceChroma) {
                 failures += "seed=%06X dark=%s bodyChroma=%.3f surfaceChroma=%.3f".format(
                     seed and 0xFFFFFF, dark, bodyChroma, surfaceChroma,
@@ -225,33 +218,29 @@ class WidgetThemeTest {
 
     @Test
     fun `dark widget header stays a dark tinted tone, not a bright pastel`() {
-        // The reported regression: at a high contrast axis (this was briefly 0.8) the HCT engine
-        // INVERTS the dark-mode secondaryContainer to a bright pastel (L ~0.68) with dark text —
-        // "so much light in dark theme". The header (and footer) ride secondaryContainer, so that
-        // inversion floods the top of the dark widget with light. This is the axis-sensitive role —
-        // the surfaceVariant body barely moves with the axis, so pinning the body would NOT catch a
-        // re-inflation; the header is the true regression vector. Pin the dark header's luminance
-        // low: at the current widget contrast level it measures L ~0.08 for every seed. This ceiling
-        // sits far below the bright-pastel failure and above the true tone, so re-inflating
-        // WIDGET_ACCENT_CONTRAST_LEVEL toward 0.8 trips it. Light face is exempt — its header is
-        // legitimately a light tone.
+        // At a high contrast level such as 0.8 the HCT engine inverts the dark secondaryContainer
+        // to a bright pastel (L ~0.68) with dark text, flooding the top of the dark widget with
+        // light, since the header and footer ride that role. The surfaceVariant body barely moves
+        // with the contrast level, so pinning the body wouldn't catch it; the header does. At the
+        // current widget contrast level the dark header measures L ~0.08 for every seed, so the
+        // ceiling below trips if WIDGET_ACCENT_CONTRAST_LEVEL rises toward 0.8. The light face is
+        // exempt; its header is a light tone.
         //
-        // This guards the RAW widgetScheme secondaryContainer, which the achromatic monochrome snap
-        // never touches (the snap replaces roles downstream in accentColorProviders). So the black and
-        // white seeds belong here unchanged — at this contrast level their raw dark header measures
-        // L~0.08 like every other seed, and their snapped panel is a separate concern covered by the
-        // achromatic-snap tests below.
+        // This checks the raw widgetScheme secondaryContainer, which the monochrome snap never
+        // touches (it replaces roles later, in accentColorProviders). So black and white seeds stay
+        // here: their raw dark header measures L ~0.08 like the rest, and their snapped panel is
+        // covered by the achromatic-snap tests below.
         val seeds = listOf(
             0xFF0E6E62.toInt(), 0xFFC0C0C0.toInt(), 0xFF000000.toInt(),
             0xFFFFFFFF.toInt(), 0xFFFFD700.toInt(), 0xFF1E90FF.toInt(), 0xFFFF69B4.toInt(),
         )
         val failures = mutableListOf<String>()
         for (seed in seeds) {
-            // Built at the widget contrast level (widgetScheme), so this IS the header the widget
-            // renders and it moves with WIDGET_ACCENT_CONTRAST_LEVEL.
+            // Built at the widget contrast level (widgetScheme), so this is the header the widget
+            // renders, and it moves with WIDGET_ACCENT_CONTRAST_LEVEL.
             val header = widgetScheme(seed, dark = true).secondaryContainer
             val l = relativeLuminance(header)
-            // Generous ceiling: measured floor of the failure was ~0.68; true dark tone is ~0.08.
+            // The inverted pastel measures ~0.68, the dark tone ~0.08.
             if (l > 0.20) {
                 failures += "seed=%06X darkHeaderLuminance=%.2f".format(seed and 0xFFFFFF, l)
             }
@@ -262,12 +251,12 @@ class WidgetThemeTest {
     }
 
     // ==================== Achromatic-extreme monochrome snap ====================
-    // A pure-black or pure-white accent seed has no hue for the HCT engine to preserve, so the raw
-    // scheme collapses every role onto a muddy neutral gray — "I picked black, the widget is gray".
-    // For these two seeds ONLY, accentColorProviders forces a crisp monochrome panel: every
-    // background role goes to the pure extreme, primary text and on-roles go to the pure inverse
-    // (a clean 21:1), and it holds in BOTH faces (a black seed is a black widget even in light mode).
-    // The dimming hierarchy survives via mid-gray secondary/past text rather than a flat pure inverse.
+    // A pure-black or pure-white seed has no hue for the HCT engine to preserve, so the raw scheme
+    // collapses onto a muddy neutral gray ("I picked black, the widget is gray"). For these two
+    // seeds only, accentColorProviders forces a monochrome panel: background roles take the pure
+    // extreme, primary text and on-roles the pure inverse (21:1), in both faces (a black seed is a
+    // black widget in light mode too). The dimming hierarchy survives through mid-gray secondary
+    // and past text, not a flat inverse.
 
     private companion object {
         const val BLACK_SEED: Int = 0xFF000000.toInt()
@@ -278,15 +267,15 @@ class WidgetThemeTest {
     fun `black seed forces an all-black panel with white text in both faces`() {
         val p: ColorProviders = accentColorProviders(BLACK_SEED)
         for (dark in listOf(false, true)) {
-            // Background roles the panel paints: header/footer (secondaryContainer) and body
-            // (widgetBackground). Both pure black, regardless of face.
+            // The painted background roles, header and footer (secondaryContainer) and body
+            // (widgetBackground), are pure black in either face.
             assertEquals("header bg dark=$dark", Color.Black, p.secondaryContainer.resolve(dark))
             assertEquals("body bg dark=$dark", Color.Black, p.widgetBackground.resolve(dark))
             // Primary text (onSurface) and header text (onSecondaryContainer): pure white.
             assertEquals("primary text dark=$dark", Color.White, p.onSurface.resolve(dark))
             assertEquals("header text dark=$dark", Color.White, p.onSecondaryContainer.resolve(dark))
-            // `primary` is BOTH the today-circle fill AND accent text drawn on the black body
-            // (e.g. "+N more"), so it must be the readable inverse (white), not black-on-black.
+            // `primary` is both the today-circle fill and accent text on the black body ("+N
+            // more"), so it must be the readable inverse (white), not black on black.
             assertEquals("accent/primary dark=$dark", Color.White, p.primary.resolve(dark))
             // The day number drawn on that white today-circle is onPrimary -> black.
             assertEquals("onPrimary dark=$dark", Color.Black, p.onPrimary.resolve(dark))
@@ -308,9 +297,8 @@ class WidgetThemeTest {
 
     @Test
     fun `achromatic snap holds under a forced light or dark pin`() {
-        // A pinned face must not defeat the snap: a black-seed widget pinned to LIGHT is still a black
-        // panel, and pinned to DARK likewise. accentColorProviders(seed, forceDark) publishes the same
-        // pure extreme for whichever face is pinned.
+        // A pinned face must not defeat the snap: a black-seed widget pinned to light or dark is
+        // still a black panel, and a white-seed widget a white one.
         for (forceDark in listOf(false, true)) {
             val black = accentColorProviders(BLACK_SEED, forceDark)
             assertEquals("black body forceDark=$forceDark", Color.Black, black.widgetBackground.resolve(forceDark))
@@ -323,28 +311,29 @@ class WidgetThemeTest {
 
     @Test
     fun `achromatic snap preserves the dimming hierarchy with mid-gray secondary and past text`() {
-        // "Everything pure white" would flatten the design: times, past events and titles would all
-        // read at identical 21:1 weight. Instead the two dimmed tiers step to gray so hierarchy holds:
-        //   primary text (onSurface)        = pure inverse (21:1)   -- titles
-        //   secondary text (onSurfaceVariant) = mid-gray, still >= AA -- event times, subtitles
-        //   dim/past text (outline)          = dimmer gray           -- past events, sync cue
-        // The secondary tier is asserted >= AA by the existing legibility test (which includes both
-        // achromatic seeds); here we assert the ORDERING that makes it a hierarchy and not a flat wall.
+        // All text at the pure inverse would read at one 21:1 weight. The two dimmed tiers step to
+        // gray so the hierarchy holds:
+        //   onSurface, pure inverse (21:1): event titles and times
+        //   onSurfaceVariant, mid-gray, at least AA: empty-state copy, Month labels and counts
+        //   outline, dimmer gray: past events, the sync cue
+        // The body legibility test above asserts the secondary tier clears AA for both achromatic
+        // seeds; this asserts the ordering that makes it a hierarchy.
         for (seed in listOf(BLACK_SEED, WHITE_SEED)) {
             val p: ColorProviders = accentColorProviders(seed)
             for (dark in listOf(false, true)) {
                 val body = p.widgetBackground.resolve(dark)
-                val primary = p.onSurface.resolve(dark)          // titles
-                val secondary = p.onSurfaceVariant.resolve(dark) // times
-                val past = p.outline.resolve(dark)               // past events / sync glyph
+                val primary = p.onSurface.resolve(dark)          // titles and times
+                val secondary = p.onSurfaceVariant.resolve(dark) // secondary copy
+                val past = p.outline.resolve(dark)               // past events, sync glyph
 
-                // Each tier is a neutral gray (R==G==B) so nothing carries a stray tint.
+                // Each dimmed tier is a neutral gray (R == G == B), with no stray tint.
                 for ((label, c) in listOf("secondary" to secondary, "past" to past)) {
                     assertEquals("$label neutral R==G seed=${seed.toHex()} dark=$dark", c.red, c.green)
                     assertEquals("$label neutral G==B seed=${seed.toHex()} dark=$dark", c.green, c.blue)
                 }
 
-                // Contrast against the panel must strictly decrease: titles > times > past.
+                // Contrast against the panel must strictly decrease: primary, secondary, past.
+                // The messages below call the secondary tier "times"; event times use onSurface.
                 val cPrimary = contrastRatio(primary, body)
                 val cSecondary = contrastRatio(secondary, body)
                 val cPast = contrastRatio(past, body)
@@ -354,7 +343,7 @@ class WidgetThemeTest {
                 assert(cSecondary > cPast) {
                     "times must out-contrast past seed=${seed.toHex()} dark=$dark: $cSecondary vs $cPast"
                 }
-                // Secondary is NOT the flat pure inverse (that would erase the tier).
+                // Secondary isn't the pure inverse, which would erase the tier.
                 assert(secondary != primary) {
                     "secondary must differ from primary inverse seed=${seed.toHex()} dark=$dark"
                 }
@@ -366,8 +355,8 @@ class WidgetThemeTest {
 
     @Test
     fun `day-header text-on-background pairs clear WCAG AA for every accent seed`() {
-        // Seeds spanning the selectable palette incl. the worst cases (low-chroma gray, black,
-        // white, saturated). Header text used onSurface before the fix and failed here.
+        // Seeds spanning the selectable palette, worst cases included (low-chroma gray, black,
+        // white, saturated). onSurface as header text fails here.
         val seeds = listOf(
             0xFF0E6E62.toInt(), // brand teal
             0xFFC0C0C0.toInt(), // silver (low chroma)

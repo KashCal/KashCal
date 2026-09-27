@@ -18,12 +18,12 @@ import org.robolectric.annotation.Config
 import java.util.TimeZone
 
 /**
- * Tests for SOGo ICS parsing (Issue #62).
- * Validates parsing of edge-case ICS patterns from SOGo servers:
- * - All-day recurring events with DATE-format UNTIL
- * - Complex VTIMEZONE with historical 6-digit (HHMMSS) UTC offsets
- * - DESCRIPTION with ALTREP parameter
- * - Long folded DESCRIPTION with non-http URL scheme
+ * Tests parsing of edge-case ICS from SOGo servers (issue #62):
+ * - All-day recurring events with a DATE-format UNTIL, parsed and expanded by lib-recur
+ * - A VTIMEZONE with historical 6-digit (HHMMSS) UTC offsets
+ * - DESCRIPTION with an ALTREP parameter
+ * - A non-recurring multi-day timed event with two VALARMs
+ * - A long folded DESCRIPTION with a non-http URL scheme
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -71,7 +71,7 @@ class SogoParseTest {
         assertEquals(Frequency.YEARLY, event.rrule!!.freq)
         assertNotNull("UNTIL should be parsed", event.rrule!!.until)
 
-        // Verify it maps to Entity without error
+        // Maps to an entity without error
         val entity = ICalEventMapper.toEntity(event, ics, 1L, "test.ics", "etag1").event
         assertEquals("Anniversary", entity.title)
         assertTrue(entity.isAllDay)
@@ -81,21 +81,19 @@ class SogoParseTest {
     // ========== lib-recur RRULE expansion tests ==========
 
     /**
-     * Verifies lib-recur can expand FREQ=YEARLY;UNTIL=20350927 (DATE-format UNTIL).
-     * This is the RRULE from event 1 — a yearly all-day event starting 2012-02-21.
+     * Tests that lib-recur expands FREQ=YEARLY;UNTIL=20350927 (a DATE-format UNTIL), the RRULE
+     * of the first event: yearly, all-day, starting 2012-02-21.
      *
-     * Bug: Using DateTime(tz, y, m, d, 0, 0, 0) creates a timed "floating" DateTime,
-     * but UNTIL=20350927 is parsed as all-day. lib-recur rejects the mismatch:
-     * "using floating start times with absolute until values is not allowed"
-     *
-     * Fix: Use DateTime(year, month, day) for all-day events (date-only, no time).
+     * DTSTART must be date-only, DateTime(year, month, day). DateTime(tz, y, m, d, 0, 0, 0) is
+     * a timed floating value, while UNTIL=20350927 parses as all-day, and lib-recur rejects the
+     * mismatch: "using floating start times with absolute until values is not allowed".
      */
     @Test
     fun `lib-recur expands yearly RRULE with DATE-format UNTIL`() {
         val rruleStr = "FREQ=YEARLY;UNTIL=20350927"
         val rule = RecurrenceRule(rruleStr)
 
-        // DTSTART is VALUE=DATE:20120221 → must be date-only DateTime (month 0-based)
+        // DTSTART is VALUE=DATE:20120221, so a date-only DateTime (month 0-based)
         val dtstart = DateTime(2012, 1, 21)
 
         val recurrenceSet = OfRuleAndFirst(rule, dtstart)
@@ -107,16 +105,16 @@ class SogoParseTest {
             count++
         }
 
-        // Should have occurrences from 2012 through 2035 (24 years)
+        // Occurrences from 2012 through 2035, at most 24
         assertTrue("Should have multiple occurrences, got ${occurrences.size}", occurrences.size >= 20)
         assertTrue("Should have at most 24 occurrences, got ${occurrences.size}", occurrences.size <= 24)
 
-        // First occurrence should be 2012-02-21
+        // First occurrence is 2012-02-21
         assertEquals(2012, occurrences[0].year)
         assertEquals(1, occurrences[0].month) // 0-based
         assertEquals(21, occurrences[0].dayOfMonth)
 
-        // Last occurrence should be 2035-02-21 (before UNTIL=20350927)
+        // Last occurrence is 2035-02-21, before UNTIL=20350927
         val last = occurrences.last()
         assertEquals(2035, last.year)
         assertEquals(1, last.month)
@@ -124,8 +122,9 @@ class SogoParseTest {
     }
 
     /**
-     * Verifies lib-recur generates occurrences within PullStrategy's sync window.
-     * Range: now - 1 year to now + 2 years (matches PullStrategy constants).
+     * Tests that lib-recur yields occurrences in a range shaped like PullStrategy's occurrence
+     * expansion window, 1 year back to 2 years ahead (`PAST_WINDOW_MS` and
+     * `OCCURRENCE_EXPANSION_MS`).
      */
     @Test
     fun `lib-recur generates occurrences within sync window for yearly all-day event`() {
@@ -137,7 +136,7 @@ class SogoParseTest {
         val recurrenceSet = OfRuleAndFirst(rule, dtstart)
         val iterator = recurrenceSet.iterator()
 
-        // Simulate PullStrategy range: ~2025-02-19 to ~2028-02-19
+        // A fixed range, 2025 through 2028 by year
         val rangeStartYear = 2025
         val rangeEndYear = 2028
         val inRange = mutableListOf<DateTime>()
@@ -150,9 +149,9 @@ class SogoParseTest {
             if (occ.year > rangeEndYear) break
         }
 
-        // Should have occurrences for 2025, 2026, 2027, 2028
+        // At least 3 occurrences between 2025 and 2028
         assertTrue("Should have occurrences in range, got ${inRange.size}", inRange.size >= 3)
-        // All should be Feb 21
+        // All on Feb 21
         inRange.forEach { occ ->
             assertEquals("Month should be February (0-based=1)", 1, occ.month)
             assertEquals("Day should be 21", 21, occ.dayOfMonth)
@@ -160,9 +159,9 @@ class SogoParseTest {
     }
 
     /**
-     * Verifies lib-recur handles the RRULE string as stored by ICalEventMapper
-     * (round-tripped through our RRule model → toICalString()).
-     * Uses date-only DateTime matching OccurrenceGenerator.timestampToAllDayDateTime().
+     * Tests that lib-recur parses and expands the RRULE string ICalEventMapper stores, which is
+     * round-tripped through the RRule model's toICalString(). DTSTART is a date-only DateTime
+     * built from the entity's UTC start.
      */
     @Test
     fun `lib-recur handles round-tripped RRULE from ICalEventMapper`() {
@@ -183,14 +182,14 @@ class SogoParseTest {
         val parsed = (parser.parseAllEvents(ics) as ParseResult.Success).value[0]
         val entity = ICalEventMapper.toEntity(parsed, ics, 1L, "test.ics", "etag").event
 
-        // This is the string that OccurrenceGenerator.expandRRule receives
+        // The stored rule, which OccurrenceGenerator expands from Event.rrule
         val storedRrule = entity.rrule!!
 
-        // Verify lib-recur can parse it
+        // lib-recur parses it
         val rule = RecurrenceRule(storedRrule)
         assertEquals("YEARLY", rule.freq.name)
 
-        // Verify expansion works using date-only DateTime (same as OccurrenceGenerator fix)
+        // Expansion works from a date-only DateTime
         val utcTz = TimeZone.getTimeZone("UTC")
         val calendar = java.util.Calendar.getInstance(utcTz)
         calendar.timeInMillis = entity.startTs
@@ -208,9 +207,9 @@ class SogoParseTest {
     }
 
     /**
-     * SOGo embeds full historical VTIMEZONE data for Pacific/Auckland going back to 1868.
-     * The historical offsets use 6-digit HHMMSS format (e.g., +113904 = +11:39:04).
-     * Also tests DESCRIPTION with ALTREP parameter containing a data: URI.
+     * Tests the full historical Pacific/Auckland VTIMEZONE SOGo embeds, back to 1868, whose old
+     * offsets use the 6-digit HHMMSS form (+113904 is +11:39:04). Also covers DESCRIPTION with
+     * an ALTREP parameter holding a data: URI.
      */
     @Test
     fun `timed event with complex historical VTIMEZONE and ALTREP description`() {
@@ -382,17 +381,17 @@ class SogoParseTest {
         assertFalse("Should NOT be all-day", event.isAllDay)
         assertEquals("Test Location", event.location)
 
-        // Verify it maps to Entity without error
+        // Maps to an entity without error
         val entity = ICalEventMapper.toEntity(event, ics, 1L, "test.ics", "etag2").event
         assertEquals("Evening Party", entity.title)
     }
 
     /**
-     * Non-recurring, multi-day timed event with two VALARMs, from a SOGo
-     * account where only a recurring event synced and this one went missing.
+     * Tests a non-recurring, multi-day timed event with two VALARMs, from a SOGo account where
+     * only a recurring event synced and this one went missing.
      *
-     * Isolates parser vs. fetch: if this parses and maps cleanly, the event is being
-     * dropped by the fetch/time-range layer, not the parser.
+     * Separates parser from fetch: if this parses and maps cleanly, the event is dropped by the
+     * fetch or time-range layer, not the parser.
      */
     @Test
     fun `non-recurring multi-day timed event with two VALARMs parses and maps`() {
@@ -447,8 +446,8 @@ class SogoParseTest {
         assertFalse("Should NOT be all-day", event.isAllDay)
         assertEquals("Should parse both VALARMs", 2, event.alarms.size)
 
-        // Verify it maps to Entity without error and keeps a valid timestamp range.
-        // PullStrategy skips events where endTs < startTs (hasValidTimestamps).
+        // Maps to an entity without error and keeps a valid timestamp range: PullStrategy skips
+        // events where endTs < startTs (hasValidTimestamps).
         val entity = ICalEventMapper.toEntity(event, ics, 1L, "test.ics", "etag-urlaub").event
         assertEquals("Urlaub", entity.title)
         assertTrue(
@@ -458,8 +457,8 @@ class SogoParseTest {
     }
 
     /**
-     * Tests long folded DESCRIPTION (from email import) and non-http URL scheme (mid:).
-     * Also exercises the same complex historical VTIMEZONE (abbreviated for brevity).
+     * Tests a long folded DESCRIPTION (from an email import) and a non-http URL scheme (mid:),
+     * with the same historical VTIMEZONE, abbreviated.
      */
     @Test
     fun `timed event with long folded description and mid URL scheme`() {
@@ -531,7 +530,7 @@ class SogoParseTest {
         assertEquals("mid:20260202224529.6f679ee857c70cad@mail.example.com", event.url)
         assertEquals(1, event.alarms.size)
 
-        // Verify it maps to Entity without error
+        // Maps to an entity without error
         val entity = ICalEventMapper.toEntity(event, ics, 1L, "test.ics", "etag3").event
         assertEquals("Film Night", entity.title)
     }

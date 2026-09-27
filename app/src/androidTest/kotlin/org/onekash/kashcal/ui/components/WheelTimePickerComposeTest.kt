@@ -24,17 +24,21 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Compose UI tests for WheelTimePicker and VerticalWheelPicker components.
+ * Compose UI tests for [WheelTimePicker] and [VerticalWheelPicker].
  *
- * Tests cover:
- * - Rendering of picker components
- * - Selection callback behavior
- * - Circular scrolling wrap behavior
- * - Accessibility semantics
+ * Covered:
+ * - The selected hour, minute and AM/PM render in 12h and 24h mode (midnight, noon, hour 23,
+ *   minutes 0 and 55, a 15-minute interval), and an outside selection change scrolls the wheel
+ * - A swipe or an animated scroll emits a new centered item, mid-scroll values included, no
+ *   item is emitted more than twice over two passes, and a circular wheel recenters after many
+ *   jumps
+ * - The wheel's content description
+ * - visibleItems of 3 and 5, and 2-item non-circular wheels, compose without crashing
  *
- * Note: Some tests may need to account for the virtual index system
- * used by circular scrolling, where the LazyColumn has 12,000+ items
- * for a 12-item list (itemCount * CIRCULAR_MULTIPLIER).
+ * The callback-wiring, font-weight and minute-rounding tests assert only that the picker renders.
+ *
+ * A circular wheel is a virtual list of itemCount * CIRCULAR_MULTIPLIER entries (12,000 for 12
+ * items), so an item's text can appear on more than one row.
  */
 @RunWith(AndroidJUnit4::class)
 class WheelTimePickerComposeTest {
@@ -57,9 +61,8 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Should display "2" for 2 PM
+        // 2 PM shows as "2".
         composeTestRule.onNodeWithText("2").assertIsDisplayed()
-        // Should display "30" for minutes
         composeTestRule.onNodeWithText("30").assertIsDisplayed()
     }
 
@@ -76,9 +79,7 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Should display "14" for hour
         composeTestRule.onNodeWithText("14").assertIsDisplayed()
-        // Should display "30" for minutes
         composeTestRule.onNodeWithText("30").assertIsDisplayed()
     }
 
@@ -95,7 +96,7 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Should display AM (circular AM/PM may show multiple instances)
+        // The circular AM/PM wheel can show "AM" on more than one row.
         composeTestRule.onAllNodesWithText("AM")[0].assertIsDisplayed()
     }
 
@@ -112,7 +113,7 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Should display PM (circular AM/PM may show multiple instances)
+        // The circular AM/PM wheel can show "PM" on more than one row.
         composeTestRule.onAllNodesWithText("PM")[0].assertIsDisplayed()
     }
 
@@ -129,7 +130,6 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Should NOT have AM/PM in 24-hour mode
         composeTestRule.onNodeWithText("AM").assertDoesNotExist()
         composeTestRule.onNodeWithText("PM").assertDoesNotExist()
     }
@@ -160,17 +160,18 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // The callback is called on scroll settle, which requires actual scroll interaction
-        // This test verifies the composable renders without crash and has the callback wired up
+        // The callback fires only when the centered item changes, which takes a scroll. This
+        // checks only that the picker renders with the callback wired; the swipe tests below
+        // drive it.
         composeTestRule.onNodeWithText("10").assertIsDisplayed()
     }
 
-    // ==================== Scroll Selection Tests (Bug Fix Verification) ====================
+    // ==================== Center Selection ====================
 
     @Test
     fun wheelTimePicker_scroll_selects_centered_item_not_top_item() {
-        // This test verifies the fix for the bug where scrolling to center hour 17
-        // incorrectly selected hour 15 (the top visible item) instead of 17 (the center)
+        // The selection is the centered item, not the top visible one (hour 17 centered must
+        // not report 15).
         var lastSelectedHour = -1
         var lastSelectedMinute = -1
 
@@ -193,18 +194,12 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Initial state: hour 12 should be displayed and centered
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("12").assertIsDisplayed()
 
-        // The picker should show hour 12 at center
-        // With visibleItems=5, we should see hours 10, 11, [12], 13, 14
-        // If the bug existed, the selection would incorrectly report hour 10 (top item)
-        // After the fix, selection should correctly report hour 12 (center item)
-
-        // Verify initial selection is correct (12, not 10)
-        // Note: The callback only fires on CHANGE, so if already at 12, no callback
-        // We verify by checking the displayed value is 12
+        // With visibleItems=5 the wheel shows 10, 11, [12], 13, 14; a top-item selection would
+        // report 10. The callback fires only on a change, so at 12 it doesn't fire, and only
+        // the displayed "12" is checked.
         composeTestRule.onNodeWithText("12").assertIsDisplayed()
     }
 
@@ -236,11 +231,10 @@ class WheelTimePickerComposeTest {
 
         composeTestRule.waitForIdle()
 
-        // Verify item 12 is displayed (at center due to initialization)
+        // Item 12 is displayed, centered by the initial index.
         composeTestRule.onNodeWithText("12").assertIsDisplayed()
 
-        // The center item (12) should be bold (isSelected = true)
-        // Adjacent items (11, 13) should be normal weight
+        // The centered 12 renders bold and 11 and 13 normal; font weight isn't asserted.
     }
 
     // ==================== VerticalWheelPicker Circular Tests ====================
@@ -264,7 +258,6 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Should display the selected item "12"
         composeTestRule.onNodeWithText("12").assertIsDisplayed()
     }
 
@@ -308,7 +301,6 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Should have content description for accessibility
         composeTestRule.onNodeWithContentDescription("Wheel picker with 12 options")
             .assertIsDisplayed()
     }
@@ -328,8 +320,8 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // The circular picker should have state description indicating circular mode
-        // This is verified via the semantics we added
+        // A circular wheel also sets a stateDescription ("Circular scrolling enabled"), but
+        // only the content description is asserted.
         composeTestRule.onNode(
             hasContentDescription("Wheel picker with 12 options")
         ).assertIsDisplayed()
@@ -342,7 +334,7 @@ class WheelTimePickerComposeTest {
         composeTestRule.setContent {
             MaterialTheme {
                 WheelTimePicker(
-                    selectedHour = 0, // Midnight = 12 AM
+                    selectedHour = 0, // Midnight, 12 AM
                     selectedMinute = 0,
                     onTimeSelected = { _, _ -> },
                     use24Hour = false
@@ -350,7 +342,7 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Midnight should display as 12 AM (circular AM/PM may show multiple instances)
+        // Midnight shows as 12 AM; the circular AM/PM wheel can show "AM" on more than one row.
         composeTestRule.onNodeWithText("12").assertIsDisplayed()
         composeTestRule.onAllNodesWithText("AM")[0].assertIsDisplayed()
     }
@@ -360,7 +352,7 @@ class WheelTimePickerComposeTest {
         composeTestRule.setContent {
             MaterialTheme {
                 WheelTimePicker(
-                    selectedHour = 12, // Noon = 12 PM
+                    selectedHour = 12, // Noon, 12 PM
                     selectedMinute = 0,
                     onTimeSelected = { _, _ -> },
                     use24Hour = false
@@ -368,7 +360,7 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Noon should display as 12 PM (circular AM/PM may show multiple instances)
+        // Noon shows as 12 PM; the circular AM/PM wheel can show "PM" on more than one row.
         composeTestRule.onNodeWithText("12").assertIsDisplayed()
         composeTestRule.onAllNodesWithText("PM")[0].assertIsDisplayed()
     }
@@ -437,7 +429,7 @@ class WheelTimePickerComposeTest {
                     use24Hour = true
                 )
 
-                // Button to change hour externally
+                // Changes the hour from outside the picker.
                 androidx.compose.material3.Button(
                     onClick = { hour = 15 }
                 ) {
@@ -446,16 +438,12 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Initial state
         composeTestRule.onNodeWithText("10").assertIsDisplayed()
 
-        // Click button to change hour
         composeTestRule.onNodeWithText("Change Hour").performClick()
 
-        // Wait for recomposition
         composeTestRule.waitForIdle()
 
-        // Should now display 15
         composeTestRule.onNodeWithText("15").assertIsDisplayed()
     }
 
@@ -475,7 +463,7 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Should display 30 (valid interval)
+        // 30 is on the 15-minute grid.
         composeTestRule.onNodeWithText("30").assertIsDisplayed()
     }
 
@@ -487,7 +475,7 @@ class WheelTimePickerComposeTest {
             MaterialTheme {
                 WheelTimePicker(
                     selectedHour = 10,
-                    selectedMinute = 32, // Should round to 30 with interval 5
+                    selectedMinute = 32, // Nearest 5-minute option is 30
                     onTimeSelected = { _, minute -> callbackMinute = minute },
                     use24Hour = true,
                     minuteInterval = 5
@@ -495,21 +483,20 @@ class WheelTimePickerComposeTest {
             }
         }
 
-        // Wait for composition and LaunchedEffect to complete rounding
+        // Let the rounding LaunchedEffect run.
         composeTestRule.waitForIdle()
 
-        // Verify component renders without crash - rounding logic is tested in unit tests.
-        // Can't assert specific minute value because circular LazyColumn virtualizes items
-        // and "30" may not be rendered if outside viewport.
+        // Checks only that the picker composes; neither this test nor a unit test asserts the
+        // rounded minute, and callbackMinute stays unread (rounding doesn't call onTimeSelected).
         composeTestRule.waitForIdle()
     }
 
-    // ==================== Crash Scenario Tests (centerOffset fix verification) ====================
+    // ==================== Initial Index Floor (no crash) ====================
 
     @Test
     fun verticalWheelPicker_nonCircular_2items_visibleItems3_noCrash() {
-        // AM/PM wheel: 2 items, effectiveCircular=false, visibleItems=3
-        // Buggy code produced initialIndex = -1 → crash
+        // A 2-item non-circular wheel with visibleItems=3. The initial index
+        // (selectedIndex - centeringOffset) is -1 here and must floor at 0, or it crashes.
         composeTestRule.setContent {
             MaterialTheme {
                 VerticalWheelPicker(
@@ -534,8 +521,8 @@ class WheelTimePickerComposeTest {
 
     @Test
     fun verticalWheelPicker_nonCircular_2items_visibleItems5_noCrash() {
-        // AM/PM wheel with default visibleItems=5
-        // Buggy code produced initialIndex = -2 → crash
+        // A 2-item non-circular wheel with the default visibleItems=5: the unfloored initial
+        // index is -2.
         composeTestRule.setContent {
             MaterialTheme {
                 VerticalWheelPicker(
@@ -560,7 +547,7 @@ class WheelTimePickerComposeTest {
 
     @Test
     fun verticalWheelPicker_nonCircular_2items_PM_selected_visibleItems3_noCrash() {
-        // PM selected with visibleItems=3
+        // PM selected, visibleItems=3.
         composeTestRule.setContent {
             MaterialTheme {
                 VerticalWheelPicker(
@@ -585,8 +572,7 @@ class WheelTimePickerComposeTest {
 
     @Test
     fun wheelTimePicker_12h_AM_visibleItems3_noCrash() {
-        // Full WheelTimePicker in 12h mode, morning hour, visibleItems=3
-        // This is the exact configuration from DateTimePicker that crashed
+        // Full WheelTimePicker in 12h mode, a morning hour, visibleItems=3.
         composeTestRule.setContent {
             MaterialTheme {
                 WheelTimePicker(
@@ -605,7 +591,7 @@ class WheelTimePickerComposeTest {
 
     @Test
     fun wheelTimePicker_12h_PM_visibleItems3_noCrash() {
-        // Full WheelTimePicker in 12h mode, afternoon hour, visibleItems=3
+        // Full WheelTimePicker in 12h mode, an afternoon hour, visibleItems=3.
         composeTestRule.setContent {
             MaterialTheme {
                 WheelTimePicker(
@@ -624,7 +610,7 @@ class WheelTimePickerComposeTest {
 
     @Test
     fun wheelTimePicker_12h_midnight_visibleItems3_noCrash() {
-        // Midnight (hour=0, 12 AM) with visibleItems=3
+        // Midnight (hour 0, 12 AM), visibleItems=3.
         composeTestRule.setContent {
             MaterialTheme {
                 WheelTimePicker(
@@ -644,7 +630,7 @@ class WheelTimePickerComposeTest {
 
     @Test
     fun wheelTimePicker_24h_visibleItems3_noCrash() {
-        // 24h mode with visibleItems=3 (DateTimePicker config)
+        // 24h mode, visibleItems=3.
         composeTestRule.setContent {
             MaterialTheme {
                 WheelTimePicker(
@@ -661,17 +647,14 @@ class WheelTimePickerComposeTest {
         composeTestRule.onNodeWithText("14").assertIsDisplayed()
     }
 
-    // ==================== Swipe Selection Tests (Bug Fix Verification) ====================
+    // ==================== Swipe Selection ====================
 
     @Test
     fun verticalWheelPicker_swipe_selects_center_item() {
-        // This test verifies the core fix: after swiping, the CENTER item should be
-        // selected, not the TOP visible item.
-        //
-        // BUG (before fix): Swipe to center hour 17 → selects hour 15 (top item)
-        // FIX (after fix): Swipe to center hour 17 → selects hour 17 (center item)
+        // After a swipe the centered item is selected, not the top visible one (hour 17
+        // centered must not report 15).
 
-        var selectedValue = 12  // Start at 12
+        var selectedValue = 12
 
         composeTestRule.setContent {
             MaterialTheme {
@@ -697,27 +680,23 @@ class WheelTimePickerComposeTest {
 
         composeTestRule.waitForIdle()
 
-        // Verify initial state: hour 12 is selected
         assertEquals("Initial selection should be 12", 12, selectedValue)
 
-        // Swipe up to scroll to higher numbers (13, 14, 15...)
+        // Swiping up scrolls toward higher numbers (13, 14, 15...).
         composeTestRule.onNodeWithContentDescription("Wheel picker with 24 options")
             .performTouchInput {
                 swipeUp(startY = centerY, endY = centerY - 200f)
             }
 
-        // Wait for scroll to settle and selection callback
         composeTestRule.waitForIdle()
-        Thread.sleep(500)  // Give time for snap animation to complete
+        Thread.sleep(500)  // Time for the snap animation to finish
         composeTestRule.waitForIdle()
 
-        // After swipe up, a higher hour should be selected
-        // The exact value depends on swipe distance, but it should NOT be
-        // 2 less than expected (which was the bug)
+        // The exact value depends on swipe distance, so the offset from the centered item
+        // isn't checked.
         println("After swipe up: selectedValue = $selectedValue")
 
-        // The selected value should be greater than 12 (we swiped up)
-        // If the bug existed, we might get a lower value than expected
+        // Only that the selection moved off 12 is asserted, not its direction.
         assertNotEquals("Selection should have changed from 12", 12, selectedValue)
     }
 
@@ -725,8 +704,7 @@ class WheelTimePickerComposeTest {
 
     @Test
     fun wheelTimePicker_displays_with_5_visible_items() {
-        // Verify WheelTimePicker works correctly with visibleItems=5
-        // This is the new default for better touch targets on small screens
+        // visibleItems=5, the default, for larger touch targets on small screens.
         composeTestRule.setContent {
             MaterialTheme {
                 WheelTimePicker(
@@ -741,15 +719,14 @@ class WheelTimePickerComposeTest {
 
         composeTestRule.waitForIdle()
 
-        // Should display center item (12) and adjacent items
+        // The centered hour and minute; adjacent items aren't asserted.
         composeTestRule.onNodeWithText("12").assertIsDisplayed()
         composeTestRule.onNodeWithText("30").assertIsDisplayed()
     }
 
     @Test
     fun wheelTimePicker_12h_mode_with_5_visible_items_no_crash() {
-        // AM/PM wheel (2 items) must work with visibleItems=5
-        // Tests the coerceAtLeast fix for small item counts
+        // The 2-item AM/PM wheel, circular in WheelTimePicker, with visibleItems=5.
         composeTestRule.setContent {
             MaterialTheme {
                 WheelTimePicker(
@@ -767,14 +744,13 @@ class WheelTimePickerComposeTest {
         composeTestRule.onAllNodesWithText("AM")[0].assertIsDisplayed()
     }
 
-    // ==================== Issue #238: Mid-fling Done commits visible value ====================
+    // ==================== Emission While Scrolling (#238) ====================
 
     @Test
     fun verticalWheelPicker_emits_intermediate_items_during_animated_scroll() {
-        // Issue #238: callback should fire continuously as the wheel scrolls,
-        // not only on settle. Drive an animated scroll across many items by
-        // changing selectedItem externally; capture every onItemSelected call;
-        // assert intermediate items appear in the captured list.
+        // The callback fires as the wheel scrolls, not only on settle, so a mid-fling Done
+        // commits the shown value (#238). An outside selectedItem change drives an animated
+        // scroll across many items; every onItemSelected call is captured.
         val captured = mutableListOf<Int>()
         val externalSelected = mutableStateOf(0)
 
@@ -802,32 +778,31 @@ class WheelTimePickerComposeTest {
         composeTestRule.waitForIdle()
         captured.clear()
 
-        // Trigger an animated scroll across many items. The picker's internal
-        // LaunchedEffect(selectedItem) calls animateScrollToItem, which steps
-        // centerIndex through intermediate values frame-by-frame.
+        // The picker's LaunchedEffect(selectedItem) calls animateScrollToItem, which steps
+        // centerIndex through intermediate values frame by frame.
         composeTestRule.runOnUiThread { externalSelected.value = 18 }
 
-        // Poll for animation progress; the snap-fling animation takes ~300-500ms.
+        // Poll for animation progress; the snap-fling animation takes about 300-500ms.
         val deadline = System.currentTimeMillis() + 3000
         while (System.currentTimeMillis() < deadline && captured.size < 3) {
             composeTestRule.mainClock.advanceTimeBy(16)
         }
         composeTestRule.waitForIdle()
 
-        // We scrolled from 0 → 18 (across the wrap-shorter path: 0, 23, 22, ... 18).
-        // Continuous emission must produce more than just the final value.
+        // 0 to 18 takes the shorter way round: 0, 23, 22, ... 18. Emission while scrolling
+        // gives more than the final value.
         assertTrue(
             "Expected intermediate emissions during animated scroll, got: $captured",
             captured.size >= 2
         )
-        // And the final centered value must land on 18.
+        // The final centered value is 18.
         assertEquals(18, captured.last())
     }
 
     @Test
     fun verticalWheelPicker_circular_recenters_to_middle_band_after_settle() {
-        // Issue #238 regression: edge recentering must still happen after settle
-        // even though selection callback moved to a separate snapshotFlow effect.
+        // Edge recentering happens after settle, separate from the snapshotFlow effect that
+        // emits the selection (#238).
         val externalSelected = mutableStateOf(0)
 
         composeTestRule.setContent {
@@ -846,31 +821,29 @@ class WheelTimePickerComposeTest {
 
         composeTestRule.waitForIdle()
 
-        // Drive a long sequence of scrolls to push virtual index far from middle.
-        // CIRCULAR_MULTIPLIER = 1000, items.size = 24 → middleStart = 12000,
-        // recenter threshold = 6000. We can't directly query virtual index, but
-        // after settling on each new value the picker should remain visually
-        // centered on the chosen item, which proves recentering is happening.
+        // A long run of scrolls pushes the virtual index away from the middle.
+        // CIRCULAR_MULTIPLIER = 1000 and 24 items give middleStart = 12000 and a recenter
+        // threshold of 6000. The virtual index can't be queried, so the check is that the
+        // picker stays centered on each chosen item.
         listOf(7, 14, 21, 4, 11, 18, 1, 8, 15, 22).forEach { target ->
             composeTestRule.runOnUiThread { externalSelected.value = target }
             composeTestRule.waitForIdle()
-            // Drive snap + animateScrollToItem to completion via the Compose
-            // clock — deterministic on slow CI emulators where Thread.sleep
-            // races the animation.
+            // Drive the snap and animateScrollToItem to completion with the Compose clock,
+            // which is deterministic on slow CI emulators where Thread.sleep races the
+            // animation.
             composeTestRule.mainClock.advanceTimeBy(500)
             composeTestRule.waitForIdle()
         }
 
-        // After many large jumps, the final selected item must still display.
-        // If recentering broke, the virtual list would have run off the end and
-        // the item would no longer be visible.
+        // After many large jumps the final item still displays. Without recentering the
+        // virtual list would run off its end and the item wouldn't be visible.
         composeTestRule.onNodeWithText("22").assertIsDisplayed()
     }
 
     @Test
     fun verticalWheelPicker_does_not_double_emit_for_same_centered_item() {
-        // Issue #238 regression: distinctUntilChanged + (item != selectedItem)
-        // must prevent the same item from being reported twice in a row.
+        // distinctUntilChanged and the item != selectedItem check keep the same item from being
+        // reported twice in a row (#238).
         val emissionCounts = mutableMapOf<Int, Int>()
         val externalSelected = mutableStateOf(5)
 
@@ -894,9 +867,8 @@ class WheelTimePickerComposeTest {
         composeTestRule.waitForIdle()
         emissionCounts.clear()
 
-        // Scroll to 10, back to 5. Final centered item is 5 (same as start).
-        // Drive Compose's clock forward instead of Thread.sleep — deterministic
-        // across CI emulators with variable wall-clock latency.
+        // Scroll to 10 and back to 5, the start. Compose's clock drives it, not Thread.sleep,
+        // so it is deterministic on CI emulators with variable wall-clock latency.
         composeTestRule.runOnUiThread { externalSelected.value = 10 }
         composeTestRule.waitForIdle()
         composeTestRule.mainClock.advanceTimeBy(800)
@@ -907,9 +879,8 @@ class WheelTimePickerComposeTest {
         composeTestRule.mainClock.advanceTimeBy(800)
         composeTestRule.waitForIdle()
 
-        // No item should be emitted twice in a row for the same value.
-        // (Counts may be > 1 across separate scroll passes, but the picker
-        // must not double-fire while sitting on a single item.)
+        // Each item may be emitted once per pass, so at most twice over the two passes; this
+        // bounds the total count, not consecutive emissions.
         emissionCounts.forEach { (item, count) ->
             assertTrue(
                 "Item $item emitted $count times — exceeds single-pass max of 2",
@@ -942,11 +913,10 @@ class WheelTimePickerComposeTest {
 
         composeTestRule.waitForIdle()
 
-        // Initial: hour 10
         assertEquals("Initial hour should be 10", 10, lastSelectedHour)
 
-        // Find the hour picker (first wheel in 24h mode)
-        // Swipe up to increase hour
+        // The first "10" is on the hour wheel, which comes first in 24h mode (the minute
+        // wheel shows a "10" too). Swiping up increases the hour.
         composeTestRule.onAllNodesWithText("10")[0]
             .performTouchInput {
                 swipeUp(startY = centerY, endY = centerY - 150f)
@@ -958,8 +928,7 @@ class WheelTimePickerComposeTest {
 
         println("After swipe: lastSelectedHour = $lastSelectedHour")
 
-        // Hour should have increased (exact value depends on swipe physics)
-        // Key verification: the selected hour should match what's visually centered
+        // The exact hour depends on swipe physics, so only that it changed is asserted.
         assertNotEquals("Hour should have changed after swipe", 10, lastSelectedHour)
     }
 }

@@ -18,12 +18,11 @@ import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * Tests the widened getCtag PROPFIND: body includes displayname, calendar-color,
- * current-user-privilege-set; response parses into [CalendarMetadataProbe].
+ * Tests the getCtag PROPFIND: the body asks for getctag, displayname, calendar-color and
+ * current-user-privilege-set, and the reply parses into [CalendarMetadataProbe].
  *
- * The four probe fields power the calendar-metadata refresh at
- * [PullStrategy.maybeRefreshMetadata]. This test isolates the client+parser
- * seam.
+ * The probe feeds the ctag skip and the calendar-metadata refresh in
+ * [PullStrategy.maybeRefreshMetadata]; this covers only the client and parser.
  */
 class OkHttpCalDavClientCtagProbeTest {
 
@@ -95,7 +94,7 @@ class OkHttpCalDavClientCtagProbeTest {
 
     @Test
     fun `PROPFIND body still requests getctag`() = runTest {
-        // Widening must not drop existing fields.
+        // The metadata props must not replace the ctag request.
         mockWebServer.enqueue(MockResponse().setResponseCode(207).setBody(fullProbeResponse()))
         client.getCtag(mockWebServer.url("/cal/").toString())
 
@@ -144,7 +143,8 @@ class OkHttpCalDavClientCtagProbeTest {
 
     @Test
     fun `response without ctag still returns error`() = runTest {
-        // Widening preserves existing contract: no ctag → error (Zoho fallback).
+        // No ctag gives an error; PullStrategy then syncs without the ctag skip or the
+        // metadata refresh, as it does for Zoho.
         val body = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:multistatus xmlns:d="DAV:">

@@ -6,94 +6,61 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * The result of the device-contact purge a contact-sync disable (or account
- * delete) attempts. Lets the UI message honestly instead of always claiming
- * removal.
+ * Reports what the device-contact purge of [AccountRepository.setContactSyncEnabled] did, so the
+ * UI claims removal only when it happened.
  */
 enum class ContactPurgeOutcome {
-    /**
-     * The purge ran and the device is verifiably clear of this login's synced
-     * contacts (post-purge count read 0 after a delete that did not fail).
-     */
+    /** The scoped delete succeeded and a count afterwards read 0 synced contacts. */
     PURGED,
 
     /**
-     * No purge was attempted: either this was an enable, a non-contacts account,
-     * or a still-syncing same-email CardDAV sibling legitimately keeps the shared
-     * contacts account (so its contacts must stay).
+     * No purge was attempted: an enable, a missing account, a non-contacts account, or a
+     * same-email CardDAV login still syncing contacts into the shared contacts account.
      */
     NOT_ATTEMPTED,
 
     /**
-     * A purge was attempted but could not be confirmed clean — the scoped delete
-     * failed (e.g. revoked WRITE_CONTACTS), or rows still remained after the
-     * retry. The UI must NOT claim contacts were removed.
+     * A purge ran but couldn't be confirmed clean: the scoped delete failed (for example,
+     * WRITE_CONTACTS revoked), or rows remained afterwards. The UI must not claim contacts were
+     * removed.
      */
     INCOMPLETE,
 }
 
 /**
- * Single source of truth for Account operations.
- *
- * Replaces direct DAO access for accounts. Handles:
- * - CRUD operations on Account entity
- * - Credential storage delegation
- * - Cleanup on account deletion (reminders, pending operations, WorkManager jobs)
- *
- * Usage:
- * ```kotlin
- * class MyService @Inject constructor(
- *     private val accountRepository: AccountRepository
- * )
- *
- * // Delete account with full cleanup
- * accountRepository.deleteAccount(accountId)
- * ```
+ * Reads and writes accounts in place of the accounts DAO: CRUD, sync metadata, contact-sync
+ * enrolment, credentials (delegated to the credential store), and account deletion with its
+ * cleanup ([deleteAccount]).
  */
 interface AccountRepository {
 
     // ========== Reactive Queries (Flow) ==========
 
-    /**
-     * Get all accounts as reactive Flow.
-     * Emits new list when accounts change.
-     */
     fun getAllAccountsFlow(): Flow<List<Account>>
 
-    /**
-     * Get accounts by provider type as Flow.
-     * Used to list CalDAV accounts, iCloud accounts, etc.
-     */
     fun getAccountsByProviderFlow(provider: AccountProvider): Flow<List<Account>>
 
-    /**
-     * Get account count by provider as Flow.
-     * Used for Settings UI badges.
-     */
+    /** Emits the number of accounts of [provider]; Settings reads the CalDAV count. */
     fun getAccountCountByProviderFlow(provider: AccountProvider): Flow<Int>
 
-    /**
-     * Get account by ID as reactive Flow.
-     * Used for AccountDetailSheet to auto-update on sync metadata changes.
-     */
+    /** Emits the account on every change, so the account detail sheet follows sync metadata. */
     fun getAccountByIdFlow(id: Long): Flow<Account?>
 
     // ========== One-Shot Queries ==========
 
-    /**
-     * Get account by ID.
-     */
     suspend fun getAccountById(id: Long): Account?
 
     /**
-     * Get account by provider and email (unique constraint).
+     * Returns an account of [provider] with [email]. Accounts are unique on provider, email and
+     * home set URL, so for CalDAV, where two may match, use
+     * [getAccountByProviderEmailAndHomeSetUrl].
      */
     suspend fun getAccountByProviderAndEmail(provider: AccountProvider, email: String): Account?
 
     /**
-     * Get account by provider, email, and home set URL.
-     * Used for CalDAV where the same username can exist on different servers.
-     * For iCloud/ICS/CONTACTS, use [getAccountByProviderAndEmail] instead.
+     * Returns the account matching provider, email and home set URL. CalDAV needs all three:
+     * the same username can exist on different servers. For iCloud, ICS and CONTACTS, use
+     * [getAccountByProviderAndEmail].
      */
     suspend fun getAccountByProviderEmailAndHomeSetUrl(
         provider: AccountProvider,
@@ -101,122 +68,84 @@ interface AccountRepository {
         homeSetUrl: String
     ): Account?
 
-    /**
-     * Get all enabled accounts for sync.
-     */
     suspend fun getEnabledAccounts(): List<Account>
 
-    /**
-     * Get all accounts (one-shot).
-     */
     suspend fun getAllAccounts(): List<Account>
 
-    /**
-     * Get accounts by provider (one-shot).
-     */
     suspend fun getAccountsByProvider(provider: AccountProvider): List<Account>
 
     /**
-     * Count accounts with matching display name.
-     * Used for uniqueness validation.
+     * Counts accounts named [displayName], excluding [excludeAccountId]; CalDAV setup uses it to
+     * keep display names unique.
      */
     suspend fun countByDisplayName(displayName: String, excludeAccountId: Long? = null): Int
 
     // ========== Write Operations ==========
 
-    /**
-     * Create new account. Returns row ID.
-     */
+    /** Inserts [account] and returns its row ID. */
     suspend fun createAccount(account: Account): Long
 
-    /**
-     * Update existing account.
-     */
     suspend fun updateAccount(account: Account)
 
     /**
-     * Delete account with full cleanup.
-     *
-     * Performs in order:
-     * 1. Cancel WorkManager sync jobs
-     * 2. Cancel all reminders for account's events
-     * 3. Delete pending operations for account's events
-     * 4. Delete credentials
-     * 5. Cascade delete account → calendars → events
-     *
-     * @param accountId Account ID to delete
+     * Deletes the account and its data, in order:
+     * 1. Cancels its sync work and the shared one-shot and expedited sync work.
+     * 2. Cancels reminders and deletes pending operations of its calendars' master events that
+     *    aren't pending delete.
+     * 3. Deletes its credentials.
+     * 4. Deletes the account row, which cascades to its calendars and address books, their
+     *    events, and the events' occurrences, attendees and scheduled reminders.
+     * 5. Cancels the shared periodic sync and contact-sync work when no account that can sync
+     *    remains.
+     * 6. For a CardDAV-capable account, purges its device contacts and contacts system account
+     *    and clears same-email logins' address books, unless a same-email CardDAV login still
+     *    syncs contacts into it.
      */
     suspend fun deleteAccount(accountId: Long)
 
     // ========== Sync Metadata ==========
 
-    /**
-     * Record successful sync.
-     */
     suspend fun recordSyncSuccess(accountId: Long, timestamp: Long)
 
-    /**
-     * Record sync failure.
-     */
     suspend fun recordSyncFailure(accountId: Long, timestamp: Long)
 
-    /**
-     * Update CalDAV discovery URLs.
-     */
     suspend fun updateCalDavUrls(accountId: Long, principalUrl: String?, homeSetUrl: String?)
 
     /**
-     * Persist the CalDAV `calendar-user-address-set` (RFC 6638 §2.4.1)
-     * for the given account. Stored verbatim — see [Account.calendarUserAddresses].
+     * Stores the CalDAV `calendar-user-address-set` (RFC 6638 §2.4.1) verbatim; see
+     * [Account.calendarUserAddresses].
      */
     suspend fun updateCalendarUserAddresses(accountId: Long, addresses: List<String>)
 
     /**
-     * Persist the principal's scheduling Outbox URL (RFC 6638 §2.1.1) for
-     * the given account. Null clears it (server advertises no outbox).
+     * Stores the principal's scheduling Outbox URL (RFC 6638 §2.1.1). Null clears it: the server
+     * advertises no outbox.
      */
     suspend fun updateScheduleOutboxUrl(accountId: Long, outboxUrl: String?)
 
-    /**
-     * Set account enabled state.
-     */
     suspend fun setEnabled(accountId: Long, enabled: Boolean)
 
     /**
-     * Turn CardDAV contact sync on or off for a login.
+     * Turns CardDAV contact sync on or off for a login.
      *
-     * Enabling registers the login's dedicated contacts system account (so
-     * Android surfaces the source and never purges its RawContacts) and persists
-     * the per-account flag; disabling removes that system account (which also
-     * purges the contacts Android holds under it) and clears the flag. Both are
-     * idempotent. A no-op when the account no longer exists.
+     * Enabling registers the login's contacts system account (so Android surfaces the source and
+     * never purges its RawContacts) and sets the per-account flag. Disabling deletes the login's
+     * device contacts and removes that system account, unless a same-email CardDAV login still
+     * syncs contacts into it, and clears the flag. Both are idempotent; a no-op when the account
+     * no longer exists.
      *
-     * @return the outcome of the device-contact purge, so callers can message
-     *   honestly (a disable that a still-syncing sibling blocks did NOT remove
-     *   contacts; a purge that couldn't be verified must not claim it did). See
-     *   [ContactPurgeOutcome].
+     * @return what the device-contact purge did ([ContactPurgeOutcome]), so the caller doesn't
+     *   claim contacts were removed when a sibling kept them or the purge couldn't be verified.
      */
     suspend fun setContactSyncEnabled(accountId: Long, enabled: Boolean): ContactPurgeOutcome
 
     // ========== Credentials (Delegated) ==========
 
-    /**
-     * Save credentials for account.
-     */
     suspend fun saveCredentials(accountId: Long, credentials: AccountCredentials): Boolean
 
-    /**
-     * Get credentials for account.
-     */
     suspend fun getCredentials(accountId: Long): AccountCredentials?
 
-    /**
-     * Check if credentials exist for account.
-     */
     suspend fun hasCredentials(accountId: Long): Boolean
 
-    /**
-     * Delete credentials for account.
-     */
     suspend fun deleteCredentials(accountId: Long)
 }

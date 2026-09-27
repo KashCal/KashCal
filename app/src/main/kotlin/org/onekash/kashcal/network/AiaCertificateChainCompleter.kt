@@ -20,33 +20,27 @@ import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
 
 /**
- * AIA (Authority Information Access) certificate chain completer.
+ * Completes a server's certificate chain that is missing its intermediate, using the leaf's
+ * AIA (Authority Information Access) extension.
  *
- * Some servers serve incomplete SSL certificate chains — the leaf cert is present
- * but the intermediate is missing. OkHttp's TLS handshake fails with SSLHandshakeException.
+ * Such a server fails OkHttp's handshake with `SSLHandshakeException`. The completer:
+ * 1. Reads the leaf cert through a trust-all handshake that sends no data.
+ * 2. Extracts the caIssuers URL from the leaf's AIA extension.
+ * 3. Downloads the intermediate over plain HTTP, refusing non-public targets and capping the
+ *    body size.
+ * 4. Builds a trust manager that appends the intermediate to the server's chain and validates
+ *    the completed path against the system roots (PKIX).
+ * 5. Returns a new OkHttpClient with that trust manager.
  *
- * This class implements the same fallback major browsers and calendar apps use:
- * 1. Grab the leaf cert via a trust-all handshake (no data transfer)
- * 2. Extract the AIA caIssuers URL from the leaf cert's AIA extension
- * 3. Download the missing intermediate certificate (always HTTP, not HTTPS),
- *    refusing non-public fetch targets and capping the response size
- * 4. Build a trust manager that appends the intermediate to the server's chain
- *    and validates the completed path against the system roots (PKIX)
- * 5. Return a new OkHttpClient configured with that trust manager
- *
- * Security: hostname verification is never disabled. The downloaded cert is
- * treated only as a candidate intermediate — it is appended to the chain the
- * server presents and the whole path must still validate to a real system root
- * via the platform's PKIX trust manager. It never becomes a trust anchor of its
- * own, so a rogue cert that reaches no system root is rejected.
+ * Hostname verification is never disabled. The downloaded cert is only a candidate
+ * intermediate and never a trust anchor, so a rogue cert that reaches no system root is
+ * rejected.
  */
 class AiaCertificateChainCompleter(
     /**
-     * Test-only escape hatch. Production always refuses AIA fetches to
-     * loopback/link-local/private/any-local addresses (an attacker-controlled AIA
-     * URL must not be usable to probe the device's own network — blind SSRF).
-     * MockWebServer binds to loopback, so unit tests that exercise a real download
-     * opt in with `allowLocalFetchTargets = true`.
+     * Allows AIA fetches to local addresses; tests only. Production always refuses them
+     * ([isAllowedFetchUrl]) so an attacker-controlled AIA URL can't probe the device's own
+     * network (blind SSRF). MockWebServer binds to loopback, so tests of a real download opt in.
      */
     @get:VisibleForTesting internal val allowLocalFetchTargets: Boolean = false,
 ) {
@@ -59,33 +53,30 @@ class AiaCertificateChainCompleter(
     companion object {
         private const val TAG = "AiaCertChainCompleter"
 
-        /** OID for Authority Information Access (RFC 5280, section 4.2.2.1) */
+        /** OID for Authority Information Access (RFC 5280 §4.2.2.1). */
         private const val AIA_OID = "1.3.6.1.5.5.7.1.1"
 
-        /** Timeout for trust-all handshake and cert download */
+        /** Read timeout for the trust-all handshake; connect and read timeout for the download. */
         private const val TIMEOUT_MS = 5_000
 
         /**
-         * Hard ceiling on an AIA download body. A single DER/PEM intermediate is a
-         * few KB; anything past 1 MB is either a misconfigured endpoint or an attempt
-         * to exhaust memory via the attacker-controlled AIA URL, so we bail rather
-         * than buffer it.
+         * Caps an AIA download body. One DER or PEM intermediate is a few KB; a body past 1 MB
+         * is a misconfigured endpoint or an attempt to exhaust memory, so the download fails.
          */
         private const val MAX_CERT_BYTES = 1L * 1024 * 1024
 
         /**
-         * In-memory cache: hostname -> intermediate cert. Cleared on process death.
-         * Only populated once the platform trust manager has accepted a completed
-         * chain for that host, so an unvalidated (attacker-seeded) cert is never stored.
+         * Maps hostname to its intermediate cert for the life of the process. Written only after
+         * the platform trust manager accepts a completed chain for that host, so an unvalidated
+         * (attacker-seeded) cert is never stored.
          */
         private val intermediateCache = ConcurrentHashMap<String, X509Certificate>()
 
         /**
-         * Trim trailing ASN.1 tag bytes stuck to a cert file extension.
-         * DER-encoded AIA has no delimiter between the URL and the next ASN.1 tag,
-         * so bytes like 0x30 ('0') can stick to the URL end.
-         * Only trims alphanumeric junk — preserves query strings (?v=2) and paths.
-         * Example: "...R36.crt0" → "...R36.crt"
+         * Matches ASN.1 tag bytes stuck to a cert file extension at the URL end. DER-encoded
+         * AIA has no delimiter between the URL and the next tag, so a byte like 0x30 ('0') can
+         * follow the URL: "...R36.crt0" becomes "...R36.crt". Only alphanumerics after a known
+         * extension are trimmed, so query strings (?v=2) and paths survive.
          */
         private val TRAILING_ASN1_JUNK = Regex("""(\.(?:crt|cer|der|pem|p7b|p7c))[a-zA-Z0-9]*$""", RegexOption.IGNORE_CASE)
 
@@ -100,14 +91,12 @@ class AiaCertificateChainCompleter(
     }
 
     /**
-     * Attempt to complete a broken certificate chain via AIA.
+     * Completes [hostname]'s broken certificate chain via AIA, reusing a cached intermediate
+     * when one exists. Never throws: every failure, an exception included, returns
+     * [Result.Failed].
      *
-     * Never throws — always returns [Result.Failed] on any error.
-     *
-     * @param hostname The server hostname
-     * @param port The server port (default 443)
-     * @param baseClientBuilder An OkHttpClient.Builder to configure with the custom trust manager.
-     *   Use `existingClient.newBuilder()` to preserve connection pool and timeouts.
+     * @param baseClientBuilder builder to configure with the custom trust manager. Pass
+     *   `existingClient.newBuilder()` to keep its connection pool and timeouts.
      */
     fun attemptChainCompletion(
         hostname: String,
@@ -115,7 +104,6 @@ class AiaCertificateChainCompleter(
         baseClientBuilder: OkHttpClient.Builder
     ): Result {
         return try {
-            // Check cache first
             val cached = intermediateCache[hostname]
             val intermediate = if (cached != null) {
                 Log.d(TAG, "Using cached intermediate for $hostname")
@@ -132,11 +120,10 @@ class AiaCertificateChainCompleter(
                 val downloaded = downloadCertificate(aiaUrl)
                     ?: return Result.Failed("Could not download intermediate from $aiaUrl")
 
-                // NOT cached here: the download is attacker-influenceable (trust-all
-                // leaf fetch + plain-HTTP fetch). Caching it now would let an on-path
-                // attacker seed a bogus intermediate that breaks genuine connections to
-                // this host until the process restarts. We cache only after the platform
-                // validator accepts a completed chain (see buildTrustManager).
+                // Not cached here: the trust-all leaf fetch and plain-HTTP download are
+                // attacker-influenceable, and a cached bogus intermediate would break real
+                // connections to this host until the process restarts. [buildTrustManager]
+                // caches it once the platform validator accepts a completed chain.
                 downloaded
             }
 
@@ -148,7 +135,7 @@ class AiaCertificateChainCompleter(
 
             val client = baseClientBuilder
                 .sslSocketFactory(sslContext.socketFactory, trustManager)
-                // Hostname verification stays ON (default) — never disabled
+                // Hostname verification keeps its default and is never disabled.
                 .build()
 
             Log.i(TAG, "AIA chain completion succeeded for $hostname")
@@ -160,11 +147,10 @@ class AiaCertificateChainCompleter(
     }
 
     /**
-     * Connect with a trust-all TrustManager to retrieve the leaf certificate.
-     * No HTTP data is transferred — socket is closed immediately after handshake.
+     * Returns the server's leaf certificate from a trust-all handshake, or null on failure. No
+     * HTTP data is sent; the socket closes right after the handshake.
      */
     internal fun getLeafCertificate(hostname: String, port: Int): X509Certificate? {
-        // Capture the server chain in a local variable accessible from the anonymous object
         var capturedChain: Array<X509Certificate>? = null
 
         val trustAllManager = object : X509TrustManager {
@@ -186,7 +172,7 @@ class AiaCertificateChainCompleter(
             (sslContext.socketFactory.createSocket(hostname, port) as SSLSocket).use { socket ->
                 socket.soTimeout = TIMEOUT_MS
                 socket.startHandshake()
-                // Leaf cert is first in the chain
+                // The leaf is first in the chain.
                 capturedChain?.firstOrNull()
             }
         } catch (e: Exception) {
@@ -196,25 +182,21 @@ class AiaCertificateChainCompleter(
     }
 
     /**
-     * Extract the caIssuers URL from a certificate's AIA extension.
+     * Returns the first `http://` URL in [cert]'s AIA extension, or null if there is none.
      *
-     * Known limitation: uses a heuristic (scanning for "http://" in the DER-encoded
-     * extension bytes) rather than full ASN.1 parsing. This works for all known CA
-     * AIA extensions but could theoretically miss unusual encodings. If it fails,
-     * the caller falls back to the original SSL error.
+     * Scans the DER bytes for "http://" instead of parsing ASN.1, so an unusual encoding can
+     * be missed, and the callers then report an SSL error.
      */
     internal fun extractAiaCaIssuersUrl(cert: X509Certificate): String? {
         val extensionBytes = cert.getExtensionValue(AIA_OID) ?: return null
 
-        // The extension value is wrapped in an OCTET STRING. Convert to a string
-        // using ISO-8859-1 (1:1 byte mapping) and scan for an HTTP URL.
+        // The value is wrapped in an OCTET STRING; ISO-8859-1 maps bytes 1:1 to chars.
         val asString = String(extensionBytes, Charsets.ISO_8859_1)
         val httpIndex = asString.indexOf("http://")
         if (httpIndex < 0) return null
 
-        // Extract URL: runs until a non-URI character.
-        // Stop at control chars, high bytes, whitespace, and fragment delimiter '#'
-        // (RFC 3986: '#' starts fragment — AIA URLs never have fragments).
+        // The URL ends at a control char, high byte, space or '#' (RFC 3986 fragment
+        // delimiter; AIA URLs have no fragment).
         val urlBuilder = StringBuilder()
         for (i in httpIndex until asString.length) {
             val ch = asString[i]
@@ -225,23 +207,19 @@ class AiaCertificateChainCompleter(
             }
         }
 
-        // DER encoding may leave ASN.1 tag bytes (e.g., 0x30 = '0') appended
-        // to the URL. Trim any trailing characters after the last dot-extension.
         val url = urlBuilder.toString()
         val trimmed = TRAILING_ASN1_JUNK.replace(url, "$1")
         return if (trimmed.length > "http://".length) trimmed else null
     }
 
     /**
-     * Download a DER-encoded certificate from a URL (typically HTTP, not HTTPS).
+     * Downloads the certificate at [url], or returns null on a refused target, non-2xx
+     * response, oversized body or parse failure.
      *
-     * The URL comes from the leaf cert's AIA extension, which is attacker-influenceable
-     * on the very path where trust has not yet been established, so the fetch is doubly
-     * bounded: [isAllowedFetchUrl] refuses non-public destinations (blind-SSRF guard) and
-     * the body is capped at [MAX_CERT_BYTES] (memory-exhaustion guard). Downloading over
-     * plain HTTP reveals the target host to a passive network observer, which is
-     * acceptable here because the fetched cert is only ever a *candidate* — it must still
-     * validate to a system root before it is trusted (see [buildTrustManager]).
+     * The URL comes from the not-yet-trusted leaf, so [isAllowedFetchUrl] refuses non-public
+     * targets (blind SSRF) and the body is capped at [MAX_CERT_BYTES]. Plain HTTP reveals the
+     * host to a passive observer, which is acceptable: the cert is only a candidate until it
+     * validates to a system root in [buildTrustManager].
      */
     internal fun downloadCertificate(url: String): X509Certificate? {
         if (!isAllowedFetchUrl(url)) {
@@ -253,11 +231,10 @@ class AiaCertificateChainCompleter(
             connection.connectTimeout = TIMEOUT_MS
             connection.readTimeout = TIMEOUT_MS
             if (connection is HttpURLConnection) {
-                // Do NOT auto-follow redirects: isAllowedFetchUrl only cleared the
-                // ORIGINAL host, so following an attacker-directed 3xx (e.g. to a
-                // cloud metadata address or loopback) would walk straight past the
-                // SSRF guard. A caIssuers endpoint is a static file, so any non-2xx
-                // response is treated as a failed fetch rather than chased.
+                // Never follow redirects: [isAllowedFetchUrl] cleared only the original
+                // host, so an attacker-directed 3xx (to a cloud metadata address or
+                // loopback) would bypass the SSRF guard. A caIssuers endpoint is a static
+                // file, so any non-2xx response fails the fetch.
                 connection.instanceFollowRedirects = false
                 if (connection.responseCode !in 200..299) {
                     Log.w(TAG, "AIA fetch returned HTTP ${connection.responseCode}, not following: $url")
@@ -280,10 +257,9 @@ class AiaCertificateChainCompleter(
     }
 
     /**
-     * True if [url]'s host resolves to a routable, public address. Refuses
-     * loopback/link-local/site-local/any-local/multicast targets so an
-     * attacker-supplied AIA URL cannot be used to probe the device's own network.
-     * A host that cannot be resolved is treated as not allowed.
+     * Returns true if every address [url]'s host resolves to is public ([isBlockedFetchAddress]),
+     * so an attacker-supplied AIA URL can't probe the device's own network. An unresolvable
+     * host is refused; [allowLocalFetchTargets] allows everything.
      */
     @VisibleForTesting
     internal fun isAllowedFetchUrl(url: String): Boolean {
@@ -291,14 +267,12 @@ class AiaCertificateChainCompleter(
         return try {
             val host = URL(url).host
             if (host.isNullOrEmpty()) return false
-            // Refuse if ANY resolved address is non-public, so a multi-record host
-            // that mixes a public IP with 127.0.0.1 can't slip through on the public
-            // one. Residual: the connection re-resolves the host independently, so a
-            // low-TTL rebinding DNS server could still flip to an internal address
-            // after this check. That risk is bounded here — the fetch is blind (its
-            // body only ever feeds CertificateFactory) and a fetched cert must still
-            // chain to a system root before it is trusted, so rebinding yields no
-            // oracle back to the attacker and cannot cause mis-trust.
+            // Any non-public address refuses, so a host mixing a public IP with 127.0.0.1
+            // can't pass on the public one. The connection re-resolves the host, so a
+            // low-TTL rebinding DNS server could still flip to an internal address after
+            // this check. The fetch is blind (its body only feeds CertificateFactory) and
+            // the cert must still chain to a system root, so rebinding gives the attacker
+            // no oracle and can't cause mis-trust.
             val addresses = InetAddress.getAllByName(host)
             addresses.isNotEmpty() && addresses.none { isBlockedFetchAddress(it) }
         } catch (e: Exception) {
@@ -308,10 +282,10 @@ class AiaCertificateChainCompleter(
     }
 
     /**
-     * Non-routable / internal address ranges an AIA fetch must never reach. Covers
-     * the JDK's built-in categories plus ranges its helpers miss: IPv4 0.0.0.0/8,
-     * CGNAT 100.64.0.0/10 (RFC 6598), the limited broadcast address, and IPv6
-     * unique-local fc00::/7 (isSiteLocalAddress only matches the deprecated fec0::/10).
+     * Returns true for an internal or non-routable address an AIA fetch must never reach: the
+     * JDK's loopback, link-local, site-local, any-local and multicast checks, plus ranges they
+     * miss: IPv4 0.0.0.0/8, CGNAT 100.64.0.0/10 (RFC 6598), the limited broadcast address, and
+     * IPv6 unique-local fc00::/7 (`isSiteLocalAddress` matches only the deprecated fec0::/10).
      */
     private fun isBlockedFetchAddress(address: InetAddress): Boolean {
         if (address.isLoopbackAddress ||
@@ -336,9 +310,7 @@ class AiaCertificateChainCompleter(
         }
     }
 
-    /**
-     * Read [input] fully, but abort (returning null) as soon as it exceeds [max] bytes.
-     */
+    /** Reads [input] fully, or returns null as soon as it exceeds [max] bytes. */
     private fun readCapped(input: InputStream, max: Long): ByteArray? {
         val buffer = ByteArrayOutputStream()
         val chunk = ByteArray(8192)
@@ -354,27 +326,18 @@ class AiaCertificateChainCompleter(
     }
 
     /**
-     * Build a TrustManager that completes a broken chain with [intermediate] while
-     * still requiring the result to chain to a real system root.
+     * Builds a trust manager that completes the server's chain with [intermediate] and still
+     * requires it to reach a system root, or returns null if none can be built.
      *
-     * The downloaded cert is NOT added as a trust anchor. Instead we return a wrapper
-     * around the platform's default trust manager (system anchors only): on each
-     * connection it appends [intermediate] to the chain the server presents and hands
-     * the completed chain to the platform validator, which builds a PKIX path to a
-     * system root. If [intermediate] genuinely bridges the gap the connection succeeds;
-     * a cert that reaches no system root — an attacker's own CA — is rejected.
-     *
-     * The intermediate is cached for [hostname] only once the platform validator
-     * has accepted a completed chain, so an unvalidated download is never stored.
-     *
-     * @param intermediate The candidate intermediate certificate fetched via AIA
-     * @param hostname The host this intermediate completes a chain for (cache key)
+     * [intermediate] is never a trust anchor. The returned wrapper around the platform's
+     * default trust manager appends it to each presented chain and lets the platform build a
+     * PKIX path to a system root; a cert that reaches none, such as an attacker's own CA, is
+     * rejected. [intermediate] is cached for [hostname] only after a completed chain passes.
      */
     internal fun buildTrustManager(intermediate: X509Certificate, hostname: String): X509TrustManager? {
         return try {
-            // Default trust manager backed by the system trust anchors only.
-            // init(null) uses the platform store (AndroidCAStore on Android, the JRE
-            // cacerts on the JVM) — never a store we've mutated with the download.
+            // init(null) uses the platform's system anchors (AndroidCAStore on Android, the
+            // JRE cacerts on the JVM), never a store holding the download.
             val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
             tmf.init(null as KeyStore?)
             val systemTrustManager = tmf.trustManagers
@@ -383,16 +346,13 @@ class AiaCertificateChainCompleter(
 
             object : X509TrustManager {
                 override fun checkServerTrusted(chain: Array<X509Certificate>, authType: String) {
-                    // Splice the fetched intermediate into the presented chain, then let
-                    // the platform validator build (and verify) a path to a system root.
                     val completed = if (chain.any { it == intermediate }) {
                         chain
                     } else {
                         chain + intermediate
                     }
-                    // Throws if the completed chain reaches no system root. Only past
-                    // this point has the intermediate proven itself, so cache it here
-                    // (never on the raw, unvalidated download) to close cache poisoning.
+                    // Throws if the completed chain reaches no system root, so the cache
+                    // write below only ever stores a validated intermediate.
                     systemTrustManager.checkServerTrusted(completed, authType)
                     intermediateCache[hostname] = intermediate
                 }
@@ -401,12 +361,11 @@ class AiaCertificateChainCompleter(
                     systemTrustManager.checkClientTrusted(chain, authType)
                 }
 
-                // Only the system anchors are advertised — the downloaded intermediate
-                // is deliberately not one. Note for the future: if certificate pinning
-                // is ever added to these clients, OkHttp's chain cleaner is derived from
-                // these accepted issuers and would be unable to build a path through the
-                // (non-anchor, not-yet-presented) intermediate, breaking pinned
-                // connections to missing-intermediate servers. Revisit this if pinning lands.
+                // Advertises only the system anchors; the intermediate is deliberately not
+                // one. If certificate pinning is added to these clients, OkHttp's chain
+                // cleaner, built from these issuers, can't build a path through the
+                // intermediate, which breaks pinned connections to missing-intermediate
+                // servers. Revisit this if pinning lands.
                 override fun getAcceptedIssuers(): Array<X509Certificate> =
                     systemTrustManager.acceptedIssuers
             }

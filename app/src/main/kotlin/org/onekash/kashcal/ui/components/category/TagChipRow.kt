@@ -49,19 +49,18 @@ import org.onekash.kashcal.domain.category.CategoryNameError
 import org.onekash.kashcal.domain.category.CategoryNameValidator
 
 /**
- * Reusable tag row. At rest it is a single quiet line: either a "+ New tag"
- * affordance (no tags yet) or the applied tags as filled chips (with an "x" to
- * remove) followed by a small "+" to add more.
+ * Shows the event's tags and lets the user add or remove them.
  *
- * Tapping the add affordance engages a type-to-filter picker: a text field over
- * a list of [suggestions] (rendered in the order given — already usage-ranked,
- * not re-sorted here). Typing prefix-filters the list; a "Create '…'" row is
- * always offered last for a name that isn't an existing suggestion. Committing
- * a typed name runs it through [CategoryNameValidator]; an invalid name shows an
- * inline error and does not commit.
+ * At rest it is one line: a "+ New tag" chip when no tag is applied, else the applied tags as
+ * filled chips with an "x" to remove, then a small "+" to add more.
  *
- * In [readOnly] mode (quick-view) the chips render without the "x", and no add
- * affordance or field is shown.
+ * The add affordance opens a type-to-filter picker: a text field over [suggestions] in the order
+ * given (callers rank them; nothing re-sorts here). Typing prefix-filters the list, and a
+ * "Create '…'" row comes last for a non-blank name matching neither a suggestion nor an applied
+ * tag. A typed name commits through [CategoryNameValidator]; an invalid one shows an inline error
+ * and doesn't commit.
+ *
+ * In [readOnly] mode (the quick views) the chips have no "x" and there is no add affordance.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -73,12 +72,10 @@ fun TagChipRow(
     modifier: Modifier = Modifier,
     readOnly: Boolean = false,
 ) {
-    // Local edit state. Applied tags live in the caller's hoisted state (via
-    // onAdd/onToggle), so they always persist; only this in-progress draft is
-    // local. If the host moves this row to a different layout position while a
-    // draft is half-typed (the form lets the user relocate the tag row), the
-    // row is recomposed at the new slot and the uncommitted draft resets. That
-    // edge is accepted — committed tags are never lost, only unsaved keystrokes.
+    // Applied tags live in the caller's state (via onAdd/onToggle); only the draft is local.
+    // Moving the row while a draft is half-typed (the form lets the user place the tag row
+    // above or below notes) recomposes it at the new slot and resets the draft. Accepted:
+    // committed tags are never lost, only unsaved keystrokes.
     var adding by remember { mutableStateOf(false) }
     var draft by remember { mutableStateOf("") }
     var errorRes by remember { mutableStateOf<Int?>(null) }
@@ -86,15 +83,13 @@ fun TagChipRow(
     val cdTemplate = stringResource(R.string.cd_tag)
     val addLabel = stringResource(R.string.tags_new)
 
-    // Per-tag custom colors from the screen root; unprovided (previews/tests)
-    // it's empty and every chip falls back to its hash color.
+    // Empty when unprovided (previews, tests), so every chip falls back to its hash color.
     val tagColors = LocalTagColors.current
 
-    // Commit a typed name (from the field's Done action or the "Create" row):
-    // validate, and on success add it and collapse back to the resting line.
-    // Validate against both applied tags and suggestions so a typed name that
-    // matches an existing tag reuses its first-seen casing (typing "personal"
-    // when "Personal" is a known tag commits "Personal", matching the tap path).
+    // Commits a typed name from the field's Done action or the "Create" row, collapsing to
+    // the resting line on success. Validating against applied tags and suggestions reuses an
+    // existing tag's casing: typing "personal" when "Personal" is known commits "Personal",
+    // as a tap would.
     val commit: (String) -> Unit = { raw ->
         when (val outcome = CategoryNameValidator.validate(raw, selected + suggestions)) {
             is CategoryName.Valid -> {
@@ -108,19 +103,17 @@ fun TagChipRow(
     }
 
     Column(modifier = modifier) {
-        // Resting/applied chips. The "x" and add affordances are hidden in
-        // read-only mode. Chips are laid out without the 48dp minimum
-        // interactive size so a row of them isn't padded to touch-target
-        // height — Material sizes chips at ~32dp and expects groups to opt out
-        // of the enforcement, keeping the row compact.
+        // Chips are laid out without the 48dp minimum interactive size so the row isn't padded
+        // to touch-target height; Material sizes chips at ~32dp and expects groups to opt out
+        // of the enforcement.
         CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            // Skip blank names — a malformed pulled CATEGORIES value can carry
-            // an empty element that would otherwise render as a blank chip.
+            // A malformed pulled CATEGORIES value can carry an empty element that would render
+            // as a blank chip.
             selected.filter { it.isNotBlank() }.forEach { tag ->
                 val tagColor = colorFor(tagColors, tag)
                 val bg = Color(tagColor)
@@ -151,9 +144,8 @@ fun TagChipRow(
                         leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) },
                     )
                 } else {
-                    // Has tags: a compact "+" to add more. Sized to match the
-                    // chip height (the row opts out of the 48dp min target, so
-                    // pin the button so its tap area stays a comfortable 40dp).
+                    // The row opts out of the 48dp minimum target, so pin the "+" at 40dp to
+                    // keep a comfortable tap area.
                     FilledTonalIconButton(
                         onClick = { adding = true },
                         modifier = Modifier.size(40.dp),
@@ -185,8 +177,7 @@ fun TagChipRow(
                 keyboardActions = KeyboardActions(onDone = { commit(draft) }),
             )
 
-            // Type-to-filter picker. Prefix-match against the (pre-ranked)
-            // suggestions, excluding tags already applied; keep the given order.
+            // Prefix-match the suggestions in the given order, leaving out applied tags.
             val prefix = draft.trim().removePrefix("#").trim()
             val matches = suggestions.filter { s ->
                 s.startsWith(prefix, ignoreCase = true) &&
@@ -220,8 +211,6 @@ fun TagChipRow(
                 }
             }
 
-            // "Create '…'" is always last, offered for any non-blank name that
-            // isn't already an existing suggestion. Committing validates it.
             if (prefix.isNotEmpty() && !exactExists) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -248,7 +237,7 @@ fun TagChipRow(
     }
 }
 
-/** Map a tag-name rejection to its user-facing message; shared across tag entry points. */
+/** Maps a tag-name rejection to its message, for this row and the Tags settings screen. */
 internal fun CategoryNameError.toMessageRes(): Int = when (this) {
     CategoryNameError.EMPTY -> R.string.tags_empty_reject
     CategoryNameError.COMMA -> R.string.tags_comma_reject

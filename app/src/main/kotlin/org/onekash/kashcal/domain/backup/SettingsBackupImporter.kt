@@ -22,15 +22,14 @@ import javax.inject.Singleton
 private const val ICS_ACCOUNT_EMAIL = "subscriptions"
 
 /**
- * Reads a backup JSON file and either parses it or applies it to local state.
+ * Parses a backup JSON file, or applies a parsed one to local state.
  *
- * Parse step is pure: validates version, structure, and size. No DB writes occur until the
- * caller explicitly invokes `applyBackup`.
+ * [parseAndValidate] checks size, structure and version and writes nothing; nothing is written
+ * until the caller invokes [applyBackup].
  *
- * Apply step runs subscription writes inside a Room transaction, then writes preferences
- * afterwards. DataStore is a separate storage system and cannot share a Room transaction.
- * In practice DataStore writes do not fail under normal conditions; a mid-loop DataStore
- * failure leaves earlier prefs applied but all Room writes still atomic.
+ * [applyBackup] writes subscriptions and tags in one Room transaction, then all preferences in
+ * one DataStore edit. DataStore can't share a Room transaction, so a failed preference write
+ * leaves the committed Room writes in place with no preference from the bundle applied.
  */
 @Singleton
 class SettingsBackupImporter @Inject constructor(
@@ -58,10 +57,9 @@ class SettingsBackupImporter @Inject constructor(
             }
         }
 
-        // Restored feeds need the periodic refresh job armed for their intervals,
-        // otherwise a restore-to-a-new-device produces feeds that never refresh.
-        // Deliberately outside the transaction above: this reads the feeds back
-        // and talks to WorkManager, neither of which belongs in a DB transaction.
+        // Restored feeds need the periodic refresh job armed, or a restore to a new device
+        // leaves feeds that never refresh. Kept outside the transaction: it reads the feeds
+        // back and talks to WorkManager.
         if (envelope.subscriptions.isNotEmpty()) {
             icsRefreshScheduleReconciler.reconcile()
         }
@@ -94,9 +92,9 @@ class SettingsBackupImporter @Inject constructor(
         if (subscriptions.isEmpty()) return
 
         for (backup in subscriptions) {
-            // A backup file is untrusted input. isDueForSync floors this too, so the
-            // refresh path is safe either way; coercing on the way in keeps the stored
-            // value one the settings UI can render as a real choice.
+            // A backup file is untrusted input. isDueForSync floors the interval too, so
+            // refresh is safe either way; flooring here also keeps a 0 or negative interval
+            // out of storage.
             val syncIntervalHours = backup.syncIntervalHours
                 .coerceAtLeast(IcsSubscription.MIN_SYNC_INTERVAL_HOURS)
             val existing = icsSubscriptionsDao.getByUrl(backup.url)
@@ -113,8 +111,8 @@ class SettingsBackupImporter @Inject constructor(
                 counts.subscriptionsUpdated++
             } else {
                 val icsAccountId = ensureIcsAccountExists()
-                // Reuse a calendar row already present for this URL — may pre-exist on the
-                // device. Creating a duplicate would violate the unique index on caldav_url.
+                // Reuse a calendar row already present for this URL: a duplicate would violate
+                // the unique index on caldav_url.
                 val calendarId = calendarRepository.getCalendarByUrl(backup.url)?.id
                     ?: calendarRepository.createCalendar(
                         Calendar(
@@ -165,10 +163,9 @@ class SettingsBackupImporter @Inject constructor(
         }
         if (decoded.isEmpty()) return 0
 
-        // Sanitize share-availability values across the whole bundle before writing,
-        // so a malformed backup can't persist values that would crash the sheet on
-        // first open. Cross-field constraints (window >= 60 min) require knowing
-        // both endpoints, so we resolve them together.
+        // Sanitize share-availability values before writing, so a malformed backup can't
+        // store values that would crash the sheet on first open. The window must be at least
+        // 60 minutes, so both endpoints are resolved together.
         val byName = decoded.associate { it.first.name to it.second }
         val rawStart = (byName[PreferencesKeys.SHARE_AVAILABILITY_WORK_START_MIN.name] as? Int)
             ?: KashCalDataStore.SHARE_AVAILABILITY_DEFAULT_WORK_START_MIN

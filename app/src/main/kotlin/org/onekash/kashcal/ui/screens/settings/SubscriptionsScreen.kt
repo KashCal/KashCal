@@ -37,22 +37,15 @@ import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.theme.KashCalTheme
 
 /**
- * Subscriptions detail screen.
+ * Shows the ICS subscriptions detail screen.
  *
- * Dedicated screen for managing ICS calendar subscriptions.
- * Features:
- * - LazyColumn with swipeable ICS subscription items
- * - Swipe left to delete
- * - Tap to edit
- * - Add button at bottom
+ * Each subscription is a [SwipeableSubscriptionItem]: swipe to delete, tap to edit in
+ * [EditSubscriptionDialog]. Below the list, one button opens [HolidayCatalogPicker] and one
+ * opens [AddSubscriptionDialog].
  *
- * @param subscriptions List of current ICS subscriptions
- * @param onNavigateBack Callback to navigate back
- * @param onAddSubscription Callback when adding new ICS subscription
- * @param onToggleSubscription Callback when ICS subscription enabled/disabled
- * @param onDeleteSubscription Callback when ICS subscription deleted
- * @param onRefreshSubscription Callback when ICS subscription refreshed
- * @param onUpdateSubscription Callback when ICS subscription updated
+ * @param onAddSubscription called with (url, name, color) from either add path; a holiday feed
+ *   gets a random palette color.
+ * @param onUpdateSubscription called with (id, name, color, syncIntervalHours).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,19 +57,19 @@ fun SubscriptionsScreen(
     onDeleteSubscription: (Long) -> Unit,
     onRefreshSubscription: (Long) -> Unit,
     onUpdateSubscription: (Long, String, Int, Int) -> Unit,
-    // Android 17+ local-network permission plumbing for the add-subscription
-    // dialog. Defaulted so previews and pre-37 hosts render nothing.
+    // Android 17+ local-network permission wiring for the add-subscription dialog. Defaulted
+    // so previews and pre-37 hosts render nothing.
     localNetworkPermissionState: LocalNetworkPermissionState =
         LocalNetworkPermissionState.NotRequired,
     onRequestLocalNetwork: () -> Unit = {},
     onSubscriptionDialogOpened: () -> Unit = {},
 ) {
-    // State for dialogs (rememberSaveable survives config changes)
+    // rememberSaveable keeps the open dialog across configuration changes.
     var showAddDialog by rememberSaveable { mutableStateOf(false) }
     var showHolidayCatalog by rememberSaveable { mutableStateOf(false) }
     var editingSubscriptionId by rememberSaveable { mutableLongStateOf(-1L) }
 
-    // Derive editingSubscription from ID (complex objects can't be saved directly)
+    // Only the id is saveable; the subscription is looked up from it.
     val editingSubscription = remember(editingSubscriptionId, subscriptions) {
         if (editingSubscriptionId > 0) subscriptions.find { it.id == editingSubscriptionId } else null
     }
@@ -142,7 +135,6 @@ fun SubscriptionsScreen(
                 }
             }
 
-            // ADD Section
             item(key = "add_header", contentType = "section_header") {
                 Spacer(modifier = Modifier.height(16.dp))
                 SectionHeader(stringResource(R.string.subscriptions_section_add))
@@ -188,7 +180,6 @@ fun SubscriptionsScreen(
         }
     }
 
-    // Holiday calendar catalog picker
     if (showHolidayCatalog) {
         val subscribedUrls = remember(subscriptions) {
             subscriptions.mapTo(HashSet()) { it.url }
@@ -203,7 +194,6 @@ fun SubscriptionsScreen(
         )
     }
 
-    // Add subscription dialog
     if (showAddDialog) {
         AddSubscriptionDialog(
             initialUrl = null,
@@ -218,7 +208,6 @@ fun SubscriptionsScreen(
         )
     }
 
-    // Edit subscription dialog
     editingSubscription?.let { subscription ->
         EditSubscriptionDialog(
             subscription = subscription,

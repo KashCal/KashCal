@@ -5,9 +5,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pure-logic tests for [avatarColorIndex] — the deterministic
- * hash(address) % palette mapping that keeps each person's avatar colour
- * stable across the picker list and the form chips.
+ * Tests [avatarColorIndex], the canonical address's masked hash modulo the palette size that
+ * keeps each person's avatar colour stable across the picker list and the form chips, and
+ * [avatarInitials].
  */
 class AvatarColorTest {
 
@@ -46,7 +46,8 @@ class AvatarColorTest {
 
     @Test
     fun `index is non-negative even when hash is Int MIN-like`() {
-        // Guards against the abs(Int.MIN_VALUE) overflow trap.
+        // Guards against the abs(Int.MIN_VALUE) overflow trap over 200 addresses; none is
+        // chosen to hash to Int.MIN_VALUE.
         (0 until 200).forEach {
             val i = avatarColorIndex("collision-probe-$it@example.com", paletteSize = 6)
             assertTrue(i >= 0)
@@ -73,9 +74,8 @@ class AvatarColorTest {
 
     @Test
     fun `the You marker yields different initials than the person's name`() {
-        // Pins why AttendeePickChip must compute initials from the real name
-        // (initialsSource), not the visible "You" label: otherwise self's
-        // avatar would read the initial of the word "You" instead of "AC".
+        // Pins why a caller must pass AttendeePickChip the real name as initialsSource, not
+        // the visible "You" label: otherwise the user's avatar would read "Y", not "AC".
         val personInitials = avatarInitials("Alice Chen")
         val youInitials = avatarInitials("You")
         assertEquals("AC", personInitials)

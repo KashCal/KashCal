@@ -10,17 +10,13 @@ import org.junit.Test
 import org.onekash.kashcal.ui.viewmodels.EditScope
 
 /**
- * Unit tests for the [ScopeOption] data class and the [ScopeTint]
- * enum that drive [RecurringScopeSheet] rendering. The sheet itself
- * is a thin Composable that maps the option list to cards; its
- * rendering is exercised by Compose previews. The interesting state —
- * which scopes are enabled, which tint applies, which icon — is data
- * that lives on [ScopeOption].
+ * Tests the data behind [RecurringScopeSheet]: [ScopeOption]'s default tint and fields, the
+ * [ScopeTint] and [EditScope] entries, and [scopeOptionTap]. The sheet maps the options to
+ * cards and isn't rendered here; which scope is enabled, its tint and its icon live on
+ * [ScopeOption].
  *
- * The tinting decisions reflect the design: edit's "All events" gets
- * Warn (subtle visual brake), delete's "All events" gets Destructive
- * (genuinely removes data). Disabled cards stay visible at reduced
- * opacity — no explanatory sub-copy is rendered.
+ * Which option gets which tint is documented on [ScopeTint], and how a disabled card looks on
+ * [ScopeOption] (not asserted here).
  */
 class RecurringScopeSheetTest {
 
@@ -101,12 +97,8 @@ class RecurringScopeSheetTest {
         assertEquals(setOf("Neutral", "Warn", "Destructive"), values.toSet())
     }
 
-    // Option-tap contract: tapping a scope option commits that scope
-    // and nothing else. The host (MainActivity) is responsible for
-    // dismissing the sheet by clearing the pending state — the card
-    // does NOT also fire the cancel callback. Firing both used to
-    // race a `signalFormSaveFailed` against an in-flight save and
-    // re-enable the form's Save button mid-flight.
+    // Tapping an enabled option commits its scope and nothing else; a disabled one commits
+    // nothing. Why the tap never cancels is documented on [scopeOptionTap].
 
     @Test
     fun `tapping an enabled option commits the scope`() {

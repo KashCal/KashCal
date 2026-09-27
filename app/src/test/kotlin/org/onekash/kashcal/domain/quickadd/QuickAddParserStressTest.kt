@@ -14,21 +14,28 @@ import java.time.LocalTime
 import java.util.Locale
 
 /**
- * Comprehensive stress testing for QuickAddParser — targeting open-source library release.
+ * Stress tests for [QuickAddParser.parse], with the default locale pinned to US.
  *
- * Categories:
- *  1. Combinatorial: every date type x every time type x location x duration x recurrence
- *  2. Rule priority conflicts: overlapping signals that could confuse the parser
- *  3. Token boundary: inputs that straddle tokenizer classification edges
- *  4. Regression: specific failure patterns found during evaluation
- *  5. Permutation: same semantics in different word orders
- *  6. Locale-sensitive ambiguity: M/D vs D/M, 12h vs 24h
- *  7. Normalizer stress: unusual character sequences, number words at limits
- *  8. Reference time sensitivity: midnight, noon, year boundary, DST-adjacent
- *  9. Duration edge cases: overflow, cross-midnight, combined with ranges
- * 10. Recurrence exhaustive: all FREQ types, intervals, BYDAY combos
- * 11. Multi-feature sentences: complex real-world inputs combining 4-5 features
- * 12. Fuzz-inspired: random-looking patterns that exercise corner cases
+ * Sections:
+ *  1. Combinatorial: each date source with each time format
+ *  2. Rule priority conflicts: overlapping signals
+ *  3. Token boundary: inputs on the tokenizer's classification edges
+ *  4. Permutation: the same meaning in different word orders
+ *  5. Locale-sensitive ambiguity: M/D vs D/M, ISO, dots, two-digit years
+ *  6. Normalizer stress: number words, case, preserved characters, scripts
+ *  7. Reference time sensitivity: midnight, noon, weekend references, year boundary, leap day,
+ *     same-month dates
+ *  8. Duration edge cases: past midnight, decimals, no start time, with a time range, "for" as
+ *     a preposition
+ *  9. Recurrence: keywords, "every" + unit, weekdays, intervals
+ * 10. Multi-feature sentences combining several features
+ * 11. Time ranges
+ * 12. Title extraction
+ * 13. Fuzz-inspired corner cases
+ * 14. isAllDay and confidence
+ * 15. Performance
+ * 16. Regression: abbreviations, typos, dotted meridiems, "may", this vs next
+ * 17. Crash resistance
  */
 class QuickAddParserStressTest {
 
@@ -52,8 +59,7 @@ class QuickAddParserStressTest {
         QuickAddParser.parse(input, reference)
 
     // ════════════════════════════════════════════════════════════
-    //  1. COMBINATORIAL: date type x time type
-    //     Exhaustively combine each date source with each time source
+    //  1. Combinatorial: each date source with each time format
     // ════════════════════════════════════════════════════════════
 
     // --- Date keyword + each time format ---
@@ -178,17 +184,17 @@ class QuickAddParserStressTest {
     fun `in 3 days + time — time overrides offset time`() {
         val r = parse("in 3 days at 5pm")
         assertEquals(LocalDate.of(2026, 4, 16), r.startDate)
-        // Explicit time overrides: context.time (5pm) > relativeDateTime time
+        // context.time (5pm) wins over relativeDateTime's time in ParseContext.resolveTime.
         assertEquals(LocalTime.of(17, 0), r.startTime)
     }
 
     // ════════════════════════════════════════════════════════════
-    //  2. RULE PRIORITY CONFLICTS
+    //  2. Rule priority conflicts
     // ════════════════════════════════════════════════════════════
 
     @Test
     fun `absolute date wins over weekday and date keyword`() {
-        // absoluteDate > weekdayDate > dateKeywordDate
+        // ParseContext.resolveDate order: absoluteDate, then weekdayDate, then dateKeywordDate.
         val r = parse("tomorrow friday January 15")
         assertEquals(LocalDate.of(2027, 1, 15), r.startDate) // absolute wins
     }
@@ -196,22 +202,21 @@ class QuickAddParserStressTest {
     @Test
     fun `weekday wins over date keyword`() {
         val r = parse("tomorrow friday")
-        assertEquals(LocalDate.of(2026, 4, 17), r.startDate) // friday (weekday) wins over tomorrow (keyword)
+        assertEquals(LocalDate.of(2026, 4, 17), r.startDate) // the weekday wins over "tomorrow"
     }
 
     @Test
     fun `relative offset wins over date keyword`() {
-        // relativeDateTime > dateKeywordDate
         val r = parse("in 2 hours tomorrow")
-        // relativeDateTime from "in 2 hours" is set, dateKeywordDate from "tomorrow" is also set
-        // Priority: relativeDateTime > dateKeywordDate
+        // "in 2 hours" sets relativeDateTime and "tomorrow" sets dateKeywordDate;
+        // ParseContext.resolveDate takes relativeDateTime first.
         assertEquals(ref.toLocalDate(), r.startDate) // today (offset)
         assertEquals(LocalTime.of(12, 0), r.startTime) // 10:00 + 2h
     }
 
     @Test
     fun `absolute date wins over relative offset`() {
-        // absoluteDate > relativeDateTime
+        // ParseContext.resolveDate takes absoluteDate before relativeDateTime.
         val r = parse("January 15 in 2 hours")
         assertEquals(LocalDate.of(2027, 1, 15), r.startDate) // absolute wins
     }
@@ -230,17 +235,15 @@ class QuickAddParserStressTest {
 
     @Test
     fun `structured date wins over absolute date when both parseable`() {
-        // AbsoluteDateRule runs before StructuredDateRule in pipeline,
-        // but if absolute consumes the month/number, structured won't fire
+        // Both rules write absoluteDate. AbsoluteDateRule sets January 20; StructuredDateRule
+        // runs later and overwrites it with "1/15" (M/D: Jan 15).
         val r = parse("1/15 January 20")
-        // "1/15" parsed as structured date (M/D: Jan 15), "January 20" as absolute
-        // absoluteDate overwrites structured because AbsoluteDateRule sets absoluteDate
-        // and StructuredDateRule also sets absoluteDate — last writer wins
+        // Only that some date comes back is asserted.
         assertNotNull(r.startDate)
     }
 
     // ════════════════════════════════════════════════════════════
-    //  3. TOKEN BOUNDARY: edge cases in tokenizer classification
+    //  3. Token boundary: edges of the tokenizer's classification
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -285,14 +288,14 @@ class QuickAddParserStressTest {
     @Test
     fun `year 3000 — above yearRegex range`() {
         val r = parse("January 1 3000")
-        // "3000" doesn't match yearRegex [12]\d{3}, treated as number
+        // "3000" doesn't match yearRegex [12]\d{3}, so it is a plain number.
         assertNotNull(r)
     }
 
     @Test
     fun `ordinal 0th — zero ordinal falls through`() {
         val r = parse("0th of march")
-        // Day 0 is invalid
+        // Day 0 doesn't exist.
         assertEquals(ref.toLocalDate(), r.startDate)
     }
 
@@ -333,7 +336,7 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    //  4. PERMUTATION: same semantics, different word orders
+    //  4. Permutation: the same meaning in different word orders
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -384,7 +387,7 @@ class QuickAddParserStressTest {
         assertEquals(LocalTime.of(15, 0), r.startTime)
     }
 
-    // All 6 permutations of {title, date, time} should produce the same result
+    // All 6 orders of title, date and time give the same result.
     @Test
     fun `all 6 permutations produce same date and time`() {
         val permutations = listOf(
@@ -404,26 +407,26 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    //  5. LOCALE-SENSITIVE AMBIGUITY (M/D vs D/M)
+    //  5. Locale-sensitive ambiguity (M/D vs D/M)
     // ════════════════════════════════════════════════════════════
 
     @Test
     fun `ambiguous date 6 slash 7 — US default M slash D`() {
-        // Both 6 and 7 are <= 12, so US default: month=6, day=7
+        // Neither part is over 12, so the US locale's month-first order applies: month 6, day 7.
         val r = parse("6/7")
         assertEquals(LocalDate.of(2026, 6, 7), r.startDate)
     }
 
     @Test
     fun `unambiguous 13 slash 7 — must be D slash M`() {
-        // 13 > 12, so day=13, month=7
+        // 13 can't be a month, so it is the day: day 13, month 7.
         val r = parse("13/7")
         assertEquals(LocalDate.of(2026, 7, 13), r.startDate)
     }
 
     @Test
     fun `unambiguous 7 slash 13 — must be M slash D`() {
-        // Both values: 7 <= 12, but 13 > 12 for day. M/D: month=7, day=13
+        // 13 can't be a month, so 7 is the month: month 7, day 13.
         val r = parse("7/13")
         assertEquals(LocalDate.of(2026, 7, 13), r.startDate)
     }
@@ -471,7 +474,7 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    //  6. NORMALIZER STRESS
+    //  6. Normalizer stress
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -567,7 +570,7 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    //  7. REFERENCE TIME SENSITIVITY
+    //  7. Reference time sensitivity
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -630,7 +633,7 @@ class QuickAddParserStressTest {
 
     @Test
     fun `future biased — same month earlier day wraps to next year`() {
-        // Ref is April 13. "April 5" is past → wraps to next year
+        // The reference is April 13, so "April 5" is past and moves to next year.
         assertEquals(LocalDate.of(2027, 4, 5), parse("April 5").startDate)
     }
 
@@ -641,7 +644,7 @@ class QuickAddParserStressTest {
 
     @Test
     fun `future biased — same month same day wraps to next year`() {
-        // Ref is April 13. "April 13" is today, which is NOT before ref. isBefore is false, so stays.
+        // The reference is April 13. "April 13" isn't before it, so it stays this year.
         assertEquals(LocalDate.of(2026, 4, 13), parse("April 13").startDate)
     }
 
@@ -652,14 +655,14 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    //  8. DURATION EDGE CASES
+    //  8. Duration edge cases
     // ════════════════════════════════════════════════════════════
 
     @Test
     fun `duration wraps past midnight`() {
         val r = parse("meeting at 11pm for 3 hours")
         assertEquals(LocalTime.of(23, 0), r.startTime)
-        // 23:00 + 3h = 02:00 (next day, wraps via LocalTime.plusMinutes)
+        // 23:00 plus 3h is 02:00; LocalTime.plusMinutes wraps past midnight.
         assertEquals(LocalTime.of(2, 0), r.endTime)
     }
 
@@ -673,19 +676,17 @@ class QuickAddParserStressTest {
     @Test
     fun `duration with no prior start time uses reference`() {
         val r = parse("meeting for 90 minutes")
-        // reference is 10:00, endTime = 10:00 + 90m = 11:30
+        // The reference time, 10:00, is the start: 10:00 plus 90m is 11:30.
         assertEquals(LocalTime.of(11, 30), r.endTime)
     }
 
     @Test
     fun `duration combined with time range — range takes priority as first match`() {
         val r = parse("meeting 2-3pm for 2 hours")
-        // Time range sets start=2pm, end=3pm
-        // Duration would set endTime relative to start, but time range already consumed
+        // The time range sets the start to 2pm and the end to 3pm.
         assertEquals(LocalTime.of(14, 0), r.startTime)
-        // DurationRule sees existing context.endTime? No — it overwrites unconditionally
-        // Actually: TimeRule runs before DurationRule, sets endTime=3pm.
-        // DurationRule then sets endTime=2pm+120min=4pm, overwriting.
+        // DurationRule runs after TimeRule and overwrites endTime unconditionally, with 2pm
+        // plus 120 minutes (4pm, not asserted here).
         assertNotNull(r.endTime)
     }
 
@@ -706,7 +707,7 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    //  9. RECURRENCE EXHAUSTIVE
+    //  9. Recurrence
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -838,7 +839,7 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 10. MULTI-FEATURE SENTENCES (real-world complexity)
+    // 10. Multi-feature sentences
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -903,7 +904,7 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 11. TIME RANGE EXHAUSTIVE
+    // 11. Time ranges
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -916,7 +917,7 @@ class QuickAddParserStressTest {
     @Test
     fun `time range 9-5pm — start infers AM when PM would exceed end`() {
         val r = parse("work 9-5pm")
-        // Start has no meridiem — inheriting PM would give 21:00 > 17:00, so flip to AM
+        // The start has no meridiem; taking PM would put 21:00 after 17:00, so it takes AM.
         assertEquals(LocalTime.of(9, 0), r.startTime)
         assertEquals(LocalTime.of(17, 0), r.endTime)
     }
@@ -957,7 +958,7 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 12. TITLE EXTRACTION UNDER STRESS
+    // 12. Title extraction
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -1010,14 +1011,14 @@ class QuickAddParserStressTest {
 
     @Test
     fun `title extraction with interleaved consumed tokens`() {
-        // "at" between two content words — middle "at" is a keyword
+        // TimeRule consumes the "at" before 3pm.
         val r = parse("look at this tomorrow at 3pm")
         assertTrue(r.title.contains("look"))
-        // "at" and "this" are keywords, filtered by dropWhile/dropLastWhile
+        // LocationRule takes the first "at" and "this" as the location (not asserted here).
     }
 
     // ════════════════════════════════════════════════════════════
-    // 13. FUZZ-INSPIRED (corner cases that exercise edge logic)
+    // 13. Fuzz-inspired corner cases
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -1029,7 +1030,7 @@ class QuickAddParserStressTest {
 
     @Test
     fun `number followed by every time unit`() {
-        // "5 seconds", "5 minutes", ..., "5 years" — all valid offset targets
+        // Every unit from seconds to years is a valid offset unit.
         val units = listOf("seconds", "minutes", "hours", "days", "weeks", "months", "years")
         for (u in units) {
             val r = parse("in 5 $u")
@@ -1040,9 +1041,9 @@ class QuickAddParserStressTest {
 
     @Test
     fun `date keyword immediately followed by time`() {
-        // No space between keyword area — handled by normalization
+        // No space between the date keyword and the time.
         val r = parse("tomorrow3pm")
-        // After normalization "tomorrow3pm" → single token. Tokenizer sees UNKNOWN.
+        // Normalization doesn't split "tomorrow3pm", so it is one UNKNOWN token.
         assertNotNull(r)
     }
 
@@ -1082,10 +1083,10 @@ class QuickAddParserStressTest {
 
     @Test
     fun `input with only location`() {
-        // "at Central Park" — no time, no date
+        // No time and no date.
         val r = parse("at Central Park")
-        // "at" is the only AT, TimeRule doesn't consume it (Central is UNKNOWN, not TIME)
-        // LocationRule claims it
+        // TimeRule leaves the only "at" alone ("Central" is UNKNOWN, not TIME), so
+        // LocationRule takes it.
         assertEquals("Central Park", r.location)
     }
 
@@ -1105,8 +1106,8 @@ class QuickAddParserStressTest {
         )
         for (m in months) {
             val r = parse("$m meeting")
-            // Month alone (no day number) should not crash.
-            // AbsoluteDateRule requires MONTH + NUMBER, so month alone is unconsumed.
+            // A month without a day doesn't crash. AbsoluteDateRule needs a NUMBER beside the
+            // MONTH, so the month stays unconsumed.
             assertNotNull("Crashed on: $m meeting", r)
         }
     }
@@ -1130,32 +1131,32 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 14. ISALLDAY AND CONFIDENCE EXHAUSTIVE
+    // 14. isAllDay and confidence
     // ════════════════════════════════════════════════════════════
 
     @Test
     fun `isAllDay matrix`() {
-        // date only → all day
+        // A date only is all-day.
         assertTrue(parse("tomorrow").isAllDay)
         assertTrue(parse("friday").isAllDay)
         assertTrue(parse("january 15").isAllDay)
         assertTrue(parse("2027-01-15").isAllDay)
         assertTrue(parse("in 3 days").isAllDay) // day offset doesn't set time
 
-        // time present → not all day
+        // A time makes it timed.
         assertEquals(false, parse("tomorrow at 3pm").isAllDay)
         assertEquals(false, parse("in 30 minutes").isAllDay)
         assertEquals(false, parse("meeting at noon").isAllDay)
         assertEquals(false, parse("2-3pm").isAllDay)
 
-        // nothing → all day (no startTime means isAllDay)
+        // No date and no time is all-day too: isAllDay means no startTime.
         assertTrue(parse("meeting").isAllDay)
         assertTrue(parse("hello world").isAllDay)
     }
 
     @Test
     fun `confidence matrix`() {
-        // HIGH: date + time
+        // HIGH: date and time
         assertEquals(ParseConfidence.HIGH, parse("tomorrow at 3pm").confidence)
         assertEquals(ParseConfidence.HIGH, parse("friday at noon").confidence)
         assertEquals(ParseConfidence.HIGH, parse("in 30 minutes").confidence)
@@ -1178,7 +1179,7 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 15. PERFORMANCE
+    // 15. Performance
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -1202,7 +1203,7 @@ class QuickAddParserStressTest {
         }
         val elapsed = (System.nanoTime() - start) / 1_000_000
 
-        // 8000 parses should complete in well under 5 seconds
+        // 8000 parses (1000 rounds of 8 inputs) in under 5 seconds.
         assertTrue("8000 parses took ${elapsed}ms, expected < 5000ms", elapsed < 5000)
     }
 
@@ -1220,12 +1221,12 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 16. REGRESSION: specific edge cases that could easily break
+    // 16. Regression: edge cases that break easily
     // ════════════════════════════════════════════════════════════
 
     @Test
     fun `may as month not confused with may as verb`() {
-        // "may 5" should parse as May 5th
+        // "may 5" parses as May 5.
         val r = parse("event may 5")
         assertEquals(LocalDate.of(2026, 5, 5), r.startDate)
     }
@@ -1341,7 +1342,7 @@ class QuickAddParserStressTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 17. CRASH RESISTANCE EXPANDED
+    // 17. Crash resistance
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -1397,7 +1398,7 @@ class QuickAddParserStressTest {
 
     @Test
     fun `unicode stress — RTL, combining marks, surrogate pairs`() {
-        // All inputs use "tomorrow" so date is consistently April 14
+        // Every input has "tomorrow", so the date is always April 14.
         listOf(
             "مراجعة tomorrow at 3pm",      // Arabic
             "रिव्यू tomorrow",              // Hindi
@@ -1424,7 +1425,7 @@ class QuickAddParserStressTest {
 
     @Test
     fun `negative numbers in input do not crash`() {
-        // After normalization, "-5" may become separate tokens
+        // Character cleanup keeps "-", so "-5" stays one token.
         val r = parse("meeting -5 tomorrow")
         assertNotNull(r)
         assertEquals(LocalDate.of(2026, 4, 14), r.startDate)

@@ -10,24 +10,20 @@ import org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper
 private const val TAG = "IcsParserService"
 
 /**
- * ICS subscription parser service using the icaldav library.
+ * Parses ICS subscription feeds and imported ICS files with the icaldav [ICalParser], which
+ * includes exception events (RECURRENCE-ID).
  *
- * Replaces the custom RfcIcsParser with the production-tested ICalParser
- * from the icaldav library. This provides:
- * - Better RFC 5545 compliance
- * - Exception event (RECURRENCE-ID) support
- * - Reduced maintenance burden
- *
- * Note: CANCELLED events are filtered to match previous RfcIcsParser behavior.
- * ICS subscriptions are read-only, so cancelled events should not appear.
+ * CANCELLED events are dropped: ICS subscriptions are read-only, so cancelled events should not
+ * appear.
  */
 object IcsParserService {
 
     private val parser = ICalParser()
 
     /**
-     * Validate ICS content structure.
-     * Returns true if content appears to be valid ICS format.
+     * Returns true if [content] has a VCALENDAR wrapper and at least one VEVENT or VTODO.
+     *
+     * A substring check only; it doesn't parse.
      */
     fun isValidIcs(content: String): Boolean {
         return content.contains("BEGIN:VCALENDAR") &&
@@ -36,12 +32,11 @@ object IcsParserService {
     }
 
     /**
-     * Parse ICS content into a list of events.
+     * Parses [content] into events, without CANCELLED ones; returns an empty list if parsing fails.
      *
-     * @param content Raw ICS file content
-     * @param calendarId Calendar ID to assign to parsed events
-     * @param subscriptionId ICS subscription ID (for source tracking)
-     * @return List of parsed events (CANCELLED events are filtered out)
+     * @param calendarId assigned to every parsed event.
+     * @param subscriptionId builds each event's `caldavUrl` source key
+     *   ([IcsSubscription.eventSourcePrefix] plus the event's import id).
      */
     fun parseIcsContent(
         content: String,
@@ -54,13 +49,9 @@ object IcsParserService {
                 val events = result.value
                     .filter { it.status.toICalString() != "CANCELLED" }
                     .map { icalEvent ->
-                        // Extract just the Event from MappedEntity. Attendees on
-                        // ICS-imported events are deferred to a follow-up: this
-                        // service is consumed by ICS subscriptions (read-only
-                        // feeds) and one-shot file imports (SettingsActivity,
-                        // MainActivity). Persistence pipeline accepts Event
-                        // today; attendee wire-up requires changing those
-                        // pipelines too. Deferred follow-up.
+                        // Attendees are dropped: the callers (ICS subscriptions and the
+                        // file imports in SettingsRoute and MainActivity) persist Event
+                        // only, so keeping attendees means changing those pipelines too.
                         ICalEventMapper.toEntity(
                             icalEvent = icalEvent,
                             rawIcal = null,
@@ -80,12 +71,10 @@ object IcsParserService {
     }
 
     /**
-     * Get the calendar name from ICS content.
+     * Returns the calendar name from [content], or null if it doesn't parse or has none.
      *
-     * Prefers RFC 7986 NAME over X-WR-CALNAME (via ICalCalendar.effectiveName),
-     * falling back to PRODID when neither is set.
-     *
-     * Note: This method is only used in tests, not in production code.
+     * Prefers RFC 7986 NAME over X-WR-CALNAME (`ICalCalendar.effectiveName`), falling back to
+     * PRODID when neither is set. Only tests call it.
      */
     fun getCalendarName(content: String): String? {
         val calendar = parser.parse(content).getOrNull() ?: return null

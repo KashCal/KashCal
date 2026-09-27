@@ -102,7 +102,7 @@ class NormalizerTest {
     @Test
     fun `NormalizerChain strips special characters except allowed`() {
         val chain = NormalizerChain()
-        // Apostrophes, hyphens, slashes, colons, dots should be preserved
+        // Apostrophes, hyphens, slashes, colons and dots are kept.
         val result = chain.normalize("Doctor's re-schedule 1/15 at 3:30 15.01")
         assertEquals("doctor's re-schedule 1/15 at 3:30 15.01", result)
     }
@@ -110,7 +110,7 @@ class NormalizerTest {
     @Test
     fun `NormalizerChain applies full pipeline`() {
         val chain = NormalizerChain()
-        // Lowercase + char cleanup + number words + multi-word join
+        // Lowercasing, character cleanup, number words and the multi-word join.
         assertEquals(
             "meeting day_after_tomorrow at 15:00",
             chain.normalize("Meeting DAY AFTER TOMORROW at 15:00")
@@ -176,10 +176,9 @@ class NormalizerTest {
 
     @Test
     fun `several and dozen are not treated as fuzzy counts`() {
-        // "several"/"dozen" are deliberately NOT rewritten to numbers: a blanket
-        // substitution would corrupt ordinary titles ("a dozen eggs" → "12 eggs").
-        // ("a" → 1 is a separate, pre-existing NumberWordNormalizer rule and is not
-        // the fuzzy-count corruption guarded against here.)
+        // "several" and "dozen" stay words: a blanket substitution would corrupt ordinary
+        // titles ("a dozen eggs" to "12 eggs"). NumberWordNormalizer's separate "a" to 1 rule
+        // isn't what this guards.
         val chain = NormalizerChain()
         assertEquals("in several weeks", chain.normalize("in several weeks"))
         assertEquals("dozen", chain.normalize("dozen"))

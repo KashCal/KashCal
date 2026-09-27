@@ -14,8 +14,8 @@ object AgendaTitleMonth {
     /**
      * @param key the topmost visible list item's key, or null when the list is empty
      * @param fallback the date whose month/year is used when [key] is absent or unparseable
-     * @return (year, 0-indexed month) — 0-indexed to match [LocalDate.getMonthValue] minus one
-     *         and the ViewMode.MONTH title inputs
+     * @return (year, 0-indexed month), matching [LocalDate.getMonthValue] minus one and the
+     *         ViewMode.MONTH title inputs
      */
     fun monthYearFromItemKey(key: String?, fallback: LocalDate): Pair<Int, Int> {
         val fallbackPair = fallback.year to (fallback.monthValue - 1)

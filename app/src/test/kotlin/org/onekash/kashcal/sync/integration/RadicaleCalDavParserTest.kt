@@ -14,16 +14,11 @@ import org.onekash.kashcal.sync.parser.CalDavXmlParser
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * Parser tests for Radicale CalDAV responses.
+ * Tests calendar-list parsing on Radicale responses. Radicale, a CalDAV/CardDAV server written
+ * in Python, splits a response into several propstats (RFC 4918), as Stalwart does: 200 for the
+ * properties it has, 404 for missing optional ones. A 404 propstat must not hide the calendar.
  *
- * Radicale is a lightweight CalDAV/CardDAV server written in Python.
- * Like Stalwart, it returns multiple propstat elements per RFC 4918 -
- * 200 for supported properties, 404 for missing optional properties.
- *
- * This test verifies that the RFC 4918 multi-propstat fix also works
- * for Radicale responses.
- *
- * Run: ./gradlew app:testDebugUnitTest --tests "*RadicaleCalDavParserTest*"
+ * Run: ./gradlew app:testDebugUnitTest -Pintegration --tests "*RadicaleCalDavParserTest*"
  */
 class RadicaleCalDavParserTest {
 
@@ -61,13 +56,12 @@ class RadicaleCalDavParserTest {
         assertEquals("radicale-ctag-personal-123", calendars[0].ctag)
     }
 
-    // ==================== Bug Fix Verification ====================
+    // ==================== Multiple Propstats ====================
 
     @Test
     fun `multiple propstat with 404 detects all calendars`() {
-        // This test verifies the RFC 4918 multi-propstat fix works for Radicale
-        // PRE-FIX: This would return 0 calendars (same bug as Stalwart)
-        // POST-FIX: This should return 2 calendars
+        // calendar-color sits in a 404 propstat; a parser that took that status for the whole
+        // response would find 0 calendars.
         val xml = loadFixture("03_calendar_list_multi_propstat.xml")
 
         val calendars = xmlParser.extractCalendars(xml)
@@ -78,14 +72,12 @@ class RadicaleCalDavParserTest {
             calendars.size
         )
 
-        // Verify Personal calendar
         val personal = calendars.find { it.displayName == "Personal" }
         assertNotNull("Personal calendar should be found", personal)
         assertEquals("/testuser/personal/", personal!!.href)
         assertNull("Color should be null (404 propstat)", personal.color)
         assertEquals("8ab8def1234567890", personal.ctag)
 
-        // Verify Work calendar
         val work = calendars.find { it.displayName == "Work" }
         assertNotNull("Work calendar should be found", work)
         assertEquals("/testuser/work/", work!!.href)

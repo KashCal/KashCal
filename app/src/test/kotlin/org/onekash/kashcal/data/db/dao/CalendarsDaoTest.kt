@@ -13,9 +13,8 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Integration tests for CalendarsDao.
- *
- * Tests CRUD operations, FK constraints, and cascade deletes.
+ * Tests [CalendarsDao] CRUD, the account foreign key and its cascade delete, caldavUrl
+ * uniqueness, sort order and the provider-joined queries.
  */
 class CalendarsDaoTest : BaseDaoTest() {
 
@@ -27,7 +26,7 @@ class CalendarsDaoTest : BaseDaoTest() {
     @Before
     override fun setup() {
         super.setup()
-        // Create a parent account for FK tests
+        // The parent account every calendar's foreign key needs.
         runTest {
             testAccountId = accountsDao.insert(
                 Account(provider = AccountProvider.ICLOUD, email = "test@example.com")
@@ -109,12 +108,10 @@ class CalendarsDaoTest : BaseDaoTest() {
 
     @Test
     fun `getByAccountId returns calendars for account`() = runTest {
-        // Create second account
         val account2Id = accountsDao.insert(
             Account(provider = AccountProvider.CALDAV, email = "other@example.com")
         )
 
-        // Add calendars to both accounts
         calendarsDao.insert(createCalendar(accountId = testAccountId, displayName = "Cal 1"))
         calendarsDao.insert(createCalendar(accountId = testAccountId, displayName = "Cal 2"))
         calendarsDao.insert(createCalendar(accountId = account2Id, displayName = "Cal 3"))
@@ -241,10 +238,8 @@ class CalendarsDaoTest : BaseDaoTest() {
     fun `deleting account cascades to calendars`() = runTest {
         val calId = calendarsDao.insert(createCalendar())
 
-        // Delete parent account
         accountsDao.deleteById(testAccountId)
 
-        // Calendar should be deleted too
         assertNull(calendarsDao.getById(calId))
     }
 
@@ -271,21 +266,18 @@ class CalendarsDaoTest : BaseDaoTest() {
         assertEquals("Zebra", calendars[2].displayName)
     }
 
-    // ========== Provider-based Query Tests (Checkpoint 2 fix) ==========
+    // ========== Provider-based Query Tests ==========
 
     @Test
     fun `getCalendarsByProvider returns only matching provider`() = runTest {
-        // Create a local account
         val localAccountId = accountsDao.insert(
             Account(provider = AccountProvider.LOCAL, email = "local@device")
         )
 
-        // Create calendars for both providers
         calendarsDao.insert(createCalendar(accountId = testAccountId, displayName = "iCloud Cal 1"))
         calendarsDao.insert(createCalendar(accountId = testAccountId, displayName = "iCloud Cal 2"))
         calendarsDao.insert(createCalendar(accountId = localAccountId, displayName = "Local Cal"))
 
-        // Query by provider
         val iCloudCalendars = calendarsDao.getCalendarsByProvider("icloud").first()
         val localCalendars = calendarsDao.getCalendarsByProvider("local").first()
 
@@ -296,18 +288,15 @@ class CalendarsDaoTest : BaseDaoTest() {
 
     @Test
     fun `getCalendarCountByProvider returns correct count`() = runTest {
-        // Create a local account
         val localAccountId = accountsDao.insert(
             Account(provider = AccountProvider.LOCAL, email = "local@device")
         )
 
-        // Create calendars for both providers
         calendarsDao.insert(createCalendar(accountId = testAccountId, displayName = "iCloud Cal 1"))
         calendarsDao.insert(createCalendar(accountId = testAccountId, displayName = "iCloud Cal 2"))
         calendarsDao.insert(createCalendar(accountId = testAccountId, displayName = "iCloud Cal 3"))
         calendarsDao.insert(createCalendar(accountId = localAccountId, displayName = "Local Cal"))
 
-        // Query count by provider
         val iCloudCount = calendarsDao.getCalendarCountByProvider("icloud").first()
         val localCount = calendarsDao.getCalendarCountByProvider("local").first()
 
@@ -325,12 +314,12 @@ class CalendarsDaoTest : BaseDaoTest() {
 
     @Test
     fun `getCalendarsByProvider excludes ICS subscription calendars`() = runTest {
-        // Note: ICS subscriptions don't have an account (they're in ics_subscriptions table)
-        // This test verifies that only calendars with a proper account are counted
+        // An ICS subscription's calendar belongs to an ICS-provider account, so the provider
+        // join leaves it out of "icloud". No ICS calendar is inserted here: this checks only
+        // that the iCloud calendar is returned.
         calendarsDao.insert(createCalendar(accountId = testAccountId, displayName = "iCloud Cal"))
 
         val iCloudCalendars = calendarsDao.getCalendarsByProvider("icloud").first()
         assertEquals(1, iCloudCalendars.size)
-        // ICS subscription calendars are stored separately and won't be included
     }
 }

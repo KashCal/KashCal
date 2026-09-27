@@ -17,10 +17,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Registry for provider-specific services (quirks, credentials).
- *
- * Single lookup point for CalDAV quirks and credential providers based on AccountProvider.
- * Replaces the old CalendarProvider interface with direct enum-based routing.
+ * Looks up provider-specific services (CalDAV and CardDAV quirks, credential providers) by
+ * [AccountProvider].
  *
  * Usage:
  * ```kotlin
@@ -40,13 +38,10 @@ class ProviderRegistry @Inject constructor(
     private val caldavCredentials: CalDavCredentialProvider
 ) {
     /**
-     * Get CalDAV quirks for a provider.
+     * Returns the CalDAV quirks for [provider], or null if it doesn't use CalDAV.
      *
-     * Note: For CALDAV provider, this returns null because DefaultQuirks requires
-     * the server URL from Account.homeSetUrl. Use [getQuirksForAccount] instead.
-     *
-     * @param provider The account provider
-     * @return CalDavQuirks for the provider, or null if provider doesn't use CalDAV
+     * Also null for CALDAV: [DefaultQuirks] needs the server URL from `Account.homeSetUrl`, so
+     * use [getQuirksForAccount].
      */
     fun getQuirks(provider: AccountProvider): CalDavQuirks? = when (provider) {
         AccountProvider.LOCAL -> null
@@ -57,14 +52,12 @@ class ProviderRegistry @Inject constructor(
     }
 
     /**
-     * Get CalDAV quirks for a specific account.
+     * Returns the CalDAV quirks for [account], or null if it doesn't use CalDAV.
      *
-     * Required for CALDAV because DefaultQuirks needs the server URL from Account.homeSetUrl.
-     * For iCloud, uses the singleton ICloudQuirks which has a fixed base URL.
+     * CALDAV builds [DefaultQuirks] from `Account.homeSetUrl`; iCloud uses the singleton
+     * [ICloudQuirks], which has a fixed base URL.
      *
-     * @param account The account entity
-     * @return CalDavQuirks for the account, or null if account doesn't use CalDAV
-     * @throws IllegalStateException if CALDAV account is missing homeSetUrl
+     * @throws IllegalStateException if a CALDAV account has no homeSetUrl
      */
     fun getQuirksForAccount(account: Account): CalDavQuirks? = when (account.provider) {
         AccountProvider.LOCAL -> null
@@ -80,12 +73,12 @@ class ProviderRegistry @Inject constructor(
     }
 
     /**
-     * Get CardDAV quirks + discovery entry point for a specific account, the
-     * contact-sync analogue of [getQuirksForAccount]. iCloud starts from its fixed
-     * contacts entry host; generic CardDAV starts from the account's own home host
-     * (derived from `homeSetUrl`). Returns null for providers that don't do CardDAV
-     * or (for CardDAV-capable accounts) whose home host can't be resolved, so the
-     * caller can skip rather than start discovery from an empty URL.
+     * Returns the CardDAV quirks and discovery entry point for [account], the contact-sync
+     * analogue of [getQuirksForAccount].
+     *
+     * iCloud starts from its fixed contacts host; generic CardDAV starts from the host of
+     * `homeSetUrl`. Returns null for providers without CardDAV, and for a CALDAV account whose
+     * home host can't be resolved, so the caller skips instead of discovering from an empty URL.
      */
     fun getCardDavQuirksForAccount(account: Account): CardDavQuirks? = when (account.provider) {
         AccountProvider.LOCAL -> null
@@ -97,13 +90,12 @@ class ProviderRegistry @Inject constructor(
             val base = baseHostOf(homeSetUrl)
             when {
                 base.isBlank() -> null
-                // Zoho serves contacts from a pinned host (contacts.zoho.com) that
-                // differs from its calendar home host, so the generic "derive
-                // contacts base from the calendar host" path would target the wrong
-                // host. Selected by the SERVER host, never the login email (which can
-                // be custom/Gmail-backed). Only the verified global .com service is
-                // pinned; regional data centers stay on the generic path (see
-                // ZohoCardDavQuirks).
+                // Zoho serves contacts from a pinned host (contacts.zoho.com) that differs
+                // from its calendar home host, so deriving the contacts base from the
+                // calendar host would target the wrong host. Selected by the server host,
+                // never the login email, which can be on a custom or third-party domain.
+                // Only the verified global .com service is pinned; regional data centers
+                // stay on the generic path ([ZohoCardDavQuirks]).
                 isZohoGlobalHost(homeSetUrl) -> ZohoCardDavQuirks()
                 else -> DefaultCardDavQuirks(serverBaseUrl = base)
             }
@@ -111,9 +103,9 @@ class ProviderRegistry @Inject constructor(
     }
 
     /**
-     * Whether a server URL's host is Zoho's verified global `.com` service. Parses
-     * with [java.net.URI] so a host is compared without any `:port` (a port left on
-     * the string would fail the suffix match and misroute to generic discovery).
+     * Returns whether [serverUrl]'s host is Zoho's verified global `.com` service. Parses with
+     * [java.net.URI] so the host is compared without a `:port`, which would fail the suffix
+     * match and misroute to generic discovery.
      */
     private fun isZohoGlobalHost(serverUrl: String): Boolean {
         val host = runCatching { java.net.URI(serverUrl).host }.getOrNull()?.lowercase()
@@ -121,12 +113,7 @@ class ProviderRegistry @Inject constructor(
         return host == "zoho.com" || host.endsWith(".zoho.com")
     }
 
-    /**
-     * Get credential provider for a provider.
-     *
-     * @param provider The account provider
-     * @return CredentialProvider for the provider, or null if provider doesn't need credentials
-     */
+    /** Returns the credential provider for [provider], or null if it needs no credentials. */
     fun getCredentialProvider(provider: AccountProvider): CredentialProvider? = when (provider) {
         AccountProvider.LOCAL -> null
         AccountProvider.ICLOUD -> icloudCredentials

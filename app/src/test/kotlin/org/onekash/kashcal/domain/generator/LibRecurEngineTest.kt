@@ -5,15 +5,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Smoke tests for the pure-function `LibRecurEngine.expandToTimestamps`.
- *
- * The real regression net is the ~240 @Test methods in OccurrenceGenerator*Test
- * that exercise this engine transitively. These tests establish the public
- * signature contract and a few baseline behaviors.
+ * Smoke tests for [LibRecurEngine.expandToTimestamps], the test-only lib-recur oracle: basic
+ * expansion, empty and malformed rules, EXDATE and RDATE, and quirks (a), (b), (d) and (e).
+ * The parity tests compare it against the production [IcalDavRRuleEngine].
  */
 class LibRecurEngineTest {
 
-    // 2024-01-01 00:00:00 UTC — deterministic anchor
+    // 2024-01-01 00:00:00 UTC
     private val baseStart = 1704067200000L
     private val oneYearMs = 365L * 24 * 3600 * 1000
 
@@ -84,8 +82,8 @@ class LibRecurEngineTest {
 
     @Test
     fun `COUNT+UNTIL both present — CRITICAL quirk (b) — UNTIL stripped, COUNT wins`() {
-        // Per lib-recur, COUNT+UNTIL both present yields 0 occurrences without sanitization.
-        // OccurrenceGenerator strips UNTIL when COUNT is present.
+        // lib-recur rejects a rule with both, which would expand to nothing, so the engine
+        // strips UNTIL when COUNT is present.
         val result = LibRecurEngine.expandToTimestamps(
             rrule = "FREQ=DAILY;COUNT=3;UNTIL=20241231T000000Z",
             dtstartMs = baseStart,
@@ -96,7 +94,7 @@ class LibRecurEngineTest {
             rdateStrings = null,
             exdateStrings = null
         )
-        // Must produce 3 (from COUNT), not 0
+        // 3 from COUNT, not 0.
         assertEquals(3, result.size)
     }
 
@@ -136,8 +134,8 @@ class LibRecurEngineTest {
 
     @Test
     fun `all-day event — CRITICAL quirk (a) — uses UTC regardless of timezone`() {
-        // All-day events stored as UTC midnight. If timezone were respected,
-        // a timezone west of UTC would shift dates backward.
+        // All-day events are stored at UTC midnight; honoring a zone west of UTC would shift
+        // dates back a day.
         val result = LibRecurEngine.expandToTimestamps(
             rrule = "FREQ=DAILY;COUNT=3",
             dtstartMs = baseStart,
@@ -149,32 +147,32 @@ class LibRecurEngineTest {
             exdateStrings = null
         )
         assertEquals(3, result.size)
-        // First occurrence must be UTC-midnight-aligned, not shifted by LA offset
+        // The first occurrence is at UTC midnight, not shifted by the Los Angeles offset.
         assertEquals(baseStart, result[0])
     }
 
     @Test
     fun `MAX_ITERATIONS safety — CRITICAL quirk (e) — unbounded rule is capped`() {
         val result = LibRecurEngine.expandToTimestamps(
-            rrule = "FREQ=SECONDLY", // no COUNT, no UNTIL — would be infinite
+            rrule = "FREQ=SECONDLY", // No COUNT or UNTIL: unbounded
             dtstartMs = baseStart,
             rangeStartMs = baseStart,
-            rangeEndMs = baseStart + oneYearMs, // 1yr window of SECONDLY = >31M iterations if uncapped
+            // A year of SECONDLY is over 31M iterations uncapped.
+            rangeEndMs = baseStart + oneYearMs,
             timezone = "UTC",
             isAllDay = false,
             rdateStrings = null,
             exdateStrings = null
         )
-        // Must not hang. Must return <= MAX_ITERATIONS (10,000) results.
+        // Must not hang, and returns at most MAX_ITERATIONS (10,000) results.
         assertTrue("Result size should be bounded by MAX_ITERATIONS", result.size <= 10_000)
     }
 
     @Test
     fun `FastForwarded boundary — CRITICAL quirk (d) — range far after DTSTART`() {
-        // Range starts 2 years after DTSTART. Without FastForwarded, lib-recur would
-        // iterate every daily occurrence from DTSTART to range start. With FastForwarded,
-        // it seeks to ~30 days before range start.
-        // We only verify: correct number of occurrences in the range, no crash.
+        // The range starts 2 years after DTSTART. Without FastForwarded, lib-recur would
+        // iterate every daily occurrence up to the range start; with it, iteration starts 30
+        // days before. Asserts only the count and bounds in the range, and no crash.
         val rangeStart = baseStart + 2L * 365 * 86400 * 1000
         val rangeEnd = rangeStart + 10L * 86400 * 1000
         val result = LibRecurEngine.expandToTimestamps(
@@ -188,9 +186,9 @@ class LibRecurEngineTest {
             exdateStrings = null
         )
         assertEquals(10, result.size)
-        // First occurrence at rangeStart or after
+        // The first occurrence is at or after rangeStart.
         assertTrue(result.first() >= rangeStart)
-        // Last occurrence before rangeEnd
+        // The last occurrence is before rangeEnd.
         assertTrue(result.last() < rangeEnd)
     }
 }

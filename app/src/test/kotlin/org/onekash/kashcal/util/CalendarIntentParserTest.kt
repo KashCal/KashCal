@@ -15,14 +15,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for CalendarIntentParser.
- *
- * Tests verify:
- * - Intent detection (isCalendarInsertIntent)
- * - Intent parsing (all CalendarContract extras)
- * - Edge cases (missing fields, invalid values)
- * - CalendarIntentData helper methods (invitees formatting)
- * - CalendarContract content URI parsing (VIEW/EDIT intents from launchers)
+ * Tests [CalendarIntentParser]:
+ * - insert/edit intent detection (`isCalendarInsertIntent`) by action, MIME type and data URI
+ * - `parse` of the CalendarContract extras, with missing fields and invalid values
+ * - `CalendarIntentData.getDescriptionWithInvitees`
+ * - VIEW/EDIT content URI detection (`isCalendarContractIntent`) and
+ *   `parseCalendarContractUri`: go to a date, create an event, open a device event, or fall
+ *   back to opening the app
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -125,8 +124,8 @@ class CalendarIntentParserTest {
 
     @Test
     fun `isCalendarInsertIntent returns true for ACTION_INSERT with CalendarContract data URI`() {
-        // Standard Android pattern: Intent(ACTION_INSERT).setData(Events.CONTENT_URI)
-        // setData() clears type, so intent.type is null — must match via URI
+        // Standard Android pattern: Intent(ACTION_INSERT).setData(Events.CONTENT_URI).
+        // setData() clears the type, so intent.type is null and the match must use the URI.
         val intent = Intent(Intent.ACTION_INSERT).apply {
             data = CalendarContract.Events.CONTENT_URI
         }
@@ -455,8 +454,8 @@ class CalendarIntentParserTest {
 
     @Test
     fun `parse returns CalendarIntentData for ACTION_EDIT with CalendarContract URI and no extras`() {
-        // Behavior change: previously fell through to parseCalendarContractUri → OpenApp
-        // Now parse() catches it → blank event form (better UX)
+        // parse() takes this intent, so it opens a blank event form instead of reaching
+        // parseCalendarContractUri's OpenApp fallback.
         val intent = Intent(Intent.ACTION_EDIT).apply {
             data = CalendarContract.Events.CONTENT_URI
         }
@@ -612,7 +611,7 @@ class CalendarIntentParserTest {
 
         assertTrue(result is CalendarContractAction.GoToDate)
         val dayCode = (result as CalendarContractAction.GoToDate).dayCode
-        // Verify dayCode is a valid YYYYMMDD (exact value depends on system timezone)
+        // Jan 4 or Jan 5, depending on the host timezone.
         assertTrue("dayCode $dayCode should be 8 digits", dayCode in 20240104..20240105)
     }
 
@@ -677,7 +676,8 @@ class CalendarIntentParserTest {
 
     @Test
     fun `parseCalendarContractUri returns OpenApp for time path with empty millis segment`() {
-        // content://com.android.calendar/time/ — trailing slash creates empty second segment
+        // The trailing slash in content://com.android.calendar/time/ creates an empty second
+        // segment.
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse("content://com.android.calendar/time/")
         }
@@ -689,7 +689,7 @@ class CalendarIntentParserTest {
 
     @Test
     fun `parseCalendarContractUri clamps extreme millis to reasonable range`() {
-        // Year 292278994 millis - should be clamped to ~year 2200
+        // Long.MAX_VALUE is in year 292278994; it is clamped to 2200-01-01 00:00 UTC.
         val extremeMillis = Long.MAX_VALUE
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse("content://com.android.calendar/time/$extremeMillis")
@@ -699,7 +699,7 @@ class CalendarIntentParserTest {
 
         assertTrue(result is CalendarContractAction.GoToDate)
         val dayCode = (result as CalendarContractAction.GoToDate).dayCode
-        // Clamped to ~year 2200, dayCode should be 2199XXXX or 2200XXXX range
+        // 21991231 or 22000101, depending on the host timezone.
         assertTrue("dayCode $dayCode should be clamped to reasonable range", dayCode < 22010000)
     }
 
@@ -808,7 +808,7 @@ class CalendarIntentParserTest {
 
     @Test
     fun `parseCalendarContractUri returns OpenApp for VIEW events with begin time (not EDIT)`() {
-        // VIEW on /events should be OpenApp even if extras are present — only EDIT creates
+        // VIEW on /events is OpenApp even with extras present; only EDIT creates an event.
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse("content://com.android.calendar/events")
             putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, 1704369600000L)
@@ -859,7 +859,8 @@ class CalendarIntentParserTest {
 
     @Test
     fun `parseCalendarContractUri OpenDeviceEvent has null begin time for zero extra`() {
-        // A zero/absent begin time must degrade to the navigate-to-date branch, not 0L.
+        // A zero begin time must give null, so MainActivity resolves the occurrence itself
+        // instead of opening one at 0L.
         val intent = Intent(Intent.ACTION_VIEW).apply {
             data = Uri.parse("content://com.android.calendar/events/789")
             putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, 0L)

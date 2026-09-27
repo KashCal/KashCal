@@ -6,6 +6,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -36,16 +37,19 @@ import org.onekash.kashcal.sync.scheduler.IcsRefreshScheduleReconciler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 
 /**
- * Comprehensive unit tests for EventCoordinator.
- *
- * Tests cover:
- * - Initialization (local calendar)
- * - Event CRUD operations
- * - Recurring event operations (edit single, edit future, delete single, delete future)
- * - Immediate sync triggers
- * - Reminder scheduling
- * - Occurrence generation delegation
- * - ICS subscription operations
+ * Tests [EventCoordinator] over mocked collaborators:
+ * - local calendar initialization
+ * - event create, update, delete and move, with the read-only, exception and end-before-start
+ *   guards
+ * - recurring edits and deletes (single occurrence, this and future)
+ * - expedited sync requests
+ * - reminder scheduling, including import defaults and saves that succeed when scheduling
+ *   throws
+ * - read, statistics, export and occurrence-generation delegation, and occurrence repair
+ * - ICS subscriptions and the refresh-schedule reconcile after each mutation
+ * - ICS file import of standalone events and linked series
+ * - RSVP replies and their reminder hooks
+ * - attendee forwarding and ORGANIZER resolution
  */
 class EventCoordinatorTest {
 
@@ -128,13 +132,12 @@ class EventCoordinatorTest {
         syncScheduler = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
-        // Relaxed is right here and only here: the reconciler is a Unit-returning
-        // side-effect collaborator, so there is no return value to get wrong.
+        // The reconciler is a Unit-returning side-effect collaborator, so a relaxed mock has
+        // no return value to get wrong.
         icsRefreshScheduleReconciler = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
-        // The user's configured default reminder. Tests use representative
-        // values (15 / 540); the production code reads whatever the user set
-        // via dataStore.defaultReminderMinutes / defaultAllDayReminder.
+        // The user's default reminders: 15 minutes for timed events, 540 for all-day ones.
+        // Production reads whatever the user set.
         every { dataStore.defaultReminderMinutes } returns flowOf(15)
         every { dataStore.defaultAllDayReminder } returns flowOf(540)
 
@@ -197,7 +200,7 @@ class EventCoordinatorTest {
         val newEvent = testEvent.copy(id = 0L)
         val createdEvent = testEvent.copy()
         coEvery { eventWriter.createEvent(any(), any()) } returns createdEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         val result = coordinator.createEvent(newEvent, localCalendarId)
 
@@ -210,7 +213,7 @@ class EventCoordinatorTest {
         val newEvent = testEvent.copy(id = 0L, calendarId = 999L) // Wrong calendar
         val createdEvent = testEvent.copy()
         coEvery { eventWriter.createEvent(any(), any()) } returns createdEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         coordinator.createEvent(newEvent, null) // No calendar specified
 
@@ -221,7 +224,7 @@ class EventCoordinatorTest {
     fun `createEvent in local calendar does not trigger sync`() = runTest {
         val newEvent = testEvent.copy(id = 0L)
         coEvery { eventWriter.createEvent(any(), any()) } returns testEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         coordinator.createEvent(newEvent, localCalendarId)
 
@@ -232,7 +235,7 @@ class EventCoordinatorTest {
     fun `createEvent in iCloud calendar triggers sync`() = runTest {
         val newEvent = testEvent.copy(id = 0L, calendarId = iCloudCalendarId)
         coEvery { eventWriter.createEvent(any(), any()) } returns newEvent.copy(id = 100L)
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         coordinator.createEvent(newEvent, iCloudCalendarId)
 
@@ -243,7 +246,7 @@ class EventCoordinatorTest {
     fun `createEvent schedules reminders when event has reminders`() = runTest {
         val eventWithReminders = testEvent.copy(reminders = listOf("-PT15M", "-PT1H"))
         coEvery { eventWriter.createEvent(any(), any()) } returns eventWithReminders
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns listOf(
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns listOf(
             Occurrence(
                 id = 1L,
                 eventId = eventWithReminders.id,
@@ -262,7 +265,7 @@ class EventCoordinatorTest {
 
     @Test
     fun `createEvent throws for read-only calendar`() = runTest {
-        // Attempt to create event on a read-only calendar (e.g., ICS subscription)
+        // A read-only calendar, such as an ICS subscription.
         val newEvent = testEvent.copy(id = 0L, calendarId = readOnlyCalendarId)
 
         try {
@@ -272,7 +275,7 @@ class EventCoordinatorTest {
             assertTrue(e.message!!.contains("read-only"))
         }
 
-        // Verify eventWriter.createEvent was NOT called
+        // The writer is never called.
         coVerify(exactly = 0) { eventWriter.createEvent(any(), any()) }
     }
 
@@ -293,7 +296,7 @@ class EventCoordinatorTest {
     @Test
     fun `createRecurringEvent delegates to createEvent`() = runTest {
         coEvery { eventWriter.createEvent(any(), any()) } returns recurringEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         val result = coordinator.createRecurringEvent(recurringEvent.copy(id = 0L))
 
@@ -304,7 +307,7 @@ class EventCoordinatorTest {
     fun `createRecurringEvent forwards attendees to the writer`() = runTest {
         val attSlot = slot<List<Attendee>>()
         coEvery { eventWriter.createEvent(any(), any(), capture(attSlot)) } answers { firstArg<Event>() }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         coordinator.createRecurringEvent(
             recurringEvent.copy(id = 0L, calendarId = iCloudCalendarId),
@@ -321,7 +324,7 @@ class EventCoordinatorTest {
     fun `updateEvent updates and triggers sync for iCloud`() = runTest {
         val updatedEvent = testEvent.copy(calendarId = iCloudCalendarId, title = "Updated")
         coEvery { eventWriter.updateEvent(any(), any()) } returns updatedEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         val result = coordinator.updateEvent(updatedEvent)
 
@@ -333,7 +336,7 @@ class EventCoordinatorTest {
     fun `updateEvent reschedules reminders`() = runTest {
         val updatedEvent = testEvent.copy(reminders = listOf("-PT30M"))
         coEvery { eventWriter.updateEvent(any(), any()) } returns updatedEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         coordinator.updateEvent(updatedEvent)
 
@@ -366,7 +369,7 @@ class EventCoordinatorTest {
         )
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
         coEvery { eventWriter.editSingleOccurrence(any(), any(), any(), any()) } returns exceptionEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         val result = coordinator.editSingleOccurrence(
             masterEventId = recurringEvent.id,
@@ -392,8 +395,8 @@ class EventCoordinatorTest {
 
     @Test
     fun `editSingleOccurrence cancels original occurrence reminders before scheduling new`() = runTest {
-        // Bug 3 fix: Editing an occurrence should cancel reminders for the original
-        // occurrence time BEFORE scheduling new reminders for the exception event
+        // The original occurrence's reminders are cancelled before the exception's are
+        // scheduled, or both fire.
         val occurrenceTime = 1704672000000L // Original occurrence time
         val exceptionEventResult = recurringEvent.copy(
             id = 200L,
@@ -421,14 +424,13 @@ class EventCoordinatorTest {
             changes = { it.copy(title = "Modified Meeting") }
         )
 
-        // Assert: Cancel is called for the ORIGINAL occurrence (master event ID + occurrence time)
+        // Cancelled for the original occurrence: master id and occurrence time.
         coVerify { reminderScheduler.cancelReminderForOccurrence(recurringEvent.id, occurrenceTime) }
 
-        // Assert: Schedule is called for the new exception event
+        // Scheduled for the exception.
         coVerify { reminderScheduler.scheduleRemindersForEvent(exceptionEventResult, any(), any()) }
 
-        // Verify order: cancel should be called before schedule
-        // MockK verifyOrder ensures methods are called in the specified order
+        // Cancel runs before schedule.
         io.mockk.coVerifyOrder {
             reminderScheduler.cancelReminderForOccurrence(recurringEvent.id, occurrenceTime)
             reminderScheduler.scheduleRemindersForEvent(exceptionEventResult, any(), any())
@@ -536,7 +538,7 @@ class EventCoordinatorTest {
 
     @Test
     fun `moveEventToCalendar moves event and triggers sync`() = runTest {
-        // Setup: Return master event (not exception) when queried
+        // A master, not an exception.
         coEvery { eventReader.getEventById(testEvent.id) } returns testEvent
 
         coordinator.moveEventToCalendar(testEvent.id, iCloudCalendarId)
@@ -797,11 +799,9 @@ class EventCoordinatorTest {
         coVerify { icsSubscriptionRepository.setSubscriptionEnabled(1L, false) }
     }
 
-    // The four mutations below are the only ways the set of enabled feeds (or a
-    // feed's interval) can change from the UI, so each one has to leave the
-    // periodic refresh job in agreement with the database. Reconciling here
-    // rather than at each caller is what makes it impossible for a mutation path
-    // to forget: the ViewModel used to own this and only did it on add.
+    // Each of the four mutations below can change the set of enabled feeds or a feed's
+    // interval, so each must leave the periodic refresh job in agreement with the database.
+    // The coordinator reconciles after the write so no caller can forget to.
 
     @Test
     fun `adding a subscription reconciles the refresh schedule`() = runTest {
@@ -822,8 +822,8 @@ class EventCoordinatorTest {
 
     @Test
     fun `a failed subscription add does not reconcile`() = runTest {
-        // Nothing was written, so there is nothing to reconcile — and re-arming
-        // on a failed add would be a scheduling call on every typo.
+        // Nothing was written, so there is nothing to reconcile; re-arming on a failed add
+        // would be a scheduling call on every typo.
         coEvery { icsSubscriptionRepository.addSubscription(any(), any(), any()) } returns
             IcsSubscriptionRepository.SubscriptionResult.Error("unreachable")
 
@@ -842,8 +842,8 @@ class EventCoordinatorTest {
 
     @Test
     fun `changing a subscription interval reconciles the refresh schedule`() = runTest {
-        // This is the path that was completely missing: the new interval was
-        // written to the database and the job kept its old period forever.
+        // Without the reconcile the new interval reaches the database and the job keeps its
+        // old period forever.
         coordinator.updateIcsSubscriptionSettings(1L, "Renamed", 0, syncIntervalHours = 1)
 
         coVerify(exactly = 1) { icsRefreshScheduleReconciler.reconcile() }
@@ -874,10 +874,7 @@ class EventCoordinatorTest {
 
     // ==================== Exception Event Guard Tests (v14.2.23) ====================
 
-    /**
-     * Exception event test data.
-     * Exception events have originalEventId pointing to master.
-     */
+    /** An exception of [recurringEvent], linked by originalEventId. */
     private val exceptionEvent = Event(
         id = 102L,
         uid = "recurring@kashcal.test", // Same UID as master (RFC 5545)
@@ -893,10 +890,8 @@ class EventCoordinatorTest {
 
     @Test
     fun `deleteEvent throws for exception event`() = runTest {
-        // Setup: Return exception event when queried
         coEvery { eventReader.getEventById(exceptionEvent.id) } returns exceptionEvent
 
-        // Act & Assert: Should throw IllegalArgumentException
         try {
             coordinator.deleteEvent(exceptionEvent.id)
             assertTrue("Should throw IllegalArgumentException", false)
@@ -905,29 +900,27 @@ class EventCoordinatorTest {
             assertTrue(e.message!!.contains("deleteSingleOccurrence"))
         }
 
-        // Verify eventWriter.deleteEvent was NOT called
+        // The writer is never called.
         coVerify(exactly = 0) { eventWriter.deleteEvent(any(), any()) }
     }
 
     @Test
     fun `deleteEvent succeeds for master event`() = runTest {
-        // Setup: Return master event (no originalEventId)
+        // A master: no originalEventId.
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
 
-        // Act
         coordinator.deleteEvent(recurringEvent.id)
 
-        // Assert: eventWriter.deleteEvent WAS called
         coVerify { eventWriter.deleteEvent(recurringEvent.id, false) }
     }
 
     @Test
     fun `moveEventToCalendar throws for exception event`() = runTest {
-        // EventWriter now handles validation and throws
+        // The writer validates the move and throws.
         coEvery { eventWriter.moveEventToCalendar(exceptionEvent.id, localCalendarId) } throws
             IllegalArgumentException("Cannot move exception event directly. Move the master event instead")
 
-        // Act & Assert: Should throw IllegalArgumentException from EventWriter
+        // The writer's exception propagates.
         try {
             coordinator.moveEventToCalendar(exceptionEvent.id, localCalendarId)
             assertTrue("Should throw IllegalArgumentException", false)
@@ -939,23 +932,21 @@ class EventCoordinatorTest {
 
     @Test
     fun `moveEventToCalendar succeeds for master event`() = runTest {
-        // Setup: Return master event (no originalEventId)
+        // A master: no originalEventId.
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
 
-        // Act
         coordinator.moveEventToCalendar(recurringEvent.id, localCalendarId)
 
-        // Assert: eventWriter.moveEventToCalendar WAS called
         coVerify { eventWriter.moveEventToCalendar(recurringEvent.id, localCalendarId) }
     }
 
     @Test
     fun `moveEventToCalendar throws for non-existent event`() = runTest {
-        // EventWriter now handles validation and throws
+        // The writer validates the move and throws.
         coEvery { eventWriter.moveEventToCalendar(999L, localCalendarId) } throws
             IllegalArgumentException("Event not found: 999")
 
-        // Act & Assert: Should throw IllegalArgumentException from EventWriter
+        // The writer's exception propagates.
         try {
             coordinator.moveEventToCalendar(999L, localCalendarId)
             assertTrue("Should throw IllegalArgumentException", false)
@@ -966,34 +957,30 @@ class EventCoordinatorTest {
 
     @Test
     fun `deleteSingleOccurrence succeeds with master ID from exception context`() = runTest {
-        // This tests the correct pattern: using masterEventId from exception.originalEventId
+        // A caller acting on an exception passes its master's id (exception.originalEventId).
         val masterEventId = exceptionEvent.originalEventId!!
         val occurrenceTime = exceptionEvent.originalInstanceTime!!
 
         coEvery { eventReader.getEventById(masterEventId) } returns recurringEvent
 
-        // Act: Use master ID (correct pattern)
         coordinator.deleteSingleOccurrence(masterEventId, occurrenceTime)
 
-        // Assert
         coVerify { eventWriter.deleteSingleOccurrence(masterEventId, occurrenceTime, false) }
     }
 
     @Test
     fun `editSingleOccurrence succeeds with master ID from exception context`() = runTest {
-        // This tests the correct pattern: using masterEventId from exception.originalEventId
+        // A caller acting on an exception passes its master's id (exception.originalEventId).
         val masterEventId = exceptionEvent.originalEventId!!
         val occurrenceTime = exceptionEvent.originalInstanceTime!!
 
         coEvery { eventReader.getEventById(masterEventId) } returns recurringEvent
         coEvery { eventWriter.editSingleOccurrence(any(), any(), any(), any()) } returns exceptionEvent
 
-        // Act: Use master ID (correct pattern)
         val result = coordinator.editSingleOccurrence(masterEventId, occurrenceTime) { event ->
             event.copy(title = "Updated Title")
         }
 
-        // Assert
         coVerify { eventWriter.editSingleOccurrence(masterEventId, occurrenceTime, any(), false) }
         assertNotNull(result)
     }
@@ -1003,8 +990,8 @@ class EventCoordinatorTest {
     @Test(expected = IllegalArgumentException::class)
     fun `createEvent throws when endTs less than startTs`() = runTest {
         val invalidEvent = testEvent.copy(
-            startTs = 1704114000000L,  // 3 PM
-            endTs = 1704110400000L     // 2 PM (before start)
+            startTs = 1704114000000L,  // 1 PM UTC
+            endTs = 1704110400000L     // Noon UTC, before start
         )
 
         coordinator.createEvent(invalidEvent)
@@ -1014,7 +1001,8 @@ class EventCoordinatorTest {
     fun `createEvent allows equal startTs and endTs - zero duration`() = runTest {
         val zeroLengthEvent = testEvent.copy(
             startTs = 1704114000000L,
-            endTs = 1704114000000L  // Same time - valid for reminders
+            // Same time: a zero-duration event, such as a reminder, is valid.
+            endTs = 1704114000000L
         )
 
         coEvery { eventWriter.createEvent(any(), any()) } returns zeroLengthEvent
@@ -1036,8 +1024,8 @@ class EventCoordinatorTest {
     @Test
     fun `updateEvent allows valid time range`() = runTest {
         val validEvent = testEvent.copy(
-            startTs = 1704114000000L,  // 3 PM
-            endTs = 1704117600000L     // 4 PM
+            startTs = 1704114000000L,  // 1 PM UTC
+            endTs = 1704117600000L     // 2 PM UTC
         )
 
         coEvery { eventReader.getCalendarById(any()) } returns localCalendar
@@ -1068,7 +1056,7 @@ class EventCoordinatorTest {
         )
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
         coEvery { eventWriter.splitSeries(any(), any(), any(), any(), any()) } returns newSeries
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(newSeries.id) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(newSeries.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
 
         coordinator.editThisAndFuture(
             masterEventId = recurringEvent.id,
@@ -1076,7 +1064,7 @@ class EventCoordinatorTest {
             changes = { it.copy(title = "New Title") }
         )
 
-        // Verify reminder scheduling was called for new series
+        // Reminders are scheduled for the new series.
         coVerify { reminderScheduler.scheduleRemindersForEvent(newSeries, any(), any()) }
     }
 
@@ -1098,7 +1086,7 @@ class EventCoordinatorTest {
         )
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
         coEvery { eventWriter.splitSeries(any(), any(), any(), any(), any()) } returns newSeries
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(newSeries.id) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(newSeries.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
 
         coordinator.editThisAndFuture(
             masterEventId = recurringEvent.id,
@@ -1106,18 +1094,15 @@ class EventCoordinatorTest {
             changes = { it.copy(title = "Renamed") }
         )
 
-        // Master-side reminders for occurrences at-or-after splitTime
-        // are now stale (those occurrences live on the new series), so
-        // the coordinator cancels them — same shape as the cancellation
-        // step in deleteThisAndFuture.
+        // The master's reminders at or after splitTime belong to the new series now, so
+        // they're cancelled, as deleteThisAndFuture cancels its own.
         coVerify { reminderScheduler.cancelRemindersForOccurrencesAfter(recurringEvent.id, splitTime) }
     }
 
     @Test
     fun `editThisAndFuture does not cancel reminders if splitSeries throws`() = runTest {
-        // Robustness: cancellation must run only after splitSeries
-        // succeeds. If the split rolls back (transactional), the master
-        // is intact and its scheduled reminders should still fire.
+        // Cancellation runs only after splitSeries succeeds: a failed split rolls back, the
+        // master is intact and its reminders must still fire.
         val splitTime = 1704672000000L
         coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
         coEvery { eventWriter.splitSeries(any(), any(), any(), any(), any()) } throws
@@ -1141,13 +1126,13 @@ class EventCoordinatorTest {
 
     @Test
     fun `importIcsEvents schedules reminders for each imported event`() = runTest {
-        // Events to import - importIcsEvents will generate new UIDs for these
+        // importIcsEvents gives each imported event a fresh UID.
         val eventsToImport = listOf(
             testEvent.copy(id = 0L, title = "Import Event 1", reminders = listOf("-PT15M")),
             testEvent.copy(id = 0L, title = "Import Event 2", reminders = listOf("-PT30M"))
         )
 
-        // Mock eventWriter to return events with IDs
+        // What the writer returns: the events with ids.
         val createdEvent1 = eventsToImport[0].copy(id = 301L, uid = "generated-1@kashcal.onekash.org")
         val createdEvent2 = eventsToImport[1].copy(id = 302L, uid = "generated-2@kashcal.onekash.org")
         val testOccurrence1 = Occurrence(
@@ -1167,27 +1152,27 @@ class EventCoordinatorTest {
             endDay = 20240101
         )
 
-        // Use answers to return different events for each call
+        // A different event for each call.
         var callCount = 0
         coEvery { eventWriter.createEvent(any(), any()) } answers {
             callCount++
             if (callCount == 1) createdEvent1 else createdEvent2
         }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent1.id) } returns listOf(testOccurrence1)
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent2.id) } returns listOf(testOccurrence2)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent1.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence1)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent2.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence2)
 
         val count = coordinator.importIcsEvents(eventsToImport, localCalendarId)
 
         assertEquals(2, count)
-        // Verify reminder scheduling was called for each imported event (exactly 2 times)
+        // Reminders are scheduled once per imported event.
         coVerify(exactly = 2) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }
 
     @Test
     fun `importIcsEvents applies user's default timed reminder when ICS has no VALARM`() = runTest {
-        // setup() stubs the user's preference at 15 minutes; ICS file
-        // omitted VALARM entirely so reminders=null reaches the import path.
-        // The point of the test is "whatever the user configured", not 15.
+        // setup() stubs the user's timed default at 15 minutes; the file has no VALARM, so
+        // reminders=null reaches the import. The test is about whatever the user configured,
+        // not 15.
         val timedEventNoReminders = testEvent.copy(
             id = 0L,
             uid = "no-reminder@test",
@@ -1205,26 +1190,25 @@ class EventCoordinatorTest {
         )
 
         coEvery { eventWriter.createEvent(any(), any()) } returns createdEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
 
         val count = coordinator.importIcsEvents(listOf(timedEventNoReminders), localCalendarId)
 
         assertEquals(1, count)
-        // Default applied: writer received an event whose reminders match the
-        // timed default formatted as ISO duration.
+        // The writer receives the timed default as an ISO duration.
         coVerify {
             eventWriter.createEvent(
                 match { it.reminders == listOf("-PT15M") },
                 any()
             )
         }
-        // Reminder scheduling fired because a default was applied.
+        // Reminders are scheduled because a default was applied.
         coVerify(exactly = 1) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }
 
     @Test
     fun `importIcsEvents applies user's default all-day reminder when ICS has no VALARM`() = runTest {
-        // setup() stubs user's all-day default at 540 minutes (9 hours before).
+        // setup() stubs the user's all-day default at 540 minutes (9 hours before).
         val allDayEventNoReminders = testEvent.copy(
             id = 0L,
             uid = "all-day-no-reminder@test",
@@ -1242,7 +1226,7 @@ class EventCoordinatorTest {
         )
 
         coEvery { eventWriter.createEvent(any(), any()) } returns createdEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
 
         coordinator.importIcsEvents(listOf(allDayEventNoReminders), localCalendarId)
 
@@ -1256,8 +1240,7 @@ class EventCoordinatorTest {
 
     @Test
     fun `importIcsEvents preserves ICS VALARM reminders and does not overwrite with default`() = runTest {
-        // ICS file already specified VALARMs (parsed into reminders). Default
-        // must NOT override what the file said.
+        // The file's VALARMs are parsed into reminders; the default must not replace them.
         val eventWithIcsReminders = testEvent.copy(
             id = 0L,
             uid = "ics-with-alarm@test",
@@ -1275,7 +1258,7 @@ class EventCoordinatorTest {
         )
 
         coEvery { eventWriter.createEvent(any(), any()) } returns createdEvent
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id) } returns listOf(testOccurrence)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(createdEvent.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
 
         coordinator.importIcsEvents(listOf(eventWithIcsReminders), localCalendarId)
 
@@ -1289,8 +1272,7 @@ class EventCoordinatorTest {
 
     @Test
     fun `importIcsEvents skips reminder scheduling when default is REMINDER_OFF`() = runTest {
-        // User explicitly disabled the default reminder. Imported events with
-        // no VALARM stay reminder-less.
+        // The user turned the default reminder off, so an event with no VALARM gets none.
         every { dataStore.defaultReminderMinutes } returns flowOf(KashCalDataStore.REMINDER_OFF)
         every { dataStore.defaultAllDayReminder } returns flowOf(KashCalDataStore.REMINDER_OFF)
 
@@ -1343,7 +1325,7 @@ class EventCoordinatorTest {
             val exs = exceptionsSlot.captured.mapIndexed { i, e -> e.copy(id = 600L + i, originalEventId = 500L) }
             EventWriter.ImportedSeries(m, exs)
         }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
         coEvery { eventReader.getOccurrenceByExceptionEventId(any()) } returns null
 
         val count = coordinator.importIcsEvents(listOf(master, exception1, exception2), localCalendarId)
@@ -1351,11 +1333,11 @@ class EventCoordinatorTest {
         assertEquals("master + 2 exceptions persisted", 3, count)
         coVerify(exactly = 1) { eventWriter.createImportedSeries(any(), any(), any()) }
         coVerify(exactly = 0) { eventWriter.createEvent(any(), any()) }
-        // One freshly generated UID, shared across master + exceptions, never the source UID.
+        // One fresh UID shared by the master and exceptions, never the source UID.
         assertNotEquals(sharedUid, seriesSlot.captured.uid)
         assertTrue(seriesSlot.captured.uid.endsWith("@kashcal.onekash.org"))
         assertTrue(exceptionsSlot.captured.all { it.uid == seriesSlot.captured.uid })
-        // Exception instance times preserved.
+        // The exceptions' instance times are kept.
         assertEquals(
             setOf(master.startTs + 7 * 86400000L, master.startTs + 14 * 86400000L),
             exceptionsSlot.captured.mapNotNull { it.originalInstanceTime }.toSet()
@@ -1364,14 +1346,14 @@ class EventCoordinatorTest {
 
     @Test
     fun `importIcsEvents imports orphan exception (no master) as standalone`() = runTest {
-        // Google truncated-window export: an override whose master fell outside
-        // the export window. Must still import, not be silently dropped.
+        // An export cut to a date window: an exception whose master fell outside the window.
+        // It must still import, not be silently dropped.
         val orphan = testEvent.copy(
             id = 0L, uid = "orphan@source.ics", title = "Orphan override",
             rrule = null, originalInstanceTime = 1704067200000L + 7 * 86400000L, reminders = null
         )
         coEvery { eventWriter.createEvent(any(), any()) } returns orphan.copy(id = 700L, uid = "new@kashcal.onekash.org")
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         val count = coordinator.importIcsEvents(listOf(orphan), localCalendarId)
 
@@ -1382,8 +1364,8 @@ class EventCoordinatorTest {
 
     @Test
     fun `importIcsEvents imports two same-UID masters as separate events with distinct UIDs`() = runTest {
-        // Google duplicate-UID quirk: two distinct non-exception VEVENTs sharing
-        // a UID. Both must import, each with its own fresh UID.
+        // An export with two distinct non-exception VEVENTs sharing a UID. Both must import,
+        // each with its own fresh UID.
         val uid = "dup@source.ics"
         val masterA = testEvent.copy(id = 0L, uid = uid, title = "A", rrule = null, originalInstanceTime = null, reminders = null)
         val masterB = testEvent.copy(id = 0L, uid = uid, title = "B", rrule = null, originalInstanceTime = null, reminders = null)
@@ -1394,7 +1376,7 @@ class EventCoordinatorTest {
             uidsSeen += e.uid
             e.copy(id = (800L + uidsSeen.size))
         }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         val count = coordinator.importIcsEvents(listOf(masterA, masterB), localCalendarId)
 
@@ -1407,14 +1389,14 @@ class EventCoordinatorTest {
 
     @Test
     fun `importIcsEvents does not form a series from a non-recurring master plus orphan exception`() = runTest {
-        // A non-recurring event sharing a UID with an orphan RECURRENCE-ID must
-        // NOT be treated as a series (no RRULE to expand). Both go standalone.
+        // A non-recurring event sharing a UID with an orphan RECURRENCE-ID isn't a series
+        // (no RRULE to expand). Both import standalone.
         val uid = "notseries@source.ics"
         val plain = testEvent.copy(id = 0L, uid = uid, title = "Plain", rrule = null, originalInstanceTime = null, reminders = null)
         val orphanEx = testEvent.copy(id = 0L, uid = uid, title = "Orphan", rrule = null, originalInstanceTime = 1704067200000L + 86400000L, reminders = null)
 
         coEvery { eventWriter.createEvent(any(), any()) } answers { firstArg<Event>().copy(id = 900L) }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         val count = coordinator.importIcsEvents(listOf(plain, orphanEx), localCalendarId)
 
@@ -1425,9 +1407,9 @@ class EventCoordinatorTest {
 
     @Test
     fun `importIcsEvents series exception with no VALARM inherits master's effective default reminders`() = runTest {
-        // setup() stubs the timed default at 15 minutes. The master had no
-        // VALARM so it takes the default; an override with no VALARM must alarm
-        // consistently with its sibling occurrences, i.e. inherit that default.
+        // setup() stubs the timed default at 15 minutes. The master has no VALARM, so it
+        // takes the default; an exception with no VALARM must alarm like its sibling
+        // occurrences, so it inherits the master's reminders.
         val sharedUid = "series-rem@source.ics"
         val master = testEvent.copy(id = 0L, uid = sharedUid, isAllDay = false, rrule = "FREQ=DAILY;COUNT=3", reminders = null, originalInstanceTime = null)
         val exception = testEvent.copy(id = 0L, uid = sharedUid, rrule = null, originalInstanceTime = master.startTs + 86400000L, reminders = null)
@@ -1439,7 +1421,7 @@ class EventCoordinatorTest {
         } answers {
             EventWriter.ImportedSeries(seriesSlot.captured.copy(id = 500L), exceptionsSlot.captured.mapIndexed { i, e -> e.copy(id = 600L + i, originalEventId = 500L) })
         }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
         coEvery { eventReader.getOccurrenceByExceptionEventId(any()) } returns null
 
         coordinator.importIcsEvents(listOf(master, exception), localCalendarId)
@@ -1460,7 +1442,7 @@ class EventCoordinatorTest {
         } answers {
             EventWriter.ImportedSeries(firstArg<Event>().copy(id = 500L), exceptionsSlot.captured.mapIndexed { i, e -> e.copy(id = 600L + i, originalEventId = 500L) })
         }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
         coEvery { eventReader.getOccurrenceByExceptionEventId(any()) } returns null
 
         coordinator.importIcsEvents(listOf(master, exception), localCalendarId)
@@ -1472,7 +1454,7 @@ class EventCoordinatorTest {
 
     @Test
     fun `cancelRemindersForAccount cancels reminders for all account calendars`() = runTest {
-        // Setup: Create test account with two calendars
+        // An account with two calendars.
         val testAccount = Account(
             id = 10L,
             provider = AccountProvider.ICLOUD,
@@ -1486,25 +1468,21 @@ class EventCoordinatorTest {
         coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, "test@icloud.com") } returns testAccount
         coEvery { eventReader.getCalendarsByAccountIdOnce(testAccount.id) } returns listOf(calendar1, calendar2)
 
-        // Act
         coordinator.cancelRemindersForAccount("test@icloud.com")
 
-        // Assert: Batch cancel called per calendar (not per event)
+        // One batch cancel per calendar, not per event.
         coVerify { reminderScheduler.cancelRemindersForCalendar(calendar1.id) }
         coVerify { reminderScheduler.cancelRemindersForCalendar(calendar2.id) }
-        // Verify old N+1 pattern NOT used
         coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
     }
 
     @Test
     fun `cancelRemindersForAccount handles non-existent account gracefully`() = runTest {
-        // Setup: No account found
         coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, "nonexistent@test.com") } returns null
 
-        // Act: Should not throw
+        // Doesn't throw and cancels nothing.
         coordinator.cancelRemindersForAccount("nonexistent@test.com")
 
-        // Assert: No reminders cancelled
         coVerify(exactly = 0) { reminderScheduler.cancelRemindersForCalendar(any()) }
     }
 
@@ -1512,7 +1490,7 @@ class EventCoordinatorTest {
 
     @Test
     fun `moveEventToCalendar reschedules reminders with new calendar color`() = runTest {
-        // Setup: Event with reminders in calendar 1
+        // An event with reminders in the local calendar.
         val eventWithReminders = testEvent.copy(
             id = 300L,
             calendarId = localCalendarId,
@@ -1521,19 +1499,17 @@ class EventCoordinatorTest {
         val targetCalendar = iCloudCalendar.copy(color = 0xFFFF0000.toInt()) // Different color
         val movedEvent = eventWithReminders.copy(calendarId = targetCalendar.id)
 
-        // First call returns event (for any pre-check), second call returns movedEvent
+        // The coordinator reads the event after the move, so this is the moved event.
         coEvery { eventReader.getEventById(eventWithReminders.id) } returns movedEvent
         coEvery { eventReader.getCalendarById(targetCalendar.id) } returns targetCalendar
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
         coEvery { eventWriter.moveEventToCalendar(eventWithReminders.id, targetCalendar.id) } returns Unit
 
-        // Act
         coordinator.moveEventToCalendar(eventWithReminders.id, targetCalendar.id)
 
-        // Assert: Move was executed
         coVerify { eventWriter.moveEventToCalendar(eventWithReminders.id, targetCalendar.id) }
 
-        // Assert: Reminders were rescheduled (cancel + schedule)
+        // Reminders are rescheduled: cancel, then schedule.
         coVerify { reminderScheduler.cancelRemindersForEvent(eventWithReminders.id) }
         coVerify { reminderScheduler.scheduleRemindersForEvent(movedEvent, any(), any()) }
     }
@@ -1547,10 +1523,9 @@ class EventCoordinatorTest {
         coEvery { eventReader.getEventById(eventToMove.id) } returns movedEvent
         coEvery { reminderScheduler.cancelRemindersForEvent(any()) } throws RuntimeException("DB locked")
 
-        // Should NOT throw — reminder failure must not break the move operation
+        // A reminder failure must not fail the move.
         coordinator.moveEventToCalendar(eventToMove.id, iCloudCalendarId)
 
-        // Move itself should have completed
         coVerify { eventWriter.moveEventToCalendar(eventToMove.id, iCloudCalendarId) }
     }
 
@@ -1558,7 +1533,7 @@ class EventCoordinatorTest {
 
     @Test
     fun `getCalendarEventsForExport uses batch query for exceptions`() = runTest {
-        // Setup: 2 recurring masters + 1 non-recurring event
+        // Two recurring masters and one non-recurring event.
         val master1 = recurringEvent.copy(id = 200L, uid = "master1@test")
         val master2 = recurringEvent.copy(id = 201L, uid = "master2@test", rrule = "FREQ=DAILY")
         val standalone = testEvent.copy(id = 202L, uid = "standalone@test", rrule = null)
@@ -1575,10 +1550,8 @@ class EventCoordinatorTest {
                 201L to listOf(exception2a)
             )
 
-        // Act
         val result = coordinator.getCalendarEventsForExport(iCloudCalendarId)
 
-        // Assert: 3 pairs returned
         assertEquals(3, result.size)
 
         // master1 has 2 exceptions
@@ -1593,9 +1566,8 @@ class EventCoordinatorTest {
         assertEquals(standalone, result[2].first)
         assertEquals(emptyList<Event>(), result[2].second)
 
-        // Verify batch query called once with correct IDs (not N+1)
+        // One batch query for the recurring masters' ids, no per-master query.
         coVerify(exactly = 1) { eventReader.getExceptionsForMasters(listOf(200L, 201L)) }
-        // Verify old N+1 pattern NOT used
         coVerify(exactly = 0) { eventReader.getExceptionsForMaster(any()) }
     }
 
@@ -1613,7 +1585,7 @@ class EventCoordinatorTest {
         assertEquals(emptyList<Event>(), result[0].second)
         assertEquals(emptyList<Event>(), result[1].second)
 
-        // No batch query needed when no recurring events
+        // No recurring events, so no exception query.
         coVerify(exactly = 0) { eventReader.getExceptionsForMasters(any()) }
         coVerify(exactly = 0) { eventReader.getExceptionsForMaster(any()) }
     }
@@ -1655,15 +1627,14 @@ class EventCoordinatorTest {
 
         assertTrue(ok)
         coVerify { eventWriter.replyRsvp(rsvpEvent.id, rsvpAccount, "ACCEPTED") }
-        // Non-local calendar → expedited sync requested.
+        // replyRsvp always requests an expedited sync after a successful write.
         verify { syncScheduler.requestExpeditedSync(false) }
     }
 
     @Test
     fun `replyRsvp lowercase input is forwarded as-is and writer canonicalizes`() = runTest {
-        // The contract: caller may pass lowercase; the writer is responsible
-        // for canonicalization. We verify the value the coordinator forwards
-        // is exactly what the caller supplied.
+        // A caller may pass lowercase; the writer canonicalizes, so the coordinator forwards
+        // the value exactly as supplied.
         coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
         coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
         coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
@@ -1707,7 +1678,7 @@ class EventCoordinatorTest {
         val ok = coordinator.replyRsvp(rsvpEvent.id, "ACCEPTED")
 
         assertFalse(ok)
-        // Sync NOT triggered when there's no successful local write.
+        // No successful local write, so no sync.
         verify(exactly = 0) { syncScheduler.requestExpeditedSync(any()) }
     }
 
@@ -1723,13 +1694,13 @@ class EventCoordinatorTest {
         coordinator.replyRsvp(rsvpEvent.id, "DECLINED")
 
         coVerify { reminderScheduler.cancelRemindersForEvent(rsvpEvent.id) }
-        // Reschedule must NOT be called on decline — there's nothing to schedule.
+        // A decline has nothing to schedule.
         coVerify(exactly = 0) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }
 
     @Test
     fun `replyRsvp DECLINED with whitespace and case variation still cancels`() = runTest {
-        // Coordinator applies status.trim().uppercase() before deciding decline-vs-reschedule.
+        // The coordinator compares status.trim().uppercase() to DECLINED.
         coEvery { eventReader.getEventById(rsvpEvent.id) } returns rsvpEvent
         coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
         coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
@@ -1749,19 +1720,16 @@ class EventCoordinatorTest {
 
         coordinator.replyRsvp(rsvpEvent.id, "ACCEPTED")
 
-        // rescheduleRemindersForEvent calls cancel + schedule.
+        // rescheduleRemindersForEvent cancels, then schedules.
         coVerify { reminderScheduler.cancelRemindersForEvent(rsvpEvent.id) }
-        // schedule may or may not call into reminderScheduler depending on whether
-        // event.reminders is empty — rsvpEvent has none configured, so the inner
-        // schedule short-circuits at "if (event.reminders.isNullOrEmpty()) return".
-        // The cancel call alone is sufficient evidence the reschedule path ran.
+        // rsvpEvent has no reminders, so scheduling returns before reaching the scheduler;
+        // the cancel alone shows the reschedule path ran.
     }
 
     @Test
     fun `replyRsvp ACCEPTED with configured reminder arms scheduleRemindersForEvent`() = runTest {
-        // Pins the end-to-end reschedule path: when the event has reminders
-        // configured, un-decline must actually call into the alarm scheduler,
-        // not just the cancel side of rescheduleRemindersForEvent.
+        // With reminders configured, an accept reaches the alarm scheduler, not only the
+        // cancel side of rescheduleRemindersForEvent.
         val eventWithReminder = rsvpEvent.copy(reminders = listOf("-PT15M"))
         val occurrence = Occurrence(
             id = 1L,
@@ -1776,7 +1744,7 @@ class EventCoordinatorTest {
         coEvery { eventReader.getCalendarById(rsvpCalendar.id) } returns rsvpCalendar
         coEvery { accountRepository.getAccountById(rsvpAccount.id) } returns rsvpAccount
         coEvery {
-            eventReader.getOccurrencesForEventInScheduleWindow(eventWithReminder.id)
+            eventReader.getOccurrencesForEventInScheduleWindow(eventWithReminder.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS)
         } returns listOf(occurrence)
         coEvery { eventWriter.replyRsvp(eventWithReminder.id, rsvpAccount, "ACCEPTED") } returns true
 
@@ -1828,7 +1796,7 @@ class EventCoordinatorTest {
         val ok = coordinator.replyRsvp(rsvpEvent.id, "DECLINED")
 
         assertTrue(ok)
-        // Non-local calendar → expedited sync still triggered.
+        // The expedited sync is still requested.
         verify { syncScheduler.requestExpeditedSync(false) }
     }
 
@@ -1842,7 +1810,7 @@ class EventCoordinatorTest {
         val eventSlot = slot<Event>()
         val attSlot = slot<List<Attendee>>()
         coEvery { eventWriter.createEvent(capture(eventSlot), any(), capture(attSlot)) } answers { firstArg<Event>() }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
         coEvery { accountRepository.getAccountById(2L) } returns Account(
             id = 2L, provider = AccountProvider.ICLOUD, email = "alice@icloud.com",
             calendarUserAddresses = listOf("mailto:alice@icloud.com", "/123/principal/")
@@ -1854,8 +1822,8 @@ class EventCoordinatorTest {
             attendees = listOf(attendee("bob@example.test"))
         )
 
-        // Stored BARE (no mailto: prefix) — the generator re-prepends mailto:
-        // on emit; a verbatim mailto: here would double-prefix on the wire.
+        // Stored without mailto:. The generator prepends mailto: on emit, so a stored one
+        // would be doubled on the wire.
         assertEquals("alice@icloud.com", eventSlot.captured.organizerEmail)
         assertFalse(eventSlot.captured.organizerEmail!!.startsWith("mailto:"))
         assertEquals(listOf("bob@example.test"), attSlot.captured.map { it.address })
@@ -1865,7 +1833,7 @@ class EventCoordinatorTest {
     fun `createEvent with no attendees does not force an organizer`() = runTest {
         val eventSlot = slot<Event>()
         coEvery { eventWriter.createEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
 
         coordinator.createEvent(testEvent.copy(id = 0L, calendarId = iCloudCalendarId, organizerEmail = null), iCloudCalendarId)
 
@@ -1876,9 +1844,10 @@ class EventCoordinatorTest {
     fun `organizer degrades to null when account has no usable address`() = runTest {
         val eventSlot = slot<Event>()
         coEvery { eventWriter.createEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
         coEvery { accountRepository.getAccountById(2L) } returns Account(
-            id = 2L, provider = AccountProvider.CALDAV, email = "nextcloud-login", // not email-shaped
+            // The login isn't email-shaped.
+            id = 2L, provider = AccountProvider.CALDAV, email = "nextcloud-login",
             calendarUserAddresses = emptyList()
         )
 
@@ -1893,14 +1862,14 @@ class EventCoordinatorTest {
 
     @Test
     fun `organizer prefers the mailto over an email-shaped principal path listed first`() = runTest {
-        // Some servers (Cyrus/Fastmail, older Nextcloud) return the principal href
-        // BEFORE the mailto in calendar-user-address-set. When the login is itself
-        // an email the principal path embeds an '@', so a permissive email-shape
-        // check wrongly picks the DAV path as ORGANIZER -> the server rejects it
-        // (SCHEDULE-STATUS 3.7 "Invalid Calendar User") and no invite is delivered.
+        // Some servers (Cyrus/Fastmail, older Nextcloud) return the principal href before the
+        // mailto in calendar-user-address-set. When the login is an email the principal path
+        // embeds an '@', so a permissive email-shape check would pick the DAV path as
+        // ORGANIZER; the server rejects it (SCHEDULE-STATUS 3.7 "Invalid Calendar User") and
+        // no invite is delivered.
         val eventSlot = slot<Event>()
         coEvery { eventWriter.createEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
         coEvery { accountRepository.getAccountById(2L) } returns Account(
             id = 2L, provider = AccountProvider.CALDAV, email = "organizer@example.com",
             calendarUserAddresses = listOf(
@@ -1921,11 +1890,11 @@ class EventCoordinatorTest {
 
     @Test
     fun `organizer degrades to null when address-set is principal-path only`() = runTest {
-        // e.g. Radicale/Nextcloud-without-email: a non-mailto ORGANIZER would be
-        // mangled by the generator's mailto: prefix, so we emit none.
+        // For example Radicale, or Nextcloud without an email: the generator's mailto: prefix
+        // would mangle a non-mailto ORGANIZER, so none is set.
         val eventSlot = slot<Event>()
         coEvery { eventWriter.createEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns emptyList()
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns emptyList()
         coEvery { accountRepository.getAccountById(2L) } returns Account(
             id = 2L, provider = AccountProvider.CALDAV, email = "alice",
             calendarUserAddresses = listOf("/123/principal/", "urn:uuid:abc")
@@ -1942,8 +1911,8 @@ class EventCoordinatorTest {
 
     @Test
     fun `setting organizer on update does not bump SEQUENCE`() = runTest {
-        // SequenceBumper does not compare organizerEmail — resolving the
-        // organizer must not re-notify attendees.
+        // SequenceBumper doesn't compare organizerEmail, so resolving the organizer doesn't
+        // re-notify attendees.
         val eventSlot = slot<Event>()
         coEvery { eventWriter.updateEvent(capture(eventSlot), any(), any()) } answers { firstArg<Event>() }
         coEvery { accountRepository.getAccountById(2L) } returns Account(
@@ -1956,5 +1925,130 @@ class EventCoordinatorTest {
 
         assertEquals("organizer resolved (bare)", "alice@icloud.com", eventSlot.captured.organizerEmail)
         assertEquals("sequence unchanged by organizer-set", 4, eventSlot.captured.sequence)
+    }
+
+    // ===== Reminder scheduling failures never fail a completed save =====
+    //
+    // Once the app holds the platform's per-app maximum of pending alarms,
+    // AlarmManager refuses every further alarm with IllegalStateException.
+    // The event is already written by then, so reporting failure would make
+    // the user retry and create a duplicate. Cancellation still propagates.
+
+    private val alarmLimitRefusal =
+        IllegalStateException("Maximum limit of concurrent alarms 500 reached")
+
+    @Test
+    fun `createEvent returns the saved event when reminder scheduling throws`() = runTest {
+        val saved = testEvent.copy(reminders = listOf("-PT15M"))
+        coEvery { eventWriter.createEvent(any(), any(), any()) } returns saved
+        coEvery { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) } throws alarmLimitRefusal
+
+        val result = coordinator.createEvent(saved, localCalendarId)
+
+        assertEquals(saved, result)
+        coVerify(exactly = 1) { eventWriter.createEvent(any(), any(), any()) }
+        coVerify(exactly = 1) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
+        coVerify { widgetUpdateManager.updateAllWidgets() }
+    }
+
+    @Test
+    fun `createEvent propagates CancellationException from reminder scheduling`() = runTest {
+        val saved = testEvent.copy(reminders = listOf("-PT15M"))
+        coEvery { eventWriter.createEvent(any(), any(), any()) } returns saved
+        coEvery {
+            reminderScheduler.scheduleRemindersForEvent(any(), any(), any())
+        } throws CancellationException("scope cancelled")
+
+        val outcome = runCatching { coordinator.createEvent(saved, localCalendarId) }
+
+        assertTrue(outcome.exceptionOrNull() is CancellationException)
+    }
+
+    @Test
+    fun `editSingleOccurrence returns the exception event when reminder scheduling throws`() = runTest {
+        val occurrenceTime = 1704672000000L
+        val exceptionEvent = recurringEvent.copy(
+            id = 210L,
+            rrule = null,
+            originalEventId = recurringEvent.id,
+            originalInstanceTime = occurrenceTime,
+            reminders = listOf("-PT15M")
+        )
+        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
+        coEvery { eventWriter.editSingleOccurrence(any(), any(), any(), any()) } returns exceptionEvent
+        coEvery { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) } throws alarmLimitRefusal
+
+        val result = coordinator.editSingleOccurrence(
+            masterEventId = recurringEvent.id,
+            occurrenceTimeMs = occurrenceTime,
+            changes = { it.copy(title = "Moved") }
+        )
+
+        assertEquals(exceptionEvent, result)
+        coVerify(exactly = 1) { reminderScheduler.scheduleRemindersForEvent(exceptionEvent, any(), any()) }
+    }
+
+    @Test
+    fun `editThisAndFuture returns the new series when reminder scheduling throws`() = runTest {
+        val splitTime = 1704672000000L
+        val newSeries = recurringEvent.copy(
+            id = 220L,
+            startTs = splitTime,
+            uid = "split-alarm-cap@kashcal.test",
+            reminders = listOf("-PT15M")
+        )
+        coEvery { eventReader.getEventById(recurringEvent.id) } returns recurringEvent
+        coEvery { eventWriter.splitSeries(any(), any(), any(), any(), any()) } returns newSeries
+        coEvery { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) } throws alarmLimitRefusal
+
+        val result = coordinator.editThisAndFuture(
+            masterEventId = recurringEvent.id,
+            splitTimeMs = splitTime,
+            changes = { it.copy(title = "New Title") }
+        )
+
+        assertEquals(newSeries, result)
+        coVerify(exactly = 1) { reminderScheduler.scheduleRemindersForEvent(newSeries, any(), any()) }
+    }
+
+    @Test
+    fun `importIcsEvents counts a saved standalone event when reminder scheduling throws`() = runTest {
+        val source = testEvent.copy(id = 0L, uid = "single@source.ics", reminders = listOf("-PT15M"))
+        coEvery { eventWriter.createEvent(any(), any()) } answers { firstArg<Event>().copy(id = 310L) }
+        coEvery { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) } throws alarmLimitRefusal
+
+        val count = coordinator.importIcsEvents(listOf(source), localCalendarId)
+
+        assertEquals(1, count)
+        coVerify(exactly = 1) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
+    }
+
+    @Test
+    fun `importIcsEvents counts a saved series when reminder scheduling throws`() = runTest {
+        val sharedUid = "series-alarm-cap@source.ics"
+        val master = testEvent.copy(
+            id = 0L, uid = sharedUid, rrule = "FREQ=WEEKLY;COUNT=5",
+            reminders = listOf("-PT15M"), originalInstanceTime = null
+        )
+        val exception = testEvent.copy(
+            id = 0L, uid = sharedUid, rrule = null,
+            originalInstanceTime = master.startTs + 7 * 86400000L, reminders = listOf("-PT15M")
+        )
+        val seriesSlot = slot<Event>()
+        val exceptionsSlot = slot<List<Event>>()
+        coEvery {
+            eventWriter.createImportedSeries(capture(seriesSlot), capture(exceptionsSlot), any())
+        } answers {
+            EventWriter.ImportedSeries(
+                seriesSlot.captured.copy(id = 700L),
+                exceptionsSlot.captured.map { it.copy(id = 701L, originalEventId = 700L) }
+            )
+        }
+        coEvery { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) } throws alarmLimitRefusal
+
+        val count = coordinator.importIcsEvents(listOf(master, exception), localCalendarId)
+
+        assertEquals("master + exception persisted", 2, count)
+        coVerify(exactly = 2) { reminderScheduler.scheduleRemindersForEvent(any(), any(), any()) }
     }
 }

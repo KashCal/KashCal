@@ -3,9 +3,7 @@ package org.onekash.kashcal.util
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/**
- * Tests for LogUtils email masking function.
- */
+/** Tests the `maskEmail` and `maskHost` log-masking extensions. */
 class LogUtilsTest {
 
     @Test
@@ -15,7 +13,7 @@ class LogUtilsTest {
 
     @Test
     fun `maskEmail with short local part 3 chars`() {
-        // 3 chars: atIndex=3, which is <=3, so shows first char + "***"
+        // A local part of 3 chars or fewer keeps only its first char.
         assertEquals("j***@***.com", "joe@example.com".maskEmail())
     }
 
@@ -51,14 +49,13 @@ class LogUtilsTest {
 
     @Test
     fun `maskEmail with unicode local part`() {
-        // Unicode characters in local part: 3 chars "日本語", atIndex=3, shows first char + "***"
+        // "日本語" is 3 chars, so only the first is kept.
         assertEquals("日***@***.com", "日本語@example.com".maskEmail())
     }
 
     @Test
     fun `maskEmail with subdomain`() {
-        // "user@mail.icloud.com" - lastIndexOf('.') finds ".com", masks to "***@***.com"
-        // This loses subdomain info, which is MORE secure (intentional)
+        // Only the domain's last label survives, so the subdomain is dropped on purpose.
         assertEquals("use***@***.com", "user@mail.icloud.com".maskEmail())
     }
 
@@ -70,5 +67,20 @@ class LogUtilsTest {
     @Test
     fun `maskEmail with special chars in local part`() {
         assertEquals("use***@***.com", "user+tag@example.com".maskEmail())
+    }
+
+    @Test
+    fun `maskHost keeps the first three characters and the top-level label`() {
+        assertEquals("cal***.com", "caldav.example.com".maskHost())
+        assertEquals("p18***.com", "p180-caldav.icloud.com".maskHost())
+    }
+
+    @Test
+    fun `maskHost keeps localhost and masks addresses and single labels`() {
+        assertEquals("localhost", "localhost".maskHost())
+        assertEquals("192.***", "192.168.1.20".maskHost())
+        assertEquals("fe80:***", "fe80::1".maskHost())
+        assertEquals("nas***", "nas".maskHost())
+        assertEquals("***", "".maskHost())
     }
 }

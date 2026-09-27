@@ -13,15 +13,12 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 /**
- * Tests for buildEventValues() helper function.
- *
- * Verifies:
- * 1. All-day UTC midnight shift
- * 2. Inclusive->exclusive +1 day for all-day events
- * 3. DURATION (RFC 5545 format) for recurring vs DTEND for single
- * 4. Timezone preservation
- *
- * TDD pre-tests for C5: buildEventValues helper.
+ * Tests [buildEventValues]:
+ * - all-day events are written in UTC with the inclusive end moved to the exclusive next midnight
+ * - a series gets an RFC 5545 DURATION, a one-off a DTEND
+ * - a timed event keeps its zone
+ * - RRULE, DURATION, description and location are written as null to clear them; an exception
+ *   leaves RRULE out and writes RDATE, EXDATE and EXRULE as null
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -31,9 +28,9 @@ class BuildEventValuesTest {
 
     @Test
     fun `all-day single-day event converts inclusive end to exclusive next day`() {
-        // KashCal: 1-day all-day event on Jan 15
-        // Stored as startTs = Jan 15 00:00 UTC, endTs = Jan 15 23:59:59.999 UTC (inclusive)
-        // CalendarProvider expects: DTSTART = Jan 15 00:00 UTC, DTEND = Jan 16 00:00 UTC (exclusive)
+        // A 1-day all-day event on Jan 15, stored as startTs = Jan 15 00:00 UTC and
+        // endTs = Jan 15 23:59:59.999 UTC (inclusive). CalendarProvider expects
+        // DTSTART = Jan 15 00:00 UTC and DTEND = Jan 16 00:00 UTC (exclusive).
         val jan15Start = LocalDate.of(2026, 1, 15)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
@@ -51,7 +48,7 @@ class BuildEventValuesTest {
             timezone = "America/New_York"
         )
 
-        // DTEND should be Jan 16 00:00 UTC (exclusive)
+        // DTEND is Jan 16 00:00 UTC (exclusive).
         val expectedDtend = LocalDate.of(2026, 1, 16)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
@@ -60,9 +57,9 @@ class BuildEventValuesTest {
 
     @Test
     fun `all-day 3-day event converts to correct exclusive end`() {
-        // KashCal: 3-day all-day event Feb 15-17
-        // Stored as startTs = Feb 15 00:00 UTC, endTs = Feb 17 23:59:59.999 UTC (inclusive)
-        // CalendarProvider expects: DTSTART = Feb 15 00:00 UTC, DTEND = Feb 18 00:00 UTC (exclusive)
+        // A 3-day all-day event Feb 15-17, stored as startTs = Feb 15 00:00 UTC and
+        // endTs = Feb 17 23:59:59.999 UTC (inclusive). CalendarProvider expects
+        // DTSTART = Feb 15 00:00 UTC and DTEND = Feb 18 00:00 UTC (exclusive).
         val feb15Start = LocalDate.of(2026, 2, 15)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
@@ -82,7 +79,7 @@ class BuildEventValuesTest {
             timezone = "UTC"
         )
 
-        // DTEND should be Feb 18 00:00 UTC (exclusive)
+        // DTEND is Feb 18 00:00 UTC (exclusive).
         val expectedDtend = LocalDate.of(2026, 2, 18)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
@@ -104,7 +101,7 @@ class BuildEventValuesTest {
             isAllDay = true,
             rrule = null,
             duration = null,
-            timezone = "America/New_York" // Should be ignored for all-day
+            timezone = "America/New_York" // ignored for all-day
         )
 
         assertEquals("All-day events should use UTC timezone", "UTC", values.getAsString(Events.EVENT_TIMEZONE))
@@ -115,7 +112,7 @@ class BuildEventValuesTest {
 
     @Test
     fun `timed single event uses DTEND not DURATION`() {
-        val startTs = 1704067200000L // Some timestamp
+        val startTs = 1704067200000L // 2024-01-01 00:00 UTC
         val endTs = startTs + 3_600_000 // 1 hour later
 
         val values = buildEventValues(
@@ -137,8 +134,8 @@ class BuildEventValuesTest {
 
     @Test
     fun `non-recurring regular event putNull RRULE for clearing recurrence`() {
-        // When isException=false (default), putNull(RRULE) is needed to clear RRULE
-        // on CalendarProvider when converting a recurring event to non-recurring
+        // With isException=false (the default), RRULE is written as null so a series turned
+        // into a one-off loses its rule in CalendarProvider.
         val values = buildEventValues(
             title = "Regular Event",
             description = null,
@@ -169,17 +166,16 @@ class BuildEventValuesTest {
             timezone = "UTC"
         )
 
-        // DURATION must be explicitly null in ContentValues to prevent CalendarProvider
-        // from inheriting the master event's DURATION when this is used for exception events
+        // DURATION must be written as null so that, when these values build an exception,
+        // CalendarProvider doesn't inherit the master event's DURATION.
         assertTrue("DURATION key must be present in ContentValues", values.containsKey(Events.DURATION))
         assertNull("DURATION value must be null", values.getAsString(Events.DURATION))
     }
 
     @Test
     fun `exception event omits RRULE key from ContentValues`() {
-        // Exception events must NOT have RRULE in ContentValues.
-        // putNull(RRULE) triggers CalendarProvider recurrence cleanup on master event.
-        // Key must be ABSENT, not present-as-null.
+        // An exception row carries no recurrence of its own, so the builder leaves the RRULE
+        // key out instead of writing it as null.
         val values = buildEventValues(
             title = "Exception Event",
             description = null,
@@ -198,7 +194,7 @@ class BuildEventValuesTest {
 
     @Test
     fun `exception event still nulls DURATION`() {
-        // putNull(DURATION) is correct for exceptions — prevents CalendarProvider inheritance
+        // An exception also writes DURATION as null, so it doesn't inherit the master's.
         val values = buildEventValues(
             title = "Exception Event",
             description = null,
@@ -218,8 +214,8 @@ class BuildEventValuesTest {
 
     @Test
     fun `exception event explicitly nulls RDATE EXDATE EXRULE`() {
-        // Exception events must have all recurrence fields explicitly null.
-        // RRULE is tested separately (must be ABSENT, not null, to avoid CalendarProvider cleanup).
+        // An exception writes RDATE, EXDATE and EXRULE as null. RRULE is tested separately
+        // (the builder leaves that key out).
         val values = buildEventValues(
             title = "Exception Event",
             description = null,
@@ -404,7 +400,7 @@ class BuildEventValuesTest {
         assertNull(values.getAsString(Events.EVENT_LOCATION))
     }
 
-    // ========== Bug 2: putNull for description/location (clearing fields) ==========
+    // ========== Null description and location clear the field ==========
 
     @Test
     fun `null description puts null in ContentValues for CalendarProvider clearing`() {
@@ -420,8 +416,8 @@ class BuildEventValuesTest {
             timezone = "UTC"
         )
 
-        // Key must be PRESENT with null value (putNull) so CalendarProvider clears the field.
-        // If key is absent, CalendarProvider preserves the old value on UPDATE.
+        // The key must be present with a null value so CalendarProvider clears the field;
+        // an absent key keeps the old value on UPDATE.
         assertTrue("DESCRIPTION key must be present for clearing", values.containsKey(Events.DESCRIPTION))
         assertNull("DESCRIPTION value must be null", values.getAsString(Events.DESCRIPTION))
     }
@@ -457,7 +453,7 @@ class BuildEventValuesTest {
             timezone = "UTC"
         )
 
-        // Same pattern as RRULE/DURATION putNull at lines 985-986
+        // Written as null, like RRULE and DURATION on a one-off.
         assertTrue("EVENT_LOCATION key must be present for clearing", values.containsKey(Events.EVENT_LOCATION))
         assertNull("EVENT_LOCATION value must be null", values.getAsString(Events.EVENT_LOCATION))
     }
@@ -513,7 +509,7 @@ class BuildEventValuesTest {
             timezone = "UTC"
         )
 
-        // Empty strings should be stored (allows clearing via update)
+        // Empty strings are written as given.
         assertEquals("", values.getAsString(Events.DESCRIPTION))
         assertEquals("", values.getAsString(Events.EVENT_LOCATION))
     }
@@ -556,7 +552,7 @@ class BuildEventValuesTest {
 
     @Test
     fun `duration format handles days for multi-day all-day recurring`() {
-        // 3-day recurring all-day event
+        // A 3-day all-day series.
         val feb15Start = LocalDate.of(2026, 2, 15)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()

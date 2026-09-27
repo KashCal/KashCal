@@ -19,13 +19,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Compose UI tests for RecurrencePickerRow.
+ * Compose UI tests for [RecurrencePickerRow].
  *
- * Drives the picker through its public composable surface so the same
- * composition lifecycle that runs in the event form runs here. The
- * round-trip case is the user-observable contract for the data-loss bug fix:
- * opening an event with INTERVAL > 1 and saving without further interaction
- * must emit the same RRULE the form was opened with.
+ * They drive the picker's public composable, so the composition lifecycle is the event form's.
+ * Most tests echo each emission back as selectedRrule, as the form does, and check that a rule
+ * opened with INTERVAL > 1 or an explicit WKST keeps it through stepper nudges and chip
+ * detours. Others cover the chip a rule opens on (Custom or Weekly), the stepper's 99 ceiling
+ * and a '-' step from 200, the string-equality self-echo contract, and when the device's week
+ * start is written as WKST.
  */
 @RunWith(AndroidJUnit4::class)
 class RecurrencePickerComposeTest {
@@ -33,7 +34,7 @@ class RecurrencePickerComposeTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    private val mondayJanFifth2026Millis = 1736035200000L // Mon 2026-01-05 00:00 UTC
+    private val mondayJanFifth2026Millis = 1736035200000L // Sun 2025-01-05 00:00 UTC
 
     @Test
     fun rowOpens_withCustomChipState_whenInboundIntervalIsFour() {
@@ -50,7 +51,7 @@ class RecurrencePickerComposeTest {
             }
         }
 
-        // Custom builder is rendered only when CUSTOM is selected.
+        // The Custom builder renders only when CUSTOM is selected.
         composeTestRule.onNodeWithText("Repeat every").assertIsDisplayed()
         composeTestRule.onNodeWithText("4").assertIsDisplayed()
         composeTestRule.onNodeWithText("Week").assertIsDisplayed()
@@ -71,8 +72,8 @@ class RecurrencePickerComposeTest {
             }
         }
 
-        // Open Custom builder is already visible (INTERVAL=4 lands on CUSTOM).
-        // Nudge stepper up to 5, then back to 4 — final emission must be INTERVAL=4.
+        // INTERVAL=4 opens on CUSTOM, so the builder is visible. Nudge the stepper up to 5
+        // and back; the final emission is INTERVAL=4.
         composeTestRule.onNodeWithContentDescription("Increase interval").performClick()
         composeTestRule.onNodeWithContentDescription("Decrease interval").performClick()
 
@@ -86,12 +87,9 @@ class RecurrencePickerComposeTest {
 
     @Test
     fun chipDetour_preservesInterval200_throughChipClicks() {
-        // The parent's selectedRrule is observed via mutableStateOf so the
-        // composable actually recomposes when onSelect fires — without this,
-        // the test passes for the wrong reason: the parameter never updates,
-        // remember(parsed) never re-keys, and the holder's stored interval=200
-        // sails through trivially. The real bug only surfaces when the parent
-        // round-trips an emitted RRULE back into the picker.
+        // The parent's selectedRrule is a mutableStateOf so the picker recomposes when
+        // onSelect fires. With a fixed parameter the holder's stored interval=200 would pass
+        // trivially; the loss shows only when the parent echoes an emitted RRULE back.
         val emitted = mutableStateOf<String?>("FREQ=WEEKLY;INTERVAL=200;BYDAY=MO")
         composeTestRule.setContent {
             MaterialTheme {
@@ -105,10 +103,9 @@ class RecurrencePickerComposeTest {
             }
         }
 
-        // Inbound INTERVAL=200 → Custom selected. Tap Weekly chip to detour
-        // through a preset (parent receives FREQ=WEEKLY, recomposition
-        // re-parses it as interval=1), then tap Custom again. The picker must
-        // recognize the echo as its own emission and not reset interval to 1.
+        // INTERVAL=200 opens on Custom. Tapping Weekly detours through a preset (the parent
+        // gets FREQ=WEEKLY, which re-parses as interval=1), then Custom again. The picker
+        // must recognize the echo as its own emission and not reset the interval to 1.
         composeTestRule.onNodeWithText("Weekly").performClick()
         composeTestRule.onNodeWithText("Custom").performClick()
 
@@ -135,8 +132,8 @@ class RecurrencePickerComposeTest {
             }
         }
 
-        // At interval=200 (above the 99 ceiling), '+' must be disabled while
-        // '-' remains enabled so the user can decrement back into range.
+        // At interval=200, above the 99 ceiling, '+' is disabled while '-' stays enabled so
+        // the user can step back down.
         composeTestRule.onNodeWithContentDescription("Increase interval").assertIsNotEnabled()
         composeTestRule.onNodeWithContentDescription("Decrease interval").assertIsEnabled()
     }
@@ -168,18 +165,13 @@ class RecurrencePickerComposeTest {
 
     @Test
     fun chipDetour_losesInterval200_whenParentNormalizesEmittedRrule() {
-        // Pins the verbatim-storage contract: the self-echo guard inside
-        // RecurrencePickerRow compares selectedRrule to lastEmitted by
-        // byte-equality. A parent that normalizes on the way in — trimming,
-        // reordering BYDAY, dropping redundant tokens — breaks that equality,
-        // fires the external-reset path, and silently regresses the chip-
-        // detour fix.
+        // Pins the verbatim-storage contract: RecurrencePickerRow's self-echo check compares
+        // selectedRrule to lastEmitted by string equality. A parent that normalizes the rule
+        // (trimming, reordering BYDAY, dropping redundant tokens) breaks that equality and
+        // fires the external-reset path, so the chip detour loses the interval.
         //
-        // This test simulates a normalizing parent (appends a trailing
-        // space) and asserts INTERVAL=200 is LOST. If a future change
-        // replaces byte-equality with a tolerant comparison, this test
-        // will fail — that's a deliberate behavior change worth surfacing
-        // at review time, not silently shipping.
+        // The parent here appends a trailing space, and INTERVAL=200 is lost. A tolerant
+        // comparison would fail this test; that change should be a deliberate one.
         val emitted = mutableStateOf<String?>("FREQ=WEEKLY;INTERVAL=200;BYDAY=MO")
         composeTestRule.setContent {
             MaterialTheme {
@@ -206,13 +198,12 @@ class RecurrencePickerComposeTest {
 
     @Test
     fun chipDetour_preservesWkstSunday_throughChipClicks() {
-        // CalDAV-pulled rule with explicit WKST=SU. Tapping Weekly chip emits
-        // a clean preset (no WKST), parent recomposes with that, then user
-        // taps Custom again. The picker's self-echo guard must keep its
-        // stored parsedWkst=SU so the final emission still has WKST=SU —
-        // not WKST=MO from a Monday-week device default. Without preservation,
-        // a no-op edit silently shifts occurrences for biweekly multi-day
-        // rules where Sunday and Monday land in different ISO weeks.
+        // A synced rule with an explicit WKST=SU. Tapping Weekly emits a preset without WKST,
+        // the parent recomposes with it, then Custom is tapped again. The self-echo check
+        // keeps the holder's parsedWkst=SU, so the final emission has WKST=SU, not the
+        // device's week start. Otherwise a no-op edit silently shifts the occurrences of a
+        // biweekly multi-day rule, since WKST decides which week a Sunday falls in
+        // (RFC 5545 §3.3.10).
         val emitted = mutableStateOf<String?>("FREQ=WEEKLY;INTERVAL=2;BYDAY=SA,SU;WKST=SU")
         composeTestRule.setContent {
             MaterialTheme {
@@ -239,12 +230,11 @@ class RecurrencePickerComposeTest {
 
     @Test
     fun loadedRuleWithoutWkst_emitsNoWkstOnNoOpSave_evenOnSundayWeekDevice() {
-        // Headline bug: opening a CalDAV-pulled biweekly multi-day rule that
-        // omitted WKST on a Sunday-first-day device used to silently inject
-        // WKST=SU on save, shifting RFC §3.3.10 default-MO occurrence
-        // anchoring. The fix: picker passes deviceWkst=null when isNewRule
-        // is false. The no-op "save" here is a chip re-tap that triggers
-        // notifyChange without otherwise changing user intent.
+        // A loaded biweekly multi-day rule without WKST, on a Sunday-first-day device, must not
+        // gain WKST=SU on save: RFC 5545 §3.3.10 defaults WKST to MO, so injecting SU shifts
+        // occurrences. The picker passes deviceWkst = null when isNewRule is false. The
+        // no-op save here is a chip re-tap, which calls notifyChange without changing
+        // anything else.
         val emitted = mutableStateOf<String?>("FREQ=WEEKLY;INTERVAL=2;BYDAY=SA,SU")
         composeTestRule.setContent {
             MaterialTheme {
@@ -259,9 +249,8 @@ class RecurrencePickerComposeTest {
             }
         }
 
-        // Re-tap the already-selected Custom chip → notifyChange fires,
-        // emitting the loaded state back through the holder. Must not
-        // inject WKST=SU.
+        // Re-tapping the selected Custom chip fires notifyChange, which emits the loaded state
+        // back through the holder.
         composeTestRule.onNodeWithText("Custom").performClick()
 
         composeTestRule.runOnIdle {
@@ -274,15 +263,12 @@ class RecurrencePickerComposeTest {
 
     @Test
     fun clearAndRebuild_emitsDeviceWkst_evenWhenLoadedRuleOmittedWkst() {
-        // Edit-then-clear-then-rebuild: user opens an event with a loaded rule
-        // that omitted WKST, taps Never to clear the recurrence, then rebuilds
-        // a biweekly multi-day rule in the same sheet. The rebuilt rule is
-        // conceptually authored fresh, so on a Sunday-first-day device it must
-        // emit WKST=SU — same as if the user had started from a brand-new
-        // event. The first composition captured isNewRule=false (selectedRrule
-        // was the loaded rule); the Never tap emits null, which flips
-        // isNewRule to true so the subsequent Custom tap's emission picks up
-        // the device wkst through the builder gate.
+        // The user opens a loaded rule without WKST, taps Never to clear the recurrence, then
+        // rebuilds a biweekly multi-day rule in the same sheet. The rebuilt rule counts as
+        // new, so on a Sunday-first-day device it emits WKST=SU, as a new event would. The
+        // first composition set isNewRule = false (selectedRrule was the loaded rule); the
+        // Never tap emits null, which sets isNewRule to true, so the Custom tap's emission
+        // gets the device's week start.
         val emitted = mutableStateOf<String?>("FREQ=WEEKLY;INTERVAL=2;BYDAY=SA,SU")
         composeTestRule.setContent {
             MaterialTheme {
@@ -322,8 +308,8 @@ class RecurrencePickerComposeTest {
             }
         }
 
-        // Weekly preset selected → Custom builder hidden. "Repeat every" only
-        // appears inside the Custom builder.
+        // Interval 1 opens on the Weekly preset, which hides the Custom builder and its
+        // "Repeat every"; only the Weekly chip's presence is asserted.
         composeTestRule.onNodeWithText("Weekly").assertIsDisplayed()
     }
 }

@@ -9,15 +9,14 @@ import java.util.TimeZone
 import javax.inject.Inject
 
 /**
- * iCloud-specific CalDAV quirks.
+ * Holds iCloud's CalDAV quirks. iCloud:
+ * - uses non-prefixed XML namespaces (xmlns="DAV:" instead of d:)
+ * - wraps calendar-data in CDATA blocks
+ * - redirects to numbered partition hosts (p*-caldav.icloud.com), so built URLs are
+ *   normalized to the canonical host ([ICloudUrlNormalizer])
+ * - requires app-specific passwords for third-party apps
  *
- * iCloud CalDAV has several unique behaviors:
- * - Uses non-prefixed XML namespaces (xmlns="DAV:" instead of d:)
- * - Wraps calendar-data in CDATA blocks
- * - Redirects to regional servers (p*-caldav.icloud.com)
- * - Requires app-specific passwords for third-party apps
- *
- * Uses XmlPullParser for robust XML parsing with proper namespace handling.
+ * Parsing goes through the namespace-aware [CalDavXmlParser].
  */
 class ICloudQuirks @Inject constructor() : CalDavQuirks {
 
@@ -47,16 +46,28 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
     override fun extractCalendars(responseBody: String, baseHost: String): List<CalDavQuirks.ParsedCalendar> {
         val calendars = xmlParser.extractCalendars(responseBody)
         return calendars.filter { parsed ->
-            !shouldSkipCalendar(parsed.href, parsed.displayName) &&
-            // Skip calendars that only support non-VEVENT components (VTODO-only, VJOURNAL-only).
-            // An empty set means the server didn't advertise a component set at all, so we can't
-            // tell it's tasks-only and keep it. iCloud always advertises the set (its Reminders
-            // list carries VTODO), so this branch keeps iCloud's tasks list off-screen; name
-            // matching is deliberately NOT used to hide it, so a real calendar named "Reminders"
-            // is never dropped.
-            (parsed.supportedComponents.isEmpty() || "VEVENT" in parsed.supportedComponents)
+            isListable(parsed.href, parsed.displayName, parsed.supportedComponents)
         }
     }
+
+    override fun classifyCalendarProbe(responseBody: String, requestedPath: String): Boolean? {
+        val probed = xmlParser.extractProbedCollection(responseBody, requestedPath) ?: return null
+        return probed.isCalendar &&
+            isListable(requestedPath, probed.displayName, probed.supportedComponents)
+    }
+
+    /**
+     * The single include rule for calendar listings and calendar probes, so a
+     * calendar the listing leaves out is also reported as not listable by a probe.
+     */
+    private fun isListable(href: String, displayName: String, supportedComponents: Set<String>): Boolean =
+        !shouldSkipCalendar(href, displayName) &&
+            // Skip calendars without VEVENT (VTODO-only, VJOURNAL-only). An empty set means the
+            // server advertised none, so it can't be shown to be tasks-only and is kept. iCloud
+            // always advertises the set (its Reminders list carries VTODO), so this hides
+            // iCloud's tasks list. Name matching is deliberately not used, so a real calendar
+            // named "Reminders" is never dropped.
+            (supportedComponents.isEmpty() || "VEVENT" in supportedComponents)
 
     override fun extractICalData(responseBody: String): List<CalDavQuirks.ParsedEventData> {
         return xmlParser.extractICalData(responseBody)
@@ -80,7 +91,7 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
         } else {
             "$baseHost$href"
         }
-        // Normalize to canonical form (p180-caldav.icloud.com → caldav.icloud.com)
+        // Canonical form (p180-caldav.icloud.com → caldav.icloud.com)
         return ICloudUrlNormalizer.normalize(url) ?: url
     }
 
@@ -98,7 +109,7 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
             }
             "$baseHost$href"
         }
-        // Normalize to canonical form (p180-caldav.icloud.com → caldav.icloud.com)
+        // Canonical form (p180-caldav.icloud.com → caldav.icloud.com)
         return ICloudUrlNormalizer.normalize(url) ?: url
     }
 
@@ -109,8 +120,8 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
     }
 
     override fun isSyncTokenInvalid(responseCode: Int, responseBody: String): Boolean {
-        // 410 Gone or specific DAV error body indicates expired sync token.
-        // A bare 403 is "permission denied", not sync-token expiry (Issue #51).
+        // 410 Gone or a valid-sync-token DAV error body means an expired sync-token. A bare
+        // 403 is "permission denied", not sync-token expiry (Issue #51).
         return responseCode == 410 ||
             responseBody.contains("valid-sync-token", ignoreCase = true)
     }
@@ -127,12 +138,20 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
         return xmlParser.extractSyncCollectionData(responseBody)
     }
 
+    /**
+     * iCloud serves one account from the canonical host and its numbered
+     * partition hosts (p*-caldav.icloud.com), and redirects between them, so any
+     * pair of those hosts is the same server. Anything else is not.
+     */
+    override fun isSameServerRedirect(requestedHost: String, finalHost: String): Boolean =
+        requestedHost.equals(finalHost, ignoreCase = true) ||
+            (ICloudUrlNormalizer.isCalDavHost(requestedHost) && ICloudUrlNormalizer.isCalDavHost(finalHost))
+
     override fun shouldSkipCalendar(href: String, displayName: String?): Boolean {
-        // Match a reserved word only as a whole PATH SEGMENT, never as a substring, so a
-        // real calendar "my-inbox-friends" or an account whose username embeds one of
-        // these words is not silently hidden. iCloud has NO tasks path-segment skip: its
-        // `/calendars/tasks/` ("Reminders") is a real <calendar> that is VTODO-only, so
-        // the VEVENT component gate — not a display-name match — is what keeps it hidden.
+        // Reserved words match only as whole path segments ([matchesReservedCollection]).
+        // iCloud has no tasks path-segment skip: its `/calendars/tasks/` ("Reminders") is a
+        // real <calendar> that is VTODO-only, so the VEVENT component gate in [isListable],
+        // not a display-name match, keeps it hidden.
         return matchesReservedCollection(href = href)
     }
 

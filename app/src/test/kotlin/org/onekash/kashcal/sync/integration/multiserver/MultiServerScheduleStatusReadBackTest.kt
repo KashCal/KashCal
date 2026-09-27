@@ -19,27 +19,23 @@ import org.robolectric.annotation.Config
 import java.util.UUID
 
 /**
- * Live regression for the post-PUT SCHEDULE-STATUS read-back (RFC 6638 §3.2.1):
- * after the app PUTs an organizer event carrying an attendee, it re-fetches the
- * stored resource and captures the server's delivery decision.
- * This drives the real create + re-fetch against each server and asserts the
- * app's own parse-and-classify path ([ICalEventMapper.toAttendeeRows] +
- * [classifyDelivery]) reproduces the per-server receipt the audit recorded —
- * the same end-state [org.onekash.kashcal.sync.strategy.PushStrategy] persists.
+ * Checks the post-PUT SCHEDULE-STATUS read-back (RFC 6638 §3.2.1) live on each server: after an
+ * organizer event with one attendee is created, the stored resource is re-fetched and the app's
+ * own parse and classify path ([ICalEventMapper.toAttendeeRows], then [classifyDelivery], the
+ * pair [org.onekash.kashcal.sync.strategy.PushStrategy]'s read-back uses) must give the recorded
+ * per-server [DeliveryState], and [routeDelivery] the recorded [DeliveryAction].
  *
- * Timing: this also observes the immediate-GET-vs-next-pull behavior. A server
- * that stamps asynchronously may not show a receipt on the immediate re-fetch;
- * that captures on a later pull and is an EXPECTED PASS here (we only assert the
- * delivery CLASS the audit recorded, and re-fetch with a short bounded retry to
- * give async stampers a chance — a remaining absence on an async stamper is not
- * a failure). The only failure is a server whose recorded class regresses.
+ * A server that stamps asynchronously may show no receipt on the immediate re-fetch; the app then
+ * captures it on a later pull. The test re-fetches up to [REFETCH_ATTEMPTS] times and fails only
+ * when the class still differs from [EXPECTED_RECEIPT] after the last attempt, or the routed
+ * action differs from [EXPECTED_ACTION].
  *
- * The invitee is a reserved-TLD `@example.test` address (RFC 6761) — undeliverable,
- * so no human is ever contacted. Any non-`@example.test` address (e.g. a server
- * that rewrites ORGANIZER to the real account holder) is redacted before it can
- * reach a failure message or CI log.
+ * The invitee is a reserved-TLD `@example.test` address (RFC 6761), undeliverable, so no human is
+ * contacted. Any other address (a server may rewrite ORGANIZER to the real account holder) is
+ * redacted before it reaches a failure message.
  *
- * Skips (never fails) on unreachable / no-credential / no-organizer servers.
+ * Skips, never fails, on a server with no credentials, no baseline, no reachable endpoint,
+ * failed discovery, no email-shaped organizer, or a failed create.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -56,34 +52,28 @@ class MultiServerScheduleStatusReadBackTest(
         fun servers(): List<Array<Any>> =
             CalDavServerConfig.allServers().map { arrayOf<Any>(it) }
 
-        // 28 days out, 09:00 UTC — same horizon as the sibling probe.
+        // 28 days out at 09:00 UTC, the same start as `ServerSideSchedulingProbeTest`.
         private const val DAY_MS = 86_400_000L
         private val START_MS = ((System.currentTimeMillis() / DAY_MS) + 28) * DAY_MS + 9 * 3_600_000L
 
         /**
-         * The delivery CLASS the app must reproduce for the invitee receipt,
-         * per server, from the recorded audit disposition (2026-06-08/09):
-         *   - SERVER_SCHEDULES servers stamp SCHEDULE-STATUS (1.x/2.x/5.x) ->
-         *     ServerOwnsDelivery.
-         *   - Zoho stamps SCHEDULE-AGENT=CLIENT -> ClientMustDeliver.
-         *   - Stalwart/SOGo/Mailbox store the attendee inertly (no receipt) ->
-         *     NoReceipt (a plain PUT sends nothing; the outbox fallback or the
-         *     no-remedy path would handle it).
-         * iCloud delivers implicitly and stamps SCHEDULE-STATUS (5.x for an
-         * undeliverable @example.test recipient) -> ServerOwnsDelivery.
+         * Invitee [DeliveryState] each server must give, recorded live 2026-06-08/09:
+         *  - Servers that stamp SCHEDULE-STATUS (1.x, 2.x or 5.x) give ServerOwnsDelivery. iCloud
+         *    delivers implicitly and stamps 5.x for the undeliverable `@example.test` invitee.
+         *  - Zoho stamps SCHEDULE-AGENT=CLIENT: ClientMustDeliver.
+         *  - Stalwart, SOGo and Mailbox store the attendee with no receipt: NoReceipt. A plain PUT
+         *    sends nothing there.
          *
-         * Nextcloud and Radicale are intentionally absent: their bare test
-         * containers have no email on the principal, so the app emits no
-         * ORGANIZER (the NO_ORGANIZER artifact), there is nothing to schedule,
-         * and the organizer guard below skips them. They are exercised by
-         * ServerSideSchedulingProbeTest instead.
+         * A server without an entry skips. Nextcloud and Radicale are left out on purpose: their
+         * bare test containers have no email on the principal, so the app emits no ORGANIZER and
+         * there is nothing to schedule. `ServerSideSchedulingProbeTest` covers them.
          */
         private val EXPECTED_RECEIPT: Map<String, DeliveryState> = mapOf(
             "iCloud" to DeliveryState.ServerOwnsDelivery,
             "Baikal" to DeliveryState.ServerOwnsDelivery,
             "BaikalDigest" to DeliveryState.ServerOwnsDelivery,
-            // Fastmail (Cyrus): implicit PUT stamps SCHEDULE-STATUS=1.1
-            // (message sent, store-and-forward iMIP) — verified live 2026-06-10.
+            // Fastmail (Cyrus): an implicit PUT stamps SCHEDULE-STATUS=1.1 (sent, store-and-forward
+            // iMIP); verified live 2026-06-10.
             "Fastmail" to DeliveryState.ServerOwnsDelivery,
             "Zoho" to DeliveryState.ClientMustDeliver,
             "Stalwart" to DeliveryState.NoReceipt,
@@ -92,16 +82,13 @@ class MultiServerScheduleStatusReadBackTest(
         )
 
         /**
-         * The client routing ACTION each server's live DeliveryState must map to
-         * through the production [routeDelivery], given its actual outbox-URL
-         * availability. The pin that catches a routing-rule regression:
-         * - ServerOwnsDelivery → ServerHandles (iCloud/Baikal/Nextcloud/Fastmail).
-         * - ClientMustDeliver + advertised outbox → ClientOutboxPost (Zoho).
-         * - NoReceipt → NoRemedy regardless of an advertised outbox (SOGo
-         *   advertises one yet a plain PUT delivered nothing; Stalwart/Mailbox).
-         * Note SOGo lands NoRemedy even though it advertises an outbox — the
-         * routing keys off the runtime NoReceipt signal, not the (lying)
-         * capability flag, which is the whole point of the read-back.
+         * [DeliveryAction] each server's live [DeliveryState] must map to through [routeDelivery],
+         * given whether the account advertises an outbox URL. Catches a change in the routing rule:
+         *  - ServerOwnsDelivery gives ServerHandles (iCloud, Baikal, BaikalDigest, Fastmail).
+         *  - ClientMustDeliver with an advertised outbox gives ClientOutboxPost (Zoho).
+         *  - NoReceipt gives NoRemedy with or without an outbox (Stalwart, SOGo, Mailbox). SOGo
+         *    advertises an outbox yet a plain PUT delivered nothing: routing follows the NoReceipt
+         *    read back, not the advertised capability.
          */
         private val EXPECTED_ACTION: Map<String, DeliveryAction> = mapOf(
             "iCloud" to DeliveryAction.ServerHandles,
@@ -114,7 +101,7 @@ class MultiServerScheduleStatusReadBackTest(
             "Mailbox" to DeliveryAction.NoRemedy,
         )
 
-        /** Bounded re-fetch attempts, to give async stampers a chance. */
+        /** Re-fetches allowed for a server that stamps SCHEDULE-STATUS asynchronously. */
         private const val REFETCH_ATTEMPTS = 3
         private const val REFETCH_DELAY_MS = 1_500L
     }
@@ -160,7 +147,7 @@ class MultiServerScheduleStatusReadBackTest(
         )
     }
 
-    /** Mask any address that is not a reserved-TLD test address (S4). */
+    /** Masks every address not ending in `@example.test`. */
     private fun redactPii(text: String): String =
         Regex("""[\w.+-]+@[\w.-]+""").replace(text) { m ->
             if (m.value.endsWith("@example.test")) m.value else "<redacted>@<redacted>"
@@ -178,9 +165,9 @@ class MultiServerScheduleStatusReadBackTest(
         val principal = c.discoverPrincipal(resolveCaldavRoot()).getOrNull()
         assumeTrue("${config.name}: principal discovery failed", principal != null)
 
-        // Organizer = the account's authoritative mailto: address (S2). No
-        // email-shaped address -> the app emits no ORGANIZER, so there is
-        // nothing to schedule; skip (handled by the probe's NO_ORGANIZER path).
+        // The ORGANIZER is the account's discovered calendar-user address, else an email-shaped
+        // username. Without one the app emits no ORGANIZER and there is nothing to schedule, so
+        // skip (`ServerSideSchedulingProbeTest` records it as NO_ORGANIZER).
         val discovered = (c.discoverCalendarUserAddresses(principal!!) as? CalDavResult.Success)
             ?.data.orEmpty()
         val organizer = discovered.map { it.substringAfter("mailto:") }
@@ -218,10 +205,8 @@ class MultiServerScheduleStatusReadBackTest(
         var etagForDelete = createEtag
 
         try {
-            // Re-fetch with a short bounded retry: this is exactly the
-            // immediate-GET-vs-async-stamp observation. A server that stamps
-            // synchronously shows the receipt on attempt 1; an async stamper
-            // may need a moment (still a PASS as long as the CLASS matches).
+            // A server that stamps synchronously shows the receipt on attempt 1; an asynchronous
+            // one may need a moment. It passes once the class matches.
             var actual: DeliveryState = DeliveryState.NoReceipt
             var detail = "no receipt"
             for (attempt in 1..REFETCH_ATTEMPTS) {
@@ -230,12 +215,12 @@ class MultiServerScheduleStatusReadBackTest(
 
                 val parsed = parser.parseAllEvents(stored.icalData).getOrNull().orEmpty()
                 val master = parsed.firstOrNull { it.recurrenceId == null } ?: continue
-                // Drive the app's actual capture path, not a bespoke regex.
+                // The app's own capture path, not a test regex.
                 val rows = ICalEventMapper.toAttendeeRows(master, eventId = 0L)
                 val inviteeRow = rows.firstOrNull { it.address.contains(attendee, ignoreCase = true) }
 
                 actual = when {
-                    // Invitee routed out (iSchedule) -> the server owns delivery.
+                    // Invitee routed out of the stored event (iSchedule): the server owns delivery.
                     inviteeRow == null && rows.isNotEmpty() -> DeliveryState.ServerOwnsDelivery
                     else -> classifyDelivery(inviteeRow?.scheduleStatus, inviteeRow?.scheduleAgent)
                 }
@@ -250,14 +235,10 @@ class MultiServerScheduleStatusReadBackTest(
                 expected, actual
             )
 
-            // Routing-rule regression pin: map the live-classified
-            // DeliveryState through the SAME production routeDelivery the push
-            // path uses, with the account's actual outbox-URL availability, and
-            // assert the action matches the recorded baseline. This catches a
-            // drift in the routing rule itself (not just the server signal) —
-            // e.g. a NoReceipt server wrongly routing to an outbox POST, or a
-            // ClientMustDeliver server no longer routing to one. Uses the
-            // production function, not a copy (single home).
+            // Routes the live state through the production routeDelivery the push path calls, with
+            // the account's real outbox availability. Catches a change in the rule itself, e.g. a
+            // NoReceipt server routed to an outbox POST, or a ClientMustDeliver server no longer
+            // routed to one.
             val expectedAction = EXPECTED_ACTION[config.name]
             if (expectedAction != null) {
                 val outboxAdvertised =

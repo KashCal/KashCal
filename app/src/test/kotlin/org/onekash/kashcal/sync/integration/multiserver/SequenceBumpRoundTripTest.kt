@@ -28,32 +28,25 @@ import org.robolectric.annotation.Config
 import java.util.UUID
 
 /**
- * Live end-to-end round-trip for the single-occurrence SEQUENCE bump.
+ * Checks live that a single-occurrence edit's SEQUENCE bump survives serialization and the
+ * server round-trip.
  *
- * Unlike the unit tests (which assert `Event.sequence` in Room) this test
- * drives the WHOLE production path against each real server:
+ * The unit tests assert `Event.sequence` in Room; this test drives the whole production path
+ * against each real server: real Room DB -> EventWriter.editSingleOccurrence (which bumps via
+ * SequenceBumper) -> IcsPatcher.serializeWithExceptions (the serializer PushStrategy uses) ->
+ * live PUT -> fetch -> parse the exception VEVENT's SEQUENCE back off the wire.
  *
- *   real Room DB -> EventWriter.editSingleOccurrence (the patched code,
- *   via SequenceBumper) -> IcsPatcher.serializeWithExceptions (the same
- *   serializer PushStrategy uses) -> live PUT -> fetch -> parse the
- *   override VEVENT's SEQUENCE back off the wire.
+ * Servers that manage SEQUENCE themselves ([MANAGES_SEQUENCE_SERVER_SIDE]: Open-Xchange/Mailbox
+ * re-stamps it, Zoho strips it) can't validate the client's value, so the SEQUENCE assertion is
+ * skipped there; the PUT must still be accepted and the exception must still round-trip.
  *
- * It proves the bump survives serialization AND the server round-trip, on
- * every server that stores SEQUENCE verbatim. Servers that manage SEQUENCE
- * themselves (Open-Xchange / Mailbox re-stamps; Zoho strips it) can't
- * validate the client's value, so the override-SEQUENCE assertion is
- * skipped there — the spike (SequenceBumpSpikeTest, since removed)
- * established which servers fall in each bucket. We still assert the PUT is
- * accepted and the override round-trips on those servers.
+ * No ORGANIZER or ATTENDEE: a synthetic organizer triggers server-side scheduling routing, which
+ * would strip or reroute the exception and destroy the SEQUENCE signal. A plain recurring event
+ * isolates the SEQUENCE round-trip.
  *
- * Deliberately NO ORGANIZER/ATTENDEE: a synthetic organizer triggers the
- * documented iSchedule routing, which would strip
- * or reroute the override and destroy the SEQUENCE signal. A plain
- * recurring event isolates the SEQUENCE round-trip.
- *
- * Safety: only ever mutates events created by this run (unique
- * `seq-rt-{ms}-` UID prefix); cleanup deletes only those hrefs. PII in any
- * failure-message ICS body is redacted via [FixtureRedactor].
+ * Safety: only mutates events created by this run (unique `seq-rt-{ms}-` UID prefix); cleanup
+ * deletes only those hrefs. PII in any failure-message ICS body is redacted via
+ * [FixtureRedactor].
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -74,9 +67,8 @@ class SequenceBumpRoundTripTest(
         internal val UID_PREFIX = "seq-rt-$classStartMs-"
 
         /**
-         * Servers that overwrite or strip the client's SEQUENCE on the
-         * override VEVENT, so the exact stored value can't validate the
-         * client's bump. Established empirically by the SEQUENCE spike.
+         * Servers that overwrite or strip the client's SEQUENCE on the exception VEVENT, so the
+         * stored value can't validate the client's bump. Established by a live probe.
          */
         private val MANAGES_SEQUENCE_SERVER_SIDE = setOf("Mailbox", "Zoho")
     }
@@ -157,8 +149,10 @@ class SequenceBumpRoundTripTest(
         createdEventUrls.add(Pair(url, etag))
     }
 
-    /** SEQUENCE of the override VEVENT (the one carrying RECURRENCE-ID), or
-     *  null if absent. Unfolds first (RFC 5545 §3.1). */
+    /**
+     * Returns the SEQUENCE of the exception VEVENT (the one with RECURRENCE-ID), or null if
+     * absent. Unfolds first (RFC 5545 §3.1).
+     */
     private fun overrideSequence(ics: String): Int? {
         val unfolded = ics.replace(Regex("""\r?\n[ \t]"""), "")
         val overrideBlock = unfolded.split("BEGIN:VEVENT").drop(1)
@@ -182,8 +176,8 @@ class SequenceBumpRoundTripTest(
 
         // --- Build the production artifacts in a real DB ----------------
         val uid = "$UID_PREFIX${config.name.lowercase()}-${UUID.randomUUID()}"
-        // Local-only account so EventWriter doesn't try to queue/sync;
-        // we drive the wire ourselves with the production serializer.
+        // Local account so EventWriter queues no sync; the test drives the wire itself with the
+        // production serializer.
         val accountId = database.accountsDao().insert(
             Account(provider = AccountProvider.LOCAL, email = "local")
         )
@@ -209,7 +203,7 @@ class SequenceBumpRoundTripTest(
             isLocal = true
         )
         val third = database.occurrencesDao().getForEvent(masterEvent.id)[2]
-        // Reschedule the third occurrence +4h — the patched path bumps SEQUENCE.
+        // Move the third occurrence 4h later; editSingleOccurrence bumps SEQUENCE.
         val exception = eventWriter.editSingleOccurrence(
             masterEventId = masterEvent.id,
             occurrenceTimeMs = third.startTs,
@@ -225,15 +219,14 @@ class SequenceBumpRoundTripTest(
         )
         val master = database.eventsDao().getById(masterEvent.id)!!
 
-        // Sanity: the fix produced a bumped override in Room before we serialize.
+        // The exception is already bumped in Room before serializing.
         assertEquals("override must be SEQUENCE:1 in Room (the fix)", 1, exception.sequence)
 
         // --- Live round-trip, mirroring the production push sequence ----
-        // PushStrategy creates the master first, then (when the exception is
-        // materialized) PUTs the master+override BUNDLE to the same href as an
-        // UPDATE. Reproduce both steps rather than one-shot creating the bundle
-        // — some servers (Zoho) reject an initial PUT that already contains a
-        // RECURRENCE-ID override for a series they haven't seen created yet.
+        // When an occurrence is changed after the series synced, PushStrategy PUTs the
+        // master+exception bundle to the same href as an UPDATE. The test creates the series
+        // first and then sends that UPDATE, because some servers (Zoho) reject an initial PUT
+        // that already holds a RECURRENCE-ID exception for a series they haven't seen created.
         val masterBody = IcsPatcher.serializeWithExceptions(master, emptyList())
         val createResult = client!!.createEvent(calendarUrl!!, uid, masterBody)
         assumeTrue(
@@ -259,15 +252,14 @@ class SequenceBumpRoundTripTest(
         assumeTrue("fetch failed on ${config.name}", fetchResult.isSuccess())
         val stored = fetchResult.getOrNull()!!.icalData
 
-        // The override must survive the round-trip on every server.
+        // The exception must survive the round-trip on every server.
         assertTrue(
             "${config.name} dropped the override VEVENT: ${FixtureRedactor.redact(stored)}",
             hasOverride(stored)
         )
 
         if (config.name in MANAGES_SEQUENCE_SERVER_SIDE) {
-            // Server owns SEQUENCE; we can't assert the client's value, only
-            // that the reschedule round-tripped as an override at all.
+            // The server owns SEQUENCE, so only the exception's round-trip is asserted.
             println("SEQ-RT ${config.name}: override round-tripped (server manages SEQUENCE; value not asserted)")
         } else {
             assertEquals(
@@ -280,7 +272,6 @@ class SequenceBumpRoundTripTest(
 }
 
 private const val DAY_MS = 86_400_000L
-// A fixed near-future Monday-ish anchor; exact weekday is irrelevant for
-// SEQUENCE round-trip (no BYDAY alignment asserted). Far enough out to avoid
-// "event in the past" rejections on strict servers.
+// Two weeks ahead so strict servers don't reject "event in the past". The weekday is whatever
+// that day is; no BYDAY alignment is asserted.
 private val FIRST_START_MS = ((System.currentTimeMillis() / DAY_MS) + 14) * DAY_MS + 10 * 3_600_000L

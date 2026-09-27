@@ -12,20 +12,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for the device-attendee bridge functions that keep the device
- * write path disjoint from the Room/iTIP path:
+ * Tests the device-attendee bridge functions that keep the device write path apart from the
+ * Room and iTIP path:
  *
- * - [pickerAttendeesToDevice] converts the picker's Room [Attendee] entities
- *   into provider-shaped [org.onekash.kashcal.data.calendar_provider.DeviceAttendee]
- *   rows at the save boundary (guest relationship, no-response status, no iTIP
- *   wire fields).
- * - [deviceGuestsToPickerSeed] seeds that same picker from a device event's
- *   existing guests so an edit diffs against the real set — excluding the
- *   organizer row, which the repository manages separately.
- *
- * Robolectric is required: the bridge references the
- * `CalendarContract.Attendees` RELATIONSHIP and ATTENDEE_STATUS constants,
- * which are stubbed to 0 under plain JVM.
+ * - [pickerAttendeesToDevice] converts the picker's Room [Attendee] rows into provider-shaped
+ *   [org.onekash.kashcal.data.calendar_provider.DeviceAttendee] rows at save: bare email, guest
+ *   relationship, no-response status, and rows without an email-shaped address dropped.
+ * - [deviceGuestsToPickerSeed] seeds the same picker from a device event's guests so an edit
+ *   diffs against the real set, leaving out the organizer row, which the repository owns.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -98,7 +92,7 @@ class BridgeDeviceAttendeesTest {
 
     @Test
     fun `seed excludes the organizer row`() {
-        // The organizer is owned by the repository, not a pickable guest.
+        // The repository owns the organizer; it isn't a pickable guest.
         val seed = deviceGuestsToPickerSeed(
             listOf(
                 uiModel("owner@example.com", "Owner", isOrganizer = true),

@@ -33,14 +33,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Covers the post-PUT read-back (RFC 6638 §3.2.1 STEP 3): after a successful
- * CREATE/UPDATE of an organizer event carrying attendees, the strategy
- * re-fetches the stored resource and captures the server's SCHEDULE-STATUS /
- * SCHEDULE-AGENT decision into the attendee rows and Event.organizerScheduleStatus.
+ * Tests the read-back after a successful PUT (RFC 6638 §3.2.1): after a CREATE of an organizer
+ * event with attendees, [PushStrategy] re-fetches the stored resource and writes the server's
+ * SCHEDULE-STATUS and SCHEDULE-AGENT decision into the attendee rows and
+ * `Event.organizerScheduleStatus`.
  *
- * The read-back must be non-fatal (a fetch failure never fails the push) and
- * must not fire for events with no attendees or where the user isn't the
- * organizer.
+ * No read-back failure fails the push, including malformed or hostile bodies, and there is no
+ * read-back for an event without attendees or one another user organizes (a null organizer
+ * counts as the user's).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -131,7 +131,9 @@ class PushStrategyReadBackTest {
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
 
         pushStrategy = PushStrategy(
             calendarRepository = calendarRepository,
@@ -297,14 +299,14 @@ class PushStrategyReadBackTest {
         coEvery { calendarRepository.getCalendarById(event.calendarId) } returns calendar
         coEvery { accountRepository.getAccountById(calendar.accountId) } returns account
         coEvery { attendeesDao.getForEventOnce(event.id) } returns listOf(attendeeRow("mailto:guest@example.test"))
-        // Server returns success but a null URL in the pair.
+        // The server returns success with a null URL in the pair.
         @Suppress("UNCHECKED_CAST")
         coEvery { client.createEvent(any(), any(), any()) } returns
             CalDavResult.success(Pair<String?, String>(null, "etag-1")) as CalDavResult<Pair<String, String>>
 
         val result = pushStrategy.pushAll(client)
 
-        // markCreatedOnServer may reject null url; the key assertion is no read-back GET and no crash.
+        // Asserts only that there is no read-back GET and no crash.
         coVerify(exactly = 0) { client.fetchEvent(any()) }
         assertTrue(result is PushResult.Success || result is PushResult.Success)
     }
@@ -314,7 +316,7 @@ class PushStrategyReadBackTest {
         val event = organizerEvent()
         stubCreateSuccess(event)
         coEvery { attendeesDao.getForEventOnce(event.id) } returns listOf(attendeeRow("mailto:guest@example.test"))
-        // Server echoes a minimal body with NO ATTENDEE lines (not an uninvite).
+        // The server echoes a minimal body with no ATTENDEE lines, which isn't an uninvite.
         coEvery { client.fetchEvent(any()) } returns CalDavResult.success(
             CalDavEvent(
                 href = "/cal/uid-100.ics",
@@ -340,8 +342,8 @@ class PushStrategyReadBackTest {
         val result = pushStrategy.pushAll(client)
 
         assertTrue(result is PushResult.Success)
-        // Must NOT call replaceForEvent with an empty set — that would wipe the
-        // just-captured attendees and their receipts.
+        // No replaceForEvent with an empty set: that would wipe the attendees and their
+        // receipts.
         coVerify(exactly = 0) { attendeesDao.replaceForEvent(event.id, emptyList()) }
     }
 
@@ -350,7 +352,7 @@ class PushStrategyReadBackTest {
         val event = organizerEvent()
         stubCreateSuccess(event)
         coEvery { attendeesDao.getForEventOnce(event.id) } returns listOf(attendeeRow("mailto:guest@example.test"))
-        // iSchedule-style: invitee ATTENDEE routed out; only the organizer self-attendee remains.
+        // The server routed the invitee ATTENDEE out; only the organizer's own ATTENDEE remains.
         coEvery { client.fetchEvent(any()) } returns CalDavResult.success(
             CalDavEvent(
                 href = "/cal/uid-100.ics",
@@ -365,16 +367,15 @@ class PushStrategyReadBackTest {
 
         pushStrategy.pushAll(client)
 
-        // The re-fetched set reflects what the server stored — the invitee
-        // is simply absent, not written as a spurious "undelivered" row.
+        // The re-fetched set is what the server stored: the invitee is absent, not written as a
+        // spurious "undelivered" row.
         assertTrue(captured.captured.none { it.address == "mailto:guest@example.test" })
     }
 
-    // ========== Adversarial: hostile / malformed server read-back responses ==========
-    // The read-back parses whatever the server returns on the re-fetch GET. A
-    // misbehaving or compromised server must never crash the push or corrupt
-    // local data — every malformed case must be swallowed (push still Success)
-    // and leave the captured columns for the next normal pull.
+    // ========== Hostile or malformed read-back bodies ==========
+    // The read-back parses whatever the re-fetch GET returns. A misbehaving or compromised
+    // server must never crash the push or corrupt local data: each malformed case is swallowed
+    // (the push still returns Success) and leaves the columns for the next normal pull.
 
     private fun stubReadBackBody(event: Event, body: String) {
         coEvery { attendeesDao.getForEventOnce(event.id) } returns listOf(attendeeRow("mailto:guest@example.test"))
@@ -408,8 +409,8 @@ class PushStrategyReadBackTest {
 
     @Test
     fun `read-back body with only an exception VEVENT (no master) does not persist`() = runTest {
-        // Server returns ONLY a RECURRENCE-ID instance, no master. The master
-        // pick (recurrenceId == null) finds nothing -> skip, no write, no crash.
+        // The server returns only an exception VEVENT (with RECURRENCE-ID), no master. The master
+        // pick (recurrenceId == null) finds nothing, so nothing is written and nothing crashes.
         val event = organizerEvent()
         stubCreateSuccess(event)
         stubReadBackBody(event, """
@@ -430,17 +431,17 @@ class PushStrategyReadBackTest {
         """.trimIndent().replace("\n", "\r\n"))
 
         assertTrue(pushStrategy.pushAll(client) is PushResult.Success)
-        // No master in the body -> no attendee write and no organizer update.
+        // No master in the body: no attendee write and no organizer update.
         coVerify(exactly = 0) { attendeesDao.replaceForEvent(any(), any()) }
         coVerify(exactly = 0) { eventsDao.updateOrganizerScheduleStatus(any(), any()) }
     }
 
     @Test
     fun `read-back body for a DIFFERENT uid still persists by event id (server-authoritative)`() = runTest {
-        // A server that echoes a body whose UID differs from what we PUT: the
-        // read-back keys persistence on the local event id (the URL we fetched),
-        // not the UID, so it captures the receipt without crashing. The point of
-        // this test is that a UID mismatch is non-fatal, not that we validate UID.
+        // The server echoes a body whose UID differs from the one PUT. The read-back keys its
+        // writes on the local event id (the URL fetched), not the UID, and doesn't validate the
+        // UID. The test asserts only that a UID mismatch is non-fatal: the push still returns
+        // Success.
         val event = organizerEvent()
         stubCreateSuccess(event)
         stubReadBackBody(event, """
@@ -474,8 +475,8 @@ class PushStrategyReadBackTest {
 
     @Test
     fun `read-back DAO write failure is swallowed and push still succeeds`() = runTest {
-        // A DB error during the read-back persist must not fail the push (the
-        // PUT already succeeded; the receipt is best-effort).
+        // A database error while writing the read-back must not fail the push: the PUT already
+        // succeeded, and the receipt is best-effort.
         val event = organizerEvent()
         stubCreateSuccess(event)
         coEvery { attendeesDao.getForEventOnce(event.id) } returns listOf(attendeeRow("mailto:guest@example.test"))

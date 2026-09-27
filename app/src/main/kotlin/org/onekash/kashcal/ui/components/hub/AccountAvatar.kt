@@ -22,12 +22,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 /**
- * Circular avatar rendered in the top bar and the account hub's hero.
+ * Shows the circular avatar in the top bar and the account hub's hero.
  *
- * Shows the user's up-to-2-letter monogram in the accent container colors. When
- * [initials] normalize to empty (never set, or cleared), it falls back to a
- * person glyph on the same tonal circle, so setting initials is a seamless swap
- * on an unchanged background.
+ * The user's monogram of up to two letters sits on the accent container color. When [initials]
+ * normalize to empty (never set, or cleared) it shows a person glyph on the same circle, so
+ * setting initials swaps only the content.
  */
 @Composable
 fun AccountAvatar(
@@ -42,10 +41,8 @@ fun AccountAvatar(
             .size(size)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.primaryContainer)
-            // A hairline outline gives the circle a defined edge against the page.
-            // The tonal container fill barely separates from the surface for some
-            // accent seeds (and collapses entirely for the white/black extremes),
-            // so the border, not the fill, carries the shape.
+            // The tonal fill barely separates from the surface for some accent seeds, and not
+            // at all for the white and black extremes, so the hairline border carries the shape.
             .border(1.dp, MaterialTheme.colorScheme.outline, CircleShape),
         contentAlignment = Alignment.Center,
     ) {
@@ -62,9 +59,8 @@ fun AccountAvatar(
                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                 fontSize = fontSize,
                 fontWeight = FontWeight.SemiBold,
-                // The monogram is decorative; each caller (top-bar trigger, hub
-                // hero) puts the real label on its own clickable, so keep the
-                // letters out of the a11y tree rather than announcing "KC" too.
+                // Decorative: each caller (top-bar trigger, hub hero) labels its own clickable,
+                // so the letters stay out of the a11y tree instead of also announcing "KC".
                 modifier = Modifier.clearAndSetSemantics {},
             )
         }

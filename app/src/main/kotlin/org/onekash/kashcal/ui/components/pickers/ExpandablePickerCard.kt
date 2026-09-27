@@ -32,21 +32,13 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
 /**
- * Reusable expandable picker card component.
+ * Shows an outlined card whose header row (label, value, expand icon) toggles an animated
+ * content area. Tapping the header clears focus before calling [onToggle].
  *
- * Provides a consistent UI pattern for picker cards with:
- * - Header row with label, value, and expand/collapse icon
- * - Animated expandable content area
- * - Focus management (clears focus on toggle)
- *
- * Used as a base component for calendar picker, reminder picker, etc.
- *
- * @param label Left-aligned label (e.g., "Calendar", "Reminder")
- * @param value Right-aligned current value display
- * @param isExpanded Whether the content is visible
- * @param onToggle Called when user taps header to toggle expansion
- * @param enabled When false, card is dimmed and not clickable
- * @param content Composable content to show when expanded
+ * @param label left-aligned label, for example "Calendar" or "Reminder"
+ * @param value right-aligned current value
+ * @param enabled when false, the card is dimmed and the header isn't clickable
+ * @param content shown when [isExpanded]
  */
 @Deprecated("Use EventFormRow-based variants instead", level = DeprecationLevel.WARNING)
 @Composable
@@ -111,17 +103,8 @@ fun ExpandablePickerCard(
 }
 
 /**
- * Expandable picker card with custom header content.
- *
- * Use this variant when you need custom content in the header row,
- * such as color dots, icons, or multiple text elements.
- *
- * @param label Left-aligned label
- * @param isExpanded Whether the content is visible
- * @param onToggle Called when user taps header to toggle expansion
- * @param enabled When false, card is dimmed and not clickable
- * @param headerContent Custom content for the right side of the header
- * @param content Composable content to show when expanded
+ * Shows the same card as [ExpandablePickerCard] with [headerContent] on the header's right side
+ * in place of the value text, for example a color dot or an icon.
  */
 @Deprecated("Use EventFormRow-based variants instead", level = DeprecationLevel.WARNING)
 @Composable

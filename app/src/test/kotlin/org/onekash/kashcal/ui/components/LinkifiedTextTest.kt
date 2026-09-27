@@ -8,10 +8,9 @@ import org.onekash.kashcal.util.text.cleanHtmlEntities
 import org.onekash.kashcal.util.text.extractUrls
 
 /**
- * Tests for LinkifiedText behavior.
- *
- * Note: These tests verify the underlying URL detection logic used by LinkifiedText.
- * Compose UI rendering tests would require Android instrumented tests or Robolectric.
+ * Tests the URL detection LinkifiedText builds its links from: [extractUrls] over
+ * [cleanHtmlEntities]-cleaned text, covering positions, order, link types and the display text
+ * its accessibility description uses. The composable itself isn't rendered here.
  */
 class LinkifiedTextTest {
 
@@ -144,7 +143,7 @@ class LinkifiedTextTest {
 
     @Test
     fun `HTML entities in URL are preserved`() {
-        // URLs should not have HTML entities, but if they do, the URL itself is preserved
+        // An entity inside a URL decodes with the rest of the text, leaving the URL intact
         val text = "Link: https://example.com/search?q=Tom&amp;Jerry"
         val cleaned = cleanHtmlEntities(text)
 

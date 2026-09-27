@@ -6,12 +6,13 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for [AddressNormalizer.canonical] — the compare-time
- * canonicalizer for CAL-ADDRESS forms (RFC 5545 §3.3.3).
+ * Tests [AddressNormalizer]: [AddressNormalizer.canonical], the compare-time canonicalizer for
+ * CAL-ADDRESS forms (RFC 5545 §3.3.3), plus [AddressNormalizer.stripMailto] and
+ * [AddressNormalizer.isEmailShaped].
  *
- * Cases cover all four address shapes observed across seven CalDAV
- * implementations: `mailto:`, `urn:uuid:`, absolute HTTP, and
- * principal-relative path.
+ * The canonical cases cover the four address shapes observed across seven CalDAV
+ * implementations (`mailto:`, `urn:uuid:`, absolute HTTP, principal-relative path), plus bare
+ * mailboxes and unrecognized forms.
  */
 class AddressNormalizerTest {
 
@@ -56,7 +57,63 @@ class AddressNormalizerTest {
         assertEquals("unknown-form", AddressNormalizer.canonical("  unknown-form  "))
     }
 
-    // ===== isEmailShaped — gates mailto-emittable ORGANIZER/ATTENDEE addresses =====
+    // ===== Bare mailbox (no mailto: scheme) =====
+
+    @Test
+    fun `bare mailbox with mixed case is lowercased`() {
+        assertEquals("alice@example.com", AddressNormalizer.canonical("  Alice@Example.COM "))
+    }
+
+    @Test
+    fun `bare and mailto forms of the same mailbox canonicalize equal`() {
+        assertEquals(
+            AddressNormalizer.canonical("mailto:alice@example.com"),
+            AddressNormalizer.canonical("Alice@Example.COM")
+        )
+    }
+
+    @Test
+    fun `bare dotless-host mailbox folds case like its mailto form`() {
+        assertEquals(
+            AddressNormalizer.canonical("mailto:testuser1@radicale"),
+            AddressNormalizer.canonical("TestUser1@Radicale")
+        )
+    }
+
+    @Test
+    fun `principal path containing an email segment is preserved verbatim`() {
+        val input = "/remote.php/dav/principals/users/Organizer@Example.com/"
+        assertEquals(input, AddressNormalizer.canonical(input))
+    }
+
+    @Test
+    fun `https URI containing an email segment is preserved verbatim`() {
+        val input = "https://server.example/principals/Alice@Example.com/"
+        assertEquals(input, AddressNormalizer.canonical(input))
+    }
+
+    @Test
+    fun `non-mailto scheme without an at sign is preserved verbatim`() {
+        assertEquals("invalid:nomail", AddressNormalizer.canonical("invalid:nomail"))
+    }
+
+    @Test
+    fun `non-mailto scheme embedding a mixed-case email is preserved verbatim`() {
+        assertEquals("urn:x-user:Alice@Example.com", AddressNormalizer.canonical("urn:x-user:Alice@Example.com"))
+    }
+
+    @Test
+    fun `bare login without an at sign keeps its case`() {
+        assertEquals("Alice", AddressNormalizer.canonical("Alice"))
+    }
+
+    @Test
+    fun `stripMailto keeps the local-part and domain casing`() {
+        assertEquals("Alice@Example.COM", AddressNormalizer.stripMailto("mailto:Alice@Example.COM"))
+        assertEquals("Alice@Example.COM", AddressNormalizer.stripMailto("Alice@Example.COM"))
+    }
+
+    // ===== isEmailShaped: gates mailto-emittable ORGANIZER/ATTENDEE addresses =====
 
     @Test
     fun `isEmailShaped accepts a plain email`() {
@@ -76,8 +133,8 @@ class AddressNormalizerTest {
 
     @Test
     fun `isEmailShaped rejects a dotless internal host`() {
-        // The exact gap the review flagged: user@localhost / testuser1@radicale
-        // must NOT be emitted as a mailto ORGANIZER (no TLD dot).
+        // user@localhost and testuser1@radicale have no dot in the host, so they must not be
+        // emitted as a mailto ORGANIZER.
         assertFalse(AddressNormalizer.isEmailShaped("user@localhost"))
         assertFalse(AddressNormalizer.isEmailShaped("testuser1@radicale"))
     }
@@ -95,10 +152,10 @@ class AddressNormalizerTest {
 
     @Test
     fun `isEmailShaped rejects a principal path whose login segment is itself an email`() {
-        // A CalDAV principal href for an account whose login is an email address
-        // embeds an '@' and a dot, so a permissive local/domain char class would
-        // match the whole path and wrongly emit it as a mailto ORGANIZER. It is a
-        // DAV path, not an email transport address (RFC 5545 3.3.3).
+        // A principal href for an account whose login is an email address embeds an '@' and a
+        // dot, so a permissive local/domain char class would match the whole path and emit it
+        // as a mailto ORGANIZER. It is a DAV path, not an email transport address
+        // (RFC 5545 §3.3.3).
         assertFalse(
             AddressNormalizer.isEmailShaped("/cloud/remote.php/caldav/principals/organizer@example.com/")
         )

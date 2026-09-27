@@ -4,128 +4,68 @@ import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.model.AccountProvider
 
-/**
- * Single source of truth for Calendar operations.
- *
- * Replaces direct DAO access for calendars.
- *
- * Usage:
- * ```kotlin
- * class MyService @Inject constructor(
- *     private val calendarRepository: CalendarRepository
- * )
- * ```
- */
+/** Reads and writes Room calendars and their sync metadata in place of the calendars DAO. */
 interface CalendarRepository {
 
     // ========== Reactive Queries (Flow) ==========
 
-    /**
-     * Get all calendars as reactive Flow.
-     */
     fun getAllCalendarsFlow(): Flow<List<Calendar>>
 
-    /**
-     * Get visible calendars as Flow.
-     */
     fun getVisibleCalendarsFlow(): Flow<List<Calendar>>
 
-    /**
-     * Get calendars for account as Flow.
-     */
     fun getCalendarsForAccountFlow(accountId: Long): Flow<List<Calendar>>
 
-    /**
-     * Get calendar count by provider as Flow.
-     */
     fun getCalendarCountByProviderFlow(provider: AccountProvider): Flow<Int>
 
     // ========== One-Shot Queries ==========
 
-    /**
-     * Get calendar by ID.
-     */
     suspend fun getCalendarById(id: Long): Calendar?
 
-    /**
-     * Get calendars by IDs (batch operation).
-     * Used for efficient batch loading in sync operations.
-     */
+    /** Loads [ids] in one query; the push loads its calendars this way. */
     suspend fun getCalendarsByIds(ids: List<Long>): List<Calendar>
 
-    /**
-     * Get calendar by CalDAV URL.
-     */
     suspend fun getCalendarByUrl(caldavUrl: String): Calendar?
 
-    /**
-     * Get calendars for account (one-shot).
-     */
     suspend fun getCalendarsForAccountOnce(accountId: Long): List<Calendar>
 
-    /**
-     * Get all calendars (one-shot).
-     */
     suspend fun getAllCalendars(): List<Calendar>
 
-    /**
-     * Get enabled calendars for sync.
-     */
+    /** Returns the visible calendars, read-only ones included. */
     suspend fun getEnabledCalendars(): List<Calendar>
 
     // ========== Write Operations ==========
 
-    /**
-     * Create new calendar. Returns row ID.
-     */
+    /** Inserts [calendar] and returns its row ID. */
     suspend fun createCalendar(calendar: Calendar): Long
 
-    /**
-     * Update existing calendar.
-     */
     suspend fun updateCalendar(calendar: Calendar)
 
-    /**
-     * Delete calendar by ID.
-     */
     suspend fun deleteCalendar(calendarId: Long)
 
-    /**
-     * Set calendar visibility.
-     */
     suspend fun setVisibility(calendarId: Long, visible: Boolean)
 
-    /**
-     * Set all calendars for account visible/hidden.
-     */
+    /** Shows or hides every calendar of the account. */
     suspend fun setAllVisible(accountId: Long, visible: Boolean)
 
     // ========== Sync Metadata ==========
 
-    /**
-     * Update sync token and ctag after sync.
-     */
+    /** Stores the sync-token and ctag after a sync. */
     suspend fun updateSyncToken(calendarId: Long, syncToken: String?, ctag: String?)
 
     /**
-     * Update ctag only.
+     * Stores the ctag only, leaving the sync-token. The sync engine clears it to null after
+     * abandoning a conflicted operation, so the next pull can't skip the calendar as unchanged.
      */
     suspend fun updateCtag(calendarId: Long, ctag: String?)
 
-    /**
-     * Persist this collection's auto-schedule capability (RFC 6638 §2).
-     * Tri-state: null = unknown/not probed, false = not advertised,
-     * true = advertised.
-     */
+    /** Stores [Calendar.autoScheduleSupported] (RFC 6638 §2); its tri-state is documented there. */
     suspend fun updateAutoScheduleSupported(calendarId: Long, supported: Boolean?)
 
     /**
-     * Update calendar metadata (color, displayName, isReadOnly) atomically.
-     *
-     * Used by [PullStrategy.maybeRefreshMetadata] to refresh server-side
-     * changes on every pull. Null means "leave unchanged" — preserves local
-     * values for servers that don't return RFC 7986 color or that omit the
-     * privilege-set element.
+     * Updates color, display name and read-only flag in one statement; a null argument leaves
+     * that column unchanged, so a server that returns no RFC 7986 color or omits the
+     * privilege-set element keeps the local value. The pull calls it when a server probe changed
+     * any of them.
      *
      * Never touches [Calendar.localColorOverride].
      */

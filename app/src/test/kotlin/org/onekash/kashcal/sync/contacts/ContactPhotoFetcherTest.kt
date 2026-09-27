@@ -24,16 +24,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests [ContactPhotoFetcher]: the deferred step that drains the photo-pending
- * worklist after a pull. For each pending contact it re-reads the vCard (targeted
- * multiget of only the pending hrefs), recovers the remote-URL photo, fetches the
- * bytes, and writes them as a blob while clearing the pending flag.
+ * Tests [ContactPhotoFetcher], which drains the photo-pending worklist after a pull: a multiget
+ * of only the pending hrefs recovers each remote-URL photo, the bytes are fetched and written as
+ * a blob, and the pending flag is cleared.
  *
- * Doubles: the shared [FakeCardDavClient] (pending vCard bodies + programmed
- * [FakeCardDavClient.fetchPhoto] results) and the shared data-bearing
- * [FakeContactsProviderRepository] (seeded pending set + written-photos capture).
- * Robolectric only because the real [org.onekash.kashcal.data.contacts.VCardContactMapper]
- * builds `ContentValues` while recovering `photoUrl` from the re-read body.
+ * Doubles: the shared [FakeCardDavClient] (pending vCard bodies and programmed
+ * [FakeCardDavClient.fetchPhoto] results) and the shared [FakeContactsProviderRepository] (seeded
+ * pending set, written-photo capture). Robolectric is needed only because the real
+ * [org.onekash.kashcal.data.contacts.VCardContactMapper] builds `ContentValues` while recovering
+ * `photoUrl` from the re-read body.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -136,10 +135,9 @@ class ContactPhotoFetcherTest {
     @Test
     fun `a foreign-host photo URL refused by the client clears the pending flag (give up)`() = runTest {
         val href = "/123/card/a.vcf"
-        // The vCard names a photo on a host that is NOT the CardDAV registrable
-        // domain; the client refuses it (no GET, credential-leak guard) -> a
-        // NON-retryable Error. Retrying it every sync can never succeed as-is, so
-        // the fetcher gives up and clears the flag (a later vCard change re-arms it).
+        // The photo's host is outside the CardDAV registrable domain, so the client refuses
+        // it without a GET (credential-leak guard) and returns a non-retryable Error. A retry
+        // can't succeed, so the fetcher clears the flag; a later vCard change re-arms it.
         val client = clientWith(addressBook(contacts = mutableListOf(contact(href, urlPhotoVcard("a", FOREIGN_PHOTO_URL)))))
         client.photoResults[FOREIGN_PHOTO_URL] =
             CalDavResult.error(0, "refused: foreign host", isRetryable = false)
@@ -169,10 +167,9 @@ class ContactPhotoFetcherTest {
     fun `a retryable photo-gateway 401 leaves the contact pending rather than clearing`() = runTest {
         val href = "/123/card/a.vcf"
         val client = clientWith(addressBook(contacts = mutableListOf(contact(href, urlPhotoVcard("a", PHOTO_URL)))))
-        // A 401 from the photo gateway (not a dead account credential — that fails the
-        // re-read first) is transient; fetchPhoto marks it retryable. Clearing the flag
-        // would permanently lose the photo since the gateway URL is stable and never
-        // re-arms on a bytes-only change.
+        // A photo-gateway 401 is transient (a dead account credential fails the re-read
+        // first), so fetchPhoto marks it retryable. Clearing the flag would lose the photo
+        // for good: the gateway URL is stable and a bytes-only change never re-arms it.
         client.photoResults[PHOTO_URL] = CalDavResult.error(401, "Photo fetch unauthorized", isRetryable = true)
         provider.seedPendingPhoto(ACCOUNT, href)
 
@@ -183,7 +180,7 @@ class ContactPhotoFetcherTest {
         assertTrue("the flag is not cleared on a retryable 401", provider.clearPhotoPendingCalls.isEmpty())
     }
 
-    // ---------- credential revocation mid-fetch degrades gracefully ----------
+    // ---------- a permission revoked mid-fetch leaves the contact pending ----------
 
     @Test
     fun `a repo write failure mid-fetch is swallowed - left pending, no crash`() = runTest {
@@ -206,8 +203,8 @@ class ContactPhotoFetcherTest {
     @Test
     fun `a pending contact whose re-read vCard has no URL photo has its stale flag cleared`() = runTest {
         val href = "/123/card/a.vcf"
-        // Re-read body no longer carries a URL photo (removed on the server, or the
-        // photo became inline and was already written on the pull).
+        // The re-read body has no URL photo: it was removed on the server, or became inline
+        // and was written by the pull.
         val client = clientWith(addressBook(contacts = mutableListOf(contact(href, noPhotoVcard("a")))))
         provider.seedPendingPhoto(ACCOUNT, href)
 
@@ -222,9 +219,8 @@ class ContactPhotoFetcherTest {
 
     @Test
     fun `a pending href matching no discovered book is skipped and left pending`() = runTest {
-        // The book that owned this href is not in this run's discovered set (its home
-        // failed to enumerate, or the book was removed). It must be left pending, never
-        // mis-fetched against the wrong collection.
+        // The href's book isn't in this run's discovered set (its home failed to list, or the
+        // book was removed). It must stay pending, never fetched against the wrong collection.
         val otherBook = addressBook(url = "$BOOK_HOST/999/other/", contacts = mutableListOf())
         val client = clientWith(otherBook)
         provider.seedPendingPhoto(ACCOUNT, "/123/card/a.vcf")
@@ -251,7 +247,7 @@ class ContactPhotoFetcherTest {
 
         fetcher.fetchPending(ACCOUNT, books(client), client)
 
-        // Each href was re-read against ITS OWN book URL, never the other's.
+        // Each href was re-read against its own book URL, never the other's.
         val calls = client.fetchByHrefCalls.toMap()
         assertEquals("book A multiget carries only A's href", listOf("/123/A/a.vcf"), calls["$BOOK_HOST/123/A/"])
         assertEquals("book B multiget carries only B's href", listOf("/123/B/b.vcf"), calls["$BOOK_HOST/123/B/"])
@@ -263,12 +259,10 @@ class ContactPhotoFetcherTest {
 
     @Test
     fun `a pending href in absolute-URL form still resolves to its book and is fetched`() = runTest {
-        // SOURCE_ID (the pending href) is whatever the listing/sync-collection path stored.
-        // Some servers return an ABSOLUTE href there while the discovered book URL is also
-        // absolute; others return a server-relative path. Book routing must reduce BOTH forms
-        // to comparable paths, or a pending photo silently never resolves to its collection.
-        // This pins that cross-form invariant so a future href-normalization change can't
-        // regress it.
+        // SOURCE_ID (the pending href) is whatever the listing or sync-collection stored:
+        // some servers return an absolute href, others a server-relative path, while the
+        // discovered book URL is absolute. Book routing must reduce both forms to comparable
+        // paths, or a pending photo silently never resolves to its collection.
         val absoluteHref = "$BOOK_HOST/123/card/a.vcf"
         val client = clientWith(addressBook(contacts = mutableListOf(contact(absoluteHref, urlPhotoVcard("a", PHOTO_URL)))))
         client.photoResults[PHOTO_URL] = CalDavResult.success(PhotoBytes(byteArrayOf(5), "image/jpeg"))
@@ -287,9 +281,8 @@ class ContactPhotoFetcherTest {
     fun `a book whose re-read fails leaves every one of its pending hrefs pending`() = runTest {
         val hrefA = "/123/card/a.vcf"
         val hrefB = "/123/card/b.vcf"
-        // The multiget for this book's pending hrefs errors out — the fetcher can't
-        // recover any photo URL, so it must leave them all pending (never clear,
-        // never write, never fetch a photo it couldn't resolve).
+        // The multiget for this book's pending hrefs fails, so no photo URL is recovered:
+        // every href must stay pending (never cleared, written or fetched).
         val client = FakeCardDavClient(fetchError = CalDavResult.error(503, "book unavailable", isRetryable = true))
         client.books += addressBook(
             contacts = mutableListOf(
@@ -314,9 +307,8 @@ class ContactPhotoFetcherTest {
     fun `a pending href absent from the re-read response is left pending`() = runTest {
         val present = "/123/card/a.vcf"
         val absent = "/123/card/gone.vcf"
-        // Only `present` comes back on the multiget; `absent` was deleted between the
-        // pull and now. It has no entry in the re-read, so it is left pending — a
-        // later orphan sweep removes the RawContact entirely, so clearing here is moot.
+        // Only `present` comes back on the multiget; `absent` was deleted on the server since
+        // the pull. It stays pending: a later pull removes the RawContact, so clearing is moot.
         val client = clientWith(addressBook(contacts = mutableListOf(contact(present, urlPhotoVcard("a", PHOTO_URL)))))
         client.photoResults[PHOTO_URL] = CalDavResult.success(PhotoBytes(byteArrayOf(7), "image/jpeg"))
         provider.seedPendingPhoto(ACCOUNT, present)
@@ -330,15 +322,14 @@ class ContactPhotoFetcherTest {
         assertTrue("the absent href is not force-cleared", provider.clearPhotoPendingCalls.none { it.second == absent })
     }
 
-    // ---------- an unexpected collaborator throw degrades to left-pending, never propagates ----------
+    // ---------- a collaborator throw leaves the book pending, never propagates ----------
 
     @Test
     fun `an unexpected throw from a collaborator is contained and leaves the book pending`() = runTest {
         val href = "/123/card/a.vcf"
-        // A no-URL re-read would take the clear path; make clearPhotoPending THROW an
-        // unchecked exception to prove the fetcher's never-throws contract holds even
-        // when a collaborator violates its Result envelope — the whole contact sync
-        // must not fail, and the href must be left pending.
+        // A no-URL re-read takes the clear path, and clearPhotoPending throws instead of
+        // returning its Result. fetchPending must still not throw, so the contact sync goes
+        // on, and the href stays pending.
         val client = clientWith(addressBook(contacts = mutableListOf(contact(href, noPhotoVcard("a")))))
         provider.seedPendingPhoto(ACCOUNT, href)
         provider.clearPhotoPendingThrows = RuntimeException("provider blew up")

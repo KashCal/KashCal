@@ -31,10 +31,10 @@ import org.onekash.kashcal.ui.shared.SyncOption
 import org.onekash.kashcal.ui.shared.getSyncOptions
 
 /**
- * Bottom sheet for selecting how often background calendar sync runs.
+ * Shows a bottom sheet for choosing how often background calendar sync runs.
  *
- * Options range from every 15 minutes (the WorkManager periodic floor) to
- * "Manual only", which disables automatic background sync entirely.
+ * Options range from every 15 minutes (the WorkManager periodic floor) to "Manual only", which
+ * turns off automatic background sync.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +54,6 @@ fun SyncFrequencySheet(
                 .padding(bottom = 32.dp)
                 .selectableGroup()
         ) {
-            // Header
             Text(
                 text = stringResource(R.string.settings_sync_frequency),
                 style = MaterialTheme.typography.titleLarge,
@@ -71,7 +70,6 @@ fun SyncFrequencySheet(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            // Options
             getSyncOptions(LocalResources.current).forEach { option ->
                 SyncFrequencyOptionRow(
                     option = option,

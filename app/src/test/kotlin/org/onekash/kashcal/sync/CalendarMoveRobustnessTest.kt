@@ -30,17 +30,13 @@ import java.util.UUID
 import kotlin.system.measureTimeMillis
 
 /**
- * Calendar move operation robustness tests.
- *
- * Tests verify:
- * - Move to read-only calendar rejection
- * - Partial failure handling (DELETE succeeds, PUT fails)
- * - Move with caldavUrl conflicts
- * - Rollback scenarios
- * - Move during active sync
- * - Large exception set move performance
- *
- * These tests ensure calendar move reliability.
+ * Robustness tests for [EventWriter.moveEventToCalendar]:
+ * - A read-only target is refused; a read-only source isn't
+ * - The MOVE op captures the server URL before the row clears it
+ * - A move to the same calendar is a no-op
+ * - A master takes its exceptions and occurrences along; an exception can't move alone
+ * - A master with 30 exceptions moves in under 3 seconds
+ * - Cross-account moves and the op queued for each sync status
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -131,7 +127,7 @@ class CalendarMoveRobustnessTest {
         // Create event in read-only calendar (simulating server sync)
         val event = createAndInsertEvent("Read-Only Event", readOnlyCalendarId)
 
-        // Moving FROM read-only should work (user might want to edit)
+        // Moving from read-only works (the user might want to edit it)
         eventWriter.moveEventToCalendar(event.id, targetCalendarId)
 
         val moved = database.eventsDao().getById(event.id)!!
@@ -145,7 +141,7 @@ class CalendarMoveRobustnessTest {
         val originalUrl = "https://test.com/source/event123.ics"
         val event = createAndInsertEvent("URL Capture Test", sourceCalendarId)
 
-        // Mark as SYNCED with caldavUrl - this is required for MOVE operation
+        // A MOVE is queued only for a SYNCED event with a caldavUrl
         val syncedEvent = event.copy(
             caldavUrl = originalUrl,
             syncStatus = SyncStatus.SYNCED
@@ -211,8 +207,8 @@ class CalendarMoveRobustnessTest {
 
     @Test
     fun `move recurring event with exceptions automatically moves exceptions`() = runTest {
-        // v21.6.0: EventWriter.moveEventToCalendar NOW moves exceptions with master.
-        // RFC 5545 says exceptions share UID with master and must stay together.
+        // Exceptions share the master's UID (RFC 5545), and RFC 4791 §4.1 keeps every
+        // component with one UID in one calendar object resource, so they move with the master.
         val master = createAndInsertRecurringEvent("Recurring with Exceptions", sourceCalendarId)
         occurrenceGenerator.regenerateOccurrences(master)
 
@@ -232,15 +228,14 @@ class CalendarMoveRobustnessTest {
         val movedMaster = database.eventsDao().getById(master.id)!!
         assertEquals(targetCalendarId, movedMaster.calendarId)
 
-        // v21.6.0: Exception should ALSO be in target calendar (cascaded with master)
+        // The exception moved with the master
         val movedException = database.eventsDao().getById(exception.id)!!
         assertEquals(targetCalendarId, movedException.calendarId)
     }
 
     @Test
     fun `move exception event directly throws error`() = runTest {
-        // v21.6.0: EventWriter.moveEventToCalendar now rejects moving exceptions directly.
-        // Exceptions must stay with their master.
+        // An exception can't move without its master, so the writer throws
         val master = createAndInsertRecurringEvent("Master for Exception", sourceCalendarId)
         occurrenceGenerator.regenerateOccurrences(master)
 
@@ -253,7 +248,6 @@ class CalendarMoveRobustnessTest {
             modifiedEvent = master.copy(title = "Direct Move Exception")
         )
 
-        // v21.6.0: EventWriter now throws for exception events
         try {
             eventWriter.moveEventToCalendar(exception.id, targetCalendarId)
             fail("Should throw IllegalArgumentException for exception events")
@@ -266,8 +260,7 @@ class CalendarMoveRobustnessTest {
 
     @Test
     fun `move recurring event with 30 exceptions should complete quickly`() = runTest {
-        // v21.6.0: EventWriter.moveEventToCalendar now cascades to exceptions.
-        // This test verifies performance with the cascading behavior.
+        // The move also updates every exception's calendar; this measures that cost
         val master = createAndInsertRecurringEvent("Large Exception Set", sourceCalendarId)
             .let {
                 // Update to have more occurrences
@@ -304,7 +297,7 @@ class CalendarMoveRobustnessTest {
         val movedMaster = database.eventsDao().getById(master.id)!!
         assertEquals(targetCalendarId, movedMaster.calendarId)
 
-        // v21.6.0: Exceptions should ALSO be moved to target calendar (cascaded)
+        // Every exception moved with the master
         val exceptionsAfter = database.eventsDao().getExceptionsForMaster(master.id)
         assertTrue("All exceptions should be in target calendar",
             exceptionsAfter.all { it.calendarId == targetCalendarId })
@@ -335,7 +328,7 @@ class CalendarMoveRobustnessTest {
         val moved = database.eventsDao().getById(event.id)!!
         assertEquals(otherAccountCalendarId, moved.calendarId)
 
-        // Should have CREATE operation (not MOVE) because event was PENDING_CREATE (not SYNCED)
+        // A CREATE, not a linked CREATE+DELETE, because the event was PENDING_CREATE (not SYNCED)
         val ops = database.pendingOperationsDao().getForEvent(event.id)
         assertTrue(
             "Should have CREATE operation for unsynced event",
@@ -377,13 +370,12 @@ class CalendarMoveRobustnessTest {
         val moved = database.eventsDao().getById(event.id)!!
         assertEquals(targetCalendarId, moved.calendarId)
 
-        // Should NOT create MOVE operation (event not on server yet)
+        // No MOVE: the event isn't on the server yet, so the writer queues a CREATE
         val ops = database.pendingOperationsDao().getForEvent(event.id)
         val moveOps = ops.filter { it.operation == PendingOperation.OPERATION_MOVE }
 
-        // Implementation may vary - either no MOVE op, or MOVE op with no targetUrl
+        // The check also accepts a MOVE, as long as it has no source URL
         if (moveOps.isNotEmpty()) {
-            // If MOVE exists, it's acceptable but targetUrl might be null
             val moveOp = moveOps.first()
             assertTrue(
                 "MOVE for unsynced event should have null targetUrl",
@@ -455,8 +447,8 @@ class CalendarMoveRobustnessTest {
     }
 
     /**
-     * Create a modified event with correct times for the given occurrence.
-     * EventWriter requires correct startTs/endTs matching the occurrence being edited.
+     * Returns a copy moved to [occurrence]'s start, keeping its duration, so the exception's
+     * times match the occurrence being edited.
      */
     private fun Event.withOccurrenceTime(occurrence: Occurrence): Event {
         val duration = this.endTs - this.startTs

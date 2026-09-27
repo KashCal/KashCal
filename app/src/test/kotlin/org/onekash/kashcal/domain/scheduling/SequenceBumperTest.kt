@@ -7,15 +7,14 @@ import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Event
 
 /**
- * Unit tests for [SequenceBumper] — the single source of truth for when an
- * organizer edit must bump the iCalendar SEQUENCE (RFC 5546 §2.1.4).
+ * Tests [SequenceBumper], the source of truth for when an organizer edit bumps the iCalendar
+ * SEQUENCE (RFC 5546 §2.1.4).
  *
- * Significant properties (MUST bump): DTSTART, DTEND, DURATION, RRULE, RDATE,
- * EXDATE, a transition of STATUS to CANCELLED, and the attendee-facing
- * SUMMARY/title and LOCATION. Purely cosmetic properties (DESCRIPTION,
- * CATEGORIES, COLOR) must NOT bump — those changes don't invalidate an
- * attendee's prior acceptance, so re-sending them as a higher SEQUENCE
- * spuriously re-notifies attendees.
+ * Bump: DTSTART, DTEND, DURATION, the all-day flag, RRULE (compared by meaning), RDATE, EXDATE, a
+ * transition of STATUS to CANCELLED, and the attendee-facing SUMMARY and LOCATION (compared
+ * trimmed). Cosmetic properties (DESCRIPTION, CATEGORIES, COLOR) must not bump: they don't
+ * invalidate an attendee's prior acceptance, so a higher SEQUENCE would re-notify attendees for
+ * nothing. Also tests [SequenceBumper.nextSequence].
  */
 class SequenceBumperTest {
 
@@ -31,7 +30,7 @@ class SequenceBumperTest {
         sequence = 4,
     )
 
-    // ---- Significant (scheduling) properties: MUST bump ----
+    // ---- Significant (scheduling) properties: bump ----
 
     @Test
     fun `DTSTART change bumps`() {
@@ -70,9 +69,9 @@ class SequenceBumperTest {
 
     @Test
     fun `cosmetically reordered RRULE does not bump`() {
-        // The recurrence picker can re-emit the same rule with parts in
-        // a different order. That is not a scheduling change, so it must
-        // not bump SEQUENCE and spuriously re-notify attendees.
+        // The recurrence picker can re-emit the same rule with parts in a different order.
+        // That isn't a scheduling change, so it must not bump SEQUENCE and re-notify
+        // attendees.
         val old = baseEvent().copy(rrule = "FREQ=WEEKLY;BYDAY=MO,WE")
         val new = old.copy(rrule = "BYDAY=WE,MO;FREQ=WEEKLY")
         assertFalse(SequenceBumper.shouldBump(old, new))
@@ -101,9 +100,8 @@ class SequenceBumperTest {
 
     @Test
     fun `ordinal BYDAY change still bumps`() {
-        // "first Sunday" vs "last Sunday" is a real cadence change. The
-        // semantic compare sorts BYxxx set members but must not collapse
-        // the ordinal prefix, so this must still bump.
+        // "first Sunday" vs "last Sunday" is a real cadence change. The semantic compare sorts
+        // list values but must not drop the ordinal prefix, so this must still bump.
         val old = baseEvent().copy(rrule = "FREQ=MONTHLY;BYDAY=1SU")
         val new = old.copy(rrule = "FREQ=MONTHLY;BYDAY=-1SU")
         assertTrue(SequenceBumper.shouldBump(old, new))
@@ -132,8 +130,8 @@ class SequenceBumperTest {
 
     @Test
     fun `title change bumps`() {
-        // A renamed meeting is attendee-facing: attendees should be
-        // re-notified so their calendars reflect the new title.
+        // A renamed meeting is attendee-facing: attendees should be re-notified so their
+        // calendars show the new title.
         val old = baseEvent()
         val new = old.copy(title = "Renamed standup")
         assertTrue(SequenceBumper.shouldBump(old, new))
@@ -141,8 +139,8 @@ class SequenceBumperTest {
 
     @Test
     fun `location change bumps`() {
-        // RFC 5546 §2.1.4 names LOCATION as an example of a change that can
-        // jeopardize an attendee's participation status (a moved venue).
+        // RFC 5546 §2.1.4 gives a moved location as an example of a change that can jeopardize
+        // an attendee's participation status.
         val old = baseEvent()
         val new = old.copy(location = "Room B")
         assertTrue(SequenceBumper.shouldBump(old, new))
@@ -157,8 +155,7 @@ class SequenceBumperTest {
 
     @Test
     fun `location whitespace-only difference does not bump`() {
-        // A no-op re-save that only pads whitespace must not spuriously
-        // re-notify attendees.
+        // A re-save that only pads whitespace must not re-notify attendees.
         val old = baseEvent().copy(location = "Room B")
         val new = old.copy(location = "  Room B  ")
         assertFalse(SequenceBumper.shouldBump(old, new))
@@ -178,7 +175,7 @@ class SequenceBumperTest {
         assertFalse(SequenceBumper.shouldBump(old, new))
     }
 
-    // ---- Non-significant properties: MUST NOT bump ----
+    // ---- Non-significant properties: don't bump ----
 
     @Test
     fun `description change does not bump`() {
@@ -209,8 +206,8 @@ class SequenceBumperTest {
 
     @Test
     fun `un-cancel does not bump in T3 scope`() {
-        // Revival (CANCELLED -> CONFIRMED) is a rare flow; T3 only bumps on
-        // the transition TO cancelled. Documented scope decision.
+        // Revival (CANCELLED -> CONFIRMED) is a rare flow; only the transition to CANCELLED
+        // bumps, a deliberate scope choice (RFC 5546 §2.1.4 lists any STATUS change).
         val old = baseEvent().copy(status = "CANCELLED")
         val new = old.copy(status = "CONFIRMED")
         assertFalse(SequenceBumper.shouldBump(old, new))
@@ -234,8 +231,8 @@ class SequenceBumperTest {
 
     @Test
     fun `nextSequence uses new event's stored sequence as the base`() {
-        // The bump is relative to the new event's sequence, not the old row's,
-        // so a caller that already carried a sequence forward isn't clobbered.
+        // The bump is relative to the new event's sequence, not the old row's, so a caller
+        // that already carried a sequence forward isn't clobbered.
         val old = baseEvent().copy(sequence = 4)
         val new = old.copy(sequence = 9, startTs = old.startTs + 3_600_000)
         assertEquals(10, SequenceBumper.nextSequence(old, new))

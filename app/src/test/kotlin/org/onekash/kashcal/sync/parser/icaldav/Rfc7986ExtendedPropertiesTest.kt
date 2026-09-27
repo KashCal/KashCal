@@ -17,18 +17,17 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /**
- * RFC 7986 compliance tests for iCalendar extended properties.
+ * Tests parsing ([ICalEventMapper]) and writing ([IcsPatcher]) of the RFC 7986 and RFC 5545
+ * descriptive properties:
+ * - RFC 7986 §5.9: COLOR, a CSS3 color name; hex is read and written too
+ * - RFC 5545 §3.8.1.2: CATEGORIES, a comma-separated list
+ * - RFC 5545 §3.8.1.6: GEO (latitude;longitude)
+ * - RFC 5545 §3.8.4.6: URL
  *
- * Tests parsing (ICalEventMapper) and writing (IcsPatcher) of:
- * - Section 5.9: COLOR property (CSS hex color)
- * - Section 5.3: CATEGORIES property (comma-separated list)
- * - RFC 5545 Section 3.8.1.6: GEO property (latitude;longitude)
- * - RFC 5545 Section 3.8.4.6: URL property
- *
- * Each test verifies compliance through the public API:
- * - Parsing: ICalParser → ICalEventMapper.toEntity().event
- * - Writing: Event → IcsPatcher.generateFresh()
- * - Round-trip: Parse → Entity → Generate → Re-parse → Verify
+ * Each test goes through the public API:
+ * - Parsing: ICalParser, then ICalEventMapper.toEntity().event
+ * - Writing: Event to IcsPatcher.generateFresh()
+ * - Round-trip: parse, map to an entity, generate, re-parse, compare
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -45,12 +44,12 @@ class Rfc7986ExtendedPropertiesTest {
 
     @Test
     fun `COLOR parses 6-digit hex to ARGB int`() {
-        // RFC 7986: COLOR value is CSS3 color (e.g., "#FF5733")
+        // RFC 7986 §5.9 defines a CSS3 color name; hex such as "#FF5733" is accepted too
         val ics = icsWithProperties("COLOR:#FF5733")
         val entity = parseToEntity(ics)
 
         assertNotNull("COLOR should be parsed", entity.color)
-        // #FF5733 → ARGB: 0xFFFF5733 (alpha=FF added by Android Color.parseColor)
+        // #FF5733 becomes ARGB 0xFFFF5733; Android Color.parseColor adds alpha FF
         assertEquals(0xFFFF5733.toInt(), entity.color)
     }
 
@@ -93,7 +92,7 @@ class Rfc7986ExtendedPropertiesTest {
 
     @Test
     fun `COLOR parses black correctly`() {
-        // Edge case: black is 0x000000 — ensure it's not confused with null
+        // Black is 0x000000 and must not be confused with null
         val ics = icsWithProperties("COLOR:#000000")
         val entity = parseToEntity(ics)
 
@@ -103,7 +102,7 @@ class Rfc7986ExtendedPropertiesTest {
 
     @Test
     fun `COLOR writes 6-digit hex without alpha`() {
-        // RFC 7986: COLOR is CSS3 hex — alpha channel not part of spec
+        // Hex COLOR is written as #RRGGBB, without the alpha channel
         val event = createEvent(color = 0xFFFF5733.toInt())
         val ics = IcsPatcher.generateFresh(event)
 
@@ -112,8 +111,8 @@ class Rfc7986ExtendedPropertiesTest {
 
     @Test
     fun `COLOR emits css3 name black for pure black`() {
-        // Black is in the wheel palette as HueFamily.NEUTRAL, so it round-trips
-        // as the CSS3 name rather than hex — more RFC 7986 §5.9 compliant.
+        // Black is in the wheel palette as HueFamily.NEUTRAL, so it is written as the CSS3
+        // name, the form RFC 7986 §5.9 defines, instead of hex.
         val event = createEvent(color = 0xFF000000.toInt())
         val ics = IcsPatcher.generateFresh(event)
 
@@ -130,7 +129,7 @@ class Rfc7986ExtendedPropertiesTest {
 
     @Test
     fun `COLOR round-trip preserves value`() {
-        // Parse → Entity → Generate → Re-parse → same color
+        // Parse, map, generate and re-parse: the color is unchanged
         val original = icsWithProperties("COLOR:#FF5733")
         val entity = parseToEntity(original)
         val regenerated = IcsPatcher.generateFresh(entity)
@@ -141,8 +140,8 @@ class Rfc7986ExtendedPropertiesTest {
 
     @Test
     fun `COLOR parses CSS3 named color mediumorchid to ARGB`() {
-        // RFC 7986 §5.9: CSS3 named colors — Android Color.parseColor doesn't support
-        // extended CSS3 names (mediumorchid, slategray, etc.). EventColorPalette fills the gap.
+        // RFC 7986 §5.9 uses CSS3 color names. Android Color.parseColor doesn't know the
+        // extended ones such as mediumorchid and slategray; EventColorPalette resolves them.
         val ics = icsWithProperties("COLOR:mediumorchid")
         val entity = parseToEntity(ics)
 
@@ -162,14 +161,14 @@ class Rfc7986ExtendedPropertiesTest {
 
     @Test
     fun `COLOR emits hex fallback for non-palette hex`() {
-        // Non-palette hex values fall back to #RRGGBB form (still valid per RFC 7986)
+        // Non-palette values fall back to #RRGGBB
         val event = createEvent(color = 0xFF123456.toInt())
         val ics = IcsPatcher.generateFresh(event)
 
         assertTrue("Should emit COLOR:#123456", ics.contains("COLOR:#123456"))
     }
 
-    // ========== RFC 7986 Section 5.3: CATEGORIES Property ==========
+    // ========== RFC 5545 Section 3.8.1.2: CATEGORIES Property ==========
 
     @Test
     fun `CATEGORIES parses single category`() {
@@ -183,7 +182,7 @@ class Rfc7986ExtendedPropertiesTest {
 
     @Test
     fun `CATEGORIES parses multiple comma-separated values`() {
-        // RFC 7986/5545: CATEGORIES can contain multiple comma-separated values
+        // RFC 5545 §3.8.1.2: CATEGORIES can hold several comma-separated values
         val ics = icsWithProperties("CATEGORIES:Meeting,Work,Important")
         val entity = parseToEntity(ics)
 
@@ -258,7 +257,7 @@ class Rfc7986ExtendedPropertiesTest {
 
     @Test
     fun `GEO handles zero coordinates`() {
-        // Null Island (0,0) — edge case to not confuse with null
+        // Null Island (0,0) must not be confused with null
         val ics = icsWithProperties("GEO:0.0;0.0")
         val entity = parseToEntity(ics)
 
@@ -354,9 +353,7 @@ class Rfc7986ExtendedPropertiesTest {
 
     // ========== Helper Methods ==========
 
-    /**
-     * Build a minimal ICS string with optional extra properties injected into VEVENT.
-     */
+    /** Builds a minimal ICS string with [properties] added to the VEVENT. */
     private fun icsWithProperties(vararg properties: String): String {
         val extra = if (properties.isNotEmpty()) {
             "\n" + properties.joinToString("\n")

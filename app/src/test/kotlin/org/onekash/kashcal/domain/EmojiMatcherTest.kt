@@ -6,16 +6,20 @@ import org.junit.Test
 import java.util.Locale
 
 /**
- * Unit tests for EmojiMatcher keyword-to-emoji matching logic.
+ * Tests [EmojiMatcher.getEmoji] and [EmojiMatcher.formatWithEmoji].
  *
  * Tests cover:
- * - Core matching functionality
- * - Case insensitivity
- * - Word boundary matching (prevents partial matches)
- * - Priority ordering
- * - Edge cases
- * - Category coverage (spot checks)
- * - formatWithEmoji helper function
+ * - Core matching, case insensitivity and whole-word matching
+ * - Priority between matches, including disjoint matches of different lengths
+ * - Edge cases: blank titles, punctuation, digits, multi-word keywords
+ * - Category spot checks
+ * - formatWithEmoji on and off, with no match, and on a title that already has an emoji
+ * - Every keyword resolving to its own emoji alone ([EmojiMatcher.keywordEmojiPairs]), and
+ *   "eye doctor" and "family dinner" winning over the shorter keyword they contain
+ * - Case folding under a Turkish default locale
+ * - The suppress list, and bare common words that aren't keywords while their qualified forms
+ *   match
+ * - The guard for a title that already carries an emoji, and which symbols count as one
  */
 class EmojiMatcherTest {
 
@@ -99,15 +103,14 @@ class EmojiMatcherTest {
 
     @Test
     fun `getEmoji respects priority - birthday party returns birthday emoji`() {
-        // Birthday (priority 10) should win over party (priority 10)
-        // but since birthday comes first in sorted list, it wins
+        // Birthday and party are both priority 10; birthday is declared first, so it wins.
         val emoji = EmojiMatcher.getEmoji("Birthday party")
         assertEquals("\uD83C\uDF82", emoji)
     }
 
     @Test
     fun `getEmoji matches higher priority first`() {
-        // Birthday (priority 10) should beat coffee (priority 5)
+        // Birthday (priority 10) beats coffee (priority 5).
         val emoji = EmojiMatcher.getEmoji("Birthday coffee meetup")
         assertEquals("\uD83C\uDF82", emoji)
     }
@@ -286,9 +289,9 @@ class EmojiMatcherTest {
     fun `getEmoji matches ASCII keyword regardless of Turkish default locale`() {
         val previous = Locale.getDefault()
         try {
-            // Turkish folds uppercase I to a dotless 'ı', so a default-locale
-            // lowercase() would turn "PILATES" into "pılates" and miss the keyword.
-            // Locale.ROOT folding must keep it "pilates" and still match.
+            // Turkish folds uppercase I to a dotless 'ı', so a default-locale lowercase()
+            // would turn "PILATES" into "pılates" and miss. Locale.ROOT folding keeps
+            // "pilates", which matches.
             Locale.setDefault(Locale.forLanguageTag("tr-TR"))
             assertEquals("🧘", EmojiMatcher.getEmoji("PILATES class"))
         } finally {
@@ -300,16 +303,16 @@ class EmojiMatcherTest {
 
     @Test
     fun `getEmoji prefers higher priority keyword on disjoint match`() {
-        // "coffee" (priority 5) must beat "shopping" (priority 3) even though
-        // "shopping" is the longer word — priority, not length, decides disjoint matches.
+        // "coffee" (priority 5) beats the longer "shopping" (priority 3): priority, not
+        // length, decides disjoint matches.
         assertEquals("☕", EmojiMatcher.getEmoji("Coffee shopping"))
     }
 
-    // ==================== Suppress List (grief / medical short-circuit) ====================
+    // ==================== Suppress List ====================
 
     @Test
     fun `getEmoji returns null for suppressed grief and medical terms`() {
-        // These titles must never be decorated, even when a keyword would otherwise match.
+        // These titles are never decorated, even when a keyword would match.
         val suppressed = listOf(
             "Dad's funeral",
             "Memorial service",
@@ -317,7 +320,7 @@ class EmojiMatcherTest {
             "Hospice visit",
             "Knee surgery",
             "Biopsy results",
-            "Chemo appointment", // "appointment" is not a keyword, but chemo must suppress regardless
+            "Chemo appointment", // "appointment" isn't a keyword; chemo suppresses on its own
             "Divorce mediation",
             "Custody hearing",
             "Layoff meeting",
@@ -337,7 +340,8 @@ class EmojiMatcherTest {
 
     @Test
     fun `getEmoji no longer fires on bare common words`() {
-        // Dropped/qualified bare words must not decorate unrelated titles.
+        // Common words that are keywords only in a qualified form, or not at all, don't
+        // decorate unrelated titles.
         assertNull(EmojiMatcher.getEmoji("Unit test"))
         assertNull(EmojiMatcher.getEmoji("A/B test"))
         assertNull(EmojiMatcher.getEmoji("Class action lawsuit"))
@@ -345,13 +349,13 @@ class EmojiMatcherTest {
         assertNull(EmojiMatcher.getEmoji("Run the numbers"))
         assertNull(EmojiMatcher.getEmoji("Grill the vendor"))
         assertNull(EmojiMatcher.getEmoji("Car pool"))
-        assertNull(EmojiMatcher.getEmoji("Product demo review")) // "demo" dropped
-        assertNull(EmojiMatcher.getEmoji("Pitch a tent")) // bare "pitch" dropped; "sales pitch" kept below
+        assertNull(EmojiMatcher.getEmoji("Product demo review")) // "demo" isn't a keyword
+        assertNull(EmojiMatcher.getEmoji("Pitch a tent")) // "pitch" alone isn't a keyword
     }
 
     @Test
     fun `getEmoji bar exam resolves to books not beer`() {
-        // "bar" bare dropped, so "exam" (📚) wins instead of "bar" (🍺).
+        // Bare "bar" isn't a keyword, so "exam" (📚) decorates "Bar exam", not 🍺.
         assertEquals("📚", EmojiMatcher.getEmoji("Bar exam"))
     }
 
@@ -370,7 +374,7 @@ class EmojiMatcherTest {
 
     @Test
     fun `getEmoji preserves legitimate matches unaffected by bare-word cleanup`() {
-        // Sibling keywords in the same rules must still work.
+        // Other keywords in the same rules still match.
         assertEquals("🏃", EmojiMatcher.getEmoji("Marathon training"))
         assertEquals("🏃", EmojiMatcher.getEmoji("Morning jog"))
         assertEquals("📚", EmojiMatcher.getEmoji("Study group"))
@@ -384,7 +388,7 @@ class EmojiMatcherTest {
 
     @Test
     fun `getEmoji returns null when title already contains an emoji`() {
-        // Synced Apple/Notion events often already carry an emoji; never stack a second.
+        // Titles synced from other apps often already carry an emoji; never stack a second.
         assertNull(EmojiMatcher.getEmoji("🎂 Birthday"))
         assertNull(EmojiMatcher.getEmoji("Pizza night 🍕"))
         assertNull(EmojiMatcher.getEmoji("Lunch 🍽️ with team"))
@@ -392,17 +396,16 @@ class EmojiMatcherTest {
 
     @Test
     fun `getEmoji still matches titles that contain no emoji`() {
-        // The guard must not false-positive on ordinary text, including CJK / accented scripts.
+        // The guard doesn't fire on ordinary text, CJK and accented Latin included.
         assertEquals("🎂", EmojiMatcher.getEmoji("Birthday"))
-        assertEquals("☕", EmojiMatcher.getEmoji("Café coffee break")) // accented letter is not an emoji
+        assertEquals("☕", EmojiMatcher.getEmoji("Café coffee break")) // accented, not an emoji
         assertEquals("☕", EmojiMatcher.getEmoji("コーヒー coffee")) // CJK text is not an emoji
     }
 
     @Test
     fun `getEmoji treats text-default symbols as text, not emoji`() {
-        // ™ ✓ ➡ ↔ render as text without a variation selector, so a title carrying
-        // one still decorates — the guard is for genuine emoji, not any glyph that
-        // happens to have an emoji form.
+        // ™, ✓ and ➡ render as text without a variation selector, so a title carrying one
+        // still decorates: the guard is for emoji, not any glyph that has an emoji form.
         assertEquals("💻", EmojiMatcher.getEmoji("Zoom™ standup"))
         assertEquals("☕", EmojiMatcher.getEmoji("Coffee ✓ done"))
         assertEquals("🎂", EmojiMatcher.getEmoji("Birthday ➡ cake"))
@@ -419,18 +422,18 @@ class EmojiMatcherTest {
         assertEquals("🎂 Birthday", EmojiMatcher.formatWithEmoji("🎂 Birthday", showEmoji = true))
     }
 
-    // ==================== Whole-word matching (no substring false positives) ====================
+    // ==================== Whole-Word Matching ====================
 
     @Test
     fun `getEmoji matches presentation only as a whole word`() {
-        // Matching is whole-word (tokenized), not substring: "presentation" must not
-        // fire inside "representation", nor "pitch" inside "pitcher".
+        // Matching is by whole word, not substring: "presentation" doesn't fire inside
+        // "representation", nor "pitch" inside "pitcher".
         assertEquals("📊", EmojiMatcher.getEmoji("Quarterly presentation"))
         assertNull(EmojiMatcher.getEmoji("Proportional representation reform"))
         assertNull(EmojiMatcher.getEmoji("Pitcher rotation meeting"))
     }
 
-    // ==================== Emoji-presence guard: presentation set vs text-default ====================
+    // ==================== Emoji Presentation vs Text-Default Symbols ====================
 
     @Test
     fun `getEmoji suppresses code points with default emoji presentation`() {
@@ -444,8 +447,8 @@ class EmojiMatcherTest {
 
     @Test
     fun `getEmoji does not suppress bare text-default symbols`() {
-        // These have an emoji form but render as text without U+FE0F, so they must
-        // not be mistaken for an already-present emoji — the title still decorates.
+        // These have an emoji form but render as text without U+FE0F, so they don't count
+        // as an emoji already present; the title still decorates.
         assertEquals("☕", EmojiMatcher.getEmoji("Coffee ™ launch")) // 0x2122
         assertEquals("☕", EmojiMatcher.getEmoji("Coffee ✓ done")) // 0x2713
         assertEquals("☕", EmojiMatcher.getEmoji("Coffee ➡ next")) // 0x27A1

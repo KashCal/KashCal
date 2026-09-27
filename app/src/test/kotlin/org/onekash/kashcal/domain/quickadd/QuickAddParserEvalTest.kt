@@ -9,15 +9,17 @@ import java.time.LocalTime
 import java.util.Locale
 
 /**
- * Runs all 179 test expressions from the original NaturalDateParserEval.java harness
- * against our Kotlin QuickAddParser rewrite. Reports pass/fail/crash with summary.
+ * Runs the 177 expressions of an earlier natural-date evaluation harness through
+ * [QuickAddParser.parse] and prints each failure and crash. The test fails on any crash or on a
+ * pass rate under 90%; a `noCrashOnly` case passes when parse returns.
  *
- * Reference: Sunday April 13, 2026, 10:00 AM (matches original eval).
+ * Reference: Monday April 13, 2026, 10:00 AM (the harness called it Sunday).
  *
- * Design differences from original library (intentional):
- * - "today" returns null time (all-day event) — original returned reference time
- * - Bare "sunday" on Sunday → +7 days (next week) — original returned today (bug we fixed)
- * - "next sunday" → +7 days (next week) — matches our "next = coming occurrence" semantics
+ * Where the expected values differ from the harness's, on purpose:
+ * - "today" has no time (an all-day event); the harness expected the reference time.
+ * - A bare weekday on that same weekday is a week later; the harness expected today.
+ * - "next <weekday>" is in the following week: a week after the bare weekday when that is
+ *   under 7 days away ("next sunday" from Monday April 13 is April 26).
  */
 class QuickAddParserEvalTest {
 
@@ -46,10 +48,10 @@ class QuickAddParserEvalTest {
     )
 
     private fun buildTestCases(): List<TestCase> = buildList {
-        // ── SECTION 1: Relative Date Keywords (12) ──
+        // ── Section 1: Relative date keywords (12) ──
         add(TestCase("today", ref.toLocalDate(), null, "today → same date"))
-        // Original expected ref time for "today" but our parser returns null (all-day). Skip time check.
-        // add(TestCase("today", ref.toLocalDate(), ref.toLocalTime(), "today preserves reference time"))
+        // The harness also checked "today" for the reference time; the parser gives no time
+        // (all-day), so this repeat checks the date only.
         add(TestCase("today", ref.toLocalDate(), null, "today (date only check)"))
         add(TestCase("tomorrow", LocalDate.of(2026, 4, 14), null, "tomorrow"))
         add(TestCase("tmr", LocalDate.of(2026, 4, 14), null, "tmr abbreviation"))
@@ -62,8 +64,8 @@ class QuickAddParserEvalTest {
         add(TestCase("day after tomorrow", LocalDate.of(2026, 4, 15), null, "day after tomorrow"))
         add(TestCase("day before yesterday", LocalDate.of(2026, 4, 11), null, "day before yesterday"))
 
-        // ── SECTION 2: Weekday References (16) ──
-        // Ref is MONDAY Apr 13, 2026 (original eval incorrectly said Sunday)
+        // ── Section 2: Weekday references (16) ──
+        // The reference is Monday Apr 13, 2026 (the harness said Sunday).
         add(TestCase("monday", LocalDate.of(2026, 4, 20), null, "monday (same day → +7)"))
         add(TestCase("friday", LocalDate.of(2026, 4, 17), null, "friday (next occurrence)"))
         add(TestCase("sunday", LocalDate.of(2026, 4, 19), null, "sunday (next occurrence from Monday)"))
@@ -81,7 +83,7 @@ class QuickAddParserEvalTest {
         add(TestCase("next tue", LocalDate.of(2026, 4, 21), null, "next tue abbreviated (following week)"))
         add(TestCase("next wed", LocalDate.of(2026, 4, 22), null, "next wed abbreviated (following week)"))
 
-        // ── SECTION 3: Absolute Dates (16) ──
+        // ── Section 3: Absolute dates (16) ──
         add(TestCase("jan 15", LocalDate.of(2027, 1, 15), null, "jan 15"))
         add(TestCase("january 15", LocalDate.of(2027, 1, 15), null, "january 15"))
         add(TestCase("15 january", LocalDate.of(2027, 1, 15), null, "15 january (day first)"))
@@ -99,7 +101,7 @@ class QuickAddParserEvalTest {
         add(TestCase("25 december 2026", LocalDate.of(2026, 12, 25), null, "25 december 2026"))
         add(TestCase("21st of march 2027", LocalDate.of(2027, 3, 21), null, "21st of march 2027"))
 
-        // ── SECTION 4: Time Expressions (24) ──
+        // ── Section 4: Time expressions (24) ──
         add(TestCase("at 3pm", null, LocalTime.of(15, 0), "at 3pm"))
         add(TestCase("at 3 pm", null, LocalTime.of(15, 0), "at 3 pm (space before pm)"))
         add(TestCase("at 10am", null, LocalTime.of(10, 0), "at 10am"))
@@ -125,7 +127,7 @@ class QuickAddParserEvalTest {
         add(TestCase("at 1am", null, LocalTime.of(1, 0), "at 1am"))
         add(TestCase("at 11am", null, LocalTime.of(11, 0), "at 11am"))
 
-        // ── SECTION 5: Combined Date + Time (14) ──
+        // ── Section 5: Combined date and time (14) ──
         add(TestCase("tomorrow at 3pm", LocalDate.of(2026, 4, 14), LocalTime.of(15, 0), "tomorrow at 3pm"))
         add(TestCase("tomorrow 3pm", LocalDate.of(2026, 4, 14), LocalTime.of(15, 0), "tomorrow 3pm (no at)"))
         add(TestCase("tomorrow at noon", LocalDate.of(2026, 4, 14), LocalTime.of(12, 0), "tomorrow at noon"))
@@ -141,7 +143,7 @@ class QuickAddParserEvalTest {
         add(TestCase("3pm tomorrow", LocalDate.of(2026, 4, 14), LocalTime.of(15, 0), "3pm tomorrow (time first)"))
         add(TestCase("noon friday", LocalDate.of(2026, 4, 17), LocalTime.of(12, 0), "noon friday (time first)"))
 
-        // ── SECTION 6: Relative Offsets (15) ──
+        // ── Section 6: Relative offsets (15) ──
         add(TestCase("in 30 minutes", null, LocalTime.of(10, 30), "in 30 minutes"))
         add(TestCase("in 2 hours", null, LocalTime.of(12, 0), "in 2 hours"))
         add(TestCase("in 1 hour", null, LocalTime.of(11, 0), "in 1 hour"))
@@ -158,7 +160,7 @@ class QuickAddParserEvalTest {
         add(TestCase("in 2 hrs", null, LocalTime.of(12, 0), "in 2 hrs"))
         add(TestCase("in 1 hr", null, LocalTime.of(11, 0), "in 1 hr"))
 
-        // ── SECTION 7: Number Words (8) ──
+        // ── Section 7: Number words (8) ──
         add(TestCase("in fifteen minutes", null, LocalTime.of(10, 15), "in fifteen minutes"))
         add(TestCase("in two hours", null, LocalTime.of(12, 0), "in two hours"))
         add(TestCase("in three days", LocalDate.of(2026, 4, 16), null, "in three days"))
@@ -168,7 +170,7 @@ class QuickAddParserEvalTest {
         add(TestCase("in forty-five minutes", null, LocalTime.of(10, 45), "in forty-five minutes"))
         add(TestCase("in twenty minutes", null, LocalTime.of(10, 20), "in twenty minutes"))
 
-        // ── SECTION 8: Abbreviations (15) ──
+        // ── Section 8: Abbreviations (15) ──
         add(TestCase("jan 1", LocalDate.of(2027, 1, 1), null, "jan"))
         add(TestCase("feb 14", LocalDate.of(2027, 2, 14), null, "feb"))
         add(TestCase("mar 15", LocalDate.of(2027, 3, 15), null, "mar"))
@@ -185,7 +187,7 @@ class QuickAddParserEvalTest {
         add(TestCase("next thurs", LocalDate.of(2026, 4, 23), null, "next thurs (following week)"))
         add(TestCase("next tues", LocalDate.of(2026, 4, 21), null, "next tues (following week)"))
 
-        // ── SECTION 9: Structured Dates (10) ──
+        // ── Section 9: Structured dates (10) ──
         add(TestCase("15/01/2027", LocalDate.of(2027, 1, 15), null, "15/01/2027 (D/M/Y)"))
         add(TestCase("25/12/2026", LocalDate.of(2026, 12, 25), null, "25/12/2026 (D/M/Y)"))
         add(TestCase("2027-01-15", LocalDate.of(2027, 1, 15), null, "2027-01-15 (ISO)"))
@@ -197,7 +199,7 @@ class QuickAddParserEvalTest {
         add(TestCase("15.01.2027", LocalDate.of(2027, 1, 15), null, "15.01.2027 (dot separator)"))
         add(TestCase("15-01-2027", LocalDate.of(2027, 1, 15), null, "15-01-2027 (dash separator)"))
 
-        // ── SECTION 10: Calendar Sentences (9) ──
+        // ── Section 10: Calendar sentences (9) ──
         add(TestCase("Coffee with Sarah tomorrow at 3pm", LocalDate.of(2026, 4, 14), LocalTime.of(15, 0), "Coffee with Sarah tomorrow at 3pm"))
         add(TestCase("Team standup next monday at 9am", LocalDate.of(2026, 4, 20), LocalTime.of(9, 0), "Team standup next monday at 9am (same day → +7)"))
         add(TestCase("Dentist appointment jan 15 at 2pm", LocalDate.of(2027, 1, 15), LocalTime.of(14, 0), "Dentist appointment jan 15 at 2pm"))
@@ -208,7 +210,7 @@ class QuickAddParserEvalTest {
         add(TestCase("Lunch with team today at noon", ref.toLocalDate(), LocalTime.of(12, 0), "Lunch with team today at noon"))
         add(TestCase("Coffee at Blue Bottle tomorrow 3pm", LocalDate.of(2026, 4, 14), LocalTime.of(15, 0), "Sentence with 'at [location]'"))
 
-        // ── SECTION 11: Duration Expressions — no crash (8) ──
+        // ── Section 11: Duration expressions, crash check only (8) ──
         add(TestCase("for 30 minutes", null, null, "for 30 minutes", noCrashOnly = true))
         add(TestCase("for 2 hours", null, null, "for 2 hours", noCrashOnly = true))
         add(TestCase("for 1 hour", null, null, "for 1 hour", noCrashOnly = true))
@@ -218,7 +220,7 @@ class QuickAddParserEvalTest {
         add(TestCase("2-3pm", null, null, "2-3pm", noCrashOnly = true))
         add(TestCase("14:00-15:00", null, null, "14:00-15:00", noCrashOnly = true))
 
-        // ── SECTION 12: Recurrence — no crash (7) ──
+        // ── Section 12: Recurrence, crash check only (7) ──
         add(TestCase("every monday", null, null, "every monday", noCrashOnly = true))
         add(TestCase("every week", null, null, "every week", noCrashOnly = true))
         add(TestCase("every other tuesday", null, null, "every other tuesday", noCrashOnly = true))
@@ -227,7 +229,7 @@ class QuickAddParserEvalTest {
         add(TestCase("monthly", null, null, "monthly", noCrashOnly = true))
         add(TestCase("every weekday", null, null, "every weekday", noCrashOnly = true))
 
-        // ── SECTION 13: Edge Cases (12) ──
+        // ── Section 13: Edge cases (12) ──
         add(TestCase("Tomorrow at 3PM", LocalDate.of(2026, 4, 14), LocalTime.of(15, 0), "Mixed case: Tomorrow at 3PM"))
         add(TestCase("NEXT FRIDAY AT NOON", LocalDate.of(2026, 4, 24), LocalTime.of(12, 0), "ALL CAPS (following week)"))
         add(TestCase("  tomorrow   at   3pm  ", LocalDate.of(2026, 4, 14), LocalTime.of(15, 0), "Extra whitespace"))
@@ -244,7 +246,7 @@ class QuickAddParserEvalTest {
         add(TestCase("this evening", null, null, "this evening (not a keyword)", noCrashOnly = true))
         add(TestCase("this morning", null, null, "this morning (not a keyword)", noCrashOnly = true))
 
-        // ── SECTION 14: Failure/Robustness (11) ──
+        // ── Section 14: Failure and robustness (11) ──
         add(TestCase("", null, null, "empty string", noCrashOnly = true))
         add(TestCase("   ", null, null, "whitespace only", noCrashOnly = true))
         add(TestCase("hello world", null, null, "no date content", noCrashOnly = true))
@@ -297,7 +299,6 @@ class QuickAddParserEvalTest {
 
         val total = cases.size
 
-        // Print report
         println()
         println("═══════════════════════════════════════════════════════════════")
         println("  QuickAddParser Evaluation: $passed passed, $failed failed, $crashed crashed / $total total")
@@ -315,14 +316,12 @@ class QuickAddParserEvalTest {
         }
         println()
 
-        // Assert zero crashes
         assert(crashed == 0) { "$crashed tests crashed:\n${crashes.joinToString("\n")}" }
 
-        // Report pass rate — don't hard-fail on known gaps (will fix incrementally)
+        // A wrong answer only lowers the pass rate; the test fails below 90%.
         val passRate = passed.toDouble() / total * 100
         println("Pass rate: ${"%.1f".format(passRate)}% ($passed/$total)")
 
-        // Fail the test if pass rate drops below threshold
         assert(passRate >= 90.0) { "Pass rate ${"%.1f".format(passRate)}% is below 90% threshold" }
     }
 }

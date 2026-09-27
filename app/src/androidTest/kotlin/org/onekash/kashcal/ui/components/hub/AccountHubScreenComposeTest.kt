@@ -12,8 +12,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Compose UI tests for [AccountHubScreen] — the full-screen destination that
- * replaced the overflow bottom sheet.
+ * Compose UI tests for [AccountHubScreen], the full-screen account hub: its destination rows
+ * are displayed, the back arrow calls onBack, and inline initials editing saves the normalized
+ * value.
  */
 @RunWith(AndroidJUnit4::class)
 class AccountHubScreenComposeTest {

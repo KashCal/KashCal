@@ -1,0 +1,36 @@
+Lịch của bạn ở khắp mọi nơi. Gia đình trên iCloud. Ngày lễ từ một trang web nào đó. Sinh nhật vùi trong danh bạ. Công việc trên lịch điện thoại. KashCal gom tất cả vào một ứng dụng trên Android.
+
+Tìm hiểu thêm: https://kashcal.onekash.org
+
+• iCloud: chuyển sang Android nhưng gia đình vẫn dùng Apple? Đồng bộ lịch iCloud trực tiếp. Không cầu nối, không cách lách.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo và nhiều hơn nữa. Đồng bộ hai chiều thực sự, không lớp trung gian. Lịch Google và Outlook trên điện thoại của bạn cũng hiện ra.
+
+• Bảy chế độ xem: tháng, tháng toàn chiều cao, lịch trình, ngày, 3 ngày, tuần và năm. Chụm để phóng to dòng thời gian, kéo một sự kiện để dời nó.
+
+• Lên lịch: mời mọi người, gửi lời mời họp và trả lời lời mời của người khác.
+
+• Thống kê: xem thời gian của bạn đi đâu. Những ngày bận nhất, chuỗi liên tục, khoảng trống rảnh. Mọi thứ được tính trên thiết bị.
+
+• Tiện ích: giữ ngày của bạn trên màn hình chính mà không cần mở ứng dụng. Lịch trình, ngày, tuần, tháng và sắp tới.
+
+• Đăng ký ICS: theo dõi bất kỳ nguồn cấp lịch nào. Ngày lễ, học kỳ, mùa thể thao.
+
+• Sinh nhật và kỷ niệm: tự động lấy từ danh bạ của bạn.
+
+• Màu theo từng sự kiện: từ bảng màu chọn lọc hoặc vòng màu đầy đủ, để tuần của bạn dễ đọc trong nháy mắt.
+
+• Tùy chỉnh theo ý bạn: giao diện sáng, tối hoặc theo hệ thống, cùng bảng màu KashCal Teal. Người ủng hộ có thể đổi sang biểu tượng ứng dụng đặc biệt.
+
+• Trợ năng: hỗ trợ trình đọc màn hình (TalkBack) đầy đủ, và đặt ngôn ngữ ứng dụng ngay trong cài đặt Android, với 67 ngôn ngữ.
+
+• Hoạt động hoàn toàn ngoại tuyến ngay từ đầu.
+
+Riêng tư theo mặc định
+
+Không phân tích. Không đo từ xa. Không tài khoản KashCal. Chúng tôi không có máy chủ, nên chẳng có gì để thu thập.
+
+• Thông tin đăng nhập được mã hóa bằng Android Keystore
+• Khóa ứng dụng: giấu các sự kiện của bạn sau vân tay, khuôn mặt hoặc khóa màn hình
+
+Tự do như tự do ngôn luận. Và cũng miễn phí.

@@ -24,16 +24,14 @@ import org.onekash.kashcal.ui.components.attendees.AttendeeStatus
 import org.onekash.kashcal.ui.util.DayPagerUtils
 
 /**
- * Half-height ModalBottomSheet that lists all pending CalDAV invitations
- * across the user's accounts. Uses the default Material3 drag handle so
- * the user can drag-to-expand to full height per spec.
+ * Lists pending CalDAV invitations across the user's accounts in a sheet that opens partially
+ * expanded; the default drag handle expands it to full height.
  *
- * Cards are keyed by `event.id` so [LazyColumn]'s item-placement
- * animation runs when sync writes mutate the underlying Flow.
+ * Cards are keyed by `event.id`, so each keeps its identity when sync changes the list; no item
+ * animation is applied.
  *
- * When the list empties after the last RSVP, an "All caught up" message
- * is shown and tapping it dismisses the sheet (the user can also tap
- * outside or drag down).
+ * With no invitations left, an "All caught up" message shows, and tapping it dismisses the sheet
+ * (as does tapping outside or dragging down).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

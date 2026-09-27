@@ -27,14 +27,13 @@ import org.onekash.kashcal.MainActivity
 import java.time.LocalDate
 
 /**
- * The minimum widget width/height (dp, at font scale 1) at which the date widget
- * switches from the small circular icon to the fuller rounded date-card. The card
- * needs horizontal room for the spelled-out weekday and month, so the decision is
- * width-led. Both floors scale with the system font scale (see [dateWidgetLayout]):
- * a larger font needs more room, so the card appears only once there is enough.
+ * The minimum width and height, in dp at font scale 1, at which the date widget switches from
+ * the circular icon to the date card. The card needs room for the spelled-out weekday and month,
+ * so width leads. [dateWidgetLayout] scales both floors by the font scale, so a larger font
+ * needs a larger widget before the card appears.
  *
- * The width floor sits comfortably between the ~57dp icon and the ~110dp two-cell
- * card so the two sizes classify cleanly at font scale 1.
+ * The width floor sits between the ~57dp icon and the ~110dp two-cell card, so both sizes
+ * classify cleanly at font scale 1.
  */
 internal const val DATE_CARD_MIN_WIDTH_DP = 85f
 internal const val DATE_CARD_MIN_HEIGHT_DP = 44f
@@ -42,13 +41,13 @@ internal const val DATE_CARD_MIN_HEIGHT_DP = 44f
 /** Inset applied on every edge inside the widget, before either face is drawn. */
 private const val PADDING_DP = 4f
 
-/** Which face the date widget renders, chosen purely from its size. */
+/** Names the face the date widget renders, chosen from its size alone. */
 internal enum class DateWidgetLayout { ICON, CARD }
 
 /**
- * Picks the icon vs card face from the widget's size and the system font scale — no
- * user setting. CARD once the widget is at least [DATE_CARD_MIN_WIDTH_DP] wide and
- * [DATE_CARD_MIN_HEIGHT_DP] tall (both scaled by [fontScale]); ICON otherwise.
+ * Picks the face from the widget's size and the system font scale; there is no user setting.
+ * CARD once the widget is at least [DATE_CARD_MIN_WIDTH_DP] wide and [DATE_CARD_MIN_HEIGHT_DP]
+ * tall, both scaled by [fontScale]; ICON otherwise.
  */
 internal fun dateWidgetLayout(
     widthDp: Float,
@@ -65,27 +64,25 @@ internal fun dateWidgetLayout(
 }
 
 /**
- * Content for the date widget — today's date, size-responsive.
+ * Renders today's date as the icon or card face.
  *
- * Small (ICON): a circular icon-like face, short uppercase weekday over the day number.
+ * Small (ICON): a circular face, short uppercase weekday over the day number.
  * ┌─────────┐
- * │   SAT   │  ← short day name
- * │   19    │  ← date number (large)
+ * │   SAT   │  short day name
+ * │   19    │  date number, large
  * └─────────┘
  *
- * Larger (CARD): a rounded date-card with the full weekday and full month + day.
+ * Larger (CARD): a rounded card with the full weekday over the full month and day.
  * ┌───────────────┐
- * │ Saturday      │  ← full weekday
- * │ September 19  │  ← full month + day
+ * │ Saturday      │  full weekday
+ * │ September 19  │  full month and day
  * └───────────────┘
  *
- * The face is chosen from [LocalSize] via [dateWidgetLayout]; the widget shows only the
- * date at every size (no event content).
+ * [dateWidgetLayout] picks the face from [LocalSize]. No size shows event content.
  *
- * Locale: Glance widgets don't recompose on Configuration changes (they redraw on their
- * own schedule — see DateWidget.kt). The LocalContext read silences the NonObservableLocale
- * lint rule; correct locale is picked up at the next scheduled update, not in response to
- * Compose reactivity.
+ * Glance widgets don't recompose on a configuration change; they redraw on their own schedule
+ * ([DateWidget]). Reading the locale through LocalContext silences the NonObservableLocale lint
+ * rule, and a new locale shows at the next scheduled update.
  */
 @Composable
 fun DateWidgetContent() {
@@ -94,8 +91,8 @@ fun DateWidgetContent() {
     val fontScale = context.resources.configuration.fontScale
     val today = LocalDate.now()
 
-    // The visible label splits into fragments that read as disconnected to TalkBack;
-    // give the whole widget one full localized date label at every size instead.
+    // TalkBack reads the visible label as disconnected fragments, so give the whole widget one
+    // full localized date label at every size.
     val fullDateLabel = today.format(
         java.time.format.DateTimeFormatter
             .ofLocalizedDate(java.time.format.FormatStyle.FULL)
@@ -120,10 +117,9 @@ fun DateWidgetContent() {
         contentAlignment = Alignment.Center
     ) {
         when (layout) {
-            // Keep the icon a true circle: the resize envelope now allows non-square
-            // sizes below the card threshold (e.g. a 1x2 placement), so size the face
-            // to the largest square that fits the padded area rather than fillMaxSize
-            // (which would stretch the circle into a pill).
+            // Keep the icon a circle: the resize envelope allows non-square sizes below the
+            // card threshold (a 1x2 placement), and fillMaxSize would stretch it into a pill.
+            // Size the face to the largest square that fits the padded area.
             DateWidgetLayout.ICON -> {
                 val side = minOf(size.width.value, size.height.value) - PADDING_DP * 2
                 DateIconFace(today, locale, side.coerceAtLeast(0f))
@@ -134,8 +130,8 @@ fun DateWidgetContent() {
 }
 
 /**
- * Small circular icon: short uppercase weekday over the day-of-month number.
- * Sized to a square of [sideDp] so the circle holds its shape at non-square sizes.
+ * Renders the circular icon face: short uppercase weekday over the day of month. Sized to a
+ * square of [sideDp] so the circle holds its shape at non-square sizes.
  */
 @Composable
 private fun DateIconFace(today: LocalDate, locale: java.util.Locale, sideDp: Float) {
@@ -150,7 +146,7 @@ private fun DateIconFace(today: LocalDate, locale: java.util.Locale, sideDp: Flo
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Day name (e.g., "SAT")
+            // Day name, for example "SAT"
             Text(
                 text = labels.dayName,
                 style = TextStyle(
@@ -161,7 +157,7 @@ private fun DateIconFace(today: LocalDate, locale: java.util.Locale, sideDp: Flo
                 )
             )
 
-            // Date number (e.g., "19")
+            // Date number, for example "19"
             Text(
                 text = labels.dateNumber,
                 style = TextStyle(
@@ -175,7 +171,7 @@ private fun DateIconFace(today: LocalDate, locale: java.util.Locale, sideDp: Flo
     }
 }
 
-/** Rounded date-card: full weekday over the full localized month + day. */
+/** Renders the card face: full weekday over the full localized month and day. */
 @Composable
 private fun DateCardFace(today: LocalDate, locale: java.util.Locale) {
     val labels = WidgetDateFormatter.buildFullDateWidgetLabels(today, locale)
@@ -190,7 +186,7 @@ private fun DateCardFace(today: LocalDate, locale: java.util.Locale) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Full weekday (e.g., "Saturday")
+            // Full weekday, for example "Saturday"
             Text(
                 text = labels.weekdayFull,
                 style = TextStyle(
@@ -201,7 +197,7 @@ private fun DateCardFace(today: LocalDate, locale: java.util.Locale) {
                 )
             )
 
-            // Full month + day (e.g., "September 19")
+            // Full month and day, for example "September 19"
             Text(
                 text = labels.monthDay,
                 style = TextStyle(

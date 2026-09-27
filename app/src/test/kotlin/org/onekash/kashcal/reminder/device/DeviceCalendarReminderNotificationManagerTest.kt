@@ -6,12 +6,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for DeviceCalendarReminderNotificationManager.
+ * Tests [DeviceCalendarReminderNotificationManager]'s IDs, action strings and request codes.
  *
- * Tests cover:
- * - Notification ID generation (non-collision with Room reminders)
- * - Notification ID uniqueness for different events
- * - Notification ID range verification
+ * - Notification IDs: the 20000 base, the 20000-29999 range, no overlap with Room reminders'
+ *   2000-11999, and distinct or equal IDs per event and occurrence. These run an inline copy of
+ *   [DeviceCalendarReminderNotificationManager.getNotificationId], not the method itself.
+ * - The snooze, dismiss and show-event action strings.
+ * - PendingIntent request codes: the 100,000 range, open, snooze and dismiss codes are always
+ *   positive and don't overlap across the three actions, and 50 events get distinct open codes.
  */
 class DeviceCalendarReminderNotificationManagerTest {
 
@@ -24,7 +26,6 @@ class DeviceCalendarReminderNotificationManagerTest {
 
     @Test
     fun `notification IDs are in range 20000-29999`() {
-        // Test various eventId and occurrenceTs combinations
         val testCases = listOf(
             Pair(1L, 1000000L),
             Pair(999L, 9999999L),
@@ -48,7 +49,7 @@ class DeviceCalendarReminderNotificationManagerTest {
 
     @Test
     fun `notification IDs do not overlap with Room reminder range`() {
-        // Room reminders use 2000-11999
+        // Room reminders use 2000-11999 (ReminderNotificationChannels).
         val testCases = listOf(
             Pair(1L, 1000000L),
             Pair(100L, 1709251200000L),
@@ -116,7 +117,7 @@ class DeviceCalendarReminderNotificationManagerTest {
         )
     }
 
-    // ========== Request Code Collision Fix ==========
+    // ========== Request Codes ==========
 
     @Test
     fun `request code range is 100_000`() {
@@ -165,7 +166,6 @@ class DeviceCalendarReminderNotificationManagerTest {
 
     @Test
     fun `request code ranges do not overlap`() {
-        // Generate request codes from all three types and verify no overlap
         val openCodes = mutableSetOf<Int>()
         val snoozeCodes = mutableSetOf<Int>()
         val dismissCodes = mutableSetOf<Int>()
@@ -178,7 +178,6 @@ class DeviceCalendarReminderNotificationManagerTest {
             dismissCodes.add(DeviceCalendarReminderNotificationManager.computeDismissRequestCode((20000 + i).toInt()))
         }
 
-        // No set should intersect with another
         assertTrue("Open and snooze codes must not overlap", openCodes.intersect(snoozeCodes).isEmpty())
         assertTrue("Open and dismiss codes must not overlap", openCodes.intersect(dismissCodes).isEmpty())
         assertTrue("Snooze and dismiss codes must not overlap", snoozeCodes.intersect(dismissCodes).isEmpty())
@@ -206,9 +205,7 @@ class DeviceCalendarReminderNotificationManagerTest {
 
     // ========== Test Helper ==========
 
-    /**
-     * Mirror the notification ID calculation from the manager.
-     */
+    /** Copies [DeviceCalendarReminderNotificationManager.getNotificationId]; keep them in step. */
     private fun calculateNotificationId(eventId: Long, occurrenceTs: Long): Int {
         val combined = (eventId xor (occurrenceTs / 60000)) % 10000
         return (DeviceCalendarReminderNotificationManager.NOTIFICATION_ID_BASE + combined).toInt()

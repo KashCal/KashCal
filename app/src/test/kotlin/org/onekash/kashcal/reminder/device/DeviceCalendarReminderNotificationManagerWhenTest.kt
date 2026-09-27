@@ -33,6 +33,11 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import java.util.TimeZone
 
+/**
+ * Tests the header time and the all-day body text of
+ * [DeviceCalendarReminderNotificationManager.buildNotification], with the default zone set to
+ * America/New_York.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -127,8 +132,8 @@ class DeviceCalendarReminderNotificationManagerWhenTest {
 
     @Test
     fun `all-day reminder hides header time`() {
-        // occurrenceTs is UTC midnight for all-day events; surfacing it in the
-        // header renders a misleading shifted clock time, so suppress it.
+        // An all-day occurrenceTs is UTC midnight, which the header would show as a
+        // zone-shifted clock time.
         val zone = ZoneId.of("America/New_York")
         val notification = buildAllDay(
             LocalDate.of(2026, 1, 6),

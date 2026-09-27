@@ -18,9 +18,12 @@ import org.onekash.kashcal.ui.screens.settings.BirthdaysAndAnniversariesScreen
 import org.onekash.kashcal.ui.screens.settings.SubscriptionsScreen
 
 /**
- * Top-bar contract for the four full-page settings screens: each renders the
- * app-name title with a back-arrow navigation icon, and no screen-name string
- * appears in the top bar (catches `title = { Text(R.string.X_title) }` drift).
+ * Tests the top bar of the Settings root and the Accounts, Subscriptions and Birthdays &
+ * Anniversaries screens: each shows the app name as a title and a back arrow, back calls
+ * `onNavigateBack` on Accounts and Subscriptions, and the root shows no "Settings" text.
+ *
+ * Each of these screens passes `R.string.settings_title` as its `SettingsTopAppBar` title, so
+ * the app-name and no-"Settings" assertions don't match the screens as built.
  */
 @RunWith(AndroidJUnit4::class)
 class UnifiedTopBarComposeTest {
@@ -137,9 +140,8 @@ class UnifiedTopBarComposeTest {
                 )
             }
         }
-        // The screen-name title "Settings" must not be rendered as the bar title.
-        // (Settings root has no body heading either, so the only place it could
-        // legitimately render is the bar title — which the unified contract forbids.)
+        // Settings root has no body heading, so a "Settings" node could only be the bar title,
+        // which this test forbids.
         rule.onNodeWithText(context.getString(R.string.settings_title)).assertDoesNotExist()
     }
 }

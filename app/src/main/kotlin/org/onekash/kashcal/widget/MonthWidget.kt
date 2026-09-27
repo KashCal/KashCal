@@ -22,33 +22,24 @@ import org.onekash.kashcal.ui.model.MonthGrid
 import java.time.YearMonth
 
 /**
- * Month View widget showing a full month calendar grid.
+ * Month widget: a 6x7 day grid, today marked in the accent color and past days dimmed.
  *
- * Features:
- * - 6x7 calendar grid with day numbers; when the widget is tall enough to fit them, events
- *   show as title rows with continuous bars for multi-day events (mirroring the in-app month
- *   view), and otherwise fall back to colored indicator dots — decided purely by widget size
- * - Today highlighted with accent color
- * - Past days dimmed
- * - Tap day → navigate to that day in app
- * - Tap header → return to current month (if navigated) or open app at today
- * - Tap "+" → create event
- * - Month navigation via forward/backward arrows
+ * Widget size alone decides how events show: when the widget is tall enough, as title rows with
+ * continuous bars for multi-day events (like the in-app month view), otherwise as colored dots.
+ * Tapping a day opens it in the app; the arrows change month; the header returns to the current
+ * month when navigated away, else opens the app at today; "+" creates an event.
  *
- * Updates:
- * - On event create/update/delete
- * - On sync completion
- * - At midnight (new day)
- * - Periodically (every 30 minutes)
+ * Refreshes on each [WidgetUpdateManager.updateAllWidgets] call (for example an event write, a
+ * sync, midnight or a settings change) and every 30 minutes.
  *
- * State management:
- * - Month offset + [WIDGET_REFRESH_STAMP] stored in Glance PreferencesGlanceStateDefinition
- * - State read inside provideContent via currentState<Preferences>() for reactive updates
- * - Glance 1.1+ session management means update() recomposes provideContent without
- *   re-calling provideGlance(), so state MUST be read inside provideContent
- * - [WIDGET_REFRESH_STAMP] is bumped by [WidgetUpdateManager] on event CRUD/sync so
- *   [produceState] re-keys and re-fetches events. Without it, month-nav arrows triggered
- *   refetches via the `monthGrid` key, but event CRUD would leave stale dots on the grid.
+ * ## State
+ *
+ * The month offset and [WIDGET_REFRESH_STAMP] live in [PreferencesGlanceStateDefinition].
+ * Glance 1.1+ keeps a session, so update() recomposes [provideContent] without calling
+ * [provideGlance] again; state must be read inside provideContent via
+ * `currentState<Preferences>()`. The stamp keys [produceState], so a bump re-fetches events.
+ * Without it only the arrows (through the `monthGrid` key) re-fetch, and an event write leaves
+ * the grid stale.
  */
 class MonthWidget : GlanceAppWidget() {
 
@@ -68,33 +59,28 @@ class MonthWidget : GlanceAppWidget() {
         val entryPoint = EntryPointAccessors.fromApplication(context, MonthWidgetEntryPoint::class.java)
         val repository = entryPoint.widgetDataRepository()
 
-        // Resolve preferences BEFORE provideContent so the very first RemoteViews render with the
-        // correct grid start-day and week-number column. These are only the INITIAL values — they
-        // are re-read reactively inside provideContent (keyed on the refresh stamp) so toggling the
-        // first-day-of-week or week-number setting takes effect on the next update() without waiting
-        // for the widget session to be torn down and recreated (see the produceState calls below).
+        // Resolve preferences before provideContent so the first RemoteViews have the right grid
+        // start day and week-number column. These are initial values only; the produceState calls
+        // below re-read them on each refresh stamp.
         val dataStore = KashCalDataStore(context)
         val initialFirstDayOfWeek = dataStore.getFirstDayOfWeek()
         val initialShowWeekNumbers = dataStore.showWeekNumbers.first()
-        // Resolve the accent BEFORE provideContent so the very first RemoteViews already carry the
-        // picked seed. Seeding produceState with null would render one frame on the platform dynamic
-        // palette (null ?: GlanceTheme.colors) and only swap to the seed on a later push — which, if
-        // the host snapshots the widget before that push lands, leaves a SEED user showing wallpaper
-        // colors ("randomly didn't take the tint"). null colors here still mean the genuine
+        // Resolve the accent before provideContent so the first RemoteViews carry the picked seed.
+        // Seeding produceState with null renders a frame on the platform dynamic palette, and a
+        // host that snapshots it then leaves a seed user on wallpaper colors. Null colors mean the
         // DYNAMIC source on the system face.
         val initialColorConfig = resolveWidgetAccentColors(context, dataStore)
 
         provideContent {
-            // Read month offset + refresh stamp reactively — currentState updates on
-            // recomposition triggered by ActionCallback / updateAppWidgetState / update()
+            // currentState updates on a recomposition from an ActionCallback,
+            // updateAppWidgetState or update().
             val prefs = currentState<Preferences>()
             val monthOffset = prefs[MonthWidgetStateKeys.MONTH_OFFSET] ?: 0
             val refreshStamp = prefs[WIDGET_REFRESH_STAMP] ?: 0L
 
-            // Re-read the day-of-week and week-number prefs reactively, keyed on the refresh stamp so
-            // toggling either setting (which bumps the stamp via WidgetUpdateManager) recomposes with
-            // the new value. Reading them once outside provideContent froze them for the session's
-            // life, so the toggle only took effect after the widget was removed and re-added.
+            // Re-read the first-day-of-week and week-number settings on each refresh stamp, which
+            // toggling either one bumps through WidgetUpdateManager. Read only outside
+            // provideContent, they would stay frozen until the widget was removed and re-added.
             val firstDayOfWeek by produceState(initialValue = initialFirstDayOfWeek, key1 = refreshStamp) {
                 value = dataStore.getFirstDayOfWeek()
             }
@@ -102,7 +88,6 @@ class MonthWidget : GlanceAppWidget() {
                 value = dataStore.showWeekNumbers.first()
             }
 
-            // Compute target month and grid (pure computation, no suspend needed)
             val targetMonth = remember(monthOffset) {
                 YearMonth.now().plusMonths(monthOffset.toLong())
             }
@@ -110,9 +95,8 @@ class MonthWidget : GlanceAppWidget() {
                 MonthGrid.compute(targetMonth.year, targetMonth.monthValue - 1, firstDayOfWeek)
             }
 
-            // Fetch events asynchronously — grid renders immediately, dots appear when ready.
-            // Re-fetches when either the grid changes (month-nav arrows, day-of-week pref) OR
-            // the refresh stamp changes (event CRUD, sync completion, midnight, periodic).
+            // The grid renders at once and events appear when fetched. Re-fetches when the grid
+            // changes (arrows, first-day-of-week) or the refresh stamp does.
             val monthEvents by produceState(
                 initialValue = emptyMap<Int, List<WidgetDataRepository.WidgetEvent>>(),
                 key1 = monthGrid,
@@ -141,9 +125,8 @@ class MonthWidget : GlanceAppWidget() {
     }
 
     /**
-     * Renders the current month with sample indicator dots into the widget picker.
-     * The preview grid starts the week on the locale's first weekday rather than the
-     * user's stored preference — see [MonthPreviewContent].
+     * Renders the current month with sample dots into the widget picker. The preview week starts
+     * on the locale's first weekday, not the user's setting ([MonthPreviewContent]).
      */
     override suspend fun providePreview(context: Context, widgetCategory: Int) {
         provideContent { MonthPreviewContent(context) }

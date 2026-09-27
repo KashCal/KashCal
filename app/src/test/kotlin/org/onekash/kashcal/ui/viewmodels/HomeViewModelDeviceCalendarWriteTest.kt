@@ -1,5 +1,10 @@
 package org.onekash.kashcal.ui.viewmodels
 
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
+import org.onekash.kashcal.testutil.phoneMidnight
+import org.onekash.kashcal.testutil.withDeviceTimeZone
+import org.onekash.kashcal.ui.components.withAllDay
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
@@ -18,6 +23,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.domain.mapper.toFormState
+import org.onekash.kashcal.ui.components.withTimezone
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -28,16 +35,16 @@ import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.components.EventFormState
-import java.time.ZoneId
 
 /**
- * Tests for HomeViewModel device calendar write operations.
- *
- * TDD tests verifying:
- * - Create routes to CalendarProviderRepository
- * - Delete routes to CalendarProviderRepository
- * - Errors surface to UI state via showError()
- * - Exception creation for recurring events
+ * Tests [HomeViewModel]'s device-event writes over [FakeCalendarProviderRepository]:
+ * - a delete and a single-occurrence delete reach the repository through the device writer;
+ * - a failed delete or this-and-future save sets the UI state's current error;
+ * - the form's Delete routes an exception to its occurrence (master id and all-day flag passed
+ *   through) and a one-off to a whole-event delete, and fails with no device event id;
+ * - a save stores the form's clock time in the event's timezone whatever the device zone, across
+ *   a timezone change, all-day toggles, one occurrence, the repeated DST hour and an
+ *   unrecognised zone name.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelDeviceCalendarWriteTest {
@@ -124,7 +131,8 @@ class HomeViewModelDeviceCalendarWriteTest {
             accountRepository = accountRepository,
             syncScheduler = syncScheduler,
             networkMonitor = networkMonitor,
-            calendarProviderRepository = fakeCalendarProviderRepository,
+            deviceEventReader = fakeCalendarProviderRepository.deviceEventReader(),
+            deviceEventWriter = fakeCalendarProviderRepository.deviceEventWriter(dataStore),
             attendeeBackfill = io.mockk.mockk(relaxed = true),
             contactEmailReader = io.mockk.mockk(relaxed = true),
             context = io.mockk.mockk(relaxed = true),
@@ -132,90 +140,10 @@ class HomeViewModelDeviceCalendarWriteTest {
         )
     }
 
-    // ==================== Create Event Tests ====================
-
-    @Test
-    fun `createDeviceEvent routes to CalendarProviderRepository`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        val result = viewModel.createDeviceEvent(
-            calendarId = 42L,
-            title = "Team Meeting",
-            description = "Weekly sync",
-            location = "Zoom",
-            startTs = 1709280000000L,
-            endTs = 1709283600000L,
-            isAllDay = false,
-            rrule = null,
-            timezone = ZoneId.systemDefault().id,
-            reminders = listOf(15)
-        )
-        advanceUntilIdle()
-
-        // Verify event was created through repository
-        assertTrue(result.isSuccess)
-        assertEquals(1, fakeCalendarProviderRepository.createdEvents.size)
-        assertEquals(42L, fakeCalendarProviderRepository.createdEvents[0].calendarId)
-        assertEquals("Team Meeting", fakeCalendarProviderRepository.createdEvents[0].title)
-    }
-
-    @Test
-    fun `createDeviceEvent returns created event ID`() = runTest {
-        fakeCalendarProviderRepository.createdEventId = 500L
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        val result = viewModel.createDeviceEvent(
-            calendarId = 42L,
-            title = "Event",
-            description = null,
-            location = null,
-            startTs = 1709280000000L,
-            endTs = 1709283600000L,
-            isAllDay = false,
-            rrule = null,
-            timezone = ZoneId.systemDefault().id,
-            reminders = emptyList()
-        )
-        advanceUntilIdle()
-
-        assertTrue(result.isSuccess)
-        assertEquals(500L, result.getOrNull())
-    }
-
-    @Test
-    fun `createDeviceEvent failure surfaces error to UI state`() = runTest {
-        fakeCalendarProviderRepository.writeFailure = CalendarError.DeviceCalendar.PermissionDenied
-
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        val result = viewModel.createDeviceEvent(
-            calendarId = 42L,
-            title = "Event",
-            description = null,
-            location = null,
-            startTs = 1709280000000L,
-            endTs = 1709283600000L,
-            isAllDay = false,
-            rrule = null,
-            timezone = ZoneId.systemDefault().id,
-            reminders = emptyList()
-        )
-        advanceUntilIdle()
-
-        assertTrue(result.isFailure)
-        // Verify error was surfaced to UI
-        val currentError = viewModel.uiState.value.currentError
-        assertNotNull(currentError)
-    }
-
     // ==================== Delete Event Tests ====================
 
     @Test
-    fun `deleteDeviceEvent routes to CalendarProviderRepository`() = runTest {
+    fun `deleting a device event removes that row`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -242,32 +170,6 @@ class HomeViewModelDeviceCalendarWriteTest {
         assertNotNull(currentError)
     }
 
-    // ==================== Update Event Tests ====================
-
-    @Test
-    fun `updateDeviceEvent routes to CalendarProviderRepository`() = runTest {
-        val viewModel = createViewModel()
-        advanceUntilIdle()
-
-        val result = viewModel.updateDeviceEvent(
-            eventId = 100L,
-            title = "Updated Meeting",
-            description = "New description",
-            location = "Office",
-            startTs = 1709280000000L,
-            endTs = 1709283600000L,
-            isAllDay = false,
-            rrule = null,
-            timezone = ZoneId.systemDefault().id,
-            reminders = listOf(30)
-        )
-        advanceUntilIdle()
-
-        assertTrue(result.isSuccess)
-        assertEquals(1, fakeCalendarProviderRepository.updatedEventIds.size)
-        assertEquals(100L, fakeCalendarProviderRepository.updatedEventIds[0])
-    }
-
     // ==================== Exception Event Tests (Recurring) ====================
 
     @Test
@@ -287,21 +189,45 @@ class HomeViewModelDeviceCalendarWriteTest {
         assertEquals(1709280000000L, fakeCalendarProviderRepository.deletedOccurrences[0].originalInstanceTime)
     }
 
+    @Test
+    fun `this-and-future save failure surfaces error to UI state`() = runTest {
+        // The scoped-save caller keeps the form open on failure and relies on
+        // the ViewModel to tell the user why, so the split failing must not be
+        // silent.
+        fakeCalendarProviderRepository.writeFailure = CalendarError.DeviceCalendar.PermissionDenied
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val formState = EventFormState(
+            title = "Standup",
+            selectedCalendarId = 42L,
+            editingDeviceEventId = 100L,
+            editingOccurrenceTs = 1709280000000L,
+        )
+
+        val result = viewModel.saveDeviceEvent(formState, scope = EditScope.THIS_AND_FUTURE)
+        advanceUntilIdle()
+
+        assertTrue(result.isFailure)
+        assertTrue(fakeCalendarProviderRepository.editedFutureSeries.isEmpty())
+        assertNotNull(viewModel.uiState.value.currentError)
+    }
+
     // ==================== handleDeviceEventFormDelete Routing ====================
     //
-    // Routing branches on the loaded device event's shape, not formState:
-    //   originalId != null    → exception      → deleteDeviceSingleOccurrence
-    //   rrule != null         → recurring master → scope sheet (no leaf delete)
-    //   else                  → non-recurring  → deleteDeviceEvent
+    // Routing branches on the loaded device event's shape, not the form state:
+    //   originalId != null: exception, deleteDeviceSingleOccurrence
+    //   rrule != null:      series, the scope sheet (not tested here)
+    //   otherwise:          one-off, deleteDeviceEvent
 
     @Test
     fun `handleDeviceEventFormDelete on exception routes to deleteDeviceSingleOccurrence`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Seed an exception event: originalId points at master, originalInstanceTime
-        // is the recurrence id. handleDeviceEventFormDelete reads these off the
-        // loaded event and forwards to deleteDeviceSingleOccurrence.
+        // An exception: originalId points at the master and originalInstanceTime is the
+        // recurrence id; handleDeviceEventFormDelete reads both off the loaded event.
         fakeCalendarProviderRepository.deviceEvents[200L] = deviceEvent(
             id = 200L,
             originalId = 100L,
@@ -320,8 +246,7 @@ class HomeViewModelDeviceCalendarWriteTest {
 
         assertTrue(result.isSuccess)
         assertEquals(1, fakeCalendarProviderRepository.deletedOccurrences.size)
-        // masterEventId comes from event.originalId (the master), NOT the
-        // exception event's own id.
+        // masterEventId comes from event.originalId, not the exception's own id.
         assertEquals(100L, fakeCalendarProviderRepository.deletedOccurrences[0].masterEventId)
         assertEquals(1709280000000L, fakeCalendarProviderRepository.deletedOccurrences[0].originalInstanceTime)
         assertTrue("Should NOT have called deleteEvent", fakeCalendarProviderRepository.deletedEventIds.isEmpty())
@@ -332,7 +257,7 @@ class HomeViewModelDeviceCalendarWriteTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Non-recurring: no rrule, no originalId → straight master delete.
+        // No rrule and no originalId, so the whole event is deleted.
         fakeCalendarProviderRepository.deviceEvents[200L] = deviceEvent(id = 200L)
 
         val formState = EventFormState(
@@ -402,21 +327,26 @@ class HomeViewModelDeviceCalendarWriteTest {
         rrule: String? = null,
         originalId: Long? = null,
         originalInstanceTime: Long? = null,
+        startTs: Long = 0L,
+        endTs: Long? = 0L,
+        duration: String? = null,
+        isAllDay: Boolean = false,
+        timezone: String = "UTC",
     ) = org.onekash.kashcal.data.calendar_provider.DeviceEvent(
         id = id,
         calendarId = calendarId,
         title = "Event $id",
         description = null,
         location = null,
-        startTs = 0L,
-        endTs = 0L,
-        duration = null,
-        isAllDay = false,
+        startTs = startTs,
+        endTs = endTs,
+        duration = duration,
+        isAllDay = isAllDay,
         rrule = rrule,
         rdate = null,
         exdate = null,
         exrule = null,
-        timezone = "UTC",
+        timezone = timezone,
         originalId = originalId,
         originalInstanceTime = originalInstanceTime,
         status = 1,
@@ -425,4 +355,218 @@ class HomeViewModelDeviceCalendarWriteTest {
         calendarColor = null,
         eventColor = null,
     )
+
+    // ==================== Event timezone on save ====================
+    //
+    // The form holds a wall-clock time plus the event's timezone. The stored
+    // instant must be that wall-clock time in that timezone, whatever the
+    // device's own zone is.
+
+    private val newYork10am = 1_709_650_800_000L // 2024-03-05 10:00 America/New_York (15:00Z)
+    private val newYork1amNextDay = 1_709_704_800_000L // 2024-03-06 01:00 New York, 22:00 LA Mar 5
+    private val oneHourMs = 3_600_000L
+
+    private fun newYorkDeviceEvent(startTs: Long, timezone: String = "America/New_York") =
+        deviceEvent(id = 100L, calendarId = 42L, startTs = startTs, endTs = startTs + oneHourMs, timezone = timezone)
+
+    /** Loads [event] into the form the way the edit sheet does, then saves it. */
+    private suspend fun openAndSave(
+        viewModel: HomeViewModel,
+        event: org.onekash.kashcal.data.calendar_provider.DeviceEvent,
+        occurrenceTs: Long? = null,
+        edit: (EventFormState) -> EventFormState = { it },
+    ) {
+        fakeCalendarProviderRepository.deviceEvents[event.id] = event
+        val formState = event.toFormState(
+            reminders = emptyList(),
+            calendarColor = null,
+            calendarName = "Work",
+            deviceCalendarGroups = emptyList(),
+            occurrenceTs = occurrenceTs,
+        ).copy(editingOccurrenceTs = occurrenceTs)
+        val result = viewModel.saveDeviceEvent(edit(formState))
+        assertTrue(result.isSuccess)
+    }
+
+    @Test
+    fun `new device event in a non-device timezone is stored at the chosen clock time`() = withDeviceTimeZone("America/Los_Angeles") {
+        runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            val formState = EventFormState(
+                title = "Standup",
+                selectedCalendarId = 42L,
+                dateMillis = phoneMidnight(java.time.LocalDate.of(2024, 3, 5)),
+                endDateMillis = phoneMidnight(java.time.LocalDate.of(2024, 3, 5)),
+                startHour = 10,
+                startMinute = 0,
+                endHour = 11,
+                endMinute = 0,
+                timezone = "America/New_York",
+            )
+            val result = viewModel.saveDeviceEvent(formState)
+            advanceUntilIdle()
+
+            assertTrue(result.isSuccess)
+            val created = fakeCalendarProviderRepository.createdEvents.single()
+            assertEquals("America/New_York", created.timezone)
+            assertEquals(newYork10am, created.startTs)
+            assertEquals(newYork10am + oneHourMs, created.endTs)
+        }
+    }
+
+    @Test
+    fun `saving an unchanged device event from another timezone keeps its time`() = withDeviceTimeZone("America/Los_Angeles") {
+        runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            openAndSave(viewModel, newYorkDeviceEvent(newYork10am))
+            advanceUntilIdle()
+
+            val update = fakeCalendarProviderRepository.updatedEvents.single()
+            assertEquals("America/New_York", update.timezone)
+            assertEquals(newYork10am, update.startTs)
+            assertEquals(newYork10am + oneHourMs, update.endTs)
+        }
+    }
+
+    @Test
+    fun `saving an unchanged device event whose local date differs from the device date keeps its time`() = withDeviceTimeZone("America/Los_Angeles") {
+        runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            openAndSave(viewModel, newYorkDeviceEvent(newYork1amNextDay))
+            advanceUntilIdle()
+
+            val update = fakeCalendarProviderRepository.updatedEvents.single()
+            assertEquals(newYork1amNextDay, update.startTs)
+            assertEquals(newYork1amNextDay + oneHourMs, update.endTs)
+        }
+    }
+
+    @Test
+    fun `picking a new timezone for a device event keeps the event at the same moment`() = withDeviceTimeZone("America/Los_Angeles") {
+        runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            openAndSave(viewModel, newYorkDeviceEvent(newYork10am)) { it.withTimezone("America/Chicago") }
+            advanceUntilIdle()
+
+            val update = fakeCalendarProviderRepository.updatedEvents.single()
+            assertEquals("America/Chicago", update.timezone)
+            assertEquals(newYork10am, update.startTs) // shown as 09:00 Chicago
+            assertEquals(newYork10am + oneHourMs, update.endTs)
+        }
+    }
+
+    @Test
+    fun `switching an all-day device event to timed saves the entered time in the device timezone`() = withDeviceTimeZone("America/Los_Angeles") {
+        runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            val allDay = newYorkDeviceEvent(1_709_596_800_000L).copy( // 2024-03-05 00:00 UTC
+                endTs = 1_709_683_199_999L,
+                isAllDay = true,
+                timezone = "UTC",
+            )
+            openAndSave(viewModel, allDay) {
+                it.copy(isAllDay = false, startHour = 10, startMinute = 0, endHour = 11, endMinute = 0)
+            }
+            advanceUntilIdle()
+
+            val update = fakeCalendarProviderRepository.updatedEvents.single()
+            val losAngeles = java.util.TimeZone.getTimeZone("America/Los_Angeles")
+            val start = java.util.Calendar.getInstance(losAngeles).apply { timeInMillis = update.startTs }
+            assertEquals(10, start.get(java.util.Calendar.HOUR_OF_DAY))
+            assertEquals(5, start.get(java.util.Calendar.DAY_OF_MONTH))
+            assertEquals(oneHourMs, update.endTs!! - update.startTs)
+        }
+    }
+
+    @Test
+    fun `saving one unchanged occurrence of a recurring device event from another timezone keeps its time`() = withDeviceTimeZone("America/Los_Angeles") {
+        runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            val series = newYorkDeviceEvent(newYork10am).copy(endTs = null, duration = "PT1H", rrule = "FREQ=WEEKLY")
+            val occurrence = 1_710_252_000_000L // 2024-03-12 10:00 New York, 14:00Z, after DST
+            openAndSave(viewModel, series, occurrenceTs = occurrence)
+            advanceUntilIdle()
+
+            val exception = fakeCalendarProviderRepository.createdExceptions.single()
+            assertEquals(occurrence, exception.originalInstanceTime)
+            assertEquals(occurrence, exception.startTs)
+        }
+    }
+
+    @Test
+    fun `turning all-day on and off on a device event from another timezone keeps its time`() = withDeviceTimeZone("America/Los_Angeles") {
+        runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            openAndSave(viewModel, newYorkDeviceEvent(newYork1amNextDay)) {
+                it.withAllDay(true, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+                    .withAllDay(false, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+            }
+            advanceUntilIdle()
+
+            val update = fakeCalendarProviderRepository.updatedEvents.single()
+            assertEquals(newYork1amNextDay, update.startTs)
+            assertEquals(newYork1amNextDay + oneHourMs, update.endTs)
+        }
+    }
+
+    @Test
+    fun `saving an unchanged device event in the repeated hour keeps both times`() = withDeviceTimeZone("America/Los_Angeles") {
+        runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            // 2024-11-03 01:00 EDT (05:00Z) to 01:00 EST (06:00Z): the same clock time twice.
+            val event = newYorkDeviceEvent(1_730_610_000_000L)
+            openAndSave(viewModel, event)
+            advanceUntilIdle()
+
+            val update = fakeCalendarProviderRepository.updatedEvents.single()
+            assertEquals(1_730_610_000_000L, update.startTs)
+            assertEquals(1_730_613_600_000L, update.endTs)
+        }
+    }
+
+    @Test
+    fun `saving an unchanged device event keeps an unrecognised timezone name`() = withDeviceTimeZone("America/Los_Angeles") {
+        runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            openAndSave(viewModel, newYorkDeviceEvent(newYork10am, timezone = "Eastern Standard Time"))
+            advanceUntilIdle()
+
+            val update = fakeCalendarProviderRepository.updatedEvents.single()
+            assertEquals("Eastern Standard Time", update.timezone)
+            assertEquals(newYork10am, update.startTs)
+        }
+    }
+
+    @Test
+    fun `choosing the device default timezone replaces an unrecognised one`() = withDeviceTimeZone("America/Los_Angeles") {
+        runTest {
+            val viewModel = createViewModel()
+            advanceUntilIdle()
+
+            openAndSave(viewModel, newYorkDeviceEvent(newYork10am, timezone = "Eastern Standard Time")) {
+                it.withTimezone(null)
+            }
+            advanceUntilIdle()
+
+            assertEquals("America/Los_Angeles", fakeCalendarProviderRepository.updatedEvents.single().timezone)
+        }
+    }
 }

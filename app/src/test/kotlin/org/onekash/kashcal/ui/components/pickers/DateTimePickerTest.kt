@@ -7,7 +7,9 @@ import org.junit.Test
 import java.util.Calendar as JavaCalendar
 
 /**
- * Unit tests for DateTimePicker component helper functions.
+ * Unit tests for the DateTimePicker.kt helpers [isMidnightCrossing], [dayCellStyle],
+ * [isOnWheelGrid] and [isSameCalendarDay], and the members of the enums [DateSelectionMode]
+ * and [ActiveDateTimeSheet].
  */
 class DateTimePickerTest {
 
@@ -32,13 +34,13 @@ class DateTimePickerTest {
 
     @Test
     fun `isMidnightCrossing returns false for midnight start to later time`() {
-        // 12:00 AM to 6:00 AM - not a crossing, just early morning
+        // 12:00 AM to 6:00 AM is early morning, not a crossing.
         assertFalse(isMidnightCrossing(0, 0, 6, 0))
     }
 
     @Test
     fun `isMidnightCrossing returns true when end time equals start time with minutes`() {
-        // 10:30 to 10:00 - end is "before" start in minutes
+        // 10:30 to 10:00: the end is earlier in minutes.
         assertTrue(isMidnightCrossing(10, 30, 10, 0))
     }
 
@@ -50,7 +52,7 @@ class DateTimePickerTest {
 
     @Test
     fun `isMidnightCrossing with minutes at boundary`() {
-        // 23:59 to 00:01 - crosses midnight
+        // 23:59 to 00:01 crosses midnight.
         assertTrue(isMidnightCrossing(23, 59, 0, 1))
     }
 
@@ -82,7 +84,7 @@ class DateTimePickerTest {
 
     @Test
     fun `dayCellStyle is TODAY when today is not the selected day`() {
-        // The reported gap: selecting another date must NOT strip today's marker.
+        // Selecting another date must not strip today's marker.
         assertEquals(DayCellStyle.TODAY, dayCellStyle(isToday = true, isSelected = false))
     }
 
@@ -93,15 +95,14 @@ class DateTimePickerTest {
 
     @Test
     fun `dayCellStyle selected fill wins when today is also selected`() {
-        // Filled selection makes the cell unmistakable, so the today ring is dropped.
+        // The selected fill already marks the cell, so today's fill and ring are dropped.
         assertEquals(DayCellStyle.SELECTED, dayCellStyle(isToday = true, isSelected = true))
     }
 
     // ==================== isOnWheelGrid Tests ====================
-    // isOnWheelGrid is the gate for the inline time area: an on-grid minute shows
-    // the 5-minute wheel, an off-grid minute (e.g. 9:47 typed via the exact-time
-    // dialog) shows tappable text instead, because mounting the wheel would snap
-    // the minute to the nearest 5-minute step and clobber the stored value.
+    // isOnWheelGrid gates the inline time area: an on-grid minute shows the 5-minute wheel, an
+    // off-grid minute (9:47 typed in the exact-time dialog) shows tappable text, because the
+    // wheel would snap the minute to a 5-minute step and overwrite the stored value.
 
     @Test
     fun `isOnWheelGrid is true for every multiple of five`() {
@@ -119,8 +120,8 @@ class DateTimePickerTest {
 
     @Test
     fun `isOnWheelGrid rejects every non-multiple-of-five across the hour`() {
-        // The wheel can render exactly 12 positions (0,5,...,55); everything else
-        // must route to the exact-time text/dialog path.
+        // The wheel has 12 positions (0, 5, ..., 55); every other minute must take the
+        // exact-time text and dialog path.
         for (m in 0..59) {
             assertEquals("minute $m", m % 5 == 0, isOnWheelGrid(m))
         }
@@ -143,7 +144,7 @@ class DateTimePickerTest {
 
     @Test
     fun `isSameCalendarDay is false across midnight`() {
-        // Today sampled at 11:59 PM must NOT match tomorrow's cell.
+        // Today sampled at 11:59 PM must not match tomorrow's cell.
         val lateToday = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2026, JavaCalendar.JUNE, 26, 23, 59) }
         val tomorrow = JavaCalendar.getInstance().apply { timeInMillis = dayMillis(2026, JavaCalendar.JUNE, 27, 0, 0) }
         assertFalse(isSameCalendarDay(lateToday, tomorrow))

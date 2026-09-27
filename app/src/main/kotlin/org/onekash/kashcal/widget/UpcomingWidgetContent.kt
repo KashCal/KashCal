@@ -42,16 +42,11 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * Upcoming Events widget — internal items, builder, formatters.
+ * A row of the Upcoming Events widget's list: a day header, an event, or the dropped-days footer.
  *
- * Composables are added by the Glance wiring chunk; this file currently holds
- * only pure logic so it is fully unit-testable.
- *
- * The widget renders a [UPCOMING_HORIZON_DAYS]-day horizon (inclusive today ..
- * today + [UPCOMING_HORIZON_DAYS] - 1) with empty days suppressed and past
- * events hidden. Past-filtering consumes the
- * `WidgetEvent.isPast` flag already populated by [WidgetDataRepository] — we
- * never re-derive that here.
+ * The widget shows the [UPCOMING_HORIZON_DAYS] days from today, skipping empty days and past
+ * events. Past events are the ones [WidgetDataRepository] flags with `WidgetEvent.isPast`; this
+ * file never re-derives that.
  */
 internal sealed class UpcomingWidgetItem(val itemId: Long) {
 
@@ -66,11 +61,10 @@ internal sealed class UpcomingWidgetItem(val itemId: Long) {
     ) : UpcomingWidgetItem(dayCode.toLong() * 100_000L + event.eventId + ITEM_ID_EVENT_OFFSET)
 
     /**
-     * Trailing row shown when the item cap ([MAX_UPCOMING_ITEMS]) forces us to
-     * drop one or more whole days from the end of the window. Tapping opens
-     * MainActivity via [ACTION_GO_TO_TODAY]. [daysDropped] is always >= 1.
-     * Uses [Long.MAX_VALUE] as itemId — only one Footer per list so uniqueness
-     * is trivial, and it sits well beyond the ~2e12 range Event itemIds occupy.
+     * Trailing row shown when the item cap ([MAX_UPCOMING_ITEMS]) drops whole days from the end
+     * of the window. Tapping opens MainActivity via [ACTION_GO_TO_TODAY]. [daysDropped] is
+     * always >= 1. The itemId is [Long.MAX_VALUE]: a list has one Footer, and the value sits well
+     * beyond the ~2e12 range Event itemIds occupy.
      */
     data class Footer(val daysDropped: Int) : UpcomingWidgetItem(Long.MAX_VALUE)
 
@@ -80,46 +74,40 @@ internal sealed class UpcomingWidgetItem(val itemId: Long) {
 }
 
 /**
- * Maximum total items (Header + Event + Footer combined) the widget will emit.
+ * Maximum total items (Header, Event and Footer combined) the widget emits.
  *
- * Why 100: heavy calendars produced 300+ items pre-cap, whose serialized
- * RemoteViews approached the per-process 1 MB Binder limit — launchers
- * silently rejected the transaction and left the widget stuck on
- * `widget_loading.xml` indefinitely. 100 items × ~3 KB/item ≈ 300 KB,
- * comfortably under the ~500-800 KB practical failure threshold.
+ * A heavy calendar can produce 300+ items, whose serialized RemoteViews approach the
+ * per-process 1 MB Binder limit; launchers silently reject the transaction and leave the widget
+ * stuck on `widget_loading.xml`. 100 items at ~3 KB each is ~300 KB, well under the ~500-800 KB
+ * practical failure threshold.
  */
 internal const val MAX_UPCOMING_ITEMS = 100
 
 /**
  * Horizon in calendar days (inclusive: today .. today + [UPCOMING_HORIZON_DAYS] - 1).
- * Shortened from 30 to 10 to reduce cold-start query work on first widget add,
- * which can otherwise exceed the BroadcastReceiver `goAsync` budget and leave
- * the widget stuck on the `widget_loading.xml` placeholder.
+ * Kept short to bound the cold-start query on first widget add: a longer horizon can exceed
+ * the BroadcastReceiver `goAsync` budget and leave the widget stuck on `widget_loading.xml`.
  */
 internal const val UPCOMING_HORIZON_DAYS = 10
 
 /**
- * Collapse an events-by-day map into a flat list for LazyColumn rendering.
+ * Flattens an events-by-day map into the list the LazyColumn renders.
  *
- * - Days whose events are all past are skipped entirely (no Header).
- * - Days are emitted in ascending dayCode order regardless of map iteration order.
- * - Within a day, event ordering is preserved (caller — [WidgetDataRepository] —
- *   is responsible for intra-day sort).
- * - Each surviving day produces: one [UpcomingWidgetItem.Header] + one
- *   [UpcomingWidgetItem.Event] per non-past event.
- * - [UpcomingWidgetItem.Header.eventCount] reflects the count AFTER past-filtering.
+ * - Days whose events are all past are skipped (no Header).
+ * - Days come out in ascending dayCode order whatever the map's iteration order.
+ * - Within a day, event order is kept; [WidgetDataRepository] sorts it.
+ * - Each kept day produces one [UpcomingWidgetItem.Header] and one [UpcomingWidgetItem.Event]
+ *   per non-past event; [UpcomingWidgetItem.Header.eventCount] counts only those.
  *
- * **Cap behaviour ([MAX_UPCOMING_ITEMS]):** Items are added a day at a time
- * in ascending dayCode order. If adding a day's header + events would push
- * total items past the cap, that entire day is dropped (never split
- * mid-list) and a [UpcomingWidgetItem.Footer] is appended instead. The first
- * non-empty day is ALWAYS included even if it alone exceeds the cap — a
- * widget showing nothing for today is worse than rendering today in full.
- * No Footer is emitted when `daysDropped` would be 0 (empty list or only the
- * first overflowing day present).
+ * ## Cap
  *
- * Returns an empty list if no non-past events remain across any day — the
- * caller renders the widget's empty state in that case.
+ * Days are added whole, in dayCode order. When a day's header and events would push the total
+ * past [MAX_UPCOMING_ITEMS], that day and every later day are dropped (a day is never split)
+ * and a [UpcomingWidgetItem.Footer] counts them. The first non-empty day is always included,
+ * even if it alone exceeds the cap: a widget showing nothing for today is worse than today in
+ * full. No Footer is emitted when no day was dropped.
+ *
+ * Returns an empty list when no non-past event remains; the caller shows the empty state.
  */
 internal fun buildFlatUpcomingItems(
     eventsByDay: Map<Int, List<WidgetDataRepository.WidgetEvent>>
@@ -149,19 +137,17 @@ internal fun buildFlatUpcomingItems(
 }
 
 /**
- * Build the [ActionParameters] that the footer row dispatches when tapped.
- * Extracted as a testable helper so the click-wiring is unit-tested, not
- * just compile-checked.
+ * Builds the [ActionParameters] the footer row dispatches when tapped. A separate function so
+ * the click wiring is unit-tested, not only compile-checked.
  */
 internal fun footerActionParameters(): ActionParameters =
     actionParametersOf(ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_GO_TO_TODAY)
 
 /**
- * Compute tomorrow's dayCode given today's dayCode.
+ * Returns the dayCode after [todayDayCode].
  *
- * Uses [java.time.LocalDate.plusDays] — NOT integer `+1` on the YYYYMMDD
- * dayCode, which would produce invalid codes across month/year boundaries
- * (e.g., `20260430 + 1 = 20260431`).
+ * Uses [java.time.LocalDate.plusDays]: integer `+1` on the YYYYMMDD dayCode gives invalid codes
+ * across month and year boundaries (`20260430 + 1 = 20260431`).
  */
 internal fun tomorrowDayCodeOf(todayDayCode: Int): Int {
     val tomorrow = DayPagerUtils.dayCodeToLocalDate(todayDayCode).plusDays(1)
@@ -169,28 +155,20 @@ internal fun tomorrowDayCodeOf(todayDayCode: Int): Int {
 }
 
 /**
- * Format a day-header label for the upcoming widget.
+ * Formats a day-header label for the Upcoming widget.
  *
- * Returns:
- * - `todayLabel` with the date appended in brackets when [dayCode] equals
- *   [todayDayCode] (e.g., "Today (Tue, Apr 28)")
- * - `tomorrowLabel` with the date in brackets when [dayCode] equals
- *   [tomorrowDayCode] (e.g., "Tomorrow (Wed, Apr 29)")
- * - Otherwise, a locale-aware "EEE, MMM d" formatting (e.g., "Fri, May 1").
+ * - [todayLabel] when [dayCode] is [todayDayCode] ("Today (Tue, Apr 28)" with a template)
+ * - [tomorrowLabel] when [dayCode] is [tomorrowDayCode] ("Tomorrow (Wed, Apr 29)")
+ * - otherwise a locale-aware "EEE, MMM d" date ("Fri, May 1")
  *
- * When [withDateTemplate] (the localizable "%1$s (%2$s)" template) is provided,
- * the date is appended in brackets so the Today/Tomorrow headers are as
- * informative as the Week widget's headers (issue #253). When it is null the
- * plain relative label is returned — preserving the behavior other callers
- * (e.g. the in-app invitation card) rely on. Injected so this function stays
- * Context-free.
+ * With [withDateTemplate] (the localizable "%1$s (%2$s)" template) the Today and Tomorrow
+ * labels get the date in brackets, as informative as the Week widget's headers (#253). When it
+ * is null they are the plain label, which the in-app invitation card relies on.
  *
- * [tomorrowDayCode] is a parameter (not recomputed internally) so that callers
- * rendering many headers per frame can compute it once and pass it in.
- *
- * The Today/Tomorrow labels are injected so this function stays Context-free
- * and unit-testable. Callers resolve the strings via `getString(R.string.label_today)`
- * and `getString(R.string.label_tomorrow)` before calling.
+ * Labels and template are passed in, resolved by the caller from `R.string.label_today`,
+ * `R.string.label_tomorrow` and `R.string.upcoming_widget_day_with_date`, so this function
+ * stays Context-free and unit-testable. [tomorrowDayCode] is a parameter so a caller rendering
+ * many headers computes it once.
  */
 internal fun formatUpcomingDayHeader(
     dayCode: Int,
@@ -221,16 +199,12 @@ internal fun formatUpcomingDayHeader(
 }
 
 /**
- * Compute the inclusive [horizonDays]-day window `(startDayCode, endDayCode)` for the
- * upcoming widget, where `startDayCode` is today and `endDayCode` is today +
- * [horizonDays] - 1.
+ * Returns the Upcoming widget's inclusive window `(startDayCode, endDayCode)`: today through
+ * today + [horizonDays] - 1 in [zone].
  *
- * Uses [java.time.LocalDate.plusDays] for day arithmetic — NEVER integer
- * addition on YYYYMMDD, which fails across month/year boundaries (e.g.,
- * `20260430 + 1` is not a valid dayCode).
- *
- * [zone] is injectable for deterministic testing; production callers pass
- * [ZoneId.systemDefault()]. [horizonDays] defaults to [UPCOMING_HORIZON_DAYS].
+ * Day arithmetic uses [java.time.LocalDate.plusDays], never integer addition on YYYYMMDD, which
+ * fails across month and year boundaries (`20260430 + 1` is not a valid dayCode). [zone] is a
+ * parameter for tests; production uses the system default.
  */
 internal fun upcomingWindow(
     nowMs: Long,
@@ -245,10 +219,8 @@ internal fun upcomingWindow(
 }
 
 /**
- * Upcoming Events widget content. Renders a scrollable list of day headers +
- * events for the next [UPCOMING_HORIZON_DAYS] calendar days; days without any
- * non-past events are skipped. An empty state is shown when no events remain
- * across the whole window.
+ * Renders the Upcoming Events widget: a scrollable list of day headers and events built by
+ * [buildFlatUpcomingItems], or an empty state when no non-past event remains in the window.
  */
 @Composable
 fun UpcomingWidgetContent(
@@ -283,9 +255,9 @@ private fun UpcomingWidgetHeader(isRefreshing: Boolean) {
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(WidgetTheme.headerBackground)
-            // No vertical padding: the 48dp add button defines the header height, so all
-            // widget headers stay a uniform 48dp. No end inset either — the add button's own
-            // glyph centering provides the right margin (same as the month widget header).
+            // No vertical padding: the 48dp add button sets the header height, so every widget
+            // header is 48dp. No end inset either: the add button's glyph centering gives the
+            // right margin, as in the month widget header.
             .padding(start = WIDGET_HORIZONTAL_MARGIN_DP.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -314,8 +286,8 @@ private fun UpcomingWidgetHeader(isRefreshing: Boolean) {
                     fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
                 ),
-                // The refresh + add buttons reserve ~96dp on the right; on a narrow widget a long
-                // localized widget name must ellipsize on one line rather than wrap/grow the header.
+                // The refresh and add buttons take ~96dp on the right; on a narrow widget a long
+                // localized name must ellipsize on one line, not wrap and grow the header.
                 maxLines = 1
             )
         }
@@ -472,8 +444,8 @@ private fun UpcomingEventRow(
     detailedRows: Boolean
 ) {
     val rowContext = LocalContext.current
-    // A cancelled event only reads as a strikethrough visually; name that state
-    // for TalkBack by labelling the whole row (time, title, cancelled).
+    // A cancelled event shows only as a strikethrough, so label the whole row (time, title,
+    // cancelled) for TalkBack.
     val cancelledLabel = if (event.isCancelled) {
         cancelledRowLabel(
             rowContext, event, dayCode, timePattern,
@@ -543,10 +515,9 @@ private fun UpcomingEmptyState() {
 }
 
 /**
- * Top-level scaffold for the Upcoming widget: branches on [UpcomingState] and dispatches
- * to Loading / Error / Loaded sub-composables. Extracted so it is unit-testable via
- * `provideComposable { UpcomingWidgetScaffold(state = X) }` without the full `provideGlance`
- * lifecycle.
+ * Renders the Upcoming widget for [state]: loading, error or loaded content. A separate function
+ * so tests render it through `provideComposable { UpcomingWidgetScaffold(state = X) }` without
+ * the full `provideGlance` lifecycle.
  */
 @Composable
 internal fun UpcomingWidgetScaffold(state: UpcomingState, isRefreshing: Boolean = false) {
@@ -570,7 +541,7 @@ internal fun UpcomingLoadingContent(isRefreshing: Boolean = false) {
     UpcomingStatePlaceholder(textRes = R.string.widget_loading_upcoming, isRefreshing = isRefreshing)
 }
 
-/** Themed error state — tapping opens the app so the user can recover. */
+/** Themed error state; tapping opens the app on today so the user can recover. */
 @Composable
 internal fun UpcomingErrorContent(isRefreshing: Boolean = false) {
     UpcomingStatePlaceholder(
@@ -585,8 +556,8 @@ internal fun UpcomingErrorContent(isRefreshing: Boolean = false) {
 }
 
 /**
- * Shared scaffolding for the Upcoming widget's non-loaded states: header + centered text.
- * Pass [onTapAction] to make the whole placeholder tappable.
+ * Renders the Upcoming widget's loading and error states: the header over centered text.
+ * [onTapAction], when given, makes the whole placeholder tappable.
  */
 @Composable
 private fun UpcomingStatePlaceholder(

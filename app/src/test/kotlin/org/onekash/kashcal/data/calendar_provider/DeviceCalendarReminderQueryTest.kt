@@ -11,15 +11,14 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * Unit tests for device calendar reminder query logic.
+ * Tests [UpcomingDeviceReminder] and reminder trigger-time arithmetic.
  *
- * Tests cover:
- * - Trigger time calculation for timed events
- * - Trigger time calculation for all-day events (9 AM local pattern)
- * - UpcomingDeviceReminder data class
- *
- * Note: Actual ContentResolver queries cannot be unit tested (need instrumented tests).
- * These tests cover the pure logic functions.
+ * The trigger-time tests compute and check their expected values in the test itself and call no
+ * production code. The all-day ones model a reminder as firing at 9 AM local on, or N days
+ * before, the event day. The repository's trigger (`DateTimeUtils.allDayReminderTriggerTime`)
+ * is the event day's local midnight minus the reminder minutes, so a 540-minute reminder fires
+ * at 3 PM the day before. The real query runs through [SqliteCalendarProvider] in the
+ * device round-trip tests.
  */
 class DeviceCalendarReminderQueryTest {
 
@@ -29,7 +28,7 @@ class DeviceCalendarReminderQueryTest {
     fun `UpcomingDeviceReminder has correct composite key fields`() {
         val reminder = UpcomingDeviceReminder(
             eventId = 123L,
-            occurrenceStartTs = 1709251200000L, // Some timestamp
+            occurrenceStartTs = 1709251200000L, // 2024-03-01 00:00 UTC
             title = "Test Event",
             location = "Test Location",
             isAllDay = false,
@@ -71,7 +70,7 @@ class DeviceCalendarReminderQueryTest {
 
     @Test
     fun `timed event trigger time is occurrenceStart minus reminderMinutes`() {
-        // Event at 10:00 AM, reminder 15 minutes before
+        // Event at 10:00 AM, reminder 15 minutes before.
         val eventStartMs = LocalDate.of(2026, 3, 15).atTime(10, 0)
             .atZone(ZoneId.systemDefault())
             .toInstant().toEpochMilli()
@@ -79,7 +78,7 @@ class DeviceCalendarReminderQueryTest {
         val reminderMinutes = 15
         val expectedTriggerMs = eventStartMs - (reminderMinutes * 60 * 1000L)
 
-        // Verify: trigger should be 9:45 AM
+        // Fires at 9:45 AM.
         val triggerTime = Instant.ofEpochMilli(expectedTriggerMs)
             .atZone(ZoneId.systemDefault())
             .toLocalTime()
@@ -95,7 +94,7 @@ class DeviceCalendarReminderQueryTest {
         val reminderMinutes = 30
         val triggerMs = eventStartMs - (reminderMinutes * 60 * 1000L)
 
-        // Verify: trigger should be 2:00 PM
+        // Fires at 2:00 PM.
         val triggerTime = Instant.ofEpochMilli(triggerMs)
             .atZone(ZoneId.systemDefault())
             .toLocalTime()
@@ -111,7 +110,7 @@ class DeviceCalendarReminderQueryTest {
         val reminderMinutes = 60
         val triggerMs = eventStartMs - (reminderMinutes * 60 * 1000L)
 
-        // Verify: trigger should be 2:00 PM
+        // Fires at 2:00 PM.
         val triggerTime = Instant.ofEpochMilli(triggerMs)
             .atZone(ZoneId.systemDefault())
             .toLocalTime()
@@ -122,27 +121,27 @@ class DeviceCalendarReminderQueryTest {
 
     @Test
     fun `all-day event day-of reminder fires at 9AM local`() {
-        // All-day event on Mar 15 (stored as UTC midnight)
+        // All-day event on Mar 15, stored as UTC midnight.
         val eventStartMs = LocalDate.of(2026, 3, 15)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
 
-        // 540 minutes = 9 hours (9 AM day of event)
+        // 540 minutes = 9 hours. Neither value below reaches the assertions.
         val reminderMinutes = 540
         val offsetMs = -reminderMinutes * 60 * 1000L
 
-        // For all-day events, 540 min offset fires at 9 AM on event day
+        // In this test's model, 540 minutes fires at 9 AM on the event day.
         val localZone = ZoneId.systemDefault()
         val eventDate = Instant.ofEpochMilli(eventStartMs)
             .atZone(ZoneOffset.UTC)
             .toLocalDate()
 
-        // Expected: 9 AM on Mar 15 in local timezone
+        // Expected: 9 AM on Mar 15 in the local zone.
         val expectedTriggerMs = eventDate.atTime(9, 0)
             .atZone(localZone)
             .toInstant().toEpochMilli()
 
-        // Verify the date is correct
+        // Check the date and time.
         val triggerDateTime = Instant.ofEpochMilli(expectedTriggerMs)
             .atZone(localZone)
             .toLocalDateTime()
@@ -153,19 +152,19 @@ class DeviceCalendarReminderQueryTest {
 
     @Test
     fun `all-day event 1 day before reminder fires at 9AM previous day`() {
-        // All-day event on Mar 15
+        // All-day event on Mar 15.
         val eventStartMs = LocalDate.of(2026, 3, 15)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
 
-        // 1440 minutes = 1 day before
+        // 1440 minutes = 1 day before.
         val reminderMinutes = 1440
         val localZone = ZoneId.systemDefault()
         val eventDate = Instant.ofEpochMilli(eventStartMs)
             .atZone(ZoneOffset.UTC)
             .toLocalDate()
 
-        // Expected: 9 AM on Mar 14 in local timezone
+        // Expected: 9 AM on Mar 14 in the local zone.
         val expectedTriggerMs = eventDate.minusDays(1).atTime(9, 0)
             .atZone(localZone)
             .toInstant().toEpochMilli()
@@ -179,18 +178,18 @@ class DeviceCalendarReminderQueryTest {
 
     @Test
     fun `all-day event 2 days before reminder fires at 9AM two days prior`() {
-        // All-day event on Mar 15
+        // All-day event on Mar 15.
         val eventStartMs = LocalDate.of(2026, 3, 15)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
 
-        // 2880 minutes = 2 days before
+        // 2880 minutes = 2 days before.
         val localZone = ZoneId.systemDefault()
         val eventDate = Instant.ofEpochMilli(eventStartMs)
             .atZone(ZoneOffset.UTC)
             .toLocalDate()
 
-        // Expected: 9 AM on Mar 13
+        // Expected: 9 AM on Mar 13.
         val expectedTriggerMs = eventDate.minusDays(2).atTime(9, 0)
             .atZone(localZone)
             .toInstant().toEpochMilli()
@@ -204,18 +203,18 @@ class DeviceCalendarReminderQueryTest {
 
     @Test
     fun `all-day event 1 week before reminder fires at 9AM one week prior`() {
-        // All-day event on Mar 15
+        // All-day event on Mar 15.
         val eventStartMs = LocalDate.of(2026, 3, 15)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
 
-        // 10080 minutes = 7 days = 1 week
+        // 10080 minutes = 7 days.
         val localZone = ZoneId.systemDefault()
         val eventDate = Instant.ofEpochMilli(eventStartMs)
             .atZone(ZoneOffset.UTC)
             .toLocalDate()
 
-        // Expected: 9 AM on Mar 8
+        // Expected: 9 AM on Mar 8.
         val expectedTriggerMs = eventDate.minusDays(7).atTime(9, 0)
             .atZone(localZone)
             .toInstant().toEpochMilli()
@@ -238,7 +237,7 @@ class DeviceCalendarReminderQueryTest {
         val trigger15Min = eventStartMs - (15 * 60 * 1000L)
         val trigger30Min = eventStartMs - (30 * 60 * 1000L)
 
-        // 30 min reminder fires BEFORE 15 min reminder
+        // The 30-minute reminder fires before the 15-minute one.
         assertTrue("30 min reminder should trigger before 15 min reminder",
             trigger30Min < trigger15Min)
     }

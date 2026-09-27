@@ -6,13 +6,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pure-logic tests for the local-network-permission classifier.
+ * Tests the local-network permission logic: the request classifier, the live resolve, the
+ * proactive banner gate, the reactive failure hint and resume reconciliation.
  *
- * Mirrors [ContactsPermissionStateTest]: permanent denial is detected via the
- * rationale-flip signal (rationale offered before the request but not after a
- * denial => "don't ask again"). Adds a [LocalNetworkPermissionState.NotRequired]
- * short-circuit for OS versions below Android 17, where apps with INTERNET
- * implicitly retain local-network access and no runtime prompt exists.
+ * Mirrors [ContactsPermissionStateTest]: a denial with no rationale afterwards is "don't ask
+ * again". Adds a [LocalNetworkPermissionState.NotRequired] short-circuit below Android 17,
+ * where apps with INTERNET keep implicit local-network access and no runtime prompt exists.
  */
 class LocalNetworkPermissionStateTest {
 
@@ -109,10 +108,9 @@ class LocalNetworkPermissionStateTest {
     }
 
     // ===== shouldShowLanHintOnFailure: reactive hint after a connection failure =====
-    // Deliberately NOT gated on isLanHost: on API 37 only local-network sockets
-    // are permission-blocked, so a connection failure while ungranted IS the
-    // signal — and it must fire for bare-hostname LAN servers that isLanHost
-    // cannot classify from the string alone.
+    // Deliberately not gated on isLanHost: on API 37 only local-network sockets are
+    // permission-blocked, so a connection failure while ungranted is the signal, and it must
+    // fire for bare-hostname LAN servers isLanHost can't classify from the string alone.
 
     @Test fun `reactive hint fires when required and ungranted`() {
         assertTrue(shouldShowLanHintOnFailure(permissionRequired = true, granted = false))
@@ -127,13 +125,13 @@ class LocalNetworkPermissionStateTest {
     }
 
     // ===== reconcileOnResume: upgrade-only reconciliation on resume =====
-    // A live read can never be PermanentlyDenied, so resume must not downgrade
-    // a PermanentlyDenied (set by the request classifier) back to a
-    // banner-showing state — else the banner nags on every app resume.
+    // A live read is never PermanentlyDenied, so resume must not turn a PermanentlyDenied set
+    // by the request classifier back into a banner-showing state, or the banner nags on every
+    // resume.
 
     @Test fun `resume does NOT downgrade PermanentlyDenied to a banner state`() {
-        // Live read after a permanent denial resolves to NotRequested (not
-        // granted, no rationale). Must keep PermanentlyDenied.
+        // A live read after a permanent denial resolves to NotRequested (not granted, no
+        // rationale); PermanentlyDenied must stay.
         assertEquals(
             LocalNetworkPermissionState.PermanentlyDenied,
             reconcileOnResume(

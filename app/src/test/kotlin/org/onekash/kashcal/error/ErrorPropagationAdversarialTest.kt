@@ -15,13 +15,12 @@ import java.net.UnknownHostException
 import javax.net.ssl.SSLHandshakeException
 
 /**
- * Adversarial tests for error handling and propagation.
- *
- * Tests edge cases in error transformation:
- * - Exception to CalendarError mapping
- * - HTTP code to CalendarError mapping
- * - Error presentation mapping
- * - Retryability logic
+ * Adversarial tests for [ErrorMapper]'s error transformation:
+ * - exception to CalendarError, including a null message
+ * - HTTP code to CalendarError, including unknown and negative codes and the 5xx range
+ * - retryability
+ * - presentation for the network, auth, storage and permission errors
+ * - context kept in the mapped error: the resource, the code, the throwable
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -206,7 +205,7 @@ class ErrorPropagationAdversarialTest {
 
     @Test
     fun `Server Conflict is not retryable`() {
-        // 412 Conflict requires user intervention (force sync or merge)
+        // A 412 Conflict needs the user: its dialog offers a force sync
         assertFalse(ErrorMapper.isRetryable(CalendarError.Server.Conflict("event")))
     }
 
@@ -267,7 +266,8 @@ class ErrorPropagationAdversarialTest {
 
     @Test
     fun `Permission errors produce appropriate presentation`() {
-        // NotificationDenied and ExactAlarmDenied -> Dialog (needs settings)
+        // NotificationDenied and ExactAlarmDenied: a Dialog (its action opens app settings,
+        // not asserted here)
         listOf(
             CalendarError.Permission.NotificationDenied,
             CalendarError.Permission.ExactAlarmDenied
@@ -279,7 +279,7 @@ class ErrorPropagationAdversarialTest {
             )
         }
 
-        // StorageDenied -> Snackbar (less critical)
+        // StorageDenied: a Snackbar (with no action, not asserted here)
         val storagePresentation = ErrorMapper.toPresentation(CalendarError.Permission.StorageDenied)
         assertTrue(
             "StorageDenied should produce Snackbar",

@@ -24,14 +24,14 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Backward Compatibility Tests
- *
- * These tests ensure that existing code continues to work after the
- * new feature implementations. They verify:
- * - Existing constructors work with minimal parameters
- * - Default values are correct
- * - Parsing of event-only calendars works unchanged
- * - Generation of events works unchanged
+ * Pins the API that existing callers depend on:
+ * - ICalTodo and ICalJournal construct from a UID alone, with their defaults
+ * - status and enum parsing (TodoStatus, JournalStatus, EventStatus, PartStat, ITipMethod)
+ * - an event-only or empty calendar parses with empty todos and journals
+ * - parseAllEvents, parseWithMethod, ICalDateTime.parse, and event generation with and
+ *   without METHOD
+ * - VTimezoneGenerator's no-argument constructor, its output, and empty output for UTC
+ * - a parse and generate round trip
  */
 @DisplayName("Backward Compatibility Tests")
 class BackwardCompatibilityTest {
@@ -42,7 +42,7 @@ class BackwardCompatibilityTest {
 
         @Test
         fun `ICalTodo can be constructed with only UID`() {
-            // Original minimal constructor should still work
+            // The original minimal constructor.
             val todo = ICalTodo(uid = "test-123")
 
             assertEquals("test-123", todo.uid)
@@ -58,7 +58,7 @@ class BackwardCompatibilityTest {
                 summary = "Test Task"
             )
 
-            // Original properties
+            // The seven original properties.
             assertEquals("test-456", todo.uid)
             assertEquals("Test Task", todo.summary)
             assertEquals(null, todo.description)
@@ -67,7 +67,7 @@ class BackwardCompatibilityTest {
             assertEquals(TodoStatus.NEEDS_ACTION, todo.status)
             assertEquals(0, todo.priority)
 
-            // New properties should have defaults
+            // Properties added since default to empty, zero or null.
             assertEquals("", todo.importId)
             assertEquals(null, todo.dtStart)
             assertEquals(null, todo.completed)
@@ -86,7 +86,7 @@ class BackwardCompatibilityTest {
 
         @Test
         fun `TodoStatus enum values unchanged`() {
-            // Verify all original status values exist
+            // Every TodoStatus value parses from its iCalendar name.
             assertEquals(TodoStatus.NEEDS_ACTION, TodoStatus.fromString("NEEDS-ACTION"))
             assertEquals(TodoStatus.IN_PROCESS, TodoStatus.fromString("IN-PROCESS"))
             assertEquals(TodoStatus.COMPLETED, TodoStatus.fromString("COMPLETED"))
@@ -310,7 +310,7 @@ class BackwardCompatibilityTest {
 
         @Test
         fun `default constructor still works`() {
-            // Critical: VTimezoneGenerator() must work without parameters
+            // VTimezoneGenerator() must work without parameters.
             val generator = VTimezoneGenerator()
 
             assertNotNull(generator)

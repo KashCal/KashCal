@@ -22,13 +22,13 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Unit tests for NetworkMonitor.
- *
- * Tests:
- * - Initial state detection
- * - Connectivity callbacks
- * - State flow updates
- * - Monitoring lifecycle
+ * Unit tests for [NetworkMonitor] over a mocked ConnectivityManager:
+ * - initial online and metered state
+ * - checkCurrentConnectivity, which needs INTERNET but not VALIDATED (#296)
+ * - the monitoring lifecycle and the live capabilities callback
+ * - the network-restored callback and the state flows
+ * - system service failures: an unavailable service reads as online, and a refused callback
+ *   registration leaves monitoring off
  */
 class NetworkMonitorTest {
 
@@ -203,7 +203,7 @@ class NetworkMonitorTest {
 
     @Test
     fun `checkCurrentConnectivity returns true if ConnectivityManager unavailable`() {
-        // Given - ConnectivityManager is null (safety fallback)
+        // Given: ConnectivityManager is null (safety fallback)
         every { context.getSystemService(Context.CONNECTIVITY_SERVICE) } returns null
 
         val monitor = NetworkMonitor(context)
@@ -211,7 +211,7 @@ class NetworkMonitorTest {
         // When
         val result = monitor.checkCurrentConnectivity()
 
-        // Then - Assume online to allow sync attempts
+        // Then: assume online to allow sync attempts
         assertTrue(result)
     }
 
@@ -252,10 +252,10 @@ class NetworkMonitorTest {
         val monitor = NetworkMonitor(context)
         monitor.startMonitoring()
 
-        // When - call again
+        // When: call again
         monitor.startMonitoring()
 
-        // Then - should only register once
+        // Then: registered once
         verify(exactly = 1) { connectivityManager.registerDefaultNetworkCallback(any()) }
     }
 
@@ -297,10 +297,10 @@ class NetworkMonitorTest {
         val monitor = NetworkMonitor(context)
         assertFalse(monitor.isMonitoring())
 
-        // When - stop without starting
+        // When: stop without starting
         monitor.stopMonitoring()
 
-        // Then - should not crash
+        // Then: no crash, and nothing unregistered
         assertFalse(monitor.isMonitoring())
         verify(exactly = 0) { connectivityManager.unregisterNetworkCallback(any<ConnectivityManager.NetworkCallback>()) }
     }
@@ -314,7 +314,7 @@ class NetworkMonitorTest {
         val initialCapabilities = mockk<NetworkCapabilities>()
         val callbackSlot = slot<ConnectivityManager.NetworkCallback>()
 
-        // Start offline so we can observe the callback flipping it online.
+        // Start offline so the callback's flip to online is visible.
         every { connectivityManager.activeNetwork } returns null
         every { connectivityManager.getNetworkCapabilities(network) } returns initialCapabilities
         every { connectivityManager.registerDefaultNetworkCallback(capture(callbackSlot)) } just Runs
@@ -328,7 +328,7 @@ class NetworkMonitorTest {
         every { unvalidatedCaps.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED) } returns false
         every { unvalidatedCaps.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED) } returns true
 
-        // When - the OS reports a connected, internet-capable but unvalidated network
+        // When: the OS reports a connected, internet-capable but unvalidated network
         callbackSlot.captured.onCapabilitiesChanged(network, unvalidatedCaps)
 
         // Then
@@ -378,7 +378,7 @@ class NetworkMonitorTest {
         // When
         monitor.setOnNetworkRestored { callbackInvoked = true }
 
-        // Then - callback is stored (will be invoked when network restored)
+        // Then: not invoked on set (that it runs on restore isn't asserted here)
         assertFalse(callbackInvoked) // Not invoked yet
     }
 
@@ -407,7 +407,7 @@ class NetworkMonitorTest {
 
     @Test
     fun `isMetered StateFlow reflects metered state`() = runTest {
-        // Given - cellular network
+        // Given: cellular network
         val network = mockk<Network>()
         val capabilities = mockk<NetworkCapabilities>()
 
@@ -436,7 +436,7 @@ class NetworkMonitorTest {
         // When
         val monitor = NetworkMonitor(context)
 
-        // Then - should assume online (safety fallback)
+        // Then: assume online (safety fallback)
         assertTrue(monitor.isOnline.value)
     }
 
@@ -456,7 +456,7 @@ class NetworkMonitorTest {
         // When
         monitor.startMonitoring()
 
-        // Then - should not crash, monitoring not active
+        // Then: no crash, and monitoring isn't active
         assertFalse(monitor.isMonitoring())
     }
 }

@@ -7,49 +7,36 @@ import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.SyncLog
 
 /**
- * Data Access Object for SyncLog operations.
+ * Reads and writes the sync diagnostics log.
  *
- * Manages sync operation logs for debugging and diagnostics.
- * Logs should be periodically cleaned up to manage database size.
+ * The sync worker prunes it with [deleteOldLogs] after each sync to bound the database size.
  */
 @Dao
 interface SyncLogsDao {
 
     // ========== Read Operations ==========
 
-    /**
-     * Get recent logs (most recent first).
-     */
+    /** Observes the newest [limit] logs, newest first. */
     @Query("SELECT * FROM sync_logs ORDER BY timestamp DESC LIMIT :limit")
     fun getRecentLogs(limit: Int = 100): Flow<List<SyncLog>>
 
-    /**
-     * Get recent logs (one-shot).
-     */
+    /** Returns the newest [limit] logs, newest first. */
     @Query("SELECT * FROM sync_logs ORDER BY timestamp DESC LIMIT :limit")
     suspend fun getRecentLogsOnce(limit: Int = 100): List<SyncLog>
 
-    /**
-     * Get logs for a specific calendar.
-     */
+    /** Returns [calendarId]'s newest [limit] logs, newest first. */
     @Query("SELECT * FROM sync_logs WHERE calendar_id = :calendarId ORDER BY timestamp DESC LIMIT :limit")
     suspend fun getLogsForCalendar(calendarId: Long, limit: Int = 50): List<SyncLog>
 
-    /**
-     * Get logs for a specific event UID.
-     */
+    /** Returns every log for [eventUid], newest first. */
     @Query("SELECT * FROM sync_logs WHERE event_uid = :eventUid ORDER BY timestamp DESC")
     suspend fun getLogsForEvent(eventUid: String): List<SyncLog>
 
-    /**
-     * Get error logs only.
-     */
+    /** Returns the newest [limit] logs whose result isn't SUCCESS, including SKIPPED. */
     @Query("SELECT * FROM sync_logs WHERE result != 'SUCCESS' ORDER BY timestamp DESC LIMIT :limit")
     suspend fun getErrorLogs(limit: Int = 50): List<SyncLog>
 
-    /**
-     * Get logs in time range.
-     */
+    /** Returns the logs from [startTs] to [endTs] inclusive, newest first. */
     @Query("""
         SELECT * FROM sync_logs
         WHERE timestamp >= :startTs AND timestamp <= :endTs
@@ -57,62 +44,43 @@ interface SyncLogsDao {
     """)
     suspend fun getLogsInRange(startTs: Long, endTs: Long): List<SyncLog>
 
-    /**
-     * Get conflict logs (HTTP 412 errors).
-     */
+    /** Returns the newest [limit] HTTP 412 conflict logs. */
     @Query("SELECT * FROM sync_logs WHERE result = 'ERROR_412' ORDER BY timestamp DESC LIMIT :limit")
     suspend fun getConflictLogs(limit: Int = 20): List<SyncLog>
 
-    /**
-     * Get log count.
-     */
     @Query("SELECT COUNT(*) FROM sync_logs")
     suspend fun getCount(): Int
 
-    /**
-     * Get error count since timestamp.
-     */
+    /** Returns how many logs since [since] have a result other than SUCCESS. */
     @Query("SELECT COUNT(*) FROM sync_logs WHERE result != 'SUCCESS' AND timestamp >= :since")
     suspend fun getErrorCountSince(since: Long): Int
 
     // ========== Write Operations ==========
 
-    /**
-     * Insert new log entry.
-     */
     @Insert
     suspend fun insert(log: SyncLog): Long
 
-    /**
-     * Insert multiple log entries.
-     */
     @Insert
     suspend fun insertAll(logs: List<SyncLog>)
 
     // ========== Cleanup ==========
 
-    /**
-     * Delete logs older than cutoff timestamp.
-     * Call periodically to manage database size.
-     */
+    /** Deletes logs older than [cutoff] and returns how many. */
     @Query("DELETE FROM sync_logs WHERE timestamp < :cutoff")
     suspend fun deleteOldLogs(cutoff: Long): Int
 
     /**
-     * Delete logs for a calendar (when calendar is removed).
+     * Deletes [calendarId]'s logs. Nothing calls it today; a removed calendar's logs age out
+     * through [deleteOldLogs].
      */
     @Query("DELETE FROM sync_logs WHERE calendar_id = :calendarId")
     suspend fun deleteLogsForCalendar(calendarId: Long)
 
-    /**
-     * Delete all logs (for testing/reset).
-     */
+    /** Deletes every log. */
     @Query("DELETE FROM sync_logs")
     suspend fun deleteAll()
 
-    /**
-     * Keep only the most recent N logs.
-     */
+    /** Deletes all but the newest [keepCount] logs and returns how many. */
     @Query("""
         DELETE FROM sync_logs
         WHERE id NOT IN (

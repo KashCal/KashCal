@@ -3,11 +3,10 @@ package org.onekash.kashcal.util
 import android.content.Intent
 
 /**
- * Parsed shape of an `Intent.ACTION_SEND` `text/plain` share targeted at KashCal.
+ * Parsed `Intent.ACTION_SEND` `text/plain` share.
  *
- * `Short` flows into the Quick Add dialog seeded with the cleaned single-line text.
- * `Long` flows into the full event form with the original (multi-line) text in
- * the description field.
+ * [Short] seeds the Quick Add dialog with the cleaned single-line text. [Long] opens the full
+ * event form with the original multi-line text in the description.
  */
 sealed class ShareTextResult {
     data class Short(
@@ -25,12 +24,9 @@ sealed class ShareTextResult {
 }
 
 /**
- * Extracts a `ShareTextResult` from an Android share intent, or null if the
- * intent isn't a plain-text share. Callers route the result to the right
- * [PendingAction]: `Short` → Quick Add seed; `Long` → full event form.
- *
- * `EXTRA_TEXT` is preferred over `EXTRA_SUBJECT`. Both are read as `CharSequence`
- * since some senders (Gmail) ship Spannable strings.
+ * Extracts a [ShareTextResult] from a plain-text share intent, or null when the intent isn't
+ * one, carries no text or has unreadable extras. [ShareIntentRouter] maps the result to a
+ * [org.onekash.kashcal.ui.viewmodels.PendingAction].
  */
 object ShareTextIntentParser {
 
@@ -58,11 +54,10 @@ object ShareTextIntentParser {
         }
     }
 
-    // Senders may put Spannable into EXTRA_TEXT; getStringExtra would return null.
-    // Wrap reads so a malicious sender's Bundle can't crash the share path.
-    // Falls back to EXTRA_SUBJECT when EXTRA_TEXT is missing OR blank — some
-    // senders set EXTRA_TEXT="" for header-only shares and the subject
-    // shouldn't be lost to a whitespace string.
+    // Reads as CharSequence: some senders (Gmail) put a Spannable in EXTRA_TEXT, for which
+    // getStringExtra returns null. Falls back to EXTRA_SUBJECT when EXTRA_TEXT is missing or
+    // blank, since some senders set EXTRA_TEXT="" for header-only shares. The try keeps a
+    // malicious sender's Bundle from crashing the share path.
     private fun readExtras(intent: Intent): String? = try {
         val text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString()
         val subject = intent.getCharSequenceExtra(Intent.EXTRA_SUBJECT)?.toString()

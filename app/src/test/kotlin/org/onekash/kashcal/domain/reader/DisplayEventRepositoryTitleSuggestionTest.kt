@@ -6,9 +6,9 @@ import org.junit.Test
 import org.onekash.kashcal.data.db.dao.TitleSuggestion
 
 /**
- * Unit tests for [mergeTitleSuggestions] — the pure merge function behind
- * [DisplayEventRepository.suggestTitles]. Full integration with Room + device
- * is covered by the downstream DAO tests and the manual smoke test.
+ * Tests [mergeTitleSuggestions], the merge behind [DisplayEventRepository.suggestTitles]: dedup
+ * across sources, one empty source, ranking, and the min-frequency and limit filters applied
+ * after the merge. The Room query is tested in `EventsDaoTitleSuggestionTest`.
  */
 class DisplayEventRepositoryTitleSuggestionTest {
 
@@ -117,7 +117,7 @@ class DisplayEventRepositoryTitleSuggestionTest {
 
     @Test
     fun `min freq filter applies to merged sum`() {
-        // Each source has freq=1 for same title; merged = freq=2, which passes minFreq=2
+        // Each source has freq=1 for the same title; the merged freq=2 passes minFreq=2.
         val room = listOf(TitleSuggestion("Coffee", freq = 1, lastUsed = 100L))
         val device = listOf(TitleSuggestion("Coffee", freq = 1, lastUsed = 200L))
 

@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Không tìm thấy lịch trên máy chủ này.</string>
     <string name="caldav_error_unexpected">Lỗi không mong muốn. Vui lòng thử lại.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nNếu đây là máy chủ trên mạng nội bộ của bạn, hãy cho phép truy cập mạng nội bộ để kết nối.</string>
+    <string name="caldav_error_connection_refused_insecure">Máy chủ đã chuyển hướng kết nối đến nơi KashCal không theo (một địa chỉ không mã hóa hoặc một vòng lặp chuyển hướng), nên KashCal đã dừng trước khi gửi mật khẩu của bạn. Hãy kiểm tra địa chỉ máy chủ.</string>
     <string name="local_network_banner_title">Cần quyền truy cập mạng nội bộ</string>
     <string name="local_network_banner_body">Máy chủ này có vẻ nằm trên mạng nội bộ của bạn. Hãy cho phép truy cập mạng nội bộ để KashCal có thể kết nối.</string>
     <string name="local_network_banner_allow">Cho phép truy cập</string>
@@ -792,6 +793,8 @@
     <string name="dialog_edit_recurring_title">Lưu thay đổi vào</string>
     <string name="dialog_delete_recurring_title">Xóa</string>
     <string name="dialog_move_recurring_title">Di chuyển</string>
+    <string name="snackbar_event_rescheduled">Đã dời lịch sự kiện</string>
+    <string name="snackbar_reschedule_failed">Không thể dời lịch sự kiện</string>
     <string name="recurring_this_event">Chỉ sự kiện này</string>
     <string name="recurring_all_events">Tất cả sự kiện</string>
 

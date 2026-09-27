@@ -21,31 +21,23 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.util.text.containsCaseInsensitive
 import org.onekash.kashcal.ui.util.text.highlighted
 
-/** Test tag on the between-groups leading divider, so its presence/count is assertable. */
+/** Test tag on the between-groups leading divider, so tests can assert its presence and count. */
 internal const val SEARCHABLE_SECTION_LEADING_DIVIDER_TAG = "searchable_section_leading_divider"
 
 /**
- * Renders a settings section that participates in inline search.
+ * Renders a settings section that takes part in inline search.
  *
- * The [content] block is a Composable lambda that registers rows on its
- * receiver via [SearchableSectionScope.row]. After the block runs, the
- * section decides — based on [query] — which rows to render and whether
- * to emit the [header] + card at all.
+ * [content] registers rows on its receiver with [SearchableSectionScope.row]. After it runs, the
+ * section uses [query] to pick which rows to render and whether to emit the [header] at all.
+ * A blank [query] renders every row. When the section emits anything it calls
+ * [SearchEmissionTracker.onEmitted] on [tracker] once during composition, so the parent knows
+ * whether any section produced UI and can show the empty state otherwise.
  *
- * Empty-query fast path: when [query] is blank, every registered row is
- * rendered. When the section emits anything, [onEmitted]
- * fires once during composition so the parent can track whether *any*
- * section produced UI (drives the empty-state fallback).
- *
- * Layout matches the account hub: a flat column of rows with a
- * primary-colored header and no card background. A divider separates
- * groups only — drawn *before* this section when an earlier section
- * already emitted (tracked via [tracker]), so no rule hangs above the
- * first group or below the last. The section reads [tracker] before
- * recording its own emission, so the divider decision and the
- * empty-state accounting stay in one place. Callers MUST NOT pass
- * `showDivider` to row composables — leaving the default `false` keeps
- * rows flush, which is what the between-groups-only rule requires.
+ * Layout matches the account hub: a flat column of rows under a primary-colored header, with no
+ * card background. A divider separates groups only: it is drawn before this section when an
+ * earlier section already emitted, so no rule hangs above the first group or below the last.
+ * Rows must pass `showDivider = false` (the row composables default to true), or each row draws
+ * its own rule and breaks the between-groups-only rule.
  */
 @Composable
 fun SearchableSection(
@@ -58,9 +50,8 @@ fun SearchableSection(
     val scope = SearchableSectionScope()
     scope.content()
 
-    // A query that matches the section header surfaces the whole group, so a
-    // user searching "appearance" finds every setting under that header even
-    // when no individual row label contains the term.
+    // A query that matches the header surfaces the whole group, so searching "appearance" finds
+    // every setting under that header even when no row label contains the term.
     val headerMatches = !query.isBlank() &&
         header?.containsCaseInsensitive(query) == true
     val visibleRows = if (query.isBlank() || headerMatches) {
@@ -70,9 +61,8 @@ fun SearchableSection(
     }
     if (visibleRows.isEmpty()) return
 
-    // Read emission state (did an earlier section render?) BEFORE recording
-    // this section's own emission, so the leading divider is drawn only
-    // between groups — never above the first or below the last.
+    // Read whether an earlier section rendered before recording this one, so the leading
+    // divider is drawn only between groups.
     val showLeadingDivider = tracker?.anyEmitted == true
     tracker?.onEmitted()
 
@@ -85,8 +75,8 @@ fun SearchableSection(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
         }
-        // Highlight the header only when the query actually matched it, so a
-        // header-driven hit shows the user why the section surfaced.
+        // Highlight the header only when the query matched it, so a header hit shows why the
+        // section surfaced.
         if (header != null) {
             FlatSectionHeader(header, if (headerMatches) query else "")
         }
@@ -97,11 +87,10 @@ fun SearchableSection(
 }
 
 /**
- * Section header in the account-hub style: a primary-colored [titleMedium]
- * with no card wrapper. Kept local to the flat settings list so the shared
- * [SectionHeader] (used by other screens with a different look) is untouched.
- * When [highlightQuery] is non-blank, the matching substring is highlighted
- * (used when the search query matched the header text itself).
+ * Shows a section header in the account-hub style: primary-colored `titleMedium` text with no
+ * card wrapper. Kept local to the flat settings list so [SectionHeader], which other screens use
+ * with a different look, stays unchanged. A non-blank [highlightQuery] highlights the matching
+ * substring.
  */
 @Composable
 private fun FlatSectionHeader(text: String, highlightQuery: String = "") {
@@ -119,19 +108,16 @@ private fun FlatSectionHeader(text: String, highlightQuery: String = "") {
     )
 }
 
-/**
- * Receiver for [SearchableSection]'s content block. The block registers
- * rows by calling [row] with their matchable text and render lambda.
- */
+/** Receives [SearchableSection]'s content block, which registers rows by calling [row]. */
 class SearchableSectionScope internal constructor() {
     internal val rows = mutableListOf<RegisteredRow>()
 
     /**
-     * Register a row in source order. The render lambda runs later in
-     * the section's Compose scope, only if the row passes the filter,
-     * and inside a [key] block keyed on [id] (defaulting to [label]) so
-     * remember-state inside the row stays bound to the row's identity
-     * even when filtering changes its position.
+     * Registers a row in source order; [label] and [subtitle] are what the query matches.
+     *
+     * [render] runs later in the section's scope, only if the row passes the filter, inside a
+     * [key] block on [id] (default [label]) so remembered state stays bound to the row even when
+     * filtering changes its position.
      */
     @Composable
     fun row(
@@ -156,16 +142,13 @@ internal data class RegisteredRow(
 }
 
 /**
- * Tracks whether any [SearchableSection] in the parent composable
- * emitted UI during the current composition. The parent calls
- * [reset] at the top of each pass and reads [anyEmitted] after the
- * sections to decide whether to show the empty-state composable.
+ * Tracks whether any [SearchableSection] in the parent composable emitted UI during the current
+ * composition.
  *
- * Designed to be created via `remember { SearchEmissionTracker() }`
- * so it survives recompositions cheaply, and reset imperatively at
- * the top of the composition (the reset is idempotent on a fresh
- * recomposition pass since the only reads happen after every section
- * has had a chance to write).
+ * Create it with `remember { SearchEmissionTracker() }`. The parent calls [reset] at the top of
+ * each pass and reads [anyEmitted] after the sections to decide whether to show
+ * [SearchEmptyState]. Resetting every pass is safe because the only reads happen after every
+ * section has had a chance to write.
  */
 class SearchEmissionTracker {
     var anyEmitted: Boolean = false
@@ -181,8 +164,8 @@ class SearchEmissionTracker {
 }
 
 /**
- * Empty-state composable shown when the user's query matches no rows.
- * Announces the headline as a single TalkBack line.
+ * Shows the empty state when the query matches no rows. TalkBack reads the message as one
+ * line.
  */
 @Composable
 fun SearchEmptyState(

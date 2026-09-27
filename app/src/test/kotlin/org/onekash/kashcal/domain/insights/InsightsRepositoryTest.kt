@@ -45,7 +45,9 @@ class InsightsRepositoryTest {
     private var hiddenCalendarId: Long = 0
 
     private val testDispatcher = StandardTestDispatcher()
-    private val zone = ZoneId.of("UTC") // Robolectric uses UTC as system default
+    // The repository reads ZoneId.systemDefault(); Robolectric sets no zone, so these tests
+    // assume the host JVM runs in UTC.
+    private val zone = ZoneId.of("UTC")
 
     // Monday 2026-04-13 to Sunday 2026-04-19 (Monday-start week)
     private val monday = LocalDate.of(2026, 4, 13)
@@ -107,7 +109,7 @@ class InsightsRepositoryTest {
         database.close()
     }
 
-    // AC1: getStats() returns correct total minutes for a week with 3 timed events
+    // A week with 3 timed events totals their minutes.
     @Test
     fun `getStats returns correct total minutes for timed events`() = runTest(testDispatcher) {
         // Mon 10:00-11:00 (60 min), Tue 14:00-16:00 (120 min), Wed 09:00-10:30 (90 min)
@@ -120,7 +122,7 @@ class InsightsRepositoryTest {
         assertEquals(270L, stats.totalMinutes) // 60 + 120 + 90
     }
 
-    // AC2: All-day events excluded from hour totals, counted in allDayCount
+    // All-day events count in allDayCount, not in the minute total.
     @Test
     fun `all-day events excluded from totals counted separately`() = runTest(testDispatcher) {
         insertTimedEvent(calendarId1, monday, 10, 0, monday, 11, 0) // 60 min
@@ -133,7 +135,7 @@ class InsightsRepositoryTest {
         assertEquals(2, stats.allDayCount)
     }
 
-    // AC3: Multi-day events apportioned correctly at midnight boundaries
+    // A multi-day event is split across days at midnight.
     @Test
     fun `multi-day event apportioned at midnight boundaries`() = runTest(testDispatcher) {
         // Wed 20:00 to Fri 08:00 = 36 hours total
@@ -159,12 +161,12 @@ class InsightsRepositoryTest {
         assertEquals(8 * 60L, friMinutes)
     }
 
-    // AC4: Zero-duration events excluded from totals
+    // A zero-duration event adds no minutes.
     @Test
     fun `zero-duration events excluded from totals`() = runTest(testDispatcher) {
         insertTimedEvent(calendarId1, monday, 10, 0, monday, 11, 0) // 60 min
 
-        // Zero-duration event (milestone)
+        // Zero-duration event (a milestone)
         val zeroStart = monday.atTime(14, 0).atZone(zone).toInstant().toEpochMilli()
         insertEventAndOccurrence(
             calendarId = calendarId1,
@@ -178,20 +180,21 @@ class InsightsRepositoryTest {
         assertEquals(60L, stats.totalMinutes)
     }
 
-    // AC5: PENDING_DELETE events excluded; PENDING_CREATE/UPDATE included
+    // PENDING_DELETE events are excluded; PENDING_CREATE and PENDING_UPDATE are included.
     @Test
     fun `pending delete excluded, pending create and update included`() = runTest(testDispatcher) {
         insertTimedEvent(calendarId1, monday, 10, 0, monday, 11, 0, SyncStatus.SYNCED) // 60 min
-        insertTimedEvent(calendarId1, monday, 13, 0, monday, 14, 0, SyncStatus.PENDING_CREATE) // 60 min
-        insertTimedEvent(calendarId1, monday, 15, 0, monday, 16, 0, SyncStatus.PENDING_UPDATE) // 60 min
-        insertTimedEvent(calendarId1, monday, 17, 0, monday, 18, 0, SyncStatus.PENDING_DELETE) // should be excluded
+        // 60 min each; the PENDING_DELETE one is excluded
+        insertTimedEvent(calendarId1, monday, 13, 0, monday, 14, 0, SyncStatus.PENDING_CREATE)
+        insertTimedEvent(calendarId1, monday, 15, 0, monday, 16, 0, SyncStatus.PENDING_UPDATE)
+        insertTimedEvent(calendarId1, monday, 17, 0, monday, 18, 0, SyncStatus.PENDING_DELETE)
 
         val (stats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.THIS_WEEK, mondayNow)
 
         assertEquals(180L, stats.totalMinutes) // 60 + 60 + 60, not 240
     }
 
-    // AC6: Calendar breakdown groups by calendarId with correct colors
+    // The calendar breakdown groups by calendarId, with each calendar's name and color.
     @Test
     fun `calendar breakdown groups by calendar with correct colors`() = runTest(testDispatcher) {
         insertTimedEvent(calendarId1, monday, 10, 0, monday, 11, 0) // Work: 60 min
@@ -213,7 +216,7 @@ class InsightsRepositoryTest {
         assertEquals(90L, personal.minutes)
     }
 
-    // AC7: Daily breakdown has 7 entries for week ordered by firstDayOfWeek
+    // A week's daily breakdown has 7 entries, starting on firstDayOfWeek.
     @Test
     fun `daily breakdown has 7 entries for week`() = runTest(testDispatcher) {
         insertTimedEvent(calendarId1, monday, 10, 0, monday, 11, 0)
@@ -225,7 +228,7 @@ class InsightsRepositoryTest {
         assertEquals(dayCode(monday.plusDays(6)), stats.dailyBreakdown.last().dayCode)
     }
 
-    // AC7 (month): Daily breakdown has correct count for month
+    // A month's daily breakdown has one entry per day.
     @Test
     fun `daily breakdown has correct count for month`() = runTest(testDispatcher) {
         insertTimedEvent(calendarId1, monday, 10, 0, monday, 11, 0)
@@ -236,7 +239,7 @@ class InsightsRepositoryTest {
         assertEquals(30, stats.dailyBreakdown.size)
     }
 
-    // AC8: Period boundaries respect firstDayOfWeek (Sunday-start)
+    // Week boundaries follow firstDayOfWeek (Sunday start).
     @Test
     fun `period boundaries respect sunday-start week`() = runTest(testDispatcher) {
         dataStore.setFirstDayOfWeek(java.util.Calendar.SUNDAY)
@@ -254,7 +257,7 @@ class InsightsRepositoryTest {
         assertEquals(dayCode(sunday), stats.dailyBreakdown.first().dayCode)
     }
 
-    // AC9: getDelta returns formatted string or null
+    // getDelta formats this week minus last week.
     @Test
     fun `getDelta returns formatted delta for this week vs last week`() = runTest(testDispatcher) {
         // This week: 2h
@@ -271,7 +274,7 @@ class InsightsRepositoryTest {
         assertEquals("+1h", delta)
     }
 
-    // AC9: getDelta returns null when no previous data
+    // getDelta is null for LAST_WEEK, which has no previous period to compare with.
     @Test
     fun `getDelta returns null for last week period`() = runTest(testDispatcher) {
         insertTimedEvent(calendarId1, monday.minusWeeks(1), 10, 0, monday.minusWeeks(1), 12, 0)
@@ -279,10 +282,10 @@ class InsightsRepositoryTest {
         val (stats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.LAST_WEEK, mondayNow)
         val delta = repository.getDelta(AnalysisPeriod.LAST_WEEK, stats, mondayNow)
 
-        assertNull(delta) // LAST_WEEK has no "previous period" comparison
+        assertNull(delta)
     }
 
-    // AC10: Empty period returns PeriodStats with 0 totals
+    // An empty period gives zero totals and a full daily breakdown of zeros.
     @Test
     fun `empty period returns zero stats with daily breakdown`() = runTest(testDispatcher) {
         val (stats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.THIS_WEEK, mondayNow)
@@ -294,11 +297,12 @@ class InsightsRepositoryTest {
         assertTrue(stats.dailyBreakdown.all { it.minutes == 0L })
     }
 
-    // AC11: Hidden calendar events excluded
+    // Events on hidden calendars are excluded.
     @Test
     fun `hidden calendar events excluded from stats`() = runTest(testDispatcher) {
         insertTimedEvent(calendarId1, monday, 10, 0, monday, 11, 0) // 60 min, visible
-        insertTimedEvent(hiddenCalendarId, monday, 13, 0, monday, 14, 0) // hidden, should be excluded
+        // On the hidden calendar, so excluded
+        insertTimedEvent(hiddenCalendarId, monday, 13, 0, monday, 14, 0)
 
         val (stats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.THIS_WEEK, mondayNow)
 
@@ -404,7 +408,7 @@ class InsightsRepositoryTest {
     fun `device calendars disabled returns room-only data`() = runTest(testDispatcher) {
         insertTimedEvent(calendarId1, monday, 10, 0, monday, 11, 0) // Room: 60 min
 
-        // Device calendars explicitly disabled (default)
+        // Device calendars are disabled by default.
         val (stats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.THIS_WEEK, mondayNow)
 
         assertEquals(60L, stats.totalMinutes)
@@ -471,7 +475,131 @@ class InsightsRepositoryTest {
         assertEquals(1, stats.allDayCount)
     }
 
+    // ==================== Per-Day Calendar Split ====================
+
+    @Test
+    fun `day split carries each calendar's minutes with top bar name and color`() = runTest(testDispatcher) {
+        insertTimedEvent(calendarId1, monday, 10, 0, monday, 11, 0) // Work 60
+        insertTimedEvent(calendarId2, monday, 13, 0, monday, 14, 30) // Personal 90
+
+        val (stats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.THIS_WEEK, mondayNow)
+
+        val split = dayOf(stats, monday).calendars
+        assertEquals(listOf(calendarId2 to 90L, calendarId1 to 60L), split.map { it.calendarId to it.minutes })
+        split.forEach { entry ->
+            val top = stats.calendarBreakdown.single { it.calendarId == entry.calendarId }
+            assertEquals(top.color, entry.color)
+            assertEquals(top.calendarName, entry.calendarName)
+        }
+        assertSplitsSumToDayMinutes(stats)
+    }
+
+    @Test
+    fun `day split is ordered by the top bar not by the day's minutes`() = runTest(testDispatcher) {
+        val tuesday = monday.plusDays(1)
+        insertTimedEvent(calendarId1, monday, 9, 0, monday, 11, 0) // Work 120
+        insertTimedEvent(calendarId1, tuesday, 9, 0, tuesday, 10, 0) // Work 60
+        insertTimedEvent(calendarId2, tuesday, 13, 0, tuesday, 14, 30) // Personal 90
+
+        val (stats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.THIS_WEEK, mondayNow)
+
+        assertEquals(listOf(calendarId1, calendarId2), stats.calendarBreakdown.map { it.calendarId })
+        assertEquals(
+            listOf(calendarId1 to 60L, calendarId2 to 90L),
+            dayOf(stats, tuesday).calendars.map { it.calendarId to it.minutes }
+        )
+        assertSplitsSumToDayMinutes(stats)
+    }
+
+    @Test
+    fun `day split apportions an event crossing midnight`() = runTest(testDispatcher) {
+        val wed = monday.plusDays(2)
+        val thu = monday.plusDays(3)
+        insertTimedEvent(calendarId2, wed, 22, 0, thu, 2, 0) // Personal 120 + 120
+        insertTimedEvent(calendarId1, thu, 9, 0, thu, 10, 0) // Work 60
+
+        val (stats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.THIS_WEEK, mondayNow)
+
+        assertEquals(listOf(calendarId2 to 120L), dayOf(stats, wed).calendars.map { it.calendarId to it.minutes })
+        assertEquals(
+            listOf(calendarId2 to 120L, calendarId1 to 60L),
+            dayOf(stats, thu).calendars.map { it.calendarId to it.minutes }
+        )
+        assertSplitsSumToDayMinutes(stats)
+    }
+
+    @Test
+    fun `day split counts only in-period minutes of an event starting before the week`() = runTest(testDispatcher) {
+        insertTimedEvent(calendarId1, monday.minusDays(1), 20, 0, monday, 2, 0)
+
+        val (stats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.THIS_WEEK, mondayNow)
+
+        assertEquals(listOf(calendarId1 to 120L), dayOf(stats, monday).calendars.map { it.calendarId to it.minutes })
+        assertSplitsSumToDayMinutes(stats)
+    }
+
+    @Test
+    fun `day split includes device calendars with their color`() = runTest(testDispatcher) {
+        insertTimedEvent(calendarId1, monday, 9, 0, monday, 10, 0) // Work 60
+        dataStore.setDeviceCalendarsEnabled(true)
+        dataStore.setEnabledDeviceCalendarIds(setOf(100L))
+        coEvery {
+            calendarProviderRepository.getInstancesForDayRange(any(), any(), eq(setOf(100L)), any())
+        } returns listOf(
+            buildDeviceInstance(
+                calendarId = 100L, calendarName = "Google", color = 0xFFFF0000.toInt(),
+                startDate = monday, startHour = 14, startMin = 0,
+                endDate = monday, endHour = 16, endMin = 0
+            )
+        )
+
+        val (stats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.THIS_WEEK, mondayNow)
+
+        val split = dayOf(stats, monday).calendars
+        assertEquals(listOf(-100L to 120L, calendarId1 to 60L), split.map { it.calendarId to it.minutes })
+        assertEquals(0xFFFF0000.toInt(), split.first().color)
+        assertSplitsSumToDayMinutes(stats)
+    }
+
+    @Test
+    fun `day split is empty for free days, all-day events and empty periods`() = runTest(testDispatcher) {
+        val (emptyStats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.THIS_WEEK, mondayNow)
+        assertTrue(emptyStats.dailyBreakdown.all { it.calendars.isEmpty() })
+
+        insertTimedEvent(calendarId1, monday, 9, 0, monday, 10, 0)
+        insertAllDayEvent(calendarId2, monday.plusDays(1))
+
+        val (stats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.THIS_WEEK, mondayNow)
+
+        assertEquals(listOf(calendarId1), dayOf(stats, monday).calendars.map { it.calendarId })
+        assertTrue(stats.dailyBreakdown.filter { it.dayCode != dayCode(monday) }.all { it.calendars.isEmpty() })
+        assertSplitsSumToDayMinutes(stats)
+    }
+
+    @Test
+    fun `day split has no zero-minute entries`() = runTest(testDispatcher) {
+        val tuesday = monday.plusDays(1)
+        val start = monday.atTime(23, 59, 30).atZone(zone).toInstant().toEpochMilli()
+        val end = tuesday.atTime(0, 0, 30).atZone(zone).toInstant().toEpochMilli()
+        insertEventAndOccurrence(calendarId1, start, end, isAllDay = false)
+
+        val (stats, _) = repository.getStatsWithOccurrences(AnalysisPeriod.THIS_WEEK, mondayNow)
+
+        assertEquals(0L, dayOf(stats, monday).minutes)
+        assertEquals(0L, dayOf(stats, tuesday).minutes)
+        assertTrue(stats.dailyBreakdown.all { it.calendars.isEmpty() })
+    }
+
     // ==================== Helper Functions ====================
+
+    private fun dayOf(stats: PeriodStats, date: LocalDate): DayHours =
+        stats.dailyBreakdown.single { it.dayCode == dayCode(date) }
+
+    private fun assertSplitsSumToDayMinutes(stats: PeriodStats) {
+        stats.dailyBreakdown.forEach { day ->
+            assertEquals("split of ${day.dayCode}", day.minutes, day.calendars.sumOf { it.minutes })
+        }
+    }
 
     private suspend fun insertTimedEvent(
         calendarId: Long,

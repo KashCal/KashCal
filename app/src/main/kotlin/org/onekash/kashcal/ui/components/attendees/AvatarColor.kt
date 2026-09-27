@@ -6,14 +6,12 @@ import androidx.compose.ui.graphics.Color
 import org.onekash.kashcal.util.AddressNormalizer
 
 /**
- * Deterministic per-identity avatar colour: `hash(canonical address) %
- * paletteSize`. The same person always gets the same bucket across the picker
- * list and the form chips (Alice always blue, Bob always teal), which reads as
- * intentional rather than random.
+ * Returns a stable avatar palette index for [address], so a person keeps one colour across the
+ * picker list and the form chips.
  *
- * Keyed on [AddressNormalizer.canonical] (lowercased) so `mailto:` prefix and
- * case never shift the colour. Uses the absolute value of [String.hashCode]
- * guarded against the `abs(Int.MIN_VALUE)` overflow.
+ * Keyed on the lowercased [AddressNormalizer.canonical] form, so a `mailto:` prefix or case
+ * never shifts the colour. The [String.hashCode] is masked to a non-negative value
+ * (`Int.MIN_VALUE` becomes 0) before the modulo.
  */
 fun avatarColorIndex(address: String, paletteSize: Int): Int {
     require(paletteSize > 0) { "paletteSize must be positive" }
@@ -24,8 +22,8 @@ fun avatarColorIndex(address: String, paletteSize: Int): Int {
 }
 
 /**
- * Curated avatar palette — distinct, accessible hues that read on both light
- * and dark surfaces. Order is stable so [avatarColorIndex] maps consistently.
+ * Distinct, accessible hues that read on light and dark surfaces. Reordering it changes every
+ * person's colour, since [avatarColorIndex] indexes into it.
  */
 private val AVATAR_PALETTE: List<Color> = listOf(
     Color(0xFF1A73C2), // blue
@@ -36,7 +34,7 @@ private val AVATAR_PALETTE: List<Color> = listOf(
     Color(0xFF16808A), // teal
 )
 
-/** The deterministic avatar background colour for [address]. */
+/** Returns the avatar background colour for [address]. */
 @Composable
 @ReadOnlyComposable
 fun avatarColorFor(address: String): Color =

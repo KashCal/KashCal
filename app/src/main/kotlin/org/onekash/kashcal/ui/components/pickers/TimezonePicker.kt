@@ -80,7 +80,6 @@ fun TimezonePickerSheet(
                 modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
             )
 
-            // Search input
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -128,7 +127,7 @@ fun TimezonePickerSheet(
 
             HorizontalDivider()
 
-            // "Use device timezone" option
+            // "Use device timezone", offered only when a timezone is set; picking it passes null.
             if (selectedTimezone != null) {
                 Surface(
                     modifier = Modifier
@@ -146,7 +145,6 @@ fun TimezonePickerSheet(
                 HorizontalDivider()
             }
 
-            // Search results
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()

@@ -24,18 +24,18 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Wire-level integration coverage for the save-time scope sheet
- * recurring-edit flows. Drives [IcsPatcher.serialize] from synthetic
- * [Event] entities representing each scope-sheet outcome (THIS_EVENT,
- * THIS_AND_FUTURE, ALL_EVENTS — plus the recently-fixed corner cases:
- * user picked "Does not repeat", user replaced master COUNT with
- * UNTIL, degenerate-COUNT split). Each ICS body PUTs to every
- * configured CalDAV server, GETs back, and asserts the resulting
- * structure is what the scope sheet promised — not a wire layer that
- * silently rewrote the user's intent.
+ * Checks, on every configured CalDAV server, that the bodies the recurring-edit scope choices
+ * produce are stored as sent: a THIS_EVENT exception, a THIS_AND_FUTURE COUNT split, "Does not
+ * repeat" on the new series, a COUNT master replaced by an UNTIL rule, a past exception kept
+ * through a split, a `RECURRENCE-ID;VALUE=DATE` on a timed master, and delete this and future
+ * dropping a future exception. Bodies are serialized from synthetic [Event]s by
+ * [IcsPatcher.serialize] or [IcsPatcher.serializeWithExceptions], with split rules from
+ * [RruleUtils.splitRruleAtTime], or written inline; each is PUT, fetched back and checked. The
+ * degenerate-COUNT test checks only [RruleUtils.isDegenerateCountSplit].
  *
- * Skips via assumeTrue when creds/server unavailable; cleanup walks
- * only URLs we created in this run, never reads server state.
+ * Skips via assumeTrue when credentials or the server are unavailable, and when a server refuses
+ * or rewrites an input in a way the test records as a server quirk. Cleanup deletes only URLs this
+ * run created and never reads server state.
  */
 @RunWith(Parameterized::class)
 class MultiServerScopeSheetWireTest(
@@ -113,7 +113,7 @@ class MultiServerScopeSheetWireTest(
         createdEventUrls.add(Pair(url, etag))
     }
 
-    /** Refuse to mutate any URL we didn't create in this run. */
+    /** Throws unless this run created [url]. */
     private fun assertOurEvent(url: String) {
         check(createdEventUrls.any { it.first == url }) {
             "Refusing to mutate URL not created by this test run: $url"
@@ -127,7 +127,10 @@ class MultiServerScopeSheetWireTest(
         val occurrence2EndTs: Long,
     )
 
-    /** Pick next-Monday at 10:00 UTC + a second weekly occurrence. */
+    /**
+     * Returns a 10:00-11:00 UTC slot on a Monday 7 to 13 days out (a week after the next Monday,
+     * today included) and the same slot one week later.
+     */
     private fun times(): Times {
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         cal.set(Calendar.HOUR_OF_DAY, 10)
@@ -181,15 +184,13 @@ class MultiServerScopeSheetWireTest(
         return fetchResult.getOrNull()!!.icalData
     }
 
-    /** Unfold per RFC 5545 §3.1 before regex-grepping. */
+    /** Unfolds content lines (RFC 5545 §3.1) so a regex sees each property on one line. */
     private fun unfold(ics: String): String =
         ics.replace(Regex("""\r?\n[ \t]"""), "")
 
     private fun firstVeventBody(ics: String): String {
         val unfolded = unfold(ics)
-        // Find the *master's* VEVENT — the one that has RRULE or, when
-        // there's only one VEVENT, the only one. We match the first
-        // non-RECURRENCE-ID block.
+        // The master's VEVENT: the first block without RECURRENCE-ID, else the first block.
         val blocks = Regex("""BEGIN:VEVENT(.*?)END:VEVENT""", RegexOption.DOT_MATCHES_ALL)
             .findAll(unfolded).map { it.groupValues[1] }.toList()
         return blocks.firstOrNull { !it.contains("RECURRENCE-ID") } ?: blocks.firstOrNull() ?: ""
@@ -202,18 +203,14 @@ class MultiServerScopeSheetWireTest(
     // ===================== TESTS =========================================
 
     /**
-     * Establishes a recurring master + an exception (THIS_EVENT scope)
-     * and asserts the wire body the scope sheet produces is what the
-     * server stores back. Smoke test for the baseline path.
+     * Creates a recurring master with a THIS_EVENT exception in one resource and checks the
+     * stored body keeps a RECURRENCE-ID and no RRULE on the exception.
      */
     @Test
     fun `01 THIS_EVENT scope produces master + RECURRENCE-ID exception that round-trips`() = runBlocking {
         assumeReady()
-        // Documented server quirks observed during recurring-edit testing:
-        // - Zoho strips ATTENDEEs/ORGANIZER on synthetic-organizer PUTs and
-        //   collapses the master+exception bundle.
-        // Same skip applied to MultiServerCalDavWorkflowTest's '08 edit
-        // single occurrence with RECURRENCE-ID' upstream.
+        // Zoho strips ATTENDEEs and ORGANIZER on synthetic-organizer PUTs and collapses the
+        // master and exception bundle.
         assumeTrue(
             "${config.name} collapses master+exception bundle on single-href fetch (documented quirk)",
             config.name != "Zoho",
@@ -225,7 +222,7 @@ class MultiServerScopeSheetWireTest(
         val t = times()
         val master = masterEvent(uid, t, rrule = "FREQ=WEEKLY;COUNT=5")
 
-        // Exception = "THIS_EVENT" outcome on occurrence 2.
+        // The THIS_EVENT outcome on occurrence 2.
         val exception = master.copy(
             title = "Scope sheet wire test (modified occurrence)",
             rrule = null,
@@ -242,7 +239,7 @@ class MultiServerScopeSheetWireTest(
             "Stored ICS must contain RECURRENCE-ID for the THIS_EVENT exception",
             unfolded.contains("RECURRENCE-ID"),
         )
-        // RFC 5545 §3.8.5: exception strips RRULE.
+        // The exception carries no RRULE of its own.
         val recurrenceBlock = Regex("""BEGIN:VEVENT[^E]*?RECURRENCE-ID[^E]*?END:VEVENT""", RegexOption.DOT_MATCHES_ALL)
             .find(unfolded)?.value ?: ""
         assertFalse(
@@ -252,10 +249,9 @@ class MultiServerScopeSheetWireTest(
     }
 
     /**
-     * THIS_AND_FUTURE on a COUNT=5 master split at occurrence 2:
-     * helper produces master COUNT=1 + new series COUNT=4.
-     * The new series row's PUT body is a separate VEVENT; we PUT both
-     * back-to-back and assert each carries the correct COUNT.
+     * THIS_AND_FUTURE on a COUNT=5 master split at occurrence 2: the split gives the master COUNT=1
+     * and the new series COUNT=4. The two are separate resources, each PUT and checked for its
+     * COUNT.
      */
     @Test
     fun `02 THIS_AND_FUTURE COUNT split produces master and new series with preserved total`() = runBlocking {
@@ -268,7 +264,7 @@ class MultiServerScopeSheetWireTest(
         val t = times()
         val masterRrule = "FREQ=WEEKLY;COUNT=5"
 
-        // Helper produces what the scope sheet would emit on THIS_AND_FUTURE.
+        // The rules a THIS_AND_FUTURE save writes.
         val (truncatedMaster, splitNewSeries) = RruleUtils.splitRruleAtTime(
             masterRrule = masterRrule,
             userRrule = masterRrule, // no user edit
@@ -289,7 +285,7 @@ class MultiServerScopeSheetWireTest(
             masterRruleStored!!.contains("COUNT=1"),
         )
 
-        // PUT new series row (different UID — RFC 5545 series split).
+        // The new series is a separate event with its own UID.
         val newMaster = Event(
             uid = newSeriesUid,
             calendarId = 1L,
@@ -312,10 +308,8 @@ class MultiServerScopeSheetWireTest(
     }
 
     /**
-     * Regression for the null-rrule conflation bug (commit d7265d93):
-     * user picked "Does not repeat" on a COUNT=5 master + THIS_AND_FUTURE.
-     * The new series row should be NON-RECURRING (no RRULE), not the
-     * master's WEEKLY rrule re-imposed.
+     * "Does not repeat" with THIS_AND_FUTURE on a COUNT=5 master: the new series row has no RRULE,
+     * not the master's WEEKLY rule.
      */
     @Test
     fun `03 user picks Does Not Repeat — new series row carries no RRULE`() = runBlocking {
@@ -326,7 +320,7 @@ class MultiServerScopeSheetWireTest(
         val newSeriesUid = "$UID_PREFIX${config.name.lowercase()}-${UUID.randomUUID()}-no-repeat"
         val t = times()
 
-        // Helper: user dropped recurrence (userRrule=null).
+        // The user dropped the recurrence (userRrule = null).
         val (_, splitNewSeries) = RruleUtils.splitRruleAtTime(
             masterRrule = "FREQ=WEEKLY;COUNT=5",
             userRrule = null,
@@ -358,12 +352,9 @@ class MultiServerScopeSheetWireTest(
     }
 
     /**
-     * Regression for the RFC 5545 §3.3.10 violation (commit 40d42d3a):
-     * user replaced master's COUNT with UNTIL on a recurring occurrence
-     * + THIS_AND_FUTURE. New series must carry user's UNTIL only —
-     * never both COUNT and UNTIL. ical4j rejects the combination on
-     * parse, so a server that accepted the bad body would still
-     * surface the bug at the next pull.
+     * THIS_AND_FUTURE where the user replaced the master's COUNT rule with an UNTIL rule: the new
+     * series carries only the user's UNTIL, never COUNT as well, which RFC 5545 §3.3.10 forbids.
+     * ical4j's `Recur` string parser accepts the pair without error, so the split has to avoid it.
      */
     @Test
     fun `04 user replaces master COUNT with UNTIL — new series has only UNTIL`() = runBlocking {
@@ -374,7 +365,7 @@ class MultiServerScopeSheetWireTest(
         val newSeriesUid = "$UID_PREFIX${config.name.lowercase()}-${UUID.randomUUID()}-count-to-until"
         val t = times()
 
-        // User replaced WEEKLY;COUNT=10 with DAILY;UNTIL=...
+        // The user replaced WEEKLY;COUNT=10 with DAILY;UNTIL=...
         val futureUntil = "20270101T000000Z"
         val (_, splitNewSeries) = RruleUtils.splitRruleAtTime(
             masterRrule = "FREQ=WEEKLY;COUNT=10",
@@ -408,8 +399,7 @@ class MultiServerScopeSheetWireTest(
         val stored = putAndFetch(newSeriesUid, ics) ?: error("fetch null")
         val rruleStored = rrulePropFrom(firstVeventBody(stored))
         assertNotNull("Server must store the new RRULE on ${config.name}", rruleStored)
-        // Some servers normalize/reorder RRULE parts; we only assert
-        // shape-level invariants.
+        // Some servers reorder RRULE parts, so only the parts present are checked.
         assertFalse(
             "Server-stored RRULE must NOT contain COUNT on ${config.name}: $rruleStored",
             rruleStored!!.contains("COUNT="),
@@ -421,18 +411,15 @@ class MultiServerScopeSheetWireTest(
     }
 
     /**
-     * Regression for the degenerate-COUNT fallback (commit 40d42d3a):
-     * master FREQ=DAILY;COUNT=3 + split at occurrence 0 would yield
-     * invalid COUNT=0. Helper signals null new-series; caller falls
-     * back to in-place ALL_EVENTS update on the master. This test
-     * verifies the helper signal — the wire-level fallback equivalent
-     * is just a master update, which test 01 already covers.
+     * A split of FREQ=DAILY;COUNT=3 with no past occurrences, or with all of them past, would give
+     * one side an invalid COUNT=0. [RruleUtils.isDegenerateCountSplit] returns true there and the
+     * caller updates the master in place as an all-events edit instead. Only that signal is
+     * checked; on the wire the fallback is a plain master update, like those in tests 06 and 08.
      */
     @Test
     fun `05 degenerate-COUNT split — helper signals fallback to ALL_EVENTS`() = runBlocking {
-        // No server interaction — pure helper assertion.
-        // Kept in this class so the helper contract is exercised
-        // alongside the server-stored variants.
+        // No server traffic, though it still skips without a server. Kept here beside the
+        // server-stored variants of the same split.
         assumeReady()
         val pastCount0 = RruleUtils.isDegenerateCountSplit("FREQ=DAILY;COUNT=3", pastCount = 0)
         val pastCount3 = RruleUtils.isDegenerateCountSplit("FREQ=DAILY;COUNT=3", pastCount = 3)
@@ -445,18 +432,14 @@ class MultiServerScopeSheetWireTest(
     }
 
     /**
-     * Real-world reproduction for the user-reported scenario:
-     *   1. Create a DAILY;COUNT=10 master
-     *   2. Edit one occurrence (creates an exception bundled with master)
-     *   3. THIS_AND_FUTURE split from a date AFTER the exception's day
+     * Reproduces a user-reported sequence:
+     *  1. Create a DAILY;COUNT=10 master.
+     *  2. Edit one occurrence, which bundles an exception with the master.
+     *  3. Split THIS_AND_FUTURE from a day after the exception's.
      *
-     * The exception is BEFORE the split point so it must survive on the
-     * server-stored master. After the split, the master should:
-     *   - have RRULE truncated to COUNT=4 (or UNTIL trim if user picked)
-     *   - keep the past exception VEVENT (RECURRENCE-ID before split)
-     *   - the new series row PUTs successfully (no 403, no UID collision)
-     *
-     * Asserts wire-level state on every CalDAV server we test against.
+     * The exception is before the split, so it must survive. After the split the stored master
+     * has COUNT=4 and still holds the exception VEVENT, and the new series (COUNT=6) is created
+     * with no 403 or UID collision.
      */
     @Test
     fun `06 THIS_AND_FUTURE preserves past exception and lets new series CREATE succeed`() = runBlocking {
@@ -467,7 +450,7 @@ class MultiServerScopeSheetWireTest(
         val masterUid = "$UID_PREFIX${config.name.lowercase()}-${UUID.randomUUID()}-past-exc-master"
         val newSeriesUid = "$UID_PREFIX${config.name.lowercase()}-${UUID.randomUUID()}-past-exc-future"
         val t = times()
-        // Step 1: PUT a master DAILY;COUNT=10 starting at t.masterStartTs
+        // Step 1: PUT a DAILY;COUNT=10 master starting at t.masterStartTs.
         val masterDaily = Event(
             uid = masterUid,
             calendarId = 1L,
@@ -486,9 +469,9 @@ class MultiServerScopeSheetWireTest(
             firstVeventBody(storedMaster).contains("COUNT=10")
         )
 
-        // Step 2: PUT the master with an exception bundled at occurrence index 3
-        // (3 days after master start). RFC 5545 §3.8.4.4: exception VEVENT
-        // shares UID + adds RECURRENCE-ID. Edit shifts time by -8h.
+        // Step 2: PUT the master with an exception bundled at occurrence index 3, 3 days after
+        // the master's start. The exception shares the UID and adds RECURRENCE-ID (RFC 5545
+        // §3.8.4.4); the edit moves it 8 hours earlier.
         val occurrenceDayMs = t.masterStartTs + 3L * 24 * 3600_000L  // master + 3 days
         val recurrenceIdUtc = icsDateFormat.format(java.util.Date(occurrenceDayMs))
         val excStartUtc = icsDateFormat.format(java.util.Date(occurrenceDayMs - 8L * 3600_000L))
@@ -528,10 +511,8 @@ END:VCALENDAR
         val newMasterEtag = updateExcResult.getOrNull()!!
         trackEvent(storedMasterUrl, newMasterEtag)
 
-        // Verify the server now stores BOTH the master VEVENT and the
-        // exception VEVENT (some servers strip exceptions on certain
-        // edges — capture as assumeTrue so the test skips rather than
-        // misattributes a server quirk to the split path).
+        // The server must now store both VEVENTs. Some servers strip exceptions; that skips
+        // rather than being blamed on the split path.
         val withExc = client!!.fetchEvent(storedMasterUrl).getOrNull()?.icalData
             ?: error("fetch master+exc returned null on ${config.name}")
         val veventCount = Regex("""BEGIN:VEVENT""").findAll(unfold(withExc)).count()
@@ -540,8 +521,7 @@ END:VCALENDAR
             veventCount >= 2
         )
 
-        // Step 3: THIS_AND_FUTURE split AFTER the exception's day. Split
-        // at master + 4 days (one day after the exception's recurrence).
+        // Step 3: split THIS_AND_FUTURE at master + 4 days, a day after the exception's.
         val splitTimeMs = t.masterStartTs + 4L * 24 * 3600_000L
         val (truncatedRrule, splitNewSeriesRrule) = RruleUtils.splitRruleAtTime(
             masterRrule = "FREQ=DAILY;COUNT=10",
@@ -553,9 +533,8 @@ END:VCALENDAR
         assertEquals("FREQ=DAILY;COUNT=4", truncatedRrule)
         assertEquals("FREQ=DAILY;COUNT=6", splitNewSeriesRrule)
 
-        // Step 3a: Truncate master (preserving the bundled exception that
-        // is BEFORE the split). The PUT body has the truncated master +
-        // the unchanged exception.
+        // Step 3a: truncate the master, keeping the exception before the split. The body is the
+        // truncated master plus the unchanged exception.
         val truncatedMasterIcs = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -581,11 +560,10 @@ END:VEVENT
 END:VCALENDAR
         """.trimIndent()
         val truncResult = client!!.updateEvent(storedMasterUrl, truncatedMasterIcs, newMasterEtag)
-        // OX App Suite (Mailbox) re-versions the resource server-side after the
-        // master+exception write, so the ETag we hold from that step is already
-        // stale here and the conditional PUT fails with "modified on server".
-        // That is a server versioning quirk, not a split-path bug — skip rather
-        // than misattribute it (matches the RECURRENCE-ID;VALUE=DATE skip above).
+        // OX App Suite (Mailbox) re-versions the resource after the master and exception write,
+        // so the ETag held from that step is stale and the conditional PUT fails with "modified on
+        // server". That is a server versioning quirk, not a split-path bug, so it skips, as test 07
+        // does for a server that refuses RECURRENCE-ID;VALUE=DATE.
         assumeTrue(
             "Truncate master must succeed on ${config.name}: ${(truncResult as? CalDavResult.Error)?.message}",
             truncResult.isSuccess()
@@ -593,7 +571,7 @@ END:VCALENDAR
         val truncEtag = truncResult.getOrNull()!!
         trackEvent(storedMasterUrl, truncEtag)
 
-        // Verify server still has the past exception after the truncate.
+        // The past exception must survive the truncate.
         val storedAfterTrunc = client!!.fetchEvent(storedMasterUrl).getOrNull()?.icalData
             ?: error("fetch master returned null after truncate")
         val unfoldedAfter = unfold(storedAfterTrunc)
@@ -609,10 +587,9 @@ END:VCALENDAR
             masterRruleAfter!!.contains("COUNT=4")
         )
 
-        // Step 3b: CREATE new series with fresh UID. This is the path that
-        // failed with 403 in production. With the fix in EventWriter
-        // (modifiedEvent.startTs verbatim), the new series row carries
-        // the user's chosen first-occurrence time, not splitTime + delta.
+        // Step 3b: create the new series with its own UID; iCloud answered this create with 403
+        // in production. The row starts at the split time: EventWriter.splitSeries takes the
+        // user's chosen first-occurrence start as-is, not the split time plus an offset.
         val newSeries = Event(
             uid = newSeriesUid,
             calendarId = 1L,
@@ -634,8 +611,7 @@ END:VCALENDAR
         val (newUrl, newEtag) = newSeriesResult.getOrNull()!!
         trackEvent(newUrl, newEtag)
 
-        // Final wire check: new series stored with COUNT=6 (no UID collision,
-        // no body rewrite that drops RRULE).
+        // The new series is stored with COUNT=6: no UID collision, no rewrite dropping the RRULE.
         val storedNewSeries = client!!.fetchEvent(newUrl).getOrNull()?.icalData
             ?: error("fetch new series returned null on ${config.name}")
         val newSeriesRruleStored = rrulePropFrom(firstVeventBody(storedNewSeries))
@@ -647,17 +623,15 @@ END:VCALENDAR
     }
 
     /**
-     * Some servers (or other clients) emit `RECURRENCE-ID;VALUE=DATE`
-     * against a non-all-day master. KashCal currently stores the
-     * timestamp verbatim, so a date-form RECURRENCE-ID lands at midnight
-     * UTC even though the master expansion puts the instance at the
-     * master's time-of-day — the linkException 60s tolerance fails,
-     * leaving two rows for that day in Room.
+     * Some servers or other clients emit `RECURRENCE-ID;VALUE=DATE` against a timed master. Left
+     * as is it would land at UTC midnight while the expansion puts the occurrence at the master's
+     * time of day, so the day would show two occurrences;
+     * [org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper.normalizeRecurrenceId] promotes it
+     * (`RecurrenceIdNormalizationTest`).
      *
-     * This wire test PUTs the mismatched form to every reachable server
-     * and captures what each server stores back. The KashCal-side parser
-     * normalization (promote DATE to master's local time-of-day) is
-     * asserted separately in unit tests once implemented.
+     * This test PUTs the mismatched form to every reachable server and records what each stores
+     * back: it skips when the server refuses it or drops the RECURRENCE-ID, and otherwise requires
+     * both VEVENTs.
      */
     @Test
     fun `07 RECURRENCE-ID VALUE=DATE on timed master server-side capture`() = runBlocking {
@@ -668,9 +642,8 @@ END:VCALENDAR
         val masterUid = "$UID_PREFIX${config.name.lowercase()}-${UUID.randomUUID()}-recid-date"
         val t = times()
 
-        // Master is non-all-day. Exception carries RECURRENCE-ID;VALUE=DATE,
-        // which is RFC-mismatched against a timed master but still observed
-        // on real servers. We send a UTC-formatted ICS.
+        // Timed master; the exception's RECURRENCE-ID;VALUE=DATE breaks RFC 5545 §3.8.4.4's
+        // same-type rule but is seen on real servers. All times are UTC.
         val recurrenceDate = SimpleDateFormat("yyyyMMdd").apply {
             timeZone = TimeZone.getTimeZone("UTC")
         }.format(java.util.Date(t.occurrence2StartTs))
@@ -700,8 +673,7 @@ END:VCALENDAR
         """.trimIndent()
 
         val createResult = client!!.createEvent(calendarUrl!!, masterUid, masterPlusExceptionIcs)
-        // Some servers reject mismatched value-types up-front. That's a
-        // valid behavior — capture as assumeTrue rather than fail.
+        // A server may refuse the mismatched value type; that is valid, so it skips.
         assumeTrue(
             "Server rejected the mismatched RECURRENCE-ID;VALUE=DATE PUT on ${config.name}: " +
                 "${(createResult as? CalDavResult.Error)?.message}",
@@ -714,17 +686,11 @@ END:VCALENDAR
             ?: error("fetch null on ${config.name}")
         val unfolded = unfold(storedIcs)
 
-        // Document what each server did with the mismatched form. We log
-        // the captured RECURRENCE-ID line so the per-server behavior is
-        // visible in test output without coupling the assertion to a
-        // specific normalization choice (different servers do different
-        // things — most preserve verbatim, Zoho strips RECURRENCE-ID).
+        // The stored RECURRENCE-ID line is printed below rather than asserted, since servers
+        // differ: most keep it verbatim, Zoho strips it.
         val recurrenceIdLines = unfolded.lines()
             .filter { it.startsWith("RECURRENCE-ID") }
-        // Some servers normalize/strip the mismatched form. That's a
-        // server quirk, not a KashCal-side issue — capture as assumeTrue
-        // so the test skips rather than misattributing the server's
-        // normalization to a code defect.
+        // A server that strips the RECURRENCE-ID skips: a server quirk, not an app defect.
         assumeTrue(
             "Server stripped or normalized RECURRENCE-ID on ${config.name} " +
                 "(known quirks: Zoho strips). " +
@@ -740,23 +706,16 @@ END:VCALENDAR
             veventCount
         )
 
-        // Snapshot the captured RECURRENCE-ID form so the test output
-        // makes the per-server divergence visible. When KashCal's parser
-        // gains the value-type normalization (promote DATE to the
-        // master's time-of-day), the corresponding ICalEventMapper test
-        // asserts the parser-side behavior — this wire test stays
-        // focused on what the server does.
+        // Prints the stored RECURRENCE-ID form per server. The parser's handling of it is
+        // checked in `RecurrenceIdNormalizationTest`; this test covers only what the server does.
         println("[RecidDateSpike] ${config.name}: VEVENTs=$veventCount, " +
             "recurrenceId=${recurrenceIdLines.firstOrNull()}")
     }
 
     /**
-     * Wire-level coverage for deleteThisAndFuture: master truncates with
-     * UNTIL clause + future exceptions are removed. Pairs with test 06
-     * (splitSeries + past-exception preservation). Both writer methods
-     * share the same future-exception cleanup helper after the refactor;
-     * this test guards against regression on the delete side specifically,
-     * since test 06 only exercises the split path.
+     * Delete this and future on the wire: the master is truncated with UNTIL and the future
+     * exception is removed from the resource. EventWriter's splitSeries and deleteThisAndFuture
+     * share the future-exception cleanup; test 06 covers the split side, this one the delete side.
      */
     @Test
     fun `08 deleteThisAndFuture truncates master and drops future bundled exceptions`() = runBlocking {
@@ -766,7 +725,7 @@ END:VCALENDAR
 
         val masterUid = "$UID_PREFIX${config.name.lowercase()}-${UUID.randomUUID()}-del-future"
         val t = times()
-        // Master DAILY;COUNT=10 starting at masterStartTs.
+        // DAILY;COUNT=10 master starting at masterStartTs.
         val masterDaily = Event(
             uid = masterUid,
             calendarId = 1L,
@@ -785,9 +744,8 @@ END:VCALENDAR
             firstVeventBody(storedMaster).contains("COUNT=10")
         )
 
-        // Bundle a future exception at occurrence index 6 (a "future"
-        // edit relative to a delete-from at index 4). This is the row
-        // whose deletion the test verifies.
+        // Bundle an exception at occurrence index 6, after the delete point at index 4. Its
+        // removal is what this test checks.
         val futureOcc6Ms = t.masterStartTs + 6L * 24 * 3600_000L
         val excStart = icsDateFormat.format(java.util.Date(futureOcc6Ms - 5 * 3600_000L))
         val excEnd = icsDateFormat.format(java.util.Date(futureOcc6Ms - 5 * 3600_000L + 3600_000L))
@@ -826,7 +784,7 @@ END:VCALENDAR
         val newEtag = excResult.getOrNull()!!
         trackEvent(storedMasterUrl, newEtag)
 
-        // Sanity: server stores both VEVENTs.
+        // The server must store both VEVENTs, else skip.
         val withExc = client!!.fetchEvent(storedMasterUrl).getOrNull()?.icalData
             ?: error("fetch null after exception PUT on ${config.name}")
         val veventsBefore = Regex("""BEGIN:VEVENT""").findAll(unfold(withExc)).count()
@@ -835,9 +793,8 @@ END:VCALENDAR
             veventsBefore >= 2
         )
 
-        // Now simulate deleteThisAndFuture from occurrence index 4. Master
-        // gets UNTIL = occ4Ms - 1; future exception (at occ6) is removed
-        // from the .ics body.
+        // Delete this and future from occurrence index 4: the master gets an UNTIL just before
+        // it, and the exception at index 6 leaves the body.
         val deleteFromMs = t.masterStartTs + 4L * 24 * 3600_000L
         val untilCal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         untilCal.timeInMillis = deleteFromMs - 1L
@@ -864,8 +821,7 @@ END:VCALENDAR
         )
         trackEvent(storedMasterUrl, truncResult.getOrNull()!!)
 
-        // Verify wire shape: server now stores ONLY the master VEVENT,
-        // no leftover exception, and master RRULE has UNTIL.
+        // The server now stores only the master VEVENT, and its RRULE has UNTIL.
         val storedAfter = client!!.fetchEvent(storedMasterUrl).getOrNull()?.icalData
             ?: error("fetch null after truncate on ${config.name}")
         val unfoldedAfter = unfold(storedAfter)

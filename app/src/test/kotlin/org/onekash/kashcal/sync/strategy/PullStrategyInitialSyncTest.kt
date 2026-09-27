@@ -5,24 +5,21 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for skipDefaultReminders computation in PullStrategy.
+ * Tests the skipDefaultReminders rule in PullStrategy's full pull: default reminders are skipped
+ * when the calendar has no sync-token (its first sync) or the sync is forced, and applied only
+ * when a token exists and the sync isn't forced. The delta and etag-fallback paths always apply
+ * them.
  *
- * skipDefaultReminders determines whether to skip applying default reminders.
- * It should be true (skip defaults) when:
- * - calendar.syncToken is null (initial sync - first time syncing)
- * - forceFullSync is true (user-requested refresh)
+ * Skipping marks the pulled changes as initial-sync, so CalDavSyncWorker adds no default
+ * reminders: on a first sync they would land on every event, and a forced sync re-lists events
+ * the user already has.
  *
- * It should be false (apply defaults) ONLY for incremental sync:
- * - syncToken exists AND forceFullSync is false
- *
- * This ensures default reminders are applied to truly new events during
- * incremental sync, but NOT during:
- * - Initial full sync (would spam reminders on first sync)
- * - Force full sync (user is refreshing, not seeing new events)
+ * Each test evaluates a copy of the expression, `(syncToken == null) || forceFullSync`, not
+ * PullStrategy itself, so a change to the production expression isn't caught here.
  */
 class PullStrategyInitialSyncTest {
 
-    // ==================== skipDefaultReminders Computation Tests ====================
+    // ==================== skipDefaultReminders ====================
 
     @Test
     fun `skipDefaultReminders is true when syncToken is null (initial sync)`() {
@@ -64,11 +61,11 @@ class PullStrategyInitialSyncTest {
         assertTrue("Should skip defaults when both conditions are true", skipDefaultReminders)
     }
 
-    // ==================== Edge Cases ====================
+    // ==================== Edge cases ====================
 
     @Test
     fun `empty string syncToken is NOT null - apply defaults`() {
-        // Edge case: Some servers might return empty string instead of null
+        // A server might return an empty string instead of no token.
         val syncToken: String? = ""
         val forceFullSync = false
 
@@ -87,12 +84,12 @@ class PullStrategyInitialSyncTest {
         assertFalse("Whitespace syncToken should apply defaults (incremental sync)", skipDefaultReminders)
     }
 
-    // ==================== Scenario Documentation Tests ====================
+    // ==================== Scenarios ====================
 
     @Test
     fun `scenario - newly discovered calendar first sync skips defaults`() {
-        // When a new calendar is discovered via refreshCalendars(),
-        // it has syncToken = null. First sync should skip defaults.
+        // A calendar found by refreshCalendars() has syncToken = null, so its first sync
+        // skips defaults.
         val syncToken: String? = null
         val forceFullSync = false
 
@@ -103,8 +100,7 @@ class PullStrategyInitialSyncTest {
 
     @Test
     fun `scenario - regular incremental sync applies defaults`() {
-        // After initial sync completes, syncToken is set.
-        // Subsequent syncs are incremental and SHOULD apply defaults.
+        // After the first sync the token is set, and later syncs apply defaults.
         val syncToken: String? = "http://example.com/ns/sync/12345"
         val forceFullSync = false
 
@@ -115,9 +111,8 @@ class PullStrategyInitialSyncTest {
 
     @Test
     fun `scenario - user triggers Force Sync from settings skips defaults`() {
-        // When user taps "Force Sync" in account settings,
-        // forceFullSync = true. Should skip defaults because
-        // user is refreshing existing data, not seeing new events.
+        // Force Sync in account settings sets forceFullSync = true. Defaults are skipped: the
+        // user is refreshing events they already have.
         val syncToken: String? = "existing-token"
         val forceFullSync = true
 
@@ -128,8 +123,7 @@ class PullStrategyInitialSyncTest {
 
     @Test
     fun `scenario - force sync on calendar that never synced skips defaults`() {
-        // Edge case: User forces sync on a calendar that hasn't synced yet.
-        // Should skip defaults - user explicitly requested refresh.
+        // A forced sync of a calendar that hasn't synced yet also skips defaults.
         val syncToken: String? = null
         val forceFullSync = true
 
@@ -140,10 +134,9 @@ class PullStrategyInitialSyncTest {
 
     @Test
     fun `scenario - sync token expired recovery applies defaults`() {
-        // When server returns 403/410, PullStrategy falls back to
-        // pullWithEtagComparison. The calendar HAD a token (exists),
-        // and it's not a force sync, so this should apply defaults.
-        // The etag fallback path explicitly sets isInitialSync = false.
+        // On a 403 or 410, PullStrategy falls back to pullWithEtagComparison. The calendar
+        // has a token and the sync isn't forced, so defaults apply; the etag fallback passes
+        // isInitialSync = false.
         val syncToken: String? = "expired-token"
         val forceFullSync = false
 

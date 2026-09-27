@@ -4,22 +4,23 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Tests for wheel picker center calculation logic.
+ * Tests a circular wheel's index arithmetic through [virtualToActualIndex]. A circular wheel
+ * has no content padding, so `firstVisibleItemIndex` is the top visible item and the centered
+ * item is `visibleItems / 2` further on; the initial index subtracts that offset.
  *
- * Bug report: Creating event at 17:15 results in 16:10
- * - Hour 17 → 16 (off by 1)
- * - Minute 15 → 10 (off by 1 position in 5-min intervals)
- *
- * Root cause hypothesis: In circular mode, firstVisibleItemIndex points to the
- * TOP visible item, but selection should read the CENTER item.
+ * The arithmetic is modeled here, not read from `VerticalWheelPicker`, which selects the item
+ * nearest the pixel center and falls back to the top item plus this offset. Reading the top
+ * item as the selection turns a centered 17:15 into 15:05. A user saw 16:10 (one position off
+ * per wheel); the tests that print their analysis show both readings without settling which.
  */
 class WheelPickerCenterCalculationTest {
 
     companion object {
+        // Same value as the picker's private CIRCULAR_MULTIPLIER.
         private const val CIRCULAR_MULTIPLIER = 1000
     }
 
-    // ==================== Comprehensive Hour Tests ====================
+    // ==================== Every Hour and Minute ====================
 
     @Test
     fun `test all hours - analyze offset pattern`() {
@@ -32,13 +33,13 @@ class WheelPickerCenterCalculationTest {
         println()
 
         for (wantedHour in 0..23) {
-            // Simulate: user visually centers this hour
-            // With visibleItems=5, viewport shows [wantedHour-2, wantedHour-1, wantedHour, wantedHour+1, wantedHour+2]
-            // firstVisibleItemIndex points to the TOP item (wantedHour - 2)
+            // The user centers this hour. With visibleItems=5 the viewport shows
+            // [wantedHour-2, wantedHour-1, wantedHour, wantedHour+1, wantedHour+2], and
+            // firstVisibleItemIndex points to the top item (wantedHour - 2).
             val topItem = (wantedHour - 2 + 24) % 24  // Handle wrap for hours 0, 1
             val firstVisibleItemIndex = middleOffset + topItem
 
-            // Current code behavior
+            // Reading the top item as the selection
             val currentResult = virtualToActualIndex(firstVisibleItemIndex, items.size, true)
 
             // What offset would give the correct result?
@@ -68,7 +69,7 @@ class WheelPickerCenterCalculationTest {
             val topIndex = (wantedMinuteIndex - 2 + items.size) % items.size
             val firstVisibleItemIndex = middleOffset + topIndex
 
-            // Current code behavior
+            // Reading the top item as the selection
             val currentResultIndex = virtualToActualIndex(firstVisibleItemIndex, items.size, true)
             val currentResultMinute = items[currentResultIndex]
 
@@ -135,25 +136,26 @@ class WheelPickerCenterCalculationTest {
         println("contentPadding = itemHeight * (visibleItems / 2) = itemHeight * 2")
         println()
 
-        // At the very start of a NON-circular list (index 0):
-        // - Top padding is VISIBLE (2 items worth)
+        // At the very start of a non-circular list (index 0):
+        // - Top padding is visible (2 items' worth)
         // - Viewport: [padding][padding][item0][item1][item2]
-        // - firstVisibleItemIndex = 0, and item 0 IS at center
+        // - firstVisibleItemIndex = 0, and item 0 is at center
         println("NON-CIRCULAR at start: firstVisibleItemIndex=0 → item 0 at center (padding visible)")
 
-        // In the MIDDLE of a circular list:
-        // - Padding is scrolled out of view
+        // In the middle of a circular list:
+        // - There is no padding in view
         // - Viewport: [item15][item16][item17][item18][item19]
         // - firstVisibleItemIndex = 15, but item 17 is at center
         println("CIRCULAR in middle: firstVisibleItemIndex=15 → item 15 at TOP, item 17 at center")
         println()
 
-        // For circular mode, we ALWAYS need to add centerOffset because padding
-        // is never visible (we start in the middle of a 12,000+ item virtual list)
+        // A circular wheel always needs centerOffset added, because it starts in the middle
+        // of a virtual list of 12,000 or more items and never shows padding. Nothing is
+        // asserted.
         println("Conclusion: For circular mode, always add centerOffset = visibleItems/2 = 2")
     }
 
-    // ==================== User report discrepancy investigation ====================
+    // ==================== Reported offset of 1 against the computed 2 ====================
 
     @Test
     fun `investigate user report - offset 1 vs calculated offset 2`() {
@@ -169,7 +171,8 @@ class WheelPickerCenterCalculationTest {
         println("3. There may be a scroll offset that puts us 'between' items")
         println()
 
-        // Let's check if the centerIndex derivedStateOf could explain it
+        // The lines printed below don't match VerticalWheelPicker: its centerIndex is the item
+        // nearest the pixel center, and it selects through that index.
         println("The centerIndex derivedStateOf adds 0 or 1 based on scroll offset:")
         println("  if (offset > itemHeightPx / 2) firstVisible + 1 else firstVisible")
         println()
@@ -177,20 +180,20 @@ class WheelPickerCenterCalculationTest {
         println("NOT for the actual selection! Line 137 uses firstVisibleItemIndex directly.")
         println()
 
-        // Test both scenarios
+        // Print both scenarios; nothing in this test is asserted
         val items = (0..23).toList()
         val visibleItems = 5
         val middleOffset = (CIRCULAR_MULTIPLIER / 2) * items.size
 
         val wantedHour = 17
 
-        // Scenario A: User report is accurate (offset = 1)
+        // Scenario A: the reported offset of 1
         // This would mean firstVisibleItemIndex = 16 when hour 17 is centered
         val scenarioA_firstVisible = middleOffset + 16
         val scenarioA_result = virtualToActualIndex(scenarioA_firstVisible, items.size, true)
         println("Scenario A (offset=1): firstVisibleItemIndex=$scenarioA_result → need +1 to get $wantedHour")
 
-        // Scenario B: Our analysis (offset = 2)
+        // Scenario B: the computed offset of 2
         // This would mean firstVisibleItemIndex = 15 when hour 17 is centered
         val scenarioB_firstVisible = middleOffset + 15
         val scenarioB_result = virtualToActualIndex(scenarioB_firstVisible, items.size, true)
@@ -217,7 +220,7 @@ class WheelPickerCenterCalculationTest {
         val fix_offset1 = virtualToActualIndex(firstVisible_offset1 + 1, items.size, true)
         println("If offset=1: firstVisible=16, current gets $result_offset1, fix with +1 gets $fix_offset1")
 
-        // If offset is 2 (our analysis)
+        // If offset is 2 (computed)
         val firstVisible_offset2 = middleOffset + 15
         val result_offset2 = virtualToActualIndex(firstVisible_offset2, items.size, true)
         val fix_offset2 = virtualToActualIndex(firstVisible_offset2 + 2, items.size, true)
@@ -243,36 +246,36 @@ class WheelPickerCenterCalculationTest {
 
         println("\n=== Full Flow Simulation with FIX ===")
 
-        // STEP 1: Initialize picker with hour 10
+        // Step 1: initialize the picker with hour 10
         val initialHour = 10
         val initialIndex = items.indexOf(initialHour)
-        // FIXED initialization: subtract centerOffset so item appears at center
+        // Initialization subtracts centerOffset so the item appears at center
         val fixedInitialFirstVisible = middleOffset + initialIndex - centerOffset
         println("Initialize with hour $initialHour:")
         println("  fixedInitialFirstVisible = middleOffset + $initialIndex - $centerOffset = maps to ${virtualToActualIndex(fixedInitialFirstVisible, items.size, true)}")
 
-        // Verify: the CENTER item at init should be initialHour
+        // The center item at init should be initialHour
         val centerAtInit = virtualToActualIndex(fixedInitialFirstVisible + centerOffset, items.size, true)
         assertEquals("Hour 10 should be at center after init", initialHour, centerAtInit)
         println("  Center item at init = $centerAtInit ✓")
 
-        // STEP 2: User scrolls to hour 17
+        // Step 2: the user scrolls to hour 17
         // After scroll, firstVisibleItemIndex will be such that hour 17 is at center
         // That means firstVisibleItemIndex = (17 - centerOffset) = 15
         val wantedHour = 17
         val firstVisibleAfterScroll = middleOffset + (wantedHour - centerOffset)
 
-        // FIXED selection: add centerOffset to get center item
+        // Selection adds centerOffset to reach the center item
         val selectedHour = virtualToActualIndex(firstVisibleAfterScroll + centerOffset, items.size, true)
         assertEquals("After scroll, hour 17 should be selected", wantedHour, selectedHour)
         println("\nUser scrolls to hour $wantedHour:")
         println("  firstVisibleItemIndex maps to ${virtualToActualIndex(firstVisibleAfterScroll, items.size, true)}")
         println("  With fix (add centerOffset): selected = $selectedHour ✓")
 
-        // STEP 3: External update - programmatically set to hour 22
+        // Step 3: an outside update sets hour 22
         val externalHour = 22
         val externalIndex = items.indexOf(externalHour)
-        // When scrolling TO a selected item, we need firstVisibleItemIndex = (target - centerOffset)
+        // Scrolling to a selected item needs firstVisibleItemIndex = (target - centerOffset)
         val targetFirstVisible = middleOffset + externalIndex - centerOffset
         val centerAfterExternal = virtualToActualIndex(targetFirstVisible + centerOffset, items.size, true)
         assertEquals("External update to hour 22 should work", externalHour, centerAfterExternal)
@@ -297,7 +300,7 @@ class WheelPickerCenterCalculationTest {
         // After scroll, firstVisibleItemIndex = wantedIndex - centerOffset = 1
         val firstVisibleAfterScroll = middleOffset + (wantedIndex - centerOffset)
 
-        // With fix
+        // Adding centerOffset
         val selectedIndex = virtualToActualIndex(firstVisibleAfterScroll + centerOffset, items.size, true)
         val selectedMinute = items[selectedIndex]
 
@@ -328,7 +331,8 @@ class WheelPickerCenterCalculationTest {
 
         // Test hour 0 (midnight)
         val hour0 = 0
-        val firstVisible0 = middleOffset + (hour0 - centerOffset)  // This will be negative offset, but virtual index handles it
+        // Below the middle; the virtual index absorbs it
+        val firstVisible0 = middleOffset + (hour0 - centerOffset)
         val selected0 = virtualToActualIndex(firstVisible0 + centerOffset, items.size, true)
         assertEquals("Hour 0 should work", hour0, selected0)
         println("Hour 0: selected = $selected0 ✓")
@@ -348,7 +352,7 @@ class WheelPickerCenterCalculationTest {
         println("Hour 23: selected = $selected23 ✓")
     }
 
-    // ==================== Current Behavior (Buggy) ====================
+    // ==================== Reading the Top Item (two positions off) ====================
 
     @Test
     fun `CURRENT - hour picker returns wrong value when 17 is centered`() {
@@ -361,19 +365,19 @@ class WheelPickerCenterCalculationTest {
         val middleOffset = (CIRCULAR_MULTIPLIER / 2) * items.size // 12000
 
         // When 17 is visually centered, firstVisibleItemIndex points to 15
-        // (the TOP visible item, not the center)
+        // (the top visible item, not the center)
         val firstVisibleItemIndex = middleOffset + 15 // Item 15 is at top
 
-        // CURRENT CODE: reads firstVisibleItemIndex directly
+        // Reading firstVisibleItemIndex as the selection
         val currentSelectedIndex = virtualToActualIndex(firstVisibleItemIndex, items.size, true)
 
-        // Bug: returns 15 instead of 17
+        // Returns 15 where 17 is centered
         assertEquals("Current code returns wrong hour", 15, currentSelectedIndex)
 
         // What user expected
         val expectedHour = 17
         assertEquals("User expected hour 17 but got $currentSelectedIndex",
-            expectedHour, currentSelectedIndex + 2) // Off by 2!
+            expectedHour, currentSelectedIndex + 2) // Off by 2
     }
 
     @Test
@@ -390,11 +394,11 @@ class WheelPickerCenterCalculationTest {
         // When minute 15 (index 3) is centered, firstVisibleItemIndex points to index 1
         val firstVisibleItemIndex = middleOffset + 1 // Index 1 (minute 5) is at top
 
-        // CURRENT CODE: reads firstVisibleItemIndex directly
+        // Reading firstVisibleItemIndex as the selection
         val currentSelectedIndex = virtualToActualIndex(firstVisibleItemIndex, items.size, true)
         val currentSelectedMinute = items[currentSelectedIndex]
 
-        // Bug: returns minute 5 instead of minute 15
+        // Returns minute 5 where 15 is centered
         assertEquals("Current code returns wrong minute index", 1, currentSelectedIndex)
         assertEquals("Current code returns wrong minute value", 5, currentSelectedMinute)
 
@@ -402,10 +406,10 @@ class WheelPickerCenterCalculationTest {
         val expectedMinute = 15
         val expectedIndex = 3
         assertEquals("User expected index 3 but got $currentSelectedIndex",
-            expectedIndex, currentSelectedIndex + 2) // Off by 2!
+            expectedIndex, currentSelectedIndex + 2) // Off by 2
     }
 
-    // ==================== Fixed Behavior ====================
+    // ==================== Adding centerOffset ====================
 
     @Test
     fun `FIXED - hour picker returns correct value when 17 is centered`() {
@@ -417,7 +421,7 @@ class WheelPickerCenterCalculationTest {
         // When 17 is visually centered, firstVisibleItemIndex = middleOffset + 15
         val firstVisibleItemIndex = middleOffset + 15
 
-        // FIXED: Add centerOffset to get actual center item
+        // Adding centerOffset reaches the center item
         val fixedCenterIndex = firstVisibleItemIndex + centerOffset
         val fixedSelectedIndex = virtualToActualIndex(fixedCenterIndex, items.size, true)
 
@@ -434,7 +438,7 @@ class WheelPickerCenterCalculationTest {
         // When minute 15 (index 3) is centered, firstVisibleItemIndex = middleOffset + 1
         val firstVisibleItemIndex = middleOffset + 1
 
-        // FIXED: Add centerOffset to get actual center item
+        // Adding centerOffset reaches the center item
         val fixedCenterIndex = firstVisibleItemIndex + centerOffset
         val fixedSelectedIndex = virtualToActualIndex(fixedCenterIndex, items.size, true)
         val fixedSelectedMinute = items[fixedSelectedIndex]
@@ -454,15 +458,15 @@ class WheelPickerCenterCalculationTest {
         val selectedHour = 17
         val selectedIndex = items.indexOf(selectedHour)
 
-        // CURRENT: initialIndex = middleOffset + selectedIndex
+        // Without the offset: initialIndex = middleOffset + selectedIndex
         val currentInitialIndex = middleOffset + selectedIndex
-        // This places hour 17 at firstVisibleItemIndex position (TOP of viewport)
-        // Visual result: [17, 18, 19, 20, 21] with 17 at TOP, not center!
+        // This places hour 17 at firstVisibleItemIndex (top of the viewport)
+        // Visual result: [17, 18, 19, 20, 21] with 17 at top, not center
 
-        // FIXED: initialIndex = middleOffset + selectedIndex - centerOffset
+        // The picker's initialIndex: middleOffset + selectedIndex - centerOffset
         val fixedInitialIndex = middleOffset + selectedIndex - centerOffset
-        // This places hour 15 at firstVisibleItemIndex, so hour 17 is at CENTER
-        // Visual result: [15, 16, 17, 18, 19] with 17 at CENTER ✓
+        // This places hour 15 at firstVisibleItemIndex, so hour 17 is at center
+        // Visual result: [15, 16, 17, 18, 19] with 17 at center ✓
 
         // Verify fixed initialization puts selected item at center
         val centerVirtualIndex = fixedInitialIndex + centerOffset
@@ -509,11 +513,12 @@ class WheelPickerCenterCalculationTest {
         assertEquals("Should correctly select minute 0 at wrap boundary", 0, fixedSelectedMinute)
     }
 
-    // ==================== Bug Report Exact Scenario ====================
+    // ==================== Reported 17:15 to 16:10 Scenario ====================
 
     @Test
     fun `bug report scenario - 17h15 becomes 16h10`() {
-        // This test reproduces the exact bug report
+        // The top-item reading is computed but not asserted; the asserts check the report's
+        // 16:10 is one position off per wheel and that adding centerOffset gives 17:15.
         val hourItems = (0..23).toList()
         val minuteItems = (0..55 step 5).toList()
         val visibleItems = 5
@@ -530,15 +535,13 @@ class WheelPickerCenterCalculationTest {
         val hourFirstVisible = middleOffsetHour + (wantedHour - 2) // 17-2=15 at top
         val minuteFirstVisible = middleOffsetMinute + (wantedMinuteIndex - 2) // 3-2=1 at top
 
-        // CURRENT (buggy) behavior:
+        // Reading the top item:
         val buggyHour = virtualToActualIndex(hourFirstVisible, hourItems.size, true)
         val buggyMinuteIndex = virtualToActualIndex(minuteFirstVisible, minuteItems.size, true)
         val buggyMinute = minuteItems[buggyMinuteIndex]
 
-        // Bug produces 15:05 (off by 2 each), but user reported 16:10 (off by 1 each)
-        // This suggests the actual offset might be 1, not 2
-        // Let's check with offset of 1:
-        val actualBugOffset = 1 // Based on user report
+        // The top item reads 15:05 (two positions off each); the report was 16:10 (one each)
+        val actualBugOffset = 1 // From the report
         val reportedHour = wantedHour - actualBugOffset // 17-1=16 ✓
         val reportedMinuteIndex = wantedMinuteIndex - actualBugOffset // 3-1=2
         val reportedMinute = minuteItems[reportedMinuteIndex] // index 2 = minute 10 ✓
@@ -546,7 +549,7 @@ class WheelPickerCenterCalculationTest {
         assertEquals("Bug report: hour should be 16", 16, reportedHour)
         assertEquals("Bug report: minute should be 10", 10, reportedMinute)
 
-        // FIXED behavior:
+        // Adding centerOffset:
         val centerOffset = visibleItems / 2
         val fixedHour = virtualToActualIndex(hourFirstVisible + centerOffset, hourItems.size, true)
         val fixedMinuteIndex = virtualToActualIndex(minuteFirstVisible + centerOffset, minuteItems.size, true)

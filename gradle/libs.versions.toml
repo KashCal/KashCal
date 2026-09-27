@@ -49,7 +49,7 @@ workManager = "2.11.2"
 hiltWork = "1.4.0"
 
 # Glance (App Widgets)
-glance = "1.2.0-rc01"
+glance = "1.2.0"
 
 # MaterialKolor (seed -> M3 ColorScheme)
 materialkolor = "4.1.1"
@@ -121,6 +121,7 @@ lib-recur = { group = "org.dmfs", name = "lib-recur", version.ref = "libRecur" }
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 okhttp-mockwebserver = { group = "com.squareup.okhttp3", name = "mockwebserver", version.ref = "okhttp" }
+okhttp-tls = { group = "com.squareup.okhttp3", name = "okhttp-tls", version.ref = "okhttp" }
 
 # DataStore & Security
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }

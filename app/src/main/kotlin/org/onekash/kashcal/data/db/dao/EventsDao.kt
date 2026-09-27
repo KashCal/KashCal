@@ -13,24 +13,19 @@ import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.SyncStatus
 
-/**
- * Search result combining Event with its next occurrence timestamp.
- * Used by search queries to show recurring events with their next upcoming occurrence.
- */
+/** Pairs an event with the occurrence start its query picked as next_occurrence_ts. */
 data class EventWithNextOccurrence(
     @Embedded val event: Event,
     @ColumnInfo(name = "next_occurrence_ts") val nextOccurrenceTs: Long?
 )
 
 /**
- * Result from getEventsWithRemindersInRange query.
- * Contains embedded Event with occurrence timing and calendar color.
- * Used by ReminderScheduler to find events that may need reminders scheduled.
+ * Holds one occurrence row of [EventsDao.getEventsWithRemindersInRange], read by
+ * ReminderScheduler.
  *
- * The `event` field contains the event with reminder configuration (may be master
- * if exception inherits reminders). The `targetEventId` field contains the actual
- * event ID to store in the reminder (exception if exists, otherwise master).
- * This ensures clicking the reminder opens the correct event.
+ * [event] carries the reminders to use: the master's when an exception inherits them.
+ * [targetEventId] is the event the reminder opens: the exception if there is one, otherwise the
+ * master.
  */
 data class EventWithOccurrenceAndColor(
     @Embedded val event: Event,
@@ -41,28 +36,21 @@ data class EventWithOccurrenceAndColor(
 )
 
 /**
- * Lightweight etag entry for etag-based sync comparison.
- * Used by pullWithEtagComparison() to compare local vs server etags
- * without loading full Event objects (saves memory for large calendars).
+ * Holds a local (caldav_url, etag) pair for comparing against the server's etags without
+ * loading whole events.
  */
 data class EtagEntry(
     @ColumnInfo(name = "caldav_url") val caldavUrl: String,
     @ColumnInfo(name = "etag") val etag: String?
 )
 
-/**
- * Lightweight projection for URL migration.
- * Used by iCloud URL normalization to efficiently update caldav_url column.
- */
+/** Holds an event's id and caldav_url for the iCloud URL normalization migration. */
 data class EventUrlProjection(
     @ColumnInfo(name = "id") val id: Long,
     @ColumnInfo(name = "caldav_url") val caldavUrl: String?
 )
 
-/**
- * A title suggestion for the event-form autocomplete dropdown.
- * Aggregated from past events in the user's history.
- */
+/** Holds one event-form title suggestion, aggregated from past events. */
 data class TitleSuggestion(
     @ColumnInfo(name = "title") val title: String,
     @ColumnInfo(name = "freq") val freq: Int,
@@ -70,55 +58,36 @@ data class TitleSuggestion(
 )
 
 /**
- * Data Access Object for Event operations.
+ * Reads and writes Room events: masters, exceptions and one-off events.
  *
- * Provides comprehensive CRUD and sync operations for calendar events.
- * Handles both master recurring events and exception instances.
+ * A master's start_ts and end_ts are its first occurrence's, so a time-range read that must see
+ * every occurrence joins the occurrences table.
  */
 @Dao
 interface EventsDao {
 
     // ========== Read Operations - By ID ==========
 
-    /**
-     * Get event by local ID.
-     */
     @Query("SELECT * FROM events WHERE id = :id")
     suspend fun getById(id: Long): Event?
 
-    /**
-     * Get multiple events by IDs.
-     * Used by PushStrategy to batch load events for pending operations.
-     */
+    /** Batch read, for example PushStrategy loading every event of the pending operations. */
     @Query("SELECT * FROM events WHERE id IN (:ids)")
     suspend fun getByIds(ids: List<Long>): List<Event>
 
-    /**
-     * Get event by local ID as Flow.
-     */
     @Query("SELECT * FROM events WHERE id = :id")
     fun getByIdFlow(id: Long): Flow<Event?>
 
-    /**
-     * Get events by RFC 5545 UID (may return multiple for master + exceptions).
-     */
+    /** Returns every row with the UID, across calendars: a master and its exceptions share it. */
     @Query("SELECT * FROM events WHERE uid = :uid")
     suspend fun getByUid(uid: String): List<Event>
 
     /**
-     * Find event by import_id within a calendar.
+     * Finds an event by import_id (`{uid}` for a master, `{uid}:RECID:{datetime}` for an
+     * exception) within a calendar.
      *
-     * import_id uniquely identifies events during sync:
-     * - Master events: "{uid}"
-     * - Exception events: "{uid}:RECID:{datetime}"
-     *
-     * @param importId The unique import identifier
-     * @param calendarId Calendar to search within
-     * @return The matching event, or null if not found
-     *
-     * @deprecated Use [getExceptionByUidAndInstanceTime] for exception lookup during sync.
-     * UID + originalInstanceTime is the RFC 5545 compliant approach and doesn't depend
-     * on local database IDs that can become stale. Kept for potential debugging use.
+     * @deprecated Look exceptions up with [getExceptionByUidAndInstanceTime]: UID plus
+     * RECURRENCE-ID is how RFC 5545 identifies them. Nothing in the app calls this.
      */
     @Deprecated(
         message = "Use getExceptionByUidAndInstanceTime for exception lookup",
@@ -132,16 +101,7 @@ interface EventsDao {
     """)
     suspend fun findByImportId(importId: String, calendarId: Long): Event?
 
-    /**
-     * Find all events by UID within a calendar (master + all exceptions).
-     *
-     * Returns master event and all exception events that share the same UID.
-     * Useful for operations that affect the entire recurring series.
-     *
-     * @param uid RFC 5545 UID
-     * @param calendarId Calendar to search within
-     * @return List of events (master first, then exceptions by original_instance_time)
-     */
+    /** Returns a series in [calendarId]: the master first, then its exceptions by instance time. */
     @Query("""
         SELECT * FROM events
         WHERE uid = :uid
@@ -151,24 +111,24 @@ interface EventsDao {
     suspend fun findAllByUid(uid: String, calendarId: Long): List<Event>
 
     /**
-     * Get event by CalDAV URL (unique per event).
+     * Returns one row at [caldavUrl], in any calendar. caldav_url isn't unique: a master and its
+     * exceptions share their resource's URL, so this may return any of them.
      */
     @Query("SELECT * FROM events WHERE caldav_url = :caldavUrl")
     suspend fun getByCaldavUrl(caldavUrl: String): Event?
 
     /**
-     * All events in a calendar that have a caldav_url, for percent-encoding-tolerant
-     * URL matching. SQLite cannot percent-decode, so callers canonicalize the URL in
-     * Kotlin (see CaldavUrlNormalizer) and compare in memory. Index-backed on
-     * calendar_id; used only as a fallback after the exact getByCaldavUrl() miss.
+     * Returns every event in a calendar that has a caldav_url, for URL matching that tolerates
+     * percent-encoding differences. SQLite can't percent-decode, so the caller canonicalizes
+     * in Kotlin (CaldavUrlNormalizer) and compares in memory. Read only after [getByCaldavUrl]
+     * finds no usable match.
      */
     @Query("SELECT * FROM events WHERE calendar_id = :calendarId AND caldav_url IS NOT NULL")
     suspend fun getEventsWithCaldavUrl(calendarId: Long): List<Event>
 
     /**
-     * Find master event by UID within a calendar.
-     * Master events have original_event_id = NULL.
-     * Used as primary lookup since caldavUrl can vary by server (p180 vs p181).
+     * Returns the master with [uid] in [calendarId]. Pull looks masters up by UID first, since
+     * the caldavUrl can vary by server (p180 vs p181).
      */
     @Query("""
         SELECT * FROM events
@@ -181,15 +141,10 @@ interface EventsDao {
 
     // ========== Read Operations - By Calendar ==========
 
-    /**
-     * Get all events for a calendar.
-     */
     @Query("SELECT * FROM events WHERE calendar_id = :calendarId ORDER BY start_ts ASC")
     fun getByCalendarId(calendarId: Long): Flow<List<Event>>
 
-    /**
-     * Get events for calendar in time range.
-     */
+    /** Filters on start_ts and end_ts, so a master counts only by its first occurrence. */
     @Query("""
         SELECT * FROM events
         WHERE calendar_id = :calendarId
@@ -201,12 +156,9 @@ interface EventsDao {
     suspend fun getByCalendarIdInRange(calendarId: Long, startTs: Long, endTs: Long): List<Event>
 
     /**
-     * Get events for calendar matching a caldav_url prefix.
-     *
-     * Used by IcsSubscriptionRepository to find events belonging to a specific
-     * ICS subscription without loading all events in the calendar.
-     * The prefix format is "ics_subscription:{subscriptionId}:" which is controlled
-     * internally (no LIKE special characters).
+     * Returns one ICS subscription's events (caldav_url starting with [urlPrefix]) without
+     * loading the rest of the calendar. The prefix, `ics_subscription:{subscriptionId}:`, is
+     * built internally; its `_` is a LIKE wildcard, which also matches a literal `_`.
      */
     @Query("""
         SELECT * FROM events
@@ -217,10 +169,7 @@ interface EventsDao {
     """)
     suspend fun getByCalendarIdAndCaldavUrlPrefix(calendarId: Long, urlPrefix: String): List<Event>
 
-    /**
-     * EXISTS check for events matching a caldav_url prefix.
-     * Avoids materializing the full row list when only emptiness matters.
-     */
+    /** Same match as [getByCalendarIdAndCaldavUrlPrefix], without loading the rows. */
     @Query("""
         SELECT EXISTS(
             SELECT 1 FROM events
@@ -231,9 +180,7 @@ interface EventsDao {
     """)
     suspend fun anyByCalendarIdAndCaldavUrlPrefix(calendarId: Long, urlPrefix: String): Boolean
 
-    /**
-     * Get all events in time range across all calendars.
-     */
+    /** Filters on start_ts and end_ts, so a master counts only by its first occurrence. */
     @Query("""
         SELECT * FROM events
         WHERE end_ts >= :startTs
@@ -244,19 +191,12 @@ interface EventsDao {
     suspend fun getInRange(startTs: Long, endTs: Long): List<Event>
 
     /**
-     * Get etag map for calendar events in time range.
-     * Memory-efficient alternative to loading full Event objects.
-     * Used by pullFull() for etag-based comparison to skip unchanged events.
+     * Returns the (caldavUrl, etag) pairs a full listing compares against, so unchanged events
+     * aren't fetched. Only rows with both values set.
      *
-     * Includes recurring events regardless of their first occurrence time because
-     * CalDAV servers return recurring events if ANY occurrence is in the range
-     * (RFC 4791 time-range filter). Without this, recurring events that started
-     * before the lookback window would be re-downloaded unnecessarily.
-     *
-     * @param calendarId Calendar to query
-     * @param startTs Range start (epoch ms)
-     * @param endTs Range end (epoch ms)
-     * @return List of (caldavUrl, etag) pairs for events with both values non-null
+     * Recurring events are included whatever their first occurrence: a server returns a series
+     * when any occurrence falls in the range (RFC 4791 time-range filter), so without them a
+     * series that started before the lookback window would be downloaded again every sync.
      */
     @Query("""
         SELECT caldav_url, etag FROM events
@@ -273,15 +213,9 @@ interface EventsDao {
 
     // ========== Read Operations - Recurring Events ==========
 
-    /**
-     * Get all master recurring events (have RRULE).
-     */
     @Query("SELECT * FROM events WHERE rrule IS NOT NULL AND original_event_id IS NULL")
     suspend fun getMasterRecurringEvents(): List<Event>
 
-    /**
-     * Get master recurring events for a calendar.
-     */
     @Query("""
         SELECT * FROM events
         WHERE calendar_id = :calendarId
@@ -290,22 +224,13 @@ interface EventsDao {
     """)
     suspend fun getMasterRecurringEventsByCalendar(calendarId: Long): List<Event>
 
-    /**
-     * Get all exception events for a master recurring event.
-     */
     @Query("SELECT * FROM events WHERE original_event_id = :masterEventId ORDER BY original_instance_time ASC")
     suspend fun getExceptionsForMaster(masterEventId: Long): List<Event>
 
-    /**
-     * Get all exception events for multiple master recurring events in a single query.
-     * Used by getCalendarEventsForExport() to avoid N+1 queries.
-     */
+    /** Loads the exceptions of many masters in one query, for ICS export. */
     @Query("SELECT * FROM events WHERE original_event_id IN (:masterIds) ORDER BY original_instance_time ASC")
     suspend fun getExceptionsForMasters(masterIds: List<Long>): List<Event>
 
-    /**
-     * Get exception for specific occurrence time.
-     */
     @Query("""
         SELECT * FROM events
         WHERE original_event_id = :masterEventId
@@ -314,16 +239,9 @@ interface EventsDao {
     suspend fun getExceptionForOccurrence(masterEventId: Long, instanceTime: Long): Event?
 
     /**
-     * Find exception by UID and instance time (RFC 5545 compliant).
-     *
-     * PRIMARY lookup for sync - uses server-stable identifiers.
-     * Per RFC 5545, exception events share the same UID as their master
-     * and are distinguished by RECURRENCE-ID (originalInstanceTime).
-     *
-     * @param uid RFC 5545 UID (shared by master and all exceptions)
-     * @param calendarId Calendar to search within
-     * @param originalInstanceTime RECURRENCE-ID timestamp (the original occurrence being modified)
-     * @return The exception event, or null if not found
+     * Finds an exception by the identifiers the server keeps stable: an exception shares its
+     * master's UID and is told apart by RECURRENCE-ID (RFC 5545), stored as
+     * [originalInstanceTime]. This is the exception lookup for sync.
      */
     @Query("""
         SELECT * FROM events
@@ -341,60 +259,32 @@ interface EventsDao {
 
     // ========== Read Operations - Sync ==========
 
-    /**
-     * Get all events pending sync (not SYNCED status).
-     */
     @Query("SELECT * FROM events WHERE sync_status != 'SYNCED'")
     suspend fun getPendingSyncEvents(): List<Event>
 
-    /**
-     * Get pending sync events for a specific calendar.
-     */
     @Query("SELECT * FROM events WHERE calendar_id = :calendarId AND sync_status != 'SYNCED'")
     suspend fun getPendingForCalendar(calendarId: Long): List<Event>
 
-    /**
-     * Get events pending creation.
-     */
     @Query("SELECT * FROM events WHERE sync_status = 'PENDING_CREATE'")
     suspend fun getPendingCreateEvents(): List<Event>
 
-    /**
-     * Get events pending update.
-     */
     @Query("SELECT * FROM events WHERE sync_status = 'PENDING_UPDATE'")
     suspend fun getPendingUpdateEvents(): List<Event>
 
-    /**
-     * Get events pending deletion.
-     */
     @Query("SELECT * FROM events WHERE sync_status = 'PENDING_DELETE'")
     suspend fun getPendingDeleteEvents(): List<Event>
 
-    /**
-     * Get events with sync errors.
-     */
     @Query("SELECT * FROM events WHERE last_sync_error IS NOT NULL")
     suspend fun getEventsWithSyncErrors(): List<Event>
 
-    /**
-     * Count pending operations.
-     */
+    /** Counts events not SYNCED; it doesn't read pending_operations. */
     @Query("SELECT COUNT(*) FROM events WHERE sync_status != 'SYNCED'")
     fun getPendingSyncCount(): Flow<Int>
 
     /**
-     * Get etags for all synced events in a calendar.
-     *
-     * Used by etag-based fallback sync when sync-token expires (403/410).
-     * Returns only caldav_url + etag pairs (lightweight, no full Event load).
-     *
-     * Filters:
-     * - Only events with caldav_url (synced to server)
-     * - Excludes PENDING_DELETE (will be deleted, not compared)
-     *
-     * @param calendarId Calendar to get etags for
-     * @return List of (caldavUrl, etag) pairs
+     * Returns the (caldavUrl, etag) pairs of every event in a calendar that has a caldav_url,
+     * except PENDING_DELETE ones, for the etag fallback after a rejected sync-token (403/410)
+     * when the lookback is "All". The etag may be null.
      */
     @Query("""
         SELECT caldav_url, etag FROM events
@@ -405,19 +295,11 @@ interface EventsDao {
     suspend fun getEtagsByCalendarId(calendarId: Long): List<EtagEntry>
 
     /**
-     * Get etags for synced events in a calendar within a time range (recurring-safe).
+     * Same as [getEtagsByCalendarId], limited to the server's time window so events outside it
+     * aren't read as deleted on the server.
      *
-     * Used by etag-based fallback sync to match the server's time-windowed query,
-     * preventing false deletions of events outside the sync window.
-     *
-     * Recurring events (rrule IS NOT NULL) are always included regardless of time range
-     * because their start_ts/end_ts represent only the first occurrence,
-     * while CalDAV servers expand recurrences in their time-range filter.
-     *
-     * @param calendarId Calendar to get etags for
-     * @param startTs Start of time window (epoch ms)
-     * @param endTs End of time window (epoch ms)
-     * @return List of (caldavUrl, etag) pairs
+     * Recurring events are always included: their start_ts and end_ts are the first
+     * occurrence's, while servers expand recurrences in their time-range filter.
      */
     @Query("""
         SELECT caldav_url, etag FROM events
@@ -430,54 +312,35 @@ interface EventsDao {
 
     // ========== Write Operations ==========
 
-    /**
-     * Insert new event. Returns row ID.
-     */
+    /** Inserts a new event and returns its row id; throws on a conflict. */
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(event: Event): Long
 
-    /**
-     * Insert or update event (by primary key).
-     */
+    /** Inserts, or updates the row with the same primary key in place. */
     @Upsert
     suspend fun upsert(event: Event): Long
 
-    /**
-     * Update existing event.
-     */
     @Update
     suspend fun update(event: Event)
 
-    /**
-     * Delete event.
-     * CASCADE: Occurrences and exception events will be deleted.
-     */
+    /** Deletes the event; its occurrences and exceptions go with it (FK cascade). */
     @Delete
     suspend fun delete(event: Event)
 
-    /**
-     * Delete event by ID.
-     */
+    /** Cascades like [delete]. */
     @Query("DELETE FROM events WHERE id = :id")
     suspend fun deleteById(id: Long)
 
-    /**
-     * Delete all events for a calendar.
-     */
     @Query("DELETE FROM events WHERE calendar_id = :calendarId")
     suspend fun deleteByCalendarId(calendarId: Long)
 
-    /**
-     * Delete events that are synced (for refresh).
-     */
+    /** Deletes a calendar's SYNCED events and keeps those with pending changes. */
     @Query("DELETE FROM events WHERE calendar_id = :calendarId AND sync_status = 'SYNCED'")
     suspend fun deleteSyncedByCalendarId(calendarId: Long)
 
     // ========== Sync Status Updates ==========
 
-    /**
-     * Soft delete - mark for deletion on server.
-     */
+    /** Soft-deletes: marks the event PENDING_DELETE until its queued server delete is pushed. */
     @Query("""
         UPDATE events
         SET sync_status = 'PENDING_DELETE',
@@ -487,9 +350,7 @@ interface EventsDao {
     """)
     suspend fun markForDeletion(id: Long, now: Long)
 
-    /**
-     * Mark event as synced after successful push.
-     */
+    /** Marks the event SYNCED after a push and clears its error and retry count. */
     @Query("""
         UPDATE events
         SET sync_status = 'SYNCED',
@@ -503,26 +364,65 @@ interface EventsDao {
     suspend fun markSynced(id: Long, etag: String?, now: Long)
 
     /**
-     * Update only the etag for an event, without changing syncStatus.
-     * Used during 412 retry: the event is still PENDING_UPDATE but needs
-     * the fresh etag for the retry PUT's If-Match header.
+     * Marks the event SYNCED after a write and stores [rawIcal], the body the write sent, with
+     * the [etag] the server returned for it, in one statement. The pair is the row's copy of the
+     * server resource: a later reply patches it, and a 412 merge diffs the rows against it. An
+     * etag stored without its body would let a later reply re-send text from before this write
+     * without meeting a 412.
+     */
+    @Query("""
+        UPDATE events
+        SET sync_status = 'SYNCED',
+            etag = :etag,
+            raw_ical = :rawIcal,
+            last_sync_error = NULL,
+            sync_retry_count = 0,
+            server_modified_at = :now,
+            updated_at = :now
+        WHERE id = :id
+    """)
+    suspend fun markSyncedWithCopy(id: Long, etag: String?, rawIcal: String, now: Long)
+
+    /**
+     * Sets only the etag, leaving sync status alone, so a still-pending event carries the new
+     * etag into its next If-Match: for example a recovered missing etag or the etag after a
+     * MOVE.
      */
     @Query("UPDATE events SET etag = :etag WHERE id = :id")
     suspend fun updateEtag(id: Long, etag: String?)
 
     /**
-     * Targeted update of the ORGANIZER SCHEDULE-STATUS receipt (RFC 6638 §7.3),
-     * written when a post-PUT read-back captures the server's delivery decision
-     * for an attendee reply. Touches only that column so it can run mid-push
-     * without a read-modify-write of the whole row (same shape as [updateEtag]).
+     * Stores the server's copy of a resource on every row pulled from it: the series
+     * [seriesId] and its changed occurrences at [oldUrl], moved to [newUrl] (the same URL
+     * unless the server redirected the write). Writes URL, etag and raw_ical in one statement,
+     * without touching sync status. A pull-made placeholder series has no URL and is never
+     * matched.
+     */
+    @Query("""
+        UPDATE events SET caldav_url = :newUrl, etag = :etag, raw_ical = :rawIcal
+        WHERE (id = :seriesId OR original_event_id = :seriesId) AND caldav_url = :oldUrl
+    """)
+    suspend fun updateResourceCopy(seriesId: Long, oldUrl: String, newUrl: String, etag: String, rawIcal: String)
+
+    /**
+     * Moves every row of a resource (series [seriesId] and its changed occurrences at
+     * [oldUrl]) to the URL the server redirected a write to.
+     */
+    @Query("""
+        UPDATE events SET caldav_url = :newUrl
+        WHERE (id = :seriesId OR original_event_id = :seriesId) AND caldav_url = :oldUrl
+    """)
+    suspend fun updateResourceUrl(seriesId: Long, oldUrl: String, newUrl: String)
+
+    /**
+     * Sets only the ORGANIZER SCHEDULE-STATUS receipt (RFC 6638 §7.3) that PushStrategy's
+     * read-back captures after an organizer's PUT. Touching one column lets it run mid-push
+     * without a read-modify-write of the whole row.
      */
     @Query("UPDATE events SET organizer_schedule_status = :status WHERE id = :id")
     suspend fun updateOrganizerScheduleStatus(id: Long, status: String?)
 
-    /**
-     * Mark event as synced with CalDAV URL after successful CREATE.
-     * Sets caldav_url, etag, and sync_status = SYNCED.
-     */
+    /** Marks the event SYNCED at its new [caldavUrl] after a create on the server. */
     @Query("""
         UPDATE events
         SET sync_status = 'SYNCED',
@@ -537,8 +437,24 @@ interface EventsDao {
     suspend fun markCreatedOnServer(id: Long, caldavUrl: String, etag: String?, now: Long)
 
     /**
-     * Record sync error for an event.
+     * [markCreatedOnServer] that also stores [rawIcal], the body the write sent, in the same
+     * statement (see [markSyncedWithCopy] for why the body and etag move together).
      */
+    @Query("""
+        UPDATE events
+        SET sync_status = 'SYNCED',
+            caldav_url = :caldavUrl,
+            etag = :etag,
+            raw_ical = :rawIcal,
+            last_sync_error = NULL,
+            sync_retry_count = 0,
+            server_modified_at = :now,
+            updated_at = :now
+        WHERE id = :id
+    """)
+    suspend fun markCreatedOnServerWithCopy(id: Long, caldavUrl: String, etag: String?, rawIcal: String, now: Long)
+
+    /** Records the error and increments the retry count. */
     @Query("""
         UPDATE events
         SET last_sync_error = :error,
@@ -549,16 +465,9 @@ interface EventsDao {
     suspend fun recordSyncError(id: Long, error: String, now: Long)
 
     /**
-     * Update calendar ID for all exception events linked to a master.
-     * Called within transaction when moving master recurring event.
-     *
-     * Exception events must stay with master (FK constraint via originalEventId).
-     * This ensures all exceptions move together with the master event.
-     *
-     * @param masterEventId The master event being moved
-     * @param newCalendarId The target calendar
-     * @param now Current timestamp for updated_at
-     * @return Number of exception events updated
+     * Moves every exception of [masterEventId] to [newCalendarId] and returns how many moved.
+     * Runs in the master's move transaction so a series never spans two calendars; the
+     * original_event_id FK doesn't enforce that.
      */
     @Query("""
         UPDATE events
@@ -569,9 +478,7 @@ interface EventsDao {
     """)
     suspend fun updateCalendarIdForExceptions(masterEventId: Long, newCalendarId: Long, now: Long): Int
 
-    /**
-     * Clear sync error after user acknowledges.
-     */
+    /** Clears the error and resets the retry count. */
     @Query("""
         UPDATE events
         SET last_sync_error = NULL,
@@ -581,9 +488,7 @@ interface EventsDao {
     """)
     suspend fun clearSyncError(id: Long, now: Long)
 
-    /**
-     * Mark event as pending update.
-     */
+    /** Marks the event PENDING_UPDATE and increments its SEQUENCE. */
     @Query("""
         UPDATE events
         SET sync_status = 'PENDING_UPDATE',
@@ -594,9 +499,7 @@ interface EventsDao {
     """)
     suspend fun markPendingUpdate(id: Long, now: Long)
 
-    /**
-     * Update sync status directly.
-     */
+    /** Sets [syncStatus] and stamps local_modified_at; SEQUENCE is left alone. */
     @Query("""
         UPDATE events
         SET sync_status = :syncStatus,
@@ -607,28 +510,21 @@ interface EventsDao {
     suspend fun updateSyncStatus(id: Long, syncStatus: SyncStatus, now: Long)
 
     /**
-     * Lightweight query returning only the sync status for an event.
-     *
-     * Used inside PullStrategy's upsert transaction to re-check whether the event
-     * gained pending local changes between the outer hasPendingChanges() check and
-     * the transaction (TOCTOU race prevention).
+     * Returns only the event's sync status. PullStrategy re-reads it inside its upsert
+     * transaction, since a user edit after its earlier pending-changes check would otherwise be
+     * overwritten with server data.
      */
     @Query("SELECT sync_status FROM events WHERE id = :eventId")
     suspend fun getSyncStatus(eventId: Long): SyncStatus?
 
     /**
-     * Update only the reminders field for an event.
+     * Sets only the reminders, leaving sync status alone, so nothing is pushed.
      *
-     * Used by CalDavSyncWorker to apply user's default reminder to NEW events
-     * that arrive from the server without VALARM (because the creator used
-     * client-local default reminders like Apple Calendar).
+     * CalDavSyncWorker uses it to give the user's default reminder to new events that arrive
+     * without a VALARM (the creator's client kept its default reminders local, as Apple
+     * Calendar does).
      *
-     * Does NOT change sync_status - reminders are local-only preference,
-     * not pushed back to server.
-     *
-     * @param id Event ID
-     * @param remindersJson JSON-encoded list of ISO 8601 durations (e.g., '["-PT15M"]')
-     * @param now Timestamp for updated_at
+     * @param remindersJson JSON list of ISO 8601 durations, e.g. `["-PT15M"]`
      */
     @Query("""
         UPDATE events
@@ -640,11 +536,8 @@ interface EventsDao {
     suspend fun updateReminders(id: Long, remindersJson: String?, now: Long)
 
     /**
-     * Update both the `reminders` JSON column and the `alarm_count`
-     * denormalized counter atomically. Used by the local-only attendee
-     * reminder write path so the on-device alarm count stays consistent
-     * with the stored list. Does not touch sync_status, so the event
-     * remains SYNCED — no server PUT will be queued.
+     * Sets the reminders and the alarm_count counter in one statement, for an attendee's
+     * local-only reminders. Sync status is left alone, so no server PUT is queued.
      */
     @Query("""
         UPDATE events
@@ -662,22 +555,16 @@ interface EventsDao {
     )
 
     /**
-     * Clear all etags to force re-parsing on next sync.
-     *
-     * Used when parser version changes (e.g., timezone fix) to ensure
-     * all events are re-parsed with the new logic, even if server etags
-     * haven't changed.
-     *
-     * @see KashCalDataStore.CURRENT_PARSER_VERSION
+     * Clears every etag so the next sync fetches and re-parses every event, even unchanged ones.
+     * Run when [org.onekash.kashcal.data.preferences.KashCalDataStore.CURRENT_PARSER_VERSION]
+     * goes up.
      */
     @Query("UPDATE events SET etag = NULL")
     suspend fun clearAllEtags()
 
     // ========== Recurrence Updates ==========
 
-    /**
-     * Update EXDATE (excluded dates) for a recurring event.
-     */
+    /** Sets EXDATE, marks the event PENDING_UPDATE and increments its SEQUENCE. */
     @Query("""
         UPDATE events
         SET exdate = :exdate,
@@ -689,9 +576,7 @@ interface EventsDao {
     """)
     suspend fun updateExdate(id: Long, exdate: String?, now: Long)
 
-    /**
-     * Update RRULE for a recurring event.
-     */
+    /** Sets RRULE, marks the event PENDING_UPDATE and increments its SEQUENCE. */
     @Query("""
         UPDATE events
         SET rrule = :rrule,
@@ -705,27 +590,15 @@ interface EventsDao {
 
     // ========== Utility Queries ==========
 
-    /**
-     * Check if UID exists in calendar.
-     */
     @Query("SELECT EXISTS(SELECT 1 FROM events WHERE calendar_id = :calendarId AND uid = :uid)")
     suspend fun uidExistsInCalendar(calendarId: Long, uid: String): Boolean
 
-    /**
-     * Get count of events in calendar.
-     */
     @Query("SELECT COUNT(*) FROM events WHERE calendar_id = :calendarId")
     suspend fun getCountByCalendar(calendarId: Long): Int
 
     /**
-     * Get all master events for a calendar (for export).
-     *
-     * Returns master recurring events and standalone events (not exceptions).
-     * Excludes events pending deletion.
-     * Used by ICS export feature to get all exportable events.
-     *
-     * @param calendarId Calendar to export
-     * @return List of master events, ordered by start time
+     * Returns a calendar's masters and one-off events by start time, without exceptions or
+     * PENDING_DELETE rows. Readers include ICS export.
      */
     @Query("""
         SELECT * FROM events
@@ -736,42 +609,27 @@ interface EventsDao {
     """)
     suspend fun getAllMasterEventsForCalendar(calendarId: Long): List<Event>
 
-    /**
-     * Get total event count.
-     */
     @Query("SELECT COUNT(*) FROM events")
     suspend fun getTotalCount(): Int
 
     /**
-     * Suggest previously-used event titles matching a prefix, for the event-form
-     * autocomplete dropdown.
+     * Suggests past event titles starting with [prefix] for the event-form autocomplete.
      *
      * Filters:
-     * - Title starts with [prefix] (case-insensitive, after TRIM)
-     * - Recency: recurring events (rrule non-null and non-empty) bypass the
-     *   window; non-recurring events require start_ts in [sinceMs, untilMs].
-     *   Using start_ts — not created_at — means sync-imported historical events
-     *   don't leak in via their fresh row-insert time.
-     * - Not a recurring-event exception (original_event_id IS NULL) — avoids
-     *   inflating counts for a series that's been rescheduled many times
-     * - Not pending-delete (user has deleted locally but not yet synced)
-     * - Title not blank
+     * - Title starts with [prefix], case-insensitive after TRIM, and isn't blank.
+     * - A series (non-empty rrule) counts whatever its date; a one-off event needs start_ts in
+     *   [sinceMs], [untilMs] inclusive. start_ts, not created_at, so events a sync inserts
+     *   today don't count as recent.
+     * - No exceptions, so a series rescheduled many times isn't counted many times.
+     * - No PENDING_DELETE rows and no synthetic masters.
      *
-     * Groups by case/whitespace-normalized title, sums frequency, and ranks by
-     * frequency DESC, then last_used DESC where last_used =
-     * MAX(COALESCE(local_modified_at, start_ts)). local_modified_at is set
-     * only on user-originated writes — null on pull-sync inserts — so this
-     * naturally promotes recently-edited events without letting import time
-     * corrupt the ordering.
+     * Groups by lower-cased trimmed title and ranks by count, then by last_used, the latest
+     * COALESCE(local_modified_at, start_ts). local_modified_at is set by the user's own writes
+     * and is null on a pull insert, so recent edits rank up and sync time doesn't. The title
+     * shown takes its casing from the row with the latest such value.
      *
-     * Display title uses the casing from the entry with the highest
-     * COALESCE(local_modified_at, start_ts).
-     *
-     * @param prefix Text the user has typed (no wildcards — added in SQL)
-     * @param sinceMs Lower-bound of the non-recurring window (epoch ms, inclusive)
-     * @param untilMs Upper-bound of the non-recurring window (epoch ms, inclusive)
-     * @param minFreq Minimum use count for a title to appear
-     * @param limit Max suggestions to return
+     * @param prefix the user's text; the wildcard is added in SQL.
+     * @param minFreq minimum use count for a title to appear.
      */
     @Query("""
         SELECT
@@ -810,19 +668,11 @@ interface EventsDao {
     ): List<TitleSuggestion>
 
     /**
-     * Search events by title, location, or description using FTS4 full-text search.
+     * Searches title, location and description with FTS4; returns at most 1000 events by start
+     * time, without PENDING_DELETE rows or synthetic masters.
      *
-     * Much faster than LIKE queries for large datasets (10-100x improvement).
-     *
-     * Query syntax supports:
-     * - Simple terms: "meeting" (matches word "meeting")
-     * - Prefix search: "meet*" (matches "meeting", "meetup", etc.)
-     * - Multiple words: "team meeting" (matches events with both words)
-     * - Phrases: '"team meeting"' (matches exact phrase)
-     * - Boolean: "meeting OR standup" (matches either)
-     *
-     * @param query FTS search query (caller should format with * for prefix matching)
-     * @return Events matching the search, ordered by start time, max 1000 results
+     * [query] is FTS4 MATCH syntax: `meeting`, prefix `meet*`, all words `team meeting`, phrase
+     * `"team meeting"`, `meeting OR standup`. The caller adds the `*` for prefix matching.
      */
     @Query("""
         SELECT events.* FROM events
@@ -837,23 +687,10 @@ interface EventsDao {
     suspend fun search(query: String): List<Event>
 
     /**
-     * Search events that have at least one current/future occurrence.
-     *
-     * Uses FTS for text matching, then joins with occurrences to filter
-     * to only events where at least one occurrence hasn't ended yet.
-     *
-     * This follows Android CalendarProvider's pattern of using the Instances
-     * table for time-based queries (occurrences = Instances).
-     *
-     * Correctly handles:
-     * - Single events that haven't ended
-     * - Multi-day events in progress (started but not ended)
-     * - Recurring events with future occurrences
-     * - Excludes recurring events that have completely ended (UNTIL in past)
-     *
-     * @param query FTS search query (caller should format with * for prefix matching)
-     * @param now Current timestamp for filtering
-     * @return Events with at least one non-ended, non-cancelled occurrence
+     * Matches [query] as [search] does and returns at most 1000 events, not PENDING_DELETE,
+     * with a non-cancelled occurrence not ended at [now]: an event in progress counts, a series
+     * whose last occurrence ended doesn't. The occurrences table decides this, since a master's
+     * end_ts is its first occurrence's. Synthetic masters aren't filtered out here.
      */
     @Query("""
         SELECT DISTINCT events.* FROM events
@@ -869,16 +706,9 @@ interface EventsDao {
     suspend fun searchFuture(query: String, now: Long): List<Event>
 
     /**
-     * Search events with occurrences in a specific date range.
-     *
-     * Combines FTS text matching with occurrence time range filtering.
-     * Returns events that have at least one non-cancelled occurrence
-     * within the specified range.
-     *
-     * @param query FTS search query (caller should format with * for prefix matching)
-     * @param rangeStart Start of range (inclusive)
-     * @param rangeEnd End of range (inclusive)
-     * @return Events with at least one occurrence in range
+     * Matches [query] as [search] does and returns at most 1000 events, not PENDING_DELETE,
+     * with a non-cancelled occurrence overlapping [rangeStart]..[rangeEnd], inclusive.
+     * Synthetic masters aren't filtered out here.
      */
     @Query("""
         SELECT DISTINCT events.* FROM events
@@ -897,16 +727,11 @@ interface EventsDao {
     // ========== FTS Search with Next Occurrence ==========
 
     /**
-     * Search events and return with next occurrence timestamp.
-     * For "All" filter - includes past events, nextOccurrenceTs = event.startTs.
+     * Searches for the "All" filter, past events included, with the event's own start_ts as
+     * next_occurrence_ts. Ordered by distance from [now].
      *
-     * Excludes exception events (original_event_id IS NULL) to prevent
-     * modified recurring occurrences from inflating results (Issue #149).
-     * Orders by proximity to now so most relevant events appear first.
-     *
-     * @param query FTS search query
-     * @param now Current timestamp for proximity ordering
-     * @return Events with their start timestamp as next_occurrence_ts
+     * Exceptions are left out so a series with changed occurrences isn't listed once per
+     * change (#149); synthetic masters are left out too.
      */
     @Query("""
         SELECT events.*, events.start_ts as next_occurrence_ts
@@ -923,12 +748,8 @@ interface EventsDao {
     suspend fun searchWithOccurrence(query: String, now: Long): List<EventWithNextOccurrence>
 
     /**
-     * Search events with future occurrences and return next occurrence timestamp.
-     * For default search (excludes past).
-     *
-     * @param query FTS search query
-     * @param now Current timestamp for filtering
-     * @return Events with their next future occurrence timestamp
+     * Searches for the default filter: events with a non-cancelled occurrence not ended at
+     * [now], each with its earliest such occurrence's start, soonest first.
      */
     @Query("""
         SELECT DISTINCT events.*,
@@ -950,13 +771,9 @@ interface EventsDao {
     suspend fun searchFutureWithOccurrence(query: String, now: Long): List<EventWithNextOccurrence>
 
     /**
-     * Search events in date range and return next occurrence timestamp within range.
-     * For date-filtered search (Week, Month, custom date).
-     *
-     * @param query FTS search query
-     * @param rangeStart Start of range (inclusive)
-     * @param rangeEnd End of range (inclusive)
-     * @return Events with their next occurrence timestamp within the range
+     * Searches for a date filter (week, month, custom date): events with a non-cancelled
+     * occurrence overlapping the inclusive range, each with its earliest such occurrence's
+     * start, soonest first.
      */
     @Query("""
         SELECT DISTINCT events.*,
@@ -984,18 +801,10 @@ interface EventsDao {
     ): List<EventWithNextOccurrence>
 
     /**
-     * Reactive read of master events that have at least one future,
-     * non-cancelled occurrence — the row set the invite-inbox builder
-     * narrows further in Kotlin.
-     *
-     * SQL filters:
-     * - `original_event_id IS NULL` (master only; per-instance exception
-     *   NEEDS-ACTION rows are deferred to T4)
-     * - `sync_status != 'PENDING_DELETE'`
-     * - at least one `occurrences` row with `end_ts >= now` and not cancelled
-     *
-     * Each result carries the earliest qualifying occurrence's start_ts as
-     * `next_occurrence_ts`, sorted ascending.
+     * Emits masters and one-off events, not PENDING_DELETE, with a non-cancelled occurrence
+     * not ended at [now], each with that earliest occurrence's start, soonest first. The
+     * pending-invitations inbox narrows these in Kotlin; an exception's own NEEDS-ACTION
+     * attendees aren't read.
      */
     @Query("""
         SELECT DISTINCT events.*,
@@ -1017,28 +826,17 @@ interface EventsDao {
     // ========== Reminder Queries ==========
 
     /**
-     * Get events with reminders that have occurrences in the given time window.
-     * Used by ReminderRefreshWorker to scan for missing reminders.
+     * Returns an [EventWithOccurrenceAndColor] for each non-cancelled occurrence starting in
+     * [fromTime]..[toTime] in a visible calendar whose event has reminders. ReminderScheduler
+     * scans it for reminders not yet scheduled.
      *
-     * Returns events where:
-     * - Event has non-empty reminders list
-     * - Event has occurrences in [fromTime, toTime] range
-     * - Calendar is visible (user hasn't hidden it)
-     * - Occurrence is not cancelled
-     *
-     * IMPORTANT: Uses COALESCE(exception_event_id, event_id) to load the correct event
-     * for modified occurrences — when an exception event exists, load it instead of
-     * the master so the notification reflects the exception's title/location.
-     *
-     * Also handles reminder inheritance: if an exception event has no reminders,
-     * it inherits from the master. The query uses UNION to cover:
-     * 1. Exception events with their own reminders
-     * 2. Normal occurrences with master reminders
-     * 3. Exception events inheriting reminders from master
-     *
-     * @param fromTime Start of window (epoch ms)
-     * @param toTime End of window (epoch ms)
-     * @return List of events with their occurrence times and calendar colors
+     * An occurrence with an exception loads the exception (COALESCE(exception_event_id,
+     * event_id)), so the notification shows the exception's title and location. The UNION
+     * covers an exception without reminders, which inherits the master's:
+     * 1. an exception with its own reminders, or an occurrence with the master's (first
+     *    SELECT);
+     * 2. an exception without reminders whose master has some, returned as the master's row
+     *    with the exception as target (second SELECT).
      */
     @Query("""
         SELECT e.*, o.start_ts as occurrence_start_ts, o.end_ts as occurrence_end_ts,
@@ -1079,16 +877,10 @@ interface EventsDao {
     // ========== Deduplication ==========
 
     /**
-     * Delete duplicate master events, keeping the oldest one per (uid, calendar_id).
-     *
-     * This is a defensive cleanup for edge cases where duplicate events might have
-     * been created due to race conditions during sync (e.g., iCloud returning the
-     * same event from multiple servers with different caldavUrls).
-     *
-     * Only affects master events (original_event_id IS NULL).
-     * Exception events share their master's UID and are not affected.
-     *
-     * @return Number of duplicate events deleted
+     * Deletes duplicate masters, keeping the lowest id per (uid, calendar_id), and returns how
+     * many went. A defensive cleanup for duplicates a sync race might create, e.g. iCloud
+     * returning the same event from multiple servers with different caldavUrls. Only masters
+     * are matched, though a deleted duplicate's exceptions go with it (FK cascade).
      */
     @Query("""
         DELETE FROM events
@@ -1104,21 +896,26 @@ interface EventsDao {
     // ========== Lookback Cleanup ==========
 
     /**
-     * Delete synced CalDAV events outside the lookback window.
+     * Deletes SYNCED one-off events with a caldav_url that ended before [cutoffTs] and returns
+     * how many went. That covers CalDAV and ICS subscription events.
      *
-     * Uses end_ts for all events. For all-day events stored in UTC, there may be
-     * up to 24 hours of fuzziness at the boundary, but this is acceptable for
-     * lookback windows of weeks/months.
+     * This is all a shrunk sync lookback removes. A server returns a series together with its
+     * changed occurrences (RFC 4791 time-range) and an upload replaces that whole resource with
+     * a body rebuilt from the Room rows, so deleting a changed occurrence here would delete it on
+     * the server at the next series edit. A kept series keeps its occurrence rows too.
      *
-     * Preserves:
-     * - Events with pending sync status (need to sync first)
-     * - Recurring master events (would orphan occurrences)
-     * - Exception events (linked to master via original_event_id)
-     * - Local calendar events (caldav_url IS NULL)
-     * - Birthday/anniversary events (caldav_url starts with contact_birthday: or contact_anniversary:)
+     * An all-day event's end_ts is UTC, so the boundary can be off by up to 24 hours; fine for
+     * a lookback of weeks or months.
      *
-     * @param cutoffTs Timestamp cutoff - events ending before this are deleted (epoch ms)
-     * @return Number of events deleted
+     * Kept:
+     * - events with pending changes, which must sync first;
+     * - series masters, whose end_ts is the first occurrence's and says nothing of later ones;
+     * - exceptions, unless their master goes: an ICS subscription's synthetic master (no RRULE,
+     *   made for changed occurrences whose series isn't in the feed) matches, and deleting it
+     *   deletes its exceptions by cascade;
+     * - events with no caldav_url;
+     * - birthday and anniversary events (caldav_url `contact_birthday:` or
+     *   `contact_anniversary:`).
      */
     @Query("""
         DELETE FROM events
@@ -1132,30 +929,11 @@ interface EventsDao {
     """)
     suspend fun deleteOutsideLookback(cutoffTs: Long): Int
 
-    /**
-     * Delete exception events (modified single occurrences) before a cutoff.
-     * Called when shrinking sync lookback to clean up orphaned exception events.
-     *
-     * Exception events have original_instance_time which is the timestamp of
-     * the original occurrence they modify. This is used as the cutoff check.
-     *
-     * @param cutoffTs Timestamp cutoff - exceptions before this are deleted
-     * @return Number of exception events deleted
-     */
-    @Query("""
-        DELETE FROM events
-        WHERE original_event_id IS NOT NULL
-        AND original_instance_time < :cutoffTs
-    """)
-    suspend fun deleteExceptionEventsBeforeCutoff(cutoffTs: Long): Int
-
     // ========== iCloud URL Migration ==========
 
     /**
-     * Get all iCloud event URLs for migration.
-     * Joins with calendars and accounts to filter by iCloud provider.
-     * Returns lightweight projection to avoid loading full Event objects.
-     * Note: provider is stored as lowercase string via Converter.
+     * Returns the id and caldav_url of every iCloud event with a URL, for URL migration.
+     * The provider column holds the lower-case name the type converter writes.
      */
     @Query("""
         SELECT e.id, e.caldav_url FROM events e
@@ -1166,9 +944,7 @@ interface EventsDao {
     """)
     suspend fun getICloudEventUrls(): List<EventUrlProjection>
 
-    /**
-     * Update CalDAV URL for a single event (for iCloud URL normalization migration).
-     */
+    /** Sets only the caldav_url, for example for iCloud URL normalization or after a MOVE. */
     @Query("UPDATE events SET caldav_url = :caldavUrl WHERE id = :id")
     suspend fun updateCaldavUrl(id: Long, caldavUrl: String)
 }

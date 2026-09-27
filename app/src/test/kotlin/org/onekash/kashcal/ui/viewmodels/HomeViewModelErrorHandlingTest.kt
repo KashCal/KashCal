@@ -20,6 +20,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
@@ -35,19 +37,23 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 
 /**
- * Tests for HomeViewModel error handling system.
- *
- * Verifies that errors are correctly:
- * - Mapped to appropriate UI presentations (Snackbar, Dialog, Banner, Silent)
- * - Stored in UI state
- * - Cleared after action handling
- *
- * Areas covered:
- * - Error handling flows
- * - Action callback handling
+ * Tests [HomeViewModel]'s error handling:
+ * - showError maps each CalendarError to a Snackbar, Dialog, Banner or Silent
+ *   presentation and stores it in the UI state, and a new error replaces the
+ *   shown one;
+ * - handleErrorAction clears the error for Retry, Dismiss, ForceFullSync,
+ *   ViewSyncDetails, OpenSettings and ReAuthenticate, opens the sync changes
+ *   sheet for ViewSyncDetails and runs a Custom callback; the Retry and
+ *   ForceFullSync tests don't assert that a sync starts. clearError clears the
+ *   error, a banner included;
+ * - showHttpError and showExceptionError map status codes and exceptions to
+ *   their errors.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelErrorHandlingTest {
+
+    private val fakeCalendarProviderRepository =
+        org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -111,7 +117,7 @@ class HomeViewModelErrorHandlingTest {
         every { eventReader.getVisibleOccurrencesForDay(any()) } returns flowOf(emptyList())
         every { eventReader.getVisibleOccurrencesWithEventsForDay(any()) } returns flowOf(emptyList())
 
-        // Device calendar change signal (starts at 0, no changes)
+        // Device calendar change signal: 0, no changes.
         every { displayEventRepository.deviceCalendarChangeSignal } returns MutableStateFlow(0)
     }
 
@@ -129,7 +135,8 @@ class HomeViewModelErrorHandlingTest {
             accountRepository = accountRepository,
             syncScheduler = syncScheduler,
             networkMonitor = networkMonitor,
-            calendarProviderRepository = org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository(),
+            deviceEventReader = fakeCalendarProviderRepository.deviceEventReader(),
+            deviceEventWriter = fakeCalendarProviderRepository.deviceEventWriter(dataStore),
             attendeeBackfill = io.mockk.mockk(relaxed = true),
             contactEmailReader = io.mockk.mockk(relaxed = true),
             context = io.mockk.mockk(relaxed = true),
@@ -189,7 +196,7 @@ class HomeViewModelErrorHandlingTest {
         viewModel.showError(CalendarError.Sync.AlreadySyncing)
 
         val state = viewModel.uiState.value
-        // Silent errors should not update currentError
+        // A silent error sets no visible presentation.
         assertTrue(state.currentError == null || state.currentError is ErrorPresentation.Silent)
         assertFalse(state.showErrorDialog)
         assertFalse(state.showErrorBanner)

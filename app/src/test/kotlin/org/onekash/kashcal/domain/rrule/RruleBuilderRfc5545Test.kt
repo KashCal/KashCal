@@ -11,15 +11,15 @@ import java.time.Instant
 import java.time.ZoneOffset
 
 /**
- * RFC 5545 compliance tests for RruleBuilder.
+ * Tests [RruleBuilder] against RFC 5545 §3.3.10, including the rules the builder doesn't enforce:
+ * - [RruleBuilder.withUntil] always emits a UTC date-time, though "the value of the UNTIL rule
+ *   part MUST have the same value type as the "DTSTART" property", so an all-day (DATE) DTSTART
+ *   must have a DATE UNTIL.
+ * - The builder lets COUNT and UNTIL occur together, which the RFC forbids.
  *
- * Tests behaviors required by RFC 5545 that may have compliance gaps:
- * - withUntil() always emits DATETIME format, but RFC 5545 Section 3.3.10 says
- *   "The UNTIL rule part MUST have the same value type as the 'DTSTART' property."
- *   For all-day events (DATE DTSTART), UNTIL must be DATE format.
- * - parseRrule with UNTIL in DATE-only format (no T separator)
- * - COUNT + UNTIL mutual exclusivity not enforced by builder
- * - formatForDisplay edge cases
+ * Also covers [RruleBuilder.parseRrule] (UNTIL in both forms, COUNT, INTERVAL, BYDAY,
+ * monthly patterns), [RruleBuilder.parseFrequency], [RruleBuilder.formatForDisplay] and the
+ * builder methods.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -29,17 +29,15 @@ class RruleBuilderRfc5545Test {
 
     @Test
     fun `withUntil generates DATETIME format UNTIL`() {
-        // Current behavior: always generates DATETIME format
-        // RFC 5545 says UNTIL type must match DTSTART type:
-        // - For timed events: DATETIME format is correct
-        // - For all-day events: should be DATE format (YYYYMMDD)
+        // withUntil always emits a UTC date-time. That matches a timed DTSTART; an all-day
+        // DTSTART needs a DATE (YYYYMMDD) UNTIL (RFC 5545 §3.3.10).
         val base = RruleBuilder.daily()
         val untilMs = Instant.parse("2026-06-15T00:00:00Z").toEpochMilli()
         val rrule = RruleBuilder.withUntil(base, untilMs)
 
         assertTrue("Should contain UNTIL", rrule.contains("UNTIL="))
 
-        // For timed events, DATETIME format is correct
+        // A UTC date-time is the right form for a timed event.
         assertTrue(
             "UNTIL should be in DATETIME format for timed events",
             rrule.contains("UNTIL=20260615T000000Z")
@@ -48,37 +46,35 @@ class RruleBuilderRfc5545Test {
 
     @Test
     fun `withUntil for all-day events generates DATETIME format - RFC compliance gap`() {
-        // RFC 5545 Section 3.3.10: "The UNTIL rule part MUST have the same value type
-        // as the 'DTSTART' property."
-        // For all-day events (VALUE=DATE), UNTIL should be YYYYMMDD format.
-        // Current implementation always uses DATETIME format.
-        // This test documents the gap - OccurrenceGenerator handles the mismatch
-        // via timestampToAllDayDateTime() conversion.
+        // RFC 5545 §3.3.10: "The value of the UNTIL rule part MUST have the same value type as
+        // the "DTSTART" property", so an all-day (VALUE=DATE) event needs a YYYYMMDD UNTIL.
+        // withUntil always emits a date-time; this test pins that. The recurrence picker
+        // (`RecurrencePickerSelections.toRrule`) writes a DATE UNTIL for an all-day event itself
+        // and calls withUntil only for a timed one.
         val base = RruleBuilder.weekly(days = setOf(DayOfWeek.MONDAY))
         val untilMs = Instant.parse("2026-06-15T00:00:00Z").toEpochMilli()
         val rrule = RruleBuilder.withUntil(base, untilMs)
 
-        // Documents current behavior: DATETIME format even for what would be all-day
+        // A date-time even for what would be an all-day event.
         assertTrue("UNTIL is DATETIME format (gap: should be DATE for all-day)",
             rrule.contains("T") && rrule.contains("Z"))
 
-        // The RRULE is still parseable
+        // The rest of the rule is intact.
         assertTrue(rrule.startsWith("FREQ=WEEKLY"))
     }
 
-    // ==================== RFC 5545 Section 3.3.10: COUNT + UNTIL Mutual Exclusivity ====================
+    // ==================== RFC 5545 §3.3.10: COUNT and UNTIL Together ====================
 
     @Test
     fun `withCount then withUntil produces invalid RFC 5545 RRULE`() {
-        // RFC 5545: "The UNTIL or COUNT rule parts are OPTIONAL, but they MUST NOT
-        // occur in the same 'recur'."
-        // RruleBuilder does not prevent this - documents the gap.
+        // RFC 5545 §3.3.10: "The UNTIL or COUNT rule parts are OPTIONAL, but they MUST NOT
+        // occur in the same 'recur'." RruleBuilder doesn't prevent it; this test pins that.
         val rrule = RruleBuilder.daily()
         val withCount = RruleBuilder.withCount(rrule, 10)
         val untilMs = Instant.parse("2026-06-15T00:00:00Z").toEpochMilli()
         val withBoth = RruleBuilder.withUntil(withCount, untilMs)
 
-        // Documents that builder allows both (no validation)
+        // The builder appends both without validation.
         assertTrue("Contains both COUNT and UNTIL (invalid per RFC)",
             withBoth.contains("COUNT=10") && withBoth.contains("UNTIL="))
     }
@@ -105,16 +101,15 @@ class RruleBuilderRfc5545Test {
 
     @Test
     fun `parseRrule with DATE-only UNTIL falls back to Never`() {
-        // RFC 5545 allows DATE format UNTIL (YYYYMMDD) for all-day events.
-        // The current regex only matches DATETIME format (YYYYMMDDTHHMMSSZ).
-        // DATE-only UNTIL should ideally be parsed, but currently falls through to Never.
+        // RFC 5545 allows a DATE (YYYYMMDD) UNTIL for an all-day DTSTART. parseRrule reads it as
+        // Until at the end of that day in UTC.
         val parsed = RruleBuilder.parseRrule(
             "FREQ=WEEKLY;UNTIL=20260615",
             DayOfWeek.MONDAY, 1, 1
         )
 
-        // Documents current behavior: DATE-only UNTIL not parsed
-        // This is a gap - the regex expects T separator
+        // The assert accepts Never as well as Until, so it only checks the rule doesn't parse
+        // as a COUNT end.
         assertTrue(
             "DATE-only UNTIL should ideally be parsed as Until, currently falls to Never",
             parsed.endCondition is EndCondition.Never || parsed.endCondition is EndCondition.Until
@@ -354,7 +349,7 @@ class RruleBuilderRfc5545Test {
 
     @Test
     fun `weekly with specific days produces sorted BYDAY`() {
-        // BYDAY should be sorted Monday-first per DAY_ORDER
+        // BYDAY is emitted Monday first.
         val rrule = RruleBuilder.weekly(
             days = setOf(DayOfWeek.FRIDAY, DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY)
         )

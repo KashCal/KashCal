@@ -3,14 +3,12 @@ package org.onekash.kashcal.domain.reader
 import org.onekash.kashcal.data.db.entity.Event
 
 /**
- * One pending CalDAV invitation surfaced in the inbox.
+ * Holds one pending CalDAV invitation for the inbox, with everything an [InvitationCard] needs
+ * and no further lookups.
  *
- * Carries enough state to render an [InvitationCard] without further
- * lookups: the underlying [event] for title/location/RSVP write,
- * the next-occurrence times so the card shows the right date/range, the
- * owning [accountId] so multi-account UI can disambiguate (currently
- * unused for grouping but kept for v2), the calendar's display [color],
- * and the human-readable [organizerLabel] (CN if present, else address).
+ * [occurrenceStartTs] and [occurrenceEndTs] are the next occurrence's times. [accountId] is the
+ * owning account; no screen reads it yet. [organizerLabel] is the organizer's CN, else their
+ * address, else the owning account's own attendee address.
  */
 data class PendingInvitation(
     val event: Event,

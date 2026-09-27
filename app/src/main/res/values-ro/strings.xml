@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Nu s-au găsit calendare pe acest server.</string>
     <string name="caldav_error_unexpected">Eroare neașteptată. Încercați din nou.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nDacă acesta este un server din rețeaua ta locală, permite accesul la rețeaua locală pentru a te conecta.</string>
+    <string name="caldav_error_connection_refused_insecure">Serverul a redirecționat conexiunea către un loc unde KashCal nu merge (o adresă necriptată sau o buclă de redirecționări), așa că KashCal s-a oprit înainte să îți trimită parola. Verifică adresa serverului.</string>
     <string name="local_network_banner_title">Este necesar accesul la rețeaua locală</string>
     <string name="local_network_banner_body">Se pare că acest server este în rețeaua ta locală. Permite accesul la rețeaua locală pentru ca KashCal să se poată conecta la el.</string>
     <string name="local_network_banner_allow">Permite accesul</string>
@@ -856,6 +857,8 @@
     <string name="dialog_edit_recurring_title">Salvează modificările în</string>
     <string name="dialog_delete_recurring_title">Șterge</string>
     <string name="dialog_move_recurring_title">Mută</string>
+    <string name="snackbar_event_rescheduled">Eveniment reprogramat</string>
+    <string name="snackbar_reschedule_failed">Nu s-a putut reprograma evenimentul</string>
     <string name="recurring_this_event">Acest eveniment</string>
     <string name="recurring_all_events">Toate evenimentele</string>
 

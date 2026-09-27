@@ -27,8 +27,8 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.util.ExternalLinks
 
 /**
- * App info bottom sheet showing origin message and website link.
- * "Built with Love in Austin" with clickable website link.
+ * Shows the app info bottom sheet: the "Built with Love in Austin" message, the privacy
+ * tagline, a support button and the website link.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +49,6 @@ fun AppInfoSheet(
                 .padding(bottom = 48.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Main message - elegant multi-line typography
             Text(
                 text = stringResource(R.string.status_built_with_love),
                 style = MaterialTheme.typography.headlineMedium,
@@ -65,7 +64,6 @@ fun AppInfoSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Value line
             Text(
                 text = stringResource(R.string.status_privacy_tagline),
                 style = MaterialTheme.typography.titleMedium
@@ -73,7 +71,6 @@ fun AppInfoSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Heart (decorative)
             Text(
                 text = "❤️",
                 fontSize = 32.sp,
@@ -82,7 +79,6 @@ fun AppInfoSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Support button
             OutlinedButton(
                 onClick = { ExternalLinks.openUrl(context, ExternalLinks.DONATE) }
             ) {
@@ -94,7 +90,6 @@ fun AppInfoSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Website link
             Text(
                 text = "kashcal.onekash.org",
                 style = MaterialTheme.typography.bodyLarge,

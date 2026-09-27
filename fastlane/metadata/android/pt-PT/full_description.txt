@@ -1,0 +1,36 @@
+Os seus calendários estão em todo o lado. A família no iCloud. Os feriados de algum site. Os aniversários perdidos nos seus contactos. O trabalho no calendário do telemóvel. O KashCal reúne-os todos numa app no Android.
+
+Saiba mais em https://kashcal.onekash.org
+
+• iCloud: mudou para Android mas a sua família ainda está no Apple? Sincronize os calendários do iCloud diretamente. Sem ponte, sem remendos.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo e mais. Sincronização bidirecional nativa, sem intermediários. Os calendários do Google e do Outlook do seu telemóvel também aparecem.
+
+• Sete vistas: mês, mês em altura total, agenda, dia, 3 dias, semana e ano. Faça um gesto de pinça para ampliar a linha do tempo e arraste um evento para o mover.
+
+• Agendamento: convide pessoas, envie convites de reunião e responda aos convites que receber.
+
+• Estatísticas: veja para onde vai o seu tempo. Dias mais cheios, sequências sem pausa, blocos livres. Calculado no dispositivo.
+
+• Widgets: mantenha o seu dia no ecrã principal sem abrir a app. Agenda, data, semana, mês e próximos.
+
+• Subscrições ICS: siga qualquer feed de calendário. Feriados, calendários escolares, épocas desportivas.
+
+• Aniversários: obtidos automaticamente dos seus contactos.
+
+• Cores por evento: de uma paleta selecionada ou da roda de cores completa, para que a sua semana se leia num relance.
+
+• À sua maneira: tema claro, escuro ou do sistema, além de uma paleta KashCal Teal. Quem apoia pode mudar para um ícone especial.
+
+• Acessibilidade: suporte completo a leitor de ecrã (TalkBack), e defina o idioma da app diretamente nas definições do Android, em 67 idiomas.
+
+• Funciona totalmente offline desde o início.
+
+Privado por predefinição
+
+Sem análises. Sem telemetria. Sem conta KashCal. Não temos servidores, por isso não há nada a recolher.
+
+• Credenciais cifradas com o Android Keystore
+• Bloqueio da app: esconda os seus eventos atrás da impressão digital, do rosto ou do bloqueio do ecrã
+
+Livre como em liberdade. E gratuito também.

@@ -63,25 +63,22 @@ import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.util.asString
 
 /**
- * Bottom sheet for adding a new ICS calendar subscription.
+ * Shows a bottom sheet for adding an ICS calendar subscription.
  *
- * Features:
- * - URL input with validation
- * - Fetch and validate calendar before adding
- * - Display event count on success
- * - Name field (auto-populated from fetched calendar)
- * - Color picker using shared ColorPicker component
+ * The user enters a URL and fetches it; [fetchCalendarInfo] validates the feed and the sheet
+ * shows its event count. Name (pre-filled from the feed, else the default calendar name) and
+ * Add are enabled only after a successful fetch. The color starts random and the user can change
+ * it in [ColorPaletteSheet]. With unsaved changes, the first dismiss request keeps the sheet
+ * open and turns Cancel into Discard.
  *
- * @param initialUrl Optional pre-filled URL (e.g., from deep link)
- * @param onDismiss Callback when sheet is dismissed
- * @param onAdd Callback when subscription is added (url, name, color)
- * @param localNetworkPermissionState Android 17+ local-network permission state,
- *   resolved by the host (needs an Activity for the rationale read). Defaults to
- *   [LocalNetworkPermissionState.NotRequired] so pre-37 OS and preview call sites
- *   render nothing.
- * @param onRequestLocalNetwork Launch the ACCESS_LOCAL_NETWORK request.
- * @param onDialogOpened Called once on open so the host can seed a fresh
- *   permission-state read (mirrors the CalDAV sheet's on-open resolve).
+ * @param initialUrl a pre-filled URL, for example from a webcal:// link.
+ * @param onAdd called with the trimmed url and name and the color.
+ * @param localNetworkPermissionState the Android 17+ local-network permission state, resolved
+ *   by the host (the rationale read needs an Activity). Defaults to
+ *   [LocalNetworkPermissionState.NotRequired] so pre-37 and preview call sites render nothing.
+ * @param onRequestLocalNetwork launches the ACCESS_LOCAL_NETWORK request.
+ * @param onDialogOpened called once on open so the host can seed a fresh permission-state read,
+ *   as the CalDAV sign-in sheet does on open.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,12 +100,10 @@ fun AddSubscriptionDialog(
     val coroutineScope = rememberCoroutineScope()
     val defaultCalendarName = stringResource(R.string.default_calendar_name)
 
-    // Local-network banner dismissal for this dialog session. The dialog is only
-    // composed while open, so this resets naturally on each open; rememberSaveable
-    // keeps a dismissal from popping back after a rotation mid-session.
+    // Banner dismissal for this dialog session. The dialog is composed only while open, so this
+    // resets on each open; rememberSaveable keeps a dismissal across a rotation.
     var localNetworkBannerDismissed by rememberSaveable { mutableStateOf(false) }
-    // Seed a fresh permission-state read when the dialog opens (matches the
-    // CalDAV sheet), so a grant made in system Settings is reflected.
+    // Seed a fresh permission-state read on open so a grant made in system Settings shows.
     LaunchedEffect(Unit) { onDialogOpened() }
 
     val lanUi = resolveSubscriptionLanUi(
@@ -118,10 +113,9 @@ fun AddSubscriptionDialog(
         bannerDismissed = localNetworkBannerDismissed,
     )
 
-    // Dismiss protection state
+    // Set by the first dismiss with unsaved changes; the next dismiss closes the sheet.
     var showDiscardConfirm by remember { mutableStateOf(false) }
 
-    // Check if user made changes
     val hasChanges by remember {
         derivedStateOf {
             url != initialUrlValue || name.isNotBlank()
@@ -149,7 +143,6 @@ fun AddSubscriptionDialog(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Title
             Text(
                 stringResource(R.string.dialog_add_subscription),
                 style = MaterialTheme.typography.titleLarge
@@ -157,8 +150,8 @@ fun AddSubscriptionDialog(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-            // Local-network permission banner (Android 17+): inline, dismissible,
-            // never blocks the URL field below.
+            // Android 17+ local-network banner: inline and dismissible, never blocking the URL
+            // field below.
             if (lanUi.showBanner) {
                 LocalNetworkPermissionBanner(
                     onAllow = onRequestLocalNetwork,
@@ -166,7 +159,6 @@ fun AddSubscriptionDialog(
                 )
             }
 
-            // URL Field
             OutlinedTextField(
                 value = url,
                 onValueChange = {
@@ -179,7 +171,6 @@ fun AddSubscriptionDialog(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Fetch Calendar Button
             Button(
                 onClick = {
                     coroutineScope.launch {
@@ -205,10 +196,9 @@ fun AddSubscriptionDialog(
                 Text(if (fetchState is FetchCalendarState.Loading) stringResource(R.string.status_fetching) else stringResource(R.string.action_fetch_calendar))
             }
 
-            // Fetch Result Feedback
             FetchResultFeedback(fetchState, appendLanHint = lanUi.appendLanHint)
 
-            // Name Field (enabled only after successful fetch)
+            // Enabled only after a successful fetch.
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -218,7 +208,6 @@ fun AddSubscriptionDialog(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Color Picker trigger
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -241,7 +230,7 @@ fun AddSubscriptionDialog(
                 )
             }
 
-            // Action Buttons - show Discard option when user tried to dismiss with changes
+            // Discard replaces Cancel once a dismiss was refused for unsaved changes.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -249,7 +238,6 @@ fun AddSubscriptionDialog(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (showDiscardConfirm) {
-                    // Discard button (error color)
                     OutlinedButton(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
@@ -278,7 +266,6 @@ fun AddSubscriptionDialog(
         }
     }
 
-    // Color Picker Sheet
     if (showColorPicker) {
         ColorPaletteSheet(
             selectedArgb = selectedColor,
@@ -292,16 +279,11 @@ fun AddSubscriptionDialog(
 }
 
 /**
- * Bottom sheet for editing an existing subscription's settings.
+ * Shows a bottom sheet for editing a subscription's name, color ([ColorPaletteSheet]) and sync
+ * interval (an expandable list of [subscriptionSyncIntervalOptions]). Dismissal works as in
+ * [AddSubscriptionDialog].
  *
- * Features:
- * - Edit subscription name
- * - Change color using shared ColorPicker
- * - Configure sync interval with dropdown picker
- *
- * @param subscription The subscription to edit
- * @param onSave Callback when changes are saved (name, color, syncIntervalHours)
- * @param onDismiss Callback when sheet is dismissed
+ * @param onSave called with the trimmed name, the color and the sync interval in hours.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -316,10 +298,9 @@ fun EditSubscriptionDialog(
     var showIntervalPicker by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
 
-    // Dismiss protection state
+    // Set by the first dismiss with unsaved changes; the next dismiss closes the sheet.
     var showDiscardConfirm by remember { mutableStateOf(false) }
 
-    // Check if user made changes
     val hasChanges by remember {
         derivedStateOf {
             name != subscription.name ||
@@ -349,7 +330,6 @@ fun EditSubscriptionDialog(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Title
             Text(
                 stringResource(R.string.dialog_edit_subscription),
                 style = MaterialTheme.typography.titleLarge
@@ -357,7 +337,6 @@ fun EditSubscriptionDialog(
 
             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
-            // Name Field
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
@@ -366,7 +345,6 @@ fun EditSubscriptionDialog(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Color Picker trigger
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -389,7 +367,6 @@ fun EditSubscriptionDialog(
                 )
             }
 
-            // Sync Interval Picker
             SyncIntervalPicker(
                 selectedInterval = selectedInterval,
                 showPicker = showIntervalPicker,
@@ -400,7 +377,7 @@ fun EditSubscriptionDialog(
                 }
             )
 
-            // Action Buttons - show Discard option when user tried to dismiss with changes
+            // Discard replaces Cancel once a dismiss was refused for unsaved changes.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -408,7 +385,6 @@ fun EditSubscriptionDialog(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (showDiscardConfirm) {
-                    // Discard button (error color)
                     OutlinedButton(
                         onClick = onDismiss,
                         modifier = Modifier.weight(1f),
@@ -437,7 +413,6 @@ fun EditSubscriptionDialog(
         }
     }
 
-    // Color Picker Sheet
     if (showColorPicker) {
         ColorPaletteSheet(
             selectedArgb = selectedColor,
@@ -451,11 +426,10 @@ fun EditSubscriptionDialog(
 }
 
 /**
- * Display fetch result feedback (success/error).
+ * Shows the fetch's event count on success or its error message on failure; nothing otherwise.
  *
- * @param appendLanHint when the error looks like a blocked local-network socket
- *   (Android 17+, permission required-but-ungranted), append the "allow local
- *   network access" hint. Additive: the fetch's real message is preserved.
+ * @param appendLanHint appends the "allow local network access" hint to the error, next to the
+ *   fetch's own message; [resolveSubscriptionLanUi] decides it.
  */
 @Composable
 private fun FetchResultFeedback(
@@ -508,9 +482,7 @@ private fun FetchResultFeedback(
     }
 }
 
-/**
- * Sync interval picker with expandable dropdown.
- */
+/** Shows the selected sync interval; tapping it expands the list of choices. */
 @Composable
 private fun SyncIntervalPicker(
     selectedInterval: Int,
@@ -523,7 +495,6 @@ private fun SyncIntervalPicker(
         Text(stringResource(R.string.label_sync_interval), style = MaterialTheme.typography.bodySmall)
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Current selection as clickable row
         val currentLabel = getSyncIntervalLabel(selectedInterval, resources)
 
         Surface(
@@ -547,7 +518,6 @@ private fun SyncIntervalPicker(
             }
         }
 
-        // Interval options
         AnimatedVisibility(
             visible = showPicker,
             enter = expandVertically(),

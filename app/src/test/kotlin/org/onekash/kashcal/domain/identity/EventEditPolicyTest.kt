@@ -9,8 +9,8 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Tests for [Account.canEditAsOrganizer] — the read-only-mode predicate
- * that decides whether an attendee sees a disabled form sheet.
+ * Tests [Account.canEditAsOrganizer], the predicate that decides whether an attendee sees a
+ * read-only event form.
  */
 class EventEditPolicyTest {
 
@@ -44,7 +44,7 @@ class EventEditPolicyTest {
 
     @Test
     fun `null organizer means lone-author event - user can edit`() {
-        // Local-only events without an ORGANIZER property: user implicitly owns.
+        // An event without an ORGANIZER property is lone-author; the user owns it.
         assertTrue(account().canEditAsOrganizer(event(organizer = null)))
     }
 
@@ -62,6 +62,11 @@ class EventEditPolicyTest {
     @Test
     fun `organizer matches via mailto prefix - can edit`() {
         assertTrue(account().canEditAsOrganizer(event(organizer = "mailto:self@example.test")))
+    }
+
+    @Test
+    fun `bare organizer differing only in case - can edit`() {
+        assertTrue(account().canEditAsOrganizer(event(organizer = "Self@Example.TEST")))
     }
 
     @Test

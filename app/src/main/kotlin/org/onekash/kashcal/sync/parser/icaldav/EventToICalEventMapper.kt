@@ -16,42 +16,37 @@ import org.onekash.kashcal.ui.shared.EventColorPalette
 import java.time.ZoneId
 
 /**
- * Maps KashCal `Event` entity to icaldav `ICalEvent`.
+ * Maps a Room [Event] to an icaldav [ICalEvent], the inverse of [ICalEventMapper].
  *
- * Inverse of `ICalEventMapper` (server -> DB). Used by the sync push path
- * (`IcsPatcher`) and the export path (`IcsExporter`) so both generate ICS
- * from Events through a single, tested code path.
+ * The push path ([IcsPatcher], `PushStrategy`) and export (`IcsExporter`) all build ICS from
+ * events through this mapper, so they serialize the same way.
  */
 object EventToICalEventMapper {
 
     /**
-     * Map a standalone or master event (no RECURRENCE-ID).
+     * Returns the DTSTART a Room [Event] serializes to.
      *
-     * For master events with `rrule`, include the parsed RRULE; exceptions
-     * should be emitted separately via [toICalEvent] with master context.
-     *
-     * @param attendees Optional Room rows to emit as ATTENDEE properties.
-     *   Defaulted empty so existing callers continue to compile and emit no
-     *   attendees. Organizer-side push paths pass the real list.
-     */
-    /**
-     * Reconstruct the DTSTART [ICalDateTime] a Room [Event] serializes to.
-     * Single source of the Room-Event→dtStart convention so every path that
-     * needs it (wire serialization here, and RECURRENCE-ID value-type
-     * normalization in the pull path) agrees byte-for-byte.
+     * The one source of this conversion, so serialization here and RECURRENCE-ID value-type
+     * normalization on pull and push agree byte for byte.
      */
     fun dtStartOf(event: Event): ICalDateTime =
         ICalDateTime.fromTimestamp(event.startTs, resolveZone(event.timezone), event.isAllDay)
 
+    /**
+     * Maps a standalone or master event, without RECURRENCE-ID.
+     *
+     * A master keeps its parsed RRULE; its exceptions are mapped separately by the
+     * master-context overloads.
+     *
+     * @param attendees Room rows to emit as ATTENDEE properties; empty emits none.
+     */
     fun toICalEvent(event: Event, attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList()): ICalEvent {
         val zone = resolveZone(event.timezone)
         val endZone = resolveZone(event.endTimezone) ?: zone
         val endTs = exclusiveEndTs(event)
-        // RFC 5545 §3.6.1 permits either DTEND or DURATION (never both) for any
-        // VEVENT. Emit DTEND for every event so all serialize paths agree — the
-        // patch path (IcsPatcher.patchToICalEvent) and the exception overload below
-        // already emit DTEND — and for interop: at least one major server rejects an
-        // EXDATE update on a bounded recurring scheduling object expressed with
+        // RFC 5545 §3.6.1 permits DTEND or DURATION, never both. Always emit DTEND, as the
+        // patch path and the exception overload do: at least one major server rejects an
+        // EXDATE update on a bounded recurring scheduling object written with
         // DTSTART+DURATION, while DTEND is accepted across servers.
         return ICalEvent(
             uid = event.uid,
@@ -87,19 +82,15 @@ object EventToICalEventMapper {
     }
 
     /**
-     * Map an exception (modified occurrence) to an ICalEvent that carries the
-     * master's UID plus a RECURRENCE-ID built from the exception's
-     * `originalInstanceTime`. RRULE/EXDATE/RDATE are cleared per RFC 5545:
-     * exceptions describe a single instance, not a recurrence.
+     * Maps an exception to a VEVENT with the master's UID and a RECURRENCE-ID from the
+     * exception's `originalInstanceTime`.
      *
-     * When `exception.originalInstanceTime` is null, the importId falls through
-     * to "master.uid:RECID:null" — this is documented pre-existing behavior
-     * (IcsPatcher.kt:274 before extraction) and is preserved intentionally here.
+     * RRULE, EXDATE and RDATE are cleared: an exception describes one occurrence (RFC 5545).
+     * With a null `originalInstanceTime` there is no RECURRENCE-ID and a null importId becomes
+     * `<masterUid>:RECID:null`; this is kept deliberately.
      *
-     * @param attendees Optional per-exception ATTENDEE rows. Defaulted
-     *   empty so existing call sites continue to behave as before; the
-     *   push path passes the real list to preserve per-exception
-     *   attendee state on recurring-event push.
+     * @param attendees the exception's own ATTENDEE rows; the push path passes them so each
+     *   exception keeps its attendee state. Empty emits none.
      */
     fun toICalEvent(
         master: Event,
@@ -107,11 +98,7 @@ object EventToICalEventMapper {
         attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList()
     ): ICalEvent = toICalEvent(masterUid = master.uid, exception = exception, attendees = attendees)
 
-    /**
-     * Convenience overload for callers that only have the master UID.
-     *
-     * @param attendees Optional per-exception ATTENDEE rows. Defaulted empty.
-     */
+    /** Maps an exception when only the master UID is known; see the overload above. */
     fun toICalEvent(
         masterUid: String,
         exception: Event,
@@ -156,9 +143,8 @@ object EventToICalEventMapper {
     }
 
     /**
-     * Resolve an IANA TZID string to a [ZoneId], returning null for blank input
-     * or non-IANA values (Windows IDs, legacy offsets). Shared by every app-side
-     * path that maps an `Event.timezone` field into icaldav types.
+     * Resolves an IANA TZID to a [ZoneId], or null for blank input or a non-IANA value
+     * (Windows IDs, legacy offsets).
      */
     fun resolveZone(tzid: String?): ZoneId? {
         if (tzid.isNullOrBlank()) return null
@@ -170,9 +156,8 @@ object EventToICalEventMapper {
     }
 
     /**
-     * Parse an RRULE string, tolerating malformed stored values.
-     * `RRule.parse` throws on missing FREQ; corrupt input should not crash
-     * push or export paths.
+     * Parses a stored RRULE, or null if malformed. `RRule.parse` throws on a missing FREQ,
+     * and a corrupt stored value must not crash push or export.
      */
     internal fun parseRruleOrNull(rrule: String?): RRule? {
         if (rrule.isNullOrBlank()) return null
@@ -180,8 +165,8 @@ object EventToICalEventMapper {
     }
 
     /**
-     * All-day events store `endTs` as inclusive (23:59:59.999 of the last day).
-     * RFC 5545 requires exclusive DTEND (next day 00:00:00). Add 1 ms.
+     * Returns the exclusive end: all-day events store `endTs` inclusive (23:59:59.999 of the
+     * last day), and RFC 5545 DTEND is exclusive (next day 00:00), so add 1 ms.
      */
     internal fun exclusiveEndTs(event: Event): Long {
         return if (event.isAllDay && event.endTs >= event.startTs) event.endTs + 1 else event.endTs
@@ -211,12 +196,11 @@ object EventToICalEventMapper {
     }
 
     /**
-     * Attendees to emit, enforcing the RFC 6638 §3.1 invariant that ATTENDEE
-     * requires ORGANIZER. A non-mailto-schedulable account (non-email login)
-     * resolves no organizer; emitting ATTENDEE alone produces a PUT body that
-     * conformant servers reject, so drop the attendees rather than ship an
-     * invalid body. The picker's non-schedulable gate stops this from arising
-     * in the UI; this is the data-layer backstop for any other feeder.
+     * Returns the attendees to emit, or none without an organizer: RFC 6638 §3.1 requires
+     * ORGANIZER alongside ATTENDEE, and conformant servers reject a PUT with ATTENDEE alone.
+     *
+     * An account that can't schedule (non-email login) resolves no organizer. The attendee
+     * picker is hidden for such accounts; this is the data-layer backstop for other callers.
      */
     private fun attendeesIfOrganized(
         organizerEmail: String?,
@@ -227,14 +211,13 @@ object EventToICalEventMapper {
     }
 
     /**
-     * Translate a Room [org.onekash.kashcal.data.db.entity.Attendee] into the
-     * icaldav-core [org.onekash.icaldav.model.Attendee]. Inverse of
-     * `ICalEventMapper.toRoomEntity` (the pull-side mapping).
+     * Converts a Room [org.onekash.kashcal.data.db.entity.Attendee] to an icaldav
+     * [org.onekash.icaldav.model.Attendee], the inverse of the pull-side mapping in
+     * [ICalEventMapper].
      *
-     * Asymmetry: the Room `address` field carries the `mailto:` prefix verbatim
-     * (since servers may also emit `urn:uuid:` or principal-relative paths);
-     * icaldav-core's `email` is the bare local-part-plus-domain. Strip
-     * `mailto:` here so the generator re-prefixes it on emit.
+     * The Room `address` keeps its `mailto:` prefix (servers also emit `urn:uuid:` or
+     * principal-relative paths), while icaldav's `email` is bare. Strip `mailto:` here; the
+     * generator adds it back on emit.
      */
     internal fun org.onekash.kashcal.data.db.entity.Attendee.toICalAttendee():
         org.onekash.icaldav.model.Attendee {

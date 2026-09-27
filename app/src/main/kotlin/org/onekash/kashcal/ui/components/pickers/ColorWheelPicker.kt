@@ -33,17 +33,15 @@ import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.shared.HueFamily
 
 /**
- * Two side-by-side wheel pickers for browsing the full 92-color CSS3 palette.
+ * Shows two side-by-side wheels for browsing the 92-color CSS3 palette, under a large preview
+ * swatch with the CSS3 name and hex.
  *
- * Left wheel: [HueFamily] (10 localized entries).
- * Right wheel: CSS3 colors in the selected family. Names are technical
- * identifiers per the CSS3 spec and are intentionally NOT localized — the
- * color swatch plus the family header label carry the meaning.
+ * The left wheel picks a [HueFamily] (10 localized entries), the right a CSS3 color in that
+ * family. CSS3 names are technical identifiers and deliberately not localized; the swatch and
+ * the family label carry the meaning.
  *
- * Above the wheels is a large preview swatch + CSS3 name + hex.
- *
- * State is parent-owned: changes fire [onColorSelected] with the new entry,
- * but the parent decides when to commit that to the rest of the app.
+ * The parent owns the state: each change calls [onColorSelected] with the new entry, and the
+ * parent decides when to commit it.
  */
 @Composable
 fun ColorWheelPicker(
@@ -58,7 +56,6 @@ fun ColorWheelPicker(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Large preview swatch
         Box(
             modifier = Modifier
                 .size(80.dp)
@@ -87,7 +84,6 @@ fun ColorWheelPicker(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Left wheel: hue family
             VerticalWheelPicker(
                 items = HueFamily.entries,
                 selectedItem = family,
@@ -113,7 +109,6 @@ fun ColorWheelPicker(
                 )
             }
 
-            // Right wheel: CSS3 color names in the selected family
             VerticalWheelPicker(
                 items = colorsInFamily,
                 selectedItem = selected,
@@ -132,8 +127,7 @@ fun ColorWheelPicker(
                     modifier = Modifier
                         .padding(horizontal = 4.dp)
                         .semantics(mergeDescendants = true) {
-                            // Screen readers announce family + technical name, e.g.
-                            // "Red, crimson" — CSS3 names alone are cryptic for TalkBack.
+                            // "Red, crimson": a CSS3 name alone is cryptic for TalkBack.
                             contentDescription = "$familyLabel, ${item.name}"
                         }
                 ) {

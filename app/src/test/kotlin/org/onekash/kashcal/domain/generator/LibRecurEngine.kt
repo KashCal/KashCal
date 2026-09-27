@@ -13,14 +13,13 @@ import java.util.Calendar
 import java.util.TimeZone
 
 /**
- * Pure-function RRULE expansion over the `dmfs/lib-recur` engine.
+ * Expands RRULE, RDATE and EXDATE over lib-recur (`dmfs/lib-recur`), as a pure function.
  *
- * This object is the single source of truth for how KashCal expands RRULE/RDATE/EXDATE
- * via lib-recur. Orchestration (DB persistence, exception-event linking, lazy extension)
- * lives in [OccurrenceGenerator], which calls through this engine for the expansion step.
- *
- * Every behavior marked `CRITICAL:` below is a bug fix against real data. Modifying
- * this code without a corresponding test update will reintroduce the bug.
+ * Test-only: the oracle the parity and fuzz tests compare the production [IcalDavRRuleEngine]
+ * against, which [OccurrenceGenerator] calls. Its quirks are lettered (a) to (i) below, with no
+ * (f). The production engine keeps (a), (b), (e), (g) and (h) under the same letters; (c), (d)
+ * and (i) work around lib-recur itself. Each quirk fixes a failure on real data; changing one
+ * without its test reintroduces the failure.
  */
 object LibRecurEngine {
 
@@ -29,16 +28,16 @@ object LibRecurEngine {
     private const val SECONDS_PER_DAY = 86400L
 
     /**
-     * Expand an RRULE (plus optional RDATE/EXDATE) to the list of occurrence
-     * start timestamps (ms) within [rangeStartMs, rangeEndMs).
+     * Expands an RRULE, plus optional RDATE and EXDATE, to the occurrence start timestamps
+     * (ms) from [rangeStartMs] inclusive to [rangeEndMs] exclusive.
      *
-     * Returns empty list on malformed input rather than throwing.
+     * Returns an empty list for a null or blank RRULE and on any exception (logged).
      *
      * @param rrule RFC 5545 RRULE value (without the "RRULE:" prefix).
      * @param dtstartMs The master event's DTSTART as epoch ms.
      * @param rangeStartMs Range start, inclusive.
      * @param rangeEndMs Range end, exclusive.
-     * @param timezone IANA TZID of the event's timezone, or null for floating/local.
+     * @param timezone IANA TZID of the event's timezone, or null for the default zone.
      * @param isAllDay Whether this is an all-day event (forces UTC regardless of [timezone]).
      * @param rdateStrings RDATE CSV in mixed format (ms / YYYYMMDD / YYYYMMDDTHHMMSS[Z]).
      * @param exdateStrings EXDATE CSV in the same mixed format.
@@ -57,10 +56,9 @@ object LibRecurEngine {
         if (rrule.isNullOrBlank()) return emptyList()
 
         return try {
-            // CRITICAL (a): All-day events MUST use UTC for RRULE expansion. All-day events
-            // are stored as UTC midnight. Using local timezone would shift the date
-            // (e.g., Jan 6 00:00 UTC in UTC-6 = Jan 5 18:00 local), causing occurrences
-            // to appear on the wrong day.
+            // Quirk (a): all-day events expand in UTC because they are stored at UTC
+            // midnight. A local zone would shift the date (Jan 6 00:00 UTC is Jan 5 18:00 at
+            // UTC-6), putting occurrences on the wrong day.
             val tz = when {
                 isAllDay -> TimeZone.getTimeZone("UTC")
                 timezone != null -> TimeZone.getTimeZone(timezone)
@@ -70,9 +68,9 @@ object LibRecurEngine {
             val rdates = parseMultiValueField(rdateStrings, isAllDay)
             val exdates = parseMultiValueField(exdateStrings, isAllDay)
 
-            // CRITICAL (b): COUNT and UNTIL MUST NOT both appear (RFC 5545).
-            // lib-recur returns 0 occurrences when both are present. Strip UNTIL when
-            // COUNT exists (COUNT is more deterministic).
+            // Quirk (b): COUNT and UNTIL MUST NOT occur in the same rule (RFC 5545 §3.3.10).
+            // lib-recur rejects such a rule (InvalidRecurrenceRuleException), which the catch
+            // below turns into no occurrences, so UNTIL is stripped and COUNT wins.
             val sanitizedRrule = if (rrule.contains("COUNT=") && rrule.contains("UNTIL=")) {
                 rrule.split(";").filter { !it.startsWith("UNTIL=") }.joinToString(";")
             } else {
@@ -80,10 +78,10 @@ object LibRecurEngine {
             }
             val rule = RecurrenceRule(sanitizedRrule)
 
-            // CRITICAL (c): lib-recur requires DTSTART and UNTIL to match in isAllDay()/isFloating().
-            // DATE-format UNTIL (e.g., "20350927") is parsed as all-day — DTSTART must also be
-            // date-only. Using DateTime(tz, y, m, d, 0, 0, 0) creates a timed DateTime that
-            // mismatches, causing: "floating start times with absolute until values not allowed"
+            // Quirk (c): lib-recur requires DTSTART and UNTIL to match in isAllDay() and
+            // isFloating(). A DATE-format UNTIL (e.g. "20350927") parses as all-day, so DTSTART
+            // must be date-only too; a timed DateTime(tz, y, m, d, 0, 0, 0) throws "using
+            // floating start times with absolute until values (and vice versa) is not allowed".
             val untilIsAllDay = rule.until?.isAllDay == true
             val startDateTime = if (isAllDay && untilIsAllDay) {
                 timestampToAllDayDateTime(dtstartSeconds)
@@ -91,15 +89,15 @@ object LibRecurEngine {
                 timestampToDateTime(dtstartSeconds, tz)
             }
 
-            // CRITICAL (g): RDATE/EXDATE date codes inherit DTSTART's time components.
-            // Otherwise a DATE-only RDATE against a timed DTSTART silently fails to match.
+            // Quirk (g): RDATE and EXDATE date codes inherit DTSTART's time of day; otherwise
+            // a DATE-only value against a timed DTSTART silently fails to match.
             val dtstartHour = if (isAllDay) 0 else startDateTime.hours
             val dtstartMinute = if (isAllDay) 0 else startDateTime.minutes
             val dtstartSecond = if (isAllDay) 0 else startDateTime.seconds
 
             val baseSet: RecurrenceSet = OfRuleAndFirst(rule, startDateTime)
 
-            // RFC 5545 §3.8.5.1-2: RecurrenceSet = (DTSTART ∪ RRULE ∪ RDATE) - EXDATE
+            // RFC 5545 §3.8.5.1-2: the set is (DTSTART ∪ RRULE ∪ RDATE) - EXDATE.
             val withRdates: RecurrenceSet = if (rdates.isNotEmpty()) {
                 val rdateDateTimes = rdates.mapNotNull {
                     parseDateCode(it, tz, dtstartHour, dtstartMinute, dtstartSecond)
@@ -118,10 +116,10 @@ object LibRecurEngine {
                 } else withRdates
             } else withRdates
 
-            // CRITICAL (d): Fast-forward to near range start only when range starts
-            // significantly after DTSTART. Otherwise DTSTART could be lost.
-            // CRITICAL (i): FastForwarded DateTime type MUST match DTSTART type (all-day
-            // vs timed) — mismatched types hit the same lib-recur isAllDay() assertion.
+            // Quirk (d): fast-forward to 30 days before the range start only when the range
+            // starts more than 30 days after DTSTART; otherwise DTSTART could be lost.
+            // Quirk (i): the fast-forward DateTime must match DTSTART's type (all-day or
+            // timed), or it hits the same lib-recur isAllDay() check as (c).
             val rangeStartSeconds = rangeStartMs / MILLISECONDS_PER_SECOND
             val optimizedSet: RecurrenceSet =
                 if (rangeStartMs > dtstartMs + 30 * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND) {
@@ -140,14 +138,14 @@ object LibRecurEngine {
             val iterator = optimizedSet.iterator()
             var iterations = 0
 
-            // CRITICAL (e): MAX_ITERATIONS safety limit — prevents infinite expansion
-            // on unbounded rules (FREQ=SECONDLY, FREQ=MINUTELY without COUNT/UNTIL).
+            // Quirk (e): at most MAX_ITERATIONS instances are read, counting those before the
+            // range, so an unbounded rule (FREQ=SECONDLY or MINUTELY without COUNT or UNTIL)
+            // can't expand forever.
             while (iterator.hasNext() && iterations < MAX_ITERATIONS) {
                 iterations++
                 val occurrence = iterator.next()
-                // CRITICAL (h): Sub-second truncation via second-alignment.
-                // occurrenceTsSeconds * MILLISECONDS_PER_SECOND produces second-aligned ms.
-                // This preserves behavior where round-trip through the engine drops sub-second precision.
+                // Quirk (h): timestamps are whole seconds, so a round trip through the engine
+                // drops sub-second precision.
                 val occurrenceTsSeconds = dateTimeToTimestamp(occurrence, isAllDay)
                 val occurrenceTsMs = occurrenceTsSeconds * MILLISECONDS_PER_SECOND
 
@@ -166,12 +164,13 @@ object LibRecurEngine {
     }
 
     /**
-     * Parse a multi-value field (RDATE or EXDATE) into list of date codes.
+     * Parses a comma-separated RDATE or EXDATE field into YYYYMMDD date codes, dropping values
+     * that don't yield one.
      *
-     * Supported formats:
-     *   - Milliseconds: "1737331200000" -> converts to day code via Occurrence.toDayFormat()
-     *   - Day codes: "20251225" -> used directly
-     *   - DateTime: "20251225T100000Z" -> extracts date portion
+     * Formats:
+     *   - Milliseconds: "1737331200000" becomes a day code via [Occurrence.toDayFormat]
+     *   - Day codes: "20251225" is used as is
+     *   - DateTime: "20251225T100000Z" keeps its date part
      */
     internal fun parseMultiValueField(field: String?, isAllDay: Boolean = false): List<String> {
         if (field.isNullOrBlank()) return emptyList()
@@ -181,7 +180,7 @@ object LibRecurEngine {
             .filter { it.isNotEmpty() }
             .mapNotNull { dateValue ->
                 when {
-                    // Milliseconds format: 10+ digit number (13 digits for 2020s epoch ms)
+                    // Milliseconds: 10 or more digits (13 for 2020s epoch ms).
                     dateValue.length >= 10 && dateValue.all { it.isDigit() } -> {
                         dateValue.toLongOrNull()?.let { ms ->
                             Occurrence.toDayFormat(ms, isAllDay).toString()
@@ -195,7 +194,7 @@ object LibRecurEngine {
             .filter { it.length == 8 && it.all { c -> c.isDigit() } }
     }
 
-    /** Parse a date code (YYYYMMDD) to lib-recur DateTime using DTSTART's time components. */
+    /** Parses a YYYYMMDD date code to a lib-recur DateTime at DTSTART's time; null if invalid. */
     internal fun parseDateCode(
         dateCode: String,
         tz: TimeZone,
@@ -215,8 +214,8 @@ object LibRecurEngine {
     }
 
     /**
-     * Convert timestamp (seconds) to lib-recur all-day DateTime (date-only, no time components).
-     * Required for DATE-format RRULE UNTIL compatibility (CRITICAL quirk c).
+     * Converts a timestamp in seconds to a date-only lib-recur DateTime, by its UTC date.
+     * Needed for a DATE-format UNTIL (quirk (c)).
      */
     internal fun timestampToAllDayDateTime(timestampSeconds: Long): DateTime {
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
@@ -228,7 +227,7 @@ object LibRecurEngine {
         )
     }
 
-    /** Convert timestamp (seconds) to lib-recur DateTime in the given timezone. */
+    /** Converts a timestamp in seconds to a lib-recur DateTime in [tz]. */
     internal fun timestampToDateTime(timestampSeconds: Long, tz: TimeZone): DateTime {
         val calendar = Calendar.getInstance(tz)
         calendar.timeInMillis = timestampSeconds * MILLISECONDS_PER_SECOND
@@ -244,11 +243,11 @@ object LibRecurEngine {
     }
 
     /**
-     * Convert lib-recur DateTime to timestamp (seconds).
+     * Converts a lib-recur DateTime to a timestamp in seconds.
      *
-     * CRITICAL: For all-day events, ALWAYS use UTC regardless of what lib-recur returns.
-     * lib-recur may return DateTime objects with null timezone for some recurrence patterns
-     * (e.g., FREQ=YEARLY). Using the device's default timezone would shift the date incorrectly.
+     * All-day events always convert in UTC: lib-recur may return a DateTime with a null
+     * timezone for some patterns (e.g. FREQ=YEARLY), and the device's default zone would shift
+     * the date.
      */
     internal fun dateTimeToTimestamp(dateTime: DateTime, isAllDay: Boolean): Long {
         val tz = when {

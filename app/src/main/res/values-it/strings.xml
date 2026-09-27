@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Nessun calendario trovato su questo server.</string>
     <string name="caldav_error_unexpected">Errore imprevisto. Riprova.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nSe si tratta di un server sulla tua rete locale, consenti l\'accesso alla rete locale per poterti connettere.</string>
+    <string name="caldav_error_connection_refused_insecure">Il server ha reindirizzato la connessione verso una destinazione che KashCal non segue (un indirizzo non cifrato o un ciclo di reindirizzamenti), quindi KashCal si è fermato prima di inviare la tua password. Controlla l\'indirizzo del server.</string>
     <string name="local_network_banner_title">Accesso alla rete locale necessario</string>
     <string name="local_network_banner_body">Questo server sembra trovarsi sulla tua rete locale. Consenti l\'accesso alla rete locale in modo che KashCal possa connettersi.</string>
     <string name="local_network_banner_allow">Consenti accesso</string>
@@ -854,6 +855,8 @@
     <string name="dialog_edit_recurring_title">Salva modifiche in</string>
     <string name="dialog_delete_recurring_title">Elimina</string>
     <string name="dialog_move_recurring_title">Sposta</string>
+    <string name="snackbar_event_rescheduled">Evento spostato</string>
+    <string name="snackbar_reschedule_failed">Impossibile spostare l\'evento</string>
     <string name="recurring_this_event">Questo evento</string>
     <string name="recurring_all_events">Tutti gli eventi</string>
 

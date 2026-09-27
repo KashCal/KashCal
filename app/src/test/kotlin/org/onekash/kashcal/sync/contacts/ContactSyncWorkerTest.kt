@@ -36,20 +36,14 @@ import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.ui.permission.FakePermissionChecker
 
 /**
- * Unit tests for [ContactSyncWorker].
+ * Tests [ContactSyncWorker], which runs [ContactPullStrategy] for every contact-sync-enabled,
+ * CardDAV-capable account with a client built from the [ProviderRegistry] quirks and credentials.
  *
- * doWork() runs [ContactPullStrategy] for every contact-sync-enabled,
- * CardDAV-capable account, assembling that account's CardDAV client from the
- * [ProviderRegistry] routing (quirks + credentials).
- *
- * The permission story is the load-bearing part. WRITE_CONTACTS revocation
- * cannot surface as a [SecurityException] escaping the strategy —
- * [AndroidContactsProviderRepository] catches it and returns `Result.failure`,
- * and [ContactPullStrategy] swallows that into its counts and still returns
- * `Success`. So a worker-level try/catch on SecurityException would be dead
- * code. The deterministic, production-real signal is a **pre-flight**
- * WRITE_CONTACTS check: when the permission is absent the worker syncs nothing
- * and raises an app-global re-grant flag for a settings affordance.
+ * A revoked WRITE_CONTACTS never escapes the strategy as a [SecurityException]:
+ * [AndroidContactsProviderRepository] returns it as `Result.failure`, and [ContactPullStrategy]
+ * folds that into its counts and still returns `Success`, so a worker-level catch would be dead
+ * code. The worker checks WRITE_CONTACTS before running instead: without it, it syncs nothing and
+ * raises an app-global re-grant flag for a settings affordance.
  */
 class ContactSyncWorkerTest {
 
@@ -69,14 +63,13 @@ class ContactSyncWorkerTest {
     fun setup() {
         context = mockk(relaxed = true)
         params = mockk(relaxed = true)
-        // Default to unscoped input (sweep all logins). A relaxed inputData would
-        // hand back a child mock whose getLong returns 0L — read as "scope to
-        // account 0" and silently drop every real account. The scoped tests
-        // override this per-test.
+        // Default to unscoped input (sweep all logins). A relaxed inputData's getLong returns
+        // 0L, read as "scope to account 0", which silently drops every real account. The
+        // scoped tests override this.
         every { params.inputData } returns Data.EMPTY
-        // Same hazard for tags, and a worse payload: a relaxed default hands back
-        // an empty set, which reads as "not the recurring job" — the one branch
-        // that ends a run in failure and takes the periodic spec down with it.
+        // Same hazard for tags: a relaxed default is an empty set, which reads as "not the
+        // recurring job", the one branch that ends a run in failure, which is terminal for the
+        // periodic spec.
         every { params.tags } returns setOf(SyncScheduler.TAG_SYNC, SyncScheduler.TAG_PERIODIC)
         // Data-bearing collaborators: stub explicitly, never relaxed.
         accountRepository = mockk()
@@ -86,7 +79,7 @@ class ContactSyncWorkerTest {
         contactPullStrategy = mockk()
         credentialProvider = mockk()
         client = mockk(relaxed = true)
-        // Side-effect / Unit-returning collaborator: relaxed is safe.
+        // Unit-returning side-effect collaborator: relaxed is safe.
         dataStore = mockk(relaxed = true)
         // Real fake, WRITE_CONTACTS granted by default.
         permissionChecker = FakePermissionChecker()
@@ -97,9 +90,9 @@ class ContactSyncWorkerTest {
             DefaultCardDavQuirks(serverBaseUrl = "https://contacts.example.test")
         coEvery { credentialProvider.getCredentials(any()) } returns
             Credentials(username = "user", password = "pass")
-        // Default: no SRV hit, so the resolver returns the fallback base URL it was
-        // handed (quirks.baseUrl) — the pre-DNS-discovery behavior. A dedicated test
-        // overrides this to prove a discovered host flows through to the strategy.
+        // Default: no SRV hit, so the resolver returns the fallback it was handed
+        // (quirks.baseUrl). A dedicated test overrides this to prove a discovered host
+        // reaches the strategy.
         coEvery { cardDavHostResolver.resolveBaseUrl(any(), any()) } answers { secondArg() }
         coEvery { contactPullStrategy.sync(any(), any(), any()) } returns
             ContactPullResult.Success(inserted = 0, replaced = 0, skipped = 0, deleted = 0, booksFailed = 0)
@@ -174,8 +167,8 @@ class ContactSyncWorkerTest {
 
     @Test
     fun `doWork skips non-CardDAV-capable accounts even when flag set`() = runTest {
-        // LOCAL cannot support CardDAV; the flag should never have been set, but
-        // the worker must defend against it rather than assemble a bogus client.
+        // LOCAL can't support CardDAV, so the flag should never be set; if it is, the worker
+        // must skip the account instead of assembling a bogus client.
         val local = account(1, AccountProvider.LOCAL, contactSyncEnabled = true, homeSetUrl = null)
         coEvery { accountRepository.getEnabledAccounts() } returns listOf(local)
 
@@ -204,7 +197,7 @@ class ContactSyncWorkerTest {
 
     @Test
     fun `doWork with unscoped input sweeps every contact-sync account`() = runTest {
-        // Absent input data (periodic / enable-path one-shot) sweeps all logins.
+        // Absent input data (periodic or enable-path one-shot) sweeps all logins.
         val a = account(1, AccountProvider.ICLOUD, contactSyncEnabled = true)
         val b = account(2, AccountProvider.CALDAV, contactSyncEnabled = true)
         coEvery { accountRepository.getEnabledAccounts() } returns listOf(a, b)
@@ -233,8 +226,8 @@ class ContactSyncWorkerTest {
     fun `doWork feeds the resolver-discovered base URL into the strategy`() = runTest {
         val a = account(1, AccountProvider.CALDAV, contactSyncEnabled = true)
         coEvery { accountRepository.getEnabledAccounts() } returns listOf(a)
-        // The resolver discovered a real host via SRV; the strategy must sync against
-        // THAT, not the raw quirks.baseUrl fallback.
+        // The resolver discovered a host via SRV; the strategy must sync against it, not the
+        // quirks.baseUrl fallback.
         coEvery { cardDavHostResolver.resolveBaseUrl(any(), any()) } returns
             "https://dav.discovered.test/carddav/"
 
@@ -247,13 +240,11 @@ class ContactSyncWorkerTest {
 
     @Test
     fun `doWork skips SRV discovery for iCloud and uses its fixed bootstrap host`() = runTest {
-        // iCloud's contacts host is a fixed bootstrap (contacts.icloud.com) unrelated
-        // to the Apple ID's email domain. Running SRV on that domain could let a
-        // custom-domain Apple ID publish a same-registrable-domain _carddavs record
-        // and silently redirect iCloud contact sync — so discovery must be skipped and
-        // the quirks bootstrap host used verbatim. The skip is driven by the quirks'
-        // own discoverHostViaDns flag, not the account provider, so a pinned-host
-        // provider is authoritative about whether its host is discoverable.
+        // iCloud's contacts host is a fixed bootstrap (contacts.icloud.com) unrelated to the
+        // Apple ID's email domain. SRV on that domain would let a custom-domain Apple ID
+        // publish a same-registrable-domain _carddavs record and silently redirect iCloud
+        // contact sync, so discovery must be skipped and the bootstrap host used verbatim.
+        // The quirks' discoverHostViaDns flag decides, not the account provider.
         val icloud = account(1, AccountProvider.ICLOUD, contactSyncEnabled = true)
         coEvery { accountRepository.getEnabledAccounts() } returns listOf(icloud)
         every { providerRegistry.getCardDavQuirksForAccount(any()) } returns ICloudCardDavQuirks()
@@ -269,10 +260,9 @@ class ContactSyncWorkerTest {
     @Test
     fun `doWork skips SRV discovery for Zoho and uses its pinned contacts host`() = runTest {
         // Zoho is a generic CALDAV account, but its contacts host is pinned
-        // (contacts.zoho.com) and unrelated to the login email domain — which can be
-        // a Gmail-backed or custom address. Discovering from that domain would send
-        // SRV to the wrong domain entirely, so the pinned-host quirks must suppress
-        // discovery exactly as iCloud does.
+        // (contacts.zoho.com) and unrelated to the login email domain, which can be another
+        // provider's or a custom address. SRV on that domain would go to the wrong domain,
+        // so the pinned-host quirks must suppress discovery as iCloud's do.
         val zoho = account(1, AccountProvider.CALDAV, contactSyncEnabled = true,
             homeSetUrl = "https://calendar.zoho.com/caldav/123/calendars/")
         coEvery { accountRepository.getEnabledAccounts() } returns listOf(zoho)
@@ -367,9 +357,9 @@ class ContactSyncWorkerTest {
 
         val result = createWorker(runAttemptCount = 0).doWork()
 
-        // One account failing must not abort the sweep or crash the worker; the
-        // remaining accounts still sync. An unexpected failure is transient-ish, so
-        // it asks for a bounded retry rather than reporting a clean success.
+        // One account failing must not abort the sweep or crash the worker; the remaining
+        // accounts still sync. An unexpected throw counts as retryable, so the run asks for a
+        // bounded retry instead of reporting success.
         coVerify(exactly = 1) { contactPullStrategy.sync(b, any(), any()) }
         assertEquals("An unexpected account failure should retry while attempts remain", Result.retry(), result)
     }
@@ -397,11 +387,10 @@ class ContactSyncWorkerTest {
 
         val result = createWorker(runAttemptCount = 3, periodic = true).doWork()
 
-        // Retries are spent, so the run has to stop looping — but failure is
-        // terminal for a periodic work spec: WorkManager marks it FAILED and
-        // never runs it again. A server that stays down through one backoff
-        // window would end contact sync for good. The next period is the retry.
-        // Success also proves the run stopped looping — Retry is a different type.
+        // Retries are spent, so the run must stop looping, but failure is terminal for a
+        // periodic work spec: WorkManager marks it FAILED and never runs it again, so a server
+        // down through one backoff window would end contact sync for good. The next period is
+        // the retry. Success also proves the run stopped looping, since Retry is another type.
         assertTrue("A periodic run must not end FAILED; was $result", result is Result.Success)
     }
 
@@ -409,15 +398,15 @@ class ContactSyncWorkerTest {
     fun `a periodic sweep does not retry or fail on a non-retryable error`() = runTest {
         coEvery { accountRepository.getEnabledAccounts() } returns
             listOf(account(1, AccountProvider.ICLOUD, contactSyncEnabled = true))
-        // Bad credentials / 401. Retrying would just hammer the server, so this
-        // must not spin backoff — but it must not kill the recurring job either,
-        // which is what it did when the user's password expired.
+        // Bad credentials (401). Retrying only hammers the server, so this must not spin
+        // backoff, but it must not kill the recurring job either: an expired password would
+        // end contact sync for good.
         coEvery { contactPullStrategy.sync(any(), any(), any()) } returns
             ContactPullResult.Error(code = 401, message = "auth", isRetryable = false)
 
         val result = createWorker(runAttemptCount = 0, periodic = true).doWork()
 
-        // Success is also the proof it didn't spin backoff — Retry is another type.
+        // Success also proves it didn't spin backoff, since Retry is another type.
         assertTrue("A 401 must not take the periodic job down; was $result", result is Result.Success)
     }
 
@@ -430,17 +419,16 @@ class ContactSyncWorkerTest {
 
         val result = createWorker(runAttemptCount = 0, periodic = false).doWork()
 
-        // A one-shot has no future run to salvage, so an honest report costs
-        // nothing. Only the recurring spec needs protecting from a terminal state.
+        // A one-shot has no future run to lose, so reporting the failure costs nothing. Only
+        // the recurring spec needs protecting from a terminal state.
         assertTrue("A one-shot must report the error as failure; was $result", result is Result.Failure)
     }
 
     @Test
     fun `a throw outside the per-account loop does not end the periodic run in failure`() = runTest {
-        // The account query and the permission-flag writes sit outside every
-        // per-account try, so a full disk or a locked database throws straight out
-        // of the sweep. That reaches WorkManager as failure, which is terminal for
-        // the periodic spec — the same way an expired password used to be.
+        // The account query and the permission-flag writes sit outside every per-account
+        // try, so a full disk or a locked database throws out of the sweep. Uncaught, that
+        // reaches WorkManager as failure, which is terminal for the periodic spec.
         coEvery { accountRepository.getEnabledAccounts() } throws
             RuntimeException("database is locked")
 
@@ -491,11 +479,11 @@ class ContactSyncWorkerTest {
 
     @Test
     fun `concurrent runs are serialized so contacts are never swept in parallel`() = runTest {
-        // The periodic job and a user-initiated one-shot are separate WorkManager
-        // unique-work names, so WorkManager can run them at once. Both sweep the
-        // same accounts with a non-transactional delete-then-insert replace, so an
-        // overlap can double-insert a contact. A process-wide lock must serialize
-        // them: while one run is inside the sweep, a second must wait, not enter.
+        // The periodic job and a user-initiated one-shot have separate WorkManager
+        // unique-work names, so both can run at once. They sync the same accounts, and with
+        // no SOURCE_ID uniqueness constraint an overlap can insert a contact twice. A
+        // process-wide lock must serialize them: while one run is inside the sweep, a second
+        // waits instead of entering.
         val acct = account(1, AccountProvider.ICLOUD, contactSyncEnabled = true)
         coEvery { accountRepository.getEnabledAccounts() } returns listOf(acct)
 
@@ -512,9 +500,9 @@ class ContactSyncWorkerTest {
             ContactPullResult.Success(inserted = 0, replaced = 0, skipped = 0, deleted = 0, booksFailed = 0)
         }
 
-        // Run both workers on the test scheduler so ordering is deterministic:
-        // launch run1, drain until it's parked inside the strategy holding the lock,
-        // then launch run2 and drain again to prove it cannot enter the sweep.
+        // Both workers run on the test scheduler so ordering is deterministic: launch run1,
+        // drain until it's parked inside the strategy holding the lock, then launch run2 and
+        // drain again to prove it can't enter the sweep.
         val dispatcher = StandardTestDispatcher(testScheduler)
         val run1 = launch { createWorker(dispatcher = dispatcher).doWork() }
         testScheduler.runCurrent()      // run1 enters the strategy, holds the lock

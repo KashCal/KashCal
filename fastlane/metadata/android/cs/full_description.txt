@@ -1,0 +1,36 @@
+Tvoje kalendáře jsou všude. Rodina na iCloudu. Svátky z nějakého webu. Narozeniny ztracené v kontaktech. Práce v kalendáři v telefonu. KashCal je všechny spojí do jedné aplikace v Androidu.
+
+Více na https://kashcal.onekash.org
+
+• iCloud: přešel jsi na Android, ale rodina je pořád na Applu? Synchronizuj kalendáře iCloud přímo. Žádný most, žádné obcházení.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo a další. Opravdová obousměrná synchronizace bez mezivrstvy. Zobrazí se i kalendáře Google a Outlook z tvého telefonu.
+
+• Sedm zobrazení: měsíc, měsíc na celou výšku, agenda, den, 3 dny, týden a rok. Sevřením přiblížíš časovou osu, tažením přesuneš událost.
+
+• Plánování: pozvi lidi, posílej pozvánky na schůzky a odpovídej na pozvánky od ostatních.
+
+• Přehledy: podívej se, kam mizí tvůj čas. Nejnabitější dny, série bez pauzy, volné bloky. Vše se počítá v zařízení.
+
+• Widgety: měj svůj den na domovské obrazovce, aniž bys otevřel aplikaci. Agenda, datum, týden, měsíc a nadcházející.
+
+• Odběry ICS: sleduj libovolný kalendářový kanál. Svátky, školní roky, sportovní sezóny.
+
+• Narozeniny a výročí: automaticky z tvých kontaktů.
+
+• Barvy pro každou událost: z pečlivě vybrané palety nebo z plného barevného kola, aby se tvůj týden dal přečíst na první pohled.
+
+• Uprav si to: světlý, tmavý nebo systémový motiv a navíc paleta KashCal Teal. Podporovatelé můžou přepnout na zvláštní ikonu aplikace.
+
+• Přístupnost: plná podpora čtečky obrazovky (TalkBack) a jazyk aplikace nastavíš přímo v nastavení Androidu, v 67 jazycích.
+
+• Od začátku funguje zcela offline.
+
+Soukromí ve výchozím nastavení
+
+Žádná analytika. Žádná telemetrie. Žádný účet KashCal. Nemáme servery, takže není co sbírat.
+
+• Přihlašovací údaje šifrované pomocí Android Keystore
+• Zámek aplikace: schovej své události za otisk prstu, obličej nebo zámek obrazovky
+
+Svobodný jako svoboda. A zdarma k tomu.

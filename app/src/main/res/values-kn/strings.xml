@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">ಈ ಸರ್ವರ್‌ನಲ್ಲಿ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ.</string>
     <string name="caldav_error_unexpected">ಅನಿರೀಕ್ಷಿತ ದೋಷ. ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nಇದು ನಿಮ್ಮ ಲೋಕಲ್ ನೆಟ್‌ವರ್ಕ್‌ನಲ್ಲಿರುವ ಸರ್ವರ್ ಆಗಿದ್ದರೆ, ಸಂಪರ್ಕಿಸಲು ಲೋಕಲ್ ನೆಟ್‌ವರ್ಕ್ ಪ್ರವೇಶವನ್ನು ಅನುಮತಿಸಿ.</string>
+    <string name="caldav_error_connection_refused_insecure">ಸರ್ವರ್ ಸಂಪರ್ಕವನ್ನು KashCal ಅನುಸರಿಸದ ಸ್ಥಳಕ್ಕೆ ಮರುನಿರ್ದೇಶಿಸಿದೆ (ಎನ್‌ಕ್ರಿಪ್ಟ್ ಮಾಡದ ವಿಳಾಸ, ಅಥವಾ ಮರುನಿರ್ದೇಶನ ಲೂಪ್), ಆದ್ದರಿಂದ ನಿಮ್ಮ ಪಾಸ್‌ವರ್ಡ್ ಕಳುಹಿಸುವ ಮೊದಲೇ KashCal ನಿಲ್ಲಿಸಿತು. ಸರ್ವರ್ ವಿಳಾಸವನ್ನು ಪರಿಶೀಲಿಸಿ.</string>
     <string name="local_network_banner_title">ಲೋಕಲ್ ನೆಟ್‌ವರ್ಕ್ ಪ್ರವೇಶ ಅಗತ್ಯವಿದೆ</string>
     <string name="local_network_banner_body">ಈ ಸರ್ವರ್ ನಿಮ್ಮ ಲೋಕಲ್ ನೆಟ್‌ವರ್ಕ್‌ನಲ್ಲಿ ಇರುವಂತೆ ಕಾಣುತ್ತದೆ. KashCal ಇದಕ್ಕೆ ಸಂಪರ್ಕಿಸಲು ಲೋಕಲ್ ನೆಟ್‌ವರ್ಕ್ ಪ್ರವೇಶವನ್ನು ಅನುಮತಿಸಿ.</string>
     <string name="local_network_banner_allow">ಪ್ರವೇಶವನ್ನು ಅನುಮತಿಸಿ</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಿ</string>
     <string name="dialog_delete_recurring_title">ಅಳಿಸಿ</string>
     <string name="dialog_move_recurring_title">ಸರಿಸಿ</string>
+    <string name="snackbar_event_rescheduled">ಈವೆಂಟ್ ಸಮಯ ಬದಲಾಯಿಸಲಾಗಿದೆ</string>
+    <string name="snackbar_reschedule_failed">ಈವೆಂಟ್ ಸಮಯ ಬದಲಾಯಿಸಲು ಸಾಧ್ಯವಾಗಲಿಲ್ಲ</string>
     <string name="recurring_this_event">ಈ ಈವೆಂಟ್</string>
     <string name="recurring_all_events">ಎಲ್ಲಾ ಈವೆಂಟ್‌ಗಳು</string>
 

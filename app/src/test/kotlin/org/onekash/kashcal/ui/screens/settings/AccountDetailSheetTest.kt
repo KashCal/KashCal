@@ -23,10 +23,10 @@ import java.util.Locale
 /**
  * Contract for the account detail sheet's contact-sync affordance.
  *
- * CardDAV contact sync is a beta feature, so the Contacts toggle carries a
- * "Beta" badge inline after its label. The badge must appear only for
- * CardDAV-capable providers — the whole Contacts toggle is gated on
- * [AccountProvider.supportsCardDAV], so a local account shows neither.
+ * CardDAV contact sync is a beta feature, so the Contacts toggle carries a "Beta" badge inline
+ * after its label, and a subtitle instead of an info button. The badge must appear only for
+ * CardDAV-capable providers: the whole toggle is gated on [AccountProvider.supportsCardDAV], so a
+ * local account shows neither toggle nor badge.
  *
  * Runs under Robolectric; run the class in isolation given the repo's
  * multi-class native-crash flake.
@@ -66,11 +66,10 @@ class AccountDetailSheetTest {
     /**
      * The row explains itself with a subtitle and carries no ⓘ button.
      *
-     * It used to have one, whose body said contact sync was "read-only for now:
-     * server to phone only". That was false — contact push runs on every sync and
-     * sends deletions first — and believing it could cost a user their server-side
-     * contacts. So the absence is asserted, not merely untested: any replacement
-     * affordance has to be written knowing the sync is two-way.
+     * Contact sync is two-way: every sync pushes device edits and deletions (deletions first)
+     * before pulling. An info text calling it "read-only, server to phone only" would be false,
+     * and a user believing it could lose their server-side contacts. So the absence is
+     * asserted: any replacement affordance has to be written knowing the sync is two-way.
      */
     @Test
     fun `contacts toggle explains itself with a subtitle and no info button`() {

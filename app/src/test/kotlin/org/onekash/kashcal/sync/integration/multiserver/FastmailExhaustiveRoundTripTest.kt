@@ -16,30 +16,26 @@ import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import java.util.UUID
 
 /**
- * Exhaustive serialize -> PUT -> GET -> parse round-trip against a real
- * Fastmail (Cyrus-based) CalDAV account.
+ * Round-trips KashCal events (serialize, PUT, GET, parse) against a real Fastmail (Cyrus-based)
+ * CalDAV account.
  *
- * Sibling of [MailboxExhaustiveRoundTripTest]; same harness, but Fastmail has
- * no dedicated round-trip coverage otherwise — it only appears as a parameter
- * in the `allServers()` scheduling/CRUD suites, which never exercise KashCal's
- * own serializer feeding its own pull parser. Cyrus runs a full RFC 6638
- * scheduling pipeline and normalizes stored ICS aggressively, so the realistic
- * failure shape is: KashCal serializes an [Event] -> PUT to Cyrus -> Cyrus
- * stores/normalizes it -> KashCal's pull parser reads its own output back and
- * a field is lost or mangled.
+ * Same harness as [MailboxExhaustiveRoundTripTest]. Otherwise Fastmail appears only as a
+ * parameter in the `allServers()` suites, which never feed KashCal's own serializer to its own
+ * pull parser. Cyrus runs a full RFC 6638 scheduling pipeline and normalizes stored ICS
+ * aggressively, so the failure this looks for is a field lost or mangled between KashCal's
+ * serializer and its pull parser.
  *
- * Every case builds a KashCal [Event] (+ [Attendee] rows), serializes through
- * the PRODUCTION write path ([IcsPatcher]), PUTs, fetches back, and parses with
- * the production pull path ([ICalParser] + [ICalEventMapper.toEntity]). Unlike
- * the Mailbox matrix, these assert field VALUES survive the round-trip (not
- * just UID/title), and add cases for fields no exhaustive test covers yet:
- * classification, URL, GEO, RDATE, distinct start/end timezones, all-day
- * reminders, and a cancelled occurrence.
+ * Every case builds a KashCal [Event] and [Attendee] rows, serializes through the production
+ * write path ([IcsPatcher]), PUTs, fetches back, and parses with the production pull path
+ * ([ICalParser] and [ICalEventMapper.toEntity]). Beyond UID and title, some cases assert the
+ * field under test survives. It adds cases the Mailbox matrix lacks: classification, URL, GEO,
+ * RDATE, distinct start and end timezones, an all-day reminder, and a cancelled occurrence on a
+ * series with attendees.
  *
- * Cyrus rewrites ORGANIZER to the authenticated account on PUT, so failure
- * messages run through [redactPii] before they can reach junit-xml / CI logs.
- * Synthetic `@example.test` attendee addresses only; events are left on the
- * account (UIDs prefixed `kc-fm-exhaustive-`) for inspection.
+ * Cyrus rewrites ORGANIZER to the authenticated account on PUT, so failure messages run through
+ * [redactPii] before they can reach junit-xml or CI logs. Attendee addresses are synthetic
+ * `@example.test` only; events are left on the account (UIDs prefixed `kc-fm-exhaustive-`) for
+ * inspection.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -53,8 +49,8 @@ class FastmailExhaustiveRoundTripTest {
     private var calendarUrl: String? = null
     private val parser = ICalParser()
 
-    // Fixed base instant so DTSTART/DTEND are deterministic across a run.
-    // 2026-06-08 09:00 UTC (a Monday — useful for BYDAY=MO weekly cases).
+    // Fixed base instant so DTSTART and DTEND are deterministic: 2026-06-08 09:00 UTC, a Monday
+    // (for the BYDAY=MO weekly cases).
     private val base = 1_780_909_200_000L
     private val hour = 3_600_000L
     private val day = 86_400_000L
@@ -111,8 +107,8 @@ class FastmailExhaustiveRoundTripTest {
     )
 
     /**
-     * Result of a round-trip: the re-parsed master plus its attendees and the
-     * full re-parsed calendar (so cases can assert on exception VEVENTs).
+     * Holds a round-trip's re-parsed master, its attendees, and the VEVENT counts (all, and
+     * those with a RECURRENCE-ID) so cases can assert on exception VEVENTs.
      */
     private data class RoundTrip(
         val event: Event,
@@ -122,10 +118,10 @@ class FastmailExhaustiveRoundTripTest {
     )
 
     /**
-     * Serialize [event] (+attendees, +exceptions) through the production write
-     * path, PUT it, fetch it back, parse with the production pull path. Fails if
-     * create/fetch fails OR the server stores something the parser can't read OR
-     * the parsed event loses its identity.
+     * Serializes [event] with its attendees and exceptions through the production write path,
+     * PUTs it, fetches it back and parses it with the production pull path. Fails if the create
+     * or fetch fails, the stored body doesn't parse or has no VEVENT, or the parsed master's UID
+     * or title changed.
      */
     private fun roundTrip(
         event: Event,
@@ -197,7 +193,10 @@ class FastmailExhaustiveRoundTripTest {
 
     private fun uid(slug: String) = "kc-fm-exhaustive-$slug-${UUID.randomUUID()}"
 
-    /** S4: never let a Cyrus-rewritten real account address reach junit-xml. */
+    /**
+     * Masks every address not ending `@example.test`, so a Cyrus-rewritten real account address
+     * never reaches junit-xml.
+     */
     private fun redactPii(text: String): String {
         val emailRegex = Regex("""[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}""")
         return emailRegex.replace(text) { m ->
@@ -275,7 +274,7 @@ class FastmailExhaustiveRoundTripTest {
 
     @Test
     fun `08 classification private`() {
-        // CLASS is untested in any exhaustive round-trip; Cyrus honors it.
+        // The Mailbox matrix has no CLASS case; Cyrus honors it.
         val e = baseEvent(uid("class"), "FM 08 confidential", startOffset = 3 * day + 9 * hour).copy(
             classification = "CONFIDENTIAL",
         )
@@ -287,7 +286,7 @@ class FastmailExhaustiveRoundTripTest {
 
     @Test
     fun `09 url and geo`() {
-        // URL + GEO are untested in the exhaustive matrix.
+        // The Mailbox matrix has no URL or GEO case.
         val e = baseEvent(uid("urlgeo"), "FM 09 url+geo", startOffset = 3 * day + 11 * hour).copy(
             url = "https://example.test/meeting/42",
             geoLat = 52.520008,
@@ -309,8 +308,8 @@ class FastmailExhaustiveRoundTripTest {
 
     @Test
     fun `11 all-day reminder day before`() {
-        // All-day VALARM uses a day-before signed offset (the path a prior fix
-        // touched); a timed VALARM and an all-day VALARM serialize differently.
+        // A day-before reminder on an all-day event: the same VALARM trigger as case 10, but
+        // relative to a DATE DTSTART.
         val e = baseEvent(uid("allday-rem"), "FM 11 all-day reminder",
             startOffset = 5 * day, durationMs = day - 1).copy(
             isAllDay = true,
@@ -336,7 +335,7 @@ class FastmailExhaustiveRoundTripTest {
 
     @Test
     fun `13 distinct start and end timezones`() {
-        // Cross-zone event (flight-style): start in one zone, end in another.
+        // Flight-style: start in one zone, end in another.
         val e = baseEvent(uid("xtz"), "FM 13 cross-zone", startOffset = 4 * day + 12 * hour,
             durationMs = 3 * hour).copy(
             timezone = "America/New_York",
@@ -361,8 +360,8 @@ class FastmailExhaustiveRoundTripTest {
                 displayName = "Bob", partstat = "NEEDS-ACTION", role = "OPT-PARTICIPANT"),
         )
         val back = roundTrip(e, attendees = attendees)
-        // Cyrus may rewrite ORGANIZER to the account and re-route, but the two
-        // synthetic attendees should survive on the stored resource.
+        // Cyrus may rewrite ORGANIZER to the account and re-route, but at least one synthetic
+        // attendee must survive on the stored resource.
         val synthetic = back.attendees.count { it.address.endsWith("@example.test") }
         assert(synthetic >= 1) {
             "expected synthetic attendees to survive, got ${back.attendees.size} total"
@@ -399,7 +398,7 @@ class FastmailExhaustiveRoundTripTest {
 
     @Test
     fun `18 recurring with RDATE`() {
-        // RDATE (additive recurrence dates) is untested in the exhaustive matrix.
+        // The Mailbox matrix has no RDATE (added recurrence dates) case.
         val e = baseEvent(uid("rdate"), "FM 18 weekly plus rdate").copy(
             rrule = "FREQ=WEEKLY;BYDAY=MO;COUNT=3",
             rdate = (base + 3 * day + 4 * hour).toString(),
@@ -458,8 +457,8 @@ class FastmailExhaustiveRoundTripTest {
 
     @Test
     fun `21 cancelled occurrence via EXDATE on series with attendees`() {
-        // Series with attendees, one instance cancelled by EXDATE — exercises
-        // the "delete one occurrence of a meeting" path end to end.
+        // A series with attendees and one occurrence cancelled by EXDATE: the "delete one
+        // occurrence of a meeting" path end to end.
         val masterUid = uid("series-cancel")
         val master = baseEvent(masterUid, "FM 21 series w cancelled instance").copy(
             rrule = "FREQ=DAILY;COUNT=5",

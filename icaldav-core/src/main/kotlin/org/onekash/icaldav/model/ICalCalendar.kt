@@ -3,19 +3,10 @@ package org.onekash.icaldav.model
 import java.time.Duration
 
 /**
- * Calendar-level metadata from VCALENDAR properties.
+ * Holds a VCALENDAR: its RFC 5545 and RFC 7986 properties, the non-standard X-WR-CALNAME and
+ * X-APPLE-CALENDAR-COLOR, and its VEVENT, VTODO and VJOURNAL components.
  *
- * Includes RFC 5545 standard properties and RFC 7986 extended properties:
- * - NAME: Human-readable calendar name
- * - SOURCE: URL where calendar can be refreshed from
- * - COLOR: Calendar color for UI display
- * - REFRESH-INTERVAL: Suggested refresh interval for subscriptions
- *
- * Also handles non-standard but widely-used properties:
- * - X-WR-CALNAME: Apple/Google calendar name
- * - X-APPLE-CALENDAR-COLOR: Apple calendar color
- *
- * Example iCalendar format:
+ * Example:
  * ```
  * BEGIN:VCALENDAR
  * VERSION:2.0
@@ -33,91 +24,62 @@ import java.time.Duration
  * @see <a href="https://tools.ietf.org/html/rfc7986">RFC 7986 - iCalendar Extensions</a>
  */
 data class ICalCalendar(
-    /** PRODID - Product identifier that created this calendar */
+    /** PRODID: the product that created this calendar. */
     val prodId: String?,
 
-    /** VERSION - iCalendar version (usually "2.0") */
     val version: String = "2.0",
 
-    /** CALSCALE - Calendar scale (usually "GREGORIAN") */
     val calscale: String = "GREGORIAN",
 
-    /** METHOD - iTIP method for scheduling (PUBLISH, REQUEST, REPLY, etc.) */
+    /** METHOD: the iTIP method, for example PUBLISH, REQUEST or REPLY. */
     val method: String? = null,
 
-    /** NAME - Human-readable calendar name (RFC 7986) */
+    /** NAME (RFC 7986); see [effectiveName]. */
     val name: String? = null,
 
-    /** SOURCE - URL where calendar can be fetched/refreshed (RFC 7986) */
+    /** SOURCE (RFC 7986): the URL to refresh the calendar from. */
     val source: String? = null,
 
-    /** COLOR - Calendar color for display (RFC 7986) */
+    /** COLOR (RFC 7986); see [effectiveColor]. */
     val color: String? = null,
 
-    /** REFRESH-INTERVAL - Suggested subscription refresh interval (RFC 7986) */
+    /** REFRESH-INTERVAL (RFC 7986): the suggested time between subscription refreshes. */
     val refreshInterval: Duration? = null,
 
-    /** X-WR-CALNAME - Non-standard calendar name (Apple/Google) */
+    /** X-WR-CALNAME: the non-standard calendar name. */
     val xWrCalname: String? = null,
 
-    /** X-APPLE-CALENDAR-COLOR - Non-standard calendar color (Apple) */
+    /** X-APPLE-CALENDAR-COLOR: the non-standard calendar color. */
     val xAppleCalendarColor: String? = null,
 
-    /** IMAGE - Calendar image/icon (RFC 7986) */
+    /** IMAGE (RFC 7986). The generator writes it; `ICalParser.parse` doesn't read it. */
     val image: ICalImage? = null,
 
-    /** All VEVENT components in this calendar */
     val events: List<ICalEvent> = emptyList(),
 
-    /** All VTODO components in this calendar */
     val todos: List<ICalTodo> = emptyList(),
 
-    /** All VJOURNAL components in this calendar */
     val journals: List<ICalJournal> = emptyList()
 ) {
-    /**
-     * Get effective calendar name.
-     * Prefers RFC 7986 NAME over X-WR-CALNAME.
-     */
+    /** Returns NAME, falling back to X-WR-CALNAME. */
     val effectiveName: String?
         get() = name ?: xWrCalname
 
-    /**
-     * Get effective calendar color.
-     * Prefers RFC 7986 COLOR over X-APPLE-CALENDAR-COLOR.
-     */
+    /** Returns COLOR, falling back to X-APPLE-CALENDAR-COLOR. */
     val effectiveColor: String?
         get() = color ?: xAppleCalendarColor
 
-    /**
-     * Check if this calendar has any events.
-     */
     fun hasEvents(): Boolean = events.isNotEmpty()
 
-    /**
-     * Check if this calendar has any todos.
-     */
     fun hasTodos(): Boolean = todos.isNotEmpty()
 
-    /**
-     * Check if this calendar has any journals.
-     */
     fun hasJournals(): Boolean = journals.isNotEmpty()
 
-    /**
-     * Get the number of components (events + todos + journals).
-     */
     val componentCount: Int
         get() = events.size + todos.size + journals.size
 
     companion object {
-        /**
-         * Create a minimal calendar with default values.
-         *
-         * @param prodId Product identifier
-         * @param name Calendar display name
-         * @return ICalCalendar with defaults
-         */
+        /** Creates an empty calendar with [prodId] and [name]; the rest take their defaults. */
         fun create(
             prodId: String = "-//iCalDAV//EN",
             name: String? = null
@@ -131,107 +93,89 @@ data class ICalCalendar(
 }
 
 /**
- * VTODO component representing a task per RFC 5545 Section 3.6.2.
+ * Holds a VTODO task (RFC 5545 §3.6.2): its dates, status, assignment through ORGANIZER and
+ * ATTENDEE, recurrence and VALARMs. Every property but [uid] has a default.
  *
- * Supports task management including:
- * - Basic properties: summary, description, due date, priority
- * - Status tracking: NEEDS-ACTION, IN-PROCESS, COMPLETED, CANCELLED
- * - Task assignment: organizer (assigner) and attendees (assignees)
- * - Recurring tasks via RRULE
- * - Due date reminders via VALARM
- *
- * All new properties have defaults for backward compatibility.
- *
- * @see <a href="https://tools.ietf.org/html/rfc5545#section-3.6.2">RFC 5545 Section 3.6.2 - To-Do Component</a>
+ * @see <a href="https://tools.ietf.org/html/rfc5545#section-3.6.2">RFC 5545 Section 3.6.2 - To-Do
+ *      Component</a>
  */
 data class ICalTodo(
-    /** Unique identifier from UID property (required) */
+    /** UID; the parser assigns a random UUID when it is missing or blank. */
     val uid: String,
 
-    /** Task summary/title from SUMMARY property */
     val summary: String? = null,
 
-    /** Task description from DESCRIPTION property */
     val description: String? = null,
 
-    /** Due date from DUE property */
     val due: ICalDateTime? = null,
 
-    /** Completion percentage (0-100) from PERCENT-COMPLETE property */
+    /** PERCENT-COMPLETE, 0 to 100. */
     val percentComplete: Int = 0,
 
-    /** Task status from STATUS property */
+    /** STATUS; see [TodoStatus.fromString] for missing or unknown values. */
     val status: TodoStatus = TodoStatus.NEEDS_ACTION,
 
-    /** Priority (0=undefined, 1=highest, 9=lowest) from PRIORITY property */
+    /** PRIORITY: 0 is undefined, 1 highest, 9 lowest. */
     val priority: Int = 0,
 
-    // ============ NEW properties (all with defaults) ============
+    // ============ Other properties ============
 
-    /**
-     * Unique import ID for database storage.
-     * Format: "{uid}" or "{uid}:RECID:{datetime}" for modified instances.
-     */
+    /** Key of the task or one of its exceptions; the format is on [generateImportId]. */
     val importId: String = "",
 
-    /** Start date/time from DTSTART property */
     val dtStart: ICalDateTime? = null,
 
-    /** Completion date/time from COMPLETED property (RFC 5545) */
+    /** COMPLETED: when the task was completed. */
     val completed: ICalDateTime? = null,
 
-    /** Sequence number for conflict detection from SEQUENCE property */
+    /** SEQUENCE: the revision number. */
     val sequence: Int = 0,
 
-    /** Creation timestamp from DTSTAMP property */
     val dtstamp: ICalDateTime? = null,
 
-    /** Created timestamp from CREATED property */
     val created: ICalDateTime? = null,
 
-    /** Last modified timestamp from LAST-MODIFIED property */
     val lastModified: ICalDateTime? = null,
 
-    /** Task location from LOCATION property */
     val location: String? = null,
 
-    /** Categories/tags from CATEGORIES property */
+    /** Every CATEGORIES value, split on commas, with blank entries dropped. */
     val categories: List<String> = emptyList(),
 
-    /** Task organizer/assigner from ORGANIZER property */
+    /** ORGANIZER: who assigned the task. */
     val organizer: Organizer? = null,
 
-    /** Task attendees/assignees from ATTENDEE properties */
+    /** ATTENDEEs: who the task is assigned to. */
     val attendees: List<Attendee> = emptyList(),
 
-    /** Alarms/reminders from VALARM components */
     val alarms: List<ICalAlarm> = emptyList(),
 
-    /** Recurrence rule from RRULE property (for recurring tasks) */
+    /** RRULE; the parser reads it only on a master, so an exception has null. */
     val rrule: RRule? = null,
 
-    /**
-     * RECURRENCE-ID for modified instances of recurring tasks.
-     * Non-null indicates this is a modified occurrence.
-     */
+    /** RECURRENCE-ID; non-null marks this as an exception of a recurring task. */
     val recurrenceId: ICalDateTime? = null,
 
-    /** URL associated with the task from URL property */
     val url: String? = null,
 
-    /** Geographic position from GEO property */
+    /** GEO, as the raw property value. */
     val geo: String? = null,
 
-    /** Class/access classification from CLASS property */
+    /** CLASS, the access classification. */
     val classification: String? = null,
 
-    /** Preserve unknown properties for round-trip fidelity */
-    val rawProperties: Map<String, String> = emptyMap()
-) {
+    /** Unknown properties keyed by name and parameters; see [unknownPropertyLines]. */
+    val rawProperties: Map<String, String> = emptyMap(),
+
     /**
-     * Generate importId for a todo.
+     * Unknown properties as the original, unfolded content lines, in document
+     * order. When non-empty the generator writes these and ignores
+     * [rawProperties].
      */
+    val unknownPropertyLines: List<String> = emptyList()
+) {
     companion object {
+        /** Builds [importId]: the UID, or `uid:RECID:<RECURRENCE-ID>` for an exception. */
         fun generateImportId(uid: String, recurrenceId: ICalDateTime?): String {
             return if (recurrenceId != null) {
                 "$uid:RECID:${recurrenceId.toICalString()}"
@@ -241,29 +185,20 @@ data class ICalTodo(
         }
     }
 
-    /**
-     * Check if this task is overdue.
-     */
+    /** Returns true when [due] has passed and the task is neither COMPLETED nor CANCELLED. */
     fun isOverdue(): Boolean {
         if (status == TodoStatus.COMPLETED || status == TodoStatus.CANCELLED) return false
         val dueTime = due ?: return false
         return dueTime.timestamp < System.currentTimeMillis()
     }
 
-    /**
-     * Check if this is a recurring task.
-     */
     fun isRecurring(): Boolean = rrule != null
 
-    /**
-     * Check if this is a modified instance of a recurring task.
-     */
+    /** Returns true for an exception of a recurring task. */
     fun isModifiedInstance(): Boolean = recurrenceId != null
 }
 
-/**
- * VTODO status values per RFC 5545.
- */
+/** VTODO STATUS values (RFC 5545 §3.8.1.11). */
 enum class TodoStatus {
     NEEDS_ACTION,
     IN_PROCESS,
@@ -273,6 +208,7 @@ enum class TodoStatus {
     fun toICalString(): String = name.replace("_", "-")
 
     companion object {
+        /** Maps [value] ignoring case; null or any unknown value maps to NEEDS_ACTION. */
         fun fromString(value: String?): TodoStatus {
             val normalized = value?.uppercase()?.replace("-", "_")
             return entries.find { it.name == normalized } ?: NEEDS_ACTION

@@ -14,13 +14,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Verifies [SearchableSection] draws a divider *between* emitted groups only —
- * never above the first group or below the last. The decision is owned by the
- * section via the shared [SearchEmissionTracker], read before each section
- * records its own emission.
+ * Verifies [SearchableSection] draws a divider only between emitted groups, never above the first
+ * visible group or below the last, including when search filters out an earlier section. Each
+ * section reads the shared [SearchEmissionTracker] before recording its own emission. Also checks
+ * that a query matching a header shows every row in that section.
  *
- * Runs under Robolectric; run in isolation given the repo's multi-class
- * native-crash flake.
+ * Runs under Robolectric; run in isolation given the repo's multi-class native-crash flake.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h9999dp-mdpi")
@@ -53,7 +52,7 @@ class SearchableSectionDividerTest {
         composeTestRule.onNodeWithText("Second").assertExists()
         composeTestRule.onNodeWithText("Row A").assertExists()
         composeTestRule.onNodeWithText("Row B").assertExists()
-        // Exactly one leading divider — before the second group, none above the first.
+        // One leading divider, before the second group; none above the first.
         composeTestRule
             .onAllNodesWithTag(SEARCHABLE_SECTION_LEADING_DIVIDER_TAG)
             .assertCountEquals(1)
@@ -103,14 +102,13 @@ class SearchableSectionDividerTest {
                 }
             }
         }
-        // First section produced no rows, so it never emitted; the surviving
-        // section is the first *visible* group and gets no leading divider.
+        // The first section has no matching rows, so it renders nothing.
         composeTestRule.onNodeWithText("First").assertDoesNotExist()
         composeTestRule.onNodeWithText("Alpha").assertDoesNotExist()
         composeTestRule.onNodeWithText("Second").assertExists()
         composeTestRule.onNodeWithText("Beta").assertExists()
-        // The filtered-out first section never emitted, so the surviving section is
-        // the first *visible* group and must not draw a leading divider.
+        // The filtered-out first section never emitted, so the surviving section is the first
+        // visible group and must not draw a leading divider.
         composeTestRule
             .onAllNodesWithTag(SEARCHABLE_SECTION_LEADING_DIVIDER_TAG)
             .assertCountEquals(0)

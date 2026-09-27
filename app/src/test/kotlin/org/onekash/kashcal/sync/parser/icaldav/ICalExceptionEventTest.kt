@@ -14,19 +14,16 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Comprehensive tests for exception events (RECURRENCE-ID).
+ * Tests parsing and mapping of exception events (RECURRENCE-ID).
  *
- * Exception events are critical for iCloud sync where a single .ics file
- * may contain:
- * - Master event with RRULE
- * - One or more exception events with RECURRENCE-ID
- *
- * These tests verify:
- * - Correct parsing of master + exception events
- * - Proper importId generation for database uniqueness
- * - Handling of cancelled exceptions (STATUS:CANCELLED)
- * - Multiple exceptions in a single file
- * - All-day exception events
+ * One .ics resource, as iCloud sync delivers it, may hold a master with RRULE and one or more
+ * exceptions with RECURRENCE-ID. Covers:
+ * - parsing a master with one or several exceptions, cancelled ones (STATUS:CANCELLED)
+ *   included
+ * - importId uniqueness for the database, with a date-only form for all-day exceptions
+ * - all-day exceptions, and exceptions with their own timezone or alarms
+ * - patching a master with [IcsPatcher]
+ * - an exception at its original time, and a RANGE=THISANDFUTURE RECURRENCE-ID
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -491,14 +488,12 @@ class ICalExceptionEventTest {
         val events = parser.parseAllEvents(originalIcs).getOrNull()!!
         val master = events.first()
 
-        // Create entity with updated title
         val entity = ICalEventMapper.toEntity(master, originalIcs, 1L, null, null).event
             .copy(title = "Updated Weekly Event")
 
-        // Patch the master
         val patched = IcsPatcher.patch(originalIcs, entity)
 
-        // Verify patched ICS is valid and has updated content
+        // The patched ICS parses, carries the new title and keeps the RRULE.
         val patchedEvents = parser.parseAllEvents(patched).getOrNull()!!
         assertEquals(1, patchedEvents.size)
         assertEquals("Updated Weekly Event", patchedEvents.first().summary)
@@ -509,8 +504,8 @@ class ICalExceptionEventTest {
 
     @Test
     fun `handles exception with same time as original occurrence`() {
-        // Sometimes exceptions just change title/description but not time
-        // The DTSTART of the exception matches its RECURRENCE-ID (same time of day)
+        // An exception may change only the title or location, not the time: its DTSTART
+        // equals its RECURRENCE-ID.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -541,7 +536,6 @@ class ICalExceptionEventTest {
         val master = events.find { it.recurrenceId == null }!!
         val exception = events.find { it.recurrenceId != null }!!
 
-        // Exception's DTSTART matches its RECURRENCE-ID (time not changed, only content)
         assertEquals(exception.dtStart.timestamp, exception.recurrenceId!!.timestamp)
 
         // But content differs
@@ -553,7 +547,7 @@ class ICalExceptionEventTest {
 
     @Test
     fun `handles THISANDFUTURE RECURRENCE-ID`() {
-        // RFC 5545 allows THISANDFUTURE range, though rare
+        // RFC 5545 §3.8.4.4 allows RANGE=THISANDFUTURE.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0

@@ -13,13 +13,7 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Repository for managing contact anniversary calendar.
- *
- * Thin subclass of [BaseContactEventRepository] for Hilt DI.
- * All logic lives in the base class; this class provides the anniversary-specific
- * DataStore reminder accessor.
- */
+/** Contact anniversary calendar; all logic is in [BaseContactEventRepository]. */
 @Singleton
 class ContactAnniversaryRepository @Inject constructor(
     accountRepository: AccountRepository,

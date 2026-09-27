@@ -5,11 +5,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Unit tests for PendingOperation entity.
- *
- * Tests computed properties and exponential backoff calculation.
- */
+/** Tests [PendingOperation]'s computed properties, exponential backoff, constants and defaults. */
 class PendingOperationTest {
 
     private fun createOperation(
@@ -134,12 +130,12 @@ class PendingOperationTest {
 
     @Test
     fun `calculateRetryDelay caps at MAX_BACKOFF_MS (5 hours)`() {
-        // Retry 9 = 30s * 2^9 = 30s * 512 = 15,360s = 256m = 4h 16m (NOT capped)
+        // Retry 9 = 30s * 2^9 = 30s * 512 = 15,360s = 256m = 4h 16m (not capped)
         val delayAt9 = PendingOperation.calculateRetryDelay(9)
         assertTrue(delayAt9 < PendingOperation.MAX_BACKOFF_MS)
         assertEquals(256L * 60 * 1000, delayAt9)  // 256 minutes
 
-        // Retry 10+ = would be 512m+ but capped to 5 hours
+        // Retry 10+ would be 512m+, capped to 5 hours
         val delayAt10 = PendingOperation.calculateRetryDelay(10)
         val delayAt15 = PendingOperation.calculateRetryDelay(15)
         assertEquals(PendingOperation.MAX_BACKOFF_MS, delayAt10)
@@ -148,14 +144,14 @@ class PendingOperationTest {
 
     @Test
     fun `calculateRetryDelay returns base delay for negative retryCount`() {
-        // Negative retryCount should be treated as 0 (defensive coding)
+        // A negative retryCount is treated as 0
         assertEquals(30_000L, PendingOperation.calculateRetryDelay(-1))
         assertEquals(30_000L, PendingOperation.calculateRetryDelay(Int.MIN_VALUE))
     }
 
     @Test
     fun `calculateRetryDelay never returns zero`() {
-        // Ensure we never get a 0 delay that could cause immediate retry loops
+        // A 0 delay would cause immediate retry loops
         listOf(Int.MIN_VALUE, -1, 0, 1, 10, Int.MAX_VALUE).forEach { value ->
             assertTrue(
                 "calculateRetryDelay($value) should be > 0",
@@ -191,14 +187,14 @@ class PendingOperationTest {
         assertEquals(0L, op.id)
         assertEquals(PendingOperation.STATUS_PENDING, op.status)
         assertEquals(0, op.retryCount)
-        assertEquals(10, op.maxRetries)  // Changed from 5 to 10 in v21.5.3
+        assertEquals(10, op.maxRetries)
         assertEquals(0L, op.nextRetryAt)
         assertEquals(null, op.lastError)
         assertEquals(null, op.failedAt)
-        assertTrue(op.lifetimeResetAt > 0)  // Should be set to current time
+        assertTrue(op.lifetimeResetAt > 0)  // Defaults to the current time
     }
 
-    // ========== Retry Lifecycle Constants Tests (v21.5.3) ==========
+    // ========== Retry Lifecycle Constants Tests ==========
 
     @Test
     fun `MAX_BACKOFF_MS equals 5 hours`() {

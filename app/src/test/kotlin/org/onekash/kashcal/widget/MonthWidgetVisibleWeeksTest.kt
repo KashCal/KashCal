@@ -7,9 +7,9 @@ import org.onekash.kashcal.ui.model.MonthGrid
 import java.util.Calendar
 
 /**
- * The month widget renders only the weeks a month actually spans, dropping trailing rows that are
- * entirely next-month padding. [MonthGrid.compute] always returns a fixed 6-row grid (needed for
- * stable paging in the full-size month view), so the trimming is widget-render-only.
+ * Tests [visibleWeeks]: the month widget renders only the weeks a month spans, dropping trailing
+ * rows that are all next-month padding. [MonthGrid.compute] always returns 6 rows, fixed for the
+ * full-size month view's paging, so the trimming is widget-only.
  */
 class MonthWidgetVisibleWeeksTest {
 
@@ -46,7 +46,7 @@ class MonthWidgetVisibleWeeksTest {
                 row.count { it.position == MonthGrid.DayPosition.MonthDate }
             }
             assertEquals("month $month lost days", monthDatesTotal, monthDatesShown)
-            // A trailing all-OutDate row must never remain.
+            // No trailing all-OutDate row remains.
             val last = visible.last()
             assertTrue(
                 "month $month kept an all-padding trailing row",

@@ -11,25 +11,21 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Pre-tests for parsing gaps identified by comparing this parser against other CalDAV clients'
- * handling of the same inputs.
- *
- * These tests document the EXPECTED behavior after fixes are applied.
- * Before implementation, some of these tests will FAIL — that's the point.
- * They verify that the gaps are real and that the fixes work.
- *
- * Gap 1: suppressInvalidProperties (ical4j ContentHandlerContext)
- * Gap 2: NOT A GAP — Outlook relaxation flags already work with ical4j.parsing.relaxed=true
- * Gap 3: Missing UID → should generate UUID instead of dropping event
- * Gap 4: Post-parse repair (missing DTSTART fallback, DTEND < DTSTART swap)
- * Gap 5: Stream preprocessing (malformed UTC offsets, durations)
+ * Tests how the parser tolerates malformed server data; the numbers match the display names.
+ * 1. An invalid property is dropped instead of failing the whole VCALENDAR (ical4j's
+ *    `suppressInvalidProperties`). The sibling-VEVENT test is disabled.
+ * 2. Outlook quirks need no extra ical4j flags (no tests).
+ * 3. A VEVENT without UID gets a random UUID instead of being dropped.
+ * 4. Repairs after parsing: DTEND stands in for a missing DTSTART, a DTEND before DTSTART is
+ *    swapped with it, and an exception's RRULE is dropped.
+ * 5. Text repairs before parsing: a 3-digit UTC offset is padded, and `-PT2D` becomes `-P2D`.
  */
 @DisplayName("Parsing Gaps Pre-Tests")
 class ICalParserParsingGapsPreTest {
 
     private val parser = ICalParser()
 
-    // ==================== Gap 1: suppressInvalidProperties ====================
+    // ==================== 1. Invalid property suppression ====================
 
     @Nested
     @DisplayName("Gap 1: Invalid properties should be suppressed, not kill entire parse")
@@ -67,8 +63,8 @@ class ICalParserParsingGapsPreTest {
         @Disabled("Unclosed quoted parameter (PARAM=\") breaks ical4j stream parser before property suppression can help")
         @Test
         fun `good event survives when sibling VEVENT has bad property`() {
-            // Two events in one VCALENDAR: one clean, one with a malformed property.
-            // Both should parse (bad property skipped), not zero events.
+            // Two events in one VCALENDAR, one with a malformed property. Both should parse
+            // with the bad property skipped, not zero events.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -91,15 +87,14 @@ class ICalParserParsingGapsPreTest {
             assertIs<ParseResult.Success<*>>(result, "Parse should succeed")
             val events = result.getOrNull()
             assertNotNull(events)
-            // With suppressInvalidProperties, both events parse (bad property skipped)
-            // Without it, the entire VCALENDAR fails → 0 events
+            // Without suppressInvalidProperties the whole VCALENDAR fails, giving 0 events.
             assertTrue(events.size >= 1, "At least the clean event should survive")
         }
 
         @Test
         fun `event with malformed VALARM property still parses`() {
-            // Some servers emit VALARMs with invalid TRIGGER or ACTION values
-            // that cause PropertyBuilder.build() to throw
+            // Some servers emit VALARMs with invalid TRIGGER or ACTION values that make
+            // PropertyBuilder.build() throw.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -127,7 +122,7 @@ class ICalParserParsingGapsPreTest {
 
         @Test
         fun `Nextcloud event with non-standard ATTACH property parses`() {
-            // Nextcloud sometimes emits ATTACH with unusual parameters
+            // Nextcloud sometimes emits ATTACH with unusual parameters.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -150,13 +145,12 @@ class ICalParserParsingGapsPreTest {
         }
     }
 
-    // ==================== Gap 2: NOT A GAP ====================
-    // Outlook relaxation flags (ical4j.compatibility.outlook, ical4j.validation.relaxed,
-    // negative_dst_supported) are NOT needed. The existing ical4j.parsing.relaxed=true
-    // already handles Outlook quirks (spaces in BYDAY, quoted TZID).
-    // Both test cases pass without changes.
+    // ==================== 2. Outlook quirks ====================
+    // No tests here. ical4j.parsing.relaxed=true handles Outlook quirks (spaces in BYDAY,
+    // quoted TZID), so ical4j.compatibility.outlook and negative_dst_supported aren't set.
+    // ical4j.validation.relaxed is set, for custom TZIDs (ICalParser's configureIcal4j).
 
-    // ==================== Gap 3: Missing UID generation ====================
+    // ==================== 3. Missing UID ====================
 
     @Nested
     @DisplayName("Gap 3: Events without UID should get a generated UUID")
@@ -164,8 +158,8 @@ class ICalParserParsingGapsPreTest {
 
         @Test
         fun `event without UID gets generated UUID instead of being dropped`() {
-            // Some CalDAV servers (especially older ones) occasionally omit UID
-            // Other CalDAV clients generate a random UUID; KashCal currently drops the event
+            // Some CalDAV servers, older ones especially, occasionally omit UID. The parser
+            // gives the event a random UUID instead of dropping it.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -215,7 +209,7 @@ class ICalParserParsingGapsPreTest {
         }
     }
 
-    // ==================== Gap 4: Post-parse repair ====================
+    // ==================== 4. Repairs after parsing ====================
 
     @Nested
     @DisplayName("Gap 4: Post-parse repair for common server bugs")
@@ -223,8 +217,7 @@ class ICalParserParsingGapsPreTest {
 
         @Test
         fun `event without DTSTART but with DTEND uses DTEND as fallback`() {
-            // Common repair: DTSTART = DTEND when DTSTART is missing
-            // KashCal currently drops the event entirely
+            // A missing DTSTART takes DTEND's value instead of dropping the event.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -247,7 +240,7 @@ class ICalParserParsingGapsPreTest {
 
         @Test
         fun `event with DTEND before DTSTART gets times swapped`() {
-            // Common repair: swap DTSTART/DTEND when end is before start
+            // A DTEND before DTSTART is swapped with it.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -276,8 +269,8 @@ class ICalParserParsingGapsPreTest {
 
         @Test
         fun `exception event with RRULE has RRULE stripped`() {
-            // RFC 5545: Exception events (with RECURRENCE-ID) should NOT have RRULE.
-            // Should be stripped. Some servers incorrectly include it.
+            // Some servers send an RRULE on an exception (a VEVENT with RECURRENCE-ID). The
+            // parser reads RRULE only on a master, so the exception's is dropped.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -306,7 +299,7 @@ class ICalParserParsingGapsPreTest {
 
             val exception = events.find { it.recurrenceId != null }
             assertNotNull(exception)
-            // After repair, exception should not have RRULE
+            // The exception has no RRULE
             assertTrue(
                 exception.rrule == null,
                 "Exception event should not have RRULE (was: ${exception.rrule})"
@@ -314,7 +307,7 @@ class ICalParserParsingGapsPreTest {
         }
     }
 
-    // ==================== Gap 5: Stream preprocessing ====================
+    // ==================== 5. Text repairs before parsing ====================
 
     @Nested
     @DisplayName("Gap 5: Stream preprocessing for known server bugs")
@@ -322,8 +315,7 @@ class ICalParserParsingGapsPreTest {
 
         @Test
         fun `malformed UTC offset with missing leading zeros parses`() {
-            // Synology CalDAV sends "+530" instead of "+0530" (3-digit, missing leading zero)
-            // Preprocessing pads 3-digit offsets to valid 4-digit HHMM format
+            // Synology CalDAV sends "+530" for "+0530"; preprocessing pads a 3-digit offset.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -353,8 +345,7 @@ class ICalParserParsingGapsPreTest {
 
         @Test
         fun `malformed duration with misplaced T designator parses`() {
-            // Some servers emit "-PT2D" instead of "-P2D"
-            // Preprocessing fixes this before ical4j parsing
+            // Some servers emit "-PT2D" for "-P2D"; preprocessing repairs it for ical4j.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0

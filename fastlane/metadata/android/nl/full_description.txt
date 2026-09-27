@@ -1,0 +1,36 @@
+Je agenda's staan overal. Familie op iCloud. Feestdagen van een of andere website. Verjaardagen verstopt in je contacten. Werk in de telefoonagenda. KashCal brengt ze samen in één app op Android.
+
+Meer info op https://kashcal.onekash.org
+
+• iCloud: overgestapt naar Android maar zit je familie nog op Apple? Synchroniseer iCloud-agenda's rechtstreeks. Geen brug, geen omweg.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo en meer. Echte tweerichtingssynchronisatie, zonder tussenlaag. De Google- en Outlook-agenda's van je telefoon verschijnen ook.
+
+• Zeven weergaven: maand, maand op volledige hoogte, agenda, dag, 3 dagen, week en jaar. Knijp om in te zoomen op de tijdlijn, sleep een afspraak om die te verplaatsen.
+
+• Plannen: nodig mensen uit, verstuur uitnodigingen voor vergaderingen en reageer op uitnodigingen van anderen.
+
+• Inzichten: zie waar je tijd naartoe gaat. Drukste dagen, aaneengesloten reeksen, vrije blokken. Op het toestel berekend.
+
+• Widgets: houd je dag op het startscherm zonder de app te openen. Agenda, datum, week, maand en aankomend.
+
+• ICS-abonnementen: volg elke agendafeed. Feestdagen, schoolvakanties, sportseizoenen.
+
+• Verjaardagen: automatisch uit je contacten gehaald.
+
+• Kleuren per afspraak: uit een samengesteld palet of het volledige kleurenwiel, zodat je week in één oogopslag leesbaar is.
+
+• Maak het van jou: licht, donker of systeemthema, plus een KashCal Teal-palet. Ondersteuners kunnen naar een speciaal app-icoon wisselen.
+
+• Toegankelijkheid: volledige ondersteuning voor schermlezers (TalkBack), en stel de taal van de app rechtstreeks in de Android-instellingen in, in 67 talen.
+
+• Werkt vanaf het begin volledig offline.
+
+Privé standaard
+
+Geen analyse. Geen telemetrie. Geen KashCal-account. We hebben geen servers, dus er valt niets te verzamelen.
+
+• Inloggegevens versleuteld met de Android Keystore
+• App-vergrendeling: verberg je afspraken achter je vingerafdruk, gezicht of schermvergrendeling
+
+Vrij als in vrijheid. En gratis ook.

@@ -4,12 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Unit tests for [normalizeInitials], the pure logic behind the avatar's
- * 2-letter monogram and the inline editor.
- *
- * Contract: uppercase (locale-independent), keep only letters, take the first
- * two, and preserve blank as blank so a cleared field reverts the avatar to its
- * generic glyph.
+ * Unit tests for [normalizeInitials], behind the avatar's two-letter monogram and the inline
+ * editor: keep only letters, take the first two, uppercase them locale-independently, and keep
+ * blank as blank so a cleared field reverts the avatar to its generic glyph.
  */
 class InitialsFormatterTest {
 
@@ -59,8 +56,7 @@ class InitialsFormatterTest {
 
     @Test
     fun `caseless scripts are kept as-is`() {
-        // Han characters have no case, so uppercasing is a no-op; a single
-        // ideograph is a complete initial on its own.
+        // Han characters have no case, so uppercasing is a no-op; each ideograph is one letter.
         assertEquals("日本", normalizeInitials("日本語"))
         // Arabic (also caseless) is preserved.
         assertEquals("مر", normalizeInitials("مرحبا"))
@@ -68,17 +64,16 @@ class InitialsFormatterTest {
 
     @Test
     fun `uppercasing is locale-independent`() {
-        // Turkish dotless-i trap: with a Turkish locale, "i".uppercase() -> "İ".
-        // normalizeInitials must use Locale.ROOT, so "i" -> "I" regardless of the
-        // device locale.
+        // Under a Turkish locale "i".uppercase() gives "İ"; normalizeInitials must use
+        // Locale.ROOT so "i" gives "I" on any device. This run uses the host locale.
         assertEquals("I", normalizeInitials("i"))
     }
 
     @Test
     fun `uppercase is applied per letter so expansion does not multiply across the pair`() {
-        // German ß uppercases to SS. Taking two SOURCE letters then uppercasing
-        // each: "ßa" -> "SS" + "A". The cap is on source letters (two), not on the
-        // rendered length; a single expanding letter must not also drag in a third.
+        // German ß uppercases to SS. The cap is two source letters, each uppercased as it is
+        // taken ("ßa" gives "SS" + "A"), not the rendered length, so an expanding letter doesn't
+        // pull in a third.
         assertEquals("SSA", normalizeInitials("ßabc"))
         // A normal two-letter input is unaffected.
         assertEquals("AB", normalizeInitials("abc"))
@@ -86,13 +81,11 @@ class InitialsFormatterTest {
 
     @Test
     fun `does not split a surrogate pair`() {
-        // A Deseret capital letter (astral plane, U+10400) is a single letter but
-        // two Java chars. Iterating by char would keep a broken half; iterating by
-        // code point keeps the whole glyph.
+        // A Deseret capital letter (astral plane, U+10400) is one letter but two Java chars.
+        // Iterating by char would keep a broken half; iterating by code point keeps it whole.
         val deseret = "𐐀" // DESERET CAPITAL LETTER LONG I
         val result = normalizeInitials(deseret + "b")
-        // Whatever the casing, the astral letter must survive intact (2 chars) and
-        // the ASCII letter follows.
+        // Whatever the casing, the astral letter survives intact (2 chars), then the ASCII one.
         assertEquals(deseret.length + 1, result.length)
         assertEquals('b'.uppercaseChar(), result.last())
         assertTrue(result.startsWith(deseret) || result.startsWith(deseret.uppercase()))

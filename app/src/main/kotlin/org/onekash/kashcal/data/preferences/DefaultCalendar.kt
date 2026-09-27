@@ -3,32 +3,22 @@ package org.onekash.kashcal.data.preferences
 import androidx.compose.runtime.Immutable
 
 /**
- * Represents the default calendar selection for new events.
+ * Names the default calendar for new events: a Room calendar or a device calendar.
  *
- * Supports both Room-backed calendars (local, iCloud, CalDAV) and
- * device calendars (from Android CalendarProvider).
- *
- * Storage format: "room:123" or "device:456"
- * Legacy format: Plain numeric string (e.g., "123") - treated as Room calendar
+ * Stored as "room:123" or "device:456" ([toStorageString], [parse], [parseLegacy]).
  */
 @Immutable
 sealed class DefaultCalendar {
 
     abstract val calendarId: Long
 
-    /**
-     * Room-backed calendar (local, iCloud, CalDAV, ICS).
-     */
+    /** Room calendar: local, iCloud, CalDAV or ICS subscription. */
     data class Room(override val calendarId: Long) : DefaultCalendar()
 
-    /**
-     * Device calendar from Android CalendarProvider.
-     */
+    /** Device calendar from the Android CalendarProvider. */
     data class Device(override val calendarId: Long) : DefaultCalendar()
 
-    /**
-     * Convert to storage string format.
-     */
+    /** Returns the stored form, "room:<id>" or "device:<id>". */
     fun toStorageString(): String = when (this) {
         is Room -> "$PREFIX_ROOM$calendarId"
         is Device -> "$PREFIX_DEVICE$calendarId"
@@ -39,10 +29,8 @@ sealed class DefaultCalendar {
         private const val PREFIX_DEVICE = "device:"
 
         /**
-         * Parse a storage string to DefaultCalendar.
-         *
-         * @param value Storage string in format "room:123" or "device:456"
-         * @return Parsed DefaultCalendar or null if invalid format
+         * Parses "room:123" or "device:456"; returns null for anything else, including a
+         * negative or non-numeric id.
          */
         fun parse(value: String?): DefaultCalendar? {
             if (value.isNullOrBlank()) return null
@@ -63,21 +51,14 @@ sealed class DefaultCalendar {
         }
 
         /**
-         * Parse with legacy support for plain numeric strings.
-         *
-         * New format (preferred): "room:123", "device:456"
-         * Legacy format: Plain numeric "123" -> Room(123)
-         *
-         * @param value Storage string (new or legacy format)
-         * @return Parsed DefaultCalendar or null if invalid
+         * Parses like [parse], and also reads a plain non-negative number ("123") as [Room].
+         * Returns null when neither form matches.
          */
         fun parseLegacy(value: String?): DefaultCalendar? {
             if (value.isNullOrBlank()) return null
 
-            // Try new format first
             parse(value)?.let { return it }
 
-            // Fall back to legacy: plain Long -> Room
             val id = value.toLongOrNull()
             return if (id != null && id >= 0) Room(id) else null
         }

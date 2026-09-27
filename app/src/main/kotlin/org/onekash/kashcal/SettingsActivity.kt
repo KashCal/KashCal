@@ -31,16 +31,14 @@ import javax.inject.Inject
 private const val TAG = "SettingsActivity"
 
 /**
- * Settings activity hosting [SettingsRoute].
- * Manages iCloud account, calendar settings, and app preferences.
+ * Hosts [SettingsRoute], which owns the view-model collection, the activity-result launchers and
+ * the theme wrapper.
  *
- * This is a thin host: [SettingsRoute] owns the view-model collection, the
- * activity-result launchers, and the theme wrapper. The activity retains only the
- * work that genuinely needs a [FragmentActivity], an injected collaborator, or the
- * content resolver — the biometric app-lock flow, the notification-settings /
- * enrollment / share intents, the backup stream I/O, the local-network permission
- * reads, the cold-start theme seed reads, `onResume` permission refresh, and the
- * intent-extra bootstrap — and passes each down as a narrow lambda.
+ * The activity keeps only work that needs an injected collaborator, the content resolver or the
+ * activity itself. It passes narrow lambdas down for the ICS export share intent, ICS file reads
+ * and imports, the backup stream I/O and the local-network permission reads, and does the
+ * cold-start theme seed reads, the `onResume` permission refresh and the intent-extra bootstrap
+ * itself.
  */
 @AndroidEntryPoint
 class SettingsActivity : FragmentActivity() {
@@ -77,7 +75,7 @@ class SettingsActivity : FragmentActivity() {
         Log.d(TAG, "onCreate")
         enableEdgeToEdge()
 
-        // Resolve the theme synchronously so the first frame renders in the chosen theme — no
+        // Resolve the theme synchronously so the first frame renders in the chosen theme, with no
         // flash of the default on cold start. DataStore caches after the first read.
         val initialThemeString = runBlocking { userPreferencesRepository.theme.first() }
         val initialThemeMode = ThemeMode.fromPrefValue(initialThemeString)
@@ -87,9 +85,9 @@ class SettingsActivity : FragmentActivity() {
         )
         val initialAccentSeed = runBlocking { userPreferencesRepository.accentSeed.first() }
 
-        // Launched straight into tag management from the account hub (there is no
-        // Tags row in Settings itself), so open on that screen and let its back
-        // finish the activity back to the hub rather than drop onto the Settings root.
+        // The account hub launches straight into tag management (Settings has no Tags row), so
+        // open on that screen and let its back finish the activity to the hub instead of
+        // dropping onto the Settings root.
         val openTags = intent.getBooleanExtra(EXTRA_OPEN_TAGS, false)
 
         setContent {
@@ -134,16 +132,15 @@ class SettingsActivity : FragmentActivity() {
         Log.d(TAG, "onResume - refreshing permissions")
         viewModel.refreshContactsPermission()
         viewModel.refreshCalendarPermission()
-        // Reflect a local-network grant made in system Settings while the sheet
-        // was open. Upgrade-only: must not clobber a PermanentlyDenied set by the
-        // request classifier (a live read can't represent it), or the banner
-        // would nag again on every resume.
+        // Reflect a local-network grant made in system Settings. Upgrade-only: it must not
+        // clobber a PermanentlyDenied set by the request classifier (a live read can't
+        // represent it), or the banner would nag again on every resume.
         viewModel.reconcileLocalNetworkPermissionOnResume(
             localNetworkPermissionManager.resolveState(this)
         )
     }
 
-    /** Export a calendar to ICS and hand it to the system share sheet. */
+    /** Exports a calendar to ICS and hands it to the system share sheet. */
     private fun exportCalendar(calendarId: Long) {
         lifecycleScope.launch {
             try {
@@ -180,7 +177,7 @@ class SettingsActivity : FragmentActivity() {
         }
     }
 
-    /** Write the prepared backup JSON to the user-chosen document. Throws on I/O failure. */
+    /** Writes the backup JSON to the user-chosen document. Throws on I/O failure. */
     private suspend fun writeBackup(uri: Uri, json: String) {
         withContext(Dispatchers.IO) {
             contentResolver.openOutputStream(uri)?.use { out ->
@@ -189,7 +186,7 @@ class SettingsActivity : FragmentActivity() {
         }
     }
 
-    /** Read the user-chosen backup document as a UTF-8 string. Throws on I/O failure. */
+    /** Reads the user-chosen backup document as a UTF-8 string. Throws on I/O failure. */
     private suspend fun readBackup(uri: Uri): String = withContext(Dispatchers.IO) {
         contentResolver.openInputStream(uri)?.use {
             it.readBytes().toString(Charsets.UTF_8)

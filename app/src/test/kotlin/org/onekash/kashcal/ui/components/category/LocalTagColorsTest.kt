@@ -4,10 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Tests for the pure tag-color resolver behind [LocalTagColors]: a custom color
- * in the map wins; a null entry or a missing key falls back to the
- * deterministic hash color. Plain-JVM (no Compose) because the resolver is pure
- * ARGB Int math.
+ * Tests [colorFor], the resolver behind [LocalTagColors], on the plain JVM: a custom color in
+ * the map wins, matched case-insensitively; a null entry, a missing key or an empty map falls
+ * back to [colorForTag].
  */
 class LocalTagColorsTest {
 
@@ -34,8 +33,8 @@ class LocalTagColorsTest {
 
     @Test
     fun `custom color resolves when the lookup casing differs from the stored key`() {
-        // The row is stored "Work" (its first-seen casing) but a chip resolves
-        // against an event carrying "work" — the custom color must still apply.
+        // The row is stored as "Work", its first-seen casing, but a chip resolves against an
+        // event carrying "work"; the custom color still applies.
         val custom = 0xFF123456.toInt()
         assertEquals(custom, colorFor(mapOf("Work" to custom), "work"))
         assertEquals(custom, colorFor(mapOf("work" to custom), "WORK"))

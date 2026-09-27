@@ -57,20 +57,20 @@ class QuickAddViewModelTest {
         originalLocale = Locale.getDefault()
         Locale.setDefault(Locale.US)
 
-        // Default DataStore stubs — mock the Flow properties
+        // Default DataStore preference flows.
         every { dataStore.defaultEventDuration } returns flowOf(60)
         every { dataStore.defaultReminderMinutes } returns flowOf(15)
         every { dataStore.defaultAllDayReminder } returns flowOf(720) // 12 hours
         every { dataStore.firstDayOfWeek } returns flowOf(KashCalDataStore.FIRST_DAY_SYSTEM)
 
-        // Default calendar — use DataStore preference (matches EventFormSheet pattern)
+        // Default calendar: a Room calendar from the DataStore preference; the local calendar is
+        // the fallback when the preference is null.
         coEvery { dataStore.getDefaultCalendar() } returns DefaultCalendar.Room(1L)
         coEvery { eventCoordinator.getLocalCalendarId() } returns 1L
 
-        // createEvent returns the event passed in (with id set). Mirror the real
-        // coordinator/EventWriter contract: a blank uid is minted with the
-        // canonical @kashcal.onekash.org domain, so the returned event always
-        // carries a non-blank domain uid.
+        // createEvent returns the event passed in with id 42. Like EventWriter, it replaces a
+        // blank uid with one in the @kashcal.onekash.org domain, so the returned event always
+        // has a uid.
         val eventSlot = slot<Event>()
         coEvery { eventCoordinator.createEvent(capture(eventSlot), any()) } answers {
             val e = eventSlot.captured
@@ -126,9 +126,8 @@ class QuickAddViewModelTest {
 
     @Test
     fun `undated input previews on the clicked day not today`() = runTest {
-        // The Quick Add preview itself must anchor on the day the user was viewing
-        // when the dialog opened, before they ever tap Expand. With no date word
-        // typed, startDate should be the reference day, not the real system date.
+        // The preview anchors on the day the user was viewing when the dialog opened, before
+        // any Expand tap: with no date word typed, startDate is the reference day, not today.
         val viewedDay = LocalDate.of(2026, 8, 20)
         viewModel.setReferenceTime(viewedDay.atTime(9, 0))
         viewModel.onInputChanged("Lunch with Sam")
@@ -188,7 +187,7 @@ class QuickAddViewModelTest {
 
     @Test
     fun `seedInput supplied location does not overwrite parser location`() = runTest {
-        // Parser's LocationRule should claim "at Mission Cantina".
+        // LocationRule claims "at Mission Cantina".
         viewModel.seedInput("Lunch at Mission Cantina", "https://override.example.com")
         advanceUntilIdle()
 
@@ -209,10 +208,8 @@ class QuickAddViewModelTest {
 
     @Test
     fun `seeded location survives a re-parse of the same text via onInputChanged`() = runTest {
-        // Reproduces the share-target snapshotFlow first-emit race: after
-        // seedInput merges seed.location, the dialog's snapshotFlow.collect
-        // immediately fires onInputChanged(seed.text) with the same string,
-        // which used to drop the seeded location.
+        // The share-target race: after seedInput merges the seeded location, the dialog's
+        // snapshotFlow first emit calls onInputChanged with the same text, which must keep it.
         viewModel.seedInput("Standup 10am", "https://meet.example.com/abc")
         advanceUntilIdle()
         viewModel.onInputChanged("Standup 10am")
@@ -223,9 +220,8 @@ class QuickAddViewModelTest {
 
     @Test
     fun `seeded location clears once the user edits the text`() = runTest {
-        // After the user types a different string, the share-supplied fallback
-        // should no longer be injected — otherwise typed input silently inherits
-        // a stale URL from the original share.
+        // Once the user types a different string the share-supplied fallback is dropped, so
+        // typed input doesn't silently inherit a stale URL from the original share.
         viewModel.seedInput("Standup 10am", "https://meet.example.com/abc")
         advanceUntilIdle()
         viewModel.onInputChanged("Coffee 2pm")
@@ -268,7 +264,7 @@ class QuickAddViewModelTest {
         assertTrue(viewModel.isSaveEnabled.value)
     }
 
-    // ==================== save() — timed event ====================
+    // ==================== save(): timed event ====================
 
     @Test
     fun `save creates event with correct fields`() = runTest {
@@ -352,7 +348,7 @@ class QuickAddViewModelTest {
         assertTrue(event.rrule!!.contains("FREQ=WEEKLY"))
     }
 
-    // ==================== Multi-day events (issue #194 follow-up: Bug A) ====================
+    // ==================== Multi-day events (#194) ====================
 
     @Test
     fun `save for all-day multi-day 'Conference Friday to Sunday' sets endTs to end-of-Sunday`() = runTest {
@@ -364,7 +360,8 @@ class QuickAddViewModelTest {
 
         val event = result.getOrNull()!!
         assertTrue("Multi-day 'Friday to Sunday' with no time is all-day", event.isAllDay)
-        // Friday Apr 17 → Sunday Apr 19. startTs is Fri UTC midnight.
+        // Friday Apr 17 to Sunday Apr 19: startTs is Friday UTC midnight, endTs Sunday
+        // 23:59:59.999 UTC.
         val expectedStart = LocalDate.of(2026, 4, 17)
             .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         val sundayMidnightUtc = LocalDate.of(2026, 4, 19)
@@ -386,9 +383,9 @@ class QuickAddViewModelTest {
 
         val event = result.getOrNull()!!
         assertFalse(event.isAllDay)
-        // Parser: startDate=Mon Apr 20 (bare "Monday" from ref Mon Apr 13 advances 7),
-        //         endDate=Wed Apr 22, startTime=15:00, endTime=null
-        // VM should produce: startTs = Mon Apr 20 15:00, endTs = Wed Apr 22 15:00 + 60min = Wed Apr 22 16:00
+        // The parser gives startDate Mon Apr 20 (a bare "Monday" from Mon Apr 13 advances 7
+        // days), endDate Wed Apr 22, startTime 15:00 and no endTime. The event runs from
+        // Mon Apr 20 15:00 to Wed Apr 22 15:00 plus the 60-minute default, 16:00.
         val expectedStart = LocalDateTime.of(2026, 4, 20, 15, 0)
             .atZone(zone).toInstant().toEpochMilli()
         val expectedEnd = LocalDateTime.of(2026, 4, 22, 16, 0)
@@ -471,10 +468,9 @@ class QuickAddViewModelTest {
 
     @Test
     fun `save delegates UID minting to the writer by passing a blank uid`() = runTest {
-        // The UI layer must not mint UIDs — it hands a blank uid so
-        // EventWriter.generateUid() is the single source of truth (and applies
-        // the @kashcal.onekash.org domain). A bare UUID minted here would sync
-        // to the server without the domain and diverge from every other path.
+        // The UI layer never mints UIDs: it passes a blank uid so EventWriter.generateUid is
+        // the single source of truth and applies the @kashcal.onekash.org domain. A bare UUID
+        // minted here would sync without the domain and diverge from every other path.
         val captured = slot<Event>()
         coEvery { eventCoordinator.createEvent(capture(captured), any()) } answers {
             captured.captured.copy(id = 42L)
@@ -488,7 +484,7 @@ class QuickAddViewModelTest {
         assertEquals("", captured.captured.uid)
     }
 
-    // ==================== save() — all-day event ====================
+    // ==================== save(): all-day event ====================
 
     @Test
     fun `save with all-day event sets isAllDay and null timezone`() = runTest {
@@ -549,7 +545,7 @@ class QuickAddViewModelTest {
         assertNull(event.reminders)
     }
 
-    // ==================== save() — failure ====================
+    // ==================== save(): failure ====================
 
     @Test
     fun `save with no writable calendar returns failure`() = runTest {
@@ -627,11 +623,10 @@ class QuickAddViewModelTest {
 
     @Test
     fun `toCalendarIntentData without a typed date uses the reference day not today`() = runTest {
-        // Expand ("More options") must open the form on the day the user was
-        // viewing when they opened Quick Add, not today. A timed input keeps the
-        // instant local (all-day would store UTC midnight, a separate convention),
-        // so the reference day reads back cleanly. Reference is far from the real
-        // system date so a "today" regression can't pass by coincidence.
+        // Expand ("More options") opens the form on the day the user was viewing when they
+        // opened Quick Add, not today. A timed input keeps a local instant, unlike an all-day
+        // one stored at UTC midnight, so the reference day reads back in the test zone. The
+        // reference is a fixed date, so a "today" regression passes only on 2026-08-20.
         val viewedDay = LocalDate.of(2026, 8, 20)
         viewModel.setReferenceTime(viewedDay.atTime(9, 0))
         viewModel.onInputChanged("Lunch with Sam at 2pm")
@@ -699,7 +694,7 @@ class QuickAddViewModelTest {
         assertFalse(viewModel.isSaving.value)
     }
 
-    // ==================== save() — calendarId ====================
+    // ==================== save(): calendarId ====================
 
     @Test
     fun `save uses Room calendar id from DataStore preference`() = runTest {
@@ -716,7 +711,7 @@ class QuickAddViewModelTest {
         coVerify { eventCoordinator.createEvent(any(), eq(7L)) }
     }
 
-    // ==================== save() — isSaving flag ====================
+    // ==================== save(): isSaving flag ====================
 
     @Test
     fun `save resets isSaving after completion`() = runTest {
@@ -744,7 +739,7 @@ class QuickAddViewModelTest {
         assertFalse(viewModel.isSaving.value)
     }
 
-    // ==================== toCalendarIntentData() — all-day with start millis ====================
+    // ==================== toCalendarIntentData(): all-day with start millis ====================
 
     @Test
     fun `toCalendarIntentData for all-day event returns UTC midnight startTimeMillis`() = runTest {
@@ -760,7 +755,7 @@ class QuickAddViewModelTest {
         assertEquals(expectedStartTs, intentData.startTimeMillis)
     }
 
-    // ==================== toCalendarIntentData() — default duration ====================
+    // ==================== toCalendarIntentData(): default duration ====================
 
     @Test
     fun `toCalendarIntentData with no end time uses default duration`() = runTest {
@@ -793,7 +788,7 @@ class QuickAddViewModelTest {
         assertEquals(expectedEndTs, intentData.endTimeMillis)
     }
 
-    // ==================== save() — endTs with default duration varies ====================
+    // ==================== save(): custom default duration ====================
 
     @Test
     fun `save with custom default duration uses that duration`() = runTest {
@@ -812,13 +807,11 @@ class QuickAddViewModelTest {
         assertEquals(expectedEndTs, event.endTs)
     }
 
-    // ==================== save() — title-only input (no date/time) ====================
-
-    // ==================== reference date drives undated input ====================
+    // ==================== Undated input uses the reference date ====================
 
     @Test
     fun `toCalendarIntentData with timed input but no date uses reference date`() = runTest {
-        // Reference is Mon Apr 13, 2026 — but user is viewing a future day.
+        // setup's reference is Mon Apr 13, 2026; here the user is viewing Aug 7.
         val viewedDay = LocalDate.of(2026, 8, 7)
         viewModel.setReferenceTime(viewedDay.atTime(10, 0))
 
@@ -858,7 +851,7 @@ class QuickAddViewModelTest {
         assertEquals("Coffee with Sarah", event.title)
         assertTrue(event.isAllDay)
         assertNull(event.timezone)
-        // All-day on reference date (April 13) at UTC midnight
+        // All-day on the reference date, April 13, at UTC midnight.
         val expectedStartTs = LocalDate.of(2026, 4, 13)
             .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         assertEquals(expectedStartTs, event.startTs)
@@ -920,8 +913,8 @@ class QuickAddViewModelTest {
 
     @Test
     fun `toCalendarIntentData carries note for note-only blank-title input`() = runTest {
-        // Blank title + a note must still carry the note through Expand — the
-        // nothingParsed early-return would otherwise drop it.
+        // A blank title with a note still carries the note through Expand: nothingParsed
+        // counts the note, so its early return doesn't drop it.
         viewModel.onInputChanged(" // just a note")
         advanceUntilIdle()
 

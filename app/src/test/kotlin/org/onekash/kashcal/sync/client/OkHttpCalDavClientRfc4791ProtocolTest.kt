@@ -20,16 +20,16 @@ import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import java.time.Instant
 
 /**
- * RFC 4791 compliance tests for protocol-level requirements.
+ * Tests [OkHttpCalDavClient]'s protocol-level behavior shared across operations.
  *
- * Tests cross-cutting protocol concerns:
- * - Section 3: CalDAV capability detection (OPTIONS + DAV header)
- * - Section 5.1: Content-Type requirements for PROPFIND/REPORT/PUT
- * - Section 5.3.4: ETag retrieval and normalization
- * - CalendarServer extension: ctag change detection
- * - RFC 6578: sync-token retrieval
- * - RFC 7231: Retry-After header handling
- * - RFC 7232: Weak ETag normalization
+ * Covers:
+ * - RFC 4791 §5.1: CalDAV detection (OPTIONS and `calendar-access` in the DAV header)
+ * - Content-Type of PROPFIND, REPORT and PUT requests
+ * - RFC 4791 §5.3.4: ETag fetch, and quote stripping
+ * - CalendarServer extension: ctag
+ * - RFC 6578: sync-token fetch
+ * - RFC 7231: Retry-After handling
+ * - RFC 7232: weak ETag normalization
  */
 class OkHttpCalDavClientRfc4791ProtocolTest {
 
@@ -65,11 +65,11 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
         unmockkAll()
     }
 
-    // ========== RFC 4791 Section 3: CalDAV Capability Detection ==========
+    // ========== CalDAV detection (RFC 4791 §5.1) ==========
 
     @Test
     fun `checkConnection sends OPTIONS method`() = runTest {
-        // RFC 4791 Section 3: OPTIONS is used to check CalDAV compliance
+        // RFC 4791 §5.1: OPTIONS reveals CalDAV support
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(200)
@@ -85,7 +85,7 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
 
     @Test
     fun `checkConnection validates calendar-access in DAV header`() = runTest {
-        // RFC 4791 Section 3: CalDAV servers MUST include "calendar-access" in DAV header
+        // RFC 4791 §5.1: a CalDAV server MUST include "calendar-access" in the DAV header
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(200)
@@ -100,7 +100,7 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
 
     @Test
     fun `checkConnection is case insensitive for calendar-access`() = runTest {
-        // Robustness: Some servers may use different casing
+        // A server may send the token in other casing
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(200)
@@ -197,7 +197,7 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
 
     @Test
     fun `checkConnection retries on 5xx with backoff`() = runTest {
-        // Server error with retry using exponential backoff
+        // A 5xx is retried with exponential backoff
         mockWebServer.enqueue(MockResponse().setResponseCode(500))
         mockWebServer.enqueue(
             MockResponse()
@@ -211,11 +211,11 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
         assertTrue("Should succeed after 500 retry", result.isSuccess())
     }
 
-    // ========== CalendarServer Extension: ctag Change Detection ==========
+    // ========== ctag (CalendarServer extension) ==========
 
     @Test
     fun `getCtag sends PROPFIND with Depth 0`() = runTest {
-        // ctag (CalendarServer extension): Lightweight change detection on collection
+        // The ctag changes whenever anything in the collection changes
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -270,7 +270,7 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
 
     @Test
     fun `getCtag returns error when ctag not in response`() = runTest {
-        // Server doesn't support ctag
+        // A server without ctag support
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -294,7 +294,7 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
         assertTrue("Missing ctag should be error", result.isError())
     }
 
-    // ========== RFC 6578: Sync Token Retrieval ==========
+    // ========== sync-token fetch (RFC 6578) ==========
 
     @Test
     fun `getSyncToken sends PROPFIND with Depth 0`() = runTest {
@@ -330,7 +330,7 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
 
     @Test
     fun `getSyncToken returns null when server has no token`() = runTest {
-        // RFC 6578: Server may not support sync-token
+        // A server without RFC 6578 support has no sync-token
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -371,11 +371,11 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
         assertEquals("Token should be parsed from response", token, result.getOrNull())
     }
 
-    // ========== RFC 4791 Section 5.3.4: ETag Retrieval ==========
+    // ========== ETag fetch (RFC 4791 §5.3.4) ==========
 
     @Test
     fun `fetchEtag sends PROPFIND with Depth 0`() = runTest {
-        // RFC 4791 Section 5.3.4: Fetch ETag via PROPFIND when not in PUT response
+        // RFC 4791 §5.3.4: fetch the ETag with PROPFIND when the PUT response has none
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -408,7 +408,7 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
 
     @Test
     fun `fetchEtag falls back to multiget when PROPFIND returns 501`() = runTest {
-        // Real-world: Zoho returns 501 for PROPFIND on individual events
+        // Zoho returns 501 for PROPFIND on a single event
         mockWebServer.enqueue(MockResponse().setResponseCode(501))
         // Multiget fallback
         mockWebServer.enqueue(
@@ -427,11 +427,11 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
         )
     }
 
-    // ========== RFC 7232: ETag Normalization ==========
+    // ========== ETag normalization (RFC 7232 §2.3) ==========
 
     @Test
     fun `fetchEtag normalizes quoted etag`() = runTest {
-        // ETags from servers often include surrounding quotes
+        // An ETag arrives quoted; the client stores it bare
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -452,7 +452,7 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
 
     @Test
     fun `fetchEtag normalizes weak etag`() = runTest {
-        // RFC 7232: Weak ETags have W/ prefix
+        // RFC 7232 §2.3: a weak ETag has a W/ prefix
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -484,11 +484,11 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
         )
     }
 
-    // ========== Content-Type Verification ==========
+    // ========== Content-Type ==========
 
     @Test
     fun `all PROPFIND requests use application xml content type`() = runTest {
-        // RFC 4791: PROPFIND bodies are XML
+        // PROPFIND bodies are XML
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -509,7 +509,7 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
 
     @Test
     fun `all REPORT requests use application xml content type`() = runTest {
-        // RFC 4791: REPORT bodies are XML
+        // REPORT bodies are XML
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -536,7 +536,7 @@ class OkHttpCalDavClientRfc4791ProtocolTest {
 
     @Test
     fun `all PUT requests use text calendar content type`() = runTest {
-        // RFC 4791 Section 5.3.1: PUT body is iCalendar data
+        // RFC 4791 §5.3.2: the PUT body is iCalendar data
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)

@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Календарі на цьому сервері не знайдено.</string>
     <string name="caldav_error_unexpected">Неочікувана помилка. Повторіть спробу.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nЯкщо це сервер у локальній мережі, дозволь доступ до локальної мережі для підключення.</string>
+    <string name="caldav_error_connection_refused_insecure">Сервер перенаправив з’єднання туди, куди KashCal не переходить (на незашифровану адресу або в цикл перенаправлень), тому KashCal зупинився, не надіславши твій пароль. Перевір адресу сервера.</string>
     <string name="local_network_banner_title">Потрібен доступ до локальної мережі</string>
     <string name="local_network_banner_body">Схоже, цей сервер у твоїй локальній мережі. Дозволь доступ до локальної мережі, щоб KashCal міг до нього підключитися.</string>
     <string name="local_network_banner_allow">Дозволити доступ</string>
@@ -888,6 +889,8 @@
     <string name="dialog_edit_recurring_title">Зберегти зміни в</string>
     <string name="dialog_delete_recurring_title">Видалити</string>
     <string name="dialog_move_recurring_title">Перемістити</string>
+    <string name="snackbar_event_rescheduled">Подію перенесено</string>
+    <string name="snackbar_reschedule_failed">Не вдалося перенести подію</string>
     <string name="recurring_this_event">Ця подія</string>
     <string name="recurring_all_events">Усі події</string>
 

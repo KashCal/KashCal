@@ -9,19 +9,18 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /**
- * Regression test for KashCal/KashCal#346.
+ * Checks that a feed with a custom, non-IANA TZID keeps every event (KashCal/KashCal#346).
  *
- * Some publishers define their own VTIMEZONE with a non-IANA TZID (here
- * `TZsfv`) and record the intended real zone only in an X-LIC-LOCATION hint.
- * This is permitted by RFC 5545 §3.2.19 (a TZID with no leading solidus names
- * a timezone defined by an embedded VTIMEZONE). ical4j 4.x resolves TZID via
- * java.time.ZoneId.of at date-access time, so the unknown name throws and the
- * per-VEVENT parse dropped every event — the feed showed a non-zero event
- * count in preview but zero events after refresh.
+ * Some publishers define their own VTIMEZONE with a non-IANA TZID (here `TZsfv`) and name the
+ * real zone only in an X-LIC-LOCATION hint. RFC 5545 §3.2.19 allows it: a TZID with no leading
+ * solidus names a zone defined by an embedded VTIMEZONE. ical4j 4.x resolves a TZID with
+ * java.time.ZoneId.of when a date is read, so the unknown name throws and, without the
+ * parser's rewrite, every VEVENT is dropped: the feed's preview counts events but a refresh
+ * stores none.
  *
- * Fixture is a real published sports-schedule feed captured 2026-08-19, with
- * its publisher identifiers replaced by generic placeholders; the count
- * assertion is self-describing so a re-snapshot stays valid.
+ * The fixture is a real published sports-schedule feed captured 2026-08-19, with its publisher
+ * identifiers replaced by placeholders. The expected count is read from the file, so a
+ * re-snapshot stays valid.
  */
 class ICalParserCustomTimezoneFeedTest {
 
@@ -60,9 +59,8 @@ class ICalParserCustomTimezoneFeedTest {
 
     @Test
     fun unresolvable_tzid_without_hint_is_kept_not_dropped() {
-        // No X-LIC-LOCATION, so the custom zone cannot be rewritten. Relaxed
-        // validation must still keep the event (falling back to floating time)
-        // rather than dropping it.
+        // No X-LIC-LOCATION, so the custom zone can't be rewritten. Relaxed validation must
+        // still keep the event, falling back to floating time, instead of dropping it.
         val ics = buildString {
             append("BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:test\r\n")
             append("BEGIN:VTIMEZONE\r\nTZID:MadeUpZone\r\n")

@@ -20,24 +20,24 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Integration test that reproduces the 412 Conflict scenario on real iCloud.
+ * Reproduces a 412 Precondition Failed on real iCloud: when an event's etag changes on the
+ * server (another user's edit in a shared calendar, or iCloud's own metadata updates), a push
+ * with the stale etag is refused.
  *
- * Demonstrates that when an event's etag changes on the server (due to another
- * user editing a shared calendar, or iCloud internal metadata updates), a local
- * push with the stale etag gets 412 Precondition Failed.
+ * The sequence behind "sometimes shared calendar events don't push":
+ * 1. The pull stores the event with etag "A".
+ * 2. The server etag becomes "B".
+ * 3. A local edit pushes with If-Match: "A" and gets 412.
+ * 4. Left to SERVER_WINS conflict resolution, the local edit is discarded.
  *
- * This is the root cause of "sometimes shared calendar events don't push":
- * 1. Pull syncs event with etag "A"
- * 2. Server etag changes to "B" (another user's edit or iCloud housekeeping)
- * 3. Local edit → push with If-Match: "A" → 412
- * 4. SERVER_WINS conflict resolution silently discards local changes
+ * The update push answers a 412 by fetching a fresh etag and retrying once before
+ * ConflictResolver; test04 checks that fetchEtag and the retry work on iCloud. test01 prints
+ * each calendar's isReadOnly without asserting it.
  *
- * Also tests:
- * - Whether fetchEtag can retrieve fresh etag after 412
- * - Whether retry with fresh etag succeeds (the proposed fix)
- * - Whether shared calendars report isReadOnly correctly
+ * Tests run in name order and share state through the companion. test05 deletes the event
+ * test02 created; [cleanupSafetyNet] deletes it if test05 didn't.
  *
- * Run with: ./gradlew :app:testDebugUnitTest --tests "*RealICloud412ConflictTest*"
+ * Run with: ./gradlew :app:testDebugUnitTest -Pintegration --tests "*RealICloud412ConflictTest*"
  *
  * Requires: local.properties with iCloud credentials
  */
@@ -57,7 +57,7 @@ class RealICloud412ConflictTest {
         private var latestEtag: String? = null
         private var sharedCalendars: List<SharedCalInfo> = emptyList()
 
-        // Credentials cached for @AfterClass cleanup
+        // Credentials for the class-level cleanup.
         private var cachedUsername: String? = null
         private var cachedPassword: String? = null
 
@@ -68,9 +68,8 @@ class RealICloud412ConflictTest {
         )
 
         /**
-         * Safety net cleanup: if test05 doesn't run (e.g. @Before throws,
-         * class construction fails), this ensures the test event doesn't
-         * leak on iCloud.
+         * Deletes the test event when test05 didn't (for example, a setup failure), so it
+         * doesn't leak on iCloud. Deletes only the URL test02's create returned.
          */
         @AfterClass
         @JvmStatic
@@ -136,7 +135,6 @@ class RealICloud412ConflictTest {
                 if (username != null && password != null) break
             }
         }
-        // Cache for @AfterClass cleanup safety net
         cachedUsername = username
         cachedPassword = password
     }
@@ -175,9 +173,9 @@ class RealICloud412ConflictTest {
         val shared = mutableListOf<SharedCalInfo>()
         for (cal in calendars) {
             val isShared = !cal.url.contains(home.substringAfter("://").substringBefore("/").let {
-                // Check if calendar URL contains a different user's DSID
-                // Shared calendars on iCloud use the owner's DSID, not the sharee's
-                ""  // Can't easily determine this from URL alone
+                // Shared calendars on iCloud use the owner's DSID, not the sharee's. No DSID is
+                // compared here, so isShared is always false, and nothing reads it.
+                ""
             })
             println("  - ${cal.displayName}")
             println("    URL: ${cal.url}")
@@ -193,7 +191,7 @@ class RealICloud412ConflictTest {
         println("\nRead-only calendars (likely shared): ${shared.size}")
         shared.forEach { println("  - ${it.displayName} (readOnly=${it.isReadOnly})") }
 
-        // Select first WRITABLE calendar for testing
+        // The first writable calendar that isn't a webcal subscription.
         val testCalendar = calendars.firstOrNull { !it.isReadOnly && !it.url.contains("webcal") }
         assert(testCalendar != null) { "No writable calendar found" }
         testCalendarUrl = testCalendar!!.url
@@ -250,7 +248,7 @@ class RealICloud412ConflictTest {
 
         val now = System.currentTimeMillis()
 
-        // Step 1: Update event (simulates another user's edit, changes the etag)
+        // Step 1: an update stands in for another user's edit and changes the etag.
         val update1Ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -279,7 +277,7 @@ class RealICloud412ConflictTest {
         println("  Server now has etag: $newServerEtag")
         println("  Old etag (stale): $staleEtag")
 
-        // Step 2: Try to push local edit with the STALE etag (simulates the bug)
+        // Step 2: push the local edit with the stale etag.
         val localEditIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -304,7 +302,6 @@ class RealICloud412ConflictTest {
 
         println("\n  Result: ${if (conflictResult.isConflict()) "412 CONFLICT (BUG REPRODUCED)" else "Unexpected: $conflictResult"}")
 
-        // VERIFY: We get 412
         assert(conflictResult.isConflict()) {
             "Expected 412 Conflict but got: $conflictResult"
         }
@@ -325,7 +322,7 @@ class RealICloud412ConflictTest {
 
         val now = System.currentTimeMillis()
 
-        // Step 1: Fetch fresh etag from server
+        // Step 1: fetch a fresh etag.
         println("Step 1: Fetch fresh etag via PROPFIND")
         val freshEtagResult = client.fetchEtag(testEventUrl!!)
         assert(freshEtagResult.isSuccess()) { "Failed to fetch etag: $freshEtagResult" }
@@ -336,7 +333,7 @@ class RealICloud412ConflictTest {
 
         assert(freshEtag != null) { "Server returned null etag" }
 
-        // Step 2: Retry push with fresh etag
+        // Step 2: retry the push with it.
         val retryIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -365,7 +362,7 @@ class RealICloud412ConflictTest {
         latestEtag = retryResult.getOrNull()!!
         println("  New etag after successful retry: $latestEtag")
 
-        // Step 3: Verify the pushed content is on the server
+        // Step 3: the server has the pushed content.
         println("\nStep 3: Verify server has our content")
         val fetchResult = client.fetchEvent(testEventUrl!!)
         assert(fetchResult.isSuccess()) { "Failed to fetch event: $fetchResult" }

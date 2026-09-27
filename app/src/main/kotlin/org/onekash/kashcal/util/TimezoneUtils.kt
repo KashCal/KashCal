@@ -5,26 +5,24 @@ import java.time.ZoneId
 import java.util.Locale
 
 /**
- * Timezone utilities for event handling and display.
- *
- * Provides:
- * - Timezone search (by city, abbreviation, region)
- * - Abbreviation formatting (EST, PST, JST)
- * - Offset calculation from device timezone
- * - Time conversion between timezones
+ * Timezone helpers for events and the timezone picker: the picker's zone list and search,
+ * abbreviations, offsets from the device zone, resolving and canonicalizing an event's timezone
+ * ID, and a device-time preview.
  *
  * @see DateTimeUtils for date/time formatting
  */
 object TimezoneUtils {
 
+    private val UNAMBIGUOUS_SHORT_IDS = mapOf("EST" to "-05:00", "MST" to "-07:00", "HST" to "-10:00")
+
     /**
-     * Information about a timezone for display in picker.
+     * A timezone as the picker shows it.
      *
-     * @param zoneId The IANA timezone ID (e.g., "America/New_York")
-     * @param abbreviation Short abbreviation (e.g., "EST", "PST")
-     * @param displayName Human-readable name (e.g., "New York")
-     * @param offsetFromDevice Offset relative to device timezone (e.g., "+5h", "-3h", "Device")
-     * @param countryName Country name from ICU (e.g., "United States", "Germany")
+     * @param zoneId IANA timezone ID, e.g. "America/New_York"
+     * @param abbreviation short name from [getAbbreviation], e.g. "EST"
+     * @param displayName city name, e.g. "New York"
+     * @param offsetFromDevice offset from the device zone, formatted by [getOffsetFromDevice]
+     * @param countryName country from ICU's zone region, in the device locale, e.g. "Germany"
      */
     data class TimezoneInfo(
         val zoneId: String,
@@ -34,12 +32,12 @@ object TimezoneUtils {
         val countryName: String? = null
     )
 
-    // Cache of all available timezones (lazy initialized)
+    // Built once, on first use; offsets are those at build time.
     private val allTimezones: List<TimezoneInfo> by lazy {
         buildTimezoneList()
     }
 
-    // Common timezone display names (city extracted from zone ID)
+    // Display names that replace the city taken from the zone ID.
     private val displayNameOverrides = mapOf(
         "America/New_York" to "New York",
         "America/Los_Angeles" to "Los Angeles",
@@ -63,8 +61,8 @@ object TimezoneUtils {
         "Pacific/Honolulu" to "Honolulu"
     )
 
-    // City aliases for search - multiple cities can share the same timezone
-    // This allows users to search by any major city name, not just the IANA zone city
+    // Extra city names search matches for a zone, so a user can find a zone by any major city
+    // in it, not only the one in its IANA ID.
     private val cityAliases = mapOf(
         // India (all cities use Asia/Kolkata)
         "Asia/Kolkata" to listOf("Mumbai", "New Delhi", "Delhi", "Bangalore", "Bengaluru", "Chennai", "Kolkata", "Hyderabad", "Pune", "Ahmedabad"),
@@ -112,23 +110,16 @@ object TimezoneUtils {
     )
 
     /**
-     * Get all available timezones sorted by offset from UTC.
-     *
-     * @return List of TimezoneInfo for all available zones
+     * Returns the picker's zones sorted by UTC offset: region IDs containing `/`, without the
+     * `Etc/` and `SystemV/` zones.
      */
     fun getAvailableTimezones(): List<TimezoneInfo> = allTimezones
 
     /**
-     * Search timezones by query string.
+     * Returns the zones whose display name, abbreviation, zone ID, country or city aliases
+     * contain [query], ignoring case: "tokyo", "EST", "asia/tok", "germany", "dallas".
      *
-     * Searches against:
-     * - City/display name (e.g., "tokyo", "new york")
-     * - Abbreviation (e.g., "EST", "PST", "JST")
-     * - Region/zone ID (e.g., "america", "asia/tok")
-     * - City aliases (e.g., "new delhi", "beijing", "dallas")
-     *
-     * @param query Search query (case-insensitive)
-     * @return Matching timezones, limited to top 10 results
+     * @return the first 10 matches in UTC-offset order, or none for a blank query
      */
     fun searchTimezones(query: String): List<TimezoneInfo> {
         if (query.isBlank()) return emptyList()
@@ -139,9 +130,7 @@ object TimezoneUtils {
             tz.displayName.lowercase().contains(normalizedQuery) ||
             tz.abbreviation.lowercase().contains(normalizedQuery) ||
             tz.zoneId.lowercase().contains(normalizedQuery) ||
-            // Check country name (from ICU getRegion)
             tz.countryName?.lowercase()?.contains(normalizedQuery) == true ||
-            // Check city aliases for this timezone
             cityAliases[tz.zoneId]?.any { city ->
                 city.lowercase().contains(normalizedQuery)
             } == true
@@ -149,36 +138,29 @@ object TimezoneUtils {
     }
 
     /**
-     * Get timezone abbreviation for display.
-     *
-     * @param zoneId IANA timezone ID (e.g., "America/New_York")
-     * @param instant Point in time for DST calculation (default: now)
-     * @return Short abbreviation (e.g., "EST", "EDT", "JST")
+     * Returns the zone's short name at [instant], e.g. "EST", "EDT" or "JST", formatted with
+     * `Locale.US`. An invalid [zoneId] gives the first three characters of its last segment,
+     * uppercased.
      */
     fun getAbbreviation(zoneId: String, instant: Instant = Instant.now()): String {
         return try {
             val zone = ZoneId.of(zoneId)
             val zdt = instant.atZone(zone)
-            // Use format pattern to get proper timezone abbreviation
             val formatter = java.time.format.DateTimeFormatter.ofPattern("zzz", Locale.US)
             zdt.format(formatter)
         } catch (_: Exception) {
-            // Fallback for invalid zone IDs
             zoneId.substringAfterLast("/").take(3).uppercase()
         }
     }
 
     /**
-     * Get offset from device timezone as human-readable string.
-     *
-     * @param zoneId IANA timezone ID
-     * @param instant Point in time for calculation (default: now)
-     * @return Offset string: "Device" if same, "+5h" if ahead, "-3h" if behind
+     * Formats the zone's offset from the device zone at [instant]: "Device" for the device's
+     * zone or a zero difference, "+5h" or "-3h" for whole hours, "+5:30" or "-3:30" otherwise,
+     * and "?" for an invalid [zoneId].
      */
     fun getOffsetFromDevice(zoneId: String, instant: Instant = Instant.now()): String {
         val deviceZoneId = ZoneId.systemDefault()
 
-        // Same timezone
         if (zoneId == deviceZoneId.id) return "Device"
 
         return try {
@@ -208,18 +190,14 @@ object TimezoneUtils {
     }
 
     /**
-     * Convert time between timezones.
-     *
-     * @param epochMs Source timestamp in milliseconds
-     * @param fromZone Source timezone ID (null = device timezone)
-     * @param toZone Target timezone ID (null = device timezone)
-     * @return Timestamp adjusted to represent same instant in target timezone display
+     * Converts [epochMs] from [fromZone] to [toZone] (null means the device zone). The
+     * conversion keeps the instant, so the result always equals [epochMs]. Throws for an invalid
+     * zone ID.
      */
     fun convertTime(epochMs: Long, fromZone: String?, toZone: String?): Long {
         val from = if (fromZone != null) ZoneId.of(fromZone) else ZoneId.systemDefault()
         val to = if (toZone != null) ZoneId.of(toZone) else ZoneId.systemDefault()
 
-        // Same timezone, no conversion needed
         if (from == to) return epochMs
 
         val instant = Instant.ofEpochMilli(epochMs)
@@ -229,29 +207,33 @@ object TimezoneUtils {
         return targetZdt.toInstant().toEpochMilli()
     }
 
-    /**
-     * Get TimezoneInfo for a specific zone ID.
-     *
-     * @param zoneId IANA timezone ID
-     * @return TimezoneInfo or null if invalid zone
-     */
+    /** Returns the picker entry for [zoneId], or null when [getAvailableTimezones] lacks it. */
     fun getTimezoneInfo(zoneId: String): TimezoneInfo? {
         return allTimezones.find { it.zoneId == zoneId }
     }
 
-    /**
-     * Get the device's current timezone ID.
-     *
-     * @return Device timezone ID (e.g., "America/New_York")
-     */
+    /** Returns the device's current timezone ID, e.g. "America/New_York". */
     fun getDeviceTimezone(): String = ZoneId.systemDefault().id
 
     /**
-     * Check if a timezone ID is valid.
-     *
-     * @param zoneId Timezone ID to validate
-     * @return true if valid IANA timezone ID
+     * Returns the zone for an event timezone ID, or null when the ID is blank or not
+     * recognised. Accepts IANA IDs and offset IDs ("UTC+05:00"), plus the legacy fixed-offset
+     * names "EST", "MST" and "HST". Other three-letter names are ambiguous ("BST", "IST", "CST"
+     * each name several zones), so they are treated as unrecognised rather than guessed.
      */
+    fun resolveZoneOrNull(id: String?): ZoneId? {
+        if (id.isNullOrBlank()) return null
+        return try {
+            ZoneId.of(id)
+        } catch (_: Exception) {
+            UNAMBIGUOUS_SHORT_IDS[id]?.let { ZoneId.of(it) }
+        }
+    }
+
+    /** Returns the zone for an event timezone ID, falling back to the device's zone. */
+    fun resolveZone(id: String?): ZoneId = resolveZoneOrNull(id) ?: ZoneId.systemDefault()
+
+    /** Returns true when `ZoneId.of` accepts [zoneId]: a region ID or an offset ID. */
     fun isValidTimezone(zoneId: String): Boolean {
         return try {
             ZoneId.of(zoneId)
@@ -262,15 +244,10 @@ object TimezoneUtils {
     }
 
     /**
-     * Canonicalize a timezone ID to its standard IANA form.
+     * Returns the canonical IANA form of [tzid] from Android's ICU (CLDR) data, e.g.
+     * "US/Pacific" → "America/Los_Angeles".
      *
-     * Converts aliases like "US/Pacific" → "America/Los_Angeles".
-     * Returns original if canonicalization fails or returns unknown.
-     *
-     * Uses Android ICU library (API 24+) for CLDR-standard mappings.
-     *
-     * @param tzid Raw timezone ID (may be alias)
-     * @return Canonical timezone ID, or original if canonicalization fails
+     * Returns [tzid] unchanged when ICU fails or doesn't know it, and null for null.
      */
     fun canonicalizeTimezone(tzid: String?): String? {
         if (tzid == null) return null
@@ -288,14 +265,11 @@ object TimezoneUtils {
     }
 
     /**
-     * Format local time preview for display.
+     * Formats [eventTimeMs] as device-zone time with its abbreviation, for an event in
+     * [eventTimezone] (null means the device zone).
      *
-     * Shows what time it will be in the device timezone when the event
-     * occurs in the selected timezone.
-     *
-     * @param eventTimeMs Event time in milliseconds
-     * @param eventTimezone Event's timezone ID (null = device timezone)
-     * @return Formatted preview (e.g., "12am EST (next day)") or null if same timezone
+     * @return e.g. "12:00 AM EST (next day)", with " (prev day)" when the device date is
+     *   earlier, or null when the event zone is the device zone. Throws for an invalid zone ID.
      */
     fun formatLocalTimePreview(
         eventTimeMs: Long,
@@ -304,19 +278,16 @@ object TimezoneUtils {
         val deviceZone = ZoneId.systemDefault()
         val eventZone = if (eventTimezone != null) ZoneId.of(eventTimezone) else deviceZone
 
-        // No preview needed if same timezone
         if (eventZone == deviceZone) return null
 
         val instant = Instant.ofEpochMilli(eventTimeMs)
         val eventZdt = instant.atZone(eventZone)
         val deviceZdt = eventZdt.withZoneSameInstant(deviceZone)
 
-        // Format time in device timezone
         val timeFormatter = java.time.format.DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault())
         val timeStr = deviceZdt.format(timeFormatter)
         val abbrev = getAbbreviation(deviceZone.id, instant)
 
-        // Check if different day
         val dayDiff = deviceZdt.toLocalDate().toEpochDay() - eventZdt.toLocalDate().toEpochDay()
         val daySuffix = when {
             dayDiff > 0 -> " (next day)"
@@ -327,16 +298,14 @@ object TimezoneUtils {
         return "$timeStr $abbrev$daySuffix"
     }
 
-    /**
-     * Build the complete list of available timezones.
-     */
+    /** Builds the picker's zone list, sorted by the UTC offset at build time. */
     private fun buildTimezoneList(): List<TimezoneInfo> {
         val now = Instant.now()
         val deviceZoneId = ZoneId.systemDefault()
 
         return ZoneId.getAvailableZoneIds()
             .filter { id ->
-                // Filter out deprecated/obscure zones
+                // Drops the Etc/ and SystemV/ zones and IDs with no region, like "UTC" or "EST".
                 !id.startsWith("Etc/") &&
                 !id.startsWith("SystemV/") &&
                 id.contains("/")
@@ -355,8 +324,7 @@ object TimezoneUtils {
                         getOffsetFromDevice(id, now)
                     }
 
-                    // Get country name from ICU (API 24+)
-                    // getRegion returns ISO 3166 country code, "001" means World/no country
+                    // getRegion returns an ISO 3166 country code; "001" means World, no country.
                     val countryName = try {
                         val countryCode = android.icu.util.TimeZone.getRegion(id)
                         if (countryCode != null && countryCode != "001") {
@@ -375,7 +343,7 @@ object TimezoneUtils {
                     null
                 }
             }
-            .sortedBy { it.second } // Sort by UTC offset
+            .sortedBy { it.second }
             .map { it.first }
     }
 }

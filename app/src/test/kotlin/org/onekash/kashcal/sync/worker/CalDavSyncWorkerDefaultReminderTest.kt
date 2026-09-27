@@ -28,16 +28,18 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for default reminder application logic in CalDavSyncWorker.
+ * Tests the default-reminder rule in CalDavSyncWorker's scheduleRemindersForSyncedEvents.
  *
- * When events are synced from CalDAV servers without VALARM (because the
- * original creator used client-local "default reminder" settings), KashCal
- * should apply the user's configured default reminder - but ONLY for:
- * - NEW events (not MODIFIED)
- * - Incremental sync (not initial sync)
- * - Events without existing reminders or truncated alarms
+ * Events synced from CalDAV servers without VALARM (because the original creator used
+ * client-local "default reminder" settings) get the user's default reminder, but only when:
+ * - the change is NEW (not MODIFIED),
+ * - it isn't from an initial sync,
+ * - the event has no reminders and an alarmCount of 0,
+ * - the default isn't [KashCalDataStore.REMINDER_OFF].
  *
- * This tests the core logic that would be in scheduleRemindersForSyncedEvents().
+ * The tests run a local copy of that predicate ([shouldApplyDefaultReminder]) and local
+ * expressions, not the worker. The ISO duration tests call [ContactEventUtils.minutesToIsoDuration]
+ * directly.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -47,7 +49,6 @@ class CalDavSyncWorkerDefaultReminderTest {
     private lateinit var dataStore: KashCalDataStore
     private lateinit var reminderScheduler: ReminderScheduler
 
-    // Test data
     private val testCalendar = Calendar(
         id = 1L,
         accountId = 1L,
@@ -69,11 +70,11 @@ class CalDavSyncWorkerDefaultReminderTest {
         dataStore = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
 
-        // Default mock behavior
+        // No test below reads these stubs.
         coEvery { dataStore.defaultReminderMinutes } returns flowOf(15)
         coEvery { dataStore.defaultAllDayReminder } returns flowOf(720) // 12 hours
         coEvery { eventReader.getCalendarById(any()) } returns testCalendar
-        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any()) } returns listOf(
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(any(), any()) } returns listOf(
             createTestOccurrence(eventId = 1L)
         )
     }
@@ -87,7 +88,7 @@ class CalDavSyncWorkerDefaultReminderTest {
 
     @Test
     fun `NEW event without VALARM on incremental sync gets default reminder`() = runTest {
-        // Event from incremental sync (isFromInitialSync = false), no reminders
+        // Incremental sync (isFromInitialSync = false), no reminders.
         val event = createTestEvent(id = 1L, reminders = null, alarmCount = 0)
         val change = createSyncChange(
             type = ChangeType.NEW,
@@ -97,7 +98,6 @@ class CalDavSyncWorkerDefaultReminderTest {
 
         coEvery { eventReader.getEventById(1L) } returns event
 
-        // Simulate the logic
         val shouldApply = shouldApplyDefaultReminder(change, event, defaultMinutes = 15)
 
         assertTrue("Should apply default reminder to new event on incremental sync", shouldApply)
@@ -137,8 +137,8 @@ class CalDavSyncWorkerDefaultReminderTest {
 
     @Test
     fun `NEW event with alarmCount greater than 0 but empty reminders does NOT get default (truncated)`() = runTest {
-        // This represents truncated alarms - server has >3 alarms but we only store first 3
-        // alarmCount > 0 means there ARE alarms on the server, just not in our reminders list
+        // alarmCount counts every alarm, while reminders keeps at most 5 (ICalEventMapper), so a
+        // nonzero alarmCount blocks the default even when the reminders list is empty.
         val event = createTestEvent(id = 1L, reminders = emptyList(), alarmCount = 5)
         val change = createSyncChange(
             type = ChangeType.NEW,
@@ -164,7 +164,8 @@ class CalDavSyncWorkerDefaultReminderTest {
 
         coEvery { eventReader.getEventById(1L) } returns event
 
-        // MODIFIED events should never get defaults applied
+        // MODIFIED events never get defaults. The local predicate omits the NEW check, so it
+        // is applied here as the worker does.
         val shouldApply = change.type == ChangeType.NEW &&
             shouldApplyDefaultReminder(change, event, defaultMinutes = 15)
 
@@ -202,12 +203,12 @@ class CalDavSyncWorkerDefaultReminderTest {
 
         coEvery { eventReader.getEventById(1L) } returns event
 
-        // Logic should use different default for all-day events
+        // All-day events use their own default.
         val defaultMinutes = if (event.isAllDay) 900 else 15
         val shouldApply = shouldApplyDefaultReminder(change, event, defaultMinutes)
 
         assertTrue("All-day event should get default reminder", shouldApply)
-        assertEquals(900, defaultMinutes) // All-day default = 9 AM the day before (-PT15H)
+        assertEquals(900, defaultMinutes) // The app's all-day default: 9 AM the day before (-PT15H)
     }
 
     @Test
@@ -226,17 +227,17 @@ class CalDavSyncWorkerDefaultReminderTest {
         val shouldApply = shouldApplyDefaultReminder(change, event, defaultMinutes)
 
         assertTrue("Timed event should get default reminder", shouldApply)
-        assertEquals(15, defaultMinutes) // Should use timed default
+        assertEquals(15, defaultMinutes)
     }
 
     @Test
     fun `exception events (NEW) get default reminder on incremental sync`() = runTest {
-        // Exception event = modified single occurrence of recurring event
+        // An exception: one changed occurrence of a recurring event.
         val event = createTestEvent(
             id = 101L,
             reminders = null,
             alarmCount = 0,
-            originalEventId = 1L,  // Has master event
+            originalEventId = 1L,  // Its master
             originalInstanceTime = System.currentTimeMillis()
         )
         val change = createSyncChange(
@@ -285,11 +286,11 @@ class CalDavSyncWorkerDefaultReminderTest {
     fun `null eventId in SyncChange is skipped`() = runTest {
         val change = createSyncChange(
             type = ChangeType.NEW,
-            eventId = null,  // Null - can't apply reminder
+            eventId = null,  // No event to apply a reminder to
             isFromInitialSync = false
         )
 
-        // Logic should skip changes with null eventId
+        // The worker skips a change with a null eventId.
         val shouldProcess = change.eventId != null
         assertFalse("Should skip changes with null eventId", shouldProcess)
     }
@@ -308,7 +309,7 @@ class CalDavSyncWorkerDefaultReminderTest {
 
     @Test
     fun `event with empty string reminders is treated as no reminders`() = runTest {
-        // Edge case: reminders might be empty list
+        // An empty reminders list counts as no reminders.
         val event = createTestEvent(id = 1L, reminders = emptyList(), alarmCount = 0)
         val change = createSyncChange(
             type = ChangeType.NEW,
@@ -327,18 +328,15 @@ class CalDavSyncWorkerDefaultReminderTest {
 
     @Test
     fun `updateReminders failure is logged and sync continues`() = runTest {
-        // This test verifies that failure in reminder application doesn't break sync
-        // The actual implementation wraps updateReminders in try-catch
-
-        // Simulate the try-catch logic that will be in the implementation
+        // Runs only a local try/catch. The worker's own catch around updateReminders (the event
+        // goes without a reminder and the sync continues) isn't exercised here.
         var continueProcessing = true
         var exceptionCaught = false
 
         try {
-            // Simulate a DB operation that throws
+            // Stands in for a failing DB write.
             throw RuntimeException("DB error")
         } catch (e: Exception) {
-            // Log error but continue - this is the expected behavior
             exceptionCaught = true
             continueProcessing = true
         }
@@ -350,8 +348,8 @@ class CalDavSyncWorkerDefaultReminderTest {
     // ==================== Helper Functions ====================
 
     /**
-     * Simulates the core logic for determining if default reminder should be applied.
-     * This mirrors the actual implementation logic in CalDavSyncWorker.
+     * Returns whether CalDavSyncWorker would apply the default reminder, copying its condition
+     * except the `ChangeType.NEW` check and the all-day versus timed choice of [defaultMinutes].
      */
     private fun shouldApplyDefaultReminder(
         change: SyncChange,

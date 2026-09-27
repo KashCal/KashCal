@@ -6,10 +6,10 @@ import org.junit.Test
 import java.time.DayOfWeek
 
 /**
- * Adversarial tests for RruleBuilder.
- *
- * Tests edge-case inputs: zero/negative intervals, invalid COUNT,
- * UNTIL in the past, empty collections, malformed RRULE strings.
+ * Tests [RruleBuilder] with edge-case inputs: zero, negative and huge intervals, empty and full
+ * BYDAY sets, zero, negative and huge COUNT, UNTIL at or before the epoch, malformed RRULE parts
+ * for [RruleBuilder.parseFrequency] and [RruleBuilder.parseRrule], display edge cases, and
+ * out-of-range month days and ordinals. The builder methods don't validate their inputs.
  */
 class RruleBuilderAdversarialTest {
 
@@ -17,9 +17,11 @@ class RruleBuilderAdversarialTest {
 
     @Test
     fun `daily with interval 0 produces INTERVAL=0`() {
-        // interval=0 is invalid per RFC 5545 but builder doesn't validate
+        // INTERVAL=0 is invalid (RFC 5545 §3.3.10 requires a positive integer); the builder
+        // doesn't validate.
         val result = RruleBuilder.daily(0)
-        // interval=0 is NOT 1, so it includes INTERVAL
+        // daily adds INTERVAL for anything but 1, so this is FREQ=DAILY;INTERVAL=0 (only FREQ is
+        // asserted).
         assertTrue("Should contain FREQ=DAILY", result.contains("FREQ=DAILY"))
     }
 
@@ -45,14 +47,14 @@ class RruleBuilderAdversarialTest {
     @Test
     fun `weekly with interval 0`() {
         val result = RruleBuilder.weekly(0)
-        // interval 0 is NOT > 1, so no INTERVAL added
+        // weekly adds INTERVAL only above 1.
         assertEquals("FREQ=WEEKLY", result)
     }
 
     @Test
     fun `weekly with negative interval`() {
         val result = RruleBuilder.weekly(-5)
-        // interval -5 is NOT > 1, so no INTERVAL added
+        // weekly adds INTERVAL only above 1.
         assertEquals("FREQ=WEEKLY", result)
     }
 
@@ -65,9 +67,8 @@ class RruleBuilderAdversarialTest {
     @Test
     fun `yearly with interval 0`() {
         val result = RruleBuilder.yearly(0)
-        // interval 0 is NOT 1, and NOT > 1 either, so it includes INTERVAL=0
-        // Actually: yearly uses if (interval == 1) ... else "..;INTERVAL=$interval"
-        // interval=0 → "FREQ=YEARLY;INTERVAL=0"
+        // yearly adds INTERVAL for anything but 1, so this is FREQ=YEARLY;INTERVAL=0 (only FREQ
+        // is asserted).
         assertTrue(result.contains("FREQ=YEARLY"))
     }
 
@@ -163,8 +164,8 @@ class RruleBuilderAdversarialTest {
             "FREQ=DAILY;INTERVAL=abc",
             DayOfWeek.MONDAY, 1, 1
         )
-        // INTERVAL= present → CUSTOM is already handled by parseFrequency
-        // But parseRrule extracts interval via regex, "abc" → toIntOrNull() returns null → default 1
+        // The INTERVAL regex matches digits only, so "abc" doesn't match and the interval
+        // defaults to 1.
         assertEquals(1, result.interval)
     }
 
@@ -174,7 +175,7 @@ class RruleBuilderAdversarialTest {
             "FREQ=DAILY;COUNT=xyz",
             DayOfWeek.MONDAY, 1, 1
         )
-        // COUNT regex matches digits only, "xyz" won't match → EndCondition.Never
+        // The COUNT regex matches digits only, so "xyz" doesn't match: EndCondition.Never.
         assertEquals(EndCondition.Never, result.endCondition)
     }
 
@@ -184,7 +185,7 @@ class RruleBuilderAdversarialTest {
             "FREQ=DAILY;UNTIL=NOTADATE",
             DayOfWeek.MONDAY, 1, 1
         )
-        // Malformed UNTIL → regex won't match → EndCondition.Never
+        // Neither UNTIL regex matches, so EndCondition.Never.
         assertEquals(EndCondition.Never, result.endCondition)
     }
 
@@ -194,7 +195,7 @@ class RruleBuilderAdversarialTest {
             "FREQ=WEEKLY;BYDAY=XX,MO",
             DayOfWeek.MONDAY, 1, 1
         )
-        // XX is not valid → mapNotNull filters it out, only MO remains
+        // XX isn't a weekday abbreviation, so it's dropped and only MO remains.
         assertEquals(setOf(DayOfWeek.MONDAY), result.weekdays)
     }
 

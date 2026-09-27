@@ -24,10 +24,7 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import javax.net.ssl.SSLHandshakeException
 
-/**
- * Interface for fetching ICS content.
- * Allows mocking in tests.
- */
+/** Fetches a subscription's ICS feed; an interface so tests can substitute a fake. */
 interface IcsFetcher {
     suspend fun fetch(subscription: IcsSubscription): FetchResult
 
@@ -45,17 +42,18 @@ interface IcsFetcher {
 
 private const val TAG = "OkHttpIcsFetcher"
 
-// Retry configuration (matches OkHttpCalDavClient pattern)
+// Same retry values as OkHttpCalDavClient. MAX_RETRIES counts attempts, not retries.
 private const val MAX_RETRIES = 2
 private const val INITIAL_BACKOFF_MS = 500L
 private const val MAX_BACKOFF_MS = 2000L
 private const val BACKOFF_MULTIPLIER = 2.0
 /**
- * OkHttp-based implementation of IcsFetcher with retry logic.
+ * Fetches ICS feeds over OkHttp with conditional headers and retries.
  *
- * Retry behavior:
- * - YES: SocketTimeoutException, ConnectException, UnknownHostException, HTTP 429/503/5xx
- * - NO: HTTP 401/403/404/413, SSLHandshakeException, invalid ICS content
+ * Retries with backoff (honoring Retry-After on 429 and 503): HTTP 429, 503 and other 5xx, and
+ * the network errors [isRetryableError] accepts. An SSL handshake failure gets one retry after
+ * AIA chain completion. Nothing else is retried: HTTP 401, 403, 404, 413 or any other code, an
+ * oversize body, invalid ICS.
  */
 @Singleton
 class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
@@ -76,7 +74,7 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
             .header("Accept", "text/calendar, */*")
             .header("User-Agent", "KashCal/1.0")
 
-        // Add conditional headers if we have cached values
+        // Conditional request from the cached validators; a match returns 304.
         subscription.etag?.let { etag ->
             requestBuilder.header("If-None-Match", etag)
         }
@@ -93,14 +91,14 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
             try {
                 val response = httpClient.newCall(request).execute()
 
-                // Handle retryable HTTP codes
+                // Retryable codes wait and retry, except on the last attempt.
                 when {
                     response.code == 429 && attempt < MAX_RETRIES - 1 -> {
                         val retryAfter = parseRetryAfterHeader(response) ?: currentBackoff
                         Log.w(TAG, "Rate limited (429), waiting ${retryAfter}ms before retry ${attempt + 1}")
                         delay(retryAfter)
                         currentBackoff = (currentBackoff * BACKOFF_MULTIPLIER).toLong().coerceAtMost(MAX_BACKOFF_MS)
-                        return@repeat // Continue to next retry
+                        return@repeat // next attempt
                     }
 
                     response.code == 503 && attempt < MAX_RETRIES - 1 -> {
@@ -119,19 +117,18 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
                     }
                 }
 
-                // Process response (no retry)
                 val result = processResponse(response)
                 if (result != null) {
                     return result
                 }
 
-                // Store error for potential retry exhaustion
+                // A retryable code on the last attempt; reported after the loop.
                 lastResult = IcsFetcher.FetchResult.Error("HTTP ${response.code}: ${response.message}")
 
             } catch (e: SSLHandshakeException) {
-                // Attempt AIA certificate chain completion as fallback.
-                // Some servers (e.g., Moodle) serve incomplete chains — the intermediate
-                // is missing but the leaf cert's AIA extension points to it.
+                // Some servers (e.g., Moodle) serve an incomplete chain: the intermediate is
+                // missing but the leaf cert's AIA extension points to it. Complete the chain
+                // and retry once.
                 Log.w(TAG, "SSL handshake failed, attempting AIA chain completion: ${e.message}")
                 val parsedUrl = URL(subscription.getNormalizedUrl())
                 val aiaResult = aiaCertChainCompleter.attemptChainCompletion(
@@ -170,14 +167,15 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
             }
         }
 
-        // All retries exhausted
+        // Reached only when the last attempt got 429, 503 or another 5xx.
         Log.e(TAG, "All $MAX_RETRIES retries exhausted for ${subscription.url}")
         return lastResult ?: IcsFetcher.FetchResult.Error("Failed after $MAX_RETRIES retries")
     }
 
     /**
-     * Process HTTP response and return result.
-     * Returns null for retryable error codes (caller handles retry).
+     * Maps a response to a result, validating a 2xx body as ICS.
+     *
+     * Returns null for 429, 503 and other 5xx; the caller retries or reports them as an error.
      */
     private fun processResponse(response: Response): IcsFetcher.FetchResult? {
         return when {
@@ -189,8 +187,7 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
                 val content = try {
                     response.readBoundedBody()
                 } catch (e: ResponseTooLargeException) {
-                    // Locally-detected oversize body — mirror the server-reported
-                    // 413 branch's wording rather than a generic network error.
+                    // Reported like the server's 413, not as a network error.
                     Log.w(TAG, "ICS feed too large: ${e.message}")
                     return IcsFetcher.FetchResult.Error("Calendar too large")
                 }
@@ -219,7 +216,6 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
                 IcsFetcher.FetchResult.Error("Calendar too large (413)")
             }
 
-            // For 429/503/5xx, return null to signal retry
             response.code == 429 || response.code == 503 || response.code in 500..599 -> {
                 null
             }
@@ -230,39 +226,32 @@ class OkHttpIcsFetcher @Inject constructor() : IcsFetcher {
         }
     }
 
-    /**
-     * Check if an IOException is retryable.
-     */
+    /** Returns true for timeout, DNS, connect and socket errors, EOF, or a "connection" message. */
     private fun isRetryableError(e: IOException): Boolean {
         return when {
             e is SocketTimeoutException -> true
             e is UnknownHostException -> true
             e is ConnectException -> true
-            e is SocketException -> true  // Connection reset
-            e is EOFException -> true     // Connection closed unexpectedly
+            e is SocketException -> true  // connection reset
+            e is EOFException -> true     // connection closed early
             e.message?.contains("connection", ignoreCase = true) == true -> true
             else -> false
         }
     }
 
     /**
-     * Parse Retry-After header value.
+     * Returns the Retry-After delay in milliseconds, or null if the header is missing or invalid.
      *
-     * RFC 7231 Section 7.1.3 defines two formats:
-     * - delay-seconds: "120" (seconds to wait)
-     * - HTTP-date: "Sun, 06 Nov 1994 08:49:37 GMT"
-     *
-     * @return Delay in milliseconds, or null if header is missing/invalid
+     * RFC 7231 §7.1.3 allows delay-seconds ("120") or an HTTP-date
+     * ("Sun, 06 Nov 1994 08:49:37 GMT"). A past date gives 0.
      */
     private fun parseRetryAfterHeader(response: Response): Long? {
         val retryAfter = response.header("Retry-After") ?: return null
 
-        // Try parsing as seconds first
         retryAfter.toLongOrNull()?.let { seconds ->
             return (seconds * 1000).coerceAtLeast(0)
         }
 
-        // Try parsing as HTTP-date
         return try {
             val dateFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'", Locale.US).apply {
                 timeZone = TimeZone.getTimeZone("GMT")

@@ -65,7 +65,7 @@ class SearchHighlightTest {
     fun `query 'on' highlights every non-overlapping occurrence in 'Notifications'`() {
         val result = highlighted("Notifications", "on", highlightStyle)
         // N(0) o(1) t(2) i(3) f(4) i(5) c(6) a(7) t(8) i(9) o(10) n(11) s(12).
-        // Only "on" pair is at indices 10..11.
+        // The only "on" is at indices 10..11.
         assertEquals(1, result.spanStyles.size)
         val span = result.spanStyles.single()
         assertEquals(10, span.start)
@@ -109,11 +109,10 @@ class SearchHighlightTest {
 
     @Test
     fun `Turkish locale - capital I in source does not crash and any spans align with source`() {
-        // Regression for the locale-aware lowercase length-mismatch bug:
-        // Turkish 'İ'.lowercase(tr) is 'i̇' (two code units). If the
-        // matcher computed indices in a lowercased buffer, slicing the
-        // original would crash or produce garbled spans. regionMatches
-        // works on the original string positions, so offsets always align.
+        // Lowercasing can change length: 'İ' lowercases to 'i̇' (two code units) outside the
+        // Turkish locale. Indices from a lowercased buffer would crash or garble spans when
+        // slicing the original; regionMatches works on the original's positions, so offsets
+        // always align.
         Locale.setDefault(Locale("tr", "TR"))
         val source = "İCloud"
         val result = highlighted(source, "i", highlightStyle)

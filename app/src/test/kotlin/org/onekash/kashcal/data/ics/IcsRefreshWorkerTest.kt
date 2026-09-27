@@ -23,13 +23,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for IcsRefreshWorker.
+ * Tests [IcsRefreshWorker.doWork] over a mocked repository.
  *
- * Tests:
- * - Refresh type routing (all, due, single)
- * - Success/failure/partial result handling
- * - Output data keys
- * - Retry logic on exception
+ * Covers routing by refresh type (all, due, single, and the default), the result for all,
+ * some and no feeds succeeding, retry on an exception, and [IcsRefreshWorker.KEY_ERROR_MESSAGE]
+ * once retries are spent. The other output keys aren't asserted.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -127,7 +125,7 @@ class IcsRefreshWorkerTest {
         worker = createWorker(inputData)
 
         val result = worker.doWork()
-        // Should be failure with error message
+        // The failure carries an error message (not asserted here).
         assertTrue(result is ListenableWorker.Result.Failure)
     }
 
@@ -163,16 +161,15 @@ class IcsRefreshWorkerTest {
         )
 
         val result = worker.doWork()
-        // Partial success - still returns success but with error message
+        // Partial success still ends in success, with an error message (not asserted here).
         assertTrue(result is ListenableWorker.Result.Success)
     }
 
     @Test
     fun `every feed erroring retries rather than failing`() = runTest {
-        // Failure is terminal for a periodic work spec: WorkManager marks it FAILED
-        // and never runs it again. One unreachable server would end background
-        // refresh until the next app start, which is the bug users report as
-        // "feeds only sync manually". Retry keeps the spec alive.
+        // Failure is terminal for a periodic work spec: WorkManager marks it FAILED and never
+        // runs it again, so one unreachable server would end background refresh until the next
+        // app start (users report it as "feeds only sync manually"). Retry keeps the spec alive.
         val inputData = Data.Builder()
             .putString(IcsRefreshWorker.KEY_REFRESH_TYPE, IcsRefreshWorker.REFRESH_TYPE_ALL)
             .build()
@@ -189,8 +186,8 @@ class IcsRefreshWorkerTest {
 
     @Test
     fun `every feed erroring at max attempts succeeds carrying the error message`() = runTest {
-        // Retries are exhausted, so the run has to end. It must still end in a
-        // state the periodic spec survives — the next period is the retry.
+        // Retries are spent, so the run ends, but it must end in a state the periodic spec
+        // survives: the next period is the retry.
         val inputData = Data.Builder()
             .putString(IcsRefreshWorker.KEY_REFRESH_TYPE, IcsRefreshWorker.REFRESH_TYPE_ALL)
             .build()
@@ -218,9 +215,8 @@ class IcsRefreshWorkerTest {
 
     @Test
     fun `a feed erroring while another is not yet due still retries`() = runTest {
-        // Skipped feeds are not counted as refreshed, so a single failing feed
-        // alongside one that simply isn't due yet reaches the all-errored branch.
-        // This is the common case for a multi-feed user, not an edge case.
+        // Skipped feeds don't count as refreshed, so one failing feed alongside one not yet due
+        // reaches the all-errored branch.
         val inputData = Data.Builder()
             .putString(IcsRefreshWorker.KEY_REFRESH_TYPE, IcsRefreshWorker.REFRESH_TYPE_DUE)
             .build()
@@ -253,8 +249,8 @@ class IcsRefreshWorkerTest {
 
     @Test
     fun `exception at max retries succeeds carrying the error message`() = runTest {
-        // Same reasoning as the all-errored branch: retries are spent, but ending
-        // FAILED would take the periodic spec down permanently.
+        // As in the all-errored branch: retries are spent, but ending FAILED would end the
+        // periodic spec for good.
         val inputData = Data.Builder()
             .putString(IcsRefreshWorker.KEY_REFRESH_TYPE, IcsRefreshWorker.REFRESH_TYPE_ALL)
             .build()

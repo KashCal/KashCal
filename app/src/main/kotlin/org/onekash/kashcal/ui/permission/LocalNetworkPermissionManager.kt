@@ -9,29 +9,26 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
 /**
- * Manages ACCESS_LOCAL_NETWORK permission state for LAN CalDAV sync.
+ * Reads the ACCESS_LOCAL_NETWORK permission state for LAN servers.
  *
- * Android 17 (API 37) blocks local-network socket traffic — including OkHttp
- * connections used for CalDAV — unless this runtime permission (part of the
- * NEARBY_DEVICES group) is granted. On older OS versions apps with INTERNET
- * retain implicit local-network access, so this manager reports the permission
- * as not required and always granted.
+ * Android 17 (API 37) blocks local-network socket traffic, the OkHttp connections used for
+ * CalDAV included, unless this runtime permission (part of the NEARBY_DEVICES group) is granted.
+ * On older OS versions apps with INTERNET keep implicit local-network access, so this reports
+ * the permission as not required and always granted.
  *
- * Mirrors [NotificationPermissionManager]: instantiated with an Activity at the
- * call site (not Hilt-injected) because the runtime request and rationale read
- * both require an Activity. Pure state derivation lives in
- * [resolveLocalNetworkPermissionState]; this class only supplies the framework
- * readings.
+ * Like [NotificationPermissionManager] it is constructed at the call site, not Hilt-injected;
+ * the rationale reads take an Activity per call. The state derivation is
+ * [resolveLocalNetworkPermissionState]; this class only supplies the framework readings.
  */
 class LocalNetworkPermissionManager(
     private val context: Context,
 ) {
 
-    /** True on Android 17+ where the runtime permission is enforced. */
+    /** Returns true on Android 17 and later, where the runtime permission is enforced. */
     fun isPermissionRequired(): Boolean =
         Build.VERSION.SDK_INT >= LOCAL_NETWORK_PERMISSION_MIN_SDK
 
-    /** Whether local-network access is currently available (auto-true pre-37). */
+    /** Returns whether local-network access is available now; always true below API 37. */
     fun isPermissionGranted(): Boolean {
         if (!isPermissionRequired()) return true
         return ContextCompat.checkSelfPermission(
@@ -41,9 +38,8 @@ class LocalNetworkPermissionManager(
     }
 
     /**
-     * Resolve the live permission state, reflecting any grant/revoke performed
-     * in system Settings. Returns [LocalNetworkPermissionState.NotRequired] on
-     * pre-37 OS versions.
+     * Resolves the live state, including a grant or revoke made in system settings. Returns
+     * [LocalNetworkPermissionState.NotRequired] below API 37.
      */
     fun resolveState(activity: Activity): LocalNetworkPermissionState {
         val required = isPermissionRequired()
@@ -59,7 +55,7 @@ class LocalNetworkPermissionManager(
         )
     }
 
-    /** Sample `shouldShowRequestPermissionRationale` (for the rationale-flip classify). */
+    /** Samples `shouldShowRequestPermissionRationale` for [classifyLocalNetworkAfterRequest]. */
     fun shouldShowRationale(activity: Activity): Boolean =
         isPermissionRequired() && ActivityCompat.shouldShowRequestPermissionRationale(
             activity,
@@ -67,7 +63,7 @@ class LocalNetworkPermissionManager(
         )
 
     companion object {
-        /** Android 17 = API level 37. Hardcoded until a named constant ships in the SDK. */
+        /** Android 17 is API level 37. Hardcoded until a named constant ships in the SDK. */
         const val LOCAL_NETWORK_PERMISSION_MIN_SDK = 37
     }
 }

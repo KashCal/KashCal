@@ -33,14 +33,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [PullStrategy.maybeRefreshMetadata] — the per-pull calendar metadata
- * refresh hook that mirrors the event-color asymmetry at PullStrategy.kt:938.
+ * Tests the calendar metadata refresh in [PullStrategy.pull]: a non-null, valid server color,
+ * display name or read-only flag wins, and null keeps the local value, the same rule the pull
+ * applies to event colors.
  *
- * Runs on every pull (including the ctag-unchanged NoChanges path) because
- * some servers don't bump ctag on metadata-only changes.
+ * The refresh runs on every pull, the ctag-unchanged NoChanges path included, because some
+ * servers don't bump the ctag on metadata-only changes. A failed ctag probe skips it.
  *
- * Requires Robolectric because [ServerColorParser] calls android.graphics.Color
- * for hex parsing.
+ * Robolectric is needed because [ServerColorParser] parses hex with `android.graphics.Color`.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -122,7 +122,7 @@ class PullStrategyMetadataRefreshTest {
 
         pullStrategy.pull(calendar, client = client)
 
-        // No field differs → no write at all
+        // No field differs, so no write at all.
         coVerify(exactly = 0) { calendarRepository.updateMetadata(any(), any(), any(), any()) }
     }
 
@@ -139,7 +139,7 @@ class PullStrategyMetadataRefreshTest {
 
     @Test
     fun `server returns same color as local - updateMetadata skipped`() = runTest {
-        // #FF5733 parses to 0xFFFF5733 (alpha full). Local already has same.
+        // #FF5733 parses to 0xFFFF5733 (full alpha), which the local row already has.
         val calendar = createCalendar(ctag = "ctag-123", color = 0xFFFF5733.toInt())
         coEvery { client.getCtag(calendar.caldavUrl) } returns
             CalDavResult.success(probe(ctag = "ctag-123", color = "#FF5733"))
@@ -267,12 +267,12 @@ class PullStrategyMetadataRefreshTest {
         }
     }
 
-    // ========== Ordering invariant: runs BEFORE NoChanges ==========
+    // ========== Ordering invariant: runs before NoChanges ==========
 
     @Test
     fun `ctag matches but color differs - NoChanges returned AND updateMetadata called`() = runTest {
-        // This is the critical invariant: some servers don't bump ctag on
-        // metadata-only changes, so the refresh must run before the early return.
+        // Some servers don't bump the ctag on metadata-only changes, so the refresh must run
+        // before the early return.
         val calendar = createCalendar(
             ctag = "ctag-123",
             color = 0xFF000000.toInt()
@@ -300,10 +300,8 @@ class PullStrategyMetadataRefreshTest {
 
     @Test
     fun `localColorOverride is never in the updateMetadata call`() = runTest {
-        // updateMetadata signature has no localColorOverride param — the column
-        // is preserved by virtue of only color/displayName/isReadOnly being
-        // written. This test asserts the signature contract, locking in that
-        // the override column stays untouched by sync.
+        // updateMetadata has no localColorOverride parameter, so sync can't write the
+        // override column. This test locks in that signature contract.
         val calendar = createCalendar(
             ctag = "ctag-123",
             color = 0xFF000000.toInt(),
@@ -322,10 +320,8 @@ class PullStrategyMetadataRefreshTest {
                 isReadOnly = null
             )
         }
-        // No other write path touches the calendar. The Calendar row's
-        // localColorOverride column is preserved because our write path is
-        // focused per-field updates (updateColor/updateDisplayName/setReadOnly),
-        // not a full-row copy.
+        // The override column survives because updateMetadata is one UPDATE of color,
+        // display_name and is_read_only, not a full-row copy.
     }
 
     // ========== Runs on full-sync path ==========
@@ -388,8 +384,8 @@ class PullStrategyMetadataRefreshTest {
 
     @Test
     fun `getCtag returns 500 - no metadata update attempted`() = runTest {
-        // Zoho-style server without ctag support. Pull falls through to
-        // ctag-less path (existing behavior); metadata refresh is a no-op.
+        // A server without ctag support, as Zoho is. The pull continues without a ctag and
+        // skips the metadata refresh.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = null)
         coEvery { client.getCtag(calendar.caldavUrl) } returns
             CalDavResult.error(500, "Ctag not found in response")

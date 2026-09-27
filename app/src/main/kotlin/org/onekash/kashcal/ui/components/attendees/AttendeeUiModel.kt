@@ -8,50 +8,47 @@ import org.onekash.kashcal.domain.identity.matchesAttendee
 import org.onekash.kashcal.util.AddressNormalizer
 
 /**
- * Read-only UI projection of an [Attendee] row. Built once at the
- * read boundary; composables receive [AttendeeUiModel] not [Attendee],
- * so DB strings (raw partstat, raw mailto address) never leak into the
- * UI layer.
+ * Projects a Room [Attendee] row or a device [DeviceAttendee] row for display. Built once at the
+ * read boundary, so raw stored strings (PARTSTAT, `mailto:` addresses) never reach composables.
  */
 @Immutable
 data class AttendeeUiModel(
-    /** Display label — CN if present, else local-part of address, else raw address. */
+    /** Label: the CN when present, else the address's local part, else the whole [bareAddress]. */
     val displayName: String,
-    /** Address with `mailto:` prefix stripped + lowercased per RFC 5545 §3.3.3 canonical form. */
+    /**
+     * The address for display and matching: [AddressNormalizer.canonical] for a Room row, the
+     * email without `mailto:` and lowercased for a device row, empty for a device row with no
+     * email.
+     */
     val bareAddress: String,
     val status: AttendeeStatus,
     /** True when this attendee is the authenticated user on the event's account. */
     val isYou: Boolean,
     /** True when this attendee's address matches the event's ORGANIZER. */
     val isOrganizer: Boolean,
-    /** Wire-order preservation; index in the source attendees list. */
+    /**
+     * Order among the attendees: the Room row's own sort order, or the device row's index. The
+     * synthesized organizer is -1.
+     */
     val sortOrder: Int,
     /**
-     * True when this chip was synthesized from `event.organizer_email`
-     * because the ORGANIZER isn't represented on the ATTENDEE list. Two
-     * flavors: the user organized the event without listing themselves
-     * (isYou=true), or the user was invited and the host was stripped from
-     * the ATTENDEE list (isYou=false). Used as part of the Compose slot key
-     * so synthesized chips can never collide with real attendee rows.
+     * True when [fromRoom] built this entry from the event's ORGANIZER because no ATTENDEE row
+     * represents it: the user organized without listing themselves ([isYou] true), or the user
+     * was invited and the host isn't on the ATTENDEE list ([isYou] false).
      */
     val isSynthesized: Boolean = false
 ) {
     companion object {
         /**
-         * Build the UI model list from Room rows.
+         * Builds the models for an event's Room attendee rows, adding a synthesized organizer
+         * first when no row represents the ORGANIZER.
          *
-         * @param attendees rows in their original sortOrder
-         * @param currentAccount the event's account; null when there's no
-         *   resolvable account (orphan event, deleted account). When null,
-         *   every model has [isYou] = false.
-         * @param organizerAddress the event's ORGANIZER property (raw form);
-         *   each attendee's [isOrganizer] is computed by canonical match.
-         * @param organizerName the event's ORGANIZER CN (raw form). Used as
-         *   the synthesized chip's display name when ORGANIZER isn't already
-         *   represented as an ATTENDEE row; falls back to [Account.displayName]
-         *   when the user IS the organizer, then to local-part of the canonical
-         *   address. Pre-A2 events without this field still render correctly
-         *   via the displayName / local-part fallback chain.
+         * @param currentAccount the event's account, or null when none resolves (an orphan
+         *   event, a deleted account); then every model has [isYou] false.
+         * @param organizerAddress the event's ORGANIZER, raw; [isOrganizer] is a canonical match.
+         * @param organizerName the ORGANIZER CN, raw: the synthesized entry's name. It falls
+         *   back to [Account.displayName] when the user is the organizer, then to the address's
+         *   local part, which covers events stored without a CN.
          */
         fun fromRoom(
             attendees: List<Attendee>,
@@ -72,18 +69,14 @@ data class AttendeeUiModel(
                 )
             }
 
-            // RFC 5545: ORGANIZER and ATTENDEE are separate properties. When
-            // ORGANIZER isn't represented on the ATTENDEE list, synthesize a
-            // chip so the host is visible. Two flavors fall out of one rule:
-            //  - User organized the event, no self ATTENDEE row → "You" + 👑.
-            //  - User was invited, host stripped from ATTENDEE list by an
-            //    iTIP-style server → host chip with 👑, isYou = false.
+            // ORGANIZER and ATTENDEE are separate properties (RFC 5545), so when no ATTENDEE row
+            // is the organizer, synthesize one so the host is visible:
+            //  - the user organized with no self ATTENDEE row: "You" as host;
+            //  - the user was invited and an iTIP-style server stripped the host from the
+            //    ATTENDEE list: the host, isYou false.
             //
-            // "Already represented" includes the multi-alias case: if the user
-            // is the organizer and the user already appears on the attendee
-            // list via a different alias, the organizer is represented through
-            // the existing "You" chip. Without this guard a multi-alias
-            // organizer would render twice.
+            // A user-organizer already on the list under another alias counts as represented
+            // through the existing "You" row; otherwise that organizer would show twice.
             if (!canonicalOrganizer.isNullOrBlank()) {
                 val userIsOrganizer = currentAccount?.matchesAttendee(organizerAddress!!) == true
                 val organizerOnList = mapped.any { it.bareAddress == canonicalOrganizer } ||
@@ -104,19 +97,16 @@ data class AttendeeUiModel(
         }
 
         /**
-         * Build the UI model list from CalendarProvider `Attendees` rows.
+         * Builds the models for CalendarProvider `Attendees` rows, one model per row.
          *
-         * Unlike [fromRoom], the device provider stores ORGANIZER as an
-         * ordinary attendee row flagged `RELATIONSHIP_ORGANIZER`, so there is
-         * no separate ORGANIZER property to reconcile and no synthesized chip:
-         * one provider row maps to exactly one model. Status comes from the
-         * provider int (not a PARTSTAT string), and "you" is decided by
-         * canonical-matching the calendar's owner email (`OWNER_ACCOUNT`)
-         * rather than a CalDAV account's mailto addresses.
+         * The provider stores the organizer as an ordinary attendee row flagged
+         * `RELATIONSHIP_ORGANIZER`, so unlike [fromRoom] nothing is synthesized. Status comes
+         * from the provider's int, and "you" is a canonical match on the calendar's
+         * `OWNER_ACCOUNT` instead of a CalDAV account's addresses.
          *
-         * @param attendees rows in provider order (index becomes [sortOrder])
-         * @param ownerEmail the device calendar's `OWNER_ACCOUNT`; null when
-         *   unknown, in which case every model has [isYou] = false.
+         * @param attendees rows in provider order; the index becomes [sortOrder].
+         * @param ownerEmail the calendar's `OWNER_ACCOUNT`, or null or blank when unknown; then
+         *   every model has [isYou] false.
          */
         fun fromDevice(
             attendees: List<DeviceAttendee>,
@@ -140,12 +130,9 @@ data class AttendeeUiModel(
         }
 
         /**
-         * Canonicalize a device-provider email (`ATTENDEE_EMAIL` /
-         * `OWNER_ACCOUNT`) for compare-time equality. Delegates to the
-         * data-layer
-         * [org.onekash.kashcal.data.calendar_provider.canonicalAttendeeEmail]
-         * so the read-side identity match and the write-side guest diff share
-         * one canonicalization rule and can't drift.
+         * Canonicalizes a device `ATTENDEE_EMAIL` or `OWNER_ACCOUNT` through
+         * [org.onekash.kashcal.data.calendar_provider.canonicalAttendeeEmail], so the read-side
+         * identity match and the write-side guest diff share one rule.
          */
         private fun canonicalDeviceEmail(raw: String): String =
             org.onekash.kashcal.data.calendar_provider.canonicalAttendeeEmail(raw)
@@ -169,10 +156,8 @@ data class AttendeeUiModel(
         )
 
         /**
-         * "Humanize an address" — used by both real-attendee mapping and
-         * the synthesized organizer chip. CN wins if present and non-blank;
-         * else the local-part of the canonical address; else the canonical
-         * itself for non-mailto forms.
+         * Returns the trimmed [cn] when not blank, else the local part of [canonicalAddress],
+         * else the whole address when it has no local part.
          */
         private fun displayNameFor(cn: String?, canonicalAddress: String): String {
             val trimmedCn = cn?.trim()
@@ -182,11 +167,9 @@ data class AttendeeUiModel(
         }
 
         /**
-         * True when [currentAccount] matches any attendee OR matches
-         * [organizerAddress]. Drives whether the chip row uses the inline
-         * render (with the user surfaced as a chip) or falls back to the
-         * lavender count chip. Organizer-only events (user organizes,
-         * no attendee row for the user) still render Inline.
+         * Returns true when [currentAccount] matches an attendee or [organizerAddress], so an
+         * organizer with no attendee row of their own counts as on the list. When false,
+         * [InviteesBlock] shows its off-list summary.
          */
         fun isCurrentUserOnList(
             attendees: List<Attendee>,
@@ -200,15 +183,13 @@ data class AttendeeUiModel(
         }
 
         /**
-         * Sort for the chip row.
+         * Orders models for a chip row: the first You at index 0, then the models that aren't You
+         * by [sortOrder]; any further You is left out.
          *
-         * - When [expanded] = true: all models, with You (if any) at index 0.
-         * - When collapsed and total ≤ 3: same — You at 0, all visible.
-         * - When collapsed and total ≥ 4 and You exists: 4 chips total —
-         *   You at index 0 plus the next 3 by sortOrder excluding You.
-         *   Pinning You without hiding two wire-first slots matches Google
-         *   Calendar parity.
-         * - When collapsed and total ≥ 4 and no You: first 3 by sortOrder.
+         * - [expanded], or collapsed with at most 3 models: all of them.
+         * - Collapsed with 4 or more and a You: You plus the next 3, so pinning You hides no
+         *   other chip of the first three.
+         * - Collapsed with 4 or more and no You: the first 3.
          */
         fun sortForCollapsedView(
             models: List<AttendeeUiModel>,
@@ -222,10 +203,8 @@ data class AttendeeUiModel(
 
             if (expanded) return withYouFirst
             if (you == null) {
-                // No You — first 3 by sortOrder when total ≥ 4, else all.
                 return if (models.size >= 4) others.take(3) else others
             }
-            // You exists — 4 chips when total ≥ 4 (You + 3 others), else all.
             return if (models.size >= 4) {
                 listOf(you) + others.take(3)
             } else {

@@ -38,17 +38,9 @@ import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 
 /**
- * Unit tests for ContactAnniversaryRepository.
- *
- * Tests calendar management and sync operations with mocked dependencies.
- *
- * Tests:
- * - calendarExists: true/false cases
- * - ensureCalendarExists: creates new, returns existing
- * - removeCalendar: delegates to AccountRepository
- * - syncEvents: error when no calendar, SecurityException handling
- * - getCaldavUrl: format validation
- * - Calendar color operations
+ * Tests [ContactAnniversaryRepository] over mocked collaborators: calendar create, lookup, removal
+ * and color, and [BaseContactEventRepository.syncEvents] (errors, an empty sync, orphan deletes,
+ * cancelling reminders turned off), plus the [ContactEventType.getCaldavUrl] key format.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContactAnniversaryRepositoryTest {
@@ -94,10 +86,8 @@ class ContactAnniversaryRepositoryTest {
         every { Log.e(any(), any()) } returns 0
         every { Log.e(any(), any(), any()) } returns 0
 
-        // Data-bearing collaborators are explicit (not relaxed) so an
-        // unexpected query throws instead of silently returning null/empty.
-        // Defaults reproduce the previous relaxed behavior; per-test stubs
-        // override them.
+        // AccountRepository and CalendarsDao are strict mocks so an unstubbed call throws instead
+        // of returning null or empty; these defaults are overridden per test.
         accountRepository = mockk()
         coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 0L
@@ -239,7 +229,7 @@ class ContactAnniversaryRepositoryTest {
         coEvery { calendarsDao.getById(20L) } returns testCalendar
         coEvery { dataStore.getAnniversaryReminder() } returns 0
 
-        // ContentResolver throws SecurityException (no permission)
+        // The query throws SecurityException, as without the contacts permission.
         every { contentResolver.query(any(), any(), any(), any(), any()) } throws SecurityException("No permission")
 
         val result = repository.syncEvents()
@@ -256,7 +246,7 @@ class ContactAnniversaryRepositoryTest {
         coEvery { calendarsDao.getById(20L) } returns testCalendar
         coEvery { dataStore.getAnniversaryReminder() } returns 0
 
-        // Throw exception with null message
+        // An exception with a null message.
         every { contentResolver.query(any(), any(), any(), any(), any()) } throws NullPointerException()
 
         val result = repository.syncEvents()
@@ -274,7 +264,7 @@ class ContactAnniversaryRepositoryTest {
         coEvery { dataStore.getAnniversaryReminder() } returns 0
         coEvery { eventsDao.getAllMasterEventsForCalendar(20L) } returns emptyList()
 
-        // Empty cursor (no contacts with anniversaries)
+        // A null cursor: no contact has an anniversary.
         every { contentResolver.query(any(), any(), any(), any(), any()) } returns null
 
         val result = repository.syncEvents()
@@ -294,7 +284,7 @@ class ContactAnniversaryRepositoryTest {
         coEvery { calendarsDao.getById(20L) } returns testCalendar
         coEvery { dataStore.getAnniversaryReminder() } returns 0
 
-        // Existing event for a contact that no longer has anniversary
+        // An event for a contact that no longer has an anniversary.
         val orphanEvent = Event(
             id = 100L,
             uid = "test-uid",
@@ -307,7 +297,7 @@ class ContactAnniversaryRepositoryTest {
         )
         coEvery { eventsDao.getAllMasterEventsForCalendar(20L) } returns listOf(orphanEvent)
 
-        // No contacts returned
+        // No contact rows.
         every { contentResolver.query(any(), any(), any(), any(), any()) } returns null
 
         val result = repository.syncEvents()
@@ -337,7 +327,7 @@ class ContactAnniversaryRepositoryTest {
         )
     }
 
-    // ==================== Multiple anniversaries per contact ====================
+    // ==================== Keys without a date suffix ====================
 
     @Test
     fun `syncEvents deletes old-format caldavUrl events as orphans`() = runTest {
@@ -348,7 +338,7 @@ class ContactAnniversaryRepositoryTest {
         coEvery { calendarsDao.getById(20L) } returns testCalendar
         coEvery { dataStore.getAnniversaryReminder() } returns 0
 
-        // Existing event with OLD format caldavUrl (no date suffix)
+        // An event whose caldavUrl key has no month-day suffix.
         val oldFormatEvent = Event(
             id = 100L,
             uid = "test-uid",
@@ -357,11 +347,11 @@ class ContactAnniversaryRepositoryTest {
             startTs = System.currentTimeMillis(),
             endTs = System.currentTimeMillis() + 86400000,
             dtstamp = System.currentTimeMillis(),
-            caldavUrl = "contact_anniversary:alice_key"  // Old format: no date
+            caldavUrl = "contact_anniversary:alice_key"  // no date suffix
         )
         coEvery { eventsDao.getAllMasterEventsForCalendar(20L) } returns listOf(oldFormatEvent)
 
-        // No contacts returned — old event should be deleted as orphan
+        // No contact rows, so the event is deleted as an orphan.
         every { contentResolver.query(any(), any(), any(), any(), any()) } returns null
 
         val result = repository.syncEvents()
@@ -396,10 +386,9 @@ class ContactAnniversaryRepositoryTest {
     // ==================== Reminder preference → None cancels prior alarms ====================
 
     /**
-     * Regression: when the user switches the anniversary reminder preference to "None"
-     * and a sync runs, the existing event's `reminders` field becomes null. Prior
-     * AlarmManager alarms must still be cancelled — the early-return for the
-     * null/empty case must NOT skip the cancellation.
+     * Setting the anniversary reminder to None makes a sync set the existing event's `reminders` to
+     * null. Its AlarmManager alarms must still be cancelled: the empty-reminders return in
+     * reminder scheduling must not skip the cancel.
      */
     @Test
     fun `syncEvents cancels reminders when an existing event's reminders become null`() = runTest {
@@ -414,10 +403,10 @@ class ContactAnniversaryRepositoryTest {
         coEvery { calendarsDao.getByAccountIdOnce(10L) } returns listOf(testCalendar)
         coEvery { calendarsDao.getById(20L) } returns testCalendar
 
-        // User preference: REMINDER_OFF (-1) → repo computes expectedReminders = null
+        // REMINDER_OFF (-1) makes the expected reminders null.
         coEvery { dataStore.getAnniversaryReminder() } returns KashCalDataStore.REMINDER_OFF
 
-        // Existing event still has an old reminder; diff predicate must fire.
+        // The stored event still has a reminder, so the reminders differ and it is updated.
         val existingEvent = Event(
             id = 100L,
             uid = "anniversary-uid@kashcal.anniversary",

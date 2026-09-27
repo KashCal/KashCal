@@ -6,11 +6,11 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * Unit tests for declined-event visual policy.
+ * Tests [declinedCardAlpha] and [declinedTitleDecoration].
  *
- * The policy: declined events render at 50% alpha with strikethrough on the
- * title. Past events also render at 50%. When both are true, alpha caps at
- * 0.5f (not multiplied to 0.25f) so declined-and-past events stay legible.
+ * Declined and cancelled events render at 50% alpha with strikethrough on the
+ * title. Past events also render at 50%. When several apply, alpha caps at 0.5f
+ * (not multiplied to 0.25f) so the event stays legible.
  */
 class DeclinedVisualsTest {
 
@@ -52,7 +52,8 @@ class DeclinedVisualsTest {
 
     @Test
     fun `cancelled defaults keep existing callers unchanged`() {
-        // isCancelled defaults to false, so pre-existing two/one-arg calls are unaffected.
+        // isCancelled defaults to false, so a call that omits it gets the
+        // declined/past result.
         assertEquals(1.0f, declinedCardAlpha(isPast = false, isDeclined = false))
         assertNull(declinedTitleDecoration(isDeclined = false))
     }

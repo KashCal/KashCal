@@ -23,11 +23,10 @@ import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for [ContactEmailReader]. Robolectric supplies a real Context for
- * the READ_CONTACTS permission check (granted/denied via the shadow), while a
- * mocked [ContentResolver] + [Cursor] feeds rows — the convention used by the
- * other contacts repository tests. Exercises the permission gate, the
- * blank-prefix short-circuit, and the cursor→model mapping with dedup.
+ * Tests [ContactEmailReader]: the READ_CONTACTS gate, the blank-prefix return, the cursor
+ * mapping (dedup by canonical address, blank addresses skipped, null cursor) and the name
+ * column it projects. Robolectric supplies a real Context whose shadow grants or denies
+ * READ_CONTACTS; a mocked [ContentResolver] and [Cursor] feed the rows.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -45,12 +44,11 @@ class ContactEmailReaderTest {
     private fun deny() =
         Shadows.shadowOf(context as Application).denyPermissions(Manifest.permission.READ_CONTACTS)
 
-    /** Mock a 2-column cursor (contact name, address) over the given (name,address) rows. */
+    /** Mocks a cursor with a contact name column and an address column over [rows]. */
     private fun cursorOf(vararg rows: Pair<String?, String?>): Cursor {
         val cursor = mockk<Cursor>(relaxed = true)
-        // Reader resolves columns by name; give it stable indices 0/1. The name
-        // column is the joined contact name (Contacts.DISPLAY_NAME), NOT the
-        // per-email-row label (Email.DISPLAY_NAME / DATA4).
+        // The reader resolves columns by name. The name column is the joined contact name
+        // (Contacts.DISPLAY_NAME), not the per-email label (Email.DISPLAY_NAME, DATA4).
         every { cursor.getColumnIndex(any()) } answers {
             when (firstArg<String>()) {
                 Contacts.DISPLAY_NAME -> 0
@@ -116,10 +114,9 @@ class ContactEmailReaderTest {
 
     @Test
     fun `projects the joined contact name column, not the per-email-row label`() = runTest {
-        // Email.DISPLAY_NAME (DATA4) is the per-email label and is almost always
-        // blank, so projecting it rendered every suggestion as a bare address
-        // even when the filter matched the contact's name. The projection must
-        // request Contacts.DISPLAY_NAME (the joined contact name).
+        // Email.DISPLAY_NAME (DATA4) is the per-email label and almost always blank, so
+        // projecting it shows a bare address even for a suggestion matched by name. The
+        // projection must request Contacts.DISPLAY_NAME instead.
         grant()
         val projectionSlot = slot<Array<String>>()
         every {

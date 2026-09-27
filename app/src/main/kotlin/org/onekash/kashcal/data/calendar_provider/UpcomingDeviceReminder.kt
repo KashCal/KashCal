@@ -3,44 +3,38 @@ package org.onekash.kashcal.data.calendar_provider
 import androidx.compose.runtime.Immutable
 
 /**
- * Data class representing an upcoming reminder for a device calendar event.
+ * The next device-event reminder to schedule, from
+ * [CalendarProviderRepository.getNextUpcomingReminder].
  *
- * Used by [CalendarProviderRepository.getNextUpcomingReminder] to return
- * the next reminder that should be scheduled.
- *
- * Key design: Uses (eventId, occurrenceStartTs) as stable composite key,
- * NOT instanceId (which is ephemeral and changes based on query range).
+ * Keyed by (eventId, occurrenceStartTs). An Instances `_ID` can't be the key: it changes with
+ * the queried range.
  */
 @Immutable
 data class UpcomingDeviceReminder(
-    /** Event ID from CalendarContract.Events (stable) */
+    /** The Events row id. */
     val eventId: Long,
 
-    /** Occurrence start timestamp - forms stable key with eventId */
+    /** The occurrence's start; with [eventId], the key. */
     val occurrenceStartTs: Long,
 
-    /** Event title for notification display */
+    /** Shown in the notification. */
     val title: String,
 
-    /** Event location (nullable) */
     val location: String?,
 
-    /** Whether this is an all-day event */
     val isAllDay: Boolean,
 
-    /** Reminder offset in minutes before event start */
+    /** Minutes before the start; negative means after. */
     val reminderMinutes: Int,
 
     /**
-     * Calculated trigger time for the alarm.
-     * For timed events: occurrenceStartTs - (reminderMinutes * 60 * 1000)
-     * For all-day events: 9 AM local time, N days before
+     * When the alarm fires: [occurrenceStartTs] minus [reminderMinutes] for a timed event; for an
+     * all-day event, local midnight of the day minus [reminderMinutes].
      */
     val triggerTime: Long,
 
-    /** Calendar display color */
+    /** The event's color override if set, else the calendar's color. */
     val calendarColor: Int,
 
-    /** Calendar ID (for filtering) */
     val calendarId: Long
 )

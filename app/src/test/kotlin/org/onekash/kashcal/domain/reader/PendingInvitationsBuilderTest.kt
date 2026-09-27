@@ -12,16 +12,16 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Pure-helper tests for [buildPendingInvitations] — the policy that
- * decides which Room events qualify as "pending invitations" for the
- * inbox.
+ * Tests [buildPendingInvitations], which picks the Room events the inbox shows as pending
+ * invitations.
  *
- * Decision policy: invite scope is per-account; an event in account B's
- * calendar qualifies iff the user (account B) is on the ATTENDEE list with
- * `partstat = NEEDS-ACTION`, the event's ORGANIZER is non-blank AND not
- * the same identity as account B, and the event is a master (not an
- * exception). Time predicate (`dtstart >= now`) is enforced by the SQL
- * filter in EventsDao; this builder takes the SQL-filtered list as input.
+ * An event in account B's calendar qualifies when B has a NEEDS-ACTION attendee row for it, B
+ * doesn't organize it (a blank or null organizer passes), and it isn't an exception. The time
+ * filter (a non-cancelled occurrence not yet ended) is SQL's, in
+ * `EventsDao.getMasterEventsWithFutureOccurrenceFlow`; these tests pass the lists in directly.
+ * Also covers empty input, an unknown account, case and whitespace in the organizer match, the
+ * login fallback for an account without discovered addresses, the organizer label and the sort
+ * by next start.
  */
 class PendingInvitationsBuilderTest {
 
@@ -131,7 +131,7 @@ class PendingInvitationsBuilderTest {
         val calA = calendar(10, accountId = 1)
         val calB = calendar(20, accountId = 2)
 
-        // event in B's calendar with A's address as attendee — does NOT belong in A's or B's inbox
+        // An event in B's calendar with A's address as attendee belongs in neither inbox.
         val evInB = event(200, calendarId = 20)
         val evInA = event(100, calendarId = 10)
 
@@ -178,8 +178,8 @@ class PendingInvitationsBuilderTest {
             addresses = listOf("mailto:alice@icloud.com", "mailto:alice2@icloud.com")
         )
         val cal = calendar(10, accountId = 1)
-        // organizer is alice2 (still self), attendee row is alice (still self), NEEDS-ACTION:
-        // some servers stamp the organizer's own ATTENDEE row this way. Still NOT an invite.
+        // The organizer is alice2 and the NEEDS-ACTION attendee row is alice, both this account:
+        // some servers stamp the organizer's own ATTENDEE row this way. Not an invite.
         val ev = event(100, calendarId = 10, organizerEmail = "mailto:alice2@icloud.com")
 
         val result = buildPendingInvitations(
@@ -201,6 +201,25 @@ class PendingInvitationsBuilderTest {
         val a = account(1, addresses = listOf("mailto:alice@icloud.com"))
         val cal = calendar(10, accountId = 1)
         val ev = event(100, calendarId = 10, organizerEmail = "  MAILTO:Alice@ICLOUD.com  ")
+
+        val result = buildPendingInvitations(
+            eventsWithNext = listOf(eventWithNext(ev)),
+            needsActionAttendees = listOf(
+                attendee(eventId = 100, address = "mailto:alice@icloud.com")
+            ),
+            accountsById = mapOf(1L to a),
+            calendarsById = mapOf(10L to cal)
+        )
+
+        assertTrue(result.isEmpty())
+    }
+
+    @Test
+    fun `organizer-self exclusion matches a bare organizer differing only in case`() {
+        // Pulled events store ORGANIZER without its mailto: prefix.
+        val a = account(1, addresses = listOf("mailto:alice@icloud.com"))
+        val cal = calendar(10, accountId = 1)
+        val ev = event(100, calendarId = 10, organizerEmail = "Alice@iCloud.com")
 
         val result = buildPendingInvitations(
             eventsWithNext = listOf(eventWithNext(ev)),
@@ -362,7 +381,7 @@ class PendingInvitationsBuilderTest {
         assertEquals(100L, result[0].event.id)
     }
 
-    // ---- 13. null ORGANIZER + matching attendee row included (defensive) ----
+    // ---- 13. null ORGANIZER + matching attendee row included ----
 
     @Test
     fun `null organizer with matching attendee row is included`() {
@@ -464,7 +483,7 @@ class PendingInvitationsBuilderTest {
 
         val result = buildPendingInvitations(
             eventsWithNext = listOf(eventWithNext(ev)),
-            // attendee is bob, not alice — so alice has nothing to respond to
+            // The attendee is bob, not alice, so alice has nothing to respond to.
             needsActionAttendees = listOf(
                 attendee(eventId = 100, address = "mailto:bob@example.com")
             ),

@@ -8,9 +8,8 @@ import org.junit.Test
 import org.onekash.kashcal.data.db.entity.SyncStatus
 
 /**
- * Unit tests for Room TypeConverters.
- *
- * Tests round-trip conversion for all custom types stored in SQLite.
+ * Tests the Room [Converters] for [SyncStatus], `List<String>` and `Map<String, String>`. The
+ * ReminderStatus and AccountProvider converters aren't tested here.
  */
 class ConvertersTest {
 

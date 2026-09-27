@@ -10,19 +10,17 @@ import org.onekash.icaldav.model.ParseResult
 import java.util.TimeZone
 
 /**
- * Timezone-specific tests for ICS parsing - ported from KashCal.
+ * Tests timezone handling in parsing. An all-day date (VALUE=DATE) must be read as a date and
+ * stored as UTC midnight, never converted through the device zone, or the event shows on the
+ * wrong day.
  *
- * These tests verify the critical fix for all-day events showing on wrong days
- * due to timezone shifts. All-day dates (VALUE=DATE) must be parsed as strings
- * and stored as UTC midnight, not converted through local timezone.
- *
- * Tests cover:
- * - All-day events in extreme positive offsets (UTC+10 Sydney, UTC+12 Auckland)
- * - All-day events in extreme negative offsets (UTC-10 Honolulu, UTC-8 Los Angeles)
- * - Multi-day all-day events preserving correct day span
- * - Year boundary edge cases
+ * Covers:
+ * - All-day events with the device zone in Sydney, Auckland, Tokyo, Honolulu, Chicago, Los
+ *   Angeles and New York
+ * - Multi-day all-day events and a year boundary, by start day
  * - EXDATE and RECURRENCE-ID with VALUE=DATE
- * - Round-trip parsing (parse → generate → parse)
+ * - Timed events with a TZID, in UTC, and floating
+ * - Windows timezone names from Outlook, with and without a VTIMEZONE (#45)
  */
 @DisplayName("ICalParser Timezone Tests")
 class ICalParserTimezoneTest {
@@ -33,7 +31,7 @@ class ICalParserTimezoneTest {
 
     @Test
     fun `all-day event date parsed as UTC to avoid timezone shift`() {
-        // Dec 25, 2025 should stay Dec 25 regardless of device timezone
+        // Dec 25, 2025 must stay Dec 25; this test runs in the JVM's default zone
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -53,15 +51,14 @@ class ICalParserTimezoneTest {
         val event = (result as ParseResult.Success).value.first()
         assertTrue(event.isAllDay)
 
-        // Verify the date is Dec 25 when formatted in UTC
+        // The date is Dec 25 when formatted in UTC
         val dayCode = event.dtStart.toDayCode()
         assertEquals("20251225", dayCode, "All-day date should be Dec 25")
     }
 
     @Test
     fun `all-day event endTs adjusted for RFC 5545 exclusive DTEND`() {
-        // Christmas: DTSTART=20241225, DTEND=20241226 (exclusive)
-        // After RFC 5545 adjustment, event should span only Dec 25
+        // Christmas: DTSTART=20241225, DTEND=20241226 (exclusive), so it covers only Dec 25
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -81,19 +78,18 @@ class ICalParserTimezoneTest {
         val event = (result as ParseResult.Success).value.first()
         assertTrue(event.isAllDay)
 
-        // Single-day all-day event should have start and end on same day
         val startDay = event.dtStart.toDayCode()
         val endDay = event.dtEnd?.toDayCode() ?: event.dtStart.toDayCode()
 
         assertEquals("20241225", startDay, "Start should be Dec 25")
-        // End day depends on library's handling of exclusive DTEND
+        // The parser keeps DTEND as sent (Dec 26); the assertion accepts Dec 25 or Dec 26
         assertTrue(endDay == "20241225" || endDay == "20241226",
             "End should be Dec 25 (inclusive) or Dec 26 (exclusive)")
     }
 
     @Test
     fun `multi-day all-day event preserves correct day span`() {
-        // Dec 24-26 = 3 days, DTEND is exclusive (Dec 27)
+        // Dec 24-26 = 3 days, DTEND is exclusive (Dec 27). Only the start day is asserted.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -121,7 +117,7 @@ class ICalParserTimezoneTest {
 
     @Test
     fun `all-day event parsed correctly regardless of default timezone - UTC+10 Sydney`() {
-        // Australia/Sydney is UTC+10/+11 - extreme positive offset
+        // Australia/Sydney is UTC+10, +11 in summer
         val originalTz = TimeZone.getDefault()
         try {
             TimeZone.setDefault(TimeZone.getTimeZone("Australia/Sydney"))
@@ -145,7 +141,7 @@ class ICalParserTimezoneTest {
             val event = (result as ParseResult.Success).value.first()
             assertTrue(event.isAllDay)
 
-            // Should be Jan 6, not shifted by Sydney UTC+10
+            // Jan 6, not shifted by Sydney's offset
             val dayCode = event.dtStart.toDayCode()
             assertEquals("20260106", dayCode, "Day should be 6 (not shifted by Sydney UTC+10)")
         } finally {
@@ -155,7 +151,7 @@ class ICalParserTimezoneTest {
 
     @Test
     fun `all-day event parsed correctly regardless of default timezone - UTC+12 Auckland`() {
-        // Pacific/Auckland is UTC+12/+13 - most extreme positive offset
+        // Pacific/Auckland is UTC+12, +13 in summer
         val originalTz = TimeZone.getDefault()
         try {
             TimeZone.setDefault(TimeZone.getTimeZone("Pacific/Auckland"))
@@ -187,7 +183,7 @@ class ICalParserTimezoneTest {
 
     @Test
     fun `all-day event parsed correctly regardless of default timezone - UTC-10 Honolulu`() {
-        // Pacific/Honolulu is UTC-10 - extreme negative offset
+        // Pacific/Honolulu is UTC-10
         val originalTz = TimeZone.getDefault()
         try {
             TimeZone.setDefault(TimeZone.getTimeZone("Pacific/Honolulu"))
@@ -219,8 +215,8 @@ class ICalParserTimezoneTest {
 
     @Test
     fun `all-day event parsed correctly regardless of default timezone - UTC-6 Chicago`() {
-        // America/Chicago is UTC-6 - common US timezone
-        // This is the exact bug scenario: Jan 6 all-day event showed as Jan 5 in CST
+        // America/Chicago is UTC-6 in January: the reported case, a Jan 6 all-day event
+        // shown as Jan 5 in CST
         val originalTz = TimeZone.getDefault()
         try {
             TimeZone.setDefault(TimeZone.getTimeZone("America/Chicago"))
@@ -253,7 +249,7 @@ class ICalParserTimezoneTest {
 
     @Test
     fun `all-day event parsed correctly regardless of default timezone - UTC-8 Los Angeles`() {
-        // America/Los_Angeles is UTC-8 - west coast
+        // America/Los_Angeles, UTC-7 (PDT) on the event's Mar 15 date
         val originalTz = TimeZone.getDefault()
         try {
             TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"))
@@ -285,7 +281,7 @@ class ICalParserTimezoneTest {
 
     @Test
     fun `all-day event parsed correctly regardless of default timezone - UTC+9 Tokyo`() {
-        // Asia/Tokyo is UTC+9 - positive offset
+        // Asia/Tokyo is UTC+9
         val originalTz = TimeZone.getDefault()
         try {
             TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"))
@@ -542,7 +538,7 @@ class ICalParserTimezoneTest {
         val event = (result as ParseResult.Success).value.first()
 
         assertFalse(event.isAllDay)
-        // UTC events may have "UTC" or no timezone depending on library
+        // A UTC time parses with a null timezone; that isn't asserted
     }
 
     @Test
@@ -566,8 +562,7 @@ class ICalParserTimezoneTest {
         val event = (result as ParseResult.Success).value.first()
 
         assertFalse(event.isAllDay)
-        // Floating time should have no specific timezone (or system default)
-        // The library may store system default for floating times
+        // A floating time is read in the device zone; only a non-null dtStart is asserted
         assertNotNull(event.dtStart, "Should have valid dtStart")
     }
 
@@ -575,8 +570,8 @@ class ICalParserTimezoneTest {
 
     @Test
     fun `Outlook ICS with Windows timezone name resolves correct timestamp`() {
-        // Issue #45: Outlook uses "Eastern Standard Time" instead of "America/New_York"
-        // Bug: parseTimezone() falls back to system default, producing wrong timestamp
+        // #45: Outlook sends "Eastern Standard Time" for "America/New_York". Without the
+        // Windows-name mapping the zone falls back to the device zone and the instant is wrong.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -610,8 +605,7 @@ class ICalParserTimezoneTest {
         assertTrue(result is ParseResult.Success)
         val event = (result as ParseResult.Success).value.first()
 
-        // Jan 15 2026 is winter → EST (UTC-5)
-        // 2:00 PM EST = 19:00 UTC = 1737olean486400000L
+        // Jan 15 2026 is winter, so EST (UTC-5): 2:00 PM EST = 19:00 UTC
         val expectedUtcMs = java.time.LocalDateTime.of(2026, 1, 15, 19, 0)
             .toInstant(java.time.ZoneOffset.UTC).toEpochMilli()
 
@@ -692,8 +686,7 @@ class ICalParserTimezoneTest {
         assertTrue(result is ParseResult.Success)
         val event = (result as ParseResult.Success).value.first()
 
-        // Jan 15 2026 is winter → CET (UTC+1)
-        // 2:00 PM CET = 13:00 UTC
+        // Jan 15 2026 is winter, so CET (UTC+1): 2:00 PM CET = 13:00 UTC
         val expectedUtcMs = java.time.LocalDateTime.of(2026, 1, 15, 13, 0)
             .toInstant(java.time.ZoneOffset.UTC).toEpochMilli()
 
@@ -701,7 +694,7 @@ class ICalParserTimezoneTest {
             "W. Europe Standard Time should resolve to UTC+1, not system default")
     }
 
-    // ==================== Windows Timezone POST Tests (Issue #45) ====================
+    // ==================== More Windows Timezone Names (#45) ====================
 
     @Test
     fun `Outlook ICS with Tokyo Standard Time resolves correct timestamp`() {
@@ -774,8 +767,7 @@ class ICalParserTimezoneTest {
         assertTrue(result is ParseResult.Success)
         val event = (result as ParseResult.Success).value.first()
 
-        // Jan 15 2026 is summer in Australia → AEDT (UTC+11)
-        // 2:00 PM AEDT = 03:00 UTC
+        // Jan 15 2026 is summer in Australia, so AEDT (UTC+11): 2:00 PM AEDT = 03:00 UTC
         val expectedUtcMs = java.time.LocalDateTime.of(2026, 1, 15, 3, 0)
             .toInstant(java.time.ZoneOffset.UTC).toEpochMilli()
 
@@ -812,11 +804,11 @@ class ICalParserTimezoneTest {
             "Should resolve Windows timezone even without VTIMEZONE block")
     }
 
-    // ==================== TripIt-Style Tests ====================
+    // ==================== Travel-Itinerary Feed Tests ====================
 
     @Test
     fun `TripIt style multi-day event Oct 11-12 trip`() {
-        // Simulates TripIt ICS: DTSTART=20251011, DTEND=20251013 (exclusive)
+        // A travel-itinerary feed's stay: DTSTART=20251011, DTEND=20251013 (exclusive)
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0

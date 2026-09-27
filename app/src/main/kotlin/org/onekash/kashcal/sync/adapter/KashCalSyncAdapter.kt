@@ -9,18 +9,14 @@ import android.os.Bundle
 import android.util.Log
 
 /**
- * Stub SyncAdapter for CalendarProvider registration.
+ * Registers a no-op sync adapter for contentAuthority="com.android.calendar".
  *
- * This adapter does NOT perform real sync — that's handled by
- * [org.onekash.kashcal.sync.worker.CalDavSyncWorker] via WorkManager.
- *
- * Its sole purpose is to register with contentAuthority="com.android.calendar"
- * so Android recognizes KashCal as a calendar app and routes
+ * Sync runs in [org.onekash.kashcal.sync.worker.CalDavSyncWorker] on WorkManager. The
+ * registration is what makes Android recognize KashCal as a calendar app and route
  * `content://com.android.calendar` intents to it.
  *
- * Auto-sync is disabled via [SystemAccountRegistrar] so this method
- * should rarely be called. If it is (e.g., user taps "Sync" in system
- * Settings), it's a safe no-op.
+ * [SystemAccountRegistrar] turns auto-sync off, so [onPerformSync] runs only on a manual
+ * trigger such as "Sync" in system Settings, and does nothing.
  */
 class KashCalSyncAdapter(
     context: Context,

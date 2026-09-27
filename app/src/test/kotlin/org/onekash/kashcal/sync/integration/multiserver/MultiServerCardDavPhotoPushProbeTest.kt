@@ -28,44 +28,42 @@ import java.util.Random
 import javax.imageio.ImageIO
 
 /**
- * Live PUSH-side characterization of contact PHOTO handling — the complement to
- * [MultiServerCardDavPhotoProbeTest], which seeds via a raw authenticated PUT and
- * characterizes only the READ path. This test drives the *application* write verb
- * end-to-end: it builds a neutral [Contact] carrying a [Photo], serializes it
- * through the production [VCardWriter], uploads it with [CardDavClient.putContact],
- * reads it back through [CardDavContactReader], and records what each server did to
- * the photo. That is the exact path a later photo-push feature would ride, and the
- * risks it surfaces (a serializer that mislabels a format, a server that transcodes
- * or rewrites inline bytes to a minted URL, a size ceiling) live only on the write
- * side and are invisible to the read-only probe.
+ * Records how each server handles a contact PHOTO on the push side, the complement to
+ * [MultiServerCardDavPhotoProbeTest], which seeds with a raw authenticated PUT and covers only
+ * the read path.
  *
- * Four axes, each its own test:
- *  1. **Format matrix** — JPEG/PNG/GIF (genuinely valid rasters), plus WebP and
- *     HEIF (signature-correct blobs). The writer's magic-byte sniffer now recognizes
- *     WebP and HEIF, so an un-typed one is labeled with its true format (webp/heic)
- *     rather than defaulting to JPEG — asserted deterministically client-side. Each
- *     is pushed with and without a declared content type.
- *  2. **Adversarial** — empty bytes, a truncated image, non-image bytes, a
- *     bytes/label mismatch, and an oversized (~1 MB) inline photo. Records the
- *     server's accept/reject status code without ever throwing.
- *  3. **URI reference** — a `PHOTO;VALUE=URI`/bare-URL photo through the writer;
- *     does the server preserve, inline, rewrite, or drop it?
- *  4. **Patch fidelity** — editing ONLY the photo bytes on a contact that carries a
- *     verbatim prior body must change the PHOTO and preserve an unmapped X-property
- *     (the round-trip guarantee the writer exists to keep).
- *  5. **Convergence** — after pushing inline bytes, does the read-back photo match
- *     byte-for-byte (stable), or did the server transcode / mint a URL (which would
- *     make the next sync see the photo as changed and re-push or overwrite)?
+ * This test drives the app's write verb end to end: it builds a neutral [Contact] carrying a
+ * [Photo], serializes it through the production [VCardWriter], uploads it with
+ * [CardDavClient.putContact], reads it back through [CardDavContactReader], and records what
+ * each server did to the photo. The risks it surfaces (a serializer that mislabels a format, a
+ * server that transcodes or rewrites inline bytes to a minted URL, a size ceiling) live only on
+ * the write side and are invisible to the read-only probe.
  *
- * Everything is synthetic: RFC 6761 reserved `@example.test`, an unassigned
- * `+1-555-01xx` number, `photos.example.test` URLs that resolve to nothing, and
- * generated images. No real person or asset is contacted. Photo bytes are never
- * printed; a server-minted photo URL is host-redacted before it hits any log.
+ * Five axes, each its own test:
+ *  1. Format matrix: JPEG, PNG and GIF (valid rasters), plus WebP and HEIF (signature-correct
+ *     blobs), each pushed with and without a declared content type. The writer's magic-byte
+ *     sniffer labels an untyped WebP or HEIF with its true format (webp, heic), not JPEG;
+ *     asserted client-side.
+ *  2. Adversarial: empty bytes, a truncated image, non-image bytes, a bytes and label mismatch,
+ *     and an oversized inline photo (a 700x700 noise PNG, about 1.5 MB). Records the server's
+ *     accept or reject status without throwing.
+ *  3. URI reference: a `PHOTO;VALUE=URI` or bare-URL photo through the writer; does the server
+ *     preserve, inline, rewrite or drop it?
+ *  4. Patch fidelity: editing only the photo bytes on a contact that carries a verbatim prior
+ *     body must change the PHOTO and preserve an unmapped X-property, the round-trip guarantee
+ *     the writer exists to keep. Asserted client-side; the upload is only printed.
+ *  5. Convergence: after pushing inline bytes, does the read-back photo match byte for byte, or
+ *     did the server transcode or mint a URL (so the next sync would see the photo as changed
+ *     and re-push or overwrite it)?
  *
- * Skips (never fails) servers without credentials, unreachable, or with no writable
- * address book. Parameterized over the widest configured set so hosted providers
- * (iCloud, Zoho, Fastmail, mailbox.org) are characterized alongside the local
- * Docker servers when their credentials are present.
+ * Everything is synthetic: RFC 6761 reserved `@example.test`, `photos.example.test` URLs that
+ * resolve to nothing, and generated images. No real person or asset is contacted. Photo bytes
+ * are never printed; a server-minted photo URL is host-redacted before it hits any log.
+ *
+ * Skips (never fails) servers without credentials, unreachable ones, and ones with no writable
+ * address book. Runs over [CardDavServerConfig.allDiscoveryProbeServers] so hosted providers
+ * (iCloud, Zoho, Fastmail, mailbox.org) are covered alongside the local Docker servers when
+ * their credentials are present.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -86,7 +84,7 @@ class MultiServerCardDavPhotoPushProbeTest(
         private const val EXP_GIVEN = "Kashcal"
         private const val PUSH_PHOTO_URL = "https://photos.example.test/push/kashcal-push.jpg"
 
-        /** Canonical 1x1 transparent PNG (67 bytes) — a genuinely valid raster, no encoder needed. */
+        /** A 1x1 transparent PNG (67 bytes): a valid raster with no encoder needed. */
         private val PNG_1x1: ByteArray = byteArrayOf(
             0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
             0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
@@ -99,7 +97,7 @@ class MultiServerCardDavPhotoPushProbeTest(
             0x42, 0x60, 0x82.toByte(),
         )
 
-        /** Canonical 1x1 GIF89a (43 bytes) — genuinely valid, no encoder needed. */
+        /** A 1x1 GIF89a (43 bytes): valid, with no encoder needed. */
         private val GIF_1x1: ByteArray = byteArrayOf(
             0x47, 0x49, 0x46, 0x38, 0x39, 0x61,
             0x01, 0x00, 0x01, 0x00, 0x80.toByte(), 0x00, 0x00,
@@ -110,23 +108,23 @@ class MultiServerCardDavPhotoPushProbeTest(
         )
 
         /**
-         * A RIFF/WEBP-signature blob. Not a decodable frame — WebP has no JDK
-         * encoder — but it carries the `RIFF....WEBP` magic, which is what a server's
-         * (or our sniffer's) format detection keys on. A verbatim-store server keeps
-         * it; a validating server rejecting it is itself a recorded finding.
+         * A blob with the RIFF/WEBP signature. It isn't a decodable frame (the JDK has no WebP
+         * encoder), but it carries the `RIFF....WEBP` magic that server and client format
+         * detection key on. A verbatim-store server keeps it; a validating server rejecting it
+         * is itself a recorded result.
          */
         private val WEBP_SIG: ByteArray = "RIFF".toByteArray(Charsets.US_ASCII) +
             byteArrayOf(0x1A, 0x00, 0x00, 0x00) +
             "WEBPVP8 ".toByteArray(Charsets.US_ASCII) +
             byteArrayOf(0x0E, 0x00, 0x00, 0x00, 0x10, 0x14, 0x10, 0x00, 0x01, 0x00, 0x01, 0x00, 0x02, 0x00)
 
-        /** An ISOBMFF `ftyp` box with the `heic` major brand — HEIF's signature. */
+        /** An ISOBMFF `ftyp` box with the `heic` major brand: HEIF's signature. */
         private val HEIF_SIG: ByteArray = byteArrayOf(0x00, 0x00, 0x00, 0x18) +
             "ftypheic".toByteArray(Charsets.US_ASCII) +
             byteArrayOf(0x00, 0x00, 0x00, 0x00) +
             "heicmif1".toByteArray(Charsets.US_ASCII)
 
-        /** Encode a valid raster of [format] via the JDK; empty array if the codec is unavailable. */
+        /** Encodes a valid raster of [format] via the JDK; an empty array if no codec exists. */
         private fun encode(format: String, w: Int, h: Int, noise: Boolean): ByteArray {
             val img = BufferedImage(w, h, BufferedImage.TYPE_INT_RGB)
             val rnd = Random(42)
@@ -159,12 +157,12 @@ class MultiServerCardDavPhotoPushProbeTest(
         )
     }
 
-    /** One image variant to push: [label] for logging, [bytes], and a declared [contentType] (or null). */
+    /** One image variant to push: [label] for logging, [bytes], and an optional [contentType]. */
     private data class PushImage(val label: String, val bytes: ByteArray, val contentType: String?)
 
-    // -----------------------------------------------------------------------------------------------
-    // 1. Format matrix — valid rasters + the un-sniffed WebP/HEIF, with and without a declared type.
-    // -----------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
+    // 1. Format matrix: valid rasters and WebP/HEIF blobs, with and without a declared type.
+    // ---------------------------------------------------------------------------------------------
 
     @Test
     fun `pushes each image format through the app write verb and records the server round-trip`() = runBlocking {
@@ -178,9 +176,9 @@ class MultiServerCardDavPhotoPushProbeTest(
             add(PushImage("png-untyped", PNG_1x1, null))       // sniffer path: recognizes PNG magic
             add(PushImage("gif-typed", GIF_1x1, "gif"))
             add(PushImage("webp-typed", WEBP_SIG, "webp"))
-            add(PushImage("webp-untyped", WEBP_SIG, null))     // sniffer path: recognizes WebP magic -> labeled webp
+            add(PushImage("webp-untyped", WEBP_SIG, null))     // sniffed from WebP magic -> webp
             add(PushImage("heif-typed", HEIF_SIG, "heic"))
-            add(PushImage("heif-untyped", HEIF_SIG, null))     // sniffer path: recognizes HEIF magic -> labeled heic
+            add(PushImage("heif-untyped", HEIF_SIG, null))     // sniffed from HEIF magic -> heic
         }
 
         for (img in cases) {
@@ -188,7 +186,7 @@ class MultiServerCardDavPhotoPushProbeTest(
             val contact = photoContact(uid, book.vcardVersion, Photo(data = img.bytes, contentType = img.contentType))
             val body = VCardWriter().write(contact, book.vcardVersion)
 
-            // Deterministic (no network): the writer MUST serialize a non-empty inline PHOTO.
+            // Deterministic (no network): the writer must serialize a non-empty inline PHOTO.
             val photoLine = photoLineOf(body)
             assertNotNull("${config.name}/${img.label}: writer emitted no PHOTO for an inline photo", photoLine)
             assertTrue(
@@ -199,9 +197,9 @@ class MultiServerCardDavPhotoPushProbeTest(
             val writtenType = paramValue(photoLine, "TYPE")
                 ?: Regex("""data:image/([A-Za-z0-9]+)""").find(photoLine)?.groupValues?.get(1)?.lowercase()
 
-            // The magic-byte sniffer now recognizes WebP and HEIF, so a photo pushed WITHOUT a
-            // declared content type is no longer mislabeled JPEG. Assert the true format rode
-            // through the writer, deterministically (no network).
+            // The magic-byte sniffer recognizes WebP and HEIF, so a photo pushed without a declared
+            // content type isn't labeled JPEG. Assert the true format rode through the writer
+            // (no network).
             when (img.label) {
                 "webp-untyped" -> assertEquals(
                     "${config.name}: un-typed WebP mislabeled (expected webp)", "webp", writtenType,
@@ -220,8 +218,8 @@ class MultiServerCardDavPhotoPushProbeTest(
                         "upload=${describe(upload)} -> ${describePhoto(readback?.photo, img.bytes)} ===",
                 )
                 if (upload is ContactUploadResult.Success) {
-                    // Serialization-corruption invariant: an accepted card must read back
-                    // with its identity intact (the photo shape itself is characterized).
+                    // An accepted card must read back with its identity intact; the photo shape
+                    // itself is only recorded.
                     assertNotNull("${config.name}/${img.label}: accepted push not found on read-back", readback)
                     assertTrue(
                         "${config.name}/${img.label}: identity field N corrupted by the photo push",
@@ -234,16 +232,16 @@ class MultiServerCardDavPhotoPushProbeTest(
         }
     }
 
-    // -----------------------------------------------------------------------------------------------
-    // 2. Adversarial — degenerate / hostile photo payloads. Record the status; never throw.
-    // -----------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
+    // 2. Adversarial: degenerate or hostile photo payloads. Record the status; never throw.
+    // ---------------------------------------------------------------------------------------------
 
     @Test
     fun `adversarial photo payloads through the app write verb are handled without corruption`() = runBlocking {
         assumeReady()
         val (c, book) = readyBook() ?: return@runBlocking
 
-        val oversized = encode("png", 700, 700, noise = true) // ~1 MB incompressible raster
+        val oversized = encode("png", 700, 700, noise = true) // about 1.5 MB incompressible raster
         val cases = buildList {
             add(PushImage("empty-bytes", ByteArray(0), "jpeg"))
             add(PushImage("truncated-png", PNG_1x1.copyOf(24), "png"))
@@ -267,10 +265,10 @@ class MultiServerCardDavPhotoPushProbeTest(
                         (readback?.let { " readbackPhoto=${describePhoto(it.photo, img.bytes)}" } ?: "") +
                         " ===",
                 )
-                // The write verb must always return a well-formed outcome (a transport
-                // crash surfaces as Failed(code=0), not an exception) — asserted by
-                // simply reaching here. If the server ACCEPTED the payload, the rest of
-                // the contact must not be collateral damage.
+                // Reaching here asserts the write verb returned an outcome, not an exception (a
+                // network error is Failed(code=0), a request the transport guard refused another
+                // Failed code). If the server accepted the payload, the rest of the contact must
+                // be intact.
                 if (upload is ContactUploadResult.Success) {
                     assertNotNull("${config.name}/${img.label}: accepted adversarial push vanished on read-back", readback)
                     assertTrue(
@@ -284,9 +282,9 @@ class MultiServerCardDavPhotoPushProbeTest(
         }
     }
 
-    // -----------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
     // 3. URI-reference photo push.
-    // -----------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
 
     @Test
     fun `pushes a URI-reference photo and records whether the server preserves it`() = runBlocking {
@@ -323,9 +321,9 @@ class MultiServerCardDavPhotoPushProbeTest(
         }
     }
 
-    // -----------------------------------------------------------------------------------------------
-    // 4. Patch fidelity — editing ONLY the photo must preserve an unmapped X-property.
-    // -----------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
+    // 4. Patch fidelity: editing only the photo must preserve an unmapped X-property.
+    // ---------------------------------------------------------------------------------------------
 
     @Test
     fun `editing only the photo preserves unmapped properties and changes the PHOTO`() = runBlocking {
@@ -333,8 +331,8 @@ class MultiServerCardDavPhotoPushProbeTest(
         val (c, book) = readyBook() ?: return@runBlocking
 
         val uid = "kashcal-photopush-patch-0001"
-        // A prior body carrying a mapped photo AND an unmapped X-property + grouping the
-        // neutral model does not represent. The writer must patch, not regenerate.
+        // A prior body carrying a mapped photo plus an unmapped X-property and a grouping the
+        // neutral model doesn't represent. The writer must patch it, not regenerate it.
         val priorBody = buildString {
             append("BEGIN:VCARD\r\n")
             append("VERSION:3.0\r\n")
@@ -351,7 +349,7 @@ class MultiServerCardDavPhotoPushProbeTest(
         val body = VCardWriter().write(edited, "3.0")
 
         // Deterministic patch guarantees: the unmapped X-property survives, and the PHOTO
-        // actually changed (GIF -> PNG bytes).
+        // changed (GIF -> PNG bytes).
         assertTrue(
             "${config.name}: photo-only edit dropped the unmapped X-KASHCAL-PROBE property",
             unfold(body).contains("X-KASHCAL-PROBE:keep-me-verbatim"),
@@ -367,7 +365,7 @@ class MultiServerCardDavPhotoPushProbeTest(
             newPhotoLine!!.substringAfter(":", "") != photoLineOf(priorBody)?.substringAfter(":", ""),
         )
 
-        // Server round-trip is characterization: does the server keep the unmapped X-prop too?
+        // The server round-trip is only printed, not read back or asserted.
         val resourceUrl = resourceUrlFor(book, uid)
         val upload = putIdempotent(c, book.url, resourceUrl, body)
         try {
@@ -377,9 +375,9 @@ class MultiServerCardDavPhotoPushProbeTest(
         }
     }
 
-    // -----------------------------------------------------------------------------------------------
-    // 5. Convergence — would the next sync see the pushed photo as unchanged, or re-push/overwrite?
-    // -----------------------------------------------------------------------------------------------
+    // ---------------------------------------------------------------------------------------------
+    // 5. Convergence: would the next sync see the pushed photo as unchanged, or re-push it?
+    // ---------------------------------------------------------------------------------------------
 
     @Test
     fun `characterizes whether an inline photo survives push byte-for-byte or would oscillate`() = runBlocking {
@@ -415,7 +413,7 @@ class MultiServerCardDavPhotoPushProbeTest(
 
     // ------------------------------- shared helpers -------------------------------
 
-    /** Build a synthetic, fully-named contact carrying [photo] at [version]. */
+    /** Builds a synthetic contact with N and FN set, carrying [photo] at [version]. */
     private fun photoContact(uid: String, version: String, photo: Photo): Contact = Contact(
         version = version,
         uid = uid,
@@ -425,7 +423,7 @@ class MultiServerCardDavPhotoPushProbeTest(
         rawVCard = "",
     )
 
-    /** Assume-ready + resolve a writable book; returns null (via a skip) when there is none. */
+    /** Resolves a writable book; skips the test when there is none. */
     private suspend fun readyBook(): Pair<CardDavClient, CardDavAddressBook>? {
         val c = client!!
         val book = resolveWritableBook(c, creds!!)
@@ -436,7 +434,10 @@ class MultiServerCardDavPhotoPushProbeTest(
     private fun resourceUrlFor(book: CardDavAddressBook, uid: String): String =
         book.url.trimEnd('/') + "/" + contactResourceName(uid)
 
-    /** Idempotent conditional PUT: create-if-absent, else overwrite the leftover by its current etag. */
+    /**
+     * PUTs with `If-None-Match: *`; on a precondition failure, overwrites the leftover by its
+     * current etag. Returns the first result when the leftover isn't listed.
+     */
     private suspend fun putIdempotent(
         c: CardDavClient,
         bookUrl: String,
@@ -466,7 +467,7 @@ class MultiServerCardDavPhotoPushProbeTest(
         currentEtag(c, bookUrl, resourceUrl)?.let { c.deleteContact(resourceUrl, it) }
     }
 
-    /** Compact one-line description of an upload outcome; never leaks a server response body. */
+    /** Describes an upload outcome on one line; never includes a server response body. */
     private fun describe(r: ContactUploadResult): String = when (r) {
         is ContactUploadResult.Success -> "Success"
         is ContactUploadResult.PreconditionFailed -> "PreconditionFailed(412/409)"
@@ -475,7 +476,7 @@ class MultiServerCardDavPhotoPushProbeTest(
         is ContactUploadResult.Failed -> "Failed(code=${r.code})"
     }
 
-    /** How the server round-tripped a pushed photo; no bytes, host-redacted URL only. */
+    /** Describes how the server round-tripped a pushed photo; no bytes, host-redacted URL only. */
     private fun describePhoto(p: Photo?, pushed: ByteArray): String = when {
         p == null -> "dropped"
         p.url != null && p.data == null -> "minted-url=${redactPhotoUrl(p.url)}"
@@ -486,32 +487,32 @@ class MultiServerCardDavPhotoPushProbeTest(
 
     private fun base64(bytes: ByteArray): String = java.util.Base64.getEncoder().encodeToString(bytes)
 
-    /** Unfold RFC 6350 §3.2 continuation lines so a long/folded PHOTO reads as one logical line. */
+    /** Unfolds RFC 6350 §3.2 continuation lines so a folded PHOTO reads as one logical line. */
     private fun unfold(body: String): String = body.replace(Regex("""\r?\n[ \t]"""), "")
 
-    /** The single logical PHOTO line of a (possibly folded) body, or null. */
+    /** Returns the first logical PHOTO line of a possibly folded body, or null. */
     private fun photoLineOf(body: String): String? =
         unfold(body).lineSequence().firstOrNull { it.startsWith("PHOTO") }
 
-    /** Value of the [name] parameter on a property line (e.g. TYPE), or null. */
+    /** Returns the value of the [name] parameter (e.g. TYPE) on a property line, or null. */
     private fun paramValue(line: String, name: String): String? =
         Regex("""(?:;|^[^:]*;)$name=([^;:]+)""", RegexOption.IGNORE_CASE)
             .find(line.substringBefore(':'))?.groupValues?.get(1)
 
-    /** True when [url] is one of our synthetic `*.example.test` URLs (resolves to nothing). */
+    /** Returns true when [url]'s host is `example.test` or under it, as the synthetic URLs are. */
     private fun isSyntheticSeedUrl(url: String): Boolean {
         val host = Regex("""^\w+://([^/:]+)""").find(url)?.groupValues?.get(1) ?: return false
         return host == "example.test" || host.endsWith(".example.test")
     }
 
-    /** Print-safe photo URL: synthetic seed URLs verbatim; a server-minted URL host-redacted. */
+    /** Redacts a photo URL for printing: synthetic URLs verbatim, any other URL host-only. */
     private fun redactPhotoUrl(url: String?): String? {
         if (url == null) return null
         if (isSyntheticSeedUrl(url)) return url
         return Regex("""^(\w+://[^/]+)/.*$""").find(url)?.let { "${it.groupValues[1]}/<redacted>" } ?: "<redacted>"
     }
 
-    /** Discover the login's first writable address book, or null if none is writable. */
+    /** Returns the first writable address book in the login's first home, or null. */
     private suspend fun resolveWritableBook(c: CardDavClient, cr: ServerCredentials) = run {
         val root = if (config.usesWellKnownDiscovery) {
             c.discoverWellKnown(cr.serverUrl).getOrNull() ?: cr.serverUrl
@@ -525,14 +526,17 @@ class MultiServerCardDavPhotoPushProbeTest(
         books.firstOrNull { !it.isReadOnly }
     }
 
-    /** The current server ETag for [resourceUrl] in [bookUrl], or null if not listed. */
+    /**
+     * Returns the server ETag of the listed resource in [bookUrl] whose last path segment
+     * matches [resourceUrl]'s, or null if none is listed.
+     */
     private suspend fun currentEtag(c: CardDavClient, bookUrl: String, resourceUrl: String): String? {
         val listed = (c.listAllContactHrefs(bookUrl) as? CalDavResult.Success)?.data.orEmpty()
         val name = resourceUrl.substringAfterLast('/')
         return listed.firstOrNull { it.first.substringAfterLast('/') == name }?.second
     }
 
-    /** Read hrefs via sync-collection when available, else the full PROPFIND listing. */
+    /** Returns the book's hrefs from sync-collection when it lists any, else a full listing. */
     private suspend fun collectHrefs(c: CardDavClient, bookUrl: String): List<String> {
         (c.syncCollection(bookUrl, null) as? CalDavResult.Success)?.data?.let { report ->
             if (report.changed.isNotEmpty()) return report.changed.map { it.href }

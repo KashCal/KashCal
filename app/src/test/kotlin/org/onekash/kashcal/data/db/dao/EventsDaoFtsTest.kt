@@ -14,15 +14,14 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import java.util.UUID
 
 /**
- * Integration tests for EventsDao FTS4 full-text search.
+ * Tests the [EventsDao] FTS4 searches: [EventsDao.search], [EventsDao.searchInRange] and the
+ * three next-occurrence variants, plus the synthetic-master exclusions (with
+ * [EventsDao.suggestTitlesByPrefix]).
  *
- * Tests the FTS search() method which uses FTS4 MATCH queries
- * instead of LIKE for improved performance.
- *
- * FTS query syntax:
- * - "meeting" - matches word "meeting"
- * - "meet*" - matches words starting with "meet"
- * - "team meeting" - matches events with both words
+ * FTS query syntax used here:
+ * - `meeting` matches the word "meeting"
+ * - `meet*` matches words starting with "meet"
+ * - `team meeting` matches events with both words
  */
 class EventsDaoFtsTest : BaseDaoTest() {
 
@@ -123,7 +122,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
         eventsDao.insert(createEvent(title = "Team Weekly Standup"))
         eventsDao.insert(createEvent(title = "Project Review"))
 
-        // FTS searches for events with BOTH words
+        // Matches only events with both words.
         val results = eventsDao.search("Team* Standup*")
 
         assertEquals(1, results.size)
@@ -140,7 +139,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
             )
         )
 
-        // Search should find event by any indexed field
+        // Title, location and description are all indexed.
         val byTitle = eventsDao.search("Meeting*")
         val byLocation = eventsDao.search("Office*")
         val byDescription = eventsDao.search("Budget*")
@@ -243,7 +242,6 @@ class EventsDaoFtsTest : BaseDaoTest() {
 
     @Test
     fun `search respects limit of 1000 results`() = runTest {
-        // Insert 1010 events
         repeat(1010) { i ->
             eventsDao.insert(createEvent(title = "Meeting $i"))
         }
@@ -279,7 +277,6 @@ class EventsDaoFtsTest : BaseDaoTest() {
 
     @Test
     fun `search finds events across different calendars`() = runTest {
-        // Create second calendar
         val account2Id = accountsDao.insert(
             Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
         )
@@ -311,9 +308,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
 
     // ========== searchInRange Tests ==========
 
-    /**
-     * Helper to create event with occurrence for date range tests.
-     */
+    /** Inserts an event with one occurrence spanning [startTs]..[endTs]. */
     private suspend fun createEventWithOccurrence(
         title: String,
         startTs: Long,
@@ -427,7 +422,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val jan7 = 1736208000000L  // Jan 7, 2025 00:00 UTC
         val jan8 = 1736294400000L  // Jan 8, 2025 00:00 UTC
 
-        // Multi-day event: Jan 6-8 (overlaps with Jan 5-7 range)
+        // A multi-day event, Jan 6-8, overlapping the Jan 5-7 range.
         createEventWithOccurrence("Multi-day Meeting", jan6, endTs = jan8)
 
         val results = eventsDao.searchInRange("Meeting*", jan5, jan7)
@@ -461,12 +456,12 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val jan7 = 1736208000000L  // Jan 7, 2025 00:00 UTC
         val jan8 = 1736294400000L  // Jan 8, 2025 00:00 UTC
 
-        // Create recurring event with multiple occurrences in range
+        // A series with two occurrences in range.
         val eventId = eventsDao.insert(
             createEvent(title = "Weekly Meeting", startTs = jan6)
         )
 
-        // Two occurrences: Jan 6 and Jan 7
+        // Jan 6 and Jan 7.
         occurrencesDao.insert(
             Occurrence(
                 eventId = eventId,
@@ -490,7 +485,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
 
         val results = eventsDao.searchInRange("Weekly*", jan5, jan8)
 
-        // Should return event only ONCE despite having 2 occurrences
+        // One result despite two occurrences.
         assertEquals(1, results.size)
         assertEquals("Weekly Meeting", results[0].title)
     }
@@ -501,7 +496,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val jan6 = 1736121600000L  // Jan 6, 2025 00:00 UTC
         val jan7 = 1736208000000L  // Jan 7, 2025 00:00 UTC
 
-        // Event exists but no occurrence created (edge case)
+        // An event with no occurrence row.
         eventsDao.insert(createEvent(title = "Orphan Meeting", startTs = jan6))
 
         val results = eventsDao.searchInRange("Orphan*", jan5, jan7)
@@ -529,7 +524,6 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val now = 1736121600000L  // Jan 6, 2025 00:00 UTC
         val dayMs = 86400000L
 
-        // Events at varying distances from "now"
         eventsDao.insert(createEvent(title = "Meeting Far Past", startTs = now - 3 * dayMs))
         eventsDao.insert(createEvent(title = "Meeting Near Future", startTs = now + 1 * dayMs))
         eventsDao.insert(createEvent(title = "Meeting Near Past", startTs = now - 1 * dayMs))
@@ -538,7 +532,8 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val results = eventsDao.searchWithOccurrence("Meeting*", now)
 
         assertEquals(4, results.size)
-        // Closest to now first (1 day away), then further (3 days away)
+        // Closest to now first (1 day away), then 3 days away. The query doesn't order an
+        // equal-distance pair; these asserts rely on the order SQLite returns.
         assertEquals("Meeting Near Future", results[0].event.title)
         assertEquals("Meeting Near Past", results[1].event.title)
         assertEquals("Meeting Far Past", results[2].event.title)
@@ -549,13 +544,12 @@ class EventsDaoFtsTest : BaseDaoTest() {
     fun `searchWithOccurrence excludes exception events`() = runTest {
         val now = 1736121600000L  // Jan 6, 2025 00:00 UTC
 
-        // Create master recurring event
         val masterId = eventsDao.insert(
             createEvent(title = "Weekly Meeting", startTs = now)
                 .copy(rrule = "FREQ=WEEKLY")
         )
 
-        // Create exception event (modified occurrence) with same title
+        // An exception with the same title.
         eventsDao.insert(
             createEvent(title = "Weekly Meeting", startTs = now + 86400000L)
                 .copy(originalEventId = masterId, originalInstanceTime = now + 7 * 86400000L)
@@ -563,7 +557,6 @@ class EventsDaoFtsTest : BaseDaoTest() {
 
         val results = eventsDao.searchWithOccurrence("Weekly*", now)
 
-        // Only master should appear, exception excluded
         assertEquals(1, results.size)
         assertEquals(masterId, results[0].event.id)
     }
@@ -591,13 +584,12 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val futureOcc1 = now + 86400000L   // Tomorrow
         val futureOcc2 = now + 2 * 86400000L  // Day after tomorrow
 
-        // Create recurring event
         val eventId = eventsDao.insert(
             createEvent(title = "Recurring Meeting", startTs = pastOcc)
                 .copy(rrule = "FREQ=DAILY")
         )
 
-        // Past occurrence (should be ignored)
+        // Past occurrence, ignored.
         occurrencesDao.insert(
             Occurrence(
                 eventId = eventId,
@@ -608,7 +600,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
                 endDay = Occurrence.toDayFormat(pastOcc, false)
             )
         )
-        // Future occurrence 1 (should be selected as MIN)
+        // The earliest future occurrence, which is the MIN.
         occurrencesDao.insert(
             Occurrence(
                 eventId = eventId,
@@ -619,7 +611,6 @@ class EventsDaoFtsTest : BaseDaoTest() {
                 endDay = Occurrence.toDayFormat(futureOcc1, false)
             )
         )
-        // Future occurrence 2
         occurrencesDao.insert(
             Occurrence(
                 eventId = eventId,
@@ -634,7 +625,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val results = eventsDao.searchFutureWithOccurrence("Recurring*", now)
 
         assertEquals(1, results.size)
-        // Should return first FUTURE occurrence, not past one
+        // The first future occurrence, not the past one.
         assertEquals(futureOcc1, results[0].nextOccurrenceTs)
     }
 
@@ -643,7 +634,6 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val now = System.currentTimeMillis()
         val futureTime = now + 86400000L
 
-        // Create event with cancelled occurrence
         val eventId = eventsDao.insert(createEvent(title = "Cancelled Meeting", startTs = futureTime))
 
         occurrencesDao.insert(
@@ -688,7 +678,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val jan7 = 1736208000000L
         val jan8 = 1736294400000L
 
-        // Create recurring event with occurrences on Jan 6 and Jan 7
+        // A series with occurrences on Jan 6 and Jan 7.
         val eventId = eventsDao.insert(
             createEvent(title = "Weekly Meeting", startTs = jan6)
                 .copy(rrule = "FREQ=DAILY")
@@ -715,7 +705,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
             )
         )
 
-        // Query Jan 6-8 range - should return Jan 6 occurrence (MIN within range)
+        // Over Jan 5-8, the MIN in range is the Jan 6 occurrence.
         val results = eventsDao.searchInRangeWithOccurrence("Weekly*", jan5, jan8)
 
         assertEquals(1, results.size)
@@ -729,7 +719,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val jan7 = 1736208000000L
         val jan10 = 1736467200000L
 
-        // Event with occurrence on Jan 10 (outside Jan 5-7 range)
+        // An occurrence on Jan 10, outside the Jan 5-7 range.
         createEventWithOccurrence("Meeting on Jan 10", jan10, endTs = jan10 + 3600000)
 
         val results = eventsDao.searchInRangeWithOccurrence("Meeting*", jan5, jan7)
@@ -743,7 +733,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val jan6 = 1736121600000L
         val jan7 = 1736208000000L
 
-        // Create event with occurrence in range
+        // An event with an occurrence in range.
         createEventWithOccurrence("Meeting", jan6, endTs = jan6 + 3600000)
 
         val results = eventsDao.searchInRangeWithOccurrence("Meeting*", jan5, jan7)
@@ -760,7 +750,7 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val jan8 = 1736294400000L
 
         createEventWithOccurrence("Meeting C", jan7, endTs = jan7 + 3600000)
-        createEventWithOccurrence("Meeting A", jan5 + 3600000, endTs = jan5 + 7200000) // Jan 5 01:00
+        createEventWithOccurrence("Meeting A", jan5 + 3600000, endTs = jan5 + 7200000)
         createEventWithOccurrence("Meeting B", jan6, endTs = jan6 + 3600000)
 
         val results = eventsDao.searchInRangeWithOccurrence("Meeting*", jan5, jan8)
@@ -786,32 +776,28 @@ class EventsDaoFtsTest : BaseDaoTest() {
         assertEquals("Active Meeting", results[0].event.title)
     }
 
-    // ========== Synthetic master leak prevention (issue #227 AC9) ==========
+    // ========== Synthetic master leak prevention (#227) ==========
 
-    /**
-     * Issue #227 AC9: ICS-synthesized placeholder masters carry the sentinel
-     * `X-KASHCAL-SYNTHETIC-MASTER` in extra_properties. They are FK targets
-     * for orphan exceptions, not real events. They must never surface in
-     * `search` (FTS), `searchWithOccurrence` (next-occurrence), or
-     * `suggestTitlesByPrefix` (autocomplete).
-     *
-     * Critically, the filter targets the SENTINEL — not status='CANCELLED' —
-     * because CalDAV/iCloud servers and the device CalendarProvider both
-     * persist legitimate cancelled events with status='CANCELLED' (RFC 5545
-     * §3.8.1.11), and those should still be searchable.
-     */
+    // Synthetic masters (#227), placeholders that ICS subscriptions and the CalDAV pull create
+    // for exceptions without a master, carry `X-KASHCAL-SYNTHETIC-MASTER` in extra_properties.
+    // They are foreign-key targets for those exceptions, not real events, and must never
+    // surface in `search`, `searchWithOccurrence` or `suggestTitlesByPrefix`.
+    //
+    // The filter tests the sentinel, not status='CANCELLED': CalDAV and iCloud servers and the
+    // device CalendarProvider all keep legitimate cancelled events (RFC 5545 §3.8.1.11), and
+    // those stay searchable.
     @Test
     fun `search excludes synthetic master but keeps genuine cancelled events`() = runTest {
-        // Synthetic master (issue #227 placeholder)
+        // A synthetic master.
         eventsDao.insert(createEvent(title = "Synthetic Placeholder").copy(
             status = "CANCELLED",
             extraProperties = mapOf("X-KASHCAL-SYNTHETIC-MASTER" to "true")
         ))
-        // Genuine cancelled event from CalDAV/iCloud/device-calendar
+        // A legitimate cancelled event.
         eventsDao.insert(createEvent(title = "Real Cancelled Meeting").copy(
             status = "CANCELLED"
         ))
-        // Normal active event
+        // An active event.
         eventsDao.insert(createEvent(title = "Active Meeting"))
 
         val results = eventsDao.search("Meeting* OR Placeholder*")
@@ -853,14 +839,14 @@ class EventsDaoFtsTest : BaseDaoTest() {
         val sinceMs = now - 30L * 24 * 3600 * 1000
         val untilMs = now + 30L * 24 * 3600 * 1000
 
-        // Two genuine cancelled events with same title — meets minFreq=2
+        // Two legitimate cancelled events with the same title, meeting minFreq=2.
         eventsDao.insert(createEvent(title = "Real Cancelled", startTs = now - 1000).copy(
             status = "CANCELLED"
         ))
         eventsDao.insert(createEvent(title = "Real Cancelled", startTs = now - 500).copy(
             status = "CANCELLED"
         ))
-        // Two synthetic placeholders with same title — would meet minFreq=2
+        // Two synthetic masters with the same title, which would meet minFreq=2.
         eventsDao.insert(createEvent(title = "Synthetic Placeholder", startTs = now - 800).copy(
             status = "CANCELLED",
             extraProperties = mapOf("X-KASHCAL-SYNTHETIC-MASTER" to "true")

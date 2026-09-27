@@ -6,8 +6,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pure unit tests for the app-icon model: preset metadata and the enable/disable switch plan.
- * No Robolectric / PackageManager — the component-state side lives in AppIconUtilityTest.
+ * Tests the app-icon model without Robolectric: preset metadata, the Default companion and the
+ * enable/disable switch plan. The PackageManager component-state side is in
+ * [AppIconUtilityTest].
  */
 class AppIconPresetTest {
 

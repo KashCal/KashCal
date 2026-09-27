@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Tältä palvelimelta ei löytynyt kalentereita.</string>
     <string name="caldav_error_unexpected">Odottamaton virhe. Yritä uudelleen.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nJos tämä on palvelin lähiverkossasi, salli lähiverkon käyttö yhteyden muodostamiseksi.</string>
+    <string name="caldav_error_connection_refused_insecure">Palvelin ohjasi yhteyden paikkaan, jonne KashCal ei seuraa (salaamattomaan osoitteeseen tai uudelleenohjaussilmukkaan), joten KashCal pysähtyi ennen salasanasi lähettämistä. Tarkista palvelimen osoite.</string>
     <string name="local_network_banner_title">Lähiverkon käyttöoikeus tarvitaan</string>
     <string name="local_network_banner_body">Tämä palvelin näyttää olevan lähiverkossasi. Salli lähiverkon käyttö, jotta KashCal voi muodostaa siihen yhteyden.</string>
     <string name="local_network_banner_allow">Salli käyttö</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Tallenna muutokset</string>
     <string name="dialog_delete_recurring_title">Poista</string>
     <string name="dialog_move_recurring_title">Siirrä</string>
+    <string name="snackbar_event_rescheduled">Tapahtuma siirretty</string>
+    <string name="snackbar_reschedule_failed">Tapahtuman siirto epäonnistui</string>
     <string name="recurring_this_event">Tämä tapahtuma</string>
     <string name="recurring_all_events">Kaikki tapahtumat</string>
 

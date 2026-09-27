@@ -39,28 +39,25 @@ import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 
 /**
- * Verifies [AndroidContactsProviderRepository] builds the correct
- * [ContentProviderOperation] batch to insert CardDAV-synced contacts into the
- * Android Contacts Provider, and scopes every write/delete to a single login's
- * system account.
+ * Tests the [ContentProviderOperation] batches, queries and write-backs
+ * [AndroidContactsProviderRepository] issues against the Android Contacts Provider, and that
+ * every read and write is scoped to one login's system account.
  *
- * Robolectric reality (shadows-framework 4.16.1): `ShadowContentResolver`
- * CAPTURES an `applyBatch` but never EXECUTES it when no `ContentProvider` is
- * registered for `com.android.contacts` (there is none in this tree). It stores
- * the ops via `map.put(authority, ops)` — LAST batch wins, not appended — and
- * returns an EMPTY `ContentProviderResult[]`. Two consequences shape these
- * assertions:
- *  - The impl must NOT dereference `results[0]` (an empty array would AIOOBE on
- *    the first insert) — a sync-adapter insert doesn't need the returned id.
- *  - There is no row store to read back, and `getContentProviderOperations`
- *    shows only the LAST batch. So single-batch cases assert on the captured op
- *    list; multi-batch chunking/yield is asserted on the pure [buildBatches]
- *    output directly (its `getUri`/`isYieldAllowed`/`resolveValueBackReferences`
- *    are all public).
+ * Robolectric 4.16.1's `ShadowContentResolver` captures an `applyBatch` but doesn't execute
+ * it when no `ContentProvider` is registered for `com.android.contacts` (none is in this
+ * tree). It stores the ops with `map.put(authority, ops)`, so the last batch wins, and
+ * returns an empty `ContentProviderResult[]`. Two consequences:
+ *  - The insert path must not dereference `results[0]` (an empty array would throw on the
+ *    first insert); a sync-adapter insert doesn't need the returned id.
+ *  - There is no row store to read back, and `getContentProviderOperations` shows only the
+ *    last batch. Single-batch cases assert on the captured ops; multi-batch chunking and
+ *    yield are asserted on the [AndroidContactsProviderRepository.buildBatches] output (its
+ *    `getUri`, `isYieldAllowed` and `resolveValueBackReferences` are public).
  *
- * Fixtures are parsed through the REAL [VCardParser] + mapped through the REAL
- * [VCardContactMapper] (the same committed bodies the mapper suite uses), so the
- * write layer stays in lockstep with the row set the mapper actually emits.
+ * Tests that need rows or a thrown provider error use a mocked [ContentResolver].
+ *
+ * Fixtures go through the real [VCardParser] and [VCardContactMapper] (the committed bodies
+ * the mapper suite uses), so the write layer stays in step with the rows the mapper emits.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -96,16 +93,15 @@ class ContactsProviderRepositoryTest {
         MappedContactWrite(href = href, etag = etag, mapped = mapped(name), isReadOnly = isReadOnly)
 
     /**
-     * Resolve an op's ContentValues, supplying a dummy prior result so a
-     * `withValueBackReference(RAW_CONTACT_ID, base)` on a Data row resolves
-     * without throwing (ContentUris.parseId needs a numeric id on the back-ref
-     * uri). RawContact ops carry no back-ref, so this is a no-op for them.
+     * Resolves an op's ContentValues against dummy prior results, so a
+     * `withValueBackReference(RAW_CONTACT_ID, base)` on a Data row resolves without throwing
+     * (`ContentUris.parseId` needs a numeric id on the back-reference URI). Ops without a
+     * back-reference come back unchanged.
      */
     private fun valuesOf(op: ContentProviderOperation): ContentValues {
-        // Back-references are batch-relative, so a data row can reference any index
-        // up to a full batch. Supply a generous result array, every entry id=1L, so
-        // ANY back-ref resolves to RAW_CONTACT_ID=1 regardless of the contact's
-        // position in the batch.
+        // Back-references are batch-relative, so a Data row can point at any index up to a
+        // full batch. Every entry has id 1, so any back-reference resolves to
+        // RAW_CONTACT_ID = 1 wherever the contact sits in the batch.
         val backRefs = Array(AndroidContactsProviderRepository.MAX_OPS_PER_BATCH) {
             ContentProviderResult(ContentUris.withAppendedId(RawContacts.CONTENT_URI, 1L))
         }
@@ -128,7 +124,7 @@ class ContactsProviderRepositoryTest {
         val ops = capturedOps()
         assertTrue("expected at least a RawContact + one data row", ops.size >= 2)
 
-        // First op is the parent RawContact insert.
+        // First op is the RawContact insert.
         assertTrue(ops.first().isInsert)
         assertTrue("first op must be the RawContact (carries SOURCE_ID)", ops.first().isRawContactInsert())
 
@@ -183,12 +179,11 @@ class ContactsProviderRepositoryTest {
             v.getAsInteger(RawContacts.SYNC4),
         )
         assertEquals("server-owned rows are read-only on device", 1, v.getAsInteger(RawContacts.RAW_CONTACT_IS_READ_ONLY))
-        // Fully isolate mirrored contacts from the user's existing device contacts:
-        // never aggregate with a Google/local RawContact, so removing this account
-        // (or purging its rows) can never collapse or delete a contact owned by
-        // another account that merely shares a phone number or name. SUSPENDED still
-        // permits a manual merge and leaves that aggregation link, so DISABLED is the
-        // only mode that guarantees our purge touches nothing but our own rows.
+        // Synced contacts never aggregate with another account's RawContact, so removing
+        // this account or purging its rows can't collapse or delete a contact of another
+        // account that shares a phone number or name. SUSPENDED still permits a manual
+        // merge and leaves that aggregation link, so only DISABLED keeps the purge to our
+        // own rows.
         assertEquals(
             "mirrored contacts must not aggregate with any other account",
             RawContacts.AGGREGATION_MODE_DISABLED,
@@ -198,10 +193,10 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `a writable book's contact is inserted editable (RAW_CONTACT_IS_READ_ONLY = 0)`() = runBlocking {
-        // A contact from a writable address book must be user-editable on device, so
-        // the provider sets DIRTY when the user edits it — the signal the push path
-        // reads. Editability is per-book: only the read-only flag changes, everything
-        // else (aggregation, SYNC columns) is identical to the read-only case.
+        // A contact from a writable address book must be editable on the device, so the
+        // provider sets DIRTY when the user edits it, the signal the push reads.
+        // Editability is per book: only the read-only flag changes; aggregation and the
+        // SYNC columns match the read-only case.
         repo().insertContacts(
             ACCOUNT_NAME,
             listOf(write("kashcal_full_v3.vcf", "/full.vcf", isReadOnly = false)),
@@ -214,7 +209,7 @@ class ContactsProviderRepositoryTest {
             0,
             v.getAsInteger(RawContacts.RAW_CONTACT_IS_READ_ONLY),
         )
-        // Editability is orthogonal to aggregation — still fully isolated.
+        // Editability doesn't change aggregation: still disabled.
         assertEquals(
             "editability must not change the aggregation isolation",
             RawContacts.AGGREGATION_MODE_DISABLED,
@@ -236,8 +231,8 @@ class ContactsProviderRepositoryTest {
     fun `insert uri carries CALLER_IS_SYNCADAPTER and the account name plus type`() = runBlocking {
         repo().insertContacts(ACCOUNT_NAME, listOf(write("kashcal_full_v3.vcf", "/full.vcf")))
 
-        // Every op's URI must be in sync-adapter mode and account-scoped, not just
-        // the ContentValues — the provider reads these off the URI.
+        // Every op's URI must be in sync-adapter mode and account-scoped, not only the
+        // ContentValues: the provider reads these off the URI.
         capturedOps().forEach { op ->
             val uri = op.uri
             assertEquals("true", uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
@@ -290,8 +285,8 @@ class ContactsProviderRepositoryTest {
 
         val yielded = ops.filter { it.isYieldAllowed }
         assertEquals("one yield per contact", many.size, yielded.size)
-        // Yielding right after a RawContact insert (before its StructuredName) would
-        // let a nameless contact commit if the batch failed partway — forbid it.
+        // Yielding right after a RawContact insert (before its StructuredName) would let a
+        // nameless contact commit if the batch failed partway.
         assertTrue(
             "the RawContact insert must never be a yield point",
             ops.filter { it.isRawContactInsert() }.none { it.isYieldAllowed },
@@ -301,10 +296,10 @@ class ContactsProviderRepositoryTest {
     // ---------- byte-bounded chunking (pure builder) ----------
 
     /**
-     * A synthetic contact carrying one StructuredName row and one inline Photo blob
-     * of [photoBytes] bytes — so its op-count is tiny (2) but its byte weight is
-     * dominated by the blob. This is the shape that trips the Binder transaction
-     * limit without ever tripping [AndroidContactsProviderRepository.MAX_OPS_PER_BATCH].
+     * Builds a contact with one StructuredName row and one inline Photo blob of [photoBytes]
+     * bytes: two Data rows, but a byte weight dominated by the blob. This shape trips the
+     * Binder transaction limit without tripping
+     * [AndroidContactsProviderRepository.MAX_OPS_PER_BATCH].
      */
     private fun photoWrite(href: String, photoBytes: Int): MappedContactWrite {
         val rows = listOf(
@@ -342,17 +337,17 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `a batch's inline-photo bytes stay under the transaction budget`() {
-        // Each contact is ~400KB of photo; several of them pack well under the 100-op
-        // cap, so ONLY a byte ceiling forces a split. Without one, they'd all land in a
-        // single applyBatch and trip TransactionTooLargeException at the ~1MB Binder limit.
+        // Each contact carries ~400KB of photo and several fit well under the 100-op cap,
+        // so only a byte ceiling forces a split. Without one they'd land in a single
+        // applyBatch and trip TransactionTooLargeException at the ~1MB Binder limit.
         val photoBytes = 400 * 1024
         val many = (1..6).map { photoWrite("/p$it.vcf", photoBytes) }
         val batches = repo().buildBatches(ACCOUNT_NAME, many)
 
         assertTrue("byte weight alone must force more than one batch", batches.size > 1)
         batches.forEach { batch ->
-            // A single contact whose own blob exceeds the budget is allowed to occupy a
-            // lone batch (a contact is never split); multi-contact batches must fit.
+            // A contact whose own blob exceeds the budget may occupy a batch alone (a
+            // contact is never split); multi-contact batches must fit.
             val rawContacts = batch.count { it.isRawContactInsert() }
             if (rawContacts > 1) {
                 assertTrue(
@@ -366,22 +361,21 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `a lone oversized-photo contact still gets its own batch rather than being split`() {
-        // One contact whose blob alone exceeds the byte budget must still emit as a
-        // single, whole batch — the byte ceiling never splits a contact mid-way.
+        // A contact whose blob alone exceeds the byte budget still goes out as one whole
+        // batch: the byte ceiling never splits a contact.
         val huge = photoWrite("/huge.vcf", (AndroidContactsProviderRepository.MAX_BATCH_BYTES + 1).toInt())
         val batches = repo().buildBatches(ACCOUNT_NAME, listOf(huge))
 
         assertEquals("the whole contact stays in one batch", 1, batches.size)
-        // RawContact + StructuredName + Photo, intact — never split by the byte ceiling.
+        // RawContact, StructuredName and Photo, together in the one batch.
         assertEquals("the whole contact stays intact", 3, batches.single().size)
     }
 
-    // ---------- dedupe pre-filter query ----------
+    // ---------- existingSourceIds query ----------
 
     @Test
     fun `existingSourceIds returns empty and does not crash when the provider yields nothing`() = runBlocking {
-        // No provider registered -> query returns null -> graceful empty set. This is
-        // the account-scoped pre-filter the pull caller must consult before insert.
+        // No provider registered -> query returns null -> empty set.
         assertTrue(repo().existingSourceIds(ACCOUNT_NAME).isEmpty())
     }
 
@@ -392,9 +386,9 @@ class ContactsProviderRepositoryTest {
         val result = repo().ensureContactVisibility(ACCOUNT_NAME)
         assertTrue(result.isSuccess)
 
-        // Contacts under a custom account type with no group membership are hidden
-        // by the Contacts Provider unless UNGROUPED_VISIBLE is set on the account's
-        // Settings row. Without it the account shows but its contacts never appear.
+        // The Contacts Provider hides contacts of a custom account type that have no group
+        // membership unless UNGROUPED_VISIBLE is set on the account's Settings row.
+        // Without it the account shows but its contacts never appear.
         val insert = shadowOf(resolver).insertStatements.last()
         val v = insert.contentValues
         assertEquals(
@@ -414,9 +408,8 @@ class ContactsProviderRepositoryTest {
         repo().ensureContactVisibility(ACCOUNT_NAME)
 
         val insert = shadowOf(resolver).insertStatements.last()
-        // The provider keys the Settings row by account; it reads name/type off the
-        // ContentValues AND the row must target the Settings collection via a
-        // sync-adapter, account-scoped URI.
+        // The provider keys the Settings row by account, read from the ContentValues, and
+        // the insert targets Settings through a sync-adapter, account-scoped URI.
         assertEquals(ACCOUNT_NAME, insert.contentValues.getAsString(ContactsContract.Settings.ACCOUNT_NAME))
         assertEquals(ACCOUNT_TYPE, insert.contentValues.getAsString(ContactsContract.Settings.ACCOUNT_TYPE))
 
@@ -439,9 +432,9 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `insert provisions a titled Group for each category before the membership rows`() = runBlocking {
-        // full_v3 carries CATEGORIES:Family,Test -> the mapper emits two GroupMembership
-        // rows keyed by GROUP_SOURCE_ID; the write layer must first insert a titled Group
-        // with that SOURCE_ID so the membership resolves to a named (not blank) group.
+        // full_v3 carries CATEGORIES:Family,Test, so the mapper emits two GroupMembership
+        // rows keyed by GROUP_SOURCE_ID. The write layer must first insert a titled Group
+        // with that SOURCE_ID so each membership resolves to a named group, not a blank one.
         repo().insertContacts(ACCOUNT_NAME, listOf(write("kashcal_full_v3.vcf", "/full.vcf")))
 
         val groupInserts = shadowOf(resolver).insertStatements.filter {
@@ -450,7 +443,7 @@ class ContactsProviderRepositoryTest {
         val titles = groupInserts.map { it.contentValues.getAsString(ContactsContract.Groups.TITLE) }.toSet()
         assertEquals(setOf("Family", "Test"), titles)
 
-        // SOURCE_ID must equal TITLE — it's the key the GroupMembership rows point at.
+        // SOURCE_ID must equal TITLE: it's the key the GroupMembership rows point at.
         groupInserts.forEach {
             val v = it.contentValues
             assertEquals(
@@ -490,8 +483,8 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `group provisioning failure does not fail the contact insert`() = runBlocking {
-        // A Groups insert that throws must be swallowed: the contact itself still inserts
-        // (the provider auto-creates a blank group), so category-group failure is not fatal.
+        // A Groups insert that throws is swallowed: the contact still inserts (the provider
+        // auto-creates a blank group), so a category-group failure isn't fatal.
         val cr = mockk<ContentResolver>(relaxed = true)
         every { cr.query(any(), any(), any(), any(), any()) } returns null
         every {
@@ -542,9 +535,9 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `applyBatch unchecked runtime (unresolvable uri) fails gracefully, honoring the no-throw contract`() = runBlocking {
-        // The provider can surface an IllegalArgumentException (unknown authority/URI)
-        // or an arbitrary Binder RuntimeException — neither is one of the three checked
-        // types. The "does not throw" contract must still hold: fail the chunk, don't crash.
+        // The provider can throw an IllegalArgumentException (unknown authority or URI) or
+        // any Binder RuntimeException, neither one of the three checked types. The
+        // no-throw contract must still hold: fail the chunk, don't crash.
         val cr = mockk<ContentResolver>()
         every { cr.applyBatch(any(), any()) } throws IllegalArgumentException("Unknown URI")
 
@@ -552,7 +545,7 @@ class ContactsProviderRepositoryTest {
         assertTrue("an unchecked runtime must degrade to Result.failure, not propagate", result.isFailure)
     }
 
-    // ---------- deleteByHrefs (server-side deletes + replace first half) ----------
+    // ---------- deleteByHrefs (server removed set and orphan sweep) ----------
 
     @Test
     fun `deleteByHrefs scopes by account name AND type AND SOURCE_ID IN`() = runBlocking {
@@ -593,7 +586,7 @@ class ContactsProviderRepositoryTest {
 
         val deletes = shadowOf(resolver).deleteStatements
         assertTrue("a 900-href delete must chunk into more than one statement", deletes.size > 1)
-        // Every chunk keeps the account+type predicate — a chunk that dropped it
+        // Every chunk keeps the account name and type predicate; a chunk that dropped it
         // could delete across the account boundary.
         deletes.forEach { del ->
             val where = del.where.orEmpty()
@@ -612,13 +605,13 @@ class ContactsProviderRepositoryTest {
         assertTrue("a provider failure returns Result.failure, not a crash", result.isFailure)
     }
 
-    // ---------- replaceContacts (change-as-replace) ----------
+    // ---------- replaceContacts (in-place update) ----------
 
     @Test
     fun `replaceContacts updates an existing contact in place, preserving its RawContact id`() = runBlocking {
-        // A present href resolves to an existing RawContact _ID; the replace must keep
-        // that row (so the aggregate Contact id, starred flag, home-screen shortcut, and
-        // lookup key survive) rather than delete+recreate it under a new id.
+        // A present href resolves to an existing RawContact _ID. The replace keeps that row,
+        // so the aggregate Contact id, starred flag, home-screen shortcut and lookup key
+        // survive; a delete and re-create would mint a new id.
         val cr = mockk<ContentResolver>()
         every { cr.query(any(), any(), any(), any(), any()) } returns
             MatrixCursor(arrayOf(RawContacts.SOURCE_ID, RawContacts._ID)).apply {
@@ -631,12 +624,12 @@ class ContactsProviderRepositoryTest {
         assertTrue(result.isSuccess)
 
         val ops = batch.captured
-        // No RawContact is INSERTED — the existing row is retained, not recreated.
+        // No RawContact is inserted: the existing row is kept.
         assertTrue(
             "an in-place replace inserts no new RawContact (that would churn the _ID)",
             ops.none { it.isInsert && it.isRawContactInsert() },
         )
-        // The RawContact row is UPDATED in place, carrying the new server etag on SYNC2.
+        // The RawContact row is updated in place, carrying the new server etag on SYNC2.
         val update = ops.first { it.isUpdate }
         assertTrue("the update targets a RawContacts row", update.uri.toString().contains("raw_contacts"))
         assertEquals(
@@ -644,7 +637,7 @@ class ContactsProviderRepositoryTest {
             "\"etag-/p.vcf\"",
             valuesOf(update).getAsString(RawContacts.SYNC2),
         )
-        // Old Data rows are cleared, then fresh ones re-inserted against the SAME retained id.
+        // Old Data rows are deleted, then new ones inserted against the same kept id.
         assertTrue("a Data-row delete clears the stale rows", ops.any { it.isDelete })
         val dataInsert = ops.first { it.isInsert }
         assertEquals(
@@ -656,10 +649,10 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `replaceContacts resolves existing rows excluding locally-deleted (tombstoned) rows`() = runBlocking {
-        // The href-to-_ID resolve behind an in-place replace must not match a tombstone
-        // (DELETED=1). Resolving one would refresh the tombstone's etag under a concurrent
-        // server edit, arming the queued DELETE to destroy the edited server copy. Scope
-        // the resolve to live rows so a delete-pending row falls through to a fresh insert.
+        // The href-to-_ID lookup behind an in-place replace must not match a tombstone
+        // (DELETED=1). Matching one would refresh the tombstone's etag under a concurrent
+        // server edit, arming the queued DELETE to destroy the edited server copy. With the
+        // lookup scoped to live rows, a delete-pending row goes to the insert path.
         val cr = mockk<ContentResolver>()
         val selection = slot<String>()
         every { cr.query(any(), any(), capture(selection), any(), any()) } returns
@@ -678,9 +671,8 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `replaceContacts falls back to a fresh insert when the href has no existing row`() = runBlocking {
-        // No existing RawContact resolves for this href (self-heal case): there's
-        // nothing to preserve, so it goes through the normal insert path. The real
-        // Robolectric resolver's resolve query returns null -> insert branch.
+        // No RawContact resolves for this href, so there's nothing to keep and it goes
+        // through the insert path. The Robolectric resolver's lookup query returns null.
         repo().replaceContacts(ACCOUNT_NAME, listOf(write("kashcal_full_v3.vcf", "/new.vcf")))
 
         val raw = capturedOps().first { it.isRawContactInsert() }
@@ -705,19 +697,19 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `existingEtagsByHref returns empty and does not crash when the provider yields nothing`() = runBlocking {
-        // No provider registered -> query returns null -> graceful empty map. This is
-        // the read-back the full pull uses to tell changed from unchanged.
+        // No provider registered -> query returns null -> empty map. This is the read-back
+        // the pull uses to tell changed from unchanged.
         assertTrue(repo().existingEtagsByHref(ACCOUNT_NAME).isEmpty())
     }
 
     @Test
     fun `existingEtagsByHref keeps tombstoned rows in change-detection`() = runBlocking {
-        // A locally-deleted contact (DELETED=1) is awaiting a DELETE push, but it MUST
-        // stay in change-detection. Dropping it would let a transient delete failure plus
-        // a full listing re-insert the just-deleted contact (an unchanged server etag must
-        // SKIP, not resurrect), and would misread a device holding only tombstones as
-        // wiped. The etag-refresh hazard is closed at the in-place-replace target lookup
-        // (resolveRawContactIdsByHref excludes DELETED), not here.
+        // A locally deleted contact (DELETED=1) awaiting its DELETE push must stay in
+        // change detection. Dropping it would let a transient delete failure plus a full
+        // listing re-insert the deleted contact (an unchanged server etag must skip, not
+        // resurrect), and would misread a device holding only tombstones as wiped. The
+        // etag-refresh hazard is closed at the in-place replace's lookup
+        // (`resolveRawContactIdsByHref` excludes DELETED), not here.
         val cr = mockk<ContentResolver>()
         val selection = slot<String>()
         every { cr.query(any(), any(), capture(selection), any(), any()) } returns
@@ -736,20 +728,19 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `pendingPhotoSourceIds returns empty and does not crash when the provider yields nothing`() = runBlocking {
-        // No provider registered -> query returns null -> graceful empty set.
+        // No provider registered -> query returns null -> empty set.
         assertTrue(repo().pendingPhotoSourceIds(ACCOUNT_NAME).isEmpty())
     }
 
     @Test
     fun `pendingPhotoSourceIds returns only rows whose SYNC4 has the photo-pending bit`() = runBlocking {
-        // ShadowContentResolver can't be pre-seeded with RawContact rows, so drive
-        // the cursor through a mocked resolver: three rows, only two pending, one
-        // with the pending bit among other bits set.
+        // ShadowContentResolver can't be seeded with RawContact rows, so a mocked resolver
+        // serves the cursor: four rows, two pending, one of those with another bit set too.
         val cr = mockk<ContentResolver>()
         val cursor = MatrixCursor(arrayOf(RawContacts.SOURCE_ID, RawContacts.SYNC4)).apply {
             addRow(arrayOf<Any?>("/pending.vcf", AndroidContactsProviderRepository.FLAG_PHOTO_PENDING))
             addRow(arrayOf<Any?>("/clean.vcf", 0))
-            // pending bit OR an unrelated high bit -> still counts as pending.
+            // Pending bit plus an unrelated high bit still counts as pending.
             addRow(arrayOf<Any?>("/pendingplus.vcf", AndroidContactsProviderRepository.FLAG_PHOTO_PENDING or 0b1000))
             addRow(arrayOf<Any?>("/nullflags.vcf", null)) // null SYNC4 = no flags
         }
@@ -809,8 +800,8 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `writePhotoAndClearPending clears only the pending bit and preserves other SYNC4 bits`() = runBlocking {
-        // Current SYNC4 = pending bit OR a high bit; the update must AND-NOT only the
-        // pending bit, leaving the high bit intact (never zero the column).
+        // Current SYNC4 is the pending bit plus a high bit; the update must AND-NOT only the
+        // pending bit and keep the high bit (never zero the column).
         val other = 0b1000
         val cr = photoResolver(rawContactId = 7L, currentFlags = FLAG_PHOTO_PENDING or other)
         val batch = slot<ArrayList<ContentProviderOperation>>()
@@ -828,8 +819,8 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `writePhotoAndClearPending is a no-op success when the source id no longer resolves`() = runBlocking {
-        // Contact deleted between pull and fetch -> resolve query returns empty ->
-        // no applyBatch, still success (nothing to leave pending).
+        // Contact deleted between pull and fetch: the lookup returns no row, so no
+        // applyBatch, and still a success (nothing to leave pending).
         val cr = mockk<ContentResolver>()
         every { cr.query(any(), any(), any(), any(), any()) } returns
             MatrixCursor(arrayOf(RawContacts._ID, RawContacts.SYNC4)) // empty
@@ -892,10 +883,11 @@ class ContactsProviderRepositoryTest {
     // ---------- pendingLocalChanges (DIRTY -> edit, DELETED -> tombstone) ----------
 
     /**
-     * A resolver that routes the three read shapes [pendingLocalChanges] issues by
-     * the substring in the selection: the DIRTY edit scan, the DELETED tombstone
-     * scan, and the per-RawContact Data-row read. Each returns a freshly-built
-     * cursor so a re-query (the per-row Data read) is never a consumed cursor.
+     * Builds a resolver that serves the reads
+     * [AndroidContactsProviderRepository.pendingLocalChanges] issues: the Groups read by its
+     * projection, and by selection substring the DIRTY edit scan, the DELETED tombstone scan and
+     * the per-RawContact Data read. Each call builds a new cursor, so a repeated per-row Data read
+     * never gets a consumed one.
      */
     private fun changesResolver(
         dirty: () -> MatrixCursor,
@@ -906,8 +898,8 @@ class ContactsProviderRepositoryTest {
         val cr = mockk<ContentResolver>()
         every { cr.query(any(), any(), any(), any(), any()) } answers {
             // Route the Groups._ID -> TITLE read by its projection: its selection is the
-            // bare account scope, shared with the DIRTY/DELETED scans, so selection
-            // routing would collide.
+            // bare account scope, which the DIRTY and DELETED scans also contain, so
+            // selection routing would collide.
             val projection = arg<Array<String>?>(1)
             if (projection != null && projection.contains(ContactsContract.Groups.TITLE)) {
                 return@answers groups()
@@ -941,20 +933,20 @@ class ContactsProviderRepositoryTest {
             ),
         ).apply { addRow(arrayOf<Any?>(StructuredName.CONTENT_ITEM_TYPE, displayName, given, family)) }
 
-    /**
-     * A Data cursor carrying a StructuredName row plus a GroupMembership row whose
-     * GROUP_SOURCE_ID is blank and whose GROUP_ROW_ID is [groupRowId] — the People-app
-     * user-label shape. DISPLAY_NAME and GROUP_ROW_ID are both DATA1, so a single
-     * "data1" column carries the name string on the name row and the group row id on
-     * the membership row.
-     */
-    /** A Data cursor carrying a StructuredName row plus a Photo row with [photoBytes]. */
+    /** Builds a Data cursor with a StructuredName row and a Photo row carrying [photoBytes]. */
     private fun nameAndPhotoData(displayName: String, photoBytes: ByteArray) =
         MatrixCursor(arrayOf(Data.MIMETYPE, StructuredName.DISPLAY_NAME, Photo.PHOTO)).apply {
             addRow(arrayOf<Any?>(StructuredName.CONTENT_ITEM_TYPE, displayName, null))
             addRow(arrayOf<Any?>(Photo.CONTENT_ITEM_TYPE, null, photoBytes))
         }
 
+    /**
+     * Builds a Data cursor with a StructuredName row and a GroupMembership row whose
+     * GROUP_SOURCE_ID is blank and whose GROUP_ROW_ID is [groupRowId]: the shape of a user
+     * label added in the Contacts app. DISPLAY_NAME and GROUP_ROW_ID are both DATA1, so one
+     * "data1" column carries the name on the name row and the group row id on the
+     * membership row.
+     */
     private fun nameAndGroupData(displayName: String, groupRowId: Long) =
         MatrixCursor(
             arrayOf(
@@ -982,11 +974,11 @@ class ContactsProviderRepositoryTest {
         assertEquals("href = SOURCE_ID", "/edited.vcf", edit.href)
         assertEquals("uid = SYNC1", "uid-1", edit.uid)
         assertEquals("stored etag = SYNC2", "\"etag-1\"", edit.storedEtag)
-        // The provider _ID is threaded onto the edit so a net-new contact (blank
-        // SOURCE_ID) can be written back by its stable _ID, not by its absent href.
+        // The provider _ID is carried on the edit so a net-new contact (blank SOURCE_ID) can
+        // be written back by its _ID, since it has no href yet.
         assertEquals("local id = _ID", 100L, edit.localId)
-        // The device field values were reverse-mapped through DeviceContactRowMapper,
-        // and the UID was threaded onto the model (not stored on Data rows).
+        // The device fields were reverse-mapped through DeviceContactRowMapper, and the UID
+        // was set on the model (it isn't stored on Data rows).
         assertEquals("reverse-mapped display name", "Alice Edited", edit.contact.displayName)
         assertEquals("uid threaded onto the model", "uid-1", edit.contact.uid)
         assertTrue("no tombstones", changes.deleted.isEmpty())
@@ -1026,17 +1018,17 @@ class ContactsProviderRepositoryTest {
 
         val changes = repo(cr).pendingLocalChanges(ACCOUNT_NAME)
 
-        // The user label (GROUP_ROW_ID -> local Groups._ID, GROUP_SOURCE_ID blank) is
-        // resolved to its title via the scan's Groups map and threaded into the model,
-        // so the push serializes it as a CATEGORIES value instead of dropping it.
+        // The user label (GROUP_ROW_ID -> local Groups._ID, GROUP_SOURCE_ID blank) resolves
+        // to its title through the scan's Groups map and lands in the model's categories,
+        // so the push writes it as a CATEGORIES value instead of dropping it.
         val edit = changes.edited.single()
         assertTrue("user label resolved into categories", edit.contact.categories.contains("Friends"))
     }
 
     @Test
     fun `a dirty contact with a WebP thumbnail comes back transcoded to JPEG`() = runBlocking {
-        // A device WebP thumbnail carries no MIME. The transcoder threaded through
-        // queryDirtyEdits normalizes it to JPEG so a strict server stores it.
+        // A device WebP thumbnail carries no MIME type. The transcoder passed to the
+        // repository converts it to JPEG in the dirty-edit scan so a strict server stores it.
         val webp = byteArrayOf(
             0x52, 0x49, 0x46, 0x46, 0x1A, 0x00, 0x00, 0x00,
             0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x20,
@@ -1049,8 +1041,8 @@ class ContactsProviderRepositoryTest {
 
         val edit = repo(cr).pendingLocalChanges(ACCOUNT_NAME).edited.single()
 
-        // Bytes swapped to the JPEG codec output, contentType cleared so the writer
-        // sniffs those bytes and stamps image/jpeg (not octet-stream) on a 4.0 book.
+        // Bytes are the JPEG codec output and contentType is cleared, so the writer sniffs
+        // them and labels image/jpeg instead of octet-stream on a 4.0 book.
         assertNull("transcoded photo carries no contentType label", edit.contact.photo?.contentType)
         assertArrayEquals(fakeJpeg, edit.contact.photo?.data)
     }
@@ -1066,9 +1058,9 @@ class ContactsProviderRepositoryTest {
 
         val changes = repo(cr).pendingLocalChanges(ACCOUNT_NAME)
 
-        // The Groups read failed, but the dirty contact is still returned; the blank-
-        // source-id label simply drops (degrades to SOURCE_ID-only) rather than
-        // collapsing the whole scan to an empty pending set.
+        // The Groups read failed but the dirty contact is still returned: the blank
+        // source-id label drops (only SOURCE_ID-keyed groups remain) instead of the whole
+        // scan collapsing to an empty pending set.
         val edit = changes.edited.single()
         assertTrue("unresolved label dropped, not crashed", edit.contact.categories.isEmpty())
     }
@@ -1089,8 +1081,8 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `pendingLocalChanges scans are scoped by account name AND type`() = runBlocking {
-        // Collect each query's (selection, args) inside the stub rather than capturing —
-        // the query count varies and captureNullable is not available in this mockk.
+        // Collect each query's (selection, args) inside the stub instead of capturing: the
+        // query count varies and captureNullable isn't available in this mockk.
         val issued = mutableListOf<Pair<String?, Array<String>?>>()
         val cr = mockk<ContentResolver>()
         every { cr.query(any(), any(), any(), any(), any()) } answers {
@@ -1108,8 +1100,8 @@ class ContactsProviderRepositoryTest {
 
         repo(cr).pendingLocalChanges(ACCOUNT_NAME)
 
-        // The two RawContact scans (dirty + deleted) must both carry the account name
-        // AND type predicate; a name-only scan could cross the calendar account type.
+        // Both RawContact scans (dirty and deleted) must carry the account name and type
+        // predicate; a name-only scan could cross into the calendar account type.
         val scans = issued.filter { (sel, _) ->
             sel != null && (sel.contains(RawContacts.DIRTY) || sel.contains(RawContacts.DELETED))
         }
@@ -1124,7 +1116,7 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `pendingLocalChanges returns empty and does not crash when the provider yields nothing`() = runBlocking {
-        // No provider registered -> query returns null -> graceful empty set.
+        // No provider registered -> query returns null -> empty pending set.
         val changes = repo().pendingLocalChanges(ACCOUNT_NAME)
         assertTrue(changes.edited.isEmpty() && changes.deleted.isEmpty())
     }
@@ -1153,12 +1145,36 @@ class ContactsProviderRepositoryTest {
         val v = valuesOf(op)
         assertEquals("SYNC2 = the server's post-PUT etag", "\"new-etag\"", v.getAsString(RawContacts.SYNC2))
         assertEquals("DIRTY cleared so the adapter's own write is not re-detected", 0, v.getAsInteger(RawContacts.DIRTY))
-        // Targets the resolved RawContact _ID via a sync-adapter, account-scoped URI —
-        // sync-adapter mode is what stops the provider re-flagging DIRTY on our write.
+        // Targets the resolved RawContact _ID through a sync-adapter, account-scoped URI;
+        // sync-adapter mode stops the provider re-flagging DIRTY on our write.
         assertEquals(88L, ContentUris.parseId(op.uri))
         assertEquals("true", op.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
         assertEquals(ACCOUNT_NAME, op.uri.getQueryParameter(RawContacts.ACCOUNT_NAME))
         assertEquals(ACCOUNT_TYPE, op.uri.getQueryParameter(RawContacts.ACCOUNT_TYPE))
+    }
+
+    @Test
+    fun `markContactUploaded moves the contact to the href the server redirected it to`() = runBlocking {
+        val cr = resolverFor(rawContactId = 88L)
+        val batch = slot<ArrayList<ContentProviderOperation>>()
+        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1))
+
+        repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e2\"", newHref = "/moved/x.vcf")
+
+        val v = valuesOf(batch.captured.single())
+        assertEquals("/moved/x.vcf", v.getAsString(RawContacts.SOURCE_ID))
+        assertEquals("\"e2\"", v.getAsString(RawContacts.SYNC2))
+    }
+
+    @Test
+    fun `markContactUploaded without a new href leaves SOURCE_ID alone`() = runBlocking {
+        val cr = resolverFor(rawContactId = 88L)
+        val batch = slot<ArrayList<ContentProviderOperation>>()
+        every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1))
+
+        repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e2\"")
+
+        assertFalse(valuesOf(batch.captured.single()).containsKey(RawContacts.SOURCE_ID))
     }
 
     @Test
@@ -1192,9 +1208,9 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `markContactUploaded treats a short applyBatch result as failure, never a swallowed success`() = runBlocking {
-        // The provider dropped the op mid-batch: the result array is shorter than the
-        // ops submitted. Per-op counts can lie, but a short array is the reliable
-        // signal the write did not fully apply — surface it, don't swallow it.
+        // The provider dropped the op mid-batch: the result array is shorter than the ops
+        // submitted. Per-op counts can lie, but a short array reliably means the write
+        // didn't fully apply, so it must be a failure.
         val cr = resolverFor(rawContactId = 1L)
         every { cr.applyBatch(any(), any()) } returns emptyArray()
         val result = repo(cr).markContactUploaded(ACCOUNT_NAME, "/x.vcf", "\"e\"")
@@ -1210,7 +1226,7 @@ class ContactsProviderRepositoryTest {
         val cause = result.exceptionOrNull()
         assertTrue("failure is a typed enum, not the raw provider exception", cause is ContactWriteException)
         assertEquals(ContactWriteFailure.PERMISSION_DENIED, (cause as ContactWriteException).failure)
-        // The PII the provider embedded in its message must never reach the failure.
+        // PII the provider put in its message must never reach the failure.
         assertFalse("no href/PII in the failure", cause.message.orEmpty().contains("/secret.vcf"))
     }
 
@@ -1218,8 +1234,8 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `markNewContactUploaded stamps SOURCE_ID and etag and clears DIRTY on the given _ID via a sync-adapter write`() = runBlocking {
-        // A net-new device contact has a blank SOURCE_ID, so the write-back must be keyed
-        // by the provider _ID directly — no SOURCE_ID resolve query at all.
+        // A net-new device contact has a blank SOURCE_ID, so the write-back is keyed by the
+        // provider _ID with no SOURCE_ID lookup (this mock stubs no query).
         val cr = mockk<ContentResolver>()
         val batch = slot<ArrayList<ContentProviderOperation>>()
         every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1))
@@ -1235,8 +1251,8 @@ class ContactsProviderRepositoryTest {
         assertEquals("SOURCE_ID = the created server href", "/ab/default/uid1.vcf", v.getAsString(RawContacts.SOURCE_ID))
         assertEquals("SYNC2 = the server's post-create etag", "\"srv-1\"", v.getAsString(RawContacts.SYNC2))
         assertEquals("DIRTY cleared so the adapter's own write is not re-detected", 0, v.getAsInteger(RawContacts.DIRTY))
-        // Targets the ORIGINATING RawContact by its provider _ID (the href was blank) via a
-        // sync-adapter, account-scoped URI — the only way to reach a row with no SOURCE_ID yet.
+        // Targets the originating RawContact by its provider _ID (the href was blank) through
+        // a sync-adapter, account-scoped URI: the only way to reach a row with no SOURCE_ID.
         assertEquals(77L, ContentUris.parseId(op.uri))
         assertEquals("true", op.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
         assertEquals(ACCOUNT_NAME, op.uri.getQueryParameter(RawContacts.ACCOUNT_NAME))
@@ -1245,7 +1261,7 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `markNewContactUploaded resolves nothing and is a no-op success when the local id is unset`() = runBlocking {
-        // An unpopulated _ID (0L) must never blind-write: no query, no applyBatch.
+        // An unset _ID (0L) must never write blind: no query, no applyBatch.
         val cr = mockk<ContentResolver>()
         val result = repo(cr).markNewContactUploaded(ACCOUNT_NAME, localId = 0L, href = "/x.vcf", newEtag = "\"e\"")
         assertTrue("an unset local id is a no-op success", result.isSuccess)
@@ -1253,14 +1269,14 @@ class ContactsProviderRepositoryTest {
         verify(exactly = 0) { cr.applyBatch(any(), any()) }
     }
 
-    // ---------- assignContactUid (pre-create UID synthesis: stamp SYNC1 by _ID, keep DIRTY) ----------
+    // ---------- assignContactUid (pre-create UID: stamp SYNC1 by _ID, keep DIRTY) ----------
 
     @Test
     fun `assignContactUid persists the synthesized UID on SYNC1 by _ID and KEEPS DIRTY set via a sync-adapter write`() = runBlocking {
-        // A device-created contact carries no UID; before its first PUT we synthesize a
-        // globally-unique one and persist it to SYNC1 so a re-attempt on a later run reuses
-        // the SAME uid (and so the same resource name) rather than minting a fresh one — the
-        // cross-device collision guard. DIRTY must stay set: the row is still pending upload.
+        // A device-created contact has no UID. Before its first PUT the push generates a
+        // unique one and persists it to SYNC1, so a retry on a later run reuses the same UID,
+        // and with it the same resource name, instead of a new one; the UID-based name is
+        // what stops two devices colliding. DIRTY must stay set: the row is still pending.
         val cr = mockk<ContentResolver>()
         val batch = slot<ArrayList<ContentProviderOperation>>()
         every { cr.applyBatch(eq(ContactsContract.AUTHORITY), capture(batch)) } returns arrayOf(ContentProviderResult(1))
@@ -1279,8 +1295,8 @@ class ContactsProviderRepositoryTest {
             1,
             v.getAsInteger(RawContacts.DIRTY),
         )
-        // Targets the ORIGINATING RawContact by its provider _ID (SOURCE_ID is still blank) via a
-        // sync-adapter, account-scoped URI.
+        // Targets the originating RawContact by its provider _ID (SOURCE_ID is still blank)
+        // through a sync-adapter, account-scoped URI.
         assertEquals(88L, ContentUris.parseId(op.uri))
         assertEquals("true", op.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
         assertEquals(ACCOUNT_NAME, op.uri.getQueryParameter(RawContacts.ACCOUNT_NAME))
@@ -1289,7 +1305,7 @@ class ContactsProviderRepositoryTest {
 
     @Test
     fun `assignContactUid is a no-op success when the local id is unset`() = runBlocking {
-        // An unpopulated _ID (0L) must never blind-write: no query, no applyBatch.
+        // An unset _ID (0L) must never write blind: no query, no applyBatch.
         val cr = mockk<ContentResolver>()
         val result = repo(cr).assignContactUid(ACCOUNT_NAME, localId = 0L, uid = "any")
         assertTrue("an unset local id is a no-op success", result.isSuccess)
@@ -1319,7 +1335,7 @@ class ContactsProviderRepositoryTest {
         val op = batch.captured.single()
         assertTrue("a hard delete", op.isDelete)
         assertEquals(55L, ContentUris.parseId(op.uri))
-        // A sync-adapter delete is a HARD delete (a non-adapter delete only soft-tombstones).
+        // A sync-adapter delete is a hard delete; a non-adapter delete only sets DELETED.
         assertEquals("true", op.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
         assertEquals(ACCOUNT_NAME, op.uri.getQueryParameter(RawContacts.ACCOUNT_NAME))
         assertEquals(ACCOUNT_TYPE, op.uri.getQueryParameter(RawContacts.ACCOUNT_TYPE))
@@ -1353,8 +1369,8 @@ class ContactsProviderRepositoryTest {
         assertTrue(op.isUpdate)
         val v = valuesOf(op)
         assertEquals("DELETED cleared -> row is live again", 0, v.getAsInteger(RawContacts.DELETED))
-        // Also clear DIRTY: leaving it set would make the restored row re-appear as a
-        // pending EDIT on the very next scan.
+        // DIRTY is cleared too: left set, the restored row would reappear as a pending edit
+        // on the next scan.
         assertEquals("DIRTY cleared so the restore is not re-detected as an edit", 0, v.getAsInteger(RawContacts.DIRTY))
         assertEquals(9L, ContentUris.parseId(op.uri))
         assertEquals("true", op.uri.getQueryParameter(ContactsContract.CALLER_IS_SYNCADAPTER))
@@ -1370,9 +1386,8 @@ class ContactsProviderRepositoryTest {
     }
 
     /**
-     * A resolver whose RawContact-by-SOURCE_ID lookup returns a single row with the
-     * given _ID (and SYNC4=0), so a write path that resolves a live target proceeds
-     * to applyBatch (which the caller stubs).
+     * Builds a resolver whose every query returns one row with [rawContactId] and SYNC4 = 0,
+     * so a write-back finds its target and reaches applyBatch (which the caller stubs).
      */
     private fun resolverFor(rawContactId: Long): ContentResolver {
         val cr = mockk<ContentResolver>()
@@ -1383,7 +1398,7 @@ class ContactsProviderRepositoryTest {
         return cr
     }
 
-    /** A resolver whose tombstone lookup (`_ID` only) returns a single DELETED row. */
+    /** Builds a resolver whose every query returns one `_ID` row, the tombstone to act on. */
     private fun tombstoneResolver(rawContactId: Long): ContentResolver {
         val cr = mockk<ContentResolver>()
         every { cr.query(any(), any(), any(), any(), any()) } returns
@@ -1392,9 +1407,9 @@ class ContactsProviderRepositoryTest {
     }
 
     /**
-     * A resolver whose RawContact-by-SOURCE_ID lookup returns a single row with the
-     * given _ID and SYNC4, so the photo-write path resolves a target and proceeds
-     * to applyBatch (which the caller stubs).
+     * Builds a resolver whose every query returns one row with [rawContactId] and
+     * [currentFlags] as SYNC4, so the photo write finds its target and reaches applyBatch
+     * (which the caller stubs).
      */
     private fun photoResolver(rawContactId: Long, currentFlags: Int): ContentResolver {
         val cr = mockk<ContentResolver>()

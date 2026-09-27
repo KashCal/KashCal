@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Tiada kalendar dijumpai pada pelayan ini.</string>
     <string name="caldav_error_unexpected">Ralat tidak dijangka. Sila cuba lagi.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nJika ini pelayan pada rangkaian setempat anda, benarkan akses rangkaian setempat untuk menyambung.</string>
+    <string name="caldav_error_connection_refused_insecure">Pelayan mengubah hala sambungan ke tempat yang tidak diikuti KashCal (alamat tanpa penyulitan, atau gelung ubah hala), jadi KashCal berhenti sebelum menghantar kata laluan anda. Semak alamat pelayan.</string>
     <string name="local_network_banner_title">Akses rangkaian setempat diperlukan</string>
     <string name="local_network_banner_body">Pelayan ini nampaknya berada pada rangkaian setempat anda. Benarkan akses rangkaian setempat supaya KashCal boleh menyambung kepadanya.</string>
     <string name="local_network_banner_allow">Benarkan akses</string>
@@ -792,6 +793,8 @@
     <string name="dialog_edit_recurring_title">Simpan perubahan ke</string>
     <string name="dialog_delete_recurring_title">Padam</string>
     <string name="dialog_move_recurring_title">Alih</string>
+    <string name="snackbar_event_rescheduled">Acara dijadualkan semula</string>
+    <string name="snackbar_reschedule_failed">Tidak dapat menjadualkan semula acara</string>
     <string name="recurring_this_event">Acara ini sahaja</string>
     <string name="recurring_all_events">Semua acara</string>
 

@@ -5,12 +5,11 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * Unit tests for ReminderScheduler duration parsing.
+ * Tests the reminder duration parsing: [parseIsoDuration] on the ISO 8601 durations of VALARM
+ * triggers, including overflow, zero and malformed input, and [parseReminderOffset] on signed
+ * offsets.
  *
- * Tests parseIsoDuration() for all ISO 8601 duration formats
- * used in iCal VALARM triggers.
- *
- * ISO 8601 Duration Format:
+ * Duration formats:
  * - P[n]W = weeks only (e.g., P1W = 1 week)
  * - P[n]D = days (e.g., P1D = 1 day)
  * - PT[n]H[n]M[n]S = time-based (e.g., PT15M = 15 minutes)
@@ -69,7 +68,7 @@ class ReminderSchedulerParseTest {
         assertEquals(2 * 60 * 60 * 1000L, result)
     }
 
-    // ========== Day-based durations (P...D) - THE BUG FIX ==========
+    // ========== Day-based durations (P...D) ==========
 
     @Test
     fun `parseIsoDuration returns correct millis for P1D`() {
@@ -99,12 +98,11 @@ class ReminderSchedulerParseTest {
 
     @Test
     fun `parseIsoDuration returns null on overflow instead of throwing or wrapping`() {
-        // Overflowing counts must fail safe to null — never a wrapped value and
-        // never an uncaught exception (ReminderConverter does not wrap this call
-        // in try/catch). Note P100000000000000D overflows to a POSITIVE value that
-        // the existing `totalMillis > 0` guard does NOT catch — the real defect.
-        assertNull(parseIsoDuration("P999999999999W"))      // wraps negative (already caught)
-        assertNull(parseIsoDuration("P100000000000000D"))   // wraps positive (the real bug)
+        // An overflowing count must give null, never a wrapped value and never an
+        // exception (`isoRemindersToMinutes` doesn't catch). P100000000000000D would wrap
+        // to a positive value that the `totalMillis > 0` guard can't catch.
+        assertNull(parseIsoDuration("P999999999999W"))      // would wrap negative
+        assertNull(parseIsoDuration("P100000000000000D"))   // would wrap positive
         assertNull(parseIsoDuration("PT99999999999999999H"))
     }
 
@@ -237,7 +235,7 @@ class ReminderSchedulerParseTest {
         assertEquals(0L, result)
     }
 
-    // ========== Real-world reminder values from KashCal ==========
+    // ========== Common reminder values ==========
 
     @Test
     fun `parseReminderOffset handles 5 minutes before`() {
@@ -288,17 +286,14 @@ class ReminderSchedulerParseTest {
         assertEquals(-7 * 24 * 60 * 60 * 1000L, result)
     }
 
-    // ========== Performance regression test ==========
+    // ========== Performance ==========
 
     @Test
     fun `parseIsoDuration performance - 1000 iterations complete in reasonable time`() {
-        // This test ensures the pre-compiled regex optimization is working.
-        // With inline Regex() calls, this would compile 5 patterns * 1000 times = 5000 compilations.
-        // With pre-compiled patterns, compilation happens once at class load.
-        //
-        // Expected: < 100ms for 1000 iterations (typically ~10-20ms)
-        // If someone accidentally reverts to inline Regex(), this will still pass
-        // but the timing difference would be noticeable in profiling.
+        // The duration regexes are compiled once at class load; per-call Regex() would
+        // compile up to 5 patterns on each of these 10,000 parses. The bound below is loose
+        // enough that per-call compilation would still pass, so this catches only a gross
+        // slowdown.
 
         val testCases = listOf(
             "-PT15M", "-PT1H", "-P1D", "-P2D", "-P1W",
@@ -315,9 +310,7 @@ class ReminderSchedulerParseTest {
 
         val elapsedMs = (System.nanoTime() - startTime) / 1_000_000
 
-        // 10,000 parse operations should complete in under 500ms even on slow CI
-        // Typical time with pre-compiled regex: ~20-50ms
-        // Typical time with inline regex: ~100-200ms
+        // 10,000 parses (1,000 rounds of 10 offsets) must finish in under 500 ms.
         assert(elapsedMs < 500) {
             "Performance regression: 10,000 parses took ${elapsedMs}ms (expected < 500ms)"
         }
@@ -327,8 +320,8 @@ class ReminderSchedulerParseTest {
 
     @Test
     fun `parseIsoDuration consistency - repeated calls return same results`() {
-        // Verify that pre-compiled regex produces consistent results across multiple calls
-        // (guards against any thread-safety issues with shared Regex objects)
+        // The shared Regex objects give the same result on every call. The calls run on one
+        // thread, so this doesn't test concurrent use.
         val testCases = mapOf(
             "PT15M" to 15 * 60 * 1000L,
             "PT1H" to 60 * 60 * 1000L,

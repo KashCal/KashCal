@@ -53,19 +53,17 @@ class InsightsRepository @Inject constructor(
     }
 
     /**
-     * Returns merged Room + device-calendar occurrences for an arbitrary time
-     * range. Visibility, cancellation, and pending-delete filtering are
-     * inherited from getOccurrencesWithEventsForInsights and the device-side
-     * visible-calendars filter — callers do not need to refilter.
+     * Returns merged Room and device-calendar occurrences for an arbitrary time range, without
+     * the [AnalysisPeriod] week and month bounds (share-availability's next N days).
      *
-     * The range is treated as half-open [startTs, endTs). The Room query uses
-     * an inclusive upper bound, so we pass endTs-1 to the DAO; the device side
-     * uses day codes, which we derive in [zone] (the caller's zone, not
-     * systemDefault).
+     * Already filtered: [OccurrencesDao.getOccurrencesWithEventsForInsights] drops cancelled,
+     * pending-delete and hidden-calendar rows, and the device side keeps only visible device
+     * calendars and drops declined events unless they are set to show, so callers don't
+     * refilter.
      *
-     * Used by share-availability to take a snapshot of the user's calendar
-     * over the next N days without going through the AnalysisPeriod
-     * (week/month) machinery.
+     * The end is exclusive. The Room query's upper bound is inclusive, so it gets endTs - 1;
+     * the device side takes day codes, derived in [zone] (the caller's zone, not the system
+     * default).
      */
     suspend fun getOccurrencesForRange(
         startTs: Long,
@@ -75,8 +73,6 @@ class InsightsRepository @Inject constructor(
         if (endTs <= startTs) return@withContext emptyList()
         val startDate = Instant.ofEpochMilli(startTs).atZone(zone).toLocalDate()
         val endDate = Instant.ofEpochMilli(endTs - 1).atZone(zone).toLocalDate()
-        // DAO uses `start_ts <= :endTs` (inclusive); subtract 1ms so an event
-        // starting exactly at the half-open upper bound is excluded.
         val (allOccurrences, _, _) = loadOccurrencesForRange(startTs, endTs - 1, startDate, endDate)
         allOccurrences
     }
@@ -195,7 +191,7 @@ class InsightsRepository @Inject constructor(
 
             val calMeta = mutableMapOf<Long, Pair<String, Int>>()
             val occs = instances.map { inst ->
-                // Negate device calendar IDs to avoid collision with Room's positive auto-increment IDs
+                // Negated so device calendar IDs can't collide with Room's positive IDs.
                 val deviceCalId = -inst.calendarId
                 calMeta.putIfAbsent(deviceCalId, Pair(inst.calendarDisplayName, inst.calendarColor))
                 SimpleOccurrence(
@@ -247,6 +243,7 @@ class InsightsRepository @Inject constructor(
         var allDayCount = 0
         val calendarMinutes = mutableMapOf<Long, Long>()
         val dayMinutes = mutableMapOf<Int, Long>()
+        val dayCalendarMinutes = mutableMapOf<Int, MutableMap<Long, Long>>()
 
         for (occ in occurrences) {
             if (occ.isAllDay) {
@@ -265,6 +262,8 @@ class InsightsRepository @Inject constructor(
 
             for ((dayCode, mins) in occMinutes) {
                 dayMinutes[dayCode] = (dayMinutes[dayCode] ?: 0L) + mins
+                val perCalendar = dayCalendarMinutes.getOrPut(dayCode) { mutableMapOf() }
+                perCalendar[occ.calendarId] = (perCalendar[occ.calendarId] ?: 0L) + mins
                 occTotal += mins
             }
 
@@ -277,7 +276,9 @@ class InsightsRepository @Inject constructor(
             CalendarHours(calendarId = calId, calendarName = name, color = color, minutes = mins)
         }.sortedByDescending { it.minutes }
 
-        val dailyBreakdown = buildDailyBreakdown(periodStart, periodEnd, dayMinutes)
+        val dailyBreakdown = buildDailyBreakdown(
+            periodStart, periodEnd, dayMinutes, dayCalendarMinutes, calendarBreakdown
+        )
 
         return PeriodStats(
             totalMinutes = totalMinutes,
@@ -322,13 +323,26 @@ class InsightsRepository @Inject constructor(
     private fun buildDailyBreakdown(
         periodStart: LocalDate,
         periodEnd: LocalDate,
-        dayMinutes: Map<Int, Long>
+        dayMinutes: Map<Int, Long>,
+        dayCalendarMinutes: Map<Int, Map<Long, Long>> = emptyMap(),
+        calendarBreakdown: List<CalendarHours> = emptyList()
     ): List<DayHours> {
         val result = mutableListOf<DayHours>()
         var date = periodStart
         while (!date.isAfter(periodEnd)) {
             val dayCode = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
-            result.add(DayHours(dayCode = dayCode, minutes = dayMinutes[dayCode] ?: 0L, isInMonth = true))
+            val perCalendar = dayCalendarMinutes[dayCode].orEmpty()
+            val calendars = calendarBreakdown.mapNotNull { cal ->
+                perCalendar[cal.calendarId]?.takeIf { it > 0 }?.let { cal.copy(minutes = it) }
+            }
+            result.add(
+                DayHours(
+                    dayCode = dayCode,
+                    minutes = dayMinutes[dayCode] ?: 0L,
+                    isInMonth = true,
+                    calendars = calendars
+                )
+            )
             date = date.plusDays(1)
         }
         return result

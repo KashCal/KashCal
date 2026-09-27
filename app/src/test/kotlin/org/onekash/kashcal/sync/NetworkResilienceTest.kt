@@ -25,16 +25,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Network resilience tests for sync operations.
+ * Tests how [SyncErrorBridge] and [ErrorMapper] classify sync failures and which ones retry:
+ * - HTTP 401, 403, 404, 410, 412, 429, 500 and 502 to 504
+ * - Timeout, offline, refused connection, SSL and DNS failures
+ * - Partial success, success, and unrecognized codes or messages
  *
- * Tests verify that the sync layer handles network failures gracefully:
- * - HTTP error codes (401, 403, 404, 429, 500-599)
- * - Timeout handling
- * - SSL/TLS errors
- * - Retry classification
- *
- * These tests focus on error classification and retry behavior,
- * not actual network calls (which are tested in integration tests).
+ * No network calls; those are covered by the integration tests.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])

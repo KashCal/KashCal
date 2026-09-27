@@ -9,16 +9,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * ContentObserver for CalendarProvider changes.
+ * Calls [onCalendarChanged] once CalendarProvider changes have been quiet for [debounceMs].
  *
- * Monitors CalendarContract.Events.CONTENT_URI for changes and triggers
- * a debounced callback when calendar data is modified.
- *
- * Uses a 3-second debounce (vs 500ms for contacts) because sync adapters
- * can write many events in rapid succession during a sync cycle.
- *
- * Unlike ContactBirthdayObserver, selfChange is NOT filtered — KashCal writes
- * to CalendarProvider so self-changes need a UI refresh too.
+ * The debounce defaults to 3 seconds because a sync adapter writes many events in quick
+ * succession during a sync. `selfChange` isn't filtered: the app writes to CalendarProvider
+ * too, and its own writes need a UI refresh.
  */
 class CalendarProviderObserver(
     handler: Handler,
@@ -36,10 +31,8 @@ class CalendarProviderObserver(
     override fun onChange(selfChange: Boolean) {
         Log.d(TAG, "Calendar data changed (selfChange=$selfChange)")
 
-        // Cancel any pending debounce
         debounceJob?.cancel()
 
-        // Schedule debounced callback
         debounceJob = scope.launch {
             delay(debounceMs)
             Log.d(TAG, "Debounce complete, triggering calendar refresh")
@@ -47,10 +40,7 @@ class CalendarProviderObserver(
         }
     }
 
-    /**
-     * Cancel any pending debounced callback.
-     * Call this when unregistering the observer.
-     */
+    /** Cancels a pending callback; call it when unregistering the observer. */
     fun cancelPending() {
         debounceJob?.cancel()
         debounceJob = null

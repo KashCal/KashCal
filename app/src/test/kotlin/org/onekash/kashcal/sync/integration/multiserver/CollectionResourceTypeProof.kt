@@ -15,61 +15,56 @@ import java.io.File
 import java.io.StringReader
 
 /**
- * Shared proof machinery for the collection-discovery safety matrix.
+ * Provides the shared helpers for the collection-discovery safety matrix.
  *
- * The question this answers empirically, across every reachable server:
- * *do the scheduling / notification collections a server exposes alongside real
- * calendars and address books ever carry the `<calendar>` / `<addressbook>`
- * resourcetype?* If they never do, then the resourcetype gate the parser already
- * applies is sufficient to exclude them, and the reserved-word NAME filter in the
- * quirks is pure redundancy — which is what makes it safe to keep that filter
- * strict (whole-segment) rather than a broad substring match that can false-drop
- * a user's real collection.
+ * It answers, on every reachable server: do the scheduling and notification collections a
+ * server exposes beside real calendars and address books ever carry the `<calendar>` or
+ * `<addressbook>` resourcetype? If they never do, the parser's resourcetype gate already
+ * excludes them and the reserved-word name filter in the quirks is redundant. That is what
+ * makes it safe to keep the filter whole-segment, not a substring match that can drop a
+ * user's real collection.
  *
- * The matrix is built from the RAW home-set PROPFIND response (not the parser's
- * already-filtered output), because the whole point is to see the inbox/outbox/
- * notification collections the parser drops and confirm each carries a distinct,
- * non-calendar/non-addressbook resourcetype.
+ * The matrix is built from the raw home-set PROPFIND response, not the parser's filtered
+ * output, so it sees the inbox, outbox and notification collections the parser drops and can
+ * confirm each carries a non-calendar, non-addressbook resourcetype.
  *
- * PII: PROPFIND home-set responses can carry the account's own principal path and
- * (on some servers) an email-shaped href or displayname. Everything written to a
- * fixture or printed to a matrix row is passed through [redactPii] first.
+ * PII: a home-set response can carry the account's principal path and, on some servers, an
+ * email-shaped href or displayname. Everything written to a fixture or printed as a matrix row
+ * goes through [redactPii] first.
  */
 object CollectionResourceTypeProof {
 
     private val XML_MEDIA_TYPE = "application/xml; charset=utf-8".toMediaType()
 
     /**
-     * The resourcetype local-names servers use for scheduling/notification
-     * collections. Used ONLY to characterize each collection in the matrix (the
-     * SOGo-fold column) — NOT as an exclusion input. The production name filter
-     * never inspects resourcetype; it matches reserved WORDS against the whole
-     * path segments (the display name is not a discriminator).
+     * Resourcetype local names servers use for scheduling and notification collections. Used
+     * only for the matrix's fold column ([CollectionRow.foldsSchedulingResourceType]), never
+     * to exclude. The production name filter never inspects resourcetype or display name; it
+     * matches reserved words against whole path segments.
      */
     private val SCHEDULING_RESOURCETYPES = setOf("schedule-inbox", "schedule-outbox", "notification", "notifications")
 
-    /** Reserved path-segment words the production name filter skips (whole-segment match). */
+    /** Reserved path-segment words the production name filter skips, matched as whole segments. */
     val RESERVED_SEGMENTS = setOf("inbox", "outbox", "notification", "notifications")
 
-    // Real production quirks instances. The proof calls THESE — never a reimplemented
-    // copy of the skip logic — so a regression in the shipped predicate (e.g. a revert
-    // to substring matching, or a re-added display-name skip) is caught.
-    // The base URL is irrelevant to the name filter; any value works.
+    // Production quirks instances. The proof calls these, never a copy of the skip logic, so
+    // a regression in the shipped predicate (e.g. substring matching or a display-name skip)
+    // is caught. The name filter ignores the base URL; any value works.
     private val genericCalDavQuirks = DefaultQuirks(serverBaseUrl = "https://example.test/")
     private val iCloudQuirks = ICloudQuirks()
     private val genericCardDavQuirks = DefaultCardDavQuirks(serverBaseUrl = "https://example.test/")
 
     /**
-     * Whether the PRODUCTION CalDAV name filter skips this collection. `iCloud`
-     * selects `ICloudQuirks` (no tasks path-segment skip; its `/tasks/` is real);
-     * every other server uses the generic `DefaultQuirks`. Delegates to the shipped
-     * `shouldSkipCalendar` so the proof can never drift from production.
+     * Returns whether the production CalDAV name filter skips [row]. [isICloud] selects
+     * [ICloudQuirks], which has no tasks path-segment skip because its `/tasks/` is a real
+     * calendar; every other server uses [DefaultQuirks]. Delegates to the shipped
+     * `shouldSkipCalendar`, so the proof can't drift from production.
      */
     fun calDavNameFilterSkips(row: CollectionRow, isICloud: Boolean): Boolean =
         if (isICloud) iCloudQuirks.shouldSkipCalendar(row.href, row.displayName)
         else genericCalDavQuirks.shouldSkipCalendar(row.href, row.displayName)
 
-    /** Whether the PRODUCTION CardDAV name filter skips this collection. */
+    /** Returns whether the production CardDAV name filter ([DefaultCardDavQuirks]) skips [row]. */
     fun cardDavNameFilterSkips(row: CollectionRow): Boolean =
         genericCardDavQuirks.shouldSkipAddressBook(row.href, row.displayName)
 
@@ -77,50 +72,48 @@ object CollectionResourceTypeProof {
     data class CollectionRow(
         val href: String,
         val displayName: String?,
-        /** Lower-cased local names inside `<resourcetype>` (e.g. "collection", "calendar", "schedule-inbox"). */
+        /** Lower-cased local names inside `<resourcetype>`, e.g. "collection", "schedule-inbox". */
         val resourceTypes: Set<String>,
-        /** `<supported-calendar-component-set>` component names (VEVENT, VTODO, …); empty when absent. */
+        /** Upper-cased `<supported-calendar-component-set>` names; empty when absent. */
         val supportedComponents: Set<String>,
     ) {
-        /** The parser's real gate: a calendar collection carries the CalDAV `<calendar>` resourcetype. */
+        /** The parser's gate: a calendar collection carries the `<calendar>` resourcetype. */
         val isCalendar: Boolean get() = "calendar" in resourceTypes
-        /** The parser's real gate: an address book carries the CardDAV `<addressbook>` resourcetype. */
+        /** The parser's gate: an address book carries the CardDAV `<addressbook>` resourcetype. */
         val isAddressBook: Boolean get() = "addressbook" in resourceTypes
 
         /**
-         * Whether the app would actually SURFACE this collection to the user, applying
-         * both real gates the parser uses: the positive `<calendar>` resourcetype AND
-         * the VEVENT component gate (a VTODO-only collection — e.g. iCloud's real
-         * `tasks` calendar, which carries `<calendar>` but advertises only VTODO — is
-         * dropped even though it is a calendar). This is the honest baseline the name
-         * filter is redundant against: it may only skip collections the app already
-         * would not show.
+         * True when the app would show this collection: it passes the parser's `<calendar>`
+         * resourcetype gate and the quirks' VEVENT component gate, where an empty component set
+         * passes. A VTODO-only collection, such as iCloud's `tasks` calendar, carries
+         * `<calendar>` but is dropped. The name filter is redundant against this baseline: it
+         * may only skip collections the app already wouldn't show.
          */
         val appSurfacesAsCalendar: Boolean
             get() = isCalendar && (supportedComponents.isEmpty() || "VEVENT" in supportedComponents)
 
-        /** CardDAV has no component gate: an address book surfaces iff it carries `<addressbook>`. */
+        /** CardDAV has no component gate: a book shows exactly when it carries `<addressbook>`. */
         val appSurfacesAsAddressBook: Boolean get() = isAddressBook
 
         /**
-         * Does this collection carry a scheduling/notification resourcetype folded
-         * alongside a real calendar/addressbook resourcetype? (SOGo does this on its
-         * primary calendar.) Purely informational: proves why the gate MUST be a
-         * positive `has <calendar>` test, never a negative `lacks scheduling` test.
+         * True when a scheduling or notification resourcetype sits beside a calendar or
+         * addressbook resourcetype, as on SOGo's primary calendar. Informational: it shows why
+         * the gate must be a positive "has `<calendar>`" test, never a negative "lacks
+         * scheduling" test.
          */
         val foldsSchedulingResourceType: Boolean
             get() = (isCalendar || isAddressBook) && resourceTypes.any { it in SCHEDULING_RESOURCETYPES }
     }
 
     /**
-     * Build an OkHttp client matching the production auth surface (preemptive
-     * Basic + Digest fallback), so digest-only servers (Baikal-digest, Cyrus)
-     * answer the raw PROPFIND. Test-only transport; issues no app write.
+     * Builds an OkHttp client with the production auth shape (preemptive Basic, then Digest on a
+     * challenge), so Digest-only servers (Baikal-digest, Cyrus) answer the raw PROPFIND. It
+     * follows redirects with OkHttp's own handling and issues no app write.
      */
     fun rawClient(username: String, password: String): OkHttpClient =
         OkHttpClient.Builder()
             .followRedirects(true)
-            .authenticator(DigestAuthenticator(username, password))
+            .authenticator(DigestAuthenticator(username, password, allowCleartext = true))
             .addNetworkInterceptor { chain ->
                 val b = chain.request().newBuilder()
                 if (chain.request().header("Authorization") == null) {
@@ -131,9 +124,8 @@ object CollectionResourceTypeProof {
             .build()
 
     /**
-     * Issue the exact production home-set PROPFIND [body] (Depth:1) against
-     * [homeUrl] and return the raw response XML, or null on transport failure /
-     * non-2xx.
+     * Sends the PROPFIND [body] with Depth 1 to [homeUrl] and returns the raw response XML, or
+     * null on a transport failure or a non-2xx reply.
      */
     fun fetchRawPropfind(client: OkHttpClient, homeUrl: String, body: String): String? = try {
         val request = Request.Builder()
@@ -150,9 +142,9 @@ object CollectionResourceTypeProof {
     }
 
     /**
-     * Parse a multistatus body into one [CollectionRow] per `<response>`, capturing
-     * every `<resourcetype>` child local-name and any advertised calendar components.
-     * Namespace-agnostic (matches by local name) so it reads every server's prefixing.
+     * Parses a multistatus body into one [CollectionRow] per `<response>` with an href,
+     * capturing every `<resourcetype>` child's local name and any advertised calendar
+     * components. Matches by local name, so any server's namespace prefixes read the same.
      */
     fun parseCollections(xml: String): List<CollectionRow> {
         if (xml.isBlank()) return emptyList()
@@ -183,9 +175,9 @@ object CollectionResourceTypeProof {
                             types = mutableSetOf(); components = mutableSetOf()
                         }
                         "href" -> if (href == null) {
-                            // First href under this response is the collection's own URL.
-                            // nextText() consumes the matching END_TAG, so compensate the
-                            // depth counter (the END_TAG event is never delivered to us).
+                            // The first href under a response is the collection's own URL.
+                            // nextText() consumes the matching END_TAG, which is never
+                            // delivered, so the depth counter is decremented here.
                             href = parser.nextText().trim()
                             depth--
                         }
@@ -226,34 +218,30 @@ object CollectionResourceTypeProof {
         href.trimEnd('/').substringAfterLast('/').lowercase()
 
     /**
-     * The only display-name values the proof needs to read verbatim (the reserved
-     * scheduling/task words the production name filter matches). Any OTHER display
-     * name is a potential real-account label — a person's name, a shared-calendar
-     * title — so it is masked. This is an AGPL/F-Droid public repo and the live
-     * capture runs against REAL cloud accounts; the redactor must be allowlist-based
-     * (mask by default) rather than heuristic (a "looks like a handle?" guess let a
-     * real account holder's name through once).
+     * The only display names kept verbatim: the reserved scheduling and task words the proof
+     * reads. Any other display name may be a real-account label, such as a person's name or a
+     * shared calendar's title, so it is masked. The repo is public and the live capture runs
+     * against real cloud accounts, so the redactor must mask by default: a "looks like a
+     * handle?" heuristic once let a real account holder's name through.
      */
     private val PROOF_DISPLAY_NAMES =
         setOf("inbox", "outbox", "notification", "notifications", "tasks", "reminders")
 
     /**
-     * Neutralize every account-identifying token so a captured body is safe to
-     * commit to a public repo, while preserving the STRUCTURE the proof reads
-     * (per-collection resourcetype, the collection's own path segment, and the
-     * reserved-word display names the name filter matches). Masks, in order:
-     *   1. email addresses (except reserved-TLD `@example.test`),
-     *   2. `sync-token` values,
-     *   3. account-identifying path SEGMENTS — a long all-digit run (iCloud DSID)
-     *      or a long hex run (Zoho zuid) — leaving the neighbouring collection
-     *      segments (inbox / personal / …) intact,
-     *   4. EVERY display name except an exact reserved word (allowlist). Handles the
-     *      three wire shapes: attributes on the tag (`<displayname xmlns="DAV:">`),
-     *      CDATA-wrapped content, and self-closing empty `<displayname/>`.
+     * Masks every account-identifying token so a captured body is safe to commit to a public
+     * repo, keeping the structure the proof reads: each collection's resourcetype, its own path
+     * segment and the reserved-word display names. Masks, in order:
+     *   1. email addresses, except those at the reserved `@example.test`;
+     *   2. `sync-token` values;
+     *   3. account-identifying path segments, six or more digits (iCloud DSID) or 24 or more
+     *      hex characters (Zoho zuid), leaving neighbouring collection segments intact;
+     *   4. every display name except an exact entry of [PROOF_DISPLAY_NAMES]. Tag attributes
+     *      (`<displayname xmlns="DAV:">`) and CDATA content are handled; an empty plain or
+     *      self-closing `<displayname/>` is left as is.
      */
     fun redactPii(text: String): String {
-        // Placeholders are deliberately bracket-free so a redacted fixture stays
-        // well-formed XML and can be re-parsed by the offline replay test.
+        // Placeholders have no angle brackets, so a redacted fixture stays well-formed XML that
+        // `CollectionResourceTypeProofFixtureTest` can re-parse.
         var s = Regex("""[\w.+-]+@[\w.-]+""").replace(text) { m ->
             if (m.value.endsWith("@example.test")) m.value else "redacted@example.test"
         }
@@ -261,17 +249,16 @@ object CollectionResourceTypeProof {
             .replace(s) { "${it.groupValues[1]}REDACTED_TOKEN${it.groupValues[3]}" }
         // Account-identifying path segments (bounded by '/'): pure digits >= 6, or hex >= 24.
         s = Regex("""(?<=/)(\d{6,}|[0-9a-fA-F]{24,})(?=/)""").replace(s) { "REDACTED_ACCOUNT" }
-        // Display names: allowlist. Only the paired-tag form (`<displayname …>value</…>`)
-        // carries content; the self-closing form (`<displayname/>`) is already empty
-        // and must be left untouched. The `[^>]*` allows tag attributes; `[^<]*`
-        // content excludes '<' so it never spans into a CDATA-less sibling element.
+        // Display names, by allowlist. Only the paired-tag form carries content; the
+        // self-closing `<displayname/>` is empty and must be left untouched. `[^>]*` allows tag
+        // attributes; `[^<]*` excludes '<' so the match never spans into a sibling element.
         s = Regex("""(<[\w:]*displayname\b[^>]*>)([^<]*)(</[\w:]*displayname>)""").replace(s) { m ->
             val inner = m.groupValues[2].trim()
             if (inner.isEmpty() || inner.lowercase() in PROOF_DISPLAY_NAMES) m.value
             else "${m.groupValues[1]}REDACTED_DISPLAYNAME${m.groupValues[3]}"
         }
-        // Display names with CDATA content (Cyrus): mask unless the CDATA holds an
-        // exact reserved word.
+        // Display names with CDATA content (Cyrus): masked unless the CDATA holds an exact
+        // reserved word.
         s = Regex(
             """(<[\w:]*displayname\b[^>]*>)<!\[CDATA\[(.*?)]]>(</[\w:]*displayname>)""",
             RegexOption.DOT_MATCHES_ALL,
@@ -283,7 +270,7 @@ object CollectionResourceTypeProof {
         return s
     }
 
-    /** Format one matrix row for console output. */
+    /** Formats one redacted matrix row for console output. */
     fun matrixRow(server: String, r: CollectionRow, protocol: String): String {
         val isCalDav = protocol == "caldav"
         val surfaced = if (isCalDav) r.appSurfacesAsCalendar else r.appSurfacesAsAddressBook
@@ -300,15 +287,16 @@ object CollectionResourceTypeProof {
             )
     }
 
-    /** Trim an href to its last two segments for readable matrix output. */
+    /** Trims an href to its last two segments for the matrix output. */
     private fun shortHref(href: String): String {
         val segs = href.trimEnd('/').split('/').filter { it.isNotEmpty() }
         return if (segs.size <= 2) href else ".../" + segs.takeLast(2).joinToString("/")
     }
 
     /**
-     * Write a redacted fixture under app/src/test/resources/<protocol>/resourcetype_proof/.
-     * Tries a few base dirs so it works whether the test working dir is the module or repo root.
+     * Writes a redacted fixture to app/src/test/resources/<protocol>/resourcetype_proof/. Uses
+     * the first base directory whose target folder exists or can be created, so it works from
+     * the module or the repo root. A write failure is printed, not thrown.
      */
     fun writeFixture(protocol: String, serverName: String, rawXml: String) {
         val redacted = redactPii(rawXml)

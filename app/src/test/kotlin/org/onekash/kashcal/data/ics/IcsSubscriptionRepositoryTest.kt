@@ -31,17 +31,18 @@ import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 
 /**
- * Unit tests for IcsSubscriptionRepository.
+ * Tests [IcsSubscriptionRepository] over mocked DAOs and fetcher.
  *
- * Tests cover:
- * - Adding subscriptions (validation, account creation, calendar creation)
- * - Removing subscriptions (cascade delete)
- * - Updating subscription settings
- * - Enabling/disabling subscriptions
- * - Syncing (fetch, parse, upsert, delete orphans)
- * - URL normalization (webcal:// to https://)
- * - Conditional request handling (ETag, Last-Modified)
- * - Error handling
+ * Covers:
+ * - reading subscriptions through the DAO
+ * - adding (duplicate URL, ICS account and read-only calendar creation)
+ * - removing (reminders cancelled, calendar deleted; the cascade itself isn't exercised)
+ * - updating settings, and enabling or disabling
+ * - refreshing: ETag and Last-Modified handling, the zero-event checks, fetch errors,
+ *   cancellation, upsert and delete of events gone from the feed, occurrence generation
+ * - refreshing all enabled or only due subscriptions
+ * - webcal:// and webcals:// rewritten to https://
+ * - duplicate-UID masters renamed on insert (#227)
  */
 class IcsSubscriptionRepositoryTest {
 
@@ -96,10 +97,9 @@ class IcsSubscriptionRepositoryTest {
     @Before
     fun setup() {
         database = mockk(relaxed = true)
-        // Data-bearing collaborators are explicit (not relaxed) so an
-        // unexpected query throws instead of silently returning null/empty.
-        // Defaults reproduce the previous relaxed behavior; per-test stubs
-        // override them.
+        // Data-bearing collaborators aren't relaxed, so an unstubbed query throws instead of
+        // silently returning null or empty. The defaults below return null, empty, false, 0 or
+        // Unit, and a fetch returns an error; per-test stubs override them.
         icsSubscriptionsDao = mockk()
         coEvery { icsSubscriptionsDao.getById(any()) } returns null
         coEvery { icsSubscriptionsDao.getByUrl(any()) } returns null
@@ -134,7 +134,7 @@ class IcsSubscriptionRepositoryTest {
         reminderScheduler = mockk(relaxed = true)
         eventReader = mockk(relaxed = true)
 
-        // Mock database.runInTransaction to just execute the block
+        // Runs the transaction block inline.
         coEvery { database.runInTransaction(any<suspend () -> Any>()) } coAnswers {
             val block = firstArg<suspend () -> Any>()
             block()
@@ -153,7 +153,7 @@ class IcsSubscriptionRepositoryTest {
             context = mockk(relaxed = true)
         )
 
-        // Default: ICS account exists
+        // The ICS account exists.
         coEvery { accountRepository.getAccountByProviderAndEmail(any(), any()) } returns Account(
             id = 1L,
             provider = AccountProvider.ICS,
@@ -171,7 +171,6 @@ class IcsSubscriptionRepositoryTest {
 
         val result = repository.getAllSubscriptions().first()
 
-        // The repository surfaces the DAO's flow contents unchanged
         assertEquals(subscriptions, result)
         verify { icsSubscriptionsDao.getAll() }
     }
@@ -328,7 +327,7 @@ class IcsSubscriptionRepositoryTest {
 
         repository.removeSubscription(1L)
 
-        // Verify reminders were cancelled for both events BEFORE calendar deletion
+        // Both reminders are cancelled and the calendar deleted; the order isn't asserted.
         coVerify { reminderScheduler.cancelRemindersForEvent(100L) }
         coVerify { reminderScheduler.cancelRemindersForEvent(101L) }
         coVerify { calendarsDao.deleteById(testSubscription.calendarId) }
@@ -403,7 +402,6 @@ class IcsSubscriptionRepositoryTest {
 
         repository.setSubscriptionEnabled(1L, false)
 
-        // Verify reminders were cancelled when disabling
         coVerify { reminderScheduler.cancelRemindersForEvent(100L) }
         coVerify { icsSubscriptionsDao.setEnabled(1L, false) }
     }
@@ -415,15 +413,15 @@ class IcsSubscriptionRepositoryTest {
 
         repository.setSubscriptionEnabled(1L, true)
 
-        // Verify reminders were NOT cancelled when enabling (refresh will schedule them)
+        // Enabling cancels nothing; the refresh reschedules reminders when the feed returns a
+        // body.
         coVerify(exactly = 0) { reminderScheduler.cancelRemindersForEvent(any()) }
         coVerify { icsSubscriptionsDao.setEnabled(1L, true) }
     }
 
     @Test
     fun `setSubscriptionEnabled refreshes subscription when enabling`() = runTest {
-        // First call returns disabled subscription (for the enable check)
-        // Second call returns enabled subscription (for refreshSubscription)
+        // Disabled for setSubscriptionEnabled's read, enabled for refreshSubscription's.
         val disabledSub = testSubscription.copy(enabled = false)
         val enabledSub = testSubscription.copy(enabled = true)
         coEvery { icsSubscriptionsDao.getById(1L) } returns disabledSub andThen enabledSub
@@ -431,7 +429,6 @@ class IcsSubscriptionRepositoryTest {
 
         repository.setSubscriptionEnabled(1L, true)
 
-        // Verify refresh was called when enabling
         coVerify { icsSubscriptionsDao.setEnabled(1L, true) }
         coVerify { icsFetcher.fetch(any()) }
     }
@@ -443,13 +440,12 @@ class IcsSubscriptionRepositoryTest {
 
         repository.setSubscriptionEnabled(1L, false)
 
-        // Verify refresh was NOT called when disabling
         coVerify(exactly = 0) { icsFetcher.fetch(any()) }
     }
 
     // ==================== refreshSubscription Tests ====================
 
-    /** Stub the EXISTS check for events from this subscription. */
+    /** Stubs whether any event from this subscription is stored. */
     private fun stubLocalEventsExist(present: Boolean) {
         coEvery {
             eventsDao.anyByCalendarIdAndCaldavUrlPrefix(any(), any())
@@ -507,10 +503,9 @@ class IcsSubscriptionRepositoryTest {
 
     @Test
     fun `refreshSubscription refuses to cache ETag when parser returns 0 from a feed containing VEVENT`() = runTest {
-        // Feed has BEGIN:VEVENT lines but parser returned no events. This is
-        // the parser-regression class of bug — don't cache the ETag, surface
-        // an error so a future refresh re-attempts from a clean conditional
-        // state. (#219 follow-up; durable fix.)
+        // A feed with BEGIN:VEVENT lines that parses to no events is treated as a parse failure
+        // (#219): the ETag isn't cached and an error is reported, so a later refresh fetches the
+        // body again.
         val brokenContent = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -524,9 +519,8 @@ class IcsSubscriptionRepositoryTest {
             END:VCALENDAR
         """.trimIndent()
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
-        // Synthetic content: VEVENT with missing required DTSTART so the
-        // real parser skips it. IcsParserService is an `object` and can't
-        // be mocked.
+        // The fetched feed is a VEVENT without DTSTART, which the parser drops. IcsParserService
+        // is an `object` and can't be mocked. `brokenContent` above isn't used.
         coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
             content = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Test//Test//EN\nBEGIN:VEVENT\nUID:bad\nEND:VEVENT\nEND:VCALENDAR",
             etag = "\"new-etag\"",
@@ -544,7 +538,7 @@ class IcsSubscriptionRepositoryTest {
             "error message must mention 'Parsed 0 events': was '$errorMessage'",
             errorMessage.contains("Parsed 0 events")
         )
-        // Critically: ETag must NOT have been cached.
+        // The ETag isn't cached.
         coVerify(exactly = 0) {
             icsSubscriptionsDao.updateSyncSuccess(any(), any(), any(), any())
         }
@@ -553,9 +547,8 @@ class IcsSubscriptionRepositoryTest {
 
     @Test
     fun `refreshSubscription accepts 0 events when feed contains no VEVENT (legitimately empty)`() = runTest {
-        // Some servers serve an empty VCALENDAR (no VEVENT). Parser correctly
-        // returns 0; we must NOT treat this as a parse failure — cache the
-        // ETag and report Success so subsequent NotModified responses work.
+        // A feed with no VEVENT (here only a VTODO) parses to 0 events. That isn't a parse
+        // failure: the ETag is cached and Success reported, so later refreshes can get a 304.
         val emptyContent = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -618,12 +611,12 @@ class IcsSubscriptionRepositoryTest {
 
         assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
         val success = result as IcsSubscriptionRepository.SyncResult.Success
-        assertEquals(2, success.count.added) // 2 events in test ICS
+        assertEquals(2, success.count.added) // the 2 events in icsContent
     }
 
     @Test
     fun `refreshSubscription deletes orphaned events`() = runTest {
-        // Setup: One existing event that's no longer in the feed
+        // A stored event the feed no longer has.
         val existingEvent = Event(
             id = 100L,
             uid = "orphan@test.com",
@@ -638,7 +631,7 @@ class IcsSubscriptionRepositoryTest {
 
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
         coEvery { icsFetcher.fetch(any()) } returns IcsFetcher.FetchResult.Success(
-            content = icsContent, // Has event-1 and event-2, NOT orphan
+            content = icsContent, // event-1 and event-2 only
             etag = null,
             lastModified = null
         )
@@ -649,13 +642,13 @@ class IcsSubscriptionRepositoryTest {
 
         assertTrue(result is IcsSubscriptionRepository.SyncResult.Success)
         val success = result as IcsSubscriptionRepository.SyncResult.Success
-        assertEquals(1, success.count.deleted) // Orphan deleted
+        assertEquals(1, success.count.deleted)
         coVerify { eventsDao.deleteById(100L) }
     }
 
     @Test
     fun `refreshSubscription updates existing events`() = runTest {
-        // Setup: One existing event that's also in the feed
+        // A stored event the feed still has.
         val existingEvent = Event(
             id = 100L,
             uid = "event-1@test.com",
@@ -699,9 +692,9 @@ class IcsSubscriptionRepositoryTest {
 
     @Test
     fun `refreshSubscription does not record a sync error for a cancelled refresh`() = runTest {
-        // Cancellation is not a feed failure. Turning it into an Error records a
-        // last_error against a named feed for a fetch that was merely cut short, and
-        // lets a caller looping over feeds carry on with a cancelled coroutine.
+        // Cancellation isn't a feed failure. Turning it into an Error records a last_error
+        // against a feed whose fetch was cut short, and lets a caller looping over feeds carry
+        // on with a cancelled coroutine.
         coEvery { icsSubscriptionsDao.getById(1L) } returns testSubscription
         coEvery { icsFetcher.fetch(any()) } throws CancellationException("refresh cancelled")
 
@@ -727,7 +720,7 @@ class IcsSubscriptionRepositoryTest {
 
         repository.refreshSubscription(1L)
 
-        // Should regenerate occurrences for each inserted event
+        // Once per inserted event.
         coVerify(atLeast = 2) { occurrenceGenerator.regenerateOccurrences(any()) }
     }
 
@@ -751,7 +744,7 @@ class IcsSubscriptionRepositoryTest {
 
         repository.refreshAllDueSubscriptions()
 
-        // Only due subscription should be synced
+        // Only the due subscription is fetched.
         coVerify(exactly = 1) { icsFetcher.fetch(any()) }
     }
 
@@ -792,7 +785,7 @@ class IcsSubscriptionRepositoryTest {
         assertEquals("https://example.com/cal.ics", urlSlot.captured)
     }
 
-    // ==================== Issue #227: Duplicate-UID disambiguation (mock-level) ====================
+    // ==================== Issue #227: Duplicate-UID disambiguation (mocked) ====================
 
     @Test
     fun `duplicate-UID feed produces two insert calls with distinct mutated UIDs`() = runTest {
@@ -817,8 +810,8 @@ class IcsSubscriptionRepositoryTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Existing setUp() uses `coEvery { eventsDao.insert(any()) } returns 1L`
-        // which doesn't capture per-call args. Override here with a list collector.
+        // setup()'s insert stub doesn't capture arguments; this one collects every inserted
+        // event.
         val capturedInserts = mutableListOf<Event>()
         var nextId = 100L
         coEvery { eventsDao.insert(any()) } answers {

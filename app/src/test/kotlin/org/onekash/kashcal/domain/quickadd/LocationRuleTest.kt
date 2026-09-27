@@ -21,9 +21,9 @@ class LocationRuleTest {
     private val normalizerNoLowercase = NormalizerChain(lowercase = false)
 
     /**
-     * Helper: normalizes input, tokenizes with original-case words,
-     * applies time/date rules first (simulating the real pipeline),
-     * then applies LocationRule.
+     * Normalizes and tokenizes [input] with original-case words, then applies the relative-date,
+     * absolute-date and time rules before [LocationRule], in [QuickAddParser]'s order. The parser
+     * also runs other rules before it.
      */
     private fun parse(input: String): ParseContext {
         val normalized = normalizer.normalize(input)
@@ -31,11 +31,9 @@ class LocationRuleTest {
         val originalWords = if (originalCased.isNotEmpty()) originalCased.split(" ") else emptyList()
         val tokens = WordTokenizer.tokenize(normalized, originalWords)
         val context = ParseContext(reference)
-        // Apply rules that run before LocationRule in the real pipeline
         RelativeDateRule.apply(tokens, context)
         AbsoluteDateRule.apply(tokens, context)
         TimeRule.apply(tokens, context)
-        // Now apply LocationRule
         LocationRule.apply(tokens, context)
         return context
     }

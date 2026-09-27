@@ -1,0 +1,36 @@
+Tus calendarios están por todas partes. La familia en iCloud. Los festivos de alguna web. Los cumpleaños enterrados en tus contactos. El trabajo en el calendario del teléfono. KashCal los reúne en una sola app en Android.
+
+Más información en https://kashcal.onekash.org
+
+• iCloud: ¿te pasaste a Android pero tu familia sigue en Apple? Sincroniza los calendarios de iCloud directamente. Sin puentes, sin apaños.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo y más. Sincronización bidireccional nativa, sin intermediarios. Los calendarios de Google y Outlook de tu teléfono también aparecen.
+
+• Siete vistas: mes, mes a pantalla completa, agenda, día, 3 días, semana y año. Pellizca para ampliar la línea de tiempo y arrastra un evento para moverlo.
+
+• Programación: invita a personas, envía invitaciones a reuniones y responde a las que te envíen.
+
+• Estadísticas: mira en qué se va tu tiempo. Días más cargados, rachas sin descanso, huecos libres. Calculado en el dispositivo.
+
+• Widgets: ten tu día en la pantalla de inicio sin abrir la app. Agenda, fecha, semana, mes y próximos.
+
+• Suscripciones ICS: sigue cualquier fuente de calendario. Festivos, calendarios escolares, temporadas deportivas.
+
+• Cumpleaños y aniversarios: se toman automáticamente de tus contactos.
+
+• Colores por evento: desde una paleta seleccionada o una rueda de color completa, para que tu semana se lea de un vistazo.
+
+• A tu manera: tema claro, oscuro o del sistema, más una paleta KashCal Teal. Quienes colaboran pueden cambiar a un icono especial.
+
+• Accesibilidad: compatibilidad total con lector de pantalla (TalkBack), y elige el idioma de la app directamente en los ajustes de Android, en 67 idiomas.
+
+• Funciona totalmente sin conexión desde el primer momento.
+
+Privado por defecto
+
+Sin analíticas. Sin telemetría. Sin cuenta de KashCal. No tenemos servidores, así que no hay nada que recopilar.
+
+• Credenciales cifradas con el Android Keystore
+• Bloqueo de la app: oculta tus eventos tras tu huella, tu cara o el bloqueo de pantalla
+
+Libre como la libertad. Y gratis, además.

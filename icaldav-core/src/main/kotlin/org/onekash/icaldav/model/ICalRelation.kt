@@ -1,65 +1,59 @@
 package org.onekash.icaldav.model
 
 /**
- * RFC 9253 iCalendar Relationships support.
- *
- * Provides LINK property and enhanced RELATED-TO for expressing
- * relationships between calendar components and external resources.
+ * RFC 9253 relationships: the LINK property ([ICalLink]) and RELATED-TO with its new RELTYPE
+ * values and GAP ([ICalRelation]).
  *
  * @see <a href="https://tools.ietf.org/html/rfc9253">RFC 9253 - iCalendar Relationships</a>
  */
 
 /**
- * LINK property per RFC 9253 Section 6.1.
- * Links calendar components to external resources.
+ * Holds one LINK property (RFC 9253 §8.2), a reference to external information about the
+ * component.
  *
- * Example iCalendar format:
- * ```
- * LINK;REL=alternate;FMTTYPE=text/html:https://example.com/event-details
- * LINK;REL=describedby:https://example.com/event-spec.pdf
- * ```
+ * The parser and [toICalString] carry the relation in a REL parameter, where RFC 9253 §6.1
+ * names it LINKREL and requires it on every LINK; RELATED is written with no REL at all. TITLE
+ * and GAP are not RFC 9253 LINK parameters.
  *
- * @param uri The URI of the linked resource
- * @param relation The link relation type (IANA-registered or URI)
- * @param mediaType MIME type of the linked resource (FMTTYPE parameter)
- * @param title Human-readable title for the link
- * @param label Display label for the link
- * @param language Language of the linked resource
+ * Example, as written here:
+ * ```
+ * LINK;VALUE=URI;REL=alternate;FMTTYPE=text/html:https://example.com/event-details
+ * LINK;VALUE=URI;REL=describedby:https://example.com/event-spec.pdf
+ * ```
  */
 data class ICalLink(
-    /** URI of the linked resource */
+    /** Linked resource URI. */
     val uri: String,
 
-    /** Link relation type (e.g., "alternate", "describedby", "related") */
+    /** Relation, for example "alternate" or "describedby"; RELATED when absent. */
     val relation: LinkRelationType = LinkRelationType.RELATED,
 
-    /** MIME type of the linked resource (FMTTYPE parameter) */
+    /** FMTTYPE parameter: the linked resource's media type. */
     val mediaType: String? = null,
 
-    /** Human-readable title */
+    /** TITLE parameter, written quoted. */
     val title: String? = null,
 
-    /** Display label */
+    /** LABEL parameter (RFC 7986), the link's display title. */
     val label: String? = null,
 
-    /** Language of the linked resource (BCP 47) */
+    /** LANGUAGE parameter (BCP 47): the linked resource's language. */
     val language: String? = null,
 
-    /** Gap between events when REL=next (RFC 9253) */
+    /** GAP parameter, which RFC 9253 §6.2 defines on RELATED-TO only. */
     val gap: java.time.Duration? = null
 ) {
     /**
-     * Generate iCalendar LINK property string.
-     *
-     * Always includes VALUE=URI as required by ical4j for proper parsing.
+     * Returns the LINK content line, unfolded. VALUE=URI is always written: RFC 9253 requires
+     * VALUE, and ical4j needs it to parse the line.
      */
     fun toICalString(): String {
         val params = mutableListOf<String>()
 
-        // VALUE=URI is required for proper parsing by ical4j
+        // Required by RFC 9253 and by ical4j's parser
         params.add("VALUE=URI")
 
-        // Add REL parameter if not RELATED (default)
+        // RELATED is this model's default, so it is written without REL
         if (relation != LinkRelationType.RELATED) {
             params.add("REL=${relation.toICalString()}")
         }
@@ -79,9 +73,7 @@ data class ICalLink(
     }
 
     companion object {
-        /**
-         * Create a link to an alternate representation.
-         */
+        /** Creates an ALTERNATE link. */
         fun alternate(uri: String, mediaType: String? = null, title: String? = null): ICalLink {
             return ICalLink(
                 uri = uri,
@@ -91,9 +83,7 @@ data class ICalLink(
             )
         }
 
-        /**
-         * Create a link to a description/documentation.
-         */
+        /** Creates a DESCRIBEDBY link. */
         fun describedBy(uri: String, title: String? = null): ICalLink {
             return ICalLink(
                 uri = uri,
@@ -102,9 +92,7 @@ data class ICalLink(
             )
         }
 
-        /**
-         * Create a link to a related resource.
-         */
+        /** Creates a RELATED link. */
         fun related(uri: String, title: String? = null): ICalLink {
             return ICalLink(
                 uri = uri,
@@ -114,7 +102,8 @@ data class ICalLink(
         }
 
         /**
-         * Parse from iCalendar parameters.
+         * Builds an [ICalLink] from raw parameter values. Quotes around [title] are dropped, and
+         * a [gap] that `java.time.Duration.parse` rejects becomes null.
          */
         fun fromParameters(
             uri: String,
@@ -147,49 +136,50 @@ data class ICalLink(
 }
 
 /**
- * Link relation types per RFC 9253 and IANA registry.
- *
- * Common link relations from the IANA Link Relations registry:
+ * Link relations this library recognizes, from the IANA Link Relations registry:
  * https://www.iana.org/assignments/link-relations/link-relations.xhtml
+ *
+ * [fromString] maps null or blank to RELATED and anything unrecognized to CUSTOM, which drops
+ * the original value.
  */
 enum class LinkRelationType {
-    /** Refers to a substitute for this context */
+    /** A substitute for this context. */
     ALTERNATE,
 
-    /** Identifies a related resource that can be used to cancel an invitation */
+    /** A resource that can cancel an invitation. */
     CANCEL,
 
-    /** Refers to a resource providing information about the link's context */
+    /** A resource with information about the link's context. */
     DESCRIBEDBY,
 
-    /** Refers to a resource containing copyright info */
+    /** A resource with copyright information. */
     COPYRIGHT,
 
-    /** Refers to a hub for real-time updates */
+    /** A hub for real-time updates. */
     HUB,
 
-    /** Refers to an icon representing the link's context */
+    /** An icon for the link's context. */
     ICON,
 
-    /** Refers to the next resource in a sequence */
+    /** The next resource in a sequence. */
     NEXT,
 
-    /** Refers to the previous resource in a sequence */
+    /** The previous resource in a sequence. */
     PREV,
 
-    /** Identifies a related resource */
+    /** A related resource. */
     RELATED,
 
-    /** Identifies a resource where replies should be sent */
+    /** Where replies go. */
     REPLIES,
 
-    /** Identifies the canonical URI for this resource */
+    /** The canonical URI for this resource. */
     SELF,
 
-    /** Identifies a resource describing this resource */
+    /** Parsed from "described-by"; written as "describedby", like [DESCRIBEDBY]. */
     DESCRIBED_BY,
 
-    /** Custom/unknown relation type */
+    /** Any unrecognized relation; written as "custom". */
     CUSTOM;
 
     fun toICalString(): String {
@@ -211,37 +201,34 @@ enum class LinkRelationType {
 }
 
 /**
- * Enhanced RELATED-TO property per RFC 9253 Section 6.2.
- * Expresses relationships between calendar components.
+ * Holds one RELATED-TO property with the RFC 9253 §9.1 extensions: new RELTYPE values and the
+ * GAP parameter (§6.2).
  *
- * Example iCalendar format:
+ * Example:
  * ```
  * RELATED-TO;RELTYPE=PARENT:parent-event-uid
  * RELATED-TO;RELTYPE=CHILD:child-event-uid
  * RELATED-TO;RELTYPE=SIBLING:related-event-uid
  * ```
- *
- * @param uid UID of the related component
- * @param relationType Type of relationship
- * @param gap Time gap to the related component (RFC 9253)
  */
 data class ICalRelation(
-    /** UID of the related calendar component */
+    /** The property value, usually the related component's UID. */
     val uid: String,
 
-    /** Type of relationship */
+    /** RELTYPE parameter; PARENT when absent. */
     val relationType: RelationType = RelationType.PARENT,
 
-    /** Time gap to the related component */
+    /**
+     * GAP parameter: lag (positive) or lead (negative) time to the related component, written
+     * in `java.time.Duration.toString` form.
+     */
     val gap: java.time.Duration? = null
 ) {
-    /**
-     * Generate iCalendar RELATED-TO property string.
-     */
+    /** Returns the RELATED-TO content line, unfolded. */
     fun toICalString(): String {
         val params = mutableListOf<String>()
 
-        // Add RELTYPE if not PARENT (default per RFC 5545)
+        // RFC 5545 §3.2.15: PARENT is the default, so it is written without RELTYPE
         if (relationType != RelationType.PARENT) {
             params.add("RELTYPE=${relationType.toICalString()}")
         }
@@ -257,52 +244,39 @@ data class ICalRelation(
         return "RELATED-TO$paramStr:$uid"
     }
 
-    /**
-     * Check if this is a parent relationship.
-     */
+    /** Returns whether [relationType] is PARENT. */
     fun isParent(): Boolean = relationType == RelationType.PARENT
 
-    /**
-     * Check if this is a child relationship.
-     */
+    /** Returns whether [relationType] is CHILD. */
     fun isChild(): Boolean = relationType == RelationType.CHILD
 
-    /**
-     * Check if this is a sibling relationship.
-     */
+    /** Returns whether [relationType] is SIBLING. */
     fun isSibling(): Boolean = relationType == RelationType.SIBLING
 
     companion object {
-        /**
-         * Create a parent relationship.
-         */
+        /** Creates a PARENT relation to [uid]. */
         fun parent(uid: String): ICalRelation {
             return ICalRelation(uid = uid, relationType = RelationType.PARENT)
         }
 
-        /**
-         * Create a child relationship.
-         */
+        /** Creates a CHILD relation to [uid]. */
         fun child(uid: String): ICalRelation {
             return ICalRelation(uid = uid, relationType = RelationType.CHILD)
         }
 
-        /**
-         * Create a sibling relationship.
-         */
+        /** Creates a SIBLING relation to [uid]. */
         fun sibling(uid: String): ICalRelation {
             return ICalRelation(uid = uid, relationType = RelationType.SIBLING)
         }
 
-        /**
-         * Create a "next" relationship with optional gap.
-         */
+        /** Creates a NEXT relation to [uid], with an optional [gap]. */
         fun next(uid: String, gap: java.time.Duration? = null): ICalRelation {
             return ICalRelation(uid = uid, relationType = RelationType.NEXT, gap = gap)
         }
 
         /**
-         * Parse from iCalendar parameters.
+         * Builds an [ICalRelation] from raw RELTYPE and GAP values; a [gap] that
+         * `java.time.Duration.parse` rejects becomes null.
          */
         fun fromParameters(
             uid: String,
@@ -327,55 +301,54 @@ data class ICalRelation(
 }
 
 /**
- * Relation type per RFC 5545 and RFC 9253.
- *
- * RFC 5545 defines: PARENT, CHILD, SIBLING
- * RFC 9253 adds: FINISHTOSTART, FINISHTOFINISH, STARTTOFINISH, STARTTOSTART,
- *               FIRST, NEXT, DEPENDS-ON, REFID, CONCEPT, REQUIRES, REPLACES
+ * RELTYPE values. RFC 5545 defines PARENT, CHILD and SIBLING; RFC 9253 §4 and §5 add
+ * FINISHTOSTART, FINISHTOFINISH, STARTTOFINISH, STARTTOSTART, FIRST, NEXT, DEPENDS-ON, REFID
+ * and CONCEPT. REQUIRES and REPLACES are in neither RFC. [fromString] maps null, blank or
+ * unknown to PARENT, as RFC 5545 §3.2.15 has clients treat unrecognized values.
  */
 enum class RelationType {
-    /** This component is a sub-component of the referenced component */
+    /** This component is a subordinate of the referenced component. */
     PARENT,
 
-    /** The referenced component is a sub-component of this component */
+    /** This component is a superior of the referenced component. */
     CHILD,
 
-    /** This component shares common parent with referenced component */
+    /** This component is a peer of the referenced component. */
     SIBLING,
 
     // RFC 9253 additions
 
-    /** Finish-to-Start dependency */
+    /** Finish-to-start dependency. */
     FINISHTOSTART,
 
-    /** Finish-to-Finish dependency */
+    /** Finish-to-finish dependency. */
     FINISHTOFINISH,
 
-    /** Start-to-Finish dependency */
+    /** Start-to-finish dependency. */
     STARTTOFINISH,
 
-    /** Start-to-Start dependency */
+    /** Start-to-start dependency. */
     STARTTOSTART,
 
-    /** First in a series */
+    /** The referenced component is the first in this component's series. */
     FIRST,
 
-    /** Next in a series */
+    /** The referenced component is the next in this component's series. */
     NEXT,
 
-    /** Depends on the referenced component */
+    /** This component depends on the referenced component. */
     DEPENDS_ON,
 
-    /** References another component by ID */
+    /** Refers to components whose REFID property matches the value. */
     REFID,
 
-    /** Conceptually related */
+    /** Refers to components whose CONCEPT property matches the value. */
     CONCEPT,
 
-    /** Requires the referenced component */
+    /** Requires the referenced component. */
     REQUIRES,
 
-    /** Replaces the referenced component */
+    /** Replaces the referenced component. */
     REPLACES;
 
     fun toICalString(): String = name.replace("_", "-")

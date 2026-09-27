@@ -25,14 +25,12 @@ import java.time.ZonedDateTime
 import java.util.TimeZone
 
 /**
- * Advanced RRULE tests for OccurrenceGenerator.
- *
- * Tests complex patterns identified as missing:
- * - Negative BYDAY offsets (-1MO, -2FR)
- * - BYSETPOS combinations
- * - Multiple BYMONTHDAY values
- * - Performance limits (MAX_ITERATIONS)
- * - Edge cases (COUNT=1, UNTIL scenarios)
+ * Tests [OccurrenceGenerator.generateOccurrences] on RRULE patterns, in America/New_York:
+ * - negative BYDAY offsets (-1MO, -1FR) and BYSETPOS=-1
+ * - BYMONTHDAY lists (1,15) and -1, and the 4th Thursday of November
+ * - a daily rule with no COUNT or UNTIL, bounded by the range, and COUNT=1
+ * - EXDATE on a weekly BYDAY rule
+ * - INTERVAL (every other week, daily INTERVAL=7 against weekly) and yearly BYMONTH
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -129,7 +127,7 @@ class OccurrenceGeneratorAdvancedTest {
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         assertEquals(6, occurrences.size)
 
-        // Verify dates are last Mondays
+        // Each date is the month's last Monday.
         val expectedLastMondays = listOf(
             LocalDate.of(2026, 1, 26),
             LocalDate.of(2026, 2, 23),
@@ -306,7 +304,7 @@ class OccurrenceGeneratorAdvancedTest {
             parseDate("2030-12-31 23:59")
         )
 
-        // Should be limited by range or MAX_ITERATIONS
+        // The range bounds it (about 1,826 days), below the engine's 10,000 cap.
         assertTrue("Should have at least 365 occurrences", count >= 365)
         assertTrue("Should be bounded", count <= 2000)
     }

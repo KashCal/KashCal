@@ -120,6 +120,8 @@ import org.onekash.kashcal.ui.components.pickers.EventFormRow
 import org.onekash.kashcal.ui.components.pickers.RecurrencePickerRow
 import org.onekash.kashcal.ui.components.pickers.ReminderPickerRow
 import org.onekash.kashcal.ui.components.pickers.TimezonePickerSheet
+import org.onekash.kashcal.ui.components.pickers.untilDisplayMillis
+import org.onekash.kashcal.ui.components.pickers.untilForPickedDate
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.PickerCalendar
 import org.onekash.kashcal.ui.model.localizedDisplayName
@@ -130,33 +132,29 @@ import org.onekash.kashcal.ui.shared.contrastForegroundOn
 import org.onekash.kashcal.ui.shared.deduplicateAndSortReminders
 import org.onekash.kashcal.util.CalendarIntentData
 import org.onekash.kashcal.util.DateTimeUtils
+import org.onekash.kashcal.util.RruleUtils
 import org.onekash.kashcal.util.TimezoneUtils
 import org.onekash.kashcal.util.location.AddressSuggestion
 import org.onekash.kashcal.util.location.LocationSuggestionService
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.Calendar as JavaCalendar
 
 private const val TAG = "EventFormSheet"
 
-/**
- * Pure predicate: should the title-autocomplete dropdown appear?
- *
- * Returns true iff both:
- * - at least [MIN_TITLE_PREFIX] characters have been typed
- * - the user has changed the text from whatever was initially loaded (so
- *   opening an existing event to correct a typo doesn't flash a dropdown)
- *
- * The feature-enabled preference is enforced upstream in the ViewModel by
- * returning an empty suggestion list. The UI doesn't know about it.
- */
+/** Characters a title needs before [shouldShowTitleSuggestions] queries suggestions. */
 internal const val MIN_TITLE_PREFIX = 3
 
 /** Wait this long after the last keystroke before querying the suggestion backend. */
 private const val TITLE_SUGGEST_DEBOUNCE_MS = 150L
 
-/**
- * Test tag on the divider between the personal group (notes/tags) and the
- * scheduling group (attendees/free-busy), so the group boundary is assertable.
- */
+/** Test tag on the divider between the notes/tags group and the attendees/free-busy group. */
 internal const val TAG_GROUP_DIVIDER = "form_group_divider"
 
 /** Test tag on the sticky Save button's top divider. */
@@ -169,23 +167,19 @@ internal const val TAG_DELETE_DIVIDER = "form_delete_divider"
 internal const val TAG_TITLE_FIELD = "form_title_field"
 
 /**
- * Whether a scroll came from the user dragging/flinging the form, as opposed to
- * a programmatic scroll such as Compose's bring-into-view (auto-scrolling to
- * reveal a focused field's cursor). Only user-driven scrolls should dismiss the
- * keyboard; treating bring-into-view as a dismiss would eject the field the user
- * just tapped or is typing in.
+ * Whether a scroll came from the user dragging or flinging the form, not from a
+ * programmatic scroll such as Compose's bring-into-view of a focused field.
+ * Dismissing the keyboard on bring-into-view would eject the field the user just
+ * tapped.
  */
 internal fun isUserDrivenScroll(source: NestedScrollSource): Boolean =
     source == NestedScrollSource.UserInput
 
 /**
- * Whether a scroll should dismiss the keyboard: only when it is user-driven AND a
- * finger is actually pressed. The source check alone is not enough — when a field
- * is focused, the animating IME inset shrinks the content and fires a scroll that
- * is itself dispatched as [NestedScrollSource.UserInput], which would wrongly
- * dismiss the keyboard the user just summoned. That scroll has no finger down (the
- * tap already released), so requiring a pressed finger distinguishes a real swipe
- * (dismiss) from the focus-driven scroll (keep the keyboard).
+ * Whether a scroll dismisses the keyboard: only a user-driven scroll with a finger
+ * pressed. When a field gains focus, the animating IME inset fires a scroll that is
+ * also dispatched as [NestedScrollSource.UserInput]; it has no finger down (the tap
+ * has released), so the finger check keeps the keyboard the user just raised.
  */
 internal fun shouldDismissKeyboardOnScroll(
     source: NestedScrollSource,
@@ -193,12 +187,17 @@ internal fun shouldDismissKeyboardOnScroll(
 ): Boolean = isUserDrivenScroll(source) && isFingerDown
 
 /**
- * Uniform breathing room above and below the content-section dividers, so their
- * spacing doesn't depend on which row (EventFormRow at 14dp, picker rows at
- * 8–12dp) happens to sit against them.
+ * Space above and below the section dividers, so it doesn't depend on which row
+ * (EventFormRow at 14dp, picker rows at 8-12dp) sits against them.
  */
 private val SECTION_DIVIDER_SPACING = 6.dp
 
+/**
+ * Whether the title-suggestion dropdown should appear: at least [MIN_TITLE_PREFIX]
+ * characters typed, and the text changed from what the form loaded (so opening an
+ * event to fix a typo doesn't flash a dropdown). The suggestions setting isn't
+ * checked here: `HomeViewModel.suggestTitles` returns an empty list when it is off.
+ */
 internal fun shouldShowTitleSuggestions(
     currentText: String,
     initialText: String
@@ -210,33 +209,30 @@ internal fun shouldShowTitleSuggestions(
 
 /**
  * Whether an optional event field (location, notes) should render. Editable
- * mode always shows it (the empty row carries an "Add …" affordance); the
- * read-only attendee viewer hides a blank field so a guest isn't shown an
- * "Add" prompt for something they can't edit.
+ * mode always shows it (the empty row is the place to add one); the read-only
+ * attendee view hides a blank field so a guest isn't prompted to add something
+ * they can't edit.
  */
 internal fun shouldShowReadOnlyOptionalField(value: String, isReadOnly: Boolean): Boolean =
     !isReadOnly || value.isNotBlank()
 
 /**
- * True when [current] differs from [initial] regardless of input order.
- * Drives the Save-enabled predicate in the read-only attendee form path
- * (Save flips on as soon as the user changes their reminder set).
+ * True when [current] differs from [initial] regardless of order. Enables Save in
+ * the read-only attendee form once the user changes their reminder set.
  *
- * Sorted-list comparison rather than set comparison: the picker doesn't
- * dedupe, so `[15, 15]` is intentionally distinct from `[15]`. Only the
- * order is normalized, not the multiset.
+ * Compares sorted lists, not sets: the picker doesn't dedupe, so `[15, 15]` is
+ * distinct from `[15]`.
  */
 internal fun remindersChanged(initial: List<Int>, current: List<Int>): Boolean =
     initial.sorted() != current.sorted()
 
 /**
- * Whether the editable (add-only) attendee row should render — a tappable
- * Attendees row that opens the picker. Shown for new events, non-recurring
- * edits, recurring SERIES edits, AND single-occurrence edits including a
- * detached exception (every save scope now carries the edited guest set to
- * its write path). Suppressed when the user can't organize: a read-only
- * (invitee) event or a non-schedulable account, or when contact querying
- * isn't wired.
+ * Whether the editable attendee row (a tappable row that opens the picker)
+ * renders. An existing device event has its own gate in the form. The row shows
+ * for new events and for every edit scope, series and single occurrence alike (a
+ * detached exception included), since each save scope carries the edited guest
+ * set to its write path. Hidden when the user can't organize (a read-only
+ * invitee event or a non-schedulable account) or when contact lookup isn't wired.
  *
  * @param hasContactQuery whether an onQueryContacts callback is available.
  */
@@ -247,11 +243,10 @@ internal fun canEditAttendees(
 ): Boolean = !isReadOnly && isSchedulable && hasContactQuery
 
 /**
- * Whether the "inviting unavailable" education text should render instead of
- * an attendee row. Shown only for the new / non-recurring flows that
- * historically showed it; a recurring edit (master or occurrence) on a
- * non-schedulable account falls through to the read-only chip display (or
- * nothing) rather than the unavailable text, matching its prior behaviour.
+ * Whether the "inviting unavailable" text renders in place of an attendee row, on
+ * a non-schedulable account. Only new events and non-recurring edits show it; a
+ * recurring edit (master or occurrence) shows the read-only guest chips, or
+ * nothing when there are no guests.
  *
  * @param hasContactQuery whether an onQueryContacts callback is available.
  */
@@ -264,9 +259,8 @@ internal fun showSchedulingUnavailable(
 ): Boolean = !isReadOnly && !isSchedulable && hasContactQuery && !(isEditMode && wasRecurringAtLoad)
 
 /**
- * Migrate reminders when toggling all-day.
- * Swaps the default reminder value; keeps all custom values as-is.
- * Deduplicates after swap.
+ * Swaps [currentDefault] for [newDefault] in [reminders] when all-day is toggled,
+ * keeping every other value, then dedupes and sorts.
  */
 private fun migrateRemindersForAllDayToggle(
     reminders: List<Int>,
@@ -281,6 +275,12 @@ private fun migrateRemindersForAllDayToggle(
 
 /**
  * Form state for event creation/editing.
+ *
+ * Dates and times: for a timed form, [dateMillis] and [endDateMillis] hold the
+ * calendar date of the start and end in the form's [timezone], stored as that
+ * date's midnight in the device's own zone (the encoding the date row, the date
+ * picker and the all-day logic read), and the hour/minute fields hold the clock
+ * time in [timezone]. [toStartEndTs] turns them back into the stored instants.
  */
 data class EventFormState(
     // Essential fields
@@ -305,11 +305,11 @@ data class EventFormState(
     val transp: String = "OPAQUE",
     val eventColor: Int? = null,
     val categories: List<String> = emptyList(),
-    // Whether the user actually changed the tag set. Mirrors [attendeesEdited]:
-    // stays false when the form is merely seeded from a loaded event, so an
-    // unedited open-and-save leaves the stored tag row untouched (passes null)
-    // rather than rewriting — which would clobber tags a sync adapter added
-    // between load and save, or wipe real tags if the load read came back empty.
+    // Whether the user changed the tag set; seeding from a loaded event leaves it
+    // false. The device save passes null tags when it is false, so an unedited
+    // open-and-save leaves the stored tag row alone: a rewrite would clobber tags a
+    // sync adapter added between load and save, or wipe real tags if the load read
+    // came back empty. The Room save writes [categories] either way.
     val categoriesEdited: Boolean = false,
 
     // UI state
@@ -322,7 +322,7 @@ data class EventFormState(
     // Device calendar state
     val isDeviceCalendar: Boolean = false,
     val editingDeviceEventId: Long? = null,
-    /** Number of reminders truncated when loading event (>5 reminders) */
+    /** Reminders beyond [MAX_REMINDERS] that the load dropped. */
     val truncatedReminderCount: Int = 0,
 
     // Edit mode
@@ -330,14 +330,29 @@ data class EventFormState(
     val isEditMode: Boolean = false,
     val editingOccurrenceTs: Long? = null,
 
-    // Attendees the user is editing in the form (organizer flow). Holds Room
-    // ENTITIES, not the lossy AttendeeUiModel — seeding from the real rows on
-    // edit preserves role/cutype/rsvp/delegation that the UI projection drops.
-    // The picker mutates this set; [attendeesEdited] records whether the user
-    // actually changed it, so an unedited open-and-save passes null to the
-    // domain layer (leave the table untouched) rather than a rebuilt list.
+    // Attendees the user is editing (organizer flow), as Room entities: seeding
+    // from the real rows preserves the role, cutype, rsvp and delegation that the
+    // AttendeeUiModel projection drops. The picker mutates this set;
+    // [attendeesEdited] records whether the user changed it, and when it is false
+    // the save passes null so the stored attendees stay untouched.
     val attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList(),
-    val attendeesEdited: Boolean = false
+    val attendeesEdited: Boolean = false,
+
+    // The stored start and end the form was loaded from (or last computed).
+    // When the date and clock time still name exactly that moment, the save
+    // reuses it, which keeps the second of two repeated clock times at a
+    // daylight saving change from sliding to the first. Not user-editable.
+    val startOffsetHintTs: Long? = null,
+    val endOffsetHintTs: Long? = null,
+    // A device event's timezone ID that the app can't resolve (the form then
+    // uses the device zone). Kept so a save that doesn't pick a zone writes the
+    // original ID back instead of replacing it. Cleared by the timezone picker.
+    val sourceTimezoneId: String? = null,
+    // The repeat rule before an all-day toggle re-expressed its end date, and the
+    // rule that toggle produced. Toggling back with the rule untouched restores the
+    // original exactly, so on-then-off never rewrites it. Not user-editable.
+    val repeatRuleBeforeAllDayToggle: String? = null,
+    val repeatRuleAfterAllDayToggle: String? = null,
 )
 
 /**
@@ -352,8 +367,8 @@ internal fun eventFormHasUnsavedChanges(
     current: EventFormState,
 ): Boolean =
     current.title != initial.title ||
-        current.dateMillis != initial.dateMillis ||
-        current.endDateMillis != initial.endDateMillis ||
+        !sameDeviceDay(current.dateMillis, initial.dateMillis) ||
+        !sameDeviceDay(current.endDateMillis, initial.endDateMillis) ||
         current.startHour != initial.startHour ||
         current.startMinute != initial.startMinute ||
         current.endHour != initial.endHour ||
@@ -365,6 +380,7 @@ internal fun eventFormHasUnsavedChanges(
         current.reminders != initial.reminders ||
         current.rrule != initial.rrule ||
         current.timezone != initial.timezone ||
+        current.sourceTimezoneId != initial.sourceTimezoneId ||
         current.eventColor != initial.eventColor ||
         current.transp != initial.transp ||
         current.categories != initial.categories ||
@@ -401,10 +417,10 @@ internal fun shouldRebaselineOnCalendarResolve(initial: EventFormState?): Boolea
 
 /**
  * Compute the stored (startTs, endTs) this form state would persist. All-day
- * events store UTC midnight (start) / end-of-day UTC (end); timed events
- * interpret the picker's wall-clock in the selected timezone (or device
- * default). Single source of truth shared by the save path and the
- * edit-notify banner so the banner's change detection matches what saves.
+ * events store UTC midnight (start) / end-of-day UTC (end); timed events read
+ * the date from [EventFormState.dateMillis] in the device's zone and the clock
+ * time in the selected timezone (or device default). The save path, the form's
+ * checks and the Save-and-notify label all use it, so they agree with what saves.
  */
 fun EventFormState.toStartEndTs(): Pair<Long, Long> {
     return if (isAllDay) {
@@ -412,27 +428,251 @@ fun EventFormState.toStartEndTs(): Pair<Long, Long> {
         val endUtc = DateTimeUtils.localDateToUtcMidnight(endDateMillis)
         startUtc to DateTimeUtils.utcMidnightToEndOfDay(endUtc)
     } else {
-        val tz = timezone?.let { java.util.TimeZone.getTimeZone(it) }
-            ?: java.util.TimeZone.getDefault()
-        val startCal = JavaCalendar.getInstance(tz).apply {
-            timeInMillis = dateMillis
-            set(JavaCalendar.HOUR_OF_DAY, startHour)
-            set(JavaCalendar.MINUTE, startMinute)
-            set(JavaCalendar.SECOND, 0)
-            set(JavaCalendar.MILLISECOND, 0)
-        }
-        val endCal = JavaCalendar.getInstance(tz).apply {
-            timeInMillis = endDateMillis
-            set(JavaCalendar.HOUR_OF_DAY, endHour)
-            set(JavaCalendar.MINUTE, endMinute)
-            set(JavaCalendar.SECOND, 0)
-            set(JavaCalendar.MILLISECOND, 0)
-        }
-        startCal.timeInMillis to endCal.timeInMillis
+        val zone = TimezoneUtils.resolveZone(timezone)
+        resolveFormTime(dateMillis, startHour, startMinute, zone, startOffsetHintTs) to
+            resolveFormTime(endDateMillis, endHour, endMinute, zone, endOffsetHintTs)
     }
 }
 
-// Reminder constants and helpers are in ui/shared/FormConstants.kt
+/**
+ * The instant for a form date (device-zone midnight encoding) at [hour]:[minute]
+ * in [zone]. When [hintTs] names exactly that clock time, it is returned as is.
+ * Otherwise RFC 5545 section 3.3.5 applies: a repeated clock time (when the
+ * clocks go back) is its first occurrence, and a skipped one (when they go
+ * forward) is read with the offset before the gap. ZonedDateTime.of does both.
+ */
+private fun resolveFormTime(dateMillis: Long, hour: Int, minute: Int, zone: ZoneId, hintTs: Long?): Long {
+    val local = deviceLocalDate(dateMillis).atTime(hour, minute)
+    if (hintTs != null) {
+        val hinted = Instant.ofEpochMilli(hintTs).atZone(zone)
+        if (hinted.toLocalDateTime().truncatedTo(ChronoUnit.MINUTES) == local) return hintTs
+    }
+    return ZonedDateTime.of(local, zone).toInstant().toEpochMilli()
+}
+
+/** The calendar date [millis] falls on in the device's zone. */
+private fun deviceLocalDate(millis: Long): LocalDate =
+    Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
+
+/** True when two form dates fall on one device-local day; producers encode dates differently. */
+private fun sameDeviceDay(a: Long, b: Long): Boolean = deviceLocalDate(a) == deviceLocalDate(b)
+
+/** [date]'s midnight in the device's zone: how the form stores a date. */
+private fun deviceMidnight(date: LocalDate): Long =
+    date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+
+/** The timed form fields that describe a start and end instant. */
+internal data class FormDateFields(
+    val dateMillis: Long,
+    val endDateMillis: Long,
+    val startHour: Int,
+    val startMinute: Int,
+    val endHour: Int,
+    val endMinute: Int,
+    val startOffsetHintTs: Long?,
+    val endOffsetHintTs: Long?,
+)
+
+/** Form fields for a timed event at [startTs]..[endTs], shown in [timezone]. */
+internal fun timedFormDateFields(startTs: Long, endTs: Long, timezone: String?): FormDateFields {
+    val zone = TimezoneUtils.resolveZone(timezone)
+    val start = Instant.ofEpochMilli(startTs).atZone(zone)
+    val end = Instant.ofEpochMilli(endTs).atZone(zone)
+    return FormDateFields(
+        dateMillis = deviceMidnight(start.toLocalDate()),
+        endDateMillis = deviceMidnight(end.toLocalDate()),
+        startHour = start.hour,
+        startMinute = start.minute,
+        endHour = end.hour,
+        endMinute = end.minute,
+        startOffsetHintTs = startTs,
+        endOffsetHintTs = endTs,
+    )
+}
+
+/**
+ * Form fields for an all-day event stored as UTC midnights: the stored dates
+ * shown as device-local dates, with no loaded-time hints.
+ */
+internal fun allDayFormDateFields(startUtcMidnight: Long, endUtc: Long): FormDateFields {
+    val localStart = DateTimeUtils.utcMidnightToLocalDate(startUtcMidnight)
+    val localEnd = DateTimeUtils.utcMidnightToLocalDate(endUtc)
+    val start = Instant.ofEpochMilli(localStart).atZone(ZoneId.systemDefault())
+    val end = Instant.ofEpochMilli(localEnd).atZone(ZoneId.systemDefault())
+    return FormDateFields(
+        dateMillis = localStart,
+        endDateMillis = localEnd,
+        startHour = start.hour,
+        startMinute = start.minute,
+        endHour = end.hour,
+        endMinute = end.minute,
+        startOffsetHintTs = null,
+        endOffsetHintTs = null,
+    )
+}
+
+internal fun EventFormState.withDateFields(fields: FormDateFields): EventFormState = copy(
+    dateMillis = fields.dateMillis,
+    endDateMillis = fields.endDateMillis,
+    startHour = fields.startHour,
+    startMinute = fields.startMinute,
+    endHour = fields.endHour,
+    endMinute = fields.endMinute,
+    startOffsetHintTs = fields.startOffsetHintTs,
+    endOffsetHintTs = fields.endOffsetHintTs,
+)
+
+/**
+ * Form fields for editing a Room event, or one occurrence of it at
+ * [occurrenceTs]. A re-edited exception keeps its own (modified) start. All-day
+ * events show their stored UTC date as a device-local date.
+ */
+internal fun org.onekash.kashcal.data.db.entity.Event.toFormDateFields(occurrenceTs: Long?): FormDateFields {
+    val duration = endTs - startTs
+    val actualStartTs = if (isException) startTs else (occurrenceTs ?: startTs)
+    val actualEndTs = actualStartTs + duration
+    return if (isAllDay) {
+        allDayFormDateFields(actualStartTs, actualEndTs)
+    } else {
+        timedFormDateFields(actualStartTs, actualEndTs, timezone)
+    }
+}
+
+/**
+ * True when a timed form's end is before its start. Compares the instants
+ * [toStartEndTs] would store, so the check agrees with the save even when the
+ * form's timezone puts the event on a different date than the phone's.
+ */
+internal fun EventFormState.endsBeforeStart(): Boolean {
+    if (isAllDay) return false
+    val (start, end) = toStartEndTs()
+    return end < start
+}
+
+/**
+ * Moves a timed form's start to the date of [dateMillis] at [hour]:[minute],
+ * keeping the event's duration. The duration is real elapsed time between the
+ * stored instants, so a daylight saving change inside the event doesn't
+ * stretch or shrink it; a form whose end is before its start gets
+ * [defaultDurationMinutes].
+ */
+internal fun EventFormState.withTimedStart(
+    dateMillis: Long,
+    hour: Int,
+    minute: Int,
+    defaultDurationMinutes: Int,
+): EventFormState {
+    val (oldStart, oldEnd) = toStartEndTs()
+    val durationMs = (oldEnd - oldStart).takeIf { it >= 0 } ?: (defaultDurationMinutes * 60_000L)
+    val moved = copy(
+        dateMillis = deviceMidnight(deviceLocalDate(dateMillis)),
+        startHour = hour,
+        startMinute = minute,
+    )
+    val newEnd = moved.toStartEndTs().first + durationMs
+    val end = Instant.ofEpochMilli(newEnd).atZone(TimezoneUtils.resolveZone(timezone))
+    return moved.copy(
+        endDateMillis = deviceMidnight(end.toLocalDate()),
+        endHour = end.hour,
+        endMinute = end.minute,
+        endOffsetHintTs = newEnd,
+    )
+}
+
+/**
+ * Sets a timed form's end to the date of [dateMillis] at [hour]:[minute]. An end
+ * date before the start date swaps them: the start moves to the picked date and
+ * the end takes the old start date, with the picked time.
+ */
+internal fun EventFormState.withTimedEnd(dateMillis: Long, hour: Int, minute: Int): EventFormState {
+    val picked = deviceLocalDate(dateMillis)
+    val startDate = deviceLocalDate(this.dateMillis)
+    return if (picked < startDate) {
+        copy(
+            dateMillis = deviceMidnight(picked),
+            endDateMillis = deviceMidnight(startDate),
+            endHour = hour,
+            endMinute = minute,
+        )
+    } else {
+        copy(endDateMillis = deviceMidnight(picked), endHour = hour, endMinute = minute)
+    }
+}
+
+/**
+ * Switches a timed form to [newTimezone] (null = device default), keeping the
+ * event at the same moment: the start and end are re-expressed as the date and
+ * clock time they fall on in the new zone. Any preserved unrecognised source
+ * timezone is dropped, since the user has now chosen one.
+ */
+internal fun EventFormState.withTimezone(newTimezone: String?): EventFormState {
+    val (start, end) = toStartEndTs()
+    return copy(timezone = newTimezone, sourceTimezoneId = null)
+        .withDateFields(timedFormDateFields(start, end, newTimezone))
+}
+
+/**
+ * Turns all-day on or off, swapping the default reminder. Turning it on keeps
+ * the form's dates (already device-local midnights) and turning it off keeps the
+ * clock times, so on-then-off leaves the event where it was. A repeat end date
+ * is kept on the same day in the new form.
+ */
+internal fun EventFormState.withAllDay(
+    newIsAllDay: Boolean,
+    defaultReminderTimed: Int,
+    defaultReminderAllDay: Int,
+): EventFormState {
+    val currentDefault = if (isAllDay) defaultReminderAllDay else defaultReminderTimed
+    val newDefault = if (newIsAllDay) defaultReminderAllDay else defaultReminderTimed
+    // Toggling back with the rule as the last toggle left it restores the rule it
+    // replaced; otherwise the end date is re-expressed for the new form.
+    val restoring = newIsAllDay != isAllDay && repeatRuleBeforeAllDayToggle != null && rrule == repeatRuleAfterAllDayToggle
+    val newRrule = if (restoring) {
+        repeatRuleBeforeAllDayToggle
+    } else {
+        reanchorRepeatEnd(rrule, wasAllDay = isAllDay, isAllDay = newIsAllDay, timezone = timezone)
+    }
+    // Remember the rule on every flip, even one that leaves it unchanged, so the
+    // flip back restores it instead of re-expressing it.
+    val rewritten = !restoring && newIsAllDay != isAllDay && rrule != null
+    return copy(
+        isAllDay = newIsAllDay,
+        dateMillis = if (newIsAllDay) normalizeToLocalMidnight(dateMillis) else dateMillis,
+        endDateMillis = if (newIsAllDay) normalizeToLocalMidnight(endDateMillis) else endDateMillis,
+        reminders = migrateRemindersForAllDayToggle(reminders, currentDefault, newDefault),
+        rrule = newRrule,
+        repeatRuleBeforeAllDayToggle = if (rewritten) rrule else null,
+        repeatRuleAfterAllDayToggle = if (rewritten) newRrule else null,
+    )
+}
+
+private val UNTIL_VALUE = Regex("UNTIL=([0-9]{8}(?:T[0-9]{6}Z?)?)(?=;|$)")
+
+/**
+ * Re-expresses a repeat rule's end date when all-day is switched, keeping the
+ * same end date. UNTIL takes DTSTART's value type (RFC 5545 section 3.3.10): a
+ * date for all-day, a UTC date-time for timed. A date UNTIL is taken as the date
+ * written; a floating local-time or malformed UNTIL is left as is.
+ */
+private fun reanchorRepeatEnd(rrule: String?, wasAllDay: Boolean, isAllDay: Boolean, timezone: String?): String? {
+    if (rrule == null || wasAllDay == isAllDay) return rrule
+    val value = UNTIL_VALUE.find(rrule)?.groups?.get(1) ?: return rrule
+    val endDate = try {
+        when {
+            value.value.length == 8 ->
+                deviceMidnight(LocalDate.parse(value.value, DateTimeFormatter.BASIC_ISO_DATE))
+            value.value.endsWith("Z") -> {
+                val until = LocalDateTime.parse(value.value, DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'"))
+                untilDisplayMillis(until.toInstant(ZoneOffset.UTC).toEpochMilli(), wasAllDay, timezone)
+            }
+            else -> return rrule
+        }
+    } catch (_: Exception) {
+        return rrule
+    }
+    val newUntil = untilForPickedDate(endDate, isAllDay, timezone)
+    return rrule.replaceRange(value.range, RruleUtils.formatUntilDate(newUntil, isAllDay))
+}
 
 internal data class ResolvedCalendar(
     val id: Long?,
@@ -477,19 +717,18 @@ internal fun resolveDefaultCalendar(
 }
 
 /**
- * Resolve the calendar a duplicated event should default to, keeping the source
+ * Resolves the calendar a duplicated event defaults to, keeping the source
  * calendar the way editing does.
  *
- * A Room-backed source carries its calendar id on [Event.calendarId]; a device
- * source zeroes it (device calendar ids live in a separate namespace from Room
- * ids) and passes the source device calendar id via [duplicateFromDeviceCalendarId].
- * Resolution order: the Room source calendar (a real, writable Room id always
- * wins), then the source device calendar (only if it still exists and is
- * writable in [deviceCalendarGroups]), else [resolvedDefault] — the same graceful
- * fallback the form used before device sources were honored.
+ * A Room source carries its calendar id on [Event.calendarId]; a device source
+ * zeroes it (device calendar ids are a separate namespace from Room ids) and
+ * passes the source device calendar id as [duplicateFromDeviceCalendarId].
+ * Resolution order: the Room source calendar if it is in [writableCalendars],
+ * then the source device calendar if it still exists and is writable in
+ * [deviceCalendarGroups], else [resolvedDefault].
  *
- * Kept pure (no Android [Resources]) like [resolveDefaultCalendar]: the returned
- * [ResolvedCalendar] carries the raw name; the caller localizes via
+ * Takes no [Resources], like [resolveDefaultCalendar]: the returned
+ * [ResolvedCalendar] carries the raw name, which the caller localizes with
  * [ResolvedCalendar.localizedName].
  */
 internal fun resolveDuplicateSourceCalendar(
@@ -520,14 +759,12 @@ internal fun resolveDuplicateSourceCalendar(
 }
 
 /**
- * The display name for a resolved default calendar, localized for Room calendars.
+ * Returns the display name for a resolved calendar, localized for Room calendars.
  *
- * [resolveDefaultCalendar] is kept pure (no Android [Resources]), so it returns the raw
- * stored name. Localization happens here: for a Room calendar we re-find the entity and
- * apply [localizedDisplayName] (which localizes the built-in on-device calendar). Device
- * calendars pass through unchanged — they carry their own name and their id lives in a
- * separate space from Room ids, so looking one up in the Room list could collide and
- * mislabel it.
+ * [resolveDefaultCalendar] takes no [Resources] and returns the raw stored name. A Room
+ * calendar is looked up again and named with [localizedDisplayName] (which localizes the
+ * built-in on-device calendar). A device calendar keeps its own name: its id is in a
+ * separate space from Room ids, so a lookup in the Room list could collide and mislabel it.
  */
 private fun ResolvedCalendar.localizedName(
     writableCalendars: List<Calendar>,
@@ -536,23 +773,9 @@ private fun ResolvedCalendar.localizedName(
     else writableCalendars.find { it.id == id }?.localizedDisplayName(resources) ?: name
 
 /**
- * Event creation/editing bottom sheet with a wheel-picker UI.
- *
- * @param eventId Event ID for edit mode, null for create mode
- * @param initialStartTs Initial start timestamp (epoch milliseconds) for new events
- * @param occurrenceTs Occurrence timestamp when editing single occurrence of recurring event
- * @param calendars Available calendars
- * @param defaultCalendar Default calendar for new events (supports Room and Device)
- * @param onDismiss Called when sheet is dismissed
- * @param onSave Called to save the event with form state
- * @param onDelete Called to delete the event (edit mode only)
- * @param onLoadEvent Called to load event data for edit mode
- * @param defaultReminderTimed Default reminder for timed events (minutes)
- * @param defaultReminderAllDay Default reminder for all-day events (minutes)
- * @param onRequestNotificationPermission Called when saving an event with reminders to request
- *        notification permission. The callback receives a result callback that must be invoked
- *        with the permission result (true=granted, false=denied). The event is saved regardless
- *        of the permission result (graceful degradation). Pass null to skip permission check.
+ * Shows the event create and edit form full screen, in a Dialog that owns the dismiss
+ * guard ([resolveFormDismiss]). Every parameter goes to [EventFormContent], which
+ * documents them.
  */
 @Composable
 fun EventFormSheet(
@@ -560,13 +783,6 @@ fun EventFormSheet(
     initialStartTs: Long? = null,
     occurrenceTs: Long? = null,
     duplicateFrom: Event? = null,
-    /**
-     * Source device calendar id when duplicating a device-calendar event.
-     * Device calendar ids live in a separate namespace from Room ids (which is
-     * why [DisplayEvent.Device.toEventForDuplicate] zeroes [Event.calendarId]),
-     * so the source device calendar reaches the form on this dedicated channel.
-     * Null for Room/CalDAV duplicates and all non-duplicate flows.
-     */
     duplicateFromDeviceCalendarId: Long? = null,
     calendarIntentData: CalendarIntentData? = null,
     calendarIntentInvitees: List<String> = emptyList(),
@@ -575,22 +791,6 @@ fun EventFormSheet(
     defaultCalendar: DefaultCalendar?,
     onDismiss: () -> Unit,
     onSave: suspend (EventFormState) -> Result<Event>,
-    /**
-     * Defer save to the host so a save-time scope sheet can ask the
-     * user how the change should apply across the recurring series.
-     *
-     * Carries metadata captured at form-load time:
-     * - `originalRrule` — the master's rrule before per-occurrence
-     *   stripping (used to detect rrule changes).
-     * - `masterStartTs` — the master's true startTs, anchors the
-     *   first-occurrence rule.
-     * - `isDetachedException` — whether the loaded event row is itself
-     *   an exception (originalEventId != null).
-     * - `isRecurringDevice` — whether this is a device-calendar event,
-     *   so the host knows which save path to invoke.
-     *
-     * Null disables the deferral (legacy direct-save behavior).
-     */
     onRequestRecurringSave: ((
         formState: EventFormState,
         occurrenceTs: Long,
@@ -600,22 +800,9 @@ fun EventFormSheet(
         isRecurringDevice: Boolean,
         loadedIsAllDay: Boolean,
     ) -> Unit)? = null,
-    /**
-     * Tick that increments whenever a deferred save fails or the user
-     * cancels from the scope sheet. The form observes this via
-     * `LaunchedEffect` to clear its `isSaving = true` flag (which is
-     * set when the deferral fires) so the Save button re-enables for
-     * retry.
-     */
     scopeSaveFailedTick: Int = 0,
     onDelete: (suspend (eventId: Long, occurrenceTs: Long?) -> Result<Unit>)? = null,
     onLoadEvent: (suspend (Long) -> Event?)? = null,
-    /**
-     * Load the event's existing attendee ENTITIES for the picker to seed
-     * from. Returns Room rows (not the lossy UI projection) so the picker
-     * preserves role/cutype/rsvp/delegation on edit. Null disables seeding
-     * (e.g. device-calendar events, which have no CalDAV attendee table).
-     */
     onLoadAttendees: (suspend (Long) -> List<org.onekash.kashcal.data.db.entity.Attendee>)? = null,
     defaultReminderTimed: Int = 15,
     defaultReminderAllDay: Int = 1440,
@@ -635,73 +822,27 @@ fun EventFormSheet(
     deviceCalendarGroups: List<CalendarGroup> = emptyList(),
     attendees: List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel> = emptyList(),
     isCurrentUserOnList: Boolean = false,
-    /**
-     * When true, the form renders in read-only mode: a banner with
-     * inline RSVP chips appears at the top, and substantive fields are
-     * not editable. Reminders remain editable per RFC 5545 §3.6.6
-     * (per-attendee VALARMs); the user can change their own alarms
-     * even though they can't edit organizer-owned fields.
-     *
-     * Client-enforced — some CalDAV servers silently accept attendee
-     * substantive edits, so server enforcement is unreliable.
-     */
     isReadOnly: Boolean = false,
-    /** Invoked when the user taps a chip inside the read-only banner. */
     onRsvp: (org.onekash.kashcal.ui.components.attendees.AttendeeStatus) -> Unit = {},
-    /**
-     * Save callback for the read-only attendee path. Receives the
-     * (possibly empty) reminder set in minutes. The callback writes
-     * locally and reschedules AlarmManager — no server PUT. When null,
-     * the read-only Save button stays disabled.
-     */
     onSaveAttendeeReminders: (suspend (List<Int>) -> Result<Unit>)? = null,
-    /**
-     * The event's account, used to mark "You" in the picker and to gate the
-     * editable picker on whether the account can send invitations
-     * ([isSchedulable]). Null for new local events with no resolved account.
-     */
     attendeeAccount: org.onekash.kashcal.data.db.entity.Account? = null,
-    /**
-     * True when the account has a mailto-emittable address (an ORGANIZER can
-     * be resolved). When false the picker surfaces an inline "inviting isn't
-     * available" notice instead of an editable list, so the UI never creates
-     * an ATTENDEE-without-ORGANIZER event (RFC 6638 §3.1).
-     */
     isSchedulable: Boolean = true,
-    /**
-     * Fired when the user changes the target calendar while the form is open,
-     * so the host can re-resolve [attendeeAccount]/[isSchedulable] for the new
-     * calendar's account. Without it the attendee context would stay pinned to
-     * the calendar the sheet opened with (stale "You"/schedulable state).
-     */
     onCalendarSelected: ((Long) -> Unit)? = null,
-    /** Debounced contact-email lookup for the picker's type-ahead. */
     onQueryContacts: (suspend (String) -> List<org.onekash.kashcal.data.contacts.ContactEmail>)? = null,
-    /**
-     * Request READ_CONTACTS. Receives the picker's current rationale-flip
-     * sampling and reports the resulting [ContactsPermissionState]. Null
-     * leaves the picker in manual-entry-only mode.
-     */
     contactsPermissionState: org.onekash.kashcal.ui.permission.ContactsPermissionState =
         org.onekash.kashcal.ui.permission.ContactsPermissionState.NotRequested,
     onRequestContactsPermission: (() -> Unit)? = null,
-    /** True when the user permanently declined contact suggestions — hides the picker banner for good. */
     contactsDeclined: Boolean = false,
-    /** Persist a permanent decline of contact suggestions ("No thanks"). */
     onDeclineContacts: (() -> Unit)? = null,
-    /** True when the tag row should render above the notes/attendees block. */
     tagsAboveNotes: Boolean = false,
-    /** Persist a new tag-row position (above/below the notes/attendees block). */
     onSetTagsAboveNotes: ((Boolean) -> Unit)? = null,
 ) {
-    // Mirror isSaving up to the shell so the modal's dismiss guard can read it
-    // without holding the full form state (which lives in EventFormContent).
+    // Mirrored up from EventFormContent, which owns the form state, for the dismiss guard.
     var isSaving by remember { mutableStateOf(false) }
 
-    // Two-tap discard confirmation, shared across the shell/content boundary:
-    // content mirrors up whether the form has unsaved edits, and the shell
-    // owns the confirmation flag so the Cancel button (content) and the back
-    // button (this Dialog's onDismissRequest) drive the same state machine.
+    // Two-tap discard confirmation: the content mirrors up whether the form has
+    // unsaved edits, and this shell owns the confirmation flag, so the Cancel
+    // button and the back button (both in the content) drive one state machine.
     var hasUnsavedChanges by remember { mutableStateOf(false) }
     var showDiscardConfirm by remember { mutableStateOf(false) }
 
@@ -713,14 +854,12 @@ fun EventFormSheet(
         }
     }
 
-    // Full-screen, non-animated container (not a ModalBottomSheet): the event form
-    // appears with no slide-in so the keyboard can rise immediately (like Google
-    // Calendar), instead of the sheet sliding up and the keyboard following it.
-    // decorFitsSystemWindows = false + safeDrawingPadding handles the status bar,
-    // IME, and nav bar insets (mirrors QuickAddDialog). Back is disabled at the
-    // platform level (dismissOnBackPress = false) and routed through the content's
-    // BackHandler -> attemptDismiss, so the two-tap discard guard still fires; the
-    // Cancel button goes through the same guard.
+    // A full-screen Dialog with no slide-in, not a ModalBottomSheet, so the keyboard
+    // can rise at once instead of following a sheet up. decorFitsSystemWindows = false
+    // with safeDrawingPadding handles the status bar, IME and nav bar insets, as in
+    // QuickAddDialog. The platform back dismissal is off (dismissOnBackPress = false):
+    // back goes through the content's BackHandler to attemptDismiss, like Cancel, so
+    // the discard guard still fires.
     Dialog(
         onDismissRequest = attemptDismiss,
         properties = DialogProperties(
@@ -792,15 +931,24 @@ fun EventFormSheet(
 }
 
 /**
- * Content of [EventFormSheet], extracted so it can be rendered and tested
- * without the Dialog wrapper (which needs a real window). The container chrome
- * (the Dialog + dismiss guard) stays in [EventFormSheet]; everything else — form
- * state, load/save logic, and the field UI — lives here.
+ * Renders the event form: its state, load and save logic, and fields. [EventFormSheet]
+ * adds the Dialog and dismiss guard; this part renders and tests without a real window.
  *
- * @param onSavingChange reports the in-flight save flag up to the host, so the
- *   host can block dismissal/teardown mid-save without owning the form state.
- *   Required (no default): a host that drops it can tear the form down mid-write,
- *   so every caller must decide how to guard dismissal.
+ * @param onSavingChange reports the in-flight save flag up to the host, so the host can
+ *   block dismissal mid-save without owning the form state. Required (no default): a host
+ *   that drops it can tear the form down mid-write.
+ * @param eventId the Room event to edit; null to create or to edit a device event
+ *   ([deviceEventId]).
+ * @param initialStartTs the start for a new event; the form takes its date and hour.
+ * @param occurrenceTs the occurrence being edited when the form opened on one occurrence of
+ *   a recurring Room event.
+ * @param defaultCalendar the calendar for a new event, Room or device.
+ * @param onDelete deletes the event; the delete row shows only in edit mode.
+ * @param defaultReminderTimed default reminder for timed events, in minutes.
+ * @param defaultReminderAllDay default reminder for all-day events, in minutes.
+ * @param onRequestNotificationPermission asked before a save with reminders; it must call
+ *   its result callback (true when granted). The save runs whatever the result. Null skips
+ *   the check.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -810,7 +958,7 @@ fun EventFormContent(
     onHasChangesChange: (Boolean) -> Unit = {},
     /** When true, the Cancel button renders the discard-confirmation label. */
     showDiscardConfirm: Boolean = false,
-    /** Invoked by the Cancel button; runs the same dismiss state machine as the back button. */
+    /** Invoked by Cancel and by back ([BackHandler]); the host runs its dismiss guard. */
     onRequestDismiss: () -> Unit = {},
     modifier: Modifier = Modifier,
     eventId: Long? = null,
@@ -818,11 +966,10 @@ fun EventFormContent(
     occurrenceTs: Long? = null,
     duplicateFrom: Event? = null,
     /**
-     * Source device calendar id when duplicating a device-calendar event.
-     * Device calendar ids live in a separate namespace from Room ids (which is
-     * why [DisplayEvent.Device.toEventForDuplicate] zeroes [Event.calendarId]),
-     * so the source device calendar reaches the form on this dedicated channel.
-     * Null for Room/CalDAV duplicates and all non-duplicate flows.
+     * Source device calendar id when duplicating a device event. Device calendar ids
+     * are a separate namespace from Room ids, so [DisplayEvent.Device.toEventForDuplicate]
+     * zeroes [Event.calendarId] and the id comes here instead. Null for Room duplicates
+     * and when not duplicating.
      */
     duplicateFromDeviceCalendarId: Long? = null,
     calendarIntentData: CalendarIntentData? = null,
@@ -833,20 +980,17 @@ fun EventFormContent(
     onDismiss: () -> Unit,
     onSave: suspend (EventFormState) -> Result<Event>,
     /**
-     * Defer save to the host so a save-time scope sheet can ask the
-     * user how the change should apply across the recurring series.
+     * Hands a save of a recurring occurrence edit to the host, whose scope sheet asks how
+     * the change applies across the series. The metadata is captured at load:
+     * - `originalRrule`: the loaded rrule, to detect a rule change.
+     * - `masterStartTs`: the loaded event's start, which anchors the first-occurrence rule.
+     * - `isDetachedException`: whether the loaded row is itself an exception.
+     * - `isRecurringDevice`: whether the event is a device event, so the host picks the
+     *   save path.
+     * - `loadedIsAllDay`: the loaded all-day flag, so toggling all-day in the form doesn't
+     *   change how the scope sheet reads the occurrence date.
      *
-     * Carries metadata captured at form-load time:
-     * - `originalRrule` — the master's rrule before per-occurrence
-     *   stripping (used to detect rrule changes).
-     * - `masterStartTs` — the master's true startTs, anchors the
-     *   first-occurrence rule.
-     * - `isDetachedException` — whether the loaded event row is itself
-     *   an exception (originalEventId != null).
-     * - `isRecurringDevice` — whether this is a device-calendar event,
-     *   so the host knows which save path to invoke.
-     *
-     * Null disables the deferral (legacy direct-save behavior).
+     * Null saves directly.
      */
     onRequestRecurringSave: ((
         formState: EventFormState,
@@ -858,20 +1002,16 @@ fun EventFormContent(
         loadedIsAllDay: Boolean,
     ) -> Unit)? = null,
     /**
-     * Tick that increments whenever a deferred save fails or the user
-     * cancels from the scope sheet. The form observes this via
-     * `LaunchedEffect` to clear its `isSaving = true` flag (which is
-     * set when the deferral fires) so the Save button re-enables for
-     * retry.
+     * Increments when a deferred save fails or the user cancels the scope sheet. The form
+     * then clears the `isSaving` flag the deferral set, so Save re-enables for a retry.
      */
     scopeSaveFailedTick: Int = 0,
     onDelete: (suspend (eventId: Long, occurrenceTs: Long?) -> Result<Unit>)? = null,
     onLoadEvent: (suspend (Long) -> Event?)? = null,
     /**
-     * Load the event's existing attendee ENTITIES for the picker to seed
-     * from. Returns Room rows (not the lossy UI projection) so the picker
-     * preserves role/cutype/rsvp/delegation on edit. Null disables seeding
-     * (e.g. device-calendar events, which have no CalDAV attendee table).
+     * Loads a Room event's attendee rows for the picker to seed from, so an edit keeps the
+     * role, cutype, rsvp and delegation the UI projection drops. Null disables seeding. A
+     * device event seeds from the guests in its [DeviceEventEditData] instead.
      */
     onLoadAttendees: (suspend (Long) -> List<org.onekash.kashcal.data.db.entity.Attendee>)? = null,
     defaultReminderTimed: Int = 15,
@@ -893,69 +1033,60 @@ fun EventFormContent(
     attendees: List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel> = emptyList(),
     isCurrentUserOnList: Boolean = false,
     /**
-     * When true, the form renders in read-only mode: a banner with
-     * inline RSVP chips appears at the top, and substantive fields are
-     * not editable. Reminders remain editable per RFC 5545 §3.6.6
-     * (per-attendee VALARMs); the user can change their own alarms
-     * even though they can't edit organizer-owned fields.
+     * When true, renders the attendee view: organizer-owned fields can't be edited, but
+     * reminders can. An attendee may change their own VALARMs (RFC 6638 §3.2.2.1), and
+     * [onSaveAttendeeReminders] saves them locally.
      *
-     * Client-enforced — some CalDAV servers silently accept attendee
-     * substantive edits, so server enforcement is unreliable.
+     * The app enforces this itself: some CalDAV servers silently accept an attendee's edits
+     * to organizer-owned fields.
      */
     isReadOnly: Boolean = false,
-    /** Invoked when the user taps a chip inside the read-only banner. */
+    /** Invoked when the user picks an RSVP answer in the read-only view. */
     onRsvp: (org.onekash.kashcal.ui.components.attendees.AttendeeStatus) -> Unit = {},
     /**
-     * Save callback for the read-only attendee path. Receives the
-     * (possibly empty) reminder set in minutes. The callback writes
-     * locally and reschedules AlarmManager — no server PUT. When null,
-     * the read-only Save button stays disabled.
+     * Saves the attendee's reminder set, in minutes and possibly empty, in the read-only
+     * view: a local write that re-arms the alarms and sends nothing to the server. Null keeps
+     * that view's Save disabled.
      */
     onSaveAttendeeReminders: (suspend (List<Int>) -> Result<Unit>)? = null,
     /**
-     * The event's account, used to mark "You" in the picker and to gate the
-     * editable picker on whether the account can send invitations
-     * ([isSchedulable]). Null for new local events with no resolved account.
+     * The event's account, used to mark "You" among the attendees. Null for new local events
+     * with no resolved account.
      */
     attendeeAccount: org.onekash.kashcal.data.db.entity.Account? = null,
     /**
-     * True when the account has a mailto-emittable address (an ORGANIZER can
-     * be resolved). When false the picker surfaces an inline "inviting isn't
-     * available" notice instead of an editable list, so the UI never creates
-     * an ATTENDEE-without-ORGANIZER event (RFC 6638 §3.1).
+     * True when the account has an address to write as ORGANIZER. When false the form offers
+     * no editable attendee list ([canEditAttendees]; an existing device event has its own
+     * gate) and [showSchedulingUnavailable] decides where the notice shows, so the form never
+     * creates attendees without an ORGANIZER, which RFC 6638 §3.1 requires of a scheduling
+     * object.
      */
     isSchedulable: Boolean = true,
     /**
-     * Fired when the user changes the target calendar while the form is open,
-     * so the host can re-resolve [attendeeAccount]/[isSchedulable] for the new
-     * calendar's account. Without it the attendee context would stay pinned to
-     * the calendar the sheet opened with (stale "You"/schedulable state).
+     * Fired when the user picks another calendar, so the host re-resolves [attendeeAccount]
+     * and [isSchedulable] for its account. Without it both stay on the calendar the form
+     * opened with.
      */
     onCalendarSelected: ((Long) -> Unit)? = null,
     /** Debounced contact-email lookup for the picker's type-ahead. */
     onQueryContacts: (suspend (String) -> List<org.onekash.kashcal.data.contacts.ContactEmail>)? = null,
-    /**
-     * Request READ_CONTACTS. Receives the picker's current rationale-flip
-     * sampling and reports the resulting [ContactsPermissionState]. Null
-     * leaves the picker in manual-entry-only mode.
-     */
+    /** READ_CONTACTS state, for the picker's permission banner. */
     contactsPermissionState: org.onekash.kashcal.ui.permission.ContactsPermissionState =
         org.onekash.kashcal.ui.permission.ContactsPermissionState.NotRequested,
+    /** Requests READ_CONTACTS from the picker's banner; null makes the request a no-op. */
     onRequestContactsPermission: (() -> Unit)? = null,
-    /** True when the user permanently declined contact suggestions — hides the picker banner for good. */
+    /** True when the user permanently declined contact suggestions; hides the picker banner. */
     contactsDeclined: Boolean = false,
     /** Persist a permanent decline of contact suggestions ("No thanks"). */
     onDeclineContacts: (() -> Unit)? = null,
-    /** True when the tag row should render above the notes/attendees block. */
+    /** True when the tag row renders above notes; otherwise it sits below them. */
     tagsAboveNotes: Boolean = false,
-    /** Persist a new tag-row position (above/below the notes/attendees block). */
+    /** Persist a new tag-row position (above or below notes). */
     onSetTagsAboveNotes: ((Boolean) -> Unit)? = null,
     /**
-     * Whether the host bottom sheet has finished its open animation. The title
-     * auto-focus (and the keyboard it raises) is deferred until this is true, so
-     * the keyboard doesn't rise mid-entrance and make the sheet appear to stall
-     * then finish opening. Defaults true for callers with no sheet (tests and any
-     * non-sheet host), which focus as soon as the form loads.
+     * Whether the host has finished its open animation. The title auto-focus, and the
+     * keyboard it raises, waits for it so the keyboard doesn't rise mid-entrance.
+     * [EventFormSheet] opens without animation and passes true.
      */
     isHostSheetSettled: Boolean = true,
 ) {
@@ -963,13 +1094,12 @@ fun EventFormContent(
     val scrollState = rememberScrollState()
     val hapticFeedback = LocalHapticFeedback.current
 
-    // Compute time pattern from preference
     val context = LocalContext.current
     val is24HourDevice = DateFormat.is24HourFormat(context)
     val timePattern = remember(timeFormat, is24HourDevice) {
         DateTimeUtils.getTimePattern(timeFormat, is24HourDevice)
     }
-    // Determine if 24-hour mode should be used (for time picker wheels)
+    // 24-hour mode for the time picker wheels.
     val use24Hour = remember(timeFormat, is24HourDevice) {
         when (timeFormat) {
             "12h" -> false
@@ -987,70 +1117,52 @@ fun EventFormContent(
     var initialFormState by remember { mutableStateOf<EventFormState?>(null) }
 
     /**
-     * Snapshot of reminders at form-load time. Used by the read-only
-     * attendee path to gate the Save button: enabled only when the
-     * current set differs from this snapshot. Initialised to the same
-     * value as state.reminders during edit-load so a no-op tap doesn't
-     * show Save as enabled.
+     * Reminders at a Room edit load, the same value as state.reminders. The read-only
+     * attendee view enables Save only when the current set differs from it.
      */
     var initialReminders by remember { mutableStateOf<List<Int>>(emptyList()) }
 
     /**
-     * Snapshot of the rrule at form-load time. Used by the
-     * save-time scope sheet to detect "user changed the recurrence
-     * rule" so it can disable the THIS_EVENT option (per RFC 5545
-     * §3.8.5 exceptions cannot carry an rrule).
+     * The rrule at load. The scope sheet compares against it and disables "This event" when
+     * the rule changed, since a changed occurrence carries no rrule ([computeEditScopeOptions]).
      */
     var initialRrule by remember { mutableStateOf<String?>(null) }
 
     /**
-     * Recurrence presence at load time. The save-time deferral
-     * predicate keys off this rather than `state.rrule`/`initialRrule`,
-     * because the load path strips rrule on per-occurrence edits
-     * (effectiveRrule = null when occurrenceTs != null), which would
-     * otherwise hide every Room recurring occurrence edit from the
-     * scope sheet.
+     * Whether the loaded event has an rrule or is an exception. The scope-sheet deferral, the
+     * delete routing and [showSchedulingUnavailable] key off this, not `state.rrule`, which the
+     * user can clear and which is null on an exception.
      */
     var wasRecurringAtLoad by remember { mutableStateOf(false) }
 
     /**
-     * Master event metadata captured at form-load time. Threaded
-     * through `onRequestRecurringSave` so the host's option-set
-     * rules see the master's true startTs and detached-exception
-     * status — not values derived from the (possibly user-edited)
-     * form state.
+     * The loaded event's start and exception flag, passed to `onRequestRecurringSave` so the
+     * host's scope rules don't derive them from the user-edited form state.
      */
     var loadedMasterStartTs by remember { mutableStateOf(0L) }
     var loadedIsDetachedException by remember { mutableStateOf(false) }
 
-    /**
-     * The master/loaded event's `isAllDay` at form-load time, frozen
-     * here so the scope-sheet sub-copy date format doesn't flip if
-     * the user toggles all-day in the form before saving.
-     */
+    /** The loaded `isAllDay`, so an all-day toggle doesn't change what the scope sheet reads. */
     var loadedIsAllDay by remember { mutableStateOf(false) }
 
     /**
-     * The event as loaded, snapshotted for the edit-notify predicate. Compared
-     * against a candidate built from the current form fields to decide whether
-     * saving will notify attendees (drives the inline banner + Save relabel).
+     * The Room event as loaded. The edit-notify check compares it with a candidate built from
+     * the form to decide whether saving notifies attendees, which relabels Save.
      */
     var loadedEvent by remember { mutableStateOf<Event?>(null) }
-    // Canonical addresses of the attendees present at load — the baseline for
-    // detecting removals (uninvites) this session.
+    // Canonical addresses of the attendees at load, to detect removals this session.
     var loadedAttendeeAddresses by remember { mutableStateOf<Set<String>>(emptySet()) }
 
-    // Guests loaded for a device-calendar event (read-only display). The Room
-    // `attendees` param doesn't populate for device events (it's keyed on a
-    // Room event id), so the device edit path carries them here. Editing the
-    // device guest list is a separate write path; this is display-only.
+    // Guests of a loaded device event, for the read-only display and the attendee
+    // sheet. The Room `attendees` param is keyed on a Room event id and stays empty
+    // for device events. An editable device guest list works on state.attendees.
     var deviceAttendees by remember {
         mutableStateOf<List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel>>(emptyList())
     }
-    // Whether the loaded device event's calendar allows writes — gates whether
-    // the guest list is editable (vs read-only) for an existing device event.
+    // Whether the loaded device event's calendar allows writes; gates whether its
+    // guest list is editable.
     var deviceEventWritable by remember { mutableStateOf(false) }
-    // In-session dismissal of the LOCAL-calendar "no invitation sent" notice.
+    // In-session dismissal of the local-account "no invitation sent" notice.
     var deviceNoticeDismissed by remember { mutableStateOf(false) }
 
     var expandedPicker by remember { mutableStateOf<String?>(null) }
@@ -1058,8 +1170,7 @@ fun EventFormContent(
     var showColorPicker by remember { mutableStateOf(false) }
     var showAttendeeSheet by remember { mutableStateOf(false) }
     var showAttendeePicker by remember { mutableStateOf(false) }
-    // Tracks an in-session "Not now" dismissal of the picker's permission
-    // banner so it doesn't reappear within the same picker open.
+    // In-session dismissal of the picker's permission banner.
     var contactsBannerDismissed by remember { mutableStateOf(false) }
 
     val borderlessFieldColors = OutlinedTextFieldDefaults.colors(
@@ -1072,19 +1183,14 @@ fun EventFormContent(
     val titleFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    // Tracks whether a finger is currently pressed on the form, so the
-    // dismiss-on-scroll below fires only for real swipes and not for the
-    // focus-driven scroll that the IME inset triggers when a field is tapped.
+    // Whether a finger is pressed on the form; see [shouldDismissKeyboardOnScroll].
     val isFingerDown = remember { mutableStateOf(false) }
 
-    // Raise the keyboard on the title exactly once, only when a brand-new blank
-    // event opens, so the user can start typing immediately. Suppressed for edits
-    // and for events that open with a title already filled in (duplicate, share,
-    // Quick Add). Deferred until the load settles (isLoading -> false) AND the host
-    // sheet finishes opening (isHostSheetSettled) — both are in the outer guard and
-    // the effect key so the one-shot isn't consumed before the sheet settles, and
-    // so the keyboard doesn't rise mid-entrance and make the sheet appear to stall.
-    // The one-shot flag means clearing the title later never re-grabs focus.
+    // Focus the title and raise the keyboard once, when a new blank event opens.
+    // Skipped for edits, for events that open with a title (duplicate, share, Quick
+    // Add), in the read-only view and on a load error. Waits for the load to finish
+    // and for isHostSheetSettled; both are effect keys and in the guard, so the
+    // one-shot isn't spent early. Clearing the title later never re-grabs focus.
     var didAutoFocusTitle by remember { mutableStateOf(false) }
     LaunchedEffect(state.isLoading, isHostSheetSettled) {
         if (!state.isLoading && isHostSheetSettled && !didAutoFocusTitle) {
@@ -1096,12 +1202,9 @@ fun EventFormContent(
         }
     }
 
-    // When the USER scrolls the form (drag/fling), drop focus and lower the IME
-    // so the fields below aren't hidden behind the keyboard. Gated on a pressed
-    // finger (a real swipe): the scroll that the animating IME inset fires when a
-    // field is focused is dispatched as user input too, but has no finger down, so
-    // requiring a pressed finger keeps that from ejecting the field the user just
-    // tapped while still dismissing on a genuine drag.
+    // A user swipe clears focus and lowers the keyboard so the fields below aren't
+    // hidden behind it; [shouldDismissKeyboardOnScroll] tells a swipe from the scroll
+    // the IME inset fires when a field gains focus.
     val dismissKeyboardOnUserScroll = remember(focusManager, keyboardController) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -1114,48 +1217,25 @@ fun EventFormContent(
         }
     }
 
-    // Perform save with result handling
     val performSave: () -> Unit = {
-        // Check if event has a reminder set
         val hasReminder = state.reminders.isNotEmpty()
 
-        // Detect a recurring edit that should defer to the save-time
-        // scope sheet. Conditions:
-        //   - host registered onRequestRecurringSave
-        //   - editing an existing event (not a create)
-        //   - the event was opened on a specific occurrence
-        //   - either the form's current rrule is non-null OR the
-        //     original was (handles the "remove RRULE" case via the
-        //     ALL_EVENTS option)
-        //   - not read-only (attendees route directly to attendee
-        //     reminder save)
-        // Defer to the host's scope sheet when:
-        //   - the host registered onRequestRecurringSave
-        //   - we're in edit mode (not create)
-        //   - the form was opened on a specific occurrence
-        //   - the loaded event was actually recurring (its master had
-        //     an rrule). Keys off the load-time snapshot rather than
-        //     state.rrule/initialRrule because the form's load path
-        //     strips rrule for per-occurrence edits — both would be
-        //     null and this predicate would always evaluate false.
-        //   - not in read-only attendee mode (which routes to
-        //     onSaveAttendeeReminders directly).
+        // Defer to the host's scope sheet when the host registered
+        // onRequestRecurringSave, the form edits an existing event opened on one
+        // occurrence, the loaded event was recurring ([wasRecurringAtLoad]), and
+        // the form isn't the read-only attendee view (which saves reminders only).
         val deferToScopeSheet = onRequestRecurringSave != null &&
             !isReadOnly &&
             state.isEditMode &&
             state.editingOccurrenceTs != null &&
             wasRecurringAtLoad
 
-        // The actual save operation. Defers to the host-supplied
-        // recurring-save callback when applicable; otherwise fires
-        // the existing direct-save path.
         val doSave: () -> Unit = saveImpl@ {
             if (deferToScopeSheet) {
-                // Stays visible so a Cancel from the scope sheet
-                // returns to the dirty form. isSaving flips to true
-                // immediately so the Save button disables — a
-                // double-tap would otherwise stage two pendingFormSave
-                // snapshots before the sheet renders.
+                // The form stays open so a Cancel from the scope sheet returns
+                // to it. isSaving disables Save at once: a double tap would
+                // otherwise stage two pendingFormSave snapshots before the sheet
+                // renders.
                 state = state.copy(isSaving = true, error = null)
                 onRequestRecurringSave!!(
                     state,
@@ -1171,12 +1251,9 @@ fun EventFormContent(
             coroutineScope.launch {
                 state = state.copy(isSaving = true, error = null)
                 try {
-                    // Route by mode:
-                    //  - read-only attendee path: only reminders are
-                    //    persisted, locally; no organizer-owned fields
-                    //    leave the device.
-                    //  - device calendar: existing onSaveDeviceEvent path.
-                    //  - default: existing onSave full-event path.
+                    // The read-only attendee view saves only its reminders, locally;
+                    // a device calendar saves through onSaveDeviceEvent; anything
+                    // else through onSave.
                     val result: Result<*> = when {
                         isReadOnly && onSaveAttendeeReminders != null ->
                             onSaveAttendeeReminders(state.reminders)
@@ -1207,11 +1284,10 @@ fun EventFormContent(
             }
         }
 
-        // If event has a reminder and permission callback is provided, request permission first
-        // Then always save regardless of permission result (graceful degradation)
+        // With reminders, ask for the notification permission first; the save runs
+        // whatever the answer.
         if (hasReminder && onRequestNotificationPermission != null) {
             onRequestNotificationPermission { _ ->
-                // Always save regardless of permission result
                 doSave()
             }
         } else {
@@ -1219,9 +1295,9 @@ fun EventFormContent(
         }
     }
 
-    // Load data on first composition
+    // Seeds the form on first composition and when the event to edit changes.
     LaunchedEffect(eventId, deviceEventId) {
-        // Filter out read-only calendars (ICS subscriptions) for event creation/editing
+        // Read-only calendars (ICS subscriptions among them) can't take an event.
         val writableCalendars = calendars.filter { !it.isReadOnly }
         val writableGroups = calendarGroups.mapNotNull { group ->
             val writableCals = group.calendars.filter { !it.isReadOnly }
@@ -1238,10 +1314,8 @@ fun EventFormContent(
         )
 
         if (deviceEventId != null && onLoadDeviceEvent != null) {
-            // Device calendar edit mode - load device event
             val editData = onLoadDeviceEvent(deviceEventId)
             if (editData != null) {
-                // Use the mapper to convert DeviceEvent to EventFormState
                 val mappedState = editData.event.toFormState(
                     reminders = editData.reminders,
                     calendarColor = editData.calendarColor,
@@ -1249,7 +1323,6 @@ fun EventFormContent(
                     deviceCalendarGroups = deviceCalendarGroups,
                     occurrenceTs = deviceOccurrenceTs
                 )
-                // Merge with writable groups and set occurrence timestamp if editing single occurrence
                 newState = mappedState.copy(
                     calendarGroups = writableGroups,
                     deviceCalendarGroups = deviceCalendarGroups,
@@ -1262,79 +1335,46 @@ fun EventFormContent(
                 loadedIsAllDay = editData.event.isAllDay
                 deviceAttendees = editData.attendees
                 deviceEventWritable = editData.isWritable
-                // Seed the picker from the device event's existing guests
-                // (organizer excluded — the repository owns that row) so a
-                // whole-event guest edit diffs against the real set. Stays
-                // unedited (attendeesEdited=false) until the user touches it,
-                // so an open-and-save passes null and leaves rows untouched.
+                // Seed the picker from the device event's guests, organizer
+                // excluded (the repository owns that row), so a whole-event guest
+                // edit diffs against the real set. attendeesEdited stays false
+                // until the user changes it, so an open-and-save leaves the rows.
                 newState = newState.copy(
                     attendees = org.onekash.kashcal.ui.viewmodels.deviceGuestsToPickerSeed(editData.attendees)
                 )
             } else {
-                // Event not found (deleted externally)
+                // Null, for example when the event was deleted elsewhere: the form
+                // shows the error and the user dismisses it.
                 newState = newState.copy(
                     error = "Event no longer exists",
                     isLoading = false
                 )
-                // Will show error, user can dismiss
             }
         } else if (eventId != null && onLoadEvent != null) {
-            // Edit mode - load event
             val event = onLoadEvent(eventId)
             if (event != null) {
                 val eventCalendar = calendars.find { it.id == event.calendarId }
 
-                // For single occurrence edit:
-                // - Re-editing exception: use exception's startTs (already has modified time)
-                // - Creating new exception: use occurrenceTs (the specific occurrence being edited)
-                val eventDuration = event.endTs - event.startTs
-                val actualStartTs = if (event.isException) event.startTs else (occurrenceTs ?: event.startTs)
-                val actualEndTs = actualStartTs + eventDuration
+                // Dates and clock times for the occurrence being edited (a
+                // re-edited exception keeps its own start), in the event's timezone.
+                val dateFields = event.toFormDateFields(occurrenceTs)
 
-                // CRITICAL: All-day events are stored as UTC midnight. For display in the
-                // date picker (which uses local time), convert UTC midnight to local midnight
-                // to preserve the calendar date.
-                val displayStartTs = if (event.isAllDay) {
-                    DateTimeUtils.utcMidnightToLocalDate(actualStartTs)
-                } else {
-                    actualStartTs
-                }
-                val displayEndTs = if (event.isAllDay) {
-                    DateTimeUtils.utcMidnightToLocalDate(actualEndTs)
-                } else {
-                    actualEndTs
-                }
-
-                // Use event's timezone when parsing times (not device timezone)
-                // This ensures events with specific timezone display correct wall clock time
-                val eventTz = event.timezone?.let { java.util.TimeZone.getTimeZone(it) }
-                    ?: java.util.TimeZone.getDefault()
-                val startCal = JavaCalendar.getInstance(eventTz).apply { timeInMillis = displayStartTs }
-                val endCal = JavaCalendar.getInstance(eventTz).apply { timeInMillis = displayEndTs }
-
-                // Parse reminders from event
                 val (parsedReminders, truncatedCount) = parseRemindersFromEvent(event.reminders, event.alarmCount)
 
-                // Show the loaded event's rrule verbatim. For a recurring
-                // master tapped via an occurrence, that's master.rrule; for
-                // an exception row it's null (exceptions strip rrule per
-                // RFC 5545 §3.8.5). The save side strips rrule for THIS_EVENT
-                // exceptions regardless of state.rrule (EventWriter.editSingleOccurrence)
-                // and the scope sheet's THIS_AND_FUTURE / ALL_EVENTS branches
-                // route the user-edited rrule through the helper.
-                newState = newState.copy(
+                // Show the loaded event's rrule as stored: the master's rule for a
+                // master opened on an occurrence, null for an exception row. A
+                // "This event" save drops the rrule whatever state.rrule holds
+                // (EventWriter.editSingleOccurrence); "This and following" and "All
+                // events" carry the edited rule.
+                newState = newState.withDateFields(dateFields).copy(
                     title = event.title,
-                    dateMillis = displayStartTs,
-                    endDateMillis = displayEndTs,
-                    startHour = startCal.get(JavaCalendar.HOUR_OF_DAY),
-                    startMinute = startCal.get(JavaCalendar.MINUTE),
-                    endHour = endCal.get(JavaCalendar.HOUR_OF_DAY),
-                    endMinute = endCal.get(JavaCalendar.MINUTE),
                     selectedCalendarId = event.calendarId,
                     selectedCalendarName = eventCalendar?.localizedDisplayName(context.resources).orEmpty(),
                     selectedCalendarColor = eventCalendar?.color,
                     isAllDay = event.isAllDay,
-                    timezone = event.timezone,
+                    // An ID the app can't resolve is shown as the device zone; the
+                    // save keeps the stored one when no zone is picked.
+                    timezone = event.timezone?.takeIf { TimezoneUtils.resolveZoneOrNull(it) != null },
                     location = event.location.orEmpty(),
                     description = event.description.orEmpty(),
                     rrule = event.rrule,
@@ -1347,8 +1387,6 @@ fun EventFormContent(
                     eventColor = event.color,
                     categories = event.categories.orEmpty()
                 )
-                // Capture the loaded reminder set so the read-only path
-                // can detect "user changed reminders" via remindersChanged.
                 initialReminders = parsedReminders
                 initialRrule = event.rrule
                 wasRecurringAtLoad = event.rrule != null || event.originalEventId != null
@@ -1356,23 +1394,19 @@ fun EventFormContent(
                 loadedIsDetachedException = event.originalEventId != null
                 loadedIsAllDay = event.isAllDay
                 loadedEvent = event
-                // Seed the picker from the event's existing attendee ENTITIES
-                // (not the lossy UI projection) so editing preserves their wire
-                // fields. attendeesEdited stays false: an open-and-save with no
-                // picker change still passes null to the domain layer.
+                // Seed the picker from the attendee rows so an edit keeps their
+                // wire fields; attendeesEdited stays false until the user changes
+                // the set.
                 if (onLoadAttendees != null) {
                     val loaded = onLoadAttendees(eventId)
                     newState = newState.copy(attendees = loaded)
-                    // Snapshot the originally-invited addresses so a later
-                    // removal can be detected (and the dropped guests counted
-                    // for the uninvite banner) via a canonical-address diff.
                     loadedAttendeeAddresses = loaded.map {
                         org.onekash.kashcal.util.AddressNormalizer.canonical(it.address)
                     }.toSet()
                 }
             }
         } else {
-            // Create mode - set default end time based on duration setting
+            // Create: the end is the start plus the default duration, capped at 23:59.
             val currentStartHour = newState.startHour
             val currentStartMinute = newState.startMinute
             val endTotalMinutes = currentStartHour * 60 + currentStartMinute + defaultEventDuration
@@ -1389,7 +1423,7 @@ fun EventFormContent(
                 endMinute = computedEndMinute
             )
 
-            // Handle initial start time (overrides defaults if provided)
+            // A given start replaces the default start, at the top of its hour.
             if (initialStartTs != null) {
                 val calendar = JavaCalendar.getInstance()
                 calendar.timeInMillis = initialStartTs
@@ -1406,9 +1440,8 @@ fun EventFormContent(
                 )
             }
 
-            // Handle duplicate event - copy data from source event
             if (duplicateFrom != null) {
-                // For all-day events: UTC timestamps need conversion for date picker
+                // All-day events store UTC midnights; the form holds device-local dates.
                 val displayStartTs = if (duplicateFrom.isAllDay) {
                     DateTimeUtils.utcMidnightToLocalDate(duplicateFrom.startTs)
                 } else {
@@ -1423,7 +1456,7 @@ fun EventFormContent(
                 val startCal = JavaCalendar.getInstance().apply { timeInMillis = displayStartTs }
                 val endCal = JavaCalendar.getInstance().apply { timeInMillis = displayEndTs }
 
-                // Parse reminders from event (ignore truncation for duplicates)
+                // A duplicate keeps no truncation notice.
                 val (dupReminders, _) = parseRemindersFromEvent(duplicateFrom.reminders, duplicateFrom.alarmCount)
 
                 // Keep the source calendar (Room or device); fall back to the
@@ -1455,17 +1488,17 @@ fun EventFormContent(
                     selectedCalendarColor = sourceCalColor,
                     isDeviceCalendar = sourceCal.isDevice,
                     reminders = dupReminders,
-                    rrule = null,  // Don't copy recurrence (creates independent event)
+                    rrule = null,  // A duplicate is a one-off event.
                     transp = duplicateFrom.transp,
                     eventColor = duplicateFrom.color,
                     categories = duplicateFrom.categories.orEmpty()
                 )
             }
 
-            // Handle calendar intent - pre-fill from external app (email client, browser, etc.)
+            // Pre-fill from another app's calendar intent.
             if (calendarIntentData != null && eventId == null) {
                 val startTs = calendarIntentData.startTimeMillis ?: run {
-                    // No parsed time — snap to next hour (matches FAB create behavior)
+                    // No parsed time: the next full hour.
                     val now = JavaCalendar.getInstance()
                     val nextHour = (now.get(JavaCalendar.HOUR_OF_DAY) + 1) % 24
                     JavaCalendar.getInstance().apply {
@@ -1492,7 +1525,7 @@ fun EventFormContent(
                 val startCal = JavaCalendar.getInstance().apply { timeInMillis = displayStartTs }
                 val endCal = JavaCalendar.getInstance().apply { timeInMillis = displayEndTs }
 
-                // Append invitees to description (user preference)
+                // The intent's invitees go into the description.
                 val fullDescription = calendarIntentData.getDescriptionWithInvitees(calendarIntentInvitees)
 
                 newState = newState.copy(
@@ -1513,23 +1546,20 @@ fun EventFormContent(
         }
 
         state = newState
-        // Snapshot the load-time baseline for unsaved-change detection.
         initialFormState = newState
     }
 
-    // Reactive calendar update: handles async calendar loading on cold start.
-    // The init LaunchedEffect above captures calendars at first composition,
-    // Reset isSaving when a deferred save fails or the user cancels
-    // from the scope sheet. Save button gates on `!state.isSaving`,
-    // so without this the form stays locked after a failure.
+    // Re-enables Save after a deferred save fails or the user cancels the scope
+    // sheet; without it the form stays locked.
     LaunchedEffect(scopeSaveFailedTick) {
         if (state.isSaving && scopeSaveFailedTick > 0) {
             state = state.copy(isSaving = false)
         }
     }
 
-    // which may be empty if HomeViewModel hasn't loaded them yet (race condition).
-    // This effect updates calendar state when the list becomes available.
+    // The load effect above reads the calendars at first composition, when they may
+    // not have loaded yet on a cold start. This one updates the calendar state as the
+    // lists arrive.
     LaunchedEffect(calendars, calendarGroups, deviceCalendarGroups) {
         val writableCalendars = calendars.filter { !it.isReadOnly }
         val writableGroups = calendarGroups.mapNotNull { group ->
@@ -1537,18 +1567,17 @@ fun EventFormContent(
             if (writableCals.isNotEmpty()) group.copy(calendars = writableCals) else null
         }
 
-        // Early return if nothing changed (prevents unnecessary state updates during sync)
+        // Nothing changed: skip the state update (the lists re-emit during sync).
         if (writableGroups == state.calendarGroups &&
             deviceCalendarGroups == state.deviceCalendarGroups) return@LaunchedEffect
 
-        // Always update the calendar groups (picker needs current list)
         state = state.copy(
             calendarGroups = writableGroups,
             deviceCalendarGroups = deviceCalendarGroups
         )
 
-        // Case 1: Create mode — no calendar selected yet (empty on first composition)
-        // Resolve default now that calendars are available
+        // No calendar selected yet (a create whose lists were empty at load):
+        // resolve the default now.
         if (state.selectedCalendarId == null && writableCalendars.isNotEmpty()) {
             val resolved = resolveDefaultCalendar(defaultCalendar, writableCalendars, deviceCalendarGroups)
             state = state.copy(
@@ -1557,18 +1586,15 @@ fun EventFormContent(
                 selectedCalendarColor = resolved.color,
                 isDeviceCalendar = resolved.isDevice
             )
-            // The default calendar resolved asynchronously (not a user action),
-            // so fold it into the baseline. If the user happened to edit a field
-            // during this sub-second cold-start window, that edit is absorbed
-            // into the baseline — pre-existing parity with the original feature.
+            // An async resolution, not a user action, so it joins the baseline. An
+            // edit the user made in this sub-second cold-start window joins it too.
             if (shouldRebaselineOnCalendarResolve(initialFormState)) {
                 initialFormState = state
             }
         }
 
-        // Case 2: Edit mode — calendar ID already set but metadata missing (cold start)
-        // The init LaunchedEffect set selectedCalendarId from event.calendarId,
-        // but calendar name/color were null because calendars list was empty
+        // An edit loaded before the calendars: the load set selectedCalendarId from
+        // the event but found no name or color.
         if (state.selectedCalendarId != null &&
             state.selectedCalendarName.isEmpty() &&
             writableCalendars.isNotEmpty()) {
@@ -1581,12 +1607,11 @@ fun EventFormContent(
             }
         }
 
-        // Case 3: Device duplicate that fell back to the Room default because
-        // deviceCalendarGroups hadn't loaded when the init effect seeded the form.
-        // Once the device groups arrive, re-resolve to the source device calendar.
-        // Only upgrades when the source device calendar is actually resolvable now
-        // (resolved.isDevice); a genuinely gone/non-writable source keeps the
-        // Room fallback. The !isDeviceCalendar guard means this fires at most once.
+        // A device duplicate that fell back to the Room default because the device
+        // groups hadn't loaded: re-resolve to the source device calendar once they
+        // arrive. Only a resolvable source (resolved.isDevice) replaces the fallback;
+        // a gone or read-only one keeps it. The !isDeviceCalendar guard makes this
+        // fire at most once.
         if (duplicateFrom != null &&
             duplicateFromDeviceCalendarId != null &&
             !state.isDeviceCalendar &&
@@ -1607,52 +1632,29 @@ fun EventFormContent(
                     selectedCalendarColor = resolved.color,
                     isDeviceCalendar = true
                 )
-                // Unlike the create-mode resolve above, the baseline here already
-                // holds the Room fallback id seeded at init, so the null-guard
-                // predicate would never fire. This upgrade is an async resolution,
-                // never a user action, so fold it into the baseline unconditionally
-                // — otherwise the fallback→source calendar change reads as an unsaved
-                // edit and pops a spurious discard confirmation on a form the user
-                // never touched.
+                // Always re-baseline: the baseline already holds the Room fallback id,
+                // so [shouldRebaselineOnCalendarResolve] would say no, and the switch
+                // would read as an unsaved edit and ask to discard an untouched form.
                 initialFormState = state
             }
         }
     }
 
-    // Time validation: end time must not be before start time on same date
     val hasTimeConflict by remember {
-        derivedStateOf {
-            if (state.isAllDay) {
-                false // All-day events don't have time conflicts
-            } else {
-                val startDateOnly = normalizeToLocalMidnight(state.dateMillis)
-                val endDateOnly = normalizeToLocalMidnight(state.endDateMillis)
-                if (startDateOnly == endDateOnly) {
-                    val startMins = state.startHour * 60 + state.startMinute
-                    val endMins = state.endHour * 60 + state.endMinute
-                    endMins < startMins
-                } else {
-                    false // Different dates - no time conflict possible
-                }
-            }
-        }
+        derivedStateOf { state.endsBeforeStart() }
     }
 
-    // Edit-notify: saving a scheduling-significant change (title, location,
-    // time, recurrence, cancellation) on an event with attendees will email
-    // them an updated invite. Surface that consequence inline before the tap —
-    // the predicate delegates to SequenceBumper so the banner matches the wire
-    // behaviour, so the candidate must carry every field SequenceBumper reads.
+    // Saving a scheduling-significant change on an event with attendees sends them
+    // an update, so Save reads "Save & notify" before the tap. The decision is
+    // [org.onekash.kashcal.domain.scheduling.shouldNotifyAttendees], which uses
+    // SequenceBumper.shouldBump, so the candidate must carry every field that reads.
     //
-    // attendeeCount is the set that WILL be saved: the picker-edited
-    // state.attendees once the user has touched it (attendeesEdited), else the
-    // persisted display projection. Using the live edited set is essential —
-    // adding the first attendee + changing the time in one session must surface
-    // the banner, and removing everyone must hide it.
+    // The count is the set that will be saved: state.attendees once the user edited
+    // it, else the loaded display list, so adding the first guest and moving the time
+    // in one session relabels Save.
     val notifyAttendeeCount = if (state.attendeesEdited) state.attendees.size else attendees.size
-    // Guests dropped from the originally-loaded set this session — each owes a
-    // CANCEL on save. Computed by canonical-address diff so the uninvite banner
-    // counts the removed guests (not the surviving set, which may be empty).
+    // Guests removed from the loaded set this session, by canonical address; each
+    // gets a CANCEL on save.
     val removedAttendeeCount = remember(state.attendees, state.attendeesEdited, loadedAttendeeAddresses) {
         if (!state.attendeesEdited) 0 else {
             val current = state.attendees.map {
@@ -1666,9 +1668,8 @@ fun EventFormContent(
             val original = loadedEvent ?: return@derivedStateOf false
             val (candStart, candEnd) = state.toStartEndTs()
             val candidate = original.copy(
-                // Mirror the save-path normalization (HomeViewModel applies the
-                // same ifBlank transforms) so the banner's bump prediction
-                // matches the value that will actually be written.
+                // The same ifBlank normalization as HomeViewModel's save, so the
+                // prediction matches what is written.
                 title = state.title.ifBlank { "Untitled" },
                 location = state.location.ifBlank { null },
                 startTs = candStart,
@@ -1681,22 +1682,18 @@ fun EventFormContent(
                 old = original,
                 new = candidate,
                 attendeeCount = notifyAttendeeCount,
-                // An add sends the new guest a REQUEST; a removal sends the
-                // dropped guest a CANCEL. attendeesEdited is the same flag the
-                // save path uses to decide the authoritative set; the removal
-                // flag relaxes the empty-set gate so uninviting the last guest
-                // still surfaces.
+                // An add sends the new guest a REQUEST and a removal sends the
+                // dropped guest a CANCEL. attendeesEdited is the flag the save uses
+                // to pass the set; a removal notifies even with no guests left.
                 attendeeSetChanged = state.attendeesEdited,
                 attendeeRemoved = removedAttendeeCount > 0,
             )
         }
     }
 
-    // Save predicate splits by mode. In read-only (attendee) mode the
-    // user can only edit reminders, so Save gates on the reminder-set
-    // having actually changed. In normal mode the existing full-form
-    // validation applies. Hoisted above the Column so both the header
-    // Save button and the sticky bottom Save button share one predicate.
+    // The read-only attendee view edits only reminders, so Save needs a changed
+    // reminder set; otherwise it needs a title and an end not before the start. Both
+    // need no save in progress. Shared by the header and the sticky bottom Save.
     val saveEnabled = if (isReadOnly) {
         onSaveAttendeeReminders != null &&
             remindersChanged(initialReminders, state.reminders) &&
@@ -1705,17 +1702,12 @@ fun EventFormContent(
         state.title.isNotBlank() && !state.isSaving && !hasTimeConflict
     }
 
-    // Propagate the save flag to the wrapper for its dismiss guard. SideEffect
-    // (not LaunchedEffect) so the wrapper's mirror is updated synchronously at
-    // commit, before any later input frame: a dismiss tap arriving after a save
-    // starts then sees the up-to-date flag rather than a value lagging by a
-    // coroutine dispatch.
+    // Reports the save flag to the wrapper's dismiss guard. SideEffect, not
+    // LaunchedEffect, updates it at commit, before any later input frame, so a
+    // dismiss tap after a save starts never sees a value a coroutine dispatch behind.
     SideEffect { onSavingChange(state.isSaving) }
 
-    // Unsaved-change detection, mirrored up to the shell's dismiss guard the
-    // same way isSaving is. SideEffect (not LaunchedEffect) so a back/Cancel tap
-    // arriving right after an edit sees the up-to-date value at commit rather
-    // than one lagging a coroutine dispatch.
+    // Reported to the dismiss guard at commit, the same way as isSaving.
     val hasUnsavedChanges by remember {
         derivedStateOf {
             initialFormState?.let { eventFormHasUnsavedChanges(it, state) } ?: false
@@ -1723,10 +1715,8 @@ fun EventFormContent(
     }
     SideEffect { onHasChangesChange(hasUnsavedChanges) }
 
-    // Route the system back button through the same dismiss guard as the Cancel
-    // button, so back gets the two-tap discard confirmation on a dirty form
-    // instead of closing it. Registered on the form's own dialog window (this
-    // content is inside it), and the Dialog's built-in back dismissal is disabled.
+    // Back runs the same dismiss guard as Cancel. This content sits in the form's
+    // own dialog window, whose built-in back dismissal is off.
     BackHandler(onBack = onRequestDismiss)
 
     val paneTitleText = if (state.isEditMode) {
@@ -1832,13 +1822,12 @@ fun EventFormContent(
                 CircularProgressIndicator()
             }
         } else {
-            // Scrollable content
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    // Observe (never consume) pointer presses so the dismiss-on-scroll
-                    // above can tell a real finger swipe from the focus-driven scroll.
+                    // Observes pointer presses without consuming them, for the
+                    // dismiss-on-scroll check.
                     .pointerInput(Unit) {
                         awaitPointerEventScope {
                             while (true) {
@@ -1851,8 +1840,8 @@ fun EventFormContent(
                     .verticalScroll(scrollState)
                     .padding(horizontal = 16.dp)
             ) {
-                // titleInitial captures the pre-filled value once after load so
-                // edit mode doesn't flash a dropdown before the user types.
+                // The title once loaded, so an edit doesn't flash a dropdown before
+                // the user types.
                 var titleInitial by remember { mutableStateOf<String?>(null) }
                 LaunchedEffect(state.isLoading, state.title) {
                     if (!state.isLoading && titleInitial == null) {
@@ -1893,11 +1882,9 @@ fun EventFormContent(
                     OutlinedTextField(
                         value = state.title,
                         onValueChange = { raw ->
-                            // maxLines=2 wraps long titles, but with
-                            // singleLine gone the Enter key would insert a
-                            // literal newline — strip it so a title stays a
-                            // single logical line (and never needs escaping
-                            // on the wire).
+                            // Without singleLine the Enter key inserts a
+                            // newline; strip it so a title stays one logical
+                            // line and never needs escaping on the wire.
                             val newValue = raw.replace("\n", "")
                             state = state.copy(title = newValue)
                             titleSearchJob?.cancel()
@@ -1928,13 +1915,12 @@ fun EventFormContent(
                             .testTag(TAG_TITLE_FIELD)
                             .focusRequester(titleFocusRequester)
                             .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
-                            // Horizontal only: the field's own box already
-                            // supplies vertical padding, so an extra vertical
-                            // pad here just made the title taller than location.
+                            // Horizontal only: the field's box has vertical
+                            // padding, and more would make the title row
+                            // taller than location.
                             .padding(horizontal = 16.dp),
-                        // Wrap a long title to a second line (matching the
-                        // quick-view title) instead of scrolling it off the
-                        // start on one line. There is no title length cap.
+                        // Wraps a long title to a second line, like the
+                        // quick-view title. There is no title length cap.
                         maxLines = 2,
                         enabled = !isReadOnly,
                         textStyle = MaterialTheme.typography.headlineSmall,
@@ -2005,8 +1991,7 @@ fun EventFormContent(
                 }
                 }
 
-                // Location sits directly under the title (matching common
-                // calendar apps), above the date/time section.
+                // Location sits under the title, above the date and time.
                 var locationExpanded by remember { mutableStateOf(false) }
                 var locationSuggestions by remember { mutableStateOf<List<AddressSuggestion>>(emptyList()) }
                 var isLoadingLocationSuggestions by remember { mutableStateOf(false) }
@@ -2032,9 +2017,8 @@ fun EventFormContent(
                         OutlinedTextField(
                             value = state.location,
                             onValueChange = { raw ->
-                                // Strip newlines: with singleLine gone the
-                                // Enter key would otherwise insert one, and
-                                // a location is a single logical line.
+                                // A location is one logical line; without
+                                // singleLine the Enter key inserts a newline.
                                 val newValue = raw.replace("\n", "")
                                 state = state.copy(location = newValue)
                                 locationSearchJob?.cancel()
@@ -2058,8 +2042,7 @@ fun EventFormContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
-                            // Wrap a long address to a second line instead of
-                            // scrolling it off the start on one line.
+                            // Wraps a long address to a second line.
                             maxLines = 2,
                             enabled = !isReadOnly,
                             colors = OutlinedTextFieldDefaults.colors(
@@ -2108,17 +2091,7 @@ fun EventFormContent(
 
 
                 val toggleAllDay = { newIsAllDay: Boolean ->
-                    val currentDefault = if (state.isAllDay) defaultReminderAllDay else defaultReminderTimed
-                    val newDefault = if (newIsAllDay) defaultReminderAllDay else defaultReminderTimed
-                    val migratedReminders = migrateRemindersForAllDayToggle(state.reminders, currentDefault, newDefault)
-                    val normalizedDate = if (newIsAllDay) normalizeToLocalMidnight(state.dateMillis) else state.dateMillis
-                    val normalizedEndDate = if (newIsAllDay) normalizeToLocalMidnight(state.endDateMillis) else state.endDateMillis
-                    state = state.copy(
-                        isAllDay = newIsAllDay,
-                        dateMillis = normalizedDate,
-                        endDateMillis = normalizedEndDate,
-                        reminders = migratedReminders
-                    )
+                    state = state.withAllDay(newIsAllDay, defaultReminderTimed, defaultReminderAllDay)
                 }
 
                 DateTimeDisplayRow(
@@ -2169,26 +2142,7 @@ fun EventFormContent(
                         TimezonePickerSheet(
                             selectedTimezone = state.timezone,
                             onTimezoneSelected = { newTimezone ->
-                                val oldTz = state.timezone?.let { java.util.TimeZone.getTimeZone(it) }
-                                    ?: java.util.TimeZone.getDefault()
-                                val newTz = newTimezone?.let { java.util.TimeZone.getTimeZone(it) }
-                                    ?: java.util.TimeZone.getDefault()
-
-                                val (newStartDate, newStartH, newStartM) = convertTimezone(
-                                    oldTz, newTz, state.dateMillis, state.startHour, state.startMinute
-                                )
-                                val (newEndDate, newEndH, newEndM) = convertTimezone(
-                                    oldTz, newTz, state.endDateMillis, state.endHour, state.endMinute
-                                )
-                                state = state.copy(
-                                    timezone = newTimezone,
-                                    dateMillis = newStartDate,
-                                    startHour = newStartH,
-                                    startMinute = newStartM,
-                                    endDateMillis = newEndDate,
-                                    endHour = newEndH,
-                                    endMinute = newEndM
-                                )
+                                state = state.withTimezone(newTimezone)
                                 showTimezoneSheet = false
                             },
                             onDismiss = { showTimezoneSheet = false }
@@ -2214,21 +2168,19 @@ fun EventFormContent(
                     },
                     isSelectedDeviceCalendar = state.isDeviceCalendar,
                     isExpanded = expandedPicker == "calendar",
-                    // Recurring DEVICE events can't be moved between calendars:
-                    // Android treats CALENDAR_ID as create-time, so a move is a
-                    // delete+recreate that we only support for non-recurring
-                    // device events. Disable the picker for a recurring device
-                    // edit rather than let a pick silently do nothing. (Room
-                    // recurring events move fine and stay enabled.)
+                    // Disabled in the read-only view, for an edit opened on one
+                    // occurrence, and for a recurring device event: Android treats
+                    // CALENDAR_ID as fixed at creation, so a device move is a create
+                    // and delete that only non-recurring events support (a pick
+                    // would do nothing). A Room series moves and stays enabled.
                     //
-                    // A synced event WITH ATTENDEES can't be moved to another
-                    // account (the move would carry the source account's ORGANIZER
-                    // and misdeliver invitations — the domain layer rejects it).
-                    // We can't selectively offer only same-account targets without
-                    // per-option disabling, so disable the whole picker for such
-                    // an edit; the user can duplicate the event onto the other
-                    // account instead. (Device attendee events are covered by the
-                    // recurring/occurrence clauses and the device move path.)
+                    // Also disabled for a Room event with attendees: a move to
+                    // another account would carry the source account's ORGANIZER
+                    // and misdeliver invitations, which the domain layer rejects.
+                    // Without per-option disabling the picker can't offer only
+                    // same-account targets; the user can duplicate the event onto
+                    // the other account instead. A device event with guests moves
+                    // through the device path, which drops the source organizer.
                     enabled = !isReadOnly &&
                         !(state.isEditMode && state.editingOccurrenceTs != null) &&
                         !(state.isEditMode && state.isDeviceCalendar && state.rrule != null) &&
@@ -2241,10 +2193,8 @@ fun EventFormContent(
                             selectedCalendarColor = color,
                             isDeviceCalendar = isDevice
                         )
-                        // Re-resolve the attendee/organizer context for the
-                        // newly chosen calendar's account (schedulable gate
-                        // + "You" detection must not stay pinned to the
-                        // calendar the sheet opened with).
+                        // Re-resolves the attendee context for the new
+                        // calendar's account.
                         onCalendarSelected?.invoke(id)
                         expandedPicker = null
                     }
@@ -2306,23 +2256,23 @@ fun EventFormContent(
                     onSelect = { rrule ->
                         state = state.copy(rrule = rrule)
                     },
-                    firstDayOfWeek = firstDayOfWeek
+                    firstDayOfWeek = firstDayOfWeek,
+                    isAllDay = state.isAllDay,
+                    timezone = state.timezone,
                 )
 
                 HorizontalDivider(modifier = Modifier.padding(vertical = SECTION_DIVIDER_SPACING))
 
-                // The tag row can sit above or below the notes/attendees block
-                // (a persisted preference the user flips from its ⋮ menu). Its
-                // content is defined once and rendered in the chosen position.
+                // The tag row sits above or below notes, a saved preference the user
+                // flips from its ⋮ menu. Defined once, rendered in the chosen position.
                 var showTagsMenu by remember { mutableStateOf(false) }
                 val tagsRow: @Composable () -> Unit = {
                     EventFormRow(
                         icon = Icons.Default.LocalOffer,
                         iconContentDescription = stringResource(R.string.label_categories),
-                        // Top-align so the icon and the ⋮ stay by the chip line;
-                        // otherwise engaging the picker (field + suggestion list)
-                        // floats them into the middle of the list. The small
-                        // offset centers the icon against the resting chip row.
+                        // Top-aligned so the icon and the ⋮ stay by the chip
+                        // line when the picker's field and suggestion list open.
+                        // The offset centers the icon on the resting chip row.
                         verticalAlignment = Alignment.Top,
                         iconTopPadding = 6.dp,
                     ) {
@@ -2345,9 +2295,9 @@ fun EventFormContent(
                             modifier = Modifier.weight(1f),
                         )
                         if (onSetTagsAboveNotes != null) {
-                            // Mirror the left icon (24dp glyph, same 6dp top
-                            // nudge) so the ⋮ shares the chip baseline instead of
-                            // sitting low inside a 48dp button box.
+                            // Matches the left icon (24dp glyph, 6dp top offset)
+                            // so the ⋮ sits on the chip line, not low in a 48dp
+                            // button box.
                             Box(modifier = Modifier.padding(top = 6.dp)) {
                                 CompositionLocalProvider(
                                     LocalMinimumInteractiveComponentSize provides Dp.Unspecified
@@ -2367,8 +2317,7 @@ fun EventFormContent(
                                     expanded = showTagsMenu,
                                     onDismissRequest = { showTagsMenu = false },
                                 ) {
-                                    // The current position's item is disabled —
-                                    // only the move to the other position acts.
+                                    // The current position's item is disabled.
                                     DropdownMenuItem(
                                         text = { Text(stringResource(R.string.tags_move_above_notes)) },
                                         enabled = !tagsAboveNotes,
@@ -2399,9 +2348,8 @@ fun EventFormContent(
                 EventFormRow(
                     icon = Icons.AutoMirrored.Filled.Notes,
                     iconContentDescription = stringResource(R.string.label_notes),
-                    // Notes is a multi-line field; top-align and drop the icon by
-                    // the field's own internal top padding so it meets the first
-                    // line of text rather than the field's top edge.
+                    // Multi-line field: the icon is top-aligned and offset by the
+                    // field's top padding so it meets the first line of text.
                     verticalAlignment = Alignment.Top,
                     iconTopPadding = 16.dp,
                 ) {
@@ -2431,20 +2379,16 @@ fun EventFormContent(
                 }
                 }
 
-                // Tags row (default position): directly below notes, so the
-                // "personal" group (notes + tags) stays together above the
-                // "scheduling" group (attendees + free/busy). The user can flip
-                // it above notes via the row's ⋮ menu.
+                // Default position: below notes, keeping notes and tags together
+                // above attendees and free/busy.
                 if (!isReadOnly && !tagsAboveNotes) {
                     tagsRow()
                 }
 
-                // Separates the personal group (notes/tags) from the scheduling
-                // group (attendees/free-busy) below. Only drawn when the
-                // personal group actually rendered something — in read-only
-                // mode with blank notes the whole group is empty, and an
-                // unconditional divider would stack against the section divider
-                // above it.
+                // Separates notes and tags from attendees and free/busy. Drawn only
+                // when that group rendered something: in the read-only view with
+                // blank notes it is empty, and the divider would stack against the
+                // section divider above.
                 if (!isReadOnly || state.description.isNotBlank()) {
                     HorizontalDivider(
                         modifier = Modifier
@@ -2453,26 +2397,20 @@ fun EventFormContent(
                     )
                 }
 
-                // Editable organizer flow: an always-present, tappable
-                // Attendees row that opens the picker. Available for new
-                // events, non-recurring edits, recurring SERIES edits, and
-                // single-occurrence edits (a detached exception included) —
-                // every save scope carries the edited guest set to its
-                // write path. Not-organizer (isReadOnly) and non-schedulable
-                // accounts keep the read-only display.
                 val isDeviceEvent = deviceEventId != null
-                // A device event's guest list is editable on a whole-event
-                // edit of a writable calendar (not a single-occurrence /
-                // this-and-future edit — the provider doesn't store
-                // per-occurrence guest divergence, so those stay read-only).
+                // A device event's guest list is editable only on a whole-event
+                // edit on a writable calendar. An edit opened on an occurrence or
+                // an exception stays read-only: the provider doesn't store
+                // per-occurrence guest divergence.
                 val isDeviceOccurrenceEdit =
                     state.editingOccurrenceTs != null || loadedIsDetachedException
                 val canEditDeviceAttendees = isDeviceEvent &&
                     deviceEventWritable &&
                     !isDeviceOccurrenceEdit &&
                     onQueryContacts != null
-                // Selected device calendar's delivery capability — drives the
-                // LOCAL-account inline notice (editing is still allowed).
+                // Whether the selected device calendar delivers invitations; true
+                // when no device calendar has the selected id. Drives the
+                // local-account notice.
                 val deviceCanDeliverInvites = deviceCalendarGroups
                     .asSequence()
                     .flatMap { it.pickerCalendars.asSequence() }
@@ -2481,11 +2419,9 @@ fun EventFormContent(
                     ?.calendar
                     ?.canDeliverInvites
                     ?: true
-                // The LOCAL "no invitation sent" notice shows whenever the
-                // user is editing guests on a device calendar that can't
-                // deliver. Computed once so both editable branches (existing
-                // device event, and new event on a device calendar) gate it
-                // identically.
+                // The "no invitation sent" notice, for guests on a device calendar
+                // that can't deliver. Shared by both editable branches: an existing
+                // device event and a new event on a device calendar.
                 val showDeviceLocalNotice = (isDeviceEvent || state.isDeviceCalendar) &&
                     !deviceCanDeliverInvites &&
                     state.attendees.isNotEmpty() &&
@@ -2503,11 +2439,9 @@ fun EventFormContent(
                     wasRecurringAtLoad = wasRecurringAtLoad,
                 )
                 if (canEditDeviceAttendees) {
-                    // Editable device guest list. The picker mutates
-                    // state.attendees (Room entities); saveDeviceEvent
-                    // bridges them to provider rows. On a LOCAL calendar
-                    // editing is still offered, with an inline notice that
-                    // no invitation will be sent.
+                    // The picker edits state.attendees (Room entities), and
+                    // saveDeviceEvent turns them into provider rows. A local
+                    // calendar still allows editing, with the notice.
                     EventFormRow(
                         icon = Icons.Default.Group,
                         iconContentDescription = stringResource(R.string.label_attendees)
@@ -2524,9 +2458,8 @@ fun EventFormContent(
                         }
                     }
                 } else if (isDeviceEvent && deviceAttendees.isNotEmpty()) {
-                    // Device-calendar guest list, read-only (occurrence edit
-                    // or non-writable calendar). Surface the existing guests
-                    // so the form matches the device quick-view's visibility.
+                    // Read-only device guests (an occurrence edit, a read-only
+                    // calendar, or no contact lookup), shown as in the quick view.
                     EventFormRow(
                         icon = Icons.Default.Group,
                         iconContentDescription = stringResource(R.string.label_attendees)
@@ -2553,8 +2486,8 @@ fun EventFormContent(
                                 account = attendeeAccount,
                                 onClick = { showAttendeePicker = true },
                             )
-                            // New event on a LOCAL device calendar: editing
-                            // is allowed but nothing is delivered.
+                            // A new event on a local device calendar: nothing
+                            // is delivered.
                             if (showDeviceLocalNotice) {
                                 DeviceLocalNoDeliveryNotice(onDismiss = { deviceNoticeDismissed = true })
                             }
@@ -2577,11 +2510,10 @@ fun EventFormContent(
                         iconContentDescription = stringResource(R.string.label_attendees)
                     ) {
                         val you = attendees.firstOrNull { it.isYou }
-                        // RSVP write path mutates only the loaded entity:
-                        // - master (state.rrule != null) → series-wide
-                        // - detached exception (loadedIsDetachedException) →
-                        //   per-occurrence; the disclosure would lie
-                        // - non-recurring → not applicable
+                        // An RSVP changes only the loaded row: series-wide on a
+                        // master (state.rrule != null), one occurrence on a
+                        // detached exception, where the series disclosure would
+                        // be false.
                         val rsvpAppliesToSeries =
                             state.rrule != null && !loadedIsDetachedException
                         val seriesDisclosure = if (
@@ -2593,13 +2525,10 @@ fun EventFormContent(
                             )
                         ) stringResource(R.string.rsvp_series_disclosure) else null
 
-                        // Editable form: the user changes attendance by
-                        // editing the event itself, so the RSVP cards
-                        // are unnecessary noise. Suppress them — but
-                        // do NOT label the user as the organizer (they
-                        // may be editing a delegated calendar where
-                        // they're an attendee), since that flows into
-                        // the summary line phrasing.
+                        // The editable form hides the RSVP cards, but doesn't
+                        // label the user as organizer: on a delegated calendar
+                        // they may be an attendee, and the flag shapes the
+                        // summary line.
                         val suppressRsvp = !isReadOnly
                         val actualIsOrganizer = you?.isOrganizer == true
 
@@ -2629,14 +2558,14 @@ fun EventFormContent(
                         seed = state.attendees,
                         account = attendeeAccount,
                         permissionState = contactsPermissionState,
-                        // Persisted decline OR this-session ✕ both hide the banner.
+                        // A saved decline or this session's ✕ hides the banner.
                         bannerDismissed = contactsDeclined || contactsBannerDismissed,
                         onQueryContacts = onQueryContacts,
                         onRequestPermission = { onRequestContactsPermission?.invoke() },
                         onDeclineContacts = { onDeclineContacts?.invoke() },
                         onDismissPermissionBanner = { contactsBannerDismissed = true },
-                        // Auto-commit: each add/remove writes straight back to
-                        // the form (back/scrim just closes — nothing to confirm).
+                        // Each add or remove writes back to the form at once,
+                        // so back or the scrim only closes the picker.
                         onSelectionChanged = { merged ->
                             state = state.copy(attendees = merged, attendeesEdited = true)
                         },
@@ -2644,10 +2573,9 @@ fun EventFormContent(
                     )
                 }
 
-                // Free/Busy availability — the last content row, paired with
-                // attendees in the "scheduling" group. Rendered in read-only
-                // mode too (chips disabled), so it stays outside any
-                // !isReadOnly gate.
+                // Free/busy, grouped with attendees. The read-only view shows it
+                // too, with the chips disabled, so it sits outside any !isReadOnly
+                // gate.
                 EventFormRow(
                     icon = Icons.Default.EventAvailable,
                     iconContentDescription = stringResource(R.string.label_availability)
@@ -2683,7 +2611,6 @@ fun EventFormContent(
                     )
                 }
 
-                // Error message
                 if (state.error != null) {
                     Spacer(modifier = Modifier.height(16.dp))
                     val errorText = state.error.orEmpty()
@@ -2697,10 +2624,9 @@ fun EventFormContent(
                     ) {
                         Text(
                             text = errorText,
-                            // A save/validation error blocks the user's action, so
-                            // interrupt TalkBack to announce it immediately, and mark
-                            // it as an error. On the Text (which carries the label),
-                            // not the Card, since the Card doesn't merge its child.
+                            // The error blocks the user's action, so TalkBack
+                            // announces it at once, as an error. Set on the Text,
+                            // which carries the label; the Card doesn't merge it.
                             modifier = Modifier
                                 .padding(16.dp)
                                 .semantics {
@@ -2715,17 +2641,14 @@ fun EventFormContent(
                 val canDeleteRoom = eventId != null && onDelete != null
                 val canDeleteDevice = state.editingDeviceEventId != null && onDeleteDeviceEvent != null
                 if (state.isEditMode && (canDeleteRoom || canDeleteDevice)) {
-                    // Leading separator for the delete section. Lives inside the
-                    // edit-mode guard so create mode doesn't draw a divider that
-                    // then stacks against the sticky Save button's own divider.
+                    // Inside the edit-mode guard, so create mode doesn't draw a
+                    // divider that stacks against the sticky Save divider.
                     HorizontalDivider(modifier = Modifier.testTag(TAG_DELETE_DIVIDER))
 
-                    // Commits the actual delete via the host's
-                    // callback. Used by both the inline-confirmation
-                    // path (non-recurring) and the direct path
-                    // (recurring — the host's scope sheet IS the
-                    // confirmation, so an extra inline tap would be
-                    // redundant friction).
+                    // Deletes through the host's callback, after the inline
+                    // confirmation (one-off events and exceptions) or directly
+                    // for a recurring master, whose scope sheet is the
+                    // confirmation.
                     val commitDelete: () -> Unit = {
                         coroutineScope.launch {
                             state = state.copy(isSaving = true)
@@ -2765,15 +2688,11 @@ fun EventFormContent(
                             iconContentDescription = stringResource(R.string.action_delete_event),
                             onToggle = {
                                 if (wasRecurringAtLoad && !loadedIsDetachedException) {
-                                    // Recurring master only: the host's
-                                    // scope sheet picks THIS_EVENT /
-                                    // THIS_AND_FUTURE / ALL_EVENTS and
-                                    // that deliberate pick is the
-                                    // confirmation. Exception events
-                                    // skip the scope sheet and route
-                                    // straight to single-occurrence
-                                    // delete, so they still need the
-                                    // inline two-tap guard.
+                                    // Recurring master: the host's scope
+                                    // sheet pick is the confirmation. An
+                                    // exception skips the sheet and
+                                    // deletes its occurrence directly, so
+                                    // it keeps the inline guard.
                                     commitDelete()
                                 } else {
                                     showDeleteConfirmation = true
@@ -2837,9 +2756,8 @@ fun EventFormContent(
                 Spacer(modifier = Modifier.height(32.dp))
             }
 
-            // Sticky bottom save button. Its own top divider separates it from
-            // whatever the scroll content ended with, so content sections must
-            // not add a trailing divider here (it would stack against this one).
+            // Sticky bottom Save. Its own top divider ends the scroll content, so
+            // content sections must not add a trailing divider (it would stack).
             HorizontalDivider(modifier = Modifier.testTag(TAG_SAVE_DIVIDER))
             Row(
                 modifier = Modifier
@@ -2887,7 +2805,6 @@ fun EventFormContent(
     }
 
 
-    // Start DateTime sheet - combined date + time picker
     if (activeSheet == ActiveDateTimeSheet.START) {
         DateTimeSheet(
             label = stringResource(R.string.label_starts),
@@ -2899,11 +2816,9 @@ fun EventFormContent(
             use24Hour = use24Hour,
             firstDayOfWeek = firstDayOfWeek,
             onConfirm = { dateMillis, hour, minute ->
-                // Normalize to midnight for all-day events to prevent timezone date shift
-                val normalizedDateMillis = if (state.isAllDay) normalizeToLocalMidnight(dateMillis) else dateMillis
-
                 if (state.isAllDay) {
-                    // ALL-DAY: Preserve day span when start date changes
+                    // Keep the day span when the start date moves.
+                    val normalizedDateMillis = normalizeToLocalMidnight(dateMillis)
                     val normalizedOldStart = normalizeToLocalMidnight(state.dateMillis)
                     val normalizedOldEnd = normalizeToLocalMidnight(state.endDateMillis)
                     val daySpanMs = (normalizedOldEnd - normalizedOldStart).coerceAtLeast(0)
@@ -2913,27 +2828,7 @@ fun EventFormContent(
                         endDateMillis = newEndDateMillis
                     )
                 } else {
-                    // TIMED: Preserve actual duration when start changes
-                    val oldStartMins = state.startHour * 60 + state.startMinute
-                    val oldEndMins = state.endHour * 60 + state.endMinute
-                    val oldStartDateOnly = normalizeToLocalMidnight(state.dateMillis)
-                    val oldEndDateOnly = normalizeToLocalMidnight(state.endDateMillis)
-                    val dayGapMinutes = ((oldEndDateOnly - oldStartDateOnly) / (60 * 1000)).toInt()
-                    val currentDurationMins = (oldEndMins - oldStartMins) + dayGapMinutes
-                    val durationMins = if (currentDurationMins >= 0) currentDurationMins else defaultEventDuration
-
-                    val newEndTotalMins = hour * 60 + minute + durationMins
-                    val dayOverflowMs = (newEndTotalMins / (24 * 60)).toLong() * 24L * 60 * 60 * 1000
-                    val remainderMins = newEndTotalMins % (24 * 60)
-
-                    state = state.copy(
-                        dateMillis = normalizedDateMillis,
-                        startHour = hour,
-                        startMinute = minute,
-                        endDateMillis = normalizedDateMillis + dayOverflowMs,
-                        endHour = remainderMins / 60,
-                        endMinute = remainderMins % 60
-                    )
+                    state = state.withTimedStart(dateMillis, hour, minute, defaultEventDuration)
                 }
                 activeSheet = ActiveDateTimeSheet.NONE
             },
@@ -2941,7 +2836,6 @@ fun EventFormContent(
         )
     }
 
-    // End DateTime sheet - combined date + time picker
     if (activeSheet == ActiveDateTimeSheet.END) {
         DateTimeSheet(
             label = stringResource(R.string.label_ends),
@@ -2953,30 +2847,21 @@ fun EventFormContent(
             use24Hour = use24Hour,
             firstDayOfWeek = firstDayOfWeek,
             onConfirm = { dateMillis, hour, minute ->
-                // Normalize to midnight for all-day events to prevent timezone date shift
-                val normalizedDateMillis = if (state.isAllDay) normalizeToLocalMidnight(dateMillis) else dateMillis
-
-                // End date logic: only clamp if user selected date before start
-                // Time validation (hasTimeConflict) handles invalid times with error UI
-                val finalEndDateMillis = when {
-                    normalizedDateMillis < state.dateMillis -> state.dateMillis  // Can't end before start date
-                    else -> normalizedDateMillis  // Use user's selection
-                }
-
-                // If user selected date before start, swap
-                if (normalizedDateMillis < state.dateMillis) {
-                    state = state.copy(
-                        dateMillis = normalizedDateMillis,
-                        endDateMillis = state.dateMillis,
-                        endHour = hour,
-                        endMinute = minute
-                    )
+                if (state.isAllDay) {
+                    val normalizedDateMillis = normalizeToLocalMidnight(dateMillis)
+                    // An end date before the start date swaps them.
+                    state = if (normalizedDateMillis < state.dateMillis) {
+                        state.copy(
+                            dateMillis = normalizedDateMillis,
+                            endDateMillis = state.dateMillis,
+                            endHour = hour,
+                            endMinute = minute
+                        )
+                    } else {
+                        state.copy(endDateMillis = normalizedDateMillis, endHour = hour, endMinute = minute)
+                    }
                 } else {
-                    state = state.copy(
-                        endDateMillis = if (state.isAllDay) normalizeToLocalMidnight(finalEndDateMillis) else finalEndDateMillis,
-                        endHour = hour,
-                        endMinute = minute
-                    )
+                    state = state.withTimedEnd(dateMillis, hour, minute)
                 }
                 activeSheet = ActiveDateTimeSheet.NONE
             },
@@ -2986,36 +2871,28 @@ fun EventFormContent(
 }
 
 
-// ExpandablePickerCard moved to ui/components/pickers/ExpandablePickerCard.kt
-// CalendarPickerRow lives in ui/components/pickers/CalendarPicker.kt
-// ReminderPickerCard and formatReminderLabel moved to ui/components/pickers/ReminderPicker.kt
-// Import these components from their respective locations
-
-// Helper functions
-
 /**
- * Parse an ISO 8601 duration trigger into signed "minutes before start".
+ * Parses an ISO 8601 duration trigger into signed minutes before the start.
  *
- * Sign is preserved (Android CalendarContract convention): a negative iCal trigger
- * ("-PT15H", before start) yields a positive Int (900); a positive trigger ("PT9H",
- * after start) yields a negative Int (-540); "PT0M" yields 0 (at start).
- * Returns null if the duration cannot be parsed (distinct from REMINDER_OFF).
+ * The sign follows the Android CalendarContract convention: a negative iCal trigger
+ * ("-PT15H", before the start) gives 900, a positive one ("PT9H", after the start) gives
+ * -540, and "PT0M" gives 0. Returns null for a blank value, one not starting with P, or
+ * a parse exception, which is distinct from [REMINDER_OFF]; unknown units add nothing.
  */
 internal fun parseIso8601DurationToMinutes(duration: String?): Int? {
     if (duration.isNullOrBlank()) return null
 
     try {
-        // A leading '-' means "before start" -> positive minutes-before (Int).
+        // A leading '-' means before the start, so positive minutes.
         val isBefore = duration.startsWith("-")
         val normalized = duration.removePrefix("-").removePrefix("+")
 
-        // Must start with P
         if (!normalized.startsWith("P")) return null
 
         var totalMinutes = 0
-        var remaining = normalized.substring(1) // Remove 'P'
+        var remaining = normalized.substring(1)
 
-        // Parse days if present (before T)
+        // Weeks and days sit before the T.
         val tIndex = remaining.indexOf('T')
         if (tIndex > 0) {
             val datePart = remaining.substring(0, tIndex)
@@ -3031,18 +2908,15 @@ internal fun parseIso8601DurationToMinutes(duration: String?): Int? {
         } else if (tIndex == 0) {
             remaining = remaining.substring(1)
         } else {
-            // No T: date-only like "P1D" or "P1W"
+            // No T: date only, like "P1D" or "P1W".
             Regex("(\\d+)D").find(remaining)?.let { totalMinutes += it.groupValues[1].toInt() * 1440 }
             Regex("(\\d+)W").find(remaining)?.let { totalMinutes += it.groupValues[1].toInt() * 10080 }
             return if (isBefore) totalMinutes else -totalMinutes
         }
 
-        // Parse hours
         Regex("(\\d+)H").find(remaining)?.let { totalMinutes += it.groupValues[1].toInt() * 60 }
-        // Parse minutes
         Regex("(\\d+)M").find(remaining)?.let { totalMinutes += it.groupValues[1].toInt() }
 
-        // 0 means "at time of event"; otherwise apply the before/after sign.
         return if (isBefore) totalMinutes else -totalMinutes
     } catch (e: Exception) {
         Log.w(TAG, "Failed to parse duration: $duration", e)
@@ -3051,10 +2925,9 @@ internal fun parseIso8601DurationToMinutes(duration: String?): Int? {
 }
 
 /**
- * Parse reminders list from event into List<Int> of signed minutes.
- * Takes first MAX_REMINDERS (5), computes truncation count from alarmCount.
- * Returns Pair(reminderMinutes, truncatedCount). Unparseable entries are dropped;
- * after-start (negative) values are kept.
+ * Parses an event's first [MAX_REMINDERS] reminders into signed minutes, paired with the
+ * count beyond that limit (from [alarmCount]). Unparseable entries are dropped; after-start
+ * (negative) values are kept.
  */
 private fun parseRemindersFromEvent(reminders: List<String>?, alarmCount: Int = 0): Pair<List<Int>, Int> {
     if (reminders.isNullOrEmpty()) return Pair(emptyList(), 0)
@@ -3070,55 +2943,16 @@ private fun parseRemindersFromEvent(reminders: List<String>?, alarmCount: Int = 
 
 
 /**
- * Normalize timestamp to local midnight (00:00:00.000).
- * Used for all-day events to ensure consistent date handling.
- *
- * When all-day toggle is ON, dateMillis should be at local midnight.
- * This prevents timezone issues where a late-evening local time
- * (e.g., Feb 20 18:00 PST = Feb 21 02:00 UTC) displays as the next day.
+ * Returns the device-local midnight of [millis]'s day. An all-day form holds its dates
+ * this way, so a late-evening time (Feb 20 18:00 PST is Feb 21 02:00 UTC) never shows as
+ * the next day.
  */
-private fun normalizeToLocalMidnight(millis: Long): Long {
-    val cal = JavaCalendar.getInstance()
-    cal.timeInMillis = millis
-    cal.set(JavaCalendar.HOUR_OF_DAY, 0)
-    cal.set(JavaCalendar.MINUTE, 0)
-    cal.set(JavaCalendar.SECOND, 0)
-    cal.set(JavaCalendar.MILLISECOND, 0)
-    return cal.timeInMillis
-}
-
-private fun convertTimezone(
-    oldTz: java.util.TimeZone,
-    newTz: java.util.TimeZone,
-    dateMillis: Long,
-    hour: Int,
-    minute: Int
-): Triple<Long, Int, Int> {
-    val oldCal = JavaCalendar.getInstance(oldTz).apply {
-        timeInMillis = dateMillis
-        set(JavaCalendar.HOUR_OF_DAY, hour)
-        set(JavaCalendar.MINUTE, minute)
-        set(JavaCalendar.SECOND, 0)
-        set(JavaCalendar.MILLISECOND, 0)
-    }
-    val newCal = JavaCalendar.getInstance(newTz).apply { timeInMillis = oldCal.timeInMillis }
-    // Normalize to midnight in the target timezone, not device timezone
-    val midnightCal = JavaCalendar.getInstance(newTz).apply {
-        timeInMillis = newCal.timeInMillis
-        set(JavaCalendar.HOUR_OF_DAY, 0)
-        set(JavaCalendar.MINUTE, 0)
-        set(JavaCalendar.SECOND, 0)
-        set(JavaCalendar.MILLISECOND, 0)
-    }
-    return Triple(midnightCal.timeInMillis, newCal.get(JavaCalendar.HOUR_OF_DAY), newCal.get(JavaCalendar.MINUTE))
-}
+private fun normalizeToLocalMidnight(millis: Long): Long = deviceMidnight(deviceLocalDate(millis))
 
 /**
- * Dismissible inline notice shown under the device attendee row when the
- * target calendar is on a LOCAL account (no sync adapter): guests are saved
- * but no invitation is delivered. Inline and dismissible per the app's
- * inline-over-modal UX — the guest-editing affordance above stays usable
- * whether the notice shows or is dismissed.
+ * Shows the dismissible notice under the attendee row when the device calendar is on a
+ * local account (no sync adapter): guests are saved but nobody is invited. It is inline,
+ * not a dialog, so the guest row above stays usable either way.
  */
 @Composable
 private fun DeviceLocalNoDeliveryNotice(onDismiss: () -> Unit) {
@@ -3144,10 +2978,9 @@ private fun DeviceLocalNoDeliveryNotice(onDismiss: () -> Unit) {
 }
 
 /**
- * The editable Attendees row body for the organizer flow. Always tappable
- * (opens the picker); shows the current invitees as compact chips, or an
- * "Add people" placeholder when empty. Holds [Attendee] entities so its
- * label/colour derive from the same canonical address the picker edits.
+ * Renders the editable attendee row: tapping opens the picker. Shows the invitees as
+ * chips, or an add prompt when there are none. Takes Room attendee entities, so labels
+ * and colors derive from the same address the picker edits.
  */
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
@@ -3161,9 +2994,8 @@ private fun EditableAttendeesRow(
             .fillMaxWidth()
             .clickable(onClick = onClick),
     ) {
-        // No "Attendees" text label — the leading 👥 icon already names the
-        // row (kept as its contentDescription), matching the label-less
-        // location/time rows. Empty state reads "Add attendees".
+        // No "Attendees" label: the leading icon names the row (its
+        // contentDescription), like the label-less location and time rows.
         if (attendees.isEmpty()) {
             Text(
                 text = stringResource(R.string.attendee_pick_add_people),
@@ -3171,9 +3003,8 @@ private fun EditableAttendeesRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         } else {
-            // Preview a few chips (You pinned first) and collapse the rest to
-            // "+N more" so a large invite list doesn't sprawl down the form —
-            // tapping the row opens the picker where every name is listed.
+            // Up to ATTENDEE_PREVIEW_LIMIT chips, "You" first, then a "+N more"
+            // count, so a long list doesn't sprawl; the picker lists everyone.
             val ordered = remember(attendees, account) {
                 val (you, others) = attendees.partition { account?.matchesAttendee(it.address) == true }
                 you + others
@@ -3211,6 +3042,6 @@ private fun EditableAttendeesRow(
     }
 }
 
-/** Max attendee chips previewed on the form's Attendees row before collapsing to "+N more". */
+/** Attendee chips shown on the form's attendee row before a "+N more" count. */
 private const val ATTENDEE_PREVIEW_LIMIT = 3
 

@@ -31,21 +31,15 @@ import org.onekash.kashcal.util.text.looksLikeHtml
 import org.onekash.kashcal.util.text.shouldOpenExternally
 
 /**
- * Text composable with automatic URL detection and linking.
+ * Shows selectable text with its links tappable, underlined in the primary color and listed
+ * in the content description for screen readers.
  *
- * Features:
- * - Detects web URLs, meeting links, phone numbers, and email addresses
- * - Makes detected links clickable (opens in default app)
- * - Wraps content in SelectionContainer for copy support
- * - Applies primary color with underline to links
- * - Provides accessibility descriptions for screen readers
+ * HTML text (per `looksLikeHtml`) goes through [buildHtmlDescriptionAnnotatedString]. Plain
+ * text is entity-decoded and scanned for web, meeting, phone and email links, up to 50. A tap
+ * opens a link in its default app only when [shouldOpenExternally] allows its scheme.
  *
- * @param text The text to render with linkified URLs
- * @param modifier Modifier for the text composable
- * @param style Text style (defaults to bodyMedium)
- * @param maxLines Maximum lines before truncation
- * @param overflow Text overflow behavior
- * @param onLinkClick Optional callback when a link is clicked (for analytics)
+ * @param onLinkClick called on a link tap; in plain text before the scheme check, in HTML only
+ *   for links that pass it. No caller sets it.
  */
 @Composable
 fun LinkifiedText(
@@ -72,9 +66,8 @@ fun LinkifiedText(
         )
     }
 
-    // cleanHtmlEntities must NOT run in the HTML branch — fromHtml does its
-    // own decoding, and pre-decoding would let literals like "&lt;b&gt;"
-    // become parseable tags.
+    // cleanHtmlEntities must not run in the HTML branch: fromHtml decodes entities itself, and
+    // decoding first would turn a literal "&lt;b&gt;" into a parseable tag.
     val isHtml = remember(text) { looksLikeHtml(text) }
     if (isHtml) {
         val annotatedHtml = remember(text, linkStyles) {
@@ -114,7 +107,6 @@ fun LinkifiedText(
     val cleanedText = remember(text) { cleanHtmlEntities(text) }
     val detectedUrls = remember(cleanedText) { extractUrls(cleanedText, limit = 50) }
 
-    // If no URLs, render simple text
     if (detectedUrls.isEmpty()) {
         SelectionContainer {
             Text(
@@ -128,8 +120,7 @@ fun LinkifiedText(
         return
     }
 
-    // Build annotated string with embedded LinkAnnotation.Url for each detected URL.
-    // LinkAnnotation routes clicks via the embedded listener — no offset lookup needed.
+    // Each link carries its own click listener, so no offset lookup is needed.
     val annotatedString = remember(cleanedText, detectedUrls, linkStyles) {
         buildAnnotatedString {
             var lastIndex = 0
@@ -139,9 +130,8 @@ fun LinkifiedText(
                     append(cleanedText.substring(lastIndex, detected.startIndex))
                 }
 
-                // Supplying linkInteractionListener overrides Compose's default
-                // URL-open behavior, so we must call uriHandler ourselves to keep
-                // the shouldOpenExternally safety gate.
+                // A linkInteractionListener replaces Compose's default URL opening, so the
+                // listener opens the link itself, behind the shouldOpenExternally gate.
                 val link = LinkAnnotation.Url(
                     url = detected.url,
                     styles = linkStyles,
@@ -183,8 +173,7 @@ fun LinkifiedText(
 }
 
 /**
- * Classify a URL string into a [DetectedUrl] shape so HTML-derived links
- * can reuse the plain-text accessibility-description builder.
+ * Classifies a URL into a [DetectedUrl] so HTML links can reuse [buildAccessibilityDescription].
  */
 private fun urlToDetected(url: String): DetectedUrl {
     val type = when {
@@ -211,13 +200,13 @@ private fun UriHandler.openUriSafely(url: String) {
     try {
         openUri(url)
     } catch (_: Exception) {
-        // System will show "No app found" toast
+        // No app handles the URI; the tap does nothing.
     }
 }
 
 /**
- * Resolve the screen-reader-friendly contentDescription for a set of detected
- * URLs using the shared i18n strings. Returns null if the list is empty.
+ * Returns the content description naming each of [urls] for screen readers, or null if there
+ * are none.
  */
 @Composable
 private fun buildAccessibilityDescription(urls: List<DetectedUrl>): String? {

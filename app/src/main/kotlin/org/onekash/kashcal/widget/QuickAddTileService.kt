@@ -8,14 +8,12 @@ import android.service.quicksettings.TileService
 import org.onekash.kashcal.R
 
 /**
- * Quick Settings tile for fast event capture. Tapping it opens KashCal's Quick
- * Add flow from anywhere (including over other apps), reusing the existing
- * widget/shortcut launch route ([buildQuickAddCaptureIntent]).
+ * Opens Quick Add from a Quick Settings tile, from anywhere including over other apps, through
+ * the widget and shortcut launch route ([buildQuickAddCaptureIntent]).
  *
- * This is a stateless launch tile, not a toggle: it has no persisted on/off
- * state, so it deliberately omits the sample's DataStore + ACTIVE_TILE /
- * TOGGLEABLE_TILE machinery. [onStartListening] just refreshes a static
- * label + icon.
+ * A stateless launch tile, not a toggle: it has no persisted on/off state, so it needs no
+ * DataStore or ACTIVE_TILE / TOGGLEABLE_TILE handling. [onStartListening] only sets a static
+ * label and icon.
  */
 class QuickAddTileService : TileService() {
 
@@ -23,9 +21,9 @@ class QuickAddTileService : TileService() {
         super.onStartListening()
         qsTile?.apply {
             label = getString(R.string.qs_tile_label)
-            // Standard full-frame calendar symbol (matches the system alarm/airplane
-            // tiles' visual weight). The launcher's monochrome "31" mark is sized for
-            // the adaptive-icon safe zone, so it renders tiny + illegible in a tile.
+            // A full-frame calendar symbol, matching the weight of the system alarm and
+            // airplane tiles. The launcher's monochrome "31" mark is sized for the
+            // adaptive-icon safe zone, so it renders tiny and illegible in a tile.
             icon = Icon.createWithResource(this@QuickAddTileService, R.drawable.ic_qs_tile_calendar)
             state = Tile.STATE_INACTIVE
             updateTile()

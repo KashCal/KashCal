@@ -1,14 +1,11 @@
 package org.onekash.icaldav.model
 
 /**
- * IMAGE property per RFC 7986 Section 5.10.
- * Associates an image (photo, icon, thumbnail) with a calendar component.
+ * Holds one IMAGE property (RFC 7986 §5.10), an image for a calendar or component, for example
+ * an event poster or a venue photo. [toICalString] always writes VALUE=URI; the parser takes the
+ * value as [uri] whatever its VALUE type.
  *
- * The IMAGE property can be used to associate an image with a calendar or
- * calendar component. For events, this could be an event poster, speaker photo,
- * or venue image.
- *
- * Example iCalendar format:
+ * Example:
  * ```
  * IMAGE;VALUE=URI;DISPLAY=BADGE;FMTTYPE=image/png:https://example.com/logo.png
  * IMAGE;VALUE=URI;DISPLAY=THUMBNAIL:https://example.com/event-thumb.jpg
@@ -17,23 +14,25 @@ package org.onekash.icaldav.model
  * @see <a href="https://tools.ietf.org/html/rfc7986#section-5.10">RFC 7986 Section 5.10</a>
  */
 data class ICalImage(
-    /** URI to the image resource */
+    /** Image URI. */
     val uri: String,
 
-    /** Display type hint for how the image should be rendered */
+    /**
+     * DISPLAY parameter. Absent parses as GRAPHIC here, although RFC 7986 §6.1 makes BADGE the
+     * default, and [toICalString] omits GRAPHIC.
+     */
     val display: ImageDisplay = ImageDisplay.GRAPHIC,
 
-    /** MIME type of the image (e.g., "image/png", "image/jpeg") */
+    /** FMTTYPE parameter, for example "image/png". */
     val mediaType: String? = null,
 
-    /** Alternative text description for accessibility */
+    /**
+     * ALTREP parameter: per RFC 7986 §5.10 a URI that a click on the image can launch, not
+     * alt text. Written quoted, with any `"` replaced by `'`.
+     */
     val altText: String? = null
 ) {
-    /**
-     * Convert to iCalendar property string format.
-     *
-     * @return IMAGE property line (without line folding)
-     */
+    /** Returns the IMAGE content line, unfolded. */
     fun toICalString(): String {
         val params = mutableListOf<String>()
         params.add("VALUE=URI")
@@ -52,15 +51,7 @@ data class ICalImage(
     }
 
     companion object {
-        /**
-         * Parse IMAGE property parameters from ical4j.
-         *
-         * @param uri The image URI value
-         * @param displayValue The DISPLAY parameter value
-         * @param fmttype The FMTTYPE parameter value
-         * @param altrep The ALTREP parameter value
-         * @return Parsed ICalImage
-         */
+        /** Builds an [ICalImage] from the raw DISPLAY, FMTTYPE and ALTREP parameter values. */
         fun fromParameters(
             uri: String,
             displayValue: String? = null,
@@ -77,34 +68,24 @@ data class ICalImage(
     }
 }
 
-/**
- * Display type hints for IMAGE property per RFC 7986.
- *
- * These hints suggest how calendar applications should render the image:
- * - BADGE: Small icon displayed inline with text
- * - GRAPHIC: Standard image display (default)
- * - FULLSIZE: Large, full-resolution image
- * - THUMBNAIL: Small preview image
- */
+/** DISPLAY parameter values for IMAGE (RFC 7986 §6.1). */
 enum class ImageDisplay {
-    /** Small icon displayed inline with text (like an avatar) */
+    /** An image inline with the event's title. */
     BADGE,
 
-    /** Standard image display (default) */
+    /** A full image replacement for the event itself; this library's default. */
     GRAPHIC,
 
-    /** Large, full-resolution image for detail views */
+    /** An image that enhances the event. */
     FULLSIZE,
 
-    /** Small preview image for lists or grids */
+    /** A smaller FULLSIZE variant for when space is constrained. */
     THUMBNAIL;
 
     companion object {
         /**
-         * Parse display type from string, case-insensitive.
-         *
-         * @param value The string value to parse
-         * @return Matching ImageDisplay or GRAPHIC as default
+         * Matches [value] case-insensitively; null, blank, unknown and multi-value lists such as
+         * "BADGE,THUMBNAIL" give GRAPHIC.
          */
         fun fromString(value: String?): ImageDisplay {
             if (value.isNullOrBlank()) return GRAPHIC

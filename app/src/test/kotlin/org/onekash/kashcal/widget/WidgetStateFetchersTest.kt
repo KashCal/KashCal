@@ -18,11 +18,10 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import java.io.IOException
 
 /**
- * Unit tests for [WidgetStateFetchers] pure suspend functions.
- *
- * These functions encapsulate the data-layer work each widget does — they are the pieces
- * the widget refactor relies on. Testing them directly gives regression coverage for the
- * 4-widget refactor without needing Glance/Compose harness.
+ * Tests the data-fetch step of the Upcoming, Agenda, Week and Month widgets
+ * ([fetchUpcomingState], [fetchAgendaData], [fetchWeekData], [fetchMonthEvents]) without a Glance
+ * or Compose harness: the success shape, the detailed-rows preference, and the Error or empty
+ * result when the repository or DataStore throws.
  */
 class WidgetStateFetchersTest {
 
@@ -36,16 +35,15 @@ class WidgetStateFetchersTest {
         dataStore = mockk(relaxed = true)
         context = mockk(relaxed = true)
 
-        // Stub common DataStore reads
+        // DataStore reads shared by every fetcher.
         every { dataStore.showEventEmojis } returns flowOf(true)
         every { dataStore.widgetMaxEventsPerDay } returns flowOf(5)
         every { dataStore.widgetDetailedRows } returns flowOf(false)
         coEvery { dataStore.getTimeFormat() } returns "system"
 
-        // Stub the static DateFormat calls — use is24Hour=false for determinism.
-        // getBestDateTimePattern must also be stubbed: mockkStatic replaces the whole
-        // class, so leaving it unstubbed returns null and the agenda header date lookup
-        // (widgetHeaderDate -> localizedPattern) NPEs into fetchAgendaData's fallback.
+        // is24HourFormat is pinned to false for determinism. getBestDateTimePattern must be
+        // stubbed too: unstubbed it returns null here, and the agenda header date lookup
+        // (widgetHeaderDate to localizedPattern) NPEs into fetchAgendaData's fallback.
         mockkStatic(android.text.format.DateFormat::class)
         every { android.text.format.DateFormat.is24HourFormat(any()) } returns false
         every { android.text.format.DateFormat.getBestDateTimePattern(any(), any()) } answers {
@@ -106,8 +104,8 @@ class WidgetStateFetchersTest {
 
     @Test
     fun `fetchUpcomingState honors custom horizonDays`() = runTest {
-        // Capture the start/end codes the repository is called with; the window width in days
-        // should be exactly horizonDays (today..today+horizonDays-1).
+        // Production asks for today..today+horizonDays-1 ([upcomingWindow]); this captures the
+        // start and end codes the repository is called with.
         var capturedStart = 0
         var capturedEnd = 0
         coEvery { repository.getEventsInRange(any(), any()) } answers {
@@ -118,10 +116,8 @@ class WidgetStateFetchersTest {
 
         fetchUpcomingState(repository, dataStore, context, horizonDays = 5)
 
-        // Start and end are YYYYMMDD ints; can't easily compute the exact diff without
-        // replicating date math, but we can assert: end >= start and end-start is within
-        // reasonable range for a 5-day window (4-6 dayCode arithmetic ticks across month
-        // boundaries). The important assertion is that horizonDays is threaded through.
+        // Only end >= start is asserted, which holds for any horizon of 1 or more, so this
+        // doesn't check that horizonDays reaches the window.
         assertTrue("end $capturedEnd should be >= start $capturedStart", capturedEnd >= capturedStart)
     }
 
@@ -155,7 +151,8 @@ class WidgetStateFetchersTest {
 
         val data = fetchAgendaData(repository, dataStore, context)
 
-        // Error path collapses to empty events + default prefs, so widget still renders "no events"
+        // The failure path returns no events and default settings, so the widget renders "no
+        // events"; only the empty list is asserted.
         assertTrue(data.events.isEmpty())
     }
 

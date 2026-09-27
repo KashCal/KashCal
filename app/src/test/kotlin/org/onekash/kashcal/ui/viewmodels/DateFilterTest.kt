@@ -12,8 +12,10 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Unit tests for DateFilter sealed class.
- * Tests time range computation for all filter types.
+ * Tests [DateFilter]: the null range of Upcoming and AnyTime, the other filters' ranges in New
+ * York (Today through NextMonth from today's date), a Tokyo and New York comparison, the display
+ * names, the preset list, and the first-day-of-week option of [DateFilter.ThisWeek] and
+ * [DateFilter.NextWeek].
  */
 @RunWith(RobolectricTestRunner::class)
 class DateFilterTest {
@@ -65,7 +67,7 @@ class DateFilterTest {
     @Test
     fun `Today range spans exactly one day`() {
         val range = DateFilter.Today.getTimeRange(testZone)!!
-        // Use date comparison to handle DST transitions (spring-forward = 23h, fall-back = 25h)
+        // Compare dates: a DST day is 23 or 25 hours long.
         val startDate = Instant.ofEpochMilli(range.first).atZone(testZone).toLocalDate()
         val endDate = Instant.ofEpochMilli(range.second).atZone(testZone).toLocalDate()
         assertEquals("Today should span exactly 1 day", startDate, endDate)
@@ -106,7 +108,7 @@ class DateFilterTest {
     @Test
     fun `ThisWeek spans 7 days`() {
         val range = DateFilter.ThisWeek.getTimeRange(testZone)!!
-        // Use date comparison to handle DST transitions
+        // Compare dates so a DST change inside the week doesn't matter.
         val startDate = Instant.ofEpochMilli(range.first).atZone(testZone).toLocalDate()
         val endDate = Instant.ofEpochMilli(range.second).atZone(testZone).toLocalDate()
         assertEquals("Week should span 7 days", startDate.plusDays(6), endDate)
@@ -126,7 +128,7 @@ class DateFilterTest {
     fun `NextWeek starts exactly 7 days after ThisWeek start`() {
         val thisWeekRange = DateFilter.ThisWeek.getTimeRange(testZone)!!
         val nextWeekRange = DateFilter.NextWeek.getTimeRange(testZone)!!
-        // Use date comparison to handle DST transitions
+        // Compare dates so a DST change between the two starts doesn't matter.
         val thisWeekStart = Instant.ofEpochMilli(thisWeekRange.first).atZone(testZone).toLocalDate()
         val nextWeekStart = Instant.ofEpochMilli(nextWeekRange.first).atZone(testZone).toLocalDate()
 
@@ -173,7 +175,7 @@ class DateFilterTest {
         val filter = DateFilter.SingleDay(dateMs)
         val range = filter.getTimeRange(testZone)!!
 
-        // Range should span exactly one day minus 1ms
+        // One day minus 1 ms (Dec 31 in New York).
         val duration = range.second - range.first
         assertTrue("Duration should be ~24 hours", duration in 86399000..86400000)
     }
@@ -183,7 +185,7 @@ class DateFilterTest {
         val dateMs = 1704067200000L // Jan 1, 2024 UTC
         val filter = DateFilter.SingleDay(dateMs)
 
-        // Display name should be like "Jan 1"
+        // Formatted in the system zone, e.g. "Jan 1" on a UTC host; only the month is asserted.
         assertTrue("Display name should contain month", filter.displayName.contains("Jan"))
     }
 
@@ -196,8 +198,7 @@ class DateFilterTest {
         val filter = DateFilter.CustomRange(startMs, endMs)
         val range = filter.getTimeRange(testZone)!!
 
-        // Start should be beginning of Jan 1
-        // End should be end of Jan 4
+        // In New York the two instants fall on Dec 31 and Jan 3; the range covers both whole days.
         assertTrue("Range start should be <= startMs", range.first <= startMs)
         assertTrue("Range end should be >= endMs", range.second >= endMs)
     }
@@ -208,7 +209,8 @@ class DateFilterTest {
         val endMs = 1704326400000L   // Jan 4, 2024
         val filter = DateFilter.CustomRange(startMs, endMs)
 
-        // Display name should be like "Jan 1 - Jan 4"
+        // Formatted in the system zone, e.g. "Jan 1 - Jan 4" on a UTC host; only the dash is
+        // asserted.
         assertTrue("Display name should contain dash", filter.displayName.contains("-"))
     }
 
@@ -218,7 +220,7 @@ class DateFilterTest {
         val filter = DateFilter.CustomRange(dateMs, dateMs)
         val range = filter.getTimeRange(testZone)!!
 
-        // Should span exactly one day
+        // One day minus 1 ms.
         val duration = range.second - range.first
         assertTrue("Same start/end should be single day", duration in 86399000..86400000)
     }
@@ -346,15 +348,14 @@ class DateFilterTest {
 
     @Test
     fun `ThisWeek spans 7 days regardless of first day`() {
-        // During DST transitions, 7 calendar days may be 167 or 169 hours in milliseconds
-        // Use date comparison instead of millisecond duration
+        // A week with a DST change is 167 or 169 hours, so compare dates, not durations.
         fun verifySevenDaySpan(firstDay: Int, label: String) {
             val range = DateFilter.ThisWeek.getTimeRange(testZone, firstDay)!!
             val startDate = java.time.Instant.ofEpochMilli(range.first)
                 .atZone(testZone).toLocalDate()
             val endDate = java.time.Instant.ofEpochMilli(range.second)
                 .atZone(testZone).toLocalDate()
-            // End is inclusive (23:59:59.999), so endDate should be startDate + 6 days
+            // The end is inclusive (23:59:59.999), so it falls on the sixth day after the start.
             assertEquals("$label week should span 7 days", startDate.plusDays(6), endDate)
         }
 

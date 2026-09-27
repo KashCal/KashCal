@@ -46,16 +46,11 @@ enum class SyncBannerState {
 }
 
 /**
- * Inline sync progress banner with state-aware indicator.
- *
- * - Syncing: animated three-dot wave
- * - Success: check icon
- * - Error: warning icon + errorContainer background
- *
- * Design follows Material 3 guidelines:
- * - primaryContainer for progress/success
- * - errorContainer for errors
- * - Edge-to-edge layout
+ * Shows the full-width inline sync banner, its indicator set by [state]:
+ * - Syncing and Preparing: the three-dot wave, on primaryContainer.
+ * - Success: a check icon, on primaryContainer.
+ * - PartialError and Error: a warning icon, on errorContainer. Error shows [errorDetail], or a
+ *   generic message when it is null.
  */
 @Composable
 fun SyncBanner(
@@ -84,8 +79,7 @@ fun SyncBanner(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            // Announce sync status changes (Syncing / complete / failed) to
-            // TalkBack without the user having to focus the banner.
+            // TalkBack announces each status change without the user focusing the banner.
             .semantics { liveRegion = LiveRegionMode.Polite },
         color = containerColor,
         tonalElevation = 1.dp
@@ -130,10 +124,7 @@ fun SyncBanner(
     }
 }
 
-/**
- * Three-dot wave animation. Each dot pulses in sequence
- * with a 150ms offset, creating a traveling wave effect.
- */
+/** Shows three dots that pulse in turn, 150 ms apart, as a traveling wave. */
 @Composable
 private fun SyncDots(
     color: Color,

@@ -27,15 +27,11 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.components.pickers.MonthYearWheelPicker
 
 /**
- * Year overlay - month/year wheel picker modal for quick navigation.
- * Tap month header (e.g., "January 2025") to open, scroll wheels to pick
- * month/year, then tap "Done" to navigate.
+ * Shows a month and year wheel picker sheet for jumping to a month. The wheels only move the
+ * pick; "Done" reports it through [onMonthSelected].
  *
- * @param visible Whether the overlay is visible
- * @param currentYear The year currently being viewed in the calendar
- * @param currentMonth The month currently being viewed (0-indexed, January = 0)
- * @param onMonthSelected Callback when a month is confirmed (year, month)
- * @param onDismiss Callback when the overlay should be dismissed
+ * @param currentYear the year the calendar is showing.
+ * @param currentMonth the month the calendar is showing, 0-based (January = 0).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,7 +44,6 @@ fun YearOverlay(
 ) {
     if (!visible) return
 
-    // Track wheel selection internally — only fire onMonthSelected on "Done"
     var pickedYear by remember(currentYear) { mutableIntStateOf(currentYear) }
     var pickedMonth by remember(currentMonth) { mutableIntStateOf(currentMonth) }
 
@@ -68,7 +63,6 @@ fun YearOverlay(
                 .semantics { contentDescription = monthYearPickerLabel },
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Title
             Text(
                 text = stringResource(R.string.label_go_to_month),
                 style = MaterialTheme.typography.titleMedium,
@@ -78,7 +72,6 @@ fun YearOverlay(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Month and year wheel pickers — update internal state only
             MonthYearWheelPicker(
                 selectedYear = currentYear,
                 selectedMonth = currentMonth,

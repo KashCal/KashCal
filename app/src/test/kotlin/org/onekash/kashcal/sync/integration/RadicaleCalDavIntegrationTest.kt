@@ -19,20 +19,13 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Integration test for generic CalDAV (Radicale) server workflows.
+ * Runs the CalDAV client with [DefaultQuirks] against a Radicale server: discovery, event
+ * create, update and delete, a recurring event with an exception (RECURRENCE-ID), a cancelled
+ * occurrence (EXDATE), and reading the calendar's sync-token.
  *
- * This test verifies:
- * 1. Calendar discovery via DefaultQuirks
- * 2. Event CRUD operations
- * 3. Recurring events with exceptions (RECURRENCE-ID)
- * 4. Cancelled occurrences (EXDATE)
- * 5. Sync-collection delta sync
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*RadicaleCalDavIntegrationTest*"
  *
- * Run: ./gradlew testDebugUnitTest --tests "*RadicaleCalDavIntegrationTest*"
- *
- * Prerequisites:
- * - Radicale server running at localhost:5232
- * - Credentials in local.properties:
+ * Needs a Radicale server at localhost:5232 and these keys in local.properties:
  *   RADICALE_SERVER=http://localhost:5232
  *   RADICALE_USERNAME=testuser
  *   RADICALE_PASSWORD=testpass123
@@ -48,13 +41,12 @@ class RadicaleCalDavIntegrationTest {
     private var password: String? = null
     private val factory = OkHttpCalDavClientFactory()
 
-    // Test state
+    // The discovered calendar and the event the running test created, which cleanup deletes.
     private var calendarUrl: String? = null
     private var testEventUrl: String? = null
     private var testEventEtag: String? = null
     private val testUid = "test-recurring-${UUID.randomUUID()}@kashcal.test"
 
-    // Date formatter for ICS
     private val icsDateFormat = SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'").apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
@@ -63,7 +55,6 @@ class RadicaleCalDavIntegrationTest {
     fun setup() {
         loadCredentials()
 
-        // Use DefaultQuirks for generic CalDAV
         val quirks = DefaultQuirks(serverUrl)
 
         if (username != null && password != null) {
@@ -74,7 +65,7 @@ class RadicaleCalDavIntegrationTest {
             )
             client = factory.createClient(credentials, quirks)
         } else {
-            // Create a minimal client for discovery tests that don't require auth
+            // Blank credentials; every test skips without real ones.
             val credentials = Credentials(
                 username = "",
                 password = "",
@@ -144,7 +135,7 @@ class RadicaleCalDavIntegrationTest {
         val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null
         val calendars = client.listCalendars(home).getOrNull() ?: return null
 
-        // Find first calendar (not inbox/outbox)
+        // The first calendar that isn't the scheduling inbox or outbox.
         return calendars.firstOrNull { cal ->
             !cal.url.contains("inbox") && !cal.url.contains("outbox")
         }?.url
@@ -236,11 +227,9 @@ END:VCALENDAR
         val (url, etag) = result.getOrNull()!!
         println("Created event at: $url with etag: $etag")
 
-        // Track for cleanup
         testEventUrl = url
         testEventEtag = etag
 
-        // Verify by fetching
         val fetchResult = client.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch created event" }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
@@ -257,7 +246,6 @@ END:VCALENDAR
 
         val updateUid = "test-update-${UUID.randomUUID()}@kashcal.test"
 
-        // Create initial event
         val initialIcs = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -279,7 +267,6 @@ END:VCALENDAR
         testEventUrl = url
         testEventEtag = etag
 
-        // Update event
         val updatedIcs = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -301,7 +288,6 @@ END:VCALENDAR
         testEventEtag = updateResult.getOrNull()!!
         println("Updated event, new etag: $testEventEtag")
 
-        // Verify update
         val fetchResult = client.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch updated event" }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
@@ -319,7 +305,6 @@ END:VCALENDAR
 
         val deleteUid = "test-delete-${UUID.randomUUID()}@kashcal.test"
 
-        // Create event
         val icsContent = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -339,16 +324,14 @@ END:VCALENDAR
 
         val (url, etag) = createResult.getOrNull()!!
 
-        // Delete event
         val deleteResult = client.deleteEvent(url, etag)
         assert(deleteResult.isSuccess()) { "Failed to delete event: ${(deleteResult as? CalDavResult.Error)?.message}" }
         println("Deleted event successfully")
 
-        // Verify deletion (should get 404)
         val fetchResult = client.fetchEvent(url)
         assert(fetchResult.isNotFound()) { "Event should be deleted (404)" }
 
-        // Clear tracking since we deleted it ourselves
+        // Already deleted, so cleanup has nothing to do.
         testEventUrl = null
         testEventEtag = null
     }
@@ -370,26 +353,24 @@ END:VCALENDAR
         assumeTrue("No calendar found", calendarUrl != null)
         println("Using calendar: $calendarUrl\n")
 
-        // Calculate dates
+        // 10:00 UTC on the next Monday, or today if it is Monday.
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         cal.set(Calendar.HOUR_OF_DAY, 10)
         cal.set(Calendar.MINUTE, 0)
         cal.set(Calendar.SECOND, 0)
         cal.set(Calendar.MILLISECOND, 0)
 
-        // Find next Monday
         while (cal.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
             cal.add(Calendar.DAY_OF_MONTH, 1)
         }
         val firstOccurrence = cal.time
         val firstOccurrenceStr = icsDateFormat.format(firstOccurrence)
 
-        // Second occurrence (1 week later)
         cal.add(Calendar.WEEK_OF_YEAR, 1)
         val secondOccurrence = cal.time
         val secondOccurrenceStr = icsDateFormat.format(secondOccurrence)
 
-        // Modified time for exception (2pm instead of 10am)
+        // The exception moves the second occurrence from 10:00 to 14:00.
         cal.set(Calendar.HOUR_OF_DAY, 14)
         val exceptionTimeStr = icsDateFormat.format(cal.time)
 
@@ -399,16 +380,12 @@ END:VCALENDAR
         println("  Exception time: $exceptionTimeStr (2pm)")
         println()
 
-        // Step 1: Create recurring event
         step1_createRecurringEvent(firstOccurrenceStr)
 
-        // Step 2: Fetch and verify
         step2_fetchAndVerify()
 
-        // Step 3: Create exception (modify second occurrence)
         step3_createException(firstOccurrenceStr, secondOccurrenceStr, exceptionTimeStr)
 
-        // Step 4: Fetch and verify exception
         step4_fetchAndVerifyException()
 
         println("\n" + "=".repeat(80))
@@ -470,7 +447,6 @@ END:VCALENDAR
         println("ETag: ${event.etag}")
         println()
 
-        // Verify structure
         assert(event.icalData.contains("RRULE:")) { "Should have RRULE" }
         assert(event.icalData.contains("BEGIN:VEVENT")) { "Should have VEVENT" }
     }
@@ -482,7 +458,7 @@ END:VCALENDAR
     ) {
         println("=== STEP 3: Create Exception (Edit Second Occurrence) ===\n")
 
-        // RFC 5545: Exception is same UID, different VEVENT with RECURRENCE-ID
+        // RFC 5545: the exception is a second VEVENT with the master's UID and a RECURRENCE-ID.
         val icsContent = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -538,10 +514,8 @@ END:VCALENDAR
         println(event.icalData)
         println()
 
-        // Verify structure
         assert(event.icalData.contains("RECURRENCE-ID:")) { "Should have RECURRENCE-ID" }
 
-        // Count VEVENTs
         val veventCount = event.icalData.split("BEGIN:VEVENT").size - 1
         println("VEVENT count: $veventCount (expected: 2 - master + exception)")
         assert(veventCount >= 2) { "Should have at least 2 VEVENTs (master + exception)" }
@@ -560,24 +534,22 @@ END:VCALENDAR
 
         val exdateUid = "test-exdate-${UUID.randomUUID()}@kashcal.test"
 
-        // Calculate dates
+        // 10:00 UTC on the next Monday, or today if it is Monday.
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         cal.set(Calendar.HOUR_OF_DAY, 10)
         cal.set(Calendar.MINUTE, 0)
         cal.set(Calendar.SECOND, 0)
         cal.set(Calendar.MILLISECOND, 0)
 
-        // Find next Monday
         while (cal.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
             cal.add(Calendar.DAY_OF_MONTH, 1)
         }
         val firstOccurrenceStr = icsDateFormat.format(cal.time)
 
-        // Third occurrence (2 weeks later) - will be cancelled
+        // The third occurrence, two weeks later, is cancelled by EXDATE.
         cal.add(Calendar.WEEK_OF_YEAR, 2)
         val thirdOccurrenceStr = icsDateFormat.format(cal.time)
 
-        // Create recurring event with EXDATE
         val icsContent = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -602,7 +574,6 @@ END:VCALENDAR
         testEventUrl = url
         testEventEtag = etag
 
-        // Verify EXDATE is preserved
         val fetchResult = client.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch event" }
 

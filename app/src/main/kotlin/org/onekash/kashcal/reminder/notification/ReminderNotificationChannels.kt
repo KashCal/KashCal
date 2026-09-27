@@ -12,27 +12,20 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Manages notification channel for event reminders.
+ * Owns the reminder notification channel and the Room reminders' notification IDs.
  *
- * Creates a high-importance channel for reminder notifications:
- * - Heads-up display
- * - Sound and vibration
- * - Badge on app icon
- *
- * Per Android best practices:
- * - Channel created once at app startup
- * - Users can customize settings
- * - Settings persist after creation
+ * The channel is high importance (heads-up and sound), with vibration, lights and an app-icon
+ * badge. It is shared by Room and device event reminders. `KashCalApplication` creates it at app
+ * start; once created, the user's channel settings persist.
  */
 @Singleton
 class ReminderNotificationChannels @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {
-        // Channel ID
         const val CHANNEL_REMINDERS = "event_reminders"
 
-        // Notification ID base (avoid collision with sync notifications 1001-1003)
+        // Above the sync notifications (1001-1005).
         const val NOTIFICATION_ID_BASE = 2000
     }
 
@@ -40,13 +33,10 @@ class ReminderNotificationChannels @Inject constructor(
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     }
 
-    /**
-     * Create the reminder notification channel.
-     * Should be called at app startup.
-     */
+    /** Creates the reminder channel; call at app start. */
     fun createChannels() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            return // Channels not needed before Android 8
+            return // No channels before Android 8.
         }
 
         val channel = NotificationChannel(
@@ -65,24 +55,16 @@ class ReminderNotificationChannels @Inject constructor(
         notificationManager.createNotificationChannel(channel)
     }
 
-    /**
-     * Generate unique notification ID from reminder ID.
-     * Uses modulo to keep within reasonable range.
-     */
+    /** Returns the notification ID for a reminder row, in 2000-11999; rows 10000 apart share it. */
     fun getNotificationId(reminderId: Long): Int {
         return (NOTIFICATION_ID_BASE + (reminderId % 10000)).toInt()
     }
 
-    /**
-     * Check if notifications are enabled for the app.
-     */
     fun areNotificationsEnabled(): Boolean {
         return NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
 
-    /**
-     * Check if the reminders channel is enabled.
-     */
+    /** Returns false when the reminders channel is blocked or doesn't exist yet. */
     fun isChannelEnabled(): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return areNotificationsEnabled()
@@ -94,16 +76,10 @@ class ReminderNotificationChannels @Inject constructor(
         return channel.importance != NotificationManager.IMPORTANCE_NONE
     }
 
-    /**
-     * Cancel a notification by ID.
-     */
     fun cancel(notificationId: Int) {
         notificationManager.cancel(notificationId)
     }
 
-    /**
-     * Cancel notification for a specific reminder.
-     */
     fun cancelForReminder(reminderId: Long) {
         cancel(getNotificationId(reminderId))
     }

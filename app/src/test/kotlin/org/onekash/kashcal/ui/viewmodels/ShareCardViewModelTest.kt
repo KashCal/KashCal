@@ -29,7 +29,7 @@ class ShareCardViewModelTest {
     @Test
     fun `setStyle overrides the auto-picked value`() {
         val vm = ShareCardViewModel()
-        vm.loadEventTitle("Brunch at Sam's") // → Regular
+        vm.loadEventTitle("Brunch at Sam's") // auto-picks Standard
         vm.setStyle(ShareCardStyle.Celebration)
         assertEquals(ShareCardStyle.Celebration, vm.selectedStyle.value)
     }

@@ -34,16 +34,18 @@ import org.robolectric.shadows.ShadowAlarmManager
 import java.io.File
 
 /**
- * Unit tests for DeviceCalendarReminderScheduler.
+ * Tests [DeviceCalendarReminderScheduler] over [FakeCalendarProviderRepository] and
+ * Robolectric's AlarmManager.
  *
- * Tests cover:
- * - Does nothing when feature disabled
- * - Does nothing when READ_CALENDAR permission missing
- * - Does nothing when no upcoming reminders
- * - Schedules alarm when reminder available
- * - Stores event details in intent extras
- * - Reschedules after fire
- * - Cancel functionality
+ * - `scheduleNextReminder` arms no alarm, and cancels an armed one, when device reminders or
+ *   device calendars are off, READ_CALENDAR is denied, no device calendar is enabled, or no
+ *   reminder is upcoming. Otherwise it arms one at the reminder's trigger time, with the event
+ *   id, occurrence start and title in the intent extras.
+ * - `cancelPendingAlarm` clears the alarm; `rescheduleAfterFire` arms the next reminder.
+ * - `shouldFireReminder` is false for each of those settings and permission cases and for an
+ *   event that is no longer active, true otherwise.
+ * - Snooze request codes: the 100,000 range, always above the reminder alarm's 5001, and 50
+ *   events get distinct codes.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -85,18 +87,17 @@ class DeviceCalendarReminderSchedulerTest {
         val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         shadowAlarmManager = shadowOf(alarmManager)
 
-        // KashCalApplication.onCreate() runs in Robolectric and schedules the widget
-        // midnight alarm via AlarmManager. Clear it so these tests see a pristine
-        // ShadowAlarmManager state.
+        // KashCalApplication.onCreate() runs under Robolectric and arms the widget midnight
+        // alarm; clear it so these tests start with no alarms.
         clearAllAlarms()
 
-        // Grant READ_CALENDAR permission by default
+        // READ_CALENDAR is granted unless a test denies it.
         Shadows.shadowOf(context as android.app.Application).grantPermissions(Manifest.permission.READ_CALENDAR)
     }
 
     private fun clearAllAlarms() {
         val am = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
-        // Bounded to defend against a silent cancel failure (would otherwise infinite-loop).
+        // Bounded so a cancel that silently fails can't loop forever.
         repeat(32) {
             val op = shadowAlarmManager.nextScheduledAlarm?.operation ?: return
             am.cancel(op)
@@ -116,20 +117,18 @@ class DeviceCalendarReminderSchedulerTest {
     fun `scheduleNextReminder does nothing when feature disabled`() = runTest {
         dataStore.setDeviceCalendarRemindersEnabled(false)
 
-        // Set up a reminder that would be scheduled if feature was enabled
+        // A reminder that would be armed if device reminders were on.
         dataStore.setDeviceCalendarsEnabled(true)
         dataStore.setEnabledDeviceCalendarIds(setOf(1L))
         fakeRepository.nextUpcomingReminder = createTestReminder()
 
         scheduler.scheduleNextReminder()
 
-        // No alarm should be scheduled
         assertNull(shadowAlarmManager.nextScheduledAlarm)
     }
 
     @Test
     fun `scheduleNextReminder schedules when feature enabled`() = runTest {
-        // Enable the feature
         dataStore.setDeviceCalendarRemindersEnabled(true)
         dataStore.setDeviceCalendarsEnabled(true)
         dataStore.setEnabledDeviceCalendarIds(setOf(1L))
@@ -137,7 +136,6 @@ class DeviceCalendarReminderSchedulerTest {
 
         scheduler.scheduleNextReminder()
 
-        // Alarm should be scheduled
         assertNotNull(shadowAlarmManager.nextScheduledAlarm)
     }
 
@@ -145,18 +143,15 @@ class DeviceCalendarReminderSchedulerTest {
 
     @Test
     fun `scheduleNextReminder does nothing when READ_CALENDAR permission missing`() = runTest {
-        // Enable the feature but revoke permission
         dataStore.setDeviceCalendarRemindersEnabled(true)
         dataStore.setDeviceCalendarsEnabled(true)
         dataStore.setEnabledDeviceCalendarIds(setOf(1L))
         fakeRepository.nextUpcomingReminder = createTestReminder()
 
-        // Revoke permission
         Shadows.shadowOf(context as android.app.Application).denyPermissions(Manifest.permission.READ_CALENDAR)
 
         scheduler.scheduleNextReminder()
 
-        // No alarm should be scheduled
         assertNull(shadowAlarmManager.nextScheduledAlarm)
     }
 
@@ -194,7 +189,7 @@ class DeviceCalendarReminderSchedulerTest {
         dataStore.setDeviceCalendarsEnabled(true)
         dataStore.setEnabledDeviceCalendarIds(setOf(1L))
 
-        val triggerTime = System.currentTimeMillis() + 60_000 // 1 minute from now
+        val triggerTime = System.currentTimeMillis() + 60_000
         fakeRepository.nextUpcomingReminder = createTestReminder(triggerTime = triggerTime)
 
         scheduler.scheduleNextReminder()
@@ -273,7 +268,6 @@ class DeviceCalendarReminderSchedulerTest {
 
         scheduler.cancelPendingAlarm()
 
-        // After cancel, the alarm list should be empty
         assertTrue(shadowAlarmManager.scheduledAlarms.isEmpty())
     }
 
@@ -281,7 +275,7 @@ class DeviceCalendarReminderSchedulerTest {
 
     @Test
     fun `scheduleNextReminder cancels existing alarm when feature is disabled`() = runTest {
-        // Prime: schedule an alarm with feature enabled
+        // Arm an alarm with device reminders on.
         dataStore.setDeviceCalendarRemindersEnabled(true)
         dataStore.setDeviceCalendarsEnabled(true)
         dataStore.setEnabledDeviceCalendarIds(setOf(1L))
@@ -289,7 +283,7 @@ class DeviceCalendarReminderSchedulerTest {
         scheduler.scheduleNextReminder()
         assertTrue("prime: alarm should be scheduled", shadowAlarmManager.scheduledAlarms.isNotEmpty())
 
-        // Flip: disable feature and re-invoke
+        // Turn them off and schedule again.
         dataStore.setDeviceCalendarRemindersEnabled(false)
         scheduler.scheduleNextReminder()
 
@@ -344,9 +338,8 @@ class DeviceCalendarReminderSchedulerTest {
 
     @Test
     fun `scheduleNextReminder cancels existing alarm when no upcoming reminder`() = runTest {
-        // This is the user's reported bug path: user deletes the only event,
-        // observer fires, getNextUpcomingReminder returns null — previously the
-        // existing alarm survived and fired with stale extras.
+        // The user deletes the only event, the observer runs and getNextUpcomingReminder
+        // returns null. A surviving alarm would fire with the deleted event's extras.
         dataStore.setDeviceCalendarRemindersEnabled(true)
         dataStore.setDeviceCalendarsEnabled(true)
         dataStore.setEnabledDeviceCalendarIds(setOf(1L))
@@ -368,18 +361,16 @@ class DeviceCalendarReminderSchedulerTest {
         dataStore.setDeviceCalendarsEnabled(true)
         dataStore.setEnabledDeviceCalendarIds(setOf(1L))
 
-        // Set up first reminder
         val firstTrigger = System.currentTimeMillis() + 60_000
         fakeRepository.nextUpcomingReminder = createTestReminder(triggerTime = firstTrigger)
 
         scheduler.scheduleNextReminder()
         assertNotNull(shadowAlarmManager.nextScheduledAlarm)
 
-        // Now simulate "after fire" - set up next reminder
+        // After the first fires, the repository reports the next reminder.
         val secondTrigger = System.currentTimeMillis() + 120_000
         fakeRepository.nextUpcomingReminder = createTestReminder(triggerTime = secondTrigger)
 
-        // Cancel old and reschedule
         scheduler.cancelPendingAlarm()
         scheduler.rescheduleAfterFire()
 
@@ -421,9 +412,8 @@ class DeviceCalendarReminderSchedulerTest {
 
     @Test
     fun `shouldFireReminder returns false when isEventActive returns false`() = runTest {
-        // User's reported bug: event soft-deleted (DELETED=1) after alarm
-        // was scheduled. Fake models this by omitting eventId from
-        // activeEventIds while still populating it in deviceEvents.
+        // The event was soft-deleted (DELETED=1) after its alarm was armed. The fake models
+        // this by removing the id from activeEventIds.
         primeHealthyEvent()
         fakeRepository.activeEventIds.remove(HEALTHY_EVENT_ID)
         assertFalse(scheduler.shouldFireReminder(HEALTHY_EVENT_ID))
@@ -442,19 +432,19 @@ class DeviceCalendarReminderSchedulerTest {
         fakeRepository.activeEventIds.add(HEALTHY_EVENT_ID)
     }
 
-    // ========== Snooze Request Code Collision ==========
+    // ========== Snooze Request Codes ==========
 
     @Test
     fun `snooze request codes use 100_000 bucket range`() {
-        // The snooze range should be large enough to avoid birthday-paradox collisions
-        // With 100_000 buckets, collision probability is <0.01% at 5 simultaneous snoozes
+        // 100,000 buckets keep birthday-paradox collisions under 0.01% at 5 simultaneous
+        // snoozes.
         assertEquals(100_000, DeviceCalendarReminderScheduler.SNOOZE_REQUEST_CODE_RANGE)
     }
 
     @Test
     fun `snooze request codes are always positive and above main alarm code`() {
-        // Regression: negative XOR results must not produce negative request codes
-        // that could collide with the main alarm code (5001)
+        // A negative XOR must still give a positive code above the reminder alarm's (5001), so
+        // the two can't collide.
         val testCases = listOf(
             Pair(Long.MAX_VALUE, 1L),           // Large positive XOR
             Pair(1L, Long.MAX_VALUE),           // Large positive XOR (reversed)
@@ -479,7 +469,6 @@ class DeviceCalendarReminderSchedulerTest {
 
     @Test
     fun `snooze request codes do not collide for different events at scale`() {
-        // Generate 50 different event/occurrence pairs and check for collisions
         val codes = mutableSetOf<Int>()
         val collisions = mutableListOf<String>()
 

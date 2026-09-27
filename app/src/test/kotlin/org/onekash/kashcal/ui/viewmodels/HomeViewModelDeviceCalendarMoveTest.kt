@@ -20,6 +20,8 @@ import org.junit.runner.RunWith
 import org.onekash.kashcal.data.calendar_provider.DeviceAttendee
 import org.onekash.kashcal.data.calendar_provider.DeviceEvent
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -33,18 +35,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for moving a DEVICE-calendar event to another device calendar while
- * editing it in the same save.
+ * Tests moving a device event to another device calendar while editing it in the same save.
  *
- * Android's CalendarProvider treats CALENDAR_ID as effectively create-time
- * ("in general a calendar_id should not be modified after insertion"; sync
- * adapters misbehave if it changes), so a move must be delete-old +
- * insert-new — carrying the edited fields into the new event. Same-calendar
- * edits stay a plain in-place update.
+ * CalendarContract says "in general a calendar_id should not be modified after insertion", as many
+ * sync adapters misbehave if it changes, so a move creates the event in the target with the edited
+ * fields and then deletes the source. A same-calendar edit stays an in-place update.
  *
- * Scope: non-recurring device events. Recurring device events cannot be moved
- * (the calendar picker is disabled for them in the form), so a recurring edit
- * always stays an in-place update.
+ * Only a stored non-recurring event moves, even when the save adds recurrence. The form disables
+ * the calendar picker for a recurring device event, and an edit of one that still names another
+ * calendar always stays an in-place update.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -112,7 +111,8 @@ class HomeViewModelDeviceCalendarMoveTest {
         accountRepository = accountRepository,
         syncScheduler = syncScheduler,
         networkMonitor = networkMonitor,
-        calendarProviderRepository = repo,
+        deviceEventReader = repo.deviceEventReader(),
+        deviceEventWriter = repo.deviceEventWriter(dataStore),
         attendeeBackfill = mockk(relaxed = true),
         contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),
@@ -147,7 +147,7 @@ class HomeViewModelDeviceCalendarMoveTest {
         eventColor = null,
     )
 
-    // ---- non-recurring move: delete-old + insert-new with edited fields ----
+    // ---- non-recurring move: create in the target with the edits, then delete the source ----
 
     @Test
     fun `moving a non-recurring device event to another calendar recreates it in the target with edits`() = runTest {
@@ -157,7 +157,7 @@ class HomeViewModelDeviceCalendarMoveTest {
         // Event currently lives in calendar 1.
         repo.deviceEvents[100L] = deviceEvent(id = 100L, calendarId = 1L)
 
-        // User edits title/note AND picks calendar 2.
+        // The user edits the title and note and picks calendar 2.
         val formState = EventFormState(
             title = "Room 2",
             description = "Room 2 note",
@@ -169,7 +169,7 @@ class HomeViewModelDeviceCalendarMoveTest {
         viewModel.saveDeviceEvent(formState)
         advanceUntilIdle()
 
-        // A new event was created in the TARGET calendar carrying the EDITED fields.
+        // A new event in the target calendar carries the edited fields.
         assertEquals(1, repo.createdEvents.size)
         val created = repo.createdEvents[0]
         assertEquals(2L, created.calendarId)
@@ -179,7 +179,7 @@ class HomeViewModelDeviceCalendarMoveTest {
         // The old event was deleted.
         assertTrue("old event must be deleted", repo.deletedEventIds.contains(100L))
 
-        // NOT a plain in-place update (that would silently drop the move).
+        // Not an in-place update, which would silently drop the move.
         assertTrue("move must not be a plain update", repo.updatedEvents.isEmpty())
     }
 
@@ -202,7 +202,7 @@ class HomeViewModelDeviceCalendarMoveTest {
         viewModel.saveDeviceEvent(formState)
         advanceUntilIdle()
 
-        // CREATE failed → source must NOT be deleted (event survives in calendar 1).
+        // The create failed, so the source isn't deleted and the event stays in calendar 1.
         assertTrue("source must survive a failed create", repo.deletedEventIds.isEmpty())
     }
 
@@ -228,8 +228,8 @@ class HomeViewModelDeviceCalendarMoveTest {
         viewModel.saveDeviceEvent(formState)
         advanceUntilIdle()
 
-        // The recreated event must keep the original guest — a move that dropped
-        // it would silently uninvite everyone.
+        // The recreated event must keep the original guest; a move that dropped it would
+        // silently uninvite everyone.
         assertEquals(1, repo.createdEvents.size)
         assertEquals(
             listOf("guest@example.com"),
@@ -293,8 +293,8 @@ class HomeViewModelDeviceCalendarMoveTest {
 
         assertEquals(1, repo.createdEvents.size)
         val carried = repo.createdEvents[0].attendees?.map { it.email }.orEmpty()
-        // The real guest carries over; the source organizer does NOT (createEvent
-        // writes a fresh organizer for the target calendar's owner).
+        // The guest carries over and the source organizer doesn't; createEvent writes a new
+        // organizer for the target calendar's owner (not asserted here).
         assertTrue("guest carried", carried.contains("guest@example.com"))
         assertTrue(
             "source organizer must not be carried as a guest, was $carried",
@@ -322,13 +322,13 @@ class HomeViewModelDeviceCalendarMoveTest {
         val result = viewModel.saveDeviceEvent(formState)
         advanceUntilIdle()
 
-        // The target copy exists; a delete failure leaves a source orphan but must
-        // NOT report the whole save as failed (a failure invites a duplicating retry).
+        // The target copy exists. A delete failure leaves the source behind but must not fail
+        // the save, since a failure invites a retry that duplicates the event.
         assertEquals(1, repo.createdEvents.size)
         assertTrue("save must succeed despite delete failure", result.isSuccess)
     }
 
-    // ---- making a non-recurring event recurring WHILE moving still moves it ----
+    // ---- making a non-recurring event recurring while moving still moves it ----
 
     @Test
     fun `adding recurrence while changing calendar still moves the event`() = runTest {
@@ -338,7 +338,7 @@ class HomeViewModelDeviceCalendarMoveTest {
         // Source is currently non-recurring.
         repo.deviceEvents[100L] = deviceEvent(id = 100L, calendarId = 1L, rrule = null)
 
-        // User makes it recurring AND picks a different calendar in one save.
+        // The user makes it recurring and picks a different calendar in one save.
         val formState = EventFormState(
             title = "Room 2",
             selectedCalendarId = 2L,
@@ -350,15 +350,15 @@ class HomeViewModelDeviceCalendarMoveTest {
         viewModel.saveDeviceEvent(formState)
         advanceUntilIdle()
 
-        // Must move (recreate in target + delete old), NOT silently drop the
-        // calendar change via an in-place update.
+        // Must move (recreate in the target, delete the old one); an in-place update would
+        // silently drop the calendar change.
         assertEquals("must recreate in target", 1, repo.createdEvents.size)
         assertEquals("recreated in target calendar", 2L, repo.createdEvents[0].calendarId)
         assertTrue("old event deleted", repo.deletedEventIds.contains(100L))
         assertTrue("not a plain in-place update", repo.updatedEvents.isEmpty())
     }
 
-    // ---- recurring device event: never moved (defensive; picker is disabled) ----
+    // ---- stored recurring device event: never moved, and the picker is disabled for it ----
 
     @Test
     fun `recurring device event edit stays in-place even if a different calendar is selected`() = runTest {
@@ -378,7 +378,7 @@ class HomeViewModelDeviceCalendarMoveTest {
         viewModel.saveDeviceEvent(formState)
         advanceUntilIdle()
 
-        // Recurring move is out of scope: must NOT delete+recreate.
+        // Recurring device moves aren't supported, so no delete and recreate.
         assertTrue("recurring event must not be recreated", repo.createdEvents.isEmpty())
         assertTrue("recurring event must not be deleted", repo.deletedEventIds.isEmpty())
         assertEquals("recurring edit stays a plain update", 1, repo.updatedEvents.size)

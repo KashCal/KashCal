@@ -8,11 +8,8 @@ import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.SinglePushResult
 
 /**
- * Bridge between sync layer errors and CalendarError system.
- *
- * Converts sync-specific error types to CalendarError for UI presentation.
- * This allows the sync layer to remain unchanged while integrating with
- * the centralized error handling system.
+ * Converts sync-layer results and errors to [CalendarError] for the UI, so the sync types stay
+ * independent of the UI error hierarchy. Only tests call it today.
  *
  * Usage:
  * ```
@@ -25,14 +22,11 @@ import org.onekash.kashcal.sync.strategy.SinglePushResult
  */
 object SyncErrorBridge {
 
-    /**
-     * Convert SyncResult to CalendarError.
-     * Returns null for success results.
-     */
+    /** Converts [result] to a [CalendarError], or null for [SyncResult.Success]. */
     fun fromSyncResult(result: SyncResult): CalendarError? = when (result) {
         is SyncResult.Success -> null
         is SyncResult.PartialSuccess -> {
-            // Partial success has errors - return the first significant one
+            // Carries every calendar's error, each converted.
             CalendarError.Sync.PartialFailure(
                 successCount = result.calendarsSynced,
                 failedCount = result.errors.size,
@@ -40,7 +34,7 @@ object SyncErrorBridge {
             )
         }
         is SyncResult.AuthError -> {
-            // Map auth errors based on message content
+            // The auth error kind is only in the message text.
             when {
                 result.message.contains("app-specific", ignoreCase = true) ->
                     CalendarError.Auth.AppSpecificPasswordRequired
@@ -54,23 +48,17 @@ object SyncErrorBridge {
         is SyncResult.Error -> fromSyncResultError(result)
     }
 
-    /**
-     * Convert SyncError (from PartialSuccess) to CalendarError.
-     */
+    /** Converts one calendar's [SyncError] from a [SyncResult.PartialSuccess]. */
     fun fromSyncError(error: SyncError): CalendarError {
         return fromErrorCode(error.code, error.message)
     }
 
-    /**
-     * Convert SyncResult.Error to CalendarError.
-     */
+    /** Converts a [SyncResult.Error] through [fromErrorCode]. */
     private fun fromSyncResultError(error: SyncResult.Error): CalendarError {
         return fromErrorCode(error.code, error.message)
     }
 
-    /**
-     * Convert error code and message to CalendarError.
-     */
+    /** Maps an HTTP status; for -1, an internal error, the message decides the kind. */
     private fun fromErrorCode(code: Int, message: String): CalendarError {
         return when (code) {
             401 -> CalendarError.Auth.InvalidCredentials
@@ -80,7 +68,7 @@ object SyncErrorBridge {
             429 -> CalendarError.Server.RateLimited
             in 500..599 -> CalendarError.Server.TemporarilyUnavailable
             -1 -> {
-                // Internal error - check message for hints
+                // An internal error names its cause only in the message.
                 when {
                     message.contains("timeout", ignoreCase = true) ->
                         CalendarError.Network.Timeout
@@ -101,15 +89,13 @@ object SyncErrorBridge {
         }
     }
 
-    /**
-     * Convert PullResult.Error to CalendarError.
-     */
+    /** Converts a pull error; 410 means the sync-token expired. */
     fun fromPullResult(result: PullResult.Error): CalendarError {
         return when (result.code) {
             401 -> CalendarError.Auth.InvalidCredentials
             403 -> CalendarError.Server.Forbidden(result.message)
             404 -> CalendarError.Server.NotFound(result.message)
-            410 -> CalendarError.Server.SyncTokenExpired // Gone - sync token expired
+            410 -> CalendarError.Server.SyncTokenExpired
             412 -> CalendarError.Server.Conflict()
             429 -> CalendarError.Server.RateLimited
             in 500..599 -> CalendarError.Server.TemporarilyUnavailable
@@ -117,9 +103,7 @@ object SyncErrorBridge {
         }
     }
 
-    /**
-     * Convert PushResult.Error to CalendarError.
-     */
+    /** Converts a push error. */
     fun fromPushResult(result: PushResult.Error): CalendarError {
         return when (result.code) {
             401 -> CalendarError.Auth.InvalidCredentials
@@ -133,12 +117,12 @@ object SyncErrorBridge {
     }
 
     /**
-     * Convert SinglePushResult to CalendarError.
-     * Returns null for success.
+     * Converts [result] to a [CalendarError], or null for a success or an advanced MOVE phase.
+     * [eventTitle] names the event in a conflict.
      */
     fun fromSinglePushResult(result: SinglePushResult, eventTitle: String? = null): CalendarError? = when (result) {
         is SinglePushResult.Success -> null
-        is SinglePushResult.PhaseAdvanced -> null  // MOVE operation advanced to next phase (not an error)
+        is SinglePushResult.PhaseAdvanced -> null
         is SinglePushResult.Conflict -> CalendarError.Server.Conflict(eventTitle)
         is SinglePushResult.RsvpModified -> CalendarError.Server.Conflict(result.eventTitle)
         is SinglePushResult.Error -> when (result.code) {
@@ -152,10 +136,7 @@ object SyncErrorBridge {
         }
     }
 
-    /**
-     * Check if a CalendarError is retryable (transient).
-     * Delegates to ErrorMapper.isRetryable().
-     */
+    /** Returns whether [error] is transient, as decided by `ErrorMapper.isRetryable`. */
     fun isRetryable(error: CalendarError): Boolean {
         return org.onekash.kashcal.error.ErrorMapper.isRetryable(error)
     }

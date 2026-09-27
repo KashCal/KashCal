@@ -17,14 +17,15 @@ import java.io.File
 import java.time.LocalDate
 
 /**
- * Unit tests for the widget-picker preview bodies.
+ * Tests the widget-picker previews of all five widgets.
  *
- * Two distinct jobs here. The render tests drive each extracted preview composable
- * through the Glance harness and assert it shows sample content rather than an empty or
- * loading state. The wiring guard asserts each widget class actually declares
- * `providePreview` — the base implementation is a silent no-op, so without this guard
- * deleting every override would leave these render tests green while the shipped
- * feature disappeared.
+ * The wiring guards assert each widget class declares `providePreview`, and overrides
+ * `previewSizeMode` with sizes matching its provider XML. The base `providePreview` is a silent
+ * no-op, so deleting every override would leave the render tests green while the previews
+ * disappeared. The render tests drive each preview composable through the Glance harness and
+ * assert it shows sample content: Agenda and Upcoming a sample event and not the empty state
+ * (Upcoming not the loading state either), Week today's header and a sample event, Month its
+ * header, Date today's date number.
  */
 @RunWith(RobolectricTestRunner::class)
 class WidgetPreviewContentTest {
@@ -76,10 +77,10 @@ class WidgetPreviewContentTest {
 
     @Test
     fun `preview sizes match the cells and minimums each provider declares`() {
-        // Preview sizes are authored independently of the provider descriptors, so a resize
-        // in the XML would otherwise silently leave the preview at the old size. Composing
-        // below a provider's own declared minimum is the failure this guards hardest: it
-        // drops content out of the preview, which is why the size is overridden at all.
+        // Preview sizes are written separately from the provider descriptors, so a resize in
+        // the XML would silently leave the preview at the old size. Composing below the
+        // provider's declared minimum drops content from the preview, which is why the size is
+        // overridden at all.
         listOf(
             "agenda_widget_info.xml" to WidgetPreviewSizes.AGENDA,
             "week_widget_info.xml" to WidgetPreviewSizes.WEEK,
@@ -138,7 +139,7 @@ class WidgetPreviewContentTest {
         setContext(context)
         provideComposable { WeekPreviewContent(context) }
 
-        // The week widget renders a header per day; assert today's header is present.
+        // The Week widget renders a header per day; only today's is asserted.
         val todayCode = LocalDate.now().let { it.year * 10000 + it.monthValue * 100 + it.dayOfMonth }
         onNode(hasText(formatDayHeaderText(todayCode))).assertExists()
         onNode(hasText(context.getString(R.string.widget_preview_event_standup)))

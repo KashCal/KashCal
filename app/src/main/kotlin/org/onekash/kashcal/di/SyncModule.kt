@@ -15,15 +15,11 @@ import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import javax.inject.Singleton
 
 /**
- * Hilt module providing sync layer dependencies.
+ * Binds the CalDAV and CardDAV client factories, the default [CalDavQuirks] and the ICS fetcher.
  *
- * Binds interfaces to their implementations for:
- * - CalDAV HTTP client and factory
- * - ICS fetcher
- *
- * For provider-specific services (quirks, credentials), use ProviderRegistry:
+ * For provider-specific quirks and credentials, use ProviderRegistry:
  * ```kotlin
- * val quirks = providerRegistry.getQuirks(account.provider)
+ * val quirks = providerRegistry.getQuirksForAccount(account)
  * val credentials = providerRegistry.getCredentialProvider(account.provider)
  * ```
  *
@@ -33,43 +29,29 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class SyncModule {
 
-    /**
-     * Bind CalDavClientFactory interface to OkHttp implementation.
-     *
-     * Use this factory for multi-account sync scenarios. Each call to
-     * createClient() returns an isolated client with immutable credentials,
-     * preventing credential race conditions during concurrent sync.
-     */
+    /** Binds [CalDavClientFactory], which holds the one-client-per-account rule. */
     @Binds
     @Singleton
     abstract fun bindCalDavClientFactory(impl: OkHttpCalDavClientFactory): CalDavClientFactory
 
     /**
-     * Bind CardDavClientFactory interface to its OkHttp implementation.
-     *
-     * The read-path CardDAV sibling of [bindCalDavClientFactory]: each
-     * createClient() call returns an isolated contact-sync client with immutable
-     * credentials, keeping concurrent multi-account sync race-free.
+     * Binds [CardDavClientFactory], the CardDAV sibling of [bindCalDavClientFactory]: each
+     * `createClient()` call returns a contact-sync client with its own fixed credentials.
      */
     @Binds
     @Singleton
     abstract fun bindCardDavClientFactory(impl: OkHttpCardDavClientFactory): CardDavClientFactory
 
     /**
-     * Bind CalDavQuirks interface to iCloud implementation.
-     *
-     * Required for OkHttpCalDavClient's @Inject constructor (test compatibility).
-     * Production code should use ProviderRegistry.getQuirks(provider) for multi-provider support.
+     * Binds [CalDavQuirks] to iCloud's. `PullStrategy` injects it as the fallback when a pull
+     * gets no quirks, and `OkHttpCalDavClient`'s `@Inject` constructor (for tests) takes it.
+     * Production code picks quirks per provider through `ProviderRegistry`.
      */
     @Binds
     @Singleton
     abstract fun bindCalDavQuirks(impl: ICloudQuirks): CalDavQuirks
 
-    /**
-     * Bind IcsFetcher interface to OkHttp implementation.
-     *
-     * Used by IcsSubscriptionRepository for fetching ICS calendar feeds.
-     */
+    /** Binds [IcsFetcher], which `IcsSubscriptionRepository` fetches ICS feeds through. */
     @Binds
     @Singleton
     abstract fun bindIcsFetcher(impl: OkHttpIcsFetcher): IcsFetcher

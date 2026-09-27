@@ -14,15 +14,12 @@ import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
 import javax.inject.Inject
 
 /**
- * Triggers widget update and reminder reschedule when device timezone or time changes.
- * Ensures event times display correctly after travel or DST transitions.
+ * Updates widgets and reschedules reminders when the device timezone or clock changes, so event
+ * times and reminders follow the new local time after travel or DST transitions.
  *
- * Per Android best practices:
- * - Uses goAsync() for work that takes > 10ms
- * - Uses Hilt DI for singleton services
- *
- * Recovery includes ReminderRefreshWorker to create missing ScheduledReminder rows
- * for events that had reminders fired/dismissed/cleaned up.
+ * [TimezoneChangeHandler] runs under goAsync() with a 9 s timeout, inside the broadcast's 10 s
+ * limit. The receiver also starts [ReminderRefreshWorker], which creates missing ScheduledReminder
+ * rows for events whose reminders were fired, dismissed or cleaned up.
  */
 @AndroidEntryPoint
 class TimezoneChangeReceiver : BroadcastReceiver() {
@@ -60,8 +57,7 @@ class TimezoneChangeReceiver : BroadcastReceiver() {
             }
         }
 
-        // Trigger immediate reminder refresh to create ScheduledReminder rows
-        // for events that are missing them. Runs via WorkManager (no 10s limit).
+        // Runs in WorkManager, outside the broadcast's 10 s limit.
         try {
             ReminderRefreshWorker.runNow(context)
         } catch (e: Exception) {

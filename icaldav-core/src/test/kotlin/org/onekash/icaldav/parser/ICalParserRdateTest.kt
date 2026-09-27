@@ -11,10 +11,10 @@ import org.junit.jupiter.api.Test
 import org.onekash.icaldav.model.ParseResult
 
 /**
- * Unit tests for RDATE (Recurrence Date) parsing.
+ * Tests RDATE parsing and its survival through generate and re-parse.
  *
- * RFC 5545 Section 3.8.5.2 defines RDATE as additional dates/times
- * for recurring events beyond what RRULE generates.
+ * RFC 5545 §3.8.5.2 defines RDATE as dates or date-times added to the recurrence set beyond
+ * what RRULE generates.
  */
 @DisplayName("RDATE Parsing Tests")
 class ICalParserRdateTest {
@@ -324,15 +324,15 @@ class ICalParserRdateTest {
             assertTrue(result is ParseResult.Success)
             val event = (result as ParseResult.Success).value.first()
 
-            // PERIOD is skipped, only the second RDATE is parsed
+            // The PERIOD RDATE is skipped; only the second RDATE is parsed
             assertEquals(1, event.rdates.size)
             assertEquals("20260125T100000Z", event.rdates[0].toICalString())
         }
 
         @Test
         fun `malformed RDATE is suppressed and event still parses`() {
-            // With suppressInvalidProperties, malformed RDATE is skipped
-            // and the event parses without RDATE (better than dropping the entire event)
+            // With suppressInvalidProperties the malformed RDATE is skipped instead of
+            // dropping the whole event. The rdates list isn't asserted.
             val ics = """
                 BEGIN:VCALENDAR
                 VERSION:2.0

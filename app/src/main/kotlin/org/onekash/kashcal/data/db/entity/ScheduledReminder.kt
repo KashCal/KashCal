@@ -7,16 +7,14 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Tracks scheduled reminder alarms.
+ * Stores one reminder alarm for one occurrence, with its own status.
  *
- * Follows Android CalendarProvider pattern: separate table for alarm instances.
- * - Event.reminders = reminder config (["-PT15M"]) - what to remind
- * - ScheduledReminder = alarm instances with state - when/if reminded
+ * As in Android's CalendarProvider, alarms live apart from the reminder config:
+ * Event.reminders (`["-PT15M"]`) says what to remind, and this table says when and whether
+ * each alarm fired. A recurring event's one config yields a row per occurrence.
  *
- * For recurring events: one config generates many scheduled instances.
- * Each occurrence gets its own ScheduledReminder with independent status.
- *
- * Denormalizes event data to avoid DB queries in BroadcastReceiver.
+ * The notification's event data is copied in, so the alarm receiver builds the notification
+ * from this row; it still checks that the event and occurrence are live before posting.
  */
 @Entity(
     tableName = "scheduled_reminders",
@@ -39,78 +37,53 @@ data class ScheduledReminder(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
 
-    /**
-     * Parent event ID.
-     * CASCADE delete: when event is deleted, its reminders are deleted.
-     */
+    /** The event. CASCADE delete: deleting the event deletes its reminders. */
     @ColumnInfo(name = "event_id")
     val eventId: Long,
 
-    /**
-     * For recurring events: the specific occurrence start time being reminded about.
-     * For non-recurring: same as event.startTs.
-     */
+    /** Start of the occurrence reminded about; event.startTs for a non-recurring event. */
     @ColumnInfo(name = "occurrence_time")
     val occurrenceTime: Long,
 
     /**
-     * When the alarm should trigger.
-     * Calculated as: occurrenceTime + reminderOffset (offset is negative).
+     * When the alarm fires: occurrenceTime plus the negative [reminderOffset] for a timed
+     * event. For an all-day event the offset is applied to local midnight of its day.
      */
     @ColumnInfo(name = "trigger_time")
     val triggerTime: Long,
 
-    /**
-     * Original reminder offset in ISO 8601 duration format.
-     * Examples: "-PT15M" (15 min before), "-PT1H" (1 hour before), "-P1D" (1 day before)
-     */
+    /** The offset as an ISO 8601 duration: "-PT15M", "-PT1H", "-P1D". */
     @ColumnInfo(name = "reminder_offset")
     val reminderOffset: String,
 
-    /**
-     * Current status of this reminder.
-     * PENDING → FIRED → (SNOOZED → FIRED →)* DISMISSED
-     */
+    /** PENDING, then FIRED, then any number of SNOOZED and FIRED, then DISMISSED. */
     @ColumnInfo(name = "status", defaultValue = "'PENDING'")
     val status: ReminderStatus = ReminderStatus.PENDING,
 
-    /**
-     * Number of times user has snoozed this reminder.
-     * Can be used to limit snooze count or show "snoozed X times".
-     */
+    /** Times the user snoozed this reminder. Nothing reads it today. */
     @ColumnInfo(name = "snooze_count", defaultValue = "0")
     val snoozeCount: Int = 0,
 
-    // ========== Denormalized Event Data ==========
-    // Avoids DB query in BroadcastReceiver (runs with limited time)
+    // ========== Event data copied for the notification ==========
+    // The alarm receiver runs with limited time and builds the notification from these
 
-    /**
-     * Event title for notification display.
-     */
+    /** Event title, the notification title. */
     @ColumnInfo(name = "event_title")
     val eventTitle: String,
 
-    /**
-     * Event location for notification display (optional).
-     */
+    /** Event location, shown when set. */
     @ColumnInfo(name = "event_location")
     val eventLocation: String? = null,
 
-    /**
-     * Whether the event is all-day (affects notification text).
-     */
+    /** Whether the event is all-day; changes the notification text. */
     @ColumnInfo(name = "is_all_day", defaultValue = "0")
     val isAllDay: Boolean = false,
 
-    /**
-     * Calendar color for notification accent.
-     */
+    /** Calendar color, the notification accent. */
     @ColumnInfo(name = "calendar_color")
     val calendarColor: Int,
 
-    /**
-     * Timestamp when this reminder was created.
-     */
+    /** Creation time, epoch millis. */
     @ColumnInfo(name = "created_at")
     val createdAt: Long = System.currentTimeMillis()
 )

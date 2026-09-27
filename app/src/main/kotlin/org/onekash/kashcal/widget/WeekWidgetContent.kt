@@ -120,10 +120,7 @@ fun WeekWidgetContent(
     }
 }
 
-/**
- * Widget header showing the week date range.
- * Tapping opens the app at today's view.
- */
+/** Renders the header with the week's date range; tapping it opens the app on today. */
 @Composable
 private fun WeekWidgetHeader(dayCodes: List<Int>, isRefreshing: Boolean) {
     val firstDay = dayCodes.firstOrNull() ?: return
@@ -133,9 +130,9 @@ private fun WeekWidgetHeader(dayCodes: List<Int>, isRefreshing: Boolean) {
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(WidgetTheme.headerBackground)
-            // No vertical padding: the 48dp add button defines the header height, so all
-            // widget headers stay a uniform 48dp. No end inset either — the add button's own
-            // glyph centering provides the right margin (same as the month widget header).
+            // No vertical padding: the 48dp add button sets the header height, so every widget
+            // header is 48dp. No end inset either: the add button's glyph centering gives the
+            // right margin, as in the month widget header.
             .padding(start = WIDGET_HORIZONTAL_MARGIN_DP.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -158,8 +155,8 @@ private fun WeekWidgetHeader(dayCodes: List<Int>, isRefreshing: Boolean) {
                     fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
                 ),
-                // The two 48dp right-edge buttons reserve ~96dp; on a narrow week widget a
-                // cross-month range must ellipsize on one line rather than wrap/grow the header.
+                // The two 48dp right-edge buttons take ~96dp; on a narrow week widget a
+                // cross-month range must ellipsize on one line, not wrap and grow the header.
                 maxLines = 1
             )
         }
@@ -256,8 +253,8 @@ private fun CompactEventRow(
     detailedRows: Boolean
 ) {
     val rowContext = LocalContext.current
-    // A cancelled event only reads as a strikethrough visually; name that state
-    // for TalkBack by labelling the whole row (time, title, cancelled).
+    // A cancelled event shows only as a strikethrough, so label the whole row (time, title,
+    // cancelled) for TalkBack.
     val cancelledLabel = if (event.isCancelled) {
         cancelledRowLabel(
             rowContext, event, dayCode, timePattern,
@@ -319,10 +316,10 @@ private fun OverflowRow(dayCode: Int, count: Int) {
 }
 
 /**
- * Format week header date range with full month names.
- * Same month: "March 7 – 13"
- * Cross-month: "March 28 – April 3"
- * Cross-year: "December 28 – January 3" (year omitted — always current/next week)
+ * Formats the week header's date range with full month names.
+ * - Same month: "March 7 – 13"
+ * - Cross-month: "March 28 – April 3"
+ * - Cross-year: "December 28 – January 3"; no year, since the range always starts today.
  */
 internal fun formatWeekHeaderRange(firstDay: Int, lastDay: Int): String {
     val firstDate = DayPagerUtils.dayCodeToLocalDate(firstDay)

@@ -10,14 +10,16 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 
 /**
- * Edge case and adversarial tests for IcsExporter.
+ * Edge-case tests for ICS export: [IcsPatcher] serialization and [IcsExporter]'s calendar export
+ * and file names.
  *
  * Covers:
- * - Events with optional RFC 5545/7986 fields (priority, geo, color, url, categories)
- * - Very long descriptions
- * - Empty calendar export
- * - Exception event bundling
- * - Malformed VEVENT extraction
+ * - Events with optional RFC 5545/7986 fields (priority, geo, color, url, categories); most
+ *   tests assert only that a VEVENT is produced
+ * - Very long descriptions and RFC 5545 special characters
+ * - `exportCalendar` rejecting an empty event list; an event with minimal fields
+ * - File names from Unicode, emoji and punctuation, through `generateFileName` by reflection
+ * - Bundling a master and its exception in one VCALENDAR
  */
 class IcsExporterEdgeCaseTest {
 
@@ -145,10 +147,6 @@ class IcsExporterEdgeCaseTest {
         assertTrue("Should still contain VEVENT", ics.contains("BEGIN:VEVENT"))
     }
 
-    // VEVENT extraction edge-case tests removed: extractVEventBlocks is deleted —
-    // ICalGenerator.generate(ICalCalendar) handles component emission directly,
-    // so line-scraping is no longer part of the code path.
-
     // ========== Filename Edge Cases ==========
 
     @Test
@@ -162,7 +160,8 @@ class IcsExporterEdgeCaseTest {
     @Test
     fun `generateFileName with only hyphens after sanitization`() {
         val fileName = invokeGenerateFileName("---")
-        // After sanitization: hyphens are kept, then trim('-') removes them → empty → "event"
+        // Sanitizing keeps the hyphens, trim('-') removes them, and the empty result falls back
+        // to "event".
         assertTrue("Should use default name", fileName.contains("event"))
     }
 
@@ -201,8 +200,7 @@ class IcsExporterEdgeCaseTest {
         assertTrue("Should contain RECURRENCE-ID", ics.contains("RECURRENCE-ID"))
     }
 
-    // ICS text escaping edge cases removed: escapeIcsText is deleted —
-    // escaping is handled by icaldav-core's escapeICalText, tested there.
+    // icaldav-core's ICalGenerator escapes text; ICalGeneratorEdgeCaseTest tests it.
 
     // ========== Helper Methods ==========
 

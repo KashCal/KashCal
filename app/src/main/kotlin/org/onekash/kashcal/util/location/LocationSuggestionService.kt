@@ -14,17 +14,8 @@ import javax.inject.Singleton
 import kotlin.coroutines.resume
 
 /**
- * Service for getting address suggestions using Android's Geocoder API.
- *
- * Features:
- * - Handles API 33+ async Geocoder and legacy blocking call
- * - Graceful degradation when Geocoder unavailable
- * - Returns empty list on errors (no crashes)
- *
- * Usage:
- * ```
- * val suggestions = locationSuggestionService.getSuggestions("123 Main")
- * ```
+ * Suggests addresses for a location query through Android's Geocoder, using the async API on
+ * API 33+ and the blocking call below it.
  */
 @Singleton
 class LocationSuggestionService @Inject constructor(
@@ -36,17 +27,13 @@ class LocationSuggestionService @Inject constructor(
     } else null
 
     /**
-     * Format display name combining place name and address.
-     * Shows "Place Name, Address" when place name is meaningful.
+     * Returns "Feature, Address", or the address line alone when the feature name is blank, all
+     * digits (a street number) or already starts the address line.
      */
     private fun formatDisplayName(featureName: String?, addressLine: String?): String {
         val address = addressLine.orEmpty()
         val feature = featureName?.trim()
 
-        // Skip featureName if:
-        // - null/blank
-        // - just a number (street number)
-        // - already starts the address line
         if (feature.isNullOrBlank() ||
             feature.all { it.isDigit() } ||
             address.startsWith(feature, ignoreCase = true)
@@ -58,11 +45,11 @@ class LocationSuggestionService @Inject constructor(
     }
 
     /**
-     * Get address suggestions for a query.
+     * Returns up to [maxResults] suggestions for [query].
      *
-     * @param query Search query (minimum 5 characters)
-     * @param maxResults Maximum number of suggestions to return (default 5)
-     * @return List of address suggestions, or empty list if unavailable
+     * Returns an empty list when the device has no Geocoder, [query] is under 5 characters, or
+     * the Geocoder call throws. On API 33+ a failure reported through the listener's `onError`
+     * isn't handled, so the call stays suspended until the caller is cancelled.
      */
     suspend fun getSuggestions(query: String, maxResults: Int = 5): List<AddressSuggestion> {
         if (geocoder == null || query.length < 5) return emptyList()
@@ -70,7 +57,6 @@ class LocationSuggestionService @Inject constructor(
         return withContext(ioDispatcher) {
             try {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    // API 33+: Use async callback
                     suspendCancellableCoroutine { continuation ->
                         geocoder.getFromLocationName(query, maxResults) { addresses ->
                             val suggestions = addresses.map { addr ->
@@ -84,7 +70,6 @@ class LocationSuggestionService @Inject constructor(
                         }
                     }
                 } else {
-                    // API < 33: Blocking call (on IO dispatcher)
                     @Suppress("DEPRECATION")
                     val addresses = geocoder.getFromLocationName(query, maxResults).orEmpty()
                     addresses.map { addr ->
@@ -96,8 +81,7 @@ class LocationSuggestionService @Inject constructor(
                     }
                 }
             } catch (_: Exception) {
-                // Geocoder can fail for various reasons (network, backend unavailable)
-                // Return empty list instead of crashing
+                // Geocoder throws when, for example, its network or backend is unavailable.
                 emptyList()
             }
         }
@@ -105,11 +89,11 @@ class LocationSuggestionService @Inject constructor(
 }
 
 /**
- * Represents an address suggestion from Geocoder.
+ * An address suggestion from Geocoder.
  *
- * @param displayName Full formatted address line
- * @param latitude Latitude coordinate (may be null if not available)
- * @param longitude Longitude coordinate (may be null if not available)
+ * @param displayName the address line, prefixed with the place name when it adds one
+ * @param latitude always set by [LocationSuggestionService.getSuggestions]
+ * @param longitude always set by [LocationSuggestionService.getSuggestions]
  */
 data class AddressSuggestion(
     val displayName: String,

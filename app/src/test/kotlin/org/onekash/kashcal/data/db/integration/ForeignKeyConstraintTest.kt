@@ -23,13 +23,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Integration tests for FOREIGN KEY constraint behavior with real Room DB.
+ * Tests which foreign keys raise SQLite's FOREIGN KEY constraint failure (code 787), over a real
+ * in-memory Room database.
  *
- * Reproduces the FK constraint failure (code 787) reported in issue #55:
- * Nextcloud/SOGo sync fails with "FOREIGN KEY constraint failed".
- *
- * Tests verify which FK relationships can trigger code 787 and what
- * the exact error looks like, using a real in-memory Room database.
+ * Reproduces the failure reported in #55: Nextcloud/SOGo sync fails with "FOREIGN KEY
+ * constraint failed". Covers events.calendar_id, events.original_event_id, occurrences.event_id
+ * and occurrences.exception_event_id, plus sync-shaped sequences and the error message.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -75,7 +74,7 @@ class ForeignKeyConstraintTest {
 
     @Test
     fun `upsert event with non-existent calendarId throws FK constraint error`() = runTest {
-        // Same as above but using upsert (which is what PullStrategy uses)
+        // Same as above but through upsert, which PullStrategy uses
         try {
             eventsDao.upsert(createEvent(calendarId = 999L, title = "Orphan Event"))
             fail("Expected SQLiteConstraintException for non-existent calendar_id on upsert")
@@ -93,7 +92,7 @@ class ForeignKeyConstraintTest {
 
     @Test
     fun `insert exception event with non-existent originalEventId throws FK constraint error`() = runTest {
-        // Scenario: Exception event references master that doesn't exist in DB
+        // Scenario: Exception event references a master that doesn't exist in the DB.
         // This is the most likely cause for Nextcloud/SOGo FK errors
         val accountId = accountsDao.insert(
             Account(provider = AccountProvider.CALDAV, email = "test@nextcloud.example.com")
@@ -129,7 +128,7 @@ class ForeignKeyConstraintTest {
             createEvent(calendarId = calendarId, title = "Master Event", rrule = "FREQ=WEEKLY")
         )
 
-        // This should NOT throw
+        // Doesn't throw
         val exceptionId = eventsDao.insert(
             createEvent(calendarId = calendarId, title = "Modified Occurrence").copy(
                 originalEventId = masterEventId,
@@ -159,7 +158,7 @@ class ForeignKeyConstraintTest {
         }
     }
 
-    // ========== Occurrence.exceptionEventId FK (occurrences.exception_event_id → events.id) ==========
+    // ========== Occurrence.exceptionEventId FK (exception_event_id → events.id) ==========
 
     @Test
     fun `link occurrence to non-existent exception event throws FK constraint error`() = runTest {
@@ -194,7 +193,7 @@ class ForeignKeyConstraintTest {
 
     @Test
     fun `simulate sync - master deleted between master insert and exception insert`() = runTest {
-        // Simulates race condition during sync:
+        // Simulates a race during sync:
         // 1. Master event inserted successfully
         // 2. Master event deleted (e.g., by concurrent calendar delete)
         // 3. Exception event tries to reference deleted master → FK violation
@@ -295,8 +294,8 @@ class ForeignKeyConstraintTest {
         }
         assertTrue("FK error should have been caught", fkErrorCaught)
 
-        // 5th event would succeed but is never attempted (sync aborted)
-        // Verify the 3 successful events are still in DB (not rolled back)
+        // In the report the sync aborted here, so later events were never attempted (not
+        // modelled). The 3 inserted events are still in the DB (not rolled back).
         for (id in successIds) {
             val event = eventsDao.getById(id)
             assertTrue("Event $id should still exist after FK error on different event", event != null)
@@ -305,16 +304,17 @@ class ForeignKeyConstraintTest {
 
     @Test
     fun `FK error message format matches user report`() = runTest {
-        // Verify the exact error message format to match what @mdonz and @h1nnak reported:
+        // @mdonz and @h1nnak reported:
         // "FOREIGN KEY constraint failed (code 787 SQLITE_CONSTRAINT_FOREIGNKEY)"
+        // This prints the message raised here and asserts only its keywords.
         try {
             eventsDao.insert(createEvent(calendarId = 999L, title = "Test"))
             fail("Expected SQLiteConstraintException")
         } catch (e: SQLiteConstraintException) {
-            // Log the actual message for diagnostic purposes
+            // Printed for diagnosis
             val message = e.message ?: ""
             println("Actual FK error message: $message")
-            // The message should contain "FOREIGN KEY" at minimum
+            // Mentions FOREIGN KEY or constraint
             assertTrue(
                 "Error message should reference FOREIGN KEY, actual: $message",
                 message.contains("FOREIGN KEY", ignoreCase = true) ||

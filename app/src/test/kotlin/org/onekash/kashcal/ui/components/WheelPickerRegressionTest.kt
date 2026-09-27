@@ -5,10 +5,13 @@ import org.junit.Test
 import kotlin.math.abs
 
 /**
- * Regression tests to verify potential blindspots in the wheel picker fix.
+ * Tests circular [VerticalWheelPicker] arithmetic on inline copies of its steps, calling only
+ * [virtualToActualIndex] and [actualToNearestVirtualIndex]: the outside-change scroll check,
+ * edge recentering, the two-item AM/PM wheel, the empty-layout fallback, wrap detection for
+ * haptics and the center-distance alpha.
  *
- * Current approach: All wheels are circular with centeringOffset = visibleItems / 2
- * subtracted from scroll targets. contentPadding provides visual padding only.
+ * Every wheel in the app is circular. A circular wheel has no contentPadding and subtracts
+ * centeringOffset = visibleItems / 2 from its scroll targets to center the selected item.
  */
 class WheelPickerRegressionTest {
 
@@ -20,22 +23,21 @@ class WheelPickerRegressionTest {
 
     @Test
     fun `external scroll does not trigger when item already centered`() {
-        // Scenario: Item 17 is already at center, user code sets selectedItem = 17
-        // The external scroll should NOT trigger because 17 is already centered
+        // Item 17 is at the center and the caller sets selectedItem = 17: no scroll.
 
         val items = (0..23).toList()
         val visibleItems = 5
         val centeringOffset = visibleItems / 2  // 2
 
-        // Current state: item 17 is at center
-        // firstVisibleItemIndex = middleOffset + 17 - centeringOffset = 12000 + 15
+        // Item 17 centered: firstVisibleItemIndex = middleOffset + 17 - centeringOffset
+        // = 12000 + 15.
         val firstVisibleItemIndex = 12000 + 15
-        val pixelBasedCenterIndex = 12000 + 17  // The actual centered item (firstVisible + centeringOffset)
+        val pixelBasedCenterIndex = 12000 + 17  // firstVisible + centeringOffset
 
         // Target: selectedItem = 17
         val targetActualIndex = 17
 
-        // The code compares targetActualIndex against centerIndex-derived actual
+        // The picker compares the target with the actual index of the pixel-based center.
         val currentCenterActual = virtualToActualIndex(pixelBasedCenterIndex, items.size, true)
         val wouldScroll = targetActualIndex != currentCenterActual
 
@@ -48,10 +50,10 @@ class WheelPickerRegressionTest {
         val visibleItems = 5
         val centeringOffset = visibleItems / 2
 
-        // Current: item 17 at center
+        // Item 17 at the center.
         val pixelBasedCenterIndex = 12000 + 17
 
-        // Target: change to item 20
+        // Change to item 20.
         val targetActualIndex = 20
 
         val currentCenterActual = virtualToActualIndex(pixelBasedCenterIndex, items.size, true)
@@ -70,9 +72,9 @@ class WheelPickerRegressionTest {
         val middleStart = (CIRCULAR_MULTIPLIER / 2) * items.size  // 12000
         val actualIndex = 17
 
-        // After recentering: scrollToItem(middleStart + actualIndex - centeringOffset)
+        // Recentering scrolls to middleStart + actualIndex - centeringOffset.
         val scrollTarget = middleStart + actualIndex - centeringOffset
-        // Center item is at scrollTarget + centeringOffset
+        // The centered item is scrollTarget + centeringOffset.
         val centerVirtualIndex = scrollTarget + centeringOffset
         val centerActual = virtualToActualIndex(centerVirtualIndex, items.size, true)
 
@@ -84,7 +86,8 @@ class WheelPickerRegressionTest {
     @Test
     fun `AM PM circular mode - both values selectable`() {
         val items = listOf("AM", "PM")
-        // AM/PM is now circular (isCircular=true, threshold >= 2)
+        // AM/PM is circular: its wheel passes isCircular = true and effectiveCircular needs
+        // two or more items.
         val effectiveCircular = items.size >= 2
         assertEquals("AM/PM should be circular", true, effectiveCircular)
 
@@ -92,12 +95,12 @@ class WheelPickerRegressionTest {
         val visibleItems = 3
         val centeringOffset = visibleItems / 2  // 1
 
-        // Select "AM" (index 0)
+        // "AM" (index 0)
         val amInitial = middleOffset + 0 - centeringOffset  // 999
         val amCenter = virtualToActualIndex(amInitial + centeringOffset, items.size, true)
         assertEquals("AM should be at center", 0, amCenter)
 
-        // Select "PM" (index 1)
+        // "PM" (index 1)
         val pmInitial = middleOffset + 1 - centeringOffset  // 1000
         val pmCenter = virtualToActualIndex(pmInitial + centeringOffset, items.size, true)
         assertEquals("PM should be at center", 1, pmCenter)
@@ -110,10 +113,10 @@ class WheelPickerRegressionTest {
         val centeringOffset = visibleItems / 2
         val middleOffset = (CIRCULAR_MULTIPLIER / 2) * items.size
 
-        // Currently showing AM: firstVisible = 1000 + 0 - 1 = 999
+        // AM showing: firstVisible = 1000 + 0 - 1 = 999.
         val currentFirstVisible = middleOffset + 0 - centeringOffset
 
-        // Switch to PM (index 1)
+        // Switch to PM (index 1).
         val targetVirtualIndex = actualToNearestVirtualIndex(
             1, currentFirstVisible, items.size, isCircular = true
         )
@@ -127,18 +130,16 @@ class WheelPickerRegressionTest {
 
     @Test
     fun `initial render fallback uses firstVisibleItemIndex`() {
-        // On first render, layoutInfo.visibleItemsInfo might be empty
-        // The centerIndex falls back to firstVisibleItemIndex
-        // For circular with centeringOffset, firstVisibleItemIndex is the TOP item,
-        // not the center. The LaunchedEffect reads centerIndex which on fallback
-        // points to the top item. This is OK because the actual pixel-based center
-        // detection takes over on the next frame once layout completes.
+        // Before the first layout, layoutInfo.visibleItemsInfo can be empty. This inline
+        // copy falls back to firstVisibleItemIndex, the top item; the picker's fallback is
+        // firstVisibleItemIndex + centeringOffset, which this test doesn't model. The
+        // pixel-based pick takes over once layout completes.
 
         val visibleItemsInfo = emptyList<Any>()
         val firstVisibleItemIndex = 12017  // middleOffset + 17
 
         val centerIndex = if (visibleItemsInfo.isEmpty()) {
-            firstVisibleItemIndex  // Fallback to first visible
+            firstVisibleItemIndex
         } else {
             -1
         }
@@ -152,7 +153,7 @@ class WheelPickerRegressionTest {
     fun `wrap detection still works with pixel-based centerIndex`() {
         val items = (0..23).toList()
 
-        // Scenario: User scrolls from hour 23 to hour 0 (wrap)
+        // Scrolling from hour 23 to hour 0 wraps.
         val previousActualIndex = 23
         val currentCenterIndex = 12000 + 0  // Now at hour 0
         val currentActualIndex = virtualToActualIndex(currentCenterIndex, items.size, true)
@@ -160,7 +161,7 @@ class WheelPickerRegressionTest {
         val wrapped = abs(currentActualIndex - previousActualIndex) > items.size / 2
         assertEquals("Should detect wrap from 23 to 0", true, wrapped)
 
-        // Non-wrap case: 22 to 23
+        // 22 to 23 doesn't.
         val previousActualIndex2 = 22
         val currentActualIndex2 = 23
         val wrapped2 = abs(currentActualIndex2 - previousActualIndex2) > items.size / 2
@@ -171,7 +172,7 @@ class WheelPickerRegressionTest {
 
     @Test
     fun `visual highlighting uses pixel-based centerIndex`() {
-        val centerIndex = 12017  // The pixel-based center
+        val centerIndex = 12017  // the pixel-based center
 
         // Items near center
         val item17VirtualIndex = 12017

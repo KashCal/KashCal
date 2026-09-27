@@ -10,15 +10,15 @@ import org.junit.jupiter.api.Test
 import java.time.Duration
 
 /**
- * Comprehensive tests for ICalCalendar model per RFC 5545 and RFC 7986.
- *
- * Tests cover:
- * - Calendar construction
- * - RFC 5545 properties (PRODID, VERSION, CALSCALE, METHOD)
- * - RFC 7986 extensions (NAME, SOURCE, COLOR, REFRESH-INTERVAL, IMAGE)
- * - Non-standard properties (X-WR-CALNAME, X-APPLE-CALENDAR-COLOR)
- * - Component access (events, todos, journals)
- * - Edge cases
+ * Tests the ICalCalendar model (RFC 5545, RFC 7986):
+ * - construction and the RFC 5545 properties PRODID, VERSION, CALSCALE and METHOD
+ * - the RFC 7986 properties NAME, SOURCE, COLOR, REFRESH-INTERVAL and IMAGE
+ * - X-WR-CALNAME and X-APPLE-CALENDAR-COLOR, and effectiveName and effectiveColor, which
+ *   prefer the RFC 7986 property and fall back to the X- one
+ * - component access and counts for events, todos and journals
+ * - the iTIP methods REQUEST, REPLY, CANCEL and PUBLISH, and no method
+ * - edge cases: null PRODID, every optional field, equality, copy, empty and repeated events
+ * - the ICalTodo and ICalJournal models and their status enums
  */
 class ICalCalendarTest {
 

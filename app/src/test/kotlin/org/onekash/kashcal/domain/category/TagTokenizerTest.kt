@@ -5,8 +5,9 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * Pure-logic tests for [TagTokenizer] — the single owner of the "#tag" grammar,
- * shared by Quick Add extraction and the form's inline "#" autocomplete.
+ * Tests [TagTokenizer], the owner of the "#tag" grammar shared by Quick Add extraction and the
+ * event form's inline "#" autocomplete: [TagTokenizer.extract],
+ * [TagTokenizer.trailingHashPrefix] and [TagTokenizer.stripToken].
  */
 class TagTokenizerTest {
 
@@ -63,9 +64,9 @@ class TagTokenizerTest {
     fun `over-length tag is rejected, not truncated, and left in the text`() {
         val long = "a".repeat(70)
         val (text, tags) = TagTokenizer.extract("Lunch #$long")
-        // Not accepted as a (truncated) tag...
+        // Not accepted as a truncated tag,
         assertEquals(emptyList<String>(), tags)
-        // ...and the literal #word stays in the title rather than vanishing.
+        // and the literal #word stays in the title.
         assertEquals("Lunch #$long", text)
     }
 
@@ -113,12 +114,12 @@ class TagTokenizerTest {
 
     @Test
     fun `token that is not a suffix leaves the text unchanged`() {
-        // stripToken only removes the token when it's at the very end; an
-        // identical fragment earlier in the title must be left alone.
+        // stripToken removes the token only at the very end; an identical fragment earlier in
+        // the title must stay.
         assertEquals("Lunch #work", TagTokenizer.stripToken("Lunch #work", "#wo"))
     }
 
-    // ==================== boundary + grammar coverage ====================
+    // ==================== boundaries and grammar ====================
 
     @Test
     fun `tag of exactly the max length is accepted`() {
@@ -138,7 +139,7 @@ class TagTokenizerTest {
 
     @Test
     fun `adjacent tags with no separator are split`() {
-        // '#' is not in the tag char class, so it terminates the preceding token.
+        // '#' isn't a tag character, so it ends the preceding token.
         val (text, tags) = TagTokenizer.extract("#a#b")
         assertEquals(listOf("a", "b"), tags)
         assertEquals("", text)

@@ -22,14 +22,13 @@ object DurationRule : ParseRule {
             val unitToken = tokens[unitIndex]
             if (unitToken.type != TokenType.UNIT) continue
 
-            // Number token may be consumed by StructuredDateRule (e.g., "2.5"),
-            // but FOR + X + UNIT pattern takes priority — skip only plain consumed NUMBERs
+            // StructuredDateRule may have consumed a decimal such as "2.5" as a date; "for X
+            // <unit>" takes it back. Any other consumed amount is skipped.
             if (context.isConsumed(numIndex) && numToken.type != TokenType.STRUCTURED_DATE) continue
 
             val unit = unitToken.value as? ChronoUnit ?: continue
             if (unit !in TIME_SCALE_UNITS) continue
 
-            // Get the amount — either a plain NUMBER or a decimal via STRUCTURED_DATE
             val totalMinutes = when (numToken.type) {
                 TokenType.NUMBER -> {
                     val amount = numToken.value as? Int ?: continue
@@ -40,7 +39,7 @@ object DurationRule : ParseRule {
                     }
                 }
                 TokenType.STRUCTURED_DATE -> {
-                    // Decimal like "2.5" matched as structured date — re-parse as double
+                    // A decimal such as "2.5" tokenizes as a structured date.
                     val amount = numToken.text.toDoubleOrNull() ?: continue
                     when (unit) {
                         ChronoUnit.HOURS -> (amount * 60).toLong()
@@ -54,8 +53,7 @@ object DurationRule : ParseRule {
             val startTime = context.resolveTime() ?: context.reference.toLocalTime()
             context.endTime = startTime.plusMinutes(totalMinutes)
 
-            // If we're reclaiming a STRUCTURED_DATE that StructuredDateRule interpreted as a date,
-            // undo that misinterpretation
+            // Taking back a decimal StructuredDateRule read as a date clears that date.
             if (numToken.type == TokenType.STRUCTURED_DATE && context.isConsumed(numIndex)) {
                 context.absoluteDate = null
                 context.dateSet = false

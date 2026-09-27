@@ -7,20 +7,16 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * Date chip on the share-card. Two distinct shapes — a single-day chip
- * with a big numeral + stacked month/dow, and a multi-day range chip
- * rendered as a single horizontal string ("MAY 31 – JUN 3") because
- * trying to cram a range into the 3-element single-day shape produced a
- * heavy, unbalanced header.
+ * Text of the share-card date chip: a single-day chip (big numeral beside a stacked month and
+ * day of week) or a multi-day chip on one line ("MAY 31 – JUN 03"). A range squeezed into the
+ * three-part single-day shape makes a heavy, unbalanced header.
  *
- * Sibling formatter audit:
- *  - [org.onekash.kashcal.util.DateTimeUtils.formatEventDate] returns a single
- *    composed string ("Thu, Dec 25"). Cannot reuse — we need three separate
- *    parts styled independently for the single-day case.
- *  - [org.onekash.kashcal.util.DateTimeUtils.formatEventDateShort] same constraint.
+ * [org.onekash.kashcal.util.DateTimeUtils.formatEventDate] and
+ * [org.onekash.kashcal.util.DateTimeUtils.formatEventDateShort] return one composed string
+ * ("Thu, Dec 25"), so they can't supply the separately styled parts.
  */
 sealed class DateChipText {
-    /** Single-day chip: big numeral + stacked month/dow on the right. */
+    /** Single-day chip: a big numeral with month and day of week stacked to its right. */
     data class Single(
         val numeral: String,
         val monthLabel: String,
@@ -28,26 +24,23 @@ sealed class DateChipText {
     ) : DateChipText()
 
     /**
-     * Multi-day chip: one horizontal label ("MAY 31 – JUN 03" / "MAY 05 – 08"
-     * / "DEC 30 – JAN 02"). Rendered at 18sp / weight 700 / letter-spaced.
-     * No DOW — the body subtitle carries that.
+     * Multi-day chip: one label such as "MAY 31 – JUN 03", "MAY 05 – 08" or "DEC 30 – JAN 02".
+     * It has no day of week; the body subtitle carries that ([DateChipFormatter.formatDowRange]).
      */
     data class Range(val label: String) : DateChipText()
 }
 
 object DateChipFormatter {
 
-    /** En-dash (U+2013) — used as the range separator. Different from a hyphen. */
+    /** Range separator: an en dash (U+2013), not a hyphen. */
     private const val EN_DASH = "–"
 
     /**
-     * Format the supplied epoch-ms timestamp into a single-day chip.
+     * Formats [timestampMs], read in [zone], as a single-day chip.
      *
-     * Numeral: locale-aware "dd" — zero-padded so single-digit dates emit
-     *   "06", lining up visually with two-digit days on neighboring chips.
-     * Month label: locale-aware "MMM", uppercased via [Locale.ROOT] (avoids
-     *   the Turkish-i / dotless-i pitfall when the device locale differs).
-     * Day-of-week label: locale-aware "EEE", uppercased via [Locale.ROOT].
+     * The numeral is "dd", zero-padded so "06" lines up with two-digit days. Month ("MMM") and
+     * day of week ("EEE") are formatted in [locale] and uppercased with [Locale.ROOT], which
+     * avoids the Turkish dotted/dotless i mapping.
      */
     fun format(timestampMs: Long, zone: ZoneId, locale: Locale): DateChipText.Single {
         val date = Instant.ofEpochMilli(timestampMs).atZone(zone).toLocalDate()
@@ -55,16 +48,11 @@ object DateChipFormatter {
     }
 
     /**
-     * Format a multi-day range into a single horizontal chip label.
+     * Formats a multi-day range as a one-line chip label. In en-US: "MAY 05 – 08" within a
+     * month, "MAY 31 – JUN 03" across months, "DEC 30 – JAN 02" across years (no year shown).
      *
-     * Examples (en-US):
-     *   same-month     → "MAY 05 – 08"
-     *   cross-month    → "MAY 31 – JUN 03"
-     *   cross-year     → "DEC 30 – JAN 02"
-     *
-     * If [startMs] and [endMs] fall on the same calendar day in [zone],
-     * returns a [DateChipText.Single] instead so the caller doesn't have
-     * to branch.
+     * Returns a [DateChipText.Single] when [startMs] and [endMs] fall on the same day in [zone],
+     * so the caller doesn't branch.
      */
     fun formatRange(
         startMs: Long,
@@ -85,8 +73,7 @@ object DateChipFormatter {
         val endMonth = DateTimeFormatter.ofPattern("MMM", locale).format(endDate)
             .uppercase(Locale.ROOT)
 
-        // Same month: "MAY 05 – 08" — month appears once.
-        // Cross-month: "MAY 31 – JUN 03" — both months appear.
+        // Within one month the month is shown once; across months both are shown.
         val label = if (startMonth == endMonth) {
             "$startMonth $startDay $EN_DASH $endDay"
         } else {
@@ -96,11 +83,10 @@ object DateChipFormatter {
     }
 
     /**
-     * Day-of-week range as it should appear in the body subtitle for a
-     * multi-day event: "Sun – Wed", "Tue – Fri", etc.
+     * Formats the day-of-week range for a multi-day event's body subtitle, e.g. "Sun – Wed", or
+     * one day name when both fall on the same day in [zone].
      *
-     * Title case (not all-caps) to differ from the chip label and read
-     * as natural language in the body.
+     * Kept in the locale's own case, unlike the uppercase chip, so it reads as body text.
      */
     fun formatDowRange(
         startMs: Long,

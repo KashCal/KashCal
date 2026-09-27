@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -48,6 +49,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -246,7 +248,7 @@ private fun CalendarLegend(breakdown: List<CalendarHours>) {
 }
 
 @Composable
-private fun DailyDistributionChart(days: List<DayHours>, period: AnalysisPeriod) {
+internal fun DailyDistributionChart(days: List<DayHours>, period: AnalysisPeriod) {
     val maxMinutes = days.maxOfOrNull { it.minutes } ?: return
     if (maxMinutes == 0L) return
 
@@ -297,8 +299,9 @@ private fun WeekDailyChart(days: List<DayHours>, maxMinutes: Long, chartDescript
                                 .fillMaxWidth(fraction)
                                 .height(16.dp)
                                 .clip(RoundedCornerShape(4.dp))
-                                .background(barColor)
-                        )
+                        ) {
+                            DaySegments(day = day, vertical = false, fallbackColor = barColor)
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.width(8.dp))
@@ -346,23 +349,78 @@ private fun MonthDailyChart(days: List<DayHours>, maxMinutes: Long, chartDescrip
                             .height(32.dp),
                         contentAlignment = Alignment.BottomCenter
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(if (!day.isInMonth) 2.dp else height)
-                                .clip(RoundedCornerShape(2.dp))
-                                .background(
-                                    if (!day.isInMonth) emptyColor
-                                    else if (day.minutes == 0L) emptyColor.copy(alpha = 0.5f)
-                                    else barColor
+                        val barModifier = Modifier
+                            .fillMaxWidth()
+                            .height(if (!day.isInMonth) 2.dp else height)
+                            .clip(RoundedCornerShape(2.dp))
+                        if (!day.isInMonth || day.minutes == 0L) {
+                            Box(
+                                modifier = barModifier.background(
+                                    if (!day.isInMonth) emptyColor else emptyColor.copy(alpha = 0.5f)
                                 )
-                        )
+                            )
+                        } else {
+                            Box(modifier = barModifier) {
+                                DaySegments(day = day, vertical = true, fallbackColor = barColor)
+                            }
+                        }
                     }
                 }
             }
         }
     }
 }
+
+/**
+ * Fills a day bar with one segment per calendar in [DayHours.calendars], sized by minutes. The
+ * first calendar sits at the start edge ([vertical] false) or at the bottom ([vertical] true).
+ * Entries with no minutes are skipped (a zero weight would throw); a day with no drawable
+ * entry is filled with [fallbackColor].
+ */
+@Composable
+private fun DaySegments(day: DayHours, vertical: Boolean, fallbackColor: Color) {
+    val segments = day.calendars.filter { it.minutes > 0 }
+    if (segments.isEmpty()) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(fallbackColor)
+                .testTag(insightsDayFallbackTag(day.dayCode))
+        )
+        return
+    }
+    if (vertical) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            segments.asReversed().forEach { cal ->
+                Box(
+                    modifier = Modifier
+                        .weight(cal.minutes.toFloat())
+                        .fillMaxWidth()
+                        .daySegment(day.dayCode, cal)
+                )
+            }
+        }
+    } else {
+        Row(modifier = Modifier.fillMaxSize()) {
+            segments.forEach { cal ->
+                Box(
+                    modifier = Modifier
+                        .weight(cal.minutes.toFloat())
+                        .fillMaxHeight()
+                        .daySegment(day.dayCode, cal)
+                )
+            }
+        }
+    }
+}
+
+private fun Modifier.daySegment(dayCode: Int, cal: CalendarHours): Modifier =
+    background(Color(cal.color)).testTag(insightsDaySegmentTag(dayCode, cal.calendarId))
+
+internal fun insightsDaySegmentTag(dayCode: Int, calendarId: Long): String =
+    "insights_day_segment_${dayCode}_$calendarId"
+
+internal fun insightsDayFallbackTag(dayCode: Int): String = "insights_day_fallback_$dayCode"
 
 @Composable
 private fun InsightCard(insight: Insight) {

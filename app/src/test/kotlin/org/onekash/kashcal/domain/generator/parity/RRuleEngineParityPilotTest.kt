@@ -5,23 +5,19 @@ import org.onekash.kashcal.domain.generator.parity.fixtures.CriticalBugCorpus
 import org.onekash.kashcal.domain.generator.parity.fixtures.RfcExamplesCorpus
 
 /**
- * Pilot run — 10 curated cases (5 Pool A + 5 Pool B) through the harness
- * to check whether the full 85-120 case run will yield actionable data.
+ * Runs a pilot of 10 cases (the first 5 of Pool A and of Pool B) through the harness to check
+ * whether the full corpus run will yield actionable data.
  *
- * If >80% of divergences are Category B
- * (RFC ambiguity) with no Category A bugs, the full corpus run will likely
- * produce more stalemate data than actionable findings. The caller should
- * inspect the printed summary before deciding to proceed.
+ * If over 80% of divergences are Category B (RFC ambiguity) with no Category A bug, the full run
+ * will likely produce more stalemate than findings. Read the printed summary before proceeding.
  *
- * Test behavior: the test always PASSES. Divergences are DATA, not
- * failures — see [RRuleEngineParityReportTest] for the same philosophy
- * applied to the full corpus. The test prints a per-case summary and a
- * header that identifies whether the pilot recommends proceeding.
+ * The test never asserts, so it passes: divergences are data, as in
+ * [RRuleEngineParityReportTest]. It prints the classification counts, a per-case breakdown and a
+ * recommendation.
  *
- * Per-case @Timeout is not used at the JUnit method level because the
- * harness wraps each engine call with its own wall-clock timeout (see
- * [ParityHarnessRunner.TIMEOUT_SECONDS]). A single hung case won't hang
- * the whole method — it becomes a Category C error.
+ * There is no JUnit @Timeout: the harness bounds each engine call with its own wall-clock
+ * timeout ([ParityHarnessRunner.TIMEOUT_SECONDS]), so a hung case becomes a Category C error
+ * instead of hanging the method.
  */
 class RRuleEngineParityPilotTest {
 

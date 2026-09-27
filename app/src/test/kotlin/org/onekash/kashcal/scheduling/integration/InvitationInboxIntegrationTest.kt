@@ -36,29 +36,30 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * End-to-end T2.5 invitation inbox flow against real CalDAV servers.
+ * Tests the invitation inbox end to end against real CalDAV servers.
  *
- * Covers the contract called out in the T2.5 plan:
- * 1. Server holds an event whose authenticated user is a NEEDS-ACTION attendee.
- * 2. Pull (fetch + parse + map + persist) lands the event + attendees in Room.
- * 3. [EventReader.getPendingInvitations] surfaces it as a [PendingInvitation].
- * 4. RSVP write path ([IcsPatcher.patchAttendeeReply] -> [CalDavClient.updateEvent])
- *    succeeds; re-fetched ICS reflects the new partstat (or documents the
- *    server-side strip quirk).
+ * Per server:
+ * 1. Create an event on the server whose authenticated user is a NEEDS-ACTION attendee.
+ * 2. Pull it (fetch, parse, map, persist) into Room with its attendees.
+ * 3. [EventReader.getPendingInvitations] surfaces it as a
+ *    [org.onekash.kashcal.domain.reader.PendingInvitation].
+ * 4. The RSVP write ([IcsPatcher.patchAttendeeReply], then [CalDavClient.updateEvent])
+ *    succeeds, and the re-fetched ICS shows PARTSTAT=ACCEPTED. A server that no longer
+ *    returns the self ATTENDEE after the PUT counts as verified.
  *
- * Auto-skips per server when credentials are missing or the server is
- * unreachable. Uses Robolectric (not [org.junit.runners.Parameterized]) so
- * each test gets a real in-memory Room DB; iterates over servers inside the
- * test body and skips servers that aren't configured.
+ * A server is passed over when it has no credentials, is unreachable, has no calendar, fails
+ * the create or first fetch, or drops the self ATTENDEE on the first GET. A failed check in
+ * steps 3 and 4 fails the test. The test skips (`assumeTrue`) when no server verifies the
+ * round trip. Uses Robolectric (not [org.junit.runners.Parameterized]) so each test gets a real
+ * in-memory Room DB, and iterates over the servers inside the test body.
  *
  * Run via `./gradlew testDebugUnitTest -Pintegration --tests
  * '*InvitationInboxIntegrationTest*'`.
  *
- * Servers that route ATTENDEEs through their iSchedule pipeline when the
- * authenticated user is the ATTENDEE-of-self
- * ([CalDavServerConfig.stripsAttendeesOnSyntheticOrganizer]) are skipped:
- * they never expose the attendee row on GET, so there is nothing for the
- * inbox to surface. This is the same documented quirk
+ * Servers whose scheduling pipeline strips ATTENDEEs under a synthetic ORGANIZER
+ * ([CalDavServerConfig.stripsAttendeesOnSyntheticOrganizer]) are left out: they never
+ * expose the attendee row on GET, so there is nothing for the inbox to surface. This is the
+ * same quirk
  * [org.onekash.kashcal.sync.integration.multiserver.MultiServerAttendeePersistenceTest]
  * tolerates.
  */
@@ -90,9 +91,7 @@ class InvitationInboxIntegrationTest {
 
     @Test
     fun `pending invite surfaces from real server, RSVP writes back`() = runBlocking {
-        // Iterate servers; skip the ones that aren't configured or strip self
-        // ATTENDEEs on the wire. Test passes if at least one configured server
-        // demonstrates the full roundtrip.
+        // Passes if at least one server shows the full round trip; skips otherwise.
         val candidates = CalDavServerConfig.allServers()
             .filterNot { it.stripsAttendeesOnSyntheticOrganizer }
         assumeTrue(
@@ -162,8 +161,7 @@ class InvitationInboxIntegrationTest {
 
         val fetchedEtag = fetched.etag ?: createEtag
 
-        // Reset DB for this server iteration so the inbox query only sees
-        // this server's rows.
+        // Reset the DB per server so the inbox query sees only this server's rows.
         database.clearAllTables()
         val (accountId, calendarId) = seedAccountAndCalendar(ctx, calendarUrl)
         val eventId = persistFromIcs(fetched.icalData, eventUrl, fetchedEtag, calendarId)
@@ -240,11 +238,11 @@ class InvitationInboxIntegrationTest {
 
     private fun buildInviteFixture(ctx: ServerContext, uid: String): String {
         val selfAddr = ctx.creds.username
-        // Synthetic external ORGANIZER so the inbox builder treats this as a
-        // real invite (organizer != self). Servers that route ATTENDEEs through
-        // iSchedule when ORGANIZER doesn't match the auth account are filtered
-        // out via stripsAttendeesOnSyntheticOrganizer; remaining servers
-        // (Baikal, Nextcloud, SOGo) preserve the self-attendee row on GET.
+        // A synthetic external ORGANIZER makes this a real invite (organizer != self).
+        // Servers that strip ATTENDEEs when the ORGANIZER doesn't match the authenticated
+        // account are filtered out by stripsAttendeesOnSyntheticOrganizer. Baikal, Nextcloud
+        // and SOGo keep the self-attendee row on GET; any remaining server that drops it is
+        // passed over in runRoundtrip.
         return """
 BEGIN:VCALENDAR
 VERSION:2.0

@@ -9,8 +9,8 @@ import org.robolectric.RobolectricTestRunner
 import java.time.DayOfWeek
 
 /**
- * Unit tests for RruleBuilder.
- * Verifies RFC 5545 RRULE generation and parsing.
+ * Tests [RruleBuilder]: building, WKST emission, parsing (frequency, full rule, extra BY*
+ * parts), round trips, display, day abbreviations and the end date in the summary.
  */
 @RunWith(RobolectricTestRunner::class)
 class RruleBuilderTest {
@@ -51,15 +51,14 @@ class RruleBuilderTest {
         assertEquals("FREQ=WEEKLY;INTERVAL=2;BYDAY=TU,TH", result)
     }
 
-    // ==================== WKST Emission (Issue 214) ====================
-    // RFC 5545 §3.3.10: WKST is "only useful when a WEEKLY RECUR is set to
-    // repeat on multiple weekdays." We emit only when interval>=2 AND
-    // days.size>=2 — the surface where WKST actually changes occurrences.
+    // ==================== WKST Emission (#214) ====================
+    // RFC 5545 §3.3.10: WKST "is significant when a WEEKLY "RRULE" has an interval greater
+    // than 1, and a BYDAY rule part is specified". The builder emits it only when
+    // interval >= 2 and days.size >= 2.
 
     @Test
     fun `weekly with biweekly multi-day BYDAY and WKST=SU emits WKST`() {
-        // BYDAY order follows the builder's Monday-first DAY_ORDER (existing
-        // convention; RFC says BYDAY order doesn't affect expansion).
+        // BYDAY is emitted Monday first.
         val days = setOf(DayOfWeek.SUNDAY, DayOfWeek.TUESDAY, DayOfWeek.THURSDAY)
         val result = RruleBuilder.weekly(2, days, wkst = DayOfWeek.SUNDAY)
         assertEquals("FREQ=WEEKLY;INTERVAL=2;BYDAY=TU,TH,SU;WKST=SU", result)
@@ -94,8 +93,8 @@ class RruleBuilderTest {
 
     @Test
     fun `weekly single-day BYDAY does not emit WKST even with wkst arg`() {
-        // RFC: WKST has no effect when only one day matches per week. Gate is
-        // safe for KashCal because all callers keep DTSTART's day in BYDAY.
+        // WKST can't change a single-day rule whose day is DTSTART's. The gate is safe for
+        // KashCal because all callers keep DTSTART's day in BYDAY.
         val days = setOf(DayOfWeek.MONDAY)
         val result = RruleBuilder.weekly(2, days, wkst = DayOfWeek.SUNDAY)
         assertEquals("FREQ=WEEKLY;INTERVAL=2;BYDAY=MO", result)
@@ -270,19 +269,18 @@ class RruleBuilderTest {
 
     @Test
     fun `parseRrule extracts date-value UNTIL end condition`() {
-        // RFC 5545 §3.3.10 allows UNTIL to be a DATE value (no T...Z).
-        // Servers paired with VALUE=DATE DTSTART emit this form.
+        // RFC 5545 §3.3.10 allows UNTIL to be a DATE value (no T...Z). Servers pair this form
+        // with a VALUE=DATE DTSTART.
         val result = RruleBuilder.parseRrule("FREQ=WEEKLY;UNTIL=20260106", DayOfWeek.MONDAY, 1, 1)
         assertTrue("expected Until, got ${result.endCondition}", result.endCondition is EndCondition.Until)
     }
 
-    // ==================== Extra-token preservation (BYMONTH / BYWEEKNO / BYYEARDAY / BYSETPOS) ====================
+    // ========== Extra-token preservation (BYMONTH, BYWEEKNO, BYYEARDAY, BYSETPOS) ==========
 
     @Test
     fun `parseRrule captures BYMONTH and BYMONTHDAY as extras for yearly rule`() {
-        // FREQ=YEARLY: the picker doesn't render BYMONTHDAY for yearly rules
-        // (only for monthly), so BYMONTHDAY is an extra alongside BYMONTH.
-        // Both must round-trip verbatim to preserve "every Jan 15" semantics.
+        // The picker models BYMONTHDAY only for monthly rules, so on FREQ=YEARLY it is an extra
+        // alongside BYMONTH. Both must round-trip verbatim to keep "every Jan 15".
         val result = RruleBuilder.parseRrule(
             "FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15", DayOfWeek.MONDAY, 1, 1
         )
@@ -316,10 +314,9 @@ class RruleBuilderTest {
 
     @Test
     fun `parseRrule preserves frequency for BYMONTH-bearing rule (routing to CUSTOM happens at option layer)`() {
-        // parseRrule keeps the source FREQ verbatim so mapFrequencyToCustomUnit
-        // can pick the right unit (YEAR for FREQ=YEARLY). The picker forces
-        // FrequencyOption.CUSTOM when extras are present — that's the layer
-        // where we want the chip routing decision to live.
+        // parseRrule keeps the source FREQ so mapFrequencyToCustomUnit can pick the unit (YEAR
+        // for FREQ=YEARLY). The switch to FrequencyOption.CUSTOM for a rule with extras belongs
+        // to selectInitialFrequencyOption, not the parser.
         val result = RruleBuilder.parseRrule(
             "FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15", DayOfWeek.MONDAY, 1, 1
         )
@@ -423,9 +420,8 @@ class RruleBuilderTest {
 
     @Test
     fun `formatForDisplay monthly with ordinal-less BYDAY does not render 0th`() {
-        // FREQ=MONTHLY;BYDAY=MO is RFC-valid ('every Monday of every month').
-        // The ordinal-greedy display regex used to match an empty ordinal and
-        // render 'Monthly on 0th Mon'.
+        // FREQ=MONTHLY;BYDAY=MO is RFC-valid ('every Monday of every month'). The display's
+        // nth-weekday regex needs a digit, so this doesn't render as 'Monthly on 0th Mon'.
         val result = RruleBuilder.formatForDisplay("FREQ=MONTHLY;BYDAY=MO")
         assertTrue("must not render 0th: $result", !result.contains("0th") && !result.contains("0 "))
     }
@@ -459,4 +455,81 @@ class RruleBuilderTest {
         assertEquals("SA", RruleBuilder.toDayAbbrev(DayOfWeek.SATURDAY))
         assertEquals("SU", RruleBuilder.toDayAbbrev(DayOfWeek.SUNDAY))
     }
+
+    // ==================== End date in the summary ====================
+    //
+    // A date-time UNTIL is an instant (RFC 5545 section 3.3.10); the summary names
+    // the date it falls on in the event's zone. A date UNTIL is shown as written.
+
+    private val english = RruleDisplayStrings.english()
+    private val losAngeles = java.time.ZoneId.of("America/Los_Angeles")
+
+    @Test
+    fun `an end written in UTC is shown on the date it falls on in the event's zone`() {
+        assertEquals(
+            RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20261231", english),
+            RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20270101T075959Z", english, untilZone = losAngeles),
+        )
+    }
+
+    @Test
+    fun `the RFC daily-until example is shown ending on its last occurrence day`() {
+        // RFC 5545 section 3.8.5.3: DTSTART 09:00 New York, UNTIL=19971224T000000Z, last occurrence
+        // Dec 23.
+        assertEquals(
+            RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=19971223", english),
+            RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=19971224T000000Z", english, untilZone = java.time.ZoneId.of("America/New_York")),
+        )
+    }
+
+    @Test
+    fun `without an event zone the summary shows the UTC date as before`() {
+        assertEquals(
+            RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20270101", english),
+            RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20270101T075959Z", english),
+        )
+    }
+
+    @Test
+    fun `a date-only end is shown as written whatever the zone`() {
+        assertEquals(
+            RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20261231", english),
+            RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20261231", english, untilZone = java.time.ZoneId.of("Asia/Tokyo")),
+        )
+    }
+
+    @Test
+    fun `the split summary shows the end in the event's zone too`() {
+        val expected = RruleBuilder.formatForDisplayParts("FREQ=WEEKLY;UNTIL=20261231", english)
+        val actual = RruleBuilder.formatForDisplayParts("FREQ=WEEKLY;UNTIL=20270101T075959Z", english, untilZone = losAngeles)
+        assertEquals(expected, actual)
+    }
+
+    @Test
+    fun `a leap-second end time is read as second 59`() {
+        // RFC 5545 section 3.3.12: without leap-second support, second 60 SHOULD be read as 59.
+        assertEquals(
+            RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20261231", english),
+            RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20270101T075960Z", english, untilZone = losAngeles),
+        )
+    }
+
+    @Test
+    fun `an end time that can't be read falls back to its date`() {
+        assertEquals(
+            RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20261231", english),
+            RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20261231T256000Z", english, untilZone = losAngeles),
+        )
+    }
+
+    @Test
+    fun `an end date that can't exist is left out of the summary`() {
+        val noEnd = RruleBuilder.formatForDisplay("FREQ=DAILY", english)
+        assertEquals(noEnd, RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20260230", english))
+        assertEquals(noEnd, RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20261332T120000Z", english, untilZone = losAngeles))
+        assertNull(RruleBuilder.formatForDisplayParts("FREQ=DAILY;UNTIL=20260230", english).second)
+        // The same impossible date with a time is left out too, not moved to Feb 28.
+        assertEquals(noEnd, RruleBuilder.formatForDisplay("FREQ=DAILY;UNTIL=20260230T120000Z", english, untilZone = losAngeles))
+    }
 }
+

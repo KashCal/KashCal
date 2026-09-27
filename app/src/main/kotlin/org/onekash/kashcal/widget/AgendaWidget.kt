@@ -18,25 +18,15 @@ import dagger.hilt.components.SingletonComponent
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 
 /**
- * Today's Agenda widget showing events for the current day.
+ * Today's Agenda widget: the date header over today's events, with time and calendar color.
  *
- * Features:
- * - Shows today's date in header
- * - Lists upcoming events with time and calendar color
- * - Past events shown grayed out with strikethrough
- * - Tap event to open quick view
- * - Tap empty state to create new event
+ * Past events render dimmed with a strikethrough. Tapping an event opens its quick view; tapping
+ * the empty state creates an event.
  *
- * Updates:
- * - On event create/update/delete
- * - On sync completion
- * - At midnight (new day)
- * - Periodically (every 30 minutes)
- *
- * State management:
- * - [WIDGET_REFRESH_STAMP] stored in Glance PreferencesGlanceStateDefinition
- * - Data fetch lives inside [provideContent] via [fetchAgendaData] so Glance 1.1's
- *   session-scoped recomposition actually re-runs the fetch (see MonthWidget KDoc)
+ * Refreshes on each [WidgetUpdateManager.updateAllWidgets] call (for example an event write, a
+ * sync, midnight or a settings change) and every 30 minutes. [WIDGET_REFRESH_STAMP] lives in
+ * [PreferencesGlanceStateDefinition]; the fetch runs inside [provideContent] via
+ * [fetchAgendaData] so a Glance 1.1 session re-runs it on update (see [MonthWidget]).
  */
 class AgendaWidget : GlanceAppWidget() {
 
@@ -56,19 +46,18 @@ class AgendaWidget : GlanceAppWidget() {
         val entryPoint = EntryPointAccessors.fromApplication(context, AgendaWidgetEntryPoint::class.java)
         val repository = entryPoint.widgetDataRepository()
         val dataStore = KashCalDataStore(context)
-        // Resolve the accent BEFORE provideContent so the very first RemoteViews already carry the
-        // picked seed. Seeding produceState with null would render one frame on the platform dynamic
-        // palette (null ?: GlanceTheme.colors) and only swap to the seed on a later push — which, if
-        // the host snapshots the widget before that push lands, leaves a SEED user showing wallpaper
-        // colors ("randomly didn't take the tint"). null here still means the genuine DYNAMIC source.
+        // Resolve the accent before provideContent so the first RemoteViews carry the picked seed.
+        // Seeding produceState with null renders a frame on the platform dynamic palette, and a
+        // host that snapshots it then leaves a seed user on wallpaper colors. Null colors mean the
+        // DYNAMIC source on the system face.
         val initialAccent = resolveWidgetAccentColors(context, dataStore).colors
 
         provideContent {
             val prefs = currentState<Preferences>()
             val stamp = prefs[WIDGET_REFRESH_STAMP] ?: 0L
             val isRefreshing = isRefreshCueActive(prefs[WIDGET_REFRESHING_UNTIL], System.currentTimeMillis())
-            // Empty-events seed: "No events today" may flash briefly on cold start
-            // before fetchAgendaData resolves — accepted trade-off, no dedicated loading UI.
+            // "No events today" may flash on cold start until fetchAgendaData resolves; there is
+            // no loading UI.
             val data by produceState(
                 initialValue = AgendaData(
                     events = emptyList(),
@@ -100,9 +89,9 @@ class AgendaWidget : GlanceAppWidget() {
     }
 
     /**
-     * Renders sample events into the widget picker so this widget is distinguishable
-     * from the other four. Deliberately reads no stored data: previews are published
-     * once per app version, so anything user-specific would be frozen at publish time.
+     * Renders sample events into the widget picker so this widget stands apart from the other
+     * four. Reads no stored data: previews are published once per app version, so anything
+     * user-specific would be frozen at publish time.
      */
     override suspend fun providePreview(context: Context, widgetCategory: Int) {
         provideContent { AgendaPreviewContent(context) }

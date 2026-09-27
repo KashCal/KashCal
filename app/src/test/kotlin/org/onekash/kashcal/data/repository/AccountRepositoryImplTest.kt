@@ -38,12 +38,13 @@ import org.onekash.kashcal.sync.contacts.FakeContactsProviderRepository
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 
 /**
- * Unit tests for AccountRepositoryImpl.
- *
- * Tests:
- * - Account CRUD operations
- * - deleteAccount with full cleanup (WorkManager, reminders, credentials)
- * - Credential delegation
+ * Tests [AccountRepositoryImpl]:
+ * - deleteAccount cleanup: sync work (shared periodic work only after the last syncable
+ *   account), reminders, pending operations, credentials, the cascade, and the contacts
+ *   system account purge with its same-email sibling rule
+ * - setContactSyncEnabled: registering or purging the contacts account, clearing address-book
+ *   rows, and the [ContactPurgeOutcome] it reports
+ * - CRUD, sync metadata and credential delegation to the DAO and [CredentialManager]
  */
 class AccountRepositoryImplTest {
 
@@ -69,9 +70,8 @@ class AccountRepositoryImplTest {
         every { Log.e(any(), any()) } returns 0
         every { Log.e(any(), any(), any()) } returns 0
 
-        // Data-bearing DAOs are explicit (not relaxed) so an unexpected query
-        // throws instead of silently returning null/empty. Defaults below
-        // reproduce the previous relaxed behavior; per-test stubs override them.
+        // Data-bearing DAOs are explicit, not relaxed, so an unstubbed query throws instead of
+        // silently returning null or empty. These are the defaults; per-test stubs override them.
         accountsDao = mockk()
         calendarsDao = mockk()
         eventsDao = mockk()
@@ -93,8 +93,8 @@ class AccountRepositoryImplTest {
         coEvery { calendarsDao.getByAccountIdOnce(any()) } returns emptyList()
         coEvery { eventsDao.getAllMasterEventsForCalendar(any()) } returns emptyList()
 
-        // Purge of the contacts system account must also drop the delta sync
-        // cursor; stub the DAO so the clear is verifiable (and unstubbed use throws).
+        // A contacts account purge also deletes the address-book rows holding the sync-tokens;
+        // stubbed so the delete is verifiable and any other call throws.
         addressBookDao = mockk()
         coEvery { addressBookDao.deleteByAccountId(any()) } just Runs
 
@@ -104,8 +104,8 @@ class AccountRepositoryImplTest {
         workManager = mockk(relaxed = true)
         // Side-effect collaborator (Unit-returning, no data): relaxed is fine.
         contactSystemAccountRegistrar = mockk(relaxed = true)
-        // Data-bearing (row store + counts drive the post-purge verify): use the
-        // canonical fake, not a relaxed mock, so a leftover-rows state is real.
+        // Data-bearing (its rows and counts decide the purge outcome): the shared fake, not a
+        // relaxed mock, keeps a leftover-rows state real.
         contactsProviderRepository = FakeContactsProviderRepository()
 
         accountRepository = AccountRepositoryImpl(
@@ -131,20 +131,16 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount cancels WorkManager jobs first`() = runBlocking {
-        // Setup
         val accountId = 1L
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
 
-        // Execute
         accountRepository.deleteAccount(accountId)
 
-        // Verify WorkManager jobs cancelled
         verify { workManager.cancelUniqueWork("sync_account_1") }
     }
 
     @Test
     fun `deleteAccount cancels all reminders before cascade delete`() = runBlocking {
-        // Setup
         val accountId = 1L
         val calendar = Calendar(
             id = 10L,
@@ -159,17 +155,15 @@ class AccountRepositoryImplTest {
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns listOf(calendar)
         coEvery { eventsDao.getAllMasterEventsForCalendar(10L) } returns listOf(event1, event2)
 
-        // Execute
         accountRepository.deleteAccount(accountId)
 
-        // Verify reminders cancelled for BOTH events
+        // Reminders are cancelled for both events.
         coVerify { reminderScheduler.cancelRemindersForEvent(100L) }
         coVerify { reminderScheduler.cancelRemindersForEvent(101L) }
     }
 
     @Test
     fun `deleteAccount deletes pending operations for account events`() = runBlocking {
-        // Setup
         val accountId = 1L
         val calendar = Calendar(
             id = 10L,
@@ -183,46 +177,39 @@ class AccountRepositoryImplTest {
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns listOf(calendar)
         coEvery { eventsDao.getAllMasterEventsForCalendar(10L) } returns listOf(event)
 
-        // Execute
         accountRepository.deleteAccount(accountId)
 
-        // Verify pending ops deleted
         coVerify { pendingOperationsDao.deleteForEvent(100L) }
     }
 
     @Test
     fun `deleteAccount handles credential deletion failure gracefully`() = runBlocking {
-        // Setup
         val accountId = 1L
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
         coEvery { credentialManager.deleteCredentials(accountId) } throws RuntimeException("Encryption error")
 
-        // Execute - should NOT throw
+        // The credential failure is logged and ignored; the cascade still runs.
         accountRepository.deleteAccount(accountId)
 
-        // Verify cascade delete still happens
         coVerify { accountsDao.deleteById(accountId) }
     }
 
     @Test
     fun `deleteAccount performs cascade delete via Room`() = runBlocking {
-        // Setup
         val accountId = 1L
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
 
-        // Execute
         accountRepository.deleteAccount(accountId)
 
-        // Verify cascade delete called
         coVerify { accountsDao.deleteById(accountId) }
     }
 
     @Test
     fun `deleteAccount cancels shared one-shot and periodic work when last syncable account removed`() = runBlocking {
-        // The one-shot/expedited jobs are shared (single work name across all
-        // accounts): cancel them unconditionally so a replayable ENQUEUED one-shot
-        // can't resurface sync UI after the account is gone. Periodic is shared
-        // too but must only die once NO syncable account remains — here none does.
+        // The one-shot and expedited jobs have one work name shared by all accounts, so they
+        // are always cancelled: an enqueued one-shot could bring back sync UI after the account
+        // is gone. The shared periodic jobs are cancelled only once no syncable account
+        // remains, as here.
         val accountId = 1L
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
         coEvery { accountsDao.getAllOnce() } returns emptyList()
@@ -238,9 +225,9 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount cancels one-shot but keeps periodic when another syncable account remains`() = runBlocking {
-        // A CalDAV login with stored credentials still remains, so the shared
-        // periodic jobs must survive — but the shared one-shot/expedited jobs are
-        // still cancelled (a remaining account re-enqueues on its next trigger).
+        // A CalDAV login with stored credentials remains, so the shared periodic jobs must
+        // survive. The shared one-shot and expedited jobs are still cancelled; a remaining
+        // account re-enqueues on its next trigger.
         val accountId = 1L
         val remaining = mockk<Account>(relaxed = true) {
             every { id } returns 2L
@@ -261,9 +248,9 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount keeps periodic when remaining syncable account lacks credentials but another has them`() = runBlocking {
-        // "Syncable" means CalDAV-capable AND has stored credentials. A remaining
-        // CalDAV login without credentials doesn't keep periodic alive on its own,
-        // but a second one with credentials does.
+        // "Syncable" means CalDAV-capable with stored credentials. A remaining CalDAV login
+        // without credentials doesn't keep periodic work alive on its own, but a second one
+        // with credentials does.
         val accountId = 1L
         val noCreds = mockk<Account>(relaxed = true) {
             every { id } returns 2L
@@ -285,8 +272,8 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount cancels periodic when only a credential-less CalDAV account remains`() = runBlocking {
-        // A remaining CalDAV login without stored credentials cannot sync, so it
-        // must NOT keep the shared periodic jobs alive.
+        // A remaining CalDAV login without stored credentials can't sync, so it must not keep
+        // the shared periodic jobs alive.
         val accountId = 1L
         val noCreds = mockk<Account>(relaxed = true) {
             every { id } returns 2L
@@ -304,7 +291,7 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount removes the per-login contacts system account`() = runBlocking {
-        // Setup: a CardDAV login (contacts-capable) resolves to a login email.
+        // A CardDAV-capable login, resolved to its login email.
         val accountId = 1L
         val account = mockk<Account>(relaxed = true) {
             every { id } returns accountId
@@ -315,12 +302,10 @@ class AccountRepositoryImplTest {
         coEvery { accountsDao.getAllOnce() } returns listOf(account)
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
 
-        // Execute
         accountRepository.deleteAccount(accountId)
 
-        // Verify the contacts system account was removed by login email, and
-        // that removal happens after the row is cascade-deleted (irreversible
-        // purge runs only once the reversible DB work has committed).
+        // The contacts system account is removed by login email, after the row's cascade
+        // delete: the irreversible purge runs last, so an earlier failure leaves the contacts.
         coVerifyOrder {
             accountsDao.deleteById(accountId)
             contactSystemAccountRegistrar.removeAccount("alice@example.test")
@@ -329,10 +314,9 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount keeps contacts account when another CardDAV login shares the email`() = runBlocking {
-        // Two CardDAV logins share one email (allowed — accounts are unique on
-        // provider+email+home_set_url). Deleting one must NOT purge the shared,
-        // email-named contacts account while the sibling login is still actively
-        // syncing contacts into it.
+        // Two CardDAV logins share one email (accounts are unique on provider, email and
+        // home_set_url). Deleting one must not purge the shared email-named contacts account
+        // while the sibling still syncs contacts into it.
         val accountId = 1L
         val deleting = mockk<Account>(relaxed = true) {
             every { id } returns accountId
@@ -357,9 +341,9 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount removes contacts account when the CardDAV sibling has contact sync disabled`() = runBlocking {
-        // A same-email CardDAV sibling exists but has contact sync OFF, so it holds
-        // no contacts in the shared account. It must NOT block the purge — else the
-        // deleted login's contacts are stranded on the device with nothing syncing.
+        // A same-email CardDAV sibling has contact sync off, so it holds no contacts in the
+        // shared account. It must not block the purge, or the deleted login's contacts are
+        // stranded on the device with nothing syncing them.
         val accountId = 1L
         val deleting = mockk<Account>(relaxed = true) {
             every { id } returns accountId
@@ -383,9 +367,9 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount removes contacts account when only a non-CardDAV sibling shares the email`() = runBlocking {
-        // A LOCAL/ICS sibling that happens to share the email never registered a
-        // contacts account, so it must NOT block the purge — otherwise the
-        // email-named contacts account leaks with nothing left to manage it.
+        // A LOCAL or ICS sibling sharing the email never registered a contacts account, so it
+        // must not block the purge, or the email-named contacts account leaks with nothing left
+        // to manage it.
         val accountId = 1L
         val deleting = mockk<Account>(relaxed = true) {
             every { id } returns accountId
@@ -408,9 +392,8 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount skips contacts removal for a non-CardDAV account`() = runBlocking {
-        // A LOCAL/ICS login never registers a contacts account, so deleting it
-        // must not attempt a removal. (A full-table scan still runs — but for the
-        // shared-periodic-work decision, not the contacts sibling scan.)
+        // A LOCAL or ICS login never registers a contacts account, so deleting it must not
+        // attempt a removal. getAllOnce still runs, for the shared periodic work check only.
         val accountId = 1L
         val account = mockk<Account>(relaxed = true) {
             every { id } returns accountId
@@ -427,12 +410,12 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount skips contacts removal when account no longer resolvable`() = runBlocking {
-        // Setup: no row for this id (already gone) → nothing to resolve an email.
+        // No row for this id, so there is no email to resolve.
         val accountId = 1L
         coEvery { accountsDao.getById(accountId) } returns null
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
 
-        // Execute — must not throw and must not call removeAccount with a null.
+        // Must not throw or call removeAccount.
         accountRepository.deleteAccount(accountId)
 
         verify(exactly = 0) { contactSystemAccountRegistrar.removeAccount(any()) }
@@ -441,12 +424,11 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount clears the delta cursor of an idle same-email CardDAV sibling whose contacts the purge wipes`() = runBlocking {
-        // Deleting account 7 cascade-drops its own address_books, but the purge of the
-        // shared email-keyed system account also wipes idle sibling 8's RawContacts —
-        // and sibling 8's row (and its stale cursor) survive the cascade. Clear it, or
-        // re-enabling sibling 8 later takes the incremental path and never restores the
-        // wiped contacts. The deleted account's own cursor needs no explicit clear
-        // (the FK cascade already dropped it).
+        // Deleting account 7 cascade-drops its own address_books rows, but the purge of the
+        // shared email-keyed system account also wipes idle sibling 8's RawContacts, and
+        // sibling 8's rows and sync-tokens survive the cascade. They are deleted, or re-enabling
+        // sibling 8 later takes the delta path and never restores the wiped contacts. Account
+        // 7's rows need no explicit delete; the FK cascade drops them.
         val accountId = 7L
         val deleting = mockk<Account>(relaxed = true) {
             every { id } returns accountId
@@ -460,11 +442,10 @@ class AccountRepositoryImplTest {
             every { contactSyncEnabled } returns false
         }
         coEvery { accountsDao.getById(accountId) } returns deleting
-        // getAllOnce() is read by the purge decision (pre-cascade, sees both) and then
-        // by the cursor sweep, which runs AFTER accountsDao.deleteById(7) — so by the
-        // sweep the cascade has already dropped account 7 and only the sibling remains.
-        // A single relaxed stub can't model both states, so answer positionally: first
-        // call sees both, every later call sees only the surviving sibling.
+        // getAllOnce() is read by the purge decision before accountsDao.deleteById(7), then
+        // after it by the periodic work check and the address-book delete, when only the
+        // sibling remains. One fixed stub can't model both states, so the first call sees both
+        // and every later call sees only the sibling.
         coEvery { accountsDao.getAllOnce() } returnsMany listOf(
             listOf(deleting, idleSibling),
             listOf(idleSibling),
@@ -474,15 +455,14 @@ class AccountRepositoryImplTest {
         accountRepository.deleteAccount(accountId)
 
         verify { contactSystemAccountRegistrar.removeAccount("shared@example.test") }
-        // Only the surviving sibling's cursor is cleared; the deleted account's own
-        // books went with the FK cascade, so it must never be cleared explicitly.
+        // Only the sibling's address-book rows are deleted explicitly; the deleted account's
+        // went with the FK cascade.
         coVerify(exactly = 1) { addressBookDao.deleteByAccountId(8L) }
         coVerify(exactly = 0) { addressBookDao.deleteByAccountId(7L) }
     }
 
     @Test
     fun `deleteAccount handles multiple calendars with multiple events`() = runBlocking {
-        // Setup
         val accountId = 1L
         val cal1 = Calendar(
             id = 10L,
@@ -506,10 +486,8 @@ class AccountRepositoryImplTest {
         coEvery { eventsDao.getAllMasterEventsForCalendar(10L) } returns listOf(event1, event2)
         coEvery { eventsDao.getAllMasterEventsForCalendar(20L) } returns listOf(event3)
 
-        // Execute
         accountRepository.deleteAccount(accountId)
 
-        // Verify all events cleaned up
         coVerify { reminderScheduler.cancelRemindersForEvent(100L) }
         coVerify { reminderScheduler.cancelRemindersForEvent(101L) }
         coVerify { reminderScheduler.cancelRemindersForEvent(200L) }
@@ -522,7 +500,6 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `createAccount returns generated ID`() = runBlocking {
-        // Setup
         val account = Account(
             id = 0L,
             provider = AccountProvider.CALDAV,
@@ -531,16 +508,13 @@ class AccountRepositoryImplTest {
         )
         coEvery { accountsDao.insert(account) } returns 42L
 
-        // Execute
         val result = accountRepository.createAccount(account)
 
-        // Verify
         assertEquals(42L, result)
     }
 
     @Test
     fun `getAccountById returns account from DAO`() = runBlocking {
-        // Setup
         val account = Account(
             id = 1L,
             provider = AccountProvider.CALDAV,
@@ -549,16 +523,13 @@ class AccountRepositoryImplTest {
         )
         coEvery { accountsDao.getById(1L) } returns account
 
-        // Execute
         val result = accountRepository.getAccountById(1L)
 
-        // Verify
         assertEquals(account, result)
     }
 
     @Test
     fun `getAccountByProviderAndEmail returns matching account`() = runBlocking {
-        // Setup
         val account = Account(
             id = 1L,
             provider = AccountProvider.ICLOUD,
@@ -567,16 +538,13 @@ class AccountRepositoryImplTest {
         )
         coEvery { accountsDao.getByProviderAndEmail(AccountProvider.ICLOUD, "user@icloud.com") } returns account
 
-        // Execute
         val result = accountRepository.getAccountByProviderAndEmail(AccountProvider.ICLOUD, "user@icloud.com")
 
-        // Verify
         assertEquals(account, result)
     }
 
     @Test
     fun `getAccountByProviderEmailAndHomeSetUrl returns matching account`() = runBlocking {
-        // Setup
         val account = Account(
             id = 1L,
             provider = AccountProvider.CALDAV,
@@ -590,30 +558,25 @@ class AccountRepositoryImplTest {
             )
         } returns account
 
-        // Execute
         val result = accountRepository.getAccountByProviderEmailAndHomeSetUrl(
             AccountProvider.CALDAV, "admin", "https://nextcloud.example.com/dav/calendars/admin/"
         )
 
-        // Verify
         assertEquals(account, result)
     }
 
     @Test
     fun `getAccountByProviderEmailAndHomeSetUrl returns null for different server`() = runBlocking {
-        // Setup
         coEvery {
             accountsDao.getByProviderEmailAndHomeSetUrl(
                 AccountProvider.CALDAV, "admin", "https://other-server.com/dav/calendars/admin/"
             )
         } returns null
 
-        // Execute
         val result = accountRepository.getAccountByProviderEmailAndHomeSetUrl(
             AccountProvider.CALDAV, "admin", "https://other-server.com/dav/calendars/admin/"
         )
 
-        // Verify
         assertNull(result)
     }
 
@@ -621,28 +584,22 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `getAllAccountsFlow returns flow from DAO`() = runBlocking {
-        // Setup
         val accounts = listOf(
             Account(id = 1L, provider = AccountProvider.ICLOUD, email = "a@icloud.com", displayName = "A")
         )
         every { accountsDao.getAll() } returns flowOf(accounts)
 
-        // Execute
         val flow = accountRepository.getAllAccountsFlow()
 
-        // Verify - flow should emit
         assertNotNull(flow)
     }
 
     @Test
     fun `getAccountCountByProviderFlow returns count flow`() = runBlocking {
-        // Setup
         every { accountsDao.getAccountCountByProvider(AccountProvider.CALDAV) } returns flowOf(3)
 
-        // Execute
         val flow = accountRepository.getAccountCountByProviderFlow(AccountProvider.CALDAV)
 
-        // Verify
         assertNotNull(flow)
     }
 
@@ -650,7 +607,6 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `saveCredentials delegates to credentialManager`() = runBlocking {
-        // Setup
         val credentials = AccountCredentials(
             username = "user",
             password = "pass",
@@ -658,17 +614,14 @@ class AccountRepositoryImplTest {
         )
         coEvery { credentialManager.saveCredentials(1L, credentials) } returns true
 
-        // Execute
         val result = accountRepository.saveCredentials(1L, credentials)
 
-        // Verify
         assertTrue(result)
         coVerify { credentialManager.saveCredentials(1L, credentials) }
     }
 
     @Test
     fun `getCredentials delegates to credentialManager`() = runBlocking {
-        // Setup
         val credentials = AccountCredentials(
             username = "user",
             password = "pass",
@@ -676,22 +629,17 @@ class AccountRepositoryImplTest {
         )
         coEvery { credentialManager.getCredentials(1L) } returns credentials
 
-        // Execute
         val result = accountRepository.getCredentials(1L)
 
-        // Verify
         assertEquals(credentials, result)
     }
 
     @Test
     fun `hasCredentials delegates to credentialManager`() = runBlocking {
-        // Setup
         coEvery { credentialManager.hasCredentials(1L) } returns true
 
-        // Execute
         val result = accountRepository.hasCredentials(1L)
 
-        // Verify
         assertTrue(result)
     }
 
@@ -699,28 +647,22 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `recordSyncSuccess updates DAO`() = runBlocking {
-        // Execute
         accountRepository.recordSyncSuccess(1L, 12345L)
 
-        // Verify
         coVerify { accountsDao.recordSyncSuccess(1L, 12345L) }
     }
 
     @Test
     fun `recordSyncFailure updates DAO`() = runBlocking {
-        // Execute
         accountRepository.recordSyncFailure(1L, 12345L)
 
-        // Verify
         coVerify { accountsDao.recordSyncFailure(1L, 12345L) }
     }
 
     @Test
     fun `updateCalDavUrls updates DAO`() = runBlocking {
-        // Execute
         accountRepository.updateCalDavUrls(1L, "https://principal", "https://home")
 
-        // Verify
         coVerify { accountsDao.updateCalDavUrls(1L, "https://principal", "https://home") }
     }
 
@@ -728,40 +670,36 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount on non-existent ID is no-op - does not throw`() = runBlocking {
-        // Setup - account doesn't exist, no calendars
         val nonExistentId = 999L
         coEvery { calendarsDao.getByAccountIdOnce(nonExistentId) } returns emptyList()
 
-        // Execute - should NOT throw
+        // Doesn't throw, and the cleanup still runs.
         accountRepository.deleteAccount(nonExistentId)
 
-        // Verify cleanup still attempted (defensive)
         verify { workManager.cancelUniqueWork("sync_account_999") }
         coVerify { accountsDao.deleteById(nonExistentId) }
     }
 
     @Test
     fun `deleteAccount for LOCAL provider account works without credentials`() = runBlocking {
-        // Setup - LOCAL accounts don't have credentials stored
+        // A LOCAL account has no stored credentials.
         val accountId = 1L
         val calendar = Calendar(
             id = 10L,
             accountId = accountId,
             displayName = "Local Calendar",
-            caldavUrl = "",  // Local calendars have empty caldavUrl
+            caldavUrl = "",  // local calendars have an empty caldavUrl
             color = 0xFF0000FF.toInt()
         )
         val event = mockk<Event>(relaxed = true) { every { id } returns 100L }
 
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns listOf(calendar)
         coEvery { eventsDao.getAllMasterEventsForCalendar(10L) } returns listOf(event)
-        // Credential deletion returns silently (no credentials exist)
+        // No credentials exist, so the delete returns without effect.
         coEvery { credentialManager.deleteCredentials(accountId) } just Runs
 
-        // Execute
         accountRepository.deleteAccount(accountId)
 
-        // Verify full cleanup still happens
         coVerify { reminderScheduler.cancelRemindersForEvent(100L) }
         coVerify { pendingOperationsDao.deleteForEvent(100L) }
         coVerify { accountsDao.deleteById(accountId) }
@@ -769,7 +707,7 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `deleteAccount for ICS provider account works without credentials`() = runBlocking {
-        // Setup - ICS subscription accounts don't have credentials
+        // An ICS subscription account has no credentials.
         val accountId = 2L
         val calendar = Calendar(
             id = 20L,
@@ -783,96 +721,78 @@ class AccountRepositoryImplTest {
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns listOf(calendar)
         coEvery { eventsDao.getAllMasterEventsForCalendar(20L) } returns listOf(event)
 
-        // Execute
         accountRepository.deleteAccount(accountId)
 
-        // Verify cleanup
         coVerify { reminderScheduler.cancelRemindersForEvent(200L) }
         coVerify { accountsDao.deleteById(accountId) }
     }
 
     @Test
     fun `getAccountById returns null for non-existent ID`() = runBlocking {
-        // Setup
         coEvery { accountsDao.getById(999L) } returns null
 
-        // Execute
         val result = accountRepository.getAccountById(999L)
 
-        // Verify
         assertNull(result)
     }
 
     @Test
     fun `deleteAccount handles WorkManager exception gracefully`() = runBlocking {
-        // Setup - WorkManager throws but should not break the flow
+        // cancelUniqueWork runs first and isn't guarded, so its exception propagates and the
+        // rest of the cleanup doesn't run. The test accepts either outcome and asserts nothing.
         val accountId = 1L
         every { workManager.cancelUniqueWork(any()) } throws IllegalStateException("WorkManager not initialized")
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
 
-        // Execute - should NOT throw, should continue with cleanup
         try {
             accountRepository.deleteAccount(accountId)
-            // If we reach here without WorkManager fix, the test documents current behavior
         } catch (e: IllegalStateException) {
-            // Current behavior: exception propagates
-            // This test documents that we may need to add try-catch around WorkManager call
+            // The exception propagates from the first cancelUniqueWork.
         }
     }
 
     @Test
     fun `getEnabledAccounts returns only enabled accounts`() = runBlocking {
-        // Setup
         val enabledAccounts = listOf(
             Account(id = 1L, provider = AccountProvider.ICLOUD, email = "a@icloud.com", displayName = "A", isEnabled = true)
         )
         coEvery { accountsDao.getEnabledAccounts() } returns enabledAccounts
 
-        // Execute
         val result = accountRepository.getEnabledAccounts()
 
-        // Verify
         assertEquals(1, result.size)
         assertTrue(result.all { it.isEnabled })
     }
 
     @Test
     fun `setEnabled updates account enabled state`() = runBlocking {
-        // Execute
         accountRepository.setEnabled(1L, false)
 
-        // Verify
         coVerify { accountsDao.setEnabled(1L, false) }
     }
 
     @Test
     fun `getAllAccounts returns all accounts one-shot`() = runBlocking {
-        // Setup
         val accounts = listOf(
             Account(id = 1L, provider = AccountProvider.ICLOUD, email = "a@icloud.com", displayName = "A"),
             Account(id = 2L, provider = AccountProvider.CALDAV, email = "b@example.com", displayName = "B")
         )
         coEvery { accountsDao.getAllOnce() } returns accounts
 
-        // Execute
         val result = accountRepository.getAllAccounts()
 
-        // Verify
         assertEquals(2, result.size)
     }
 
     @Test
     fun `getAccountsByProvider returns filtered accounts`() = runBlocking {
-        // Setup
         val caldavAccounts = listOf(
             Account(id = 2L, provider = AccountProvider.CALDAV, email = "b@example.com", displayName = "B")
         )
         coEvery { accountsDao.getByProvider(AccountProvider.CALDAV) } returns caldavAccounts
 
-        // Execute
         val result = accountRepository.getAccountsByProvider(AccountProvider.CALDAV)
 
-        // Verify
         assertEquals(1, result.size)
         assertEquals(AccountProvider.CALDAV, result[0].provider)
     }
@@ -887,8 +807,8 @@ class AccountRepositoryImplTest {
 
         accountRepository.setContactSyncEnabled(accountId, true)
 
-        // Enrol the system account BEFORE the flag reads true, so Android won't
-        // purge RawContacts written under it.
+        // The system account is enrolled before the flag reads true, so Android won't purge
+        // RawContacts written under it.
         coVerifyOrder {
             contactSystemAccountRegistrar.ensureAccount("carol@example.test")
             accountsDao.setContactSyncEnabled(accountId, true)
@@ -912,11 +832,9 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `setContactSyncEnabled false keeps the contacts account when a CardDAV sibling shares the email`() = runBlocking {
-        // Same-email CardDAV logins share ONE email-named contacts system account.
-        // Disabling contact sync on one must NOT purge the shared account (and the
-        // sibling's synced contacts) while the sibling is still actively syncing
-        // contacts into it — mirroring the guard deleteAccount already applies. The
-        // flag is still cleared.
+        // Same-email CardDAV logins share one email-named contacts system account. Disabling
+        // contact sync on one must not purge it, with the sibling's contacts, while the sibling
+        // still syncs into it; deleteAccount applies the same rule. The flag is still cleared.
         val accountId = 7L
         val disabling = Account(id = accountId, provider = AccountProvider.ICLOUD, email = "shared@example.test")
         val sibling = Account(
@@ -936,10 +854,9 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `setContactSyncEnabled false removes the contacts account when the CardDAV sibling has contact sync disabled`() = runBlocking {
-        // The only same-email CardDAV sibling has contact sync OFF, so it holds no
-        // contacts in the shared account. Disabling sync here must purge the account
-        // — otherwise the just-disabled login's contacts linger on the device with
-        // nothing left syncing them.
+        // The only same-email CardDAV sibling has contact sync off, so it holds no contacts in
+        // the shared account. Disabling sync here must purge the account, or the disabled
+        // login's contacts linger on the device with nothing syncing them.
         val accountId = 7L
         val disabling = Account(id = accountId, provider = AccountProvider.ICLOUD, email = "shared@example.test")
         val idleSibling = Account(
@@ -959,8 +876,8 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `setContactSyncEnabled false removes the contacts account when only a non-CardDAV sibling shares the email`() = runBlocking {
-        // A LOCAL/ICS sibling sharing the email never registered a contacts
-        // account, so it must NOT block the purge on disable.
+        // A LOCAL or ICS sibling sharing the email never registered a contacts account, so it
+        // must not block the purge on disable.
         val accountId = 7L
         val disabling = Account(id = accountId, provider = AccountProvider.ICLOUD, email = "shared@example.test")
         val localSibling = Account(id = 8L, provider = AccountProvider.LOCAL, email = "shared@example.test")
@@ -976,10 +893,10 @@ class AccountRepositoryImplTest {
     @Test
     fun `setContactSyncEnabled false clears the delta sync cursor when it purges the contacts account`() = runBlocking {
         // Purging the contacts system account wipes every RawContact under it, so the
-        // address-book delta cursor MUST be dropped in lockstep. Otherwise the next
-        // re-enable takes the incremental (RFC 6578) path against a still-valid token,
-        // the server reports only *changes*, and the wiped contacts are never
-        // re-fetched — the account shows on the device holding zero contacts.
+        // address-book rows and their sync-tokens must go with it. Otherwise the next re-enable
+        // takes the delta (RFC 6578) path against a still-valid token, the server reports only
+        // changes, and the wiped contacts are never fetched again: the account shows on the
+        // device with zero contacts.
         val accountId = 7L
         val account = Account(id = accountId, provider = AccountProvider.ICLOUD, email = "carol@example.test")
         coEvery { accountsDao.getById(accountId) } returns account
@@ -993,8 +910,8 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `setContactSyncEnabled false leaves the cursor intact when an active sibling keeps the account`() = runBlocking {
-        // An active same-email CardDAV sibling blocks the purge, so no contacts are
-        // wiped — the cursor must survive so the sibling keeps syncing incrementally.
+        // An active same-email CardDAV sibling blocks the purge, so no contacts are wiped and
+        // the address-book rows must survive for the sibling's delta sync.
         val accountId = 7L
         val disabling = Account(id = accountId, provider = AccountProvider.ICLOUD, email = "shared@example.test")
         val activeSibling = Account(
@@ -1014,11 +931,10 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `setContactSyncEnabled false clears the cursor for every same-email CardDAV login whose contacts were purged`() = runBlocking {
-        // The purged account is email-keyed and shared: an idle (contact-sync-off)
-        // same-email CardDAV sibling's contacts also lived under it and were wiped.
-        // Its cursor must be cleared too, or re-enabling THAT sibling later would hit
-        // the identical stale-delta bug. A non-CardDAV sibling never synced contacts
-        // into the account, so its (nonexistent) cursor must not be touched.
+        // The purged account is email-keyed and shared: an idle (contact sync off) same-email
+        // CardDAV sibling's contacts also lived under it and were wiped. Its address-book rows
+        // are deleted too, or re-enabling that sibling later would take the same stale delta. A
+        // non-CardDAV sibling never synced contacts into the account, so it gets no delete.
         val accountId = 7L
         val disabling = Account(id = accountId, provider = AccountProvider.ICLOUD, email = "shared@example.test")
         val idleCardDavSibling = Account(
@@ -1049,16 +965,14 @@ class AccountRepositoryImplTest {
         coVerify(exactly = 0) { accountsDao.setContactSyncEnabled(any(), any()) }
     }
 
-    // ========== Contacts purge: explicit scoped delete + post-purge verify ==========
+    // ========== Contacts purge: scoped delete and post-purge count ==========
 
     @Test
     fun `disable explicitly purges our scoped rows before removing the account`() = runBlocking {
-        // Don't trust the OS account-removal cascade to delete the RawContacts:
-        // delete our own account-scoped rows first, then remove the account. The
-        // "before" is load-bearing: removal must never depend on the cascade, so
-        // wire the registrar to record its call into the same ordering log the
-        // fake writes to, then assert the real sequence — a plain verify{} would
-        // pass even if the two calls were swapped.
+        // The account-removal cascade isn't trusted to delete the RawContacts: our
+        // account-scoped rows are deleted first, then the account is removed. The registrar
+        // records into the fake's ordering log so the test asserts the real sequence; a plain
+        // verify {} would pass with the two calls swapped.
         val accountId = 7L
         val account = Account(id = accountId, provider = AccountProvider.ICLOUD, email = "carol@example.test")
         coEvery { accountsDao.getById(accountId) } returns account
@@ -1071,8 +985,8 @@ class AccountRepositoryImplTest {
 
         accountRepository.setContactSyncEnabled(accountId, false)
 
-        // The scoped purge ran (touching only our ACCOUNT_NAME + type) BEFORE the
-        // account was removed, and our rows are gone without relying on the cascade.
+        // The scoped purge (our ACCOUNT_NAME and type only) ran before the account removal,
+        // and our rows are gone without the cascade.
         assertTrue(
             "expected an explicit scoped purge for the login email",
             contactsProviderRepository.purgeCalls.contains("carol@example.test"),
@@ -1091,18 +1005,18 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `disable runs the scoped purge exactly once, not a byte-identical retry`() = runBlocking {
-        // The explicit scoped delete runs before the (synchronous) account removal, and
-        // it is deterministic: any rows surviving it are ones the account-scoped
-        // predicate can't match, which a byte-identical retry couldn't clear either. So
-        // there must be no retry — the purge is issued once, and leftovers are reported
-        // honestly (see the INCOMPLETE test) rather than retried in a loop that no-ops.
+        // The scoped delete runs before the synchronous account removal and is deterministic:
+        // rows surviving it are ones the account-scoped predicate can't match, which an
+        // identical retry couldn't clear either. So the purge is issued once and leftovers are
+        // reported as INCOMPLETE (`disable reports INCOMPLETE when rows survive the scoped
+        // purge`).
         val accountId = 7L
         val account = Account(id = accountId, provider = AccountProvider.ICLOUD, email = "carol@example.test")
         coEvery { accountsDao.getById(accountId) } returns account
         coEvery { accountsDao.getAllOnce() } returns listOf(account)
         contactsProviderRepository.seed("carol@example.test", "/c1.vcf", "\"e1\"")
-        // The count keeps reporting leftovers regardless of the (successful) delete —
-        // the classic account-less-survivor case that a retry cannot fix.
+        // The count reports leftovers whatever the successful delete did: the account-less
+        // survivor case a retry can't fix.
         contactsProviderRepository.countOverride = 1
 
         accountRepository.setContactSyncEnabled(accountId, false)
@@ -1129,12 +1043,10 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `disable reports INCOMPLETE when the scoped delete fails on revoked WRITE_CONTACTS`() = runBlocking {
-        // The reported false-clean: WRITE_CONTACTS is revoked, so purgeAccount can't
-        // delete and returns failure, AND countRawContacts (READ also revoked) returns
-        // 0 as "can't tell". The old code discarded the failure and trusted the 0,
-        // reporting a clean purge with rows still on the device. The outcome must be
-        // INCOMPLETE — a 0 that could just mean "couldn't check" is never treated as
-        // verified-empty when the delete itself failed.
+        // WRITE_CONTACTS is revoked, so purgeAccount can't delete and returns failure, and
+        // countRawContacts, with READ also revoked, returns 0 as "can't tell". Trusting that 0
+        // would report a clean purge with rows still on the device. The outcome must be
+        // INCOMPLETE: after a failed delete a 0 is never treated as verified-empty.
         val accountId = 7L
         val account = Account(id = accountId, provider = AccountProvider.ICLOUD, email = "carol@example.test")
         coEvery { accountsDao.getById(accountId) } returns account
@@ -1150,15 +1062,14 @@ class AccountRepositoryImplTest {
 
     @Test
     fun `disable reports INCOMPLETE when rows survive the scoped purge`() = runBlocking {
-        // The delete succeeds (Result.success) but the scoped predicate never matches
-        // the survivors (e.g. account-less rows), so the count stays non-zero. Honest
-        // signal: INCOMPLETE, not a false clean.
+        // The delete succeeds but the scoped predicate never matches the survivors (for
+        // example account-less rows), so the count stays above 0: INCOMPLETE, not a false clean.
         val accountId = 7L
         val account = Account(id = accountId, provider = AccountProvider.ICLOUD, email = "carol@example.test")
         coEvery { accountsDao.getById(accountId) } returns account
         coEvery { accountsDao.getAllOnce() } returns listOf(account)
         contactsProviderRepository.seed("carol@example.test", "/c1.vcf", "\"e1\"")
-        // Every count read reports leftovers regardless of the (successful) deletes.
+        // Every count read reports leftovers whatever the successful delete did.
         contactsProviderRepository.countOverride = 1
 
         val outcome = accountRepository.setContactSyncEnabled(accountId, false)

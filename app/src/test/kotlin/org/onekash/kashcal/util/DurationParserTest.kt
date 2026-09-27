@@ -5,10 +5,9 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * Tests for RFC 5545 duration parsing in DateTimeUtils.
- *
- * CalendarProvider stores duration instead of endTs for recurring events.
- * Format: P[n]D for days, PT[n]H[n]M[n]S for hours/minutes/seconds
+ * Tests [DateTimeUtils.parseDurationToMillis], which reads the RFC 5545 DURATION that
+ * CalendarProvider stores instead of an end time for recurring events: `P[n]W`, `P[n]D` and
+ * `PT[n]H[n]M[n]S`, with null for a null, empty, non-`P`, digitless (`P`) or overflowing value.
  */
 class DurationParserTest {
 
@@ -101,9 +100,8 @@ class DurationParserTest {
 
     @Test
     fun `parseDurationToMillis returns null on overflow rather than a garbage negative`() {
-        // A week count whose millisecond total overflows Long must fail safe
-        // (null) so the caller falls back to endTs — never a negative duration
-        // that would place the event's end before its start.
+        // A count whose millisecond total overflows Long must give null, so the caller falls
+        // back to endTs, never a negative duration that puts the event's end before its start.
         assertNull(DateTimeUtils.parseDurationToMillis("P999999999999W"))
         assertNull(DateTimeUtils.parseDurationToMillis("PT99999999999999999H"))
     }

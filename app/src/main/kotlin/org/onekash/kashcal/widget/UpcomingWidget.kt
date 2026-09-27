@@ -18,22 +18,18 @@ import dagger.hilt.components.SingletonComponent
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 
 /**
- * Upcoming Events widget — shows a scrollable list of events across the next
- * [UPCOMING_HORIZON_DAYS] calendar days starting today. Empty days are
- * skipped; past events are hidden. In-progress events and all-day events
- * remain visible until they actually end.
+ * Shows a scrollable list of events across the [UPCOMING_HORIZON_DAYS] calendar days starting
+ * today. Empty days are skipped and past events hidden; in-progress and all-day events stay
+ * until they end.
  *
- * Refresh triggers (inherited from [WidgetUpdateManager]):
- * - Event CRUD
- * - Sync completion
- * - Local midnight (through Doze via AlarmManager)
- * - Every 30 minutes (WorkManager)
+ * Refreshes come through [WidgetUpdateManager], for example after event CRUD, sync completion,
+ * local midnight (AlarmManager, through Doze) and every 30 minutes (WorkManager), and from the
+ * header refresh button ([WidgetRefreshAction]).
  *
- * State management:
- * - [WIDGET_REFRESH_STAMP] stored in Glance PreferencesGlanceStateDefinition
- * - Bumped by [WidgetUpdateManager] before each `updateAll()` to re-key [produceState]
- * - Data fetch lives inside [provideContent] via [fetchUpcomingState] so Glance 1.1's
- *   session-scoped recomposition actually re-runs the fetch (see MonthWidget KDoc)
+ * [WIDGET_REFRESH_STAMP] lives in the Glance preferences state. [bumpRefreshStamp] writes it
+ * before each refresh's update to re-key [produceState]. The fetch ([fetchUpcomingState]) runs
+ * inside [provideContent] because Glance 1.1 and later recompose the session without calling
+ * provideGlance again (see [MonthWidget]).
  */
 class UpcomingWidget : GlanceAppWidget() {
 
@@ -55,11 +51,10 @@ class UpcomingWidget : GlanceAppWidget() {
         )
         val repository = entryPoint.widgetDataRepository()
         val dataStore = KashCalDataStore(context)
-        // Resolve the accent BEFORE provideContent so the very first RemoteViews already carry the
-        // picked seed. Seeding produceState with null would render one frame on the platform dynamic
-        // palette (null ?: GlanceTheme.colors) and only swap to the seed on a later push — which, if
-        // the host snapshots the widget before that push lands, leaves a SEED user showing wallpaper
-        // colors ("randomly didn't take the tint"). null here still means the genuine DYNAMIC source.
+        // Resolve the accent before provideContent so the first RemoteViews carry the picked seed.
+        // Seeding produceState with null renders one frame on the platform dynamic palette
+        // (null ?: GlanceTheme.colors); if the host snapshots the widget then, a SEED user sees
+        // wallpaper colors. null here means the DYNAMIC source on the system face.
         val initialAccent = resolveWidgetAccentColors(context, dataStore).colors
 
         provideContent {

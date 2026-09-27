@@ -41,9 +41,9 @@ class CalendarDisplayNameTest {
 
     @Test
     fun `contact calendar falls through to stored display name`() {
-        // Contact CALENDAR urls (local://contact_birthdays) are not matched by
-        // ContactEventType.fromCaldavUrl (which matches event prefixes), so the
-        // stored name is returned unchanged - documenting preserved behavior.
+        // A contact calendar's url (local://contact_birthdays) isn't matched by
+        // ContactEventType.fromCaldavUrl, which matches event keys such as
+        // "contact_birthday:...", so the stored name is returned unchanged.
         val cal = calendar("local://contact_birthdays", "Contact Birthdays")
 
         assertEquals("Contact Birthdays", cal.localizedDisplayName(context.resources))
@@ -51,8 +51,8 @@ class CalendarDisplayNameTest {
 
     @Test
     fun `grouped local calendar carries localized name through the picker wiring`() {
-        // Proves the expanded-dropdown surface: the calendar name substituted into
-        // the group is the localized value, not the raw stored "Local".
+        // The calendar name substituted into the group, with the lambda the ViewModels pass,
+        // is the localized value, not the stored "Local".
         val account = Account(
             id = 1L,
             provider = AccountProvider.LOCAL,

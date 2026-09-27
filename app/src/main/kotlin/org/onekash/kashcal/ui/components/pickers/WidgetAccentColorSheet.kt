@@ -27,16 +27,16 @@ import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.widget.WidgetColorSource
 
 /**
- * Accent color picker for the WIDGETS, independent of the app accent. Same grid + 92-color wheel
- * layout as [AccentColorSheet], plus a third source: following the app's colors (the default, so
- * the widgets stay in sync until the user opts out).
+ * Shows the widgets' accent color picker, independent of the app accent. Same grid and 92-color
+ * wheel as [AccentColorSheet], plus a third source: following the app's colors, the default, so
+ * the widgets stay in step until the user opts out.
  *
- * @param source the current widget color source; decides which row/swatch shows selected.
- * @param selectedArgb the current widget accent seed ARGB; highlighted when [source] is SEED.
- * @param onFollowApp invoked when the widgets should mirror the app's colors again.
- * @param onUseDynamic invoked when the widgets should use the device's Material You palette.
- * @param onColorSelected invoked with the chosen widget-only accent ARGB (never null).
- * @param onDismiss invoked when the sheet is dismissed without a selection.
+ * @param source decides which row or swatch shows as selected
+ * @param selectedArgb the widget accent seed; highlighted only when [source] is SEED
+ * @param onFollowApp called when the user picks the follow-the-app row
+ * @param onUseDynamic called when the user picks the device's Material You palette
+ * @param onColorSelected called with the chosen widget-only accent from a swatch or the wheel
+ * @param onDismiss called on the sheet's dismiss request
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +77,7 @@ fun WidgetAccentColorSheet(
                 )
             } else {
                 Column {
-                    // Mirror the app's accent + color source (the default).
+                    // Follow the app's accent and color source (the default).
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.settings_widget_color_follow_app)) },
                         supportingContent = { Text(stringResource(R.string.settings_widget_color_follow_app_desc)) },
@@ -92,7 +92,7 @@ fun WidgetAccentColorSheet(
                         modifier = Modifier.clickable { onFollowApp() },
                     )
 
-                    // Return to Material You / wallpaper colors.
+                    // Material You wallpaper colors.
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.settings_accent_color_dynamic)) },
                         supportingContent = { Text(stringResource(R.string.settings_accent_color_dynamic_desc)) },
@@ -107,8 +107,8 @@ fun WidgetAccentColorSheet(
                         modifier = Modifier.clickable { onUseDynamic() },
                     )
 
-                    // First cell commits the brand-teal default seed (not null): the accent always
-                    // resolves to a concrete color when a swatch is chosen.
+                    // The first cell commits the brand-teal default seed, not null, so a chosen
+                    // swatch always resolves to a concrete color.
                     val defaultCell: @Composable () -> Unit = {
                         SwatchCell(
                             color = Color(defaultSeed),
@@ -128,9 +128,8 @@ fun WidgetAccentColorSheet(
                                 )
                             }
                         }
-                    // Label the current selection. Outside SEED no swatch is active, so name the
-                    // source rather than a color that isn't in effect. Brand teal isn't a CSS3
-                    // palette entry (would read as "Custom"), so label it explicitly.
+                    // Outside SEED no swatch is active, so the label names the source. Brand
+                    // teal isn't a palette entry and would read as "Custom", so it gets its own.
                     val labelRes = when {
                         source == WidgetColorSource.FOLLOW_APP -> R.string.settings_widget_color_follow_app
                         source == WidgetColorSource.DYNAMIC -> R.string.settings_accent_color_dynamic

@@ -5,35 +5,32 @@ import org.onekash.kashcal.domain.generator.icaldav.IcalDavRRuleAdapter
 import java.time.Instant
 
 /**
- * Pure-function RRULE expansion over icaldav-core's [RRuleExpander] (ical4j).
+ * Expands an RRULE to occurrence start timestamps over icaldav-core's [RRuleExpander] (ical4j).
  *
- * Drop-in replacement for [LibRecurEngine.expandToTimestamps] with identical
- * signature. [OccurrenceGenerator] routes through this object after the
- * lib-recur → ical4j migration.
+ * The production recurrence engine. Its signature matches the test-only `LibRecurEngine`
+ * oracle that the parity tests compare it against, and it keeps that engine's quirks. The
+ * letters match the oracle's.
  *
- * Quirks preserved via [IcalDavRRuleAdapter]:
- *   (a) All-day events force UTC regardless of TZID (via ICalDateTime isDate semantics).
- *   (b) COUNT+UNTIL sanitization — strip UNTIL when COUNT is present.
- *   (g) DATE-format RDATE/EXDATE inherit DTSTART hour/minute/second on timed events.
+ * In [IcalDavRRuleAdapter]:
+ *   (a) All-day events expand in UTC regardless of TZID.
+ *   (b) When an RRULE has both COUNT and UNTIL, UNTIL is stripped.
+ *   (g) DATE-format RDATE/EXDATE inherit DTSTART's hour, minute and second on timed events.
  *
- * Quirks preserved in this engine:
- *   (e) MAX_ITERATIONS=10_000 safety cap on the total number of timestamps
- *       emitted. ical4j's `maxIncrementCount` is a matching-attempt cap with
- *       different semantics; without an explicit cap here, unbounded
- *       SECONDLY/MINUTELY rules can OOM.
- *   (f)/(h) Second-boundary alignment of every returned timestamp. Matches
- *       lib-recur's seconds-math path. Preserves the documented behavior
- *       where sub-second DTSTART precision is dropped on recurring expansion.
+ * Here:
+ *   (e) At most MAX_ITERATIONS (10,000) timestamps are returned. ical4j's `maxIncrementCount`
+ *       caps matching attempts, a different measure; without this cap an unbounded
+ *       SECONDLY or MINUTELY rule can OOM.
+ *   (f)/(h) Every timestamp is aligned to a whole second, so sub-second DTSTART precision is
+ *       dropped on recurring expansion.
  *
- * Defensive behavior matches LibRecurEngine: on any exception, log and return
- * emptyList. Range filter applied post-expansion to match LibRecurEngine's
- * range-bound iterator semantics — without it, non-recurring events whose
- * DTSTART falls before rangeStart would leak into the output.
+ * Returns an empty list for a null or blank RRULE, one that fails to parse, or any exception
+ * (logged). Output is filtered to rangeStartMs inclusive through rangeEndMs exclusive,
+ * matching the oracle's range-bound iterator.
  */
 object IcalDavRRuleEngine {
 
-    // Mirrored in the test-only LibRecurEngine oracle used by the parity
-    // harness — keep in sync if a constant is ever tuned.
+    // Mirrored in the test-only LibRecurEngine oracle; keep the two in sync if a constant
+    // is tuned.
     private const val MAX_ITERATIONS = 10_000
     private const val MILLISECONDS_PER_SECOND = 1000L
 
@@ -59,15 +56,13 @@ object IcalDavRRuleEngine {
                 rdateStrings = rdateStrings,
                 exdateStrings = exdateStrings,
             )
-            // Match LibRecurEngine: non-null-non-blank rrule that failed to
-            // parse (garbage, missing FREQ, etc.) yields empty expansion, not
-            // DTSTART-only. The adapter returns event.rrule=null on parse
-            // failure; RRuleExpander.expand would otherwise return [DTSTART].
+            // An RRULE that fails to parse (garbage, missing FREQ) expands to nothing, as in
+            // the oracle. The adapter leaves event.rrule null on a parse failure, and
+            // RRuleExpander.expand would then return DTSTART alone.
             val rule = event.rrule ?: return emptyList()
-            // Quirk (e): cap unbounded rules (FREQ=SECONDLY/MINUTELY without
-            // COUNT or UNTIL) at MAX_ITERATIONS BEFORE passing to ical4j,
-            // so the expander doesn't materialize millions of entries (OOM).
-            // Bounded rules pass through unchanged.
+            // Quirk (e): give a rule with neither COUNT nor UNTIL a COUNT of MAX_ITERATIONS
+            // before ical4j sees it, so the expander doesn't materialize millions of
+            // entries (OOM). Bounded rules pass through unchanged.
             val capped = if (rule.count == null && rule.until == null) {
                 event.copy(rrule = rule.copy(count = MAX_ITERATIONS))
             } else {
@@ -78,12 +73,9 @@ object IcalDavRRuleEngine {
                 rangeStart = Instant.ofEpochMilli(rangeStartMs),
                 rangeEnd = Instant.ofEpochMilli(rangeEndMs),
             )
-            // REGRESSION GUARD: RRuleExpander doesn't strictly bound by range;
-            // match LibRecurEngine's range-bound iterator with an explicit
-            // filter. Then apply quirks (f)/(h) second-alignment. Trailing
-            // .take(MAX_ITERATIONS) catches the bounded-but-pathological case
-            // (e.g. COUNT=50000) that the pre-expansion cap above doesn't
-            // touch because the rule already has a COUNT.
+            // RRuleExpander doesn't strictly bound by range, so filter to the range, then
+            // align to seconds (quirks f/h). The final take(MAX_ITERATIONS) caps a bounded
+            // but huge rule (e.g. COUNT=50000), which the cap above leaves alone.
             IcalDavRRuleAdapter.extractTimestamps(occurrences)
                 .filter { it in rangeStartMs until rangeEndMs }
                 .map { (it / MILLISECONDS_PER_SECOND) * MILLISECONDS_PER_SECOND }

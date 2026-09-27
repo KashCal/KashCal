@@ -14,12 +14,11 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Tests for configurable TimeZoneRegistry in ICalParser.
- *
- * Verifies that:
- * - Default constructor uses SimpleTimeZoneRegistry (Android-safe)
- * - Custom registry can be injected (JVM server use case)
- * - Parsing works correctly with both registry types
+ * Tests [ICalParser]'s TimeZoneRegistry choice: the default constructor, which uses the
+ * Android-safe [SimpleTimeZoneRegistry], [ICalParser.createWithFullRegistry] and a
+ * `TimeZoneRegistryImpl` or stub registry passed in (the JVM server case), what each registry's
+ * getTimeZone returns, two parsers with different registries, ten parsers on separate threads,
+ * and matching results from both registries.
  */
 @DisplayName("ICalParser Registry Configuration")
 class ICalParserRegistryTest {
@@ -164,8 +163,7 @@ class ICalParserRegistryTest {
         @Test
         @DisplayName("createWithFullRegistry provides TimeZoneRegistryImpl for JVM servers")
         fun `createWithFullRegistry works`() {
-            // This test verifies JVM server use case
-            // On Android, createWithFullRegistry() would fail at runtime
+            // The JVM server case; on Android createWithFullRegistry() fails at runtime
             val parser = ICalParser.createWithFullRegistry()
 
             val result = parser.parseAllEvents(icsWithVTimezone)
@@ -178,7 +176,7 @@ class ICalParserRegistryTest {
         @Test
         @DisplayName("accepts TimeZoneRegistryImpl via constructor for JVM servers")
         fun `parser accepts TimeZoneRegistryImpl directly`() {
-            // Direct constructor usage (requires ical4j dependency in caller)
+            // Passing the registry to the constructor needs ical4j on the caller's classpath
             val registry = TimeZoneRegistryImpl()
             val parser = ICalParser(registry)
 
@@ -193,7 +191,7 @@ class ICalParserRegistryTest {
         fun `TimeZoneRegistryImpl provides timezone objects`() {
             val registry = TimeZoneRegistryImpl()
 
-            // TimeZoneRegistryImpl returns actual TimeZone objects
+            // TimeZoneRegistryImpl returns TimeZone objects
             val tz = registry.getTimeZone("America/New_York")
             assertNotNull(tz, "TimeZoneRegistryImpl should return TimeZone objects")
             assertEquals("America/New_York", tz.id)
@@ -204,7 +202,7 @@ class ICalParserRegistryTest {
         fun `SimpleTimeZoneRegistry returns null for getTimeZone`() {
             val registry = SimpleTimeZoneRegistry()
 
-            // SimpleTimeZoneRegistry returns null (uses embedded VTIMEZONE)
+            // SimpleTimeZoneRegistry returns null, leaving ical4j to the embedded VTIMEZONE
             val tz = registry.getTimeZone("America/New_York")
             assertEquals(null, tz, "SimpleTimeZoneRegistry should return null")
         }
@@ -212,7 +210,7 @@ class ICalParserRegistryTest {
         @Test
         @DisplayName("custom mock registry can be used for testing")
         fun `parser accepts mock registry for testing`() {
-            // Create a mock registry for testing
+            // A stub registry that resolves IDs with ZoneId.of and has no TimeZone objects
             val mockRegistry = object : TimeZoneRegistry {
                 override fun getTimeZone(id: String?): TimeZone? = null
                 override fun register(timezone: TimeZone?) {}
@@ -224,11 +222,10 @@ class ICalParserRegistryTest {
                 override fun getTzId(zoneId: String?): String? = zoneId
             }
 
-            // Verify parser can be created with custom registry and parsing works
+            // Build the parser over the stub and parse TZID-only data
             val parser = ICalParser(mockRegistry)
             val result = parser.parseAllEvents(icsWithTzidOnly)
 
-            // The parser should successfully parse the data
             assertTrue(result is ParseResult.Success, "Parsing should succeed with custom registry")
             val events = (result as ParseResult.Success).value
             assertEquals(1, events.size)
@@ -245,7 +242,7 @@ class ICalParserRegistryTest {
             val simpleParser = ICalParser(SimpleTimeZoneRegistry())
             val fullParser = ICalParser(TimeZoneRegistryImpl())
 
-            // Both should parse the same data correctly
+            // Both parse the same data to the same UID, summary and zone
             val simpleResult = simpleParser.parseAllEvents(icsWithVTimezone)
             val fullResult = fullParser.parseAllEvents(icsWithVTimezone)
 
@@ -266,7 +263,8 @@ class ICalParserRegistryTest {
             val parsers = (1..10).map { ICalParser() }
             val results = mutableListOf<ParseResult<*>>()
 
-            // Parse concurrently
+            // Each thread parses inside synchronized(results), so the parses run one at a
+            // time: this checks separate instances on separate threads, not concurrent parsing.
             val threads = parsers.map { parser ->
                 Thread {
                     synchronized(results) {
@@ -278,7 +276,7 @@ class ICalParserRegistryTest {
             threads.forEach { it.start() }
             threads.forEach { it.join() }
 
-            // All should succeed
+            // All succeed
             assertEquals(10, results.size)
             results.forEach { result ->
                 assertTrue(result is ParseResult.Success, "All parsing should succeed")

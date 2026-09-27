@@ -9,20 +9,21 @@ import java.time.format.DateTimeFormatter
 import java.util.Calendar
 
 /**
- * Represents date filter options for search.
- *
- * Each filter provides a computed time range based on current date.
- * Used with FTS search to filter results by occurrence date range.
+ * Date filter for search. [Today] through [NextMonth] compute their range from today's date,
+ * [SingleDay] and [CustomRange] from the picked days; the search keeps events with an
+ * occurrence in the range.
  */
 @Immutable
 sealed class DateFilter {
     abstract val displayName: String
 
     /**
-     * Compute the time range for this filter.
-     * @param zone Timezone for date calculations
-     * @param firstDayOfWeek User's preferred first day of week (only affects ThisWeek/NextWeek)
-     * @return Pair of (startMs, endMs) or null for AnyTime
+     * Returns the filter's range as (startMs, endMs), from the first day's midnight in [zone] to
+     * the last millisecond of the last day, or null for [Upcoming] and [AnyTime]; the search
+     * treats those as from now on and as all dates.
+     *
+     * @param firstDayOfWeek a Calendar constant or 0 for the locale default; only [ThisWeek] and
+     *   [NextWeek] read it.
      */
     abstract fun getTimeRange(
         zone: ZoneId = ZoneId.systemDefault(),
@@ -110,9 +111,7 @@ sealed class DateFilter {
         }
     }
 
-    /**
-     * Single day selection (from date picker tap).
-     */
+    /** One day, picked by tapping the same day twice in the search date picker. */
     data class SingleDay(val dateMs: Long) : DateFilter() {
         override val displayName: String
             get() {
@@ -130,9 +129,7 @@ sealed class DateFilter {
         }
     }
 
-    /**
-     * Custom date range (from date picker double tap or range selection).
-     */
+    /** A range, picked by tapping two different days in the search date picker. */
     data class CustomRange(val startMs: Long, val endMs: Long) : DateFilter() {
         override val displayName: String
             get() {
@@ -147,7 +144,7 @@ sealed class DateFilter {
             }
 
         override fun getTimeRange(zone: ZoneId, firstDayOfWeek: Int): Pair<Long, Long> {
-            // Use start of startMs day and end of endMs day
+            // From the start of startMs's day to the end of endMs's day.
             val startDate = Instant.ofEpochMilli(startMs).atZone(zone).toLocalDate()
             val endDate = Instant.ofEpochMilli(endMs).atZone(zone).toLocalDate()
             val start = startDate.atStartOfDay(zone).toInstant().toEpochMilli()
@@ -157,7 +154,7 @@ sealed class DateFilter {
     }
 
     companion object {
-        /** Preset filters shown as chips */
+        /** Preset filters. No app code reads this; HomeScreen builds the search chips itself. */
         val presets = listOf(AnyTime, Today, Tomorrow, ThisWeek, NextWeek, ThisMonth)
     }
 }

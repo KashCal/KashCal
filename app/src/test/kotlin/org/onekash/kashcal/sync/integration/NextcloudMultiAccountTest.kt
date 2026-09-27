@@ -12,18 +12,12 @@ import org.onekash.kashcal.sync.quirks.DefaultQuirks
 import java.io.File
 
 /**
- * Integration test for multiple Nextcloud CalDAV accounts.
+ * Checks that two Nextcloud users discovered against one server get independent principal,
+ * calendar home and calendar URLs, with each username in its principal URL.
  *
- * This test verifies that:
- * 1. Different users get different principal URLs
- * 2. Different users get different calendar URLs
- * 3. Account deduplication works correctly
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*NextcloudMultiAccountTest*"
  *
- * Run: ./gradlew testDebugUnitTest --tests "*NextcloudMultiAccountTest*"
- *
- * Prerequisites:
- * - Nextcloud server with CalDAV enabled
- * - Credentials in local.properties:
+ * Needs a Nextcloud server with CalDAV and these keys in local.properties:
  *   NEXTCLOUD_SERVER=https://your-nextcloud-server.com
  *   NEXTCLOUD_USERNAME=your_username
  *   NEXTCLOUD_PASSWORD=your_password
@@ -238,9 +232,8 @@ class NextcloudMultiAccountTest {
     }
 
     /**
-     * Test that simulates two sequential account additions.
-     * This mirrors the user's reported scenario where adding a second account
-     * "overwrote" the first.
+     * Runs discovery for two accounts in sequence, the user-reported scenario where adding a
+     * second account "overwrote" the first.
      */
     @Test
     fun `sequential account discoveries return independent data`() = runBlocking {
@@ -289,7 +282,6 @@ class NextcloudMultiAccountTest {
         println("Calendars 2:")
         calendars2.forEach { println("  - ${it.displayName}: ${it.url}") }
 
-        // Verify data is independent
         println("\n=== Verification ===")
 
         // 1. Principal URLs should be different

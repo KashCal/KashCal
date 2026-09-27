@@ -24,18 +24,18 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Adversarial tests for calendar move operations.
+ * Adversarial tests for the database state a calendar move queues and leaves behind.
  *
- * Calendar moves are complex because CalDAV doesn't support MOVE for events.
- * Instead, we must DELETE from old calendar + PUT to new calendar.
+ * The push tries a WebDAV MOVE first and falls back to CREATE in the target then DELETE from
+ * the source (`PushStrategy.processMove`), so the MOVE op must carry the source URL from queue
+ * time.
  *
- * Edge cases tested:
- * - Move to non-existent calendar
- * - Move during active sync
- * - Move recurring event (master + exceptions)
- * - Partial failure states (DELETE succeeds, PUT fails)
- * - Move to read-only calendar
+ * Cases covered:
  * - targetUrl capture timing
+ * - Recurring master, with and without exceptions
+ * - Retry bookkeeping and a partial failure (source gone, target not created)
+ * - Read-only target calendar
+ * - Several moves at once, and a move during an active sync
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -103,8 +103,7 @@ class CalendarMoveAdversarialTest {
         )
         val eventId = database.eventsDao().insert(event)
 
-        // CRITICAL: Queue MOVE operation BEFORE changing calendar
-        // This captures the source URL needed for DELETE
+        // Queue the MOVE before changing the calendar, so it captures the source URL
         database.pendingOperationsDao().insert(
             PendingOperation(
                 eventId = eventId,
@@ -132,7 +131,7 @@ class CalendarMoveAdversarialTest {
 
     @Test
     fun `move operation without targetUrl would fail DELETE`() = runTest {
-        // This documents the bug pattern: queuing MOVE after clearing caldavUrl
+        // Documents the trap: queuing MOVE after clearing caldavUrl loses the source URL
         val now = System.currentTimeMillis()
         val sourceUrl = "https://caldav.icloud.com/123/calendars/personal/event2.ics"
 
@@ -149,20 +148,20 @@ class CalendarMoveAdversarialTest {
         )
         val eventId = database.eventsDao().insert(event)
 
-        // WRONG: Update event BEFORE queueing operation
+        // Wrong order: the event is updated before the op is queued
         database.eventsDao().update(event.copy(
             id = eventId,
             calendarId = targetCalendarId,
-            caldavUrl = null, // Now we can't get the source URL!
+            caldavUrl = null, // The source URL is gone from the row
             syncStatus = SyncStatus.PENDING_CREATE
         ))
 
-        // Trying to queue MOVE now - source URL is lost
+        // Queuing MOVE now reads a null URL
         val updatedEvent = database.eventsDao().getById(eventId)!!
         val pendingOp = PendingOperation(
             eventId = eventId,
             operation = PendingOperation.OPERATION_MOVE,
-            targetUrl = updatedEvent.caldavUrl, // NULL!
+            targetUrl = updatedEvent.caldavUrl, // null
             targetCalendarId = targetCalendarId
         )
 
@@ -334,7 +333,7 @@ class CalendarMoveAdversarialTest {
 
     @Test
     fun `partial move failure - DELETE succeeds PUT fails`() = runTest {
-        // This is a critical edge case: event deleted from source but not created in target
+        // The event is gone from the source but not yet created in the target
         val now = System.currentTimeMillis()
 
         val event = Event(
@@ -359,13 +358,12 @@ class CalendarMoveAdversarialTest {
             )
         )
 
-        // Simulate: DELETE succeeded, but PUT failed
-        // Event is now in local DB but gone from source server
-        // The pending operation should record this state
+        // Simulate: DELETE succeeded, PUT failed. The event exists only in the local DB, and
+        // its row must stay PENDING_CREATE so a later push creates it in the target.
         database.eventsDao().update(event.copy(
             id = eventId,
             calendarId = targetCalendarId,
-            caldavUrl = null, // No URL yet - PUT didn't complete
+            caldavUrl = null, // No URL yet: the PUT didn't complete
             syncStatus = SyncStatus.PENDING_CREATE // Need to retry PUT
         ))
 
@@ -408,8 +406,7 @@ class CalendarMoveAdversarialTest {
         val targetCal = database.calendarsDao().getById(readOnlyCalendarId)!!
         assertTrue("Target calendar should be read-only", targetCal.isReadOnly)
 
-        // Event should NOT be moved to read-only calendar
-        // This is enforced at UI/domain layer, but DB should preserve source
+        // EventWriter.moveEventToCalendar refuses a read-only target; the DB keeps the source
         val originalEvent = database.eventsDao().getById(eventId)!!
         assertEquals(sourceCalendarId, originalEvent.calendarId)
     }
@@ -469,8 +466,8 @@ class CalendarMoveAdversarialTest {
         )
         val eventId = database.eventsDao().insert(event)
 
-        // Simulate: sync is running, user requests move
-        // Event should be queued, sync will pick it up
+        // Simulate: a sync is running when the user moves the event. The op is queued and a
+        // later sync picks it up.
 
         database.pendingOperationsDao().insert(
             PendingOperation(

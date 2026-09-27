@@ -9,24 +9,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * One-time migration to normalize iCloud URLs from regional to canonical form.
+ * Rewrites stored iCloud URLs from regional hosts to the canonical host, once
+ * ([ICloudUrlNormalizer] says why).
  *
- * iCloud uses regional servers (p180-caldav.icloud.com) that can become unreachable
- * when Apple rotates server assignments. By normalizing all URLs to canonical form
- * (caldav.icloud.com), server rotation becomes transparent.
+ * Covers account homeSetUrl and principalUrl, calendar and event caldavUrl, and pending
+ * operation targetUrl. The rewrite runs in one transaction; the done flag is set only after
+ * a check finds no regional URL left, so a failed check reruns it next time (idempotent).
  *
- * Migration scope:
- * - Account homeSetUrl, principalUrl
- * - Calendar caldavUrl
- * - Event caldavUrl
- * - PendingOperation targetUrl
- *
- * The migration is:
- * - Idempotent: Safe to run multiple times (checks completion flag)
- * - Atomic: Uses database transaction (all or nothing)
- * - Verified: Confirms no regional URLs remain after migration
- *
- * Called at sync startup in [CalDavSyncWorker].
+ * Called at sync startup in [org.onekash.kashcal.sync.worker.CalDavSyncWorker].
  */
 @Singleton
 class ICloudUrlMigration @Inject constructor(
@@ -38,9 +28,9 @@ class ICloudUrlMigration @Inject constructor(
     }
 
     /**
-     * Run migration if not already completed.
+     * Runs the migration unless it is already done.
      *
-     * @return true if migration was performed, false if already completed
+     * @return true if it ran and verified, false if already done or verification failed
      */
     suspend fun migrateIfNeeded(): Boolean {
         if (dataStore.getICloudUrlMigrationCompleted()) {
@@ -54,8 +44,7 @@ class ICloudUrlMigration @Inject constructor(
         var eventCount = 0
         var operationCount = 0
 
-        // Transaction ensures atomicity: verification runs after commit
-        // is safe due to idempotency (re-runs skip already-migrated URLs)
+        // Verification runs after commit; re-runs skip already-migrated URLs.
         database.withTransaction {
             accountCount = migrateAccounts()
             calendarCount = migrateCalendars()
@@ -63,10 +52,9 @@ class ICloudUrlMigration @Inject constructor(
             operationCount = migratePendingOperations()
         }
 
-        // Verify migration completed successfully
         if (!verifyNoRegionalUrls()) {
             Log.e(TAG, "Migration verification failed - some regional URLs remain")
-            // Don't mark as completed so it runs again
+            // Not marked done, so it runs again.
             return false
         }
 
@@ -80,9 +68,6 @@ class ICloudUrlMigration @Inject constructor(
         return true
     }
 
-    /**
-     * Migrate iCloud account URLs to canonical form.
-     */
     private suspend fun migrateAccounts(): Int {
         val accountsDao = database.accountsDao()
         val icloudAccounts = accountsDao.getByProvider(AccountProvider.ICLOUD)
@@ -104,9 +89,6 @@ class ICloudUrlMigration @Inject constructor(
         return migrated
     }
 
-    /**
-     * Migrate iCloud calendar URLs to canonical form.
-     */
     private suspend fun migrateCalendars(): Int {
         val accountsDao = database.accountsDao()
         val calendarsDao = database.calendarsDao()
@@ -129,9 +111,6 @@ class ICloudUrlMigration @Inject constructor(
         return migrated
     }
 
-    /**
-     * Migrate iCloud event URLs to canonical form.
-     */
     private suspend fun migrateEvents(): Int {
         val eventsDao = database.eventsDao()
         val eventUrls = eventsDao.getICloudEventUrls()
@@ -154,9 +133,7 @@ class ICloudUrlMigration @Inject constructor(
         return migrated
     }
 
-    /**
-     * Migrate pending operation target URLs to canonical form.
-     */
+    /** Covers every pending operation; only regional iCloud URLs match. */
     private suspend fun migratePendingOperations(): Int {
         val pendingOpsDao = database.pendingOperationsDao()
         val operations = pendingOpsDao.getAllOnce()
@@ -179,18 +156,13 @@ class ICloudUrlMigration @Inject constructor(
         return migrated
     }
 
-    /**
-     * Verify no regional URLs remain after migration.
-     *
-     * Checks all entity types: accounts, calendars, events, pending operations.
-     */
+    /** Returns true if no account, calendar, event or pending operation has a regional URL. */
     private suspend fun verifyNoRegionalUrls(): Boolean {
         val accountsDao = database.accountsDao()
         val calendarsDao = database.calendarsDao()
         val eventsDao = database.eventsDao()
         val pendingOpsDao = database.pendingOperationsDao()
 
-        // Check accounts
         val icloudAccounts = accountsDao.getByProvider(AccountProvider.ICLOUD)
         val accountsWithRegional = icloudAccounts.any {
             ICloudUrlNormalizer.isRegionalUrl(it.homeSetUrl) ||
@@ -201,7 +173,6 @@ class ICloudUrlMigration @Inject constructor(
             return false
         }
 
-        // Check calendars
         val icloudAccountIds = icloudAccounts.map { it.id }
         val calendarsWithRegional = icloudAccountIds.any { accountId ->
             calendarsDao.getByAccountIdOnce(accountId).any {
@@ -213,7 +184,6 @@ class ICloudUrlMigration @Inject constructor(
             return false
         }
 
-        // Check events
         val eventsWithRegional = eventsDao.getICloudEventUrls().any {
             ICloudUrlNormalizer.isRegionalUrl(it.caldavUrl)
         }
@@ -222,7 +192,6 @@ class ICloudUrlMigration @Inject constructor(
             return false
         }
 
-        // Check pending operations
         val opsWithRegional = pendingOpsDao.getAllOnce().any {
             ICloudUrlNormalizer.isRegionalUrl(it.targetUrl)
         }

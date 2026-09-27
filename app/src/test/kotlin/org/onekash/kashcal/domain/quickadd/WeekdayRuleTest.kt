@@ -71,14 +71,14 @@ class WeekdayRuleTest {
     @Test
     fun `next Monday from Sunday resolves to following week`() {
         val ctx = parse("next monday", sunday)
-        // "next Monday" from Sunday Apr 12: next occurrence is Apr 13 (1 day), but <7 days → skip to Apr 20
+        // "next Monday" from Sunday Apr 12: Apr 13 is 1 day away, under 7 → skip to Apr 20
         assertEquals(LocalDate.of(2026, 4, 20), ctx.resolveDate())
     }
 
     @Test
     fun `next Friday from Sunday resolves to following week`() {
         val ctx = parse("next friday", sunday)
-        // "next Friday" from Sunday Apr 12: next occurrence is Apr 17 (5 days), but <7 days → skip to Apr 24
+        // "next Friday" from Sunday Apr 12: Apr 17 is 5 days away, under 7 → skip to Apr 24
         assertEquals(LocalDate.of(2026, 4, 24), ctx.resolveDate())
     }
 
@@ -94,8 +94,7 @@ class WeekdayRuleTest {
     @Test
     fun `this Monday from Monday resolves to today`() {
         val ctx = parse("this monday", monday)
-        // "this Monday" from Monday Apr 13: bare weekday for same day = +7 (Apr 20)
-        // BUT "this" should mean today if it IS the day → Apr 13
+        // A bare "monday" from Monday Apr 13 gives Apr 20; "this" on the day itself means today.
         assertEquals(LocalDate.of(2026, 4, 13), ctx.resolveDate())
     }
 
@@ -233,9 +232,9 @@ class WeekdayRuleTest {
         val tokens = WordTokenizer.tokenize(normalized)
         val context = ParseContext(sunday)
         WeekdayRule.apply(tokens, context)
-        // "conference" (0) should NOT be consumed
+        // "conference" (0) stays unconsumed
         assertTrue(!context.isConsumed(0))
-        // "friday" (1), "to" (2), "sunday" (3) should be consumed
+        // "friday" (1), "to" (2) and "sunday" (3) are consumed
         assertTrue(context.isConsumed(1))
         assertTrue(context.isConsumed(2))
         assertTrue(context.isConsumed(3))

@@ -29,6 +29,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
@@ -57,17 +59,17 @@ import java.time.LocalDate
 import java.util.Calendar as JavaCalendar
 
 /**
- * Unit tests for HomeViewModel.
+ * Tests [HomeViewModel] over relaxed mocks, with device reads and writes on a
+ * [FakeCalendarProviderRepository]. The tests drive the sync status, banner flag and network
+ * flows directly.
  *
- * Tests cover:
- * - Initial state and async initialization
- * - Calendar loading and visibility
- * - Event dots building
- * - Day selection and event loading
- * - Search functionality
- * - iCloud status checking
- * - Sync operations
- * - Network state transitions
+ * Sections cover initial state and initialization, account status for every CalDAV provider,
+ * calendar visibility, navigation and resume rollover, day selection, search (debounce,
+ * lookback, date filter), the agenda, sync (startup, resume, pull-to-refresh, force full, contact
+ * sync, banner, spinner, partial errors), network state, sheets and snackbars, event saves and
+ * deletes at each scope, month dots, pending actions, the week and day pagers, time-grid scroll
+ * and zoom restore, date pickers, the time-grid FAB seed, the view picker and the reactive week
+ * and month grids, occurrence extension, the device calendar picker filter and avatar initials.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -84,14 +86,14 @@ class HomeViewModelTest {
     private lateinit var syncScheduler: SyncScheduler
     private lateinit var networkMonitor: NetworkMonitor
 
-    // Network state flow that we control
+    // Network state the tests drive.
     private lateinit var networkStateFlow: MutableStateFlow<Boolean>
     private lateinit var networkMeteredFlow: MutableStateFlow<Boolean>
 
-    // Sync status flow that we control
+    // Immediate-sync status the tests drive.
     private lateinit var syncStatusFlow: MutableStateFlow<SyncStatus>
 
-    // Banner flag flow that we control
+    // showBannerForSync flag, set and reset through the syncScheduler stubs below.
     private lateinit var bannerFlagFlow: MutableStateFlow<Boolean>
 
     // Test data
@@ -211,9 +213,8 @@ class HomeViewModelTest {
         every { syncScheduler.lastSyncChanges } returns MutableStateFlow(emptyList())
         every { syncScheduler.clearSyncChanges() } returns Unit
 
-        // Setup default mock behavior - EventCoordinator provides calendars and accounts via Flow
-        // IMPORTANT: ViewModel uses combine() on getAllCalendars + getAllAccounts + defaultCalendar
-        // All three flows must emit for combine() to emit
+        // observeCalendars combines getAllCalendars, getAllAccounts, defaultCalendar and the two
+        // device-calendar prefs stubbed below; combine emits only after all five have emitted.
         every { eventCoordinator.getAllCalendars() } returns flowOf(testCalendars)
         every { eventCoordinator.getAllAccounts() } returns flowOf(emptyList())
         every { dataStore.defaultCalendar } returns flowOf(null)
@@ -237,10 +238,11 @@ class HomeViewModelTest {
         coEvery { eventReader.searchEventsExcludingPast(any()) } returns testEvents
         coEvery { eventReader.searchEventsWithNextOccurrence(any()) } returns testEventsWithNextOccurrence
         coEvery { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) } returns testEventsWithNextOccurrence
-        // Device calendar change signal (starts at 0, no changes)
+        // Device calendar change signal: 0, no changes.
         every { displayEventRepository.deviceCalendarChangeSignal } returns MutableStateFlow(0)
 
-        // SearchDisplayEvents mock: invokes roomSearcher lambda so EventReader verifications still work
+        // searchDisplayEvents runs its roomSearcher lambda, so the EventReader verifications
+        // still see the search calls.
         coEvery { displayEventRepository.searchDisplayEvents(any(), any(), any(), any()) } coAnswers {
             val query = firstArg<String>()
             val roomSearcher = arg<suspend (String) -> List<SearchResult>>(3)
@@ -254,20 +256,19 @@ class HomeViewModelTest {
         // flow would otherwise block weekEvents from ever emitting.
         every { dataStore.showMultiDayTimedInAllDayStrip } returns flowOf(true)
 
-        // Week-view scroll restore: default to the never-saved sentinel so initializeAsync's
-        // .first() read doesn't hang/throw on the relaxed mock, and existing tests are unaffected.
+        // Week-view scroll restore: the never-saved sentinel -1, not the relaxed mock's 0, for
+        // tests whose initializeAsync reaches the restore.
         every { dataStore.weekViewScrollMinutes } returns flowOf(-1)
         coEvery { dataStore.getWeekViewScrollMinutes() } returns -1
 
-        // Week-view zoom restore: stub the default hour-height so the relaxed mock's 0f
-        // (which would clamp to MIN_HOUR_HEIGHT_DP and shift the seeded default) doesn't
-        // perturb existing tests. Mirrors the scroll-minutes stubs above.
+        // Week-view zoom restore: the default hour-height, since the relaxed mock's 0f would clamp
+        // to MIN_HOUR_HEIGHT_DP and shift the seeded default. Mirrors the scroll-minutes stubs.
         every { dataStore.weekViewHourHeight } returns flowOf(60f)
         coEvery { dataStore.getWeekViewHourHeight() } returns 60f
         coEvery { dataStore.setWeekViewHourHeight(any()) } returns Unit
 
-        // Device-calendar prefs: stub Flow getters so combine() in observeCalendars can emit,
-        // and stub suspend variants used by loadCalendars. Default = feature off, no enabled IDs.
+        // Device-calendar prefs: the flows for observeCalendars and the drawer state, the
+        // suspend getters for loadCalendars. Default: feature off, no enabled or hidden IDs.
         every { dataStore.deviceCalendarsEnabled } returns flowOf(false)
         every { dataStore.enabledDeviceCalendarIds } returns flowOf(emptySet())
         every { dataStore.hiddenDeviceCalendarIds } returns flowOf(emptySet())
@@ -298,7 +299,8 @@ class HomeViewModelTest {
             accountRepository = accountRepository,
             syncScheduler = syncScheduler,
             networkMonitor = networkMonitor,
-            calendarProviderRepository = calendarProviderRepository,
+            deviceEventReader = calendarProviderRepository.deviceEventReader(),
+            deviceEventWriter = calendarProviderRepository.deviceEventWriter(dataStore),
             attendeeBackfill = io.mockk.mockk(relaxed = true),
             contactEmailReader = io.mockk.mockk(relaxed = true),
             context = io.mockk.mockk(relaxed = true),
@@ -320,14 +322,14 @@ class HomeViewModelTest {
 
     @Test
     fun `switching to MONTH_FULL with no prior selection stays on current month not epoch`() = runTest {
-        // Regression: selectedDate defaults to 0L. Switching to a month view synced
-        // the pager to Calendar(timeInMillis = 0) -> Dec 1969. With no explicit
-        // selection the month views must stay on today's month.
+        // selectedDate defaults to 0L. Syncing the month pager to Calendar(timeInMillis = 0)
+        // would land on the epoch month (Dec 1969 west of UTC); with no explicit selection the
+        // month views stay on today's month.
         every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns flowOf(persistentListOf())
 
         val viewModel = createViewModel()
         advanceUntilIdle()
-        // Simulate the common entry point: default Agenda view leaves selectedDate at 0L.
+        // The Agenda view leaves selectedDate at 0L.
         viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
         assertEquals(0L, viewModel.uiState.value.selectedDate)
@@ -387,7 +389,7 @@ class HomeViewModelTest {
 
     @Test
     fun `initializeAsync loads calendars with visibility from Calendar isVisible`() = runTest {
-        // Calendars have visibility from Calendar.isVisible (DB source of truth)
+        // Calendar.isVisible in the DB is the source of truth for visibility.
         val calendarsWithVisibility = listOf(
             testCalendars[0].copy(isVisible = true),
             testCalendars[1].copy(isVisible = false)
@@ -397,7 +399,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Visibility is derived from Calendar.isVisible, not a separate UI state field
+        // No separate UI state field: visibility is read from each Calendar.
         assertTrue(viewModel.uiState.value.calendars[0].isVisible)
         assertFalse(viewModel.uiState.value.calendars[1].isVisible)
     }
@@ -407,7 +409,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // With no accounts, should not be configured
+        // No accounts: not configured.
         assertFalse(viewModel.uiState.value.isConfigured)
     }
 
@@ -426,7 +428,7 @@ class HomeViewModelTest {
 
     @Test
     fun `checkAccountStatus shows setup banner when no accounts exist`() = runTest {
-        // @Before default: getAllAccounts returns emptyList()
+        // setup's default: getAllAccounts returns an empty list.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -489,9 +491,10 @@ class HomeViewModelTest {
         assertFalse("isConfigured should be false when no credentials", viewModel.uiState.value.isConfigured)
     }
 
-    // ==================== Account Status POST Tests (BUG 1 fix) ====================
-    // These tests verify the DESIRED behavior after removing iCloud hardcoding.
-    // checkAccountStatus() should consider ALL sync-capable accounts (iCloud + CalDAV).
+    // ==================== Account Status for Every CalDAV Provider ====================
+    // checkAccountStatus sets isConfigured when any account whose provider supportsCalDAV, CalDAV
+    // as well as iCloud, has credentials, and the startup and resume syncs run for a CalDAV-only
+    // account.
 
     @Test
 
@@ -589,20 +592,20 @@ class HomeViewModelTest {
 
         assertTrue(viewModel.uiState.value.isConfigured)
 
-        // Trigger startup sync first (sets hasTriggeredStartupSync)
+        // Startup sync first; it sets hasTriggeredStartupSync.
         viewModel.triggerStartupSync()
         advanceUntilIdle()
 
-        // Simulate sync completing so isSyncing resets to false
+        // The sync completes, so isSyncing resets to false.
         syncStatusFlow.value = SyncStatus.Succeeded()
         advanceUntilIdle()
         assertFalse(viewModel.uiState.value.isSyncing)
 
-        // Now resume sync should trigger
+        // The resume sync runs.
         viewModel.syncOnResumeIfNeeded()
         advanceUntilIdle()
 
-        // Should have been called twice: once for startup, once for resume
+        // Once for startup, once for resume.
         verify(atLeast = 2) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
@@ -642,23 +645,21 @@ class HomeViewModelTest {
 
     @Test
     fun `toggleCalendarVisibility calls eventCoordinator setCalendarVisibility`() = runTest {
-        // Setup mock for setCalendarVisibility
         coEvery { eventCoordinator.setCalendarVisibility(any(), any()) } returns Unit
 
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Toggle calendar 1 visibility (currently visible -> hidden)
+        // Calendar 1 is visible, so the toggle hides it.
         viewModel.toggleCalendarVisibility(1L)
         advanceUntilIdle()
 
-        // Should call EventCoordinator to update DB (source of truth)
+        // Written to the DB, the source of truth, through EventCoordinator.
         coVerify { eventCoordinator.setCalendarVisibility(1L, false) }
     }
 
     @Test
     fun `showAllCalendars calls setCalendarVisibility for all calendars`() = runTest {
-        // Setup mock for setCalendarVisibility
         coEvery { eventCoordinator.setCalendarVisibility(any(), any()) } returns Unit
 
         val viewModel = createViewModel()
@@ -667,7 +668,7 @@ class HomeViewModelTest {
         viewModel.showAllCalendars()
         advanceUntilIdle()
 
-        // Should call EventCoordinator.setCalendarVisibility(id, true) for each calendar
+        // setCalendarVisibility(id, true) for each calendar.
         coVerify { eventCoordinator.setCalendarVisibility(1L, true) }
         coVerify { eventCoordinator.setCalendarVisibility(2L, true) }
     }
@@ -749,12 +750,12 @@ class HomeViewModelTest {
 
     @Test
     fun `cold start in MONTH lands instantly not animated`() = runTest {
-        // initializeAsync() reads onboardingDismissed.first() before reaching the
-        // goToToday() cold-start land; stub it so init runs to completion.
+        // initializeAsync reads onboardingDismissed.first() before the cold-start goToToday;
+        // stubbed so init runs to completion.
         every { dataStore.onboardingDismissed } returns flowOf(false)
 
-        // createViewModel() runs initializeAsync() -> goToToday(animate=false)
-        // internally. Drives the actual cold-start path, not the handler alone.
+        // createViewModel runs initializeAsync, which calls goToToday(animate = false): the
+        // cold-start path itself, not the handler alone.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -787,9 +788,8 @@ class HomeViewModelTest {
 
     @Test
     fun `onAppResume same day preserves selectedDate after user navigated`() = runTest {
-        // The first resume is record-only by design, so a single same-day read
-        // here also covers "first resume does not snap when user already
-        // navigated to a non-today date".
+        // The first resume only records the day, so one same-day read also covers "the first
+        // resume doesn't snap after the user navigated to another date".
         val viewModel = createViewModel(dayCodeSequence = mutableListOf(20260518))
         advanceUntilIdle()
 
@@ -810,8 +810,8 @@ class HomeViewModelTest {
 
     @Test
     fun `onAppResume after day rollover snaps to today in MONTH view`() = runTest {
-        // goToToday() uses real wall-clock Calendar.getInstance() to compute the
-        // snap target; the injected provider is only used to detect the rollover.
+        // goToToday takes the snap target from the wall clock (Calendar.getInstance()); the
+        // injected day-code provider only detects the rollover.
         val sequence = mutableListOf(20260518, 20260519)
         val viewModel = createViewModel(dayCodeSequence = sequence)
         advanceUntilIdle()
@@ -821,7 +821,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
         assertEquals(pastDate, viewModel.uiState.value.selectedDate)
 
-        // First resume: lastResumeDayCode is null -> record-only, no snap.
+        // First resume: lastResumeDayCode is null, so it only records the day.
         viewModel.onAppResume()
         advanceUntilIdle()
         assertEquals(
@@ -830,7 +830,7 @@ class HomeViewModelTest {
             viewModel.uiState.value.selectedDate
         )
 
-        // Second resume: dayCode differs -> snap to today.
+        // Second resume: the day code differs, so it snaps to today.
         viewModel.onAppResume()
         advanceUntilIdle()
 
@@ -861,11 +861,11 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // First show the year overlay
+        // Show the year overlay.
         viewModel.toggleYearOverlay()
         assertTrue(viewModel.uiState.value.showYearOverlay)
 
-        // Navigate to month should dismiss it
+        // navigateToMonth dismisses it.
         viewModel.navigateToMonth(2025, 5)
         advanceUntilIdle()
 
@@ -877,14 +877,14 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Initial state should be false
+        // Hidden at first.
         assertFalse(viewModel.uiState.value.showYearOverlay)
 
-        // Toggle to true
+        // Shown.
         viewModel.toggleYearOverlay()
         assertTrue(viewModel.uiState.value.showYearOverlay)
 
-        // Toggle back to false
+        // Hidden again.
         viewModel.toggleYearOverlay()
         assertFalse(viewModel.uiState.value.showYearOverlay)
     }
@@ -927,7 +927,7 @@ class HomeViewModelTest {
         viewModel.selectDate(dateMillis)
         advanceUntilIdle()
 
-        // selectDate updates selectedDate and label (events loaded via day pager cache)
+        // selectDate sets selectedDate and the label; events load through the day pager cache.
         assertEquals(dateMillis, viewModel.uiState.value.selectedDate)
         assertTrue(viewModel.uiState.value.selectedDayLabel.contains("2024"))
     }
@@ -937,10 +937,10 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Apollo 11 — July 20, 1969 (month param is 0-indexed: 6 = July)
+        // Apollo 11, July 20, 1969; the month parameter is 0-indexed, so 6 is July.
         val dateMillis = getTimestamp(1969, 6, 20, 0, 0)
 
-        // Pre-1970 dates have negative epoch millis
+        // Pre-1970 dates have negative epoch millis.
         assertTrue("Pre-1970 date should have negative millis", dateMillis < 0)
 
         viewModel.selectDate(dateMillis)
@@ -961,7 +961,7 @@ class HomeViewModelTest {
         viewModel.selectDate(dateMillis)
         advanceUntilIdle()
 
-        // Pre-1970 dates should update state correctly
+        // The pre-1970 date reaches the state.
         assertEquals(dateMillis, viewModel.uiState.value.selectedDate)
         assertTrue(viewModel.uiState.value.selectedDayLabel.contains("1969"))
     }
@@ -1010,7 +1010,7 @@ class HomeViewModelTest {
         viewModel.updateSearchQuery("me")
         advanceUntilIdle()
 
-        // Default filter is Upcoming, so calls searchEventsExcludingPastWithNextOccurrence
+        // The default filter is Upcoming, so it calls searchEventsExcludingPastWithNextOccurrence.
         coVerify { eventReader.searchEventsExcludingPastWithNextOccurrence("me") }
         assertTrue(viewModel.uiState.value.searchResults.size >= 0)
     }
@@ -1038,14 +1038,14 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         assertEquals(DateFilter.Upcoming, viewModel.uiState.value.searchDateFilter)
-        // First search uses searchEventsExcludingPastWithNextOccurrence (default Upcoming)
+        // The first search runs under the default Upcoming filter.
         coVerify(exactly = 1) { eventReader.searchEventsExcludingPastWithNextOccurrence("test") }
 
         viewModel.setSearchDateFilter(DateFilter.AnyTime)
         advanceUntilIdle()
 
         assertEquals(DateFilter.AnyTime, viewModel.uiState.value.searchDateFilter)
-        // After setting AnyTime, should call searchEventsWithNextOccurrence (include past)
+        // AnyTime includes the past: searchEventsWithNextOccurrence.
         coVerify(exactly = 1) { eventReader.searchEventsWithNextOccurrence("test") }
     }
 
@@ -1061,11 +1061,12 @@ class HomeViewModelTest {
         viewModel.updateSearchQuery("test")
         advanceUntilIdle()
 
-        // Set AnyTime filter to include past
+        // AnyTime includes the past.
         viewModel.setSearchDateFilter(DateFilter.AnyTime)
         advanceUntilIdle()
 
-        // Verify startDayCode passed to displayEventRepository is ~730 days ago (±1 day for midnight)
+        // startDayCode is 730 days back, within 1 of the expected day code to allow for
+        // midnight (one day either side, except across a month boundary).
         val today = java.time.LocalDate.now()
         val expectedDate = today.minusDays(730)
         val expectedCode = expectedDate.year * 10000 + expectedDate.monthValue * 100 + expectedDate.dayOfMonth
@@ -1089,11 +1090,11 @@ class HomeViewModelTest {
         viewModel.updateSearchQuery("test")
         advanceUntilIdle()
 
-        // Set AnyTime filter to include past
+        // AnyTime includes the past.
         viewModel.setSearchDateFilter(DateFilter.AnyTime)
         advanceUntilIdle()
 
-        // Verify startDayCode passed to displayEventRepository is ~10 years ago (±1 day)
+        // startDayCode is 10 years back, within 1 of the expected day code.
         val today = java.time.LocalDate.now()
         val expectedDate = today.minusYears(10)
         val expectedCode = expectedDate.year * 10000 + expectedDate.monthValue * 100 + expectedDate.dayOfMonth
@@ -1117,18 +1118,18 @@ class HomeViewModelTest {
         viewModel.activateSearch()
         advanceUntilIdle()
 
-        // Type query
+        // Type a query.
         viewModel.updateSearchQuery("me")
 
-        // Immediately after typing, search should NOT have been called yet
+        // No search right after typing.
         coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) }
 
-        // Advance time by 100ms - still not called
+        // 100 ms: still no search.
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
         coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) }
 
-        // Advance time to 300ms total - now should be called
+        // 300 ms in total: the search runs.
         testScheduler.advanceTimeBy(200)
         testScheduler.runCurrent()
         coVerify(exactly = 1) { eventReader.searchEventsExcludingPastWithNextOccurrence("me") }
@@ -1142,21 +1143,22 @@ class HomeViewModelTest {
         viewModel.activateSearch()
         advanceUntilIdle()
 
-        // Type first query
+        // First query.
         viewModel.updateSearchQuery("me")
 
-        // Advance time by 150ms (half of debounce delay)
+        // 150 ms, half the debounce delay.
         testScheduler.advanceTimeBy(150)
         testScheduler.runCurrent()
 
-        // Type second query before first completes
+        // Second query before the first runs.
         viewModel.updateSearchQuery("meet")
 
-        // Advance full 300ms for second query
+        // The full 300 ms for the second query.
         testScheduler.advanceTimeBy(300)
         testScheduler.runCurrent()
 
-        // Only second query should have been executed (using searchEventsExcludingPastWithNextOccurrence by default)
+        // Only the second query runs, through the default
+        // searchEventsExcludingPastWithNextOccurrence.
         coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence("me") }
         coVerify(exactly = 1) { eventReader.searchEventsExcludingPastWithNextOccurrence("meet") }
     }
@@ -1170,7 +1172,7 @@ class HomeViewModelTest {
         viewModel.updateSearchQuery("m")
         advanceUntilIdle()
 
-        // Should not search and should clear results immediately (no debounce)
+        // No search, and the results clear at once without the debounce.
         coVerify(exactly = 0) { eventReader.searchEventsExcludingPastWithNextOccurrence(any()) }
         assertTrue(viewModel.uiState.value.searchResults.isEmpty())
     }
@@ -1242,7 +1244,7 @@ class HomeViewModelTest {
 
     @Test
     fun `setViewMode to AGENDA loads events`() = runTest {
-        // Setup DisplayEventRepository mock for agenda (merges Room + device events)
+        // The agenda reads DisplayEventRepository, which merges Room and device events.
         val testDisplayEvents = persistentListOf(
             DisplayEvent.Room(testEvents[0], testOccurrences[0], testCalendars[0]),
             DisplayEvent.Room(testEvents[1], testOccurrences[1], testCalendars[1])
@@ -1254,9 +1256,9 @@ class HomeViewModelTest {
 
         assertEquals(ViewMode.MONTH, viewModel.uiState.value.viewMode)
 
-        // agendaEvents is a WhileSubscribed StateFlow — Turbine-collect so its upstream runs.
+        // agendaEvents is a WhileSubscribed StateFlow: Turbine-collect it so its upstream runs.
         viewModel.agendaEvents.test {
-            // Before entering agenda, the key is null → empty.
+            // Before entering the agenda the key is null, so the list is empty.
             assertTrue(awaitItem().events.isEmpty())
 
             viewModel.setViewMode(ViewMode.AGENDA)
@@ -1280,7 +1282,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Collect agenda so its flow is active while we're in AGENDA.
+        // Collect the agenda so its flow is active while in AGENDA.
         viewModel.agendaEvents.test {
             skipItems(1) // initial empty
             viewModel.setViewMode(ViewMode.AGENDA)
@@ -1288,13 +1290,13 @@ class HomeViewModelTest {
             assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
             assertEquals(1, expectMostRecentItem().events.size)
 
-            // Clear mock call count, then leave agenda — the key nulls, so no new query.
+            // Clear the recorded calls, then leave the agenda: the key nulls, so no new query.
             io.mockk.clearMocks(displayEventRepository, answers = false, recordedCalls = true, childMocks = false)
             viewModel.setViewMode(ViewMode.MONTH)
             advanceUntilIdle()
 
             assertEquals(ViewMode.MONTH, viewModel.uiState.value.viewMode)
-            // Nulling the agenda key must NOT issue a fresh range query.
+            // Nulling the agenda key issues no range query.
             verify(exactly = 0) { displayEventRepository.getDisplayEventsForRange(any(), any()) }
             cancelAndIgnoreRemainingEvents()
         }
@@ -1316,7 +1318,7 @@ class HomeViewModelTest {
             viewModel.setViewMode(ViewMode.AGENDA)
             advanceUntilIdle()
 
-            // Verify the DisplayEventRepository range query was called with a ~90-day window
+            // The range query covers exactly 90 days.
             verify { displayEventRepository.getDisplayEventsForRange(any(), any()) }
             val ninetyDaysMs = 90L * 24 * 60 * 60 * 1000
             assertEquals(ninetyDaysMs, endSlot.captured - startSlot.captured)
@@ -1326,7 +1328,7 @@ class HomeViewModelTest {
 
     @Test
     fun `agenda events are sorted by start time`() = runTest {
-        // Create events in reverse order
+        // A second event, three days after testEvents[0].
         val laterOccurrence = Occurrence(
             id = 3L,
             eventId = 3L,
@@ -1346,8 +1348,8 @@ class HomeViewModelTest {
             dtstamp = System.currentTimeMillis()
         )
 
-        // DisplayEventRepository returns pre-sorted (later first to test sort correctness)
-        // In practice, DisplayEventRepository sorts by startTs; verify ViewModel stores as-is
+        // The mock returns the list sorted, earlier first, as DisplayEventRepository sorts by
+        // startTs; the ViewModel keeps that order.
         val sortedDisplayEvents = persistentListOf(
             DisplayEvent.Room(testEvents[0], testOccurrences[0], testCalendars[0]),
             DisplayEvent.Room(laterEvent, laterOccurrence, testCalendars[0])
@@ -1362,7 +1364,7 @@ class HomeViewModelTest {
             viewModel.setViewMode(ViewMode.AGENDA)
             advanceUntilIdle()
 
-            // Should be sorted by startTs (earlier first) - DisplayEventRepository handles sorting
+            // Still earlier first.
             val loaded = expectMostRecentItem()
             assertEquals(2, loaded.events.size)
             assertTrue(loaded.events[0].startTs < loaded.events[1].startTs)
@@ -1372,10 +1374,10 @@ class HomeViewModelTest {
 
     @Test
     fun `agenda shows loading state while fetching`() = runTest {
-        // Track loading state during the fetch
+        // Records whether the range query ran.
         var loadingStateDuringFetch = false
         every { displayEventRepository.getDisplayEventsForRange(any(), any()) } answers {
-            // This captures that the agenda flow was fetching when the range was queried
+            // The LOADING emission itself isn't asserted.
             loadingStateDuringFetch = true
             flowOf(persistentListOf())
         }
@@ -1441,7 +1443,7 @@ class HomeViewModelTest {
         viewModel.triggerStartupSync()
         advanceUntilIdle()
 
-        // Should only be called once
+        // Requested once.
         verify(exactly = 1) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
@@ -1468,20 +1470,19 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Verify iCloud is configured
+        // The iCloud account is configured.
         assertTrue(viewModel.uiState.value.isConfigured)
 
-        // Start first sync
+        // First sync.
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // Try to start another sync while first one is still processing
-        // The second call should be ignored because isSyncing check happens
-        // before the state is updated
+        // A second refreshSync while the first is live returns at the isSyncing guard
+        // (asserted by `concurrent refreshSync calls are blocked when isSyncing is true`).
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // Verify sync was requested (may be called multiple times due to init)
+        // Only checks that a sync was requested.
         verify(atLeast = 1) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
@@ -1501,7 +1502,7 @@ class HomeViewModelTest {
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // Should show offline error snackbar, not start syncing
+        // An offline error snackbar, and no sync.
         assertFalse(viewModel.uiState.value.isSyncing)
         val error = viewModel.uiState.value.currentError
         assertTrue("Expected Snackbar error but got $error", error is ErrorPresentation.Snackbar)
@@ -1525,9 +1526,9 @@ class HomeViewModelTest {
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // Sync should NOT have been requested
+        // No sync requested.
         verify(exactly = 0) { syncScheduler.requestImmediateSync(any(), any()) }
-        // Offline must not trigger contact sync either
+        // No contact sync either.
         verify(exactly = 0) { syncScheduler.requestImmediateContactSync() }
     }
 
@@ -1548,7 +1549,7 @@ class HomeViewModelTest {
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // Sync should have been requested
+        // A sync was requested.
         verify(exactly = 1) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
@@ -1569,7 +1570,7 @@ class HomeViewModelTest {
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // Contact sync should also have been requested (sweep all contact-sync accounts)
+        // A contact sync too; the worker syncs every account with contact sync on.
         verify { syncScheduler.requestImmediateContactSync() }
     }
 
@@ -1583,17 +1584,16 @@ class HomeViewModelTest {
 
         assertTrue(viewModel.uiState.value.isConfigured)
 
-        // Clear any init-time sync calls, then resume from background. App-open
-        // resume shares performSync() with pull-to-refresh but must NOT sweep
-        // contacts — only the explicit pull-to-refresh gesture does.
+        // Clear any init-time sync calls, then resume from the background. The app-open resume
+        // shares performSync with pull-to-refresh but never syncs contacts; only the
+        // pull-to-refresh gesture does.
         io.mockk.clearMocks(syncScheduler, answers = false, recordedCalls = true, childMocks = false)
 
         viewModel.syncOnResumeIfNeeded()
         advanceUntilIdle()
 
-        // The resume path did run (calendar sync fired) — it just must not
-        // sweep contacts. This guards against the exactly=0 passing because
-        // syncOnResumeIfNeeded early-returned instead.
+        // The resume ran (the calendar sync was requested) without a contact sync, so the
+        // exactly = 0 check can't pass through an early return in syncOnResumeIfNeeded.
         verify { syncScheduler.requestImmediateSync(any(), any()) }
         verify(exactly = 0) { syncScheduler.requestImmediateContactSync() }
     }
@@ -1602,7 +1602,7 @@ class HomeViewModelTest {
 
     @Test
     fun `refreshSync when not configured shows snackbar`() = runTest {
-        // Default setup: no accounts configured (isConfigured = false)
+        // setup's default: no account configured, so isConfigured is false.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -1672,10 +1672,10 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Force sync sets showBannerForCurrentSync = true
+        // Force sync sets showBannerForSync to true.
         viewModel.forceFullSync()
 
-        // Emit Running status immediately (before advanceUntilIdle processes Idle)
+        // Running at once, before advanceUntilIdle processes Idle.
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
 
@@ -1687,9 +1687,9 @@ class HomeViewModelTest {
 
     @Test
     fun `passive Enqueued replay shows no spinner and no banner`() = runTest {
-        // Reproduces #356: a fresh process replays the persisted ENQUEUED one_shot_sync
-        // (stuck offline) with NO in-session user action. The spinner must stay hidden
-        // and no banner appears — the spinner is only ever driven by a live pull.
+        // #356: a new process replays the persisted Enqueued one_shot_sync (stuck offline) with
+        // no user action in the session. Neither the spinner nor a banner shows; only a live
+        // pull drives the spinner.
         coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
@@ -1720,9 +1720,8 @@ class HomeViewModelTest {
 
     @Test
     fun `startup sync guard keeps isSyncing true while spinner stays false`() = runTest {
-        // The isSyncing duplicate-guard and the visible spinner are distinct: a silent
-        // startup sync marks the guard but never the spinner (pins the #356 fix so the
-        // two roles can't be reconflated later).
+        // The isSyncing duplicate-sync guard and the visible spinner are separate: a silent
+        // startup sync sets the guard but never the spinner (#356).
         coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
@@ -1744,10 +1743,10 @@ class HomeViewModelTest {
 
     @Test
     fun `startup sync cannot re-enqueue over an in-flight pull and steal its spinner`() = runTest {
-        // A pull-to-refresh is in flight (isSyncing guard set, spinner showing). If a
-        // startup sync could REPLACE-enqueue a silent sync on top, that silent sync's
-        // later failure would be misread as a pull failure (wasPull reads the spinner).
-        // performSync guards on isSyncing, so triggerStartupSync is a no-op here.
+        // A pull-to-refresh is in flight (isSyncing guard set, spinner showing). A silent
+        // startup sync enqueued over it would replace it, and its failure would read as a pull
+        // failure (wasPull reads the spinner). performSync guards on isSyncing, so
+        // triggerStartupSync is a no-op here.
         coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
@@ -1760,8 +1759,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.showRefreshSpinner)
 
-        // Startup sync fires while the pull is still live: it must NOT enqueue a
-        // second (silent app-open) sync over the pull.
+        // The startup sync fires while the pull is live and enqueues no silent app-open sync.
         viewModel.triggerStartupSync()
         advanceUntilIdle()
 
@@ -1793,8 +1791,8 @@ class HomeViewModelTest {
 
     @Test
     fun `first-sync-after-account-setup shows the banner`() = runTest {
-        // refreshAccountStatus() is the first-setup path: it opts into the banner via
-        // showBannerForSync even though it is not a pull-to-refresh.
+        // refreshAccountStatus is the first-setup path: it opts into the banner through
+        // showBannerForSync.
         coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
@@ -1818,19 +1816,19 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Force sync sets showBannerForCurrentSync = true
+        // Force sync sets showBannerForSync to true.
         viewModel.forceFullSync()
 
-        // Emit status changes immediately
+        // Status changes at once.
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
 
         syncStatusFlow.value = SyncStatus.Succeeded(calendarsSynced = 2, eventsPulled = 5)
-        // Don't use advanceUntilIdle() - it would advance past the 2s auto-dismiss delay
+        // Not advanceUntilIdle: it would run past the 2 s auto-dismiss delay.
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
 
-        // Banner should still be visible (auto-dismisses after 2 seconds)
+        // Still showing; it auto-dismisses after 2 seconds.
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals(SyncBannerState.Success, viewModel.uiState.value.syncBannerState)
         assertFalse(viewModel.uiState.value.isSyncing)
@@ -1844,15 +1842,14 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Pull-to-refresh sets showBannerForCurrentSync = false
+        // Pull-to-refresh sets showBannerForSync to false.
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // Emit Running status
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
 
-        // Banner should be hidden for pull-to-refresh
+        // No banner for pull-to-refresh.
         assertFalse(viewModel.uiState.value.showSyncBanner)
         assertTrue(viewModel.uiState.value.isSyncing)
     }
@@ -1865,7 +1862,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Pull-to-refresh sets showBannerForCurrentSync = false
+        // Pull-to-refresh sets showBannerForSync to false.
         viewModel.refreshSync()
         advanceUntilIdle()
 
@@ -1875,7 +1872,7 @@ class HomeViewModelTest {
         syncStatusFlow.value = SyncStatus.Succeeded(calendarsSynced = 2, eventsPulled = 5)
         advanceUntilIdle()
 
-        // Banner should remain hidden for pull-to-refresh success
+        // Still no banner after the pull-to-refresh succeeds.
         assertFalse(viewModel.uiState.value.showSyncBanner)
         assertFalse(viewModel.uiState.value.isSyncing)
     }
@@ -1898,8 +1895,8 @@ class HomeViewModelTest {
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
 
-        // A user-initiated pull owns its own feedback: no banner, but the error is
-        // still surfaced (not swallowed), and the spinner is cleared.
+        // A user-initiated pull owns its feedback: no banner, but the error still surfaces and
+        // the spinner clears.
         assertFalse(viewModel.uiState.value.showSyncBanner)
         assertFalse(viewModel.uiState.value.showRefreshSpinner)
         assertNotNull(
@@ -1922,16 +1919,16 @@ class HomeViewModelTest {
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
 
-        // Simulate a concurrent force-sync (e.g. from Settings) flipping the shared
-        // banner flag to true while the pull is still in flight.
+        // A concurrent force sync, for example from Settings, sets the shared banner flag while
+        // the pull is in flight.
         syncScheduler.setShowBannerForSync(true)
 
         syncStatusFlow.value = SyncStatus.Failed(errorMessage = "Network error")
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
 
-        // The pull-failed path must clear the flag so the next silent startup/resume
-        // sync does not surface a banner off the stale intent.
+        // The failed pull clears the flag, so the next silent startup or resume sync shows no
+        // banner from it.
         verify { syncScheduler.resetBannerFlag() }
         assertFalse(bannerFlagFlow.value)
     }
@@ -1944,18 +1941,18 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Force sync sets showBannerForSync = true.
+        // Force sync sets showBannerForSync to true.
         viewModel.forceFullSync()
 
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
 
         syncStatusFlow.value = SyncStatus.Failed(errorMessage = "Network error")
-        // Don't use advanceUntilIdle() - it would advance past the 3s auto-dismiss delay
+        // Not advanceUntilIdle: it would run past the 3 s auto-dismiss delay.
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
 
-        // Banner should still be visible (auto-dismisses after 3 seconds)
+        // Still showing; it auto-dismisses after 3 seconds.
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals(SyncBannerState.Error, viewModel.uiState.value.syncBannerState)
         assertEquals("Network error", viewModel.uiState.value.syncErrorDetail)
@@ -1964,16 +1961,15 @@ class HomeViewModelTest {
 
     @Test
     fun `background startup failure stays silent (no banner, no spinner)`() = runTest {
-        // Reproduces the #356 eagerness: a startup/resume sync (no user action,
-        // showBannerForSync=false) that fails must NOT surface a banner on a normal
-        // app open, and must never show the spinner.
+        // #356: a failed startup or resume sync (no user action, showBannerForSync false)
+        // shows no banner on a normal app open, and never the spinner.
         coEvery { accountRepository.getAllAccounts() } returns listOf(testICloudAccount)
         coEvery { accountRepository.hasCredentials(testICloudAccount.id) } returns true
 
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // No user action: showBannerForSync stays false.
+        // No user action, so showBannerForSync stays false.
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
 
@@ -1986,7 +1982,7 @@ class HomeViewModelTest {
         assertFalse(viewModel.uiState.value.isSyncing)
     }
 
-    // ==================== Partial Error Chain Tests (GAP 2 / GAP 7 plan) ====================
+    // ==================== Partial Error Tests ====================
 
     @Test
     fun `PartialSuccess shows banner with error message even for pull-to-refresh`() = runTest {
@@ -1996,24 +1992,24 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Pull-to-refresh sets showBannerForSync = false
+        // Pull-to-refresh sets showBannerForSync to false.
         viewModel.refreshSync()
         advanceUntilIdle()
 
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
 
-        // Emit PartialSuccess (Succeeded with errorMessage)
+        // A partial success: Succeeded with an errorMessage.
         syncStatusFlow.value = SyncStatus.Succeeded(
             calendarsSynced = 2,
             eventsPulled = 5,
             errorMessage = "1 account failed: Auth error"
         )
-        // Advance enough for state update but not past auto-dismiss
+        // Enough for the state update, short of the auto-dismiss.
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
 
-        // Banner should be visible because hasPartialError forces it
+        // hasPartialError forces the banner.
         assertTrue("Banner should show for partial error", viewModel.uiState.value.showSyncBanner)
         assertEquals(SyncBannerState.PartialError, viewModel.uiState.value.syncBannerState)
         assertFalse("isSyncing should be false", viewModel.uiState.value.isSyncing)
@@ -2038,12 +2034,12 @@ class HomeViewModelTest {
             errorMessage = "1 account failed"
         )
 
-        // After 100ms, banner should be visible
+        // Showing after 100 ms.
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
         assertTrue("Banner should show initially", viewModel.uiState.value.showSyncBanner)
 
-        // After 3 seconds, banner should auto-dismiss
+        // Dismissed 3 seconds later.
         testScheduler.advanceTimeBy(3000)
         testScheduler.runCurrent()
         assertFalse("Banner should auto-dismiss after 3s", viewModel.uiState.value.showSyncBanner)
@@ -2057,14 +2053,14 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Pull-to-refresh: banner flag is false
+        // Pull-to-refresh: the banner flag is false.
         viewModel.refreshSync()
         advanceUntilIdle()
 
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
 
-        // Clean success — no errorMessage
+        // A clean success, no errorMessage.
         syncStatusFlow.value = SyncStatus.Succeeded(
             calendarsSynced = 3,
             eventsPulled = 10
@@ -2072,7 +2068,7 @@ class HomeViewModelTest {
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
 
-        // Banner should NOT show because showBanner=false and hasPartialError=false
+        // No banner: showBanner and hasPartialError are both false.
         assertFalse("Banner should not show for clean pull-to-refresh success",
             viewModel.uiState.value.showSyncBanner)
         assertEquals(SyncBannerState.Success, viewModel.uiState.value.syncBannerState)
@@ -2089,7 +2085,7 @@ class HomeViewModelTest {
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // Test PartialSuccess banner message
+        // Partial success: PartialError, with no error detail.
         syncStatusFlow.value = SyncStatus.Succeeded(errorMessage = "Nextcloud auth expired")
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
@@ -2097,10 +2093,10 @@ class HomeViewModelTest {
         assertEquals(SyncBannerState.PartialError, viewModel.uiState.value.syncBannerState)
         assertNull(viewModel.uiState.value.syncErrorDetail)
 
-        // Reset and test Failed banner message
+        // Reset, then a failure: Error, with the detail.
         syncStatusFlow.value = SyncStatus.Idle
         advanceUntilIdle()
-        // Idle resets state to Syncing
+        // Idle resets the banner state to Syncing.
         assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
 
         syncStatusFlow.value = SyncStatus.Failed(errorMessage = "All accounts failed")
@@ -2119,7 +2115,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Force full sync sets banner flag to true
+        // Force full sync sets the banner flag.
         viewModel.forceFullSync()
         advanceUntilIdle()
 
@@ -2133,7 +2129,7 @@ class HomeViewModelTest {
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
 
-        // Banner should show (both showBanner=true AND hasPartialError=true)
+        // Showing: showBanner and hasPartialError are both true.
         assertTrue("Banner should show", viewModel.uiState.value.showSyncBanner)
         assertEquals(SyncBannerState.PartialError, viewModel.uiState.value.syncBannerState)
     }
@@ -2164,7 +2160,7 @@ class HomeViewModelTest {
 
     @Test
     fun `PartialSuccess banner works with CalDAV multi-account setup`() = runTest {
-        // Setup: iCloud + CalDAV — mixed provider scenario
+        // An iCloud and a CalDAV account.
         val caldavAccount = Account(
             id = 10L,
             provider = AccountProvider.CALDAV,
@@ -2185,7 +2181,7 @@ class HomeViewModelTest {
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
 
-        // PartialSuccess: iCloud synced, Nextcloud auth expired
+        // Partial success: iCloud synced, Nextcloud auth expired.
         syncStatusFlow.value = SyncStatus.Succeeded(
             calendarsSynced = 3,
             eventsPulled = 10,
@@ -2194,7 +2190,7 @@ class HomeViewModelTest {
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
 
-        // Banner should show for partial error even in pull-to-refresh
+        // The partial error shows the banner even for pull-to-refresh.
         assertTrue("Banner should show for partial error", viewModel.uiState.value.showSyncBanner)
         assertEquals(SyncBannerState.PartialError, viewModel.uiState.value.syncBannerState)
     }
@@ -2207,15 +2203,14 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Use forceFullSync to show banner
+        // forceFullSync shows the banner.
         viewModel.forceFullSync()
 
-        // Emit Running status immediately
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.showSyncBanner)
 
-        // Then set to Idle
+        // Then Idle.
         syncStatusFlow.value = SyncStatus.Idle
         advanceUntilIdle()
 
@@ -2232,15 +2227,14 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Use forceFullSync to show banner
+        // forceFullSync shows the banner.
         viewModel.forceFullSync()
 
-        // Emit Running status immediately
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.showSyncBanner)
 
-        // Then set to Cancelled
+        // Then Cancelled.
         syncStatusFlow.value = SyncStatus.Cancelled
         advanceUntilIdle()
 
@@ -2256,7 +2250,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // isOnline is exposed directly as StateFlow from NetworkMonitor
+        // isOnline is NetworkMonitor's StateFlow, exposed directly.
         assertTrue(viewModel.isOnline.value)
 
         // Go offline
@@ -2297,7 +2291,7 @@ class HomeViewModelTest {
 
     @Test
     fun `clearSnackbar clears pending message`() = runTest {
-        // Trigger snackbar via a failed delete operation
+        // A failed delete sets the snackbar message.
         coEvery { eventCoordinator.deleteEvent(999L) } throws RuntimeException("DB error")
 
         val viewModel = createViewModel()
@@ -2306,7 +2300,6 @@ class HomeViewModelTest {
         viewModel.deleteEventOptimistic(999L)
         advanceUntilIdle()
 
-        // Should have snackbar message from failed delete
         assertTrue(viewModel.uiState.value.pendingSnackbarMessage != null)
 
         viewModel.clearSnackbar()
@@ -2403,12 +2396,13 @@ class HomeViewModelTest {
         coVerify { eventCoordinator.updateEvent(match { it.title == "Updated Meeting" }) }
     }
 
-    // ==================== Save-Time Scope Sheet Integration ====================
-    // These tests are the integration coverage for the save-time deferral
-    // round-trip (requestFormSave → saveEvent(scope)) and the delete
-    // round-trip (requestDeleteRoom → confirmDelete(scope)) end-to-end
-    // through the ViewModel, asserting the right coordinator method
-    // is invoked for each scope.
+    // ==================== Save and Delete Scopes ====================
+    // Drives the save round trip (requestFormSave, then saveEvent at a scope), saveEvent at a
+    // scope directly, the delete round trip (requestDeleteRoom, then confirmDelete) and
+    // handleRoomEventFormDelete through the ViewModel, and checks which coordinator method each
+    // scope or event shape reaches. Then loadedIsAllDay in PendingFormSave,
+    // signalFormSaveFailed, and the plain saveEvent and deleteEvent cases: a non-recurring
+    // edit, a missing event, no calendar, a blank title, a delete and a failed delete.
 
     private val recurringEvent_ = testEvents[0].copy(rrule = "FREQ=WEEKLY;COUNT=10")
 
@@ -2451,7 +2445,7 @@ class HomeViewModelTest {
         assertNotNull(pending)
         assertEquals(recurringEvent_.startTs, pending!!.masterStartTs)
 
-        // Simulate MainActivity's onConfirmFormSave for THIS_EVENT.
+        // What MainActivity's onConfirmFormSave does for THIS_EVENT.
         viewModel.cancelPendingFormSave()
         viewModel.saveEvent(pending.formState, EditScope.THIS_EVENT)
         advanceUntilIdle()
@@ -2461,21 +2455,18 @@ class HomeViewModelTest {
 
     @Test
     fun `THIS_EVENT on the first occurrence with no rule change creates an exception for that instance`() = runTest {
-        // Case A: the user edits content (title etc.) of the FIRST
-        // occurrence and leaves the recurrence rule alone. The scope
-        // sheet must offer THIS_EVENT (it is gated only on rruleChanged,
-        // not isFirstOccurrence), and picking it must split that single
-        // instance off via editSingleOccurrence — leaving the master
-        // series untouched. Mirrors the real flow on the first instance,
-        // which the existing THIS_EVENT test does not cover (it uses an
-        // off-master occurrence).
+        // The user edits the content (title and so on) of the first occurrence and leaves the
+        // rule alone. The scope sheet offers THIS_EVENT, gated only on a rule change and not on
+        // being the first occurrence, and picking it splits that occurrence off through
+        // editSingleOccurrence, leaving the master untouched. `requestFormSave + saveEvent
+        // THIS_EVENT routes to editSingleOccurrence` uses a later occurrence.
         coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
         coEvery { eventCoordinator.editSingleOccurrence(any(), any(), any(), any()) } returns recurringEvent_
 
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // First occurrence: occurrenceTs == master start; rrule unchanged.
+        // First occurrence: occurrenceTs is the master's start; the rrule is unchanged.
         val firstOccurrenceTs = recurringEvent_.startTs
         viewModel.requestFormSave(
             formState = recurringFormState().copy(
@@ -2494,8 +2485,7 @@ class HomeViewModelTest {
         )
         advanceUntilIdle()
 
-        // The scope sheet's options must enable THIS_EVENT on the first
-        // occurrence when the rule is unchanged.
+        // The scope sheet enables THIS_EVENT on the first occurrence when the rule is unchanged.
         val pending = viewModel.uiState.value.pendingFormSave
         assertNotNull(pending)
         val options = computeEditScopeOptions(
@@ -2514,13 +2504,13 @@ class HomeViewModelTest {
             options.first { it.scope == EditScope.THIS_EVENT }.enabled,
         )
 
-        // Picking THIS_EVENT splits just the first instance off.
+        // Picking THIS_EVENT splits only the first occurrence off.
         viewModel.cancelPendingFormSave()
         viewModel.saveEvent(pending.formState, EditScope.THIS_EVENT)
         advanceUntilIdle()
 
         coVerify { eventCoordinator.editSingleOccurrence(recurringEvent_.id, firstOccurrenceTs, any(), any()) }
-        // The master series is never updated wholesale on a THIS_EVENT save.
+        // A THIS_EVENT save never updates the whole master.
         coVerify(exactly = 0) { eventCoordinator.updateEvent(any()) }
     }
 
@@ -2578,6 +2568,27 @@ class HomeViewModelTest {
     }
 
     @Test
+    fun `THIS_AND_FUTURE save gives the new series the edited title, location and description`() = runTest {
+        coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
+        val changesSlot = slot<(org.onekash.kashcal.data.db.entity.Event) -> org.onekash.kashcal.data.db.entity.Event>()
+        coEvery {
+            eventCoordinator.editThisAndFuture(any(), any(), any(), capture(changesSlot))
+        } returns recurringEvent_
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val formState = recurringFormState().copy(title = "Retro", location = "Room 9", description = "notes")
+        viewModel.saveEvent(formState, EditScope.THIS_AND_FUTURE)
+        advanceUntilIdle()
+
+        val newSeries = changesSlot.captured(recurringEvent_)
+        assertEquals("Retro", newSeries.title)
+        assertEquals("Room 9", newSeries.location)
+        assertEquals("notes", newSeries.description)
+    }
+
+    @Test
     fun `THIS_AND_FUTURE save forwards the edited attendee set to editThisAndFuture`() = runTest {
         coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
         coEvery { eventCoordinator.editThisAndFuture(any(), any(), any(), any()) } returns recurringEvent_
@@ -2626,18 +2637,16 @@ class HomeViewModelTest {
         viewModel.saveEvent(pending.formState, EditScope.ALL_EVENTS)
         advanceUntilIdle()
 
-        // ALL_EVENTS scope: occurrenceTs is dropped, master is updated directly.
+        // ALL_EVENTS drops the occurrenceTs and updates the master directly.
         coVerify { eventCoordinator.updateEvent(any()) }
     }
 
     @Test
     fun `ALL_EVENTS save on an exception id resolves to the master before updating`() = runTest {
-        // If the form was opened on a detached exception row,
-        // editingEventId is the exception's id. ALL_EVENTS must rewrite
-        // the MASTER's rrule, not the exception's — so the branch
-        // climbs originalEventId like its THIS_AND_FUTURE / exception
-        // siblings do. Updating the exception id would corrupt the
-        // wrong row.
+        // A form opened on a detached exception row has the exception's id as editingEventId.
+        // ALL_EVENTS rewrites the master's rrule, so the branch climbs originalEventId as the
+        // THIS_AND_FUTURE and single-occurrence branches do; updating the exception id would
+        // corrupt the wrong row.
         val masterId = recurringEvent_.id
         val exception = recurringEvent_.copy(
             id = 7_777L,
@@ -2655,7 +2664,7 @@ class HomeViewModelTest {
         viewModel.saveEvent(formState, EditScope.ALL_EVENTS)
         advanceUntilIdle()
 
-        // The updated event must be the master row, not the exception.
+        // The updated event is the master row, not the exception.
         coVerify { eventCoordinator.updateEvent(match { it.id == masterId }) }
         coVerify(exactly = 0) { eventCoordinator.updateEvent(match { it.id == exception.id }) }
     }
@@ -2682,11 +2691,9 @@ class HomeViewModelTest {
 
     @Test
     fun `handleRoomEventFormDelete on exception routes to deleteSingleOccurrence`() = runTest {
-        // The form's in-line Delete button on a Room exception must
-        // route the same way QuickView Delete does — calling
-        // eventCoordinator.deleteSingleOccurrence(masterId,
-        // originalInstanceTime). The naive deleteEvent path fails
-        // EventCoordinator's exception guard.
+        // The form's inline Delete on a Room exception routes as the quick view's Delete does,
+        // to eventCoordinator.deleteSingleOccurrence(masterId, originalInstanceTime).
+        // EventCoordinator.deleteEvent refuses an exception.
         val masterId = recurringEvent_.id
         val originalInstance = recurringEvent_.startTs + 7L * 86_400_000L
         val exception = recurringEvent_.copy(
@@ -2712,10 +2719,9 @@ class HomeViewModelTest {
 
     @Test
     fun `handleRoomEventFormDelete on recurring master stages PendingDelete and returns success`() = runTest {
-        // Recurring master deletion needs the scope sheet. The handler
-        // stages PendingDelete.Room and returns success-no-op so the
-        // form dismisses. The scope sheet renders on top via the
-        // pending-delete state in uiState.
+        // Deleting a recurring master needs the scope sheet. The handler stages
+        // PendingDelete.Room and returns success without deleting, so the form closes and the
+        // scope sheet opens over it through uiState.pendingDelete.
         val master = recurringEvent_
         coEvery { eventCoordinator.getEventById(master.id) } returns master
 
@@ -2729,17 +2735,16 @@ class HomeViewModelTest {
         val pending = viewModel.uiState.value.pendingDelete
         assertNotNull("pendingDelete must be non-null after master delete request", pending)
         assertTrue("pending must be a Room variant", pending is PendingDelete.Room)
-        // The handler does NOT call eventCoordinator.deleteEvent — the
-        // scope-sheet confirm path is responsible for the actual delete.
+        // The handler doesn't call eventCoordinator.deleteEvent; the scope sheet's confirm does
+        // the delete.
         coVerify(exactly = 0) { eventCoordinator.deleteEvent(any()) }
     }
 
     @Test
     fun `handleRoomEventFormDelete on recurring master preserves form's occurrenceTs anchor`() = runTest {
-        // User taps occurrence #5, opens Edit, hits in-form Delete.
-        // The scope sheet's first-occurrence rule depends on the
-        // pendingDelete carrying the actual tapped occurrence ts —
-        // not the master's first-occurrence start.
+        // The user taps occurrence #5, opens Edit and taps Delete in the form. The scope sheet's
+        // first-occurrence rule needs pendingDelete to carry the tapped occurrence's ts, not the
+        // master's start.
         val master = recurringEvent_
         coEvery { eventCoordinator.getEventById(master.id) } returns master
 
@@ -2757,8 +2762,8 @@ class HomeViewModelTest {
 
     @Test
     fun `handleRoomEventFormDelete on non-recurring event calls deleteEvent`() = runTest {
-        // Non-recurring deletes go straight through eventCoordinator
-        // — no scope sheet, no special routing.
+        // A non-recurring delete goes straight to eventCoordinator.deleteEvent, with no scope
+        // sheet.
         val nonRecurring = testEvents[0].copy(rrule = null, originalEventId = null)
         coEvery { eventCoordinator.getEventById(nonRecurring.id) } returns nonRecurring
         coEvery { eventCoordinator.deleteEvent(nonRecurring.id) } returns Unit
@@ -2776,18 +2781,16 @@ class HomeViewModelTest {
 
     @Test
     fun `requestFormSave preserves loadedIsAllDay independent of formState`() = runTest {
-        // Form-load isAllDay must survive into PendingFormSave so the
-        // scope-sheet sub-copy renders the correct date even when the
-        // user toggled all-day in the form before saving (which would
-        // flip formState.isAllDay but must not flip the load-time
-        // anchor).
+        // The isAllDay loaded with the form survives into PendingFormSave, so the scope sheet's
+        // sub-copy shows the right date even after the user toggles all-day in the form. The
+        // toggle flips formState.isAllDay but not the load-time value.
         coEvery { eventCoordinator.getEventById(recurringEvent_.id) } returns recurringEvent_
 
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // formState says isAllDay=true (user toggled), but the master
-        // event was timed at load — loadedIsAllDay=false.
+        // formState has isAllDay true (the user toggled it); the master was timed at load, so
+        // loadedIsAllDay is false.
         val toggledFormState = recurringFormState().copy(isAllDay = true)
         viewModel.requestFormSave(
             formState = toggledFormState,
@@ -2819,11 +2822,9 @@ class HomeViewModelTest {
 
     @Test
     fun `saveEvent on non-recurring event with null occurrenceTs routes to updateEvent not editSingleOccurrence`() = runTest {
-        // Regression for the QuickView Edit-on-non-recurring crash:
-        // saveEvent must NOT call editSingleOccurrence when the form
-        // was opened on a non-recurring event (editingOccurrenceTs is
-        // null after the MainActivity collapse). editSingleOccurrence
-        // would throw via EventWriter's isRecurring require.
+        // Edit from the quick view on a non-recurring event: the form has a null
+        // editingOccurrenceTs, and saveEvent doesn't call editSingleOccurrence, which would
+        // throw on EventWriter's isRecurring require.
         val nonRecurring = testEvents[0].copy(rrule = null, originalEventId = null)
         coEvery { eventCoordinator.getEventById(nonRecurring.id) } returns nonRecurring
         coEvery { eventCoordinator.updateEvent(any()) } returns nonRecurring
@@ -2842,7 +2843,7 @@ class HomeViewModelTest {
             selectedCalendarId = 1L,
             isEditMode = true,
             editingEventId = nonRecurring.id,
-            editingOccurrenceTs = null,  // critical: null for non-recurring
+            editingOccurrenceTs = null,  // null for a non-recurring event
         )
 
         val result = viewModel.saveEvent(formState)
@@ -2896,7 +2897,7 @@ class HomeViewModelTest {
             startMinute = 0,
             endHour = 11,
             endMinute = 0,
-            selectedCalendarId = null,  // No calendar selected
+            selectedCalendarId = null,  // no calendar selected
             isEditMode = false
         )
 
@@ -2917,7 +2918,7 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         val formState = EventFormState(
-            title = "   ",  // Blank title
+            title = "   ",  // blank title
             dateMillis = getTimestamp(2024, 11, 20, 0, 0),
             endDateMillis = getTimestamp(2024, 11, 20, 0, 0),
             startHour = 10,
@@ -2962,7 +2963,7 @@ class HomeViewModelTest {
         assertTrue(result.exceptionOrNull() is IllegalArgumentException)
     }
 
-    // ==================== Optimistic Delete Tests ====================
+    // ==================== Optimistic Delete, selectDate, getLocalCalendarId ====================
 
     @Test
     fun `deleteEventOptimistic calls coordinator`() = runTest {
@@ -3059,7 +3060,7 @@ class HomeViewModelTest {
         viewModel.deleteEventOptimistic(1L)
         advanceUntilIdle()
 
-        // Verify reloadCurrentView was called (rebuilds event dots via DisplayEventRepository)
+        // reloadCurrentView ran: it rebuilds the event dots through DisplayEventRepository.
         coVerify(atLeast = 1) { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) }
     }
 
@@ -3070,7 +3071,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Select a pre-1970 date (Feb 11, 1952 — from issue #53)
+        // A pre-1970 date, Feb 11, 1952, from issue #53.
         viewModel.selectDate(getTimestamp(1952, 1, 11, 0, 0))
         advanceUntilIdle()
 
@@ -3080,7 +3081,7 @@ class HomeViewModelTest {
         viewModel.deleteEventOptimistic(1L)
         advanceUntilIdle()
 
-        // Verify reloadCurrentView rebuilt dots via DisplayEventRepository (always happens regardless of selectedDate)
+        // reloadCurrentView rebuilt the dots, which it does whatever selectedDate is.
         coVerify(atLeast = 1) { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) }
     }
 
@@ -3089,7 +3090,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // 0L is the sentinel for "no selection"
+        // 0L is the "no selection" sentinel.
         viewModel.selectDate(0L)
         advanceUntilIdle()
 
@@ -3101,8 +3102,8 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // A wall-clock timestamp carrying a time-of-day (e.g. 14:37:11.500) — the
-        // shape goToToday() passes at cold start via Calendar.getInstance().
+        // A wall-clock timestamp with a time of day (14:37:11.500), the shape goToToday passes
+        // at cold start from Calendar.getInstance().
         val timeBearing = JavaCalendar.getInstance().apply {
             set(2026, 5, 4, 14, 37, 11)
             set(JavaCalendar.MILLISECOND, 500)
@@ -3113,14 +3114,14 @@ class HomeViewModelTest {
 
         val stored = viewModel.uiState.value.selectedDate
 
-        // Same calendar day...
+        // The same calendar day,
         assertEquals(
             "selectDate must preserve the calendar day",
             DayPagerUtils.msToDayCode(timeBearing),
             DayPagerUtils.msToDayCode(stored)
         )
-        // ...but normalized to that day's local midnight so every selectedDate
-        // writer agrees on one representation (no startup round-trip rewrite).
+        // normalized to that day's local midnight, so every selectedDate writer agrees on one
+        // representation.
         val expectedMidnight = java.time.Instant.ofEpochMilli(timeBearing)
             .atZone(java.time.ZoneId.systemDefault())
             .toLocalDate()
@@ -3139,8 +3140,8 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Negative epoch millis with a time-of-day — guards against arithmetic
-        // truncation (dateMs % DAY_MS) which is wrong for negative values.
+        // Negative epoch millis with a time of day: an arithmetic truncation such as
+        // dateMs % DAY_MS would be wrong for negative values.
         val timeBearing = JavaCalendar.getInstance().apply {
             set(1969, 6, 20, 14, 37, 11)
             set(JavaCalendar.MILLISECOND, 500)
@@ -3172,7 +3173,7 @@ class HomeViewModelTest {
         assertEquals(42L, calendarId)
     }
 
-    // ==================== Sync Timing Tests (Pull-to-Refresh Fix) ====================
+    // ==================== Sync Timing Tests ====================
 
     @Test
     fun `performSync sets isSyncing true immediately`() = runTest {
@@ -3182,16 +3183,16 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Before sync, isSyncing should be false (from Idle status)
+        // isSyncing is false before the sync (Idle status).
         assertFalse(viewModel.uiState.value.isSyncing)
 
-        // Call refreshSync which calls performSync
+        // refreshSync calls performSync.
         viewModel.refreshSync()
 
-        // isSyncing should be true immediately (before WorkManager responds)
+        // isSyncing is true at once, before WorkManager reports a status.
         assertTrue(viewModel.uiState.value.isSyncing)
 
-        // Verify sync was requested
+        // A sync was requested.
         verify { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
@@ -3203,41 +3204,40 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Initial state
         assertFalse(viewModel.uiState.value.isSyncing)
         assertFalse(viewModel.uiState.value.showSyncBanner)
 
-        // Start force sync (shows banner, not the pull-to-refresh spinner)
+        // Force sync shows the banner, not the pull-to-refresh spinner.
         viewModel.forceFullSync()
 
         // Force sync does not run performSync, so the guard stays false until work starts.
         assertFalse(viewModel.uiState.value.isSyncing)
         assertFalse(viewModel.uiState.value.showRefreshSpinner)
 
-        // Simulate WorkManager emitting Enqueued (immediately to avoid Idle processing)
+        // WorkManager reports Enqueued at once, before Idle is processed.
         syncStatusFlow.value = SyncStatus.Enqueued
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals(SyncBannerState.Preparing, viewModel.uiState.value.syncBannerState)
 
-        // Simulate WorkManager emitting Running
+        // WorkManager reports Running.
         syncStatusFlow.value = SyncStatus.Running
         advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals(SyncBannerState.Syncing, viewModel.uiState.value.syncBannerState)
         // Force full sync shows the banner, not the pull-to-refresh spinner. isSyncing is the
-        // duplicate-sync guard and is true while work runs (it is not a visible signal).
+        // duplicate-sync guard, true while work runs, not a visible signal (not asserted here).
         assertFalse(viewModel.uiState.value.showRefreshSpinner)
 
-        // Simulate WorkManager emitting Succeeded
+        // WorkManager reports Succeeded.
         syncStatusFlow.value = SyncStatus.Succeeded(calendarsSynced = 2, eventsPulled = 10)
-        // Don't use advanceUntilIdle() - it would advance past the 2s auto-dismiss delay
+        // Not advanceUntilIdle: it would run past the 2 s auto-dismiss delay.
         testScheduler.advanceTimeBy(100)
         testScheduler.runCurrent()
 
-        // Banner should still be visible (auto-dismisses after 2 seconds)
+        // Still showing; it auto-dismisses after 2 seconds.
         assertTrue(viewModel.uiState.value.showSyncBanner)
         assertEquals(SyncBannerState.Success, viewModel.uiState.value.syncBannerState)
         assertFalse(viewModel.uiState.value.isSyncing)
@@ -3251,19 +3251,18 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Clear initial call counts
+        // Clear the recorded init calls.
         io.mockk.clearMocks(displayEventRepository, answers = false, recordedCalls = true, childMocks = false)
         every { displayEventRepository.deviceCalendarChangeSignal } returns MutableStateFlow(0)
 
-        // Start sync
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // Now simulate sync completing successfully
+        // The sync succeeds.
         syncStatusFlow.value = SyncStatus.Succeeded(calendarsSynced = 2, eventsPulled = 5)
         advanceUntilIdle()
 
-        // reloadCurrentView should rebuild event dots via DisplayEventRepository
+        // reloadCurrentView rebuilds the event dots through DisplayEventRepository.
         coVerify(atLeast = 1) { displayEventRepository.getDisplayEventsGroupedByDayOnce(any(), any()) }
     }
 
@@ -3275,19 +3274,19 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // First refresh - should work
+        // The first refresh starts a sync,
         viewModel.refreshSync()
 
-        // isSyncing should be true now
+        // so isSyncing is true.
         assertTrue(viewModel.uiState.value.isSyncing)
 
-        // Second refresh while isSyncing is true - should be blocked
+        // Later refreshes while isSyncing is true are blocked.
         viewModel.refreshSync()
         viewModel.refreshSync()
         viewModel.refreshSync()
         advanceUntilIdle()
 
-        // Should only have been called once (from the first refreshSync)
+        // Requested once, by the first refreshSync.
         verify(exactly = 1) { syncScheduler.requestImmediateSync(any(), any()) }
     }
 
@@ -3299,23 +3298,22 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Start sync
         viewModel.refreshSync()
         assertTrue(viewModel.uiState.value.isSyncing)
 
-        // Simulate sync failure
+        // The sync fails.
         syncStatusFlow.value = SyncStatus.Failed(errorMessage = "Network error")
         advanceUntilIdle()
 
-        // isSyncing should be false after failure
+        // isSyncing is false after the failure.
         assertFalse(viewModel.uiState.value.isSyncing)
-        // This was a pull-to-refresh failure: it surfaces the error via the error channel
-        // (not a banner), and clears the spinner.
+        // A pull-to-refresh failure surfaces through the error channel, not a banner, and clears
+        // the spinner.
         assertFalse(viewModel.uiState.value.showRefreshSpinner)
         assertFalse(viewModel.uiState.value.showSyncBanner)
         assertNotNull(viewModel.uiState.value.currentError)
 
-        // Should be able to start another sync now
+        // Another sync can start.
         viewModel.refreshSync()
         assertTrue(viewModel.uiState.value.isSyncing)
         verify(exactly = 2) { syncScheduler.requestImmediateSync(any(), any()) }
@@ -3361,7 +3359,7 @@ class HomeViewModelTest {
 
     @Test
     fun `event dots are built from occurrences`() = runTest {
-        // Mock DisplayEventRepository to return pre-grouped events by day code
+        // DisplayEventRepository returns the events grouped by day code.
         val cal1Color = testCalendars[0].color
         val cal2Color = testCalendars[1].color
         val groupedEvents = mapOf(
@@ -3378,25 +3376,25 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Navigate to December 2024 to trigger event dots loading
-        // Use navigateToMonth (not setViewingMonth) to trigger buildEventDots
+        // December 2024 isn't cached, so navigateToMonth loads its dots through
+        // ensureDotsForMonth.
         viewModel.navigateToMonth(2024, 11) // December (0-indexed)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
 
-        // Day 5 should have 1 color (calendar 1) - December 2024 (month=11 is 0-indexed)
+        // Day 5 has one color, calendar 1's; month 11 is December (0-indexed).
         assertTrue(state.hasEventsOnDay(2024, 11, 5))
         assertEquals(1, state.getEventColors(2024, 11, 5).size)
 
-        // Day 10 should have 2 colors (calendar 1 and 2)
+        // Day 10 has two colors, calendars 1 and 2.
         assertTrue(state.hasEventsOnDay(2024, 11, 10))
         assertEquals(2, state.getEventColors(2024, 11, 10).size)
     }
 
     @Test
     fun `recurring event shows dots on all occurrence days`() = runTest {
-        // Recurring weekly event with 3 occurrences in the month
+        // A weekly event with 3 occurrences in the month.
         val cal1Color = testCalendars[0].color
         val groupedEvents = mapOf(
             20241203 to listOf(
@@ -3414,13 +3412,13 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Use navigateToMonth (not setViewingMonth) to trigger buildEventDots
+        // navigateToMonth loads the uncached month's dots.
         viewModel.navigateToMonth(2024, 11)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
 
-        // All 3 occurrence days should have dots (December 2024, month=11 is 0-indexed)
+        // All 3 occurrence days have dots.
         assertTrue(state.hasEventsOnDay(2024, 11, 3))
         assertTrue(state.hasEventsOnDay(2024, 11, 10))
         assertTrue(state.hasEventsOnDay(2024, 11, 17))
@@ -3428,15 +3426,13 @@ class HomeViewModelTest {
 
     @Test
     fun `loadDotsForMonth ignores dayCodes outside the loaded month (issue 255)`() = runTest {
-        // Regression: a multi-day event spanning a month boundary — or any event
-        // whose start/end fall outside the queried month — must not paint a phantom
-        // dot on the loaded month. Repro per issue #255: navigating to Dec 2026
-        // showed a green dot on Dec 1 even though no real event was on Dec 1; the
-        // phantom came from the day-1 piece of an adjacent month's event leaking
-        // into December's monthKey.
+        // Issue #255: a multi-day event crossing a month boundary, or any event starting or
+        // ending outside the queried month, paints no phantom dot on the loaded month. A
+        // phantom Dec 1 dot would come from the day-1 piece of an adjacent month's event
+        // landing in December's monthKey.
         val cal1Color = testCalendars[0].color
-        // Mock returns three dayCodes — Nov 30, Dec 15, Jan 1 — as if a multi-day
-        // event spanning Nov 30 → Jan 2 had been expanded into per-day buckets.
+        // The mock returns three day codes, Nov 30, Dec 15 and Jan 1, as if a multi-day event
+        // from Nov 30 to Jan 2 had been expanded into per-day buckets.
         val groupedEvents = mapOf(
             20261130 to listOf(
                 createDotDisplayEvent(1L, "Cross-month", getTimestamp(2026, 10, 30, 9, 0), getTimestamp(2027, 0, 2, 17, 0), 20261130, calendarColor = cal1Color)
@@ -3453,17 +3449,17 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Dec 2026 is far outside the initial ±6 month cache, so this hits the
-        // on-demand loadDotsForMonth path (not buildEventDots).
+        // Takes the on-demand loadDotsForMonth path only when Dec 2026 is outside the 6-month
+        // window init caches either side of today's month; from June 2026 to June 2027 init's
+        // buildEventDots has loaded it. Either path puts only December's day codes in December.
         viewModel.setViewingMonth(2026, 11)
         advanceUntilIdle()
 
         val state = viewModel.uiState.value
 
-        // Mid-month event should produce its dot.
+        // The mid-month event has its dot.
         assertTrue("Dec 15 should have a dot", state.hasEventsOnDay(2026, 11, 15))
-        // Adjacent-month dayCodes must NOT bleed into the December bucket as
-        // day=1 / day=30 phantoms.
+        // Adjacent-month day codes don't land in December as day 1 or day 30 phantoms.
         assertFalse(
             "Dec 1 must not show a phantom dot from the Jan 1 dayCode (issue #255)",
             state.hasEventsOnDay(2026, 11, 1)
@@ -3494,14 +3490,14 @@ class HomeViewModelTest {
             endHour = 11,
             endMinute = 0,
             selectedCalendarId = 1L,
-            reminders = listOf(30, 1440),  // 30 minutes + 1 day before
+            reminders = listOf(30, 1440),  // 30 minutes and 1 day before
             isEditMode = false
         )
 
         viewModel.saveEvent(formState)
         advanceUntilIdle()
 
-        // Verify reminders are passed to createEvent
+        // Only checks that createEvent is called; the reminders it gets aren't asserted.
         coVerify { eventCoordinator.createEvent(any(), any()) }
     }
 
@@ -3523,18 +3519,18 @@ class HomeViewModelTest {
             endHour = 11,
             endMinute = 0,
             selectedCalendarId = 1L,
-            reminders = emptyList(), // No reminders
+            reminders = emptyList(), // no reminders
             isEditMode = false
         )
 
         viewModel.saveEvent(formState)
         advanceUntilIdle()
 
-        // Verify createEvent was called
+        // createEvent is called.
         coVerify { eventCoordinator.createEvent(any(), any()) }
     }
 
-    // ==================== Pending Action Tests (v11.4.0 - Industry Standard Pattern) ====================
+    // ==================== Pending Action Tests ====================
 
     @Test
     fun `setPendingAction sets pending action in state`() = runTest {
@@ -3558,12 +3554,12 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Set an action first
+        // Set an action,
         viewModel.setPendingAction(PendingAction.OpenSearch)
         advanceUntilIdle()
         assertTrue(viewModel.uiState.value.pendingAction is PendingAction.OpenSearch)
 
-        // Now clear it
+        // then clear it.
         viewModel.clearPendingAction()
         advanceUntilIdle()
 
@@ -3575,11 +3571,11 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Set first action
+        // A first action,
         viewModel.setPendingAction(PendingAction.OpenSearch)
         advanceUntilIdle()
 
-        // Replace with new action
+        // replaced by a new one.
         val newAction = PendingAction.CreateEvent(startTs = 2000000L)
         viewModel.setPendingAction(newAction)
         advanceUntilIdle()
@@ -3596,11 +3592,11 @@ class HomeViewModelTest {
         viewModel.setPendingAction(action)
         advanceUntilIdle()
 
-        // Trigger another state update (select a date)
+        // Another state update: select a date.
         viewModel.selectDate(System.currentTimeMillis())
         advanceUntilIdle()
 
-        // Pending action should still be there
+        // The pending action is still set.
         assertEquals(action, viewModel.uiState.value.pendingAction)
     }
 
@@ -3697,7 +3693,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Use mockk for URI since Uri.parse returns null in unit tests
+        // A mocked Uri; the action only stores it.
         val uri = mockk<android.net.Uri>(relaxed = true)
         val action = PendingAction.ImportIcsFile(uri)
         viewModel.setPendingAction(action)
@@ -3722,14 +3718,13 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Initially pendingWeekViewPagerPosition should be null
+        // No pending pager position at first.
         assertEquals(null, viewModel.uiState.value.pendingWeekViewPagerPosition)
 
-        // Switch to 3-day view
         viewModel.setViewMode(ViewMode.THREE_DAYS)
         advanceUntilIdle()
 
-        // With infinite pager, switching to 3-day view sets pendingWeekViewPagerPosition to CENTER_DAY_PAGE
+        // The infinite pager's today page is CENTER_DAY_PAGE.
         val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE
         assertEquals(
             "pendingWeekViewPagerPosition should be CENTER_DAY_PAGE",
@@ -3748,7 +3743,7 @@ class HomeViewModelTest {
         viewModel.setViewMode(ViewMode.DAY)
         advanceUntilIdle()
 
-        // DAY shares the day-pager with THREE_DAYS, so it routes to CENTER_DAY_PAGE
+        // DAY shares the day pager with THREE_DAYS, so it lands on CENTER_DAY_PAGE.
         val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE
         assertEquals(
             "pendingWeekViewPagerPosition should be CENTER_DAY_PAGE for DAY",
@@ -3762,20 +3757,18 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Switch to 3-day view
         viewModel.setViewMode(ViewMode.THREE_DAYS)
         advanceUntilIdle()
 
-        // Clear any pending navigation from initialization
+        // Clear the pending position the mode switch set.
         viewModel.clearPendingWeekViewPagerPosition()
         advanceUntilIdle()
         assertEquals(null, viewModel.uiState.value.pendingWeekViewPagerPosition)
 
-        // Call goToToday - should set pending position to CENTER_DAY_PAGE (today)
         viewModel.goToToday()
         advanceUntilIdle()
 
-        // With infinite pager, goToToday sets pendingWeekViewPagerPosition to CENTER_DAY_PAGE
+        // goToToday sets the pending position to CENTER_DAY_PAGE, today.
         val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE
         assertEquals(
             "Should navigate to CENTER_DAY_PAGE (today)",
@@ -3789,24 +3782,23 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Make sure we're in month view
+        // Month view.
         if (viewModel.uiState.value.viewMode != ViewMode.MONTH) {
             viewModel.setViewMode(ViewMode.MONTH)
             advanceUntilIdle()
         }
 
-        // Navigate to a different month
+        // Another month.
         viewModel.setViewingMonth(2027, 5)  // June 2027
         advanceUntilIdle()
 
         assertEquals(2027, viewModel.uiState.value.viewingYear)
         assertEquals(5, viewModel.uiState.value.viewingMonth)
 
-        // Call goToToday
         viewModel.goToToday()
         advanceUntilIdle()
 
-        // Should navigate to today's month
+        // Back on today's month.
         val today = JavaCalendar.getInstance()
         assertEquals(today.get(JavaCalendar.YEAR), viewModel.uiState.value.viewingYear)
         assertEquals(today.get(JavaCalendar.MONTH), viewModel.uiState.value.viewingMonth)
@@ -3822,20 +3814,19 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Switch to agenda view
+        // Agenda view.
         viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
 
         assertEquals(ViewMode.AGENDA, viewModel.uiState.value.viewMode)
 
-        // Initially pendingScrollAgendaToTop should be false
+        // pendingScrollAgendaToTop is false at first.
         assertFalse(viewModel.uiState.value.pendingScrollAgendaToTop)
 
-        // Call goToToday
         viewModel.goToToday()
         advanceUntilIdle()
 
-        // Should set pendingScrollAgendaToTop = true
+        // goToToday sets pendingScrollAgendaToTop.
         assertTrue(viewModel.uiState.value.pendingScrollAgendaToTop)
     }
 
@@ -3849,7 +3840,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Switch to agenda and trigger scroll
+        // Agenda view, then goToToday requests the scroll.
         viewModel.setViewMode(ViewMode.AGENDA)
         advanceUntilIdle()
         viewModel.goToToday()
@@ -3857,7 +3848,7 @@ class HomeViewModelTest {
 
         assertTrue(viewModel.uiState.value.pendingScrollAgendaToTop)
 
-        // Clear the flag
+        // Clear it.
         viewModel.clearScrollAgendaToTop()
         advanceUntilIdle()
 
@@ -3869,10 +3860,10 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Initial state: no pending position
+        // No pending position at first.
         assertEquals(null, viewModel.uiState.value.pendingWeekViewPagerPosition)
 
-        // Select a date 5 days from today
+        // Noon 5 days from today.
         val today = java.time.LocalDate.now()
         val targetDate = today.plusDays(5)
         val targetMs = targetDate.atStartOfDay(java.time.ZoneId.systemDefault())
@@ -3883,8 +3874,7 @@ class HomeViewModelTest {
         viewModel.onWeekViewDateSelected(targetMs)
         advanceUntilIdle()
 
-        // With infinite pager, pendingWeekViewPagerPosition is the absolute page number
-        // dateToPage(date) = CENTER_DAY_PAGE + days from today
+        // The pending position is the absolute page: CENTER_DAY_PAGE plus the days from today.
         val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE + 5
         assertEquals(expectedPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
     }
@@ -3894,11 +3884,11 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Switch to WEEK mode
+        // WEEK mode.
         viewModel.setViewMode(ViewMode.WEEK)
         advanceUntilIdle()
 
-        // Select a date 5 days from today
+        // Noon 5 days from today.
         val today = java.time.LocalDate.now()
         val targetDate = today.plusDays(5)
         val targetMs = targetDate.atStartOfDay(java.time.ZoneId.systemDefault())
@@ -3909,7 +3899,7 @@ class HomeViewModelTest {
         viewModel.onWeekViewDateSelected(targetMs)
         advanceUntilIdle()
 
-        // In WEEK mode, should use dateToWeekPage (not dateToPage)
+        // WEEK mode pages by week: dateToWeekPage.
         val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.dateToWeekPage(
             targetDate,
             viewModel.uiState.value.firstDayOfWeek
@@ -3922,7 +3912,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Set a pending position via date selection (7 days from today)
+        // A pending position from selecting noon 7 days from today.
         val today = java.time.LocalDate.now()
         val targetDate = today.plusDays(7)
         val targetMs = targetDate.atStartOfDay(java.time.ZoneId.systemDefault())
@@ -3933,11 +3923,11 @@ class HomeViewModelTest {
         viewModel.onWeekViewDateSelected(targetMs)
         advanceUntilIdle()
 
-        // Should have pending position (absolute page number)
+        // The absolute page.
         val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE + 7
         assertEquals(expectedPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
 
-        // Clear it
+        // Clear it.
         viewModel.clearPendingWeekViewPagerPosition()
         advanceUntilIdle()
 
@@ -3984,7 +3974,7 @@ class HomeViewModelTest {
 
         assertEquals(2025, viewModel.uiState.value.viewingYear)
         assertEquals(2, viewModel.uiState.value.viewingMonth) // 0-indexed
-        // Also triggers date selection and sets pending navigation
+        // It also selects the date and sets the pending month navigation.
         assertEquals(2025 to 2, viewModel.uiState.value.pendingNavigateToMonth)
     }
 
@@ -3996,10 +3986,10 @@ class HomeViewModelTest {
         viewModel.goToTodayWeek()
         advanceUntilIdle()
 
-        // Should have pending pager position at center
+        // The pending pager position is the center page.
         val centerPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE
         assertEquals(centerPage, viewModel.uiState.value.pendingWeekViewPagerPosition)
-        // onDayPagerPageChanged also updates weekViewPagerPosition
+        // onDayPagerPageChanged also sets weekViewPagerPosition.
         assertEquals(centerPage, viewModel.uiState.value.weekViewPagerPosition)
     }
 
@@ -4056,10 +4046,10 @@ class HomeViewModelTest {
 
     @Test
     fun `initializeAsync seeds saved scroll minutes from DataStore`() = runTest {
-        // Persisted clock time (14:00) must reach uiState so the time grid restores it
-        // on first composition, before the debounced writer can overwrite it.
-        // onboardingDismissed must be stubbed so initializeAsync runs past the onboarding
-        // gate and reaches the seed (the gate reads it via .first()).
+        // The persisted clock time (14:00) reaches uiState so the time grid restores it on first
+        // composition, before the debounced writer can overwrite it. onboardingDismissed is
+        // stubbed so initializeAsync gets past the onboarding gate, which reads it with .first(),
+        // to the seed.
         every { dataStore.onboardingDismissed } returns flowOf(false)
         every { dataStore.weekViewScrollMinutes } returns flowOf(840)
         coEvery { dataStore.getWeekViewScrollMinutes() } returns 840
@@ -4095,9 +4085,10 @@ class HomeViewModelTest {
 
     @Test
     fun `initializeAsync seeds saved hour height from DataStore`() = runTest {
-        // Persisted zoom (90dp) must reach uiState so the time grid restores it on first
-        // composition — in the SAME update that seeds the scroll minutes, so the scroll's
-        // minutes->pixels conversion uses the restored zoom rather than the default.
+        // The persisted zoom (90 dp) reaches uiState so the time grid restores it on first
+        // composition, in the same update that seeds the scroll minutes, so the scroll's
+        // minutes-to-pixels conversion uses the restored zoom and not the default (the shared
+        // update isn't asserted here).
         every { dataStore.onboardingDismissed } returns flowOf(false)
         every { dataStore.weekViewHourHeight } returns flowOf(90f)
         coEvery { dataStore.getWeekViewHourHeight() } returns 90f
@@ -4110,8 +4101,8 @@ class HomeViewModelTest {
 
     @Test
     fun `initializeAsync clamps an out-of-range persisted hour height`() = runTest {
-        // A persisted or corrupt value outside the pinch range snaps back in on restore,
-        // never rendering a degenerate grid.
+        // A persisted or corrupt value above the pinch range is clamped on restore, so the grid
+        // never renders degenerate.
         every { dataStore.onboardingDismissed } returns flowOf(false)
         every { dataStore.weekViewHourHeight } returns flowOf(999f)
         coEvery { dataStore.getWeekViewHourHeight() } returns 999f
@@ -4136,8 +4127,8 @@ class HomeViewModelTest {
 
     @Test
     fun `initializeAsync falls back to default for a non-finite persisted hour height`() = runTest {
-        // A corrupt DataStore proto could hold NaN; coerceIn leaves NaN unchanged, which would
-        // render a degenerate (NaN-height) grid. The seed must reject it and use the default.
+        // A corrupt DataStore proto could hold NaN. coerceIn leaves NaN unchanged, which would
+        // render a NaN-height grid, so the seed rejects it and uses the default.
         every { dataStore.onboardingDismissed } returns flowOf(false)
         every { dataStore.weekViewHourHeight } returns flowOf(Float.NaN)
         coEvery { dataStore.getWeekViewHourHeight() } returns Float.NaN
@@ -4151,8 +4142,8 @@ class HomeViewModelTest {
     @Test
     fun `setWeekViewHourHeight persists to DataStore after debounce`() = runTest {
         val viewModel = createViewModel()
-        // Let the init-launched persistence collector subscribe before emitting; the
-        // persist SharedFlow has replay=0, so an emit before subscription would be dropped.
+        // Let the persistence collector launched at init subscribe first: the SharedFlow has no
+        // replay, so an emit before it subscribes would be dropped.
         advanceUntilIdle()
 
         viewModel.setWeekViewHourHeight(90f)
@@ -4192,7 +4183,7 @@ class HomeViewModelTest {
 
         assertEquals(2025, viewModel.uiState.value.viewingYear)
         assertEquals(11, viewModel.uiState.value.viewingMonth)
-        // Should NOT set pendingNavigateToMonth (this is for swipe callbacks)
+        // No pendingNavigateToMonth: setViewingMonth is the swipe callback.
         assertEquals(null, viewModel.uiState.value.pendingNavigateToMonth)
     }
 
@@ -4206,7 +4197,7 @@ class HomeViewModelTest {
 
         val centerPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE
         assertEquals(centerPage, resultPage)
-        // onDayPagerPageChanged updates weekViewPagerPosition
+        // onDayPagerPageChanged sets weekViewPagerPosition.
         assertEquals(centerPage, viewModel.uiState.value.weekViewPagerPosition)
     }
 
@@ -4215,7 +4206,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Navigate to 10 days from today
+        // Noon 10 days from today.
         val today = java.time.LocalDate.now()
         val targetDate = today.plusDays(10)
         val targetMs = targetDate.atStartOfDay(java.time.ZoneId.systemDefault())
@@ -4228,7 +4219,7 @@ class HomeViewModelTest {
 
         val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE + 10
         assertEquals(expectedPage, resultPage)
-        // Also updates weekViewPagerPosition via onDayPagerPageChanged
+        // onDayPagerPageChanged also sets weekViewPagerPosition.
         assertEquals(expectedPage, viewModel.uiState.value.weekViewPagerPosition)
     }
 
@@ -4237,7 +4228,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Navigate to 5 days in the past
+        // Noon 5 days ago.
         val today = java.time.LocalDate.now()
         val targetDate = today.minusDays(5)
         val targetMs = targetDate.atStartOfDay(java.time.ZoneId.systemDefault())
@@ -4250,7 +4241,7 @@ class HomeViewModelTest {
 
         val expectedPage = org.onekash.kashcal.ui.components.weekview.WeekViewUtils.CENTER_DAY_PAGE - 5
         assertEquals(expectedPage, resultPage)
-        // Also updates weekViewPagerPosition via onDayPagerPageChanged
+        // onDayPagerPageChanged also sets weekViewPagerPosition.
         assertEquals(expectedPage, viewModel.uiState.value.weekViewPagerPosition)
     }
 
@@ -4331,7 +4322,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Activate search first
+        // Search is active first.
         viewModel.activateSearch()
         advanceUntilIdle()
 
@@ -4359,11 +4350,11 @@ class HomeViewModelTest {
         assertFalse(viewModel.uiState.value.showSearchDatePicker)
     }
 
-    // ==================== CalendarViewType.WEEK Cleanup Tests ====================
+    // ==================== Time-Grid Initialization, Refresh and FAB Seed ====================
 
     @Test
     fun `initialization defaults to month view without week-specific setup`() = runTest {
-        // After CalendarViewType removal, initialization never triggers goToTodayWeek
+        // Initialization in MONTH never calls goToTodayWeek.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -4384,26 +4375,25 @@ class HomeViewModelTest {
         viewModel.setViewMode(ViewMode.THREE_DAYS)
         advanceUntilIdle()
 
-        // 3-day view should have triggered goToTodayWeek which sets pending navigation
-        // and starts loading data via onDayPagerPageChanged
+        // The 3-day view calls goToTodayWeek, which sets the pending navigation and loads data
+        // through onDayPagerPageChanged.
         assertEquals(ViewMode.THREE_DAYS, viewModel.uiState.value.viewMode)
-        // goToTodayWeek sets pendingWeekViewPagerPosition to CENTER_DAY_PAGE
+        // goToTodayWeek sets the pending position to CENTER_DAY_PAGE.
         assertEquals(WeekViewUtils.CENTER_DAY_PAGE, viewModel.uiState.value.pendingWeekViewPagerPosition)
     }
 
     @Test
     fun `creating event in week view after year round-trip refreshes the grid`() = runTest {
-        // Reproduces the stale-week-grid bug (#297): a view round-trip through YEAR
-        // used to leave the week grid stale after a create. The durable fix makes the
-        // grid a reactive StateFlow (viewModel.weekEvents) derived from the repository
-        // Flow, so a DB write propagates automatically with no manual reload.
+        // #297: after a view round trip through YEAR, a create still shows in the week grid.
+        // The grid is a reactive StateFlow (viewModel.weekEvents) derived from the repository
+        // Flow, so a DB write reaches it with no manual reload.
         //
-        // The repository Flow is the source of truth; emit an empty grid first, then the
-        // created event after the save, and assert weekEvents reflects the second emission.
+        // The repository Flow is the source of truth: it emits an empty grid, then the created
+        // event after the save, and weekEvents reflects the second emission.
         //
-        // NOTE: weekEvents is a WhileSubscribed StateFlow — it only runs its upstream
-        // while it has an active collector. We Turbine-collect it (a bare .value read
-        // would pass for the wrong reason: the initial-empty value).
+        // weekEvents is a WhileSubscribed StateFlow that runs its upstream only while it has a
+        // collector, so the test Turbine-collects it; a bare .value read would pass on the
+        // initial empty value.
         val createdEvent = testEvents[0].copy(id = 100L, title = "New Meeting")
         val afterCreate = persistentListOf<DisplayEvent>(
             DisplayEvent.Room(createdEvent, testOccurrences[0], testCalendars[0])
@@ -4414,7 +4404,7 @@ class HomeViewModelTest {
         every { displayEventRepository.getDisplayEventsForRange(any(), any()) } returns gridFlow
         coEvery { eventCoordinator.getLocalCalendarId() } returns 1L
         coEvery { eventCoordinator.createEvent(any(), any()) } coAnswers {
-            // Simulate the DB write that the reactive Flow would observe.
+            // The DB write the reactive Flow observes.
             gridFlow.value = afterCreate
             createdEvent
         }
@@ -4431,11 +4421,11 @@ class HomeViewModelTest {
         advanceUntilIdle()
 
         viewModel.weekEvents.test {
-            // Let the range flow settle (debounce + initial empty repo emission).
+            // Let the range flow settle: the debounce and the repository's initial empty emission.
             advanceUntilIdle()
             assertTrue(expectMostRecentItem().timedEvents.isEmpty())
 
-            // Create an event via the public save surface (as the FAB "+" does).
+            // Create an event through saveEvent, as the FAB "+" does.
             val formState = EventFormState(
                 title = "New Meeting",
                 dateMillis = getTimestamp(2024, 11, 20, 0, 0),
@@ -4452,7 +4442,7 @@ class HomeViewModelTest {
             advanceUntilIdle()
             assertTrue(result.isSuccess)
 
-            // The reactive grid must reflect the created event, with no manual reload.
+            // The reactive grid shows the created event with no manual reload.
             val updated = expectMostRecentItem()
             assertEquals(1, updated.timedEvents.size)
             assertEquals("New Meeting", updated.timedEvents.first().title)
@@ -4471,7 +4461,7 @@ class HomeViewModelTest {
         val seed = java.time.Instant.ofEpochMilli(viewModel.computeTimeGridEventSeedTs())
             .atZone(java.time.ZoneId.systemDefault())
 
-        // Today's date, at the next hour on the hour (matches the non-grid FAB).
+        // Today, at the next hour on the hour, like the other FABs.
         assertEquals(java.time.LocalDate.now(), seed.toLocalDate())
         assertEquals((java.time.LocalTime.now().hour + 1) % 24, seed.hour)
         assertEquals(0, seed.minute)
@@ -4482,7 +4472,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Even after paging away, the FAB still defaults to today (not the viewed day).
+        // After paging away the FAB still defaults to today, not the viewed day.
         viewModel.setViewMode(ViewMode.DAY)
         viewModel.onDayPagerPageChanged(WeekViewUtils.CENTER_DAY_PAGE + 30)
         advanceUntilIdle()
@@ -4502,17 +4492,17 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Already in MONTH view
+        // Already in MONTH view.
         assertEquals(ViewMode.MONTH, viewModel.uiState.value.viewMode)
 
-        // Clear mocks to verify no calls happen
+        // Clear the recorded calls.
         io.mockk.clearMocks(eventReader, answers = false, recordedCalls = true, childMocks = false)
 
-        // Set same view - should be no-op
+        // The same view: a no-op.
         viewModel.setViewMode(ViewMode.MONTH)
         advanceUntilIdle()
 
-        // No data loading calls should have been made
+        // No data loading calls.
         verify(exactly = 0) { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) }
     }
 
@@ -4523,20 +4513,20 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Switch to THREE_DAYS first so we can switch back to MONTH
+        // THREE_DAYS first, so there is a switch back to MONTH.
         viewModel.setViewMode(ViewMode.THREE_DAYS)
         advanceUntilIdle()
 
-        // Select a date in June 2025 (different from current viewing month)
+        // A date in June 2025, another month than the one viewed.
         val juneDate = getTimestamp(2025, 5, 15, 10, 0) // month is 0-indexed: 5 = June
         viewModel.selectDate(juneDate)
         advanceUntilIdle()
 
-        // Clear any pending navigation from previous operations
+        // Clear any pending month navigation.
         viewModel.clearNavigateToMonth()
         advanceUntilIdle()
 
-        // Switch back to MONTH — should sync pager to June 2025
+        // Back to MONTH: the pager syncs to June 2025.
         viewModel.setViewMode(ViewMode.MONTH)
         advanceUntilIdle()
 
@@ -4556,25 +4546,25 @@ class HomeViewModelTest {
         val currentYear = today.get(JavaCalendar.YEAR)
         val currentMonth = today.get(JavaCalendar.MONTH)
 
-        // Explicitly select today so selectedDate matches current viewing month
+        // Select today, so selectedDate is in the viewed month.
         viewModel.selectDate(today.timeInMillis)
         advanceUntilIdle()
 
-        // Switch to THREE_DAYS then back — selectedDate is still in current month
+        // To THREE_DAYS and back; selectedDate is still in the current month.
         viewModel.setViewMode(ViewMode.THREE_DAYS)
         advanceUntilIdle()
 
-        // Clear any pending navigation
+        // Clear any pending month navigation.
         viewModel.clearNavigateToMonth()
         advanceUntilIdle()
 
         viewModel.setViewMode(ViewMode.MONTH)
         advanceUntilIdle()
 
-        // viewingYear/viewingMonth should still be current month
+        // Still the current month.
         assertEquals(currentYear, viewModel.uiState.value.viewingYear)
         assertEquals(currentMonth, viewModel.uiState.value.viewingMonth)
-        // No pending navigation needed — already on correct month
+        // No pending navigation: already on that month.
         assertEquals(null, viewModel.uiState.value.pendingNavigateToMonth)
     }
 
@@ -4586,7 +4576,7 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // monthEvents is a WhileSubscribed StateFlow — Turbine-collect so its upstream runs.
+        // monthEvents is a WhileSubscribed StateFlow: Turbine-collect it so its upstream runs.
         viewModel.monthEvents.test {
             skipItems(1) // initial empty (not in MONTH_FULL yet)
 
@@ -4597,8 +4587,8 @@ class HomeViewModelTest {
             viewModel.goToToday()
             advanceUntilIdle()
 
-            // Each distinct (year, month) key drives a fresh reactive query:
-            // MONTH_FULL entry, setViewingMonth, goToToday.
+            // Each distinct (year, month) key starts a new reactive query: MONTH_FULL entry,
+            // setViewingMonth and goToToday.
             verify(atLeast = 3) { displayEventRepository.getDisplayEventsForDateRange(any(), any()) }
             assertTrue(viewModel.uiState.value.pendingNavigateToToday)
             cancelAndIgnoreRemainingEvents()
@@ -4620,7 +4610,7 @@ class HomeViewModelTest {
             viewModel.setViewMode(ViewMode.MONTH_FULL)
             advanceUntilIdle()
 
-            // Simulate a DB write landing in the reactive grid Flow.
+            // A DB write lands in the reactive grid Flow.
             gridFlow.value = persistentMapOf(
                 20241217 to persistentListOf<DisplayEvent>(
                     DisplayEvent.Room(createdEvent, testOccurrences[0], testCalendars[0])
@@ -4628,7 +4618,7 @@ class HomeViewModelTest {
             )
             advanceUntilIdle()
 
-            // Most recent emission must reflect the write, with no manual reload.
+            // The latest emission shows the write with no manual reload.
             val updated = expectMostRecentItem()
             assertEquals(1, updated[20241217]?.size)
             cancelAndIgnoreRemainingEvents()
@@ -4642,20 +4632,20 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Switch to THREE_DAYS first
+        // THREE_DAYS first.
         viewModel.setViewMode(ViewMode.THREE_DAYS)
         advanceUntilIdle()
 
-        // Select a date in March 2025
+        // A date in March 2025.
         val marchDate = getTimestamp(2025, 2, 10, 10, 0) // month 0-indexed: 2 = March
         viewModel.selectDate(marchDate)
         advanceUntilIdle()
 
-        // Clear any pending navigation
+        // Clear any pending month navigation.
         viewModel.clearNavigateToMonth()
         advanceUntilIdle()
 
-        // Switch to MONTH_FULL — should sync pager to March 2025
+        // MONTH_FULL: the pager syncs to March 2025.
         viewModel.setViewMode(ViewMode.MONTH_FULL)
         advanceUntilIdle()
 
@@ -4723,20 +4713,20 @@ class HomeViewModelTest {
         viewModel.onWeekViewDayHeaderClick(LocalDate.now())
         advanceUntilIdle()
 
-        // A real transient switch: mode flips to DAY, but the persisted default
-        // must not change. Asserting both here so a regression that stops the
-        // switch entirely can't pass by simply never persisting.
+        // A transient switch: the mode flips to DAY and the persisted default doesn't change.
+        // Both are asserted, so a regression that stops the switch can't pass by never
+        // persisting.
         assertEquals(ViewMode.DAY, viewModel.uiState.value.viewMode)
         coVerify(exactly = 0) { dataStore.setDefaultCalendarView("day") }
     }
 
     @Test
     fun `init loads default view from DataStore`() = runTest {
-        // Override default view to AGENDA (must be set before createViewModel)
+        // The default view is AGENDA, stubbed before createViewModel.
         coEvery { dataStore.getDefaultCalendarView() } returns KashCalDataStore.VIEW_AGENDA
         every { dataStore.defaultCalendarView } returns flowOf(KashCalDataStore.VIEW_AGENDA)
         every { eventReader.getVisibleOccurrencesWithEventsInRangeFlow(any(), any()) } returns flowOf(emptyList())
-        // Explicit mock for onboardingDismissed (accessed via .first() in initializeAsync)
+        // initializeAsync reads onboardingDismissed with .first().
         every { dataStore.onboardingDismissed } returns flowOf(false)
 
         val viewModel = createViewModel()
@@ -4752,15 +4742,15 @@ class HomeViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Setup specific return values to verify both are called
+        // Both extensions extend nothing.
         coEvery { eventCoordinator.extendOccurrencesIfNeeded(any()) } returns 0
         coEvery { eventCoordinator.extendPastOccurrencesIfNeeded(any()) } returns 0
 
-        // Navigate to a past month
+        // A past month.
         viewModel.setViewingMonth(2020, 2) // March 2020
         advanceUntilIdle()
 
-        // Both forward and past extension should be called
+        // Both the forward and the past extension run.
         coVerify { eventCoordinator.extendOccurrencesIfNeeded(any()) }
         coVerify { eventCoordinator.extendPastOccurrencesIfNeeded(any()) }
     }
@@ -4790,8 +4780,8 @@ class HomeViewModelTest {
     }
 
     /**
-     * Create a DisplayEvent.Room for dots tests.
-     * Lightweight helper — only calendarColor matters for dots, other fields are minimal.
+     * Returns a [DisplayEvent.Room] for the dots tests. Only the color matters for a dot, so the
+     * other fields are minimal; the calendar is the test calendar with [calendarColor].
      */
     private fun createDotDisplayEvent(
         id: Long,
@@ -4823,11 +4813,12 @@ class HomeViewModelTest {
     }
 
     // ==================== Device Calendar Picker Filter ====================
-    // The new-event calendar picker (uiState.deviceCalendarGroups) must respect the
-    // same gate-and-filter as the navigation drawer's device-calendar section:
+    // The new-event calendar picker (uiState.deviceCalendarGroups) applies the same gate and
+    // filter as the drawer's device-calendar section (observeDeviceCalendarDrawerState):
     //   - master toggle dataStore.deviceCalendarsEnabled
     //   - per-calendar set dataStore.enabledDeviceCalendarIds
-    // Reference behavior at HomeViewModel.observeDeviceCalendarDrawerState (~L923-948).
+    // and then keeps only writable calendars. The tests cover the observeCalendars Flow path
+    // and the loadCalendars suspend path.
 
     private fun deviceCal(
         id: Long,
@@ -4863,14 +4854,14 @@ class HomeViewModelTest {
 
     @Test
     fun `device picker shows only enabled writable calendars when master on`() = runTest {
-        // observeCalendars Flow path + writableOnly preservation
+        // observeCalendars Flow path, with the writableOnly filter.
         every { dataStore.deviceCalendarsEnabled } returns flowOf(true)
         every { dataStore.enabledDeviceCalendarIds } returns flowOf(setOf(10L, 30L))
         val fake = FakeCalendarProviderRepository().apply {
             calendars = listOf(
-                deviceCal(10L, accessLevel = 700), // enabled + writable → included
-                deviceCal(20L, accessLevel = 700), // writable but NOT enabled → excluded
-                deviceCal(30L, accessLevel = 200)  // enabled but READ-ONLY → excluded by writableOnly
+                deviceCal(10L, accessLevel = 700), // enabled and writable: included
+                deviceCal(20L, accessLevel = 700), // writable, not enabled: excluded
+                deviceCal(30L, accessLevel = 200)  // enabled, read-only: excluded by writableOnly
             )
         }
 
@@ -4885,7 +4876,7 @@ class HomeViewModelTest {
 
     @Test
     fun `device picker is empty when master on but no calendars enabled`() = runTest {
-        // observeCalendars Flow path edge case
+        // observeCalendars Flow path, empty enabled set.
         every { dataStore.deviceCalendarsEnabled } returns flowOf(true)
         every { dataStore.enabledDeviceCalendarIds } returns flowOf(emptySet())
         val fake = FakeCalendarProviderRepository().apply {
@@ -4903,7 +4894,7 @@ class HomeViewModelTest {
 
     @Test
     fun `device picker updates reactively when enabled IDs change`() = runTest {
-        // observeCalendars reactive Flow update
+        // observeCalendars reacts to a Flow update.
         val enabledIdsFlow = MutableStateFlow<Set<Long>>(emptySet())
         every { dataStore.deviceCalendarsEnabled } returns flowOf(true)
         every { dataStore.enabledDeviceCalendarIds } returns enabledIdsFlow
@@ -4934,10 +4925,9 @@ class HomeViewModelTest {
 
     @Test
     fun `loadCalendars (refreshCalendars) respects gate-and-filter`() = runTest {
-        // loadCalendars suspend path. Configure Flow path to emit empty so observeCalendars
-        // produces no device groups; configure suspend path to emit enabled. This isolates
-        // loadCalendars — the post-refreshCalendars assertion can only be true if the
-        // suspend path filtered correctly.
+        // loadCalendars suspend path. The Flow path has the feature off, so observeCalendars
+        // produces no device groups; the suspend getters have it on with id 10 enabled. The
+        // assertion after refreshCalendars holds only if the suspend path filtered.
         every { dataStore.deviceCalendarsEnabled } returns flowOf(false)
         every { dataStore.enabledDeviceCalendarIds } returns flowOf(emptySet())
         coEvery { dataStore.getDeviceCalendarsEnabled() } returns true
@@ -4989,7 +4979,7 @@ class HomeViewModelTest {
         viewModel.setUserInitials("john")
         advanceUntilIdle()
 
-        // "john" -> first two letters, uppercased.
+        // "john": the first two letters, uppercased.
         assertEquals("JO", saved.captured)
     }
 

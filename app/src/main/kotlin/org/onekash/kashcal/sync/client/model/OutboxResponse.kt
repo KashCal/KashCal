@@ -6,16 +6,12 @@ import org.xmlpull.v1.XmlPullParserFactory
 import java.io.StringReader
 
 /**
- * Parsed result of a scheduling-Outbox POST (RFC 6638 §6, §10.1).
+ * Holds the per-recipient outcomes of a scheduling Outbox POST (RFC 6638 §6, §10.1).
  *
- * The server answers an Outbox POST with a `CALDAV:schedule-response` document
- * containing one `CALDAV:response` per recipient — each carrying the
- * recipient's CAL-ADDRESS and a `CALDAV:request-status` outcome code
- * (RFC 6638 §10.4, e.g. `2.0;Success`, `3.7;Invalid calendar user`).
- *
- * This model holds the raw per-recipient status strings server-faithfully; the
- * leading-digit delivery classification lives in [classifyRequestStatus] so the
- * retry policy has a single home (no re-derivation at the call site).
+ * The server answers with a `CALDAV:schedule-response` holding one `CALDAV:response` per
+ * recipient: its CAL-ADDRESS and a `CALDAV:request-status` code (RFC 6638 §10.4, e.g.
+ * `2.0;Success`, `3.7;Invalid calendar user`). The status strings are kept as the server sent
+ * them; [classifyRequestStatus] is the one place that turns them into a retry decision.
  */
 data class OutboxResponse(
     val recipients: List<RecipientStatus>
@@ -41,11 +37,10 @@ data class OutboxResponse(
         }
 
         /**
-         * Parse a `schedule-response` XML body into per-recipient outcomes.
+         * Parses a `schedule-response` body into per-recipient outcomes.
          *
-         * Namespace-prefix tolerant (matches on local element names) and
-         * defensive: a blank, empty-element, or malformed/non-XML body yields
-         * an empty recipient list rather than throwing — an Outbox POST result
+         * Matches local element names, so any namespace prefix works. A blank, empty or
+         * malformed body gives an empty recipient list and never throws: the Outbox result
          * is best-effort and must never crash the push.
          */
         fun parse(xml: String): OutboxResponse {
@@ -69,9 +64,8 @@ data class OutboxResponse(
                                 recipientHref = null
                                 requestStatus = null
                             }
-                            // The recipient CAL-ADDRESS lives in a <href> nested
-                            // inside <recipient>; scope to <recipient> so a
-                            // sibling <calendar-data> href is never mistaken.
+                            // The CAL-ADDRESS is the <href> inside <recipient>; any
+                            // other <href> in the response is not the recipient.
                             "recipient" -> inRecipient = true
                             "href" -> if (inResponse && inRecipient) {
                                 parser.next()
@@ -108,34 +102,35 @@ data class OutboxResponse(
 }
 
 /**
- * The retry disposition of an Outbox per-recipient `request-status`, keyed off
- * the leading status digit (RFC 6638 §3.6 / RFC 5546 §3.6, which prescribe
- * retry behavior by status class, not by an attempt count).
+ * Says whether an Outbox recipient's `request-status` is worth sending again, by its status
+ * class (RFC 6638 §3.6 / RFC 5546 §3.6 set retry behavior by status class, not attempt count).
+ * [classifyRequestStatus] maps codes to these.
  */
 enum class OutboxDeliveryClass {
-    /** `2.x` — the message was sent; stop, the send is done. */
+    /** `2.x`: the message was sent; don't send it again. */
     SUCCESS,
 
     /**
-     * `5.1`, a transport/network failure, or an unparseable status — "the
-     * originator can try to send the message again at a later time." The
-     * idempotency marker is left unadvanced so the next push retries.
+     * `5.1`, any class other than 2, 3 or 5, or a missing or unparseable status: "the
+     * originator can try to send the message again at a later time." The push sends it again
+     * on a later run (an invite's sent marker stays unadvanced; a cancel is kept, up to its
+     * attempt cap).
      */
     TRANSIENT,
 
     /**
-     * `3.x` (invalid user / privileges), `5.2`, `5.3` — "the originator ought
-     * not try to send the message again, at least without verifying/correcting
-     * the calendar user address." The marker is advanced to stop the loop;
-     * recovery rides a later SEQUENCE bump or an address correction.
+     * `3.x` (invalid user or privileges), `5.2`, `5.3` and any other `5.x` but `5.1`: "the
+     * originator ought not try to send the message again, at least without verifying/correcting the
+     * calendar user address." The push stops sending (an invite's marker advances, a cancel is
+     * dropped); an invite goes out again only after a SEQUENCE bump or an address correction.
      */
     PERMANENT,
 }
 
 /**
- * Classify a raw `request-status` string by its leading status code (RFC 6638
- * §10.4). A null/blank/unparseable code is treated as [TRANSIENT] so an
- * ambiguous outcome is retried rather than silently dropped.
+ * Classifies a raw `request-status` by the code before its `;` (RFC 6638 §10.4). A null,
+ * blank or unrecognised code is [OutboxDeliveryClass.TRANSIENT], so an unclear outcome is
+ * retried, never silently dropped.
  */
 fun classifyRequestStatus(requestStatus: String?): OutboxDeliveryClass {
     val code = requestStatus?.substringBefore(';')?.trim().orEmpty()

@@ -6,8 +6,7 @@ import org.onekash.kashcal.domain.model.DisplayEvent
 /**
  * One rendered agenda entry. A multi-day event produces one item per day it
  * spans, carrying its [dayNumber] within [totalDays] so the card can show
- * "Day X of Y". Moved out of the AgendaContent composable so the expansion /
- * dedup / grouping logic is pure and unit-testable.
+ * "Day X of Y".
  */
 internal data class AgendaDisplayItem(
     val displayEvent: DisplayEvent,
@@ -27,9 +26,9 @@ internal data class AgendaDayGroup(
  * map from each group's day code to the flat LazyColumn index of its header.
  *
  * The flat layout is, per group, one header item followed by its N card items,
- * so a group's header index is the cumulative count of all preceding
- * (header + cards). This must mirror the LazyColumn exactly — no leading items
- * before the first header — for [resolveScrollTargetIndex] to land correctly.
+ * so a group's header index is the count of all preceding headers and cards.
+ * The LazyColumn must match this layout, with no items before the first header,
+ * or [resolveScrollTargetIndex] lands on the wrong item.
  */
 internal data class AgendaListModel(
     val groups: List<AgendaDayGroup>,
@@ -37,9 +36,9 @@ internal data class AgendaListModel(
 )
 
 /**
- * Expand [events] into the agenda render model: split multi-day events per day,
- * keep only today-onward entries, dedup by title+startTs+day, and group/sort by
- * day then start time. Pure so it can run in a `remember` and be unit-tested.
+ * Expands [events] into the agenda render model: splits multi-day events per
+ * day, keeps entries from today on, dedups by title, startTs and day, and groups
+ * and sorts by day then start time. Pure, so it can run in a `remember`.
  */
 internal fun buildAgendaListModel(
     events: List<DisplayEvent>,
@@ -62,10 +61,8 @@ internal fun buildAgendaListModel(
             listOf(AgendaDisplayItem(displayEvent, displayEvent.startDay, 1, 1))
         }
     }.filter { item ->
-        // Only show items from today onwards.
         item.displayDay >= todayDayCode
     }.distinctBy { item ->
-        // Identity-based dedup key (title + startTs + displayDay).
         "${item.displayEvent.title}-${item.displayEvent.startTs}-${item.displayDay}"
     }.sortedWith(
         compareBy(
@@ -91,10 +88,10 @@ internal fun buildAgendaListModel(
 }
 
 /**
- * The LazyColumn item index to scroll to for [dayCode]: that day's header if it
- * has one, else the nearest following day's header (so tapping an empty day still
- * scrolls forward sensibly), else the last group's header. Returns -1 for an
- * empty model — the caller must skip scrolling.
+ * Returns the LazyColumn item index to scroll to for [dayCode]: that day's
+ * header, else the nearest following day's header (so tapping an empty day still
+ * scrolls forward), else the last group's header. Returns -1 for an empty model;
+ * the caller must skip scrolling then.
  */
 internal fun resolveScrollTargetIndex(dayCode: Int, model: AgendaListModel): Int {
     if (model.groups.isEmpty()) return -1

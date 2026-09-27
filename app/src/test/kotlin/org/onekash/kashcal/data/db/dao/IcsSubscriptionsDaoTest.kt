@@ -23,14 +23,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for IcsSubscriptionsDao - ICS calendar subscription management.
- *
- * Critical for ensuring:
- * - Subscription CRUD operations work correctly
- * - Sync status updates (etag, lastModified, errors) are persisted
- * - Settings changes (name, color, interval) are applied
- * - URL uniqueness is enforced
- * - Cascade delete with Calendar works properly
+ * Tests [IcsSubscriptionsDao]:
+ * - CRUD, upsert and the queries and counts
+ * - sync status updates (etag, lastModified, errors)
+ * - settings updates (enabled, name, color, interval, username)
+ * - URL and calendar_id uniqueness, and the cascade delete from the calendar
+ * - the [IcsSubscription] computed properties (isDueForSync, requiresAuth, hasError, the
+ *   webcal-normalized URL)
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -53,7 +52,7 @@ class IcsSubscriptionsDaoTest {
         calendarsDao = database.calendarsDao()
 
         runTest {
-            // Create ICS account (required for calendars)
+            // The ICS account every calendar needs.
             testAccountId = database.accountsDao().insert(
                 Account(
                     provider = AccountProvider.ICS,
@@ -61,7 +60,7 @@ class IcsSubscriptionsDaoTest {
                 )
             )
 
-            // Create a calendar for subscription (use unique URL to avoid conflicts with createCalendar())
+            // A calendar URL unlike createCalendar()'s, so the two never collide.
             testCalendarId = calendarsDao.insert(
                 Calendar(
                     accountId = testAccountId,
@@ -78,7 +77,7 @@ class IcsSubscriptionsDaoTest {
         database.close()
     }
 
-    // Counter for unique URLs - starts at 100 to avoid conflicts with setup
+    // Makes subscription and calendar URLs unique within a test.
     private var subscriptionCounter = 100
 
     private fun createSubscription(
@@ -203,11 +202,9 @@ class IcsSubscriptionsDaoTest {
     @Test
     fun `getAll returns reactive Flow of subscriptions`() = runTest {
         subscriptionsDao.getAll().test {
-            // Initial state
             val initial = awaitItem()
             assertEquals(0, initial.size)
 
-            // Add subscription
             val cal1 = createCalendar()
             subscriptionsDao.insert(createSubscription(calendarId = cal1, name = "Sub A"))
 
@@ -343,7 +340,7 @@ class IcsSubscriptionsDaoTest {
         assertEquals(syncTime, updated?.lastSync)
         assertEquals("\"abc123\"", updated?.etag)
         assertEquals("Wed, 21 Oct 2024 07:28:00 GMT", updated?.lastModified)
-        assertNull(updated?.lastError) // Error should be cleared
+        assertNull(updated?.lastError)
     }
 
     @Test
@@ -508,12 +505,10 @@ class IcsSubscriptionsDaoTest {
 
         subscriptionsDao.insert(createSubscription(url = testUrl, calendarId = cal1))
 
-        // Second insert with same URL should fail
         try {
             subscriptionsDao.insert(createSubscription(url = testUrl, calendarId = cal2))
             assertTrue("Should have thrown exception for duplicate URL", false)
         } catch (e: Exception) {
-            // Expected - unique constraint violation
             assertTrue(e is android.database.sqlite.SQLiteConstraintException)
         }
     }
@@ -527,7 +522,6 @@ class IcsSubscriptionsDaoTest {
             calendarId = calId
         ))
 
-        // Second insert with same calendar_id should fail
         try {
             subscriptionsDao.insert(createSubscription(
                 url = "https://second.com/calendar.ics",
@@ -535,7 +529,6 @@ class IcsSubscriptionsDaoTest {
             ))
             assertTrue("Should have thrown exception for duplicate calendar_id", false)
         } catch (e: Exception) {
-            // Expected - unique constraint violation
             assertTrue(e is android.database.sqlite.SQLiteConstraintException)
         }
     }
@@ -547,10 +540,8 @@ class IcsSubscriptionsDaoTest {
         val calId = createCalendar()
         val subId = subscriptionsDao.insert(createSubscription(calendarId = calId))
 
-        // Delete the calendar
         calendarsDao.deleteById(calId)
 
-        // Subscription should be cascade deleted
         val subscription = subscriptionsDao.getById(subId)
         assertNull(subscription)
     }
@@ -564,7 +555,7 @@ class IcsSubscriptionsDaoTest {
 
         val retrieved = subscriptionsDao.getById(id)
         assertEquals(webcalUrl, retrieved?.url)
-        // getNormalizedUrl() should convert webcal to https
+        // The stored URL keeps webcal; getNormalizedUrl() maps it to https.
         assertEquals("https://example.com/calendar.ics", retrieved?.getNormalizedUrl())
     }
 
@@ -590,7 +581,7 @@ class IcsSubscriptionsDaoTest {
     fun `computed property isDueForSync works correctly`() = runTest {
         val now = System.currentTimeMillis()
 
-        // Due for sync (last sync was 25 hours ago with 24h interval)
+        // Due: last sync 25 hours ago with a 24h interval.
         val dueSub = createSubscription(
             lastSync = now - 25 * 60 * 60 * 1000L,
             syncIntervalHours = 24,
@@ -598,7 +589,7 @@ class IcsSubscriptionsDaoTest {
         )
         assertTrue(dueSub.isDueForSync())
 
-        // Not due (last sync was 1 hour ago with 24h interval)
+        // Not due: last sync 1 hour ago with a 24h interval.
         val notDueSub = createSubscription(
             lastSync = now - 1 * 60 * 60 * 1000L,
             syncIntervalHours = 24,

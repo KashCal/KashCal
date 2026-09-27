@@ -12,11 +12,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Behavior of IcsShareIntentParser — the mapper that turns an incoming
- * `Intent.ACTION_SEND` carrying a calendar file (in EXTRA_STREAM) into the
- * shared `.ics` Uri. Tests run at this layer rather than booting MainActivity
- * because the activity boot has a heavy Hilt + Room + Compose fixture cost; the
- * bug surface is the intent → Uri mapping, which is mechanical and pure.
+ * Tests [IcsShareIntentParser], which maps an `Intent.ACTION_SEND` carrying a calendar file in
+ * `EXTRA_STREAM` to the shared `.ics` Uri. The tests run here instead of booting MainActivity,
+ * whose Hilt, Room and Compose setup is heavy; the intent to Uri mapping is pure.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -54,11 +52,9 @@ class IcsShareIntentParserTest {
         assertEquals(icsUri, IcsShareIntentParser.parse(intent))
     }
 
-    // Defensive guard, not a primary path: the manifest only registers the three
-    // concrete ICS mime types, so a generic-typed share won't actually resolve to
-    // KashCal through the share sheet. This asserts the parser's own logic — if a
-    // generic-typed SEND ever reaches us (e.g. via onNewIntent), an `.ics` suffix
-    // is still honored.
+    // A fallback, not the share-sheet path: the manifest registers only the three ICS mime
+    // types, so a generic-typed share doesn't resolve to KashCal there. A generic-typed SEND
+    // that arrives another way, such as onNewIntent, is still taken on its `.ics` suffix.
     @Test
     fun `ACTION_SEND with generic mime but ics path suffix returns the uri`() {
         val suffixUri = Uri.parse("file:///storage/emulated/0/Download/invite.ics")
@@ -115,8 +111,7 @@ class IcsShareIntentParserTest {
         assertNull(IcsShareIntentParser.parse(null))
     }
 
-    // Guards the predicate that MainActivity's VIEW (open-with) path also delegates
-    // to after this refactor — keeps the single source of truth honest.
+    // MainActivity's VIEW ("Open with") path delegates to this predicate too.
     @Test
     fun `isIcsMimeType classifies the three calendar mimes as ics and others as not`() {
         assertTrue(IcsShareIntentParser.isIcsMimeType("text/calendar"))

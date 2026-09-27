@@ -11,11 +11,11 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * v23.7.17: `EventCardAttendeeBadge` count must subtract every chip
- * with `isYou=true`, not just one. Real-world trigger: a user whose
- * account has multiple calendar-user-addresses (e.g. me.com + icloud.com)
- * appears twice on the attendee list, both rows synthesized as `isYou=true`
- * by `AttendeeUiModel.computeForEvent`.
+ * Tests [EventCardAttendeeBadge]: the count excludes every `isYou = true` model, not only one
+ * (v23.7.17), and the badge renders nothing when the list is empty or no one else is on it. A
+ * user whose account has several calendar-user-addresses (me.com and icloud.com, for example)
+ * appears twice on the attendee list, both rows marked `isYou` by [AttendeeUiModel.fromRoom].
+ * An organizer-self list shows the 👑 hosting badge.
  */
 @RunWith(AndroidJUnit4::class)
 class EventCardAttendeeBadgeComposeTest {
@@ -26,13 +26,14 @@ class EventCardAttendeeBadgeComposeTest {
     @Test
     fun emptyList_rendersNothing() {
         rule.setContent { Themed { EventCardAttendeeBadge(models = emptyList()) } }
-        // Nothing to assert beyond "no exception" — no testTag on the badge.
+        // The badge has no testTag. This checks only that no node's text is exactly "👥";
+        // a rendered badge reads "👥 <count>", so it would pass that too.
         rule.onNodeWithText("👥").assertDoesNotExist()
     }
 
     @Test
     fun multiAlias_user_subtractsBothFromCount() {
-        // Two aliases of the user + two real invitees. Badge should show "2".
+        // Two aliases of the user and two invitees: the badge shows "2".
         rule.setContent {
             Themed {
                 EventCardAttendeeBadge(
@@ -50,7 +51,7 @@ class EventCardAttendeeBadgeComposeTest {
 
     @Test
     fun singleUser_with3Invitees_count3() {
-        // Single isYou + 3 invitees — count is 3, not 4.
+        // One isYou model and 3 invitees: the count is 3, not 4.
         rule.setContent {
             Themed {
                 EventCardAttendeeBadge(
@@ -68,7 +69,7 @@ class EventCardAttendeeBadgeComposeTest {
 
     @Test
     fun organizerSelf_only_rendersNothing() {
-        // Organizer-self with no invitees: count = 0 → early-return, no badge.
+        // Organizer-self with no invitees: the count is 0, so no badge renders.
         rule.setContent {
             Themed {
                 EventCardAttendeeBadge(

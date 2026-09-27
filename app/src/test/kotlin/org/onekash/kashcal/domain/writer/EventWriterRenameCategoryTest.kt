@@ -30,13 +30,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Renaming a tag must re-upload every affected *syncable* event with its new
- * tag, so a rename on one device reaches the CalDAV server and the user's other
- * devices. The rewrite already worked; the gap this covers is marking the
- * affected events dirty (PENDING_UPDATE + queued OPERATION_UPDATE) without
- * bumping SEQUENCE (a tag is cosmetic — no attendee re-notification), skipping
- * events that can't be pushed, and routing an exception's update to its master.
- * Backed by a real in-memory Room DB for fidelity.
+ * Tests [EventWriter.renameCategory] over an in-memory Room database. Renaming a tag re-uploads
+ * every affected syncable event, so the rename reaches the CalDAV server and the user's other
+ * devices: the rename rewrites the tag, marks each affected event PENDING_UPDATE with a queued
+ * OPERATION_UPDATE and restamps it, without bumping SEQUENCE (a tag is cosmetic, so attendees
+ * aren't re-notified). Local, read-only, PENDING_CREATE and PENDING_DELETE events are rewritten
+ * but not queued, an exception's update goes to its master, a failed queue write rolls the
+ * whole rename back, and a tag on more events than the SQL variable limit still renames.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -175,7 +175,7 @@ class EventWriterRenameCategoryTest {
         assertTrue("updatedAt restamped to rename time", row.updatedAt!! >= before)
     }
 
-    // ---- cosmetic rename must not re-notify attendees ----
+    // ---- a cosmetic rename doesn't re-notify attendees ----
 
     @Test
     fun `does not bump SEQUENCE on a renamed event`() = runTest {
@@ -236,10 +236,9 @@ class EventWriterRenameCategoryTest {
 
     @Test
     fun `leaves a PENDING_DELETE event queued for delete and does not resurrect it`() = runTest {
-        // A soft-deleted CalDAV event still lives in the events table with its
-        // categories intact and a queued DELETE. Re-stamping it PENDING_UPDATE
-        // would resurrect it in the UI while the DELETE still drains — the
-        // server deletes it, the device shows it active. Skip it.
+        // A soft-deleted CalDAV event stays in the events table with its categories and a
+        // queued DELETE. Re-stamping it PENDING_UPDATE would show it again while the DELETE
+        // removes it from the server.
         val id = seedEvent(caldavCalendarId, listOf("Work"), syncStatus = SyncStatus.PENDING_DELETE)
 
         val queued = eventWriter.renameCategory("Work", "Job")
@@ -269,9 +268,8 @@ class EventWriterRenameCategoryTest {
     fun `rolls back the whole cascade atomically when the queue write fails`() = runTest {
         val id = seedEvent(caldavCalendarId, listOf("Work"))
 
-        // Fault-inject at the queue-write layer: an explicit throwing spy (not a
-        // relaxed mock) so the transaction that spans the category rewrite and
-        // the pending-op insert must roll back as one unit.
+        // The pending-op insert throws (an explicit throwing spy, not a relaxed mock), so
+        // the transaction spanning the category rewrite and the insert must roll back as one.
         val throwingDb = spyk(database)
         val throwingPendingOps = spyk(database.pendingOperationsDao())
         coEvery { throwingPendingOps.insert(any()) } throws RuntimeException("boom")
@@ -290,10 +288,8 @@ class EventWriterRenameCategoryTest {
         assertTrue(pendingUpdateOps().isEmpty())
     }
 
-    // Note: an event with no matching calendar row is schema-unreachable — the
-    // events table has a CASCADE foreign key on calendar_id, so an orphaned
-    // calendarId can't exist. The production code still guards against a null
-    // calendar defensively, but no test can seed the impossible state.
+    // An event with no calendar row can't be seeded: events.calendar_id is a CASCADE
+    // foreign key. The production guard for a missing calendar has no test.
 
     // ---- exceptions route their update to the master ----
 
@@ -312,7 +308,7 @@ class EventWriterRenameCategoryTest {
         // Both rows rewritten.
         assertEquals(listOf("Job"), categoriesOf(master))
         assertEquals(listOf("Job"), categoriesOf(exception))
-        // The UPDATE targets the master, exactly once (dedup master+exception).
+        // One UPDATE, on the master, for both rows.
         val ops = pendingUpdateOps()
         assertEquals(listOf(master), ops.map { it.eventId })
         assertEquals(SyncStatus.PENDING_UPDATE, syncStatusOf(master))
@@ -330,11 +326,11 @@ class EventWriterRenameCategoryTest {
 
         eventWriter.renameCategory("Work", "Job")
 
-        // The master never carried the tag — its own categories are untouched.
+        // The master never carried the tag, so its own categories are untouched.
         assertEquals("master categories unchanged", listOf("Personal"), categoriesOf(master))
         assertEquals(listOf("Job"), categoriesOf(exception))
-        // But the master is still queued so the exception's rewritten body ships
-        // via the master's bundled PUT (queue-for-bundling, not because-changed).
+        // The master is still queued, because the exception's rewritten body ships in the
+        // master's PUT.
         val ops = pendingUpdateOps()
         assertEquals(listOf(master), ops.map { it.eventId })
         assertEquals(SyncStatus.PENDING_UPDATE, syncStatusOf(master))
@@ -344,7 +340,7 @@ class EventWriterRenameCategoryTest {
 
     @Test
     fun `a rename spanning two accounts queues each event to its own account`() = runTest {
-        // Second CalDAV account + calendar.
+        // A second CalDAV account and calendar.
         val accountB = database.accountsDao().insert(
             Account(provider = AccountProvider.CALDAV, email = "b@example.test")
         )
@@ -356,8 +352,8 @@ class EventWriterRenameCategoryTest {
 
         eventWriter.renameCategory("Work", "Job")
 
-        // Each event gets its own op; each op carries its own event (which
-        // carries its calendar -> account), so the drain routes per-account.
+        // Each event gets its own op, and the op's event names its calendar and so its
+        // account, which the drain routes by.
         val queuedIds = pendingUpdateOps().map { it.eventId }.toSet()
         assertEquals(setOf(eventA, eventB), queuedIds)
     }
@@ -366,9 +362,9 @@ class EventWriterRenameCategoryTest {
 
     @Test
     fun `renames a tag carried by more than the SQL variable limit of events`() = runTest {
-        // A power user tags 1200 events "Work", then renames it. The batch
-        // getByIds queries must chunk under SQLite's 999-bind-variable cap, or
-        // the whole rename throws inside the transaction and silently no-ops.
+        // 1200 events tagged "Work", then renamed. The batch getByIds queries must chunk
+        // under SQLite's 999-bind-variable cap, or the rename throws inside the transaction
+        // and rolls back.
         val count = 1200
         val ids = (1..count).map { seedEvent(caldavCalendarId, listOf("Work")) }
 

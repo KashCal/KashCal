@@ -19,13 +19,13 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * Tests for the RFC 6638 scheduling-discovery operations on
- * [OkHttpCalDavClient]:
- *  - `discoverScheduleOutboxUrl` (§2.1.1 PROPFIND for schedule-outbox-URL)
- *  - `supportsAutoSchedule` (§2 OPTIONS DAV-header calendar-auto-schedule)
+ * Tests the RFC 6638 scheduling discovery on [OkHttpCalDavClient]:
+ *  - [OkHttpCalDavClient.discoverScheduleOutboxUrl]: PROPFIND for schedule-outbox-URL (§2.1.1)
+ *  - [OkHttpCalDavClient.supportsAutoSchedule]: `calendar-auto-schedule` in the OPTIONS DAV
+ *    header (§2)
  *
- * Verifies outgoing request shape (method, headers) and response handling
- * (href extraction, DAV-header token detection, error paths).
+ * Checks the outgoing request (method, headers) and the response handling: href extraction,
+ * DAV-header token detection and error paths.
  */
 class OkHttpCalDavClientSchedulingDiscoveryTest {
 
@@ -194,10 +194,10 @@ class OkHttpCalDavClientSchedulingDiscoveryTest {
 
     @Test
     fun `supportsAutoSchedule finds the token when DAV is split across multiple header lines`() = runTest {
-        // Some servers (e.g. Cyrus-based hosts) emit several DAV: response
-        // header lines and put calendar-auto-schedule on a line OTHER than the
-        // first. response.header("DAV") returns only one of them, so the token
-        // must be matched across ALL DAV lines (response.headers("DAV")).
+        // Some servers (Cyrus-based hosts) send several DAV response header lines and put
+        // calendar-auto-schedule on a line other than the first. response.header("DAV")
+        // returns only one of them, so the token must be matched across every DAV line
+        // (response.headers("DAV")).
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(200)

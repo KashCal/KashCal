@@ -20,14 +20,9 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
 /**
- * Confirmation bottom sheet for signing out of iCloud.
+ * Shows [GenericSignOutConfirmationSheet] for iCloud.
  *
- * Shows before disconnecting to prevent accidental sign out.
- *
- * @param sheetState Material3 sheet state
- * @param email Masked email to display (e.g., "j***@icloud.com")
- * @param onConfirm Callback when user confirms sign out
- * @param onDismiss Callback when sheet is dismissed
+ * @param email the masked email to display, for example "j***@icloud.com".
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,13 +42,12 @@ fun SignOutConfirmationSheet(
 }
 
 /**
- * Generic sign-out confirmation sheet that works for any provider.
+ * Asks the user to confirm signing out of an account, so a sign-out isn't accidental. Sign Out
+ * calls [onConfirm] then [onDismiss].
  *
- * @param sheetState Material3 sheet state
- * @param providerName Display name of the provider (e.g., "iCloud", "Nextcloud")
- * @param email Masked email to display
- * @param onConfirm Callback when user confirms sign out
- * @param onDismiss Callback when sheet is dismissed
+ * @param providerName the name shown in the title; the accounts screen passes the account's
+ *   display name.
+ * @param email the masked email to display.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,27 +69,23 @@ fun GenericSignOutConfirmationSheet(
                 .padding(bottom = 32.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Title
             Text(
                 stringResource(R.string.dialog_sign_out_title, providerName),
                 style = MaterialTheme.typography.titleLarge
             )
 
-            // Description
             Text(
                 stringResource(R.string.dialog_sign_out_message, email),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Buttons
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Cancel button
                 OutlinedButton(
                     onClick = onDismiss,
                     modifier = Modifier.weight(1f)
@@ -103,7 +93,7 @@ fun GenericSignOutConfirmationSheet(
                     Text(stringResource(R.string.action_cancel))
                 }
 
-                // Sign Out button (destructive)
+                // Destructive action.
                 Button(
                     onClick = {
                         onConfirm()

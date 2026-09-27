@@ -16,19 +16,17 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Handles one-time migration of credentials from old format to unified format.
+ * Copies credentials once from the old prefs files into [CredentialManager]'s unified format.
  *
- * Migration sources:
- * - iCloud: Single-key format in `icloud_credentials` (apple_id, app_password)
- * - CalDAV: Account-keyed format in `caldav_credentials` (caldav_{id}_username)
+ * Sources:
+ * - iCloud: one unkeyed set in `icloud_credentials` (`apple_id`, `app_password`)
+ * - CalDAV: account-keyed sets in `caldav_credentials` (`caldav_{id}_username`)
  *
- * Migration target:
- * - Unified: Account-keyed format in `unified_credentials` (account_{id}_username)
+ * Target: account-keyed sets in `unified_credentials` (`account_{id}_username`).
  *
- * Safety:
- * - Idempotent: DataStore flag prevents duplicate migration
- * - Non-destructive: Old credentials preserved until Phase 12 cleanup
- * - Failure-safe: Partial migration retries on next app launch
+ * A DataStore flag makes it run once. Nothing deletes the old prefs files. The flag is set when
+ * every source that has credentials migrates; a source whose prefs can't be opened counts as
+ * having none. Otherwise the flag stays unset and the next app launch retries.
  */
 @Singleton
 class CredentialMigration @Inject constructor(
@@ -40,10 +38,8 @@ class CredentialMigration @Inject constructor(
     companion object {
         private const val TAG = "CredentialMigration"
 
-        // DataStore key for migration flag
         private val KEY_CREDENTIALS_MIGRATED = booleanPreferencesKey("credentials_migrated_to_unified")
 
-        // Old preferences file names
         private const val ICLOUD_PREFS_NAME = "icloud_credentials"
         private const val CALDAV_PREFS_NAME = "caldav_credentials"
 
@@ -61,9 +57,7 @@ class CredentialMigration @Inject constructor(
         private const val CALDAV_KEY_TRUST_INSECURE = "trust_insecure"
     }
 
-    /**
-     * Results of migration attempt.
-     */
+    /** Outcome of [migrateIfNeeded]. */
     sealed class MigrationResult {
         data object AlreadyMigrated : MigrationResult()
         data object Success : MigrationResult()
@@ -77,13 +71,8 @@ class CredentialMigration @Inject constructor(
         data class Failed(val error: String) : MigrationResult()
     }
 
-    /**
-     * Run migration if needed.
-     *
-     * Safe to call multiple times - will return AlreadyMigrated if previously completed.
-     */
+    /** Runs the migration unless it's done; then returns [MigrationResult.AlreadyMigrated]. */
     suspend fun migrateIfNeeded(): MigrationResult {
-        // Check if already migrated (atomic flag)
         if (hasMigrationCompleted()) {
             Log.d(TAG, "Credentials already migrated, skipping")
             return MigrationResult.AlreadyMigrated
@@ -91,7 +80,6 @@ class CredentialMigration @Inject constructor(
 
         Log.i(TAG, "Starting credential migration")
 
-        // Check if there are any credentials to migrate
         val hasICloudCreds = hasOldICloudCredentials()
         val hasCalDavCreds = hasOldCalDavCredentials()
 
@@ -101,12 +89,11 @@ class CredentialMigration @Inject constructor(
             return MigrationResult.NoCredentialsToMigrate
         }
 
-        var icloudSuccess = !hasICloudCreds  // True if nothing to migrate
+        var icloudSuccess = !hasICloudCreds  // Nothing to migrate counts as success
         var caldavSuccess = !hasCalDavCreds
         var icloudError: String? = null
         var caldavError: String? = null
 
-        // Migrate iCloud credentials
         if (hasICloudCreds) {
             try {
                 icloudSuccess = migrateICloudCredentials()
@@ -119,7 +106,6 @@ class CredentialMigration @Inject constructor(
             }
         }
 
-        // Migrate CalDAV credentials
         if (hasCalDavCreds) {
             try {
                 caldavSuccess = migrateCalDavCredentials()
@@ -129,14 +115,13 @@ class CredentialMigration @Inject constructor(
             }
         }
 
-        // Mark migration complete if both succeeded
         if (icloudSuccess && caldavSuccess) {
             setMigrationComplete()
             Log.i(TAG, "Credential migration completed successfully")
             return MigrationResult.Success
         }
 
-        // Partial success - don't set flag, retry on next launch
+        // Leave the flag unset so the next launch retries.
         Log.w(TAG, "Partial migration: iCloud=$icloudSuccess, CalDAV=$caldavSuccess")
         return MigrationResult.PartialSuccess(
             icloudSuccess = icloudSuccess,
@@ -158,38 +143,34 @@ class CredentialMigration @Inject constructor(
     }
 
     /**
-     * Migrate iCloud credentials from single-key format to account-keyed.
-     *
-     * Old format: apple_id, app_password (no account ID prefix)
-     * New format: account_{id}_username, account_{id}_password
+     * Copies the unkeyed iCloud set to the iCloud account whose email is the Apple ID. Returns
+     * false if the prefs can't be opened, the set is incomplete, no such account exists yet, or
+     * the save fails.
      */
     private suspend fun migrateICloudCredentials(): Boolean {
         val oldPrefs = getOldICloudPrefs() ?: return false
 
-        // Read old format
         val appleId = oldPrefs.getString(ICLOUD_KEY_APPLE_ID, null) ?: return false
         val appPassword = oldPrefs.getString(ICLOUD_KEY_APP_PASSWORD, null) ?: return false
 
         Log.d(TAG, "Found iCloud credentials for: ${appleId.take(3)}***")
 
-        // Find account ID from Room (appleId == email in Account table)
+        // The Apple ID is the account's email in Room.
         val account = accountsDao.getByProviderAndEmail(AccountProvider.ICLOUD, appleId)
         if (account == null) {
             Log.w(TAG, "No iCloud account found in database for: ${appleId.take(3)}***")
-            // This is expected if user signed in but account wasn't created yet
-            // Migration will retry on next launch
+            // Expected when the user signed in but the account row isn't created yet; the
+            // next launch retries.
             return false
         }
 
-        // Read optional fields
         val serverUrl = oldPrefs.getString(ICLOUD_KEY_SERVER_URL, null)
             ?: AccountCredentials.ICLOUD_DEFAULT_SERVER_URL
         val principalUrl = oldPrefs.getString(ICLOUD_KEY_PRINCIPAL_URL, null)
         val calendarHomeSet = oldPrefs.getString(ICLOUD_KEY_CALENDAR_HOME_URL, null)
 
-        // Write to unified format
         val credentials = AccountCredentials(
-            username = appleId,  // appleId stored in username field
+            username = appleId,
             password = appPassword,
             serverUrl = serverUrl,
             trustInsecure = false,  // iCloud never uses self-signed certs
@@ -207,15 +188,14 @@ class CredentialMigration @Inject constructor(
     }
 
     /**
-     * Migrate CalDAV credentials from old format to unified format.
-     *
-     * Old format: caldav_{id}_username (in caldav_credentials file)
-     * New format: account_{id}_username (in unified_credentials file)
+     * Copies every `caldav_{id}_*` set to account `{id}`. A set that is incomplete or whose account
+     * doesn't exist is skipped and doesn't block completion. Returns false if the prefs can't be
+     * opened or a save fails.
      */
     private suspend fun migrateCalDavCredentials(): Boolean {
         val oldPrefs = getOldCalDavPrefs() ?: return false
 
-        // Find all account IDs with stored credentials
+        // An account ID counts as stored when its password key exists.
         val accountIds = oldPrefs.all.keys
             .filter { it.startsWith("caldav_") && it.endsWith("_password") }
             .mapNotNull { key ->
@@ -226,7 +206,7 @@ class CredentialMigration @Inject constructor(
 
         if (accountIds.isEmpty()) {
             Log.d(TAG, "No CalDAV credentials to migrate")
-            return true  // Nothing to migrate is success
+            return true
         }
 
         Log.d(TAG, "Found ${accountIds.size} CalDAV account(s) to migrate")
@@ -243,7 +223,6 @@ class CredentialMigration @Inject constructor(
                 continue
             }
 
-            // Verify account exists in database
             val account = accountsDao.getById(accountId)
             if (account == null) {
                 Log.w(TAG, "CalDAV account $accountId not found in database, skipping")
@@ -255,7 +234,7 @@ class CredentialMigration @Inject constructor(
                 password = password,
                 serverUrl = serverUrl,
                 trustInsecure = trustInsecure,
-                principalUrl = null,  // CalDAV didn't store these in old format
+                principalUrl = null,  // The old CalDAV format didn't store these
                 calendarHomeSet = null
             )
 
@@ -286,8 +265,8 @@ class CredentialMigration @Inject constructor(
     }
 
     /**
-     * Get old iCloud encrypted SharedPreferences.
-     * Returns null if encryption unavailable or prefs don't exist.
+     * Opens the old iCloud prefs, or returns null if they can't be opened. A missing file opens
+     * as empty prefs.
      */
     private fun getOldICloudPrefs(): SharedPreferences? {
         return try {
@@ -307,10 +286,7 @@ class CredentialMigration @Inject constructor(
         }
     }
 
-    /**
-     * Get old CalDAV encrypted SharedPreferences.
-     * Returns null if encryption unavailable or prefs don't exist.
-     */
+    /** Opens the old CalDAV prefs like [getOldICloudPrefs]. */
     private fun getOldCalDavPrefs(): SharedPreferences? {
         return try {
             val masterKey = MasterKey.Builder(context)

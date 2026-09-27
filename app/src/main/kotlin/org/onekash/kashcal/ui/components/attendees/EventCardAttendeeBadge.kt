@@ -13,11 +13,11 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
 /**
- * Compact day-card status badge — count + a single status indicator.
- * Renders nothing when [models] is empty.
+ * Shows a day card's attendee badge: the count of other people and the user's status. Shows
+ * nothing when no one but the user is on the list.
  *
- * - Hosting (organizer): 👑 N · Hosting
- * - Off-list: 👥 N (count only, no status label)
+ * - The user organizes: 👑 N · Hosting
+ * - Off-list: 👥 N, no status
  * - On-list: 👥 N · {Going|Pending|Declined|Tentative}
  */
 @Composable
@@ -28,10 +28,8 @@ fun EventCardAttendeeBadge(
     if (models.isEmpty()) return
 
     val you = models.firstOrNull { it.isYou }
-    // Exclude the user themselves from the badge count — "👥 5" should
-    // mean "5 OTHER people," not "5 including you." Counting `!isYou`
-    // handles multi-alias users where multiple rows match the account
-    // (e.g. me.com + icloud.com both on the attendee list).
+    // "👥 5" means five other people. Counting `!isYou` also drops every row of a user listed
+    // under several aliases (me.com and icloud.com, for example).
     val count = models.count { !it.isYou }
     if (count <= 0) return
     val (badgeIcon, label, color) = when {

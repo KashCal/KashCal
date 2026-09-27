@@ -11,14 +11,11 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * CredentialProvider implementation for iCloud accounts.
+ * Provides the credentials of iCloud accounts, keyed by account ID.
  *
- * Delegates to unified CredentialManager for encrypted storage.
- * Supports multiple iCloud accounts via account-keyed credentials.
- *
- * Architecture:
  * ```
- * CalDavSyncWorker
+ * CalDavSyncWorker, ContactSyncWorker (through ProviderRegistry),
+ * ICloudAccountDiscoveryService.refreshCalendars
  *       |
  * ICloudCredentialProvider (this class)
  *       |
@@ -27,10 +24,8 @@ import javax.inject.Singleton
  * EncryptedSharedPreferences → Android Keystore (AES-256-GCM)
  * ```
  *
- * Security:
- * - Credentials encrypted at rest using AES-256-GCM
- * - Master key stored in Android Keystore
- * - Account-keyed storage format: account_{id}_{field}
+ * Values are encrypted at rest with AES-256-GCM under a master key in the Android Keystore,
+ * stored under `account_{id}_{field}` keys.
  */
 @Singleton
 class ICloudCredentialProvider @Inject constructor(
@@ -60,7 +55,6 @@ class ICloudCredentialProvider @Inject constructor(
     }
 
     override suspend fun getPrimaryCredentials(): Credentials? {
-        // Find first enabled iCloud account
         val icloudAccounts = accountRepository.getAccountsByProvider(AccountProvider.ICLOUD)
         val enabledAccount = icloudAccounts.firstOrNull { it.isEnabled }
 
@@ -107,14 +101,15 @@ class ICloudCredentialProvider @Inject constructor(
         return true
     }
 
+    /** Clears every stored credential of every provider, not only iCloud's. */
     override suspend fun clearAllCredentials() {
         credentialManager.clearAllCredentials()
         Log.i(TAG, "Cleared all credentials")
     }
 
     /**
-     * Get discovered URLs from the stored credentials.
-     * Used after initial discovery to avoid re-discovering.
+     * Returns the principal and calendar home URLs stored with the credentials, or null when
+     * no home set is stored. Nothing in the app calls it today.
      */
     suspend fun getDiscoveredUrls(accountId: Long): DiscoveredUrls? {
         val creds = credentialManager.getCredentials(accountId) ?: return null
@@ -127,7 +122,8 @@ class ICloudCredentialProvider @Inject constructor(
     }
 
     /**
-     * Save discovered URLs after successful PROPFIND discovery.
+     * Stores discovered principal and calendar home URLs with the account's credentials; a
+     * no-op when none are stored. Nothing in the app calls it today.
      */
     suspend fun saveDiscoveredUrls(accountId: Long, principalUrl: String?, calendarHomeUrl: String) {
         val existingCreds = credentialManager.getCredentials(accountId)
@@ -142,9 +138,7 @@ class ICloudCredentialProvider @Inject constructor(
     }
 }
 
-/**
- * Discovered CalDAV URLs from PROPFIND.
- */
+/** Holds the principal and calendar home URLs stored with an iCloud account's credentials. */
 data class DiscoveredUrls(
     val principalUrl: String?,
     val calendarHomeUrl: String?

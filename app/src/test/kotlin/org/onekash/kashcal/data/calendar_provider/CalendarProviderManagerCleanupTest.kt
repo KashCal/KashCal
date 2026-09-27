@@ -24,18 +24,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
+import org.onekash.kashcal.widget.WidgetUpdateManager
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for CalendarProviderManager cleanup functionality.
- *
- * Tests:
- * - onDisabled cancels alarm
- * - onRemindersDisabled cancels without affecting observer
- * - onRemindersEnabled schedules next
- * - permission revocation cancels alarm
+ * Tests the reminder cleanup in [CalendarProviderManager]: onDisabled and onRemindersDisabled
+ * cancel the pending alarm, and onRemindersEnabled schedules the next reminder.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -46,6 +42,7 @@ class CalendarProviderManagerCleanupTest {
     private lateinit var context: Application
     private lateinit var dataStore: KashCalDataStore
     private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
+    private lateinit var widgetUpdateManager: WidgetUpdateManager
     private lateinit var manager: CalendarProviderManager
 
     @Before
@@ -63,11 +60,12 @@ class CalendarProviderManagerCleanupTest {
         context = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
         deviceCalendarReminderScheduler = mockk(relaxed = true)
+        widgetUpdateManager = mockk(relaxed = true)
 
         every { dataStore.deviceCalendarsEnabled } returns MutableStateFlow(false)
         every { context.contentResolver } returns mockk(relaxed = true)
 
-        manager = CalendarProviderManager(context, dataStore, deviceCalendarReminderScheduler)
+        manager = CalendarProviderManager(context, dataStore, deviceCalendarReminderScheduler, widgetUpdateManager)
     }
 
     @After
@@ -86,26 +84,24 @@ class CalendarProviderManagerCleanupTest {
 
     @Test
     fun `onRemindersDisabled cancels alarm without unregistering observer`() = runTest {
-        // First enable to register observer
+        // Enable first, which registers the observer.
         val app = androidx.test.core.app.ApplicationProvider.getApplicationContext<Application>()
         Shadows.shadowOf(app).grantPermissions(Manifest.permission.READ_CALENDAR)
 
         val realDataStore = mockk<KashCalDataStore>(relaxed = true)
         every { realDataStore.deviceCalendarsEnabled } returns MutableStateFlow(true)
 
-        val realManager = CalendarProviderManager(app, realDataStore, deviceCalendarReminderScheduler)
+        val realManager = CalendarProviderManager(app, realDataStore, deviceCalendarReminderScheduler, widgetUpdateManager)
         realManager.onEnabled()
         advanceUntilIdle()
 
-        // Now disable just reminders
+        // Then disable only reminders.
         realManager.onRemindersDisabled()
         advanceUntilIdle()
 
-        // Alarm should be cancelled
         verify { deviceCalendarReminderScheduler.cancelPendingAlarm() }
 
-        // Observer should still be registered (changeSignal increments work)
-        // We verify this by checking that onEnabled() was called which registers observer
+        // That the observer stays registered isn't asserted here.
     }
 
     @Test
@@ -118,7 +114,7 @@ class CalendarProviderManagerCleanupTest {
         coVerify { deviceCalendarReminderScheduler.scheduleNextReminder() }
     }
 
-    // Note: ContentObserver callback scheduling is verified through manual integration
-    // testing on device. The callback is internal and triggers scheduleNextReminder()
-    // when CalendarProvider data changes (event added/modified/deleted).
+    // The ContentObserver callback (reminder reschedule, change signal, widget refresh on a
+    // CalendarProvider change) is covered in CalendarProviderManagerTest, which delivers real
+    // change notifications through the Robolectric ContentResolver.
 }

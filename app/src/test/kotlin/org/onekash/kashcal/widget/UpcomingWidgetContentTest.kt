@@ -56,7 +56,7 @@ class UpcomingWidgetContentTest {
 
     @Test
     fun `buildFlatUpcomingItems keeps cancelled future events (crossed off, not hidden)`() {
-        // Cancelled events are dimmed + struck through, never filtered like past.
+        // Cancelled events render dimmed and struck through; only past events are filtered.
         val cancelled = makeEvent(eventId = 1, title = "Cancelled", isPast = false, isCancelled = true)
         val confirmed = makeEvent(eventId = 2, title = "Confirmed", isPast = false, isCancelled = false)
         val items = buildFlatUpcomingItems(mapOf(20260428 to listOf(cancelled, confirmed)))
@@ -93,7 +93,7 @@ class UpcomingWidgetContentTest {
 
     @Test
     fun `buildFlatUpcomingItems preserves ascending day-code ordering`() {
-        // Input map with out-of-order keys; output must be ascending by dayCode
+        // Out-of-order keys come out ascending by dayCode.
         val input = mapOf(
             20260430 to listOf(makeEvent(eventId = 3)),
             20260428 to listOf(makeEvent(eventId = 1)),
@@ -119,15 +119,15 @@ class UpcomingWidgetContentTest {
 
         val dayCodes = items.filterIsInstance<UpcomingWidgetItem.Header>().map { it.dayCode }
         assertEquals(listOf(20260428, 20260430), dayCodes)
-        // 20260429 entirely filtered out — no Header, no Event for it
+        // 20260429 is filtered out entirely: no Header, no Event.
         assertTrue(items.none { it is UpcomingWidgetItem.Header && it.dayCode == 20260429 })
         assertTrue(items.none { it is UpcomingWidgetItem.Event && it.dayCode == 20260429 })
     }
 
     @Test
     fun `buildFlatUpcomingItems emits unique itemIds across multi-day expansion`() {
-        // Same eventId appears on 3 consecutive days (simulating a 3-day event
-        // expanded by DisplayEventRepository.generateDayCodesInRange).
+        // One eventId on 3 consecutive days, standing in for a 3-day event expanded by
+        // generateDayCodesInRange in DisplayEventRepository.
         val event = makeEvent(eventId = 42, startDay = 20260428)
         val input = linkedMapOf(
             20260428 to listOf(event),
@@ -163,7 +163,7 @@ class UpcomingWidgetContentTest {
         val input = linkedMapOf(
             20260428 to (1..3).map { makeEvent(eventId = it.toLong()) },
             20260429 to (4..6).map { makeEvent(eventId = it.toLong()) },
-            20260430 to (1..2).map { makeEvent(eventId = it.toLong()) } // eventId collision across days
+            20260430 to (1..2).map { makeEvent(eventId = it.toLong()) } // reuses day 1 ids
         )
         val items = buildFlatUpcomingItems(input)
 
@@ -173,8 +173,8 @@ class UpcomingWidgetContentTest {
 
     @Test
     fun `buildFlatUpcomingItems preserves event ordering within a day`() {
-        // Caller is responsible for intra-day sort (WidgetDataRepository does this).
-        // The builder must preserve the incoming order — NOT re-sort.
+        // WidgetDataRepository sorts within a day; the builder keeps the incoming order and
+        // never re-sorts.
         val events = listOf(
             makeEvent(eventId = 1, title = "First"),
             makeEvent(eventId = 2, title = "Second"),
@@ -188,8 +188,10 @@ class UpcomingWidgetContentTest {
 
     // ==================== item cap + Footer ====================
 
-    /** Builds a linked map of [dayCount] consecutive days starting at [startDayCode],
-     *  each with [eventsPerDay] non-past events. */
+    /**
+     * Returns [dayCount] consecutive days from [startDayCode], each with [eventsPerDay] events
+     * none of which is past.
+     */
     private fun denseDays(
         startDayCode: Int = 20260428,
         dayCount: Int,
@@ -220,7 +222,7 @@ class UpcomingWidgetContentTest {
 
     @Test
     fun `buildFlatUpcomingItems emits no Footer at exactly cap`() {
-        // Construct exactly 100 items: 10 days with (1 header + 9 events) each = 10*10 = 100.
+        // Exactly 100 items: 10 days of (1 header + 9 events).
         val items = buildFlatUpcomingItems(denseDays(dayCount = 10, eventsPerDay = 9))
         assertEquals(100, items.size)
         assertTrue(items.none { it is UpcomingWidgetItem.Footer })
@@ -228,14 +230,12 @@ class UpcomingWidgetContentTest {
 
     @Test
     fun `buildFlatUpcomingItems truncates next day when adding it would exceed 100`() {
-        // 10 days * 10 items = 100 (fits), then day 11 adds 10 more which would exceed -> drop day 11.
-        // Remaining: 1 day dropped.
+        // 10 days * 10 items = 100 fits; day 11's 10 more would exceed the cap, so it is dropped.
         val items = buildFlatUpcomingItems(denseDays(dayCount = 11, eventsPerDay = 9))
 
-        // First 10 days (100 items) included
+        // The first 10 days (100 items) are kept.
         val headers = items.filterIsInstance<UpcomingWidgetItem.Header>()
         assertEquals(10, headers.size)
-        // Footer emitted with daysDropped = 1
         val footers = items.filterIsInstance<UpcomingWidgetItem.Footer>()
         assertEquals(1, footers.size)
         assertEquals(1, footers[0].daysDropped)
@@ -255,8 +255,8 @@ class UpcomingWidgetContentTest {
 
     @Test
     fun `buildFlatUpcomingItems includes first day even if alone it exceeds cap, no Footer`() {
-        // 1 day with 150 events — day 1 must still be included; no Footer because
-        // daysDropped would be 0 (no subsequent days to drop).
+        // 1 day with 150 events: day 1 is still included, and with no later day dropped there
+        // is no Footer.
         val items = buildFlatUpcomingItems(denseDays(dayCount = 1, eventsPerDay = 150))
 
         val headers = items.filterIsInstance<UpcomingWidgetItem.Header>()
@@ -268,7 +268,7 @@ class UpcomingWidgetContentTest {
 
     @Test
     fun `buildFlatUpcomingItems Footer itemId does not collide with others`() {
-        // Construct input that emits Headers, Events, and a Footer.
+        // Input that emits Headers, Events and a Footer.
         val items = buildFlatUpcomingItems(denseDays(dayCount = 11, eventsPerDay = 9))
 
         val ids = items.map { it.itemId }
@@ -306,8 +306,7 @@ class UpcomingWidgetContentTest {
 
     @Test
     fun `upcomingWindow crosses month boundary correctly Apr 25 to May 4`() {
-        // Naive integer addition would produce 20260425 + 9 = 20260434 — NOT a valid dayCode.
-        // Verifies LocalDate arithmetic is used.
+        // Integer addition would give 20260425 + 9 = 20260434, not a valid dayCode.
         val (start, end) = upcomingWindow(atMiddayMs(LocalDate.of(2026, 4, 25)), laZone)
         assertEquals(20260425, start)
         assertEquals(20260504, end)
@@ -322,8 +321,7 @@ class UpcomingWidgetContentTest {
 
     @Test
     fun `upcomingWindow crosses short-month boundary Feb 25 to Mar 6 in non-leap year`() {
-        // 2026 is NOT a leap year (Feb has 28 days). Feb 25 + 9 = Mar 6.
-        // Confirms LocalDate handles the short-month roll correctly.
+        // 2026 isn't a leap year (Feb has 28 days): Feb 25 + 9 = Mar 6.
         val (start, end) = upcomingWindow(atMiddayMs(LocalDate.of(2026, 2, 25)), laZone)
         assertEquals(20260225, start)
         assertEquals(20260306, end)
@@ -331,7 +329,7 @@ class UpcomingWidgetContentTest {
 
     @Test
     fun `upcomingWindow handles leap year Feb 20 2028 to Feb 29 2028`() {
-        // 2028 IS a leap year. Feb 20 + 9 = Feb 29. Verifies LocalDate handles Feb 29.
+        // 2028 is a leap year: Feb 20 + 9 = Feb 29.
         val (start, end) = upcomingWindow(atMiddayMs(LocalDate.of(2028, 2, 20)), laZone)
         assertEquals(20280220, start)
         assertEquals(20280229, end)

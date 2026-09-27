@@ -27,12 +27,9 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Unit tests for the all-day-strip expand/collapse DataStore preference used by
- * the DAY/3-DAY/WEEK time-grid views.
- *
- * Covers: default (collapsed/false when absent — preserving today's one-row
- * behavior), round-trip both ways, and a stable key string so an upgrade doesn't
- * silently reset the user's choice.
+ * Tests the all-day strip expanded preference of the Day, 3-Day and Week grids: false (one row)
+ * when absent, round-trips both ways, and keeps its key string so an upgrade doesn't silently
+ * reset the user's choice.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)

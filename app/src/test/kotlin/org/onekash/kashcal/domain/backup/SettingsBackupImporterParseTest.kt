@@ -6,8 +6,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Parse-and-validate is a pure function (no DB writes). These tests exercise the
- * version, structure, and size gates before any state would be touched.
+ * Tests the version, structure, type and size gates of [SettingsBackupImporter.Parser], which
+ * writes nothing, and that it tolerates unknown extra keys.
  */
 class SettingsBackupImporterParseTest {
 
@@ -97,7 +97,7 @@ class SettingsBackupImporterParseTest {
 
     @Test
     fun `input over 10 MB is rejected before parse`() {
-        // Build 11 MB of valid JSON-shaped padding inside a string value.
+        // 11 MB of padding inside a string value, so the JSON stays valid.
         val padding = "x".repeat(11 * 1024 * 1024)
         val oversized = validV1Json.replace("\"23.6.4\"", "\"$padding\"")
         val result = parser.parseAndValidate(oversized)

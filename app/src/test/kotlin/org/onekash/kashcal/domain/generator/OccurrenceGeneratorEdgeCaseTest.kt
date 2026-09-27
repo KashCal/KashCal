@@ -23,16 +23,12 @@ import java.util.TimeZone
 import kotlin.system.measureTimeMillis
 
 /**
- * Edge case tests for OccurrenceGenerator.
+ * Tests [OccurrenceGenerator.generateOccurrences] on boundary and malformed RRULE inputs:
+ * COUNT=0 and 1, INTERVAL=1 and 365, UNTIL before or at DTSTART, daily series across both
+ * 2025 US DST changes, an empty, garbage or SECONDLY rule, RDATE, mixed-format EXDATE, and
+ * long series (COUNT=1000 timing, the 10,000 cap). Complements `OccurrenceGeneratorTest`.
  *
- * Tests cover boundary conditions and unusual inputs that could cause:
- * - Wrong event times after DST transitions
- * - Missing or duplicate occurrences
- * - Crashes on malformed RRULE strings
- * - Performance issues with long series
- *
- * These tests complement OccurrenceGeneratorTest.kt by focusing on
- * adversarial inputs and edge cases from real-world ICS files.
+ * [parseDate] reads times as UTC.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -74,8 +70,8 @@ class OccurrenceGeneratorEdgeCaseTest {
 
     @Test
     fun `COUNT=0 is treated as unlimited by lib-recur`() = runTest {
-        // DISCOVERY: lib-recur treats COUNT=0 as "ignore COUNT" (unlimited)
-        // This documents actual behavior - COUNT=0 generates occurrences for full range
+        // Documents the behavior: ical4j's `Recur` applies COUNT only when above 0, so COUNT=0
+        // runs to the range end.
         val startTs = parseDate("2025-01-01 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -89,7 +85,7 @@ class OccurrenceGeneratorEdgeCaseTest {
             parseDate("2025-12-31 23:59")
         )
 
-        // lib-recur treats COUNT=0 as unlimited - generates for full year (365 days)
+        // One per day of 2025.
         assertEquals(365, count)
     }
 
@@ -117,7 +113,7 @@ class OccurrenceGeneratorEdgeCaseTest {
 
     @Test
     fun `INTERVAL=1 is equivalent to no INTERVAL`() = runTest {
-        // Test that explicit INTERVAL=1 works same as implicit
+        // An explicit INTERVAL=1 behaves like the default.
         val startTs = parseDate("2025-01-01 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -133,7 +129,7 @@ class OccurrenceGeneratorEdgeCaseTest {
 
         assertEquals(5, count)
         val occurrences = database.occurrencesDao().getForEvent(event.id)
-        // Should be consecutive days
+        // Consecutive days.
         for (i in 0 until 4) {
             val diff = occurrences[i + 1].startTs - occurrences[i].startTs
             assertEquals("Expected 24 hours between occurrences", 24 * 60 * 60 * 1000L, diff)
@@ -142,7 +138,7 @@ class OccurrenceGeneratorEdgeCaseTest {
 
     @Test
     fun `very large INTERVAL works correctly`() = runTest {
-        // INTERVAL=365 for daily = yearly-ish recurrence
+        // A daily INTERVAL=365 lands about once a year.
         val startTs = parseDate("2025-01-01 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -158,7 +154,8 @@ class OccurrenceGeneratorEdgeCaseTest {
 
         assertEquals(3, count)
         val occurrences = database.occurrencesDao().getForEvent(event.id)
-        // Jan 1, 2025 -> Jan 1, 2026 -> Jan 1, 2027 (approx, accounting for leap year)
+        // Jan 1 of 2025, 2026 and 2027 (neither 2025 nor 2026 is a leap year); only the first
+        // is asserted.
         assertEquals(20250101, occurrences[0].startDay)
     }
 
@@ -166,7 +163,7 @@ class OccurrenceGeneratorEdgeCaseTest {
 
     @Test
     fun `UNTIL before DTSTART generates no occurrences`() = runTest {
-        // Edge case: UNTIL is before event even starts
+        // UNTIL falls before the event starts.
         val startTs = parseDate("2025-06-15 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -180,13 +177,13 @@ class OccurrenceGeneratorEdgeCaseTest {
             parseDate("2025-12-31 23:59")
         )
 
-        // UNTIL before DTSTART means no occurrences
+        // No occurrences.
         assertEquals(0, count)
     }
 
     @Test
     fun `UNTIL equals DTSTART generates single occurrence`() = runTest {
-        // Boundary: UNTIL matches DTSTART exactly
+        // UNTIL equals DTSTART.
         val startTs = parseDate("2025-03-15 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -200,7 +197,7 @@ class OccurrenceGeneratorEdgeCaseTest {
             parseDate("2025-12-31 23:59")
         )
 
-        // UNTIL inclusive = 1 occurrence (the DTSTART itself)
+        // UNTIL is inclusive (RFC 5545 §3.3.10), so DTSTART itself is the one occurrence.
         assertEquals(1, count)
     }
 
@@ -208,8 +205,8 @@ class OccurrenceGeneratorEdgeCaseTest {
 
     @Test
     fun `daily event across DST spring forward maintains local time`() = runTest {
-        // US DST Spring Forward 2025: March 9 at 2:00 AM
-        // Event at 10:00 should remain at 10:00 local time after DST
+        // US DST starts 2025-03-09 at 2:00. The event is 10:00 UTC (05:00 in New York); only
+        // the count is asserted, not the local time.
         val startTs = parseDate("2025-03-07 10:00") // March 7, before DST
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -225,14 +222,14 @@ class OccurrenceGeneratorEdgeCaseTest {
         )
 
         assertEquals(5, count)
-        // All occurrences should exist (no missing days due to DST)
+        // No day lost to the change.
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         assertEquals(5, occurrences.size)
     }
 
     @Test
     fun `daily event across DST fall back maintains local time`() = runTest {
-        // US DST Fall Back 2025: November 2 at 2:00 AM
+        // US DST ends 2025-11-02 at 2:00. Only the count is asserted, not the local time.
         val startTs = parseDate("2025-10-31 10:00") // Oct 31, before DST ends
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -248,7 +245,7 @@ class OccurrenceGeneratorEdgeCaseTest {
         )
 
         assertEquals(5, count)
-        // All occurrences should exist (no duplicates due to DST)
+        // No duplicate from the change.
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         assertEquals(5, occurrences.size)
     }
@@ -257,7 +254,7 @@ class OccurrenceGeneratorEdgeCaseTest {
 
     @Test
     fun `empty RRULE string treated as non-recurring`() = runTest {
-        // Empty string should be treated as non-recurring (single occurrence)
+        // An empty RRULE is non-recurring: one occurrence.
         val startTs = parseDate("2025-01-15 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -276,7 +273,7 @@ class OccurrenceGeneratorEdgeCaseTest {
 
     @Test
     fun `malformed RRULE returns empty list gracefully`() = runTest {
-        // Garbage RRULE should not crash, should return empty
+        // A garbage RRULE doesn't throw; it expands to nothing.
         val startTs = parseDate("2025-01-15 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -290,7 +287,7 @@ class OccurrenceGeneratorEdgeCaseTest {
             parseDate("2025-12-31 23:59")
         )
 
-        // Malformed RRULE returns 0 (graceful failure)
+        // 0 generated.
         assertEquals(0, count)
     }
 
@@ -300,7 +297,7 @@ class OccurrenceGeneratorEdgeCaseTest {
         val event = createAndInsertEvent(
             startTs = startTs,
             endTs = startTs + 3600000,
-            rrule = "FREQ=SECONDLY" // SECONDLY is valid but may not be supported
+            rrule = "FREQ=SECONDLY" // A valid FREQ (RFC 5545 §3.3.10)
         )
 
         val count = occurrenceGenerator.generateOccurrences(
@@ -309,7 +306,7 @@ class OccurrenceGeneratorEdgeCaseTest {
             parseDate("2025-01-31 23:59")
         )
 
-        // Should handle gracefully (either works or returns 0)
+        // Asserts only that it returns without throwing.
         assertTrue(count >= 0)
     }
 
@@ -317,8 +314,7 @@ class OccurrenceGeneratorEdgeCaseTest {
 
     @Test
     fun `RDATE adds additional occurrences to RRULE`() = runTest {
-        // Test RDATE union with RRULE-generated occurrences
-        // RDATE adds dates that are NOT in the RRULE expansion
+        // RDATE adds a date outside the RRULE expansion; the set is their union.
         val startTs = parseDate("2025-01-01 10:00")
         val event = Event(
             uid = "rdate-test-${System.nanoTime()}@test.com",
@@ -328,7 +324,7 @@ class OccurrenceGeneratorEdgeCaseTest {
             endTs = startTs + 3600000,
             dtstamp = System.currentTimeMillis(),
             rrule = "FREQ=DAILY;COUNT=3", // Jan 1, 2, 3
-            rdate = "20250115", // Add Jan 15 via RDATE
+            rdate = "20250115", // Jan 15; a DATE RDATE takes DTSTART's time of day
             syncStatus = SyncStatus.SYNCED
         )
         val eventId = database.eventsDao().insert(event)
@@ -343,7 +339,7 @@ class OccurrenceGeneratorEdgeCaseTest {
         // 3 from COUNT (Jan 1, 2, 3) + 1 from RDATE (Jan 15) = 4
         assertEquals(4, count)
 
-        // Verify Jan 15 is included
+        // Jan 15 at 10:00 is among them.
         val occurrences = database.occurrencesDao().getForEvent(savedEvent.id)
         val jan15 = parseDate("2025-01-15 10:00")
         assertTrue("Jan 15 should be in occurrences", occurrences.any { it.startTs == jan15 })
@@ -353,7 +349,7 @@ class OccurrenceGeneratorEdgeCaseTest {
 
     @Test
     fun `EXDATE with different timezone format is handled`() = runTest {
-        // EXDATE with Z suffix vs without
+        // One EXDATE without a Z suffix and one with.
         val startTs = parseDate("2025-01-01 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -368,7 +364,7 @@ class OccurrenceGeneratorEdgeCaseTest {
             parseDate("2025-01-31 23:59")
         )
 
-        // Should exclude both dates: 10 - 2 = 8
+        // Both excluded: 10 - 2 = 8.
         assertEquals(8, count)
     }
 
@@ -392,13 +388,13 @@ class OccurrenceGeneratorEdgeCaseTest {
             assertEquals(1000, count)
         }
 
-        // Should complete in under 5 seconds (generous for CI)
+        // Under 5 seconds, generous for CI.
         assertTrue("Expected completion in <5s, took ${timeMs}ms", timeMs < 5000)
     }
 
     @Test
     fun `long range query with infinite recurrence respects MAX_ITERATIONS`() = runTest {
-        // FREQ=DAILY without COUNT or UNTIL = infinite
+        // FREQ=DAILY without COUNT or UNTIL is unbounded.
         val startTs = parseDate("2025-01-01 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -412,7 +408,8 @@ class OccurrenceGeneratorEdgeCaseTest {
             parseDate("2100-12-31 23:59") // 75+ years
         )
 
-        // MAX_ITERATIONS is 10000, so should cap at that
+        // The engine gives a rule with neither COUNT nor UNTIL a COUNT of 10,000
+        // ([IcalDavRRuleEngine]), so the count is at most that.
         assertTrue("Expected at most 10000 due to MAX_ITERATIONS", count <= 10000)
     }
 

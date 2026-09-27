@@ -10,8 +10,9 @@ import java.net.URL
 /**
  * Loads CalDAV test server credentials from local.properties.
  *
- * Uses the 3-path fallback pattern from existing integration tests:
- * 1. local.properties (project root)
+ * Reads every one of these files that exists, in order, and a key in a later file overrides the
+ * same key in an earlier one:
+ * 1. local.properties (working directory)
  * 2. ../local.properties (parent directory)
  * 3. /onekash/KashCal/local.properties (absolute path)
  */
@@ -25,8 +26,9 @@ object CalDavTestServerLoader {
 
     private val propertiesCache: Map<String, String> by lazy { loadAllProperties() }
 
-    /** Raw local.properties lookup for tests that need an arbitrary key
-     *  (e.g. cross-account attendee addresses). Null when absent. */
+    /**
+     * Looks up any local.properties key, e.g. a cross-account attendee address. Null when absent.
+     */
     fun property(key: String): String? = propertiesCache[key]
 
     private fun loadAllProperties(): Map<String, String> {
@@ -47,8 +49,8 @@ object CalDavTestServerLoader {
     }
 
     /**
-     * Load credentials for the given server config.
-     * Returns null if credentials are not available.
+     * Loads credentials for [config], or null when the username, the password or a server URL
+     * is missing. [ServerCredentials.davEndpoint] is the server URL plus the config's suffix.
      */
     fun loadCredentials(config: CalDavServerConfig): ServerCredentials? {
         val username = propertiesCache[config.usernameKey] ?: return null
@@ -74,10 +76,7 @@ object CalDavTestServerLoader {
         )
     }
 
-    /**
-     * Create a CalDavClient for the given server config.
-     * Returns null if credentials are not available.
-     */
+    /** Creates a [CalDavClient] for [config], or null when [loadCredentials] returns null. */
     fun createClient(config: CalDavServerConfig): Pair<CalDavClient, ServerCredentials>? {
         val creds = loadCredentials(config) ?: return null
         val quirks = config.quirksFactory(creds.serverUrl)
@@ -92,7 +91,8 @@ object CalDavTestServerLoader {
     }
 
     /**
-     * Check if a server is reachable (2-second timeout).
+     * Returns whether [url] answers OPTIONS with an accepted code. Redirects aren't followed;
+     * connect and read each time out after 2 seconds.
      */
     fun isServerReachable(url: String): Boolean {
         return try {
@@ -102,11 +102,10 @@ object CalDavTestServerLoader {
             connection.readTimeout = 2000
             connection.instanceFollowRedirects = false
             val code = connection.responseCode
-            // A reachable server is one that answered at all. Besides 2xx/3xx,
-            // accept auth/authorization/not-found challenges that live servers
-            // return at the probed path: 401 (auth required), 403 (e.g. iCloud
-            // root), 404 (e.g. Fastmail root). Anything that throws (no socket,
-            // DNS failure, timeout) falls through to false below.
+            // Besides 2xx and 3xx, accept the codes live servers return at the probed path:
+            // 401 (auth required), 403 (e.g. iCloud root), 404 (e.g. Fastmail root). Any other
+            // code, such as Zoho's 400, is unreachable. Anything that throws (no socket, DNS
+            // failure, timeout) gives false below.
             code in 200..399 || code == 401 || code == 403 || code == 404
         } catch (_: Exception) {
             false

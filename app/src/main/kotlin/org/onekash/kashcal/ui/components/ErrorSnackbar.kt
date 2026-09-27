@@ -17,7 +17,7 @@ import org.onekash.kashcal.error.ErrorActionCallback
 import org.onekash.kashcal.error.ErrorPresentation
 
 /**
- * Error snackbar host that displays ErrorPresentation.Snackbar.
+ * Shows [errorPresentation] in a snackbar each time it changes to a non-null value.
  *
  * Usage:
  * ```
@@ -31,11 +31,8 @@ import org.onekash.kashcal.error.ErrorPresentation
  * )
  * ```
  *
- * Design:
- * - Uses Material 3 Snackbar with action button
- * - Supports Short, Long, and Indefinite durations
- * - Action button triggers callback through ViewModel
- * - Dismissal clears error state
+ * The action button calls [onAction]; a snackbar dismissed without its action, on timeout for
+ * example, calls [onDismiss].
  */
 @Composable
 fun ErrorSnackbarHost(
@@ -45,11 +42,10 @@ fun ErrorSnackbarHost(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Show snackbar when error changes
     LaunchedEffect(errorPresentation) {
         if (errorPresentation != null) {
             val result = hostState.showSnackbar(
-                message = "", // We use custom snackbar, message is resolved in composable
+                message = "", // ErrorSnackbarContent resolves the message from resources
                 actionLabel = if (errorPresentation.action != null) "" else null,
                 duration = when (errorPresentation.duration) {
                     ErrorPresentation.Snackbar.SnackbarDuration.Short -> SnackbarDuration.Short
@@ -75,7 +71,6 @@ fun ErrorSnackbarHost(
         hostState = hostState,
         modifier = modifier
     ) { snackbarData ->
-        // Custom snackbar with resolved string resources
         if (errorPresentation != null) {
             ErrorSnackbarContent(
                 presentation = errorPresentation,
@@ -86,9 +81,7 @@ fun ErrorSnackbarHost(
     }
 }
 
-/**
- * Custom snackbar content that resolves string resources.
- */
+/** Draws the snackbar with its message and action label resolved from resources. */
 @Composable
 private fun ErrorSnackbarContent(
     presentation: ErrorPresentation.Snackbar,
@@ -120,10 +113,8 @@ private fun ErrorSnackbarContent(
 }
 
 /**
- * Simplified snackbar for showing error message with optional action.
- *
- * Use this when you need more control over when to show/hide.
- * For automatic state management, use ErrorSnackbarHost.
+ * Shows [presentation] as a snackbar with a Dismiss button, for callers that control when it
+ * shows. [ErrorSnackbarHost] shows and dismisses it from state.
  */
 @Composable
 fun ErrorSnackbar(

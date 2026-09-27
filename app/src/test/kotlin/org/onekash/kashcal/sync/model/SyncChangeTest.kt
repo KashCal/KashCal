@@ -6,10 +6,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for SyncChange data class.
- *
- * Focus on isFromInitialSync field which is used to determine
- * whether to apply default reminders to new events.
+ * Tests [SyncChange], focused on [SyncChange.isFromInitialSync], which the sync worker reads to
+ * decide whether a new pulled event gets the default reminder.
  */
 class SyncChangeTest {
 
@@ -40,7 +38,7 @@ class SyncChangeTest {
             isRecurring = false,
             calendarName = "Test Calendar",
             calendarColor = 0xFF2196F3.toInt()
-            // Note: isFromInitialSync not specified - should default to false
+            // isFromInitialSync omitted, so its default applies
         )
 
         assertFalse(change.isFromInitialSync)

@@ -16,14 +16,13 @@ import java.time.LocalDate
 import java.util.Locale
 
 /**
- * Unit tests for [WidgetPreviewData] — the sample content the widget-picker previews
- * render instead of real events.
+ * Tests [WidgetPreviewData], the sample content widget-picker previews render in place of events.
  *
- * The invariants here are what keep a preview from looking broken: day codes must be
- * derived from today (a hardcoded date would show a stale month), each event's
- * `startDay` must match the day it is filed under (otherwise the row renders a
- * multi-day continuation arrow instead of a time), and nothing may be flagged past or
- * cancelled (both render struck-through).
+ * The invariants that keep a preview from looking broken: day codes must derive from today (a
+ * hardcoded date would show a stale month), each event's `startDay` must match the day it is
+ * filed under (stated on [WidgetPreviewData]), and nothing may be flagged past or cancelled (both
+ * render struck through). The tests also pin each widget's sample shape, that every event ends
+ * after it starts and has a color, that titles are localized, the per-day cap and the time pattern.
  */
 @RunWith(RobolectricTestRunner::class)
 class WidgetPreviewDataTest {
@@ -77,9 +76,9 @@ class WidgetPreviewDataTest {
 
     @Test
     fun `every month sample lands on a cell the grid actually draws a dot on`() {
-        // Being inside the grid's 42-cell range is not enough: the grid fades
-        // adjacent-month cells without drawing dots, and drops trailing all-next-month
-        // rows entirely, so a sample outside the displayed month is invisible.
+        // Being inside the grid's 42-cell range isn't enough: in dots mode the grid draws no
+        // dots on adjacent-month cells, and it drops trailing all-next-month rows, so a sample
+        // outside the displayed month is invisible.
         val today = LocalDate.now()
 
         val monthEvents = WidgetPreviewData.monthEvents(context)
@@ -96,9 +95,8 @@ class WidgetPreviewDataTest {
 
     @Test
     fun `month samples spread several dots across the month on every date of the year`() {
-        // Sampling by offset from today used to collapse to a single dot near month end.
-        // Walk a whole year of leap-year dates so a month-end regression can't hide behind
-        // whatever today happens to be.
+        // Samples offset from today would collapse to one dot near month end. Walking every date
+        // of a leap year keeps a month-end regression from hiding behind whatever today is.
         var start = LocalDate.of(2024, 1, 1)
         while (start.year == 2024) {
             val inMonth = WidgetPreviewData.monthSampleDates(start)
@@ -196,9 +194,8 @@ class WidgetPreviewDataTest {
     @Test
     @Config(qualifiers = "fr")
     fun `sample titles are localized rather than hardcoded English`() {
-        // The test class runs under a French configuration, so `context` resolves French
-        // resources. Building the same samples through an explicitly English context gives
-        // the source strings to compare against.
+        // This test runs under a French configuration, so `context` resolves French resources.
+        // The same samples built through an English context give the source strings to compare.
         val english = context.createConfigurationContext(
             Configuration(context.resources.configuration).apply { setLocale(Locale.ENGLISH) }
         )
@@ -212,8 +209,8 @@ class WidgetPreviewDataTest {
             englishTitles.size,
             frenchTitles.size
         )
-        // Guard the guard: prove the French resources really loaded, so the assertion
-        // below can't pass merely because the configuration was ignored.
+        // Proves the French resources loaded, so the assertion below can't pass because the
+        // configuration was ignored.
         assertEquals(
             "French configuration did not take effect",
             "Point d'équipe",
@@ -231,8 +228,8 @@ class WidgetPreviewDataTest {
 
     @Test
     fun `the per-day cap leaves room for the busiest sample day`() {
-        // Exceeding the cap makes the widget render a "+N more" overflow row instead of
-        // the events themselves, which is not what a preview should advertise.
+        // Above the cap the widget renders a "+N more" overflow row in place of events, which a
+        // preview shouldn't advertise.
         val busiest = listOf(
             WidgetPreviewData.agendaEvents(context).size,
             WidgetPreviewData.weekEvents(context).values.maxOf { it.size },

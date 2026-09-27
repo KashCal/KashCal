@@ -17,18 +17,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Contract gate for the wire bytes [ITipBuilder] hands to a CalDAV
- * schedule-outbox POST (RFC 6638 §6 / the explicit client-delivery channel).
+ * Pins, without a server, the wire bytes [ITipBuilder] hands to a CalDAV schedule-outbox POST,
+ * the client-delivery channel (the outbox collection is RFC 6638 §2.1).
  *
- * This is the offline, server-free half of the iTIP delivery oracle: it pins
- * the structural contract a real server outbox enforces, so a regression in the
- * builder or generator is caught here without a live account. The live half —
- * POSTing these bytes to a real outbox and asserting `request-status 2.0` — is a
- * separate, credential-gated integration test; running both is how the
- * end-to-end delivery path is verified.
+ * It checks the structure a server outbox enforces, so a builder or generator regression shows
+ * here without a live account. The live half, `ZohoOutboxITipDeliveryTest` in the app module,
+ * POSTs a built REQUEST to a real outbox, asserts a 2.x request-status and skips without
+ * credentials.
  *
- * REQUEST is the invite-delivery payload; CANCEL is the cancellation payload.
- * Both travel the same outbox channel, so both contracts are pinned here.
+ * Covers the invite (REQUEST) and the cancellation (CANCEL), which travel the same channel.
  */
 @DisplayName("iTIP outbox payload contract")
 class ITipOutboxPayloadContractTest {
@@ -78,16 +75,17 @@ class ITipOutboxPayloadContractTest {
     private val invitee = meetingEvent().attendees
 
     /**
-     * RFC 5546 §3.2.2: a METHOD:REQUEST of a VEVENT requires ORGANIZER,
-     * ATTENDEE, DTSTAMP, DTSTART, SUMMARY, and UID, and forbids REQUEST-STATUS.
-     * RFC 5545 §3.1.1: VCALENDAR carries VERSION (MUST be 2.0) and PRODID.
-     * A server outbox rejects a payload missing any of these.
+     * RFC 5546 §3.2.2: a METHOD:REQUEST of a VEVENT requires ORGANIZER, ATTENDEE, DTSTAMP,
+     * DTSTART, SUMMARY and UID, and forbids REQUEST-STATUS. RFC 5545 §3.6 requires VERSION and
+     * PRODID on the VCALENDAR, and §3.7.4 gives VERSION the value 2.0. A server outbox rejects a
+     * payload missing any of these.
      */
     @Test
     fun `REQUEST carries the complete RFC 5546 section 3_2_2 outbox property set`() {
         val ics = builder.createRequest(meetingEvent(), invitee)
 
         assertTrue(ics.contains("BEGIN:VCALENDAR"), "must be a VCALENDAR")
+        // The next two messages cite RFC 5545 §3.1.1; the rules are in §3.6 and §3.7.4.
         assertTrue(ics.contains("VERSION:2.0"), "RFC 5545 §3.1.1: VERSION MUST be 2.0")
         assertTrue(ics.contains("PRODID:"), "RFC 5545 §3.1.1: PRODID required")
         assertTrue(ics.contains("METHOD:REQUEST"), "outbox invite uses METHOD:REQUEST")
@@ -104,8 +102,8 @@ class ITipOutboxPayloadContractTest {
     }
 
     /**
-     * The outbox marks invitees as awaiting a response. RFC 5546 §3.2.2.1:
-     * the organizer sets PARTSTAT=NEEDS-ACTION and requests RSVP=TRUE.
+     * Checks that the REQUEST marks the invitee as awaiting a response. RFC 5546 §2.1.1: the
+     * organizer's initial object sets PARTSTAT=NEEDS-ACTION. RSVP=TRUE asks for a reply.
      */
     @Test
     fun `REQUEST marks the invitee NEEDS-ACTION and requests an RSVP`() {
@@ -116,9 +114,8 @@ class ITipOutboxPayloadContractTest {
     }
 
     /**
-     * The bytes must survive a round-trip through the parser the way a recipient
-     * server will read them: a well-formed REQUEST with the organizer and the
-     * invitee intact.
+     * Checks that the bytes parse back, as a recipient server reads them, into one REQUEST
+     * VEVENT with the UID, the organizer and the invitee intact.
      */
     @Test
     fun `REQUEST round-trips through the parser as METHOD REQUEST`() {
@@ -136,10 +133,9 @@ class ITipOutboxPayloadContractTest {
     }
 
     /**
-     * The cancellation payload that travels the same outbox channel. RFC 5546
-     * §3.2.5 + §2.1.4: a CANCEL sets STATUS=CANCELLED for the whole event and
-     * MUST carry an incremented SEQUENCE. (This assertion would fail against the
-     * pre-conformance builder, which emitted the un-incremented SEQUENCE.)
+     * Checks the whole-event cancellation. RFC 5546 §3.2.5: a CANCEL of the entire event sets
+     * STATUS=CANCELLED, and §2.1.4: it MUST increment SEQUENCE. The payload parses back as
+     * METHOD:CANCEL.
      */
     @Test
     fun `CANCEL outbox payload sets STATUS CANCELLED and an incremented SEQUENCE`() {
@@ -155,9 +151,9 @@ class ITipOutboxPayloadContractTest {
     }
 
     /**
-     * RFC 5545 §3.1: content lines are CRLF-delimited. A schedule-outbox POST
-     * sends the body verbatim, so a bare-LF payload risks rejection by a strict
-     * server. Every line break the builder emits must be CRLF.
+     * RFC 5545 §3.1: content lines are delimited by a CRLF. A schedule-outbox POST sends the
+     * body verbatim, so a bare-LF payload risks rejection by a strict server. Every line break
+     * the builder emits must be CRLF, with no bare LF or CR.
      */
     @Test
     fun `outbox payload uses CRLF line endings`() {

@@ -1,8 +1,6 @@
 package org.onekash.kashcal.sync.scheduler
 
-/**
- * Test fake for [IcsScheduler] that records invocations.
- */
+/** Records calls to [IcsScheduler] and can suspend or fail inside them. */
 class FakeIcsScheduler : IcsScheduler {
     private val _ensureCalls = mutableListOf<Long>()
     private val _callLog = mutableListOf<String>()

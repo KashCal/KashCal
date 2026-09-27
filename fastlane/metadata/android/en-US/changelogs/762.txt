@@ -1,0 +1,4 @@
+• Insights: day bars show your calendar colors
+• Sync: edits made elsewhere are merged, not overwritten
+• Repeating and device-calendar events: many edit and reschedule fixes
+• Reminders stay reliable on busy calendars; month widget fixed on busy months (#373)

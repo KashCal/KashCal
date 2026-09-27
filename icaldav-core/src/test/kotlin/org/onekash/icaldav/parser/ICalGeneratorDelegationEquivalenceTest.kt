@@ -19,20 +19,14 @@ import java.time.ZonedDateTime
 import kotlin.test.assertEquals
 
 /**
- * Golden-snapshot tests locking the wire format of the three single-component
- * `ICalGenerator.generate(event|todo|journal, ...)` entry points.
+ * Locks the wire format of the single-component `ICalGenerator.generate(event|todo|journal,
+ * ...)` entry points, which delegate to `generate(calendar: ICalCalendar, ...)`. Output must
+ * match the goldens byte for byte; the fixtures are deterministic (pinned DTSTAMP,
+ * `preserveDtstamp = true`, fixed ZoneId).
  *
- * Purpose: these methods are being collapsed into delegators that route through
- * `generate(calendar: ICalCalendar, ...)`. The goldens are captured from the
- * PRE-refactor implementation with deterministic fixtures (pinned DTSTAMP,
- * `preserveDtstamp = true`, fixed ZoneId). After refactor, output must match
- * byte-for-byte.
- *
- * VTIMEZONE bodies are excluded from the golden because they're generated from
- * ZoneRules at runtime and covered exhaustively by VTimezoneGeneratorTest.
- * The snapshot captures only the VCALENDAR envelope + component body + the
- * VTIMEZONE block structure, via `normalize()` which strips the VTIMEZONE
- * inner content while preserving BEGIN/TZID/END markers.
+ * VTIMEZONE bodies come from ZoneRules at runtime and VTimezoneGeneratorTest covers them, so
+ * [normalize] keeps only their BEGIN, TZID and END lines; the goldens hold the VCALENDAR
+ * envelope, the component body and that VTIMEZONE outline.
  */
 @DisplayName("ICalGenerator single-component delegation equivalence")
 class ICalGeneratorDelegationEquivalenceTest {
@@ -111,9 +105,8 @@ class ICalGeneratorDelegationEquivalenceTest {
     )
 
     /**
-     * Strip VTIMEZONE inner content so snapshots aren't sensitive to JDK/OS
-     * timezone database revisions. Keeps BEGIN:VTIMEZONE / TZID / END:VTIMEZONE
-     * markers so placement and count are still verified.
+     * Strips VTIMEZONE content so snapshots don't depend on the JDK's timezone database,
+     * keeping the BEGIN:VTIMEZONE, TZID and END:VTIMEZONE lines for placement and count.
      */
     private fun normalize(ics: String): String {
         val result = StringBuilder()
@@ -137,7 +130,7 @@ class ICalGeneratorDelegationEquivalenceTest {
         return result.toString().trimEnd('\n', '\r') + "\n"
     }
 
-    // ========== Golden snapshots (captured from pre-refactor implementation) ==========
+    // ========== Golden snapshots ==========
 
     @Test
     fun `generate(event) with method null and non-UTC TZID matches golden`() {

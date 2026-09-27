@@ -10,16 +10,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for IcsParserService.
- *
- * Tests cover:
- * - Basic parsing functionality
- * - CANCELLED event filtering
- * - Edge cases and malformed input handling
- * - Unicode and internationalization
- * - Validation edge cases
- *
- * Migrated from RfcIcsParserAdversarialTest.kt with adjustments for ICalParser behavior.
+ * Tests [IcsParserService]: parsing, CANCELLED filtering, malformed and unusual input, line
+ * endings and folding, non-Latin text, [IcsParserService.isValidIcs],
+ * [IcsParserService.getCalendarName], all-day events and the subscription source key in
+ * `caldavUrl`.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -76,7 +70,7 @@ class IcsParserServiceTest {
         assertEquals(2, events.size)
     }
 
-    // ==================== CANCELLED Event Filtering (CRITICAL) ====================
+    // ==================== CANCELLED Event Filtering ====================
 
     @Test
     fun `filters CANCELLED events`() {
@@ -129,7 +123,7 @@ class IcsParserServiceTest {
         """.trimIndent()
 
         val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
-        // Should have master event but filter out the cancelled exception
+        // The master stays; the cancelled exception is dropped
         assertEquals("Should have master but not cancelled exception", 1, events.size)
         assertEquals("Weekly Meeting", events[0].title)
     }
@@ -215,7 +209,7 @@ class IcsParserServiceTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Should not crash
+        // Must not throw; the event may be kept or dropped
         val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
         assertTrue("Should handle null bytes gracefully", events.size <= 1)
     }
@@ -496,7 +490,7 @@ class IcsParserServiceTest {
         assertNull(name)
     }
 
-    // ==================== Real-World Format Examples ====================
+    // ==================== Feed Format Variants ====================
 
     @Test
     fun `Google Calendar export with extra whitespace`() {
@@ -520,7 +514,7 @@ class IcsParserServiceTest {
 
     @Test
     fun `Outlook style with BOM marker`() {
-        // UTF-8 BOM at start of file
+        // UTF-8 BOM at the start of the file
         val bom = "\uFEFF"
         val ics = bom + """
             BEGIN:VCALENDAR
@@ -535,7 +529,7 @@ class IcsParserServiceTest {
         """.trimIndent()
 
         val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
-        // BOM should be handled gracefully
+        // Must not throw; the event may be kept or dropped
         assertTrue("Should handle BOM gracefully", events.size <= 1)
     }
 

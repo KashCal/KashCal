@@ -5,21 +5,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Documents the sync decision logic from MainActivity.onResume().
+ * Documents the resume-sync decision in MainActivity.onResume() as a truth table.
  *
- * The actual logic lives inline in MainActivity.onResume() - this test documents
- * the expected behavior as a truth table for sync decisions.
- *
- * Sync on resume is skipped when:
- * - First resume (cold start) - triggerStartupSync() handles this
- * - Returning from internal activity (SettingsActivity) - no external changes possible
+ * The logic lives inline in onResume(); these tests run a copy of it, so they don't fail when
+ * the activity changes. onResume() calls `syncOnResumeIfNeeded` except:
+ * - on the first resume (cold start), where triggerStartupSync() runs instead
+ * - on return from an activity opened through `launchInternalActivity` (SettingsActivity, the
+ *   system enrollment and permission screens), where nothing outside the app changed
  */
 class MainActivitySyncDecisionTest {
 
-    /**
-     * Documents the sync decision logic from MainActivity.onResume().
-     * Truth table for sync behavior.
-     */
+    /** Mirrors the two guards in MainActivity.onResume() around `syncOnResumeIfNeeded`. */
     private fun shouldSyncOnResume(
         isFirstResume: Boolean,
         returningFromInternalActivity: Boolean
@@ -31,19 +27,19 @@ class MainActivitySyncDecisionTest {
 
     @Test
     fun `first resume does not sync`() {
-        // Cold start - triggerStartupSync() handles this case
+        // Cold start: triggerStartupSync() handles this case
         assertFalse(shouldSyncOnResume(isFirstResume = true, returningFromInternalActivity = false))
     }
 
     @Test
     fun `returning from settings does not sync`() {
-        // Internal navigation - no external changes possible
+        // Internal navigation: nothing outside the app changed
         assertFalse(shouldSyncOnResume(isFirstResume = false, returningFromInternalActivity = true))
     }
 
     @Test
     fun `returning from external app does sync`() {
-        // User was outside app - might have changes from shared calendar
+        // The user was outside the app; a shared calendar may have changed
         assertTrue(shouldSyncOnResume(isFirstResume = false, returningFromInternalActivity = false))
     }
 
@@ -55,13 +51,13 @@ class MainActivitySyncDecisionTest {
 
     @Test
     fun `returning from home screen does sync`() {
-        // User pressed Home, then returned - might have changes from shared calendar
+        // The user pressed Home, then returned; a shared calendar may have changed
         assertTrue(shouldSyncOnResume(isFirstResume = false, returningFromInternalActivity = false))
     }
 
     @Test
     fun `returning from another app does sync`() {
-        // User switched to another app, then returned - might have changes
+        // The user switched to another app, then returned; data may have changed
         assertTrue(shouldSyncOnResume(isFirstResume = false, returningFromInternalActivity = false))
     }
 }

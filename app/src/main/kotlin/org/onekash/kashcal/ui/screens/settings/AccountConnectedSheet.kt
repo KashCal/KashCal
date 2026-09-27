@@ -28,18 +28,13 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.shared.maskEmail
 
 /**
- * Success bottom sheet shown after account connection.
+ * Shows the sheet that confirms an account connected: provider name, masked email and the
+ * number of calendars found, with Add Another ([onAddAnother]) and Done ([onDone]) buttons.
  *
- * Displays connection success with provider name, email, and calendar count.
- * Offers "Add Another" to add more accounts or "Done" to finish.
- *
- * @param sheetState Material3 sheet state
- * @param providerName Display name of the provider (e.g., "iCloud", "Nextcloud")
- * @param email User email (will be masked for display)
- * @param calendarCount Number of calendars discovered
- * @param onAddAnother Callback to add another account (stays on AccountsScreen)
- * @param onDone Callback when user is done (returns to HomeScreen)
- * @param onDismiss Callback when sheet is dismissed (same as onAddAnother)
+ * @param providerName display name of the provider, for example "iCloud" or "Nextcloud"
+ * @param email shown masked by [maskEmail]
+ * @param calendarCount calendars discovered
+ * @param onDismiss called when the sheet is dismissed without either button
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,7 +59,6 @@ fun AccountConnectedSheet(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Success icon
             Icon(
                 imageVector = Icons.Default.CheckCircle,
                 contentDescription = null,
@@ -72,14 +66,12 @@ fun AccountConnectedSheet(
                 modifier = Modifier.size(48.dp)
             )
 
-            // Title
             Text(
                 text = stringResource(R.string.signin_connected_to, providerName),
                 style = MaterialTheme.typography.titleLarge,
                 textAlign = TextAlign.Center
             )
 
-            // Description
             Text(
                 text = stringResource(R.string.account_connected_found_calendars, calendarCount, maskEmail(email)) +
                     "\n" + stringResource(R.string.account_connected_syncing_hint),
@@ -90,12 +82,10 @@ fun AccountConnectedSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Buttons
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                // Add Another button
                 OutlinedButton(
                     onClick = {
                         onAddAnother()
@@ -105,7 +95,6 @@ fun AccountConnectedSheet(
                     Text(stringResource(R.string.action_add_another))
                 }
 
-                // Done button (primary)
                 Button(
                     onClick = {
                         onDone()

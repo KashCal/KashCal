@@ -6,9 +6,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Guards the [WidgetKind] -> [GlanceAppWidget] routing used by [WidgetRefreshAction] to repaint the
- * tapped widget. Exhaustive over the enum so adding a kind without a `widget()` mapping fails here
- * rather than silently repainting the wrong (or no) widget.
+ * Guards the [WidgetKind] to [GlanceAppWidget] routing [WidgetRefreshAction] uses to repaint the
+ * tapped widget. The compiler forces a `widget()` branch for every kind; this test checks each
+ * branch returns that kind's widget class, so a wrong mapping can't silently repaint another.
  */
 class WidgetKindTest {
 
@@ -19,7 +19,7 @@ class WidgetKindTest {
             WidgetKind.WEEK to WeekWidget::class.java,
             WidgetKind.UPCOMING to UpcomingWidget::class.java,
         )
-        // Fails if a new enum value is added without extending this test (and the `when`).
+        // Fails if a new enum value is added without extending this map.
         assertEquals(expected.keys, WidgetKind.entries.toSet())
 
         for (kind in WidgetKind.entries) {

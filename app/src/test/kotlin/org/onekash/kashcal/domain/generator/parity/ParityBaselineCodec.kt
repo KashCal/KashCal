@@ -5,20 +5,20 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 /**
- * Serializes per-engine corpus output to the baseline JSON format (one file
- * per engine). Format chosen for readable `git diff`s — engine version bumps
- * show as per-case hunks.
+ * Serializes per-engine corpus output to the baseline JSON format, one file per engine. The
+ * format keeps `git diff`s readable: an engine version bump shows as per-case hunks.
  *
  * Schema:
  *   {
  *     "engine": "lib-recur",
  *     "cases": [
  *       { "name": "…", "timestamps": [1704067200000, …], "error": null },
- *       { "name": "…", "timestamps": [], "error": "TimeoutException: …" }
+ *       { "name": "…", "timestamps": [], "error": "<ThrowableClass>: <message>" }
  *     ]
  *   }
  *
- * Cases are emitted in corpus-declaration order so git diff hunks are stable.
+ * Cases are emitted in the order given, corpus-declaration order from
+ * [RRuleEngineParityReportTest], so git diff hunks are stable.
  */
 object ParityBaselineCodec {
 

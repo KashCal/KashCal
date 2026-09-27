@@ -43,15 +43,16 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.ui.util.asString
 
 /**
- * Account detail bottom sheet — unified layout for all providers.
+ * Shows one account's details, in the same layout for every provider.
  *
  * Sections:
- * 1. Header (provider icon, display name, email)
- * 2. Sync (status, enabled toggle, sync now)
- * 3. Calendars (count, discover new)
- * 4. Account (change password, sign out)
+ * 1. Header: provider icon, display name and email; tapping it calls [onRename]
+ * 2. Sync: status, calendar sync toggle, contact sync toggle for CardDAV providers, Sync Now
+ * 3. Calendars: count, Discover Calendars
+ * 4. Account: change password, sign out
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,7 +95,6 @@ fun AccountDetailSheet(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Provider icon
                 Icon(
                     imageVector = when (account.provider) {
                         AccountProvider.ICLOUD -> Icons.Default.Cloud
@@ -122,7 +122,6 @@ fun AccountDetailSheet(
                 )
             }
 
-            // Divider after header
             HorizontalDivider(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
@@ -130,14 +129,13 @@ fun AccountDetailSheet(
             // ==================== Sync ====================
             SectionHeader(stringResource(R.string.account_detail_section_sync))
             SettingsCard {
-                // Sync status row (hidden when healthy + idle)
                 SyncStatusRow(
                     lastSuccessfulSyncAt = account.lastSuccessfulSyncAt,
                     consecutiveSyncFailures = account.consecutiveSyncFailures,
                     syncStatus = syncStatus
                 )
 
-                // Calendar sync toggle (preserves the prior "Enabled" behavior)
+                // Toggles the account's isEnabled flag.
                 SettingsToggleRow(
                     label = stringResource(R.string.account_detail_sync_calendar),
                     subtitle = stringResource(R.string.account_detail_sync_calendar_subtitle),
@@ -145,20 +143,19 @@ fun AccountDetailSheet(
                     onCheckedChange = { onToggleEnabled(it) }
                 )
 
-                // Contacts sync toggle — only for CardDAV-capable providers.
-                // Gated on the static supportsCardDAV flag, not a discovery result.
+                // Gated on the provider's static supportsCardDAV flag, not a discovery result.
                 if (account.provider.supportsCardDAV) {
                     SettingsToggleRow(
                         label = stringResource(R.string.account_detail_sync_contacts),
                         subtitle = stringResource(R.string.account_detail_sync_contacts_subtitle),
                         checked = account.contactSyncEnabled,
                         onCheckedChange = { onToggleContactSync(it) },
-                        // Contact sync is still stabilizing; flag it inline.
+                        // Contact sync is still stabilizing.
                         badge = { BetaBadge() }
                     )
 
-                    // Inline re-grant affordance (not a blocking dialog) shown when
-                    // contact sync is on but WRITE_CONTACTS was revoked.
+                    // Inline re-grant row, not a blocking dialog, while contact sync is on
+                    // and a contacts permission it needs is missing.
                     if (account.contactSyncEnabled && contactSyncPermissionNeeded) {
                         InlineStatusRow(
                             icon = Icons.Default.Warning,
@@ -173,18 +170,17 @@ fun AccountDetailSheet(
                         )
                     }
 
-                    // Inline confirmation after toggling contact sync. Auto-dismisses
-                    // so it doesn't linger; lives in the sheet (not a snackbar) so it
-                    // is visible while the sheet is open.
+                    // Confirmation after toggling contact sync, dismissed after 4 seconds. It
+                    // lives in the sheet, not a snackbar, so it is visible while the sheet
+                    // is open.
                     if (contactSyncConfirmation != null) {
                         LaunchedEffect(contactSyncConfirmation) {
                             delay(4000)
                             onDismissContactSyncConfirmation()
                         }
-                        // A destructive/unverified outcome (contacts removed, or may
-                        // remain) gets a warning glyph + tint; a benign one keeps the
-                        // reassuring checkmark. Tone is decided in the ViewModel from the
-                        // real purge outcome, never re-derived from the message text.
+                        // [ContactSyncConfirmation.Tone.WARNING] gets a warning glyph and
+                        // tint, anything else a checkmark. The ViewModel sets the tone from
+                        // the purge outcome; never re-derive it from the message text.
                         val isWarning =
                             contactSyncConfirmation.tone == ContactSyncConfirmation.Tone.WARNING
                         InlineStatusRow(
@@ -197,7 +193,7 @@ fun AccountDetailSheet(
                     }
                 }
 
-                // Sync Now — primary text + sync icon / spinner
+                // Sync Now shows a spinner and ignores taps while syncing.
                 val isSyncing = syncStatus is AccountDetailSyncStatus.Syncing
                 Row(
                     modifier = Modifier
@@ -231,7 +227,6 @@ fun AccountDetailSheet(
             // ==================== Calendars ====================
             SectionHeader(stringResource(R.string.account_detail_section_calendars))
             SettingsCard {
-                // Calendar count + discover status
                 val calendarText = when (discoverStatus) {
                     is AccountDetailDiscoverStatus.Discovering ->
                         stringResource(R.string.account_detail_discovering)
@@ -265,14 +260,14 @@ fun AccountDetailSheet(
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = discoverStatus.message,
+                            text = discoverStatus.message.asString(),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.error
                         )
                     }
                 }
 
-                // Discover — primary text + search icon / spinner
+                // Discover shows a spinner and ignores taps while discovering.
                 val isDiscovering = discoverStatus is AccountDetailDiscoverStatus.Discovering
                 Row(
                     modifier = Modifier
@@ -312,7 +307,6 @@ fun AccountDetailSheet(
                     showDivider = true
                 )
 
-                // Sign Out — red outlined button
                 OutlinedButton(
                     onClick = onSignOut,
                     modifier = Modifier
@@ -330,21 +324,17 @@ fun AccountDetailSheet(
     }
 }
 
-/**
- * Format calendar count with correct singular/plural.
- */
+/** Formats the calendar count with the plural resource. */
 @Composable
 private fun formatCalendarCount(count: Int): String {
     return pluralStringResource(R.plurals.account_detail_calendar_count, count, count)
 }
 
 /**
- * A compact inline status line: a small leading glyph, a message, and an optional
- * trailing action. The shared shape behind the SYNC section's contact banners
- * (permission-needed, toggle confirmation) so a new banner can't drift on padding,
- * spacing, or icon size. Caller supplies the semantics — [icon], its [iconTint],
- * the [text], and its [textColor] — so a warning and a confirmation read distinctly
- * even though the layout is identical.
+ * Draws a compact status line: small glyph, message and optional [trailing] action. The Sync
+ * section's contact rows (permission needed, toggle confirmation) share it so a new row can't
+ * drift on padding, spacing or icon size; the caller's [icon], [iconTint], [text] and
+ * [textColor] tell a warning from a confirmation.
  */
 @Composable
 private fun InlineStatusRow(
@@ -378,12 +368,12 @@ private fun InlineStatusRow(
 }
 
 /**
- * Sync status display row within the SYNC section.
+ * Shows the account's sync state in the Sync section.
  *
- * Three states:
- * - Healthy + idle (0 failures, not syncing): renders nothing
- * - Syncing: spinner + "Syncing..." text
- * - Failure (>0 failures): warning + failure count + last sync context
+ * - Not syncing and 0 failures: renders nothing
+ * - Syncing, whatever the failure count: spinner and "Syncing..."
+ * - Otherwise, with failures: warning, failure count, and the last successful sync time or
+ *   "never synced"
  */
 @Composable
 private fun SyncStatusRow(
@@ -391,7 +381,6 @@ private fun SyncStatusRow(
     consecutiveSyncFailures: Int,
     syncStatus: AccountDetailSyncStatus
 ) {
-    // Healthy + idle: render nothing
     if (consecutiveSyncFailures == 0 && syncStatus !is AccountDetailSyncStatus.Syncing) {
         return
     }
@@ -418,7 +407,6 @@ private fun SyncStatusRow(
                 }
             }
             consecutiveSyncFailures > 0 -> {
-                // Failure warning
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
@@ -436,7 +424,6 @@ private fun SyncStatusRow(
                     )
                 }
 
-                // Last sync context
                 val syncTimeText = if (lastSuccessfulSyncAt != null && lastSuccessfulSyncAt > 0) {
                     val relativeTime = DateUtils.getRelativeTimeSpanString(
                         lastSuccessfulSyncAt,

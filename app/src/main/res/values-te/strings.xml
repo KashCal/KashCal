@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">ఈ సర్వర్‌లో క్యాలెండర్లు కనుగొనబడలేదు.</string>
     <string name="caldav_error_unexpected">ఊహించని లోపం. దయచేసి మళ్లీ ప్రయత్నించండి.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nఇది మీ లోకల్ నెట్‌వర్క్‌లోని సర్వర్ అయితే, కనెక్ట్ కావడానికి లోకల్ నెట్‌వర్క్ యాక్సెస్‌ను అనుమతించండి.</string>
+    <string name="caldav_error_connection_refused_insecure">KashCal అనుసరించని చోటికి (ఎన్‌క్రిప్ట్ చేయని చిరునామా, లేదా రీడైరెక్ట్ లూప్) సర్వర్ కనెక్షన్‌ను మళ్లించింది, కాబట్టి మీ పాస్‌వర్డ్ పంపే ముందే KashCal ఆగిపోయింది. సర్వర్ చిరునామాను తనిఖీ చేయండి.</string>
     <string name="local_network_banner_title">లోకల్ నెట్‌వర్క్ యాక్సెస్ అవసరం</string>
     <string name="local_network_banner_body">ఈ సర్వర్ మీ లోకల్ నెట్‌వర్క్‌లో ఉన్నట్లు కనిపిస్తోంది. KashCal దీనికి కనెక్ట్ కావడానికి లోకల్ నెట్‌వర్క్ యాక్సెస్‌ను అనుమతించండి.</string>
     <string name="local_network_banner_allow">యాక్సెస్‌ను అనుమతించు</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">మార్పులను సేవ్ చేయండి</string>
     <string name="dialog_delete_recurring_title">తొలగించు</string>
     <string name="dialog_move_recurring_title">తరలించు</string>
+    <string name="snackbar_event_rescheduled">ఈవెంట్ సమయం మార్చబడింది</string>
+    <string name="snackbar_reschedule_failed">ఈవెంట్ సమయం మార్చడం సాధ్యం కాలేదు</string>
     <string name="recurring_this_event">ఈ ఈవెంట్</string>
     <string name="recurring_all_events">అన్ని ఈవెంట్‌లు</string>
 

@@ -7,26 +7,23 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * A guest removed from an event, awaiting an iTIP CANCEL (RFC 5546 §3.2.2.6).
+ * Records a guest removed from an event who is awaiting an iTIP CANCEL (RFC 5546 §3.2.2.6).
  *
- * When the organizer uninvites a guest, the attendee row is dropped from the
- * event's set (so the shrunk PUT no longer lists them, and an implicit-
- * scheduling server cancels them automatically per RFC 6638 §3.2.1.2). But the
- * dropped row no longer exists to carry a client-side CANCEL for servers that
- * decline to self-schedule (SCHEDULE-AGENT=CLIENT). This table preserves the
- * removed recipient — and the delivery context captured at removal time — so
- * the push can deliver the CANCEL after the attendee row is gone.
+ * Uninviting a guest drops their attendee row, so the shrunk PUT no longer lists them and an
+ * implicit-scheduling server cancels them itself (RFC 6638 §3.2.1.2). A server that leaves
+ * delivery to the client (SCHEDULE-AGENT=CLIENT) needs a client-side CANCEL, and the dropped
+ * row can't carry it. This table keeps the removed recipient and the delivery context
+ * captured at removal, so the push can send the CANCEL after the attendee row is gone.
  *
- * Deliberately a SEPARATE table, not a column on `attendees`: a removed guest
- * is by definition absent from the attendee set, and `AttendeesDao.replaceForEvent`
- * deletes any row absent from the incoming set (and runs again on every pull),
- * so an attendee-column marker would be destroyed before its CANCEL fired.
+ * It is a separate table, not a column on `attendees`: `AttendeesDao.replaceForEvent` deletes
+ * every row absent from the incoming set, and runs on every pull, so a marker on the removed
+ * guest's row would be deleted before its CANCEL went out.
  *
- * Lifecycle: inserted on removal (organizer write path), drained on the next
- * successful push (one METHOD:CANCEL per row for outbox-class servers; skipped
- * for the implicit fleet whose shrunk PUT already cancelled), then deleted. A
- * transient send failure leaves the row to retry; [attemptCount] bounds retries
- * so a permanently-undeliverable row cannot leak forever.
+ * Lifecycle: the organizer write path inserts a row on removal. After a successful push,
+ * `PushStrategy.drainPendingCancels` routes each row (one METHOD:CANCEL per row through the
+ * outbox, or nothing when the shrunk PUT already cancelled) and deletes it once resolved. A
+ * row not yet deliverable stays for a later push; [attemptCount] bounds the retries so an
+ * undeliverable row doesn't stay forever.
  */
 @Entity(
     tableName = "pending_cancels",
@@ -48,64 +45,57 @@ data class PendingCancel(
     val id: Long = 0,
 
     /**
-     * Parent event ID. CASCADE delete: a whole-event delete removes the row —
-     * correct, because deleting the event triggers the server's whole-event
-     * cancellation, which notifies all attendees including this one.
+     * The event. CASCADE delete: deleting the event deletes the row, since the server's
+     * whole-event cancellation notifies every attendee, this one included.
      */
     @ColumnInfo(name = "event_id")
     val eventId: Long,
 
     /**
-     * The occurrence this cancel scopes to. NULL = master / all-events (the
-     * guest is uninvited from the series). Set = a per-occurrence uninvite; the
-     * CANCEL carries RECURRENCE-ID for this instance only. Matches the
-     * `originalInstanceTime` convention used for exceptions.
+     * The occurrence the cancel applies to, as an `originalInstanceTime`. Null uninvites the
+     * guest from the whole series; set, the CANCEL carries RECURRENCE-ID for that occurrence
+     * only.
      */
     @ColumnInfo(name = "recurrence_id")
     val recurrenceId: Long? = null,
 
     /**
-     * The removed attendee's CAL-ADDRESS, stored verbatim as it was on the
-     * attendee row (mailto:, urn:uuid:, principal path, …).
+     * The removed attendee's CAL-ADDRESS, verbatim from the attendee row (mailto:, urn:uuid:,
+     * principal path).
      */
     @ColumnInfo(name = "address")
     val address: String,
 
     /**
-     * The removed attendee's last-known SCHEDULE-AGENT (RFC 6638 §7.1), captured
-     * at removal time. Feeds the delivery classifier so the drain knows whether
-     * the server will cancel implicitly or the client must POST.
+     * The attendee's last-known SCHEDULE-AGENT (RFC 6638 §7.1) at removal. With
+     * [scheduleStatus] it tells the delivery classifier whether the server cancels implicitly
+     * or the client must POST.
      */
     @ColumnInfo(name = "schedule_agent")
     val scheduleAgent: String? = null,
 
-    /**
-     * The removed attendee's last-known SCHEDULE-STATUS (RFC 6638 §7.3),
-     * captured at removal time. Feeds the same classifier.
-     */
+    /** The attendee's last-known SCHEDULE-STATUS (RFC 6638 §7.3) at removal. */
     @ColumnInfo(name = "schedule_status")
     val scheduleStatus: String? = null,
 
     /**
-     * The event SEQUENCE at removal time. The CANCEL goes out at this value + 1
-     * (the iTIP builder increments per RFC 5546 §2.1.4), so the cancelled guest
-     * sees a higher SEQUENCE than the last REQUEST they received.
+     * The event SEQUENCE at removal. The iTIP builder sends the CANCEL at this value + 1
+     * (RFC 5546 §2.1.4), so the guest sees a higher SEQUENCE than their last REQUEST.
      */
     @ColumnInfo(name = "sequence")
     val sequence: Int = 0,
 
     /**
-     * Number of delivery attempts so far. Bounds retries for a row that can
-     * never be delivered (e.g. a declined server with no usable outbox), so it
-     * is eventually abandoned rather than retried forever.
+     * Delivery attempts so far. A row that can never be delivered (for example, a server
+     * that leaves delivery to the client but has no outbox) is dropped at the cap instead of
+     * retried forever.
      */
     @ColumnInfo(name = "attempt_count", defaultValue = "0")
     val attemptCount: Int = 0
 ) {
     /**
-     * Project this queued cancel back into an [Attendee] for the CANCEL body —
-     * the single recipient the per-attendee METHOD:CANCEL targets. Carries the
-     * captured delivery context so the body reflects what was on the wire.
+     * Returns the removed guest as an [Attendee], the one recipient of the per-attendee
+     * METHOD:CANCEL, carrying the delivery context captured at removal.
      */
     fun toAttendee(eventId: Long): Attendee = Attendee(
         eventId = eventId,

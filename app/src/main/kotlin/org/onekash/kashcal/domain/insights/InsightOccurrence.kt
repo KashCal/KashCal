@@ -8,10 +8,8 @@ interface InsightOccurrence {
     val endDay: Int
     val calendarId: Long
     /**
-     * RFC 5545 TRANSP value: "OPAQUE" (busy) or "TRANSPARENT" (free).
-     * Consumers that only care about busy-time totals (e.g., Insights stats)
-     * may ignore this field; share-availability uses it to skip free-marked
-     * events when computing the user's shareable open blocks.
+     * RFC 5545 TRANSP value: "OPAQUE" (busy) or "TRANSPARENT" (free). Insights stats may
+     * ignore it; share-availability skips free-marked events when computing open blocks.
      */
     val transparency: String
 }

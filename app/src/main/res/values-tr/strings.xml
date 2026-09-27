@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Bu sunucuda takvim bulunamadı.</string>
     <string name="caldav_error_unexpected">Beklenmeyen hata. Lütfen tekrar deneyin.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nBu, yerel ağındaki bir sunucuysa, bağlanmak için yerel ağ erişimine izin ver.</string>
+    <string name="caldav_error_connection_refused_insecure">Sunucu bağlantıyı KashCal\'ın izlemediği bir yere yönlendirdi (şifrelenmemiş bir adres ya da yönlendirme döngüsü), bu yüzden KashCal şifreni göndermeden önce durdu. Sunucu adresini kontrol et.</string>
     <string name="local_network_banner_title">Yerel ağ erişimi gerekli</string>
     <string name="local_network_banner_body">Bu sunucu, yerel ağında gibi görünüyor. KashCal\'ın ona bağlanabilmesi için yerel ağ erişimine izin ver.</string>
     <string name="local_network_banner_allow">Erişime izin ver</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Değişiklikleri kaydet</string>
     <string name="dialog_delete_recurring_title">Sil</string>
     <string name="dialog_move_recurring_title">Taşı</string>
+    <string name="snackbar_event_rescheduled">Etkinlik yeniden planlandı</string>
+    <string name="snackbar_reschedule_failed">Etkinlik yeniden planlanamadı</string>
     <string name="recurring_this_event">Bu etkinlik</string>
     <string name="recurring_all_events">Tüm etkinlikler</string>
 

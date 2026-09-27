@@ -4,7 +4,6 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.RemoteException
 import android.util.Log
 import androidx.work.BackoffPolicy
@@ -18,6 +17,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
+import org.onekash.kashcal.util.AlarmArming
 import java.io.IOException
 import java.time.LocalDate
 import java.time.ZoneId
@@ -31,14 +31,14 @@ private const val WORK_NAME_RETRY = "widget_retry_update"
 private const val REQUEST_CODE_MIDNIGHT = 1
 
 /**
- * Manages widget update triggers:
- * - Periodic updates every 30 minutes (WorkManager; cosmetic, OK to drift in Doze)
- * - Midnight day-rollover updates (AlarmManager setExactAndAllowWhileIdle — fires through Doze)
- * - Manual updates after event changes
+ * Schedules and runs widget updates:
+ * - every 30 minutes through WorkManager; cosmetic, so drifting in Doze is fine;
+ * - at local midnight through an allow-while-idle AlarmManager alarm, for the day rollover;
+ * - on demand, after data or settings changes ([updateAllWidgets],
+ *   [updateAllWidgetsForColorChange]).
  *
- * Midnight uses AlarmManager instead of WorkManager because Doze defers
- * JobScheduler (and therefore WorkManager) entirely; setExactAndAllowWhileIdle
- * is documented to fire "even if battery-saving measures are in effect."
+ * Midnight uses AlarmManager because Doze defers JobScheduler, and so WorkManager, entirely;
+ * setExactAndAllowWhileIdle is documented to fire "even if battery-saving measures are in effect."
  */
 @Singleton
 class WidgetUpdateManager @Inject constructor(
@@ -49,8 +49,9 @@ class WidgetUpdateManager @Inject constructor(
     }
 
     /**
-     * Immediately update all widget instances.
-     * Call this after event CRUD operations.
+     * Refreshes every event widget now, DateWidget excepted ([refreshAllWidgets]). Rethrows
+     * cancellation; any other failure is logged, and a transient one (IOException or
+     * RemoteException) schedules [WidgetRetryWorker].
      */
     suspend fun updateAllWidgets(reason: String = "unknown") {
         Log.d(TAG, "Updating all widgets (reason: $reason)")
@@ -68,9 +69,8 @@ class WidgetUpdateManager @Inject constructor(
     }
 
     /**
-     * Update all widgets after a change that affects their appearance rather than their data
-     * (accent color, color source). Unlike [updateAllWidgets] this also refreshes the DateWidget,
-     * which the event-driven path skips because its content is date-only.
+     * Refreshes every widget after a change to their appearance, such as the accent color, color
+     * source or widget theme. Unlike [updateAllWidgets] it includes DateWidget. Fails the same way.
      */
     suspend fun updateAllWidgetsForColorChange(reason: String = "color_change") {
         Log.d(TAG, "Updating all widgets incl. DateWidget (reason: $reason)")
@@ -105,9 +105,15 @@ class WidgetUpdateManager @Inject constructor(
         else -> false
     }
 
+    /** Schedules the periodic and midnight updates; app startup calls it. */
+    fun scheduleUpdates() {
+        schedulePeriodicUpdates()
+        scheduleMidnightUpdate()
+    }
+
     /**
-     * Schedule periodic widget updates every 30 minutes.
-     * Should be called once at app startup.
+     * Schedules [WidgetUpdateWorker] every 30 minutes, keeping an existing schedule. App startup
+     * calls it through [scheduleUpdates].
      */
     fun schedulePeriodicUpdates() {
         Log.d(TAG, "Scheduling periodic widget updates")
@@ -127,12 +133,13 @@ class WidgetUpdateManager @Inject constructor(
     }
 
     /**
-     * Schedule an exact alarm at next local midnight to refresh the widget for
-     * the new day. Uses setExactAndAllowWhileIdle so the refresh fires through
-     * Doze (e.g., phone in airplane mode overnight).
+     * Sets the allow-while-idle alarm for the next local midnight, exact when exact alarms are
+     * allowed ([AlarmArming.setAllowWhileIdle]), so the day rollover fires through Doze, for
+     * example with the phone in airplane mode overnight.
      *
-     * Called from app startup and re-armed by the receiver itself and by
-     * BootRecoveryHandler (since AlarmManager alarms clear on reboot).
+     * Called at app startup and re-armed by [MidnightWidgetUpdateReceiver] and by
+     * `BootRecoveryHandler` after a boot or an app update, since a reboot clears AlarmManager
+     * alarms.
      */
     fun scheduleMidnightUpdate() {
         val now = System.currentTimeMillis()
@@ -142,30 +149,18 @@ class WidgetUpdateManager @Inject constructor(
             .toEpochMilli()
         Log.d(TAG, "Scheduling midnight widget update in ${(midnight - now) / 1000 / 60} minutes")
 
-        val pendingIntent = createMidnightPendingIntent()
-
-        try {
-            if (canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, midnight, pendingIntent)
-                Log.d(TAG, "Scheduled exact midnight widget alarm")
-            } else {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, midnight, pendingIntent)
-                Log.d(TAG, "Scheduled inexact midnight widget alarm (exact permission unavailable)")
-            }
-        } catch (e: SecurityException) {
-            Log.w(TAG, "Exact alarm failed, falling back to inexact", e)
-            try {
-                alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, midnight, pendingIntent)
-            } catch (e2: SecurityException) {
-                Log.e(TAG, "Cannot schedule any midnight alarm", e2)
-            }
-        }
+        // Startup, the midnight receiver and boot recovery all run this where an
+        // exception would crash, so a refusal must skip the alarm, not throw.
+        AlarmArming.setAllowWhileIdle(
+            alarmManager = alarmManager,
+            triggerTime = midnight,
+            pendingIntent = createMidnightPendingIntent(),
+            tag = TAG,
+            label = "Midnight widget refresh"
+        )
     }
 
-    /**
-     * Cancel all scheduled widget updates.
-     * Call this when the app is being uninstalled or widgets removed.
-     */
+    /** Cancels the periodic, retry and midnight updates. Nothing calls it. */
     fun cancelAllUpdates() {
         Log.d(TAG, "Cancelling all widget updates")
         WorkManager.getInstance(context).cancelUniqueWork(WORK_NAME_PERIODIC)
@@ -182,23 +177,9 @@ class WidgetUpdateManager @Inject constructor(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
     }
-
-    /**
-     * For Android 12+, USE_EXACT_ALARM is auto-granted for calendar apps.
-     * This is belt-and-suspenders in case the permission is ever revoked/denied.
-     */
-    private fun canScheduleExactAlarms(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            alarmManager.canScheduleExactAlarms()
-        } else {
-            true
-        }
-    }
 }
 
-/**
- * Worker for periodic widget updates (every 30 minutes).
- */
+/** Runs the 30-minute widget refresh, retrying on any failure. */
 class WidgetUpdateWorker(
     context: Context,
     workerParams: WorkerParameters

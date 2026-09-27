@@ -18,16 +18,11 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Golden tests for database migrations.
+ * Tests migration 6 to 7 on a v6 database: it runs without errors, adds the new columns and
+ * indexes, keeps existing data, copies uid into import_id and sets alarm_count to 0. The last test
+ * opens a full v6 database with Room, which runs every migration to the current version.
  *
- * These tests verify that migrations:
- * 1. Execute without errors
- * 2. Correctly modify the schema
- * 3. Preserve existing data
- * 4. Initialize new columns with correct defaults
- *
- * Uses SQLite directly with Robolectric to test migrations without needing
- * instrumented tests.
+ * Runs on SQLite through Robolectric, so no instrumented test is needed.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -220,11 +215,8 @@ class MigrationGoldenTest {
 
     @Test
     fun `migration 6 to 7 handles null uid gracefully`() {
-        // Edge case: what if uid is somehow null? (shouldn't happen but test defensively)
-        // Note: In practice, uid is NOT NULL so this would fail on insert.
-        // This test verifies the migration SQL doesn't crash on edge cases.
-
-        // Just verify migration runs without error on empty table
+        // uid is NOT NULL in the v6 schema, so a null-uid row can't be inserted. The test runs
+        // the migration on an empty table instead and checks the new columns exist.
         Migrations.MIGRATION_6_7.migrate(db)
 
         // Verify table structure is correct
@@ -263,20 +255,12 @@ class MigrationGoldenTest {
     }
 
     /**
-     * CRITICAL TEST: Validate Room accepts the migrated schema.
+     * Opens a complete v6 database with Room, which runs every migration up to the current
+     * version; the migrated schema must match the current one.
      *
-     * This test catches migration issues that other tests miss:
-     * - Column order differences
-     * - Default value format mismatches
-     * - Index naming discrepancies
-     * - Foreign key constraint differences
-     *
-     * The error "Migration didn't properly handle: events" means Room's
-     * schema validation failed after migration. This test catches that.
-     *
-     * NOTE: This test uses a simplified approach - it creates a full v6 schema,
-     * runs migration, then tries to open with Room. The schema must match exactly
-     * what Room expects for v7.
+     * This catches what the column checks above miss: default value format, index names and
+     * foreign key differences. Room compares columns by name, so column order doesn't matter. A
+     * mismatch throws `IllegalStateException` naming the table that failed.
      */
     @Test
     fun `migration 6 to 7 produces Room-compatible schema`() {
@@ -323,7 +307,7 @@ class MigrationGoldenTest {
         rawDb.insert("events", null, eventValues)
         rawDb.close()
 
-        // Now open with Room - this will run migration 6→7 and validate
+        // Opening with Room runs every migration from 6 and validates the schema
         val roomDb = Room.databaseBuilder(
             RuntimeEnvironment.getApplication(),
             KashCalDatabase::class.java,
@@ -333,8 +317,7 @@ class MigrationGoldenTest {
             .build()
 
         try {
-            // Force Room to open and validate the database
-            // This will throw IllegalStateException if schema doesn't match
+            // The first query opens the database; a schema mismatch throws IllegalStateException
             kotlinx.coroutines.runBlocking {
                 val events = roomDb.eventsDao().getByUid("room-compat-test")
 
@@ -349,8 +332,7 @@ class MigrationGoldenTest {
     }
 
     /**
-     * Create COMPLETE v6 schema matching exported schema exactly.
-     * This includes all tables, indices, triggers, and Room metadata.
+     * Creates the exported v6 schema's tables, indexes and FTS triggers, plus room_master_table.
      */
     private fun createCompleteSchemaV6(db: android.database.sqlite.SQLiteDatabase) {
         // Room master table
@@ -421,7 +403,8 @@ class MigrationGoldenTest {
     // ==================== Helper Functions ====================
 
     /**
-     * Create schema at version 6 (before migration 6→7).
+     * Creates the v6 accounts, calendars and events tables, plus the account and calendar the
+     * events reference.
      */
     private fun createSchemaV6(db: SupportSQLiteDatabase) {
         // Accounts table
@@ -520,9 +503,7 @@ class MigrationGoldenTest {
         })
     }
 
-    /**
-     * Insert an event at schema version 6 (before migration).
-     */
+    /** Inserts an event into the v6 events table in calendar 1. */
     private fun insertEventV6(uid: String, title: String): Long {
         val values = ContentValues().apply {
             put("uid", uid)

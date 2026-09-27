@@ -21,8 +21,8 @@ object RelativeDateRule : ParseRule {
             }
 
             if (keyword == "weekend") {
-                // "every weekend" is a recurrence, not a one-off — leave it for
-                // RecurrenceRule (which runs after this rule).
+                // "every weekend" is a recurrence; RecurrenceRule, which runs after this
+                // rule, takes it.
                 if (precededByEvery(tokens, index, context)) continue
                 if (handleWeekend(tokens, index, context)) return
                 continue
@@ -45,10 +45,10 @@ object RelativeDateRule : ParseRule {
     }
 
     /**
-     * Resolve a "weekend" reference to Saturday, honoring a preceding NEXT / THIS
-     * modifier and an "on (the)" lead-in. Weekend is anchored on Saturday
-     * regardless of the first-day-of-week setting, matching the app's fixed
-     * Saturday+Sunday weekend definition.
+     * Resolves "weekend" to the coming Saturday, a week later after "next", and consumes a
+     * preceding "next" or "this" and an "on" or "on the" lead-in. The weekend starts on
+     * Saturday whatever the first-day-of-week setting, matching the app's fixed Saturday and
+     * Sunday weekend.
      */
     private fun handleWeekend(tokens: List<Token>, index: Int, context: ParseContext): Boolean {
         val refDate = context.reference.toLocalDate()
@@ -67,14 +67,14 @@ object RelativeDateRule : ParseRule {
         return true
     }
 
-    /** Coming Saturday: today if it's Saturday, otherwise roll forward (never backward). */
+    /** Returns today if it is Saturday, else the next Saturday; never a past date. */
     private fun comingSaturday(refDate: LocalDate): LocalDate {
         val diff = DayOfWeek.SATURDAY.value - refDate.dayOfWeek.value
         val daysToAdd = if (diff < 0) diff + 7 else diff
         return refDate.plusDays(daysToAdd.toLong())
     }
 
-    /** Look for an unconsumed NEXT/THIS keyword immediately before [index]. */
+    /** Returns the unconsumed NEXT or THIS keyword right before [index] and its index, or null. */
     private fun findModifier(tokens: List<Token>, index: Int, context: ParseContext): Pair<String, Int>? {
         if (index == 0) return null
         val prevIndex = index - 1
@@ -97,10 +97,10 @@ object RelativeDateRule : ParseRule {
         return prev.type == TokenType.KEYWORD && prev.value == "EVERY"
     }
 
-    /** Consume a preceding "on" and an optional "the" ("on the weekend"). */
+    /** Consumes a preceding "on" and an optional "the" between it and the weekend. */
     private fun consumePrecedingOnThe(tokens: List<Token>, index: Int, context: ParseContext) {
         var cursor = index - 1
-        // Skip an already-consumed modifier slot.
+        // Skip consumed tokens, such as the modifier.
         while (cursor >= 0 && context.isConsumed(cursor)) cursor--
         if (cursor < 0) return
         val maybeThe = tokens[cursor]

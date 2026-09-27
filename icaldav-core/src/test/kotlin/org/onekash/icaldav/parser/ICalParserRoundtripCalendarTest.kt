@@ -19,14 +19,12 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Round-trip tests for the calendar-level parse -> generate -> parse cycle.
+ * Tests that each calendar-level property the parser reads comes back equal after
+ * generate(ICalCalendar) and re-parse, along with component counts and the NAME over
+ * X-WR-CALNAME preference.
  *
- * For each calendar-level property the parser populates, verify that emitting
- * it through generate(ICalCalendar) and re-parsing yields an equal value.
- *
- * IMAGE round-trip is not asserted here because ICalParser.parse does not
- * currently populate ICalCalendar.image (parser gap, tracked separately).
- * Generation of IMAGE is verified in ICalGeneratorCalendarTest.
+ * IMAGE isn't round-tripped: ICalParser.parse doesn't read the calendar's IMAGE into
+ * ICalCalendar.image. `ICalGeneratorCalendarTest` covers generating it.
  */
 @DisplayName("ICalParser + ICalGenerator calendar-level round-trip")
 class ICalParserRoundtripCalendarTest {

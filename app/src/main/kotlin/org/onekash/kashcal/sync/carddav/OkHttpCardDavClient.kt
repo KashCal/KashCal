@@ -12,9 +12,13 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.onekash.kashcal.data.contacts.MAX_PHOTO_SIZE_BYTES
+import org.onekash.kashcal.network.DavMultistatus
+import org.onekash.kashcal.network.DavTransportRefusedException
 import org.onekash.kashcal.network.ResponseTooLargeException
 import org.onekash.kashcal.network.readBoundedBody
 import org.onekash.kashcal.network.readBoundedBytes
+import org.onekash.kashcal.network.wellKnownEndpoint
+import org.onekash.kashcal.network.withoutDavTransportGuard
 import org.onekash.kashcal.sync.carddav.model.CardDavAddressBook
 import org.onekash.kashcal.sync.carddav.model.CardDavContactData
 import org.onekash.kashcal.sync.carddav.model.ContactDeleteResult
@@ -34,23 +38,21 @@ import java.util.TimeZone
 import javax.net.ssl.SSLHandshakeException
 
 /**
- * Resolves a URL's registrable (public-suffix + 1) domain, or null when it has
- * none (a bare IP or a public-suffix host) OR the public-suffix data is
- * unavailable.
+ * Resolves a URL's registrable (public-suffix + 1) domain, or null when it has none (a bare IP
+ * or a public-suffix host) or the public-suffix data is unavailable.
  */
 typealias RegistrableDomainResolver = (HttpUrl) -> String?
 
 /**
- * Production registrable-domain resolver, backed by OkHttp's public-suffix
- * database ([okhttp3.HttpUrl.topPrivateDomain]).
+ * Resolves registrable domains from OkHttp's public-suffix database
+ * ([okhttp3.HttpUrl.topPrivateDomain]); the production [RegistrableDomainResolver].
  *
- * Fails closed: on the `okhttp-android` artifact this app resolves,
- * `topPrivateDomain()` loads its public-suffix list from an Android asset via
- * app-startup — present on device, but ABSENT in a JVM unit-test worker, where
- * the call throws `IllegalStateException`. Any such failure is mapped to null so
- * [shouldAttachCredentials] refuses a cross-host fetch rather than crashing the
- * sync pass — exact-host photo fetches still succeed. On device the asset loads,
- * so this catch is a safety net, not the normal path.
+ * Fails closed. On the `okhttp-android` artifact this app resolves, `topPrivateDomain()` loads
+ * its public-suffix list from an Android asset via app-startup: present on device, absent in a
+ * JVM unit-test worker, where the call throws `IllegalStateException`. Any failure maps to null
+ * so [shouldAttachCredentials] refuses a cross-host fetch rather than crashing the sync pass;
+ * exact-host photo fetches still succeed. On device the asset loads, so this catch is a safety
+ * net.
  */
 val DefaultRegistrableDomainResolver: RegistrableDomainResolver = { url ->
     try {
@@ -61,25 +63,21 @@ val DefaultRegistrableDomainResolver: RegistrableDomainResolver = { url ->
 }
 
 /**
- * Whether the account credentials baked into the CardDAV client may be sent to
- * [photoUrl], given the client's CardDAV [endpointUrl]. True only when both URLs
+ * Returns whether the account credentials baked into the CardDAV client may be sent to
+ * [photoUrl], given the client's CardDAV [endpointUrl]: true only when the hosts are equal or
  * resolve to the same registrable (public-suffix + 1) domain.
  *
- * A `PHOTO` URL is server-controlled, so this is a credential-leak guard: iCloud
- * serves photos from `gateway.icloud.com` while the CardDAV endpoint is on
- * `pNN-contacts.icloud.com` — different hosts, same registrable `icloud.com`, so
- * permitted. A look-alike (`evil-icloud.com`) or suffix trick
- * (`icloud.com.attacker.example`) resolves to a different registrable domain and
- * is refused. Registrable domains come from [registrableDomainOf] (the
- * public-suffix-backed [DefaultRegistrableDomainResolver] in production); a
- * resolver result of null (bare IP / public-suffix host / unavailable list)
- * refuses unless the hosts are already exactly equal. A malformed URL on either
- * side is refused.
+ * A `PHOTO` URL is server-controlled, so this guards against credential leaks. iCloud serves
+ * photos from `gateway.icloud.com` while its CardDAV hosts are `contacts.icloud.com` and
+ * `pNN-contacts.icloud.com`: different hosts, same registrable `icloud.com`, so permitted. A
+ * look-alike (`evil-icloud.com`) or suffix trick (`icloud.com.attacker.example`) resolves to a
+ * different registrable domain and is refused. A null from [registrableDomainOf] (bare IP,
+ * public-suffix host, unavailable list) refuses unless the hosts are equal. A malformed URL on
+ * either side is refused.
  *
- * A scheme *downgrade* is always refused: an https endpoint's credentials must
- * never ride an http photo GET (cleartext + trivially MITM'd), even to the same
- * registrable domain. A genuinely-http endpoint fetching an http photo (local
- * test servers) is still permitted, since nothing is being downgraded.
+ * An https to http downgrade is always refused: an https endpoint's credentials must never
+ * ride a cleartext photo GET, even to the same registrable domain. An http endpoint fetching
+ * an http photo (local test servers) is permitted, since nothing is downgraded.
  */
 fun shouldAttachCredentials(
     endpointUrl: String,
@@ -88,11 +86,10 @@ fun shouldAttachCredentials(
 ): Boolean {
     val endpoint = endpointUrl.toHttpUrlOrNull() ?: return false
     val photo = photoUrl.toHttpUrlOrNull() ?: return false
-    // Refuse an https -> http downgrade: credentials from a secure endpoint must
-    // not be sent over cleartext, regardless of host/domain agreement below.
+    // Refuse an https -> http downgrade whatever the host or domain agreement below.
     if (endpoint.isHttps && !photo.isHttps) return false
-    // Exact host match always qualifies (covers IP hosts and public-suffix hosts
-    // that have no registrable domain, and the case where the list is unavailable).
+    // An exact host match always qualifies: it covers IP and public-suffix hosts with no
+    // registrable domain, and an unavailable list.
     if (endpoint.host.equals(photo.host, ignoreCase = true)) return true
     val endpointDomain = registrableDomainOf(endpoint) ?: return false
     val photoDomain = registrableDomainOf(photo) ?: return false
@@ -100,43 +97,38 @@ fun shouldAttachCredentials(
 }
 
 /**
- * Longest UID accepted as a resource-name segment before falling back to a random
- * name. Well under any server's path-length limit and long enough for every real
- * UID shape (a UUID is 36 chars).
+ * Longest UID used as a resource-name segment before falling back to a random name. Well under
+ * any server's path-length limit and long enough for real UID shapes (a UUID is 36 chars).
  */
 private const val MAX_RESOURCE_NAME_UID_LENGTH = 200
 
 /**
- * Characters permitted in a UID used verbatim as a `.vcf` resource-name segment:
- * the RFC 3986 "unreserved" set minus `~`. Conservative on purpose — anything
- * outside this set (slash, space, `%`, `?`, `#`, `:`, `@`, `&`, `=`, `+`, …) could
- * change how the server parses the path, so such a UID is not used verbatim.
+ * Characters permitted in a UID used verbatim as a `.vcf` resource-name segment: the RFC 3986
+ * "unreserved" set minus `~`. Anything else (slash, space, `%`, `?`, `#`, `:`, `@`, `&`, `=`,
+ * `+`, …) could change how the server parses the path, so such a UID isn't used verbatim.
  */
 private val SAFE_RESOURCE_NAME_UID = Regex("[A-Za-z0-9._-]+")
 
 /**
- * Name the resource for a contact whose vCard UID is [uid].
+ * Names the resource for a contact whose vCard UID is [uid].
  *
- * When [uid] is a safe URL path segment we name the file `<uid>.vcf`. This is the
- * biased-toward default: Zoho rejects arbitrary resource names with a misleading
- * 401 (looks like an auth failure but is really name-policy), so a stable
- * UID-derived name keeps writes working there. When [uid] would not be a safe
- * segment — empty/blank, over-length, `.`/`..`, or containing any character
- * outside [SAFE_RESOURCE_NAME_UID] — we fall back to a random `UUID.vcf` name,
- * which is always well-formed and needs no percent-escaping.
+ * A [uid] that is a safe path segment gives `<uid>.vcf`. Zoho rejects arbitrary resource names
+ * with a misleading 401 (a name-policy refusal that looks like an auth failure), so a stable
+ * UID-derived name keeps writes working there. A [uid] that isn't safe (blank, over
+ * [MAX_RESOURCE_NAME_UID_LENGTH], `.` or `..`, or with a character outside
+ * [SAFE_RESOURCE_NAME_UID]) gets a random `UUID.vcf`, which needs no percent-escaping.
  *
- * A device-created contact carries no UID of its own (RFC 6350 §6.7.6 gives UID
- * cardinality `*1`), so its caller synthesizes a globally-unique UID and persists it
- * BEFORE the first PUT, then passes that here — the resource is named by a value that
- * is unique across every device on the account, so two devices can never collide on a
- * name the way a per-device RawContact `_ID` would.
+ * A device-created contact has no UID of its own (RFC 6350 §6.7.6 gives UID cardinality `*1`),
+ * so the caller synthesizes a globally unique UID and persists it before the first PUT. Two
+ * devices on the account then can't collide on one name the way a per-device RawContact `_ID`
+ * would.
  */
 fun contactResourceName(uid: String): String {
     safeResourceSegment(uid)?.let { return "$it.vcf" }
     return "${java.util.UUID.randomUUID()}.vcf"
 }
 
-/** The trimmed [segment] iff it is safe to use verbatim as a `.vcf` resource-name stem, else null. */
+/** Returns the trimmed [segment] if it is safe as a verbatim `.vcf` resource-name stem, or null. */
 private fun safeResourceSegment(segment: String): String? {
     val trimmed = segment.trim()
     val safe = trimmed.isNotEmpty() &&
@@ -148,19 +140,16 @@ private fun safeResourceSegment(segment: String): String? {
 }
 
 /**
- * OkHttp-based CardDAV (RFC 6352) client — read path only.
+ * Reads and writes contacts on a CardDAV (RFC 6352) server over OkHttp.
  *
- * A standalone sibling of `OkHttpCalDavClient` living entirely inside
- * `sync/carddav/`. It mirrors that client's HTTP plumbing — retry/backoff,
- * response mapping, well-known redirect cleaning, base-host derivation — with
- * CardDAV XML request bodies, but borrows no CalDAV *client* symbol: the
- * duplicated generic WebDAV verbs are by design (no shared `WebDavClient` base
- * is extracted). It reuses the generic [CalDavResult] envelope,
- * [readBoundedBody], and the [CardDavQuirks] seam (which in turn delegates
- * parsing to the shared multistatus skeleton).
+ * A standalone sibling of `OkHttpCalDavClient` inside `sync/carddav/`. It has the same HTTP
+ * plumbing (retry and backoff, response mapping, well-known redirect cleaning, base-host
+ * derivation) with CardDAV request bodies, but borrows no CalDAV client symbol
+ * (`CardDavCalDavIsolationTest`); the duplicated WebDAV verbs are by design. It reuses the
+ * generic [CalDavResult] envelope, [readBoundedBody], and the [CardDavQuirks] seam for parsing.
  *
- * The [httpClient] is pre-authenticated by [CardDavClientFactory] (credentials
- * baked into its interceptor chain), so this class holds no credentials itself.
+ * [CardDavClientFactory] bakes the credentials into [httpClient]'s interceptor chain, so this
+ * class holds none itself.
  */
 class OkHttpCardDavClient(
     private val quirks: CardDavQuirks,
@@ -168,16 +157,13 @@ class OkHttpCardDavClient(
 ) : CardDavClient {
 
     /**
-     * A redirect-disabled derivative of [httpClient] used only for the photo GET.
-     * It shares the same authenticated interceptor chain and connection pool, but
-     * refuses to follow 30x hops so server-controlled photo URLs can't bounce the
-     * account credentials to a foreign host (see [fetchPhoto]).
+     * A copy of [httpClient] for the photo GET only, with the same authenticated interceptor
+     * chain and connection pool but no redirect following, so a server-controlled photo URL
+     * can't bounce the account credentials to a foreign host (see [fetchPhoto]). The DAV
+     * transport guard is removed too, since it would follow the redirect itself.
      */
     private val photoHttpClient: OkHttpClient by lazy {
-        httpClient.newBuilder()
-            .followRedirects(false)
-            .followSslRedirects(false)
-            .build()
+        httpClient.withoutDavTransportGuard()
     }
 
     companion object {
@@ -205,10 +191,9 @@ class OkHttpCardDavClient(
         """.trimIndent()
 
         /**
-         * Escape a server-supplied value (sync-token, href) before interpolating
-         * it into request XML. The parser XML-decodes these on the way in, so a
-         * token/href containing `&`, `<`, or `>` would otherwise produce malformed
-         * request XML the server rejects with 400, breaking the round-trip.
+         * Escapes a server-supplied value (sync-token, href) for request XML. The parser
+         * XML-decodes these on the way in, so an unescaped `&`, `<` or `>` would produce
+         * malformed XML the server rejects with 400.
          */
         private fun escapeXmlText(value: String): String =
             value.replace("&", "&amp;")
@@ -216,9 +201,8 @@ class OkHttpCardDavClient(
                 .replace(">", "&gt;")
 
         /**
-         * True only for raster image content types the Contacts Photo column can
-         * render. Excludes `image/svg+xml` (a vector XML document, not a bitmap)
-         * even though it carries the `image/` prefix.
+         * Returns true only for raster image types the Contacts Photo column can render.
+         * `image/svg+xml` has the `image/` prefix but is a vector XML document, so it's excluded.
          */
         private fun isRasterImageContentType(contentType: String): Boolean {
             val bare = contentType.substringBefore(';').trim().lowercase()
@@ -232,7 +216,7 @@ class OkHttpCardDavClient(
         withContext(Dispatchers.IO) {
             val baseHost = extractBaseHost(serverUrl)
             val wellKnownUrl = "$baseHost/.well-known/carddav"
-            // Capture original scheme before any redirect (reverse proxy may change it).
+            // Captured before any redirect, which a reverse proxy may send to another scheme.
             val originalScheme = baseHost.substringBefore("://")
             Log.d(TAG, "Trying well-known discovery: $wellKnownUrl")
 
@@ -249,7 +233,7 @@ class OkHttpCardDavClient(
                     when {
                         resp.isSuccessful || resp.code == 207 || resp.code == 401 || resp.code == 403 -> {
                             if (finalUrl != wellKnownUrl && !finalUrl.contains("/.well-known/")) {
-                                CalDavResult.success(cleanRedirectUrl(finalUrl, originalScheme))
+                                CalDavResult.success(wellKnownEndpoint(finalUrl, originalScheme))
                             } else {
                                 CalDavResult.success(serverUrl)
                             }
@@ -257,25 +241,14 @@ class OkHttpCardDavClient(
                         else -> CalDavResult.success(serverUrl)
                     }
                 }
+            } catch (e: DavTransportRefusedException) {
+                // Not "no well-known here": the server sent us somewhere unsafe.
+                transportRefused(e)
             } catch (e: Exception) {
                 Log.w(TAG, "Well-known discovery failed: ${e.javaClass.simpleName}, using original URL")
                 CalDavResult.success(serverUrl)
             }
         }
-
-    /**
-     * Clean a well-known redirect URL for use as the CardDAV endpoint. Preserves
-     * the full path (the redirect target IS the service endpoint per RFC 6764)
-     * and trailing slash; strips only query/fragment; restores the original
-     * scheme when a reverse proxy rewrote it.
-     */
-    private fun cleanRedirectUrl(url: String, originalScheme: String? = null): String {
-        val cleanUrl = url.substringBefore("?").substringBefore("#")
-        if (originalScheme == null) return cleanUrl
-        val uri = try { java.net.URI(cleanUrl) } catch (_: Exception) { return cleanUrl }
-        if (uri.scheme == originalScheme) return cleanUrl
-        return cleanUrl.replaceFirst(Regex("^\\w+://"), "$originalScheme://")
-    }
 
     override suspend fun discoverPrincipal(serverUrl: String): CalDavResult<String> =
         withContext(Dispatchers.IO) {
@@ -350,9 +323,9 @@ class OkHttpCardDavClient(
                 .build()
 
             executeWithRetry(request) { responseBody ->
-                // Derive the base host from the HOME URL, not an account root: iCloud
-                // serves address books from a partition host (pNN-contacts.icloud.com)
-                // whose absolute hrefs must resolve against the home's host.
+                // Base host from the home URL, not an account root: iCloud serves address
+                // books from a partition host (pNN-contacts.icloud.com), and hrefs must
+                // resolve against the home's host.
                 val baseHost = extractBaseHost(addressBookHomeUrl)
                 val books = quirks.extractAddressBooks(responseBody).map { parsed ->
                     CardDavAddressBook(
@@ -440,8 +413,8 @@ class OkHttpCardDavClient(
 
         val request = Request.Builder()
             .url(addressBookUrl)
-            // RFC 6578 §3.2: sync-collection is defined only with Depth "0"; the
-            // body's <sync-level> controls scope.
+            // RFC 6578 §3.2: sync-collection is defined only with Depth "0"; the body's
+            // <sync-level> sets the scope.
             .method("REPORT", body.toRequestBody(XML_MEDIA_TYPE))
             .header("Depth", "0")
             .build()
@@ -454,6 +427,13 @@ class OkHttpCardDavClient(
 
             when {
                 responseCode == 207 || topLevel507 -> {
+                    // Both carry a multistatus (RFC 6578 section 3.6); a body that
+                    // isn't one says nothing about what changed.
+                    val reading = DavMultistatus.read(responseBody)
+                    reading.problem?.let { problem ->
+                        Log.w(TAG, "sync-collection: not a multistatus ($problem)")
+                        return@withContext CalDavResult.notMultistatus(problem)
+                    }
                     if (responseCode == 207 && quirks.isSyncTokenInvalid(207, responseBody)) {
                         return@withContext CalDavResult.error(403, "Sync token invalid", isRetryable = false)
                     }
@@ -461,26 +441,29 @@ class OkHttpCardDavClient(
                     val changed = syncData.changedItems.map { (href, etag) ->
                         ContactSyncItem(href = href, etag = etag)
                     }
-                    // Truncation can arrive two ways (RFC 6578 §3.6): a top-level HTTP
-                    // 507, or an in-body 507 <status> on the collection's <response>
-                    // inside a 207. Honor both so a large delta pages fully.
+                    // Truncation arrives two ways (RFC 6578 §3.6): a top-level HTTP 507, or an
+                    // in-body 507 <status> on the collection's <response> inside a 207. Both
+                    // count, so a large delta pages fully.
                     CalDavResult.success(
                         ContactSyncReport(
                             syncToken = syncData.syncToken,
                             changed = changed,
                             deleted = syncData.deletedHrefs,
-                            truncated = topLevel507 || syncData.truncated
+                            truncated = topLevel507 || syncData.truncated || reading.truncated
                         )
                     )
                 }
+                responseCode in 200..299 -> CalDavResult.notMultistatus("status $responseCode, not 207")
                 responseCode == 401 -> CalDavResult.authError("Authentication failed")
                 responseCode == 403 || responseCode == 410 -> {
-                    // In sync-collection context, 403/410 always means an expired sync
-                    // token (RFC 6578 §3.6). Not retryable — caller falls back to a full listing.
+                    // On a sync-collection REPORT, 403/410 always means an expired sync-token
+                    // (RFC 6578 §3.6). Not retryable: the caller falls back to a full listing.
                     CalDavResult.error(responseCode, "Sync token invalid", isRetryable = false)
                 }
                 else -> CalDavResult.error(responseCode, "sync-collection failed: $responseCode")
             }
+        } catch (e: DavTransportRefusedException) {
+            transportRefused(e)
         } catch (e: IOException) {
             CalDavResult.networkError("Network error: ${e.message}")
         }
@@ -489,9 +472,9 @@ class OkHttpCardDavClient(
     override suspend fun listAllContactHrefs(
         addressBookUrl: String
     ): CalDavResult<List<Pair<String, String?>>> = withContext(Dispatchers.IO) {
-        // PROPFIND Depth:1 lists all members with etags — the full-sync fallback.
-        // Request only <d:getetag/>: as on the CalDAV side, adding <d:resourcetype/>
-        // makes iCloud emit a per-member propstat-404 that bloats the response.
+        // PROPFIND Depth:1 lists every member with its etag: the full listing. Request only
+        // <d:getetag/>: as on the CalDAV side, adding <d:resourcetype/> makes iCloud emit a
+        // per-member propstat-404 that bloats the response.
         val body = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:propfind xmlns:d="DAV:">
@@ -507,19 +490,19 @@ class OkHttpCardDavClient(
             .header("Depth", "1")
             .build()
 
-        executeWithRetry(request) { responseBody ->
+        // rejectTruncated: an in-body 507 or a DAV:number-of-matches-within-limits
+        // error (RFC 6578 section 3.6) on this listing is caught before parsing.
+        executeWithRetry(request, rejectTruncated = true) { responseBody ->
             val data = quirks.extractSyncCollectionData(responseBody)
             if (data.truncated) {
-                // RFC 6578 §3.6: the server marked this listing truncated with an
-                // in-body 507 (an otherwise-207 multistatus). Returning the partial
-                // member set as Success would let the caller's orphan sweep delete
-                // every contact truncated off the page — the user's own synced
-                // contacts vanishing. Surface it as a retryable failure so the book
-                // is counted failed and the sweep is disabled, mirroring the delta
-                // path's truncation discipline.
+                // RFC 6578 §3.6: an in-body 507 in an otherwise-207 multistatus marks the
+                // listing truncated. rejectTruncated normally catches it first. Returning the
+                // partial member set as Success would let the orphan sweep delete every
+                // contact cut off the page, so it's a retryable failure: the book counts as
+                // failed and the sweep is skipped.
                 CalDavResult.error(507, "Full-listing PROPFIND truncated", isRetryable = true)
             } else {
-                // The changed-items split skips the collection self-row via trailing-slash.
+                // The changed-items split skips the collection self-row by its trailing slash.
                 CalDavResult.success(data.changedItems)
             }
         }
@@ -535,19 +518,18 @@ class OkHttpCardDavClient(
         }
 
         // Drop the collection self-href. iCloud's sync-collection REPORT returns the
-        // collection itself without a trailing slash and with no resourcetype, so the
-        // shared parser's trailing-slash / resourcetype self-row filter misses it; a
-        // multiget that includes a non-contact collection href gets a 400 for the
-        // WHOLE batch, so filter here where the collection URL is known.
+        // collection itself without a trailing slash or resourcetype, so the shared
+        // parser's self-row filter misses it, and a multiget that includes the collection
+        // href gets a 400 for the whole batch. Filter here, where the collection URL is known.
         val collectionPath = pathOf(addressBookUrl).trimEnd('/')
         val memberHrefs = hrefs.filter { pathOf(it).trimEnd('/') != collectionPath }
         if (memberHrefs.isEmpty()) {
             return@withContext CalDavResult.success(emptyList())
         }
 
-        // Build without trimIndent(): the href lines are interpolated flush-left,
-        // which would leave leading whitespace before <?xml and produce invalid XML
-        // that iCloud rejects with 400 (mirrors the CalDAV multiget body builder).
+        // Built without trimIndent(): the interpolated href lines would sit flush-left, leaving
+        // whitespace before <?xml, which is invalid XML iCloud rejects with 400. The CalDAV
+        // multiget body is built the same way.
         val body = buildString {
             appendLine("""<?xml version="1.0" encoding="utf-8"?>""")
             appendLine("""<card:addressbook-multiget xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">""")
@@ -564,9 +546,8 @@ class OkHttpCardDavClient(
         val request = Request.Builder()
             .url(addressBookUrl)
             .method("REPORT", body.toRequestBody(XML_MEDIA_TYPE))
-            // RFC 6352 §8.7: addressbook-multiget targets resources named by <href>
-            // in the body, so the REPORT MUST be Depth: 0. (The PROPFIND listing is
-            // Depth: 1 to enumerate members; only this by-href fetch is Depth: 0.)
+            // RFC 6352 §8.7: addressbook-multiget targets the resources named by <href> in the
+            // body, so the REPORT must be Depth: 0. The PROPFIND listing is Depth: 1.
             .header("Depth", "0")
             .build()
 
@@ -585,9 +566,8 @@ class OkHttpCardDavClient(
 
     override suspend fun fetchPhoto(photoUrl: String): CalDavResult<PhotoBytes> =
         withContext(Dispatchers.IO) {
-            // Credential-leak guard: the shared client sends preemptive Basic and
-            // computes Digest on a 401, so refuse a foreign host outright — issue
-            // no request at all rather than trusting header suppression.
+            // The shared client sends preemptive Basic and computes Digest on a 401, so a
+            // foreign host gets no request at all; header suppression isn't trusted.
             if (!shouldAttachCredentials(quirks.baseUrl, photoUrl)) {
                 Log.w(TAG, "Refusing photo fetch to a foreign host (credential-leak guard)")
                 return@withContext CalDavResult.error(
@@ -597,13 +577,12 @@ class OkHttpCardDavClient(
 
             val request = Request.Builder().url(photoUrl).get().build()
             try {
-                // Never follow redirects on the photo GET. The shared client
-                // re-attaches preemptive Basic auth on every network request, and
-                // OkHttp strips Authorization only on a cross-host hop — so a
-                // same-host photo URL that 302-redirects to a foreign host would
-                // leak the account credentials there. The initial-host guard above
-                // can't see the redirect target, so refuse to follow at all; the
-                // characterized gateways serve the image 200 directly (no redirect).
+                // Never follow redirects on the photo GET. The shared client re-attaches
+                // preemptive Basic auth on every network request, and OkHttp strips
+                // Authorization only on a cross-host hop, so a same-host photo URL that
+                // 302-redirects to a foreign host would leak the account credentials there.
+                // The host guard above can't see the redirect target. The characterized
+                // gateways serve the image with a direct 200.
                 photoHttpClient.newCall(request).execute().use { response ->
                     when {
                         response.isSuccessful -> {
@@ -614,10 +593,9 @@ class OkHttpCardDavClient(
                             }
                             val bytes = response.readBoundedBytes(MAX_PHOTO_SIZE_BYTES)
                             if (bytes.isEmpty()) {
-                                // A 0-byte 200 reads as a transient truncation/glitch,
-                                // not an authoritative "no photo" — retryable, so the
-                                // pending flag is kept and a later sync tries again
-                                // (an empty blob would otherwise pin a blank photo).
+                                // A 0-byte 200 is a transient glitch, not "no photo": retryable,
+                                // so the pending flag is kept and a later sync tries again.
+                                // Writing the empty blob would pin a blank photo.
                                 Log.w(TAG, "Photo fetch returned an empty body; rejecting")
                                 return@use CalDavResult.error(
                                     response.code, "Empty image body", isRetryable = true
@@ -625,22 +603,21 @@ class OkHttpCardDavClient(
                             }
                             CalDavResult.success(PhotoBytes(bytes = bytes, contentType = contentType))
                         }
-                        // A genuine credential rotation fails the CardDAV re-read
-                        // (same account creds) before this GET is ever reached, so a
-                        // 401 seen here is a transient photo-gateway rejection, not a
-                        // dead credential. Retryable, and keep code 401 so isAuthError()
-                        // still recognizes it. Clearing the flag would lose the photo
-                        // permanently — the gateway URL is stable, so it never self-heals.
+                        // A credential rotation fails the CardDAV read (same account
+                        // credentials) before this GET is reached, so a 401 here is a
+                        // transient photo-gateway rejection. Retryable, with code 401 kept so
+                        // isAuthError() still recognizes it. Clearing the flag would lose the
+                        // photo permanently: the gateway URL stays the same across a photo edit,
+                        // so the vCard doesn't change and the flag never comes back.
                         response.code == 401 -> CalDavResult.error(
                             401, "Photo fetch unauthorized", isRetryable = true
                         )
                         response.code == 404 -> CalDavResult.notFoundError("Photo not found")
-                        // Transient statuses stay retryable so the contact is left
-                        // pending for a later sync: 5xx (server-side), 429 (throttled —
-                        // the photo GET has no Retry-After backoff of its own), 408
-                        // (request timeout). Any other unexpected code (e.g. 403, 410)
-                        // is an authoritative refusal for this URL: permanent, so the
-                        // fetcher clears the flag rather than looping every sync.
+                        // Transient statuses stay retryable so the contact stays pending for a
+                        // later sync: 5xx, 429 (the photo GET has no Retry-After backoff of its
+                        // own) and 408. Any other code (e.g. 403, 410) is a refusal for this
+                        // URL: permanent, so the fetcher clears the flag rather than looping
+                        // every sync.
                         else -> CalDavResult.error(
                             response.code,
                             "Photo fetch failed: ${response.code}",
@@ -651,15 +628,14 @@ class OkHttpCardDavClient(
                     }
                 }
             } catch (e: ResponseTooLargeException) {
-                // The body itself is over the cap: retrying re-downloads the same
-                // oversized image forever, and it could never be written to the
-                // Contacts blob anyway. Non-retryable so the fetcher gives up and
-                // clears the pending flag (a smaller replacement re-arms it later).
+                // Over the cap: a retry re-downloads the same oversized image forever, and it
+                // could never be written to the Contacts blob. Non-retryable, so the fetcher
+                // clears the pending flag; a later change to the contact's vCard re-arms it.
                 Log.w(TAG, "Photo fetch rejected: body over the ${MAX_PHOTO_SIZE_BYTES / 1024}KB cap")
                 CalDavResult.error(0, "Photo body over size cap", isRetryable = false)
             } catch (e: IOException) {
-                // Transient transport failure (offline, reset, timeout) — retryable,
-                // leaves the photo pending for a later sync.
+                // Transient transport failure (offline, reset, timeout): retryable, so the
+                // photo stays pending for a later sync.
                 Log.w(TAG, "Photo fetch failed: ${e.javaClass.simpleName}")
                 CalDavResult.networkError("Photo fetch error: ${e.javaClass.simpleName}")
             }
@@ -667,25 +643,22 @@ class OkHttpCardDavClient(
 
     // ========== Writing ==========
 
-    // A write's Failed.isRetryable is ADVISORY for the caller, not a signal that
-    // this client will retry — it never does (see putContact). 5xx/429 mean the
-    // server rejected the request, so nothing landed and a caller may re-derive
-    // the resource state (re-pull for a fresh etag) and try again. A caller must
-    // NOT blindly re-send the same conditional write: if the original response was
-    // merely lost in transit, the retry's If-None-Match:*/If-Match would fail the
-    // precondition and misreport a real success.
+    // A write's Failed.isRetryable advises the caller; this client never retries a write
+    // (see putContact). 5xx/429 mean the server rejected the request, so nothing landed and
+    // a caller may re-derive the resource state (re-pull for a fresh etag) and try again. A
+    // caller must not blindly re-send the same conditional write: if the original response
+    // was lost in transit, the retry's If-None-Match:*/If-Match would fail the precondition
+    // and misreport a real success.
     private fun isRetryableWriteStatus(code: Int): Boolean =
         code in 500..599 || code == 429
 
-    // A stored etag must be placeable in an HTTP header value. OkHttp rejects any
-    // char outside HT / visible-ASCII (` `..`~`) — covering control chars
-    // and obs-text (%x80-FF) — by throwing IllegalArgumentException while building
-    // the request, which the IOException catch below would NOT catch. A server etag
-    // never carries such a char (an interior one would already break the ICS/HTTP
-    // parse upstream), but going wide across many servers we don't want a single
-    // malformed etag to throw and stall the account. When it happens the conditional
-    // header can't be expressed, so the precondition provably can't hold: the write
-    // verbs short-circuit to PreconditionFailed (server-wins on the next pull).
+    // A stored etag must fit in an HTTP header value. OkHttp rejects any char outside HT and
+    // visible ASCII (` `..`~`), so control chars and obs-text (%x80-FF), by throwing
+    // IllegalArgumentException while building the request, which the IOException catches
+    // don't catch. Server etags shouldn't carry such chars, but one malformed etag must not
+    // throw and stall the account. The conditional header can't be expressed, so the
+    // precondition can't hold: the write verbs return PreconditionFailed and the server wins
+    // on the next pull.
     private fun isHeaderSafe(value: String): Boolean =
         value.all { it == '\t' || it in ' '..'~' }
 
@@ -699,10 +672,10 @@ class OkHttpCardDavClient(
             .put(vcardBody.toRequestBody(VCARD_MEDIA_TYPE))
         when (precondition) {
             // RFC 7232 §3.2: "*" matches any current representation, so If-None-Match:*
-            // means "only if the resource does not already exist".
+            // means "only if the resource doesn't exist yet".
             is ContactPrecondition.IfAbsent -> builder.header("If-None-Match", "*")
-            // The stored etag is already normalized (unquoted); re-wrap in quotes
-            // for the header, matching the CalDAV update path.
+            // The stored etag is normalized (unquoted); quote it for the header, as the CalDAV
+            // update path does.
             is ContactPrecondition.IfMatch -> {
                 // Guard before OkHttp throws on an unusable etag (see isHeaderSafe).
                 if (!isHeaderSafe(precondition.etag)) return@withContext ContactUploadResult.PreconditionFailed
@@ -710,29 +683,29 @@ class OkHttpCardDavClient(
             }
         }
 
-        // Deliberately NOT routed through executeWithRetry: a blind retry of a
-        // conditional write is unsafe. If the first attempt succeeded but the
-        // response was lost, the retry's If-None-Match:*/If-Match would fail the
-        // precondition and we'd misreport a real success as PreconditionFailed.
+        // Not routed through executeWithRetry: if the first attempt succeeded but the response
+        // was lost, a retry's If-None-Match:*/If-Match would fail the precondition and
+        // misreport a real success as PreconditionFailed.
+        val request = builder.build()
         try {
-            httpClient.newCall(builder.build()).execute().use { response ->
+            httpClient.newCall(request).execute().use { response ->
                 when (response.code) {
-                    // 201 on create; 200/204 on update (a conditional update PUT may
-                    // answer 200 OK, so accept it on the shared verb — matching the
-                    // CalDAV update path this mirrors).
+                    // 201 on create; 200 or 204 on update. A conditional update PUT may
+                    // answer 200, which the CalDAV update path accepts too.
                     200, 201, 204 -> {
-                        // RFC 6352/4791: the server SHOULD return an ETag but MAY
-                        // omit it. A null etag is fine — the next pull reconciles.
+                        // RFC 6352/4791: the server should return an ETag but may omit it. A
+                        // null etag is fine; the next pull reconciles.
                         val etag = EtagUtils.normalizeEtag(response.header("ETag"))
-                        ContactUploadResult.Success(etag)
+                        // Where the server took it, when it redirected the PUT: the
+                        // caller stores that href instead of the one it asked for.
+                        val finalUrl = response.request.url.takeIf { it != request.url }?.toString()
+                        ContactUploadResult.Success(etag, finalUrl = finalUrl)
                     }
-                    // 412 is the conditional-header failure; 409 Conflict is folded
-                    // in as a precondition failure because some servers answer a
-                    // failed conditional write with 409 rather than 412. The
-                    // server-wins reconcile on the next pull absorbs either. (409
-                    // can also mean a missing parent collection per RFC 4918 §9.7.1,
-                    // which a pull won't fix; that can't arise here because the
-                    // collection URL comes from a just-discovered address book.)
+                    // 412 is the conditional-header failure. 409 counts as one too because
+                    // some servers answer a failed conditional write with 409; the server
+                    // wins on the next pull either way. 409 can also mean a missing parent
+                    // collection (RFC 4918 §9.7.1), which a pull won't fix, but that can't
+                    // arise here: the collection URL comes from a just-discovered address book.
                     412, 409 -> ContactUploadResult.PreconditionFailed
                     403 -> ContactUploadResult.PermissionDenied
                     404, 410 -> ContactUploadResult.Gone
@@ -743,6 +716,9 @@ class OkHttpCardDavClient(
                     )
                 }
             }
+        } catch (e: DavTransportRefusedException) {
+            // Retryable: the contact change waits for the server or network to be fixed.
+            CalDavResult.transportRefused(e.message.orEmpty()).let { ContactUploadResult.Failed(it.code, it.message, it.isRetryable) }
         } catch (e: IOException) {
             ContactUploadResult.Failed(0, "Network error: ${e.javaClass.simpleName}", isRetryable = true)
         }
@@ -774,15 +750,22 @@ class OkHttpCardDavClient(
                     )
                 }
             }
+        } catch (e: DavTransportRefusedException) {
+            CalDavResult.transportRefused(e.message.orEmpty()).let { ContactDeleteResult.Failed(it.code, it.message, it.isRetryable) }
         } catch (e: IOException) {
             ContactDeleteResult.Failed(0, "Network error: ${e.javaClass.simpleName}", isRetryable = true)
         }
     }
 
-    // ========== HTTP plumbing (mirrors OkHttpCalDavClient) ==========
+    // ========== HTTP plumbing (same as OkHttpCalDavClient) ==========
+
+    /** Maps a request the transport guard wouldn't send to [CalDavResult.transportRefused]. */
+    private fun transportRefused(e: DavTransportRefusedException): CalDavResult.Error =
+        CalDavResult.transportRefused(e.message.orEmpty())
 
     private suspend inline fun <T> executeWithRetry(
         request: Request,
+        rejectTruncated: Boolean = false,
         parser: (String) -> CalDavResult<T>
     ): CalDavResult<T> {
         var lastException: IOException? = null
@@ -793,7 +776,7 @@ class OkHttpCardDavClient(
             try {
                 val response = httpClient.newCall(request).execute()
                 val responseBody = response.readBoundedBody()
-                val result = processResponse(response, responseBody, parser)
+                val result = processResponse(response, responseBody, rejectTruncated, parser)
 
                 if (response.code == 429) {
                     val retryAfter = parseRetryAfterHeader(response)
@@ -819,6 +802,9 @@ class OkHttpCardDavClient(
                 }
 
                 return result
+            } catch (e: DavTransportRefusedException) {
+                // Deterministic: retrying in place would be refused the same way.
+                return transportRefused(e)
             } catch (e: SocketTimeoutException) {
                 Log.w(TAG, "Socket timeout on ${request.method} ${request.url}, retry ${attempt + 1}/$MAX_RETRIES")
                 lastException = e
@@ -856,10 +842,25 @@ class OkHttpCardDavClient(
     private inline fun <T> processResponse(
         response: Response,
         responseBody: String,
+        rejectTruncated: Boolean,
         parser: (String) -> CalDavResult<T>
     ): CalDavResult<T> {
         return when {
-            response.isSuccessful || response.code == 207 -> parser(responseBody)
+            // Every caller sends PROPFIND or REPORT, so only a 207 multistatus is an answer. A
+            // hotspot page or a reply cut short would read as an empty book, and an empty book
+            // lets the orphan sweep delete the user's contacts.
+            response.isSuccessful || response.code == 207 -> {
+                val reading = DavMultistatus.readReply(response.code, response.header("Content-Type"), responseBody)
+                when {
+                    reading.problem != null -> {
+                        Log.w(TAG, "${response.request.method}: not a multistatus (${reading.problem})")
+                        CalDavResult.notMultistatus(reading.problem)
+                    }
+                    rejectTruncated && reading.truncated ->
+                        CalDavResult.error(507, "Listing truncated by the server", isRetryable = true)
+                    else -> parser(responseBody)
+                }
+            }
             response.code == 401 -> CalDavResult.authError("Authentication failed")
             response.code == 403 -> {
                 if (quirks.isSyncTokenInvalid(403, responseBody)) {
@@ -906,10 +907,8 @@ class OkHttpCardDavClient(
     private fun extractBaseHost(url: String): String = baseHostOf(url)
 
     /**
-     * Path component of a URL or already-relative href. A bare path (the common
-     * href shape) is returned as-is; a full URL is reduced to its path so a
-     * self-href can be compared to the collection URL regardless of which form
-     * the server returned.
+     * Returns the path of a URL or relative href, or the input if it doesn't parse, so a
+     * self-href compares to the collection URL whichever form the server returned.
      */
     private fun pathOf(urlOrPath: String): String =
         try {

@@ -15,16 +15,13 @@ import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.ics.IcsRefreshWorker
 
 /**
- * Unit tests for [IcsRefreshScheduleReconciler].
+ * Tests [IcsRefreshScheduleReconciler], which derives the ICS refresh job's period from the feeds
+ * in the database. Feed mutations, backup restore and app start call it, so no mutation path
+ * arms the job itself.
  *
- * The reconciler is the single place that answers "what period should the ICS
- * refresh job have right now?", derived from the feeds actually in the database.
- * Every feed mutation and every app start drives it, which is what makes it
- * impossible for a mutation path to forget to arm the job.
- *
- * The DAO double is deliberately NOT relaxed. A relaxed mock returns an empty
- * list for `getEnabled()`, which is exactly the "cancel the job" branch, so a
- * test that had stopped exercising the real path would still pass.
+ * The DAO double is deliberately not relaxed: a relaxed mock returns an empty list for
+ * `getEnabled()`, the "cancel the job" branch, so a test that had stopped exercising the real
+ * path would still pass.
  */
 class IcsRefreshScheduleReconcilerTest {
 
@@ -73,8 +70,8 @@ class IcsRefreshScheduleReconcilerTest {
 
     @Test
     fun `shortest interval wins`() = runTest {
-        // One shared check pass serves every feed: the job wakes at the shortest
-        // interval and each feed's own due-check filters the rest out.
+        // One shared check pass serves every feed: the job wakes at the shortest interval and
+        // each feed's own due-check filters the rest out.
         givenFeeds(feed(1, intervalHours = 24), feed(2, intervalHours = 6))
 
         reconciler.reconcile()
@@ -95,8 +92,8 @@ class IcsRefreshScheduleReconcilerTest {
 
     @Test
     fun `every feed disabled cancels the job`() = runTest {
-        // This is also the "user deleted the last feed" path: nothing enabled
-        // remains, so the job should stop rather than wake forever for no one.
+        // Also the "user deleted the last feed" path: nothing enabled remains, so the job
+        // stops instead of waking forever for no one.
         givenFeeds(feed(1, intervalHours = 1, enabled = false), feed(2, intervalHours = 24, enabled = false))
 
         reconciler.reconcile()
@@ -116,8 +113,8 @@ class IcsRefreshScheduleReconcilerTest {
 
     @Test
     fun `reconcile is idempotent`() = runTest {
-        // Runs on every app start as well as every mutation, so repeat calls with
-        // unchanged data must ask for the same thing rather than churn.
+        // Runs on every app start and every mutation, so repeat calls with unchanged data
+        // must ask for the same thing.
         givenFeeds(feed(1, intervalHours = 6))
 
         reconciler.reconcile()
@@ -129,9 +126,8 @@ class IcsRefreshScheduleReconcilerTest {
 
     @Test
     fun `a nonsensical stored interval is floored at the minimum`() = runTest {
-        // Reachable without any UI bug: the backup importer coerces on the way in
-        // now, but a row written from a hand-edited or corrupt backup before it did
-        // still has 0 (or worse) in the column.
+        // Reachable without a UI bug: a row restored from a hand-edited or corrupt backup by
+        // an older importer, which didn't coerce the interval, can hold 0 or less.
         givenFeeds(feed(1, intervalHours = 0), feed(2, intervalHours = 24))
 
         reconciler.reconcile()
@@ -156,9 +152,9 @@ class IcsRefreshScheduleReconcilerTest {
 
     @Test
     fun `a failing scheduler does not propagate out of reconcile`() = runTest {
-        // Most callers are bare application-scope launches, and that scope has no
-        // exception handler, so a throw from here would kill the process on a
-        // recoverable failure (WorkManager writing its own database on a full disk).
+        // Most callers are bare application-scope launches with no exception handler, so a
+        // throw from here would kill the process on a recoverable failure, such as
+        // WorkManager writing its own database on a full disk.
         givenFeeds(feed(1, intervalHours = 6))
         scheduler.failWith = IllegalStateException("WorkManager unavailable")
 
@@ -179,10 +175,10 @@ class IcsRefreshScheduleReconcilerTest {
 
     @Test
     fun `cancellation is not swallowed`() = runTest {
-        // Best-effort is right for a real failure, but cancellation is not a failure.
-        // Restoring a backup reconciles from a viewModelScope the user can cancel by
-        // leaving the screen, and that path rethrows cancellation itself — swallowing
-        // it here would report the restore as finished with the schedule half-applied.
+        // Best-effort is right for a real failure, but cancellation isn't one. Restoring a
+        // backup reconciles from a viewModelScope the user can cancel by leaving the screen,
+        // and that path rethrows cancellation itself; swallowed here, the restore would be
+        // reported as finished with the schedule half-applied.
         givenFeeds(feed(1, intervalHours = 6))
         scheduler.failWith = CancellationException("caller cancelled")
 
@@ -196,10 +192,9 @@ class IcsRefreshScheduleReconcilerTest {
 
     @Test
     fun `concurrent reconciles are serialized`() = runTest {
-        // Mutations run on the application scope and app start reconciles too, so
-        // two passes can overlap. Read-decide-apply has to be one step, otherwise
-        // one pass can read "one feed enabled" while the other reads "none left"
-        // and the later-landing decision wins.
+        // Mutations and app start can overlap. Read-decide-apply has to be one step, or one
+        // pass can read "one feed enabled" while the other reads "none left" and the
+        // later-landing decision wins.
         givenFeeds(feed(1, intervalHours = 6))
         scheduler.duringEnsure = { yield(); yield() }
 

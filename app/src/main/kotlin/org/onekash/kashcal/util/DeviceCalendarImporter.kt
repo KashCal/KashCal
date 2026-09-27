@@ -6,21 +6,17 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import kotlin.coroutines.cancellation.CancellationException
 
 /**
- * Import parsed ICS events into a device calendar via CalendarProvider.
+ * Imports parsed ICS events into device calendar [calendarId] through
+ * [CalendarProviderRepository.createEvent], one event at a time.
  *
- * Maps Event entity fields to CalendarProviderRepository.createEvent params.
- * Failed events are skipped (continues to next).
+ * A recurring event is written with a DURATION and no end time. An event that fails, by a
+ * failed result or an exception, is skipped; cancellation still propagates.
  *
- * @param events List of events to import
- * @param calendarId Target device calendar ID
- * @param repo CalendarProviderRepository for writing
- * @param defaultTimedReminderMinutes The user's configured default for timed
- *   events (KashCalDataStore.defaultReminderMinutes). Applied when a parsed
- *   event has no reminders (no VALARM in the ICS file). Pass
- *   [KashCalDataStore.REMINDER_OFF] to skip default.
- * @param defaultAllDayReminderMinutes The user's configured default for
- *   all-day events. Same semantics.
- * @return Count of successfully imported events
+ * @param defaultTimedReminderMinutes the user's default for timed events
+ *   (`KashCalDataStore.defaultReminderMinutes`), applied when a parsed event has no reminders
+ *   (no VALARM in the ICS file). [KashCalDataStore.REMINDER_OFF] applies none.
+ * @param defaultAllDayReminderMinutes the same for all-day events
+ * @return how many events were created
  */
 suspend fun importEventsToDeviceCalendar(
     events: List<Event>,
@@ -43,9 +39,8 @@ suspend fun importEventsToDeviceCalendar(
             }
 
             val timezone = event.timezone ?: java.util.TimeZone.getDefault().id
-            // ICS file had VALARMs → preserve them. Otherwise apply the user's
-            // configured default (matches the EventCoordinator import path so
-            // device-calendar imports behave the same way).
+            // Parsed VALARMs are kept; otherwise the user's default applies, as on the
+            // EventCoordinator import path.
             val reminders = if (event.reminders != null) {
                 isoRemindersToMinutes(event.reminders)
             } else {
@@ -81,7 +76,6 @@ suspend fun importEventsToDeviceCalendar(
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
-            // Skip failed event, continue to next
         }
     }
 

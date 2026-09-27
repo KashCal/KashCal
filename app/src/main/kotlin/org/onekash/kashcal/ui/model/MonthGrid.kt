@@ -8,14 +8,13 @@ import java.time.temporal.WeekFields
 import java.util.Calendar
 
 /**
- * Pre-computed month grid for calendar display.
- * Always 6 rows x 7 columns (42 cells) for stable height during paging.
+ * Holds a month's day cells, always 6 rows of 7 (42 cells) so the height stays stable while
+ * paging.
  *
- * Shared between CalendarGrid (full-size month view) and future year overview (mini-months).
+ * Built for the month view, the year view's mini-months and the month widget.
  *
- * @property year Calendar year
  * @property month 0-indexed month (January = 0)
- * @property weeks 6 rows of 7 DayCell each
+ * @property weeks 6 rows of 7 [DayCell]
  */
 @Immutable
 data class MonthGrid(
@@ -23,25 +22,24 @@ data class MonthGrid(
     val month: Int,
     val weeks: List<List<DayCell>>,
 ) {
-    /**
-     * Position of a day cell within the month grid.
-     */
+    /** Tells whether a cell belongs to this month or pads it from a neighbouring one. */
     enum class DayPosition {
-        /** Day belongs to this month */
+        /** A day of this month. */
         MonthDate,
-        /** Padding day from previous month */
+        /** A padding day from the previous month. */
         InDate,
-        /** Padding day from next month */
+        /** A padding day from the next month. */
         OutDate,
     }
 
     /**
-     * A single cell in the month grid.
+     * Holds one cell of the grid.
      *
-     * @property dayOfMonth Day number (1-31). For InDate/OutDate, this is the actual day from the adjacent month.
-     * @property position Whether this cell is current month, previous month, or next month
-     * @property isWeekend True if this cell falls on Saturday or Sunday
-     * @property weekNumber Week-of-year number for this row (WeekFields-based)
+     * @property dayOfMonth the day number (1-31); for [DayPosition.InDate] and
+     *   [DayPosition.OutDate], the day in the adjacent month
+     * @property isWeekend true on Saturday or Sunday
+     * @property weekNumber the row's week of the week-based year, from
+     *   [DateTimeUtils.getLocaleWeekFields]
      */
     @Immutable
     data class DayCell(
@@ -52,8 +50,8 @@ data class MonthGrid(
     )
 
     /**
-     * Get the dayCode range (YYYYMMDD) covered by this grid,
-     * from the first cell (top-left, possibly InDate) to the last cell (bottom-right, possibly OutDate).
+     * Returns the dayCode (YYYYMMDD) range of the grid, from the top-left cell to the bottom-right
+     * one, padding days included.
      */
     fun toDayCodeRange(): Pair<Int, Int> {
         val firstCell = weeks.first().first()
@@ -65,35 +63,34 @@ data class MonthGrid(
 
     companion object {
         /**
-         * Compute a 6-row month grid (EndOfGrid style — uniform height).
+         * Builds the 6-row grid, padding the end with next-month days so every month has the
+         * same height.
          *
-         * @param year Calendar year
          * @param month 0-indexed month (January = 0, December = 11)
-         * @param firstDayOfWeek java.util.Calendar constant (1=Sun, 2=Mon, 7=Sat) or 0=system default
-         * @return MonthGrid with 6 rows x 7 columns = 42 cells
+         * @param firstDayOfWeek a java.util.Calendar constant (1=Sun, 2=Mon, 7=Sat) or 0 for the
+         *   locale default
          * @throws IllegalArgumentException if month is not in 0..11
          */
         fun compute(year: Int, month: Int, firstDayOfWeek: Int): MonthGrid {
             require(month in 0..11) { "Month must be 0-11, got $month" }
 
-            // Grid offset: how many InDate cells before day 1
+            // How many InDate cells come before day 1
             val cal = Calendar.getInstance().apply { set(year, month, 1) }
             val daysInMonth = cal.getActualMaximum(Calendar.DAY_OF_MONTH)
             val gridOffset = DateTimeUtils.getFirstDayOffset(cal, firstDayOfWeek)
 
-            // Previous month's day count (for InDate dayOfMonth values)
+            // The previous month's length, for InDate dayOfMonth values
             val prevCal = Calendar.getInstance().apply {
                 set(year, month, 1)
                 add(Calendar.MONTH, -1)
             }
             val prevMonthDays = prevCal.getActualMaximum(Calendar.DAY_OF_MONTH)
 
-            // Weekend detection by column position
+            // Weekend detection by column
             val orderedDays = DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeek)
 
             val weekFields = DateTimeUtils.getLocaleWeekFields(firstDayOfWeek)
 
-            // Build 6 rows x 7 columns
             val weeks = mutableListOf<List<DayCell>>()
             var dayCounter = 1
             var nextMonthDay = 1
@@ -140,7 +137,6 @@ data class MonthGrid(
                     row.add(cell)
                 }
 
-                // Compute week number for this row using a representative date
                 val weekNumber = computeRowWeekNumber(row, year, month, weekFields)
                 val rowWithWeekNum = row.map { it.copy(weekNumber = weekNumber) }
                 weeks.add(rowWithWeekNum)
@@ -150,11 +146,11 @@ data class MonthGrid(
         }
 
         /**
-         * Compute the week number for a row using a representative date.
+         * Returns a row's week number from a representative date.
          *
-         * For rows containing MonthDate cells, uses the first MonthDate date.
-         * For all-OutDate rows, uses the first OutDate date (next month).
-         * For all-InDate rows (shouldn't happen in practice), uses the first InDate date.
+         * A row with MonthDate cells uses its first one; an all-OutDate row uses its first cell
+         * (next month). An all-InDate row can't occur (day 1 is in the first row), but would use
+         * its first cell.
          */
         private fun computeRowWeekNumber(
             row: List<DayCell>,
@@ -162,7 +158,6 @@ data class MonthGrid(
             month: Int,
             weekFields: WeekFields,
         ): Int {
-            // Find a representative cell and its actual date
             val monthDateCell = row.firstOrNull { it.position == DayPosition.MonthDate }
             if (monthDateCell != null) {
                 val date = LocalDate.of(year, month + 1, monthDateCell.dayOfMonth)
@@ -177,7 +172,7 @@ data class MonthGrid(
                 return date.get(weekFields.weekOfWeekBasedYear())
             }
 
-            // All InDate (shouldn't happen, but handle gracefully)
+            // All InDate: can't occur, see the KDoc
             val inDateCell = row.first()
             val (prevYear, prevMonth1) = if (month == 0) (year - 1) to 12 else year to month
             val date = LocalDate.of(prevYear, prevMonth1, inDateCell.dayOfMonth)
@@ -185,15 +180,12 @@ data class MonthGrid(
         }
 
         /**
-         * Convert a DayCell to its dayCode (YYYYMMDD) given the grid's year and month.
+         * Returns a cell's dayCode (YYYYMMDD, for example 20260315).
          *
-         * Handles InDate (previous month) and OutDate (next month) boundary crossing,
-         * including year boundaries (e.g., Jan grid InDate → December of prev year).
+         * InDate cells map to the previous month and OutDate cells to the next, across year
+         * boundaries (a January grid's InDate cells are in December of the previous year).
          *
-         * @param cell The day cell from the grid
-         * @param gridYear The grid's year
-         * @param gridMonth The grid's 0-indexed month (January = 0)
-         * @return dayCode in YYYYMMDD format (e.g., 20260315)
+         * @param gridMonth the grid's 0-indexed month (January = 0)
          */
         fun computeDayCodeForCell(cell: DayCell, gridYear: Int, gridMonth: Int): Int {
             return when (cell.position) {
@@ -206,7 +198,7 @@ data class MonthGrid(
                     val (prevYear, prevMonth1) = if (gridMonth == 0) {
                         (gridYear - 1) to 12
                     } else {
-                        gridYear to gridMonth // gridMonth is 0-indexed, so gridMonth == 1-indexed prev month
+                        gridYear to gridMonth // 0-indexed gridMonth = 1-indexed prev
                     }
                     prevYear * 10000 + prevMonth1 * 100 + cell.dayOfMonth
                 }
@@ -215,7 +207,7 @@ data class MonthGrid(
                     val (nextYear, nextMonth1) = if (gridMonth == 11) {
                         (gridYear + 1) to 1
                     } else {
-                        gridYear to (gridMonth + 2) // gridMonth is 0-indexed, +2 gives 1-indexed next month
+                        gridYear to (gridMonth + 2) // 0-indexed, +2 = 1-indexed next
                     }
                     nextYear * 10000 + nextMonth1 * 100 + cell.dayOfMonth
                 }

@@ -10,9 +10,8 @@ data class BackupEnvelope(
     @SerialName("exported_at") val exportedAt: String,
     val preferences: Map<String, BackupPreferenceValue>,
     val subscriptions: List<BackupSubscription>,
-    // Additive field, defaulted so envelopes written before tags existed (and
-    // any that omit it) still parse. Only tags with a user-chosen color are
-    // carried; see CategoryDao.getColoredOnce.
+    // Defaulted so envelopes without the field still parse. Only tags with a user-chosen
+    // color are carried (`CategoryDao.getColoredOnce`).
     val categories: List<BackupCategory> = emptyList(),
 )
 

@@ -18,8 +18,8 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
 /**
- * Unit tests for [persistCalendarUserAddresses] — RFC 6638 §2.4.1 address-set
- * discovery, persisted non-fatally.
+ * Tests [persistCalendarUserAddresses]: RFC 6638 §2.4.1 calendar-user-address-set discovery,
+ * persisted without ever failing the sync. A failed request persists an empty list.
  */
 class CalendarUserAddressDiscoveryTest {
 
@@ -68,7 +68,7 @@ class CalendarUserAddressDiscoveryTest {
         coEvery { accountRepository.updateCalendarUserAddresses(any(), any()) } throws
             RuntimeException("disk full")
 
-        // Must NOT throw.
+        // Must not throw.
         persistCalendarUserAddresses(client, principalUrl, accountId, accountRepository, "TAG")
     }
 

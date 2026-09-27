@@ -130,10 +130,8 @@ class WeekWidgetFormatTest {
     }
 
     // ============ single-line contract (time column renders with maxLines=1) ============
-    // The widget time column is a fixed-width Text rendered single-line. These
-    // guard the invariant the layout depends on: the label is always a compact,
-    // newline-free token, so timed values, the continuation marker, and the
-    // all-day label all occupy exactly one line in the column.
+    // The widget time column is a fixed-width single-line Text, so every label it gets (timed
+    // values, the continuation marker, the all-day label) must be free of newlines.
 
     @Test
     fun `formatWidgetEventTime never contains a newline`() {

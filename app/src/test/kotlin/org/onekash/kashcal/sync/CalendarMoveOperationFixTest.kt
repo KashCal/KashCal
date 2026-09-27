@@ -26,21 +26,17 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for calendar move operation fix (v21.6.0).
+ * Tests the operations [EventWriter.moveEventToCalendar] queues for each kind of move:
+ * - Same account, SYNCED: one MOVE, which the push tries as a WebDAV MOVE before a
+ *   CREATE+DELETE
+ * - Cross account, SYNCED: a CREATE and a DELETE sharing a linkedMoveId; the DELETE isn't
+ *   ready while that CREATE is PENDING
+ * - Synced to local: a DELETE only, so the server copy goes
+ * - Local to synced: a CREATE only
+ * - Local to local, or to the same calendar: nothing
  *
- * This test suite verifies the fixes for two bugs:
- * 1. Synced → Local: Moving from iCloud to local calendar doesn't DELETE from server
- * 2. Cross-Account: Moving between accounts (iCloud → Nextcloud) fails to DELETE
- *
- * Solution: Hybrid approach with sourceCalendarId for DELETE filtering
- * - Same account: WebDAV MOVE (atomic)
- * - Cross account: CREATE + DELETE (independent operations)
- * - Synced → Local: DELETE only (with sourceCalendarId)
- * - Local → Synced: CREATE only
- *
- * Key fix: Add sourceCalendarId field to PendingOperation for DELETE filtering
- * during cross-account moves, since event.calendarId is updated to target
- * before push completes.
+ * A move sets event.calendarId to the target before the push runs, so the DELETE (and a MOVE
+ * in its DELETE phase) carries sourceCalendarId and is pushed with the source calendar.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -247,8 +243,7 @@ class CalendarMoveOperationFixTest {
 
     @Test
     fun `DELETE filters by sourceCalendarId when present`() = runTest {
-        // This test verifies that PushStrategy can filter DELETE operations
-        // by sourceCalendarId to run on the correct calendar's sync cycle
+        // PushStrategy pushes a DELETE with the calendar named by its sourceCalendarId
 
         // Create synced event and move to local (queues DELETE with sourceCalendarId)
         val event = createSyncedEvent(iCloudPersonalCalendarId, "https://caldav.icloud.com/123/personal/event.ics")
@@ -259,9 +254,7 @@ class CalendarMoveOperationFixTest {
         val deleteOp = ops.find { it.operation == PendingOperation.OPERATION_DELETE }
         assertNotNull("Should have DELETE operation", deleteOp)
 
-        // Verify filtering criteria
-        // After move, event.calendarId = localCalendarId (target)
-        // But DELETE should run on iCloudPersonalCalendarId (source) sync cycle
+        // After the move event.calendarId is the target, but the DELETE runs with the source
         val movedEvent = database.eventsDao().getById(event.id)
         assertEquals("Event calendarId should be target", localCalendarId, movedEvent?.calendarId)
         assertEquals("DELETE sourceCalendarId should be source", iCloudPersonalCalendarId, deleteOp!!.sourceCalendarId)
@@ -327,8 +320,8 @@ class CalendarMoveOperationFixTest {
 
     @Test
     fun `MOVE CREATE phase filters by targetCalendarId`() = runTest {
-        // After DELETE phase completes, MOVE advances to CREATE phase
-        // CREATE phase should filter by targetCalendarId
+        // When the server declines the WebDAV MOVE, the op advances to the CREATE phase, which
+        // is pushed with the target calendar
 
         val event = createSyncedEvent(iCloudPersonalCalendarId, "https://caldav.icloud.com/123/personal/event.ics")
 
@@ -555,11 +548,9 @@ class CalendarMoveOperationFixTest {
     }
 
     // ==================== Linked Operations Tests (v23.2.0) ====================
-    // TDD Pre-Tests: These tests should FAIL before implementation
 
     @Test
     fun `cross-account move queues linked CREATE and DELETE with same linkedMoveId`() = runTest {
-        // TDD Pre-Test: This should FAIL because linkedMoveId field doesn't exist yet
         val event = createSyncedEvent(iCloudPersonalCalendarId, "https://caldav.icloud.com/123/personal/event.ics")
 
         eventWriter.moveEventToCalendar(event.id, nextcloudCalendarId)
@@ -582,7 +573,7 @@ class CalendarMoveOperationFixTest {
 
     @Test
     fun `same-account MOVE does not use linkedMoveId`() = runTest {
-        // Regression test: same-account moves should NOT use linked CREATE+DELETE
+        // Same-account moves don't use a linked CREATE+DELETE
         val event = createSyncedEvent(iCloudPersonalCalendarId, "https://caldav.icloud.com/123/personal/event.ics")
 
         eventWriter.moveEventToCalendar(event.id, iCloudWorkCalendarId)
@@ -595,7 +586,7 @@ class CalendarMoveOperationFixTest {
 
     @Test
     fun `DELETE blocked while linked CREATE is pending`() = runTest {
-        // TDD Pre-Test: Guard query in getReadyOperations() should block DELETE
+        // The guard in getReadyOperations holds back a DELETE while its linked CREATE is pending
         val linkedId = "test-linked-id-${System.nanoTime()}"
         val now = System.currentTimeMillis()
 
@@ -695,7 +686,7 @@ class CalendarMoveOperationFixTest {
 
     @Test
     fun `deleteLinkedDelete removes DELETE with matching linkedMoveId`() = runTest {
-        // TDD Pre-Test: DAO method deleteLinkedDelete doesn't exist yet
+        // PushStrategy calls deleteLinkedDelete when the linked CREATE fails for good
         val linkedId = "test-linked-cleanup-${System.nanoTime()}"
         val now = System.currentTimeMillis()
 
@@ -720,7 +711,7 @@ class CalendarMoveOperationFixTest {
             )
         )
 
-        // Simulate CREATE permanent failure - should clean up linked DELETE
+        // Simulate the CREATE failing for good: the linked DELETE goes, so the source copy stays
         database.pendingOperationsDao().deleteLinkedDelete(linkedId)
 
         // Verify DELETE is removed

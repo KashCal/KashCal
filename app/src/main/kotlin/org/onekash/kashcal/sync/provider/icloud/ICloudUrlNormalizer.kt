@@ -1,36 +1,24 @@
 package org.onekash.kashcal.sync.provider.icloud
 
 /**
- * Normalizes iCloud CalDAV URLs from regional servers to canonical form.
+ * Normalizes iCloud CalDAV URLs from regional servers to the canonical host.
  *
- * iCloud uses regional servers (p180-caldav.icloud.com, p181-caldav.icloud.com, etc.)
- * that can become unreachable when Apple rotates server assignments. The canonical
- * hostname (caldav.icloud.com) transparently routes to the appropriate regional
- * server at the CDN level.
+ * iCloud's regional servers (p180-caldav.icloud.com, p181-caldav.icloud.com) can become
+ * unreachable when Apple rotates server assignments, while the canonical host
+ * (caldav.icloud.com) routes to the right regional server at the CDN level. Storing only
+ * canonical URLs keeps sync working across a rotation.
  *
- * By normalizing all URLs to canonical form at storage time, server rotation
- * becomes transparent and sync continues working without manual intervention.
- *
- * Example:
- * - Input:  "https://p180-caldav.icloud.com:443/123456/calendars/..."
- * - Output: "https://caldav.icloud.com/123456/calendars/..."
+ * "https://p180-caldav.icloud.com:443/123456/calendars/..." becomes
+ * "https://caldav.icloud.com/123456/calendars/...".
  */
 object ICloudUrlNormalizer {
 
     private const val CANONICAL_HOST = "caldav.icloud.com"
 
     /**
-     * Pattern matching regional iCloud CalDAV servers.
-     *
-     * Matches:
-     * - p180-caldav.icloud.com
-     * - p1-caldav.icloud.com
-     * - P180-CALDAV.ICLOUD.COM (case insensitive)
-     * - p180-caldav.icloud.com:443 (with explicit port)
-     *
-     * Does NOT match:
-     * - caldav.icloud.com (canonical - already normalized)
-     * - p180-caldav.notcloud.com (different domain)
+     * Matches a regional host with any explicit port, case-insensitively: p180-caldav.icloud.com,
+     * p1-caldav.icloud.com, P180-CALDAV.ICLOUD.COM, p180-caldav.icloud.com:443. It doesn't
+     * match the canonical caldav.icloud.com or another domain such as p180-caldav.notcloud.com.
      */
     private val REGIONAL_PATTERN = Regex(
         """p\d+-caldav\.icloud\.com(:\d+)?""",
@@ -38,15 +26,8 @@ object ICloudUrlNormalizer {
     )
 
     /**
-     * Normalize iCloud URL to canonical form.
-     *
-     * - Regional server (p180-caldav.icloud.com) → caldav.icloud.com
-     * - Strips explicit :443 port (implicit for HTTPS)
-     * - Case-insensitive matching
-     * - Preserves path, query parameters, and fragments
-     *
-     * @param url The URL to normalize (may be null)
-     * @return Normalized URL, or null if input was null
+     * Replaces a regional host and its explicit port with caldav.icloud.com, keeping path,
+     * query and fragment. Other URLs are returned unchanged; null stays null.
      */
     fun normalize(url: String?): String? {
         if (url.isNullOrEmpty()) return url
@@ -54,21 +35,18 @@ object ICloudUrlNormalizer {
     }
 
     /**
-     * Check if URL is a regional iCloud URL that needs normalization.
-     *
-     * @param url The URL to check
-     * @return true if URL contains a regional iCloud hostname (p*-caldav.icloud.com)
+     * Returns whether a bare host name is iCloud's CalDAV host, canonical or a numbered
+     * partition (p*-caldav.icloud.com).
      */
+    fun isCalDavHost(host: String): Boolean =
+        host.equals(CANONICAL_HOST, ignoreCase = true) || REGIONAL_PATTERN.matches(host)
+
+    /** Returns true if [url] contains a regional host (p*-caldav.icloud.com) to normalize. */
     fun isRegionalUrl(url: String?): Boolean {
         return url?.let { REGIONAL_PATTERN.containsMatchIn(it) } ?: false
     }
 
-    /**
-     * Check if URL is any iCloud URL (regional or canonical).
-     *
-     * @param url The URL to check
-     * @return true if URL contains icloud.com
-     */
+    /** Returns true if [url] contains "icloud.com", regional or canonical. Only tests call it. */
     fun isICloudUrl(url: String?): Boolean {
         return url?.contains("icloud.com", ignoreCase = true) ?: false
     }

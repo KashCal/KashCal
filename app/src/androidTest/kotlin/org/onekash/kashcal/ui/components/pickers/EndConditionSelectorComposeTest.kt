@@ -20,11 +20,15 @@ import org.junit.runner.RunWith
 import org.onekash.kashcal.domain.rrule.EndCondition
 
 /**
- * Compose UI tests for EndConditionSelector component.
+ * Compose UI tests for [EndConditionSelector].
  *
- * Tests the occurrence count text field behavior, particularly:
- * - Select-all on focus (typing replaces, not appends)
- * - Count updates propagate to callback
+ * Covered:
+ * - The "After ... occurrences" row and the count field's initial value show
+ * - A replaced count reaches onEndConditionChange
+ * - A tap then a replacement yields the new count; select-all on focus isn't exercised, since
+ *   performTextReplacement ignores the selection
+ * - The count field keeps digits only, at most 3
+ * - Tapping Never and On date emits Never and Until
  */
 @RunWith(AndroidJUnit4::class)
 class EndConditionSelectorComposeTest {
@@ -44,9 +48,7 @@ class EndConditionSelectorComposeTest {
             }
         }
 
-        // Should display "After" label
         composeTestRule.onNodeWithText("After").assertIsDisplayed()
-        // Should display "occurrences" label
         composeTestRule.onNodeWithText("occurrences").assertIsDisplayed()
     }
 
@@ -62,7 +64,6 @@ class EndConditionSelectorComposeTest {
             }
         }
 
-        // Text field should show "15"
         composeTestRule.onNode(hasSetTextAction()).assertTextEquals("15")
     }
 
@@ -87,18 +88,15 @@ class EndConditionSelectorComposeTest {
             }
         }
 
-        // Replace text with new value
         composeTestRule.onNode(hasSetTextAction()).performTextReplacement("25")
         composeTestRule.waitForIdle()
 
-        // Callback should have been called with new count
         assertEquals(25, capturedCount)
     }
 
     @Test
     fun endConditionSelector_typing_replaces_value_via_select_all() {
-        // This test verifies the select-all on focus behavior works correctly
-        // When user clicks field (selects all) and types "2", result should be "2" not "210"
+        // A tap on the field selects all, so typing "2" gives 2, not 210.
         var capturedCount = 0
 
         composeTestRule.setContent {
@@ -120,16 +118,15 @@ class EndConditionSelectorComposeTest {
 
         val textField = composeTestRule.onNode(hasSetTextAction())
 
-        // Click on text field to focus it (which should select all)
         textField.performClick()
         composeTestRule.waitForIdle()
 
-        // Type new value - with select-all on focus, this should replace "10" with "2"
-        // Using performTextReplacement to simulate the user typing after select-all
+        // performTextReplacement stands in for typing after select-all. It replaces the
+        // whole text whatever the selection, so this passes even without select-all.
         textField.performTextReplacement("2")
         composeTestRule.waitForIdle()
 
-        // Value should be 2, NOT 210 or 102
+        // 2, not 210 or 102.
         assertEquals(2, capturedCount)
     }
 
@@ -152,11 +149,9 @@ class EndConditionSelectorComposeTest {
             }
         }
 
-        // Click on "Never" option
         composeTestRule.onNodeWithText("Never").performClick()
         composeTestRule.waitForIdle()
 
-        // End condition should now be Never
         assertEquals(EndCondition.Never, endCondition)
     }
 
@@ -179,11 +174,9 @@ class EndConditionSelectorComposeTest {
             }
         }
 
-        // Click on "On date" option
         composeTestRule.onNodeWithText("On date").performClick()
         composeTestRule.waitForIdle()
 
-        // End condition should now be Until
         assert(endCondition is EndCondition.Until)
     }
 
@@ -208,11 +201,11 @@ class EndConditionSelectorComposeTest {
             }
         }
 
-        // Try to input text with non-digits - the filter should strip non-digits
+        // The input filter strips non-digits.
         composeTestRule.onNode(hasSetTextAction()).performTextReplacement("abc123xyz")
         composeTestRule.waitForIdle()
 
-        // Only digits should be kept: "123"
+        // Only the digits "123" remain.
         assertEquals(123, capturedCount)
     }
 
@@ -237,11 +230,11 @@ class EndConditionSelectorComposeTest {
             }
         }
 
-        // Try to input more than 3 digits
+        // More than 3 digits.
         composeTestRule.onNode(hasSetTextAction()).performTextReplacement("12345")
         composeTestRule.waitForIdle()
 
-        // Should be truncated to 3 digits: "123"
+        // Truncated to the first 3: "123".
         assertEquals(123, capturedCount)
     }
 }

@@ -5,24 +5,19 @@ import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 
 /**
- * One release's notes shown by the What's New sheet.
+ * One release's section in the What's New sheet. Every resource field except [titleRes] is
+ * optional; 0 omits it.
  *
- * @param versionCode the BuildConfig.VERSION_CODE this entry was authored for.
- *   Used both as a stable identity for "have I seen this?" tracking and to
- *   filter out entries authored ahead of the user's installed version.
- * @param titleRes per-version section heading (e.g. "Help keep Android open").
- * @param bodyRes optional prose paragraph rendered above the bullets.
- *   Pass 0 when the section is bullet-only.
- * @param bulletsRes optional string-array resource — one <item> per bullet —
- *   so translators can't break rendering by mishandling newlines. Pass 0
- *   when the section has no bullets.
- * @param captionRes optional small caption rendered just above the CTA
- *   button (e.g. "Not a supporter yet?"). Pass 0 to omit.
- * @param actionLabelRes optional CTA button label rendered below the
- *   content. Pass 0 to omit the button.
- * @param actionUrlRes optional string resource holding the URL the CTA
- *   button opens. Stored as a resource (not a hardcoded string) so the URL
- *   can be branded/redirected per locale if needed. Pass 0 to omit.
+ * @param versionCode the BuildConfig.VERSION_CODE the entry announces. [WhatsNewGate] shows it
+ *   once the user runs that version and hasn't seen it yet.
+ * @param titleRes section heading, e.g. "Help keep Android open".
+ * @param bodyRes paragraph shown above the bullets.
+ * @param bulletsRes string array with one item per bullet, so translators can't break the
+ *   layout by mishandling newlines.
+ * @param captionRes small caption just above the action button, e.g. "Not a supporter yet?".
+ * @param actionLabelRes label of the action button below the content.
+ * @param actionUrlRes string resource holding the URL the button opens, so the URL can differ
+ *   per locale. The button shows only when both this and [actionLabelRes] are set.
  */
 @Immutable
 data class ReleaseNote(

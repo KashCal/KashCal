@@ -28,16 +28,14 @@ import java.util.UUID
 import kotlin.system.measureTimeMillis
 
 /**
- * Complex exception event scenario tests.
+ * Tests exception edge cases through [EventWriter] over an in-memory Room database.
  *
- * Tests verify edge cases in recurring event exception handling:
- * - Editing exception that was already edited (nested exceptions)
- * - Delete master while exceptions are pending
- * - Large exception set performance
- * - Exception linking after RRULE regeneration
- * - Exception event sync status transitions
- *
- * These tests validate RFC 5545 compliance and data integrity.
+ * Tests cover:
+ * - Re-editing an exception, directly or through the same occurrence
+ * - Deleting a master that has exceptions, through [EventWriter.deleteEvent] and the FK cascade
+ * - Timing bounds for querying 50 exceptions and moving a series with 20
+ * - Exception links surviving an RRULE change that regenerates occurrences
+ * - An exception's sync status and its UID, shared with the master (RFC 5545)
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -89,14 +87,13 @@ class ExceptionEventComplexTest {
 
     @Test
     fun `editing exception event should preserve master link`() = runTest {
-        // Create recurring event
         val master = createAndInsertRecurringEvent("Weekly Meeting", "FREQ=WEEKLY;COUNT=10")
         occurrenceGenerator.regenerateOccurrences(master)
 
         val occurrences = database.occurrencesDao().getForEvent(master.id)
         assertTrue(occurrences.size >= 3)
 
-        // Create exception for first occurrence
+        // An exception for the first occurrence
         val firstOccurrenceTs = occurrences[0].startTs
         val exception = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
@@ -104,15 +101,14 @@ class ExceptionEventComplexTest {
             modifiedEvent = master.copy(title = "Modified Meeting")
         )
 
-        // Verify exception is linked to master
         assertEquals(master.id, exception.originalEventId)
         assertEquals(master.uid, exception.uid)
 
-        // Now edit the exception again
+        // Edit the exception itself.
         val updatedException = exception.copy(title = "Double Modified Meeting")
         eventWriter.updateEvent(updatedException, isLocal = true)
 
-        // Verify link is still preserved
+        // The link to the master is kept.
         val reloadedException = database.eventsDao().getById(exception.id)!!
         assertEquals(master.id, reloadedException.originalEventId)
         assertEquals("Double Modified Meeting", reloadedException.title)
@@ -141,10 +137,10 @@ class ExceptionEventComplexTest {
             modifiedEvent = master.copy(title = "Second Edit").withOccurrenceTime(targetOccurrence)
         )
 
-        // Should be same exception event
+        // The second edit updates the same exception.
         assertEquals(exception1.id, exception2.id)
 
-        // Verify only one exception exists for this occurrence
+        // One exception for this occurrence
         val allExceptions = database.eventsDao().getExceptionsForMaster(master.id)
         val matchingExceptions = allExceptions.filter {
             it.originalInstanceTime == targetOccurrenceTs
@@ -162,7 +158,7 @@ class ExceptionEventComplexTest {
 
         val occurrences = database.occurrencesDao().getForEvent(master.id)
 
-        // Create multiple exceptions
+        // Two exceptions
         val exception1 = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = occurrences[0].startTs,
@@ -174,7 +170,7 @@ class ExceptionEventComplexTest {
             modifiedEvent = master.copy(title = "Exception 2").withOccurrenceTime(occurrences[1])
         )
 
-        // Add pending operations for exceptions
+        // A pending CREATE for one exception; the queue isn't asserted after the delete.
         database.pendingOperationsDao().insert(
             PendingOperation(
                 eventId = exception1.id,
@@ -183,14 +179,14 @@ class ExceptionEventComplexTest {
             )
         )
 
-        // Delete master
+        // A local delete removes the master at once.
         eventWriter.deleteEvent(master.id, isLocal = true)
 
-        // Verify master is marked for deletion
+        // The master is gone or marked PENDING_DELETE.
         val deletedMaster = database.eventsDao().getById(master.id)
         assertTrue(deletedMaster == null || deletedMaster.syncStatus == SyncStatus.PENDING_DELETE)
 
-        // Verify exceptions are also cleaned up
+        // Its exceptions are gone or marked PENDING_DELETE.
         val remainingExceptions = database.eventsDao().getExceptionsForMaster(master.id)
         assertTrue(
             remainingExceptions.isEmpty() ||
@@ -205,7 +201,6 @@ class ExceptionEventComplexTest {
 
         val occurrences = database.occurrencesDao().getForEvent(master.id)
 
-        // Create 3 exceptions
         repeat(3) { i ->
             eventWriter.editSingleOccurrence(
                 masterEventId = master.id,
@@ -214,14 +209,13 @@ class ExceptionEventComplexTest {
             )
         }
 
-        // Verify exceptions exist
         val beforeDelete = database.eventsDao().getExceptionsForMaster(master.id)
         assertEquals(3, beforeDelete.size)
 
-        // Delete master (hard delete simulation)
+        // Delete the master row directly.
         database.eventsDao().deleteById(master.id)
 
-        // Exceptions should be cascade deleted via FK
+        // The `original_event_id` FK cascade deletes its exceptions.
         val afterDelete = database.eventsDao().getExceptionsForMaster(master.id)
         assertEquals(0, afterDelete.size)
     }
@@ -235,7 +229,6 @@ class ExceptionEventComplexTest {
 
         val occurrences = database.occurrencesDao().getForEvent(master.id)
 
-        // Create 50 exceptions
         repeat(50) { i ->
             eventWriter.editSingleOccurrence(
                 masterEventId = master.id,
@@ -244,7 +237,7 @@ class ExceptionEventComplexTest {
             )
         }
 
-        // Query should complete quickly (under 1 second)
+        // The query finishes in under a second.
         val queryTime = measureTimeMillis {
             val exceptions = database.eventsDao().getExceptionsForMaster(master.id)
             assertEquals(50, exceptions.size)
@@ -255,14 +248,13 @@ class ExceptionEventComplexTest {
 
     @Test
     fun `move recurring event with many exceptions should complete reasonably`() = runTest {
-        // v21.6.0: EventWriter.moveEventToCalendar NOW cascades move to exceptions.
-        // This test verifies performance when many exceptions exist.
+        // EventWriter.moveEventToCalendar moves a master's exceptions with it; this bounds
+        // its time with 20 exceptions.
         val master = createAndInsertRecurringEvent("Movable Event", "FREQ=DAILY;COUNT=30")
         occurrenceGenerator.regenerateOccurrences(master)
 
         val occurrences = database.occurrencesDao().getForEvent(master.id)
 
-        // Create 20 exceptions
         repeat(20) { i ->
             eventWriter.editSingleOccurrence(
                 masterEventId = master.id,
@@ -271,18 +263,17 @@ class ExceptionEventComplexTest {
             )
         }
 
-        // Move should complete quickly (single UPDATE query for exceptions)
+        // One UPDATE moves all the exceptions, so the move finishes in under 2 seconds.
         val moveTime = measureTimeMillis {
             eventWriter.moveEventToCalendar(master.id, secondCalendarId)
         }
 
         assertTrue("Move took ${moveTime}ms, should be under 2000ms", moveTime < 2000)
 
-        // Master should be moved
         val movedMaster = database.eventsDao().getById(master.id)!!
         assertEquals(secondCalendarId, movedMaster.calendarId)
 
-        // v21.6.0: Exceptions should ALSO be moved (cascaded with master)
+        // The exceptions moved with the master.
         val exceptions = database.eventsDao().getExceptionsForMaster(master.id)
         assertTrue("All exceptions should move with master",
             exceptions.all { it.calendarId == secondCalendarId })
@@ -299,20 +290,19 @@ class ExceptionEventComplexTest {
         val targetOccurrence = occurrences[1]
         val exceptionTs = targetOccurrence.startTs
 
-        // Create exception
         val exception = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = exceptionTs,
             modifiedEvent = master.copy(title = "Important Exception").withOccurrenceTime(targetOccurrence)
         )
 
-        // Update RRULE to have more occurrences
+        // Raise COUNT, which regenerates occurrences.
         val updatedMaster = database.eventsDao().getById(master.id)!!.copy(
             rrule = "FREQ=WEEKLY;COUNT=10"
         )
         eventWriter.updateEvent(updatedMaster, isLocal = true)
 
-        // Exception should still be linked
+        // The exception is still linked.
         val reloadedException = database.eventsDao().getById(exception.id)
         assertNotNull(reloadedException)
         assertEquals(master.id, reloadedException!!.originalEventId)
@@ -328,20 +318,19 @@ class ExceptionEventComplexTest {
         val targetOccurrence = occurrences[2]
         val exceptionTs = targetOccurrence.startTs
 
-        // Create exception
         val exception = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = exceptionTs,
             modifiedEvent = master.copy(title = "Preserved Exception").withOccurrenceTime(targetOccurrence)
         )
 
-        // Change frequency (regenerates occurrences)
+        // Change the frequency, which regenerates occurrences.
         val updatedMaster = database.eventsDao().getById(master.id)!!.copy(
             rrule = "FREQ=WEEKLY;COUNT=7"
         )
         eventWriter.updateEvent(updatedMaster, isLocal = true)
 
-        // Exception should still exist and be linked
+        // The exception still exists and is linked.
         val reloadedException = database.eventsDao().getById(exception.id)
         assertNotNull(reloadedException)
         assertEquals(master.id, reloadedException!!.originalEventId)
@@ -354,20 +343,20 @@ class ExceptionEventComplexTest {
         val master = createAndInsertRecurringEvent("Synced Event", "FREQ=WEEKLY;COUNT=5")
         occurrenceGenerator.regenerateOccurrences(master)
 
-        // Mark master as synced
+        // Mark the master synced; it has no caldavUrl.
         database.eventsDao().update(master.copy(syncStatus = SyncStatus.SYNCED))
 
         val occurrences = database.occurrencesDao().getForEvent(master.id)
 
-        // Create exception - should be bundled with master, so status should reflect that
+        // The exception is pushed inside the master's resource.
         val exception = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = occurrences[0].startTs,
             modifiedEvent = master.copy(title = "Bundled Exception")
         )
 
-        // Exception sync status depends on implementation
-        // It should either be SYNCED (bundled) or trigger master UPDATE
+        // editSingleOccurrence always stores the exception SYNCED, and moves the master to
+        // PENDING_UPDATE only when it has a caldavUrl. The assert accepts either.
         val masterAfter = database.eventsDao().getById(master.id)!!
         assertTrue(
             masterAfter.syncStatus == SyncStatus.PENDING_UPDATE ||
@@ -391,7 +380,7 @@ class ExceptionEventComplexTest {
             modifiedEvent = master.copy(title = "RFC Exception")
         )
 
-        // UID must match (RFC 5545 requirement)
+        // The UIDs match; RECURRENCE-ID picks the instance (RFC 5545 §3.8.4.4).
         assertEquals(master.uid, exception.uid)
     }
 
@@ -433,8 +422,11 @@ class ExceptionEventComplexTest {
     }
 
     /**
-     * Create a modified event with correct times for the given occurrence.
-     * EventWriter requires correct startTs/endTs matching the occurrence being edited.
+     * Returns a copy moved to [occurrence]'s start, keeping this event's duration.
+     *
+     * An exception built from `master.copy` alone keeps the master's start, so
+     * [OccurrenceGenerator.linkException] reads it as moved onto the first occurrence and
+     * deletes the occurrence already there.
      */
     private fun Event.withOccurrenceTime(occurrence: Occurrence): Event {
         val duration = this.endTs - this.startTs

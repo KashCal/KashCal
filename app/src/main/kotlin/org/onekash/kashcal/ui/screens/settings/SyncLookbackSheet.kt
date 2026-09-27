@@ -31,10 +31,10 @@ import org.onekash.kashcal.ui.shared.SyncLookbackOption
 import org.onekash.kashcal.ui.shared.getSyncLookbackOptions
 
 /**
- * Bottom sheet for selecting how far back to sync calendar events.
+ * Shows a bottom sheet for choosing how far back to sync calendar events.
  *
- * Options range from 3 months to "All events". Selecting "All events"
- * syncs the entire calendar history, which uses more storage and bandwidth.
+ * Options range from 3 months to "All events", which syncs the whole calendar history and uses
+ * more storage and bandwidth.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -54,7 +54,6 @@ fun SyncLookbackSheet(
                 .padding(bottom = 32.dp)
                 .selectableGroup()
         ) {
-            // Header
             Text(
                 text = stringResource(R.string.settings_sync_lookback),
                 style = MaterialTheme.typography.titleLarge,
@@ -71,7 +70,6 @@ fun SyncLookbackSheet(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            // Options
             getSyncLookbackOptions(LocalResources.current).forEach { option ->
                 SyncLookbackOptionRow(
                     option = option,

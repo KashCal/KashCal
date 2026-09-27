@@ -18,10 +18,10 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.widget.WidgetUpdateManager
 
 /**
- * Unit tests for BootRecoveryHandler.
+ * Tests [BootRecoveryHandler] as a plain class over relaxed mocks, without Hilt or a receiver.
  *
- * Tests the reminder recovery logic extracted from BootCompletedReceiver.
- * No Hilt, no Android framework, no reflection — just a plain class with mocks.
+ * The Room reminders are re-armed before old rows are cleaned up, the widget midnight alarm is
+ * re-armed, and a Room failure propagates and skips the cleanup.
  */
 class BootRecoveryHandlerTest {
 
@@ -86,7 +86,7 @@ class BootRecoveryHandlerTest {
             assert(e.message == "DB error")
         }
 
-        // cleanupOldReminders should NOT be called if rescheduleAllPending throws
+        // When the re-arm throws, the cleanup is skipped.
         coVerify(exactly = 0) { reminderScheduler.cleanupOldReminders() }
     }
 

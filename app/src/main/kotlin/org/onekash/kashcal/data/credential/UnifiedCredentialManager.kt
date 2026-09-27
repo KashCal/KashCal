@@ -13,21 +13,17 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Unified credential storage for all account types.
+ * Stores credentials in EncryptedSharedPreferences; they are never stored in plain text.
  *
- * Uses EncryptedSharedPreferences with AES-256-GCM encryption for secure
- * credential storage. Credentials are never stored in plain text.
+ * All accounts share the `unified_credentials` prefs file, keyed `account_{accountId}_{field}`.
+ * The `account_ids` key holds a comma-separated index of account IDs.
  *
- * Storage pattern:
- * - Keys are prefixed with "account_": `account_{accountId}_{field}`
- * - All accounts share the same prefs file: "unified_credentials"
- * - Account IDs tracked in `account_ids` key (comma-separated) for efficient lookup
+ * Keys are encrypted with AES256-SIV and values with AES256-GCM, under a master key in the
+ * Android Keystore. The file is excluded from Android backup (`backup_rules.xml`,
+ * `data_extraction_rules.xml`).
  *
- * Security:
- * - Keys encrypted with AES256-SIV
- * - Values encrypted with AES256-GCM
- * - Master key stored in Android Keystore
- * - Excluded from Android backup (see backup_rules.xml)
+ * When the Keystore or prefs can't be created, reads return null or empty, writes are no-ops
+ * and [saveCredentials] returns false.
  */
 @Singleton
 class UnifiedCredentialManager @Inject constructor(
@@ -50,13 +46,10 @@ class UnifiedCredentialManager @Inject constructor(
         private const val KEY_ACCOUNT_IDS = "account_ids"
     }
 
-    // Track encryption initialization error
+    // The last MasterKey or prefs creation failure, for [getEncryptionError].
     private var encryptionError: Exception? = null
 
-    /**
-     * Create master key for encryption.
-     * Uses AES256-GCM key scheme stored in Android Keystore.
-     */
+    /** The AES256-GCM master key in the Android Keystore, or null if it can't be created. */
     private val masterKey: MasterKey? by lazy {
         try {
             MasterKey.Builder(context)
@@ -69,10 +62,7 @@ class UnifiedCredentialManager @Inject constructor(
         }
     }
 
-    /**
-     * Create encrypted SharedPreferences.
-     * Falls back to null if encryption is not available.
-     */
+    /** The encrypted prefs, or null if encryption is unavailable. */
     private val encryptedPrefs: SharedPreferences? by lazy {
         try {
             masterKey?.let { key ->
@@ -93,10 +83,7 @@ class UnifiedCredentialManager @Inject constructor(
 
     override fun isEncryptionAvailable(): Boolean = encryptedPrefs != null
 
-    /**
-     * Get error message if encryption failed.
-     * Returns null if encryption is working.
-     */
+    /** Returns the encryption setup failure's message, or null if encryption works. */
     fun getEncryptionError(): String? = encryptionError?.message
 
     override suspend fun saveCredentials(accountId: Long, credentials: AccountCredentials): Boolean {
@@ -118,7 +105,6 @@ class UnifiedCredentialManager @Inject constructor(
                 }
             }
 
-            // Update account IDs index
             addAccountIdToIndex(accountId)
 
             Log.d(TAG, "Saved credentials for account $accountId: ${credentials.username.take(3)}***")
@@ -165,7 +151,6 @@ class UnifiedCredentialManager @Inject constructor(
                 remove(keyFor(accountId, KEY_CALENDAR_HOME_SET))
             }
 
-            // Remove from account IDs index
             removeAccountIdFromIndex(accountId)
 
             Log.d(TAG, "Deleted credentials for account $accountId")
@@ -179,10 +164,7 @@ class UnifiedCredentialManager @Inject constructor(
         }
     }
 
-    /**
-     * Get all account IDs with stored credentials.
-     * Useful for migration and debugging.
-     */
+    /** Returns the account IDs in the `account_ids` index. */
     suspend fun getAllAccountIds(): Set<Long> {
         return withContext(Dispatchers.IO) {
             val prefs = encryptedPrefs ?: return@withContext emptySet()
@@ -195,10 +177,7 @@ class UnifiedCredentialManager @Inject constructor(
         }
     }
 
-    /**
-     * Update CalDAV discovery URLs for an account.
-     * Called after successful CalDAV discovery.
-     */
+    /** Stores the account's discovered CalDAV URLs; a null argument keeps the stored value. */
     suspend fun updateDiscoveryUrls(
         accountId: Long,
         principalUrl: String?,
@@ -216,16 +195,10 @@ class UnifiedCredentialManager @Inject constructor(
         }
     }
 
-    /**
-     * Build preference key for an account field.
-     */
     private fun keyFor(accountId: Long, field: String): String {
         return "account_${accountId}_$field"
     }
 
-    /**
-     * Add account ID to the index for efficient lookup.
-     */
     private fun addAccountIdToIndex(accountId: Long) {
         val prefs = encryptedPrefs ?: return
         val currentIds = prefs.getString(KEY_ACCOUNT_IDS, null)
@@ -241,9 +214,6 @@ class UnifiedCredentialManager @Inject constructor(
         }
     }
 
-    /**
-     * Remove account ID from the index.
-     */
     private fun removeAccountIdFromIndex(accountId: Long) {
         val prefs = encryptedPrefs ?: return
         val currentIds = prefs.getString(KEY_ACCOUNT_IDS, null)

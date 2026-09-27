@@ -29,12 +29,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for immediate push sync functionality in EventCoordinator.
- *
- * Tests verify that:
- * - CalDAV calendar operations trigger expedited sync
- * - Local calendar operations do NOT trigger sync
- * - All 8 write operations correctly call sync
+ * Tests that [EventCoordinator] writes request an expedited sync on a CalDAV calendar and none
+ * on the local calendar. Covers createEvent, updateEvent, deleteEvent, editSingleOccurrence,
+ * editThisAndFuture, deleteSingleOccurrence, deleteThisAndFuture and moveEventToCalendar; the
+ * local-calendar case is tested for createEvent (with and without a calendar id), updateEvent,
+ * deleteEvent, editSingleOccurrence and moveEventToCalendar.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])

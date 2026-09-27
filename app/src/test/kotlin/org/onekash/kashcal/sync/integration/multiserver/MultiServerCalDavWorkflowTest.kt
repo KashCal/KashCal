@@ -16,15 +16,15 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Parameterized CalDAV workflow tests that run across all configured servers.
+ * Runs CalDAV workflow tests with hand-written ICS once per server in
+ * [CalDavServerConfig.allServers].
  *
- * Each test runs once per server. Tests auto-skip via `assumeTrue` when:
+ * Tests skip via `assumeTrue` when:
  * - Credentials are not available in local.properties
  * - Server is not reachable
+ * - CalDAV discovery or the calendar listing fails on a reachable server
  *
- * Run: ./gradlew testDebugUnitTest --tests "*MultiServerCalDavWorkflowTest*"
- *
- * Servers tested: iCloud, Stalwart, Baikal, Radicale, Nextcloud, Zoho
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*MultiServerCalDavWorkflowTest*"
  */
 @RunWith(Parameterized::class)
 class MultiServerCalDavWorkflowTest(
@@ -81,7 +81,7 @@ class MultiServerCalDavWorkflowTest(
         val c = client!!
         val endpoint = creds!!.davEndpoint
 
-        // Well-known discovery first if the server supports it
+        // Well-known discovery first if the server supports it.
         val caldavUrl = if (config.usesWellKnownDiscovery) {
             val wellKnown = c.discoverWellKnown(endpoint)
             if (wellKnown.isSuccess()) wellKnown.getOrNull()!! else endpoint
@@ -120,7 +120,7 @@ END:VCALENDAR
     """.trimIndent()
 
     private fun trackEvent(url: String, etag: String) {
-        // Remove previous entry for same URL, add updated one
+        // Replace any entry for the same URL with the new etag.
         createdEventUrls.removeAll { it.first == url }
         createdEventUrls.add(Pair(url, etag))
     }
@@ -141,7 +141,7 @@ END:VCALENDAR
         }
 
         val result = c.discoverPrincipal(caldavUrl)
-        // Skip if CalDAV discovery not functional (server reachable but CalDAV not configured)
+        // Skip when CalDAV discovery doesn't work (server reachable but CalDAV not configured).
         assumeTrue(
             "CalDAV discovery not functional on ${config.name}: ${(result as? CalDavResult.Error)?.message}",
             result.isSuccess()
@@ -183,7 +183,7 @@ END:VCALENDAR
         calendarUrl = discoverCalendar()
         assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
 
-        // discoverCalendar already verified listing works; calendarUrl is non-null
+        // discoverCalendar already listed the calendars; calendarUrl is non-null.
         assert(calendarUrl!!.isNotEmpty()) { "Calendar URL should not be empty on ${config.name}" }
     }
 
@@ -206,7 +206,7 @@ END:VCALENDAR
         val (url, etag) = result.getOrNull()!!
         trackEvent(url, etag)
 
-        // Fetch back and verify
+        // Fetch back and verify.
         val fetchResult = client!!.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch event on ${config.name}" }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
@@ -268,8 +268,8 @@ END:VCALENDAR
             "Failed to delete event on ${config.name}: ${(deleteResult as? CalDavResult.Error)?.message}"
         }
 
-        // Verify gone — most servers return 404, some (Zoho) return 200 with empty body.
-        // Nextcloud is eventually consistent: an immediate re-fetch after DELETE
+        // Verify gone: most servers return 404, some (Zoho) 200 with an empty body; any error
+        // counts. Nextcloud is eventually consistent: an immediate re-fetch after DELETE
         // occasionally still returns the event, so poll briefly before asserting.
         var fetchResult = client!!.fetchEvent(url)
         fun gone() = fetchResult.isNotFound() ||
@@ -307,7 +307,7 @@ END:VCALENDAR
         val (url, etag) = result.getOrNull()!!
         trackEvent(url, etag)
 
-        // Verify RRULE preserved
+        // Verify the RRULE is preserved.
         val fetchResult = client!!.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch recurring event on ${config.name}" }
         assert(fetchResult.getOrNull()!!.icalData.contains("RRULE:")) {
@@ -325,7 +325,7 @@ END:VCALENDAR
 
         val uid = "test-exception-${config.name.lowercase()}-${UUID.randomUUID()}"
 
-        // Calculate dates: next Monday at 10am UTC
+        // The first occurrence: the coming Monday (today, if Monday) at 10:00 UTC.
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         cal.set(Calendar.HOUR_OF_DAY, 10)
         cal.set(Calendar.MINUTE, 0)
@@ -342,7 +342,7 @@ END:VCALENDAR
         val exceptionStart = icsDateFormat.format(cal.time)
         val exceptionEnd = exceptionStart.replace("T14", "T15")
 
-        // Create recurring event
+        // Create the recurring event.
         val createIcs = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -363,7 +363,7 @@ END:VCALENDAR
         val (url, etag) = createResult.getOrNull()!!
         trackEvent(url, etag)
 
-        // Update with exception (reschedule second occurrence)
+        // Update with an exception rescheduling the second occurrence.
         val exceptionIcs = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -395,7 +395,7 @@ END:VCALENDAR
         }
         trackEvent(url, updateResult.getOrNull()!!)
 
-        // Verify RECURRENCE-ID preserved
+        // Verify the RECURRENCE-ID is preserved.
         val fetchResult = client!!.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch event with exception on ${config.name}" }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
@@ -454,7 +454,7 @@ END:VCALENDAR
         val (url, etag) = result.getOrNull()!!
         trackEvent(url, etag)
 
-        // Verify event was created and EXDATE preserved (some servers like Zoho may strip EXDATE)
+        // The RRULE must survive; a lost EXDATE is only logged (Zoho may strip it).
         val fetchResult = client!!.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch event on ${config.name}" }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
@@ -478,23 +478,22 @@ END:VCALENDAR
         calendarUrl = discoverCalendar()
         assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
 
-        // Get initial ctag
+        // Read the initial ctag.
         val ctagResult1 = client!!.getCtag(calendarUrl!!)
-        // Some servers may not support ctag even if config says they do
+        // A server may not support ctag even when its config says it does.
         assumeTrue(
             "${config.name} getCtag failed: ${(ctagResult1 as? CalDavResult.Error)?.message}",
             ctagResult1.isSuccess()
         )
         val ctag1 = ctagResult1.getOrNull()?.ctag
 
-        // Some servers (SOGo) derive the ctag from a 1-second-granularity
-        // timestamp. Reading the baseline ctag, creating the event, and
-        // re-reading can all land in the same wall-clock second, so the
-        // unchanged ctag is correct rather than a bug. Cross a second boundary
-        // before the mutation so a coarse stamp is guaranteed to advance.
+        // SOGo derives the ctag from a 1-second-granularity timestamp. Reading the baseline,
+        // creating the event and re-reading can land in the same second, which leaves the ctag
+        // unchanged without a bug. Cross a second boundary before the mutation so a coarse
+        // stamp advances.
         delay(1_100)
 
-        // Create an event to change the ctag
+        // Create an event to change the ctag.
         val uid = "test-ctag-${config.name.lowercase()}-${UUID.randomUUID()}"
         val ics = createTestIcs(uid, "Ctag Test on ${config.name}")
 
@@ -503,12 +502,12 @@ END:VCALENDAR
         val (url, etag) = createResult.getOrNull()!!
         trackEvent(url, etag)
 
-        // Get new ctag
+        // Read the new ctag.
         val ctagResult2 = client!!.getCtag(calendarUrl!!)
         assert(ctagResult2.isSuccess()) { "Failed to get ctag after create on ${config.name}" }
         val ctag2 = ctagResult2.getOrNull()?.ctag
 
-        // Ctag should have changed (or at least be non-null)
+        // The ctag must be non-null, and must differ when the initial one was non-null.
         assert(ctag2 != null) { "Ctag should not be null after event creation on ${config.name}" }
         if (ctag1 != null) {
             assert(ctag1 != ctag2) {
@@ -525,7 +524,7 @@ END:VCALENDAR
         calendarUrl = discoverCalendar()
         assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
 
-        // Get initial sync token
+        // Read the initial sync-token.
         val tokenResult = client!!.getSyncToken(calendarUrl!!)
         assumeTrue(
             "${config.name} does not support sync-token",
@@ -533,13 +532,12 @@ END:VCALENDAR
         )
         val initialToken = tokenResult.getOrNull()!!
 
-        // SOGo's sync-token is timestamp-derived at 1-second granularity. A
-        // create landing in the same wall-clock second as the initial-token
-        // read isn't reported as a delta (its change stamp is not strictly
-        // after the token). Cross a second boundary so the create is visible.
+        // SOGo's sync-token is timestamp-derived at 1-second granularity. A create in the same
+        // second as the initial-token read isn't reported as a delta (its change stamp is not
+        // strictly after the token). Cross a second boundary so the create is visible.
         delay(1_100)
 
-        // Create an event
+        // Create an event.
         val uid = "test-sync-${config.name.lowercase()}-${UUID.randomUUID()}"
         val ics = createTestIcs(uid, "Sync Token Test on ${config.name}")
 
@@ -548,14 +546,14 @@ END:VCALENDAR
         val (url, etag) = createResult.getOrNull()!!
         trackEvent(url, etag)
 
-        // Sync collection with initial token
+        // sync-collection with the initial token.
         val syncResult = client!!.syncCollection(calendarUrl!!, initialToken)
         assert(syncResult.isSuccess()) {
             "Failed sync-collection on ${config.name}: ${(syncResult as? CalDavResult.Error)?.message}"
         }
 
         val report = syncResult.getOrNull()!!
-        // Should detect our new event (changed list or new token)
+        // Must report the new event, as a changed entry or a new token.
         assert(report.changed.isNotEmpty() || report.syncToken != initialToken) {
             "Sync should detect new event or provide new token on ${config.name}"
         }
@@ -577,17 +575,17 @@ END:VCALENDAR
         val (url, etag) = createResult.getOrNull()!!
         trackEvent(url, etag)
 
-        // Update the event to get a new etag
+        // Update the event to get a new etag.
         val updatedIcs = createTestIcs(uid, "Updated for conflict", extra = "SEQUENCE:1")
         val updateResult = client!!.updateEvent(url, updatedIcs, etag)
         assert(updateResult.isSuccess()) { "Failed to update event on ${config.name}" }
         val newEtag = updateResult.getOrNull()!!
         trackEvent(url, newEtag)
 
-        // Try to update with the OLD etag (should get 412 Conflict or 409 Conflict)
+        // Update with the old etag: expects 412 Precondition Failed or 409 Conflict.
         val conflictIcs = createTestIcs(uid, "Stale update", extra = "SEQUENCE:2")
         val conflictResult = client!!.updateEvent(url, conflictIcs, etag)
-        // RFC 4791 says 412, but some servers (Zoho) return 409
+        // A failed If-Match is 412 (RFC 7232 §3.1), but some servers (Zoho) return 409.
         val isConflictResponse = conflictResult.isConflict() ||
             (conflictResult is CalDavResult.Error && (conflictResult as CalDavResult.Error).code == 409)
         assert(isConflictResponse) {
@@ -604,7 +602,7 @@ END:VCALENDAR
         assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
 
         val uid = "test-special-${config.name.lowercase()}-${UUID.randomUUID()}"
-        // Title with special chars: quotes, ampersand, angle brackets, unicode
+        // Title with special chars: quotes, ampersand, angle brackets, unicode.
         val summary = "Team Sync: Q&A <Review> \"Sprint\" — Café ☕"
         val ics = createTestIcs(uid, summary, extra = "DESCRIPTION:Notes with special chars: <>&\"'")
 
@@ -615,11 +613,11 @@ END:VCALENDAR
         val (url, etag) = result.getOrNull()!!
         trackEvent(url, etag)
 
-        // Fetch back and verify content is preserved
+        // Fetch back and verify the content is preserved.
         val fetchResult = client!!.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch event on ${config.name}" }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
-        // Check key parts are preserved (servers may re-encode slightly)
+        // Only "Q&A" is checked, escaped or not, since servers may re-encode.
         assert(fetchedIcs.contains("Q&A") || fetchedIcs.contains("Q\\&A")) {
             "Special characters should be preserved on ${config.name}"
         }
@@ -672,14 +670,14 @@ END:VCALENDAR
         val (url, etag) = result.getOrNull()!!
         trackEvent(url, etag)
 
-        // Verify timezone info preserved
+        // Verify the timezone is preserved.
         val fetchResult = client!!.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch event on ${config.name}" }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
-        // Server should preserve timezone reference (either VTIMEZONE or converted to UTC)
+        // The server must keep the TZID or convert to UTC.
         assert(
             fetchedIcs.contains("America/New_York") ||
-                fetchedIcs.contains("DTSTART:20260315T190000Z") // UTC equivalent
+                fetchedIcs.contains("DTSTART:20260315T190000Z") // meant as UTC; 14:00 EDT is 18:00Z
         ) {
             "Timezone info should be preserved on ${config.name}"
         }

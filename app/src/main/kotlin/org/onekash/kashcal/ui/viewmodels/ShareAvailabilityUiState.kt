@@ -13,9 +13,9 @@ data class ShareAvailabilityUiState(
     val isShareEnabled: Boolean = false,
     val isLoading: Boolean = true,
     /**
-     * App TIME_FORMAT preference ("system", "12h", "24h"). Combined with the
-     * device's 24h setting via DateTimeUtils.isUse24Hour to produce the
-     * effective is24Hour value used for slider labels and shared text.
+     * App time-format preference (`system`, `12h` or `24h`).
+     * [org.onekash.kashcal.util.DateTimeUtils.isUse24Hour] combines it with the device's 24h
+     * setting for the slider labels and the shared text.
      */
     val timeFormatPref: String = KashCalDataStore.TIME_FORMAT_SYSTEM
 )

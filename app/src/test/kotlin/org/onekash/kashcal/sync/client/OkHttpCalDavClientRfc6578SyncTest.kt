@@ -19,19 +19,18 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * RFC 6578 compliance tests for WebDAV Collection Synchronization (sync-collection REPORT).
+ * Tests [OkHttpCalDavClient.syncCollection] against RFC 6578 (sync-collection REPORT).
  *
- * Tests syncCollection() against RFC 6578 requirements:
- * - Section 3: sync-collection REPORT request format
- * - Section 3.2: sync-level element
- * - Section 3.3: sync-token in request (initial vs subsequent)
- * - Section 3.4: Response format (multistatus with changed items and new token)
- * - Section 3.5: Deleted items (404 status)
- * - Section 3.6: Truncated results (507 Insufficient Storage)
- * - Section 3.8: Error handling (invalid/expired sync-token)
+ * Covers:
+ * - §3.2: request format, Depth 0, changed and removed members, the valid-sync-token
+ *   precondition
+ * - §3.3: the sync-level element
+ * - §3.4 and §3.5: the sync-token on an initial and a later sync
+ * - §3.6: truncated results (507 Insufficient Storage)
+ * - how an invalid or expired sync-token is reported
  *
- * Each test verifies BOTH outgoing request compliance (method, headers, XML body)
- * and response handling compliance (parsing multistatus responses).
+ * Each test checks the outgoing request (method, headers, XML body) or how the multistatus
+ * reply is parsed.
  */
 class OkHttpCalDavClientRfc6578SyncTest {
 
@@ -67,11 +66,11 @@ class OkHttpCalDavClientRfc6578SyncTest {
         unmockkAll()
     }
 
-    // ========== RFC 6578 Section 3: sync-collection REPORT Request Format ==========
+    // ========== sync-collection request format (RFC 6578 §3.2) ==========
 
     @Test
     fun `syncCollection sends REPORT method`() = runTest {
-        // RFC 6578 Section 3: sync-collection uses REPORT method
+        // RFC 6578 §3.2: sync-collection is a REPORT
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
         client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -82,10 +81,10 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection sends Depth 0 header per RFC 6578 section 3 point 2`() = runTest {
-        // RFC 6578 §3.2: "This report is only defined when the Depth header
-        // has value '0'; other values result in a 400 (Bad Request) error
-        // response." The body's <sync-level>1</sync-level> element is what
-        // requests one-level traversal — the Depth header itself must be 0.
+        // RFC 6578 §3.2: "This report is only defined when the Depth header has value '0';
+        // other values result in a 400 (Bad Request) error response." The body's
+        // <sync-level>1</sync-level> element requests one-level traversal; the Depth header
+        // must be 0.
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
         client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -96,7 +95,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection sends Content-Type application xml`() = runTest {
-        // RFC 6578: Request body is XML
+        // The request body is XML
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
         client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -112,7 +111,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection uses sync-collection element in DAV namespace`() = runTest {
-        // RFC 6578 Section 3: Root element is DAV:sync-collection
+        // RFC 6578 §3.2: the request body MUST be a DAV:sync-collection element
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
         client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -131,7 +130,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection includes sync-level element with value 1`() = runTest {
-        // RFC 6578 Section 3.2: sync-level MUST be present with value "1"
+        // RFC 6578 §3.3: the client MUST include sync-level; "1" means immediate members
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
         client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -150,8 +149,8 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection requests getetag property only`() = runTest {
-        // RFC 6578: Request should include properties to return with changes.
-        // KashCal requests only getetag (fetches full data via multiget later).
+        // RFC 6578 §3.2: the request names the properties to return with each change. The
+        // client asks only for getetag and fetches event data by multiget later.
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
         client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -163,8 +162,8 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection does not request calendar-data in prop`() = runTest {
-        // Bandwidth optimization: sync-collection returns hrefs+etags only.
-        // Full event data fetched via calendar-multiget (RFC 4791 Section 7.9).
+        // To save bandwidth the sync-collection returns only hrefs and etags; event data
+        // comes from a calendar-multiget (RFC 4791 §7.9).
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
         client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -177,12 +176,12 @@ class OkHttpCalDavClientRfc6578SyncTest {
         )
     }
 
-    // ========== RFC 6578 Section 3.3: Sync-Token in Request ==========
+    // ========== sync-token in the request (RFC 6578 §3.4, §3.5) ==========
 
     @Test
     fun `syncCollection sends empty sync-token element for initial sync`() = runTest {
-        // RFC 6578 Section 3.3: Initial sync sends empty sync-token element
-        // to request all items in the collection
+        // RFC 6578 §3.4: an initial sync sends an empty sync-token element, and the server
+        // returns every member
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_1))
 
         client.syncCollection(calendarUrl(), null)
@@ -197,7 +196,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection sends previous sync-token value for subsequent sync`() = runTest {
-        // RFC 6578 Section 3.3: Subsequent sync sends the token from previous response
+        // RFC 6578 §3.5: a later sync sends the token from the previous response
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
         client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -212,7 +211,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection preserves full sync-token URL in request`() = runTest {
-        // RFC 6578: Sync tokens are often URIs — must be preserved exactly
+        // RFC 6578 §3.2: a sync-token is an opaque URI, so it is sent back unchanged
         val fullTokenUrl = "http://sabre.io/ns/sync/63845d9c3a7b9"
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
@@ -228,10 +227,9 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection XML-escapes a sync-token containing entities`() = runTest {
-        // The parser XML-decodes the server's sync-token on the way in, so a token
-        // carrying literal &, <, or > must be re-escaped before interpolation, or
-        // the request XML is malformed and the server 400s — freezing incremental
-        // sync on the same bad token forever.
+        // The parser XML-decodes the server's sync-token on the way in, so a token carrying
+        // a literal &, < or > must be re-escaped before interpolation. Otherwise the request
+        // XML is malformed, the server 400s, and delta sync stays stuck on that token forever.
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
         client.syncCollection(calendarUrl(), "sync?a=1&b=2<x>")
@@ -244,11 +242,11 @@ class OkHttpCalDavClientRfc6578SyncTest {
         assertFalse("unescaped ampersand must not appear", body.contains("a=1&b=2"))
     }
 
-    // ========== RFC 6578 Section 3.4: Response Parsing - Changed Items ==========
+    // ========== Changed members (RFC 6578 §3.2) ==========
 
     @Test
     fun `syncCollection parses changed items with href and etag from 200 propstat`() = runTest {
-        // RFC 6578 Section 3.4: Changed/new items have 200 OK status with getetag
+        // RFC 6578 §3.2: a new or changed member has a propstat, here 200 OK with getetag
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -268,7 +266,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection parses new sync-token from response`() = runTest {
-        // RFC 6578 Section 3.4: Response MUST include a new sync-token
+        // RFC 6578 §3.2: the multistatus MUST contain a new sync-token
         val expectedToken = "http://example.com/ns/sync/token-after-changes"
         mockWebServer.enqueue(
             MockResponse()
@@ -289,7 +287,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection returns empty report for empty multistatus`() = runTest {
-        // RFC 6578: No changes since last sync → empty multistatus with new token
+        // No changes since the last sync: a multistatus with only a new token
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
         val result = client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -303,7 +301,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection handles multiple changed items`() = runTest {
-        // RFC 6578: Response can contain many changed items
+        // The response can list many changed members
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -319,7 +317,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection normalizes quoted etag values`() = runTest {
-        // RFC 7232: ETags may be quoted — KashCal normalizes them
+        // RFC 7232 §2.3: an ETag is quoted; the client strips the quotes
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -330,7 +328,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
         assertTrue("Result should be success", result.isSuccess())
         val report = result.getOrNull()!!
-        // ETags in XML are quoted ("etag-v2"), parser should strip quotes
+        // The XML carries "etag-v2" quoted; the parser strips the quotes
         val etag = report.changed[0].etag
         assertFalse(
             "ETag should be normalized (quotes stripped)",
@@ -340,10 +338,9 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection skips collection self-row identified by trailing slash`() = runTest {
-        // Primary discriminator is href.endsWith("/") (RFC 4918 §5.2 SHOULD). The wire
-        // body no longer requests resourcetype because iCloud emits a separate
-        // propstat-404 per member resource for empty-resourcetype queries, bloating
-        // responses past the read timeout.
+        // The main signal is href.endsWith("/") (RFC 4918 §5.2 SHOULD). The request doesn't
+        // ask for resourcetype, because iCloud answers that with a separate propstat-404 per
+        // member resource and the response grows past the read timeout.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -364,10 +361,9 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection uses resourcetype fallback for slashless self-row`() = runTest {
-        // Defensive fallback for non-conforming servers that drop the trailing slash on
-        // the collection self-row but still volunteer <resourcetype><collection/></...>
-        // unprompted. Pins the fallback branch standalone so deleting the resourcetype
-        // bookkeeping in ResponseState would fail this test.
+        // Fallback for a server that drops the trailing slash on the collection's own row but
+        // volunteers <resourcetype><collection/></...> unprompted. Tests the fallback alone,
+        // so removing the resourcetype tracking in ResponseState fails this test.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -388,12 +384,12 @@ class OkHttpCalDavClientRfc6578SyncTest {
         )
     }
 
-    // ========== RFC 6578 Section 3.5: Deleted Items ==========
+    // ========== Removed members (RFC 6578 §3.2) ==========
 
     @Test
     fun `syncCollection identifies deleted items by 404 status at response level`() = runTest {
-        // RFC 6578 Section 3.5: Deleted items have 404 status directly in response
-        // (no propstat wrapper) — this is the Nextcloud/Sabre pattern
+        // RFC 6578 §3.2: a removed member has a 404 status directly in the response, with no
+        // propstat. Nextcloud and Sabre send this shape.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -413,7 +409,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection identifies deleted items by 404 status in propstat`() = runTest {
-        // RFC 6578 Section 3.5: Some servers wrap 404 in propstat element
+        // Some servers wrap the 404 in a propstat instead, which RFC 6578 §3.2 doesn't allow
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -433,7 +429,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection separates changed and deleted items in same response`() = runTest {
-        // RFC 6578: Real-world responses mix changed and deleted items
+        // One response can mix changed and removed members
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -454,9 +450,8 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection includes non-ics deleted hrefs`() = runTest {
-        // DEVIATION: extractDeletedHrefs does NOT filter by .ics extension,
-        // while extractChangedItems does. This is intentional — deleted resources
-        // may have been renamed or the server may not append .ics to deletion reports.
+        // A removed href is reported whatever its extension. The parser never filters changed
+        // or removed members by .ics, since some servers store events at extensionless hrefs.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -474,12 +469,13 @@ class OkHttpCalDavClientRfc6578SyncTest {
         )
     }
 
-    // ========== RFC 6578 Section 3.6: Truncated Results (507) ==========
+    // ========== Truncated results, 507 (RFC 6578 §3.6) ==========
 
     @Test
     fun `syncCollection marks report as truncated on 507`() = runTest {
-        // RFC 6578 Section 3.6: Server MAY return 507 when results are too large.
-        // Client MUST use the new sync-token to continue.
+        // RFC 6578 §3.6 has a server mark truncation with a 507 status for the request-URI
+        // inside a 207; the client also accepts a top-level HTTP 507. The returned sync-token
+        // continues from the partial set.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(507)
@@ -495,7 +491,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection parses partial results from 507 response`() = runTest {
-        // RFC 6578 Section 3.6: 507 response still contains valid partial results
+        // RFC 6578 §3.6: a truncated response still holds the partial changes
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(507)
@@ -511,8 +507,8 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection extracts continuation token from 507 response`() = runTest {
-        // RFC 6578 Section 3.6: 507 response MUST include a new sync-token
-        // for the client to continue syncing
+        // RFC 6578 §3.6: a truncated response's sync-token MUST represent the partial set,
+        // so the client continues from it
         val continuationToken = "http://example.com/sync/page2"
         mockWebServer.enqueue(
             MockResponse()
@@ -533,7 +529,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection normal 207 response is not truncated`() = runTest {
-        // RFC 6578: Normal 207 response means all changes are included
+        // A 207 without a truncation marker holds every change
         mockWebServer.enqueue(mockSyncResponse(syncToken = SYNC_TOKEN_2))
 
         val result = client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -543,12 +539,13 @@ class OkHttpCalDavClientRfc6578SyncTest {
         assertFalse("Normal 207 response must NOT be truncated", report.truncated)
     }
 
-    // ========== RFC 6578 Section 3.8: Error Handling ==========
+    // ========== Errors and invalid sync-tokens ==========
 
     @Test
     fun `syncCollection returns error on 403 expired token`() = runTest {
-        // RFC 6578 Section 3.8: Server returns 403 when sync-token is invalid.
-        // Some servers (e.g., iCloud) return bare 403 without error element.
+        // An invalid sync-token fails the valid-sync-token precondition (RFC 6578 §3.2) and
+        // the server answers 403. Some servers (iCloud) send a bare 403 without the error
+        // element.
         mockWebServer.enqueue(MockResponse().setResponseCode(403))
 
         val result = client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -561,8 +558,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection returns error on 410 Gone`() = runTest {
-        // RFC 6578 Section 3.8: Server returns 410 Gone when sync-token expired
-        // (collection has been significantly modified)
+        // Some servers answer an expired sync-token with 410 Gone
         mockWebServer.enqueue(MockResponse().setResponseCode(410))
 
         val result = client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -575,7 +571,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection returns auth error on 401`() = runTest {
-        // RFC 6578: Authentication failure handling
+        // 401 is an auth error
         mockWebServer.enqueue(MockResponse().setResponseCode(401))
 
         val result = client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -585,8 +581,8 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection detects invalid sync-token via valid-sync-token element on 207`() = runTest {
-        // RFC 6578 Section 3.8: Some servers return 207 with DAV:error containing
-        // valid-sync-token element instead of 403/410
+        // Some servers answer a 207 whose DAV:error holds the valid-sync-token element
+        // (RFC 6578 §3.2) instead of a 403 or 410
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -602,7 +598,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection returns generic error on 500`() = runTest {
-        // Server error handling
+        // A 500 is a plain error
         mockWebServer.enqueue(MockResponse().setResponseCode(500))
 
         val result = client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
@@ -614,9 +610,8 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection 507 does not check for valid-sync-token error`() = runTest {
-        // RFC 6578 Section 3.6: 507 is always treated as truncation, even if
-        // body happens to contain valid-sync-token text. The valid-sync-token
-        // check only applies to 207 responses.
+        // A top-level 507 with a multistatus body is always truncation, even when the body
+        // contains valid-sync-token text. The valid-sync-token check applies only to 207s.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(507)
@@ -625,18 +620,17 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
         val result = client.syncCollection(calendarUrl(), SYNC_TOKEN_1)
 
-        // 507 is treated as success (truncated), not as a sync-token error
+        // A truncated success, not a sync-token error
         assertTrue("507 should be success even with error body", result.isSuccess())
         val report = result.getOrNull()!!
         assertTrue("Should be marked as truncated", report.truncated)
     }
 
-    // ========== RFC 6578 Section 3.4: Namespace Handling ==========
+    // ========== Namespace prefixes and token position ==========
 
     @Test
     fun `syncCollection parses uppercase DAV namespace prefix`() = runTest {
-        // Real servers use different namespace prefixes: d:, D:, no prefix, etc.
-        // Stalwart uses D: prefix — parser must handle this.
+        // Servers use different namespace prefixes (d:, D:, none); Stalwart uses D:.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -655,8 +649,8 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection parses sync-token at end of multistatus`() = runTest {
-        // RFC 6578: sync-token can appear at the end of multistatus (after responses).
-        // Some servers (Stalwart) place it at the end, others at the top.
+        // The sync-token can follow the responses in the multistatus. Stalwart puts it at
+        // the end, other servers at the top.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -676,8 +670,7 @@ class OkHttpCalDavClientRfc6578SyncTest {
 
     @Test
     fun `syncCollection parses sync-token at start of multistatus`() = runTest {
-        // RFC 6578: sync-token can appear at the start of multistatus (before responses).
-        // Nextcloud/Sabre places it at the top.
+        // The sync-token can precede the responses. Nextcloud and Sabre put it at the top.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)

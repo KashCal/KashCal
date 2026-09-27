@@ -9,19 +9,16 @@ import java.util.Calendar
 import java.util.TimeZone
 
 /**
- * Unit tests for ContactEventUtils.
- *
- * Tests:
- * - parseContactDate: RFC 6350, ISO, US format, slash variants, invalid dates, leap years
- * - formatOrdinal: ordinal suffixes including teens, 21st-23rd, 111th
- * - calculateYearsSince: simple subtraction from occurrence timestamp
- * - formatBirthdayTitle: with/without year, edge cases (age 0, age 150+)
- * - formatAnniversaryTitle: with/without year, edge cases (years 0, 150+)
- * - encodeEventYear / decodeEventYear: round-trip, null, embedded text
- * - generateYearlyRRule: expected RRULE string
- * - getEventTimestamp: UTC midnight for given date
- * - getNextEventTimestamp: future vs past date
- * - minutesToIsoDuration: various time ranges
+ * Tests [ContactEventUtils]:
+ * - parseContactDate: RFC 6350 no-year, ISO, slash and US forms, invalid dates, leap years,
+ *   the 1900-2100 year range
+ * - formatOrdinal: suffixes including teens, 21st-23rd and 111th-113th
+ * - calculateYearsSince
+ * - formatBirthdayTitle and formatAnniversaryTitle: with and without a year, and the plain
+ *   title for a count of 0 or 150 and above
+ * - encodeEventYear and decodeEventYear: round trip, null, a year inside other text
+ * - YEARLY_RRULE, getEventTimestamp (UTC midnight), getNextEventTimestamp, getStartTimestamp
+ * - minutesToIsoDuration and the [ContactEventSyncResult] fields
  */
 class ContactEventUtilsTest {
 
@@ -244,11 +241,11 @@ class ContactEventUtilsTest {
         cal.clear()
         cal.set(2026, Calendar.JANUARY, 1)
 
-        // year 0 (same year as occurrence)
+        // A count of 0: the occurrence's own year.
         val title0 = ContactEventUtils.formatAnniversaryTitle("Bob", 2026, cal.timeInMillis)
         assertEquals("Bob's Anniversary", title0)
 
-        // 150+ years
+        // A count of 150 or more.
         val titleOld = ContactEventUtils.formatAnniversaryTitle("Bob", 1850, cal.timeInMillis)
         assertEquals("Bob's Anniversary", titleOld)
     }
@@ -330,7 +327,7 @@ class ContactEventUtilsTest {
 
     @Test
     fun `getNextEventTimestamp - past month returns next year`() {
-        // January is always past if we are in February or later
+        // Assumes Jan 10 has passed this year; the test fails if run Jan 1-10.
         val ts = ContactEventUtils.getNextEventTimestamp(1, 10)
 
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
@@ -346,7 +343,7 @@ class ContactEventUtilsTest {
 
     @Test
     fun `getNextEventTimestamp - future month returns current year`() {
-        // December is always future if we are in February
+        // Assumes Dec 25 is still ahead; the test fails if run Dec 26-31.
         val ts = ContactEventUtils.getNextEventTimestamp(12, 25)
 
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
@@ -407,18 +404,16 @@ class ContactEventUtilsTest {
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         cal.timeInMillis = ts
         val year = cal.get(Calendar.YEAR)
-        // Must be a leap year
         assertTrue("Year $year must be a leap year", year % 4 == 0 && (year % 100 != 0 || year % 400 == 0))
-        // Must be in the past (before current year)
         assertTrue("Year $year must be before current year", year < Calendar.getInstance().get(Calendar.YEAR))
-        // Must be Feb 29, not rolled to Mar 1
+        // Feb 29, not rolled to Mar 1.
         assertEquals(Calendar.FEBRUARY, cal.get(Calendar.MONTH))
         assertEquals(29, cal.get(Calendar.DAY_OF_MONTH))
     }
 
     @Test
     fun `getStartTimestamp - future month with known year still uses known year`() {
-        // December with year 1985 should return 1985, not next year
+        // A known year is used as is, even for a month still ahead this year.
         val ts = ContactEventUtils.getStartTimestamp(12, 25, 1985)
 
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
@@ -468,7 +463,7 @@ class ContactEventUtilsTest {
 
     @Test
     fun `minutesToIsoDuration - negative minutes are after start (positive trigger)`() {
-        // The critical case: -540 ("9 AM day of", after midnight) must NOT collapse to PT0M.
+        // -540 (9 AM the day of, after midnight) must give PT9H, not collapse to PT0M.
         assertEquals("PT9H", ContactEventUtils.minutesToIsoDuration(-540))
         assertEquals("PT12H", ContactEventUtils.minutesToIsoDuration(-720))
         assertEquals("PT30M", ContactEventUtils.minutesToIsoDuration(-30))

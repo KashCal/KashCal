@@ -4,18 +4,16 @@ import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.quirks.matchesReservedCollection
 
 /**
- * CardDAV quirks for generic RFC 6352 servers (Radicale, Baikal, SOGo,
- * Nextcloud, Cyrus, and any standard CardDAV server).
+ * CardDAV quirks for generic RFC 6352 servers (Radicale, Baikal, SOGo, Nextcloud, Cyrus and any
+ * standard CardDAV server).
  *
- * Mirrors the CalDAV `DefaultQuirks`: server base URL comes in via the
- * constructor (from the login's home-set URL), no app-specific password is
- * required, and all extraction delegates to a held [CardDavXmlParser].
+ * Like the CalDAV `DefaultQuirks`, the server base URL comes in through the constructor (the
+ * scheme and host of the account's home-set URL), no app-specific password is required, and all
+ * extraction delegates to a held [CardDavXmlParser].
  *
- * Provider metadata ([providerId], [displayName], [requiresAppSpecificPassword])
- * are constructor parameters so a provider that differs only in those values
- * (see [ICloudCardDavQuirks]) is a thin subclass rather than a copy — the
- * extraction and URL-resolution behavior is identical across every RFC 6352
- * server, so there is nothing else to fork.
+ * The base URL and provider metadata ([providerId], [displayName], [requiresAppSpecificPassword],
+ * [discoverHostViaDns]) are constructor parameters, so [ICloudCardDavQuirks] and
+ * [ZohoCardDavQuirks] are thin subclasses that share this extraction and URL resolution.
  */
 open class DefaultCardDavQuirks(
     private val serverBaseUrl: String,
@@ -61,27 +59,27 @@ open class DefaultCardDavQuirks(
         mapOf("User-Agent" to "KashCal/2.0 (Android)")
 
     override fun isSyncTokenInvalid(responseCode: Int, responseBody: String): Boolean =
-        // 410 Gone or the DAV:valid-sync-token precondition body indicates an
-        // expired token. A bare 403 is "permission denied", not expiry.
+        // 410 Gone or a DAV:valid-sync-token precondition body means an expired token. A bare
+        // 403 is permission denied here; a 403 to a sync-collection REPORT is read as expiry
+        // by OkHttpCardDavClient.syncCollection itself.
         responseCode == 410 || responseBody.contains("valid-sync-token", ignoreCase = true)
 
     override fun shouldSkipAddressBook(href: String, displayName: String?): Boolean {
-        // Skip the scheduling (inbox/outbox) and notification collections a server
-        // may expose alongside real address books. Match a reserved word only as a
-        // whole PATH SEGMENT, never as a substring: a user's real book called
-        // "notifications-contacts" or "my-inbox-friends" — or any account whose
-        // username contains one of these words — must survive. Radicale (arbitrary
-        // collection paths whose segment carries username + book name) is where a
+        // Skips the scheduling (inbox, outbox) and notification collections a server may
+        // expose next to real address books. A reserved word matches only as a whole path
+        // segment, never as a substring, so a book called "notifications-contacts" or
+        // "my-inbox-friends", or any account whose username contains one of these words,
+        // survives. On Radicale a path segment carries the username and book name, so a
         // substring match would silently hide real contacts. The display name is not a
-        // discriminator: a book carries the <addressbook> resourcetype to reach this
-        // filter, so one the user named "Inbox" must surface.
+        // discriminator: a book reaches this filter only with the <addressbook> resourcetype,
+        // so one the user named "Inbox" must surface.
         return matchesReservedCollection(href = href)
     }
 
     /**
-     * Resolve a possibly-relative href against a base host into an absolute URL.
-     * Absolute hrefs (including iCloud's `pNN-contacts.icloud.com` partition
-     * hosts) are preserved verbatim — no canonicalization.
+     * Resolves a possibly relative href against [baseHost] into an absolute URL. Absolute hrefs,
+     * including iCloud's `pNN-contacts.icloud.com` partition hosts, are kept verbatim with no
+     * canonicalization.
      */
     private fun resolveUrl(href: String, baseHost: String): String =
         if (href.startsWith("http")) {

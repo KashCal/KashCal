@@ -14,18 +14,15 @@ import java.time.zone.ZoneRulesException
 import java.util.TimeZone
 
 /**
- * Adversarial timezone tests for calendar operations.
+ * Probes timezone cases that could show a wrong date or time.
  *
- * Tests probe edge cases that could display wrong dates/times:
- * - DST gap (time doesn't exist)
- * - DST overlap (time exists twice)
- * - All-day event timezone traps
- * - Invalid/obsolete timezone IDs
- * - International Date Line crossings
- * - Extreme timezone offsets
- * - Historical timezone changes
- *
- * These tests verify defensive coding in DateTimeUtils and elsewhere.
+ * Most tests pin java.time and java.util.TimeZone behavior the app relies on: DST gaps and
+ * overlaps, all-day dates read in UTC against local time, invalid and legacy zone IDs,
+ * UTC+14 and UTC-12, the date line, half- and quarter-hour offsets, the year boundary and
+ * epoch-millis round-trips. The two `eventTsToDayCode` tests in the all-day section, the first
+ * multi-day test and the DateTimeUtils section call [DateTimeUtils]: `eventTsToDayCode`,
+ * `spansMultipleDays`, `formatEventDate`, `localDateToUtcMidnight`, `utcMidnightToLocalDate`
+ * and `calculateTotalDays`.
  */
 class TimezoneAdversarialTest {
 
@@ -40,7 +37,7 @@ class TimezoneAdversarialTest {
         val before = ZonedDateTime.of(2024, 3, 10, 1, 59, 0, 0, zone)
         assertEquals(1, before.hour)
 
-        // 2:30 AM doesn't exist - ZonedDateTime adjusts forward to 3:30 AM
+        // 2:30 AM doesn't exist; ZonedDateTime moves it forward to 3:30 AM.
         val gap = ZonedDateTime.of(2024, 3, 10, 2, 30, 0, 0, zone)
         assertEquals("2:30 AM should be adjusted to 3:30 AM", 3, gap.hour)
     }
@@ -49,11 +46,10 @@ class TimezoneAdversarialTest {
     fun `DST gap - event at non-existent time gets adjusted`() {
         val zone = ZoneId.of("America/New_York")
 
-        // Create event at 2:15 AM on DST day (doesn't exist)
+        // 2:15 AM on the DST day doesn't exist and moves forward to 3:15 AM.
         val localDateTime = LocalDateTime.of(2024, 3, 10, 2, 15)
         val adjusted = localDateTime.atZone(zone)
 
-        // Should be adjusted to 3:15 AM
         assertEquals(3, adjusted.hour)
         assertEquals(15, adjusted.minute)
     }
@@ -66,7 +62,7 @@ class TimezoneAdversarialTest {
         val start = ZonedDateTime.of(2024, 3, 10, 1, 0, 0, 0, zone)
         val end = ZonedDateTime.of(2024, 3, 10, 4, 0, 0, 0, zone)
 
-        // Wall clock: 3 hours. Actual: 2 hours (lost hour due to DST)
+        // 3 hours on the wall clock, 2 elapsed: the gap skips an hour.
         val actualHours = java.time.Duration.between(start, end).toHours()
         assertEquals(2, actualHours)
     }
@@ -105,10 +101,9 @@ class TimezoneAdversarialTest {
             zone
         ).withLaterOffsetAtOverlap()
 
-        // Both are 1:30 AM but different instants
+        // Both read 1:30 AM. The hour apart in UTC isn't asserted.
         assertEquals(1, first130.hour)
         assertEquals(1, second130.hour)
-        // They should have different UTC times (1 hour apart)
     }
 
     @Test
@@ -119,7 +114,7 @@ class TimezoneAdversarialTest {
         val start = ZonedDateTime.of(2024, 11, 3, 0, 30, 0, 0, zone)
         val end = ZonedDateTime.of(2024, 11, 3, 2, 30, 0, 0, zone)
 
-        // Wall clock: 2 hours. Actual: 3 hours (gained hour due to DST)
+        // 2 hours on the wall clock, 3 elapsed: the overlap repeats an hour.
         val actualHours = java.time.Duration.between(start, end).toHours()
         assertEquals(3, actualHours)
     }
@@ -128,11 +123,12 @@ class TimezoneAdversarialTest {
 
     @Test
     fun `all-day event UTC midnight displays correct date in any timezone`() {
-        // All-day events stored as UTC midnight
+        // An all-day event is stored as UTC midnight.
         val date = LocalDate.of(2024, 6, 15)
         val utcMidnight = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
-        // Verify in various timezones
+        // The loop never uses `zone`: the date is read in UTC every time, so each zone gives
+        // the same answer.
         val zones = listOf(
             "America/New_York",     // UTC-4/-5
             "America/Los_Angeles",  // UTC-7/-8
@@ -143,7 +139,6 @@ class TimezoneAdversarialTest {
 
         zones.forEach { zoneId ->
             val zone = ZoneId.of(zoneId)
-            // For all-day events, use UTC to get the date
             val displayDate = Instant.ofEpochMilli(utcMidnight)
                 .atZone(ZoneOffset.UTC)
                 .toLocalDate()
@@ -158,21 +153,20 @@ class TimezoneAdversarialTest {
 
     @Test
     fun `all-day event WRONG - using local TZ shifts date backward`() {
-        // This demonstrates the BUG if you use local TZ instead of UTC
+        // Shows the wrong date that reading an all-day timestamp in the local zone gives.
         val date = LocalDate.of(2024, 6, 15)
         val utcMidnight = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
-        // In Tokyo (UTC+9), UTC midnight is 9 AM local = same day = CORRECT
+        // In Tokyo (UTC+9), UTC midnight is 9 AM the same day, so the date matches by chance.
         val tokyoDate = Instant.ofEpochMilli(utcMidnight)
             .atZone(ZoneId.of("Asia/Tokyo"))
             .toLocalDate()
-        assertEquals(date, tokyoDate) // Happens to be correct
+        assertEquals(date, tokyoDate)
 
-        // In New York (UTC-5), UTC midnight is 7 PM previous day = WRONG if used
+        // In New York (EDT, UTC-4), UTC midnight is 8 PM the day before.
         val nyZone = ZoneId.of("America/New_York")
         val nyLocalDateTime = Instant.ofEpochMilli(utcMidnight).atZone(nyZone)
 
-        // If someone incorrectly uses local TZ:
         val wrongDate = nyLocalDateTime.toLocalDate()
         assertEquals(
             "Using local TZ would show June 14 instead of June 15",
@@ -200,7 +194,6 @@ class TimezoneAdversarialTest {
         val nyZone = ZoneId.of("America/New_York")
         val dayCode = DateTimeUtils.eventTsToDayCode(timestampMs, isAllDay = false, nyZone)
 
-        // Should be June 14 in NY
         assertEquals(20240614, dayCode)
     }
 
@@ -212,19 +205,18 @@ class TimezoneAdversarialTest {
             ZoneId.of("Invalid/Timezone")
             fail("Expected ZoneRulesException for an unknown zone ID")
         } catch (e: ZoneRulesException) {
-            // Expected - invalid zone throws; message names the bad region
+            // The message names the bad region.
             assertTrue(e.message?.contains("Invalid/Timezone") == true)
         }
     }
 
     @Test
     fun `obsolete timezone ID is handled`() {
-        // Some timezone IDs have been renamed
-        // "US/Eastern" is legacy, "America/New_York" is current
+        // "US/Eastern" is a legacy alias of "America/New_York".
         val legacy = ZoneId.of("US/Eastern")
         val current = ZoneId.of("America/New_York")
 
-        // Both should work and produce same results
+        // Both resolve and give the same offset now.
         val now = Instant.now()
         assertEquals(
             now.atZone(legacy).offset,
@@ -234,7 +226,7 @@ class TimezoneAdversarialTest {
 
     @Test
     fun `TimeZone getTimeZone returns GMT for invalid ID`() {
-        // java.util.TimeZone silently returns GMT for invalid IDs
+        // java.util.TimeZone silently returns GMT for an invalid ID; ZoneId.of throws.
         val invalid = TimeZone.getTimeZone("Not/A/Zone")
         assertEquals("GMT", invalid.id)
     }
@@ -255,7 +247,7 @@ class TimezoneAdversarialTest {
 
     @Test
     fun `UTC-12 - Baker Island (furthest behind)`() {
-        // Baker Island uses UTC-12 (AoE - Anywhere on Earth)
+        // Baker Island uses UTC-12 (AoE, Anywhere on Earth); the test uses the fixed offset.
         val offset = ZoneOffset.ofHours(-12)
 
         val utcTime = ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneOffset.UTC)
@@ -308,20 +300,19 @@ class TimezoneAdversarialTest {
     fun `Chatham Islands uses UTC+12_45 or +13_45`() {
         val zone = ZoneId.of("Pacific/Chatham")
 
-        // Winter (CHAST = +12:45)
+        // July is southern winter (CHAST, +12:45).
         val winter = ZonedDateTime.of(2024, 7, 15, 0, 0, 0, 0, ZoneOffset.UTC)
             .withZoneSameInstant(zone)
 
-        // Offset should be +12:45 in winter or +13:45 in summer
+        // Accepts either +12:45 (765) or +13:45 (825).
         val offsetMinutes = winter.offset.totalSeconds / 60
-        assertTrue(offsetMinutes == 765 || offsetMinutes == 825) // 12:45 or 13:45
+        assertTrue(offsetMinutes == 765 || offsetMinutes == 825)
     }
 
     // ==================== Year Boundary Tests ====================
 
     @Test
     fun `New Year in different timezones`() {
-        // When it's midnight Jan 1 in Tokyo, what date is it elsewhere?
         val tokyoNewYear = ZonedDateTime.of(2024, 1, 1, 0, 0, 0, 0, ZoneId.of("Asia/Tokyo"))
 
         val nyTime = tokyoNewYear.withZoneSameInstant(ZoneId.of("America/New_York"))
@@ -336,10 +327,9 @@ class TimezoneAdversarialTest {
 
     @Test
     fun `timestamps near leap second boundaries`() {
-        // Java time API doesn't support leap seconds directly
-        // but we should not crash on any timestamp, and the conversion
-        // must round-trip the epoch-millis we put in.
-        val maxTimestamp = Long.MAX_VALUE / 2 // Reasonable max
+        // java.time has no leap seconds; this asserts only that 0 and Long.MAX_VALUE / 2
+        // round-trip through Instant without throwing.
+        val maxTimestamp = Long.MAX_VALUE / 2
         val minTimestamp = 0L
 
         assertEquals(minTimestamp, Instant.ofEpochMilli(minTimestamp).toEpochMilli())
@@ -370,8 +360,8 @@ class TimezoneAdversarialTest {
         val nyZone = ZoneId.of("America/New_York")
         val laZone = ZoneId.of("America/Los_Angeles")
 
-        // Event at 11 PM June 15 NY = 8 PM June 15 LA (same day)
-        // Event at 1 AM June 16 NY = 10 PM June 15 LA (different day!)
+        // 11 PM June 15 in NY is 8 PM June 15 in LA, the same day; 1 AM June 16 in NY is
+        // 10 PM June 15 in LA, the day before. The test uses the second.
         val eventStart = ZonedDateTime.of(2024, 6, 16, 1, 0, 0, 0, nyZone)
 
         val nyDate = eventStart.toLocalDate()
@@ -449,12 +439,11 @@ class TimezoneAdversarialTest {
     fun `calculateTotalDays handles timezone correctly`() {
         val date = LocalDate.of(2024, 6, 15)
         val utcStart = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-        // End on June 17 (3 days: 15, 16, 17)
-        // Using June 17 00:00 UTC as end gives June 17 as end date
+        // An all-day end of June 17 00:00 UTC ends on June 17: 15, 16 and 17.
         val utcEnd = date.plusDays(2).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
         val days = DateTimeUtils.calculateTotalDays(utcStart, utcEnd, isAllDay = true)
 
-        assertEquals(3, days)  // June 15, 16, 17
+        assertEquals(3, days)
     }
 }

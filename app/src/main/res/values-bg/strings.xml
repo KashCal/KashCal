@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Не са намерени календари на този сървър.</string>
     <string name="caldav_error_unexpected">Неочаквана грешка. Опитайте отново.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nАко това е сървър във вашата локална мрежа, разрешете достъпа до локалната мрежа, за да се свържете.</string>
+    <string name="caldav_error_connection_refused_insecure">Сървърът пренасочи връзката към място, към което KashCal не преминава (некриптиран адрес или цикъл от пренасочвания), затова KashCal спря, преди да изпрати паролата Ви. Проверете адреса на сървъра.</string>
     <string name="local_network_banner_title">Необходим е достъп до локалната мрежа</string>
     <string name="local_network_banner_body">Изглежда, че този сървър е във вашата локална мрежа. Разрешете достъпа до локалната мрежа, за да може KashCal да се свърже с него.</string>
     <string name="local_network_banner_allow">Разрешаване на достъп</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Запази промените в</string>
     <string name="dialog_delete_recurring_title">Изтрий</string>
     <string name="dialog_move_recurring_title">Премести</string>
+    <string name="snackbar_event_rescheduled">Събитието е пренасрочено</string>
+    <string name="snackbar_reschedule_failed">Събитието не можа да бъде пренасрочено</string>
     <string name="recurring_this_event">Това събитие</string>
     <string name="recurring_all_events">Всички събития</string>
 

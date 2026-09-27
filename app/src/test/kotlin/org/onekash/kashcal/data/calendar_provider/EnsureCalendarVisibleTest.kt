@@ -11,16 +11,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for the pure helpers backing
- * [AndroidCalendarProviderRepository.ensureCalendarVisible].
+ * Tests the pure helpers behind [AndroidCalendarProviderRepository.ensureCalendarVisible]
+ * ([buildCalendarVisibleValues], [shouldSkipRequestSync]).
  *
- * Issue #170: on Xiaomi/MIUI, Google calendars ship with both SYNC_EVENTS=0
- * AND VISIBLE=0 by default. A typo in either key would silently break MIUI
- * users; these tests guard against that.
+ * On Xiaomi/MIUI, Google calendars ship with SYNC_EVENTS=0 and VISIBLE=0 by default (#170). A
+ * typo in either key would silently break MIUI users.
  *
- * Uses Robolectric because `ContentValues` and `Account` are Android framework
- * types that are stubbed-out no-ops in plain JVM tests (every `put` silently
- * drops, every `Account` constructor NPEs).
+ * Runs on Robolectric because `ContentValues` and `Account` are stubbed-out no-ops in plain JVM
+ * tests (every `put` silently drops, every `Account` constructor NPEs).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])

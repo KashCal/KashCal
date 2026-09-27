@@ -3,13 +3,10 @@ package org.onekash.icaldav.model
 import java.time.Duration
 
 /**
- * VAVAILABILITY component per RFC 7953.
- * Defines when a user is available for scheduling.
+ * Holds a VAVAILABILITY component (RFC 7953): a period in which the user is [busyType] except
+ * during the [available] slots, published for free-busy lookups (RFC 7953 §1).
  *
- * VAVAILABILITY is used for Calendly-style booking pages, allowing users
- * to publish their available time slots for others to schedule against.
- *
- * Example iCalendar format:
+ * Example:
  * ```
  * BEGIN:VAVAILABILITY
  * UID:availability-1
@@ -28,47 +25,43 @@ import java.time.Duration
  * @see <a href="https://tools.ietf.org/html/rfc7953">RFC 7953 - VAVAILABILITY</a>
  */
 data class ICalAvailability(
-    /** Unique identifier */
     val uid: String,
 
-    /** Start of availability period */
+    /** Start of the period; null means unbounded (RFC 7953 §3.1). */
     val dtStart: ICalDateTime? = null,
 
-    /** End of availability period */
+    /** End of the period; null means unbounded. */
     val dtEnd: ICalDateTime? = null,
 
-    /** Summary/title for this availability */
     val summary: String? = null,
 
-    /** Calendar address this availability applies to */
+    /** ORGANIZER: the calendar user whose available time this publishes. */
     val organizer: String? = null,
 
-    /** Priority (0 = undefined, 1 = highest, 9 = lowest) */
+    /**
+     * PRIORITY for combining overlapping components: 1 is highest, 9 lowest, and 0 (the
+     * default) ranks below 9 (RFC 7953 §4).
+     */
     val priority: Int = 0,
 
-    /** Available time slots within this period */
+    /** AVAILABLE subcomponents: the free time within the period. */
     val available: List<AvailableSlot> = emptyList(),
 
-    /** Default busy type when not in available slots */
+    /** BUSYTYPE of the period outside [available]; RFC 7953 defaults it to BUSY-UNAVAILABLE. */
     val busyType: BusyType = BusyType.BUSY_UNAVAILABLE,
 
-    /** Categories for filtering */
     val categories: List<String> = emptyList(),
 
-    /** Last modified timestamp */
     val lastModified: ICalDateTime? = null,
 
-    /** Sequence number for versioning */
     val sequence: Int = 0
 ) {
-    /**
-     * Check if there are any available slots.
-     */
     fun hasAvailableSlots(): Boolean = available.isNotEmpty()
 
     companion object {
         /**
-         * Create a simple availability with working hours.
+         * Creates an unbounded BUSY-UNAVAILABLE availability titled [summary], with no
+         * [available] slots; add the hours with `copy`.
          */
         fun workingHours(
             uid: String = java.util.UUID.randomUUID().toString(),
@@ -83,40 +76,28 @@ data class ICalAvailability(
     }
 }
 
-/**
- * AVAILABLE sub-component defining specific available time slots.
- *
- * Each AVAILABLE defines a window of time when the user can accept
- * meetings. Can include recurrence rules for repeating availability.
- */
+/** Holds one AVAILABLE subcomponent: a window of free time, repeating when [rrule] is set. */
 data class AvailableSlot(
-    /** Start of availability window */
     val dtStart: ICalDateTime,
 
-    /** End of availability window (mutually exclusive with duration) */
+    /** End of the window; mutually exclusive with [duration]. */
     val dtEnd: ICalDateTime? = null,
 
-    /** Duration of availability (mutually exclusive with dtEnd) */
+    /** Length of the window; mutually exclusive with [dtEnd]. */
     val duration: Duration? = null,
 
-    /** Recurrence rule for repeating availability */
     val rrule: RRule? = null,
 
-    /** Exception dates when this slot is not available */
+    /** EXDATEs: occurrences of [rrule] that aren't available. */
     val exdates: List<ICalDateTime> = emptyList(),
 
-    /** Summary/label for this slot */
     val summary: String? = null,
 
-    /** Location for this availability */
     val location: String? = null,
 
-    /** Categories for this slot */
     val categories: List<String> = emptyList()
 ) {
-    /**
-     * Calculate the effective end time.
-     */
+    /** Returns [dtEnd], else [dtStart] plus [duration], else [dtStart]. */
     fun effectiveEnd(): ICalDateTime {
         return dtEnd ?: duration?.let { dur ->
             ICalDateTime.fromTimestamp(
@@ -127,15 +108,10 @@ data class AvailableSlot(
         } ?: dtStart
     }
 
-    /**
-     * Check if this slot recurs.
-     */
     fun isRecurring(): Boolean = rrule != null
 
     companion object {
-        /**
-         * Create a simple one-time slot.
-         */
+        /** Creates a non-repeating slot from [start] to [end]. */
         fun oneTime(
             start: ICalDateTime,
             end: ICalDateTime,
@@ -150,23 +126,19 @@ data class AvailableSlot(
     }
 }
 
-/**
- * Busy type per RFC 7953.
- * Defines the default busy status when not in available slots.
- */
+/** BUSYTYPE values (RFC 7953 §3.2): the busy status of time outside the AVAILABLE slots. */
 enum class BusyType {
-    /** Generic busy status */
     BUSY,
 
-    /** Definitely unavailable (default) */
+    /** The default. */
     BUSY_UNAVAILABLE,
 
-    /** Tentatively busy, might be available */
     BUSY_TENTATIVE;
 
     fun toICalString(): String = name.replace("_", "-")
 
     companion object {
+        /** Maps [value] ignoring case; null, blank or unknown values map to BUSY_UNAVAILABLE. */
         fun fromString(value: String?): BusyType {
             if (value.isNullOrBlank()) return BUSY_UNAVAILABLE
             val normalized = value.uppercase().replace("-", "_")

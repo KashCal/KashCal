@@ -27,42 +27,37 @@ import java.util.UUID
 import okhttp3.Credentials as OkCredentials
 
 /**
- * Live oracle probing whether an attendee RSVP (iTIP REPLY) can be DELIVERED to
- * the organizer via the RFC 6638 §6 schedule-outbox on a server that does not
- * self-schedule (Zoho stamps SCHEDULE-AGENT=CLIENT).
+ * Probes live whether Zoho's schedule-outbox accepts an attendee RSVP (iTIP REPLY) POST.
  *
- * WHY THIS EXISTS: the organizer-send direction has an outbox fallback
- * (`PushStrategy.maybeSendViaOutbox` POSTs METHOD:REQUEST when the server won't
- * deliver). The RSVP direction does NOT — `PushStrategy.processPartstatOnlyUpdate`
- * only PATCH-PUTs the PARTSTAT onto the event resource and never POSTs a REPLY.
- * On an implicit-scheduling server (iCloud/Baikal/Nextcloud) the PUT triggers
- * server-side REPLY delivery to the organizer, so the RSVP is seen. On a
- * Zoho-class server the PARTSTAT sits inert and the organizer is never notified
- * — the RSVP-side mirror of the bug T4's outbox POST fixed for invites.
+ * Zoho doesn't self-schedule (it stamps SCHEDULE-AGENT=CLIENT). The organizer direction has
+ * an outbox fallback: `PushStrategy.maybeSendViaOutbox` POSTs METHOD:REQUEST when the server
+ * won't deliver. The RSVP direction has none: `PushStrategy.processPartstatOnlyUpdate` only
+ * PUTs the patched PARTSTAT onto the event resource and never POSTs a REPLY. On an
+ * implicit-scheduling server (iCloud, Baikal, Nextcloud) that PUT triggers server-side REPLY
+ * delivery to the organizer. On a Zoho-class server the PARTSTAT sits inert and the organizer
+ * is never notified.
  *
- * This probe confirms the SERVER half: does Zoho's outbox accept a METHOD:REPLY
- * (built by the real, currently-unused [ITipBuilder.createReply])?
+ * This probe checks the server half: does Zoho's outbox accept a METHOD:REPLY built by the
+ * real [ITipBuilder.createReply], which the app doesn't call yet?
  *
- * RESULT (2026-06-23, live Zoho): the outbox ACCEPTS the REPLY POST — HTTP 200,
- * empty schedule-response (recipients == []). That is NOT a rejection: it is the
- * same "accepted, server took ownership" disposition Zoho returns for an outbox
- * CANCEL even to a real recipient (the empty-CANCEL fix established this). It
- * contrasts with Sabre/Stalwart, which return 501/400 on an event outbox POST.
- * So the gap is REAL (the RSVP path has no outbox fallback) and the fix is
- * VIABLE through the existing postToOutbox primitive. The synthetic reserved-TLD
- * organizer cannot elicit a per-recipient 2.x status, so this asserts the
- * acceptance contract (2xx, no FAILURE status), not delivery to a real mailbox.
+ * Result (2026-06-23, live Zoho): the outbox accepts the REPLY POST with HTTP 200 and an
+ * empty schedule-response (recipients == []). That isn't a rejection: Zoho returns the same
+ * "accepted, server took ownership" disposition for an outbox CANCEL, even to a real
+ * recipient. Sabre and Stalwart, by contrast, return 501/400 on an event outbox POST. So an
+ * RSVP outbox fallback is viable through the existing postToOutbox. The synthetic
+ * reserved-TLD organizer can't elicit a per-recipient 2.x status, so this asserts the
+ * acceptance contract (2xx, no failure status), not delivery to a real mailbox.
  *
- * ROLE INVERSION vs [ZohoOutboxITipDeliveryTest]: there the account is the
- * ORGANIZER and the recipient is a synthetic attendee. HERE the account is the
- * responding ATTENDEE (Originator) and the recipient is a synthetic ORGANIZER
- * (@example.test, RFC 6761 reserved — undeliverable, no human contacted). The
- * event's ORGANIZER is that synthetic address; the single REPLY attendee is the
- * account's own discovered calendar-user-address with PARTSTAT=ACCEPTED.
+ * Roles are inverted from [ZohoOutboxITipDeliveryTest], where the account is the ORGANIZER
+ * and the recipient a synthetic attendee. Here the account is the responding ATTENDEE
+ * (Originator) and the recipient a synthetic ORGANIZER (@example.test, reserved by RFC 6761:
+ * undeliverable, no human contacted). The event's ORGANIZER is that synthetic address; the
+ * single REPLY attendee is the account's own discovered calendar-user-address with
+ * PARTSTAT=ACCEPTED.
  *
- * OUTWARD-FACING SIDE EFFECT: running this (only under `-Pintegration`, only
- * with `ZOHO_*` creds) makes the real Zoho account emit a REPLY toward the
- * reserved-TLD organizer — undeliverable, inert until explicitly run.
+ * Side effect: running this (only under `-Pintegration`, only with `ZOHO_*` creds) makes the
+ * real Zoho account emit a REPLY toward the reserved-TLD organizer, which is undeliverable.
+ * The file is inert until run.
  *
  * PII: the account's own address (Originator + REPLY attendee) may be real; any
  * non-`@example.test` address is redacted before reaching a failure message.
@@ -76,12 +71,10 @@ class ZohoOutboxReplyDeliveryTest {
     private var davEndpoint: String? = null
     private var username: String? = null
     private var password: String? = null
-    // Optional real, consenting organizer mailbox to receive the REPLY. When set,
-    // it upgrades the acceptance check into an end-to-end "Zoho reports it
-    // delivered to a real address" check (the reserved-TLD recipient can only
-    // ever yield an empty schedule-response). Prefers a dedicated key, falls back
-    // to the existing MAILBOX_PROBE_RECIPIENT so an already-configured consenting
-    // address works without new setup.
+    // Optional real, consenting organizer mailbox to receive the REPLY; when set,
+    // the real-recipient test runs, otherwise it is skipped. ZOHO_REPLY_ORGANIZER
+    // wins, falling back to MAILBOX_PROBE_RECIPIENT so an already configured
+    // consenting address works without new setup.
     private var realOrganizer: String? = null
     private val factory = OkHttpCalDavClientFactory()
     private val builder = ITipBuilder()
@@ -123,7 +116,7 @@ class ZohoOutboxReplyDeliveryTest {
         val outboxUrl = discoverScheduleOutboxUrl(principalUrl)
         assumeTrue("Zoho did not advertise a schedule-outbox-URL", outboxUrl != null)
 
-        // 3. Build the REPLY with the REAL ITipBuilder. ORGANIZER is a synthetic
+        // 3. Build the REPLY with the real ITipBuilder. ORGANIZER is a synthetic
         //    reserved-TLD address (the party being notified); the lone REPLY
         //    attendee is the account, PARTSTAT=ACCEPTED.
         val organizerRecipient = "kashcal-reply-oracle-organizer@example.test"
@@ -147,16 +140,14 @@ class ZohoOutboxReplyDeliveryTest {
             icsBody = ics
         )
 
-        // OBSERVED (2026-06-23): Zoho ACCEPTS the REPLY POST with HTTP 200 and an
-        // EMPTY schedule-response. That empty-but-accepted disposition is the same
-        // one Zoho/SOGo/Mailbox return for an outbox CANCEL even to a real
-        // recipient (see the empty-CANCEL fix), i.e. "server took ownership" — NOT
-        // a rejection. The synthetic reserved-TLD organizer can't elicit a
-        // per-recipient 2.x status, so we cannot demand one here. The contract we
-        // CAN assert is the one that decides whether the fix is viable: the outbox
-        // ACCEPTS a METHOD:REPLY (HTTP 2xx, no 4xx/5xx rejection like Sabre/Stalwart
-        // give for an event outbox POST). A non-empty response, if present, must
-        // not carry a failure (3.x/5.x) request-status.
+        // Observed 2026-06-23: Zoho accepts the REPLY POST with HTTP 200 and an
+        // empty schedule-response, the same disposition Zoho, SOGo and Mailbox
+        // return for an outbox CANCEL even to a real recipient: the server took
+        // ownership, not a rejection. The synthetic reserved-TLD organizer can't
+        // elicit a per-recipient 2.x status, so none is demanded. Asserted instead:
+        // the outbox accepts a METHOD:REPLY (HTTP 2xx, not the 4xx/5xx Sabre and
+        // Stalwart give for an event outbox POST), and a non-empty response carries
+        // no failure (3.x/5.x) request-status.
         val safeBody = redactPii(responseBody.orEmpty())
         println("REPLY-PROBE httpCode=$httpCode bodyLen=${responseBody?.length ?: -1} body=[$safeBody]")
         assertTrue(
@@ -171,8 +162,8 @@ class ZohoOutboxReplyDeliveryTest {
 
     @Test
     fun `in-app postToOutbox primitive delivers ITipBuilder REPLY and reports request-status 2_x`() = runBlocking {
-        // Same chain via the PRODUCTION CalDavClient.postToOutbox primitive — the
-        // method the RSVP path would call once the outbox fallback is wired in.
+        // Same chain through the production CalDavClient.postToOutbox, the method an
+        // RSVP outbox fallback would call.
         val principalResult = client.discoverPrincipal(davEndpoint!!)
         assumeTrue("Zoho principal discovery failed", principalResult.isSuccess())
         val principalUrl = principalResult.getOrNull()!!
@@ -206,11 +197,10 @@ class ZohoOutboxReplyDeliveryTest {
             icalData = ics
         )
 
-        // Production primitive must also be ACCEPTED (not error out). Like the
-        // raw POST above, a synthetic recipient yields an empty schedule-response
-        // (recipients == []) — accepted, server took ownership. The assertion is
-        // "the primitive succeeded and reported no per-recipient FAILURE", which
-        // is what tells us the RSVP-outbox fix is wireable through this method.
+        // Like the raw POST above, a synthetic recipient yields an empty
+        // schedule-response (recipients == []): accepted, server took ownership.
+        // A success with no per-recipient failure means an RSVP outbox fallback
+        // can go through this method.
         assertTrue(
             "In-app postToOutbox should be ACCEPTED for REPLY against Zoho (got $result)",
             result.isSuccess()
@@ -232,15 +222,15 @@ class ZohoOutboxReplyDeliveryTest {
         // End-to-end leg with a real consenting organizer address configured
         // (ZOHO_REPLY_ORGANIZER, or the shared MAILBOX_PROBE_RECIPIENT).
         //
-        // OBSERVED (2026-06-23): Zoho returns the SAME empty schedule-response
-        // (recipients == []) for a REAL recipient as for the reserved-TLD one —
-        // it does NOT upgrade to a per-recipient 2.x status. Likely because the
-        // REPLY references a synthetic event the recipient never organized, so
-        // Zoho has nothing to correlate and just accepts ownership. This matches
-        // the empty-but-accepted CANCEL behaviour, so we assert the ACCEPTANCE
-        // contract (accepted, no FAILURE), and the diagnostic line records
-        // whether a real status ever appears (would flip this understanding).
-        // Skipped entirely when no consenting address is set, so it never spams.
+        // Observed 2026-06-23: Zoho returns the same empty schedule-response
+        // (recipients == []) for a real recipient as for the reserved-TLD one, with
+        // no per-recipient 2.x status. Likely because the REPLY references a
+        // synthetic event the recipient never organized, so Zoho has nothing to
+        // correlate and accepts ownership. This matches the empty-but-accepted
+        // CANCEL behavior, so the test asserts acceptance (success, no failure
+        // status); the printed line records whether a real status ever appears,
+        // which would change this reading. Skipped when no consenting address is
+        // set, so it never spams.
         assumeTrue(
             "No real reply-organizer configured (ZOHO_REPLY_ORGANIZER / MAILBOX_PROBE_RECIPIENT)",
             realOrganizer != null
@@ -285,9 +275,9 @@ class ZohoOutboxReplyDeliveryTest {
         val statuses = response.recipients.map { it.requestStatus }
         val safeStatuses = redactPii(statuses.joinToString())
         println("REPLY-PROBE real-recipient recipients=${response.recipients.size} statuses=[$safeStatuses]")
-        // Accepted (server took ownership) and no per-recipient FAILURE. An empty
-        // response is the observed norm; a 3.x/5.x would mean the real-recipient
-        // REPLY was actively refused (which would change the fix's viability).
+        // An empty response is the observed norm; a 3.x/5.x would mean Zoho
+        // refused the real-recipient REPLY, and an outbox fallback wouldn't work
+        // as is.
         assertTrue(
             "Real-recipient REPLY reported a FAILURE request-status (got: [$safeStatuses]) — " +
                 "Zoho actively refused the REPLY, the outbox-fallback fix is NOT viable as-is",
@@ -298,8 +288,9 @@ class ZohoOutboxReplyDeliveryTest {
     }
 
     /**
-     * The event being responded to. ORGANIZER is the (synthetic) party the REPLY
-     * notifies; sequence 0 is echoed verbatim by createReply per RFC 5546 §2.1.4.
+     * Builds the event being responded to. ORGANIZER is the synthetic party the REPLY
+     * notifies; createReply echoes sequence 0 unchanged (RFC 5546 §2.1.4: a REPLY
+     * must not increment SEQUENCE).
      */
     private fun oracleEvent(organizerAddress: String): ICalEvent = ICalEvent(
         uid = "kashcal-reply-oracle-${UUID.randomUUID()}@example.test",
@@ -381,9 +372,9 @@ class ZohoOutboxReplyDeliveryTest {
     }
 
     /**
-     * Mask every address not on the reserved `@example.test` TLD before it can
-     * reach an assertion message — keeps the account holder's real address out
-     * of junit-xml / CI logs.
+     * Masks every address not on the reserved `@example.test` TLD before it can
+     * reach an assertion message, keeping the account holder's real address out
+     * of junit-xml and CI logs.
      */
     private fun redactPii(text: String): String =
         Regex("""[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+""").replace(text) { m ->
@@ -410,8 +401,8 @@ class ZohoOutboxReplyDeliveryTest {
                     "ZOHO_USERNAME" -> username = value
                     "ZOHO_PASSWORD" -> password = value
                     "ZOHO_REPLY_ORGANIZER" -> realOrganizer = value
-                    // Fall back to the consenting recipient used by the CANCEL
-                    // probe, unless a dedicated reply-organizer key overrides it.
+                    // Fall back to the consenting recipient the CANCEL probe
+                    // uses, unless ZOHO_REPLY_ORGANIZER overrides it.
                     "MAILBOX_PROBE_RECIPIENT" ->
                         if (realOrganizer == null) realOrganizer = value
                 }

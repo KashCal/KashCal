@@ -41,28 +41,35 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * End-to-end proof, against a real Cyrus (the CalDAV engine Fastmail runs),
- * that the client recovers from the exact server-driven ETag drift behind
- * issue #311.
+ * Proves end to end, against a real Cyrus (the CalDAV engine Fastmail runs), that the client
+ * recovers from the server-driven ETag drift behind #311.
  *
- * The reporter's freeze needs a *scheduling object* (ORGANIZER present): after
- * an attendee reply is auto-processed, Cyrus rewrites the organizer's copy and
- * the ETag drifts while the Schedule-Tag stays stable (RFC 6638 §3.2.10). A
- * later edit or delete built from the pulled (now stale) ETag then 412s. Every
- * other Cyrus round-trip test uses a plain, ORGANIZER-free event, so none of
- * them ever drift and none exercise the 412-recovery path.
+ * The drift needs a scheduling object (ORGANIZER present): after an attendee reply is
+ * auto-processed, Cyrus rewrites the organizer's copy and the ETag changes while the
+ * Schedule-Tag doesn't (RFC 6638 §3.2.10). A later edit or delete sent with the pulled, now
+ * stale, ETag then gets a 412. A test without an attendee reply never drifts, so it never
+ * reaches the 412 recovery.
  *
- * This test drives the real production chain:
- *   organizer PUT (scheduling object) -> pull into real Room
- *     -> a second user ACCEPTS (server drifts the organizer ETag)
- *     -> queue an edit / a delete against the stale pulled ETag
- *     -> PushStrategy.pushForCalendar drains it
- *     -> assert no 412 warning and the server reflects the outcome
+ * The chain under test:
+ *   organizer PUT (scheduling object) -> pull into Room
+ *     -> a second user accepts (the server drifts the organizer ETag)
+ *     -> queue an edit or a delete against the stale pulled ETag
+ *     -> [PushStrategy.pushForCalendar] drains it
+ *     -> assert no 412 warning and that the server shows the outcome, and for the edit that
+ *        the attendee's ACCEPTED is still there
  *
- * A 412 that reached the caller surfaces as a pushWarning containing "412"
- * (the frozen-link symptom); recovery means the strategy refetched the ETag and
- * retried once. Cyrus-only (needs the scheduling pipeline + a second local
- * user); silently skipped when the container/creds are absent.
+ * A 412 that reached the caller shows up as a push warning containing "412" (the frozen-link
+ * symptom); recovery means one retry: an edit built on the server's current copy, a delete sent
+ * with the refetched ETag. Cyrus only (it needs the scheduling pipeline and a second local user);
+ * skipped when the credentials are missing or the server is unreachable, no calendar is found, the
+ * create fails, the event doesn't pull into Room, or the accept doesn't drift the ETag, as when the
+ * invite never reaches the second user: the test image's scheduling delivery can refuse the store
+ * with a 403.
+ *
+ * The last test reaches the same end state without the scheduling pipeline: a direct write
+ * standing in for another client puts the attendee's ACCEPTED into the organizer's copy, which
+ * moves the strong ETag, and the edit queued against the pulled ETag must keep that answer. It
+ * skips on the same assumptions, with a failed direct write in place of the drift.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -84,15 +91,15 @@ class CyrusScheduleDriftRecoveryTest {
     private var creds: ServerCredentials? = null
     private val createdEventUrls = mutableListOf<Pair<String, String>>()
 
-    // A far-future anchor so strict servers don't reject "event in the past".
+    // Three weeks ahead so strict servers don't reject an event in the past.
     private val dayMs = 86_400_000L
     private val startMs = ((System.currentTimeMillis() / dayMs) + 21) * dayMs + 9 * 3_600_000L
     private val icsUtc = SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'", Locale.US).apply {
         timeZone = TimeZone.getTimeZone("UTC")
     }
 
-    // Second local Cyrus user whose accept drives the organizer-copy drift. The
-    // test image seeds user1..user5, any password.
+    // user2 is the second local Cyrus user, whose accept drifts the organizer's copy. The test
+    // image seeds user1..user5 and accepts any password.
     private val organizerUser = "user1"
     private val attendeeUser = "user2"
     private val attendeeMailto = "mailto:user2@example.com"
@@ -205,8 +212,8 @@ class CyrusScheduleDriftRecoveryTest {
         return runBlocking { database.calendarsDao().getById(calendarId)!! }
     }
 
-    // A scheduling object: ORGANIZER=user1 with user2 invited. This is the class
-    // of event that drifts; a plain event never enters the scheduling pipeline.
+    // A scheduling object: ORGANIZER user1 with user2 invited. Only this kind of event drifts;
+    // a plain event never enters the scheduling pipeline.
     private fun schedulingObjectIcs(uid: String, partstat: String): String =
         """
 BEGIN:VCALENDAR
@@ -226,9 +233,9 @@ END:VCALENDAR
         """.trimIndent().replace("\n", "\r\n")
 
     /**
-     * A second CalDavClient authenticated as [attendeeUser], used to accept the
-     * invitation from the attendee's side. Built the same way the loader builds
-     * the organizer client, but with the attendee's username.
+     * Returns a [CalDavClient] authenticated as [attendeeUser], for accepting the invitation.
+     * Built as [CalDavTestServerLoader.createClient] builds the organizer's, with the
+     * attendee's username.
      */
     private fun attendeeClient(): CalDavClient {
         val quirks = config.quirksFactory(creds!!.serverUrl)
@@ -243,18 +250,19 @@ END:VCALENDAR
     }
 
     /**
-     * Have [attendeeUser] accept the invitation, which makes Cyrus auto-update
-     * the organizer's copy and drift its ETag. Returns true if the drift
-     * actually happened (delivery + auto-process succeeded), false if the local
-     * container lacks scheduling-delivery rights — in which case the caller
-     * skips rather than asserting on a drift that never occurred.
+     * Has [attendeeUser] accept the invitation, which makes Cyrus update the organizer's copy
+     * and drift its ETag. Returns true only when the organizer ETag read before and after
+     * the accept are both present and differ. Returns false when the attendee's principal,
+     * home or calendar isn't found or the invite wasn't delivered (the container may lack
+     * delivery rights); the caller then skips instead of asserting on a drift that never
+     * happened.
      */
     private fun triggerDriftViaAttendeeAccept(uid: String, organizerUrl: String): Boolean = runBlocking {
         val organizerClient = client!!
         val etagBefore = organizerClient.fetchEtag(organizerUrl).getOrNull()
 
-        // Discover the attendee's own calendar home and find the delivered copy
-        // of this UID (the invite filename is server-assigned, so match by body).
+        // Find the delivered copy of this UID in the attendee's calendar. The server picks the
+        // invite's filename, so match by body.
         val ac = attendeeClient()
         val endpoint = creds!!.davEndpoint
         val base = if (config.usesWellKnownDiscovery) {
@@ -268,8 +276,8 @@ END:VCALENDAR
             ?.firstOrNull { !it.url.contains("inbox") && !it.url.contains("outbox") }?.url
             ?: return@runBlocking false.also { println("CYRUS DRIFT: no attendee calendar") }
 
-        // Resolve any relative href (e.g. "/dav/calendars/...") against the
-        // server origin — fetchEvent needs an absolute URL.
+        // fetchEvent needs an absolute URL, so a relative href (e.g. "/dav/calendars/...") is
+        // resolved against the server origin.
         val origin = creds!!.serverUrl.trimEnd('/')
             .let { Regex("""^(https?://[^/]+)""").find(it)?.groupValues?.get(1) ?: it }
         fun absolute(href: String) = if (href.startsWith("http")) href else origin + href
@@ -282,8 +290,8 @@ END:VCALENDAR
             println("CYRUS DRIFT: invite not delivered to $attendeeUser — cannot drift (delivery rights?)")
             return@runBlocking false
         }
-        // Accept as the attendee, using the attendee copy's current etag for the
-        // If-Match PUT (an empty etag would send If-Match: "" and 412).
+        // Accept as the attendee with the attendee copy's current etag as If-Match; an empty
+        // etag would send If-Match: "" and get a 412.
         val attendeeEtag = ac.fetchEtag(attendeeEventUrl).getOrNull().orEmpty()
         ac.updateEvent(attendeeEventUrl, schedulingObjectIcs(uid, "ACCEPTED"), attendeeEtag)
         Thread.sleep(1000)
@@ -318,12 +326,12 @@ END:VCALENDAR
         val drifted = triggerDriftViaAttendeeAccept(uid, url)
         assumeTrue("drift did not occur on this container (delivery rights) — skipping", drifted)
 
-        // 4. Queue a delete against the STALE pulled etag and drain it.
+        // 4. Queue a delete against the stale pulled etag and drain it.
         eventWriter.deleteEvent(pulled!!.id, isLocal = false)
         val pushResult = pushStrategy.pushForCalendar(calendar, client!!)
 
-        // 5. The delete must recover: no 412 warning, one event deleted, and the
-        //    resource is actually gone from the server.
+        // 5. The delete must recover: no 412 warning, at least one event deleted, and the
+        //    resource gone from the server.
         assertTrue("push must succeed, got $pushResult", pushResult is PushResult.Success)
         val success = pushResult as PushResult.Success
         assertFalse(
@@ -374,7 +382,64 @@ END:VCALENDAR
             "edit must round-trip to the server after drift; body: ${FixtureRedactor.redact(stored)}",
             stored.replace(Regex("""\r?\n[ \t]"""), "").contains(newTitle)
         )
+        // The drift was the attendee's answer; the recovered edit must not send it back.
+        val attendeeLine = stored.replace(Regex("""\r?\n[ \t]"""), "").lines()
+            .first { it.startsWith("ATTENDEE") && it.contains(attendeeMailto, ignoreCase = true) }
+        assertTrue(
+            "the attendee's ACCEPTED must survive the edit; line: ${FixtureRedactor.redact(attendeeLine)}",
+            attendeeLine.contains("PARTSTAT=ACCEPTED", ignoreCase = true)
+        )
         client!!.fetchEtag(url).getOrNull()?.let { trackEvent(url, it) }
         println("CYRUS: edit of drifted scheduling object recovered end-to-end")
     }
+
+    @Test
+    fun `edit after the attendee's answer reached the organizer's copy keeps the answer on Cyrus`() = runBlocking<Unit> {
+        // The same end state as the drift above, written directly as another client would instead
+        // of by Cyrus's scheduling pipeline, which the test image can't always deliver through: the
+        // organizer's copy gains the attendee's ACCEPTED and a new strong etag, and the edit
+        // queued against the pulled etag meets a 412.
+        assumeReady()
+        assumeTrue("Not Cyrus", config.name == "Cyrus")
+        val calendarUrl = discoverCalendar()
+        assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
+
+        val uid = "cyrus-answer-edit-${System.currentTimeMillis()}-${UUID.randomUUID()}"
+        val createResult = client!!.createEvent(calendarUrl!!, uid, schedulingObjectIcs(uid, "NEEDS-ACTION"))
+        assumeTrue("create failed: ${(createResult as? CalDavResult.Error)?.message}", createResult.isSuccess())
+        val (url, createEtag) = createResult.getOrNull()!!
+        trackEvent(url, createEtag)
+
+        val calendar = localCalendarFor(calendarUrl)
+        pullStrategy.pull(calendar, forceFullSync = true, client = client!!)
+        val pulled = database.eventsDao().getByUid(uid).firstOrNull()
+        assumeTrue("event did not pull into Room", pulled != null)
+
+        val current = client!!.fetchEvent(url).getOrNull()!!
+        val answered = current.icalData.replace(Regex("""\r?\n[ \t]"""), "").lines().joinToString("\r\n") { line ->
+            if (line.startsWith("ATTENDEE") && line.contains(attendeeMailto, ignoreCase = true)) {
+                line.replace(Regex("PARTSTAT=[A-Z-]+", RegexOption.IGNORE_CASE), "PARTSTAT=ACCEPTED")
+            } else line
+        }
+        val written = client!!.updateEvent(url, answered, current.etag ?: client!!.fetchEtag(url).getOrNull().orEmpty())
+        assumeTrue("the answer could not be written: $written", written.isSuccess())
+        trackEvent(url, written.getOrNull()!!)
+
+        val newTitle = "Cyrus answered (edited after)"
+        eventWriter.updateEvent(pulled!!.copy(title = newTitle), isLocal = false)
+        val pushResult = pushStrategy.pushForCalendar(calendar, client!!)
+
+        assertTrue("push must succeed, got $pushResult", pushResult is PushResult.Success)
+        val success = pushResult as PushResult.Success
+        assertFalse("edit hit a 412 instead of recovering: ${success.pushWarnings}", success.pushWarnings.any { it.contains("412") })
+        val stored = client!!.fetchEvent(url).getOrNull()!!.icalData.replace(Regex("""\r?\n[ \t]"""), "")
+        assertTrue("the edit must reach the server; body: ${FixtureRedactor.redact(stored)}", stored.contains(newTitle))
+        val attendeeLine = stored.lines().first { it.startsWith("ATTENDEE") && it.contains(attendeeMailto, ignoreCase = true) }
+        assertTrue(
+            "the attendee's ACCEPTED must survive the edit; line: ${FixtureRedactor.redact(attendeeLine)}",
+            attendeeLine.contains("PARTSTAT=ACCEPTED", ignoreCase = true)
+        )
+        client!!.fetchEtag(url).getOrNull()?.let { trackEvent(url, it) }
+    }
+
 }

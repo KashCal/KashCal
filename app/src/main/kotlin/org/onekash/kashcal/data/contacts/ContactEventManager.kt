@@ -22,17 +22,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Manager for contact event (birthday + anniversary) calendar features.
+ * Keeps the birthday and anniversary calendars in step with the phone's contacts.
  *
- * Handles:
- * - ContentObserver registration/unregistration
- * - Initialization on app startup (if either feature enabled)
- * - Triggering sync via WorkManager
+ * - App start: if either feature is on, register the contacts observer and sync directly.
+ * - Enable (either feature): register the observer if needed and enqueue a
+ *   [ContactEventSyncWorker] run; each contacts change enqueues another.
+ * - Disable: unregister the observer and cancel the worker only when both features are off.
  *
- * Lifecycle:
- * - On app start: Check if either feature enabled, register observer if so
- * - On enable (birthdays or anniversaries): Register observer if not registered, trigger sync
- * - On disable: Unregister observer only if BOTH disabled
+ * When app start or observer registration finds READ_CONTACTS revoked, both features are
+ * turned off and their calendars removed.
  */
 @Singleton
 class ContactEventManager @Inject constructor(
@@ -51,14 +49,12 @@ class ContactEventManager @Inject constructor(
     private var observer: ContactEventObserver? = null
 
     /**
-     * Initialize on app startup.
-     * Checks if either contact birthdays or anniversaries feature is enabled and registers
-     * the ContentObserver if so.
-     * If permission was revoked since a feature was enabled, auto-disables both.
+     * Registers the observer and syncs on app startup when either feature is on. If
+     * READ_CONTACTS was revoked since, turns both features off instead.
      */
     fun initialize() {
         scope.launch {
-            // Legacy cleanup: cancel any in-flight work under old name
+            // Cancel work still queued under the old unique-work name.
             try {
                 WorkManager.getInstance(context).cancelUniqueWork("contact_birthday_sync")
             } catch (_: Exception) {
@@ -77,8 +73,8 @@ class ContactEventManager @Inject constructor(
                 Log.d(TAG, "Contact events enabled on startup (birthdays=$birthdaysEnabled, anniversaries=$anniversariesEnabled), registering observer")
                 registerObserver()
 
-                // Sync on startup to recover from killed WorkManager jobs (Issue #146)
-                // syncContactBirthdays/Anniversaries are idempotent (diff-based, fast no-op if events exist)
+                // Sync on startup to recover from killed WorkManager jobs (#146). The sync is a
+                // diff, so it writes nothing when no contact changed.
                 try {
                     if (birthdaysEnabled) {
                         eventCoordinator.syncContactBirthdays()
@@ -93,21 +89,15 @@ class ContactEventManager @Inject constructor(
         }
     }
 
-    /**
-     * Called when user enables contact birthdays.
-     *
-     * Registers ContentObserver (if not already registered) and triggers sync.
-     */
+    /** Registers the observer if needed and enqueues a sync, on enabling birthdays. */
     fun onBirthdaysEnabled() {
         registerObserver()
         ContactEventSyncWorker.requestImmediateSync(context)
     }
 
     /**
-     * Called when user disables contact birthdays.
-     *
-     * Unregisters ContentObserver only if anniversaries are also disabled.
-     * Calendar deletion is handled separately by EventCoordinator.disableContactBirthdays().
+     * Unregisters the observer and cancels the worker if anniversaries are also off. The
+     * calendar is removed separately by [EventCoordinator.disableContactBirthdays].
      */
     fun onBirthdaysDisabled() {
         scope.launch {
@@ -116,25 +106,18 @@ class ContactEventManager @Inject constructor(
                 unregisterObserver()
                 ContactEventSyncWorker.cancelSync(context)
             }
-            // If anniversaries still enabled, keep observer active
         }
     }
 
-    /**
-     * Called when user enables contact anniversaries.
-     *
-     * Registers ContentObserver (if not already registered) and triggers sync.
-     */
+    /** Registers the observer if needed and enqueues a sync, on enabling anniversaries. */
     fun onAnniversariesEnabled() {
         registerObserver()
         ContactEventSyncWorker.requestImmediateSync(context)
     }
 
     /**
-     * Called when user disables contact anniversaries.
-     *
-     * Unregisters ContentObserver only if birthdays are also disabled.
-     * Calendar deletion is handled separately by EventCoordinator.disableContactAnniversaries().
+     * Unregisters the observer and cancels the worker if birthdays are also off. The calendar is
+     * removed separately by [EventCoordinator.disableContactAnniversaries].
      */
     fun onAnniversariesDisabled() {
         scope.launch {
@@ -143,7 +126,6 @@ class ContactEventManager @Inject constructor(
                 unregisterObserver()
                 ContactEventSyncWorker.cancelSync(context)
             }
-            // If birthdays still enabled, keep observer active
         }
     }
 
@@ -168,7 +150,6 @@ class ContactEventManager @Inject constructor(
             scope = scope,
             debounceMs = 500L
         ) {
-            // Trigger sync when contacts change
             ContactEventSyncWorker.requestImmediateSync(context)
         }
 
@@ -187,15 +168,10 @@ class ContactEventManager @Inject constructor(
     }
 
     /**
-     * Full cleanup when READ_CONTACTS permission is revoked.
-     *
-     * Uses EventCoordinator (domain layer) for calendar deletion, same as the
-     * toggle-off path in AccountSettingsViewModel. This ensures:
-     * - Calendar, events, occurrences, and reminders are deleted via removeCalendar()
-     * - Widgets are updated via triggerWidgetUpdate()
-     *
-     * disableContactBirthdays/Anniversaries() is a no-op if the calendar doesn't
-     * exist, so safe to call unconditionally for both features.
+     * Turns both features off after READ_CONTACTS is revoked: stops the observer and worker,
+     * clears the settings, and removes both calendars through the same [EventCoordinator]
+     * calls as the settings toggle, which also refresh the widgets. Removing a calendar that
+     * doesn't exist is a no-op, so both are called unconditionally.
      */
     private suspend fun cleanupAllContactFeatures() {
         unregisterObserver()

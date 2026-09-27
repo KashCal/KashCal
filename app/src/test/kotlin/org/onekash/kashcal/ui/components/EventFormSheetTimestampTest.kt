@@ -7,29 +7,21 @@ import java.util.Calendar
 import java.util.TimeZone
 
 /**
- * Unit tests for EventFormSheet initialStartTs parameter.
+ * Tests reading the event form's `initialStartTs` as epoch milliseconds
+ * (`calendar.timeInMillis = initialStartTs`), not seconds.
  *
- * These tests verify that the milliseconds-based API works correctly after
- * the refactor from seconds to milliseconds.
- *
- * The key change was:
- * - Old: calendar.timeInMillis = initialStartTs * 1000 (seconds input)
- * - New: calendar.timeInMillis = initialStartTs (milliseconds input)
- *
- * Test categories:
- * - Basic milliseconds conversion
- * - All-day events
- * - Multi-day events
- * - DST transitions
- * - Overnight/midnight crossing
- * - Far future dates
- * - Edge cases
+ * The tests run an inline copy of that read ([extractDateTimeFromMs]) in the JVM default
+ * zone and don't call [EventFormContent]. Categories: basic conversion, a seconds value
+ * landing in 1970, all-day UTC midnights, multi-day spans, DST transitions, midnight
+ * crossing, edge cases (leap day, pre-epoch, year 3000, a widget day start, a calendar
+ * intent time), far-off timezones, and a 30-minute duration.
  */
 class EventFormSheetTimestampTest {
 
     /**
-     * Simulates the timestamp conversion logic from EventFormSheet.kt line 375.
-     * This extracts the date/time components from a milliseconds timestamp.
+     * Copies the `initialStartTs` read in [EventFormContent]: a [Calendar] set to the
+     * milliseconds, read for date and time fields. The form then keeps only the date and hour,
+     * with the minute set to 0.
      */
     private fun extractDateTimeFromMs(timestampMs: Long): DateTimeComponents {
         val calendar = Calendar.getInstance()
@@ -57,23 +49,23 @@ class EventFormSheetTimestampTest {
 
     @Test
     fun `initialStartTs in milliseconds sets correct date and time`() {
-        // Jan 25 2025 10:00 AM UTC
+        // Jan 25 2025 11:00 UTC
         val timestampMs = 1737802800000L
 
         val result = extractDateTimeFromMs(timestampMs)
 
-        // Verify the date is Jan 25 2025 (in local timezone)
+        // Jan 25 2025 in the JVM default zone.
         assertEquals(2025, result.year)
-        // Note: Month is 0-indexed, so January = 0
+        // Month is 0-indexed, so January = 0.
         assertEquals(Calendar.JANUARY, result.month)
         assertEquals(25, result.dayOfMonth)
     }
 
     @Test
     fun `initialStartTs preserves milliseconds precision`() {
-        // Timestamp with milliseconds component: 10:30:45.123
+        // Jan 25 2025 11:00:00.123 UTC.
         val baseMs = 1737802800000L
-        val withMs = baseMs + 123 // Add 123 milliseconds
+        val withMs = baseMs + 123
 
         val result = extractDateTimeFromMs(withMs)
 
@@ -126,22 +118,19 @@ class EventFormSheetTimestampTest {
 
     @Test
     fun `regression - seconds value would show 1970 date`() {
-        // If someone accidentally passes seconds instead of milliseconds,
-        // the date would be near epoch (1970)
-        val timestampSeconds = 1737802800L // This is SECONDS, not ms
+        // A seconds value passed as milliseconds lands near the epoch (1970).
+        val timestampSeconds = 1737802800L // Seconds, not ms.
 
         val result = extractDateTimeFromMs(timestampSeconds)
 
-        // This would be Jan 1970 if passed as-is
-        // The test documents the bug that the refactor fixed
+        // Read as milliseconds, the value is in Jan 1970.
         assertEquals(1970, result.year)
         assertEquals(Calendar.JANUARY, result.month)
     }
 
     @Test
     fun `regression - milliseconds value shows correct 2025 date`() {
-        // Correct milliseconds value
-        val timestampMs = 1737802800000L // This is MILLISECONDS
+        val timestampMs = 1737802800000L // Milliseconds.
 
         val result = extractDateTimeFromMs(timestampMs)
 
@@ -153,7 +142,7 @@ class EventFormSheetTimestampTest {
 
     @Test
     fun `all-day event start at UTC midnight`() {
-        // All-day events are typically stored as UTC midnight
+        // All-day events are stored as UTC midnight.
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         cal.set(2025, Calendar.MARCH, 15, 0, 0, 0)
         cal.set(Calendar.MILLISECOND, 0)
@@ -180,7 +169,7 @@ class EventFormSheetTimestampTest {
         val startResult = extractDateTimeFromMs(fridayMs)
         val endResult = extractDateTimeFromMs(sundayMs)
 
-        // Both should parse correctly
+        // Only the order is asserted; the dates depend on the JVM default zone.
         assertTrue(startResult.dateMillis < endResult.dateMillis)
     }
 
@@ -287,7 +276,8 @@ class EventFormSheetTimestampTest {
 
         assertTrue("Year should be 2025", result.year == 2025)
         assertTrue("Timestamp should be positive", result.dateMillis > 0)
-        // The exact month/day/hour depends on local timezone, so just verify parsing works
+        // The month, day and hour depend on the JVM default zone, so only the year and a
+        // positive value are asserted.
     }
 
     // ==================== Overnight/Midnight Crossing ====================
@@ -391,9 +381,8 @@ class EventFormSheetTimestampTest {
 
     @Test
     fun `typical widget dayCode timestamp`() {
-        // DayPagerUtils.dayCodeToMs returns milliseconds
-        // dayCode format is YYYYMMDD, e.g., 20250125 for Jan 25, 2025
-        // The widget passes this directly after refactor
+        // DayPagerUtils.dayCodeToMs returns milliseconds for a YYYYMMDD dayCode,
+        // e.g. 20250125 for Jan 25, 2025. The widget passes the value unchanged.
         val cal = Calendar.getInstance()
         cal.set(2025, Calendar.JANUARY, 25, 0, 0, 0)
         cal.set(Calendar.MILLISECOND, 0)
@@ -409,8 +398,8 @@ class EventFormSheetTimestampTest {
 
     @Test
     fun `calendar intent timestamp from email client`() {
-        // Android CalendarContract.EXTRA_EVENT_BEGIN_TIME uses milliseconds
-        // Simulating an email client "Add to Calendar" link
+        // CalendarContract.EXTRA_EVENT_BEGIN_TIME is in milliseconds. The input models
+        // an email client's "Add to Calendar" link.
         val cal = Calendar.getInstance()
         cal.set(2025, Calendar.FEBRUARY, 14, 19, 0, 0) // Valentine's dinner at 7 PM
         val valentinesMs = cal.timeInMillis
@@ -434,7 +423,7 @@ class EventFormSheetTimestampTest {
 
         val result = extractDateTimeFromMs(cal.timeInMillis)
 
-        // Should parse without error (exact date depends on test machine timezone)
+        // Only a positive value is asserted; the date depends on the JVM default zone.
         assertTrue(result.dateMillis > 0)
     }
 
@@ -466,8 +455,8 @@ class EventFormSheetTimestampTest {
 
     @Test
     fun `default event duration 30 minutes from initialStartTs`() {
-        // EventFormSheet adds defaultEventDuration (30 min) to start time
-        val startMs = 1737802800000L // Jan 25 2025 10:00
+        // The form ends a new event defaultEventDuration (30 min) after its start.
+        val startMs = 1737802800000L // Jan 25 2025 11:00 UTC
         val defaultDuration = 30 // minutes
 
         val startResult = extractDateTimeFromMs(startMs)

@@ -8,13 +8,12 @@ import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
 
 /**
- * Data Access Object for scheduled reminders.
+ * Stores one row per scheduled reminder, unique on event, occurrence and offset.
  *
- * Manages the lifecycle of reminder alarms:
- * - Schedule reminders when events are created/updated
- * - Cancel reminders when events are deleted
- * - Update status on fire/snooze/dismiss
- * - Reschedule after device boot
+ * ReminderScheduler writes a row before arming its alarm and deletes it if the alarm is
+ * refused, updates it on fire, snooze and dismiss, deletes rows when their event, occurrences
+ * or account go away, and re-arms from them after boot, app update or a timezone change. A
+ * pending row may have no alarm: only rows inside the scheduling window are armed.
  */
 @Dao
 interface ScheduledRemindersDao {
@@ -23,6 +22,16 @@ interface ScheduledRemindersDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(reminder: ScheduledReminder): Long
+
+    /**
+     * Inserts unless a row for the same event, occurrence and offset exists; returns the new
+     * row id, or -1 if one did.
+     *
+     * Checking and inserting in one statement means a save and a scan running at once never
+     * both write and arm the same reminder.
+     */
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertIfAbsent(reminder: ScheduledReminder): Long
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(reminders: List<ScheduledReminder>)
@@ -33,8 +42,8 @@ interface ScheduledRemindersDao {
     suspend fun getById(id: Long): ScheduledReminder?
 
     /**
-     * Get all pending/snoozed reminders for an event.
-     * Used when rescheduling after event update.
+     * Returns [eventId]'s PENDING and SNOOZED reminders, whose alarms the cancel paths clear
+     * before deleting the rows.
      */
     @Query("""
         SELECT * FROM scheduled_reminders
@@ -44,8 +53,8 @@ interface ScheduledRemindersDao {
     suspend fun getPendingForEvent(eventId: Long): List<ScheduledReminder>
 
     /**
-     * Get all pending/snoozed reminders after a given time.
-     * Used for boot recovery - reschedule all future reminders.
+     * Returns every PENDING and SNOOZED reminder triggering after [afterTime], soonest first,
+     * for re-arming after boot, app update or a timezone change.
      */
     @Query("""
         SELECT * FROM scheduled_reminders
@@ -55,10 +64,7 @@ interface ScheduledRemindersDao {
     """)
     suspend fun getAllPendingAfter(afterTime: Long): List<ScheduledReminder>
 
-    /**
-     * Get reminders in a time range.
-     * Used for batch scheduling (e.g., schedule next 7 days).
-     */
+    /** Returns the PENDING reminders triggering in [fromTime]..[toTime], soonest first. */
     @Query("""
         SELECT * FROM scheduled_reminders
         WHERE status = 'PENDING'
@@ -67,10 +73,7 @@ interface ScheduledRemindersDao {
     """)
     suspend fun getPendingInRange(fromTime: Long, toTime: Long): List<ScheduledReminder>
 
-    /**
-     * Check if a reminder already exists for this event/occurrence/offset combo.
-     * Prevents duplicate reminders.
-     */
+    /** Returns the row for this event, occurrence and offset in any status, or null. */
     @Query("""
         SELECT * FROM scheduled_reminders
         WHERE event_id = :eventId
@@ -85,27 +88,23 @@ interface ScheduledRemindersDao {
     ): ScheduledReminder?
 
     /**
-     * Ids of the other reminders set on the same occurrence as [excludeId].
+     * Returns the ids of the other reminders on the same occurrence as [excludeId].
      *
-     * An occurrence with several reminders (say 1 hour and 15 minutes before) has one
-     * row per offset, and each row's notification is keyed to its own id. When one of
-     * them fires it uses this to clear the others' notifications, so the user sees a
-     * single notification for the occurrence instead of one per offset.
+     * An occurrence with several reminders (say 1 hour and 15 minutes before) has one row per
+     * offset, each with a notification keyed to its own id. A firing reminder clears the
+     * others' notifications, so the user sees one notification per occurrence.
      *
-     * Deliberately does NOT filter on status. The reminder whose notification is
-     * actually on screen has already moved to FIRED, so filtering to
-     * PENDING/SNOOZED would skip the only row that matters, and narrowing to FIRED
-     * alone would miss a sibling that posted moments ago and has not been marked
-     * yet, which is exactly the case when several offsets come due together after a
-     * doze.
+     * Deliberately not filtered on status. The reminder whose notification is on screen is
+     * already FIRED, so PENDING/SNOOZED would skip the only row that matters, and FIRED alone
+     * would miss a sibling that posted moments ago and isn't marked yet, which is the case when
+     * several offsets come due together after a doze.
      *
-     * The cost of the wider net is that some returned rows never posted anything.
-     * Cancelling those is normally a no-op, with one bound worth knowing: notification
-     * ids fold the row id modulo 10000, so a cancel for a row that posted nothing
-     * still clears whatever occupies that slot. Rows 10000 apart alias, which stays
-     * theoretical only because reminders past their window are pruned, keeping live
-     * row ids in a narrow band. Widening the id space is the real fix if that ever
-     * stops holding.
+     * Some returned rows never posted anything. Cancelling those is normally a no-op, but
+     * notification ids fold the row id modulo 10000, so the cancel still clears whatever holds
+     * that slot. Rows 10000 apart alias; that stays theoretical only because reminders past
+     * their window are pruned, keeping live row ids in a narrow band. The band widens while the
+     * app is at the platform's alarm limit, since each refused reminder's row is dropped and
+     * later re-inserted under a new id. Widening the id space is the fix if that stops holding.
      */
     @Query("""
         SELECT id FROM scheduled_reminders
@@ -121,16 +120,11 @@ interface ScheduledRemindersDao {
 
     // ========== Update Operations ==========
 
-    /**
-     * Update reminder status.
-     * Called after alarm fires or user dismisses.
-     */
+    /** Sets a reminder's status, when its alarm fires or the user dismisses it. */
     @Query("UPDATE scheduled_reminders SET status = :status WHERE id = :id")
     suspend fun updateStatus(id: Long, status: ReminderStatus)
 
-    /**
-     * Snooze a reminder: update trigger time, status, and increment count.
-     */
+    /** Snoozes a reminder to [newTriggerTime] and counts the snooze. */
     @Query("""
         UPDATE scheduled_reminders
         SET trigger_time = :newTriggerTime,
@@ -141,24 +135,28 @@ interface ScheduledRemindersDao {
     suspend fun snooze(id: Long, newTriggerTime: Long)
 
     /**
-     * Update trigger time for a reminder.
-     * Used when timezone changes require recalculating all-day reminder times.
+     * Sets a reminder's trigger time, when an all-day reminder is recalculated for the current
+     * timezone.
      */
     @Query("UPDATE scheduled_reminders SET trigger_time = :triggerTime WHERE id = :id")
     suspend fun updateTriggerTime(id: Long, triggerTime: Long)
 
     // ========== Delete Operations ==========
 
+    /** Deletes a reminder whose alarm couldn't be set, so the refresh scan retries it. */
+    @Query("DELETE FROM scheduled_reminders WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
     /**
-     * Delete all reminders for an event.
-     * Called when event is deleted or updated (before rescheduling).
+     * Deletes [eventId]'s reminders, for example when the event is deleted or declined, or
+     * before its reminders are rescheduled.
      */
     @Query("DELETE FROM scheduled_reminders WHERE event_id = :eventId")
     suspend fun deleteForEvent(eventId: Long)
 
     /**
-     * Delete reminders for a specific occurrence.
-     * Called when a single occurrence is deleted from recurring event.
+     * Deletes one occurrence's reminders, when it is deleted, edited into an exception, or found
+     * cancelled at fire time.
      */
     @Query("""
         DELETE FROM scheduled_reminders
@@ -168,8 +166,8 @@ interface ScheduledRemindersDao {
     suspend fun deleteForOccurrence(eventId: Long, occurrenceTime: Long)
 
     /**
-     * Delete reminders for occurrences at or after a certain time.
-     * Called when truncating a recurring series (deleteThisAndFuture).
+     * Deletes the reminders of occurrences at or after [fromTimeMs], when a this-and-future
+     * edit or delete ends the series there.
      */
     @Query("""
         DELETE FROM scheduled_reminders
@@ -178,10 +176,7 @@ interface ScheduledRemindersDao {
     """)
     suspend fun deleteForOccurrencesAfter(eventId: Long, fromTimeMs: Long)
 
-    /**
-     * Delete old reminders (cleanup).
-     * Removes fired/dismissed reminders older than specified time.
-     */
+    /** Deletes FIRED and DISMISSED reminders that triggered before [beforeTime]. */
     @Query("""
         DELETE FROM scheduled_reminders
         WHERE trigger_time < :beforeTime
@@ -190,8 +185,8 @@ interface ScheduledRemindersDao {
     suspend fun deleteOldReminders(beforeTime: Long)
 
     /**
-     * Get all pending/snoozed reminders for events in a calendar.
-     * Used for batch reminder cancellation when deleting a calendar or account.
+     * Returns the PENDING and SNOOZED reminders of [calendarId]'s events, so their alarms can
+     * be cancelled when the account is removed.
      */
     @Query("""
         SELECT sr.* FROM scheduled_reminders sr
@@ -201,10 +196,7 @@ interface ScheduledRemindersDao {
     """)
     suspend fun getPendingForCalendar(calendarId: Long): List<ScheduledReminder>
 
-    /**
-     * Delete all reminders for events in a calendar.
-     * Used for batch cleanup when deleting a calendar or account.
-     */
+    /** Deletes every reminder of [calendarId]'s events, when the account is removed. */
     @Query("""
         DELETE FROM scheduled_reminders
         WHERE event_id IN (SELECT id FROM events WHERE calendar_id = :calendarId)
@@ -213,16 +205,11 @@ interface ScheduledRemindersDao {
 
     // ========== Statistics ==========
 
-    /**
-     * Count pending reminders.
-     * Useful for debugging and status display.
-     */
+    /** Returns the number of PENDING and SNOOZED reminders. */
     @Query("SELECT COUNT(*) FROM scheduled_reminders WHERE status IN ('PENDING', 'SNOOZED')")
     suspend fun getPendingCount(): Int
 
-    /**
-     * Count all reminders for an event.
-     */
+    /** Returns the number of [eventId]'s reminders, any status. */
     @Query("SELECT COUNT(*) FROM scheduled_reminders WHERE event_id = :eventId")
     suspend fun getCountForEvent(eventId: Long): Int
 }

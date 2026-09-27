@@ -10,65 +10,51 @@ import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.util.AddressNormalizer
 
 /**
- * Room DAO for `attendees` table.
- *
- * Server-authoritative replace-on-update semantics: [replaceForEvent]
- * wipes existing rows for an event and inserts the new server-supplied
- * set in one transaction. Reads return Flows so the chip UI updates
- * reactively as sync writes attendees.
+ * Reads and writes the `attendees` table. Every write of an event's attendee set (for example
+ * pull, push read-back, conflict resolution and local edits) goes through [replaceForEvent],
+ * which replaces the whole set. The Flow reads let the attendee chips update as writes land.
  */
 @Dao
 interface AttendeesDao {
 
     /**
-     * Replace the attendee set for [eventId] atomically. Existing rows
-     * are deleted and [attendees] is inserted in a single transaction.
-     * Empty list → all existing rows removed.
+     * Replaces [eventId]'s attendees with [attendees] in one transaction; an empty list removes
+     * them all.
      *
-     * **Merge semantics for `notified_at`**: when a row in the new set
-     * has the same canonical address (per [AddressNormalizer.canonical])
-     * as a prior row, the prior `notified_at` is preserved on the new
-     * row. This prevents the self-RSVP race — the optimistic UI
-     * write writes ACCEPTED locally, but the next pull may race the
-     * server's REPLY queue and return NEEDS-ACTION; without this
-     * merge, the notification would re-fire for an event the user
-     * already responded to.
+     * A new row whose address matches a prior row's by [AddressNormalizer.canonical] takes
+     * `notified_at`, `schedule_status`, `schedule_agent`, `itip_request_sequence` and
+     * `itip_request_status` from the prior row when its own is null (reasons inline).
+     * Without `notified_at`, an optimistic ACCEPTED RSVP followed by a pull that races the
+     * server's REPLY queue and returns NEEDS-ACTION would re-fire the invite notification.
      *
-     * Caller must set `eventId` on every attendee — either by
-     * `attendees.map { it.copy(eventId = id) }` after the parent event
-     * upsert returns its ID, or by carrying the eventId forward from
-     * the existing event row.
+     * The caller must set `eventId` on every attendee, either with
+     * `attendees.map { it.copy(eventId = id) }` after the event upsert returns its ID or by
+     * carrying it from the existing event row.
      */
     @Transaction
     suspend fun replaceForEvent(eventId: Long, attendees: List<Attendee>) {
-        // Index prior rows by canonical address so the merge is robust to
-        // mailto-vs-bare-address servers and case differences.
+        // Canonical addresses match across mailto-vs-bare-address servers and case.
         val priorByAddress: Map<String, Attendee> = getForEventOnce(eventId)
             .associateBy { AddressNormalizer.canonical(it.address) }
 
         val merged = attendees.map { incoming ->
             val canonical = AddressNormalizer.canonical(incoming.address)
             val prior = priorByAddress[canonical]
-            // Honor an explicit value on the incoming row; otherwise fall back
-            // to the prior row's value when the incoming row leaves it null.
+            // A non-null incoming value wins; a null falls back to the prior row's.
             //
-            // notified_at: prevents the self-RSVP notification re-firing race.
+            // notified_at: keeps the self-RSVP race above from re-firing the notification.
             //
-            // schedule_status / schedule_agent: server-written delivery
-            // receipts (RFC 6638 §7.3). A client never echoes SCHEDULE-STATUS
-            // on its own PUT, so a cosmetic re-push whose read-back races an
-            // async-stamping server returns the attendee with no receipt.
-            // RFC 6638 §7.3 says a client SHOULD NOT remove a server-provided
-            // parameter — so a null incoming preserves the prior receipt, while
-            // a non-null incoming (the server spoke again) is authoritative and
-            // overwrites.
+            // schedule_status / schedule_agent: server-written delivery receipts
+            // (RFC 6638 §7.3). A client never echoes SCHEDULE-STATUS on its own PUT, so a
+            // re-push whose read-back races an async-stamping server returns the attendee with
+            // no receipt. RFC 6638 §7.3 says a client SHOULD NOT remove a server-provided
+            // parameter, so a null keeps the prior receipt and a non-null (the server spoke
+            // again) overwrites it.
             //
-            // itip_request_sequence / itip_request_status: the client-outbox
-            // send marker. It exists ONLY locally (the server never echoes it),
-            // so every server-parsed incoming row carries it null. Preserving it
-            // here is what keeps the idempotency marker alive across the
-            // read-back's replace — without this, the marker would be wiped each
-            // cycle and the client would re-POST (spam) the same invitation.
+            // itip_request_sequence / itip_request_status: the client-outbox send marker. It
+            // exists only locally (the server never echoes it), so every server-parsed row
+            // carries it null. Without this the read-back's replace would wipe it each cycle
+            // and the client would re-POST the same invitation.
             incoming.copy(
                 notifiedAt = incoming.notifiedAt ?: prior?.notifiedAt,
                 scheduleStatus = incoming.scheduleStatus ?: prior?.scheduleStatus,
@@ -84,57 +70,40 @@ interface AttendeesDao {
         }
     }
 
-    /**
-     * Reactive read — emits the current attendee list for an event,
-     * re-emits when [replaceForEvent] mutates.
-     */
+    /** Emits [eventId]'s attendees and re-emits on each write to the table. */
     @Query("SELECT * FROM attendees WHERE event_id = :eventId ORDER BY sort_order ASC")
     fun getForEvent(eventId: Long): Flow<List<Attendee>>
 
-    /**
-     * One-shot suspend read of the attendee list. Used by write paths
-     * (e.g., RSVP) that need to read-modify-write the row set inside a
-     * transaction without holding a Flow subscription.
-     */
+    /** Reads the attendees once, for write paths (e.g. RSVP) that read-modify-write the set. */
     @Query("SELECT * FROM attendees WHERE event_id = :eventId ORDER BY sort_order ASC")
     suspend fun getForEventOnce(eventId: Long): List<Attendee>
 
     /**
-     * Bulk read for day-view-style N+1 avoidance. Returns one list
-     * containing all attendees across the requested events; callers
-     * (e.g., [org.onekash.kashcal.domain.reader.EventReader]) group by
-     * `eventId` in memory.
-     *
-     * First Flow-on-IN-clause precedent in this codebase. Validated
-     * against Room docs: Flow returns work on `IN (:list)` queries.
+     * Emits the attendees of all [eventIds] in one list, avoiding a query per event; callers
+     * (e.g. [org.onekash.kashcal.domain.reader.EventReader]) group by `eventId` in memory.
      */
     @Query("SELECT * FROM attendees WHERE event_id IN (:eventIds) ORDER BY event_id ASC, sort_order ASC")
     fun getForEvents(eventIds: List<Long>): Flow<List<Attendee>>
 
     /**
-     * One-shot read of every DECLINED attendee row across the requested
-     * events. SQL filters on `partstat = 'DECLINED'` to keep the result
-     * set small even for week/month-full ranges. The "is this MY decline?"
-     * resolution is finalized in Kotlin via [Account.matchesAttendee] —
-     * see [org.onekash.kashcal.domain.reader.selfDeclinedEventIds].
+     * Reads the DECLINED attendee rows of [eventIds]. The SQL filter keeps the result small even
+     * for a month's range; whether a decline is the user's own is decided in Kotlin by
+     * [org.onekash.kashcal.domain.reader.selfDeclinedEventIds].
      */
     @Query("SELECT * FROM attendees WHERE event_id IN (:eventIds) AND partstat = 'DECLINED'")
     suspend fun getDeclinedAttendeesForEvents(eventIds: List<Long>): List<Attendee>
 
     /**
-     * Reactive read of every NEEDS-ACTION attendee row across the
-     * requested events. SQL filters on `partstat = 'NEEDS-ACTION'` so the
-     * inbox Flow remains cheap even when the database holds many
-     * already-responded events. Owning-account identity matching is
-     * finalized in Kotlin via [Account.matchesAttendee].
+     * Emits the NEEDS-ACTION attendee rows of [eventIds]. The SQL filter keeps the inbox Flow
+     * cheap with many answered events; which rows are the user's is decided in Kotlin by
+     * [org.onekash.kashcal.domain.identity.matchesAttendee].
      */
     @Query("SELECT * FROM attendees WHERE event_id IN (:eventIds) AND partstat = 'NEEDS-ACTION'")
     fun getNeedsActionAttendeesForEventsFlow(eventIds: List<Long>): Flow<List<Attendee>>
 
     /**
-     * One-shot read of every NEEDS-ACTION attendee row across the
-     * requested events. Useful for the DAO unit test; production code
-     * should prefer [getNeedsActionAttendeesForEventsFlow].
+     * Reads the NEEDS-ACTION rows once, for the DAO unit test; production code should use
+     * [getNeedsActionAttendeesForEventsFlow].
      */
     @Query("SELECT * FROM attendees WHERE event_id IN (:eventIds) AND partstat = 'NEEDS-ACTION'")
     suspend fun getNeedsActionAttendeesForEvents(eventIds: List<Long>): List<Attendee>
@@ -142,19 +111,14 @@ interface AttendeesDao {
     @Query("DELETE FROM attendees WHERE event_id = :eventId")
     suspend fun deleteForEvent(eventId: Long)
 
-    /**
-     * Mark a single attendee row as notified. Used by the invite
-     * notification path to dedupe per-row firing.
-     */
+    /** Marks one attendee row notified, so the invite notification fires once per row. */
     @Query("UPDATE attendees SET notified_at = :ts WHERE id = :id")
     suspend fun markNotified(id: Long, ts: Long)
 
     /**
-     * Record that a client-side `METHOD:REQUEST` was POSTed to this attendee's
-     * scheduling outbox at the given event SEQUENCE (RFC 6638 §6), and store the
-     * raw per-recipient request-status the outbox returned. Advancing
-     * `itip_request_sequence` is what suppresses a duplicate re-send on the next
-     * push cycle (the idempotency marker).
+     * Records that a client `METHOD:REQUEST` was POSTed to this attendee's scheduling outbox at
+     * event SEQUENCE [sequence] (RFC 6638 §6), with the outbox's raw per-recipient
+     * request-status. Advancing `itip_request_sequence` stops the next push from re-sending it.
      */
     @Query("UPDATE attendees SET itip_request_sequence = :sequence, itip_request_status = :status WHERE id = :id")
     suspend fun markItipRequestSent(id: Long, sequence: Int, status: String?)
@@ -163,16 +127,10 @@ interface AttendeesDao {
     suspend fun countForEvent(eventId: Long): Int
 
     /**
-     * Reactive attendees-table change signal. Emits a fresh value whenever
-     * any attendee row is inserted/updated/deleted. Used by display-event
-     * Flows that depend on attendee state (e.g. "did I decline this?")
-     * but key on the events table for their main payload — without this
-     * signal, an RSVP write that only touches `attendees` wouldn't re-run
-     * the visible-events query and the strikethrough would wait for the
-     * next sync that touches `events`.
-     *
-     * The exact value isn't meaningful — Room re-emits on any write to
-     * the table, which is the only behavior we care about.
+     * Emits on every write to the attendees table; the value means nothing. Display-event Flows
+     * keyed on the events table combine it so an RSVP write that touches only `attendees`
+     * re-runs them; otherwise the decline strikethrough would wait for the next sync that touches
+     * `events`.
      */
     @Query("SELECT COUNT(*) FROM attendees")
     fun attendeesChangeSignal(): Flow<Int>

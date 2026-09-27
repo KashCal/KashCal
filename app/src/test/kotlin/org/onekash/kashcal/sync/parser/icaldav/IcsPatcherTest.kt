@@ -18,8 +18,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for IcsPatcher: verifies round-trip preservation when patching
- * existing ICS data and fresh generation for new events.
+ * Tests [IcsPatcher]: what patching a stored server body keeps and changes, fresh generation,
+ * [RawIcsParser], series with exceptions, and invite replies.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -36,10 +36,10 @@ class IcsPatcherTest {
 
     @Test
     fun `patch preserves genuinely-hidden alarms beyond MAX_DISPLAYED but honors deletions within it`() {
-        // Original ICS with 6 alarms. The first 5 (indices 0-4) are the DISPLAYED set
-        // the user sees in the form; index 5 (-P1W) is hidden (never shown). The user's
-        // stored reminders keep only the first 3 displayed alarms — indices 3-4 were
-        // displayed and deleted, so they must NOT survive. Index 5 (hidden) must.
+        // Original ICS with 6 alarms. The first 5 (indices 0-4) are the displayed set the user
+        // sees in the form; index 5 (-P1W) is hidden, never shown. The user's reminders keep
+        // only the first 3: indices 3-4 were displayed and deleted, so they must not survive,
+        // and hidden index 5 must.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -92,7 +92,7 @@ class IcsPatcherTest {
 
         val originalEvent = parser.parseAllEvents(originalIcs).getOrNull()!!.first()
 
-        // User kept only the first 3 displayed reminders (deleted displayed indices 3-4)
+        // User kept only the first 3 displayed reminders, deleting displayed indices 3-4
         val entity = createTestEvent(
             uid = "multi-alarm@kashcal.test",
             title = "Updated Title",
@@ -106,7 +106,7 @@ class IcsPatcherTest {
 
         assertEquals("Updated Title", patchedEvent.summary)
 
-        // 3 kept displayed + 1 hidden (index 5) = 4. Deleted displayed indices 3-4 dropped.
+        // 3 kept displayed + 1 hidden (index 5) = 4; deleted displayed indices 3-4 dropped.
         val triggers = patchedEvent.alarms.mapNotNull { it.trigger?.let { d -> org.onekash.icaldav.model.ICalAlarm.formatDuration(d) } }
         assertEquals("Kept 3 displayed + 1 hidden = 4 alarms", 4, patchedEvent.alarms.size)
         assertTrue("displayed -PT15M kept", triggers.contains("-PT15M"))
@@ -120,10 +120,10 @@ class IcsPatcherTest {
 
     @Test
     fun `patch preserves an END-relative alarm through a START-relative reminder edit`() {
-        // An event with one START-relative alarm (-PT15M, surfaced in the form) and one
-        // END-relative alarm (5 min before end). The reminders list carries only START
-        // offsets (the pull path does not surface END-relative alarms), so an unrelated
-        // edit (title) must NOT erase the END-relative alarm from the server copy.
+        // One START-relative alarm (-PT15M, shown in the form) and one END-relative alarm
+        // (5 min before end). The reminders list holds only START offsets, since the pull path
+        // doesn't surface END-relative alarms, so an unrelated title edit must not erase the
+        // END-relative alarm from the server copy.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -172,10 +172,9 @@ class IcsPatcherTest {
 
     @Test
     fun `patch preserves an END-relative alarm when there are no displayed reminders`() {
-        // Silent-erasure case: the event's ONLY alarm is END-relative, so the pull path
-        // stored no reminders (reminders == null). A save must NOT wipe it — the
-        // null-reminders branch clears the displayed set but must keep never-shown
-        // END-relative alarms (same rationale as hidden alarms beyond the form's window).
+        // The event's only alarm is END-relative, so the pull path stored no reminders
+        // (reminders == null). A save must not silently wipe it: the null-reminders branch
+        // clears every START-relative alarm but keeps the never-shown END-relative ones.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -215,10 +214,10 @@ class IcsPatcherTest {
 
     @Test
     fun `patch does not turn a START reminder into an END-relative alarm on a shared offset`() {
-        // Latent reconcile bug: mergeAlarms matched user reminders to original alarms by
-        // trigger VALUE only, ignoring RELATED=END. A START reminder of -15m could consume
-        // an END-relative -15m alarm and be re-emitted as END-relative — firing 15m before
-        // END instead of START. Partitioning END-relative out of the reconciliation fixes it.
+        // Reminders are matched to original alarms by trigger value, so if END-relative alarms
+        // took part, a START reminder of -15m could consume an END-relative -15m alarm and be
+        // re-emitted as END-relative, firing 15m before the end instead of the start.
+        // mergeAlarms partitions END-relative alarms out of the reconciliation.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -267,12 +266,11 @@ class IcsPatcherTest {
 
     @Test
     fun `patch normalizes a non-NONE absolute-trigger alarm to a single relative alarm`() {
-        // A real (non-NONE) absolute-trigger VALARM in the displayed window. KashCal's
-        // pull path converts absolute triggers to relative offsets (instant - dtStart)
-        // and stores them in event.reminders, so the entity carries a relative string
-        // for it. On patch, mergeAlarms must reconcile by position and emit ONE clean
-        // relative alarm — not preserve the absolute verbatim AND append a relative twin
-        // (the old code's latent duplicate bug). DTSTART 10:00Z, trigger 09:00Z = -PT1H.
+        // A non-NONE absolute-trigger VALARM in the displayed window. The pull path converts
+        // absolute triggers to relative offsets (instant - dtStart) in event.reminders, so the
+        // entity carries a relative string for it. The patch must emit one relative alarm,
+        // not keep the absolute one verbatim and append a relative twin.
+        // DTSTART 10:00Z, trigger 09:00Z = -PT1H.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -315,9 +313,9 @@ class IcsPatcherTest {
 
     @Test
     fun `patch drops ACTION_NONE sentinel and deleted displayed alarm (real iCloud case)`() {
-        // Real-world shape from an iCloud 'test alert' event: 3 DISPLAY alarms + Apple's
-        // ACTION:NONE sentinel (1976 absolute trigger). User kept only 2 reminders
-        // (deleted the 1-week -P6DT15H). Expected PUT: exactly 2 VALARMs, no NONE/phantom.
+        // Real-world shape from an iCloud 'test alert' event: 3 DISPLAY alarms and Apple's
+        // ACTION:NONE sentinel (1976 absolute trigger). The user kept 2 reminders, deleting
+        // the 1-week -P6DT15H. Expected PUT: exactly 2 VALARMs, no NONE or phantom.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -377,8 +375,8 @@ class IcsPatcherTest {
 
     @Test
     fun `patch drops ACTION_NONE even when it is the only original alarm`() {
-        // NONE-only original + the user has a reminder -> NONE dropped, reminder emitted
-        // as a fresh DISPLAY alarm (the else-branch path in mergeAlarms).
+        // NONE-only original and one user reminder: NONE is dropped and the reminder becomes
+        // a new DISPLAY alarm (the no-match branch in mergeAlarms).
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -453,10 +451,8 @@ class IcsPatcherTest {
 
     @Test
     fun `patch with explicit attendees REPLACES the rawIcal attendee set`() {
-        // Regression for the picker-no-op bug: editing attendees on a
-        // server-synced event (which has rawIcal) must reach the wire. When the
-        // caller passes a non-null attendee set, it is authoritative and
-        // overrides the original ICS's ATTENDEE block.
+        // Editing attendees on a server-synced event (which has rawIcal) must reach the wire:
+        // a non-null attendee set from the caller replaces the original ATTENDEE block.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -479,7 +475,7 @@ class IcsPatcherTest {
             startTs = System.currentTimeMillis(),
             endTs = System.currentTimeMillis() + 3600000,
         )
-        // User added Carl and removed Jane via the picker — this is the table set.
+        // User added Carl and removed Jane in the picker; this is the table set.
         val newAttendees = listOf(
             Attendee(eventId = 1, address = "mailto:carl@example.com", displayName = "Carl", partstat = "NEEDS-ACTION")
         )
@@ -494,8 +490,8 @@ class IcsPatcherTest {
 
     @Test
     fun `patch with empty attendees clears the rawIcal attendee set`() {
-        // Remove-all-attendees: an explicit empty list clears, distinct from
-        // null (preserve). Confirms the remove-all path reaches the wire.
+        // An explicit empty list clears every attendee, unlike null, which keeps them. The
+        // remove-all path reaches the wire.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -511,7 +507,7 @@ class IcsPatcherTest {
             END:VEVENT
             END:VCALENDAR
         """.trimIndent()
-        // Organized event (the only case where remove-all is meaningful).
+        // Organized, since only an organized event takes the caller's attendee set.
         val entity = createTestEvent(
             uid = "clear-attendees@kashcal.test", title = "Meeting",
             startTs = System.currentTimeMillis(), endTs = System.currentTimeMillis() + 3600000,
@@ -526,11 +522,10 @@ class IcsPatcherTest {
 
     @Test
     fun `patch emits organizer from event when rawIcal had none and attendees are added`() {
-        // Real-world bug: an event created without invitees synced to the server,
-        // so its stored rawIcal carries NO ORGANIZER. Later the user adds an
-        // attendee; the coordinator stamps Event.organizerEmail. The patch path
-        // must surface that organizer on the wire, otherwise the server has no
-        // ORGANIZER to auto-schedule (RFC 6638 §3) and no invite is delivered.
+        // An event created without invitees synced to the server, so its stored rawIcal has
+        // no ORGANIZER. Later the user adds an attendee and the coordinator stamps
+        // Event.organizerEmail. The patch must put that organizer on the wire; otherwise the
+        // server has no ORGANIZER to schedule with (RFC 6638 §3) and no invite is delivered.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -567,10 +562,9 @@ class IcsPatcherTest {
 
     @Test
     fun `patch does not synthesize an organizer on a cosmetic edit with no attendees`() {
-        // A non-push edit (attendees == null) — e.g. a title change, or the
-        // export/share path — must NOT invent an ORGANIZER from a lingering
-        // organizerEmail. Doing so would leak the user's address into a body
-        // that never carried one (and into shared .ics files).
+        // A non-push edit (attendees == null), such as a title change or the export and share
+        // path, must not invent an ORGANIZER from a lingering organizerEmail. That would leak
+        // the user's address into a body that never had one, and into shared .ics files.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -593,7 +587,7 @@ class IcsPatcherTest {
             organizerEmail = "me@example.com",
         )
 
-        // attendees == null → preserve path; no ORGANIZER must appear.
+        // attendees == null keeps the original, so no ORGANIZER appears.
         val patched = IcsPatcher.patch(originalIcs, entity, attendees = null)
         val patchedEvent = parser.parseAllEvents(patched).getOrNull()!!.first()
 
@@ -602,8 +596,8 @@ class IcsPatcherTest {
 
     @Test
     fun `patch keeps the original organizer over the event organizer`() {
-        // The server's ORGANIZER is authoritative (correct mailto/urn-uuid/CN
-        // shape); a stamped Event.organizerEmail must not clobber it.
+        // The server's ORGANIZER wins, in its mailto/urn-uuid/CN shape; a stamped
+        // Event.organizerEmail must not replace it.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -701,10 +695,9 @@ class IcsPatcherTest {
         val patchedEvents = parser.parseAllEvents(patched).getOrNull()!!
         val patchedEvent = patchedEvents.first()
 
-        // The patcher serializes the entity's stored SEQUENCE verbatim and does
-        // not compare old-vs-new — the bump decision lives upstream in
-        // EventWriter (SequenceBumper). Even though this fixture's startTs
-        // differs from the original DTSTART, the patcher emits the stored 5.
+        // The patcher writes the stored SEQUENCE verbatim and compares nothing; EventWriter
+        // decides the bump (SequenceBumper). Though this fixture's startTs differs from the
+        // original DTSTART, the patcher emits the stored 5.
         assertEquals("Sequence should be serialized verbatim", 5, patchedEvent.sequence)
     }
 
@@ -726,11 +719,11 @@ class IcsPatcherTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Add a new EXDATE
+        // Add EXDATEs
         val entity = createTestEvent(
             uid = "exdate-test@kashcal.test",
             title = "Daily Event",
-            startTs = 1735120800000L, // Dec 25, 2025 10:00 UTC
+            startTs = 1735120800000L, // Dec 25, 2024 10:00 UTC
             endTs = 1735124400000L,
             rrule = "FREQ=DAILY;COUNT=10",
             exdate = "1735207200000,1735293600000"  // Dec 26 and Dec 27 in ms
@@ -773,9 +766,8 @@ class IcsPatcherTest {
 
     @Test
     fun `patch uses Event entity UID when rawIcal has no UID`() {
-        // Push scenario: rawIcal from a non-compliant server has no UID.
-        // ICalParser generates a random UUID on re-parse, but IcsPatcher must
-        // override it with the Event entity's UID (stable since first pull).
+        // rawIcal from a non-compliant server has no UID. ICalParser gives it a random UUID on
+        // every parse, so IcsPatcher must write the entity's UID, stable since the first pull.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -809,15 +801,15 @@ class IcsPatcherTest {
             title = "New Event",
             description = "A brand new event",
             location = "Meeting Room",
-            startTs = 1735120800000L, // Dec 25, 2025 10:00 UTC
-            endTs = 1735124400000L,   // Dec 25, 2025 11:00 UTC
+            startTs = 1735120800000L, // Dec 25, 2024 10:00 UTC
+            endTs = 1735124400000L,   // Dec 25, 2024 11:00 UTC
             timezone = "America/New_York",
             reminders = listOf("-PT15M", "-PT1H")
         )
 
         val generated = IcsPatcher.generateFresh(entity)
 
-        // Verify it parses correctly
+        // The output parses
         val events = parser.parseAllEvents(generated).getOrNull()!!
         assertEquals("Should have 1 event", 1, events.size)
 
@@ -834,8 +826,8 @@ class IcsPatcherTest {
         val entity = createTestEvent(
             uid = "allday-new@kashcal.test",
             title = "All Day Event",
-            startTs = 1735084800000L, // Dec 25, 2025 00:00 UTC
-            endTs = 1735171199999L,   // Dec 25, 2025 23:59:59.999 UTC
+            startTs = 1735084800000L, // Dec 25, 2024 00:00 UTC
+            endTs = 1735171199999L,   // Dec 25, 2024 23:59:59.999 UTC
             isAllDay = true
         )
 
@@ -966,9 +958,9 @@ class IcsPatcherTest {
 
     @Test
     fun `RawIcsParser excludes ACTION_NONE sentinels`() {
-        // The >3-alarm scheduling path (ReminderScheduler) enumerates alarms via
-        // RawIcsParser. An ACTION:NONE sentinel must be excluded there too, so it can
-        // never schedule a phantom reminder — consistent with ICalEventMapper's filter.
+        // ReminderScheduler reads alarms through RawIcsParser when an event has more than 3.
+        // An ACTION:NONE sentinel must be excluded there too, as ICalEventMapper excludes it,
+        // so it can never schedule a phantom reminder.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -1039,8 +1031,8 @@ class IcsPatcherTest {
 
     @Test
     fun `serializeWithExceptions with 3 exceptions round-trips correctly`() {
-        // Create master recurring event
-        val masterStartTs = 1735099200000L // Dec 25, 2024 00:00 UTC
+        // Master recurring event
+        val masterStartTs = 1735099200000L // Dec 25, 2024 04:00 UTC
         val master = createTestEvent(
             uid = "weekly-standup@kashcal.test",
             title = "Weekly Standup",
@@ -1050,7 +1042,7 @@ class IcsPatcherTest {
             reminders = listOf("-PT15M", "-PT30M")
         )
 
-        // Create 3 different exceptions
+        // 3 different exceptions
         val exception1 = createExceptionEvent(
             masterId = 1L,
             masterUid = "weekly-standup@kashcal.test",
@@ -1081,7 +1073,7 @@ class IcsPatcherTest {
             description = "Year-end quarterly review" // Added description
         )
 
-        // Serialize with all exceptions
+        // Serialize with every exception
         val serialized = IcsPatcher.serializeWithExceptions(
             master,
             listOf(exception1, exception2, exception3)
@@ -1090,19 +1082,19 @@ class IcsPatcherTest {
         // Parse the result
         val parsed = parser.parseAllEvents(serialized).getOrNull()!!
 
-        // Verify we have 4 events (1 master + 3 exceptions)
+        // 4 events: 1 master and 3 exceptions
         assertEquals("Should have 4 events", 4, parsed.size)
 
         // Find master and exceptions
         val parsedMaster = parsed.find { it.recurrenceId == null }!!
         val parsedExceptions = parsed.filter { it.recurrenceId != null }
 
-        // Verify master
+        // Master
         assertEquals("weekly-standup@kashcal.test", parsedMaster.uid)
         assertEquals("Weekly Standup", parsedMaster.summary)
         assertNotNull("Master should have RRULE", parsedMaster.rrule)
 
-        // Verify all 3 exceptions
+        // All 3 exceptions
         assertEquals("Should have 3 exceptions", 3, parsedExceptions.size)
 
         // All exceptions share master's UID
@@ -1112,7 +1104,7 @@ class IcsPatcherTest {
             assertNotNull("Exception should have RECURRENCE-ID", exc.recurrenceId)
         }
 
-        // Verify each exception's unique properties
+        // Each exception's own properties
         val exc1 = parsedExceptions.find { it.summary == "Weekly Standup - Extended" }!!
         assertEquals("Extended exception should have different alarm", 1, exc1.alarms.size)
 
@@ -1125,7 +1117,7 @@ class IcsPatcherTest {
 
     @Test
     fun `serializeWithExceptions with cancelled exception (deletion)`() {
-        // Create master recurring event
+        // Master recurring event
         val masterStartTs = 1735099200000L
         val master = createTestEvent(
             uid = "daily-meeting@kashcal.test",
@@ -1135,15 +1127,15 @@ class IcsPatcherTest {
             rrule = "FREQ=DAILY"
         )
 
-        // Create a cancelled exception (deleted occurrence)
+        // A cancelled exception (deleted occurrence)
         val cancelledException = createExceptionEvent(
             masterId = 1L,
             masterUid = "daily-meeting@kashcal.test",
             originalInstanceTime = masterStartTs + (3 * 24 * 3600000L), // Day 4
-            title = "Daily Sync", // Keep original title
+            title = "Daily Sync", // original title
             startTs = masterStartTs + (3 * 24 * 3600000L),
             endTs = masterStartTs + (3 * 24 * 3600000L) + 1800000,
-            status = "CANCELLED" // Cancelled!
+            status = "CANCELLED"
         )
 
         // Serialize
@@ -1188,17 +1180,15 @@ class IcsPatcherTest {
 
     @Test
     fun `serializeWithExceptions emits VTIMEZONE for zone referenced only by exception`() {
-        // This is the gap the line-scraper leaves: master has no TZID (floating),
-        // an exception uses a non-UTC TZID. The scraper emits master's VCALENDAR
-        // header (no VTIMEZONE) and drops any VTIMEZONE because exceptions are
-        // generated with includeVTimezone=false and then scraped out.
+        // The master has no TZID (floating) and an exception uses a non-UTC TZID, so only the
+        // exception references the zone; its VTIMEZONE must still be emitted.
         val masterStartTs = 1735099200000L
         val master = createTestEvent(
             uid = "floating@kashcal.test",
             title = "Floating Master",
             startTs = masterStartTs,
             endTs = masterStartTs + 3600000,
-            timezone = null, // floating — no TZID
+            timezone = null, // floating, no TZID
             rrule = "FREQ=WEEKLY"
         )
         val exceptionInTokyo = createExceptionEvent(
@@ -1230,7 +1220,7 @@ class IcsPatcherTest {
             rrule = "FREQ=WEEKLY;COUNT=10"
         )
 
-        // Week 2: Modified (moved to afternoon)
+        // Week 2: modified, moved to the afternoon
         val modifiedException = createExceptionEvent(
             masterId = 1L,
             masterUid = "team-call@kashcal.test",
@@ -1240,7 +1230,7 @@ class IcsPatcherTest {
             endTs = masterStartTs + (7 * 24 * 3600000L) + (7 * 3600000L)
         )
 
-        // Week 3: Cancelled
+        // Week 3: cancelled
         val cancelledException = createExceptionEvent(
             masterId = 1L,
             masterUid = "team-call@kashcal.test",
@@ -1251,7 +1241,7 @@ class IcsPatcherTest {
             status = "CANCELLED"
         )
 
-        // Week 4: Modified with location
+        // Week 4: modified with a location
         val locationException = createExceptionEvent(
             masterId = 1L,
             masterUid = "team-call@kashcal.test",
@@ -1280,8 +1270,8 @@ class IcsPatcherTest {
 
     @Test
     fun `serializeWithExceptions re-edit same occurrence preserves only latest`() {
-        // Scenario: User edits occurrence on Week 2, then edits it again
-        // Only the FINAL edit should appear in serialization
+        // The user edits the week 2 occurrence, then edits it again; only the final edit is
+        // serialized.
 
         val masterStartTs = 1735099200000L
         val master = createTestEvent(
@@ -1292,18 +1282,18 @@ class IcsPatcherTest {
             rrule = "FREQ=WEEKLY"
         )
 
-        // Final version of Week 2 exception (after multiple edits)
-        // Title changed twice: "Planning Session" -> "Extended Planning" -> "Final Planning"
-        // Time changed: morning -> afternoon -> evening
+        // Final version of the week 2 exception after several edits.
+        // Title changed twice: "Planning Session", "Extended Planning", "Final Planning".
+        // Time changed: morning, afternoon, evening.
         val finalException = createExceptionEvent(
             masterId = 1L,
             masterUid = "evolving-meeting@kashcal.test",
             originalInstanceTime = masterStartTs + (7 * 24 * 3600000L), // Week 2
-            title = "Final Planning Session", // After multiple edits
-            startTs = masterStartTs + (7 * 24 * 3600000L) + (10 * 3600000L), // Evening time
+            title = "Final Planning Session", // after several edits
+            startTs = masterStartTs + (7 * 24 * 3600000L) + (10 * 3600000L), // evening
             endTs = masterStartTs + (7 * 24 * 3600000L) + (12 * 3600000L), // 2 hour meeting
             description = "Final version after re-edits",
-            sequence = 3 // Higher sequence from multiple edits
+            sequence = 3 // higher sequence from several edits
         )
 
         val serialized = IcsPatcher.serializeWithExceptions(master, listOf(finalException))
@@ -1389,29 +1379,29 @@ class IcsPatcherTest {
 
         val parsed = parser.parseAllEvents(serialized).getOrNull()!!
 
-        // Verify 6 events total
+        // 6 events in total
         assertEquals("Should have 6 events", 6, parsed.size)
 
         val parsedMaster = parsed.find { it.recurrenceId == null }!!
         val parsedExceptions = parsed.filter { it.recurrenceId != null }
 
-        // Verify master integrity
+        // Master is intact
         assertEquals("Sprint Review", parsedMaster.summary)
         assertEquals("Main Conference Room", parsedMaster.location)
         assertNotNull(parsedMaster.rrule)
 
-        // Verify exception count
+        // Exception count
         assertEquals("Should have 5 exceptions", 5, parsedExceptions.size)
 
-        // Verify all have unique RECURRENCE-IDs
+        // Every RECURRENCE-ID is distinct
         val recurrenceIds = parsedExceptions.map { it.recurrenceId!!.timestamp }.toSet()
         assertEquals("All RECURRENCE-IDs should be unique", 5, recurrenceIds.size)
 
-        // Verify cancelled one
+        // The cancelled one
         val cancelled = parsedExceptions.filter { it.status?.name == "CANCELLED" }
         assertEquals("Should have 1 cancelled", 1, cancelled.size)
 
-        // Verify year-end exception has all modifications
+        // The year-end exception has every change
         val yearEnd = parsedExceptions.find { it.summary == "Year-End Sprint Review" }!!
         assertEquals("Executive Boardroom", yearEnd.location)
         assertEquals("Year-end review with stakeholders", yearEnd.description)
@@ -1419,7 +1409,7 @@ class IcsPatcherTest {
 
     @Test
     fun `serializeWithExceptions preserves RECURRENCE-ID timestamps accurately`() {
-        val masterStartTs = 1735099200000L // Dec 25, 2024 00:00 UTC
+        val masterStartTs = 1735099200000L // Dec 25, 2024 04:00 UTC
         val master = createTestEvent(
             uid = "timestamp-test@kashcal.test",
             title = "Timestamp Test",
@@ -1428,7 +1418,7 @@ class IcsPatcherTest {
             rrule = "FREQ=DAILY"
         )
 
-        // Create exceptions on specific dates
+        // Exceptions on specific dates
         val day3Ts = masterStartTs + (2 * 24 * 3600000L) // Dec 27
         val day7Ts = masterStartTs + (6 * 24 * 3600000L) // Dec 31
         val day10Ts = masterStartTs + (9 * 24 * 3600000L) // Jan 3
@@ -1465,7 +1455,7 @@ class IcsPatcherTest {
 
         val parsedExceptions = parsed.filter { it.recurrenceId != null }
 
-        // Verify each RECURRENCE-ID matches the originalInstanceTime
+        // Each RECURRENCE-ID matches its originalInstanceTime
         val recIdTimestamps = parsedExceptions.map { it.recurrenceId!!.timestamp }.sorted()
         val expectedTimestamps = listOf(day3Ts, day7Ts, day10Ts).sorted()
 
@@ -1503,7 +1493,7 @@ class IcsPatcherTest {
 
         val parsedException = parsed.find { it.recurrenceId != null }!!
         assertEquals("Cross-TZ Meeting - Rescheduled", parsedException.summary)
-        // Verify the event was serialized with different time
+        // The exception is serialized with its new time
         assertNotNull(parsedException.dtStart)
         assertNotEquals("Exception should have different start time than original occurrence",
             masterStartTs + (7 * 24 * 3600000L), parsedException.dtStart.timestamp)
@@ -1527,8 +1517,7 @@ class IcsPatcherTest {
         assertEquals("Solo Event", parsed.first().summary)
     }
 
-    // ========== BUG CONFIRMATION: User Reminder Edits Not Synced ==========
-    // These tests confirm the bug where user's reminder edits are ignored by patch()
+    // ========== User reminder edits reach the patched body ==========
 
     @Test
     fun `BUG - patch should sync user reminder edits but currently ignores them`() {
@@ -1562,13 +1551,13 @@ class IcsPatcherTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // User edits reminder 1 from 15m to 45m (keeps reminder 2 at 30m)
+        // User changes reminder 1 from 15m to 45m and keeps reminder 2 at 30m
         val entity = createTestEvent(
             uid = "reminder-edit-bug@kashcal.test",
             title = "Original Title",
             startTs = 1735120800000L,
             endTs = 1735124400000L,
-            reminders = listOf("-PT45M", "-PT30M")  // USER'S EDIT: 15m → 45m
+            reminders = listOf("-PT45M", "-PT30M")  // user's edit: 15m to 45m
         )
 
         // Patch the ICS
@@ -1576,8 +1565,7 @@ class IcsPatcherTest {
         val patchedEvents = parser.parseAllEvents(patched).getOrNull()!!
         val patchedEvent = patchedEvents.first()
 
-        // BUG: This assertion SHOULD pass but currently FAILS
-        // The first alarm should be 45 minutes (user's edit), not 15 minutes (original)
+        // The first alarm is 45 minutes (the user's edit), not 15 minutes (the original)
         val alarmTriggers = patchedEvent.alarms.map { alarm ->
             alarm.trigger?.let { duration ->
                 duration.toMinutes()
@@ -1593,7 +1581,7 @@ class IcsPatcherTest {
 
     @Test
     fun `patch syncs user edits and drops deleted displayed alarms`() {
-        // Original ICS with 5 alarms — all within the displayed window (index < 5).
+        // Original ICS with 5 alarms, all within the displayed window (index < 5).
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -1678,20 +1666,20 @@ class IcsPatcherTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // User cleared all reminders (both set to "No reminder" → null)
+        // User cleared every reminder (both set to "No reminder", stored as null)
         val entity = createTestEvent(
             uid = "clear-alarms@kashcal.test",
             title = "Event",
             startTs = 1735120800000L,
             endTs = 1735124400000L,
-            reminders = null  // User wants NO reminders
+            reminders = null  // user wants no reminders
         )
 
         val patched = IcsPatcher.patch(originalIcs, entity)
         val patchedEvents = parser.parseAllEvents(patched).getOrNull()!!
         val patchedEvent = patchedEvents.first()
 
-        // BUG: Should have 0 alarms (user's intent), but currently preserves original 2
+        // Neither of the original 2 alarms remains
         assertEquals(
             "Should have 0 alarms when user clears reminders, but bug preserves original",
             0,
@@ -1700,14 +1688,13 @@ class IcsPatcherTest {
     }
 
     // ========== Sorted Reminders Round-Trip Tests ==========
-    // ICalEventMapper now sorts reminders by duration (v21.5.6)
-    // These tests verify IcsPatcher handles sorted reminders correctly
+    // ICalEventMapper stores reminders sorted by magnitude (v21.5.6), while the original alarms
+    // stay in document order; IcsPatcher must pair them by trigger.
 
     @Test
     fun `patch applies sorted reminders to unsorted rawIcal alarms`() {
-        // Server originally sent alarms in order: 1 day, 1 hour, 15 min
-        // ICalEventMapper sorted them to: 15 min, 1 hour, 1 day
-        // When patching, triggers should be updated in original positions
+        // Server sent alarms in the order 1 day, 1 hour, 15 min; ICalEventMapper stored them
+        // as 15 min, 1 hour, 1 day.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -1737,26 +1724,25 @@ class IcsPatcherTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Entity has sorted reminders (as stored by ICalEventMapper)
+        // Entity has sorted reminders, as ICalEventMapper stores them
         val entity = createTestEvent(
             uid = "sorted-roundtrip@kashcal.test",
             title = "Event with Unsorted Alarms",
             startTs = 1735120800000L,
             endTs = 1735124400000L,
-            reminders = listOf("-PT15M", "-PT1H", "-P1D")  // Sorted order from pull
+            reminders = listOf("-PT15M", "-PT1H", "-P1D")  // sorted order from pull
         )
 
         val patched = IcsPatcher.patch(originalIcs, entity)
         val patchedEvents = parser.parseAllEvents(patched).getOrNull()!!
         val patchedEvent = patchedEvents.first()
 
-        // Should have 3 alarms
+        // 3 alarms
         assertEquals("Should have 3 alarms", 3, patchedEvent.alarms.size)
 
-        // Each user reminder is reconciled with the original alarm that has the
-        // SAME trigger (not by position), so each alarm keeps its own ACTION at
-        // its own time. Position-based pairing would scramble actions (the AUDIO
-        // alarm would fire at -15m, etc.).
+        // Each reminder is reconciled with the original alarm that has the same trigger, so
+        // each alarm keeps its own ACTION at its own time. Pairing by position would scramble
+        // actions: the AUDIO alarm would fire at -15m.
         val byTrigger = patchedEvent.alarms.associateBy { it.trigger?.toMinutes() }
         assertEquals("AUDIO stays at -1 day", AlarmAction.AUDIO, byTrigger[-1440L]?.action)
         assertEquals("EMAIL stays at -1 hour", AlarmAction.EMAIL, byTrigger[-60L]?.action)
@@ -1765,8 +1751,8 @@ class IcsPatcherTest {
 
     @Test
     fun `patch preserves ACTION types from original alarms with sorted reminders`() {
-        // Verify ACTION types (AUDIO, EMAIL, DISPLAY) are preserved from original
-        // even when triggers are reordered by sorting
+        // ACTION types (AUDIO, EMAIL, DISPLAY) are kept from the original alarms even when
+        // sorting reorders the triggers
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -1804,10 +1790,9 @@ class IcsPatcherTest {
 
         assertEquals("Should have 2 alarms", 2, patchedEvent.alarms.size)
 
-        // Reconciled by TRIGGER, not position: -1d matches the AUDIO alarm and
-        // keeps its ACTION; -15m matches no original alarm (the EMAIL@-1h was
-        // deleted in the form) so it becomes a fresh DISPLAY alarm. Position
-        // pairing would have wrongly stamped the EMAIL action onto -1d.
+        // Reconciled by trigger: -1d matches the AUDIO alarm and keeps its ACTION; -15m matches
+        // no original alarm (EMAIL@-1h was deleted in the form), so it becomes a new DISPLAY
+        // alarm. Pairing by position would stamp the EMAIL action onto -1d.
         val byTrigger = patchedEvent.alarms.associateBy { it.trigger?.toMinutes() }
         assertEquals("AUDIO preserved at its own -1 day offset", AlarmAction.AUDIO, byTrigger[-1440L]?.action)
         assertEquals("new -15m reminder is a fresh DISPLAY alarm", AlarmAction.DISPLAY, byTrigger[-15L]?.action)
@@ -1861,7 +1846,7 @@ class IcsPatcherTest {
             title = "Red Event",
             startTs = 1735120800000L,
             endTs = 1735124400000L,
-            color = 0xFFFF0000.toInt() // Red
+            color = 0xFFFF0000.toInt() // red
         )
 
         val generated = IcsPatcher.generateFresh(entity)
@@ -1869,7 +1854,7 @@ class IcsPatcherTest {
         val event = events.first()
 
         assertNotNull("Should have COLOR", event.color)
-        // Pure red maps to CSS3 "red" in the wheel palette → emitted as the name
+        // Pure red is CSS3 "red" in the wheel palette, so the name is emitted
         assertEquals("red", event.color)
     }
 
@@ -1989,7 +1974,7 @@ class IcsPatcherTest {
 
         assertEquals(2, parsedException.priority)
         assertNotNull("Exception should have GEO", parsedException.geo)
-        // 0xFF00FF00 maps to CSS3 "lime" in the wheel palette → emitted as the name
+        // 0xFF00FF00 is CSS3 "lime" in the wheel palette, so the name is emitted
         assertEquals("lime", parsedException.color)
         assertEquals("https://special.example.com", parsedException.url)
         assertEquals(2, parsedException.categories.size)
@@ -2019,8 +2004,8 @@ class IcsPatcherTest {
         organizerEmail: String? = null
     ): Event {
         return Event(
-            id = 100L + (originalInstanceTime % 1000), // Unique ID
-            uid = masterUid, // Same UID as master
+            id = 100L + (originalInstanceTime % 1000), // 100 for whole-second instance times
+            uid = masterUid, // same UID as master
             importId = "$masterUid:RECID:$originalInstanceTime",
             calendarId = 1L,
             title = title,
@@ -2035,12 +2020,12 @@ class IcsPatcherTest {
             classification = "PUBLIC",
             organizerEmail = organizerEmail,
             organizerName = null,
-            rrule = null, // Exceptions have no RRULE
+            rrule = null, // exceptions have no RRULE
             rdate = null,
             exdate = null,
             duration = null,
-            originalEventId = masterId, // Link to master
-            originalInstanceTime = originalInstanceTime, // Which occurrence is modified
+            originalEventId = masterId, // link to master
+            originalInstanceTime = originalInstanceTime, // which occurrence is modified
             originalSyncId = null,
             reminders = reminders,
             extraProperties = null,
@@ -2201,9 +2186,8 @@ class IcsPatcherTest {
 
     @Test
     fun `patchAttendeeReply preserves SEQUENCE verbatim`() {
-        // RFC 5546 §2.1.4 — attendee PARTSTAT-only PUT must NOT bump SEQUENCE.
-        // (iCloud will auto-bump on the wire; we tolerate that, but we don't
-        // bump on the client.)
+        // RFC 5546 §2.1.4: an attendee's PARTSTAT-only PUT must not bump SEQUENCE. iCloud
+        // bumps it on the wire, which is tolerated; the client never bumps it.
         val patched = IcsPatcher.patchAttendeeReply(
             rawIcal = multiAttendeeIcs,
             account = selfAccount(),
@@ -2215,7 +2199,7 @@ class IcsPatcherTest {
 
     @Test
     fun `patchAttendeeReply canonicalizes lowercase PARTSTAT to uppercase`() {
-        // The RSVP UI may pass any-case value; the patcher canonicalizes.
+        // The RSVP UI may pass any case; the patcher canonicalizes.
         val patched = IcsPatcher.patchAttendeeReply(
             rawIcal = multiAttendeeIcs,
             account = selfAccount(),
@@ -2224,7 +2208,7 @@ class IcsPatcherTest {
         val parsed = parser.parseAllEvents(patched).getOrNull()!!.first()
         val self = parsed.attendees.first { it.email == "self@example.test" }
         assertEquals(org.onekash.icaldav.model.PartStat.ACCEPTED, self.partStat)
-        // Wire form should be uppercase too.
+        // The wire form is uppercase too.
         assertTrue(
             "wire form must use uppercase ACCEPTED",
             patched.contains("PARTSTAT=ACCEPTED")
@@ -2254,10 +2238,29 @@ class IcsPatcherTest {
     }
 
     @Test
+    fun `patchAttendeeReply matches self when the address differs only in case and keeps its casing`() {
+        val mixedCaseIcs = multiAttendeeIcs.replace(
+            "RSVP=TRUE:mailto:self@example.test",
+            "RSVP=TRUE:mailto:Self@Example.TEST"
+        )
+
+        val patched = IcsPatcher.patchAttendeeReply(
+            rawIcal = mixedCaseIcs,
+            account = selfAccount(),
+            partstat = "ACCEPTED"
+        )
+        assertNotNull("case-only difference must still find the self attendee", patched)
+
+        val unfolded = patched!!.replace(Regex("""\r?\n[ \t]"""), "")
+        val selfLine = unfolded.lines().single { it.startsWith("ATTENDEE") && "CN=Self" in it }
+        assertTrue("PARTSTAT updated: $selfLine", "PARTSTAT=ACCEPTED" in selfLine)
+        assertTrue("original casing kept on the wire: $selfLine", selfLine.endsWith(":mailto:Self@Example.TEST"))
+    }
+
+    @Test
     fun `patchAttendeeReply returns null when self attendee not present`() {
-        // Server's body doesn't list us — caller falls back to surfacing an error
-        // ("can't RSVP without an attendee row for you") instead of silently
-        // adding a new attendee row.
+        // The server's body doesn't list this account, so the caller shows an error ("can't
+        // RSVP without an attendee row for you") instead of silently adding an attendee.
         val account = org.onekash.kashcal.data.db.entity.Account(
             id = 1L,
             provider = org.onekash.kashcal.domain.model.AccountProvider.CALDAV,
@@ -2285,7 +2288,7 @@ class IcsPatcherTest {
 
     @Test
     fun `patchAttendeeReply preserves recurring RRULE`() {
-        // Series-level RSVP only — RRULE on the master must survive.
+        // Series-level RSVP only: the master's RRULE must survive.
         val recurringIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -2328,7 +2331,8 @@ class IcsPatcherTest {
             title = "Planning",
             startTs = 1_700_000_000_000L,
             endTs = 1_700_003_600_000L,
-            // ATTENDEE requires ORGANIZER (RFC 6638 §3.1); a real invite has one.
+            // Without an ORGANIZER the fresh path emits no attendees (RFC 6638 §3.1); a real
+            // invite has one.
             organizerEmail = "host@example.test"
         )
         val ics = IcsPatcher.generateFresh(
@@ -2344,9 +2348,9 @@ class IcsPatcherTest {
 
     @Test
     fun `generateFresh without attendees emits no ATTENDEE - share-card PII guard`() {
-        // The share-card path nulls rawIcal and passes no attendees so the
-        // recipient's .ics never leaks the master's attendee list. The default
-        // empty list MUST keep generateFresh attendee-free.
+        // The share-card path nulls rawIcal and passes no attendees so the recipient's .ics
+        // never leaks the master's attendee list. The default empty list must keep
+        // generateFresh attendee-free.
         val event = createTestEvent(
             uid = "share-card@example.test",
             title = "Private",
@@ -2396,10 +2400,728 @@ class IcsPatcherTest {
             "master VEVENT must carry its attendee",
             masterVevent.attendees.any { it.email == "alice@example.test" }
         )
-        // This is the bug being fixed: exception attendees previously dropped.
+        // Each exception VEVENT carries its own attendees.
         assertTrue(
             "exception VEVENT must carry carol (previously dropped on push)",
             exceptionVevent.attendees.any { it.email == "carol@example.test" }
         )
+    }
+
+    // ==================== VEVENT order within one resource ====================
+    //
+    // A series with a changed occurrence is one resource holding two VEVENTs,
+    // and RFC 5545 puts no order on them. A file may list the changed
+    // occurrence (RECURRENCE-ID) before the series; a series edit or an invite
+    // reply must still patch the series VEVENT.
+
+    private val orderUid = "order-series@example.test"
+    private val orderSeriesStart = 1_792_490_400_000L // 2026-10-20 10:00 UTC
+    private val orderChangedInstance = 1_792_663_200_000L // 2026-10-22 10:00 UTC, third occurrence
+    private val orderChangedStart = 1_792_670_400_000L // moved to 12:00
+
+    private fun orderSeriesVevent(selfInvited: Boolean) = listOfNotNull(
+        "BEGIN:VEVENT",
+        "UID:$orderUid",
+        "DTSTAMP:20261001T100000Z",
+        "DTSTART:20261020T100000Z",
+        "DTEND:20261020T110000Z",
+        "RRULE:FREQ=DAILY;COUNT=5",
+        "SUMMARY:Standup",
+        "ORGANIZER;CN=Boss:mailto:boss@example.test",
+        if (selfInvited) "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:self@example.test" else null,
+        "ATTENDEE;CN=Alice;PARTSTAT=ACCEPTED:mailto:alice@example.test",
+        "END:VEVENT",
+    )
+
+    private fun orderChangeVevent(recurrenceId: String, start: String, end: String, title: String) = listOf(
+        "BEGIN:VEVENT",
+        "UID:$orderUid",
+        "DTSTAMP:20261001T100000Z",
+        "RECURRENCE-ID:$recurrenceId",
+        "DTSTART:$start",
+        "DTEND:$end",
+        "SUMMARY:$title",
+        "ORGANIZER;CN=Boss:mailto:boss@example.test",
+        "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:self@example.test",
+        "ATTENDEE;CN=Alice;PARTSTAT=ACCEPTED:mailto:alice@example.test",
+        "END:VEVENT",
+    )
+
+    private val orderChange = orderChangeVevent(
+        "20261022T100000Z", "20261022T120000Z", "20261022T130000Z", "Standup moved"
+    )
+
+    private fun orderCalendar(vararg vevents: List<String>): String =
+        (listOf("BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Test//Order//EN") +
+            vevents.toList().flatten() + listOf("END:VCALENDAR")).joinToString("\r\n")
+
+    /** The changed occurrence is listed before the series. */
+    private fun changeFirstIcs(selfOnSeries: Boolean = true) =
+        orderCalendar(orderChange, orderSeriesVevent(selfInvited = selfOnSeries))
+
+    /** Only changed occurrences, no series VEVENT (RFC 4791 section 4.1 allows it). */
+    private val changesOnlyIcs get() = orderCalendar(
+        orderChange,
+        orderChangeVevent("20261023T100000Z", "20261023T120000Z", "20261023T130000Z", "Standup moved again"),
+    )
+
+    private fun renamedAndMovedSeries(rawIcal: String): Event = createTestEvent(
+        uid = orderUid,
+        title = "Standup renamed",
+        startTs = orderSeriesStart + 3_600_000L, // series moved one hour later
+        endTs = orderSeriesStart + 7_200_000L,
+        rrule = "FREQ=DAILY;COUNT=5",
+    ).copy(id = 1L, rawIcal = rawIcal)
+
+    @Test
+    fun `series edit on a file listing the changed occurrence first keeps one series with its repeat rule`() {
+        val master = renamedAndMovedSeries(changeFirstIcs())
+        val exception = createExceptionEvent(
+            masterId = master.id,
+            masterUid = orderUid,
+            originalInstanceTime = orderChangedInstance,
+            title = "Standup moved",
+            startTs = orderChangedStart,
+            endTs = orderChangedStart + 3_600_000L,
+        ).copy(rawIcal = master.rawIcal)
+
+        val ics = IcsPatcher.serializeWithExceptions(
+            master = master,
+            masterAttendees = null,
+            exceptionsWithAttendees = listOf(exception to null),
+        )
+
+        val events = parser.parseAllEvents(ics).getOrNull()!!
+        assertEquals("series plus one changed occurrence", 2, events.size)
+        val series = events.filter { it.recurrenceId == null }
+        assertEquals("exactly one series VEVENT", 1, series.size)
+        val rule = series.single().rrule
+        assertNotNull("series keeps its repeat rule", rule)
+        assertEquals(org.onekash.icaldav.model.Frequency.DAILY, rule!!.freq)
+        assertEquals(5, rule.count)
+        assertEquals("Standup renamed", series.single().summary)
+        assertEquals("series carries the new start", orderSeriesStart + 3_600_000L, series.single().dtStart.timestamp)
+
+        val changes = events.filter { it.recurrenceId != null }
+        assertEquals("exactly one changed occurrence", 1, changes.size)
+        assertEquals(orderChangedInstance, changes.single().recurrenceId!!.timestamp)
+        assertEquals("Standup moved", changes.single().summary)
+        assertNull("changed occurrence has no repeat rule", changes.single().rrule)
+    }
+
+    @Test
+    fun `series patch without exception rows on a file listing the changed occurrence first emits the series`() {
+        val master = renamedAndMovedSeries(changeFirstIcs())
+
+        val only = parser.parseAllEvents(IcsPatcher.serialize(master)).getOrNull()!!.single()
+
+        assertNull("patched VEVENT is the series, not the changed occurrence", only.recurrenceId)
+        assertNotNull("series keeps its repeat rule", only.rrule)
+        assertEquals("Standup renamed", only.summary)
+    }
+
+    @Test
+    fun `invite reply on a file listing the changed occurrence first answers the series`() {
+        val patched = IcsPatcher.patchAttendeeReply(
+            rawIcal = changeFirstIcs(),
+            account = selfAccount(),
+            partstat = "ACCEPTED",
+        )
+
+        assertNotNull("reply patch should succeed", patched)
+        val events = parser.parseAllEvents(patched!!).getOrNull()!!
+        assertEquals("the changed occurrence is sent back too", 2, events.size)
+        val series = events.single { it.recurrenceId == null }
+        assertNotNull("series keeps its repeat rule", series.rrule)
+        assertEquals("Standup", series.summary)
+        assertEquals(
+            org.onekash.icaldav.model.PartStat.ACCEPTED,
+            series.attendees.first { it.email == "self@example.test" }.partStat
+        )
+        val change = events.single { it.recurrenceId != null }
+        assertEquals("Standup moved", change.summary)
+        assertEquals(
+            "the changed occurrence keeps its own answer",
+            org.onekash.icaldav.model.PartStat.NEEDS_ACTION,
+            change.attendees.first { it.email == "self@example.test" }.partStat
+        )
+    }
+
+    @Test
+    fun `invite reply is refused when the account is a guest only on a changed occurrence listed first`() {
+        // Same answer as when the series is listed first: the reply patches the
+        // series, and the account isn't a guest there.
+        val seriesFirst = IcsPatcher.patchAttendeeReply(
+            orderCalendar(orderSeriesVevent(selfInvited = false), orderChange), selfAccount(), "ACCEPTED"
+        )
+        val changeFirst = IcsPatcher.patchAttendeeReply(
+            changeFirstIcs(selfOnSeries = false), selfAccount(), "ACCEPTED"
+        )
+
+        assertNull("series-first file: no reply", seriesFirst)
+        assertNull("changed-occurrence-first file: no reply either", changeFirst)
+    }
+
+    @Test
+    fun `file holding only changed occurrences still patches its first VEVENT`() {
+        val reply = IcsPatcher.patchAttendeeReply(changesOnlyIcs, selfAccount(), "ACCEPTED")
+        assertNotNull("reply patch still succeeds", reply)
+        val events = parser.parseAllEvents(reply!!).getOrNull()!!
+        assertEquals("both changed occurrences are sent back", 2, events.size)
+        val replied = events.first()
+        assertEquals(orderChangedInstance, replied.recurrenceId?.timestamp)
+        assertEquals(
+            org.onekash.icaldav.model.PartStat.ACCEPTED,
+            replied.attendees.first { it.email == "self@example.test" }.partStat
+        )
+
+        val seriesRow = createTestEvent(
+            uid = orderUid,
+            title = "Standup renamed",
+            startTs = orderChangedStart,
+            endTs = orderChangedStart + 3_600_000L,
+        ).copy(id = 1L, rawIcal = changesOnlyIcs)
+        val patched = parser.parseAllEvents(IcsPatcher.serialize(seriesRow)).getOrNull()!!.single()
+        assertEquals("first VEVENT is patched", orderChangedInstance, patched.recurrenceId?.timestamp)
+        assertTrue(
+            "patch path kept, not fresh generation (attendees survive)",
+            patched.attendees.any { it.email == "alice@example.test" }
+        )
+    }
+
+    @Test
+    fun `exception row patch still takes the first VEVENT of the file`() {
+        val exception = createExceptionEvent(
+            masterId = 1L,
+            masterUid = orderUid,
+            originalInstanceTime = orderChangedInstance,
+            title = "Standup moved",
+            startTs = orderChangedStart,
+            endTs = orderChangedStart + 3_600_000L,
+        ).copy(rawIcal = changeFirstIcs())
+
+        val patched = parser.parseAllEvents(IcsPatcher.serialize(exception)).getOrNull()!!.single()
+
+        assertEquals(orderChangedInstance, patched.recurrenceId?.timestamp)
+    }
+
+    // ========== Unknown properties are sent back as the server sent them ==========
+
+    private val unknownUid = "unknown-props@example.test"
+
+    /** Shapes seen on real events; each was damaged when rebuilt from decoded values. */
+    private val seriesUnknownLines = listOf(
+        "X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=\"10600 N Tantau Ave\\nCupertino, CA 95014\";X-TITLE=\"Apple Park: Visitor Center\":geo:37.332,-122.005",
+        "X-APPLE-SUGGESTION-INFO-UNIQUE-KEY:mail\\,msg-1234\\;part\\=2",
+        "COMMENT:line one\\nline two\\, with comma",
+        "RESOURCES:Projector",
+        "RESOURCES:Whiteboard",
+    )
+    private val occurrenceUnknownLines = listOf(
+        "X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-TITLE=\"Cafe, Main St\":geo:1.0,2.0",
+        "COMMENT:moved\\nthis week only",
+    )
+    private val unknownSeriesStart = 1_796_306_400_000L // 2026-12-03T14:00:00Z
+    private val unknownChangedInstance = unknownSeriesStart + 7 * 86_400_000L
+
+    private fun unknownResource(
+        occurrenceRecurrenceId: String = "RECURRENCE-ID:20261210T140000Z",
+        occurrenceLines: List<String> = occurrenceUnknownLines,
+        withAttendee: Boolean = false,
+    ): String = (
+        listOf(
+            "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Test//Test//EN",
+            "BEGIN:VEVENT", "UID:$unknownUid", "DTSTAMP:20260101T100000Z",
+            "DTSTART:20261203T140000Z", "DTEND:20261203T150000Z", "RRULE:FREQ=WEEKLY;COUNT=5",
+            "SUMMARY:Series",
+        ) + (if (withAttendee) listOf(
+            "ORGANIZER:mailto:organizer@example.test",
+            "ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:reader@example.test"
+        ) else emptyList()) + seriesUnknownLines + listOf(
+            "END:VEVENT",
+            "BEGIN:VEVENT", "UID:$unknownUid", "DTSTAMP:20260101T100000Z",
+            occurrenceRecurrenceId, "DTSTART:20261210T160000Z", "DTEND:20261210T170000Z",
+            "SUMMARY:Changed occurrence",
+        ) + occurrenceLines + listOf("END:VEVENT", "END:VCALENDAR", "")
+        ).joinToString("\r\n")
+
+    /** Rows as pull stores them: every row carries the whole resource body. */
+    private fun pulledRows(resource: String): Pair<Event, Event> {
+        val parsed = parser.parseAllEvents(resource).getOrNull()!!
+        val seriesParsed = parsed.single { it.recurrenceId == null }
+        val series = ICalEventMapper.toEntity(seriesParsed, resource, 1L, "https://example.test/cal/u.ics", "e1")
+            .event.copy(id = 1L)
+        val exception = ICalEventMapper.toEntity(
+            parsed.single { it.recurrenceId != null }, resource, 1L, "https://example.test/cal/u.ics", "e1",
+            masterDtStart = seriesParsed.dtStart
+        ).event.copy(id = 2L, originalEventId = 1L)
+        return series to exception
+    }
+
+    /** An occurrence row the way the writer builds it: a copy of the series row. */
+    private fun rowDerivedFromSeries(series: Event, occurrenceMs: Long, title: String) =
+        series.copy(
+            id = 3L, title = title, rrule = null, originalEventId = series.id, originalInstanceTime = occurrenceMs,
+            startTs = occurrenceMs, endTs = occurrenceMs + 3_600_000L
+        )
+
+    private fun unfoldIcs(ics: String) = ics.replace(Regex("\r?\n[ \t]"), "")
+
+    private fun veventBlocks(ics: String): List<List<String>> {
+        val blocks = mutableListOf<List<String>>()
+        var current: MutableList<String>? = null
+        var depth = 0
+        for (line in unfoldIcs(ics).split("\r\n", "\n")) {
+            when {
+                current == null && line == "BEGIN:VEVENT" -> { current = mutableListOf(); depth = 0 }
+                current == null -> Unit
+                line == "END:VEVENT" && depth == 0 -> { blocks += current; current = null }
+                line.startsWith("BEGIN:") -> depth++
+                line.startsWith("END:") -> depth--
+                depth == 0 -> current += line
+            }
+        }
+        return blocks
+    }
+
+    private fun blockTitled(ics: String, title: String) =
+        veventBlocks(ics).firstOrNull { "SUMMARY:$title" in it } ?: throw AssertionError("no '$title' in $ics")
+
+    private fun unknownIn(block: List<String>) =
+        block.filter { it in seriesUnknownLines || it in occurrenceUnknownLines }
+
+    @Test
+    fun `editing a pulled event sends every unknown line back unchanged`() {
+        val (series, _) = pulledRows(unknownResource())
+        val out = IcsPatcher.serialize(series.copy(title = "Series edited", startTs = series.startTs + 3_600_000L))
+        assertEquals(seriesUnknownLines, unknownIn(blockTitled(out, "Series edited")))
+    }
+
+    @Test
+    fun `replying to an invitation sends every unknown line back unchanged`() {
+        val resource = unknownResource(withAttendee = true)
+        val reader = org.onekash.kashcal.data.db.entity.Account(
+            provider = org.onekash.kashcal.domain.model.AccountProvider.CALDAV, email = "reader@example.test"
+        )
+        val out = IcsPatcher.patchAttendeeReply(resource, reader, "ACCEPTED")!!
+        val block = blockTitled(out, "Series")
+        assertEquals(seriesUnknownLines, unknownIn(block))
+        assertTrue(block.any { it.startsWith("ATTENDEE") && "PARTSTAT=ACCEPTED" in it })
+    }
+
+    @Test
+    fun `a pulled changed occurrence is sent with its own unknown lines`() {
+        val (series, exception) = pulledRows(unknownResource())
+        val out = IcsPatcher.serializeWithExceptions(series, listOf(exception))
+        assertEquals(seriesUnknownLines, unknownIn(blockTitled(out, "Series")))
+        assertEquals(occurrenceUnknownLines, unknownIn(blockTitled(out, "Changed occurrence")))
+    }
+
+    @Test
+    fun `a re-edited changed occurrence built from the series row still sends its own lines`() {
+        val (series, _) = pulledRows(unknownResource())
+        val reEdited = rowDerivedFromSeries(series, unknownChangedInstance, "Changed again")
+        val out = IcsPatcher.serializeWithExceptions(series, listOf(reEdited))
+        assertEquals(occurrenceUnknownLines, unknownIn(blockTitled(out, "Changed again")))
+    }
+
+    @Test
+    fun `a newly changed occurrence is sent with the series' lines unchanged`() {
+        val (series, exception) = pulledRows(unknownResource())
+        val fresh = rowDerivedFromSeries(series, unknownChangedInstance + 7 * 86_400_000L, "New occurrence")
+        val out = IcsPatcher.serializeWithExceptions(series, listOf(exception, fresh))
+        assertEquals(seriesUnknownLines, unknownIn(blockTitled(out, "New occurrence")))
+    }
+
+    @Test
+    fun `a changed occurrence with no unknown lines sends none, not the series' copy`() {
+        val (series, _) = pulledRows(unknownResource(occurrenceLines = emptyList()))
+        val reEdited = rowDerivedFromSeries(series, unknownChangedInstance, "Changed again")
+        val out = IcsPatcher.serializeWithExceptions(series, listOf(reEdited))
+        val block = blockTitled(out, "Changed again")
+        assertEquals(emptyList<String>(), unknownIn(block))
+        assertTrue(block.none { it.startsWith("X-APPLE-SUGGESTION-INFO-UNIQUE-KEY") || it.startsWith("RESOURCES") })
+    }
+
+    @Test
+    fun `an occurrence that matches nothing and is not a series copy keeps today's map output`() {
+        val (series, exception) = pulledRows(unknownResource())
+        val stray = exception.copy(
+            id = 4L, importId = "$unknownUid:RECID:other", title = "Stray",
+            originalInstanceTime = unknownChangedInstance + 21 * 86_400_000L,
+            extraProperties = mapOf("X-STRAY" to "kept")
+        )
+        val block = blockTitled(IcsPatcher.serializeWithExceptions(series, listOf(stray)), "Stray")
+        assertTrue(block.contains("X-STRAY:kept"))
+    }
+
+    @Test
+    fun `a series without a stored body sends its occurrences from the map as before`() {
+        val (series, exception) = pulledRows(unknownResource())
+        val local = series.copy(rawIcal = null, extraProperties = mapOf("X-LOCAL" to "series"))
+        val localException = exception.copy(rawIcal = null, extraProperties = mapOf("X-LOCAL" to "occurrence"))
+        val out = IcsPatcher.serializeWithExceptions(local, listOf(localException))
+        assertTrue(blockTitled(out, "Changed occurrence").contains("X-LOCAL:occurrence"))
+    }
+
+    @Test
+    fun `an unreadable stored body falls back to today's output without throwing`() {
+        val (series, exception) = pulledRows(unknownResource())
+        val broken = "not an icalendar body"
+        val out = IcsPatcher.serializeWithExceptions(
+            series.copy(rawIcal = broken, extraProperties = mapOf("X-MAP" to "series")),
+            listOf(exception.copy(rawIcal = broken, extraProperties = mapOf("X-MAP" to "occurrence")))
+        )
+        assertTrue(blockTitled(out, "Series").contains("X-MAP:series"))
+        assertTrue(blockTitled(out, "Changed occurrence").contains("X-MAP:occurrence"))
+    }
+
+    @Test
+    fun `a body holding only changed occurrences still gives each its own lines`() {
+        // RFC 4791 §4.1 allows a resource with only overridden instances; the
+        // series row is then a placeholder and the body has no series VEVENT.
+        val resource = (listOf(
+            "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Test//Test//EN",
+            "BEGIN:VEVENT", "UID:$unknownUid", "DTSTAMP:20260101T100000Z",
+            "RECURRENCE-ID:20261210T140000Z", "DTSTART:20261210T160000Z", "DTEND:20261210T170000Z",
+            "SUMMARY:Changed occurrence",
+        ) + occurrenceUnknownLines + listOf("END:VEVENT", "END:VCALENDAR", "")).joinToString("\r\n")
+        val parsed = parser.parseAllEvents(resource).getOrNull()!!.single()
+        val placeholder = createTestEvent(
+            uid = unknownUid, title = "Placeholder", startTs = unknownSeriesStart,
+            endTs = unknownSeriesStart + 3_600_000L, rrule = "FREQ=WEEKLY;COUNT=5"
+        ).copy(id = 1L, rawIcal = resource)
+        val exception = ICalEventMapper.toEntity(parsed, resource, 1L, "https://example.test/cal/u.ics", "e1")
+            .event.copy(id = 2L, originalEventId = 1L)
+
+        val out = IcsPatcher.serializeWithExceptions(placeholder, listOf(exception))
+        assertEquals(occurrenceUnknownLines, unknownIn(blockTitled(out, "Changed occurrence")))
+    }
+
+    @Test
+    fun `an occurrence of a split-off series never takes the old series' changed occurrence`() {
+        val (series, _) = pulledRows(unknownResource())
+        // A this-and-future split copies the series row (stored body included)
+        // under a new UID.
+        val splitOff = series.copy(uid = "split-off@example.test")
+        val fresh = rowDerivedFromSeries(splitOff, unknownChangedInstance, "Edited after split")
+        val block = blockTitled(IcsPatcher.serializeWithExceptions(splitOff, listOf(fresh)), "Edited after split")
+        assertTrue(block.none { it in occurrenceUnknownLines })
+        assertEquals(seriesUnknownLines, unknownIn(block))
+    }
+
+    @Test
+    fun `a date-form occurrence id still matches after the series time was changed locally`() {
+        val resource = unknownResource(occurrenceRecurrenceId = "RECURRENCE-ID;VALUE=DATE:20261210")
+        val (series, _) = pulledRows(resource)
+        // The user moved the series an hour later; the stored body still holds 14:00.
+        val shifted = series.copy(startTs = series.startTs + 3_600_000L, endTs = series.endTs + 3_600_000L)
+        val reEdited = rowDerivedFromSeries(shifted, unknownChangedInstance, "Changed again")
+        val out = IcsPatcher.serializeWithExceptions(shifted, listOf(reEdited))
+        assertEquals(occurrenceUnknownLines, unknownIn(blockTitled(out, "Changed again")))
+    }
+
+    // ==================== Invite reply on a series with changed occurrences ====================
+    //
+    // A PUT replaces the whole resource, so a reply must send every VEVENT back
+    // as the server holds it; only this account's answer on one VEVENT changes.
+
+    private val replyUid = "reply-series@example.test"
+    private val berlin = java.time.ZoneId.of("Europe/Berlin")
+
+    private fun berlinMs(date: String) =
+        java.time.LocalDateTime.parse(date).atZone(berlin).toInstant().toEpochMilli()
+
+    /** Instance times of the moved, the retitled and the already-answered occurrence. */
+    private val movedInstance get() = berlinMs("2026-11-04T10:00")
+    private val retitledInstance get() = berlinMs("2026-11-05T10:00")
+    private val answeredInstance get() = berlinMs("2026-11-06T10:00")
+
+    /** Folds one logical line into RFC 5545 physical lines of at most 75 octets. */
+    private fun fold75(line: String): List<String> {
+        val out = mutableListOf<String>()
+        var current = StringBuilder()
+        var octets = 0
+        line.codePoints().forEach { cp ->
+            val size = String(Character.toChars(cp)).toByteArray(Charsets.UTF_8).size
+            if (octets + size > 75) {
+                out += current.toString()
+                current = StringBuilder(" ")
+                octets = 1
+            }
+            current.appendCodePoint(cp)
+            octets += size
+        }
+        out += current.toString()
+        return out
+    }
+
+    private val selfSeriesLine =
+        "ATTENDEE;CN=\"Self, the attendee with a long name: Zoë\";ROLE=REQ-PARTICIPANT;" +
+            "PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:self@example.test"
+
+    private fun replyResource(eol: String = "\r\n"): String = (listOf(
+        "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Organizer//Client 9.1//EN",
+        "BEGIN:VTIMEZONE", "TZID:Europe/Berlin",
+        "BEGIN:STANDARD", "DTSTART:19701025T030000", "RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU",
+        "TZOFFSETFROM:+0200", "TZOFFSETTO:+0100", "TZNAME:CET", "END:STANDARD",
+        "BEGIN:DAYLIGHT", "DTSTART:19700329T020000", "RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=-1SU",
+        "TZOFFSETFROM:+0100", "TZOFFSETTO:+0200", "TZNAME:CEST", "END:DAYLIGHT",
+        "END:VTIMEZONE",
+        // Series
+        "BEGIN:VEVENT", "UID:$replyUid", "DTSTAMP:20261001T100000Z",
+        "DTSTART;TZID=Europe/Berlin:20261103T100000", "DTEND;TZID=Europe/Berlin:20261103T110000",
+        "RRULE:FREQ=DAILY;COUNT=6", "SUMMARY:Planning", "SEQUENCE:2",
+    ) + fold75(
+        "X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-ADDRESS=\"Main St 1\\nBerlin\";X-TITLE=\"Room: 4; west\":geo:52.5,13.4"
+    ) + listOf(
+        "ORGANIZER;CN=Boss:mailto:boss@example.test",
+    ) + fold75(selfSeriesLine) + listOf(
+        "ATTENDEE;CN=Alice;PARTSTAT=ACCEPTED:mailto:alice@example.test",
+        "BEGIN:VALARM", "ACTION:EMAIL", "TRIGGER:-PT30M", "SUMMARY:Reminder", "DESCRIPTION:Planning soon",
+        "ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:self@example.test", "END:VALARM",
+        "END:VEVENT",
+        // Moved occurrence
+        "BEGIN:VEVENT", "UID:$replyUid", "DTSTAMP:20261001T100000Z",
+        "RECURRENCE-ID;TZID=Europe/Berlin:20261104T100000",
+        "DTSTART;TZID=Europe/Berlin:20261104T140000", "DTEND;TZID=Europe/Berlin:20261104T150000",
+        "SUMMARY:Planning", "SEQUENCE:2", "X-MOVED-BY:organizer",
+        "ORGANIZER;CN=Boss:mailto:boss@example.test",
+        "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:self@example.test",
+        "ATTENDEE;CN=Alice;PARTSTAT=ACCEPTED:mailto:alice@example.test",
+        "END:VEVENT",
+        // Retitled occurrence with an extra guest
+        "BEGIN:VEVENT", "UID:$replyUid", "DTSTAMP:20261001T100000Z",
+        "RECURRENCE-ID;TZID=Europe/Berlin:20261105T100000",
+        "DTSTART;TZID=Europe/Berlin:20261105T100000", "DTEND;TZID=Europe/Berlin:20261105T110000",
+        "SUMMARY:Planning with finance", "SEQUENCE:2",
+        "ORGANIZER;CN=Boss:mailto:boss@example.test",
+        "ATTENDEE;CN=Self;RSVP=TRUE;PARTSTAT=NEEDS-ACTION:mailto:self@example.test",
+        "ATTENDEE;CN=Alice;PARTSTAT=ACCEPTED:mailto:alice@example.test",
+        "ATTENDEE;CN=Finance;PARTSTAT=NEEDS-ACTION:mailto:finance@example.test",
+        "END:VEVENT",
+        // Occurrence this account already answered
+        "BEGIN:VEVENT", "UID:$replyUid", "DTSTAMP:20261001T100000Z",
+        "RECURRENCE-ID;TZID=Europe/Berlin:20261106T100000",
+        "DTSTART;TZID=Europe/Berlin:20261106T100000", "DTEND;TZID=Europe/Berlin:20261106T113000",
+        "SUMMARY:Planning (long)", "SEQUENCE:2",
+        "ORGANIZER;CN=Boss:mailto:boss@example.test",
+        "ATTENDEE;CN=Self;PARTSTAT=TENTATIVE:mailto:self@example.test",
+        "END:VEVENT",
+        "END:VCALENDAR", "",
+    )).joinToString(eol)
+
+    private fun unfoldedLines(ics: String) = unfoldIcs(ics).split(Regex("""\r?\n"""))
+
+    /** Returns the indices of logical lines that differ; both files must have as many lines. */
+    private fun changedLines(before: String, after: String): List<Int> {
+        val a = unfoldedLines(before)
+        val b = unfoldedLines(after)
+        assertEquals("same number of logical lines", a.size, b.size)
+        return a.indices.filter { a[it] != b[it] }
+    }
+
+    private fun veventTexts(ics: String) =
+        Regex("""BEGIN:VEVENT.*?END:VEVENT""", RegexOption.DOT_MATCHES_ALL).findAll(ics).map { it.value }.toList()
+
+    @Test
+    fun `series reply sends every changed occurrence back byte for byte`() {
+        val before = replyResource()
+        val after = IcsPatcher.patchAttendeeReply(before, selfAccount(), "ACCEPTED")!!
+
+        val blocksBefore = veventTexts(before)
+        val blocksAfter = veventTexts(after)
+        assertEquals("series and three changed occurrences", 4, blocksAfter.size)
+        for (k in 1..3) assertEquals("changed occurrence $k unchanged", blocksBefore[k], blocksAfter[k])
+        assertTrue("series keeps its repeat rule", blocksAfter[0].contains("RRULE:FREQ=DAILY;COUNT=6"))
+    }
+
+    @Test
+    fun `series reply changes only this account's answer on the series`() {
+        val before = replyResource()
+        val after = IcsPatcher.patchAttendeeReply(before, selfAccount(), "TENTATIVE")!!
+
+        val changed = changedLines(before, after)
+        assertEquals("exactly one logical line changes", 1, changed.size)
+        assertEquals(
+            selfSeriesLine.replace("PARTSTAT=NEEDS-ACTION", "PARTSTAT=TENTATIVE"),
+            unfoldedLines(after)[changed.single()]
+        )
+    }
+
+    @Test
+    fun `series reply leaves the email alarm's attendee alone`() {
+        val after = IcsPatcher.patchAttendeeReply(replyResource(), selfAccount(), "DECLINED")!!
+        assertTrue(unfoldedLines(after).contains("ATTENDEE;PARTSTAT=NEEDS-ACTION:mailto:self@example.test"))
+    }
+
+    @Test
+    fun `reply refolds the edited line to at most 75 octets`() {
+        for (answer in listOf("ACCEPTED", "DECLINED", "TENTATIVE")) {
+            val after = IcsPatcher.patchAttendeeReply(replyResource(), selfAccount(), answer)!!
+            after.split("\r\n").forEach { line ->
+                assertTrue("line over 75 octets: $line", line.toByteArray(Charsets.UTF_8).size <= 75)
+            }
+            val parsed = parser.parseAllEvents(after).getOrNull()!!
+            val self = parsed.first { it.recurrenceId == null }.attendees.first { it.email == "self@example.test" }
+            assertEquals(answer, self.partStat.toICalString())
+            assertEquals("Self, the attendee with a long name: Zoë", self.name)
+        }
+    }
+
+    @Test
+    fun `reply to one changed occurrence changes only that occurrence`() {
+        val before = replyResource()
+        val after = IcsPatcher.patchAttendeeReply(before, selfAccount(), "ACCEPTED", occurrence = retitledInstance)!!
+
+        val changed = changedLines(before, after)
+        assertEquals("exactly one logical line changes", 1, changed.size)
+        assertEquals(
+            "ATTENDEE;CN=Self;RSVP=TRUE;PARTSTAT=ACCEPTED:mailto:self@example.test",
+            unfoldedLines(after)[changed.single()]
+        )
+        val blocks = veventTexts(after)
+        assertTrue("the edit is in the retitled occurrence", blocks[2].contains("PARTSTAT=ACCEPTED:mailto:self@"))
+    }
+
+    @Test
+    fun `reply to an occurrence already answered replaces that answer`() {
+        val after = IcsPatcher.patchAttendeeReply(replyResource(), selfAccount(), "DECLINED", occurrence = answeredInstance)!!
+        assertTrue(veventTexts(after)[3].contains("ATTENDEE;CN=Self;PARTSTAT=DECLINED:mailto:self@example.test"))
+        assertEquals(veventTexts(replyResource()).take(3), veventTexts(after).take(3))
+    }
+
+    @Test
+    fun `reply to an occurrence the file does not hold is refused`() {
+        val notChanged = berlinMs("2026-11-07T10:00")
+        assertNull(IcsPatcher.patchAttendeeReply(replyResource(), selfAccount(), "ACCEPTED", occurrence = notChanged))
+    }
+
+    @Test
+    fun `reply to an occurrence this account is not invited to is refused`() {
+        val resource = replyResource().replace(
+            "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:self@example.test\r\n", ""
+        )
+        assertNull(IcsPatcher.patchAttendeeReply(resource, selfAccount(), "ACCEPTED", occurrence = movedInstance))
+    }
+
+    @Test
+    fun `reply to an unreadable file is refused`() {
+        assertNull(IcsPatcher.patchAttendeeReply("BEGIN:VCALENDAR\r\nnot a calendar", selfAccount(), "ACCEPTED"))
+    }
+
+    @Test
+    fun `reply adds PARTSTAT when the attendee line has none and keeps a lower-case one's name`() {
+        val noPartstat = replyResource().replace(
+            "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:self@example.test",
+            "ATTENDEE;CN=Self;RSVP=TRUE:MAILTO:Self@Example.test"
+        )
+        val added = IcsPatcher.patchAttendeeReply(noPartstat, selfAccount(), "accepted", occurrence = movedInstance)!!
+        assertTrue(veventTexts(added)[1].contains("ATTENDEE;CN=Self;RSVP=TRUE;PARTSTAT=ACCEPTED:MAILTO:Self@Example.test"))
+
+        val lowerCase = replyResource().replace(
+            "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:self@example.test",
+            "ATTENDEE;CN=Self;partstat=needs-action;RSVP=TRUE:mailto:self@example.test"
+        )
+        val replaced = IcsPatcher.patchAttendeeReply(lowerCase, selfAccount(), "ACCEPTED", occurrence = movedInstance)!!
+        assertTrue(veventTexts(replaced)[1].contains("ATTENDEE;CN=Self;partstat=ACCEPTED;RSVP=TRUE:mailto:self@example.test"))
+    }
+
+    @Test
+    fun `reply patches only the first line when the account is listed twice`() {
+        val twice = replyResource().replace(
+            "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:self@example.test",
+            "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:self@example.test\r\n" +
+                "ATTENDEE;CN=Alias;PARTSTAT=NEEDS-ACTION:mailto:alias@example.test"
+        )
+        val account = selfAccount(listOf("mailto:self@example.test", "mailto:alias@example.test"))
+        val after = IcsPatcher.patchAttendeeReply(twice, account, "ACCEPTED", occurrence = movedInstance)!!
+        val block = veventTexts(after)[1]
+        assertTrue(block.contains("ATTENDEE;CN=Self;PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:self@example.test"))
+        assertTrue(block.contains("ATTENDEE;CN=Alias;PARTSTAT=NEEDS-ACTION:mailto:alias@example.test"))
+    }
+
+    @Test
+    fun `reply keeps a file's plain line feeds`() {
+        val before = replyResource(eol = "\n")
+        val after = IcsPatcher.patchAttendeeReply(before, selfAccount(), "ACCEPTED")!!
+        assertFalse("no carriage return introduced", after.contains('\r'))
+        assertEquals(1, changedLines(before, after).size)
+    }
+
+    @Test
+    fun `reply to an occurrence of a file with no series is keyed by its own occurrence time`() {
+        val before = changesOnlyIcs
+        val second = 1_792_749_600_000L // 2026-10-23 10:00 UTC
+        val after = IcsPatcher.patchAttendeeReply(before, selfAccount(), "ACCEPTED", occurrence = second)!!
+        val blocks = veventTexts(after)
+        assertEquals(veventTexts(before)[0], blocks[0])
+        assertTrue(blocks[1].contains("PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:self@example.test"))
+    }
+
+    @Test
+    fun `a date-form occurrence id against a timed series still finds the occurrence`() {
+        val dateForm = replyResource().replace(
+            "RECURRENCE-ID;TZID=Europe/Berlin:20261105T100000", "RECURRENCE-ID;VALUE=DATE:20261105"
+        )
+        val after = IcsPatcher.patchAttendeeReply(dateForm, selfAccount(), "ACCEPTED", occurrence = retitledInstance)
+        assertNotNull(after)
+        assertTrue(veventTexts(after!!)[2].contains("PARTSTAT=ACCEPTED:mailto:self@example.test"))
+    }
+
+
+    @Test
+    fun `reply finds this account when the fold splits its address`() {
+        val line = "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:self@example.test"
+        val cut = line.indexOf("self@") + 3 // the fold falls inside the address
+        val folded = replyResource().replace(line, line.substring(0, cut) + "\r\n " + line.substring(cut))
+        val after = IcsPatcher.patchAttendeeReply(folded, selfAccount(), "ACCEPTED", occurrence = movedInstance)!!
+        assertTrue(veventTexts(unfoldIcs(after))[1].contains("PARTSTAT=ACCEPTED;RSVP=TRUE:mailto:self@example.test"))
+        assertEquals(1, changedLines(folded, after).size)
+    }
+
+    @Test
+    fun `reply finds an occurrence whose id is written in another time zone`() {
+        // 10:00 in Berlin is 04:00 in New York on 2026-11-05.
+        val otherZone = replyResource().replace(
+            "RECURRENCE-ID;TZID=Europe/Berlin:20261105T100000", "RECURRENCE-ID;TZID=America/New_York:20261105T040000"
+        )
+        val after = IcsPatcher.patchAttendeeReply(otherZone, selfAccount(), "ACCEPTED", occurrence = retitledInstance)
+        assertNotNull(after)
+        assertTrue(veventTexts(after!!)[2].contains("PARTSTAT=ACCEPTED:mailto:self@example.test"))
+    }
+
+    @Test
+    fun `reply with no stored file is refused`() {
+        assertNull(IcsPatcher.patchAttendeeReply(null, selfAccount(), "ACCEPTED"))
+    }
+
+    @Test
+    fun `reply to a file starting with a byte order mark still answers`() {
+        val before = "\uFEFF" + replyResource()
+        val after = IcsPatcher.patchAttendeeReply(before, selfAccount(), "ACCEPTED")
+        assertNotNull(after)
+        assertTrue("the mark is kept", after!!.startsWith("\uFEFF"))
+        assertEquals(1, changedLines(before, after).size)
+    }
+
+    @Test
+    fun `reply finds an attendee written as a principal URL with an EMAIL parameter`() {
+        // Some servers rewrite an attendee who has answered to their principal
+        // URL, keeping the address in EMAIL; the parser reads it from there.
+        val principal = replyResource().replace(
+            "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:self@example.test",
+            "ATTENDEE;CN=Self;PARTSTAT=ACCEPTED;EMAIL=self@example.test:/123456/principal/"
+        )
+        val after = IcsPatcher.patchAttendeeReply(principal, selfAccount(), "DECLINED", occurrence = movedInstance)
+        assertNotNull(after)
+        val block = veventTexts(unfoldIcs(after!!))[1]
+        assertTrue(block, block.contains("ATTENDEE;CN=Self;PARTSTAT=DECLINED;EMAIL=self@example.test:/123456/principal/"))
+    }
+
+    @Test
+    fun `reply writes the canonical answer whatever case it was given in`() {
+        val after = IcsPatcher.patchAttendeeReply(replyResource(), selfAccount(), " tentative ", occurrence = movedInstance)!!
+        assertTrue(veventTexts(after)[1].contains("PARTSTAT=TENTATIVE;RSVP=TRUE:mailto:self@example.test"))
     }
 }

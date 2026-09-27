@@ -11,9 +11,8 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Integration tests for AccountsDao.
- *
- * Tests CRUD operations and sync metadata updates.
+ * Tests [AccountsDao] CRUD, the schedule outbox URL, sync metadata updates and the unique
+ * (provider, email, home-set URL) index.
  */
 class AccountsDaoTest : BaseDaoTest() {
 
@@ -117,13 +116,10 @@ class AccountsDaoTest : BaseDaoTest() {
     fun `getAll returns Flow that updates`() = runTest {
         val flow = accountsDao.getAll()
 
-        // Initially empty
         assertEquals(0, flow.first().size)
 
-        // Add account
         accountsDao.insert(createAccount())
 
-        // Flow should reflect new account
         assertEquals(1, flow.first().size)
     }
 
@@ -180,11 +176,9 @@ class AccountsDaoTest : BaseDaoTest() {
         val id = accountsDao.insert(createAccount())
         val now = System.currentTimeMillis()
 
-        // First record a failure
         accountsDao.recordSyncFailure(id, now - 1000)
         assertEquals(1, accountsDao.getById(id)!!.consecutiveSyncFailures)
 
-        // Then record success
         accountsDao.recordSyncSuccess(id, now)
 
         val result = accountsDao.getById(id)!!

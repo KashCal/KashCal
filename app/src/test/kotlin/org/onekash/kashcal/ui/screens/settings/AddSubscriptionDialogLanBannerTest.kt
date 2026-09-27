@@ -16,10 +16,10 @@ import java.util.Locale
 /**
  * Compose tests for the Android 17+ local-network banner in [AddSubscriptionDialog].
  *
- * The banner brings the ICS "Add subscription" flow to parity with the CalDAV
- * sign-in sheet: for a LAN URL it proactively offers to grant ACCESS_LOCAL_NETWORK,
- * so a http://192.168.x.x feed (e.g. a Sonarr .ics) can actually be reached. It is
- * inline and never blocks the URL field.
+ * As in the CalDAV sign-in sheet, a LAN URL, typed or pre-filled, brings up an offer to grant
+ * ACCESS_LOCAL_NETWORK so a http://192.168.x.x feed (such as a home media server's .ics) can be
+ * reached. A public URL, or a device below Android 17, shows no banner. The banner is inline and
+ * never blocks the URL field (not asserted here).
  *
  * Runs under Robolectric; run the class in isolation given the repo's multi-class
  * native-crash flake.

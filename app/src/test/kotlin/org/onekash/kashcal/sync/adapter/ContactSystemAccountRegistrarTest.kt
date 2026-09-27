@@ -19,16 +19,12 @@ import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [ContactSystemAccountRegistrar].
+ * Tests for [ContactSystemAccountRegistrar]: one contacts account per login, named after the
+ * login email (the naming rule is on the class doc).
  *
- * Unlike the singleton calendar account, contacts get ONE account per login,
- * NAMED AFTER THE LOGIN EMAIL, under the dedicated
- * `org.onekash.kashcal.contacts` type. Android surfaces the account *name* as
- * the Contacts source label, so email-naming is what the user sees.
- *
- * NOTE: Robolectric's AccountManager/ContentResolver shadows may not perfectly
- * replicate device behavior for setIsSyncable/getSyncAutomatically. These
- * verify the calls are made; actual device behavior is verified manually.
+ * Robolectric's AccountManager and ContentResolver shadows may not match a device for
+ * setIsSyncable and getSyncAutomatically, so these tests check the calls are made; device
+ * behavior is verified manually.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [31])
@@ -46,9 +42,8 @@ class ContactSystemAccountRegistrarTest {
         context = ApplicationProvider.getApplicationContext()
         accountManager = AccountManager.get(context)
 
-        // AccountManager is a process-wide singleton Robolectric does not reset
-        // between test classes in the same JVM fork. Clear any leftover contacts
-        // accounts so each test starts from a known-empty state.
+        // Robolectric doesn't reset the process-wide AccountManager between test classes in
+        // one JVM fork, so clear leftover contacts accounts first.
         accountManager.getAccountsByType(KashCalContactsAuthenticator.ACCOUNT_TYPE)
             .forEach { accountManager.removeAccountExplicitly(it) }
 
@@ -132,14 +127,14 @@ class ContactSystemAccountRegistrarTest {
 
     @Test
     fun `removeAccount of an absent login reports success (nothing to remove)`() {
-        // No matching account: there is nothing left behind, so the outcome is success.
+        // No matching account means nothing is left behind, so the outcome is success.
         assertTrue(registrar.removeAccount(email))
     }
 
     @Test
     fun `removeAccount reports failure when AccountManager cannot remove the account`() {
-        // A stuck removeAccountExplicitly (false return) must not be swallowed silently —
-        // the caller needs to know the contacts account (and its RawContacts) survived.
+        // A false removeAccountExplicitly must not be swallowed silently: the caller needs to
+        // know the contacts account and its RawContacts survived.
         val am = mockk<AccountManager>()
         val stuck = Account(email, KashCalContactsAuthenticator.ACCOUNT_TYPE)
         every { am.getAccountsByType(KashCalContactsAuthenticator.ACCOUNT_TYPE) } returns arrayOf(stuck)

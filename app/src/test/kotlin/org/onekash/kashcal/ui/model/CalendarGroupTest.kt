@@ -52,7 +52,7 @@ class CalendarGroupTest {
 
     @Test
     fun `ICS account maps to icsLabel regardless of stored displayName`() {
-        // The DB displayName is the legacy hardcoded "ICS Subscriptions" — it must not leak through.
+        // A stored displayName, here "ICS Subscriptions", must not show; the group uses icsLabel.
         val accounts = listOf(account(1L, AccountProvider.ICS, displayName = "ICS Subscriptions"))
         val calendars = listOf(calendar(10L, 1L))
 
@@ -96,7 +96,7 @@ class CalendarGroupTest {
 
     @Test
     fun `provider is null when account not found`() {
-        // Calendar with accountId that has no matching account
+        // A calendar whose accountId has no matching account.
         val accounts = emptyList<Account>()
         val calendars = listOf(calendar(10L, 999L))
 
@@ -126,7 +126,7 @@ class CalendarGroupTest {
 
         val groups = group(calendars, accounts)
 
-        // First two should be non-CONTACTS (iCloud, Offline), last two should be CONTACTS
+        // The non-CONTACTS groups (iCloud, Offline) come first, the two CONTACTS groups last.
         assertEquals(4, groups.size)
         assertEquals(AccountProvider.ICLOUD, groups[0].provider)
         assertEquals(AccountProvider.LOCAL, groups[1].provider)
@@ -156,7 +156,7 @@ class CalendarGroupTest {
 
     @Test
     fun `CONTACTS groups sort alphabetically among themselves`() {
-        // Real data: CONTACTS accounts have displayName set from ContactEventType.calendarDisplayName
+        // A CONTACTS account stores ContactEventType.calendarDisplayName as its displayName.
         val accounts = listOf(
             account(1L, AccountProvider.CONTACTS, displayName = "Contact Birthdays", email = "contact_birthdays"),
             account(2L, AccountProvider.CONTACTS, displayName = "Contact Anniversaries", email = "contact_anniversaries")
@@ -192,7 +192,7 @@ class CalendarGroupTest {
 
         assertEquals(1, groups.size)
         assertEquals(2, groups[0].calendars.size)
-        // Calendars sorted alphabetically within group
+        // Calendars are sorted by name within the group.
         assertEquals("Personal", groups[0].calendars[0].displayName)
         assertEquals("Work", groups[0].calendars[1].displayName)
     }

@@ -21,22 +21,18 @@ import org.robolectric.annotation.Config
 import java.util.Locale
 
 /**
- * Compose tests for [AccountSettingsScreen] after the hub-alignment restyle.
+ * Compose tests for [AccountSettingsScreen].
  *
- * Two jobs:
- *  1. Structural guards — the sentence-case section headers, the renamed
- *     labels, the split alert rows.
- *  2. **Per-row callback wiring guards.** Every flat-screen callback is injectable
- *     via [render] (see [Rec]), so a test can drive the real affordance the user
- *     touches, assert that row's callback fired with a DISTINCT sentinel value, and
- *     assert every OTHER same-typed callback stayed silent. The sibling-silent
- *     assertion is the load-bearing part: many callbacks share a type
- *     (six `(Int)->Unit`, six `(Boolean)->Unit`, four `()->Unit` nav rows), so
- *     swapping two of them compiles clean and passes any test that only checks the
- *     target fired. Recording each callback into its own field and proving the
- *     siblings never fired is what turns "looks like coverage" into "catches a swap."
+ * - Structure: the sentence-case section headers, the sync rows, the relabelled rows with no
+ *   beta badge, and the split timed and all-day alert rows.
+ * - Callback wiring: [render] records sixteen callbacks in [Rec] (six `(Int)`, the `(Long)` sync
+ *   frequency, five `(Boolean)` toggles and four navigation rows). Each test drives the row the
+ *   user touches, asserts its callback fired with a distinct sentinel value, and asserts its
+ *   siblings stayed silent. The sibling check is what catches a swap: callbacks of one type
+ *   swapped with each other still compile and pass a test that only checks the target fired.
+ * - Info tooltips: tapping a toggle's info icon shows its explanation without firing the toggle.
  *
- * Runs under Robolectric; run the class in isolation given the repo's multi-class
+ * Runs under Robolectric; run the class in isolation because of the repo's multi-class
  * native-crash flake.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -69,10 +65,9 @@ class AccountSettingsScreenComposeTest {
     )
 
     /**
-     * One field per flat-screen callback. Deliberately NOT a single shared recorder:
-     * a shared recorder would swallow a cross-fire (two rows recording into the same
-     * slot), which is exactly the mis-wire these tests exist to catch. Ints/Booleans
-     * stay null until fired; nav rows count invocations so a double-fire is visible too.
+     * Holds one field per recorded callback. A single shared recorder would hide a cross-fire
+     * (two rows recording into the same slot), the mis-wire these tests catch. Value fields stay
+     * null until fired; nav rows count invocations so a double-fire shows too.
      */
     private class Rec {
         // (Int) -> Unit cluster
@@ -101,10 +96,9 @@ class AccountSettingsScreenComposeTest {
     }
 
     /**
-     * Renders the real screen with EVERY flat-screen callback wired to [rec]. The
-     * screen's rendered output is unchanged from production defaults; only what the
-     * test can observe is widened. Seed values are chosen so each row's picker offers
-     * a distinct sentinel option (see the per-row tests).
+     * Renders the real screen with the [Rec] callbacks wired to [rec] and the rest left at their
+     * defaults. Seed values are chosen so each row's picker offers a sentinel option distinct from
+     * the seed (see the per-row tests).
      */
     private fun render(rec: Rec = Rec()) {
         composeTestRule.setContent {
@@ -114,9 +108,8 @@ class AccountSettingsScreenComposeTest {
                         iCloudState = ICloudConnectionState.NotConnected(),
                     ),
                     calendars = listOf(localCalendar),
-                    // Seeds chosen so the distinct sentinel is a DIFFERENT option than
-                    // the current value (so a fired callback can't be confused with a
-                    // no-op re-selection of the seed).
+                    // Each sentinel differs from its seed, so a fired callback can't be a
+                    // re-selection of the current value.
                     widgetMaxEventsPerDay = 5,
                     defaultEventDuration = 30,
                     defaultReminderTimed = 15,
@@ -129,7 +122,7 @@ class AccountSettingsScreenComposeTest {
                     quickAddEnabled = false,
                     titleSuggestionsEnabled = true,
                     showEventEmojis = true,
-                    // (Int) cluster
+                    // (Int) cluster, plus the (Long) sync frequency
                     onWidgetMaxEventsPerDayChange = { rec.widget = it },
                     onDefaultEventDurationChange = { rec.duration = it },
                     onDefaultReminderTimedChange = { rec.timed = it },
@@ -156,7 +149,7 @@ class AccountSettingsScreenComposeTest {
 
     // ==================== Sibling-silence helpers ====================
 
-    /** Assert the named (Int) callback fired with [expected] and every sibling stayed null. */
+    /** Asserts the named (Int) callback fired with [expected] and every sibling stayed null. */
     private fun assertOnlyInt(rec: Rec, fired: String, expected: Int) {
         val all = linkedMapOf(
             "widget" to rec.widget,
@@ -173,10 +166,9 @@ class AccountSettingsScreenComposeTest {
     }
 
     /**
-     * Assert the sync-frequency (Long) callback fired with [expected] and no other
-     * value-carrying row callback did. Sync frequency is the only visible (Long) row,
-     * so its real cross-fire risk is being mis-wired to a neighbouring (Int) row (e.g.
-     * Sync lookback) or a (Boolean) toggle — this checks every one of those stayed null.
+     * Asserts the sync-frequency (Long) callback fired with [expected] and every recorded (Int)
+     * and (Boolean) callback stayed null. Sync frequency is the only visible (Long) row, so its
+     * cross-fire risk is a mis-wire to an (Int) row such as Sync lookback or to a toggle.
      */
     private fun assertOnlySyncInterval(rec: Rec, expected: Long) {
         assertEquals("syncInterval should fire with $expected", expected, rec.syncInterval)
@@ -203,7 +195,7 @@ class AccountSettingsScreenComposeTest {
         }
     }
 
-    /** Assert the named (Boolean) callback fired with [expected] and every sibling stayed null. */
+    /** Asserts the named (Boolean) callback fired with [expected] and every sibling stayed null. */
     private fun assertOnlyBool(rec: Rec, fired: String, expected: Boolean) {
         val all = linkedMapOf(
             "quickAdd" to rec.quickAdd,
@@ -218,7 +210,7 @@ class AccountSettingsScreenComposeTest {
         }
     }
 
-    /** Assert the named nav callback fired exactly once and every sibling stayed at zero. */
+    /** Asserts the named nav callback fired once and every sibling stayed at zero. */
     private fun assertOnlyNav(rec: Rec, fired: String) {
         val all = linkedMapOf(
             "accounts" to rec.navAccounts,
@@ -269,7 +261,7 @@ class AccountSettingsScreenComposeTest {
         render()
         composeTestRule.onNodeWithText("Timed event alert").assertExists()
         composeTestRule.onNodeWithText("All-day event alert").assertExists()
-        // The old combined row is gone.
+        // No combined row.
         composeTestRule.onNodeWithText("Default alerts").assertDoesNotExist()
     }
 
@@ -349,7 +341,7 @@ class AccountSettingsScreenComposeTest {
         assertOnlyInt(rec, fired = "firstDay", expected = java.util.Calendar.MONDAY)
     }
 
-    // ==================== (Boolean) cluster: fired-with-value + siblings silent ====================
+    // ==================== (Boolean) cluster: fired + siblings silent ====================
 
     @Test
     fun `show week numbers toggle fires only its callback`() {
@@ -393,7 +385,7 @@ class AccountSettingsScreenComposeTest {
         assertOnlyBool(rec, fired = "emojis", expected = false)
     }
 
-    // ==================== Info tooltips reveal explanation WITHOUT toggling ====================
+    // ==================== Info tooltips reveal explanation without toggling ====================
 
     @Test
     fun `smart event add info tooltip reveals explanation without toggling`() {

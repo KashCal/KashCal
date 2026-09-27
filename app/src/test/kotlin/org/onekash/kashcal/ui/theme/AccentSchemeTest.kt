@@ -10,17 +10,17 @@ import org.onekash.kashcal.ui.shared.EventColorPalette
 import org.onekash.kashcal.ui.shared.contrastRatio
 
 /**
- * Proves that a ColorScheme generated from ANY user-selectable accent seed keeps
- * text/UI contrast at or above WCAG AA — the guarantee the accent picker rests on.
+ * Tests that [accentColorScheme] keeps text and UI contrast at or above WCAG AA for every
+ * selectable accent seed, the guarantee the accent picker rests on.
  *
- * The sweep covers every color the picker can produce (the full 92-color wheel, which
- * contains the grid by construction) plus the brand-teal default and the achromatic
- * extremes (white/black) that stress the tone mapping hardest. Contrast is measured
- * with the app's own [contrastRatio], so the assertion matches what ships.
+ * The seeds are the 92-color wheel (which contains the grid), the brand-teal default, and pure
+ * white and black, which stress the tone mapping hardest. Contrast is measured with the app's own
+ * [contrastRatio], so the assertion matches what ships. The file also checks the widget contrast
+ * level, that the scheme is seed-derived, and the achromatic container snap.
  */
 class AccentSchemeTest {
 
-    /** WCAG AA: normal text needs >= 4.5:1; UI components / large text need >= 3:1. */
+    /** WCAG AA: normal text needs >= 4.5:1; UI components and large text need >= 3:1. */
     private companion object {
         const val AA_TEXT = 4.5
         const val AA_UI = 3.0
@@ -65,53 +65,53 @@ class AccentSchemeTest {
         pair(name, dark, "onTertiaryContainer/tertiaryContainer", s.onTertiaryContainer, s.tertiaryContainer, AA_TEXT, failures)
         pair(name, dark, "onError/error", s.onError, s.error, AA_TEXT, failures)
 
-        // Body + secondary text on surfaces.
+        // Body and secondary text on surfaces.
         pair(name, dark, "onSurface/surface", s.onSurface, s.surface, AA_TEXT, failures)
         pair(name, dark, "onSurfaceVariant/surfaceVariant", s.onSurfaceVariant, s.surfaceVariant, AA_TEXT, failures)
         pair(name, dark, "onBackground/background", s.onBackground, s.background, AA_TEXT, failures)
 
-        // onSurface must stay legible on EVERY surface-container tone — these back
-        // cards, bottom sheets, and navigation surfaces.
+        // onSurface must stay legible on every surface-container tone; these back cards, bottom
+        // sheets and navigation surfaces.
         pair(name, dark, "onSurface/surfaceContainerLowest", s.onSurface, s.surfaceContainerLowest, AA_TEXT, failures)
         pair(name, dark, "onSurface/surfaceContainerLow", s.onSurface, s.surfaceContainerLow, AA_TEXT, failures)
         pair(name, dark, "onSurface/surfaceContainer", s.onSurface, s.surfaceContainer, AA_TEXT, failures)
         pair(name, dark, "onSurface/surfaceContainerHigh", s.onSurface, s.surfaceContainerHigh, AA_TEXT, failures)
         pair(name, dark, "onSurface/surfaceContainerHighest", s.onSurface, s.surfaceContainerHighest, AA_TEXT, failures)
 
-        // Accent must be VISIBLE against the surface (non-text UI: FAB, selection marks).
+        // The accent must be visible against the surface (non-text UI: FAB, selection marks).
         pair(name, dark, "primary/surface", s.primary, s.surface, AA_UI, failures)
 
-        // Accent-colored TEXT on the surface must clear the stricter text threshold,
-        // not just the UI one: the account hub paints `primary` as readable text on
-        // the sheet surface in two places — the "Make it yours" section header and the
-        // Accounts pill's outlined label (no fill, so the accent IS the text). If this
-        // dips below AA text contrast for a seed, that copy becomes hard to read.
+        // Accent-colored text on the surface must clear the text threshold, not only the UI one:
+        // the account hub paints `primary` as text on the sheet surface in the "Make it yours"
+        // section header and the Accounts pill's outlined label, which has no fill. Below AA text
+        // contrast that copy becomes hard to read.
         pair(name, dark, "primary/surface (text)", s.primary, s.surface, AA_TEXT, failures)
 
-        // The outline role must be VISIBLE against the surface: the account hub draws
-        // hairline borders on the avatar circle and the Accounts pill with it, because
-        // their tonal fills (primaryContainer / secondaryContainer) barely separate from
-        // the surface for many seeds and collapse entirely for the white/black extremes.
-        // If outline/surface drops below the UI threshold those shapes lose their edge.
+        // The outline must be visible against the surface: the account hub draws hairline borders
+        // with it on the avatar circle and the Accounts pill, because their tonal fills
+        // (primaryContainer, secondaryContainer) barely separate from the surface for many seeds
+        // and not at all for pure white and black. Below the UI threshold those shapes lose their
+        // edge.
         pair(name, dark, "outline/surface", s.outline, s.surface, AA_UI, failures)
     }
 
     /**
-     * The widget faces build the scheme at [WIDGET_ACCENT_CONTRAST_LEVEL] (with the achromatic
-     * container snap OFF — see accentColorProviders). The widget reads as a near-uniform tinted
-     * panel: the header and footer ride the muted `secondaryContainer`, while the body rides the
-     * tinted `surfaceVariant`. Three text pairs must clear AA on every selectable seed: the header
-     * text (onSecondaryContainer on secondaryContainer), and the body's item text (onSurface) and
-     * secondary text (onSurfaceVariant) on surfaceVariant. The header text is the one that gains as
-     * this small positive axis rises; the two body pairs are guaranteed-contrast M3 pairs and stay
-     * safe. This proves all three clear AA with margin for EVERY selectable seed — the achromatic
-     * extremes included, which is what lets widgets skip the snap.
+     * Checks the widget scheme: [WIDGET_ACCENT_CONTRAST_LEVEL] with the achromatic container snap
+     * off, as [org.onekash.kashcal.widget.accentColorProviders] builds it.
+     *
+     * The widget reads as one tinted panel: header and footer ride the muted `secondaryContainer`,
+     * the body the tinted `surfaceVariant`. Three text pairs must clear AA with margin on every
+     * selectable seed: the header text (onSecondaryContainer on secondaryContainer), and the body's
+     * item text (onSurface) and secondary text (onSurfaceVariant) on surfaceVariant. The header
+     * text is the one that gains as this small positive axis rises. Pure white and black are
+     * included here, which is what lets widgets skip the snap; the rendered widget sends those two
+     * seeds through its own monochrome snap.
      */
     @Test
     fun `widget contrast level keeps every panel text pair above AA for every seed`() {
-        // Assert a margin above the bare AA floor so a regression that flattens any pair — or that
-        // re-inflates the axis toward 0.8 (the dark-header bright-pastel bug) — trips. Measured
-        // floors at this level: header text ~5.0:1, item text ~7:1, secondary text ~5.5:1.
+        // A margin above the bare AA floor trips on a regression that flattens any pair or raises
+        // the axis toward 0.8, where the dark header turns bright pastel. Measured floors at this
+        // level: header text ~5.0:1, item text ~7:1, secondary text ~5.5:1.
         val floor = 4.6
         val failures = mutableListOf<String>()
         for ((name, seed) in seeds) {
@@ -150,10 +150,9 @@ class AccentSchemeTest {
     }
 
     /**
-     * Guards against roles silently falling back to a Material default. If the generator
-     * forgot to map a role, it would equal the baseline scheme's value — which for a
-     * distinctive seed would leave that role off-brand. A generated scheme for a saturated
-     * seed must differ from the plain baseline in its key accent roles.
+     * Guards against a role silently falling back to the Material default: an unmapped role would
+     * equal the baseline scheme's value and leave the accent off-brand. For the brand-teal seed,
+     * `primary` must differ from the baseline in both faces.
      */
     @Test
     fun `generated scheme is not the untouched Material baseline`() {
@@ -169,20 +168,16 @@ class AccentSchemeTest {
     }
 
     /**
-     * The two achromatic extremes are special: HCT has no hue to preserve, so the tonal
-     * engine pairs each accent container with a mid-gray "on" tone that only scrapes AA
-     * (~4.6:1) and reads as muddy on the widget header and tonal chips. For pure white and
-     * pure black we snap BOTH accent-container pairs (primary and secondary) to the crisp
-     * inverse (black-on-white / white-on-black, a full 21:1) in BOTH faces, so the header the
-     * user picked looks like the color they picked. The widget header uses secondaryContainer/
-     * onSecondaryContainer; the app's tonal chips use primaryContainer/onPrimaryContainer.
+     * Checks the achromatic snap: for pure white and pure black seeds both accent-container pairs
+     * (primary and secondary) are the inverse pair (black on white, white on black, 21:1) in both
+     * faces. The reason is on the snap in AccentScheme.kt.
      */
     @Test
     fun `pure white seed yields a pure white accent container with black text in both faces`() {
         for (dark in listOf(false, true)) {
             val s = accentColorScheme(0xFFFFFFFF.toInt(), dark)
-            // Pure white bg + pure black fg is exactly 21:1 by definition, so pinning the two
-            // colors pins the ratio; no separate contrast assertion needed.
+            // Pure black on pure white is 21:1 by definition, so pinning the two colors pins the
+            // ratio; no separate contrast assertion is needed.
             assertEquals("white container (dark=$dark)", Color.White, s.primaryContainer)
             assertEquals("white on-container (dark=$dark)", Color.Black, s.onPrimaryContainer)
             assertEquals("white secondary container (dark=$dark)", Color.White, s.secondaryContainer)
@@ -202,17 +197,15 @@ class AccentSchemeTest {
     }
 
     /**
-     * The achromatic snap must touch ONLY the two accent-container pairs. If a future change
-     * over-broadened the post-processing (e.g. rewrote the surface family or primary), a
-     * pure-white seed would silently wash out unrelated roles. Assert every role other than
-     * the primary/secondary container pairs is byte-for-byte the raw engine output. This also
-     * pins that `primary` is untouched, so the primary/surface visibility guarantee holds.
+     * Checks that the achromatic snap touches only the two accent-container pairs. A broader snap
+     * (the surface family or primary, say) would silently wash out unrelated roles for pure white.
+     * Every other role must equal the raw engine output, `primary` included, so the primary/surface
+     * visibility guarantee holds.
      */
     @Test
     fun `achromatic snap leaves every other role identical to the raw engine`() {
-        // Every role EXCEPT the intentionally-snapped container pair. ColorScheme has no value
-        // equality, so compare role-by-role. If a future change over-broadened the snap, one of
-        // these — surface, primary, the sibling containers — would diverge from the raw engine.
+        // Every role except the snapped container pairs. ColorScheme has no value equality, so
+        // roles are compared one by one.
         val untouched: List<Pair<String, (ColorScheme) -> Color>> = listOf(
             "primary" to { it.primary },
             "onPrimary" to { it.onPrimary },

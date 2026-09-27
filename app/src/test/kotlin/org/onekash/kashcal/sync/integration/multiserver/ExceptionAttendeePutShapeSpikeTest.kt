@@ -12,43 +12,36 @@ import org.robolectric.annotation.Config
 import java.util.UUID
 
 /**
- * SPIKE (not a regression gate): does the PUT SHAPE change whether a server's
- * implicit scheduling pipeline delivers an invite to an attendee that exists
- * ONLY on an override (per-occurrence) VEVENT?
+ * Asks, as an exploratory spike and not a regression gate, whether the PUT shape changes
+ * whether implicit scheduling delivers to an attendee that exists only on an exception VEVENT.
  *
- * Motivation: the companion [ExceptionAttendeeDeliveryProbeTest] PUTs the master
- * and the override bundled in ONE resource, in one operation. With that shape,
- * sabre-backed servers (Baikal, Nextcloud) deliver the whole-series attendee but
- * NOT the override-only attendee. RFC 6638 implicit scheduling triggers on the
- * PUT as a Create/Modify operation, so the open question is whether a server
- * that ignores the override-only attendee on an initial bundled CREATE would
- * deliver it if it instead arrives as a later MODIFY of an already-stored series
- * (the shape a real KashCal per-occurrence edit produces: the series already
- * exists on the server, then the user edits one instance, then we PUT again).
+ * [ExceptionAttendeeDeliveryProbeTest] PUTs the master and the exception bundled in one
+ * resource in one operation. With that shape, sabre-backed servers (Baikal, Nextcloud) deliver
+ * the whole-series attendee but not the exception-only one. RFC 6638 implicit scheduling runs
+ * on the PUT as a create or a modify (§3.2.1), so the question is whether a server that
+ * ignores the exception-only attendee on a bundled create delivers it when it arrives as a
+ * later modify of a stored series. That is the shape an app per-occurrence edit produces: the
+ * series is already on the server, the user edits one occurrence, and the app PUTs again.
  *
- * Two shapes are compared per server:
- *   - Shape A (CREATE-bundled): one PUT of master + override together (a fresh
- *     resource). This reproduces the existing probe's negative result.
- *   - Shape B (MODIFY-add): PUT the master ALONE first (server stores + schedules
- *     the series), THEN a second PUT of master + override that ADDS the
- *     override-only attendee — a discrete modify on the existing resource, which
- *     is what an actual per-occurrence edit emits.
+ * Two shapes per server:
+ *   - Shape A (CREATE-bundled): one PUT of master and exception together to a new resource,
+ *     reproducing the probe's result.
+ *   - Shape B (MODIFY-add): PUT the master alone, then a second PUT of master and exception
+ *     that adds the exception-only attendee, a modify of the existing resource.
  *
- * If Shape B delivers where Shape A doesn't, per-occurrence editing can ship on
- * the existing implicit path for those servers (just by ordering the writes),
- * with NO client-side iTIP extension needed for them. If both shapes are silent,
- * those servers genuinely need the client-side outbox send extended to exception
+ * If Shape B delivers where Shape A doesn't, ordering the writes is enough for that server. If
+ * neither delivers, the server needs the client-side outbox send extended to exception
  * attendees.
  *
- * RESULT (2026-06-16): both shapes were IDENTICAL on every server — iCloud and
- * Fastmail deliver under both; the other schedulable servers (Stalwart, Baikal,
- * Nextcloud, SOGo, Mailbox) show no receipt under either; Zoho declines under
- * both (though MODIFY-add retains the override where bundled-CREATE drops it).
- * The write ordering does not change delivery, so the client-side send must be
- * extended to exception attendees for the non-iCloud/Fastmail fleet.
+ * Result (2026-06-16): both shapes behaved the same on every server. iCloud and Fastmail
+ * deliver under both; Stalwart, Baikal, Nextcloud, SOGo and Mailbox show no receipt under
+ * either; Zoho declines under both, though MODIFY-add keeps the exception where CREATE-bundled
+ * drops it. Write order doesn't change delivery, so every server but iCloud and Fastmail needs
+ * the client-side send extended to exception attendees.
  *
- * Records both dispositions per server and prints a comparison. Never fails on
- * disposition (it's exploratory); only skips on unreachable/no-credential.
+ * It prints both signals per server and a comparison, and never fails on them. It skips when
+ * credentials, the server, the principal or a calendar is missing, and passes without probing
+ * when no email-shaped ORGANIZER is available.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -69,18 +62,20 @@ class ExceptionAttendeePutShapeSpikeTest(
         private val START_MS = ((System.currentTimeMillis() / DAY_MS) + 35) * DAY_MS + 9 * 3_600_000L
     }
 
-    /** The override-only attendee's delivery signal under one PUT shape. */
+    /** The exception-only attendee's delivery signal under one PUT shape. */
     private enum class Signal {
-        /** SCHEDULE-STATUS stamped on the override invitee, or it was routed out
-         *  of a retained override — the server delivered. */
+        /**
+         * SCHEDULE-STATUS is stamped on the exception's invitee, or it was routed out of a
+         * retained exception: the server delivered.
+         */
         DELIVERED,
-        /** Override invitee stored verbatim, no receipt — no delivery evidence. */
+        /** The exception's invitee is stored with no receipt: no delivery evidence. */
         NO_RECEIPT,
-        /** SCHEDULE-AGENT=CLIENT — server explicitly declines. */
+        /** SCHEDULE-AGENT=CLIENT on the invitee: the server declines to deliver. */
         CLIENT_DECLINED,
-        /** The override VEVENT didn't survive at all. */
+        /** No exception VEVENT survived. */
         OVERRIDE_DROPPED,
-        /** Could not run this shape (PUT rejected / nothing to inspect). */
+        /** The shape couldn't run: a PUT was rejected, the re-fetch found nothing, or it threw. */
         INCONCLUSIVE,
     }
 
@@ -183,7 +178,7 @@ class ExceptionAttendeePutShapeSpikeTest(
         """.trimIndent()
     }
 
-    /** Classify the override-only invitee's delivery signal in a stored body. */
+    /** Classifies the exception-only invitee's delivery signal in a stored body. */
     private fun classify(body: String, overrideAttendee: String): Pair<Signal, String> {
         val unfolded = unfold(body)
         val blocks = Regex("""BEGIN:VEVENT(.*?)END:VEVENT""", RegexOption.DOT_MATCHES_ALL)
@@ -241,7 +236,7 @@ class ExceptionAttendeePutShapeSpikeTest(
         val masterAttendee = "kashcal-master-invitee@example.test"
         val overrideAttendee = "kashcal-occurrence-invitee@example.test"
 
-        // ---- Shape A: CREATE-bundled (master + override in one fresh PUT) ----
+        // ---- Shape A: CREATE-bundled, master and exception in one PUT ----
         val uidA = "kashcal-shape-a-${config.name.lowercase()}-${UUID.randomUUID()}@kashcal.test"
         var shapeA: Pair<Signal, String> = Signal.INCONCLUSIVE to "not run"
         var urlA: String? = null
@@ -261,7 +256,7 @@ class ExceptionAttendeePutShapeSpikeTest(
         }
         println("  Shape A (CREATE-bundled): ${shapeA.first} (${shapeA.second})")
 
-        // ---- Shape B: MODIFY-add (master alone, THEN add override) ----
+        // ---- Shape B: MODIFY-add, master alone, then add the exception ----
         val uidB = "kashcal-shape-b-${config.name.lowercase()}-${UUID.randomUUID()}@kashcal.test"
         var shapeB: Pair<Signal, String> = Signal.INCONCLUSIVE to "not run"
         var urlB: String? = null
@@ -271,8 +266,8 @@ class ExceptionAttendeePutShapeSpikeTest(
             if (create.isSuccess()) {
                 val (u, e) = create.getOrNull()!!
                 urlB = u; etagB = e
-                // Second PUT: add the override (and its override-only attendee) as
-                // a discrete MODIFY of the now-stored series.
+                // Second PUT: add the exception and its attendee as a modify of the stored
+                // series.
                 val update = c.updateEvent(u, masterPlusOverrideIcs(uidB, organizer, masterAttendee, overrideAttendee), e)
                 if (update.isSuccess()) {
                     etagB = update.getOrNull()!!

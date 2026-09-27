@@ -9,12 +9,12 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Tests for [formatReminderMedium] — the abbreviated-word duration format used by
- * the Settings row values (Default event length, Timed alert, All-day alert).
+ * Tests [formatReminderMedium], the abbreviated-word format of the Settings rows Default event
+ * length, Timed alert and All-day alert.
  *
- * Style: "30 min", "1 hr", "1 day" / "2 days", "1 wk". All-day 9 AM offsets map to
- * their day/week meaning (900 = "1 day", not "15 hr"), and the day-of case reads
- * "Day of" (the 9 AM fire time is shown by the sheet hint, not the row).
+ * Timed values read "30 min", "1 hr", "1 day", "1 wk", "Off" and "At event". All-day 9 AM offsets
+ * read as their day or week meaning (900 is "1 day", not "15 hr"), and the day-of offset reads
+ * "Day of"; the sheet hint, not the row, shows the 9 AM fire time.
  */
 @RunWith(RobolectricTestRunner::class)
 class FormConstantsMediumTest {
@@ -60,7 +60,7 @@ class FormConstantsMediumTest {
 
     @Test
     fun `all-day 1 day offset reads 1 day not 15 hr`() {
-        // 900 = "9 AM the day before" — must read as 1 day, not its raw 15h magnitude.
+        // 900 is 9 AM the day before, so it must read 1 day, not its 15-hour magnitude.
         assertEquals("1 day", formatReminderMedium(900, isAllDay = true, resources = resources))
     }
 

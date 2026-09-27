@@ -9,7 +9,7 @@ import org.onekash.kashcal.R
 
 class EventColorPaletteTest {
 
-    // ========== Grid palette (11 hue-distinct entries) ==========
+    // ========== Grid palette (12 hue-distinct entries) ==========
 
     @Test
     fun `entries list has 12 hue-distinct colors in documented order`() {
@@ -111,8 +111,8 @@ class EventColorPaletteTest {
 
     @Test
     fun `nearestWheelEntry maps an off-wheel teal to a teal-family neighbor, not red`() {
-        // Brand teal 0xFF0E6E62 is NOT in the wheel; the nearest color must be a green/teal,
-        // never the RED-family fallback that entryForArgbOrDefault would return.
+        // The brand teal 0xFF0E6E62 isn't a wheel color; its nearest must be green or teal, never
+        // the red fallback entryForArgbOrDefault returns.
         val nearest = EventColorPalette.nearestWheelEntry(0xFF0E6E62.toInt())
         assertTrue(
             "nearest to brand teal should be teal/green family, got ${nearest.name} (${nearest.family})",
@@ -150,13 +150,13 @@ class EventColorPaletteTest {
 
     @Test
     fun `wheel nameForHex resolves extended css3 colors`() {
-        // These are wheel-only (not in grid). Row label becomes "Custom" but
-        // CalDAV emit still uses the CSS3 name.
+        // Wheel-only colors: the row label reads "Custom", but COLOR is still written with the
+        // CSS3 name.
         assertEquals("crimson", EventColorPalette.nameForHex(0xFFDC143C.toInt()))
         assertEquals("mediumpurple", EventColorPalette.nameForHex(0xFF9370DB.toInt()))
         assertEquals("teal", EventColorPalette.nameForHex(0xFF008080.toInt()))
         assertEquals("slateblue", EventColorPalette.nameForHex(0xFF6A5ACD.toInt()))
-        assertEquals("sienna".let { null }, null) // sienna not in our 92-set
+        assertEquals("sienna".let { null }, null) // sienna isn't in the 92-color wheel
     }
 
     @Test
@@ -176,11 +176,11 @@ class EventColorPaletteTest {
         assertNull(EventColorPalette.entryForArgb(0xFF123456.toInt()))
     }
 
-    // ========== resolveColorForFamily (wheel left-wheel-change logic) ==========
+    // ========== resolveColorForFamily (wheel hue-family change) ==========
 
     @Test
     fun `resolveColorForFamily keeps current selection when family matches`() {
-        // tomato is RED — if user is on tomato and RED is still selected, keep tomato
+        // tomato is RED, so it stays selected while RED stays selected.
         val result = EventColorPalette.resolveColorForFamily(
             HueFamily.RED,
             currentArgb = 0xFFFF6347.toInt() // tomato
@@ -190,7 +190,7 @@ class EventColorPaletteTest {
 
     @Test
     fun `resolveColorForFamily jumps to first color when family changes`() {
-        // User is on tomato (RED), switches to GREEN — should return first GREEN entry
+        // Switching from tomato (RED) to GREEN picks GREEN's first color.
         val result = EventColorPalette.resolveColorForFamily(
             HueFamily.GREEN,
             currentArgb = 0xFFFF6347.toInt() // tomato (RED)
@@ -236,9 +236,9 @@ class EventColorPaletteTest {
 
     @Test
     fun `stringResIdForColor returns label_custom for wheel-only colors`() {
-        // crimson is in wheel but not in grid — row label falls back to Custom
+        // crimson is a wheel color but not a grid color, so the row label falls back to Custom.
         assertEquals(R.string.label_custom, EventColorPalette.stringResIdForColor(0xFFDC143C.toInt()))
-        // teal was previously in grid (v23.6.0), now wheel-only
+        // teal is wheel-only.
         assertEquals(R.string.label_custom, EventColorPalette.stringResIdForColor(0xFF008080.toInt()))
     }
 

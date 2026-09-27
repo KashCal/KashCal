@@ -6,10 +6,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pure-logic tests for the tag color helper. These assert *determinism* and
- * *diversity*, never a specific literal color — `String.hashCode()` is stable
- * within a JVM but not guaranteed identical across platforms, so pinning an
- * exact palette index would be a false-confidence test.
+ * Tests [colorForTag] and [onColorFor]. The tag color tests assert determinism, case
+ * insensitivity, palette membership and diversity, never a specific palette color.
  */
 class CategoryColorsTest {
 
@@ -20,7 +18,7 @@ class CategoryColorsTest {
 
     @Test
     fun `color is case-insensitive`() {
-        // Case-insensitive dedup means Work and work are one tag -> one color.
+        // Case-insensitive dedup makes Work and work one tag, so one color.
         assertEquals(colorForTag("Work"), colorForTag("work"))
         assertEquals(colorForTag("WORK"), colorForTag("work"))
     }
@@ -32,8 +30,7 @@ class CategoryColorsTest {
 
     @Test
     fun `different names generally differ`() {
-        // Not a guarantee for any specific pair, but across a spread of names
-        // we expect more than one distinct color to be produced.
+        // No specific pair must differ, but a spread of names gives more than one color.
         val distinct = listOf("work", "personal", "family", "travel", "health", "finance", "focus")
             .map { colorForTag(it) }
             .distinct()
@@ -42,19 +39,19 @@ class CategoryColorsTest {
 
     @Test
     fun `on-color for a dark background is light`() {
-        // 0xFF202020 is near-black -> foreground should be white.
+        // Near-black 0xFF202020 takes white.
         assertEquals(0xFFFFFFFF.toInt(), onColorFor(0xFF202020.toInt()))
     }
 
     @Test
     fun `on-color for a light background is dark`() {
-        // 0xFFF0F0F0 is near-white -> foreground should be black.
+        // Near-white 0xFFF0F0F0 takes black.
         assertEquals(0xFF000000.toInt(), onColorFor(0xFFF0F0F0.toInt()))
     }
 
     @Test
     fun `on-color differs between a palette color and its inverse extreme`() {
-        // Sanity: the two on-color outcomes are not identical.
+        // Black and white backgrounds get different on-colors.
         assertNotEquals(onColorFor(0xFF000000.toInt()), onColorFor(0xFFFFFFFF.toInt()))
     }
 }

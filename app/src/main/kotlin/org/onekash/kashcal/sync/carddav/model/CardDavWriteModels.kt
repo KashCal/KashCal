@@ -1,38 +1,33 @@
 package org.onekash.kashcal.sync.carddav.model
 
 /**
- * Data shapes for the CardDAV write path (RFC 6352 §6.3, RFC 4918 conditional
- * PUT/DELETE).
+ * Data shapes for the CardDAV write path: conditional PUT and DELETE of one contact resource
+ * (RFC 6352 §6.3, RFC 4918).
  *
- * These describe uploading and deleting a single contact resource. Nothing in the
- * app calls the write verbs yet — they exist so a later sync path can push local
- * contact edits. The outcomes are modelled as sealed types rather than folded
- * into HTTP status codes so the eventual caller can branch on each business
- * outcome explicitly (a stale-version precondition failure is an expected,
- * non-fatal event that server-wins consumes — not a generic "error").
+ * `ContactPushStrategy` is the caller. Outcomes are sealed types, not status codes, so it can
+ * branch on each one: a stale-version precondition failure is an expected, non-fatal outcome
+ * that server wins absorbs, not a generic error.
  */
 
 /**
  * The conditional-request precondition for a contact PUT.
  *
- * RFC 4918 §10.4: a conditional PUT lets the client express intent atomically
- * against the server's current state, avoiding a lost-update race.
+ * RFC 4918 §10.4: a conditional PUT states intent atomically against the server's current
+ * state, avoiding a lost-update race.
  */
 sealed interface ContactPrecondition {
     /**
-     * `If-None-Match: *` — create only if no resource exists at the target href.
-     * Used for a brand-new contact so a name collision fails loudly (412) instead
-     * of silently clobbering an unrelated resource.
+     * `If-None-Match: *`: creates only if no resource exists at the target href. Used for a
+     * net-new contact so a name collision fails with 412 instead of silently overwriting an
+     * unrelated resource.
      */
     data object IfAbsent : ContactPrecondition
 
     /**
-     * `If-Match: "<etag>"` — update only if the resource's current version still
-     * matches [etag] (the version the client last saw). A mismatch means the
-     * server copy changed underneath us and the PUT fails with 412.
+     * `If-Match: "<etag>"`: updates only if the resource still matches [etag], the version the
+     * client last saw. A mismatch means the server copy changed and the PUT fails with 412.
      *
-     * @property etag the normalized (unquoted) entity tag; the client re-wraps it
-     *   in quotes for the header.
+     * @property etag the normalized (unquoted) entity tag; the client re-wraps it in quotes.
      */
     data class IfMatch(val etag: String) : ContactPrecondition
 }
@@ -40,41 +35,42 @@ sealed interface ContactPrecondition {
 /**
  * Outcome of uploading a contact vCard via PUT.
  *
- * Success and every distinguishable failure are separate variants so the caller
- * never has to interpret raw status codes. Transport failures (unreachable host,
- * reset) surface as [Failed] with `code = 0`, mirroring the generic result
- * envelope's `networkError` convention.
+ * Each distinguishable outcome is its own variant so the caller never interprets status codes.
+ * A transport failure (unreachable host, reset) is [Failed] with `code = 0`, like the result
+ * envelope's `networkError`; a request the transport guard refused to send is [Failed] with
+ * `CalDavResult.CODE_TRANSPORT_REFUSED`.
  */
 sealed interface ContactUploadResult {
     /**
-     * 201 Created or 204 No Content — the vCard landed.
+     * 200 OK, 201 Created or 204 No Content: the vCard landed.
      *
-     * @property etag the new version identifier from the response `ETag` header,
-     *   or null when the server omitted it (RFC 6352/4791 permit this). A null
-     *   etag is not an error: the next pull re-reads the resource and reconciles.
+     * @property etag the response `ETag`, or null when the server omitted it (RFC 6352/4791
+     *   permit this). A null etag is not an error: the next pull re-reads and reconciles.
+     * @property finalUrl where the vCard landed when the server redirected the PUT, null
+     *   otherwise. The caller stores it as the contact's href.
      */
-    data class Success(val etag: String?) : ContactUploadResult
+    data class Success(val etag: String?, val finalUrl: String? = null) : ContactUploadResult
 
     /**
-     * 412 Precondition Failed or 409 Conflict — the precondition did not hold
-     * (the name is already taken on a create, or the known version is stale on an
-     * update). Non-fatal by design: server-wins will overwrite the local copy on
-     * the next pull.
+     * 412 Precondition Failed or 409 Conflict: the name is taken on a create, or the known
+     * version is stale on an update. Also returned without a request when the etag can't be
+     * placed in a header. Non-fatal: server wins overwrites the local copy on the next pull.
      */
     data object PreconditionFailed : ContactUploadResult
 
-    /** 403 Forbidden — the account lacks write privilege for this resource. */
+    /** 403 Forbidden: the account lacks write privilege for this resource. */
     data object PermissionDenied : ContactUploadResult
 
-    /** 404 Not Found or 410 Gone — the target resource no longer exists. */
+    /** 404 Not Found or 410 Gone: the target resource no longer exists. */
     data object Gone : ContactUploadResult
 
     /**
      * Any other HTTP status, or a transport failure.
      *
-     * @property code the HTTP status, or 0 for a transport-layer failure.
-     * @property isRetryable follows the shared result envelope's convention (5xx,
-     *   429, and network failures are retryable).
+     * @property code the HTTP status, 0 for a transport failure, or
+     *   `CalDavResult.CODE_TRANSPORT_REFUSED` for a request the guard refused.
+     * @property isRetryable true for 5xx, 429, transport failures and guard refusals. The client
+     *   never retries a conditional write itself.
      */
     data class Failed(
         val code: Int,
@@ -83,27 +79,27 @@ sealed interface ContactUploadResult {
     ) : ContactUploadResult
 }
 
-/**
- * Outcome of deleting a contact resource via a conditional DELETE.
- */
+/** Outcome of deleting a contact resource via a conditional DELETE (`If-Match`). */
 sealed interface ContactDeleteResult {
-    /** 200 OK or 204 No Content — the resource was removed. */
+    /** 200 OK or 204 No Content: the resource was removed. */
     data object Deleted : ContactDeleteResult
 
     /**
-     * 404 Not Found or 410 Gone — already removed (perhaps by another client). The
-     * caller's intent (make it not exist) is satisfied, so this is not an error.
+     * 404 Not Found or 410 Gone: already removed, perhaps by another client. The intent is
+     * satisfied, so this is not an error.
      */
     data object AlreadyGone : ContactDeleteResult
 
     /**
-     * 412 Precondition Failed or 409 Conflict — the resource changed since the
-     * known version. Swallow-able: the next pull re-downloads the server copy.
+     * 412 Precondition Failed or 409 Conflict: the resource changed since the known version.
+     * Also returned without a request when the etag can't be placed in a header. Non-fatal:
+     * the next pull re-downloads the server copy.
      */
     data object PreconditionFailed : ContactDeleteResult
 
     /**
-     * Any other HTTP status, or a transport failure ([code] == 0).
+     * Any other HTTP status, or a transport failure. [code] and [isRetryable] follow
+     * [ContactUploadResult.Failed].
      */
     data class Failed(
         val code: Int,

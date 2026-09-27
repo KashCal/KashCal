@@ -24,12 +24,11 @@ object QuickAddParser {
     private val normalizer = NormalizerChain()
     private val normalizerNoLowercase = NormalizerChain(lowercase = false)
 
-    // A note is everything after the first whitespace-preceded "//". The leading
-    // whitespace is required so pasted URLs ("https://…", "zoom.us//x") — which
-    // have no space before the slashes — are never split.
+    // A note is everything after the first whitespace-preceded "//". Requiring the
+    // whitespace means a pasted URL ("https://…", "zoom.us//x") is never split.
     private val NOTE_DELIMITER = Regex("""\s//""")
 
-    // Order matters: RecurrenceRule before WeekdayRule so "every Monday" is claimed as recurrence
+    // RecurrenceRule runs before WeekdayRule so it claims "every Monday" as a recurrence.
     private val rules = listOf(
         RelativeDateRule,
         RecurrenceRule,
@@ -57,31 +56,28 @@ object QuickAddParser {
             )
         }
 
-        // Split the inline note off the RAW input before anything else: the text
-        // after the first whitespace-preceded "//" is the note (stored verbatim,
-        // surrounding whitespace trimmed), and only the part before it is parsed —
-        // so date/time/location words inside the note can't move the schedule.
+        // Split the note off the raw input first. The note is kept verbatim apart from
+        // trimming, and only the text before it is parsed, so date, time or location
+        // words in the note can't move the event.
         val delimiter = NOTE_DELIMITER.find(input)
         val beforeNote = if (delimiter != null) input.substring(0, delimiter.range.first) else input
         val note = delimiter
             ?.let { input.substring(it.range.last + 1).trim() }
             ?.ifEmpty { null }
 
-        // Extract #tags from the RAW (pre-note) input first: the normalizer's
-        // character cleanup strips '#', so a parse rule downstream could never see
-        // it. Running after the note split keeps a '#tag' inside the note verbatim.
+        // Take #tags before normalizing, whose character cleanup strips '#'. Doing it after
+        // the note split keeps a '#tag' inside the note verbatim.
         val (detagged, categories) = TagTokenizer.extract(beforeNote)
 
         val normalized = normalizer.normalize(detagged)
-        // Apply same transforms without lowercase, for original-case title extraction
+        // The same transforms without lowercasing, so the title keeps the user's case.
         val originalCased = normalizerNoLowercase.normalize(detagged)
         val originalWords = if (originalCased.isNotEmpty()) originalCased.split(" ") else emptyList()
 
         val tokens = WordTokenizer.tokenize(normalized, originalWords, locale)
 
         if (tokens.isEmpty()) {
-            // A tags-only input (e.g. "#work") has no remaining tokens but must
-            // still carry the extracted categories through.
+            // A tags-only input (e.g. "#work") has no tokens left but keeps its categories.
             return QuickAddResult(
                 title = "",
                 startDate = reference.toLocalDate(),

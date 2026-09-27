@@ -13,17 +13,15 @@ import org.onekash.icaldav.model.ICalCalendar
 import org.onekash.icaldav.model.ParseResult
 
 /**
- * Tests for ATTENDEE parameter parsing — covers A2-pre fixes:
+ * Tests the ATTENDEE parameters MEMBER and RSVP, parsed and generated.
  *
- * - **MEMBER as multi-value list** (RFC 5545 §3.2.11): the parameter is
- *   a comma-separated list of CAL-ADDRESSes. Pre-fix, the parser stored
- *   only the first value as a single `String?`. Post-fix, MEMBER is
- *   parsed via `parseMailtoList` like DELEGATED-TO/FROM, yielding a
- *   `List<String>`.
- * - **RSVP three-state semantics** (RFC 5545 §3.2.17): the parameter is
- *   optional and distinguishes present-and-TRUE, present-and-FALSE,
- *   absent. Pre-fix, the parser conflated absent with FALSE.
- *   Post-fix, `rsvp: Boolean?` preserves the three states.
+ * - MEMBER (RFC 5545 §3.2.11) is a comma-separated list of quoted CAL-ADDRESSes. The parser
+ *   reads it with `parseMailtoList`, like DELEGATED-TO and DELEGATED-FROM, into a
+ *   `List<String>` of bare addresses. The multi-value parse test is disabled because ical4j
+ *   4.x mangles that input.
+ * - RSVP (RFC 5545 §3.2.17) defaults to FALSE when absent. `rsvp: Boolean?` keeps three
+ *   states: TRUE, an explicit FALSE, and null for absent. The generator writes RSVP only
+ *   when it is TRUE.
  */
 @DisplayName("ICalParser ATTENDEE Tests (A2-pre)")
 class ICalParserAttendeeTest {
@@ -167,10 +165,8 @@ class ICalParserAttendeeTest {
 
         @Test
         fun `generator emits MEMBER with mailto prefix for single-element list`() {
-            // Generator handles the multi-value emit form; parser limitation is
-            // upstream (see Disabled multi-value parse test). This validates the
-            // generator side works for single-value, which is the only verified
-            // round-trip until ical4j workaround lands.
+            // The generator writes a multi-value MEMBER too, but only one value is checked:
+            // ical4j can't parse more than one back (the disabled test in MemberTests).
             val ics = roundTripSingleAttendee(
                 baseAttendee(member = listOf("a@x.com"))
             )

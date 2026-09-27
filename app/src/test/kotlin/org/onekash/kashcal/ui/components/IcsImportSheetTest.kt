@@ -16,12 +16,11 @@ import org.robolectric.annotation.Config
 import java.util.Locale
 
 /**
- * Tests for [IcsImportSheet] — the ICS-file import bottom sheet.
+ * Tests the Import button of [IcsImportSheet], the ICS-file import bottom sheet.
  *
- * The load-bearing regression: a large import runs for several seconds while the
- * sheet stays open, and the Import button used to remain tappable throughout, so
- * repeated taps enqueued one full import each and duplicated every event (#309).
- * Tapping Import must fire the import callback exactly once per sheet session.
+ * A large import runs for seconds while the sheet stays open. If each tap started an import,
+ * repeated taps would enqueue one full import each and duplicate every event (#309), so tapping
+ * Import must fire the import callback exactly once per sheet session.
  *
  * Runs under Robolectric; run the class in isolation given the repo's multi-class
  * native-crash flake.

@@ -22,12 +22,15 @@ import java.util.concurrent.TimeUnit
 import org.onekash.kashcal.sync.auth.Credentials as CalDavCredentials
 
 /**
- * Integration test to verify WebDAV MOVE operation support on CalDAV servers.
+ * Probes whether iCloud and Nextcloud accept WebDAV MOVE of an event between two calendars
+ * of the same account.
  *
- * Tests whether iCloud and Nextcloud support the MOVE method for moving
- * calendar events between calendars within the same account.
+ * The raw MOVE tests print the status and assert only on a 201 or 204: the event must then
+ * be at the target and, on Nextcloud, gone from the source. The moveEvent tests require
+ * [org.onekash.kashcal.sync.client.CalDavClient.moveEvent] to succeed. With fewer than two
+ * Nextcloud calendars, the raw test creates one with MKCALENDAR.
  *
- * Run: ./gradlew testDebugUnitTest --tests "*MoveOperationServerTest*"
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*MoveOperationServerTest*"
  */
 class MoveOperationServerTest {
 
@@ -42,7 +45,7 @@ class MoveOperationServerTest {
     private var nextcloudUsername: String? = null
     private var nextcloudPassword: String? = null
 
-    // Track created events for cleanup
+    // Events this run created, deleted in cleanup
     private val createdEventUrls = mutableListOf<Pair<String, String>>() // (url, auth)
 
     @Before
@@ -53,13 +56,13 @@ class MoveOperationServerTest {
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
-            .followRedirects(false) // Handle redirects manually for auth
+            .followRedirects(false) // A redirect comes back as its 3xx status
             .build()
     }
 
     @After
     fun cleanup() {
-        // Delete any events we created
+        // Delete the source and target URLs of the events this run created
         createdEventUrls.forEach { (url, auth) ->
             try {
                 val request = Request.Builder()
@@ -106,7 +109,7 @@ class MoveOperationServerTest {
 
         val auth = Credentials.basic(icloudUsername!!, icloudPassword!!)
 
-        // Step 1: Discover calendars
+        // Step 1: discover calendars
         println("=== iCloud MOVE Test ===")
         val calendars = discoverICloudCalendars(auth)
         assumeTrue("Need at least 2 calendars for MOVE test", calendars.size >= 2)
@@ -116,13 +119,13 @@ class MoveOperationServerTest {
         println("Source calendar: ${sourceCalendar.first}")
         println("Target calendar: ${targetCalendar.first}")
 
-        // Step 2: Create test event in source calendar
+        // Step 2: create the event in the source calendar
         val uid = "move-test-${UUID.randomUUID()}@kashcal.test"
         val eventUrl = createTestEvent(sourceCalendar.second, uid, auth)
         assertNotNull("Failed to create test event", eventUrl)
         println("Created event: $eventUrl")
 
-        // Step 3: Attempt MOVE to target calendar
+        // Step 3: MOVE it to the target calendar
         val targetUrl = "${targetCalendar.second}$uid.ics"
         println("Attempting MOVE to: $targetUrl")
 
@@ -142,15 +145,15 @@ class MoveOperationServerTest {
         println("MOVE response: $moveStatus")
         println("MOVE body: ${moveBody.take(500)}")
 
-        // Track for cleanup (might be at source or target depending on success)
+        // Clean up both URLs: the event is at one of them depending on the outcome
         createdEventUrls.add(eventUrl to auth)
         createdEventUrls.add(targetUrl to auth)
 
-        // Analyze result
+        // Report the outcome
         when (moveStatus) {
             201, 204 -> {
                 println("✅ iCloud SUPPORTS MOVE (status $moveStatus)")
-                // Verify event is at target
+                // The event is at the target
                 val getTarget = Request.Builder()
                     .url(targetUrl)
                     .get()
@@ -175,7 +178,7 @@ class MoveOperationServerTest {
             }
         }
 
-        // Record result for summary
+        // Summary line
         println("\n=== iCloud MOVE Result: HTTP $moveStatus ===")
     }
 
@@ -188,11 +191,11 @@ class MoveOperationServerTest {
 
         val auth = Credentials.basic(nextcloudUsername!!, nextcloudPassword!!)
 
-        // Step 1: Discover calendars
+        // Step 1: discover calendars
         println("=== Nextcloud MOVE Test ===")
         var calendars = discoverNextcloudCalendars(auth)
 
-        // Create test calendar if we don't have 2 writable ones
+        // Create a calendar when fewer than 2 are listed; it isn't deleted afterwards
         if (calendars.size < 2) {
             println("Only ${calendars.size} calendars found, creating test calendar...")
             val testCalUrl = createTestCalendar(
@@ -213,13 +216,13 @@ class MoveOperationServerTest {
         println("Source calendar: ${sourceCalendar.first}")
         println("Target calendar: ${targetCalendar.first}")
 
-        // Step 2: Create test event in source calendar
+        // Step 2: create the event in the source calendar
         val uid = "move-test-${UUID.randomUUID()}@kashcal.test"
         val eventUrl = createTestEvent(sourceCalendar.second, uid, auth)
         assertNotNull("Failed to create test event", eventUrl)
         println("Created event: $eventUrl")
 
-        // Step 3: Attempt MOVE to target calendar
+        // Step 3: MOVE it to the target calendar
         val targetUrl = "${targetCalendar.second}$uid.ics"
         println("Attempting MOVE to: $targetUrl")
 
@@ -239,15 +242,15 @@ class MoveOperationServerTest {
         println("MOVE response: $moveStatus")
         println("MOVE body: ${moveBody.take(500)}")
 
-        // Track for cleanup
+        // Clean up both URLs
         createdEventUrls.add(eventUrl to auth)
         createdEventUrls.add(targetUrl to auth)
 
-        // Analyze result
+        // Report the outcome
         when (moveStatus) {
             201, 204 -> {
                 println("✅ Nextcloud SUPPORTS MOVE (status $moveStatus)")
-                // Verify event is at target
+                // The event is at the target
                 val getTarget = Request.Builder()
                     .url(targetUrl)
                     .get()
@@ -257,7 +260,7 @@ class MoveOperationServerTest {
                 assertEquals("Event should exist at target", 200, targetResponse.code)
                 targetResponse.close()
 
-                // Verify event is gone from source
+                // The event is gone from the source
                 val getSource = Request.Builder()
                     .url(eventUrl)
                     .get()
@@ -303,13 +306,13 @@ class MoveOperationServerTest {
         println("Source: ${sourceCalendar.first} (${sourceCalendar.second})")
         println("Target: ${targetCalendar.first} (${targetCalendar.second})")
 
-        // Create test event
+        // Create the event
         val uid = "caldavclient-move-${UUID.randomUUID()}@kashcal.test"
         val eventUrl = createTestEvent(sourceCalendar.second, uid, auth)
         assertNotNull("Failed to create test event", eventUrl)
         println("Created: $eventUrl")
 
-        // Use CalDavClient.moveEvent()
+        // Move it with CalDavClient.moveEvent()
         val clientFactory = OkHttpCalDavClientFactory()
         val caldavClient = clientFactory.createClient(
             CalDavCredentials(icloudUsername!!, icloudPassword!!, "https://caldav.icloud.com"),
@@ -318,7 +321,7 @@ class MoveOperationServerTest {
 
         val result = caldavClient.moveEvent(eventUrl!!, targetCalendar.second, uid)
 
-        // Track for cleanup
+        // Clean up the source URL and, on success, the new URL
         createdEventUrls.add(eventUrl to auth)
         if (result.isSuccess()) {
             val (newUrl, _) = result.getOrNull()!!
@@ -331,7 +334,7 @@ class MoveOperationServerTest {
         val (newUrl, newEtag) = result.getOrNull()!!
         println("✅ moveEvent succeeded: newUrl=$newUrl, newEtag=$newEtag")
 
-        // Verify event exists at target
+        // The event exists at the new URL
         val verifyRequest = Request.Builder()
             .url(newUrl)
             .get()
@@ -359,13 +362,13 @@ class MoveOperationServerTest {
         println("Source: ${sourceCalendar.first} (${sourceCalendar.second})")
         println("Target: ${targetCalendar.first} (${targetCalendar.second})")
 
-        // Create test event
+        // Create the event
         val uid = "caldavclient-move-${UUID.randomUUID()}@kashcal.test"
         val eventUrl = createTestEvent(sourceCalendar.second, uid, auth)
         assertNotNull("Failed to create test event", eventUrl)
         println("Created: $eventUrl")
 
-        // Use CalDavClient.moveEvent()
+        // Move it with CalDavClient.moveEvent()
         val clientFactory = OkHttpCalDavClientFactory()
         val caldavClient = clientFactory.createClient(
             CalDavCredentials(nextcloudUsername!!, nextcloudPassword!!, nextcloudServer!!),
@@ -374,7 +377,7 @@ class MoveOperationServerTest {
 
         val result = caldavClient.moveEvent(eventUrl!!, targetCalendar.second, uid)
 
-        // Track for cleanup
+        // Clean up the source URL and, on success, the new URL
         createdEventUrls.add(eventUrl to auth)
         if (result.isSuccess()) {
             val (newUrl, _) = result.getOrNull()!!
@@ -387,7 +390,7 @@ class MoveOperationServerTest {
         val (newUrl, newEtag) = result.getOrNull()!!
         println("✅ moveEvent succeeded: newUrl=$newUrl, newEtag=$newEtag")
 
-        // Verify event exists at target
+        // The event exists at the new URL
         val verifyRequest = Request.Builder()
             .url(newUrl)
             .get()
@@ -402,7 +405,7 @@ class MoveOperationServerTest {
     // ==================== Helper Methods ====================
 
     private fun discoverICloudCalendars(auth: String): List<Pair<String, String>> = runBlocking {
-        // Use the project's CalDavClient for proper iCloud discovery
+        // The app's CalDavClient runs the iCloud discovery
         val clientFactory = OkHttpCalDavClientFactory()
         val quirks = ICloudQuirks()
         val caldavClient = clientFactory.createClient(
@@ -410,7 +413,7 @@ class MoveOperationServerTest {
             quirks
         )
 
-        // Discover principal
+        // Principal
         val principalResult = caldavClient.discoverPrincipal("https://caldav.icloud.com/")
         if (!principalResult.isSuccess()) {
             println("Failed to discover principal: $principalResult")
@@ -419,7 +422,7 @@ class MoveOperationServerTest {
         val principalUrl = principalResult.getOrNull()!!
         println("Principal URL: $principalUrl")
 
-        // Discover calendar home
+        // Calendar home
         val homeResult = caldavClient.discoverCalendarHome(principalUrl)
         if (!homeResult.isSuccess()) {
             println("Failed to discover calendar home: $homeResult")
@@ -428,7 +431,7 @@ class MoveOperationServerTest {
         val calendarHome = homeResult.getOrNull()!!.first()
         println("Calendar home: $calendarHome")
 
-        // List calendars
+        // Calendars, minus inbox and outbox
         val calendarsResult = caldavClient.listCalendars(calendarHome)
         if (!calendarsResult.isSuccess()) {
             println("Failed to list calendars: $calendarsResult")
@@ -469,7 +472,7 @@ class MoveOperationServerTest {
         val body = response.body?.string() ?: ""
         response.close()
 
-        // Parse calendar URLs (look for resources with <calendar/> in resourcetype)
+        // Keep responses whose XML has a calendar element (the resourcetype's <calendar/>)
         val calendars = mutableListOf<Pair<String, String>>()
         val responsePattern = Regex("""<d:response>(.*?)</d:response>""", RegexOption.DOT_MATCHES_ALL)
         val hrefPattern = Regex("""<d:href>([^<]+)</d:href>""")

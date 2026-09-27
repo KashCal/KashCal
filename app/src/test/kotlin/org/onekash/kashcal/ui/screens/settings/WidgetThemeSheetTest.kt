@@ -6,10 +6,10 @@ import org.junit.Test
 import org.onekash.kashcal.widget.WidgetThemeSource
 
 /**
- * Pure tests for the widget-theme-picker option model that backs [WidgetThemeSheet]. The options
- * derive from [WidgetThemeSource.entries] and each source's own label/description resources, so a
- * new source needs no change here — this pins that derivation and the menu ordering. In particular
- * the first option is Follow app (the default), and System is not offered.
+ * Tests [widgetThemeSheetOptions], the option model behind [WidgetThemeSheet]: enum order with
+ * Follow app (the default) first, labels and descriptions taken from each [WidgetThemeSource], and
+ * distinct string ids. The options derive from [WidgetThemeSource.entries], so a new source needs
+ * no change here. System is not offered, since the enum has no such entry (not asserted here).
  */
 class WidgetThemeSheetTest {
 

@@ -7,9 +7,9 @@ import org.junit.Test
 import java.util.Random
 
 /**
- * Tests for RFC 2782 SRV selection ordering. Randomness is injected as
- * `rng: () -> Double`, so ordering is deterministic and exactly assertable —
- * and the production code contains no global `Math.random`.
+ * Tests [SrvSelection.order]: priority buckets, weighted order within a bucket, zero weights, the
+ * draw boundaries, and that the result is a permutation. Randomness is injected as
+ * `rng: () -> Double`, so each order is exact; [SrvSelection] itself never calls `Math.random`.
  */
 class SrvSelectionTest {
 
@@ -37,8 +37,8 @@ class SrvSelectionTest {
     @Test
     fun `single record is returned as-is without drawing rng`() {
         val one = listOf(rec(0, 0, "only.example.test"))
-        // Same instance back: the size<=1 short-circuit returns the input list
-        // untouched (no bucketing, no allocation) and never draws rng.
+        // Same instance back: the size <= 1 short-circuit returns the input list without
+        // bucketing or allocating, and never draws rng.
         assertSame(one, SrvSelection.order(one, StubRng()))  // StubRng throws if drawn
     }
 
@@ -84,8 +84,8 @@ class SrvSelectionTest {
             rec(10, 1, "a.example.test"),
             rec(10, 1, "b.example.test"),
         )
-        // RFC 2782 zero-weight rule adds 1 per record: running weights [2,4];
-        // r=0.9*4=3.6 -> first cumsum>3.6 is b.
+        // Each record counts weight + 1, so running weights [2,4]; r=0.9*4=3.6 -> first
+        // cumsum>3.6 is b.
         assertEquals(
             listOf("b.example.test", "a.example.test"),
             targets(SrvSelection.order(records, StubRng(0.9))),
@@ -137,10 +137,10 @@ class SrvSelectionTest {
     @Test
     fun `draw landing exactly on a cumulative-sum boundary selects the later record`() {
         // Equal weights -> weight+1 running sums [2, 4]; rng 0.5 * total 4 = pick 2.0,
-        // exactly the first record's running sum. RFC 2782 selects the first RR whose
-        // running sum is strictly greater (the code uses half-open `pick < running`),
-        // so a's sum of 2 does NOT win at pick 2.0 — b does. A boundary mutant that
-        // flips this to `pick <= running` would pick a instead.
+        // exactly a's running sum. The code takes the first sum strictly greater
+        // (`pick < running`), so b wins; a mutant flipping it to `pick <= running` picks a.
+        // RFC 2782's own draw differs: from [0, sum] inclusive, taking the first running sum
+        // greater than or equal to the draw.
         val records = listOf(
             rec(10, 1, "a.example.test"),
             rec(10, 1, "b.example.test"),
@@ -175,9 +175,8 @@ class SrvSelectionTest {
             rec(10, 1, "b.example.test"),
             rec(10, 1, "c.example.test"),
         )
-        // Draw the largest value the half-open rng can yield at each step; the
-        // selector must still terminate with a valid full ordering (no index
-        // past the end).
+        // Draw near the top of the half-open rng range at each step; the selector must still
+        // return a full ordering with no index past the end.
         val result = SrvSelection.order(records, StubRng(0.999999, 0.999999))
         assertEquals(3, result.size)
         assertEquals(setOf("a.example.test", "b.example.test", "c.example.test"), targets(result).toSet())

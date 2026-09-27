@@ -745,8 +745,7 @@
       "name": "RFC 5545 §3.8.5.3 example 33: every 3 hours on Sep 2 1997 until 17Z",
       "timestamps": [
         873205200000,
-        873216000000,
-        873226800000
+        873216000000
       ],
       "error": null
     },

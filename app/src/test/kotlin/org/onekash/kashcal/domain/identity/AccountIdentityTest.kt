@@ -8,10 +8,9 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Tests for [Account.matchesAttendee] — the identity-match helper that
- * answers "is this attendee me?" across iCloud aliases, non-mailto
- * URI forms, and the fallback path when `calendar_user_addresses`
- * isn't populated yet.
+ * Tests [Account.matchesAttendee], which answers "is this attendee me?" across iCloud aliases,
+ * non-mailto URI forms, letter case and the email-login fallback when `calendar_user_addresses`
+ * is empty, and [Account.effectiveAddresses], the address list it and the organizer pick read.
  */
 class AccountIdentityTest {
 
@@ -86,6 +85,25 @@ class AccountIdentityTest {
     }
 
     @Test
+    fun `mixed-case login fallback matches a lowercase mailto attendee`() {
+        val a = account(email = "Alice@iCloud.com", addresses = emptyList())
+        assertTrue(a.matchesAttendee("mailto:alice@icloud.com"))
+    }
+
+    @Test
+    fun `bare mixed-case organizer matches a lowercase mailto address`() {
+        // The parser stores ORGANIZER without its mailto: prefix.
+        val a = account(addresses = listOf("mailto:alice@example.com"))
+        assertTrue(a.matchesAttendee("Alice@Example.com"))
+    }
+
+    @Test
+    fun `principal path embedding an email stays case-sensitive`() {
+        val a = account(addresses = listOf("/remote.php/dav/principals/users/Alice@Example.com/"))
+        assertFalse(a.matchesAttendee("/remote.php/dav/principals/users/alice@example.com/"))
+    }
+
+    @Test
     fun `urn match is case-sensitive`() {
         val a = account(addresses = listOf("urn:uuid:ABC-DEF"))
         assertFalse(a.matchesAttendee("urn:uuid:abc-def"))
@@ -99,7 +117,7 @@ class AccountIdentityTest {
         assertFalse(a.matchesAttendee("urn:uuid:123456789"))
     }
 
-    // ---- effectiveAddresses() — the reusable resolver (organizer source) ----
+    // ---- effectiveAddresses(): the list the organizer is picked from ----
 
     @Test
     fun `effectiveAddresses returns the address set verbatim when present`() {
@@ -121,7 +139,8 @@ class AccountIdentityTest {
 
     @Test
     fun `effectiveAddresses firstOrNull yields the preferred organizer address`() {
-        // Address discovery hoists a mailto to index 0; firstOrNull is the organizer pick.
+        // Discovery puts `preferred="1"` hrefs first. The organizer is the first email-shaped
+        // entry, which here is also the first entry.
         val a = account(addresses = listOf("mailto:alice@icloud.com", "/123/principal/"))
         assertEquals("mailto:alice@icloud.com", a.effectiveAddresses().firstOrNull())
     }

@@ -18,12 +18,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Integration tests for immediate push sync functionality.
- *
- * Tests verify WorkManager behavior:
- * - Expedited work is enqueued properly
- * - Rapid sync requests are coalesced (REPLACE policy)
- * - Work has correct tags and constraints
+ * Checks how [SyncScheduler] enqueues immediate syncs in WorkManager:
+ * - an expedited request enqueues one work item with the expedited and sync tags
+ * - rapid requests coalesce into one item (REPLACE policy)
+ * - the returned id finds the enqueued work
+ * - expedited work is separate from the periodic sync work
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -37,7 +36,7 @@ class ImmediatePushIntegrationTest {
     fun setup() {
         context = ApplicationProvider.getApplicationContext()
 
-        // Initialize WorkManager for testing with synchronous executor
+        // Test WorkManager with a synchronous executor
         val config = Configuration.Builder()
             .setMinimumLoggingLevel(android.util.Log.DEBUG)
             .setExecutor(SynchronousExecutor())
@@ -73,7 +72,7 @@ class ImmediatePushIntegrationTest {
 
     @Test
     fun `multiple rapid syncs are coalesced via REPLACE policy`() {
-        // When - rapid fire sync requests (simulating user making multiple quick changes)
+        // When - rapid requests, as from quick successive edits
         repeat(5) {
             syncScheduler.requestExpeditedSync(forceFullSync = false)
         }
@@ -92,11 +91,10 @@ class ImmediatePushIntegrationTest {
         // When
         syncScheduler.requestExpeditedSync(forceFullSync = false)
 
-        // Then - verify work was created (constraints are internal to WorkRequest)
+        // Then - the work is enqueued or running. The network constraint itself isn't
+        // checked, though `WorkInfo.constraints` exposes it.
         val workInfos = workManager.getWorkInfosForUniqueWork(SyncScheduler.EXPEDITED_SYNC_WORK).get()
         assertEquals(1, workInfos.size)
-        // Note: We can't directly inspect constraints via WorkInfo API,
-        // but we verify the work is created correctly
         assertTrue(workInfos[0].state == WorkInfo.State.ENQUEUED || workInfos[0].state == WorkInfo.State.RUNNING)
     }
 
@@ -105,7 +103,7 @@ class ImmediatePushIntegrationTest {
         // When - request with forceFullSync = true
         syncScheduler.requestExpeditedSync(forceFullSync = true)
 
-        // Then - work is enqueued (input data is internal)
+        // Then - work is enqueued; WorkInfo doesn't expose input data, so the flag isn't checked
         val workInfos = workManager.getWorkInfosForUniqueWork(SyncScheduler.EXPEDITED_SYNC_WORK).get()
         assertEquals(1, workInfos.size)
         assertTrue(workInfos[0].tags.contains(SyncScheduler.TAG_EXPEDITED))

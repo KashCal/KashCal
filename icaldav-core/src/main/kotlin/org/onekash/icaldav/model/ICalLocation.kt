@@ -1,13 +1,10 @@
 package org.onekash.icaldav.model
 
 /**
- * VLOCATION component per RFC 9073 Section 6.1.
- * Provides structured location information for events.
+ * Holds one VLOCATION component (RFC 9073 §7.2): a venue or related service such as parking,
+ * with optional coordinates, address and URL. The parser and generator don't read or write it.
  *
- * VLOCATION allows rich venue details including geographic coordinates,
- * structured addresses, and virtual location URLs.
- *
- * Example iCalendar format:
+ * Example:
  * ```
  * BEGIN:VLOCATION
  * UID:location-1
@@ -18,51 +15,43 @@ package org.onekash.icaldav.model
  * END:VLOCATION
  * ```
  *
- * @see <a href="https://tools.ietf.org/html/rfc9073#section-6.1">RFC 9073 Section 6.1</a>
+ * @see <a href="https://tools.ietf.org/html/rfc9073#section-7.2">RFC 9073 Section 7.2</a>
  */
 data class ICalLocation(
-    /** Unique identifier for this location */
+    /** UID property, required by RFC 9073. */
     val uid: String,
 
-    /** Human-readable name (e.g., "Conference Room A") */
+    /** NAME property, for example "Conference Room A". */
     val name: String? = null,
 
-    /** Full address or description */
+    /** DESCRIPTION property, for example a full address. */
     val description: String? = null,
 
-    /** Geographic coordinates */
+    /** GEO property. */
     val geo: GeoCoordinates? = null,
 
-    /** Location types (INDOOR, OUTDOOR, ONLINE, etc.) */
+    /** LOCATION-TYPE values (RFC 9073 §6.1). */
     val locationTypes: List<LocationType> = emptyList(),
 
-    /** URL for more information or virtual location */
+    /** URL for more information, or the address of an online location. */
     val url: String? = null,
 
-    /** Structured address components */
+    /** Postal address parts. */
     val structuredAddress: StructuredAddress? = null
 ) {
-    /**
-     * Check if this is a virtual/online location.
-     */
+    /** Returns whether [locationTypes] contains ONLINE. */
     fun isOnline(): Boolean = locationTypes.contains(LocationType.ONLINE)
 
-    /**
-     * Check if this location has coordinates.
-     */
+    /** Returns whether [geo] is set. */
     fun hasCoordinates(): Boolean = geo != null
 
     companion object {
-        /**
-         * Create a simple location with name.
-         */
+        /** Creates a location with only a name and a UID, random by default. */
         fun simple(name: String, uid: String = java.util.UUID.randomUUID().toString()): ICalLocation {
             return ICalLocation(uid = uid, name = name)
         }
 
-        /**
-         * Create an online/virtual location.
-         */
+        /** Creates an ONLINE location with a name, URL and a UID, random by default. */
         fun online(
             name: String,
             url: String,
@@ -78,24 +67,18 @@ data class ICalLocation(
     }
 }
 
-/**
- * Geographic coordinates for a location.
- */
+/** Latitude and longitude, as in a GEO value. */
 data class GeoCoordinates(
     val latitude: Double,
     val longitude: Double
 ) {
-    /**
-     * Format as iCalendar GEO property value.
-     */
+    /** Returns the GEO value, "latitude;longitude". */
     fun toICalString(): String = "$latitude;$longitude"
 
     companion object {
         /**
-         * Parse from iCalendar GEO property value.
-         *
-         * @param value String in format "latitude;longitude" (e.g., "37.386013;-122.082932")
-         * @return Parsed coordinates or null if invalid
+         * Parses a GEO value such as "37.386013;-122.082932"; null when [value] is null, blank,
+         * not two `;`-separated parts, or not numeric.
          */
         fun parse(value: String?): GeoCoordinates? {
             if (value.isNullOrBlank()) return null
@@ -113,29 +96,24 @@ data class GeoCoordinates(
     }
 }
 
-/**
- * Structured address components.
- * Based on vCard ADR property structure.
- */
+/** Postal address parts, modelled on the vCard ADR property. */
 data class StructuredAddress(
-    /** Street address (e.g., "123 Main Street") */
+    /** Street address, for example "123 Main Street". */
     val streetAddress: String? = null,
 
-    /** City/locality */
+    /** City or locality. */
     val locality: String? = null,
 
-    /** State/province/region */
+    /** State, province or region. */
     val region: String? = null,
 
-    /** Postal/ZIP code */
+    /** Postal or ZIP code. */
     val postalCode: String? = null,
 
-    /** Country name */
+    /** Country name. */
     val country: String? = null
 ) {
-    /**
-     * Format as a single-line address string.
-     */
+    /** Joins the non-blank parts with ", ", street first and country last. */
     fun toDisplayString(): String {
         return listOfNotNull(streetAddress, locality, region, postalCode, country)
             .filter { it.isNotBlank() }
@@ -143,26 +121,24 @@ data class StructuredAddress(
     }
 }
 
-/**
- * Location type per RFC 9073.
- */
+/** LOCATION-TYPE values this library recognizes; RFC 9073 §6.1 draws its values from RFC 4589. */
 enum class LocationType {
-    /** Indoor physical location */
+    /** Indoor physical location. */
     INDOOR,
 
-    /** Outdoor physical location */
+    /** Outdoor physical location. */
     OUTDOOR,
 
-    /** Online/virtual location */
+    /** Online location. */
     ONLINE,
 
-    /** Parking area */
+    /** Parking area. */
     PARKING,
 
-    /** Private location (e.g., home office) */
+    /** Private location, for example a home office. */
     PRIVATE,
 
-    /** Public venue */
+    /** Public venue. */
     PUBLIC;
 
     fun toICalString(): String = name

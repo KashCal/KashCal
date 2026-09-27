@@ -10,12 +10,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Pins the device-tag interop honesty copy to its resource key and asserts the
- * English text tells the user the two facts that matter: tags travel over CalDAV
- * sync (and reinstalls), and some device calendars may not preserve them.
+ * Pins the device-tag interop copy to its resource key and asserts the English
+ * text tells the user three facts: tags travel over CalDAV sync, some device
+ * calendars may not keep them, and removing a tag from the list leaves events'
+ * labels. Also caps the tag-management intro at 60 characters.
  *
  * Anchored on the exact resource id rather than a substring scan of strings.xml
- * so it can't pass off some unrelated string that happens to mention "CalDAV".
+ * so it can't pass on an unrelated string that mentions "CalDAV".
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])

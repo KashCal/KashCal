@@ -15,11 +15,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for ICalEventMapper: verifies that icaldav ICalEvent maps correctly
- * to KashCal Event entity.
- *
- * These tests ensure that the icaldav → KashCal mapping is accurate
- * for all supported iCalendar patterns.
+ * Checks that [ICalEventMapper] maps parsed icaldav events onto the Room entity: times and
+ * zones, all-day ends, RRULE and EXDATE, RECURRENCE-ID, status, alarms, organizer, DURATION,
+ * TRANSP, SEQUENCE and X-properties, plus the isException and getImportId helpers and an
+ * empty ICS.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -61,7 +60,7 @@ class ParserComparisonTest {
         assertFalse(entity.isAllDay)
         assertEquals("CONFIRMED", entity.status)
 
-        // Use comparator for comprehensive check
+        // Field-by-field check of everything the comparator covers.
         ParsedEventComparator.assertMappingEquivalent(icalEvent, entity, "simple event")
     }
 
@@ -89,9 +88,8 @@ class ParserComparisonTest {
         assertTrue("Should be all-day", entity.isAllDay)
         assertEquals("All Day Event", entity.title)
 
-        // All-day endTs is adjusted: exclusive → inclusive (minus 1ms)
-        // Original DTEND is 20231216 (start of Dec 16)
-        // Entity endTs should be last millisecond of Dec 15
+        // All-day DTEND is exclusive: DTEND 20231216 is the start of Dec 16, and the entity
+        // stores 1 ms earlier, the last millisecond of Dec 15.
         assertTrue(entity.endTs < icalEvent.dtEnd!!.timestamp)
     }
 
@@ -125,7 +123,7 @@ class ParserComparisonTest {
 
     @Test
     fun `monthly by setpos maps correctly to entity`() {
-        // Second Tuesday of every month
+        // Second Tuesday of every month.
         val ical = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -171,11 +169,9 @@ class ParserComparisonTest {
 
         val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
-        // RECURRENCE-ID → originalInstanceTime
         assertNotNull("originalInstanceTime should be set", entity.originalInstanceTime)
         assertEquals(icalEvent.recurrenceId!!.timestamp, entity.originalInstanceTime)
 
-        // importId should contain RECID
         assertTrue("importId should contain RECID", entity.importId!!.contains("RECID"))
 
         ParsedEventComparator.assertMappingEquivalent(icalEvent, entity, "exception event")
@@ -206,11 +202,10 @@ class ParserComparisonTest {
         val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
         assertNotNull("exdate should be mapped", entity.exdate)
-        // EXDATEs stored as comma-separated timestamps
+        // EXDATEs are stored as comma-separated epoch milliseconds.
         val exdates = entity.exdate!!.split(",")
         assertEquals("Should have 2 EXDATEs", 2, exdates.size)
 
-        // Timestamps should match
         val icalExdates = icalEvent.exdates.map { it.timestamp.toString() }
         exdates.forEach { ts ->
             assertTrue("EXDATE $ts should be in parsed list", icalExdates.contains(ts))
@@ -238,10 +233,8 @@ class ParserComparisonTest {
 
         val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
-        // UTC times have no timezone ID
         assertNull("UTC event should have null timezone", entity.timezone)
 
-        // Timestamps should match exactly
         assertEquals(icalEvent.dtStart.timestamp, entity.startTs)
         assertEquals(icalEvent.dtEnd!!.timestamp, entity.endTs)
     }
@@ -374,7 +367,7 @@ class ParserComparisonTest {
         assertEquals(2, entity.reminders!!.size)
         assertEquals(2, entity.alarmCount)
 
-        // Verify trigger durations are mapped
+        // Reminders are stored as the TRIGGER durations.
         assertTrue(entity.reminders!!.any { it == "-PT30M" })
         assertTrue(entity.reminders!!.any { it == "-PT5M" })
     }
@@ -426,7 +419,7 @@ class ParserComparisonTest {
 
         val entity = ICalEventMapper.toEntity(icalEvent, ical, 1L, null, null).event
 
-        // endTs should be startTs + 2 hours
+        // With DURATION and no DTEND, endTs is DTSTART plus the duration.
         val expectedEndTs = entity.startTs + 2 * 60 * 60 * 1000
         assertEquals(expectedEndTs, entity.endTs)
     }

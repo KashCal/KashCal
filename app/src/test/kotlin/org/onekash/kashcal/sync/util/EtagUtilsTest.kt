@@ -5,15 +5,8 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * Unit tests for EtagUtils.normalizeEtag().
- *
- * Tests RFC 7232 ETag normalization:
- * - null/blank input
- * - Quoted etags
- * - Weak etags (W/ prefix)
- * - XML entity encoded quotes
- * - Whitespace trimming
- * - Edge cases (single char, empty quotes)
+ * Tests [EtagUtils.normalizeEtag] (RFC 7232 etags): null and blank input, plain, quoted and weak
+ * (`W/`) etags, `&quot;` entity quotes, whitespace trimming, a single character and empty quotes.
  */
 class EtagUtilsTest {
 

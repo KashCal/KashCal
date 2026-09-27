@@ -11,9 +11,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for ColorPickerSheet color conversion utilities.
- *
- * Uses Robolectric for android.graphics.Color access.
+ * Unit tests for the color helpers in ColorPickerSheet.kt: hue, ARGB and hex conversions, hex
+ * validation, round trips, and the bands of [hueToColorName]. Robolectric supplies
+ * `android.graphics.Color`, which [hueToArgb] and [colorToHue] call.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -258,7 +258,7 @@ class ColorPickerSheetTest {
 
     @Test
     fun `hueToColorName - boundary values`() {
-        // Test boundary between colors
+        // 15 starts the Orange band and 45 the Yellow band.
         assertEquals("Red", hueToColorName(14f))
         assertEquals("Orange", hueToColorName(15f))
         assertEquals("Orange", hueToColorName(44f))

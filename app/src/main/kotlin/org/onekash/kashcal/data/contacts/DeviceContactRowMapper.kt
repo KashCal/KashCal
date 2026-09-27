@@ -28,53 +28,43 @@ import org.onekash.vcard.model.Phone as VPhone
 import org.onekash.vcard.model.Relation as VRelation
 
 /**
- * Reads the Contacts Provider Data rows of a single aggregated contact back into the
- * neutral [Contact] model — the exact inverse of [VCardContactMapper].
+ * Reads the Contacts Provider Data rows of one RawContact back into the neutral [Contact]
+ * model, the inverse of [VCardContactMapper].
  *
- * Deliberately pure: it consumes an already-materialized `List<ContentValues>` (one
- * per Data row) and touches no ContentResolver, Cursor, or Binder. The provider read
- * that produces those rows lives in the write/sync layer under `sync/contacts/`; this
- * mapper is just the row→model transform, so it is unit-testable with plain
- * [ContentValues] and carries no provider-write marker.
+ * It is pure: it takes the rows as `List<ContentValues>` and touches no ContentResolver,
+ * Cursor or Binder. The provider read that produces them lives under `sync/contacts/`.
  *
- * ## Faithful inverse on the forward image
+ * ## Inverse on the forward image
  *
- * The forward mapper is lossy on a few sub-facets (it collapses each vCard `TYPE`
- * token list onto one provider constant, drops photo `contentType`/URL, keeps only the
- * first preferred value per mimetype, and retains anniversary text only as a date).
- * This mapper is the inverse ON THE FORWARD IMAGE: `reverse(forward(x))` is a fixed
- * point (proven for every fixture in the test), and it is facet-equal to
- * [org.onekash.vcard.VCardParser]'s neutral representation for the losslessly
- * round-tripping facets.
+ * [VCardContactMapper] loses some detail: it collapses each vCard `TYPE` list onto one provider
+ * constant, drops the photo `contentType` and URL, keeps one preferred value per mimetype, and
+ * keeps birthday and anniversary text only when it parses as a date. This mapper inverts that
+ * image: `reverse(forward(x))` is a fixed point (`DeviceContactRowMapperTest`, every fixture), and
+ * it equals [org.onekash.vcard.VCardParser]'s model on the facets that round-trip losslessly.
  *
- * It is NOT facet-equal on the forward-lossy sub-facets — most notably the secondary
- * `TYPE` tokens on email/phone (`INTERNET`, `VOICE`) the provider can't store. Because
- * [org.onekash.vcard.VCardWriter] diffs email/phone at full structural equality, the
- * first write after a reverse map regenerates those lines to their device-canonical
- * form; they then converge (the server holds the narrowed form, which reverse-maps to
- * itself). Photo is exempt from this churn: the writer diffs the photo on its bytes/URL
- * and ignores the unrecoverable `contentType`, so a device-sourced photo is not rewritten
- * or relabeled on a no-edit round trip.
+ * It differs on the lossy facets, such as the email and phone `TYPE` tokens the provider
+ * can't store (`INTERNET`, `VOICE`). [org.onekash.vcard.VCardWriter] compares emails and
+ * phones by full equality, so the first write after a reverse map rewrites those lines in the
+ * device's form; the server then holds a form that reverse-maps to itself, so they converge.
+ * The photo doesn't churn: the writer compares its bytes and URL and ignores `contentType`,
+ * so a device-sourced photo isn't rewritten on a no-edit round trip.
  *
- * ## Identity fields are not on Data rows
+ * ## Fields not on Data rows
  *
- * `uid`, `version`, `kind`, and `rawVCard` live on the RawContact SYNC columns, not the
- * Data rows, so they are supplied by the caller (the sync layer reads them off the
- * RawContact; tests pass the parsed originals). Everything else is reconstructed from
- * the rows.
+ * `uid`, `version`, `kind` and `rawVCard` aren't on Data rows, so the caller supplies them.
+ * The sync layer passes only the UID (from SYNC1); the rest keep their defaults, and the push
+ * writes the body at the address book's version.
  */
 object DeviceContactRowMapper {
 
     /**
-     * Reconstruct a [Contact] from the [dataRows] of one RawContact. [uid], [version],
-     * [kind], and [rawVCard] are RawContact-level identity fields not stored on Data
-     * rows; callers supply them (defaults suit row-only unit tests).
+     * Rebuilds a [Contact] from the [dataRows] of one RawContact; [uid], [version], [kind] and
+     * [rawVCard] come from the caller (see the class doc).
      *
-     * [groupTitlesById] maps a local `Groups._ID` to its title, letting a
-     * `GroupMembership` row that carries only a `GROUP_ROW_ID` (the People app leaves
-     * `GROUP_SOURCE_ID` blank for a user-created label) resolve to a category. It is
-     * likewise supplied by the caller (the sync layer reads the account's groups once
-     * per scan); the empty default degrades to `GROUP_SOURCE_ID`-only categories.
+     * [groupTitlesById] maps a local `Groups._ID` to its title, so a `GroupMembership` row with
+     * only a `GROUP_ROW_ID` resolves to a category (the People app leaves `GROUP_SOURCE_ID`
+     * blank for a user-created label). The sync layer reads the account's groups once per
+     * scan; with the empty default only `GROUP_SOURCE_ID` categories resolve.
      */
     fun toContact(
         dataRows: List<ContentValues>,
@@ -88,8 +78,7 @@ object DeviceContactRowMapper {
 
         val nameRow = byMime[StructuredName.CONTENT_ITEM_TYPE]?.firstOrNull()
         val structuredName = structuredName(nameRow)
-        // FN is stored on DISPLAY_NAME; fall back to the N-derived form (matching the
-        // parser, which derives displayName from N when the body carried no FN).
+        // FN is stored as DISPLAY_NAME; without it, derive the name from N as the parser does.
         val displayName = nameRow?.getAsString(StructuredName.DISPLAY_NAME).blankToNull()
             ?: structuredName.toDisplayName()
 
@@ -117,10 +106,9 @@ object DeviceContactRowMapper {
             relations = byMime[Relation.CONTENT_ITEM_TYPE].orEmpty().map(::relation),
             categories = byMime[GroupMembership.CONTENT_ITEM_TYPE].orEmpty()
                 .mapNotNull { row ->
-                    // Prefer a non-blank GROUP_SOURCE_ID (the sync adapter's own groups
-                    // set SOURCE_ID = title). When it is blank — the People-app label
-                    // case, keyed by GROUP_ROW_ID -> local Groups._ID — fall back to the
-                    // supplied title map; a row resolvable by neither is dropped.
+                    // Prefer a non-blank GROUP_SOURCE_ID (this app's groups use the title as
+                    // SOURCE_ID). A People-app label has only GROUP_ROW_ID, looked up in
+                    // the title map; a row resolved by neither is dropped.
                     row.getAsString(GroupMembership.GROUP_SOURCE_ID).blankToNull()
                         ?: row.getAsLong(GroupMembership.GROUP_ROW_ID)?.let { groupTitlesById[it] }
                 }
@@ -149,9 +137,8 @@ object DeviceContactRowMapper {
     private fun email(row: ContentValues): VEmail {
         val type = row.getAsInteger(Email.TYPE)
         val label = row.getAsString(Email.LABEL).blankToNull()
-        // A custom label wins over the type token, exactly as the forward mapper prefers
-        // it; the fixed provider constants otherwise map back to a single canonical token
-        // (TYPE_CUSTOM and any unmapped constant fall through to no token).
+        // A custom label wins, as in the forward mapper; each fixed constant maps back to one
+        // token, and TYPE_CUSTOM or an unmapped constant to none.
         val types = when (type) {
             Email.TYPE_HOME -> listOf("home")
             Email.TYPE_WORK -> listOf("work")
@@ -205,12 +192,10 @@ object DeviceContactRowMapper {
     }
 
     /**
-     * `ORG` = company (COMPANY) followed by the organizational units the forward mapper
-     * joined into DEPARTMENT with "; ". Splitting on that separator is the inverse of
-     * that join and is exact unless a unit itself contained "; " (a documented narrowing
-     * that self-heals under the fixed point). A leading blank ORG component (`ORG:;Unit`)
-     * is likewise not recoverable: the forward mapper drops a blank company before writing,
-     * so there is no COMPANY cell to restore — same forward-loss class, fixed-point-safe.
+     * Rebuilds `ORG` as COMPANY followed by DEPARTMENT split on "; ", the forward mapper's
+     * join. A unit that itself contained "; " comes back split, and a blank leading component
+     * (`ORG:;Unit`) is lost because the forward mapper drops a blank company; both are
+     * forward losses that hold under the fixed point.
      */
     private fun organization(row: ContentValues?): List<String> {
         row ?: return emptyList()
@@ -247,13 +232,12 @@ object DeviceContactRowMapper {
 
     private fun photo(row: ContentValues?): VPhoto? {
         val bytes = row?.getAsByteArray(Photo.PHOTO)?.takeIf { it.isNotEmpty() } ?: return null
-        // The Photo row carries no MIME subtype and never a URL, so those stay null —
-        // matching the forward mapper, which drops contentType and routes URL photos out
-        // of the row set entirely.
+        // The Photo row has no MIME type and no URL, so both stay null; the forward mapper
+        // drops contentType and never puts a URL photo in a row.
         return VPhoto(data = bytes)
     }
 
-    /** First Event row of [type] → its [ContactDate]; ISO date parses to [ContactDate.date], else text. */
+    /** Returns the first [type] Event row's date: an ISO date as [ContactDate.date], else text. */
     private fun eventDate(rows: List<ContentValues>?, type: Int): ContactDate? {
         val start = rows.orEmpty()
             .firstOrNull { it.getAsInteger(Event.TYPE) == type }
@@ -283,11 +267,10 @@ object DeviceContactRowMapper {
     private fun ContentValues.isPrimary(key: String): Boolean = getAsInteger(key) == 1
 
     /**
-     * Keep [pref] on only the first item per list, mirroring the forward mapper, which
-     * honours a single `IS_PRIMARY` per mimetype. A real RawContact can carry `IS_PRIMARY=1`
-     * on several rows of one mimetype (unlike the globally-unique `IS_SUPER_PRIMARY`), so
-     * clamping here keeps `reverse` a fixed point of the forward image — without it the
-     * writer would rewrite the surplus PREF markers on every sync.
+     * Keeps [pref] on only the first preferred item, as the forward mapper sets one `IS_PRIMARY`
+     * per mimetype. A real RawContact can have `IS_PRIMARY=1` on several rows of one mimetype
+     * (unlike the unique `IS_SUPER_PRIMARY`); without the clamp the writer would rewrite the extra
+     * PREF markers on every sync.
      */
     private inline fun <T> List<T>.clampSinglePreferred(pref: (T) -> Boolean, withPref: (T, Boolean) -> T): List<T> {
         var taken = false

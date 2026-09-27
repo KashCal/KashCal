@@ -69,34 +69,28 @@ import org.onekash.kashcal.util.text.formatRemindersFromMinutes
 import org.onekash.kashcal.util.text.shouldOpenExternally
 
 /**
- * Quick view sheet for device calendar events.
+ * Shows the quick view sheet for a device calendar event, in the layout of [EventQuickViewSheet].
  *
- * Shows event details in the same visual style as [EventQuickViewSheet].
- * When the calendar is writable and WRITE_CALENDAR permission is granted,
- * shows Edit/Delete buttons. Otherwise shows Duplicate/Share (read-only mode).
+ * With WRITE_CALENDAR granted on a writable calendar it offers Edit, Delete and a More menu
+ * (Duplicate, Share as text, Export ICS); otherwise Duplicate and Share.
  *
- * @param displayEvent The device calendar event to display
- * @param showEventEmojis Whether to prefix auto-detected emoji to the title
- * @param hasWritePermission Whether WRITE_CALENDAR permission is granted
- * @param isWritableCalendar Whether the calendar allows write access
- * @param onDismiss Called when sheet is dismissed
- * @param onEdit Called to edit all occurrences (or single event if not recurring)
- * @param onEditOccurrence Called to edit just this occurrence (recurring events)
- * @param onDelete Called to delete all occurrences (or single event if not recurring)
- * @param onDuplicate Called to duplicate this event into a KashCal calendar
- * @param onShare Called to share event details as text
- * @param onShareAsCard Called to open the share-as-card sheet (top-right icon)
- * @param showShareCardTooltip True on first appearance to display the
- *   one-shot coach mark on the Share icon. Caller persists dismissal.
- * @param onShareCardTooltipDismissed Invoked when the tooltip should be
- *   marked as displayed (after first show or first tap on the Share icon).
- * @param attendees Existing guests on the event (empty = no guest section).
- * @param isCurrentUserOnList Whether the calendar owner is among [attendees].
- *   When true (and the user isn't the organizer) on a writable calendar, the
- *   RSVP Going/Maybe/Not-going cards are offered and tapping fires [onRsvp].
- * @param onRsvp Fired with the chosen response when the user changes their own
- *   RSVP. No-op affordance when the user has no self row.
- * @param timeFormat Time format preference: "system", "12h", or "24h"
+ * @param showEventEmojis whether to prefix an auto-detected emoji to the title
+ * @param onEdit opens the edit form; for a series the host decides the scope at save
+ * @param onEditOccurrence never called: no button in this sheet uses it
+ * @param onDelete deletes the event. A one-off event asks for an inline confirmation first; a
+ *   series occurrence calls it at once and the host resolves the scope.
+ * @param onDuplicate duplicates this event into a KashCal calendar
+ * @param onShare shares the event details as text
+ * @param onShareAsCard opens the share-as-card sheet (top-right icon)
+ * @param showShareCardTooltip true to show the one-shot coach mark on the Share icon; the caller
+ *   persists its dismissal
+ * @param onShareCardTooltipDismissed called when the tooltip should be marked as shown: after it
+ *   first shows or on the first tap of the Share icon
+ * @param attendees the event's guests; empty shows no guest section
+ * @param isCurrentUserOnList whether the calendar owner is among [attendees]
+ * @param onRsvp called with the chosen response when the user changes their own RSVP. The RSVP
+ *   cards show only on a writable calendar, for a user with a self row who isn't the organizer.
+ * @param timeFormat time format preference: "system", "12h" or "24h"
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -152,10 +146,6 @@ fun DeviceEventQuickViewSheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
-            // Top row beneath the drag handle: calendar dot+name pill on the
-            // left, Share-as-card icon on the right. Mirrors
-            // EventQuickViewSheet's header strip so the device-event sheet
-            // surfaces the same share affordance as the Room sheet.
             ShareAsCardTopRow(
                 calendarColor = displayEvent.calendarColor,
                 calendarName = displayEvent.calendarName,
@@ -167,14 +157,12 @@ fun DeviceEventQuickViewSheet(
                 onTooltipDisplayed = onShareCardTooltipDismissed,
             )
 
-            // Event details with color stripe (same layout as EventQuickViewSheet)
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .height(IntrinsicSize.Min)
             ) {
-                // Left color stripe
                 Box(
                     modifier = Modifier
                         .width(4.dp)
@@ -187,13 +175,11 @@ fun DeviceEventQuickViewSheet(
 
                 Spacer(modifier = Modifier.width(16.dp))
 
-                // Event details
                 SelectionContainer {
                     Column(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
-                        // Title
                         Text(
                             text = displayTitle,
                             style = MaterialTheme.typography.headlineSmall,
@@ -203,7 +189,6 @@ fun DeviceEventQuickViewSheet(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        // Date and time
                         Text(
                             text = formatDeviceEventDateTime(
                                 displayEvent.startTs,
@@ -262,7 +247,6 @@ fun DeviceEventQuickViewSheet(
                             }
                         }
 
-                        // Tags (read-only chips)
                         if (displayEvent.categories.isNotEmpty()) {
                             Row(verticalAlignment = Alignment.Top) {
                                 Icon(
@@ -282,14 +266,14 @@ fun DeviceEventQuickViewSheet(
                             }
                         }
 
-                        // Repeat info
                         if (displayEvent.hasRrule) {
                             val rruleStrings = rememberRruleDisplayStrings()
                             val recurringFallback = stringResource(R.string.cd_recurring)
-                            val repeatText = remember(displayEvent.rrule, rruleStrings) {
+                            val untilZone = RruleBuilder.untilZoneFor(displayEvent.isAllDay, displayEvent.instance.timezone)
+                            val repeatText = remember(displayEvent.rrule, rruleStrings, untilZone) {
                                 displayEvent.rrule?.let { rrule ->
                                     try {
-                                        RruleBuilder.formatForDisplay(rrule, rruleStrings)
+                                        RruleBuilder.formatForDisplay(rrule, rruleStrings, untilZone)
                                     } catch (_: Exception) {
                                         recurringFallback
                                     }
@@ -305,16 +289,10 @@ fun DeviceEventQuickViewSheet(
                 }
             }
 
-            // Guest list (read-only). RSVP is suppressed here — device-event
-            // self-response editing is wired separately; this surfaces the
-            // existing guests so the device sheet matches the Room sheet's
-            // visibility. No section when there are no guests.
             if (attendees.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(12.dp))
-                // Offer the RSVP cards only when the user has a self row on a
-                // writable calendar. InviteesBlock internally hides them for
-                // the organizer and when the user isn't on the list, so a
-                // no-self-row / not-on-list event shows no affordance.
+                // RSVP cards only on a writable calendar; InviteesBlock also hides
+                // them for the organizer and for a user with no self row.
                 org.onekash.kashcal.ui.components.attendees.InviteesBlock(
                     attendees = attendees,
                     isCurrentUserOnList = isCurrentUserOnList,
@@ -327,7 +305,6 @@ fun DeviceEventQuickViewSheet(
                 )
             }
 
-            // Description and reminders section
             if (hasExpandableContent) {
                 DeviceEventDescriptionSection(
                     description = displayEvent.description,
@@ -338,7 +315,6 @@ fun DeviceEventQuickViewSheet(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Action buttons
             DeviceEventActionButtons(
                 canWrite = canWrite,
                 isRecurring = isRecurring,
@@ -360,10 +336,7 @@ fun DeviceEventQuickViewSheet(
     }
 }
 
-/**
- * Action buttons for device event quick view.
- * Shows Edit/Delete when writable, Duplicate/Share when read-only.
- */
+/** Shows Edit, Delete and More when [canWrite], else Duplicate and Share. */
 @Composable
 private fun DeviceEventActionButtons(
     canWrite: Boolean,
@@ -385,7 +358,6 @@ private fun DeviceEventActionButtons(
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         if (!canWrite) {
-            // Read-only: show Duplicate and Share
             FilledTonalButton(
                 onClick = onDuplicate,
                 modifier = Modifier.weight(1f)
@@ -399,10 +371,10 @@ private fun DeviceEventActionButtons(
                 Text(stringResource(R.string.action_share))
             }
         } else {
-            // Writable: Edit / Delete / More. Recurring events route
-            // through the host's scope sheet (which serves as its own
-            // confirmation); non-recurring events use the inline
-            // two-tap pattern since the host commits immediately.
+            // A one-off event takes an inline two-tap confirmation because the
+            // host deletes it at once. A series occurrence skips it: the host's
+            // scope sheet confirms an occurrence of the master, though an
+            // exception is deleted with no confirmation.
             if (!showDeleteConfirmation) {
                 FilledTonalButton(
                     onClick = onEdit,
@@ -501,9 +473,7 @@ private fun DeviceEventActionButtons(
     }
 }
 
-/**
- * Description and reminders section for device events.
- */
+/** Shows the notes, linkified, and the reminders in a scrollable section up to 300 dp tall. */
 @Composable
 private fun DeviceEventDescriptionSection(
     description: String?,
@@ -529,7 +499,6 @@ private fun DeviceEventDescriptionSection(
                 modifier = Modifier.padding(vertical = 4.dp)
             )
 
-            // Notes section (with linkified text)
             if (hasDescription) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -548,7 +517,6 @@ private fun DeviceEventDescriptionSection(
                 }
             }
 
-            // Reminders section
             val resources = LocalResources.current
             val formattedReminders = remember(reminders, resources) {
                 formatRemindersFromMinutes(reminders, resources)
@@ -573,10 +541,7 @@ private fun DeviceEventDescriptionSection(
     }
 }
 
-/**
- * Format date and time for device event display.
- * Uses same formatting as EventQuickViewSheet.
- */
+/** Formats the date and time line the same way as `EventQuickViewSheet.formatEventDateTime`. */
 private fun formatDeviceEventDateTime(
     startTs: Long,
     endTs: Long,

@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -22,11 +23,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import org.onekash.kashcal.R
 import org.onekash.kashcal.di.ApplicationScope
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
-import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.contacts.ContactEventManager
 import org.onekash.kashcal.data.db.entity.Account
@@ -47,10 +48,12 @@ import org.onekash.kashcal.domain.backup.SettingsBackupImporter
 import org.onekash.kashcal.domain.backup.toSummary
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.domain.reader.DeviceEventReader
 import org.onekash.kashcal.domain.reader.SyncLogReader
-import org.onekash.kashcal.domain.writer.EventWriter
+import org.onekash.kashcal.domain.writer.DeviceEventWriter
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveredCalendar
+import org.onekash.kashcal.sync.discovery.DiscoveryErrorReason
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
@@ -77,15 +80,15 @@ import org.onekash.kashcal.ui.shared.maskEmail
 import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.util.UiMessage
-import org.onekash.kashcal.util.importEventsToDeviceCalendar
+import org.onekash.kashcal.ui.util.resolve
 import org.onekash.kashcal.util.maskEmail
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import javax.inject.Inject
 
 private const val TAG = "AccountSettingsVM"
 
-// Maximum time to wait for iCloud discovery (30 seconds)
-// This prevents UI from hanging indefinitely on network issues
+// Per-attempt limit for iCloud and CalDAV sign-in discovery, so a stalled network can't hang the
+// sign-in sheet.
 private const val DISCOVERY_TIMEOUT_MS = 30_000L
 
 // Retry configuration for discovery timeouts
@@ -93,16 +96,13 @@ private const val MAX_DISCOVERY_RETRIES = 2
 private const val DISCOVERY_RETRY_DELAY_MS = 1000L
 
 /**
- * Execute a block with timeout, retrying on timeout.
+ * Runs [block] with a per-attempt timeout, trying again only after a timeout.
  *
- * Only retries on timeout (null result from withTimeoutOrNull).
- * Does NOT retry on errors returned by the block (e.g., auth errors).
+ * A result the block returns, an auth error included, is never retried. A block that returns
+ * null reads as a timeout.
  *
- * @param maxRetries Maximum number of attempts
- * @param timeoutMs Timeout per attempt in milliseconds
- * @param retryDelayMs Delay between retries
- * @param block The suspend block to execute
- * @return Result from block, or null if all attempts timed out
+ * @param maxRetries total attempts, the first one included
+ * @return the block's result, or null if every attempt timed out
  */
 private suspend fun <T> withRetryOnTimeout(
     maxRetries: Int = MAX_DISCOVERY_RETRIES,
@@ -120,15 +120,10 @@ private suspend fun <T> withRetryOnTimeout(
 }
 
 /**
- * ViewModel for AccountSettingsScreen.
- * Manages account connection, calendar settings, and user preferences.
- *
- * Wires UI components to backend services:
- * - AccountRepository for account and credential operations
- * - EventCoordinator for calendar data (follows architecture pattern)
- * - UserPreferencesRepository for user settings
- * - SyncScheduler for sync scheduling
- * - SyncLogReader for debug logs
+ * Holds the state and actions of the settings screens that `SettingsActivity` hosts through
+ * [org.onekash.kashcal.ui.screens.SettingsRoute]: iCloud and CalDAV sign-in and account detail,
+ * calendar visibility, ICS subscriptions, contact birthdays, anniversaries and contact sync,
+ * device calendars, display, sync and reminder preferences, and settings backup.
  */
 @HiltViewModel
 class AccountSettingsViewModel @Inject constructor(
@@ -138,11 +133,11 @@ class AccountSettingsViewModel @Inject constructor(
     private val discoveryService: AccountDiscoveryService,
     private val calDavDiscoveryService: CalDavAccountDiscoveryService,
     private val eventCoordinator: EventCoordinator,
-    private val eventWriter: EventWriter,
     private val syncLogReader: SyncLogReader,
     private val contactEventManager: ContactEventManager,
     private val calendarProviderManager: CalendarProviderManager,
-    private val calendarProviderRepository: CalendarProviderRepository,
+    private val deviceEventReader: DeviceEventReader,
+    private val deviceEventWriter: DeviceEventWriter,
     private val dataStore: KashCalDataStore,
     private val widgetUpdateManager: WidgetUpdateManager,
     private val deviceCalendarReminderScheduler: org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler,
@@ -153,7 +148,6 @@ class AccountSettingsViewModel @Inject constructor(
     @ApplicationScope private val applicationScope: CoroutineScope,
 ) : ViewModel() {
 
-    // Account connection state
     private val _uiState = MutableStateFlow(AccountSettingsUiState(isLoading = true))
     val uiState: StateFlow<AccountSettingsUiState> = _uiState.asStateFlow()
 
@@ -162,18 +156,19 @@ class AccountSettingsViewModel @Inject constructor(
     private var passwordInput = ""
     private var showHelpState = false
 
-    // Initial setup mode - when true, auto-navigate back to HomeScreen after sign-in
+    // Set when launched from onboarding: a successful iCloud sign-in finishes the activity back to
+    // HomeScreen instead of showing the success sheet.
     private var isInitialSetup = false
 
-    // CalDAV state variables for two-phase discovery flow
+    // CalDAV sign-in sheet input
     private var calDavServerUrl = ""
     private var calDavDisplayName = ""
-    private var calDavDisplayNameManuallyEdited = false  // Track if user has manually edited
+    private var calDavDisplayNameManuallyEdited = false  // Stops the name auto-fill
     private var calDavUsername = ""
     private var calDavPassword = ""
     private var calDavTrustInsecure = false
-    private var validateDisplayNameJob: Job? = null  // Debounced validation job
-    // Discovered data from phase 1 (needed for phase 2)
+    private var validateDisplayNameJob: Job? = null  // Debounced display-name uniqueness check
+    // Last discovery's result; written and cleared, never read.
     private var calDavDiscoveredPrincipalUrl: String? = null
     private var calDavDiscoveredCalendarHomeUrl: String? = null
     private var calDavDiscoveredCalendars: List<DiscoveredCalendar> = emptyList()
@@ -198,8 +193,8 @@ class AccountSettingsViewModel @Inject constructor(
     private val _writableDeviceCalendarGroups = MutableStateFlow<List<CalendarGroup>>(emptyList())
     val writableDeviceCalendarGroups: StateFlow<List<CalendarGroup>> = _writableDeviceCalendarGroups.asStateFlow()
 
-    // ICS Subscriptions — exposed [subscriptions] filters out the row in the
-    // delete-with-undo window so it disappears immediately on swipe (issue #133).
+    // ICS subscriptions. [subscriptions] leaves out the row in its delete-with-undo window, so it
+    // disappears on swipe (issue #133).
     private val _subscriptionsRaw = MutableStateFlow<List<IcsSubscriptionUiModel>>(emptyList())
     private val _pendingSubscriptionDeletionId = MutableStateFlow<Long?>(null)
     val subscriptions: StateFlow<List<IcsSubscriptionUiModel>> =
@@ -232,9 +227,8 @@ class AccountSettingsViewModel @Inject constructor(
     private val _defaultEventDuration = MutableStateFlow(KashCalDataStore.DEFAULT_EVENT_DURATION_MINUTES)
     val defaultEventDuration: StateFlow<Int> = _defaultEventDuration.asStateFlow()
 
-    // Settings search state. Owned exclusively by this ViewModel; sub-screens
-    // never receive a non-empty query. Cleared on navigation away (see the
-    // onCleared override).
+    // Settings search state. SettingsRoute closes search before opening a sub-screen, so
+    // sub-screens never receive a non-empty query.
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
@@ -275,18 +269,16 @@ class AccountSettingsViewModel @Inject constructor(
     private val _hasContactsPermission = MutableStateFlow(false)
     val hasContactsPermission: StateFlow<Boolean> = _hasContactsPermission.asStateFlow()
 
-    // Contact SYNC needs READ + WRITE (it mirrors server contacts onto the
-    // device), unlike the birthday/anniversary reads above which need READ alone.
-    // Kept separate so a read-granted/write-denied login doesn't flip the sync
-    // toggle on without ever requesting WRITE.
+    // Contact sync needs READ and WRITE (it writes server contacts to the device); the birthday
+    // and anniversary reads above need READ alone. Kept separate so a read-granted, write-denied
+    // login doesn't turn the sync toggle on without ever requesting WRITE.
     private val _hasContactsSyncPermission = MutableStateFlow(false)
     val hasContactsSyncPermission: StateFlow<Boolean> = _hasContactsSyncPermission.asStateFlow()
 
     /**
-     * True when a background contact sync was skipped because WRITE_CONTACTS was
-     * revoked. Drives the inline re-grant affordance in the account detail sheet.
-     * App-global because WRITE_CONTACTS is a single app-wide runtime permission,
-     * not per-account.
+     * Drives the inline re-grant row in the account detail sheet; the conditions that set and
+     * clear it are on [KashCalDataStore.contactSyncPermissionNeeded]. App-global because the
+     * contacts permissions are app-wide, not per account.
      */
     val contactSyncPermissionNeeded: StateFlow<Boolean> =
         dataStore.contactSyncPermissionNeeded.stateIn(
@@ -295,19 +287,20 @@ class AccountSettingsViewModel @Inject constructor(
             initialValue = false
         )
 
-    // Local-network permission (Android 17+): resolved by the Activity (needs
-    // rationale read) and pushed here so the sign-in sheet can proactively ask
-    // for LAN servers. Defaults to NotRequired so pre-37 OS never shows anything.
+    // Local-network permission (Android 17+): resolved by the host, which needs the activity for
+    // the rationale read, and pushed here so the CalDAV sign-in sheet and the add-subscription
+    // dialog can ask up front for LAN servers. Defaults to NotRequired so an OS before API 37
+    // never shows anything.
     private val _localNetworkPermissionState =
         MutableStateFlow<LocalNetworkPermissionState>(LocalNetworkPermissionState.NotRequired)
     val localNetworkPermissionState: StateFlow<LocalNetworkPermissionState> =
         _localNetworkPermissionState.asStateFlow()
 
-    // Set when a discovery attempt fails in a way that looks like a blocked LAN
-    // socket (permission required-but-ungranted). Drives the sign-in banner even
-    // when the URL string isn't recognizably local (bare hostname / custom
-    // domain), so the user still gets the Allow-access affordance, not just an
-    // error message. Reset at the start of each discovery attempt.
+    // Set when a discovery attempt fails while the permission is required but not granted, which
+    // looks like a blocked LAN socket. Drives the sign-in banner even when the URL isn't
+    // recognizably local (a bare hostname or custom domain), so the user gets the Allow-access
+    // action and not only an error message. Reset at the start of each attempt, when the sheet
+    // closes and when the permission is granted.
     private val _localNetworkHintActive = MutableStateFlow(false)
     val localNetworkHintActive: StateFlow<Boolean> = _localNetworkHintActive.asStateFlow()
 
@@ -321,7 +314,7 @@ class AccountSettingsViewModel @Inject constructor(
     private val _hasWriteCalendarPermission = MutableStateFlow(false)
     val hasWriteCalendarPermission: StateFlow<Boolean> = _hasWriteCalendarPermission.asStateFlow()
 
-    // Legacy alias for backward compatibility
+    // Legacy alias of [hasReadCalendarPermission]
     val hasCalendarPermission: StateFlow<Boolean> = _hasReadCalendarPermission.asStateFlow()
 
     private val _deviceCalendars = MutableStateFlow<List<DeviceCalendar>>(emptyList())
@@ -345,17 +338,17 @@ class AccountSettingsViewModel @Inject constructor(
     val timeFormat: StateFlow<String> = _timeFormat.asStateFlow()
 
     /**
-     * Current app theme choice, derived from the stored theme string. A cold flow (not stateIn):
-     * the activity seeds the first frame with a synchronous read and collects this, whose first
-     * emission is the same stored value — so there's no flash of the default theme on cold start.
+     * Emits the app theme choice, derived from the stored theme string. A cold flow, not stateIn:
+     * the activity seeds the first frame with a synchronous read and this flow's first emission is
+     * the same stored value, so there's no flash of the default theme on cold start.
      */
     val themeMode: Flow<ThemeMode> = dataStore.theme
         .map { ThemeMode.fromPrefValue(it) }
 
     /**
-     * Where app + widget colors come from (dynamic Material You vs. accent seed). Combines the
-     * explicit stored source with the legacy theme string so users who had picked the retired
-     * "teal" theme land on the seed path (their brand color is preserved via the seed default).
+     * Emits where app and widget colors come from, dynamic Material You or the accent seed;
+     * [UserPreferencesRepository.resolvedColorSource] maps a retired "teal" theme to the seed,
+     * whose default keeps the brand color.
      */
     val colorSource: Flow<ColorSource> = userPreferences.resolvedColorSource
 
@@ -388,8 +381,9 @@ class AccountSettingsViewModel @Inject constructor(
     private val _backupRestoreState = MutableStateFlow<BackupRestoreUiState>(BackupRestoreUiState.Idle)
     val backupRestoreState: StateFlow<BackupRestoreUiState> = _backupRestoreState.asStateFlow()
 
-    // Backup JSON prepared in-memory between the VM building it and the SAF writer consuming it.
-    // VM-scoped so it survives Activity config changes (e.g., rotation while the SAF picker is up).
+    // Backup JSON held in memory between [prepareExport] and the SAF writer consuming it.
+    // ViewModel-scoped so it survives a configuration change, such as rotation while the SAF
+    // picker is up.
     @Volatile
     private var pendingExportJson: String? = null
 
@@ -466,20 +460,17 @@ class AccountSettingsViewModel @Inject constructor(
             }.collect { (calendarList, groups) ->
                 _calendars.value = calendarList
                 _calendarGroups.value = groups
-                // Note: iCloud calendar count is now observed separately via observeICloudCalendarCount()
             }
         }
     }
 
     /**
-     * Observe iCloud calendar count separately.
-     * Uses JOIN query to count only calendars where account.provider = "icloud".
-     * Fixes bug where local calendars were incorrectly included in the count.
+     * Keeps the Connected iCloud state's calendar count live. The count joins on the account's
+     * provider, so local calendars aren't counted.
      */
     private fun observeICloudCalendarCount() {
         viewModelScope.launch {
             eventCoordinator.getICloudCalendarCount().collect { count ->
-                // Update calendar count in Connected state
                 val currentState = _uiState.value
                 val iCloudState = currentState.iCloudState
                 if (iCloudState is ICloudConnectionState.Connected) {
@@ -491,9 +482,6 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Observe CalDAV account count.
-     */
     private fun observeCalDavAccountCount() {
         viewModelScope.launch {
             eventCoordinator.getCalDavAccountCount().collect { count ->
@@ -503,13 +491,12 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Observe CalDAV accounts and populate the list for Settings UI.
-     * Maps Account entities to CalDavAccountUiModel with calendar counts.
+     * Maps CalDAV accounts to [CalDavAccountUiModel] rows with calendar counts. Counts are read
+     * when the account list emits, so a calendar change alone doesn't refresh them.
      */
     private fun observeCalDavAccounts() {
         viewModelScope.launch {
             eventCoordinator.getCalDavAccounts().collect { accounts ->
-                // Map accounts to UI models with calendar counts
                 val uiModels = accounts.map { account ->
                     val calendarCount = eventCoordinator.getCalendarCountForAccount(account.id)
                     CalDavAccountUiModel(
@@ -529,7 +516,6 @@ class AccountSettingsViewModel @Inject constructor(
     private fun observeIcsSubscriptions() {
         viewModelScope.launch {
             eventCoordinator.getAllIcsSubscriptions().collect { entities ->
-                // Map entity to UI model
                 val mapped = entities.map { entity ->
                     IcsSubscriptionUiModel(
                         id = entity.id,
@@ -545,9 +531,8 @@ class AccountSettingsViewModel @Inject constructor(
                 }
                 _subscriptionsRaw.value = mapped
 
-                // If the pending row vanished externally (server-side delete
-                // arrived during the undo window), clear pending so a stray
-                // settle doesn't try to re-delete a non-existent row.
+                // The pending row vanished from the database during the undo window: clear
+                // pending so a later settle doesn't delete a row that no longer exists.
                 val pending = _pendingSubscriptionDeletionId.value
                 if (pending != null && mapped.none { it.id == pending }) {
                     _pendingSubscriptionDeletionId.value = null
@@ -560,7 +545,6 @@ class AccountSettingsViewModel @Inject constructor(
 
     private fun observeContactBirthdays() {
         viewModelScope.launch {
-            // Observe enabled state
             dataStore.contactBirthdaysEnabled.collect { enabled ->
                 _contactBirthdaysEnabled.value = enabled
             }
@@ -572,13 +556,12 @@ class AccountSettingsViewModel @Inject constructor(
             }
         }
         viewModelScope.launch {
-            // Observe birthday reminder setting
             dataStore.birthdayReminder.collect { reminder ->
                 _contactBirthdaysReminder.value = reminder
             }
         }
         viewModelScope.launch {
-            // Load initial color from calendar (if exists)
+            // Seed the color from the birthdays calendar when it exists
             val color = eventCoordinator.getContactBirthdaysColor()
             if (color != null) {
                 _contactBirthdaysColor.value = color
@@ -646,8 +629,8 @@ class AccountSettingsViewModel @Inject constructor(
 
     private suspend fun loadDeviceCalendars() {
         try {
-            calendarProviderRepository.pruneStaleCalendarIds(dataStore)
-            val calendars = calendarProviderRepository.getDeviceCalendars()
+            deviceEventWriter.pruneStaleCalendarIds()
+            val calendars = deviceEventReader.getDeviceCalendars()
             _deviceCalendars.value = calendars
         } catch (e: SecurityException) {
             Log.w(TAG, "Calendar permission revoked", e)
@@ -678,7 +661,7 @@ class AccountSettingsViewModel @Inject constructor(
                 _defaultEventDuration.value = prefs.defaultEventDuration
             }
         }
-        // Observe new format DefaultCalendar
+        // The DefaultCalendar format, which covers Room and device calendars
         viewModelScope.launch {
             userPreferences.defaultCalendar.collect { default ->
                 _defaultCalendar.value = default
@@ -749,26 +732,22 @@ class AccountSettingsViewModel @Inject constructor(
 
     // ==================== Settings search ====================
 
-    /** Open the inline search bar; query starts empty. */
+    /** Opens the inline search bar with an empty query. */
     fun onSearchOpen() {
         _isSearchActive.value = true
         _searchQuery.value = ""
     }
 
-    /** Update the active query as the user types. */
     fun onSearchQueryChange(query: String) {
         _searchQuery.value = query
     }
 
-    /** Close the search bar and clear the query. */
+    /** Closes the search bar and clears the query. */
     fun onSearchClose() {
         _isSearchActive.value = false
         _searchQuery.value = ""
     }
 
-    /**
-     * Update the show event emojis preference.
-     */
     fun setShowEventEmojis(show: Boolean) {
         viewModelScope.launch {
             dataStore.setShowEventEmojis(show)
@@ -787,10 +766,7 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Update the time format preference.
-     * Also triggers widget refresh since widgets display times.
-     */
+    /** Stores the time format and refreshes the widgets, which show times. */
     fun setTimeFormat(format: String) {
         viewModelScope.launch {
             dataStore.setTimeFormat(format)
@@ -798,9 +774,6 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Update the first day of week preference.
-     */
     fun setFirstDayOfWeek(day: Int) {
         viewModelScope.launch {
             dataStore.setFirstDayOfWeek(day)
@@ -810,31 +783,22 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Update the show week numbers preference.
-     */
     fun setShowWeekNumbers(show: Boolean) {
         viewModelScope.launch {
             dataStore.setShowWeekNumbers(show)
-            // The month widget's week-number gutter is driven by this preference, so refresh the
-            // widgets immediately rather than on the next periodic tick.
+            // The month widget's week-number gutter follows this preference, so refresh the
+            // widgets now instead of on the next periodic update.
             widgetUpdateManager.updateAllWidgets("week_numbers_changed")
         }
     }
 
-    /**
-     * Update the show-multi-day-timed-events-in-all-day-strip preference.
-     */
     fun setShowMultiDayTimedInAllDayStrip(show: Boolean) {
         viewModelScope.launch {
             dataStore.setShowMultiDayTimedInAllDayStrip(show)
         }
     }
 
-    /**
-     * Update the widget max events per day preference.
-     * Also triggers widget refresh since widgets display events.
-     */
+    /** Stores the widget's events-per-day limit and refreshes the widgets. */
     fun setWidgetMaxEventsPerDay(count: Int) {
         viewModelScope.launch {
             dataStore.setWidgetMaxEventsPerDay(count)
@@ -843,8 +807,8 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Update the detailed-widget-rows preference (compact single line vs detailed two lines).
-     * Also triggers widget refresh since it changes how event rows render.
+     * Stores the widget row style, compact single line or detailed two lines, and refreshes the
+     * widgets.
      */
     fun setWidgetDetailedRows(detailed: Boolean) {
         viewModelScope.launch {
@@ -862,24 +826,17 @@ class AccountSettingsViewModel @Inject constructor(
 
     // ==================== Account Actions ====================
 
-    /**
-     * Show the iCloud sign-in sheet.
-     */
     fun showICloudSignInSheet() {
         _uiState.update { it.copy(showICloudSignInSheet = true) }
     }
 
-    /**
-     * Hide the iCloud sign-in sheet.
-     */
     fun hideICloudSignInSheet() {
         _uiState.update { it.copy(showICloudSignInSheet = false) }
     }
 
     /**
-     * Set initial setup mode.
-     * When true, auto-navigate back to HomeScreen after successful sign-in.
-     * Called from SettingsActivity when launched from onboarding.
+     * Makes a successful iCloud sign-in finish the activity back to HomeScreen instead of showing
+     * the success sheet. `SettingsActivity` sets it when onboarding launches it.
      */
     fun setInitialSetupMode(initial: Boolean) {
         isInitialSetup = initial
@@ -917,21 +874,22 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Attempt to sign in with iCloud credentials.
-     * Validates credentials, discovers calendars, creates Account/Calendar entities,
-     * then triggers initial event sync.
+     * Signs in to iCloud: discovers the account and its calendars, which creates the account
+     * and saves its credentials, then requests a full sync of it and schedules periodic sync.
+     * Blank input, a timeout, an auth error or a discovery error returns the sheet to
+     * NotConnected with the message.
      */
     fun onSignIn() {
         viewModelScope.launch {
             _uiState.update { it.copy(iCloudState = ICloudConnectionState.Connecting) }
 
-            // Snapshot input buffer so closure captures stable values, not mutable fields.
-            // Guards against later edits clearing passwordInput before an error branch runs.
+            // Snapshot the input so a later edit clearing passwordInput can't change what an
+            // error branch restores.
             val snappedAppleId = appleIdInput
             val snappedPassword = passwordInput
             val snappedShowHelp = showHelpState
 
-            // Rebuilds iCloud NotConnected with the given error; collapses 4 copy-paste sites.
+            // Rebuilds the NotConnected state from the snapshot with the given error.
             val iCloudNotConnectedWith = { error: UiMessage? ->
                 ICloudConnectionState.NotConnected(
                     appleId = snappedAppleId,
@@ -955,8 +913,6 @@ class AccountSettingsViewModel @Inject constructor(
 
             Log.i(TAG, "Starting iCloud discovery for: ${appleIdInput.trim().maskEmail()}")
 
-            // Discover account and calendars with timeout and retry
-            // Retries on timeout only, not on auth errors
             val result = withRetryOnTimeout {
                 discoveryService.discoverAndCreateAccount(
                     username = appleIdInput.trim(),
@@ -966,7 +922,7 @@ class AccountSettingsViewModel @Inject constructor(
 
             when {
                 result == null -> {
-                    // All retries timed out - network too slow or server unreachable
+                    // Every attempt timed out: network too slow or server unreachable
                     Log.e(TAG, "Discovery timed out after $MAX_DISCOVERY_RETRIES attempts")
                     _uiState.update {
                         it.copy(
@@ -980,13 +936,9 @@ class AccountSettingsViewModel @Inject constructor(
                 result is DiscoveryResult.Success -> {
                     Log.i(TAG, "Discovery successful: ${result.calendars.size} calendars")
 
-                    // Credentials are saved inside ICloudAccountDiscoveryService.
-                    // If we reached here, they were saved successfully.
-
-                    // Clear password from memory
+                    // Discovery saved the credentials; a failed save returns an Error instead.
                     passwordInput = ""
 
-                    // Update state to connected (atomic state update)
                     _uiState.update {
                         it.copy(
                             iCloudState = ICloudConnectionState.Connected(
@@ -995,9 +947,9 @@ class AccountSettingsViewModel @Inject constructor(
                                 lastSyncTime = null,
                                 calendarCount = result.calendars.size
                             ),
-                            showICloudSignInSheet = false, // Close sign-in sheet
-                            // Initial setup: auto-navigate to HomeScreen
-                            // Normal setup: show success sheet
+                            showICloudSignInSheet = false,
+                            // Initial setup finishes back to HomeScreen; otherwise the success
+                            // sheet shows.
                             pendingFinishActivity = isInitialSetup,
                             showAccountConnectedSheet = !isInitialSetup,
                             connectedProviderName = if (!isInitialSetup) "iCloud" else "",
@@ -1006,14 +958,13 @@ class AccountSettingsViewModel @Inject constructor(
                         )
                     }
 
-                    // Trigger initial sync for the new account only (not all accounts)
+                    // Initial sync of the new account only
                     syncScheduler.syncAccount(result.account.id, forceFullSync = true)
 
-                    // Schedule periodic background sync with user's configured interval
+                    // Periodic sync at the configured interval, unless it is manual only
                     val intervalMinutes = userPreferences.syncIntervalMs.first() / (60 * 1000L)
                     if (intervalMinutes > 0 && intervalMinutes != Long.MAX_VALUE / (60 * 1000L)) {
                         syncScheduler.schedulePeriodicSync(intervalMinutes)
-                        // User-friendly format for log
                         val hours = intervalMinutes / 60
                         val displayInterval = if (hours >= 24) "${hours / 24} day(s)" else "$hours hour(s)"
                         Log.d(TAG, "Periodic background sync: every $displayInterval")
@@ -1021,9 +972,8 @@ class AccountSettingsViewModel @Inject constructor(
                 }
 
                 result is DiscoveryResult.AuthError -> {
-                    // TODO: result.message is English-only from the sync layer.
-                    // A future refactor should make DiscoveryResult carry an error-kind
-                    // enum that the UI maps to a localized string; Literal is a bridge.
+                    // TODO: result.message is English-only from the sync layer. Make
+                    // DiscoveryResult carry an error kind the UI maps to a localized string.
                     Log.e(TAG, "Authentication failed: ${result.message}")
                     _uiState.update {
                         it.copy(iCloudState = iCloudNotConnectedWith(UiMessage.Literal(result.message)))
@@ -1033,7 +983,7 @@ class AccountSettingsViewModel @Inject constructor(
                 result is DiscoveryResult.Error -> {
                     Log.e(TAG, "Discovery failed: ${result.message}")
                     _uiState.update {
-                        it.copy(iCloudState = iCloudNotConnectedWith(UiMessage.Literal(result.message)))
+                        it.copy(iCloudState = iCloudNotConnectedWith(discoveryErrorMessage(result)))
                     }
                 }
             }
@@ -1041,29 +991,21 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Sign out from iCloud - clears credentials, removes Account/Calendar entities.
+     * Signs out of iCloud: deletes the account and its data ([AccountRepository.deleteAccount]
+     * lists the cleanup) and resets the whole UI state to NotConnected.
      */
     fun onSignOut() {
         viewModelScope.launch {
             Log.i(TAG, "Signing out from iCloud")
 
-            // Get current account email before clearing
             val icloudAccounts = accountRepository.getAccountsByProvider(AccountProvider.ICLOUD)
             val account = icloudAccounts.firstOrNull()
             val accountEmail = account?.email
 
-            // Remove Account, Calendar, and Event entities from Room
-            // AccountRepository.deleteAccount() handles:
-            // - WorkManager job cancellation (per-account AND shared one-shot;
-            //   plus periodic work once the last syncable account is gone)
-            // - Reminder cancellation
-            // - Credentials deletion
-            // - Cascade delete account → calendars → events
             if (accountEmail != null) {
                 discoveryService.removeAccountByEmail(accountEmail)
             }
 
-            // Reset state
             appleIdInput = ""
             passwordInput = ""
             showHelpState = false
@@ -1077,22 +1019,15 @@ class AccountSettingsViewModel @Inject constructor(
 
     // ==================== CalDAV Account Actions ====================
 
-    /**
-     * Show the CalDAV sign-in sheet.
-     */
     fun showCalDavSignInSheet() {
         _uiState.update { it.copy(showCalDavSignInSheet = true) }
     }
 
-    /**
-     * Hide the CalDAV sign-in sheet and reset state.
-     */
+    /** Hides the CalDAV sign-in sheet and resets its input, discovery and LAN-hint state. */
     fun hideCalDavSignInSheet() {
-        // Cancel pending validation job
         validateDisplayNameJob?.cancel()
         validateDisplayNameJob = null
 
-        // Reset CalDAV state
         calDavServerUrl = ""
         calDavDisplayName = ""
         calDavDisplayNameManuallyEdited = false
@@ -1114,10 +1049,10 @@ class AccountSettingsViewModel @Inject constructor(
 
     fun onCalDavServerUrlChange(serverUrl: String) {
         calDavServerUrl = serverUrl
-        // Auto-populate display name from server URL + username if not manually edited
+        // Auto-fill the display name from server URL and username until the user edits it
         if (!calDavDisplayNameManuallyEdited) {
             calDavDisplayName = generateDefaultDisplayName(serverUrl, calDavUsername)
-            // Clear display name error since name changed
+            // The name changed, so a display-name error no longer applies
             _uiState.update {
                 val current = it.calDavState as? CalDavConnectionState.NotConnected ?: return@update it
                 if (current.errorField == CalDavConnectionState.ErrorField.DISPLAY_NAME) {
@@ -1130,10 +1065,10 @@ class AccountSettingsViewModel @Inject constructor(
 
     fun onCalDavDisplayNameChange(displayName: String) {
         calDavDisplayName = displayName
-        calDavDisplayNameManuallyEdited = true  // User has manually edited
-        updateCalDavNotConnectedState()  // Update state FIRST, before validation job
+        calDavDisplayNameManuallyEdited = true
+        updateCalDavNotConnectedState()  // Before starting the validation job
 
-        // Real-time validation only for manual edits (debounced 300ms)
+        // Uniqueness check for manual edits only, debounced 300 ms
         validateDisplayNameJob?.cancel()
         validateDisplayNameJob = viewModelScope.launch {
             delay(300)
@@ -1149,7 +1084,7 @@ class AccountSettingsViewModel @Inject constructor(
                     ))
                 }
             } else {
-                // Clear error if now valid
+                // Clear a display-name error once the name is valid
                 _uiState.update {
                     val current = it.calDavState as? CalDavConnectionState.NotConnected ?: return@launch
                     if (current.errorField == CalDavConnectionState.ErrorField.DISPLAY_NAME) {
@@ -1162,10 +1097,9 @@ class AccountSettingsViewModel @Inject constructor(
 
     fun onCalDavUsernameChange(username: String) {
         calDavUsername = username
-        // Auto-populate display name from server URL + username if not manually edited
+        // Same display-name auto-fill as [onCalDavServerUrlChange]
         if (!calDavDisplayNameManuallyEdited) {
             calDavDisplayName = generateDefaultDisplayName(calDavServerUrl, username)
-            // Clear display name error since name changed
             _uiState.update {
                 val current = it.calDavState as? CalDavConnectionState.NotConnected ?: return@update it
                 if (current.errorField == CalDavConnectionState.ErrorField.DISPLAY_NAME) {
@@ -1205,8 +1139,10 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Generate default display name from server URL and username.
-     * Format: username@provider or username@hostname_prefix
+     * Builds the default CalDAV display name: `username@Provider` for a known host,
+     * `username@<first host label>` otherwise, or `username@<address>` for an IPv4 host.
+     *
+     * @return "" when the URL or username is blank, the bare username when no host parses
      */
     private fun generateDefaultDisplayName(serverUrl: String, username: String): String {
         if (serverUrl.isBlank() || username.isBlank()) return ""
@@ -1218,7 +1154,6 @@ class AccountSettingsViewModel @Inject constructor(
             return username
         }
 
-        // Known providers get friendly names
         val providerName = when {
             host.contains("fastmail", ignoreCase = true) -> "Fastmail"
             host.contains("nextcloud", ignoreCase = true) -> "Nextcloud"
@@ -1236,7 +1171,6 @@ class AccountSettingsViewModel @Inject constructor(
         return if (providerName != null) {
             "$username@$providerName"
         } else {
-            // IPv4 addresses use full address; hostnames use first part
             val isIpAddress = host.matches(Regex("""^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$"""))
             val hostPart = if (isIpAddress) host else host.split(".").firstOrNull() ?: host
             "$username@$hostPart"
@@ -1244,32 +1178,32 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Discover and connect to CalDAV server.
+     * Connects a CalDAV account from the sign-in sheet:
+     * 1. Checks the inputs are filled and the display name is unused.
+     * 2. Discovers the calendars, with the timeout retry.
+     * 3. With at least one calendar, creates the account with every discovered calendar.
+     * 4. Shows the success sheet, requests a full sync of the account and schedules periodic
+     *    sync unless it is manual only.
      *
-     * Simplified flow (v21.5.0):
-     * 1. Discover calendars from server
-     * 2. Auto-create account with ALL discovered calendars
-     * 3. Show success sheet (or error)
+     * Any failure returns the sheet to NotConnected with the message and, where known, the field.
      */
     fun onCalDavDiscover() {
         viewModelScope.launch {
             Log.i(TAG, "Starting CalDAV discovery for: ${calDavUsername.take(3)}***")
 
-            // Clear any prior blocked-LAN signal; re-set only if this attempt
-            // fails the same way.
+            // Clear the blocked-LAN signal; set again only if this attempt fails the same way.
             _localNetworkHintActive.value = false
 
-            // Snapshot input buffer so closure captures stable values, not mutable fields.
+            // Snapshot the input so the error states below restore what was submitted.
             val snappedServerUrl = calDavServerUrl
             val snappedDisplayName = calDavDisplayName
             val snappedUsername = calDavUsername
             val snappedPassword = calDavPassword
             val snappedTrustInsecure = calDavTrustInsecure
 
-            // Rebuilds CalDav NotConnected with the given error; collapses ~10 copy-paste sites.
-            // Server-provided strings (createResult.message, discoveryResult.message) wrap as
-            // UiMessage.Literal — those are English-only; future refactor should make
-            // DiscoveryResult carry an error-kind enum the UI maps to a localized string.
+            // Rebuilds the NotConnected state from the snapshot with the given error. Service
+            // messages wrap as UiMessage.Literal and are English-only; DiscoveryResult should
+            // carry an error kind the UI maps to a localized string.
             val calDavNotConnectedWith = { error: UiMessage?, errorField: CalDavConnectionState.ErrorField? ->
                 CalDavConnectionState.NotConnected(
                     serverUrl = snappedServerUrl,
@@ -1282,7 +1216,6 @@ class AccountSettingsViewModel @Inject constructor(
                 )
             }
 
-            // Validate inputs
             if (calDavServerUrl.isBlank() || calDavDisplayName.isBlank() || calDavUsername.isBlank() || calDavPassword.isBlank()) {
                 _uiState.update {
                     it.copy(
@@ -1300,7 +1233,6 @@ class AccountSettingsViewModel @Inject constructor(
                 return@launch
             }
 
-            // Validate display name uniqueness
             val effectiveDisplayName = calDavDisplayName.ifBlank {
                 generateDefaultDisplayName(calDavServerUrl, calDavUsername)
             }
@@ -1320,7 +1252,6 @@ class AccountSettingsViewModel @Inject constructor(
                 return@launch
             }
 
-            // Transition to Discovering state
             _uiState.update {
                 it.copy(
                     calDavState = CalDavConnectionState.Discovering(
@@ -1330,7 +1261,6 @@ class AccountSettingsViewModel @Inject constructor(
                 )
             }
 
-            // Discover calendars with timeout/retry
             val discoveryResult = withRetryOnTimeout {
                 calDavDiscoveryService.discoverCalendars(
                     serverUrl = calDavServerUrl,
@@ -1356,7 +1286,6 @@ class AccountSettingsViewModel @Inject constructor(
                 discoveryResult is DiscoveryResult.CalendarsFound -> {
                     Log.i(TAG, "CalDAV discovery successful: ${discoveryResult.calendars.size} calendars")
 
-                    // Check for zero calendars
                     if (discoveryResult.calendars.isEmpty()) {
                         _uiState.update {
                             it.copy(
@@ -1369,13 +1298,11 @@ class AccountSettingsViewModel @Inject constructor(
                         return@launch
                     }
 
-                    // Store discovered data for account creation
                     calDavDiscoveredPrincipalUrl = discoveryResult.principalUrl
                     calDavDiscoveredCalendarHomeUrl = discoveryResult.calendarHomeUrl
                     calDavDiscoveredCalendars = discoveryResult.calendars
                     calDavServerUrl = discoveryResult.serverUrl
 
-                    // Auto-create account with ALL discovered calendars
                     val createResult = calDavDiscoveryService.createAccountWithSelectedCalendars(
                         serverUrl = discoveryResult.serverUrl,
                         username = calDavUsername,
@@ -1383,7 +1310,7 @@ class AccountSettingsViewModel @Inject constructor(
                         trustInsecure = calDavTrustInsecure,
                         principalUrl = discoveryResult.principalUrl,
                         calendarHomeUrl = discoveryResult.calendarHomeUrl,
-                        selectedCalendars = discoveryResult.calendars,  // ALL calendars
+                        selectedCalendars = discoveryResult.calendars,  // every calendar
                         displayName = calDavDisplayName.takeIf { it.isNotBlank() }
                     )
 
@@ -1391,17 +1318,16 @@ class AccountSettingsViewModel @Inject constructor(
                         is DiscoveryResult.Success -> {
                             Log.i(TAG, "CalDAV account created: ${createResult.account.id}")
 
-                            // Clear password from memory
                             calDavPassword = ""
 
-                            // Derive provider name from display name or generated default
+                            // Success-sheet title: the display name or the generated default
                             val providerName = calDavDisplayName.takeIf { it.isNotBlank() }
                                 ?: generateDefaultDisplayName(discoveryResult.serverUrl, calDavUsername).ifBlank { "CalDAV" }
 
-                            // Atomic state update: close sign-in sheet + show success sheet
+                            // One update closes the sign-in sheet and opens the success sheet
                             _uiState.update {
                                 it.copy(
-                                    calDavState = CalDavConnectionState.NotConnected(),  // Reset
+                                    calDavState = CalDavConnectionState.NotConnected(),
                                     showCalDavSignInSheet = false,
                                     showAccountConnectedSheet = true,
                                     connectedProviderName = providerName,
@@ -1410,7 +1336,6 @@ class AccountSettingsViewModel @Inject constructor(
                                 )
                             }
 
-                            // Reset CalDAV input state
                             calDavServerUrl = ""
                             calDavDisplayName = ""
                             calDavDisplayNameManuallyEdited = false
@@ -1420,10 +1345,10 @@ class AccountSettingsViewModel @Inject constructor(
                             calDavDiscoveredCalendarHomeUrl = null
                             calDavDiscoveredCalendars = emptyList()
 
-                            // Trigger initial sync for the new account only (not all accounts)
+                            // Initial sync of the new account only
                             syncScheduler.syncAccount(createResult.account.id, forceFullSync = true)
 
-                            // Schedule periodic sync
+                            // Periodic sync, unless it is manual only
                             val intervalMinutes = userPreferences.syncIntervalMs.first() / (60 * 1000L)
                             if (intervalMinutes > 0 && intervalMinutes != Long.MAX_VALUE / (60 * 1000L)) {
                                 syncScheduler.schedulePeriodicSync(intervalMinutes)
@@ -1435,7 +1360,7 @@ class AccountSettingsViewModel @Inject constructor(
                             _uiState.update {
                                 it.copy(
                                     calDavState = calDavNotConnectedWith(
-                                        UiMessage.Literal(createResult.message),
+                                        discoveryErrorMessage(createResult),
                                         null
                                     )
                                 )
@@ -1470,25 +1395,22 @@ class AccountSettingsViewModel @Inject constructor(
 
                 discoveryResult is DiscoveryResult.Error -> {
                     Log.e(TAG, "CalDAV discovery failed: ${discoveryResult.message}")
-                    // A blocked local-network socket surfaces here; arm the
-                    // Allow-access banner so the user has an action, not just the
-                    // hint text (covers bare hostnames isLanHost can't classify).
+                    // A blocked local-network socket surfaces here. Arm the Allow-access banner
+                    // so the user has an action and not only the hint text; this covers bare
+                    // hostnames `isLanHost` can't classify.
                     if (isDiscoveryFailureBlockedLan()) {
                         _localNetworkHintActive.value = true
                     }
-                    val errorField = when {
-                        discoveryResult.message.contains("URL", ignoreCase = true) ||
-                        discoveryResult.message.contains("server", ignoreCase = true) ->
-                            CalDavConnectionState.ErrorField.SERVER
-                        else -> null
+                    val (message, errorField) = if (discoveryResult.reason != null) {
+                        discoveryErrorMessage(discoveryResult) to CalDavConnectionState.ErrorField.SERVER
+                    } else {
+                        val field = if (discoveryResult.message.contains("URL", ignoreCase = true) ||
+                            discoveryResult.message.contains("server", ignoreCase = true)
+                        ) CalDavConnectionState.ErrorField.SERVER else null
+                        withLanHintIfBlocked(discoveryResult.message) to field
                     }
                     _uiState.update {
-                        it.copy(
-                            calDavState = calDavNotConnectedWith(
-                                withLanHintIfBlocked(discoveryResult.message),
-                                errorField
-                            )
-                        )
+                        it.copy(calDavState = calDavNotConnectedWith(message, errorField))
                     }
                 }
 
@@ -1507,19 +1429,15 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Sign out from a CalDAV account.
-     *
-     * @param accountId The CalDAV account ID to remove
-     */
+    /** Signs out of a CalDAV account: cancels its reminders, then deletes the account. */
     fun onCalDavSignOut(accountId: Long) {
         viewModelScope.launch {
             Log.i(TAG, "Signing out from CalDAV account: $accountId")
 
-            // Cancel reminders before cascade delete
+            // Before the cascade deletes the events the reminders are found by
             eventCoordinator.cancelRemindersForCalDavAccount(accountId)
 
-            // Remove account (credentials + Room entities)
+            // [AccountRepository.deleteAccount] lists the cleanup
             calDavDiscoveryService.removeAccount(accountId)
 
             Log.i(TAG, "CalDAV account $accountId removed")
@@ -1530,14 +1448,13 @@ class AccountSettingsViewModel @Inject constructor(
 
     fun onToggleCalendar(calendarId: Long, visible: Boolean) {
         viewModelScope.launch {
-            // Update via EventCoordinator (source of truth for EventReader, Widget, UI)
+            // The calendar's visible flag is the source of truth for which calendars show
             eventCoordinator.setCalendarVisibility(calendarId, visible)
         }
     }
 
     fun onShowAllCalendars() {
         viewModelScope.launch {
-            // Update via EventCoordinator for each calendar (source of truth)
             _calendars.value.forEach { calendar ->
                 eventCoordinator.setCalendarVisibility(calendar.id, true)
             }
@@ -1546,9 +1463,8 @@ class AccountSettingsViewModel @Inject constructor(
 
     fun onHideAllCalendars() {
         viewModelScope.launch {
-            // Can't hide all calendars - keep first one visible
+            // At least one calendar stays visible: the first one
             val firstCalendarId = _calendars.value.firstOrNull()?.id
-            // Update via EventCoordinator for each calendar (source of truth)
             _calendars.value.forEach { calendar ->
                 eventCoordinator.setCalendarVisibility(calendar.id, calendar.id == firstCalendarId)
             }
@@ -1558,8 +1474,8 @@ class AccountSettingsViewModel @Inject constructor(
     // ==================== Subscription Actions ====================
 
     /**
-     * Open the add subscription dialog with a pre-filled URL.
-     * Used when handling webcal:// deep links.
+     * Opens the add-subscription dialog with [url] filled in; `SettingsActivity` calls it when a
+     * webcal:// link launches it.
      */
     fun openAddSubscriptionWithUrl(url: String) {
         _uiState.update {
@@ -1570,9 +1486,6 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Hide the add subscription dialog and clear any pre-filled URL.
-     */
     fun hideAddSubscriptionDialog() {
         _uiState.update {
             it.copy(
@@ -1583,11 +1496,12 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Add a new ICS calendar subscription.
+     * Adds an ICS subscription and fetches its feed.
      *
-     * @param url The ICS feed URL (supports webcal:// and https://)
-     * @param name Display name for the subscription
-     * @param color Calendar color (ARGB integer)
+     * @param url the feed URL; webcal:// and webcals:// are rewritten to https://
+     * @param color calendar color (ARGB)
+     * @param duplicateUrlMessage snackbar text shown when the URL is already subscribed; null
+     *   shows nothing
      */
     fun onAddSubscription(
         url: String,
@@ -1595,19 +1509,17 @@ class AccountSettingsViewModel @Inject constructor(
         color: Int,
         duplicateUrlMessage: String? = null,
     ) {
-        // applicationScope, not viewModelScope: this fetches the feed and then
-        // brings the periodic refresh job in line with it, and the user may well
-        // close the sheet while the fetch is in flight. On viewModelScope that
-        // cancellation would abandon the mutation part-way and leave the feed
-        // with no refresh job. Same reasoning as commitSubscriptionDeletion.
+        // applicationScope, not viewModelScope: the user may close the sheet while the fetch is
+        // in flight, and cancelling then would abandon the add part-way and leave the feed with
+        // no refresh job. Same reason as [commitSubscriptionDeletion].
         applicationScope.launch {
             Log.i(TAG, "Adding subscription: $url, $name")
 
             when (val result = eventCoordinator.addIcsSubscription(url, name, color)) {
                 is IcsSubscriptionRepository.SubscriptionResult.Success -> {
                     Log.i(TAG, "Subscription added: ${result.subscription.name}")
-                    // Arming the refresh job is the coordinator's job: it owns
-                    // every feed mutation, so no screen can forget to do it.
+                    // The coordinator reconciles the refresh schedule after each subscription
+                    // change it makes, so no screen has to arm the refresh job.
                 }
 
                 is IcsSubscriptionRepository.SubscriptionResult.Error -> {
@@ -1621,29 +1533,22 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Stage an ICS subscription for deletion behind a snackbar with an Undo action.
+     * Stages an ICS subscription for deletion behind a snackbar with an Undo action (issue #133).
      *
-     * Behavior (issue #133):
-     * - The row is filtered out of [subscriptions] immediately.
-     * - The deletion is *not* committed yet — [eventCoordinator.removeIcsSubscription]
-     *   only fires when [onSubscriptionDeletionSettled] is called (snackbar timeout
-     *   or dismissal).
-     * - If a prior pending deletion exists, it is committed before the new one
-     *   is staged (eager-replace semantics; matches Material's "snackbar replaces
-     *   snackbar" UX).
+     * - The row leaves [subscriptions] at once.
+     * - Nothing is deleted until [onSubscriptionDeletionSettled], [onCleared] or the next staged
+     *   deletion commits it.
+     * - A different subscription already pending is committed first, so undo can never
+     *   restore the wrong row.
      *
-     * @param subscriptionId The subscription to remove.
-     * @param removedMessage Pre-localized snackbar message (e.g. "Subscription removed").
-     *   Resolved at the call site so the ViewModel can stay [Context]-free.
-     * @param undoActionLabel Pre-localized action label (e.g. "Undo").
+     * @param removedMessage localized snackbar message, such as "Subscription removed"
+     * @param undoActionLabel localized action label, such as "Undo"
      */
     fun onDeleteSubscription(
         subscriptionId: Long,
         removedMessage: String,
         undoActionLabel: String
     ) {
-        // Eager-replace: settle any prior pending deletion before staging the
-        // new one so the user can never undo the wrong row.
         val prior = _pendingSubscriptionDeletionId.value
         if (prior != null && prior != subscriptionId) {
             Log.i(TAG, "Settling prior pending deletion before staging new: $prior")
@@ -1661,8 +1566,8 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Cancel a pending ICS subscription deletion. No persistent state is changed.
-     * Idempotent: safe to call when no deletion is pending.
+     * Cancels the pending ICS subscription deletion without touching stored data. Idempotent: a
+     * no-op when no deletion is pending.
      */
     fun onUndoSubscriptionDeletion() {
         val pending = _pendingSubscriptionDeletionId.value ?: return
@@ -1673,13 +1578,12 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Commit a pending ICS subscription deletion via the coordinator.
-     * Called by the snackbar host on `Dismissed` (timeout, navigate-away,
-     * snackbar replaced).
+     * Commits the pending ICS subscription deletion. The settings snackbar host calls it on
+     * `Dismissed`; a snackbar cut off by the screen closing reports nothing, which [onCleared]
+     * covers.
      *
-     * Idempotent: a no-op if no deletion is pending. Material 3 may fire
-     * `Dismissed` after `ActionPerformed`; this guard ensures we never commit
-     * after the user undid.
+     * Idempotent: a no-op if no deletion is pending. Material 3 may fire `Dismissed` after
+     * `ActionPerformed`; the guard means a deletion the user undid is never committed.
      */
     fun onSubscriptionDeletionSettled() {
         val pending = _pendingSubscriptionDeletionId.value ?: return
@@ -1691,13 +1595,11 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Commit any pending subscription deletion on ViewModel destruction.
+     * Commits any pending subscription deletion when the ViewModel is destroyed.
      *
-     * The snackbar's `Dismissed` callback is the normal trigger for
-     * [onSubscriptionDeletionSettled], but when the Activity finish()es
-     * mid-undo-window the LaunchedEffect coroutine throws
-     * CancellationException and `Dismissed` is never delivered. This is
-     * the fallback so the deletion still commits (issue #133, v23.7.9).
+     * When the Activity finishes inside the undo window, the snackbar's LaunchedEffect is
+     * cancelled and `Dismissed` never reaches [onSubscriptionDeletionSettled]; this commits the
+     * deletion instead (issue #133, v23.7.9).
      */
     override fun onCleared() {
         val pending = _pendingSubscriptionDeletionId.value
@@ -1705,32 +1607,26 @@ class AccountSettingsViewModel @Inject constructor(
             Log.i(TAG, "Committing pending deletion on ViewModel destruction: $pending")
             commitSubscriptionDeletion(pending)
         }
-        // Clear search so the next ViewModel instance starts with a fresh list.
         onSearchClose()
         super.onCleared()
     }
 
-    /**
-     * Test-only hook for [onCleared]. Kotlin's [ViewModel.onCleared] is
-     * `protected`, so tests can't call it directly without subclassing.
-     */
+    /** Exposes [onCleared] to tests; [ViewModel.onCleared] is `protected`. */
     @androidx.annotation.VisibleForTesting
     internal fun onClearedForTest() = onCleared()
 
     /**
-     * Run the subscription delete on [applicationScope] so it survives
-     * Activity destroy mid-undo-window (issue #133). All commit paths
-     * funnel through here so the scope choice can't drift.
+     * Deletes the subscription on [applicationScope] so the delete survives the Activity being
+     * destroyed inside the undo window (issue #133). Every commit path calls this, so the scope
+     * choice can't drift.
      */
     private fun commitSubscriptionDeletion(subscriptionId: Long) {
         applicationScope.launch { eventCoordinator.removeIcsSubscription(subscriptionId) }
     }
 
     /**
-     * Enable or disable an ICS subscription.
-     *
-     * Runs on [applicationScope] so the mutation and the refresh-schedule update
-     * it triggers survive the settings screen closing.
+     * Enables or disables an ICS subscription on [applicationScope], so the change and the
+     * refresh-schedule update it triggers survive the settings screen closing.
      */
     fun onToggleSubscription(subscriptionId: Long, enabled: Boolean) {
         applicationScope.launch {
@@ -1739,9 +1635,7 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Refresh all ICS subscriptions immediately.
-     */
+    /** Refreshes every enabled ICS subscription now, due or not. */
     fun onSyncAllSubscriptions() {
         viewModelScope.launch {
             _subscriptionSyncing.value = true
@@ -1760,9 +1654,6 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Refresh a single ICS subscription.
-     */
     fun onRefreshSubscription(subscriptionId: Long) {
         viewModelScope.launch {
             Log.i(TAG, "Refreshing subscription: $subscriptionId")
@@ -1771,10 +1662,9 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Update subscription settings (name, color, sync interval).
-     *
-     * Runs on [applicationScope]: a changed sync interval has to reach the
-     * periodic refresh job even if the user backs out of the sheet immediately.
+     * Updates a subscription's name, color and sync interval on [applicationScope]: a changed
+     * interval has to reach the periodic refresh job even if the user backs out of the sheet at
+     * once.
      */
     fun onUpdateSubscription(subscriptionId: Long, name: String, color: Int, syncIntervalHours: Int) {
         applicationScope.launch {
@@ -1786,24 +1676,22 @@ class AccountSettingsViewModel @Inject constructor(
     // ==================== Contact Birthdays ====================
 
     /**
-     * Toggle contact birthdays feature.
-     *
-     * Note: Permission should be checked by the caller before enabling.
-     * If permission is denied, this method should not be called with enabled=true.
+     * Turns contact birthdays on (creates the calendar, syncs it, starts observing contacts) or
+     * off (deletes the calendar; observing stops once anniversaries are off too). The caller must
+     * hold READ_CONTACTS before enabling; without it [ContactEventManager.onBirthdaysEnabled]
+     * turns both contact features back off.
      */
     fun onToggleContactBirthdays(enabled: Boolean) {
         viewModelScope.launch {
             Log.i(TAG, "Toggle contact birthdays: enabled=$enabled")
 
             if (enabled) {
-                // Enable: create calendar + sync in-process + start observer
                 val color = _contactBirthdaysColor.value
                 eventCoordinator.enableContactBirthdays(color)
                 eventCoordinator.syncContactBirthdays()
                 dataStore.setContactBirthdaysEnabled(true)
                 contactEventManager.onBirthdaysEnabled()
             } else {
-                // Disable: delete calendar + stop observer
                 dataStore.setContactBirthdaysEnabled(false)
                 dataStore.setContactBirthdaysLastSync(0L)
                 contactEventManager.onBirthdaysDisabled()
@@ -1813,9 +1701,6 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Update contact birthdays calendar color.
-     */
     fun onContactBirthdaysColorChange(color: Int) {
         viewModelScope.launch {
             Log.i(TAG, "Contact birthdays color change: $color")
@@ -1824,16 +1709,13 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Update birthday reminder setting.
-     *
-     * Persists the preference and — if the birthdays feature is currently
-     * enabled — triggers a sync so every existing event's reminders and
-     * AlarmManager alarms are rewritten to the new value immediately.
-     * The cancel-previous-job guard mirrors [ContactEventObserver]'s
-     * debounce pattern so rapid picker dismissals converge on the last value.
-     */
     private var birthdayReminderJob: Job? = null
+    /**
+     * Stores the birthday reminder and, while birthdays are on, syncs them so every existing
+     * event's reminders and AlarmManager alarms move to the new value now. Each change cancels the
+     * previous job, as [org.onekash.kashcal.data.contacts.ContactEventObserver] does, so rapid
+     * picker dismissals end on the last value.
+     */
     fun onContactBirthdaysReminderChange(minutes: Int) {
         if (_contactBirthdaysReminder.value == minutes) return
         birthdayReminderJob?.cancel()
@@ -1848,11 +1730,7 @@ class AccountSettingsViewModel @Inject constructor(
 
     // ==================== Contact Anniversaries ====================
 
-    /**
-     * Toggle contact anniversaries feature.
-     *
-     * Note: Permission should be checked by the caller before enabling.
-     */
+    /** Same as [onToggleContactBirthdays] for anniversaries. */
     fun onToggleContactAnniversaries(enabled: Boolean) {
         viewModelScope.launch {
             Log.i(TAG, "Toggle contact anniversaries: enabled=$enabled")
@@ -1873,9 +1751,6 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Update contact anniversaries calendar color.
-     */
     fun onContactAnniversariesColorChange(color: Int) {
         viewModelScope.launch {
             Log.i(TAG, "Contact anniversaries color change: $color")
@@ -1884,12 +1759,8 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Update anniversary reminder setting.
-     *
-     * See [onContactBirthdaysReminderChange] for the propagation contract.
-     */
     private var anniversaryReminderJob: Job? = null
+    /** Same as [onContactBirthdaysReminderChange] for anniversaries. */
     fun onContactAnniversariesReminderChange(minutes: Int) {
         if (_contactAnniversariesReminder.value == minutes) return
         anniversaryReminderJob?.cancel()
@@ -1905,8 +1776,8 @@ class AccountSettingsViewModel @Inject constructor(
     // ==================== Device Calendars ====================
 
     /**
-     * Toggle device calendars feature.
-     * Permission should be checked by the caller before enabling.
+     * Turns device calendars on or off. The caller requests READ_CALENDAR before enabling;
+     * without it [CalendarProviderManager.onEnabled] switches the feature back off.
      */
     fun onToggleDeviceCalendars(enabled: Boolean) {
         viewModelScope.launch {
@@ -1922,22 +1793,15 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Toggle "show declined events" preference for device calendars.
-     */
     fun onToggleShowDeclinedEvents(show: Boolean) {
         viewModelScope.launch {
             dataStore.setShowDeclinedEvents(show)
-            // Increment change signal so views refresh with updated filter
-            calendarProviderManager.onEnabled()
+            // Re-query device events so views refresh with the updated filter
+            calendarProviderManager.onDeviceCalendarSettingsChanged()
         }
     }
 
-    /**
-     * Toggle device calendar reminders on/off.
-     * When enabled, schedules the next upcoming reminder.
-     * When disabled, cancels any pending alarm.
-     */
+    /** Turns device calendar reminders on (schedules the next one) or off (cancels its alarm). */
     fun onToggleDeviceCalendarReminders(enabled: Boolean) {
         viewModelScope.launch {
             dataStore.setDeviceCalendarRemindersEnabled(enabled)
@@ -1950,7 +1814,8 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Toggle a specific device calendar on/off.
+     * Ticks or unticks one device calendar. Ticking makes it visible in the provider; unticking
+     * also drops it from the hidden set so it doesn't linger there.
      */
     fun onToggleDeviceCalendar(calendarId: Long, enabled: Boolean) {
         viewModelScope.launch {
@@ -1958,31 +1823,30 @@ class AccountSettingsViewModel @Inject constructor(
             if (enabled) currentIds.add(calendarId) else currentIds.remove(calendarId)
             dataStore.setEnabledDeviceCalendarIds(currentIds)
             if (enabled) {
-                calendarProviderRepository.ensureCalendarVisible(calendarId)
+                deviceEventWriter.ensureCalendarVisible(calendarId)
             } else {
-                // When disabling, also clear from hidden set so it doesn't linger
                 dataStore.removeFromHiddenDeviceCalendarIds(calendarId)
             }
-            // Increment change signal so day view refreshes
-            calendarProviderManager.onEnabled()
+            // Re-query device events so the calendar views refresh
+            calendarProviderManager.onDeviceCalendarSettingsChanged()
         }
     }
 
     /**
-     * Refresh calendar permission state (call from Activity onResume or after permission result).
+     * Re-reads the calendar permissions and reloads the device calendar lists that depend on them.
+     * Called on resume and after a calendar permission request returns.
      */
     fun refreshCalendarPermission() {
         checkCalendarPermission()
         if (_hasReadCalendarPermission.value && _deviceCalendarsEnabled.value) {
             viewModelScope.launch { loadDeviceCalendars() }
         }
-        // Also reload writable device calendars for default calendar picker
         loadWritableDeviceCalendars()
     }
 
     /**
-     * Manually refresh device calendars list.
-     * Use when user adds/removes calendar accounts and wants to see the updated list.
+     * Reloads the device calendar list, for example after the user adds a calendar account. A
+     * no-op without READ_CALENDAR or with device calendars off.
      */
     fun refreshDeviceCalendars() {
         if (_hasReadCalendarPermission.value && _deviceCalendarsEnabled.value) {
@@ -1991,16 +1855,15 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Load writable device calendars for the default calendar picker.
-     * Only loads if WRITE_CALENDAR permission is granted.
-     * Unlike loadDeviceCalendars(), this doesn't depend on deviceCalendarsEnabled setting
-     * since writable calendars should be available for default selection regardless.
+     * Loads the writable device calendars for the default-calendar picker; empty without
+     * WRITE_CALENDAR. Unlike [loadDeviceCalendars] it ignores the device-calendars switch, so a
+     * device calendar can be the default either way.
      */
     private fun loadWritableDeviceCalendars() {
         viewModelScope.launch {
             val groups = if (_hasWriteCalendarPermission.value) {
                 try {
-                    val deviceCalendars = calendarProviderRepository.getDeviceCalendars()
+                    val deviceCalendars = deviceEventReader.getDeviceCalendars()
                     CalendarGroup.fromDeviceCalendars(deviceCalendars, writableOnly = true)
                 } catch (e: SecurityException) {
                     Log.w(TAG, "Calendar permission revoked while loading writable calendars", e)
@@ -2013,10 +1876,7 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Set the default calendar for new events.
-     * Supports both Room calendars (local, iCloud, CalDAV) and device calendars.
-     */
+    /** Sets the default calendar for new events, a Room or a device calendar. */
     fun onDefaultCalendarSelect(calendar: DefaultCalendar) {
         viewModelScope.launch {
             userPreferences.setDefaultCalendar(calendar)
@@ -2029,7 +1889,7 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             userPreferences.setSyncIntervalMs(intervalMs)
 
-            // Update sync scheduler with new interval
+            // Long.MAX_VALUE is manual only
             if (intervalMs != Long.MAX_VALUE) {
                 val intervalMinutes = intervalMs / (60 * 1000L)
                 syncScheduler.updatePeriodicSyncInterval(intervalMinutes)
@@ -2040,16 +1900,13 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Update how far back to sync calendar events.
+     * Sets how many days back calendar events sync, at least 1 or Int.MAX_VALUE for all.
      *
-     * When expanding the window (new > old), forces a full sync so older events
-     * are actually fetched from the server. The sync uses etag comparison to skip
-     * unchanged events (bandwidth optimization).
+     * Widening the window, or choosing all, forces a full sync so older events are fetched from
+     * the server; the sync compares etags to skip unchanged events.
      *
-     * When shrinking the window (new < old), deletes CalDAV events outside the new
-     * window before syncing. Preserves: pending sync events, recurring masters,
-     * exception events, local calendar events, and birthday/anniversary events.
-     * Widgets are refreshed after cleanup.
+     * Narrowing it runs [EventCoordinator.cleanupEventsOutsideLookback] before a normal sync.
+     * Widgets refresh when anything was deleted.
      */
     fun onSyncLookbackChange(days: Int) {
         val safeDays = if (days == Int.MAX_VALUE) days else days.coerceAtLeast(1)
@@ -2060,15 +1917,13 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             dataStore.setSyncPastDays(safeDays)
 
-            // Cleanup events, occurrences, and exceptions outside new window when shrinking
             if (isShrinking && safeDays != Int.MAX_VALUE) {
                 val now = System.currentTimeMillis()
                 val cutoffTs = now - (safeDays.toLong() * 24 * 60 * 60 * 1000)
 
-                val result = eventWriter.cleanupForShrinkingLookback(cutoffTs)
-                if (result.totalDeleted > 0) {
-                    Log.i(TAG, "Lookback cleanup: ${result.deletedEvents} events, " +
-                        "${result.deletedOccurrences} occurrences, ${result.deletedExceptions} exceptions")
+                val deleted = eventCoordinator.cleanupEventsOutsideLookback(cutoffTs)
+                if (deleted > 0) {
+                    Log.i(TAG, "Lookback cleanup: $deleted events")
                     widgetUpdateManager.updateAllWidgets("lookback_shrink_cleanup")
                 }
             }
@@ -2082,11 +1937,11 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Force a full sync, re-downloading all calendar data.
-     * Useful when data seems out of sync with server.
+     * Requests a full sync with the HomeScreen banner and sync notifications, for when data seems
+     * out of step with the server.
      */
     fun forceFullSync() {
-        syncScheduler.setShowBannerForSync(true)  // Show banner on HomeScreen
+        syncScheduler.setShowBannerForSync(true)
         syncScheduler.requestImmediateSync(forceFullSync = true, showNotification = true)
     }
 
@@ -2110,17 +1965,16 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Refresh contacts permission state (call from Activity onResume).
-     */
+    /** Re-reads the contacts permissions; called on resume and after a contacts request returns. */
     fun refreshContactsPermission() {
         checkContactsPermission()
     }
 
     /**
-     * Push the resolved local-network permission state from the Activity (which
-     * owns the rationale read + request launcher). Called on open and after a
-     * permission request returns. See [shouldShowLanBanner].
+     * Takes the local-network permission state the host resolved (it owns the rationale read and
+     * the request launcher). Called when the CalDAV sign-in sheet or the add-subscription dialog
+     * opens and after a permission request returns. See
+     * [org.onekash.kashcal.ui.permission.shouldShowLanBanner].
      */
     fun updateLocalNetworkPermissionState(state: LocalNetworkPermissionState) {
         _localNetworkPermissionState.value = state
@@ -2131,12 +1985,10 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Reconcile permission state on resume (e.g. after the user changed it in
-     * system Settings). Upgrade-only: a fresh live read can never represent
-     * PermanentlyDenied (that's set only by the rationale-flip classifier after
-     * a request), so it must not overwrite a PermanentlyDenied with a
-     * banner-showing state — otherwise the banner would nag again on the next
-     * app resume. Applies a detected grant; otherwise leaves the state as-is.
+     * Merges a live read of the local-network permission into the stored state on resume, for
+     * example after the user changed it in system Settings. [reconcileOnResume] decides what the
+     * live read may replace; it never overwrites PermanentlyDenied, or the banner would nag again
+     * on every resume.
      */
     fun reconcileLocalNetworkPermissionOnResume(resolved: LocalNetworkPermissionState) {
         _localNetworkPermissionState.value =
@@ -2144,11 +1996,20 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Wrap a failed-discovery message with the local-network hint when the
-     * permission is required-but-ungranted, so a blocked LAN server (including
-     * bare-hostname ones [isLanHost] can't classify) is explained. Additive:
-     * the server's real message is preserved as an arg, so a genuinely-down
-     * public server is not mislabeled.
+     * The message for a failed discovery: a translated one for the failures the app
+     * explains itself, else the service's own text.
+     */
+    private fun discoveryErrorMessage(error: DiscoveryResult.Error): UiMessage = when (error.reason) {
+        DiscoveryErrorReason.INSECURE_CONNECTION_REFUSED ->
+            UiMessage.ResId(R.string.caldav_error_connection_refused_insecure)
+        null -> UiMessage.Literal(error.message)
+    }
+
+    /**
+     * Adds the local-network hint to a failed-discovery message when the permission is required
+     * but not granted, so a blocked LAN server is explained, bare hostnames that
+     * [org.onekash.kashcal.util.isLanHost] can't classify included. The server's message stays
+     * as an argument, so a public server that is down isn't mislabeled.
      */
     private fun withLanHintIfBlocked(serverMessage: String): UiMessage =
         if (isDiscoveryFailureBlockedLan()) {
@@ -2158,9 +2019,8 @@ class AccountSettingsViewModel @Inject constructor(
         }
 
     /**
-     * True when a just-failed discovery looks like a blocked local-network
-     * socket: the permission is required (API 37+) but not granted. Pure read
-     * of the current permission state — no side effects.
+     * True when a failed discovery looks like a blocked local-network socket: the permission is
+     * required (API 37 and later) but not granted. Reads the current permission state only.
      */
     private fun isDiscoveryFailureBlockedLan(): Boolean =
         _localNetworkPermissionState.value.failureIndicatesBlockedLan()
@@ -2176,18 +2036,12 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    // ==================== Navigation Callbacks ====================
+    // ==================== Default reminders ====================
 
-    /**
-     * Get the default reminder for new timed events.
-     */
     suspend fun getDefaultReminderTimed(): Int {
         return userPreferences.defaultReminderTimed.first()
     }
 
-    /**
-     * Get the default reminder for new all-day events.
-     */
     suspend fun getDefaultReminderAllDay(): Int {
         return userPreferences.defaultReminderAllDay.first()
     }
@@ -2195,28 +2049,20 @@ class AccountSettingsViewModel @Inject constructor(
     // ==================== ICS Device Import ====================
 
     /**
-     * Import ICS events into a device calendar via CalendarProvider.
+     * Imports events parsed from an ICS file into device calendar [calendarId] and returns how
+     * many were created.
      *
-     * @param events Events parsed from ICS file
-     * @param calendarId Target device calendar ID
-     * @return Count of successfully imported events
+     * Uses the same writer method as the home screen's import, which signals the device change
+     * so the calendar views show the new events at once.
      */
-    suspend fun importIcsToDeviceCalendar(events: List<Event>, calendarId: Long): Int {
-        return importEventsToDeviceCalendar(
-            events = events,
-            calendarId = calendarId,
-            repo = calendarProviderRepository,
-            defaultTimedReminderMinutes = dataStore.defaultReminderMinutes.first(),
-            defaultAllDayReminderMinutes = dataStore.defaultAllDayReminder.first()
-        )
-    }
+    suspend fun importIcsToDeviceCalendar(events: List<Event>, calendarId: Long): Int =
+        deviceEventWriter.importIcsEvents(events, calendarId)
 
     // ==================== Snackbar ====================
 
     /**
-     * Show a snackbar message to the user. Optional action turns the snackbar
-     * into a Material "snackbar with action" (used by the subscription
-     * delete-with-undo flow, issue #133).
+     * Sets the pending snackbar. An [action] adds an action button, which the subscription
+     * delete-with-undo flow uses (issue #133).
      */
     fun showSnackbar(
         message: String,
@@ -2232,10 +2078,7 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Clear the pending snackbar after it's shown — including any action label
-     * and callback set via [showSnackbar].
-     */
+    /** Clears the pending snackbar, its action label and callback included. */
     fun clearSnackbar() {
         _uiState.update {
             it.copy(
@@ -2249,16 +2092,14 @@ class AccountSettingsViewModel @Inject constructor(
     // ==================== Backup & Restore ====================
 
     /**
-     * Build the backup JSON payload and stash it in [pendingExportJson] for the Activity's
-     * SAF writer. Called after the user confirms the pre-export warning dialog.
-     *
-     * @return the built JSON payload
+     * Builds the backup JSON and holds it in [pendingExportJson] for the SAF writer, which takes
+     * it through [consumePendingExportJson].
      */
     suspend fun prepareExport() {
         pendingExportJson = backupExporter.exportSettings()
     }
 
-    /** Consume and clear the stashed JSON after the SAF writer finishes (or aborts). */
+    /** Returns the held backup JSON and clears it. */
     fun consumePendingExportJson(): String? {
         val json = pendingExportJson
         pendingExportJson = null
@@ -2266,9 +2107,8 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Parse a selected backup file. On success transitions to [BackupRestoreUiState.PendingConfirmation]
-     * so the UI can show the confirmation dialog. On failure transitions to
-     * [BackupRestoreUiState.Error]. No DB or prefs writes happen here.
+     * Parses a selected backup file into [BackupRestoreUiState.PendingConfirmation], which shows
+     * the confirmation dialog, or [BackupRestoreUiState.Error]. Writes nothing.
      */
     fun onBackupFileSelected(json: String) {
         _backupRestoreState.value = when (val result = backupImporter.parseAndValidate(json)) {
@@ -2281,24 +2121,32 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Apply the envelope surfaced in [BackupRestoreUiState.PendingConfirmation]. No-op if the
-     * state is anything else (e.g., user raced dismiss + confirm).
+     * Applies the backup held by [BackupRestoreUiState.PendingConfirmation]. A no-op in any other
+     * state, for example when a dismiss beat the confirm.
      */
     fun confirmRestore() {
         val pending = _backupRestoreState.value as? BackupRestoreUiState.PendingConfirmation ?: return
         viewModelScope.launch {
-            _backupRestoreState.value = try {
-                BackupRestoreUiState.Success(backupImporter.applyBackup(pending.envelope))
+            try {
+                _backupRestoreState.value =
+                    BackupRestoreUiState.Success(backupImporter.applyBackup(pending.envelope))
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "applyBackup failed", e)
-                BackupRestoreUiState.Error(BackupImportError.ApplyFailed(e.message))
+                _backupRestoreState.value = BackupRestoreUiState.Error(BackupImportError.ApplyFailed(e.message))
+            } finally {
+                // The restore may have switched device calendars on or off without the
+                // switch, so start or stop observing the provider to match. Runs even when the
+                // apply failed or was cancelled, since settings may already be written.
+                withContext(NonCancellable) {
+                    calendarProviderManager.applyDeviceCalendarsSetting()
+                }
             }
         }
     }
 
-    /** Dismiss any backup/restore dialog, returning to [BackupRestoreUiState.Idle]. */
+    /** Dismisses any backup or restore dialog, returning to [BackupRestoreUiState.Idle]. */
     fun dismissDialog() {
         _backupRestoreState.value = BackupRestoreUiState.Idle
     }
@@ -2306,11 +2154,9 @@ class AccountSettingsViewModel @Inject constructor(
     // ==================== Account Connected Sheet ====================
 
     /**
-     * Show the success sheet after account connection.
+     * Shows the account-connected success sheet.
      *
-     * @param provider Display name of the provider (e.g., "iCloud", "Nextcloud")
-     * @param email User email
-     * @param calendarCount Number of calendars discovered
+     * @param provider the sheet's provider label, such as "iCloud" or a CalDAV display name
      */
     fun showAccountConnectedSheet(provider: String, email: String, calendarCount: Int) {
         _uiState.update {
@@ -2323,9 +2169,7 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Hide the success sheet and stay on AccountsScreen.
-     */
+    /** Hides the success sheet without leaving settings. */
     fun hideAccountConnectedSheet() {
         _uiState.update {
             it.copy(
@@ -2337,9 +2181,7 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Handle "Done" button on success sheet - finish activity and return to HomeScreen.
-     */
+    /** Hides the success sheet and finishes the activity back to HomeScreen. */
     fun onAccountConnectedDone() {
         _uiState.update {
             it.copy(
@@ -2354,17 +2196,15 @@ class AccountSettingsViewModel @Inject constructor(
 
     // ==================== Account Detail ====================
 
-    /** Job tracking sync status observation — cancelled in clearAccountDetail() */
+    /** Observes the "Sync now" work status; cancelled in [clearAccountDetail]. */
     private var syncObservationJob: Job? = null
 
-    /** Job tracking account detail Flow observation — cancelled in clearAccountDetail() */
+    /** Observes the detail sheet's account; cancelled in [clearAccountDetail]. */
     private var accountDetailJob: Job? = null
 
     /**
-     * Observe account detail for the bottom sheet via Flow.
-     * Auto-updates when Room's invalidation tracker fires (e.g., after sync metadata changes).
-     *
-     * @param accountId The account to observe
+     * Observes [accountId] for the account detail sheet. Updates whenever the account row changes,
+     * for example after sync metadata is recorded; a deleted account clears the detail.
      */
     fun observeAccountDetail(accountId: Long) {
         accountDetailJob?.cancel()
@@ -2382,9 +2222,7 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Clear account detail state and cancel sync observation.
-     */
+    /** Clears the account detail state and cancels both observations. */
     fun clearAccountDetail() {
         accountDetailJob?.cancel()
         accountDetailJob = null
@@ -2395,31 +2233,25 @@ class AccountSettingsViewModel @Inject constructor(
                 accountDetail = null,
                 accountDetailSyncStatus = AccountDetailSyncStatus.Idle,
                 accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Idle,
-                // Clear the inline contact-sync confirmation too: it names a masked
-                // account email and otherwise survives the sheet close on the VM
-                // StateFlow, so it would surface again in the next account's sheet.
+                // The contact-sync confirmation names a masked account email and would otherwise
+                // outlive the sheet and show again in the next account's sheet.
                 contactSyncConfirmation = null
             )
         }
     }
 
     /**
-     * Trigger per-account sync and observe result.
-     *
-     * @param accountId The account to sync
+     * Syncs one account's calendars and tracks the result in the detail sheet. When the account
+     * has contact sync on, also syncs its contacts, or raises the re-grant row when the contacts
+     * permissions are missing.
      */
     fun syncAccountNow(accountId: Long) {
         _uiState.update { it.copy(accountDetailSyncStatus = AccountDetailSyncStatus.Syncing) }
         syncObservationJob?.cancel()
 
-        // "Sync now" covers contacts too when contact sync is on for this account
-        // — otherwise the manual sync silently skips them until the next periodic
-        // tick. Gate on the live grant like the enable path: a revoked
-        // WRITE_CONTACTS would only skip-and-flag downstream. And, like the enable
-        // path, own the re-grant banner here rather than leaving it to a background
-        // worker that may never be scheduled: this is a manual entry point that can
-        // run for a login whose periodic contact job never existed, so the worker
-        // never fires to raise/clear it.
+        // Without this, "Sync now" would silently skip contacts until the next periodic run.
+        // Check the live grant, as the enable path does, and set or clear the re-grant row here:
+        // a login whose periodic contact job never existed has no worker to do it.
         viewModelScope.launch {
             val contactSyncOn = accountRepository.getAccountById(accountId)?.contactSyncEnabled == true
             if (!contactSyncOn) return@launch
@@ -2429,8 +2261,8 @@ class AccountSettingsViewModel @Inject constructor(
             )
             if (granted) {
                 dataStore.setContactSyncPermissionNeeded(false)
-                // Scope the pull to this account — "Sync now" for one login shouldn't
-                // re-sweep every other contact-sync account's address books.
+                // This account only: "Sync now" for one login shouldn't re-sync every other
+                // contact-sync login's address books.
                 syncScheduler.requestImmediateContactSync(accountId)
             } else {
                 dataStore.setContactSyncPermissionNeeded(true)
@@ -2451,18 +2283,13 @@ class AccountSettingsViewModel @Inject constructor(
                             it.copy(accountDetailSyncStatus = AccountDetailSyncStatus.Done(success = false))
                         }
                     }
-                    else -> { /* Enqueued, Running, Blocked, Idle — keep Syncing state */ }
+                    else -> { /* Enqueued, Running, Blocked, Idle: stay Syncing */ }
                 }
             }
         }
     }
 
-    /**
-     * Toggle account enabled/disabled for sync.
-     *
-     * @param accountId The account to toggle
-     * @param enabled New enabled state
-     */
+    /** Enables or disables an account for sync. */
     fun toggleAccountEnabled(accountId: Long, enabled: Boolean) {
         viewModelScope.launch {
             accountRepository.setEnabled(accountId, enabled)
@@ -2470,38 +2297,30 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Toggle CardDAV contact sync for a single account. Routes through the
-     * repository (which enrols/removes the contacts system account and persists
-     * the flag) — never a DAO directly. Disabling needs no permission.
+     * Turns CardDAV contact sync on or off for one account through
+     * [AccountRepository.setContactSyncEnabled], never a DAO. Disabling needs no permission and
+     * shows a confirmation that matches what the purge did.
      *
-     * The UI gates enabling behind a READ + WRITE_CONTACTS request, but the pull
-     * kick re-checks the live grant here rather than trusting the caller (the
-     * same defense-in-depth the contact-birthday manager applies before its
-     * sync). Without both permissions the flag still persists and we raise the
-     * re-grant signal directly — the inline banner must surface even for a login
-     * whose periodic job was never scheduled (manual-only, or predating this
-     * feature), where the background worker never runs to raise it. With both
-     * permissions we clear that signal and kick the pull.
-     *
-     * @param accountId The account to toggle
-     * @param enabled New contact-sync state
+     * The UI requests READ and WRITE_CONTACTS before enabling, but the pull re-checks the live
+     * grant here, as the contact-birthday manager does before its sync. Without both the flag
+     * still persists and the re-grant row is raised here: a login whose periodic job was never
+     * scheduled (manual only, or older than contact sync) has no worker to raise it. With both,
+     * the row is cleared, the periodic contact job is ensured unless sync is manual only, and a
+     * pull of every contact-sync login starts now.
      */
     fun onToggleContactSync(accountId: Long, enabled: Boolean) {
         viewModelScope.launch {
             val purgeOutcome = accountRepository.setContactSyncEnabled(accountId, enabled)
 
-            // Resolve the account label once so both branches can name it. Fall
-            // back to a blank label (maskEmail is null-safe) if the account has
-            // vanished — the confirmation still reads sensibly.
+            // Both branches name the account. A vanished account gives a blank label
+            // (maskEmail takes null), and the confirmation still reads sensibly.
             val maskedEmail = maskEmail(accountRepository.getAccountById(accountId)?.email)
 
             if (!enabled) {
-                // Message from what the purge actually did, not a blanket "removed":
-                // a same-email sibling can keep the contacts, and a revoked-permission
-                // purge can't confirm removal. Claiming removal in those cases is a lie.
-                // Tone mirrors the outcome so the sheet styles a destructive removal (or
-                // an unverified "may remain") as a warning, not a celebratory checkmark;
-                // contacts KEPT by a sibling is benign, so it stays positive.
+                // Say what the purge did, not a blanket "removed": a same-email sibling can keep
+                // the contacts, and a purge without the permission can't confirm removal. A
+                // removal or an unconfirmed "may remain" shows as a warning; contacts a sibling
+                // kept are benign, so that stays positive.
                 val confirmation = when (purgeOutcome) {
                     ContactPurgeOutcome.PURGED -> ContactSyncConfirmation(
                         context.getString(R.string.contact_sync_disabled_for, maskedEmail),
@@ -2525,22 +2344,19 @@ class AccountSettingsViewModel @Inject constructor(
                 writeGranted = permissionChecker.hasWriteContactsPermission(),
             )
             if (!granted) {
-                // Surface the re-grant banner now rather than waiting for a
-                // background worker that may never be scheduled to run. Don't show
-                // the "Syncing…" confirmation — nothing will actually pull.
+                // Raise the re-grant row now; no worker may ever run to do it. Skip the
+                // "Syncing" confirmation, since nothing will pull.
                 dataStore.setContactSyncPermissionNeeded(true)
                 return@launch
             }
             dataStore.setContactSyncPermissionNeeded(false)
 
-            // Enabling only flips a flag and enrols the system account; nothing
-            // pulls contacts until we kick it. Schedule the recurring job (in
-            // case periodic sync predates this feature) and fire an immediate
-            // one-shot pull so contacts start appearing within seconds, not at
-            // the next periodic tick. Surface the background work inline.
+            // Enabling only sets a flag and registers the system account; nothing pulls
+            // contacts until a sync runs. Ensure the periodic job, which an older periodic
+            // setup lacks, and start a one-shot pull of every contact-sync login so contacts
+            // appear within seconds instead of at the next periodic run.
             val intervalMs = userPreferences.syncIntervalMs.first()
-            // Long.MAX_VALUE is the repository's "manual only" sentinel: as with
-            // calendar sync, don't schedule a periodic job in that mode — but the
+            // Long.MAX_VALUE means manual only: as with calendar sync, no periodic job, but the
             // one-shot pull below still runs so enabling has an immediate effect.
             if (intervalMs != Long.MAX_VALUE) {
                 syncScheduler.ensureContactSyncScheduled(intervalMs / (60 * 1000L))
@@ -2555,25 +2371,18 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Set the inline contact-sync confirmation shown inside the account detail
-     * sheet.
-     */
     private fun showContactSyncConfirmation(confirmation: ContactSyncConfirmation) {
         _uiState.update { it.copy(contactSyncConfirmation = confirmation) }
     }
 
-    /** Clear the inline contact-sync confirmation once it's been shown. */
+    /** Clears the inline contact-sync confirmation once it has been shown. */
     fun clearContactSyncConfirmation() {
         _uiState.update { it.copy(contactSyncConfirmation = null) }
     }
 
     /**
-     * Rename an account's display name.
-     *
-     * @param accountId The account to rename
-     * @param newName New display name (trimmed, must not be empty)
-     * @return true if renamed, false if validation failed
+     * Renames an account to [newName], trimmed. A blank name or a missing account is ignored
+     * without feedback.
      */
     fun renameAccount(accountId: Long, newName: String) {
         val trimmed = newName.trim()
@@ -2582,20 +2391,16 @@ class AccountSettingsViewModel @Inject constructor(
         viewModelScope.launch {
             val account = accountRepository.getAccountById(accountId) ?: return@launch
             accountRepository.updateAccount(account.copy(displayName = trimmed))
-            // Refresh account lists in UI state
             refreshCalDavAccounts()
             refreshICloudState(account)
         }
     }
 
     /**
-     * Change an account's password using save-then-validate pattern.
+     * Changes an account's password: saves the new credentials, validates them by refreshing the
+     * account's calendars, and restores the old ones on an auth or discovery error.
      *
-     * Saves new credentials, validates via refreshCalendars(), reverts on failure.
-     *
-     * @param accountId The account to update
-     * @param newPassword New password
-     * @return Result with success or error message
+     * @param onResult gets success, or a failure whose message is the localized reason
      */
     fun changeAccountPassword(accountId: Long, newPassword: String, onResult: (Result<Unit>) -> Unit) {
         viewModelScope.launch {
@@ -2611,11 +2416,10 @@ class AccountSettingsViewModel @Inject constructor(
                 return@launch
             }
 
-            // Save new credentials
             val newCredentials = oldCredentials.copy(password = newPassword)
             accountRepository.saveCredentials(accountId, newCredentials)
 
-            // Validate by running refreshCalendars which uses stored credentials
+            // refreshCalendars reads the stored credentials, so it tests the new password
             val result = when (account.provider) {
                 AccountProvider.ICLOUD -> discoveryService.refreshCalendars(accountId)
                 AccountProvider.CALDAV -> calDavDiscoveryService.refreshCalendars(accountId)
@@ -2630,27 +2434,29 @@ class AccountSettingsViewModel @Inject constructor(
                     onResult(Result.success(Unit))
                 }
                 is DiscoveryResult.CalendarsFound -> {
-                    // Unexpected for refresh, but credentials are valid
+                    // Not a refresh result, but the credentials worked
                     onResult(Result.success(Unit))
                 }
                 is DiscoveryResult.AuthError -> {
-                    // Revert to old credentials
                     accountRepository.saveCredentials(accountId, oldCredentials)
                     onResult(Result.failure(Exception(context.getString(R.string.password_change_error_invalid))))
                 }
                 is DiscoveryResult.Error -> {
-                    // Revert to old credentials
                     accountRepository.saveCredentials(accountId, oldCredentials)
-                    onResult(Result.failure(Exception(context.getString(R.string.password_change_error_network))))
+                    val message = if (result.reason != null) {
+                        discoveryErrorMessage(result).resolve(context)
+                    } else {
+                        context.getString(R.string.password_change_error_network)
+                    }
+                    onResult(Result.failure(Exception(message)))
                 }
             }
         }
     }
 
     /**
-     * Discover new calendars for an existing account.
-     *
-     * @param accountId The account to refresh calendars for
+     * Re-discovers an existing account's calendars, reports how many are new in the detail
+     * sheet, and syncs the account when any are.
      */
     fun discoverNewCalendars(accountId: Long) {
         _uiState.update { it.copy(accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Discovering) }
@@ -2659,7 +2465,7 @@ class AccountSettingsViewModel @Inject constructor(
             val account = accountRepository.getAccountById(accountId)
             if (account == null) {
                 _uiState.update {
-                    it.copy(accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Error("Account not found"))
+                    it.copy(accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Error(UiMessage.Literal("Account not found")))
                 }
                 return@launch
             }
@@ -2671,7 +2477,7 @@ class AccountSettingsViewModel @Inject constructor(
                 AccountProvider.CALDAV -> calDavDiscoveryService.refreshCalendars(accountId)
                 else -> {
                     _uiState.update {
-                        it.copy(accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Error("Provider does not support discovery"))
+                        it.copy(accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Error(UiMessage.Literal("Provider does not support discovery")))
                     }
                     return@launch
                 }
@@ -2694,7 +2500,7 @@ class AccountSettingsViewModel @Inject constructor(
                     }
                 }
                 is DiscoveryResult.CalendarsFound -> {
-                    // Shouldn't happen for refresh — treat as no change
+                    // Not a refresh result; treat it as no change
                     _uiState.update {
                         it.copy(
                             accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Done(
@@ -2708,23 +2514,21 @@ class AccountSettingsViewModel @Inject constructor(
                     _uiState.update {
                         it.copy(
                             accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Error(
-                                "Authentication failed. Update your password."
+                                UiMessage.Literal("Authentication failed. Update your password.")
                             )
                         )
                     }
                 }
                 is DiscoveryResult.Error -> {
                     _uiState.update {
-                        it.copy(accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Error(result.message))
+                        it.copy(accountDetailDiscoverStatus = AccountDetailDiscoverStatus.Error(discoveryErrorMessage(result)))
                     }
                 }
             }
         }
     }
 
-    /**
-     * Refresh CalDAV accounts list after rename.
-     */
+    /** Reloads the CalDAV account rows after a rename. */
     private suspend fun refreshCalDavAccounts() {
         val accounts = accountRepository.getAccountsByProvider(AccountProvider.CALDAV)
         val uiModels = accounts.map { account ->
@@ -2741,15 +2545,12 @@ class AccountSettingsViewModel @Inject constructor(
         _uiState.update { it.copy(calDavAccounts = uiModels) }
     }
 
-    /**
-     * Refresh iCloud state after rename (if renamed account is iCloud).
-     */
+    /** Does nothing: the iCloud Connected state has no display name to update. */
     private fun refreshICloudState(account: Account) {
         if (account.provider != AccountProvider.ICLOUD) return
         val currentState = _uiState.value.iCloudState
         if (currentState is ICloudConnectionState.Connected) {
-            // Connected state doesn't include displayName, so no update needed
-            // The account detail sheet auto-updates via observeAccountDetail Flow
+            // The account detail sheet picks up the new name through [observeAccountDetail]
         }
     }
 }

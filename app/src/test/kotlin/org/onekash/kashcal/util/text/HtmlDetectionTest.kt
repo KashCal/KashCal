@@ -5,17 +5,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for [looksLikeHtml], the gate that decides whether a description
- * is routed through the HTML rendering path or the plain-text path.
+ * Tests [looksLikeHtml], which routes a description to the HTML or the plain-text renderer.
  *
- * Design intent (from issue #207): plain text containing `<` must NOT
- * be treated as HTML, because `HtmlCompat.fromHtml` would drop those
- * characters. Only structural tags (`<a href`, `<br>`, `<p>`, …) should
- * trigger the HTML branch.
+ * Plain text containing `<` must not be taken as HTML, because the HTML renderer
+ * (`AnnotatedString.fromHtml`, over `HtmlCompat.fromHtml`) would drop those characters (#207).
+ * Only allow-listed tags (`<a href`, `<br>`, `<p>` and the rest) and `<!--` take the HTML branch.
  */
 class HtmlDetectionTest {
 
-    // ---------- Plain text with `<` that must NOT be treated as HTML ----------
+    // ---------- Plain text with `<` is not HTML ----------
 
     @Test
     fun `angle bracket followed by digit is not HTML`() {
@@ -46,11 +44,11 @@ class HtmlDetectionTest {
 
     @Test
     fun `unrelated tag-looking word is not HTML`() {
-        // `<foo>` is not a known structural tag
+        // `<foo>` isn't an allow-listed tag.
         assertFalse(looksLikeHtml("version <foo> not released"))
     }
 
-    // ---------- Real HTML that MUST be treated as HTML ----------
+    // ---------- Allow-listed tags and comments are HTML ----------
 
     @Test
     fun `anchor tag is HTML`() {
@@ -136,11 +134,11 @@ class HtmlDetectionTest {
 
     @Test
     fun `closing tag alone is HTML`() {
-        // A stray `</p>` still marks this as HTML - user probably intends a tag
+        // A stray `</p>` still counts: the user probably meant a tag.
         assertTrue(looksLikeHtml("</p>"))
     }
 
-    // ---------- Similar-looking false negatives ----------
+    // ---------- A `<` that opens no tag is not HTML ----------
 
     @Test
     fun `text ending with less-than is not HTML`() {
@@ -149,15 +147,14 @@ class HtmlDetectionTest {
 
     @Test
     fun `angle bracket with whitespace after is not HTML`() {
-        // `< br>` (with leading space inside tag) is not standard; treat as non-HTML
+        // A space after `<` means no tag name follows.
         assertFalse(looksLikeHtml("a < b and c > d"))
     }
 
-    // ---------- Single-letter tag false positives (critical) ----------
-    // `a`, `b`, `i`, `u`, `s`, `p` are real HTML tags AND real English words.
-    // Without tightening the regex, sentences like "I use <a lot" would be
-    // sent through HtmlCompat.fromHtml, which would silently drop everything
-    // from `<a` onward.
+    // ---------- One-letter tag names followed by a word are not HTML ----------
+    // `a`, `b`, `i`, `u`, `s` and `p` are HTML tags and English words. A tag needs its closing
+    // `>`; otherwise "I use <a lot" would go through the HTML renderer, which silently drops
+    // everything from `<a` on.
 
     @Test
     fun `short-tag letter followed by space and word is not HTML`() {
@@ -170,7 +167,7 @@ class HtmlDetectionTest {
 
     @Test
     fun `tag name must be immediately after opening angle bracket`() {
-        // `< b>` (with a leading space inside the tag) is invalid HTML, treat as plain
+        // `< b>`, with a space before the name, is not a tag.
         assertFalse(looksLikeHtml("a < b > c"))
         assertFalse(looksLikeHtml("range: < br"))
     }

@@ -13,30 +13,24 @@ import org.robolectric.annotation.Config
 import java.util.UUID
 
 /**
- * Live probe: does moving an event that HAS ATTENDEES between two calendars on
- * the same scheduling account cause the server to RE-DELIVER an iTIP message to
- * those attendees?
+ * Probes whether moving an event with attendees between two calendars of one scheduling
+ * account makes the server re-deliver an iTIP message to those attendees.
  *
- * This replicates the exact wire sequence PushStrategy.processMove performs on a
- * MOVE-accepting server (iCloud): WebDAV MOVE to relocate, then an identical-body
- * PUT to the new URL (the #292 fix's post-move body push). The question is
- * whether that PUT — same SEQUENCE, same body, new URL — makes iCloud re-run its
- * RFC 6638 implicit-scheduling delivery.
+ * It replays the wire sequence PushStrategy's `processMove` produces on a MOVE-accepting server
+ * (iCloud): a WebDAV MOVE, then a PUT of the unchanged body to the new URL (the post-move body
+ * push from #292, which `processUpdate` sends). The question is whether that PUT, with the same
+ * SEQUENCE and body at a new URL, makes iCloud re-run its RFC 6638 implicit-scheduling delivery.
  *
- * Observability caveat: CalDAV cannot see "an email was sent." The observable
- * proxy is the SCHEDULE-STATUS receipt iCloud stamps on the organizer's ATTENDEE
- * rows on delivery (RFC 6638 §3.2.9). We capture it after the initial create,
- * then again after the move, and compare:
- *   - receipt unchanged  -> no re-delivery on the move (safe: the redundant PUT
- *                           is a no-op to the scheduler)
- *   - receipt re-stamped -> the move re-ran delivery (re-invite risk on the
- *                           post-move PUT)
- * Not a hard delivery guarantee, but the strongest signal CalDAV exposes.
+ * CalDAV can't see "an email was sent". The observable proxy is the SCHEDULE-STATUS delivery
+ * status iCloud stamps on the organizer's ATTENDEE lines (RFC 6638 §3.2.9). The probe reads it
+ * after the create, after the MOVE, and after the PUT:
+ *   - receipt unchanged  -> no re-delivery on the move (the redundant PUT is a no-op to the
+ *                           scheduler)
+ *   - receipt re-stamped -> the move re-ran delivery (re-invite risk on the post-move PUT)
+ * Not a delivery guarantee, but the strongest signal CalDAV exposes.
  *
- * Records the observed disposition and asserts against a baseline once recorded,
- * so a future regression in either direction is caught. Runs on iCloud (the
- * MOVE-accepting scheduling server we care about) and any other configured
- * server that both accepts MOVE and schedules.
+ * It prints the observed disposition and asserts nothing; it skips when a precondition fails.
+ * Runs on iCloud only.
  *
  * Run: ./gradlew :app:testDebugUnitTest -Pintegration --tests '*MoveReInviteProbeTest*'
  */
@@ -49,9 +43,9 @@ class MoveReInviteProbeTest(
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun servers(): List<Array<Any>> =
-            // Only servers that both accept WebDAV MOVE and run scheduling are
-            // meaningful here; iCloud is the one we ship the MOVE-then-PUT path
-            // to. Others auto-skip if they reject MOVE or expose no organizer.
+            // Only servers that both accept WebDAV MOVE and run scheduling are meaningful here;
+            // iCloud is the one the MOVE-then-PUT path ships to. An added server skips if it
+            // rejects MOVE or exposes no organizer address.
             listOf(CalDavServerConfig.ICLOUD).map { arrayOf<Any>(it) }
 
         private val DAY_MS = 86_400_000L
@@ -87,7 +81,7 @@ class MoveReInviteProbeTest(
         )
     }
 
-    /** The organizer's ATTENDEE SCHEDULE-STATUS receipt(s) in a fetched body. */
+    /** Returns the sorted SCHEDULE-STATUS values on the ATTENDEE lines of a fetched body. */
     private fun scheduleStatuses(body: String): List<String> =
         unfold(body).lines()
             .filter { it.startsWith("ATTENDEE") }
@@ -100,8 +94,8 @@ class MoveReInviteProbeTest(
         val c = client!!
         println("\n=== MOVE RE-INVITE PROBE: ${config.name} ===")
 
-        // Discover a matched organizer address (iCloud strips attendees if the
-        // ORGANIZER mailto doesn't match the authenticated account — S2).
+        // Discover a matched organizer address: iCloud strips attendees when the ORGANIZER
+        // mailto doesn't match the authenticated account.
         val root = if (config.usesWellKnownDiscovery)
             c.discoverWellKnown(creds!!.davEndpoint).getOrNull() ?: creds!!.davEndpoint
         else creds!!.davEndpoint
@@ -140,7 +134,7 @@ class MoveReInviteProbeTest(
             END:VCALENDAR
         """.trimIndent().replace("\n", "\r\n")
 
-        // 1. Create in calendar A; capture the initial delivery receipt.
+        // 1. Create in calendar A and capture the initial delivery receipt.
         val createResult = c.createEvent(calA, uid, ics)
         assumeTrue("${config.name}: create failed", createResult.isSuccess())
         val (urlA, etagA) = createResult.getOrNull()!!
@@ -153,15 +147,15 @@ class MoveReInviteProbeTest(
         val attendeeSurvived = unfold(afterCreate.icalData).contains(attendee, ignoreCase = true)
         println("  after create: SCHEDULE-STATUS=$receiptAfterCreate attendeePresent=$attendeeSurvived")
 
-        // If iCloud didn't schedule at all (no receipt AND attendee routed out),
-        // there's nothing to observe a re-delivery against.
+        // With no receipt and the attendee routed out, iCloud didn't schedule at all, so there
+        // is nothing to observe a re-delivery against.
         assumeTrue(
             "${config.name}: no initial delivery signal to compare against",
             receiptAfterCreate.isNotEmpty() || attendeeSurvived
         )
 
-        // 2. Replicate processMove: WebDAV MOVE to calendar B, then identical-body
-        //    PUT to the new URL (the #292 post-move body push, SEQUENCE unchanged).
+        // 2. Replay processMove: WebDAV MOVE to calendar B, then the same body PUT to the new
+        //    URL (the #292 post-move body push, SEQUENCE unchanged).
         val moveResult = c.moveEvent(urlA, calB, uid)
         assumeTrue(
             "${config.name}: does not accept WebDAV MOVE (not the ship path)",
@@ -171,10 +165,9 @@ class MoveReInviteProbeTest(
         createdUrls.removeAll { it.first == urlA }
         createdUrls.add(urlB to movedEtag)
 
-        // Immediately after the MOVE (before the body PUT) the relocated
-        // resource should still carry iCloud's stamped receipt verbatim (RFC 4918
-        // MOVE relocates the body as-is). Capture that to separate the MOVE's
-        // effect from the PUT's.
+        // Right after the MOVE, before the PUT, the resource is expected to carry iCloud's
+        // receipt unchanged (an RFC 4918 §9.9 MOVE relocates the body as is). Reading it here
+        // separates the MOVE's effect from the PUT's.
         val afterMoveOnly = c.fetchEvent(urlB).getOrNull()
         val receiptAfterMoveOnly = afterMoveOnly?.let { scheduleStatuses(it.icalData) } ?: emptyList()
         println("  after MOVE (pre-PUT): SCHEDULE-STATUS=$receiptAfterMoveOnly")
@@ -182,10 +175,9 @@ class MoveReInviteProbeTest(
         val putResult = c.updateEvent(urlB, ics, movedEtag.ifEmpty { "" })
         assumeTrue("${config.name}: post-move PUT did not land (${(putResult as? CalDavResult.Error)?.code})", putResult.isSuccess())
 
-        // Poll for up to ~20s: if iCloud RE-DELIVERS on the move+PUT it will
-        // re-stamp a receipt; if the PUT merely clobbered the receipt without
-        // re-scheduling, it stays empty. This distinguishes re-invite from a
-        // benign receipt loss.
+        // Poll for up to about 20s: a re-delivery on the move and PUT re-stamps a receipt; a PUT
+        // that clobbered the receipt without re-scheduling leaves it empty. This tells a
+        // re-invite from a benign receipt loss.
         var receiptAfterMove = emptyList<String>()
         repeat(10) { i ->
             delay(2000)
@@ -201,15 +193,13 @@ class MoveReInviteProbeTest(
         println("  after move+PUT (final):$receiptAfterMove")
         println("  RE-DELIVERED (receipt re-stamped after PUT): $reDelivered")
 
-        // This is a research probe: it RECORDS the disposition rather than
-        // red-failing on an ambiguous signal. The product-relevant facts are the
-        // three receipts printed above:
+        // A research probe: it prints the disposition instead of failing on an ambiguous
+        // signal. Reading the three receipts printed above:
         //   - re-stamped after PUT  -> move re-invites (needs a guard)
-        //   - stays empty after PUT -> PUT clobbers the receipt but does not
-        //     re-deliver (benign for attendees; readBackScheduleStatus re-reads
-        //     empty, a minor state loss)
-        //   - MOVE preserved it but PUT cleared it -> the redundant post-move PUT
-        //     is what disturbs scheduling; a pure move could skip the PUT.
+        //   - stays empty after PUT -> PUT clobbers the receipt but doesn't re-deliver (benign
+        //     for attendees; readBackScheduleStatus re-reads empty, a minor state loss)
+        //   - MOVE preserved it but PUT cleared it -> the redundant post-move PUT is what
+        //     disturbs scheduling; a pure move could skip the PUT.
     }
 
     @org.junit.After

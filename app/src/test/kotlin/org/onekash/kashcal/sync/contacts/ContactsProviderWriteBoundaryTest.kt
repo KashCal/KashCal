@@ -5,35 +5,27 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Architectural firewall: only the contact-sync layer may *write* to the
- * Android Contacts Provider.
+ * Fails when a main source file outside `sync/contacts/` writes to the Android Contacts
+ * Provider.
  *
- * Reading contacts is fine anywhere — the birthday/anniversary feature already
- * queries `ContactsContract` from `data/contacts/`, and attendee autocomplete
- * reads it too. Writing is the dangerous half: a stray `applyBatch` /
- * `CALLER_IS_SYNCADAPTER` write from a ViewModel or the domain layer would
- * bypass the per-account (`ACCOUNT_NAME`/`ACCOUNT_TYPE`) scoping that keeps one
- * login's pull from clobbering another login's contacts, and would give contact
- * sync a coupling to the presentation/domain layers it must never have. So this
- * guard fences the *write* surface, not the import.
+ * Reads are allowed anywhere: the birthday and anniversary feature and attendee autocomplete
+ * query `ContactsContract` from `data/contacts/`. A stray `applyBatch` or
+ * `CALLER_IS_SYNCADAPTER` write from a ViewModel or the domain layer would bypass the
+ * per-account (`ACCOUNT_NAME`/`ACCOUNT_TYPE`) scoping that keeps one login's pull from
+ * clobbering another login's contacts, and would give contact sync a coupling to those
+ * layers it must never have. So the guard fences the write surface, not the import.
  *
- * The property enforced: any source file that references `ContactsContract`
- * AND performs a provider write must live under `sync/contacts/`. It passes
- * today (no such writer exists yet) and exists to fail loudly the moment the
- * CardDAV contact-sync write path lands anywhere else — the same "guard the
- * boundary so it can't silently regress" idea as DevicePathFirewallTest and
- * UiLayerPersistenceBoundaryTest.
- *
- * Implemented as a source scan (no ArchUnit/Konsist on the classpath), matching
- * the two sibling boundary tests.
+ * A file fails when it references `ContactsContract`, contains a provider-write marker and
+ * lives outside `sync/contacts/`. It is a source scan, like its sibling boundary tests
+ * `DevicePathFirewallTest` and `UiLayerPersistenceBoundaryTest`, since no architecture-test
+ * library is on the classpath.
  */
 class ContactsProviderWriteBoundaryTest {
 
     private companion object {
         /**
-         * The only package allowed to hold Contacts Provider writes. Paths use
-         * '/' so the check is filesystem-separator-agnostic in the assertion
-         * message; matching is done against a normalized path below.
+         * The only package allowed to hold Contacts Provider writes, with '/' separators; the
+         * scan matches it against a path normalized to '/'.
          */
         const val ALLOWED_WRITE_PACKAGE = "org/onekash/kashcal/sync/contacts"
 
@@ -41,11 +33,9 @@ class ContactsProviderWriteBoundaryTest {
         const val CONTACTS_CONTRACT_MARKER = "ContactsContract"
 
         /**
-         * ...AND contains at least one of these provider-write signatures.
-         * These are the batch-write markers the sync path uses; they are
-         * absent from the read-only birthday/attendee query code, so those
-         * files are not flagged. `bulkInsert` and the sync-adapter query flag
-         * are included so a non-batch write path can't slip the fence.
+         * ...and contains at least one of these provider-write markers. The read-only birthday
+         * and attendee query code has none, so it isn't flagged. `bulkInsert` and the
+         * sync-adapter query flag are here so a non-batch write path can't slip the fence.
          */
         val WRITE_MARKERS = listOf(
             ".applyBatch(",
@@ -103,11 +93,10 @@ class ContactsProviderWriteBoundaryTest {
     }
 
     /**
-     * Self-check: the detector must actually flag a file that both references
-     * the contract and performs a write from outside the allowed package.
-     * Without this, a refactor that broke the matcher (renamed markers, wrong
-     * path normalization) would silently turn the firewall into a no-op that
-     * always passes.
+     * Self-check: the detector flags a file outside the allowed package that references the
+     * contract and writes. Without it, a refactor that broke the matcher (renamed markers,
+     * wrong path normalization) would silently turn the firewall into a no-op that always
+     * passes.
      */
     @Test
     fun `detector flags a contacts write outside the allowed package`() {
@@ -126,9 +115,8 @@ class ContactsProviderWriteBoundaryTest {
     }
 
     /**
-     * Self-check the other direction: a file under sync/contacts/ that does the
-     * exact same write must NOT be flagged, or the guard would block the very
-     * layer it's meant to permit.
+     * Self-check the other direction: the same write under sync/contacts/ must not be flagged,
+     * or the guard would block the layer it permits.
      */
     @Test
     fun `detector permits a contacts write inside the allowed package`() {

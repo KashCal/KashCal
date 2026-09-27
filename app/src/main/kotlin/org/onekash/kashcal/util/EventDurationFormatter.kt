@@ -1,15 +1,10 @@
 package org.onekash.kashcal.util
 
 /**
- * Compute RFC 5545 duration string from start/end timestamps.
+ * Returns the RFC 5545 duration between two epoch-millis timestamps: whole days, at least
+ * one, for an all-day event ("P1D"), else hours and minutes ("PT1H30M", "PT45M").
  *
  * CalendarProvider requires DURATION instead of DTEND for recurring events.
- * Extracted from HomeViewModel for reuse by DeviceCalendarImporter.
- *
- * @param startTs Start timestamp in epoch millis
- * @param endTs End timestamp in epoch millis
- * @param isAllDay Whether this is an all-day event
- * @return Duration string like "P1D", "PT1H30M", "PT45M"
  */
 fun computeDurationString(startTs: Long, endTs: Long, isAllDay: Boolean): String {
     val diffMs = endTs - startTs

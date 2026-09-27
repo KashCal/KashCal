@@ -11,20 +11,19 @@ import kotlinx.serialization.json.Json
 import org.onekash.kashcal.data.db.entity.Category
 
 /**
- * Access to the `categories` tag-metadata table (color + recency per tag).
+ * Reads and writes the `categories` tag-metadata table: a color and a recency per tag.
  *
- * Rows are seeded/backfilled at migration time, auto-seeded on sync pull, and
- * touched on every save. The primary key is `COLLATE NOCASE`, so all lookups
- * and conflict resolution are case-insensitive while stored casing is kept.
+ * Rows are seeded and backfilled by the v21 to v22 migration, seeded on sync pull
+ * ([seedFromPull]) and touched on every save ([touch]). The primary key is `COLLATE NOCASE`, so
+ * lookups and conflicts are case-insensitive while the stored casing is kept.
  */
 @Dao
 interface CategoryDao {
 
     /**
-     * Insert a tag if one with that (case-insensitive) name doesn't already
-     * exist; a collision is ignored so an existing row's color and recency are
-     * left intact. Used by seed/backfill/auto-seed where the first-seen row
-     * must win.
+     * Inserts a tag unless one with that name exists (case-insensitive); an existing row's color
+     * and recency stay intact. The first-seen row must win: [touch] and [seedFromPull] rely on it
+     * to leave a stored color alone.
      */
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insertIgnore(category: Category): Long
@@ -33,14 +32,13 @@ interface CategoryDao {
     @Query("SELECT * FROM categories WHERE name = :name LIMIT 1")
     suspend fun getByName(name: String): Category?
 
-    /** All tags, reactive — fuels the management screen and the color map. */
+    /** Emits every tag; feeds the management screen and the tag color map. */
     @Query("SELECT * FROM categories ORDER BY name COLLATE NOCASE ASC")
     fun observeAll(): Flow<List<Category>>
 
     /**
-     * Tag-suggestion names, most-recently-used first with a stable `name ASC`
-     * tiebreak (tags saved on the same event share a `last_used_at`, so recency
-     * alone would be nondeterministic).
+     * Returns tag-suggestion names, most recently used first. Tags saved on the same event share
+     * a `last_used_at`, so the `name` tiebreak keeps the order deterministic.
      */
     @Query(
         "SELECT name FROM categories " +
@@ -55,14 +53,13 @@ interface CategoryDao {
     )
     fun observeSuggestions(limit: Int): Flow<List<String>>
 
-    /** Remove a tag's metadata row; the event strings that reference it stay. */
+    /** Removes a tag's metadata row; the event strings that reference it stay. */
     @Query("DELETE FROM categories WHERE name = :name")
     suspend fun deleteByName(name: String)
 
     /**
-     * All tags carrying a user-chosen color, for backup. Colorless tags are
-     * deliberately excluded — they reappear on their own via sync/usage and
-     * their swatch is derived, so backing them up carries nothing recoverable.
+     * Returns the tags with a user-chosen color, for backup. Colorless tags are left out: they
+     * reappear through sync or use and their swatch is derived, so a backup would recover nothing.
      */
     @Query("SELECT * FROM categories WHERE color IS NOT NULL ORDER BY name COLLATE NOCASE ASC")
     suspend fun getColoredOnce(): List<Category>
@@ -71,9 +68,9 @@ interface CategoryDao {
     suspend fun raiseLastUsedAt(name: String, lastUsedAt: Long)
 
     /**
-     * Apply a backed-up tag: create the row if absent, then let the backup's
-     * custom color win on an existing row while keeping whichever recency is
-     * newer (a locally-more-recent use isn't rolled back by an older backup).
+     * Applies a backed-up tag: creates the row if absent, then the backup's color wins on an
+     * existing row while the newer recency is kept, so an older backup doesn't roll back a local
+     * use.
      */
     @Transaction
     suspend fun restoreFromBackup(name: String, color: Int?, lastUsedAt: Long) {
@@ -82,7 +79,7 @@ interface CategoryDao {
         raiseLastUsedAt(name, lastUsedAt)
     }
 
-    // ---- Internal statements composed by the color-preserving operations ----
+    // ---- Single statements composed by the color-preserving operations ----
 
     @Query("UPDATE categories SET last_used_at = :now WHERE name = :name")
     suspend fun setLastUsedAt(name: String, now: Long)
@@ -94,10 +91,9 @@ interface CategoryDao {
     suspend fun renameRowInPlace(from: String, to: String)
 
     /**
-     * Record a use of [name] at time [now] without ever disturbing a stored
-     * color: insert the tag (color null) only if absent, then bump its
-     * recency. Deliberately two statements rather than a whole-row upsert,
-     * which would reset a user's chosen color to null.
+     * Records a use of [name] at [now] without touching a stored color: inserts the tag (color
+     * null) only if absent, then sets its recency to [now]. A whole-row upsert would reset a
+     * user's chosen color to null.
      */
     @Transaction
     suspend fun touch(name: String, now: Long) {
@@ -106,11 +102,10 @@ interface CategoryDao {
     }
 
     /**
-     * Seed a tag seen on a pulled event, dating its recency to the event's own
-     * [recency] (its last-modified or start time) rather than wall-clock now.
-     * Create the row if absent, then only ever *raise* recency — so pulling a
-     * batch of old events doesn't rank their tags as "just used" or roll back a
-     * newer local use. Never disturbs a stored color.
+     * Seeds a tag seen on a pulled event, dated to the event's [recency] (its last-modified or
+     * start time), not wall-clock now. Creates the row if absent, then only raises recency, so
+     * pulling old events doesn't rank their tags as just used or roll back a newer local use.
+     * Never changes a stored color.
      */
     @Transaction
     suspend fun seedFromPull(name: String, recency: Long) {
@@ -119,9 +114,8 @@ interface CategoryDao {
     }
 
     /**
-     * Set (or clear) a tag's custom color, creating the row if the tag has no
-     * metadata yet. A freshly-created row is stamped with [now]; an existing
-     * row keeps its `last_used_at` (recoloring is not a use).
+     * Sets or clears a tag's custom color, creating the row if absent. A new row is stamped with
+     * [now]; an existing row keeps its `last_used_at` (recoloring is not a use).
      */
     @Transaction
     suspend fun setColor(name: String, color: Int?, now: Long) {
@@ -131,28 +125,23 @@ interface CategoryDao {
 
     // ---- Rename cascade over the event category strings ----
     //
-    // These rewrite the denormalized `Event.categories` JSON list (the tag is a
-    // list-of-strings on each event, not an FK). The rewrite is a Kotlin
-    // read-modify-write per affected event rather than a SQL `REPLACE`: only
-    // Kotlin can match a list *element* exactly (so renaming "Work" never
-    // touches "Teamwork") and dedup case-insensitively (so an event already
-    // carrying the destination doesn't end up with it twice).
+    // These rewrite the `Event.categories` JSON list of strings (a tag is not an FK). A SQL
+    // `REPLACE` can't do it: only Kotlin can match a whole list element (renaming "Work" never
+    // touches "Teamwork") and dedup case-insensitively (an event already carrying the
+    // destination doesn't end up with it twice).
 
-    /** Projection of an event's id + raw categories JSON for the rewrite loop. */
+    /** Projects an event's id and raw categories JSON for the rewrite loop. */
     data class EventCategories(
         @ColumnInfo(name = "id") val id: Long,
         @ColumnInfo(name = "categories") val categoriesJson: String?,
     )
 
     /**
-     * Every event that carries at least one tag. The exact, per-element match
-     * happens in Kotlin (Unicode-correct case folding); this only skips the
-     * untagged rows. A `LIKE '%"Name"%'` prefilter was deliberately avoided:
-     * SQLite's `LIKE` folds case for ASCII only, so it would silently miss an
-     * event storing the tag in a different non-ASCII casing (e.g. Cyrillic
-     * `работа` vs `Работа`) — leaving that event un-renamed. Renames are
-     * rare, user-initiated actions, so scanning the tagged rows is a fine trade
-     * for correctness across every script.
+     * Returns every event with at least one tag. The per-element match happens in Kotlin, with
+     * Unicode case folding; this only skips untagged rows. Don't add a `LIKE '%"Name"%'`
+     * prefilter: SQLite's `LIKE` folds ASCII case only, so it would silently miss an event
+     * storing the tag in another non-ASCII casing (Cyrillic `работа` vs `Работа`) and leave it
+     * un-renamed. Renames are rare user actions, so scanning the tagged rows is cheap enough.
      */
     @Query("SELECT id, categories FROM events WHERE categories IS NOT NULL AND categories != '' AND categories != '[]'")
     suspend fun eventsCarrying(): List<EventCategories>
@@ -161,25 +150,21 @@ interface CategoryDao {
     suspend fun setEventCategories(id: Long, categoriesJson: String?)
 
     /**
-     * Rename tag [from] to [to] everywhere: rewrite every carrying event's list
-     * (exact element match, case-insensitive dedup so renaming into a name an
-     * event already has collapses to one) and move the metadata row. If a
-     * *distinct* [to] row already exists this is effectively a merge — its
-     * color/recency win and the [from] row is dropped; otherwise the [from] row
-     * is renamed in place, keeping its color and recency.
+     * Renames tag [from] to [to] everywhere: rewrites every carrying event's list ([retagEvents])
+     * and moves the metadata row. If a distinct [to] row exists this is a merge: its color and
+     * recency win and the [from] row is dropped. Otherwise the [from] row is re-inserted under
+     * [to] with its color and recency; a case-only rename restamps the row in place.
      *
-     * Returns the ids of the events whose stored list actually changed, so the
-     * domain layer can mark exactly those for sync. An event that carries the
-     * tag but whose rebuilt list is byte-identical (e.g. an identity rename) is
-     * not reported — there is nothing new to upload.
+     * Returns the ids of the events whose stored list changed, so the domain layer queues only
+     * those for sync. An event whose rebuilt list is byte-identical (an identity rename) is not
+     * reported.
      */
     @Transaction
     suspend fun renameTag(from: String, to: String): List<Long> {
         val changed = retagEvents(from, to)
         if (to.equals(from, ignoreCase = true)) {
-            // Case-only rename ("work" -> "Work"): the NOCASE PK means source and
-            // target are the same row, so a delete-then-reinsert would drop the
-            // color. Just restamp the stored casing in place.
+            // Case-only rename ("work" -> "Work"): the NOCASE PK makes source and target the
+            // same row, so a delete then re-insert would drop the color. Restamp the casing.
             renameRowInPlace(from, to)
             return changed
         }
@@ -193,10 +178,9 @@ interface CategoryDao {
     }
 
     /**
-     * Replace tag [from] with [to] in every carrying event's category list,
-     * matching [from] as a whole list element (case-insensitive) and deduping
-     * the result case-insensitively so [to] never appears twice. Returns the
-     * ids of the events whose stored JSON actually changed.
+     * Replaces tag [from] with [to] in every carrying event's list, matching [from] as a whole
+     * element (case-insensitive) and deduping case-insensitively so [to] never appears twice.
+     * Returns the ids of the events whose stored JSON changed.
      */
     private suspend fun retagEvents(from: String, to: String): List<Long> {
         val changed = mutableListOf<Long>()

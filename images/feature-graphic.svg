@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
-  <rect width="1024" height="500" fill="#0e1116"/>
+  <rect width="1024" height="500" fill="#3a2140"/>
 
   <!-- Logo cards (new deck-of-cards mark, 88-unit space centered at 44,44),
        scaled to a ~320px area centered around (220, 250) -->
@@ -21,6 +21,6 @@
   </g>
 
   <!-- Wordmark + tagline -->
-  <text x="440" y="240" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="92" font-weight="700" fill="#e6e8ec" letter-spacing="-2">KashCal</text>
-  <text x="440" y="295" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="28" font-weight="400" fill="#8c93a0">Private. No tracking. Open Source.</text>
+  <text x="440" y="240" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="92" font-weight="700" fill="#f3edf4" letter-spacing="-2">KashCal</text>
+  <text x="440" y="295" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="28" font-weight="400" fill="#b8a6bd">Private. No tracking. Open Source.</text>
 </svg>

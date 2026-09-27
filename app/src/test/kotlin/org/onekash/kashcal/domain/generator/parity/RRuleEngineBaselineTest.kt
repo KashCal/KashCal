@@ -9,16 +9,14 @@ import org.onekash.kashcal.domain.generator.parity.fixtures.ExistingTestsCorpus
 import org.onekash.kashcal.domain.generator.parity.fixtures.RfcExamplesCorpus
 
 /**
- * Drift detector. Runs the full corpus through both engines and compares
- * each engine's output against the checked-in baseline JSON files.
+ * Detects engine drift: one test per engine runs the four corpus pools and compares each case's
+ * output with that engine's checked-in baseline JSON.
  *
- * This test FAILS if any case's per-engine output changes — intentional
- * behavior change requires running [RRuleEngineParityReportTest] to
- * regenerate baselines AND staging the updated JSON files. The resulting
- * `git diff` is a readable per-case hunk showing exactly what changed.
- *
- * Unlike the report test, this one enforces: engine behavior must match
- * the baseline, or the commit is rejected by CI.
+ * Fails when a case's timestamps or error text differ from the baseline, when a corpus case is
+ * missing from the baseline or a baseline case is no longer in the corpus, or when the baseline
+ * resource is missing or names another engine. For an intended behavior change, run
+ * [RRuleEngineParityReportTest] to regenerate the baselines and commit the JSON; its `git diff`
+ * shows the change per case. Unlike the report test, this one fails the unit test run.
  */
 class RRuleEngineBaselineTest {
 

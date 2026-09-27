@@ -10,19 +10,18 @@ import org.onekash.kashcal.R
  * A selectable launcher-icon variant.
  *
  * Each variant is backed by an `<activity-alias>` in the manifest that targets `MainActivity`.
- * Exactly one alias is enabled at a time; switching the icon enables the chosen alias and disables
- * the others (see [AppIconSwitchPlan] and AppIconUtility). The component state itself is the source
- * of truth — there is no separate persisted preference.
+ * One alias is enabled at a time; switching enables the chosen alias and disables the others
+ * ([AppIconSwitchPlan], [AppIconUtility]). The component state is the source of truth; no
+ * preference is persisted.
  *
  * [DEFAULT] is the only alias enabled at install. [SUPPORTER] and [SUPPORTER_CALENDAR] share one
  * gold icon and differ only in the launcher label: "KashCal" vs "Calendar".
  *
  * @property aliasSuffix the alias class name relative to the application package.
- * @property previewForegroundRes the adaptive icon's *foreground* layer (a raster the picker can
- *   render over [R.color.ic_launcher_background]). The adaptive-icon XML itself can't be loaded by
- *   Compose's painterResource, so the picker composites the foreground over the background — the
- *   same approach as AppLockVeil.
- * @property labelRes the picker row label (not the launcher label; that lives in the manifest).
+ * @property previewForegroundRes the adaptive icon's foreground layer. Compose's painterResource
+ *   can't load the adaptive-icon XML, so the picker draws this over
+ *   [R.color.ic_launcher_background], as AppLockVeil does.
+ * @property labelRes the picker row label; the launcher label lives in the manifest.
  */
 enum class AppIconPreset(
     val aliasSuffix: String,
@@ -58,11 +57,11 @@ enum class AppIconPreset(
 }
 
 /**
- * The set of component-state changes to apply when switching to [target].
+ * Lists the component-state changes that switch the launcher icon to [toEnable].
  *
- * Enabling the target *before* disabling the others guarantees the app is never left with zero
- * enabled launcher aliases (which would remove it from the launcher). This is pure so the
- * enable/disable decision is unit-testable without a PackageManager.
+ * [AppIconUtility.setAppIcon] enables the target before disabling the others, so the app is never
+ * left with zero enabled launcher aliases, which would remove it from the launcher. Pure, so the
+ * decision is testable without a PackageManager.
  *
  * @property toEnable the single alias to enable.
  * @property toDisable every other alias.

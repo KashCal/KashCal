@@ -18,32 +18,29 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Capture canonical recurring-edit fixtures for each supported CalDAV
- * server. For each (server × edit-mode) the harness creates a master
- * weekly recurring event, performs the edit, fetches the stored body
- * back, and writes a redacted fixture to a local, gitignored
- * fixtures directory (recurring-edit/<server>/...).
+ * Captures recurring-edit fixtures for each supported CalDAV server. For
+ * each (server × edit mode) the harness creates a weekly recurring master,
+ * performs the edit, fetches the stored body back, and writes a redacted
+ * fixture to a local, gitignored fixtures directory
+ * (recurring-edit/<server>/...).
  *
  * Edit modes captured:
- *   01 — master create + fetch round-trip
- *   02 — THIS_EVENT     (single-occurrence exception via RECURRENCE-ID)
- *   03 — THIS_AND_FUTURE (split: truncate master with UNTIL + new series UID)
- *   04 — ALL_EVENTS     (PUT to master with new title)
+ *   01: master create and fetch round-trip
+ *   02: THIS_EVENT (single-occurrence exception via RECURRENCE-ID)
+ *   03: THIS_AND_FUTURE (split: truncate the master with UNTIL, plus a new
+ *       series UID)
+ *   04: ALL_EVENTS (PUT to the master with a new title and location)
  *
- * Anonymization: every PUT body uses synthetic `@example.test`
- * addresses. Before any fixture lands on disk it goes through
- * [FixtureRedactor] which masks any address that doesn't end in
- * `@example.test`, opaque etag/schedule-tag values, account-id segments
- * in URLs, and `CN=` display-names. The harness loud-fails if a
- * post-redaction body still contains a non-synthetic email-shaped
- * substring.
+ * Every PUT body uses synthetic `@example.test` addresses. Every file goes
+ * through [FixtureRedactor.redact] before it lands on disk, and the `.ics`
+ * fixtures also through [FixtureRedactor.assertSafe], which throws instead
+ * of writing a body that still leaks.
  *
  * Run:
  *     ./gradlew :app:testDebugUnitTest -Pintegration \
  *         --tests '*MultiServerRecurringEditFixturesTest*'
  *
- * Output dir is a local, gitignored fixtures directory. Servers
- * unreachable at runtime skip via `assumeTrue`.
+ * Servers unreachable at runtime skip via `assumeTrue`.
  */
 @RunWith(Parameterized::class)
 class MultiServerRecurringEditFixturesTest(
@@ -79,15 +76,15 @@ class MultiServerRecurringEditFixturesTest(
     @After
     fun cleanup() = runBlocking {
         val c = client ?: return@runBlocking
-        // Cleanup walks ONLY URLs we created in this run; we never read
-        // a calendar listing and delete arbitrary events. This is the
-        // hard invariant that protects against ever touching user data.
+        // Cleanup walks only URLs this run created; it never reads a
+        // calendar listing to delete events. That invariant keeps the test
+        // off user data.
         for ((url, etag) in createdEventUrls.reversed()) {
             try {
                 c.deleteEvent(url, etag)
             } catch (_: Exception) {
-                // Best-effort. Orphans use unique UID prefix
-                // `recur-fix-{ms}-…` and are harmless if left.
+                // Best-effort. Orphans carry the unique UID prefix
+                // `recur-fix-{ms}-` and are harmless if left.
             }
         }
     }
@@ -126,9 +123,8 @@ class MultiServerRecurringEditFixturesTest(
     }
 
     /**
-     * Belt-and-suspenders: refuse to mutate any URL we didn't create in
-     * this run. Catches any future refactor that drifts off our own URL
-     * set and would otherwise touch user data.
+     * Throws unless this run created [url], so an edit that drifts off the
+     * test's own URLs fails before it can touch user data.
      */
     private fun assertOurEvent(url: String) {
         check(createdEventUrls.any { it.first == url }) {
@@ -137,9 +133,10 @@ class MultiServerRecurringEditFixturesTest(
     }
 
     /**
-     * Compute three weekly occurrence timestamps starting next Monday at
-     * 10:00 UTC. We pick Monday because every server tested handles
-     * weekday alignment without timezone hand-waving.
+     * Start and end times of three weekly occurrences at 10:00 UTC, built by
+     * [timePoints]: the first is on a Monday one to two weeks out. Monday
+     * because every server tested handles weekday alignment without
+     * timezone hand-waving.
      */
     private data class TimePoints(
         val first: String,
@@ -264,16 +261,16 @@ END:VCALENDAR
         val uid = "$UID_PREFIX${config.name.lowercase()}-${UUID.randomUUID()}-this"
         val t = timePoints()
 
-        // Step 1 — create master.
+        // Step 1: create the master.
         val masterIcs = masterIcs(uid, t)
         val createResult = client!!.createEvent(calendarUrl!!, uid, masterIcs)
         assumeTrue("create failed", createResult.isSuccess())
         val (url, masterEtag) = createResult.getOrNull()!!
         trackEvent(url, masterEtag)
 
-        // Step 2 — PUT same href with master+exception VEVENTs (RFC 5545
-        // single-resource recurrence model). Exception modifies SUMMARY
-        // and shifts time by +4h on the third occurrence.
+        // Step 2: PUT the same href with master and exception VEVENTs (one
+        // resource per recurrence set, RFC 4791 §4.1). The exception changes
+        // SUMMARY and moves the third occurrence 4 hours later.
         val exceptionStart = t.third.replace("T10", "T14")
         val exceptionEnd = t.third.replace("T10", "T15")
         val combinedIcs = """
@@ -356,15 +353,15 @@ END:VCALENDAR
         val splitUid = "$UID_PREFIX${config.name.lowercase()}-${UUID.randomUUID()}-future-split"
         val t = timePoints()
 
-        // Step 1 — create master.
+        // Step 1: create the master.
         val masterIcs = masterIcs(uid, t)
         val createResult = client!!.createEvent(calendarUrl!!, uid, masterIcs)
         assumeTrue("create failed", createResult.isSuccess())
         val (url, masterEtag) = createResult.getOrNull()!!
         trackEvent(url, masterEtag)
 
-        // Step 2 — truncate master with UNTIL = third occurrence start - 1
-        // second. Per `splitSeries` (EventWriter.kt:435).
+        // Step 2: truncate the master with UNTIL one second before the third
+        // occurrence, as `EventWriter.splitSeries` ends a non-COUNT rule.
         val untilCal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         untilCal.time = icsDateFormat.parse(t.third)!!
         untilCal.add(Calendar.SECOND, -1)
@@ -392,16 +389,16 @@ END:VCALENDAR
 
         assertOurEvent(url)
         val updateMasterResult = client!!.updateEvent(url, truncatedMasterIcs, masterEtag)
-        // We deliberately keep both COUNT and UNTIL in the truncated PUT
-        // to capture how each server reacts — RFC 5545 says these are
-        // mutually exclusive.
+        // The truncated PUT keeps both COUNT and UNTIL on purpose, to capture
+        // how each server reacts; RFC 5545 §3.3.10 says they MUST NOT occur
+        // in the same rule.
         val masterFollowupEtag = if (updateMasterResult.isSuccess()) {
             val e = updateMasterResult.getOrNull()!!
             trackEvent(url, e)
             e
         } else {
-            // Retry with COUNT removed (matches how splitSeries should
-            // behave once we add the strip).
+            // Retry with COUNT removed, the UNTIL-only shape. `splitSeries`
+            // itself never writes both: it cuts a COUNT rule's COUNT instead.
             val cleanIcs = truncatedMasterIcs.replace(";COUNT=5", "")
             assertOurEvent(url)
             val retry = client!!.updateEvent(url, cleanIcs, masterEtag)
@@ -430,8 +427,8 @@ END:VCALENDAR
             writeFixture("03-this-and-future-master-stored.ics", fetchedMaster.getOrNull()!!.icalData)
         }
 
-        // Step 3 — create new series for THIS+FUTURE starting at the
-        // third occurrence with shifted SUMMARY.
+        // Step 3: create the new THIS_AND_FUTURE series, starting at the
+        // third occurrence with a changed SUMMARY.
         val splitMasterIcs = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -499,7 +496,7 @@ END:VCALENDAR
         val (url, etag) = createResult.getOrNull()!!
         trackEvent(url, etag)
 
-        // Update SUMMARY + LOCATION to drive a server-detectable diff.
+        // Change SUMMARY and add LOCATION so the server sees a real diff.
         val updatedIcs = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -581,16 +578,19 @@ END:VCALENDAR
 }
 
 /**
- * Strict redactor for fixture output. Two passes:
- *   1. Replace any non-`@example.test` email with the synthetic
- *      placeholder.
- *   2. Mask account-id-shaped path segments (long alphanumerics in URL
- *      portions of properties), opaque tag values (Schedule-Tag /
- *      ETag), and `CN=` display-names.
+ * Masks PII in fixture output and log lines. [redact] replaces, in order:
+ *   1. any email not ending in `@example.test`, with a synthetic
+ *      placeholder
+ *   2. `CN=` display names, unless they contain "Synthetic"
+ *   3. account-id-shaped path segments: 6 or more digits, or 20 or more
+ *      upper-case hex characters and dashes
+ *   4. quoted opaque values of 16 or more characters, such as ETag and
+ *      Schedule-Tag
+ *   5. the values of the [piiPropertyPrefixes] properties
  *
- * [assertSafe] re-scans the redacted body and throws if anything still
- * looks like a real email address — fixtures are never written to disk
- * if redaction fails.
+ * [assertSafe] re-scans a redacted body and throws if its first
+ * email-shaped substring isn't `@example.test` or a PII property is
+ * unmasked, so a fixture that fails redaction is never written.
  */
 internal object FixtureRedactor {
     private val emailRegex = Regex("""[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}""")
@@ -599,11 +599,11 @@ internal object FixtureRedactor {
     private val opaqueTagRegex = Regex(""""[A-Za-z0-9+/=:_-]{16,}"""")
 
     /**
-     * Lines whose value is server- or account-specific PII (calendar
-     * name, default timezone, etc). Server-stored fixtures often echo
-     * these from PROPFIND or account settings. Replaced wholesale with a
-     * `<redacted>` token rather than stripped so the diff still shows
-     * the property *was* present.
+     * Properties whose value is server- or account-specific PII, for
+     * example the calendar name or default timezone. Server-stored bodies
+     * often echo these from PROPFIND or account settings. The value is
+     * replaced with `<redacted>` rather than the line stripped, so the diff
+     * still shows the property was present.
      */
     private val piiPropertyPrefixes = listOf(
         "X-WR-CALNAME",

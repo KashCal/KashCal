@@ -16,6 +16,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
@@ -28,9 +30,10 @@ import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.components.EventFormState
 
 /**
- * Verifies that tags entered in the event form are persisted on the create and
- * update save paths — the sibling-mapper risk where any of the five Event
- * build/copy branches in [HomeViewModel.saveEvent] could silently drop them.
+ * Tests that tags entered in the event form are persisted by each of the five Event build or
+ * copy branches in [HomeViewModel.saveEvent] (create, same-calendar update, single occurrence,
+ * this and future, calendar move); any one of them could silently drop them. A create with no
+ * tags stores null, and a create passes a blank uid for the writer to mint.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelSaveCategoriesTest {
@@ -94,7 +97,8 @@ class HomeViewModelSaveCategoriesTest {
         accountRepository = accountRepository,
         syncScheduler = syncScheduler,
         networkMonitor = networkMonitor,
-        calendarProviderRepository = fakeCalendarProviderRepository,
+        deviceEventReader = fakeCalendarProviderRepository.deviceEventReader(),
+        deviceEventWriter = fakeCalendarProviderRepository.deviceEventWriter(dataStore),
         attendeeBackfill = mockk(relaxed = true),
         contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),
@@ -132,9 +136,9 @@ class HomeViewModelSaveCategoriesTest {
     @Test
     fun `create path delegates UID minting to the writer by passing a blank uid`() =
         runTest(testDispatcher) {
-            // The event form must not mint its own UID — it hands a blank uid so
-            // EventWriter.generateUid() is the single source of truth (and applies
-            // the @kashcal.onekash.org domain). A bare UUID minted here would sync
+            // The event form must not mint its own UID: it hands a blank uid so
+            // EventWriter.generateUid() is the single source of truth and applies
+            // the @kashcal.onekash.org domain. A bare UUID minted here would sync
             // to the server without the domain and diverge from every other path.
             val captured = slot<Event>()
             coEvery { eventCoordinator.createEvent(capture(captured), any(), any()) } answers { captured.captured }

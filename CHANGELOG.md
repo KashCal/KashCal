@@ -1,3 +1,18 @@
+## [2026.09.27]
+
+### Everything in this release
+
+- Added calendar colors to the Insights day bars, so each day shows how its hours split across your calendars
+- Changed the app icon and store art to an aubergine background
+- Improved sync reliability: an edit that meets a change made elsewhere now merges instead of overwriting it, a redirected or unreadable server reply can no longer lose edits or delete events, and a flaky network or a calendar the server briefly stops listing no longer removes calendars
+- Changed sign-in and calendar discovery to refuse a server that redirects to an unencrypted address or loops, before your password is sent
+- Fixed edits, invite replies and drag-to-reschedule on repeating events losing changed occurrences, the repeat rule, the time zone, or details KashCal doesn't display
+- Fixed a set of device-calendar edits (this and future, all events, dragging to another day, making one occurrence all-day) leaving old occurrences behind or dropping guests, organizer, tags, reminders or color
+- Fixed reminders on very busy calendars, which could be lost or stop KashCal from opening at Android's alarm limit, and reminders firing late on Android 12
+- Fixed events created in KashCal on Stalwart not being readable, movable or deletable
+- Fixed narrowing the sync lookback removing local events
+- Fixed the month home-screen widget failing on busy months, #373, and TalkBack reading each widget day twice
+
 ## [2026.09.19]
 
 ### Everything in this release

@@ -27,31 +27,27 @@ import java.util.UUID
 import okhttp3.Credentials as OkCredentials
 
 /**
- * Live end-to-end oracle for the explicit client-side iTIP delivery channel
- * (RFC 6638 §6 schedule-outbox POST), confirmed working on Zoho.
+ * Checks live that Zoho accepts an invite sent as a client-side schedule-outbox POST.
  *
- * It POSTs a `METHOD:REQUEST` built by the real [ITipBuilder] to Zoho's
- * discovered `schedule-outbox-URL` and asserts the server accepts it with
- * `request-status 2.0` ("Success" — "Event Invitation mail has been
- * successfully sent"). This is the live half of the delivery contract; the
- * offline structural half is `ITipOutboxPayloadContractTest` in icaldav-core.
+ * RFC 6638 defines an outbox POST only for busy-time requests (§5); Zoho also accepts an event
+ * `METHOD:REQUEST` there. Each test POSTs one built by the real [ITipBuilder] to Zoho's
+ * discovered `schedule-outbox-URL` and asserts a 2.x request-status (Zoho answers `2.0`,
+ * "Success": "Event Invitation mail has been successfully sent"). This is the live half of the
+ * delivery contract; the offline structural half is `ITipOutboxPayloadContractTest` in
+ * icaldav-core.
  *
- * TWO ORACLES IN THIS FILE: the first test POSTs inline (raw OkHttp) exactly as
- * the original investigation did by hand — the independent server-accepted-bytes
- * check that does not depend on the in-app client. The second drives the in-app
- * [CalDavClient.postToOutbox] primitive, confirming the production code path
- * produces equivalent, server-accepted bytes against the live server.
+ * Two oracles: the first test POSTs with raw OkHttp, a check of server-accepted bytes that
+ * doesn't depend on the in-app client. The second drives [CalDavClient.postToOutbox], the
+ * production path, against the same server.
  *
- * OUTWARD-FACING SIDE EFFECT: running this (only under `-Pintegration`, only
- * when `ZOHO_*` creds are present) makes the real Zoho account emit an invite.
- * The recipient is a reserved-TLD `@example.test` address (RFC 6761 — no real
- * mailbox), so the invite is undeliverable and no human is contacted. Merely
- * committing the file sends nothing; it is inert until explicitly run.
+ * Side effect: running this (only under `-Pintegration`, only when `ZOHO_*` creds are present)
+ * makes the real Zoho account emit an invite. The recipient is a reserved-TLD `@example.test`
+ * address (RFC 6761, no real mailbox), so the invite is undeliverable and no human is
+ * contacted. Committing the file sends nothing; it is inert until run.
  *
- * PII: ORGANIZER is the account's own discovered calendar-user-address (which
- * may be a real address, per RFC 6638 §2 and §6). Any non-`@example.test`
- * address is redacted before it can reach a failure message / junit-xml, so CI
- * logs never capture the account holder's email.
+ * PII: ORGANIZER is the account's own discovered calendar-user-address (RFC 6638 §2.4.1),
+ * which may be a real address. Any non-`@example.test` address is redacted before it can
+ * reach a failure message or junit-xml, so CI logs never capture the account holder's email.
  *
  * Run: `./gradlew :app:testDebugUnitTest -Pintegration --tests "*ZohoOutboxITipDeliveryTest*"`
  */
@@ -75,7 +71,7 @@ class ZohoOutboxITipDeliveryTest {
         if (!serverUrl!!.startsWith("http")) {
             serverUrl = "https://$serverUrl"
         }
-        // Zoho's CalDAV entry point is /caldav — a PROPFIND on the bare root
+        // Zoho's CalDAV entry point is /caldav; a PROPFIND on the bare root
         // returns 501. Discovery and the principal PROPFIND must target the DAV
         // endpoint, matching the ZOHO server config's davEndpointSuffix.
         davEndpoint = serverUrl!!.trimEnd('/') + "/caldav"
@@ -93,9 +89,9 @@ class ZohoOutboxITipDeliveryTest {
         assumeTrue("Zoho principal discovery failed", principalResult.isSuccess())
         val principalUrl = principalResult.getOrNull()!!
 
-        // 2. Resolve the account's own calendar-user-address (ORGANIZER per RFC 6638 §6:
-        //    the ORGANIZER mailto MUST match the authenticated account or Zoho
-        //    rewrites/strips it).
+        // 2. Resolve the account's own calendar-user-address for ORGANIZER. RFC 6638
+        //    §5.2.2: the ORGANIZER of an outbox POST must match one of the outbox
+        //    owner's addresses; on a mismatch Zoho rewrites or strips it.
         val cuasResult = client.discoverCalendarUserAddresses(principalUrl)
         val organizerAddress = cuasResult.getOrNull()
             ?.firstOrNull { it.startsWith("mailto:", ignoreCase = true) }
@@ -103,12 +99,11 @@ class ZohoOutboxITipDeliveryTest {
             ?.removePrefix("MAILTO:")
         assumeTrue("No mailto: calendar-user-address discovered for Zoho", organizerAddress != null)
 
-        // 3. Discover the schedule-outbox-URL on the principal (the channel the
-        //    in-app outbox primitive will later use).
+        // 3. Discover the schedule-outbox-URL on the principal with a raw PROPFIND.
         val outboxUrl = discoverScheduleOutboxUrl(principalUrl)
         assumeTrue("Zoho did not advertise a schedule-outbox-URL", outboxUrl != null)
 
-        // 4. Build the REQUEST with the REAL ITipBuilder. Synthetic, reserved-TLD
+        // 4. Build the REQUEST with the real ITipBuilder. Synthetic, reserved-TLD
         //    recipient so the emitted invite is undeliverable.
         val recipient = "kashcal-outbox-oracle@example.test"
         val ics = builder.createRequest(
@@ -124,7 +119,7 @@ class ZohoOutboxITipDeliveryTest {
             )
         )
 
-        // 5. POST to the outbox with the RFC 6638 iMIP envelope headers.
+        // 5. POST to the outbox with Originator and Recipient headers.
         val (httpCode, responseBody) = postToOutbox(
             outboxUrl = absoluteUrl(outboxUrl!!),
             originator = organizerAddress,
@@ -147,11 +142,9 @@ class ZohoOutboxITipDeliveryTest {
 
     @Test
     fun `in-app postToOutbox primitive delivers ITipBuilder REQUEST and reports request-status 2_x`() = runBlocking {
-        // Same chain as above, but drives the PRODUCTION CalDavClient.postToOutbox
-        // primitive (not the inline hand-rolled POST) — the in-app code path that
-        // PushStrategy uses. This is the oracle that the productionized primitive
-        // is coded against (the inline version above stays as the independent
-        // server-accepted-bytes check).
+        // Same chain as above through the production CalDavClient.postToOutbox,
+        // which PushStrategy uses. The raw POST above stays as the independent
+        // server-accepted-bytes check.
         val principalResult = client.discoverPrincipal(davEndpoint!!)
         assumeTrue("Zoho principal discovery failed", principalResult.isSuccess())
         val principalUrl = principalResult.getOrNull()!!
@@ -278,7 +271,7 @@ class ZohoOutboxITipDeliveryTest {
         }
         .build()
 
-    /** Resolve a possibly-relative DAV href against the server origin. */
+    /** Resolves a possibly relative DAV href against the server origin. */
     private fun absoluteUrl(pathOrUrl: String): String {
         if (pathOrUrl.startsWith("http", ignoreCase = true)) return pathOrUrl
         val origin = Regex("""^(https?://[^/]+)""").find(serverUrl!!)?.groupValues?.get(1)
@@ -287,9 +280,9 @@ class ZohoOutboxITipDeliveryTest {
     }
 
     /**
-     * Mask every address that is not on the reserved `@example.test` TLD before
-     * it can reach an assertion message — keeps the account holder's real
-     * address out of junit-xml / CI logs (S4).
+     * Masks every address not on the reserved `@example.test` TLD before it can
+     * reach an assertion message, keeping the account holder's real address out of
+     * junit-xml and CI logs.
      */
     private fun redactPii(text: String): String =
         Regex("""[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+""").replace(text) { m ->

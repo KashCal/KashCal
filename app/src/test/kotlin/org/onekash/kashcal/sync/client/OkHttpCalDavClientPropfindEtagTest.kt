@@ -17,13 +17,11 @@ import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * Tests for OkHttpCalDavClient.fetchAllEtags() — PROPFIND Depth:1 etag listing.
+ * Tests [OkHttpCalDavClient.fetchAllEtags], the PROPFIND Depth:1 etag listing, over MockWebServer.
  *
- * This method is used by PullStrategy.pullFull() on servers without sync-token
- * (e.g., Purelymail) where calendar-query REPORT has a stale index.
- * PROPFIND Depth:1 reads the filesystem directly — always accurate.
- *
- * Uses MockWebServer to simulate CalDAV server responses.
+ * PullStrategy.pullFull uses it on servers without sync-tokens (for example Purelymail), where
+ * the calendar-query REPORT has a stale index. PROPFIND Depth:1 lists every resource with no
+ * time-range filter and stays accurate there.
  */
 class OkHttpCalDavClientPropfindEtagTest {
 
@@ -111,10 +109,9 @@ class OkHttpCalDavClientPropfindEtagTest {
     @Test
     fun `fetchAllEtags skips collection self-row identified by trailing slash`() = runTest {
         // The collection self-row is identified by href.endsWith("/") (RFC 4918 §5.2 SHOULD).
-        // Wire body requests only <d:getetag/>, so server may not include resourcetype at
-        // all — this fixture mirrors that wire reality. Member rows are identified by the
-        // presence of an etag and a slashless href. Filename-based filtering would miss
-        // servers that store events at extensionless UID hrefs.
+        // The body asks only for <d:getetag/>, so a server may omit resourcetype, as this
+        // fixture does. A member row has an etag and a slashless href. Filtering by file
+        // name would miss servers that store events at extensionless UID hrefs.
         val xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <d:multistatus xmlns:d="DAV:">
@@ -241,9 +238,9 @@ class OkHttpCalDavClientPropfindEtagTest {
 
     @Test
     fun `fetchAllEtags skips slashless member rows with no etag`() = runTest {
-        // A slashless response with no etag can't be proven to be a member resource so
-        // it's skipped (diagnostic). Without this rule, we'd emit Pair(href, null) and
-        // downstream pulls would force-fetch every such response and waste bandwidth.
+        // A slashless response with no etag can't be proven to be a member, so it is
+        // skipped and logged. Emitting Pair(href, null) would make the pull fetch every
+        // such response.
         val xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <d:multistatus xmlns:d="DAV:">

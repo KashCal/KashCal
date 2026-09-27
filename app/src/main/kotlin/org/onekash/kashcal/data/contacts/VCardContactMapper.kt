@@ -22,59 +22,48 @@ import org.onekash.vcard.model.Phone as VPhone
 import org.onekash.vcard.model.PostalAddress
 
 /**
- * Byte cap for a contact photo written to the Contacts Photo column. Deliberately
- * well under the ~1 MB Android Binder transaction limit.
+ * Byte cap for a contact photo written to the Contacts Photo column, below the ~1 MB Binder
+ * transaction limit.
  *
- * A photo is written as an inline blob inside an `applyBatch` transaction, which
- * crosses Binder — a body approaching 1 MB would trip `TransactionTooLargeException`
- * and fail the whole write batch (the provider downscales large photos, but only
- * AFTER receiving the bytes over Binder, so its downscale can't rescue an oversized
- * transaction). This one cap governs both photo paths: the deferred URL fetch caps
- * its download here, and the mapper drops an inline blob that exceeds it. A real
- * contact avatar is a small image, so this rejects only pathological bodies.
+ * The photo is a blob inside an `applyBatch`, which crosses Binder; a body near 1 MB throws
+ * `TransactionTooLargeException` and fails the whole batch. The provider downscales large
+ * photos only after receiving the bytes, so that can't save an oversized transaction. The cap
+ * governs both photo paths: the URL fetch stops its download here, and [VCardContactMapper]
+ * drops a larger inline blob. A real contact avatar is small, so this rejects only
+ * pathological bodies.
  */
 const val MAX_PHOTO_SIZE_BYTES: Long = 950L * 1024
 
 /**
- * Maps the neutral [Contact] model onto Android Contacts Provider Data rows.
+ * Maps the neutral [Contact] model onto Android Contacts Provider Data rows, one per property,
+ * returned as a [MappedContact].
  *
- * This is the app-side, Android-coupled half of contact-sync parsing: the pure
- * vCard→neutral-model parse lives in the `vcard-core` module (behind the ez-vcard
- * compile wall), and this mapper consumes the already-resolved neutral fields to
- * produce a [MappedContact] carrying one [ContentValues] Data row per property, in
- * the same "return the row set, not a bare list" shape the calendar mapper uses
- * ([org.onekash.kashcal.sync.parser.icaldav.MappedEntity]).
+ * This is the Android half of contact parsing; the vCard to [Contact] parse lives in the
+ * `vcard-core` module, which alone depends on ez-vcard. The mapper is pure: no ContentResolver
+ * write, no batch, no network I/O.
  *
- * Deliberately pure: it performs no ContentResolver write, no batch, and no network
- * I/O. The produced rows carry no `RAW_CONTACT_ID` — the write layer supplies that
- * back-reference (via `withValueBackReference`) when it inserts the parent RawContact.
- *
- * The load-bearing contract is the birthday/anniversary alignment. KashCal already
- * ships readers that query `Event.CONTENT_ITEM_TYPE` rows by `Event.TYPE` =
- * [Event.TYPE_BIRTHDAY] / [Event.TYPE_ANNIVERSARY] and read `Event.START_DATE`. A
- * synced date lands in the shipped birthday/anniversary calendars only if it is
- * emitted as an Event row with the matching type constant and a start-date string the
- * reader can parse back — both the ISO `yyyy-MM-dd` form and the year-less `--MM-DD`
- * reduced-accuracy form (RFC 6350 §4.3.1) are accepted there.
+ * Birthdays and anniversaries must reach the contact event calendars, whose reader
+ * ([BaseContactEventRepository]) queries Event rows by `Event.TYPE_BIRTHDAY` or
+ * `Event.TYPE_ANNIVERSARY` and parses `Event.START_DATE`. So a synced date is emitted as an
+ * Event row with the matching type and a START_DATE that reader parses, such as ISO
+ * `yyyy-MM-dd` or the year-less `--MM-DD` (RFC 6350 §4.3.1).
  */
 object VCardContactMapper {
 
     /**
-     * Convert a neutral [contact] into the Data rows for a single RawContact.
+     * Converts [contact] into the Data rows of one RawContact.
      *
-     * A remote-URL photo cannot become a Photo blob row without a network fetch, so it
-     * is returned on [MappedContact.photoUrl] for a later step to resolve rather than
-     * dropped; an inline (bytes) photo is emitted directly as a Photo Data row.
+     * Inline photo bytes within [MAX_PHOTO_SIZE_BYTES] become a Photo row. Otherwise the
+     * photo's URL, if any, goes on [MappedContact.photoUrl] for the later fetch.
      */
     fun toEntity(contact: Contact): MappedContact {
         val rows = ArrayList<ContentValues>()
 
         rows += structuredNameRow(contact)
         contact.nickname?.let { rows += row(Nickname.CONTENT_ITEM_TYPE) { put(Nickname.NAME, it) } }
-        // A blank EMAIL/TEL/IMPP value (some servers store empty property lines) would
-        // otherwise become a phantom tappable row in the system Contacts app; skip it.
-        // At most one email and one phone may carry IS_PRIMARY — the provider expects a
-        // single primary per mimetype, so honour only the first preferred value.
+        // Skip a blank EMAIL/TEL/IMPP value (some servers store empty property lines), or it
+        // becomes a phantom tappable row in the system Contacts app. The provider expects one
+        // IS_PRIMARY per mimetype, so only the first preferred email and phone get it.
         var emailPrimaryTaken = false
         contact.emails.forEach { email ->
             if (email.address.isBlank()) return@forEach
@@ -95,9 +84,8 @@ object VCardContactMapper {
             if (im.handle.isBlank()) return@forEach
             rows += row(Im.CONTENT_ITEM_TYPE) {
                 put(Im.DATA, im.handle)
-                // vCard IM protocols are open-ended (xmpp, twitter, matrix, …), so keep
-                // them losslessly on the custom-protocol channel rather than forcing a
-                // lossy match onto the fixed PROTOCOL_* set.
+                // vCard IM protocols are open-ended (xmpp, matrix and others); the custom
+                // protocol keeps them intact, where the fixed PROTOCOL_* set would lose some.
                 put(Im.PROTOCOL, Im.PROTOCOL_CUSTOM)
                 im.protocol?.let { put(Im.CUSTOM_PROTOCOL, it) }
             }
@@ -123,11 +111,10 @@ object VCardContactMapper {
             }
         }
         contact.notes.forEach { note -> rows += row(Note.CONTENT_ITEM_TYPE) { put(Note.NOTE, note) } }
-        // CATEGORIES -> one GroupMembership row per label, keyed by GROUP_SOURCE_ID
-        // (the category name). The write layer provisions a titled Group with that
-        // SOURCE_ID before the batch, so the membership resolves to a named group the
-        // user sees rather than the provider auto-creating an untitled one. A pure
-        // mapper can't know the group's row id, so it emits the stable string key.
+        // One GroupMembership row per CATEGORIES label, keyed by GROUP_SOURCE_ID (the
+        // name), because a pure mapper can't know the group's row id. The write layer
+        // creates a titled Group with that SOURCE_ID before the batch, or the provider would
+        // auto-create an untitled one.
         contact.categories.forEach { category ->
             if (category.isBlank()) return@forEach
             rows += row(GroupMembership.CONTENT_ITEM_TYPE) { put(GroupMembership.GROUP_SOURCE_ID, category) }
@@ -136,24 +123,20 @@ object VCardContactMapper {
         eventRow(contact.birthday, Event.TYPE_BIRTHDAY)?.let { rows += it }
         eventRow(contact.anniversary, Event.TYPE_ANNIVERSARY)?.let { rows += it }
 
-        // An inline blob over the Binder-driven cap can't be written (it would fail the
-        // whole applyBatch), so treat only within-cap inline bytes as emittable.
         val inlinePhoto = contact.photo?.data
             ?.takeIf { it.isNotEmpty() && it.size <= MAX_PHOTO_SIZE_BYTES }
         if (inlinePhoto != null) {
             rows += row(Photo.CONTENT_ITEM_TYPE) { put(Photo.PHOTO, inlinePhoto) }
         }
-        // No blob was emitted (no photo, empty/absent, or over-cap inline bytes): if a URL
-        // is present, carry it for the deferred fetch step rather than dropping the photo.
         val photoUrl = if (inlinePhoto == null) contact.photo?.url else null
 
         return MappedContact(contact = contact, dataRows = rows, photoUrl = photoUrl)
     }
 
     /**
-     * StructuredName is always written, even when every component is empty, because the
-     * provider treats a missing StructuredName as an unnamed contact. DISPLAY_NAME comes
-     * from the neutral model, which already derives it from `N` when the body had no `FN`.
+     * Builds the StructuredName row. It is written even when every component is empty, because
+     * the provider treats a missing StructuredName as an unnamed contact. The parser already
+     * derives [Contact.displayName] from `N` when the body has no `FN`.
      */
     private fun structuredNameRow(contact: Contact): ContentValues =
         row(StructuredName.CONTENT_ITEM_TYPE) {
@@ -164,7 +147,7 @@ object VCardContactMapper {
             n.middle?.let { put(StructuredName.MIDDLE_NAME, it) }
             n.prefix?.let { put(StructuredName.PREFIX, it) }
             n.suffix?.let { put(StructuredName.SUFFIX, it) }
-            // Phonetic reading aids (X-PHONETIC-*): drive CJK name sort/search on device.
+            // X-PHONETIC-* reading aids drive CJK name sort and search on the device.
             n.phoneticGiven?.let { put(StructuredName.PHONETIC_GIVEN_NAME, it) }
             n.phoneticMiddle?.let { put(StructuredName.PHONETIC_MIDDLE_NAME, it) }
             n.phoneticFamily?.let { put(StructuredName.PHONETIC_FAMILY_NAME, it) }
@@ -174,7 +157,7 @@ object VCardContactMapper {
         row(Email.CONTENT_ITEM_TYPE) {
             put(Email.ADDRESS, email.address)
             // A custom label wins over the fixed types: the provider shows LABEL verbatim
-            // under TYPE_CUSTOM, so a "School" email is not flattened to a generic type.
+            // under TYPE_CUSTOM, so a "School" email keeps its label.
             if (email.label != null) {
                 put(Email.TYPE, Email.TYPE_CUSTOM)
                 put(Email.LABEL, email.label)
@@ -238,10 +221,9 @@ object VCardContactMapper {
         }
 
     /**
-     * `ORG` components split company / department; `TITLE` and `ROLE` ride the same row
-     * (the provider stores both on the Organization mimetype — TITLE is the job title,
-     * JOB_DESCRIPTION the ROLE/function). Emits nothing when the contact carries none of
-     * organization, title, or role.
+     * Builds the Organization row: the first `ORG` component is COMPANY, the rest are joined
+     * into DEPARTMENT with "; ", `TITLE` is TITLE and `ROLE` is JOB_DESCRIPTION. Returns null
+     * when all four are blank.
      */
     private fun organizationRow(contact: Contact): ContentValues? {
         val company = contact.organization.getOrNull(0)?.takeIf { it.isNotBlank() }
@@ -259,20 +241,16 @@ object VCardContactMapper {
     }
 
     /**
-     * A birthday/anniversary becomes an Event Data row with [type], the constant the
-     * shipped [ContactEventType] readers query. START_DATE is the provider's stored form:
-     * a full date serializes as ISO `yyyy-MM-dd`; a reduced-accuracy value that carried no
-     * year keeps its `--MM-DD` text so it is not dropped. Returns null when the neutral
-     * date is absent or carries neither a date nor text.
+     * Builds an Event row of [type] ([ContactEventType.contactEventTypeId]) for a birthday or
+     * anniversary. Returns null when there is no date, or when it has no full date and its text
+     * isn't one the contact event reader parses.
      */
     private fun eventRow(date: ContactDate?, type: Int): ContentValues? {
         date ?: return null
-        // A full calendar date serializes to ISO yyyy-MM-dd; otherwise fall back to the
-        // retained text, which is EITHER a reduced-accuracy --MM-DD date (RFC 6350 §4.3.1)
-        // OR genuinely free-text (e.g. "circa 1990"). START_DATE is a format-constrained
-        // column, so emit only a value the shipped reader can parse back — a free-text value
-        // would produce an Event row that silently never reaches the birthday/anniversary
-        // calendars. Verify against the reader itself rather than re-encoding its format here.
+        // A full date serializes as ISO yyyy-MM-dd. Otherwise the kept text is either a
+        // reduced-accuracy --MM-DD date (RFC 6350 §4.3.1) or free text ("circa 1990"), which
+        // would give an Event row that silently never reaches the calendars. The check calls
+        // the reader's own parser so its formats aren't copied here.
         val startDate = date.date?.toString()
             ?: date.text?.takeIf { ContactEventUtils.parseContactDate(it) != null }
             ?: return null
@@ -282,7 +260,7 @@ object VCardContactMapper {
         }
     }
 
-    /** Map a vCard relation label to the provider's fixed relation type, else custom. */
+    /** Maps a vCard relation label to the provider's fixed relation type, else TYPE_CUSTOM. */
     private fun relationType(label: String?): Int = when (label?.lowercase()) {
         "spouse" -> Relation.TYPE_SPOUSE
         "child" -> Relation.TYPE_CHILD

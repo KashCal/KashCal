@@ -14,24 +14,17 @@ import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
 import javax.inject.Inject
 
 /**
- * BroadcastReceiver for device boot and app update events.
+ * Re-arms reminders after device boot (BOOT_COMPLETED) or an app update (MY_PACKAGE_REPLACED),
+ * both of which clear every AlarmManager alarm.
  *
- * Reschedules all pending reminders after:
- * - Device boot (BOOT_COMPLETED)
- * - App update (MY_PACKAGE_REPLACED)
- *
- * This is critical because AlarmManager alarms are cleared on:
- * - Device reboot
- * - App update/reinstall
- *
- * Per Android best practices:
- * - Uses goAsync() for work that takes > 10ms
- * - Reschedules from persistent database storage
- *
- * Recovery is two-phase:
- * 1. Immediate: rescheduleAllPending() re-registers alarms for existing ScheduledReminder rows
- * 2. Deferred: ReminderRefreshWorker creates missing rows for events that had reminders
- *    fired/dismissed/cleaned up (runs via WorkManager, not subject to 10s receiver limit)
+ * Recovery has two phases:
+ * 1. Inside the broadcast, under goAsync() and a 9-second timeout,
+ *    [BootRecoveryHandler.rescheduleReminders] re-arms the existing ScheduledReminder rows due
+ *    within the scheduler's window, the device calendar reminder and the widget midnight alarm.
+ *    Rows further out are armed once they come into the window.
+ * 2. [ReminderRefreshWorker.runNow] creates the rows missing for reminders now due within the
+ *    window and re-arms the existing ones there. It runs in WorkManager, outside the receiver's
+ *    10-second limit.
  */
 @AndroidEntryPoint
 class BootCompletedReceiver : BroadcastReceiver() {
@@ -58,7 +51,6 @@ class BootCompletedReceiver : BroadcastReceiver() {
             }
         }
 
-        // Use goAsync() for database access and alarm scheduling
         val pendingResult = goAsync()
 
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
@@ -76,8 +68,6 @@ class BootCompletedReceiver : BroadcastReceiver() {
             }
         }
 
-        // Trigger immediate reminder refresh to create ScheduledReminder rows
-        // for events that are missing them. Runs via WorkManager (no 10s limit).
         try {
             ReminderRefreshWorker.runNow(context)
         } catch (e: Exception) {

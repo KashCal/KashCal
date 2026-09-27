@@ -25,11 +25,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Renaming a tag re-uploads every affected syncable event, but the drain must
- * run once for the whole batch — a rename touching 300 events should request a
- * single expedited sync, not 300 — and must request none when nothing syncable
- * was touched. The per-event mark-and-queue lives in [EventWriter]; the
- * coordinator only orchestrates and fires the single sync on the returned count.
+ * Tests that [EventCoordinator.renameTag] requests one expedited sync for the whole batch and
+ * none when no syncable event was queued. A rename queuing 300 events must request one, not 300.
+ * The per-event queuing is [EventWriter.renameCategory]'s; the coordinator only acts on the
+ * returned count.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -75,7 +74,7 @@ class EventCoordinatorRenameTagTest {
 
     @Test
     fun `a rename touching syncable events requests exactly one expedited sync`() = runBlocking {
-        // 300 events queued -> one drain, not 300 syncs.
+        // 300 events queued: one sync, not 300.
         coEvery { eventWriter.renameCategory("Work", "Job") } returns 300
 
         coordinator.renameTag("Work", "Job")

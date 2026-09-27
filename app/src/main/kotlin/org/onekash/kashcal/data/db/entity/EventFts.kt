@@ -6,17 +6,13 @@ import androidx.room.Fts4
 import androidx.room.PrimaryKey
 
 /**
- * FTS4 virtual table for full-text search on events.
+ * Indexes event title, location and description for full-text search (FTS4).
  *
- * Room automatically keeps this in sync with the Event table via triggers
- * when using contentEntity. Searches are 10-100x faster than LIKE queries.
+ * With `contentEntity`, Room keeps this table in step with [Event] through triggers. Searches
+ * are 10-100x faster than LIKE queries.
  *
- * Indexed fields:
- * - title: Event summary/title
- * - location: Event location
- * - description: Event notes/description
- *
- * @see <a href="https://developer.android.com/training/data-storage/room/defining-data#fts">Room FTS</a>
+ * @see <a href="https://developer.android.com/training/data-storage/room/defining-data#fts">Room
+ *      FTS</a>
  */
 @Fts4(contentEntity = Event::class)
 @Entity(tableName = "events_fts")

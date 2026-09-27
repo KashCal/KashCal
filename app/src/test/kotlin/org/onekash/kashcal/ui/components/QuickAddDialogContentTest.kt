@@ -20,12 +20,11 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 /**
- * Robolectric wiring guards for the hardened Quick Add field. The pure
- * cap/counter logic is unit-tested separately; these confirm the composable is
- * wired to it — that Enter never becomes a newline in the field state, that the
- * cap holds through the input pipeline, and that the counter reveals/hides at
- * the right thresholds. Guards against the field silently reverting to
- * SingleLine or the counter thresholds regressing in a future edit.
+ * Tests that [QuickAddDialogContent] applies the Quick Add input limits, which
+ * `QuickAddInputLimitsTest` covers on their own: Enter never leaves a newline in the field
+ * state, a 600-character paste is cut to the cap, and the counter is hidden for short input
+ * and shown at the reveal threshold and at the cap. Dropping the field's input transformation
+ * or its counter wiring fails here.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h720dp-mdpi")

@@ -7,7 +7,8 @@ import androidx.compose.runtime.Stable
 import androidx.compose.ui.platform.LocalContext
 
 /**
- * Localizable user-facing message resolved at render time in the UI layer.
+ * Holds a user-facing message as a string resource or literal text, turned into text by
+ * [asString] in composition or [resolve] outside it.
  *
  * Use [Literal] for server-provided text that is not an app resource.
  */
@@ -22,8 +23,8 @@ sealed class UiMessage {
 }
 
 /**
- * Non-Composable resolver for callers outside composition (e.g. `semantics { }`,
- * snackbar workers, notifications).
+ * Resolves the message with [context], for callers outside composition such as
+ * `AccountSettingsViewModel` building an error message.
  */
 fun UiMessage.resolve(context: Context): String = when (this) {
     is UiMessage.ResId ->

@@ -9,9 +9,8 @@ internal fun isDotOnly(text: String): Boolean =
     text.contains('.') && !text.contains('/') && !text.contains('-')
 
 /**
- * Resolve a bare weekday to its next occurrence relative to [refDate]. If [refDate]
- * already falls on [target], advance a full week (uses `<= 0`, so "same day" rolls
- * forward). Shared by the weekday and recurrence rules.
+ * Returns the next [target] after [refDate]; when [refDate] is already [target], the one a week
+ * later. Shared by the weekday and recurrence rules.
  */
 internal fun resolveBareWeekday(refDate: LocalDate, target: DayOfWeek): LocalDate {
     val diff = target.value - refDate.dayOfWeek.value
@@ -20,41 +19,39 @@ internal fun resolveBareWeekday(refDate: LocalDate, target: DayOfWeek): LocalDat
 }
 
 /**
- * @param firstDayOfWeek `java.util.Calendar` constant or 0 (system default);
- *   used by RecurrenceRule for biweekly WKST emission.
+ * Collects what the rules extract from one input and which tokens they consumed.
+ *
+ * @param firstDayOfWeek a `java.util.Calendar` day constant, or 0 for the system default;
+ *   [RecurrenceRule] uses it for the WKST of an "every N weeks on <weekday>" rule.
  */
 class ParseContext(
     val reference: LocalDateTime,
     val firstDayOfWeek: Int = 0,
 ) {
 
-    // Date components (priority: absoluteDate > relativeDate > weekdayDate > dateKeywordDate)
+    // When several are set, resolveDate takes the first of these in declaration order.
     var absoluteDate: LocalDate? = null
     var relativeDateTime: LocalDateTime? = null
     var weekdayDate: LocalDate? = null
     var dateKeywordDate: LocalDate? = null
 
-    // Time component
     var time: LocalTime? = null
     var endTime: LocalTime? = null
 
-    // End date (for multi-day events like "Friday to Sunday")
+    // End date of a multi-day event such as "Friday to Sunday".
     var endDate: LocalDate? = null
 
-    // Location component
     var location: String? = null
 
-    // Timezone component
     var timezone: String? = null
 
-    // Recurrence component
     var rrule: String? = null
 
-    // Whether date or time was explicitly set by a rule
+    // Whether a rule set the date or time explicitly.
     var dateSet: Boolean = false
     var timeSet: Boolean = false
 
-    // Consumed token indices (for title extraction)
+    // Indices of consumed tokens; the rest form the title.
     private val consumedIndices = mutableSetOf<Int>()
 
     fun consume(index: Int) {
@@ -89,9 +86,8 @@ class ParseContext(
     }
 
     /**
-     * Resolve a day/month/year to a LocalDate, biased toward future dates.
-     * If no year is given, uses the current year if the date is today or later, otherwise next year.
-     * Returns null for invalid dates (e.g., Feb 30).
+     * Returns the date for [day], [month] and [year], or null if it doesn't exist (Feb 30).
+     * Without a year it takes this year if the date is today or later, else next year.
      */
     fun resolveFutureDate(day: Int, month: Int, year: Int?): LocalDate? {
         return try {

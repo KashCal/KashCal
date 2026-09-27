@@ -227,9 +227,9 @@ class ICalParserTest {
 
     @Test
     fun `blank UID gets a unique generated UID per event so unrelated events do not collide`() {
-        // A present-but-empty UID must be treated like a missing one: each event
-        // gets its own generated UID. Otherwise both would share the "" key and
-        // downstream grouping (e.g. ICS import series-detection) could merge them.
+        // A present but empty UID counts as missing, so each event gets its own generated
+        // UID. A shared "" key could let downstream grouping, such as ICS import's series
+        // detection, merge them.
         val icalData = """
             BEGIN:VCALENDAR
             VERSION:2.0

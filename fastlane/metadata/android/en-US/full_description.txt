@@ -8,7 +8,7 @@ Learn more at https://kashcal.onekash.org
 
 • Seven views: month, full-height month, agenda, day, 3-day, week, and year. Pinch to zoom the timeline, drag an event to reschedule it.
 
-• Quick Add: type "Coffee with Kash tomorrow 3pm" and the event is made. Understands dates, times, recurrence, and locations.
+• Smart Add: type "Coffee with Kash tomorrow 3pm" and it's added to your calendar. Understands dates, times, recurrence, and locations.
 
 • Scheduling: invite people, send meeting invitations, and RSVP to invites others send you.
 

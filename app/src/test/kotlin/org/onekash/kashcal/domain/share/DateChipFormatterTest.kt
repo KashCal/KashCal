@@ -27,8 +27,8 @@ class DateChipFormatterTest {
 
     @Test
     fun `single-digit day is zero-padded to two digits on the single-day chip`() {
-        // "06" reads consistently next to "10" / "21" on multi-day chips
-        // and matches calendar-grid-cell typography.
+        // "06" lines up with "10" or "21" on multi-day chips and matches the calendar grid
+        // cells.
         val out = DateChipFormatter.format(ts(2026, 5, 6), nyc, Locale.US)
         assertEquals("06", out.numeral)
     }
@@ -42,37 +42,37 @@ class DateChipFormatterTest {
     @Test
     fun `fr-FR uses French locale month label and zero-pads`() {
         val out = DateChipFormatter.format(ts(2026, 5, 31), nyc, Locale.FRANCE)
-        // French short month for May is "mai" — uppercased becomes "MAI".
+        // The French short month for May is "mai", uppercased to "MAI".
         assertEquals("31", out.numeral)
         assertEquals("MAI", out.monthLabel)
     }
 
     @Test
     fun `Turkish locale uppercase doesn't break — uses Locale-ROOT casing on the formatted value`() {
-        // The formatted MMM in tr-TR could be "May." or similar. We uppercase
-        // using Locale.ROOT so dotless-i mappings don't fight ASCII.
+        // The formatted MMM in tr-TR could be "May." or similar. The formatter uppercases
+        // with Locale.ROOT so the Turkish dotted and dotless i mapping doesn't apply.
         val out = DateChipFormatter.format(ts(2026, 5, 31), nyc, Locale.forLanguageTag("tr-TR"))
-        // Whatever Turkish renders, uppercased via Locale.ROOT is deterministic
-        // and contains only chars that won't break layout (tr 'i' → 'I' in ROOT).
+        // Whatever Turkish renders, each label is already its Locale.ROOT uppercase (tr 'i'
+        // becomes 'I' in ROOT).
         assertEquals(out.monthLabel, out.monthLabel.uppercase(Locale.ROOT))
         assertEquals(out.dayOfWeekLabel, out.dayOfWeekLabel.uppercase(Locale.ROOT))
     }
 
     @Test
     fun `Japanese locale produces a month label and dow label`() {
-        // Japanese Locale: "5月" for May, "土" for Saturday short. Just verify
-        // the formatter doesn't crash and the output is non-empty.
+        // Japanese short forms are like "5月" for May and "土" for Saturday. Checks only that
+        // the formatter doesn't crash and the labels aren't empty.
         val out = DateChipFormatter.format(ts(2026, 5, 31), nyc, Locale.JAPAN)
         assertEquals("31", out.numeral)
-        // ja's short forms can be a single character or two — non-empty is enough.
+        // ja's short forms can be one character or two, so non-empty is enough.
         assertTrue(out.monthLabel.isNotEmpty())
         assertTrue(out.dayOfWeekLabel.isNotEmpty())
     }
 
     @Test
     fun `single-digit day formatted in zone, not UTC`() {
-        // Late-evening UTC timestamp that's still the same day in NYC vs the
-        // next day in UTC. Confirms we use the supplied zone.
+        // 23:30 in NYC is already the next day in UTC, so "31" shows the supplied zone is
+        // used.
         val sameDayInNyc = LocalDateTime.of(2026, 5, 31, 23, 30)
             .atZone(nyc)
             .toInstant()
@@ -81,12 +81,12 @@ class DateChipFormatterTest {
         assertEquals("31", out.numeral)
     }
 
-    // ============== formatRange — multi-day chips ==============
+    // ============== formatRange: multi-day chips ==============
 
     @Test
     fun `formatRange same month emits zero-padded MMM DD – DD label`() {
-        // May 5 09:00 - May 8 17:00. Padded so single-digit days line
-        // up with two-digit ones across different events.
+        // May 5 09:00 - May 8 17:00. Padded so single-digit days line up with two-digit ones
+        // across events.
         val out = DateChipFormatter.formatRange(
             startMs = ts(2026, 5, 5, LocalTime.of(9, 0)),
             endMs = ts(2026, 5, 8, LocalTime.of(17, 0)),
@@ -98,7 +98,7 @@ class DateChipFormatterTest {
 
     @Test
     fun `formatRange cross-month emits zero-padded MMM DD – MMM DD label`() {
-        // May 31 - Jun 3 in nyc — end day padded to "03".
+        // May 31 - Jun 3 in NYC; the end day is padded to "03".
         val out = DateChipFormatter.formatRange(
             startMs = ts(2026, 5, 31, LocalTime.of(9, 0)),
             endMs = ts(2026, 6, 3, LocalTime.of(17, 0)),
@@ -110,9 +110,8 @@ class DateChipFormatterTest {
 
     @Test
     fun `formatRange cross-year handles year boundary`() {
-        // Dec 30 - Jan 2 — dec→jan boundary. Year not shown in chip
-        // (chats are usually about near-future events; recipient infers
-        // year from context). End day padded to "02".
+        // Dec 30 - Jan 2 across the year boundary. The chip shows no year (chats are usually
+        // about near-future events; the recipient infers it). The end day is padded to "02".
         val out = DateChipFormatter.formatRange(
             startMs = ts(2026, 12, 30, LocalTime.of(9, 0)),
             endMs = ts(2027, 1, 2, LocalTime.of(17, 0)),
@@ -124,8 +123,8 @@ class DateChipFormatterTest {
 
     @Test
     fun `formatRange same start and end falls back to single-day chip`() {
-        // Defensive: when start and end fall on the same calendar day,
-        // formatRange returns a Single rather than a Range with day == day.
+        // When start and end fall on the same calendar day, formatRange returns a Single, not
+        // a Range from a day to itself.
         val out = DateChipFormatter.formatRange(
             startMs = ts(2026, 5, 31, LocalTime.of(9, 0)),
             endMs = ts(2026, 5, 31, LocalTime.of(17, 0)),
@@ -139,7 +138,7 @@ class DateChipFormatterTest {
         assertEquals("SUN", out.dayOfWeekLabel)
     }
 
-    // ============== formatDowRange — body subtitle ==============
+    // ============== formatDowRange: body subtitle ==============
 
     @Test
     fun `formatDowRange same month emits Tue – Fri`() {

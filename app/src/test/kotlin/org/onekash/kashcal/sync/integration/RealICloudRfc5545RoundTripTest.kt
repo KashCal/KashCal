@@ -18,17 +18,16 @@ import java.io.File
 import java.util.UUID
 
 /**
- * Integration test for RFC 5545/7986 field round-trip with real iCloud.
+ * Round-trips RFC 5545 and RFC 7986 fields through real iCloud. Tests run in name order and
+ * share state through the companion:
+ * 1. Discover a calendar.
+ * 2. Create an event with PRIORITY, GEO, URL, CATEGORIES and COLOR.
+ * 3. Fetch it back and check the parsed and mapped fields.
+ * 4. Change PRIORITY, GEO and CATEGORIES, patch the ICS with [IcsPatcher] and push it.
+ * 5. Fetch it and check the changes, and that URL and title were kept.
+ * 6. Delete the event.
  *
- * Tests the complete flow:
- * 1. Create event with priority, geo, color, url, categories
- * 2. Push to iCloud
- * 3. Fetch back and verify parsing
- * 4. Update fields and push again
- * 5. Fetch and verify patching
- * 6. Delete event
- *
- * Run with: ./gradlew :app:testDebugUnitTest --tests "*RealICloudRfc5545RoundTripTest*"
+ * Run: ./gradlew :app:testDebugUnitTest -Pintegration --tests "*RealICloudRfc5545*"
  *
  * Requires: local.properties with iCloud credentials
  */
@@ -42,7 +41,7 @@ class RealICloudRfc5545RoundTripTest {
     private val serverUrl = "https://caldav.icloud.com"
     private val factory = OkHttpCalDavClientFactory()
 
-    // Test event state
+    // State shared across the ordered tests.
     companion object {
         private var testCalendarUrl: String? = null
         private var testEventUrl: String? = null
@@ -50,7 +49,6 @@ class RealICloudRfc5545RoundTripTest {
         private var testEventEtag: String? = null
         private var originalIcs: String? = null
 
-        // Test data
         private const val TEST_TITLE = "RFC 5545/7986 Test Event"
         private const val TEST_LOCATION = "Apple Park, Cupertino"
         private const val TEST_PRIORITY = 1  // High priority
@@ -60,7 +58,7 @@ class RealICloudRfc5545RoundTripTest {
         private const val TEST_URL = "https://example.com/test-event"
         private val TEST_CATEGORIES = listOf("TESTING", "KASHCAL", "RFC5545")
 
-        // Updated values for patching test
+        // Values test04 patches in.
         private const val UPDATED_PRIORITY = 5  // Medium priority
         private const val UPDATED_GEO_LAT = 40.7128
         private const val UPDATED_GEO_LON = -74.0060
@@ -81,7 +79,7 @@ class RealICloudRfc5545RoundTripTest {
             )
             client = factory.createClient(credentials, quirks)
         } else {
-            // Create a minimal client for tests that check credential availability
+            // Blank credentials; every test skips without real ones.
             val credentials = Credentials(
                 username = "",
                 password = "",
@@ -131,7 +129,6 @@ class RealICloudRfc5545RoundTripTest {
 
         println("\n========== TEST 1: Discover iCloud Calendars ==========")
 
-        // Discover principal
         println("Credentials loaded: username=${username?.take(3)}***, password=${if (password != null) "set" else "null"}")
         val principalResult = client.discoverPrincipal(serverUrl)
         if (!principalResult.isSuccess()) {
@@ -142,13 +139,11 @@ class RealICloudRfc5545RoundTripTest {
         val principal = principalResult.getOrNull()!!
         println("Principal: $principal")
 
-        // Discover calendar home
         val homeResult = client.discoverCalendarHome(principal)
         assert(homeResult.isSuccess()) { "Failed to discover calendar home" }
         val home = homeResult.getOrNull()!!.first()
         println("Calendar Home: $home")
 
-        // List calendars
         val calendarsResult = client.listCalendars(home)
         assert(calendarsResult.isSuccess()) { "Failed to list calendars" }
         val calendars = calendarsResult.getOrNull()!!
@@ -158,7 +153,7 @@ class RealICloudRfc5545RoundTripTest {
             println("  - ${cal.displayName} (${cal.url})")
         }
 
-        // Select first writable calendar (not subscribed)
+        // The first calendar that isn't a webcal subscription; isReadOnly isn't checked.
         val testCalendar = calendars.firstOrNull { !it.url.contains("webcal") }
         assert(testCalendar != null) { "No writable calendar found" }
 
@@ -176,16 +171,14 @@ class RealICloudRfc5545RoundTripTest {
 
         println("\n========== TEST 2: Create Event with RFC 5545/7986 Fields ==========")
 
-        // Generate unique UID
         testEventUid = "kashcal-rfc5545-test-${UUID.randomUUID()}@kashcal.test"
 
-        // Calculate timestamps (tomorrow, 2pm-3pm)
+        // Tomorrow, 14:00 to 15:00 UTC.
         val now = System.currentTimeMillis()
         val tomorrow = now + 24 * 60 * 60 * 1000
-        val startTs = tomorrow - (tomorrow % (24 * 60 * 60 * 1000)) + 14 * 60 * 60 * 1000  // 2pm UTC
+        val startTs = tomorrow - (tomorrow % (24 * 60 * 60 * 1000)) + 14 * 60 * 60 * 1000
         val endTs = startTs + 60 * 60 * 1000  // +1 hour
 
-        // Build ICS with RFC 5545/7986 properties
         val ics = buildString {
             appendLine("BEGIN:VCALENDAR")
             appendLine("VERSION:2.0")
@@ -212,7 +205,6 @@ class RealICloudRfc5545RoundTripTest {
         println("Generated ICS:")
         println(ics)
 
-        // Push to iCloud
         println("\nCreating event with UID: $testEventUid")
 
         val result = client.createEvent(testCalendarUrl!!, testEventUid!!, ics)
@@ -238,7 +230,6 @@ class RealICloudRfc5545RoundTripTest {
 
         println("\n========== TEST 3: Fetch Event and Verify Parsing ==========")
 
-        // Fetch event from iCloud
         val result = client.fetchEvent(testEventUrl!!)
         assert(result.isSuccess()) { "Failed to fetch event" }
 
@@ -250,7 +241,6 @@ class RealICloudRfc5545RoundTripTest {
         println(fetchedIcs)
         println("\nEtag: $fetchedEtag")
 
-        // Parse with icaldav library
         val icalEvents = parser.parseAllEvents(fetchedIcs).getOrNull()
         assert(icalEvents != null) { "Failed to parse ICS" }
         assert(icalEvents!!.isNotEmpty()) { "No events parsed" }
@@ -265,7 +255,6 @@ class RealICloudRfc5545RoundTripTest {
         println("  Color: ${icalEvent.color}")
         println("  Categories: ${icalEvent.categories}")
 
-        // Map to Event entity
         val event = ICalEventMapper.toEntity(
             icalEvent = icalEvent,
             rawIcal = fetchedIcs,
@@ -283,12 +272,11 @@ class RealICloudRfc5545RoundTripTest {
         println("  url: ${event.url}")
         println("  categories: ${event.categories}")
 
-        // Verify RFC 5545 fields
         assert(event.title == TEST_TITLE) { "Title mismatch" }
         assert(event.priority == TEST_PRIORITY) { "Priority mismatch: expected $TEST_PRIORITY, got ${event.priority}" }
         assert(event.url == TEST_URL) { "URL mismatch: expected $TEST_URL, got ${event.url}" }
 
-        // Verify GEO (with tolerance for floating point)
+        // GEO within a floating-point tolerance.
         assert(event.geoLat != null) { "geoLat should not be null" }
         assert(event.geoLon != null) { "geoLon should not be null" }
         assert(kotlin.math.abs(event.geoLat!! - TEST_GEO_LAT) < 0.0001) {
@@ -298,19 +286,16 @@ class RealICloudRfc5545RoundTripTest {
             "geoLon mismatch: expected $TEST_GEO_LON, got ${event.geoLon}"
         }
 
-        // Verify categories
         assert(event.categories != null) { "categories should not be null" }
         TEST_CATEGORIES.forEach { cat ->
             assert(event.categories!!.contains(cat)) { "Missing category: $cat" }
         }
 
-        // Verify COLOR (may not be preserved by iCloud)
-        // Note: event.color uses Android's Color.parseColor() which returns 0 in JVM tests
-        // So we verify the raw icalEvent.color string instead
+        // iCloud may drop COLOR. event.color goes through Android's Color.parseColor, which
+        // returns 0 in JVM tests, so the raw icalEvent.color is checked instead.
         if (icalEvent.color != null) {
             println("\niCloud PRESERVED COLOR property: ${icalEvent.color}")
 
-            // Verify color parsing with pure Kotlin (since android.graphics.Color is stubbed in JVM)
             val expectedArgb = parseColorPureKotlin(TEST_COLOR)
             val actualArgb = parseColorPureKotlin(icalEvent.color)
             println("Expected ARGB: ${expectedArgb?.toString(16)} from $TEST_COLOR")
@@ -325,7 +310,7 @@ class RealICloudRfc5545RoundTripTest {
             println("\niCloud STRIPPED COLOR property (some servers don't support RFC 7986)")
         }
 
-        // Update stored ICS and etag for next test
+        // test04 patches the server's copy.
         originalIcs = fetchedIcs
         testEventEtag = fetchedEtag
 
@@ -342,11 +327,9 @@ class RealICloudRfc5545RoundTripTest {
 
         println("\n========== TEST 4: Update Event with Changed RFC Fields ==========")
 
-        // Parse original ICS to get ICalEvent
         val parseResult = parser.parseAllEvents(originalIcs!!)
         val icalEvent = parseResult.getOrNull()!!.first()
 
-        // Create modified Event entity
         val event = ICalEventMapper.toEntity(
             icalEvent = icalEvent,
             rawIcal = originalIcs!!,
@@ -354,7 +337,6 @@ class RealICloudRfc5545RoundTripTest {
             caldavUrl = testEventUrl,
             etag = testEventEtag
         ).event.copy(
-            // Update RFC 5545/7986 fields
             priority = UPDATED_PRIORITY,
             geoLat = UPDATED_GEO_LAT,
             geoLon = UPDATED_GEO_LON,
@@ -367,13 +349,11 @@ class RealICloudRfc5545RoundTripTest {
         println("  geoLon: ${event.geoLon} (was $TEST_GEO_LON)")
         println("  categories: ${event.categories} (was $TEST_CATEGORIES)")
 
-        // Patch ICS
         val patchedIcs = IcsPatcher.patch(originalIcs, event)
 
         println("\nPatched ICS:")
         println(patchedIcs)
 
-        // Verify patched ICS contains updated values
         assert(patchedIcs.contains("PRIORITY:$UPDATED_PRIORITY")) {
             "Patched ICS should contain updated priority"
         }
@@ -384,7 +364,6 @@ class RealICloudRfc5545RoundTripTest {
             "Patched ICS should contain updated categories"
         }
 
-        // Push update to iCloud
         println("\nPushing update to: $testEventUrl")
         println("If-Match: $testEventEtag")
 
@@ -409,7 +388,6 @@ class RealICloudRfc5545RoundTripTest {
 
         println("\n========== TEST 5: Fetch Updated Event and Verify Patching ==========")
 
-        // Fetch updated event from iCloud
         val result = client.fetchEvent(testEventUrl!!)
         assert(result.isSuccess()) { "Failed to fetch updated event" }
 
@@ -419,7 +397,6 @@ class RealICloudRfc5545RoundTripTest {
         println("Fetched updated ICS:")
         println(fetchedIcs)
 
-        // Parse and map
         val icalEvent = parser.parseAllEvents(fetchedIcs).getOrNull()!!.first()
         val event = ICalEventMapper.toEntity(
             icalEvent = icalEvent,
@@ -435,7 +412,6 @@ class RealICloudRfc5545RoundTripTest {
         println("  geoLon: ${event.geoLon} (expected $UPDATED_GEO_LON)")
         println("  categories: ${event.categories} (expected $UPDATED_CATEGORIES)")
 
-        // Verify updates
         assert(event.priority == UPDATED_PRIORITY) {
             "Priority not updated: expected $UPDATED_PRIORITY, got ${event.priority}"
         }
@@ -446,7 +422,6 @@ class RealICloudRfc5545RoundTripTest {
             "geoLon not updated: expected $UPDATED_GEO_LON, got ${event.geoLon}"
         }
 
-        // Verify categories updated
         assert(event.categories != null) { "categories should not be null" }
         UPDATED_CATEGORIES.forEach { cat ->
             assert(event.categories!!.contains(cat)) {
@@ -454,7 +429,7 @@ class RealICloudRfc5545RoundTripTest {
             }
         }
 
-        // Verify preserved fields (URL should still be there)
+        // Fields the patch didn't change are kept.
         assert(event.url == TEST_URL) { "URL should be preserved: expected $TEST_URL, got ${event.url}" }
         assert(event.title == TEST_TITLE) { "Title should be preserved" }
 
@@ -477,13 +452,11 @@ class RealICloudRfc5545RoundTripTest {
 
         assert(result.isSuccess()) { "Failed to delete event: $result" }
 
-        // Verify deletion
         val fetchResult = client.fetchEvent(testEventUrl!!)
         assert(!fetchResult.isSuccess()) { "Event should be deleted but still exists" }
 
         println("\n✅ Event deleted successfully!")
 
-        // Clear test state
         testEventUrl = null
         testEventUid = null
         testEventEtag = null
@@ -494,8 +467,8 @@ class RealICloudRfc5545RoundTripTest {
 
     @After
     fun cleanup() {
-        // Cleanup is done in test06
-        // If tests fail early, event may remain on iCloud (manual cleanup needed)
+        // test06 deletes the event. If an earlier test fails, the event stays on iCloud and
+        // needs a manual delete.
     }
 
     // ========== Helpers ==========
@@ -509,8 +482,8 @@ class RealICloudRfc5545RoundTripTest {
     }
 
     /**
-     * Pure Kotlin color parser for test verification.
-     * Android's Color.parseColor() returns 0 in JVM tests (stubbed).
+     * Parses `RRGGBB` or `AARRGGBB` hex, with or without a leading `#`, to ARGB, or null for
+     * anything else. Android's Color.parseColor returns 0 in JVM tests.
      */
     private fun parseColorPureKotlin(color: String?): Int? {
         if (color.isNullOrBlank()) return null

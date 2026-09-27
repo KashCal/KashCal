@@ -25,13 +25,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for ReminderRefreshWorker.
- *
- * Tests:
- * - Normal doWork success path
- * - Migration logic (version check)
- * - Cleanup failure is best-effort
- * - Retry/failure logic
+ * Tests [ReminderRefreshWorker.doWork] over relaxed mocks: the success path, the one-time
+ * timezone migration gate, a cleanup failure that still succeeds, retry below 3 attempts and
+ * success at or above it, and cancellation passing through every catch.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -75,20 +71,20 @@ class ReminderRefreshWorkerTest {
     @Test
     fun `doWork success calls scheduleUpcomingReminders and cleanupOldReminders`() = runTest {
         coEvery { dataStore.getReminderMigrationVersion() } returns 1
-        coEvery { reminderScheduler.scheduleUpcomingReminders(30) } returns 5
+        coEvery { reminderScheduler.scheduleUpcomingReminders() } returns 5
 
         worker = createWorker()
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        coVerify { reminderScheduler.scheduleUpcomingReminders(30) }
+        coVerify { reminderScheduler.scheduleUpcomingReminders() }
         coVerify { reminderScheduler.cleanupOldReminders() }
     }
 
     @Test
     fun `doWork runs migration when migrationVersion is less than 1`() = runTest {
         coEvery { dataStore.getReminderMigrationVersion() } returns 0
-        coEvery { reminderScheduler.scheduleUpcomingReminders(any()) } returns 0
+        coEvery { reminderScheduler.scheduleUpcomingReminders() } returns 0
 
         worker = createWorker()
         val result = worker.doWork()
@@ -101,7 +97,7 @@ class ReminderRefreshWorkerTest {
     @Test
     fun `doWork skips migration when migrationVersion is 1 or above`() = runTest {
         coEvery { dataStore.getReminderMigrationVersion() } returns 1
-        coEvery { reminderScheduler.scheduleUpcomingReminders(any()) } returns 0
+        coEvery { reminderScheduler.scheduleUpcomingReminders() } returns 0
 
         worker = createWorker()
         worker.doWork()
@@ -112,7 +108,7 @@ class ReminderRefreshWorkerTest {
     @Test
     fun `cleanup failure still returns success`() = runTest {
         coEvery { dataStore.getReminderMigrationVersion() } returns 1
-        coEvery { reminderScheduler.scheduleUpcomingReminders(any()) } returns 3
+        coEvery { reminderScheduler.scheduleUpcomingReminders() } returns 3
         coEvery { reminderScheduler.cleanupOldReminders() } throws RuntimeException("Cleanup failed")
 
         worker = createWorker()
@@ -147,7 +143,7 @@ class ReminderRefreshWorkerTest {
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        coVerify(exactly = 0) { reminderScheduler.scheduleUpcomingReminders(any()) }
+        coVerify(exactly = 0) { reminderScheduler.scheduleUpcomingReminders() }
     }
 
     @Test
@@ -159,7 +155,7 @@ class ReminderRefreshWorkerTest {
         val result = worker.doWork()
 
         assertEquals(ListenableWorker.Result.success(), result)
-        coVerify(exactly = 0) { reminderScheduler.scheduleUpcomingReminders(any()) }
+        coVerify(exactly = 0) { reminderScheduler.scheduleUpcomingReminders() }
     }
 
     @Test
@@ -180,11 +176,10 @@ class ReminderRefreshWorkerTest {
 
     @Test
     fun `cancellation during best-effort cleanup is not swallowed`() = runTest {
-        // The cleanup catch is deliberately best-effort, but cancellation is not a
-        // failure to shrug off: absorbing it here would carry on scheduling device
-        // reminders and report success on a coroutine that is already cancelled.
+        // The cleanup catch is best-effort, but absorbing cancellation there would go on
+        // to schedule device reminders and report success on a cancelled coroutine.
         coEvery { dataStore.getReminderMigrationVersion() } returns 1
-        coEvery { reminderScheduler.scheduleUpcomingReminders(any()) } returns 3
+        coEvery { reminderScheduler.scheduleUpcomingReminders() } returns 3
         coEvery { reminderScheduler.cleanupOldReminders() } throws
             CancellationException("worker stopped")
 
@@ -201,7 +196,7 @@ class ReminderRefreshWorkerTest {
     @Test
     fun `cancellation during device reminder scheduling is not swallowed`() = runTest {
         coEvery { dataStore.getReminderMigrationVersion() } returns 1
-        coEvery { reminderScheduler.scheduleUpcomingReminders(any()) } returns 3
+        coEvery { reminderScheduler.scheduleUpcomingReminders() } returns 3
         coEvery { deviceCalendarReminderScheduler.scheduleNextReminder() } throws
             CancellationException("worker stopped")
 
@@ -212,16 +207,5 @@ class ReminderRefreshWorkerTest {
             "device reminder scheduling's best-effort catch swallowed cancellation; got $thrown",
             thrown is CancellationException,
         )
-    }
-
-    @Test
-    fun `doWork uses SCAN_WINDOW_DAYS constant for scheduling`() = runTest {
-        coEvery { dataStore.getReminderMigrationVersion() } returns 1
-        coEvery { reminderScheduler.scheduleUpcomingReminders(any()) } returns 0
-
-        worker = createWorker()
-        worker.doWork()
-
-        coVerify { reminderScheduler.scheduleUpcomingReminders(ReminderRefreshWorker.SCAN_WINDOW_DAYS) }
     }
 }

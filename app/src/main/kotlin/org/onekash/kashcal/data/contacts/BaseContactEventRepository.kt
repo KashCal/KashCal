@@ -22,9 +22,7 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.util.DateTimeUtils
 import java.util.UUID
 
-/**
- * Internal data class representing a contact with an event date (birthday or anniversary).
- */
+/** A contact's birthday or anniversary as read from the Contacts Provider. */
 data class ContactEventEntry(
     val lookupKey: String,
     val displayName: String,
@@ -32,15 +30,11 @@ data class ContactEventEntry(
 )
 
 /**
- * Base repository for contact event calendars (birthdays, anniversaries).
+ * Manages a read-only contact event calendar (birthdays or anniversaries): creates and removes
+ * it, and syncs its events from the phone's contacts.
  *
- * Contains all shared logic for:
- * - Creating/removing the contact event calendar
- * - Syncing events from phone contacts
- * - Upsert/delete logic for contact events
- *
- * Subclasses exist only for Hilt DI (to distinguish birthday vs anniversary instances)
- * and to provide the DataStore reminder accessor via [getReminderMinutes].
+ * Subclasses exist only to give Hilt a birthday and an anniversary instance and to supply
+ * [getReminderMinutes]; per-type differences live on [ContactEventType].
  */
 abstract class BaseContactEventRepository(
     private val accountRepository: AccountRepository,
@@ -56,25 +50,18 @@ abstract class BaseContactEventRepository(
 ) {
     private val tag: String get() = eventType.logTag
 
-    /**
-     * Returns the reminder duration in minutes from DataStore.
-     * Different per type (birthday vs anniversary use different DataStore keys).
-     */
+    /** Returns this type's reminder setting in minutes; each type has its own DataStore key. */
     protected abstract suspend fun getReminderMinutes(): Int
 
     // ========== Calendar Management ==========
 
-    /**
-     * Check if the contact event calendar exists.
-     */
+    /** Returns true if this type's contacts account has a calendar. */
     suspend fun calendarExists(): Boolean = withContext(Dispatchers.IO) {
         val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, eventType.accountEmail)
         account != null && calendarsDao.getByAccountIdOnce(account.id).isNotEmpty()
     }
 
-    /**
-     * Get the calendar ID, or null if not created.
-     */
+    /** Returns the calendar ID, or null if the calendar isn't created. */
     suspend fun getCalendarId(): Long? = withContext(Dispatchers.IO) {
         val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, eventType.accountEmail)
             ?: return@withContext null
@@ -82,16 +69,12 @@ abstract class BaseContactEventRepository(
     }
 
     /**
-     * Ensure the calendar exists, creating it if needed.
-     *
-     * @param color Initial color for the calendar
-     * @return Calendar ID
+     * Returns the calendar ID, creating the contacts account and the read-only calendar if
+     * missing. [color] applies only to a newly created calendar.
      */
     suspend fun ensureCalendarExists(color: Int = eventType.defaultColor): Long = withContext(Dispatchers.IO) {
-        // Check if account exists
         var account = accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, eventType.accountEmail)
         if (account == null) {
-            // Create contacts account
             account = Account(
                 provider = AccountProvider.CONTACTS,
                 email = eventType.accountEmail,
@@ -102,13 +85,11 @@ abstract class BaseContactEventRepository(
             Log.i(tag, "Created contacts account: $accountId")
         }
 
-        // Check if calendar exists
         val existingCalendars = calendarsDao.getByAccountIdOnce(account.id)
         if (existingCalendars.isNotEmpty()) {
             return@withContext existingCalendars.first().id
         }
 
-        // Create calendar
         val calendar = Calendar(
             accountId = account.id,
             caldavUrl = eventType.localCalendarUrl,
@@ -124,36 +105,26 @@ abstract class BaseContactEventRepository(
         calendarId
     }
 
-    /**
-     * Update the calendar color.
-     */
+    /** Sets the calendar color; a no-op when the calendar doesn't exist. */
     suspend fun updateCalendarColor(color: Int) = withContext(Dispatchers.IO) {
         val calendarId = getCalendarId() ?: return@withContext
         calendarsDao.updateColor(calendarId, color)
     }
 
-    /**
-     * Get the current calendar color.
-     */
+    /** Returns the calendar color, or null if the calendar doesn't exist. */
     suspend fun getCalendarColor(): Int? = withContext(Dispatchers.IO) {
         val calendarId = getCalendarId() ?: return@withContext null
         calendarsDao.getById(calendarId)?.color
     }
 
     /**
-     * Remove the calendar and all its events.
-     *
-     * Uses AccountRepository.deleteAccount() which handles:
-     * - Cancelling WorkManager jobs
-     * - Cancelling reminders for all events
-     * - Deleting credentials (none for CONTACTS)
-     * - Cascade delete account -> calendars -> events -> occurrences
+     * Removes the calendar, its events and its account; [AccountRepository.deleteAccount] lists
+     * the cleanup.
      */
     suspend fun removeCalendar() = withContext(Dispatchers.IO) {
         val account = accountRepository.getAccountByProviderAndEmail(AccountProvider.CONTACTS, eventType.accountEmail)
             ?: return@withContext
 
-        // Delete account with full cleanup
         accountRepository.deleteAccount(account.id)
         Log.i(tag, "Removed ${eventType.name.lowercase()} calendar and account")
     }
@@ -161,9 +132,11 @@ abstract class BaseContactEventRepository(
     // ========== Sync Operations ==========
 
     /**
-     * Sync events from phone contacts.
+     * Syncs the calendar's events from the phone's contacts: inserts new ones, updates changed
+     * ones and deletes events whose contact is gone or whose date changed or is gone.
      *
-     * @return ContactEventSyncResult indicating success or failure
+     * Returns [ContactEventSyncResult.Error] when the calendar isn't created, the contacts
+     * permission is denied, or anything else throws; it doesn't throw.
      */
     suspend fun syncEvents(): ContactEventSyncResult = withContext(Dispatchers.IO) {
         try {
@@ -175,14 +148,11 @@ abstract class BaseContactEventRepository(
 
             val calendarId = calendar.id
 
-            // Read reminder setting
             val reminderMinutes = getReminderMinutes()
 
-            // Read events from contacts
             val contactEvents = readEventsFromContacts()
             Log.d(tag, "Found ${contactEvents.size} contacts with ${eventType.name.lowercase()}s")
 
-            // Get existing events
             val existingEvents = eventsDao.getAllMasterEventsForCalendar(calendarId)
             val existingByCaldavUrl = existingEvents
                 .filter { it.caldavUrl != null }
@@ -192,7 +162,6 @@ abstract class BaseContactEventRepository(
             var updated = 0
             var deleted = 0
 
-            // Pre-compute loop-invariant values
             val expectedReminders = if (reminderMinutes != KashCalDataStore.REMINDER_OFF) {
                 listOf(ContactEventUtils.minutesToIsoDuration(reminderMinutes))
             } else {
@@ -202,7 +171,6 @@ abstract class BaseContactEventRepository(
             val oneYearAgo = now - (365L * 24 * 60 * 60 * 1000)
             val twoYearsAhead = now + (2L * 365 * 24 * 60 * 60 * 1000)
 
-            // Process each contact event
             val processedCaldavUrls = mutableSetOf<String>()
             for (contact in contactEvents) {
                 val caldavUrl = eventType.getCaldavUrl(contact.lookupKey, contact.date.month, contact.date.day)
@@ -210,7 +178,8 @@ abstract class BaseContactEventRepository(
 
                 val existingEvent = existingByCaldavUrl[caldavUrl]
                 if (existingEvent != null) {
-                    // Migration: Fix events with wrong DTSTART (future-year bug or getNextEventTimestamp gap)
+                    // A DTSTART that differs from [ContactEventUtils.getStartTimestamp] is
+                    // rewritten, which repairs events stored with a later start year.
                     val expectedStartTs = ContactEventUtils.getStartTimestamp(contact.date.month, contact.date.day, contact.date.year)
                     val startTsNeedsMigration = existingEvent.startTs != expectedStartTs
 
@@ -228,7 +197,6 @@ abstract class BaseContactEventRepository(
                         Log.d(tag, "Updated ${eventType.name.lowercase()}: ${contact.displayName}")
                     }
                 } else {
-                    // Insert new
                     val newEvent = createEvent(contact, calendarId, reminderMinutes = reminderMinutes)
                     val eventId = eventsDao.insert(newEvent)
                     val insertedEvent = newEvent.copy(id = eventId)
@@ -240,7 +208,7 @@ abstract class BaseContactEventRepository(
                 }
             }
 
-            // Delete orphaned events (contacts removed or event removed)
+            // An event whose contact is gone, or whose date on that contact changed or is gone.
             for ((caldavUrl, event) in existingByCaldavUrl) {
                 if (caldavUrl !in processedCaldavUrls) {
                     reminderScheduler.cancelRemindersForEvent(event.id)
@@ -265,7 +233,9 @@ abstract class BaseContactEventRepository(
     // ========== Private Helpers ==========
 
     /**
-     * Read events from phone contacts for this event type.
+     * Reads this type's Event rows from the Contacts Provider, sorted by display name. Rows
+     * without a lookup key or name, or with a date [ContactEventUtils.parseContactDate] rejects,
+     * are skipped.
      */
     private fun readEventsFromContacts(): List<ContactEventEntry> {
         val entries = mutableListOf<ContactEventEntry>()
@@ -319,12 +289,11 @@ abstract class BaseContactEventRepository(
     }
 
     /**
-     * Create an event for a contact.
+     * Builds the yearly all-day event for [contact]; the year, if known, is encoded in the
+     * description.
      *
-     * @param contact The contact with event date info
-     * @param calendarId The calendar ID
-     * @param existingId Existing event ID for updates (0 for new events)
-     * @param reminderMinutes Reminder minutes from user preferences (REMINDER_OFF for no reminder)
+     * @param existingId the event to update, or 0 for a new event (only a new event gets a UID)
+     * @param reminderMinutes the reminder setting; [KashCalDataStore.REMINDER_OFF] for none
      */
     private fun createEvent(
         contact: ContactEventEntry,
@@ -336,7 +305,6 @@ abstract class BaseContactEventRepository(
         val startTs = ContactEventUtils.getStartTimestamp(date.month, date.day, date.year)
         val endTs = DateTimeUtils.utcMidnightToEndOfDay(startTs)
 
-        // Convert reminder minutes to ISO 8601 duration format
         val reminders = if (reminderMinutes != KashCalDataStore.REMINDER_OFF) {
             listOf(ContactEventUtils.minutesToIsoDuration(reminderMinutes))
         } else {
@@ -362,11 +330,10 @@ abstract class BaseContactEventRepository(
     }
 
     /**
-     * Schedule reminders for a contact event.
+     * Schedules [event]'s reminders over the reminder lookahead window. Failures are logged and
+     * don't fail the sync.
      *
-     * @param event The event to schedule reminders for
-     * @param calendarColor Calendar color for notification
-     * @param isModified If true, cancels existing reminders first (handles time changes)
+     * @param isModified cancel the event's existing reminders first
      */
     private suspend fun scheduleRemindersForEvent(
         event: Event,
@@ -374,16 +341,17 @@ abstract class BaseContactEventRepository(
         isModified: Boolean
     ) {
         try {
-            // Cancel first so "reminder turned off" transitions drop stale alarms.
-            // The cancel runs even when the new reminders list is empty — otherwise
-            // an early-return would leak the previously-scheduled AlarmManager alarm.
+            // Cancel before the empty-reminders return, or turning the reminder off would
+            // leave the old AlarmManager alarm scheduled.
             if (isModified) {
                 reminderScheduler.cancelRemindersForEvent(event.id)
             }
 
             if (event.reminders.isNullOrEmpty()) return
 
-            val occurrences = eventReader.getOccurrencesForEventInScheduleWindow(event.id)
+            val occurrences = eventReader.getOccurrencesForEventInScheduleWindow(
+                event.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+            )
             if (occurrences.isEmpty()) return
 
             reminderScheduler.scheduleRemindersForEvent(
@@ -392,7 +360,6 @@ abstract class BaseContactEventRepository(
                 calendarColor = calendarColor
             )
         } catch (e: Exception) {
-            // Log but don't fail sync for reminder scheduling errors
             Log.e(tag, "Failed to schedule reminders for event ${event.id}: ${e.message}")
         }
     }

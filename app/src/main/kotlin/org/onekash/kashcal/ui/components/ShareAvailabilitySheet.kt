@@ -60,12 +60,11 @@ import org.onekash.kashcal.ui.viewmodels.ShareAvailabilityUiState
 import org.onekash.kashcal.util.DateTimeUtils
 
 /**
- * Modal bottom sheet that lets the user configure the share-availability
- * window (days, working hours, all-day handling) and shares a plain-text
- * summary via the Android chooser.
+ * Shows the share-availability sheet: the user sets the window (days, working hours, all-day
+ * events) and shares the plain-text summary through [onShare].
  *
- * Stateless content split off ([ShareAvailabilitySheetContent]) so it can be
- * driven directly from compose tests without a Hilt VM or sheet host.
+ * The stateless body is [ShareAvailabilitySheetContent], so compose tests drive it without a
+ * Hilt ViewModel or sheet host.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,8 +125,7 @@ fun ShareAvailabilitySheetContent(
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Spacer matching Done's intrinsic width (best-effort; small
-            // visual asymmetry is tolerable to keep the layout simple).
+            // Roughly Done's width, to center the title; a small asymmetry is accepted.
             Spacer(modifier = Modifier.width(72.dp))
             Text(
                 text = stringResource(R.string.share_availability_sheet_title),
@@ -288,10 +286,8 @@ private fun DaysCard(
                 color = MaterialTheme.colorScheme.primary
             )
 
-            // Slider + tick labels
-            // Accessibility: stateDescription uses the original "Next N days"
-            // plural so screen readers announce the same phrase as before the
-            // visual redesign — the hero "N days" text is decorative.
+            // Slider and tick labels. Screen readers hear the "Next N days" plural as the
+            // slider's state; the hero "N days" text is decorative.
             val a11yLabel = pluralStringResource(
                 R.plurals.share_availability_days_label, days, days
             )
@@ -304,7 +300,7 @@ private fun DaysCard(
                 modifier = Modifier.semantics { stateDescription = a11yLabel }
             )
 
-            // Tick labels positioned at the slider's anchor values 1, 3, 7, 14.
+            // Tick labels at slider values 1, 3, 7 and 14.
             DaysTicks()
         }
     }
@@ -312,8 +308,7 @@ private fun DaysCard(
 
 @Composable
 private fun DaysTicks() {
-    // Position labels by fractional offset so they line up with the slider's
-    // value-to-pixel mapping (value 1..14 → fraction 0..1).
+    // Places labels by fraction (value 1..14 maps to 0..1) so they line up with the slider.
     val tickValues = listOf(1, 3, 7, 14)
     Layout(
         content = {
@@ -418,7 +413,7 @@ private fun WorkingHoursCard(
 
             Spacer(Modifier.height(10.dp))
 
-            // ----- Pills row: start → end -----
+            // ----- Pills row: start to end -----
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -446,8 +441,8 @@ private fun DayStripRangeSlider(
     onValueChangeFinished: () -> Unit,
     stateDescription: String
 ) {
-    // Theme-adaptive dim color for outside-window regions (matches surface so
-    // light/dark themes both read naturally).
+    // Dims the strip outside the window with the surface color, so it reads in light and dark
+    // themes.
     val dimColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.55f)
     val accent = MaterialTheme.colorScheme.primary
 
@@ -466,10 +461,9 @@ private fun DayStripRangeSlider(
             .fillMaxWidth()
             .height(56.dp)
     ) {
-        // Day-strip background (gradient + dim outside window).
-        // Coordinate space matches the RangeSlider on top: both use the full
-        // BoxWithConstraints width so thumb position and the highlighted
-        // window outline track each other across the entire 0..1440 range.
+        // Day-strip background: gradient, dimmed outside the window. It and the RangeSlider on
+        // top both span the full BoxWithConstraints width, so the thumbs and the window outline
+        // line up across the whole 0..1440 range.
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
@@ -480,7 +474,6 @@ private fun DayStripRangeSlider(
             drawRect(brush = gradient)
             val startFraction = (workStartMin / 1440f).coerceIn(0f, 1f)
             val endFraction = (workEndMin / 1440f).coerceIn(0f, 1f)
-            // Dim left of window
             if (startFraction > 0f) {
                 drawRect(
                     color = dimColor,
@@ -488,7 +481,6 @@ private fun DayStripRangeSlider(
                     size = Size(startFraction * size.width, size.height)
                 )
             }
-            // Dim right of window
             if (endFraction < 1f) {
                 drawRect(
                     color = dimColor,
@@ -496,7 +488,7 @@ private fun DayStripRangeSlider(
                     size = Size(size.width - endFraction * size.width, size.height)
                 )
             }
-            // Highlight outline on selected window
+            // Outline the selected window, top and bottom.
             val left = startFraction * size.width
             val right = endFraction * size.width
             val outlineWidth = 3f
@@ -512,9 +504,8 @@ private fun DayStripRangeSlider(
             )
         }
 
-        // The actual interactive RangeSlider sits on top. Its track slot is a
-        // transparent full-width placeholder so the gradient strip shows
-        // through while still giving the thumbs a track to travel along.
+        // The interactive RangeSlider on top. Its track is a transparent full-width box, so the
+        // gradient shows through and the thumbs still have a track.
         RangeSlider(
             value = workStartMin.toFloat()..workEndMin.toFloat(),
             onValueChange = onValueChange,
@@ -538,9 +529,8 @@ private fun DayStripRangeSlider(
 
 @Composable
 private fun DayStripAxis(is24Hour: Boolean) {
-    // Four anchor labels at fractions 0, 0.25, 0.5, 0.75. The right edge
-    // (fraction 1.0) is implicitly midnight again; labeling both ends is
-    // visual noise.
+    // Labels at fractions 0, 0.25, 0.5 and 0.75. The right edge is midnight again and stays
+    // unlabeled.
     val labels = if (is24Hour) {
         listOf("00", "06", "12", "18")
     } else {
@@ -625,10 +615,8 @@ private fun AllDayRow(
 
 private fun formatMinutesAsClock(minutes: Int, is24Hour: Boolean): String {
     val safeMinutes = minutes.coerceIn(0, 1440)
-    // 1440 = end of day; LocalTime can't represent 24:00, so render the
-    // boundary explicitly. 24h mode shows "24:00" (universal); 12h mode
-    // formats midnight via the locale's own AM/PM formatter so non-English
-    // users see locale-appropriate text instead of a hardcoded "12:00 AM".
+    // 1440 is the end of the day, which LocalTime can't represent. 24-hour mode shows "24:00";
+    // 12-hour mode formats midnight with the locale's AM/PM formatter, not a fixed "12:00 AM".
     if (safeMinutes == 1440) {
         return if (is24Hour) "24:00"
         else DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault()).format(LocalTime.MIDNIGHT)
@@ -641,11 +629,9 @@ private fun formatMinutesAsClock(minutes: Int, is24Hour: Boolean): String {
 }
 
 /**
- * Format a duration in minutes as a number of hours suitable for the
- * "X hour window" caption. Whole hours render as integers (e.g. "8");
- * fractional values render with one decimal in the user's locale (e.g.
- * "1.5" en-US, "1,5" de-DE). Half-hour granularity is enforced upstream
- * by the slider quantization.
+ * Formats [minutes] as hours for the "X hour window" caption: whole hours as an integer ("8"),
+ * others with one decimal in the user's locale ("1.5" en-US, "1,5" de-DE). The slider snaps to
+ * half hours.
  */
 private fun formatHourDuration(minutes: Int): String {
     val whole = minutes / 60

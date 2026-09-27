@@ -44,7 +44,7 @@ class InsightGeneratorsTest {
         assertTrue(gen.shouldEmit(stats, emptyList(), mondayNow))
         val insight = gen.generate(stats, emptyList(), mondayNow, periodStart, periodEnd, context)
         assertEquals(InsightId.BUSIEST_DAY, insight.id)
-        // Text uses future tense because Wednesday is after Monday (now)
+        // Wednesday is after Monday (now), so the future-tense string is chosen (not asserted here)
         assertTrue(insight.text.isNotEmpty())
     }
 
@@ -102,7 +102,7 @@ class InsightGeneratorsTest {
         val occ3 = buildOccurrence(monday, 14, 0, monday, 15, 0)
         val occurrences = listOf(occ1, occ2, occ3)
         val gen = BackToBackGenerator()
-        assertEquals(0, gen.countBackToBack(occurrences)) // No real back-to-back
+        assertEquals(0, gen.countBackToBack(occurrences)) // The zero-duration event is dropped
     }
 
     // ========== CalendarDominant ==========
@@ -168,7 +168,8 @@ class InsightGeneratorsTest {
         val occurrences = listOf(
             buildOccurrence(monday, 7, 0, monday, 8, 0),           // Mon before 8 AM
             buildOccurrence(monday.plusDays(1), 7, 30, monday.plusDays(1), 9, 0), // Tue before 8 AM
-            buildOccurrence(monday.plusDays(2), 9, 0, monday.plusDays(2), 10, 0)  // Wed at 9 AM (not early)
+            // Wed at 9 AM (not early)
+            buildOccurrence(monday.plusDays(2), 9, 0, monday.plusDays(2), 10, 0)
         )
         val gen = EarlyLateBoundsGenerator()
         val (early, late) = gen.countBoundaryDays(occurrences, zone)
@@ -180,7 +181,8 @@ class InsightGeneratorsTest {
     fun `EarlyLateBounds counts days with events after 7 PM`() {
         val occurrences = listOf(
             buildOccurrence(monday, 18, 0, monday, 20, 0), // Mon ends at 8 PM (after 7 PM)
-            buildOccurrence(monday.plusDays(1), 9, 0, monday.plusDays(1), 17, 0)  // Tue ends at 5 PM (not late)
+            // Tue ends at 5 PM (not late)
+            buildOccurrence(monday.plusDays(1), 9, 0, monday.plusDays(1), 17, 0)
         )
         val gen = EarlyLateBoundsGenerator()
         val (early, late) = gen.countBoundaryDays(occurrences, zone)
@@ -203,6 +205,7 @@ class InsightGeneratorsTest {
 
     @Test
     fun `division by zero returns 0 for all generators`() {
+        // Asserts each score is finite and within [0, 1], not that it is 0.
         val emptyStats = PeriodStats.EMPTY
         val generators = listOf(
             BusiestDayGenerator(), LightestDayGenerator(), LongestFreeGenerator(),

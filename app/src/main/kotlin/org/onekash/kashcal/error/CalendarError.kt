@@ -4,9 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 
 /**
- * Centralized error types for KashCal.
+ * Lists the errors the app can show; [ErrorMapper.toPresentation] decides how each is displayed.
  *
- * Usage:
  * ```
  * try {
  *     syncEngine.sync()
@@ -15,143 +14,125 @@ import androidx.compose.runtime.Stable
  *     viewModel.showError(error)
  * }
  * ```
- *
- * Design:
- * - Sealed class hierarchy for exhaustive when() expressions
- * - Data classes for errors with parameters
- * - Data objects for singleton errors
- * - Nested sealed classes for organization
  */
 @Immutable
 sealed class CalendarError {
 
-    /**
-     * Authentication errors requiring user action.
-     * Always displayed as Dialog.
-     */
+    /** Authentication errors that need the user to act; always shown as a dialog. */
     @Immutable
     sealed class Auth : CalendarError() {
-        /** Invalid Apple ID or app-specific password */
+        /** Credentials rejected, for example an HTTP 401 ([ErrorMapper.fromHttpCode]). */
         data object InvalidCredentials : Auth()
 
-        /** User entered regular Apple ID password instead of app-specific password */
+        /** The user entered the regular Apple ID password instead of an app-specific password. */
         data object AppSpecificPasswordRequired : Auth()
 
-        /** OAuth token expired, needs re-authentication */
+        /** The iCloud session expired; the user must sign in again. */
         data object SessionExpired : Auth()
 
-        /** Apple ID locked due to security (too many attempts, etc.) */
+        /** The Apple ID is locked for security, for example after too many attempts. */
         data object AccountLocked : Auth()
     }
 
     /**
-     * Network connectivity errors.
-     * Usually transient, displayed as Snackbar with Retry.
+     * Network connectivity errors, shown as a snackbar. All but [SslError] are retryable
+     * ([ErrorMapper.isRetryable]) and offer Retry.
      */
     @Immutable
     sealed class Network : CalendarError() {
-        /** Device is offline */
+        /** The device is offline. */
         data object Offline : Network()
 
-        /** Connection timed out */
+        /** The connection timed out. */
         data object Timeout : Network()
 
-        /** SSL/TLS certificate error */
+        /** The TLS handshake failed. */
         data object SslError : Network()
 
-        /** DNS resolution failed */
+        /** DNS resolution failed. */
         data object UnknownHost : Network()
 
-        /** Generic connection failure */
+        /** Any other connection failure. */
         data class ConnectionFailed(val detail: String? = null) : Network()
     }
 
     /**
-     * Server-side errors.
-     * Mix of transient (5xx) and permanent (4xx).
+     * Server-side errors. 5xx, 429 and an expired sync-token are retryable
+     * ([ErrorMapper.isRetryable]); 403, 404 and 412 are not.
      */
     @Immutable
     sealed class Server : CalendarError() {
-        /** 5xx - Server temporarily unavailable */
+        /** 5xx: the server is temporarily unavailable. */
         data object TemporarilyUnavailable : Server()
 
-        /** 429 - Too many requests, rate limited */
+        /** 429: rate limited. */
         data object RateLimited : Server()
 
-        /** 403 - Access denied */
+        /** 403: access denied. */
         data class Forbidden(val resource: String? = null) : Server()
 
-        /** 404 - Resource not found */
+        /** 404: resource not found. */
         data class NotFound(val resource: String? = null) : Server()
 
-        /** 412 - ETag conflict, event modified elsewhere */
+        /** 412: ETag conflict; the event was modified elsewhere. */
         data class Conflict(val eventTitle: String? = null) : Server()
 
-        /** Sync token expired, need full sync */
+        /** The sync-token expired; a full sync is needed. */
         data object SyncTokenExpired : Server()
     }
 
-    /**
-     * Event operation errors.
-     * Displayed as Snackbar.
-     */
+    /** Event operation errors, shown as a snackbar. */
     @Immutable
     sealed class Event : CalendarError() {
-        /** Event ID not found in database */
+        /** No event with this ID in the database. */
         data class NotFound(val eventId: Long) : Event()
 
-        /** Calendar ID not found */
+        /** No calendar with this ID. */
         data class CalendarNotFound(val calendarId: Long) : Event()
 
-        /** Cannot modify read-only calendar */
+        /** The calendar is read-only. */
         data class ReadOnlyCalendar(val calendarName: String) : Event()
 
-        /** Invalid event data (e.g., end before start) */
+        /** Invalid event data, for example an end before the start. */
         data class InvalidData(val reason: String) : Event()
 
-        /** RRULE parsing failed */
+        /** The RRULE couldn't be parsed. */
         data class InvalidRecurrence(val rule: String) : Event()
     }
 
-    /**
-     * Import/Export errors.
-     * Displayed as Snackbar, may include partial success info.
-     */
+    /** Import and export errors, shown as a snackbar; [PartialImport] carries the counts. */
     @Immutable
     sealed class ImportExport : CalendarError() {
-        /** File not found or unreadable */
+        /** The file is missing or unreadable. */
         data object FileNotFound : ImportExport()
 
-        /** ICS file parsing failed */
+        /** The ICS file couldn't be parsed. */
         data class InvalidIcsFormat(val detail: String? = null) : ImportExport()
 
-        /** Partial import - some events succeeded, some failed */
+        /** Some events imported and some failed. */
         data class PartialImport(
             val imported: Int,
             val failed: Int,
             val failedTitles: List<String> = emptyList()
         ) : ImportExport()
 
-        /** Export write operation failed */
+        /** Writing the export failed. */
         data class ExportFailed(val reason: String? = null) : ImportExport()
 
-        /** Calendar has no events to export */
+        /** The calendar has no events to export. */
         data object NoEventsToExport : ImportExport()
     }
 
-    /**
-     * Storage/Database errors.
-     * Serious errors, displayed as Dialog.
-     */
+    /** Storage and database errors, shown as a dialog. */
     @Immutable
     sealed class Storage : CalendarError() {
-        /** Device storage full */
+        /** Device storage is full. */
         data object StorageFull : Storage()
 
-        /** SQLite database corrupted */
+        /** The SQLite database is corrupt. */
         data object DatabaseCorruption : Storage()
 
-        /** Room migration failed */
+        /** A Room migration failed. */
         data class MigrationFailed(
             val fromVersion: Int,
             val toVersion: Int
@@ -159,71 +140,67 @@ sealed class CalendarError {
     }
 
     /**
-     * Android permission errors.
-     * Displayed as Dialog with Settings action.
+     * Android permission errors. Notification and exact-alarm denials show a dialog that opens
+     * the app's settings; [StorageDenied] shows a snackbar.
      */
     @Immutable
     sealed class Permission : CalendarError() {
-        /** Notification permission denied */
+        /** Notification permission denied. */
         data object NotificationDenied : Permission()
 
-        /** Exact alarm permission denied (Android 12+) */
+        /** Exact alarm permission denied (Android 12+). */
         data object ExactAlarmDenied : Permission()
 
-        /** Storage permission for import/export */
+        /** Storage permission, needed for import and export, denied. */
         data object StorageDenied : Permission()
     }
 
     /**
-     * Device calendar (CalendarProvider) operation errors.
-     * Used for Phase 3 write support.
-     * Displayed as Dialog with retry option.
+     * Device calendar (CalendarProvider) write errors. [WriteFailed] shows a dialog with Retry,
+     * [PermissionDenied] a dialog that opens the app's settings, and the rest a snackbar.
      */
     @Immutable
     sealed class DeviceCalendar : CalendarError() {
-        /** Write operation failed */
+        /** The write failed. */
         data class WriteFailed(val message: String) : DeviceCalendar()
 
-        /** WRITE_CALENDAR permission denied or revoked */
+        /** WRITE_CALENDAR permission denied or revoked. */
         data object PermissionDenied : DeviceCalendar()
 
-        /** Target calendar not found in CalendarProvider */
+        /** The target calendar isn't in CalendarProvider. */
         data object CalendarNotFound : DeviceCalendar()
 
-        /** Event not found in CalendarProvider */
+        /** The event, or the row of it a write targets, isn't in CalendarProvider. */
         data object EventNotFound : DeviceCalendar()
 
-        /** Calendar is read-only (ACCESS_LEVEL_READ or CALENDAR_ACCESS_LEVEL_FREEBUSY) */
+        /** The calendar is read-only (`CAL_ACCESS_READ` or `CAL_ACCESS_FREEBUSY`). */
         data object ReadOnlyCalendar : DeviceCalendar()
     }
 
     /**
-     * Sync operation errors.
-     * Various presentations based on severity.
+     * Sync errors. [AlreadySyncing] and [Cancelled] are only logged, [NoAccountsConfigured] shows
+     * a banner and [PartialFailure] a snackbar.
      */
     @Stable
     sealed class Sync : CalendarError() {
-        /** Sync already in progress */
+        /** A sync is already running. */
         data object AlreadySyncing : Sync()
 
-        /** No iCloud account configured */
+        /** No iCloud account is configured. */
         data object NoAccountsConfigured : Sync()
 
-        /** Some calendars synced, some failed */
+        /** Some calendars synced and some failed. */
         data class PartialFailure(
             val successCount: Int,
             val failedCount: Int,
             val errors: List<CalendarError> = emptyList()
         ) : Sync()
 
-        /** User cancelled sync */
+        /** The user cancelled the sync. */
         data object Cancelled : Sync()
     }
 
-    /**
-     * Unknown/unexpected errors.
-     * Fallback for unhandled cases.
-     */
+    /** Any error no other type covers. */
     data class Unknown(
         val message: String,
         val throwable: Throwable? = null
@@ -231,12 +208,8 @@ sealed class CalendarError {
 }
 
 /**
- * Exception wrapper for [CalendarError] to use with [Result.failure].
+ * Wraps a [CalendarError] as the [Throwable] that [Result.failure] requires.
  *
- * Kotlin's [Result] type requires a [Throwable] for the failure case.
- * This wrapper allows CalendarError to be used with Result APIs.
- *
- * Usage:
  * ```
  * Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.PermissionDenied))
  * ```

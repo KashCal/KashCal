@@ -27,14 +27,8 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for SyncNotificationManager.
- *
- * Tests:
- * - ForegroundInfo creation
- * - Progress notifications
- * - Completion notifications
- * - Error notifications
- * - Notification cancellation
+ * Tests [SyncNotificationManager]: ForegroundInfo creation, progress, completion and error
+ * notifications, cancellation, and the parse-failure and operation-expired notifications.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -102,7 +96,7 @@ class SyncNotificationManagerTest {
 
         // Then
         assertNotNull(foregroundInfo)
-        // Note: Verifying notification actions requires deeper inspection
+        // The cancel action itself isn't inspected, only that ForegroundInfo is built
     }
 
     // ==================== Progress Notification Tests ====================
@@ -334,7 +328,7 @@ class SyncNotificationManagerTest {
             SyncResult.Error(code = 500, message = "")
         )
 
-        // Then - still posts an error notification (falls back to default text)
+        // Then - still posts an error notification, with the empty message as its text
         assertNotNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_SYNC_ERROR))
     }
 
@@ -351,7 +345,7 @@ class SyncNotificationManagerTest {
 
     @Test
     fun `showParseFailureNotification does not throw with zero abandonedCount`() {
-        // Edge case: zero count is an early return — nothing should post
+        // Edge case: zero count is an early return, so nothing posts
         manager.showParseFailureNotification(calendarName = "Work", abandonedCount = 0)
 
         assertNull(activeById(SyncNotificationChannels.NOTIFICATION_ID_SYNC_ERROR))
@@ -395,7 +389,7 @@ class SyncNotificationManagerTest {
 
     @Test
     fun `showOperationExpiredNotification does not post with zero count`() {
-        // Edge case: zero count is an early return — nothing should post
+        // Edge case: zero count is an early return, so nothing posts
         manager.showOperationExpiredNotification(
             expiredCount = 0, scope = ExpiredCalendarScope.Single("Work")
         )
@@ -422,8 +416,8 @@ class SyncNotificationManagerTest {
 
     @Test
     fun `showOperationExpiredNotification only alerts once so re-posts stay silent`() {
-        // A later sync abandoning more ops re-posts on the same fixed id; it must
-        // update silently rather than buzz/heads-up again.
+        // A later sync abandoning more ops re-posts on the same fixed id; it must update
+        // silently instead of vibrating or showing a heads-up again.
         manager.showOperationExpiredNotification(
             expiredCount = 1, scope = ExpiredCalendarScope.Unknown
         )

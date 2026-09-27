@@ -7,18 +7,12 @@ import java.util.Calendar
 import java.util.TimeZone
 
 /**
- * Tests for DateTimeUtils.isEventPast() - timezone-aware isPast logic.
+ * Tests [DateTimeUtils.isEventPast]: an all-day occurrence compares day codes, a timed one
+ * compares instants (rule on the function).
  *
- * Key insight: All-day events are stored with UTC midnight timestamps, but should
- * be compared using calendar dates in local timezone to avoid premature graying out.
- *
- * Bug scenario: At 6 PM Central (UTC-6), an all-day event for "today" would be
- * marked as past because:
- * - endTs = Jan 15, 23:59:59.999 UTC
- * - Current UTC time = Jan 16, 00:00 UTC
- * - endTs < now = true (incorrectly marked as past)
- *
- * Fix: For all-day events, compare endDay (YYYYMMDD) to todayDayCode instead.
+ * The all-day trap: at 6 PM Central (UTC-6) on Jan 15 the clock reads Jan 16 00:00 UTC, past a
+ * Jan 15 all-day endTs of 23:59:59.999 UTC, so an instant compare would gray out today's event.
+ * No zone is set; each test passes `nowMs` and the local `todayDayCode` that zone would give.
  */
 class IsEventPastTest {
 
@@ -26,11 +20,10 @@ class IsEventPastTest {
 
     @Test
     fun `all-day event today at 6 PM UTC-6 is NOT past`() {
-        // Simulate: Jan 15, 2025, 6 PM Central (UTC-6)
-        // UTC time would be Jan 16, 2025, 00:00 UTC
+        // Jan 15, 2025, 6 PM Central (UTC-6) is Jan 16, 00:00 UTC.
         val jan15_6pm_central_as_utc = createUtcMillis(2025, 1, 16, 0, 0)
 
-        // All-day event ends Jan 15 (stored as UTC midnight = Jan 15 23:59:59.999 UTC)
+        // An all-day event ending Jan 15 stores the end of its UTC day, 23:59:59.999.
         val endTs = createUtcMillis(2025, 1, 15, 23, 59, 59, 999)
         val endDay = 20250115  // Jan 15, 2025
 
@@ -86,8 +79,8 @@ class IsEventPastTest {
 
     @Test
     fun `multi-day all-day event on last day at 6 PM is NOT past`() {
-        // 3-day event: Jan 14-16, currently Jan 16 at 6 PM local
-        val jan16_6pm_as_utc = createUtcMillis(2025, 1, 17, 0, 0)  // 6 PM UTC-6 = midnight UTC next day
+        // 3-day event, Jan 14-16; now is Jan 16 at 6 PM UTC-6, midnight UTC the next day.
+        val jan16_6pm_as_utc = createUtcMillis(2025, 1, 17, 0, 0)
 
         val endTs = createUtcMillis(2025, 1, 16, 23, 59, 59, 999)
         val endDay = 20250116  // Jan 16

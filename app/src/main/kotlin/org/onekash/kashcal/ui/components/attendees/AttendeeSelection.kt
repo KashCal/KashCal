@@ -5,32 +5,23 @@ import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.util.AddressNormalizer
 
 /**
- * The attendee picker's selection model.
+ * Holds the attendee picker's selection as Room [Attendee] rows, not the lossy [AttendeeUiModel].
  *
- * Holds Room [Attendee] **entities**, not the lossy [AttendeeUiModel]. An
- * event pulled from a CalDAV server carries wire fields the UI projection
- * drops — `role`, `cutype`, `rsvp`, `delegatedFrom`/`To`, `member`, `sentBy`,
- * and the `schedule*` parameters. If the picker rebuilt its set from
- * [AttendeeUiModel] on save, those fields would be silently stripped on the
- * next push. So the model seeds from the real entities, mutates them by
- * add/remove only, and hands the merged entity list back to the save path.
+ * A pulled event carries wire fields the UI projection drops: `role`, `cutype`, `rsvp`,
+ * `delegatedFrom`/`To`, `member`, `sentBy` and the `schedule*` parameters. Rebuilding the set
+ * from [AttendeeUiModel] would silently strip them on the next push, so the model seeds from
+ * the real rows, changes them only by add and remove, and hands the merged list back.
  *
- * [isChanged] tells the save path whether the set actually changed: an
- * unedited open-and-save must pass the existing rows through untouched (the
- * domain layer treats a `null` attendee list as "leave the table alone"), so
- * the picker only commits a non-null list when the user added or removed
- * someone.
+ * [isChanged] is true once the user added or removed someone. The event form keeps its own
+ * `attendeesEdited` flag, set on each change the picker reports, so an unedited open-and-save
+ * leaves the attendee table alone.
  *
- * Dedup is by canonical address ([AddressNormalizer.canonical]) so a person
- * already on the list — whether stored `mailto:`-prefixed, bare, or in a
- * different case — is never added twice.
+ * Dedup is by [AddressNormalizer.canonical], so a person already on the list, stored with or
+ * without `mailto:` or in another case, is never added twice.
  *
- * [seedCanonicals] snapshots the canonical addresses present at seed time (the
- * originally-invited guests), captured unconditionally. [removedFromSeed]
- * diffs it against the current set to report which originals the organizer
- * dropped — the recipients owed an iTIP CANCEL. A guest added and removed
- * within the same session was never in [seedCanonicals], so it nets out and is
- * not cancelled (it was never on the wire).
+ * [seedCanonicals] snapshots the canonical addresses at seed time, the originally invited
+ * guests, and [removedFromSeed] reports which of them are gone. A guest added and removed in
+ * the same session was never in [seedCanonicals], so it doesn't appear.
  */
 @Immutable
 data class AttendeeSelection(
@@ -42,31 +33,24 @@ data class AttendeeSelection(
         attendees.mapTo(mutableSetOf()) { AddressNormalizer.canonical(it.address) }
 
     /**
-     * Whether [attendee] can be removed from the picker. Always true — removing
-     * an invited guest is allowed; the dropped guest is sent an iTIP CANCEL on
-     * save. (Retained as a method so the picker chip's remove-affordance check
-     * has a single home, and to leave room for future per-row restrictions.)
+     * Returns whether [attendee] can be removed from the picker; always true. A method so the
+     * picker chip's remove check has one home if a per-row restriction is ever needed.
      */
     @Suppress("UNUSED_PARAMETER")
     fun isRemovable(attendee: Attendee): Boolean = true
 
-    /**
-     * Canonical addresses present at seed time but absent from the current set
-     * — the originally-invited guests the organizer removed this session. These
-     * are the recipients owed a CANCEL. A session-only add that was then
-     * removed is not here (it was never in [seedCanonicals]).
-     */
+    /** Returns the canonical addresses present at seed time but absent from the current set. */
     fun removedFromSeed(): Set<String> = seedCanonicals - canonicalAddresses()
 
     /**
-     * Add a newly picked/typed attendee. Email-shaped addresses are stored
-     * `mailto:`-prefixed to match the pull-side storage convention; any other
-     * CAL-ADDRESS form is stored verbatim (never `mailto:urn:uuid:…`). A
-     * freshly invited person has no response yet, so PARTSTAT is NEEDS-ACTION
-     * and role/cutype/rsvp/delegation take their entity defaults (null/empty).
+     * Adds a picked or typed attendee at the end of the sort order. An email-shaped address is
+     * stored `mailto:`-prefixed to match the pull side; any other CAL-ADDRESS form is stored
+     * trimmed but otherwise as given, never as `mailto:urn:uuid:...`. A new invitee has no
+     * response yet, so PARTSTAT is NEEDS-ACTION and role, cutype, rsvp and delegation take the
+     * entity defaults (null or empty).
      *
-     * A canonical duplicate is a no-op (the existing entity, with its wire
-     * fields, is kept) and does not flip [isChanged].
+     * A canonical duplicate is a no-op that returns this instance: the existing row and its wire
+     * fields stay, and [isChanged] doesn't flip.
      */
     fun addNew(displayName: String?, bareAddress: String): AttendeeSelection {
         val canonical = AddressNormalizer.canonical(bareAddress)
@@ -88,10 +72,10 @@ data class AttendeeSelection(
     }
 
     /**
-     * Remove the attendee whose canonical address matches [address] (any
-     * CAL-ADDRESS form — the chip displays the canonical form, this
-     * canonicalizes its argument so the two always meet). Removing an absent
-     * address is a no-op and does not flip [isChanged].
+     * Removes the attendee whose canonical address matches [address], given in any CAL-ADDRESS
+     * form; the argument is canonicalized, so the picker's canonical form always matches.
+     * Removing an absent address is a no-op that returns this instance and doesn't flip
+     * [isChanged].
      */
     fun remove(address: String): AttendeeSelection {
         val target = AddressNormalizer.canonical(address)
@@ -102,10 +86,8 @@ data class AttendeeSelection(
 
     companion object {
         /**
-         * Seed the model from the event's existing attendee entities. A pure
-         * seed is unchanged. The seed's canonical addresses are snapshotted
-         * into [seedCanonicals] so a later removal can be reported via
-         * [removedFromSeed] for cancellation.
+         * Seeds the model from the event's attendee rows, unchanged, snapshotting their
+         * canonical addresses into [seedCanonicals] for [removedFromSeed].
          */
         fun seed(existing: List<Attendee>): AttendeeSelection =
             AttendeeSelection(

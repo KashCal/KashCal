@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Ez da egutegirik aurkitu zerbitzari honetan.</string>
     <string name="caldav_error_unexpected">Ustekabeko errorea. Saiatu berriro.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nHau zure sare lokaleko zerbitzari bat bada, baimendu sare lokalerako sarbidea konektatzeko.</string>
+    <string name="caldav_error_connection_refused_insecure">Zerbitzariak konexioa KashCal-ek jarraitzen ez duen leku batera birbideratu du (zifratu gabeko helbide batera edo birbideratze-begizta batera); beraz, KashCal gelditu egin da zure pasahitza bidali aurretik. Egiaztatu zerbitzariaren helbidea.</string>
     <string name="local_network_banner_title">Sare lokalerako sarbidea behar da</string>
     <string name="local_network_banner_body">Badirudi zerbitzari hau zure sare lokalean dagoela. Baimendu sare lokalerako sarbidea KashCal bertara konektatu ahal izan dadin.</string>
     <string name="local_network_banner_allow">Baimendu sarbidea</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Gorde aldaketak</string>
     <string name="dialog_delete_recurring_title">Ezabatu</string>
     <string name="dialog_move_recurring_title">Eraman</string>
+    <string name="snackbar_event_rescheduled">Gertaera birprogramatu da</string>
+    <string name="snackbar_reschedule_failed">Ezin izan da gertaera birprogramatu</string>
     <string name="recurring_this_event">Gertaera hau</string>
     <string name="recurring_all_events">Gertaera guztiak</string>
 

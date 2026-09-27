@@ -19,16 +19,7 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/**
- * Implementation of AccountRepository.
- *
- * Handles full account lifecycle including cleanup on deletion:
- * - WorkManager job cancellation
- * - Reminder cancellation
- * - Pending operation cleanup
- * - Credential deletion
- * - Cascade delete via Room FK constraints
- */
+/** Room, credential-store and contacts-account backed [AccountRepository]. */
 @Singleton
 class AccountRepositoryImpl @Inject constructor(
     private val accountsDao: AccountsDao,
@@ -113,48 +104,29 @@ class AccountRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Delete account with comprehensive cleanup.
-     *
-     * BUG FIX: Previous implementations forgot to cancel reminders,
-     * leaving orphaned alarms in AlarmManager.
-     *
-     * Order of operations matters:
-     * 1. Cancel WorkManager jobs (prevents sync during cleanup)
-     * 2. Cancel reminders BEFORE cascade delete (need event IDs)
-     * 3. Delete pending operations BEFORE cascade delete (need event IDs)
-     * 4. Delete credentials (independent, can fail silently)
-     * 5. Cascade delete via Room FK constraints
-     * 6. Purge the per-login contacts system account LAST — it is irreversible
-     *    (see inline note), so it must not run before the reversible DB work.
+     * Steps are listed on [AccountRepository.deleteAccount]. The order matters: sync work is
+     * cancelled first so no sync runs during cleanup; reminders and pending operations go
+     * before the cascade, which deletes the event IDs they are found by (a cascade alone leaves
+     * the alarms in AlarmManager); the irreversible contacts purge goes last.
      */
     override suspend fun deleteAccount(accountId: Long) {
         Log.i(TAG, "Deleting account: $accountId")
 
-        // Resolve whether to purge this login's contacts system account BEFORE
-        // the cascade wipes the row. The contacts account is keyed by email, but
-        // accounts are unique on (provider, email, home_set_url) — so the same
-        // email can back two logins (e.g. iCloud + a CalDAV host). Only
-        // CardDAV-capable providers register a contacts account, so a LOCAL/ICS
-        // sibling that happens to share the email must NOT block the purge (else
-        // the contacts account leaks with nothing left to manage it), and a
-        // remaining CardDAV sibling MUST block it (else we purge its contacts).
+        // Decide the purge before the cascade deletes the row; [contactsAccountToPurge] holds
+        // the same-email sibling rule.
         val account = accountsDao.getById(accountId)
         val contactsAccountToRemove = account?.let { contactsAccountToPurge(it) }
 
-        // 1. Cancel pending sync jobs (prevents orphaned WorkManager jobs).
-        //    The per-account job plus the SHARED one-shot/expedited jobs, which
-        //    are keyed by a single work name across all accounts: an in-flight
-        //    (or replayable ENQUEUED) one-shot enqueued for this account would
-        //    otherwise linger after removal and resurface sync UI for a user who
-        //    no longer has the account. Cancelling them here is unconditional and
-        //    safe — a remaining account simply re-enqueues on its next trigger.
+        // 1. The one-shot and expedited jobs have one work name shared by all accounts. A
+        //    running or enqueued one for this account would otherwise outlive it and bring
+        //    back sync UI for an account the user removed. Other accounts re-enqueue on their
+        //    next trigger.
         workManager.cancelUniqueWork("sync_account_$accountId")
         workManager.cancelUniqueWork(SyncScheduler.ONE_SHOT_SYNC_WORK)
         workManager.cancelUniqueWork(SyncScheduler.EXPEDITED_SYNC_WORK)
         Log.d(TAG, "Cancelled WorkManager jobs for account $accountId")
 
-        // 2. Cancel reminders and delete pending ops BEFORE cascade delete
-        //    (we need event IDs which will be deleted by cascade).
+        // 2. Before the cascade, which deletes the event IDs these are found by.
         val calendars = calendarsDao.getByAccountIdOnce(accountId)
         var remindersCancelled = 0
         var pendingOpsDeleted = 0
@@ -170,7 +142,7 @@ class AccountRepositoryImpl @Inject constructor(
         }
         Log.d(TAG, "Cancelled $remindersCancelled reminders, deleted $pendingOpsDeleted pending ops")
 
-        // 3. Delete credentials (silent failure OK - may not exist).
+        // 3. A failure is logged and ignored; the credentials may not exist.
         try {
             credentialManager.deleteCredentials(accountId)
             Log.d(TAG, "Deleted credentials for account $accountId")
@@ -178,18 +150,14 @@ class AccountRepositoryImpl @Inject constructor(
             Log.w(TAG, "Failed to delete credentials for account $accountId: ${e.message}")
         }
 
-        // 4. Cascade delete account → calendars → events → scheduled_reminders.
-        //    Note: scheduled_reminders has FK to events with ON DELETE CASCADE.
+        // 4. Cascades as listed on [AccountRepository.deleteAccount].
         accountsDao.deleteById(accountId)
         Log.i(TAG, "Account $accountId deleted with cascade")
 
-        // 4a. If no syncable account remains, cancel the shared PERIODIC work too.
-        //     Periodic sync/contact-sync are single-named jobs shared by all
-        //     accounts, so they must survive as long as ANY account can still
-        //     sync (CalDAV-capable provider with stored credentials). Once the
-        //     last such account is gone, an orphaned periodic job would keep
-        //     waking with nothing to do — and would replay sync UI on a device
-        //     that is now device-calendar-only.
+        // 4a. Periodic sync and contact sync are single jobs shared by all accounts, so they
+        //     stay while any account can sync (CalDAV-capable, with stored credentials). After
+        //     the last one, they would keep waking with nothing to do and bring back sync UI
+        //     on a device that is now device-calendar-only.
         val remainingSyncable = accountsDao.getAllOnce().any {
             it.provider.supportsCalDAV && credentialManager.hasCredentials(it.id)
         }
@@ -199,19 +167,14 @@ class AccountRepositoryImpl @Inject constructor(
             Log.d(TAG, "No syncable account remains; cancelled periodic sync work")
         }
 
-        // 5. Remove the dedicated contacts system account LAST. Deleting a login
-        //    must remove its per-login contacts account too, which also purges
-        //    any RawContacts Android holds under it. That purge is a synchronous
-        //    Binder IPC to AccountManagerService and is irreversible — so it runs
-        //    only after the DB deletes above, never before: if any earlier step
-        //    throws, we abort with the contacts still intact rather than orphaning
-        //    a live account whose synced contacts were already wiped.
+        // 5. Last, because the purge (a synchronous Binder IPC to AccountManagerService) is
+        //    irreversible: if any earlier step throws, the deletion aborts with the contacts
+        //    intact, instead of leaving a live account whose synced contacts are already gone.
         contactsAccountToRemove?.let { email ->
             purgeContactsForEmail(email)
         }
 
-        // Note: Widget refresh happens automatically via Room Flow observers.
-        // WidgetDataRepository observes calendar/event changes and triggers update.
+        // Nothing here refreshes the widgets.
     }
 
     // ========== Sync Metadata ==========
@@ -245,21 +208,15 @@ class AccountRepositoryImpl @Inject constructor(
     }
 
     override suspend fun setContactSyncEnabled(accountId: Long, enabled: Boolean): ContactPurgeOutcome {
-        // The contacts system account is keyed by login email, so resolve it
-        // before touching AccountManager.
+        // The contacts system account is keyed by login email.
         val account = accountsDao.getById(accountId) ?: run {
             Log.w(TAG, "setContactSyncEnabled: account $accountId not found")
             return ContactPurgeOutcome.NOT_ATTEMPTED
         }
-        // Register/remove the system account BEFORE persisting the flag: the
-        // registrar is idempotent and swallows its own failures, and enrolling
-        // is what stops Android from purging RawContacts written under the
-        // account. On enable we want the account to exist by the time the flag
-        // reads true; on disable, removing it also purges its contacts — so the
-        // same sibling-guard deleteAccount uses applies: the email-named account
-        // is shared by same-email CardDAV logins, and removing it would wipe a
-        // sibling's synced contacts. Only remove it when no CardDAV sibling
-        // still relies on it.
+        // Register or purge before setting the flag, so on enable the account exists by the
+        // time the flag reads true; enrolment is what stops Android purging RawContacts written
+        // under it. The registrar is idempotent and swallows its own failures. On disable the
+        // sibling rule of [contactsAccountToPurge] applies, as in deleteAccount.
         var outcome = ContactPurgeOutcome.NOT_ATTEMPTED
         if (enabled) {
             contactSystemAccountRegistrar.ensureAccount(account.email)
@@ -273,21 +230,16 @@ class AccountRepositoryImpl @Inject constructor(
     }
 
     /**
-     * The login email whose per-login contacts system account is safe to purge
-     * for [account], or null when it must be kept.
+     * Returns the email of [account]'s contacts system account if it is safe to purge, or null
+     * for a non-CardDAV account or when the account must be kept.
      *
-     * The contacts account is keyed by email, but accounts are unique on
-     * (provider, email, home_set_url) — so the same email can back two logins
-     * (e.g. iCloud + a CalDAV host) that share ONE email-named contacts account
-     * holding the union of both logins' synced contacts. The purge is all-or-
-     * nothing and irreversible, so keep the account only when another same-email
-     * login is *still actively syncing contacts* into it — CardDAV-capable AND
-     * contact-sync enabled. A sibling with contact sync turned off (or a
-     * non-CardDAV sibling that never registered a contacts account) contributes
-     * nothing to protect, so it must NOT block the purge — otherwise disabling or
-     * deleting the last syncing login leaves its contacts stranded on the device.
-     * Returns null for a non-contacts account (nothing to remove) or when a
-     * still-syncing CardDAV sibling remains.
+     * The contacts account is keyed by email, but accounts are unique on provider, email and
+     * home set URL, so two logins (for example iCloud and a CalDAV host) can share one
+     * email-named contacts account holding both logins' contacts. The purge is all or nothing
+     * and irreversible, so it is kept only while another same-email login is CardDAV-capable
+     * with contact sync enabled. A sibling with contact sync off, or a non-CardDAV sibling that
+     * never registered a contacts account, must not block the purge, or disabling or deleting the
+     * last syncing login leaves its contacts stranded on the device.
      */
     private suspend fun contactsAccountToPurge(account: Account): String? =
         account
@@ -303,50 +255,35 @@ class AccountRepositoryImpl @Inject constructor(
             }
 
     /**
-     * Remove the per-login contacts system account named [email] AND make sure its
-     * synced RawContacts are actually gone from the device.
+     * Deletes the synced RawContacts of the contacts system account named [email], removes the
+     * account, and clears same-email logins' address books ([clearContactSyncCursorsForEmail]).
      *
-     * Removing the account is *supposed* to cascade-delete the RawContacts Android
-     * holds under it, but that cascade is not guaranteed (a declined removal, or a
-     * provider that leaves the rows account-less), which is how a disable/sign-out
-     * can leave hundreds of orphaned contacts on the device. So this does not trust
-     * the cascade: it explicitly deletes our own account-scoped rows FIRST (the
-     * scoped [ContactsProviderRepository.purgeAccount], which touches nothing but
-     * `ACCOUNT_NAME` + our contacts `ACCOUNT_TYPE`), THEN removes the account, then
-     * verifies the row count is zero and re-runs the scoped purge once if any
-     * survived. Every delete is our-account-scoped, so this can never remove a
-     * contact owned by another account (e.g. Google) — even one sharing a phone
-     * number — regardless of what the OS cascade does.
+     * Removing the account should cascade to its RawContacts, but the cascade isn't guaranteed (a
+     * declined removal, or a provider that leaves the rows account-less), which leaves orphaned
+     * contacts after a disable or sign-out. So the rows are deleted first through
+     * [ContactsProviderRepository.purgeAccount], scoped to `ACCOUNT_NAME` and our contacts
+     * `ACCOUNT_TYPE`; it never removes a contact of another account (for example Google), even one
+     * sharing a phone number. Then the account is removed and the rows are counted once. There is
+     * no retry.
      *
-     * Returns an honest outcome instead of swallowing failures. Two failure modes
-     * used to compound into a false "clean": [ContactsProviderRepository.purgeAccount]
-     * returns [Result.failure] on revoked WRITE_CONTACTS, and
-     * [ContactsProviderRepository.countRawContacts] returns 0 when READ is also
-     * revoked ("can't tell"). Trusting that 0 reported success with rows still on the
-     * device. So a post-purge 0 is treated as verified-clean ([ContactPurgeOutcome.PURGED])
-     * ONLY when the scoped delete did not itself fail; a failed delete, or rows still
-     * counted afterward, yields [ContactPurgeOutcome.INCOMPLETE].
+     * Returns [ContactPurgeOutcome.PURGED] only when the delete succeeded and the count is 0,
+     * else [ContactPurgeOutcome.INCOMPLETE]. The delete fails on revoked WRITE_CONTACTS, and
+     * [ContactsProviderRepository.countRawContacts] returns 0 when it can't read, so a 0 alone
+     * isn't proof.
      *
-     * Whether or not the row count reaches zero, the purge is irreversible and has
-     * dropped the account's RawContacts, so this ALSO clears the CardDAV delta cursors
-     * of every same-email login in lockstep (see [clearContactSyncCursorsForEmail]) —
-     * the cursor-clear is an invariant of purging, not something a caller may forget.
+     * The address books are cleared whatever the count, because the purge is irreversible and
+     * has dropped the account's RawContacts; clearing them is part of purging, not a step a
+     * caller can forget.
      */
     private suspend fun purgeContactsForEmail(email: String): ContactPurgeOutcome {
-        // Delete our own rows explicitly before dropping the account, rather than
-        // relying on the account-removal cascade to do it. Keep the delete's own
-        // success/failure — a failure means WRITE_CONTACTS is gone and nothing was
-        // deleted, so a later count of 0 can't be trusted as "verified empty".
+        // Keep the delete's result: after a failed delete a count of 0 means "can't tell".
         val delete = contactsProviderRepository.purgeAccount(email)
         contactSystemAccountRegistrar.removeAccount(email)
         clearContactSyncCursorsForEmail(email)
-        // Verify the account removal + explicit purge actually cleared the device.
-        // A count of 0 only proves clean if the delete that was supposed to clear it
-        // actually ran: on revoked permission the delete failed AND the count can't
-        // read — that 0 is "can't tell", not "empty". Any surviving rows are ones the
-        // account-scoped predicate can't match (e.g. account-less survivors); the
-        // removeAccount cascade is synchronous and the scoped delete deterministic, so
-        // re-running it would clear nothing new — report INCOMPLETE instead.
+        // Surviving rows are ones the account-scoped delete can't match (for example
+        // account-less survivors). The removeAccount cascade is synchronous and the scoped
+        // delete deterministic, so re-running the delete would clear nothing new; report
+        // INCOMPLETE instead.
         val remaining = contactsProviderRepository.countRawContacts(email)
         if (remaining > 0) {
             Log.w(TAG, "Contacts purge left $remaining synced rows on the device")
@@ -356,16 +293,14 @@ class AccountRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Drop the CardDAV delta sync cursors of every login sharing [email] whose
-     * contacts lived under the just-purged, email-keyed contacts system account.
+     * Deletes the `address_books` rows, and with them the sync-tokens and ctags, of every
+     * CardDAV-capable login sharing [email].
      *
-     * A purge is irreversible and wipes the account's RawContacts, so any surviving
-     * `address_books` row for a same-email login now points at a token the server
-     * still honors while the device holds none of the contacts it covers. Clearing
-     * the cursor forces the next sync of that login onto the full-listing path, which
-     * re-fetches everything. Scoped to CardDAV-capable logins: a non-CardDAV
-     * same-email sibling never wrote contacts into the account, so it has no cursor to
-     * clear. Idempotent — a login with no books is a no-op delete.
+     * After a purge, a kept row would hold a token the server still honors while the device
+     * has none of the contacts it covers. Without the rows the next sync of that login takes a
+     * full listing, which fetches everything. A non-CardDAV same-email login never wrote
+     * contacts into the account, so it has no rows. Idempotent: a login with no books is a no-op
+     * delete.
      */
     private suspend fun clearContactSyncCursorsForEmail(email: String) {
         accountsDao.getAllOnce()

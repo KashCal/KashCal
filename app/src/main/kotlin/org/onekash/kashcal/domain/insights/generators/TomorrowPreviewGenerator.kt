@@ -19,7 +19,7 @@ class TomorrowPreviewGenerator @Inject constructor() : InsightGenerator {
     override val id = InsightId.TOMORROW_PREVIEW
 
     override fun shouldEmit(stats: PeriodStats, occurrences: List<InsightOccurrence>, now: Long): Boolean {
-        if (now > stats.periodEnd) return false // Past period
+        if (now > stats.periodEnd) return false
         val tomorrow = Instant.ofEpochMilli(now).atZone(ZoneId.systemDefault()).toLocalDate().plusDays(1)
         val tomorrowCode = localDateToDayCode(tomorrow)
         return stats.dailyBreakdown.any { it.dayCode == tomorrowCode }

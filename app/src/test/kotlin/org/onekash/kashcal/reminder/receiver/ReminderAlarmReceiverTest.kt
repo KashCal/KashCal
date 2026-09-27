@@ -8,6 +8,7 @@ import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -24,15 +25,24 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for ReminderAlarmReceiver.
+ * Tests [ReminderAlarmReceiver].
  *
- * Two groups:
- * - Contract tests: intent action/extra constants stay in sync with the scheduler.
- * - Fire-path tests: drive the extracted [ReminderAlarmReceiver.handleAlarm]
- *   directly with explicit dependencies. `@AndroidEntryPoint`'s generated
- *   `onReceive` re-runs field injection on every dispatch, clobbering any
- *   values a test sets manually — so the receiver exposes `handleAlarm(deps...)`
- *   for testability, mirroring DeviceCalendarAlarmReceiver.
+ * - Contract: the alarm action and reminder-id extra, and how a plain [Intent] reads a wrong
+ *   action or a missing id.
+ * - Fire path, through [ReminderAlarmReceiver.handleAlarm] over strict mocks: a live reminder
+ *   posts and is marked fired (FIRED and SNOOZED rows included); a missing row or a DISMISSED
+ *   one does nothing; a gone event cancels all its reminders; a cancelled occurrence cancels
+ *   only that occurrence's reminders.
+ * - Coalescing: the occurrence's other notifications are cleared after building and before
+ *   posting, never its own, and none when it has one reminder; a suppressed reminder doesn't
+ *   look them up, and a cleared sibling keeps its row. A failed lookup still posts; a failed
+ *   build throws and clears nothing.
+ * - Refill: the window is refilled after the post and the fired mark; a failed refill is
+ *   swallowed, a cancelled one propagates, and a suppressed or dismissed reminder doesn't refill.
+ *
+ * The tests pass dependencies to handleAlarm, as DeviceCalendarAlarmReceiver's tests do, because
+ * `@AndroidEntryPoint`'s generated `onReceive` re-runs field injection on every dispatch and
+ * overwrites fields a test sets.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -99,6 +109,7 @@ class ReminderAlarmReceiverTest {
         stubPost(notificationManager, reminder)
         coEvery { scheduler.getSiblingReminderIds(reminder) } returns emptyList()
         coJustRun { scheduler.markAsFired(REMINDER_ID) }
+        coEvery { scheduler.scheduleUpcomingReminders() } returns 0
 
         receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
 
@@ -108,9 +119,9 @@ class ReminderAlarmReceiverTest {
 
     @Test
     fun `handleAlarm suppresses notification and cleans up when event is gone`() = runTest {
-        // User's bug: event deleted (or pulled-as-deleted) after the alarm was
-        // armed. shouldFireReminder returns false → no notification, and the
-        // stale row + sibling alarms are cleaned up.
+        // The event was deleted, or a pull deleted it, after the alarm was armed.
+        // shouldFireReminder returns false: no notification, and every reminder row and
+        // alarm of the event is cancelled.
         val scheduler = mockk<ReminderScheduler>()
         val notificationManager = mockk<ReminderNotificationManager>()
         coEvery { scheduler.getReminder(REMINDER_ID) } returns reminder(status = ReminderStatus.PENDING)
@@ -126,12 +137,11 @@ class ReminderAlarmReceiverTest {
 
     @Test
     fun `handleAlarm suppresses and cleans up the slot when its occurrence is cancelled`() = runTest {
-        // User's bug: an organizer cancels a single instance of a recurring series
-        // (server-pulled EXDATE / cancelled exception). The master event is still
-        // live, so shouldFireReminder passes — but the occurrence-level guard finds
-        // no live occurrence. Suppress, and clean up ONLY this slot's reminder
-        // (cancelReminderForOccurrence), not every reminder on the master — the
-        // series' other live occurrences must keep their reminders.
+        // An organizer cancels one occurrence of a series (a pulled EXDATE or cancelled
+        // exception). The master is live, so shouldFireReminder passes, but the
+        // occurrence guard finds no live occurrence. Suppress and cancel only this
+        // occurrence's reminders (cancelReminderForOccurrence); the series' other
+        // occurrences must keep theirs.
         val scheduler = mockk<ReminderScheduler>()
         val notificationManager = mockk<ReminderNotificationManager>()
         val reminder = reminder(status = ReminderStatus.PENDING)
@@ -145,8 +155,9 @@ class ReminderAlarmReceiverTest {
         verify(exactly = 0) { notificationManager.postNotification(any(), any()) }
         coVerify(exactly = 0) { scheduler.markAsFired(any()) }
         coVerify(exactly = 1) { scheduler.cancelReminderForOccurrence(EVENT_ID, reminder.occurrenceTime) }
-        // Must NOT nuke the whole series' reminders for a single cancelled instance.
+        // One cancelled occurrence must not cancel the whole series' reminders.
         coVerify(exactly = 0) { scheduler.cancelRemindersForEvent(any()) }
+        coVerify(exactly = 0) { scheduler.scheduleUpcomingReminders() }
     }
 
     @Test
@@ -171,15 +182,15 @@ class ReminderAlarmReceiverTest {
         receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
 
         verify(exactly = 0) { notificationManager.postNotification(any(), any()) }
-        // DISMISSED is a no-op: don't even check the event or clean up.
+        // DISMISSED is a no-op: no event check and no cleanup.
         coVerify(exactly = 0) { scheduler.shouldFireReminder(any()) }
         coVerify(exactly = 0) { scheduler.cancelRemindersForEvent(any()) }
     }
 
     @Test
     fun `handleAlarm still notifies a FIRED reminder for a live event (reboot re-fire)`() = runTest {
-        // After reboot, rescheduled alarms can re-fire reminders already marked
-        // FIRED. As long as the event is live, the user must still be reminded.
+        // After a reboot, re-armed alarms can re-fire reminders already marked FIRED.
+        // While the event is live, the user must still be reminded.
         val scheduler = mockk<ReminderScheduler>()
         val notificationManager = mockk<ReminderNotificationManager>()
         val reminder = reminder(status = ReminderStatus.FIRED)
@@ -189,6 +200,7 @@ class ReminderAlarmReceiverTest {
         stubPost(notificationManager, reminder)
         coEvery { scheduler.getSiblingReminderIds(reminder) } returns emptyList()
         coJustRun { scheduler.markAsFired(REMINDER_ID) }
+        coEvery { scheduler.scheduleUpcomingReminders() } returns 0
 
         receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
 
@@ -197,8 +209,7 @@ class ReminderAlarmReceiverTest {
 
     @Test
     fun `handleAlarm notifies a SNOOZED reminder for a live event`() = runTest {
-        // SNOOZED is the one status that re-arms an alarm, so it is the most
-        // likely to fire after a delete. For a live event it must still notify.
+        // A snooze arms a new alarm minutes later. For a live event it must still notify.
         val scheduler = mockk<ReminderScheduler>()
         val notificationManager = mockk<ReminderNotificationManager>()
         val reminder = reminder(status = ReminderStatus.SNOOZED)
@@ -208,6 +219,7 @@ class ReminderAlarmReceiverTest {
         stubPost(notificationManager, reminder)
         coEvery { scheduler.getSiblingReminderIds(reminder) } returns emptyList()
         coJustRun { scheduler.markAsFired(REMINDER_ID) }
+        coEvery { scheduler.scheduleUpcomingReminders() } returns 0
 
         receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
 
@@ -216,8 +228,7 @@ class ReminderAlarmReceiverTest {
 
     @Test
     fun `handleAlarm suppresses a SNOOZED reminder whose event is gone`() = runTest {
-        // The deferred-then-deleted case: a snoozed alarm re-fires after the
-        // event was deleted → suppress and clean up, don't notify.
+        // A snoozed alarm fires after its event was deleted: suppress and clean up.
         val scheduler = mockk<ReminderScheduler>()
         val notificationManager = mockk<ReminderNotificationManager>()
         coEvery { scheduler.getReminder(REMINDER_ID) } returns reminder(status = ReminderStatus.SNOOZED)
@@ -232,14 +243,13 @@ class ReminderAlarmReceiverTest {
 
     // ==================== Same-occurrence Coalescing Tests ====================
     //
-    // An occurrence with two reminders (1 hour and 15 minutes before) posts one
-    // notification per offset, so the user ends up dismissing the same meeting
-    // twice. The firing reminder clears the occurrence's other notifications.
+    // Each reminder row has its own notification, so an occurrence with two reminders
+    // (1 hour and 15 minutes before) would show the same meeting twice. The firing
+    // reminder clears the occurrence's other notifications.
     //
-    // Note these must assert positively. The sibling lookup deliberately
-    // swallows exceptions so a lookup failure can never cost the user the
-    // notification, and that also swallows the strict mock's "no answer found",
-    // so a missing stub shows up as a missing cancel rather than an error.
+    // These must assert positively. The sibling lookup swallows exceptions so a failed
+    // lookup never costs the notification, and that also swallows the strict mock's
+    // "no answer found", so a missing stub shows up as a missing cancel, not an error.
 
     @Test
     fun `handleAlarm clears the occurrence's other notifications before posting`() = runTest {
@@ -253,14 +263,14 @@ class ReminderAlarmReceiverTest {
         every { notificationManager.cancelNotification(any()) } returns Unit
         stubPost(notificationManager, reminder)
         coJustRun { scheduler.markAsFired(REMINDER_ID) }
+        coEvery { scheduler.scheduleUpcomingReminders() } returns 0
 
         receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
 
-        // Both orderings matter, and both protect the same thing: the user must
-        // never end up with zero notifications for the occurrence. Clearing has to
-        // precede the post (post-then-clear could clear the survivor), and building
-        // has to precede the clear (building can suspend, so failing there must cost
-        // the new notification rather than the one already on screen).
+        // Both orderings keep the user from ending up with zero notifications for the
+        // occurrence. Clearing precedes the post (post-then-clear could clear the
+        // survivor), and building precedes the clear (building can suspend, so failing
+        // there must cost the new notification, not the one already on screen).
         coVerifyOrder {
             notificationManager.buildNotification(reminder)
             notificationManager.cancelNotification(41L)
@@ -281,6 +291,7 @@ class ReminderAlarmReceiverTest {
         every { notificationManager.cancelNotification(any()) } returns Unit
         stubPost(notificationManager, reminder)
         coJustRun { scheduler.markAsFired(REMINDER_ID) }
+        coEvery { scheduler.scheduleUpcomingReminders() } returns 0
 
         receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
 
@@ -298,6 +309,7 @@ class ReminderAlarmReceiverTest {
         coEvery { scheduler.getSiblingReminderIds(reminder) } returns emptyList()
         stubPost(notificationManager, reminder)
         coJustRun { scheduler.markAsFired(REMINDER_ID) }
+        coEvery { scheduler.scheduleUpcomingReminders() } returns 0
 
         receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
 
@@ -307,8 +319,8 @@ class ReminderAlarmReceiverTest {
 
     @Test
     fun `handleAlarm still notifies when the sibling lookup fails`() = runTest {
-        // Tidying up other notifications is cosmetic. A broken lookup must cost
-        // the user the tidy-up, never the reminder itself.
+        // Clearing other notifications is cosmetic. A broken lookup must cost the
+        // tidy-up, never the reminder itself.
         val scheduler = mockk<ReminderScheduler>()
         val notificationManager = mockk<ReminderNotificationManager>()
         val reminder = reminder(status = ReminderStatus.PENDING)
@@ -318,6 +330,7 @@ class ReminderAlarmReceiverTest {
         coEvery { scheduler.getSiblingReminderIds(reminder) } throws RuntimeException("database closed")
         stubPost(notificationManager, reminder)
         coJustRun { scheduler.markAsFired(REMINDER_ID) }
+        coEvery { scheduler.scheduleUpcomingReminders() } returns 0
 
         receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
 
@@ -370,6 +383,7 @@ class ReminderAlarmReceiverTest {
         every { notificationManager.cancelNotification(any()) } returns Unit
         stubPost(notificationManager, reminder)
         coJustRun { scheduler.markAsFired(REMINDER_ID) }
+        coEvery { scheduler.scheduleUpcomingReminders() } returns 0
 
         receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
 
@@ -380,17 +394,17 @@ class ReminderAlarmReceiverTest {
 
     @Test
     fun `handleAlarm keeps the other notifications when building its own fails`() = runTest {
-        // The reason building comes first. If the clear ran first and the post then
-        // failed, the user would be left with no notification at all for a meeting
-        // they previously had one for — worse than the duplicate this fixes.
+        // Building comes before the clear: if the clear ran first and building then
+        // failed, the user would be left with no notification for a meeting that had
+        // one, which is worse than a duplicate.
         val scheduler = mockk<ReminderScheduler>()
         val notificationManager = mockk<ReminderNotificationManager>()
         val reminder = reminder(status = ReminderStatus.PENDING)
         coEvery { scheduler.getReminder(REMINDER_ID) } returns reminder
         coEvery { scheduler.shouldFireReminder(EVENT_ID) } returns true
         coEvery { scheduler.hasLiveOccurrenceForReminder(reminder) } returns true
-        // A real sibling to clear, so "nothing was cleared" is a real observation
-        // rather than the vacuous pass an empty list would give.
+        // A sibling to clear, so "nothing was cleared" is an observation; an empty list
+        // would pass vacuously.
         coEvery { scheduler.getSiblingReminderIds(reminder) } returns listOf(41L)
         every { notificationManager.cancelNotification(any()) } returns Unit
         coEvery { notificationManager.buildNotification(reminder) } throws
@@ -403,9 +417,96 @@ class ReminderAlarmReceiverTest {
         coVerify(exactly = 0) { scheduler.markAsFired(any()) }
     }
 
+    // ==================== Refill after firing ====================
+
+    @Test
+    fun `handleAlarm refills the reminder window after the notification is posted`() = runTest {
+        val scheduler = mockk<ReminderScheduler>()
+        val notificationManager = mockk<ReminderNotificationManager>()
+        val reminder = reminder(status = ReminderStatus.PENDING)
+        coEvery { scheduler.getReminder(REMINDER_ID) } returns reminder
+        coEvery { scheduler.shouldFireReminder(EVENT_ID) } returns true
+        coEvery { scheduler.hasLiveOccurrenceForReminder(reminder) } returns true
+        stubPost(notificationManager, reminder)
+        coEvery { scheduler.getSiblingReminderIds(reminder) } returns emptyList()
+        coJustRun { scheduler.markAsFired(REMINDER_ID) }
+        coEvery { scheduler.scheduleUpcomingReminders() } returns 3
+
+        receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
+
+        coVerifyOrder {
+            notificationManager.postNotification(reminder, any())
+            scheduler.markAsFired(REMINDER_ID)
+            scheduler.scheduleUpcomingReminders()
+        }
+    }
+
+    @Test
+    fun `a failed refill still leaves the reminder shown and marked fired`() = runTest {
+        val scheduler = mockk<ReminderScheduler>()
+        val notificationManager = mockk<ReminderNotificationManager>()
+        val reminder = reminder(status = ReminderStatus.PENDING)
+        coEvery { scheduler.getReminder(REMINDER_ID) } returns reminder
+        coEvery { scheduler.shouldFireReminder(EVENT_ID) } returns true
+        coEvery { scheduler.hasLiveOccurrenceForReminder(reminder) } returns true
+        stubPost(notificationManager, reminder)
+        coEvery { scheduler.getSiblingReminderIds(reminder) } returns emptyList()
+        coJustRun { scheduler.markAsFired(REMINDER_ID) }
+        coEvery { scheduler.scheduleUpcomingReminders() } throws IllegalStateException("database closed")
+
+        receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
+
+        verify(exactly = 1) { notificationManager.postNotification(reminder, any()) }
+        coVerify(exactly = 1) { scheduler.markAsFired(REMINDER_ID) }
+    }
+
+    @Test
+    fun `a cancelled refill is not swallowed`() = runTest {
+        val scheduler = mockk<ReminderScheduler>()
+        val notificationManager = mockk<ReminderNotificationManager>()
+        val reminder = reminder(status = ReminderStatus.PENDING)
+        coEvery { scheduler.getReminder(REMINDER_ID) } returns reminder
+        coEvery { scheduler.shouldFireReminder(EVENT_ID) } returns true
+        coEvery { scheduler.hasLiveOccurrenceForReminder(reminder) } returns true
+        stubPost(notificationManager, reminder)
+        coEvery { scheduler.getSiblingReminderIds(reminder) } returns emptyList()
+        coJustRun { scheduler.markAsFired(REMINDER_ID) }
+        coEvery { scheduler.scheduleUpcomingReminders() } throws CancellationException("timed out")
+
+        val thrown = runCatching { receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID) }
+            .exceptionOrNull()
+
+        assertTrue("cancellation must reach the caller; got $thrown", thrown is CancellationException)
+        coVerify(exactly = 1) { scheduler.markAsFired(REMINDER_ID) }
+    }
+
+    @Test
+    fun `suppressed reminders do not refill the window`() = runTest {
+        val scheduler = mockk<ReminderScheduler>()
+        val notificationManager = mockk<ReminderNotificationManager>()
+        coEvery { scheduler.getReminder(REMINDER_ID) } returns reminder(status = ReminderStatus.PENDING)
+        coEvery { scheduler.shouldFireReminder(EVENT_ID) } returns false
+        coJustRun { scheduler.cancelRemindersForEvent(EVENT_ID) }
+
+        receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
+
+        coVerify(exactly = 0) { scheduler.scheduleUpcomingReminders() }
+    }
+
+    @Test
+    fun `a dismissed reminder does not refill the window`() = runTest {
+        val scheduler = mockk<ReminderScheduler>()
+        val notificationManager = mockk<ReminderNotificationManager>()
+        coEvery { scheduler.getReminder(REMINDER_ID) } returns reminder(status = ReminderStatus.DISMISSED)
+
+        receiver.handleAlarm(scheduler, notificationManager, REMINDER_ID)
+
+        coVerify(exactly = 0) { scheduler.scheduleUpcomingReminders() }
+    }
+
     // ==================== Helpers ====================
 
-    /** Accept the build-then-post pair the fire path uses for [reminder]. */
+    /** Stubs the build-then-post pair the fire path uses for [reminder]. */
     private fun stubPost(
         notificationManager: ReminderNotificationManager,
         reminder: ScheduledReminder,

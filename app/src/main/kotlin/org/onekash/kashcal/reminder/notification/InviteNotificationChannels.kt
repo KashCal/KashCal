@@ -12,20 +12,16 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Manages the system notification channel used by T2's invite-arrival
- * notifications. Mirrors [ReminderNotificationChannels] in shape; the
- * key differences are:
+ * Owns the notification channel and IDs for invitation notifications.
  *
- * - **Lower importance than reminders.** Invites announce something the
- *   user can decide on later; they should not preempt time-sensitive
- *   reminder buzzes. Default-importance channel — heads-up suppressed,
- *   sound/vibration off by default (user can opt in via per-channel
- *   settings).
- * - **Distinct ID range.** Notification IDs use base 2500 to avoid
- *   collisions with reminders (2000-base) and sync notifications
- *   (1001-1003).
+ * Parallels [ReminderNotificationChannels], with two differences:
+ * - Default importance, below reminders: an invite can wait and shouldn't preempt a
+ *   time-sensitive reminder. No heads-up, and vibration and lights off; the user can turn them
+ *   on in the channel settings.
+ * - IDs start at [NOTIFICATION_ID_BASE] (12000), above reminders (2000-11999) and sync
+ *   notifications (1001-1005).
  *
- * Channel created once at app start by [KashCalApplication].
+ * `KashCalApplication` creates the channel at app start.
  */
 @Singleton
 class InviteNotificationChannels @Inject constructor(
@@ -33,8 +29,6 @@ class InviteNotificationChannels @Inject constructor(
 ) {
     companion object {
         const val CHANNEL_INVITATIONS = "event_invitations"
-        // Above ReminderNotificationChannels.NOTIFICATION_ID_BASE (2000) and
-        // its 10000-row modulo space, below 13000.
         const val NOTIFICATION_ID_BASE = 12000
     }
 
@@ -53,7 +47,7 @@ class InviteNotificationChannels @Inject constructor(
         ).apply {
             description = context.getString(R.string.channel_event_invitations_desc)
             setShowBadge(true)
-            // No vibration by default — invites aren't time-sensitive.
+            // No vibration by default: invites aren't time-sensitive.
             enableVibration(false)
             enableLights(false)
             lockscreenVisibility = Notification.VISIBILITY_PUBLIC
@@ -61,19 +55,15 @@ class InviteNotificationChannels @Inject constructor(
         notificationManager.createNotificationChannel(channel)
     }
 
-    /**
-     * Generate a stable notification ID per attendee row. Modulo guards
-     * against very large IDs without colliding within typical row counts.
-     */
+    /** Returns an attendee row's notification ID, in 12000-21999; rows 10000 apart share it. */
     fun getNotificationId(attendeeRowId: Long): Int {
         return (NOTIFICATION_ID_BASE + (attendeeRowId % 10_000)).toInt()
     }
 
     /**
-     * Generate a stable notification ID per event (used by
-     * [InviteNotificationManager.cancelForEvent], which doesn't know
-     * which attendee row notified). Uses event ID + 5000 offset to
-     * keep distinct from per-row IDs.
+     * Returns a per-event ID in 17000-21999, used as the tap intent's request code and cancelled
+     * by [InviteNotificationManager.cancelForEvent]. It lies inside the per-row range, so it
+     * can equal a row's notification ID.
      */
     fun getNotificationIdForEvent(eventId: Long): Int {
         return (NOTIFICATION_ID_BASE + 5_000 + (eventId % 5_000)).toInt()

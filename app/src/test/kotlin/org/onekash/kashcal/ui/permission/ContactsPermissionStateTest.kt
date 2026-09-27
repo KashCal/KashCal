@@ -5,14 +5,14 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Test
 
 /**
- * Pure-logic tests for the contacts-permission classifier.
+ * Tests [classifyAfterRequest] and [resolveContactsPermissionState], pure functions testable
+ * without an Activity.
  *
- * Permanent denial is detected via the rationale-flip signal recommended by
- * the Android docs: if the system would show a rationale BEFORE the request
- * but not AFTER a denial, the user checked "don't ask again". This is more
- * precise than a denial-count threshold. The classifier is a pure function of
- * the two rationale booleans + whether the grant succeeded, so it's unit
- * testable without an Activity.
+ * Permanent denial is detected from the rationale signal recommended by the Android docs: a
+ * denial with no rationale afterwards means the user chose "don't ask again", whether the
+ * rationale flipped from true or was false before too. This is more precise than a
+ * denial-count threshold. The classifier keys on the grant and the post-request rationale;
+ * rationaleBefore doesn't change the result.
  */
 class ContactsPermissionStateTest {
 
@@ -26,7 +26,7 @@ class ContactsPermissionStateTest {
 
     @Test
     fun `denial with rationale still true after stays ShouldShowRationale`() {
-        // User denied but didn't check "don't ask again" — can be asked again.
+        // The user denied without "don't ask again", so can be asked again.
         assertEquals(
             ContactsPermissionState.ShouldShowRationale,
             classifyAfterRequest(granted = false, rationaleBefore = false, rationaleAfter = true),
@@ -43,8 +43,8 @@ class ContactsPermissionStateTest {
 
     @Test
     fun `denial with rationale false both before and after is PermanentlyDenied`() {
-        // No rationale offered before AND none after a denial = "don't ask
-        // again" path (e.g. denied on the very first ask with the checkbox).
+        // No rationale before and none after a denial is "don't ask again", for example a
+        // denial on the first ask with the checkbox ticked.
         assertEquals(
             ContactsPermissionState.PermanentlyDenied,
             classifyAfterRequest(granted = false, rationaleBefore = false, rationaleAfter = false),
@@ -60,8 +60,8 @@ class ContactsPermissionStateTest {
     }
 
     // ===== resolveContactsPermissionState: live state recomputed on each open =====
-    // (granted, shouldShowRationale) → state. This is what the form-open path
-    // uses so a grant/revoke made in system Settings is always reflected.
+    // Maps (granted, shouldShowRationale) to a state. The event form's open path uses it so a
+    // grant or revoke made in system Settings always shows.
 
     @Test
     fun `live resolve - granted is Granted`() {
@@ -89,10 +89,9 @@ class ContactsPermissionStateTest {
 
     @Test
     fun `live resolve - revoked-in-settings never stays Granted`() {
-        // The bug: a previously-granted user revokes in system Settings, then
-        // reopens the form. checkSelfPermission now reports false — the resolved
-        // state must NOT be Granted (else we query a revoked permission and the
-        // re-request banner never returns).
+        // A user who granted revokes in system Settings, then reopens the form, so
+        // checkSelfPermission reports false. The resolved state must not be Granted, or the
+        // form queries a revoked permission and the re-request banner never returns.
         val revoked = resolveContactsPermissionState(granted = false, shouldShowRationale = true)
         assertNotEquals(ContactsPermissionState.Granted, revoked)
     }

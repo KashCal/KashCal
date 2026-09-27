@@ -9,27 +9,19 @@ import org.onekash.icaldav.model.ICalCalendar
 import org.onekash.icaldav.model.ParseResult
 
 /**
- * Tests for the EMAIL= parameter fallback on ORGANIZER and ATTENDEE.
+ * Tests the `EMAIL=` parameter fallback on ORGANIZER and ATTENDEE, in VEVENT, VTODO,
+ * VJOURNAL and VFREEBUSY.
  *
- * Apple's iSchedule binding (and the renamed `stalwartlabs/stalwart`
- * server in some configurations) rewrites the ORGANIZER property's
- * primary value from `mailto:foo@bar` to `/principal/...` (an internal
- * principal-href) when the mailto matches the authenticated account.
- * The mailto is preserved as an `EMAIL=` parameter on the property.
- * The same rewrite hits ATTENDEE rows when an invitee accepts.
+ * iCloud's iSchedule binding, and the `stalwartlabs/stalwart` server in some configurations,
+ * rewrite the ORGANIZER value from `mailto:foo@bar` to an internal principal href
+ * (`/principal/...`) when the mailto matches the authenticated account, and keep the mailto as
+ * an `EMAIL=` parameter. The same rewrite hits ATTENDEE rows when an invitee accepts. Without
+ * the fallback, `Organizer.email` and `Attendee.email` would hold the principal href, which has
+ * no `@`, and identity matching would fail.
  *
- * Pre-fix, `extractEmailFromCalAddress` read only the primary value,
- * so `Organizer.email` and `Attendee.email` came back as the
- * principal-href string (which has no `@` and starts with `/`),
- * defeating downstream identity matching. Post-fix, the parser
- * detects a non-mailto-shaped primary value and falls back to the
- * `EMAIL=` parameter.
- *
- * RFC 5545 §3.3.3 (CAL-ADDRESS) permits non-mailto URI schemes
- * (`urn:uuid:`, HTTP principal URIs, etc.). The fallback is generic:
- * any time the primary value isn't a mailto-shape AND an `EMAIL=`
- * parameter is present, prefer the parameter. Forward-compatible
- * with future server-side scheduling extensions.
+ * RFC 5545 §3.3.3 permits non-mailto CAL-ADDRESS forms (`urn:uuid:`, HTTP principal URIs). The
+ * fallback is generic: when the value isn't mailbox-shaped and a mailbox-shaped `EMAIL=` is
+ * present, the parameter wins; otherwise the stripped value is kept.
  */
 @DisplayName("ICalParser EMAIL= parameter fallback")
 class ICalParserEmailFallbackTest {
@@ -78,15 +70,12 @@ class ICalParserEmailFallbackTest {
 
         @Test
         fun `keeps primary value when no EMAIL parameter and primary is non-mailto`() {
-            // Degenerate case: server gave us a principal-href but no EMAIL=.
-            // We can't reverse-engineer; preserve current behavior (return the
-            // string as-is so downstream matchesAttendee returns false rather
-            // than null/empty pollution).
+            // A non-mailto value with no EMAIL= has no address to recover, so it is kept as
+            // is instead of a null or empty address; identity matching then finds no match.
             val ics = vevent("ORGANIZER;CN=Alice:urn:uuid:12345-67890")
             val event = (parser.parse(ics) as ParseResult.Success).value.events.single()
             assertNotNull(event.organizer)
-            // Email is whatever extractEmailFromCalAddress returned — non-mailto
-            // form. The point of this test is "doesn't crash, doesn't lose the row."
+            // The organizer is kept, with the non-mailto value as its email.
             assertEquals("urn:uuid:12345-67890", event.organizer?.email)
         }
     }
@@ -106,9 +95,8 @@ class ICalParserEmailFallbackTest {
 
         @Test
         fun `falls back to EMAIL parameter on accepted iCloud invitee (principal-href primary)`() {
-            // Apple rewrites ATTENDEE rows when an invitee accepts on iCloud,
-            // putting the invitee's principal-href as the primary value and
-            // preserving their mailto as EMAIL=.
+            // iCloud rewrites an ATTENDEE row when the invitee accepts: the value becomes
+            // the invitee's principal href and the mailto moves to EMAIL=.
             val ics = vevent(
                 "ATTENDEE;CN=Bob;PARTSTAT=ACCEPTED;EMAIL=bob@example.com:" +
                     "/aNjQ2NjkxODM5/principal/"
@@ -193,13 +181,12 @@ class ICalParserEmailFallbackTest {
 
         @Test
         fun `EMAIL parameter present but empty value preserves primary value`() {
-            // Degenerate: EMAIL= is present but blank. No usable fallback.
-            // Helper returns the original primary value (caller decides what to do).
+            // EMAIL= is present but blank, so there is no fallback and the value is kept.
             val ics = vevent(
                 "ORGANIZER;CN=Alice;EMAIL=:/aNjQ2NjkxODM5/principal/"
             )
             val event = (parser.parse(ics) as ParseResult.Success).value.events.single()
-            // Falls through to primary value — neither parses as a valid email.
+            // Only the organizer's presence is asserted.
             assertNotNull(event.organizer)
         }
 
@@ -214,7 +201,7 @@ class ICalParserEmailFallbackTest {
 
         @Test
         fun `HTTP principal URI as primary value falls back to EMAIL`() {
-            // Some Radicale + Stalwart configs emit HTTP-principal hrefs.
+            // Some Radicale and Stalwart configurations emit HTTP principal hrefs.
             val ics = vevent(
                 "ORGANIZER;CN=Alice;EMAIL=alice@example.com:" +
                     "https://caldav.example.com/principals/users/alice/"
@@ -225,8 +212,8 @@ class ICalParserEmailFallbackTest {
 
         @Test
         fun `case-insensitive EMAIL parameter lookup (RFC 5545 mandates parameter names case-insensitive)`() {
-            // Lowercase param name. Real iCloud uses uppercase but some servers might
-            // normalize to lowercase per the RFC.
+            // A lowercase parameter name. iCloud sends uppercase; RFC 5545 §3.1 makes the
+            // name case-insensitive, so a server may lowercase it.
             val ics = vevent(
                 "ORGANIZER;CN=Alice;email=alice@example.com:" +
                     "/aNjQ2NjkxODM5/principal/"
@@ -241,8 +228,8 @@ class ICalParserEmailFallbackTest {
                 "ORGANIZER;CN=Alice;EMAIL=/another/principal/:/aNjQ2NjkxODM5/principal/"
             )
             val event = (parser.parse(ics) as ParseResult.Success).value.events.single()
-            // Neither value is a valid mailto. Helper must not crash; downstream
-            // matchesAttendee returns false (correct: nothing to identify).
+            // Neither value is mailbox-shaped, so the organizer keeps the value; identity
+            // matching then finds nothing to match. Only the organizer's presence is asserted.
             assertNotNull(event.organizer)
         }
     }

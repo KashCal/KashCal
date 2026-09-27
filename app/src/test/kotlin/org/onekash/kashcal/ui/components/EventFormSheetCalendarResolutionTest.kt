@@ -13,8 +13,12 @@ import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.model.PickerCalendar
 
 /**
- * Unit tests for resolveDefaultCalendar() — pure function extracted from
- * EventFormSheet's LaunchedEffect for default calendar resolution.
+ * Tests [resolveDefaultCalendar] and [resolveDuplicateSourceCalendar], which pick the calendar
+ * the event form opens on.
+ *
+ * Covers: a Room or device default that exists, a missing one falling back to the first
+ * writable Room calendar (or no calendar when there is none), a null default, the isDevice
+ * flag for every resolvable selection, and a duplicate's source calendar.
  */
 class EventFormSheetCalendarResolutionTest {
 
@@ -201,12 +205,11 @@ class EventFormSheetCalendarResolutionTest {
 
     // ========== isDevice flag invariant ==========
     //
-    // The isDevice flag is the single switch that routes a save to the Room
-    // (scheduling/iTIP) path vs. the device (CalendarProvider) path. A flag
-    // inversion would send device attendees into the CalDAV scheduling stack
-    // (or vice versa), so pin the invariant: resolving a Room selection is
-    // never isDevice=true, and resolving a Device selection is never
-    // isDevice=false (when the calendar exists).
+    // isDevice becomes the form's isDeviceCalendar, which picks the save path:
+    // the device (CalendarProvider) save or the Room save with its CalDAV
+    // scheduling. An inverted flag would send device attendees into CalDAV
+    // scheduling or the reverse, so: a Room selection never resolves
+    // isDevice=true, and an existing Device selection never isDevice=false.
 
     @Test
     fun `every resolvable Room selection is not flagged as device`() {
@@ -235,13 +238,9 @@ class EventFormSheetCalendarResolutionTest {
 
     // ========== resolveDuplicateSourceCalendar ==========
     //
-    // A duplicate keeps its SOURCE calendar. Room-backed events carry the
-    // source id on Event.calendarId; device events zero it (device ids live in
-    // a separate namespace) and pass the source device calendar id on a
-    // dedicated channel. This resolver picks Room source, then device source,
-    // then falls back to the already-resolved default. The isDevice flag it
-    // returns routes the save to the Room vs. device path, so the same
-    // flag-inversion invariant applies here as for resolveDefaultCalendar.
+    // A duplicate keeps its source calendar; the resolution order is on
+    // [resolveDuplicateSourceCalendar]. Its isDevice picks the save path too,
+    // so the same flag invariant applies as for resolveDefaultCalendar.
 
     private val fallbackDefault = ResolvedCalendar(
         id = 7L,

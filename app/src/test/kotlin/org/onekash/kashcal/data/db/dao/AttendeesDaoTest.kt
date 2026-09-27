@@ -178,7 +178,7 @@ class AttendeesDaoTest {
                 makeAttendee(eventId1, "mailto:b@x.com")
             )
         )
-        // Delete the parent event — FK CASCADE should remove the attendees.
+        // Deleting the event cascades to its attendees through the foreign key.
         database.eventsDao().deleteById(eventId1)
 
         val rows = attendeesDao.getForEvent(eventId1).first()
@@ -203,7 +203,7 @@ class AttendeesDaoTest {
         assertTrue(rows.zipWithNext().all { (a, b) -> a.sortOrder < b.sortOrder })
     }
 
-    // ========== notified_at merge-preserve (race fix) ==========
+    // ========== notified_at merge-preserve ==========
 
     @Test
     fun `replaceForEvent preserves notified_at when prior row was non-NEEDS-ACTION`() = runTest {
@@ -217,9 +217,8 @@ class AttendeesDaoTest {
             )
         )
 
-        // Server replays the event (its REPLY queue hasn't fired yet) →
-        // returns NEEDS-ACTION for self. The new row's notifiedAt is null.
-        // Without merge-preserve, this would re-fire the notification.
+        // A pull racing the server's REPLY queue returns NEEDS-ACTION for self with a null
+        // notifiedAt. Without merge-preserve this would re-fire the notification.
         attendeesDao.replaceForEvent(
             eventId1,
             listOf(
@@ -241,12 +240,9 @@ class AttendeesDaoTest {
 
     @Test
     fun `replaceForEvent always preserves notified_at by canonical address`() = runTest {
-        // The merge semantic: any prior row with the same canonical address
-        // donates its notified_at, regardless of PARTSTAT. This is broader
-        // than the original race-fix spec but safer — the notification
-        // only re-fires when a prior row didn't exist (truly new attendee
-        // on the event). A re-invite of the same address won't re-notify;
-        // that's an acceptable edge-case tradeoff.
+        // Any prior row with the same canonical address donates its notified_at, whatever
+        // its PARTSTAT, so the notification re-fires only for an attendee new to the event.
+        // A re-invite of the same address doesn't re-notify; that tradeoff is accepted.
         attendeesDao.replaceForEvent(
             eventId1,
             listOf(
@@ -270,8 +266,8 @@ class AttendeesDaoTest {
 
     @Test
     fun `replaceForEvent does not carry notified_at across address change`() = runTest {
-        // notifiedAt belongs to (eventId, canonical address). A different
-        // attendee replacing the row should NOT inherit the prior's notified_at.
+        // notifiedAt belongs to (eventId, canonical address), so a different attendee
+        // replacing the row doesn't inherit it.
         attendeesDao.replaceForEvent(
             eventId1,
             listOf(
@@ -303,12 +299,10 @@ class AttendeesDaoTest {
     }
 
     // ========== schedule_status / schedule_agent merge-preserve ==========
-    // A server stamps SCHEDULE-STATUS on the stored ATTENDEE (RFC 6638 §7.3),
-    // but the client never echoes it on a subsequent PUT. A cosmetic re-push
-    // whose read-back races an async-stamping server can return the attendee
-    // with no status; without merge-preserve, replaceForEvent would wipe the
-    // captured receipt. RFC 6638 §7.3: a client SHOULD NOT remove a
-    // server-provided parameter — null incoming preserves; non-null overwrites.
+    // A null incoming value keeps the prior one; a non-null value overwrites it. A re-push
+    // whose read-back races an async-stamping server can return the attendee with no
+    // SCHEDULE-STATUS, and RFC 6638 §7.3 says a client SHOULD NOT remove a server-provided
+    // one. The reasons are on [AttendeesDao.replaceForEvent].
 
     @Test
     fun `replaceForEvent preserves prior schedule_status when incoming is null`() = runTest {
@@ -345,7 +339,7 @@ class AttendeesDaoTest {
             eventId1,
             listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(scheduleStatus = "1.0"))
         )
-        // Server later reports successful delivery — authoritative, overwrites.
+        // The server later reports successful delivery, which overwrites.
         attendeesDao.replaceForEvent(
             eventId1,
             listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(scheduleStatus = "2.0"))
@@ -374,13 +368,11 @@ class AttendeesDaoTest {
     }
 
     // ========== itip_request_sequence / itip_request_status merge-preserve ==========
-    // The client-outbox idempotency marker (itip_request_sequence) records the
-    // SEQUENCE at which a METHOD:REQUEST was sent to an attendee. The read-back
-    // calls replaceForEvent with server-parsed rows that carry no iTIP marker
-    // (the server never echoes it), so without merge-preserve every read-back
-    // cycle would wipe the marker -> the attendee re-classifies ClientMustDeliver
-    // -> a duplicate invite is POSTed every sync. The marker MUST survive the
-    // server-authoritative replace, exactly like notified_at.
+    // itip_request_sequence records the SEQUENCE at which a METHOD:REQUEST was sent to an
+    // attendee through the client outbox. The server never echoes it, so the read-back's
+    // server-parsed rows carry it null. Without merge-preserve each read-back would wipe it,
+    // the push's send filter would pass again, and the same invite would be POSTed every
+    // sync. It must survive the server wins replace, like notified_at.
 
     @Test
     fun `replaceForEvent preserves prior itip_request_sequence when incoming is null`() = runTest {
@@ -388,7 +380,7 @@ class AttendeesDaoTest {
             eventId1,
             listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(itipRequestSequence = 2))
         )
-        // Read-back after a later (cosmetic) push: server-parsed row has no marker.
+        // Read-back after a later cosmetic push: the server-parsed row has no marker.
         attendeesDao.replaceForEvent(
             eventId1,
             listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(itipRequestSequence = null))
@@ -420,7 +412,7 @@ class AttendeesDaoTest {
                     .copy(itipRequestSequence = 1, itipRequestStatus = "2.0;Success")
             )
         )
-        // A genuinely new send at a higher SEQUENCE writes the marker again.
+        // A new send at a higher SEQUENCE writes the marker again.
         attendeesDao.replaceForEvent(
             eventId1,
             listOf(
@@ -439,8 +431,8 @@ class AttendeesDaoTest {
             eventId1,
             listOf(makeAttendee(eventId1, "mailto:a@x.com").copy(itipRequestSequence = 2))
         )
-        // A different (late-added) attendee must NOT inherit a@x.com's marker —
-        // it must stay null so it gets its own first invite.
+        // A late-added attendee must not inherit a@x.com's marker; it stays null so the
+        // attendee gets its own first invite.
         attendeesDao.replaceForEvent(
             eventId1,
             listOf(

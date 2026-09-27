@@ -44,24 +44,16 @@ import org.onekash.kashcal.widget.WidgetUpdateManager
 import java.util.concurrent.TimeUnit
 
 /**
- * WorkManager worker for CalDAV synchronization.
+ * Runs CalDAV sync for WorkManager: the periodic background job and the one-shot, expedited,
+ * per-account and per-calendar requests [SyncScheduler] enqueues.
  *
- * Handles both periodic background sync and user-initiated one-shot sync.
- * Uses Hilt for dependency injection.
- *
- * Features:
- * - Periodic background sync (configurable interval, minimum 15 min)
- * - One-shot sync for user-initiated or push notification triggered sync
- * - Expedited work for immediate sync needs with foreground service
- * - Calendar-specific sync via input data
- * - Progress reporting via WorkInfo
- * - Foreground notification for long-running sync
- *
- * Per Android WorkManager best practices:
- * - Uses CoroutineWorker for suspend function support
- * - Returns appropriate Result for retry/backoff handling
- * - Respects constraints (network, battery)
- * - Uses setForeground() for expedited/long-running work
+ * Input data picks the scope (all accounts, one account, one calendar) and whether the run is
+ * user-visible; only a user-visible run goes foreground with a progress notification. After the
+ * sync it refreshes widgets when anything changed, schedules reminders for synced events and
+ * prunes old sync logs. Results go to WorkManager output data and [SyncScheduler.setSyncChanges].
+ * The worker adds its own sync-history entries ([SyncSessionStore]) only for a throw, an account
+ * it couldn't set up, or no account to sync. A periodic run (always the all-accounts scope) never
+ * returns failure, which would stop the periodic spec for good; the catch in [doWork] says why.
  */
 @HiltWorker
 class CalDavSyncWorker @AssistedInject constructor(
@@ -109,12 +101,9 @@ class CalDavSyncWorker @AssistedInject constructor(
         const val SYNC_TYPE_CALENDAR = "calendar"
         const val SYNC_TYPE_ACCOUNT = "account"
 
-        // Sync log retention (7 days)
         private const val SYNC_LOG_RETENTION_DAYS = 7
 
-        /**
-         * Create input data for full sync (all accounts).
-         */
+        /** Builds input data for a sync of every account. */
         fun createFullSyncInput(
             forceFullSync: Boolean = false,
             showNotification: Boolean = false,
@@ -128,9 +117,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                 .build()
         }
 
-        /**
-         * Create input data for calendar-specific sync.
-         */
+        /** Builds input data for a sync of one calendar. */
         fun createCalendarSyncInput(
             calendarId: Long,
             forceFullSync: Boolean = false,
@@ -146,9 +133,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                 .build()
         }
 
-        /**
-         * Create input data for account-specific sync.
-         */
+        /** Builds input data for a sync of one account. */
         fun createAccountSyncInput(
             accountId: Long,
             forceFullSync: Boolean = false,
@@ -166,9 +151,8 @@ class CalDavSyncWorker @AssistedInject constructor(
     }
 
     /**
-     * Required for setExpedited() on API < 31 (Android 10-11).
-     * WorkManager falls back to a foreground service on older APIs,
-     * which calls getForegroundInfo() to get the notification.
+     * Supplies the notification for expedited work on API < 31 (Android 10-11), where WorkManager
+     * runs it as a foreground service and asks for one here.
      */
     override suspend fun getForegroundInfo(): ForegroundInfo {
         return notificationManager.createForegroundInfo(
@@ -184,9 +168,9 @@ class CalDavSyncWorker @AssistedInject constructor(
 
         Log.i(TAG, "Starting sync: type=$syncType, force=$forceFullSync, trigger=${trigger.name}, attempt=${runAttemptCount + 1}")
 
-        // Set foreground (shows the OS progress notification) only when this sync
-        // is meant to be user-visible. Silent syncs (app-open/resume/periodic) must
-        // not post a "Syncing…" notification for an action the user didn't initiate.
+        // Go foreground (the OS progress notification) only for a user-visible sync. Silent
+        // syncs (app open, resume, periodic) must not post "Syncing…" for an action the user
+        // didn't take.
         if (showNotification) {
             try {
                 val foregroundInfo = notificationManager.createForegroundInfo(
@@ -195,14 +179,14 @@ class CalDavSyncWorker @AssistedInject constructor(
                 )
                 setForeground(foregroundInfo)
             } catch (e: Exception) {
-                // setForeground may fail if work is not expedited, that's OK
+                // setForeground may fail when the work isn't expedited; the sync still runs.
                 Log.d(TAG, "Could not set foreground (non-expedited work): ${e.message}")
             }
         }
 
         try {
-            // Recover any operations stuck in IN_PROGRESS from previous crashed syncs
-            // Uses 1-hour timeout - operations legitimately in progress complete in <2 min
+            // Recover operations left IN_PROGRESS by a crashed sync. The cutoff is 1 hour;
+            // an operation in progress completes in under 2 minutes.
             val staleCount = run {
                 val oneHourAgo = System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1)
                 pendingOperationsDao.resetStaleInProgress(
@@ -214,20 +198,19 @@ class CalDavSyncWorker @AssistedInject constructor(
                 Log.w(TAG, "Recovered $staleCount stuck IN_PROGRESS operations from previous sync")
             }
 
-            // === iCloud URL Migration (one-time) ===
-            // Normalizes regional URLs (p180-caldav.icloud.com) to canonical form (caldav.icloud.com)
-            // to handle Apple server rotation gracefully
+            // One-time iCloud URL migration: regional hosts (p180-caldav.icloud.com) become
+            // caldav.icloud.com, so iCloud's server rotation doesn't strand stored URLs.
             val migrated = iCloudUrlMigration.migrateIfNeeded()
             if (migrated) {
                 Log.i(TAG, "iCloud URLs normalized to canonical form")
             }
 
-            // === Retry Lifecycle Management (v21.5.3) ===
+            // Pending-operation retry lifecycle.
             val now = System.currentTimeMillis()
             val thirtyDaysAgo = now - PendingOperation.OPERATION_LIFETIME_MS
 
-            // A: Force full sync resets ALL failed operations (runs FIRST)
-            // Also resets lifetime_reset_at so they get a fresh 30-day window
+            // A forced full sync resets every FAILED and ABANDONED operation, and its
+            // lifetime_reset_at, for a fresh 30-day window. Runs first.
             if (forceFullSync) {
                 val failedResetCount = pendingOperationsDao.resetAllFailed(now)
                 if (failedResetCount > 0) {
@@ -235,11 +218,11 @@ class CalDavSyncWorker @AssistedInject constructor(
                 }
             }
 
-            // D: Abandon operations exceeding 30-day lifetime (skipped if force sync just reset them).
-            // getExpiredOperations is global (not scoped to this worker's account/calendar) and this
-            // block runs on every sync, so overlapping background syncs can read the same expired list.
-            // abandonOperation is a compare-and-set: only the run that actually transitions an op keeps
-            // it here, so a concurrent sync that already abandoned it won't re-notify for the same op.
+            // Abandon operations past the 30-day lifetime; ones a forced sync just reset aren't
+            // expired. getExpiredOperations isn't scoped to this worker's account or calendar
+            // and runs on every sync, so overlapping syncs can read the same list.
+            // abandonOperation is a compare-and-set: only the run that transitions an op keeps
+            // it, so a concurrent sync that already abandoned it doesn't notify again.
             val expiredOps = pendingOperationsDao.getExpiredOperations(thirtyDaysAgo)
             val abandonedOps = mutableListOf<PendingOperation>()
             for (op in expiredOps) {
@@ -258,7 +241,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                 )
             }
 
-            // B: Auto-retry failed operations older than 24 hours (excludes expired)
+            // Retry FAILED operations older than 24 hours, except expired ones.
             val twentyFourHoursAgo = now - PendingOperation.AUTO_RESET_FAILED_MS
             val oldFailedResetCount = pendingOperationsDao.autoResetOldFailed(
                 failedBefore = twentyFourHoursAgo,
@@ -295,21 +278,18 @@ class CalDavSyncWorker @AssistedInject constructor(
                 }
             }
 
-            // Show completion notification if requested
             if (showNotification) {
                 notificationManager.showCompletionNotification(syncResult, showOnlyOnChanges = false)
             }
 
-            // Cancel progress notification
             notificationManager.cancelProgressNotification()
 
-            // Update home screen widgets if sync had changes
             if (syncResult.hasChanges()) {
                 Log.d(TAG, "Updating widgets after sync with changes")
                 widgetUpdateManager.updateAllWidgets()
             }
 
-            // Schedule reminders for synced events (NEW and MODIFIED)
+            // Schedule reminders for NEW and MODIFIED synced events.
             val changes = when (syncResult) {
                 is SyncResult.Success -> syncResult.changes
                 is SyncResult.PartialSuccess -> syncResult.changes
@@ -319,8 +299,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                 scheduleRemindersForSyncedEvents(changes)
             }
 
-            // Cleanup old sync logs (7 day retention)
-            // Best-effort - don't fail sync if cleanup throws
+            // Delete sync logs past the 7-day retention; a cleanup failure doesn't fail the sync.
             try {
                 val cutoff = System.currentTimeMillis() - (SYNC_LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000L)
                 val deleted = syncLogsDao.deleteOldLogs(cutoff)
@@ -333,7 +312,7 @@ class CalDavSyncWorker @AssistedInject constructor(
 
             handleSyncResult(syncResult)
         } catch (e: java.util.concurrent.CancellationException) {
-            // Rethrow cancellation to properly handle coroutine cancellation
+            // Rethrow so the coroutine cancels.
             Log.d(TAG, "Sync cancelled")
             notificationManager.cancelProgressNotification()
             throw e
@@ -343,8 +322,8 @@ class CalDavSyncWorker @AssistedInject constructor(
 
             val errorMessage = e.message ?: e.javaClass.simpleName
 
-            // Record failure in sync session for debugging
-            // Use placeholder values for calendar since error happened before reaching sync engine
+            // Record the failure in sync history, with placeholder calendar values: the error
+            // may come from before the sync engine picked a calendar.
             val sessionBuilder = SyncSessionBuilder(
                 calendarId = -1L,
                 calendarName = "Exception: ${e.javaClass.simpleName}",
@@ -354,7 +333,7 @@ class CalDavSyncWorker @AssistedInject constructor(
             val errorType = when (e) {
                 is java.net.SocketTimeoutException -> ErrorType.TIMEOUT
                 is java.io.IOException -> ErrorType.NETWORK
-                else -> ErrorType.SERVER  // Generic server/unknown error
+                else -> ErrorType.SERVER  // Any other error, server or unknown
             }
             sessionBuilder.setError(errorType, "worker_exception", errorMessage)
             syncSessionStore.add(sessionBuilder.build())
@@ -367,35 +346,30 @@ class CalDavSyncWorker @AssistedInject constructor(
             if (runAttemptCount < MAX_RETRY_ATTEMPTS) {
                 Result.retry()
             } else if (isPeriodicRun()) {
-                // Retries are spent, but failure is terminal for a periodic work
-                // spec: WorkManager stops scheduling it, and nothing re-arms
-                // periodic sync except creating an account. A throw from outside
-                // the per-account loop (the pending-operation lifecycle sweep, a
-                // reminder-scheduling limit) repeats on every attempt and lands
-                // here, so background sync would be dead for good. The error is
-                // already recorded in sync history above, which is where the user
-                // sees it — nothing observes the periodic work's own state, so the
-                // output data here is diagnostic. Leave the next period to retry.
+                // Retries are spent, but failure is terminal for a periodic spec: WorkManager
+                // stops scheduling it, and only creating an account re-arms periodic sync. A
+                // throw from outside the per-account loop (the pending-operation lifecycle
+                // sweep, for example) repeats on every attempt and lands here, so background
+                // sync would be dead for good. The user sees the error in sync history,
+                // recorded above; nothing observes the periodic work's own state, so this
+                // output data is diagnostic. The next period retries.
                 Result.success(createErrorOutput(errorMessage))
             } else {
-                // A one-shot has no future run to lose, and the screen that asked
-                // for the sync renders SyncStatus.Failed, so failing is honest.
+                // A one-shot has no future run to lose, and the screen that asked for the sync
+                // renders SyncStatus.Failed.
                 Result.failure(createErrorOutput(errorMessage))
             }
         }
     }
 
     /**
-     * Whether this run belongs to the recurring background job rather than a
-     * one-shot request. Only the periodic request carries the tag; the sync
-     * trigger can't answer this, since the expedited and per-calendar requests
-     * inherit the [SyncTrigger.BACKGROUND_PERIODIC] default.
+     * Returns whether this run is the periodic background job. Only the periodic request carries
+     * [SyncScheduler.TAG_PERIODIC]; the sync trigger can't tell, since the expedited and
+     * per-calendar requests inherit the [SyncTrigger.BACKGROUND_PERIODIC] default.
      */
     private fun isPeriodicRun(): Boolean = SyncScheduler.TAG_PERIODIC in tags
 
-    /**
-     * Create a cancel pending intent for the foreground notification.
-     */
+    /** Returns the foreground notification's cancel intent, or null if it can't be made. */
     private fun createCancelPendingIntent(): android.app.PendingIntent? {
         return try {
             val cancelIntent = androidx.work.WorkManager.getInstance(applicationContext)
@@ -407,9 +381,7 @@ class CalDavSyncWorker @AssistedInject constructor(
         }
     }
 
-    /**
-     * Sync a specific calendar.
-     */
+    /** Syncs one calendar with a client built from its account's credentials and quirks. */
     private suspend fun syncCalendar(calendarId: Long, forceFullSync: Boolean, trigger: SyncTrigger): SyncResult {
         val calendar = calendarRepository.getCalendarById(calendarId)
         if (calendar == null) {
@@ -417,35 +389,31 @@ class CalDavSyncWorker @AssistedInject constructor(
             return SyncResult.Error(-1, "Calendar not found", false)
         }
 
-        // Load account for this calendar
         val account = accountRepository.getAccountById(calendar.accountId)
         if (account == null) {
             Log.w(TAG, "Account ${calendar.accountId} not found for calendar")
             return SyncResult.Error(-1, "Account not found", false)
         }
 
-        // Get credential provider from registry
         val credProvider = providerRegistry.getCredentialProvider(account.provider)
         if (credProvider == null) {
             Log.w(TAG, "No credential provider for account ${account.email.maskEmail()}")
             return SyncResult.Error(-1, "No credential provider for ${account.provider}", false)
         }
 
-        // Load credentials for this account
         val credentials = credProvider.getCredentials(account.id)
         if (credentials == null) {
             Log.w(TAG, "No credentials for account ${account.email.maskEmail()}")
             return SyncResult.AuthError("Credentials not found")
         }
 
-        // Get quirks for this provider
         val quirks = providerRegistry.getQuirksForAccount(account)
         if (quirks == null) {
             Log.w(TAG, "No quirks for account ${account.email.maskEmail()}")
             return SyncResult.Error(-1, "No quirks for ${account.provider}", false)
         }
 
-        // Create isolated client for this account
+        // A client of its own per account, so a concurrent sync can't swap its credentials.
         val client = calDavClientFactory.createClient(credentials, quirks)
 
         Log.d(TAG, "Syncing calendar: ${calendar.displayName}")
@@ -459,14 +427,12 @@ class CalDavSyncWorker @AssistedInject constructor(
     }
 
     /**
-     * Sync all calendars for an account using provider registry.
+     * Syncs every calendar of one account and records the outcome on the account.
      *
-     * Uses same pattern as syncAll() for consistency:
-     * 1. Get provider from AccountProvider enum
-     * 2. Skip if doesn't support CalDAV
-     * 3. Load credentials from provider's credential provider
-     * 4. Create isolated client for this account
-     * 5. Sync using provider-specific quirks
+     * A disabled or non-CalDAV account returns an empty success. A missing credential provider,
+     * credentials or quirks is recorded in sync history and returns an error
+     * ([SyncResult.AuthError] for missing credentials). A throw from the engine records a sync
+     * failure on the account and propagates.
      */
     private suspend fun syncAccount(accountId: Long, forceFullSync: Boolean, trigger: SyncTrigger): SyncResult {
         val account = accountRepository.getAccountById(accountId)
@@ -477,19 +443,16 @@ class CalDavSyncWorker @AssistedInject constructor(
 
         Log.d(TAG, "Syncing account: ${account.email.maskEmail()}")
 
-        // Skip disabled accounts
         if (!account.isEnabled) {
             Log.d(TAG, "Account $accountId is disabled, skipping sync")
             return SyncResult.Success(calendarsSynced = 0, durationMs = 0)
         }
 
-        // Skip accounts that don't support CalDAV
         if (!account.provider.supportsCalDAV) {
             Log.d(TAG, "Skipping non-CalDAV account ${account.email.maskEmail()} (${account.provider})")
             return SyncResult.Success(calendarsSynced = 0, durationMs = 0)
         }
 
-        // Get credential provider from registry
         val credProvider = providerRegistry.getCredentialProvider(account.provider)
         if (credProvider == null) {
             Log.w(TAG, "No credential provider for account ${account.email.maskEmail()}")
@@ -504,7 +467,6 @@ class CalDavSyncWorker @AssistedInject constructor(
             return SyncResult.Error(-1, "No credential provider for ${account.provider}", false)
         }
 
-        // Load credentials for this account
         val credentials = credProvider.getCredentials(account.id)
         if (credentials == null) {
             Log.w(TAG, "No credentials for account ${account.email.maskEmail()}")
@@ -519,7 +481,6 @@ class CalDavSyncWorker @AssistedInject constructor(
             return SyncResult.AuthError("Credentials not found")
         }
 
-        // Get quirks for this provider
         val quirks = providerRegistry.getQuirksForAccount(account)
         if (quirks == null) {
             Log.w(TAG, "No quirks for account ${account.email.maskEmail()}")
@@ -534,11 +495,10 @@ class CalDavSyncWorker @AssistedInject constructor(
             return SyncResult.Error(-1, "No quirks for ${account.provider}", false)
         }
 
-        // Create isolated client for this account (prevents credential race condition)
+        // A client of its own per account, so a concurrent sync can't swap its credentials.
         val isolatedClient = calDavClientFactory.createClient(credentials, quirks)
         Log.d(TAG, "Created isolated client for: ${credentials.username.take(3)}***")
 
-        // Sync this account with its quirks and isolated client
         val result = try {
             syncEngine.syncAccountWithQuirks(
                 account = account,
@@ -552,7 +512,7 @@ class CalDavSyncWorker @AssistedInject constructor(
             throw e
         }
 
-        // Record sync metadata on account
+        // Only a full success records a sync success; a partial one counts as a failure.
         val now = System.currentTimeMillis()
         when (result) {
             is SyncResult.Success ->
@@ -569,28 +529,26 @@ class CalDavSyncWorker @AssistedInject constructor(
     }
 
     /**
-     * Resolve the display name of the single calendar all expired operations
-     * belong to, or null when they span multiple calendars (or the calendar
-     * can't be resolved — e.g. the event was hard-deleted). A null result
-     * drives the count-only notification wording.
+     * Returns which calendars the expired operations belong to, for the expired-operation
+     * notification: [ExpiredCalendarScope.Single] with the calendar's name,
+     * [ExpiredCalendarScope.Multiple] with the count, or [ExpiredCalendarScope.Unknown] when
+     * any calendar or its name can't be resolved (the event was hard-deleted, for example).
      *
-     * Uses the op's [PendingOperation.sourceCalendarId] when present, falling
-     * back to the event's current calendarId. This mirrors the
-     * COALESCE(source_calendar_id, e.calendar_id) scoping in
-     * [PendingOperationsDao.getConflictOperationsForCalendar]: a MOVE or
-     * synced→local DELETE has already advanced the event row to the move
-     * target, but the stuck operation concerns the source calendar.
+     * Takes the op's [PendingOperation.sourceCalendarId] when set and falls back to the event's
+     * current calendarId, matching the COALESCE(source_calendar_id, e.calendar_id) scoping in
+     * [PendingOperationsDao.getConflictOperationsForCalendar]: a MOVE or synced-to-local DELETE
+     * has already moved the event row to the target, but the stuck operation concerns the source
+     * calendar.
      */
     private suspend fun resolveExpiredCalendarScope(expiredOps: List<PendingOperation>): ExpiredCalendarScope {
-        // Collect every distinct calendar so Multiple can report the true count.
-        // (No early exit on size > 1: that would cap the reported count at 2.)
+        // Collect every distinct calendar; an early exit at size > 1 would cap Multiple's
+        // count at 2.
         val calendarIds = mutableSetOf<Long>()
         for (op in expiredOps) {
             val calendarId = op.sourceCalendarId ?: eventsDao.getById(op.eventId)?.calendarId
                 ?: return ExpiredCalendarScope.Unknown
             calendarIds.add(calendarId)
         }
-        // Ops span more than one calendar: name the count rather than pick one.
         if (calendarIds.size > 1) return ExpiredCalendarScope.Multiple(calendarIds.size)
         val calendarId = calendarIds.singleOrNull() ?: return ExpiredCalendarScope.Unknown
         val name = calendarRepository.getCalendarById(calendarId)?.displayName
@@ -599,13 +557,12 @@ class CalDavSyncWorker @AssistedInject constructor(
     }
 
     /**
-     * Sync all enabled accounts using provider registry.
+     * Syncs every enabled network account and merges their results.
      *
-     * For each account:
-     * 1. Get provider from registry
-     * 2. Skip local providers (don't need network sync)
-     * 3. Load credentials from provider's credential provider
-     * 4. Sync using provider-specific quirks
+     * Local-only and non-CalDAV accounts are skipped. An account missing its credential
+     * provider, credentials or quirks is recorded in sync history and skipped. An account whose
+     * sync throws or fails adds an error, so the merged result is [SyncResult.PartialSuccess]
+     * when any account failed.
      */
     private suspend fun syncAll(forceFullSync: Boolean, trigger: SyncTrigger): SyncResult {
         val accounts = accountRepository.getEnabledAccounts()
@@ -613,7 +570,6 @@ class CalDavSyncWorker @AssistedInject constructor(
 
         if (accounts.isEmpty()) {
             Log.d(TAG, "No enabled accounts to sync")
-            // Record session for debugging
             val sessionBuilder = SyncSessionBuilder(
                 calendarId = -1L,
                 calendarName = "No accounts",
@@ -628,14 +584,12 @@ class CalDavSyncWorker @AssistedInject constructor(
             )
         }
 
-        // Filter to accounts with network providers (using AccountProvider enum)
         val networkAccounts = accounts.filter { account ->
             account.provider.requiresNetwork
         }
 
         if (networkAccounts.isEmpty()) {
             Log.d(TAG, "No network accounts to sync")
-            // Record session for debugging
             val sessionBuilder = SyncSessionBuilder(
                 calendarId = -1L,
                 calendarName = "No network accounts",
@@ -650,7 +604,6 @@ class CalDavSyncWorker @AssistedInject constructor(
         Log.d(TAG, "Syncing ${networkAccounts.size} network accounts")
         val startTime = System.currentTimeMillis()
 
-        // Aggregate results from all accounts
         var totalCalendars = 0
         var totalPushCreated = 0
         var totalPushUpdated = 0
@@ -663,13 +616,11 @@ class CalDavSyncWorker @AssistedInject constructor(
         val allChanges = mutableListOf<org.onekash.kashcal.sync.model.SyncChange>()
 
         for ((_, account) in networkAccounts.withIndex()) {
-            // Skip accounts that don't support CalDAV
             if (!account.provider.supportsCalDAV) {
                 Log.d(TAG, "Skipping non-CalDAV account ${account.email.maskEmail()} (${account.provider})")
                 continue
             }
 
-            // Get credential provider from registry
             val credProvider = providerRegistry.getCredentialProvider(account.provider)
             if (credProvider == null) {
                 Log.w(TAG, "No credential provider for account ${account.email.maskEmail()}, skipping")
@@ -684,11 +635,9 @@ class CalDavSyncWorker @AssistedInject constructor(
                 continue
             }
 
-            // Load credentials for this account
             val credentials = credProvider.getCredentials(account.id)
             if (credentials == null) {
                 Log.w(TAG, "No credentials for account ${account.email.maskEmail()}, skipping")
-                // Record session for debugging
                 val sessionBuilder = SyncSessionBuilder(
                     calendarId = -1L,
                     calendarName = "Account: ${account.email.maskEmail()}",
@@ -700,11 +649,9 @@ class CalDavSyncWorker @AssistedInject constructor(
                 continue
             }
 
-            // Get quirks for this provider
             val quirks = providerRegistry.getQuirksForAccount(account)
             if (quirks == null) {
                 Log.w(TAG, "No quirks for account ${account.email.maskEmail()}, skipping")
-                // Record session for debugging
                 val sessionBuilder = SyncSessionBuilder(
                     calendarId = -1L,
                     calendarName = "Account: ${account.email.maskEmail()}",
@@ -716,11 +663,10 @@ class CalDavSyncWorker @AssistedInject constructor(
                 continue
             }
 
-            // Create isolated client for this account (prevents credential race condition)
+            // A client of its own per account, so a concurrent sync can't swap its credentials.
             val isolatedClient = calDavClientFactory.createClient(credentials, quirks)
             Log.d(TAG, "Created isolated client for: ${credentials.username.take(3)}***")
 
-            // Sync this account with its quirks and isolated client
             val result = try {
                 syncEngine.syncAccountWithQuirks(
                     account = account,
@@ -730,7 +676,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                     trigger = trigger
                 )
             } catch (e: kotlinx.coroutines.CancellationException) {
-                // Coroutine cancellation - rethrow to handle properly
+                // Rethrow so the coroutine cancels.
                 Log.d(TAG, "syncEngine cancelled: ${e.message}")
                 throw e
             } catch (e: Exception) {
@@ -744,7 +690,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                 continue
             }
 
-            // Record per-account sync metadata (same as single-account path)
+            // Same per-account recording as syncAccount.
             val now = System.currentTimeMillis()
             when (result) {
                 is SyncResult.Success -> {
@@ -827,13 +773,14 @@ class CalDavSyncWorker @AssistedInject constructor(
     }
 
     /**
-     * Convert SyncResult to WorkManager Result with output data.
+     * Maps [syncResult] to a WorkManager result with output data. A partial success is a success;
+     * an auth error fails; an error retries only when retryable and attempts remain.
      */
     private fun handleSyncResult(syncResult: SyncResult): Result {
         return when (syncResult) {
             is SyncResult.Success -> {
                 Log.i(TAG, "Sync SUCCESS: ${syncResult.totalChanges} changes in ${syncResult.durationMs}ms")
-                // Set sync changes for UI notification (snackbar, bottom sheet)
+                // Publishes the changes for the in-app snackbar and bottom sheet.
                 if (syncResult.changes.isNotEmpty()) {
                     syncScheduler.setSyncChanges(syncResult.changes)
                 }
@@ -841,9 +788,7 @@ class CalDavSyncWorker @AssistedInject constructor(
             }
             is SyncResult.PartialSuccess -> {
                 Log.w(TAG, "Sync PARTIAL: ${syncResult.totalChanges} changes, ${syncResult.errors.size} errors")
-                // Partial success is still considered success for WorkManager
-                // The UI can check the error count in output data
-                // Set sync changes for UI notification
+                // The error count goes in the output data.
                 if (syncResult.changes.isNotEmpty()) {
                     syncScheduler.setSyncChanges(syncResult.changes)
                 }
@@ -851,7 +796,7 @@ class CalDavSyncWorker @AssistedInject constructor(
             }
             is SyncResult.AuthError -> {
                 Log.e(TAG, "Sync AUTH ERROR: ${syncResult.message}")
-                // Auth errors are not retryable - user needs to re-authenticate
+                // Not retryable: the user has to sign in again.
                 Result.failure(createErrorOutput(syncResult.message))
             }
             is SyncResult.Error -> {
@@ -866,27 +811,26 @@ class CalDavSyncWorker @AssistedInject constructor(
     }
 
     /**
-     * Schedule reminders for events that were added or modified during sync.
+     * Schedules reminders for events the sync added or modified.
      *
-     * For NEW events: schedules reminders for all occurrences in the schedule window.
-     * For MODIFIED events: cancels existing reminders and reschedules (handles time changes).
-     * For DELETED events: skipped (reminders cleaned up with event deletion).
+     * - NEW: schedules every occurrence in the schedule window. A new event with no reminders and
+     *   no alarms gets the user's default reminder unless it is off, except on initial sync.
+     * - MODIFIED: cancels the existing reminders and reschedules. AlarmManager triggers are
+     *   absolute times, so they must be recalculated when event times change.
+     * - DELETED: skipped; reminders are cleaned up with the event.
      *
-     * Follows same pattern as EventCoordinator.scheduleRemindersForEvent() for consistency.
-     * Per Android best practice: uses absolute trigger times with AlarmManager, so must
-     * recalculate when event times change.
+     * A failure for one event is logged and skipped; it never fails the sync.
      */
     private suspend fun scheduleRemindersForSyncedEvents(changes: List<SyncChange>) {
         var scheduled = 0
         var skipped = 0
         var defaultsApplied = 0
 
-        // Read default reminder settings ONCE before the loop
+        // Read the default reminder settings once, before the loop.
         val defaultTimedMinutes = dataStore.defaultReminderMinutes.first()
         val defaultAllDayMinutes = dataStore.defaultAllDayReminder.first()
 
         for (change in changes) {
-            // Skip DELETED events (reminders already cleaned up)
             if (change.type == ChangeType.DELETED || change.eventId == null) {
                 skipped++
                 continue
@@ -900,14 +844,12 @@ class CalDavSyncWorker @AssistedInject constructor(
                     continue
                 }
 
-                // For MODIFIED events, cancel existing reminders first (before null check,
-                // handles transition from having reminders to no reminders)
+                // Cancel before the empty-reminders check, so an edit that removed every
+                // reminder still clears the old alarms.
                 if (change.type == ChangeType.MODIFIED) {
                     reminderScheduler.cancelRemindersForEvent(event.id)
                 }
 
-                // For NEW events without reminders, apply user's default reminder
-                // (only during incremental sync, not initial sync)
                 if (change.type == ChangeType.NEW && !change.isFromInitialSync) {
                     val defaultMinutes = if (event.isAllDay) defaultAllDayMinutes else defaultTimedMinutes
                     val shouldApplyDefaults = event.reminders.isNullOrEmpty() &&
@@ -924,12 +866,12 @@ class CalDavSyncWorker @AssistedInject constructor(
                             Log.d(TAG, "Applied default reminder ($defaultMinutes min) to new event ${event.id}: ${event.title}")
                         } catch (e: Exception) {
                             Log.e(TAG, "Failed to apply default reminder to event ${event.id}", e)
-                            // Continue without failing - event just won't have reminder
+                            // The event goes without a reminder; the sync continues.
                         }
                     }
                 }
 
-                // Skip events without reminders (after potential default application)
+                // Checked after the default may have been applied.
                 if (event.reminders.isNullOrEmpty()) {
                     skipped++
                     continue
@@ -942,13 +884,14 @@ class CalDavSyncWorker @AssistedInject constructor(
                     continue
                 }
 
-                // Get occurrences - handle exception events specially
+                // An exception has one linked occurrence; a master has every occurrence in the
+                // schedule window.
                 val occurrences = if (event.originalEventId != null) {
-                    // Exception event - get the linked occurrence by exception event ID
                     listOfNotNull(eventReader.getOccurrenceByExceptionEventId(event.id))
                 } else {
-                    // Regular/master event - get all occurrences in schedule window
-                    eventReader.getOccurrencesForEventInScheduleWindow(event.id)
+                    eventReader.getOccurrencesForEventInScheduleWindow(
+                        event.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+                    )
                 }
 
                 if (occurrences.isEmpty()) {
@@ -963,7 +906,6 @@ class CalDavSyncWorker @AssistedInject constructor(
                 )
                 scheduled++
             } catch (e: Exception) {
-                // Log but don't fail sync for reminder scheduling errors
                 Log.e(TAG, "Failed to schedule reminders for event ${change.eventId}: ${e.message}")
                 skipped++
             }
@@ -1004,8 +946,8 @@ class CalDavSyncWorker @AssistedInject constructor(
     }
 
     /**
-     * Parse SyncTrigger from input data.
-     * Returns BACKGROUND_PERIODIC if missing or invalid (backward compatibility).
+     * Reads the [SyncTrigger] from input data, or [SyncTrigger.BACKGROUND_PERIODIC] when it is
+     * missing or unknown (work enqueued without one).
      */
     private fun parseTrigger(inputData: Data): SyncTrigger {
         val triggerStr = inputData.getString(KEY_SYNC_TRIGGER)

@@ -6,11 +6,12 @@ import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Calendar
 
 /**
- * Unit tests for AccountSettingsScreen derived state calculations.
+ * Tests inline copies of the settings screens' derived-state calculations over a calendar list.
  *
- * These tests verify the correctness of the underlying calculations
- * used in AccountSettingsScreen. Recomposition behavior is tested
- * separately in instrumentation tests.
+ * Each test runs its own `count { it.isVisible }` (as in `CalendarSheets.kt`) or
+ * `find { it.id == id }` (as in AccountSettingsScreen's default-calendar name) and calls no
+ * production code. Recomposition is covered by `AccountSettingsScreenRecompositionTest` in
+ * androidTest.
  */
 class AccountSettingsScreenTest {
 

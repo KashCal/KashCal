@@ -14,10 +14,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Tests for RFC 9253 property parsing and roundtrip.
- * Tests LINK and RELATED-TO properties.
+ * Tests the RFC 9253 properties LINK and RELATED-TO: parsing, generate-and-re-parse, the
+ * [ICalLink] and [ICalRelation] models, and their fromParameters edge cases.
  *
- * Note: ical4j requires VALUE=URI parameter for LINK properties.
+ * ical4j 4.3.0's Link property requires a VALUE parameter, so the fixtures carry VALUE=URI.
  */
 class ICalParserRfc9253Test {
 
@@ -236,8 +236,8 @@ class ICalParserRfc9253Test {
 
         @Test
         fun `parse LINK without VALUE=URI still works if server sends it`() {
-            // Some servers may not include VALUE=URI - test that our fromParameters
-            // still works (though ical4j may not parse it correctly)
+            // Some servers may omit VALUE=URI, which ical4j's Link requires; this checks
+            // ICalLink.fromParameters directly, without the parser.
             val link = ICalLink.fromParameters(
                 uri = "https://example.com/no-value-param",
                 rel = "alternate",
@@ -451,7 +451,7 @@ class ICalParserRfc9253Test {
             val event = result.getOrNull()!![0]
 
             assertEquals(1, event.relations.size)
-            // Unknown RELTYPE defaults to PARENT per RelationType.fromString
+            // RelationType.fromString maps an unknown RELTYPE to PARENT
             assertEquals(RelationType.PARENT, event.relations[0].relationType)
         }
 
@@ -766,7 +766,7 @@ class ICalParserRfc9253Test {
             val relation = ICalRelation.parent("parent-uid")
             val result = relation.toICalString()
 
-            // PARENT is the default, so RELTYPE should be omitted
+            // PARENT is the default (RFC 5545 §3.2.15), so RELTYPE is omitted
             assertEquals("RELATED-TO:parent-uid", result)
         }
     }
@@ -808,7 +808,7 @@ class ICalParserRfc9253Test {
             )
 
             assertEquals("https://example.com", link.uri)
-            // Invalid duration should result in null gap (not throw)
+            // An invalid duration gives a null gap instead of throwing
             assertNull(link.gap)
         }
 
@@ -840,7 +840,7 @@ class ICalParserRfc9253Test {
             )
 
             assertEquals("test-uid", relation.uid)
-            // Invalid duration should result in null gap (not throw)
+            // An invalid duration gives a null gap instead of throwing
             assertNull(relation.gap)
         }
 
@@ -860,7 +860,7 @@ class ICalParserRfc9253Test {
 
         @Test
         fun `ICalLink with all RFC 9253 relation types`() {
-            // Test all LinkRelationType values work correctly
+            // Six of the LinkRelationType values, each written with its URI
             val types = listOf(
                 LinkRelationType.ALTERNATE,
                 LinkRelationType.DESCRIBEDBY,
@@ -879,7 +879,7 @@ class ICalParserRfc9253Test {
 
         @Test
         fun `ICalRelation with all RFC 9253 relation types`() {
-            // Test all RelationType values work correctly
+            // Every RelationType value, each written with its UID
             val types = listOf(
                 RelationType.PARENT,
                 RelationType.CHILD,
@@ -912,7 +912,7 @@ class ICalParserRfc9253Test {
             )
             val icalString = link.toICalString()
 
-            // Title should be wrapped in quotes
+            // The title is wrapped in quotes
             assertTrue(icalString.contains("TITLE=\"Title with special chars\""))
         }
 
@@ -923,7 +923,7 @@ class ICalParserRfc9253Test {
                 title = "\"Quoted Title\""
             )
 
-            // Quotes should be stripped
+            // The quotes are stripped
             assertEquals("Quoted Title", link.title)
         }
 
@@ -932,7 +932,7 @@ class ICalParserRfc9253Test {
             val relation = ICalRelation(uid = "uid", relationType = RelationType.DEPENDS_ON)
             val icalString = relation.toICalString()
 
-            // Should use hyphen, not underscore
+            // Written with a hyphen, not the enum's underscore
             assertTrue(icalString.contains("RELTYPE=DEPENDS-ON"))
         }
 
@@ -945,7 +945,7 @@ class ICalParserRfc9253Test {
 
         @Test
         fun `ICalLink next factory method creates correct relation with gap`() {
-            // ICalLink doesn't have a next() factory, but ICalRelation does
+            // ICalLink has no next() factory; this exercises ICalRelation.next
             val relation = ICalRelation.next("next-uid", java.time.Duration.ofMinutes(45))
 
             assertEquals(RelationType.NEXT, relation.relationType)

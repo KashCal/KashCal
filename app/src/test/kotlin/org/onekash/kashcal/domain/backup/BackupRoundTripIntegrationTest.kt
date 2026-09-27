@@ -38,12 +38,15 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Real-Room + real-DataStore round-trip tests for the settings backup feature.
+ * Round-trips a settings backup from one real in-memory Room database and DataStore to another.
  *
- * Pure-unit tests use MockK to stub repository behaviour, which means SQL constraint violations
- * and FK cascades are invisible. These tests build two independent in-memory databases (source +
- * target) and exercise the real exporter against one, then the real importer against the other,
- * so structural failures surface as actual SQLiteConstraintExceptions.
+ * Mocked repositories hide SQL constraint violations and FK cascades; here the real
+ * [SettingsBackupExporter] runs against the source and the real [SettingsBackupImporter]
+ * against the target, so a structural failure throws a real SQLiteConstraintException.
+ *
+ * Tests cover an ICS subscription (applied once, then again as updates), tag colors (only
+ * colored tags travel; a newer local recency is kept), and older envelopes carrying a
+ * default_calendar preference or accounts and calendars fields, which are dropped.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -100,8 +103,8 @@ class BackupRoundTripIntegrationTest {
 
     @After
     fun teardown() {
-        // Cancel the scope before deleting DataStore files — the factory's write coroutines
-        // may still hold the file open otherwise.
+        // Cancel the scope before deleting the DataStore files; otherwise the factory's write
+        // coroutines may still hold them open.
         scope.cancel()
         sourceDb.close()
         targetDb.close()
@@ -130,8 +133,8 @@ class BackupRoundTripIntegrationTest {
 
     @Test
     fun `round trip with ICS subscription applies cleanly`() = runTest {
-        // Direct DAO seeding matches the post-state of IcsSubscriptionRepository.addSubscription
-        // minus the network refresh — intentional scope for this test.
+        // Seeds the rows IcsSubscriptionRepository.addSubscription writes (ICS account,
+        // calendar, subscription), without its network refresh.
         val icsAccountId = sourceDb.accountsDao().insert(
             Account(provider = AccountProvider.ICS, email = IcsSubscription.ACCOUNT_EMAIL)
         )
@@ -209,7 +212,7 @@ class BackupRoundTripIntegrationTest {
 
     @Test
     fun `round trip preserves tag custom colors and drops null-color tags`() = runTest {
-        // A recolored tag (custom color) and a plain tag (null color, renders via hash).
+        // A recolored tag (custom color) and a plain tag (null color, rendered from a hash).
         sourceDb.categoryDao().insertIgnore(
             org.onekash.kashcal.data.db.entity.Category(name = "Work", color = 0xFF4457C9.toInt(), lastUsedAt = 500L)
         )
@@ -220,8 +223,8 @@ class BackupRoundTripIntegrationTest {
         val json = sourceExporter.exportSettings()
         val envelope = (targetImporter.parseAndValidate(json) as BackupParseResult.Ok).envelope
 
-        // Only the recolored tag is worth carrying — a null-color tag reappears on its
-        // own via sync/usage and its swatch is derived, so exporting it is pointless.
+        // Only the recolored tag is exported (CategoryDao.getColoredOnce): a null-color tag
+        // comes back through sync and use, and its swatch is derived.
         assertEquals(1, envelope.categories.size)
         assertEquals("Work", envelope.categories.single().name)
 
@@ -239,7 +242,7 @@ class BackupRoundTripIntegrationTest {
         sourceDb.categoryDao().insertIgnore(
             org.onekash.kashcal.data.db.entity.Category(name = "Work", color = 0xFF4457C9.toInt(), lastUsedAt = 100L)
         )
-        // Target already has the tag, used more recently than the backup snapshot.
+        // The target already has the tag, used more recently than the backup snapshot.
         targetDb.categoryDao().insertIgnore(
             org.onekash.kashcal.data.db.entity.Category(name = "Work", color = null, lastUsedAt = 999L)
         )
@@ -279,7 +282,7 @@ class BackupRoundTripIntegrationTest {
 
     @Test
     fun `legacy v1 envelope with accounts and calendars fields parses cleanly and applies only subscriptions and prefs`() = runTest {
-        // Verifies backward compatibility: accounts/calendars fields are safely ignored.
+        // Older backups carry accounts and calendars fields; restore ignores them.
         val legacyJson = """
             {
               "file_format_version": 1,
@@ -304,8 +307,8 @@ class BackupRoundTripIntegrationTest {
         assertEquals("only subscription was applied", 1, result.subscriptionsCreated)
         assertEquals("theme pref was applied", 1, result.preferencesApplied)
         assertEquals("dark", snapshot[PreferencesKeys.THEME])
-        // The accounts/calendars in the legacy payload were silently dropped — target has only
-        // what the subscription path created (1 ICS account + 1 calendar for the feed URL).
+        // The payload's accounts and calendars are silently dropped: the target has only the
+        // ICS account the subscription path created (its calendar isn't asserted here).
         val targetAccounts = targetDb.accountsDao().getAllOnce()
         assertEquals(1, targetAccounts.size)
         assertEquals(AccountProvider.ICS, targetAccounts[0].provider)

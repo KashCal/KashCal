@@ -9,24 +9,26 @@ import java.security.MessageDigest
 import java.security.SecureRandom
 
 /**
- * HTTP Digest authenticator for CalDAV servers (RFC 2617, RFC 7616).
+ * Answers HTTP Digest challenges (RFC 2617, RFC 7616) for CalDAV and CardDAV clients.
  *
- * Handles Digest challenge-response when server responds with:
- *   401 + WWW-Authenticate: Digest realm="...", nonce="...", qop="auth"
- *
- * Supports:
- * - MD5 algorithm (default, required by all servers)
- * - SHA-256 algorithm (RFC 7616 optional)
- * - qop=auth (quality of protection)
+ * Handles a `401` with `WWW-Authenticate: Digest realm="...", nonce="...", qop="auth"`:
+ * - MD5, the default when the server names no algorithm, and SHA-256 (RFC 7616)
+ * - qop=auth, or the legacy form without qop
  * - stale=true nonce refresh
- * - Thread-safe via @Synchronized
- * - Infinite loop prevention (checks existing Digest header + stale flag)
+ * - no endless retry: a rejected Digest header is retried only when the nonce is stale
  *
- * Used by: CalDavClientFactory.createClient() and OkHttpCalDavClient.createLegacyClient()
+ * Calls are `@Synchronized`, so one instance is safe across concurrent requests. Installed by
+ * [CalDavClientFactory], `CardDavClientFactory` and OkHttpCalDavClient's legacy client.
  */
 class DigestAuthenticator(
     private val username: String,
-    private val password: String
+    private val password: String,
+    /**
+     * Whether a challenge on a plain http request may be answered: true only when the account
+     * was set up with an http:// address. A Digest response is derived from the password, so
+     * it is never sent over cleartext for an https account.
+     */
+    private val allowCleartext: Boolean
 ) : Authenticator {
 
     companion object {
@@ -34,38 +36,41 @@ class DigestAuthenticator(
         private val SECURE_RANDOM = SecureRandom()
     }
 
-    /** Nonce count for qop=auth. RFC 2617 requires incrementing nc per nonce. */
+    /** Nonce count for qop=auth; RFC 2617 requires nc to increase per nonce. */
     private var nonceCount = 0  // Guarded by @Synchronized
 
-    /** Current nonce from server. Reset triggers nonceCount reset. */
+    /** The server's current nonce; a new one resets [nonceCount]. */
     private var lastNonce: String? = null  // Guarded by @Synchronized
 
     /**
-     * Handle a 401 challenge from the server.
+     * Answers a 401 Digest challenge.
      *
-     * Loop prevention: if the request already has a Digest Authorization header
-     * and the server rejected it, only retry if stale=true (nonce expired).
-     * Otherwise return null (wrong credentials — stop).
+     * When the rejected request already carried a Digest header, retries only if the nonce
+     * is stale; otherwise the credentials are wrong and it gives up. Also gives up on plain
+     * http unless [allowCleartext].
      *
-     * @return New request with Digest Authorization header, or null to give up.
+     * @return the request with a Digest Authorization header, or null to give up
      */
     @Synchronized
     override fun authenticate(route: Route?, response: Response): Request? {
+        if (!response.request.url.isHttps && !allowCleartext) {
+            Log.w(TAG, "Not answering a Digest challenge over plain http")
+            return null
+        }
         val challenge = parseDigestChallenge(response) ?: return null
 
-        // Loop prevention: if we already sent Digest and server rejected it
+        // A Digest header was already sent and rejected.
         val existingAuth = response.request.header("Authorization")
         if (existingAuth != null && existingAuth.startsWith("Digest", ignoreCase = true)) {
             if (challenge.stale) {
                 Log.d(TAG, "Server indicates stale nonce, resetting counter")
-                nonceCount = 0  // Nonce expired — reset and retry
+                nonceCount = 0  // Nonce expired: reset and retry
             } else {
                 Log.w(TAG, "Digest auth failed (not stale) — credentials likely incorrect")
-                return null     // Wrong credentials — stop
+                return null     // Wrong credentials: stop
             }
         }
 
-        // Reset nonce count when server issues a new nonce
         if (challenge.nonce != lastNonce) {
             nonceCount = 0
             lastNonce = challenge.nonce
@@ -81,33 +86,30 @@ class DigestAuthenticator(
             .build()
     }
 
-    /**
-     * Parsed Digest challenge from WWW-Authenticate header.
-     */
+    /** A parsed `WWW-Authenticate: Digest` challenge. */
     internal data class DigestChallenge(
         val realm: String,
         val nonce: String,
-        val qop: String?,        // Parsed via parseQop() — "auth" or null
+        val qop: String?,        // From parseQop(): "auth" or null
         val opaque: String?,     // Echoed back unchanged
-        val algorithm: String?,  // Raw value from server: "MD5", "SHA-256", or null
+        val algorithm: String?,  // As the server sent it, e.g. "MD5", "SHA-256", or null
         val stale: Boolean       // true = nonce expired (retry ok), false = bad credentials
     ) {
-        /** Hash function name for MessageDigest. Defaults to MD5 when server omits algorithm. */
+        /** The challenge's algorithm, or MD5 when the server names none. */
         val hashAlgorithm: String
             get() = algorithm ?: "MD5"
     }
 
     /**
-     * Parse WWW-Authenticate: Digest header from the response.
+     * Parses the Digest challenge among the response's `WWW-Authenticate` headers, ignoring
+     * Basic ones.
      *
-     * Handles multiple WWW-Authenticate headers (prefers Digest over Basic).
-     * Returns null if no Digest challenge found or required fields missing.
+     * @return null when there is no Digest challenge or it lacks realm or nonce
      */
     internal fun parseDigestChallenge(response: Response): DigestChallenge? {
         val authHeaders = response.headers("WWW-Authenticate")
         if (authHeaders.isEmpty()) return null
 
-        // Find the Digest challenge (prefer Digest over Basic)
         val digestHeader = authHeaders
             .firstOrNull { it.trimStart().startsWith("Digest ", ignoreCase = true) }
             ?: return null
@@ -128,25 +130,22 @@ class DigestAuthenticator(
     }
 
     /**
-     * Parse comma-separated qop list and select "auth" if available.
+     * Picks "auth" from a comma-separated qop list such as "auth,auth-int".
      *
-     * @param rawQop Raw qop value from challenge (e.g., "auth,auth-int" or "auth")
-     * @return "auth" if supported, null for legacy mode (no qop) or unsupported options
+     * @return "auth" when offered; null for no qop or only unsupported options (legacy mode)
      */
     internal fun parseQop(rawQop: String?): String? {
         if (rawQop == null) return null  // Legacy mode
         val options = rawQop.split(",").map { it.trim() }
         return when {
             "auth" in options -> "auth"
-            else -> null  // Only auth-int or unknown — unsupported, fall back to legacy
+            else -> null  // Only auth-int or unknown: unsupported, fall back to legacy
         }
     }
 
     /**
-     * Parse key=value pairs from Digest challenge string.
-     *
-     * Handles both quoted and unquoted values per RFC 2617.
-     * Keys are lowercased for case-insensitive lookup.
+     * Parses the key=value pairs of a Digest challenge, quoted or unquoted (RFC 2617). Keys
+     * are lowercased for case-insensitive lookup.
      */
     internal fun parseAuthParams(header: String): Map<String, String> {
         val params = mutableMapOf<String, String>()
@@ -161,7 +160,7 @@ class DigestAuthenticator(
     }
 
     /**
-     * Build the Digest Authorization header value per RFC 2617 Section 3.2.2.
+     * Builds the Digest Authorization header value (RFC 2617 §3.2.2).
      *
      * When qop=auth:
      *   HA1 = H(username:realm:password)
@@ -202,10 +201,7 @@ class DigestAuthenticator(
         }
     }
 
-    /**
-     * Compute hash using specified algorithm.
-     * Returns lowercase hex string.
-     */
+    /** Hashes [input] as lowercase hex: SHA-256 when [algorithm] names it, else MD5. */
     internal fun hash(input: String, algorithm: String): String {
         val javaAlgorithm = when (algorithm.uppercase()) {
             "SHA-256" -> "SHA-256"
@@ -216,10 +212,7 @@ class DigestAuthenticator(
         return bytes.joinToString("") { "%02x".format(it) }
     }
 
-    /**
-     * Generate a random client nonce.
-     * Uses SecureRandom for unpredictability (RFC 2617 recommends unique per request).
-     */
+    /** Generates an unpredictable client nonce (RFC 2617: unique per request). */
     internal fun generateCnonce(): String {
         val bytes = ByteArray(16)
         SECURE_RANDOM.nextBytes(bytes)

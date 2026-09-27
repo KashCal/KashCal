@@ -8,15 +8,14 @@ import org.onekash.kashcal.domain.model.DisplayEvent
 import java.time.LocalDate
 
 /**
- * Unit tests for the all-day-strip spanning-bar layout engine
- * ([computeAllDaySpans] / [computeAllDayStripRender]). These are pure functions
- * over dayCodes and [DisplayEvent]s, so they run without Robolectric.
+ * Unit tests for the all-day strip's spanning-bar layout, [computeAllDaySpans] and
+ * [computeAllDayStripRender]. Both are pure functions over dayCodes and [DisplayEvent]s, so they
+ * run without Robolectric.
  *
- * Coverage focuses on the arithmetic the UI depends on and that is easy to get
- * subtly wrong: column mapping, flush-edge detection when an event runs off the
- * visible window, greedy lane packing, dedup by stableKey, the maxLanes cap and
- * its per-day cell fallback, month-boundary (non-contiguous) dayCodes, and the
- * overflow-badge math.
+ * The tests cover the arithmetic that is easy to get subtly wrong: column mapping, flush edges
+ * when an event runs off the visible window, greedy lane packing, dedup by stableKey, the
+ * maxLanes cap, month-boundary (non-contiguous) dayCodes, multi-day timed events as spans, and
+ * the overflow counts.
  */
 class AllDayStripLayoutTest {
 
@@ -109,8 +108,9 @@ class AllDayStripLayoutTest {
 
     @Test
     fun `overlapping spans take separate lanes`() {
-        val a = multiDayDisplayEvent(1, "a", monday, monday.plusDays(3))            // cols 0..3
-        val b = multiDayDisplayEvent(2, "b", monday.plusDays(2), monday.plusDays(4)) // cols 2..4 (overlaps a)
+        // a covers cols 0..3 and b cols 2..4, overlapping a.
+        val a = multiDayDisplayEvent(1, "a", monday, monday.plusDays(3))
+        val b = multiDayDisplayEvent(2, "b", monday.plusDays(2), monday.plusDays(4))
         val layout = computeAllDaySpans(week, listOf(a, b), maxLanes = 3)
         assertEquals(2, layout.lanes.size)
     }
@@ -139,8 +139,8 @@ class AllDayStripLayoutTest {
     @Test
     fun `span across a month boundary maps columns correctly despite non-contiguous dayCodes`() {
         // Jan 30 -> Feb 2, 2026. dayCodes: 20260130, 20260131, 20260201, 20260202.
-        // endDay - startDay == 72, NOT 3, so any code that assumed contiguous
-        // dayCodes would mis-map the columns.
+        // endDay - startDay is 72, not 3, so code that assumed contiguous dayCodes would
+        // mis-map the columns.
         val janStart = LocalDate.of(2026, 1, 30)
         val visible = (0..4).map { dayCodeOf(janStart.plusDays(it.toLong())) } // Jan30..Feb3
         val e = multiDayDisplayEvent(1, "cross-month", janStart, LocalDate.of(2026, 2, 2))
@@ -192,8 +192,9 @@ class AllDayStripLayoutTest {
 
     @Test
     fun `span in row 0 leaves single-day events on a covered column to lower rows`() {
-        val span = multiDayDisplayEvent(1, "span", monday, monday.plusDays(2))   // cols 0..2, row 0
-        val solo = allDayDisplayEvent(2, "solo", monday)                          // col 0, must go to row 1
+        // The span takes cols 0..2 in row 0, so solo (col 0) must go to row 1.
+        val span = multiDayDisplayEvent(1, "span", monday, monday.plusDays(2))
+        val solo = allDayDisplayEvent(2, "solo", monday)
         val render = computeAllDayStripRender(week, listOf(span, solo), maxRows = 3)
         assertTrue(render.slots[0][0] is AllDaySlot.BarSegment)
         assertTrue(render.slots[1][0] is AllDaySlot.CellEvent)
@@ -202,10 +203,10 @@ class AllDayStripLayoutTest {
 
     @Test
     fun `overflow is reported out-of-band without consuming a row`() {
-        // 5 single-day events on the same day, cap = 3 rows: all 3 free rows show a
-        // cell now that overflow no longer reserves one of them for a badge, with
-        // the remaining 2 reported via overflowByColumn instead.
-        val events = (1..5).map { allDayDisplayEvent(it.toLong(), "e$it", monday.plusDays(1)) } // col 1
+        // 5 single-day events on the same day, cap = 3 rows: overflow reserves no row for a
+        // badge, so all 3 rows show a cell and the remaining 2 are reported in overflowByColumn.
+        // All five in col 1.
+        val events = (1..5).map { allDayDisplayEvent(it.toLong(), "e$it", monday.plusDays(1)) }
         val render = computeAllDayStripRender(week, events, maxRows = 3)
         val col1 = render.slots.map { it[1] }
         val cells = col1.filterIsInstance<AllDaySlot.CellEvent>()
@@ -217,11 +218,9 @@ class AllDayStripLayoutTest {
 
     @Test
     fun `collapsed strip surfaces a span-covered column's own event as overflow, not a silent drop`() {
-        // In the 1-row collapsed strip (the default), a day covered by a spanning
-        // bar shows only the bar; that day's own single-day event has no free row
-        // to render in, so it must surface via overflowByColumn instead of
-        // vanishing with no affordance (the regression the old CompactEventCell
-        // never had, since it always fell back to a "+N more" badge).
+        // In the 1-row collapsed strip (the default), a day covered by a spanning bar shows only
+        // the bar; that day's own single-day event has no free row, so it must surface in
+        // overflowByColumn instead of vanishing with no "+N" badge.
         val span = multiDayDisplayEvent(1, "span", monday, monday.plusDays(2)) // covers col 0
         val solo = allDayDisplayEvent(2, "hidden", monday)                     // col 0
         val render = computeAllDayStripRender(week, listOf(span, solo), maxRows = 1)
@@ -232,8 +231,8 @@ class AllDayStripLayoutTest {
             it is AllDaySlot.CellEvent && (it.event as DisplayEvent.Room).event.id == 2L
         }
         assertFalse(soloShown)
-        // ...but it's surfaced as this column's overflow, and only the solo event —
-        // not the already-visible bar — so the badge count and its sheet agree.
+        // ...but it's this column's overflow, and only the solo event is, not the visible bar,
+        // so the badge count and its sheet agree.
         val overflow = render.overflowByColumn[0]
         assertEquals(1, overflow?.count)
         assertEquals(listOf(2L), overflow?.events?.map { (it as DisplayEvent.Room).event.id })
@@ -251,14 +250,13 @@ class AllDayStripLayoutTest {
 
     @Test
     fun `span beyond lane capacity falls back to per-day cells`() {
-        // maxRows = 1 -> maxLanes = 1. Two overlapping spans: one is placed as a
-        // bar, the other overflows lane capacity and reappears as a per-day cell
-        // in each column it covers (the documented fallback).
+        // maxRows = 1 -> maxLanes = 1. Two overlapping spans: one is placed as a bar; the other
+        // gets no lane and falls back to per-day handling in each column it covers.
         val a = multiDayDisplayEvent(1, "placed", monday, monday.plusDays(2))
         val b = multiDayDisplayEvent(2, "fallback", monday, monday.plusDays(2))
         val render = computeAllDayStripRender(week, listOf(a, b), maxRows = 1)
-        // Row 0 is the placed bar; the fallback event cannot fit (no free rows)
-        // so it is dropped from this collapsed render — assert the placed bar wins.
+        // Row 0 is the placed bar. The fallback event has no free row, so it goes to
+        // overflowByColumn (not asserted here); only the placed bar is asserted.
         assertTrue(render.slots[0][0] is AllDaySlot.BarSegment)
     }
 }

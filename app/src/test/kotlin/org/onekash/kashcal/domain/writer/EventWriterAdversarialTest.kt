@@ -27,17 +27,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Adversarial tests for EventWriter.
- *
- * Tests probe edge cases that could corrupt data:
- * - Non-existent event operations
- * - Concurrent modifications
- * - Exception event edge cases
- * - Split series edge cases
- * - Move operations with invalid calendars
- * - State machine violations
- *
- * These tests verify defensive coding and data integrity.
+ * Tests [EventWriter] edge cases that could corrupt data, over an in-memory Room database:
+ * - operations on a missing event or master, and occurrence operations on a non-recurring event
+ * - a move to the same calendar, and deleting this and future from the first occurrence
+ * - series splits (new UID, UNTIL or COUNT truncation) and exceptions (shared UID, master link,
+ *   re-edit updates the same row)
+ * - the pending-operation queue (no duplicate UPDATE, a delete leaves a DELETE pending)
+ * - UID generation, timestamps, sync-status transitions and hard versus soft delete
+ * - SEQUENCE bumps, occurrence deletion and regeneration, and move bookkeeping
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -59,7 +56,8 @@ class EventWriterAdversarialTest {
         occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         eventWriter = EventWriter(database, occurrenceGenerator)
 
-        // Setup test calendars with ICLOUD provider for CalDAV sync behavior tests
+        // Two calendars on an iCloud account, so a move between them is a synced move. Other
+        // writes follow each call's isLocal.
         val accountId = database.accountsDao().insert(
             Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
         )
@@ -275,10 +273,10 @@ class EventWriterAdversarialTest {
         val recurringEvent = createTestEvent("Recurring").copy(rrule = "FREQ=DAILY;COUNT=5")
         val event = eventWriter.createEvent(recurringEvent, isLocal = true)
 
-        // Delete from first occurrence (startTs)
+        // Delete from the first occurrence (startTs).
         eventWriter.deleteThisAndFuture(event.id, event.startTs, isLocal = true)
 
-        // Event should be completely deleted
+        // The whole event is deleted.
         val deleted = database.eventsDao().getById(event.id)
         assertNull("Event should be deleted when deleting from first occurrence", deleted)
     }
@@ -290,7 +288,6 @@ class EventWriterAdversarialTest {
         val recurringEvent = createTestEvent("Daily Meeting").copy(rrule = "FREQ=DAILY;COUNT=10")
         val master = eventWriter.createEvent(recurringEvent, isLocal = false)
 
-        // Get second occurrence time
         val occurrences = database.occurrencesDao().getForEvent(master.id).sortedBy { it.startTs }
         val splitTime = occurrences[2].startTs // 3rd occurrence
 
@@ -303,9 +300,8 @@ class EventWriterAdversarialTest {
 
     @Test
     fun `splitSeries truncates master RRULE for unbounded series`() = runTest {
-        // Unbounded RRULE -> UNTIL branch of splitRruleAtTime: master
-        // gets UNTIL, no COUNT change. (COUNT-based RRULEs go through
-        // the COUNT branch instead, which preserves total count.)
+        // An unbounded RRULE takes the UNTIL branch of RruleUtils.splitRruleAtTime: the
+        // master gets UNTIL. A COUNT rule takes the COUNT branch, which keeps the total count.
         val recurringEvent = createTestEvent("Daily Meeting").copy(rrule = "FREQ=DAILY")
         val master = eventWriter.createEvent(recurringEvent, isLocal = false)
 
@@ -324,10 +320,9 @@ class EventWriterAdversarialTest {
 
     @Test
     fun `splitSeries preserves COUNT total for COUNT-based series`() = runTest {
-        // RFC 5545 §3.3.10 forbids COUNT and UNTIL together. The split
-        // path keeps the original total count intact: master
-        // COUNT=pastCount, new series COUNT=remaining. Master never
-        // gets UNTIL when input had COUNT.
+        // RFC 5545 §3.3.10 forbids COUNT and UNTIL together. The split keeps the total count:
+        // the master gets COUNT=pastCount, the new series COUNT=remaining, and the master
+        // never gets UNTIL.
         val recurringEvent = createTestEvent("Counted").copy(rrule = "FREQ=DAILY;COUNT=20")
         val master = eventWriter.createEvent(recurringEvent, isLocal = false)
 
@@ -359,7 +354,7 @@ class EventWriterAdversarialTest {
         val modifiedEvent = master.copy(title = "Modified Occurrence")
         val exception = eventWriter.editSingleOccurrence(master.id, occTime, modifiedEvent, isLocal = false)
 
-        // RFC 5545: Exception MUST have same UID as master
+        // RFC 5545: an exception has the same UID as its master.
         assertEquals("Exception UID should match master", master.uid, exception.uid)
     }
 
@@ -386,19 +381,17 @@ class EventWriterAdversarialTest {
         val occurrences = database.occurrencesDao().getForEvent(master.id).sortedBy { it.startTs }
         val occTime = occurrences[1].startTs
 
-        // First edit
         val firstEdit = master.copy(title = "First Edit")
         val exception1 = eventWriter.editSingleOccurrence(master.id, occTime, firstEdit, isLocal = false)
 
-        // Second edit of same occurrence
+        // A second edit of the same occurrence.
         val secondEdit = master.copy(title = "Second Edit")
         val exception2 = eventWriter.editSingleOccurrence(master.id, occTime, secondEdit, isLocal = false)
 
-        // Should be same exception event ID (updated, not new)
+        // The same exception row is updated, not a new one created.
         assertEquals(exception1.id, exception2.id)
         assertEquals("Second Edit", exception2.title)
 
-        // Should only have 1 exception
         val exceptions = database.eventsDao().getExceptionsForMaster(master.id)
         assertEquals(1, exceptions.size)
     }
@@ -410,13 +403,12 @@ class EventWriterAdversarialTest {
         val event = eventWriter.createEvent(createTestEvent("Test"), isLocal = false)
         val initialPendingCount = database.pendingOperationsDao().getAll().size
 
-        // Update the same event multiple times
         eventWriter.updateEvent(event.copy(title = "Update 1"), isLocal = false)
         eventWriter.updateEvent(event.copy(title = "Update 2"), isLocal = false)
         eventWriter.updateEvent(event.copy(title = "Update 3"), isLocal = false)
 
         val finalPending = database.pendingOperationsDao().getForEvent(event.id)
-        // Should not have multiple pending UPDATE operations
+        // At most one pending UPDATE.
         val pendingUpdates = finalPending.filter { it.operation == PendingOperation.OPERATION_UPDATE }
         assertTrue("Should not duplicate pending operations", pendingUpdates.size <= 1)
     }
@@ -424,14 +416,14 @@ class EventWriterAdversarialTest {
     @Test
     fun `delete upgrades existing pending operation`() = runTest {
         val event = eventWriter.createEvent(createTestEvent("Test"), isLocal = false)
-        // Simulate sync completed
+        // Simulate a completed sync.
         database.eventsDao().update(event.copy(syncStatus = SyncStatus.SYNCED))
         database.pendingOperationsDao().deleteForEvent(event.id)
 
-        // Create update operation
         eventWriter.updateEvent(event.copy(title = "Updated"), isLocal = false)
 
-        // Now delete - should upgrade UPDATE to DELETE
+        // The delete turns the pending UPDATE into a DELETE; the assert checks a DELETE is
+        // pending.
         eventWriter.deleteEvent(event.id, isLocal = false)
 
         val pending = database.pendingOperationsDao().getForEvent(event.id)
@@ -490,8 +482,8 @@ class EventWriterAdversarialTest {
         val event = eventWriter.createEvent(createTestEvent("Test"), isLocal = false)
         val originalModified = event.localModifiedAt!!
 
-        // Wall-clock delay: localModifiedAt uses System.currentTimeMillis(),
-        // not virtual time. delay() only advances virtual time and is ineffective here.
+        // A wall-clock sleep: localModifiedAt comes from System.currentTimeMillis(), and
+        // delay() only advances virtual time.
         Thread.sleep(50)
 
         val updated = eventWriter.updateEvent(event.copy(title = "Updated"), isLocal = false)
@@ -520,7 +512,7 @@ class EventWriterAdversarialTest {
     @Test
     fun `SYNCED becomes PENDING_UPDATE after update`() = runTest {
         val event = eventWriter.createEvent(createTestEvent("Test"), isLocal = false)
-        // Simulate sync completed
+        // Simulate a completed sync.
         val synced = event.copy(syncStatus = SyncStatus.SYNCED)
         database.eventsDao().update(synced)
 
@@ -680,7 +672,7 @@ class EventWriterAdversarialTest {
     @Test
     fun `moveEvent creates MOVE operation for synced event`() = runTest {
         val event = eventWriter.createEvent(createTestEvent("Synced"), isLocal = false)
-        // Simulate sync completed with URL
+        // Simulate a completed sync with a server URL.
         val synced = event.copy(
             syncStatus = SyncStatus.SYNCED,
             caldavUrl = "https://server.com/event.ics",

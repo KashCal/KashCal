@@ -12,9 +12,12 @@ import java.io.File
 import java.util.Properties
 
 /**
- * Tests multi-href calendar-multiget compatibility across all live CalDAV servers.
- * Verifies that the batched multiget pattern works correctly, and that the
- * single-href fallback activates only for servers that need it (Zoho).
+ * Checks calendar-multiget with one href and with up to 10 against live Zoho, iCloud, Baikal,
+ * Radicale and SOGo.
+ *
+ * A single-href multiget must return an event. A non-empty multi-href reply must hold one
+ * event per href; an error or an empty reply is printed, not failed, since PullStrategy's
+ * batched fetch retries such a batch one href at a time (Zoho's empty-body quirk).
  *
  * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*MultigetServerCompatTest*"
  */
@@ -60,7 +63,7 @@ class MultigetServerCompatTest {
         val calendarUrl = calendars!![0].url
         println("$serverName: calendar=${calendars[0].displayName} at $calendarUrl")
 
-        // Fetch etags — try time-range first, fall back to full fetch
+        // Hrefs from an etag query, falling back to a query that returns event bodies
         val now = System.currentTimeMillis()
         val pastWindow = now - (90L * 24 * 60 * 60 * 1000)
         val etagResult = client.fetchEtagsInRange(calendarUrl, pastWindow, Long.MAX_VALUE / 2)
@@ -72,7 +75,7 @@ class MultigetServerCompatTest {
                 val err = etagResult as org.onekash.kashcal.sync.client.model.CalDavResult.Error
                 println("$serverName: fetchEtagsInRange failed (code=${err.code}): ${err.message}, trying fetchEventsInRange")
             }
-            // Fallback: full calendar-query (may work when time-range doesn't)
+            // Fallback: calendar-query with calendar-data, over the same range
             val fullResult = client.fetchEventsInRange(calendarUrl, pastWindow, Long.MAX_VALUE / 2)
             if (fullResult.isSuccess() && fullResult.getOrNull()!!.isNotEmpty()) {
                 hrefs = fullResult.getOrNull()!!.map { it.href }
@@ -84,13 +87,13 @@ class MultigetServerCompatTest {
         }
         println("$serverName: ${hrefs.size} events on server")
 
-        // Test 1: Single-href multiget
+        // Test 1: single-href multiget
         val singleResult = client.fetchEventsByHref(calendarUrl, listOf(hrefs[0]))
         println("$serverName: single-href multiget: success=${singleResult.isSuccess()}, events=${singleResult.getOrNull()?.size}")
         assert(singleResult.isSuccess()) { "$serverName: single-href multiget failed" }
         assert(singleResult.getOrNull()!!.isNotEmpty()) { "$serverName: single-href multiget returned empty" }
 
-        // Test 2: Multi-href multiget (up to 10)
+        // Test 2: multi-href multiget, up to 10
         val batchHrefs = hrefs.take(10.coerceAtMost(hrefs.size))
         val batchResult = client.fetchEventsByHref(calendarUrl, batchHrefs)
         println("$serverName: multi-href multiget (${batchHrefs.size} hrefs): success=${batchResult.isSuccess()}, events=${batchResult.getOrNull()?.size}")

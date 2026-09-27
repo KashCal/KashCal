@@ -10,8 +10,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Tests for RFC 7986 property parsing and roundtrip.
- * Tests IMAGE and CONFERENCE properties.
+ * Tests parsing and generate-and-re-parse of the RFC 7986 properties IMAGE, CONFERENCE and
+ * COLOR, and an event without any of them.
  */
 class ICalParserRfc7986Test {
 

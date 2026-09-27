@@ -58,28 +58,20 @@ import android.graphics.Color as AndroidColor
 // Color Utility Functions
 // ============================================================================
 
-/**
- * Convert hue (0-360) to ARGB Int at full saturation and brightness.
- */
+/** Converts a hue (0-360, clamped) to an opaque ARGB color at full saturation and brightness. */
 fun hueToArgb(hue: Float): Int {
     val hsv = floatArrayOf(hue.coerceIn(0f, 360f), 1f, 1f)
     return AndroidColor.HSVToColor(hsv)
 }
 
-/**
- * Extract hue (0-360) from an ARGB color.
- * Note: Saturation and brightness are lost - only hue is extracted.
- */
+/** Returns the hue (0-360) of an ARGB color, dropping its saturation and brightness. */
 fun colorToHue(argb: Int): Float {
     val hsv = FloatArray(3)
     AndroidColor.colorToHSV(argb, hsv)
     return hsv[0]
 }
 
-/**
- * Convert ARGB Int to 6-character hex string (without #).
- * Alpha channel is stripped - always outputs opaque colors.
- */
+/** Formats an ARGB color as six uppercase hex digits without `#`, dropping alpha. */
 fun argbToHex(argb: Int): String {
     val r = (argb shr 16) and 0xFF
     val g = (argb shr 8) and 0xFF
@@ -88,9 +80,8 @@ fun argbToHex(argb: Int): String {
 }
 
 /**
- * Parse hex string to ARGB Int.
- * Accepts with or without # prefix, case insensitive.
- * Returns null if invalid.
+ * Parses six hex digits, with or without `#` and in any case, to an opaque ARGB color, or null
+ * if invalid.
  */
 fun hexToArgb(hex: String): Int? {
     val cleaned = hex.removePrefix("#").uppercase()
@@ -105,10 +96,7 @@ fun hexToArgb(hex: String): Int? {
     }
 }
 
-/**
- * Validate hex string format.
- * Accepts 6 characters, with or without # prefix.
- */
+/** Returns whether [hex] is six hex digits, with or without a `#` prefix. */
 fun isValidHex(hex: String): Boolean {
     val cleaned = hex.removePrefix("#")
     if (cleaned.length != 6) return false
@@ -116,7 +104,8 @@ fun isValidHex(hex: String): Boolean {
 }
 
 /**
- * Convert hue to human-readable color name for accessibility.
+ * Returns an English color name for a hue. The slider's accessibility text uses the localized
+ * [hueToColorNameI18n]; no production code calls this one.
  */
 fun hueToColorName(hue: Float): String = when {
     hue < 15 -> "Red"
@@ -146,19 +135,13 @@ fun hueToColorNameI18n(hue: Float): String = when {
 // ============================================================================
 
 /**
- * Bottom sheet for selecting a color using hue slider and hex input.
+ * Shows a bottom sheet that picks a color with a hue slider and a hex field.
  *
- * Features:
- * - Rainbow hue slider (full saturation/brightness)
- * - Hex input field with validation
- * - Bidirectional sync between slider and hex
- * - Accessibility support with color names
- * - Haptic feedback on slider interaction
+ * The slider covers hues at full saturation and brightness, with haptics and a localized color
+ * name for accessibility. The slider and the hex field update each other; a typed hex sets only
+ * the hue, and Select commits the slider's full-saturation color.
  *
- * @param sheetState Material3 sheet state
- * @param currentColor Initial color as ARGB Int
- * @param onColorSelected Callback when color is selected
- * @param onDismiss Callback when sheet is dismissed
+ * @param currentColor the initial color; only its hue seeds the slider.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -181,14 +164,8 @@ fun ColorPickerSheet(
 }
 
 /**
- * Content for ColorPickerSheet, extracted for testability.
- *
- * This composable can be tested independently without ModalBottomSheet
- * animation timing issues.
- *
- * @param currentColor Initial color as ARGB Int
- * @param onColorSelected Callback when color is selected
- * @param onCancel Callback when cancel is clicked
+ * Shows the body of [ColorPickerSheet], split out so tests avoid ModalBottomSheet animation
+ * timing.
  */
 @Composable
 fun ColorPickerSheetContent(
@@ -196,12 +173,11 @@ fun ColorPickerSheetContent(
     onColorSelected: (Int) -> Unit,
     onCancel: () -> Unit
 ) {
-    // State: hue drives the slider, hex is for user input
+    // The hue drives the slider and the preview; the hex holds what the user types.
     var localHue by remember { mutableFloatStateOf(colorToHue(currentColor)) }
     var hexInput by remember { mutableStateOf(argbToHex(currentColor)) }
     var isHexValid by remember { mutableStateOf(true) }
 
-    // Computed preview color from current hue
     val previewColor = hueToArgb(localHue)
 
     Column(
@@ -211,7 +187,6 @@ fun ColorPickerSheetContent(
             .padding(bottom = 32.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Header
         Text(
             stringResource(R.string.dialog_choose_color),
             style = MaterialTheme.typography.titleLarge,
@@ -220,13 +195,11 @@ fun ColorPickerSheetContent(
                 .padding(bottom = 24.dp)
         )
 
-        // Color preview
         ColorPreview(
             color = previewColor,
             modifier = Modifier.padding(bottom = 24.dp)
         )
 
-        // Hue slider
         HueSlider(
             hue = localHue,
             onHueChange = { newHue ->
@@ -239,7 +212,6 @@ fun ColorPickerSheetContent(
                 .padding(bottom = 24.dp)
         )
 
-        // Hex input
         HexInputField(
             value = hexInput,
             isError = !isHexValid,
@@ -258,7 +230,6 @@ fun ColorPickerSheetContent(
                 .padding(bottom = 24.dp)
         )
 
-        // Action buttons
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.End
@@ -277,9 +248,7 @@ fun ColorPickerSheetContent(
     }
 }
 
-/**
- * Color preview box showing the currently selected color.
- */
+/** Shows a swatch of the color Select would commit. */
 @Composable
 private fun ColorPreview(
     color: Int,
@@ -299,11 +268,7 @@ private fun ColorPreview(
 }
 
 /**
- * Rainbow hue slider with accessibility and haptic feedback.
- *
- * @param hue Current hue value (0-360)
- * @param onHueChange Callback when hue changes
- * @param modifier Modifier
+ * Shows the rainbow hue slider (0-360), with a haptic on touch and every 30 degrees of drag.
  */
 @Composable
 private fun HueSlider(
@@ -317,11 +282,10 @@ private fun HueSlider(
 
     val colorName = hueToColorNameI18n(hue)
 
-    // Accessibility strings (captured outside semantics block since it's not @Composable)
+    // Resolved here because the semantics block isn't @Composable.
     val sliderDescription = stringResource(R.string.cd_color_slider, colorName)
     val sliderState = stringResource(R.string.cd_color_slider_state, colorName, hue.toInt())
 
-    // Rainbow gradient colors
     val rainbowColors = remember {
         listOf(
             Color.hsl(0f, 1f, 0.5f),     // Red
@@ -339,7 +303,6 @@ private fun HueSlider(
         val newHue = (x / sliderWidth * 360f).coerceIn(0f, 360f)
         onHueChange(newHue)
 
-        // Haptic feedback every 30 degrees
         if ((newHue - lastHapticHue).absoluteValue >= 30f) {
             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
             lastHapticHue = newHue
@@ -384,17 +347,15 @@ private fun HueSlider(
         ) {
             sliderWidth = size.width
 
-            // Draw rainbow gradient
             drawRect(
                 brush = Brush.horizontalGradient(rainbowColors),
                 size = size
             )
 
-            // Draw thumb
             val thumbX = (hue / 360f) * size.width
             val thumbY = size.height / 2
 
-            // Thumb shadow/outline
+            // Thumb outline
             drawCircle(
                 color = Color.White,
                 radius = 14.dp.toPx(),
@@ -406,7 +367,6 @@ private fun HueSlider(
                 center = Offset(thumbX, thumbY),
                 style = Stroke(width = 1.dp.toPx())
             )
-            // Thumb inner color
             drawCircle(
                 color = Color(hueToArgb(hue)),
                 radius = 10.dp.toPx(),
@@ -416,9 +376,7 @@ private fun HueSlider(
     }
 }
 
-/**
- * Hex input field with validation and error state.
- */
+/** Shows the hex field, with an error hint when [isError]. */
 @Composable
 private fun HexInputField(
     value: String,

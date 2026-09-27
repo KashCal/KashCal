@@ -28,13 +28,11 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Unit tests for share-availability DataStore preferences.
- *
- * Covers:
- * - Defaults when keys are absent (days=7, work-start=540, work-end=1020, all-day=false)
- * - Round-trip set-then-read for each pref
- * - Write-side clamping (out-of-range coerced to default)
- * - Stable string identifiers for the four pref keys
+ * Tests the share-availability preferences in [KashCalDataStore]:
+ * - defaults when absent: days 7, work start 540, work end 1020, all-day false
+ * - set-then-read round-trips for each
+ * - an out-of-range write stores the default
+ * - stable key strings for all four
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -175,15 +173,13 @@ class ShareAvailabilityPreferencesTest {
 
     @Test
     fun `pref keys use stable string identifiers`() = runTest {
-        // Write through public API.
         dataStore.setShareAvailabilityDays(5)
         dataStore.setShareAvailabilityWorkStartMinutes(600)
         dataStore.setShareAvailabilityWorkEndMinutes(1200)
         dataStore.setShareAvailabilityIncludeAllDay(true)
 
-        // Read raw preferences via the documented key strings — if a refactor
-        // accidentally renamed the key, this assertion fails before user prefs
-        // would silently disappear on upgrade.
+        // Read by the raw key strings: a renamed key fails here instead of silently dropping
+        // user prefs on upgrade.
         val prefs = dataStore.dataStore.data.first()
         assertEquals(5, prefs[intPreferencesKey("share_availability_days")])
         assertEquals(600, prefs[intPreferencesKey("share_availability_work_start_min")])

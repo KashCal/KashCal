@@ -3,34 +3,30 @@ package org.onekash.kashcal.domain
 import java.util.Locale
 
 /**
- * Matches event titles to emojis based on keywords.
- *
- * Used for display-only decoration of event titles across all calendar types
- * (iCloud, ICS subscriptions, Contact Birthdays, Local).
+ * Matches event titles to emojis by keyword, for display only: the stored title never changes.
+ * Covers event titles from every calendar source, including device calendars, and the Quick Add
+ * preview.
  *
  * Matching rules:
- * - Case-insensitive, folded with [Locale.ROOT] so the result never depends on
- *   the device locale (a locale that folds letters differently, e.g. Turkish
- *   mapping 'I' to a dotless 'ı', must not change how the ASCII keyword table
- *   matches).
- * - Whole-word matching (prevents partial matches like "scoffee" → coffee).
- * - When two keywords match overlapping spans of the title, the longer match
- *   wins (so a specific keyword like "eye doctor" beats the generic "doctor").
- * - Otherwise the higher-priority rule wins; equal priorities break by the
- *   order rules are declared.
+ * - Case-insensitive, folded with [Locale.ROOT] so the result never depends on the device
+ *   locale (Turkish folds 'I' to a dotless 'ı', which must not change how the ASCII keyword
+ *   table matches).
+ * - Whole words only, so "scoffee" doesn't match coffee.
+ * - When two keywords match overlapping spans of the title, the longer match wins, so "eye
+ *   doctor" beats "doctor".
+ * - Otherwise the higher-priority rule wins; equal priorities break by declaration order.
  *
- * Matching is precomputed at class load: single-word keywords resolve through a
- * hash map keyed on the title's tokens, and only multi-token keywords need a
- * precompiled word-boundary regex — so the common no-match title costs a
- * tokenize pass, not a regex compile per keyword.
+ * The matchers are built at class load: single-word keywords resolve through a hash map keyed
+ * on the title's tokens, and only multi-token keywords use a precompiled word-boundary regex,
+ * so a title with no match costs one tokenize pass.
  */
 object EmojiMatcher {
 
     private data class EmojiRule(
         val emoji: String,
         val keywords: List<String>,
-        // Decides only *disjoint* matches in one title (e.g. christmas vs dinner).
-        // Overlapping matches are resolved by specificity (longer wins), not by this.
+        // Decides only disjoint matches in one title (e.g. christmas vs dinner); overlapping
+        // matches go to the longer one.
         val priority: Int = 0
     )
 
@@ -62,7 +58,7 @@ object EmojiMatcher {
         EmojiRule("🍕", listOf("pizza"), 5),
         EmojiRule("🍖", listOf("bbq", "barbecue", "cookout"), 5),
 
-        // ===== TRAVEL (Priority 5) =====
+        // ===== TRAVEL (Priority 3-5) =====
         EmojiRule("✈️", listOf("flight", "airport", "flying"), 5),
         EmojiRule("🚂", listOf("train", "amtrak"), 5),
         EmojiRule("🚗", listOf("road trip"), 3),
@@ -121,7 +117,7 @@ object EmojiMatcher {
         EmojiRule("📚", listOf("study", "lecture", "exam"), 5),
         EmojiRule("🏫", listOf("school", "pta"), 5),
 
-        // ===== FAMILY & KIDS (Priority 5) =====
+        // ===== FAMILY & KIDS (Priority 3-5) =====
         EmojiRule("👶", listOf("daycare", "babysitter", "nanny"), 5),
         EmojiRule("👨‍👩‍👧", listOf("parent teacher", "family dinner"), 3),
 
@@ -135,9 +131,8 @@ object EmojiMatcher {
     )
 
     /**
-     * A single keyword flattened out of its rule, in declaration order.
-     * [ruleIndex] is the position of the owning rule in [rules] — the declaration
-     * order used to break ties between equal-priority matches.
+     * One keyword flattened out of its rule, in declaration order. [ruleIndex] is the owning
+     * rule's position in [rules], which breaks ties between equal-priority matches.
      */
     private data class KeywordEntry(
         val keyword: String,
@@ -161,13 +156,12 @@ object EmojiMatcher {
         }
     }
 
-    /** Matches runs of word characters (letters, digits, underscore) — the token grain of `\b`. */
+    /** Matches runs of word characters (letters, digits, underscore), the token grain of `\b`. */
     private val wordToken = Regex("\\w+")
 
     /**
-     * Titles mentioning any of these are never decorated: an emoji on a funeral,
-     * a diagnosis, or a layoff reads as flippant. Checked as whole title tokens
-     * ahead of any keyword match, so suppression always wins.
+     * Titles containing any of these as a whole token are never decorated: an emoji on a
+     * funeral, a diagnosis or a layoff reads as flippant. Suppression wins over any keyword.
      */
     private val suppressWords = setOf(
         "funeral", "memorial", "hospice",
@@ -176,31 +170,25 @@ object EmojiMatcher {
     )
 
     /**
-     * Single-word keywords, indexed by the word so a title token resolves with a
-     * hash lookup instead of a regex scan. A word can map to several entries when
-     * unrelated rules reuse it, so the value is a list resolved by the winner rule.
+     * Single-word keywords, indexed by the word so a title token resolves with a hash lookup.
+     * A word can map to several entries when rules reuse it; [electWinner] picks between them.
      */
     private val singleWordIndex: Map<String, List<KeywordEntry>>
 
     /**
-     * Multi-token keywords (containing whitespace/hyphen/colon), each with a
-     * precompiled word-boundary regex and its leading `\w+` token. A `\b lead …\b`
-     * keyword can only match when [lead] appears as a whole token in the title, so
-     * the hot path skips the regex entirely unless the title contains that token.
+     * Multi-token keywords (containing a space, hyphen or colon), each with a precompiled
+     * word-boundary regex and its leading `\w+` token. Such a keyword can only match when its
+     * lead is a whole token of the title, so the regex runs only for titles containing it.
      */
     private val multiTokenKeywords: List<MultiTokenMatcher>
 
     init {
-        // Split keywords by whether the title tokenizer can find them whole (exactly
-        // one `\w+` run). Testing that invariant directly against wordToken — rather
-        // than listing separators — keeps the split in lockstep with how the title is
-        // tokenized: the same definition of a word decides both which path a keyword
-        // takes and how the title is broken up.
+        // A keyword is single-word when it is one whole `\w+` run. Testing against wordToken,
+        // not a list of separators, keeps the split in step with how the title is tokenized.
         val (multiToken, singleWord) = allKeywords.partition { !it.keyword.matches(wordToken) }
         singleWordIndex = singleWord.groupBy { it.keyword }
-        // Drop any keyword with no word character at all: its `\b…\b` regex could
-        // never match a real title, and it has no leading token to gate on. Skipping
-        // it degrades gracefully instead of letting the gate lookup throw.
+        // A keyword with no word character can never match and has no lead token, so it is
+        // dropped instead of letting the lead lookup throw.
         multiTokenKeywords = multiToken.mapNotNull { entry ->
             val lead = wordToken.find(entry.keyword)?.value ?: return@mapNotNull null
             MultiTokenMatcher(
@@ -217,25 +205,21 @@ object EmojiMatcher {
     private data class Candidate(val entry: KeywordEntry, val range: IntRange)
 
     /**
-     * Returns the emoji for an event title, or null if no match.
-     *
-     * @param title The event title to match
-     * @return Emoji string (e.g., "☕") or null if no keyword matches
+     * Returns the emoji (e.g. "☕") for [title], or null when the title is blank, already has an
+     * emoji, contains a suppressed word, or matches no keyword.
      */
     fun getEmoji(title: String): String? {
         if (title.isBlank()) return null
 
-        // A title that already carries an emoji (common on synced Apple/Notion
-        // events) must not get a second one stacked in front of it.
+        // A title that already carries an emoji must not get a second one in front of it.
         if (title.containsEmoji()) return null
 
         val lowerTitle = title.lowercase(Locale.ROOT)
         val candidates = ArrayList<Candidate>()
         val titleTokens = HashSet<String>()
 
-        // Single-word keywords: resolve each title token through the hash index.
-        // The same pass records the token set the multi-token gate reads below,
-        // and lets a suppressed term short-circuit the whole title to no emoji.
+        // Single-word keywords resolve through the hash index. The same pass records the
+        // tokens the multi-token check reads below and stops at a suppressed word.
         for (token in wordToken.findAll(lowerTitle)) {
             if (token.value in suppressWords) return null
             titleTokens.add(token.value)
@@ -245,9 +229,8 @@ object EmojiMatcher {
             }
         }
 
-        // Multi-token keywords: run the precompiled regex only when the keyword's
-        // leading token is present — a `\b lead …\b` match is impossible otherwise,
-        // so the common no-match title skips every regex scan.
+        // Multi-token keywords: run the regex only when the keyword's lead token is present,
+        // since it can't match otherwise.
         for (matcher in multiTokenKeywords) {
             if (matcher.lead !in titleTokens) continue
             val match = matcher.regex.find(lowerTitle) ?: continue
@@ -261,11 +244,10 @@ object EmojiMatcher {
     private val winnerOrder = compareBy<Candidate>({ -it.entry.priority }, { it.entry.ruleIndex })
 
     /**
-     * Picks the winning candidate. Specificity first: a match overlapped by a
-     * strictly longer match is dropped, so "eye doctor" shadows the "doctor" it
-     * contains. Among the survivors — none of which is a shorter piece of another —
-     * the higher-priority rule wins, and equal priorities break by declaration
-     * order. This leaves disjoint matches ("Christmas dinner") decided by priority.
+     * Picks the winning candidate. A match overlapped by a strictly longer match is dropped, so
+     * "eye doctor" shadows the "doctor" it contains. Among the rest, the higher-priority rule
+     * wins and equal priorities break by declaration order, so disjoint matches ("Christmas
+     * dinner") are decided by priority.
      */
     private fun electWinner(candidates: List<Candidate>): KeywordEntry? {
         if (candidates.size <= 1) return candidates.firstOrNull()?.entry
@@ -282,24 +264,20 @@ object EmojiMatcher {
         first <= other.last && other.first <= last
 
     /**
-     * True if the string contains an emoji code point. Detects only characters that
-     * render as an emoji — never ordinary text — so a title is left undecorated only
-     * when it genuinely already carries one. Two signals:
+     * Returns true if the string contains a character that renders as an emoji, so a title is
+     * left undecorated only when it already carries one. Two signals:
      *  - a code point with default emoji presentation (Unicode Emoji_Presentation), or
-     *  - any character followed by U+FE0F, the emoji variation selector, which forces
-     *    emoji rendering of an otherwise text-default symbol (✈️, ⛷️, ❤️, and an
-     *    explicitly-styled ™️).
-     * A *bare* text symbol that merely has an emoji form (™, ✓, ➡, ↔ without FE0F)
-     * renders as text and is deliberately not treated as an emoji, so titles like
-     * "Zoom™ standup" still decorate. CJK ideographs, Kana, and accented Latin are
-     * text and never match.
+     *  - U+FE0F, the emoji variation selector, which forces emoji rendering of a text-default
+     *    symbol (✈️, ⛷️, ❤️, and a styled ™️).
+     * A bare text symbol that has an emoji form (™, ✓, ➡, ↔ without FE0F) renders as text and
+     * is deliberately not an emoji, so "Zoom™ standup" still decorates. CJK ideographs, Kana
+     * and accented Latin never match.
      */
     private fun String.containsEmoji(): Boolean {
         var i = 0
         while (i < length) {
             val cp = codePointAt(i)
-            // U+FE0F only ever trails an emoji base; its presence anywhere in the
-            // string is a reliable "this was styled as emoji" signal.
+            // U+FE0F anywhere in the string means a character was styled as emoji.
             if (cp == 0xFE0F || cp.isEmojiCodePoint()) return true
             i += Character.charCount(cp)
         }
@@ -307,12 +285,10 @@ object EmojiMatcher {
     }
 
     /**
-     * True only for code points Unicode assigns default emoji presentation
-     * (Emoji_Presentation=Yes) — the ones that render as emoji with no variation
-     * selector. Text-default symbols (™, ✓, arrows, ↔) are excluded; they reach
-     * emoji rendering only via the trailing U+FE0F handled in [containsEmoji].
-     * The keyword table's own ✈️/⛷️ are text-default and match through that FE0F
-     * path, not here.
+     * Returns true only for code points with default emoji presentation (Emoji_Presentation=Yes),
+     * which render as emoji with no variation selector. Text-default symbols (™, ✓, arrows, ↔)
+     * are excluded; they render as emoji only with the U+FE0F that [containsEmoji] checks. The
+     * keyword table's own ✈️ and ⛷️ are text-default and match through that FE0F check.
      */
     private fun Int.isEmojiCodePoint(): Boolean = when (this) {
         in 0x1F000..0x1FAFF -> true                          // pictographs, transport, symbols
@@ -331,11 +307,8 @@ object EmojiMatcher {
     }
 
     /**
-     * Formats a title with emoji prefix if a match is found.
-     *
-     * @param title The event title
-     * @param showEmoji Whether to prepend emoji (user preference)
-     * @return Title with emoji prefix (e.g., "☕ Coffee with Sarah") or original title
+     * Returns [title] with its emoji and a space prepended ("☕ Coffee with Sarah"), or [title]
+     * unchanged when [showEmoji] (the user preference) is off or [getEmoji] finds none.
      */
     fun formatWithEmoji(title: String, showEmoji: Boolean): String {
         if (!showEmoji) return title
@@ -344,9 +317,9 @@ object EmojiMatcher {
     }
 
     /**
-     * Every (keyword, emoji) pair in the rule table, in declaration order.
-     * Exposed so tests can assert every keyword resolves to its own emoji in
-     * isolation — a guard against a keyword being shadowed by another rule.
+     * Returns every (keyword, emoji) pair in the rule table, in declaration order, so
+     * `EmojiMatcherTest` can check that each keyword alone resolves to its own emoji and no rule
+     * shadows it.
      */
     internal fun keywordEmojiPairs(): List<Pair<String, String>> =
         allKeywords.map { it.keyword to it.emoji }

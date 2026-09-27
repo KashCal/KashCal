@@ -19,12 +19,13 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Integration test for Baikal CalDAV server workflows.
+ * Runs discovery, create and fetch, a recurring event with an exception, and a sync-token read
+ * against a live Baikal server.
  *
- * Baikal is a popular self-hosted CalDAV/CardDAV server built on SabreDAV.
- * It uses /dav.php/ as the WebDAV endpoint.
+ * Baikal is a self-hosted CalDAV/CardDAV server built on SabreDAV, with its WebDAV endpoint
+ * at /dav.php/.
  *
- * Run: ./gradlew testDebugUnitTest --tests "*BaikalCalDavIntegrationTest*"
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*BaikalCalDavIntegrationTest*"
  *
  * Prerequisites:
  * - Baikal server running at localhost:8081
@@ -65,7 +66,7 @@ class BaikalCalDavIntegrationTest {
         val quirks = DefaultQuirks(baseServerUrl)
         clientFactory = OkHttpCalDavClientFactory()
 
-        // Create client using factory pattern (replaces setCredentials)
+        // The client carries its credentials from creation
         if (username != null && password != null) {
             val credentials = Credentials(
                 username = username!!,
@@ -74,7 +75,7 @@ class BaikalCalDavIntegrationTest {
             )
             client = clientFactory.createClient(credentials, quirks)
         } else {
-            // Create a dummy client for cases where credentials aren't available
+            // Placeholder client when credentials are missing; the tests then skip
             val dummyCredentials = Credentials(
                 username = "dummy",
                 password = "dummy",
@@ -240,7 +241,7 @@ END:VCALENDAR
 
         println("Created event on Baikal: $url (etag: $etag)")
 
-        // Verify by fetching
+        // Fetch it back
         val fetchResult = client.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch event" }
 

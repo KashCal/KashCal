@@ -10,20 +10,16 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for the pure device-attendee write helpers:
- * [computeAttendeeDiff] (add/remove delta keyed on canonical email) and the
- * owner/guest [android.content.ContentValues] builders.
+ * Tests the device-attendee write helpers: [computeAttendeeDiff], the owner and guest
+ * [android.content.ContentValues] builders, [isValidOrganizerEmail], [guestsExcludingOwner] and
+ * [ownerRowNeeded].
  *
- * The diff is what makes an edit non-destructive: a guest the user didn't
- * touch keeps its provider row (and therefore its pulled-down ATTENDEE_STATUS)
- * because it appears in neither the insert nor the delete set. A
- * delete-all-reinsert would wipe every guest's synced response on an unrelated
- * edit.
+ * The diff keeps an edit non-destructive: a guest the user didn't touch is in neither the insert
+ * nor the delete set, so its provider row and its synced ATTENDEE_STATUS survive. A delete-all
+ * and re-insert would wipe every guest's response on an unrelated edit.
  *
- * Robolectric is required because the helpers reference
- * `CalendarContract.Attendees.*` constants (RELATIONSHIP_*, ATTENDEE_STATUS_*,
- * TYPE_*), which are stubbed to 0 under plain JVM — the assertions would be
- * vacuous otherwise.
+ * Robolectric is required for the builders: plain-JVM `ContentValues` is a stub whose getters
+ * return null, so their assertions couldn't pass.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -63,7 +59,7 @@ class ComputeAttendeeDiffTest {
 
     @Test
     fun `add and remove together touches only the deltas`() {
-        // A, B present; remove A, add C, leave B → delete A, insert C, B untouched.
+        // A and B present; remove A, add C, keep B: delete A, insert C, B untouched.
         val existing = listOf(guest(1L, "a@example.com"), guest(2L, "b@example.com"))
         val desired = listOf(guest(0L, "b@example.com"), guest(0L, "c@example.com"))
 
@@ -96,7 +92,7 @@ class ComputeAttendeeDiffTest {
 
     @Test
     fun `diff is keyed on canonical email so casing and mailto prefix match`() {
-        // Same person, different casing / mailto prefix → unchanged, no churn.
+        // Same person with different casing and a mailto prefix: unchanged, no churn.
         val existing = listOf(guest(1L, "Alice@Example.com"))
         val desired = listOf(guest(0L, "mailto:alice@example.com"))
 
@@ -108,8 +104,8 @@ class ComputeAttendeeDiffTest {
 
     @Test
     fun `organizer row is never a delete candidate`() {
-        // The owner/organizer row must survive a guest edit even when it isn't
-        // in the desired guest set (the desired set is guests, not the owner).
+        // The organizer row survives a guest edit though it isn't in the desired set, which
+        // holds guests only.
         val existing = listOf(
             guest(1L, "owner@example.com", relationship = Attendees.RELATIONSHIP_ORGANIZER, status = Attendees.ATTENDEE_STATUS_ACCEPTED),
             guest(2L, "a@example.com"),
@@ -177,8 +173,8 @@ class ComputeAttendeeDiffTest {
 
     @Test
     fun `machine-generated group address is not a valid organizer`() {
-        // Google group calendars carry an @group.calendar.google.com OWNER_ACCOUNT;
-        // writing it as ORGANIZER is meaningless, so isValidOrganizerEmail rejects it.
+        // A shared group calendar's OWNER_ACCOUNT can be a machine-generated group address;
+        // it means nothing as ORGANIZER, so it's rejected.
         assertFalse(isValidOrganizerEmail("abc123@group.calendar.google.com"))
     }
 
@@ -219,8 +215,8 @@ class ComputeAttendeeDiffTest {
 
     @Test
     fun `machine-address owner does not strip a matching guest`() {
-        // No owner row is written for a machine address, so a guest that happens
-        // to equal it must NOT be silently dropped — there's no duplicate to avoid.
+        // No owner row is written for a machine address, so a guest equal to it must not be
+        // silently dropped: there's no duplicate to avoid.
         val guests = listOf(
             guest(0L, "shared@group.calendar.google.com"),
             guest(0L, "alice@example.com"),
@@ -247,7 +243,7 @@ class ComputeAttendeeDiffTest {
 
     @Test
     fun `owner row is not needed when an organizer row already exists`() {
-        // On update: the event already carries the owner as ORGANIZER — don't add a second.
+        // On update the event already has the owner as ORGANIZER, so no second one is added.
         val existing = listOf(
             guest(1L, "owner@example.com", relationship = Attendees.RELATIONSHIP_ORGANIZER, status = Attendees.ATTENDEE_STATUS_ACCEPTED),
             guest(2L, "alice@example.com"),
@@ -264,7 +260,7 @@ class ComputeAttendeeDiffTest {
 
     @Test
     fun `owner row is needed on update when guests appear but no organizer row exists`() {
-        // Previously-solo event (no attendee rows) gains a guest → owner row must be added.
+        // A solo event (no attendee rows) gaining a guest must get an owner row.
         val existing = emptyList<DeviceAttendee>()
         val desired = listOf(guest(0L, "alice@example.com"))
         assertTrue(ownerRowNeeded(existing = existing, desired = desired, ownerEmail = "owner@example.com"))

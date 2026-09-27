@@ -114,26 +114,22 @@ import kotlin.math.abs
 
 private const val TAG = "WeekViewContent"
 
-// Test tags for headless layout verification that the all-day strip does not
-// occlude the timed grid's earliest hours.
+// Test tags `AllDayStripOcclusionTest` uses to check that the all-day strip doesn't cover the
+// timed grid's earliest hours.
 internal const val TEST_TAG_ALL_DAY_STRIP = "allDayStrip"
 internal const val TEST_TAG_FIRST_TIME_LABEL = "firstTimeLabel"
 
 /**
- * Main container for the week view with infinite day pager.
+ * Shows the day, 3-day and week time grids over a pseudo-infinite pager.
  *
- * Architecture:
- * - Uses pseudo-infinite pager (Int.MAX_VALUE pages) where each page = 1 day
- * - CENTER_DAY_PAGE corresponds to today
- * - Headers scroll WITH content (like monthly view) for smooth, non-jarring scrolling
- * - Debounced event loading in ViewModel
+ * With [visibleDays] 1 or 3, each page is one day and [WeekViewUtils.CENTER_DAY_PAGE] is today;
+ * with 7, each page is one week starting on [firstDayOfWeek] and
+ * [WeekViewUtils.CENTER_WEEK_PAGE] is the current week. The settled page goes to
+ * [onPageChanged].
  *
- * Each page contains:
- * - Day header (Mon 6, Tue 7, etc.)
- * - All-day events (1 item + "+N more" with bottom picker)
- * - Early overflow events (before 6am) with contrast background
- * - Time grid with timed events
- * - Late overflow events (after 11pm) with contrast background
+ * Top to bottom: day headers (not in Day view), the all-day strip, then the 24-hour grid. The
+ * headers and the strip sit above the pager and follow its current page. A "+N" badge opens
+ * [OverlapListSheet].
  */
 @Composable
 fun WeekViewContent(
@@ -150,8 +146,8 @@ fun WeekViewContent(
     visibleDays: Int = 3,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
     /**
-     * Localized prefix for the week-number label ("W") shown in the header corner,
-     * left of the day strip. Only rendered in the full 7-day week view; blank hides it.
+     * Localized prefix for the week-number label ("W") in the header corner, left of the day
+     * headers. Shown only in the 7-day week view; blank hides it.
      */
     weekLabelPrefix: String = "",
     allDayRowsExpanded: Boolean = false,
@@ -165,20 +161,20 @@ fun WeekViewContent(
     pendingNavigateToPage: Int? = null,
     onNavigationConsumed: () -> Unit = {},
     onReschedule: (DisplayEvent, LocalDate, Int) -> Unit = { _, _, _ -> },
-    /** Tap on a day column header — drills into Day view for that date. */
+    /** Called with the date of a tapped day header. */
     onDayHeaderClick: (LocalDate) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    // Grid time range: full 24h for both views
+    // The grid covers the full 24 hours in every view.
     val startHour = WeekViewUtils.START_HOUR
     val endHour = WeekViewUtils.END_HOUR
     val totalHours = WeekViewUtils.TOTAL_HOURS
 
-    // DAY view (visibleDays=1) raises the side-by-side cap to 5 since each event has the full
-    // viewport width available; multi-day views stay at the default 2 to keep columns readable.
+    // Day view (visibleDays = 1) raises the side-by-side cap to 5 since events get the full
+    // width; multi-day views keep the default 2 so columns stay readable.
     val maxVisibleOverlap = if (visibleDays == 1) 5 else WeekViewUtils.MAX_VISIBLE_OVERLAP
 
-    // Pager: day-based (DAY/THREE_DAYS) or week-based (WEEK)
+    // One page per day (Day, 3-day) or per week (Week).
     val pagerState = if (visibleDays == 7) {
         rememberPagerState(
             initialPage = WeekViewUtils.CENTER_WEEK_PAGE,
@@ -191,21 +187,20 @@ fun WeekViewContent(
         )
     }
 
-    // Track pager position changes - use settledPage for debounced loading
+    // Report the settled page only, so a swipe in progress doesn't trigger loads.
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.settledPage }
-            .distinctUntilChanged()  // Prevent duplicate emissions
+            .distinctUntilChanged()
             .collect { page ->
                 Log.d(TAG, "Pager settled on page $page")
                 onPageChanged(page)
             }
     }
 
-    // Handle programmatic navigation (from Today button, date picker)
-    // Wait for any ongoing gesture to complete before animating
+    // Programmatic navigation, for example the Today button or the date picker.
     LaunchedEffect(pendingNavigateToPage) {
         pendingNavigateToPage?.let { targetPage ->
-            // Wait for user gesture to complete (prevents racing with user scroll)
+            // Wait for any user scroll to finish so the animation doesn't race it.
             snapshotFlow { pagerState.isScrollInProgress }
                 .filter { !it }
                 .first()
@@ -225,22 +220,20 @@ fun WeekViewContent(
     )
     val scrollState = rememberScrollState(initial = initialScrollPx)
 
-    // Group events by date (LocalDate key)
     val timedEventsByDate = remember(timedEvents) {
         groupEventsByDate(timedEvents.toList())
     }
 
     val allDayEventsList = remember(allDayEvents) { allDayEvents.toList() }
 
-    // All timed events go directly to the grid (full 24h range, no overflow separation)
+    // Every timed event goes to the grid, which covers the full 24 hours.
     val normalEventsByDate = timedEventsByDate
 
-    // State for overflow sheet
+    // Events of the tapped "+N" badge; non-null shows OverlapListSheet.
     var overflowEvents by remember { mutableStateOf<List<DisplayEvent>?>(null) }
 
-    // Main content — always render the grid immediately so the structure
-    // (time labels, grid lines, headers) appears without a spinner flash.
-    // Events populate when the Flow emits. Empty columns are fine during load.
+    // Render the grid at once, while loading too, so time labels, grid lines and headers
+    // appear without a spinner flash; events fill in when the Flow emits.
     when {
         error != null -> {
             Box(
@@ -257,7 +250,6 @@ fun WeekViewContent(
             }
         }
         else -> {
-            // Time grid with unified day columns (headers inside pager)
             UnifiedTimeGrid(
                 pagerState = pagerState,
                 normalEventsByDate = normalEventsByDate,
@@ -288,7 +280,6 @@ fun WeekViewContent(
         }
     }
 
-    // Overflow sheet
     overflowEvents?.let { events ->
         OverlapListSheet(
             events = events,
@@ -301,8 +292,10 @@ fun WeekViewContent(
 }
 
 /**
- * Unified time grid where each page contains header + all sections.
- * This creates smooth scrolling (like monthly view) because headers move with content.
+ * Lays out the day headers, the all-day strip and the scrolling time grid.
+ *
+ * The grid handles pinch-zoom of the hour height, long-press drag to reschedule
+ * ([onReschedule] on release), edge auto-scroll while dragging, and the current-time line.
  */
 @Composable
 private fun UnifiedTimeGrid(
@@ -371,48 +364,44 @@ private fun UnifiedTimeGrid(
         }
     }
 
-    // Density / hour-height are needed both here (to persist scroll as clock minutes) and
-    // by the grid body below. rememberUpdatedState lets the debounced collectors read the
-    // live hour-height without restarting on every pinch-zoom.
+    // rememberUpdatedState lets the scroll-minutes collector, the pinch gesture and the drag
+    // callbacks read the live hour height without restarting on every pinch-zoom.
     val density = LocalDensity.current
     val hourHeightPx = with(density) { hourHeight.toPx() }
     val currentHourHeight by rememberUpdatedState(hourHeight)
     val currentHourHeightPx by rememberUpdatedState(hourHeightPx)
 
-    // Track scroll position changes - debounced to prevent per-pixel state updates
+    // Report the scroll position, debounced so scrolling doesn't update state every pixel.
     LaunchedEffect(scrollState) {
         @OptIn(FlowPreview::class)
         snapshotFlow { scrollState.value }
-            .debounce(100)  // 100ms debounce prevents recomposition storms
+            .debounce(100)
             .collect { position ->
                 onScrollPositionChange(position)
             }
     }
 
-    // Persist the scroll position as clock minutes for cross-restart restore. Longer debounce
-    // than the in-memory pixel path above so active scrolling doesn't hammer DataStore — only
-    // the settled position matters for restore. Uses the live hour-height so a pinch-zoom
-    // before settling still records the correct clock time.
+    // Report the scroll position as clock minutes, restored after a restart. The longer
+    // debounce keeps active scrolling from hammering DataStore; only the settled position
+    // matters. The live hour height keeps the minutes right after a pinch-zoom.
     LaunchedEffect(scrollState) {
         @OptIn(FlowPreview::class)
         snapshotFlow { scrollState.value }
             .debounce(1000)
             .map { position -> WeekViewUtils.pixelsToMinutesOfDay(position.toFloat(), currentHourHeightPx) }
-            .distinctUntilChanged()  // don't re-persist when the settled clock-minute is unchanged
+            .distinctUntilChanged()
             .collect { minutes -> onScrollMinutesChange(minutes) }
     }
 
-    // Recenter the grid after a pinch-zoom. The gesture changes the hour-row height (which
-    // grows/shrinks the scrollable content) and records the scroll offset that keeps the
-    // clock time under the viewport center fixed. We wait for the grid to re-measure to its
-    // new height before scrolling, otherwise scrollTo() clamps the target against the stale
-    // pre-zoom max — stranding the recenter short and sliding the current-time line and every
-    // event off their correct time when zooming in.
+    // Recenter the grid after a pinch-zoom. The gesture changes the hour height and records
+    // the scroll offset that keeps the clock time under the viewport center fixed. Scrolling
+    // before the grid re-measures would clamp against the pre-zoom max, leaving the recenter
+    // short and sliding the current-time line and every event off their time when zooming in.
     LaunchedEffect(pendingZoomScrollPx) {
         val target = pendingZoomScrollPx ?: return@LaunchedEffect
-        // Wait for the grid to grow to the target before scrolling; bounded so a rounding
-        // mismatch between our target and the measured max can never suspend forever. By
-        // the timeout the re-measure has long since landed, so scrollTo() clamps correctly.
+        // Wait for the grid to grow to the target. The timeout stops a rounding mismatch
+        // between the target and the measured max from suspending forever; by then the
+        // re-measure has landed, so scrollTo() clamps against the new max.
         withTimeoutOrNull(250) {
             snapshotFlow { scrollState.maxValue }.first { it.toFloat() >= target - 1f }
         }
@@ -420,7 +409,8 @@ private fun UnifiedTimeGrid(
         pendingZoomScrollPx = null
     }
 
-    // Derive visible dates once — shared by headers, all-day, overflow, and time indicator.
+    // The current page's dates, shared by the headers, the week label, the all-day strip and
+    // drag targeting.
     val visibleDates by remember(visibleDays, firstDayOfWeek) {
         derivedStateOf {
             if (visibleDays == 7) {
@@ -434,13 +424,13 @@ private fun UnifiedTimeGrid(
     }
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Per-column day headers — skipped in Day view since the screen-level
-        // header already labels the single day.
+        // Day headers, skipped in Day view since the screen-level header already labels the
+        // single day.
         if (visibleDays > 1) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                // Header corner (left of the day strip). In the 7-day week view it
-                // carries the week-number label so the top bar can stay uncrowded;
-                // otherwise it's the blank spacer above the all-day gutter.
+                // Header corner, left of the day headers. In the 7-day week view it carries
+                // the week-number label so the top bar stays uncrowded; otherwise it's the
+                // blank spacer above the all-day gutter.
                 Box(
                     modifier = Modifier.width(timeColumnWidth),
                     contentAlignment = Alignment.Center
@@ -477,9 +467,8 @@ private fun UnifiedTimeGrid(
             }
         }
 
-        // All-day strip sits above the timed grid as its own row: it reserves
-        // its height so the grid starts below it and the earliest hours
-        // (midnight onward) are never hidden behind it.
+        // The all-day strip is its own row above the timed grid, so the grid starts below it
+        // and the earliest hours are never hidden behind it.
         AllDayEventsPagerRow(
             visibleDates = visibleDates,
             allDayEvents = allDayEvents,
@@ -492,11 +481,9 @@ private fun UnifiedTimeGrid(
             onOverflowClick = onOverflowClick
         )
 
-        // Main time grid area (density / hour-height hoisted above the scroll
-        // collectors).
         Box(modifier = Modifier.weight(1f)) {
             Row(modifier = Modifier.fillMaxSize()) {
-                // Time labels column (fixed)
+                // Hour labels, scrolling vertically with the grid but not paging.
                 Column(
                     modifier = Modifier
                         .width(timeColumnWidth)
@@ -517,7 +504,6 @@ private fun UnifiedTimeGrid(
                     }
                 }
 
-                // Day columns area
                 BoxWithConstraints(modifier = Modifier.weight(1f)) {
                     val columnWidth = this.maxWidth / visibleDays
                     val localViewportHeight = with(density) { this@BoxWithConstraints.maxHeight.toPx() }
@@ -533,15 +519,13 @@ private fun UnifiedTimeGrid(
                                 awaitEachGesture {
                                     awaitFirstDown(requireUnconsumed = false, pass = pass)
                                     var pastSlop = false
-                                    // Track the scroll offset and hour-height this gesture is
-                                    // steering toward. The applied hour-height (currentHourHeightPx)
-                                    // and the scroll offset (scrollState.value) each settle a frame
-                                    // apart from a pinch — reading the live values mid-gesture pairs
-                                    // a fresh height with a stale scroll and drifts the center. These
-                                    // locals advance together every frame so the center math stays
-                                    // self-consistent regardless of recomposition timing.
-                                    // Seed from a still-settling recenter if one exists, so a rapid
-                                    // re-pinch doesn't anchor to a scroll offset that hasn't landed.
+                                    // The scroll offset and hour height this gesture steers
+                                    // toward. The applied height (currentHourHeightPx) and
+                                    // scrollState.value settle a frame apart, so reading them
+                                    // mid-gesture pairs a new height with an old scroll and
+                                    // drifts the center. These locals advance together every
+                                    // frame. Seed from a still-settling recenter so a quick
+                                    // re-pinch doesn't anchor to an offset that hasn't landed.
                                     var zoomScrollPx = pendingZoomScrollPx ?: scrollState.value.toFloat()
                                     var zoomHourHeightPx = currentHourHeightPx
                                     do {
@@ -575,18 +559,19 @@ private fun UnifiedTimeGrid(
                                                 onHourHeightChange(newHourHeightPx / density.density)
                                                 zoomScrollPx = recenter
                                                 zoomHourHeightPx = newHourHeightPx
-                                                // Move toward the target this frame for continuity.
-                                                // This is self-clamped to the not-yet-grown range, so
-                                                // it lands short when zooming in; the recentring effect
-                                                // snaps to the exact target once the grid re-measures.
+                                                // Move toward the target this frame. The delta is
+                                                // clamped to the not-yet-grown range, so it lands
+                                                // short when zooming in; the recentring effect
+                                                // snaps to the target once the grid re-measures.
                                                 scrollState.dispatchRawDelta(recenter - scrollState.value.toFloat())
                                                 pendingZoomScrollPx = recenter
                                             }
                                         } else if (abs(pan.y) > 0.5f) {
                                             scrollState.dispatchRawDelta(-pan.y)
-                                            // Advance the tracked offset by the pan (not the possibly
-                                            // not-yet-applied scrollState.value), and fold it into any
-                                            // settling recenter so the deferred scrollTo keeps the pan.
+                                            // Advance the tracked offset by the pan, not by
+                                            // scrollState.value, which may not have applied yet,
+                                            // and fold it into a settling recenter so the
+                                            // deferred scrollTo keeps the pan.
                                             zoomScrollPx = (zoomScrollPx - pan.y).coerceAtLeast(0f)
                                             pendingZoomScrollPx?.let {
                                                 pendingZoomScrollPx = (it - pan.y).coerceAtLeast(0f)
@@ -602,7 +587,6 @@ private fun UnifiedTimeGrid(
                                 .fillMaxWidth()
                                 .height(totalHeight)
                         ) {
-                            // Grid lines
                             GridLines(
                                 hourHeight = hourHeight,
                                 totalHours = totalHours
@@ -624,7 +608,7 @@ private fun UnifiedTimeGrid(
                             }
 
                             if (visibleDays == 7) {
-                                // Week mode: 1 page = 1 week (Row of 7 DayColumns)
+                                // Week mode: one page is a week, a Row of 7 DayColumns.
                                 HorizontalPager(
                                     state = pagerState,
                                     modifier = Modifier.fillMaxSize(),
@@ -701,7 +685,6 @@ private fun UnifiedTimeGrid(
                                     }
                                 }
 
-                                // Current time indicator (week mode)
                                 val weekStart = remember {
                                     derivedStateOf {
                                         WeekViewUtils.weekPageToStartDate(pagerState.currentPage, firstDayOfWeek)
@@ -720,7 +703,7 @@ private fun UnifiedTimeGrid(
                                     columnWidth = columnWidth
                                 )
                             } else {
-                                // Day-pager mode: 1 page = 1 day, PageSize.Fixed (used by DAY and THREE_DAYS)
+                                // Day and 3-day mode: one page is one day, one column wide.
                                 HorizontalPager(
                                     state = pagerState,
                                     modifier = Modifier.fillMaxSize(),
@@ -793,7 +776,6 @@ private fun UnifiedTimeGrid(
                                     )
                                 }
 
-                                // Current time indicator (day-pager mode: DAY/THREE_DAYS)
                                 CurrentTimeIndicator(
                                     hourHeight = hourHeight,
                                     visibleDays = visibleDays,
@@ -875,9 +857,7 @@ private fun UnifiedTimeGrid(
     }
 }
 
-/**
- * Single day header cell (Mon 6, Tue 7, etc.)
- */
+/** Shows one day header: "Mon 6", or in [compact] mode a stacked narrow day name and number. */
 @Composable
 private fun DayHeaderCell(
     date: LocalDate,
@@ -889,7 +869,7 @@ private fun DayHeaderCell(
 ) {
     val dayName = remember(date, compact) {
         if (compact) {
-            // Single letter: M, T, W, T, F, S, S
+            // Narrow day name, for example M, T, W in English.
             date.format(DateTimeFormatter.ofPattern("EEEEE", Locale.getDefault()))
         } else {
             date.format(DateTimeFormatter.ofPattern("EEE", Locale.getDefault()))
@@ -903,11 +883,11 @@ private fun DayHeaderCell(
     }
 
     if (compact) {
-        // Compact vertical layout for 7-day view: single letter + number stacked
+        // 7-day view: narrow day name above the number.
         Column(
             modifier = modifier
-                // Guarantee a 48dp tap target (WCAG / Material minimum): the
-                // stacked letter + number alone are shorter than that.
+                // 48dp minimum tap target (WCAG and Material); the stacked name and number
+                // are shorter.
                 .heightIn(min = 48.dp)
                 .clickable(role = Role.Button, onClick = onClick)
                 .padding(vertical = 4.dp),
@@ -915,10 +895,9 @@ private fun DayHeaderCell(
         ) {
             Text(
                 text = dayName,
-                // The 7-day columns are narrow, but a single letter + 1-2 digit
-                // number never fill them, so match the 3-day header's bodyMedium
-                // size for legibility. The cell is already pinned to a 48dp min
-                // height, so the larger text neither wraps nor grows the row.
+                // A narrow day name and a 1-2 digit number don't fill even a 7-day column,
+                // so use the 3-day header's bodyMedium for legibility. The 48dp minimum
+                // height means the larger text neither wraps nor grows the row.
                 style = MaterialTheme.typography.bodyMedium,
                 color = textColor,
                 textAlign = TextAlign.Center
@@ -947,10 +926,10 @@ private fun DayHeaderCell(
             }
         }
     } else {
-        // Standard horizontal layout for 3-day view: "Wed 11"
+        // 3-day view: "Wed 11" on one line.
         Row(
             modifier = modifier
-                // Guarantee a 48dp tap target (WCAG / Material minimum).
+                // 48dp minimum tap target (WCAG and Material).
                 .heightIn(min = 48.dp)
                 .clickable(role = Role.Button, onClick = onClick)
                 .padding(vertical = 8.dp),
@@ -992,15 +971,13 @@ private fun DayHeaderCell(
 }
 
 /**
- * All-day events row with pager synchronization.
+ * Shows the all-day strip for [visibleDates], or nothing when no visible day has an event.
  *
- * Collapsed (the default) shows at most one row per day; expanded fills up to
- * [WeekViewUtils.MAX_ALLDAY_ROWS_EXPANDED] rows adaptively. A day with events that
- * don't fit in its visible rows gets a "+N" badge overlaid on that column (see
- * [computeAllDayStripRender]) rather than a row of its own, so it's never lost even
- * when every row is taken by a spanning multi-day bar. A chevron on the fixed
- * "All day" label toggles the two states; it is hidden when no visible day has more
- * than one all-day event (nothing to expand).
+ * Collapsed (the default) shows [WeekViewUtils.MAX_ALLDAY_ROWS_COLLAPSED] row; expanded shows
+ * up to [WeekViewUtils.MAX_ALLDAY_ROWS_EXPANDED]. Events that don't fit a day's rows go behind
+ * a "+N" badge overlaid on that column ([computeAllDayStripRender]). Tapping the "All day" label
+ * toggles the two states; its chevron and the toggle show only when some visible day has more
+ * events than the collapsed row holds.
  */
 @Composable
 private fun AllDayEventsPagerRow(
@@ -1019,9 +996,8 @@ private fun AllDayEventsPagerRow(
         visibleDates.map { DayPagerUtils.localDateToDayCode(it) }
     }
 
-    // Per-day raw event counts (each multi-day event counts once per day it
-    // touches) — used only to decide chevron visibility and whether the strip
-    // renders at all, independent of how spans are actually laid out into rows.
+    // Per-day event counts, a multi-day event once per day it touches. They decide only whether
+    // the strip renders and whether it can toggle, not how spans are laid out.
     val perDayCounts = remember(visibleDayCodes, allDayEvents) {
         visibleDayCodes.map { dayCode ->
             allDayEvents.count { it.startDay <= dayCode && it.endDay >= dayCode }
@@ -1031,9 +1007,7 @@ private fun AllDayEventsPagerRow(
     val hasAnyEvents = perDayCounts.any { it > 0 }
     if (!hasAnyEvents) return
 
-    // Chevron visibility: is there any day with more than one all-day event to
-    // expand? Delegated to the unit-tested WeekViewUtils helper (single source of
-    // truth).
+    // Whether any day has more events than the collapsed row holds (`WeekViewUtilsTest`).
     val canToggle = remember(perDayCounts) {
         WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(perDayCounts)
     }
@@ -1047,10 +1021,6 @@ private fun AllDayEventsPagerRow(
     // Shared across every chip in the strip instead of one TextMeasurer per chip.
     val textMeasurer = rememberTextMeasurer()
 
-    // Spanning-bar render grid: multi-day events occupy one lane row across every
-    // column they cover (rendered once, not duplicated per day); each column's
-    // remaining rows fill with that day's own single-day events, with any
-    // remainder collapsed into a "+N" badge.
     val render = remember(visibleDayCodes, allDayEvents, maxRows) {
         computeAllDayStripRender(visibleDayCodes, allDayEvents, maxRows)
     }
@@ -1072,21 +1042,18 @@ private fun AllDayEventsPagerRow(
             .testTag(TEST_TAG_ALL_DAY_STRIP)
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            // Match the chevron's 300ms tween so the strip resize and the arrow
-            // rotation finish together on a toggle.
+            // Same 300ms tween as the chevron, so the resize and the rotation end together.
             .animateContentSize(animationSpec = tween(300))
             .padding(vertical = 4.dp)
     ) {
-        // Label column — the "All day" caption with, when there's something to
-        // expand, a chevron stacked beneath it. The column is only 48dp wide, so
-        // the chevron goes below the caption rather than beside it (which would
-        // overflow the width in English and longer locales).
+        // Label column: the "All day" caption, with the chevron below it when the strip can
+        // toggle. The column is 48dp wide, so a chevron beside the caption would overflow it in
+        // English and longer locales.
         Box(
             modifier = Modifier
                 .width(timeColumnWidth)
-                // When there's something to expand, the whole "All day" label toggles
-                // the strip; guarantee a 48dp tap target (WCAG / Material minimum),
-                // since the caption + chevron alone are shorter than that.
+                // When the strip can toggle, the whole label is the toggle, with a 48dp
+                // minimum tap target (WCAG and Material); the caption and chevron are shorter.
                 .then(
                     if (canToggle) {
                         Modifier
@@ -1103,11 +1070,10 @@ private fun AllDayEventsPagerRow(
                     text = stringResource(R.string.label_all_day),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    // The gutter is a fixed 48dp; longer translations ("Toute la
-                    // journée") would wrap to a second line and grow the strip out of
-                    // alignment with the day cells. Keep one line and shrink to fit,
-                    // down to a still-legible floor; only the longest few locales pass
-                    // that floor and ellipsize.
+                    // The gutter is a fixed 48dp; a longer translation ("Toute la journée")
+                    // would wrap and grow the strip out of line with the day cells. Keep one
+                    // line and shrink to fit, down to a still-legible floor; only the longest
+                    // few locales pass that floor and ellipsize.
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     autoSize = TextAutoSize.StepBased(
@@ -1129,24 +1095,17 @@ private fun AllDayEventsPagerRow(
             }
         }
 
-        // All-day events grid: one row per lane, one column per visible day (up
-        // to 7 in WEEK mode). A multi-day event occupies a single wide cell
-        // spanning every column it covers (rendered once, not duplicated per
-        // day); single-day events fill the remaining per-column slots. No
-        // HorizontalPager here to avoid gesture conflicts with the main time grid.
+        // One row per lane, one column per visible day. A bar is one wide chip across the
+        // columns it covers. No HorizontalPager here, so the strip has no gesture conflict with
+        // the time grid. The "+N" badges are an overlay (the second Row below) because a
+        // column's rows can all be bars, and a badge row could be squeezed out and silently
+        // drop events.
         //
-        // A "+N" badge is overlaid per column (see the second Row below) rather
-        // than claiming a grid row: a column can run out of free rows entirely
-        // (every row taken by a spanning bar), so a row-based badge slot could
-        // itself get squeezed out and silently drop events with no affordance.
-        // Only when a column actually overflows do we floor this box to the label's
-        // 48dp tap-target height, so the bottom-anchored badge overlay (which
-        // matchParentSize's this box) reaches the strip's real bottom instead of
-        // hugging short row content and stranding the badge mid-strip over a bar's
-        // end-time. It's a MINIMUM applied conditionally, never fillMaxHeight: the
-        // box still wraps its rows and never expands to the parent's full height, so
-        // it cannot starve the scrollable timed grid; and days with no overflow keep
-        // the strip tight to its content rather than always reserving 48dp.
+        // When a column overflows, this box gets the label's 48dp minimum height so the
+        // bottom-anchored overlay, which matchParentSize's this box, reaches the strip's bottom
+        // instead of sitting mid-strip over a bar's end time. It must stay a conditional
+        // minimum, never fillMaxHeight: filling would starve the scrolling time grid, and
+        // without overflow the strip stays tight to its rows.
         val hasOverflow = render.overflowByColumn.any { it != null }
         Box(
             modifier = Modifier.weight(1f)
@@ -1166,10 +1125,9 @@ private fun AllDayEventsPagerRow(
                                         onClick = { onEventClick(span.displayEvent) },
                                         textMeasurer = textMeasurer,
                                         showEventEmojis = showEventEmojis,
-                                        // The start/end time is only meaningful on the segment that
-                                        // actually contains that day — a leftFlush segment continues
-                                        // from before the visible window, and a rightFlush segment
-                                        // continues past the end of it.
+                                        // Show the start or end time only when that day is
+                                        // visible: a leftFlush bar starts before the window,
+                                        // a rightFlush bar ends after it.
                                         showStartTime = !span.displayEvent.isAllDay && !span.leftFlush,
                                         showEndTime = !span.displayEvent.isAllDay && !span.rightFlush,
                                         timePattern = timePattern,
@@ -1191,9 +1149,9 @@ private fun AllDayEventsPagerRow(
                                         onClick = { onEventClick(slot.event) },
                                         textMeasurer = textMeasurer,
                                         showEventEmojis = showEventEmojis,
-                                        // Only show the time when this cell is the event's actual
-                                        // start day (a multi-day event that spilled out of the
-                                        // spanning lanes is duplicated per day it touches).
+                                        // Start time only on the event's start day: a
+                                        // multi-day event without a lane has a cell on every
+                                        // day it touches.
                                         showStartTime = !slot.event.isAllDay && slot.event.startDay == visibleDayCodes[col],
                                         timePattern = timePattern,
                                         modifier = Modifier
@@ -1212,9 +1170,8 @@ private fun AllDayEventsPagerRow(
                 }
             }
 
-            // Overflow badges, one per column, overlaid at the bottom-end corner
-            // regardless of what that column's rows are showing (a bar, a cell
-            // event, or nothing at all).
+            // Overflow badges, one per column, at the bottom-end corner whatever the column's
+            // rows show.
             Row(modifier = Modifier.matchParentSize()) {
                 for (col in visibleDayCodes.indices) {
                     val overflow = render.overflowByColumn.getOrNull(col)
@@ -1225,10 +1182,8 @@ private fun AllDayEventsPagerRow(
                         contentAlignment = Alignment.BottomEnd
                     ) {
                         if (overflow != null) {
-                            // Compact "+N" badge (no "more" text) to fit the narrow
-                            // all-day columns. The glyph is small, so the clickable
-                            // Box carries a larger min size than the text would
-                            // occupy, giving a comfortable tap target.
+                            // "+N" without "more" to fit the narrow columns. The minimum
+                            // size makes the tap target larger than the small text.
                             Box(
                                 modifier = Modifier
                                     .padding(horizontal = 3.dp, vertical = 1.dp)
@@ -1255,7 +1210,8 @@ private fun AllDayEventsPagerRow(
 }
 
 /**
- * Compact event chip for all-day event rows.
+ * Shows one event of the all-day strip as a one-line chip: title, optional start time after it
+ * and optional end time at the right edge.
  */
 @Composable
 private fun CompactEventChip(
@@ -1293,9 +1249,8 @@ private fun CompactEventChip(
     } else {
         null
     }
-    // Shown at the bar's right cap (see the Spacer-pushed Text below), distinct from
-    // timeText's start time at the left — a bar with no end time reads ambiguously,
-    // e.g. "Sample event, 6:15am" alone doesn't say when it ends.
+    // End time at the bar's right edge, pushed there by the Spacer below. Without it,
+    // "Sample event, 6:15am" doesn't say when the event ends.
     val endTimeText = if (showEndTime) {
         WeekViewUtils.formatTime(displayEvent.endTs, timePattern)
     } else {
@@ -1316,11 +1271,9 @@ private fun CompactEventChip(
             .clickable(onClick = onClick)
             .padding(horizontal = 4.dp, vertical = 2.dp)
     ) {
-        // TextOverflow.Ellipsis can size its box to the full available width
-        // even though the painted glyphs stop short of it, which leaves a
-        // visible gap before sibling text placed right after. Truncating the
-        // title ourselves to the exact pixel budget avoids relying on that
-        // box-sizing behavior, so it sits flush against the time label.
+        // TextOverflow.Ellipsis can size its box to the full available width while the glyphs
+        // stop short, leaving a gap before the time label. Truncating the title here to the
+        // pixel budget keeps it flush against the label.
         val timeWidthPx = remember(timeText, titleStyle) {
             timeText?.let { measureWidthPx(textMeasurer, it, titleStyle) } ?: 0
         }
@@ -1332,9 +1285,8 @@ private fun CompactEventChip(
         val truncatedTitle = remember(displayText, availableTitleWidthPx, titleStyle) {
             truncateWithEllipsis(textMeasurer, displayText, titleStyle, availableTitleWidthPx)
         }
-        // When the chip is too narrow for the title at all, truncatedTitle is empty —
-        // drop timeText's leading ", " separator so the chip doesn't paint a dangling
-        // comma before the time with no title before it.
+        // When the chip has no room for the title, truncatedTitle is empty; drop the leading
+        // ", " so no comma dangles before the time.
         val displayTimeText = if (truncatedTitle.isEmpty()) timeText?.removePrefix(", ") else timeText
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -1374,10 +1326,11 @@ private fun measureWidthPx(measurer: TextMeasurer, text: String, style: TextStyl
     measurer.measure(text = text, style = style, maxLines = 1).size.width
 
 /**
- * Truncates [text] to fit within [maxWidthPx], appending an ellipsis if it
- * doesn't already fit. Measures with [measurer]/[style] directly instead of
- * using Text's built-in overflow handling, so the result's rendered width is
- * exact rather than settling for "some width no larger than the max".
+ * Truncates [text] to fit [maxWidthPx], with an ellipsis when it doesn't fit whole.
+ *
+ * Measures with [measurer] and [style] instead of Text's overflow handling, so the returned
+ * string's width is its rendered width. Returns "" when [maxWidthPx] is 0 or less and the
+ * ellipsis alone when nothing else fits; never splits a surrogate pair.
  */
 private fun truncateWithEllipsis(
     measurer: TextMeasurer,
@@ -1409,9 +1362,7 @@ private fun safeSubstring(text: String, length: Int): String = when {
     else -> text.substring(0, length)
 }
 
-/**
- * Time label for the time grid.
- */
+/** Shows one hour label of the time grid, aligned to the top of its hour. */
 @Composable
 private fun TimeLabel(
     hour: Int,
@@ -1434,9 +1385,7 @@ private fun TimeLabel(
     }
 }
 
-/**
- * Grid lines for the time grid.
- */
+/** Draws a line at the top of each hour of the time grid. */
 @Composable
 private fun GridLines(
     hourHeight: Dp,
@@ -1463,13 +1412,13 @@ private fun GridLines(
 }
 
 /**
- * Current time indicator positioned on today's column.
+ * Draws the current-time line and dot across today's column, updated each minute.
  *
- * @param hourHeight Height of one hour in the grid
- * @param visibleDays Number of visible day columns (3 or 7)
- * @param startHour First hour of the grid (6 for 3-day, 0 for week)
- * @param todayOffset Lambda returning today's column offset (0-based) from current page
- * @param columnWidth Width of one day column
+ * Draws nothing when today isn't visible or the time is outside the grid's hours.
+ *
+ * @param visibleDays number of visible day columns: 1, 3 or 7
+ * @param startHour first hour of the grid
+ * @param todayOffset returns today's 0-based column index from the current page
  */
 @Composable
 private fun CurrentTimeIndicator(
@@ -1482,7 +1431,7 @@ private fun CurrentTimeIndicator(
 ) {
     val endHour = WeekViewUtils.END_HOUR
 
-    // Update current time every minute
+    // Update at the start of each minute.
     var currentMinutes by remember { mutableStateOf(LocalTime.now().let { it.hour * 60 + it.minute }) }
 
     LaunchedEffect(Unit) {
@@ -1495,15 +1444,12 @@ private fun CurrentTimeIndicator(
         }
     }
 
-    // Only show if current time is in visible grid range
     val startMinutes = startHour * 60
     val endMinutes = endHour * 60
     if (currentMinutes < startMinutes || currentMinutes >= endMinutes) return
 
-    // Calculate today's visible position
     val todayVisibleOffset = todayOffset()
 
-    // Only show if today is in visible range
     if (todayVisibleOffset !in 0 until visibleDays) return
 
     val minutesFromStart = currentMinutes - startMinutes
@@ -1512,8 +1458,8 @@ private fun CurrentTimeIndicator(
     val xOffset = columnWidth * todayVisibleOffset
     val indicatorColor = MaterialTheme.colorScheme.error
 
-    // Density-independent sizing. The marker box is as tall as the dot and offset up by
-    // half its height so the line lands exactly on the current minute.
+    // The marker box is as tall as the dot and offset up by half its height so the line
+    // lands on the current minute.
     val lineThickness = 2.dp
     val dotRadius = 4.dp
     val markerHeight = dotRadius * 2
@@ -1544,11 +1490,11 @@ private fun CurrentTimeIndicator(
 // ==================== Helper Functions ====================
 
 /**
- * Group events by LocalDate.
+ * Groups events by date, listing a multi-day event under every day from its startDay to its
+ * endDay.
  *
- * Uses pre-calculated startDay/endDay from DisplayEvent which are already
- * UTC-aware for all-day events.
- * Expands multi-day events to appear on all days they span.
+ * Uses DisplayEvent's precomputed startDay and endDay, which already handle all-day events'
+ * UTC dates.
  */
 private fun groupEventsByDate(
     events: List<DisplayEvent>
@@ -1556,7 +1502,6 @@ private fun groupEventsByDate(
     val result = mutableMapOf<LocalDate, MutableList<DisplayEvent>>()
 
     for (displayEvent in events) {
-        // Expand multi-day events to all days they span
         var currentDay = displayEvent.startDay
         while (currentDay <= displayEvent.endDay) {
             val date = DayPagerUtils.dayCodeToLocalDate(currentDay)
@@ -1569,9 +1514,7 @@ private fun groupEventsByDate(
 }
 
 
-/**
- * Preview/placeholder version of week view for empty state.
- */
+/** Shows the no-events-this-week message. */
 @Composable
 fun EmptyWeekView(
     modifier: Modifier = Modifier

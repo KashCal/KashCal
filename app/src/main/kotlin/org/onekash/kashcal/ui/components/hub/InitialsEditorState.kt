@@ -7,22 +7,20 @@ import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.setValue
 
 /**
- * State holder for the hub's inline initials editor.
+ * Holds the state of the hub's inline initials editor.
  *
  * Transitions:
- * - [start] enters edit mode seeded with [current];
- * - [onType] applies [normalizeInitials] live, so the draft is always at most
- *   two uppercase letters and never contains stray input;
- * - [cancel] discards the draft and exits without changing [current];
- * - [save] exits and returns the normalized value for the caller to persist;
- * - [syncCurrent] refreshes [current] from the persisted value, but only when
- *   not editing, so an external re-emit can't clobber an in-progress draft.
+ * - [start] enters edit mode seeded with [current].
+ * - [onType] applies [normalizeInitials] live, so the draft only ever holds up to two
+ *   uppercased letters.
+ * - [cancel] discards the draft and exits without changing [current].
+ * - [save] exits and returns the normalized value for the caller to persist.
+ * - [syncCurrent] adopts the persisted value only when not editing, so an external re-emit
+ *   can't clobber an in-progress draft.
  *
- * Backed by Compose snapshot state so the editing composable recomposes, and
- * restorable via [Saver] so an in-progress edit survives configuration changes
- * (the enclosing `showHub` flag is itself saveable). It is otherwise a plain
- * class with no framework entry points, so its transitions are unit tested
- * directly.
+ * Snapshot state drives recomposition, and [Saver] keeps an in-progress edit across
+ * configuration changes (HomeScreen's `showHub` flag is saveable too). There are no framework
+ * entry points, so the transitions are unit tested directly.
  */
 class InitialsEditorState(
     current: String,
@@ -33,11 +31,11 @@ class InitialsEditorState(
     var isEditing: Boolean by mutableStateOf(isEditing)
         private set
 
-    /** The value the editor was opened with; what [cancel] reverts to. */
+    /** The committed value; [start] seeds the draft from it and [cancel] leaves it unchanged. */
     var current: String by mutableStateOf(current)
         private set
 
-    /** Live, normalized draft shown in the text field while editing. */
+    /** The normalized draft shown in the text field while editing. */
     var draft: String by mutableStateOf(draft)
         private set
 

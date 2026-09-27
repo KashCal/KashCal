@@ -14,7 +14,7 @@ object WeekdayRule : ParseRule {
 
             val targetDay = token.value as? DayOfWeek ?: continue
 
-            // Check for modifier (next/last) before the weekday
+            // A next, this or last keyword before the weekday.
             val modifier = findModifier(tokens, index, context)
 
             val date = when (modifier?.first) {
@@ -29,7 +29,7 @@ object WeekdayRule : ParseRule {
             context.consume(index)
             modifier?.let { context.consume(it.second) }
 
-            // Check for TO + WEEKDAY pattern for multi-day events
+            // "<weekday> to <weekday>" makes a multi-day event ending on the second weekday.
             val toIdx = context.findNextUnconsumed(tokens, index + 1)
             if (toIdx != null) {
                 val toToken = tokens[toIdx]
@@ -55,8 +55,8 @@ object WeekdayRule : ParseRule {
     }
 
     /**
-     * Look for NEXT/LAST keyword immediately before the weekday token.
-     * Returns the keyword value and its index, or null.
+     * Returns the unconsumed NEXT, THIS or LAST keyword right before the weekday and its index,
+     * or null.
      */
     private fun findModifier(tokens: List<Token>, weekdayIndex: Int, context: ParseContext): Pair<String, Int>? {
         if (weekdayIndex == 0) return null
@@ -73,27 +73,21 @@ object WeekdayRule : ParseRule {
         }
     }
 
-    /**
-     * "this [weekday]": next occurrence, but same-day returns today.
-     */
+    /** Resolves "this [weekday]": the next such day, or today if it is that day. */
     private fun resolveThisWeekday(refDate: LocalDate, target: DayOfWeek): LocalDate {
         val diff = target.value - refDate.dayOfWeek.value
         val daysToAdd = if (diff < 0) diff + 7 else diff
         return refDate.plusDays(daysToAdd.toLong())
     }
 
-    /**
-     * "next [weekday]": always at least 7 days out (the following week's occurrence).
-     */
+    /** Resolves "next [weekday]": the first such day at least 7 days out. */
     private fun resolveNextWeekday(refDate: LocalDate, target: DayOfWeek): LocalDate {
         val bare = resolveBareWeekday(refDate, target)
         val daysBetween = java.time.temporal.ChronoUnit.DAYS.between(refDate, bare)
         return if (daysBetween < 7) bare.plusDays(7) else bare
     }
 
-    /**
-     * "last [weekday]": the most recent past occurrence. If today is the same day, go back 7 days.
-     */
+    /** Resolves "last [weekday]": the most recent such day before today. */
     private fun resolveLastWeekday(refDate: LocalDate, target: DayOfWeek): LocalDate {
         val diff = refDate.dayOfWeek.value - target.value
         val daysToSubtract = if (diff <= 0) diff + 7 else diff

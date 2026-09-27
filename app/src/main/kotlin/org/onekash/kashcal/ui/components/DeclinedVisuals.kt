@@ -7,30 +7,28 @@ import androidx.compose.ui.text.style.TextDecoration
 import org.onekash.kashcal.R
 
 /**
- * Alpha for an event card given its de-emphasized state (past, declined, or
+ * Returns an event card's alpha for its de-emphasized state (past, declined or
  * cancelled).
  *
- * Floors at 0.5f when any flag is set: multiplying several 0.5fs would dim a
- * past-and-declined-and-cancelled event well below legibility.
+ * Any flag gives 0.5f and the flags don't compound: multiplying several 0.5fs
+ * would dim a past, declined and cancelled event well below legibility.
  */
 fun declinedCardAlpha(isPast: Boolean, isDeclined: Boolean, isCancelled: Boolean = false): Float =
     if (isPast || isDeclined || isCancelled) 0.5f else 1.0f
 
 /**
- * Title decoration for an event given its declined/cancelled state.
- *
- * Returns LineThrough when the event is declined by the user or the whole
- * event has been cancelled (STATUS:CANCELLED), null otherwise.
+ * Returns LineThrough for the title of an event the user declined or one that is
+ * cancelled (STATUS:CANCELLED), else null.
  */
 fun declinedTitleDecoration(isDeclined: Boolean, isCancelled: Boolean = false): TextDecoration? =
     if (isDeclined || isCancelled) TextDecoration.LineThrough else null
 
 /**
- * String resource for an event's de-emphasized state, or null when the event is
- * in its normal state. Returns the single most significant state — cancelled
- * outranks declined outranks past — to keep the screen-reader announcement short.
+ * Returns the string resource for an event's de-emphasized state, or null for a
+ * normal event. Only the most significant state is returned (cancelled, then
+ * declined, then past) to keep the screen-reader announcement short.
  *
- * Kept as a pure (non-composable) function so the precedence is unit-testable.
+ * Not composable, so the precedence is unit-testable.
  */
 @StringRes
 fun eventStateRes(
@@ -45,10 +43,10 @@ fun eventStateRes(
 }
 
 /**
- * Screen-reader state label for an event whose de-emphasized state is otherwise
- * conveyed only by dimming + strikethrough (which is silent to TalkBack). Meant
- * as a `stateDescription` on the merged event-card node, so the card announces
- * e.g. "Team Meeting, 10 AM, cancelled". Null when the event is normal.
+ * Returns the screen-reader state label for an event whose state is otherwise shown
+ * only by dimming and strikethrough, which TalkBack doesn't announce. Meant as the
+ * `stateDescription` of the merged event-card node, so the card announces e.g.
+ * "Team Meeting, 10 AM, cancelled". Null for a normal event.
  */
 @Composable
 fun eventStateDescription(

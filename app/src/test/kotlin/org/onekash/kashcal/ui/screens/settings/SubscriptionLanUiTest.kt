@@ -6,15 +6,14 @@ import org.junit.Test
 import org.onekash.kashcal.ui.permission.LocalNetworkPermissionState
 
 /**
- * Pure-logic tests for the add-subscription dialog's local-network UI decision,
- * which composes the shipped CalDAV helpers (isLanHost / shouldShowLanBanner /
- * shouldShowLanHintOnFailure) for the ICS "Add subscription" context.
+ * Tests [resolveSubscriptionLanUi], the add-subscription dialog's local-network banner and hint
+ * decision, built on the CalDAV helpers `isLanHost`, `shouldShowLanBanner` and
+ * `shouldShowLanHintOnFailure`.
  *
- * The reactive hint deliberately is NOT gated on isLanHost — a connection
- * failure while the permission is required-but-ungranted is itself the signal,
- * so a LAN server addressed by a bare hostname (which isLanHost can't classify)
- * still gets the Allow-access affordance. This mirrors CalDAV's
- * shouldShowLanHintOnFailure contract.
+ * The reactive hint is deliberately not gated on isLanHost: a connection failure while the
+ * permission is required but not granted is itself the signal, so a LAN server addressed by a
+ * bare hostname (which isLanHost can't classify) still gets the Allow-access affordance, as in
+ * CalDAV's shouldShowLanHintOnFailure contract.
  */
 class SubscriptionLanUiTest {
 
@@ -46,9 +45,9 @@ class SubscriptionLanUiTest {
         assertFalse(ui.appendLanHint)
     }
 
-    // A server-responded failure (HTTP error, empty body, non-calendar) proves the
-    // socket connected, so it must NOT arm the LAN signal even for a LAN-looking url
-    // while ungranted. Only a connection-level failure does.
+    // A server-responded failure (HTTP error, empty body, non-calendar) proves the socket
+    // connected, so it must not arm the LAN signal even for a LAN-looking url while ungranted.
+    // Only a connection-level failure does.
     @Test fun `non-connection failure does not arm banner or hint`() {
         val ui = resolveSubscriptionLanUi(
             url = lanUrl,
@@ -56,8 +55,8 @@ class SubscriptionLanUiTest {
             state = LocalNetworkPermissionState.NotRequested,
             bannerDismissed = false,
         )
-        // The literal LAN url still shows the proactive banner (that is url-driven,
-        // not failure-driven), but the reactive hint must stay off.
+        // The literal LAN url still shows the proactive banner (url-driven, not
+        // failure-driven), but the reactive hint must stay off.
         assertTrue("proactive banner is url-driven, unaffected", ui.showBanner)
         assertFalse("a server-responded failure must not append the LAN hint", ui.appendLanHint)
     }
@@ -73,8 +72,8 @@ class SubscriptionLanUiTest {
         assertFalse("no hint without a connection-level failure", ui.appendLanHint)
     }
 
-    // (c) Public/bare-host URL that FAILED while required-but-ungranted -> reactive
-    // banner + hint, proving the hint is NOT gated on isLanHost.
+    // (c) A public or bare-host URL that failed while required but not granted -> reactive
+    // banner and hint, showing the hint isn't gated on isLanHost.
     @Test fun `bare-host url failure while ungranted arms banner and hint`() {
         val ui = resolveSubscriptionLanUi(
             url = bareHostUrl,

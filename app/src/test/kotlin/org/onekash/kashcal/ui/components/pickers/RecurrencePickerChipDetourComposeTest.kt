@@ -19,17 +19,15 @@ import org.robolectric.annotation.Config
 import java.util.Locale
 
 /**
- * Robolectric mirror of the self-echo / chip-detour guard in [RecurrencePickerRow].
+ * Robolectric copies of two chip-detour cases for the self-echo guard in [RecurrencePickerRow].
  *
- * The guard (lastEmitted + LaunchedEffect discrimination) keeps a large inbound
- * INTERVAL alive across a Custom -> preset -> Custom chip detour by recognizing
- * the parent echoing our own emission and skipping the holder rebuild. That
- * behavior is exercised on-device by RecurrencePickerComposeTest, but those are
- * AndroidJUnit4 instrumentation tests that don't run in the PR-gated
- * testDebugUnitTest sweep. This class mirrors the two load-bearing cases under
- * Robolectric so a regression is caught pre-merge, not only on a device run.
+ * The guard (`lastEmitted` checked in a LaunchedEffect) keeps a large inbound INTERVAL across a
+ * Custom, preset, Custom chip detour: it recognizes the parent echoing the picker's own emission
+ * and skips rebuilding the selections. The instrumentation test `RecurrencePickerComposeTest`
+ * covers the same cases on a device, but it doesn't run in the PR-gated `testDebugUnitTest`
+ * sweep; this class does, so a regression fails before merge.
  *
- * Run the class in isolation given the repo's known multi-class native-crash flake.
+ * Run the class in isolation, since Robolectric runs of more than one class hit a native crash.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h9999dp-mdpi")
@@ -38,7 +36,7 @@ class RecurrencePickerChipDetourComposeTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    // Mon 2026-01-05 00:00 UTC — chip labels are locale-sensitive, so pin the locale.
+    // Sun 2025-01-05 00:00 UTC. Chip labels are locale-sensitive, so the locale is pinned.
     private val mondayJan5Millis = 1736035200000L
 
     private var originalLocale: Locale? = null
@@ -56,11 +54,10 @@ class RecurrencePickerChipDetourComposeTest {
 
     @Test
     fun chipDetour_preservesInterval200_throughWeeklyThenCustom() {
-        // The parent stores each emission verbatim into an observed state, so the
-        // picker actually recomposes with its own echo. Tapping Weekly emits a
-        // clean preset (interval=1); tapping Custom again must NOT reset the stored
-        // interval — the self-echo guard skips the holder rebuild, so INTERVAL=200
-        // survives. Without the guard the final emission drops to INTERVAL=1.
+        // The parent stores each emission verbatim in observed state, so the picker recomposes
+        // with its own echo. Tapping Weekly emits a preset (interval 1); tapping Custom again
+        // must not reset the stored interval: the self-echo guard skips the rebuild, so
+        // INTERVAL=200 survives. Without the guard the final emission drops to INTERVAL=1.
         var emitted: String? = "FREQ=WEEKLY;INTERVAL=200;BYDAY=MO"
         composeTestRule.setContent {
             MaterialTheme {
@@ -88,11 +85,10 @@ class RecurrencePickerChipDetourComposeTest {
 
     @Test
     fun chipDetour_losesInterval200_whenParentNormalizesEmittedRrule() {
-        // Contract guard: the self-echo comparison is byte-equality. A parent that
-        // normalizes on the way in (here, appends a trailing space) breaks that
-        // equality, fires the external-reset path, and — by design — loses the
-        // large interval. If a future change makes the comparison tolerant, this
-        // test fails, surfacing the behavior change at review time.
+        // The self-echo comparison is byte equality. A parent that normalizes the emission (here
+        // it appends a trailing space) breaks that equality, takes the external-reset path and,
+        // by design, loses the large interval. If the comparison becomes tolerant, this test
+        // fails so the behavior change is seen in review.
         var emitted: String? = "FREQ=WEEKLY;INTERVAL=200;BYDAY=MO"
         composeTestRule.setContent {
             MaterialTheme {

@@ -58,11 +58,20 @@ data class CalendarHours(
     val minutes: Long
 )
 
+/**
+ * Holds one day's timed minutes.
+ *
+ * [calendars] splits [minutes] by calendar: each entry is the calendar's
+ * [PeriodStats.calendarBreakdown] entry (same name and color) with that day's minutes, in
+ * calendarBreakdown order. For stats built by [InsightsRepository] the entries sum to [minutes]
+ * and none has 0 minutes.
+ */
 @Immutable
 data class DayHours(
     val dayCode: Int,
     val minutes: Long,
-    val isInMonth: Boolean = true
+    val isInMonth: Boolean = true,
+    val calendars: List<CalendarHours> = emptyList()
 )
 
 @Immutable

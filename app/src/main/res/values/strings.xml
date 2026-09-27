@@ -494,6 +494,8 @@
     <string name="caldav_error_unexpected">Unexpected error. Please try again.</string>
     <!-- Appended to a connection failure (arg %1$s is the underlying error) when local-network access may be blocked on Android 17+. -->
     <string name="caldav_error_with_lan_hint">%1$s\n\nIf this is a server on your local network, allow local network access to connect.</string>
+    <!-- Shown inline in sign-in, Discover calendars and password change when KashCal refused a connection: the server redirected to plain http on another host, an https account was pointed at plain http, or the server kept redirecting. The password was not sent. -->
+    <string name="caldav_error_connection_refused_insecure">The server redirected the connection somewhere KashCal won\'t follow (an unencrypted address, or a redirect loop), so KashCal stopped before sending your password. Check the server address.</string>
 
     <!-- Local-network permission banner in CalDAV sign-in (Android 17+) -->
     <string name="local_network_banner_title">Local network access needed</string>
@@ -1172,6 +1174,10 @@
     <string name="dialog_delete_recurring_title">Delete</string>
     <!-- Title shown above the recurring-scope sheet's two cards (drag-reschedule flow). One verb. -->
     <string name="dialog_move_recurring_title">Move</string>
+    <!-- Snackbar after an event is dragged to a new time and the change is saved. -->
+    <string name="snackbar_event_rescheduled">Event rescheduled</string>
+    <!-- Snackbar when dragging an event to a new time fails to save. -->
+    <string name="snackbar_reschedule_failed">Couldn\'t reschedule event</string>
     <string name="recurring_this_event">This event</string>
     <string name="recurring_all_events">All events</string>
 

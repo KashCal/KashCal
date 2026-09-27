@@ -5,6 +5,8 @@ import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.onekash.kashcal.BuildConfig
+import org.onekash.kashcal.network.DavTransportGuard
+import org.onekash.kashcal.network.installDavTransport
 import org.onekash.kashcal.sync.client.DigestAuthenticator
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
@@ -18,33 +20,27 @@ import okhttp3.Credentials as OkHttpCredentials
 import org.onekash.kashcal.sync.auth.Credentials as AccountCredentials
 
 /**
- * Factory for creating isolated [CardDavClient] instances — read path only.
+ * Creates [CardDavClient] instances, each with its own immutable credentials.
  *
- * Mirrors [org.onekash.kashcal.sync.client.CalDavClientFactory] in shape while
- * staying firewall-isolated (it borrows no CalDAV *client* symbol, only the
- * shared [DigestAuthenticator] and the generic account [AccountCredentials]).
- * Each created client bakes immutable credentials into its own
- * `OkHttpClient` interceptor chain, so concurrent multi-account contact sync
- * is race-free — the same rationale as the CalDAV factory.
+ * Mirrors [org.onekash.kashcal.sync.client.CalDavClientFactory] in shape but borrows no CalDAV
+ * client symbol, only the shared [DigestAuthenticator] and the generic [AccountCredentials]
+ * (`CardDavCalDavIsolationTest`). Each client bakes its credentials into its own `OkHttpClient`
+ * interceptor chain, so concurrent multi-account contact sync can't mix them up.
  */
 interface CardDavClientFactory {
     /**
-     * Create a new [CardDavClient] with immutable credentials.
-     *
-     * @param credentials the account credentials (username/password)
-     * @param quirks provider-specific CardDAV quirks
-     * @return a new client with credentials baked in
+     * Creates a client with [credentials] baked in, sent only on requests
+     * [DavTransportGuard.mayAttachCredentials] allows.
      */
     fun createClient(credentials: AccountCredentials, quirks: CardDavQuirks): CardDavClient
 }
 
 /**
- * OkHttp-based implementation of [CardDavClientFactory].
+ * Builds OkHttp-backed [CardDavClient]s.
  *
- * Shares base configuration (timeouts, connection pool) across clients but gives
- * each its own auth interceptor with immutable credentials. The construction
- * plumbing intentionally duplicates the CalDAV factory rather than extracting a
- * shared base — see the package-level isolation rationale.
+ * Clients share timeouts and a connection pool but each gets its own auth interceptor. The
+ * construction code duplicates the CalDAV factory on purpose; a shared base would couple the two
+ * stacks (`CardDavCalDavIsolationTest`).
  */
 @Singleton
 class OkHttpCardDavClientFactory @Inject constructor() : CardDavClientFactory {
@@ -85,25 +81,30 @@ class OkHttpCardDavClientFactory @Inject constructor() : CardDavClientFactory {
             .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .writeTimeout(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .followRedirects(true)
             .connectionPool(sharedConnectionPool)
             .addInterceptor(loggingInterceptor)
             .build()
     }
 
     override fun createClient(credentials: AccountCredentials, quirks: CardDavQuirks): CardDavClient {
+        // Plain http only for an account the user set up with http://; everything
+        // else is refused before it is sent, and Basic/Digest never go over it.
+        val allowCleartext = DavTransportGuard.allowsCleartext(credentials.serverUrl)
         val clientBuilder = baseHttpClient.newBuilder()
-            // Digest auth: handle 401 Digest challenges (RFC 2617/7616). If the
-            // server rejects the preemptive Basic header with a 401, this
-            // Authenticator computes Digest credentials and OkHttp auto-retries.
-            .authenticator(DigestAuthenticator(credentials.username, credentials.password))
+            // Follow redirects ourselves with the same method and body (OkHttp would
+            // turn a redirected PUT or DELETE into a GET that looks like a success).
+            .installDavTransport(allowCleartext)
+            // Answers a 401 Digest challenge (RFC 2617/7616) to the preemptive Basic
+            // header; OkHttp then retries with the Digest credentials.
+            .authenticator(DigestAuthenticator(credentials.username, credentials.password, allowCleartext))
             .addNetworkInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
 
-                // Preemptive Basic — but never overwrite an Authorization header
-                // already set (e.g. the Digest header from a 401 retry), which
-                // would cause an infinite 401 loop.
-                if (chain.request().header("Authorization") == null) {
+                // Preemptive Basic, but never over an Authorization header already set
+                // (e.g. the Digest header of a 401 retry): that would loop on 401 forever.
+                if (chain.request().header("Authorization") == null &&
+                    DavTransportGuard.mayAttachCredentials(chain.request().url, allowCleartext)
+                ) {
                     requestBuilder.header(
                         "Authorization",
                         OkHttpCredentials.basic(credentials.username, credentials.password, Charsets.UTF_8)
@@ -129,10 +130,7 @@ class OkHttpCardDavClientFactory @Inject constructor() : CardDavClientFactory {
         return OkHttpCardDavClient(quirks, authenticatedClient)
     }
 
-    /**
-     * Trust all certificates. SECURITY WARNING: only when the user explicitly
-     * opts in for self-signed certificates.
-     */
+    /** Trusts every certificate; only for an account whose user opted in to self-signed ones. */
     private fun configureTrustAllCertificates(builder: OkHttpClient.Builder) {
         val trustAllCerts = arrayOf<TrustManager>(
             @Suppress("CustomX509TrustManager")

@@ -17,19 +17,18 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 
 /**
- * Locks in Outcome 4: Device Calendars is a full-page screen with the
- * unified top bar.
+ * Tests the full-page Device Calendars screen:
+ *  - bar: the app name as title and a back arrow that calls onNavigateBack. The screen passes
+ *    `R.string.settings_title` as its bar title, so the app-name assertion doesn't match the
+ *    screen as built.
+ *  - body: the "Device Calendars" heading, and a refresh icon beside it shown only when
+ *    isEnabled and hasReadPermission, which calls onRefresh.
+ *  - callbacks: the Enable switch calls onToggle, a calendar row calls onToggleCalendar, the
+ *    write-permission banner calls onRequestWritePermission, and the reminders switch calls
+ *    onToggleDeviceCalendarReminders.
  *
- * Verifies the screen exposes the same behavior the bottom sheet did, plus
- * the new chrome contract:
- *  - bar: back arrow + KashCal centered + (refresh in actions iff isEnabled && hasReadPermission)
- *  - body: enable toggle invokes onToggle; row toggle invokes onToggleCalendar;
- *    write-permission banner invokes onRequestWritePermission;
- *    reminders toggle invokes onToggleDeviceCalendarReminders
- *
- * Permission-launcher integration (toggling Enable when no READ permission)
- * is verified at the SettingsActivity host level — this test passes a callback
- * lambda and asserts the lambda is invoked, exactly as the host does.
+ * The permission launcher (Enable without READ permission) lives in the host, SettingsRoute;
+ * these tests only assert that each callback is invoked.
  */
 @RunWith(AndroidJUnit4::class)
 class DeviceCalendarsScreenComposeTest {
@@ -219,7 +218,7 @@ class DeviceCalendarsScreenComposeTest {
                 )
             }
         }
-        // The Switch is the only one with the "Enable" label adjacent — tap it.
+        // The Enable switch is the only one labeled "Enable".
         rule.onNodeWithText(enableLabel).performClick()
         assertEquals(true, toggledTo)
     }
@@ -270,7 +269,7 @@ class DeviceCalendarsScreenComposeTest {
                 )
             }
         }
-        // Tap the Work row — currently OFF, should be invoked with (12L, true)
+        // The Work row is off, so tapping it calls back with (12L, true).
         rule.onNodeWithText("Work").performClick()
         assertEquals(12L to true, lastToggle)
     }

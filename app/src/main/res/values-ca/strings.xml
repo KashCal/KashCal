@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">No s\'han trobat calendaris en aquest servidor.</string>
     <string name="caldav_error_unexpected">Error inesperat. Torneu-ho a provar.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nSi es tracta d\'un servidor de la vostra xarxa local, permeteu l\'accés a la xarxa local per connectar-vos-hi.</string>
+    <string name="caldav_error_connection_refused_insecure">El servidor ha redirigit la connexió a un lloc on KashCal no va (una adreça sense xifrar o un bucle de redireccions), així que KashCal s\'ha aturat abans d\'enviar la teva contrasenya. Comprova l\'adreça del servidor.</string>
     <string name="local_network_banner_title">Cal accés a la xarxa local</string>
     <string name="local_network_banner_body">Sembla que aquest servidor és a la vostra xarxa local. Permeteu l\'accés a la xarxa local perquè KashCal s\'hi pugui connectar.</string>
     <string name="local_network_banner_allow">Permet l\'accés</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Desa els canvis a</string>
     <string name="dialog_delete_recurring_title">Suprimeix</string>
     <string name="dialog_move_recurring_title">Mou</string>
+    <string name="snackbar_event_rescheduled">Esdeveniment reprogramat</string>
+    <string name="snackbar_reschedule_failed">No s\'ha pogut reprogramar l\'esdeveniment</string>
     <string name="recurring_this_event">Aquest esdeveniment</string>
     <string name="recurring_all_events">Tots els esdeveniments</string>
 

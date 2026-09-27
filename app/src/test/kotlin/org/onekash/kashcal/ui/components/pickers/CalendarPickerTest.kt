@@ -8,8 +8,9 @@ import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Calendar
 
 /**
- * Unit tests for CalendarPicker component.
- * Tests calendar data structures and selection logic.
+ * Tests the [Calendar] entity's fields and defaults, and lookups and filters over a list of
+ * calendars (by id, account and visibility). The lookups are inline `find` and `filter` calls; no
+ * test renders [CalendarPickerContent] or [CalendarPickerRow].
  */
 class CalendarPickerTest {
 

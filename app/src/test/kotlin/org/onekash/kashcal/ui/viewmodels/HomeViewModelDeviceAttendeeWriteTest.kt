@@ -20,6 +20,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
@@ -34,18 +36,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Guard tests for the device-event guest write path (add/remove).
+ * Tests the device-event guest write path and its separation from the Room and iTIP save path.
  *
- * The load-bearing invariant: the device save path is disjoint from the
- * Room/iTIP save path. A device guest edit must bridge picker emails into
- * provider-shaped DeviceAttendee rows and reach
- * calendarProviderRepository.createEvent/updateEvent — while
- * eventCoordinator (the Room/CalDAV write path) is NEVER invoked on the device
- * branch. saveDeviceEvent and saveEvent are disjoint today; these tests lock
- * that in so a future merge of the two paths regresses loudly.
- *
- * Robolectric is required because pickerAttendeesToDevice references
- * CalendarContract.Attendees constants (stubbed to 0 under plain JVM).
+ * [HomeViewModel.saveDeviceEvent] turns picker emails into provider-shaped DeviceAttendee rows
+ * and writes them through the device writer's create or update, never through the create or
+ * update of [EventCoordinator]; [HomeViewModel.saveEvent] never writes to the device provider. An
+ * unedited guest list passes null so stored rows survive, and a single-occurrence edit writes no
+ * guests. A merge of the two save paths fails these tests.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -116,7 +113,8 @@ class HomeViewModelDeviceAttendeeWriteTest {
         accountRepository = accountRepository,
         syncScheduler = syncScheduler,
         networkMonitor = networkMonitor,
-        calendarProviderRepository = fakeCalendarProviderRepository,
+        deviceEventReader = fakeCalendarProviderRepository.deviceEventReader(),
+        deviceEventWriter = fakeCalendarProviderRepository.deviceEventWriter(dataStore),
         attendeeBackfill = mockk(relaxed = true),
         contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),
@@ -158,26 +156,23 @@ class HomeViewModelDeviceAttendeeWriteTest {
         viewModel.saveDeviceEvent(formState)
         advanceUntilIdle()
 
-        // The Room/CalDAV write path (and its attendees arg) must not be hit on
-        // the device branch — that's the regression seam being locked in.
+        // The Room and CalDAV write path, attendees included, must not run on the device branch.
         coVerify(exactly = 0) { eventCoordinator.createEvent(any(), any(), attendees = any()) }
         coVerify(exactly = 0) { eventCoordinator.updateEvent(any(), attendees = any()) }
     }
 
     @Test
     fun `Room event save never writes attendees through the device provider`() = runTest {
-        // The mirror of the device->Room guard above: a Room (non-device) save
-        // with edited attendees must route through eventCoordinator only and
-        // never touch the CalendarProvider write path — otherwise Room
-        // attendees (with their iTIP wire fields) could leak onto a device
-        // event, re-opening the CalDAV scheduling hazards on the wrong path.
+        // The reverse guard: a Room save with edited attendees must go through the coordinator
+        // only and never touch the CalendarProvider write path, or Room attendees with their
+        // iTIP wire fields could leak onto a device event.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         val formState = EventFormState(
             title = "Lunch",
             selectedCalendarId = 7L,
-            // isDeviceCalendar defaults to false → Room save path.
+            // isDeviceCalendar defaults to false, so this is the Room save path.
             attendees = listOf(Attendee(eventId = 0L, address = "alice@example.com")),
             attendeesEdited = true,
         )
@@ -236,9 +231,9 @@ class HomeViewModelDeviceAttendeeWriteTest {
 
     @Test
     fun `per-occurrence device guest edit is not persisted as attendees`() = runTest {
-        // Per spec, recurring single-occurrence guest edits are out of scope:
-        // the occurrence branch routes to createException, which carries no
-        // attendees arg — so a guest edit there is intentionally NOT written.
+        // The occurrence branch goes to DeviceEventWriter.editSingleOccurrence, whose
+        // createException takes no guest list (a new exception copies the series' guests), so
+        // the guest edit isn't written.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -256,7 +251,7 @@ class HomeViewModelDeviceAttendeeWriteTest {
         viewModel.saveDeviceEvent(formState)
         advanceUntilIdle()
 
-        // Routed to exception creation, not a whole-event create/update.
+        // An exception was created; no whole-event create or update ran.
         assertTrue("no whole-event create", fakeCalendarProviderRepository.createdEvents.isEmpty())
         assertTrue("no whole-event update", fakeCalendarProviderRepository.updatedEvents.isEmpty())
         assertEquals(1, fakeCalendarProviderRepository.createdExceptions.size)

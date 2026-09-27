@@ -16,9 +16,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Compose UI tests for tag-pill rendering on [EventCard]. Verifies chips show
- * for tagged events, overflow truncates to "+N more", and untagged events add
- * no tag content.
+ * Tests tag-pill rendering on [EventCard] for Room and device events: chips show
+ * for tagged events, more than three truncate to "+N more", blank entries render
+ * no chip and don't count toward the overflow, and an untagged event shows no
+ * overflow badge.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h720dp-mdpi")

@@ -50,20 +50,16 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.util.text.highlighted
 
 /**
- * Reusable flat settings row component.
+ * Draws a flat settings row: optional icon, label with optional [badge], optional subtitle, and
+ * a trailing value plus chevron or custom [trailing] content.
  *
- * Used for the new flat list design that replaces nested accordions.
- *
- * @param icon Optional Material icon
- * @param iconEmoji Optional emoji icon (alternative to Material icon)
- * @param label Primary text label
- * @param value Optional value displayed on the right
- * @param subtitle Optional secondary text below label
- * @param onClick Callback when row is tapped
- * @param badge Optional composable rendered inline after the label (e.g., BetaBadge)
- * @param trailing Optional custom trailing composable (overrides default chevron)
- * @param showChevron Whether to show chevron (default true when trailing is null)
- * @param showDivider Whether to show bottom divider
+ * @param iconEmoji emoji shown when [icon] is null
+ * @param value shown at the end of the row
+ * @param badge rendered inline after the label, for example [BetaBadge]
+ * @param trailing replaces the chevron
+ * @param showChevron defaults to true only when [trailing] is null
+ * @param searchQuery when not blank, its matches in the label, subtitle and value are
+ *   highlighted
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -93,13 +89,11 @@ fun SettingsRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Leading icon + text
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                // Icon (Material or Emoji)
                 when {
                     icon != null -> {
                         Icon(
@@ -114,7 +108,6 @@ fun SettingsRow(
                     }
                 }
 
-                // Label and subtitle
                 Column {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -151,14 +144,13 @@ fun SettingsRow(
                 }
             }
 
-            // Trailing section
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                // Value text — highlight the match when searching, since a row can
-                // match on its value alone (the value is registered as search text),
-                // and an unhighlighted match gives no cue why the row surfaced.
+                // Highlighted too: a row can match on its value alone when the value is
+                // registered as its search subtitle, and an unhighlighted match gives no cue
+                // why the row surfaced.
                 if (value != null) {
                     if (searchQuery.isBlank()) {
                         Text(
@@ -175,7 +167,6 @@ fun SettingsRow(
                     }
                 }
 
-                // Custom trailing or chevron
                 if (trailing != null) {
                     trailing()
                 } else if (showChevron) {
@@ -189,10 +180,9 @@ fun SettingsRow(
             }
         }
 
-        // Divider
         if (showDivider) {
             HorizontalDivider(
-                modifier = Modifier.padding(start = 52.dp), // Align with text after icon
+                modifier = Modifier.padding(start = 52.dp), // Aligns with the text after the icon
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
         }
@@ -200,25 +190,16 @@ fun SettingsRow(
 }
 
 /**
- * Settings row with toggle switch.
+ * Draws a settings row with a switch; tapping anywhere on the row toggles it. The whole row is
+ * the touch target, so the [Switch] drops the 48dp minimum and the row keeps the single-line
+ * height of neighbouring [SettingsRow]s.
  *
- * Used for boolean preferences that can be toggled on/off.
- * The entire row is clickable to toggle the switch.
- *
- * The [Switch] opts out of the 48dp minimum interactive size so the row
- * sits at single-line height, matching the neighbouring [SettingsRow]s
- * instead of standing taller. The whole row is the touch target.
- *
- * @param label Primary text label
- * @param checked Current toggle state
- * @param onCheckedChange Callback when toggle changes
- * @param subtitle Optional secondary text below label (omit for single-line height)
- * @param icon Optional Material icon
- * @param iconEmoji Optional emoji icon (alternative to Material icon)
- * @param info Optional rich-tooltip explanation shown by a trailing ⓘ button;
- *   tapping ⓘ reveals the tooltip without toggling the row.
- * @param badge Optional composable rendered inline after the label (e.g., BetaBadge)
- * @param showDivider Whether to show bottom divider
+ * @param subtitle omit for single-line height
+ * @param iconEmoji emoji shown when [icon] is null
+ * @param info explanation shown by a trailing ⓘ button ([SettingsInfoButton]); tapping ⓘ
+ *   doesn't toggle the row
+ * @param badge rendered inline after the label, for example [BetaBadge]
+ * @param searchQuery when not blank, its matches in the label and subtitle are highlighted
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -244,13 +225,11 @@ fun SettingsToggleRow(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Leading icon + text
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                // Icon (Material or Emoji)
                 when {
                     icon != null -> {
                         Icon(
@@ -265,7 +244,6 @@ fun SettingsToggleRow(
                     }
                 }
 
-                // Label (+ optional inline badge) and (optional) subtitle
                 Column {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -302,7 +280,6 @@ fun SettingsToggleRow(
                 }
             }
 
-            // Trailing: optional info tooltip + toggle switch
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -310,8 +287,6 @@ fun SettingsToggleRow(
                 if (info != null) {
                     SettingsInfoButton(info)
                 }
-                // Opt the switch out of the 48dp minimum so the row keeps
-                // single-line height, matching sibling rows.
                 CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
                     Switch(
                         checked = checked,
@@ -321,7 +296,6 @@ fun SettingsToggleRow(
             }
         }
 
-        // Divider
         if (showDivider) {
             HorizontalDivider(
                 modifier = Modifier.padding(start = 52.dp),
@@ -332,10 +306,10 @@ fun SettingsToggleRow(
 }
 
 /**
- * Content for the trailing ⓘ tooltip on a settings row.
+ * Holds the content of a settings row's ⓘ tooltip.
  *
- * @param title Tooltip title (also the ⓘ button's content description)
- * @param text Supporting explanation shown inside the rich tooltip
+ * @param title tooltip title, also used in the ⓘ button's content description
+ * @param text explanation shown inside the rich tooltip
  */
 data class SettingsRowInfo(
     val title: String,
@@ -343,14 +317,12 @@ data class SettingsRowInfo(
 )
 
 /**
- * Trailing ⓘ button that anchors a dismissible [RichTooltip]. Tapping it
- * shows the explanation in place (no sheet); it does not toggle the row
- * because the click is consumed by this [IconButton].
+ * Draws an ⓘ button that shows a persistent [RichTooltip] in place, without a sheet. This
+ * [IconButton] consumes the click, so it doesn't toggle the row it sits on.
  *
- * @param compact when true (the default, for dense settings rows) the button
- *   opts out of the 48dp minimum touch target so it doesn't inflate the row
- *   above single-line height. Set false on taller rows that want the full 48dp
- *   accessible target.
+ * @param compact when true, the default for dense settings rows, the button is glyph-sized and
+ *   drops the 48dp minimum touch target so the row keeps single-line height. Pass false on
+ *   taller rows that want the full 48dp target.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -370,8 +342,6 @@ internal fun SettingsInfoButton(info: SettingsRowInfo, compact: Boolean = true) 
         val button: @Composable () -> Unit = {
             IconButton(
                 onClick = { scope.launch { tooltipState.show() } },
-                // Compact keeps the button at glyph size; non-compact lets the
-                // IconButton keep its default 48dp accessible touch target.
                 modifier = if (compact) Modifier.size(24.dp) else Modifier
             ) {
                 Icon(
@@ -383,8 +353,6 @@ internal fun SettingsInfoButton(info: SettingsRowInfo, compact: Boolean = true) 
             }
         }
         if (compact) {
-            // Opt out of the 48dp minimum touch target so it doesn't inflate the
-            // row above single-line height (same treatment as the Switch).
             CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
                 button()
             }
@@ -395,13 +363,11 @@ internal fun SettingsInfoButton(info: SettingsRowInfo, compact: Boolean = true) 
 }
 
 /**
- * Version footer component for the bottom of settings screen.
+ * Shows the app version at the bottom of the settings screen. A tap calls [onClick]; a long
+ * press gives haptic feedback and calls [onLongPress], which the settings screen uses to open
+ * the debug menu.
  *
- * Long-press opens the debug menu.
- *
- * @param versionName App version (e.g., "4.2.4")
- * @param onClick Callback when tapped (opens app info)
- * @param onLongPress Callback when long-pressed (opens debug menu)
+ * @param versionName app version, for example "2026.09.25-1"
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -440,15 +406,7 @@ fun VersionFooter(
     }
 }
 
-/**
- * Settings row with badge indicator (e.g., subscription count).
- *
- * @param label Primary text label
- * @param badgeCount Number to display in badge
- * @param onClick Callback when row is tapped
- * @param iconEmoji Emoji icon
- * @param subtitle Optional secondary text
- */
+/** Draws a [SettingsRow] whose value is [badgeCount] in parentheses, such as "(3)". */
 @Composable
 fun SettingsRowWithBadge(
     label: String,
@@ -472,8 +430,8 @@ fun SettingsRowWithBadge(
 }
 
 /**
- * Highlight style for matched substrings during settings search. Uses
- * the primary container to read correctly under both light and dark.
+ * Returns the highlight style for search matches in settings rows: primary container colors,
+ * which stay legible in light and dark themes.
  */
 @Composable
 internal fun settingsSearchHighlightStyle(): SpanStyle = SpanStyle(

@@ -5,14 +5,16 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for wheel picker index mapping functions.
- *
- * These pure Kotlin math functions handle the virtual-to-actual index mapping
- * for circular scrolling in the wheel picker. Tests verify:
- * - Modulo wrapping for circular mode
- * - Bounds clamping for non-circular mode
- * - Shortest path calculation for external selection sync
- * - Edge cases (empty lists, negative indices, large indices)
+ * Tests [virtualToActualIndex] and [actualToNearestVirtualIndex], the index math behind the
+ * circular wheel in [VerticalWheelPicker]:
+ * - modulo wrapping in circular mode, negative and large indices included;
+ * - clamping in non-circular mode, and 0 for an empty or one-item list;
+ * - the shorter way round for an outside selection change, forward on a tie, and the target
+ *   itself in non-circular mode;
+ * - hour, minute and two-item (AM/PM) wheels at their wrap points;
+ * - recentering arithmetic, computed inline from the picker's multiplier of 1000 (not a
+ *   production call);
+ * - bounds over wide index ranges and a virtual-to-actual round trip.
  */
 class WheelPickerIndexMappingTest {
 
@@ -20,8 +22,7 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `maps middle range correctly`() {
-        // 12-item list (like hours 0-11 or 1-12)
-        // Virtual index 500*12 + 5 = 6005 should map to actual index 5
+        // A 12-item list, like hours 0-11 or 1-12: 500 * 12 + 5 = 6005 maps to 5.
         val actual = virtualToActualIndex(6005, 12, isCircular = true)
         assertEquals(5, actual)
     }
@@ -33,23 +34,23 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `handles negative indices safely`() {
-        // -1 mod 12 should give 11 (wrap around)
+        // -1 wraps to 11.
         val actual = virtualToActualIndex(-1, 12, isCircular = true)
         assertEquals(11, actual)
     }
 
     @Test
     fun `handles large negative indices`() {
-        // -25 mod 12: -25 + 36 = 11, then mod 12 = 11
+        // -25 % 12 is -1 in Kotlin; (-1 + 12) % 12 = 11.
         val actual = virtualToActualIndex(-25, 12, isCircular = true)
         assertEquals(11, actual)
     }
 
     @Test
     fun `non-circular mode clamps to bounds`() {
-        // In non-circular mode, index 15 should clamp to max (11)
+        // 15 clamps to the last index, 11.
         assertEquals(11, virtualToActualIndex(15, 12, isCircular = false))
-        // Index -3 should clamp to min (0)
+        // -3 clamps to 0.
         assertEquals(0, virtualToActualIndex(-3, 12, isCircular = false))
     }
 
@@ -73,7 +74,7 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `large virtual index maps correctly`() {
-        // Index 11999 for 12 items: 11999 mod 12 = 11
+        // 11999 % 12 = 11
         val actual = virtualToActualIndex(11999, 12, isCircular = true)
         assertEquals(11, actual)
     }
@@ -82,8 +83,7 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `finds nearest forward`() {
-        // Current at virtual 6000 (actual 0), want actual 3
-        // Should return 6003 (move forward 3)
+        // From virtual 6000 (actual 0) to actual 3: forward 3, to 6003.
         val result = actualToNearestVirtualIndex(
             targetActualIndex = 3,
             currentVirtualIndex = 6000,
@@ -95,8 +95,7 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `finds nearest backward`() {
-        // Current at virtual 6005 (actual 5), want actual 2
-        // Should return 6002 (move backward 3)
+        // From virtual 6005 (actual 5) to actual 2: back 3, to 6002.
         val result = actualToNearestVirtualIndex(
             targetActualIndex = 2,
             currentVirtualIndex = 6005,
@@ -108,10 +107,8 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `wraps forward when shorter - 11 to 0`() {
-        // Current at virtual 6011 (actual 11), want actual 0
-        // Forward wrap: +1 step (11→0)
-        // Backward: -11 steps
-        // Should wrap forward: 6011 + 1 = 6012
+        // From virtual 6011 (actual 11) to actual 0: forward is 1 step, back is 11, so it
+        // wraps forward to 6012.
         val result = actualToNearestVirtualIndex(
             targetActualIndex = 0,
             currentVirtualIndex = 6011,
@@ -123,10 +120,8 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `wraps backward when shorter - 0 to 11`() {
-        // Current at virtual 6000 (actual 0), want actual 11
-        // Backward wrap: -1 step (0→11)
-        // Forward: +11 steps
-        // Should wrap backward: 6000 - 1 = 5999
+        // From virtual 6000 (actual 0) to actual 11: back is 1 step, forward is 11, so it
+        // wraps back to 5999.
         val result = actualToNearestVirtualIndex(
             targetActualIndex = 11,
             currentVirtualIndex = 6000,
@@ -138,9 +133,8 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `handles midpoint by choosing forward`() {
-        // 12 items, current at actual 0, want actual 6
-        // Forward: +6, Backward: -6
-        // delta = 6, which equals itemCount/2 (6), so no adjustment
+        // 12 items, actual 0 to actual 6: 6 steps either way. The delta of 6 isn't above
+        // itemCount / 2, so it stays forward.
         val result = actualToNearestVirtualIndex(
             targetActualIndex = 6,
             currentVirtualIndex = 6000,
@@ -165,9 +159,8 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `12h wraps 12 to 1`() {
-        // Hours 1-12 in a list (index 0=1, index 11=12)
-        // From index 11 (hour 12), want index 0 (hour 1)
-        // Should wrap forward
+        // Hours 1-12, index 0 is hour 1 and index 11 is hour 12. From hour 12 to hour 1
+        // wraps forward.
         val result = actualToNearestVirtualIndex(
             targetActualIndex = 0,
             currentVirtualIndex = 6011,
@@ -175,14 +168,12 @@ class WheelPickerIndexMappingTest {
             isCircular = true
         )
         assertEquals(6012, result)
-        // Verify actual index
         assertEquals(0, virtualToActualIndex(6012, 12, isCircular = true))
     }
 
     @Test
     fun `12h wraps 1 to 12`() {
-        // From index 0 (hour 1), want index 11 (hour 12)
-        // Should wrap backward
+        // From index 0 (hour 1) to index 11 (hour 12) wraps back.
         val result = actualToNearestVirtualIndex(
             targetActualIndex = 11,
             currentVirtualIndex = 6000,
@@ -195,9 +186,7 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `24h wraps 23 to 0`() {
-        // 24 hours (index 0=00, index 23=23)
-        // From index 23, want index 0
-        // Forward: +1 step, Backward: -23 steps
+        // 24 hours, index n is hour n. From 23 to 0: forward 1 step, back 23.
         val result = actualToNearestVirtualIndex(
             targetActualIndex = 0,
             currentVirtualIndex = 12023,  // actual 23
@@ -210,8 +199,7 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `24h wraps 0 to 23`() {
-        // From index 0, want index 23
-        // Forward: +23 steps, Backward: -1 step
+        // From 0 to 23: forward 23 steps, back 1.
         val result = actualToNearestVirtualIndex(
             targetActualIndex = 23,
             currentVirtualIndex = 12000,  // actual 0
@@ -226,8 +214,8 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `minutes wrap 55 to 0`() {
-        // Minutes: 0, 5, 10, ..., 55 (12 items with interval 5)
-        // Index 11 = 55, Index 0 = 00
+        // Minutes 0, 5, ..., 55 (12 items at a 5-minute interval): index 11 is 55, index 0
+        // is 00.
         val result = actualToNearestVirtualIndex(
             targetActualIndex = 0,
             currentVirtualIndex = 6011,
@@ -250,8 +238,7 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `minute intervals respected in wrap - 10 interval`() {
-        // Minutes: 0, 10, 20, 30, 40, 50 (6 items)
-        // From 50 (index 5) to 0 (index 0): should wrap forward
+        // Minutes 0, 10, ..., 50 (6 items). From 50 (index 5) to 0 wraps forward.
         val result = actualToNearestVirtualIndex(
             targetActualIndex = 0,
             currentVirtualIndex = 3005,
@@ -265,33 +252,30 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `recentering threshold calculation`() {
-        // CIRCULAR_MULTIPLIER = 1000, itemCount = 12
-        // Middle start = 500 * 12 = 6000
-        // 25% threshold = 250 * 12 = 3000
+        // Inline copy of the picker's recenter test: with a multiplier of 1000 and 12 items
+        // the middle start is 500 * 12 = 6000, and a drift over 250 * 12 = 3000 recenters.
         val middleStart = 500 * 12  // 6000
         val threshold = 250 * 12    // 3000
 
-        // Drifted to 9100 (beyond threshold)
+        // 9100 is past the threshold.
         val drift = kotlin.math.abs(9100 - middleStart)
         assertTrue("Should trigger recentering", drift > threshold)
 
-        // At 7500 (within threshold)
+        // 7500 is within it.
         val smallDrift = kotlin.math.abs(7500 - middleStart)
         assertTrue("Should NOT trigger recentering", smallDrift <= threshold)
     }
 
     @Test
     fun `recenter preserves actual index`() {
-        // After recentering from 9100 to middle
+        // Recentering from 9100 to the middle keeps the actual index.
         val virtualIndex = 9100
         val itemCount = 12
         val actualIndex = virtualToActualIndex(virtualIndex, itemCount, isCircular = true)
 
-        // Recenter target
         val middleStart = 500 * itemCount  // 6000
         val recenteredVirtual = middleStart + actualIndex
 
-        // Verify actual index is preserved
         assertEquals(
             actualIndex,
             virtualToActualIndex(recenteredVirtual, itemCount, isCircular = true)
@@ -326,8 +310,8 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `round trip virtual to actual and back maintains consistency`() {
-        // If we're at virtual index V with actual index A,
-        // then actualToNearestVirtualIndex(A, V, count) should return V
+        // At virtual index V with actual index A, actualToNearestVirtualIndex(A, V, count)
+        // returns V.
         for (virtualIndex in 5990..6010) {
             val actualIndex = virtualToActualIndex(virtualIndex, 12, isCircular = true)
             val roundTrip = actualToNearestVirtualIndex(
@@ -344,16 +328,15 @@ class WheelPickerIndexMappingTest {
 
     @Test
     fun `two item list should not use circular wrapping`() {
-        // AM/PM list has only 2 items - circular disabled by effectiveCircular check
-        // But let's test the functions directly to ensure they handle it
+        // The AM/PM wheel is circular: VerticalWheelPicker keeps a two-item list circular
+        // (effectiveCircular needs at least two items).
         val result = virtualToActualIndex(5, 2, isCircular = true)
         assertEquals(1, result)  // 5 mod 2 = 1
     }
 
     @Test
     fun `two item list wrap behavior`() {
-        // Even with circular enabled, 2-item lists should be handled gracefully
-        // From index 0 (AM) to index 1 (PM): both forward and backward are 1 step
+        // From index 0 (AM) to index 1 (PM) is 1 step either way; the tie goes forward.
         val result = actualToNearestVirtualIndex(
             targetActualIndex = 1,
             currentVirtualIndex = 1000,

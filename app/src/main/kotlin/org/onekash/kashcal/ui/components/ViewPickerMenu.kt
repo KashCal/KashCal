@@ -63,10 +63,8 @@ internal fun viewModeLabel(mode: ViewMode): String = when (mode) {
 }
 
 /**
- * View mode button with dropdown menu.
- *
- * Shows the current view's icon with a small dropdown chevron.
- * Tap opens a dropdown menu to switch views.
+ * Shows the current view's icon with a small chevron; a tap opens a menu of [viewOptions] that
+ * reports the chosen view through [onViewSelect].
  */
 @Composable
 fun ViewPickerButton(

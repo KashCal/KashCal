@@ -2,12 +2,7 @@ package org.onekash.kashcal.data.calendar_provider
 
 import androidx.compose.runtime.Immutable
 
-/**
- * A device calendar from CalendarProvider.
- * Used in settings UI (calendar selection) and write routing (access level check).
- *
- * Maps to CalendarContract.Calendars columns.
- */
+/** A row of CalendarProvider's Calendars table. */
 @Immutable
 data class DeviceCalendar(
     val id: Long,
@@ -18,28 +13,24 @@ data class DeviceCalendar(
     val visible: Boolean,
     val accessLevel: Int,
     /**
-     * `Calendars.OWNER_ACCOUNT` — the email of the calendar's owner. Used as
-     * the organizer address and the "you" identity when reading/writing
-     * device-event attendees. Blank when the provider doesn't supply one
-     * (e.g. some LOCAL calendars). Trailing/defaulted so existing
-     * construction sites stay source-compatible.
+     * `Calendars.OWNER_ACCOUNT`, the owner's email: the organizer address and the "you" identity
+     * when reading and writing device-event attendees. Blank when the provider has none (e.g.
+     * some local calendars).
      */
     val ownerAccount: String = "",
 ) {
     /**
-     * Calendar is writable if access level >= CONTRIBUTOR (500).
-     * Read-only calendars (FREEBUSY=100, READ=200) don't allow event creation/editing.
+     * True at access level `CAL_ACCESS_CONTRIBUTOR` (500) or above. Below it (FREEBUSY 100,
+     * READ 200) events can't be created or edited.
      */
     val isWritable: Boolean
         get() = accessLevel >= 500 // CalendarContract.Calendars.CAL_ACCESS_CONTRIBUTOR
 
     /**
-     * Whether adding a guest to an event on this calendar can result in an
-     * invitation being sent. True for accounts backed by a sync adapter
-     * (Google, Exchange, …); false for LOCAL accounts, which have no adapter —
-     * guest rows are written but stay inert. Drives the form's "this calendar
-     * can't send invitations" inline notice. Keyed on the same LOCAL signal as
-     * the sync-skip check so the two can't drift.
+     * True when adding a guest can send an invitation: the account has a sync adapter. A local
+     * account has none, so its guest rows are written but stay inert. Drives the event form's
+     * "this calendar can't send invitations" notice. Uses [isLocalAccountType], as
+     * [shouldSkipRequestSync] does, so the two can't drift.
      */
     val canDeliverInvites: Boolean
         get() = !isLocalAccountType(accountType)

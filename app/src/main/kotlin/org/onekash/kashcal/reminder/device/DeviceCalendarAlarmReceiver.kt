@@ -14,17 +14,13 @@ import org.onekash.kashcal.util.maskEventId
 import javax.inject.Inject
 
 /**
- * BroadcastReceiver for device calendar reminder alarms.
+ * Receives [DeviceCalendarReminderScheduler.ACTION_DEVICE_REMINDER_ALARM] for device events.
  *
- * Handles ACTION_DEVICE_REMINDER_ALARM:
- * 1. Extracts event data from intent extras
- * 2. Shows notification (via DeviceCalendarReminderNotificationManager)
- * 3. Reschedules for next reminder
+ * Reads the event from the intent extras, shows the notification when
+ * [DeviceCalendarReminderScheduler.shouldFireReminder] allows it, then arms the next reminder.
+ * goAsync() allows about 10 seconds, so the work is cut off at [GOASYNC_TIMEOUT_MS].
  *
- * Note: goAsync() has ~10 second limit per Android docs.
- * Our work (notification + reschedule) is lightweight and fits within this limit.
- *
- * @see DeviceCalendarReminderScheduler for alarm scheduling
+ * @see DeviceCalendarReminderScheduler
  */
 @AndroidEntryPoint
 class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
@@ -41,9 +37,9 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
     lateinit var notificationManager: DeviceCalendarReminderNotificationManager
 
     /**
-     * Extracted for test access: `@AndroidEntryPoint`'s generated `onReceive`
-     * re-runs field injection on every dispatch, clobbering any values set
-     * manually by a test. Callers must pass the dependencies explicitly.
+     * Shows the reminder unless it's stale, then reschedules. Takes its dependencies as
+     * parameters because `@AndroidEntryPoint`'s generated `onReceive` re-runs field injection
+     * on every dispatch, overwriting fields a test set.
      */
     internal suspend fun handleAlarm(
         scheduler: DeviceCalendarReminderScheduler,
@@ -80,7 +76,6 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
             return
         }
 
-        // Extract event data from extras
         val eventId = intent.getLongExtra(DeviceCalendarReminderScheduler.EXTRA_EVENT_ID, -1L)
         val occurrenceTs = intent.getLongExtra(DeviceCalendarReminderScheduler.EXTRA_OCCURRENCE_TS, -1L)
         val title = intent.getStringExtra(DeviceCalendarReminderScheduler.EXTRA_TITLE).orEmpty()
@@ -97,11 +92,9 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
         val maskedEventId = eventId.maskEventId()
         Log.d(TAG, "Received alarm for event $maskedEventId at occurrence $occurrenceTs")
 
-        // Use goAsync() for background work (10 second limit)
-        // Note: goAsync() can return null in Robolectric test environments
+        // goAsync() can return null under Robolectric.
         val pendingResult = goAsync()
 
-        // Create a scope that will complete within the broadcast window
         val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
         scope.launch {
@@ -127,7 +120,7 @@ class DeviceCalendarAlarmReceiver : BroadcastReceiver() {
             } catch (e: Exception) {
                 Log.e(TAG, "Error handling device calendar reminder", e)
             } finally {
-                // Must call finish() to signal completion
+                // finish() must run on every path to end the broadcast.
                 pendingResult?.finish()
             }
         }

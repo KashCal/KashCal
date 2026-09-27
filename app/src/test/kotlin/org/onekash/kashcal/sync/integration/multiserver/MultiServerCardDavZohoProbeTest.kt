@@ -18,29 +18,26 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Characterization probe for whether Zoho exposes a usable CardDAV surface.
+ * Characterizes whether Zoho exposes a usable CardDAV surface.
  *
- * Zoho is wired for CalDAV (see [CalDavServerConfig.ZOHO]) but has never been
- * exercised for contacts: its CardDAV lives on a different host
- * (`contacts.zoho.com`, not the `calendar.zoho.com` CalDAV endpoint), and it is
- * deliberately absent from [CardDavServerConfig.allServers] until this probe
- * confirms the shape. This test consumes the standalone [CardDavServerConfig.ZOHO]
- * entry and RECORDS — never asserts on — each step of the discovery walk plus a
- * best-effort seed → read-back, so we learn:
+ * Zoho's CardDAV lives on `contacts.zoho.com`, a different host from its
+ * `calendar.zoho.com` CalDAV endpoint ([CalDavServerConfig.ZOHO]), and it stays out of
+ * [CardDavServerConfig.allServers] until this probe confirms the shape. The tests use the
+ * standalone [CardDavServerConfig.ZOHO] entry and record, never assert, each step of the
+ * discovery walk plus a best-effort seed and read-back:
  *  - does `/.well-known/carddav` resolve, or does the bare contacts host answer?
- *  - is there a discoverable principal / addressbook-home / address book?
+ *  - is there a discoverable principal, addressbook-home and address book?
  *  - does a raw authenticated PUT of a synthetic seed succeed?
  *  - does the seed read back through the production [CardDavContactReader]?
  *
- * Everything degrades to a logged line + `assumeTrue` skip rather than a failure:
- * a probe's job is to surface behavior, not gate the build on a third-party server
- * we don't yet understand. Promote the findings into a real assertion-bearing
- * config entry in `allServers()` only once the walk is known to work.
+ * Every step that can't complete logs a line and skips through `assumeTrue`, so a
+ * third-party server we don't yet understand never fails the build. Move Zoho into
+ * `allServers()` with real assertions only once the walk is known to work.
  *
- * The seed reuses the shared synthetic fixture (RFC 6761 `@example.test`), so no
- * real person is contacted. PII discipline: on the Zoho account the login is a real
- * address, so this probe prints only discovery URLs' host/shape and counts — never
- * the account address, a fetched body, or a minted URL.
+ * The seeds are synthetic fixtures (RFC 6761 `@example.test`), so no real person is
+ * contacted. The Zoho login is a real address, so the probe prints host shapes, counts,
+ * the book's display name and a redacted snippet of a rejected PUT's body; never the
+ * account address or a minted URL.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -93,13 +90,12 @@ class MultiServerCardDavZohoProbeTest {
 
         val book = books.firstOrNull { !it.isReadOnly } ?: books.first()
 
-        // Best-effort seed (TEST SETUP — raw authenticated PUT). Record success/failure
-        // rather than gating: Zoho may reject a client-chosen href or require a UID-named
-        // resource, both of which are findings worth logging. When the default seed is
-        // rejected, walk a small matrix of write shapes so the *reason* is characterized,
-        // not just observed — vCard version (3.0 vs 4.0), href form (filename vs UID-named
-        // vs UID.vcf), Content-Type, and whether an If-None-Match precondition is required.
-        // Each attempt logs its HTTP status + redacted body so we learn Zoho's contract.
+        // Best-effort seed through a raw authenticated PUT, recorded rather than gated: Zoho
+        // may reject a client-chosen href or require a UID-named resource. When the first
+        // shape is rejected, try the next in a small matrix so the reason is characterized:
+        // vCard version (3.0 or 4.0), href form (filename or UID.vcf), Content-Type, and an
+        // If-None-Match precondition. The first accepted shape stops the walk. Each attempt
+        // logs its HTTP status and redacted body.
         val bookBase = book.url.trimEnd('/')
         val attempts = listOf(
             SeedAttempt("v3.0 filename href, text/vcard", bookBase + "/" + SEED_FILENAME, SEED_BODY_V3, VCARD_MEDIA_TYPE, ifNoneMatch = false),
@@ -125,14 +121,13 @@ class MultiServerCardDavZohoProbeTest {
     }
 
     /**
-     * Characterizes how Zoho round-trips a contact PHOTO in both vCard shapes —
-     * a `VALUE=URI` remote reference and inline `ENCODING=b` bytes — so the deferred
-     * photo-fetch path has ground truth for Zoho, which the parameterized
-     * [MultiServerCardDavPhotoProbeTest] cannot cover (it seeds arbitrary-filename
-     * hrefs, which Zoho rejects with 401, and Zoho is absent from `allServers()`).
-     * Seeds with the UID-named href form Zoho requires, reads back through the
-     * production reader + [VCardContactMapper], and RECORDS the mapped shape. Soft
-     * throughout: any step that can't complete skips rather than fails.
+     * Characterizes how Zoho round-trips a contact photo in both vCard shapes: a `VALUE=URI`
+     * remote reference and inline `ENCODING=b` bytes. The parameterized
+     * [MultiServerCardDavPhotoProbeTest] can't cover Zoho: it seeds arbitrary-filename hrefs,
+     * which Zoho rejects with 401, and Zoho is absent from `allServers()`. Seeds with the
+     * UID-named href form Zoho requires, reads back through the production reader and
+     * [VCardContactMapper], and records the mapped shape. Nothing fails: a step that can't
+     * complete skips, and a seed that doesn't read back is logged.
      */
     @Test
     fun `characterizes how Zoho round-trips URI and inline contact photos`() = runBlocking {
@@ -148,7 +143,7 @@ class MultiServerCardDavZohoProbeTest {
         assumeTrue("Zoho: no writable address book to seed a photo into", book != null)
         val bookBase = book!!.url.trimEnd('/')
 
-        // Zoho requires <UID>.vcf hrefs (arbitrary filenames -> 401, see the walk test).
+        // Zoho requires <UID>.vcf hrefs; arbitrary filenames get 401 (see the walk test).
         val urlOk = putSeed(bookBase + "/$URL_PHOTO_UID.vcf", URL_PHOTO_BODY, VCARD_MEDIA_TYPE, false, cr)
         val inlineOk = putSeed(bookBase + "/$INLINE_PHOTO_UID.vcf", INLINE_PHOTO_BODY, VCARD_MEDIA_TYPE, false, cr)
         println("=== Zoho CardDAV photo seed: url PUT=HTTP ${urlOk.code}, inline PUT=HTTP ${inlineOk.code} ===")
@@ -185,24 +180,22 @@ class MultiServerCardDavZohoProbeTest {
     }
 
     /**
-     * Characterizes whether Zoho's `addressbook-multiget` returns a usable body for
-     * a MULTI-href batch, or only for a single href — the observation that decides
-     * whether [CardDavContactReader] needs the per-href fallback the CalDAV pull path
-     * already carries (`PullStrategy.fetchEventsBatched` retries single-href when a
-     * multi-href `calendar-multiget` comes back as an empty 200, Zoho's documented
-     * calendar quirk). The existing walk test seeds one contact (batch size 1), which
-     * cannot surface this: the CalDAV empty-guard only fires for `batch.size > 1`.
+     * Characterizes whether Zoho's `addressbook-multiget` returns bodies for a multi-href batch or
+     * only for a single href. That decides whether [CardDavContactReader] needs the per-href
+     * fallback the CalDAV pull has: `PullStrategy.fetchEventsBatched` retries single-href when a
+     * multi-href `calendar-multiget` comes back as an empty 200, Zoho's documented calendar quirk.
+     * The walk test seeds one contact, which can't surface this: the CalDAV guard only fires for
+     * `batch.size > 1`.
      *
-     * Seeds ~25 contacts, then probes THREE reads and RECORDS (never asserts) each:
-     *  - a single-href `fetchContactsByHref` (control: proves the resource is fetchable)
-     *  - a multi-href (>[MULTIGET_PAGE_SIZE]) `fetchContactsByHref` DIRECTLY, bypassing
-     *    the reader's chunking, so an empty 200 for the multi-href case is visible
-     *  - the production [CardDavContactReader.readContacts] over all hrefs (chunked)
+     * Seeds 25 contacts, then records, never asserts, three reads:
+     *  - a single-href `fetchContactsByHref` (control: the resource is fetchable)
+     *  - a `fetchContactsByHref` over every seed href (more than [MULTIGET_PAGE_SIZE]), sent
+     *    directly so the reader's chunking can't hide an empty multi-href response
+     *  - the production [CardDavContactReader.readContacts] over the same hrefs (chunked)
      *
-     * Reading multi-href = 0 while single-href = 1 is the signal that Zoho shares the
-     * calendar empty-response quirk on CardDAV and the reader must gain a single-href
-     * fallback; multi-href returning the full batch means the gap is a theoretical
-     * generic-CardDAV robustness item, not Zoho-specific.
+     * Multi-href 0 while single-href is above 0 means Zoho shares the calendar quirk on
+     * CardDAV and the reader needs a single-href fallback. Multi-href returning the full batch
+     * means the gap is a generic-CardDAV robustness item, not a Zoho one.
      */
     @Test
     fun `characterizes Zoho's multi-href addressbook-multiget batch behavior`() = runBlocking {
@@ -218,8 +211,8 @@ class MultiServerCardDavZohoProbeTest {
         assumeTrue("Zoho: no writable address book to seed a batch into", book != null)
         val bookBase = book!!.url.trimEnd('/')
 
-        // Seed a batch larger than one multiget page. Zoho requires <UID>.vcf hrefs
-        // (arbitrary filenames -> 401, established by the walk test).
+        // Seed more than one multiget page. Zoho requires <UID>.vcf hrefs; arbitrary
+        // filenames get 401 (see the walk test).
         var seededCount = 0
         for (i in 0 until BATCH_SEED_COUNT) {
             val uid = batchUid(i)
@@ -234,13 +227,13 @@ class MultiServerCardDavZohoProbeTest {
         println("=== Zoho CardDAV batch: collected ${batchHrefs.size} seed href(s) of ${hrefs.size} total ===")
         assumeTrue("Zoho: fewer seed hrefs than a full page — cannot exercise a multi-href read", batchHrefs.size > MULTIGET_PAGE_SIZE)
 
-        // Control: a single-href multiget. Proves the resources are individually fetchable.
+        // Control: a single-href multiget proves the resources are individually fetchable.
         val single = c.fetchContactsByHref(book.url, listOf(batchHrefs.first()), book.vcardVersion)
         val singleCount = (single as? CalDavResult.Success)?.data?.size ?: -1
         println("=== Zoho CardDAV batch: single-href multiget -> ${resultShape(single)} (bodies=$singleCount) ===")
 
-        // The measurement: a multi-href multiget larger than a page, sent DIRECTLY so
-        // the reader's chunking can't mask an empty multi-href response.
+        // The measurement: a multi-href multiget larger than a page, sent directly so the
+        // reader's chunking can't mask an empty multi-href response.
         val multi = c.fetchContactsByHref(book.url, batchHrefs, book.vcardVersion)
         val multiCount = (multi as? CalDavResult.Success)?.data?.size ?: -1
         println("=== Zoho CardDAV batch: multi-href multiget (${batchHrefs.size} hrefs) -> ${resultShape(multi)} (bodies=$multiCount) ===")
@@ -258,13 +251,13 @@ class MultiServerCardDavZohoProbeTest {
         )
     }
 
-    /** A CalDavResult's outcome shape for logging, never its (PII-bearing) body. */
+    /** Returns a [CalDavResult]'s outcome shape for logging, never its PII-bearing body. */
     private fun resultShape(result: CalDavResult<*>): String = when (result) {
         is CalDavResult.Success -> "Success"
         is CalDavResult.Error -> "Error(${result.code})"
     }
 
-    /** Discover the login's first writable address book (else the first book), or null. */
+    /** Returns the login's first writable address book, else its first book, or null if none. */
     private suspend fun resolveWritableBook(c: CardDavClient, cr: ServerCredentials) = run {
         val root = c.discoverWellKnown(cr.serverUrl).getOrNull() ?: cr.serverUrl
         val principal = c.discoverPrincipal(root).getOrNull() ?: return@run null
@@ -286,10 +279,11 @@ class MultiServerCardDavZohoProbeTest {
     private class SeedOutcome(val ok: Boolean, val code: Int, val bodyNote: String)
 
     /**
-     * Authenticated PUT of a synthetic seed, capturing the status + a short redacted
-     * body snippet so a rejection's *cause* is legible (Zoho commonly answers 4xx with
-     * an explanatory XML/text error). 201/204 = created/updated; 412 = precondition
-     * (still proves write is permitted, just needs a different If-* header).
+     * PUTs a synthetic seed with basic auth, capturing the status and, on a rejection, a
+     * short redacted body snippet so the cause is legible (Zoho commonly answers 4xx with an
+     * explanatory XML or text error). Any 2xx (201 created, 204 updated) counts as written;
+     * so does 412, which still proves writes are permitted, though with a different If-*
+     * header. An exception gives code -1.
      */
     private fun putSeed(
         url: String,
@@ -315,7 +309,10 @@ class MultiServerCardDavZohoProbeTest {
         SeedOutcome(false, -1, " exception=" + (e.message ?: e.javaClass.simpleName))
     }
 
-    /** Never let a Zoho-echoed real account address reach junit-xml / CI logs. */
+    /**
+     * Masks every non-`@example.test` address so a Zoho-echoed account address never reaches
+     * junit-xml or CI logs.
+     */
     private fun redactPii(text: String): String {
         val emailRegex = Regex("""[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}""")
         return emailRegex.replace(text) { m ->
@@ -323,7 +320,10 @@ class MultiServerCardDavZohoProbeTest {
         }
     }
 
-    /** Read hrefs via sync-collection when available, else the full PROPFIND listing. */
+    /**
+     * Returns the book's hrefs from sync-collection, or from the PROPFIND listing when that
+     * fails or lists none.
+     */
     private suspend fun collectHrefs(c: CardDavClient, bookUrl: String): List<String> {
         (c.syncCollection(bookUrl, null) as? CalDavResult.Success)?.data?.let { report ->
             if (report.changed.isNotEmpty()) return report.changed.map { it.href }
@@ -331,7 +331,7 @@ class MultiServerCardDavZohoProbeTest {
         return (c.listAllContactHrefs(bookUrl) as? CalDavResult.Success)?.data?.map { it.first }.orEmpty()
     }
 
-    /** Scheme+host of a URL for logging, without the account-identifying path. */
+    /** Returns a URL's scheme and host for logging, with the account-identifying path masked. */
     private fun hostShape(url: String?): String =
         url?.let { Regex("""^(\w+://[^/]+)""").find(it)?.groupValues?.get(1)?.plus("/<path>") ?: "<opaque>" }
             ?: "(none)"
@@ -348,10 +348,10 @@ class MultiServerCardDavZohoProbeTest {
                 .getResourceAsStream("carddav/fixtures/$SEED_FILENAME")!!
                 .use { it.readBytes().decodeToString() }
 
-        /** Same contact re-expressed as vCard 4.0 (N/FN retained, VERSION bumped). */
+        /** The same contact as vCard 4.0; only the VERSION line changes. */
         private val SEED_BODY_V4: String = SEED_BODY_V3.replace("VERSION:3.0", "VERSION:4.0")
 
-        // Photo seeds — shared synthetic fixtures reused from the parameterized probe.
+        // Photo seeds: shared synthetic fixtures reused from the parameterized probe.
         private const val URL_PHOTO_UID = "kashcal-seed-photo-url-0002"
         private const val INLINE_PHOTO_UID = "kashcal-seed-photo-inline-0003"
         private const val EXPECTED_PHOTO_URL = "https://photos.example.test/seed/kashcal-url.jpg"
@@ -365,10 +365,8 @@ class MultiServerCardDavZohoProbeTest {
         private val INLINE_PHOTO_BODY: String by lazy { fixture("kashcal_seed_photo_inline_0003.vcf") }
 
         /**
-         * Mirror of the production reader's private page size. Kept in sync by hand;
-         * the batch probe only needs "seed more than one page" to exercise a
-         * multi-href multiget, so an exact match is not load-bearing — a value that
-         * is >= the real one still forces a multi-page batch.
+         * Copies the production reader's private batch size by hand. An exact match isn't
+         * required: any value at or above the real one still forces a multi-page batch.
          */
         private const val MULTIGET_PAGE_SIZE = 20
 

@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Engin dagatöl fundust á þessum þjóni.</string>
     <string name="caldav_error_unexpected">Óvænt villa. Reyndu aftur.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nEf þetta er þjónn á staðarnetinu þínu skaltu leyfa aðgang að staðarneti til að tengjast.</string>
+    <string name="caldav_error_connection_refused_insecure">Þjónninn vísaði tengingunni eitthvert sem KashCal fylgir ekki (á ódulkóðað vistfang eða í endurvísunarlykkju), svo KashCal hætti áður en lykilorðið þitt var sent. Athugaðu vistfang þjónsins.</string>
     <string name="local_network_banner_title">Aðgangur að staðarneti nauðsynlegur</string>
     <string name="local_network_banner_body">Þessi þjónn virðist vera á staðarnetinu þínu. Leyfðu aðgang að staðarneti svo KashCal geti tengst honum.</string>
     <string name="local_network_banner_allow">Leyfa aðgang</string>
@@ -823,6 +824,8 @@
     <string name="dialog_edit_recurring_title">Vista breytingar á</string>
     <string name="dialog_delete_recurring_title">Eyða</string>
     <string name="dialog_move_recurring_title">Flytja</string>
+    <string name="snackbar_event_rescheduled">Viðburður færður</string>
+    <string name="snackbar_reschedule_failed">Ekki tókst að færa viðburð</string>
     <string name="recurring_this_event">Þennan viðburð</string>
     <string name="recurring_all_events">Alla viðburði</string>
 

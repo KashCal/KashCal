@@ -101,13 +101,12 @@ import org.onekash.kashcal.widget.WidgetColorSource
 import org.onekash.kashcal.widget.WidgetThemeSource
 
 /**
- * Full-screen "account hub" that replaces the former overflow bottom sheet.
+ * Shows the full-screen account hub opened from the top bar's avatar.
  *
- * Structured like the Insights destination: its own top bar with a back arrow
- * (no title) and a [BackHandler] so the system back gesture/button dismiss it
- * through the same [onBack] path as the arrow. A hero avatar at the top edits
- * the user's initials inline; below are the same destinations the overflow menu
- * offered, with a Privacy & Security link at the bottom of the list.
+ * It has its own untitled top bar with a back arrow, and a [BackHandler] so system back
+ * dismisses it through the same [onBack] as the arrow. A hero avatar edits the user's initials
+ * inline. Below it: Accounts & settings, the personalization rows, the calendar destinations,
+ * a Privacy & security section, and About.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,21 +122,18 @@ fun AccountHubScreen(
     onAboutClick: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    // App lock lives here (not Settings) because its host activity owns the
-    // BiometricPrompt. Defaults keep the section inert until the host wires it.
+    // App lock lives here, not in Settings, because the host activity owns the BiometricPrompt.
+    // The defaults leave the row inert until the host wires it.
     appLockEnabled: Boolean = false,
     onToggleAppLock: (Boolean) -> Unit = {},
-    // App permissions opens as a full-screen destination above the hub (like
-    // Manage tags), so it's a plain navigation row here; the host owns the
-    // destination and its permission launchers.
+    // App permissions opens as a full-screen destination above the hub, so this is a plain
+    // navigation row; the host owns the destination and its permission launchers.
     onAppPermissionsClick: () -> Unit = {},
-    // Personalization rows are hoisted as a slot so they can be stubbed in tests:
-    // the real section pulls an AppearanceViewModel via hiltViewModel(), which a
-    // plain Compose test has no graph to satisfy.
+    // A slot so tests can stub it: the real section gets an AppearanceViewModel through
+    // hiltViewModel(), which a plain Compose test has no graph for.
     makeItYours: @Composable () -> Unit = { MakeItYoursSection() },
-    // Snackbar host for confirmations that fire while the hub is up (e.g. the
-    // app-lock toggle). The hub is an opaque overlay above the caller's Scaffold,
-    // so its snackbar host would be hidden; the caller passes one mounted here.
+    // For confirmations that fire while the hub is up, such as the app-lock toggle's. The hub
+    // is an opaque overlay above the caller's Scaffold, which would hide the caller's host.
     snackbarHost: @Composable () -> Unit = {},
 ) {
     BackHandler(onBack = onBack)
@@ -170,14 +166,9 @@ fun AccountHubScreen(
                 onInitialsChange = onInitialsChange,
             )
 
-            // Accounts + app configuration presented as a centered pill tied to
-            // the identity block above, so it reads as an action on "you" rather
-            // than a stray list row floating above the sections. An outlined button
-            // gives a clear tap affordance (the border) without the heavy solid
-            // fill of a primary button, which dominated the hub. Its accent-colored
-            // label matches the "Make it yours" header below it — the pill and the
-            // section headers share one accent tone, so they read as a coherent
-            // identity block. A leading glyph aids scannability.
+            // Accounts & settings is a centered pill under the avatar so it reads as an action
+            // on "you", not a stray row above the sections. Outlined: a solid primary button
+            // dominated the hub. Its accent label matches the section headers below.
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -200,8 +191,7 @@ fun AccountHubScreen(
 
             HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
 
-            // Personalization (theme, accent, app icon) sits next to the
-            // identity avatar.
+            // Personalization sits next to the identity avatar.
             HubSectionHeader(stringResource(R.string.hub_section_make_it_yours))
             makeItYours()
 
@@ -224,9 +214,8 @@ fun AccountHubScreen(
                 icon = Icons.Default.Share,
                 onClick = onShareAvailabilityClick,
             )
-            // Tag management. Opens on top of the hub (like Settings) rather than
-            // swapping the calendar view, so it carries no `selected` state and the
-            // hub stays mounted beneath it.
+            // Tag management opens on top of the hub, like Settings, without swapping the
+            // calendar view, so it has no `selected` state and the hub stays mounted beneath.
             HubDrawerItem(
                 label = stringResource(R.string.tags_row_label),
                 icon = Icons.Default.LocalOffer,
@@ -245,7 +234,6 @@ fun AccountHubScreen(
                 icon = Icons.Default.Security,
                 onClick = onAppPermissionsClick,
             )
-            // Link to the data-ownership policy, closing the privacy section.
             PrivacyDataOwnershipRow()
 
             HorizontalDivider(modifier = Modifier.padding(horizontal = 28.dp, vertical = 8.dp))
@@ -259,7 +247,7 @@ fun AccountHubScreen(
     }
 }
 
-/** A small round color chip used as the trailing badge on the accent rows. */
+/** Draws the small round color chip that trails an accent row's value. */
 @Composable
 private fun ColorSwatch(argb: Int) {
     Box(
@@ -280,24 +268,20 @@ private fun HubDrawerItem(
     badgeTrailing: (@Composable () -> Unit)? = null,
     badge: @Composable (() -> Unit)? = null,
 ) {
-    // A row takes either a plain current-value string (badgeText, rendered in the
-    // label row so it truncates rather than squishing the label) or a custom badge
-    // slot (count), never both — passing both would silently drop the badge.
+    // A row takes a current-value string (badgeText) or a custom badge slot (a count), never
+    // both: passing both would silently drop the badge.
     require(badgeText == null || badge == null) {
         "HubDrawerItem takes badgeText or badge, not both"
     }
-    // badgeTrailing is a fixed-size element (e.g. a color swatch) pinned after the
-    // value string, so it only makes sense alongside badgeText.
+    // badgeTrailing is a fixed-size element (a color swatch) pinned after the value string.
     require(badgeTrailing == null || badgeText != null) {
         "HubDrawerItem badgeTrailing requires badgeText"
     }
     NavigationDrawerItem(
-        // A plain current-value string is rendered inside the label row (not the
-        // trailing badge slot) so the label keeps its intrinsic width and the
-        // value takes the leftover, truncating on one line. NavigationDrawerItem's
-        // badge slot is non-weighted, so a long value string would otherwise
-        // collapse the weighted label — squishing e.g. "Theme" in locales where
-        // the current-mode string is long.
+        // The value string renders inside the label row so the label keeps its width and the
+        // value truncates in the leftover. NavigationDrawerItem's badge slot isn't weighted,
+        // so a long value there would squish the weighted label ("Theme" in locales with a
+        // long mode name).
         label = {
             if (badgeText != null) {
                 Row(
@@ -332,11 +316,9 @@ private fun HubDrawerItem(
 }
 
 /**
- * App-lock toggle rendered as a hub-native row so its icon lands at the same
- * 28dp inset as every [HubDrawerItem] and it keeps the hub's row height (rather
- * than the denser settings-row inset and padding). A trailing ⓘ explains the
- * setting; the switch opts out of the 48dp minimum so the row doesn't stand
- * taller than its neighbours, and the whole row toggles the lock.
+ * Shows the app-lock toggle as a hub row, so its icon sits at the 28dp inset of every
+ * [HubDrawerItem] and it keeps the hub's row height instead of the denser settings-row inset.
+ * A trailing ⓘ explains the setting, and the whole row toggles the lock.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -373,8 +355,8 @@ private fun HubAppLockRow(
             ),
         )
         Spacer(Modifier.width(4.dp))
-        // Opt out of the 48dp minimum so the switch keeps the row at hub-row
-        // height instead of standing taller.
+        // Opting out of the 48dp minimum keeps the switch from making the row taller than its
+        // neighbours.
         CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
             Switch(checked = checked, onCheckedChange = onCheckedChange)
         }
@@ -392,11 +374,10 @@ private fun HubSectionHeader(text: String) {
 }
 
 /**
- * Personalization rows (theme, accent color, app icon) driven by
- * [AppearanceViewModel], plus the widget-appearance rows (widget design, widget
- * accent) which are independent of the app face. Each row opens the same
- * reusable sheet the settings screen used, so there's no duplicated picker
- * logic; the sheets render on top of the hub and dismiss back to it.
+ * Shows the personalization rows (theme, accent color, app icon) and the widget rows (widget
+ * design, widget accent), which are independent of the app face. [AppearanceViewModel] drives
+ * every row except the app icon, which [AppIconUtility] reads and sets. Each row opens its
+ * picker sheet over the hub, and the sheet dismisses back to it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -449,9 +430,8 @@ private fun MakeItYoursSection() {
         badgeText = stringResource(currentAppIcon.labelRes),
     )
 
-    // Widgets get their own light/dark face and color source, independent of the
-    // app face above; the rows stay flat under "Make it yours" rather than under
-    // a nested sub-header.
+    // Widgets have their own light/dark face and color source; their rows stay flat under
+    // "Make it yours", with no nested sub-header.
     HubDrawerItem(
         label = stringResource(R.string.hub_widget_theme),
         icon = Icons.Default.Widgets,
@@ -514,13 +494,12 @@ private fun MakeItYoursSection() {
     }
     if (showAppIconSheet) {
         AppIconSheet(
-            // Open fully expanded so the icon options + support link + note are all
-            // visible at once, not half-height requiring a drag-up.
+            // Fully expanded so the icon options, support link and note show without a drag.
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             currentPreset = currentAppIcon,
             onPresetSelect = { preset ->
-                // Skip the no-op: re-toggling the active alias needlessly refreshes
-                // the launcher (and can briefly restart the app).
+                // Re-toggling the active alias refreshes the launcher for nothing and can
+                // briefly restart the app.
                 if (preset != currentAppIcon) {
                     appIconUtility.setAppIcon(preset)
                     currentAppIcon = preset
@@ -533,19 +512,17 @@ private fun MakeItYoursSection() {
 }
 
 /**
- * Hero header: a large avatar that swaps into an inline 2-letter editor when
- * tapped. State transitions live in [InitialsEditorState] so they're unit
- * tested off-device.
+ * Shows the hero avatar, which swaps into an inline two-letter editor when tapped. The
+ * transitions live in [InitialsEditorState] so they are unit tested off-device.
  */
 @Composable
 private fun HubHero(
     initials: String,
     onInitialsChange: (String) -> Unit,
 ) {
-    // Saveable so an in-progress edit survives rotation (the hub's showHub flag
-    // does too). Not keyed on `initials`: instead adopt external changes via
-    // syncCurrent, which no-ops mid-edit so a sync/backup re-emit can't wipe the
-    // user's draft.
+    // Saveable so an in-progress edit survives rotation, as the hub's showHub flag does. Not
+    // keyed on `initials`: syncCurrent adopts external changes and is a no-op mid-edit, so a
+    // sync or backup re-emit can't wipe the draft.
     val editor = rememberSaveable(saver = InitialsEditorState.Saver) {
         InitialsEditorState(current = initials)
     }
@@ -559,8 +536,8 @@ private fun HubHero(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (editor.isEditing) {
-            // The user tapped specifically to type their initials, so focus the
-            // field (which raises the soft keyboard) as soon as edit mode begins.
+            // The user tapped to type, so focus the field (raising the keyboard) on entering
+            // edit mode.
             val focusRequester = remember { FocusRequester() }
             LaunchedEffect(Unit) { focusRequester.requestFocus() }
             OutlinedTextField(
@@ -588,19 +565,17 @@ private fun HubHero(
         } else {
             val editLabel = stringResource(R.string.cd_edit_initials)
             Box(
-                // No clip here: the pencil badge sits at the bottom-end corner and a
-                // circular clip on this wrapper would cut it off. The avatar clips
-                // its own circular background internally.
+                // No clip: a circular clip here would cut off the bottom-end pencil badge. The
+                // avatar clips its own background.
                 modifier = Modifier
                     .clickable(role = Role.Button, onClick = editor::start)
-                    // A real name (not just an onClick action label) so TalkBack
-                    // announces the hero — critical in the empty state, where the
-                    // avatar is a glyph with no text of its own.
+                    // A real name, not only an action label, so TalkBack announces the hero;
+                    // in the empty state the avatar is a glyph with no text of its own.
                     .semantics(mergeDescendants = true) { contentDescription = editLabel },
             ) {
                 AccountAvatar(initials = initials, size = 76.dp, fontSize = 30.sp)
-                // Small pencil badge marks the avatar as an editable field in both
-                // the empty and set states (the hint text below only shows when empty).
+                // Marks the avatar editable in both states; the hint below shows only when
+                // empty.
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -620,8 +595,6 @@ private fun HubHero(
                     )
                 }
             }
-            // Only prompt when there's nothing set yet; once initials exist the
-            // pencil badge alone signals the avatar is editable.
             if (normalizeInitials(initials).isEmpty()) {
                 Text(
                     text = stringResource(R.string.hub_initials_hint),
@@ -634,7 +607,7 @@ private fun HubHero(
     }
 }
 
-/** External link to the data-ownership policy, with an open-in-new affordance. */
+/** Shows the external link to the data-ownership policy, with an open-in-new icon. */
 @Composable
 private fun PrivacyDataOwnershipRow() {
     val context = LocalContext.current
@@ -644,8 +617,8 @@ private fun PrivacyDataOwnershipRow() {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(role = Role.Button) { ExternalLinks.openUrl(context, ExternalLinks.PRIVACY) }
-            // The OpenInNew glyph is the only "leaves the app" cue and is decorative
-            // to TalkBack, so fold "Opens in browser" into the row's merged label.
+            // The OpenInNew glyph is the only "leaves the app" cue and TalkBack skips it, so the
+            // merged label carries "Opens in browser".
             .semantics(mergeDescendants = true) { contentDescription = "$label, $opensInBrowser" }
             .padding(horizontal = 28.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,

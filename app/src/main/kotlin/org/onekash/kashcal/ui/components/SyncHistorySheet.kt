@@ -55,8 +55,8 @@ import org.onekash.kashcal.sync.session.SyncSessionStore
 import org.onekash.kashcal.sync.session.SyncStatus
 
 /**
- * Simplified bottom sheet displaying sync session history.
- * Shows compact session cards with status icons and expandable details.
+ * Shows the sync session history as a bottom sheet: a summary line, then one expandable card per
+ * session, with actions to copy the history to the clipboard or clear it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,7 +81,6 @@ fun SyncHistorySheet(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
         ) {
-            // Header row with title and actions
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -110,7 +109,6 @@ fun SyncHistorySheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Summary line
             SyncSummaryLine(
                 totalSyncs = stats.totalSyncs,
                 totalPushed = stats.totalPushed,
@@ -120,7 +118,6 @@ fun SyncHistorySheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Session List
             if (sessions.isEmpty()) {
                 Text(
                     text = stringResource(R.string.status_no_sync_sessions),
@@ -149,8 +146,8 @@ fun SyncHistorySheet(
 }
 
 /**
- * Summary line with colored background based on status.
- * Format: "X syncs   ↑Y pushed   ↓Z pulled" or with issues
+ * Shows totals across all sessions ("X syncs   ↑Y pushed   ↓Z pulled", plus an issue count when
+ * there are issues), tinted orange for issues, green for changes, neutral otherwise.
  */
 @Composable
 private fun SyncSummaryLine(
@@ -161,9 +158,9 @@ private fun SyncSummaryLine(
 ) {
     val hasChanges = totalPushed > 0 || totalPulled > 0
     val backgroundColor = when {
-        issueCount > 0 -> Color(0xFFFFA000).copy(alpha = 0.1f)  // Orange tint for issues
-        hasChanges -> Color(0xFF4CAF50).copy(alpha = 0.1f)      // Green tint for success with changes
-        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)  // Neutral for no changes
+        issueCount > 0 -> Color(0xFFFFA000).copy(alpha = 0.1f)
+        hasChanges -> Color(0xFF4CAF50).copy(alpha = 0.1f)
+        else -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     }
 
     Surface(
@@ -184,7 +181,7 @@ private fun SyncSummaryLine(
 }
 
 /**
- * Simplified sync session card with expandable details.
+ * Shows one sync session; a tap expands its duration, parse failures, skips, warnings and error.
  */
 @Composable
 private fun SyncSessionCard(session: SyncSession) {
@@ -213,7 +210,7 @@ private fun SyncSessionCard(session: SyncSession) {
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            // Row 1: Status icon, calendar name, trigger+method, time
+            // Status icon, calendar name, trigger icon and sync type, relative time
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -254,14 +251,14 @@ private fun SyncSessionCard(session: SyncSession) {
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // Row 2: Fetched → changes summary
+            // Push and pull counts, or the error when the sync failed
             Text(
                 text = buildChangeSummary(session, stringResource(R.string.sync_history_failed)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Row 3 (optional): Parse failure warning
+            // Collapsed only; the expanded details repeat these counts
             if (session.hasParseFailures && !expanded) {
                 Text(
                     text = stringResource(R.string.status_failed_to_parse, session.skippedParseError),
@@ -270,7 +267,6 @@ private fun SyncSessionCard(session: SyncSession) {
                 )
             }
 
-            // Row 4 (optional): Already-synced info
             if (session.hasAlreadySynced && !expanded) {
                 Text(
                     text = stringResource(R.string.sync_history_already_synced_count, session.skippedAlreadySynced),
@@ -279,7 +275,6 @@ private fun SyncSessionCard(session: SyncSession) {
                 )
             }
 
-            // Expandable details
             AnimatedVisibility(
                 visible = expanded,
                 enter = expandVertically(),
@@ -291,7 +286,6 @@ private fun SyncSessionCard(session: SyncSession) {
 
                     DetailRow(stringResource(R.string.sync_history_duration), "${session.durationMs}ms")
 
-                    // Parse failure details
                     if (session.hasParseFailures) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -305,7 +299,6 @@ private fun SyncSessionCard(session: SyncSession) {
                         }
                     }
 
-                    // Already-synced details
                     if (session.hasAlreadySynced) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -316,7 +309,7 @@ private fun SyncSessionCard(session: SyncSession) {
                         DetailRow(stringResource(R.string.sync_history_events_skipped), session.skippedAlreadySynced.toString())
                     }
 
-                    // Warnings (silently handled issues)
+                    // Issues handled without failing the sync
                     if (session.hasWarnings) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -334,7 +327,6 @@ private fun SyncSessionCard(session: SyncSession) {
                         }
                     }
 
-                    // Error details
                     if (session.errorMessage != null) {
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
@@ -352,7 +344,6 @@ private fun SyncSessionCard(session: SyncSession) {
                 }
             }
 
-            // Expand/collapse indicator
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
@@ -370,8 +361,8 @@ private fun SyncSessionCard(session: SyncSession) {
 }
 
 /**
- * Build the change summary line.
- * Format: "↑N   ↓ +Y ~Z -W" or error message
+ * Builds a session's change line: "↑ N   ↓ +Y ~Z -W" (zero pull parts omitted), "↑ 0   ↓ 0"
+ * with no changes, or for a failed sync its error message, error type or [failedLabel].
  */
 private fun buildChangeSummary(session: SyncSession, failedLabel: String = "Failed"): String {
     return when {
@@ -384,10 +375,8 @@ private fun buildChangeSummary(session: SyncSession, failedLabel: String = "Fail
         else -> {
             val parts = mutableListOf<String>()
 
-            // Push summary
             parts.add("↑ ${session.totalPushed}")
 
-            // Pull summary with breakdown
             val pullParts = mutableListOf<String>()
             if (session.eventsWritten > 0) pullParts.add("+${session.eventsWritten}")
             if (session.eventsUpdated > 0) pullParts.add("~${session.eventsUpdated}")

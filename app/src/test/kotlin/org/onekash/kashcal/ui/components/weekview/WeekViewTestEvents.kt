@@ -9,9 +9,9 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Shared factory for a one-hour timed [DisplayEvent.Room] used by the week-view
- * gesture tests. One builder so the Event/Occurrence/Calendar boilerplate lives
- * in a single place and tracks entity-constructor changes.
+ * Builds a one-hour timed [DisplayEvent.Room] starting at [hour] on [date] in [zone]. The
+ * Event, Occurrence and Calendar boilerplate lives here once so entity-constructor changes
+ * are fixed in one place.
  */
 internal fun roomDisplayEvent(
     id: Long,
@@ -59,8 +59,8 @@ internal fun roomDisplayEvent(
 }
 
 /**
- * Shared factory for an all-day [DisplayEvent.Room] on a single day. Used by
- * layout tests that need the all-day strip populated.
+ * Builds a single-day all-day [DisplayEvent.Room], stored from UTC midnight to 1 ms before the
+ * next midnight.
  */
 internal fun allDayDisplayEvent(
     id: Long,
@@ -106,12 +106,11 @@ internal fun allDayDisplayEvent(
 }
 
 /**
- * Shared factory for a multi-day [DisplayEvent.Room] spanning [startDate] through
- * [endDate] (inclusive). Used by the all-day-strip span-layout tests. When
- * [allDay] is false the event is a timed event that happens to cross a day
- * boundary — exactly the case the all-day strip's spanning bars were added for.
- * [startDay]/[endDay] carry the real year*10000+month*100+day dayCodes so tests
- * exercise the non-contiguous month-boundary arithmetic the layout relies on.
+ * Builds a multi-day [DisplayEvent.Room] spanning [startDate] through [endDate] inclusive.
+ * When [allDay] is false it is a timed event crossing midnight, which the all-day strip can
+ * show as a spanning bar. The occurrence's startDay and endDay carry real
+ * year*10000+month*100+day codes so tests exercise the non-contiguous month-boundary
+ * arithmetic the layout relies on.
  */
 internal fun multiDayDisplayEvent(
     id: Long,

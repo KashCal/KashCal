@@ -14,15 +14,17 @@ import java.time.ZoneId
 import java.util.UUID
 
 /**
- * Unit tests for event positioning in week view.
- * Tests overlap detection, stacking, and visual positioning.
+ * Unit tests for [WeekViewUtils.positionEventsForDay] and [WeekViewUtils.groupForDisplay]: slot
+ * packing and overlap totals, width fractions, the minimum-height floor and its layout window,
+ * zero-duration and sub-minute events, top offsets and heights at default and zoomed hour
+ * heights, cross-midnight clamping, the visible-overlap cap (#175, #256), and an exception's
+ * DisplayEvent. Times are built in the JVM default zone, the zone the positioning reads.
  */
 class EventPositioningTest {
 
     private val testCalendarId = 1L
     private val now = System.currentTimeMillis()
 
-    // Helper to create a test event
     private fun createTestEvent(
         id: Long = 1L,
         title: String = "Test Event",
@@ -42,7 +44,7 @@ class EventPositioningTest {
         dtstamp = now
     )
 
-    // Helper to create test occurrence (supports cross-midnight via endDate)
+    // Builds an occurrence in the default zone; endDate allows a cross-midnight end.
     private fun createTestOccurrence(
         eventId: Long = 1L,
         startHour: Int,
@@ -77,7 +79,6 @@ class EventPositioningTest {
         )
     }
 
-    // Helper to wrap Event + Occurrence into DisplayEvent.Room
     private fun toDisplayEvent(event: Event, occurrence: Occurrence): DisplayEvent.Room {
         return DisplayEvent.Room(event = event, occurrence = occurrence, calendar = null)
     }
@@ -173,8 +174,8 @@ class EventPositioningTest {
 
     @Test
     fun `zero-duration event overlapping a timed event packs side by side`() {
-        // A zero-duration event sharing a start minute with a timed event must not
-        // draw full-width on top of it — it packs into a neighbouring slot.
+        // A zero-duration event sharing a start minute with a timed event must not draw
+        // full-width on top of it; it packs into a neighbouring slot.
         val zeroDur = toDisplayEvent(
             createTestEvent(id = 1, title = "Point"),
             createTestOccurrence(eventId = 1, startHour = 9, startMinute = 0, endHour = 9, endMinute = 0)
@@ -198,7 +199,7 @@ class EventPositioningTest {
 
     @Test
     fun `zero-duration event abutting a prior event does not overlap it`() {
-        // An event ending at 9:00 and a point event at 9:00 merely touch — they stack.
+        // An event ending at 9:00 and a point event at 9:00 only touch, so both stay full width.
         val earlier = toDisplayEvent(
             createTestEvent(id = 1, title = "Earlier"),
             createTestOccurrence(eventId = 1, startHour = 8, endHour = 9)
@@ -221,8 +222,8 @@ class EventPositioningTest {
 
     @Test
     fun `sub-minute event renders at minimum height`() {
-        // A positive-but-sub-minute event (e.g. a 40-second synced event) truncates
-        // to a single minute; it must still be visible, not dropped.
+        // A positive sub-minute event (a 40-second synced event) has both ends in minute 9:00,
+        // so its minute span is zero; it must still be visible, not dropped.
         val zone = ZoneId.systemDefault()
         val date = LocalDate.now()
         val startTs = date.atTime(9, 0, 10).atZone(zone).toInstant().toEpochMilli()
@@ -251,9 +252,9 @@ class EventPositioningTest {
 
     @Test
     fun `two short events shorter than min height pack side by side`() {
-        // Two 5-minute events at 9:00-9:05 and 9:05-9:10 each render floored to 20dp
-        // (covering ~20 min of screen), so their drawn blocks overlap — they must
-        // pack into neighbouring slots, not stack on top of each other.
+        // Two 5-minute events at 9:00-9:05 and 9:05-9:10 each render at the 20dp floor (20 min
+        // of screen at 60dp an hour), so their drawn blocks overlap; they must pack into
+        // neighbouring slots, not draw on top of each other.
         val first = toDisplayEvent(
             createTestEvent(id = 1, title = "First"),
             createTestOccurrence(eventId = 1, startHour = 9, startMinute = 0, endHour = 9, endMinute = 5)
@@ -277,10 +278,10 @@ class EventPositioningTest {
 
     @Test
     fun `back-to-back 30-minute meetings stay full-width at min zoom`() {
-        // At min zoom (30dp/hr) a 30-min block floors to 20dp, covering ~40 min of
-        // screen. The overlap window must NOT inflate to match, or two back-to-back
-        // 30-min meetings would force into half-width columns. They should stay
-        // full-width stacked — the user zooms in or switches view to see detail.
+        // At min zoom (30dp an hour) a 30-min block is raised to the 20dp floor, 40 min of
+        // screen. The overlap window must not grow to match, or two back-to-back 30-min
+        // meetings would be forced into half-width columns. They stay full width, one above
+        // the other; the user zooms in or switches view to see detail.
         val first = toDisplayEvent(
             createTestEvent(id = 1, title = "First"),
             createTestOccurrence(eventId = 1, startHour = 9, startMinute = 0, endHour = 9, endMinute = 30)
@@ -303,8 +304,8 @@ class EventPositioningTest {
 
     @Test
     fun `zero-duration event outside the visible grid is dropped`() {
-        // A point event at 3am with a grid starting at 6am is off-screen and must
-        // not be pinned to the grid edge.
+        // A point event at 3am with a grid starting at 6am is off-screen and must not be pinned
+        // to the grid edge.
         val event = createTestEvent(id = 1)
         val occurrence = createTestOccurrence(
             eventId = 1,
@@ -341,14 +342,14 @@ class EventPositioningTest {
 
         assertEquals(2, positioned.size)
 
-        // Both should have width < 1.0 (sharing space)
+        // Both share the column.
         positioned.forEach { pos ->
             assertTrue("Width should be less than 1.0 for overlapping events",
                 pos.widthFraction < 1.0f)
             assertEquals(2, pos.overlapTotal)
         }
 
-        // Should have different left positions
+        // They sit at different left positions.
         val leftPositions = positioned.map { it.leftFraction }.toSet()
         assertEquals(2, leftPositions.size)
     }
@@ -409,7 +410,7 @@ class EventPositioningTest {
 
         assertEquals(2, positioned.size)
 
-        // Should be stacked due to overlap
+        // The overlap puts them in two slots.
         positioned.forEach { pos ->
             assertEquals(2, pos.overlapTotal)
         }
@@ -733,11 +734,11 @@ class EventPositioningTest {
 
     @Test
     fun `long event with two disjoint shorter events all get slots`() {
-        // Regression for github.com/KashCal/KashCal/issues/175 (positioning layer)
+        // Regression for #175, positioning layer.
         // Event 1: 11:00-23:00 (spans most of the day)
         // Event 2: 13:00-14:00 (inside event 1, disjoint from event 3)
         // Event 3: 15:00-16:00 (inside event 1, disjoint from event 2)
-        // Expected: all three positioned — event 2 and event 3 share a slot next to event 1.
+        // All three are positioned; events 2 and 3 share a slot next to event 1.
         val date = LocalDate.now()
         val e1 = toDisplayEvent(
             createTestEvent(id = 1, title = "Event 1"),
@@ -781,8 +782,8 @@ class EventPositioningTest {
 
     @Test
     fun `groupForDisplay shows all events that fit within slot cap with no overflow`() {
-        // Regression for github.com/KashCal/KashCal/issues/175 (display layer)
-        // With MAX_VISIBLE_OVERLAP = 2, three events fitting in 2 slots must ALL be visible.
+        // Regression for #175, display layer. With MAX_VISIBLE_OVERLAP = 2, three events that
+        // fit in 2 slots must all be visible.
         val date = LocalDate.now()
         val positioned = WeekViewUtils.positionEventsForDay(
             listOf(
@@ -812,8 +813,8 @@ class EventPositioningTest {
 
     @Test
     fun `groupForDisplay overflows events in slots beyond cap`() {
-        // Four events fully overlapping at 9-10am: 4 slots required, cap is 2.
-        // Events in slots 0-1 visible, events in slots 2-3 go to overflow.
+        // Four events fully overlapping at 9-10am need 4 slots and the cap is 2: slots 0-1 are
+        // visible and slots 2-3 go to overflow.
         val date = LocalDate.now()
         val positioned = WeekViewUtils.positionEventsForDay(
             (1..4).map { id ->
@@ -864,9 +865,8 @@ class EventPositioningTest {
 
     @Test
     fun `visible events fill column width when cluster exceeds cap`() {
-        // Regression for github.com/KashCal/KashCal/issues/256
-        // 8 events fully overlapping at 9-10am with default cap=2: only 2 events render,
-        // and they must split the column 50/50 — not stay narrow at 1/8 each.
+        // Regression for #256. 8 events fully overlapping at 9-10am with the default cap of 2:
+        // only 2 render, and they must split the column 50/50, not stay narrow at 1/8 each.
         val date = LocalDate.now()
         val positioned = WeekViewUtils.positionEventsForDay(
             (1..8).map { id ->
@@ -889,7 +889,7 @@ class EventPositioningTest {
             assertEquals(0.5f, pos.widthFraction, 0.01f)
         }
 
-        // Two visible events sit at fractions 0.0 and 0.5 — no empty space at the right.
+        // The two visible events sit at fractions 0.0 and 0.5, leaving no empty space at the right.
         val leftFractions = visible.map { it.leftFraction }.sorted()
         assertEquals(0.0f, leftFractions[0], 0.01f)
         assertEquals(0.5f, leftFractions[1], 0.01f)

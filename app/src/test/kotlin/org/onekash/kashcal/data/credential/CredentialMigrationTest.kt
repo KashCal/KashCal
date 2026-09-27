@@ -22,14 +22,12 @@ import org.onekash.kashcal.data.db.dao.AccountsDao
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 
 /**
- * Unit tests for CredentialMigration.
+ * Tests [CredentialMigration]: the DataStore flag short-circuit and the
+ * [CredentialMigration.MigrationResult] variants.
  *
- * Tests:
- * - Migration from iCloud single-key format to account-keyed format
- * - Migration from CalDAV format to unified format
- * - Idempotency (DataStore flag)
- * - Partial failure handling
- * - Fresh install (no credentials)
+ * The old prefs are EncryptedSharedPreferences, which this test's mocked Context can't open,
+ * so the fresh install, iCloud, CalDAV and missing-account tests are placeholders that assert
+ * nothing and only describe the expected flow. No other test covers those paths.
  */
 class CredentialMigrationTest {
 
@@ -59,7 +57,7 @@ class CredentialMigrationTest {
         mockDataStore = mockk(relaxed = true)
         mockPreferences = mockk(relaxed = true)
 
-        // Default: not yet migrated
+        // Not yet migrated unless a test sets the flag.
         every { mockPreferences[KEY_CREDENTIALS_MIGRATED] } returns null
         every { dataStore.dataStore } returns mockDataStore
         every { mockDataStore.data } returns flowOf(mockPreferences)
@@ -81,23 +79,21 @@ class CredentialMigrationTest {
 
     @Test
     fun `migration returns AlreadyMigrated when flag is set`() = runBlocking {
-        // Setup: migration flag already set
+        // The migration flag is set.
         every { mockPreferences[KEY_CREDENTIALS_MIGRATED] } returns true
 
-        // Execute
         val result = credentialMigration.migrateIfNeeded()
 
-        // Verify
         assertEquals(CredentialMigration.MigrationResult.AlreadyMigrated, result)
         coVerify(exactly = 0) { credentialManager.saveCredentials(any(), any()) }
     }
 
     @Test
     fun `migration is idempotent - second call returns AlreadyMigrated when flag set`() = runBlocking {
-        // After migration completes, flag is set
+        // A completed migration left the flag set.
         every { mockPreferences[KEY_CREDENTIALS_MIGRATED] } returns true
 
-        // Execute - should return immediately
+        // Returns before reading any old prefs.
         val result = credentialMigration.migrateIfNeeded()
         assertEquals(CredentialMigration.MigrationResult.AlreadyMigrated, result)
     }
@@ -106,10 +102,8 @@ class CredentialMigrationTest {
 
     @Test
     fun `migration returns NoCredentialsToMigrate on fresh install`() = runBlocking {
-        // Setup: no old credentials exist (EncryptedSharedPreferences can't be mocked)
-        // This test documents expected behavior - actual testing via integration tests
-
-        // The migration should:
+        // Placeholder: arranging empty old prefs needs EncryptedSharedPreferences. The
+        // migration should:
         // 1. Check DataStore flag (not set)
         // 2. Check for old iCloud credentials (none)
         // 3. Check for old CalDAV credentials (none)
@@ -123,17 +117,9 @@ class CredentialMigrationTest {
 
     @Test
     fun `migration preserves iCloud credentials including principalUrl`() = runBlocking {
-        // This test verifies the migration preserves all iCloud fields.
-        // Due to EncryptedSharedPreferences requiring Android context,
-        // we can only verify the migration logic flow in unit tests.
-        // Integration tests on device verify actual credential storage.
-
-        // The key assertion is that when getOldICloudPrefs() returns valid credentials,
-        // and accountsDao.getByProviderAndEmail() returns the account,
-        // then credentialManager.saveCredentials() is called with correct AccountCredentials.
-
-        // Since EncryptedSharedPreferences can't be mocked easily,
-        // this test documents the expected behavior:
+        // Placeholder: the old iCloud prefs are EncryptedSharedPreferences. When
+        // getOldICloudPrefs() has a complete set and accountsDao.getByProviderAndEmail()
+        // finds the account, credentialManager.saveCredentials() gets every iCloud field:
         // 1. Read apple_id, app_password, server_url, principal_url, calendar_home_url
         // 2. Find account by (ICLOUD, appleId)
         // 3. Save to unified format with username=appleId
@@ -145,9 +131,10 @@ class CredentialMigrationTest {
 
     @Test
     fun `migration preserves CalDAV credentials with trustInsecure flag`() = runBlocking {
-        // Similar to iCloud test, this verifies the expected behavior:
-        // 1. Read caldav_{id}_server_url, caldav_{id}_username, caldav_{id}_password, caldav_{id}_trust_insecure
-        // 2. Verify account exists in database
+        // Placeholder, like the iCloud test. The expected flow:
+        // 1. Read caldav_{id}_server_url, caldav_{id}_username, caldav_{id}_password,
+        //    caldav_{id}_trust_insecure
+        // 2. Skip a set whose account isn't in the database
         // 3. Save to unified format
 
         assertTrue("CalDAV migration test placeholder - see integration tests", true)
@@ -157,9 +144,9 @@ class CredentialMigrationTest {
 
     @Test
     fun `migration handles missing account gracefully - returns NoAccount equivalent`() = runBlocking {
-        // When iCloud credentials exist but account not in database yet,
-        // migration should return partial failure and retry on next launch.
-        // This happens if user upgraded mid-sign-in flow.
+        // Placeholder. When iCloud credentials exist but the account row isn't created yet,
+        // the migration returns PartialSuccess and leaves the flag unset, so the next launch
+        // retries.
 
         assertTrue("Partial failure test placeholder - see integration tests", true)
     }
@@ -168,7 +155,7 @@ class CredentialMigrationTest {
 
     @Test
     fun `MigrationResult sealed class has expected variants`() {
-        // Verify all result types exist
+        // Compiles only while every variant exists.
         val results = listOf(
             CredentialMigration.MigrationResult.AlreadyMigrated,
             CredentialMigration.MigrationResult.Success,

@@ -13,18 +13,17 @@ import java.time.ZoneId
 /**
  * Sample content for the widget-picker previews.
  *
- * Previews are generated on a picker-triggered path outside a normal widget session.
- * Nothing here touches the repository, the database or DataStore: the picker should
- * render immediately and can be asked to render before the user has any events at all,
- * so the samples are computed purely from [LocalDate.now] and string resources.
+ * Previews render outside a normal widget session. Nothing here touches the repository, the
+ * database or DataStore: the picker should render at once, possibly before the user has any
+ * events, so the samples come only from [LocalDate.now] and string resources.
  *
- * That makes the samples correct as of the moment previews are published, and no later:
- * the system keeps the rasterized image, so nothing here re-renders on its own. Keeping
- * them from going stale is the registrar's job — see [WidgetPreviewRegistrar.publishStamp].
+ * The samples are correct as of the moment previews are published, and no later: the system
+ * keeps the rasterized image and nothing here re-renders it. [WidgetPreviewRegistrar.publishStamp]
+ * keeps them from going stale.
  *
- * Two invariants matter for the previews to render correctly:
- * - `startDay` on each event must equal the day code it is filed under, or the row
- *   renders a multi-day continuation glyph instead of a start time.
+ * Two invariants keep the previews rendering right:
+ * - `startDay` on each event must equal the day code it is filed under, or the row shows a
+ *   multi-day continuation glyph instead of a start time.
  * - `isPast` and `isCancelled` stay false, or rows render dimmed and struck through.
  */
 internal object WidgetPreviewData {
@@ -35,16 +34,16 @@ internal object WidgetPreviewData {
     /** Leaves room for the busiest sample day without triggering the overflow row. */
     const val MAX_EVENTS_PER_DAY = 5
 
-    /** Distinct colours so preview rows don't all share one calendar's stripe. */
+    /** Distinct colors so preview rows don't all share one calendar's pill. */
     private const val COLOR_BLUE = 0xFF2196F3.toInt()
     private const val COLOR_GREEN = 0xFF43A047.toInt()
     private const val COLOR_ORANGE = 0xFFF57C00.toInt()
     private const val COLOR_PURPLE = 0xFF7E57C2.toInt()
 
     /**
-     * Time pattern from the device's 12/24-hour setting. The real widgets let the user's
-     * stored time-format preference override the device setting; a preview keeps to the
-     * device setting so it needs no DataStore read on the picker path.
+     * Returns the time pattern for the device's 12/24-hour setting. The real widgets let the
+     * stored time-format preference override it; a preview keeps to the device setting so it
+     * needs no DataStore read on the picker path.
      */
     fun timePattern(context: Context): String = DateTimeUtils.getTimePattern(
         preference = DateTimeUtils.TimeFormatPreference.SYSTEM,
@@ -52,9 +51,9 @@ internal object WidgetPreviewData {
     )
 
     /**
-     * Current month's grid, matching the real month widget's default view. The
-     * first-day-of-week comes from the device locale: previews are rasterized once at
-     * publish time, so a snapshot of the user's stored preference would go stale anyway.
+     * Returns the current month's grid, the real month widget's default view. The first day of
+     * the week comes from the device locale: previews are rasterized once at publish time, so a
+     * snapshot of the stored preference would go stale anyway.
      */
     fun monthGrid(): MonthGrid {
         val today = LocalDate.now()
@@ -72,9 +71,8 @@ internal object WidgetPreviewData {
     }
 
     /**
-     * Seven days starting today. Every day is present as a key because the week widget
-     * renders a header per day; some days are intentionally empty so the preview shows
-     * what a quiet day looks like too.
+     * Returns seven days from today. Every day is a key because the week widget renders a
+     * header per day; some days are empty so the preview also shows a quiet day.
      */
     fun weekEvents(context: Context): Map<Int, List<WidgetDataRepository.WidgetEvent>> {
         val today = LocalDate.now()
@@ -101,17 +99,16 @@ internal object WidgetPreviewData {
         }
     }
 
-    /** Days of the month that get a dot, spread out enough to read as a busy-ish month. */
+    /** Days of the month that get a sample event, spread out to read as a busy-ish month. */
     private val MONTH_SAMPLE_DAYS = listOf(3, 8, 12, 17, 22, 26)
 
     /**
-     * The dates that get a dot, all inside [inMonthOf]'s own month.
+     * Returns the dates that get a sample event, all inside [inMonthOf]'s own month.
      *
-     * Anchored to days of the month rather than to offsets from today, because the grid
-     * only draws dots on its own month's cells: it fades adjacent-month cells and drops
-     * trailing all-next-month rows entirely, so a sample that spilled into the next month
-     * would silently vanish. Offsets from today spill for the whole last stretch of every
-     * month, which is exactly when a fresh install is most likely to publish previews.
+     * Anchored to days of the month, not offsets from today: the grid drops trailing
+     * all-next-month rows, and in dots mode draws no dots on adjacent-month cells, so a sample
+     * that spilled into the next month could silently vanish. Offsets from today spill for the
+     * last stretch of every month.
      *
      * Takes the reference date as a parameter so a test can walk a full year of them.
      */
@@ -119,7 +116,7 @@ internal object WidgetPreviewData {
         .filter { it <= inMonthOf.lengthOfMonth() }
         .map { inMonthOf.withDayOfMonth(it) }
 
-    /** Dots for the month grid, spread across the current month. */
+    /** Returns sample events for the month grid, spread across the current month. */
     fun monthEvents(context: Context): Map<Int, List<WidgetDataRepository.WidgetEvent>> {
         var nextId = 30L
 
@@ -131,8 +128,8 @@ internal object WidgetPreviewData {
     }
 
     /**
-     * Upcoming spans several days within the widget's horizon. Empty days are omitted
-     * entirely — that suppression is the upcoming widget's defining behaviour.
+     * Returns sample events on four days within the Upcoming widget's horizon. Empty days have
+     * no key, since the Upcoming widget skips empty days.
      */
     fun upcomingEvents(context: Context): Map<Int, List<WidgetDataRepository.WidgetEvent>> {
         val today = LocalDate.now()

@@ -29,16 +29,21 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Comprehensive tests for EventWriter.
- *
- * Tests cover:
- * - Create events (single and recurring)
- * - Update events
- * - Delete events (soft delete for sync)
- * - Edit single occurrence (exception creation)
- * - Delete single occurrence (EXDATE)
- * - Split series (this and all future)
- * - Move event to different calendar
+ * Tests [EventWriter] over an in-memory Room database:
+ * - tag usage recorded on save, keeping a tag's color
+ * - create (UID, sync status, occurrences, queued CREATE) and ICS-imported series (master plus
+ *   linked exceptions)
+ * - update: SEQUENCE bumps per field, occurrence regeneration, sync status
+ * - delete: hard for local and never-synced events, soft with a queued DELETE otherwise
+ * - single-occurrence edits: exception creation and linking, shared UID, master-queued UPDATE,
+ *   attendee sets, SEQUENCE
+ * - single-occurrence delete (EXDATE and the cancelled occurrence row)
+ * - split series and delete this and future: truncation by COUNT or UNTIL, the in-place
+ *   fallbacks, future exceptions, attendees, the new series' times
+ * - all-events attendee changes cascading to exceptions, and CANCELs queued for removed guests
+ * - calendar moves: occurrences, queued operations per source and target, the cross-account
+ *   check for events with attendees
+ * - RSVP queueing and the attendee rows written by create and update
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -62,7 +67,8 @@ class EventWriterTest {
         occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         eventWriter = EventWriter(database, occurrenceGenerator)
 
-        // Create test accounts and calendars
+        // Two calendars on one iCloud account, a local calendar, and a calendar on a second
+        // synced account.
         runTest {
             val testAccountId = database.accountsDao().insert(
                 Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
@@ -96,8 +102,8 @@ class EventWriterTest {
                 )
             )
 
-            // A SECOND synced account (distinct from test@icloud.com) for
-            // cross-account move tests.
+            // A second synced account, distinct from test@icloud.com, for the cross-account
+            // move tests.
             val otherAccountId = database.accountsDao().insert(
                 Account(provider = AccountProvider.CALDAV, email = "other@nextcloud.test")
             )
@@ -176,9 +182,9 @@ class EventWriterTest {
 
     @Test
     fun `recordCategoryUsage registers a brand-new tag as a colorless registry row`() = runTest {
-        // The device save path reconciles tags through this entry point rather
-        // than a Room createEvent. A never-seen name must join the registry so
-        // it becomes selectable and colorable — with no color assigned yet.
+        // A device-event save records its tags here (EventCoordinator.recordTagUsage), not
+        // through a Room createEvent. A never-seen name must join the registry so it becomes
+        // selectable and colorable, with no color yet.
         eventWriter.recordCategoryUsage(listOf("Errand"))
 
         val errand = database.categoryDao().getByName("Errand")
@@ -272,11 +278,10 @@ class EventWriterTest {
     // ========== createImportedSeries (ICS file import: master + exceptions) ==========
 
     /**
-     * Build a master + N exception events as they arrive from an ICS file
-     * import: all sharing one source UID, exceptions distinguished by
-     * originalInstanceTime, originalEventId not yet set (the writer sets it
-     * after inserting the master). The caller (EventCoordinator) has already
-     * regenerated the shared UID; this method just persists the linked series.
+     * Builds a master and one exception as they reach [EventWriter.createImportedSeries] from
+     * an ICS file import: both share [sharedUid], the exception is told apart by
+     * originalInstanceTime, and originalEventId is unset (the writer sets it after inserting
+     * the master). In production EventCoordinator has already set a fresh shared UID.
      */
     private fun importMasterWithExceptions(
         calendarId: Long,
@@ -346,8 +351,8 @@ class EventWriterTest {
         val saved = eventWriter.createImportedSeries(master, exceptions, isLocal = true)
 
         val overriddenTime = exceptions[0].originalInstanceTime!!
-        // The master's occurrence at the overridden instance time must carry the
-        // exception link (Model B) — not a second standalone occurrence row.
+        // The master's occurrence at the overridden instance time carries the exception
+        // link; there is no second standalone occurrence row.
         val linked = database.occurrencesDao().getForEvent(saved.master.id)
             .filter { it.exceptionEventId == saved.exceptions[0].id }
         assertEquals("exactly one linked occurrence", 1, linked.size)
@@ -356,8 +361,8 @@ class EventWriterTest {
         assertTrue("no standalone occurrence for exception", standaloneUnderException.isEmpty())
         // Total occurrence count for the series stays at the RRULE count.
         assertEquals(5, database.occurrencesDao().getForEvent(saved.master.id).size)
-        // The linked occurrence was moved to the exception's modified start time,
-        // not left at the original RRULE instant.
+        // The linked occurrence moves to the exception's modified start time, off the
+        // original RRULE instant.
         assertEquals(
             "linked occurrence carries the exception's moved start time",
             saved.exceptions[0].startTs,
@@ -693,10 +698,10 @@ class EventWriterTest {
 
     @Test
     fun `editSingleOccurrence copies master attendees to the new exception`() = runTest {
-        // A rescheduled occurrence of a recurring meeting must carry the
-        // series' attendees so the bundled exception VEVENT pushes them
-        // (mirrors splitSeries). Without this the override VEVENT has zero
-        // ATTENDEEs and that instance loses its invitee list on the wire.
+        // A rescheduled occurrence of a recurring meeting must carry the series' attendees
+        // so the bundled exception VEVENT pushes them (as splitSeries does). Otherwise the
+        // exception VEVENT has no ATTENDEEs and that occurrence loses its guest list on the
+        // wire.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true,
@@ -727,9 +732,8 @@ class EventWriterTest {
 
     @Test
     fun `editSingleOccurrence persists an edited attendee set to the new exception only`() = runTest {
-        // Per-occurrence add: the user adds a guest to just this occurrence.
-        // The edited set lands on the exception's own rows; the master series
-        // is unchanged.
+        // The user adds a guest to this occurrence only. The edited set lands on the
+        // exception's own rows; the master is unchanged.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true,
@@ -770,8 +774,8 @@ class EventWriterTest {
 
     @Test
     fun `editSingleOccurrence with edited attendees replaces a re-edited exception's rows`() = runTest {
-        // Re-editing an occurrence that already has an override: the new
-        // edited set replaces the exception's existing attendee rows.
+        // Re-editing an occurrence that already has an exception: the new edited set
+        // replaces the exception's attendee rows.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true,
@@ -811,8 +815,8 @@ class EventWriterTest {
 
     @Test
     fun `editSingleOccurrence with null attendees leaves a re-edited exception's rows untouched`() = runTest {
-        // Characterization of current behavior: a re-edit that doesn't touch
-        // attendees (null) must not clobber the exception's existing rows.
+        // A re-edit that leaves attendees alone (null) must not clobber the exception's
+        // existing rows.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true,
@@ -864,11 +868,12 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // v15.0.6: Find by exceptionEventId since occurrence times are updated to exception's times
+        // linkException moves the occurrence to the exception's times, so find it by
+        // exceptionEventId.
         val updatedOccurrence = database.occurrencesDao().getByExceptionEventId(exception.id)
         assertNotNull(updatedOccurrence)
         assertEquals(exception.id, updatedOccurrence?.exceptionEventId)
-        // Verify times were updated to exception event's times
+        // The occurrence has the exception's times.
         assertEquals(exception.startTs, updatedOccurrence?.startTs)
         assertEquals(exception.endTs, updatedOccurrence?.endTs)
     }
@@ -892,7 +897,7 @@ class EventWriterTest {
 
     @Test
     fun `editSingleOccurrence exception has same UID as master`() = runTest {
-        // RFC 5545: Exception MUST have same UID as master, distinguished by RECURRENCE-ID
+        // RFC 5545: an exception has its master's UID and is told apart by RECURRENCE-ID.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true
@@ -906,26 +911,25 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // Exception UID must equal master UID (not master.uid-timestamp)
+        // The exception's UID equals the master's, with no timestamp suffix.
         assertEquals(master.uid, exception.uid)
         assertFalse(exception.uid.contains("-${targetOccurrence.startTs}"))
     }
 
     @Test
     fun `editSingleOccurrence queues UPDATE on master not CREATE on exception`() = runTest {
-        // Create synced master event
+        // A master on the server.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = false
         )
-        // Mark master as synced with server URL
         database.eventsDao().markCreatedOnServer(
             master.id,
             "https://caldav.icloud.com/test/master.ics",
             "etag123",
             System.currentTimeMillis()
         )
-        // Clear any pending operations from creation
+        // Clear the pending CREATE from the create.
         database.pendingOperationsDao().deleteForEvent(master.id)
 
         val targetOccurrence = database.occurrencesDao().getForEvent(master.id)[2]
@@ -937,19 +941,19 @@ class EventWriterTest {
             isLocal = false
         )
 
-        // Pending operation should be on MASTER (UPDATE), not exception (CREATE)
+        // The pending operation is an UPDATE on the master, not a CREATE on the exception.
         val masterOps = database.pendingOperationsDao().getForEvent(master.id)
         assertEquals(1, masterOps.size)
         assertEquals(PendingOperation.OPERATION_UPDATE, masterOps[0].operation)
 
-        // Exception should have NO pending operations
+        // The exception has no pending operations.
         val exceptionOps = database.pendingOperationsDao().getForEvent(exception.id)
         assertEquals(0, exceptionOps.size)
     }
 
     @Test
     fun `editSingleOccurrence exception has SYNCED status`() = runTest {
-        // Exception is bundled with master for sync, so should be SYNCED locally
+        // The exception is pushed inside its master's resource, so it's SYNCED locally.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = false
@@ -969,7 +973,6 @@ class EventWriterTest {
             isLocal = false
         )
 
-        // Exception is bundled with master, so it's marked SYNCED locally
         assertEquals(SyncStatus.SYNCED, exception.syncStatus)
     }
 
@@ -981,7 +984,6 @@ class EventWriterTest {
         )
         val targetOccurrence = database.occurrencesDao().getForEvent(master.id)[2]
 
-        // First edit
         val exception1 = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = targetOccurrence.startTs,
@@ -989,7 +991,7 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // Second edit of same occurrence
+        // A second edit of the same occurrence.
         val exception2 = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = targetOccurrence.startTs,
@@ -997,18 +999,17 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // Should be same event with preserved UID
+        // The same row, with its UID kept.
         assertEquals(exception1.id, exception2.id)
         assertEquals(exception1.uid, exception2.uid)
         assertEquals(master.uid, exception2.uid)
         assertEquals("Modified Twice", exception2.title)
     }
 
-    // Rescheduling a single occurrence is an organizer timing change, so
-    // the override MUST advance SEQUENCE (RFC 5546 §2.1.4) — matching the
-    // master-edit and this-and-future paths. The baseline is the pristine
-    // occurrence (master projected onto this occurrence's time), so the
-    // structural master→exception difference doesn't masquerade as a change.
+    // Rescheduling one occurrence is an organizer timing change, so the exception advances
+    // SEQUENCE (RFC 5546 §2.1.4), as on the master-edit and this-and-future paths. The
+    // baseline is the unedited occurrence (the master projected onto this occurrence's
+    // time), so the master-to-exception difference in shape doesn't read as a change.
     @Test
     fun `editSingleOccurrence bumps SEQUENCE when occurrence is rescheduled`() = runTest {
         val master = eventWriter.createEvent(
@@ -1021,7 +1022,7 @@ class EventWriterTest {
         val exception = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = target.startTs,
-            // Reproduce the coordinator's lambda: derive from master, shift time.
+            // As the coordinator builds it: derived from the master, time shifted.
             modifiedEvent = master.copy(
                 id = 0,
                 uid = "",
@@ -1035,8 +1036,8 @@ class EventWriterTest {
         assertEquals("rescheduled occurrence must bump SEQUENCE", 1, exception.sequence)
     }
 
-    // A cosmetic-only single-occurrence edit (notes) must NOT bump SEQUENCE,
-    // or attendees get re-notified for nothing.
+    // A notes-only occurrence edit must not bump SEQUENCE, or attendees get re-notified for
+    // nothing.
     @Test
     fun `editSingleOccurrence does not bump SEQUENCE for notes-only change`() = runTest {
         val master = eventWriter.createEvent(
@@ -1063,7 +1064,7 @@ class EventWriterTest {
         assertEquals("notes-only edit must not bump SEQUENCE", 0, exception.sequence)
     }
 
-    // A retitled occurrence is attendee-facing, so it MUST bump SEQUENCE.
+    // A retitled occurrence is attendee-facing, so it bumps SEQUENCE.
     @Test
     fun `editSingleOccurrence bumps SEQUENCE for title-only change`() = runTest {
         val master = eventWriter.createEvent(
@@ -1090,8 +1091,8 @@ class EventWriterTest {
         assertEquals("title-only edit must bump SEQUENCE", 1, exception.sequence)
     }
 
-    // Re-editing an already-materialized exception with a fresh timing change
-    // bumps relative to the exception's own SEQUENCE, not the master's.
+    // Re-editing an existing exception with a new timing change bumps from the exception's
+    // own SEQUENCE, not the master's.
     @Test
     fun `editSingleOccurrence bumps SEQUENCE when re-editing exception with new timing`() = runTest {
         val master = eventWriter.createEvent(
@@ -1100,8 +1101,8 @@ class EventWriterTest {
         )
         val target = database.occurrencesDao().getForEvent(master.id)[2]
 
-        // First edit: notes-only, establishes the exception at occurrence time
-        // without bumping (SEQUENCE stays 0).
+        // First edit: notes only, creating the exception at the occurrence time without a
+        // bump (SEQUENCE stays 0).
         val firstEdit = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = target.startTs,
@@ -1134,8 +1135,8 @@ class EventWriterTest {
 
         assertEquals("re-edit timing change must bump exception SEQUENCE", 1, secondEdit.sequence)
 
-        // Third edit, another time shift: the exception's own counter must
-        // keep climbing (1 -> 2), not re-derive from the master's sequence.
+        // Third edit, another time shift: the exception's own counter keeps climbing
+        // (1 -> 2), not re-derived from the master's sequence.
         val thirdEdit = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = target.startTs,
@@ -1153,11 +1154,10 @@ class EventWriterTest {
         assertEquals("successive re-edits must climb monotonically", 2, thirdEdit.sequence)
     }
 
-    // Guards the pristine-occurrence projection for all-day masters: a
-    // notes-only edit must not bump SEQUENCE even though the projection
-    // recomputes endTs from the master's span and carries isAllDay. If the
-    // projection ever desynced from the modified event on these fields, this
-    // would false-fire and re-notify attendees.
+    // Guards the unedited-occurrence projection for all-day masters: a notes-only edit must
+    // not bump SEQUENCE even though the projection recomputes endTs from the master's span
+    // and carries isAllDay. If the projection drifted from the modified event on these
+    // fields, the bump would fire and re-notify attendees.
     @Test
     fun `editSingleOccurrence does not bump SEQUENCE for notes-only change on all-day master`() = runTest {
         val master = eventWriter.createEvent(
@@ -1217,20 +1217,13 @@ class EventWriterTest {
 
     @Test
     fun `deleteSingleOccurrence on a previously-edited occurrence cancels the right row`() = runTest {
-        // Regression: a recurring occurrence the user has already edited
-        // (creating an exception event) had its master-side occurrence row
-        // updated to the EXCEPTION's modified start_ts. When the user
-        // later deletes that exception via the form's Delete button,
-        // EventWriter.deleteSingleOccurrence(masterId, originalInstanceTime)
-        // calls cancelOccurrence which uses a 60-second time-tolerance
-        // match — but the row no longer lives at originalInstanceTime,
-        // it lives at the exception's modified time.
-        //
-        // The match silently fails: is_cancelled stays 0, exception_event_id
-        // points at a now-deleted row, and the day card renders the slot
-        // again under the master's title at the exception's modified time.
-        // Visually identical to "the recurring event came back, no longer
-        // an exception."
+        // Editing an occurrence moves its master-side occurrence row to the exception's
+        // modified start_ts. Deleting it later from the form calls
+        // deleteSingleOccurrence(masterId, originalInstanceTime), and a time match within
+        // 60 seconds of originalInstanceTime (cancelOccurrence) would miss the row, so the
+        // writer cancels it by exception_event_id. If the match failed, is_cancelled would
+        // stay 0, exception_event_id would point at a deleted row, and the day card would
+        // show the master's title at the modified time, as if the edit had been undone.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true
@@ -1238,8 +1231,8 @@ class EventWriterTest {
         val originalSlot = database.occurrencesDao().getForEvent(master.id)[2]
         val originalInstanceTime = originalSlot.startTs
 
-        // Step 1: edit the occurrence → creates exception, moves the
-        // master's occurrence row to the exception's modified time.
+        // Step 1: edit the occurrence, which creates the exception and moves the master's
+        // occurrence row to the exception's modified time.
         val exception = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = originalInstanceTime,
@@ -1254,28 +1247,25 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // Sanity: the linked row is at the exception's modified time, not
-        // the original instance time.
+        // The linked row is at the exception's modified time, not the original instance
+        // time.
         val linkedRow = database.occurrencesDao().getByExceptionEventId(exception.id)
         assertNotNull(linkedRow)
         assertEquals(exception.startTs, linkedRow!!.startTs)
 
-        // Step 2: delete the (now-edited) occurrence — same path the form's
-        // Delete button hits via handleRoomEventFormDelete.
+        // Step 2: delete the edited occurrence, the path the form's Delete button takes
+        // through handleRoomEventFormDelete.
         eventWriter.deleteSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = originalInstanceTime,
             isLocal = true
         )
 
-        // The exception event row is gone (existing behavior, not the bug).
+        // The exception event row is gone.
         assertNull(database.eventsDao().getById(exception.id))
 
-        // The bug surface: the master's occurrence row at the exception's
-        // modified time must now be marked cancelled OR removed entirely.
-        // Today, neither happens — the row at exception.startTs sits there
-        // with is_cancelled=0 and a dangling exception_event_id, making
-        // the day card render the master's title at the modified time.
+        // The master's occurrence row at the exception's modified time is cancelled or
+        // removed.
         val survivors = database.occurrencesDao().getForEvent(master.id)
         val staleRow = survivors.firstOrNull { it.startTs == exception.startTs }
         assertTrue(
@@ -1284,7 +1274,7 @@ class EventWriterTest {
             staleRow == null || staleRow.isCancelled
         )
 
-        // And no row should still point at the deleted exception.
+        // No row still points at the deleted exception.
         assertNull(database.occurrencesDao().getByExceptionEventId(exception.id))
     }
 
@@ -1298,7 +1288,7 @@ class EventWriterTest {
 
         eventWriter.deleteSingleOccurrence(master.id, targetOccurrence.startTs, isLocal = true)
 
-        // All 5 still exist, just one is cancelled
+        // All 5 still exist; one is cancelled.
         val allOccurrences = database.occurrencesDao().getForEvent(master.id)
         assertEquals(5, allOccurrences.size)
         assertEquals(1, allOccurrences.count { it.isCancelled })
@@ -1325,13 +1315,11 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // COUNT-based RRULE: master keeps COUNT=pastCount, never UNTIL
-        // (master keeps COUNT=pastCount, never UNTIL, on the split path
-        // that preserves total instance count).
+        // A COUNT rule: the master keeps COUNT=pastCount and never gets UNTIL, so the total
+        // occurrence count is kept.
         val updatedMaster = database.eventsDao().getById(master.id)
         assertEquals("FREQ=DAILY;COUNT=5", updatedMaster?.rrule)
 
-        // New event should exist
         assertNotNull(newEvent)
         assertEquals("Future Series", newEvent.title)
         assertNull(newEvent.originalEventId) // Not an exception
@@ -1353,7 +1341,7 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // Master should have fewer occurrences
+        // The master keeps only occurrences before the split.
         val masterOccurrences = database.occurrencesDao().getForEvent(master.id)
         assertTrue(masterOccurrences.size < 10)
         assertTrue(masterOccurrences.all { it.startTs < splitPoint })
@@ -1372,11 +1360,11 @@ class EventWriterTest {
 
         eventWriter.deleteThisAndFuture(master.id, deleteFrom, isLocal = true)
 
-        // Master should have UNTIL
+        // The master gets an UNTIL.
         val updated = database.eventsDao().getById(master.id)
         assertTrue(updated?.rrule?.contains("UNTIL=") == true)
 
-        // Fewer occurrences
+        // Only occurrences before deleteFrom remain.
         val remaining = database.occurrencesDao().getForEvent(master.id)
         assertTrue(remaining.size < 10)
         assertTrue(remaining.all { it.startTs < deleteFrom })
@@ -1391,7 +1379,6 @@ class EventWriterTest {
 
         eventWriter.deleteThisAndFuture(master.id, master.startTs, isLocal = true)
 
-        // Event should be deleted
         assertNull(database.eventsDao().getById(master.id))
     }
 
@@ -1413,7 +1400,7 @@ class EventWriterTest {
         assertNotNull("Event should exist after deleteThisAndFuture", updated)
         val rrule = updated!!.rrule!!
         assertTrue("RRULE should contain UNTIL", rrule.contains("UNTIL="))
-        // Date-only format: 8 digits, no 'T' (e.g., UNTIL=20260115)
+        // Date-only form: 8 digits, no 'T' (e.g. UNTIL=20260115).
         val untilMatch = Regex("UNTIL=([^;]+)").find(rrule)
         assertNotNull("UNTIL should be in RRULE: $rrule", untilMatch)
         val untilValue = untilMatch!!.groupValues[1]
@@ -1424,8 +1411,8 @@ class EventWriterTest {
 
     @Test
     fun `splitSeries uses date-only UNTIL for all-day unbounded events`() = runTest {
-        // Unbounded RRULE forces the UNTIL branch (the COUNT branch
-        // preserves COUNT and never emits UNTIL).
+        // An unbounded RRULE takes the UNTIL branch (the COUNT branch keeps COUNT and never
+        // emits UNTIL).
         val master = eventWriter.createEvent(
             createBaseEvent().copy(
                 rrule = "FREQ=DAILY",
@@ -1434,8 +1421,8 @@ class EventWriterTest {
             isLocal = true
         )
         val occurrences = database.occurrencesDao().getForEvent(master.id)
-        // Sync window seeds at least a few occurrences for an unbounded
-        // daily; index 5 lands well before any horizon-induced trim.
+        // The expansion window gives an unbounded daily series many occurrences; index 5 is
+        // well inside it.
         val splitFrom = occurrences[5].startTs
 
         eventWriter.splitSeries(
@@ -1454,13 +1441,12 @@ class EventWriterTest {
             untilValue.contains("T"))
     }
 
-    // ========== Split Series — total-count-preserving semantics ==========
+    // ========== Split Series: total count kept ==========
 
     @Test
     fun `splitSeries preserves total count for COUNT-based series`() = runTest {
-        // Master has COUNT=10. Split at occurrence index 2 means 2 past
-        // occurrences (indices 0 and 1) before splitTime. Master should
-        // keep COUNT=2; new series should keep COUNT=8. Total unchanged.
+        // The master has COUNT=10. A split at index 2 leaves 2 past occurrences (indices 0
+        // and 1), so the master keeps COUNT=2 and the new series gets COUNT=8.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
             isLocal = true
@@ -1471,8 +1457,7 @@ class EventWriterTest {
         val newEvent = eventWriter.splitSeries(
             masterEventId = master.id,
             splitTimeMs = splitFrom,
-            // Caller passes the master's own RRULE — writer is
-            // responsible for splitting the COUNT.
+            // The caller passes the master's own RRULE; the writer splits the COUNT.
             modifiedEvent = createBaseEvent().copy(
                 title = "Future series",
                 rrule = "FREQ=DAILY;COUNT=10"
@@ -1502,21 +1487,22 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // No new event row — split returns the master itself with
-        // changes applied (mirrors deleteThisAndFuture's first-occ
-        // shortcut at line 520).
+        // No new event row: the split returns the master with the changes applied, as
+        // deleteThisAndFuture from the first occurrence acts on the whole event.
         assertEquals(priorMasterId, result.id)
         val updated = database.eventsDao().getById(priorMasterId)
         assertEquals("Renamed via this-and-future on first", updated?.title)
-        // Original RRULE survives — no truncation.
+        // The original RRULE survives, not truncated.
         assertEquals("FREQ=DAILY;COUNT=10", updated?.rrule)
     }
 
     @Test
     fun `splitSeries with pastCount zero falls back to ALL_EVENTS update`() = runTest {
-        // splitTime > masterStart but < first expansion +interval would
-        // produce master COUNT=0 (invalid). Helper produces COUNT=0;
-        // splitSeries must detect and fall back to in-place ALL_EVENTS.
+        // A splitTime 1 ms after masterStart gives pastCount 0: the count's range ends,
+        // exclusive, at splitTime - 1, which leaves out the first occurrence.
+        // RruleUtils.splitRruleAtTime would give the master an invalid COUNT=0, so
+        // splitSeries detects it (RruleUtils.isDegenerateCountSplit) and updates the master
+        // in place, as an all-events edit.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
             isLocal = true
@@ -1525,9 +1511,8 @@ class EventWriterTest {
 
         val result = eventWriter.splitSeries(
             masterEventId = master.id,
-            // 1 second after master start — strictly greater than
-            // masterStart so the first-occurrence guard does NOT fire,
-            // but no daily expansion has materialized yet (pastCount=0).
+            // 1 ms after the master's start: past the first-occurrence guard, with no
+            // occurrence counted before the split (pastCount=0).
             splitTimeMs = master.startTs + 1L,
             modifiedEvent = master.copy(title = "pastCount zero edge"),
             isLocal = true
@@ -1536,7 +1521,7 @@ class EventWriterTest {
         assertEquals(priorMasterId, result.id)
         val updated = database.eventsDao().getById(priorMasterId)
         assertEquals("pastCount zero edge", updated?.title)
-        // No invalid COUNT=0 emitted, no UNTIL — original RRULE.
+        // The original RRULE: no COUNT=0 and no UNTIL.
         assertEquals("FREQ=DAILY;COUNT=10", updated?.rrule)
     }
 
@@ -1549,8 +1534,7 @@ class EventWriterTest {
         val occurrences = database.occurrencesDao().getForEvent(master.id)
         val futureOccTs = occurrences[5].startTs
 
-        // Create an exception event for occurrence 5 (future relative
-        // to a split at occurrence 3).
+        // An exception at occurrence 5, after a split at occurrence 3.
         val exception = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = futureOccTs,
@@ -1566,9 +1550,8 @@ class EventWriterTest {
         assertNotNull("exception should exist before split",
             database.eventsDao().getById(exception.id))
 
-        // Split at occurrence 3 — exception at 5 is in the truncated
-        // range and must be cleaned up (same shape as the cleanup
-        // deleteThisAndFuture performs).
+        // Split at occurrence 3: the exception at 5 is in the truncated range and is
+        // deleted, as deleteThisAndFuture does.
         eventWriter.splitSeries(
             masterEventId = master.id,
             splitTimeMs = occurrences[3].startTs,
@@ -1586,10 +1569,8 @@ class EventWriterTest {
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
             isLocal = true
         )
-        // Attendees live in their own Room table; writer paths must
-        // populate them via replaceForEvent rather than relying on
-        // eventsDao.insert(Event), which doesn't touch the attendee
-        // table.
+        // Attendees live in their own Room table; eventsDao.insert(Event) doesn't touch it,
+        // so writer paths populate it through replaceForEvent.
         val attendees = listOf(
             Attendee(
                 eventId = master.id,
@@ -1632,9 +1613,8 @@ class EventWriterTest {
 
     @Test
     fun `splitSeries with explicit attendees writes the supplied set to the new series`() = runTest {
-        // The this-and-future attendee-edit path: the user added a guest, so
-        // the new series must carry the EDITED set, not a verbatim copy of the
-        // master's attendees.
+        // A this-and-future attendee edit: the user added a guest, so the new series carries
+        // the edited set, not a copy of the master's attendees.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
             isLocal = true,
@@ -1662,7 +1642,7 @@ class EventWriterTest {
             setOf("mailto:alice@example.test", "mailto:carol@example.test"),
             onNewSeries
         )
-        // The truncated (past) master keeps its original single attendee.
+        // The truncated master keeps its original single attendee.
         val onMaster = database.attendeesDao().getForEventOnce(master.id).map { it.address }.toSet()
         assertEquals(
             "past master retains its original attendee set",
@@ -1673,9 +1653,8 @@ class EventWriterTest {
 
     @Test
     fun `splitSeries at first occurrence collapses to in-place update and applies supplied attendees`() = runTest {
-        // splitTimeMs <= masterStart collapses to updateMasterInPlace. The
-        // edited attendee set must still land on the master — not be dropped
-        // by the collapse branch.
+        // splitTimeMs <= masterStart takes updateMasterInPlace. The edited attendee set must
+        // still land on the master, not be dropped by that branch.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
             isLocal = true,
@@ -1707,10 +1686,9 @@ class EventWriterTest {
 
     @Test
     fun `updateEvent all-events attendee change cascades onto existing exception rows`() = runTest {
-        // An ALL_EVENTS attendee edit lands on updateEvent. Existing time-only
-        // exceptions were seeded with the master's OLD attendee list; the new
-        // set must cascade onto them so the whole series stays consistent
-        // (safe in this phase — no exception has a divergent set yet).
+        // An all-events attendee edit goes through updateEvent. A time-only exception was
+        // seeded with the master's old attendee list, so the new set cascades onto it and the
+        // series stays consistent. An exception with its own guest set is skipped (next test).
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true,
@@ -1719,7 +1697,7 @@ class EventWriterTest {
             )
         )
         val occurrences = database.occurrencesDao().getForEvent(master.id)
-        // Create a time-only exception (seeds master's single attendee).
+        // A time-only exception, seeded with the master's single attendee.
         val exception = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = occurrences[2].startTs,
@@ -1732,7 +1710,7 @@ class EventWriterTest {
         )
         assertEquals(1, database.attendeesDao().getForEventOnce(exception.id).size)
 
-        // ALL_EVENTS edit: add a guest to the master.
+        // All-events edit: add a guest to the master.
         val edited = listOf(
             Attendee(eventId = 0, address = "mailto:alice@example.test", partstat = "ACCEPTED", sortOrder = 0),
             Attendee(eventId = 0, address = "mailto:erin@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
@@ -1753,9 +1731,9 @@ class EventWriterTest {
 
     @Test
     fun `updateEvent all-events change does NOT clobber a customized per-occurrence override`() = runTest {
-        // Once a guest is added to ONE occurrence, that override holds a
-        // deliberately-divergent set. A later all-events edit must leave it
-        // alone rather than overwriting the user's per-occurrence customization.
+        // After a guest is added to one occurrence, that exception holds its own set. A
+        // later all-events edit must leave it alone and not overwrite the user's
+        // per-occurrence change.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true,
@@ -1764,7 +1742,7 @@ class EventWriterTest {
             )
         )
         val occurrences = database.occurrencesDao().getForEvent(master.id)
-        // Customize one occurrence: add a per-occurrence guest (divergent set).
+        // Add a guest to one occurrence only.
         val exception = eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = occurrences[2].startTs,
@@ -1778,7 +1756,7 @@ class EventWriterTest {
             )
         )
 
-        // ALL_EVENTS edit: add a DIFFERENT guest to the whole series.
+        // All-events edit: add a different guest to the whole series.
         eventWriter.updateEvent(
             event = database.eventsDao().getById(master.id)!!.copy(title = "Series Renamed"),
             isLocal = true,
@@ -1798,9 +1776,8 @@ class EventWriterTest {
 
     @Test
     fun `updateEvent all-events change still cascades onto a seeded override with stamped PARTSTAT`() = runTest {
-        // A seeded (non-customized) override matches the series addresses but
-        // may carry server-stamped PARTSTAT differences. Divergence is judged
-        // by address SET only, so it must still cascade.
+        // A seeded exception matches the series addresses but may carry a server-set
+        // PARTSTAT. Only the address set is compared, so the change still cascades.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true,
@@ -1817,8 +1794,8 @@ class EventWriterTest {
             ),
             isLocal = true
         )
-        // Simulate a server-stamped PARTSTAT on the seeded override (same
-        // address, different status) — must NOT be mistaken for customization.
+        // A server-set PARTSTAT on the seeded exception (same address, different status),
+        // which must not read as a per-occurrence edit.
         val seededRow = database.attendeesDao().getForEventOnce(exception.id).single()
         database.attendeesDao().replaceForEvent(
             exception.id,
@@ -1844,8 +1821,8 @@ class EventWriterTest {
 
     @Test
     fun `updateEvent tombstones a removed synced guest into pending_cancels`() = runTest {
-        // Removing an invited guest must enqueue a CANCEL for them (carrying the
-        // captured delivery context) rather than silently dropping the row.
+        // Removing an invited guest queues a CANCEL for them in pending_cancels, with the
+        // captured delivery context, instead of only dropping the row.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = false,
@@ -1854,10 +1831,10 @@ class EventWriterTest {
                 Attendee(eventId = 0, address = "mailto:bob@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
             )
         )
-        // Mark it as pushed so the removed guest counts as "synced" (on the wire).
+        // Mark it pushed, so the removed guest was on the wire.
         database.eventsDao().markCreatedOnServer(master.id, "https://caldav.icloud.com/test/${master.uid}.ics", "etag-1", System.currentTimeMillis())
 
-        // Save with bob removed (survivor set = alice only).
+        // Save with bob removed (survivors: alice only).
         eventWriter.updateEvent(
             event = database.eventsDao().getById(master.id)!!.copy(title = "Renamed"),
             isLocal = false,
@@ -1870,7 +1847,7 @@ class EventWriterTest {
         assertEquals(1, cancels.size)
         assertEquals("mailto:bob@example.test", cancels[0].address)
         assertNull("all-events removal has no recurrence scope", cancels[0].recurrenceId)
-        // Survivor set persisted; removed guest gone from attendees.
+        // The survivors are saved; the removed guest's row is gone.
         assertEquals(
             setOf("mailto:alice@example.test"),
             database.attendeesDao().getForEventOnce(master.id).map { it.address }.toSet()
@@ -1879,8 +1856,8 @@ class EventWriterTest {
 
     @Test
     fun `updateEvent does not tombstone a removed never-synced guest`() = runTest {
-        // A guest added locally and removed before the event ever synced was
-        // never on the wire — no CANCEL is owed.
+        // A guest added and removed before the event ever synced was never on the wire, so
+        // no CANCEL is owed.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = false,
@@ -1889,7 +1866,7 @@ class EventWriterTest {
                 Attendee(eventId = 0, address = "mailto:bob@example.test", partstat = "NEEDS-ACTION", sortOrder = 1)
             )
         )
-        // NOT marked created-on-server: caldavUrl stays null (never synced).
+        // Not marked created on the server: caldavUrl stays null.
 
         eventWriter.updateEvent(
             event = database.eventsDao().getById(master.id)!!,
@@ -1928,8 +1905,8 @@ class EventWriterTest {
 
     @Test
     fun `editSingleOccurrence removal enqueues a per-occurrence CANCEL scoped to the instance`() = runTest {
-        // Removing a guest from just one occurrence cancels them for that
-        // instance only (recurrence_id set); the master series keeps them.
+        // Removing a guest from one occurrence cancels them for that occurrence only
+        // (recurrence_id set); the master keeps them.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = false,
@@ -1941,7 +1918,7 @@ class EventWriterTest {
         database.eventsDao().markCreatedOnServer(master.id, "https://caldav.icloud.com/test/${master.uid}.ics", "etag-1", System.currentTimeMillis())
         val target = database.occurrencesDao().getForEvent(master.id)[2]
 
-        // Edit just this occurrence, dropping bob (survivors = alice only).
+        // Edit this occurrence only, dropping bob (survivors: alice only).
         eventWriter.editSingleOccurrence(
             masterEventId = master.id,
             occurrenceTimeMs = target.startTs,
@@ -1956,7 +1933,7 @@ class EventWriterTest {
         assertEquals(1, cancels.size)
         assertEquals("mailto:bob@example.test", cancels[0].address)
         assertEquals("per-occurrence cancel is scoped to the instance", target.startTs, cancels[0].recurrenceId)
-        // Master series still has both guests.
+        // The master still has both guests.
         assertEquals(
             setOf("mailto:alice@example.test", "mailto:bob@example.test"),
             database.attendeesDao().getForEventOnce(master.id).map { it.address }.toSet()
@@ -1965,9 +1942,9 @@ class EventWriterTest {
 
     @Test
     fun `editThisAndFuture removal leaves the guest off the new series and enqueues no cancel`() = runTest {
-        // This-and-future via split: the new series is a fresh UID the guest was
-        // never on, so they are simply absent going forward (no explicit CANCEL);
-        // the past series retains them.
+        // This and future splits the series: the new series has a fresh UID the guest was
+        // never on, so they are absent from then on with no CANCEL; the truncated master
+        // keeps them.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
             isLocal = false,
@@ -1992,7 +1969,7 @@ class EventWriterTest {
             )
         )
 
-        // New series lacks bob; past series keeps both; no pending cancel.
+        // The new series lacks bob, the master keeps both, and no cancel is pending.
         assertEquals(
             setOf("mailto:alice@example.test"),
             database.attendeesDao().getForEventOnce(newSeries.id).map { it.address }.toSet()
@@ -2007,10 +1984,9 @@ class EventWriterTest {
 
     @Test
     fun `updateEvent on a non-recurring event does not touch exception rows`() = runTest {
-        // The cascade must be gated on recurring-master; a plain non-recurring
-        // attendee edit must not run the exception cascade (no-op, no surprise
-        // writes). Verified by: an unrelated recurring series' exception is
-        // untouched when we update a separate non-recurring event.
+        // The exception cascade runs only for a recurring master, so a non-recurring
+        // attendee edit writes no exception rows. Checked through an unrelated recurring
+        // series' exception, untouched by an update to a separate non-recurring event.
         val recurringMaster = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true,
@@ -2046,20 +2022,17 @@ class EventWriterTest {
 
     @Test
     fun `splitSeries with EXDATE in past range counts rule recurrences not survivors`() = runTest {
-        // RFC 5545 §3.3.10: COUNT counts rule recurrences, not the
-        // post-EXDATE survivor count. Splitting at occurrence index 5
-        // of a COUNT=10 series with one EXDATE in [start, splitTime)
-        // must yield master COUNT=5 (not 4 — that would silently drop
-        // a past visible occurrence on re-expansion since EXDATE is
-        // applied after the COUNT cap).
+        // RFC 5545 §3.3.10: COUNT counts rule recurrences, not what survives EXDATE.
+        // Splitting a COUNT=10 series at index 5 with one EXDATE in [start, splitTime) must
+        // give the master COUNT=5. COUNT=4 would drop a visible past occurrence on
+        // re-expansion, because EXDATE applies after the COUNT cap.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
             isLocal = true
         )
         val occurrences = database.occurrencesDao().getForEvent(master.id).sortedBy { it.startTs }
         val splitFrom = occurrences[5].startTs
-        // EXDATE on the 3rd occurrence — strictly before splitFrom.
-        // Stored as the millis-string CSV form the engine accepts.
+        // EXDATE on the 3rd occurrence, before splitFrom, in the stored epoch-millis form.
         val masterWithExdate = database.eventsDao().getById(master.id)!!
             .copy(exdate = occurrences[2].startTs.toString())
         database.eventsDao().update(masterWithExdate)
@@ -2072,26 +2045,22 @@ class EventWriterTest {
         )
 
         val updatedMaster = database.eventsDao().getById(master.id)!!
-        // 5 rule recurrences before splitFrom (occurrences 0-4); 1 of
-        // those is EXDATE'd, leaving 4 visible — but COUNT must reflect
-        // the rule recurrences (5), so re-expansion yields 5 candidates
-        // and the EXDATE filters to 4 visible. Without this fix master
-        // gets COUNT=4 → re-expansion yields 4 candidates → after
-        // EXDATE filter only 3 visible (lost an occurrence).
+        // 5 rule recurrences before splitFrom (occurrences 0-4), one excluded, so 4 visible.
+        // COUNT=5 re-expands to 5 candidates and the EXDATE leaves 4; COUNT=4 would leave 3.
         assertEquals("FREQ=DAILY;COUNT=5", updatedMaster.rrule)
     }
 
     @Test
     fun `splitSeries with pastCount equal total falls back to ALL_EVENTS`() = runTest {
-        // splitTimeMs after the last occurrence — pastCount == total.
-        // Without a guard the helper would emit COUNT=0 (RFC 5545
-        // forbids; ical4j won't expand) on the new series.
+        // splitTimeMs after the last occurrence, so pastCount == total. Without the
+        // degenerate-split check, RruleUtils.splitRruleAtTime would give the new series
+        // COUNT=0, which ical4j 4.3.0 expands as if the rule had no COUNT.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = true
         )
         val occurrences = database.occurrencesDao().getForEvent(master.id).sortedBy { it.startTs }
-        // 1 day past the final occurrence's start — pastCount=5 == total.
+        // 1 day past the final occurrence's start: pastCount=5 == total.
         val splitFrom = occurrences.last().startTs + 86_400_000L
         val priorMasterId = master.id
 
@@ -2102,19 +2071,18 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // No new event row — split fell back to in-place ALL_EVENTS.
+        // No new event row: the split updated the master in place, as an all-events edit.
         assertEquals(priorMasterId, result.id)
         val updated = database.eventsDao().getById(priorMasterId)!!
         assertEquals("Edited past end", updated.title)
-        // Original RRULE preserved — no truncation.
+        // The original RRULE, not truncated.
         assertEquals("FREQ=DAILY;COUNT=5", updated.rrule)
     }
 
     @Test
     fun `splitSeries bumps SEQUENCE on first-occurrence in-place fallback`() = runTest {
-        // updateMasterInPlace must bump SEQUENCE for iTIP correctness
-        // (RFC 5545 §3.8.7.4) when fields material to attendees change
-        // — matches the public updateEvent path's behavior at line 121.
+        // updateMasterInPlace bumps SEQUENCE (RFC 5545 §3.8.7.4) when a field that matters to
+        // attendees changes, through SequenceBumper as updateEvent does.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
             isLocal = false
@@ -2124,8 +2092,7 @@ class EventWriterTest {
         eventWriter.splitSeries(
             masterEventId = master.id,
             splitTimeMs = master.startTs, // first-occurrence guard
-            // Change timing to trigger the bump (matches updateEvent's
-            // rruleChanged || timingChanged predicate).
+            // A timing change, which triggers the bump.
             modifiedEvent = master.copy(
                 title = "Renamed",
                 startTs = master.startTs + 3_600_000L,
@@ -2141,11 +2108,9 @@ class EventWriterTest {
 
     @Test
     fun `splitSeries respects caller RRULE change on new series`() = runTest {
-        // When the caller's modifiedEvent.rrule differs from the master's
-        // rrule, the caller is intentionally changing the recurrence
-        // pattern as part of "this and future." Honor the caller's rrule
-        // rather than the helper's COUNT/UNTIL-rewritten copy of the
-        // master's pattern.
+        // A modifiedEvent.rrule that differs from the master's changes the recurrence for
+        // "this and future", so the new series gets the caller's rule, not a COUNT- or
+        // UNTIL-rewritten copy of the master's.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=WEEKLY;BYDAY=MO;COUNT=10"),
             isLocal = true
@@ -2153,9 +2118,7 @@ class EventWriterTest {
         val occurrences = database.occurrencesDao().getForEvent(master.id).sortedBy { it.startTs }
         val splitFrom = occurrences[2].startTs
 
-        // Caller provides a different recurrence pattern (DAILY) and
-        // would expect it to land on the new series rather than be
-        // silently rewritten to the master's pattern.
+        // A different pattern (DAILY), which must land on the new series unchanged.
         val newSeries = eventWriter.splitSeries(
             masterEventId = master.id,
             splitTimeMs = splitFrom,
@@ -2224,22 +2187,21 @@ class EventWriterTest {
 
     @Test
     fun `moveEventToCalendar iCloud to iCloud queues MOVE operation`() = runTest {
-        // Create synced event with caldavUrl
+        // An event on the server.
         val event = eventWriter.createEvent(createBaseEvent(), isLocal = false)
-        // Simulate that event was synced to server
         database.eventsDao().markCreatedOnServer(
             event.id,
             "https://caldav.icloud.com/test/event123.ics",
             "etag123",
             System.currentTimeMillis()
         )
-        // Clear any pending CREATE from initial create
+        // Clear the pending CREATE from the create.
         database.pendingOperationsDao().deleteForEvent(event.id)
 
-        // Move to different iCloud calendar (auto-detects both are CalDAV)
+        // Move to another calendar on the same iCloud account.
         eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id)
 
-        // Verify MOVE operation queued with correct data
+        // One MOVE, with the old URL and the target calendar.
         val ops = database.pendingOperationsDao().getForEvent(event.id)
         assertEquals(1, ops.size)
         assertEquals(PendingOperation.OPERATION_MOVE, ops[0].operation)
@@ -2248,10 +2210,10 @@ class EventWriterTest {
     }
 
     // ---- cross-account move is blocked for events with attendees ----
-    // Moving an attendee-bearing event to a different account would send the
-    // wrong ORGANIZER (the source account's address), which scheduling servers
-    // reject/rewrite — re-inviting or stripping guests. Block it; the user can
-    // duplicate into the other account instead (fresh UID, correct organizer).
+    // Moving an event with attendees to another account would send the source account's
+    // address as ORGANIZER, which scheduling servers reject or rewrite, re-inviting or
+    // stripping guests. The writer refuses it and the user duplicates the event into the
+    // other account instead (fresh UID, correct organizer).
 
     @Test
     fun `moveEventToCalendar cross-account with attendees is rejected`() = runTest {
@@ -2265,7 +2227,7 @@ class EventWriterTest {
         )
         database.pendingOperationsDao().deleteForEvent(event.id)
 
-        // Cross-account move (test@icloud.com -> other@nextcloud.test) must throw.
+        // A cross-account move (test@icloud.com -> other@nextcloud.test) throws.
         var threw = false
         try {
             eventWriter.moveEventToCalendar(event.id, otherAccountCalendarId)
@@ -2274,7 +2236,7 @@ class EventWriterTest {
         }
         assertTrue("cross-account move of an attendee event must be rejected", threw)
 
-        // The event must stay put (calendar unchanged, no move op queued).
+        // The event stays put: calendar unchanged, no op queued.
         val after = database.eventsDao().getById(event.id)
         assertEquals(testCalendarId, after?.calendarId)
         assertTrue(database.pendingOperationsDao().getForEvent(event.id).isEmpty())
@@ -2288,7 +2250,8 @@ class EventWriterTest {
         )
         database.pendingOperationsDao().deleteForEvent(event.id)
 
-        // No attendees -> cross-account move proceeds (linked CREATE + DELETE).
+        // No attendees, so the cross-account move proceeds (a linked CREATE and DELETE; the
+        // assert checks only that an op is queued).
         eventWriter.moveEventToCalendar(event.id, otherAccountCalendarId)
 
         assertEquals(otherAccountCalendarId, database.eventsDao().getById(event.id)?.calendarId)
@@ -2297,10 +2260,10 @@ class EventWriterTest {
 
     @Test
     fun `moveEventToCalendar cross-account rejected when only an EXCEPTION has attendees`() = runTest {
-        // Recurring master with NO attendees, but a per-occurrence edit adds a
-        // guest to one occurrence (an exception row with its own attendee rows).
-        // The cross-account guard must count exception attendees too, or the
-        // move slips through and mis-schedules the exception's guest.
+        // A recurring master with no attendees, and a per-occurrence edit that adds a guest to
+        // one occurrence (an exception with its own attendee rows). The cross-account check
+        // must count exception attendees too, or the move goes through and mis-schedules the
+        // exception's guest.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=5"),
             isLocal = false
@@ -2317,7 +2280,7 @@ class EventWriterTest {
                 Attendee(eventId = 0, address = "mailto:guest@example.test", partstat = "NEEDS-ACTION", sortOrder = 0)
             )
         )
-        // Master itself has zero attendees.
+        // The master itself has no attendees.
         assertEquals(0, database.attendeesDao().countForEvent(master.id))
         database.pendingOperationsDao().deleteForEvent(master.id)
 
@@ -2343,8 +2306,9 @@ class EventWriterTest {
         )
         database.pendingOperationsDao().deleteForEvent(event.id)
 
-        // Same-account move (two iCloud calendars) is safe — attendees ride along
-        // on the same eventId, no re-invite (proven by MoveReInviteProbeTest).
+        // A same-account move (two iCloud calendars) keeps the attendees on the same eventId.
+        // Whether iCloud re-invites on it is probed live by MoveReInviteProbeTest, which
+        // prints its observation and asserts nothing.
         eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id)
 
         assertEquals(iCloudCalendar2Id, database.eventsDao().getById(event.id)?.calendarId)
@@ -2355,24 +2319,24 @@ class EventWriterTest {
 
     @Test
     fun `moveEventToCalendar local to iCloud queues CREATE only`() = runTest {
-        // Create local event (never synced)
+        // A local event, never synced.
         val event = eventWriter.createEvent(createBaseEvent().copy(
             calendarId = localCalendarId
         ), isLocal = true)
 
-        // Move to iCloud calendar (auto-detects local→synced)
+        // Move to an iCloud calendar.
         eventWriter.moveEventToCalendar(event.id, testCalendarId)
 
-        // Verify CREATE operation queued (no MOVE since no old URL)
+        // One CREATE, not a MOVE: there is no old URL.
         val ops = database.pendingOperationsDao().getForEvent(event.id)
         assertEquals(1, ops.size)
         assertEquals(PendingOperation.OPERATION_CREATE, ops[0].operation)
-        assertNull(ops[0].targetUrl)  // No old URL for local events
+        assertNull(ops[0].targetUrl)  // No old URL for a local event
     }
 
     @Test
     fun `moveEventToCalendar iCloud to local queues DELETE`() = runTest {
-        // Create synced event with caldavUrl
+        // An event on the server.
         val event = eventWriter.createEvent(createBaseEvent(), isLocal = false)
         database.eventsDao().markCreatedOnServer(
             event.id,
@@ -2382,10 +2346,10 @@ class EventWriterTest {
         )
         database.pendingOperationsDao().deleteForEvent(event.id)
 
-        // Move to local calendar (auto-detects synced→local, queues DELETE)
+        // Move to the local calendar, which queues a DELETE.
         eventWriter.moveEventToCalendar(event.id, localCalendarId)
 
-        // Verify DELETE operation queued with sourceCalendarId
+        // One DELETE, carrying the source calendar id.
         val ops = database.pendingOperationsDao().getForEvent(event.id)
         assertEquals(1, ops.size)
         assertEquals(PendingOperation.OPERATION_DELETE, ops[0].operation)
@@ -2395,7 +2359,7 @@ class EventWriterTest {
     @Test
     fun `moveEventToCalendar cancels existing pending operations`() = runTest {
         val event = eventWriter.createEvent(createBaseEvent(), isLocal = false)
-        // Simulate pending UPDATE
+        // A pending UPDATE.
         database.pendingOperationsDao().insert(
             PendingOperation(
                 eventId = event.id,
@@ -2403,10 +2367,9 @@ class EventWriterTest {
             )
         )
 
-        // Move to different calendar
         eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id)
 
-        // Verify old UPDATE is gone, replaced with CREATE or MOVE
+        // The UPDATE is replaced by one CREATE or MOVE.
         val ops = database.pendingOperationsDao().getForEvent(event.id)
         assertEquals(1, ops.size)
         assertTrue(ops[0].operation == PendingOperation.OPERATION_CREATE ||
@@ -2440,10 +2403,10 @@ class EventWriterTest {
 
         eventWriter.moveEventToCalendar(event.id, iCloudCalendar2Id)
 
-        // Verify the old URL is stored in the operation for DELETE
+        // The MOVE stores the old URL, the source resource it moves from.
         val ops = database.pendingOperationsDao().getForEvent(event.id)
         assertEquals(PendingOperation.OPERATION_MOVE, ops[0].operation)
-        assertEquals(oldUrl, ops[0].targetUrl)  // Critical: URL captured before cleared
+        assertEquals(oldUrl, ops[0].targetUrl)  // Captured before the move clears it
     }
 
     // ========== replyRsvp ==========
@@ -2475,8 +2438,8 @@ class EventWriterTest {
         assertEquals(PendingOperation.OPERATION_UPDATE, op.operation)
         assertTrue(op.partstatOnly)
         assertEquals("ACCEPTED", op.partstatTarget)
-        // Critical: caldavUrl captured at queue time so a future code path that
-        // clears Event.caldavUrl can't silently turn the queued RSVP into a no-op.
+        // caldavUrl is captured at queue time, so a code path that later clears
+        // Event.caldavUrl can't silently turn the queued RSVP into a no-op.
         assertEquals(syncedUrl, op.targetUrl)
     }
 
@@ -2484,7 +2447,7 @@ class EventWriterTest {
     fun `replyRsvp on never-synced event queues with null targetUrl`() = runTest {
         val event = eventWriter.createEvent(createBaseEvent(), isLocal = false)
         database.pendingOperationsDao().deleteForEvent(event.id)
-        // No markCreatedOnServer — event.caldavUrl stays null.
+        // No markCreatedOnServer, so event.caldavUrl stays null.
         database.attendeesDao().replaceForEvent(
             event.id,
             listOf(
@@ -2508,23 +2471,20 @@ class EventWriterTest {
         assertNull("targetUrl is null when event was never synced", op.targetUrl)
     }
 
-    // ========== Bug repro: edit-this-and-future with prior exception ==========
+    // ========== Edit This and Future After a Past Exception ==========
 
     @Test
     fun `splitSeries with past exception preserves single occurrence at exception time`() = runTest {
-        // Repro for "Jun 01 shows two events after edit-this-and-future":
+        // The edited day must not show two events after this and future:
         //   1. Master DAILY;COUNT=10
-        //   2. Edit occurrence 3 (creates exception at master-time + offset)
-        //   3. Split at occurrence 4 (the exception is BEFORE the split, must survive)
-        //   4. Master gets COUNT=4. The exception's occurrence on the
-        //      Day-of-Exception must be the only row — not master's
-        //      RRULE-generated row plus the exception's row (the visible
-        //      "two events for Jun 01" symptom).
+        //   2. Edit occurrence 3 (an exception at the master's time minus 3 hours)
+        //   3. Split at occurrence 4 (the exception is before the split and must survive)
+        //   4. The master gets COUNT=4. The exception's occurrence is the only row on its
+        //      day, not the master's RRULE row plus the exception's row.
 
-        // Pin start time at noon UTC so edit-time minus 9 hours stays on
-        // the same calendar day in any test runner timezone (3am UTC =
-        // previous day in many western zones).
-        val anchorStartUtc = 1780308000000L // 2026-06-02 06:00:00 UTC — noon CDT
+        // A fixed start, so the -3 hour edit stays on the same calendar day in runner
+        // timezones from UTC-7 to UTC+13.
+        val anchorStartUtc = 1780308000000L // 2026-06-01 10:00:00 UTC
         val master = eventWriter.createEvent(
             createBaseEvent().copy(
                 rrule = "FREQ=DAILY;COUNT=10",
@@ -2535,10 +2495,9 @@ class EventWriterTest {
         )
         val occurrences = database.occurrencesDao().getForEvent(master.id)
             .sortedBy { it.startTs }
-        // Pick occurrence index 3 as the day to edit (the "Jun 01" analog).
+        // Edit the occurrence at index 3.
         val editOccTs = occurrences[3].startTs
-        // User shifts the time-of-day by -3 hours on this single occurrence.
-        // Small enough to stay on the same calendar day in any reasonable TZ.
+        // The user moves this occurrence 3 hours earlier.
         val exceptionStartTs = editOccTs - 3 * 3600_000L
         val exceptionEndTs = exceptionStartTs + 30 * 60_000L
 
@@ -2553,8 +2512,8 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // Sanity: after the edit, occurrence index 3 should be at the
-        // exception's modified startTs and linked to the exception row.
+        // After the edit, occurrence index 3 is at the exception's modified startTs and
+        // linked to the exception row.
         val occsAfterEdit = database.occurrencesDao().getForEvent(master.id)
             .sortedBy { it.startTs }
         val occOnEditedDay = occsAfterEdit.first { it.exceptionEventId == exception.id }
@@ -2564,9 +2523,8 @@ class EventWriterTest {
             occOnEditedDay.startTs,
         )
 
-        // Now split-this-and-future at occurrence 4 (the day AFTER the
-        // edited occurrence). The exception is BEFORE the split point, so
-        // it must survive.
+        // Split at occurrence 4, the day after the edited occurrence. The exception is
+        // before the split point, so it must survive.
         val splitOccTs = occurrences[4].startTs
         eventWriter.splitSeries(
             masterEventId = master.id,
@@ -2579,22 +2537,18 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // Exception event row should still exist.
         assertNotNull(
             "past exception (before split) must survive the truncate",
             database.eventsDao().getById(exception.id),
         )
 
-        // Master should be COUNT=4.
         val updatedMaster = database.eventsDao().getById(master.id)
         assertEquals("FREQ=DAILY;COUNT=4", updatedMaster?.rrule)
 
-        // Master's occurrence rows for the edited day should be EXACTLY ONE
-        // — the exception-linked row at exception's modified time. No
-        // separate row at master's RRULE-generated time should be present.
-        // Tolerance on the day boundary: the edit moves the time by -8h, so
-        // both the master-time and exception-time fall on the same calendar
-        // day; we filter by day code.
+        // The edited day has exactly one master occurrence row: the exception-linked row at
+        // the exception's modified time, with no row at the master's RRULE time. The -3 hour
+        // edit keeps both times on one calendar day (see the anchor), so rows are filtered by
+        // day code.
         val editedDayCode = occsAfterEdit.first { it.exceptionEventId == exception.id }.startDay
         val rowsOnEditedDay = database.occurrencesDao().getForEvent(master.id)
             .filter { it.startDay == editedDayCode }
@@ -2617,14 +2571,12 @@ class EventWriterTest {
 
     @Test
     fun `regenerateOccurrences after splitSeries with past exception keeps single linked row`() = runTest {
-        // Same shape as the prior test, but adds the pull-side
-        // regeneration that runs whenever the master is re-fetched from
-        // the server (PullStrategy.generateOccurrences). The bug surfaces
-        // here if any: master regen wipes the linked occurrence and the
-        // restoreExceptionLink path fails to find a match within the 60s
-        // tolerance, falling back to inserting a fresh row alongside the
-        // already-inserted master-time one.
-        val anchorStartUtc = 1780308000000L // 2026-06-02 06:00:00 UTC
+        // The prior test plus the regeneration the pull runs when it re-fetches a master
+        // (PullStrategy calls OccurrenceGenerator.regenerateOccurrences). Regeneration
+        // replaces the linked occurrence, and OccurrenceGenerator.restoreExceptionLink must
+        // re-link the exception to the master's row within 60 seconds of its original time;
+        // a miss would leave two rows on the edited day.
+        val anchorStartUtc = 1780308000000L // 2026-06-01 10:00:00 UTC
         val master = eventWriter.createEvent(
             createBaseEvent().copy(
                 rrule = "FREQ=DAILY;COUNT=10",
@@ -2659,12 +2611,11 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // Simulate pull-side regeneration of master (PullStrategy does this
-        // every time a master event is re-fetched from the server).
+        // The pull's regeneration of the master.
         val truncatedMaster = database.eventsDao().getById(master.id)!!
         occurrenceGenerator.regenerateOccurrences(truncatedMaster)
 
-        // After regen, the day with the exception must still have ONE row.
+        // After regeneration the exception's day still has one row.
         val occsAfterRegen = database.occurrencesDao().getForEvent(master.id)
         val editedDayCode = org.onekash.kashcal.data.db.entity.Occurrence
             .toDayFormat(exceptionStartTs, false)
@@ -2688,12 +2639,10 @@ class EventWriterTest {
 
     @Test
     fun `splitSeries new event uses modified startTs verbatim`() = runTest {
-        // Repro for the math bug: when the form lambda passes the user's
-        // chosen first-occurrence time as modifiedEvent.startTs, the new
-        // series row must start at that exact time. The previous formula
+        // The form passes the user's chosen first-occurrence time as modifiedEvent.startTs,
+        // and the new series starts at that exact time. A formula of
         //   splitTimeMs + (modifiedEvent.startTs - masterEvent.startTs)
-        // shifted the new series by (splitTime - masterStart), placing it
-        // days later than the user intended.
+        // would shift the new series by (splitTime - masterStart), days later than intended.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
             isLocal = true
@@ -2702,7 +2651,7 @@ class EventWriterTest {
             .sortedBy { it.startTs }
         val splitOccTs = occurrences[4].startTs
 
-        // User shifts the time-of-day by -8 hours starting at the split.
+        // The user moves the time of day 8 hours earlier from the split on.
         val userIntendedStart = splitOccTs - 8 * 3600_000L
         val userIntendedEnd = userIntendedStart + 3600_000L
 
@@ -2731,24 +2680,21 @@ class EventWriterTest {
 
     @Test
     fun `splitSeries new event has endTs strictly after startTs`() = runTest {
-        // Regression for the iCloud 403 root cause: the previous startTs
-        // formula
+        // A startTs formula of
         //   splitTimeMs + (modifiedEvent.startTs - masterEvent.startTs)
-        // shifted ONLY startTs by the master-to-split-day delta and left
-        // endTs (inherited from modifiedEvent) at the form's chosen end
-        // time on the split day. For an edit-this-and-future where the
-        // user changes time-of-day on a later occurrence, the result was
-        // endTs < startTs by the same delta — RFC 5545 §3.6.1 violation.
-        // iCloud rejected such bodies with 403; other servers may rewrite
-        // or accept silently. This test asserts the invariant directly.
+        // would shift only startTs by the master-to-split-day gap and leave endTs (from
+        // modifiedEvent) at the form's end time on the split day. When the user changes the
+        // time of day on a later occurrence, endTs < startTs, which RFC 5545 §3.8.2.2 forbids
+        // (DTEND must be later than DTSTART). iCloud rejects such bodies with 403; other
+        // servers may rewrite or accept them. This test asserts the invariant directly.
         val master = eventWriter.createEvent(
             createBaseEvent().copy(rrule = "FREQ=DAILY;COUNT=10"),
             isLocal = true
         )
         val occurrences = database.occurrencesDao().getForEvent(master.id)
             .sortedBy { it.startTs }
-        // Split 4 days into the series with a user-chosen time-of-day
-        // shift, to maximize the gap the buggy formula would create.
+        // Split 4 days into the series with a time-of-day shift, so the shifting formula
+        // would open a gap of days.
         val splitOccTs = occurrences[4].startTs
         val userIntendedStart = splitOccTs - 11 * 3600_000L
         val userIntendedEnd = userIntendedStart + 30 * 60_000L
@@ -2774,17 +2720,13 @@ class EventWriterTest {
 
     @Test
     fun `splitSeries via drag-style lambda preserves dragged occurrence duration`() = runTest {
-        // Repro for the drag-vs-form endTs divergence: when the drag
-        // lambda emits `endTs = master.endTs + delta` instead of
-        // `endTs = newStartTs + (occurrence.endTs - occurrence.startTs)`,
-        // the new series ends at master-time + occurrence-delta, which
-        // sits days before the new startTs — same RFC 5545 §3.6.1
-        // violation as the form-side math bug, different code path.
+        // A drag that built `endTs = master.endTs + delta` instead of
+        // `endTs = newStartTs + (occurrence.endTs - occurrence.startTs)` would end the new
+        // series days before its start, the same RFC 5545 §3.8.2.2 breach as the form case on
+        // another code path.
         //
-        // Setup: master with deterministic anchor (noon UTC) so a
-        // -11h drag stays on the same calendar day in any TZ. Drag
-        // the 5th occurrence to -11h.
-        val anchorStartUtc = 1780308000000L // 2026-06-02 06:00:00 UTC
+        // Setup: a master at a fixed anchor, with the 5th occurrence dragged 11 hours earlier.
+        val anchorStartUtc = 1780308000000L // 2026-06-01 10:00:00 UTC
         val masterDurationMs = 30 * 60_000L
         val master = eventWriter.createEvent(
             createBaseEvent().copy(
@@ -2799,10 +2741,9 @@ class EventWriterTest {
         val draggedOccStartTs = occurrences[4].startTs
         val draggedOccEndTs = draggedOccStartTs + masterDurationMs
 
-        // The drag gesture shifts the occurrence start by -11h.
+        // The drag moves the occurrence start 11 hours earlier.
         val newStartTs = draggedOccStartTs - 11 * 3600_000L
-        // The fix's emitted modifiedEvent: anchor endTs on the dragged
-        // occurrence's duration, NOT master's startTs.
+        // endTs comes from the dragged occurrence's duration, not the master's times.
         val draggedDuration = draggedOccEndTs - draggedOccStartTs
         val draggedNewEndTs = newStartTs + draggedDuration
 
@@ -2816,14 +2757,13 @@ class EventWriterTest {
             isLocal = true
         )
 
-        // Invariant 1: endTs > startTs (no RFC 5545 §3.6.1 violation).
+        // endTs > startTs (RFC 5545 §3.8.2.2).
         assertTrue(
             "endTs must be after startTs: got start=${newSeries.startTs}, end=${newSeries.endTs}",
             newSeries.endTs > newSeries.startTs,
         )
-        // Invariant 2: duration matches the dragged occurrence (i.e. the
-        // user's existing event length is preserved, NOT inflated to
-        // (master.endTs - master.startTs) + delta).
+        // The duration matches the dragged occurrence: the event keeps its length, not
+        // (master.endTs - master.startTs) + delta.
         assertEquals(
             "new series duration must equal dragged occurrence duration",
             draggedDuration,
@@ -2851,12 +2791,12 @@ class EventWriterTest {
 
     @Test
     fun `updateEvent with null attendees leaves existing rows untouched`() = runTest {
-        // Mimics a drag-reschedule / non-attendee edit: caller passes no attendees arg.
+        // As a drag reschedule or other non-attendee edit calls it: no attendees argument.
         val created = eventWriter.createEvent(
             createBaseEvent(), isLocal = true,
             attendees = listOf(attendee("carol@example.test", "ACCEPTED", 0))
         )
-        // Edit a non-attendee field with NO attendees arg (param defaults null).
+        // Edit a non-attendee field with no attendees argument (it defaults to null).
         eventWriter.updateEvent(created.copy(title = "Rescheduled"), isLocal = true)
         val rows = database.attendeesDao().getForEventOnce(created.id)
         assertEquals("null attendees must preserve existing rows", 1, rows.size)

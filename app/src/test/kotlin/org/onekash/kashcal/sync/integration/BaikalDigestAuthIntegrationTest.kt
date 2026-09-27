@@ -18,12 +18,13 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Integration test for Baikal CalDAV server configured with HTTP Digest authentication.
+ * Runs discovery, create and fetch, and a sync-token read against a live Baikal server that
+ * uses HTTP Digest authentication.
  *
- * Proves that KashCal's DigestAuthenticator handles the full challenge-response flow
- * against a real SabreDAV Digest auth implementation, not just MockWebServer.
+ * Exercises [org.onekash.kashcal.sync.client.DigestAuthenticator]'s challenge-response flow
+ * against SabreDAV's Digest implementation, which MockWebServer tests can't cover.
  *
- * Run: ./gradlew testDebugUnitTest --tests "*BaikalDigestAuthIntegrationTest*"
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*BaikalDigestAuthIntegrationTest*"
  *
  * Prerequisites:
  * - Baikal server configured for Digest auth running at localhost:8083
@@ -124,7 +125,7 @@ class BaikalDigestAuthIntegrationTest {
                 code == 401 || code in 200..299
             )
 
-            // Verify this instance actually uses Digest auth (not Basic)
+            // Skip unless the 401 challenge offers Digest
             if (code == 401) {
                 val wwwAuth = conn.getHeaderField("WWW-Authenticate") ?: ""
                 assumeTrue(
@@ -239,7 +240,7 @@ END:VCALENDAR
 
         println("Created event on Digest Baikal: $url (etag: $etag)")
 
-        // Verify by fetching
+        // Fetch it back
         val fetchResult = client.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch event through Digest auth" }
 

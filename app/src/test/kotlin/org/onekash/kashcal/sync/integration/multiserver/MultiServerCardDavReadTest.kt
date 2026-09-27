@@ -20,23 +20,23 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Live read-path regression across every configured CardDAV server: discover the
- * login's address books, ensure a synthetic seed contact exists (idempotent PUT
- * via raw authenticated harness HTTP — TEST SETUP only, never an app write path),
- * then read it back through the production [CardDavClient] + [CardDavContactReader]
- * and assert the neutral [org.onekash.vcard.model.Contact] round-trips.
+ * Checks the contact read path live across every configured CardDAV server: discover the
+ * login's address books, ensure a synthetic seed contact exists, then read it back through the
+ * production [CardDavClient] and [CardDavContactReader] and assert the neutral
+ * [org.onekash.vcard.model.Contact] round-trips.
  *
- * The seed is entirely synthetic (RFC 6761 reserved `@example.test`, RFC 3849-style
- * `+1-555-0100` unassigned number), so no real person is ever contacted or exposed.
+ * The seed goes up with an idempotent PUT over raw authenticated harness HTTP (test setup,
+ * never an app write path). It is synthetic (RFC 6761 reserved `@example.test`, an unassigned
+ * `+1-555-0100` number), so no real person is ever contacted or exposed.
  *
- * PII discipline: the calendar-side `redactPii` masks only emails and would leak
- * vCard names/phones/addresses. This test asserts ONLY on counts and the seed's
- * own UID/href, and any body that must surface for debugging is first passed
- * through [redactContactBody], which also masks FN/N/TEL/ADR/PHOTO. No non-seed
- * body is ever committed or printed raw.
+ * PII: the calendar-side `redactPii` masks only emails and would leak vCard names, phones and
+ * addresses. This test asserts only on the seed's own UID and synthetic values, and prints only
+ * counts and the book's name and vCard version. [redactContactBody] (which also masks FN, N, TEL,
+ * ADR and PHOTO) exists for any body that must surface for debugging. No non-seed body is committed
+ * or printed raw.
  *
- * Skips (never fails) servers without credentials, that are unreachable, or that
- * do not expose CardDAV — with a logged reason.
+ * Skips (never fails) servers without credentials, unreachable ones, and ones that don't expose
+ * CardDAV, with a logged reason.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -98,10 +98,10 @@ class MultiServerCardDavReadTest(
         val cr = creds!!
 
         // --- Discovery walk ---
-        // For well-known servers (Nextcloud, Cyrus) the principal lives under a
-        // path the RFC 6764 /.well-known/carddav redirect resolves — hitting the
-        // bare root would 404 the principal PROPFIND and skip the case. Resolve
-        // the real endpoint first so the well-known path is actually exercised.
+        // For well-known servers (Nextcloud, Cyrus, Mailbox) the principal lives under a path
+        // the RFC 6764 /.well-known/carddav redirect resolves; the bare root would 404 the
+        // principal PROPFIND and skip the case. Resolving the endpoint first exercises the
+        // well-known path.
         val root = if (config.usesWellKnownDiscovery) {
             c.discoverWellKnown(cr.serverUrl).getOrNull() ?: cr.serverUrl
         } else {
@@ -119,7 +119,7 @@ class MultiServerCardDavReadTest(
         // Target the first writable collection for the seed, else the first book.
         val book = books.firstOrNull { !it.isReadOnly } ?: books.first()
 
-        // --- Idempotent seed (TEST SETUP — raw authenticated PUT, not an app path) ---
+        // --- Idempotent seed (test setup: raw authenticated PUT, not an app path) ---
         val seedUrl = book.url.trimEnd('/') + "/" + SEED_FILENAME
         val seeded = putSeed(seedUrl, cr)
         assumeTrue("${config.name}: could not seed contact (PUT $seeded)", seeded)
@@ -130,14 +130,14 @@ class MultiServerCardDavReadTest(
 
         val read = (reader.readContacts(book.url, hrefs, book.vcardVersion) as? CalDavResult.Success)?.data?.contacts.orEmpty()
 
-        // Tolerate pre-existing contacts: assert only that OUR seed is present.
+        // Tolerate pre-existing contacts: assert only on this test's seed.
         val seed = read.firstOrNull { it.contact.uid == SEED_UID }
         assertTrue(
             "${config.name}: seed UID $SEED_UID not found among ${read.size} contacts",
             seed != null,
         )
 
-        // Assertions on the seed only — parse version comes from the RETURNED body.
+        // The parse version comes from the returned body's VERSION line.
         assertTrue(
             "${config.name}: seed FN should contain '$SEED_FN_MARKER'",
             seed!!.contact.displayName.contains(SEED_FN_MARKER),
@@ -153,7 +153,7 @@ class MultiServerCardDavReadTest(
         println("=== ${config.name}: read back seed OK (book='${book.displayName}', version=${book.vcardVersion}, total=${read.size}) ===")
     }
 
-    /** Idempotent PUT of the seed body with the harness credentials. Returns true on 2xx. */
+    /** PUTs the seed body with the harness credentials (idempotent). Returns true on 2xx or 412. */
     private fun putSeed(url: String, cr: ServerCredentials): Boolean = try {
         val http = OkHttpClient()
         val request = Request.Builder()
@@ -166,7 +166,7 @@ class MultiServerCardDavReadTest(
         false
     }
 
-    /** Read hrefs via sync-collection when available, else the full PROPFIND listing. */
+    /** Returns the book's hrefs from sync-collection when it lists any, else a full listing. */
     private suspend fun collectHrefs(c: CardDavClient, bookUrl: String): List<String> {
         (c.syncCollection(bookUrl, null) as? CalDavResult.Success)?.data?.let { report ->
             if (report.changed.isNotEmpty()) return report.changed.map { it.href }
@@ -175,9 +175,8 @@ class MultiServerCardDavReadTest(
     }
 
     /**
-     * Contact-aware redactor for debug output. Masks the identity-bearing vCard
-     * properties the calendar-side email-only redactor would leak. Not used on
-     * the passing path — kept for any diagnostic that must print a non-seed body.
+     * Masks the identity-bearing vCard properties the calendar-side email-only redactor would
+     * leak. Nothing calls it; it is kept for any diagnostic that must print a non-seed body.
      */
     @Suppress("unused")
     private fun redactContactBody(body: String): String =

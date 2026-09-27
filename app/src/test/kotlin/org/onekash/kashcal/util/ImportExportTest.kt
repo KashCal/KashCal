@@ -24,19 +24,17 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for ICS import/export functionality.
+ * Tests ICS export of events saved through [EventWriter] into an in-memory Room database.
  *
- * Import/export is critical for:
- * - Data backup and restore
- * - Calendar sharing via email
- * - Interoperability with other calendar apps
- *
- * Tests ensure:
- * - Single event export produces valid ICS
- * - Recurring events with exceptions export correctly
- * - Calendar export bundles multiple events
- * - Import handles various ICS formats
- * - Round-trip (export -> import) preserves data
+ * - Single-event export ([IcsPatcher.serialize]): VCALENDAR structure, UID, SUMMARY, LOCATION,
+ *   DESCRIPTION, DTSTART, DTEND, DTSTAMP, RRULE, the all-day DATE form, long fields and null
+ *   optional fields.
+ * - A master with an exception ([IcsPatcher.serializeWithExceptions]): two VEVENTs, a
+ *   RECURRENCE-ID and one shared UID.
+ * - Calendar export ([IcsExporter.exportCalendar]): succeeds for three events, fails for none.
+ * - The escaping and VALARM tests assert neither (see their inline comments).
+ * - The "import" tests save events with [EventWriter.createEvent] and parse no ICS; the
+ *   "round-trip" tests check only the exported text and import nothing.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -156,7 +154,7 @@ class ImportExportTest {
 
         val ics = IcsPatcher.serialize(event)
 
-        // Semicolons should be escaped
+        // Always passes: the second operand matches the unescaped title too.
         assertTrue("Should escape semicolons", ics.contains("\\;") || ics.contains("Team Meeting"))
     }
 
@@ -182,7 +180,6 @@ class ImportExportTest {
             rrule = "FREQ=DAILY"
         ), isLocal = true)
 
-        // Create exception
         val occurrences = database.occurrencesDao().getForEvent(master.id)
         assertTrue("Should have occurrences", occurrences.isNotEmpty())
 
@@ -195,7 +192,6 @@ class ImportExportTest {
         val exceptions = listOf(exception)
         val ics = IcsPatcher.serializeWithExceptions(master, exceptions)
 
-        // Count VEVENT blocks
         val veventCount = ics.split("BEGIN:VEVENT").size - 1
 
         assertEquals("Should have 2 VEVENTs (master + exception)", 2, veventCount)
@@ -218,7 +214,6 @@ class ImportExportTest {
 
         val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
 
-        // Count UID occurrences - should all be the same
         val uidLines = ics.lines().filter { it.startsWith("UID:") }
         assertEquals("Should have 2 UID lines", 2, uidLines.size)
 
@@ -235,7 +230,7 @@ class ImportExportTest {
 
         val ics = IcsPatcher.serialize(saved)
 
-        // All-day events use VALUE=DATE or just YYYYMMDD format
+        // DATE form: a VALUE=DATE parameter or a bare YYYYMMDD DTSTART.
         assertTrue(
             "Should use DATE format for all-day",
             ics.contains(";VALUE=DATE") || ics.matches(Regex(".*DTSTART:\\d{8}\\r?\\n.*"))
@@ -261,8 +256,7 @@ class ImportExportTest {
 
         assertTrue("Export should succeed", result.isSuccess)
 
-        // Read exported content via file (would need FileProvider in real test)
-        // For now, just verify the method completes successfully
+        // Asserts only that the export succeeds; the written file isn't read.
     }
 
     @Test
@@ -282,7 +276,7 @@ class ImportExportTest {
             createTestEvent(title = "Imported Event 2")
         )
 
-        // Note: importIcsEvents is on EventCoordinator, testing directly through EventWriter
+        // EventCoordinator.importIcsEvents isn't called; the events go through EventWriter.
         val savedEvents = events.map { eventWriter.createEvent(it, isLocal = true) }
 
         assertEquals(2, savedEvents.size)
@@ -327,10 +321,8 @@ class ImportExportTest {
             description = "Original Description"
         ), isLocal = true)
 
-        // Export
         val ics = IcsPatcher.serialize(original)
 
-        // Verify data is in ICS
         assertTrue(ics.contains("SUMMARY:Original Title"))
         assertTrue(ics.contains("DESCRIPTION:Original Description"))
     }
@@ -370,7 +362,7 @@ class ImportExportTest {
 
         val ics = IcsPatcher.serialize(event)
 
-        // ICS uses line folding for long lines
+        // Asserts only that a SUMMARY is present; folding isn't checked.
         assertTrue("Should have event content", ics.contains("SUMMARY:"))
     }
 
@@ -395,10 +387,9 @@ class ImportExportTest {
 
         val ics = IcsPatcher.serialize(saved)
 
-        // Check for VALARM (reminder) component
+        // Despite the name, no VALARM is asserted: only VCALENDAR, and only when the saved
+        // event kept its reminders; otherwise the test passes without asserting.
         if (saved.reminders?.isNotEmpty() == true) {
-            // Note: VALARM serialization depends on implementation
-            // Just verify ICS is valid
             assertTrue("Should have VCALENDAR", ics.contains("VCALENDAR"))
         }
     }

@@ -16,16 +16,16 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for ReminderActionReceiver.
+ * Tests the intent contract [ReminderActionReceiver] reads, over plain [Intent]s.
  *
- * Tests:
- * - Action constants match between notification manager and receiver
- * - Intent extra handling (reminder ID, snooze duration)
- * - Default snooze duration fallback
+ * - The Snooze and Dismiss actions, the extra keys and the 15-minute default snooze, and that
+ *   the two actions differ.
+ * - The same extra reads the receiver does: a missing reminder id reads -1, a missing snooze
+ *   duration falls back to [ReminderNotificationManager.DEFAULT_SNOOZE_MINUTES].
  *
- * Note: onReceive() cannot be called directly because @AndroidEntryPoint
- * generates Hilt injection code that requires a full Hilt test environment.
- * The core logic is simple delegation tested via ReminderScheduler tests.
+ * These don't call onReceive: the Hilt-generated onReceive injects fields and needs a Hilt test
+ * environment. The receiver delegates to [ReminderScheduler.snoozeReminder] and
+ * [ReminderScheduler.markAsDismissed]; `ReminderSchedulerAlarmCapTest` covers the snooze.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])

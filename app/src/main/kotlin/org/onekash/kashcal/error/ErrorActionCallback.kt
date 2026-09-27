@@ -3,42 +3,41 @@ package org.onekash.kashcal.error
 import androidx.compose.runtime.Stable
 
 /**
- * Callbacks for error action buttons.
+ * Names the action an error button asks for; `HomeViewModel.handleErrorAction` dispatches it.
+ * There [Retry] runs a sync whatever failed, and [OpenSettings], [OpenAppSettings],
+ * [OpenAppleIdWebsite] and [ReAuthenticate] only clear the error.
  *
- * ViewModel handles these callbacks and performs appropriate actions.
- * Using sealed class ensures exhaustive handling.
- *
- * Uses @Stable (not @Immutable) because Custom variant contains a lambda.
+ * `@Stable`, not `@Immutable`, because [Custom] holds a lambda.
  */
 @Stable
 sealed class ErrorActionCallback {
-    /** Retry the failed operation */
+    /** Retries the failed operation. */
     data object Retry : ErrorActionCallback()
 
-    /** Navigate to app settings screen */
+    /** Opens the app's settings screen. */
     data object OpenSettings : ErrorActionCallback()
 
-    /** Open Android system settings for this app */
+    /** Opens Android's system settings for this app. */
     data object OpenAppSettings : ErrorActionCallback()
 
-    /** Open Apple ID website for app-specific password */
+    /** Opens the Apple ID website, where app-specific passwords are made. */
     data object OpenAppleIdWebsite : ErrorActionCallback()
 
-    /** Show sign-in/authentication flow */
+    /** Shows the sign-in flow. */
     data object ReAuthenticate : ErrorActionCallback()
 
-    /** Trigger force full sync */
+    /** Forces a full sync. */
     data object ForceFullSync : ErrorActionCallback()
 
-    /** Show sync debug/details view */
+    /** Shows the sync details. */
     data object ViewSyncDetails : ErrorActionCallback()
 
-    /** Dismiss the error UI */
+    /** Dismisses the error. */
     data object Dismiss : ErrorActionCallback()
 
-    /** Open a URL in browser */
+    /** Opens [url] in the browser. */
     data class OpenUrl(val url: String) : ErrorActionCallback()
 
-    /** Custom action with lambda */
+    /** Runs [action]. */
     data class Custom(val action: () -> Unit) : ErrorActionCallback()
 }

@@ -37,10 +37,9 @@ fun KashCalTheme(
     val darkTheme = themeMode.isDark(isSystemInDarkTheme())
 
     val colorScheme = when {
-        // Seed source: a full Material 3 scheme generated from the user's chosen accent color.
-        // WCAG AA is guaranteed for any seed (see AccentSchemeTest).
+        // Seed source. WCAG AA holds for every selectable seed (`AccentSchemeTest`).
         colorSource == ColorSource.SEED -> accentColorScheme(accentSeed, darkTheme)
-        // Dynamic source: Material You (wallpaper-derived) on Android 12+, baseline otherwise.
+        // Dynamic source: Material You on Android 12+, the baseline scheme below that.
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
@@ -49,10 +48,10 @@ fun KashCalTheme(
         else -> LightColorScheme
     }
 
-    // Drive the status/navigation bar icon appearance from the app's resolved face, not the OS
-    // setting — otherwise forcing Light on a dark-mode phone (or Dark on a light one) leaves the
-    // system icons the wrong color and near-invisible against the app's bar. Keyed on darkTheme so
-    // it only writes when the face actually flips, not on every recomposition.
+    // Set the status and navigation bar icon colors from the app's face, not the OS setting:
+    // forcing Light on a dark-mode phone, or Dark on a light one, would leave the icons nearly
+    // invisible against the app's bars. Keyed on darkTheme, so it writes when the face flips (or
+    // the view or activity changes), not on every recomposition.
     val view = LocalView.current
     val activity = LocalActivity.current
     if (!view.isInEditMode && activity != null) {

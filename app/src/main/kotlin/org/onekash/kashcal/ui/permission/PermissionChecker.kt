@@ -1,14 +1,11 @@
 package org.onekash.kashcal.ui.permission
 
 /**
- * Point-in-time permission query abstraction.
+ * Reports the current grant state of the app's permissions at the moment of the call.
  *
- * Returns the current grant state at the moment of the call. Callers that need
- * reactive updates re-query on lifecycle events (e.g. `Activity.onResume`).
- *
- * Distinct from [NotificationPermissionManager], which handles the *asking*
- * flow (system dialog, rationale, denial counting). This interface handles
- * only the *querying* of current grant state.
+ * Callers that need updates re-query on lifecycle events, for example `Activity.onResume`. It only
+ * queries. For notifications, [NotificationPermissionManager] decides whether to ask (system
+ * dialog, rationale, denial count).
  */
 interface PermissionChecker {
     fun hasNotificationPermission(): Boolean

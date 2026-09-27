@@ -114,32 +114,33 @@ object WordTokenizer {
 
     // ==================== Regex Patterns ====================
 
-    // Time range: "2-3pm", "5pm-6", "10:30-11:30am", "3.15-4.30pm", "11pm-1am"
-    // Meridiem allowed on either side; at least one required (post-match guard).
+    // Time range: "2-3pm", "5pm-6", "10:30-11:30am", "3.15-4.30pm", "11pm-1am". A meridiem may
+    // sit on either side; parseTimeRange rejects a range with none.
     private val timeRangeRegex = Regex(
         """(\d{1,2})(?:[:.](\d{2}))?(am|pm|a\.m\.?|p\.m\.?)?-(\d{1,2})(?:[:.](\d{2}))?(am|pm|a\.m\.?|p\.m\.?)?""",
         RegexOption.IGNORE_CASE
     )
 
-    // Structured dates: M/D, M/D/Y, Y-M-D, D.M.Y
+    // Structured dates such as M/D, D/M/Y, Y-M-D and D.M.Y; parseStructuredDate decides the order.
     private val structuredDateRegex = Regex(
         """(\d{1,4})[/\-.](\d{1,2})(?:[/\-.](\d{1,4}))?"""
     )
 
-    // Time: "3pm", "3:30pm", "3.30pm", "15:00", "3:30" — requires colon/dot OR meridiem (bare "15" is not time)
-    // Alternation order: colon form | dot form (meridiem required) | meridiem-only form
+    // Time: "3pm", "3:30pm", "3.30pm", "15:00", "3:30". Needs a colon, or a meridiem after an
+    // hour or a dotted time, so a bare "15" isn't a time. Alternatives: colon form, dot form,
+    // meridiem-only form.
     private val timeRegex = Regex(
         """(\d{1,2})(?::(\d{2}))\s*(am|pm|a\.m\.?|p\.m\.?)?|(\d{1,2})\.(\d{2})\s*(am|pm|a\.m\.?|p\.m\.?)|(\d{1,2})\s*(am|pm|a\.m\.?|p\.m\.?)""",
         RegexOption.IGNORE_CASE
     )
 
-    // H-notation compact time: "9h", "15h30" (24-hour). Minutes optional.
+    // 24-hour "h" notation: "9h", "15h30".
     private val hNotationRegex = Regex("""(\d{1,2})h(\d{2})?""", RegexOption.IGNORE_CASE)
 
-    // Year: 1000-2999
+    // Year: 1000 to 2999.
     private val yearRegex = Regex("""[12]\d{3}""")
 
-    // Number or ordinal: "15", "15th", "1st", "2nd", "3rd"
+    // Ordinal ("15th", "1st") and plain number ("15").
     private val ordinalRegex = Regex("""(\d+)(st|nd|rd|th)""", RegexOption.IGNORE_CASE)
     private val numberRegex = Regex("""\d+""")
     private val whitespaceRegex = Regex("""\s+""")
@@ -165,67 +166,58 @@ object WordTokenizer {
         originalText: String = word,
         locale: Locale = Locale.getDefault()
     ): Token {
-        // 0. Time range (must check before structured date to catch "2-3pm")
+        // The checks run in this order; the first match wins.
+        // Time range before structured date, so "2-3pm" is a range.
         timeRangeRegex.matchEntire(word)?.let { match ->
             parseTimeRange(word, match, originalText)?.let { return it }
         }
 
-        // 1. Structured date (must check before numbers to catch "1/15")
+        // Structured date before numbers, so "1/15" is a date.
         structuredDateRegex.matchEntire(word)?.let { match ->
             return parseStructuredDate(word, match, originalText, locale)
         }
 
-        // 2. Month names
         months[word]?.let {
             return Token(TokenType.MONTH, word, it, originalText)
         }
 
-        // 3. Weekday names
         weekdays[word]?.let {
             return Token(TokenType.WEEKDAY, word, it, originalText)
         }
 
-        // 4. Date keywords (today, tomorrow, etc.)
         dateKeywords[word]?.let {
             return Token(TokenType.DATE_KEYWORD, word, it, originalText)
         }
 
-        // 5. Time keywords (noon, midnight)
         timeKeywords[word]?.let {
             return Token(TokenType.TIME_KEYWORD, word, it, originalText)
         }
 
-        // 6. Meridiem (am, pm) — must check before units to avoid conflicts with "min"
         if (word in meridiems) {
             return Token(TokenType.MERIDIEM, word, word, originalText)
         }
 
-        // 6a. Timezone abbreviations (EST, PST, UTC, etc.) — after meridiem, before recurrence
         timezoneAbbreviations[word]?.let {
             return Token(TokenType.TIMEZONE, word, it, originalText)
         }
 
-        // 6b. Recurrence keywords (daily, weekly, etc.) — before units and general keywords
         recurrenceKeywords[word]?.let {
             return Token(TokenType.RECURRENCE_KEYWORD, word, it, originalText)
         }
 
-        // 7. Unit words (minutes, hours, days, etc.)
         units[word]?.let {
             return Token(TokenType.UNIT, word, it, originalText)
         }
 
-        // 8. General keywords (at, in, next, last, etc.)
         keywords[word]?.let {
             return Token(TokenType.KEYWORD, word, it, originalText)
         }
 
-        // 9. Time with meridiem ("3pm", "3:30pm", "15:00")
         timeRegex.matchEntire(word)?.let { match ->
             parseTime(word, match, originalText)?.let { return it }
         }
 
-        // 9a. H-notation compact time ("9h", "15h30") — before year/number
+        // "h" notation before year and number.
         hNotationRegex.matchEntire(word)?.let { match ->
             val hour = match.groupValues[1].toIntOrNull()
             val minute = match.groupValues[2].takeIf { it.isNotEmpty() }?.toIntOrNull() ?: 0
@@ -234,24 +226,22 @@ object WordTokenizer {
             }
         }
 
-        // 10. Year (1000-2999) — check before general numbers
+        // Year before plain numbers.
         if (yearRegex.matchEntire(word) != null) {
             return Token(TokenType.YEAR, word, word.toInt(), originalText)
         }
 
-        // 11. Ordinal ("15th", "1st", "2nd", "3rd")
         ordinalRegex.matchEntire(word)?.let { match ->
             val num = match.groupValues[1].toIntOrNull() ?: return Token(TokenType.UNKNOWN, word, word, originalText)
             return Token(TokenType.NUMBER, word, num, originalText)
         }
 
-        // 12. Plain number (guard against overflow for huge numbers like "99999999999")
+        // A number too large for Int, such as "99999999999", is UNKNOWN.
         if (numberRegex.matchEntire(word) != null) {
             val num = word.toIntOrNull() ?: return Token(TokenType.UNKNOWN, word, word, originalText)
             return Token(TokenType.NUMBER, word, num, originalText)
         }
 
-        // 13. Unknown
         return Token(TokenType.UNKNOWN, word, word, originalText)
     }
 
@@ -264,37 +254,36 @@ object WordTokenizer {
         val endMeridiem = match.groupValues[6].lowercase().replace(".", "").takeIf { it.isNotEmpty() }
 
         if (startMinute > 59 || endMinute > 59) return null
-        // Guard: at least one meridiem required to disambiguate from structured dates like "2-3"
+        // Without a meridiem, "2-3" is a structured date, not a range.
         if (startMeridiem == null && endMeridiem == null) return null
 
         val startHour: Int
         val endHour: Int
 
         if (startMeridiem != null && endMeridiem != null) {
-            // Both sides explicit
             startHour = resolveMeridiemHour(startHourRaw, startMeridiem) ?: return null
             endHour = resolveMeridiemHour(endHourRaw, endMeridiem) ?: return null
         } else if (startMeridiem != null) {
-            // Start has meridiem, end inferred
+            // The end takes the start's meridiem, or the opposite one when that would put it
+            // before the start: "10am-2" is 10:00 to 14:00.
             startHour = resolveMeridiemHour(startHourRaw, startMeridiem) ?: return null
             val sameAsStart = resolveMeridiemHour(endHourRaw, startMeridiem) ?: return null
             val startTime24 = startHour * 60 + startMinute
             val endSame = sameAsStart * 60 + endMinute
             endHour = if (endSame < startTime24) {
-                // "10am-2" → 10:00-02:00 doesn't make sense; flip end to PM → 10:00-14:00
                 val oppositeMeridiem = if (startMeridiem.startsWith("p")) "am" else "pm"
                 resolveMeridiemHour(endHourRaw, oppositeMeridiem) ?: sameAsStart
             } else {
                 sameAsStart
             }
         } else {
-            // End has meridiem, start inferred (endMeridiem != null by guard)
+            // The start takes the end's meridiem, or the opposite one when that would put it
+            // after the end: "9-5pm" is 9:00 to 17:00. endMeridiem is non-null by the guard.
             endHour = resolveMeridiemHour(endHourRaw, endMeridiem!!) ?: return null
             val sameAsEnd = resolveMeridiemHour(startHourRaw, endMeridiem) ?: return null
             val endTime24 = endHour * 60 + endMinute
             val startSame = sameAsEnd * 60 + startMinute
             startHour = if (startSame > endTime24) {
-                // "9-5pm" → 21:00-17:00 doesn't make sense; flip to AM → 9:00-17:00
                 val oppositeMeridiem = if (endMeridiem.startsWith("p")) "am" else "pm"
                 resolveMeridiemHour(startHourRaw, oppositeMeridiem) ?: sameAsEnd
             } else {
@@ -318,23 +307,20 @@ object WordTokenizer {
     }
 
     private fun parseTime(word: String, match: MatchResult, originalText: String = word): Token? {
-        // Three alternations: group 1-3 = colon form, group 4-6 = dot form, group 7-8 = meridiem-only form
+        // Groups 1-3 are the colon form, 4-6 the dot form, 7-8 the meridiem-only form.
         val hour: Int
         val minute: Int
         val meridiem: String
 
         if (match.groupValues[1].isNotEmpty()) {
-            // Colon form: "15:00", "3:30pm"
             hour = match.groupValues[1].toIntOrNull() ?: return null
             minute = match.groupValues[2].toIntOrNull() ?: 0
             meridiem = match.groupValues[3].lowercase().replace(".", "")
         } else if (match.groupValues[4].isNotEmpty()) {
-            // Dot form: "3.30pm" (meridiem required)
             hour = match.groupValues[4].toIntOrNull() ?: return null
             minute = match.groupValues[5].toIntOrNull() ?: 0
             meridiem = match.groupValues[6].lowercase().replace(".", "")
         } else {
-            // Meridiem-only form: "3pm"
             hour = match.groupValues[7].toIntOrNull() ?: return null
             minute = 0
             meridiem = match.groupValues[8].lowercase().replace(".", "")
@@ -352,7 +338,7 @@ object WordTokenizer {
                 if (hour == 12) 0 else hour
             }
             else -> {
-                // 24-hour format or ambiguous
+                // No meridiem: 24-hour.
                 if (hour > 23) return null
                 hour
             }
@@ -378,25 +364,26 @@ object WordTokenizer {
         val separator = word.first { it == '/' || it == '-' || it == '.' }
 
         val dateParts = when {
-            // ISO: Y-M-D (year is 4 digits in first position)
+            // Y-M-D: a dash and a first part over 31. Without a third part, the second part
+            // is both the month and the day.
             separator == '-' && part1 > 31 -> DateParts(
                 day = part3 ?: part2,
                 month = part2,
                 year = part1
             )
-            // European: D.M.Y (dot separator)
+            // Dots always mean D.M.Y.
             separator == '.' -> DateParts(
                 day = part1,
                 month = part2,
                 year = resolveYear(part3)
             )
-            // D/M/Y or D-M-Y: first number > 12 can't be a month
+            // A first part over 12 can't be a month, so it is the day.
             part1 > 12 -> DateParts(
                 day = part1,
                 month = part2,
                 year = resolveYear(part3)
             )
-            // Second number > 12 can't be a month, so first must be month
+            // A second part over 12 can't be a month, so the first is.
             part2 > 12 -> DateParts(
                 day = part2,
                 month = part1,

@@ -26,10 +26,8 @@ import java.io.File
 import java.util.Properties
 
 /**
- * Nextcloud sync resilience test.
- *
- * Tests KashCal's CalDAV sync against a Nextcloud instance populated with edge-case
- * events that exercise known Nextcloud sync failure modes:
+ * Runs the CalDAV client, parser and mapper against a Nextcloud calendar seeded with edge-case
+ * resources that exercise known Nextcloud sync failure modes:
  *
  * - Normal VEVENTs (baseline)
  * - VTODOs mixed in same calendar
@@ -43,8 +41,8 @@ import java.util.Properties
  * - Empty SUMMARY
  * - Events with VTIMEZONE + TZID
  *
- * Prerequisite: Run the test event setup script or create events via CalDAV PUT
- * on the Nextcloud "resilience-test" calendar.
+ * Prerequisite: run the test event setup script or create the events via CalDAV PUT on the
+ * Nextcloud calendar named "Resilience Test".
  *
  * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*NextcloudSyncResilienceTest*"
  */
@@ -107,9 +105,7 @@ class NextcloudSyncResilienceTest {
         return client to quirks
     }
 
-    /**
-     * Test 1: Discovery finds the resilience-test calendar.
-     */
+    /** Checks that discovery lists the "Resilience Test" calendar. */
     @Test
     fun `discovery finds resilience-test calendar`() = runBlocking {
         skipIfMissing()
@@ -135,8 +131,8 @@ class NextcloudSyncResilienceTest {
     }
 
     /**
-     * Test 2: fetchEtagsInRange returns all VEVENTs from the mixed calendar.
-     * VTODOs should be excluded by the VEVENT comp-filter.
+     * Checks that fetchEtagsInRange lists the calendar's VEVENTs and its VEVENT comp-filter
+     * leaves out the VTODO.
      */
     @Test
     fun `fetchEtagsInRange returns VEVENTs only - excludes VTODOs`() = runBlocking {
@@ -156,10 +152,9 @@ class NextcloudSyncResilienceTest {
             println("  $href  etag=${etag?.take(20)}...")
         }
 
-        // We uploaded 12 events, 1 is VTODO. So we should get 11 VEVENTs.
+        // 12 resources were uploaded, one a VTODO, so 11 VEVENTs are expected.
         assertTrue("Expected at least 10 VEVENTs, got ${etags.size}", etags.size >= 10)
 
-        // VTODO should NOT be in the list
         val todoHref = etags.find { it.first.contains("task-item.ics") }
         assertNull("VTODO task-item.ics should be excluded by VEVENT comp-filter", todoHref)
 
@@ -167,9 +162,8 @@ class NextcloudSyncResilienceTest {
     }
 
     /**
-     * Test 3: fetchEventsByHref can fetch ALL events including edge cases.
-     * This is the multiget batch path. If any event causes a batch failure,
-     * this test will catch it.
+     * Checks that one calendar-multiget returns data for every listed href, edge cases
+     * included, so no resource fails the batch.
      */
     @Test
     fun `fetchEventsByHref fetches all edge-case events in single batch`() = runBlocking {
@@ -177,7 +171,6 @@ class NextcloudSyncResilienceTest {
         val (client, _) = createClient()
         val calUrl = getResilienceCalendarUrl(client)
 
-        // Get all hrefs first
         val now = System.currentTimeMillis()
         val oneYearBack = 365L * 24 * 60 * 60 * 1000
         val etags = client.fetchEtagsInRange(calUrl, now - oneYearBack, 4102444800000L)
@@ -186,7 +179,7 @@ class NextcloudSyncResilienceTest {
         val hrefs = etags.map { it.first }
         println("Fetching ${hrefs.size} events via multiget...")
 
-        // Fetch all events in one batch (simulates what pullFull does)
+        // One multiget for every href; the pull sends batches of up to 20.
         val fetchResult = client.fetchEventsByHref(calUrl, hrefs)
         assertTrue("fetchEventsByHref failed: $fetchResult", fetchResult.isSuccess())
 
@@ -200,7 +193,6 @@ class NextcloudSyncResilienceTest {
             println("  ${event.url}: $summary")
         }
 
-        // All VEVENT hrefs should return data
         assertEquals(
             "All fetched hrefs should return event data",
             hrefs.size,
@@ -209,9 +201,9 @@ class NextcloudSyncResilienceTest {
     }
 
     /**
-     * Test 4: ICalParser can parse ALL edge-case events without throwing.
-     * This tests the parse path in processEvents() that currently re-throws
-     * Throwable (line 725-728 in PullStrategy.kt).
+     * Checks that ICalParser parses every edge-case resource without throwing. The pull's
+     * processEvents catches an Exception from the parser and skips that resource; any other
+     * Throwable would abort the sync.
      */
     @Test
     fun `ICalParser parses all edge-case events without exceptions`() = runBlocking {
@@ -276,21 +268,19 @@ class NextcloudSyncResilienceTest {
             }
         }
 
-        // The key assertion: NO exceptions should be thrown
         assertTrue(
             "Parser threw ${exceptions.size} exception(s) that would abort sync:\n" +
                 exceptions.joinToString("\n") { "  ${it.first}: ${it.second.message}" },
             exceptions.isEmpty()
         )
 
-        // At least the normal events should parse
+        // At least the ordinary events parse.
         assertTrue("Expected at least 8 parsed events, got $parsed", parsed >= 8)
     }
 
     /**
-     * Test 5: Unicode/non-ASCII event parses correctly.
-     * Nextcloud returns UTF-8 responses. This verifies our parser handles
-     * non-ASCII characters in SUMMARY, DESCRIPTION, and LOCATION.
+     * Checks that non-ASCII text in SUMMARY survives Nextcloud's UTF-8 response and the parser.
+     * LOCATION is printed, not asserted.
      */
     @Test
     fun `unicode event preserves non-ASCII characters`() = runBlocking {
@@ -314,7 +304,6 @@ class NextcloudSyncResilienceTest {
         println("\nParsed SUMMARY: ${event.summary}")
         println("Parsed LOCATION: ${event.location}")
 
-        // Verify non-ASCII chars survived round-trip
         assertTrue(
             "SUMMARY should contain Müller, got: ${event.summary}",
             event.summary?.contains("Müller") == true
@@ -325,9 +314,7 @@ class NextcloudSyncResilienceTest {
         )
     }
 
-    /**
-     * Test 6: Recurring event with exception parses as master + exception.
-     */
+    /** Checks that a resource holding a master and an exception parses as both. */
     @Test
     fun `recurring event with exception parses both components`() = runBlocking {
         skipIfMissing()
@@ -352,7 +339,7 @@ class NextcloudSyncResilienceTest {
         assertEquals("Expected 1 master event", 1, masters.size)
         assertEquals("Expected 1 exception event", 1, excs.size)
 
-        // Verify same UID (RFC 5545 requirement)
+        // RFC 5545: an exception shares its master's UID.
         assertEquals(
             "Exception must have same UID as master",
             masters.first().uid,
@@ -360,10 +347,7 @@ class NextcloudSyncResilienceTest {
         )
     }
 
-    /**
-     * Test 7: Orphaned exception doesn't crash parser.
-     * An exception without a matching master should parse gracefully.
-     */
+    /** Checks that an exception with no master in its resource parses to a non-null result. */
     @Test
     fun `orphaned exception parses without crashing`() = runBlocking {
         skipIfMissing()
@@ -374,7 +358,6 @@ class NextcloudSyncResilienceTest {
         val orphanEvent = events.find { it.url.contains("orphan-exception.ics") }
         assertNotNull("orphan-exception.ics not found", orphanEvent)
 
-        // Should not throw
         val result = icalParser.parseAllEvents(orphanEvent!!.icalData)
         val parsedEvents = result.getOrNull()
 
@@ -384,13 +367,10 @@ class NextcloudSyncResilienceTest {
             println("  isException=${ICalEventMapper.isException(event)}")
         }
 
-        // It should parse without crashing, even if it's an orphan
         assertNotNull("Orphan exception should not return null", parsedEvents)
     }
 
-    /**
-     * Test 8: Large description event doesn't cause OOM or timeout.
-     */
+    /** Checks that an event with a large DESCRIPTION (over 10 KB) fetches and parses. */
     @Test
     fun `large description event fetches and parses within limits`() = runBlocking {
         skipIfMissing()
@@ -415,9 +395,7 @@ class NextcloudSyncResilienceTest {
         println("Large event parsed OK, title: ${parsedEvents.first().summary}")
     }
 
-    /**
-     * Test 9: All-day events parse correctly with DATE (not DATETIME).
-     */
+    /** Checks that single-day and multi-day DATE events parse as all-day. */
     @Test
     fun `all-day events parse with DATE format`() = runBlocking {
         skipIfMissing()
@@ -426,7 +404,6 @@ class NextcloudSyncResilienceTest {
 
         val events = fetchAllEvents(client, calUrl)
 
-        // Single all-day
         val allday = events.find { it.url.contains("allday-event.ics") }
         assertNotNull("allday-event.ics not found", allday)
 
@@ -436,7 +413,6 @@ class NextcloudSyncResilienceTest {
         println("All-day event: ${parsed1.first().summary}, isAllDay=${parsed1.first().isAllDay}")
         assertTrue("Should be marked as all-day", parsed1.first().isAllDay)
 
-        // Multi-day all-day
         val multiday = events.find { it.url.contains("multiday-allday.ics") }
         assertNotNull("multiday-allday.ics not found", multiday)
 
@@ -447,9 +423,7 @@ class NextcloudSyncResilienceTest {
         assertTrue("Should be marked as all-day", parsed2.first().isAllDay)
     }
 
-    /**
-     * Test 10: Event with VALARM parses alarms correctly.
-     */
+    /** Checks that an event's VALARMs parse. */
     @Test
     fun `event with VALARM parses alarm triggers`() = runBlocking {
         skipIfMissing()
@@ -468,13 +442,11 @@ class NextcloudSyncResilienceTest {
         println("Alarm event: ${event.summary}")
         println("Alarms: ${event.alarms}")
 
-        // Should have 2 alarms (-PT15M and -PT1H)
+        // The fixture has 2 alarms (-PT15M and -PT1H); only one is required.
         assertTrue("Should have at least 1 alarm", event.alarms.isNotEmpty())
     }
 
-    /**
-     * Test 11: Empty SUMMARY event parses without crashing.
-     */
+    /** Checks that an event with an empty SUMMARY parses. */
     @Test
     fun `empty summary event parses gracefully`() = runBlocking {
         skipIfMissing()
@@ -493,9 +465,7 @@ class NextcloudSyncResilienceTest {
         println("Empty summary event title: '${parsed.first().summary}'")
     }
 
-    /**
-     * Test 12: Timezone event with VTIMEZONE + TZID parses correctly.
-     */
+    /** Checks that an event with a VTIMEZONE and TZID parses to a start before its end. */
     @Test
     fun `timezone event with VTIMEZONE parses correct time`() = runBlocking {
         skipIfMissing()
@@ -518,17 +488,17 @@ class NextcloudSyncResilienceTest {
         println("  startTs: $startTs (${java.time.Instant.ofEpochMilli(startTs)})")
         println("  endTs: $endTs (${java.time.Instant.ofEpochMilli(endTs)})")
 
-        // 10:00 AM Eastern on Feb 22, 2026 = 15:00 UTC (EST = UTC-5)
+        // The fixture is 10:00 Eastern on Feb 22, 2026, 15:00 UTC (EST = UTC-5); only the
+        // order is asserted.
         assertTrue("Start time should be set", startTs > 0)
         assertTrue("End time should be after start", endTs > startTs)
     }
 
     /**
-     * Test 13: Full sync-collection (incremental path) returns VTODO hrefs
-     * that must be handled by processEvents without crashing.
-     *
-     * Unlike fetchEtagsInRange (which filters by VEVENT), syncCollection returns ALL
-     * changed resources including VTODOs. The parser must handle them gracefully.
+     * Checks that a VTODO returned by sync-collection, the delta path, doesn't make the parser
+     * throw. Unlike fetchEtagsInRange, which filters by VEVENT, sync-collection returns every
+     * changed resource. Returns without asserting when sync-collection fails, doesn't list the
+     * VTODO, or the fetch of it fails or comes back empty.
      */
     @Test
     fun `syncCollection returns VTODOs that parser handles gracefully`() = runBlocking {
@@ -536,7 +506,7 @@ class NextcloudSyncResilienceTest {
         val (client, _) = createClient()
         val calUrl = getResilienceCalendarUrl(client)
 
-        // Do a sync-collection with empty token to get all items
+        // A null token returns every resource.
         val syncResult = client.syncCollection(calUrl, null)
         if (syncResult.isError()) {
             println("syncCollection failed (may not be supported), skipping")
@@ -549,13 +519,12 @@ class NextcloudSyncResilienceTest {
         println("  Deleted items: ${syncReport.deleted.size}")
         println("  New token: ${syncReport.syncToken?.take(30)}...")
 
-        // Check if VTODO appears in changed items
         val todoItem = syncReport.changed.find { it.href.contains("task-item") }
         if (todoItem != null) {
             println("\n  VTODO found in sync-collection results: ${todoItem.href}")
             println("  This is expected - sync-collection returns ALL resources")
 
-            // Fetch the VTODO via multiget (simulating what pullIncremental does)
+            // Fetch the VTODO by multiget, as the delta pull does.
             val fetchResult = client.fetchEventsByHref(calUrl, listOf(todoItem.href))
             if (fetchResult.isSuccess()) {
                 val fetched = (fetchResult as CalDavResult.Success).data
@@ -569,7 +538,6 @@ class NextcloudSyncResilienceTest {
                     if (isNonEvent) {
                         println("  Correctly identified as non-event resource")
                     } else {
-                        // Try parsing - should not crash
                         try {
                             val parseResult = icalParser.parseAllEvents(icalData)
                             println("  Parse result: $parseResult (expected empty or error)")
@@ -585,8 +553,9 @@ class NextcloudSyncResilienceTest {
     }
 
     /**
-     * Test 14: Nextcloud deleted-calendar flag is detected.
-     * Nextcloud soft-deletes calendars with <x1:deleted-calendar> in resourcetype.
+     * Reports whether a soft-deleted calendar appears in the listing; asserts only that the
+     * listing succeeds. Nextcloud soft-deletes a calendar by adding `<x1:deleted-calendar>` to
+     * its resourcetype, and the client's calendar parser doesn't filter on it.
      */
     @Test
     fun `deleted calendar detection in PROPFIND response`() = runBlocking {
@@ -606,8 +575,7 @@ class NextcloudSyncResilienceTest {
             println("  ${cal.displayName} -> ${cal.url} (readOnly=${cal.isReadOnly})")
         }
 
-        // The mixed-test calendar (soft-deleted) should either be excluded by
-        // extractCalendars() or flagged
+        // "Mixed Test" is the soft-deleted calendar.
         val deletedCal = calendars.find { it.displayName == "Mixed Test" }
         if (deletedCal != null) {
             println("\nWARNING: Soft-deleted 'Mixed Test' calendar appears in listing!")
@@ -620,18 +588,16 @@ class NextcloudSyncResilienceTest {
     }
 
     // ==================== THEORY TESTS ====================
-    // These test the three hypotheses for "a few events + empty sync log"
+    // Hypotheses for the report "a few events + empty sync log".
 
     /**
-     * THEORY 1: ICalEventMapper.toEntity().event crashes on edge-case data.
+     * Checks that ICalEventMapper.toEntity maps every edge-case event without throwing. The
+     * pull catches a mapping exception per event and skips it, so a throw here is an event
+     * that never reaches Room.
      *
-     * If toEntity() throws for a specific event, it would propagate through
-     * processEvents() → pullFull() → pull() → syncCalendar(). The sync
-     * would stop and events already written stay in Room.
-     *
-     * Color.parseColor() is the main risk — it's an Android API that throws
-     * IllegalArgumentException for unsupported color formats. Our test event
-     * has COLOR:tomato which Android handles but unit tests may not.
+     * The fixture has COLOR:tomato, which the mapper resolves through EventColorPalette.
+     * Color.parseColor, which returns 0 in JVM unit tests, is mocked below for other values;
+     * like Android's, it throws IllegalArgumentException for a format it can't parse.
      */
     @Test
     fun `THEORY 1 - toEntity maps all Nextcloud events without exceptions`() = runBlocking {
@@ -639,18 +605,16 @@ class NextcloudSyncResilienceTest {
         val (client, _) = createClient()
         val calUrl = getResilienceCalendarUrl(client)
 
-        // Mock Color.parseColor for unit test environment
         mockkStatic(android.graphics.Color::class)
         every { android.graphics.Color.parseColor(any()) } answers {
             val color = firstArg<String>()
-            // Simulate Android's Color.parseColor for common named colors
+            // A few named colors and hex, like Android's Color.parseColor.
             when (color.lowercase()) {
                 "tomato" -> 0xFFFF6347.toInt()
                 "red" -> 0xFFFF0000.toInt()
                 "blue" -> 0xFF0000FF.toInt()
                 else -> {
                     if (color.startsWith("#")) {
-                        // Basic hex parsing
                         val hex = color.removePrefix("#")
                         when (hex.length) {
                             6 -> (0xFF000000 or hex.toLong(16)).toInt()
@@ -716,10 +680,8 @@ class NextcloudSyncResilienceTest {
     }
 
     /**
-     * THEORY 2: SyncSession serialization round-trip preserves all fields.
-     *
-     * kotlinx.serialization uses the Kotlin constructor, so default values
-     * are applied correctly and type safety is preserved at compile time.
+     * Checks that a SyncSession with every field set survives a JSON round trip with the
+     * store's Json settings, computed properties included.
      */
     @Test
     fun `THEORY 2 - SyncSession serialization round-trip preserves all fields`() {
@@ -728,7 +690,6 @@ class NextcloudSyncResilienceTest {
             coerceInputValues = true
         }
 
-        // Create a session with ALL fields populated (worst case for round-trip)
         val original = org.onekash.kashcal.sync.session.SyncSession(
             id = "test-session-001",
             timestamp = System.currentTimeMillis(),
@@ -761,7 +722,6 @@ class NextcloudSyncResilienceTest {
             truncated = true
         )
 
-        // Round-trip: serialize -> deserialize
         val jsonStr = json.encodeToString(listOf(original))
         println("Serialized JSON size: ${jsonStr.length} chars")
         println("JSON sample: ${jsonStr.take(200)}...")
@@ -772,7 +732,6 @@ class NextcloudSyncResilienceTest {
         assertEquals("Should deserialize 1 session", 1, deserialized.size)
         val restored = deserialized.first()
 
-        // Verify ALL fields survived round-trip
         assertEquals("id", original.id, restored.id)
         assertEquals("timestamp", original.timestamp, restored.timestamp)
         assertEquals("calendarId", original.calendarId, restored.calendarId)
@@ -803,7 +762,6 @@ class NextcloudSyncResilienceTest {
         assertEquals("errorMessage", original.errorMessage, restored.errorMessage)
         assertEquals("truncated", original.truncated, restored.truncated)
 
-        // Verify computed properties work after deserialization
         assertEquals("status", original.status, restored.status)
         assertEquals("totalChanges", original.totalChanges, restored.totalChanges)
         assertEquals("totalPushed", original.totalPushed, restored.totalPushed)
@@ -812,11 +770,8 @@ class NextcloudSyncResilienceTest {
     }
 
     /**
-     * THEORY 2b: Serialization handles missing fields in old session JSON.
-     *
-     * If the user's app was updated and the session file has old-format entries,
-     * kotlinx.serialization applies Kotlin default values for missing fields
-     * (unlike Gson which used JVM zero values).
+     * Checks that session JSON written by an older app version, missing newer fields,
+     * deserializes with each missing field at its Kotlin default.
      */
     @Test
     fun `THEORY 2b - serialization handles missing fields in old session JSON`() {
@@ -825,7 +780,7 @@ class NextcloudSyncResilienceTest {
             coerceInputValues = true
         }
 
-        // Simulate old JSON with only the original fields (no push stats, no recently-pushed, etc.)
+        // Old-format JSON without the push stats, skippedRecentlyPushed or later fields.
         val oldJson = """[{
             "id": "old-session-001",
             "timestamp": ${System.currentTimeMillis()},
@@ -841,7 +796,6 @@ class NextcloudSyncResilienceTest {
             "eventsDeleted": 0
         }]"""
 
-        // This should NOT throw
         val sessions: List<org.onekash.kashcal.sync.session.SyncSession> = try {
             json.decodeFromString(oldJson)
         } catch (e: Throwable) {
@@ -861,20 +815,16 @@ class NextcloudSyncResilienceTest {
         println("  truncated: ${session.truncated}")
         println("  errorType: ${session.errorType}")
 
-        // Missing Int fields get Kotlin default (0)
         assertEquals("eventsPushedCreated should be 0", 0, session.eventsPushedCreated)
         assertEquals("skippedRecentlyPushed should be 0", 0, session.skippedRecentlyPushed)
 
-        // Missing Boolean fields get Kotlin default (false for truncated)
         assertEquals("truncated should be false", false, session.truncated)
 
-        // tokenAdvanced gets Kotlin default (true) — correctness fix vs Gson's JVM zero (false)
+        // tokenAdvanced defaults to true, not a JVM zero of false.
         assertEquals("tokenAdvanced should be true (Kotlin default)", true, session.tokenAdvanced)
 
-        // Missing nullable fields get Kotlin default (null)
         assertNull("errorType should be null", session.errorType)
 
-        // Verify computed properties don't crash
         try {
             val status = session.status
             val total = session.totalChanges
@@ -888,15 +838,12 @@ class NextcloudSyncResilienceTest {
     }
 
     /**
-     * THEORY 3: Multi-calendar sync aborts after first calendar.
+     * Checks that every listed calendar answers an etag listing, and prints its sync-collection
+     * result.
      *
-     * CalDavSyncEngine.syncAccount() iterates calendars. If a read-only calendar
-     * returns AuthError (401), it returns immediately — skipping remaining calendars.
-     * Similarly, writable calendar AuthError returns immediately.
-     *
-     * This test verifies we can discover all calendars and fetch from each one.
-     * If the user's Nextcloud has a calendar that returns errors, remaining calendars
-     * are skipped.
+     * CalDavSyncEngine.syncAccount stops at the first auth failure: a 401 from a read-only
+     * calendar's pull, or an AuthError from a writable calendar's sync, skips the remaining
+     * calendars.
      */
     @Test
     fun `THEORY 3 - all calendars are individually accessible`() = runBlocking {
@@ -917,7 +864,7 @@ class NextcloudSyncResilienceTest {
             print("  ${cal.displayName} (${cal.url})... ")
 
             try {
-                // Try fetching etags — this is what pull does first
+                // The full pull lists etags before fetching.
                 val etagResult = client.fetchEtagsInRange(
                     cal.url,
                     System.currentTimeMillis() - 30L * 24 * 60 * 60 * 1000,
@@ -940,7 +887,7 @@ class NextcloudSyncResilienceTest {
                 failed++
             }
 
-            // Also try sync-collection (incremental path)
+            // sync-collection, the delta path.
             try {
                 val syncResult = client.syncCollection(cal.url, null)
                 val status = if (syncResult.isSuccess()) {
@@ -959,7 +906,6 @@ class NextcloudSyncResilienceTest {
         println("Accessible: $accessible")
         println("Failed:     $failed")
 
-        // All calendars should be accessible
         if (failed > 0) {
             println("\nWARNING: $failed calendar(s) returned errors!")
             println("In syncAccount(), AuthError from ANY calendar stops the entire loop.")

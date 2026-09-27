@@ -31,11 +31,14 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.scheduler.IcsRefreshScheduleReconciler
 
 /**
- * Unit tests for SettingsBackupImporter.applyBackup.
+ * Tests [SettingsBackupImporter.applyBackup] over mocked repositories and DAOs.
  *
- * Uses MockK to verify subscription orchestration and preference application. Accounts and
- * calendars are no longer in the backup envelope — see BackupRoundTripIntegrationTest for
- * end-to-end coverage of the new bottom-up shape.
+ * Tests cover the refresh schedule (armed after the transaction, untouched with no
+ * subscriptions), subscription update and create (runtime state kept, interval floored, ICS
+ * account and calendar reused or created), preference writes (absent keys kept, unknown keys
+ * and the old default_calendar key dropped), the device-calendars note, and a failed
+ * subscription write leaving preferences untouched. The envelope carries no accounts or
+ * calendars; `BackupRoundTripIntegrationTest` covers a restore over real Room.
  */
 class SettingsBackupImporterApplyTest {
 
@@ -58,13 +61,13 @@ class SettingsBackupImporterApplyTest {
         dataStore = mockk()
         kashcalDataStore = KashCalDataStore(mockk(relaxed = true), dataStore)
 
-        // Pass-through Room transaction — just executes the block synchronously.
+        // Pass-through Room transaction: runs the block in place.
         coEvery { database.runInTransaction<Unit>(any<suspend () -> Unit>()) } coAnswers {
             val block = firstArg<suspend () -> Unit>()
             block()
         }
 
-        // Default: empty prefs, `edit` accumulates into a held MutablePreferences.
+        // Default: empty prefs; `edit` accumulates into a held MutablePreferences.
         currentPrefs = mutablePreferencesOf()
         every { dataStore.data } returns flowOf(currentPrefs)
         coEvery { dataStore.updateData(any()) } coAnswers {
@@ -102,10 +105,9 @@ class SettingsBackupImporterApplyTest {
 
     @Test
     fun `restoring subscriptions arms the periodic refresh after the transaction`() = runBlocking {
-        // Restore-to-a-new-device used to leave feeds that never refreshed: rows
-        // were inserted and nothing ever scheduled. Reconciling must happen
-        // outside the transaction — a suspending scheduler call inside a Room
-        // transaction can hop threads and deadlock it.
+        // Without a reconcile, feeds restored to a new device never refresh. It must run
+        // outside the transaction: a suspending scheduler call inside a Room transaction can
+        // hop threads and deadlock it.
         coEvery { icsSubscriptionsDao.getByUrl(any()) } returns null
         coEvery { accountRepository.getAccountByProviderAndEmail(AccountProvider.ICS, any()) } returns null
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
@@ -113,11 +115,10 @@ class SettingsBackupImporterApplyTest {
         coEvery { calendarRepository.createCalendar(any()) } returns 88L
         coEvery { icsSubscriptionsDao.insert(any()) } returns 90L
 
-        // Count reconciles ourselves and snapshot the count at the moment the
-        // transaction block returns. `coVerifyOrder` alone cannot prove
-        // "after the transaction": MockK records the `runInTransaction` call
-        // before its answer runs, so a reconcile invoked *inside* the block
-        // still records second and the ordered verification passes.
+        // Count reconciles and snapshot the count when the transaction block returns.
+        // `coVerifyOrder` can't prove "after the transaction": MockK records the
+        // `runInTransaction` call before its answer runs, so a reconcile inside the block
+        // still records second and the ordered check passes.
         var reconcileCalls = 0
         var reconcilesAtTransactionExit = -1
         coEvery { icsRefreshScheduleReconciler.reconcile() } coAnswers { reconcileCalls++; Unit }
@@ -193,7 +194,7 @@ class SettingsBackupImporterApplyTest {
         assertEquals(44L, r.calendarId)
         assertEquals(8L, r.id)
         assertEquals(1L, r.createdAt)
-        // User-preference fields updated.
+        // The user-chosen fields are updated.
         assertEquals("New name", r.name)
         assertEquals(0x222, r.color)
         assertEquals(6, r.syncIntervalHours)
@@ -203,9 +204,8 @@ class SettingsBackupImporterApplyTest {
 
     @Test
     fun `a new subscription's interval is floored at the minimum refresh period`() = runBlocking {
-        // Nothing validates the interval inside a backup file. A 0 makes
-        // IcsSubscription.isDueForSync() unconditionally true, so the feed would be
-        // re-fetched on every wake of the shared refresh job.
+        // A backup file is untrusted. IcsSubscription.isDueForSync floors the interval on
+        // read too; flooring on import keeps a 0 out of storage.
         coEvery { icsSubscriptionsDao.getByUrl(any()) } returns null
         coEvery {
             accountRepository.getAccountByProviderAndEmail(AccountProvider.ICS, any())
@@ -324,9 +324,9 @@ class SettingsBackupImporterApplyTest {
 
     @Test
     fun `subscription reuses calendar row already present with same URL`() = runBlocking {
-        // If an ICS calendar row exists for this URL (e.g., user previously subscribed), the
-        // importer must reuse it rather than attempt a duplicate insert that would hit the
-        // unique index on caldav_url.
+        // An ICS calendar row already exists for this URL (say, from an earlier
+        // subscription). The importer reuses it; a second insert would hit the unique index
+        // on caldav_url.
         val icsAccount = Account(
             id = 5, provider = AccountProvider.ICS, email = "subscriptions",
         )
@@ -395,7 +395,7 @@ class SettingsBackupImporterApplyTest {
         )))
 
         assertEquals("dark", currentPrefs[PreferencesKeys.THEME])
-        // Not in backup — preserved.
+        // Not in the backup, so kept.
         assertEquals(true, currentPrefs[PreferencesKeys.AUTO_SYNC_ENABLED])
     }
 
@@ -409,8 +409,8 @@ class SettingsBackupImporterApplyTest {
 
     @Test
     fun `legacy default_calendar key in envelope preferences is silently dropped on import`() = runBlocking {
-        // Backup files produced before DEFAULT_CALENDAR was excluded may still carry the key.
-        // The key must not reach the target DataStore (source-device row IDs don't match target).
+        // Older backup files may carry DEFAULT_CALENDAR. It must not reach the target
+        // DataStore: the source device's row IDs don't match the target's.
         currentPrefs = mutablePreferencesOf()
         every { dataStore.data } returns flowOf(currentPrefs)
 
@@ -468,7 +468,7 @@ class SettingsBackupImporterApplyTest {
             }
         }
 
-        // Prefs untouched — txn block threw before post-txn pref writes.
+        // Prefs untouched: the transaction threw before the preference writes that follow it.
         assertEquals("light", currentPrefs[PreferencesKeys.THEME])
     }
 

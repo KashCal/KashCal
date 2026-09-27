@@ -18,11 +18,13 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Tests for February 29 leap year handling and BYSETPOS in RRULE expansion.
+ * Tests [RRuleExpander] on February 29, short months, BYSETPOS and UTC series.
  *
- * RFC 5545 Section 3.3.10: RRULE has specific rules for February 29.
- * - FREQ=YEARLY with BYMONTH=2;BYMONTHDAY=29 should only occur on leap years
- * - FREQ=MONTHLY with BYMONTHDAY=29 should skip February in non-leap years
+ * RFC 5545 §3.3.10: a recurrence instance with an invalid date (Feb 29 in a non-leap year, the
+ * 31st of a 30-day month) must be ignored and not counted. So a yearly Feb 29 series occurs only
+ * in leap years, and a monthly series on the 29th skips February in non-leap years.
+ *
+ * The BYSETPOS tests assert only that expansion returns (`size >= 0` is always true).
  */
 @DisplayName("RRuleExpander Leap Year and BYSETPOS Tests")
 class RRuleExpanderLeapYearTest {
@@ -37,7 +39,7 @@ class RRuleExpanderLeapYearTest {
 
         @Test
         fun `yearly on Feb 29 only occurs on leap years`() {
-            // 2024 is a leap year, 2025 is not, 2028 is
+            // 2024 is a leap year, 2025 is not, 2028 is.
             val event = createEvent(
                 dtStart = dateTime(2024, 2, 29, 10, 0),
                 rrule = RRule(
@@ -50,10 +52,10 @@ class RRuleExpanderLeapYearTest {
             val end = ZonedDateTime.of(2033, 12, 31, 0, 0, 0, 0, zone).toInstant()
             val occurrences = expander.expand(event, start, end)
 
-            // Should get: 2024-02-29, 2028-02-29, 2032-02-29 (or skipped non-leap years)
+            // Expected 2024-02-29, 2028-02-29 and 2032-02-29; asserts that some occur, all on
+            // Feb 29.
             assertTrue(occurrences.isNotEmpty(), "Should have at least one Feb 29 occurrence")
 
-            // Verify all occurrences are on Feb 29
             occurrences.forEach { occ ->
                 val zdt = occ.dtStart.toZonedDateTime()
                 assertEquals(2, zdt.monthValue, "All occurrences should be in February")
@@ -63,7 +65,7 @@ class RRuleExpanderLeapYearTest {
 
         @Test
         fun `monthly on day 29 - skips or adjusts February in non-leap years`() {
-            // Monthly recurring on the 29th should handle February
+            // Monthly on the 29th, across a non-leap and a leap February.
             val event = createEvent(
                 dtStart = dateTime(2023, 1, 29, 10, 0),
                 rrule = RRule(
@@ -77,12 +79,10 @@ class RRuleExpanderLeapYearTest {
             val end = ZonedDateTime.of(2024, 3, 1, 0, 0, 0, 0, zone).toInstant()
             val occurrences = expander.expand(event, start, end)
 
-            // Should have occurrences for each month except Feb 2023 (not leap year)
-            // 2023: Jan 29, Mar 29, Apr 29, May 29, Jun 29, Jul 29, Aug 29, Sep 29, Oct 29, Nov 29, Dec 29
-            // 2024: Jan 29, Feb 29 (leap year!)
+            // Expected the 29th of every month but Feb 2023, then Jan 29 and Feb 29, 2024 (a leap
+            // year). Asserts only that some occur and that Feb 2024 has one.
             assertTrue(occurrences.isNotEmpty())
 
-            // Check Feb 2024 (leap year) has occurrence
             val feb2024Occurrences = occurrences.filter { occ ->
                 val zdt = occ.dtStart.toZonedDateTime()
                 zdt.year == 2024 && zdt.monthValue == 2
@@ -105,10 +105,10 @@ class RRuleExpanderLeapYearTest {
             val end = ZonedDateTime.of(2024, 12, 31, 0, 0, 0, 0, zone).toInstant()
             val occurrences = expander.expand(event, start, end)
 
-            // Only months with 31 days: Jan, Mar, May, Jul, Aug, Oct, Dec (7 months)
+            // Seven months have a 31st (Jan, Mar, May, Jul, Aug, Oct, Dec); asserts that some
+            // occur, all on the 31st.
             assertTrue(occurrences.isNotEmpty())
 
-            // All occurrences should be on day 31
             occurrences.forEach { occ ->
                 val zdt = occ.dtStart.toZonedDateTime()
                 assertEquals(31, zdt.dayOfMonth, "All occurrences should be on day 31")
@@ -117,12 +117,12 @@ class RRuleExpanderLeapYearTest {
 
         @Test
         fun `last day of month pattern handles variable month lengths`() {
-            // Using BYMONTHDAY=-1 for last day of month
+            // BYMONTHDAY=-1 is the last day of the month.
             val event = createEvent(
                 dtStart = dateTime(2024, 1, 31, 10, 0),
                 rrule = RRule(
                     freq = Frequency.MONTHLY,
-                    byMonthDay = listOf(-1), // Last day of month
+                    byMonthDay = listOf(-1),
                     count = 6
                 )
             )
@@ -131,20 +131,19 @@ class RRuleExpanderLeapYearTest {
             val end = ZonedDateTime.of(2024, 7, 1, 0, 0, 0, 0, zone).toInstant()
             val occurrences = expander.expand(event, start, end)
 
-            // Should get: Jan 31, Feb 29 (leap), Mar 31, Apr 30, May 31, Jun 30
+            // Expected Jan 31, Feb 29 (leap), Mar 31, Apr 30, May 31 and Jun 30.
             assertTrue(occurrences.isNotEmpty())
 
-            // Verify some expected dates
             val dates = occurrences.map { occ ->
                 val zdt = occ.dtStart.toZonedDateTime()
                 "${zdt.monthValue}/${zdt.dayOfMonth}"
             }
-            // Implementation may vary; just ensure we got occurrences
+            // `dates` isn't asserted; only a non-empty result is.
         }
 
         @Test
         fun `yearly birthday on Feb 29 - born on leap day`() {
-            // Person born Feb 29, 2000 - birthday recurs yearly
+            // A birthday on Feb 29, 2000, recurring yearly.
             val event = createEvent(
                 dtStart = dateTime(2000, 2, 29, 0, 0),
                 isAllDay = true,
@@ -159,10 +158,10 @@ class RRuleExpanderLeapYearTest {
             val end = ZonedDateTime.of(2040, 12, 31, 0, 0, 0, 0, zone).toInstant()
             val occurrences = expander.expand(event, start, end)
 
-            // Leap years in range: 2000, 2004, 2008, 2012, 2016, 2020, 2024, 2028, 2032, 2036
+            // Leap years in range: 2000, 2004, 2008, 2012, 2016, 2020, 2024, 2028, 2032, 2036.
             assertTrue(occurrences.isNotEmpty())
 
-            // All should be Feb 29
+            // Every occurrence is Feb 29.
             occurrences.forEach { occ ->
                 val ld = occ.dtStart.toLocalDate()
                 assertEquals(2, ld.monthValue)
@@ -177,7 +176,7 @@ class RRuleExpanderLeapYearTest {
 
         @Test
         fun `BYSETPOS 1 with BYDAY - first weekday of month`() {
-            // First Monday, Tuesday, Wednesday, Thursday, or Friday of month
+            // The first weekday of the month.
             val event = createEvent(
                 dtStart = dateTime(2024, 1, 1, 10, 0),
                 rrule = RRule(
@@ -189,7 +188,7 @@ class RRuleExpanderLeapYearTest {
                         WeekdayNum(DayOfWeek.THURSDAY),
                         WeekdayNum(DayOfWeek.FRIDAY)
                     ),
-                    bySetPos = listOf(1), // First occurrence in the set
+                    bySetPos = listOf(1),
                     count = 6
                 )
             )
@@ -198,14 +197,14 @@ class RRuleExpanderLeapYearTest {
             val end = ZonedDateTime.of(2024, 7, 1, 0, 0, 0, 0, zone).toInstant()
             val occurrences = expander.expand(event, start, end)
 
-            // Note: BYSETPOS support varies by implementation
-            // This test documents expected behavior
+            // RRuleExpander passes BYSETPOS to ical4j (RRuleExpanderAdversarialTest counts 12
+            // second Tuesdays), despite the message below. This assert is always true.
             assertTrue(occurrences.size >= 0, "Implementation may or may not support BYSETPOS")
         }
 
         @Test
         fun `BYSETPOS -1 with BYDAY - last weekday of month`() {
-            // Last Monday, Tuesday, Wednesday, Thursday, or Friday of month
+            // The last weekday of the month.
             val event = createEvent(
                 dtStart = dateTime(2024, 1, 31, 10, 0),
                 rrule = RRule(
@@ -217,7 +216,7 @@ class RRuleExpanderLeapYearTest {
                         WeekdayNum(DayOfWeek.THURSDAY),
                         WeekdayNum(DayOfWeek.FRIDAY)
                     ),
-                    bySetPos = listOf(-1), // Last occurrence in the set
+                    bySetPos = listOf(-1),
                     count = 6
                 )
             )
@@ -226,12 +225,13 @@ class RRuleExpanderLeapYearTest {
             val end = ZonedDateTime.of(2024, 7, 1, 0, 0, 0, 0, zone).toInstant()
             val occurrences = expander.expand(event, start, end)
 
+            // Always true; BYSETPOS is passed to ical4j, despite the message.
             assertTrue(occurrences.size >= 0, "Implementation may or may not support BYSETPOS")
         }
 
         @Test
         fun `BYSETPOS 2 - second occurrence in set`() {
-            // Second weekday of each month
+            // The second weekday of each month.
             val event = createEvent(
                 dtStart = dateTime(2024, 1, 2, 10, 0),
                 rrule = RRule(
@@ -257,7 +257,7 @@ class RRuleExpanderLeapYearTest {
 
         @Test
         fun `BYSETPOS with multiple values`() {
-            // First and last weekday of month
+            // The first and last weekday of the month.
             val event = createEvent(
                 dtStart = dateTime(2024, 1, 1, 10, 0),
                 rrule = RRule(
@@ -269,7 +269,7 @@ class RRuleExpanderLeapYearTest {
                         WeekdayNum(DayOfWeek.THURSDAY),
                         WeekdayNum(DayOfWeek.FRIDAY)
                     ),
-                    bySetPos = listOf(1, -1), // First and last
+                    bySetPos = listOf(1, -1),
                     count = 12
                 )
             )
@@ -283,9 +283,8 @@ class RRuleExpanderLeapYearTest {
 
         @Test
         fun `BYSETPOS for yearly - second Tuesday in November US Election Day`() {
-            // US Election Day: First Tuesday after first Monday in November
-            // Can be expressed as: FREQ=YEARLY;BYMONTH=11;BYDAY=TU;BYMONTHDAY=2,3,4,5,6,7,8
-            // Or with BYSETPOS as first Tuesday in day range 2-8
+            // US Election Day, the first Tuesday after the first Monday in November:
+            // FREQ=YEARLY;BYMONTH=11;BYDAY=TU;BYMONTHDAY=2,3,4,5,6,7,8, plus BYSETPOS=1.
             val event = createEvent(
                 dtStart = dateTime(2024, 11, 5, 0, 0), // Election Day 2024
                 isAllDay = true,
@@ -294,7 +293,7 @@ class RRuleExpanderLeapYearTest {
                     freq = Frequency.YEARLY,
                     byMonth = listOf(11),
                     byDay = listOf(WeekdayNum(DayOfWeek.TUESDAY)),
-                    byMonthDay = listOf(2, 3, 4, 5, 6, 7, 8), // First Tuesday after Nov 1
+                    byMonthDay = listOf(2, 3, 4, 5, 6, 7, 8),
                     bySetPos = listOf(1),
                     count = 5
                 )
@@ -304,7 +303,6 @@ class RRuleExpanderLeapYearTest {
             val end = ZonedDateTime.of(2030, 12, 31, 0, 0, 0, 0, zone).toInstant()
             val occurrences = expander.expand(event, start, end)
 
-            // This is a complex BYSETPOS use case
             assertTrue(occurrences.size >= 0)
         }
     }
@@ -332,7 +330,7 @@ class RRuleExpanderLeapYearTest {
 
             assertEquals(5, occurrences.size)
 
-            // All should be at 10:00 UTC
+            // Every occurrence is at 10:00 UTC.
             occurrences.forEach { occ ->
                 val zdt = Instant.ofEpochMilli(occ.dtStart.timestamp)
                     .atZone(utcZone)
@@ -342,7 +340,7 @@ class RRuleExpanderLeapYearTest {
 
         @Test
         fun `UTC event spanning timezone boundaries`() {
-            // Event at 23:00 UTC daily - would be different local times
+            // Daily at 23:00 UTC, which falls on a different date in zones east of UTC.
             val event = createEvent(
                 dtStart = ICalDateTime(
                     timestamp = ZonedDateTime.of(2024, 1, 1, 23, 0, 0, 0, utcZone)
@@ -389,7 +387,7 @@ class RRuleExpanderLeapYearTest {
         isAllDay: Boolean = false
     ): ICalEvent {
         val effectiveDtEnd = if (isAllDay && dtEnd == null) {
-            // All-day events default to same day end
+            // An all-day event defaults to one day long.
             ICalDateTime(
                 timestamp = dtStart.timestamp + 86400000,
                 timezone = dtStart.timezone,

@@ -8,11 +8,13 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Tests for TimezoneServiceClient.
+ * Tests [TimezoneServiceClient]'s URL building, cache and network calls.
  *
- * Note: These tests are designed to work without network access where possible.
- * Tests that require network are marked accordingly and will gracefully handle
- * network failures.
+ * The URL, cache and constant tests run offline. Tests named "(requires network)" reach
+ * tzurl.org but none fails offline: the two fetch tests assert only on success, and the
+ * invalid-zone and availability asserts always hold. The invalid-host and 1 ms timeout tests
+ * expect isAvailable to return false with or without a network; the 1 ms fetch test checks only
+ * that nothing throws.
  */
 @DisplayName("TimezoneServiceClient Tests")
 class TimezoneServiceClientTest {
@@ -106,7 +108,7 @@ class TimezoneServiceClientTest {
         fun `clearCache empties the cache`() {
             val client = TimezoneServiceClient()
 
-            // Cache might have entries from previous operations
+            // A new client's cache is already empty; this checks clearCache leaves it at 0.
             client.clearCache()
 
             assertEquals(0, client.cacheSize())
@@ -121,7 +123,6 @@ class TimezoneServiceClientTest {
         fun `default instance exists`() {
             val client = TimezoneServiceClient.default
 
-            // Should be able to get a URL
             val url = client.getTzurl("America/Los_Angeles")
             assertTrue(url.isNotEmpty())
         }
@@ -145,13 +146,12 @@ class TimezoneServiceClientTest {
 
             val result = client.fetchTimezone("America/New_York")
 
-            // If network available, should succeed; if not, should fail gracefully
+            // Offline the fetch fails and the test passes without asserting.
             if (result.isSuccess) {
                 val data = result.getOrNull()!!
                 assertTrue(data.contains("BEGIN:VTIMEZONE"))
                 assertTrue(data.contains("TZID:America/New_York") || data.contains("America/New_York"))
             }
-            // If network unavailable, test passes - we're just checking it doesn't crash
         }
 
         @Test
@@ -161,23 +161,21 @@ class TimezoneServiceClientTest {
                 readTimeoutMs = 10000
             )
 
-            // Clear any existing cache
             client.clearCache()
             assertEquals(0, client.cacheSize())
 
-            // First fetch
             val result1 = client.fetchTimezone("Europe/London")
 
             if (result1.isSuccess) {
-                // Should now be cached
+                // A successful fetch is cached.
                 assertEquals(1, client.cacheSize())
 
-                // Second fetch should use cache
+                // The second fetch is served from the cache; these asserts can't tell it from a
+                // refetch, which would also leave one entry.
                 val result2 = client.fetchTimezone("Europe/London")
                 assertTrue(result2.isSuccess)
-                assertEquals(1, client.cacheSize())  // Still 1, used cache
+                assertEquals(1, client.cacheSize())
 
-                // Data should be identical
                 assertEquals(result1.getOrNull(), result2.getOrNull())
             }
         }
@@ -191,12 +189,10 @@ class TimezoneServiceClientTest {
 
             val result = client.fetchTimezone("Invalid/Timezone/That/Does/Not/Exist")
 
-            // Should fail - either network error or 404
-            // If network is available, service should return error
-            // If network unavailable, connection fails
-            // Either way, we just check it doesn't crash
+            // Online the service answers an error such as 404, offline the connection fails; both
+            // are a failure. The assert inside the if always holds, so the test checks only that
+            // nothing throws.
             if (result.isFailure) {
-                // Expected
                 assertTrue(result.isFailure)
             }
         }
@@ -208,10 +204,9 @@ class TimezoneServiceClientTest {
                 readTimeoutMs = 5000
             )
 
-            // This may return true or false depending on network
-            // Just verify it doesn't throw
+            // Either answer passes, online or offline; the test checks only that isAvailable
+            // doesn't throw.
             val available = client.isAvailable()
-            // Result is a boolean, test passes either way
             assertTrue(available || !available)
         }
 
@@ -223,7 +218,7 @@ class TimezoneServiceClientTest {
                 readTimeoutMs = 1000
             )
 
-            // Should fail to connect
+            // The connection fails, so isAvailable returns false.
             val available = client.isAvailable()
             assertFalse(available)
         }
@@ -235,7 +230,7 @@ class TimezoneServiceClientTest {
 
         @Test
         fun `fetchTimezone handles connection timeout gracefully`() {
-            // Use extremely short timeout to force timeout
+            // A 1 ms timeout forces a timeout or a network error.
             val client = TimezoneServiceClient(
                 connectTimeoutMs = 1,
                 readTimeoutMs = 1
@@ -243,8 +238,8 @@ class TimezoneServiceClientTest {
 
             val result = client.fetchTimezone("America/New_York")
 
-            // Should fail gracefully (either timeout or network error)
-            // Just ensure it doesn't throw uncaught exception
+            // fetchTimezone returns the exception as a failure. The assert always holds, so the
+            // test checks only that nothing throws.
             assertTrue(result.isSuccess || result.isFailure)
         }
 
@@ -255,7 +250,7 @@ class TimezoneServiceClientTest {
                 readTimeoutMs = 1
             )
 
-            // Should return false, not throw
+            // isAvailable catches the timeout and returns false.
             val available = client.isAvailable()
             assertFalse(available)
         }

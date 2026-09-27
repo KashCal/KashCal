@@ -7,18 +7,18 @@ import android.util.Log
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 /**
- * BroadcastReceiver for the midnight widget refresh alarm.
+ * Receives the midnight widget refresh alarm.
  *
- * AlarmManager.setExactAndAllowWhileIdle() fires through Doze, unlike
- * WorkManager, which is deferred until the next maintenance window.
- * This is what makes the Agenda widget roll over to today's date even
- * when the phone has been idle (e.g. airplane mode) overnight.
+ * AlarmManager.setExactAndAllowWhileIdle() fires through Doze, unlike WorkManager, which is
+ * deferred until the next maintenance window. This alarm is what rolls the Agenda widget over
+ * to the new day when the phone sat idle overnight, for example in airplane mode.
  */
 @AndroidEntryPoint
 class MidnightWidgetUpdateReceiver : BroadcastReceiver() {
@@ -32,13 +32,25 @@ class MidnightWidgetUpdateReceiver : BroadcastReceiver() {
     lateinit var widgetUpdateManager: WidgetUpdateManager
 
     override fun onReceive(context: Context, intent: Intent?) {
+        handleMidnight(widgetUpdateManager, goAsync())
+    }
+
+    /**
+     * Re-arms tomorrow's alarm, then refreshes the widgets in the background.
+     *
+     * Takes its collaborators explicitly because the generated Hilt onReceive re-injects fields
+     * on every dispatch, and goAsync() is null when a test calls onReceive directly.
+     */
+    internal fun handleMidnight(
+        widgetUpdateManager: WidgetUpdateManager,
+        pendingResult: PendingResult?
+    ): Job {
         Log.d(TAG, "Midnight alarm fired, refreshing widgets")
 
-        // Reschedule BEFORE updating so a failure in updateAllWidgets doesn't orphan tomorrow's alarm.
+        // Reschedule first so a failure in updateAllWidgets doesn't lose tomorrow's alarm.
         widgetUpdateManager.scheduleMidnightUpdate()
 
-        val pendingResult = goAsync()
-        CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+        return CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
             try {
                 val completed = withTimeoutOrNull(GOASYNC_TIMEOUT_MS) {
                     widgetUpdateManager.updateAllWidgets("midnight")
@@ -49,7 +61,7 @@ class MidnightWidgetUpdateReceiver : BroadcastReceiver() {
             } catch (e: Exception) {
                 Log.e(TAG, "Error updating widgets at midnight", e)
             } finally {
-                pendingResult.finish()
+                pendingResult?.finish()
             }
         }
     }

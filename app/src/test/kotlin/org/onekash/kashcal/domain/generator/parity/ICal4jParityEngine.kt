@@ -3,12 +3,9 @@ package org.onekash.kashcal.domain.generator.parity
 import org.onekash.kashcal.domain.generator.IcalDavRRuleEngine
 
 /**
- * Drives icaldav-core's RRuleExpander (ical4j backend) for the parity harness.
- *
- * Post-migration: delegates directly to the PRODUCTION [IcalDavRRuleEngine] so
- * the harness and OccurrenceGenerator exercise the same code path. This
- * eliminates the "harness has its own parallel adapter" divergence source that
- * the pre-migration design carried.
+ * Runs the production [IcalDavRRuleEngine] (ical4j) for the parity harness, so the harness and
+ * OccurrenceGenerator exercise the same code path and the harness has no adapter of its own to
+ * diverge. A throw is returned as [ExpansionResult.Error].
  */
 object ICal4jParityEngine : RRuleEngine {
     override val name: String = "ical4j"

@@ -6,9 +6,9 @@ import org.junit.Test
 import org.onekash.kashcal.ui.theme.ThemeMode
 
 /**
- * Pure tests for the theme-picker option model that backs [ThemeSheet]. The options derive from
- * [ThemeMode.entries] and each mode's own label/description resources, so adding a new theme needs
- * no change here — this pins that derivation and the menu ordering.
+ * Tests [themeSheetOptions], the option model behind [ThemeSheet]: enum order, labels and
+ * descriptions taken from each [ThemeMode], and distinct string ids. The options derive from
+ * [ThemeMode.entries], so adding a theme needs no change here.
  */
 class ThemeSheetTest {
 

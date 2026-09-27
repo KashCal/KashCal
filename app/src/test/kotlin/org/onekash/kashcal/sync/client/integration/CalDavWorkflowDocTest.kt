@@ -17,17 +17,19 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Comprehensive CalDAV workflow documentation test.
+ * Prints iCloud's replies, as ICS, at each step of the app's CalDAV workflows.
  *
- * This test documents EXACT iCloud behavior for all KashCal workflows:
- * - Single event: create, update, delete, move
- * - Recurring event: create, edit occurrence, delete occurrence, split, etc.
- * - Sync: ctag, sync-token, conflict detection
- * - Edge cases: special characters, timezones, multi-day events
+ * Covers:
+ * - Single event: create, update, delete, and a move as delete then create
+ * - Recurring event: create, edit an occurrence, delete an occurrence (EXDATE), re-edit an
+ *   exception, this-and-future split, all-day series with an exception
+ * - Sync: ctag, sync-token, 412 conflict
+ * - Edge cases: special characters, multi-day events, timezones
  *
- * Run: ./gradlew testDebugUnitTest --tests "*CalDavWorkflowDocTest*"
+ * Needs iCloud credentials in local.properties; skipped without them. Each test deletes only
+ * the events it created, by the URL its own create returned.
  *
- * Output: Test logs document ICS format at each step for reference.
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*CalDavWorkflowDocTest*"
  */
 class CalDavWorkflowDocTest {
 
@@ -63,7 +65,7 @@ class CalDavWorkflowDocTest {
             val factory = OkHttpCalDavClientFactory()
             client = factory.createClient(credentials, quirks)
         } else {
-            // Create a client with dummy credentials for tests that will be skipped
+            // Dummy credentials: every test is skipped without real ones
             val dummyCredentials = Credentials(
                 username = "test@example.com",
                 password = "test-password",
@@ -76,7 +78,7 @@ class CalDavWorkflowDocTest {
 
     @After
     fun cleanup() = runBlocking {
-        // Clean up all test events
+        // Deletes only the events this test created, by the URL its create returned
         for ((url, etag) in createdEventUrls) {
             try {
                 client.deleteEvent(url, etag)
@@ -128,7 +130,7 @@ class CalDavWorkflowDocTest {
         val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null to null
         val calendars = client.listCalendars(home).getOrNull() ?: return null to null
 
-        // Find first two non-inbox/outbox calendars
+        // The first two calendars whose URL contains neither "inbox" nor "outbox"
         val usableCalendars = calendars.filter { cal ->
             !cal.url.contains("inbox") && !cal.url.contains("outbox")
         }
@@ -154,7 +156,7 @@ class CalDavWorkflowDocTest {
     }
 
     // ========================================================================
-    // PHASE 1: SINGLE EVENT WORKFLOWS
+    // Single event workflows
     // ========================================================================
 
     @Test
@@ -455,7 +457,7 @@ END:VCALENDAR
     }
 
     // ========================================================================
-    // PHASE 2: RECURRING EVENT WORKFLOWS
+    // Recurring event workflows
     // ========================================================================
 
     @Test
@@ -540,8 +542,9 @@ END:VCALENDAR
         now.add(Calendar.HOUR_OF_DAY, 1)
         val firstEnd = icsDateTimeFormat.format(now.time)
 
-        // Calculate second occurrence
-        now.add(Calendar.DAY_OF_MONTH, 6) // Back to start, then +7 days
+        // Meant as the second occurrence, but now is still the first Monday (11:00), so
+        // + 6 days is a Sunday, which isn't an occurrence of this Monday series
+        now.add(Calendar.DAY_OF_MONTH, 6)
         now.set(Calendar.HOUR_OF_DAY, 10)
         val secondOccurrence = icsDateTimeFormat.format(now.time)
 
@@ -646,7 +649,7 @@ END:VCALENDAR
         now.add(Calendar.HOUR_OF_DAY, 1)
         val firstEnd = icsDateTimeFormat.format(now.time)
 
-        // Second occurrence (to exclude)
+        // Meant as the second occurrence to exclude; Monday + 6 days is a Sunday
         now.add(Calendar.DAY_OF_MONTH, 6)
         now.set(Calendar.HOUR_OF_DAY, 10)
         val secondOccurrence = icsDateTimeFormat.format(now.time)
@@ -735,7 +738,8 @@ END:VCALENDAR
         now.add(Calendar.HOUR_OF_DAY, 1)
         val firstEnd = icsDateTimeFormat.format(now.time)
 
-        // Second occurrence (original time for RECURRENCE-ID)
+        // Meant as the second occurrence's original time for RECURRENCE-ID; Monday + 6 days
+        // is a Sunday
         now.add(Calendar.DAY_OF_MONTH, 6)
         now.set(Calendar.HOUR_OF_DAY, 10)
         val secondOccurrenceOriginal = icsDateTimeFormat.format(now.time)
@@ -875,8 +879,8 @@ END:VCALENDAR
         now.add(Calendar.HOUR_OF_DAY, 1)
         val firstEnd = icsDateTimeFormat.format(now.time)
 
-        // Split point: 3rd occurrence
-        now.add(Calendar.DAY_OF_MONTH, 13) // +2 weeks
+        // Meant as the 3rd occurrence; Monday + 13 days is a Sunday
+        now.add(Calendar.DAY_OF_MONTH, 13)
         now.set(Calendar.HOUR_OF_DAY, 10)
         val splitPoint = icsDateTimeFormat.format(now.time)
 
@@ -1087,7 +1091,7 @@ END:VCALENDAR
     }
 
     // ========================================================================
-    // PHASE 3: SYNC BEHAVIOR TESTS
+    // Sync behavior
     // ========================================================================
 
     @Test
@@ -1314,7 +1318,7 @@ END:VCALENDAR
     }
 
     // ========================================================================
-    // PHASE 4: EDGE CASES
+    // Edge cases
     // ========================================================================
 
     @Test

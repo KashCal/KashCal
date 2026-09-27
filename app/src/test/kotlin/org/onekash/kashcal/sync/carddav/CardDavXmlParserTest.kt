@@ -16,10 +16,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [CardDavXmlParser]: the CardDAV-specific extractors (addressbook
- * home-set, address book listing, supported-address-data version negotiation,
- * addressbook-multiget address-data) plus a check that the generic multistatus
- * bits are delegated to the shared CalDAV parser skeleton.
+ * Tests [CardDavXmlParser]: the CardDAV extractors (addressbook-home-set, address book listing
+ * with privileges, supported-address-data version negotiation, addressbook-multiget
+ * address-data), and that principal, sync-collection and ctag parsing delegate to the shared
+ * CalDAV parser.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -245,10 +245,10 @@ class CardDavXmlParserTest {
 
     @Test
     fun `an aggregated all privilege marks the address book writable`() {
-        // Some servers advertise the RFC 3744 aggregate DAV:all instead of the
-        // leaf DAV:write / DAV:write-content. DAV:all aggregates write, so the book
-        // is writable and must NOT be surfaced as read-only. A server misread here
-        // silently blocks every contact push against it (issue #281).
+        // Some servers advertise the RFC 3744 aggregate DAV:all instead of the leaf DAV:write
+        // or DAV:write-content. DAV:all includes write, so the book is writable and must not
+        // be read-only; misreading it silently blocks every contact push to that server
+        // (issue #281).
         val xml = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:multistatus xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
@@ -272,9 +272,8 @@ class CardDavXmlParserTest {
 
     @Test
     fun `a write-content privilege marks the address book writable`() {
-        // DAV:write-content is the leaf content-write privilege (RFC 3744 §3.12);
-        // a server may advertise it without the DAV:write aggregate. It confers
-        // content writes, so the book must be writable.
+        // DAV:write-content is the leaf content-write privilege (RFC 3744 §3.12); a server may
+        // advertise it without the DAV:write aggregate, and the book must be writable.
         val xml = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:multistatus xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
@@ -299,9 +298,8 @@ class CardDavXmlParserTest {
 
     @Test
     fun `an address book advertising no privilege set at all is treated as read-only`() {
-        // When the server returns no current-user-privilege-set, write capability
-        // is unknown, so the book is surfaced read-only (fail-closed) rather than
-        // attempting a push that would 403. Locks the fail-closed default.
+        // With no current-user-privilege-set, write capability is unknown, so the book fails
+        // closed to read-only instead of attempting a push that would 403.
         val xml = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:multistatus xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
@@ -322,10 +320,9 @@ class CardDavXmlParserTest {
 
     @Test
     fun `skips addressbook whose resourcetype propstat returned non-200 (RFC 4918 multi-propstat)`() {
-        // A multi-propstat server (Radicale/Stalwart) can echo the addressbook
-        // resourcetype inside a 404/403 propstat for a collection the user cannot
-        // read. The successful propstat carries the readable props; the failed one
-        // carries resourcetype. The book must NOT be surfaced as readable.
+        // A multi-propstat server (Radicale, Stalwart) can echo the addressbook resourcetype
+        // inside a 404 or 403 propstat for a collection the user can't read, while the 200
+        // propstat carries the readable props. The book must not be listed.
         val xml = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:multistatus xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
@@ -352,8 +349,8 @@ class CardDavXmlParserTest {
 
     @Test
     fun `includes addressbook whose resourcetype propstat is 200 in a multi-propstat response`() {
-        // Same multi-propstat shape but the resourcetype propstat is 200: the book
-        // is real and must be surfaced (guards against the fix over-filtering).
+        // Same multi-propstat shape, but the resourcetype propstat is 200: the book is real and
+        // must be listed, so the non-200 filter doesn't over-filter.
         val xml = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:multistatus xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav">
@@ -380,10 +377,9 @@ class CardDavXmlParserTest {
 
     @Test
     fun `extracts address data bodies with normalized etags`() {
-        // Flush-left (no trimIndent): the vCard body carries real newlines with
-        // no structural indentation, exactly as a server emits it. Indenting the
-        // wrapper would leave the body's flush-left lines un-dedented and corrupt
-        // the payload, so the whole document sits at the margin.
+        // Flush-left (no trimIndent): the vCard body's lines have no indentation, as a server
+        // emits them. An indented wrapper would leave those lines un-dedented and corrupt the
+        // payload, so the whole document sits at the margin.
         val xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<d:multistatus xmlns:d=\"DAV:\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\">\n" +
             "<d:response>\n" +
@@ -414,17 +410,13 @@ class CardDavXmlParserTest {
 
     @Test
     fun `keeps the whole vcard body when it contains an escaped ampersand`() {
-        // Regression guard for the address-data reader's single-token text read.
-        // A real contact whose ORG/NOTE/FN contains '&' arrives XML-escaped as
-        // "&amp;" (likewise '<' -> "&lt;"). The worry was that an entity reference
-        // splits the element's character content into separate text segments, so a
-        // one-token read would stop at the first and lose everything after the '&'
-        // (here END:VCARD), failing the BEGIN:VCARD gate and silently dropping the
-        // contact. In practice the pull-parser resolves the five predefined XML
-        // entities inline and reports the whole run as ONE text token, so the body
-        // survives intact. This test pins that behavior: if a parser swap ever
-        // reverts to per-segment entity reporting, the body would truncate and this
-        // fails loudly instead of contacts vanishing in the field.
+        // Guards the address-data reader's single-token text read. A contact whose ORG, NOTE
+        // or FN contains '&' arrives escaped as "&amp;" (likewise '<' as "&lt;"). If an entity
+        // reference split the element's text into segments, a one-token read would lose
+        // everything after the '&' (here END:VCARD), failing the BEGIN:VCARD check and
+        // silently dropping the contact. The pull parser resolves the five predefined XML
+        // entities inline and reports the whole run as one text token; this test fails if a
+        // parser swap changes that.
         val xml = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
             "<d:multistatus xmlns:d=\"DAV:\" xmlns:card=\"urn:ietf:params:xml:ns:carddav\">\n" +
             "<d:response>\n" +

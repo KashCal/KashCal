@@ -26,17 +26,18 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Adversarial regression tests for critical invariants in the data and sync layers.
+ * Pins data-layer invariants the sync path relies on, over an in-memory Room database.
  *
  * Areas covered:
- * - Always use @Transaction for multi-step operations
- * - PendingOperation queue for sync
- * - Exception linking via FK
- * - Time-based queries via the occurrences table (NOT Event.endTs)
- * - Self-contained sync operations (targetUrl captured at queue time)
- * - Exception events share master UID
+ * - Time-based queries go through the occurrences table: `Event.endTs` is the first
+ *   occurrence's end, not the series end
+ * - A PendingOperation keeps the targetUrl captured at queue time (DELETE and MOVE)
+ * - Exception events share the master's UID
+ * - Exceptions link to the master through the `originalEventId` FK
+ * - The PendingOperation queue holds CREATE, UPDATE and DELETE ops, and
+ *   [PendingOperation.calculateRetryDelay] stays positive and capped
  *
- * Violations of these invariants have caused bugs that required multiple fix cycles.
+ * The tests write events and ops through the DAOs; none drives EventWriter.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -80,7 +81,7 @@ class CriticalPatternAdversarialTest {
 
     @Test
     fun `Event endTs is first occurrence end - NOT series end`() = runTest {
-        // This test documents WHY filtering by Event.endTs is wrong
+        // Shows why filtering by Event.endTs misses a recurring event.
         val now = System.currentTimeMillis()
 
         // Create recurring event: daily for 10 days
@@ -89,7 +90,7 @@ class CriticalPatternAdversarialTest {
             calendarId = testCalendarId,
             title = "Daily Standup",
             startTs = now,
-            endTs = now + 3600000, // 1 hour - THIS IS FIRST OCCURRENCE ONLY
+            endTs = now + 3600000, // 1 hour: the first occurrence only
             dtstamp = now,
             rrule = "FREQ=DAILY;COUNT=10",
             syncStatus = SyncStatus.SYNCED
@@ -104,25 +105,24 @@ class CriticalPatternAdversarialTest {
             now + 20 * 86400000
         )
 
-        // Event.endTs = first occurrence end = now + 1 hour
-        // But series actually ends on day 10!
+        // Event.endTs is the first occurrence's end (now + 1 hour); the series ends on day 10.
         val lastOccurrence = database.occurrencesDao().getForEvent(eventId)
             .maxByOrNull { it.endTs }!!
 
-        // CRITICAL: Event.endTs != series end
+        // Event.endTs isn't the series end.
         assertTrue(
             "Last occurrence should be days after Event.endTs",
             lastOccurrence.endTs > savedEvent.endTs + 8 * 86400000
         )
 
-        // WRONG approach: filtering by Event.endTs would miss this event after day 1
+        // A filter on Event.endTs would drop this event after day 1.
         val futureTime = now + 5 * 86400000 // 5 days from now
         assertTrue(
             "Event.endTs < futureTime - would incorrectly filter out this event!",
             savedEvent.endTs < futureTime
         )
 
-        // CORRECT: Query occurrences table
+        // The occurrences table still has it.
         val futureOccurrences = database.occurrencesDao().getForEvent(eventId)
             .filter { it.endTs >= futureTime }
         assertTrue(
@@ -143,14 +143,13 @@ class CriticalPatternAdversarialTest {
             startTs = now,
             endTs = now + 3600000, // 1 hour
             dtstamp = now,
-            rrule = "FREQ=WEEKLY", // Infinite!
+            rrule = "FREQ=WEEKLY", // Repeats forever
             syncStatus = SyncStatus.SYNCED
         )
         val eventId = eventsDao.insert(event)
         val savedEvent = eventsDao.getById(eventId)!!
 
-        // CRITICAL: Event.endTs = FIRST occurrence end (finite)
-        // Even though the event repeats FOREVER!
+        // Event.endTs is the first occurrence's end, finite though the series never ends.
         assertEquals(
             "Event.endTs should be first occurrence end only",
             now + 3600000,
@@ -168,7 +167,7 @@ class CriticalPatternAdversarialTest {
         // Should have multiple weekly occurrences in 30 days
         assertTrue("Should generate multiple weekly occurrences", occurrences.size >= 4)
 
-        // Key insight: occurrences extend beyond Event.endTs
+        // Occurrences extend past Event.endTs.
         val lastOccurrence = occurrences.maxByOrNull { it.endTs }!!
         assertTrue(
             "Occurrences extend beyond Event.endTs",
@@ -197,22 +196,22 @@ class CriticalPatternAdversarialTest {
         )
         val eventId = eventsDao.insert(event)
 
-        // CORRECT: Store URL in pending operation at queue time
+        // The op stores the URL at queue time.
         val pendingOp = PendingOperation(
             eventId = eventId,
             operation = PendingOperation.OPERATION_DELETE,
-            targetUrl = caldavUrl // Captured NOW before any clearing
+            targetUrl = caldavUrl // Captured before the event's URL is cleared
         )
         database.pendingOperationsDao().insert(pendingOp)
 
-        // Simulate: event.caldavUrl gets cleared (common pattern)
+        // The event's caldavUrl is then cleared.
         eventsDao.update(event.copy(id = eventId, caldavUrl = null))
 
-        // VERIFY: PendingOperation still has the URL
+        // The op still has the URL.
         val ops = database.pendingOperationsDao().getAll()
         assertEquals(caldavUrl, ops.first().targetUrl)
 
-        // If we had read from Event at process time, it would be null!
+        // Reading it from the event at process time would give null.
         val clearedEvent = eventsDao.getById(eventId)!!
         assertNull("Event caldavUrl should be cleared", clearedEvent.caldavUrl)
     }
@@ -245,7 +244,7 @@ class CriticalPatternAdversarialTest {
         )
         val eventId = eventsDao.insert(event)
 
-        // CORRECT: Capture source URL BEFORE any changes
+        // Capture the source URL before any change.
         val pendingOp = PendingOperation(
             eventId = eventId,
             operation = PendingOperation.OPERATION_MOVE,
@@ -287,12 +286,13 @@ class CriticalPatternAdversarialTest {
         val masterId = eventsDao.insert(masterEvent)
         val savedMaster = eventsDao.getById(masterId)!!
 
-        // Target occurrence time (3rd week from now)
+        // The third occurrence (two weeks from now)
         val targetOccTime = now + 14 * 86400000L
 
-        // CORRECT: Exception has SAME UID as master (RFC 5545)
+        // The exception has the master's UID; RECURRENCE-ID picks the instance
+        // (RFC 5545 §3.8.4.4).
         val exception = Event(
-            uid = masterUid, // MUST be same as master
+            uid = masterUid, // Same as the master
             calendarId = testCalendarId,
             title = "Weekly Standup - RESCHEDULED",
             startTs = targetOccTime + 3600000, // Different time
@@ -315,7 +315,7 @@ class CriticalPatternAdversarialTest {
 
     @Test
     fun `exception event with different UID would create orphan on server`() = runTest {
-        // This test documents the BUG pattern: different UID = orphan event
+        // Shows the trap: an exception with its own UID is a separate event on the server.
         val now = System.currentTimeMillis()
         val masterUid = "master@test.com"
 
@@ -331,10 +331,10 @@ class CriticalPatternAdversarialTest {
         )
         val masterId = eventsDao.insert(masterEvent)
 
-        // WRONG: Different UID (this was a bug pattern)
+        // The trap: a UID of its own
         val wrongUid = "${masterUid}-${now}"
         val badException = Event(
-            uid = wrongUid, // WRONG! Different UID
+            uid = wrongUid, // Not the master's UID
             calendarId = testCalendarId,
             title = "Exception",
             startTs = now + 86400000,
@@ -342,11 +342,11 @@ class CriticalPatternAdversarialTest {
             dtstamp = now,
             originalEventId = masterId,
             originalInstanceTime = now + 86400000,
-            syncStatus = SyncStatus.PENDING_CREATE // Would CREATE new event on server!
+            syncStatus = SyncStatus.PENDING_CREATE // Would be pushed as a new event
         )
 
-        // This WOULD create an orphan event on the server
-        // The test documents that different UID + PENDING_CREATE = bug
+        // Pushed, this would create an orphan event on the server. Nothing is written; the
+        // assert only checks that the two UIDs differ.
         assertNotEquals(
             "Different UIDs would create orphan on server - THIS IS A BUG",
             masterUid,
@@ -402,7 +402,9 @@ class CriticalPatternAdversarialTest {
     fun `all mutations create PendingOperation entries`() = runTest {
         val now = System.currentTimeMillis()
 
-        // CREATE: Must queue PENDING_CREATE
+        // The test inserts each op itself: it checks the queue stores all three kinds, not
+        // that a mutation queues one.
+        // CREATE op for a PENDING_CREATE event
         val createEvent = Event(
             uid = "create@test.com",
             calendarId = testCalendarId,
@@ -420,7 +422,7 @@ class CriticalPatternAdversarialTest {
             )
         )
 
-        // UPDATE: Must queue PENDING_UPDATE
+        // UPDATE op for a PENDING_UPDATE event
         val updateEvent = Event(
             uid = "update@test.com",
             calendarId = testCalendarId,
@@ -441,7 +443,7 @@ class CriticalPatternAdversarialTest {
             )
         )
 
-        // DELETE: Must queue PENDING_DELETE
+        // DELETE op for a PENDING_DELETE event
         val deleteEvent = Event(
             uid = "delete@test.com",
             calendarId = testCalendarId,
@@ -462,7 +464,7 @@ class CriticalPatternAdversarialTest {
             )
         )
 
-        // Verify all operations queued
+        // All three ops are queued.
         val pendingOps = database.pendingOperationsDao().getAll()
         assertEquals(3, pendingOps.size)
 
@@ -474,7 +476,7 @@ class CriticalPatternAdversarialTest {
 
     @Test
     fun `calculateRetryDelay handles edge cases`() {
-        // Pattern violation that was fixed: negative input
+        // A negative count gives the base delay.
         assertEquals(
             "Negative retryCount should return base delay",
             30_000L,

@@ -10,14 +10,14 @@ class MonthGridDayCodeTest {
 
     @Test
     fun `computeDayCodeForCell correct for MonthDate`() {
-        // March 2026, day 15 -> 20260315
+        // March 2026 (month 2, 0-indexed), day 15 -> 20260315
         val cell = MonthGrid.DayCell(
             dayOfMonth = 15,
             position = MonthGrid.DayPosition.MonthDate,
             isWeekend = false,
             weekNumber = 11
         )
-        assertEquals(20260315, MonthGrid.computeDayCodeForCell(cell, 2026, 2)) // month 2 = March (0-indexed)
+        assertEquals(20260315, MonthGrid.computeDayCodeForCell(cell, 2026, 2)) // 2 = March
     }
 
     @Test
@@ -34,14 +34,14 @@ class MonthGridDayCodeTest {
 
     @Test
     fun `computeDayCodeForCell handles OutDate across year boundary`() {
-        // December 2026 grid, OutDate day 1 -> January 1, 2027 = 20270101
+        // December 2026 grid (month 11), OutDate day 1 -> January 1, 2027 = 20270101
         val cell = MonthGrid.DayCell(
             dayOfMonth = 1,
             position = MonthGrid.DayPosition.OutDate,
             isWeekend = false,
             weekNumber = 1
         )
-        assertEquals(20270101, MonthGrid.computeDayCodeForCell(cell, 2026, 11)) // month 11 = December
+        assertEquals(20270101, MonthGrid.computeDayCodeForCell(cell, 2026, 11)) // December
     }
 
     @Test
@@ -72,37 +72,35 @@ class MonthGridDayCodeTest {
 
     @Test
     fun `toDayCodeRange returns correct bounds for month with InDate and OutDate`() {
-        // March 2026, Sunday start: March 1 is Sunday, so no InDate.
-        // Last row may be all-OutDate.
+        // March 2026 with a Sunday start: March 1 is a Sunday, so despite the test name there
+        // is no InDate, and the last row is all OutDate.
         val grid = MonthGrid.compute(2026, 2, Calendar.SUNDAY)
         val (start, end) = grid.toDayCodeRange()
 
-        // First cell should be first day visible in grid
+        // Start is the first cell's day.
         val firstCell = grid.weeks.first().first()
         val expectedStart = MonthGrid.computeDayCodeForCell(firstCell, 2026, 2)
         assertEquals(expectedStart, start)
 
-        // Last cell should be last day visible in grid
+        // End is the last cell's day.
         val lastCell = grid.weeks.last().last()
         val expectedEnd = MonthGrid.computeDayCodeForCell(lastCell, 2026, 2)
         assertEquals(expectedEnd, end)
 
-        // Verify start <= end
         assert(start <= end) { "Start ($start) should be <= end ($end)" }
     }
 
     @Test
     fun `toDayCodeRange covers InDate from previous month`() {
-        // February 2026, Sunday start: Feb 1 is Sunday, so InDate days from January
-        // Actually Feb 1, 2026 is a Sunday, so grid offset = 0. Use a month where offset > 0.
-        // April 2026: April 1 is Wednesday. With Sunday start, offset = 3 (Sun, Mon, Tue from March).
+        // April 1, 2026 is a Wednesday, so with a Sunday start the first 3 cells (Sun, Mon,
+        // Tue) are March InDates.
         val grid = MonthGrid.compute(2026, 3, Calendar.SUNDAY) // April
         val (start, _) = grid.toDayCodeRange()
 
-        // First cell should be InDate from March
+        // The first cell is a March InDate.
         val firstCell = grid.weeks.first().first()
         assertEquals(MonthGrid.DayPosition.InDate, firstCell.position)
-        // Start should be a March date
+        // Start is a March date.
         assert(start < 20260401) { "Start ($start) should be before April 1" }
     }
 }

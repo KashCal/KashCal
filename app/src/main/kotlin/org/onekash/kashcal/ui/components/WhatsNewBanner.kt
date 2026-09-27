@@ -34,15 +34,12 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.whatsnew.ReleaseNote
 
 /**
- * Post-update sheet listing release-note content the user hasn't acknowledged.
+ * Shows the release notes the user hasn't acknowledged as a post-update bottom sheet, shaped
+ * like [OnboardingBanner]'s.
  *
- * Mirrors [OnboardingBanner]'s modal bottom sheet shape for visual consistency.
- * One section per [ReleaseNote] (oldest-to-newest), so a user upgrading across
- * multiple releases sees every entry in a single sheet.
- *
- * Each section can render any combination of: a body paragraph, a bullet
- * list (sourced from a string-array resource so translators can't break
- * rendering), and a CTA button that opens a URL.
+ * One section per entry of [releases], oldest first as `WhatsNewGate` sorts them, so a user
+ * upgrading across several releases sees every entry in one sheet. A section shows the optional
+ * parts [ReleaseNote] sets: body, bullets, caption and a button that opens a URL.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

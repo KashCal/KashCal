@@ -10,7 +10,9 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Tests for RFC 9074 VALARM extensions parsing and roundtrip.
+ * Tests the RFC 9074 VALARM properties UID, ACKNOWLEDGED, RELATED-TO and PROXIMITY, plus
+ * DEFAULT-ALARM, which RFC 9074 doesn't define: the [AlarmProximity] mapping, parsing, and
+ * generate-and-re-parse. The re-parse checks don't cover ACKNOWLEDGED.
  */
 class ICalParserRfc9074Test {
 
@@ -386,7 +388,7 @@ class ICalParserRfc9074Test {
             assertEquals(false, alarm1.defaultAlarm)
             assertNull(alarm1.proximity)
 
-            // Roundtrip should work
+            // The alarm survives generate and re-parse
             val generated = generator.generate(event1, method = null)
             val event2 = parser.parseAllEvents(generated).getOrNull()!![0]
 

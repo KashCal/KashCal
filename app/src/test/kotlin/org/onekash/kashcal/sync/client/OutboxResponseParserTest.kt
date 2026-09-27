@@ -8,17 +8,18 @@ import org.onekash.kashcal.sync.client.model.OutboxResponse
 import org.onekash.kashcal.sync.client.model.classifyRequestStatus
 
 /**
- * Parses a CALDAV:schedule-response document (RFC 6638 §10.1, Appendix B.6)
- * into per-recipient (recipient, request-status) pairs. The parser must be
- * namespace-prefix tolerant (servers use C:/D:/caldav:/no-prefix), survive
- * missing children and multiple <response> blocks, and never throw on garbage
- * (a hostile/empty body yields an empty result, never a crash).
+ * Tests [OutboxResponse.parse] of a CALDAV:schedule-response (RFC 6638 §10.1, Appendix B.5) into
+ * (recipient, request-status) pairs, and [classifyRequestStatus].
+ *
+ * The parser must accept any namespace prefix (servers use C:, D:, caldav: or none), survive
+ * missing children and several <response> blocks, and never throw on garbage: an empty or
+ * hostile body gives an empty result.
  */
 class OutboxResponseParserTest {
 
     @Test
     fun `parses a single 2_0 Success response (Zoho shape)`() {
-        // The exact positive shape a live Zoho server returned.
+        // The success shape a live Zoho server returned.
         val xml = """
             <?xml version="1.0" encoding="utf-8" ?>
             <C:schedule-response xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
@@ -39,9 +40,9 @@ class OutboxResponseParserTest {
 
     @Test
     fun `parses the real Zoho response shape (request-status before recipient, trailing newlines)`() {
-        // Captured live from Zoho 2026-06: request-status comes BEFORE recipient
-        // (RFC examples show the reverse), element text has trailing newlines,
-        // and the D: namespace is declared inline on the href.
+        // Captured live from Zoho 2026-06: request-status comes before recipient (the RFC
+        // examples show the reverse), element text has trailing newlines, and the D:
+        // namespace is declared inline on the href.
         val xml = """
             <?xml version="1.0" encoding="UTF-8" standalone="no"?>
             <B:schedule-response xmlns:B="urn:ietf:params:xml:ns:caldav">
@@ -68,8 +69,8 @@ class OutboxResponseParserTest {
 
     @Test
     fun `parses multiple recipients with mixed request-status (success and invalid user)`() {
-        // RFC 6638 Appendix B.6: one <response> per recipient, each with its
-        // own request-status — including a 3.7 for a bad calendar user.
+        // RFC 6638 Appendix B.5: one <response> per recipient, each with its own
+        // request-status, here a 3.7 for an invalid calendar user.
         val xml = """
             <C:schedule-response xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
               <C:response>
@@ -139,7 +140,7 @@ class OutboxResponseParserTest {
         assertEquals(null, result.recipients[0].requestStatus)
     }
 
-    // ===== delivery-class classification (leading status digit, RFC 5546 §3.6) =====
+    // ===== Delivery class, from the code before ';' (RFC 5546 §3.6) =====
 
     @Test
     fun `classifies 2_x as success`() {

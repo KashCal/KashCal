@@ -11,16 +11,13 @@ import org.junit.jupiter.api.assertThrows
 import java.time.DayOfWeek
 
 /**
- * Comprehensive tests for RRule model per RFC 5545 Section 3.3.10.
- *
- * Tests cover:
- * - RRule construction
- * - RRule parsing from iCal strings
- * - RRule serialization to iCal strings
- * - WeekdayNum parsing and serialization
- * - All RRULE components (FREQ, INTERVAL, COUNT, UNTIL, BYDAY, etc.)
- * - Round-trip parsing and serialization
- * - Edge cases and validation
+ * Tests the RRule model (RFC 5545 §3.3.10):
+ * - construction, parsing and serialization of the rule parts FREQ, INTERVAL, COUNT, UNTIL,
+ *   WKST and the BY-lists, BYHOUR, BYMINUTE and BYSECOND included
+ * - BYDAY ordinals: signed and two-digit ones parse, zero and magnitudes above 53 throw
+ * - WeekdayNum parsing and serialization, round trips and the Frequency values
+ * - edge cases: every BY-list set, none set, equality, copy, a DATE UNTIL, and the tolerance
+ *   for non-numeric and out-of-range BY-list entries
  */
 class RRuleTest {
 
@@ -171,9 +168,8 @@ class RRuleTest {
             assertEquals(-1, rrule.byDay?.first()?.ordinal)
         }
 
-        // RFC 5545 §3.3.10: the ordwk of a BYDAY weekdaynum is 1*2DIGIT (1..53)
-        // with an optional +/- sign, so a two-digit ordinal and an explicit +
-        // are both valid and must parse.
+        // RFC 5545 §3.3.10: the ordwk of a BYDAY weekdaynum is 1*2DIGIT (1 to 53) with an
+        // optional sign, so a two-digit ordinal and an explicit + must parse.
 
         @Test
         fun `parse yearly rule with two-digit positive ordinal byday`() {
@@ -202,10 +198,8 @@ class RRuleTest {
             assertEquals(1, rrule.byDay?.first()?.ordinal)
         }
 
-        // RFC 5545 §3.3.10: ordwk is bounded to 1..53, so a zero ordinal or a
-        // magnitude above 53 is not a valid weekdaynum and must be rejected
-        // rather than silently accepted (which would hand ical4j a nonsensical
-        // ordinal at expansion time).
+        // RFC 5545 §3.3.10 bounds ordwk to 1 to 53, so a zero ordinal or a magnitude above 53
+        // must throw; accepted silently, it would reach ical4j at expansion time.
         @Test
         fun `parse rejects zero ordinal byday`() {
             assertThrows<IllegalArgumentException> {
@@ -587,7 +581,7 @@ class RRuleTest {
 
         @Test
         fun `parse handles extra whitespace`() {
-            // Some servers might add whitespace
+            // The input has no whitespace, so this checks only a plain parse.
             val rrule = RRule.parse("FREQ=DAILY")
             assertEquals(Frequency.DAILY, rrule.freq)
         }
@@ -609,8 +603,8 @@ class RRuleTest {
     // ==================== BYHOUR / BYMINUTE / BYSECOND Tests ====================
 
     /**
-     * Round-trip and parse tests for RFC 5545 §3.3.10 BYHOUR/BYMINUTE/BYSECOND
-     * rule parts. Pinned by RFC §3.8.5.3 example 36 (sub-daily BY* grid).
+     * Tests parsing and round trips of BYHOUR, BYMINUTE and BYSECOND (RFC 5545 §3.3.10), pinned
+     * by the §3.8.5.3 example "Every 20 minutes from 9:00 AM to 4:40 PM every day".
      */
     @Nested
     inner class ByHourMinuteSecondTests {
@@ -696,16 +690,14 @@ class RRuleTest {
 
         @Test
         fun `parse tolerates non-integer entries in BYHOUR list`() {
-            // Matches existing .mapNotNull { toIntOrNull() } tolerance for
-            // byMonthDay/byMonth/byWeekNo/byYearDay.
+            // Non-numeric entries are dropped, as in every other numeric BY-list.
             val rrule = RRule.parse("FREQ=DAILY;BYHOUR=9,foo,12")
             assertEquals(listOf(9, 12), rrule.byHour)
         }
 
         @Test
         fun `parse accepts out of range values without model level validation`() {
-            // Model layer accepts any Int; range validation is the engine's
-            // responsibility. Matches the tolerance already in byMonthDay/byMonth.
+            // The model keeps any Int, as in the other numeric BY-lists; the engine checks ranges.
             val rrule = RRule.parse("FREQ=DAILY;BYHOUR=24;BYSECOND=-1")
             assertEquals(listOf(24), rrule.byHour)
             assertEquals(listOf(-1), rrule.bySecond)

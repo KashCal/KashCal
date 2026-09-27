@@ -9,10 +9,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Unit tests for SimpleTimeZoneRegistry.
- *
- * Verifies the registry provides safe defaults that work on Android
- * without requiring ZoneRulesProvider.
+ * Tests [SimpleTimeZoneRegistry], which works on Android without ZoneRulesProvider: getTimeZone
+ * returns null, register and clear are no-ops, getZoneRules is empty, getTzId passes its input
+ * through, and getZoneId resolves IANA IDs and Windows names (hardcoded aliases and the
+ * properties-file fallback, in any case) and returns null for blank or unknown IDs.
  */
 @DisplayName("SimpleTimeZoneRegistry")
 class SimpleTimeZoneRegistryTest {
@@ -32,7 +32,7 @@ class SimpleTimeZoneRegistryTest {
     @Test
     @DisplayName("register does not throw")
     fun `register is no-op`() {
-        // Should not throw
+        // Passes if it doesn't throw.
         registry.register(null)
         registry.register(null, false)
         registry.register(null, true)
@@ -41,7 +41,7 @@ class SimpleTimeZoneRegistryTest {
     @Test
     @DisplayName("clear does not throw")
     fun `clear is no-op`() {
-        // Should not throw
+        // Passes if it doesn't throw.
         registry.clear()
     }
 
@@ -105,7 +105,7 @@ class SimpleTimeZoneRegistryTest {
     fun `getZoneId resolves India Standard Time`() {
         val zone = registry.getZoneId("India Standard Time")
         assertNotNull(zone, "India Standard Time should resolve via properties file")
-        // Verify it produces the correct UTC+5:30 offset
+        // UTC+5:30, which has no DST.
         val offset = zone!!.rules.getOffset(java.time.Instant.now())
         assertEquals(java.time.ZoneOffset.ofHoursMinutes(5, 30), offset)
     }

@@ -54,11 +54,11 @@ New to the project? [DeepWiki](https://deepwiki.com/KashCal/KashCal) gives you a
 - Describe the problem you're trying to solve
 - Explain your proposed solution
 
-**Please open an issue to discuss features and enhancements before writing code.** This avoids wasted effort on changes that don't fit the roadmap. Bug fixes are the exception; you can go straight to a pull request.
+Please open an issue to discuss a feature or enhancement before writing code, so no one spends effort on a change that doesn't fit the roadmap. Bug fixes can go straight to a pull request.
 
 ### Improving Translations
 
-New user-facing strings are added in English only, and maintainers batch-generate the 67 translations before release (so please don't hand-edit locale files in a PR). If you spot a wrong or awkward translation, [open an issue](https://github.com/KashCal/KashCal/issues) with the language, the current text, and your suggested wording. We'll fold the correction into the next translation pass.
+New user-facing strings are added in English only, and maintainers batch-generate the 67 translations before release, so please don't hand-edit locale files in a PR. If you spot a wrong or awkward translation, [open an issue](https://github.com/KashCal/KashCal/issues) with the language, the current text, and your suggested wording. The correction goes into the next translation pass.
 
 ### Submitting Code
 
@@ -77,7 +77,18 @@ Keep pull requests focused: one logical change per PR. Small, self-contained PRs
 - Follow Kotlin coding conventions
 - Use meaningful variable and function names
 - Keep functions small and focused
-- Add comments for non-obvious logic only (don't comment what the code already says)
+
+### Comments and KDoc
+
+Comment what the code can't say: invariants, consequences ("if X, Y breaks"), server and platform behavior, and RFC rules. Don't restate the code.
+
+- Write the rule once, where it is enforced or decided, and link to it from elsewhere with `[Symbol]`. Every `[Symbol]` must name a real declaration.
+- State the present rule, not its history. Git has the history; keep `#issue` references.
+- Name the test that enforces a rule (`ContactsProviderWriteBoundaryTest`) so it can be found.
+- KDoc starts with a one-line summary ("Deletes...", "Returns..."), then the contract: what it returns, when it fails, what it never does.
+- Keep the alternative a future editor would reach for when it is a trap ("a delete and re-insert would lose the starred flag").
+- Plain words, short sentences. No em dashes, bold, ALL-CAPS emphasis or filler ("actually", "correctly", "robust", "note that").
+- If you change code, update or delete the comments that describe it.
 
 ### Commit Messages
 
@@ -107,7 +118,7 @@ Key principles:
 - All data operations go through the domain layer; never access DAOs from ViewModels
 - Use Room's Flow for observable data so the UI updates progressively during sync
 - Queue all sync mutations through PendingOperation (never fire-and-forget)
-- Exception events (modified recurring occurrences) share the master event's UID per RFC 5545
+- Exception events (modified recurring occurrences) share the master event's UID and are told apart by RECURRENCE-ID (RFC 5545 §3.8.4.4)
 
 ## Testing
 
@@ -126,7 +137,7 @@ Key principles:
 ./gradlew lint
 ```
 
-If you're changing **sync or ICS import/export**, also run the integration suite against real CalDAV servers with the `-Pintegration` flag (excluded by default because it's slower, ~13 min):
+If you're changing sync or ICS import/export, also run the integration suite against real CalDAV servers with the `-Pintegration` flag. It is excluded by default because it is slower (~13 min):
 
 ```bash
 ./gradlew testDebugUnitTest -Pintegration
@@ -142,12 +153,12 @@ Before opening a PR, please confirm:
 - [ ] `./gradlew lint` passes.
 - [ ] AI assistance is disclosed (see below).
 
-If your change touches **sync or ICS import/export**:
+If your change touches sync or ICS import/export:
 
 - [ ] Tested against at least one real CalDAV server (iCloud, Nextcloud, Radicale, Baikal, and so on).
 - [ ] Credentials, sync tokens, and passwords are never logged in full.
 
-If your change touches the **UI**:
+If your change touches the UI:
 
 - [ ] It follows KashCal's inline-over-interrupting approach: prefer inline banners to blocking dialogs, use undo for reversible actions, and reserve confirmation dialogs for destructive or irreversible ones.
 
@@ -171,7 +182,7 @@ Contributions that appear to be bulk AI-generated without human review or testin
 
 ## CalDAV Server Testing
 
-If you find a CalDAV server that doesn't work with KashCal, please [open an issue](https://github.com/KashCal/KashCal/issues) with the server software and version. We test against iCloud, Nextcloud, Radicale, Baikal, Stalwart, Zoho, SoGo, and FastMail.
+If you find a CalDAV server that doesn't work with KashCal, please [open an issue](https://github.com/KashCal/KashCal/issues) with the server software and version. The integration suite runs against iCloud, Nextcloud, Radicale, Baikal (also with digest auth), Stalwart, Zoho, SOGo, mailbox.org, Fastmail, Cyrus, and Xandikos.
 
 KashCal also integrates with Android device calendars (Google Calendar, Samsung Calendar, etc.) via CalendarProvider. If you encounter issues with a specific device calendar app, please include the app name and Android version in your report.
 

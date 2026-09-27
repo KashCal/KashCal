@@ -9,8 +9,9 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Component-state behavior of [AppIconUtility] against a real (Robolectric) PackageManager:
- * fresh-install detection, switching, keeping exactly one alias enabled, and self-heal.
+ * Tests [AppIconUtility]'s component state against Robolectric's PackageManager: fresh-install
+ * detection, switching, keeping exactly one alias enabled, reporting DEFAULT without a write
+ * when every alias is disabled, and the repair by switching to DEFAULT.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -83,7 +84,7 @@ class AppIconUtilityTest {
 
     @Test
     fun `currentPreset reports DEFAULT without writing when every alias is disabled`() {
-        // Force the pathological state: nothing enabled.
+        // Force the state where nothing is enabled.
         AppIconPreset.entries.forEach {
             pm.setComponentEnabledSetting(
                 it.componentName(context),
@@ -92,7 +93,7 @@ class AppIconUtilityTest {
             )
         }
 
-        // Reading is pure: it reports DEFAULT but must NOT re-enable anything as a side effect.
+        // Reading is pure: it reports DEFAULT but must not re-enable anything.
         assertEquals(AppIconPreset.DEFAULT, utility.currentPreset())
         assertEquals(
             PackageManager.COMPONENT_ENABLED_STATE_DISABLED,

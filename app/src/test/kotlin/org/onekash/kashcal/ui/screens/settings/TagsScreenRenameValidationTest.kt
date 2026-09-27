@@ -22,11 +22,12 @@ import org.robolectric.annotation.Config
 import java.util.Locale
 
 /**
- * The rename sheet must run the same name rules as every other tag entry point:
- * a comma (the RFC 5545 CATEGORIES separator) or an over-long name is rejected
- * inline and Save stays disabled, so an invalid rename can't reach the cascade.
- * Driven through the public [TagsScreen] — the surface the user actually taps —
- * rather than the private sheet composable.
+ * Verifies the tag actions menu (change color, rename and delete, no merge) and the rename sheet.
+ * The sheet must run the same name rules as every other tag entry point: a comma (the RFC 5545
+ * CATEGORIES separator) or an over-long name is rejected inline and Save stays disabled, so an
+ * invalid rename can't reach the cascade (only the comma is tested here). A valid changed name
+ * enables Save, and a case-only change is saved through to the rename callback. Driven through the
+ * public [TagsScreen], the surface the user taps, not the private sheet composable.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h9999dp-mdpi")

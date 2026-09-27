@@ -17,6 +17,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -29,25 +31,26 @@ import org.onekash.kashcal.ui.util.DayPagerUtils
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Locks in the back-from-Insights contract: HomeViewModel tracks the
- * last non-INSIGHTS view in [HomeUiState.previousNonInsightsMode] so the
- * Insights screen can return the user to whichever view they came from.
+ * Tests the back-from-Insights contract: HomeViewModel tracks the last
+ * non-INSIGHTS view in [HomeUiState.previousNonInsightsMode] so the Insights
+ * screen can return the user to whichever view they came from.
  *
- * Critical invariants:
- * 1. On VM init the field is seeded from the user's persisted default —
- *    not hardcoded to MONTH — so a deep-link directly into Insights still
- *    backs out to the user's preferred view.
- * 2. setViewMode(non-INSIGHTS) updates both viewMode AND previousNonInsightsMode.
- * 3. setViewMode(INSIGHTS) updates only viewMode; previousNonInsightsMode
- *    is preserved so the back-target survives the transition.
+ * 1. On ViewModel init the field is seeded from the user's persisted default,
+ *    not MONTH, so a deep link straight into Insights still backs out to the
+ *    user's preferred view.
+ * 2. setViewMode to any other view updates viewMode and previousNonInsightsMode.
+ * 3. setViewMode(INSIGHTS) updates only viewMode, so the back target survives
+ *    the transition.
  *
- * The DataStore invariant that prevents "insights" from being persisted as
- * the default view (and therefore poisoning the seed) is locked in by
- * KashCalDataStoreInvariantTest.
+ * `KashCalDataStoreInvariantTest` checks that "insights" can't be persisted as
+ * the default view, which would seed the back target with INSIGHTS.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 class HomeViewModelInsightsBackStackTest {
+
+    private val fakeCalendarProviderRepository =
+        org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -106,7 +109,8 @@ class HomeViewModelInsightsBackStackTest {
         accountRepository = accountRepository,
         syncScheduler = syncScheduler,
         networkMonitor = networkMonitor,
-        calendarProviderRepository = org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository(),
+        deviceEventReader = fakeCalendarProviderRepository.deviceEventReader(),
+        deviceEventWriter = fakeCalendarProviderRepository.deviceEventWriter(dataStore),
         attendeeBackfill = mockk(relaxed = true),
         contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),

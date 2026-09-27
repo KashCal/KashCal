@@ -27,15 +27,17 @@ import java.time.ZonedDateTime
 import java.util.TimeZone
 
 /**
- * RFC 5545 compliance tests for OccurrenceGenerator.
- *
- * Tests behaviors required by RFC 5545 that are not covered by existing tests:
- * - COUNT + UNTIL mutual exclusivity (Section 3.3.10)
- * - EXDATE with millisecond timestamps (from ICalEventMapper)
- * - RDATE with millisecond timestamps (from ICalEventMapper)
- * - Set algebra: (RRULE UNION RDATE) MINUS EXDATE
- * - EXDATE on all-day recurring events
- * - EXDATE precision: day-level matching for timed events
+ * Tests [OccurrenceGenerator.generateOccurrences] against RFC 5545 recurrence rules, in
+ * America/New_York:
+ * - an RRULE with both COUNT and UNTIL (§3.3.10)
+ * - EXDATE and RDATE as millisecond timestamps, the form `ICalEventMapper` stores
+ * - the set algebra (RRULE union RDATE) minus EXDATE, including an EXDATE removing an RDATE
+ * - EXDATE on an all-day series, and day-level EXDATE matching on a timed one
+ * - YEARLY BYMONTH+BYDAY, BYDAY=-1FR, BYMONTHDAY=29 in leap and non-leap years, BYSETPOS
+ *   with BYDAY, and a BYMONTHDAY list
+ * - DATE and DATE-TIME UNTIL
+ * - EXDATE and RDATE ignored on an event without an RRULE
+ * - EXDATE as DATE-TIME, as YYYYMMDD, and mixed with milliseconds
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -130,22 +132,17 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
         return event.copy(id = eventId)
     }
 
-    // ==================== RFC 5545 Section 3.3.10: COUNT + UNTIL Mutual Exclusivity ====================
+    // ==================== RFC 5545 §3.3.10: COUNT and UNTIL Together ====================
 
     @Test
     fun `COUNT and UNTIL in same RRULE should honor COUNT`() = runTest {
-        // RFC 5545 Section 3.3.10: "The UNTIL or COUNT rule parts are OPTIONAL,
+        // RFC 5545 §3.3.10: "The UNTIL or COUNT rule parts are OPTIONAL,
         // but they MUST NOT occur in the same 'recur'."
         //
-        // BUG: lib-recur returns 0 occurrences when both are present, silently
-        // dropping all occurrences. A non-compliant server sending both causes
-        // the event to appear non-recurring.
+        // A non-compliant server can still send both. The adapter strips UNTIL when COUNT is
+        // present (`IcalDavRRuleAdapter`), so COUNT wins.
         //
-        // COUNT=5 → Jan 5-9 (5 occurrences)
-        // UNTIL=Mar 1 → Jan 5 through Mar 1 (55+ occurrences)
-        //
-        // FIX NEEDED: OccurrenceGenerator should strip UNTIL when COUNT is present
-        // before passing to lib-recur, as COUNT is the more restrictive constraint.
+        // COUNT=5 gives Jan 5-9 (5 occurrences); UNTIL=Mar 1 alone would give 55.
         val startTs = parseDate("2026-01-05 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -156,20 +153,19 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
         val rangeEnd = startTs + 90L * 24 * 3600000
         val count = occurrenceGenerator.generateOccurrences(event, startTs - 86400000, rangeEnd)
 
-        // Should honor COUNT (5 occurrences) rather than producing 0
+        // COUNT's 5 occurrences, not 0.
         assertEquals(
             "COUNT+UNTIL: should honor COUNT and produce 5 occurrences",
             5, count
         )
     }
 
-    // ==================== RFC 5545 Section 3.8.5.1: EXDATE with Millisecond Timestamps ====================
+    // ==================== RFC 5545 §3.8.5.1: EXDATE as Millisecond Timestamps ====================
 
     @Test
     fun `EXDATE with millisecond timestamps excludes correct occurrences`() = runTest {
-        // ICalEventMapper stores EXDATE as comma-separated millisecond timestamps.
-        // OccurrenceGenerator.parseMultiValueField converts these to day codes.
-        // Verify the excluded dates are actually removed from the occurrence set.
+        // ICalEventMapper stores EXDATE as comma-separated millisecond timestamps. The
+        // excluded dates are removed from the occurrence set.
         val startTs = parseDate("2026-01-05 10:00") // Monday
         val jan7 = parseDate("2026-01-07 10:00") // Wednesday
         val jan9 = parseDate("2026-01-09 10:00") // Friday
@@ -192,11 +188,11 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
             Instant.ofEpochMilli(it.startTs).atZone(defaultZone).toLocalDate()
         }
 
-        // Jan 7 and Jan 9 should be excluded
+        // Jan 7 and Jan 9 are excluded.
         assertTrue("Jan 7 should be excluded", !occDates.contains(LocalDate.of(2026, 1, 7)))
         assertTrue("Jan 9 should be excluded", !occDates.contains(LocalDate.of(2026, 1, 9)))
 
-        // Jan 5, 6, 8, 10, 11 should be present
+        // Jan 5, 6 and 8 are present (10 and 11 aren't asserted).
         assertTrue("Jan 5 should be present", occDates.contains(LocalDate.of(2026, 1, 5)))
         assertTrue("Jan 6 should be present", occDates.contains(LocalDate.of(2026, 1, 6)))
         assertTrue("Jan 8 should be present", occDates.contains(LocalDate.of(2026, 1, 8)))
@@ -224,8 +220,8 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
 
     @Test
     fun `EXDATE on all-day recurring event excludes correct dates`() = runTest {
-        // All-day events use UTC. EXDATE stored as ms of UTC midnight.
-        // Verify day-code conversion uses UTC, not local timezone.
+        // All-day events expand in UTC, and the EXDATE is stored as the ms of UTC midnight.
+        // The excluded day is read in UTC, not the New York default zone.
         val startTs = parseUtcDate("2026-01-05 00:00") // UTC midnight
         val jan7Utc = parseUtcDate("2026-01-07 00:00") // UTC midnight
 
@@ -257,7 +253,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
     @Test
     fun `RDATE with millisecond timestamps adds occurrences to set`() = runTest {
         // RFC 5545: RecurrenceSet = (DTSTART UNION RRULE UNION RDATE) MINUS EXDATE
-        // RDATE adds additional occurrences beyond what the RRULE generates.
+        // RDATE adds occurrences the RRULE doesn't generate.
         val startTs = parseDate("2026-01-05 10:00") // Monday
         val jan10 = parseDate("2026-01-10 10:00") // Saturday (not in BYDAY=MO)
 
@@ -292,7 +288,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
             startTs = startTs,
             endTs = startTs + 3600000,
             rrule = "FREQ=MONTHLY;COUNT=2", // Mar 1, Apr 1 (DTSTART already at Mar 1)
-            rdate = "$mar15,$apr1" // Add Mar 15 + duplicate Apr 1
+            rdate = "$mar15,$apr1" // Mar 15, and Apr 1, which the RRULE already gives
         )
 
         val rangeEnd = startTs + 90L * 24 * 3600000
@@ -306,12 +302,12 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
         assertTrue("Mar 15 (RDATE) should be present", occDates.contains(LocalDate.of(2026, 3, 15)))
     }
 
-    // ==================== RFC 5545: Set Algebra (RRULE UNION RDATE) MINUS EXDATE ====================
+    // ==================== RFC 5545: (RRULE UNION RDATE) MINUS EXDATE ====================
 
     @Test
     fun `RDATE and EXDATE together follow set algebra`() = runTest {
         // RFC 5545: RecurrenceSet = (DTSTART UNION RRULE UNION RDATE) MINUS EXDATE
-        // Add via RDATE, then remove some via EXDATE - verify correct final set.
+        // RDATE adds two dates and EXDATE removes an RRULE date.
         val startTs = parseDate("2026-01-05 10:00") // Monday
         val jan7 = parseDate("2026-01-07 10:00") // Wednesday
         val jan10 = parseDate("2026-01-10 10:00") // Saturday
@@ -348,7 +344,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
 
     @Test
     fun `EXDATE can exclude RDATE occurrences`() = runTest {
-        // EXDATE should remove from the union, not just from RRULE.
+        // EXDATE removes from the union, RDATE dates included.
         val startTs = parseDate("2026-02-02 10:00") // Monday
         val feb7 = parseDate("2026-02-07 10:00") // Saturday (added by RDATE)
 
@@ -379,10 +375,10 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
 
     @Test
     fun `EXDATE with different time than DTSTART still excludes the day`() = runTest {
-        // EXDATE stored as ms may have slightly different time than DTSTART.
-        // parseMultiValueField converts to day code, so any time on that day should match.
+        // An EXDATE stored as ms may have a different time than DTSTART. The expander matches
+        // EXDATE by calendar day (`RRuleExpander.expand`), so any time on that day excludes it.
         val startTs = parseDate("2026-01-05 10:00") // 10 AM
-        // EXDATE with midnight timestamp (different time, same day)
+        // EXDATE at midnight: different time, same day
         val jan7Midnight = parseDate("2026-01-07 00:00")
 
         val event = createAndInsertEvent(
@@ -395,7 +391,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
         val rangeEnd = startTs + 30L * 24 * 3600000
         val count = occurrenceGenerator.generateOccurrences(event, startTs - 86400000, rangeEnd)
 
-        // Day-level matching should exclude Jan 7 even though time differs
+        // Jan 7 is excluded although the time differs.
         assertEquals("Should have 4 occurrences (day-level EXDATE match)", 4, count)
 
         val occurrences = database.occurrencesDao().getForEvent(event.id)
@@ -411,7 +407,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
 
     @Test
     fun `FREQ=YEARLY with BYMONTH and BYDAY generates correct occurrences`() = runTest {
-        // RFC 5545 example: US Thanksgiving - 4th Thursday in November
+        // US Thanksgiving: 4th Thursday in November.
         val startTs = parseDate("2025-11-27 10:00") // Thanksgiving 2025
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -435,7 +431,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
 
     @Test
     fun `FREQ=MONTHLY with BYDAY=-1FR generates last Friday of each month`() = runTest {
-        // RFC 5545: negative offset counts from end of month
+        // A negative BYDAY offset counts from the end of the month (RFC 5545 §3.3.10).
         val startTs = parseDate("2026-01-30 10:00") // Last Friday of Jan 2026
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -453,7 +449,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
         occurrences.forEach { occ ->
             val date = Instant.ofEpochMilli(occ.startTs).atZone(defaultZone).toLocalDate()
             assertEquals("Should be Friday", java.time.DayOfWeek.FRIDAY, date.dayOfWeek)
-            // Verify it's the last Friday: adding 7 days should go to next month
+            // The last Friday: 7 days later is in the next month.
             val nextFriday = date.plusWeeks(1)
             assertTrue("Next Friday should be in a different month",
                 nextFriday.monthValue != date.monthValue)
@@ -462,7 +458,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
 
     @Test
     fun `FREQ=MONTHLY with BYMONTHDAY=29 skips Feb in non-leap years`() = runTest {
-        // RFC 5545: BYMONTHDAY=29 should not generate Feb 29 in non-leap years
+        // An invalid date such as Feb 29 in a non-leap year is ignored (RFC 5545 §3.3.10).
         val startTs = parseDate("2026-01-29 10:00") // 2026 is not a leap year
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -479,13 +475,13 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
             Instant.ofEpochMilli(it.startTs).atZone(defaultZone).toLocalDate().monthValue
         }
 
-        // In 2026 (non-leap), Feb 29 doesn't exist - should be skipped
+        // 2026 has no Feb 29, so February is skipped.
         assertTrue("February should be skipped in non-leap year 2026", !months.contains(2))
     }
 
     @Test
     fun `FREQ=MONTHLY with BYMONTHDAY=29 includes Feb in leap years`() = runTest {
-        // 2028 is a leap year - Feb 29 should be included
+        // 2028 is a leap year, so Feb 29 is included.
         val startTs = parseDate("2028-01-29 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -502,7 +498,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
             Instant.ofEpochMilli(it.startTs).atZone(defaultZone).toLocalDate().monthValue
         }
 
-        // In 2028 (leap year), Feb 29 exists
+        // February is present.
         assertTrue("February should be included in leap year 2028", months.contains(2))
     }
 
@@ -510,8 +506,8 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
 
     @Test
     fun `all-day event with DATE format UNTIL generates correct occurrences`() = runTest {
-        // RFC 5545 Section 3.3.10: UNTIL value type MUST match DTSTART
-        // All-day DTSTART (DATE) requires DATE UNTIL (YYYYMMDD)
+        // RFC 5545 §3.3.10: UNTIL MUST have the same value type as DTSTART, so an all-day
+        // (DATE) DTSTART takes a DATE UNTIL (YYYYMMDD).
         val startTs = parseUtcDate("2026-01-05 00:00") // UTC midnight
 
         val event = createAndInsertEvent(
@@ -524,7 +520,8 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
         val rangeEnd = startTs + 60L * 24 * 3600000
         val count = occurrenceGenerator.generateOccurrences(event, startTs - 86400000, rangeEnd)
 
-        // Jan 5, 12, 19, 26 = 4 occurrences (UNTIL inclusive)
+        // Jan 5, 12, 19, 26 are expected (UNTIL is inclusive); the asserts check at least 3,
+        // none after Jan 26.
         assertTrue("Should generate occurrences up to and including UNTIL date", count >= 3)
 
         val occurrences = database.occurrencesDao().getForEvent(event.id)
@@ -537,13 +534,13 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
 
     @Test
     fun `timed event with DATETIME format UNTIL generates correct occurrences`() = runTest {
-        // Timed DTSTART requires DATETIME UNTIL
+        // A DTSTART with a time zone takes a UTC DATE-TIME UNTIL (RFC 5545 §3.3.10).
         val startTs = parseDate("2026-01-05 10:00")
 
         val event = createAndInsertEvent(
             startTs = startTs,
             endTs = startTs + 3600000,
-            rrule = "FREQ=WEEKLY;UNTIL=20260126T150000Z", // DATETIME format UNTIL
+            rrule = "FREQ=WEEKLY;UNTIL=20260126T150000Z", // 10:00 New York on Jan 26
             timezone = "America/New_York"
         )
 
@@ -553,11 +550,11 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
         assertTrue("Should generate at least 3 occurrences", count >= 3)
     }
 
-    // ==================== Non-recurring events with EXDATE/RDATE (should be ignored) ====================
+    // ==================== EXDATE and RDATE Ignored Without an RRULE ====================
 
     @Test
     fun `non-recurring event ignores EXDATE and RDATE`() = runTest {
-        // EXDATE and RDATE are only meaningful for recurring events
+        // Without an RRULE the generator makes one occurrence and ignores EXDATE and RDATE.
         val startTs = parseDate("2026-01-05 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -570,7 +567,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
         val rangeEnd = startTs + 30L * 24 * 3600000
         val count = occurrenceGenerator.generateOccurrences(event, startTs - 86400000, rangeEnd)
 
-        // Non-recurring: always exactly 1 occurrence regardless of EXDATE/RDATE
+        // Exactly 1 occurrence, whatever EXDATE and RDATE hold.
         assertEquals("Non-recurring event should have exactly 1 occurrence", 1, count)
     }
 
@@ -584,7 +581,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
             startTs = startTs,
             endTs = startTs + 3600000,
             rrule = "FREQ=DAILY;COUNT=5",
-            exdate = "20260107T150000Z" // DateTime format
+            exdate = "20260107T150000Z" // DATE-TIME: 10:00 New York on Jan 7
         )
 
         val rangeEnd = startTs + 30L * 24 * 3600000
@@ -601,7 +598,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
             startTs = startTs,
             endTs = startTs + 3600000,
             rrule = "FREQ=DAILY;COUNT=5",
-            exdate = "20260107" // Day code format
+            exdate = "20260107" // YYYYMMDD
         )
 
         val rangeEnd = startTs + 30L * 24 * 3600000
@@ -619,7 +616,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
             startTs = startTs,
             endTs = startTs + 3600000,
             rrule = "FREQ=DAILY;COUNT=7",
-            // Mixed: milliseconds, datetime, day code
+            // Milliseconds (Jan 7), DATE-TIME (Jan 9) and YYYYMMDD (Jan 8).
             exdate = "$jan7Ms,20260109T150000Z,20260108"
         )
 
@@ -633,7 +630,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
 
     @Test
     fun `BYSETPOS with BYDAY selects correct positional occurrences`() = runTest {
-        // RFC 5545: First and last weekday of each month
+        // First and last weekday of each month.
         val startTs = parseDate("2026-01-01 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,
@@ -660,7 +657,7 @@ class OccurrenceGeneratorRfc5545ComplianceTest {
 
     @Test
     fun `multiple BYMONTHDAY values generate occurrences on all specified days`() = runTest {
-        // RFC 5545: BYMONTHDAY=1,15 generates on 1st and 15th of each month
+        // BYMONTHDAY=1,15: the 1st and 15th of each month.
         val startTs = parseDate("2026-01-01 10:00")
         val event = createAndInsertEvent(
             startTs = startTs,

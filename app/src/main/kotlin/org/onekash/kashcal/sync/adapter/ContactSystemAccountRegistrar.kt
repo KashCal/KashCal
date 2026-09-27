@@ -12,16 +12,15 @@ import javax.inject.Singleton
 /**
  * Manages the per-login contacts account in Android AccountManager.
  *
- * Unlike the singleton calendar account ([SystemAccountRegistrar]), contacts
- * get ONE account per login, NAMED AFTER THE LOGIN EMAIL, under the dedicated
- * `org.onekash.kashcal.contacts` type ([KashCalContactsAuthenticator]). Android
- * surfaces the account *name* as the Contacts source label, so a real login
- * email is what the user sees. A registered account type is also what stops
- * Android from purging any RawContacts written under it.
+ * Unlike the singleton calendar account ([SystemAccountRegistrar]), contacts get one account per
+ * login, named after the login email, under the dedicated `org.onekash.kashcal.contacts` type
+ * ([KashCalContactsAuthenticator]). Android shows the account name as the Contacts source label,
+ * so the user sees the login email. A registered account type is also what stops Android from
+ * purging the RawContacts written under it.
  *
- * [ensureAccount] is created when a login enables contact sync; [removeAccount]
- * runs on disable, sign-out, or account deletion. Both are idempotent and
- * wrapped in try-catch so a registration hiccup never crashes the caller.
+ * [ensureAccount] runs when a login enables contact sync; [removeAccount] runs when contact sync
+ * is disabled or the login is deleted. Both are idempotent and catch every exception, so a
+ * registration failure never crashes the caller.
  */
 @Singleton
 class ContactSystemAccountRegistrar @Inject constructor(
@@ -33,10 +32,7 @@ class ContactSystemAccountRegistrar @Inject constructor(
         private const val CONTACTS_AUTHORITY = "com.android.contacts"
     }
 
-    /**
-     * Ensure a contacts account named [email] exists. Safe to call repeatedly;
-     * a second call for the same login is a no-op.
-     */
+    /** Creates the contacts account named [email] if missing; a no-op when it exists. */
     fun ensureAccount(email: String) {
         try {
             val accountManager = AccountManager.get(context)
@@ -52,8 +48,8 @@ class ContactSystemAccountRegistrar @Inject constructor(
 
             val created = accountManager.addAccountExplicitly(account, null, null)
             if (created) {
-                // Syncable (recognized by ContactsProvider) but no auto-sync
-                // (real sync is via WorkManager).
+                // Syncable so ContactsProvider recognizes it, but no auto-sync: contact sync
+                // runs on WorkManager.
                 ContentResolver.setIsSyncable(account, CONTACTS_AUTHORITY, 1)
                 ContentResolver.setSyncAutomatically(account, CONTACTS_AUTHORITY, false)
                 Log.i(TAG, "Registered contacts account for ContactsProvider visibility")
@@ -61,25 +57,23 @@ class ContactSystemAccountRegistrar @Inject constructor(
                 Log.w(TAG, "Failed to create contacts account (may already exist)")
             }
         } catch (e: Exception) {
-            // Don't crash the caller for a non-critical registration step.
+            // Registration is non-critical; never crash the caller.
             Log.w(TAG, "Failed to register contacts account", e)
         }
     }
 
     /**
-     * Remove the contacts account named [email], if present. No-op when the
-     * login has no account. Removing the account also purges any RawContacts
-     * Android holds under it.
+     * Removes the contacts account named [email], a no-op when there is none. Removing the
+     * account also purges the RawContacts Android holds under it.
      *
-     * @return true if the login has no matching account left afterwards (either it
-     *   was removed, or there was none to begin with); false if AccountManager
-     *   refused to remove an existing account or threw — the caller then knows the
-     *   account (and its synced RawContacts) survived.
+     * @return true if no matching account is left afterwards (removed, or none existed); false if
+     *   AccountManager refused to remove one or threw, meaning the account and its synced
+     *   RawContacts survived.
      */
     fun removeAccount(email: String): Boolean =
         removeAccount(email, AccountManager.get(context))
 
-    /** Testable seam: the [accountManager] is injected so the failure path is reachable. */
+    /** Takes [accountManager] as a parameter so tests can reach the failure path. */
     internal fun removeAccount(email: String, accountManager: AccountManager): Boolean {
         return try {
             val matching = accountManager
@@ -89,8 +83,8 @@ class ContactSystemAccountRegistrar @Inject constructor(
             for (account in matching) {
                 if (!accountManager.removeAccountExplicitly(account)) {
                     allRemoved = false
-                    // A stuck removal leaves the account (and its RawContacts) behind;
-                    // surface it rather than pretending the login was cleaned up.
+                    // The account and its RawContacts stay behind; report false so the login
+                    // doesn't read as cleaned up.
                     Log.w(TAG, "AccountManager declined to remove a contacts account")
                 }
             }

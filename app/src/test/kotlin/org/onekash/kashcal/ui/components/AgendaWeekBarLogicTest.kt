@@ -193,7 +193,7 @@ class AgendaWeekBarLogicTest {
 
     @Test
     fun `weekend flags are independent of first-day setting`() {
-        // Saturday & Sunday are weekend regardless of where the week starts.
+        // isWeekend takes no first-day setting: Saturday and Sunday are always weekend.
         assertTrue(org.onekash.kashcal.ui.components.weekview.WeekViewUtils.isWeekend(LocalDate.of(2026, 7, 18)))
         assertTrue(org.onekash.kashcal.ui.components.weekview.WeekViewUtils.isWeekend(LocalDate.of(2026, 7, 19)))
         assertFalse(org.onekash.kashcal.ui.components.weekview.WeekViewUtils.isWeekend(LocalDate.of(2026, 7, 20)))

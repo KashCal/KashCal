@@ -12,8 +12,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Compose UI tests for the read-only tag row in [EventQuickViewSheet].
- * (Recurring-detection logic lives in the sibling EventQuickViewSheetTest.)
+ * Tests the read-only tag row in [EventQuickViewSheet]: a tagged event shows each tag chip,
+ * and the editable "New tag" affordance never appears. Recurring detection is tested in
+ * `EventQuickViewSheetTest`.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h720dp-mdpi")
@@ -61,7 +62,7 @@ class EventQuickViewSheetTagsTest {
     @Test
     fun no_editable_new_tag_affordance_in_read_only_quick_view() {
         render(listOf("Work"))
-        // "New tag" is the editable +New affordance; must never appear here.
+        // "New tag" is the editable add-tag affordance; it must never appear here.
         assertEquals(0, countWithText("New tag"))
     }
 }

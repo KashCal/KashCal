@@ -37,17 +37,16 @@ import java.util.Locale
 import java.util.TimeZone
 
 /**
- * What the user sees when one occurrence has several reminders.
+ * Tests what the user sees when one occurrence has several reminders (#362).
  *
- * An event with a 1-hour and a 15-minute reminder used to leave two
- * notifications side by side for the same meeting, so the user dismissed it
- * twice (#362). The later reminder now clears the earlier one's notification as
- * it posts, while still alerting normally.
+ * When an event has a 1-hour and a 15-minute reminder, the later one clears the earlier one's
+ * notification as it posts and still alerts. A reminder on another occurrence of the series keeps
+ * its own notification.
  *
- * These drive the real notification manager rather than a mock, deliberately.
- * A notification's id is derived from its reminder row, and the post and cancel
- * paths compute it independently, so a mock-only test would happily pass while
- * the app cancelled an id it never posted.
+ * These drive [ReminderAlarmReceiver.handleAlarm] over the real [ReminderNotificationManager] and
+ * the platform notification manager, not a mock. A notification's id is derived from its reminder
+ * row on the post and on the cancel path separately, so a mock-only test would pass while the app
+ * cancelled an id it never posted.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -83,9 +82,8 @@ class ReminderNotificationCoalescingTest {
         channels = ReminderNotificationChannels(context)
         channels.createChannels()
 
-        // A dedicated real scope (not TestScope) for DataStore: runTest catches
-        // coroutines leaked by other classes in the same JVM fork, so a real
-        // scope + runBlocking sidesteps that entirely.
+        // A real scope (not TestScope) for DataStore: runTest catches coroutines leaked by
+        // other classes in the same JVM fork, which a real scope and runBlocking avoid.
         dataStoreScope = CoroutineScope(Dispatchers.Unconfined + SupervisorJob())
         testDataStoreFile = File(context.filesDir, "test_prefs_${System.nanoTime()}.preferences_pb")
         val testPrefsDataStore = PreferenceDataStoreFactory.create(scope = dataStoreScope) {
@@ -135,9 +133,8 @@ class ReminderNotificationCoalescingTest {
 
     @Test
     fun `replacing the notification does not silence the later reminder`() = runBlocking {
-        // The whole point of #362 is that the second reminder still rings; it is
-        // only the stale notification that goes away. Alert-once would suppress
-        // the alert, so it must not be set.
+        // #362 removes only the stale notification; the second reminder still rings.
+        // Alert-once would suppress its alert, so it must not be set.
         val scheduler = schedulerFor(quarterHourBefore, siblings = listOf(EARLIER_ID))
         receiver.handleAlarm(scheduler, manager, LATER_ID)
 
@@ -156,12 +153,12 @@ class ReminderNotificationCoalescingTest {
 
     @Test
     fun `a reminder on a different occurrence keeps its own notification`() = runBlocking {
-        // Two occurrences of a recurring event are genuinely different meetings, so
-        // collapsing them would hide one. Tomorrow's standup is already showing.
+        // Two occurrences of a recurring event are different meetings, so collapsing them
+        // would hide one. Tomorrow's standup is already showing.
         val survivingId = manager.showNotification(tomorrowsHourBefore)
 
-        // The lookup is scoped to one occurrence, so tomorrow's reminder is not in
-        // today's sibling list (proven against real Room in ScheduledRemindersDaoTest).
+        // The sibling lookup is scoped to one occurrence, so tomorrow's reminder isn't in
+        // today's list (`ScheduledRemindersDaoTest` checks the query against real Room).
         val scheduler = schedulerFor(quarterHourBefore, siblings = listOf(EARLIER_ID))
         receiver.handleAlarm(scheduler, manager, LATER_ID)
 
@@ -173,8 +170,11 @@ class ReminderNotificationCoalescingTest {
     }
 
     /**
-     * A scheduler that reports [siblings] for [reminder] and accepts the
-     * post-fire bookkeeping. Strict on purpose: an unexpected call fails.
+     * Returns a strict scheduler mock that reports [siblings] for [reminder] and accepts
+     * [ReminderScheduler.markAsFired].
+     *
+     * An unstubbed call throws. The receiver catches and logs the throw from the unstubbed
+     * window refill, so these tests don't cover it.
      */
     private fun schedulerFor(reminder: ScheduledReminder, siblings: List<Long>): ReminderScheduler {
         val scheduler = mockk<ReminderScheduler>()

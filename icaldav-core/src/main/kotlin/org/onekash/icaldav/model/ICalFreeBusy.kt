@@ -1,9 +1,6 @@
 package org.onekash.icaldav.model
 
-/**
- * VFREEBUSY component per RFC 5545.
- * Used for free/busy time queries in scheduling.
- */
+/** Holds one VFREEBUSY component (RFC 5545), as read by `ICalParser.parseFreeBusy`. */
 data class ICalFreeBusy(
     val uid: String,
     val dtstamp: ICalDateTime,
@@ -14,9 +11,7 @@ data class ICalFreeBusy(
     val freeBusyPeriods: List<FreeBusyPeriod> = emptyList()
 )
 
-/**
- * A single free/busy time period.
- */
+/** Holds one FREEBUSY period and its FBTYPE. */
 data class FreeBusyPeriod(
     val start: ICalDateTime,
     val end: ICalDateTime,
@@ -24,7 +19,8 @@ data class FreeBusyPeriod(
 )
 
 /**
- * FBTYPE parameter values per RFC 5545.
+ * FBTYPE parameter values (RFC 5545 §3.2.9). [fromString] maps an unrecognized value to BUSY,
+ * as the RFC requires.
  */
 enum class FreeBusyType(val value: String) {
     FREE("FREE"),

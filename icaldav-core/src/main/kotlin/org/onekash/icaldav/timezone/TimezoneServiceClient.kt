@@ -6,19 +6,12 @@ import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * Client for fetching timezone definitions from timezone distribution services.
+ * Fetches VTIMEZONE definitions from a timezone distribution service and caches them in memory.
  *
- * Supports the CalConnect TZURL service (https://www.tzurl.org) and
- * compatible services following the same URL pattern.
+ * Works with the CalConnect TZURL service (https://www.tzurl.org) and any service that serves
+ * `<serviceUrl>/<tzid>.ics`.
  *
- * Features:
- * - In-memory caching of fetched timezones
- * - Configurable service URL
- * - Connection timeout handling
- *
- * @param serviceUrl Base URL of the timezone service (defaults to tzurl.org)
- * @param connectTimeoutMs Connection timeout in milliseconds
- * @param readTimeoutMs Read timeout in milliseconds
+ * @param serviceUrl base URL of the service; defaults to [DEFAULT_SERVICE_URL].
  *
  * @see <a href="https://www.calconnect.org/resources/tzurl">CalConnect TZURL Service</a>
  */
@@ -28,25 +21,20 @@ class TimezoneServiceClient(
     private val readTimeoutMs: Int = 30_000
 ) {
 
-    // In-memory cache for fetched timezone definitions
     private val cache = ConcurrentHashMap<String, CachedTimezone>()
 
     /**
-     * Fetch a timezone definition from the service.
+     * Returns the service's VTIMEZONE body for [tzid] (an IANA ID such as "America/New_York").
      *
-     * Results are cached for 24 hours to avoid repeated network requests.
-     *
-     * @param tzid The IANA timezone ID (e.g., "America/New_York")
-     * @return Result containing the iCalendar VTIMEZONE data or error
+     * A successful body is cached for 24 hours; failures aren't cached. A non-200 status, an
+     * empty body and every exception the request throws become a failure.
      */
     fun fetchTimezone(tzid: String): Result<String> {
-        // Check cache first
         val cached = cache[tzid]
         if (cached != null && !cached.isExpired()) {
             return Result.success(cached.data)
         }
 
-        // Fetch from service
         val url = getTzurl(tzid)
 
         return try {
@@ -61,7 +49,6 @@ class TimezoneServiceClient(
                 if (responseCode == HttpURLConnection.HTTP_OK) {
                     val body = connection.inputStream.bufferedReader().use { it.readText() }
                     if (body.isNotEmpty()) {
-                        // Cache the result
                         cache[tzid] = CachedTimezone(body, System.currentTimeMillis())
                         Result.success(body)
                     } else {
@@ -78,23 +65,15 @@ class TimezoneServiceClient(
         }
     }
 
-    /**
-     * Get the TZURL for a timezone ID.
-     *
-     * @param tzid The IANA timezone ID
-     * @return Full URL to fetch the timezone definition
-     */
+    /** Returns the TZURL for [tzid]: `<serviceUrl>/<tzid>.ics`, with [tzid] not URL-encoded. */
     fun getTzurl(tzid: String): String {
         val baseUrl = serviceUrl.trimEnd('/')
         return "$baseUrl/$tzid.ics"
     }
 
     /**
-     * Check if the timezone service is available.
-     *
-     * Performs a lightweight HEAD request to verify connectivity.
-     *
-     * @return true if service responds successfully
+     * Sends a HEAD request to the service URL and returns true when it answers 200 or 404 (a 404
+     * still shows the service is reachable). Any other status or an exception returns false.
      */
     fun isAvailable(): Boolean {
         return try {
@@ -114,21 +93,13 @@ class TimezoneServiceClient(
         }
     }
 
-    /**
-     * Clear the timezone cache.
-     */
     fun clearCache() {
         cache.clear()
     }
 
-    /**
-     * Get current cache size.
-     */
     fun cacheSize(): Int = cache.size
 
-    /**
-     * Cached timezone data with expiration.
-     */
+    /** A fetched body, expired once it is older than [CACHE_TTL_MS]. */
     private data class CachedTimezone(
         val data: String,
         val fetchedAt: Long
@@ -138,15 +109,12 @@ class TimezoneServiceClient(
     }
 
     companion object {
-        /** Default timezone service URL (CalConnect tzurl.org) */
+        /** CalConnect tzurl.org. */
         const val DEFAULT_SERVICE_URL = "https://www.tzurl.org/zoneinfo"
 
-        /** Cache TTL: 24 hours */
         private const val CACHE_TTL_MS = 24 * 60 * 60 * 1000L
 
-        /**
-         * Get instance with default settings.
-         */
+        /** A client with the default URL and timeouts. */
         val default = TimezoneServiceClient()
     }
 }

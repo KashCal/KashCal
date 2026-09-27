@@ -16,31 +16,29 @@ import org.robolectric.annotation.Config
 import java.util.UUID
 
 /**
- * Exploratory spike — Zoho attendee REMOVAL, exercising the live client-side
- * CANCEL outbox-POST path (the shipped removal=CANCEL delivery surface) against
- * real servers. Parameterized over the fleet so it's comparative, but the open
- * questions are Zoho-centric. The CANCEL body is built through the production
- * path (EventToICalEventMapper + ITipBuilder.createCancel) so server responses
- * reflect real behaviour, not a hand-rolled body.
+ * Probes attendee removal on Zoho through the live client-side CANCEL outbox POST, the path the
+ * app uses to deliver a removal. Parameterized over the fleet so it's comparative, but the open
+ * questions are Zoho-centric. The CANCEL body is built through the production path
+ * ([cancelIcs]), so server responses reflect real behavior, not a hand-rolled body.
  *
  * Questions probed, live:
- *  - all-events removal: shrink a 2-attendee master to 1 via PUT, then POST a
- *      METHOD:CANCEL for the dropped guest to the discovered outbox; record the
- *      schedule-response status.
- *  - per-occurrence override survival (MODIFY-add): create master, then add an
- *      override (2nd PUT) that drops a guest for one instance, re-fetch — does
- *      the override VEVENT survive the round-trip, or collapse to the master set?
- *  - per-occurrence pull divergence: does the stored resource still list the
- *      removed guest on that instance (would a pull revert it to "still invited")?
- *  - per-occurrence CANCEL POST: does the per-instance METHOD:CANCEL
- *      (RECURRENCE-ID set) POST to the outbox and get accepted?
- *  - real-recipient CANCEL: repeat the POST with a consenting real recipient
- *      (MAILBOX_PROBE_RECIPIENT) to tell an empty schedule-response apart from a
- *      reserved-TLD artifact.
+ *  - All-events removal: shrink a 2-attendee master to 1 via PUT, then POST a METHOD:CANCEL
+ *    for the dropped guest to the discovered outbox; record the schedule-response status.
+ *  - Per-occurrence exception survival: create a series, then add an exception (2nd PUT) that
+ *    drops a guest for one occurrence and re-fetch. Does the exception VEVENT survive the
+ *    round-trip, or collapse to the master set?
+ *  - Per-occurrence pull divergence: does the stored resource still list the removed guest on
+ *    that occurrence (would a pull revert it to "still invited")?
+ *  - Per-occurrence CANCEL POST: is the per-occurrence METHOD:CANCEL (RECURRENCE-ID set)
+ *    accepted by the outbox?
+ *  - Real-recipient CANCEL: repeat the POST with a consenting real recipient
+ *    (MAILBOX_PROBE_RECIPIENT) to tell an empty schedule-response apart from a reserved-TLD
+ *    artifact.
  *
- * Records observations and prints a per-server report. NEVER fails on a
- * disposition (exploratory); only skips on unreachable/no-credential. Redacts
- * non-@example.test addresses before printing (Zoho rewrites ORGANIZER to the
+ * Records observations and prints a per-server report. Never fails on a disposition
+ * (exploratory). Skips when the server is unreachable, credentials are missing or principal
+ * discovery fails; prints SKIP and returns when there is no email-shaped organizer or no
+ * calendar. Redacts non-@example.test addresses before printing (Zoho rewrites ORGANIZER to the
  * account holder).
  *
  * Run:
@@ -128,7 +126,7 @@ class ZohoRemovalCancelSpikeTest(
         val kept = "kashcal-kept-invitee@example.test"
         val removed = "kashcal-removed-invitee@example.test"
 
-        // ---------- all-events removal — shrink master, then CANCEL POST ----------
+        // ---------- all-events removal: shrink master, then CANCEL POST ----------
         val uidA = "kashcal-zrm-all-${config.name.lowercase()}-${UUID.randomUUID()}@kashcal.test"
         var q1 = "not run"
         try {
@@ -137,9 +135,9 @@ class ZohoRemovalCancelSpikeTest(
             if (res.isSuccess()) {
                 var (url, etag) = res.getOrNull()!!
                 c.fetchEvent(url).getOrNull()?.let { etag = it.etag?.ifEmpty { etag } ?: etag }
-                // Shrink to just the kept guest (SEQUENCE bumped per CANCEL semantics).
+                // Shrink to the kept guest only, with SEQUENCE bumped as for a CANCEL.
                 c.updateEvent(url, masterIcs(uidA, organizer, listOf(kept), seq = 1), etag).getOrNull()?.let { etag = it }
-                // Now POST the per-attendee CANCEL for the dropped guest (the drain's path).
+                // POST the per-attendee CANCEL for the dropped guest, as the drain does.
                 q1 = if (outboxUrl != null) {
                     val cancelIcs = cancelIcs(uidA, organizer, removed, recurrenceId = null, seq = 1)
                     postCancelAndDescribe(c, outboxUrl, organizer, removed, cancelIcs)
@@ -149,13 +147,13 @@ class ZohoRemovalCancelSpikeTest(
         } catch (e: Exception) { q1 = "exception: ${e.message}" }
         println("  [all-events] CANCEL POST: $q1")
 
-        // ---------- REAL-recipient CANCEL (resolves the empty-[] ambiguity) ----------
-        // The synthetic @example.test recipient yields an empty schedule-response
-        // on Zoho/SOGo/Mailbox — can't tell "accepted, will deliver" from
-        // "accepted, did nothing", and the drain classifies empty as TRANSIENT
-        // (retry 10x). A consenting REAL recipient forces the server to report a
-        // genuine per-recipient request-status. Outbound email to a real inbox,
-        // so gated on the explicit consenting-recipient key.
+        // ---------- real-recipient CANCEL (empty-response check) ----------
+        // The synthetic @example.test recipient yields an empty schedule-response on Zoho, SOGo
+        // and Mailbox, which can't tell "accepted, will deliver" from "accepted, did nothing".
+        // PushStrategy.drainPendingCancels treats an empty response as resolved and drops the
+        // pending cancel. A consenting real recipient checks whether the server then reports a
+        // per-recipient request-status. This sends email to a real inbox, so it is gated on the
+        // explicit consenting-recipient key.
         val realRecipient = CalDavTestServerLoader.property("MAILBOX_PROBE_RECIPIENT")
         if (outboxUrl != null && realRecipient != null) {
             val q5 = postCancelAndDescribe(
@@ -167,7 +165,7 @@ class ZohoRemovalCancelSpikeTest(
             println("  [real-recipient] CANCEL POST: SKIPPED (no outbox or no MAILBOX_PROBE_RECIPIENT)")
         }
 
-        // ---------- per-occurrence override survival + pull divergence ----------
+        // ---------- per-occurrence exception survival + pull divergence ----------
         val uidB = "kashcal-zrm-occ-${config.name.lowercase()}-${UUID.randomUUID()}@kashcal.test"
         val occMs = START_MS + 2L * DAY_MS
         var q2 = "not run"; var q3 = "not run"; var q4 = "not run"
@@ -176,7 +174,7 @@ class ZohoRemovalCancelSpikeTest(
             if (create.isSuccess()) {
                 var (url, etag) = create.getOrNull()!!
                 c.fetchEvent(url).getOrNull()?.let { etag = it.etag?.ifEmpty { etag } ?: etag }
-                // MODIFY-add an override for occ #2 that drops `removed` (per-instance uninvite).
+                // Add an exception for the third occurrence that drops `removed`.
                 val bundled = masterPlusShrunkOverrideIcs(uidB, organizer, listOf(kept, removed), listOf(kept), occMs)
                 val upd = c.updateEvent(url, bundled, etag)
                 if (upd.isSuccess()) {
@@ -188,7 +186,7 @@ class ZohoRemovalCancelSpikeTest(
                         overrideBlock == null -> "OVERRIDE_DROPPED (server collapsed to ${blocks.size} VEVENT — per-instance state not retained)"
                         else -> "OVERRIDE_RETAINED (${blocks.size} VEVENTs)"
                     }
-                    // does the override (or, if dropped, the master fallback) still list the removed guest for that instance?
+                    // Does the exception (or the master, if dropped) still list the removed guest?
                     val instanceAttendees = (overrideBlock ?: blocks.firstOrNull() ?: "")
                         .lines().filter { it.startsWith("ATTENDEE") }
                     val removedStillThere = instanceAttendees.any { it.contains(removed, ignoreCase = true) }
@@ -255,13 +253,11 @@ class ZohoRemovalCancelSpikeTest(
     }
 
     /**
-     * Build the CANCEL body through the PRODUCTION path — the exact
-     * EventToICalEventMapper + ITipBuilder.createCancel that
-     * PushStrategy.drainPendingCancels uses — so the server's response is a
-     * trustworthy signal about the drain's real behaviour, not an artifact of a
-     * hand-rolled body. Mirrors the drain: per-occurrence (recurrenceId set)
-     * routes through the exception overload (RECURRENCE-ID + instance DTSTART,
-     * no RRULE); series cancel uses the master overload.
+     * Builds the CANCEL body with the EventToICalEventMapper + ITipBuilder.createCancel calls
+     * PushStrategy.drainPendingCancels makes, so the server's response reflects the drain's
+     * behavior, not an artifact of a hand-rolled body. As in the drain, a per-occurrence cancel
+     * ([recurrenceId] set) goes through the exception overload (RECURRENCE-ID and occurrence
+     * DTSTART, no RRULE); a series cancel uses the master overload.
      */
     private fun cancelIcs(uid: String, organizer: String, recipient: String, recurrenceId: Long?, seq: Int): String {
         val base = Event(

@@ -9,14 +9,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Ensures a local calendar always exists for offline-first operation.
+ * Ensures the local account and calendar exist, so events can be created without any sync
+ * account.
  *
- * KashCal is offline-first - users can always create events locally
- * without setting up any sync accounts. This initializer creates:
- * - A local account (provider = AccountProvider.LOCAL)
- * - A "Local" calendar as default
- *
- * Called on app startup via Hilt.
+ * Creates a local account (provider [AccountProvider.LOCAL]) and a default "Local" calendar.
+ * `MainActivity` calls [ensureLocalCalendarExists] on startup through
+ * [org.onekash.kashcal.domain.coordinator.EventCoordinator]; [getLocalCalendarId] creates
+ * them on demand.
  */
 @Singleton
 class LocalCalendarInitializer @Inject constructor(
@@ -24,8 +23,8 @@ class LocalCalendarInitializer @Inject constructor(
 ) {
     companion object {
         const val LOCAL_EMAIL = "local"
-        // Stored display name for the on-device calendar. This is the stable DB fallback,
-        // never mutated; the user-visible label is localized at display time.
+        // Stored display names: the stable DB fallback, never mutated; the user-visible label
+        // is localized at display time.
         const val LOCAL_ACCOUNT_DISPLAY_NAME = "On This Device"
         const val LOCAL_CALENDAR_DISPLAY_NAME = "Local"
         const val LOCAL_CALENDAR_URL = "local://default"
@@ -33,23 +32,17 @@ class LocalCalendarInitializer @Inject constructor(
     }
 
     /**
-     * Ensures local account and calendar exist.
-     *
-     * Safe to call multiple times - only creates if not exists.
-     * Uses transaction for atomicity.
-     *
-     * @return The local calendar ID
+     * Creates the local account and calendar if missing, in one transaction, and returns the
+     * local calendar ID. Idempotent.
      */
     suspend fun ensureLocalCalendarExists(): Long {
         return database.withTransaction {
             val accountsDao = database.accountsDao()
             val calendarsDao = database.calendarsDao()
 
-            // Check if local account exists
             var localAccount = accountsDao.getByProviderAndEmail(AccountProvider.LOCAL, LOCAL_EMAIL)
 
             if (localAccount == null) {
-                // Create local account
                 val accountId = accountsDao.insert(
                     Account(
                         provider = AccountProvider.LOCAL,
@@ -63,11 +56,9 @@ class LocalCalendarInitializer @Inject constructor(
                 }
             }
 
-            // Check if local calendar exists
             val localCalendar = calendarsDao.getByCaldavUrl(LOCAL_CALENDAR_URL)
 
             if (localCalendar == null) {
-                // Create local calendar
                 val calendarId = calendarsDao.insert(
                     Calendar(
                         accountId = localAccount.id,
@@ -87,25 +78,19 @@ class LocalCalendarInitializer @Inject constructor(
         }
     }
 
-    /**
-     * Get the local calendar ID, creating if necessary.
-     */
+    /** Returns the local calendar ID, creating the account and calendar if missing. */
     suspend fun getLocalCalendarId(): Long {
         val calendarsDao = database.calendarsDao()
         val localCalendar = calendarsDao.getByCaldavUrl(LOCAL_CALENDAR_URL)
         return localCalendar?.id ?: ensureLocalCalendarExists()
     }
 
-    /**
-     * Check if an account is the local account.
-     */
+    /** Returns true if [account] is the local account. */
     fun isLocalAccount(account: Account): Boolean {
         return account.provider == AccountProvider.LOCAL && account.email == LOCAL_EMAIL
     }
 
-    /**
-     * Check if a calendar is the local calendar.
-     */
+    /** Returns true if [calendar] is the local calendar. */
     fun isLocalCalendar(calendar: Calendar): Boolean {
         return calendar.caldavUrl == LOCAL_CALENDAR_URL
     }

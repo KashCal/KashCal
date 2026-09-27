@@ -5,11 +5,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for [remindersChanged] — the Save-enabled predicate used by
- * EventFormSheet's read-only mode. Sorted-list comparison: order doesn't
- * matter (e.g., picking [15, 30] then re-ordering to [30, 15] is no
- * change), but duplicates DO matter ([15, 15] differs from [15] —
- * matches the picker's non-deduping behavior).
+ * Tests [remindersChanged], which enables Save in the read-only attendee form once the
+ * reminder set changes. Order doesn't matter (`[15, 30]` against `[30, 15]` is no change), but
+ * duplicates do: the picker doesn't dedupe, so `[15, 15]` differs from `[15]`.
  */
 class RemindersChangedPredicateTest {
 
@@ -45,7 +43,7 @@ class RemindersChangedPredicateTest {
 
     @Test
     fun `duplicate added is changed`() {
-        // Picker doesn't dedupe — two 15-min reminders are distinct from one.
+        // The picker doesn't dedupe, so two 15-min reminders differ from one.
         assertTrue(remindersChanged(listOf(15), listOf(15, 15)))
     }
 

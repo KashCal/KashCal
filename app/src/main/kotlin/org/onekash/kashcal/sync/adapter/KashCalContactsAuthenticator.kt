@@ -11,17 +11,14 @@ import org.onekash.kashcal.MainActivity
 import org.onekash.kashcal.sync.adapter.KashCalContactsAuthenticator.Companion.ACCOUNT_TYPE
 
 /**
- * Stub AccountAuthenticator for the ContactsProvider registration.
+ * Registers the contacts [ACCOUNT_TYPE] with AccountManager; a stub that holds no credentials.
  *
- * This authenticator does NOT manage real credentials — those are handled by
- * [org.onekash.kashcal.data.credential.CredentialManager] in EncryptedSharedPreferences.
- *
- * Its sole purpose is to register the dedicated [ACCOUNT_TYPE] with Android's
- * AccountManager so a per-login, email-named contacts account can be created
- * (see [ContactSystemAccountRegistrar]). A distinct type keeps contacts an
- * independent Contacts source, separate from the singleton calendar account
- * ([KashCalAuthenticator], type `org.onekash.kashcal`). Without a registered
- * account type Android purges any RawContacts written under it.
+ * Credentials live in [org.onekash.kashcal.data.credential.CredentialManager]
+ * (EncryptedSharedPreferences). The type lets [ContactSystemAccountRegistrar] create one
+ * email-named contacts account per login. A distinct type keeps contacts an independent Contacts
+ * source, separate from the singleton calendar account ([KashCalAuthenticator], type
+ * `org.onekash.kashcal`). Without a registered account type Android purges any RawContacts
+ * written under it.
  */
 class KashCalContactsAuthenticator(
     private val context: Context
@@ -38,8 +35,7 @@ class KashCalContactsAuthenticator(
         requiredFeatures: Array<out String>?,
         options: Bundle?
     ): Bundle {
-        // Settings > Add account → open KashCal app.
-        // Account creation happens through KashCal's own UI, not system settings.
+        // Settings > Add account opens the app: accounts are created in KashCal's own UI.
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }

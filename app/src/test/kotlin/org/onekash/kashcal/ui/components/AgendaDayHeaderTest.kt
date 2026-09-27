@@ -117,7 +117,7 @@ class AgendaDayHeaderTest {
 
     @Test
     fun `joinedHeader keeps the date when a locale reorders the template params`() {
-        // Date-first template (as ja/zh/ko often need). The date must NOT vanish
+        // A date-first template, as a translation may use. The date must not vanish
         // and the accent must still land on the relative word.
         val parts = AgendaDayHeader.format(20260718, 20260718, todayLabel, tomorrowLabel)
         val h = AgendaDayHeader.joinedHeader(parts, "%2\$s · %1\$s")

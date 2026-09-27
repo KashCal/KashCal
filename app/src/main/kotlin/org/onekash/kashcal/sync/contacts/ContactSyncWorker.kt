@@ -25,25 +25,20 @@ import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.ui.permission.PermissionChecker
 
 /**
- * Background worker that mirrors CardDAV contact changes/deletions from the
- * server onto the device for every contact-sync-enabled account.
+ * Runs contact sync ([ContactPullStrategy]: push device edits, then pull server changes) for
+ * every contact-sync-enabled CardDAV account.
  *
- * It assembles each account's CardDAV client from the [ProviderRegistry] routing
- * (quirks + credentials — iCloud entry point vs the account's own home host for
- * generic CardDAV), then hands off to [ContactPullStrategy].
+ * It builds each account's CardDAV client from the [ProviderRegistry] quirks and credentials
+ * (the iCloud entry point, or the account's own host for generic CardDAV).
  *
- * Permission handling is the load-bearing part. A revoked WRITE_CONTACTS never
- * surfaces as an exception the worker can catch: [AndroidContactsProviderRepository]
- * swallows the provider [SecurityException] into a failed result, and
- * [ContactPullStrategy] folds that into its counts and still returns Success. So
- * the deterministic signal is a **pre-flight** WRITE_CONTACTS check. When the
- * permission is absent the worker syncs nothing and raises an app-global re-grant
- * flag so settings can surface an inline affordance; when present it clears any
- * stale flag. The flag is app-global because WRITE_CONTACTS is a single app-wide
- * runtime permission, not per-account.
+ * A revoked WRITE_CONTACTS never reaches the worker as an exception:
+ * [AndroidContactsProviderRepository] turns the provider [SecurityException] into a failed
+ * result, and [ContactPullStrategy] folds that into its counts and still returns Success. So the
+ * worker checks WRITE_CONTACTS before running. Without it the worker syncs nothing and raises an
+ * app-global re-grant flag for an inline affordance in settings; with it the flag is cleared.
+ * The flag is app-global because WRITE_CONTACTS is one app-wide permission, not per account.
  *
- * Scheduled through the shared [org.onekash.kashcal.sync.scheduler.SyncScheduler]
- * at the same interval as calendar sync — not a second scheduling mechanism.
+ * Scheduled by [SyncScheduler] at the calendar sync interval.
  */
 @HiltWorker
 class ContactSyncWorker @AssistedInject constructor(
@@ -59,28 +54,23 @@ class ContactSyncWorker @AssistedInject constructor(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) : CoroutineWorker(context, params) {
 
-    // Serialize every contact sweep across the whole process. The periodic job and
-    // a user-initiated one-shot run under different WorkManager unique-work names,
-    // so WorkManager can execute both at once; both sweep the same accounts with a
-    // non-transactional delete-then-insert replace and no SOURCE_ID uniqueness
-    // constraint, so an overlap can double-insert a contact. WorkManager creates a
-    // fresh worker instance per run, so the lock must be process-static (companion),
-    // not per-instance. withLock (not tryLock) means a second run waits and then
-    // executes: it re-reads the account list, so a just-enabled account is never
-    // dropped, and the read-only pull is idempotent, so re-running is safe.
+    // Serialize every contact sweep in the process. The periodic job and a user-initiated
+    // one-shot have different WorkManager unique-work names, so both can run at once; they
+    // sync the same accounts, and with no SOURCE_ID uniqueness constraint an overlap can
+    // insert a contact twice. WorkManager creates a worker per run, so the lock lives in the
+    // companion. withLock, not tryLock: a second run waits, then re-reads the account list,
+    // so a just-enabled account is never dropped.
     override suspend fun doWork(): Result = withContext(ioDispatcher) {
         try {
             syncLock.withLock { runSweep() }
         } catch (e: CancellationException) {
-            // Cooperative cancellation, not a failure — let it propagate.
+            // Cancellation isn't a failure; let it propagate.
             throw e
         } catch (e: Exception) {
-            // The per-account loop guards each account, but the account query and
-            // the permission-flag writes run outside it, so a locked database or a
-            // full disk throws straight out of the sweep. An uncaught throw reaches
-            // WorkManager as failure, which is terminal for the periodic spec — the
-            // same permanent stop the result branches below exist to avoid, reached
-            // by a different route.
+            // The account query and the permission-flag writes run outside the per-account
+            // guard, so a locked database or a full disk throws out of the sweep. Uncaught,
+            // that reaches WorkManager as failure, which is terminal for the periodic spec:
+            // the permanent stop the result branches in runSweep avoid.
             Log.e(TAG, "Contact sync sweep failed", e)
             when {
                 runAttemptCount < MAX_RETRY_ATTEMPTS -> Result.retry()
@@ -91,36 +81,34 @@ class ContactSyncWorker @AssistedInject constructor(
     }
 
     private suspend fun runSweep(): Result {
-        // A user-initiated "Sync now" from one account's sheet scopes the sweep to
-        // that account via input data; the periodic/global one-shot leaves it unset
-        // (-1) and sweeps every contact-sync login. Scoping avoids re-pulling every
-        // other account's address books just because the user refreshed one.
+        // "Sync now" from one account's sheet scopes the sweep to that account through
+        // input data, so the other accounts' books aren't re-pulled. The periodic and
+        // global one-shot runs leave it unset (-1) and sweep every contact-sync login.
         val scopedAccountId = inputData.getLong(KEY_ACCOUNT_ID, UNSCOPED_ACCOUNT_ID)
         val accounts = accountRepository.getEnabledAccounts()
             .filter { it.contactSyncEnabled && it.provider.supportsCardDAV }
             .filter { scopedAccountId == UNSCOPED_ACCOUNT_ID || it.id == scopedAccountId }
 
-        // Nothing to do — don't touch the re-grant flag, which belongs to the
-        // contact-sync feature and shouldn't flip when the feature is unused.
+        // Nothing to do. Leave the re-grant flag alone: it shouldn't flip while the
+        // feature is unused.
         if (accounts.isEmpty()) {
             return Result.success()
         }
 
-        // Pre-flight permission gate: a revoked WRITE_CONTACTS makes every
-        // provider write silently fail downstream, so refuse to run and flag it
-        // for a settings re-grant affordance instead of looping fruitless syncs.
+        // Without WRITE_CONTACTS every provider write silently fails downstream, so don't
+        // run; flag it for the re-grant affordance in settings.
         if (!permissionChecker.hasWriteContactsPermission()) {
             Log.w(TAG, "WRITE_CONTACTS revoked; skipping contact sync and flagging re-grant")
             dataStore.setContactSyncPermissionNeeded(true)
             return Result.success()
         }
-        // Permission is present — clear any stale banner from a prior denial.
+        // Permission present: clear a banner left from an earlier denial.
         dataStore.setContactSyncPermissionNeeded(false)
 
-        // Track the worst outcome across the sweep: a retryable failure asks
-        // WorkManager for a bounded backoff retry; a non-retryable one is terminal
-        // for this run (retrying 401s just hammers the server). The read-only pull
-        // is idempotent, so retrying accounts that already succeeded re-skips them.
+        // The worst outcome across the sweep: a retryable failure asks WorkManager for a
+        // bounded backoff retry; a non-retryable one isn't retried in this run (retrying a
+        // 401 only hammers the server). A retry re-runs accounts that already succeeded;
+        // their contacts' etags match, so the pull skips them.
         var sawRetryable = false
         var sawTerminalError = false
 
@@ -132,12 +120,11 @@ class ContactSyncWorker @AssistedInject constructor(
                     else -> Unit
                 }
             } catch (e: CancellationException) {
-                // Cooperative cancellation (worker stopped) must propagate, not be
-                // logged as an account failure and have the loop keep issuing work.
+                // Worker stopped: propagate, or the loop logs it as an account failure and
+                // keeps issuing work.
                 throw e
             } catch (e: Exception) {
-                // One account's failure must not abort the sweep or crash the
-                // worker; log, mark for retry, and move on to the next.
+                // One account's failure must not abort the sweep or crash the worker.
                 Log.w(TAG, "Contact sync failed for account ${account.id}: ${e.javaClass.simpleName}")
                 sawRetryable = true
             }
@@ -145,30 +132,28 @@ class ContactSyncWorker @AssistedInject constructor(
 
         return when {
             sawRetryable && runAttemptCount < MAX_RETRY_ATTEMPTS -> Result.retry()
-            // Retries are spent, or the error was never worth retrying. Ending the
-            // run in failure is only safe when there is no future run to lose:
-            // WorkManager treats failure as terminal for a periodic work spec and
-            // stops scheduling it, and nothing re-arms contact sync except account
-            // creation or toggling the feature off and on. So one expired password
-            // used to end contact sync permanently. For the recurring job the next
-            // period is the retry; a one-shot has no future run to lose, so it can
-            // afford to report honestly.
+            // Retries are spent, or the error isn't worth retrying. Failure is terminal
+            // for a periodic work spec: WorkManager stops scheduling it, and nothing
+            // re-arms contact sync except account creation or toggling the feature off
+            // and on, so one expired password would end contact sync for good. The
+            // periodic job reports success and the next period is its retry; a one-shot
+            // has no future run to lose, so it reports the failure.
             !isPeriodicRun() && (sawRetryable || sawTerminalError) -> Result.failure()
             else -> Result.success()
         }
     }
 
     /**
-     * Whether this run belongs to the recurring background job rather than a
-     * user-initiated sweep. Only the periodic request carries the tag.
+     * Returns whether this run belongs to the periodic job. Only the periodic request carries
+     * [SyncScheduler.TAG_PERIODIC].
      */
     private fun isPeriodicRun(): Boolean = SyncScheduler.TAG_PERIODIC in tags
 
     /**
-     * Sync one account, returning the strategy's [ContactPullResult] so [doWork]
-     * can honor the retryable signal. Returns a benign [ContactPullResult.Success]
-     * for accounts skipped before the strategy runs (no credential provider,
-     * credentials, or resolvable home host) — a skip is not a failure to retry.
+     * Syncs one account and returns the strategy's [ContactPullResult], whose retryable flag
+     * decides the run's result. An account skipped before the strategy (no credential provider,
+     * no credentials, or no resolvable host) returns an empty [ContactPullResult.Success]: a
+     * skip isn't a failure to retry.
      */
     private suspend fun syncAccount(account: Account): ContactPullResult {
         val credentialProvider = providerRegistry.getCredentialProvider(account.provider)
@@ -184,23 +169,21 @@ class ContactSyncWorker @AssistedInject constructor(
 
         val quirks = providerRegistry.getCardDavQuirksForAccount(account)
         if (quirks == null) {
-            // A CardDAV-capable account with no resolvable home host (e.g. a generic
-            // CardDAV account whose homeSetUrl was never discovered) would otherwise
-            // start discovery from an empty URL and fail opaquely — skip and log.
+            // A CardDAV account with no resolvable host (e.g. a generic account whose
+            // homeSetUrl was never discovered) would start discovery from an empty URL and
+            // fail opaquely.
             Log.w(TAG, "No CardDAV quirks/base URL for account ${account.id}; skipping")
             return SKIPPED
         }
         val client: CardDavClient = cardDavClientFactory.createClient(credentials, quirks)
-        // RFC 6764 §6: for generic CardDAV accounts, discover the contacts host from
-        // the account's email domain via DNS SRV/TXT, falling back to the configured
-        // host (quirks.baseUrl) when no in-domain SRV record exists (self-hosted
-        // without SRV) or the resolver is unreachable. Pinned-host providers (iCloud,
-        // Zoho) skip discovery: their bootstrap host is known and unrelated to the
-        // account email domain, so an email-domain SRV lookup could only misdirect
-        // them. Whether the host is discoverable is the quirks' own decision, not the
-        // account provider's — so a generic provider can still carry a pinned host.
-        // The downstream well-known + principal walk in the pull strategy is unchanged
-        // — it just starts from a better-discovered seed.
+        // RFC 6764 §6: when the quirks allow it, discover the contacts host from the
+        // account's email domain via DNS SRV/TXT, falling back to quirks.baseUrl when no
+        // in-domain SRV record exists (self-hosted without SRV) or the resolver is
+        // unreachable. Pinned-host providers (iCloud, Zoho) skip it: their host is known
+        // and unrelated to the email domain, so the lookup could only misdirect them. The
+        // quirks decide, not the account provider, so a generic provider can still carry a
+        // pinned host. The pull strategy's well-known and principal walk starts from the
+        // result.
         val baseUrl = if (quirks.discoverHostViaDns) {
             cardDavHostResolver.resolveBaseUrl(domainOf(account.email), quirks.baseUrl)
         } else {
@@ -219,35 +202,28 @@ class ContactSyncWorker @AssistedInject constructor(
         const val SYNC_WORK = "contact_dav_sync"
 
         /**
-         * Input-data key carrying the single account a user-initiated "Sync now"
-         * scopes the sweep to. Absent (or [UNSCOPED_ACCOUNT_ID]) means sweep every
-         * contact-sync login, as the periodic and global one-shot runs do.
+         * Input-data key for the one account a "Sync now" scopes the sweep to. Absent or
+         * [UNSCOPED_ACCOUNT_ID] sweeps every contact-sync login.
          */
         const val KEY_ACCOUNT_ID = "account_id"
 
-        /** Sentinel for "no account scope" — sweep all contact-sync logins. */
+        /** Sentinel for no account scope: sweep all contact-sync logins. */
         const val UNSCOPED_ACCOUNT_ID = -1L
 
-        /** Build scoped input data for a per-account one-shot contact sync. */
+        /** Builds input data scoping a one-shot contact sync to [accountId]. */
         fun createScopedInput(accountId: Long): Data =
             Data.Builder().putLong(KEY_ACCOUNT_ID, accountId).build()
 
-        /**
-         * Process-wide guard so no two contact sweeps run at once. Periodic and
-         * one-shot contact sync are separate WorkManager unique-work names, so they
-         * can be dispatched concurrently; static (not per-instance) because
-         * WorkManager builds a fresh worker per run. See [doWork].
-         */
+        /** Keeps two contact sweeps from running at once; why is in [doWork]. */
         private val syncLock = Mutex()
 
         /**
-         * Bounded retry budget, matching the calendar sync worker. Past this
-         * WorkManager attempt count a retryable failure becomes terminal rather
-         * than backing off forever.
+         * Retry budget, matching the calendar sync worker. Past this attempt count a
+         * retryable failure stops backing off and ends the run.
          */
         private const val MAX_RETRY_ATTEMPTS = 3
 
-        /** A pre-strategy skip is not a failure — treat it as a benign no-op. */
+        /** Result for an account skipped before the strategy runs; not a failure. */
         private val SKIPPED = ContactPullResult.Success(
             inserted = 0, replaced = 0, skipped = 0, deleted = 0, booksFailed = 0,
         )

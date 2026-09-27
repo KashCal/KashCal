@@ -48,17 +48,17 @@ import java.io.File
 import java.util.UUID
 
 /**
- * Integration test for CalDavSyncEngine with real iCloud and real Room DB.
+ * Runs CalDavSyncEngine against live iCloud with an in-memory Room database.
  *
- * Uses real CalDavClient, Parser, Room in-memory database, OccurrenceGenerator,
- * PullStrategy, PushStrategy, ConflictResolver. Only SyncNotificationManager
- * is mocked (needs Android notification system).
+ * The client, parser, OccurrenceGenerator, PullStrategy, PushStrategy and ConflictResolver
+ * are real. Mocked (relaxed): SyncNotificationManager, the AccountRepository both strategies
+ * take, and PullStrategy's invite notifier and reminder scheduler.
  *
- * This test performs REAL operations against iCloud:
- * - Pulls events from iCloud into real Room DB
- * - Creates test events in Room, pushes to iCloud
- * - Verifies round-trip data integrity
- * - Cleans up test events from iCloud
+ * Against iCloud it:
+ * - pulls the first discovered calendar into Room
+ * - creates events in Room and pushes them
+ * - checks that title and location survive a round trip
+ * - deletes the events it created, by the URLs its own pushes returned
  *
  * Run with: ./gradlew testDebugUnitTest -Pintegration --tests "*RealICloudSyncEngineTest*"
  *
@@ -94,7 +94,7 @@ class RealICloudSyncEngineTest {
     fun setup() {
         val context: Context = ApplicationProvider.getApplicationContext()
 
-        // Real Room in-memory database
+        // In-memory Room database
         database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
             .allowMainThreadQueries()
             .build()
@@ -106,10 +106,9 @@ class RealICloudSyncEngineTest {
         val syncLogsDao = database.syncLogsDao()
 
         val calendarRepository = CalendarRepositoryImpl(calendarsDao)
-        // PARTSTAT-only RSVP path resolves the account via this repository.
-        // The integration tests in this file don't exercise that path, so a
-        // relaxed mock is sufficient — full Account resolution comes from
-        // production DI in the live app.
+        // PushStrategy reads the account only for RSVP pushes, outbox delivery and
+        // pending cancels. These tests queue no RSVP and add no attendees, so a relaxed
+        // mock is enough.
         val accountRepository = io.mockk.mockk<
             org.onekash.kashcal.data.repository.AccountRepository
         >(relaxed = true)
@@ -166,7 +165,7 @@ class RealICloudSyncEngineTest {
             database = database
         )
 
-        // Only SyncNotificationManager is mocked — it needs Android notification system
+        // SyncNotificationManager needs the Android notification system, so it's mocked.
         syncEngine = CalDavSyncEngine(
             pullStrategy = pullStrategy,
             pushStrategy = pushStrategy,
@@ -182,7 +181,7 @@ class RealICloudSyncEngineTest {
 
     @After
     fun tearDown() {
-        // Clean up any events we created on iCloud
+        // Delete only the events this run pushed.
         runBlocking {
             for (url in createdEventUrls) {
                 try {
@@ -289,7 +288,7 @@ class RealICloudSyncEngineTest {
 
                 assertEquals("Should sync 1 calendar", 1, result.calendarsSynced)
 
-                // Verify events in real DB
+                // Check events landed in Room
                 val now = System.currentTimeMillis()
                 val farFuture = now + 365L * 24 * 60 * 60 * 1000 * 10
                 val farPast = now - 365L * 24 * 60 * 60 * 1000 * 10
@@ -319,7 +318,7 @@ class RealICloudSyncEngineTest {
 
         val calendar = setupDbCalendar(caldavCalendar!!.url, caldavCalendar.displayName)
 
-        // Create test event in real DB
+        // Create the event in Room
         val uid = "kashcal-test-${UUID.randomUUID()}"
         val now = System.currentTimeMillis()
         val oneHourLater = now + 3600_000
@@ -342,7 +341,7 @@ class RealICloudSyncEngineTest {
             updatedAt = now
         ))
 
-        // Create pending operation in real DB
+        // Queue its CREATE
         pendingOperationsDao.insert(PendingOperation(
             eventId = eventId,
             operation = PendingOperation.OPERATION_CREATE,
@@ -360,7 +359,7 @@ class RealICloudSyncEngineTest {
                 println("SUCCESS")
                 println("Events pushed (created): ${result.eventsPushedCreated}")
 
-                // Verify in real DB — event should now have caldavUrl and etag
+                // The pushed row now has the server's URL and etag
                 val pushedEvent = eventsDao.getById(eventId)
                 assertNotNull("Event should still exist in DB", pushedEvent)
                 assertNotNull("CalDAV URL should be assigned by server", pushedEvent?.caldavUrl)
@@ -498,11 +497,11 @@ class RealICloudSyncEngineTest {
         println("Event pushed to: ${pushedEvent?.caldavUrl}")
         pushedEvent?.caldavUrl?.let { createdEventUrls.add(it) }
 
-        // Delete local events to simulate a fresh pull
-        // (keep the calendar with its ctag/syncToken so we can do a full pull)
+        // Delete the calendar's events from Room only (no pending operations), so the
+        // forced full pull below has to bring the event back from the server.
         eventsDao.deleteByCalendarId(testCalendarId)
 
-        // Get updated calendar (ctag/syncToken may have been updated by push)
+        // Re-read the calendar: the first sync may have stored a new ctag or sync-token
         val updatedCalendar = database.calendarsDao().getById(testCalendarId)!!
 
         println("\n=== Round-Trip Test: PULL Phase ===")
@@ -514,7 +513,7 @@ class RealICloudSyncEngineTest {
                 println("Pull SUCCESS")
                 println("Events pulled: ${pullResult.eventsPulledAdded}")
 
-                // Find our event in real DB by UID
+                // Find the event in Room by UID
                 val roundTrippedEvents = eventsDao.getByUid(uid)
                 val roundTrippedEvent = roundTrippedEvents.firstOrNull()
 
@@ -525,7 +524,7 @@ class RealICloudSyncEngineTest {
                     println("  Start: ${java.util.Date(roundTrippedEvent.startTs)}")
                     println("  Timezone: ${roundTrippedEvent.timezone}")
 
-                    // Verify data integrity
+                    // Title and location survive the round trip
                     assertEquals("Title should survive round-trip", testTitle, roundTrippedEvent.title)
                     assertEquals("Location should survive round-trip", testLocation, roundTrippedEvent.location)
                     println("\nRound-trip data integrity verified!")

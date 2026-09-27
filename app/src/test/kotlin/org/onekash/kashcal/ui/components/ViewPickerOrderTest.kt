@@ -15,13 +15,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Pins the view picker's entry order to shortest-span-first, so a future edit to
- * [viewOptions] cannot silently scramble what the user sees.
+ * Pins the view picker's entries so an edit to [viewOptions] can't silently scramble what the
+ * user sees: Agenda first, then the grid views from shortest span to longest, each selectable
+ * view once (not INSIGHTS) with a distinct icon that [iconForMode] finds by mode.
  *
- * The order is asserted twice on purpose: once on the list itself, and once on the
- * rendered dropdown by comparing each row's top bound. [viewOptions] feeds both the
- * dropdown here and the navigation drawer's view rows, so the list-level assertion
- * covers the drawer too.
+ * The order is asserted twice on purpose: on the list itself, and on the rendered dropdown by
+ * comparing each row's top bound. [viewOptions] also feeds the navigation drawer's view rows,
+ * so the list-level assertion covers the drawer too.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h9999dp-mdpi")
@@ -30,7 +30,7 @@ class ViewPickerOrderTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    /** Ascending by span: one day through a full year. */
+    /** Agenda, then the grid views ascending by span: one day through a full year. */
     private val expectedOrder = listOf(
         ViewMode.AGENDA,
         ViewMode.DAY,

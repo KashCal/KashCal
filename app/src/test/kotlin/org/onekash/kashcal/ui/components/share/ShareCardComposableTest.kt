@@ -18,15 +18,17 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Compose UI tests for ShareCardComposable. Runs under Robolectric in the
- * unit-test source set (no emulator).
- *
- * Visual fidelity (typography sizes, gradient brushes) is verified manually
- * via @Preview. These tests verify behavioral contracts:
- *  - text content renders for title / numeral / month / day-of-week / location
- *  - all-day events show "All day" instead of a time line
- *  - day stripe is hidden for all-day and multi-day events
- *  - confetti overlay is present only for Celebration
+ * Compose UI tests for [ShareCardComposable], under Robolectric in the unit-test source set (no
+ * emulator). Visual fidelity (typography sizes, gradient brushes) is checked by hand in @Preview
+ * and by [ShareCardScreenshotTest]. These tests check that:
+ *  - the title, date chip, location, time text and attribution render;
+ *  - the caller's time text shows as given ("All day", "Sun – Wed");
+ *  - the day stripe renders only when [StripePosition.visible] is true; the card doesn't read
+ *    `isAllDay` or `isMultiDay`, so the all-day and multi-day cases pass a hidden stripe;
+ *  - the confetti overlay appears for Celebration and not for Standard;
+ *  - a null title doesn't crash;
+ *  - [normalizeShareAddress] collapses whitespace runs and trims, and a multi-line location
+ *    renders on one line.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h720dp-mdpi")
@@ -75,9 +77,9 @@ class ShareCardComposableTest {
                 ShareCardComposable(
                     title = "Conference",
                     location = "Moscone Center",
-                    // Caller composes "Sun – Wed" for multi-day timed; would
-                    // append " · All day" for all-day multi-day. The chip's
-                    // range carries the calendar dates.
+                    // The caller (MainActivity) composes "Sun – Wed" for a multi-day timed event
+                    // and appends " · All day" for a multi-day all-day one. The chip's range
+                    // carries the calendar dates.
                     timeRangeText = "Sun – Wed",
                     style = ShareCardStyle.Standard,
                     dateChip = DateChipText.Range("MAY 31 – JUN 3"),
@@ -147,7 +149,7 @@ class ShareCardComposableTest {
                 )
             }
         }
-        // Should not crash. Numeral still renders.
+        // Composition doesn't crash, and the numeral still renders.
         composeTestRule.onNodeWithText("31").assertIsDisplayed()
     }
 

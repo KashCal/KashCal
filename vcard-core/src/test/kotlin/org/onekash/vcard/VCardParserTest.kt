@@ -11,12 +11,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Parses the committed fixtures through [VCardParser] and asserts the neutral
- * model, re-confirming in-tree the ez-vcard 0.12.2 property surfacing the plan
- * probed out-of-tree. The load-bearing case is that a 3.0 Apple
- * `itemN.X-ABDATE`+`X-ABLabel="Anniversary"` reaches the same
- * [Contact.anniversary] field as a 4.0 native `ANNIVERSARY` — the code path that
- * would otherwise silently drop 3.0 anniversaries.
+ * Parses the committed fixtures and inline bodies through [VCardParser] and asserts the neutral
+ * model ez-vcard 0.12.2 yields. The load-bearing case: a 3.0 Apple `itemN.X-ABDATE` with an
+ * `Anniversary` `X-ABLabel` reaches the same [Contact.anniversary] field as a 4.0 native
+ * `ANNIVERSARY`; without the hand-routing, 3.0 anniversaries would be silently dropped.
  */
 class VCardParserTest {
 
@@ -75,7 +73,7 @@ class VCardParserTest {
     fun `3-0 Apple raw properties are hand-routed`() {
         val c = parseSingle("kashcal_full_v3.vcf")
 
-        // itemN.X-ABDATE + X-ABLabel="Anniversary" -> anniversary (NOT auto-typed by ez-vcard).
+        // itemN.X-ABDATE + X-ABLabel="Anniversary" -> anniversary (ez-vcard leaves it raw).
         assertEquals(LocalDate.of(2015, 6, 20), c.anniversary?.date)
 
         // itemN.X-ABRELATEDNAMES -> relation.
@@ -106,7 +104,7 @@ class VCardParserTest {
         assertEquals("4.0", c.version)
         assertEquals("urn:uuid:kashcal-v4-0002", c.uid)
 
-        // Native 4.0 ANNIVERSARY reaches the SAME field the 3.0 raw form does.
+        // Native 4.0 ANNIVERSARY reaches the same field the 3.0 raw form does.
         assertEquals(LocalDate.of(2015, 6, 20), c.anniversary?.date)
         assertEquals(LocalDate.of(1990, 1, 15), c.birthday?.date)
 
@@ -142,9 +140,9 @@ class VCardParserTest {
 
     @Test
     fun `3-0 Apple group vCard surfaces kind as group`() {
-        // vCard 3.0 has no native KIND; Apple servers mark a distribution list with
-        // the extended X-ADDRESSBOOKSERVER-KIND:group property. It must reach the
-        // same [Contact.kind] value so the same group filter catches both syntaxes.
+        // vCard 3.0 has no native KIND; Apple servers mark a distribution list with the
+        // extended X-ADDRESSBOOKSERVER-KIND:group property. It must reach the same
+        // [Contact.kind] value so one group filter catches both syntaxes.
         val body = "BEGIN:VCARD\r\n" +
             "VERSION:3.0\r\n" +
             "UID:team-3\r\n" +
@@ -279,7 +277,7 @@ class VCardParserTest {
     @Test
     fun `multi-valued N components are space-joined not truncated`() {
         val c = parseSingle("kashcal_field_fidelity_v3.vcf")
-        // N:Probe;KashCal;Quincy Aloysius;Dr. Prof.;Jr. III — each extra value retained.
+        // N:Probe;KashCal;Quincy,Aloysius;Dr.,Prof.;Jr.,III keeps every value of each component.
         assertEquals("Quincy Aloysius", c.structuredName.middle)
         assertEquals("Dr. Prof.", c.structuredName.prefix)
         assertEquals("Jr. III", c.structuredName.suffix)
@@ -319,10 +317,10 @@ class VCardParserTest {
 
     @Test
     fun `malformed tel URI degrades to the raw number instead of dropping the contact`() {
-        // Some servers emit a 4.0 TEL as a tel: URI whose global number does not
-        // start with "+" (a spec violation ez-vcard rejects). The phone must survive
-        // as its raw text and, crucially, the rest of the contact must parse — a bad
-        // number costs only that number, never the whole contact.
+        // Some servers emit a 4.0 TEL as a tel: URI whose global number doesn't start
+        // with "+" (a spec violation ez-vcard rejects). The phone survives as its raw
+        // text and the rest of the contact parses: a bad number costs only that number,
+        // never the whole contact.
         val body = """
             BEGIN:VCARD
             VERSION:4.0
@@ -343,9 +341,9 @@ class VCardParserTest {
 
     @Test
     fun `contact with an unparseable tel URI still yields the other fields`() {
-        // A TEL declared as VALUE=uri but not a valid tel URI at all: ez-vcard cannot
-        // build a TelUri, so the number falls back to raw text. The contact's name
-        // and email must still come through rather than the body being discarded.
+        // A TEL declared as VALUE=uri but not a tel URI: ez-vcard can't build a TelUri,
+        // so the number falls back to raw text. The name and email must still come
+        // through; the body isn't discarded.
         val body = """
             BEGIN:VCARD
             VERSION:4.0
@@ -365,8 +363,8 @@ class VCardParserTest {
 
     @Test
     fun `empty and malformed bodies yield no contacts without throwing`() {
-        // A sync/import path feeds untrusted bytes here; parsing must degrade to an
-        // empty list rather than throw on empty or non-vCard input.
+        // CardDAV sync feeds server bytes here; empty or non-vCard input must yield an
+        // empty list, never throw.
         assertTrue(parser.parse("").isEmpty())
         assertTrue(parser.parse(ByteArray(0)).isEmpty())
         assertTrue(parser.parse("not a vcard at all").isEmpty())

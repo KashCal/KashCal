@@ -37,25 +37,22 @@ import java.io.File
 import java.util.UUID
 
 /**
- * Regression test for issue #292: moving an event to another calendar on the
- * same account while editing the title/note in the same save must not lose the
- * edits on the CalDAV server.
+ * Checks that moving an event to another calendar on the same account and editing its title
+ * and note in the same save keeps the edits on the CalDAV server (#292).
  *
- * Drives the real production stack (EventWriter -> PushStrategy -> live server
- * -> real Room DB) through the exact save sequence the UI uses
- * (moveEventToCalendar, then updateEvent with the new field values), then
+ * Drives the real stack (EventWriter -> PushStrategy -> live server -> Room) through the save
+ * sequence the UI uses: moveEventToCalendar, then updateEvent with the new values. It then
  * fetches the destination body from the server and asserts it carries the edit.
  *
- * Runs once per server (iCloud, Nextcloud) to cover both same-account move
- * paths:
- *  - Servers that ACCEPT WebDAV MOVE (iCloud): the atomic MOVE relocates the old
- *    body, then the fix PUTs the current body to the new URL.
- *  - Servers that DECLINE MOVE (some Nextcloud/Sabre builds return 403): the
- *    CREATE+DELETE fallback re-serializes the current body.
+ * Runs once per server to cover both same-account move paths:
+ *  - Servers that accept WebDAV MOVE (iCloud): MOVE relocates the old body, then an UPDATE PUTs
+ *    the current body to the new URL.
+ *  - Servers that decline MOVE (some Nextcloud/Sabre builds return 403): the CREATE+DELETE
+ *    fallback re-serializes the current body.
  * Either way the destination must end up with the edited body.
  *
- * Auto-skips when credentials are missing, the server is unreachable, or the
- * account exposes fewer than two writable calendars.
+ * Skips when credentials are missing, the server is unreachable, or discovery finds fewer
+ * than two calendars (see [discoverCalendars]).
  *
  * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*CalendarMoveWithEditIntegrationTest*"
  */
@@ -141,7 +138,10 @@ class CalendarMoveWithEditIntegrationTest(
         )
     }
 
-    /** All writable calendar collection URLs on the account (inbox/outbox/birthdays excluded). */
+    /**
+     * Lists the calendar URLs in the first calendar home, minus any whose URL contains inbox,
+     * outbox, birthday or trashbin. Writability isn't checked.
+     */
     private suspend fun discoverCalendars(): List<String> {
         val c = client!!
         val endpoint = creds!!.davEndpoint
@@ -175,7 +175,7 @@ class CalendarMoveWithEditIntegrationTest(
         val calAUrl = calendars[0]
         val calBUrl = calendars[1]
 
-        // Seed the local DB with an account + both calendars.
+        // Seed Room with the account and both calendars.
         val accountId = database.accountsDao().insert(
             Account(provider = config.accountProvider(), email = creds!!.username, displayName = "Test")
         )

@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">இந்த சேவையகத்தில் நாட்காட்டிகள் எதுவும் இல்லை.</string>
     <string name="caldav_error_unexpected">எதிர்பாராத பிழை. மீண்டும் முயற்சிக்கவும்.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nஇது உங்கள் லோக்கல் நெட்வொர்க்கில் உள்ள சர்வராக இருந்தால், இணைக்க லோக்கல் நெட்வொர்க் அணுகலை அனுமதிக்கவும்.</string>
+    <string name="caldav_error_connection_refused_insecure">KashCal பின்தொடராத இடத்திற்கு (மறையாக்கம் இல்லாத முகவரி அல்லது திசைதிருப்பல் சுழற்சி) சேவையகம் இணைப்பைத் திருப்பியது, எனவே உங்கள் கடவுச்சொல்லை அனுப்பும் முன்பே KashCal நின்றது. சேவையக முகவரியைச் சரிபார்க்கவும்.</string>
     <string name="local_network_banner_title">லோக்கல் நெட்வொர்க் அணுகல் தேவை</string>
     <string name="local_network_banner_body">இந்த சர்வர் உங்கள் லோக்கல் நெட்வொர்க்கில் இருப்பது போல் தெரிகிறது. KashCal இதனுடன் இணைய லோக்கல் நெட்வொர்க் அணுகலை அனுமதிக்கவும்.</string>
     <string name="local_network_banner_allow">அணுகலை அனுமதி</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">மாற்றங்களைச் சேமி</string>
     <string name="dialog_delete_recurring_title">அழி</string>
     <string name="dialog_move_recurring_title">நகர்த்து</string>
+    <string name="snackbar_event_rescheduled">நிகழ்வு நேரம் மாற்றப்பட்டது</string>
+    <string name="snackbar_reschedule_failed">நிகழ்வு நேரத்தை மாற்ற முடியவில்லை</string>
     <string name="recurring_this_event">இந்த நிகழ்வு</string>
     <string name="recurring_all_events">அனைத்து நிகழ்வுகளும்</string>
 

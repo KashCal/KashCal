@@ -21,25 +21,15 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for recurring event modifications (RECURRENCE-ID).
+ * Tests parsing, expanding, generating and round-tripping recurring events with exceptions
+ * (RECURRENCE-ID).
  *
- * Based on production-tested patterns:
- *
- * KEY CONCEPTS:
- * 1. When user edits "This event only" on a recurring event:
- *    - Master event keeps its RRULE
- *    - A new VEVENT with same UID + RECURRENCE-ID is created
- *    - Modified instance has its own DTSTART/DTEND
- *    - RECURRENCE-ID = original datetime of the occurrence being modified
- *
- * 2. importId Strategy (critical for database uniqueness):
- *    - Master event: importId = "abc123" (just UID)
- *    - Modified instance: importId = "abc123:RECID:20241220T100000Z"
- *
- * 3. iCal Structure:
- *    - One .ics file can contain MULTIPLE VEVENTs (master + modified instances)
- *    - All share same UID, modified ones have RECURRENCE-ID
- *    - Modified instance should NOT have RRULE
+ * - Editing one occurrence keeps the master's RRULE and adds an exception: a VEVENT with the
+ *   master's UID, a RECURRENCE-ID holding the original occurrence's start, its own DTSTART and
+ *   DTEND, and no RRULE.
+ * - importId keeps them unique for storage: the master's is the UID ("abc123"), an exception's
+ *   is "abc123:RECID:20241220T100000Z" ([ICalEvent.generateImportId]).
+ * - One .ics resource can hold the master and its exceptions as several VEVENTs.
  */
 @DisplayName("Recurring Event Modification Tests")
 class RecurringEventModificationTest {
@@ -55,7 +45,7 @@ class RecurringEventModificationTest {
 
         @Test
         fun `parses iCal with master and modified instance`() {
-            // This is what iCloud sends: master + modified instance in one file
+            // What iCloud sends: master and exception in one resource.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -87,14 +77,14 @@ class RecurringEventModificationTest {
             assertNotNull(events)
             assertEquals(2, events.size, "Should parse both master and modified instance")
 
-            // Find master (no RECURRENCE-ID)
+            // The master has no RECURRENCE-ID.
             val master = events.find { it.recurrenceId == null }
             assertNotNull(master, "Master event should have no RECURRENCE-ID")
             assertEquals("daily-standup-123", master.uid)
             assertNotNull(master.rrule, "Master should have RRULE")
             assertEquals("Daily Standup", master.summary)
 
-            // Find modified instance (has RECURRENCE-ID)
+            // The exception has one.
             val modified = events.find { it.recurrenceId != null }
             assertNotNull(modified, "Modified instance should have RECURRENCE-ID")
             assertEquals("daily-standup-123", modified.uid, "Same UID as master")
@@ -201,7 +191,7 @@ class RecurringEventModificationTest {
             assertNotNull(events)
             val event = events[0]
 
-            // importId format: "uid:RECID:recurrence-id-value"
+            // importId format: "uid:RECID:recurrence-id-value".
             assertTrue(
                 event.importId.contains(event.uid) && event.importId.contains("RECID"),
                 "ImportId should contain UID and RECID marker: ${event.importId}"
@@ -241,11 +231,10 @@ class RecurringEventModificationTest {
             assertNotNull(events)
             assertEquals(3, events.size)
 
-            // All importIds should be unique
+            // Every importId differs, while all share one UID.
             val importIds = events.map { it.importId }.toSet()
             assertEquals(3, importIds.size, "All importIds must be unique")
 
-            // All UIDs are the same
             val uids = events.map { it.uid }.toSet()
             assertEquals(1, uids.size, "All UIDs should be the same")
         }
@@ -266,7 +255,7 @@ class RecurringEventModificationTest {
                 rrule = RRule(freq = Frequency.DAILY, count = 5)
             )
 
-            // Dec 3 moved from 10am to 2pm
+            // Dec 3 moved from 10am to 2pm.
             val dec3Original = ZonedDateTime.of(2024, 12, 3, 10, 0, 0, 0, zone)
             val dec3Modified = ZonedDateTime.of(2024, 12, 3, 14, 0, 0, 0, zone)
 
@@ -288,14 +277,13 @@ class RecurringEventModificationTest {
 
             assertEquals(5, occurrences.size, "Should still have 5 occurrences")
 
-            // Find Dec 3 occurrence
+            // The Dec 3 occurrence is the exception, at 2pm.
             val dec3Occurrence = occurrences.find {
                 it.dtStart.toLocalDate().dayOfMonth == 3
             }
             assertNotNull(dec3Occurrence)
             assertEquals("Daily Meeting (Moved to 2pm)", dec3Occurrence.summary)
 
-            // Verify time changed to 2pm
             val hour = dec3Occurrence.dtStart.toZonedDateTime().hour
             assertEquals(14, hour, "Dec 3 should be at 2pm (14:00)")
         }
@@ -310,7 +298,7 @@ class RecurringEventModificationTest {
                 dtStart = masterStart,
                 rrule = RRule(freq = Frequency.DAILY, count = 5),
                 exdates = listOf(
-                    // Dec 3 cancelled (EXDATE)
+                    // Dec 3 cancelled by an EXDATE.
                     ICalDateTime.fromZonedDateTime(
                         ZonedDateTime.of(2024, 12, 3, 10, 0, 0, 0, zone),
                         false
@@ -327,7 +315,6 @@ class RecurringEventModificationTest {
 
             assertEquals(4, occurrences.size, "Should have 4 occurrences (1 cancelled)")
 
-            // Dec 3 should not be in the list
             val dec3 = occurrences.find {
                 it.dtStart.toLocalDate().dayOfMonth == 3
             }
@@ -369,32 +356,32 @@ class RecurringEventModificationTest {
             val ical = generator.generate(event, method = null)
 
             assertTrue(ical.contains("RECURRENCE-ID"), "Modified instance should have RECURRENCE-ID")
-            // Check that RRULE doesn't appear in VEVENT section (VTIMEZONE may have RRULE for DST)
+            // Checks only the VEVENT, since a VTIMEZONE carries RRULEs for its DST rules.
             val veventSection = ical.substringAfter("BEGIN:VEVENT").substringBefore("END:VEVENT")
             assertFalse(veventSection.contains("RRULE"), "Modified instance VEVENT should NOT have RRULE")
         }
 
         @Test
         fun `generates correct RECURRENCE-ID format for UTC`() {
-            // Use ZoneOffset.UTC (not ZoneId.of("UTC")) for proper UTC detection
+            // fromZonedDateTime sets isUtc for ZoneOffset.UTC but not for ZoneId.of("UTC").
             val originalDt = ZonedDateTime.of(2025, 12, 15, 10, 0, 0, 0, ZoneOffset.UTC)
 
             val event = createEvent(
                 uid = "test-event",
                 summary = "Test",
                 dtStart = ZonedDateTime.now(zone),
-                recurrenceId = ICalDateTime.fromZonedDateTime(originalDt, false) // isDate=false
+                recurrenceId = ICalDateTime.fromZonedDateTime(originalDt, false)
             )
 
             val ical = generator.generate(event, method = null)
 
-            // Should be formatted as UTC (ends with Z, pattern: YYYYMMDDTHHmmssZ)
+            // UTC form: YYYYMMDDTHHmmssZ.
             val utcRecIdPattern = Regex("""RECURRENCE-ID:\d{8}T\d{6}Z""")
             assertTrue(
                 utcRecIdPattern.containsMatchIn(ical),
                 "RECURRENCE-ID should be in UTC format (YYYYMMDDTHHmmssZ). Got: $ical"
             )
-            // Should NOT have TZID parameter for UTC
+            // No TZID parameter for UTC.
             assertFalse(
                 ical.contains("RECURRENCE-ID;TZID="),
                 "UTC RECURRENCE-ID should not have TZID parameter"
@@ -437,27 +424,25 @@ class RecurringEventModificationTest {
                 END:VCALENDAR
             """.trimIndent()
 
-            // Parse
             val parseResult = parser.parseAllEvents(originalIcal)
             val events = parseResult.getOrNull()
             assertNotNull(events)
             assertEquals(2, events.size)
 
-            // Regenerate each event
+            // Parse, generate each VEVENT, and parse again.
             val master = events.find { it.recurrenceId == null }!!
             val modified = events.find { it.recurrenceId != null }!!
 
             val masterIcal = generator.generate(master, method = null)
             val modifiedIcal = generator.generate(modified, method = null)
 
-            // Re-parse
             val reparsedMaster = parser.parseAllEvents(masterIcal).getOrNull()?.firstOrNull()
             val reparsedModified = parser.parseAllEvents(modifiedIcal).getOrNull()?.firstOrNull()
 
             assertNotNull(reparsedMaster)
             assertNotNull(reparsedModified)
 
-            // Verify properties preserved
+            // UID, RRULE and RECURRENCE-ID survive.
             assertEquals(master.uid, reparsedMaster.uid)
             assertNotNull(reparsedMaster.rrule)
             assertNull(reparsedMaster.recurrenceId)
@@ -474,7 +459,7 @@ class RecurringEventModificationTest {
 
         @Test
         fun `handles VTIMEZONE followed by multiple VEVENTs`() {
-            // Real iCloud format: VTIMEZONE, then master VEVENT, then modified VEVENT
+            // iCloud's layout: VTIMEZONE, then the master VEVENT, then the exception.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -515,7 +500,8 @@ class RecurringEventModificationTest {
             assertNotNull(events, "Should parse successfully")
             assertEquals(2, events.size, "Should find master + modified (not VTIMEZONE)")
 
-            // Ensure VTIMEZONE RRULE wasn't picked up
+            // The master's RRULE is its own DAILY one. This VTIMEZONE has no RRULE, so the test
+            // doesn't show that one would be ignored.
             val master = events.find { it.recurrenceId == null }
             assertNotNull(master)
             assertEquals(Frequency.DAILY, master.rrule?.freq)
@@ -523,7 +509,7 @@ class RecurringEventModificationTest {
 
         @Test
         fun `modified instance for all-day event`() {
-            // All-day events use VALUE=DATE format
+            // All-day events use VALUE=DATE.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -558,13 +544,12 @@ class RecurringEventModificationTest {
 
         @Test
         fun `extracting base UID from importId with RECID`() {
-            // importId format is "uid:RECID:datetime"
-            // Need to extract base UID for server comparison
+            // importId format is "uid:RECID:datetime". This checks a local copy of the split,
+            // not ICalEvent.parseImportId.
 
             val importIdMaster = "abc123-xyz"
             val importIdModified = "abc123-xyz:RECID:20241215T100000Z"
 
-            // Extraction logic for base UID
             fun extractBaseUid(importId: String): String {
                 return if (importId.contains(":RECID:")) {
                     importId.substringBefore(":RECID:")
@@ -621,7 +606,8 @@ class RecurringEventModificationTest {
     }
 }
 
-// Extension functions for test convenience (using unique names to avoid shadowing)
+// No test calls these helpers. The `InZone` names keep the extensions apart from ICalDateTime's
+// toLocalDate and toZonedDateTime members.
 private fun ICalDateTime.toLocalDateInZone(zone: ZoneId): java.time.LocalDate {
     return java.time.Instant.ofEpochMilli(timestamp).atZone(zone).toLocalDate()
 }

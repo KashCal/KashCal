@@ -8,9 +8,9 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.theme.ThemeMode
 
 /**
- * A theme option: which [ThemeMode] it selects and the string resources that describe it.
- * Kept as a pure list ([themeSheetOptions]) so ordering and label mapping are unit-testable
- * without a Compose render harness.
+ * Describes a theme option: the [ThemeMode] it selects and the strings that describe it. Kept as
+ * a plain list ([themeSheetOptions]) so order and labels are unit-testable without a Compose
+ * render harness (`ThemeSheetTest`).
  */
 data class ThemeSheetOption(
     val mode: ThemeMode,
@@ -26,10 +26,10 @@ fun themeSheetOptions(): List<ThemeSheetOption> =
     ThemeMode.entries.map { ThemeSheetOption(it, it.labelRes, it.descriptionRes) }
 
 /**
- * Bottom sheet for selecting a light/dark face.
+ * Shows a bottom sheet for choosing the app's light or dark face.
  *
- * System default follows the device light/dark setting; Light and Dark force that appearance.
- * The accent color is chosen separately (see the accent color picker).
+ * System default follows the device setting; Light and Dark force that face. The accent color
+ * is chosen separately, in `AccentColorSheet`.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

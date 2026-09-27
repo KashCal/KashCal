@@ -11,9 +11,12 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Unit tests for WeekViewUtils.
- * Tests week calculations, range formatting, time snapping, event clamping,
- * and infinite day pager functions.
+ * Tests [WeekViewUtils]: the day and week pagers, the day-strip render gate, visible and
+ * loading date ranges, epoch-date conversion, week starts per first day of week, range, day
+ * header, individual date, month-year, week-label and time-range formatting, quarter-hour
+ * snapping, offset-to-time, weekend and day-index lookups, the initial scroll offset and
+ * visible start hour, minutes-pixels conversion, pinch-zoom recentring and the all-day
+ * overflow check.
  */
 @RunWith(RobolectricTestRunner::class)
 class WeekViewUtilsTest {
@@ -78,7 +81,6 @@ class WeekViewUtilsTest {
 
     @Test
     fun `pageToDate and dateToPage are inverse operations`() {
-        // Test various dates
         val testDates = listOf(
             LocalDate.now(),
             LocalDate.now().plusDays(100),
@@ -200,7 +202,8 @@ class WeekViewUtilsTest {
 
     @Test
     fun `getWeekStart handles month boundary`() {
-        // Wednesday Feb 5, 2025 - week starts in January
+        // Wednesday Feb 5, 2025. Its week starts Sunday Feb 2, so despite the test name no
+        // month boundary is crossed.
         val feb5 = LocalDate.of(2025, 2, 5)
         val weekStart = WeekViewUtils.getWeekStart(feb5)
 
@@ -294,7 +297,7 @@ class WeekViewUtilsTest {
 
     @Test
     fun `formatCompactRange same month shows month and days`() {
-        // Use current year so it doesn't show year suffix
+        // The current year, so no year suffix is shown.
         val currentYear = LocalDate.now().year
         val start = LocalDate.of(currentYear, 1, 6)
         val end = LocalDate.of(currentYear, 1, 8)
@@ -311,7 +314,6 @@ class WeekViewUtilsTest {
 
         val result = WeekViewUtils.formatCompactRange(start, end)
 
-        // Cross-year shows both years
         assertEquals("Dec 30, 2024 - Jan 1, 2025", result)
     }
 
@@ -410,7 +412,7 @@ class WeekViewUtilsTest {
         val result = WeekViewUtils.formatDayHeader(monday)
 
         assertTrue(result.contains("6"))
-        // Day name varies by locale, just check it has some content
+        // The day name varies by locale; only its length is checked.
         assertTrue(result.length > 2)
     }
 
@@ -480,21 +482,21 @@ class WeekViewUtilsTest {
 
     @Test
     fun `formatIndividualDate returns month and day for current year`() {
-        // Use a date in the current year
+        // Jan 5 of the current year; its weekday varies by year and doesn't matter, since the
+        // day index is added to whatever date weekStart holds.
         val currentYear = LocalDate.now().year
-        val weekStart = LocalDate.of(currentYear, 1, 5)  // Sunday Jan 5
+        val weekStart = LocalDate.of(currentYear, 1, 5)
             .atStartOfDay(ZoneId.systemDefault())
             .toInstant()
             .toEpochMilli()
 
-        val result = WeekViewUtils.formatIndividualDate(weekStart, 0)  // Day 0 = Sunday
+        val result = WeekViewUtils.formatIndividualDate(weekStart, 0)
 
         assertEquals("Jan 5", result)
     }
 
     @Test
     fun `formatIndividualDate returns month day and year for different year`() {
-        // Use a date in a future year
         val weekStart = LocalDate.of(2027, 6, 13)  // Sunday Jun 13, 2027
             .atStartOfDay(ZoneId.systemDefault())
             .toInstant()
@@ -510,12 +512,12 @@ class WeekViewUtilsTest {
     @Test
     fun `formatIndividualDate returns correct date for day index 3`() {
         val currentYear = LocalDate.now().year
-        val weekStart = LocalDate.of(currentYear, 1, 5)  // Sunday Jan 5
+        val weekStart = LocalDate.of(currentYear, 1, 5)
             .atStartOfDay(ZoneId.systemDefault())
             .toInstant()
             .toEpochMilli()
 
-        val result = WeekViewUtils.formatIndividualDate(weekStart, 3)  // Day 3 = Wednesday
+        val result = WeekViewUtils.formatIndividualDate(weekStart, 3)  // Jan 5 + 3 days
 
         assertEquals("Jan 8", result)
     }
@@ -523,12 +525,12 @@ class WeekViewUtilsTest {
     @Test
     fun `formatIndividualDate returns correct date for day index 6`() {
         val currentYear = LocalDate.now().year
-        val weekStart = LocalDate.of(currentYear, 1, 5)  // Sunday Jan 5
+        val weekStart = LocalDate.of(currentYear, 1, 5)
             .atStartOfDay(ZoneId.systemDefault())
             .toInstant()
             .toEpochMilli()
 
-        val result = WeekViewUtils.formatIndividualDate(weekStart, 6)  // Day 6 = Saturday
+        val result = WeekViewUtils.formatIndividualDate(weekStart, 6)  // Jan 5 + 6 days
 
         assertEquals("Jan 11", result)
     }
@@ -536,12 +538,12 @@ class WeekViewUtilsTest {
     @Test
     fun `formatIndividualDate handles month boundary`() {
         val currentYear = LocalDate.now().year
-        val weekStart = LocalDate.of(currentYear, 1, 26)  // Sunday Jan 26
+        val weekStart = LocalDate.of(currentYear, 1, 26)
             .atStartOfDay(ZoneId.systemDefault())
             .toInstant()
             .toEpochMilli()
 
-        val result = WeekViewUtils.formatIndividualDate(weekStart, 6)  // Day 6 = Saturday Feb 1
+        val result = WeekViewUtils.formatIndividualDate(weekStart, 6)  // Jan 26 + 6 days = Feb 1
 
         assertEquals("Feb 1", result)
     }
@@ -622,7 +624,6 @@ class WeekViewUtilsTest {
         val ref = LocalDate.of(2026, 3, 11)
         val firstDayOfWeek = java.util.Calendar.MONDAY
 
-        // Test round-trip for several week offsets
         for (offset in listOf(-10, -1, 0, 1, 10, 52)) {
             val page = WeekViewUtils.CENTER_WEEK_PAGE + offset
             val date = WeekViewUtils.weekPageToStartDate(page, firstDayOfWeek, ref)
@@ -666,8 +667,7 @@ class WeekViewUtilsTest {
 
     @Test
     fun `formatWeekRange cross month`() {
-        // Find a week that crosses March -> April 2026
-        // Mar 30 is a Monday, so Mon-start week = Mar 30 - Apr 5
+        // Mar 30, 2026 is a Monday, so its Monday-start week is Mar 30 - Apr 5.
         val ref = LocalDate.of(2026, 3, 30)
         val result = WeekViewUtils.formatWeekRange(
             WeekViewUtils.CENTER_WEEK_PAGE,
@@ -691,8 +691,7 @@ class WeekViewUtilsTest {
 
     @Test
     fun `formatWeekRange sunday firstDayOfWeek starts on Sunday`() {
-        // Mar 11 2026 is a Wednesday
-        // Sunday-start week containing Mar 11 = Mar 8 (Sun) - Mar 14 (Sat)
+        // Mar 11, 2026 is a Wednesday; its Sunday-start week is Mar 8 - Mar 14.
         val ref = LocalDate.of(2026, 3, 11)
         val result = WeekViewUtils.formatWeekRange(
             WeekViewUtils.CENTER_WEEK_PAGE,
@@ -753,8 +752,9 @@ class WeekViewUtilsTest {
 
     @Test
     fun `formatWeekLabel week number is locale-aware not ISO-fixed`() {
-        // Jan 1, 2026 is Thursday. Sunday-start (US, minimalDays=1) and Monday-start
-        // (ISO, minimalDays=4) can disagree on the year-end / year-start week.
+        // Jan 1, 2026 is a Thursday, where a Sunday-start and a Monday-start week can number
+        // differently. Both take minimalDaysInFirstWeek from the default locale; only the
+        // first day differs. The test asserts only the W## shape of each, not their numbers.
         val date = LocalDate.of(2026, 1, 1)
         val sundayResult = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.SUNDAY, prefix = "W")
         val mondayResult = WeekViewUtils.formatWeekLabel(date, java.util.Calendar.MONDAY, prefix = "W")
@@ -789,7 +789,8 @@ class WeekViewUtilsTest {
 
     @Test
     fun `formatTimeRange with 24h pattern shows 24h format`() {
-        // 2:00 PM - 3:30 PM UTC
+        // 14:00 - 15:30 UTC. formatTimeRange formats in the system zone, so the "14:00" and
+        // "15:30" checks hold only when the JVM default zone is at UTC+0 on that date.
         val startTs = 1767657600000L + (14 * 60 * 60 * 1000)  // Jan 6, 2026 14:00 UTC
         val endTs = startTs + (90 * 60 * 1000)  // +90 minutes
 
@@ -801,7 +802,7 @@ class WeekViewUtilsTest {
 
     @Test
     fun `formatTimeRange with 12h pattern shows 12h format`() {
-        // Same times as above, but with 12h pattern
+        // The same times with a 12h pattern; also depends on a UTC+0 default zone.
         val startTs = 1767657600000L + (14 * 60 * 60 * 1000)
         val endTs = startTs + (90 * 60 * 1000)
 
@@ -876,8 +877,8 @@ class WeekViewUtilsTest {
 
     @Test
     fun `resolveInitialScrollPx handles fractional density for xxhdpi devices`() {
-        // Many real devices have non-integer density (e.g. Pixel xxhdpi ≈ 2.625).
-        // Guards against silent regressions from toInt() truncation behavior.
+        // Many devices have a non-integer density (420 dpi is 2.625). 6 * 60 * 2.625 is
+        // exactly 945, so this input doesn't exercise the toInt() truncation.
         val result = WeekViewUtils.resolveInitialScrollPx(
             savedPosition = 0,
             hourHeightDp = 60f,
@@ -900,9 +901,8 @@ class WeekViewUtilsTest {
 
     @Test
     fun `resolveInitialScrollPx treats negative savedPosition as no-saved-value`() {
-        // Documents the `savedPosition > 0` gate: non-positive values fall into
-        // the default-hour branch. Real scroll state never emits negative, but
-        // the gate semantics are worth pinning.
+        // Pins the `savedPosition > 0` gate: a non-positive value takes the default-hour
+        // branch. Scroll state never emits a negative value.
         val result = WeekViewUtils.resolveInitialScrollPx(
             savedPosition = -1,
             hourHeightDp = 60f,
@@ -911,12 +911,12 @@ class WeekViewUtilsTest {
         assertEquals(360, result)  // falls through to 6 AM default
     }
 
-    // ==================== resolveVisibleStartHour Tests (issue #188 FAB sync) ====================
+    // ==================== resolveVisibleStartHour Tests (issue #188) ====================
 
     @Test
     fun `resolveVisibleStartHour returns default hour when savedPosition is 0`() {
-        // Cold-launch path: FAB falls back to DEFAULT_SCROLL_START_HOUR so new events
-        // default to 6 AM (matching the grid's visual landing).
+        // With no in-session scroll it returns DEFAULT_SCROLL_START_HOUR, the hour the grid
+        // lands on when no scroll time is persisted either.
         val result = WeekViewUtils.resolveVisibleStartHour(
             savedPosition = 0,
             hourHeightPx = 60f
@@ -977,7 +977,7 @@ class WeekViewUtilsTest {
 
     @Test
     fun `resolveVisibleStartHour handles fractional hourHeightPx from xxhdpi density`() {
-        // xxhdpi: 60 dp * 2.625 density = 157.5 px/hr. At saved pixel 945, that's hour 6.
+        // 60 dp at density 2.625 (420 dpi) is 157.5 px/hr. At saved pixel 945, that's hour 6.
         val result = WeekViewUtils.resolveVisibleStartHour(
             savedPosition = 945,
             hourHeightPx = 157.5f,
@@ -1006,8 +1006,8 @@ class WeekViewUtilsTest {
 
     @Test
     fun `pixelsToMinutesOfDay is independent of hour height`() {
-        // Same clock time (12:00) at two zoom levels maps to the same minutes,
-        // even though the pixel offsets differ. This is the anti-drift guarantee.
+        // The same clock time (12:00) at two zoom levels maps to the same minutes, though the
+        // pixel offsets differ, so a restored scroll doesn't drift after a zoom change.
         val atNormalZoom = WeekViewUtils.pixelsToMinutesOfDay(720f, 60f)   // 12h * 60px
         val atMaxZoom = WeekViewUtils.pixelsToMinutesOfDay(1800f, 150f)    // 12h * 150px
         assertEquals(720, atNormalZoom)
@@ -1038,17 +1038,16 @@ class WeekViewUtilsTest {
 
     @Test
     fun `minutesOfDayToPixels scales with hour height`() {
-        // Same clock time, different zoom -> different pixels (by design).
+        // The same clock time at a different zoom gives different pixels.
         assertEquals(720, WeekViewUtils.minutesOfDayToPixels(720, 60f))
         assertEquals(1800, WeekViewUtils.minutesOfDayToPixels(720, 150f))
     }
 
     @Test
     fun `minutes and pixels round-trip within one minute at a given zoom`() {
-        // Round-trip through integer pixels is lossy below ~1 minute (at 157.5 px/hr
-        // one minute is ~2.6 px, and both conversions truncate). A ±1 minute tolerance
-        // is the honest contract; the restored scroll lands on the same visible time.
-        val hourHeightPx = 157.5f  // xxhdpi 60dp * 2.625
+        // A round trip through integer pixels loses under a minute: at 157.5 px/hr one minute
+        // is about 2.6 px and both conversions truncate. The contract is a 1 minute tolerance.
+        val hourHeightPx = 157.5f  // 60dp at density 2.625
         val originalMinutes = 555  // 09:15
         val px = WeekViewUtils.minutesOfDayToPixels(originalMinutes, hourHeightPx)
         val backToMinutes = WeekViewUtils.pixelsToMinutesOfDay(px.toFloat(), hourHeightPx)
@@ -1062,7 +1061,7 @@ class WeekViewUtilsTest {
 
     @Test
     fun `resolveZoomScrollPx keeps the viewport-center clock time fixed when zooming in`() {
-        // xxhdpi density; 1000px viewport; grid centered on 12:00 before the zoom.
+        // Density 2.625; 1000px viewport; grid centered on 12:00 before the zoom.
         val density = 2.625f
         val viewportHeightPx = 1000f
         val oldPx = 60f * density   // 157.5 px/hr
@@ -1108,9 +1107,9 @@ class WeekViewUtilsTest {
     @Test
     fun `resolveZoomScrollPx stays within the post-zoom range even with an upward pan`() {
         // Zoom in from the very bottom of the grid while the centroid drifts upward
-        // (pan.y < 0). The folded target must not exceed the post-zoom scrollable max,
-        // otherwise the caller's "wait until the grid reaches this offset" step can never
-        // complete and the recentre is silently dropped.
+        // (pan.y < 0). The folded target must not exceed the post-zoom scrollable max, or the
+        // caller's wait for the grid to grow to this offset runs to its timeout before the
+        // scroll.
         val density = 2.625f
         val viewportHeightPx = 1000f
         val oldPx = 60f * density   // 157.5
@@ -1150,7 +1149,8 @@ class WeekViewUtilsTest {
             currentScrollPx = startScroll, viewportHeightPx = viewportHeightPx,
             oldHourHeightPx = oldPx, newHourHeightPx = newPx, panYPx = 100f
         )
-        // A downward pan (finger content moving up) scrolls the grid down by that many px.
+        // A downward pan (positive panYPx) lowers the scroll offset by the same px, so the
+        // content follows the finger down.
         assertEquals(noPan - 100f, downPan, 0.001f)
     }
 
@@ -1169,8 +1169,8 @@ class WeekViewUtilsTest {
 
     @Test
     fun `resolveInitialScrollPx restores savedMinutes on cold launch`() {
-        // Cold launch: no in-session pixel scroll (savedPosition 0), but a persisted
-        // clock time exists -> land at that time, not the 6 AM default.
+        // Cold launch: no in-session scroll (savedPosition 0) but a persisted clock time, so
+        // the grid lands at that time, not the 6 AM default.
         val result = WeekViewUtils.resolveInitialScrollPx(
             savedPosition = 0,
             hourHeightDp = 60f,
@@ -1193,8 +1193,7 @@ class WeekViewUtilsTest {
 
     @Test
     fun `resolveInitialScrollPx prefers in-session pixels over savedMinutes`() {
-        // If the user has already scrolled this session, that wins over the
-        // persisted cold-launch value.
+        // A scroll made this session wins over the persisted cold-launch value.
         val result = WeekViewUtils.resolveInitialScrollPx(
             savedPosition = 1234,
             hourHeightDp = 60f,
@@ -1206,8 +1205,8 @@ class WeekViewUtilsTest {
 
     @Test
     fun `resolveInitialScrollPx falls back to default hour when no saved minutes`() {
-        // savedMinutes sentinel (-1) and no in-session scroll -> 6 AM default,
-        // preserving prior behavior for fresh installs.
+        // The savedMinutes sentinel (-1) and no in-session scroll give the 6 AM default, as on
+        // a fresh install.
         val result = WeekViewUtils.resolveInitialScrollPx(
             savedPosition = 0,
             hourHeightDp = 60f,
@@ -1219,7 +1218,7 @@ class WeekViewUtilsTest {
 
     @Test
     fun `resolveInitialScrollPx defaults savedMinutes to sentinel keeping legacy behavior`() {
-        // Callers that don't pass savedMinutes get the original default-hour behavior.
+        // A caller that doesn't pass savedMinutes gets the default hour.
         val result = WeekViewUtils.resolveInitialScrollPx(
             savedPosition = 0,
             hourHeightDp = 60f,
@@ -1235,7 +1234,7 @@ class WeekViewUtilsTest {
         // Nothing to expand: empty, or every column at most one event.
         assertFalse(WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(emptyList()))
         assertFalse(WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(listOf(0, 1, 1)))
-        // At least one column with 2+ events -> the toggle is meaningful.
+        // At least one column with 2 or more events gives the toggle something to do.
         assertTrue(WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(listOf(1, 2, 0)))
         assertTrue(WeekViewUtils.anyAllDayColumnHasOverflowWhenCollapsed(listOf(5)))
     }

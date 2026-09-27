@@ -48,11 +48,10 @@ class ZohoLiveDebugTest {
     }
 
     /**
-     * Run discovery (principal -> home -> calendars) and return the first
-     * calendar URL, or skip the test (via assumeTrue) if any step yields no
-     * result. Zoho is a shared, rate-limited live account, so a rapid burst of
-     * discovery calls across these diagnostic tests can transiently return
-     * empty; that is an environmental skip, not a failure. Mirrors the
+     * Runs discovery (principal -> home -> calendars) and returns the first calendar URL,
+     * or skips the test (via assumeTrue) if any step yields no result. Zoho is a shared,
+     * rate-limited live account, so a burst of discovery calls across these tests can
+     * transiently return empty; that is an environmental skip, not a failure. Mirrors the
      * reachability-gate contract the multiserver suite uses.
      */
     private suspend fun discoverFirstCalendarUrlOrSkip(): String {
@@ -199,8 +198,8 @@ class ZohoLiveDebugTest {
     }
 
     /**
-     * Test whether Zoho's multiget failure is batch-size dependent.
-     * KashCal chunks at 10 — does a batch of 10 work? A batch of 1?
+     * Probes whether Zoho's multiget failure depends on batch size: does a batch of 10 work,
+     * or a batch of 1? The pull chunks multigets at 20 (PullStrategy.MULTIGET_BATCH_SIZE).
      */
     @Test
     fun `multiget batch size experiment`() = runBlocking {
@@ -297,9 +296,8 @@ class ZohoLiveDebugTest {
     }
 
     /**
-     * Test push operations (CREATE → UPDATE → DELETE) against live Zoho.
-     * Diagnoses etag handling: Zoho may not return ETag in PUT response header,
-     * requiring PROPFIND fallback or multiget to retrieve the etag.
+     * Runs CREATE → UPDATE → DELETE against live Zoho to diagnose etag handling: Zoho may not
+     * return an ETag in the PUT response header, requiring a PROPFIND or multiget to get it.
      */
     @Test
     fun `push cycle - create update delete`() = runBlocking {
@@ -445,16 +443,19 @@ class ZohoLiveDebugTest {
     }
 
     /**
-     * Test whether the empty-etag update flow works after the 201 fix.
+     * Probes whether Zoho accepts updates with an empty etag after a create that returned none.
      *
-     * Simulates real app flow:
+     * Steps:
      *   1. CREATE → etag="" (Zoho returns no ETag, PROPFIND 501)
      *   2. UPDATE with If-Match: "" → does Zoho accept?
      *   3. UPDATE again with If-Match: "" → still works?
-     *   4. Verify data was actually updated on server via single-href multiget
-     *   5. DELETE cleanup
+     *   4. Check the data changed on the server via single-href multiget
+     *   5. UPDATE with the etag the multiget returned, for comparison
+     *   6. DELETE cleanup
      *
-     * If this passes, Bug 2 (ETag fallback chain) is cosmetic, not functional.
+     * If this passes, the etag fallback chain after a create is cosmetic, not functional.
+     * The app's push path doesn't send an empty etag: PushStrategy.processUpdate recovers a
+     * missing one by PROPFIND and fails the update if that fails.
      */
     @Test
     fun `empty etag update flow - is Bug 2 needed`() = runBlocking {
@@ -488,7 +489,7 @@ class ZohoLiveDebugTest {
         println("  etag='$createEtag' (empty=${createEtag.isEmpty()})")
 
         try {
-            // --- Step 2: UPDATE with empty etag (simulates real app flow) ---
+            // --- Step 2: UPDATE with empty etag ---
             val emptyEtag = ""  // What KashCal stores when PROPFIND fails
             val icalV2 = icalV1.replace("SUMMARY:ETag Test v1", "SUMMARY:ETag Test v2")
             println("\n--- Step 2: UPDATE with If-Match: \"\" (empty etag) ---")

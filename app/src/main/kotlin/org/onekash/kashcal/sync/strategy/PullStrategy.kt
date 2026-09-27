@@ -44,57 +44,34 @@ import java.util.concurrent.CancellationException
 import javax.inject.Inject
 
 /**
- * Handles pulling events from CalDAV server to local database.
- *
- * Implements both incremental sync (using sync-token/ctag) and full sync.
- *
- * Process:
- * 1. Check ctag for quick "any changes?" detection
- * 2. Use sync-collection REPORT (incremental) or calendar-query (initial)
- * 3. Parse iCal data and map to Event entities
- * 4. Link exception events to master events
- * 5. Regenerate occurrences for recurring events
- * 6. Update sync metadata
- *
- * Provider Support:
- * The pull() method accepts an optional quirks parameter for provider-specific
- * parsing. If not provided, falls back to the injected CalDavQuirks (iCloud by default).
- *
- * @see org.onekash.kashcal.sync.provider.CalendarProvider
- */
-
-/**
  * Sentinel placed in [Event.extraProperties] on a synthetic master row.
  *
- * A synthetic master is a placeholder created when an exception VEVENT
- * arrives without its master VEVENT in the same pull (master outside the
- * sync lookback window, server returned them in different multiget batches,
- * or the master was deleted server-side but exception lingers). The
- * exception's `originalEventId` FK points at the synthetic so the row
- * survives ingest. When the real master arrives in a later sync, the
- * UID-keyed `@Upsert` mutates the synthetic in place — same row id, real
- * RRULE populated, sentinel cleared — so existing exception FKs survive
- * without churn.
+ * A synthetic master is a placeholder created when an exception VEVENT arrives without its
+ * master in the same pull and none is in Room: the master is outside the lookback window, came
+ * in a different multiget batch, or was deleted on the server while the exception lingers. The
+ * exception's `originalEventId` FK points at it so the exception survives ingest. When the real
+ * master arrives, the master pass finds the synthetic by UID and upserts over its row id (real
+ * RRULE, sentinel cleared), so exception FKs stay valid.
  *
- * The string value matches the constant in IcsSubscriptionRepository so
- * the existing FTS-search and title-suggest exclusions cover both paths.
- * The two declarations are intentionally independent: ICS sync and CalDAV
- * pull are separate code paths with different surrounding logic.
+ * The value matches `SYNTHETIC_MASTER_EXTRA_KEY` in `IcsSubscriptionRepository`, so the
+ * FTS-search and title-suggest exclusions in [EventsDao] and the occurrence skip in
+ * [OccurrenceGenerator.generateOccurrences] cover both paths. The two declarations are kept
+ * separate on purpose: ICS sync and CalDAV pull are separate code paths.
  */
 internal const val PULL_SYNTHETIC_MASTER_EXTRA_KEY = "X-KASHCAL-SYNTHETIC-MASTER"
 
+/** Reports whether this row is a synthetic master the pull made for an orphan exception. */
+internal val Event.isPullSyntheticMaster: Boolean
+    get() = extraProperties?.get(PULL_SYNTHETIC_MASTER_EXTRA_KEY) == "true"
+
 /**
- * Build a placeholder master Event for an orphan exception. The synthetic
- * carries `rrule = null`, `status = "CANCELLED"`, and the sentinel above
- * in [Event.extraProperties]. Inserting it via `eventsDao.upsert` returns
- * a real row id that the orphan exception can reference via
- * `originalEventId`. When the real master arrives later, pass 2's upsert
- * matches by (uid, calendarId, original_event_id IS NULL) and mutates
- * this row in place.
+ * Builds a placeholder master for an orphan exception: `rrule = null`, `status = "CANCELLED"`
+ * and [PULL_SYNTHETIC_MASTER_EXTRA_KEY] set. Inserting it gives the exception a row id for
+ * `originalEventId`. When the real master arrives, the master pass finds this row with
+ * `getMasterByUidAndCalendar` (uid, calendar, `original_event_id IS NULL`) and upserts over it.
  *
- * Caller is responsible for skipping `regenerateOccurrences` on synthetics
- * — the row has no rrule so the non-recurring path would emit a phantom
- * occurrence at `recurrenceIdMs`.
+ * [OccurrenceGenerator.generateOccurrences] returns 0 for a synthetic; without that skip the
+ * rrule-less row would emit a phantom occurrence at [recurrenceIdMs].
  */
 internal fun synthesizeMasterForOrphanException(
     uid: String,
@@ -118,6 +95,18 @@ internal fun synthesizeMasterForOrphanException(
     )
 }
 
+/**
+ * Pulls one CalDAV calendar's events from the server into Room.
+ *
+ * Each pull probes the ctag (an unchanged ctag ends the pull), then takes the delta through a
+ * sync-collection REPORT when a sync-token is stored, or a full listing of etags otherwise. Only
+ * hrefs whose etag differs are fetched by calendar-multiget. Fetched resources are parsed and
+ * mapped to events, exceptions are linked to their masters, occurrences are regenerated, and
+ * the calendar's sync-token and ctag are stored.
+ *
+ * [pull] takes optional provider quirks and falls back to the injected [CalDavQuirks], which
+ * is iCloud's.
+ */
 class PullStrategy @Inject constructor(
     private val database: KashCalDatabase,
     private val calendarRepository: CalendarRepository,
@@ -130,25 +119,22 @@ class PullStrategy @Inject constructor(
     private val accountRepository: org.onekash.kashcal.data.repository.AccountRepository,
     private val reminderScheduler: org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 ) {
-    // icaldav parser instance
     private val icalParser = ICalParser()
 
     private val categoryDao by lazy { database.categoryDao() }
 
     /**
-     * Seed the tag metadata table for each category carried by a pulled event
-     * so a tag first seen on the server appears in suggestions and the
-     * management screen. Color-preserving (never clobbers a user's chosen
-     * color), case-insensitive (the NOCASE primary key collapses cased
-     * duplicates). Runs inside the event's upsert transaction.
+     * Seeds the tag table with each category on a pulled event, so a tag first seen on the
+     * server appears in suggestions and the management screen. Never overwrites a user's
+     * chosen color; case-insensitive (the NOCASE primary key collapses cased duplicates). Runs
+     * inside the event's upsert transaction.
      *
-     * Recency is dated to the event's own last-modified/start time, not wall-
-     * clock now: a bulk pull of old events must not rank their tags as
-     * just-used, and the raise-only update never rolls back a newer local use.
+     * Recency is the event's `localModifiedAt` (kept from the existing row) or its start time,
+     * not wall-clock now: a bulk pull of old events must not rank their tags as just used, and
+     * the raise-only update never rolls back a newer local use.
      *
-     * Note: this can resurrect a tag the user deleted locally if the server
-     * still has events carrying it — accepted behavior, since a tag that labels
-     * live events shouldn't silently vanish.
+     * This can bring back a tag the user deleted locally if server events still carry it. That
+     * is accepted: a tag that labels live events shouldn't silently vanish.
      */
     private suspend fun seedCategories(event: Event) {
         val recency = event.localModifiedAt ?: event.startTs
@@ -160,23 +146,21 @@ class PullStrategy @Inject constructor(
     companion object {
         private const val TAG = "PullStrategy"
 
-        /** Extract .ics filename from caldavUrl for privacy-safe warning messages. */
+        /** Returns the .ics filename of [caldavUrl], for privacy-safe warning messages. */
         private fun filenameOf(caldavUrl: String): String =
             caldavUrl.substringAfterLast('/').ifEmpty { caldavUrl }
 
         /**
-         * Validate that mapped event has sane timestamps.
-         * Rejects endTs < startTs (RFC 5545 violation, always corrupt server data).
-         * Does NOT reject historical events or epoch-zero — those are legitimate dates.
+         * Rejects endTs < startTs (an RFC 5545 violation, always corrupt server data). Historical
+         * and epoch-zero dates are legitimate and pass.
          */
         internal fun hasValidTimestamps(event: Event): Boolean =
             event.endTs >= event.startTs
 
         /**
-         * CalDAV uses one etag per .ics resource. When any VEVENT in a recurring
-         * series changes, the etag changes for ALL of them. This comparison detects
-         * VEVENTs whose content is unchanged — we still upsert (new etag) but skip
-         * the UI notification.
+         * Reports whether [incoming] differs from [existing] beyond sync metadata. CalDAV has one
+         * etag per .ics resource, so a change to any VEVENT in a series changes the etag of all
+         * of them; an unchanged VEVENT is still upserted (new etag) but raises no UI notification.
          */
         internal fun hasContentChanged(existing: Event, incoming: Event): Boolean =
             stripSyncMetadata(existing) != stripSyncMetadata(incoming)
@@ -190,33 +174,32 @@ class PullStrategy @Inject constructor(
             serverModifiedAt = null, lastSyncError = null, syncRetryCount = 0
         )
 
-        // Sync window: 1 year back, unlimited future (far-future date for CalDAV spec compliance)
+        // Past edge of the occurrence expansion for a pulled recurring master (1 year). The
+        // sync lookback comes from the syncPastDays setting, not from this.
         private const val PAST_WINDOW_MS = 365L * 24 * 60 * 60 * 1000
-        // Upper bound for the LOCAL Room range queries (stale-event deletion, etag map).
-        // SQL needs a concrete numeric bound; 2100 is unreachable by real events, so it means
-        // "forever" for the DB. This is NOT the server fetch reach: the CalDAV client drops the
-        // upper bound on the wire past 2038 (32-bit time_t servers like SOGo silently truncate
-        // results otherwise), so future reach is already unbounded. Raising this number does not
-        // fetch more from the server — don't bump it to "reach further."
+        // Upper bound for the Room range queries (stale-event deletion, etag maps). SQL needs a
+        // concrete bound; no real event reaches 2100, so for the DB it means "forever". It is
+        // also passed to fetchEtagsInRange, but the CalDAV client drops the wire upper bound past
+        // 2038 (32-bit time_t servers like SOGo silently truncate results otherwise), so server
+        // reach is already unbounded. Raising this fetches nothing more from the server.
         private const val FUTURE_END_MS = 4102444800000L  // Jan 1, 2100 UTC
 
-        // Occurrence expansion window (local generation) - shared across codebase
+        // Future edge of local occurrence expansion; EventWriter and ConflictResolver use it too.
         const val OCCURRENCE_EXPANSION_MS = 2 * 365L * 24 * 60 * 60 * 1000  // 2 years
 
-        // Parse failure retry: hold token for N syncs before giving up (v16.7.0)
+        // Syncs to hold the token for on parse errors before advancing (v16.7.0).
         private const val MAX_PARSE_RETRIES = 3
 
-        // Batched multiget: max hrefs per calendar-multiget request (v22.5.11)
+        // Max hrefs per calendar-multiget request (v22.5.11).
         private const val MULTIGET_BATCH_SIZE = 20
 
-        // DB retry configuration
         private const val MAX_DB_RETRIES = 3
         private const val INITIAL_DB_RETRY_DELAY_MS = 100L
 
         /**
-         * Check if ICS data contains non-event RFC 5545 components but no VEVENTs.
-         * Used to distinguish "valid non-event resource" from "genuinely failed to parse"
-         * when parseAllEvents() returns empty.
+         * Reports whether [icalData] holds VTODO, VJOURNAL or VFREEBUSY but no VEVENT, which
+         * separates a valid non-event resource from a parse failure when parseAllEvents()
+         * returns empty.
          */
         private fun isNonEventResource(icalData: String): Boolean {
             return !icalData.contains("BEGIN:VEVENT") &&
@@ -227,14 +210,11 @@ class PullStrategy @Inject constructor(
     }
 
     /**
-     * Retry database operations on lock errors only.
+     * Retries [block] on "database is locked" only, with exponential backoff.
      *
-     * Room sets SQLite's busy_timeout, but if that expires we get "database is locked".
-     * This provides a safety net for extreme contention during sync.
-     *
-     * Does NOT retry on:
-     * - SQLiteConstraintException (handled separately)
-     * - Other SQLite errors (likely bugs, should propagate)
+     * Room sets SQLite's busy_timeout; this covers contention that outlasts it. Every other
+     * SQLiteException propagates at once: SQLiteConstraintException has its own handling in the
+     * callers, and other SQLite errors are likely bugs.
      */
     private suspend inline fun <T> withDbRetry(block: () -> T): T {
         var lastException: SQLiteException? = null
@@ -242,17 +222,16 @@ class PullStrategy @Inject constructor(
             try {
                 return block()
             } catch (e: SQLiteException) {
-                // ONLY retry on lock errors - let other SQLite errors propagate
                 if (e.message?.contains("database is locked", ignoreCase = true) == true) {
                     lastException = e
                     Log.w(TAG, "DB locked (attempt ${attempt + 1}/$MAX_DB_RETRIES), retrying...")
                     if (attempt < MAX_DB_RETRIES - 1) {
-                        // Bounded bit-shift to cap exponential backoff
+                        // The shift is capped so the backoff can't overflow.
                         val backoff = INITIAL_DB_RETRY_DELAY_MS * (1L shl attempt.coerceIn(0, 4))
                         delay(backoff)
                     }
                 } else {
-                    throw e  // Not a lock error - don't retry
+                    throw e
                 }
             }
         }
@@ -260,9 +239,9 @@ class PullStrategy @Inject constructor(
     }
 
     /**
-     * Refresh calendar metadata from the server probe. Server non-null-and-
-     * valid wins; null/invalid preserves local. Skips the DB write when no
-     * field changed to avoid churning getVisibleCalendarsFlow consumers.
+     * Refreshes the calendar's color, display name and read-only flag from [probe]. A non-null,
+     * valid server value wins; null or invalid keeps the local value. Skips the write when
+     * nothing changed, so getVisibleCalendarsFlow collectors don't re-emit.
      */
     private suspend fun maybeRefreshMetadata(
         calendar: Calendar,
@@ -284,14 +263,23 @@ class PullStrategy @Inject constructor(
     }
 
     /**
-     * Pull events from server for a calendar.
+     * Pulls [calendar]'s server changes into Room and stores its new sync-token and ctag on
+     * success.
      *
-     * @param calendar The calendar to sync
-     * @param forceFullSync If true, ignores sync token and fetches all events
-     * @param quirks Optional provider-specific quirks. If null, uses default (iCloud).
-     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
-     * @param sessionBuilder Optional builder for tracking sync session stats.
-     * @return PullResult indicating success/failure and statistics
+     * @param forceFullSync ignores the ctag and sync-token and lists every event in the lookback
+     *   window; stale local events are then kept, not deleted (see [pullFull]).
+     * @param quirks provider quirks; null uses the injected default (iCloud).
+     * @param client carries the account's credentials; the caller creates one per account.
+     * @param recentlyPushedEventIds events pushed earlier in this sync cycle, which the pull
+     *   never deletes. It doesn't overwrite a series or single event among them unless it is also
+     *   in [refetchEventIds]; a changed occurrence is overwritten like any other.
+     * @param refetchEventIds pushed events whose rows lack a change the push wrote with them
+     *   ([PushResult.Success.refetchEventIds]). They are also in [recentlyPushedEventIds], so
+     *   still never deleted, but they are refreshed like any changed event, exceptions their EXDATE
+     *   covers pruned, since a later sync-collection listing won't name them again.
+     * @return [PullResult.NoChanges] when the ctag is unchanged. A 401/403 ctag probe, a failed
+     *   listing, a network failure or any other exception returns [PullResult.Error];
+     *   cancellation is rethrown.
      */
     suspend fun pull(
         calendar: Calendar,
@@ -299,19 +287,20 @@ class PullStrategy @Inject constructor(
         quirks: CalDavQuirks? = null,
         client: CalDavClient,
         sessionBuilder: SyncSessionBuilder? = null,
-        recentlyPushedEventIds: Set<Long> = emptySet()
+        recentlyPushedEventIds: Set<Long> = emptySet(),
+        refetchEventIds: Set<Long> = emptySet()
     ): PullResult {
         val effectiveQuirks = quirks ?: defaultQuirks
         val effectiveClient = client
 
         return try {
-            // Step 1: Probe ctag + metadata (displayName, color, isReadOnly)
+            // Probe the ctag and metadata (displayName, color, isReadOnly).
             val ctagResult = effectiveClient.getCtag(calendar.caldavUrl)
             val probe: CalendarMetadataProbe? = if (ctagResult.isSuccess()) {
                 (ctagResult as CalDavResult.Success).data
             } else {
                 val error = ctagResult as CalDavResult.Error
-                // Auth/permission errors are systemic — abort immediately
+                // Auth and permission errors are systemic: abort.
                 if (error.code == 401 || error.code == 403) {
                     Log.e(TAG, "getCtag failed: ${error.code} - ${error.message}")
                     return PullResult.Error(code = error.code, message = error.message, isRetryable = error.isRetryable)
@@ -336,16 +325,13 @@ class PullStrategy @Inject constructor(
                 return PullResult.NoChanges
             }
 
-            // Step 2: Determine sync method
             val result = if (!forceFullSync && calendar.syncToken != null) {
-                // Incremental sync using sync-token
-                pullIncremental(calendar, effectiveQuirks, effectiveClient, sessionBuilder, recentlyPushedEventIds)
+                pullIncremental(calendar, effectiveQuirks, effectiveClient, sessionBuilder, recentlyPushedEventIds, refetchEventIds)
             } else {
-                // Full sync - fetch all events in time window
-                pullFull(calendar, effectiveQuirks, effectiveClient, sessionBuilder, recentlyPushedEventIds, forceFullSync = forceFullSync)
+                pullFull(calendar, effectiveQuirks, effectiveClient, sessionBuilder, recentlyPushedEventIds, refetchEventIds, forceFullSync = forceFullSync)
             }
 
-            // Step 3: Update calendar metadata on success
+            // A null token or ctag in the result keeps the stored token and takes the probed ctag.
             if (result is PullResult.Success) {
                 calendarRepository.updateSyncToken(
                     calendarId = calendar.id,
@@ -370,7 +356,6 @@ class PullStrategy @Inject constructor(
                 isRetryable = true
             )
         } catch (e: CancellationException) {
-            // Rethrow cancellation to properly handle coroutine cancellation
             Log.d(TAG, "Pull cancelled")
             throw e
         } catch (e: Exception) {
@@ -384,40 +369,34 @@ class PullStrategy @Inject constructor(
     }
 
     /**
-     * Build a resolver that maps a server-reported resource URL to the local
-     * event whose stored caldav_url matches it, tolerating percent-encoding
-     * differences. Some servers (e.g. Radicale) echo a resource href with
-     * pchar-legal reserved characters percent-encoded (a literal '@' comes back
-     * as %40) while KashCal stored the URL with the literal character. An exact
-     * match is tried first (index-backed and the common case); on a miss the URL
-     * is compared canonically against the calendar's stored URLs.
+     * Builds a resolver from a server-reported resource URL to the local event whose stored
+     * caldav_url matches it, tolerating percent-encoding differences. Some servers (Radicale)
+     * echo an href with pchar-legal reserved characters percent-encoded (a literal '@' comes back
+     * as %40) while KashCal stored the literal character. An exact, index-backed match is tried
+     * first; on a miss the URL is compared canonically against the calendar's stored URLs.
      *
-     * Reuse a single resolver across a whole deletion loop: the heavier canonical
-     * candidate map is loaded at most once — on the first exact-match miss — then
-     * reused. This matters on servers that re-encode every href, where every
-     * lookup misses the fast path; a per-lookup reload would be O(deletions x
-     * calendar size). Create it per loop (its cache must not outlive the loop).
+     * Use one resolver per deletion loop: the canonical candidate map loads once, on the first
+     * exact-match miss, and is reused. On servers that re-encode every href every lookup misses
+     * the exact match, and a reload per lookup would cost deletions x calendar size. The cache
+     * must not outlive the loop.
      */
     private fun caldavUrlResolver(calendarId: Long): suspend (String) -> Event? {
         var canonicalMap: Map<String, Event>? = null
         return resolve@{ url ->
-            // caldav_url is deliberately non-unique: a recurring master and its
-            // overrides share one server resource, and a row moved to another
-            // calendar keeps the source URL. The exact-match query is global and
-            // returns an arbitrary one of those rows, so short-circuit on it only
-            // when it is in THIS calendar and is a master. An out-of-calendar hit,
-            // or an override that may have a master beside it, falls through to the
-            // canonical map, which is scoped and master-preferring.
+            // caldav_url is not unique: a recurring master and its exceptions share one server
+            // resource, and a row moved to another calendar keeps the source URL. The exact
+            // query is global and returns any one of those rows, so use its hit only when it is
+            // a master in this calendar. Anything else falls through to the canonical map,
+            // which is scoped to the calendar and prefers masters.
             eventsDao.getByCaldavUrl(url)
                 ?.takeIf { it.calendarId == calendarId && it.originalEventId == null }
                 ?.let { return@resolve it }
             val target = CaldavUrlNormalizer.canonicalize(url) ?: return@resolve null
             val map = canonicalMap ?: eventsDao.getEventsWithCaldavUrl(calendarId)
-                // Several rows can canonicalize to the same key (master + its
-                // overrides). toMap() is last-wins, so order masters last: removing
-                // a master cascades to its overrides, whereas resolving to an
-                // override would drop one occurrence and leave the master pointing
-                // at a resource the server no longer has.
+                // A master and its exceptions canonicalize to the same key. toMap() is
+                // last-wins, so masters sort last: deleting a master cascades to its
+                // exceptions, while resolving to an exception would drop one occurrence and
+                // leave the master pointing at a resource the server no longer has.
                 .sortedBy { it.originalEventId == null }
                 .mapNotNull { e ->
                     val u = e.caldavUrl ?: return@mapNotNull null
@@ -430,32 +409,33 @@ class PullStrategy @Inject constructor(
     }
 
     /**
-     * Incremental sync using sync-collection REPORT.
-     * Only fetches changed/deleted items since last sync.
+     * Pulls the delta since the stored sync-token with a sync-collection REPORT (RFC 6578),
+     * fetching only changed hrefs. A rejected token (403/410) falls back to
+     * [pullWithEtagComparison], then to [pullFull].
      */
     private suspend fun pullIncremental(
         calendar: Calendar,
         quirks: CalDavQuirks,
         clientToUse: CalDavClient,
         sessionBuilder: SyncSessionBuilder?,
-        recentlyPushedEventIds: Set<Long> = emptySet()
+        recentlyPushedEventIds: Set<Long>,
+        refetchEventIds: Set<Long>
     ): PullResult {
         Log.d(TAG, "Incremental sync with token: ${calendar.syncToken?.take(8)}...")
 
         val reportResult = clientToUse.syncCollection(calendar.caldavUrl, calendar.syncToken)
         if (reportResult.isError()) {
             val error = reportResult as CalDavResult.Error
-            // 403/410 means sync token expired - try etag comparison first, then full sync
-            // Etag comparison saves ~96% bandwidth (33KB vs 834KB for 231 events)
+            // 403/410: the sync-token expired.
             if (error.code == 403 || error.code == 410) {
                 Log.w(TAG, "Sync token expired (${error.code}), trying etag-based fallback")
-                val etagResult = pullWithEtagComparison(calendar, quirks, clientToUse, sessionBuilder, recentlyPushedEventIds)
+                val etagResult = pullWithEtagComparison(calendar, quirks, clientToUse, sessionBuilder, recentlyPushedEventIds, refetchEventIds)
                 if (etagResult != null) {
                     Log.d(TAG, "Etag-based fallback succeeded")
                     return etagResult
                 }
                 Log.w(TAG, "Etag fallback returned null, falling back to full sync")
-                return pullFull(calendar, quirks, clientToUse, sessionBuilder, recentlyPushedEventIds)
+                return pullFull(calendar, quirks, clientToUse, sessionBuilder, recentlyPushedEventIds, refetchEventIds)
             }
             return PullResult.Error(error.code, error.message, error.isRetryable)
         }
@@ -463,39 +443,36 @@ class PullStrategy @Inject constructor(
         val syncReport = (reportResult as CalDavResult.Success).data
         Log.d(TAG, "syncCollection: ${syncReport.changed.size} changed, ${syncReport.deleted.size} deleted")
 
-        // RFC 6578 Section 3.6: 507 means server truncated results
-        // Results are still valid - save the new token and next sync will continue
+        // RFC 6578 §3.6: a 507 means the server truncated the results. They are still valid,
+        // so the new token is saved and the next sync continues from it.
         if (syncReport.truncated) {
             Log.w(TAG, "Server returned truncated results (507). Will continue on next sync.")
             sessionBuilder?.setTruncated(true)
         }
 
-        // Handle deletions (respecting pending local changes)
         var deleted = 0
         val deletedChanges = mutableListOf<SyncChange>()
         val resolveLocalEvent = caldavUrlResolver(calendar.id)
-        // Dedupe like the changed-href list below: a server may report the same
-        // deleted href more than once (iCloud is known to). The resolver caches a
-        // per-loop candidate map, so a repeated href would otherwise resolve the
-        // just-deleted row again and double-count the deletion + notification.
+        // A server may report the same deleted href more than once (iCloud does). The
+        // resolver's cached map would resolve the just-deleted row again and count the
+        // deletion and its notification twice.
         for (href in syncReport.deleted.distinct()) {
             val url = quirks.buildEventUrl(href, calendar.caldavUrl)
             val event = resolveLocalEvent(url)
             if (event != null) {
-                // LOCAL-FIRST: Don't delete events with pending local changes
-                // They may have been modified/recreated locally while offline
-                // RFC 4791: Don't delete recently pushed events — server may not
-                // have indexed them yet (no immediate visibility guarantee after PUT)
+                // Local-first: an event with pending local changes may have been edited or
+                // recreated offline, so it stays. A recently pushed event stays too: RFC 4791
+                // gives no visibility guarantee right after a PUT, so the server may not have
+                // indexed it yet.
                 if (event.hasPendingChanges() || event.id in recentlyPushedEventIds) {
                     Log.d(TAG, "Skipping deletion of $url - " +
                         if (event.hasPendingChanges()) "has pending local changes (${event.syncStatus})"
                         else "recently pushed in this sync cycle")
                     continue
                 }
-                // Track deletion for UI notification before deleting
                 deletedChanges.add(SyncChange(
                     type = ChangeType.DELETED,
-                    eventId = null, // Event will be deleted, so ID won't be valid
+                    eventId = null, // the row is deleted below
                     eventTitle = event.title,
                     eventStartTs = event.startTs,
                     isAllDay = event.isAllDay,
@@ -510,24 +487,21 @@ class PullStrategy @Inject constructor(
             }
         }
 
-        // Fetch full iCal data for changed items
-        // IMPORTANT: Apply .distinct() to handle iCloud returning duplicate hrefs
-        // Without this, hrefsReported != receivedHrefs.size even when all events are fetched,
-        // causing confusing "Missing: N" in Sync History when nothing is actually missing
+        // iCloud returns duplicate hrefs. Without distinct(), hrefsReported exceeds the
+        // received count even when every event arrived, and Sync History shows a false
+        // "Missing: N".
         val rawHrefs = syncReport.changed
             .filter { it.status == SyncItemStatus.OK }
             .map { it.href }
         val changedHrefs = rawHrefs.distinct()
 
-        // Log duplicate hrefs if detected (helps diagnose sync issues)
         val duplicateCount = rawHrefs.size - changedHrefs.size
         if (duplicateCount > 0) {
             Log.w(TAG, "sync-collection returned $duplicateCount duplicate hrefs (raw=${rawHrefs.size}, deduped=${changedHrefs.size})")
         }
 
         if (changedHrefs.isEmpty()) {
-            // Clean up any duplicate master events even when no events changed
-            // This handles accumulated duplicates from previous syncs
+            // Duplicate masters left by earlier syncs are removed even when nothing changed.
             val dedupedCount = eventsDao.deleteDuplicateMasterEvents()
             if (dedupedCount > 0) {
                 Log.w(TAG, "Cleaned up $dedupedCount duplicate master events during incremental sync (no changes)")
@@ -543,16 +517,14 @@ class PullStrategy @Inject constructor(
             )
         }
 
-        // Track hrefs reported by sync-collection
         sessionBuilder?.setHrefsReported(changedHrefs.size)
 
-        // Fetch events in batched concurrent multiget (v22.5.11)
         val fetchResult = fetchEventsBatched(clientToUse, calendar.caldavUrl, changedHrefs, sessionBuilder)
         val serverEvents = fetchResult.events
         sessionBuilder?.setEventsFetched(serverEvents.size)
 
-        // Detect missing events due to iCloud eventual consistency
-        // sync-collection may return hrefs before calendar-data server has the actual data
+        // iCloud is eventually consistent: sync-collection may report an href before the
+        // calendar-data server has its data, so a multiget can come back short.
         val receivedHrefs = serverEvents.map { it.href }.toSet()
         val missingHrefs = changedHrefs.filter { it !in receivedHrefs }
         val hasMissingEvents = missingHrefs.isNotEmpty()
@@ -561,60 +533,53 @@ class PullStrategy @Inject constructor(
             Log.w(TAG, "fetchEventsByHref: requested=${changedHrefs.size}, received=${serverEvents.size}, missing: $missingHrefs")
         }
 
-        // Incremental sync: syncToken exists, so this is never initial sync
-        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds, isInitialSync = false)
+        // A stored sync-token means this is never the initial sync.
+        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds, refetchEventIds, isInitialSync = false)
 
-        // Clean up any duplicate master events that may have accumulated
-        // This handles edge cases where duplicates were created due to:
-        // - iCloud hostname changes (p180 → p181)
-        // - Race conditions during concurrent syncs
+        // Duplicate masters can come from iCloud hostname changes (p180 → p181) or concurrent
+        // syncs racing.
         val dedupedCount = eventsDao.deleteDuplicateMasterEvents()
         if (dedupedCount > 0) {
             Log.w(TAG, "Cleaned up $dedupedCount duplicate master events during incremental sync")
         }
 
-        // Combine deletion changes with add/update changes
         val allChanges = deletedChanges + processResult.changes
 
-        // Determine if we should hold or advance the sync token
-        // Priority: 1) Missing events (eventual consistency) 2) Parse errors (retry logic)
+        // Hold or advance the sync-token. Missing events hold it first; parse errors hold it
+        // for up to MAX_PARSE_RETRIES syncs, then it advances and abandons them.
         val parseErrorCount = sessionBuilder?.getSkippedParseError() ?: 0
         val currentRetryCount = dataStore.getParseFailureRetryCount(calendar.id)
 
         val effectiveSyncToken = when {
-            // Priority 1: Missing events - hold token for eventual consistency
             hasMissingEvents -> {
                 Log.w(TAG, "NOT advancing sync token due to ${missingHrefs.size} missing events")
                 sessionBuilder?.setTokenAdvanced(false)
-                calendar.syncToken  // Keep old token - next sync will re-fetch
+                calendar.syncToken  // the next sync re-fetches them
             }
 
-            // Priority 2: Parse errors - retry logic (v16.7.0)
+            // Parse-error retry (v16.7.0).
             parseErrorCount > 0 && currentRetryCount < MAX_PARSE_RETRIES -> {
                 val newCount = dataStore.incrementParseFailureRetry(calendar.id)
                 Log.w(TAG, "NOT advancing sync token due to $parseErrorCount parse errors (retry $newCount/$MAX_PARSE_RETRIES)")
                 sessionBuilder?.setTokenAdvanced(false)
-                calendar.syncToken  // Keep old token - retry on next sync
+                calendar.syncToken
             }
 
-            // Parse errors exceeded max retries - give up and advance
             parseErrorCount > 0 && currentRetryCount >= MAX_PARSE_RETRIES -> {
                 Log.w(TAG, "Advancing sync token despite $parseErrorCount parse errors (max retries reached)")
                 dataStore.resetParseFailureRetry(calendar.id)
                 sessionBuilder?.setAbandonedParseErrors(parseErrorCount)
                 sessionBuilder?.setTokenAdvanced(true)
-                syncReport.syncToken  // Advance - abandon unrecoverable events
+                syncReport.syncToken  // abandons the unparseable events
             }
 
-            // No issues - normal advancement
             else -> {
-                // Reset retry count on successful sync (no parse errors)
                 if (currentRetryCount > 0) {
                     dataStore.resetParseFailureRetry(calendar.id)
                     Log.d(TAG, "Reset parse failure retry count for calendar ${calendar.id}")
                 }
                 sessionBuilder?.setTokenAdvanced(true)
-                syncReport.syncToken  // Advance to new token (normal case)
+                syncReport.syncToken
             }
         }
 
@@ -623,50 +588,53 @@ class PullStrategy @Inject constructor(
             eventsUpdated = processResult.updated,
             eventsDeleted = deleted,
             newSyncToken = effectiveSyncToken,
+            // A held token keeps the old ctag too, so the next ctag probe doesn't skip the retry.
             newCtag = if (effectiveSyncToken == calendar.syncToken) calendar.ctag else null,
             changes = allChanges
         )
     }
 
     /**
-     * Full sync - fetch all events in time window.
-     * Used for initial sync or when sync token is invalid.
+     * Lists every server etag in the lookback window, deletes local events the server no longer
+     * has, and fetches the new and changed ones. Runs when no sync-token is stored, on a forced
+     * full sync, or when both the sync-token and [pullWithEtagComparison] failed.
      */
     private suspend fun pullFull(
         calendar: Calendar,
         quirks: CalDavQuirks,
         clientToUse: CalDavClient,
         sessionBuilder: SyncSessionBuilder?,
-        recentlyPushedEventIds: Set<Long> = emptySet(),
+        recentlyPushedEventIds: Set<Long>,
+        refetchEventIds: Set<Long>,
         forceFullSync: Boolean = false
     ): PullResult {
-        // Clean up any duplicate master events before processing
         val dedupedCount = eventsDao.deleteDuplicateMasterEvents()
         if (dedupedCount > 0) {
             Log.d(TAG, "Cleaned up $dedupedCount duplicate master events")
         }
 
-        // Read configurable lookback window (matches pullWithEtagComparison pattern)
+        // Same lookback window as pullWithEtagComparison.
         val syncPastDays = dataStore.syncPastDays.first()
         val isAllLookback = syncPastDays == Int.MAX_VALUE
         val now = System.currentTimeMillis()
         val pastWindowMs = if (isAllLookback) Long.MAX_VALUE else syncPastDays.toLong() * 24 * 60 * 60 * 1000
         val startMs = if (isAllLookback) 0L else now - pastWindowMs
-        val endMs = FUTURE_END_MS  // Unlimited future - fetch all future events
+        val endMs = FUTURE_END_MS  // no future limit; see FUTURE_END_MS
 
-        // Step 1: Fetch etags only (lightweight — calendar-query or PROPFIND Depth:1)
+        // Etags only, no calendar data: a calendar-query or a PROPFIND Depth:1.
         val etagResult = if (forceFullSync || calendar.syncToken != null) {
-            // Force refresh or server known to support sync-token — calendar-query with time filter
+            // Forced, or the server is known to support sync-tokens: time-filtered
+            // calendar-query.
             clientToUse.fetchEtagsInRange(calendar.caldavUrl, startMs, endMs)
         } else {
-            // syncToken is null and not force sync — probe if server supports sync-token
+            // No token and not forced: probe whether the server supports sync-tokens.
             val tokenProbe = clientToUse.getSyncToken(calendar.caldavUrl)
             val serverSupportsSyncToken = tokenProbe.isSuccess() && tokenProbe.getOrNull() != null
             if (serverSupportsSyncToken) {
-                // First sync on a capable server (iCloud, Nextcloud) — calendar-query works
+                // First sync on a capable server (iCloud, Nextcloud): calendar-query works.
                 clientToUse.fetchEtagsInRange(calendar.caldavUrl, startMs, endMs)
             } else {
-                // Server genuinely doesn't support sync-token (Purelymail) — use PROPFIND
+                // No sync-token support (Purelymail): PROPFIND, falling back to calendar-query.
                 val propfindResult = clientToUse.fetchAllEtags(calendar.caldavUrl)
                 if (propfindResult.isError()) {
                     val error = propfindResult as CalDavResult.Error
@@ -685,17 +653,16 @@ class PullStrategy @Inject constructor(
         val serverEtags = (etagResult as CalDavResult.Success).data
         sessionBuilder?.setHrefsReported(serverEtags.size)
 
-        // Delete local events not on server (skip when forceFullSync to prevent data loss).
-        // Force full sync may get a truncated server response (time-range REPORT limitations,
-        // RRULE expansion bugs, URL mismatches). Ghost events from server-side deletions
-        // are a less harmful failure mode than losing events that exist on the server.
-        // The next incremental sync will handle reconciliation properly.
+        // Delete local events the server no longer lists, except on a forced full sync: its
+        // response may be truncated (time-range REPORT limits, RRULE expansion bugs, URL
+        // mismatches), and a ghost of a server-side deletion does less harm than losing an
+        // event the server still has. The delta never reports those ghosts; a later unforced
+        // listing (this path or pullWithEtagComparison) deletes them.
         var deleted = 0
         val deletedChanges = mutableListOf<SyncChange>()
-        // Membership is compared on a CANONICAL form of the URL so a resource the
-        // server echoes with different (but equivalent) percent-encoding — e.g.
-        // Radicale re-encoding a literal '@' in the filename as '%40' — is not
-        // mistaken for a server-side deletion and destroyed locally (issue #333).
+        // Compared on a canonical URL so a resource the server echoes with equivalent
+        // percent-encoding (Radicale re-encodes a literal '@' in the filename as '%40') isn't
+        // taken for a server-side deletion and destroyed locally (#333).
         val serverUrls = serverEtags.mapTo(HashSet(serverEtags.size)) { (href, _) ->
             val url = quirks.buildEventUrl(href, calendar.caldavUrl)
             CaldavUrlNormalizer.canonicalize(url) ?: url
@@ -706,14 +673,13 @@ class PullStrategy @Inject constructor(
             !hasPendingChanges() &&
             id !in recentlyPushedEventIds
         if (forceFullSync) {
-            // Count how many events *would have been* deleted (skipped to avoid data loss).
+            // Only counts what would have been deleted, for the log.
             val localEvents = eventsDao.getByCalendarIdInRange(calendar.id, startMs, endMs)
             val wouldDelete = localEvents.count { it.isStaleOnServer() }
             if (wouldDelete > 0) {
                 Log.d(TAG, "forceFullSync: skipping deletion of $wouldDelete local events not in server response")
             }
         } else {
-            // Normal path: delete stale local events
             val localEvents = eventsDao.getByCalendarIdInRange(calendar.id, startMs, endMs)
             val toDelete = localEvents.filter { it.isStaleOnServer() }
             for (event in toDelete) {
@@ -733,9 +699,8 @@ class PullStrategy @Inject constructor(
             }
         }
 
-        // Step 2: Compare etags to skip unchanged events (bandwidth optimization).
-        // Keyed on the canonical URL form so an '@'-in-filename event the server
-        // re-encodes as '%40' still matches its local etag and isn't re-downloaded.
+        // Unchanged etags aren't fetched. Keyed on the canonical URL so an '@'-in-filename
+        // event the server re-encodes as '%40' still matches its local etag.
         val localEtagEntries = eventsDao.getEtagMapForCalendar(calendar.id, startMs, endMs)
         val localEtagMap = localEtagEntries.associate {
             (CaldavUrlNormalizer.canonicalize(it.caldavUrl) ?: it.caldavUrl) to it.etag
@@ -759,7 +724,7 @@ class PullStrategy @Inject constructor(
         }
 
         if (hrefsToFetch.isEmpty()) {
-            // No events on server — only deletions
+            // Every listed etag matched, or the server listed none.
             sessionBuilder?.setEventsFetched(0)
             val syncTokenResult = clientToUse.getSyncToken(calendar.caldavUrl)
             return PullResult.Success(
@@ -776,17 +741,15 @@ class PullStrategy @Inject constructor(
         val serverEvents = fetchResult.events
         sessionBuilder?.setEventsFetched(serverEvents.size)
 
-        // Process server events
-        // Skip default reminders for:
-        // - Initial sync (syncToken == null): first time syncing, don't spam defaults
-        // - Force sync (forceFullSync == true): user is refreshing, not seeing truly new events
+        // Marks the changes as initial-sync, so CalDavSyncWorker adds no default reminders: on a
+        // first sync they would land on every event, and a forced sync re-lists events the user
+        // already has.
         val skipDefaultReminders = (calendar.syncToken == null) || forceFullSync
-        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds, skipDefaultReminders)
+        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds, refetchEventIds, skipDefaultReminders)
 
-        // Combine deletion changes with add/update changes
         val allChanges = deletedChanges + processResult.changes
 
-        // Get new sync token if available
+        // Null when the server has no sync-token or the request failed.
         val syncTokenResult = clientToUse.getSyncToken(calendar.caldavUrl)
         val newSyncToken = syncTokenResult.getOrNull()
 
@@ -801,24 +764,23 @@ class PullStrategy @Inject constructor(
     }
 
     /**
-     * Etag-based fallback sync when sync-token expires (403/410).
+     * Resyncs after the sync-token is rejected (403/410) by comparing etags: lists only server
+     * etags, diffs them with Room, and multigets only new and changed events. That saves ~96% of
+     * a full pull's bandwidth (33KB vs 834KB for 231 events).
      *
-     * Instead of fetching all events (~834KB), this fetches only etags (~33KB),
-     * compares with local database, and multigets only changed events.
-     * Saves ~96% bandwidth for large calendars.
-     *
-     * @return PullResult.Success if sync worked, null if should fall through to pullFull()
+     * @return null when Room has no etags for the window or the etag listing failed; the
+     *   caller then runs [pullFull].
      */
     private suspend fun pullWithEtagComparison(
         calendar: Calendar,
         quirks: CalDavQuirks,
         clientToUse: CalDavClient,
         sessionBuilder: SyncSessionBuilder?,
-        recentlyPushedEventIds: Set<Long> = emptySet()
+        recentlyPushedEventIds: Set<Long>,
+        refetchEventIds: Set<Long>
     ): PullResult? {
         Log.d(TAG, "Attempting etag-based fallback sync for calendar: ${calendar.displayName}")
 
-        // Read configurable lookback window
         val syncPastDays = dataStore.syncPastDays.first()
         val isAllLookback = syncPastDays == Int.MAX_VALUE
         val now = System.currentTimeMillis()
@@ -826,10 +788,9 @@ class PullStrategy @Inject constructor(
         val startMs = if (isAllLookback) 0L else now - pastWindowMs
         val endMs = FUTURE_END_MS
 
-        // Step 1: Load local etags
-        // When lookback is "All", use unfiltered query (matches server which also has no time filter).
-        // Otherwise, use time-filtered query matching the server's window to prevent
-        // asymmetric deletion of events outside the lookback (issue #87, bug 2).
+        // With an "All" lookback the local query is unfiltered, like the server's. Otherwise it
+        // uses the server's window, so events outside the lookback aren't read as deleted
+        // on the server (#87).
         val localEtags = if (isAllLookback) {
             eventsDao.getEtagsByCalendarId(calendar.id)
         } else {
@@ -837,41 +798,35 @@ class PullStrategy @Inject constructor(
         }
         if (localEtags.isEmpty()) {
             Log.d(TAG, "No local events with etags - falling through to pullFull")
-            return null  // No local data to compare, fall through to full sync
+            return null  // nothing local to compare
         }
 
-        // Build local lookup map (caldavUrl -> etag)
         val localEtagMap = localEtags.associate { it.caldavUrl to it.etag }
         Log.d(TAG, "Local etags loaded: ${localEtagMap.size} events (lookback=${if (isAllLookback) "All" else "${syncPastDays}d"})")
 
-        // Step 2: Fetch server etags (lightweight - no iCal data)
         val etagResult = clientToUse.fetchEtagsInRange(calendar.caldavUrl, startMs, endMs)
         if (etagResult.isError()) {
             val error = etagResult as CalDavResult.Error
             Log.w(TAG, "fetchEtagsInRange failed: ${error.code} - ${error.message}, falling through to pullFull")
-            return null  // Etag fetch failed, fall through to full sync
+            return null
         }
 
         val serverEtags = (etagResult as CalDavResult.Success).data
         Log.d(TAG, "Server etags fetched: ${serverEtags.size} events")
 
-        // Build server lookup map (full URL -> etag)
+        // Full URL -> etag.
         val serverEtagMap = serverEtags.associate { (href, etag) ->
             quirks.buildEventUrl(href, calendar.caldavUrl) to etag
         }
 
-        // Step 3: Compare etags to find changes
-        // Changed: etag differs (including null -> non-null)
-        // New: on server but not local
-        // Deleted: on local but not server (handled separately)
+        // Changed: the etag differs (including null -> non-null). New: on the server only.
+        // Deleted: local only, handled below.
         //
-        // Membership is compared on a CANONICAL form of the URL so a resource
-        // the server echoes with different (but equivalent) percent-encoding —
-        // e.g. Radicale re-encoding a literal '@' in the filename as '%40' —
-        // is recognized as the same event rather than being misclassified as
-        // both deleted and new. We only canonicalize for comparison; changed/new
-        // keep the ORIGINAL server URL (so multiget fetches the exact server
-        // path) and deleted keeps the ORIGINAL local URL (for the row lookup).
+        // Compared on a canonical URL so a resource the server echoes with equivalent
+        // percent-encoding (Radicale re-encodes a literal '@' in the filename as '%40') isn't
+        // classed as both deleted and new. Only the comparison is canonical: changed and new
+        // keep the server URL, so multiget fetches the exact server path, and deleted keeps the
+        // local URL for the row lookup.
         val canonicalLocalEtags = HashMap<String, String?>(localEtagMap.size)
         for ((url, etag) in localEtagMap) {
             canonicalLocalEtags[CaldavUrlNormalizer.canonicalize(url) ?: url] = etag
@@ -883,16 +838,12 @@ class PullStrategy @Inject constructor(
         for ((serverUrl, serverEtag) in serverEtagMap) {
             val canonicalServerUrl = CaldavUrlNormalizer.canonicalize(serverUrl) ?: serverUrl
             if (!canonicalLocalEtags.containsKey(canonicalServerUrl)) {
-                // New event on server
                 newUrls.add(serverUrl)
             } else if (canonicalLocalEtags[canonicalServerUrl] != serverEtag) {
-                // Etag differs - event changed
                 changedUrls.add(serverUrl)
             }
-            // else: etag matches, no change needed
         }
 
-        // Find deleted events (on local but not server), comparing canonically.
         val canonicalServerKeys = serverEtagMap.keys
             .mapTo(HashSet(serverEtagMap.size)) { CaldavUrlNormalizer.canonicalize(it) ?: it }
         val deletedUrls = localEtagMap.keys.filter {
@@ -901,16 +852,13 @@ class PullStrategy @Inject constructor(
 
         Log.d(TAG, "Etag comparison: changed=${changedUrls.size}, new=${newUrls.size}, deleted=${deletedUrls.size}")
 
-        // Step 4: Handle deletions (respecting pending local changes)
         var deleted = 0
         val deletedChanges = mutableListOf<SyncChange>()
         val resolveLocalEvent = caldavUrlResolver(calendar.id)
         for (url in deletedUrls) {
             val event = resolveLocalEvent(url)
             if (event != null) {
-                // LOCAL-FIRST: Don't delete events with pending local changes
-                // RFC 4791: Don't delete recently pushed events — server may not
-                // have indexed them yet (no immediate visibility guarantee after PUT)
+                // Same keep rule as the delta's deletions in pullIncremental.
                 if (event.hasPendingChanges() || event.id in recentlyPushedEventIds) {
                     Log.d(TAG, "Skipping deletion of $url - " +
                         if (event.hasPendingChanges()) "has pending local changes (${event.syncStatus})"
@@ -934,9 +882,8 @@ class PullStrategy @Inject constructor(
             }
         }
 
-        // Step 5: Fetch changed + new events via multiget
+        // Multiget takes hrefs, so full URLs are cut back to their path.
         val hrefsToFetch = (changedUrls + newUrls).map { url ->
-            // Convert full URL back to href for multiget
             if (url.contains("://")) {
                 "/" + url.substringAfter("://").substringAfter("/")
             } else {
@@ -945,11 +892,9 @@ class PullStrategy @Inject constructor(
         }
 
         if (hrefsToFetch.isEmpty()) {
-            // No changes to fetch, just deletions
             Log.d(TAG, "No events to fetch - only deletions")
             sessionBuilder?.addDeleted(deleted)
 
-            // Get new sync token
             val syncTokenResult = clientToUse.getSyncToken(calendar.caldavUrl)
             val newSyncToken = syncTokenResult.getOrNull()
 
@@ -963,24 +908,19 @@ class PullStrategy @Inject constructor(
             )
         }
 
-        // Track hrefs for session
         sessionBuilder?.setHrefsReported(hrefsToFetch.size)
 
-        // Fetch events in batched concurrent multiget (v22.5.11)
         val fetchResult = fetchEventsBatched(clientToUse, calendar.caldavUrl, hrefsToFetch, sessionBuilder)
         val serverEvents = fetchResult.events
         sessionBuilder?.setEventsFetched(serverEvents.size)
 
         Log.d(TAG, "Fetched ${serverEvents.size} events via multiget (requested ${hrefsToFetch.size})")
 
-        // Step 6: Process fetched events
-        // Etag fallback is only called during incremental sync attempts, so isInitialSync = false
-        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds, isInitialSync = false)
+        // Only pullIncremental calls this, so it is never the initial sync.
+        val processResult = processEvents(calendar, serverEvents, sessionBuilder, recentlyPushedEventIds, refetchEventIds, isInitialSync = false)
 
-        // Combine deletion changes with add/update changes
         val allChanges = deletedChanges + processResult.changes
 
-        // Get new sync token
         val syncTokenResult = clientToUse.getSyncToken(calendar.caldavUrl)
         val newSyncToken = syncTokenResult.getOrNull()
 
@@ -994,9 +934,7 @@ class PullStrategy @Inject constructor(
         )
     }
 
-    /**
-     * Result of processing events - includes counts and individual changes for UI.
-     */
+    /** Counts and per-event changes for the UI from [processEvents]. */
     private data class ProcessEventsResult(
         val added: Int,
         val updated: Int,
@@ -1004,10 +942,9 @@ class PullStrategy @Inject constructor(
     )
 
     /**
-     * Cancel armed alarms when a server pull brings a fresh self-decline
-     * (server-side DECLINED) or removes the user from the attendee list
-     * (uninvite). AlarmManager is process-wide and not transactional, so
-     * this fires post-transaction; failures here must not abort the pull.
+     * Cancels the event's armed alarms when the pulled attendees show the user as DECLINED or
+     * no longer list the user (uninvited). AlarmManager isn't transactional, so this runs after
+     * the transaction commits, and a failure here must not abort the pull.
      */
     private suspend fun cancelRemindersIfSelfDeclined(
         eventId: Long,
@@ -1030,17 +967,15 @@ class PullStrategy @Inject constructor(
     }
 
     /**
-     * Record a per-event processing failure and route it through the same
-     * accounting a malformed-ICS parse failure gets. Shared by both processing
-     * passes so a change to the isolation policy can't drift between them.
+     * Records a per-event processing failure with the same accounting as a malformed-ICS parse
+     * failure. The master pass, the synthetic-master insert and the exception pass all call it,
+     * so the isolation policy can't drift between them.
      *
-     * Recovery depends on which pull path is running. The incremental path
-     * (pullIncremental) reads getSkippedParseError() and holds the sync token
-     * for a bounded retry (MAX_PARSE_RETRIES) before abandoning, so a transient
-     * failure gets re-fetched. The full-sync and etag-fallback paths do NOT
-     * consult this count: they advance the token/ctag unconditionally, so a
-     * skipped event is re-fetched only when the server next changes it (or on a
-     * forced full sync). Either way the failure is isolated to the one event and
+     * Recovery depends on the pull path. [pullIncremental] reads getSkippedParseError() and
+     * holds the sync-token for up to MAX_PARSE_RETRIES syncs before abandoning, so a transient
+     * failure is re-fetched. [pullFull] and [pullWithEtagComparison] don't read the count and
+     * advance the token and ctag regardless, so a skipped event is re-fetched only when the
+     * server next changes it or on a forced full sync. Either way only the one event is lost;
      * the rest of the batch lands.
      */
     private fun recordProcessingFailure(
@@ -1055,32 +990,31 @@ class PullStrategy @Inject constructor(
     }
 
     /**
-     * Process fetched events: parse, map, and save to database.
-     * Returns counts and individual SyncChange objects for UI notification.
+     * Parses, maps and saves fetched resources in four passes: parse, masters, exceptions, and
+     * a prune of exceptions the master's EXDATE now excludes. Returns counts and per-event
+     * [SyncChange]s for the UI.
      *
-     * IMPORTANT: Respects local-first architecture by skipping events with pending
-     * local changes (PENDING_CREATE, PENDING_UPDATE, PENDING_DELETE). These events
-     * will be pushed to server first, and any conflicts resolved via ETag/sequence.
-     *
-     * See: https://developer.android.com/topic/architecture/data-layer/offline-first
+     * Local-first: events with pending local changes (PENDING_CREATE, PENDING_UPDATE,
+     * PENDING_DELETE) are skipped. They are pushed to the server first, and any conflicts are
+     * resolved via ETag/sequence.
+     * See https://developer.android.com/topic/architecture/data-layer/offline-first
      */
     private suspend fun processEvents(
         calendar: Calendar,
         serverEvents: List<CalDavEvent>,
         sessionBuilder: SyncSessionBuilder?,
-        recentlyPushedEventIds: Set<Long> = emptySet(),
+        recentlyPushedEventIds: Set<Long>,
+        refetchEventIds: Set<Long>,
         isInitialSync: Boolean = false
     ): ProcessEventsResult {
         var added = 0
         var updated = 0
         val changes = mutableListOf<SyncChange>()
 
-        // Resolve the calendar's account once for the whole batch — feeds
-        // the per-event invite-notification check without re-querying the
-        // account row for every event in the pull.
+        // Read once per batch for the per-event invite and decline checks.
         val accountForInvites = accountRepository.getAccountById(calendar.accountId)
 
-        // First pass: collect all parsed events, separate masters from exceptions
+        // First pass: parse every resource and split masters from exceptions.
         val masterEvents = mutableListOf<ParsedEventWithMeta>()
         val exceptionEvents = mutableListOf<ParsedEventWithMeta>()
 
@@ -1094,7 +1028,6 @@ class PullStrategy @Inject constructor(
                 continue
             }
 
-            // Check for parse success
             val parsedEvents = when (parseResult) {
                 is ParseResult.Success -> parseResult.value
                 is ParseResult.Error -> {
@@ -1131,48 +1064,40 @@ class PullStrategy @Inject constructor(
             }
         }
 
-        // Second pass: upsert master events (respecting pending local changes)
+        // Second pass: upsert masters, skipping those with pending local changes.
         val uidToMasterEvent = mutableMapOf<String, Event>()
-        // Tracks UIDs whose master was actually re-processed (occurrences
-        // regenerated). Pass 3 must NOT skip bundled exceptions for these
-        // UIDs even if the exception's own etag matches — the master regen
-        // wiped and re-inserted occurrences at master-time, and the
-        // exception link must be re-applied so the day-card doesn't show
-        // both the master's RRULE-expanded instance AND the exception.
+        // UIDs whose master was saved and its occurrences regenerated. Pass 3 must re-link
+        // these UIDs' exceptions even when an exception's own etag matches: the regeneration
+        // re-inserted occurrences at master time, and without the link the day card shows both
+        // the master's expanded occurrence and the exception.
         val uidsWithRegeneratedMaster = mutableSetOf<String>()
-        // The parsed master DTSTART, indexed by UID, so pass 3 can
-        // normalize value-type-mismatched RECURRENCE-IDs against the
-        // master before storing originalInstanceTime.
+        // Parsed master DTSTART by UID, so pass 3 can normalize a value-type-mismatched
+        // RECURRENCE-ID against it before storing originalInstanceTime.
         val uidToMasterDtStart = masterEvents
             .associate { it.parsed.uid to it.parsed.dtStart }
 
-        // Resolve the master DTSTART to normalize a value-type-mismatched
-        // RECURRENCE-ID against. Prefer the master parsed in THIS batch;
-        // otherwise reconstruct it from the master already in Room, so the
-        // incremental path (exception .ics pulled without its unchanged
-        // master) normalizes the same way the bundled path stored it, using
-        // the shared Room-Event→dtStart reconstruction so it can't drift from
-        // the wire serialization. A synthetic placeholder or a non-recurring
-        // row is not a usable reference — return null so normalizeRecurrenceId
-        // passes the RECURRENCE-ID through unchanged. RDATE-only masters are
-        // recurring too (RFC 5545 §3.8.5.2), so the guard checks rdate as well
-        // as rrule — Event.isRecurring covers only rrule.
+        // Returns the master DTSTART to normalize a value-type-mismatched RECURRENCE-ID
+        // against. The master parsed in this batch wins; otherwise it is rebuilt from the
+        // master in Room with EventToICalEventMapper.dtStartOf, the same reconstruction the
+        // wire serialization uses, so an exception pulled without its unchanged master
+        // normalizes the way the bundled path stored it. A synthetic or non-recurring row
+        // returns null, and normalizeRecurrenceId passes the RECURRENCE-ID through unchanged.
+        // RDATE-only masters recur too (RFC 5545 §3.8.5.2), so rdate counts; Event.isRecurring
+        // checks only rrule.
         fun masterDtStartFor(uid: String, resolvedMaster: Event?): ICalDateTime? {
             uidToMasterDtStart[uid]?.let { return it }
             val m = resolvedMaster ?: return null
             val recurs = m.rrule != null || m.rdate != null
             if (!recurs) return null
-            if (m.extraProperties?.get(PULL_SYNTHETIC_MASTER_EXTRA_KEY) == "true") return null
+            if (m.isPullSyntheticMaster) return null
             return EventToICalEventMapper.dtStartOf(m)
         }
 
-        // Derive an exception's instance-time key: the RECURRENCE-ID normalized
-        // against the resolved master DTSTART. The lookup and the store both
-        // route through this so they can never disagree on the stored/queried
-        // value. (The orphan synthetic-master path below cannot use it — no
-        // master DTSTART exists yet — and deliberately anchors on the raw
-        // RECURRENCE-ID; masterDtStartFor's null-for-synthetic result keeps the
-        // two consistent for that case.)
+        // Returns an exception's instance-time key: its RECURRENCE-ID normalized against the
+        // resolved master DTSTART. The lookup and the store both use it, so the stored and
+        // queried values can't disagree. The orphan synthetic-master path below has no master
+        // DTSTART and anchors on the raw RECURRENCE-ID; masterDtStartFor returns null for a
+        // synthetic, which keeps the two consistent.
         fun resolveInstanceTime(parsed: ICalEvent, resolvedMaster: Event?): Long? =
             ICalEventMapper.normalizeRecurrenceId(
                 recurrenceId = parsed.recurrenceId,
@@ -1180,17 +1105,15 @@ class PullStrategy @Inject constructor(
             )?.timestamp
 
         for (meta in masterEvents) {
-            // PRIMARY: UID lookup (stable across server hostname changes like p180 vs p181)
-            // SECONDARY: caldavUrl lookup (fallback for edge cases)
-            // The URL fallback is a global query, and a row moved to another
-            // calendar keeps its old URL — adopting it here would overwrite live
-            // data and drag the row back into this calendar.
+            // UID first: it is stable across server hostname changes (p180 vs p181). The
+            // caldavUrl fallback is a global query, and a row moved to another calendar keeps
+            // its old URL, so only a hit in this calendar counts; adopting another calendar's
+            // row would overwrite live data and drag it back here.
             val existingEvent = eventsDao.getMasterByUidAndCalendar(meta.parsed.uid, calendar.id)
                 ?: eventsDao.getByCaldavUrl(meta.caldavUrl)?.takeIf { it.calendarId == calendar.id }
 
-            // LOCAL-FIRST: Skip events with pending local changes
-            // These will be pushed to server first via PushStrategy
-            // Server wins only AFTER local changes are synced (prevents data loss)
+            // Local-first: PushStrategy sends pending local changes first; the server wins only
+            // after they are synced, or the local edit would be lost.
             if (existingEvent != null && existingEvent.hasPendingChanges()) {
                 Log.d(TAG, "Skipping ${meta.caldavUrl} - has pending local changes (${existingEvent.syncStatus})")
                 sessionBuilder?.incrementSkipPendingLocal()
@@ -1198,20 +1121,22 @@ class PullStrategy @Inject constructor(
                 continue
             }
 
-            // CDN PROTECTION: Skip events we just pushed in this sync cycle.
-            // iCloud CDN may return stale data for recently-modified events.
-            // Trust our local version since we just successfully pushed it.
-            if (existingEvent != null && existingEvent.id in recentlyPushedEventIds) {
+            // iCloud's CDN may return stale data for an event pushed moments ago, so an event
+            // pushed in this sync cycle keeps its local version, unless the push merged a server
+            // change its rows lack.
+            if (existingEvent != null && existingEvent.id in recentlyPushedEventIds &&
+                existingEvent.id !in refetchEventIds
+            ) {
                 Log.d(TAG, "Skipping ${meta.caldavUrl} - recently pushed in this sync cycle")
                 sessionBuilder?.incrementSkipRecentlyPushed()
                 uidToMasterEvent[meta.parsed.uid] = existingEvent
                 continue
             }
 
-            // Skip if etag unchanged (prevents overwrite with stale data after push)
-            // After successful push, local event has the new etag from server.
-            // If server returns same etag, data is identical - no need to upsert.
-            // This handles iCloud eventual consistency where pull may return stale data.
+            // An unchanged etag means identical data, so there is nothing to upsert. After a
+            // first-attempt write the local row holds the server's new etag, so this also stops
+            // an eventually consistent iCloud read from overwriting it with stale data. A merged
+            // upload or a retried reply leaves the old etag, so its event passes this check.
             if (existingEvent != null && existingEvent.etag != null && existingEvent.etag == meta.etag) {
                 Log.d(TAG, "Skipping ${meta.caldavUrl} - etag unchanged (${meta.etag})")
                 sessionBuilder?.incrementSkipEtagUnchanged()
@@ -1219,19 +1144,14 @@ class PullStrategy @Inject constructor(
                 continue
             }
 
-            // Fault isolation spans the whole map->validate->upsert->occurrence
-            // pipeline: the map step (toEntity) and the pre-transaction reads run
-            // before the transaction, and a parseable-but-hostile event can make
-            // any of them throw a shape no fixture anticipated. Isolating only the
-            // transaction would still let a map-step throw abort the whole
-            // calendar's pull and strand every other event in the batch. The
-            // `continue`s inside are ordinary skip paths (invalid ts, race), not
-            // failures.
-            // Triple carries (saved event, prior attendees, new attendees) out of
-            // the isolated block; `mapped.attendees` is needed post-transaction by
-            // the decline-cancel hook but is scoped inside the try.
+            // The try spans map, validate, upsert and occurrences. The map step (toEntity) and
+            // the reads run before the transaction, and a parseable but hostile event can make
+            // any of them throw; isolating only the transaction would let that abort the whole
+            // calendar's pull and strand every other event in the batch. The `continue`s inside
+            // are ordinary skips (invalid timestamps, race), not failures.
+            // The Triple (saved event, prior attendees, new attendees) carries the attendees
+            // out of the try for the post-transaction decline check.
             val savedTriple: Triple<Event, List<Attendee>, List<Attendee>> = try {
-                // Map ICalEvent to Event entity + Attendee rows using ICalEventMapper
                 val mapped = ICalEventMapper.toEntity(
                     icalEvent = meta.parsed,
                     rawIcal = meta.rawIcal,
@@ -1241,7 +1161,6 @@ class PullStrategy @Inject constructor(
                 )
                 var event = mapped.event
 
-                // Reject events with invalid timestamps (RFC 5545 violation)
                 if (!hasValidTimestamps(event)) {
                     Log.w(TAG, "Skipping ${meta.caldavUrl} - invalid timestamps: startTs=${event.startTs}, endTs=${event.endTs}")
                     sessionBuilder?.incrementSkipParseError()
@@ -1249,24 +1168,22 @@ class PullStrategy @Inject constructor(
                     continue
                 }
 
-                // Preserve existing event ID and timestamps
+                // Keeps the row id, timestamps and a local color when the server sends none.
                 if (existingEvent != null) {
                     event = event.copy(
                         id = existingEvent.id,
                         createdAt = existingEvent.createdAt,
                         localModifiedAt = existingEvent.localModifiedAt,
-                        // Preserve existing etag when server omits <getetag> from response
-                        // (RFC 4791 says SHOULD include etag, but some servers/CDN may omit it)
+                        // RFC 4791 says the response SHOULD include <getetag>, but some servers
+                        // and CDNs omit it; the stored etag is kept then.
                         etag = meta.etag ?: existingEvent.etag,
                         color = event.color ?: existingEvent.color
                     )
                 }
 
-                // RACE PREVENTION: Re-check sync status just before the transaction.
-                // The outer hasPendingChanges() check (line 865) uses a stale in-memory
-                // object. A user edit between that check and this transaction would set
-                // syncStatus to PENDING_UPDATE. Without this re-check, the upsert would
-                // silently overwrite the user's local edit with server data (data loss).
+                // The hasPendingChanges() check above read an in-memory row. A user edit since
+                // then sets PENDING_UPDATE, and without this re-read the upsert would silently
+                // overwrite that edit with server data.
                 if (existingEvent != null) {
                     val freshStatus = eventsDao.getSyncStatus(existingEvent.id)
                     if (freshStatus != null && freshStatus != SyncStatus.SYNCED) {
@@ -1277,9 +1194,8 @@ class PullStrategy @Inject constructor(
                     }
                 }
 
-                // TRANSACTION: Upsert event and generate occurrences atomically
-                // Prevents orphaned events (no occurrences) if crash occurs mid-operation
-                // Wrapped in withDbRetry for resilience against database lock errors
+                // One transaction, so a crash can't leave an event without occurrences;
+                // withDbRetry retries a locked database.
                 withDbRetry {
                     database.runInTransaction {
                         val eventId = eventsDao.upsert(event)
@@ -1287,18 +1203,15 @@ class PullStrategy @Inject constructor(
 
                         seedCategories(saved)
 
-                        // Pre-replace snapshot lets the post-transaction
-                        // decline-cancel hook detect uninvites.
+                        // Read before the replace so the decline check can detect an uninvite.
                         val priorAttendees = attendeesDao.getForEventOnce(saved.id)
 
-                        // Persist server-authoritative attendee set inside the
-                        // same transaction (replace-not-merge per A2).
+                        // Server wins: the pulled attendee set replaces the stored one, no merge.
                         attendeesDao.replaceForEvent(
                             saved.id,
                             mapped.attendees.map { it.copy(eventId = saved.id) }
                         )
 
-                        // Regenerate occurrences for recurring events
                         if (saved.rrule != null) {
                             val now = System.currentTimeMillis()
                             occurrenceGenerator.generateOccurrences(
@@ -1307,7 +1220,6 @@ class PullStrategy @Inject constructor(
                                 rangeEndMs = now + OCCURRENCE_EXPANSION_MS
                             )
                         } else {
-                            // Non-recurring: generate single occurrence
                             occurrenceGenerator.regenerateOccurrences(saved)
                         }
 
@@ -1315,7 +1227,7 @@ class PullStrategy @Inject constructor(
                     }
                 }
             } catch (_: SQLiteConstraintException) {
-                // Check if this is a duplicate UID (unique constraint on uid, calendar_id)
+                // A master with this UID may already exist in the calendar; adopt it.
                 val existing = eventsDao.getMasterByUidAndCalendar(meta.parsed.uid, calendar.id)
                 if (existing != null) {
                     Log.w(TAG, "Duplicate UID detected for ${meta.parsed.uid}, using existing event")
@@ -1323,19 +1235,16 @@ class PullStrategy @Inject constructor(
                     uidToMasterEvent[meta.parsed.uid] = existing
                     continue
                 }
-                // Not a duplicate — already synced in a prior session. Skip to prevent sync abort loop (issue #55)
+                // Otherwise it was synced in an earlier session. Skipping it keeps the sync from
+                // aborting on every run (#55).
                 Log.d(TAG, "Skipped already-synced master ${meta.parsed.uid} (${meta.caldavUrl})")
                 sessionBuilder?.incrementSkipAlreadySynced()
                 continue
             } catch (e: CancellationException) {
-                throw e  // Never swallow coroutine cancellation
+                throw e  // never swallow coroutine cancellation
             } catch (e: Exception) {
-                // Fault isolation: a single event whose map/upsert/occurrence
-                // generation throws must not abort the whole calendar's pull and
-                // strand every other event in the batch. Any transaction rolled
-                // back this event's partial write, so skip it and continue.
-                // Recovery (token hold vs. advance) is path-dependent — see
-                // recordProcessingFailure.
+                // The transaction, if it started, rolled back this event's write. Recovery is
+                // described on recordProcessingFailure.
                 recordProcessingFailure(sessionBuilder, meta.caldavUrl, "event", e)
                 continue
             }
@@ -1347,12 +1256,10 @@ class PullStrategy @Inject constructor(
             uidToMasterEvent[meta.parsed.uid] = savedEvent
             uidsWithRegeneratedMaster.add(meta.parsed.uid)
 
-            // Fire the per-invite system notification after the
-            // transaction commits. The notifier filters for self-on-list +
-            // PARTSTAT=NEEDS-ACTION + notified_at IS NULL, so the call is
-            // cheap no-op for events that don't qualify. Skipped entirely
-            // when the calendar's account couldn't be resolved (orphan
-            // calendar — no user identity to match against attendees).
+            // Runs after the commit. The notifier fires only for the user's own attendee row
+            // with PARTSTAT=NEEDS-ACTION and notified_at IS NULL, so it is a no-op for other
+            // events. With no account (orphan calendar) there is no identity to match, so it
+            // is skipped.
             if (accountForInvites != null) {
                 try {
                     inviteNotifier.notifyNew(savedEvent, accountForInvites)
@@ -1362,9 +1269,8 @@ class PullStrategy @Inject constructor(
                 }
             }
 
-            // Run BEFORE the etag-only short-circuit below so PARTSTAT-only
-            // deltas — which leave hasContentChanged returning false — still
-            // cancel the alarm.
+            // Runs before the etag-only skip below, so a PARTSTAT-only change, which leaves
+            // hasContentChanged false, still cancels the alarm.
             cancelRemindersIfSelfDeclined(
                 eventId = savedEvent.id,
                 priorAttendees = priorAttendees,
@@ -1372,13 +1278,12 @@ class PullStrategy @Inject constructor(
                 account = accountForInvites
             )
 
-            // Skip notification for etag-only updates (sibling VEVENT in same resource changed)
+            // Etag-only update: another VEVENT in the same resource changed. No notification.
             if (existingEvent != null && !hasContentChanged(existingEvent, savedEvent)) {
                 Log.d(TAG, "Etag-only update for: ${savedEvent.title}")
                 continue
             }
 
-            // Track change for UI notification
             val changeType = if (existingEvent == null) ChangeType.NEW else ChangeType.MODIFIED
             if (existingEvent == null) {
                 added++
@@ -1403,30 +1308,22 @@ class PullStrategy @Inject constructor(
             ))
         }
 
-        // Third pass: link and upsert exception events (respecting pending local changes)
+        // Third pass: upsert and link exceptions, skipping those with pending local changes.
         for (meta in exceptionEvents) {
-            // First lookup: in-memory map populated by pass 2 (covers the
-            // common case where master and exception are bundled). Fallback
-            // to a UID query in case the master was upserted in a prior sync
-            // and isn't in this batch's map. Accept synthetic placeholders
-            // (rrule=null but `original_event_id IS NULL`) so a real master
-            // arriving in a later batch finds and mutates it in place.
+            // Pass 2's map covers a master bundled with its exceptions; the UID query covers a
+            // master saved in an earlier sync. It also returns a synthetic placeholder
+            // (rrule null, `original_event_id IS NULL`), so exceptions keep linking to one row
+            // until the real master replaces it.
             var masterEvent = uidToMasterEvent[meta.parsed.uid]
                 ?: eventsDao.getMasterByUidAndCalendar(meta.parsed.uid, calendar.id)
 
             if (masterEvent == null) {
-                // Orphan exception: no master in this batch, no master in
-                // Room, no synthetic from a prior pull. Synthesize a
-                // placeholder so the exception's FK has a target. When the
-                // real master eventually arrives (window expanded, scroll-
-                // back fetch, server-side fix), pass 2's getMasterBy...
-                // lookup finds this synthetic and the upsert path mutates
-                // it in place — same row id, sentinel cleared, real RRULE
-                // populated, exception FKs survive untouched.
+                // Orphan exception: no master in this batch or in Room, and no synthetic from an
+                // earlier pull. The synthetic gives its FK a target until the real master
+                // arrives (see PULL_SYNTHETIC_MASTER_EXTRA_KEY).
                 val recurrenceIdMs = meta.parsed.recurrenceId?.timestamp
                 if (recurrenceIdMs == null) {
-                    // No RECURRENCE-ID — can't synthesize without an anchor
-                    // timestamp. Drop with the legacy warning.
+                    // Without a RECURRENCE-ID there is no anchor timestamp: drop it.
                     Log.w(TAG, "Orphaned exception with no RECURRENCE-ID dropped: ${meta.caldavUrl}")
                     sessionBuilder?.incrementSkipOrphanedException()
                     sessionBuilder?.addWarning(
@@ -1440,18 +1337,16 @@ class PullStrategy @Inject constructor(
                     recurrenceIdMs = recurrenceIdMs,
                     placeholderTitle = meta.parsed.summary?.ifBlank { null } ?: "Untitled",
                 )
-                // The synthetic insert runs before the map/upsert try below, so
-                // isolate it here: a DB-layer throw on this one placeholder must
-                // skip this exception, not abort the whole calendar's pull.
-                // withDbRetry mirrors the master (upsert) and exception (upsert)
-                // write paths so a transient "database is locked" retries rather
-                // than being caught and silently dropping the orphan — full-sync
-                // and etag paths advance the token unconditionally, so a dropped
-                // orphan would not be re-fetched until the server next changes it.
+                // This insert runs before the try below, so it has its own: a DB throw on the
+                // placeholder must skip this exception, not abort the calendar's pull. withDbRetry,
+                // as on the master and exception upserts, retries a transient "database is
+                // locked" before the catch drops the orphan; the full and etag paths advance the
+                // token regardless, so a dropped orphan isn't re-fetched until the server next
+                // changes it.
                 val syntheticId = try {
                     withDbRetry { eventsDao.insert(synthetic) }
                 } catch (e: CancellationException) {
-                    throw e  // Never swallow coroutine cancellation
+                    throw e  // never swallow coroutine cancellation
                 } catch (e: Exception) {
                     recordProcessingFailure(sessionBuilder, meta.caldavUrl, "exception", e)
                     continue
@@ -1468,19 +1363,16 @@ class PullStrategy @Inject constructor(
                 )
             }
 
-            // Get original instance time from RECURRENCE-ID. Normalize a
-            // value-type-mismatched RECURRENCE-ID (a DATE-form value against a
-            // timed master — RFC 5545 §3.8.4.4 says the types MUST match, but
-            // peer clients emit the mismatch and servers preserve it) against
-            // the master's DTSTART, exactly as the store path does when writing
-            // originalInstanceTime. Passing the resolved masterEvent lets this
-            // normalize on the incremental path too (exception pulled without
-            // its master in-batch); keying off the raw value would miss the
-            // stored row and re-add the exception as a new event.
+            // RFC 5545 §3.8.4.4 says RECURRENCE-ID must match the master DTSTART's value type,
+            // but other clients send a DATE against a timed master and servers keep it. The
+            // value is normalized against the master's DTSTART the way the store writes
+            // originalInstanceTime. Passing the resolved master covers an exception pulled
+            // without its master; keying off the raw value would miss the stored row and
+            // re-add the exception as a new event.
             val originalInstanceTime = resolveInstanceTime(meta.parsed, masterEvent)
 
-            // Find existing exception by UID + instance time (RFC 5545 compliant)
-            // Uses server-stable identifiers - doesn't break when master ID changes
+            // UID + instance time (RFC 5545) are server-stable, so the lookup survives a change
+            // of master row id.
             val existingException = originalInstanceTime?.let {
                 eventsDao.getExceptionByUidAndInstanceTime(
                     uid = meta.parsed.uid,
@@ -1489,31 +1381,24 @@ class PullStrategy @Inject constructor(
                 )
             }
 
-            // LOCAL-FIRST: Skip exception events with pending local changes
             if (existingException != null && existingException.hasPendingChanges()) {
                 Log.d(TAG, "Skipping exception ${meta.caldavUrl} - has pending local changes (${existingException.syncStatus})")
                 sessionBuilder?.incrementSkipPendingLocal()
                 continue
             }
 
-            // Skip if etag unchanged (prevents overwrite with stale data after push).
-            // BUT: when the master in this same .ics resource was just
-            // regenerated, re-link first. Master regen wipes occurrences
-            // and re-expands from RRULE; without re-running linkException
-            // here, the master-time instance (e.g. Jun 01 19:00) and the
-            // exception's modified-time instance (e.g. Jun 01 10:00) both
-            // render on the day card.
+            // An unchanged etag skips the upsert, as for masters. When the master in the same
+            // resource was regenerated, its occurrences were re-expanded from the RRULE, so the
+            // link is re-applied; otherwise the master-time occurrence (Jun 01 19:00) and the
+            // exception's moved one (Jun 01 10:00) both render on the day card.
             val etagsKnownUnchanged = existingException != null &&
                 existingException.etag != null &&
                 existingException.etag == meta.etag
             val masterRegenerated = meta.parsed.uid in uidsWithRegeneratedMaster
             if (etagsKnownUnchanged && !masterRegenerated) {
-                // Self-heal: a previous pull may have crashed mid-link,
-                // leaving the master's RRULE-expanded occurrence at this
-                // exception's instance time WITHOUT exception_event_id set
-                // while the exception row itself was committed. Both etags
-                // match this round so neither pass would otherwise touch
-                // the row. Detect the unlinked state and re-run linkException.
+                // Self-heal: an earlier pull may have committed the exception row and crashed
+                // before linking, leaving the master's occurrence at this instance time without
+                // exception_event_id. Both etags match now, so nothing else would touch it.
                 val recurrenceIdTime = existingException?.originalInstanceTime
                 if (recurrenceIdTime != null) {
                     val occ = database.occurrencesDao()
@@ -1532,12 +1417,9 @@ class PullStrategy @Inject constructor(
                 continue
             }
             if (etagsKnownUnchanged && masterRegenerated) {
-                // The exception's own row data is unchanged, but its master
-                // was regenerated and needs the link re-applied. Re-run
-                // linkException — Step 3 matches the freshly-inserted
-                // master row by `ABS(start_ts - recurrenceIdTime) < 60s`
-                // and updates it to the exception's modified time with
-                // exception_event_id set.
+                // The exception row is unchanged but its master was regenerated. linkException
+                // matches the re-inserted master occurrence by `ABS(start_ts - recurrenceIdTime)
+                // < 60s` and moves it to the exception's time with exception_event_id set.
                 val recurrenceIdTime = existingException!!.originalInstanceTime
                 if (recurrenceIdTime != null) {
                     occurrenceGenerator.linkException(
@@ -1550,34 +1432,22 @@ class PullStrategy @Inject constructor(
                 continue
             }
 
-            // Fault isolation covers the map->validate->upsert->link pipeline for
-            // this override, mirroring the master pass: the map step (toEntity)
-            // runs before the transaction and a parseable-but-hostile override
-            // event can make it throw a shape no fixture anticipated. Isolating
-            // only the transaction would still let a map-step throw abort the
-            // whole calendar's pull. The `continue`s inside are ordinary skip
-            // paths (invalid ts, race), not failures.
+            // The try spans map, validate, upsert and link, for the same reason as in the master
+            // pass. The `continue`s inside are ordinary skips (invalid timestamps, race).
             //
-            // Scope note: the RECURRENCE-ID resolution and etag-unchanged re-link
-            // above (resolveInstanceTime / the self-heal linkException) sit before
-            // this try and are not isolated — they operate on already-resolved
-            // values, not the untrusted map step, so a throw there is treated as a
-            // real error, same as before this change.
+            // resolveInstanceTime and the etag-unchanged re-links above sit outside it: they
+            // work on already-resolved values, not the untrusted map step, so a throw there is
+            // a real error.
             //
-            // NOTE: a synthetic master may have been inserted above (outside any
-            // transaction) to give this exception's FK a target. It is left in
-            // place on failure by design — it is an invisible CANCELLED, rrule-null
-            // placeholder that generates no occurrence of its own, is cached in
-            // uidToMasterEvent for sibling exceptions in this batch, and is mutated
-            // in place when the real master arrives. Deleting it here would orphan
-            // a sibling exception that already linked to it.
+            // A synthetic master inserted above stays on failure. It is an invisible CANCELLED
+            // placeholder with no occurrence of its own, cached in uidToMasterEvent for sibling
+            // exceptions, and replaced when the real master arrives; deleting it would orphan a
+            // sibling exception already linked to it.
             val savedExceptionTriple: Triple<Event, List<Attendee>, List<Attendee>> = try {
-                // Map ICalEvent to Event entity + Attendee rows using ICalEventMapper.
-                // Pass the master's DTSTART so the mapper normalizes a
-                // value-type-mismatched RECURRENCE-ID before writing
-                // originalInstanceTime — see ICalEventMapper.normalizeRecurrenceId.
-                // Uses the same resolver as the lookup above so the stored key and
-                // the queried key are always derived identically.
+                // The master DTSTART lets the mapper normalize the RECURRENCE-ID
+                // (ICalEventMapper.normalizeRecurrenceId) before writing originalInstanceTime.
+                // It comes from masterDtStartFor, as the lookup's does, so the stored and
+                // queried keys match.
                 val mappedException = ICalEventMapper.toEntity(
                     icalEvent = meta.parsed,
                     rawIcal = meta.rawIcal,
@@ -1588,7 +1458,6 @@ class PullStrategy @Inject constructor(
                 )
                 var event = mappedException.event
 
-                // Reject exception events with invalid timestamps (RFC 5545 violation)
                 if (!hasValidTimestamps(event)) {
                     Log.w(TAG, "Skipping exception ${meta.caldavUrl} - invalid timestamps: startTs=${event.startTs}, endTs=${event.endTs}")
                     sessionBuilder?.incrementSkipParseError()
@@ -1596,25 +1465,23 @@ class PullStrategy @Inject constructor(
                     continue
                 }
 
-                // Link to master event
                 event = event.copy(
                     originalEventId = masterEvent.id,
                     originalSyncId = meta.parsed.uid
                 )
 
-                // Preserve existing event ID and timestamps
+                // Same preserved fields as the master pass.
                 if (existingException != null) {
                     event = event.copy(
                         id = existingException.id,
                         createdAt = existingException.createdAt,
                         localModifiedAt = existingException.localModifiedAt,
-                        // Preserve existing etag when server omits <getetag> from response
                         etag = meta.etag ?: existingException.etag,
                         color = event.color ?: existingException.color
                     )
                 }
 
-                // RACE PREVENTION: Re-check sync status for exception events (same as master events above)
+                // Re-read the sync status, as in the master pass.
                 if (existingException != null) {
                     val freshStatus = eventsDao.getSyncStatus(existingException.id)
                     if (freshStatus != null && freshStatus != SyncStatus.SYNCED) {
@@ -1624,10 +1491,10 @@ class PullStrategy @Inject constructor(
                     }
                 }
 
-                // TRANSACTION: Upsert exception, link to master's occurrence atomically
-                // Uses Model B (linked occurrence) consistently to prevent duplicates.
-                // linkException handles: delete Model A occurrence (if exists), update/create Model B.
-                // Wrapped in withDbRetry for resilience against database lock errors
+                // Upsert and link in one transaction; withDbRetry retries a locked database.
+                // The exception always ends up as the master's linked occurrence (Model B):
+                // linkException deletes any occurrence of its own (Model A), which would
+                // otherwise show twice.
                 withDbRetry {
                     database.runInTransaction {
                         val eventId = eventsDao.upsert(event)
@@ -1637,21 +1504,17 @@ class PullStrategy @Inject constructor(
 
                         val priorAttendees = attendeesDao.getForEventOnce(saved.id)
 
-                        // Persist attendee rows for the exception event in
-                        // the same transaction. Exception events have their
-                        // own per-instance attendee list (RFC 5545 §3.8.4.1).
+                        // An exception has its own attendee list (RFC 5545 §3.8.4.1).
                         attendeesDao.replaceForEvent(
                             saved.id,
                             mappedException.attendees.map { it.copy(eventId = saved.id) }
                         )
 
-                        // Link exception to master's occurrence (Model B)
-                        // This normalizes any existing Model A to Model B, preventing duplicates
                         val originalTime = event.originalInstanceTime
                         if (originalTime != null) {
                             occurrenceGenerator.linkException(masterEvent.id, originalTime, saved)
                         } else {
-                            // Fallback: no original time means standalone occurrence
+                            // No instance time: a standalone occurrence.
                             occurrenceGenerator.regenerateOccurrences(saved)
                         }
 
@@ -1659,20 +1522,18 @@ class PullStrategy @Inject constructor(
                     }
                 }
             } catch (_: SQLiteConstraintException) {
-                // Already synced in a prior session. Skip to prevent sync abort loop (issue #55)
+                // Synced in an earlier session. Skipping it keeps the sync from aborting on
+                // every run (#55).
                 Log.d(TAG, "Skipped already-synced exception ${meta.parsed.uid} " +
                     "(RECURRENCE-ID: ${meta.parsed.recurrenceId?.timestamp})")
                 sessionBuilder?.incrementSkipAlreadySynced()
                 sessionBuilder?.addWarning("Already-synced exception skipped at ${filenameOf(meta.caldavUrl)}")
                 continue
             } catch (e: CancellationException) {
-                throw e  // Never swallow coroutine cancellation
+                throw e  // never swallow coroutine cancellation
             } catch (e: Exception) {
-                // Fault isolation for the exception pass, mirroring the master
-                // pass above: one override event that throws during map/upsert/
-                // link must not abort the pull. Any transaction rolled back its
-                // partial write; skip and continue. Recovery is path-dependent —
-                // see recordProcessingFailure.
+                // As in the master pass: the write rolled back; recovery is described on
+                // recordProcessingFailure.
                 recordProcessingFailure(sessionBuilder, meta.caldavUrl, "exception", e)
                 continue
             }
@@ -1688,13 +1549,13 @@ class PullStrategy @Inject constructor(
                 account = accountForInvites
             )
 
-            // Skip notification for etag-only updates (sibling VEVENT in same resource changed)
+            // Etag-only update: another VEVENT in the same resource changed.
             if (existingException != null && !hasContentChanged(existingException, savedExceptionEvent)) {
                 Log.d(TAG, "Etag-only update for exception: ${savedExceptionEvent.title}")
                 continue
             }
 
-            // Track change for UI notification (exception events are shown like regular events)
+            // Exceptions are notified like regular events.
             val changeType = if (existingException == null) ChangeType.NEW else ChangeType.MODIFIED
             if (existingException == null) {
                 added++
@@ -1710,38 +1571,30 @@ class PullStrategy @Inject constructor(
                 eventTitle = savedExceptionEvent.title,
                 eventStartTs = savedExceptionEvent.startTs,
                 isAllDay = savedExceptionEvent.isAllDay,
-                isRecurring = true, // Exception events are always from recurring series
+                isRecurring = true, // an exception always belongs to a series
                 calendarName = calendar.displayName,
                 calendarColor = calendar.color,
                 isFromInitialSync = isInitialSync
             ))
         }
 
-        // Fourth pass: prune local exceptions the server genuinely excluded.
-        // When a modified occurrence is deleted on another client, the server
-        // adds an EXDATE to the master (RFC 5545 §3.8.5.1) and drops the
-        // override VEVENT. Without pruning, the stale exception lingers on the
-        // calendar (the row survives because pass 3 only visits exceptions the
-        // server still sends).
+        // Fourth pass: prune local exceptions the server excluded. When a changed occurrence is
+        // deleted on another client, the server adds an EXDATE to the master (RFC 5545
+        // §3.8.5.1) and drops the exception VEVENT. Pass 3 only visits exceptions the server
+        // still sends, so without this the stale exception stays on the calendar.
         //
-        // The prune fires ONLY when BOTH hold for a local exception:
-        //   (a) its instance is absent from the batch's exception set, AND
-        //   (b) the master's EXDATE now covers that instance.
-        // (b) is the load-bearing guard. Absent-alone is NOT sufficient — that
-        // would wrongly delete live overrides in two reachable cases:
-        //   • a server that violates RFC 4791 §4.1 by splitting same-UID
-        //     components across resources (only the master's resource is
-        //     re-fetched, so its overrides are absent from this batch), and
-        //   • an override VEVENT the parser dropped (parseAllEvents silently
-        //     skips unparseable components), which is present on the server but
-        //     absent from `present`.
-        // Requiring the EXDATE match means we only remove what the master
-        // itself declares excluded — matching EXDATE-precedence semantics and
-        // erring toward keeping data when the signals are ambiguous.
+        // A local exception is pruned only when its instance is absent from this batch and the
+        // master's EXDATE now covers it. Absence alone would delete live exceptions in two
+        // reachable cases:
+        //   - a server that breaks RFC 4791 §4.1 by splitting same-UID components across
+        //     resources: only the master's resource is re-fetched, so its exceptions are absent;
+        //   - an exception VEVENT the parser dropped (parseAllEvents silently skips
+        //     unparseable components): on the server but absent from `present`.
+        // So only what the master itself declares excluded is removed, and ambiguous signals
+        // keep the data.
         //
-        // Guarded to UIDs whose master arrived in this batch: §4.1 also permits
-        // a resource carrying ONLY overrides without the master, which is not
-        // authoritative for pruning.
+        // Only UIDs whose master was saved in this batch are pruned: §4.1 also permits a
+        // resource with only exceptions, which isn't authoritative for pruning.
         val presentInstancesByUid = exceptionEvents
             .groupBy { it.parsed.uid }
             .mapValues { (_, metas) ->
@@ -1749,15 +1602,15 @@ class PullStrategy @Inject constructor(
             }
         for (uid in uidsWithRegeneratedMaster) {
             val master = uidToMasterEvent[uid] ?: continue
-            // CDN protection: if we just pushed this master's resource this
-            // cycle, a stale read may omit a bundled exception we added. Don't
-            // prune its exceptions now — pass 2 applies the same guard to the
-            // master, and bundled exception ids aren't tracked individually.
-            if (master.id in recentlyPushedEventIds) continue
+            // A stale CDN read of a master pushed this cycle may omit an exception just added.
+            // Pass 2 guards the master the same way; an ordinary upload doesn't report its
+            // bundled exception ids one by one, so none of this master's exceptions are pruned.
+            // A master refreshed after a merged upload is pruned like any other: its exceptions
+            // went up as merged, and those it sent are in recentlyPushedEventIds, skipped below.
+            if (master.id in recentlyPushedEventIds && master.id !in refetchEventIds) continue
             val present = presentInstancesByUid[uid].orEmpty()
-            // Master EXDATE set (stored as epoch-ms CSV, normalized against the
-            // master's own DTSTART — the same basis as the exception instance
-            // keys, so directly comparable).
+            // EXDATE is stored as epoch-ms CSV normalized against the master's own DTSTART, the
+            // same basis as the exception instance keys, so they compare directly.
             val exdateSet = master.exdate
                 ?.split(",")
                 ?.mapNotNull { it.trim().toLongOrNull() }
@@ -1767,22 +1620,20 @@ class PullStrategy @Inject constructor(
             for (ex in localExceptions) {
                 val instance = ex.originalInstanceTime ?: continue
                 if (instance in present) continue
-                // Only prune what the master's EXDATE actually excludes (see above).
                 if (instance !in exdateSet) continue
-                // Local-first: never drop an exception with unsynced local edits;
-                // it will be pushed (or resurrected) on the next cycle.
+                // Local-first: never drop an exception with unsynced local edits; the next cycle
+                // pushes (or resurrects) it.
                 if (ex.hasPendingChanges()) continue
                 if (ex.id in recentlyPushedEventIds) continue
                 Log.d(TAG, "Pruning exception ${ex.id} (uid=$uid, instance=$instance) — EXDATE-excluded on master")
-                // Atomic: cancel the linked occurrence AND delete the row
-                // together, so a failure between them can't leave a cancelled
-                // occurrence with a surviving, still-linked exception row that
-                // no later etag-matching pass would revisit.
+                // One transaction: a failure between the two would leave a cancelled occurrence
+                // with a surviving, still-linked exception row that no later etag-matching pass
+                // revisits.
                 database.runInTransaction {
                     database.occurrencesDao().markCancelledByException(ex.id)
                     eventsDao.deleteById(ex.id)
                 }
-                // Emit the notification only after the delete committed.
+                // Notified only after the delete commits.
                 changes.add(SyncChange(
                     type = ChangeType.DELETED,
                     eventId = null,
@@ -1801,9 +1652,7 @@ class PullStrategy @Inject constructor(
         return ProcessEventsResult(added, updated, changes)
     }
 
-    /**
-     * Helper class to hold parsed event with metadata.
-     */
+    /** A parsed VEVENT with the resource it came from. */
     private data class ParsedEventWithMeta(
         val parsed: ICalEvent,
         val rawIcal: String,
@@ -1816,15 +1665,12 @@ class PullStrategy @Inject constructor(
     )
 
     /**
-     * Fetch events in batched concurrent multiget requests (v22.5.11).
+     * Fetches [hrefs] with concurrent calendar-multiget requests of [MULTIGET_BATCH_SIZE]
+     * (v22.5.11). OkHttp's Dispatcher limits them to 5 concurrent requests per host.
      *
-     * Splits hrefs into batches of [MULTIGET_BATCH_SIZE] and fetches them concurrently.
-     * OkHttp Dispatcher throttles to 5 concurrent requests per host.
-     *
-     * Per-batch resilience: if a batch multiget fails, falls back to individual
-     * single-href fetches for that batch via [fetchSingleHrefConcurrent]. Other
-     * batches continue normally. This also handles Zoho's empty-response quirk
-     * (HTTP 200 empty body for multi-href calendar-multiget).
+     * A batch that fails, or returns no events for more than one href, falls back to one fetch
+     * per href via [fetchSingleHrefConcurrent]; other batches are unaffected. The empty case is
+     * Zoho's quirk: HTTP 200 with an empty body for a multi-href calendar-multiget.
      */
     private suspend fun fetchEventsBatched(
         client: CalDavClient,
@@ -1868,10 +1714,9 @@ class PullStrategy @Inject constructor(
     }
 
     /**
-     * Fetch events one href at a time, concurrently. Used as fallback when a server
-     * returns empty for multi-href calendar-multiget (Zoho quirk).
-     * OkHttp Dispatcher throttles to 5 concurrent requests per host.
-     * Skips individual failures — partial data is better than none.
+     * Fetches [hrefs] one per request, concurrently, as the fallback for a failed or empty
+     * batch in [fetchEventsBatched]. Failed hrefs are skipped with a warning: partial data is
+     * better than none.
      */
     private suspend fun fetchSingleHrefConcurrent(
         client: CalDavClient,

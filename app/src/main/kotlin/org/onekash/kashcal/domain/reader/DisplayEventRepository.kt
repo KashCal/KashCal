@@ -30,12 +30,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Composite repository merging Room (EventReader) + device calendar events.
+ * Merges Room events ([EventReader]) and device-calendar events so ViewModels and widgets
+ * only see [DisplayEvent].
  *
- * Follows NIA's CompositeUserNewsResourceRepository pattern: combine two
- * data sources in a domain-layer class so ViewModels only see [DisplayEvent].
- *
- * SecurityException from CalendarProvider is caught and falls back to Room-only.
+ * A CalendarProvider [SecurityException] is caught and falls back to Room-only results.
  */
 @Singleton
 class DisplayEventRepository @Inject constructor(
@@ -51,31 +49,19 @@ class DisplayEventRepository @Inject constructor(
     }
 
     /**
-     * Signal that device calendar data has changed.
-     * Exposes [CalendarProviderManager.changeSignal] so ViewModels can invalidate
-     * one-shot caches (e.g., month grid event dots) without importing CalendarProviderManager.
+     * Emits when device calendar data changes ([CalendarProviderManager.changeSignal]), so
+     * ViewModels can invalidate one-shot caches (e.g. month grid event dots) without importing
+     * CalendarProviderManager.
      */
     val deviceCalendarChangeSignal: StateFlow<Int> get() = calendarProviderManager.changeSignal
 
     /**
-     * Signal that the app itself just wrote to a device calendar, so the
-     * reactive views (day pager, agenda, week, month dots) re-query device
-     * events immediately instead of waiting for the debounced ContentObserver.
-     * The re-query still runs when no device calendars are visible; it just
-     * returns no device events.
-     */
-    fun notifyDeviceCalendarChanged() {
-        calendarProviderManager.notifyLocalChange()
-    }
-
-    /**
-     * Get display events for a day pager range, grouped by day code.
+     * Emits the day pager's events, from 3 days before [centerDateMs] to 4 days after, grouped
+     * by day code and sorted by start.
      *
-     * Combines Room Flow + changeSignal. When either emits, re-queries
-     * CalendarProvider and merges results.
-     *
-     * @param centerDateMs Center date of the pager range (ms)
-     * @return Flow of day code -> sorted events map
+     * Re-emits, re-querying CalendarProvider, when the Room flow
+     * ([EventReader.getVisibleOccurrencesWithEventsInRangeFlow]), the device change signal, the
+     * show-declined preference or any attendee row changes.
      */
     fun getDisplayEventsForDayRange(
         centerDateMs: Long
@@ -98,13 +84,9 @@ class DisplayEventRepository @Inject constructor(
     }
 
     /**
-     * Get display events for a timestamp range as a flat list.
-     *
-     * Used by agenda view and 3-day view. Combines Room Flow + changeSignal.
-     *
-     * @param startMs Start of range in epoch millis (inclusive)
-     * @param endMs End of range in epoch millis (inclusive)
-     * @return Flow of sorted display events
+     * Emits the events in [startMs]..[endMs] (inclusive) as one list sorted by start, for the
+     * agenda and the week, 3-day and day grids. Re-emits on the same sources as
+     * [getDisplayEventsForDayRange].
      */
     fun getDisplayEventsForRange(
         startMs: Long,
@@ -128,14 +110,9 @@ class DisplayEventRepository @Inject constructor(
     }
 
     /**
-     * Get display events for a day code range, grouped by day code.
-     *
-     * Used by batch prefetch. Same pattern as [getDisplayEventsForDayRange] but
-     * takes day codes instead of a center date.
-     *
-     * @param startDayCode Start day in YYYYMMDD format (inclusive)
-     * @param endDayCode End day in YYYYMMDD format (inclusive)
-     * @return Flow of day code -> sorted events map
+     * Emits the events from [startDayCode] to [endDayCode] (YYYYMMDD, inclusive) grouped by
+     * day code, for the full-height month grid. Same shape and sources as
+     * [getDisplayEventsForDayRange].
      */
     fun getDisplayEventsForDateRange(
         startDayCode: Int,
@@ -157,16 +134,13 @@ class DisplayEventRepository @Inject constructor(
     }
 
     /**
-     * Search for display events matching a text query.
+     * Returns the Room and CalendarProvider matches for [query], sorted by `displayTs`; empty
+     * for a blank query.
      *
-     * Merges Room FTS search results + CalendarProvider search results.
-     * Returns a flat list of [SearchResult] sorted by displayTs.
-     *
-     * @param query Search text
-     * @param startDayCode Start day in YYYYMMDD format (inclusive), or null for unbounded Room search
-     * @param endDayCode End day in YYYYMMDD format (inclusive), or null for unbounded Room search
-     * @param roomSearcher Lambda to perform the Room FTS search (injected to keep EventReader flexible)
-     * @return Merged search results sorted by displayTs
+     * @param startDayCode first day (YYYYMMDD, inclusive) of the device search; the Room search
+     *   gets only [query].
+     * @param endDayCode last day (YYYYMMDD, inclusive) of the device search.
+     * @param roomSearcher runs the Room FTS search.
      */
     suspend fun searchDisplayEvents(
         query: String,
@@ -197,17 +171,12 @@ class DisplayEventRepository @Inject constructor(
     }
 
     /**
-     * One-shot query for display events grouped by day code.
+     * Returns the events from [startDayCode] to [endDayCode] (YYYYMMDD, inclusive) grouped by
+     * day code, once, for callers that don't need updates (for example widgets and month and
+     * year dots).
      *
-     * Used by widgets and month grid event dots — contexts that need current data
-     * but don't need reactive updates.
-     *
-     * Uses dedicated one-shot path: EventReader.first() + CalendarProvider query,
-     * NOT combine().first() which would set up reactive machinery for a single emission.
-     *
-     * @param startDayCode Start day in YYYYMMDD format (inclusive)
-     * @param endDayCode End day in YYYYMMDD format (inclusive)
-     * @return Map of day code -> sorted events
+     * Takes the Room Flow's first value and queries the provider directly; `combine().first()`
+     * would set up the reactive machinery for a single emission.
      */
     suspend fun getDisplayEventsGroupedByDayOnce(
         startDayCode: Int,
@@ -227,16 +196,12 @@ class DisplayEventRepository @Inject constructor(
     }
 
     /**
-     * Suggest event titles from user history (Room + device calendar) matching
-     * a prefix, for the event-form autocomplete dropdown.
+     * Suggests event titles from Room and device-calendar history that match [prefix], for the
+     * event-form autocomplete. Empty for a prefix shorter than [TITLE_SUGGESTION_MIN_PREFIX].
      *
-     * Queries both sources in parallel, then merges by case-and-whitespace-
-     * normalized title. Frequencies sum across sources; display casing comes
-     * from the entry with the most recent [TitleSuggestion.lastUsed].
-     *
-     * Respects the user's device-calendar visibility settings via the shared
-     * [getVisibleDeviceCalendarIds] helper. The device repository catches
-     * [SecurityException] internally and returns empty — no extra guard here.
+     * Queries both sources in parallel and merges them with [mergeTitleSuggestions]. Only
+     * visible device calendars count ([getVisibleDeviceCalendarIds]). The device repository
+     * returns empty on a [SecurityException], so there is no guard here.
      */
     suspend fun suggestTitles(
         prefix: String,
@@ -269,18 +234,14 @@ class DisplayEventRepository @Inject constructor(
     }
 
     /**
-     * Apply the "Show declined events" preference to Room occurrences.
+     * Applies the "Show declined events" preference to Room occurrences.
      *
-     * Resolves which event IDs the current user has declined (matched
-     * against the event's owning calendar's account, so the same address
-     * can decline in one account without flagging another), then either
-     * filters them out (toggle off — default) or maps them to
-     * [DisplayEvent.Room] with `isDeclinedByMe = true` (toggle on, so the
-     * UI can dim + strike-through). Device-side declined events are
-     * handled directly by [DisplayEvent.Device.isDeclinedByMe] reading the
-     * instance's `selfAttendeeStatus` — the toggle for the device side is
-     * applied at query time via the `hideDeclined` flag passed into
-     * [CalendarProviderRepository].
+     * Finds the events the user declined ([selfDeclinedEventIds], matched per owning account),
+     * then drops them when [showDeclined] is off (the default) or marks them
+     * `isDeclinedByMe = true` when on, so the UI dims and strikes them through. Device events
+     * carry [DisplayEvent.Device.isDeclinedByMe] from the instance's `selfAttendeeStatus`; the
+     * preference reaches them as the `hideDeclined` flag of the [CalendarProviderRepository]
+     * query.
      */
     private suspend fun applyDeclinedPolicy(
         roomOccurrences: List<EventReader.OccurrenceWithEvent>,
@@ -326,10 +287,8 @@ class DisplayEventRepository @Inject constructor(
     }
 
     /**
-     * Query device calendar events for a day code range.
-     *
-     * Shared helper for all methods that need device events.
-     * Checks feature enabled + enabled calendar IDs + SecurityException.
+     * Returns the visible device calendars' instances for a day code range
+     * ([getVisibleDeviceCalendarIds]); empty when none is visible or on a [SecurityException].
      */
     private suspend fun queryDeviceEvents(
         startDayCode: Int,
@@ -351,6 +310,7 @@ class DisplayEventRepository @Inject constructor(
         }
     }
 
+    /** Returns the enabled, not hidden device calendar IDs; empty when the feature is off. */
     private suspend fun getVisibleDeviceCalendarIds(): Set<Long> {
         val featureEnabled = dataStore.getDeviceCalendarsEnabled()
         val enabledIds = if (featureEnabled) dataStore.getEnabledDeviceCalendarIds() else emptySet()
@@ -359,14 +319,8 @@ class DisplayEventRepository @Inject constructor(
     }
 
     /**
-     * Merge Room + device events, expand multi-day events, group by day code, sort.
-     *
-     * Multi-day events are expanded only across the days they occupy WITHIN the
-     * requested `[windowStartDayCode, windowEndDayCode]` window. Expanding across
-     * the event's own full span would leak buckets outside the window — e.g. an
-     * event that began before the window start would produce day buckets before
-     * it, which surfaced in the upcoming widget as a first row dated before today
-     * (issue #306).
+     * Merges Room and device events into day code buckets sorted by start. A multi-day event
+     * goes into each day it occupies within the window ([spannedDayCodesWithinWindow]).
      */
     private fun mergeAndGroupByDay(
         roomEvents: List<DisplayEvent>,
@@ -400,15 +354,11 @@ const val TITLE_SUGGESTION_MIN_FREQ = 2
 const val TITLE_SUGGESTION_LIMIT = 5
 
 /**
- * Merge two [TitleSuggestion] lists by normalized title.
+ * Merges two [TitleSuggestion] lists by `title.trim().lowercase()`.
  *
- * Grouping key: title.trim().lowercase(). For each group:
- * - `title`: original casing from the entry with max `lastUsed`
- * - `freq`: sum of entries' freq
- * - `lastUsed`: max of entries' lastUsed
- *
- * Result is filtered to `freq >= minFreq`, sorted by freq DESC then
- * lastUsed DESC, and truncated to [limit].
+ * Each group takes the trimmed title of its latest `lastUsed` entry, the sum of `freq` and
+ * the max `lastUsed`. The result keeps `freq >= minFreq`, sorts by freq then lastUsed, both
+ * descending, and takes [limit].
  */
 internal fun mergeTitleSuggestions(
     room: List<TitleSuggestion>,
@@ -435,15 +385,11 @@ internal fun mergeTitleSuggestions(
 }
 
 /**
- * Day-code buckets an event occupies WITHIN a query window.
+ * Returns the day codes of the event's `[startDay, endDay]` span that fall within
+ * `[windowStartDayCode, windowEndDayCode]`, both inclusive; empty when they don't overlap.
  *
- * Intersects the event's own `[startDay, endDay]` span with the requested
- * `[windowStartDayCode, windowEndDayCode]` window, then expands the intersection
- * to inclusive day codes. Returns an empty list when the event lies entirely
- * outside the window (its intersection is empty).
- *
- * This is the clamp that keeps a multi-day event from producing day buckets
- * outside the range the caller asked for (issue #306).
+ * Without this clamp a multi-day event that began before the window adds buckets before it,
+ * and the upcoming widget shows a first row dated before today (issue #306).
  */
 internal fun spannedDayCodesWithinWindow(
     startDay: Int,
@@ -458,10 +404,11 @@ internal fun spannedDayCodesWithinWindow(
 }
 
 /**
- * Generate a list of YYYYMMDD day codes for each day from startDayCode to endDayCode (inclusive).
- * Handles month/year boundaries correctly via LocalDate arithmetic.
+ * Returns the YYYYMMDD day code of each day from [startDayCode] to [endDayCode], inclusive,
+ * crossing month and year boundaries with [LocalDate].
  *
- * Returns emptyList() for invalid inputs (day codes < 10000101, reversed range, or span > 366 days).
+ * Returns an empty list, with a log line, for a day code below 10000101, a reversed range or a
+ * span over 366 days.
  */
 internal fun generateDayCodesInRange(startDayCode: Int, endDayCode: Int): List<Int> {
     if (startDayCode < 10000101 || endDayCode < 10000101) {

@@ -17,12 +17,12 @@ import org.junit.runner.RunWith
 import java.time.LocalDate
 
 /**
- * Instrumentation tests for DayColumn blank-space tap handler.
+ * Tests that a tap on blank space in [DayColumn] fires `onEmptyTap`.
  *
- * Locks in: tapping blank space fires onEmptyTap immediately (no 300ms
- * double-tap wait caused by the previous no-op `onDoubleTap = { }`).
+ * The column's tap detector must not register a no-op `onDoubleTap = { }`: that makes every
+ * tap wait out the 300ms double-tap timeout first. The delay itself isn't asserted here.
  *
- * Requires connectedDebugAndroidTest (device/emulator).
+ * Runs under connectedDebugAndroidTest on a device or emulator.
  */
 @RunWith(AndroidJUnit4::class)
 class DayColumnComposeTest {

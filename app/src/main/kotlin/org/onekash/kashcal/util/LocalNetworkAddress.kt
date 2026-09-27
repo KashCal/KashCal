@@ -1,19 +1,17 @@
 package org.onekash.kashcal.util
 
 /**
- * Classifies whether a CalDAV Server URL points at the local network.
+ * Returns true when a server URL provably points at the local network.
  *
- * Android 17 (targetSdk 37) blocks local-network socket traffic — including
- * OkHttp connections — unless the app holds the ACCESS_LOCAL_NETWORK runtime
- * permission. This lets the sign-in flow proactively ask for that permission
- * only when the entered server is a LAN address, and never prompt for
- * public-internet accounts.
+ * Android 17 (targetSdk 37) blocks local-network socket traffic, OkHttp connections included,
+ * unless the app holds the ACCESS_LOCAL_NETWORK runtime permission. The CalDAV sign-in sheet
+ * and the add-subscription dialog use this to show the permission banner up front for a LAN
+ * address only, never for a public-internet server.
  *
- * The decision is made from the URL string alone (no DNS): a literal private /
- * link-local / loopback / unique-local / IPv4-mapped address, or an mDNS
- * `.local` name. A bare hostname or a custom domain that happens to resolve to
- * a private IP cannot be proven LAN here and returns false — that case is
- * handled at runtime by the reactive connection-failure hint.
+ * The decision uses the URL string alone (no DNS): a literal private, CGNAT, link-local,
+ * loopback, unique-local or IPv4-mapped address, or an mDNS `.local` name. A bare hostname or
+ * a custom domain that resolves to a private IP can't be proven LAN here and returns false;
+ * the reactive connection-failure hint covers that case.
  */
 fun isLanHost(url: String): Boolean {
     val host = extractHost(url)?.lowercase() ?: return false
@@ -28,7 +26,7 @@ fun isLanHost(url: String): Boolean {
         return isLanIpv6(addr)
     }
 
-    // IPv4 literal — only if it actually parses as four octets.
+    // IPv4 literal, only when it parses as four octets.
     val v4 = parseIpv4(host)
     if (v4 != null) return isLanIpv4(v4)
 
@@ -36,7 +34,7 @@ fun isLanHost(url: String): Boolean {
     return false
 }
 
-/** Extract the host portion from a URL that may lack a scheme, and may be an [IPv6] literal. */
+/** Returns the host of [url], which may lack a scheme; an IPv6 literal loses its brackets. */
 private fun extractHost(url: String): String? {
     val trimmed = url.trim()
     if (trimmed.isEmpty()) return null
@@ -85,7 +83,7 @@ private fun isLanIpv4(o: IntArray): Boolean = when {
 private fun isLanIpv6(addr: String): Boolean {
     if (addr == "::1") return true                      // loopback
 
-    // IPv4-mapped (::ffff:a.b.c.d) — unwrap and reclassify on the v4.
+    // IPv4-mapped (::ffff:a.b.c.d): classify the embedded IPv4 address.
     val mapped = addr.substringAfterLast(':')
     if (mapped.contains('.')) {
         parseIpv4(mapped)?.let { return isLanIpv4(it) }

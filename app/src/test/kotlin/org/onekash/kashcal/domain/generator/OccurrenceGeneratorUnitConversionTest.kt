@@ -21,18 +21,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for OccurrenceGenerator millisecond/second conversions.
+ * Tests that [OccurrenceGenerator] stores and returns timestamps in milliseconds.
  *
- * These tests specifically verify the boundary between KashCal (milliseconds)
- * and lib-recur (seconds) to catch unit conversion bugs.
- *
- * Key conversion points in OccurrenceGenerator:
- * - Line 306: event.startTs / MILLISECONDS_PER_SECOND (ms → sec)
- * - Line 374: occurrenceTsSeconds * MILLISECONDS_PER_SECOND (sec → ms)
- * - Line 492: timestampSeconds * MILLISECONDS_PER_SECOND (sec → ms)
- * - Line 532: calendar.timeInMillis / MILLISECONDS_PER_SECOND (ms → sec)
- *
- * Created as part of iCalDAV integration audit (Task #2).
+ * [IcalDavRRuleEngine] aligns every recurring timestamp to a whole second, so a recurring
+ * event loses a sub-second DTSTART while a non-recurring event keeps its exact start and end.
+ * Covers stored occurrences, [OccurrenceGenerator.expandForPreview], durations, far past and
+ * future dates, and all-day events at UTC midnight.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -74,7 +68,6 @@ class OccurrenceGeneratorUnitConversionTest {
 
     @Test
     fun `occurrence startTs is in milliseconds not seconds`() = runTest {
-        // This is the most basic sanity check
         val startMs = 1737590400000L // Jan 23, 2025 00:00:00 UTC
         val endMs = startMs + 3600000L // +1 hour
 
@@ -84,7 +77,7 @@ class OccurrenceGeneratorUnitConversionTest {
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         assertEquals(1, occurrences.size)
 
-        // Key assertion: startTs should be 13 digits (milliseconds), not 10 digits (seconds)
+        // 13 digits (milliseconds), not 10 (seconds).
         assertTrue(
             "startTs should be in milliseconds (>1e12), got ${occurrences[0].startTs}",
             occurrences[0].startTs > 1_000_000_000_000L
@@ -94,8 +87,7 @@ class OccurrenceGeneratorUnitConversionTest {
 
     @Test
     fun `occurrence preserves exact millisecond timestamp for non-recurring`() = runTest {
-        // Test with a timestamp that has specific milliseconds
-        // Non-recurring events use event.startTs directly, preserving milliseconds
+        // A non-recurring occurrence copies event.startTs, so its milliseconds survive.
         val startMs = 1737590400123L // Has 123 milliseconds
         val endMs = startMs + 3600000L
 
@@ -104,14 +96,13 @@ class OccurrenceGeneratorUnitConversionTest {
 
         val occurrences = database.occurrencesDao().getForEvent(event.id)
 
-        // Non-recurring events preserve exact milliseconds
         assertEquals(startMs, occurrences[0].startTs)
         assertEquals(endMs, occurrences[0].endTs)
     }
 
     @Test
     fun `recurring event truncates milliseconds to seconds`() = runTest {
-        // Recurring events go through lib-recur which works in seconds
+        // The engine aligns recurring timestamps to whole seconds.
         val startMs = 1737590400123L // Has 123 milliseconds
         val endMs = startMs + 3600000L
 
@@ -121,11 +112,10 @@ class OccurrenceGeneratorUnitConversionTest {
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         assertEquals(2, occurrences.size)
 
-        // lib-recur works in seconds, so milliseconds are truncated
         val expectedTruncated = (startMs / 1000) * 1000 // 1737590400000
         assertEquals(expectedTruncated, occurrences[0].startTs)
 
-        // But duration should still be 3600000 (1 hour)
+        // The duration keeps its full 3600000 ms (1 hour).
         assertEquals(3600000L, occurrences[0].endTs - occurrences[0].startTs)
     }
 
@@ -140,7 +130,6 @@ class OccurrenceGeneratorUnitConversionTest {
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         assertEquals(5, occurrences.size)
 
-        // All occurrences should be in milliseconds
         for (occ in occurrences) {
             assertTrue(
                 "All startTs should be in milliseconds, got ${occ.startTs}",
@@ -148,7 +137,7 @@ class OccurrenceGeneratorUnitConversionTest {
             )
         }
 
-        // Verify correct spacing (24 hours = 86400000 ms)
+        // 24 hours = 86400000 ms apart.
         for (i in 1 until occurrences.size) {
             val diff = occurrences[i].startTs - occurrences[i - 1].startTs
             assertEquals("Occurrences should be 24 hours apart", 86400000L, diff)
@@ -179,7 +168,6 @@ class OccurrenceGeneratorUnitConversionTest {
 
     @Test
     fun `event at exact second boundary handled correctly`() = runTest {
-        // Timestamp at exact second (no milliseconds)
         val startMs = 1737590400000L // Exactly 00:00:00.000
         val endMs = startMs + 3600000L
 
@@ -207,19 +195,17 @@ class OccurrenceGeneratorUnitConversionTest {
 
     @Test
     fun `recurring event with 30-minute interval generates correct timestamps`() = runTest {
-        // This tests that sub-hour intervals work correctly through the conversion
+        // A 30-minute event repeating hourly.
         val startMs = 1737590400000L // 00:00
         val endMs = startMs + 1800000L // 30 minutes
 
-        // Every 30 minutes for 4 occurrences
-        // Note: MINUTELY isn't standard RRULE, so we test with times that differ by 30 min
         val event = createEvent(startMs, endMs, rrule = "FREQ=HOURLY;INTERVAL=1;COUNT=4")
         occurrenceGenerator.generateOccurrences(event, startMs - 86400000, startMs + 86400000)
 
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         assertEquals(4, occurrences.size)
 
-        // Should be 1 hour apart (3600000 ms)
+        // 1 hour (3600000 ms) apart.
         assertEquals(3600000L, occurrences[1].startTs - occurrences[0].startTs)
     }
 
@@ -227,7 +213,7 @@ class OccurrenceGeneratorUnitConversionTest {
 
     @Test
     fun `large timestamp (year 2100) handled correctly`() = runTest {
-        // Tests that large timestamps don't overflow during conversion
+        // A large timestamp doesn't overflow.
         val startMs = 4102444800000L // Jan 1, 2100 00:00:00 UTC
         val endMs = startMs + 3600000L
 
@@ -289,7 +275,6 @@ class OccurrenceGeneratorUnitConversionTest {
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         assertEquals(3, occurrences.size)
 
-        // Each occurrence should be at UTC midnight
         for (occ in occurrences) {
             val msInDay = occ.startTs % 86400000
             assertEquals("All-day occurrence should be at UTC midnight", 0L, msInDay)

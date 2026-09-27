@@ -8,7 +8,8 @@ import org.junit.Test
 import java.time.DayOfWeek
 
 /**
- * Unit tests for RRULE domain models.
+ * Tests the RRULE models: [RecurrenceFrequency], [MonthlyPattern], [EndCondition],
+ * [ParsedRecurrence] and [FrequencyOption].
  */
 class RruleModelsTest {
 

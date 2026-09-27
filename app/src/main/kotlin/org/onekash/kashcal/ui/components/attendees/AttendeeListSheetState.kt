@@ -1,21 +1,6 @@
 package org.onekash.kashcal.ui.components.attendees
 
-/**
- * Pure logic for the [AttendeeListSheet] body. Lives outside the
- * composable so the grouping/sorting/filtering rules can be unit-tested
- * without spinning up Compose.
- *
- * One [AttendeeListSection] per [AttendeeStatus] that has at least one
- * matching attendee, in the canonical display order:
- * Accepted (Going) → Tentative (Maybe) → NeedsAction (Pending) →
- * Declined → Delegated.
- *
- * Within a section, You is pinned to the top, then attendees by their
- * wire-order [AttendeeUiModel.sortOrder]. Filtering matches the query
- * against [AttendeeUiModel.displayName] and [AttendeeUiModel.bareAddress]
- * case-insensitively. Section headers are dropped when the query
- * empties their group.
- */
+/** One status group of the [AttendeeListSheet], in the order [buildAttendeeListSections] gives. */
 data class AttendeeListSection(
     val status: AttendeeStatus,
     val rows: List<AttendeeUiModel>,
@@ -29,6 +14,17 @@ internal val SECTION_ORDER: List<AttendeeStatus> = listOf(
     AttendeeStatus.Delegated,
 )
 
+/**
+ * Groups [attendees] into [AttendeeListSheet] sections, outside the composable so the rules are
+ * unit-testable.
+ *
+ * One section per [AttendeeStatus] with at least one match, in [SECTION_ORDER]: Accepted
+ * (Going), Tentative (Maybe), NeedsAction (Pending), Declined, Delegated. Within a section the
+ * first row with [AttendeeUiModel.isYou] comes first, then the rows that aren't You by
+ * [AttendeeUiModel.sortOrder]; any further You row is left out. A non-blank [query] keeps rows
+ * whose display name or bare address contains it, ignoring case; a group it empties has no
+ * section.
+ */
 internal fun buildAttendeeListSections(
     attendees: List<AttendeeUiModel>,
     query: String = "",

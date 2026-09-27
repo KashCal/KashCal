@@ -1,14 +1,11 @@
 package org.onekash.kashcal.ui.components
 
 /**
- * Single source of truth for badge text shown on count overlays (the
- * top-bar overflow IconButton and the overflow sheet's Invites row).
- * Keeping formatting here lets sibling badge sites stay aligned without
- * each re-implementing the cap-at-99 rule.
+ * Formats the text of a count badge, capped at "99+". The one home of the rule for
+ * both badge sites: the top-bar overflow IconButton and the account hub's Invites row.
  *
- * Returns the rendered string when the badge should be visible, or
- * `null` when the caller should suppress the [androidx.compose.material3.Badge]
- * entirely (non-positive counts).
+ * Returns null for a non-positive count; the caller then shows no
+ * [androidx.compose.material3.Badge].
  */
 internal fun formatBadgeCount(count: Int): String? = when {
     count <= 0 -> null

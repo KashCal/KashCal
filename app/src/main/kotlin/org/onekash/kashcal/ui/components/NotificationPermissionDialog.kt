@@ -14,28 +14,11 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
 /**
- * Rationale dialog shown after user denies notification permission once.
+ * Explains why notifications are needed after the user denied the permission once, when
+ * `shouldShowRequestPermissionRationale()` returns true.
  *
- * Follows Android best practices:
- * - Shows clear explanation of why permission is needed
- * - Offers path to enable (system permission dialog)
- * - Allows user to skip without blocking the action
- *
- * Dialog flow:
- * ```
- * First denial → shouldShowRequestPermissionRationale() returns true
- *                              │
- *                              ▼
- *                 NotificationPermissionDialog
- *                              │
- *           ┌──────────────────┴────────────────────┐
- *           ▼                                       ▼
- *       "Enable"                               "Not Now"
- *           │                                       │
- *           ▼                                       ▼
- *   Launch permission dialog                 Continue without
- *                                            notifications
- * ```
+ * Enable launches the system permission dialog; Not Now continues without notifications, so the
+ * action that asked is never blocked.
  */
 @Composable
 fun NotificationPermissionDialog(

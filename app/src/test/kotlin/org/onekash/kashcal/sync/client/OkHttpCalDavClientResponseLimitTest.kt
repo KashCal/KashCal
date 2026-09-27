@@ -11,9 +11,9 @@ import org.junit.Test
 import org.onekash.kashcal.network.MAX_HTTP_RESPONSE_SIZE_BYTES
 
 /**
- * Tests that the CalDAV client reads responses through the shared bounded
- * reader. Reader behavior is covered by HttpResponseBodyReaderTest; this pins
- * the shared size limit the CalDAV path inherits.
+ * Pins the shared response size limit that [OkHttpCalDavClient] inherits by reading its response
+ * bodies through `readBoundedBody`. The reader itself (limit enforcement, charsets, chunked bodies)
+ * is covered by `HttpResponseBodyReaderTest`.
  */
 class OkHttpCalDavClientResponseLimitTest {
 
@@ -36,11 +36,7 @@ class OkHttpCalDavClientResponseLimitTest {
 
     @Test
     fun `CalDAV reads enforce the shared response size limit`() {
-        // CalDAV responses are read through the shared bounded reader, which
-        // caps buffered body size to prevent OOM on malicious/malformed servers.
-        // The reader itself (limit enforcement, charset handling, chunked-body
-        // behavior) is covered by HttpResponseBodyReaderTest; here we pin the
-        // shared limit that the CalDAV path inherits.
+        // The cap keeps a malicious or malformed server from running the app out of memory.
         assertEquals(
             "CalDAV inherits the shared 50MB response limit",
             50L * 1024 * 1024,

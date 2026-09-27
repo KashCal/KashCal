@@ -65,10 +65,7 @@ import org.onekash.kashcal.ui.util.asString
 
 private val AccentBlue = Color(0xFF5AC8FA)
 
-/**
- * Visual transformation for Apple app-specific passwords.
- * Formats input as: xxxx-xxxx-xxxx-xxxx
- */
+/** Shows an iCloud app-specific password as xxxx-xxxx-xxxx-xxxx. */
 private class AppSpecificPasswordTransformation : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         val trimmed = text.text.replace("-", "")
@@ -85,19 +82,16 @@ private class AppSpecificPasswordTransformation : VisualTransformation {
     }
 }
 
-/**
- * Offset mapping for app-specific password format (xxxx-xxxx-xxxx-xxxx).
- * Handles cursor position when dashes are inserted.
- */
+/** Maps cursor offsets across the dashes [AppSpecificPasswordTransformation] inserts. */
 private class AppSpecificPasswordOffsetMapping(private val originalLength: Int) : OffsetMapping {
     override fun originalToTransformed(offset: Int): Int {
-        // Each group of 4 chars adds a dash before it (except first group)
+        // Every group of 4 after the first has a dash before it.
         val dashes = if (offset > 0) (offset - 1) / 4 else 0
         return offset + dashes
     }
 
     override fun transformedToOriginal(offset: Int): Int {
-        // Remove dash positions from offset
+        // Every fifth transformed position is a dash.
         var originalOffset = 0
         var transformedOffset = 0
         while (transformedOffset < offset && originalOffset < originalLength) {
@@ -111,15 +105,8 @@ private class AppSpecificPasswordOffsetMapping(private val originalLength: Int) 
 }
 
 /**
- * iCloud sign-in bottom sheet.
- * Used by both OnboardingBanner and AccountSettingsScreen.
- *
- * Features:
- * - Apple ID input
- * - App-specific password with xxxx-xxxx-xxxx-xxxx formatting
- * - Expandable help section
- * - Loading state during connection
- * - Error display
+ * Shows the iCloud sign-in sheet: Apple ID, app-specific password (up to 16 characters, shown
+ * in dashed groups), expandable help, a loading state and the connection error.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -196,7 +183,6 @@ fun ICloudSignInSheet(
             OutlinedTextField(
                 value = password,
                 onValueChange = { newValue ->
-                    // Strip dashes and limit to 16 characters
                     val cleaned = newValue.replace("-", "").take(16)
                     onPasswordChange(cleaned)
                 },
@@ -314,7 +300,7 @@ fun ICloudSignInSheet(
                     Text(
                         errorText,
                         // Announce the connection failure immediately (it appears
-                        // after tapping Connect with no focus change) and mark it
+                        // after tapping Sign In with no focus change) and mark it
                         // as an error. On the Text (which carries the label), not
                         // the Card, since the Card doesn't merge its child's text.
                         modifier = Modifier

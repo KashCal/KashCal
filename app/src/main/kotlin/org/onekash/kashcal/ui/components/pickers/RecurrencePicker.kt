@@ -146,11 +146,15 @@ fun RecurrencePickerRow(
     onToggle: () -> Unit,
     onSelect: (String?) -> Unit,
     modifier: Modifier = Modifier,
-    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
+    // The event's all-day flag and timezone: the end date is written and shown
+    // in the event's own terms (RFC 5545 section 3.3.10).
+    isAllDay: Boolean = false,
+    timezone: String? = null,
 ) {
     val focusManager = LocalFocusManager.current
     val rruleStrings = rememberRruleDisplayStrings()
-    val displayText = RruleBuilder.formatForDisplay(selectedRrule, rruleStrings)
+    val displayText = RruleBuilder.formatForDisplay(selectedRrule, rruleStrings, RruleBuilder.untilZoneFor(isAllDay, timezone))
 
     val startZoned = remember(startDateMillis) {
         Instant.ofEpochMilli(startDateMillis)
@@ -171,50 +175,49 @@ fun RecurrencePickerRow(
         DateTimeUtils.resolveFirstDayOfWeekAsDow(firstDayOfWeek)
     }
 
-    // Holder is keyed off the start-date inputs only, NOT off `parsed`.
-    // Re-keying on `parsed` would reset the holder every time the parent
-    // echoes our emission back — turning a Custom→Weekly chip detour into
-    // an interval-losing round-trip (e.g. INTERVAL=200 → INTERVAL=1).
+    // The holder is keyed on the start-date inputs only, not on `parsed`: keying on `parsed`
+    // would reset it each time the parent echoes an emission back, so a Custom to Weekly chip
+    // detour would lose the interval (INTERVAL=200 back to INTERVAL=1).
     var selections by remember(startDayOfWeek, startDayOfMonth) {
         mutableStateOf(RecurrencePickerSelections.from(parsed, startDayOfWeek, startDayOfMonth))
     }
 
-    // Tracks the last RRULE we emitted so the LaunchedEffect below can tell a
-    // self-echo (parent storing our emission) apart from an external reset
-    // (e.g. user picked a different event). Only the latter rebuilds the holder.
+    // The last emitted RRULE, so the LaunchedEffect below can tell a self-echo (the parent
+    // storing an emission) from an external reset such as a different event. Only a reset
+    // rebuilds the holder.
     //
-    // Contract: the parent must store the emitted string verbatim. Any
-    // normalization on the way in (trimming, BYDAY reordering, dropping
-    // redundant tokens) would break byte-equality, fire a false reset, and
-    // silently regress the chip-detour fix — INTERVAL=200 would be lost again
-    // on Custom→Weekly→Custom. EventFormSheet currently stores it verbatim.
+    // The parent must store the emitted string verbatim. Any normalization (trimming, BYDAY
+    // reordering, dropping redundant tokens) breaks byte equality and fires a false reset, so
+    // INTERVAL=200 would be lost on Custom, Weekly, Custom. EventFormSheet stores it verbatim.
     var lastEmitted by remember(startDayOfWeek, startDayOfMonth) { mutableStateOf(selectedRrule) }
 
-    // Sticky across the chip-detour oscillation (self-echo guard skips
-    // the reset branch below) but recomputed on a real parent-driven
-    // reset. Loaded rules emit no device-wkst injection; only brand-new
-    // rules let the device wkst flow into the builder gate.
+    // Survives a chip detour (the self-echo check skips the reset branch below) and is
+    // recomputed on an external reset. Only a new rule gets the device's week start as WKST;
+    // a loaded rule never does.
     var isNewRule by remember(startDayOfWeek, startDayOfMonth) {
         mutableStateOf(selectedRrule == null)
     }
 
     androidx.compose.runtime.LaunchedEffect(selectedRrule) {
         if (selectedRrule != lastEmitted) {
-            selections = RecurrencePickerSelections.from(parsed, startDayOfWeek, startDayOfMonth)
+            if (onlyUntilDiffers(lastEmitted, selectedRrule)) {
+                // Only the end date's form changed (an all-day toggle): keep the
+                // picker's choices and whether this is a new rule.
+                selections = selections.copy(endCondition = parsed.endCondition)
+            } else {
+                selections = RecurrencePickerSelections.from(parsed, startDayOfWeek, startDayOfMonth)
+                isNewRule = selectedRrule == null
+            }
             lastEmitted = selectedRrule
-            isNewRule = selectedRrule == null
         }
     }
 
     fun notifyChange() {
-        val emitted = selections.toRrule(if (isNewRule) wkstDow else null)
+        val emitted = selections.toRrule(if (isNewRule) wkstDow else null, isAllDay)
         lastEmitted = emitted
-        // Clearing the rule mid-session (Never chip) means the user is starting
-        // over. The next rule they author should be treated as new — including
-        // device-wkst seeding through the builder gate. The flip is one-way
-        // (false → true); only the LaunchedEffect's external-reset branch can
-        // restore false, so the sticky-loaded-rule contract is preserved when
-        // the parent reroutes the sheet to a different loaded rule.
+        // Picking Never starts over, so the next rule is new and gets the device's week start.
+        // This only sets true; only an external reset (the LaunchedEffect's reset branch, or a
+        // new start date re-keying the state) sets false, when the rule it loads isn't null.
         if (emitted == null) isNewRule = true
         onSelect(emitted)
     }
@@ -323,7 +326,9 @@ fun RecurrencePickerRow(
                         endCondition = selections.endCondition,
                         startDateMillis = startDateMillis,
                         onEndConditionChange = { condition -> selections = selections.copy(endCondition = condition); notifyChange() },
-                        firstDayOfWeek = firstDayOfWeek
+                        firstDayOfWeek = firstDayOfWeek,
+                        isAllDay = isAllDay,
+                        timezone = timezone,
                     )
                 }
             }
@@ -339,14 +344,13 @@ fun RecurrencePickerRow(
 }
 
 /**
- * Row of frequency option chips.
+ * Shows a row of single-select frequency chips.
  *
- * Hand-built rather than Material3 [SingleChoiceSegmentedButtonRow] / FilterChip
- * so the row matches the inverse-surface filled chip style used elsewhere in the
- * app (ColorChipRow, calendar visibility chips, account chips). Material's
- * built-ins paint the selected state with primary/secondary container colors,
- * which would clash with the rest of the picker. Visual consistency across the
- * codebase is the reason we keep this custom — not a missed migration.
+ * Hand-built rather than a Material3 `SingleChoiceSegmentedButtonRow` or FilterChip so the
+ * selected chip uses the app's inverse-surface fill, like the selected day in the date picker
+ * and agenda week bar. Material's built-ins paint the selected state with container colors,
+ * which would clash with the rest of the picker. This is a deliberate choice, not a missed
+ * migration.
  */
 @Composable
 fun FrequencyChipRow(
@@ -391,8 +395,8 @@ fun FrequencyChipRow(
 }
 
 /**
- * One stepper button: 40dp circle with icon. Background and border dim to 50% alpha
- * when disabled so the button reads as inert at a glance, not just slightly faded.
+ * Shows a 40dp circular stepper button. When disabled, background and border drop to 50% alpha
+ * so it reads as inert at a glance, not only slightly faded.
  */
 @Composable
 private fun StepperButton(
@@ -425,17 +429,14 @@ private fun StepperButton(
 }
 
 /**
- * Custom recurrence builder: interval stepper + Day/Week/Month/Year segmented control.
+ * Shows the Custom builder: an interval stepper and a Day/Week/Month/Year chip row.
  *
- * The visible stepper value equals the actual interval state (no display clamp). '+' is
- * disabled at or above 99 — that's how new in-app authoring is bounded — but '-' stays
- * enabled above 99 so an inbound `INTERVAL=200` (synced from a CalDAV server) can be
- * walked down toward range without losing the saved value.
+ * The stepper shows the real interval, unclamped. '+' is disabled at 99 and above, which bounds
+ * in-app authoring, but '-' stays enabled above 99 so a synced `INTERVAL=200` can be walked
+ * down without losing the saved value.
  *
- * The Day/Week/Month/Year selector is a hand-built chip row, not Material3
- * [SingleChoiceSegmentedButtonRow]. It mirrors the [FrequencyChipRow] above so the
- * two control rows read as one visual group; switching to Material's segmented
- * button would split them stylistically.
+ * The unit row is hand-built like [FrequencyChipRow], not a Material3
+ * `SingleChoiceSegmentedButtonRow`, so the two rows read as one visual group.
  */
 @Composable
 fun CustomRecurrenceBuilder(
@@ -515,9 +516,7 @@ fun CustomRecurrenceBuilder(
     }
 }
 
-/**
- * Day of week selector circles.
- */
+/** Shows a multi-select row of weekday circles; the last selected day can't be deselected. */
 @Composable
 fun WeekdaySelector(
     selectedDays: Set<DayOfWeek>,
@@ -525,7 +524,7 @@ fun WeekdaySelector(
     modifier: Modifier = Modifier,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
-    // Display order based on user preference (doesn't affect RRULE storage)
+    // Display order follows the first-day-of-week setting; the RRULE doesn't depend on it.
     val daysOrder = remember(firstDayOfWeek) {
         DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeek)
     }
@@ -541,7 +540,7 @@ fun WeekdaySelector(
                 isSelected = isSelected,
                 onClick = {
                     val newDays = if (isSelected) {
-                        // Don't allow deselecting the last day
+                        // The last selected day stays selected.
                         if (selectedDays.size > 1) selectedDays - day else selectedDays
                     } else {
                         selectedDays + day
@@ -557,10 +556,9 @@ fun WeekdaySelector(
 private val NTH_WEEKDAY_ORDINALS = listOf(1, 2, 3, 4, -1)
 
 /**
- * Localized label for an nth-weekday ordinal. 1-4 use the ordinal_* strings and
- * -1 uses the "last" string. Values outside {1,2,3,4,-1} (a rare imported
- * BYDAY=5FR) fall back to [R.string.ordinal_nth] so the rule renders faithfully
- * in the radio label without being coerced onto a chip.
+ * Returns the localized label for an nth-weekday ordinal: 1-4 use the ordinal_* strings, -1
+ * the "last" string. Any other value, such as an imported BYDAY=5FR, falls back to
+ * [R.string.ordinal_nth] so the radio label shows the rule as is without forcing it onto a chip.
  */
 @Composable
 private fun nthWeekdayOrdinalLabel(ordinal: Int): String = when (ordinal) {
@@ -572,24 +570,21 @@ private fun nthWeekdayOrdinalLabel(ordinal: Int): String = when (ordinal) {
     else -> stringResource(R.string.ordinal_nth, ordinal)
 }
 
-/** The picker offers 1st-4th + Last; a start-date position of 5 clamps to Last. */
+/** Clamps a start-date position to the offered 1st-4th or Last; 5 becomes Last (-1). */
 private fun clampSeedOrdinal(ordinalInMonth: Int): Int =
     if (ordinalInMonth in 1..4) ordinalInMonth else -1
 
 /**
- * Monthly pattern selector with radio options.
+ * Shows the monthly pattern radio options: on day N, on the last day, or on the nth weekday.
  *
- * The third option ("On the <ordinal> <weekday>") renders its ordinal and
- * weekday from the current [pattern] when it is a [MonthlyPattern.NthWeekday],
- * so an imported rule like `BYDAY=-1FR` shows "Last" + "Friday" regardless of
- * the start date. [ordinalInMonth] and [weekday] are only the FALLBACK seed used
- * when the user first switches into the nth-weekday option from a different
- * pattern; [ordinalInMonth] is clamped to the offered set (5 -> Last).
+ * The nth-weekday option takes its ordinal and weekday from [pattern] when it is a
+ * [MonthlyPattern.NthWeekday], so an imported `BYDAY=-1FR` shows "Last" and "Friday" whatever
+ * the start date. [ordinalInMonth] and [weekday] are only the seed when the user switches in
+ * from another pattern; [ordinalInMonth] is clamped to the offered set (5 becomes Last).
  *
- * When the nth-weekday option is selected it expands inline (no dropdowns) into
- * a single-select ordinal chip row (1st/2nd/3rd/4th/Last, mirroring
- * [FrequencyChipRow]) and a single-select weekday circle row (the same 40dp
- * circles the weekly [WeekdaySelector] uses, respecting [firstDayOfWeek]).
+ * When selected, that option expands inline into a single-select ordinal chip row
+ * (1st/2nd/3rd/4th/Last, styled like [FrequencyChipRow]) and a single-select row of the
+ * weekday circles [WeekdaySelector] uses, ordered by [firstDayOfWeek].
  */
 @Composable
 fun MonthlyPatternSelector(
@@ -601,36 +596,34 @@ fun MonthlyPatternSelector(
     modifier: Modifier = Modifier,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
-    // Values shown by the nth-weekday option: the parsed rule wins; the
-    // (clamped) start-date position is only the seed for a fresh switch-in.
+    // The rule's nth weekday wins; the clamped start-date position only seeds a switch-in.
     val activeOrdinal = (pattern as? MonthlyPattern.NthWeekday)?.ordinal
         ?: clampSeedOrdinal(ordinalInMonth)
     val activeWeekday = (pattern as? MonthlyPattern.NthWeekday)?.weekday ?: weekday
     val activeOrdinalLabel = nthWeekdayOrdinalLabel(activeOrdinal)
     val activeWeekdayLabel = activeWeekday.getDisplayName(TextStyle.FULL, LocalLocale.current.platformLocale)
 
-    // Day shown by the by-date option: the parsed rule's day wins so an imported
-    // BYMONTHDAY=9 reads "On day 9" even when the start date is the 18th; the
-    // start-date day is only the seed when the pattern isn't SameDay.
+    // The rule's day wins, so an imported BYMONTHDAY=9 reads "On day 9" even when the start
+    // date is the 18th; the start date's day is the seed when the pattern isn't SameDay.
     val activeDayOfMonth = (pattern as? MonthlyPattern.SameDay)?.dayOfMonth ?: dayOfMonth
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Option 1: Same day of month
+        // On day N of the month.
         RadioOption(
             label = stringResource(R.string.recurrence_on_day, activeDayOfMonth),
             selected = pattern is MonthlyPattern.SameDay,
             onClick = { onPatternChange(MonthlyPattern.SameDay(activeDayOfMonth)) }
         )
 
-        // Option 2: Last day of month
+        // On the last day of the month.
         RadioOption(
             label = stringResource(R.string.recurrence_on_last_day),
             selected = pattern is MonthlyPattern.LastDay,
             onClick = { onPatternChange(MonthlyPattern.LastDay) }
         )
 
-        // Option 3: Nth weekday — label reflects the active ordinal/weekday so an
-        // imported "last Friday" reads correctly even when the start date differs.
+        // On the nth weekday; the label shows the active ordinal and weekday, so an imported
+        // "last Friday" reads as such whatever the start date.
         val isNthWeekday = pattern is MonthlyPattern.NthWeekday
         RadioOption(
             label = stringResource(R.string.recurrence_on_nth_weekday, activeOrdinalLabel, activeWeekdayLabel),
@@ -638,8 +631,7 @@ fun MonthlyPatternSelector(
             onClick = { onPatternChange(MonthlyPattern.NthWeekday(activeOrdinal, activeWeekday)) }
         )
 
-        // Inline expansion for the nth-weekday option: ordinal chips + weekday
-        // circles, each under a caption at full width (no side-label column).
+        // Ordinal chips and weekday circles, each under a full-width caption.
         AnimatedVisibility(
             visible = isNthWeekday,
             enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(150)),
@@ -676,9 +668,8 @@ fun MonthlyPatternSelector(
 }
 
 /**
- * Single-select ordinal chip row (1st / 2nd / 3rd / 4th / Last), full-width and
- * flex-filled. Hand-built to mirror [FrequencyChipRow] so it reads as one visual
- * group with the rest of the picker rather than a Material segmented control.
+ * Shows a full-width single-select row of 1st/2nd/3rd/4th/Last chips, hand-built like
+ * [FrequencyChipRow] so it reads as one visual group with the rest of the picker.
  */
 @Composable
 private fun OrdinalChipRow(
@@ -723,11 +714,9 @@ private fun OrdinalChipRow(
 }
 
 /**
- * Single-select weekday circle row for the monthly nth-weekday pattern. Reuses
- * the visual [DayCircle] from the weekly [WeekdaySelector] and its SpaceEvenly /
- * firstDayOfWeek-ordered layout, but with single-select semantics (tapping a day
- * replaces the selection) — it deliberately does NOT share the weekly selector's
- * "can't deselect the last day" accumulation rule, which has no meaning here.
+ * Shows a single-select weekday circle row for the monthly nth-weekday pattern. It uses
+ * [WeekdaySelector]'s [DayCircle] and layout, but tapping a day replaces the selection; the
+ * weekly selector's keep-the-last-day rule has no meaning here.
  */
 @Composable
 private fun SingleWeekdaySelector(
@@ -754,9 +743,8 @@ private fun SingleWeekdaySelector(
 }
 
 /**
- * One 40dp weekday circle with a NARROW day label. Visual-only; selection and
- * click semantics are owned by the caller so both the multi-select weekly
- * selector and the single-select monthly selector can share the same look.
+ * Shows a 40dp weekday circle with a narrow day label. The caller owns selection and click
+ * behavior, so the multi-select weekly and single-select monthly rows share the look.
  */
 @Composable
 private fun DayCircle(
@@ -793,33 +781,33 @@ private fun DayCircle(
     }
 }
 
-/**
- * End condition selector with radio options and inline date picker.
- */
+/** Shows the end condition options: never, after N occurrences, or on a date picked inline. */
 @Composable
 fun EndConditionSelector(
     endCondition: EndCondition,
     startDateMillis: Long,
     onEndConditionChange: (EndCondition) -> Unit,
     modifier: Modifier = Modifier,
-    firstDayOfWeek: Int = java.util.Calendar.SUNDAY
+    firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
+    isAllDay: Boolean = false,
+    timezone: String? = null,
 ) {
-    // Use TextFieldState for modern select-all on focus support
+    // TextFieldState supports select-all on focus.
     val initialCountText = if (endCondition is EndCondition.Count) endCondition.count.toString() else "10"
     val countTextFieldState = rememberTextFieldState(initialCountText)
 
-    // Use rememberUpdatedState to capture current values in long-running LaunchedEffect
+    // The long-running LaunchedEffect below reads these current values.
     val currentEndCondition by androidx.compose.runtime.rememberUpdatedState(endCondition)
     val currentOnEndConditionChange by androidx.compose.runtime.rememberUpdatedState(onEndConditionChange)
 
-    // Track if we're in Count mode to detect type changes (not value changes)
+    // Detects a switch into Count mode, as opposed to a new count value.
     var wasCountMode by remember { mutableStateOf(endCondition is EndCondition.Count) }
 
-    // Sync text field only when switching TO Count mode (not on every value change)
+    // Sync the text field only on a switch into Count mode.
     androidx.compose.runtime.LaunchedEffect(endCondition) {
         val isCountMode = endCondition is EndCondition.Count
         if (isCountMode && !wasCountMode) {
-            // Switched to Count mode - sync the value
+            // Switched into Count mode.
             val newText = (endCondition as EndCondition.Count).count.toString()
             if (countTextFieldState.text.toString() != newText) {
                 countTextFieldState.setTextAndPlaceCursorAtEnd(newText)
@@ -828,11 +816,11 @@ fun EndConditionSelector(
         wasCountMode = isCountMode
     }
 
-    // Observe text changes and update the end condition (only when valid number entered)
+    // Propagate typed counts while in Count mode.
     androidx.compose.runtime.LaunchedEffect(countTextFieldState) {
         androidx.compose.runtime.snapshotFlow { countTextFieldState.text.toString() }
             .collect { text ->
-                // Only propagate valid positive numbers - allow empty/partial input while typing
+                // Only a positive number propagates; empty or partial input waits.
                 val count = text.toIntOrNull()?.takeIf { it > 0 }
                 if (count != null && currentEndCondition is EndCondition.Count &&
                     (currentEndCondition as EndCondition.Count).count != count) {
@@ -841,23 +829,25 @@ fun EndConditionSelector(
             }
     }
 
-    var untilMillis by remember(endCondition) {
+    var untilMillis by remember(endCondition, isAllDay, timezone, startDateMillis) {
         mutableStateOf(
             if (endCondition is EndCondition.Until) endCondition.dateMillis
-            else startDateMillis + (365L * 24 * 60 * 60 * 1000) // Default: 1 year from now
+            else defaultUntilMillis(startDateMillis, isAllDay, timezone)
         )
     }
+    // The date the rule ends on, as a device-local midnight for the grid and label.
+    val untilDisplay = untilDisplayMillis(untilMillis, isAllDay, timezone)
 
-    // State for showing inline date picker
+    // Whether the inline date picker is open.
     var showDatePicker by remember { mutableStateOf(false) }
 
-    // Calendar state for the date picker
-    var displayedMonth by remember(untilMillis) {
-        mutableStateOf(JavaCalendar.getInstance().apply { timeInMillis = untilMillis })
+    // Month the date picker shows.
+    var displayedMonth by remember(untilDisplay) {
+        mutableStateOf(JavaCalendar.getInstance().apply { timeInMillis = untilDisplay })
     }
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // Option 1: Never
+        // Never.
         RadioOption(
             label = stringResource(R.string.label_recurrence_never),
             selected = endCondition is EndCondition.Never,
@@ -867,7 +857,7 @@ fun EndConditionSelector(
             }
         )
 
-        // Option 2: After N occurrences
+        // After N occurrences.
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -917,7 +907,7 @@ fun EndConditionSelector(
                     .padding(horizontal = 8.dp, vertical = 12.dp)
                     .onFocusChanged { focusState ->
                         if (focusState.isFocused) {
-                            // Select all text when field gains focus (modern API)
+                            // Select all text on focus.
                             countTextFieldState.edit { selectAll() }
                         }
                     },
@@ -930,7 +920,7 @@ fun EndConditionSelector(
                 ),
                 enabled = endCondition is EndCondition.Count,
                 inputTransformation = InputTransformation {
-                    // Filter to digits only and limit to 3 characters
+                    // Digits only, at most 3.
                     val filtered = asCharSequence().filter { it.isDigit() }.take(3)
                     if (filtered.toString() != asCharSequence().toString()) {
                         replace(0, length, filtered)
@@ -940,7 +930,7 @@ fun EndConditionSelector(
             Text(stringResource(R.string.label_recurrence_occurrences), style = MaterialTheme.typography.bodyMedium)
         }
 
-        // Option 3: Until date (clickable to show date picker)
+        // On a date; tapping the row selects it and toggles the date picker.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -980,7 +970,7 @@ fun EndConditionSelector(
             }
             Text(stringResource(R.string.label_recurrence_on_date), style = MaterialTheme.typography.bodyMedium)
             Text(
-                text = DateTimeUtils.formatEventDate(untilMillis, isAllDay = false, DateTimeUtils.localizedPattern("yMMMd")),
+                text = DateTimeUtils.formatEventDate(untilDisplay, isAllDay = false, DateTimeUtils.localizedPattern("yMMMd")),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium,
                 color = if (endCondition is EndCondition.Until)
@@ -998,18 +988,18 @@ fun EndConditionSelector(
             }
         }
 
-        // Inline date picker for "Until date" option
+        // Date picker for the end date, shown only while it is the selected option.
         AnimatedVisibility(
             visible = showDatePicker && endCondition is EndCondition.Until,
             enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(150)),
             exit = shrinkVertically(animationSpec = tween(150)) + fadeOut(animationSpec = tween(100))
         ) {
             InlineDatePickerContent(
-                selectedDateMillis = untilMillis,
+                selectedDateMillis = untilDisplay,
                 displayedMonth = displayedMonth,
                 onDateSelect = { newDateMillis ->
-                    untilMillis = newDateMillis
-                    onEndConditionChange(EndCondition.Until(newDateMillis))
+                    untilMillis = untilForPickedDate(newDateMillis, isAllDay, timezone)
+                    onEndConditionChange(EndCondition.Until(untilMillis))
                 },
                 onMonthChange = { newMonth ->
                     displayedMonth = newMonth
@@ -1020,9 +1010,7 @@ fun EndConditionSelector(
     }
 }
 
-/**
- * Radio option row with circle indicator.
- */
+/** Shows a radio row with a circle indicator. */
 @Composable
 fun RadioOption(
     label: String,
@@ -1035,8 +1023,7 @@ fun RadioOption(
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
             .clickable { onClick() }
-            // Expose selection to TalkBack (and tests) so state isn't conveyed by
-            // the filled dot alone.
+            // TalkBack and tests read the selection here, not only from the filled dot.
             .semantics { this.selected = selected }
             .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,

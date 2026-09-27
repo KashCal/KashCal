@@ -18,18 +18,17 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * RFC 4791 compliance tests for CalDAV mutation operations.
+ * Tests [OkHttpCalDavClient] event create, update, delete and move against CalDAV and WebDAV.
  *
- * Tests event CRUD against RFC 4791 requirements:
- * - Section 5.3.1: Creating calendar object resources (PUT)
- * - Section 5.3.2: UID uniqueness constraint (If-None-Match)
- * - Section 5.3.3: Modifying/deleting calendar object resources (If-Match)
- * - Section 5.3.4: ETag retrieval after mutation
- * - Section 5.2.5: max-resource-size (413)
- * - RFC 4918 Section 9.9: MOVE operation
+ * Covers:
+ * - RFC 4791 §5.3.2: creating with PUT and `If-None-Match: *`, changing with `If-Match`
+ * - RFC 4791 §5.3.2.1: the no-uid-conflict and max-resource-size preconditions
+ * - RFC 4791 §5.3.4: reading the ETag after a write
+ * - RFC 4918 §9.6: DELETE
+ * - RFC 4918 §9.9: MOVE
  *
- * Each test verifies BOTH outgoing request compliance (headers, Content-Type)
- * and response handling compliance (status codes, error classification).
+ * Each test checks the outgoing request (method, headers, Content-Type) or how a reply's status
+ * code is classified.
  */
 class OkHttpCalDavClientRfc4791MutationTest {
 
@@ -65,11 +64,12 @@ class OkHttpCalDavClientRfc4791MutationTest {
         unmockkAll()
     }
 
-    // ========== RFC 4791 Section 5.3.1: Creating Calendar Object Resources ==========
+    // ========== Creating calendar object resources (RFC 4791 §5.3.2) ==========
 
     @Test
     fun `createEvent sends PUT to calendar-url slash uid dot ics`() = runTest {
-        // RFC 4791 Section 5.3.1: PUT to {calendar-collection}/{uid}.ics
+        // PUT to {calendar-collection}/{uid}.ics. RFC 4791 §5.3.2 makes the name arbitrary;
+        // the client derives it from the UID.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -89,7 +89,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `createEvent sends If-None-Match star header`() = runTest {
-        // RFC 4791 Section 5.3.2: If-None-Match: * prevents overwriting existing resource
+        // RFC 4791 §5.3.2: If-None-Match: * stops the PUT overwriting an existing resource
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -109,7 +109,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `createEvent sends Content-Type text calendar`() = runTest {
-        // RFC 4791 Section 5.3.1: PUT body is iCalendar data with text/calendar Content-Type
+        // The PUT body is iCalendar data, sent as text/calendar
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -130,7 +130,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `createEvent returns url and etag on 201 Created`() = runTest {
-        // RFC 4791 Section 5.3.1: 201 Created indicates successful resource creation
+        // 201 Created: the resource was created
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -148,7 +148,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `createEvent returns url and etag on 204 No Content`() = runTest {
-        // RFC 4791: Some servers return 204 instead of 201 for create
+        // Some servers answer a create with 204 instead of 201
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(204)
@@ -163,7 +163,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `createEvent extracts etag from response header`() = runTest {
-        // RFC 4791 Section 5.3.4: Server SHOULD return ETag in PUT response
+        // RFC 4791 §5.3.4: the server SHOULD return an ETag in the PUT response
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -180,8 +180,8 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `createEvent falls back to PROPFIND when etag header missing`() = runTest {
-        // RFC 4791 Section 5.3.4: Server MAY not return ETag; client should fetch via PROPFIND
-        // Real-world: Nextcloud, Zoho omit ETag from PUT response
+        // RFC 4791 §5.3.4: the server may omit the ETag; the client then fetches it.
+        // Nextcloud and Zoho omit it from the PUT response.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -204,11 +204,11 @@ class OkHttpCalDavClientRfc4791MutationTest {
         )
     }
 
-    // ========== RFC 4791 Section 5.3.2: UID Uniqueness ==========
+    // ========== UID uniqueness and create failures (RFC 4791 §5.3.2.1) ==========
 
     @Test
     fun `createEvent returns conflict on 412 Precondition Failed`() = runTest {
-        // RFC 4791 Section 5.3.2: 412 when If-None-Match: * fails (resource exists)
+        // 412 when If-None-Match: * fails because a resource exists at that URL
         mockWebServer.enqueue(MockResponse().setResponseCode(412))
 
         val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
@@ -219,8 +219,8 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `createEvent returns UID conflict on 403 with Location header`() = runTest {
-        // RFC 4791 Section 5.3.2: 403 with Location header indicates UID already used
-        // at a different URL in the calendar collection
+        // A 403 with a Location header: the UID is already used at another URL in the
+        // collection (the RFC 4791 §5.3.2.1 no-uid-conflict precondition)
         val existingUrl = "/calendars/testuser/personal/other-file.ics"
         mockWebServer.enqueue(
             MockResponse()
@@ -242,7 +242,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `createEvent returns permission denied on 403 without Location`() = runTest {
-        // RFC 4791: 403 without Location is generic permission denied
+        // A 403 without Location is reported as permission denied
         mockWebServer.enqueue(MockResponse().setResponseCode(403))
 
         val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
@@ -260,7 +260,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `createEvent returns error on 413 Request Entity Too Large`() = runTest {
-        // RFC 4791 Section 5.2.5: max-resource-size exceeded
+        // 413: the event exceeds the calendar's max-resource-size (RFC 4791 §5.2.5)
         mockWebServer.enqueue(MockResponse().setResponseCode(413))
 
         val calendarUrl = mockWebServer.url("/calendars/testuser/personal/").toString()
@@ -281,11 +281,11 @@ class OkHttpCalDavClientRfc4791MutationTest {
         assertTrue("401 should be auth error", result.isAuthError())
     }
 
-    // ========== RFC 4791 Section 5.3.3: Modifying Calendar Object Resources ==========
+    // ========== Modifying calendar object resources (RFC 4791 §5.3.2) ==========
 
     @Test
     fun `updateEvent sends PUT with If-Match etag header`() = runTest {
-        // RFC 4791 Section 5.3.3: If-Match with current ETag for optimistic locking
+        // RFC 4791 §5.3.2: a change carries the current ETag in If-Match (optimistic locking)
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(204)
@@ -323,7 +323,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `updateEvent returns new etag on success`() = runTest {
-        // RFC 4791 Section 5.3.4: Server returns new ETag after modification
+        // RFC 4791 §5.3.4: the server returns the new ETag after the change
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(204)
@@ -339,7 +339,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `updateEvent falls back to PROPFIND when etag header missing`() = runTest {
-        // RFC 4791 Section 5.3.4: Fallback for servers that don't return ETag in PUT response
+        // RFC 4791 §5.3.4: fetch the ETag when the PUT response has none
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(204)
@@ -364,7 +364,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `updateEvent returns conflict on 412`() = runTest {
-        // RFC 4791 Section 5.3.3: 412 Precondition Failed when ETag doesn't match
+        // RFC 7232 §3.1: 412 Precondition Failed when the ETag doesn't match
         mockWebServer.enqueue(MockResponse().setResponseCode(412))
 
         val eventUrl = mockWebServer.url("/calendars/testuser/personal/event.ics").toString()
@@ -386,7 +386,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `updateEvent returns error on 413`() = runTest {
-        // RFC 4791 Section 5.2.5: Event exceeds max-resource-size after edit
+        // 413: the edited event exceeds max-resource-size (RFC 4791 §5.2.5)
         mockWebServer.enqueue(MockResponse().setResponseCode(413))
 
         val eventUrl = mockWebServer.url("/calendars/testuser/personal/event.ics").toString()
@@ -395,11 +395,11 @@ class OkHttpCalDavClientRfc4791MutationTest {
         assertTrue("413 should be error", result.isError())
     }
 
-    // ========== RFC 4791 Section 5.3.3: Deleting Calendar Object Resources ==========
+    // ========== Deleting calendar object resources (RFC 4918 §9.6) ==========
 
     @Test
     fun `deleteEvent sends DELETE with If-Match etag header`() = runTest {
-        // RFC 4791 Section 5.3.3: DELETE with If-Match for optimistic locking
+        // DELETE carries If-Match for optimistic locking (RFC 7232 §3.1)
         mockWebServer.enqueue(MockResponse().setResponseCode(204))
 
         val eventUrl = mockWebServer.url("/calendars/testuser/personal/event.ics").toString()
@@ -436,7 +436,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `deleteEvent returns success on 404`() = runTest {
-        // RFC 4918: DELETE is idempotent. 404 means already deleted elsewhere.
+        // 404 means the event is already gone, so the delete counts as done
         mockWebServer.enqueue(MockResponse().setResponseCode(404))
 
         val eventUrl = mockWebServer.url("/calendars/testuser/personal/event.ics").toString()
@@ -450,7 +450,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `deleteEvent returns conflict on 412`() = runTest {
-        // RFC 4791 Section 5.3.3: ETag mismatch means event was modified
+        // 412: the ETag doesn't match, so the event was modified on the server
         mockWebServer.enqueue(MockResponse().setResponseCode(412))
 
         val eventUrl = mockWebServer.url("/calendars/testuser/personal/event.ics").toString()
@@ -459,11 +459,11 @@ class OkHttpCalDavClientRfc4791MutationTest {
         assertTrue("412 should be conflict", result.isConflict())
     }
 
-    // ========== RFC 4918 Section 9.9: MOVE Operation ==========
+    // ========== MOVE (RFC 4918 §9.9) ==========
 
     @Test
     fun `moveEvent sends MOVE method`() = runTest {
-        // RFC 4918 Section 9.9: MOVE method for relocating resources
+        // RFC 4918 §9.9: MOVE relocates the resource
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -479,8 +479,24 @@ class OkHttpCalDavClientRfc4791MutationTest {
     }
 
     @Test
-    fun `moveEvent sends Destination header with uid dot ics`() = runTest {
-        // RFC 4918 Section 9.9: Destination header specifies target URL
+    fun `deleteEvent without an etag sends no If-Match at all`() = runTest {
+        // An empty entity-tag never matches (RFC 9110 section 13.1.1), so "delete whatever is
+        // there" must omit the header rather than send If-Match: "".
+        mockWebServer.enqueue(MockResponse().setResponseCode(204))
+
+        val result = client.deleteEvent(mockWebServer.url("/calendars/testuser/personal/gone.ics").toString(), null)
+
+        assertTrue(result.isSuccess())
+        val request = mockWebServer.takeRequest()
+        assertEquals("DELETE", request.method)
+        assertEquals(null, request.getHeader("If-Match"))
+    }
+
+    @Test
+    fun `moveEvent keeps the source resource name as the Destination`() = runTest {
+        // RFC 4918 §9.9: the Destination header names the target URL. Resource names are
+        // opaque, so the name the source was stored under (here chosen by another client,
+        // not derived from the UID) is kept in the destination calendar.
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -495,14 +511,14 @@ class OkHttpCalDavClientRfc4791MutationTest {
         val destination = request.getHeader("Destination")
         assertNotNull("Must have Destination header", destination)
         assertTrue(
-            "Destination must end with {uid}.ics",
-            destination!!.endsWith("/my-event-uid.ics")
+            "Destination must keep the source name, got $destination",
+            destination!!.endsWith("/calendars/testuser/work/event.ics")
         )
     }
 
     @Test
     fun `moveEvent sends Overwrite F header`() = runTest {
-        // RFC 4918 Section 9.9: Overwrite: F prevents clobbering existing resource at destination
+        // RFC 4918 §10.6: Overwrite: F stops the MOVE replacing a resource at the destination
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -523,7 +539,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `moveEvent returns new url and etag on 201`() = runTest {
-        // RFC 4918: 201 Created when destination didn't exist
+        // RFC 4918 §9.9.4: 201 Created when the destination URL wasn't mapped
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
@@ -537,12 +553,12 @@ class OkHttpCalDavClientRfc4791MutationTest {
         assertTrue("201 should be success", result.isSuccess())
         val (newUrl, etag) = result.getOrNull()!!
         assertTrue("New URL should contain destination calendar", newUrl.contains("/work/"))
-        assertTrue("New URL should end with uid.ics", newUrl.endsWith("/uid.ics"))
+        assertTrue("New URL keeps the source resource name", newUrl.endsWith("/work/event.ics"))
     }
 
     @Test
     fun `moveEvent returns new url and etag on 204`() = runTest {
-        // RFC 4918: 204 No Content is also success for MOVE
+        // RFC 4918 §9.9.4: 204 No Content is also a successful MOVE
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(204)
@@ -558,13 +574,13 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `moveEvent falls back to PROPFIND when etag missing`() = runTest {
-        // RFC 4791 Section 5.3.4: ETag may not be in MOVE response
+        // The MOVE response may carry no ETag; the client fetches it from the destination
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(201)
                 // No ETag header
         )
-        // PROPFIND fallback on destination URL
+        // ETag fetch on the destination URL
         mockWebServer.enqueue(
             MockResponse()
                 .setResponseCode(207)
@@ -580,7 +596,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `moveEvent returns not found on 404`() = runTest {
-        // RFC 4918: Source doesn't exist
+        // 404: the source doesn't exist
         mockWebServer.enqueue(MockResponse().setResponseCode(404))
 
         val sourceUrl = mockWebServer.url("/calendars/testuser/personal/event.ics").toString()
@@ -592,7 +608,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `moveEvent returns conflict on 412`() = runTest {
-        // RFC 4918: Destination exists and Overwrite: F was set
+        // RFC 4918 §9.9.4: 412 when the destination exists and Overwrite: F was set
         mockWebServer.enqueue(MockResponse().setResponseCode(412))
 
         val sourceUrl = mockWebServer.url("/calendars/testuser/personal/event.ics").toString()
@@ -604,7 +620,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `moveEvent returns error on 403 cross-server`() = runTest {
-        // RFC 4918: Cross-server MOVE is forbidden
+        // 403: the server forbids the MOVE; the client reports it as a possible cross-server move
         mockWebServer.enqueue(MockResponse().setResponseCode(403))
 
         val sourceUrl = mockWebServer.url("/calendars/testuser/personal/event.ics").toString()
@@ -618,7 +634,7 @@ class OkHttpCalDavClientRfc4791MutationTest {
 
     @Test
     fun `moveEvent returns error on 405 not supported`() = runTest {
-        // RFC 4918: Server doesn't support MOVE on this resource
+        // 405: the server doesn't support MOVE on this resource
         mockWebServer.enqueue(MockResponse().setResponseCode(405))
 
         val sourceUrl = mockWebServer.url("/calendars/testuser/personal/event.ics").toString()

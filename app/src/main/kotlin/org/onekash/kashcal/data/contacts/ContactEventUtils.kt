@@ -6,11 +6,11 @@ import java.util.Calendar
 import java.util.TimeZone
 
 /**
- * Data class representing a parsed date from a contact event (birthday or anniversary).
+ * A birthday or anniversary date parsed from a contact.
  *
- * @param month Month (1-12)
- * @param day Day of month (1-31)
- * @param year Event year (null if not available)
+ * @param month 1-12
+ * @param day 1-31
+ * @param year the event year, or null if the contact has none
  */
 data class ContactEventDate(
     val month: Int,
@@ -18,42 +18,32 @@ data class ContactEventDate(
     val year: Int?
 )
 
-/**
- * Shared sync result for contact event repositories (birthday and anniversary).
- */
+/** Result of [BaseContactEventRepository.syncEvents]. */
 sealed class ContactEventSyncResult {
     data class Success(val added: Int, val updated: Int, val deleted: Int) : ContactEventSyncResult()
     data class Error(val message: String) : ContactEventSyncResult()
 }
 
 /**
- * Utility functions for contact event parsing and formatting.
- *
- * Handles:
- * - Parsing date strings from Android Contacts (multiple formats)
- * - Year calculation from event year and occurrence date
- * - Birthday and anniversary event title formatting with ordinal suffixes
- * - Event year encoding/decoding in event description
+ * Parses contact dates, computes contact event start times, formats their titles and stores
+ * the event year in the description.
  */
 object ContactEventUtils {
 
-    // Description field format for storing event year.
-    // Retained as "birthYear:" for backward compatibility with existing birthday events.
-    // Anniversary events also use this prefix — semantically odd but functionally correct.
+    // Prefix of the event year in the description. It stays "birthYear:" because stored
+    // birthday events carry it; anniversaries share it.
     private const val EVENT_YEAR_PREFIX = "birthYear:"
 
     /**
-     * Parse a date string from Android Contacts.
+     * Parses a Contacts Provider date string, or returns null if it's unparseable or invalid.
      *
-     * Supports formats:
-     * - "--MM-DD" (no year, RFC 6350 vCard format)
-     * - "YYYY-MM-DD" (full date)
-     * - "YYYY/MM/DD" (alternative format)
-     * - "MM/DD/YYYY" (US format)
-     * - "DD/MM/YYYY" (European format - ambiguous, assumes US)
+     * Accepts:
+     * - `--MM-DD` (no year, RFC 6350)
+     * - `YYYY-MM-DD` or `YYYY/MM/DD`
+     * - `MM/DD/YYYY` or `MM-DD-YYYY`; a day-first date is read as month-first, and rejected
+     *   when its day is over 12
      *
-     * @param dateString The date string from contacts
-     * @return Parsed ContactEventDate or null if unparseable
+     * A date with a year must fall in 1900-2100.
      */
     fun parseContactDate(dateString: String?): ContactEventDate? {
         if (dateString.isNullOrBlank()) return null
@@ -98,13 +88,7 @@ object ContactEventUtils {
         return null
     }
 
-    /**
-     * Calculate years elapsed from an event year to the occurrence timestamp.
-     *
-     * @param eventYear The year of the event (birth year, anniversary year, etc.)
-     * @param occurrenceTs Occurrence timestamp in milliseconds
-     * @return Years elapsed at the time of the occurrence
-     */
+    /** Returns the occurrence's year, in the device zone, minus [eventYear]. */
     fun calculateYearsSince(eventYear: Int, occurrenceTs: Long): Int {
         val calendar = Calendar.getInstance(TimeZone.getDefault())
         calendar.timeInMillis = occurrenceTs
@@ -112,12 +96,7 @@ object ContactEventUtils {
         return occurrenceYear - eventYear
     }
 
-    /**
-     * Format ordinal suffix for a number (1st, 2nd, 3rd, 4th, etc.)
-     *
-     * @param n The number
-     * @return Formatted string with ordinal suffix
-     */
+    /** Returns [n] with its English ordinal suffix, such as 1st, 12th or 23rd. */
     fun formatOrdinal(n: Int): String {
         return when {
             n % 100 in 11..13 -> "${n}th"
@@ -128,6 +107,7 @@ object ContactEventUtils {
         }
     }
 
+    /** Returns [n] with the localized ordinal suffix chosen by the English rule. */
     fun formatOrdinal(n: Int, resources: Resources): String {
         val suffixRes = when {
             n % 100 in 11..13 -> R.string.ordinal_suffix_th
@@ -140,12 +120,9 @@ object ContactEventUtils {
     }
 
     /**
-     * Format birthday event title with optional age.
-     *
-     * @param displayName Contact display name
-     * @param birthYear Birth year (null if unknown)
-     * @param occurrenceTs Occurrence timestamp for age calculation
-     * @return Formatted title like "John Smith's 30th Birthday" or "John Smith's Birthday"
+     * Returns a title like "John Smith's 30th Birthday", or "John Smith's Birthday" when
+     * [birthYear] is null or the age isn't 1-149. The overload without [Resources] uses
+     * hardcoded English.
      */
     fun formatBirthdayTitle(displayName: String, birthYear: Int?, occurrenceTs: Long): String {
         return if (birthYear != null) {
@@ -174,12 +151,9 @@ object ContactEventUtils {
     }
 
     /**
-     * Format anniversary event title with optional year count.
-     *
-     * @param displayName Contact display name
-     * @param anniversaryYear Anniversary year (null if unknown)
-     * @param occurrenceTs Occurrence timestamp for year calculation
-     * @return Formatted title like "Alice's 10th Anniversary" or "Alice's Anniversary"
+     * Returns a title like "Alice's 10th Anniversary", or "Alice's Anniversary" when
+     * [anniversaryYear] is null or the count isn't 1-149. The overload without [Resources]
+     * uses hardcoded English.
      */
     fun formatAnniversaryTitle(displayName: String, anniversaryYear: Int?, occurrenceTs: Long): String {
         return if (anniversaryYear != null) {
@@ -207,22 +181,12 @@ object ContactEventUtils {
         }
     }
 
-    /**
-     * Encode event year into event description.
-     *
-     * @param eventYear The event year (null if unknown)
-     * @return Description string with encoded year, or null
-     */
+    /** Returns the description holding [eventYear], or null when the year is unknown. */
     fun encodeEventYear(eventYear: Int?): String? {
         return eventYear?.let { "$EVENT_YEAR_PREFIX$it" }
     }
 
-    /**
-     * Decode event year from event description.
-     *
-     * @param description Event description that may contain event year
-     * @return Extracted year or null
-     */
+    /** Returns the year [encodeEventYear] stored in [description], or null if none. */
     fun decodeEventYear(description: String?): Int? {
         if (description == null) return null
         val prefix = EVENT_YEAR_PREFIX
@@ -234,19 +198,10 @@ object ContactEventUtils {
         return description.substring(start, end).toIntOrNull()
     }
 
-    /** RRULE for yearly recurrence (birthdays, anniversaries). */
+    /** RRULE of every birthday and anniversary event. */
     const val YEARLY_RRULE = "FREQ=YEARLY;INTERVAL=1"
 
-    /**
-     * Calculate the timestamp for a date in a given year.
-     *
-     * All-day event: returns midnight UTC of the date.
-     *
-     * @param month Month (1-12)
-     * @param day Day (1-31)
-     * @param year The year to calculate for
-     * @return Timestamp in milliseconds
-     */
+    /** Returns UTC midnight of the date, the start of an all-day event. [month] is 1-12. */
     fun getEventTimestamp(month: Int, day: Int, year: Int): Long {
         val calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         calendar.clear()
@@ -261,18 +216,11 @@ object ContactEventUtils {
     }
 
     /**
-     * Get the DTSTART timestamp for a contact event (birthday/anniversary).
+     * Returns the DTSTART (UTC midnight) of a contact event: the date in [eventYear] when known.
      *
-     * Uses the event's known year if available. If the year is unknown (null),
-     * uses (currentYear - 1) to ensure the RRULE FREQ=YEARLY generates
-     * occurrences for the current year. Special case: Feb 29 with unknown year
-     * uses the nearest past leap year to prevent java.util.Calendar from
-     * silently rolling to March 1.
-     *
-     * @param month Month (1-12)
-     * @param day Day (1-31)
-     * @param eventYear The known event year, or null if unknown
-     * @return Timestamp at UTC midnight for the computed DTSTART date
+     * With no year it uses last year, so the yearly rule still yields this year's
+     * occurrence. Feb 29 with no year uses the latest leap year before this one, or
+     * java.util.Calendar would silently roll it to March 1.
      */
     fun getStartTimestamp(month: Int, day: Int, eventYear: Int?): Long {
         val year = if (eventYear != null) {
@@ -280,7 +228,6 @@ object ContactEventUtils {
         } else {
             val currentYear = Calendar.getInstance().get(Calendar.YEAR)
             if (month == 2 && day == 29) {
-                // Find nearest past leap year to avoid Calendar rolling Feb 29 → Mar 1
                 var candidate = currentYear - 1
                 while (!isLeapYear(candidate)) {
                     candidate--
@@ -294,15 +241,9 @@ object ContactEventUtils {
     }
 
     /**
-     * Get the next upcoming event timestamp from today.
+     * Returns UTC midnight of the date's next occurrence from today (all-day, RFC 5545).
      *
-     * Uses local timezone for date comparison to correctly determine if
-     * today's date has passed. The returned timestamp is still UTC
-     * midnight (correct for all-day events per RFC 5545).
-     *
-     * @param month Month (1-12)
-     * @param day Day (1-31)
-     * @return Timestamp of the next occurrence (UTC midnight)
+     * Today is judged in the device zone, so today's date still counts late in the day.
      */
     @Deprecated("Use getStartTimestamp() instead — getNextEventTimestamp sets DTSTART to next year for past-month dates, causing RRULE to skip the current year")
     fun getNextEventTimestamp(month: Int, day: Int): Long {
@@ -311,8 +252,6 @@ object ContactEventUtils {
         val currentMonth = now.get(Calendar.MONTH) + 1  // Calendar.MONTH is 0-based
         val currentDay = now.get(Calendar.DAY_OF_MONTH)
 
-        // Compare calendar dates in local time (not timestamps)
-        // This ensures today's event shows up even late in the day
         val isDateTodayOrLater = when {
             month > currentMonth -> true
             month < currentMonth -> false
@@ -322,23 +261,20 @@ object ContactEventUtils {
         return if (isDateTodayOrLater) {
             getEventTimestamp(month, day, currentYear)
         } else {
-            // Date already passed this year, use next year
             getEventTimestamp(month, day, currentYear + 1)
         }
     }
 
     /**
-     * Convert reminder minutes to ISO 8601 duration trigger.
+     * Converts a reminder in minutes before the start (the CalendarContract convention) to
+     * an ISO 8601 trigger duration.
      *
-     * Signed "minutes before start" (Android CalendarContract convention): positive =
-     * before the start (negative iCal trigger), negative = after the start (positive
-     * iCal trigger). e.g. 900 -> "-PT15H" (15h before), -540 -> "PT9H" (9h after),
-     * 0 -> "PT0M" (at start). Uses hour-form (never period -P_D) so all-day offsets
-     * are DST-stable as exact durations.
+     * Positive minutes (before the start) give a negative trigger, negative minutes (after
+     * the start) a positive one: 900 -> "-PT15H", -540 -> "PT9H", 0 -> "PT0M". It emits hours
+     * and minutes, never days (`-P1D`), so all-day offsets are DST-stable exact durations.
      */
     fun minutesToIsoDuration(minutes: Int): String {
         if (minutes == 0) return "PT0M"
-        // Sign of the iCal trigger is the negation of the "minutes before" sign.
         val sign = if (minutes > 0) "-" else ""
         val abs = kotlin.math.abs(minutes)
         val hours = abs / 60
@@ -360,7 +296,6 @@ object ContactEventUtils {
         if (month < 1 || month > 12) return false
         if (day < 1 || day > 31) return false
 
-        // Basic day-of-month validation
         val maxDays = when (month) {
             2 -> if (isLeapYear(year)) 29 else 28
             4, 6, 9, 11 -> 30

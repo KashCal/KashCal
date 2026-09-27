@@ -12,16 +12,16 @@ import org.onekash.kashcal.network.dns.DnsWireTestFixtures.question
 import org.onekash.kashcal.network.dns.DnsWireTestFixtures.u16
 
 /**
- * Adversarial + real-fixture tests for the DNS SRV response wire decoder.
+ * Tests [SrvWireParser.parse] on captured responses, RCODE handling, root "." targets, skipped
+ * non-SRV answers, several SRV answers, and malformed or truncated input.
  *
- * The parser consumes raw bytes returned by the system resolver for an
- * `_carddavs._tcp.<domain>` / `_caldavs._tcp.<domain>` SRV query (RFC 6764).
- * Those bytes are fully attacker-influenced (a malicious or broken nameserver),
- * so the decoder must never throw, never loop, and never emit a half-built
- * record — it returns a typed [SrvParseResult] for every input.
+ * The parser reads the raw reply to an `_carddavs._tcp.<domain>` or `_caldavs._tcp.<domain>` SRV
+ * query (RFC 6764). A malicious or broken nameserver controls those bytes, so the decoder must
+ * never throw, never loop and never emit a half-built record; it returns a typed
+ * [SrvParseResult] for every input.
  *
- * Positive fixtures are the exact wire bytes captured from live queries to
- * three real providers; the Zoho fixture is a genuine NXDOMAIN response.
+ * The positive fixtures are the exact wire bytes captured from live queries to three real
+ * providers; the Zoho fixture is a genuine NXDOMAIN response.
  */
 class SrvWireParserTest {
 
@@ -106,7 +106,7 @@ class SrvWireParserTest {
 
     @Test
     fun `header-only RCODE 0 zero answers is NoRecords`() {
-        // 12-byte header, RCODE 0, QD 0, AN 0 — a well-formed empty answer.
+        // 12-byte header, RCODE 0, QD 0, AN 0: a well-formed empty answer.
         assertEquals(SrvParseResult.NoRecords, SrvWireParser.parse(header(rcode = 0, qd = 0, an = 0)))
     }
 
@@ -119,19 +119,17 @@ class SrvWireParserTest {
 
     @Test
     fun `NXDOMAIN with a lying nonzero ANCOUNT still yields NoRecords`() {
-        // The name-error RCODE is authoritative: a hostile server that sets RCODE 3
-        // but ANCOUNT 1 with no RR bytes following must NOT make the parser walk
-        // past the question into garbage — the RCODE wins and the count is ignored.
+        // A hostile server sets RCODE 3 but ANCOUNT 1 with no RR bytes following. The RCODE
+        // wins and the count is ignored, so the parser doesn't walk past the question.
         val pkt = header(rcode = 3, qd = 1, an = 1) + QUESTION
         assertEquals(SrvParseResult.NoRecords, SrvWireParser.parse(pkt))
     }
 
     @Test
     fun `NXDOMAIN with a malformed question is still NoRecords`() {
-        // RCODE 3 means the name does not exist; that verdict is authoritative and
-        // the body is not trusted or parsed. A garbled/truncated question on such a
-        // response must not flip "the domain has no SRV" into a parse failure — the
-        // parser must short-circuit on the RCODE before touching the question bytes.
+        // RCODE 3 says the name doesn't exist, so the parser returns on the RCODE before
+        // reading the body. A truncated question here must not turn "the domain has no SRV"
+        // into a parse failure.
         val pkt = header(rcode = 3, qd = 1, an = 0) + byteArrayOf(40, 0x61, 0x62, 0x63)
         assertEquals(SrvParseResult.NoRecords, SrvWireParser.parse(pkt))
     }
@@ -167,8 +165,8 @@ class SrvWireParserTest {
 
     @Test
     fun `question QNAME as self-pointer is Failed`() {
-        // QNAME at offset 12 is a pointer to offset 12 (itself) — not strictly
-        // backward, so the name reader must reject it rather than loop.
+        // QNAME at offset 12 is a pointer to offset 12 (itself), not strictly backward, so the
+        // name reader rejects it instead of looping.
         val pkt = header(rcode = 0, qd = 1, an = 0) + byteArrayOf(0xc0.toByte(), 12) + u16(33) + u16(1)
         assertTrue(SrvWireParser.parse(pkt) is SrvParseResult.Failed)
     }
@@ -198,19 +196,18 @@ class SrvWireParserTest {
             byteArrayOf(0xc0.toByte(), 0x0c) + u16(33) + u16(1) + TTL + u16(2 + 2 + 2 + 2) +
             u16(0) + u16(0) + u16(443)
         val targetOffset = prefix.size
-        // Points to targetOffset+4, strictly after itself — forward pointers rejected.
+        // Points to targetOffset+4, after itself; forward pointers are rejected.
         val pkt = prefix + byteArrayOf(0xc0.toByte(), (targetOffset + 4).toByte()) + byteArrayOf(0, 0, 0, 0)
         assertTrue(SrvWireParser.parse(pkt) is SrvParseResult.Failed)
     }
 
     @Test
     fun `target label followed by a backward pointer to itself is Failed not a hang`() {
-        // The strictly-backward pointer rule does NOT forbid every cycle: a label
-        // advances pos, so a following pointer can legally aim back at that label's
-        // own offset and oscillate (label -> back-pointer -> same label -> ...).
-        // Termination is guaranteed only by the MAX_NAME cap, not the backward rule.
-        // The target here is a 1-octet label "a" immediately followed by a pointer
-        // to that label's offset; the walk must bail with "name too long", not loop.
+        // The strictly-backward pointer rule doesn't forbid every cycle: a label advances pos,
+        // so a following pointer can aim back at that label's own offset and oscillate
+        // (label -> back-pointer -> same label -> ...). Only the 255-octet name cap ends it.
+        // The target is a 1-octet label "a" followed by a pointer to that label's offset; the
+        // walk must stop with "name too long", not loop.
         val prefix = header(rcode = 0, qd = 1, an = 1) + QUESTION +
             byteArrayOf(0xc0.toByte(), 0x0c) + u16(33) + u16(1) + TTL + u16(2 + 2 + 2 + 4) +
             u16(0) + u16(0) + u16(443)                      // priority, weight, port
@@ -224,7 +221,8 @@ class SrvWireParserTest {
     @Test
     fun `target with a valid backward pointer parses`() {
         // Target = literal "sub" + pointer to the qname at offset 12, assembling
-        // sub._carddavs._tcp.example.test.
+        // sub._carddavs._tcp.example.test. RFC 2782 says a target isn't compressed; the
+        // parser accepts one anyway.
         val target = byteArrayOf(3, 0x73, 0x75, 0x62) + byteArrayOf(0xc0.toByte(), 0x0c)
         val pkt = header(rcode = 0, qd = 1, an = 1) + QUESTION + srvRr(0, 0, 443, target)
         val result = SrvWireParser.parse(pkt)
@@ -246,7 +244,7 @@ class SrvWireParserTest {
 
     @Test
     fun `reserved label bits 0x40 is Failed`() {
-        // 0x40 = 0b01000000: reserved label type (also >63 as a length) — reject.
+        // 0x40 = 0b01000000: a reserved label type (and over 63 as a length), rejected.
         val target = byteArrayOf(0x40, 0x61, 0x62)
         val pkt = header(rcode = 0, qd = 1, an = 1) + QUESTION + srvRr(0, 0, 443, target)
         assertTrue(SrvWireParser.parse(pkt) is SrvParseResult.Failed)
@@ -294,13 +292,12 @@ class SrvWireParserTest {
 
     @Test
     fun `SRV target whose label runs past its own RDLENGTH is Failed`() {
-        // The target name must be read WITHIN the RR's declared rdata window, not
-        // merely within the whole buffer. Here RDLENGTH claims 8 (priority+weight+
-        // port + a 2-octet target), but the target's first label declares 5 content
-        // octets that spill past the window into bytes the record does not own.
-        // Reading them anyway would fabricate a target ("abcde") from a malformed
-        // record instead of rejecting it.
-        val targetBytes = byteArrayOf(5, 0x61, 0x62, 0x63, 0x64, 0x65, 0)  // "abcde" + terminator (7 octets)
+        // The target must be read within the RR's declared rdata window, not the whole
+        // buffer. RDLENGTH claims 8 (priority, weight, port and a 2-octet target), but the
+        // target's first label declares 5 content octets that spill into bytes the record
+        // doesn't own. Reading them would build a target ("abcde") from a malformed record.
+        // The target: "abcde" + terminator (7 octets).
+        val targetBytes = byteArrayOf(5, 0x61, 0x62, 0x63, 0x64, 0x65, 0)
         val rdata = u16(0) + u16(0) + u16(443) + targetBytes               // 13 octets present
         val declaredRdlength = 8                                           // but only 8 declared
         val rr = byteArrayOf(0xc0.toByte(), 0x0c) + u16(33) + u16(1) + TTL + u16(declaredRdlength) + rdata
@@ -311,9 +308,9 @@ class SrvWireParserTest {
 
     @Test
     fun `SRV target ending exactly at its RDLENGTH boundary parses`() {
-        // The window is inclusive: a target that terminates precisely at the last
-        // declared rdata octet is valid and must not be rejected by the bound.
-        val targetBytes = encodeName("d.test")                             // 8 octets incl. terminator
+        // A target whose terminator is the last declared rdata octet is inside the window and
+        // must parse.
+        val targetBytes = encodeName("d.test")                     // 8 octets incl. terminator
         val rdata = u16(0) + u16(0) + u16(443) + targetBytes
         val rr = byteArrayOf(0xc0.toByte(), 0x0c) + u16(33) + u16(1) + TTL + u16(rdata.size) + rdata
         val pkt = header(rcode = 0, qd = 1, an = 1) + QUESTION + rr
@@ -326,20 +323,19 @@ class SrvWireParserTest {
 
     @Test
     fun `single root target is NotAvailable`() {
-        // RFC 2782: a lone SRV with target "." means the service is decidedly
-        // not offered here — distinct from having no records at all.
+        // RFC 2782: a target of "." means the service is decidedly not available at this
+        // domain, which differs from having no records at all.
         val pkt = header(rcode = 0, qd = 1, an = 1) + QUESTION + srvRr(0, 0, 0, byteArrayOf(0))
         assertEquals(SrvParseResult.NotAvailable, SrvWireParser.parse(pkt))
     }
 
     @Test
     fun `root target mixed with a real record drops the root and keeps the real one`() {
-        // A conformant server never mixes the "." not-available sentinel with real
-        // SRV records, but a hostile one can. The root-target record must be dropped
-        // (it carries an empty target that must never reach host selection as a host
-        // to probe), leaving only the genuine record.
+        // RFC 2782 gives "." as the sign that the service isn't available at this domain; a
+        // hostile server can still send it beside real SRV records. The root-target record is
+        // dropped, since its empty target must never reach host selection as a host to probe.
         val pkt = header(rcode = 0, qd = 1, an = 2) + QUESTION +
-            srvRr(0, 0, 0, byteArrayOf(0)) +                       // "." — not-available sentinel
+            srvRr(0, 0, 0, byteArrayOf(0)) +                       // ".": not available
             srvRr(10, 5, 443, encodeName("real.example.test"))
         val result = SrvWireParser.parse(pkt)
         assertTrue("expected Records, got $result", result is SrvParseResult.Records)
@@ -351,8 +347,8 @@ class SrvWireParserTest {
 
     @Test
     fun `two root targets and nothing else is NotAvailable`() {
-        // More than one "." target, no real record: still the not-available signal,
-        // not a two-element Records list of empty-target junk.
+        // Two "." targets and no real record: still NotAvailable, not a Records list of empty
+        // targets.
         val pkt = header(rcode = 0, qd = 1, an = 2) + QUESTION +
             srvRr(0, 0, 0, byteArrayOf(0)) +
             srvRr(0, 0, 0, byteArrayOf(0))
@@ -393,12 +389,12 @@ class SrvWireParserTest {
         )
     }
 
-    // ---- Failed carries the specific diagnostic, not a generic fallback ------
+    // ---- Failed carries the specific diagnostic ------------------------------
 
     @Test
     fun `SERVFAIL Failed reason names the RCODE`() {
-        // The elvis fallback in parse() must not swallow the real cause: a server
-        // failure surfaces its RCODE so the resolver layer can log/branch on it.
+        // Failed carries the decoder's reason, so a server failure surfaces its RCODE, which
+        // SrvResolverImpl passes on as the SrvResult.Error reason.
         val result = SrvWireParser.parse(header(rcode = 2, qd = 0, an = 0))
         assertTrue(result is SrvParseResult.Failed)
         assertEquals("RCODE=2", (result as SrvParseResult.Failed).reason)
@@ -409,7 +405,7 @@ class SrvWireParserTest {
     @Test
     fun `RR header truncated below 10 octets is Failed`() {
         // Owner NAME (a 0xc00c pointer) then only 5 of the 10 fixed header octets
-        // (TYPE/CLASS/TTL/RDLENGTH) — one octet short must fail, not read past.
+        // (TYPE/CLASS/TTL/RDLENGTH); a short header must fail, not read past the end.
         val pkt = header(rcode = 0, qd = 1, an = 1) + QUESTION +
             byteArrayOf(0xc0.toByte(), 0x0c) + byteArrayOf(0, 33, 0, 1, 0)
         assertTrue(SrvWireParser.parse(pkt) is SrvParseResult.Failed)
@@ -444,9 +440,9 @@ class SrvWireParserTest {
 
     @Test
     fun `label whose octets reach exactly the buffer end fails as an unterminated name`() {
-        // Label content ends flush with the buffer (labelStart+len == buf.size is
-        // in-bounds), so the failure is the *missing terminator*, not the label
-        // overrunning — the distinct reason pins the boundary direction.
+        // Label content ends flush with the buffer (labelStart+len == buf.size is in bounds),
+        // so the failure is the missing terminator, not the label overrunning. The distinct
+        // reason pins the boundary direction.
         val pkt = header(rcode = 0, qd = 1, an = 0) + byteArrayOf(3, 0x61, 0x62, 0x63)
         val result = SrvWireParser.parse(pkt)
         assertTrue(result is SrvParseResult.Failed)
@@ -455,10 +451,9 @@ class SrvWireParserTest {
 
     @Test
     fun `name of exactly 255 wire octets including the terminator parses`() {
-        // RFC 1035 §3.1: the total encoded name length — every label length octet,
-        // all label content, AND the terminating zero — is capped at 255. Three
-        // 64-octet labels (63 content each) + one 62-octet label (61 content) + the
-        // 1-octet terminator = 64*3 + 62 + 1 = 255 must assemble at the boundary.
+        // RFC 1035 §3.1 caps a name's label octets and label length octets, the root's zero
+        // included, at 255. Three 64-octet labels (63 content each) + one 62-octet label (61
+        // content) + the 1-octet terminator = 64*3 + 62 + 1 = 255 must assemble.
         val label63 = byteArrayOf(63) + ByteArray(63) { 0x61 }   // 64 wire octets
         val label61 = byteArrayOf(61) + ByteArray(61) { 0x61 }   // 62 wire octets
         val target = label63 + label63 + label63 + label61 + byteArrayOf(0)  // 255 total
@@ -470,9 +465,9 @@ class SrvWireParserTest {
 
     @Test
     fun `name of 256 wire octets including the terminator is Failed`() {
-        // One octet over the RFC 1035 §3.1 cap: 64*3 + 63 + 1 = 256. The terminating
-        // zero counts toward the total, so this trips "name too long" — pinning the
-        // boundary at 255 inclusive of the terminator rather than one octet looser.
+        // One octet over the RFC 1035 §3.1 cap: 64*3 + 63 + 1 = 256. The terminating zero
+        // counts toward the total, so this trips "name too long" and pins the cap at 255
+        // including the terminator.
         val label63 = byteArrayOf(63) + ByteArray(63) { 0x61 }   // 64 wire octets
         val label62 = byteArrayOf(62) + ByteArray(62) { 0x61 }   // 63 wire octets
         val target = label63 + label63 + label63 + label62 + byteArrayOf(0)  // 256 total
@@ -486,8 +481,8 @@ class SrvWireParserTest {
 
     @Test
     fun `compression pointer missing its second octet at buffer end is Failed`() {
-        // rdata = priority+weight+port then a lone 0xc0 as the final octet: the
-        // pointer's low byte is off the end, so reading it must fail cleanly.
+        // rdata = priority+weight+port then a lone 0xc0 as the final octet: the pointer's low
+        // byte is off the end, so reading it must fail.
         val pkt = header(rcode = 0, qd = 1, an = 1) + QUESTION +
             byteArrayOf(0xc0.toByte(), 0x0c) + u16(33) + u16(1) + TTL + u16(7) +
             u16(0) + u16(0) + u16(443) + byteArrayOf(0xc0.toByte())
@@ -498,10 +493,9 @@ class SrvWireParserTest {
 
     @Test
     fun `backward pointer to an offset above 255 resolves via the high byte`() {
-        // The target name is planted at absolute offset 256, so the pointer's high
-        // 6 bits are non-zero (0xC1 0x00). If the high byte were shifted the wrong
-        // way the offset collapses to 0 and the name assembles from the header
-        // instead — so asserting the exact target pins the shift direction.
+        // The target name is planted at absolute offset 256, so the pointer's high 6 bits are
+        // non-zero (0xC1 0x00). A high byte shifted the wrong way collapses the offset to 0
+        // and assembles the name from the header, so the exact target pins the shift.
         val header = header(rcode = 0, qd = 1, an = 2)          // padding RR + SRV
         val plantedName = encodeName("shifted.example.test")
         // Bytes before the planted name: 12 header + 33 question + 12 padding-RR
@@ -521,23 +515,22 @@ class SrvWireParserTest {
         )
     }
 
-    // ---- resume position is fixed at the FIRST pointer of a chained name -----
+    // ---- resume position is fixed at the first pointer of a chained name -----
 
     @Test
     fun `owner name that follows two chained pointers resumes after the first`() {
-        // RFC 1035: once a name is redirected by a compression pointer, the field
-        // that follows in the RR stream begins right after THAT first pointer —
-        // even if the target itself ends in a further pointer. Here an RR's owner
-        // NAME is pointer1 -> ("z" + pointer2 -> root terminator). Resume must be
-        // pinned to just past pointer1; if it were re-pinned at pointer2 the next
-        // RR (the SRV answer) is read from the wrong offset and lost.
+        // RFC 1035 §4.1.4: a name in the stream ends at its first pointer, so the next field
+        // starts right after that pointer even if the labels it points to end in another
+        // pointer. Here an RR's owner NAME is pointer1 -> ("z" + pointer2 -> root
+        // terminator). Resume must be just past pointer1; resuming at pointer2 would read
+        // the next RR (the SRV answer) from the wrong offset and lose it.
         val header = header(rcode = 0, qd = 1, an = 3)
 
         // A TXT padding RR whose rdata holds the chain's middle hop:
         // label "z" + pointer2 back to the question's root terminator.
         val rootTerminatorOffset = header.size + encodeName("_carddavs._tcp.example.test").size - 1
         val midHopBytes = byteArrayOf(1, 0x7a) +                                   // label "z"
-            byteArrayOf(0xc0.toByte(), rootTerminatorOffset.toByte())             // pointer2 -> root
+            byteArrayOf(0xc0.toByte(), rootTerminatorOffset.toByte())     // pointer2 -> root
         val paddingRr = byteArrayOf(0xc0.toByte(), 0x0c) + u16(16) + u16(1) + TTL +
             u16(midHopBytes.size) + midHopBytes                                    // TXT, skipped
         // Absolute offset of the mid-hop (rdata start of the padding RR).

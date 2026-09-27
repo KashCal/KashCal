@@ -35,29 +35,24 @@ import org.onekash.kashcal.sync.strategy.PullStrategy
 import org.onekash.kashcal.sync.strategy.PushStrategy
 
 /**
- * Post-refactor verification tests.
+ * Tests that account data goes through [AccountRepository] and the unified [CredentialManager].
  *
- * These tests verify the repository layer refactor was successful.
- * They should all pass once the migration is complete.
+ * Covered here:
+ * - Over a real [AccountRepositoryImpl] with relaxed DAO mocks,
+ *   [AccountRepositoryImpl.deleteAccount]: a reminder-cancel failure propagates, a
+ *   credential-delete failure doesn't stop the cascade, the order of its cleanup steps, and
+ *   that it deletes only its own account's credentials.
+ * - Over the same repository, credential save, read and [AccountRepository.hasCredentials]
+ *   delegate to [CredentialManager], one set per account.
+ * - The iCloud and CalDAV discovery services' `removeAccount` delegates to
+ *   [AccountRepository.deleteAccount].
+ * - `CalDavSyncEngine` takes a [CalendarRepository] (the test only constructs it).
+ * - `ICloudCredentialProvider` and `CalDavCredentialProvider` read through [CredentialManager].
  *
- * Test Status Legend:
- * - ✅ IMPLEMENTED: Test is complete and passing
- * - 🔶 PENDING: Test requires a later migration step to be complete first
- * - 🔴 INTEGRATION: Requires device/emulator (androidTest)
- *
- * Checklist:
- * - [x] deleteAccount cancels WorkManager jobs (AccountRepositoryImplTest)
- * - [x] deleteAccount cancels reminders (AccountRepositoryImplTest)
- * - [x] CredentialManager uses account-keyed format (UnifiedCredentialManagerTest)
- * - [x] backup_rules excludes credential files (PreRefactorSnapshotTest)
- * - [x] deleteAccount is transactional (this file)
- * - [x] ICloudAccountDiscoveryService uses AccountRepository
- * - [x] CalDavAccountDiscoveryService uses AccountRepository
- * - [x] EventReader no longer has account methods
- * - [x] AccountSettingsViewModel uses AccountRepository
- * - [x] HomeViewModel uses AccountRepository
- * - [ ] Old credential managers deleted
- * - [ ] iCloud sync works end-to-end (Integration test)
+ * The EventCoordinator, AccountSettingsViewModel and HomeViewModel tests call only the mocked
+ * [AccountRepository], not those classes. The old-credential-manager and end-to-end sync tests
+ * are placeholders that assert nothing. Elsewhere, `AccountRepositoryImplTest` covers the
+ * WorkManager and reminder cancels and `UnifiedCredentialManagerTest` the account-keyed format.
  */
 class PostRefactorVerificationTest {
 
@@ -107,17 +102,17 @@ class PostRefactorVerificationTest {
         unmockkAll()
     }
 
-    // ========== ✅ IMPLEMENTED: Transactional Behavior ==========
+    // ========== deleteAccount Failure Handling ==========
 
     /**
-     * Verify deleteAccount completes all steps even if one fails.
+     * Asserts that a reminder-cancel failure propagates out of deleteAccount.
      *
-     * The @Transaction annotation ensures atomicity at the Room level,
-     * but we also need defensive coding for non-Room operations.
+     * deleteAccount has no `@Transaction` and no catch around `cancelRemindersForEvent`, so the
+     * steps after it, the credential delete and the cascade included, don't run (not asserted
+     * here). The test name describes the cascade completing, which the code doesn't do.
      */
     @Test
     fun `deleteAccount completes cascade delete even if reminder cancellation fails`() = runBlocking {
-        // Setup
         val accountId = 1L
         val calendar = Calendar(
             id = 10L,
@@ -130,40 +125,33 @@ class PostRefactorVerificationTest {
 
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns listOf(calendar)
         coEvery { eventsDao.getAllMasterEventsForCalendar(10L) } returns listOf(event)
-        // Reminder cancellation throws
+        // The reminder cancel throws.
         coEvery { reminderScheduler.cancelRemindersForEvent(100L) } throws RuntimeException("AlarmManager error")
 
-        // Execute - should NOT throw, should continue
+        // The exception reaches the caller.
         try {
             accountRepository.deleteAccount(accountId)
             fail("Expected exception to propagate")
         } catch (e: RuntimeException) {
-            // Current behavior: exception propagates
-            // This documents that we may want to add try-catch in deleteAccount
             assertEquals("AlarmManager error", e.message)
         }
-
-        // Note: If we want truly defensive behavior, wrap reminderScheduler call in try-catch
-        // For now, this test documents current behavior
     }
 
     @Test
     fun `deleteAccount continues after credential deletion failure`() = runBlocking {
-        // Setup
         val accountId = 1L
         coEvery { calendarsDao.getByAccountIdOnce(accountId) } returns emptyList()
         coEvery { credentialManager.deleteCredentials(accountId) } throws RuntimeException("Encryption error")
 
-        // Execute - should NOT throw (already has try-catch)
+        // deleteAccount catches and logs a credential-delete failure.
         accountRepository.deleteAccount(accountId)
 
-        // Verify cascade delete still happens
+        // The cascade delete still runs.
         coVerify { accountsDao.deleteById(accountId) }
     }
 
     @Test
     fun `deleteAccount order of operations - WorkManager before reminders before cascade`() = runBlocking {
-        // Setup
         val accountId = 1L
         val calendar = Calendar(
             id = 10L,
@@ -196,41 +184,34 @@ class PostRefactorVerificationTest {
             callOrder.add("cascade")
         }
 
-        // Execute
         accountRepository.deleteAccount(accountId)
 
-        // Verify RELATIVE ordering of the cleanup phases. WorkManager cancellation
-        // runs first (multiple cancels: the per-account job plus the shared
-        // one-shot/expedited jobs), then reminders, pending ops, credentials, and
-        // finally the cascade delete. (A further WorkManager cancel for the shared
-        // periodic jobs trails the cascade — it's decided from the post-delete
-        // account set — so exact list equality no longer holds.)
+        // Checks relative order by first occurrence: the WorkManager cancels (this account's
+        // job and the shared one-shot and expedited work), then reminders, pending operations,
+        // credentials and the cascade. The periodic-work cancels come after the cascade when no
+        // syncable account remains (the relaxed getAllOnce returns none), so the list isn't
+        // compared whole.
         assertTrue(callOrder.indexOf("workManager") < callOrder.indexOf("reminderScheduler"))
         assertTrue(callOrder.indexOf("reminderScheduler") < callOrder.indexOf("pendingOps"))
         assertTrue(callOrder.indexOf("pendingOps") < callOrder.indexOf("credentials"))
         assertTrue(callOrder.indexOf("credentials") < callOrder.indexOf("cascade"))
     }
 
-    // ========== ✅ PHASE 7: Discovery Service Migration ==========
+    // ========== Discovery Service Delegation ==========
 
     /**
-     * Verified: Verify ICloudAccountDiscoveryService delegates to AccountRepository.
-     *
-     * Implementation:
-     * - ICloudAccountDiscoveryService now injects AccountRepository (not AccountsDao)
-     * - removeAccount() calls accountRepository.deleteAccount()
-     * - Direct accountsDao.delete() has been removed
+     * Asserts that `ICloudAccountDiscoveryService.removeAccount` calls
+     * [AccountRepository.deleteAccount] once. The service takes [AccountRepository], not
+     * [AccountsDao].
      */
     @Test
     fun `PHASE 7 - ICloudAccountDiscoveryService delegates to AccountRepository`() = runBlocking {
-        // Create mocks
         val mockAccountRepository: AccountRepository = mockk(relaxed = true)
         val mockCalendarRepository: CalendarRepository = mockk(relaxed = true)
         val mockClientFactory: org.onekash.kashcal.sync.client.CalDavClientFactory = mockk(relaxed = true)
         val mockCredentialProvider: org.onekash.kashcal.sync.provider.icloud.ICloudCredentialProvider = mockk(relaxed = true)
         val mockQuirks = org.onekash.kashcal.sync.provider.icloud.ICloudQuirks()
 
-        // Create discovery service with repositories
         val discoveryService = org.onekash.kashcal.sync.provider.icloud.ICloudAccountDiscoveryService(
             clientFactory = mockClientFactory,
             credentialProvider = mockCredentialProvider,
@@ -239,56 +220,46 @@ class PostRefactorVerificationTest {
             calendarRepository = mockCalendarRepository
         )
 
-        // Execute removeAccount
         val accountId = 42L
         discoveryService.removeAccount(accountId)
 
-        // Verify - should delegate to AccountRepository.deleteAccount()
         coVerify(exactly = 1) { mockAccountRepository.deleteAccount(accountId) }
     }
 
     /**
-     * Verified: Verify CalDavAccountDiscoveryService delegates to AccountRepository.
+     * Asserts that `CalDavAccountDiscoveryService.removeAccount` calls
+     * [AccountRepository.deleteAccount] once.
      */
     @Test
     fun `PHASE 7 - CalDavAccountDiscoveryService delegates to AccountRepository`() = runBlocking {
-        // Create mocks
         val mockAccountRepository: AccountRepository = mockk(relaxed = true)
         val mockCalendarRepository: CalendarRepository = mockk(relaxed = true)
         val mockClientFactory: org.onekash.kashcal.sync.client.CalDavClientFactory = mockk(relaxed = true)
 
-        // Create discovery service with repositories
         val discoveryService = org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService(
             calDavClientFactory = mockClientFactory,
             accountRepository = mockAccountRepository,
             calendarRepository = mockCalendarRepository
         )
 
-        // Execute removeAccount
         val accountId = 99L
         discoveryService.removeAccount(accountId)
 
-        // Verify - should delegate to AccountRepository.deleteAccount()
         coVerify(exactly = 1) { mockAccountRepository.deleteAccount(accountId) }
     }
 
-    // ========== ✅ PHASE 8: Sync Layer Migration ==========
+    // ========== Sync Layer Repositories ==========
 
     /**
-     * Verified: Verify sync layer uses repositories instead of DAOs.
+     * Constructs `CalDavSyncEngine` with a [CalendarRepository]; compiling is the check.
      *
-     * Implementation:
-     * - CalDavSyncEngine uses CalendarRepository (removed AccountsDao)
-     * - PullStrategy uses CalendarRepository
-     * - PushStrategy uses CalendarRepository
-     * - ConflictResolver uses CalendarRepository
-     * - CalDavSyncWorker uses AccountRepository and CalendarRepository
+     * In the sync layer, `CalDavSyncEngine`, [PullStrategy], [PushStrategy] and [ConflictResolver]
+     * take [CalendarRepository], the two strategies and `CalDavSyncWorker` also take
+     * [AccountRepository], and `CalDavSyncEngine` has no [AccountsDao]. Only the engine is built
+     * here.
      */
     @Test
     fun `PHASE 8 - CalDavSyncEngine uses repositories`() = runBlocking {
-        // Verify CalDavSyncEngine no longer has accountsDao parameter
-        // and uses calendarRepository instead of calendarsDao
-
         val mockCalendarRepository: CalendarRepository = mockk(relaxed = true)
         val mockPullStrategy: PullStrategy = mockk(relaxed = true)
         val mockPushStrategy: PushStrategy = mockk(relaxed = true)
@@ -299,7 +270,7 @@ class PostRefactorVerificationTest {
         val mockSyncSessionStore: org.onekash.kashcal.sync.session.SyncSessionStore = mockk(relaxed = true)
         val mockNotificationManager: org.onekash.kashcal.sync.notification.SyncNotificationManager = mockk(relaxed = true)
 
-        // This compiles = CalDavSyncEngine accepts CalendarRepository
+        // Compiles only while CalDavSyncEngine takes these parameters.
         val syncEngine = org.onekash.kashcal.sync.engine.CalDavSyncEngine(
             pullStrategy = mockPullStrategy,
             pushStrategy = mockPushStrategy,
@@ -315,29 +286,23 @@ class PostRefactorVerificationTest {
         assertTrue("CalDavSyncEngine accepts CalendarRepository", syncEngine != null)
     }
 
-    // ========== ✅ PHASE 9: Credential Provider Migration ==========
+    // ========== Credential Providers ==========
 
     /**
-     * Verified: Verify ICloudCredentialProvider uses unified CredentialManager.
-     *
-     * Implementation:
-     * - ICloudCredentialProvider now injects CredentialManager (not ICloudAuthManager)
-     * - ICloudCredentialProvider now injects AccountRepository (not AccountsDao)
-     * - Credentials are stored in account-keyed format via CredentialManager
+     * Asserts that `ICloudCredentialProvider.getCredentials` reads through [CredentialManager].
+     * The provider takes [CredentialManager] and [AccountRepository]; the credentials are
+     * stored account-keyed.
      */
     @Test
     fun `PHASE 9 - ICloudCredentialProvider uses unified CredentialManager`() = runBlocking {
-        // Create mocks for unified interfaces
         val mockCredentialManager: CredentialManager = mockk(relaxed = true)
         val mockAccountRepository: AccountRepository = mockk(relaxed = true)
 
-        // Create ICloudCredentialProvider with unified dependencies
         val icloudCredentialProvider = org.onekash.kashcal.sync.provider.icloud.ICloudCredentialProvider(
             credentialManager = mockCredentialManager,
             accountRepository = mockAccountRepository
         )
 
-        // Setup mock for getCredentials
         val accountId = 42L
         val testCredentials = AccountCredentials(
             username = "test@icloud.com",
@@ -347,7 +312,6 @@ class PostRefactorVerificationTest {
         coEvery { mockCredentialManager.isEncryptionAvailable() } returns true
         coEvery { mockCredentialManager.getCredentials(accountId) } returns testCredentials
 
-        // Execute and verify
         val result = icloudCredentialProvider.getCredentials(accountId)
 
         assertNotNull(result)
@@ -356,27 +320,21 @@ class PostRefactorVerificationTest {
     }
 
     /**
-     * Verified: Verify CalDavCredentialProvider uses unified CredentialManager.
-     *
-     * Implementation:
-     * - CalDavCredentialProvider now injects CredentialManager (not CalDavCredentialManager)
-     * - CalDavCredentialProvider now injects AccountRepository (not AccountsDao)
-     * - getTrustInsecure() and setTrustInsecure() are now suspend functions
-     * - getCalDavCredentials() renamed to getAccountCredentials()
+     * Asserts that `CalDavCredentialProvider.getCredentials` and `getAccountCredentials` read
+     * through [CredentialManager], trust-insecure flag included. The provider takes
+     * [CredentialManager] and [AccountRepository], and its `getTrustInsecure` and
+     * `setTrustInsecure` are suspend functions (not called here).
      */
     @Test
     fun `PHASE 9 - CalDavCredentialProvider uses unified CredentialManager`() = runBlocking {
-        // Create mocks for unified interfaces
         val mockCredentialManager: CredentialManager = mockk(relaxed = true)
         val mockAccountRepository: AccountRepository = mockk(relaxed = true)
 
-        // Create CalDavCredentialProvider with unified dependencies
         val caldavCredentialProvider = org.onekash.kashcal.sync.provider.caldav.CalDavCredentialProvider(
             credentialManager = mockCredentialManager,
             accountRepository = mockAccountRepository
         )
 
-        // Setup mock for getCredentials
         val accountId = 99L
         val testCredentials = AccountCredentials(
             username = "user@nextcloud.com",
@@ -387,7 +345,6 @@ class PostRefactorVerificationTest {
         coEvery { mockCredentialManager.isEncryptionAvailable() } returns true
         coEvery { mockCredentialManager.getCredentials(accountId) } returns testCredentials
 
-        // Execute and verify
         val result = caldavCredentialProvider.getCredentials(accountId)
 
         assertNotNull(result)
@@ -395,31 +352,27 @@ class PostRefactorVerificationTest {
         assertTrue(result?.trustInsecure == true)
         coVerify { mockCredentialManager.getCredentials(accountId) }
 
-        // Verify getAccountCredentials (renamed from getCalDavCredentials)
+        // getAccountCredentials returns the same stored set.
         val rawCreds = caldavCredentialProvider.getAccountCredentials(accountId)
         assertNotNull(rawCreds)
         assertEquals("https://nextcloud.example.com", rawCreds?.serverUrl)
     }
 
-    // ========== ✅ PHASE 10: EventReader Cleanup ==========
+    // ========== Account Reads Outside EventReader ==========
 
     /**
-     * Verified: EventReader no longer exposes account methods.
+     * Calls the three account flows on a mocked [AccountRepository] and asserts they return
+     * their stubs; neither EventReader nor EventCoordinator is called.
      *
-     * Removed methods:
-     * - getAccountByProviderAndEmail() - moved to AccountRepository
-     * - getCalDavAccounts() - moved to AccountRepository.getAccountsByProviderFlow(CALDAV)
-     * - getCalDavAccountCount() - moved to AccountRepository.getAccountCountByProviderFlow(CALDAV)
-     * - getAllAccounts() - moved to AccountRepository.getAllAccountsFlow()
-     *
-     * EventCoordinator now uses AccountRepository for all account operations.
+     * EventReader exposes no account queries. EventCoordinator reads accounts from
+     * [AccountRepository]: `getCalDavAccounts` from `getAccountsByProviderFlow(CALDAV)`,
+     * `getCalDavAccountCount` from `getAccountCountByProviderFlow(CALDAV)`, `getAllAccounts`
+     * from `getAllAccountsFlow`, and account lookups by provider and email.
      */
     @Test
     fun `PHASE 10 - EventReader account methods removed and EventCoordinator uses AccountRepository`() = runBlocking {
-        // Verify EventCoordinator delegates to AccountRepository
         val mockAccountRepository: AccountRepository = mockk(relaxed = true)
 
-        // Setup mocks
         val testAccounts = listOf(
             Account(id = 1, provider = AccountProvider.CALDAV, email = "test@example.com",
                 displayName = "Test", isEnabled = true)
@@ -428,12 +381,10 @@ class PostRefactorVerificationTest {
         every { mockAccountRepository.getAccountsByProviderFlow(AccountProvider.CALDAV) } returns kotlinx.coroutines.flow.flowOf(testAccounts)
         every { mockAccountRepository.getAccountCountByProviderFlow(AccountProvider.CALDAV) } returns kotlinx.coroutines.flow.flowOf(1)
 
-        // Verify the flows return expected data
         val allAccountsFlow = mockAccountRepository.getAllAccountsFlow()
         val caldavAccountsFlow = mockAccountRepository.getAccountsByProviderFlow(AccountProvider.CALDAV)
         val caldavCountFlow = mockAccountRepository.getAccountCountByProviderFlow(AccountProvider.CALDAV)
 
-        // Collect and verify
         val allAccounts = allAccountsFlow.first()
         val caldavAccounts = caldavAccountsFlow.first()
         val caldavCount = caldavCountFlow.first()
@@ -444,27 +395,22 @@ class PostRefactorVerificationTest {
         assertEquals("test@example.com", allAccounts.first().email)
     }
 
-    // ========== ✅ PHASE 10: ViewModel Migration ==========
+    // ========== ViewModel Account Reads ==========
 
     /**
-     * Verified: AccountSettingsViewModel uses AccountRepository.
+     * Calls `getAccountsByProvider`, `hasCredentials` and `saveCredentials` on a mocked
+     * [AccountRepository] and asserts they return their stubs; AccountSettingsViewModel isn't
+     * built.
      *
-     * Changed from:
-     * - ICloudAuthManager.loadAccount() -> AccountRepository.getAccountsByProvider(ICLOUD)
-     * - ICloudAuthManager.saveAccount() -> AccountRepository.saveCredentials()
-     * - ICloudAuthManager.clearAccount() -> (handled by discoveryService.removeAccountByEmail)
-     * - CalDavCredentialManager -> Removed (was imported but unused)
+     * AccountSettingsViewModel loads iCloud accounts with `getAccountsByProvider(ICLOUD)`, saves
+     * credentials with `saveCredentials`, and signs out of iCloud through the discovery
+     * service's `removeAccountByEmail`.
      */
     @Test
     fun `PHASE 10 - AccountSettingsViewModel uses AccountRepository`() = runBlocking {
-        // Verify AccountSettingsViewModel constructor takes AccountRepository instead of ICloudAuthManager
-        // This test validates the migration at compile-time - if it compiles, the migration is correct
-
-        // Create mocks needed for AccountSettingsViewModel
         val mockAccountRepository: AccountRepository = mockk(relaxed = true)
         val mockCredentials = AccountCredentials("test@icloud.com", "password", "https://caldav.icloud.com")
 
-        // Setup mocks
         coEvery { mockAccountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(
             Account(id = 1, provider = AccountProvider.ICLOUD, email = "test@icloud.com",
                 displayName = "iCloud", isEnabled = true)
@@ -472,7 +418,6 @@ class PostRefactorVerificationTest {
         coEvery { mockAccountRepository.hasCredentials(1) } returns true
         coEvery { mockAccountRepository.saveCredentials(any(), any()) } returns true
 
-        // Verify - flows return expected data
         val accounts = mockAccountRepository.getAccountsByProvider(AccountProvider.ICLOUD)
         val hasCredentials = mockAccountRepository.hasCredentials(1)
         val saved = mockAccountRepository.saveCredentials(1, mockCredentials)
@@ -483,19 +428,17 @@ class PostRefactorVerificationTest {
     }
 
     /**
-     * Verified: HomeViewModel uses AccountRepository.
+     * Runs a copy of HomeViewModel's account status check over a mocked [AccountRepository]:
+     * `getAllAccounts`, filtered to providers with `supportsCalDAV`, then `hasCredentials`.
      *
-     * Changed from:
-     * - ICloudAuthManager.loadAccount() -> AccountRepository.getAllAccounts() + filter supportsCalDAV
-     * - account.hasCredentials() -> AccountRepository.hasCredentials(account.id)
-     * - account.appleId -> account.email (Account entity field)
+     * The copy checks only the first syncable account; `HomeViewModel.checkAccountStatus`
+     * treats the app as configured when any syncable account has credentials.
      */
     @Test
     fun `PHASE 10 - HomeViewModel uses AccountRepository for account status check`() = runBlocking {
-        // Create mocks needed for HomeViewModel account status check
         val mockAccountRepository: AccountRepository = mockk(relaxed = true)
 
-        // Setup mocks - account exists with credentials
+        // One iCloud account with credentials.
         val testAccount = Account(
             id = 1,
             provider = AccountProvider.ICLOUD,
@@ -506,45 +449,38 @@ class PostRefactorVerificationTest {
         coEvery { mockAccountRepository.getAllAccounts() } returns listOf(testAccount)
         coEvery { mockAccountRepository.hasCredentials(testAccount.id) } returns true
 
-        // Execute - simulate checkAccountStatus logic
+        // The copy of the status check.
         val allAccounts = mockAccountRepository.getAllAccounts()
         val syncableAccounts = allAccounts.filter { it.provider.supportsCalDAV }
         val account = syncableAccounts.firstOrNull()
         val hasCredentials = account?.let { mockAccountRepository.hasCredentials(it.id) } ?: false
 
-        // Verify
         assertNotNull(account)
         assertTrue(hasCredentials)
         assertEquals("test@icloud.com", account?.email)
     }
 
-    // ========== 🔶 PHASE 12: Old Managers Deleted ==========
+    // ========== Old Credential Managers ==========
 
     /**
-     * Pending: verify old credential managers are deleted (after they are removed).
-     *
-     * Files that should NOT exist:
+     * Placeholder that asserts nothing. These files must not exist, and don't in `app/src/main`:
      * - ICloudAuthManager.kt
      * - CalDavCredentialManager.kt
      * - ICloudAccount.kt
      */
     @Test
     fun `PHASE 12 - Old credential managers deleted`() {
-        // Placeholder - implement once old credential managers are removed
-        //
-        // Verification: grep for imports should return nothing
+        // A manual check, which prints nothing while the old managers are gone:
         // grep -r "ICloudAuthManager\|CalDavCredentialManager" --include="*.kt" app/src/main/
 
         assertTrue("Implement once old credential managers are removed - verify old files deleted", true)
     }
 
-    // ========== 🔴 INTEGRATION: End-to-End Sync ==========
+    // ========== End-to-End Sync ==========
 
     /**
-     * Integration test: Full iCloud sync works after refactor.
-     *
-     * This test should run on device/emulator (androidTest folder).
-     * It verifies the complete flow:
+     * Placeholder that asserts nothing, for an iCloud end-to-end test to run on a device or
+     * emulator (androidTest). The flow it would cover:
      * 1. Save credentials via AccountRepository
      * 2. Trigger sync
      * 3. Verify events appear
@@ -553,16 +489,17 @@ class PostRefactorVerificationTest {
      */
     @Test
     fun `INTEGRATION - iCloud sync end-to-end after refactor`() {
-        // Placeholder - implement as androidTest
+        // No androidTest implements this flow.
 
         assertTrue("Implement as androidTest - requires real iCloud credentials", true)
     }
 
-    // ========== ✅ IMPLEMENTED: Credential Format Verification ==========
+    // ========== Credential Delegation ==========
 
     @Test
     fun `unified credentials use account-keyed format`() = runBlocking {
-        // Verify credentials are saved with account ID prefix
+        // Save and read pass the account ID to CredentialManager; the key format itself is
+        // UnifiedCredentialManagerTest's.
         val accountId = 42L
         val credentials = AccountCredentials(
             username = "user@example.com",
@@ -573,11 +510,9 @@ class PostRefactorVerificationTest {
         coEvery { credentialManager.saveCredentials(accountId, credentials) } returns true
         coEvery { credentialManager.getCredentials(accountId) } returns credentials
 
-        // Execute
         val saved = accountRepository.saveCredentials(accountId, credentials)
         val retrieved = accountRepository.getCredentials(accountId)
 
-        // Verify
         assertTrue(saved)
         assertEquals(credentials, retrieved)
         coVerify { credentialManager.saveCredentials(accountId, credentials) }
@@ -586,24 +521,22 @@ class PostRefactorVerificationTest {
 
     @Test
     fun `hasCredentials delegates to CredentialManager`() = runBlocking {
-        // Setup
         coEvery { credentialManager.hasCredentials(1L) } returns true
         coEvery { credentialManager.hasCredentials(2L) } returns false
 
-        // Execute & Verify
         assertTrue(accountRepository.hasCredentials(1L))
         assertFalse(accountRepository.hasCredentials(2L))
     }
 
-    // ========== ✅ IMPLEMENTED: Multi-Account Support ==========
+    // ========== Multi-Account Credentials ==========
 
     /**
-     * Verify multiple accounts can have separate credentials.
-     * This is the key improvement over single-key iCloud format.
+     * Asserts that two accounts read back their own credentials, which the old unkeyed iCloud
+     * format couldn't hold (`PreRefactorSnapshotTest`).
      */
     @Test
     fun `multiple accounts have isolated credentials`() = runBlocking {
-        // Setup - two different accounts
+        // Two iCloud accounts.
         val account1Id = 1L
         val account2Id = 2L
         val creds1 = AccountCredentials("user1@icloud.com", "pass1", "https://caldav.icloud.com")
@@ -612,11 +545,10 @@ class PostRefactorVerificationTest {
         coEvery { credentialManager.getCredentials(account1Id) } returns creds1
         coEvery { credentialManager.getCredentials(account2Id) } returns creds2
 
-        // Execute
         val retrieved1 = accountRepository.getCredentials(account1Id)
         val retrieved2 = accountRepository.getCredentials(account2Id)
 
-        // Verify - each account has its own credentials
+        // Each account gets its own credentials.
         assertEquals("user1@icloud.com", retrieved1?.username)
         assertEquals("user2@icloud.com", retrieved2?.username)
         assertNotEquals(retrieved1, retrieved2)
@@ -624,7 +556,6 @@ class PostRefactorVerificationTest {
 
     @Test
     fun `deleting one account does not affect other accounts credentials`() = runBlocking {
-        // Setup
         val account1Id = 1L
         val account2Id = 2L
         val creds2 = AccountCredentials("user2@icloud.com", "pass2", "https://caldav.icloud.com")
@@ -632,14 +563,14 @@ class PostRefactorVerificationTest {
         coEvery { calendarsDao.getByAccountIdOnce(account1Id) } returns emptyList()
         coEvery { credentialManager.getCredentials(account2Id) } returns creds2
 
-        // Execute - delete account 1
+        // Delete account 1.
         accountRepository.deleteAccount(account1Id)
 
-        // Verify - account 2 credentials still accessible
+        // Account 2's credentials still read back.
         val retrieved2 = accountRepository.getCredentials(account2Id)
         assertEquals("user2@icloud.com", retrieved2?.username)
 
-        // Verify only account 1 credentials were deleted
+        // Only account 1's credentials are deleted.
         coVerify { credentialManager.deleteCredentials(account1Id) }
         coVerify(exactly = 0) { credentialManager.deleteCredentials(account2Id) }
     }

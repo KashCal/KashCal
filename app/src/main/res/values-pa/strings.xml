@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">ਇਸ ਸਰਵਰ \'ਤੇ ਕੋਈ ਕੈਲੰਡਰ ਨਹੀਂ ਮਿਲਿਆ।</string>
     <string name="caldav_error_unexpected">ਅਣਕਿਆਸੀ ਗਲਤੀ। ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nਜੇ ਇਹ ਤੁਹਾਡੇ ਲੋਕਲ ਨੈੱਟਵਰਕ ਦਾ ਸਰਵਰ ਹੈ, ਤਾਂ ਕਨੈਕਟ ਕਰਨ ਲਈ ਲੋਕਲ ਨੈੱਟਵਰਕ ਪਹੁੰਚ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ।</string>
+    <string name="caldav_error_connection_refused_insecure">ਸਰਵਰ ਨੇ ਕਨੈਕਸ਼ਨ ਨੂੰ ਅਜਿਹੀ ਥਾਂ ਭੇਜ ਦਿੱਤਾ ਜਿੱਥੇ KashCal ਨਹੀਂ ਜਾਂਦਾ (ਬਿਨਾਂ ਇਨਕ੍ਰਿਪਸ਼ਨ ਵਾਲਾ ਪਤਾ, ਜਾਂ ਰੀਡਾਇਰੈਕਟ ਲੂਪ), ਇਸ ਲਈ ਤੁਹਾਡਾ ਪਾਸਵਰਡ ਭੇਜਣ ਤੋਂ ਪਹਿਲਾਂ KashCal ਰੁਕ ਗਿਆ। ਸਰਵਰ ਦਾ ਪਤਾ ਜਾਂਚੋ।</string>
     <string name="local_network_banner_title">ਲੋਕਲ ਨੈੱਟਵਰਕ ਪਹੁੰਚ ਦੀ ਲੋੜ ਹੈ</string>
     <string name="local_network_banner_body">ਇਹ ਸਰਵਰ ਤੁਹਾਡੇ ਲੋਕਲ ਨੈੱਟਵਰਕ ਉੱਤੇ ਜਾਪਦਾ ਹੈ। KashCal ਇਸ ਨਾਲ ਕਨੈਕਟ ਕਰ ਸਕੇ, ਇਸ ਲਈ ਲੋਕਲ ਨੈੱਟਵਰਕ ਪਹੁੰਚ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ।</string>
     <string name="local_network_banner_allow">ਪਹੁੰਚ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">ਤਬਦੀਲੀਆਂ ਸੰਭਾਲੋ</string>
     <string name="dialog_delete_recurring_title">ਮਿਟਾਓ</string>
     <string name="dialog_move_recurring_title">ਮੂਵ ਕਰੋ</string>
+    <string name="snackbar_event_rescheduled">ਘਟਨਾ ਦਾ ਸਮਾਂ ਬਦਲਿਆ ਗਿਆ</string>
+    <string name="snackbar_reschedule_failed">ਘਟਨਾ ਦਾ ਸਮਾਂ ਬਦਲਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ</string>
     <string name="recurring_this_event">ਇਹ ਘਟਨਾ</string>
     <string name="recurring_all_events">ਸਾਰੀਆਂ ਘਟਨਾਵਾਂ</string>
 

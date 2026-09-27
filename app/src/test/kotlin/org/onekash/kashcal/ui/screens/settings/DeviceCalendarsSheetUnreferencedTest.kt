@@ -6,8 +6,8 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Guards against re-introducing the `DeviceCalendarsSheet` composable
- * (replaced by `DeviceCalendarsScreen`).
+ * Fails if `DeviceCalendarsSheet.kt` exists or any main Kotlin source mentions
+ * `DeviceCalendarsSheet`; device calendars are shown by the full-screen `DeviceCalendarsScreen`.
  */
 class DeviceCalendarsSheetUnreferencedTest {
 

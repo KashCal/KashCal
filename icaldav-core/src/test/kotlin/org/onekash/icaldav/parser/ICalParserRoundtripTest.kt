@@ -15,10 +15,9 @@ import org.onekash.icaldav.model.ParseResult
 import java.time.Duration
 
 /**
- * Roundtrip tests: Parse -> Generate -> Parse
- *
- * These tests verify that events can be parsed, regenerated as iCal,
- * and re-parsed without losing essential data.
+ * Tests that events survive parse, generate and re-parse: text, all-day dates, RRULE, EXDATE,
+ * DURATION, VALARM, CATEGORIES, COLOR, URL, STATUS, PRIORITY, GEO and an exception with a
+ * RECURRENCE-ID.
  */
 @DisplayName("ICalParser Roundtrip Tests")
 class ICalParserRoundtripTest {
@@ -68,7 +67,7 @@ class ICalParserRoundtripTest {
             assertEquals(event1.location, event2.location)
             assertEquals(event1.isAllDay, event2.isAllDay)
 
-            // DateTime comparison (timestamp should be close)
+            // Start and end timestamps match exactly
             assertEquals(event1.dtStart.timestamp, event2.dtStart.timestamp)
             assertEquals(event1.dtEnd?.timestamp, event2.dtEnd?.timestamp)
         }
@@ -100,7 +99,7 @@ class ICalParserRoundtripTest {
             assertTrue(parseResult2 is ParseResult.Success)
             val event2 = parseResult2.getOrNull()!![0]
 
-            // Special chars should be preserved
+            // The escaped comma and newline come back decoded
             assertEquals("Meeting, Important", event2.summary)
             assertTrue(event2.description!!.contains("\n"))
         }
@@ -596,7 +595,7 @@ class ICalParserRoundtripTest {
 
             val generatedIcal = generator.generate(event1, method = null)
 
-            // PRIORITY:0 should NOT be in output (0 = undefined)
+            // PRIORITY:0 means undefined (RFC 5545 §3.8.1.9), so it isn't written
             assertFalse(generatedIcal.contains("PRIORITY:"))
 
             val parseResult2 = parser.parseAllEvents(generatedIcal)
@@ -722,7 +721,7 @@ class ICalParserRoundtripTest {
 
             val generatedIcal = generator.generate(event1, method = null)
 
-            // GEO should NOT be in output when null
+            // A null GEO isn't written
             assertFalse(generatedIcal.contains("GEO:"))
 
             val parseResult2 = parser.parseAllEvents(generatedIcal)

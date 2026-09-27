@@ -15,16 +15,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Event.endTimezone mapper wire-up.
+ * Tests that an event whose DTEND TZID differs from its DTSTART TZID (a flight SFO→JFK)
+ * round-trips through the CalDAV mappers as [Event.endTimezone].
  *
- * Verifies that events with distinct DTSTART and DTEND TZIDs (e.g., flights
- * SFO→JFK) round-trip through KashCal's CalDAV mapper layer correctly:
- * - Inbound: server's distinct DTEND TZID is stored in Event.endTimezone
- * - Inbound: matching TZIDs collapse to endTimezone=null (per the invariant)
- * - Outbound fresh + patch: Event.endTimezone reflected as distinct DTEND TZID
+ * - Pull: a distinct DTEND TZID is stored, even beside a floating DTSTART; a matching TZID,
+ *   a DURATION-only event and an all-day event store null.
+ * - Push, fresh and patch: [Event.endTimezone] becomes the DTEND TZID, a non-IANA value
+ *   falls back to the start zone, and the exception overload uses the exception's own zones.
  *
- * CalendarProvider side is out of scope. RFC 5545 §3.8.2.2 permits
- * distinct TZIDs on DTSTART vs DTEND.
+ * The CalendarProvider side is out of scope. RFC 5545 §3.8.2.2 lets DTEND carry its own TZID.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -68,10 +67,8 @@ class EndTimezoneRoundTripTest {
     )
 
     /**
-     * Find lines starting with [prefix] that appear inside the first VEVENT block.
-     * VTIMEZONE sub-components also emit DTSTART/DTEND for DST transitions, so a
-     * plain top-level filter would match those. Scoping to VEVENT isolates the
-     * event-level properties under test.
+     * Finds lines starting with [prefix] inside the first VEVENT block. VTIMEZONE
+     * sub-components emit DTSTART for DST transitions, which a whole-file filter would match.
      */
     private fun findLines(ics: String, prefix: String): List<String> {
         val lines = ics.lines()
@@ -223,8 +220,8 @@ class EndTimezoneRoundTripTest {
 
     @Test
     fun `fresh path falls back to start zone when endTimezone is invalid IANA`() {
-        // Windows TZID "Pacific Standard Time" is not a valid IANA ID.
-        // resolveZone() returns null for it; mapper falls back to start zone.
+        // Windows TZID "Pacific Standard Time" isn't an IANA ID, so resolveZone() returns
+        // null and the mapper falls back to the start zone.
         val event = createEvent(
             timezone = "America/Los_Angeles",
             endTimezone = "Pacific Standard Time"
@@ -313,8 +310,8 @@ class EndTimezoneRoundTripTest {
             "Patched DTEND must carry Event.endTimezone (America/New_York); got: $dtEndLine",
             dtEndLine.contains("TZID=America/New_York")
         )
-        // Negative: rawIcal's original DTSTART TZID must NOT survive into output
-        // (catches hypothetical .copy() preservation bug where original.dtStart.zone leaked).
+        // Negative: rawIcal's original DTSTART TZID must not survive, which catches a
+        // .copy() that keeps original.dtStart's zone.
         assertFalse(
             "Patched DTSTART must not preserve rawIcal's original TZID=America/New_York; got: $dtStartLine",
             dtStartLine.contains("TZID=America/New_York")
@@ -374,9 +371,9 @@ class EndTimezoneRoundTripTest {
 
     @Test
     fun `inbound accepts floating start paired with distinct DTEND zone`() {
-        // RFC 5545-valid but unusual. DTSTART has no TZID (floating time);
-        // DTEND has an explicit TZID. Normalization logic must treat
-        // (timezone=null) != ("America/New_York") and keep endTimezone set.
+        // RFC 5545-valid but unusual: DTSTART has no TZID (floating time) and DTEND has
+        // one. The mapper must treat timezone=null as different from "America/New_York"
+        // and keep endTimezone set.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -394,8 +391,8 @@ class EndTimezoneRoundTripTest {
         val icalEvent = parser.parseAllEvents(ics).getOrNull()!!.first()
         val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null).event
 
-        // Parser may normalize floating DTSTART to UTC; don't assert on entity.timezone.
-        // The guarantee here is that a distinct DTEND zone survives regardless.
+        // The parser may normalize a floating DTSTART to UTC, so entity.timezone isn't
+        // asserted; the distinct DTEND zone must survive either way.
         assertEquals(
             "Distinct DTEND zone must be preserved when start is floating",
             "America/New_York",

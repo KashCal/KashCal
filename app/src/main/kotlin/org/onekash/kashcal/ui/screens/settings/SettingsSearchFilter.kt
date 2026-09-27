@@ -3,18 +3,14 @@ package org.onekash.kashcal.ui.screens.settings
 import org.onekash.kashcal.ui.util.text.containsCaseInsensitive
 
 /**
- * A searchable representation of a single settings row. Carries enough
- * for the filter to decide visibility and for the UI to map back to its
- * row composable via [id].
+ * Describes one settings row for [filterSettings]: enough to decide visibility and to map back
+ * to the row composable by [id].
  *
- * @property id Stable identifier; tied to the row by the screen, not by
- *   any database key.
- * @property label The row's primary label (the same string that renders
- *   in [SettingsRow]'s `label` parameter).
- * @property subtitle The row's currently-rendered subtitle, or null if
- *   the row has none. Subtitles are dynamic (e.g., "30 days" -> "90 days"),
- *   so callers must reconstruct this list when underlying state changes
- *   so the filter re-evaluates.
+ * @property id a stable identifier the screen assigns, not a database key.
+ * @property label the row's primary label, the string passed as [SettingsRow]'s `label`.
+ * @property subtitle the row's currently rendered subtitle, or null. Subtitles change with state
+ *   ("30 days" to "90 days"), so callers must rebuild the list when that state changes or the
+ *   filter matches stale text.
  */
 data class SearchableRow(
     val id: String,
@@ -23,8 +19,7 @@ data class SearchableRow(
 )
 
 /**
- * Returns the subset of [rows] whose label or subtitle contains [query]
- * as a substring (case-insensitive). Empty or whitespace-only [query]
+ * Returns the [rows] whose label or subtitle contains [query], ignoring case. A blank [query]
  * returns [rows] unchanged.
  */
 fun filterSettings(rows: List<SearchableRow>, query: String): List<SearchableRow> {

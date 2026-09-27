@@ -27,15 +27,11 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for SyncScheduler.
+ * Tests [SyncScheduler] against a test WorkManager.
  *
- * Tests:
- * - Periodic sync scheduling
- * - One-shot sync scheduling
- * - Expedited sync scheduling
- * - Calendar/account-specific sync
- * - Sync cancellation
- * - Status observation
+ * Covers periodic, one-shot, expedited, per-calendar and per-account calendar sync, the
+ * periodic and one-shot contact-sync jobs, the network constraint (#296), cancellation,
+ * status observation, and the sync banner flag.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -54,7 +50,6 @@ class SyncSchedulerTest {
 
         context = RuntimeEnvironment.getApplication()
 
-        // Initialize WorkManager for testing
         val config = Configuration.Builder()
             .setMinimumLoggingLevel(Log.DEBUG)
             .setExecutor(java.util.concurrent.Executors.newSingleThreadExecutor())
@@ -87,10 +82,10 @@ class SyncSchedulerTest {
 
     @Test
     fun `schedulePeriodicSync respects minimum interval`() {
-        // Given - Request less than 15 minutes
+        // Given - under 15 minutes
         scheduler.schedulePeriodicSync(intervalMinutes = 5)
 
-        // Then - Should still work (WorkManager enforces minimum internally)
+        // Then - still enqueued; the scheduler floors the interval to 15 minutes
         val workInfos = workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK).get()
         assertEquals(1, workInfos.size)
     }
@@ -130,7 +125,7 @@ class SyncSchedulerTest {
         // When
         scheduler.updatePeriodicSyncInterval(intervalMinutes = 60)
 
-        // Then - Should still have one unique work
+        // Then - still one unique work
         val workInfos = workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK).get()
         assertEquals(1, workInfos.size)
     }
@@ -182,10 +177,9 @@ class SyncSchedulerTest {
 
     @Test
     fun `requestImmediateContactSync scoped to an account still enqueues one contact-sync job`() {
-        // The scoped-id plumbing itself (input data → worker filter) is proven in
-        // ContactSyncWorkerTest; here we only confirm the scoped overload enqueues
-        // the same single one-shot job. WorkInfo does not expose a request's input
-        // data, so the id round-trip is verified at the worker, not here.
+        // WorkInfo doesn't expose a request's input data, so the account id reaching the
+        // worker's filter is tested in `ContactSyncWorkerTest`. This only checks that the
+        // scoped overload enqueues the same single one-shot job.
         val workId = scheduler.requestImmediateContactSync(accountId = 42L)
 
         assertNotNull(workId)
@@ -222,10 +216,9 @@ class SyncSchedulerTest {
 
     @Test
     fun `ensureContactSyncScheduled enqueues the periodic contact job on its own`() {
-        // A login that enabled contacts AFTER periodic calendar sync was last
-        // scheduled (or was set up before the feature shipped) has no periodic
-        // contact job. Enabling must be able to schedule it without rescheduling
-        // calendar sync.
+        // A login whose calendar job was armed before the contact job existed has no
+        // periodic contact job. Enabling contacts must be able to schedule it without
+        // rescheduling calendar sync.
         scheduler.ensureContactSyncScheduled(intervalMinutes = 30)
 
         val workInfos =
@@ -238,7 +231,7 @@ class SyncSchedulerTest {
     fun `ensureContactSyncScheduled keeps an already-scheduled contact job`() {
         scheduler.schedulePeriodicSync(intervalMinutes = 30)
 
-        // KEEP policy: a second ensure must not tear down / duplicate the job.
+        // KEEP: the ensure call must not tear down or duplicate the job.
         scheduler.ensureContactSyncScheduled(intervalMinutes = 60)
 
         val workInfos =
@@ -250,9 +243,9 @@ class SyncSchedulerTest {
 
     @Test
     fun `periodic sync requires internet without requiring validation`() {
-        // A self-hosted server on a LAN/VPN reports INTERNET without VALIDATED.
-        // The sync job must be dispatchable on such a network, so its constraint
-        // requires INTERNET but not VALIDATED.
+        // A self-hosted server on a LAN or VPN reports INTERNET without VALIDATED. The sync
+        // job must be dispatchable on such a network, so its constraint requires INTERNET
+        // but not VALIDATED.
         scheduler.schedulePeriodicSync(intervalMinutes = 30)
 
         val workInfos = workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK).get()
@@ -307,7 +300,7 @@ class SyncSchedulerTest {
         // When
         scheduler.requestImmediateSync()
 
-        // Then - Should still have one work
+        // Then - still one work
         val workInfos = workManager.getWorkInfosForUniqueWork(SyncScheduler.ONE_SHOT_SYNC_WORK).get()
         assertEquals(1, workInfos.size)
     }
@@ -324,11 +317,9 @@ class SyncSchedulerTest {
 
     @Test
     fun `requestImmediateSync with showNotification enqueues one-shot work`() {
-        // The showNotification flag (user-initiated force sync opts in) threads
-        // through into the worker input Data via createFullSyncInput; here we only
-        // assert the enqueue still happens with the new param. WorkInfo does not
-        // expose enqueued input Data, so the data mapping is covered in
-        // CalDavSyncWorkerTest.createFullSyncInput.
+        // A user-initiated force sync sets showNotification, which reaches the worker's
+        // input Data through createFullSyncInput. WorkInfo doesn't expose input Data, so
+        // `CalDavSyncWorkerTest` covers that mapping; this only checks the enqueue.
         val workId = scheduler.requestImmediateSync(forceFullSync = true, showNotification = true)
 
         assertNotNull(workId)
@@ -376,9 +367,9 @@ class SyncSchedulerTest {
         val workInfo = workManager.getWorkInfoById(workId).get()
         assertNotNull(workInfo)
         assertTrue(workInfo?.tags?.contains("calendar_$calendarId") == true)
-        // The workers read this tag to decide whether ending a run in failure is
-        // safe, so it must never leak onto a one-shot: the screen that asked for
-        // this sync would show a green "Synced" over a real error.
+        // The workers read TAG_PERIODIC to decide whether ending a run in failure is safe,
+        // so it must never leak onto a one-shot: the screen that asked for this sync would
+        // show a green "Synced" over a real error.
         assertFalse(workInfo?.tags?.contains(SyncScheduler.TAG_PERIODIC) == true)
     }
 
@@ -421,8 +412,8 @@ class SyncSchedulerTest {
         val workInfo = workManager.getWorkInfoById(workId).get()
         assertNotNull(workInfo)
         assertTrue(workInfo?.tags?.contains("account_$accountId") == true)
-        // This is the request whose Failed state drives the account sheet's sync
-        // result, so a stray periodic tag here would silently mask a failure.
+        // This request's Failed state drives the account sheet's sync result, so a stray
+        // periodic tag here would silently mask a failure.
         assertFalse(workInfo?.tags?.contains(SyncScheduler.TAG_PERIODIC) == true)
     }
 
@@ -453,8 +444,7 @@ class SyncSchedulerTest {
         // When
         scheduler.cancelAllSync()
 
-        // Then - All work with TAG_SYNC should be cancelled
-        // Verify periodic is cancelled
+        // Then - cancelAllSync cancels by TAG_SYNC; only the periodic job is checked
         val periodicWork = workManager.getWorkInfosForUniqueWork(SyncScheduler.PERIODIC_SYNC_WORK).get()
         assertTrue(periodicWork.isEmpty() || periodicWork[0].state == WorkInfo.State.CANCELLED)
     }
@@ -557,7 +547,7 @@ class SyncSchedulerTest {
 
     @Test
     fun `pruneCompletedWork does not throw`() {
-        // When/Then - Should not throw
+        // When/Then - doesn't throw
         scheduler.pruneCompletedWork()
     }
 

@@ -57,8 +57,8 @@ class ColorContrastTest {
 
     @Test
     fun `chosen foreground always beats the other choice`() {
-        // For any background, the returned foreground must have >= contrast than
-        // the alternative black/white option.
+        // On each grid color, the returned foreground must have at least the contrast of the
+        // other black/white option.
         for (entry in EventColorPalette.entries) {
             val bg = Color(entry.argb)
             val chosen = contrastForegroundOn(bg)
@@ -72,8 +72,8 @@ class ColorContrastTest {
 
     @Test
     fun `every palette entry meets WCAG AA for normal text against its chosen foreground`() {
-        // Picking the better of black/white against a solid color is provably
-        // >= 4.58:1 in the worst case, so AA (4.5:1) must always hold.
+        // The better of black and white against a solid color is at least 4.58:1 in the worst
+        // case, so AA (4.5:1) must always hold.
         for (entry in EventColorPalette.entries) {
             val bg = Color(entry.argb)
             val ratio = contrastRatio(contrastForegroundOn(bg), bg)
@@ -86,9 +86,9 @@ class ColorContrastTest {
 
     @Test
     fun `every wheel color meets WCAG AA against its chosen foreground`() {
-        // contrastForegroundOn serves the full 92-color wheel palette (and
-        // arbitrary user hex), not just the 11-color grid — so exercise the
-        // whole wheel set to back the "any solid color clears AA" claim.
+        // contrastForegroundOn serves the 92-color wheel palette and arbitrary user hex, not
+        // only the 12-color grid, so exercise the whole wheel set to back the "any solid color
+        // clears AA" claim.
         for (entry in EventColorPalette.allCss3Colors) {
             val bg = Color(entry.argb)
             val ratio = contrastRatio(contrastForegroundOn(bg), bg)

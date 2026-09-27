@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">在此服务器上找不到日历。</string>
     <string name="caldav_error_unexpected">意外错误。请重试。</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\n如果这是本地网络上的服务器，请允许访问本地网络以进行连接。</string>
+    <string name="caldav_error_connection_refused_insecure">服务器将连接重定向到了 KashCal 不会跟随的地方（未加密的地址或重定向循环），因此 KashCal 在发送你的密码之前已停止。请检查服务器地址。</string>
     <string name="local_network_banner_title">需要访问本地网络</string>
     <string name="local_network_banner_body">此服务器似乎位于您的本地网络中。请允许访问本地网络，以便 KashCal 可以连接到它。</string>
     <string name="local_network_banner_allow">允许访问</string>
@@ -792,6 +793,8 @@
     <string name="dialog_edit_recurring_title">保存更改至</string>
     <string name="dialog_delete_recurring_title">删除</string>
     <string name="dialog_move_recurring_title">移动</string>
+    <string name="snackbar_event_rescheduled">已重新安排事件</string>
+    <string name="snackbar_reschedule_failed">无法重新安排事件</string>
     <string name="recurring_this_event">仅此事件</string>
     <string name="recurring_all_events">所有事件</string>
 

@@ -1,6 +1,7 @@
 package org.onekash.kashcal.sync.parser
 
 import android.util.Log
+import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.util.EtagUtils
@@ -9,17 +10,11 @@ import org.xmlpull.v1.XmlPullParserFactory
 import java.io.StringReader
 
 /**
- * XmlPullParser-based CalDAV XML parser.
+ * Parses WebDAV and CalDAV multistatus responses with a streaming [XmlPullParser].
  *
- * Uses Android's recommended streaming XML parser for parsing WebDAV/CalDAV responses.
- * Reference: https://developer.android.com/reference/org/xmlpull/v1/XmlPullParser
- *
- * Benefits over regex:
- * - Proper namespace handling (DAV:, caldav, etc.)
- * - Automatic XML entity decoding (&amp; -> &, &quot; -> ")
- * - Single-pass extraction (more efficient for multiple fields)
- * - Validates XML structure
- * - Handles CDATA sections properly
+ * Unlike regex extraction, the pull parser is namespace-aware, decodes XML entities and CDATA,
+ * rejects malformed XML and reads several fields in one pass. Every `extract*` function
+ * returns null or empty on malformed XML instead of throwing.
  */
 class CalDavXmlParser {
 
@@ -27,30 +22,37 @@ class CalDavXmlParser {
         private const val TAG = "CalDavXmlParser"
 
         /**
-         * WebDAV privilege element local-names that confer the right to write
-         * calendar-object content. DAV:all aggregates DAV:write aggregates
-         * DAV:write-content (RFC 3744 §3.11/§3.12), and a server may advertise
-         * any of these aggregation levels, so all three count as writable.
-         * DAV:write-properties / DAV:bind / DAV:unbind are deliberately excluded:
-         * they don't grant content writes, so a calendar offering only those
-         * stays read-only.
+         * Parses the code from an HTTP status line (`HTTP/<ver> <code> <reason>`), tolerating
+         * extra whitespace. Null unless the second token is a code in 100..599.
+         */
+        private fun parseHttpStatusCode(statusText: String): Int? {
+            val tokens = statusText.trim().split(Regex("""\s+"""))
+            if (tokens.size < 2) return null
+            return tokens[1].toIntOrNull()?.takeIf { it in 100..599 }
+        }
+
+        /**
+         * Lists the WebDAV privilege local names that grant writing calendar-object content.
          *
-         * This is the single source of truth for the write-privilege vocabulary;
-         * the CardDAV parser references it rather than keeping a parallel copy, so
-         * the two read paths can't drift (trimming this set can't leave the other
-         * silently stale).
+         * DAV:all contains DAV:write, which contains DAV:write-content (RFC 3744 §3.11,
+         * §3.12), and a server may advertise any level, so all three count. DAV:write-properties,
+         * DAV:bind and DAV:unbind are deliberately excluded: they don't grant content writes,
+         * so a calendar offering only those stays read-only.
+         *
+         * The source of truth for both parsers: `CardDavXmlParser` reads this set, so the
+         * calendar and contact read paths can't drift.
          */
         internal val WRITE_PRIVILEGE_ELEMENTS = setOf("all", "write", "write-content")
 
         /**
-         * Decode the 5 standard XML entities.
+         * Decodes the 5 standard XML entities in parsed display names and descriptions.
          *
-         * XmlPullParser.next() should decode these automatically, but Android's
-         * KXmlParser may not in all cases (e.g., CDATA sections, certain runtime
-         * versions). This is a defensive no-op when entities are already decoded.
+         * XmlPullParser.next() should decode them, but Android's KXmlParser may not in all
+         * cases (e.g., CDATA sections, certain runtime versions). Text without `&` is returned
+         * unchanged; text the parser already decoded is decoded again, so a name containing a
+         * literal `&lt;` becomes `<`.
          *
-         * IMPORTANT: &amp; must be decoded LAST to avoid double-decoding.
-         * e.g., "&amp;lt;" should become "&lt;", not "<".
+         * `&amp;` must be decoded last, or "&amp;lt;" would become "<" instead of "&lt;".
          */
         internal fun decodeXmlEntities(text: String): String {
             if (!text.contains('&')) return text
@@ -67,10 +69,7 @@ class CalDavXmlParser {
         isNamespaceAware = true
     }
 
-    /**
-     * Extract principal URL from PROPFIND response.
-     * Looks for: <current-user-principal><href>...</href></current-user-principal>
-     */
+    /** Returns the href inside `<current-user-principal>`, or null. */
     fun extractPrincipalUrl(xml: String): String? {
         if (xml.isBlank()) return null
         return try {
@@ -105,16 +104,12 @@ class CalDavXmlParser {
     }
 
     /**
-     * Extract the scheduling Outbox URL from a PROPFIND response.
+     * Returns the principal's scheduling Outbox URL, the one href inside
+     * `<schedule-outbox-URL>` (RFC 6638 §2.1.1).
      *
-     * RFC 6638 §2.1.1 (CALDAV:schedule-outbox-URL): the property wraps a
-     * single DAV:href identifying the principal's scheduling Outbox. Looks for:
-     * `<schedule-outbox-URL><href>...</href></schedule-outbox-URL>`.
-     *
-     * Returns null when the property is empty or absent — per the RFC, that
-     * means the calendar user is not enabled for sending scheduling messages.
-     * The href read is scoped to inside the property element so the response's
-     * own self-href (the principal URL) is never mistaken for the outbox.
+     * Null when the property is empty or absent, which per the RFC means the calendar user
+     * can't send scheduling messages. Only an href inside the property is read, so the
+     * response's own href (the principal URL) is never taken for the outbox.
      */
     fun extractScheduleOutboxUrl(xml: String): String? {
         if (xml.isBlank()) return null
@@ -151,9 +146,8 @@ class CalDavXmlParser {
     }
 
     /**
-     * Extract ALL calendar home URLs from PROPFIND response.
-     * RFC 4791 Section 6.2.1 allows multiple <href> values inside <calendar-home-set>.
-     * Looks for: <calendar-home-set><href>...</href><href>...</href></calendar-home-set>
+     * Returns every href inside `<calendar-home-set>`, which may hold several
+     * (RFC 4791 §6.2.1).
      */
     fun extractCalendarHomeUrls(xml: String): List<String> {
         if (xml.isBlank()) return emptyList()
@@ -192,28 +186,15 @@ class CalDavXmlParser {
         }
     }
 
-    /**
-     * Extract first calendar home URL from PROPFIND response.
-     * Delegates to [extractCalendarHomeUrls] for backward compatibility.
-     */
+    /** Returns the first of [extractCalendarHomeUrls], or null. */
     fun extractCalendarHomeUrl(xml: String): String? = extractCalendarHomeUrls(xml).firstOrNull()
 
     /**
-     * Extract `calendar-user-address-set` entries from PROPFIND response
-     * (RFC 6638 §2.4.1). Looks for:
-     * `<calendar-user-address-set><href>...</href><href>...</href></calendar-user-address-set>`.
+     * Returns the hrefs inside `<calendar-user-address-set>` (RFC 6638 §2.4.1), or empty.
      *
-     * Honors the `preferred="1"` attribute on individual `<href>` elements
-     * (observed on iCloud) by hoisting preferred entries to the front of
-     * the returned list. Otherwise wire order is preserved. The first
-     * preferred entry is the primary address used by `addresses[0]`-by-
-     * convention consumers (e.g., T3 organizer-emit). If multiple
-     * entries are preferred, all preferred ones come first; relative
-     * order among preferred and among non-preferred matches wire order.
-     *
-     * `preferred="0"` and any non-`"1"` value are treated as not preferred.
-     *
-     * Empty body, missing element, malformed XML — all return empty list.
+     * Hrefs with `preferred="1"` (observed on iCloud) come first, so consumers that take the
+     * first address as the account's primary get the preferred one. Any other `preferred`
+     * value counts as not preferred. Within each group the wire order is kept.
      */
     fun extractCalendarUserAddresses(xml: String): List<String> {
         if (xml.isBlank()) return emptyList()
@@ -254,10 +235,7 @@ class CalDavXmlParser {
         }
     }
 
-    /**
-     * Extract sync token from multistatus response.
-     * Looks for: <sync-token>...</sync-token>
-     */
+    /** Returns the first `<sync-token>` text, or null. */
     fun extractSyncToken(xml: String): String? {
         if (xml.isBlank()) return null
         return try {
@@ -284,13 +262,12 @@ class CalDavXmlParser {
     }
 
     /**
-     * Extract per-calendar metadata from a Depth:0 PROPFIND response.
+     * Reads one calendar's metadata from a Depth:0 PROPFIND reply, or null when there is no
+     * ctag.
      *
-     * Returns null when ctag is absent. Nullable fields preserve local state
-     * for servers that omit the property. `isReadOnly` returns null when no
-     * privilege-set element appears — which is the deliberate divergence from
-     * [extractCalendars]'s "assume read-only" fallback (discovery-time safety
-     * vs. refresh-time preservation).
+     * A null field means the server omitted the property, and the refresh keeps the local
+     * value. `isReadOnly` is null without a privilege set, unlike [extractCalendars], which
+     * then assumes read-only: discovery errs safe, a refresh keeps what it has.
      */
     fun extractCalendarMetadata(xml: String): CalendarMetadataProbe? {
         if (xml.isBlank()) return null
@@ -358,10 +335,7 @@ class CalDavXmlParser {
         }
     }
 
-    /**
-     * Extract ctag (calendar tag) from response.
-     * Looks for: <getctag>...</getctag>
-     */
+    /** Returns the first `<getctag>` text, or null. */
     fun extractCtag(xml: String): String? {
         if (xml.isBlank()) return null
         return try {
@@ -388,8 +362,10 @@ class CalDavXmlParser {
     }
 
     /**
-     * Extract calendar list from PROPFIND response.
-     * Returns calendars that have <calendar> resourcetype.
+     * Returns the responses whose resourcetype holds `<calendar>` under a successful propstat.
+     *
+     * A calendar without a privilege set that grants writes, or with a `<read-only>` element,
+     * is read-only.
      */
     fun extractCalendars(xml: String): List<CalDavQuirks.ParsedCalendar> {
         if (xml.isBlank()) return emptyList()
@@ -406,14 +382,15 @@ class CalDavXmlParser {
             var currentColor: String? = null
             var currentCtag: String? = null
             var isCalendar = false
-            var statusOk = true  // Default to OK - only set false if we see a non-200 status
+            var statusOk = true  // Nothing reads this; inclusion uses resourceTypeStatusOk.
             var hasWritePrivilege = false
             var isReadOnly = false
-            // Per-propstat tracking for RFC 4918 multi-propstat support (Stalwart, Radicale)
+            // A response may split properties over several propstats (RFC 4918), as Stalwart
+            // and Radicale do; only the status of the one holding resourcetype decides.
             var currentPropstatHasResourceType = false
             var currentPropstatStatus: String? = null
-            var resourceTypeStatusOk = true  // Status for propstat containing resourcetype
-            // RFC 4791 supported-calendar-component-set tracking
+            var resourceTypeStatusOk = true
+            // RFC 4791 supported-calendar-component-set
             var inSupportedComponentSet = false
             val currentComponents = mutableSetOf<String>()
 
@@ -428,25 +405,22 @@ class CalDavXmlParser {
                                 currentColor = null
                                 currentCtag = null
                                 isCalendar = false
-                                statusOk = true  // Default to OK - only set false if we see a non-200 status
+                                statusOk = true
                                 hasWritePrivilege = false
                                 isReadOnly = false
-                                // Reset per-propstat tracking for this response
                                 resourceTypeStatusOk = true
                                 currentPropstatHasResourceType = false
                                 currentPropstatStatus = null
-                                // Reset component tracking for this response
                                 currentComponents.clear()
                             }
                             "propstat" -> {
                                 inPropstat = true
-                                // Reset per-propstat tracking
                                 currentPropstatHasResourceType = false
                                 currentPropstatStatus = null
                             }
                             "resourcetype" -> {
                                 inResourceType = true
-                                currentPropstatHasResourceType = true  // Mark this propstat contains resourcetype
+                                currentPropstatHasResourceType = true
                             }
                             "current-user-privilege-set" -> inPrivilegeSet = true
                             "calendar" -> if (inResourceType) isCalendar = true
@@ -475,8 +449,7 @@ class CalDavXmlParser {
                             }
                             "status" -> {
                                 val statusText = readText(parser)
-                                currentPropstatStatus = statusText  // Store for per-propstat check
-                                // Keep existing global check for backward compat
+                                currentPropstatStatus = statusText
                                 if (statusText != null && !statusText.contains("200") && !statusText.contains("201")) {
                                     statusOk = false
                                 }
@@ -486,7 +459,6 @@ class CalDavXmlParser {
                     XmlPullParser.END_TAG -> {
                         when (parser.name) {
                             "response" -> {
-                                // Use resourceTypeStatusOk for calendar inclusion (RFC 4918 multi-propstat support)
                                 if (isCalendar && currentHref != null && resourceTypeStatusOk) {
                                     val href = currentHref
                                     val name = currentDisplayName ?: "Unnamed"
@@ -504,10 +476,9 @@ class CalDavXmlParser {
                                 inResponse = false
                             }
                             "propstat" -> {
-                                // Only update resourceTypeStatusOk if this propstat contained resourcetype
                                 if (currentPropstatHasResourceType) {
                                     val status = currentPropstatStatus
-                                    resourceTypeStatusOk = status == null ||  // No status = OK (RFC 4918 default)
+                                    resourceTypeStatusOk = status == null ||  // No status means OK.
                                         status.contains("200") ||
                                         status.contains("201")
                                 }
@@ -530,8 +501,207 @@ class CalDavXmlParser {
     }
 
     /**
-     * Extract iCal data from calendar-multiget or calendar-query response.
-     * Returns list of events with href, etag, and iCal data.
+     * Reads a Depth-0 PROPFIND reply about one collection.
+     *
+     * Only the `<response>` whose href names [requestedPath] counts (compared as
+     * decoded paths, ignoring a trailing slash). Returns null, meaning "could not
+     * tell", when the body is not parseable XML, when no response or more than one
+     * response names that path, or when no `<resourcetype>` was read from a
+     * successful propstat. A null must never be read as "not a calendar": callers
+     * use a non-null result as evidence that a calendar has gone.
+     *
+     * Two server answers for a missing resource come back as
+     * [CalDavQuirks.ProbedCollection.absent]: a response-level `<status>` of
+     * 404/410 (RFC 4918 §14.24, used instead of propstat), and a response
+     * whose successful propstats hold no properties at all. The second is how some
+     * servers answer for a URL that does not exist; a real resource always has a
+     * resourcetype (RFC 4918 §15.9), and a reply that returns some properties but
+     * not that one stays unreadable.
+     */
+    fun extractProbedCollection(xml: String, requestedPath: String): CalDavQuirks.ProbedCollection? {
+        if (xml.isBlank()) return null
+        val wantedPath = comparablePath(requestedPath)
+        return try {
+            val parser = createParser(xml)
+            val matches = mutableListOf<CalDavQuirks.ProbedCollection?>()
+
+            var inResponse = false
+            var inPropstat = false
+            var inResourceType = false
+            var inSupportedComponentSet = false
+            var currentHref: String? = null
+            var currentDisplayName: String? = null
+            var isCalendar = false
+            var resourceTypeSeenOk = false
+            var propstatHasResourceType = false
+            var propstatSaysCalendar = false
+            var propstatStatus: String? = null
+            var inProp = false
+            var propstatPropCount = 0
+            var okPropstatCount = 0
+            var okPropCount = 0
+            var failedPropstatCount = 0
+            var responseStatus: String? = null
+            val currentComponents = mutableSetOf<String>()
+
+            while (parser.eventType != XmlPullParser.END_DOCUMENT) {
+                when (parser.eventType) {
+                    XmlPullParser.START_TAG -> {
+                        // Count before any readText() below moves the parser past this tag.
+                        // Any element inside <prop> is a returned property (or part of one).
+                        if (inProp) propstatPropCount++
+                        when (parser.name) {
+                            "response" -> {
+                                inResponse = true
+                                currentHref = null
+                                currentDisplayName = null
+                                isCalendar = false
+                                resourceTypeSeenOk = false
+                                okPropstatCount = 0
+                                okPropCount = 0
+                                failedPropstatCount = 0
+                                responseStatus = null
+                                currentComponents.clear()
+                            }
+                            "propstat" -> {
+                                inPropstat = true
+                                propstatHasResourceType = false
+                                propstatSaysCalendar = false
+                                propstatStatus = null
+                                propstatPropCount = 0
+                            }
+                            "prop" -> if (inPropstat) inProp = true
+                            "resourcetype" -> if (inPropstat) {
+                                inResourceType = true
+                                propstatHasResourceType = true
+                            }
+                            "calendar" -> if (inResourceType) propstatSaysCalendar = true
+                            "supported-calendar-component-set" -> inSupportedComponentSet = true
+                            "comp" -> if (inSupportedComponentSet) {
+                                parser.getAttributeValue(null, "name")?.uppercase()?.let {
+                                    currentComponents.add(it)
+                                }
+                            }
+                            "href" -> if (inResponse && !inPropstat && currentHref == null) {
+                                currentHref = readText(parser)
+                            }
+                            "displayname" -> if (inPropstat) {
+                                currentDisplayName = readText(parser)?.takeIf { it.isNotBlank() }
+                                    ?.let { decodeXmlEntities(it) }
+                            }
+                            "status" -> when {
+                                inPropstat -> propstatStatus = readText(parser)
+                                inResponse -> responseStatus = readText(parser)
+                            }
+                        }
+                    }
+                    XmlPullParser.END_TAG -> {
+                        when (parser.name) {
+                            "resourcetype" -> inResourceType = false
+                            "supported-calendar-component-set" -> inSupportedComponentSet = false
+                            "prop" -> inProp = false
+                            "propstat" -> {
+                                // No status means OK (RFC 4918 default).
+                                val ok = propstatStatus?.let { (parseHttpStatusCode(it) ?: 0) in 200..299 } ?: true
+                                if (ok) {
+                                    okPropstatCount++
+                                    okPropCount += propstatPropCount
+                                    // Only a resourcetype under a successful status is evidence.
+                                    if (propstatHasResourceType) {
+                                        resourceTypeSeenOk = true
+                                        if (propstatSaysCalendar) isCalendar = true
+                                    }
+                                } else {
+                                    failedPropstatCount++
+                                }
+                                inPropstat = false
+                            }
+                            "response" -> {
+                                val href = currentHref
+                                if (href != null && comparablePath(href) == wantedPath) {
+                                    val statusSaysGone = responseStatus
+                                        ?.let { parseHttpStatusCode(it) } in CalDavResult.RESOURCE_GONE_CODES
+                                    val emptyAnswer = okPropstatCount > 0 && okPropCount == 0 &&
+                                        failedPropstatCount == 0
+                                    val absent = statusSaysGone || (!resourceTypeSeenOk && emptyAnswer)
+                                    // Neither a resourcetype nor a clear "nothing here": no answer.
+                                    matches.add(
+                                        if (resourceTypeSeenOk || absent) {
+                                            CalDavQuirks.ProbedCollection(
+                                                // Same default name the listing parser uses.
+                                                displayName = currentDisplayName ?: "Unnamed",
+                                                isCalendar = isCalendar && !absent,
+                                                supportedComponents = currentComponents.toSet(),
+                                                absent = absent
+                                            )
+                                        } else {
+                                            null
+                                        }
+                                    )
+                                }
+                                inResponse = false
+                            }
+                        }
+                    }
+                }
+                parser.next()
+            }
+
+            matches.singleOrNull()
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to parse collection probe: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Reduces an href (absolute URL or path) to a decoded path without a trailing slash, so a
+     * server's encoded or slash-less spelling matches the request.
+     */
+    private fun comparablePath(href: String): String {
+        // Decode first: some servers percent-encode the whole absolute URL
+        // ("http%3A//host%3A8999/path/"), not just the path.
+        val decoded = percentDecode(href)
+        val schemeEnd = decoded.indexOf("://")
+        val path = if (schemeEnd > 0 && decoded.substring(0, schemeEnd).all { it.isLetter() }) {
+            val afterAuthority = decoded.indexOf('/', schemeEnd + 3)
+            if (afterAuthority < 0) "/" else decoded.substring(afterAuthority)
+        } else {
+            decoded
+        }
+        return path.trimEnd('/')
+    }
+
+    private fun Char.isHexDigit() = this in '0'..'9' || this in 'a'..'f' || this in 'A'..'F'
+
+    /** Decodes `%XX` escapes as UTF-8, keeping anything that isn't a valid escape. */
+    private fun percentDecode(value: String): String {
+        if ('%' !in value) return value
+        val out = java.io.ByteArrayOutputStream()
+        var i = 0
+        while (i < value.length) {
+            val c = value[i]
+            val hex = if (c == '%' && i + 2 < value.length &&
+                value[i + 1].isHexDigit() && value[i + 2].isHexDigit()
+            ) {
+                value.substring(i + 1, i + 3).toInt(16)
+            } else {
+                null
+            }
+            if (hex != null) {
+                out.write(hex)
+                i += 3
+            } else {
+                out.write(c.toString().toByteArray(Charsets.UTF_8))
+                i++
+            }
+        }
+        return out.toString(Charsets.UTF_8.name())
+    }
+
+    /**
+     * Returns href, etag and calendar-data for each response of a calendar-multiget or
+     * calendar-query that carries a VCALENDAR.
      */
     fun extractICalData(xml: String): List<CalDavQuirks.ParsedEventData> {
         if (xml.isBlank()) return emptyList()
@@ -579,10 +749,10 @@ class CalDavXmlParser {
                                 )
                             } else if (currentHref != null && currentIcalData == null &&
                                 currentEtag != null) {
-                                // Response carried an etag but no calendar-data — this is a
-                                // member resource the server failed to materialize. The etag
-                                // proves it isn't the collection self-row, so warn regardless
-                                // of href filename (servers may use extensionless UIDs).
+                                // An etag without calendar-data: a member the server didn't
+                                // return data for. The etag rules out the collection's own
+                                // row, so warn whatever the href looks like (servers may use
+                                // extensionless UIDs).
                                 Log.w(TAG, "Response for ${currentHref} has no calendar-data " +
                                     "— server may not support calendar-data in calendar-query")
                             }
@@ -601,27 +771,18 @@ class CalDavXmlParser {
     }
 
     /**
-     * Extract changed items (href + etag pairs) from sync-collection or PROPFIND
-     * Depth:1 response.
+     * Returns the href and etag of each changed member in a sync-collection or PROPFIND
+     * Depth:1 reply.
      *
-     * Discriminator (RFC 4918 §5.2 + §13, RFC 6578 §3.2):
-     *   - Response-level 404 (status directly inside `<response>`, no `<propstat>`) →
-     *     deletion. RFC 6578 §3.2 mandates this shape for removed members.
-     *   - propstat-404 in a response with NO successful propstat → deletion (pragmatic
-     *     convention used by some servers: `<propstat><prop/><status>404</status></propstat>`).
-     *   - propstat-404 in a response that also has a successful propstat → just a missing
-     *     property (e.g., `<getetag/>` 404 on a collection self-row). RFC 4918 §13:
-     *     propstat-level status applies only to those properties.
-     *   - href ends with `/` → collection self-row (RFC 4918 §5.2 SHOULD), skipped.
-     *   - resourcetype contains `<collection/>` → collection self-row, skipped (defensive
-     *     fallback for non-conforming servers that omit the trailing slash; the
-     *     fetchAllEtags / fetchEtagsInRange / syncCollection wire bodies do not request
-     *     resourcetype, so this fires only when a server volunteers the element
-     *     unprompted).
-     *   - Otherwise, etag present → changed item.
-     *   - No etag, not a collection, not deleted → diagnostic skip.
+     * Each response is classified in this order:
+     *   - The collection's own row ([ResponseState.isCollection]) is skipped.
+     *   - A deleted member ([ResponseState.isDeleted]) is skipped. A propstat-404 next to a
+     *     successful propstat is only a missing property (RFC 4918 §13), such as `<getetag/>`
+     *     404 on the collection's own row.
+     *   - A response with an etag is a changed member.
+     *   - Anything else is logged and dropped.
      *
-     * Filename extension is NOT used: some servers store events at extensionless
+     * The href's file extension is never used: some servers store events at extensionless
      * UID hrefs.
      */
     fun extractChangedItems(xml: String): List<Pair<String, String?>> {
@@ -653,17 +814,8 @@ class CalDavXmlParser {
     }
 
     /**
-     * Extract deleted hrefs from sync-collection or PROPFIND Depth:1 response.
-     *
-     * Returns hrefs that the server reports as deleted. Two reporting styles supported:
-     *   - Response-level 404 with no `<propstat>` (RFC 6578 §3.2 sync-collection
-     *     mandate): status directly inside `<response>`.
-     *   - propstat-404 with no successful sibling propstat (pragmatic convention used
-     *     by some servers): `<propstat><prop/><status>404</status></propstat>` with no
-     *     sibling 2xx propstat indicates the resource itself is gone.
-     *
-     * propstat-404 alongside a successful propstat (e.g., `<displayname/>` 404 next
-     * to `<getetag>` 200) is a missing-property report, NOT deletion.
+     * Returns the hrefs a sync-collection or PROPFIND Depth:1 reply reports as deleted; the
+     * two reporting styles are on [ResponseState.isDeleted].
      */
     fun extractDeletedHrefs(xml: String): List<String> {
         if (xml.isBlank()) return emptyList()
@@ -685,10 +837,11 @@ class CalDavXmlParser {
     }
 
     /**
-     * Single-pass extraction of all sync-collection data.
-     * More efficient than 3 separate calls for changed items, deleted hrefs, and sync token.
+     * Reads a sync-collection reply in one pass: changed items, deleted hrefs, the sync-token
+     * and whether the server truncated it.
      *
-     * Uses the same discriminator as [extractChangedItems] / [extractDeletedHrefs].
+     * Classifies each response as [extractChangedItems] and [extractDeletedHrefs] do, and
+     * never emits a 507 truncation marker as a member.
      */
     fun extractSyncCollectionData(xml: String): CalDavQuirks.SyncCollectionData {
         if (xml.isBlank()) return CalDavQuirks.SyncCollectionData(null, emptyList(), emptyList())
@@ -737,15 +890,13 @@ class CalDavXmlParser {
                             "resourcetype" -> state.insideResourcetype = false
                             "response" -> {
                                 // A 507 on any <response> means the server truncated the
-                                // listing (RFC 6578 §3.6); note it regardless of which
-                                // href carried it, then fall through so a genuine member
-                                // href on the same page is still classified below.
+                                // listing (RFC 6578 §3.6), whichever href carried it. The
+                                // other responses on the page are still classified below.
                                 if (state.isTruncationMarker()) truncated = true
                                 if (state.currentHref != null) {
                                     when {
-                                        state.isCollection() -> { /* skip collection self-row */ }
-                                        // A 507-marked response is the truncation signal, not a
-                                        // member change/delete — never emit it as a resource.
+                                        state.isCollection() -> { /* the collection's own row */ }
+                                        // The truncation signal, never emitted as a member.
                                         state.isTruncationMarker() -> { /* truncation marker, not a member */ }
                                         state.isDeleted() -> deletedHrefs.add(state.currentHref!!)
                                         state.currentEtag != null ->
@@ -775,16 +926,9 @@ class CalDavXmlParser {
     }
 
     /**
-     * Per-response state shared by [extractChangedItems], [extractDeletedHrefs],
-     * and [extractSyncCollectionData].
-     *
-     * Tracks the four pieces of information needed to classify a `<response>`:
-     *   - href and etag (for changed-item output);
-     *   - propstat depth + status observations (for deletion semantics — RFC 6578 §3.2
-     *     for response-level 404, plus the propstat-404 convention used by some servers);
-     *   - resourcetype-collection marker (defensive fallback for collection self-row
-     *     when href omits the trailing slash; the primary signal is href.endsWith("/"),
-     *     RFC 4918 §5.2).
+     * Holds what one `<response>` said, for [extractChangedItems], [extractDeletedHrefs] and
+     * [extractSyncCollectionData]: its href and etag, the statuses seen at response and
+     * propstat level, and whether its resourcetype holds `<collection/>`.
      */
     private class ResponseState {
         var currentHref: String? = null
@@ -818,8 +962,8 @@ class CalDavXmlParser {
             val code = parseHttpStatusCode(statusText) ?: return
             val is404 = code == 404
             val is2xx = code in 200..299
-            // RFC 6578 §3.6: a truncated sync-collection reports 507 on the
-            // collection's own <response> (response-level status), not in a propstat.
+            // RFC 6578 §3.6: a truncated sync-collection reports 507 as the response-level
+            // status of the collection's own <response>, not in a propstat.
             if (code == 507) sawStatus507 = true
             if (propstatDepth == 0) {
                 if (is404) responseLevel404 = true
@@ -829,36 +973,22 @@ class CalDavXmlParser {
             }
         }
 
-        /** True when this `<response>` carried a 507 status (RFC 6578 §3.6 truncation). */
+        /** Returns whether this `<response>` carried a 507 (RFC 6578 §3.6 truncation). */
         fun isTruncationMarker(): Boolean = sawStatus507
 
         /**
-         * Parse the 3-digit code from an HTTP status line (`HTTP/<ver> <code> <reason>`),
-         * tolerating extra whitespace. Returns null if no 3-digit code is found.
-         */
-        private fun parseHttpStatusCode(statusText: String): Int? {
-            val tokens = statusText.trim().split(Regex("""\s+"""))
-            if (tokens.size < 2) return null
-            return tokens[1].toIntOrNull()?.takeIf { it in 100..599 }
-        }
-
-        /**
-         * True when this `<response>` describes the collection itself rather than a
-         * member resource.
+         * Returns whether this `<response>` is the collection's own row, not a member.
          *
-         * Primary signal: href ends with `/` (RFC 4918 §5.2 SHOULD — *"Wherever a
-         * server produces a URL referring to a collection, the server SHOULD include
-         * the trailing slash."*). Verified across 7 server families; every probed
-         * collection self-row honors this.
+         * The main signal is a trailing `/` on the href: "Wherever a server produces a URL
+         * referring to a collection, the server SHOULD include the trailing slash" (RFC 4918
+         * §5.2). Verified across 7 server families; every probed collection row has it.
          *
-         * Defensive fallback: resourcetype contains `<collection/>`. The wire bodies
-         * for fetchAllEtags / fetchEtagsInRange / syncCollection do NOT request
-         * resourcetype, so this fallback only fires when a server volunteers the
-         * element unprompted (RFC 4918 §9.1 permits servers to return more properties
-         * than requested). It is kept for resilience against non-conforming servers
-         * that drop the trailing slash; do not re-add wire-level resourcetype "for
-         * safety" — iCloud emits a separate propstat-404 per member resource for an
-         * empty resourcetype query and the response bloats well past the read timeout.
+         * The fallback, a resourcetype holding `<collection/>`, covers servers that drop the
+         * slash. The fetchAllEtags, fetchEtagsInRange and syncCollection requests don't ask
+         * for resourcetype, so it fires only when a server volunteers it (RFC 4918 §9.1
+         * allows extra properties). Never add resourcetype to those requests: iCloud answers
+         * with a separate propstat-404 per member and the response grows past the read
+         * timeout.
          */
         fun isCollection(): Boolean {
             val href = currentHref ?: return false
@@ -866,27 +996,21 @@ class CalDavXmlParser {
         }
 
         /**
-         * True when the server is reporting the resource as deleted.
+         * Returns whether the server reports the resource as deleted, by either:
+         *   - a 404 directly inside `<response>`, the shape RFC 6578 §3.2 requires for a
+         *     removed member, or
+         *   - a propstat-404 with no successful propstat beside it, a convention some servers
+         *     use (`<propstat><prop/><status>404</status></propstat>`), not an RFC rule.
          *
-         * Either:
-         *   - response-level 404 with no `<propstat>` (RFC 6578 §3.2 mandates this
-         *     shape for removed members), or
-         *   - propstat-404 with no successful sibling propstat (pragmatic convention
-         *     used by some servers; not RFC-mandated).
-         *
-         * propstat-404 alongside a 2xx propstat is a missing-property report — e.g.,
-         * `<displayname/>` 404 alongside `<getetag>` 200. That is NOT a deletion.
+         * A propstat-404 next to a 2xx propstat, such as `<displayname/>` 404 beside
+         * `<getetag>` 200, only reports a missing property and is not a deletion.
          */
         fun isDeleted(): Boolean =
             currentHref != null &&
                 (responseLevel404 || (sawPropstat404 && !sawSuccessfulPropstat))
     }
 
-    /**
-     * Streaming iterator over `<response>` elements. Invokes [onResponse] at each
-     * `</response>` with the populated [ResponseState], allowing callers to project
-     * different views (changed items, deleted hrefs, etc.) from the same parse.
-     */
+    /** Calls [onResponse] at each `</response>` that had an href, with its [ResponseState]. */
     private inline fun forEachResponse(
         parser: XmlPullParser,
         onResponse: (ResponseState) -> Unit
@@ -943,10 +1067,7 @@ class CalDavXmlParser {
         return parser
     }
 
-    /**
-     * Read text content from current element.
-     * Advances parser to next token.
-     */
+    /** Advances past the current start tag and returns its trimmed text, or null if none. */
     private fun readText(parser: XmlPullParser): String? {
         parser.next()
         return if (parser.eventType == XmlPullParser.TEXT) {
@@ -957,8 +1078,8 @@ class CalDavXmlParser {
     }
 
     /**
-     * Read text or CDATA content from current element.
-     * Handles both regular text and CDATA sections (used by iCloud for calendar-data).
+     * Returns the current element's trimmed text, which may be a CDATA section (iCloud sends
+     * calendar-data as CDATA).
      */
     private fun readTextOrCdata(parser: XmlPullParser): String? {
         parser.next()

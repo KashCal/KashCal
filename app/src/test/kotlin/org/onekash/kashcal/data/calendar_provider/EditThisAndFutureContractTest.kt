@@ -7,12 +7,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Contract tests for [CalendarProviderRepository.editThisAndFuture]
- * exercised against the [FakeCalendarProviderRepository]. The
- * real-device behavior depends on `ContentResolver.applyBatch`,
- * which Robolectric can't faithfully simulate; the multi-server and
- * device QA passes cover the wire-level behavior. These tests fix
- * the contract that callers (HomeViewModel) depend on.
+ * Tests that [FakeCalendarProviderRepository]'s [CalendarProviderRepository.editThisAndFuture]
+ * records the split request and returns a configured write failure, which tests over the fake
+ * depend on. The real repository's split runs over [SqliteCalendarProvider] in
+ * `DeviceRecurringRoundTripTest` and `AndroidCalendarProviderRepositoryExceptionWriteTest`.
  */
 class EditThisAndFutureContractTest {
 

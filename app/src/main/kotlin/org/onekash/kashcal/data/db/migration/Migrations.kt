@@ -9,10 +9,9 @@ import org.onekash.kashcal.data.db.entity.Category
 private const val TAG = "Migrations"
 
 /**
- * Lenient JSON reader for the migration-time backfill of the `categories`
- * table. Mirrors `Converters.toStringList` exactly — a null/blank or malformed
- * value yields an empty list rather than throwing — so a single bad
- * `events.categories` blob can never fault the whole migration.
+ * Lenient JSON reader for the `categories` backfill in [Migrations.MIGRATION_21_22]. Like
+ * `Converters.toStringList`, a null, blank or malformed value yields an empty list, so one bad
+ * `events.categories` blob can't fail the migration.
  */
 private val migrationJson = Json { ignoreUnknownKeys = true }
 
@@ -26,19 +25,16 @@ private fun parseCategoriesBlob(value: String?): List<String> {
 }
 
 /**
- * Database migrations for KashCalDatabase.
+ * Holds the manual migrations for [org.onekash.kashcal.data.db.KashCalDatabase]; 3 to 4 is a Room
+ * `AutoMigration` declared there.
  *
- * Each migration should be thoroughly tested before release.
- * Migrations are additive - never modify existing migrations.
+ * Never modify a shipped migration; add a new one.
  */
 object Migrations {
 
     // ==================== Helper Functions ====================
 
-    /**
-     * Check if a column exists in a table.
-     * Used to make migrations idempotent (safe to run multiple times).
-     */
+    /** Returns whether [table] has [column]; the idempotency checks below use it. */
     private fun columnExists(db: SupportSQLiteDatabase, table: String, column: String): Boolean {
         db.query("PRAGMA table_info($table)").use { cursor ->
             val nameIndex = cursor.getColumnIndex("name")
@@ -51,10 +47,7 @@ object Migrations {
         return false
     }
 
-    /**
-     * Add a column only if it doesn't already exist.
-     * Prevents "duplicate column name" errors on partial migrations.
-     */
+    /** Adds [column] unless it exists, so a re-run after a partial migration can't fail on it. */
     private fun addColumnIfNotExists(
         db: SupportSQLiteDatabase,
         table: String,
@@ -69,28 +62,19 @@ object Migrations {
         }
     }
 
-    /**
-     * Check if an index exists.
-     */
     private fun indexExists(db: SupportSQLiteDatabase, indexName: String): Boolean {
         db.query("SELECT name FROM sqlite_master WHERE type='index' AND name=?", arrayOf(indexName)).use { cursor ->
             return cursor.count > 0
         }
     }
 
-    /**
-     * Check if a table exists.
-     */
     private fun tableExists(db: SupportSQLiteDatabase, tableName: String): Boolean {
         db.query("SELECT name FROM sqlite_master WHERE type='table' AND name=?", arrayOf(tableName)).use { cursor ->
             return cursor.count > 0
         }
     }
 
-    /**
-     * Read the set of column names for a table via PRAGMA table_info.
-     * Returns an empty set if the table doesn't exist.
-     */
+    /** Returns [tableName]'s column names, or an empty set if the table doesn't exist. */
     private fun tableColumns(db: SupportSQLiteDatabase, tableName: String): Set<String> {
         val result = mutableSetOf<String>()
         db.query("PRAGMA table_info($tableName)").use { cursor ->
@@ -103,15 +87,12 @@ object Migrations {
     }
 
     /**
-     * Read the SQLite affinity of a column via PRAGMA table_info, uppercased
-     * for canonical comparison (`"INTEGER"`, `"TEXT"`, etc.). Returns null
-     * when the column doesn't exist.
+     * Returns the declared type of [column] uppercased (`"INTEGER"`, `"TEXT"`), or null if the
+     * column doesn't exist.
      *
-     * Used by pre-migration shape checks to detect forked dev DBs where the
-     * column was hand-added with the wrong type. Without this guard, an
-     * `ALTER TABLE ADD COLUMN` skip via `addColumnIfNotExists` would silently
-     * leave the mis-typed column in place and the next launch would 412 on
-     * Room's identityHash check far away from the root cause.
+     * The pre-migration shape check in [MIGRATION_17_18] uses it to catch a forked dev DB with a
+     * hand-added, mis-typed column. [addColumnIfNotExists] would silently skip that column, and
+     * Room's schema validation after the migrations would reject the upgrade instead.
      */
     private fun columnTypeOf(db: SupportSQLiteDatabase, table: String, column: String): String? {
         db.query("PRAGMA table_info($table)").use { cursor ->
@@ -127,11 +108,10 @@ object Migrations {
     }
 
     /**
-     * Whether [table]'s primary-key column is declared `COLLATE NOCASE`, read
-     * from the stored `CREATE TABLE` SQL in `sqlite_master`. Used to prove a
-     * migration produced a case-insensitive PK — a case-sensitive one would
-     * silently let cased duplicates split into two rows, which a column-
-     * existence check can't detect.
+     * Returns whether [table]'s stored `CREATE TABLE` SQL declares `COLLATE NOCASE` on any
+     * column. It stands in for a PK check only on a table whose sole NOCASE column is the
+     * primary key, as in `categories`. A case-sensitive PK would silently split cased duplicates
+     * into two rows, which a column-existence check can't detect.
      */
     private fun primaryKeyIsNoCase(db: SupportSQLiteDatabase, table: String): Boolean {
         db.query(
@@ -140,15 +120,12 @@ object Migrations {
         ).use { cursor ->
             if (!cursor.moveToFirst() || cursor.isNull(0)) return false
             val sql = cursor.getString(0)
-            // Match the PK column's own definition carrying NOCASE, e.g.
-            // `name` TEXT NOT NULL COLLATE NOCASE
+            // Matches NOCASE anywhere in the table SQL, e.g. `name` TEXT NOT NULL COLLATE NOCASE
             return Regex("""COLLATE\s+NOCASE""", RegexOption.IGNORE_CASE).containsMatchIn(sql)
         }
     }
 
-    /**
-     * Drop an index if it exists (more robust than DROP INDEX IF EXISTS).
-     */
+    /** Drops [indexName] if it exists, logging whether it did. */
     private fun dropIndexIfExists(db: SupportSQLiteDatabase, indexName: String) {
         if (indexExists(db, indexName)) {
             db.execSQL("DROP INDEX $indexName")
@@ -159,16 +136,11 @@ object Migrations {
     }
 
     /**
-     * Migration from version 1 to 2.
-     *
-     * Adds ICS subscription support:
-     * - Creates ics_subscriptions table
-     * - Adds unique indexes for url and calendar_id
-     * - Sets up foreign key to calendars table
+     * Migrates 1 to 2: adds the `ics_subscriptions` table, unique on url and on calendar_id, with a
+     * cascading FK to calendars.
      */
     val MIGRATION_1_2 = object : Migration(1, 2) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            // Create ics_subscriptions table
             db.execSQL("""
                 CREATE TABLE IF NOT EXISTS ics_subscriptions (
                     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -188,13 +160,13 @@ object Migrations {
                 )
             """.trimIndent())
 
-            // Create unique index on URL (prevents duplicate subscriptions)
+            // One subscription per URL
             db.execSQL("""
                 CREATE UNIQUE INDEX IF NOT EXISTS index_ics_subscriptions_url
                 ON ics_subscriptions (url)
             """.trimIndent())
 
-            // Create unique index on calendar_id (one subscription per calendar)
+            // One subscription per calendar
             db.execSQL("""
                 CREATE UNIQUE INDEX IF NOT EXISTS index_ics_subscriptions_calendar_id
                 ON ics_subscriptions (calendar_id)
@@ -203,15 +175,11 @@ object Migrations {
     }
 
     /**
-     * Migration from version 2 to 3.
-     *
-     * Adds reminder notification support:
-     * - Creates scheduled_reminders table for alarm tracking
-     * - Follows Android CalendarProvider pattern (separate table for alarm instances)
+     * Migrates 2 to 3: adds the `scheduled_reminders` table, one row per alarm to fire, kept apart
+     * from events the way Android CalendarProvider keeps its alarms.
      */
     val MIGRATION_2_3 = object : Migration(2, 3) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            // Create scheduled_reminders table
             db.execSQL("""
                 CREATE TABLE IF NOT EXISTS scheduled_reminders (
                     id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -230,25 +198,22 @@ object Migrations {
                 )
             """.trimIndent())
 
-            // Index on event_id (for cascade delete and queries)
             db.execSQL("""
                 CREATE INDEX IF NOT EXISTS index_scheduled_reminders_event_id
                 ON scheduled_reminders (event_id)
             """.trimIndent())
 
-            // Index on trigger_time (for efficient alarm scheduling)
             db.execSQL("""
                 CREATE INDEX IF NOT EXISTS index_scheduled_reminders_trigger_time
                 ON scheduled_reminders (trigger_time)
             """.trimIndent())
 
-            // Index on status (for querying pending/snoozed reminders)
             db.execSQL("""
                 CREATE INDEX IF NOT EXISTS index_scheduled_reminders_status
                 ON scheduled_reminders (status)
             """.trimIndent())
 
-            // Unique index to prevent duplicate reminders for same event/occurrence/offset
+            // One reminder per event, occurrence and offset
             db.execSQL("""
                 CREATE UNIQUE INDEX IF NOT EXISTS index_scheduled_reminders_unique
                 ON scheduled_reminders (event_id, occurrence_time, reminder_offset)
@@ -257,83 +222,66 @@ object Migrations {
     }
 
     /**
-     * Migration from version 4 to 5.
+     * Migrates 4 to 5: adds the pending_operations columns that let a MOVE carry all its context
+     * from queue time.
+     * - target_url: the caldavUrl captured before it is cleared (DELETE and MOVE).
+     * - target_calendar_id: the MOVE's destination calendar.
      *
-     * Adds calendar move support to pending_operations:
-     * - target_url: Captures caldavUrl before it's cleared (for DELETE/MOVE)
-     * - target_calendar_id: Target calendar for MOVE operations
-     *
-     * Fixes bug where calendar move would lose the event because:
-     * 1. caldavUrl was cleared before DELETE processed
-     * 2. queueOperation didn't allow both DELETE + CREATE
-     *
-     * Solution: New OPERATION_MOVE type that stores all context at queue time.
+     * Reading caldavUrl from the event at process time loses the event: it is already cleared.
      */
     val MIGRATION_4_5 = object : Migration(4, 5) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            // Add target_url column for DELETE/MOVE operations
             db.execSQL("ALTER TABLE pending_operations ADD COLUMN target_url TEXT")
 
-            // Add target_calendar_id column for MOVE operations
             db.execSQL("ALTER TABLE pending_operations ADD COLUMN target_calendar_id INTEGER")
         }
     }
 
     /**
-     * Migration from version 5 to 6.
+     * Migrates 5 to 6: adds pending_operations.move_phase (0 = DELETE, 1 = CREATE).
      *
-     * Adds MOVE operation phase tracking to pending_operations:
-     * - move_phase: Phase of MOVE operation (0 = DELETE, 1 = CREATE)
-     *
-     * Each phase gets independent 5-retry budget to prevent event loss when
-     * DELETE succeeds but CREATE fails repeatedly.
+     * Each phase gets its own retry budget, so a CREATE that keeps failing after its DELETE
+     * succeeded doesn't run out of retries and lose the event.
      */
     val MIGRATION_5_6 = object : Migration(5, 6) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            // Add move_phase column for MOVE operation phase tracking
             db.execSQL("ALTER TABLE pending_operations ADD COLUMN move_phase INTEGER NOT NULL DEFAULT 0")
         }
     }
 
     /**
-     * Migration from version 6 to 7.
+     * Migrates 6 to 7: adds the events columns the iCalendar parser needs.
+     * - raw_ical: the original ICS, kept for round trips, so alarms beyond the first 3 and
+     *   properties without a column survive.
+     * - import_id: the sync key (uid, or uid:RECID:datetime), which tells apart exceptions that
+     *   share the master's UID.
+     * - alarm_count: the event's alarm total; above 3,
+     *   [org.onekash.kashcal.reminder.scheduler.ReminderScheduler] reads the extra alarms from
+     *   raw_ical.
      *
-     * Adds icaldav library migration support:
-     * - raw_ical: Original ICS data for round-trip preservation
-     * - import_id: Unique identifier for sync (uid or uid:RECID:datetime)
-     * - alarm_count: Total alarm count for optimization
-     *
-     * These columns enable:
-     * - Preserving alarms beyond the first 3
-     * - Preserving attendees and other properties not stored in columns
-     * - Distinguishing exception events that share the same UID
+     * It also replaces the partial unique index on master uid with triggers.
      */
     val MIGRATION_6_7 = object : Migration(6, 7) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            // Add raw_ical column for round-trip preservation
             db.execSQL("ALTER TABLE events ADD COLUMN raw_ical TEXT")
 
-            // Add import_id column for unique event lookup during sync
             db.execSQL("ALTER TABLE events ADD COLUMN import_id TEXT")
 
-            // Add alarm_count column for optimization
             db.execSQL("ALTER TABLE events ADD COLUMN alarm_count INTEGER NOT NULL DEFAULT 0")
 
-            // Initialize import_id from uid for existing events (master events)
+            // Existing rows take the master form, import_id = uid
             db.execSQL("UPDATE events SET import_id = uid WHERE import_id IS NULL")
 
-            // Create indexes for import_id lookups
             db.execSQL("CREATE INDEX IF NOT EXISTS index_events_import_id ON events (import_id)")
             db.execSQL("CREATE INDEX IF NOT EXISTS index_events_calendar_id_import_id ON events (calendar_id, import_id)")
 
-            // Drop partial unique index created by databaseCallback.onCreate()
-            // Room doesn't support partial indexes in @Index annotations, causing
-            // schema validation to fail (Found has index that Expected doesn't have)
-            // Use robust drop that verifies index exists first
+            // Older installs created a partial unique index at database creation. Room can't
+            // declare partial indexes in @Index, so its schema validation fails on it ("Found has
+            // index that Expected doesn't have").
             dropIndexIfExists(db, "index_events_uid_calendar_master")
 
-            // Replace with trigger to enforce same constraint (Room doesn't validate triggers)
-            // This prevents duplicate master events from iCloud sync (multiple servers may send same data)
+            // Triggers enforce the same constraint, and Room doesn't validate triggers. They stop
+            // duplicate master events from iCloud sync (multiple servers may send the same data).
             db.execSQL("""
                 CREATE TRIGGER IF NOT EXISTS trigger_master_event_unique_insert
                 BEFORE INSERT ON events
@@ -368,25 +316,18 @@ object Migrations {
     }
 
     /**
-     * Migration from version 7 to 8.
+     * Migrates 7 to 8: adds RFC 5545/7986 properties to events and indexes on boolean filters.
+     * - priority: 0 = undefined, 1 = highest, 9 = lowest.
+     * - geo_lat, geo_lon: coordinates.
+     * - color: per-event ARGB override.
+     * - url: event link.
+     * - categories: tags as a JSON array.
      *
-     * Adds RFC 5545/7986 extended properties to events:
-     * - priority: Event priority (0=undefined, 1=highest, 9=lowest)
-     * - geo_lat, geo_lon: Geographic location coordinates
-     * - color: Per-event color override (ARGB)
-     * - url: Event link
-     * - categories: Event tags/labels (JSON array)
-     *
-     * Also adds boolean indexes for query optimization:
-     * - calendars.is_visible
-     * - accounts.is_enabled
-     * - ics_subscriptions.enabled
-     * - occurrences.is_cancelled
+     * Indexed: calendars.is_visible, accounts.is_enabled, ics_subscriptions.enabled and
+     * occurrences.is_cancelled.
      */
     val MIGRATION_7_8 = object : Migration(7, 8) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            // New Event columns (RFC 5545/7986)
-            // Use addColumnIfNotExists to handle partial migrations safely
             addColumnIfNotExists(db, "events", "priority", "INTEGER NOT NULL DEFAULT 0")
             addColumnIfNotExists(db, "events", "geo_lat", "REAL")
             addColumnIfNotExists(db, "events", "geo_lon", "REAL")
@@ -394,10 +335,9 @@ object Migrations {
             addColumnIfNotExists(db, "events", "url", "TEXT")
             addColumnIfNotExists(db, "events", "categories", "TEXT")
 
-            // Also ensure the old problematic index is dropped (in case v6->7 didn't complete)
+            // In case 6 to 7 didn't complete
             dropIndexIfExists(db, "index_events_uid_calendar_master")
 
-            // Boolean indexes for query optimization
             db.execSQL("CREATE INDEX IF NOT EXISTS index_calendars_is_visible ON calendars (is_visible)")
             db.execSQL("CREATE INDEX IF NOT EXISTS index_accounts_is_enabled ON accounts (is_enabled)")
             db.execSQL("CREATE INDEX IF NOT EXISTS index_ics_subscriptions_enabled ON ics_subscriptions (enabled)")
@@ -406,18 +346,14 @@ object Migrations {
     }
 
     /**
-     * Migration from version 8 to 9.
-     *
-     * Adds composite index for RFC 5545 compliant exception event lookup.
-     * Enables efficient getExceptionByUidAndInstanceTime() queries using
-     * server-stable identifiers (UID + originalInstanceTime) instead of
-     * local database IDs that can become stale.
+     * Migrates 8 to 9: indexes events on (calendar_id, uid, original_instance_time) for
+     * `EventsDao.getExceptionByUidAndInstanceTime`, which finds an exception by its server-stable
+     * UID and instance time (RFC 5545) instead of a local ID that can go stale.
      */
     val MIGRATION_8_9 = object : Migration(8, 9) {
         private val INDEX_NAME = "index_events_calendar_id_uid_original_instance_time"
 
         override fun migrate(db: SupportSQLiteDatabase) {
-            // Check if index already exists (idempotent migration)
             if (indexExists(db, INDEX_NAME)) {
                 Log.d(TAG, "Index $INDEX_NAME already exists, skipping")
                 return
@@ -430,12 +366,11 @@ object Migrations {
                 """.trimIndent())
                 Log.d(TAG, "Created index $INDEX_NAME for UID-based exception lookup")
             } catch (e: Exception) {
-                // Log but don't fail - index is an optimization, not critical
-                // The app will still work, just with slower exception lookups
+                // The index only speeds up exception lookups, so a failure doesn't fail the
+                // migration.
                 Log.e(TAG, "Failed to create index $INDEX_NAME: ${e.message}", e)
             }
 
-            // Verify index was created
             if (indexExists(db, INDEX_NAME)) {
                 Log.d(TAG, "Verified index $INDEX_NAME exists")
             } else {
@@ -445,26 +380,21 @@ object Migrations {
     }
 
     /**
-     * Migration from version 9 to 10.
+     * Migrates 9 to 10: makes occurrences unique on (event_id, start_ts), so concurrent syncs
+     * (birthday sync, for example) can't write duplicates.
      *
-     * Adds unique constraint on occurrences (event_id, start_ts) to prevent
-     * duplicate occurrences from concurrent sync operations (e.g., birthday sync).
-     *
-     * Before creating the index, removes any existing duplicates by keeping
-     * only the occurrence with the lowest id for each (event_id, start_ts) pair.
+     * Existing duplicates are deleted first, keeping the lowest id of each pair.
      */
     val MIGRATION_9_10 = object : Migration(9, 10) {
         private val INDEX_NAME = "index_occurrences_event_id_start_ts_unique"
 
         override fun migrate(db: SupportSQLiteDatabase) {
-            // Check if index already exists (idempotent migration)
             if (indexExists(db, INDEX_NAME)) {
                 Log.d(TAG, "Index $INDEX_NAME already exists, skipping")
                 return
             }
 
             try {
-                // Count duplicates before deletion for logging
                 val duplicateCount = db.query("""
                     SELECT COUNT(*) FROM occurrences
                     WHERE id NOT IN (
@@ -479,8 +409,7 @@ object Migrations {
                 if (duplicateCount > 0) {
                     Log.i(TAG, "Found $duplicateCount duplicate occurrences to remove")
 
-                    // Delete duplicate occurrences (keep the one with lowest id)
-                    // This is required before creating the unique index
+                    // The unique index can't be created while duplicates exist
                     db.execSQL("""
                         DELETE FROM occurrences
                         WHERE id NOT IN (
@@ -494,50 +423,41 @@ object Migrations {
                     Log.d(TAG, "No duplicate occurrences found")
                 }
 
-                // Create unique index to prevent future duplicates
                 db.execSQL("""
                     CREATE UNIQUE INDEX $INDEX_NAME
                     ON occurrences (event_id, start_ts)
                 """.trimIndent())
                 Log.i(TAG, "Created unique index $INDEX_NAME")
 
-                // Verify index was created
                 if (indexExists(db, INDEX_NAME)) {
                     Log.d(TAG, "Verified index $INDEX_NAME exists")
                 } else {
                     Log.w(TAG, "Index $INDEX_NAME not found after creation - this may cause issues")
                 }
             } catch (e: Exception) {
-                // Log error but don't fail migration - app can still work
-                // The distinctBy in HomeScreen prevents crashes even without the index
                 Log.e(TAG, "Error in migration 9->10: ${e.message}", e)
-                // Re-throw to fail migration properly - Room will handle it
+                // Fails the migration
                 throw e
             }
         }
     }
 
     /**
-     * Migration from version 10 to 11.
-     *
-     * Adds retry lifecycle tracking to pending_operations:
-     * - lifetime_reset_at: When user last interacted with event (30-day lifetime cap)
-     * - failed_at: When operation entered FAILED status (24h auto-reset)
-     *
-     * Existing operations get lifetime_reset_at initialized from created_at.
+     * Migrates 10 to 11: adds retry lifecycle columns to pending_operations.
+     * - lifetime_reset_at: when the user last touched the event; starts the 30-day lifetime cap.
+     *   Existing rows take created_at.
+     * - failed_at: when the operation went FAILED; starts the 24-hour auto-reset.
      */
     val MIGRATION_10_11 = object : Migration(10, 11) {
         override fun migrate(db: SupportSQLiteDatabase) {
             try {
-                // Track when operation lifetime was last reset (user interaction)
-                // Default 0 allows us to identify rows needing initialization
+                // Default 0 marks the rows still to initialize
                 addColumnIfNotExists(
                     db, "pending_operations", "lifetime_reset_at",
                     "INTEGER NOT NULL DEFAULT 0"
                 )
 
-                // Initialize lifetime_reset_at from created_at for existing operations
-                // Only update rows where lifetime_reset_at is still 0 (idempotent)
+                // Only rows still at 0, so a re-run is a no-op
                 val updatedCount = db.compileStatement("""
                     UPDATE pending_operations
                     SET lifetime_reset_at = created_at
@@ -548,14 +468,12 @@ object Migrations {
                     Log.i(TAG, "Initialized lifetime_reset_at for $updatedCount existing operations")
                 }
 
-                // Track when operation entered FAILED status (for 24h auto-reset)
-                // Nullable - only set when operation is in FAILED status
+                // Null unless the operation is FAILED
                 addColumnIfNotExists(
                     db, "pending_operations", "failed_at",
                     "INTEGER"
                 )
 
-                // Verify columns exist
                 if (columnExists(db, "pending_operations", "lifetime_reset_at") &&
                     columnExists(db, "pending_operations", "failed_at")) {
                     Log.d(TAG, "Migration 10->11 completed: retry lifecycle columns added")
@@ -564,40 +482,30 @@ object Migrations {
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Error in migration 10->11: ${e.message}", e)
-                throw e  // Let Room handle the failure
+                throw e  // Fails the migration
             }
         }
     }
 
     /**
-     * Migration from version 11 to 12.
+     * Migrates 11 to 12: adds pending_operations.source_calendar_id, the calendar a cross-account
+     * MOVE deletes from once event.calendarId points at the target.
      *
-     * Adds sourceCalendarId to pending_operations for cross-account calendar moves.
-     * This field preserves "where to delete from" after event.calendarId changes.
-     *
-     * IMPORTANT: In-flight MOVE operations at phase 0 (DELETE) are marked FAILED
-     * because their sourceCalendarId cannot be reliably inferred - the event's
-     * calendarId has already been updated to the target calendar.
-     *
-     * These operations will be retried via 24h auto-reset or Force Sync.
+     * In-flight MOVEs at phase 0 (DELETE) are marked FAILED: their source can't be inferred, since
+     * the event's calendarId is already the target. The 24-hour auto-reset or Force Sync retries
+     * them.
      */
     val MIGRATION_11_12 = object : Migration(11, 12) {
         override fun migrate(db: SupportSQLiteDatabase) {
             try {
-                // Step 1: Add source_calendar_id column (idempotent)
                 addColumnIfNotExists(
                     db, "pending_operations", "source_calendar_id",
                     "INTEGER DEFAULT NULL"
                 )
 
-                // Step 2: Handle in-flight MOVE operations at DELETE phase
-                //
-                // CRITICAL: We CANNOT backfill sourceCalendarId from event.calendarId!
-                // Timeline: User moves A→B → event.calendarId = B → queue MOVE(phase 0)
-                // At migration time, event.calendarId is ALREADY B (target), not A (source)
-                //
-                // Solution: Mark as FAILED for user retry (low volume edge case)
-                // The 24h auto-reset (MIGRATION_10_11) will pick these up automatically
+                // Don't backfill source_calendar_id from event.calendarId: a move from A to B
+                // sets event.calendarId = B before it queues MOVE(phase 0), so the event names the
+                // target, not the source.
                 val inFlightMoves = db.compileStatement("""
                     UPDATE pending_operations
                     SET status = 'FAILED',
@@ -615,10 +523,8 @@ object Migrations {
                     Log.d(TAG, "No in-flight MOVE operations to migrate")
                 }
 
-                // Step 3: Phase 1 (CREATE) MOVEs don't need sourceCalendarId
-                // They filter by targetCalendarId which is already set correctly
+                // Phase 1 (CREATE) MOVEs select by target_calendar_id and need no source.
 
-                // Step 4: Verify column exists
                 if (columnExists(db, "pending_operations", "source_calendar_id")) {
                     Log.d(TAG, "Migration 11->12 completed: source_calendar_id column added")
                 } else {
@@ -627,25 +533,21 @@ object Migrations {
 
             } catch (e: Exception) {
                 Log.e(TAG, "Error in migration 11->12: ${e.message}", e)
-                throw e  // Let Room handle the failure
+                throw e  // Fails the migration
             }
         }
     }
 
     /**
-     * Migration from version 12 to 13.
-     *
-     * Changes the accounts unique index from (provider, email) to
-     * (provider, email, home_set_url) so that the same username on
-     * different CalDAV servers creates separate accounts instead of
-     * colliding (Issue #69).
+     * Migrates 12 to 13: widens the accounts unique index from (provider, email) to
+     * (provider, email, home_set_url), so one username on two CalDAV servers makes two accounts
+     * (#69).
      */
     val MIGRATION_12_13 = object : Migration(12, 13) {
         override fun migrate(db: SupportSQLiteDatabase) {
             try {
-                // Defensive check: log any CalDAV accounts with NULL home_set_url.
-                // These accounts would not be found by the new 3-param lookup.
-                // All CalDAV accounts should have home_set_url set during discovery.
+                // Every CalDAV account should have home_set_url from discovery. One without it
+                // can't be found by the (provider, email, home_set_url) lookup, so it is logged.
                 val nullHomeSetCount = db.query(
                     "SELECT COUNT(*) FROM accounts WHERE provider = 'CALDAV' AND home_set_url IS NULL"
                 ).use { cursor ->
@@ -656,23 +558,19 @@ object Migrations {
                         "These accounts may need re-authentication after upgrade.")
                 }
 
-                // Step 1: Drop old unique index
                 dropIndexIfExists(db, "index_accounts_provider_email")
 
-                // Step 2: Create new unique index including home_set_url
                 db.execSQL(
                     "CREATE UNIQUE INDEX IF NOT EXISTS index_accounts_provider_email_home_set_url " +
                     "ON accounts (provider, email, home_set_url)"
                 )
 
-                // Step 3: Verify new index exists
                 if (indexExists(db, "index_accounts_provider_email_home_set_url")) {
                     Log.d(TAG, "Migration 12->13 completed: unique index updated to include home_set_url")
                 } else {
                     Log.w(TAG, "Migration 12->13: index verification FAILED")
                 }
 
-                // Step 4: Verify old index is gone
                 if (indexExists(db, "index_accounts_provider_email")) {
                     Log.w(TAG, "Migration 12->13: old index still exists after drop")
                 }
@@ -684,25 +582,20 @@ object Migrations {
     }
 
     /**
-     * Migration from version 13 to 14.
+     * Migrates 13 to 14: moves the exception unique key from the local
+     * (original_event_id, original_instance_time) to the RFC 5545 natural key
+     * (calendar_id, uid, original_instance_time).
      *
-     * Swaps unique index on exception events from local FK-based
-     * UNIQUE(original_event_id, original_instance_time) to RFC 5545 natural key
-     * UNIQUE(calendar_id, uid, original_instance_time).
-     *
-     * The old index uses local IDs and cannot deduplicate orphan exceptions
-     * (original_event_id = NULL makes SQLite treat each row as distinct).
-     * The new index uses non-NULL columns and correctly identifies exceptions
-     * per RFC 5545 §3.8.4.4 + RFC 4791 §4.1.
-     *
-     * Includes two-step dedup to clean any existing duplicates before creating
-     * the unique index.
+     * The old key can't dedupe orphan exceptions: SQLite treats every NULL original_event_id as
+     * distinct. The new key's columns are non-NULL on an exception and identify it per RFC 5545
+     * §3.8.4.4 and RFC 4791 §4.1. Existing duplicates are removed in two steps before the unique
+     * index is created.
      */
     val MIGRATION_13_14 = object : Migration(13, 14) {
         override fun migrate(db: SupportSQLiteDatabase) {
             try {
-                // Step 1: Delete orphan exceptions that have a properly linked counterpart.
-                // Keeps the linked version (original_event_id IS NOT NULL) which has the FK to the master.
+                // Step 1: delete orphan exceptions that have a linked counterpart, keeping the
+                // linked row (original_event_id IS NOT NULL), which has the FK to the master.
                 val orphanLinkedDedup = db.compileStatement("""
                     DELETE FROM events WHERE id IN (
                         SELECT e1.id FROM events e1
@@ -720,9 +613,8 @@ object Migrations {
                     Log.d(TAG, "Migration 13->14: dedup step 1 deleted $step1Deleted orphan exceptions with linked counterparts")
                 }
 
-                // Step 2: Generic dedup for any remaining duplicates (two orphans,
-                // two linked with different masters, etc.). Keeps the highest id
-                // (most recently written) per (calendar_id, uid, original_instance_time).
+                // Step 2: any remaining duplicates (two orphans, two linked to different masters)
+                // keep the highest id, the most recently written, per natural key.
                 val genericDedup = db.compileStatement("""
                     DELETE FROM events
                     WHERE original_instance_time IS NOT NULL
@@ -737,25 +629,21 @@ object Migrations {
                     Log.d(TAG, "Migration 13->14: dedup step 2 deleted $step2Deleted remaining duplicate exceptions")
                 }
 
-                // Step 3: Drop old unique index on local FK columns
                 dropIndexIfExists(db, "index_events_original_event_id_original_instance_time")
 
-                // Step 4: Create non-unique replacement (still useful for FK lookups)
+                // Recreated non-unique for FK lookups
                 db.execSQL(
                     "CREATE INDEX IF NOT EXISTS index_events_original_event_id_original_instance_time " +
                     "ON events (original_event_id, original_instance_time)"
                 )
 
-                // Step 5: Drop current non-unique composite index
                 dropIndexIfExists(db, "index_events_calendar_id_uid_original_instance_time")
 
-                // Step 6: Create RFC-correct unique index
                 db.execSQL(
                     "CREATE UNIQUE INDEX IF NOT EXISTS index_events_calendar_id_uid_original_instance_time " +
                     "ON events (calendar_id, uid, original_instance_time)"
                 )
 
-                // Verify
                 if (indexExists(db, "index_events_calendar_id_uid_original_instance_time")) {
                     Log.d(TAG, "Migration 13->14 completed: unique index swapped to (calendar_id, uid, original_instance_time)")
                 } else {
@@ -769,37 +657,28 @@ object Migrations {
     }
 
     /**
-     * Migration from version 14 to 15.
+     * Migrates 14 to 15: adds pending_operations.linked_move_id, the UUID pairing the CREATE and
+     * DELETE of a cross-account move.
      *
-     * Adds linked operation support for cross-account calendar moves:
-     * - linked_move_id: UUID linking CREATE and DELETE operations in cross-account moves
+     * `PendingOperationsDao.getReadyOperations` holds back a linked DELETE while a PENDING CREATE
+     * with the same id exists, so the copy lands before the original is removed.
      *
-     * DELETE operations with a linkedMoveId are blocked by a guard query until
-     * no pending CREATE with the same linkedMoveId exists. This prevents event loss
-     * when DELETE runs before CREATE completes on a different account's sync cycle.
-     *
-     * IMPORTANT: In-flight cross-account moves (existing CREATE + DELETE pairs without
-     * linkedMoveId) cannot be safely linked post-hoc because we can't determine which
-     * CREATE belongs to which DELETE. These are left as-is and may result in:
-     * - Duplication if CREATE succeeds and DELETE fails (recoverable)
-     * - Event loss if DELETE runs first (rare: requires DELETE account to sync before
-     *   CREATE account, which is unlikely for same-user accounts)
-     *
-     * New cross-account moves after this migration use the linked mechanism.
+     * In-flight cross-account CREATE and DELETE pairs are left unlinked: which CREATE belongs to
+     * which DELETE can't be told afterwards. They may duplicate the event if the CREATE succeeds
+     * and the DELETE fails, or lose it if the DELETE account syncs first, which is unlikely for
+     * one user's accounts.
      */
     val MIGRATION_14_15 = object : Migration(14, 15) {
         private val INDEX_NAME = "index_pending_operations_linked_move_id"
 
         override fun migrate(db: SupportSQLiteDatabase) {
             try {
-                // Step 1: Add linked_move_id column (idempotent via helper)
                 addColumnIfNotExists(
                     db, "pending_operations", "linked_move_id",
                     "TEXT DEFAULT NULL"
                 )
 
-                // Step 2: Create index for efficient guard query in getReadyOperations()
-                // The guard query uses: WHERE linked.linked_move_id = po.linked_move_id
+                // For the getReadyOperations guard: WHERE linked.linked_move_id = po.linked_move_id
                 if (!indexExists(db, INDEX_NAME)) {
                     db.execSQL("""
                         CREATE INDEX $INDEX_NAME
@@ -810,9 +689,7 @@ object Migrations {
                     Log.d(TAG, "Index $INDEX_NAME already exists, skipping")
                 }
 
-                // Step 3: Log any in-flight cross-account moves for visibility
-                // These are CREATE+DELETE pairs for the same event without linkedMoveId.
-                // We don't modify them - just log for awareness.
+                // Logs the unlinked CREATE and DELETE pairs for one event; they aren't modified.
                 val inFlightCrossAccountMoves = db.query("""
                     SELECT COUNT(DISTINCT po1.event_id) FROM pending_operations po1
                     INNER JOIN pending_operations po2 ON po1.event_id = po2.event_id
@@ -831,7 +708,6 @@ object Migrations {
                         "without linkedMoveId. These will use legacy (unlinked) behavior.")
                 }
 
-                // Step 4: Verify migration completed
                 val columnOk = columnExists(db, "pending_operations", "linked_move_id")
                 val indexOk = indexExists(db, INDEX_NAME)
 
@@ -843,38 +719,31 @@ object Migrations {
 
             } catch (e: Exception) {
                 Log.e(TAG, "Error in migration 14->15: ${e.message}", e)
-                throw e  // Let Room handle the failure
+                throw e  // Fails the migration
             }
         }
     }
 
     /**
-     * Migration from version 15 to 16.
+     * Migrates 15 to 16: adds four columns.
+     * - calendars.is_notification_muted: mute reminders per calendar (#137); nothing reads it yet.
+     * - calendars.local_color_override: the user's color for a CalDAV calendar (#102).
+     * - calendars.default_reminder: a calendar's default reminder offset.
+     * - events.end_timezone: a separate timezone for the event end (#39).
      *
-     * Adds columns for three features + one planned feature:
-     * - is_notification_muted: Mute reminders per calendar (Issue #137)
-     * - local_color_override: User color override for CalDAV calendars (Issue #102)
-     * - default_reminder: Default reminder offset per calendar
-     * - end_timezone: Different timezone for event end time (Issue #39)
-     *
-     * All columns use ALTER TABLE ADD COLUMN with defaults - instant, no data rewrite.
+     * Each is an ALTER TABLE ADD COLUMN, which rewrites no data.
      */
     val MIGRATION_15_16 = object : Migration(15, 16) {
         override fun migrate(db: SupportSQLiteDatabase) {
-            // Calendar columns
             addColumnIfNotExists(db, "calendars", "is_notification_muted", "INTEGER NOT NULL DEFAULT 0")
             addColumnIfNotExists(db, "calendars", "local_color_override", "INTEGER")
             addColumnIfNotExists(db, "calendars", "default_reminder", "TEXT")
 
-            // Event columns
             addColumnIfNotExists(db, "events", "end_timezone", "TEXT")
         }
     }
 
-    /**
-     * Expected column-name set for the `attendees` table at v17. Used by
-     * the drop-rogue-on-shape-mismatch check in MIGRATION_16_17.
-     */
+    /** Lists the v17 `attendees` columns; [MIGRATION_16_17] drops a table that differs. */
     private val EXPECTED_ATTENDEES_COLUMNS = setOf(
         "id",
         "event_id",
@@ -895,42 +764,32 @@ object Migrations {
     )
 
     /**
-     * Migration from version 16 to 17 — scheduling schema bundle.
+     * Migrates 16 to 17: adds the scheduling schema.
+     * - `accounts.calendar_user_addresses` (TEXT NOT NULL DEFAULT '[]'): JSON `List<String>` of
+     *   the CAL-ADDRESS forms from the RFC 6638 §2.4.1 `calendar-user-address-set` PROPFIND.
+     * - `events.organizer_sent_by` (TEXT): RFC 5545 §3.2.18.
+     * - `events.organizer_schedule_status` (TEXT): RFC 6638 §7.3.
+     * - `attendees`: a child of events with FK CASCADE, 16 columns covering the RFC 5545
+     *   §3.8.4.1 ATTENDEE and the RFC 6638 §7 scheduling parameters.
      *
-     * Schema delta:
-     * - `accounts.calendar_user_addresses` (TEXT NOT NULL DEFAULT '[]') —
-     *   JSON `List<String>` of CAL-ADDRESS forms from RFC 6638 §2.4.1
-     *   `calendar-user-address-set` PROPFIND.
-     * - `events.organizer_sent_by` (TEXT) — RFC 5545 §3.2.18.
-     * - `events.organizer_schedule_status` (TEXT) — RFC 6638 §7.3.
-     * - `attendees` table — child of events with FK CASCADE, 16 columns
-     *   covering RFC 5545 §3.8.4.1 ATTENDEE plus RFC 6638 §7 scheduling
-     *   parameters.
+     * Guarantees:
+     * 1. Idempotent: `addColumnIfNotExists` and the IF NOT EXISTS creates make a re-run a no-op.
+     * 2. Its own transaction, as defense in depth over Room's, so a partial failure rolls back.
+     * 3. An `attendees` table whose column set differs from [EXPECTED_ATTENDEES_COLUMNS] is
+     *    dropped and recreated; one with the expected columns is kept.
+     * 4. Every expected column, table and index is checked inside the transaction, before
+     *    `setTransactionSuccessful()`; a missing one throws `IllegalStateException` and rolls
+     *    back instead of committing a broken schema.
      *
-     * Robustness guarantees:
-     * 1. Idempotent — `addColumnIfNotExists`, `CREATE TABLE IF NOT EXISTS`,
-     *    `CREATE INDEX IF NOT EXISTS` mean re-runs are safe no-ops.
-     * 2. Explicit transaction wrap — defense in depth even though Room
-     *    provides an implicit wrap; partial failures roll back.
-     * 3. Drop-rogue-on-shape-mismatch — if `attendees` exists with column
-     *    set ≠ expected, drop and recreate. Forward-compatible tables
-     *    (matching shape) are left alone via IF NOT EXISTS.
-     * 4. Post-migration validation — verify all expected columns/tables/
-     *    indexes exist; throw `IllegalStateException` if any are missing.
-     *    Validation runs INSIDE the transaction, BEFORE
-     *    `setTransactionSuccessful()`, so a failed check rolls back rather
-     *    than commits a broken schema.
-     *
-     * SQL strings for the new table and indexes are copied verbatim from
-     * Room's autogen `17.json` schema export (with `${TABLE_NAME}`
-     * substituted) so the migration's identityHash matches Room's
-     * expected hash at startup.
+     * The table and index SQL follows Room's `17.json` schema export (`${TABLE_NAME}`
+     * substituted), so Room's schema validation after the migrations passes
+     * (`MigrationHashValidationTest`).
      */
     val MIGRATION_16_17 = object : Migration(16, 17) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.beginTransaction()
             try {
-                // 1. Additive column adds (idempotent via addColumnIfNotExists)
+                // 1. Column adds
                 addColumnIfNotExists(
                     db,
                     "accounts",
@@ -940,9 +799,8 @@ object Migrations {
                 addColumnIfNotExists(db, "events", "organizer_sent_by", "TEXT")
                 addColumnIfNotExists(db, "events", "organizer_schedule_status", "TEXT")
 
-                // 2. Drop-rogue-on-shape-mismatch: only destroys data on stale
-                //    leftovers, never on a forward-compatible table. Empty set
-                //    means the table doesn't exist — no drop needed.
+                // 2. Drops only a stale leftover, never a table with the expected columns. An
+                //    empty set means there is no table.
                 val actualColumns = tableColumns(db, "attendees")
                 if (actualColumns.isNotEmpty() && actualColumns != EXPECTED_ATTENDEES_COLUMNS) {
                     Log.w(
@@ -953,8 +811,7 @@ object Migrations {
                     db.execSQL("DROP TABLE attendees")
                 }
 
-                // 3. Create table + indexes (autogen SQL from 17.json,
-                //    wrapped in IF NOT EXISTS for idempotency).
+                // 3. Table and indexes, Room's 17.json SQL with IF NOT EXISTS
                 db.execSQL(
                     """
                     CREATE TABLE IF NOT EXISTS `attendees` (
@@ -988,9 +845,7 @@ object Migrations {
                         "ON `attendees` (`address`)"
                 )
 
-                // 4. Post-migration validation — runs BEFORE
-                //    setTransactionSuccessful() so a thrown exception rolls
-                //    back rather than commits a broken schema.
+                // 4. Validation, before setTransactionSuccessful() so a throw rolls back
                 val missing = buildList {
                     if (!columnExists(db, "accounts", "calendar_user_addresses")) {
                         add("accounts.calendar_user_addresses")
@@ -1023,9 +878,8 @@ object Migrations {
     }
 
     /**
-     * Expected SQLite affinity for each new column added by MIGRATION_17_18.
-     * Drives the pre-migration shape check that rejects forked dev DBs where
-     * a column was hand-added with the wrong type.
+     * Lists the declared type of each column [MIGRATION_17_18] adds, for its pre-migration shape
+     * check.
      */
     private val EXPECTED_V18_COLUMN_TYPES = mapOf(
         Triple("pending_operations", "partstat_only", "INTEGER") to Unit,
@@ -1034,52 +888,27 @@ object Migrations {
     ).keys
 
     /**
-     * Migration from version 17 to 18 — RSVP / invite-notification state.
+     * Migrates 17 to 18: adds RSVP and invite-notification state. The columns are app-internal
+     * queue and dedup state, not RFC wire fields.
+     * - `pending_operations.partstat_only` (INTEGER NOT NULL DEFAULT 0): 1 marks a PARTSTAT-only
+     *   RSVP write, pushed through `IcsPatcher.patchAttendeeReply`; 0 an ordinary UPDATE.
+     * - `pending_operations.partstat_target` (TEXT): the PARTSTAT the operation writes, an
+     *   RFC 5545 §3.2.12 value (`ACCEPTED`, `TENTATIVE`, `DECLINED`, `NEEDS-ACTION`) uppercased by
+     *   `EventWriter.replyRsvp`. NULL when `partstat_only = 0`.
+     * - `attendees.notified_at` (INTEGER epoch millis): when the per-invite system notification
+     *   fired, for dedup. NULL = not yet notified.
      *
-     * Schema delta — three additive columns. None of these are RFC wire-
-     * protocol fields; they are app-internal sync-queue state and
-     * notification-dedup state.
-     *
-     * - `pending_operations.partstat_only` (INTEGER NOT NULL DEFAULT 0) —
-     *   internal flag distinguishing an ordinary UPDATE (`0`) from a
-     *   PARTSTAT-only RSVP write (`1`) that uses the
-     *   `IcsPatcher.patchAttendeeReply` path.
-     * - `pending_operations.partstat_target` (TEXT, nullable) — internal
-     *   carrier for the target PARTSTAT value the operation should write.
-     *   The *value* domain (`ACCEPTED`, `TENTATIVE`, `DECLINED`,
-     *   `NEEDS-ACTION`) is RFC 5545 §3.2.12 PARTSTAT, canonicalized to
-     *   uppercase via `AttendeeStatus.fromPartstat` at write time. The
-     *   *column itself* is internal queue state. NULL when
-     *   `partstat_only = 0`.
-     * - `attendees.notified_at` (INTEGER, nullable epoch millis) — internal
-     *   dedup timestamp marking when the per-invite system notification
-     *   fired. NULL = not yet notified.
-     *
-     * Robustness pattern (mirrors the MIGRATION_16_17 scheduling-schema
-     * bundle that preceded it):
-     *  1. Explicit `try { ... } finally { db.endTransaction() }` wrap so a
-     *     thrown validation exception always rolls back.
-     *  2. `addColumnIfNotExists` for every column add (re-run safe).
-     *  3. Pre-migration shape check: if a column already exists with the
-     *     wrong SQLite affinity (forked dev DB scenario), throw
-     *     `IllegalStateException` BEFORE attempting to add — silent skip
-     *     would leave a mis-typed column in place and the next launch would
-     *     fail Room's identityHash check far away from the root cause.
-     *  4. Post-migration validation: collect missing columns; throw with
-     *     the missing list IF NOT EMPTY, BEFORE
-     *     `setTransactionSuccessful()`, so a thrown check rolls back rather
-     *     than commits a broken schema.
-     *  5. Validation order is load-bearing — `setTransactionSuccessful()`
-     *     is the LAST statement in the try block.
+     * Same transaction, idempotency and validation as [MIGRATION_16_17], plus a pre-migration shape
+     * check: a column that already exists with the wrong type (a forked dev DB) throws
+     * `IllegalStateException` before any add ([columnTypeOf] says what a silent skip would cause).
+     * `setTransactionSuccessful()` must stay the last statement in the try block, after the
+     * validation.
      */
     val MIGRATION_17_18 = object : Migration(17, 18) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.beginTransaction()
             try {
-                // 1. Pre-migration shape check — reject forked dev DBs that
-                //    hand-added a column with the wrong type. addColumn-
-                //    IfNotExists would otherwise silently no-op and leave
-                //    the mis-typed column in place.
+                // 1. Pre-migration shape check
                 val shapeMismatches = mutableListOf<String>()
                 for ((table, column, expectedType) in EXPECTED_V18_COLUMN_TYPES) {
                     val actual = columnTypeOf(db, table, column)
@@ -1102,7 +931,7 @@ object Migrations {
                     )
                 }
 
-                // 2. Idempotent column adds.
+                // 2. Column adds
                 addColumnIfNotExists(
                     db,
                     "pending_operations",
@@ -1122,9 +951,7 @@ object Migrations {
                     "INTEGER"
                 )
 
-                // 3. Post-migration validation — runs BEFORE
-                //    setTransactionSuccessful() so a thrown exception rolls
-                //    back rather than commits a broken schema.
+                // 3. Validation, before setTransactionSuccessful() so a throw rolls back
                 val missing = buildList {
                     if (!columnExists(db, "pending_operations", "partstat_only")) {
                         add("pending_operations.partstat_only")
@@ -1150,40 +977,25 @@ object Migrations {
     }
 
     /**
-     * Migration from version 18 to 19 — scheduling-capability + outbox
-     * discovery columns (RFC 6638 §2 / §2.1.1).
+     * Migrates 18 to 19: adds the scheduling-capability and outbox discovery columns
+     * (RFC 6638 §2, §2.1.1).
+     * - `accounts.schedule_outbox_url` (TEXT): the principal's CALDAV:schedule-outbox-URL
+     *   (RFC 6638 §2.1.1) from PROPFIND. NULL = not yet discovered or no outbox advertised.
+     * - `calendars.auto_schedule_supported` (INTEGER): the RFC 6638 §2 "calendar-auto-schedule"
+     *   OPTIONS token on the collection. NULL = not yet probed, 0 = not advertised, 1 = advertised.
      *
-     * Schema delta — two additive nullable columns:
-     * - `accounts.schedule_outbox_url` (TEXT, nullable) — the principal's
-     *   CALDAV:schedule-outbox-URL (RFC 6638 §2.1.1), discovered by PROPFIND.
-     *   NULL = not yet discovered or no outbox advertised.
-     * - `calendars.auto_schedule_supported` (INTEGER, nullable) — tri-state
-     *   capability flag from the RFC 6638 §2 "calendar-auto-schedule" OPTIONS
-     *   token on the collection. NULL = unknown / not yet probed, 0 = not
-     *   advertised, 1 = advertised.
-     *
-     * Robustness pattern (mirrors MIGRATION_17_18): explicit transaction wrap,
-     * idempotent `addColumnIfNotExists`, post-migration validation BEFORE
-     * `setTransactionSuccessful()` so a thrown check rolls back rather than
-     * commits a broken schema.
-     *
-     * No pre-migration type-shape check (unlike MIGRATION_17_18): both columns
-     * are brand-new at v19, so the "forked dev DB hand-added the column with
-     * the wrong affinity" case that check guards cannot arise here.
-     *
-     * Both columns are nullable with no DEFAULT, so existing rows take NULL
-     * automatically and the next sync's discovery hook populates them.
+     * Same transaction, idempotency and validation as [MIGRATION_16_17]. It has no shape check:
+     * both columns are new at v19, so no forked dev DB can have hand-added them. Existing rows take
+     * NULL until calendar discovery (`persistSchedulingDiscovery`) fills them in.
      */
     val MIGRATION_18_19 = object : Migration(18, 19) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.beginTransaction()
             try {
-                // Idempotent column adds.
                 addColumnIfNotExists(db, "accounts", "schedule_outbox_url", "TEXT")
                 addColumnIfNotExists(db, "calendars", "auto_schedule_supported", "INTEGER")
 
-                // Post-migration validation — runs BEFORE setTransactionSuccessful()
-                // so a thrown exception rolls back rather than commits a broken schema.
+                // Validation, before setTransactionSuccessful() so a throw rolls back
                 val missing = buildList {
                     if (!columnExists(db, "accounts", "schedule_outbox_url")) {
                         add("accounts.schedule_outbox_url")
@@ -1206,32 +1018,23 @@ object Migrations {
     }
 
     /**
-     * v19 → v20: client-outbox iTIP send tracking.
+     * Migrates 19 to 20: adds two nullable `attendees` columns for the client-side
+     * `METHOD:REQUEST` outbox send (RFC 6638 §6) on servers that don't schedule themselves.
+     * - `itip_request_sequence` (INTEGER): the event SEQUENCE at which a REQUEST was last POSTed
+     *   to this attendee; it stops a re-push from sending the same invitation again.
+     * - `itip_request_status` (TEXT): the raw per-recipient request-status the outbox returned
+     *   (e.g. `2.0;Success`), separate from the server-PUT `schedule_status`.
      *
-     * Adds two nullable `attendees` columns supporting the client-side
-     * `METHOD:REQUEST` outbox send (RFC 6638 §6) on servers that decline to
-     * self-schedule:
-     * - `itip_request_sequence` (INTEGER) — the event SEQUENCE at which a
-     *   REQUEST was last POSTed to this attendee; the idempotency marker that
-     *   stops a re-push from re-sending (spamming) the same invitation.
-     * - `itip_request_status` (TEXT) — the raw per-recipient request-status the
-     *   outbox returned (e.g. `2.0;Success`), kept distinct from the
-     *   server-PUT `schedule_status`.
-     *
-     * Both nullable with no DEFAULT — mirrors `notified_at` (MIGRATION_17_18).
-     * Idempotent adds + in-transaction post-validation that rolls back rather
-     * than committing a partial/broken schema (same shape as MIGRATION_18_19).
+     * Same transaction, idempotency and validation as [MIGRATION_16_17].
      */
     val MIGRATION_19_20 = object : Migration(19, 20) {
         override fun migrate(db: SupportSQLiteDatabase) {
             db.beginTransaction()
             try {
-                // Idempotent column adds.
                 addColumnIfNotExists(db, "attendees", "itip_request_sequence", "INTEGER")
                 addColumnIfNotExists(db, "attendees", "itip_request_status", "TEXT")
 
-                // Post-migration validation — runs BEFORE setTransactionSuccessful()
-                // so a thrown exception rolls back rather than commits a broken schema.
+                // Validation, before setTransactionSuccessful() so a throw rolls back
                 val missing = buildList {
                     if (!columnExists(db, "attendees", "itip_request_sequence")) {
                         add("attendees.itip_request_sequence")
@@ -1254,18 +1057,14 @@ object Migrations {
     }
 
     /**
-     * v20 → v21: removed-attendee CANCEL queue.
+     * Migrates 20 to 21: adds the `pending_cancels` table, one row per guest dropped from an
+     * event and awaiting an iTIP CANCEL (RFC 5546 §3.2.2.6).
      *
-     * Adds the `pending_cancels` table: a guest dropped from an event's
-     * attendee set, awaiting an iTIP CANCEL (RFC 5546 §3.2.2.6). A dedicated
-     * table (not a column on `attendees`) because the removed attendee row is
-     * deleted, and `replaceForEvent` would destroy an attendee-column marker
-     * before its CANCEL could be delivered.
+     * It can't be a column on `attendees`: the removed attendee's row is deleted, so
+     * `AttendeesDao.replaceForEvent` would destroy the marker before the CANCEL is delivered.
      *
-     * Idempotent CREATE TABLE / CREATE INDEX (IF NOT EXISTS) + in-transaction
-     * post-validation that rolls back rather than committing a partial schema
-     * (same shape as MIGRATION_18_19/19_20). The CREATE SQL mirrors Room's
-     * generated v21 schema so the migrated DB's identityHash matches the export.
+     * Same transaction, idempotency and validation as [MIGRATION_16_17]. The CREATE SQL mirrors
+     * Room's v21 schema export so Room's schema validation passes.
      */
     val MIGRATION_20_21 = object : Migration(20, 21) {
         override fun migrate(db: SupportSQLiteDatabase) {
@@ -1294,8 +1093,7 @@ object Migrations {
                         "ON `pending_cancels` (`event_id`, `recurrence_id`, `address`)"
                 )
 
-                // Post-migration validation — runs BEFORE setTransactionSuccessful()
-                // so a thrown exception rolls back rather than commits a broken schema.
+                // Validation, before setTransactionSuccessful() so a throw rolls back
                 val missing = buildList {
                     if (!tableExists(db, "pending_cancels")) add("pending_cancels (table)")
                     else {
@@ -1323,26 +1121,19 @@ object Migrations {
     }
 
     /**
-     * v21 -> v22: add the `categories` tag-metadata table.
+     * Migrates 21 to 22: adds the `categories` tag-metadata table.
      *
-     * Same robustness shape as MIGRATION_20_21: one transaction with
-     * post-validation that throws *before* setTransactionSuccessful(), so a
-     * partial schema rolls back rather than leaving Room to fail its hash check
-     * on next launch. The CREATE SQL mirrors Room's generated v22 schema
-     * (NOCASE primary key, nullable color, non-null last_used_at) so the
-     * migrated identityHash matches the export.
+     * Same transaction, idempotency and validation as [MIGRATION_16_17]. The CREATE SQL mirrors
+     * Room's v22 schema export (NOCASE primary key, nullable color, non-null last_used_at) so
+     * Room's schema validation passes.
      *
-     * Beyond the table it seeds three curated defaults and backfills a row for
-     * every tag already present on events:
-     * - Seed runs BEFORE backfill; both use INSERT OR IGNORE, so where a
-     *   backfilled name collides (case-insensitively) with a seeded default the
-     *   seeded row wins and keeps its curated color.
-     * - Backfill is done in Kotlin by iterating the events rows (not via a
-     *   JSON SQL function, which has no precedent here and varies by SQLite
-     *   build): each `categories` blob is parsed with the same lenient
-     *   empty-on-malformed semantics as the app's TypeConverter, deduped
-     *   case-insensitively (first-seen casing kept), tracking the most recent
-     *   use, then inserted with color = NULL (renders via the name-hash color).
+     * It seeds [Category.DEFAULT_SEEDS] and backfills a row for every tag already on events:
+     * - The seed runs before the backfill and both use INSERT OR IGNORE, so a backfilled name
+     *   equal to a seeded one in any casing loses: the seeded row keeps its curated color.
+     * - The backfill iterates events rows in Kotlin, not a JSON SQL function (none is used
+     *   elsewhere, and support varies by SQLite build). Each blob is parsed leniently
+     *   ([parseCategoriesBlob]), deduped case-insensitively keeping the first-seen casing, and
+     *   inserted with the most recent use and color = NULL, which renders the name-hash color.
      */
     val MIGRATION_21_22 = object : Migration(21, 22) {
         override fun migrate(db: SupportSQLiteDatabase) {
@@ -1360,9 +1151,7 @@ object Migrations {
                         "ON `categories` (`last_used_at`)"
                 )
 
-                // Seed the curated defaults first (non-null colors). INSERT OR
-                // IGNORE so a user who already tagged events "Work" keeps their
-                // row and the seed stays deterministic on a re-run.
+                // Seeds first; INSERT OR IGNORE leaves an existing row alone on a re-run.
                 val seedNow = System.currentTimeMillis()
                 for ((name, color) in Category.DEFAULT_SEEDS) {
                     db.execSQL(
@@ -1371,9 +1160,7 @@ object Migrations {
                     )
                 }
 
-                // Backfill from existing event tags. Dedup case-insensitively,
-                // first-seen casing wins, and track the most recent use so the
-                // suggestion ranking is meaningful immediately after upgrade.
+                // The most recent use ranks tag suggestions right after the upgrade.
                 data class Backfilled(val display: String, var lastUsed: Long)
                 val byKey = LinkedHashMap<String, Backfilled>()
                 db.query(
@@ -1405,8 +1192,7 @@ object Migrations {
                     )
                 }
 
-                // Post-migration validation — runs BEFORE setTransactionSuccessful()
-                // so a thrown exception rolls back rather than commits a broken schema.
+                // Validation, before setTransactionSuccessful() so a throw rolls back
                 val missing = buildList {
                     if (!tableExists(db, "categories")) {
                         add("categories (table)")
@@ -1421,9 +1207,7 @@ object Migrations {
                         "MIGRATION_21_22 post-migration validation failed: missing $missing"
                     )
                 }
-                // A silently case-sensitive PK would let `Work` and `work` split
-                // into two rows and defeat the case-insensitive dedup guarantee,
-                // which a plain column-existence check would not catch.
+                // A case-sensitive PK would split `Work` and `work` into two rows.
                 if (!primaryKeyIsNoCase(db, "categories")) {
                     throw IllegalStateException(
                         "MIGRATION_21_22 post-migration validation failed: " +
@@ -1439,15 +1223,11 @@ object Migrations {
     }
 
     /**
-     * v22 -> v23: add the `address_books` CardDAV collection table.
+     * Migrates 22 to 23: adds the `address_books` table of CardDAV collections.
      *
-     * Same robustness shape as MIGRATION_20_21/MIGRATION_21_22: one transaction
-     * with post-validation that throws *before* setTransactionSuccessful(), so a
-     * partial schema rolls back rather than leaving Room to fail its hash check
-     * on next launch. The CREATE SQL is copied verbatim from Room's generated
-     * v23 schema (`address_books` createSql + both index createSql entries) so
-     * the migrated identityHash matches the export. Purely additive — no data to
-     * backfill; the empty table is populated by the first contact-sync pull.
+     * Same transaction, idempotency and validation as [MIGRATION_16_17]. The CREATE SQL is copied
+     * from Room's v23 schema export (the table and both index createSql entries) so Room's schema
+     * validation passes. There is nothing to backfill; contact sync fills the table.
      */
     val MIGRATION_22_23 = object : Migration(22, 23) {
         override fun migrate(db: SupportSQLiteDatabase) {
@@ -1472,8 +1252,7 @@ object Migrations {
                         "ON `address_books` (`account_id`, `url`)"
                 )
 
-                // Post-migration validation — runs BEFORE setTransactionSuccessful()
-                // so a thrown exception rolls back rather than commits a broken schema.
+                // Validation, before setTransactionSuccessful() so a throw rolls back
                 val missing = buildList {
                     if (!tableExists(db, "address_books")) {
                         add("address_books (table)")
@@ -1497,15 +1276,11 @@ object Migrations {
     }
 
     /**
-     * v23 -> v24: add the `accounts.contact_sync_enabled` column (per-login
-     * opt-in for CardDAV contact sync).
+     * Migrates 23 to 24: adds `accounts.contact_sync_enabled`, the per-login opt-in for CardDAV
+     * contact sync.
      *
-     * Same robustness shape as the recent migrations: one transaction, an
-     * idempotent `addColumnIfNotExists` add, and post-validation that throws
-     * *before* setTransactionSuccessful() so a partial schema rolls back rather
-     * than leaving Room to fail its identityHash check on next launch. Purely
-     * additive with a `DEFAULT 0` — existing logins keep contact sync off until
-     * the user opts in, matching the entity default.
+     * Same transaction, idempotency and validation as [MIGRATION_16_17]. With `DEFAULT 0`, matching
+     * the entity default, existing logins keep contact sync off until the user opts in.
      */
     val MIGRATION_23_24 = object : Migration(23, 24) {
         override fun migrate(db: SupportSQLiteDatabase) {
@@ -1518,8 +1293,7 @@ object Migrations {
                     "INTEGER NOT NULL DEFAULT 0"
                 )
 
-                // Post-migration validation — runs BEFORE setTransactionSuccessful()
-                // so a thrown exception rolls back rather than commits a broken schema.
+                // Validation, before setTransactionSuccessful() so a throw rolls back
                 if (!columnExists(db, "accounts", "contact_sync_enabled")) {
                     throw IllegalStateException(
                         "MIGRATION_23_24 post-migration validation failed: " +
@@ -1534,10 +1308,7 @@ object Migrations {
         }
     }
 
-    /**
-     * All migrations in order.
-     * Add new migrations to this list as they are created.
-     */
+    /** Lists every manual migration in order; add each new one here. */
     val ALL_MIGRATIONS = arrayOf(
         MIGRATION_1_2,
         MIGRATION_2_3,

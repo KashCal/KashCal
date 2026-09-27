@@ -3,17 +3,13 @@ package org.onekash.kashcal.sync.carddav
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 
 /**
- * Abstraction for CardDAV (RFC 6352) provider-specific behavior.
+ * Holds the per-server CardDAV (RFC 6352) differences: URL building, collection skip rules,
+ * auth requirements and response extraction.
  *
- * The CardDAV analogue of `CalDavQuirks`, kept standalone inside
- * `sync/carddav/`. It reuses the generic [CalDavQuirks.SyncCollectionData]
- * value type (a protocol-agnostic WebDAV-Sync result shape) but borrows no
- * CalDAV *client* symbol. Extraction is delegated to a held [CardDavXmlParser];
- * this seam exists for the small behavioral differences (URL normalization,
- * skip rules, auth requirements) between servers.
- *
- * Read-path scope: there is no write-facing method here. Methods for building
- * request URLs, discovering collections, and reading contact data only.
+ * The CardDAV counterpart of `CalDavQuirks`, kept inside `sync/carddav/`. It reuses the
+ * protocol-agnostic [CalDavQuirks.SyncCollectionData] result type but borrows no CalDAV client
+ * symbol (`CardDavCalDavIsolationTest`). Implementations delegate extraction to a
+ * [CardDavXmlParser]. None of the methods is specific to the write verbs.
  */
 interface CardDavQuirks {
 
@@ -23,19 +19,18 @@ interface CardDavQuirks {
     /** Human-readable provider name. */
     val displayName: String
 
-    /** Base CardDAV URL for this provider. */
+    /** The provider's CardDAV base URL; also the domain photo fetches must stay within. */
     val baseUrl: String
 
     /** Whether this provider requires app-specific passwords. */
     val requiresAppSpecificPassword: Boolean
 
     /**
-     * Whether the contacts host should be discovered from the account's email
-     * domain via RFC 6764 DNS SRV/TXT. True only for generic servers whose host is
-     * unknown a priori; false for providers with a pinned bootstrap host
-     * ([baseUrl]) unrelated to the login email domain (iCloud, Zoho). Running SRV
-     * on the email domain for a pinned-host provider could only misdirect it — a
-     * same-registrable-domain `_carddavs` record would silently redirect sync.
+     * Whether to discover the contacts host from the account's email domain via RFC 6764 DNS
+     * SRV/TXT. True only for generic servers whose host isn't known up front; false for
+     * providers with a pinned [baseUrl] unrelated to the login email domain (iCloud, Zoho). SRV
+     * on the email domain could only misdirect a pinned-host provider: a `_carddavs` record in
+     * the same registrable domain would silently redirect sync.
      */
     val discoverHostViaDns: Boolean
 
@@ -54,24 +49,24 @@ interface CardDavQuirks {
     /** `DAV:sync-token` from a sync-collection REPORT response (RFC 6578). */
     fun extractSyncToken(responseBody: String): String?
 
-    /** `CS:getctag` collection tag for cheap change detection. */
+    /** `CS:getctag` collection tag, a cheap change check. */
     fun extractCtag(responseBody: String): String?
 
-    /** Single-pass sync-collection parse: token + changed items + deleted hrefs. */
+    /** Parses a sync-collection response in one pass: token, changed items, deleted hrefs. */
     fun extractSyncCollectionData(responseBody: String): CalDavQuirks.SyncCollectionData
 
-    /** Build the absolute URL for an address book given its (possibly relative) href. */
+    /** Builds the absolute URL of an address book from its href, which may be relative. */
     fun buildAddressBookUrl(href: String, baseHost: String): String
 
-    /** Build the absolute URL for a contact resource given its href. */
+    /** Builds the absolute URL of a contact resource from its href. */
     fun buildContactUrl(href: String, addressBookUrl: String): String
 
     /** Additional headers this provider requires (e.g. User-Agent). */
     fun getAdditionalHeaders(): Map<String, String>
 
-    /** Whether a response indicates the sync-token is invalid/expired (RFC 6578 §3.6). */
+    /** Whether a response says the sync-token is invalid or expired (RFC 6578 §3.6). */
     fun isSyncTokenInvalid(responseCode: Int, responseBody: String): Boolean
 
-    /** Whether an address book href/name should be skipped (inbox, notifications, etc.). */
+    /** Whether to skip a collection such as a scheduling inbox, outbox or notification one. */
     fun shouldSkipAddressBook(href: String, displayName: String?): Boolean
 }

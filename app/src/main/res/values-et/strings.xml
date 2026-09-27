@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Sellel serveril kalendreid ei leitud.</string>
     <string name="caldav_error_unexpected">Ootamatu viga. Proovige uuesti.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nKui see on server sinu kohtvõrgus, luba juurdepääs kohtvõrgule, et ühendus luua.</string>
+    <string name="caldav_error_connection_refused_insecure">Server suunas ühenduse kohta, kuhu KashCal ei järgne (krüptimata aadressile või ümbersuunamiste tsüklisse), seega peatus KashCal enne sinu parooli saatmist. Kontrolli serveri aadressi.</string>
     <string name="local_network_banner_title">Vajalik on juurdepääs kohtvõrgule</string>
     <string name="local_network_banner_body">Tundub, et see server on sinu kohtvõrgus. Luba juurdepääs kohtvõrgule, et KashCal saaks sellega ühenduse luua.</string>
     <string name="local_network_banner_allow">Luba juurdepääs</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Salvesta muudatused</string>
     <string name="dialog_delete_recurring_title">Kustuta</string>
     <string name="dialog_move_recurring_title">Liiguta</string>
+    <string name="snackbar_event_rescheduled">Sündmus ajastati ümber</string>
+    <string name="snackbar_reschedule_failed">Sündmust ei õnnestunud ümber ajastada</string>
     <string name="recurring_this_event">See sündmus</string>
     <string name="recurring_all_events">Kõik sündmused</string>
 

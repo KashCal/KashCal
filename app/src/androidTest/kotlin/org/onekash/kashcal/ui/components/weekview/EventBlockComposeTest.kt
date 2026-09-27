@@ -38,21 +38,22 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 /**
- * Instrumentation tests that lock in EventBlock behavior:
+ * Tests [EventBlock] gestures and the all-day label of [EventBlock] and [CompactEventBlock].
  *
- * Gestures (existing):
- * - Tap fires onClick immediately (no 300ms double-tap wait).
- * - Horizontal swipe consumed by a parent scrollable does NOT fire onClick
- *   (guards GitHub #199 — swipe-on-editable-event used to open event detail).
- * - Long-press on an editable, non-read-only EventBlock fires onDragStart and
- *   does NOT fire onClick.
+ * Gestures:
+ * - A tap fires onClick on a draggable block without starting a drag, and on a non-draggable
+ *   one. The 300ms double-tap wait a registered `onDoubleTap` would add isn't asserted.
+ * - A horizontal swipe consumed by a parent scrollable fires neither onClick nor a drag
+ *   (#199: a swipe on an editable event must not open its detail).
+ * - A long-press on a draggable block fires onDragStart and not onClick.
  *
  * All-day rendering:
- * - All-day events render the localized "All day" label, not a formatted
- *   time range. Reproduces the +N more overflow sheet showing
- *   "7:00pm – 6:59pm" for midnight-UTC-anchored all-day events in CST.
+ * - An all-day event shows the localized "All day" label, not a time range. A midnight-UTC
+ *   all-day event formatted as a range reads like "7:00pm – 6:59pm" in CST, as the "+N more"
+ *   overflow sheet showed. Covered for CompactEventBlock (default, 12h and 24h patterns, no
+ *   "AM" or "PM" under 12h) and for EventBlock.
  *
- * Requires connectedDebugAndroidTest (device/emulator). Not covered by unit tests.
+ * Runs under connectedDebugAndroidTest on a device or emulator; unit tests don't cover it.
  */
 @RunWith(AndroidJUnit4::class)
 class EventBlockComposeTest {
@@ -63,18 +64,17 @@ class EventBlockComposeTest {
     private val tag = "eventBlock"
 
     /**
-     * Locale-correct expected label. Reading via the target context means
-     * the test passes regardless of the device's default locale — running
-     * on fr-FR returns "Toute la journée"; the assertion still matches.
+     * Returns the "All day" label in the device's locale, so the assertions hold on any locale
+     * (on fr-FR it is "Toute la journée").
      */
     private val allDayLabel: String
         get() = InstrumentationRegistry.getInstrumentation().targetContext
             .getString(R.string.label_all_day)
 
     /**
-     * Shared display-event factory. Defaults produce a 1-hour timed event
-     * starting now; pass [allDayAnchor] to produce an all-day event with
-     * its conventional midnight-UTC start and 24-hour duration.
+     * Builds a Room display event on a writable calendar. The defaults give a 1-hour timed event
+     * starting now; [allDayDisplayEvent] passes [startTs], [durationMs] and [isAllDay] for the
+     * all-day fixture.
      */
     private fun displayEvent(
         id: Long = 1L,
@@ -120,11 +120,9 @@ class EventBlockComposeTest {
     }
 
     /**
-     * Conventional all-day fixture: midnight UTC anchor with a 24-hour
-     * span. Formatting these as a time range in any non-UTC timezone
-     * yields a confusing "7pm – 6:59pm"-style label (issue surfaced when
-     * a +N more overflow sheet showed all-day events in CST). The label
-     * must read "All day" instead.
+     * Builds an all-day event stored the usual way: a midnight-UTC start and a 24-hour span.
+     * Formatted as a time range in a non-UTC zone it reads like "7pm – 6:59pm" (a "+N more"
+     * overflow sheet in CST showed this); the label must read "All day".
      */
     private fun allDayDisplayEvent(): DisplayEvent {
         val midnightUtc = LocalDate.of(2025, 6, 3)
@@ -190,8 +188,8 @@ class EventBlockComposeTest {
 
     @Test
     fun swipe_on_editable_event_does_not_fire_onClick() {
-        // Wrap in a scrollable parent so the swipe is consumed upstream,
-        // matching the real app where the EventBlock lives inside HorizontalPager.
+        // A scrollable parent consumes the swipe, as the HorizontalPager around the time grid
+        // does in the app.
         val clicked = mutableStateOf(false)
         val dragStarted = mutableStateOf(false)
         composeTestRule.setContent {
@@ -259,8 +257,7 @@ class EventBlockComposeTest {
             }
         }
 
-        // Locale-resolved label, not the English literal — passes regardless
-        // of the device's default locale.
+        // The locale-resolved label, so this passes on any device locale.
         composeTestRule.onNodeWithText(allDayLabel, substring = true).assertIsDisplayed()
     }
 
@@ -277,9 +274,8 @@ class EventBlockComposeTest {
             }
         }
 
-        // 12h regression check: a midnight-UTC start formatted in any
-        // non-UTC zone would render "AM" or "PM" — neither belongs on an
-        // all-day label.
+        // A start formatted with "h:mma" renders "AM" or "PM"; neither belongs on an all-day
+        // label.
         composeTestRule.onAllNodesWithText("PM", substring = true).assertCountEquals(0)
         composeTestRule.onAllNodesWithText("AM", substring = true).assertCountEquals(0)
     }
@@ -297,9 +293,8 @@ class EventBlockComposeTest {
             }
         }
 
-        // 24h regression check: under HH:mm the broken render would show
-        // ":" between digits (e.g. "19:00 – 18:59"). Confirm the visible
-        // label is the localized all-day text.
+        // Under "HH:mm" a time range would read like "19:00 – 18:59"; the localized all-day
+        // label must show instead.
         composeTestRule.onNodeWithText(allDayLabel, substring = true).assertIsDisplayed()
     }
 

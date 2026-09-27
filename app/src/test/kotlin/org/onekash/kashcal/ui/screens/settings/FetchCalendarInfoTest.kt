@@ -16,13 +16,13 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.util.UiMessage
 
 /**
- * Tests for [fetchCalendarInfo], the "Fetch Calendar" preview used by the
- * add-subscription dialog.
+ * Tests [fetchCalendarInfo], the feed preview fetch behind the add-subscription dialog's "Fetch
+ * Calendar" button and the holiday catalog picker, and [normalizeSubscriptionUrl].
  *
- * Regression focus: when the URL field is pre-filled from a webcal:// deep link
- * (tapping "Add to calendar" on a feed's web page), the fetch must convert the
- * scheme to https:// before calling OkHttp. Without that, OkHttp rejects the
- * webcal:// scheme and the button surfaces an HTTP/network error.
+ * Covers a parsed feed name, the HTTP, empty-body and not-a-calendar errors, and webcal://
+ * handling. The URL field can be pre-filled from a webcal:// deep link (tapping "Add to
+ * calendar" on a feed's web page), so the fetch must convert the scheme to https:// before
+ * calling OkHttp, which rejects webcal:// and would surface a network error.
  */
 class FetchCalendarInfoTest {
 
@@ -56,8 +56,7 @@ class FetchCalendarInfoTest {
 
     @After
     fun tearDown() {
-        // A test may already have shut the server down (to free its port);
-        // shutting down twice is a no-op but guard anyway.
+        // A test may already have shut the server down to free its port.
         runCatching { server.shutdown() }
         unmockkAll()
     }
@@ -114,19 +113,15 @@ class FetchCalendarInfoTest {
 
     @Test
     fun `fetchCalendarInfo treats a webcal URL the same as its https form`() = runTest {
-        // Point both a webcal:// URL and its equivalent https:// URL at a dead
-        // authority (a port nothing listens on), so both deterministically fail
-        // with the same connection error. With normalization, fetchCalendarInfo
-        // rewrites webcal:// to that identical https:// request, so the two
-        // errors are EQUAL.
+        // Point a webcal:// URL and its https:// form at a port nothing listens on, so both
+        // fail with the same connection error. fetchCalendarInfo rewrites webcal:// to the
+        // identical https:// request, so the two errors are equal.
         //
-        // This guards the fix without depending on OkHttp's exact error wording:
-        // delete the normalizeSubscriptionUrl call in fetchCalendarInfo and this
-        // test fails, because the webcal input then hits OkHttp's synchronous
-        // scheme rejection (IllegalArgumentException) while the https input hits a
-        // connection error — two different messages. A live server is avoided on
-        // purpose: an https attempt against a plaintext port yields nondeterministic
-        // TLS-handshake garbage, whereas connection-refused is stable.
+        // This doesn't depend on OkHttp's error wording: without the normalizeSubscriptionUrl
+        // call, the webcal input hits OkHttp's synchronous scheme rejection
+        // (IllegalArgumentException) while the https input gets a connection error, two
+        // different messages. No live server: an https attempt against a plaintext port gives
+        // nondeterministic TLS-handshake errors, while connection-refused is stable.
         val deadPort = server.port
         server.shutdown() // free the port so connections are refused, not served
 
@@ -145,9 +140,9 @@ class FetchCalendarInfoTest {
 
     @Test
     fun `normalizeSubscriptionUrl rewrites only the leading webcal scheme`() {
-        // The normalized form is what fetchCalendarInfo hands to OkHttp: the
-        // leading scheme becomes https, and a webcal literal elsewhere in the URL
-        // (e.g. a query param) is left untouched.
+        // The normalized form is what fetchCalendarInfo hands to OkHttp: the leading scheme
+        // becomes https, and a webcal literal elsewhere in the URL, such as a query param, is
+        // left untouched.
         assertEquals(
             "https://host/feed.ics",
             normalizeSubscriptionUrl("webcal://host/feed.ics"),

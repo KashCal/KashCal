@@ -12,20 +12,17 @@ import java.time.LocalDateTime
 import java.util.Locale
 
 /**
- * End-to-end wiring guard for the "last Friday of every month" round-trip that
- * motivates the monthly nth-weekday picker.
+ * Checks that an nth-weekday Quick Add phrase ("last Friday of every month") reaches the monthly
+ * picker as the same pattern.
  *
- * The chain is: QuickAddParser emits the RRULE + anchors the start date to the
- * first real occurrence, that RRULE flows verbatim into the event form's
- * recurrence state, and RecurrencePicker's parseRrule turns it back into the
- * MonthlyPattern the selector displays. This test asserts the two ends of that
- * chain without an emulator: the parser output (rrule + anchored start weekday)
- * and the parseRrule the picker seeds from.
+ * QuickAddParser emits the RRULE and anchors the start date to the first real occurrence; the
+ * RRULE flows verbatim into the event form, and RecurrencePicker seeds its selector from
+ * [RruleBuilder.parseRrule]. These tests assert both ends without an emulator: the parser output
+ * (RRULE and anchored start weekday) and what parseRrule returns for it.
  *
- * QuickAddViewModel.toCalendarIntentData passes result.rrule through verbatim
- * and derives startTimeMillis from the anchored result.startDate, so the parser
- * assertion below covers the intent-data hop as well; the ViewModel adds no
- * recurrence logic of its own.
+ * `QuickAddViewModel.toCalendarIntentData` passes `result.rrule` through verbatim and derives
+ * `startTimeMillis` from the anchored `result.startDate`, so the parser assertions cover that hop
+ * too; the ViewModel adds no recurrence logic.
  */
 class QuickAddRecurrenceFormWiringTest {
 
@@ -49,14 +46,14 @@ class QuickAddRecurrenceFormWiringTest {
     fun `last Friday of every month emits BYDAY -1FR anchored on a Friday and parses to last Friday`() {
         val result = QuickAddParser.parse("rent last Friday of every month", reference)
 
-        // 1-2. Parser output → the rrule the ViewModel forwards verbatim, plus a
-        // start date anchored to the first real last-Friday (Fri Apr 24, 2026).
+        // Parser output: the rrule the ViewModel forwards verbatim, and a start date anchored to
+        // the first real last Friday (Fri Apr 24, 2026).
         assertEquals("FREQ=MONTHLY;BYDAY=-1FR", result.rrule)
         assertEquals(DayOfWeek.FRIDAY, result.startDate.dayOfWeek)
 
-        // 3-4. The value the picker seeds from: parseRrule of the forwarded rrule,
-        // using the anchored start date's fields as the fallback defaults. The
-        // parsed rule must win → NthWeekday(-1, FRIDAY), not a start-date guess.
+        // What the picker seeds from: parseRrule of the forwarded rrule, with the anchored start
+        // date's fields as fallback defaults. The parsed rule must win: NthWeekday(-1, FRIDAY),
+        // not a guess from the start date.
         val startOrdinal = (result.startDate.dayOfMonth - 1) / 7 + 1
         val parsed = RruleBuilder.parseRrule(
             result.rrule,

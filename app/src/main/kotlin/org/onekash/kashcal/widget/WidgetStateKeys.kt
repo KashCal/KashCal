@@ -14,30 +14,27 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicLong
 
 /**
- * Shared Glance state keys used by [UpcomingWidget], [AgendaWidget], [WeekWidget],
- * and [MonthWidget].
+ * Keys the `produceState` fetches of [UpcomingWidget], [AgendaWidget], [WeekWidget], [MonthWidget]
+ * and [DateWidget], so a new value re-runs them.
  *
- * These widgets each declare `override val stateDefinition = PreferencesGlanceStateDefinition`,
- * which gives every placed widget instance its own Preferences bag (keyed by glanceId).
- * [WIDGET_REFRESH_STAMP] is written by [WidgetUpdateManager] before calling `updateAll()` so
- * that the session-scoped `provideContent` recomposes with a new key — re-running the
- * `produceState` block that drives data fetches. See the MonthWidget file-level KDoc for the
- * underlying Glance 1.1 session-management rationale.
+ * Each placed widget instance has its own Preferences state (PreferencesGlanceStateDefinition,
+ * keyed by glanceId). [bumpRefreshStamp] writes a new stamp before the widget's `update` or
+ * `updateAll`, which recomposes `provideContent` with the new key. [MonthWidget]'s class doc
+ * explains why state is read inside `provideContent`.
  */
 internal val WIDGET_REFRESH_STAMP = longPreferencesKey("widget_refresh_stamp")
 
 /**
- * Epoch-millis deadline for the header refresh "syncing" cue. Written by [WidgetRefreshAction]
- * when the user taps refresh; the header dims its refresh glyph while `now < deadline`. Stored as
- * a self-expiring deadline (rather than a plain boolean) so the cue can never get stuck: even if
- * the action's coroutine is killed before it can clear the flag, the next recomposition past the
- * deadline reads the glyph as idle. See [isRefreshCueActive].
+ * Holds the epoch-millis deadline of the header refresh cue. [WidgetRefreshAction] writes it on a
+ * tap, and the header dims its refresh glyph while `now < deadline`. A deadline, unlike a boolean,
+ * can't get stuck: if the action's coroutine dies before clearing it, the next recomposition past
+ * the deadline reads idle ([isRefreshCueActive]).
  */
 internal val WIDGET_REFRESHING_UNTIL = longPreferencesKey("widget_refreshing_until")
 
 /**
- * Whether the refresh "syncing" cue should currently render, given the stored deadline and the
- * current time. Pure so the self-expiry contract can be unit-tested without a render harness.
+ * Returns whether the refresh cue shows at [nowMs] for the stored deadline. Pure, so the expiry is
+ * unit-testable without a render harness.
  */
 internal fun isRefreshCueActive(refreshingUntil: Long?, nowMs: Long): Boolean =
     (refreshingUntil ?: 0L) > nowMs
@@ -46,28 +43,25 @@ internal fun isRefreshCueActive(refreshingUntil: Long?, nowMs: Long): Boolean =
 internal const val WIDGET_REFRESH_CUE_DURATION_MS = 800L
 
 /**
- * Monotonically-increasing counter used by [WidgetUpdateManager] when writing
- * [WIDGET_REFRESH_STAMP]. Seeded from `System.currentTimeMillis()` at class load so stamps
- * remain roughly clock-aligned (useful for debugging) but distinct across same-millisecond
- * bumps that can occur during CalDAV batched sync completion.
+ * Counts up the [WIDGET_REFRESH_STAMP] values. Seeded from `System.currentTimeMillis()` at class
+ * load, so stamps stay roughly clock-aligned for debugging yet differ across bumps in the same
+ * millisecond, which can occur during CalDAV batched sync completion.
  */
 private val stampCounter = AtomicLong(System.currentTimeMillis())
 
-/**
- * Returns a strictly monotonic [Long] for use as the next value of [WIDGET_REFRESH_STAMP].
- * Guaranteed distinct from every prior value returned in this process.
- */
+/** Returns the next [WIDGET_REFRESH_STAMP], larger than every value returned in this process. */
 internal fun nextRefreshStamp(): Long = stampCounter.incrementAndGet()
 
 private const val TAG_BUMP = "WidgetStateKeys"
 
 /**
- * Write a new value of [WIDGET_REFRESH_STAMP] to every placed instance of [widgetClass].
- * Must be called BEFORE `SomeWidget().updateAll(context)` — the stamp write is what triggers
- * Glance's active `provideContent` session to recompose with a new `produceState` key.
+ * Writes a new [WIDGET_REFRESH_STAMP] to every placed instance of [widgetClass].
  *
- * Errors from [GlanceAppWidgetManager] (e.g. no widgets placed) are swallowed; the caller
- * already handles downstream update errors.
+ * Must complete before the widget's `update` or `updateAll`: the stamp write alone doesn't
+ * recompose a running session, and the update reloads state, so an update that runs first
+ * recomposes on the old key and re-fetches nothing.
+ *
+ * Logs and swallows any failure other than cancellation; the caller's update runs regardless.
  */
 internal suspend fun <T : GlanceAppWidget> bumpRefreshStamp(
     context: Context,
@@ -89,15 +83,13 @@ internal suspend fun <T : GlanceAppWidget> bumpRefreshStamp(
 }
 
 /**
- * Bump refresh stamps and call `updateAll()` on every event-driven widget in parallel.
- * Used by WidgetUpdateManager, WidgetUpdateWorker, and WidgetRetryWorker — extracted here
- * so adding a new widget requires one edit, not three.
+ * Bumps the refresh stamp of every event widget and then updates it, all widgets in parallel.
+ * [WidgetUpdateManager], [WidgetUpdateWorker] and [WidgetRetryWorker] all call this, so a new
+ * widget is added here once.
  *
- * Stamp write triggers recomposition of active provideContent sessions; the subsequent
- * updateAll is belt-and-braces for freshly-cold sessions. DateWidget is normally omitted: its
- * content depends only on today's date, refreshed by midnight alarm + periodic worker — so
- * event-driven refreshes skip it. Set [includeDateWidget] for changes that DO affect its
- * appearance (e.g. accent color), so it recolors immediately rather than waiting for midnight.
+ * DateWidget is left out by default: it shows only today's date and refreshes on the platform's
+ * 30-minute `updatePeriodMillis` update. Set [includeDateWidget] for changes to its appearance,
+ * such as the accent color, so it recolors at once.
  */
 internal suspend fun refreshAllWidgets(
     context: Context,
@@ -108,17 +100,12 @@ internal suspend fun refreshAllWidgets(
         add(WeekWidget::class.java to WeekWidget())
         add(MonthWidget::class.java to MonthWidget())
         add(UpcomingWidget::class.java to UpcomingWidget())
-        // DateWidget is normally omitted (its content is date-only, refreshed by midnight alarm +
-        // periodic worker), but color changes DO affect it, so include it then. It reads the same
-        // refresh stamp and keys its accent producer on it, so it recolors immediately.
+        // DateWidget keys its accent producer on the same stamp, so the bump recolors it.
         if (includeDateWidget) add(DateWidget::class.java to DateWidget())
     }
     widgets.forEach { (cls, instance) ->
-        // Widgets refresh in parallel, but WITHIN each widget the stamp write must complete
-        // before updateAll (see bumpRefreshStamp docs): updateAll recomposes provideContent,
-        // and it must see the NEW stamp so produceState re-runs its data + accent-color fetch.
-        // Racing them (two sibling launches) let updateAll win and recompose on the old stamp,
-        // leaving stale data/colors on some widgets nondeterministically.
+        // Sequential within one widget ([bumpRefreshStamp]): run as two sibling launches,
+        // updateAll can win and recompose on the old stamp, leaving stale data or colors.
         launch {
             bumpRefreshStamp(context, cls)
             instance.updateAll(context)

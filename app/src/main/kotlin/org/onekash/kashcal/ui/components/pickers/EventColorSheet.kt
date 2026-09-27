@@ -15,16 +15,14 @@ import androidx.compose.ui.graphics.Color
 import org.onekash.kashcal.ui.shared.EventColorPalette
 
 /**
- * RFC 7986 §5.9 compliant event color picker.
+ * Picks an event color from CSS3 named colors, the values of the RFC 7986 §5.9 COLOR property.
  *
  * Two modes:
- * 1. **Grid** (default): 3×4 grid — 1 calendar-default cell + 11 hue-distinct
- *    CSS3 colors (palette entries 1..11). Entry 0 (saddlebrown) is reserved
- *    for the default cell slot here; it remains reachable via the wheel.
- *    Tapping a swatch commits immediately and dismisses the sheet.
- * 2. **Wheel** (via "More colors" link): two-wheel browser of all 92
- *    perceptually-distinct CSS3 colors grouped by hue family. Wheel selection
- *    is previewed live but only committed when the user taps Done.
+ * 1. Grid (default): the calendar-default cell and the 11 hue-distinct palette entries 1..11,
+ *    four per row. Entry 0 (saddlebrown) gives its slot to the default cell and stays
+ *    reachable through the wheel. A tap commits at once.
+ * 2. Wheel ("More colors"): two wheels over all 92 perceptually-distinct CSS3 colors grouped by
+ *    hue family. The selection previews live and commits only on Done.
  *
  * @param selectedArgb current event color ARGB, or null when using calendar default
  * @param calendarDefaultArgb calendar color used to render the first (default) cell

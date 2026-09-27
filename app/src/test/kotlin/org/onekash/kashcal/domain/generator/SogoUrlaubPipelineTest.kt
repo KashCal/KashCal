@@ -26,16 +26,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * End-to-end post-sync pipeline for the far-future, multi-day, two-VALARM event
- * that only became visible once the CalDAV time-range query dropped its 32-bit
- * upper bound (issue #326). The parser layer is already covered by SogoParseTest;
- * this drives the SAME event through the steps that run AFTER the parser —
- * map → Room insert → occurrence generation → reminder-offset parsing — because
- * a newly-surfaced event exercises those paths for the first time.
+ * Drives the multi-day, two-VALARM event that surfaced once the CalDAV time-range query dropped
+ * its 32-bit upper bound (#326) through the steps after the parser: map, Room insert,
+ * occurrence generation and reminder-offset parsing. `SogoParseTest` covers the parser.
  *
- * The event runs 2026-08-15 → 2026-08-22 (Europe/Berlin), so it is genuinely in
- * the future relative to the test-fixture "now"; the assertions therefore pin the
- * behavior a real first sync would hit, not a past-dated stand-in.
+ * The event runs 2026-08-15 to 2026-08-22 (Europe/Berlin), inside the fixed 2026-2027
+ * generation window the test passes; no clock is read.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -123,7 +119,7 @@ class SogoUrlaubPipelineTest {
 
     @Test
     fun `Urlaub event maps, inserts, and generates a single valid occurrence`() = runTest {
-        // Parse + map (parser layer proven elsewhere; here it feeds the DB path).
+        // Parse and map to feed the DB path.
         val parsed = (parser.parseAllEvents(urlaubIcs) as ParseResult.Success).value.single()
         val mapped = ICalEventMapper.toEntity(
             parsed, urlaubIcs, testCalendarId, "urlaub.ics", "etag-urlaub"
@@ -132,12 +128,11 @@ class SogoUrlaubPipelineTest {
             syncStatus = SyncStatus.SYNCED
         )
 
-        // Insert into Room exactly as PullStrategy would.
+        // Insert as a synced event, the state a pull leaves it in.
         val eventId = database.eventsDao().insert(mapped)
         val stored = mapped.copy(id = eventId)
 
-        // Generate occurrences over a window that spans the event's dates. This is
-        // the first code that consumes the newly-surfaced event's timestamps.
+        // Generate occurrences over a window spanning the event's dates.
         val count = occurrenceGenerator.generateOccurrences(
             stored,
             rangeStartMs = parseUtc("2026-01-01 00:00"),
@@ -156,8 +151,8 @@ class SogoUrlaubPipelineTest {
             occ.endTs >= occ.startTs
         )
 
-        // Multi-day: Aug 15 → Aug 22, 2026. Day codes must be well-formed YYYYMMDD
-        // (guards the eventTsToEndDayCode path against Int overflow / bad math).
+        // Multi-day, Aug 15 to Aug 22, 2026. Day codes must be well-formed YYYYMMDD, which
+        // guards the eventTsToEndDayCode path against Int overflow.
         assertEquals(20260815, occ.startDay)
         assertEquals(20260822, occ.endDay)
         assertTrue("endDay must not precede startDay", occ.endDay >= occ.startDay)
@@ -174,8 +169,8 @@ class SogoUrlaubPipelineTest {
         val reminders = mapped.reminders
         assertNotNull("Reminders must be stored", reminders)
 
-        // Every stored trigger must parse (a null here is the shape that lets a
-        // bad offset slip silently past ReminderScheduler).
+        // Every stored trigger must parse: ReminderScheduler skips a reminder whose offset
+        // parses to null, logging at most a warning.
         reminders!!.forEach { offset ->
             val parsedOffset = parseReminderOffset(offset)
             assertNotNull("Trigger '$offset' must parse to a non-null offset", parsedOffset)

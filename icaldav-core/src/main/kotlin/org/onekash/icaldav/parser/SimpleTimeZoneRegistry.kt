@@ -7,83 +7,64 @@ import java.time.ZoneId
 import java.time.zone.ZoneRules
 
 /**
- * A minimal TimeZoneRegistry implementation that avoids ZoneRulesProvider.
+ * Resolves timezones without ZoneRulesProvider, so iCalendar parsing works on Android.
  *
- * ical4j 4.x's TimeZoneRegistryImpl uses ZoneRulesProvider which is not available
- * on Android via desugaring. This simple implementation:
- * - Returns null for getTimeZone() - ical4j will use embedded VTIMEZONE definitions
- * - Uses ZoneId.of() for getZoneId() which is supported on Android
- * - No-ops for register/clear operations
- *
- * This allows iCalendar parsing to work on Android without the full timezone
- * registry infrastructure.
+ * ical4j 4.x's TimeZoneRegistryImpl uses ZoneRulesProvider, which isn't available on Android
+ * via desugaring. This registry instead:
+ * - returns null from [getTimeZone], so ical4j uses the data's embedded VTIMEZONE definitions
+ * - resolves IDs in [getZoneId] with ZoneId.of, which Android supports, plus alias tables
+ * - ignores register and clear
  */
 class SimpleTimeZoneRegistry : TimeZoneRegistry {
 
     /**
-     * Returns null - ical4j will handle dates using embedded VTIMEZONE definitions
-     * in the iCalendar data or fall back to system timezone handling.
+     * Returns null, so ical4j handles dates with the embedded VTIMEZONE definitions in the data
+     * or falls back to system timezone handling.
      */
     override fun getTimeZone(id: String?): TimeZone? = null
 
-    /**
-     * No-op - we don't maintain a registry of custom timezones.
-     */
     override fun register(timezone: TimeZone?) {
-        // No-op: We don't store custom timezone definitions
+        // A no-op: this registry keeps no custom timezones.
     }
 
-    /**
-     * No-op - we don't maintain a registry of custom timezones.
-     */
     override fun register(timezone: TimeZone?, update: Boolean) {
-        // No-op: We don't store custom timezone definitions
+        // A no-op: this registry keeps no custom timezones.
     }
 
-    /**
-     * No-op - nothing to clear.
-     */
     override fun clear() {
-        // No-op: Nothing to clear
+        // A no-op: there is nothing to clear.
     }
 
-    /**
-     * Returns empty map - we don't maintain zone rules.
-     * Avoids ZoneRulesProvider which is not available on Android.
-     */
+    /** Returns an empty map, since zone rules would need ZoneRulesProvider, which Android lacks. */
     override fun getZoneRules(): Map<String, ZoneRules> = emptyMap()
 
     /**
-     * Converts timezone ID string to ZoneId using Java's built-in support.
-     * ZoneId.of() is supported on Android via desugaring.
-     *
-     * Returns null if the timezone ID is invalid or not recognized.
+     * Resolves [tzId] with ZoneId.of (supported on Android via desugaring), then the aliases in
+     * [normalizeTimezoneId], then [ICalDateTime.timezoneAliases]. Returns null for a blank or
+     * unrecognized ID.
      */
     override fun getZoneId(tzId: String?): ZoneId? {
         if (tzId.isNullOrBlank()) return null
         return try {
             ZoneId.of(tzId)
         } catch (_: Exception) {
-            // Try hardcoded aliases first (preserves exact ZoneId for existing behavior)
+            // Hardcoded aliases first, so these names keep resolving to these IDs
             normalizeTimezoneId(tzId)?.let {
                 try { ZoneId.of(it) } catch (_: Exception) { null }
             }
-            // Then try shared properties file aliases (Windows timezone names)
+            // Then the Windows timezone names from ical4j's properties file
             ?: ICalDateTime.timezoneAliases[tzId]?.let {
                 try { ZoneId.of(it) } catch (_: Exception) { null }
             }
         }
     }
 
-    /**
-     * Returns the timezone ID string as-is.
-     */
+    /** Returns [zoneId] unchanged. */
     override fun getTzId(zoneId: String?): String? = zoneId
 
     /**
-     * Hardcoded aliases for common US Windows timezone names.
-     * Returns canonical IANA IDs that match existing behavior, or null to fall through
-     * to the properties file for non-US Windows timezones.
+     * Maps four US Windows timezone names and GMT, in any case, to IANA IDs. Returns null for any
+     * other name, which falls through to [ICalDateTime.timezoneAliases].
      */
     private fun normalizeTimezoneId(tzId: String): String? {
         return when {

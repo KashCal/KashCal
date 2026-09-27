@@ -5,6 +5,8 @@ import okhttp3.ConnectionPool
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.onekash.kashcal.BuildConfig
+import org.onekash.kashcal.network.DavTransportGuard
+import org.onekash.kashcal.network.installDavTransport
 import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import java.security.SecureRandom
 import java.security.cert.X509Certificate
@@ -18,44 +20,21 @@ import okhttp3.Credentials as OkHttpCredentials
 import org.onekash.kashcal.sync.auth.Credentials as AccountCredentials
 
 /**
- * Factory for creating isolated CalDavClient instances.
+ * Creates one [CalDavClient] per account, with that account's credentials fixed in its
+ * OkHttp interceptor chain.
  *
- * This solves the credential race condition in multi-account sync:
- * - Old pattern: Singleton CalDavClient with mutable credentials (race condition!)
- * - New pattern: Factory creates isolated client per account (thread-safe)
- *
- * Each client created by this factory has immutable credentials baked into
- * its OkHttpClient interceptor chain. This ensures:
- * - No credential mutation during sync
- * - Thread-safe concurrent sync of multiple accounts
- * - Clear ownership: each account sync owns its client
- *
- * Usage:
- * ```
- * for (account in accounts) {
- *     val credentials = credProvider.getCredentials(account.id) ?: continue
- *     val client = calDavClientFactory.createClient(credentials, quirks)
- *     syncEngine.syncAccountWithClient(account, client)
- * }
- * ```
+ * A shared client with mutable credentials would race when accounts sync concurrently: one
+ * account's requests could go out with another's password. Callers (`CalDavSyncWorker`, the
+ * account discovery services) create a client per account; a client's credentials never change.
  */
 interface CalDavClientFactory {
-    /**
-     * Create a new CalDavClient with immutable credentials.
-     *
-     * @param credentials The account credentials (username/password)
-     * @param quirks Provider-specific CalDAV quirks
-     * @return A new CalDavClient instance with credentials baked in
-     */
+    /** Creates a client that authenticates every request with [credentials]. */
     fun createClient(credentials: AccountCredentials, quirks: CalDavQuirks): CalDavClient
 }
 
 /**
- * OkHttp-based implementation of CalDavClientFactory.
- *
- * Creates OkHttpCalDavClient instances with pre-authenticated OkHttpClient.
- * Shares base configuration (timeouts, connection pool) but each client
- * has its own auth interceptor with immutable credentials.
+ * Creates [OkHttpCalDavClient]s that share timeouts, logging and a connection pool, each
+ * with its own auth interceptor and [DigestAuthenticator].
  */
 @Singleton
 class OkHttpCalDavClientFactory @Inject constructor() : CalDavClientFactory {
@@ -63,7 +42,7 @@ class OkHttpCalDavClientFactory @Inject constructor() : CalDavClientFactory {
     companion object {
         private const val TAG = "CalDavClientFactory"
 
-        // Shared configuration (same as OkHttpCalDavClient)
+        // Same values as OkHttpCalDavClient's own defaults.
         private const val CONNECT_TIMEOUT_SECONDS = 15L
         private const val READ_TIMEOUT_SECONDS = 30L
         private const val WRITE_TIMEOUT_SECONDS = 30L
@@ -72,8 +51,9 @@ class OkHttpCalDavClientFactory @Inject constructor() : CalDavClientFactory {
     }
 
     /**
-     * HTTP logging interceptor - shared across all clients.
-     * Note: Set to HEADERS level for debugging, NONE for production.
+     * Logs request and response headers in debug builds, nothing in release. As an application
+     * interceptor it runs before the network interceptor adds Authorization, so credentials
+     * aren't logged.
      */
     private val loggingInterceptor by lazy {
         HttpLoggingInterceptor { message ->
@@ -93,44 +73,46 @@ class OkHttpCalDavClientFactory @Inject constructor() : CalDavClientFactory {
     }
 
     /**
-     * Shared connection pool for all clients.
-     * Connection pooling is safe to share since HTTP connections are per-host.
+     * Connection pool shared by all clients. Sharing is safe: credentials go on each request,
+     * not on the connection.
      */
     private val sharedConnectionPool by lazy {
         ConnectionPool(MAX_IDLE_CONNECTIONS, KEEP_ALIVE_DURATION_MINUTES, TimeUnit.MINUTES)
     }
 
-    /**
-     * Base OkHttpClient with shared configuration.
-     * Each created client builds from this with its own auth interceptor.
-     */
+    /** Shared base that each created client extends with its own auth. */
     private val baseHttpClient: OkHttpClient by lazy {
         OkHttpClient.Builder()
             .connectTimeout(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .readTimeout(READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
             .writeTimeout(WRITE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-            .followRedirects(true)
             .connectionPool(sharedConnectionPool)
             .addInterceptor(loggingInterceptor)
             .build()
     }
 
     override fun createClient(credentials: AccountCredentials, quirks: CalDavQuirks): CalDavClient {
-        // Create new OkHttpClient with credentials baked into network interceptor
-        // This is thread-safe because OkHttpClient.newBuilder() creates independent copy
+        // Thread-safe because newBuilder() copies the base: each account's interceptors stay
+        // its own.
+        // Plain http is allowed only for an account the user set up with http://; any other
+        // plain http request is refused before it is sent, so Basic and Digest never go over it.
+        val allowCleartext = DavTransportGuard.allowsCleartext(credentials.serverUrl)
         val clientBuilder = baseHttpClient.newBuilder()
-            // Digest auth: handle 401 Digest challenges via RFC 2617/7616
-            // If server requires Digest, the interceptor's Basic auth is rejected with 401,
-            // then this Authenticator computes Digest credentials and OkHttp auto-retries.
-            .authenticator(DigestAuthenticator(credentials.username, credentials.password))
+            // Follow redirects ourselves with the same method and body (OkHttp would
+            // turn a redirected PUT or DELETE into a GET that looks like a success).
+            .installDavTransport(allowCleartext)
+            // A Digest server rejects the preemptive Basic with a 401 challenge; this
+            // authenticator answers it (RFC 2617/7616) and OkHttp retries.
+            .authenticator(DigestAuthenticator(credentials.username, credentials.password, allowCleartext))
             .addNetworkInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
 
-                // Add Basic auth preemptively — but only if no Authorization header
-                // already present. When DigestAuthenticator handles a 401 challenge,
-                // OkHttp retries with a Digest Authorization header. We must not
-                // overwrite it with Basic (that would cause an infinite 401 loop).
-                if (chain.request().header("Authorization") == null) {
+                // Preemptive Basic, only when no Authorization header is present: the
+                // retry after a Digest challenge carries a Digest header, which must not be
+                // overwritten with Basic or the request loops on 401 forever.
+                if (chain.request().header("Authorization") == null &&
+                    DavTransportGuard.mayAttachCredentials(chain.request().url, allowCleartext)
+                ) {
                     // Issue #49: Use UTF-8 encoding for non-ASCII passwords (RFC 7617)
                     requestBuilder.header(
                         "Authorization",
@@ -138,7 +120,7 @@ class OkHttpCalDavClientFactory @Inject constructor() : CalDavClientFactory {
                     )
                 }
 
-                // Add provider-specific headers
+                // Provider-specific headers.
                 quirks.getAdditionalHeaders().forEach { (key, value) ->
                     requestBuilder.header(key, value)
                 }
@@ -146,7 +128,7 @@ class OkHttpCalDavClientFactory @Inject constructor() : CalDavClientFactory {
                 chain.proceed(requestBuilder.build())
             }
 
-        // Configure SSL trust for self-signed certificates when trustInsecure is enabled
+        // The user opted in to trusting self-signed certificates for this account.
         if (credentials.trustInsecure) {
             Log.w(TAG, "Creating client with insecure SSL (user opted in)")
             configureTrustAllCertificates(clientBuilder)
@@ -160,13 +142,10 @@ class OkHttpCalDavClientFactory @Inject constructor() : CalDavClientFactory {
     }
 
     /**
-     * Configure OkHttpClient to trust all certificates.
-     * SECURITY WARNING: Only use when user explicitly opts in for self-signed certificates.
-     *
-     * @param builder OkHttpClient builder to configure
+     * Makes [builder] trust every certificate and hostname. Call only when the user has opted
+     * in for self-signed certificates; it disables TLS server authentication.
      */
     private fun configureTrustAllCertificates(builder: OkHttpClient.Builder) {
-        // Create a trust manager that accepts all certificates
         val trustAllCerts = arrayOf<TrustManager>(
             @Suppress("CustomX509TrustManager")
             object : X509TrustManager {
@@ -184,11 +163,9 @@ class OkHttpCalDavClientFactory @Inject constructor() : CalDavClientFactory {
             }
         )
 
-        // Create SSL context with our trust-all manager
         val sslContext = SSLContext.getInstance("TLS")
         sslContext.init(null, trustAllCerts, SecureRandom())
 
-        // Configure the client builder
         builder.sslSocketFactory(sslContext.socketFactory, trustAllCerts[0] as X509TrustManager)
         builder.hostnameVerifier { _, _ -> true }  // Accept any hostname
     }

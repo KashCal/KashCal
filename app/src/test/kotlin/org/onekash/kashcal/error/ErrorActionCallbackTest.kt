@@ -5,7 +5,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for ErrorActionCallback types.
+ * Checks that [ErrorActionCallback.OpenUrl] keeps its url and compares by it, and that every
+ * callback is its own type.
  */
 class ErrorActionCallbackTest {
 
@@ -49,7 +50,7 @@ class ErrorActionCallbackTest {
             ErrorActionCallback.Custom { }
         )
 
-        // All should be different types
+        // Each callback is its own class
         val uniqueTypes = callbacks.map { it::class }.toSet()
         assertEquals(callbacks.size, uniqueTypes.size)
     }

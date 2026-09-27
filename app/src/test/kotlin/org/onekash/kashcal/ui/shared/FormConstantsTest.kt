@@ -11,8 +11,10 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Unit tests for FormConstants.
- * Verifies shared constants are correctly defined and consistent.
+ * Tests the shared form constants and helpers in FormConstants.kt: [REMINDER_OFF] and
+ * [MAX_REMINDERS], the reminder, sync-interval and event-duration option lists and their labels,
+ * [maskEmail], the reminder duration helpers and formatters, reminder dedup and summary, and the
+ * preset chips.
  */
 @RunWith(RobolectricTestRunner::class)
 class FormConstantsTest {
@@ -56,13 +58,13 @@ class FormConstantsTest {
 
     @Test
     fun `TIMED_REMINDER_MINUTES should not contain all-day specific options`() {
-        // 540 = 9 AM day of event (all-day specific)
+        // 540 is a legacy all-day value (9 AM day of is -540); timed options leave it out.
         assertFalse("Timed options should not include '9 AM day of event'", TIMED_REMINDER_MINUTES.contains(540))
     }
 
     @Test
     fun `ALL_DAY_REMINDER_MINUTES should not contain timed-specific options`() {
-        // 5, 10, 15, 30 minutes are timed-specific
+        // Short minute offsets aren't all-day options.
         assertFalse("All-day options should not include '5 minutes before'", ALL_DAY_REMINDER_MINUTES.contains(5))
         assertFalse("All-day options should not include '10 minutes before'", ALL_DAY_REMINDER_MINUTES.contains(10))
         assertFalse("All-day options should not include '15 minutes before'", ALL_DAY_REMINDER_MINUTES.contains(15))
@@ -144,7 +146,7 @@ class FormConstantsTest {
         val options = getSyncOptions(resources)
         val manual = options.firstOrNull { it.intervalMs == Long.MAX_VALUE }
         assertTrue("Manual option should exist", manual != null)
-        // Label comes from R.string.sync_manual_only — just verify it's non-empty
+        // The label is R.string.sync_manual_only; only non-emptiness is asserted.
         assertTrue("Manual label should be non-empty", !manual?.label.isNullOrEmpty())
     }
 
@@ -181,7 +183,7 @@ class FormConstantsTest {
         assertEquals("notanemail", maskEmail("notanemail"))
     }
 
-    // ==================== Reminder Migration Tests (v16.4.1) ====================
+    // ==================== Timed vs all-day option membership ====================
 
     @Test
     fun `15 minutes is valid for timed events but not all-day`() {
@@ -209,7 +211,7 @@ class FormConstantsTest {
         assertTrue("-540 (birthday/anniversary default, 9 AM day of) should be an option", ALL_DAY_REMINDER_MINUTES.contains(-540))
     }
 
-    // ==================== Event Duration Tests (v20.8.0) ====================
+    // ==================== Event Duration ====================
 
     @Test
     fun `EVENT_DURATION_MINUTES should not be empty`() {
@@ -430,7 +432,7 @@ class FormConstantsTest {
     @Test
     fun `ALL_DAY_PRESET_CHIPS has 4 chips with signed offset values`() {
         assertEquals(4, ALL_DAY_PRESET_CHIPS.size)
-        // Labels stay short and unchanged; stored values are the signed offsets.
+        // Labels are short; stored values are the signed offsets.
         assertEquals("9AM", ALL_DAY_PRESET_CHIPS[0].label)
         assertEquals(-540, ALL_DAY_PRESET_CHIPS[0].minutes) // 9 AM day of (after midnight)
         assertEquals("1d", ALL_DAY_PRESET_CHIPS[1].label)
@@ -462,14 +464,14 @@ class FormConstantsTest {
 
     @Test
     fun `formatReminderShort keeps timed semantics for the same numeric value`() {
-        // 900 as a TIMED reminder is a 15h-before alarm, not the all-day "1d" chip.
+        // 900 as a timed reminder is a 15h-before alarm, not the all-day "1d" chip.
         assertEquals("15h", formatReminderShort(900, isAllDay = false, resources = resources))
     }
 
     @Test
     fun `formatReminderDuration gives fuller wording for all-day before-values`() {
         assertEquals("9 AM day of event", formatReminderDuration(-540, isAllDay = true, use24Hour = false, resources = resources))
-        // "1 day before at 9 AM" style (exact string from reminder_before_at_12h).
+        // Reads "1 day before at 9 AM" (reminder_before_at_12h); only "9 AM" is asserted.
         assertTrue(formatReminderDuration(900, isAllDay = true, use24Hour = false, resources = resources).contains("9 AM"))
     }
 

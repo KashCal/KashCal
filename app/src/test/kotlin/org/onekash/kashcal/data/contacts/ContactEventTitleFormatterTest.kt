@@ -26,8 +26,7 @@ class ContactEventTitleFormatterTest {
         description = description
     )
 
-    // An occurrence timestamp in 2024 for testing
-    // Use a fixed timestamp: Jan 15, 2024 12:00 UTC = 1705320000000
+    // An occurrence on Jan 15, 2024, 12:00 UTC.
     private val occurrenceTs2024 = 1705320000000L
 
     @Test

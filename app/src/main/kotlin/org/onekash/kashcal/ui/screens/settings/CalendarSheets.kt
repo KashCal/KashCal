@@ -40,16 +40,11 @@ import org.onekash.kashcal.ui.components.GroupedCalendarList
 import org.onekash.kashcal.ui.model.CalendarGroup
 
 /**
- * Bottom sheet for toggling calendar visibility with account grouping.
+ * Shows every calendar grouped by account, with a checkbox that toggles its visibility.
  *
- * Shows all calendars grouped by account with checkboxes to toggle visibility.
- *
- * @param sheetState Material3 sheet state
- * @param calendarGroups Calendars grouped by account
- * @param onToggleCalendar Callback when calendar visibility changes (calendarId, isVisible)
- * @param onShowAllCalendars Callback to show all calendars
- * @param onHideAllCalendars Callback to hide all calendars
- * @param onDismiss Callback when sheet is dismissed
+ * @param onToggleCalendar called with the calendar id and its new visibility
+ * @param onShowAllCalendars never called; the sheet has no show-all control
+ * @param onHideAllCalendars never called; the sheet has no hide-all control
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,7 +74,6 @@ fun VisibleCalendarsSheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
-            // Header with count
             Text(
                 stringResource(R.string.settings_visible_calendars),
                 style = MaterialTheme.typography.titleMedium,
@@ -98,7 +92,6 @@ fun VisibleCalendarsSheet(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            // Calendar list grouped by account
             if (calendarGroups.isEmpty() || allCalendars.isEmpty()) {
                 Box(
                     modifier = Modifier
@@ -126,17 +119,12 @@ fun VisibleCalendarsSheet(
 }
 
 /**
- * Bottom sheet for selecting default calendar with account grouping.
+ * Shows the calendars to pick the default from, grouped by account: Room calendars first, then
+ * device calendars under their own header. Picking one calls [onSelectDefault], then [onDismiss].
  *
- * Shows all calendars grouped by account with radio-style selection.
- * Supports both Room calendars (local, iCloud, CalDAV) and device calendars.
- *
- * @param sheetState Material3 sheet state
- * @param calendarGroups Room calendars grouped by account
- * @param deviceCalendarGroups Device calendars grouped by account (requires WRITE_CALENDAR)
- * @param currentDefault Current default calendar selection
- * @param onSelectDefault Callback when default calendar is selected
- * @param onDismiss Callback when sheet is dismissed
+ * @param calendarGroups Room calendars (local, iCloud, CalDAV) grouped by account
+ * @param deviceCalendarGroups device calendars grouped by account, read from
+ *   [CalendarGroup.pickerCalendars] (the host passes them only with WRITE_CALENDAR)
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -156,7 +144,7 @@ fun DefaultCalendarSheet(
     }
     val hasAnyCalendars = allRoomCalendars.isNotEmpty() || allDeviceCalendars.isNotEmpty()
 
-    // Track selection - which ID and which type
+    // A Room and a device calendar can share an id, so the selection keeps the type.
     val selectedRoomId = (currentDefault as? DefaultCalendar.Room)?.calendarId
     val selectedDeviceId = (currentDefault as? DefaultCalendar.Device)?.calendarId
 
@@ -169,7 +157,6 @@ fun DefaultCalendarSheet(
                 .fillMaxWidth()
                 .padding(bottom = 32.dp)
         ) {
-            // Header
             Text(
                 stringResource(R.string.settings_default_calendar),
                 style = MaterialTheme.typography.titleMedium,
@@ -202,9 +189,7 @@ fun DefaultCalendarSheet(
                 }
             } else {
                 LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    // Room calendars section
                     calendarGroups.forEach { group ->
-                        // Account header
                         item(key = "room_header_${group.accountId}", contentType = "account_header") {
                             Text(
                                 text = group.accountName,
@@ -217,7 +202,6 @@ fun DefaultCalendarSheet(
                                     .padding(top = 8.dp)
                             )
                         }
-                        // Calendars in group
                         items(
                             items = group.calendars,
                             key = { "room_cal_${it.id}" },
@@ -235,7 +219,6 @@ fun DefaultCalendarSheet(
                         }
                     }
 
-                    // Device calendars section (if available)
                     if (allDeviceCalendars.isNotEmpty()) {
                         item(key = "device_section_header", contentType = "section_header") {
                             Column {
@@ -256,7 +239,6 @@ fun DefaultCalendarSheet(
                         }
 
                         deviceCalendarGroups.forEach { group ->
-                            // Account header
                             item(key = "device_header_${group.accountName}", contentType = "account_header") {
                                 Text(
                                     text = group.accountName,
@@ -269,7 +251,6 @@ fun DefaultCalendarSheet(
                                         .padding(top = 4.dp)
                                 )
                             }
-                            // Calendars in group
                             items(
                                 items = group.pickerCalendars,
                                 key = { "device_cal_${it.id}" },
@@ -293,9 +274,7 @@ fun DefaultCalendarSheet(
     }
 }
 
-/**
- * Calendar item for default calendar selection.
- */
+/** Draws one calendar row of [DefaultCalendarSheet], tinted with a check icon when selected. */
 @Composable
 private fun DefaultCalendarItem(
     name: String,
@@ -323,14 +302,12 @@ private fun DefaultCalendarItem(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.weight(1f)
         ) {
-            // Color dot
             Box(
                 modifier = Modifier
                     .size(14.dp)
                     .clip(CircleShape)
                     .background(Color(color))
             )
-            // Calendar name
             Text(
                 name,
                 style = MaterialTheme.typography.bodyLarge,
@@ -339,7 +316,6 @@ private fun DefaultCalendarItem(
             )
         }
 
-        // Selection indicator
         if (isSelected) {
             Icon(
                 Icons.Default.Check,

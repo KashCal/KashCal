@@ -15,28 +15,22 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Cross-server behavior probe for moving an event between two calendars on the
- * SAME account while the title/description are edited in the same save.
+ * Probes, per server, moving an event between two calendars on the same account while its
+ * title and description are edited in the same save (issue #292).
  *
- * Reproduces the wire-level sequence behind issue #292 (title/note edits lost
- * after moving an event to another calendar) and measures three things per
- * server, since the correct fix depends on real server behavior that the RFCs
- * under-specify:
+ * The RFCs under-specify what servers do here, so each test records one behavior:
  *
- *  A. Does an atomic WebDAV MOVE succeed, and does it leave the OLD body at the
- *     destination? (RFC 4918 §9.9 defines MOVE as copy-then-delete with no body,
- *     so any same-save edit is lost — this is the #292 reproduction.)
- *  B. Does MOVE-then-PUT (relocate, then overwrite the destination with the
- *     edited body) land the edits? (The candidate fix.)
- *  C. Does CREATE-with-the-same-UID-into-a-sibling-collection while the source
- *     still exists get rejected as a UID conflict? RFC 4791 §5.3.2.1 scopes
- *     CALDAV:no-uid-conflict to the *target* collection, but iCloud enforces it
- *     more broadly — this measures whether "always CREATE-on-target + DELETE-
- *     source" (the alternative fix) is even viable per server.
+ *  A. Whether a WebDAV MOVE succeeds and leaves the old body at the destination. RFC 4918 §9.9
+ *     defines MOVE as copy then delete, so a same-save edit isn't carried; this reproduces #292.
+ *  B. Whether MOVE then PUT (relocate, then overwrite the destination with the edited body)
+ *     lands the edits. Production does this after a successful MOVE (`PushStrategy.processMove`).
+ *  C. Whether a CREATE with the same UID into a sibling collection is rejected while the
+ *     source still exists. RFC 4791 §5.3.2.1 scopes CALDAV:no-uid-conflict to the targeted
+ *     collection, but iCloud enforces it more broadly; this measures whether "always CREATE on
+ *     the target, then DELETE the source" is viable per server.
  *
- * Each test runs once per server and auto-skips when credentials are missing,
- * the server is unreachable, or the account exposes fewer than two writable
- * calendars (a same-account move needs a source and a distinct destination).
+ * Each test runs once per server and skips when credentials are missing, the server is
+ * unreachable, or the account lists fewer than two calendars (inbox and outbox excluded).
  *
  * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*MultiServerCalendarMoveEditTest*"
  */
@@ -52,7 +46,7 @@ class MultiServerCalendarMoveEditTest(
 
     private var client: CalDavClient? = null
     private var creds: ServerCredentials? = null
-    // (url, etag) of everything created, deleted best-effort in reverse.
+    // (url, etag) of everything this test created, deleted best-effort in reverse.
     private val createdEventUrls = mutableListOf<Pair<String, String>>()
 
     private val icsDateFormat = SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'").apply {
@@ -91,7 +85,7 @@ class MultiServerCalendarMoveEditTest(
         )
     }
 
-    /** All writable calendar collection URLs on the account (inbox/outbox excluded). */
+    /** Returns the account's calendar collection URLs, minus any URL containing inbox or outbox. */
     private suspend fun discoverCalendars(): List<String> {
         val c = client!!
         val endpoint = creds!!.davEndpoint
@@ -164,16 +158,16 @@ END:VCALENDAR
         val (sourceUrl, sourceEtag) = createResult.getOrNull()!!
         track(sourceUrl, sourceEtag)
 
-        // Production same-account path: bodyless WebDAV MOVE. The in-app edit to
-        // "Room 2" is NOT part of the MOVE request, mirroring the #292 sequence.
+        // The production same-account path starts with a bodyless WebDAV MOVE. The in-app edit
+        // to "Room 2" isn't part of the MOVE request, as in the #292 sequence.
         val moveResult = client!!.moveEvent(sourceUrl, calB, uid)
 
         val moveCode = (moveResult as? CalDavResult.Error)?.code
         println("MOVE-RESULT ${config.name}: success=${moveResult.isSuccess()} code=$moveCode")
 
-        // iCloud rejects MOVE (412) and falls back to CREATE+DELETE in production;
-        // that path re-serializes, so it is not the #292 vector. Only servers that
-        // ACCEPT MOVE can strand a stale body.
+        // A server that declines MOVE (403, 405 or 412) takes production's CREATE+DELETE
+        // fallback, which re-serializes the current body, so it isn't the #292 vector. Only
+        // servers that accept MOVE can strand a stale body.
         assumeTrue(
             "${config.name} does not accept WebDAV MOVE (code=$moveCode) — not the #292 vector",
             moveResult.isSuccess()
@@ -187,15 +181,15 @@ END:VCALENDAR
         val staleTitlePresent = body.contains("Room 1")
         println("MOVE-BODY ${config.name}: stale='Room 1' present=$staleTitlePresent at $newUrl")
 
-        // This documents the bug: on a MOVE-capable server the relocated body is
-        // the original, so an edit made in the same save would be lost.
+        // On a MOVE-capable server the relocated body is the original, so without a follow-up
+        // PUT an edit made in the same save is lost.
         assert(staleTitlePresent) {
             "${config.name}: expected MOVE to relocate the original body verbatim, " +
                 "but 'Room 1' was absent. Body:\n$body"
         }
     }
 
-    // ========== B. Does MOVE-then-PUT land the edits? (candidate fix) ==========
+    // ========== B. Does MOVE-then-PUT land the edits? ==========
 
     @Test
     fun `MOVE then PUT lands the edited body at the destination`() = runBlocking {
@@ -219,7 +213,7 @@ END:VCALENDAR
         val (newUrl, movedEtag) = moveResult.getOrNull()!!
         track(newUrl, movedEtag)
 
-        // Candidate fix: overwrite the relocated resource with the edited body.
+        // Overwrite the relocated resource with the edited body, as production does.
         val putResult = client!!.updateEvent(
             newUrl,
             createTestIcs(uid, "Room 2", "Room 2 note", sequence = 1),
@@ -254,10 +248,10 @@ END:VCALENDAR
         val (urlA, etagA) = createA.getOrNull()!!
         track(urlA, etagA)
 
-        // "Always CREATE-on-target then DELETE-source" would issue this CREATE
-        // while the source resource (same UID) is still live. RFC 4791 §5.3.2.1
-        // scopes no-uid-conflict per-collection, so per spec this SHOULD succeed;
-        // iCloud enforces UID uniqueness across the account and rejects it.
+        // "Always CREATE on the target, then DELETE the source" would issue this CREATE while
+        // the source resource (same UID) is still live. RFC 4791 §5.3.2.1 scopes
+        // no-uid-conflict to the targeted collection, so the spec allows it; iCloud enforces
+        // UID uniqueness across the account and rejects it.
         val createB = client!!.createEvent(calB, uid, createTestIcs(uid, "Room 2", "Room 2 note"))
         val code = (createB as? CalDavResult.Error)?.code
         val conflicted = createB is CalDavResult.Error && (code == 403 || code == 409 || code == 412)
@@ -271,10 +265,9 @@ END:VCALENDAR
             track(urlB, etagB)
         }
 
-        // No hard assertion on outcome — this test's job is to record per-server
-        // behavior. A conflict here means "always CREATE+DELETE" is unsafe on this
-        // server and the MOVE-based path must be retained for same-account moves.
-        // Give eventually-consistent servers a beat before cleanup fetches.
+        // No assertion on the outcome: this test records per-server behavior. A conflict means
+        // "always CREATE+DELETE" is unsafe on this server and same-account moves must keep the
+        // MOVE-based path. The delay gives eventually-consistent servers a moment before cleanup.
         delay(200)
     }
 }

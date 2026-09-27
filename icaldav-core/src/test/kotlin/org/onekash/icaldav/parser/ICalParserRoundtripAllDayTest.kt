@@ -9,15 +9,12 @@ import org.junit.jupiter.api.Test
 import org.onekash.icaldav.model.ParseResult
 
 /**
- * Round-trip tests for all-day events - ported from KashCal.
+ * Tests that events survive parse, generateBatch and re-parse. An all-day event's start day
+ * code must come back unchanged; a shifted date would surface in sync (iCloud CalDAV to the
+ * device and back), import and export, and copy and paste.
  *
- * These tests verify that all-day events survive the parse → generate → parse cycle
- * without shifting dates. This is critical for:
- * - Sync operations (iCloud CalDAV → local → iCloud CalDAV)
- * - Import/export operations
- * - Copy/paste operations
- *
- * The key invariant: day codes must be preserved exactly after round-trip.
+ * Also covers timed events, RRULE, EXDATE, special and UTF-8 characters, VALARM and three
+ * events at once. The VALARM test checks only that the summary survives.
  */
 @DisplayName("ICalParser All-Day Round-Trip Tests")
 class ICalParserRoundtripAllDayTest {
@@ -88,7 +85,7 @@ class ICalParserRoundtripAllDayTest {
         assertTrue(parsed is ParseResult.Success)
         val originalEvent = (parsed as ParseResult.Success).value.first()
 
-        // Calculate original day span
+        // Only the start day is compared; the span isn't asserted.
         val originalStartDay = originalEvent.dtStart.toDayCode()
 
         // Generate and re-parse
@@ -107,7 +104,7 @@ class ICalParserRoundtripAllDayTest {
 
     @Test
     fun `round trip TripIt style multi-day event`() {
-        // TripIt: Oct 11-12 trip with DTSTART=20251011, DTEND=20251013
+        // A travel-itinerary feed's Oct 11-12 stay: DTSTART=20251011, DTEND=20251013
         val original = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -310,7 +307,7 @@ class ICalParserRoundtripAllDayTest {
 
         val roundTrippedEvent = (reparsed as ParseResult.Success).value.first()
 
-        // Special characters should be preserved (either escaped or unescaped)
+        // Only the word "Important" is checked, so escaping either way passes.
         assertNotNull(roundTrippedEvent.summary)
         assertTrue(roundTrippedEvent.summary!!.contains("Important"),
             "Summary should preserve content")
@@ -382,7 +379,7 @@ class ICalParserRoundtripAllDayTest {
 
         val roundTrippedEvent = (reparsed as ParseResult.Success).value.first()
 
-        // VALARM should be preserved (if library supports it)
+        // Only the summary is checked; the VALARM isn't.
         assertNotNull(roundTrippedEvent.summary)
     }
 

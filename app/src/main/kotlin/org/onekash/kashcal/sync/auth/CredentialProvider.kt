@@ -3,85 +3,48 @@ package org.onekash.kashcal.sync.auth
 import org.onekash.kashcal.util.maskEmail
 
 /**
- * Provides credentials for CalDAV sync operations.
+ * Loads and stores one provider's account credentials for CalDAV and CardDAV sync.
  *
- * This interface abstracts credential loading from the sync layer,
- * enabling:
- * - Production: Load from EncryptedSharedPreferences (CredentialManager)
- * - Testing: Load from properties files or mocks
- *
- * Usage in sync layer:
- * ```
- * val credentials = credentialProvider.getCredentials(accountId)
- * if (credentials != null) {
- *     client.setCredentials(credentials.username, credentials.password)
- * }
- * ```
+ * Production implementations read [org.onekash.kashcal.data.credential.CredentialManager]
+ * (EncryptedSharedPreferences); tests substitute mocks or properties files.
  */
 interface CredentialProvider {
 
-    /**
-     * Get credentials for a specific account.
-     *
-     * @param accountId The database account ID
-     * @return Credentials if available, null if not configured
-     */
+    /** Returns the credentials of Room account [accountId], or null if none are stored. */
     suspend fun getCredentials(accountId: Long): Credentials?
 
     /**
-     * Get credentials for the primary iCloud account.
-     * Convenience method for single-account scenarios.
-     *
-     * @return Credentials if configured, null otherwise
+     * Returns the credentials of the first enabled account of this provider, or null if there
+     * is none.
      */
     suspend fun getPrimaryCredentials(): Credentials?
 
-    /**
-     * Check if credentials are available for an account.
-     *
-     * @param accountId The database account ID
-     * @return true if credentials exist
-     */
+    /** Returns whether credentials are stored for Room account [accountId]. */
     suspend fun hasCredentials(accountId: Long): Boolean
 
-    /**
-     * Check if any credentials are configured.
-     *
-     * @return true if at least one account has credentials
-     */
+    /** Returns true if at least one account of this provider has stored credentials. */
     suspend fun hasAnyCredentials(): Boolean
 
-    /**
-     * Save credentials for an account.
-     *
-     * @param accountId The database account ID
-     * @param credentials The credentials to save
-     * @return true if saved successfully
-     */
+    /** Saves [credentials] for Room account [accountId]; returns true on success. */
     suspend fun saveCredentials(accountId: Long, credentials: Credentials): Boolean
 
-    /**
-     * Delete credentials for an account.
-     *
-     * @param accountId The database account ID
-     * @return true if deleted (or didn't exist)
-     */
+    /** Deletes the credentials of Room account [accountId]; returns true also when none existed. */
     suspend fun deleteCredentials(accountId: Long): Boolean
 
     /**
-     * Clear all stored credentials.
-     * Use when user logs out of all accounts.
+     * Clears the stored credentials of every account, of all providers, for when the user signs
+     * out of every account.
      */
     suspend fun clearAllCredentials()
 }
 
 /**
- * Credentials for CalDAV authentication.
+ * Holds the login for one CalDAV or CardDAV account.
  *
- * @property username The username (typically email for iCloud)
- * @property password The password (app-specific password for iCloud)
- * @property serverUrl Optional server URL override
- * @property trustInsecure Whether to trust self-signed certificates (for self-hosted servers)
+ * @property username for iCloud, usually the Apple ID email.
+ * @property password for iCloud, an app-specific password.
+ * @property serverUrl defaults to iCloud's CalDAV host.
+ * @property trustInsecure whether to trust self-signed certificates, for self-hosted servers.
  */
 data class Credentials(
     val username: String,
@@ -93,10 +56,7 @@ data class Credentials(
         const val DEFAULT_ICLOUD_SERVER = "https://caldav.icloud.com"
     }
 
-    /**
-     * Mask credentials for safe logging.
-     * Never shows any password characters. Username is masked using maskEmail().
-     */
+    /** Returns a loggable form: never any password characters, and a [maskEmail] username. */
     fun toSafeString(): String {
         return "Credentials(username=${username.maskEmail()}, password=****, trustInsecure=$trustInsecure)"
     }

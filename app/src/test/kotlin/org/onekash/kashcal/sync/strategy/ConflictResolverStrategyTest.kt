@@ -30,15 +30,16 @@ import org.onekash.kashcal.sync.client.model.CalDavEvent
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
 /**
- * Comprehensive strategy tests for ConflictResolver.
+ * Tests each [ConflictStrategy] of [ConflictResolver]:
+ * - SERVER_WINS, the default: the server version overwrites local; a pending delete is cancelled,
+ *   and a server 404 or a calendar deleted meanwhile deletes the local event
+ * - LOCAL_WINS: a pending delete deletes the server copy with an empty etag, then the local event;
+ *   an update is refused
+ * - NEWEST_WINS: the higher SEQUENCE wins, then the later of the server DTSTAMP and the local
+ *   modification time; no caldavUrl or a server 404 counts as a local win
+ * - MANUAL: marks the operation failed and records a sync error on the event
  *
- * Tests all 4 conflict resolution strategies:
- * - SERVER_WINS: Server overwrites local (default, safest)
- * - LOCAL_WINS: Force push local (limited to DELETE)
- * - NEWEST_WINS: Compare sequence/dtstamp, keep newer
- * - MANUAL: Mark for user resolution
- *
- * Plus general edge cases: missing event, calendar mismatch, resolveAll.
+ * Plus a missing event, a calendar mismatch, resolveAll and [ConflictResult.isSuccess].
  */
 class ConflictResolverStrategyTest {
 
@@ -434,7 +435,7 @@ END:VCALENDAR""".trimIndent()
         )
 
         assertEquals(ConflictResult.LocalVersionPushed, result)
-        // Verify etag updated to server's current before creating retry
+        // The server's current etag is stored before the retry is queued.
         coVerifyOrder {
             eventsDao.updateEtag(1L, "etag-current")
             pendingOperationsDao.deleteById(operation.id)
@@ -452,7 +453,7 @@ END:VCALENDAR""".trimIndent()
         )
         val operation = makeOperation(eventId = 1L)
         val calendar = makeCalendar(id = 1L)
-        // Server dtstamp is 2026 — clearly newer than local's 2020 timestamp
+        // Server DTSTAMP 2026, newer than the local 2020 timestamp.
         val serverIcs = makeServerIcs(sequence = 5, dtstamp = "20260219T030000Z")
 
         coEvery { eventsDao.getById(1L) } returns event
@@ -479,7 +480,7 @@ END:VCALENDAR""".trimIndent()
             sequence = 5, localModifiedAt = now
         )
         val operation = makeOperation(eventId = 1L)
-        // Server dtstamp = 2020 (very old)
+        // Server DTSTAMP 2020.
         val serverIcs = makeServerIcs(sequence = 5, dtstamp = "20200101T120000Z")
 
         coEvery { eventsDao.getById(1L) } returns event

@@ -21,15 +21,14 @@ import javax.net.ssl.SSLHandshakeException
 import javax.net.ssl.SSLPeerUnverifiedException
 
 /**
- * Adversarial tests for network transition handling.
+ * Adversarial tests for how [ErrorMapper] maps the exceptions a network drop or change throws:
+ * - DNS failures, refused connections, timeouts and SSL/TLS errors
+ * - Socket resets, broken pipes and wrapped exceptions
+ * - Message keywords, and null, empty, long or non-ASCII messages
+ * - Retryability, and HTTP 502 to 504
  *
- * Tests error mapping for network conditions:
- * - WiFi to Cellular transitions
- * - Network loss scenarios
- * - DNS resolution failures
- * - SSL/TLS errors
- * - Connection refused
- * - Timeout variations
+ * An IOException other than the mapped types is classified by its own message ("timeout",
+ * then "connection"); anything else is Unknown.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -68,7 +67,7 @@ class NetworkTransitionAdversarialTest {
         val exception = NoRouteToHostException("No route to host")
         val error = ErrorMapper.fromException(exception)
 
-        // Should map to some network error
+        // An IOException subtype with no keyword in its message maps to Unknown; either passes
         assertTrue(
             "NoRouteToHost should be network error",
             error is CalendarError.Network || error is CalendarError.Unknown
@@ -116,7 +115,7 @@ class NetworkTransitionAdversarialTest {
         val exception = SSLPeerUnverifiedException("Hostname verification failed")
         val error = ErrorMapper.fromException(exception)
 
-        // Should be SSL-related error
+        // Only SSLHandshakeException maps to SslError; this one falls to the message check
         assertTrue(
             "SSLPeerUnverified should be network/ssl error",
             error is CalendarError.Network || error is CalendarError.Unknown
@@ -175,9 +174,8 @@ class NetworkTransitionAdversarialTest {
 
         val error = ErrorMapper.fromException(wrapper)
 
-        // ErrorMapper only checks outer exception message, not cause
-        // "I/O error during sync" doesn't contain "timeout" or "connection"
-        // so it maps to Unknown (this is current behavior)
+        // ErrorMapper checks the outer exception, not its cause. "I/O error during sync" has
+        // neither "timeout" nor "connection", so it maps to Unknown.
         assertTrue(
             "Wrapped exception without keywords maps to Unknown",
             error is CalendarError.Unknown
@@ -201,7 +199,7 @@ class NetworkTransitionAdversarialTest {
 
     @Test
     fun `IOException with connection in message`() {
-        // Note: ErrorMapper checks for "connection" not "connect"
+        // ErrorMapper matches "connection", not "connect"
         val exception = IOException("Connection refused to caldav.icloud.com/17.253.144.10:443")
         val error = ErrorMapper.fromException(exception)
 

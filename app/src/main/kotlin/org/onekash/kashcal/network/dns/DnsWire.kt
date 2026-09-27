@@ -1,22 +1,17 @@
 package org.onekash.kashcal.network.dns
 
 /**
- * Shared, defensive primitives for decoding a DNS response message (RFC 1035
- * message format). Used by both [SrvWireParser] and [TxtRecordParser] so the
- * security-critical parts — header/RCODE validation, the compression-aware name
- * reader, and every bounds check — are defined and tested exactly once rather
- * than duplicated per record type (a hardening fix to one copy would otherwise
- * silently miss the other).
+ * Decodes the parts of a DNS response message (RFC 1035) that [SrvWireParser] and
+ * [TxtRecordParser] share: header and RCODE validation, the compression-aware name reader and
+ * the bounds checks. Keeping one copy means a hardening fix can't miss the other parser.
  *
- * The bytes come from an untrusted resolver/server, so decoding is defensive
- * throughout: every read is bounds-checked, compression pointers must point
- * strictly backward (RFC 1035 §4.1.4 — forbids loops and forward/self references
- * without tracking visited offsets), names are capped at 255 octets and labels
- * at 63, and any malformed structure throws [WireFormatException] rather than
- * reading past the end or returning a half-built value. Each parser wraps the
- * walk in its own try/catch and maps the exception to its typed Failed result.
+ * The bytes come from an untrusted resolver or server. Every read is bounds-checked,
+ * compression pointers must point strictly backward (RFC 1035 §4.1.4), names are capped at
+ * 255 octets and labels at 63, and any malformed structure throws [WireFormatException]
+ * instead of reading past the end or returning a half-built value. Each parser catches it and
+ * returns its typed Failed result.
  *
- * Pure JVM logic (no Android APIs) so it is unit- and fuzz-testable off-device.
+ * Pure JVM, with no Android APIs, so it is unit- and fuzz-testable off-device.
  */
 internal object DnsWire {
 
@@ -33,27 +28,23 @@ internal object DnsWire {
     class AnswerRr(val type: Int, val rdataStart: Int, val rdlength: Int)
 
     /**
-     * Validates the 12-octet header and RCODE, skips the question section, then
-     * returns every answer RR located (TYPE + rdata offset + RDLENGTH) for the
-     * caller to type-decode. Returns an empty list without touching the body on
-     * RCODE 3 (NXDOMAIN); throws [WireFormatException] on a short header, a
-     * server-failure RCODE (SERVFAIL, REFUSED, ...), or any malformed structure.
+     * Validates the 12-octet header and RCODE, skips the question section, and returns each
+     * answer RR's TYPE, rdata offset and RDLENGTH for the caller to type-decode. Throws
+     * [WireFormatException] on a short header, any RCODE other than 0 and 3 (SERVFAIL,
+     * REFUSED, ...), or malformed structure.
      *
-     * NXDOMAIN is authoritative: the RCODE alone says "the name does not exist",
-     * so the body is neither trusted nor parsed — a garbled or truncated question
-     * on such a response must not flip "nothing to honour" into a parse failure.
-     * A NOERROR response with no answers yields the same empty list, so callers
-     * treat both identically and no RCODE is surfaced. Each RR is accounted by its
-     * declared RDLENGTH (a compression pointer inside the rdata may chase backward
-     * outside the record's window, but the record still occupies exactly RDLENGTH
-     * octets in the stream).
+     * RCODE 3 (NXDOMAIN) returns an empty list without parsing the body: the RCODE alone says
+     * the name doesn't exist, so a garbled question on such a response must not become a
+     * parse failure. A NOERROR response with no answers returns the same empty list, so
+     * callers treat both alike. Each RR advances by its declared RDLENGTH, even when a
+     * compression pointer inside its rdata chases backward outside the record.
      */
     fun answers(buf: ByteArray): List<AnswerRr> {
         if (buf.size < HEADER_LEN) throw WireFormatException("truncated header")
 
         when (val rcode = buf[3].toInt() and 0x0F) {
-            0 -> {}                                     // NOERROR — inspect the body below
-            3 -> return emptyList()                     // NXDOMAIN — authoritative, body untrusted
+            0 -> {}                                     // NOERROR: inspect the body below
+            3 -> return emptyList()                     // NXDOMAIN: authoritative, body untrusted
             else -> throw WireFormatException("RCODE=$rcode")
         }
 
@@ -61,9 +52,8 @@ internal object DnsWire {
         val answerCount = u16(buf, 6)
 
         var pos = HEADER_LEN
-        // Skip the question section. A QNAME can itself be compressed, so it must
-        // go through the same bounds-checked name reader — a truncated or
-        // pointer-only QNAME is a real attack class.
+        // Skip the question section. A QNAME can be compressed, so it goes through the same
+        // bounds-checked name reader: a truncated or pointer-only QNAME is an attack class.
         repeat(questionCount) {
             pos = readName(buf, pos).next
             pos = advance(buf, pos, 4)                  // QTYPE(2) + QCLASS(2)
@@ -88,26 +78,22 @@ internal object DnsWire {
     }
 
     /**
-     * Reads a (possibly compressed) domain name starting at [start]. Returns the
-     * decoded name (labels joined by '.', empty for the root) and [NameResult.next]:
-     * the position in the RR stream immediately after the name — after the first
-     * compression pointer if one is followed, otherwise after the zero terminator.
+     * Reads a possibly compressed domain name at [start]. Returns the name (labels joined by
+     * '.', empty for the root) and [NameResult.next], the stream position after the name:
+     * after the first compression pointer if one is followed, else after the zero terminator.
      *
-     * [limit] bounds the physical bytes this name may occupy *before* any
-     * compression pointer is followed — pass an RR's rdata end
-     * (`rdataStart + rdlength`) to enforce that an embedded name (e.g. an SRV
-     * target) stays inside the record it belongs to rather than reading into the
-     * next record's bytes; it defaults to the whole buffer for owner/question
-     * names, which are bounded only by the message. Once a pointer is followed the
-     * name legally chases *backward* into earlier message bytes (RFC 1035 §4.1.4),
-     * outside the record window, so from that point reads are bounded by the buffer.
+     * [limit] bounds the bytes the name may occupy before any pointer is followed. Pass an
+     * RR's rdata end (`rdataStart + rdlength`) so an embedded name such as an SRV target
+     * can't read into the next record; the default, the whole buffer, suits owner and
+     * question names. A followed pointer legally chases backward into earlier message bytes
+     * (RFC 1035 §4.1.4), so from then on reads are bounded by the buffer.
      */
     fun readName(buf: ByteArray, start: Int, limit: Int = buf.size): NameResult {
         val labels = ArrayList<String>()
         var pos = start
         var next = -1
         var nameLen = 0
-        var bound = limit                               // rdata window until the first pointer chase
+        var bound = limit                               // rdata window until a pointer
 
         while (true) {
             if (pos >= bound) throw WireFormatException("name past buffer")
@@ -120,9 +106,8 @@ internal object DnsWire {
                     }
                     val labelStart = pos + 1
                     if (labelStart + lenByte > bound) throw WireFormatException("label past buffer")
-                    // RFC 1035 §3.1 caps the total encoded name at 255 octets
-                    // INCLUDING the terminating zero, so the running content length
-                    // plus that mandatory terminator must not exceed the cap.
+                    // RFC 1035 §3.1 caps the encoded name at 255 octets including the
+                    // terminating zero, so the running length plus that terminator must fit.
                     nameLen += lenByte + 1
                     if (nameLen + 1 > MAX_NAME) throw WireFormatException("name too long")
                     labels.add(String(buf, labelStart, lenByte, Charsets.US_ASCII))
@@ -131,20 +116,17 @@ internal object DnsWire {
                 0xC0 -> {                               // compression pointer
                     if (pos + 1 >= bound) throw WireFormatException("truncated pointer")
                     val target = ((lenByte and 0x3F) shl 8) or (buf[pos + 1].toInt() and 0xFF)
-                    // Must point strictly backward. This forbids a self- or forward
-                    // pointer and makes any pointer->pointer chain strictly descend,
-                    // so a pure pointer chain always terminates. It does NOT by
-                    // itself forbid every cycle: an interspersed label advances pos,
-                    // after which a later pointer can legally aim back at an
-                    // already-seen offset and oscillate. Termination in that case is
-                    // guaranteed by the MAX_NAME cap below — every label read adds
-                    // >=2 to nameLen, so the walk trips "name too long" in a bounded
-                    // number of steps. Both guards are load-bearing; do not drop the
-                    // cap on the assumption the backward rule alone prevents loops.
+                    // Must point strictly backward, which forbids self and forward pointers
+                    // and makes a pure pointer chain strictly descend and terminate. It
+                    // doesn't forbid every cycle: a label in between advances pos, and a
+                    // later pointer can aim back at an offset already seen. The MAX_NAME cap
+                    // ends that walk, since each label adds at least 2 to nameLen. Both
+                    // guards are needed; don't drop the cap assuming the backward rule
+                    // alone prevents loops.
                     if (target >= pos) throw WireFormatException("non-backward pointer")
                     if (next == -1) next = pos + 2
                     pos = target
-                    bound = buf.size                    // backward chase legally leaves the rdata window
+                    bound = buf.size                    // a backward chase leaves the rdata window
                 }
                 else -> throw WireFormatException("reserved label type")  // 0x40 / 0x80
             }

@@ -28,20 +28,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * SyncScheduler manages WorkManager-based synchronization scheduling.
+ * Schedules calendar and contact sync on WorkManager, and holds the sync UI state shared
+ * across ViewModels (banner flag, last sync changes).
  *
- * Provides:
- * - Periodic background sync (configurable interval, minimum 15 min per Android)
- * - One-shot sync for user-initiated refresh
- * - Expedited sync for immediate needs (e.g., push notification)
- * - Calendar-specific and account-specific sync
- * - Sync status observation
- *
- * Per Android WorkManager best practices:
- * - Uses constraints for network and battery
- * - Unique work names prevent duplicate schedules
- * - Exponential backoff for retries
- * - Respects Doze mode via WorkManager
+ * Provides periodic background sync (configurable, at least 15 minutes), one-shot sync for
+ * user-initiated refresh, expedited sync after a local change, per-calendar and per-account
+ * sync, and status observation. Every request carries a network constraint and a unique work
+ * name so schedules don't duplicate; all but the expedited one use exponential backoff.
  */
 @Singleton
 class SyncScheduler @Inject constructor(
@@ -50,53 +43,39 @@ class SyncScheduler @Inject constructor(
     private val workManager = WorkManager.getInstance(context)
 
     /**
-     * Whether the current/next sync should show UI banner.
-     * Single Source of Truth for banner visibility across all ViewModels.
-     * Set by caller before requestImmediateSync(), read by UI observers.
-     * Reset to false after sync completes (success/failure).
+     * Whether the current or next sync shows the UI banner; the source of truth for banner
+     * visibility across ViewModels. Callers set it before [requestImmediateSync]; the UI
+     * resets it after the sync succeeds or fails.
      */
     private val _showBannerForSync = MutableStateFlow(false)
     val showBannerForSync: StateFlow<Boolean> = _showBannerForSync.asStateFlow()
 
-    /**
-     * Set banner visibility for the current/next sync.
-     * Call this BEFORE requestImmediateSync() to show banner feedback.
-     */
+    /** Sets banner visibility for the current or next sync; call before [requestImmediateSync]. */
     fun setShowBannerForSync(show: Boolean) {
         Log.d(TAG, "setShowBannerForSync: $show")
         _showBannerForSync.value = show
     }
 
-    /**
-     * Reset banner flag after sync completes.
-     * Called by UI layer after handling success/failure.
-     */
+    /** Resets the banner flag; the UI calls it after handling the sync's success or failure. */
     fun resetBannerFlag() {
         Log.d(TAG, "resetBannerFlag: resetting to false")
         _showBannerForSync.value = false
     }
 
     /**
-     * Sync changes from most recent sync (for UI notification).
-     * Populated by CalDavSyncWorker after sync completes.
-     * Observed by HomeViewModel to show snackbar.
+     * Changes from the most recent sync. `CalDavSyncWorker` sets them when a sync with changes
+     * completes; HomeViewModel observes them to show the snackbar.
      */
     private val _lastSyncChanges = MutableStateFlow<List<SyncChange>>(emptyList())
     val lastSyncChanges: StateFlow<List<SyncChange>> = _lastSyncChanges.asStateFlow()
 
-    /**
-     * Set sync changes after sync completes.
-     * Called by CalDavSyncWorker with changes from PullStrategy.
-     */
+    /** Sets the changes of a completed sync; called by `CalDavSyncWorker`. */
     fun setSyncChanges(changes: List<SyncChange>) {
         Log.d(TAG, "setSyncChanges: ${changes.size} changes")
         _lastSyncChanges.value = changes
     }
 
-    /**
-     * Clear sync changes after UI consumed them.
-     * Called after snackbar/bottom sheet dismissal.
-     */
+    /** Clears the sync changes once the UI has shown them (snackbar or bottom sheet dismissed). */
     fun clearSyncChanges() {
         Log.d(TAG, "clearSyncChanges: clearing")
         _lastSyncChanges.value = emptyList()
@@ -123,36 +102,29 @@ class SyncScheduler @Inject constructor(
     }
 
     /**
-     * Standard network constraints for sync operations.
-     *
-     * Requires a connected, internet-capable network without requiring
-     * public-internet validation, so sync runs against self-hosted CalDAV
-     * servers on a LAN or VPN (#296). See [SyncNetworkConstraints].
+     * Requires a connected, internet-capable network but not public-internet validation, so
+     * sync runs against self-hosted CalDAV servers on a LAN or VPN (#296). See
+     * [SyncNetworkConstraints].
      */
     private val networkConstraints = SyncNetworkConstraints.builder()
         .build()
 
-    /**
-     * Relaxed constraints for expedited work.
-     * Still requires network (same INTERNET-without-VALIDATED rule) but runs immediately.
-     */
+    /** Constraints for expedited work; the same network rule as [networkConstraints]. */
     private val expeditedConstraints = SyncNetworkConstraints.builder()
         .build()
 
     /**
-     * Schedule periodic background sync for all accounts.
+     * Schedules periodic background sync of all accounts, and the contact job alongside it.
      *
-     * Uses KEEP existing policy to avoid rescheduling if already scheduled.
-     * WorkManager ensures this runs even across device restarts.
+     * KEEP leaves a pending schedule alone. WorkManager keeps it across device restarts.
      *
-     * A recurring request must stay a **full** sync. Failure is terminal for a
-     * periodic work spec — WorkManager stops scheduling it, and only re-arming
-     * with KEEP revives it — and the worker's full-sync path is the only one that
-     * cannot end in failure: it folds each account's auth and transport errors
-     * into a partial success. The per-calendar and per-account paths return
-     * failure directly on an expired password, so scheduling either of them
-     * recurringly would let one bad credential stop background sync for good.
-     * If a narrower recurring sync is ever wanted, give it the same folding first.
+     * A recurring request must stay a full sync. Failure is terminal for a periodic work
+     * spec: WorkManager stops scheduling it, and only re-arming with KEEP revives it. The
+     * worker's full-sync path is the only one that can't end in failure, since it folds each
+     * account's auth and transport errors into a partial success. The per-calendar and
+     * per-account paths return failure on an expired password, so scheduling either
+     * recurringly would let one bad credential stop background sync for good. Give a
+     * narrower recurring sync the same folding first.
      *
      * @param intervalMinutes Sync interval (minimum 15 per Android)
      * @param forceFullSync If true, ignores ctag/sync-token and fetches all events
@@ -191,13 +163,11 @@ class SyncScheduler @Inject constructor(
     }
 
     /**
-     * Schedule (or update) the periodic contact-sync job at [actualInterval].
+     * Enqueues the periodic contact-sync job at [actualInterval] with [policy].
      *
-     * Deliberately reuses the calendar sync interval and lifecycle rather than
-     * introducing a second scheduling mechanism — contact sync rides alongside
-     * calendar sync. Only CardDAV-capable, contact-sync-enabled accounts are
-     * actually synced; the worker itself no-ops when none qualify, so scheduling
-     * it unconditionally is cheap.
+     * Contact sync reuses the calendar sync interval and lifecycle, with no scheduling
+     * mechanism of its own. Only CardDAV-capable, contact-sync-enabled accounts sync; the
+     * worker is a no-op when none qualify, so scheduling it unconditionally is cheap.
      */
     private fun scheduleContactSync(
         actualInterval: Long,
@@ -224,14 +194,13 @@ class SyncScheduler @Inject constructor(
     }
 
     /**
-     * Ensure the periodic contact-sync job exists, scheduling it if absent.
+     * Schedules the periodic contact-sync job unless one is pending; a finished (FAILED or
+     * cancelled) spec is replaced.
      *
-     * Unlike [schedulePeriodicSync], this touches only the contact job — it does
-     * not (re)schedule calendar sync. Enabling contact sync on a login whose
-     * periodic calendar sync was last scheduled before this feature shipped would
-     * otherwise leave the recurring contact job unscheduled, so an immediate pull
-     * would be a one-time import rather than ongoing sync. KEEP policy: a no-op
-     * when the job already exists.
+     * Unlike [schedulePeriodicSync], it doesn't touch calendar sync. A login whose calendar
+     * job was armed before the contact job existed has no contact job, so without this an
+     * enable would import once and never sync again. KEEP makes it a no-op when a job is
+     * pending.
      */
     fun ensureContactSyncScheduled(intervalMinutes: Long) {
         val actualInterval = maxOf(intervalMinutes, MIN_SYNC_INTERVAL_MINUTES)
@@ -239,15 +208,14 @@ class SyncScheduler @Inject constructor(
     }
 
     /**
-     * Request an immediate one-shot contact pull (user-initiated, e.g. enabling
-     * contact sync for an account). Runs as soon as the network constraint is
-     * met rather than waiting for the next periodic tick. REPLACE so repeated
-     * toggles collapse to a single pending run.
+     * Requests a one-shot contact pull (user-initiated, e.g. enabling contact sync) that runs
+     * as soon as the network constraint is met, without waiting for the periodic tick.
+     * REPLACE collapses repeated toggles to one pending run.
      *
-     * @param accountId when non-null, scope the sweep to that one login's
-     *   contacts (a "Sync now" from a single account's sheet); null sweeps every
-     *   contact-sync login (enable path, periodic catch-up).
-     * @return UUID of the work request for status tracking
+     * @param accountId when non-null, only that login's contacts sync (a "Sync now" from one
+     *   account's sheet); null syncs every contact-sync login (the enable path,
+     *   pull-to-refresh).
+     * @return the work request's id, for status tracking
      */
     fun requestImmediateContactSync(accountId: Long? = null): java.util.UUID {
         Log.i(TAG, "Requesting immediate contact sync (accountId=$accountId)")
@@ -271,9 +239,9 @@ class SyncScheduler @Inject constructor(
     }
 
     /**
-     * Shared defaults for user-initiated one-shot sync work: the LAN-friendly
-     * network constraint, exponential backoff, and the sync + one-shot tags.
-     * Callers add worker-specific input data before building.
+     * Applies the defaults of user-initiated one-shot sync work: the LAN-friendly network
+     * constraint, exponential backoff, and the sync and one-shot tags. Callers add
+     * worker-specific input data.
      */
     private fun OneTimeWorkRequest.Builder.applyOneShotSyncDefaults():
         OneTimeWorkRequest.Builder =
@@ -286,10 +254,7 @@ class SyncScheduler @Inject constructor(
             .addTag(TAG_SYNC)
             .addTag(TAG_ONE_SHOT)
 
-    /**
-     * Cancel periodic sync.
-     * Call when user disables sync or removes all accounts.
-     */
+    /** Cancels periodic calendar and contact sync; called when the user picks manual-only. */
     fun cancelPeriodicSync() {
         Log.i(TAG, "Cancelling periodic sync")
         workManager.cancelUniqueWork(PERIODIC_SYNC_WORK)
@@ -297,10 +262,8 @@ class SyncScheduler @Inject constructor(
     }
 
     /**
-     * Update periodic sync interval.
-     * Replaces existing schedule with new interval.
-     *
-     * @param intervalMinutes New interval (minimum 15 per Android)
+     * Moves periodic calendar and contact sync to [intervalMinutes] (at least 15) with UPDATE.
+     * UPDATE doesn't apply to a finished spec, so this doesn't revive a FAILED job.
      */
     fun updatePeriodicSyncInterval(intervalMinutes: Long) {
         val actualInterval = maxOf(intervalMinutes, MIN_SYNC_INTERVAL_MINUTES)
@@ -333,15 +296,14 @@ class SyncScheduler @Inject constructor(
     }
 
     /**
-     * Request immediate sync (one-shot, user-initiated).
-     * Queues sync to run as soon as network is available.
+     * Requests a one-shot full sync that runs as soon as the network is available.
      *
-     * @param forceFullSync If true, ignores ctag/sync-token
-     * @param trigger The trigger source for sync history tracking
-     * @param showNotification If true, the worker posts user-visible sync notifications
-     *   (progress/completion/error). Only user-initiated force syncs opt in; silent
-     *   app-open/resume syncs leave this false so no notification surfaces.
-     * @return UUID of the work request for status tracking
+     * @param forceFullSync if true, ignores ctag and sync-token
+     * @param trigger the trigger source recorded in sync history
+     * @param showNotification if true, the worker posts sync notifications (progress,
+     *   completion, error). Only user-initiated force syncs opt in; silent app-open and
+     *   resume syncs leave it false.
+     * @return the work request's id, for status tracking
      */
     fun requestImmediateSync(
         forceFullSync: Boolean = false,
@@ -367,13 +329,11 @@ class SyncScheduler @Inject constructor(
     }
 
     /**
-     * Request expedited sync (for push notifications or app foreground).
-     * Uses expedited work to run immediately if possible.
+     * Requests an expedited full sync, which EventCoordinator issues after a local change to
+     * a synced calendar. Expedited work has quotas; past the quota it runs as regular work.
      *
-     * Note: Expedited work has quotas. If quota exceeded, falls back to regular.
-     *
-     * @param forceFullSync If true, ignores ctag/sync-token
-     * @return UUID of the work request
+     * @param forceFullSync if true, ignores ctag and sync-token
+     * @return the work request's id
      */
     fun requestExpeditedSync(forceFullSync: Boolean = false): java.util.UUID {
         Log.i(TAG, "Requesting expedited sync (force=$forceFullSync)")
@@ -398,12 +358,11 @@ class SyncScheduler @Inject constructor(
     }
 
     /**
-     * Sync a specific calendar.
-     * Useful for calendar-specific refresh or after local changes.
+     * Requests a one-shot sync of [calendarId]. Never schedule it recurringly (see
+     * [schedulePeriodicSync]).
      *
-     * @param calendarId The calendar to sync
-     * @param forceFullSync If true, ignores sync-token
-     * @return UUID of the work request
+     * @param forceFullSync if true, ignores the sync-token
+     * @return the work request's id
      */
     fun syncCalendar(calendarId: Long, forceFullSync: Boolean = false): java.util.UUID {
         Log.i(TAG, "Requesting calendar sync: calendarId=$calendarId")
@@ -433,11 +392,11 @@ class SyncScheduler @Inject constructor(
     }
 
     /**
-     * Sync all calendars for a specific account.
+     * Requests a one-shot sync of every calendar of [accountId]. Never schedule it recurringly
+     * (see [schedulePeriodicSync]).
      *
-     * @param accountId The account to sync
-     * @param forceFullSync If true, ignores ctag/sync-token
-     * @return UUID of the work request
+     * @param forceFullSync if true, ignores ctag and sync-token
+     * @return the work request's id
      */
     fun syncAccount(accountId: Long, forceFullSync: Boolean = false): java.util.UUID {
         Log.i(TAG, "Requesting account sync: accountId=$accountId")
@@ -466,34 +425,25 @@ class SyncScheduler @Inject constructor(
         return work.id
     }
 
-    /**
-     * Cancel all sync work (periodic and one-shot).
-     */
+    /** Cancels all sync work, periodic and one-shot. */
     fun cancelAllSync() {
         Log.i(TAG, "Cancelling all sync work")
         workManager.cancelAllWorkByTag(TAG_SYNC)
     }
 
-    /**
-     * Cancel sync for a specific calendar.
-     */
+    /** Cancels a pending [syncCalendar] request. */
     fun cancelCalendarSync(calendarId: Long) {
         Log.i(TAG, "Cancelling sync for calendar: $calendarId")
         workManager.cancelUniqueWork("sync_calendar_$calendarId")
     }
 
-    /**
-     * Cancel sync for a specific account.
-     */
+    /** Cancels a pending [syncAccount] request. */
     fun cancelAccountSync(accountId: Long) {
         Log.i(TAG, "Cancelling sync for account: $accountId")
         workManager.cancelUniqueWork("sync_account_$accountId")
     }
 
-    /**
-     * Observe sync status for immediate sync.
-     * Returns Flow of SyncStatus updates.
-     */
+    /** Observes the status of the [requestImmediateSync] work. */
     fun observeImmediateSyncStatus(): Flow<SyncStatus> {
         return workManager.getWorkInfosForUniqueWorkFlow(ONE_SHOT_SYNC_WORK)
             .map { workInfoList ->
@@ -501,9 +451,7 @@ class SyncScheduler @Inject constructor(
             }
     }
 
-    /**
-     * Observe sync status for periodic sync.
-     */
+    /** Observes the status of the periodic calendar sync. */
     fun observePeriodicSyncStatus(): Flow<SyncStatus> {
         return workManager.getWorkInfosForUniqueWorkFlow(PERIODIC_SYNC_WORK)
             .map { workInfoList ->
@@ -511,9 +459,7 @@ class SyncScheduler @Inject constructor(
             }
     }
 
-    /**
-     * Observe sync status for expedited sync.
-     */
+    /** Observes the status of the [requestExpeditedSync] work. */
     fun observeExpeditedSyncStatus(): Flow<SyncStatus> {
         return workManager.getWorkInfosForUniqueWorkFlow(EXPEDITED_SYNC_WORK)
             .map { workInfoList ->
@@ -521,9 +467,7 @@ class SyncScheduler @Inject constructor(
             }
     }
 
-    /**
-     * Observe sync status by work UUID.
-     */
+    /** Observes the status of the work with [workId]. */
     fun observeSyncStatus(workId: java.util.UUID): Flow<SyncStatus> {
         return workManager.getWorkInfoByIdFlow(workId)
             .map { workInfo ->
@@ -532,7 +476,8 @@ class SyncScheduler @Inject constructor(
     }
 
     /**
-     * Get current periodic sync info (for settings UI).
+     * Returns the periodic calendar sync's state and next run, or null when WorkManager has
+     * no record of it.
      */
     fun getPeriodicSyncInfo(): PeriodicSyncInfo? {
         val workInfo = workManager.getWorkInfosForUniqueWork(PERIODIC_SYNC_WORK).get()
@@ -545,37 +490,31 @@ class SyncScheduler @Inject constructor(
         )
     }
 
-    /**
-     * Check if periodic sync is currently scheduled.
-     */
+    /** Returns whether a periodic calendar sync spec exists that isn't cancelled. */
     fun isPeriodicSyncEnabled(): Boolean {
         val workInfos = workManager.getWorkInfosForUniqueWork(PERIODIC_SYNC_WORK).get()
         return workInfos.any { it.state != WorkInfo.State.CANCELLED }
     }
 
-    /**
-     * Prune completed work to free up WorkManager database.
-     */
+    /** Prunes finished work from WorkManager's database. */
     fun pruneCompletedWork() {
         Log.d(TAG, "Pruning completed work")
         workManager.pruneWork()
     }
 }
 
-/**
- * Sync operation status for UI observation.
- */
+/** Status of a sync work request, for the UI. */
 sealed class SyncStatus {
-    /** No sync in progress or scheduled */
+    /** No sync in progress or scheduled. */
     data object Idle : SyncStatus()
 
-    /** Sync is queued and waiting for constraints */
+    /** Queued and waiting for constraints. */
     data object Enqueued : SyncStatus()
 
-    /** Sync is currently running */
+    /** Running. */
     data object Running : SyncStatus()
 
-    /** Sync completed successfully (may include partial errors) */
+    /** Completed; may include partial errors. */
     data class Succeeded(
         val calendarsSynced: Int = 0,
         val eventsPushed: Int = 0,
@@ -584,30 +523,26 @@ sealed class SyncStatus {
         val errorMessage: String? = null
     ) : SyncStatus()
 
-    /** Sync failed */
+    /** Failed. */
     data class Failed(
         val errorMessage: String?
     ) : SyncStatus()
 
-    /** Sync was cancelled */
+    /** Cancelled. */
     data object Cancelled : SyncStatus()
 
-    /** Sync is blocked (e.g., no network) */
+    /** Blocked by unfinished prerequisite work. */
     data object Blocked : SyncStatus()
 }
 
-/**
- * Information about periodic sync schedule.
- */
+/** State and next run time of the periodic calendar sync. */
 data class PeriodicSyncInfo(
     val isEnabled: Boolean,
     val state: SyncStatus,
     val nextScheduledRunTime: Long
 )
 
-/**
- * Extension to convert WorkInfo to SyncStatus.
- */
+/** Maps a [WorkInfo] to its [SyncStatus], reading counts from `CalDavSyncWorker`'s output. */
 private fun WorkInfo.toSyncStatus(): SyncStatus {
     return when (state) {
         WorkInfo.State.ENQUEUED -> SyncStatus.Enqueued

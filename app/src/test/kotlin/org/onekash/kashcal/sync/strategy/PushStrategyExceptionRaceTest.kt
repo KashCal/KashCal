@@ -22,21 +22,13 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
 /**
- * Regression tests for exception event race condition in PushStrategy.
+ * Tests that a push marks synced only the exceptions that were in the body it sent.
  *
- * SCENARIO:
- * 1. User modifies recurring event occurrence → creates exception A
- * 2. PushStrategy serializes master with exception A
- * 3. HTTP PUT in progress...
- * 4. User modifies ANOTHER occurrence → creates exception B (not in serialized payload)
- * 5. HTTP response arrives with etag
- *
- * BUG (pre-fix): Both A and B get the etag, but only A was actually pushed
- * FIX: Only update etags for exceptions captured at serialization time
- *
- * The fix is in PushStrategy.processCreate/processUpdate:
- * - serializeEventWithExceptions() captures exceptions at serialization time
- * - Only those captured exceptions get their etag updated
+ * The race: [PushStrategy] serializes a master with its exceptions and starts the PUT; while the
+ * request is in flight the user edits another occurrence, creating exception C that isn't in the
+ * body. When the response arrives, only the serialized exceptions take the master's URL and
+ * etag; C keeps its pending state. `serializeEventWithExceptions` returns the body together with
+ * the exceptions it contains, and those are the only rows marked synced.
  */
 class PushStrategyExceptionRaceTest {
 
@@ -98,7 +90,7 @@ class PushStrategyExceptionRaceTest {
         syncStatus = SyncStatus.SYNCED
     )
 
-    // Exception C is created during HTTP PUT (race condition)
+    // Created while the PUT is in flight, so it isn't in the serialized body.
     private val exceptionC = Event(
         id = 103L,
         uid = "recurring-event-uid",
@@ -109,7 +101,7 @@ class PushStrategyExceptionRaceTest {
         originalEventId = masterEvent.id,
         originalInstanceTime = masterEvent.startTs + 21 * 86400000L,
         dtstamp = System.currentTimeMillis(),
-        syncStatus = SyncStatus.PENDING_CREATE // Still pending!
+        syncStatus = SyncStatus.PENDING_CREATE // still pending
     )
 
     @Before
@@ -139,13 +131,8 @@ class PushStrategyExceptionRaceTest {
     }
 
     /**
-     * CREATE only updates etag for exceptions captured at serialization time.
-     *
-     * Scenario:
-     * 1. serializeEventWithExceptions() captures [exceptionA, exceptionB]
-     * 2. HTTP PUT creates event on server
-     * 3. Server returns etag
-     * 4. Verify: only A and B get etag updated, NOT C (which was created after serialization)
+     * Serialization captures [exceptionA] and [exceptionB]; the create returns a URL and etag.
+     * Only A and B take them; [exceptionC], created after serialization, is left untouched.
      */
     @Test
     fun `CREATE only updates etag for exceptions captured at serialization time`() = runTest {
@@ -165,17 +152,19 @@ class PushStrategyExceptionRaceTest {
         coEvery { eventsDao.getById(masterEvent.id) } returns masterEvent
         coEvery { calendarRepository.getCalendarById(masterEvent.calendarId) } returns testCalendar
 
-        // KEY: getExceptionsForMaster returns only A and B at serialization time
-        // (exceptionC doesn't exist yet in this snapshot)
+        // At serialization time only A and B exist; exceptionC doesn't yet.
         coEvery { eventsDao.getExceptionsForMaster(masterEvent.id) } returns listOf(exceptionA, exceptionB)
 
                 coEvery { client.createEvent(testCalendar.caldavUrl, masterEvent.uid, any()) } returns
             CalDavResult.success(Pair(serverUrl, serverEtag))
         coEvery { eventsDao.markCreatedOnServer(masterEvent.id, serverUrl, serverEtag, any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(masterEvent.id, serverUrl, serverEtag, any(), any()) } just Runs
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
-        // A bundled override shares the master's resource, so it adopts the
-        // master's url and etag together.
+        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
+        // A bundled exception shares the master's resource, so it takes the master's URL and
+        // etag together.
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         // Execute
@@ -186,21 +175,18 @@ class PushStrategyExceptionRaceTest {
         val success = result as PushResult.Success
         assertEquals(1, success.eventsCreated)
 
-        // CRITICAL ASSERTIONS:
-        // Only exceptionA and exceptionB should have etag updated (exactly 2 calls)
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exceptionA.id, serverUrl, serverEtag, any()) }
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exceptionB.id, serverUrl, serverEtag, any()) }
+        // One call each for exceptionA and exceptionB.
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(exceptionA.id, serverUrl, serverEtag, any(), any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(exceptionB.id, serverUrl, serverEtag, any(), any()) }
 
-        // exceptionC should NOT be marked synced (it wasn't captured at serialization time)
+        // exceptionC wasn't serialized, so it isn't marked synced.
         coVerify(exactly = 0) { eventsDao.markCreatedOnServer(exceptionC.id, any(), any(), any()) }
+        coVerify(exactly = 0) { eventsDao.markCreatedOnServerWithCopy(exceptionC.id, any(), any(), any(), any()) }
         coVerify(exactly = 0) { eventsDao.markSynced(exceptionC.id, any(), any()) }
+        coVerify(exactly = 0) { eventsDao.markSyncedWithCopy(exceptionC.id, any(), any(), any()) }
     }
 
-    /**
-     * UPDATE only updates etag for exceptions captured at serialization time.
-     *
-     * Same race condition scenario but for UPDATE operations.
-     */
+    /** Runs the same race through an UPDATE: only A and B take the new etag. */
     @Test
     fun `UPDATE only updates etag for exceptions captured at serialization time`() = runTest {
         val masterEventWithUrl = masterEvent.copy(
@@ -224,13 +210,15 @@ class PushStrategyExceptionRaceTest {
         coEvery { eventsDao.getById(masterEventWithUrl.id) } returns masterEventWithUrl
         coEvery { calendarRepository.getCalendarById(masterEventWithUrl.calendarId) } returns testCalendar
 
-        // KEY: getExceptionsForMaster returns only A and B at serialization time
+        // At serialization time only A and B exist.
         coEvery { eventsDao.getExceptionsForMaster(masterEventWithUrl.id) } returns listOf(exceptionA, exceptionB)
 
                 coEvery { client.updateEvent(masterEventWithUrl.caldavUrl!!, any(), "existing-etag") } returns
             CalDavResult.success(newEtag)
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         // Execute
@@ -241,23 +229,20 @@ class PushStrategyExceptionRaceTest {
         val success = result as PushResult.Success
         assertEquals(1, success.eventsUpdated)
 
-        // CRITICAL ASSERTIONS:
-        // Master event etag updated
-        coVerify(exactly = 1) { eventsDao.markSynced(masterEventWithUrl.id, newEtag, any()) }
+        // The master takes the new etag.
+        coVerify(exactly = 1) { eventsDao.markSyncedWithCopy(masterEventWithUrl.id, newEtag, any(), any()) }
 
-        // Only exceptionA and exceptionB should be marked synced, against the
-        // master's resource url (which is also theirs).
+        // Only exceptionA and exceptionB are marked synced, at the master's URL (also theirs).
         val masterUrl = masterEventWithUrl.caldavUrl!!
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exceptionA.id, masterUrl, newEtag, any()) }
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exceptionB.id, masterUrl, newEtag, any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(exceptionA.id, masterUrl, newEtag, any(), any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(exceptionB.id, masterUrl, newEtag, any(), any()) }
 
-        // exceptionC should NOT be marked synced
+        // exceptionC isn't marked synced.
         coVerify(exactly = 0) { eventsDao.markCreatedOnServer(exceptionC.id, any(), any(), any()) }
+        coVerify(exactly = 0) { eventsDao.markCreatedOnServerWithCopy(exceptionC.id, any(), any(), any(), any()) }
     }
 
-    /**
-     * CREATE with zero exceptions - verify no exception etag updates.
-     */
+    /** Creates a recurring master with no exceptions: no exception row is updated. */
     @Test
     fun `CREATE with no exceptions does not call markSynced for exceptions`() = runTest {
         val operation = PendingOperation(
@@ -275,29 +260,29 @@ class PushStrategyExceptionRaceTest {
         coEvery { eventsDao.getById(masterEvent.id) } returns masterEvent
         coEvery { calendarRepository.getCalendarById(masterEvent.calendarId) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(masterEvent.id) } returns emptyList()
-        // Note: Even with empty exceptions, recurring events use serializeWithExceptions
+        // A recurring master goes through serializeWithExceptions even with no exceptions.
                 coEvery { client.createEvent(testCalendar.caldavUrl, masterEvent.uid, any()) } returns
             CalDavResult.success(Pair(serverUrl, serverEtag))
         coEvery { eventsDao.markCreatedOnServer(masterEvent.id, serverUrl, serverEtag, any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(masterEvent.id, serverUrl, serverEtag, any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         val result = pushStrategy.pushAll(client)
 
         assert(result is PushResult.Success)
 
-        // Master uses markCreatedOnServer, not markSynced
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(masterEvent.id, serverUrl, serverEtag, any()) }
+        // Master uses markCreatedOnServerWithCopy, not markSynced
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(masterEvent.id, serverUrl, serverEtag, any(), any()) }
 
-        // No exceptions means no markSynced calls
+        // No exceptions means no markSynced or markSyncedWithCopy calls
         coVerify(exactly = 0) { eventsDao.markSynced(any(), any(), any()) }
+        coVerify(exactly = 0) { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) }
     }
 
     /**
-     * Verify serialization captures exceptions at call time (not later).
-     *
-     * This test ensures the architectural guarantee: serializeEventWithExceptions
-     * returns BOTH the serialized data AND the list of exceptions, so they're
-     * guaranteed to be consistent.
+     * Checks that the exceptions read at serialization time decide which rows are marked synced:
+     * `serializeEventWithExceptions` returns the body and its exceptions from one read, so the two
+     * can't disagree.
      */
     @Test
     fun `exceptions captured at serialization time determine etag updates`() = runTest {
@@ -314,7 +299,7 @@ class PushStrategyExceptionRaceTest {
             status = PendingOperation.STATUS_PENDING
         )
 
-        // Capture the list of exceptions at mock call time
+        // Records the exceptions returned at serialization time.
         val capturedExceptions = mutableListOf<Event>()
 
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
@@ -322,9 +307,9 @@ class PushStrategyExceptionRaceTest {
         coEvery { eventsDao.getById(masterEventWithUrl.id) } returns masterEventWithUrl
         coEvery { calendarRepository.getCalendarById(masterEventWithUrl.calendarId) } returns testCalendar
 
-        // Return only exceptionA at serialization time
+        // Only exceptionA exists at serialization time.
         coEvery { eventsDao.getExceptionsForMaster(masterEventWithUrl.id) } answers {
-            // Capture what's returned - this is what should determine etag updates
+            // This list decides which exceptions are marked synced.
             val result = listOf(exceptionA)
             capturedExceptions.addAll(result)
             result
@@ -333,7 +318,9 @@ class PushStrategyExceptionRaceTest {
                 coEvery { client.updateEvent(masterEventWithUrl.caldavUrl!!, any(), "existing-etag") } returns
             CalDavResult.success("new-etag")
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         // Execute
@@ -341,17 +328,17 @@ class PushStrategyExceptionRaceTest {
 
         assert(result is PushResult.Success)
 
-        // Verify the captured list is used for etag updates
+        // Serialization read exactly exceptionA.
         assertEquals(1, capturedExceptions.size)
         assertEquals(exceptionA.id, capturedExceptions[0].id)
 
         // Only exceptionA (captured at serialization) gets the etag
         coVerify(exactly = 1) {
-            eventsDao.markCreatedOnServer(exceptionA.id, masterEventWithUrl.caldavUrl!!, "new-etag", any())
+            eventsDao.markCreatedOnServerWithCopy(exceptionA.id, masterEventWithUrl.caldavUrl!!, "new-etag", any(), any())
         }
 
-        // The master is the only row going through markSynced
-        coVerify(exactly = 1) { eventsDao.markSynced(masterEventWithUrl.id, "new-etag", any()) }
-        coVerify(exactly = 1) { eventsDao.markSynced(any(), any(), any()) }
+        // The master is the only row going through markSyncedWithCopy
+        coVerify(exactly = 1) { eventsDao.markSyncedWithCopy(masterEventWithUrl.id, "new-etag", any(), any()) }
+        coVerify(exactly = 1) { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) }
     }
 }

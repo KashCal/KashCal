@@ -9,10 +9,7 @@ import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.PendingOperation
 
 /**
- * Data Access Object for PendingOperation operations.
- *
- * Manages the offline-first sync queue.
- * Operations are processed FIFO by WorkManager with exponential backoff.
+ * Reads and writes the offline-first sync queue; [PendingOperation] says how the push drains it.
  */
 @Dao
 interface PendingOperationsDao {
@@ -20,14 +17,11 @@ interface PendingOperationsDao {
     // ========== Read Operations ==========
 
     /**
-     * Get all operations ready for processing.
+     * Returns the PENDING operations due by [now], oldest first.
      *
-     * Ready = PENDING status AND next_retry_at <= now, with an additional guard:
-     * DELETE operations with a linkedMoveId are excluded if a pending CREATE
-     * with the same linkedMoveId exists. This ensures cross-account moves
-     * complete CREATE before DELETE runs (prevents event loss).
-     *
-     * @see PendingOperation.linkedMoveId
+     * A DELETE with a [PendingOperation.linkedMoveId] waits while a PENDING CREATE with the same
+     * id exists, so a cross-account move lands the copy before removing the original; the
+     * other order would lose the event.
      */
     @Query("""
         SELECT * FROM pending_operations po
@@ -49,97 +43,67 @@ interface PendingOperationsDao {
     """)
     suspend fun getReadyOperations(now: Long): List<PendingOperation>
 
-    /**
-     * Get all pending operations (any status).
-     */
+    /** Returns every operation, any status, oldest first. */
     @Query("SELECT * FROM pending_operations ORDER BY created_at ASC")
     suspend fun getAll(): List<PendingOperation>
 
-    /**
-     * Alias for getAll (consistent naming with other DAOs).
-     */
+    /** Returns the same rows as [getAll]; named like the other DAOs' one-shot reads. */
     @Query("SELECT * FROM pending_operations ORDER BY created_at ASC")
     suspend fun getAllOnce(): List<PendingOperation>
 
-    /**
-     * Get pending operations for an event.
-     */
+    /** Returns [eventId]'s operations, any status, oldest first. */
     @Query("SELECT * FROM pending_operations WHERE event_id = :eventId ORDER BY created_at ASC")
     suspend fun getForEvent(eventId: Long): List<PendingOperation>
 
-    /**
-     * Get operation by ID.
-     */
+    /** Returns the operation with [id], or null. */
     @Query("SELECT * FROM pending_operations WHERE id = :id")
     suspend fun getById(id: Long): PendingOperation?
 
     /**
-     * Get count of pending operations (for UI badge).
+     * Observes the PENDING count. `EventCoordinator.getPendingOperationCount` exposes it; no UI
+     * reads it today.
      */
     @Query("SELECT COUNT(*) FROM pending_operations WHERE status = 'PENDING'")
     fun getPendingCount(): Flow<Int>
 
-    /**
-     * Get count of failed operations.
-     */
+    /** Observes the FAILED count. */
     @Query("SELECT COUNT(*) FROM pending_operations WHERE status = 'FAILED'")
     fun getFailedCount(): Flow<Int>
 
-    /**
-     * Get total operation count.
-     */
+    /** Returns the number of operations, any status. */
     @Query("SELECT COUNT(*) FROM pending_operations")
     suspend fun getTotalCount(): Int
 
-    /**
-     * Check if event has pending operations.
-     */
+    /** Returns whether [eventId] has an operation in any status but FAILED. */
     @Query("SELECT EXISTS(SELECT 1 FROM pending_operations WHERE event_id = :eventId AND status != 'FAILED')")
     suspend fun hasPendingForEvent(eventId: Long): Boolean
 
     // ========== Write Operations ==========
 
-    /**
-     * Insert new operation.
-     */
+    /** Inserts [operation], replacing a row with the same id. */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(operation: PendingOperation): Long
 
-    /**
-     * Update operation.
-     */
     @Update
     suspend fun update(operation: PendingOperation)
 
-    /**
-     * Delete operation by ID.
-     */
     @Query("DELETE FROM pending_operations WHERE id = :id")
     suspend fun deleteById(id: Long)
 
-    /**
-     * Delete all operations for an event.
-     */
+    /** Deletes every operation of [eventId], any status. */
     @Query("DELETE FROM pending_operations WHERE event_id = :eventId")
     suspend fun deleteForEvent(eventId: Long)
 
-    /**
-     * Delete all completed/failed operations older than cutoff.
-     */
+    /** Deletes FAILED operations last updated before [cutoff]. */
     @Query("DELETE FROM pending_operations WHERE status = 'FAILED' AND updated_at < :cutoff")
     suspend fun deleteOldFailed(cutoff: Long)
 
-    /**
-     * Delete all operations (for testing/reset).
-     */
+    /** Deletes every operation. */
     @Query("DELETE FROM pending_operations")
     suspend fun deleteAll()
 
     // ========== Status Updates ==========
 
-    /**
-     * Mark operation as in progress.
-     */
     @Query("""
         UPDATE pending_operations
         SET status = 'IN_PROGRESS',
@@ -148,9 +112,7 @@ interface PendingOperationsDao {
     """)
     suspend fun markInProgress(id: Long, now: Long)
 
-    /**
-     * Schedule retry with exponential backoff.
-     */
+    /** Requeues an operation for [nextRetryAt], counting the retry and recording [error]. */
     @Query("""
         UPDATE pending_operations
         SET status = 'PENDING',
@@ -162,10 +124,7 @@ interface PendingOperationsDao {
     """)
     suspend fun scheduleRetry(id: Long, nextRetryAt: Long, error: String, now: Long)
 
-    /**
-     * Mark operation as permanently failed.
-     * Sets failed_at for 24h auto-reset tracking (v21.5.3).
-     */
+    /** Marks an operation FAILED; `failed_at` is the clock [autoResetOldFailed] measures. */
     @Query("""
         UPDATE pending_operations
         SET status = 'FAILED',
@@ -176,9 +135,7 @@ interface PendingOperationsDao {
     """)
     suspend fun markFailed(id: Long, error: String, now: Long)
 
-    /**
-     * Reset operation to pending (for manual retry).
-     */
+    /** Returns one operation to PENDING, ready now, with a fresh retry count. */
     @Query("""
         UPDATE pending_operations
         SET status = 'PENDING',
@@ -191,15 +148,12 @@ interface PendingOperationsDao {
     suspend fun resetToPending(id: Long, now: Long)
 
     /**
-     * Reset all failed operations (for Force Full Sync).
-     * Also resets lifetime_reset_at to give fresh 30-day window (v21.5.3).
+     * Returns every FAILED and ABANDONED operation to PENDING for a forced full sync, and
+     * returns how many.
      *
-     * Includes ABANDONED operations: this is the recovery path the "sync
-     * expired" notification advertises ("Force Sync to retry"). Re-arming with
-     * a fresh lifetime_reset_at means a just-recovered op is NOT immediately
-     * re-detected as expired by the worker's subsequent expiry check.
-     *
-     * @return Number of operations reset
+     * ABANDONED is included because this is the recovery the "sync expired" notification
+     * advertises ("Force Sync to retry"). A fresh `lifetime_reset_at` starts a new 30-day
+     * window, so the worker's expiry check that follows doesn't abandon the op again.
      */
     @Query("""
         UPDATE pending_operations
@@ -215,13 +169,11 @@ interface PendingOperationsDao {
     suspend fun resetAllFailed(now: Long): Int
 
     /**
-     * Reset operations stuck in IN_PROGRESS state back to PENDING.
-     * Called at sync startup to recover from app crashes during processing.
-     * Uses 1-hour timeout to avoid resetting legitimately active operations.
+     * Returns IN_PROGRESS operations last updated before [cutoff] to PENDING, and returns how
+     * many.
      *
-     * @param cutoff Operations with updated_at before this are considered stuck
-     * @param now Current timestamp for updated_at
-     * @return Number of operations reset
+     * Runs at sync start to recover operations a crash left in progress; the caller's one-hour
+     * cutoff spares operations another sync is still working on.
      */
     @Query("""
         UPDATE pending_operations
@@ -233,14 +185,12 @@ interface PendingOperationsDao {
     suspend fun resetStaleInProgress(cutoff: Long, now: Long): Int
 
     /**
-     * Advance MOVE operation to CREATE phase with fresh retry budget.
+     * Advances a MOVE to its CREATE phase with a fresh retry budget, once its DELETE phase
+     * succeeds.
      *
-     * Called after DELETE phase succeeds. Resets retry_count to 0 so CREATE
-     * phase gets its own independent 5-retry budget.
-     *
-     * This prevents event loss when DELETE succeeds but CREATE fails:
-     * - Before: DELETE succeeds at retry 4, CREATE fails, total retries = 5 → FAILED (event lost!)
-     * - After: DELETE succeeds, CREATE starts at retry 0, has 5 more attempts
+     * The CREATE gets its own full `max_retries` attempts. Sharing the DELETE's budget would
+     * let a DELETE that succeeded on a late retry leave the CREATE too few attempts, and a
+     * CREATE that gives up after the DELETE has run loses the event.
      */
     @Query("""
         UPDATE pending_operations
@@ -256,10 +206,7 @@ interface PendingOperationsDao {
 
     // ========== Deduplication ==========
 
-    /**
-     * Check if operation exists for event with same type.
-     * Used to prevent duplicate operations.
-     */
+    /** Returns whether [eventId] has a non-FAILED operation of type [operation]. */
     @Query("""
         SELECT EXISTS(
             SELECT 1 FROM pending_operations
@@ -270,10 +217,7 @@ interface PendingOperationsDao {
     """)
     suspend fun operationExists(eventId: Long, operation: String): Boolean
 
-    /**
-     * Consolidate operations - if CREATE exists, remove UPDATE.
-     * Returns number of deleted rows.
-     */
+    /** Deletes [eventId]'s UPDATE operations when it has a CREATE, and returns how many. */
     @Query("""
         DELETE FROM pending_operations
         WHERE event_id = :eventId
@@ -286,8 +230,10 @@ interface PendingOperationsDao {
     suspend fun consolidateOperations(eventId: Long): Int
 
     /**
-     * Conflict ops (412 / 'Conflict') whose effective calendar matches [calendarId].
-     * Scoping mirrors [PushStrategy.pushForCalendar] — keep the two in sync.
+     * Returns the PENDING operations whose last error was a conflict (412 or "Conflict") and
+     * whose effective calendar is [calendarId].
+     *
+     * The calendar scoping mirrors `PushStrategy.pushForCalendar`; keep the two in step.
      */
     @Query("""
         SELECT po.* FROM pending_operations po
@@ -308,14 +254,11 @@ interface PendingOperationsDao {
     // ========== Retry Lifecycle Methods (v21.5.3) ==========
 
     /**
-     * Auto-reset FAILED operations older than 24 hours.
-     * Uses failed_at column to measure time since failure, not updated_at.
-     * Excludes operations that have exceeded 30-day lifetime.
+     * Returns FAILED operations that failed before [failedBefore] (the caller passes 24 hours
+     * ago) to PENDING with a fresh retry count, and returns how many.
      *
-     * @param failedBefore Reset ops that failed before this timestamp
-     * @param lifetimeCutoff Exclude ops with lifetime_reset_at before this (expired)
-     * @param now Current timestamp for updated_at
-     * @return Number of operations reset
+     * Measures from `failed_at`, not `updated_at`. Operations whose `lifetime_reset_at` is not
+     * after [lifetimeCutoff] (past the 30-day lifetime) are left alone.
      */
     @Query("""
         UPDATE pending_operations
@@ -333,11 +276,8 @@ interface PendingOperationsDao {
     suspend fun autoResetOldFailed(failedBefore: Long, lifetimeCutoff: Long, now: Long): Int
 
     /**
-     * Find operations that have exceeded 30-day lifetime.
-     * These should be abandoned to prevent infinite retry loops.
-     *
-     * @param cutoff Operations with lifetime_reset_at before this are expired
-     * @return List of expired operations to abandon
+     * Returns PENDING and FAILED operations whose `lifetime_reset_at` is before [cutoff] (the
+     * caller passes 30 days ago), for [abandonOperation]; otherwise they would retry forever.
      */
     @Query("""
         SELECT * FROM pending_operations
@@ -348,30 +288,19 @@ interface PendingOperationsDao {
     suspend fun getExpiredOperations(cutoff: Long): List<PendingOperation>
 
     /**
-     * Abandon an expired operation permanently.
+     * Abandons an expired operation; returns 1 if this call abandoned it, 0 if it was already
+     * terminal (for example abandoned by a concurrent sync).
      *
-     * Sets status to the terminal ABANDONED (not FAILED): this removes the row
-     * from [getExpiredOperations] (which selects only PENDING/FAILED), so the
-     * "sync expired" notification fires exactly once instead of re-posting on
-     * every subsequent background sync. The row is intentionally kept (not
-     * deleted) so [resetAllFailed] (Force Sync) can recover it.
+     * ABANDONED, unlike FAILED, is outside [getExpiredOperations], so the "sync expired"
+     * notification fires once instead of on every later background sync. The row is kept so
+     * [resetAllFailed] (Force Sync) can recover it.
      *
-     * The `status IN ('PENDING','FAILED')` guard makes this a compare-and-set:
-     * only the first caller to reach a still-active row transitions it and gets
-     * a non-zero return. When two background syncs overlap (they run under
-     * different WorkManager unique-work names and are not otherwise serialized),
-     * both may read the same expired op, but only one abandons it — the other
-     * gets 0 for that op and won't count it toward its own notification. Two
-     * syncs racing over disjoint ops can still each post; the notification stays
-     * single because it reposts on a fixed id with setOnlyAlertOnce (see
-     * SyncNotificationManager). The per-run count can undercount in that race,
-     * but the user sees one silent update rather than repeated alerts.
-     *
-     * @param id Operation ID to abandon
-     * @param reason Human-readable reason for abandonment
-     * @param now Current timestamp for updated_at
-     * @return Number of rows transitioned (1 if this call abandoned the op, 0 if
-     *   it was already terminal — e.g. abandoned by a concurrent sync).
+     * The `status IN ('PENDING','FAILED')` guard makes this a compare-and-set. Two overlapping
+     * background syncs (different WorkManager unique-work names, not otherwise serialized) can
+     * read the same expired op, but only one abandons it and counts it toward its notification.
+     * Syncs racing over disjoint ops can each post; the notification stays single because it
+     * reposts on a fixed id with setOnlyAlertOnce (`SyncNotificationManager`). The per-run
+     * count can then undercount, but the user sees one silent update instead of repeated alerts.
      */
     @Query("""
         UPDATE pending_operations
@@ -384,18 +313,12 @@ interface PendingOperationsDao {
     suspend fun abandonOperation(id: Long, reason: String, now: Long): Int
 
     /**
-     * Refresh lifetime clock when user interacts with event.
-     * Extends the 30-day retry window from this moment.
+     * Restarts the 30-day lifetime of [eventId]'s non-FAILED operations at [now]; EventWriter
+     * calls it when a change is queued onto an event that already has a PENDING operation.
      *
-     * Only refreshes non-FAILED operations (FAILED ops need explicit reset).
-     *
-     * Note: an ABANDONED op would also match (status != 'FAILED'), but this is
-     * harmless — refreshing its clock does NOT re-arm it (status stays
-     * ABANDONED, so it remains excluded from both getReadyOperations and
-     * getExpiredOperations). Re-editing the event queues a fresh op instead.
-     *
-     * @param eventId Event ID whose operations should be refreshed
-     * @param now Current timestamp to set as new lifetime_reset_at
+     * FAILED operations need an explicit reset. An ABANDONED op also matches, which is
+     * harmless: its status stays ABANDONED, so it stays out of [getReadyOperations] and
+     * [getExpiredOperations]. Re-editing the event queues a fresh op.
      */
     @Query("""
         UPDATE pending_operations
@@ -407,22 +330,17 @@ interface PendingOperationsDao {
 
     // ========== iCloud URL Migration ==========
 
-    /**
-     * Update target URL for a pending operation (for iCloud URL normalization migration).
-     */
+    /** Sets an operation's target URL, for the iCloud URL normalization migration. */
     @Query("UPDATE pending_operations SET target_url = :targetUrl WHERE id = :id")
     suspend fun updateTargetUrl(id: Long, targetUrl: String)
 
     // ========== Cross-Account Move Linked Operations (v23.2.0) ==========
 
     /**
-     * Remove linked DELETE when CREATE permanently fails.
+     * Deletes the DELETE half of a cross-account move once its CREATE fails for good.
      *
-     * In cross-account moves, CREATE and DELETE are queued with the same linkedMoveId.
-     * If CREATE permanently fails (e.g., auth error after max retries), the DELETE
-     * becomes orphaned. This method cleans it up to prevent queue pollution.
-     *
-     * @param linkedMoveId The UUID linking the CREATE and DELETE operations
+     * Both halves share [linkedMoveId]. Without the CREATE the DELETE is orphaned, and running
+     * it would remove the only copy.
      */
     @Query("""
         DELETE FROM pending_operations

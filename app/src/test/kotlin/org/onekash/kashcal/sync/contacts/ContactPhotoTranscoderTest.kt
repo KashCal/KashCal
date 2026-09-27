@@ -11,11 +11,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * [ContactPhotoTranscoder] transcodes only the two formats strict servers drop
- * (WebP, HEIF) to JPEG and leaves everything else untouched. The real platform
- * codec is replaced with a fake via the internal constructor, so these assert the
- * ROUTING decision — Robolectric cannot decode WebP/HEIF, so real-pixel output is
- * device-verified, not here.
+ * [ContactPhotoTranscoder] transcodes only the two formats strict servers drop (WebP, HEIF) to
+ * JPEG and leaves everything else untouched. The internal constructor swaps in a fake codec, so
+ * these check the routing only: Robolectric can't decode WebP/HEIF, and real-pixel output is
+ * device-verified.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])

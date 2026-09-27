@@ -26,13 +26,12 @@ import java.util.Calendar
 import java.util.Locale
 
 /**
- * Compose tests for the monthly nth-weekday selector.
+ * Compose tests for the monthly pattern selector: the day, last-day and nth-weekday options show
+ * the parsed rule, not the start date, and taps emit the chosen pattern.
  *
- * Drives [MonthlyPatternSelector] and [RecurrencePickerRow] through their real
- * composition so that rendering from the parsed pattern (not the start date) is
- * exercised at the surface where the user sits. Runs under Robolectric so it
- * lands in the normal unit-test sweep; run the class in isolation given the
- * repo's known multi-class native-crash flake.
+ * Renders [MonthlyPatternSelector] directly and through [RecurrencePickerRow], the surface the
+ * user sees. Runs under Robolectric in the normal unit-test sweep; run the class in isolation,
+ * since Robolectric runs of more than one class hit a native crash.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h9999dp-mdpi")
@@ -41,8 +40,7 @@ class MonthlyPatternSelectorComposeTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    // Assertions match English strings and NARROW weekday labels, so pin the
-    // locale rather than rely on the JVM/Robolectric default.
+    // Assertions match English strings and narrow weekday labels, so the locale is pinned.
     private var originalLocale: Locale? = null
 
     @Before
@@ -56,8 +54,8 @@ class MonthlyPatternSelectorComposeTest {
         originalLocale?.let { Locale.setDefault(it) }
     }
 
-    // Sat 2026-04-18 00:00 UTC — a Saturday, the 3rd Saturday of April. Used as
-    // the start-date fallback to prove the parsed rule wins over it.
+    // Sat 2026-04-18 00:00 UTC, the 3rd Saturday of April: the parsed rule must win over this
+    // start date.
     private val saturday18Millis = 1776470400000L
 
     private fun renderSelector(
@@ -88,13 +86,13 @@ class MonthlyPatternSelectorComposeTest {
 
     @Test
     fun nthWeekdayPattern_showsLastAndFriday_regardlessOfSaturdayStart() {
-        // A parsed "last Friday" rule opened on a Saturday-the-18th event must show
-        // Last + Friday selected, NOT 3rd + Saturday from the start date.
+        // A parsed "last Friday" rule opened on a Saturday-the-18th event must show Last and
+        // Friday selected, not 3rd and Saturday from the start date.
         renderSelector(initial = MonthlyPattern.NthWeekday(-1, DayOfWeek.FRIDAY))
 
         composeTestRule.onNodeWithText("last").assertIsSelected()
         composeTestRule.onNodeWithText("F").assertIsSelected()
-        // The start-date-derived ordinal (3rd) must NOT be highlighted.
+        // The start date's ordinal (3rd) must not be highlighted.
         composeTestRule.onNodeWithText("3rd").assertIsNotSelected()
     }
 
@@ -129,7 +127,7 @@ class MonthlyPatternSelectorComposeTest {
     @Test
     fun sevenWeekdayCircles_allRenderAtNarrowWidth() {
         renderSelector(initial = MonthlyPattern.NthWeekday(-1, DayOfWeek.FRIDAY))
-        // NARROW English weekday labels: S M T W T F S -> 2x"S", 2x"T", singles M W F.
+        // Narrow English weekday labels S M T W T F S: two "S", two "T", one each of M, W, F.
         composeTestRule.onAllNodesWithText("S").assertCountEquals(2)
         composeTestRule.onAllNodesWithText("T").assertCountEquals(2)
         composeTestRule.onNodeWithText("F").assertIsSelected()
@@ -137,8 +135,8 @@ class MonthlyPatternSelectorComposeTest {
 
     @Test
     fun switchingIntoNthWeekday_fromDay29Start_seedsLastNotInvalidFifth() {
-        // The fresh-switch fallback clamps positional ordinal 5 (days 29-31) to
-        // Last, so it seeds NthWeekday(-1, weekday) — never an invalid 5th.
+        // Switching in from another pattern clamps start-date ordinal 5 (days 29-31) to Last, so
+        // it seeds NthWeekday(-1, weekday), never an invalid 5th.
         var last: MonthlyPattern? = null
         renderSelector(
             initial = MonthlyPattern.SameDay(29),
@@ -156,10 +154,9 @@ class MonthlyPatternSelectorComposeTest {
 
     @Test
     fun sameDayPattern_showsRuleDayNotStartDay_andHidesOrdinalRows() {
-        // The "On day N" radio reflects the parsed rule's day-of-month, NOT the
-        // start date's. A BYMONTHDAY=9 rule opened on a day-18 start must read
-        // "On day 9" (start date is only a fallback when the rule has none). The
-        // nth-weekday rows are absent when pattern is SameDay.
+        // The "On day N" radio shows the parsed rule's day of month, not the start date's: a
+        // BYMONTHDAY=9 rule opened on a day-18 start reads "On day 9". The nth-weekday rows are
+        // absent for SameDay.
         renderSelector(initial = MonthlyPattern.SameDay(9), startDayOfMonth = 18)
 
         composeTestRule.onNodeWithText("On day 9").assertIsSelected()
@@ -170,10 +167,9 @@ class MonthlyPatternSelectorComposeTest {
 
     @Test
     fun sameDayRule_openedOnDivergingStart_roundTripsDayNineThroughPickerRow() {
-        // End-to-end guard: a BYMONTHDAY=9 rule opened on a day-18 start must show
-        // "On day 9" and, when that radio is tapped, re-emit BYMONTHDAY=9 — not
-        // silently rewrite to the start date's day 18. Start emitted at null (not the
-        // expected value) so the assertion only passes if the tap actually emits.
+        // A BYMONTHDAY=9 rule opened on a day-18 start must show "On day 9" and, when that radio
+        // is tapped, emit BYMONTHDAY=9, not silently rewrite to the start date's day 18.
+        // `emitted` starts at null so the assertion passes only if the tap emits.
         var emitted: String? = null
         composeTestRule.setContent {
             MaterialTheme {
@@ -195,7 +191,7 @@ class MonthlyPatternSelectorComposeTest {
 
     @Test
     fun lastDayPattern_selectsLastDayRadio_andHidesOrdinalRows() {
-        // The untouched "On last day" radio stays selected, rows absent.
+        // The untouched "On last day" radio stays selected and the nth-weekday rows are absent.
         renderSelector(initial = MonthlyPattern.LastDay)
 
         composeTestRule.onNodeWithText("On last day of month").assertIsSelected()
@@ -204,9 +200,8 @@ class MonthlyPatternSelectorComposeTest {
 
     @Test
     fun customMonthInterval2_lastFridayRule_showsLastFridaySelectedThroughPickerRow() {
-        // The custom every-N-months host renders the same selector. Opening a
-        // FREQ=MONTHLY;INTERVAL=2;BYDAY=-1FR rule on a Saturday start must show
-        // Last + Friday selected — end-to-end through the custom-month path.
+        // The custom every-N-months path renders the same selector. Opening a
+        // FREQ=MONTHLY;INTERVAL=2;BYDAY=-1FR rule on a Saturday start must select Last and Friday.
         composeTestRule.setContent {
             MaterialTheme {
                 var rrule by remember {

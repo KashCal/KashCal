@@ -17,15 +17,20 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Serializes the neutral [Contact] model back to vCard text through [VCardWriter],
- * the inverse of [VCardParser]. The load-bearing behavior is round-trip fidelity:
- * a contact parsed from a body, edited in one field, and written back must change
- * ONLY that field and preserve every unmapped property from the original body —
- * the parse -> edit -> write -> re-parse identity that settles whether writing
- * should patch the stored body or regenerate from the lossy model.
+ * Serializes the neutral [Contact] model back to vCard text through [VCardWriter], the inverse
+ * of [VCardParser]. The load-bearing behavior is patch mode's round trip: a contact parsed from
+ * a body, edited in one field and written back re-parses with only that field changed, and the
+ * original body's unmapped properties survive.
  *
- * Whole-[Contact] equality is never asserted directly: a write always produces a
- * fresh [Contact.rawVCard] on re-parse, so comparisons normalize that one field.
+ * Also covered: custom labels kept on edit, the output version and its default, generate mode
+ * (from-scratch contacts, a mandatory FN and an empty N for a nameless one, a display-name-only
+ * contact, fallback from an unparseable or multi-card rawVCard), the Apple raw idioms for
+ * anniversary, relations, IM handles and KIND, a 4.0 KIND edit, lower-cased emission of KIND,
+ * relation type and IM protocol, preferred emails at both versions, and PHOTO typing and byte
+ * preservation.
+ *
+ * Whole-[Contact] equality is never asserted directly: a re-parse carries the written body as
+ * [Contact.rawVCard], so comparisons normalize that one field.
  */
 class VCardWriterTest {
 
@@ -146,11 +151,11 @@ class VCardWriterTest {
 
     @Test
     fun `a nameless from-scratch contact still emits a mandatory non-blank FN`() {
-        // A device contact can carry only a phone (no name row at all): the reverse
-        // mapper then yields a blank displayName and an all-null StructuredName. FN is
-        // mandatory in a vCard (RFC 6350 6.2.1 / RFC 2426 3.1.1) and strict servers
-        // reject a card that omits it, so a net-new (generate-mode) write MUST still
-        // emit a non-blank FN synthesized from the best available identifier.
+        // A device contact can carry only a phone and no name row: the reverse mapper
+        // then yields a blank displayName and an all-null StructuredName. FN is
+        // mandatory (RFC 6350 §6.2.1, RFC 2426 §3.1.1) and strict servers reject a card
+        // without it, so a net-new (generate-mode) write must still emit a non-blank FN
+        // synthesized from the best available identifier.
         val phoneOnly = Contact(
             version = "3.0",
             uid = "urn:uuid:nameless-0001",
@@ -172,11 +177,11 @@ class VCardWriterTest {
 
     @Test
     fun `a nameless contact emits a structurally-present empty N that round-trips to no name`() {
-        // N is optional per RFC 6350 6.2.2, but some servers reject a card that omits the
-        // N property entirely while accepting an all-empty N:;;;;. A nameless generate-mode
-        // contact must therefore emit a structurally-present N with empty components — no
-        // fabricated name — and it must re-parse back to an all-null structured name so the
-        // round-trip is unchanged.
+        // N is optional at 4.0 (RFC 6350 §6.2.2) but required at 3.0 (RFC 2426 §3.1.2),
+        // and some servers reject a card that omits N while accepting an all-empty
+        // N:;;;;. A nameless generate-mode contact must emit an N with empty components
+        // and no fabricated name, and it must re-parse to an all-null structured name so
+        // the round trip is unchanged.
         val phoneOnly = Contact(
             version = "3.0",
             uid = "urn:uuid:nameless-emptyn-0001",
@@ -190,7 +195,7 @@ class VCardWriterTest {
 
         val nLine = body.lineSequence().firstOrNull { it.startsWith("N:") || it.startsWith("N;") }
         assertNotNull(nLine, "a nameless card must still carry a structurally-present N property")
-        // The N carries no name components — it must not fabricate a name from the phone.
+        // The N carries no name components; it must not fabricate a name from the phone.
         assertFalse(nLine.contains("15550142"), "empty N must not smuggle the phone into a name component; got '$nLine'")
         val reparsed = parser.parse(body).single()
         assertEquals(StructuredName(), reparsed.structuredName)
@@ -218,8 +223,8 @@ class VCardWriterTest {
         // The 3.0 fixture stores the anniversary as the Apple raw itemN.X-ABDATE +
         // X-ABLabel form. ANNIVERSARY is a 4.0-only property ez-vcard drops from a 3.0
         // body, so a 3.0 card must carry the edit in that same raw idiom. The edit is
-        // APPLIED (not preserved) and the STALE date is gone, so the body carries a
-        // single, consistent anniversary rather than a contradictory double-emit.
+        // applied and the stale date is gone, so the body carries one anniversary, not
+        // two contradictory ones.
         val original = parse("kashcal_full_v3.vcf")
         assertEquals(LocalDate.of(2015, 6, 20), original.anniversary?.date)
 
@@ -234,8 +239,8 @@ class VCardWriterTest {
 
     @Test
     fun `an unedited Apple raw anniversary is preserved verbatim, not converted`() {
-        // Preserve-when-unchanged: an untouched dual-spelling facet keeps its original
-        // Apple raw idiom byte-faithful rather than being rewritten as a native property.
+        // An untouched dual-spelling facet keeps its original Apple raw idiom; it isn't
+        // rewritten as a native property.
         val original = parse("kashcal_full_v3.vcf")
 
         val body = writer.write(original, "3.0")
@@ -256,7 +261,7 @@ class VCardWriterTest {
         val reparsed = parser.parse(body).single()
 
         // RELATED is 4.0-only (dropped from a 3.0 body), so the 3.0 relation stays in the
-        // Apple raw X-ABRELATEDNAMES idiom — carrying the NEW name, with the stale one gone.
+        // Apple raw X-ABRELATEDNAMES idiom, carrying the new name with the stale one gone.
         assertEquals("New Partner Name", reparsed.relations.single().name)
         assertFalse(body.contains("KashCal Spouse Probe"), "the stale relation name must not linger")
     }
@@ -446,10 +451,10 @@ class VCardWriterTest {
 
     @Test
     fun `a photo missing only its contentType is preserved verbatim, never relabeled`() {
-        // The device Contacts Photo row carries no MIME subtype, so a photo sourced
-        // from a device round trip comes back with the same bytes but contentType=null.
-        // Patch mode must treat that as UNCHANGED (a contentType-only delta), leaving the
-        // original PHOTO line byte-faithful — not regenerate it and relabel PNG as JPEG.
+        // The device Contacts Photo row carries no MIME subtype, so a photo read back from
+        // the device has the same bytes but contentType=null. Patch mode must treat that
+        // contentType-only difference as unchanged and keep the original PHOTO, not
+        // regenerate it and relabel the PNG as JPEG.
         val original = parse("kashcal_photo_inline_v3.vcf")
         assertEquals("png", original.photo?.contentType)
 
@@ -465,8 +470,8 @@ class VCardWriterTest {
 
     @Test
     fun `a generated inline photo of unknown type is labeled from its bytes, not defaulted to JPEG`() {
-        // A genuinely new inline photo with no contentType (e.g. reverse-mapped from a
-        // device row) must be typed from its magic bytes rather than blindly stamped JPEG.
+        // A new inline photo with no contentType (for example reverse-mapped from a device
+        // row) must be typed from its magic bytes, not stamped JPEG.
         val pngBytes = byteArrayOf(0x89.toByte(), 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x01, 0x02)
         val scratch = Contact(
             version = "3.0",
@@ -485,9 +490,9 @@ class VCardWriterTest {
 
     @Test
     fun `a generated WebP photo with no contentType is labeled webp, not defaulted to JPEG`() {
-        // 'RIFF' + size + 'WEBP' — a device WebP thumbnail carries no MIME subtype, so the
-        // type must come from the magic bytes rather than the JPEG default (else a
-        // byte-preserving server stores the wrong TYPE).
+        // 'RIFF' + size + 'WEBP'. A device WebP thumbnail carries no MIME subtype, so the
+        // type must come from the magic bytes, not the JPEG default, or a byte-preserving
+        // server stores the wrong TYPE.
         val webpBytes = byteArrayOf(
             0x52, 0x49, 0x46, 0x46, 0x1A, 0x00, 0x00, 0x00,
             0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x20,
@@ -511,7 +516,7 @@ class VCardWriterTest {
 
     @Test
     fun `a generated HEIF photo with no contentType is labeled heic, not defaulted to JPEG`() {
-        // ISOBMFF: box size, 'ftyp', 'heic' brand. A device HEIF thumbnail with no MIME.
+        // ISOBMFF: box size, 'ftyp', 'heic' brand; a device HEIF thumbnail with no MIME type.
         val heifBytes = byteArrayOf(
             0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70,
             0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
@@ -536,9 +541,9 @@ class VCardWriterTest {
     @Test
     fun `a JPEG photo with no contentType carries a real image media type on 4-0, not octet-stream`() {
         // A transcoded device photo arrives as JPEG bytes with contentType cleared to null,
-        // so its type must be sniffed. A literal "jpeg" contentType would fall through
-        // ez-vcard's predefined-constant match (its extension is "jpg") and serialize as
-        // data:application/octet-stream on 4.0 — the exact mislabel a strict server drops.
+        // so its type must be sniffed. A literal "jpeg" contentType would miss ez-vcard's
+        // predefined JPEG constant (its extension is "jpg") and serialize as
+        // data:application/octet-stream on 4.0, the mislabel a strict server drops.
         val jpegBytes = byteArrayOf(0xFF.toByte(), 0xD8.toByte(), 0xFF.toByte(), 0xE0.toByte(), 0x00, 0x10)
         val scratch = Contact(
             version = "4.0",

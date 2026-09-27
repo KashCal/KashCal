@@ -11,13 +11,13 @@ import org.robolectric.annotation.Config
 import kotlin.random.Random
 
 /**
- * Never-throws property test for the layer directly above the parser:
- * [ICalEventMapper.toEntity]. Untrusted bytes enter at [ICalParser], but the
- * mapper is where a *parseable-yet-hostile* event (DTEND before DTSTART, a
- * multi-year DURATION, a far-future date past the 32-bit time_t boundary that
- * issue #326 surfaces, an empty SUMMARY) turns into a stored [Event] — the shape
- * a crash-on-bad-server-data would take. The mapper must be total (never throw)
- * and internally consistent (a mapped Event carries a real title and finite ts).
+ * Checks that [ICalEventMapper.toEntity] never throws on parseable but hostile input.
+ *
+ * Untrusted bytes enter at [ICalParser], but the mapper, one layer above, turns a parseable
+ * event into a stored [Event], so a crash on hostile server data (DTEND before DTSTART, a
+ * multi-year DURATION, a date past the 32-bit time_t boundary from #326, an empty SUMMARY)
+ * would surface here. It must be total and each mapped Event consistent: a non-empty title,
+ * timestamps that aren't `Long.MIN_VALUE` or `Long.MAX_VALUE`, and a non-negative alarm count.
  *
  * Seeded for reproducibility: -Dfuzz.mapper.seed= / -Dfuzz.mapper.iterations=.
  */
@@ -61,17 +61,17 @@ class ICalEventMapperFuzzTest {
                 assertTrue("alarmCount must be >= 0", entity.alarmCount >= 0)
             }
         }
-        // Guard against the generator silently producing zero parseable events
-        // (which would make this test vacuously pass forever).
+        // A generator that silently yields zero parseable events would make this test
+        // pass vacuously.
         assertTrue("Generator must yield some parseable events, got $mapped", mapped > 0)
     }
 
-    /** Build a syntactically valid VCALENDAR with adversarial field values. */
+    /** Builds a syntactically valid VCALENDAR with adversarial field values. */
     private fun randomIcs(rnd: Random, salt: Int): String {
         val allDay = rnd.nextBoolean()
         val useDuration = rnd.nextBoolean()
 
-        // Year across a wide range straddling the 32-bit boundary (2038) and 2100.
+        // Years straddling the 32-bit boundary (2038) and 2100.
         val year = 1970 + rnd.nextInt(230) // 1970..2199
         val month = 1 + rnd.nextInt(12)
         val day = 1 + rnd.nextInt(28)

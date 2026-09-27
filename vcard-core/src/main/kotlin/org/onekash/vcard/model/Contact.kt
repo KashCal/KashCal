@@ -3,32 +3,28 @@ package org.onekash.vcard.model
 import java.time.LocalDate
 
 /**
- * Neutral, framework-free representation of a single vCard.
+ * One vCard as a framework-free value, the handoff between this pure-JVM format module and the
+ * app layers that map it to and from the Android Contacts Provider.
  *
- * This is the handoff type between the format layer (vCard bytes/text, parsed
- * here in the pure-JVM module) and the later Android-coupled layers that map it
- * onto the system Contacts Provider. It carries **no** ez-vcard, Android, or
- * networking types by design: callers never need the vCard library on their
- * classpath.
- *
- * Both vCard 3.0 (RFC 2426) and 4.0 (RFC 6350) collapse into this one shape.
- * [version] reflects the `VERSION:` line of the parsed body, not any version the
- * caller may have requested.
+ * It carries no ez-vcard, Android or networking types, so callers never need the vCard library
+ * on their classpath. vCard 3.0 (RFC 2426) and 4.0 (RFC 6350) share this one shape.
  */
 data class Contact(
-    /** The `VERSION:` value from the parsed body ("3.0" / "4.0"). */
+    /**
+     * The `VERSION:` value of the parsed body, never a version the caller requested. ez-vcard
+     * assumes "2.1" when the body has none.
+     */
     val version: String,
 
     /** `UID` property, or empty when the body carries none (RFC 6350 §6.7.6, `*1`). */
     val uid: String,
 
     /**
-     * `KIND` value, lower-cased (RFC 6350 §6.1.4: "individual", "group", "org", …),
-     * or null when the body declares none. Carries the native 4.0 `KIND` property and
-     * the 3.0 Apple `X-ADDRESSBOOKSERVER-KIND` fallback alike, so a caller can drop a
-     * `"group"` distribution-list vCard (which would otherwise mirror as a phantom
-     * empty contact) without re-parsing the body. The parser records the value; the
-     * drop policy lives with the caller.
+     * `KIND` value, lower-cased (RFC 6350 §6.1.4: "individual", "group", "org", "location"), or
+     * null when the body declares none. Taken from the 4.0 `KIND` property, else the 3.0 Apple
+     * `X-ADDRESSBOOKSERVER-KIND`, so a caller can drop a "group" distribution-list vCard, which
+     * would otherwise show as an empty contact, without re-parsing the body. The parser only
+     * records the value; the drop policy lives with the caller.
      */
     val kind: String? = null,
 
@@ -36,8 +32,8 @@ data class Contact(
     val structuredName: StructuredName,
 
     /**
-     * `FN` formatted/display name. Never blank on the model: when the body has no
-     * `FN`, this is derived from [structuredName].
+     * `FN` formatted name. When the body's `FN` is missing or blank, the parser derives it from
+     * [structuredName], so it is blank only when the body has neither.
      */
     val displayName: String,
 
@@ -64,19 +60,25 @@ data class Contact(
     val birthday: ContactDate? = null,
     val anniversary: ContactDate? = null,
 
-    /** The verbatim vCard text this contact was parsed from (round-trip fidelity). */
+    /**
+     * The vCard text this contact was parsed from: the body verbatim for a single-card body, a
+     * re-serialization of each card for a multi-card one. Blank on a contact rebuilt from device
+     * rows unless the caller attaches a body. [org.onekash.vcard.VCardWriter] patches this body
+     * when it holds one parseable card.
+     */
     val rawVCard: String,
 )
 
 /**
  * Structured `N` components (RFC 6350 §6.2.2).
  *
- * Each `N` component is a comma-separated value list; the extra values (a second
- * middle name, "Dr. Prof." prefixes) are space-joined into the single [middle] /
- * [prefix] / [suffix] strings the Android provider stores, rather than dropped.
+ * Each `N` component can hold several comma-separated values. The extra values of the
+ * additional-name, prefix and suffix components (a second middle name, "Dr. Prof.") are
+ * space-joined into the single [middle], [prefix] and [suffix] strings the Android provider
+ * stores, not dropped.
  *
- * The `X-PHONETIC-*` reading aids (Apple/Android convention) surface on the
- * phonetic components so CJK name sorting and search work on device.
+ * The `X-PHONETIC-*` reading aids (Apple/Android convention) fill the phonetic components so CJK
+ * name sorting and search work on device.
  */
 data class StructuredName(
     val family: String? = null,
@@ -88,7 +90,7 @@ data class StructuredName(
     val phoneticMiddle: String? = null,
     val phoneticFamily: String? = null,
 ) {
-    /** Space-joined display form built from the populated components, in reading order. */
+    /** Space-joins the non-blank prefix, given, middle, family and suffix, in that order. */
     fun toDisplayName(): String =
         listOfNotNull(prefix, given, middle, family, suffix)
             .filter { it.isNotBlank() }
@@ -100,7 +102,7 @@ data class Email(
     val address: String,
     /** Lower-cased `TYPE` tokens (e.g. "home", "work"), excluding the preference marker. */
     val types: List<String> = emptyList(),
-    /** True for 3.0 `TYPE=PREF` and 4.0 `PREF=1` alike. */
+    /** True for a 3.0 `TYPE=PREF` and for any 4.0 `PREF` parameter alike. */
     val preferred: Boolean = false,
     /** Custom label from a grouped `itemN.X-ABLabel` (e.g. "School"), else null. */
     val label: String? = null,
@@ -151,8 +153,8 @@ data class Relation(
 )
 
 /**
- * A contact photo, in exactly one of two shapes: a remote [url], or inline
- * [data] bytes with their [contentType].
+ * A contact photo, either a remote [url] or inline [data] bytes. [contentType] is null when the
+ * source declares no type, as with a photo read from a device row.
  */
 data class Photo(
     val url: String? = null,
@@ -177,8 +179,9 @@ data class Photo(
 }
 
 /**
- * A `BDAY`/`ANNIVERSARY` value. A full calendar [date] when the body carried one;
- * otherwise the un-parsed [text] (partial dates, free-text values) is retained.
+ * A `BDAY` or `ANNIVERSARY` value: [date] when it is a full calendar date, and [text] for a
+ * partial date or free text. An Apple `X-ABDATE` anniversary keeps its raw string in [text]
+ * alongside a parsed [date].
  */
 data class ContactDate(
     val date: LocalDate? = null,

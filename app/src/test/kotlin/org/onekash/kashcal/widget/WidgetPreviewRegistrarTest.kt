@@ -10,17 +10,16 @@ import java.io.File
 import java.time.LocalDate
 
 /**
- * Unit tests for the widget-preview registration policy.
+ * Tests [WidgetPreviewRegistrar]'s registration policy: the SDK gate, the publish stamp, the
+ * per-receiver batch walk and the backup exclusion of its preferences file.
  *
- * The policy is deliberately a pure function taking the SDK level as a parameter rather
- * than reading `Build.VERSION.SDK_INT`. Robolectric pins `sdk=34` here, so a
- * framework-read gate would make the only interesting branch — API 35 and up —
- * untestable.
+ * The policy takes the SDK level as a parameter, not `Build.VERSION.SDK_INT`, because unit tests
+ * run below API 35 (this class on the plain JVM, Robolectric tests at `sdk=34`), so a framework
+ * read would leave the only interesting branch, API 35 and up, untestable.
  *
- * The batch behaviour matters as much as the per-receiver decision: the platform budget
- * is roughly two calls an hour and there are five receivers, so a naive retry-everything
- * loop would keep re-burning the quota on widgets that already registered and starve the
- * ones at the end of the list.
+ * The batch walk matters as much as the per-receiver decision: the platform allows roughly two
+ * calls an hour and there are five receivers, so retrying every receiver would re-burn the quota
+ * on widgets already registered and starve the ones at the end of the list.
  */
 class WidgetPreviewRegistrarTest {
 
@@ -60,9 +59,9 @@ class WidgetPreviewRegistrarTest {
 
     @Test
     fun `the stamp changes at a month rollover so previews cannot advertise a stale month`() {
-        // Previews are rasterized once and kept by the system, and their sample content is
-        // built from the publish date. Without the month in the stamp, a preview published
-        // in July would still show July's grid and July's date number in December.
+        // Previews are rasterized once and kept by the system, with sample content built from
+        // the publish date. Without the month in the stamp, a preview published in July would
+        // still show July's grid and date number in December.
         val version = 100
         val july = WidgetPreviewRegistrar.publishStamp(version, LocalDate.of(2026, 7, 24))
         val laterInJuly = WidgetPreviewRegistrar.publishStamp(version, LocalDate.of(2026, 7, 31))
@@ -85,8 +84,8 @@ class WidgetPreviewRegistrarTest {
     @Test
     fun `no version and month combination collides with another or overflows`() {
         // The stamp packs a version code and a month into one Int. A collision silently
-        // suppresses a re-publish, leaving that widget stale until something else changes —
-        // a naive `k * version + month` packing collides once the months drift past k.
+        // suppresses a re-publish, leaving that widget stale until something else changes; a
+        // `k * version + month` packing would collide once the months drift past k.
         val stamps = mutableMapOf<Int, Pair<Int, LocalDate>>()
         (680..760).forEach { version ->
             var date = LocalDate.of(2026, 1, 1)
@@ -126,8 +125,8 @@ class WidgetPreviewRegistrarTest {
 
     @Test
     fun `a stored stamp ahead of the current one still registers`() {
-        // Downgrade, a restored-then-rolled-back install, or a clock moved backwards:
-        // re-register rather than trusting a stamp this build never wrote.
+        // A downgrade, a restored then rolled-back install, or a clock moved backwards:
+        // re-register, since this build never wrote that stamp.
         assertTrue(
             WidgetPreviewRegistrar.shouldRegister(
                 sdkInt = 35,
@@ -279,9 +278,9 @@ class WidgetPreviewRegistrarTest {
 
     /**
      * Registration state must never be restored onto another device. Both rule files are
-     * checked against the name the registrar actually uses, so renaming the preferences
-     * file without updating the rules fails here rather than silently leaving restored
-     * devices stuck on placeholder previews.
+     * checked against [WidgetPreviewRegistrar.PREFS_NAME], so renaming the preferences file
+     * without updating the rules fails here, not silently leaving restored devices on
+     * placeholder previews.
      */
     @Test
     fun `the registration preferences file is excluded from backup and device transfer`() {

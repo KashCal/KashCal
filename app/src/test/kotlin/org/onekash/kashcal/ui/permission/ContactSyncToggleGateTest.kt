@@ -5,17 +5,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pure-logic tests for the settings contact-sync toggle gate.
+ * Tests the contact-sync toggle gates in settings, so a refactor can't silently drop the
+ * permission gate:
  *
- * These lock the two decisions that used to live as inline lambda logic in the
- * settings route, where nothing exercised them and a refactor could silently
- * drop the permission gate:
- *
- *  1. Enabling contact sync must NOT take effect until READ + WRITE_CONTACTS is
- *     held — the toggle requests the permission first and defers the enable.
- *  2. A permission request only counts as granted when BOTH READ and WRITE come
- *     back granted; a partial grant must not enable sync (a write-only or
- *     read-only outcome can't mirror server contacts onto the device).
+ *  1. [contactSyncToggleRequiresPermissionRequest]: enabling contact sync without the contacts
+ *     permission requests it first, and the caller defers the enable until the result. An
+ *     enable with the permission held and any disable don't request.
+ *  2. [contactSyncPermissionGranted]: a request counts as granted only when both READ and
+ *     WRITE_CONTACTS come back granted. A partial grant can't sync and must not enable it.
  */
 class ContactSyncToggleGateTest {
 
@@ -37,8 +34,8 @@ class ContactSyncToggleGateTest {
 
     @Test
     fun `disabling never requests permission`() {
-        // Disable must go straight through even if the permission is missing —
-        // turning sync off needs no runtime permission.
+        // Disabling goes straight through even without the permission: turning sync off
+        // needs none.
         assertFalse(
             contactSyncToggleRequiresPermissionRequest(enabled = false, hasContactsPermission = false),
         )

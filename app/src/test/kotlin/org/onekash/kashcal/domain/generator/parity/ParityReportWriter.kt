@@ -5,7 +5,7 @@ import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 /**
- * Writes a human-readable markdown report of parity results, one section per case.
+ * Writes a Markdown report of parity results, one section per case, grouped by category.
  *
  * Output format:
  *
@@ -14,18 +14,19 @@ import java.time.format.DateTimeFormatter
  *     ## Summary
  *     - Total cases: N
  *     - Both engines agree: X (Y%)
- *     - Divergences: Z (by pool)
- *     - Engine errors: A (by engine)
+ *     - Divergences: Z (W%)
+ *     - One engine errored: E1
+ *     - Both engines errored: E2
+ *     ### RFC 5545 §3.8.5.3 compliance (Pool A only, n cases)   (when there are RFC results)
+ *     - counts of both, only lib-recur, only ical4j, and neither matching the RFC
  *
- *     ## Pool A: RFC 5545 §3.8.5.3 examples
+ *     ## Pool: <category> (n cases)
  *     ### Case name
- *     - Inputs: ...
- *     - RFC expected: [...]
- *     - lib-recur actual: [...]
- *     - ical4j actual: [...]
- *     - lib-recur matches RFC: true/false
- *     - ical4j matches RFC: true/false
+ *     - RRULE, DTSTART, RDATE and EXDATE (when set), Range
+ *     - RFC expected, lib-recur matches RFC, ical4j matches RFC   (Pool A)
+ *     - Result: AGREE, DIVERGE, ONE ERRORED or BOTH ERRORED, with the timestamps or errors
  *     - Classification: A / B / C / D
+ *     - Known divergence reason, Analyst note   (when set)
  */
 object ParityReportWriter {
 
@@ -146,13 +147,13 @@ object ParityReportWriter {
 }
 
 /**
- * A single case result with its comparison and classification.
+ * Holds one case's engine comparison and classification.
  *
- * @property case The input case.
- * @property parity Result of running both engines and comparing.
- * @property classification Divergence category ("A" clear bug, "B" RFC ambiguity,
- *   "C" scope gap, "D" identical). Set to "D" for BothAgree by default.
- * @property analystNote Optional free-form note added during analysis.
+ * @property classification Divergence category ("A" clear bug, "B" RFC ambiguity, "C" scope
+ *   gap, "D" identical), from [ParityHarnessRunner]'s rules or a [ParityAnalystNotes] override.
+ * @property analystNote From [ParityHarnessRunner.runCase]: the override's note, else, when the
+ *   engines don't agree, the case's `knownDivergenceReason` marked "[pre-classified]"; otherwise
+ *   null.
  */
 data class CaseResult(
     val case: RRuleCase,

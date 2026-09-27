@@ -23,15 +23,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Adversarial tests for credential and authentication handling.
+ * Adversarial tests for how the accounts table stores credentials and account state.
  *
- * Tests edge cases:
- * - Account with missing credentials
- * - Multiple accounts (unique constraint)
- * - Account deletion during sync
- * - Credential format validation
- * - Sync failure tracking
- * - Account state transitions
+ * Covers: accounts with and without a credential key, the provider+email+homeSetUrl unique
+ * index, account deletion cascading to calendars, email and credential-key formats, sync failure
+ * tracking, each provider, URLs with and without a trailing slash, enable and disable, and
+ * lookups.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -91,11 +88,10 @@ class CredentialAdversarialTest {
     @Test
     fun `duplicate provider-email-homeSetUrl rejected`() = runTest {
         val home = "https://caldav.icloud.com/12345/calendars/"
-        // First account succeeds
         val account1 = Account(provider = AccountProvider.ICLOUD, email = "same@icloud.com", homeSetUrl = home)
         database.accountsDao().insert(account1)
 
-        // Second with same provider+email+homeSetUrl should fail due to unique index
+        // Same provider+email+homeSetUrl violates the unique index
         val account2 = Account(provider = AccountProvider.ICLOUD, email = "same@icloud.com", homeSetUrl = home)
         try {
             database.accountsDao().insert(account2)
@@ -128,7 +124,6 @@ class CredentialAdversarialTest {
             Account(provider = AccountProvider.ICLOUD, email = "delete@icloud.com")
         )
 
-        // Add calendars
         database.calendarsDao().insert(
             Calendar(
                 accountId = accountId,
@@ -149,10 +144,9 @@ class CredentialAdversarialTest {
         val calsBefore = database.calendarsDao().getByAccountIdOnce(accountId)
         assertEquals(2, calsBefore.size)
 
-        // Delete account
         database.accountsDao().deleteById(accountId)
 
-        // Calendars should be cascade deleted (if FK set up)
+        // The calendars FK cascades the delete
         val calsAfter = database.calendarsDao().getByAccountIdOnce(accountId)
         assertTrue("Calendars should be deleted with account", calsAfter.isEmpty())
     }
@@ -161,10 +155,10 @@ class CredentialAdversarialTest {
     fun `delete non-existent account is safe`() = runTest {
         val nonExistentId = 99999L
 
-        // Should not throw (the assertion is that the next line runs at all)
+        // Must not throw; reaching the next line is the assertion
         database.accountsDao().deleteById(nonExistentId)
 
-        // And the row genuinely isn't present afterwards
+        // And no row exists afterwards
         assertEquals(null, database.accountsDao().getById(nonExistentId))
     }
 
@@ -179,7 +173,6 @@ class CredentialAdversarialTest {
         )
         val accountId = database.accountsDao().insert(account)
 
-        // Simulate failures
         repeat(5) {
             database.accountsDao().recordSyncFailure(accountId, System.currentTimeMillis())
         }
@@ -197,7 +190,6 @@ class CredentialAdversarialTest {
         )
         val accountId = database.accountsDao().insert(account)
 
-        // Simulate successful sync
         database.accountsDao().recordSyncSuccess(accountId, System.currentTimeMillis())
 
         val updated = database.accountsDao().getById(accountId)
@@ -214,11 +206,10 @@ class CredentialAdversarialTest {
         )
         val accountId = database.accountsDao().insert(account)
 
-        // Initial state - no sync yet
+        // No sync yet
         val initial = database.accountsDao().getById(accountId)
         assertNull(initial?.lastSuccessfulSyncAt)
 
-        // After successful sync
         database.accountsDao().recordSyncSuccess(accountId, now)
 
         val afterSync = database.accountsDao().getById(accountId)
@@ -344,12 +335,10 @@ class CredentialAdversarialTest {
             Account(provider = AccountProvider.ICLOUD, email = "toggle@icloud.com", isEnabled = true)
         )
 
-        // Disable
         database.accountsDao().setEnabled(accountId, false)
         var saved = database.accountsDao().getById(accountId)
         assertFalse(saved!!.isEnabled)
 
-        // Re-enable
         database.accountsDao().setEnabled(accountId, true)
         saved = database.accountsDao().getById(accountId)
         assertTrue(saved!!.isEnabled)
@@ -379,7 +368,7 @@ class CredentialAdversarialTest {
             Account(provider = AccountProvider.CALDAV, email = "haserror@test.com")
         )
 
-        // Simulate failure on second account
+        // Only the second account fails
         database.accountsDao().recordSyncFailure(id2, System.currentTimeMillis())
 
         val errored = database.accountsDao().getAccountsWithSyncErrors()

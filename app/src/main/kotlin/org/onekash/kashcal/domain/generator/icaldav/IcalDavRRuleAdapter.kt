@@ -13,25 +13,24 @@ import java.util.Calendar
 import java.util.TimeZone
 
 /**
- * Bridges OccurrenceGenerator's primitive-argument expansion signature to
- * icaldav-core's [ICalEvent] / [RRuleExpander] shape.
+ * Builds the icaldav-core [ICalEvent] that `RRuleExpander` expands from the primitive arguments
+ * of [org.onekash.kashcal.domain.generator.IcalDavRRuleEngine.expandToTimestamps].
  *
- * Ports two behavior-preserving quirks from `LibRecurEngine`:
+ * Carries three quirks of the test-only `LibRecurEngine` oracle:
  *
- *   (b) COUNT+UNTIL sanitization: when the raw RRULE contains both, strip
- *       UNTIL before parsing. Preserves "COUNT wins" behavior for real-world
- *       malformed-but-common inputs.
- *   (g) DATE-format RDATE/EXDATE inherit DTSTART hour/minute/second on timed
- *       events so `toDayCode()` returns the expected local day.
+ *   (a) All-day events resolve to UTC ([resolveZone]).
+ *   (b) When the raw RRULE contains both COUNT and UNTIL, UNTIL is stripped before parsing,
+ *       so COUNT wins on this malformed but common input ([sanitizeRRule]).
+ *   (g) DATE-format RDATE/EXDATE inherit DTSTART's hour, minute and second on timed events
+ *       so `toDayCode()` returns the expected local day.
  */
 object IcalDavRRuleAdapter {
 
     private val DTSTAMP_STATIC = ICalDateTime.parse("20240101T000000Z")
 
     /**
-     * Build an ICalEvent suitable for `RRuleExpander.expand`. Duration is
-     * irrelevant for expansion (the expander returns occurrence events
-     * carrying the master's duration). A nominal 1-hour event is fine.
+     * Builds an [ICalEvent] for `RRuleExpander.expand`. An RRULE that fails to parse leaves
+     * `rrule` null. Duration doesn't affect the expanded start times, so DTEND equals DTSTART.
      */
     fun buildICalEvent(
         rrule: String?,
@@ -43,9 +42,8 @@ object IcalDavRRuleAdapter {
     ): ICalEvent {
         val zone = resolveZone(timezone, isAllDay)
         val dtStart = ICalDateTime.fromTimestamp(dtstartMs, zone, isAllDay)
-        // ICalEvent requires dtEnd but RRuleExpander.expand uses it only for
-        // output-occurrence duration, which `expandToTimestamps` throws away.
-        // Reuse dtStart to skip one ICalDateTime allocation per call.
+        // RRuleExpander.expand uses dtEnd only for the occurrences' duration, which
+        // `expandToTimestamps` discards. Reusing dtStart saves an allocation per call.
         val dtEnd = dtStart
 
         val sanitizedRrule = sanitizeRRule(rrule)
@@ -53,8 +51,7 @@ object IcalDavRRuleAdapter {
             runCatching { RRule.parse(it) }.getOrNull()
         }
 
-        // quirk (g): compute DTSTART's local hour/minute/second so DATE-format
-        // RDATE/EXDATE inherit them when constructing ICalDateTimes.
+        // Quirk (g): DATE-format RDATE/EXDATE inherit DTSTART's local time.
         val (dtstartHour, dtstartMinute, dtstartSecond) = dtstartLocalTime(
             dtstartMs = dtstartMs,
             zone = zone,
@@ -109,16 +106,15 @@ object IcalDavRRuleAdapter {
         )
     }
 
-    /** Extract occurrence start timestamps from expander output, sorted ascending. */
+    /** Returns the occurrence start timestamps from expander output, sorted ascending. */
     fun extractTimestamps(events: List<ICalEvent>): List<Long> =
         events.map { it.dtStart.timestamp }.sorted()
 
     /**
-     * Strip UNTIL tokens when COUNT is present (quirk b). Raw string-level
-     * sanitization, before `RRule.parse`. Returns null for null/blank input.
+     * Strips UNTIL parts from the raw string when COUNT is present (quirk b), before
+     * `RRule.parse`. Returns null for null or blank input.
      *
-     * Mirrored in the test-only `LibRecurEngine` oracle used by the parity
-     * harness — keep the two implementations in sync if the sanitizer ever
+     * Mirrored in the test-only `LibRecurEngine` oracle; keep the two in sync if the sanitizer
      * grows a new case.
      */
     internal fun sanitizeRRule(rrule: String?): String? {
@@ -128,9 +124,8 @@ object IcalDavRRuleAdapter {
     }
 
     /**
-     * Resolve TZID string to a [ZoneId]. All-day events force UTC regardless
-     * of input (matches LibRecurEngine quirk a). Invalid TZIDs fall through
-     * to null (floating), not errors.
+     * Resolves a TZID to a [ZoneId]. All-day events always get UTC (quirk a). A blank or
+     * invalid TZID returns null (floating) without an error.
      */
     internal fun resolveZone(tzid: String?, isAllDay: Boolean): ZoneId? {
         if (isAllDay) return ZoneOffset.UTC
@@ -143,9 +138,8 @@ object IcalDavRRuleAdapter {
     }
 
     /**
-     * Extract DTSTART's local hour/minute/second in the event's resolved zone.
-     * For all-day events returns (0, 0, 0). Used to implement quirk (g)
-     * inheritance for DATE-format RDATE/EXDATE.
+     * Returns DTSTART's local hour, minute and second in [zone], or the device zone when
+     * null, for quirk (g). All-day events return (0, 0, 0).
      */
     internal fun dtstartLocalTime(
         dtstartMs: Long,
@@ -167,12 +161,12 @@ object IcalDavRRuleAdapter {
     }
 
     /**
-     * Parse a mixed-format RDATE/EXDATE CSV (milliseconds / YYYYMMDD /
-     * YYYYMMDD'T'HHMMSS['Z']) into a list of [ICalDateTime]. Silently skips
-     * unparseable entries.
+     * Parses a comma-separated RDATE/EXDATE list of epoch milliseconds (10+ digits),
+     * YYYYMMDD, or YYYYMMDD'T'HHMMSS with optional Z. Silently skips unparseable entries,
+     * except that a YYYYMMDD with an out-of-range month or day throws.
      *
-     * DATE-format entries (YYYYMMDD) on timed events inherit DTSTART's local
-     * hour/minute/second (quirk g). All-day events use UTC midnight.
+     * YYYYMMDD entries on timed events inherit DTSTART's local time (quirk g); on all-day
+     * events they are UTC midnight.
      */
     internal fun parseCsvDates(
         csv: String?,

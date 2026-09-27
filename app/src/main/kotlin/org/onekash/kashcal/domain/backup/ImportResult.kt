@@ -1,8 +1,8 @@
 package org.onekash.kashcal.domain.backup
 
 /**
- * Counts of entities applied during a restore, plus a flag for whether the post-restore UI
- * should remind the user to re-select device calendars.
+ * Counts of what a restore applied, plus whether the post-restore UI should remind the user to
+ * re-select device calendars (the backup had device calendars enabled).
  */
 data class ImportResult(
     val subscriptionsCreated: Int,
@@ -12,9 +12,7 @@ data class ImportResult(
     val deviceCalendarsNoteNeeded: Boolean,
 )
 
-/**
- * Pre-apply summary shown in the confirmation dialog. Derived entirely from a parsed envelope.
- */
+/** Summary of a parsed envelope, shown in the confirmation dialog before a restore. */
 data class BackupSummary(
     val appVersion: String,
     val exportedAt: String,

@@ -8,18 +8,13 @@ import android.net.Uri
 /**
  * Builds the payload [Intent] for the share-card flow.
  *
- * When both PNG and ICS URIs are present (the happy path), produces an
- * `ACTION_SEND_MULTIPLE` intent so the recipient gets both: a beautiful
- * image preview AND a tappable .ics file that adds to their calendar.
+ * With both URIs it is an `ACTION_SEND_MULTIPLE`, so the recipient gets the card image and a
+ * tappable .ics that adds the event to their calendar. With only the PNG (the ICS export
+ * failed) it falls back to `ACTION_SEND` `image/png`; the card still shows the date.
  *
- * When only the PNG is available (ICS export failed), falls back to plain
- * `ACTION_SEND image/png`. The card alone is still useful — recipients can
- * still read the date and add manually.
- *
- * `ClipData` carries both URIs alongside `EXTRA_STREAM` so receivers
- * running in separate processes/tasks see the temporary URI grants. This
- * matters for chooser activities that re-launch the picked target on a
- * different task than the original sender.
+ * In the multiple case `ClipData` carries both URIs alongside `EXTRA_STREAM` so receivers in
+ * other processes or tasks get the temporary URI grants. This matters for chooser activities
+ * that re-launch the picked target on a different task than the sender.
  */
 object ShareCardIntentBuilder {
 

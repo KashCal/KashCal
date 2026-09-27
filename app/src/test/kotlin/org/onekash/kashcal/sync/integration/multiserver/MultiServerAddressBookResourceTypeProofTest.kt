@@ -12,23 +12,21 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Empirical safety proof for CardDAV address-book discovery, run live across every
- * configured server. The CardDAV twin of [MultiServerCalendarResourceTypeProofTest]
- * — and the protocol where the reserved-word substring bug actually bit (a real
- * Radicale book "notifications-contacts" was silently hidden).
+ * Proves live, on every configured server, that CardDAV address-book discovery's name filter
+ * is safe redundancy. The CardDAV twin of [MultiServerCalendarResourceTypeProofTest], and the
+ * protocol where a reserved-word substring match hid a real Radicale book
+ * ("notifications-contacts").
  *
- * Proves, on real servers, that:
- *   (1) every collection the reserved-word name filter would skip is ALSO excluded
- *       by the resourcetype gate (lacks the `<addressbook>` resourcetype), AND
- *   (2) no collection carrying `<addressbook>` is skipped by the name filter.
+ * It asserts that every collection the reserved-word name filter skips also lacks the
+ * `<addressbook>` resourcetype, so no collection carrying `<addressbook>` is skipped by name.
+ * The resourcetype gate alone excludes everything the name filter does, so the whole-segment
+ * name filter is never load-bearing. It reads the raw home-set PROPFIND so the notification
+ * collection the parser drops stays visible; each server's redacted raw XML is written as a
+ * fixture.
  *
- * So resourcetype alone is a superset of the name filter's exclusions and never
- * over-includes a scheduling/notification collection — the whole-segment name
- * filter is safe redundancy, never load-bearing. Reads the RAW home-set PROPFIND
- * so the notification collection the parser drops is visible for inspection; each
- * server's redacted raw XML is written as a fixture.
- *
- * Skips (never fails) servers without credentials / unreachable / no CardDAV.
+ * Skips, never fails, a server without credentials, unreachable, without CardDAV (no principal
+ * or home-set), whose raw home-set PROPFIND fails, or whose home-set yields no collections. A
+ * server whose home-set shows no address book skips after the invariant check.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -45,7 +43,7 @@ class MultiServerAddressBookResourceTypeProofTest(
         fun servers(): List<Array<Any>> =
             CardDavServerConfig.allServers().map { arrayOf<Any>(it) }
 
-        /** Exact production `listAddressBooks` PROPFIND body (OkHttpCardDavClient). */
+        /** Copy of the production `listAddressBooks` PROPFIND body in `OkHttpCardDavClient`. */
         private val LIST_ADDRESSBOOKS_BODY = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:propfind xmlns:d="DAV:" xmlns:card="urn:ietf:params:xml:ns:carddav"
@@ -112,10 +110,10 @@ class MultiServerAddressBookResourceTypeProofTest(
         println("\n=== CardDAV resourcetype proof: ${config.name} (${rows.size} collections) ===")
         rows.forEach { println("  " + CollectionResourceTypeProof.matrixRow(config.name, it, "carddav")) }
 
-        // The invariant, calling the REAL production predicate: every collection the
-        // shipped name filter skips is one the app would NOT surface anyway (lacks the
-        // <addressbook> resourcetype). So the name filter can only add false-drops,
-        // never prevent a real one — which is what makes whole-segment matching safe.
+        // The invariant, through the production predicate: every collection the name filter
+        // skips is one the app wouldn't surface anyway (it lacks the <addressbook>
+        // resourcetype), so the filter never hides a real address book. That is what makes
+        // whole-segment matching safe.
         val disagreements = rows.filter {
             CollectionResourceTypeProof.cardDavNameFilterSkips(it) && it.appSurfacesAsAddressBook
         }

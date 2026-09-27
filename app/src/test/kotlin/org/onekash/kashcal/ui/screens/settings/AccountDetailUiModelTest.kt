@@ -7,7 +7,8 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Unit tests for AccountDetailUiModel mapping from Account entity.
+ * Tests [toDetailUiModel]: field mapping, the display-name fallback, nullable fields and email
+ * masking.
  */
 class AccountDetailUiModelTest {
 
@@ -113,7 +114,7 @@ class AccountDetailUiModelTest {
         val account = createAccount(email = "a@b.com")
         val model = account.toDetailUiModel(calendarCount = 0)
 
-        // maskEmail returns original for atIndex <= 1
+        // maskEmail masks only when the local part has at least two characters.
         assertEquals("a@b.com", model.email)
     }
 

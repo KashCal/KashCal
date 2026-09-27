@@ -10,10 +10,9 @@ import java.time.LocalDateTime
 import java.util.Calendar
 
 /**
- * WKST plumbing tests for QuickAdd's RecurrenceRule. Today's grammar only emits
- * single-day BYDAY for biweekly, which the gate suppresses — so these tests pin
- * that the firstDayOfWeek setting threads through ParseContext without corrupting
- * output. See RruleBuilder.weekly for the gate semantics.
+ * Tests that the firstDayOfWeek setting passes through [ParseContext] to [RecurrenceRule] without
+ * changing its output. The grammar gives a WKST only to "every N weeks on <weekday>", a single-day
+ * BYDAY, and `RruleBuilder.weekly` emits WKST only for an INTERVAL above 1 with two or more days.
  */
 class RecurrenceRuleWkstTest {
 
@@ -33,7 +32,7 @@ class RecurrenceRuleWkstTest {
     @Test
     fun `every 2 weeks on Sunday with firstDayOfWeek=SUNDAY emits no WKST (single-day gate)`() {
         val ctx = parse("every 2 weeks on Sunday", firstDayOfWeek = Calendar.SUNDAY)
-        // Single-day BYDAY: WKST has no behavioral effect, gate suppresses emission.
+        // WKST changes nothing for a single-day BYDAY, so the builder leaves it out.
         assertEquals("FREQ=WEEKLY;INTERVAL=2;BYDAY=SU", ctx.rrule)
     }
 

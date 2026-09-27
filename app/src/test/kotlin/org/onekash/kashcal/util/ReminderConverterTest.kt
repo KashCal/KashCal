@@ -72,9 +72,9 @@ class ReminderConverterTest {
 
     @Test
     fun `overflowing reminder duration is skipped, not crashed on`() {
-        // isoRemindersToMinutes does NOT wrap parseIsoDuration in try/catch, so an
-        // overflowing value must return null internally (be dropped) rather than
-        // throw an uncaught ArithmeticException. Valid entries still come through.
+        // isoRemindersToMinutes doesn't catch, so parseIsoDuration must return null for an
+        // overflowing count, dropping the entry, and never throw ArithmeticException. Valid
+        // entries still come through.
         assertEquals(
             listOf(15),
             isoRemindersToMinutes(listOf("-P999999999999W", "-PT15M"))

@@ -1,11 +1,10 @@
 package org.onekash.kashcal.domain.generator.parity
 
 /**
- * Engine-agnostic interface for RRULE expansion.
+ * Expands an [RRuleCase] with one RRULE engine for the parity harness.
  *
- * Two concrete implementations drive the parity harness:
- * - [LibRecurParityEngine] wraps `LibRecurEngine.expandToTimestamps` (dmfs/lib-recur, app-side).
- * - [ICal4jParityEngine] wraps `icaldav-core.RRuleExpander.expand` (ical4j, library-side).
+ * - [LibRecurParityEngine] wraps the test-only `LibRecurEngine.expandToTimestamps` (lib-recur).
+ * - [ICal4jParityEngine] wraps the production `IcalDavRRuleEngine.expandToTimestamps` (ical4j).
  */
 interface RRuleEngine {
     val name: String

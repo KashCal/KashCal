@@ -11,10 +11,12 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * Pure-logic tests for FreeBlockFinder.
+ * Tests [FreeBlockFinder.find] with plain [SimpleOccurrence] inputs.
  *
- * FreeBlockFinder is the public surface for free-block computation, so direct
- * unit tests are appropriate here.
+ * Tests cover empty and fully busy days, splits and the minimum block length, clipping today to
+ * now, multi-day timed events, all-day handling (the toggle, UTC-anchored day codes, multi-day
+ * spans), a block ending at workEnd, a DST day, the passed zone, pre-filtered cancellation, the
+ * 1440 end-of-day sentinel, and TRANSP filtering.
  */
 class FreeBlockFinderTest {
 
@@ -95,7 +97,7 @@ class FreeBlockFinderTest {
 
     @Test
     fun `sub-threshold gap is filtered out`() {
-        // Event 09:00-12:00, then 12:45-17:00 — leaves a 45-minute gap.
+        // Events 09:00-12:00 and 12:45-17:00 leave a 45-minute gap.
         val blocks = finder.find(
             occurrences = listOf(
                 timed(mon, 9, 0, 12, 0),
@@ -117,7 +119,7 @@ class FreeBlockFinderTest {
 
     @Test
     fun `today clipped to now when now is mid-window`() {
-        // now = 12:00 on day 1, work 09-17.
+        // Now is 12:00 on day 1; work hours 09-17.
         val blocks = finder.find(
             occurrences = emptyList(),
             startDay = mon,
@@ -153,7 +155,7 @@ class FreeBlockFinderTest {
 
     @Test
     fun `today preserved fully when now is before workStart`() {
-        // now = 07:30 on day 1.
+        // Now is 07:30 on day 1.
         val blocks = finder.find(
             occurrences = emptyList(),
             startDay = mon,
@@ -174,8 +176,7 @@ class FreeBlockFinderTest {
 
     @Test
     fun `multi-day event reduces each covered day's window`() {
-        // Event from Mon 14:00 to Tue 11:00. Mon afternoon clipped to 09-14 and
-        // Tue morning clipped to 11-17.
+        // An event from Mon 14:00 to Tue 11:00 leaves Mon 09-14 and Tue 11-17 free.
         val s = ZonedDateTime.of(mon, LocalTime.of(14, 0), zone).toInstant().toEpochMilli()
         val e = ZonedDateTime.of(mon.plusDays(1), LocalTime.of(11, 0), zone).toInstant().toEpochMilli()
         val multiDay = SimpleOccurrence(s, e, false, dayCode(mon), dayCode(mon.plusDays(1)), 1L)
@@ -241,21 +242,17 @@ class FreeBlockFinderTest {
 
     @Test
     fun `all-day Mon and Wed in non-UTC zone leave Tue free (UTC-anchored storage)`() {
-        // Reproduces the device-storage convention: CalendarProvider stores all-day
-        // events at UTC midnight regardless of the viewer's zone, but startDay/endDay
-        // are pre-computed YYYYMMDD codes that already match the user's perceived date
-        // (DateTimeUtils.eventTsToDayCode uses UTC for isAllDay=true).
-        //
-        // Bug: covers() used to re-derive startDate/endDate by reinterpreting the
-        // UTC-midnight startTs/endTs in the local zone — for Tokyo (UTC+9), Monday's
-        // all-day endTs of Tue 00:00Z resolves to Tue 09:00 Tokyo, so covers() returned
-        // true for Tuesday and the day was incorrectly suppressed.
+        // CalendarProvider stores all-day events at UTC midnight whatever the viewer's zone,
+        // while startDay/endDay are YYYYMMDD codes already matching the user's date
+        // (DateTimeUtils.eventTsToDayCode uses UTC for isAllDay = true). All-day matching
+        // must use the codes: read in Tokyo (UTC+9), Monday's end (just before Tue 00:00Z)
+        // falls on Tuesday morning, which would blank Tuesday.
         val tokyo = ZoneId.of("Asia/Tokyo")
         fun utcMidnight(date: LocalDate): Long =
             date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-        // Match Room/Event.endTs convention: stored inclusive (last ms of last day),
-        // not RFC-exclusive next-day midnight. AndroidCalendarProviderRepository.kt:182
-        // performs the same `endMs - 1` decrement before the day-code computation.
+        // The Room Event.endTs convention: the inclusive last ms of the last day, not the
+        // RFC-exclusive next midnight. AndroidCalendarProviderRepository subtracts the same
+        // 1 ms from a device all-day end before computing its day code.
         fun utcInclusiveEnd(date: LocalDate): Long = utcMidnight(date.plusDays(1)) - 1
 
         val mondayAllDay = SimpleOccurrence(
@@ -295,8 +292,8 @@ class FreeBlockFinderTest {
 
     @Test
     fun `genuine multi-day all-day event suppresses all covered days`() {
-        // Regression guard for the covers() fix: a real multi-day all-day Mon->Wed
-        // event (startDay = Mon, endDay = Wed) must still suppress Tuesday.
+        // A multi-day all-day event Mon to Wed (startDay = Mon, endDay = Wed) blanks all
+        // three days, Tuesday included.
         val multiDayAllDay = SimpleOccurrence(
             startTs = mon.atStartOfDay(zone).toInstant().toEpochMilli(),
             endTs = mon.plusDays(3).atStartOfDay(zone).toInstant().toEpochMilli(),
@@ -319,9 +316,8 @@ class FreeBlockFinderTest {
         )
         assertTrue("Mon-Wed all-day spanning event must suppress all three days", suppressed.isEmpty())
 
-        // Control: with the toggle OFF, the same input must produce 3 blocks.
-        // Proves emptiness above came from the all-day path, not from a broken
-        // work-window calculation that would silently zero out every day.
+        // Control: with the toggle off, the same input gives 3 blocks, so the empty result
+        // above comes from the all-day path, not a work window that zeroes out every day.
         val notSuppressed = finder.find(
             occurrences = listOf(multiDayAllDay),
             startDay = mon,
@@ -344,7 +340,7 @@ class FreeBlockFinderTest {
 
     @Test
     fun `block ending exactly at workEnd is included`() {
-        // Event 09:00-15:00 leaves 15:00-17:00 (= 120 min) as a free block at workEnd.
+        // An event 09:00-15:00 leaves 15:00-17:00 (120 min), a block ending at workEnd.
         val blocks = finder.find(
             occurrences = listOf(timed(mon, 9, 0, 15, 0)),
             startDay = mon,
@@ -378,7 +374,7 @@ class FreeBlockFinderTest {
             now = nowAt(dstDay.minusDays(1), 12, 0),
             zone = zone
         )
-        // Free window 09:00-17:00 is wholly in EDT after the transition; no off-by-one.
+        // 09:00-17:00 is wholly in EDT after the transition, so the block is 8 hours.
         assertEquals(1, blocks.size)
         assertEquals(LocalTime.of(9, 0), blocks[0].start)
         assertEquals(LocalTime.of(17, 0), blocks[0].end)
@@ -389,9 +385,8 @@ class FreeBlockFinderTest {
 
     @Test
     fun `passed zone is used not systemDefault`() {
-        // If finder captured ZoneId.systemDefault(), running this test on a host
-        // with TZ != Tokyo would yield different boundaries. We pass Tokyo
-        // explicitly and verify Tokyo-local times in the output.
+        // A finder using ZoneId.systemDefault() would give other boundaries on a host
+        // outside Tokyo. The test passes Tokyo and checks Tokyo-local times.
         val tokyo = ZoneId.of("Asia/Tokyo")
         val tokyoNoonInstant = ZonedDateTime.of(mon, LocalTime.of(12, 0), tokyo)
             .toInstant().toEpochMilli()
@@ -421,14 +416,14 @@ class FreeBlockFinderTest {
         assertEquals(LocalTime.of(17, 0), blocks[1].end)
     }
 
-    // ========== Caller responsibility for cancelled ==========
+    // ========== Cancellation Filtered by the Caller ==========
 
     @Test
     fun `finder respects pre-filtered input — does not re-filter cancellation`() {
-        // The finder doesn't know about is_cancelled. It trusts callers to filter
-        // upstream (matches getOccurrencesWithEventsForInsights query semantics).
-        // This test asserts: a "regular" non-cancelled occurrence in input blocks
-        // free time as expected — equivalent to what a caller-filtered list yields.
+        // InsightOccurrence has no cancelled flag, so the finder can't filter: callers filter
+        // upstream. InsightsRepository.getOccurrencesForRange takes its Room rows from
+        // OccurrencesDao.getOccurrencesWithEventsForInsights, which drops cancelled rows. This
+        // test only shows that a non-cancelled occurrence in the input is busy.
         val blocks = finder.find(
             occurrences = listOf(timed(mon, 10, 0, 11, 0)),
             startDay = mon,
@@ -448,7 +443,7 @@ class FreeBlockFinderTest {
         assertEquals(LocalTime.of(17, 0), blocks[1].end)
     }
 
-    // ========== Returns empty list for fully-busy day ==========
+    // ========== Fully Busy Day ==========
 
     @Test
     fun `fully busy day produces no blocks`() {
@@ -475,7 +470,7 @@ class FreeBlockFinderTest {
             startDay = mon,
             days = 1,
             workStartMin = 0,
-            workEndMin = 1440, // 24:00 — must not throw LocalTime.of(24,0)
+            workEndMin = 1440, // 24:00; must not reach LocalTime.of(24, 0), which throws
             minBlockMinutes = 60,
             includeAllDayAsBusy = false,
             now = nowAt(mon.minusDays(1), 12, 0),
@@ -489,7 +484,7 @@ class FreeBlockFinderTest {
 
     @Test
     fun `event near end-of-day in a 1440 window leaves a leading free block`() {
-        // Event 23:00-23:59 inside 09:00-1440 leaves 09:00-23:00 as a free block.
+        // An event 23:00-23:59 in a 09:00-1440 window leaves 09:00-23:00 free.
         val blocks = finder.find(
             occurrences = listOf(timed(mon, 23, 0, 23, 59)),
             startDay = mon,
@@ -506,15 +501,12 @@ class FreeBlockFinderTest {
         assertEquals(LocalTime.of(23, 0), blocks[0].end)
     }
 
-    // ========== Custom min block ==========
-
-    // ========== Free-busy (RFC 5545 TRANSP) filtering ==========
+    // ========== TRANSP Filtering (RFC 5545) and Minimum Block ==========
 
     @Test
     fun `transparent timed event does not split the work window`() {
-        // Event 12:00-14:00 marked TRANSPARENT (free) — must not contribute to
-        // the busy mask. The full 09:00-17:00 window should remain a single
-        // free block.
+        // An event 12:00-14:00 marked TRANSPARENT (free) isn't busy, so 09:00-17:00 stays
+        // one free block.
         val blocks = finder.find(
             occurrences = listOf(timed(mon, 12, 0, 14, 0, transparency = "TRANSPARENT")),
             startDay = mon,
@@ -534,9 +526,8 @@ class FreeBlockFinderTest {
 
     @Test
     fun `transparent all-day event does not blank the day even when toggle is on`() {
-        // All-day TRANSPARENT covers Monday — it's a "free" marker (e.g.
-        // remote-work flag), not a busy day. Even with includeAllDayAsBusy=true
-        // the day must not be blanked, and the timed window must remain free.
+        // A TRANSPARENT all-day event on Monday is a free marker (a remote-work flag, say),
+        // not a busy day. Even with includeAllDayAsBusy = true the day stays free.
         val blocks = finder.find(
             occurrences = listOf(allDay(mon, transparency = "TRANSPARENT")),
             startDay = mon,
@@ -555,8 +546,7 @@ class FreeBlockFinderTest {
 
     @Test
     fun `mixed busy and free events filter only the busy ones`() {
-        // 10-11 TRANSPARENT (free, ignored), 13-14 OPAQUE (busy, splits window).
-        // Expected output: 09-13 and 14-17.
+        // 10-11 TRANSPARENT is ignored; 13-14 OPAQUE splits the window into 09-13 and 14-17.
         val blocks = finder.find(
             occurrences = listOf(
                 timed(mon, 10, 0, 11, 0, transparency = "TRANSPARENT"),
@@ -580,7 +570,7 @@ class FreeBlockFinderTest {
 
     @Test
     fun `30-minute min threshold accepts 30-minute gap`() {
-        // 11:30-12:00 is exactly 30 min — passes when minBlockMinutes=30.
+        // 11:30-12:00 is exactly 30 min, which passes with minBlockMinutes = 30.
         val blocks = finder.find(
             occurrences = listOf(
                 timed(mon, 9, 0, 11, 30),

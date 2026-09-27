@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">ഈ സെർവറിൽ കലണ്ടറുകൾ കണ്ടെത്തിയില്ല.</string>
     <string name="caldav_error_unexpected">അപ്രതീക്ഷിത പിശക്. വീണ്ടും ശ്രമിക്കുക.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nഇത് നിങ്ങളുടെ ലോക്കൽ നെറ്റ്‌വർക്കിലുള്ള ഒരു സെർവർ ആണെങ്കിൽ, കണക്റ്റ് ചെയ്യാൻ ലോക്കൽ നെറ്റ്‌വർക്ക് ആക്‌സസ് അനുവദിക്കുക.</string>
+    <string name="caldav_error_connection_refused_insecure">KashCal പിന്തുടരാത്ത ഒരിടത്തേക്ക് (എൻക്രിപ്റ്റ് ചെയ്യാത്ത വിലാസം, അല്ലെങ്കിൽ റീഡയറക്ട് ലൂപ്പ്) സെർവർ കണക്ഷൻ തിരിച്ചുവിട്ടു, അതിനാൽ നിങ്ങളുടെ പാസ്‌വേഡ് അയയ്ക്കുന്നതിന് മുമ്പ് KashCal നിർത്തി. സെർവർ വിലാസം പരിശോധിക്കുക.</string>
     <string name="local_network_banner_title">ലോക്കൽ നെറ്റ്‌വർക്ക് ആക്‌സസ് ആവശ്യമാണ്</string>
     <string name="local_network_banner_body">ഈ സെർവർ നിങ്ങളുടെ ലോക്കൽ നെറ്റ്‌വർക്കിൽ ഉള്ളതായി തോന്നുന്നു. KashCal-ന് ഇതിലേക്ക് കണക്റ്റ് ചെയ്യാൻ ലോക്കൽ നെറ്റ്‌വർക്ക് ആക്‌സസ് അനുവദിക്കുക.</string>
     <string name="local_network_banner_allow">ആക്‌സസ് അനുവദിക്കുക</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">മാറ്റങ്ങൾ സംരക്ഷിക്കുക</string>
     <string name="dialog_delete_recurring_title">ഇല്ലാതാക്കുക</string>
     <string name="dialog_move_recurring_title">മാറ്റുക</string>
+    <string name="snackbar_event_rescheduled">ഇവന്റിന്റെ സമയം മാറ്റി</string>
+    <string name="snackbar_reschedule_failed">ഇവന്റിന്റെ സമയം മാറ്റാനായില്ല</string>
     <string name="recurring_this_event">ഈ ഇവന്റ്</string>
     <string name="recurring_all_events">എല്ലാ ഇവന്റുകളും</string>
 

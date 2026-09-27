@@ -1,5 +1,8 @@
 package org.onekash.kashcal.ui.components
 
+import org.onekash.kashcal.testutil.phoneLocalDate
+import org.onekash.kashcal.testutil.phoneMidnight
+import org.onekash.kashcal.testutil.withDeviceTimeZone
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -8,20 +11,30 @@ import org.junit.Test
 import org.onekash.kashcal.ui.components.pickers.DateSelectionMode
 
 /**
- * Unit tests for EventFormSheet logic.
+ * Tests the event form's pure logic.
  *
- * Tests occurrence dates, duration, time validation, date range picker,
- * save button enablement, and form state calculations.
+ * Production functions called: [withTimedStart], [withTimedEnd], [withTimezone], [withAllDay],
+ * [toStartEndTs], [endsBeforeStart], [toFormDateFields], [parseIso8601DurationToMinutes],
+ * [canEditAttendees], [showSchedulingUnavailable], [eventFormHasUnsavedChanges],
+ * [resolveFormDismiss] and [shouldRebaselineOnCalendarResolve].
+ *
+ * Other sections run inline copies and don't call production. Copies of form code: the
+ * delete-confirmation predicate, the save-button gate, the all-day start-date move and the
+ * calendar-intent start and end in [EventFormContent], and the occurrence start in
+ * [toFormDateFields]. The separate-pickers, midnight-crossing, end-time, date-range
+ * selection, range-highlight and cross-month, date-label and multi-day end-time sections
+ * model picker logic with no production counterpart in the form. The DateSelectionMode
+ * tests assert only enum values, the date-format tests only a multi-day check, and the
+ * edit-mode and all-day date-range sections build an [EventFormState] and read it back.
  */
 class EventFormSheetTest {
 
     // ========== Delete Button Confirmation Tests ==========
 
     /**
-     * Mirrors the delete-button onToggle predicate in EventFormSheet:
-     * the inline two-tap confirmation is skipped ONLY when the host's
-     * scope sheet will appear, which happens only for a recurring master.
-     * Returns true when the inline confirmation must be shown.
+     * Copies the delete row's onToggle predicate in [EventFormContent]: the inline two-tap
+     * confirmation is skipped only when the host's scope sheet will appear, which happens only
+     * for a recurring master. Returns true when the inline confirmation must be shown.
      */
     private fun shouldShowInlineDeleteConfirm(
         wasRecurringAtLoad: Boolean,
@@ -48,12 +61,9 @@ class EventFormSheetTest {
 
     @Test
     fun `delete on exception event shows inline confirmation - scope sheet does NOT appear`() {
-        // Regression: prior to fix, the predicate skipped the inline
-        // confirmation for any event with wasRecurringAtLoad=true. That
-        // included exception events (which set wasRecurringAtLoad via
-        // originalEventId != null) — but exceptions route straight to
-        // single-occurrence delete WITHOUT a scope sheet, so the user
-        // got zero confirmation and one tap was destructive.
+        // An exception also has wasRecurringAtLoad=true (via originalEventId), but
+        // its delete goes straight to the single-occurrence delete without a scope
+        // sheet. Skipping the inline confirmation would make one tap delete it.
         assertTrue(shouldShowInlineDeleteConfirm(
             wasRecurringAtLoad = true,
             loadedIsDetachedException = true
@@ -63,8 +73,8 @@ class EventFormSheetTest {
     // ========== Occurrence Date Tests ==========
 
     /**
-     * Simulates the occurrence date calculation from EventFormSheet.
-     * When editing a single occurrence, the form should use occurrenceTs (not master event date).
+     * Copies the occurrence start in [toFormDateFields], without its exception branch: an
+     * occurrence edit starts at occurrenceTs, not the master's start, and keeps the duration.
      */
     private fun calculateActualStartTs(
         eventStartTs: Long,
@@ -79,12 +89,12 @@ class EventFormSheetTest {
 
     @Test
     fun `form loads with occurrenceTs date when editing single occurrence`() {
-        // Master event: Jan 1, 2024 10:00 AM - 11:00 AM (1 hour event)
-        val masterStartTs = 1704106800000L // Jan 1, 2024 10:00 AM UTC
-        val masterEndTs = 1704110400000L   // Jan 1, 2024 11:00 AM UTC
+        // Master event: a 1-hour event on Jan 1, 2024.
+        val masterStartTs = 1704106800000L // Jan 1, 2024 11:00 UTC
+        val masterEndTs = 1704110400000L   // Jan 1, 2024 12:00 UTC
 
-        // Occurrence: Jan 8, 2024 10:00 AM (one week later)
-        val occurrenceTs = 1704711600000L  // Jan 8, 2024 10:00 AM UTC
+        // Occurrence one week later.
+        val occurrenceTs = 1704711600000L  // Jan 8, 2024 11:00 UTC
 
         val (actualStart, actualEnd) = calculateActualStartTs(masterStartTs, masterEndTs, occurrenceTs)
 
@@ -96,7 +106,7 @@ class EventFormSheetTest {
 
     @Test
     fun `form loads with master event date when occurrenceTs is null`() {
-        // Master event: Jan 1, 2024 10:00 AM - 11:00 AM
+        // Master event: Jan 1, 2024 11:00-12:00 UTC
         val masterStartTs = 1704106800000L
         val masterEndTs = 1704110400000L
 
@@ -113,8 +123,8 @@ class EventFormSheetTest {
     @Test
     fun `occurrence date preserves event duration`() {
         // Master event: 2 hour duration
-        val masterStartTs = 1704106800000L // 10:00 AM
-        val masterEndTs = 1704114000000L   // 12:00 PM (2 hours)
+        val masterStartTs = 1704106800000L // 11:00 UTC
+        val masterEndTs = 1704114000000L   // 13:00 UTC (2 hours)
         val expectedDuration = masterEndTs - masterStartTs // 2 hours = 7200000ms
 
         // Occurrence on different date
@@ -128,8 +138,8 @@ class EventFormSheetTest {
     // ========== Duration Maintenance Tests ==========
 
     /**
-     * Check if start and end dates represent different calendar days.
-     * Uses Calendar DAY_OF_YEAR comparison (matches production isMultiDay function).
+     * Returns whether two instants fall on different days in the JVM default zone, comparing
+     * year and DAY_OF_YEAR.
      */
     private fun isMultiDayTest(startDateMillis: Long, endDateMillis: Long): Boolean {
         val startCal = java.util.Calendar.getInstance().apply { timeInMillis = startDateMillis }
@@ -138,54 +148,16 @@ class EventFormSheetTest {
             startCal.get(java.util.Calendar.DAY_OF_YEAR) != endCal.get(java.util.Calendar.DAY_OF_YEAR)
     }
 
-    /**
-     * Simulates the duration maintenance logic from EventFormSheet onStartTimeSelected.
-     * Returns Pair(newEndHour, newEndMinute)
-     */
-    private fun calculateEndTimeWithDuration(
-        oldStartHour: Int,
-        oldStartMinute: Int,
-        oldEndHour: Int,
-        oldEndMinute: Int,
-        oldStartDateMillis: Long,
-        oldEndDateMillis: Long,
-        newStartHour: Int,
-        newStartMinute: Int
-    ): Triple<Int, Int, Long> {
-        // Calculate current duration (or default 20 mins if invalid)
-        val currentDurationMinutes = (oldEndHour * 60 + oldEndMinute) -
-            (oldStartHour * 60 + oldStartMinute)
-        // Handle case where end was already on next day (use calendar day comparison)
-        val adjustedDuration = if (isMultiDayTest(oldStartDateMillis, oldEndDateMillis)) {
-            currentDurationMinutes + 24 * 60
-        } else {
-            currentDurationMinutes
-        }
-        val duration = if (adjustedDuration > 0) adjustedDuration else 20
-
-        // Calculate new end time
-        val newEndTotalMinutes = newStartHour * 60 + newStartMinute + duration
-
-        return if (newEndTotalMinutes >= 24 * 60) {
-            // Crosses midnight
-            val nextDayMillis = oldStartDateMillis + (24 * 60 * 60 * 1000)
-            val overflowMinutes = newEndTotalMinutes - (24 * 60)
-            Triple(overflowMinutes / 60, overflowMinutes % 60, nextDayMillis)
-        } else {
-            // Same day
-            Triple(newEndTotalMinutes / 60, newEndTotalMinutes % 60, oldStartDateMillis)
-        }
-    }
-
     @Test
     fun `end time follows start time maintaining duration`() {
         // Given: start=10:00, end=10:30 (30 min duration)
-        val (newEndHour, newEndMinute, _) = calculateEndTimeWithDuration(
+        val (newEndHour, newEndMinute, _) = simulateStartTimeChangePreservingDuration(
             oldStartHour = 10, oldStartMinute = 0,
             oldEndHour = 10, oldEndMinute = 30,
             oldStartDateMillis = 1704106800000L, // Jan 1
             oldEndDateMillis = 1704106800000L,   // Jan 1 (same day)
-            newStartHour = 14, newStartMinute = 0
+            newStartHour = 14, newStartMinute = 0,
+            defaultDuration = 20
         )
         // Then: end should be 14:30
         assertEquals("End hour should be 14", 14, newEndHour)
@@ -195,12 +167,13 @@ class EventFormSheetTest {
     @Test
     fun `end time uses default 20 min when duration invalid`() {
         // Given: start=10:00, end=09:00 (negative duration)
-        val (newEndHour, newEndMinute, _) = calculateEndTimeWithDuration(
+        val (newEndHour, newEndMinute, _) = simulateStartTimeChangePreservingDuration(
             oldStartHour = 10, oldStartMinute = 0,
             oldEndHour = 9, oldEndMinute = 0,
             oldStartDateMillis = 1704106800000L,
             oldEndDateMillis = 1704106800000L,
-            newStartHour = 14, newStartMinute = 0
+            newStartHour = 14, newStartMinute = 0,
+            defaultDuration = 20
         )
         // Then: end should be 14:20 (default)
         assertEquals("End hour should be 14", 14, newEndHour)
@@ -211,12 +184,13 @@ class EventFormSheetTest {
     fun `midnight crossing updates endDateMillis to next day`() {
         // Given: start=22:00, end=22:30, same date
         val startDateMillis = 1704106800000L // Jan 1
-        val (newEndHour, newEndMinute, newEndDateMillis) = calculateEndTimeWithDuration(
+        val (newEndHour, newEndMinute, newEndDateMillis) = simulateStartTimeChangePreservingDuration(
             oldStartHour = 22, oldStartMinute = 0,
             oldEndHour = 22, oldEndMinute = 30,
             oldStartDateMillis = startDateMillis,
             oldEndDateMillis = startDateMillis,
-            newStartHour = 23, newStartMinute = 50
+            newStartHour = 23, newStartMinute = 50,
+            defaultDuration = 20
         )
         // Then: end=00:20, endDateMillis = next day
         assertEquals("End hour should be 0", 0, newEndHour)
@@ -229,12 +203,13 @@ class EventFormSheetTest {
         // Given: start=23:00, end=00:30 (+1 day), duration=90 mins
         val day1 = 1704106800000L
         val day2 = day1 + (24 * 60 * 60 * 1000)
-        val (newEndHour, newEndMinute, newEndDateMillis) = calculateEndTimeWithDuration(
+        val (newEndHour, newEndMinute, newEndDateMillis) = simulateStartTimeChangePreservingDuration(
             oldStartHour = 23, oldStartMinute = 0,
             oldEndHour = 0, oldEndMinute = 30,
             oldStartDateMillis = day1,
             oldEndDateMillis = day2, // End is on day 2
-            newStartHour = 23, newStartMinute = 30
+            newStartHour = 23, newStartMinute = 30,
+            defaultDuration = 20
         )
         // Then: end=01:00 (+1 day), duration still 90 mins
         assertEquals("End hour should be 1", 1, newEndHour)
@@ -247,45 +222,49 @@ class EventFormSheetTest {
         // Given: start=23:50, end=00:10 (+1 day)
         val day1 = 1704106800000L
         val day2 = day1 + (24 * 60 * 60 * 1000)
-        val (newEndHour, newEndMinute, newEndDateMillis) = calculateEndTimeWithDuration(
+        val (newEndHour, newEndMinute, newEndDateMillis) = simulateStartTimeChangePreservingDuration(
             oldStartHour = 23, oldStartMinute = 50,
             oldEndHour = 0, oldEndMinute = 10,
             oldStartDateMillis = day1,
             oldEndDateMillis = day2,
-            newStartHour = 10, newStartMinute = 0
+            newStartHour = 10, newStartMinute = 0,
+            defaultDuration = 20
         )
         // Then: end=10:20, endDateMillis = same day
         assertEquals("End hour should be 10", 10, newEndHour)
         assertEquals("End minute should be 20", 20, newEndMinute)
-        assertEquals("endDateMillis should be same day", day1, newEndDateMillis)
+        assertFalse("End should stay on the same day", isMultiDayTest(day1, newEndDateMillis))
     }
 
     @Test
     fun `same day event with different timestamps does not add 24h duration`() {
-        // Given: Event 10 AM - 11 AM on Jan 2 (realistic: different timestamps, same day)
-        // This is how real events are stored - start and end have DIFFERENT timestamps
-        val jan2_10am = 1704193200000L  // Jan 2, 2024 @ 10:00 AM UTC
-        val jan2_11am = jan2_10am + (60 * 60 * 1000)  // 1 hour later = 11:00 AM
+        // Given: a 10 AM - 11 AM event whose start and end dates carry different
+        // timestamps on the same day, as stored events do.
+        val jan2_10am = 1704193200000L  // Jan 2, 2024 11:00 UTC
+        val jan2_11am = jan2_10am + (60 * 60 * 1000)  // 1 hour later
 
         // When: User changes start to 12:00 AM (midnight)
-        val (newEndHour, newEndMinute, newEndDateMillis) = calculateEndTimeWithDuration(
+        val (newEndHour, newEndMinute, newEndDateMillis) = simulateStartTimeChangePreservingDuration(
             oldStartHour = 10, oldStartMinute = 0,
             oldEndHour = 11, oldEndMinute = 0,
             oldStartDateMillis = jan2_10am,
-            oldEndDateMillis = jan2_11am,  // Different timestamp, SAME day!
-            newStartHour = 0, newStartMinute = 0  // User picks 12:00 AM
+            oldEndDateMillis = jan2_11am,  // Different timestamp, same day.
+            newStartHour = 0, newStartMinute = 0, // User picks 12:00 AM
+            defaultDuration = 20
         )
 
         // Then: Should preserve 1-hour duration, end at 1:00 AM same day
         assertEquals("End hour should be 1 (1 AM)", 1, newEndHour)
         assertEquals("End minute should be 0", 0, newEndMinute)
-        assertEquals("Should stay same day", jan2_10am, newEndDateMillis)
+        assertFalse("Should stay same day", isMultiDayTest(jan2_10am, newEndDateMillis))
     }
 
     // ========== shouldShowSeparatePickers Tests ==========
 
     /**
-     * Simulates shouldShowSeparatePickers logic.
+     * Models separate start and end pickers: shown for a multi-day range, except a
+     * one-day-apart range whose end hour is before its start hour (a midnight crossing).
+     * No production function matches it.
      */
     private fun shouldShowSeparatePickers(
         startDateMillis: Long,
@@ -334,7 +313,7 @@ class EventFormSheetTest {
     fun `true multi-day event shows separate pickers`() {
         val day1 = 1704106800000L
         val day2 = day1 + (24 * 60 * 60 * 1000)
-        // 1 day apart, endHour(14) > startHour(10) = NOT midnight crossing
+        // 1 day apart, endHour(14) > startHour(10) = not a midnight crossing
         assertTrue(
             "True multi-day should show separate pickers",
             shouldShowSeparatePickers(day1, day2, 10, 14)
@@ -365,14 +344,11 @@ class EventFormSheetTest {
     // ========== isMidnightCrossing Tests ==========
 
     /**
-     * Simulates the isMidnightCrossing logic from MergedTimeRow.
-     * This is the FIXED version that uses isMultiDay() for proper day comparison.
-     *
-     * Bug: The original code used `endDateMillis > startDateMillis` which is always
-     * true for same-day events because timestamps include time (not just date).
-     *
-     * Fix: Use calendar day comparison via isMultiDay(), then check if end hour
-     * wrapped around midnight (endHour < startHour).
+     * Models a midnight crossing as a different calendar day with an end hour before the start
+     * hour. Comparing `endDateMillis > startDateMillis` would flag every same-day event, since
+     * the timestamps carry a time. The production
+     * [org.onekash.kashcal.ui.components.pickers.isMidnightCrossing] compares only the clock
+     * times, not the dates, and is tested in `DateTimePickerTest`.
      */
     private fun isMidnightCrossing(
         startDateMillis: Long,
@@ -390,10 +366,9 @@ class EventFormSheetTest {
 
     @Test
     fun `isMidnightCrossing returns false for same day event`() {
-        // 10 AM to 10:20 PM same day - should NOT show +1
-        // This was the bug: timestamps differ but calendar day is the same
-        val day1 = 1704106800000L  // Some day at 10 AM
-        val day1Later = day1 + (12 * 60 * 60 * 1000)  // Same day at 10 PM (+12 hours)
+        // 10 AM to 10 PM on one day: no +1, although the timestamps differ.
+        val day1 = 1704106800000L  // Jan 1, 2024 11:00 UTC
+        val day1Later = day1 + (12 * 60 * 60 * 1000)  // 12 hours later, 23:00 UTC
         assertFalse(
             "Same day event should NOT show +1",
             isMidnightCrossing(day1, day1Later, 10, 22)
@@ -423,8 +398,7 @@ class EventFormSheetTest {
 
     @Test
     fun `isMidnightCrossing returns false for true multi-day event`() {
-        // 10 AM to 3 PM next day - multi-day event, NOT midnight crossing
-        // Should show separate pickers, not merged with +1
+        // 10 AM to 3 PM next day: a multi-day event, not a midnight crossing.
         val day1 = 1704106800000L
         val day2 = day1 + (24 * 60 * 60 * 1000)
         assertFalse(
@@ -435,7 +409,7 @@ class EventFormSheetTest {
 
     @Test
     fun `isMidnightCrossing returns false for exactly 24 hour event`() {
-        // 10 PM to 10 PM next day - exactly 24h, NOT midnight crossing
+        // 10 PM to 10 PM next day: 24 hours, not a midnight crossing.
         val day1 = 1704106800000L
         val day2 = day1 + (24 * 60 * 60 * 1000)
         assertFalse(
@@ -447,8 +421,9 @@ class EventFormSheetTest {
     // ========== onEndTimeSelected Tests ==========
 
     /**
-     * Simulates the onEndTimeSelected logic that updates endDateMillis
-     * when end time crosses midnight relative to start time.
+     * Models an end-time pick that moves the end date to the next day when the end hour is
+     * before the start hour. The form's [withTimedEnd] takes the end date from the picker
+     * instead.
      */
     private fun calculateEndDateMillisForEndTimeChange(
         startDateMillis: Long,
@@ -526,22 +501,16 @@ class EventFormSheetTest {
         assertTrue("Should show +1 for midnight", isMidnightCrossing(day1, newEndDateMillis, startHour, newEndHour))
     }
 
-    // ========== Date Range Picker Tests (Marriott-style unified picker) ==========
+    // ========== Date Range Picker Tests ==========
+    //
+    // Model a single date-range picker with Start and End tabs: a start after the
+    // end moves the end, an end before the start swaps them, and picking the start
+    // date as the end makes a same-day range. The form uses separate Start and End
+    // sheets; its End sheet does the swap ([withTimedEnd] for a timed form).
 
     /**
-     * Tests for the unified date range picker that shows both start and end
-     * dates in a single compact row with a shared calendar.
-     *
-     * Key behaviors:
-     * - Start/End tab toggle for selection mode
-     * - Auto-advance from Start to End after selection
-     * - Smart swap validation (end < start → swap)
-     * - Same-day confirmation (tap same date → collapse)
-     */
-
-    /**
-     * Simulates the date selection logic from DateRangePickerCard.
-     * Returns Pair(newStartDateMillis, newEndDateMillis).
+     * Models a date pick for the [activeSelection] tab and returns
+     * Pair(newStartDateMillis, newEndDateMillis).
      */
     private fun simulateDateSelection(
         currentStartMillis: Long,
@@ -550,15 +519,13 @@ class EventFormSheetTest {
         activeSelection: DateSelectionMode
     ): Pair<Long, Long> {
         return if (activeSelection == DateSelectionMode.START) {
-            // Update start date
             val newStart = selectedMillis
-            // If new start is after end, swap (smart validation)
+            // A start after the end moves the end to it.
             val newEnd = if (selectedMillis > currentEndMillis) selectedMillis else currentEndMillis
             Pair(newStart, newEnd)
         } else {
-            // Update end date
             if (selectedMillis < currentStartMillis) {
-                // Smart swap: selected becomes start, old start becomes end
+                // Swap: the picked date becomes the start, the old start the end.
                 Pair(selectedMillis, currentStartMillis)
             } else {
                 Pair(currentStartMillis, selectedMillis)
@@ -658,9 +625,9 @@ class EventFormSheetTest {
 
     @Test
     fun `date range selection preserves time components`() {
-        // When selecting dates, time components should be preserved
-        val jan1_10am = 1704103200000L  // Jan 1 at 10:00 AM
-        val jan1_11am = jan1_10am + (60 * 60 * 1000)  // Jan 1 at 11:00 AM
+        // Copying a new date into the state leaves its time fields as they were.
+        val jan1_10am = 1704103200000L  // Jan 1, 2024 10:00 UTC
+        val jan1_11am = jan1_10am + (60 * 60 * 1000)  // Jan 1, 2024 11:00 UTC
 
         val initial = EventFormState(
             dateMillis = jan1_10am,
@@ -671,10 +638,8 @@ class EventFormSheetTest {
             endMinute = 0
         )
 
-        // Changing date should not affect time fields
         val updated = initial.copy(dateMillis = jan1_10am + (24 * 60 * 60 * 1000))  // Jan 2
 
-        // Time fields should remain unchanged
         assertEquals("Start hour should be preserved", 10, updated.startHour)
         assertEquals("End hour should be preserved", 11, updated.endHour)
     }
@@ -713,10 +678,9 @@ class EventFormSheetTest {
 
     @Test
     fun `auto-advance from START to END after selection`() {
-        // Simulating the auto-advance behavior
+        // Models the advance from the Start tab to End after a start pick.
         var activeSelection = DateSelectionMode.START
 
-        // After selecting start date, should advance to END
         if (activeSelection == DateSelectionMode.START) {
             activeSelection = DateSelectionMode.END
         }
@@ -726,12 +690,8 @@ class EventFormSheetTest {
 
     // ========== Range Highlighting Tests ==========
 
-    /**
-     * Tests the range highlighting logic for calendar days.
-     * - Start date: primary color
-     * - End date: tertiary color
-     * - Days in range: primaryContainer background
-     */
+    // Model a range picker's day highlighting: the start day, the end day, and the
+    // days strictly between them. Only the predicates are tested, not colors.
 
     private fun isInRange(dayMillis: Long, startMillis: Long, endMillis: Long): Boolean {
         return dayMillis > startMillis && dayMillis < endMillis
@@ -817,21 +777,21 @@ class EventFormSheetTest {
 
     @Test
     fun `collapsed row shows both dates for multi-day`() {
-        // Visual test: "Thu, Jan 2 → Sat, Jan 4"
+        // A collapsed row would read "Tue, Jan 2 → Thu, Jan 4"; only the multi-day check
+        // is asserted, not the text.
         val jan2 = 1704153600000L  // Jan 2, 2024
         val jan4 = jan2 + (2 * 24 * 60 * 60 * 1000)
 
         assertTrue("Should be multi-day", isMultiDayTest(jan2, jan4))
-        // UI should show "Jan 2 → Jan 4" format
     }
 
     @Test
     fun `collapsed row shows single date for same-day`() {
-        // Visual test: "Thu, Jan 2" (not "Thu, Jan 2 → Thu, Jan 2")
+        // A collapsed row would read "Tue, Jan 2" with no arrow; only the same-day check
+        // is asserted, not the text.
         val jan2 = 1704153600000L
 
         assertFalse("Should be same-day", isMultiDayTest(jan2, jan2))
-        // UI should show just "Jan 2" without arrow
     }
 
     // ========== Edit Mode Date Range Tests ==========
@@ -881,7 +841,6 @@ class EventFormSheetTest {
             endDateMillis = jan5
         )
 
-        // All-day events also use the unified picker
         assertTrue("All-day multi-day event detected", isMultiDayTest(state.dateMillis, state.endDateMillis))
     }
 
@@ -901,26 +860,19 @@ class EventFormSheetTest {
         assertEquals("End date preserved", jan5, state.endDateMillis)
     }
 
-    // ========== MergedTimeRow Date Label Tests (v5.1.0) ==========
-
-    /**
-     * v5.1.0 Change: MergedTimeRow now always used for time selection.
-     * shouldShowSeparatePickers() determines if date labels are shown in tabs.
-     *
-     * For multi-day events, the Start/End tabs show date labels underneath:
-     *   [Start]    [End]
-     *   [Jan 2]    [Jan 4]
-     *
-     * For same-day events, no date labels are shown:
-     *   [Start]    [End]
-     */
+    // ========== Time Picker Date Label Tests ==========
+    //
+    // Model date labels under a time picker's Start and End tabs, decided by
+    // shouldShowSeparatePickers: shown for a multi-day event, hidden for a
+    // same-day event and a midnight crossing.
+    //   [Start]    [End]
+    //   [Jan 2]    [Jan 4]
 
     @Test
     fun `multi-day event shows date labels in unified time picker`() {
         val jan2 = 1704153600000L
         val jan4 = jan2 + (2 * 24 * 60 * 60 * 1000)
 
-        // shouldShowSeparatePickers now determines if date labels are shown
         val showDateLabels = shouldShowSeparatePickers(jan2, jan4, 10, 14)
         assertTrue("Multi-day event should show date labels", showDateLabels)
     }
@@ -945,14 +897,14 @@ class EventFormSheetTest {
 
     @Test
     fun `multi-day duration calculation works with unified time picker`() {
-        // Simulate: Jan 2 10 AM - Jan 4 3 PM (multi-day event)
+        // Jan 2 10 AM - Jan 4 3 PM (multi-day event)
         val jan2 = 1704153600000L
         val jan4 = jan2 + (2 * 24 * 60 * 60 * 1000)
 
         // This is a multi-day event
         assertTrue("Should detect as multi-day", isMultiDayTest(jan2, jan4))
 
-        // Verify duration calculation for multi-day (53 hours = 3180 minutes)
+        // The duration across days is 53 hours (3180 minutes), computed inline.
         val startMinutes = 10 * 60  // 10:00 AM
         val endMinutes = 15 * 60    // 3:00 PM
         // Duration across days: (24h - 10h) + 24h + 15h = 53 hours
@@ -960,12 +912,12 @@ class EventFormSheetTest {
         assertEquals("Multi-day duration calculation", 53 * 60, durationMinutes)
     }
 
-    // ========== v6.1.0 Regression Tests for Multi-Day Bug Fix ==========
+    // ========== Multi-Day End-Time Tests ==========
 
     /**
-     * Simulates the fixed onEndTimeSelected logic.
-     * BUG (pre-v6.1.0): Always reset endDateMillis to dateMillis
-     * FIX: Check if already multi-day and preserve endDateMillis
+     * Models an end-time pick that keeps a multi-day event's end date. A same-day event moves
+     * its end to the next day when the end hour is before the start hour; resetting the end
+     * date to the start date would collapse a multi-day event to one day.
      */
     private fun calculateEndDateMillisForEndTimeChangeFix(
         dateMillis: Long,
@@ -976,7 +928,7 @@ class EventFormSheetTest {
         val isSameDay = !isMultiDayTest(dateMillis, endDateMillis)
         val crossesMidnight = newEndHour < startHour
         return when {
-            !isSameDay -> endDateMillis  // FIX: Preserve multi-day end date
+            !isSameDay -> endDateMillis  // A multi-day end date stays.
             crossesMidnight -> dateMillis + (24 * 60 * 60 * 1000)
             else -> dateMillis
         }
@@ -1043,15 +995,13 @@ class EventFormSheetTest {
 
     @Test
     fun `v6-1-0 regression - multi-day event time change does not collapse to single day`() {
-        // This is the exact bug scenario reported in v6.0.0
         // Given: Multi-day event (conference from Jan 2 - Jan 4)
         val conferenceStart = 1704153600000L  // Jan 2
         val conferenceEnd = conferenceStart + (2 * 24 * 60 * 60 * 1000)  // Jan 4
 
         assertTrue("Conference should be multi-day", isMultiDayTest(conferenceStart, conferenceEnd))
 
-        // When: User opens time picker and selects ANY end time
-        // In v6.0.0, this would ALWAYS reset endDateMillis to dateMillis
+        // When: the user picks any end time, the end date must not reset to the start date.
         val scenarios = listOf(
             Pair(15, "3 PM - normal time"),
             Pair(23, "11 PM - late time"),
@@ -1076,39 +1026,380 @@ class EventFormSheetTest {
         }
     }
 
-    // ========== Time Validation Tests (v15.0.7) ==========
+    // ========== Form dates, event timezone and the end-before-start / duration checks ==========
+    //
+    // Timed forms keep the event's date in the form's own timezone, stored as that
+    // date's midnight on the phone, and the hours in the form's timezone. Every
+    // check measures the instants toStartEndTs will save.
 
-    /**
-     * Simulates the hasTimeConflict logic from EventFormSheet.
-     * Returns true if end time is before start time on the same day.
-     */
-    private fun hasTimeConflict(state: EventFormState): Boolean {
-        if (state.isAllDay) return false
-        val startDateOnly = normalizeToLocalMidnightTest(state.dateMillis)
-        val endDateOnly = normalizeToLocalMidnightTest(state.endDateMillis)
-        if (startDateOnly == endDateOnly) {
-            val startMins = state.startHour * 60 + state.startMinute
-            val endMins = state.endHour * 60 + state.endMinute
-            return endMins < startMins
+    private val oneHourMs = 3_600_000L
+    private val newYork = "America/New_York"
+
+    private fun day(y: Int, m: Int, d: Int) = java.time.LocalDate.of(y, m, d)
+
+    /** A timed form as the edit loaders build it for an event at [startTs]..[endTs]. */
+    private fun loadedForm(startTs: Long, endTs: Long, timezone: String? = newYork) =
+        EventFormState(timezone = timezone).withDateFields(timedFormDateFields(startTs, endTs, timezone))
+
+    @Test
+    fun `event crossing midnight in its own zone but not on the phone is not flagged as ending before it starts`() =
+        withDeviceTimeZone("America/Los_Angeles") {
+            // New York 2024-03-05 23:30 to 2024-03-06 00:30 is 20:30-21:30 Mar 5 in Los Angeles.
+            val state = EventFormState(
+                dateMillis = phoneMidnight(day(2024, 3, 5)),
+                endDateMillis = phoneMidnight(day(2024, 3, 6)),
+                startHour = 23, startMinute = 30,
+                endHour = 0, endMinute = 30,
+                timezone = newYork,
+            )
+            assertFalse(state.endsBeforeStart())
         }
-        return false
-    }
 
-    /**
-     * Normalize timestamp to local midnight for date comparison.
-     */
-    private fun normalizeToLocalMidnightTest(millis: Long): Long {
-        val cal = java.util.Calendar.getInstance()
-        cal.timeInMillis = millis
-        cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
-        cal.set(java.util.Calendar.MINUTE, 0)
-        cal.set(java.util.Calendar.SECOND, 0)
-        cal.set(java.util.Calendar.MILLISECOND, 0)
-        return cal.timeInMillis
+    @Test
+    fun `moving the start keeps the duration when the event spans the phone's midnight but not its own`() =
+        withDeviceTimeZone("America/Los_Angeles") {
+            // New York 2024-03-06 02:00-04:00, which is 23:00 Mar 5 to 01:00 Mar 6 in Los Angeles.
+            val state = loadedForm(1_709_708_400_000L, 1_709_715_600_000L)
+
+            val moved = state.withTimedStart(state.dateMillis, 3, 0, defaultDurationMinutes = 30)
+
+            val (start, end) = moved.toStartEndTs()
+            assertEquals(1_709_712_000_000L, start) // 03:00 New York
+            assertEquals(1_709_719_200_000L, end) // 05:00 New York, still 2 hours
+            assertEquals(5, moved.endHour)
+            assertEquals(day(2024, 3, 6), phoneLocalDate(moved.endDateMillis))
+        }
+
+    @Test
+    fun `moving the start across a daylight saving change keeps the real elapsed duration`() =
+        withDeviceTimeZone("America/Los_Angeles") {
+            // New York 2024-03-10 00:00-04:00 spans the spring-forward change: 3 real hours.
+            val state = loadedForm(1_710_046_800_000L, 1_710_057_600_000L)
+
+            val moved = state.withTimedStart(state.dateMillis, 9, 0, defaultDurationMinutes = 30)
+
+            val (start, end) = moved.toStartEndTs()
+            assertEquals(3 * oneHourMs, end - start)
+            assertEquals(12, moved.endHour)
+        }
+
+    @Test
+    fun `a repeated clock time resolves to its first occurrence`() = withDeviceTimeZone("America/Los_Angeles") {
+        // RFC 5545 section 3.3.5: 01:30 on the fall-back day is 01:30 EDT, the first of the two.
+        val state = EventFormState(
+            dateMillis = phoneMidnight(day(2024, 11, 3)),
+            endDateMillis = phoneMidnight(day(2024, 11, 3)),
+            startHour = 1, startMinute = 30,
+            endHour = 3, endMinute = 0,
+            timezone = newYork,
+        )
+        assertEquals(1_730_611_800_000L, state.toStartEndTs().first) // 05:30Z
     }
 
     @Test
-    fun `hasTimeConflict returns false when end time after start time`() {
+    fun `a skipped clock time resolves with the offset before the gap`() = withDeviceTimeZone("America/Los_Angeles") {
+        // RFC 5545 section 3.3.5: 02:30 on the spring-forward day is read as 03:30 EDT.
+        val state = EventFormState(
+            dateMillis = phoneMidnight(day(2024, 3, 10)),
+            endDateMillis = phoneMidnight(day(2024, 3, 10)),
+            startHour = 2, startMinute = 30,
+            endHour = 4, endMinute = 0,
+            timezone = newYork,
+        )
+        assertEquals(1_710_055_800_000L, state.toStartEndTs().first) // 07:30Z
+    }
+
+    @Test
+    fun `an unchanged form keeps the loaded time in the second of two repeated hours`() =
+        withDeviceTimeZone("America/Los_Angeles") {
+            val secondOneThirty = 1_730_615_400_000L // 2024-11-03 01:30 EST (06:30Z)
+            val state = loadedForm(secondOneThirty, secondOneThirty + oneHourMs)
+            assertEquals(secondOneThirty to secondOneThirty + oneHourMs, state.toStartEndTs())
+        }
+
+    @Test
+    fun `a winter event moved into a repeated hour follows the first-occurrence rule`() =
+        withDeviceTimeZone("America/Los_Angeles") {
+            val state = loadedForm(1_704_898_800_000L, 1_704_902_400_000L) // 2024-01-10 10:00 EST
+            val moved = state.withTimedStart(phoneMidnight(day(2024, 11, 3)), 1, 30, defaultDurationMinutes = 30)
+            assertEquals(1_730_611_800_000L, moved.toStartEndTs().first) // 01:30 EDT
+        }
+
+    @Test
+    fun `picking a new timezone keeps the event at the same moment inside a repeated hour`() =
+        withDeviceTimeZone("America/Los_Angeles") {
+            val start = 1_730_619_000_000L // 02:30 EST Nov 3 = 01:30 CST, Chicago's second 01:30
+            val moved = loadedForm(start, start + oneHourMs).withTimezone("America/Chicago")
+            assertEquals(start to start + oneHourMs, moved.toStartEndTs())
+            assertEquals(1, moved.startHour)
+            assertEquals(30, moved.startMinute)
+        }
+
+    @Test
+    fun `picking a new timezone keeps the event at the same moment when the phone is ahead of the event`() =
+        withDeviceTimeZone("Asia/Tokyo") {
+            val start = 1_709_647_200_000L // 2024-03-05 09:00 New York (23:00 in Tokyo)
+            val moved = loadedForm(start, start + oneHourMs).withTimezone("America/Chicago")
+            assertEquals(start to start + oneHourMs, moved.toStartEndTs())
+            assertEquals(8, moved.startHour)
+            assertEquals(day(2024, 3, 5), phoneLocalDate(moved.dateMillis))
+        }
+
+    @Test
+    fun `picking a timezone replaces a preserved unrecognised one`() = withDeviceTimeZone("America/Los_Angeles") {
+        val state = EventFormState(sourceTimezoneId = "Eastern Standard Time")
+        assertNull(state.withTimezone(null).sourceTimezoneId)
+        assertNull(state.withTimezone(newYork).sourceTimezoneId)
+    }
+
+    @Test
+    fun `turning all-day on and off keeps the event's date and time`() = withDeviceTimeZone("America/Los_Angeles") {
+        val start = 1_709_704_800_000L // 2024-03-06 01:00 New York (22:00 Mar 5 in Los Angeles)
+        val state = loadedForm(start, start + oneHourMs)
+
+        val toggled = state.withAllDay(true, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+            .withAllDay(false, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+
+        assertEquals(start to start + oneHourMs, toggled.toStartEndTs())
+    }
+
+    @Test
+    fun `turning all-day on swaps the default reminder`() = withDeviceTimeZone("America/Los_Angeles") {
+        val state = EventFormState(reminders = listOf(15, 60), isAllDay = false)
+        val allDay = state.withAllDay(true, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+        assertTrue(allDay.isAllDay)
+        assertEquals(listOf(60, 1440), allDay.reminders)
+    }
+
+    @Test
+    fun `re-picking the end on a phone ahead of the event keeps a one-hour event`() = withDeviceTimeZone("Asia/Tokyo") {
+        // New York 2024-03-05 09:00-10:00 is 23:00 Mar 5 to 00:00 Mar 6 in Tokyo.
+        val start = 1_709_647_200_000L
+        val state = loadedForm(start, start + oneHourMs)
+
+        // The user picks Mar 5, 10:00 in the End sheet.
+        val picked = state.withTimedEnd(phoneMidnight(day(2024, 3, 5)), 10, 0)
+
+        // Same day as the start, so no swap: the start date is untouched.
+        assertEquals(state.dateMillis, picked.dateMillis)
+        val (newStart, newEnd) = picked.toStartEndTs()
+        assertEquals(start, newStart)
+        assertEquals(oneHourMs, newEnd - newStart)
+    }
+
+    @Test
+    fun `picking an end date before the start date swaps them`() = withDeviceTimeZone("America/Los_Angeles") {
+        val state = EventFormState(
+            dateMillis = phoneMidnight(day(2024, 3, 5)),
+            endDateMillis = phoneMidnight(day(2024, 3, 5)),
+            startHour = 10, startMinute = 0,
+            endHour = 11, endMinute = 0,
+        )
+        val swapped = state.withTimedEnd(phoneMidnight(day(2024, 3, 3)), 12, 0)
+        assertEquals(day(2024, 3, 3), phoneLocalDate(swapped.dateMillis))
+        assertEquals(day(2024, 3, 5), phoneLocalDate(swapped.endDateMillis))
+        assertEquals(12, swapped.endHour)
+    }
+
+    @Test
+    fun `a Room event loads with its own date and clock time and the loaded instants`() =
+        withDeviceTimeZone("America/Los_Angeles") {
+            val start = 1_709_704_800_000L // 2024-03-06 01:00 New York
+            val event = org.onekash.kashcal.data.db.entity.Event(
+                uid = "u", calendarId = 1L, title = "Late call",
+                startTs = start, endTs = start + oneHourMs, dtstamp = start,
+                timezone = newYork,
+            )
+            val fields = event.toFormDateFields(occurrenceTs = null)
+            assertEquals(day(2024, 3, 6), phoneLocalDate(fields.dateMillis))
+            assertEquals(1, fields.startHour)
+            assertEquals(2, fields.endHour)
+            assertEquals(start, fields.startOffsetHintTs)
+            assertEquals(start + oneHourMs, fields.endOffsetHintTs)
+        }
+
+    @Test
+    fun `a Room event with an offset timezone loads and saves in that offset`() = withDeviceTimeZone("America/Los_Angeles") {
+        val start = 1_709_650_800_000L // 15:00Z, 20:00 at UTC+05:00
+        val event = org.onekash.kashcal.data.db.entity.Event(
+            uid = "u", calendarId = 1L, title = "Offset",
+            startTs = start, endTs = start + oneHourMs, dtstamp = start,
+            timezone = "UTC+05:00",
+        )
+        val fields = event.toFormDateFields(occurrenceTs = null)
+        assertEquals(20, fields.startHour)
+
+        val form = EventFormState(timezone = "UTC+05:00").withDateFields(fields)
+        assertEquals(start to start + oneHourMs, form.toStartEndTs())
+    }
+
+    @Test
+    fun `a blank or unrecognised timezone saves in the phone's timezone`() = withDeviceTimeZone("America/Los_Angeles") {
+        val tenAmLosAngeles = 1_709_661_600_000L // 2024-03-05 10:00 PST
+        for (zone in listOf("", "Eastern Standard Time")) {
+            val state = EventFormState(
+                dateMillis = phoneMidnight(day(2024, 3, 5)),
+                endDateMillis = phoneMidnight(day(2024, 3, 5)),
+                startHour = 10, startMinute = 0,
+                endHour = 11, endMinute = 0,
+                timezone = zone,
+            )
+            assertEquals("zone '$zone'", tenAmLosAngeles, state.toStartEndTs().first)
+        }
+    }
+
+    @Test
+    fun `a legacy three-letter timezone still resolves`() = withDeviceTimeZone("America/Los_Angeles") {
+        val state = EventFormState(
+            dateMillis = phoneMidnight(day(2024, 3, 5)),
+            endDateMillis = phoneMidnight(day(2024, 3, 5)),
+            startHour = 10, startMinute = 0,
+            endHour = 11, endMinute = 0,
+            timezone = "EST",
+        )
+        assertEquals(1_709_650_800_000L, state.toStartEndTs().first) // 10:00 at -05:00
+    }
+
+    @Test
+    fun `an ambiguous three-letter timezone is not guessed`() = withDeviceTimeZone("America/Los_Angeles") {
+        // "BST" could be British Summer Time or Bangladesh; only the unambiguous
+        // fixed-offset names are accepted.
+        val state = EventFormState(
+            dateMillis = phoneMidnight(day(2024, 3, 5)),
+            endDateMillis = phoneMidnight(day(2024, 3, 5)),
+            startHour = 10, startMinute = 0,
+            endHour = 11, endMinute = 0,
+            timezone = "BST",
+        )
+        assertEquals(1_709_661_600_000L, state.toStartEndTs().first) // 10:00 in Los Angeles
+    }
+
+    @Test
+    fun `re-picking the same end day on a new-event form does not swap`() = withDeviceTimeZone("America/Los_Angeles") {
+        // New-event forms carry raw instants in their date fields.
+        val tenAm = 1_709_661_600_000L // 2024-03-05 10:00 PST
+        val state = EventFormState(
+            dateMillis = tenAm, endDateMillis = tenAm,
+            startHour = 10, startMinute = 0, endHour = 11, endMinute = 0,
+        )
+        val picked = state.withTimedEnd(phoneMidnight(day(2024, 3, 5)), 12, 0)
+        assertEquals(tenAm, picked.dateMillis)
+        assertEquals(2 * oneHourMs, picked.toStartEndTs().let { it.second - it.first })
+    }
+
+    @Test
+    fun `moving the start so the end lands in the second repeated hour keeps that end`() =
+        withDeviceTimeZone("America/Los_Angeles") {
+            // 00:30 EDT to 01:30 EST on 2024-11-03 is two real hours.
+            val state = loadedForm(1_730_608_200_000L, 1_730_615_400_000L)
+            val moved = state.withTimedStart(state.dateMillis, 0, 30, defaultDurationMinutes = 30)
+            assertEquals(1_730_615_400_000L, moved.toStartEndTs().second)
+        }
+
+    @Test
+    fun `picking the same day again does not count as an edit`() = withDeviceTimeZone("America/Los_Angeles") {
+        val tenAm = 1_709_661_600_000L
+        val baseline = EventFormState(dateMillis = tenAm, endDateMillis = tenAm)
+        val sameDay = baseline.copy(dateMillis = phoneMidnight(day(2024, 3, 5)), endDateMillis = phoneMidnight(day(2024, 3, 5)))
+        val nextDay = baseline.copy(dateMillis = phoneMidnight(day(2024, 3, 6)))
+        assertFalse(eventFormHasUnsavedChanges(baseline, sameDay))
+        assertTrue(eventFormHasUnsavedChanges(baseline, nextDay))
+    }
+
+    @Test
+    fun `choosing the device zone for an event with an unrecognised timezone counts as an edit`() {
+        val loaded = EventFormState(timezone = null, sourceTimezoneId = "Eastern Standard Time")
+        assertTrue(eventFormHasUnsavedChanges(loaded, loaded.withTimezone(null)))
+    }
+
+    @Test
+    fun `turning all-day on and off keeps a repeat end date`() = withDeviceTimeZone("America/Los_Angeles") {
+        val timed = EventFormState(
+            isAllDay = false,
+            timezone = "America/Los_Angeles",
+            // The UNTIL is the end of Dec 31 in Los Angeles.
+            rrule = "FREQ=WEEKLY;BYDAY=MO;UNTIL=20270101T075959Z;WKST=MO",
+        )
+
+        val allDay = timed.withAllDay(true, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+        assertEquals("FREQ=WEEKLY;BYDAY=MO;UNTIL=20261231;WKST=MO", allDay.rrule)
+
+        val backToTimed = allDay.withAllDay(false, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+        assertEquals(timed.rrule, backToTimed.rrule)
+    }
+
+    @Test
+    fun `turning all-day off ends the repeat on the same day in the event's zone`() = withDeviceTimeZone("Asia/Tokyo") {
+        val allDay = EventFormState(isAllDay = true, timezone = null, rrule = "FREQ=DAILY;UNTIL=20261231")
+        val timed = allDay.withAllDay(false, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+        assertEquals("FREQ=DAILY;UNTIL=20261231T145959Z", timed.rrule) // Dec 31 23:59:59 in Tokyo
+    }
+
+    @Test
+    fun `turning all-day on leaves a repeat without an end date alone`() = withDeviceTimeZone("America/Los_Angeles") {
+        for (rule in listOf("FREQ=DAILY;COUNT=5", "FREQ=DAILY")) {
+            val toggled = EventFormState(isAllDay = false, rrule = rule)
+                .withAllDay(true, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+            assertEquals(rule, toggled.rrule)
+        }
+    }
+
+    @Test
+    fun `turning all-day on keeps a date-only repeat end as written`() = withDeviceTimeZone("Asia/Tokyo") {
+        val timed = EventFormState(isAllDay = false, timezone = "Asia/Tokyo", rrule = "FREQ=DAILY;UNTIL=20261231")
+        assertEquals(
+            "FREQ=DAILY;UNTIL=20261231",
+            timed.withAllDay(true, defaultReminderTimed = 15, defaultReminderAllDay = 1440).rrule,
+        )
+    }
+
+    @Test
+    fun `turning all-day on and back off restores a repeat rule exactly`() = withDeviceTimeZone("America/Los_Angeles") {
+        // A server-written end that isn't the end of a day; the round trip must not rewrite it.
+        val loaded = EventFormState(isAllDay = false, timezone = "America/Los_Angeles", rrule = "FREQ=DAILY;UNTIL=20261231T000000Z")
+
+        val roundTrip = loaded.withAllDay(true, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+            .withAllDay(false, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+
+        assertEquals(loaded.rrule, roundTrip.rrule)
+        assertFalse(eventFormHasUnsavedChanges(loaded, roundTrip))
+    }
+
+    @Test
+    fun `a repeat rule edited between all-day toggles is re-expressed, not restored`() = withDeviceTimeZone("America/Los_Angeles") {
+        val loaded = EventFormState(isAllDay = false, timezone = "America/Los_Angeles", rrule = "FREQ=DAILY;UNTIL=20270101T075959Z")
+        val allDay = loaded.withAllDay(true, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+            .copy(rrule = "FREQ=WEEKLY;UNTIL=20261231")
+        val timed = allDay.withAllDay(false, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+        assertEquals("FREQ=WEEKLY;UNTIL=20270101T075959Z", timed.rrule)
+    }
+
+    @Test
+    fun `a malformed repeat end is left alone on an all-day toggle`() = withDeviceTimeZone("America/Los_Angeles") {
+        val rule = "FREQ=DAILY;UNTIL=20261231T1459Z"
+        val toggled = EventFormState(isAllDay = true, rrule = rule)
+            .withAllDay(false, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+        assertEquals(rule, toggled.rrule)
+    }
+
+    @Test
+    fun `a round trip restores a repeat rule the first toggle left unchanged`() = withDeviceTimeZone("America/Los_Angeles") {
+        val timed = EventFormState(isAllDay = false, timezone = "America/Los_Angeles", rrule = "FREQ=DAILY;UNTIL=20261231")
+        val roundTrip = timed.withAllDay(true, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+            .withAllDay(false, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+        assertEquals(timed.rrule, roundTrip.rrule)
+
+        val allDay = EventFormState(isAllDay = true, timezone = "UTC", rrule = "FREQ=DAILY;UNTIL=20261231T235959Z")
+        val back = allDay.withAllDay(false, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+            .withAllDay(true, defaultReminderTimed = 15, defaultReminderAllDay = 1440)
+        assertEquals(allDay.rrule, back.rrule)
+    }
+
+    // ========== End-Before-Start Tests ==========
+
+
+    @Test
+    fun `end after start is valid`() {
         val state = EventFormState(
             dateMillis = 1704106800000L,
             endDateMillis = 1704106800000L,
@@ -1118,11 +1409,11 @@ class EventFormSheetTest {
             endMinute = 0,
             isAllDay = false
         )
-        assertFalse("End time after start time should be valid", hasTimeConflict(state))
+        assertFalse("End time after start time should be valid", state.endsBeforeStart())
     }
 
     @Test
-    fun `hasTimeConflict returns true when end time before start time same day`() {
+    fun `end before start on the same day is invalid`() {
         val state = EventFormState(
             dateMillis = 1704106800000L,
             endDateMillis = 1704106800000L,
@@ -1132,11 +1423,11 @@ class EventFormSheetTest {
             endMinute = 0,
             isAllDay = false
         )
-        assertTrue("End time before start time should be invalid", hasTimeConflict(state))
+        assertTrue("End time before start time should be invalid", state.endsBeforeStart())
     }
 
     @Test
-    fun `hasTimeConflict returns false for all-day events`() {
+    fun `all-day events skip the end-before-start check`() {
         val state = EventFormState(
             dateMillis = 1704106800000L,
             endDateMillis = 1704106800000L,
@@ -1146,11 +1437,11 @@ class EventFormSheetTest {
             endMinute = 0,
             isAllDay = true // All-day events skip time validation
         )
-        assertFalse("All-day events should skip time validation", hasTimeConflict(state))
+        assertFalse("All-day events should skip time validation", state.endsBeforeStart())
     }
 
     @Test
-    fun `hasTimeConflict returns false when dates are different`() {
+    fun `an end hour earlier than the start hour on a later date is valid`() {
         val day1 = 1704106800000L
         val day2 = day1 + (24 * 60 * 60 * 1000) // Next day
         val state = EventFormState(
@@ -1162,11 +1453,11 @@ class EventFormSheetTest {
             endMinute = 0,
             isAllDay = false
         )
-        assertFalse("Different dates should allow any end hour", hasTimeConflict(state))
+        assertFalse("Different dates should allow any end hour", state.endsBeforeStart())
     }
 
     @Test
-    fun `hasTimeConflict returns false for equal start and end time - zero duration allowed`() {
+    fun `an end equal to the start is valid`() {
         val state = EventFormState(
             dateMillis = 1704106800000L,
             endDateMillis = 1704106800000L,
@@ -1176,11 +1467,11 @@ class EventFormSheetTest {
             endMinute = 30,
             isAllDay = false
         )
-        assertFalse("Zero-duration events (end = start) should be valid", hasTimeConflict(state))
+        assertFalse("Zero-duration events (end = start) should be valid", state.endsBeforeStart())
     }
 
     @Test
-    fun `hasTimeConflict handles midnight boundary correctly`() {
+    fun `an end just after midnight on the start date is before a late-evening start`() {
         val state = EventFormState(
             dateMillis = 1704106800000L,
             endDateMillis = 1704106800000L,
@@ -1191,11 +1482,11 @@ class EventFormSheetTest {
             isAllDay = false
         )
         // Same date with end hour 0 < start hour 23 = conflict
-        assertTrue("End at midnight (hour 0) before start at 11 PM should be invalid", hasTimeConflict(state))
+        assertTrue("End at midnight (hour 0) before start at 11 PM should be invalid", state.endsBeforeStart())
     }
 
     @Test
-    fun `hasTimeConflict returns false for multi-day event with earlier end hour`() {
+    fun `a multi-day event with an earlier end hour is valid`() {
         val day1 = 1704106800000L
         val day2 = day1 + (2 * 24 * 60 * 60 * 1000) // 2 days later
         val state = EventFormState(
@@ -1207,11 +1498,11 @@ class EventFormSheetTest {
             endMinute = 0,
             isAllDay = false
         )
-        assertFalse("Multi-day event with earlier end hour should be valid", hasTimeConflict(state))
+        assertFalse("Multi-day event with earlier end hour should be valid", state.endsBeforeStart())
     }
 
     @Test
-    fun `hasTimeConflict edge case - end time 1 minute before start`() {
+    fun `an end one minute before the start is invalid`() {
         val state = EventFormState(
             dateMillis = 1704106800000L,
             endDateMillis = 1704106800000L,
@@ -1221,11 +1512,11 @@ class EventFormSheetTest {
             endMinute = 59,
             isAllDay = false
         )
-        assertTrue("End time 1 minute before start should be invalid", hasTimeConflict(state))
+        assertTrue("End time 1 minute before start should be invalid", state.endsBeforeStart())
     }
 
     @Test
-    fun `hasTimeConflict edge case - end time 1 minute after start`() {
+    fun `an end one minute after the start is valid`() {
         val state = EventFormState(
             dateMillis = 1704106800000L,
             endDateMillis = 1704106800000L,
@@ -1235,13 +1526,14 @@ class EventFormSheetTest {
             endMinute = 1,
             isAllDay = false
         )
-        assertFalse("End time 1 minute after start should be valid", hasTimeConflict(state))
+        assertFalse("End time 1 minute after start should be valid", state.endsBeforeStart())
     }
 
     // ========== Save Button Enablement Tests ==========
 
     /**
-     * Simulates the save button enabled state logic.
+     * Copies the Save button's enabled gate in [EventFormContent] for a form that isn't
+     * read-only: a non-blank title, not saving, and no end-before-start conflict.
      */
     private fun isSaveButtonEnabled(
         title: String,
@@ -1302,10 +1594,9 @@ class EventFormSheetTest {
     // ========== Duration Preservation Tests (start time change) ==========
 
     /**
-     * Simulates the FIXED onStartTimeConfirm logic for timed events.
-     * Computes actual duration from current state and applies to new start.
-     *
-     * Returns Triple(newEndHour, newEndMinute, newEndDateMillis)
+     * Moves the start of a timed form through the production [withTimedStart]
+     * and returns Triple(newEndHour, newEndMinute, newEndDateMillis). The end
+     * date is a device-local midnight, so compare days with [isMultiDayTest].
      */
     private fun simulateStartTimeChangePreservingDuration(
         oldStartHour: Int,
@@ -1319,26 +1610,31 @@ class EventFormSheetTest {
         newStartDateMillis: Long = oldStartDateMillis,
         defaultDuration: Int = 30
     ): Triple<Int, Int, Long> {
-        val oldStartMins = oldStartHour * 60 + oldStartMinute
-        val oldEndMins = oldEndHour * 60 + oldEndMinute
-        val oldStartDateOnly = normalizeToLocalMidnightTest(oldStartDateMillis)
-        val oldEndDateOnly = normalizeToLocalMidnightTest(oldEndDateMillis)
-        val dayGapMinutes = ((oldEndDateOnly - oldStartDateOnly) / (60 * 1000)).toInt()
-        val currentDurationMins = (oldEndMins - oldStartMins) + dayGapMinutes
-        val durationMins = if (currentDurationMins >= 0) currentDurationMins else defaultDuration
+        val moved = EventFormState(
+            dateMillis = oldStartDateMillis,
+            endDateMillis = oldEndDateMillis,
+            startHour = oldStartHour,
+            startMinute = oldStartMinute,
+            endHour = oldEndHour,
+            endMinute = oldEndMinute,
+        ).withTimedStart(newStartDateMillis, newStartHour, newStartMinute, defaultDuration)
+        return Triple(moved.endHour, moved.endMinute, moved.endDateMillis)
+    }
 
-        val newEndTotalMins = newStartHour * 60 + newStartMinute + durationMins
-        val dayOverflowMs = (newEndTotalMins / (24 * 60)).toLong() * 24L * 60 * 60 * 1000
-        val remainderMins = newEndTotalMins % (24 * 60)
-        val newEndDateMillis = newStartDateMillis + dayOverflowMs
-        return Triple(remainderMins / 60, remainderMins % 60, newEndDateMillis)
+    /** Returns the midnight of [millis]'s day in the JVM default zone. */
+    private fun normalizeToLocalMidnightTest(millis: Long): Long {
+        val cal = java.util.Calendar.getInstance()
+        cal.timeInMillis = millis
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0)
+        cal.set(java.util.Calendar.MINUTE, 0)
+        cal.set(java.util.Calendar.SECOND, 0)
+        cal.set(java.util.Calendar.MILLISECOND, 0)
+        return cal.timeInMillis
     }
 
     /**
-     * Simulates the FIXED onStartDateConfirm logic for all-day events.
-     * Computes day span from current state and applies to new start date.
-     *
-     * Returns newEndDateMillis.
+     * Copies the all-day branch of the Start sheet's onConfirm in [EventFormContent]: the old
+     * day span is applied to the new start date. Returns newEndDateMillis.
      */
     private fun simulateAllDayStartChangePreservingDaySpan(
         oldStartDateMillis: Long,
@@ -1355,7 +1651,7 @@ class EventFormSheetTest {
     fun `start time change preserves actual 2h duration`() {
         // Given: 10:00-12:00 (2h event)
         // When: start moves to 14:00
-        // Then: end should be 16:00 (not 14:30 from defaultDuration)
+        // Then: end should be 16:00, not 14:30 from defaultDuration
         val (newEndHour, newEndMinute, _) = simulateStartTimeChangePreservingDuration(
             oldStartHour = 10, oldStartMinute = 0,
             oldEndHour = 12, oldEndMinute = 0,
@@ -1384,7 +1680,7 @@ class EventFormSheetTest {
         )
         assertEquals("End hour should be 16", 16, newEndHour)
         assertEquals("End minute should be 0", 0, newEndMinute)
-        assertEquals("End date should be Jan 5", jan5, newEndDate)
+        assertFalse("End date should be Jan 5", isMultiDayTest(jan5, newEndDate))
     }
 
     @Test
@@ -1459,12 +1755,12 @@ class EventFormSheetTest {
         )
         assertEquals("End hour should be 0 (midnight)", 0, newEndHour)
         assertEquals("End minute should be 0", 0, newEndMinute)
-        assertEquals("End date should be Jan 6", jan6, newEndDate)
+        assertFalse("End date should be Jan 6", isMultiDayTest(jan6, newEndDate))
     }
 
     @Test
     fun `start time change falls back to default for negative duration`() {
-        // Given: end before start (invalid, but possible in state)
+        // Given: end before start (invalid, but the state can hold it)
         // When: start changes
         // Then: should use defaultDuration (30 min)
         val (newEndHour, newEndMinute, _) = simulateStartTimeChangePreservingDuration(
@@ -1482,12 +1778,10 @@ class EventFormSheetTest {
     // ========== Calendar Intent / Quick Add Expand Duration Tests ==========
 
     /**
-     * Simulates the calendar intent data path in EventFormSheet (lines 505-540).
-     * This is the code path used when:
-     * - Quick Add "More options" sends CalendarIntentData to EventFormSheet
-     * - External apps (Gmail, browsers) use ACTION_INSERT
-     *
-     * Returns Pair(startTs, endTs) as computed by the form.
+     * Copies the calendar-intent start and end in [EventFormContent]: a missing start is the
+     * next full hour, a missing end is the start plus [defaultEventDuration] minutes. Quick
+     * Add's "More options", another app's ACTION_INSERT or ACTION_EDIT, and a long shared text
+     * take this path. Returns Pair(startTs, endTs); [currentHourOfDay] stands in for the clock.
      */
     private fun simulateCalendarIntentPath(
         intentStartMillis: Long?,
@@ -1496,7 +1790,7 @@ class EventFormSheetTest {
         currentHourOfDay: Int = 14 // for testing next-hour snap
     ): Pair<Long, Long> {
         val startTs = intentStartMillis ?: run {
-            // No parsed time — snap to next hour (matches FAB create behavior)
+            // No parsed time: the next full hour.
             val nextHour = (currentHourOfDay + 1) % 24
             val cal = java.util.Calendar.getInstance().apply {
                 set(java.util.Calendar.HOUR_OF_DAY, nextHour)
@@ -1513,7 +1807,7 @@ class EventFormSheetTest {
 
     @Test
     fun `intent data with null times uses default duration not hardcoded 1 hour`() {
-        // Regression: was hardcoded to 60*60*1000 (1 hour)
+        // The default duration setting applies, not a fixed hour.
         val (startTs, endTs) = simulateCalendarIntentPath(
             intentStartMillis = null,
             intentEndMillis = null,
@@ -1662,9 +1956,10 @@ class EventFormSheetTest {
 
     @Test
     fun `attendee row editable for a detached exception on a schedulable organizer account`() {
-        // The per-occurrence ("just this one") edit now carries the edited
-        // guest set, so a detached exception's attendee row is editable —
-        // it is no longer gated read-only.
+        // The per-occurrence ("just this one") edit carries the edited guest set,
+        // so a detached exception's attendee row is editable. canEditAttendees
+        // takes no recurrence input, so this test and the next pass the same
+        // arguments.
         assertTrue(canEditAttendees(isReadOnly = false, isSchedulable = true, hasContactQuery = true))
     }
 
@@ -1690,11 +1985,10 @@ class EventFormSheetTest {
 
     @Test
     fun `scheduling-unavailable text stays suppressed for a recurring occurrence edit`() {
-        // Dropping the detached-exception clause from canEditAttendees must NOT
-        // reroute a non-schedulable detached exception into the
-        // "inviting unavailable" education text: that branch keys on
-        // (isEditMode && wasRecurringAtLoad), both true for a recurring
-        // occurrence edit, so it stays suppressed (read-only chip display).
+        // A non-schedulable recurring occurrence edit, a detached exception
+        // included, shows the read-only guest chips (or nothing), not the "inviting
+        // unavailable" text: that branch is off when isEditMode && wasRecurringAtLoad,
+        // both true here.
         assertFalse(
             showSchedulingUnavailable(
                 isReadOnly = false,
@@ -1742,8 +2036,8 @@ class EventFormSheetTest {
     fun `a change in each tracked field is detected`() {
         val b = baselineFormState
         assertTrue(eventFormHasUnsavedChanges(b, b.copy(title = "Retro")))
-        assertTrue(eventFormHasUnsavedChanges(b, b.copy(dateMillis = b.dateMillis + 1)))
-        assertTrue(eventFormHasUnsavedChanges(b, b.copy(endDateMillis = b.endDateMillis + 1)))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(dateMillis = b.dateMillis + 86_400_000L)))
+        assertTrue(eventFormHasUnsavedChanges(b, b.copy(endDateMillis = b.endDateMillis + 86_400_000L)))
         assertTrue(eventFormHasUnsavedChanges(b, b.copy(startHour = b.startHour + 1)))
         assertTrue(eventFormHasUnsavedChanges(b, b.copy(startMinute = b.startMinute + 1)))
         assertTrue(eventFormHasUnsavedChanges(b, b.copy(endHour = (b.endHour + 1) % 24)))
@@ -1762,9 +2056,9 @@ class EventFormSheetTest {
 
     @Test
     fun `editing the guest list counts as an unsaved change`() {
-        // The attendee picker auto-commits every add/remove into form state
-        // with attendeesEdited=true; adding a guest then dismissing must trip
-        // the two-tap discard guard rather than silently drop the edit.
+        // The attendee picker commits every add and remove into form state with
+        // attendeesEdited=true; adding a guest then dismissing must trip the
+        // two-tap discard guard, or the edit is silently dropped.
         val b = baselineFormState
         assertTrue(eventFormHasUnsavedChanges(b, b.copy(attendeesEdited = true)))
     }
@@ -1777,6 +2071,10 @@ class EventFormSheetTest {
         assertFalse(eventFormHasUnsavedChanges(b, b.copy(isLoading = !b.isLoading)))
         assertFalse(eventFormHasUnsavedChanges(b, b.copy(isSaving = !b.isSaving)))
         assertFalse(eventFormHasUnsavedChanges(b, b.copy(error = "boom")))
+        assertFalse(eventFormHasUnsavedChanges(b, b.copy(startOffsetHintTs = 1L, endOffsetHintTs = 2L)))
+        assertFalse(
+            eventFormHasUnsavedChanges(b, b.copy(repeatRuleBeforeAllDayToggle = "FREQ=DAILY", repeatRuleAfterAllDayToggle = "FREQ=WEEKLY"))
+        )
         assertFalse(
             eventFormHasUnsavedChanges(
                 b,

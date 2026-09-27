@@ -17,16 +17,19 @@ import org.robolectric.annotation.Config
 import java.util.concurrent.TimeUnit
 
 /**
- * Comprehensive comparison test between IcsParserService (current) and ICalParser (icaldav library).
+ * Compares [IcsParserService] with a direct [ICalParser] parse on real holiday feeds downloaded
+ * from [BASE_URL] in [setup].
  *
- * Downloads real holiday calendars from Thunderbird and compares parsing results.
- * This validates the migration approach before replacing the custom parser.
+ * [IcsParserService] wraps the same [ICalParser], drops CANCELLED events and maps through
+ * [ICalEventMapper], so the comparison checks what that wrapping changes. Test groups:
+ * - PRE: [IcsParserService] parses every feed with the required fields.
+ * - POST: [ICalParser] parses every feed and its events map to
+ *   [org.onekash.kashcal.data.db.entity.Event].
+ * - COMPARE: event counts, UIDs, titles and all-day starts agree.
+ * - EDGE: non-Latin titles, escaped characters, description lengths.
+ * - FEATURE, PERF and FIXTURE: CATEGORIES and importId, parse time, bundled fixtures.
  *
- * Test categories:
- * 1. Pre-test: Verify IcsParserService handles all calendars
- * 2. Post-test: Verify ICalParser handles all calendars
- * 3. Comparison: Ensure both parsers produce equivalent results
- * 4. Edge cases: Test calendars with special features (Unicode, RRULE, etc.)
+ * Fewer than 20 downloaded feeds fails the two "parses all downloaded calendars" tests.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -38,13 +41,11 @@ class IcsParserComparisonTest {
         private const val BASE_URL = "https://www.thunderbird.net/media/caldata/autogen/"
 
         /**
-         * Comprehensive list of holiday calendars from Thunderbird.
-         * Selected to cover:
-         * - Different regions (Americas, Europe, Asia, Africa, Oceania)
-         * - Different scripts (Latin, Cyrillic, Arabic, CJK, Hebrew)
-         * - Different calendar features (all-day, multi-day, descriptions)
+         * Lists the holiday feeds to download, chosen to span regions (Americas, Europe, Asia,
+         * Africa, Oceania), scripts (Latin, Cyrillic, CJK and others) and features (all-day,
+         * multi-day, descriptions).
          *
-         * Note: Some calendars may be empty or 404 depending on Thunderbird's current data.
+         * Some feeds may be empty or 404, depending on the host's current data.
          */
         val HOLIDAY_CALENDARS = listOf(
             // Americas
@@ -96,8 +97,8 @@ class IcsParserComparisonTest {
         )
 
         /**
-         * Calendars known to be empty (valid ICS but no events).
-         * These are Thunderbird data issues, not parser issues.
+         * Lists feeds known to be valid ICS with no events, a data issue at the host and not a
+         * parser issue. IndonesiaHolidays.ics isn't in [HOLIDAY_CALENDARS], so it isn't downloaded.
          */
         val KNOWN_EMPTY_CALENDARS = setOf(
             "IndonesiaHolidays.ics"  // Empty as of 2025-01
@@ -150,7 +151,7 @@ class IcsParserComparisonTest {
         }
     }
 
-    // ========== Pre-Tests: IcsParserService (Current Implementation) ==========
+    // ========== Pre-Tests: IcsParserService ==========
 
     @Test
     fun `PRE - IcsParserService parses all downloaded calendars`() {
@@ -179,7 +180,7 @@ class IcsParserComparisonTest {
             println("Failed calendars: ${failed.keys}")
         }
 
-        // All calendars should parse successfully (excluding known empty ones)
+        // Every calendar except the known empty ones must parse
         assertTrue(
             "All calendars should parse with IcsParserService. Failed: ${failed.keys}",
             failed.isEmpty()
@@ -193,14 +194,14 @@ class IcsParserComparisonTest {
 
             val events = IcsParserService.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
 
-            // Holiday calendars should have mostly all-day events
+            // Each holiday calendar must have at least one all-day event
             val allDayEvents = events.filter { it.isAllDay }
             assertTrue(
                 "$name: Holiday calendar should have all-day events (found ${events.size} events)",
                 allDayEvents.isNotEmpty()
             )
 
-            // Verify all-day events have valid timestamps
+            // All-day events end at or after their start
             for (event in allDayEvents) {
                 assertTrue(
                     "$name: ${event.title} - endTs should be >= startTs",
@@ -228,7 +229,7 @@ class IcsParserComparisonTest {
         }
     }
 
-    // ========== Post-Tests: ICalParser (icaldav Library) ==========
+    // ========== Post-Tests: ICalParser (icaldav) ==========
 
     @Test
     fun `POST - ICalParser parses all downloaded calendars`() {
@@ -272,7 +273,7 @@ class IcsParserComparisonTest {
             }
         }
 
-        // All calendars should parse successfully (excluding known empty ones)
+        // Every calendar except the known empty ones must parse
         assertTrue(
             "All calendars should parse with ICalParser. Failed: ${failed.keys}",
             failed.isEmpty()
@@ -299,7 +300,7 @@ class IcsParserComparisonTest {
 
                 assertTrue("$name: Should have events after mapping", events.isNotEmpty())
 
-                // Verify mapped events have all required fields
+                // Mapped events carry the required fields
                 for (event in events) {
                     assertNotNull("$name: ${event.title} - UID required", event.uid)
                     assertTrue("$name: ${event.title} - title required", event.title.isNotBlank())
@@ -343,7 +344,8 @@ class IcsParserComparisonTest {
             mismatches.forEach { println("  $it") }
         }
 
-        // Allow some mismatches due to CANCELLED event handling differences
+        // Counts differ where a feed has CANCELLED events, which IcsParserService drops; under
+        // 20% of feeds may differ
         val mismatchRate = mismatches.size.toFloat() / comparison.size
         assertTrue(
             "Mismatch rate should be < 20% (actual: ${(mismatchRate * 100).toInt()}%)",
@@ -364,11 +366,10 @@ class IcsParserComparisonTest {
                 else -> emptySet()
             }
 
-            // UIDs should be identical (or nearly so)
+            // At most 10% of IcsParserService's UIDs may be missing from ICalParser's
             val missingInIcal = rfcUids - icalUids
             val missingInRfc = icalUids - rfcUids
 
-            // IcsParserService skips events without SUMMARY, so some UIDs may be missing
             assertTrue(
                 "$name: Too many UIDs missing in ICalParser: $missingInIcal",
                 missingInIcal.size <= rfcUids.size * 0.1 // Allow 10% difference
@@ -395,7 +396,7 @@ class IcsParserComparisonTest {
                 }
                 val icalTitles = icalEvents.map { it.uid to it.title }.toMap()
 
-                // Compare titles for matching UIDs
+                // Titles must match for every UID both return
                 for ((uid, rfcTitle) in rfcTitles) {
                     val icalTitle = icalTitles[uid]
                     if (icalTitle != null) {
@@ -439,7 +440,7 @@ class IcsParserComparisonTest {
                         icalEvent.isAllDay
                     )
 
-                    // For all-day events, startTs should match (both use UTC midnight)
+                    // All-day events must have the same startTs
                     if (rfcEvent.isAllDay) {
                         assertEquals(
                             "$name ($uid): startTs mismatch for all-day event",
@@ -456,7 +457,7 @@ class IcsParserComparisonTest {
 
     @Test
     fun `EDGE - Unicode titles parsed correctly by both parsers`() {
-        // Test calendars with non-Latin scripts (use available ones)
+        // Non-Latin feeds; those that didn't download are skipped, but at least 2 must run
         val unicodeCalendars = listOf(
             "JapanHolidays.ics",     // Japanese
             "ChinaHolidays.ics",     // Chinese
@@ -478,7 +479,7 @@ class IcsParserComparisonTest {
                 assertTrue("$name: IcsParserService should have events", rfcEvents.isNotEmpty())
                 assertTrue("$name: ICalParser should have events", icalEvents.isNotEmpty())
 
-                // Titles should not be empty or garbled
+                // Titles must not be blank
                 rfcEvents.forEach { event ->
                     assertTrue(
                         "$name: RFC title should not be empty",
@@ -504,11 +505,11 @@ class IcsParserComparisonTest {
         for ((name, content) in downloadedCalendars) {
             val rfcEvents = IcsParserService.parseIcsContent(content, CALENDAR_ID, SUBSCRIPTION_ID)
 
-            // Check for any events with descriptions (likely to have escaped chars)
+            // Descriptions are where escaped characters are likely
             val eventsWithDesc = rfcEvents.filter { !it.description.isNullOrBlank() }
 
             eventsWithDesc.forEach { event ->
-                // Should not contain raw escape sequences
+                // No raw \n (without a real newline) or \, may remain
                 assertFalse(
                     "$name: Description should not contain raw \\n",
                     event.description?.contains("\\n") == true && !event.description!!.contains("\n")
@@ -534,11 +535,11 @@ class IcsParserComparisonTest {
                 for ((uid, rfcEvent) in rfcByUid) {
                     val icalEvent = icalByUid[uid] ?: continue
 
-                    // Compare description lengths
                     val rfcDescLen = rfcEvent.description?.length ?: 0
                     val icalDescLen = icalEvent.description?.length ?: 0
 
-                    // Lengths should be similar (within 10 chars for whitespace differences)
+                    // Non-empty description lengths must be within 10 characters, allowing for
+                    // whitespace differences
                     if (rfcDescLen > 0 && icalDescLen > 0) {
                         assertTrue(
                             "$name ($uid): Description length mismatch (RFC=$rfcDescLen, iCal=$icalDescLen)",
@@ -563,12 +564,12 @@ class IcsParserComparisonTest {
             if (icalResult is org.onekash.icaldav.model.ParseResult.Success) {
                 val events = icalResult.value
 
-                // Check for CATEGORIES (IcsParserService doesn't parse this)
+                // Counts the calendars with CATEGORIES; at least one must have them
                 if (events.any { it.categories.isNotEmpty() }) {
                     calendarsWithCategories++
                 }
 
-                // Check for CLASS (IcsParserService parses this)
+                // Counts the calendars with CLASS (printed, not asserted)
                 if (events.any { it.classification != null }) {
                     calendarsWithClass++
                 }
@@ -595,13 +596,13 @@ class IcsParserComparisonTest {
                 val events = icalResult.value
 
                 events.forEach { event ->
-                    // importId should be generated
+                    // Every event has an importId
                     assertNotNull(
                         "$name: ${event.summary} - importId should be generated",
                         event.importId
                     )
 
-                    // For regular events, importId should equal UID
+                    // Without a RECURRENCE-ID, importId equals the UID
                     if (event.recurrenceId == null) {
                         assertEquals(
                             "$name: importId should equal UID for non-exception events",
@@ -642,8 +643,8 @@ class IcsParserComparisonTest {
         println("IcsParserService: ${rfcTotalMs}ms total, ${rfcTotalMs / totalParses}ms avg")
         println("ICalParser: ${icalTotalMs}ms total, ${icalTotalMs / totalParses}ms avg")
 
-        // ICalParser may be slower due to ical4j overhead, but should be reasonable
-        // Allow up to 5x slower (still acceptable for background sync)
+        // IcsParserService runs the same parse plus mapping, so this 5x bound only catches a
+        // direct parse that is far slower than the wrapped one
         assertTrue(
             "ICalParser should not be more than 5x slower",
             icalTotalMs < rfcTotalMs * 5
@@ -698,7 +699,7 @@ class IcsParserComparisonTest {
         if (icalResult is org.onekash.icaldav.model.ParseResult.Success) {
             println("Japan holidays: RFC=${rfcEvents.size}, iCal=${icalResult.value.size}")
 
-            // Check Japanese characters are preserved
+            // Japanese characters survive the parse (a SUMMARY char above U+3000)
             val hasJapanese = icalResult.value.any { event ->
                 event.summary?.any { it.code > 0x3000 } == true
             }

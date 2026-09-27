@@ -26,20 +26,13 @@ import org.onekash.kashcal.R
 import java.time.LocalDate
 
 /**
- * Logo button for the top app bar. Renders the three stacked tilted calendar
- * cards with today's day-of-month painted on the front card. Tapping invokes
- * [onClick] — the caller wires this to "navigate to today" so the logo doubles
- * as the today affordance.
+ * Draws the app logo for the top app bar: three tilted calendar cards with [today]'s day of
+ * month on the front card. The caller passes "go to today" as [onClick], so the logo doubles as
+ * the today button.
  *
- * The mark is a monochrome line drawing: the three cards are stroked outlines
- * (transparent fill) in the theme's on-surface color at reduced opacity, so it
- * sits a step below the toolbar title in emphasis while still adapting to
- * light/dark and dynamic color. The day-of-month numeral is drawn in the same
- * color, centered on the front card.
- *
- * Geometry mirrors images/icon-transparent.svg (viewBox 88x88): three
- * equal-size cards fanned around a shared center so the mark reads as a
- * deck. Any future tweak to the static SVG should be mirrored here.
+ * The mark is a monochrome line drawing in the theme's on-surface color, so it follows light,
+ * dark and dynamic color. Geometry mirrors images/icon-transparent.svg (viewBox 88x88); mirror
+ * any change to that SVG here.
  */
 @Composable
 fun TopBarLogoButton(
@@ -50,10 +43,8 @@ fun TopBarLogoButton(
 ) {
     val description = stringResource(R.string.shortcut_today_long)
     val scheme = MaterialTheme.colorScheme
-    // Monochrome line drawing: the outlined deck is dimmed below full
-    // on-surface so it reads as secondary to the toolbar title, while the
-    // day-of-month numeral stays at full on-surface so the date is the
-    // focal point of the mark.
+    // The outlines are dimmed so the deck sits below the toolbar title; the numeral stays at
+    // full on-surface so the date is the focal point.
     val deckColor = scheme.onSurface.copy(alpha = 0.7f)
     val numeralColor = scheme.onSurface.toArgb()
     Canvas(
@@ -69,11 +60,8 @@ fun TopBarLogoButton(
         val scale = this.size.width / 88f
         val stroke = Stroke(width = 3.5f * scale)
 
-        // Three equal-size cards (36×42) fanned around a shared center at
-        // (44,44) so the icon reads as a deck of dated pages rather than a
-        // loose pile of mismatched cards. The back cards peek as uniform
-        // edges; the tight fan keeps overall width in check. The front card
-        // carries the day-of-month numeral.
+        // Three equal 36 by 42 cards fanned around the shared center (44,44), back to front; the
+        // last one carries the numeral.
         translate(left = 44f * scale, top = 44f * scale) {
             rotate(degrees = 8f, pivot = Offset.Zero) {
                 drawRoundRect(
@@ -118,9 +106,8 @@ fun TopBarLogoButton(
                             android.graphics.Typeface.BOLD,
                         )
                     }
-                    // Baseline offset that vertically centers the glyphs on the
-                    // card center (0,0 here after the translate), so the number
-                    // sits in the middle of the outlined front card.
+                    // Baseline that centers the glyphs vertically on the card center, which is
+                    // (0,0) after the translate.
                     val fm = paint.fontMetrics
                     val baselineY = -(fm.ascent + fm.descent) / 2f
                     canvas.nativeCanvas.drawText(day.toString(), 0f, baselineY, paint)

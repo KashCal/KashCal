@@ -5,24 +5,24 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pre-tests for the unified circular centering fix.
+ * Tests circular-wheel centering arithmetic: initial index and scroll targets subtract
+ * centeringOffset = visibleItems / 2, so the selected item sits at the viewport center.
  *
- * Approach: Make ALL wheels circular (including AM/PM) and subtract
- * centeringOffset = visibleItems / 2 from scroll targets. This replaces
- * the unreliable contentPadding-based centering.
- *
- * Key change: effectiveCircular threshold lowered from items.size >= 3 to >= 2,
- * allowing 2-item AM/PM to use circular mode with middleOffset = 1000.
+ * contentPadding can't center an item in the middle of a large virtual list, so a circular
+ * wheel has none. A wheel can be circular from two items, so the AM/PM wheel is too, starting
+ * at middleOffset 1000. The formulas are local copies of `VerticalWheelPicker`'s arithmetic
+ * over [virtualToActualIndex] and [actualToNearestVirtualIndex].
  */
 class WheelPickerCircularCenteringTest {
 
     companion object {
+        // Same value as the picker's private CIRCULAR_MULTIPLIER.
         private const val CIRCULAR_MULTIPLIER = 1000
     }
 
     /**
-     * Simulates the NEW initialIndex calculation with circular centering.
-     * effectiveCircular threshold: items.size >= 2 (was 3)
+     * Copies the circular branch of the picker's initialIndex, circular from two items. For a
+     * non-circular list it drops the offset, where the picker subtracts it and clamps at 0.
      */
     private fun computeFixedInitialIndex(
         itemCount: Int,
@@ -30,15 +30,15 @@ class WheelPickerCircularCenteringTest {
         isCircular: Boolean,
         visibleItems: Int
     ): Int {
-        val effectiveCircular = isCircular && itemCount >= 2  // NEW threshold
+        val effectiveCircular = isCircular && itemCount >= 2  // Circular from two items
         val middleOffset = if (effectiveCircular) (CIRCULAR_MULTIPLIER / 2) * itemCount else 0
         val centeringOffset = if (effectiveCircular) visibleItems / 2 else 0
         return middleOffset + selectedIndex - centeringOffset
     }
 
     /**
-     * Returns what actual item ends up at the viewport center given initialIndex.
-     * For circular: center is at initialIndex + centeringOffset
+     * Returns the item index at the viewport center for [initialIndex]: the item at
+     * initialIndex + centeringOffset for a circular wheel.
      */
     private fun getCenterItem(
         itemCount: Int,
@@ -102,7 +102,7 @@ class WheelPickerCircularCenteringTest {
         assertEquals("PM (index 1) should be at viewport center", 1, centerItem)
     }
 
-    // ==================== 24-Hour Mode: All Hours Center Correctly ====================
+    // ==================== 24-Hour Mode: Every Hour Centers ====================
 
     @Test
     fun `24h mode - all hours center correctly with visibleItems 3`() {
@@ -128,7 +128,7 @@ class WheelPickerCircularCenteringTest {
         }
     }
 
-    // ==================== 12-Hour Mode: All Hours Center Correctly ====================
+    // ==================== 12-Hour Mode: Every Hour Centers ====================
 
     @Test
     fun `12h mode - all hours center correctly with visibleItems 3`() {
@@ -143,7 +143,7 @@ class WheelPickerCircularCenteringTest {
         }
     }
 
-    // ==================== Minutes: All Values Center Correctly ====================
+    // ==================== Minutes: Every Value Centers ====================
 
     @Test
     fun `minutes - all values center correctly with visibleItems 3`() {
@@ -251,7 +251,7 @@ class WheelPickerCircularCenteringTest {
     fun `visibleItems 3 - viewport shows correct 3 items`() {
         // With centeringOffset, the viewport shows:
         // [selectedIndex - 1] [selectedIndex] [selectedIndex + 1]
-        //        top              CENTER           bottom
+        //        top              center           bottom
         val itemCount = 24
         val visibleItems = 3
         val selectedHour = 14
@@ -322,7 +322,7 @@ class WheelPickerCircularCenteringTest {
     fun `all configurations produce non-negative initialIndex`() {
         data class WheelConfig(val name: String, val itemCount: Int, val isCircular: Boolean)
         val wheels = listOf(
-            WheelConfig("AM/PM", 2, true),           // NEW: circular
+            WheelConfig("AM/PM", 2, true),           // circular
             WheelConfig("12h hours", 12, true),
             WheelConfig("24h hours", 24, true),
             WheelConfig("minutes (5min)", 12, true),

@@ -13,13 +13,12 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive RFC 5545 compliance tests based on CalConnect Developer's Guide.
+ * Tests RFC 5545 parsing against the requirements in the CalConnect Developer's Guide.
  *
- * Tests cover:
- * - iCalendar Data Model requirements
- * - UID uniqueness and format requirements
- * - Property parsing and generation
- * - Component structure validation
+ * Covers UID, DTSTART and DTEND, DTSTAMP, SEQUENCE (with one generate and re-parse), STATUS,
+ * TRANSP, CATEGORIES, CLASS, CREATED and LAST-MODIFIED, GEO, URL, ATTACH, component order
+ * and the VCALENDAR properties. The missing-DTSTART, DTEND-with-DURATION, CLASS and VEVENT
+ * GEO tests assert only that the parse succeeds.
  *
  * @see https://devguide.calconnect.org/
  */
@@ -165,7 +164,8 @@ class ICalParserCalConnectComplianceTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ics)
-            // Events without DTSTART should be rejected or have null dtStart
+            // parseVEvent refuses a VEVENT with neither DTSTART nor DTEND, so it is left out;
+            // only the parse's success is asserted.
             assertTrue(result is ParseResult.Success)
         }
 
@@ -257,8 +257,8 @@ class ICalParserCalConnectComplianceTest {
 
         @Test
         fun `DURATION and DTEND mutually exclusive - DTEND takes precedence`() {
-            // According to RFC 5545, both should not appear, but if they do,
-            // implementation should handle gracefully
+            // RFC 5545 §3.6.1: DTEND and DURATION must not occur in the same VEVENT. The parse
+            // must still succeed; which one wins isn't asserted.
             val ics = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -275,7 +275,6 @@ class ICalParserCalConnectComplianceTest {
 
             val result = parser.parseAllEvents(ics)
             assertTrue(result is ParseResult.Success)
-            // Should not crash
         }
     }
 
@@ -656,7 +655,8 @@ class ICalParserCalConnectComplianceTest {
 
             val result = parser.parseAllEvents(ics)
             assertTrue(result is ParseResult.Success)
-            // Default class should be PUBLIC or null
+            // RFC 5545 §3.8.1.3 defaults CLASS to PUBLIC; the parser leaves an absent CLASS
+            // null. Only the parse's success is asserted.
         }
 
         @Test
@@ -789,7 +789,7 @@ class ICalParserCalConnectComplianceTest {
 
             val result = parser.parseAllEvents(ics)
             assertTrue(result is ParseResult.Success)
-            // GEO should be parsed if supported
+            // Only the parse's success is asserted; the VTODO test checks the GEO value.
         }
 
         @Test

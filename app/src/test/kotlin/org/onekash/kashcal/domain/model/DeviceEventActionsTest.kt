@@ -10,7 +10,7 @@ import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Tests for device event action helpers: toEventForDuplicate() and buildShareText().
+ * Tests the device event action helpers [toEventForDuplicate] and [buildShareText].
  */
 @RunWith(RobolectricTestRunner::class)
 class DeviceEventActionsTest {
@@ -175,11 +175,11 @@ class DeviceEventActionsTest {
 
     @Test
     fun `buildShareText includes end date for multi-day timed event`() {
-        // Mar 4, 2024 12:00 PM UTC to Mar 6, 2024 2:00 PM UTC (3-day event)
-        // Using noon UTC so date doesn't shift in most timezones
+        // Mar 4, 2024 2:00 PM UTC to Mar 6, 2024 3:00 PM UTC, spanning 3 dates.
+        // 49 hours apart, so the start and end dates differ in any timezone.
         val device = DisplayEvent.Device(createTestInstance(
-            startTs = 1709560800000L,  // Mar 4, 2024 12:00 PM UTC
-            endTs = 1709737200000L,    // Mar 6, 2024 2:00 PM UTC
+            startTs = 1709560800000L,  // Mar 4, 2024 2:00 PM UTC
+            endTs = 1709737200000L,    // Mar 6, 2024 3:00 PM UTC
             isAllDay = false
         ))
 
@@ -194,8 +194,8 @@ class DeviceEventActionsTest {
         val dateLine = lines.find { it.contains("PM") || it.contains("AM") }
         assertNotNull("Should have a date/time line", dateLine)
 
-        // Multi-day event should show year twice (once for each date)
-        // Format: "Mon, Mar 4, 2024 12:00 PM - Wed, Mar 6, 2024 2:00 PM"
+        // A multi-day event shows the year twice, once per date.
+        // Format in UTC: "Mon, Mar 4, 2024 2:00 PM - Wed, Mar 6, 2024 3:00 PM"
         val yearCount = dateLine!!.split("2024").size - 1
         assertEquals(
             "Multi-day timed event should show both dates (year appears twice)",
@@ -206,10 +206,10 @@ class DeviceEventActionsTest {
 
     @Test
     fun `buildShareText shows date once for same-day timed event`() {
-        // Mar 4, 2024 12:00 PM to 2:00 PM UTC (same day, 2-hour event)
+        // Mar 4, 2024 2:00 PM to 4:00 PM UTC (same day, 2-hour event)
         val device = DisplayEvent.Device(createTestInstance(
-            startTs = 1709560800000L,  // Mar 4, 2024 12:00 PM UTC
-            endTs = 1709568000000L,    // Mar 4, 2024 2:00 PM UTC
+            startTs = 1709560800000L,  // Mar 4, 2024 2:00 PM UTC
+            endTs = 1709568000000L,    // Mar 4, 2024 4:00 PM UTC
             isAllDay = false
         ))
 
@@ -224,8 +224,8 @@ class DeviceEventActionsTest {
         val dateLine = lines.find { it.contains("PM") || it.contains("AM") }
         assertNotNull("Should have a date/time line", dateLine)
 
-        // Same-day event should show year only once
-        // Format: "Mon, Mar 4, 2024 12:00 PM - 2:00 PM"
+        // A same-day event shows the year only once.
+        // Format in UTC: "Mon, Mar 4, 2024 2:00 PM - 4:00 PM"
         val yearCount = dateLine!!.split("2024").size - 1
         assertEquals(
             "Same-day timed event should show date once (year appears once)",
@@ -236,11 +236,11 @@ class DeviceEventActionsTest {
 
     @Test
     fun `buildShareText includes end date for two-day timed event`() {
-        // Mar 4, 2024 6:00 PM UTC to Mar 5, 2024 6:00 PM UTC (next day same time)
-        // Using 6 PM ensures different calendar dates across all reasonable timezones
+        // Mar 4, 2024 7:00 PM UTC to Mar 5, 2024 7:00 PM UTC (next day, same time).
+        // 24 hours apart, so the two dates differ in any timezone.
         val device = DisplayEvent.Device(createTestInstance(
-            startTs = 1709578800000L,  // Mar 4, 2024 6:00 PM UTC
-            endTs = 1709665200000L,    // Mar 5, 2024 6:00 PM UTC
+            startTs = 1709578800000L,  // Mar 4, 2024 7:00 PM UTC
+            endTs = 1709665200000L,    // Mar 5, 2024 7:00 PM UTC
             isAllDay = false
         ))
 
@@ -255,7 +255,7 @@ class DeviceEventActionsTest {
         val dateLine = lines.find { it.contains("PM") || it.contains("AM") }
         assertNotNull("Should have a date/time line", dateLine)
 
-        // Two-day event spans different dates - should show year twice
+        // A two-day event spans two dates, so the year shows twice
         val yearCount = dateLine!!.split("2024").size - 1
         assertEquals(
             "Two-day timed event should show both dates (year appears twice)",

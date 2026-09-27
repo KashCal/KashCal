@@ -1,0 +1,36 @@
+Dina kalendrar finns överallt. Familjen på iCloud. Helgdagar från någon webbplats. Födelsedagar begravda i kontakterna. Jobbet i telefonens kalender. KashCal samlar dem alla i en app på Android.
+
+Läs mer på https://kashcal.onekash.org
+
+• iCloud: bytt till Android men familjen är kvar på Apple? Synka iCloud-kalendrar direkt. Ingen brygga, ingen omväg.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo med flera. Äkta tvåvägssynkning, utan mellanlager. Telefonens Google- och Outlook-kalendrar dyker också upp.
+
+• Sju vyer: månad, månad i full höjd, agenda, dag, 3 dagar, vecka och år. Nyp för att zooma tidslinjen, dra en händelse för att flytta den.
+
+• Schemaläggning: bjud in personer, skicka mötesinbjudningar och svara på inbjudningar från andra.
+
+• Insikter: se vart din tid tar vägen. Fullaste dagarna, sammanhängande serier, lediga luckor. Allt beräknas på enheten.
+
+• Widgetar: håll koll på din dag på hemskärmen utan att öppna appen. Agenda, datum, vecka, månad och kommande.
+
+• ICS-prenumerationer: följ vilket kalenderflöde som helst. Helgdagar, terminstider, sportsäsonger.
+
+• Födelsedagar och årsdagar: hämtas automatiskt från dina kontakter.
+
+• Färger per händelse: från en utvald palett eller hela färghjulet, så att din vecka går att läsa av på ett ögonkast.
+
+• Gör den till din: ljust, mörkt eller systemtema, plus en KashCal Teal-palett. Stödjare kan byta till en särskild appikon.
+
+• Tillgänglighet: fullt stöd för skärmläsare (TalkBack), och ställ in appens språk direkt i Android-inställningarna, på 67 språk.
+
+• Fungerar helt offline direkt.
+
+Privat som standard
+
+Ingen analys. Ingen telemetri. Inget KashCal-konto. Vi har inga servrar, så det finns inget att samla in.
+
+• Inloggningsuppgifter krypterade med Android Keystore
+• Applås: göm dina händelser bakom fingeravtryck, ansikte eller skärmlås
+
+Fri som i frihet. Och gratis dessutom.

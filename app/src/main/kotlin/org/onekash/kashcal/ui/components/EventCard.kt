@@ -112,9 +112,9 @@ internal fun EventCard(
 }
 
 /**
- * Card body tint alpha. Overridden events ride higher (0.35) so the user's chosen
- * color resists simultaneous-contrast shift from the adjacent calendar stripe;
- * non-override events stay at 0.15 for a calm baseline.
+ * Returns the card body's tint alpha. An event with its own color gets 0.40 so the
+ * chosen color resists the simultaneous-contrast shift from the adjacent calendar
+ * stripe; other events stay at 0.15.
  */
 internal fun DisplayEvent.cardFillAlpha(): Float = if (eventColor != null) 0.40f else 0.15f
 

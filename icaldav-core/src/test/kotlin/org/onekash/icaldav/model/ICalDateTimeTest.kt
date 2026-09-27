@@ -113,7 +113,7 @@ class ICalDateTimeTest {
         val dt = ICalDateTime.parse("20231215T140000Z")
         val utcInstant = dt.timestamp
 
-        // Create same instant in different timezone (should be same underlying time)
+        // The same instant in another zone.
         val nyZdt = java.time.ZonedDateTime.ofInstant(
             java.time.Instant.ofEpochMilli(utcInstant),
             ZoneId.of("America/New_York")
@@ -139,7 +139,7 @@ class ICalDateTimeTest {
     fun `parse resolves Windows timezone via properties file`() {
         // "Eastern Standard Time" is a Windows timezone name, not a valid IANA ID
         val dt = ICalDateTime.parse("20260115T140000", "Eastern Standard Time")
-        // Should resolve via msTimezoneNames → US/Eastern → UTC-5
+        // Resolves through msTimezoneNames to US/Eastern, UTC-5 in January.
         val expectedMs = LocalDateTime.of(2026, 1, 15, 19, 0)
             .toInstant(ZoneOffset.UTC).toEpochMilli()
         assertEquals(expectedMs, dt.timestamp,
@@ -169,7 +169,7 @@ class ICalDateTimeTest {
     @Test
     fun `parse falls back to system default for unknown timezone`() {
         val dt = ICalDateTime.parse("20260115T140000", "Nonexistent/Zone")
-        // Should use system default — verify it doesn't throw
+        // An unknown zone falls back to the system default.
         assertNotNull(dt.timezone)
         assertEquals(ZoneId.systemDefault(), dt.timezone)
     }
@@ -190,10 +190,10 @@ class ICalDateTimeTest {
 
     @Test
     fun `customTimezoneResolver returning null falls through to properties file`() {
-        // Resolver returns null for everything — properties file should handle it
+        // The resolver returns null for everything, so the properties file resolves it.
         ICalDateTime.customTimezoneResolver = { null }
         val dt = ICalDateTime.parse("20260115T140000", "India Standard Time")
-        // 2:30 PM IST test with 2:00 PM input → check UTC+5:30 conversion
+        // 2:00 PM IST (UTC+5:30) = 08:30 UTC
         val expectedMs = LocalDateTime.of(2026, 1, 15, 8, 30)
             .toInstant(ZoneOffset.UTC).toEpochMilli()
         assertEquals(expectedMs, dt.timestamp,
@@ -202,14 +202,14 @@ class ICalDateTimeTest {
 
     @Test
     fun `timezoneAliases map loads entries from classpath`() {
-        // ical4j's msTimezoneNames has ~99 entries, ~5 have invalid IANA IDs
+        // ical4j 4.3.0's msTimezoneNames has 99 entries, and ZoneId.of accepts every target.
         assertTrue(ICalDateTime.timezoneAliases.size > 90,
             "Expected >90 valid timezone aliases, got ${ICalDateTime.timezoneAliases.size}")
     }
 
     @Test
     fun `timezoneAliases map is case insensitive`() {
-        // TreeMap with CASE_INSENSITIVE_ORDER should match regardless of case
+        // The map is a TreeMap with CASE_INSENSITIVE_ORDER.
         assertNotNull(ICalDateTime.timezoneAliases["Eastern Standard Time"])
         assertNotNull(ICalDateTime.timezoneAliases["eastern standard time"])
         assertNotNull(ICalDateTime.timezoneAliases["EASTERN STANDARD TIME"])
@@ -217,7 +217,8 @@ class ICalDateTimeTest {
 
     @Test
     fun `timezoneAliases excludes entries with invalid IANA targets`() {
-        // US/Hwaii is a typo in msTimezoneNames — should be filtered out
+        // Targets ZoneId.of rejects are skipped. ical4j 4.3.0's file has neither of these typos,
+        // so this test can't fail there.
         assertFalse(ICalDateTime.timezoneAliases.containsValue("US/Hwaii"),
             "US/Hwaii is an invalid IANA ID and should be excluded")
         assertFalse(ICalDateTime.timezoneAliases.containsValue("Austraila/Perth"),

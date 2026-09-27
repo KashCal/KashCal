@@ -23,15 +23,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * Thread safety tests for iCalendar parsing and processing.
- *
- * These tests verify that the core parsing and expansion operations
- * are safe for concurrent use from multiple threads.
- *
- * Important for:
- * - Android apps with background sync
- * - Server applications handling multiple requests
- * - Libraries used in multi-threaded environments
+ * Tests that [ICalParser], [RRuleExpander] and [ICalGenerator] run concurrently from many threads
+ * without errors or wrong results: shared and per-thread instances, racing
+ * [ICalParser.ensureConfigured], a DST-spanning expansion, and a parse-generate-parse roundtrip.
  */
 @DisplayName("Thread Safety Tests")
 class ThreadSafetyTest {
@@ -165,7 +159,7 @@ class ThreadSafetyTest {
 
         @RepeatedTest(5)
         fun `static configuration is thread-safe`() {
-            // Test the double-checked locking in ICalParser.ensureConfigured()
+            // Races the double-checked locking in ICalParser.ensureConfigured().
             val threadCount = 50
             val executor = Executors.newFixedThreadPool(threadCount)
             val errors = ConcurrentLinkedQueue<Throwable>()
@@ -275,7 +269,7 @@ class ThreadSafetyTest {
                             val occurrences = sharedExpander.expand(sharedEvent, start, end)
                             assertEquals(10, occurrences.size, "Should have exactly 10 occurrences")
 
-                            // Verify first occurrence
+                            // First occurrence is June 15.
                             val first = occurrences.first()
                             val firstZdt = first.dtStart.toZonedDateTime()
                             assertEquals(2024, firstZdt.year)
@@ -305,7 +299,7 @@ class ThreadSafetyTest {
             val latch = CountDownLatch(threadCount)
             val zone = ZoneId.of("America/New_York")
 
-            // Event that spans DST transition
+            // Daily from March 1, COUNT=10, so it crosses the March 10 DST change.
             val dstEvent = createRecurringEvent(
                 uid = "dst-event",
                 startYear = 2024,
@@ -324,7 +318,7 @@ class ThreadSafetyTest {
                             val occurrences = expander.expand(dstEvent, start, end)
                             assertTrue(occurrences.isNotEmpty())
 
-                            // All occurrences should be at 10:00 local time
+                            // Every occurrence stays at 10:00 local time.
                             occurrences.forEach { occ ->
                                 val zdt = occ.dtStart.toZonedDateTime()
                                 assertEquals(10, zdt.hour,
@@ -422,7 +416,7 @@ class ThreadSafetyTest {
                             assertTrue(parseResult2 is ParseResult.Success)
                             val event2 = parseResult2.getOrNull()!![0]
 
-                            // Verify roundtrip preserved data
+                            // The roundtrip keeps UID, summary and the all-day flag.
                             assertEquals(event1.uid, event2.uid)
                             assertEquals(event1.summary, event2.summary)
                             assertEquals(event1.isAllDay, event2.isAllDay)

@@ -5,9 +5,9 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * Tests for [CaldavUrlNormalizer], the comparison-only URL canonicalizer that lets
- * href->local-row matching survive servers (e.g. Radicale) that percent-encode
- * pchar-legal reserved characters like '@' as '%40' in echoed hrefs.
+ * Tests [CaldavUrlNormalizer], the comparison-only canonicalizer that keeps href-to-row matching
+ * working against servers (Radicale, for example) that echo pchar-legal reserved characters
+ * such as '@' as '%40'.
  */
 class CaldavUrlNormalizerTest {
 
@@ -36,7 +36,7 @@ class CaldavUrlNormalizerTest {
 
     @Test
     fun `other pchar-legal reserved octets are decoded`() {
-        // sub-delims + ':' are all legal unencoded in a path segment (RFC 3986 pchar)
+        // The sub-delims and ':' are legal unencoded in a path segment (RFC 3986 pchar).
         val encoded = "https://s.example/cal/a%2Cb%3Bc%3Dd%26e%3Af.ics"
         val literal = "https://s.example/cal/a,b;c=d&e:f.ics"
         assertEquals(
@@ -47,8 +47,8 @@ class CaldavUrlNormalizerTest {
 
     @Test
     fun `encoded slash is NOT decoded (would change path structure)`() {
-        // %2F must stay encoded — decoding it crosses a segment boundary and could
-        // merge two structurally distinct resources.
+        // %2F stays encoded: decoding it crosses a segment boundary and could merge two
+        // distinct resources.
         val encoded = "https://s.example/cal/a%2Fb.ics"
         val decoded = "https://s.example/cal/a/b.ics"
         val ce = CaldavUrlNormalizer.canonicalize(encoded)
@@ -61,8 +61,8 @@ class CaldavUrlNormalizerTest {
     @Test
     fun `non-pchar octets like percent-20 are left untouched`() {
         val encoded = "https://s.example/cal/a%20b.ics"
-        // Space is not a pchar; leaving it encoded is safe (and it never appears in
-        // a KashCal-generated filename anyway).
+        // Space is not a pchar, so it stays encoded; a KashCal-generated filename never
+        // contains one.
         assertEquals(encoded, CaldavUrlNormalizer.canonicalize(encoded))
     }
 
@@ -107,7 +107,7 @@ class CaldavUrlNormalizerTest {
     @Test
     fun `malformed trailing percent does not throw`() {
         val url = "https://s.example/cal/weird%.ics"
-        // Incomplete escape: leave as-is rather than crash.
+        // An incomplete escape is left as is.
         assertEquals(url, CaldavUrlNormalizer.canonicalize(url))
     }
 

@@ -409,7 +409,7 @@ class WordTokenizerTest {
         assertEquals(LocalTime.of(1, 0), range.end)
     }
 
-    // ==================== Time range with meridiem on start only (issue #194 follow-up Bug E) ====================
+    // ==================== Time range with meridiem on start only (#194) ====================
 
     @Test
     fun `tokenizes 5pm-6 as TIME_RANGE with inherited pm`() {
@@ -433,8 +433,8 @@ class WordTokenizerTest {
 
     @Test
     fun `tokenizes 10am-2 as TIME_RANGE with end flipped to pm when same-meridiem inversion`() {
-        // 10am-2am would be inverted (2am before 10am), so flip end to pm → 10:00-14:00
-        // Mirrors the symmetric logic at WordTokenizer parseTimeRange for end-only meridiem
+        // 10am-2am would end before it starts, so the end flips to pm: 10:00-14:00.
+        // parseTimeRange applies the mirror rule to an end-only meridiem ("9-5pm").
         val tokens = WordTokenizer.tokenize("10am-2")
         assertEquals(1, tokens.size)
         assertEquals(TokenType.TIME_RANGE, tokens[0].type)
@@ -680,7 +680,7 @@ class WordTokenizerTest {
 
     @Test
     fun `tokenize 5 slash 10 under Locale_JAPAN classifies as M-D via y-slash-MM-slash-dd pattern`() {
-        // ja_JP's SHORT pattern is "yyyy/MM/dd" — M appears before d → MDY
+        // ja_JP's SHORT pattern is "y/MM/dd": M comes before d, so M/D.
         val tokens = WordTokenizer.tokenize("5/10", locale = Locale.JAPAN)
         assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
         val parts = tokens[0].value as WordTokenizer.DateParts
@@ -690,7 +690,7 @@ class WordTokenizerTest {
 
     @Test
     fun `tokenize with default locale argument still compiles and classifies as MDY on US-pinned default`() {
-        // Verifies the overload default works; pinLocaleToUS() sets Locale.US as default.
+        // Uses the default locale argument; pinLocaleToUS() sets the default to Locale.US.
         val tokens = WordTokenizer.tokenize("5/10")
         assertEquals(TokenType.STRUCTURED_DATE, tokens[0].type)
         val parts = tokens[0].value as WordTokenizer.DateParts

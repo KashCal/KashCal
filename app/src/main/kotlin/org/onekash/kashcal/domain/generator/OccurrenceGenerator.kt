@@ -13,18 +13,14 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Generates and manages materialized occurrences for recurring events.
+ * Generates and maintains the materialized occurrences table for events.
  *
- * Uses ical4j (via icaldav-core's [IcalDavRRuleEngine]) for RFC 5545 compliant
- * RRULE expansion:
+ * Expands RRULEs through [IcalDavRRuleEngine] (ical4j) per RFC 5545:
  *   RecurrenceSet = (DTSTART ∪ RRULE ∪ RDATE) - EXDATE
  *
- * Occurrences are stored in the database for O(1) range queries.
- * This class handles:
- * - Initial generation when event is created
- * - Regeneration when RRULE/EXDATE changes
- * - Incremental extension for lazy loading
- * - Single occurrence cancellation (EXDATE)
+ * Occurrences are stored for O(1) range queries. This class covers generation on create,
+ * regeneration when the rule or its exclusions change, extension forward and back as the
+ * user scrolls, cancelling one occurrence, and linking exceptions to occurrences.
  */
 @Singleton
 class OccurrenceGenerator @Inject constructor(
@@ -34,119 +30,103 @@ class OccurrenceGenerator @Inject constructor(
     private val dataStore: KashCalDataStore
 ) {
     companion object {
-        private const val DEFAULT_EXPANSION_MONTHS = 24 // 2 years - consistent with PullStrategy
+        private const val DEFAULT_EXPANSION_MONTHS = 24 // about 2 years, like PullStrategy
         private const val MILLISECONDS_PER_SECOND = 1000L
         private const val SECONDS_PER_DAY = 86400L
     }
 
     /**
-     * Generate occurrences for an event within a date range.
+     * Replaces [event]'s occurrences with those in [rangeStartMs] to [rangeEndMs], in one
+     * transaction.
      *
-     * For non-recurring events, generates a single occurrence.
-     * For recurring events, expands RRULE and stores all occurrences in range.
+     * A non-recurring event gets a single occurrence whatever the range. Existing
+     * exception_event_id links are restored after re-expansion, so changed occurrences stay
+     * linked to their exceptions. An expansion that returns nothing keeps the existing rows.
      *
-     * IMPORTANT: Preserves exception_event_id links when regenerating.
-     * This ensures modified occurrences (RECURRENCE-ID events) maintain their
-     * link to exception events after RRULE re-expansion.
-     *
-     * @param event The event to generate occurrences for
-     * @param rangeStartMs Start of range in milliseconds (epoch)
-     * @param rangeEndMs End of range in milliseconds (epoch)
-     * @return Number of occurrences generated
+     * @return the number of occurrences generated: 0 for a synthetic master or an empty
+     *   expansion
      */
     suspend fun generateOccurrences(
         event: Event,
         rangeStartMs: Long,
         rangeEndMs: Long
     ): Int {
-        // Synthetic placeholder masters (orphan-exception support) carry no
-        // RRULE and exist purely as FK targets for linked exceptions. Emitting
-        // a single occurrence for them would put a phantom CANCELLED row on
-        // the day card. Both ICS sync and CalDAV pull tag these rows with
+        // A synthetic master (for orphan exceptions) has no RRULE and exists only as the FK
+        // target of its exceptions; a single occurrence for it would put a phantom CANCELLED
+        // row on the day card. ICS sync and CalDAV pull both mark it with
         // X-KASHCAL-SYNTHETIC-MASTER in extraProperties.
         if (event.extraProperties?.get("X-KASHCAL-SYNTHETIC-MASTER") == "true") {
             return 0
         }
         return database.withTransaction {
-            // PRESERVE EXCEPTION LINKS: Query existing links before modification
-            // These are occurrences modified via RECURRENCE-ID (edited single occurrences)
+            // Read the exception links (changed occurrences) before anything is deleted.
             val existingOccurrences = occurrencesDao.getForEvent(event.id)
             val exceptionLinks = existingOccurrences
                 .filter { it.exceptionEventId != null }
                 .associate { it.startTs to ExceptionLinkData(it.exceptionEventId!!, it.isCancelled) }
 
-            // EXPAND FIRST: Calculate new occurrences BEFORE deleting existing ones
-            // This prevents data loss if expansion fails (e.g., malformed RRULE, timezone issue)
+            // Expand before deleting, so a failed expansion (malformed RRULE, bad timezone)
+            // loses nothing.
             val occurrences = if (event.rrule.isNullOrBlank()) {
-                // Non-recurring: single occurrence
                 listOf(createSingleOccurrence(event))
             } else {
-                // Recurring: expand RRULE
                 expandRRule(event, rangeStartMs, rangeEndMs)
             }
 
-            // Only delete and replace if expansion succeeded
             if (occurrences.isNotEmpty()) {
-                // Clear existing occurrences AFTER successful expansion
                 occurrencesDao.deleteForEvent(event.id)
 
                 occurrencesDao.insertAll(occurrences)
 
-                // RESTORE EXCEPTION LINKS: Reapply after insert
-                // Uses tolerance matching because timestamps may shift slightly on re-expand
+                // Links match within 60 seconds, since timestamps may shift slightly on
+                // re-expansion.
                 for ((originalStartTs, linkData) in exceptionLinks) {
                     restoreExceptionLink(event.id, originalStartTs, linkData)
                 }
             } else if (!event.rrule.isNullOrBlank()) {
-                // RRULE expansion returned empty - log warning but preserve existing occurrences
+                // Empty expansion: keep the existing occurrences.
                 android.util.Log.w("OccurrenceGenerator",
                     "RRULE expansion returned empty for event ${event.id}, preserving existing ${existingOccurrences.size} occurrences")
             }
 
             occurrences.size
-        }  // Transaction commits here - all or nothing
+        }
     }
 
-    /**
-     * Data class to hold exception link information during regeneration.
-     */
+    /** Holds an exception link across regeneration. */
     private data class ExceptionLinkData(
         val exceptionEventId: Long,
         val isCancelled: Boolean
     )
 
     /**
-     * Restore an exception link after occurrence regeneration.
-     * Uses 60-second tolerance for timestamp matching (DST/timezone edge cases).
+     * Restores an exception link after regeneration, matching within 60 seconds.
      *
-     * CRITICAL: Also restores occurrence times from the exception event!
-     * After regeneration, occurrences have master event times (from RRULE).
-     * This method updates them to match the exception event's modified times.
+     * Regenerated occurrences carry the master's rule times, so this also moves the
+     * occurrence to the exception's times and re-applies a cancelled flag. If the exception
+     * row is gone, it links at [originalStartTs] without changing times.
      */
     private suspend fun restoreExceptionLink(
         eventId: Long,
         originalStartTs: Long,
         linkData: ExceptionLinkData
     ) {
-        // Fetch exception event to get its current times
         val exceptionEvent = eventsDao.getById(linkData.exceptionEventId)
         if (exceptionEvent != null) {
-            // CRITICAL: Use originalInstanceTime (RECURRENCE-ID) to find the RRULE-generated occurrence.
-            // The originalStartTs parameter is the occurrence's CURRENT startTs (after previous linking),
-            // which is the exception's modified time. We need the ORIGINAL time from RECURRENCE-ID
-            // to find the newly regenerated occurrence at the rule's time.
+            // originalStartTs is the old row's start, which holds the exception's changed
+            // time. The regenerated occurrence sits at the rule's time, so match on
+            // originalInstanceTime (RECURRENCE-ID).
             val recurrenceIdTime = exceptionEvent.originalInstanceTime ?: originalStartTs
             linkException(eventId, recurrenceIdTime, exceptionEvent)
-            // Restore cancelled status using exception's time (occurrence now has exception times)
+            // The occurrence now has the exception's times.
             if (linkData.isCancelled) {
                 occurrencesDao.markCancelled(eventId, exceptionEvent.startTs)
             }
         } else {
-            // Fallback: just link if exception not found (edge case - orphaned link)
+            // Orphaned link: the exception row is gone.
             android.util.Log.w("OccurrenceGenerator",
                 "Exception event ${linkData.exceptionEventId} not found during link restoration")
             occurrencesDao.linkException(eventId, originalStartTs, linkData.exceptionEventId)
-            // Use original time since we didn't update times
             if (linkData.isCancelled) {
                 occurrencesDao.markCancelled(eventId, originalStartTs)
             }
@@ -154,36 +134,28 @@ class OccurrenceGenerator @Inject constructor(
     }
 
     /**
-     * Regenerate occurrences for an event (e.g., after RRULE change).
+     * Regenerates [event]'s occurrences over the sync lookback and the next
+     * DEFAULT_EXPANSION_MONTHS (24 x 30 days) with [generateOccurrences].
      *
-     * Past window: Respects user's sync lookback setting (via DataStore).
-     * Future window: Always DEFAULT_EXPANSION_MONTHS (24 = 2 years).
-     *
-     * When sync lookback is "All events" (Int.MAX_VALUE), uses unbounded past window
-     * (back to event start) and DEFAULT_EXPANSION_MONTHS for future window.
-     *
-     * For old events, bounds rangeStart to (now - window) so FastForwarded
-     * activates instead of iterating from DTSTART.
+     * The past window is the sync lookback setting; for "All events" (Int.MAX_VALUE) it
+     * reaches back to the event start. An old event's range starts at now minus the lookback,
+     * so its occurrences before that aren't materialized.
      */
     suspend fun regenerateOccurrences(event: Event): Int {
         val now = System.currentTimeMillis()
 
-        // Past window: use sync lookback setting, unbounded for "All events"
         val syncPastDays = dataStore.syncPastDays.first()
         val pastWindowMs = if (syncPastDays == Int.MAX_VALUE) {
-            // Unbounded: now - Long.MAX_VALUE underflows to large negative,
-            // then coerceAtLeast(eventStartAligned) picks event start
+            // now - Long.MAX_VALUE is a large negative, so coerceAtLeast picks the event start.
             Long.MAX_VALUE
         } else {
-            // User-specified lookback in days
             syncPastDays.toLong() * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND
         }
 
-        // Future window: always 2 years regardless of sync lookback
         val futureWindowMs = DEFAULT_EXPANSION_MONTHS * 30L * SECONDS_PER_DAY * MILLISECONDS_PER_SECOND
 
-        // Truncate to second boundary to match lib-recur's precision (avoids off-by-ms skip
-        // where first occurrence at floor(startTs/1000)*1000 falls before rangeStart)
+        // Second-aligned like the engine's output, so a first occurrence at
+        // floor(startTs/1000)*1000 doesn't fall before rangeStart and get skipped.
         val eventStartAligned = (event.startTs / MILLISECONDS_PER_SECOND) * MILLISECONDS_PER_SECOND
         val rangeStart = (now - pastWindowMs).coerceAtLeast(eventStartAligned)
         val rangeEnd = now + futureWindowMs
@@ -191,29 +163,26 @@ class OccurrenceGenerator @Inject constructor(
     }
 
     /**
-     * Extend occurrences for an event beyond current range.
-     * Used for lazy loading when user scrolls far into future.
+     * Adds a recurring [event]'s occurrences after its latest one, up to [extendToMs], as the
+     * user scrolls forward.
      *
-     * @param event The event to extend
-     * @param extendToMs New end date in milliseconds
-     * @return Number of new occurrences added
+     * @return the number of occurrences added; 0 for a non-recurring event or one with no
+     *   occurrences yet
      */
     suspend fun extendOccurrences(
         event: Event,
         extendToMs: Long
     ): Int {
         if (event.rrule.isNullOrBlank()) {
-            return 0 // Non-recurring events don't need extension
+            return 0
         }
 
         return database.withTransaction {
-            // Find current max occurrence
             val currentMaxTs = occurrencesDao.getMaxStartTs(event.id) ?: return@withTransaction 0
 
-            // Expand from current max to new end
             val newOccurrences = expandRRule(
                 event,
-                currentMaxTs + 1, // Start after current max
+                currentMaxTs + 1,
                 extendToMs
             )
 
@@ -226,37 +195,33 @@ class OccurrenceGenerator @Inject constructor(
     }
 
     /**
-     * Extend occurrences for an event into the past.
-     * Used for lazy loading when user scrolls far into the past.
+     * Adds a recurring [event]'s occurrences before its earliest one, back to [extendToMs]
+     * but not before DTSTART, as the user scrolls back.
      *
-     * @param event The event to extend backwards
-     * @param extendToMs Target start date in milliseconds (how far back to extend)
-     * @return Number of new occurrences added
+     * @return the number of occurrences added; 0 for a non-recurring event, one with no
+     *   occurrences yet, or one already extended that far
      */
     suspend fun extendPastOccurrences(
         event: Event,
         extendToMs: Long
     ): Int {
         if (event.rrule.isNullOrBlank()) {
-            return 0 // Non-recurring events don't need extension
+            return 0
         }
 
         return database.withTransaction {
-            // Find current min occurrence
             val currentMinTs = occurrencesDao.getMinStartTs(event.id) ?: return@withTransaction 0
 
-            // Clamp to event start — can't go before DTSTART
-            // Second-align to match lib-recur precision (same as regenerateOccurrences)
+            // Not before DTSTART, second-aligned as in regenerateOccurrences.
             val effectiveExtendTo = extendToMs
                 .coerceAtLeast((event.startTs / MILLISECONDS_PER_SECOND) * MILLISECONDS_PER_SECOND)
 
-            // Already extended far enough
             if (currentMinTs <= effectiveExtendTo) {
                 return@withTransaction 0
             }
 
-            // expandRRule uses exclusive end (>= rangeEndMs breaks),
-            // so currentMinTs won't duplicate the existing boundary occurrence
+            // The range end is exclusive, so the existing occurrence at currentMinTs isn't
+            // duplicated.
             val newOccurrences = expandRRule(
                 event,
                 effectiveExtendTo,
@@ -272,33 +237,25 @@ class OccurrenceGenerator @Inject constructor(
     }
 
     /**
-     * Cancel a single occurrence (applies EXDATE).
-     * Does not modify the event - caller should update event.exdate separately.
-     *
-     * @param eventId The event ID
-     * @param occurrenceTimeMs The occurrence start time to cancel
+     * Marks the occurrence of [eventId] within 60 seconds of [occurrenceTimeMs] cancelled.
+     * Doesn't touch the event: the caller adds the EXDATE.
      */
     suspend fun cancelOccurrence(eventId: Long, occurrenceTimeMs: Long) {
         occurrencesDao.markCancelled(eventId, occurrenceTimeMs)
     }
 
     /**
-     * Cancel the occurrence linked to a specific exception event.
-     * Used when deleting an occurrence that has been edited into an
-     * exception — the linked row's start_ts no longer matches the
-     * original instance time, so we must identify it by FK instead.
+     * Marks the occurrence linked to [exceptionEventId] cancelled. An occurrence edited into
+     * an exception no longer starts at its original instance time, so it is found by the
+     * link instead of by time.
      */
     suspend fun cancelOccurrenceByException(exceptionEventId: Long) {
         occurrencesDao.markCancelledByException(exceptionEventId)
     }
 
     /**
-     * Link an exception event to an occurrence.
-     * Called when an exception event is created for a modified occurrence.
-     *
-     * @param masterEventId The master event ID
-     * @param occurrenceTimeMs The original occurrence time
-     * @param exceptionEventId The exception event ID
+     * Links [exceptionEventId] to the master's occurrence within 60 seconds of
+     * [occurrenceTimeMs] (its original time), without changing the occurrence's times.
      */
     suspend fun linkException(
         masterEventId: Long,
@@ -309,23 +266,21 @@ class OccurrenceGenerator @Inject constructor(
     }
 
     /**
-     * Link exception to occurrence AND update occurrence times to match exception.
+     * Links [exceptionEvent] to the master's occurrence and moves that occurrence to the
+     * exception's times (start_ts, end_ts, start_day, end_day), in one transaction.
      *
-     * This is the preferred method when you have the exception Event object,
-     * as it also updates the occurrence's start_ts, end_ts, start_day, end_day
-     * to match the exception event's modified times.
+     * Leaves one occurrence row for the changed occurrence, under the master:
+     * 1. Deletes any occurrence the exception owns itself (event_id = exception id).
+     * 2. When the exception moved, deletes the master's occurrence already at the new start
+     *    (for example Jan 6 moved onto an existing Jan 13).
+     * 3. Updates the master's occurrence matched by
+     *    [OccurrencesDao.updateOccurrenceForException]: within 60 seconds of
+     *    [occurrenceTimeMs] or already linked to the exception, which finds a re-edit.
+     * 4. Inserts a linked occurrence if none matched, e.g. when the original time is outside
+     *    the materialized window.
      *
-     * CRITICAL: This method normalizes Model A (PullStrategy) to Model B:
-     * - Step 1: Delete Model A occurrence (event_id = exception.id) if exists
-     * - Step 2: Update master's occurrence with exception link and times
-     * - Step 3: Fallback - insert new occurrence if master occurrence didn't exist
-     *
-     * The underlying DAO query uses OR condition to handle re-editing:
-     *   WHERE (ABS(start_ts - occurrenceTime) < 60000 OR exception_event_id = exceptionEventId)
-     *
-     * @param masterEventId The master event ID
-     * @param occurrenceTimeMs The ORIGINAL occurrence time (from event.originalInstanceTime)
-     * @param exceptionEvent The exception event with modified times
+     * @param occurrenceTimeMs the original occurrence time (the exception's
+     *   originalInstanceTime)
      */
     suspend fun linkException(
         masterEventId: Long,
@@ -333,9 +288,6 @@ class OccurrenceGenerator @Inject constructor(
         exceptionEvent: Event
     ) {
         database.withTransaction {
-            // Step 1: Delete Model A occurrence (if exists)
-            // PullStrategy creates occurrence with event_id = exception.id
-            // This normalizes Model A to Model B (single linked occurrence)
             occurrencesDao.deleteForEvent(exceptionEvent.id)
 
             val newStartDay = Occurrence.toDayFormat(exceptionEvent.startTs, exceptionEvent.isAllDay)
@@ -345,20 +297,16 @@ class OccurrenceGenerator @Inject constructor(
                 isAllDay = exceptionEvent.isAllDay
             )
 
-            // Step 2: Check if exception's new time conflicts with another occurrence
-            // (e.g., user moves Jan 6 occurrence to Jan 13, but Jan 13 already exists)
             if (exceptionEvent.startTs != occurrenceTimeMs) {
                 val conflictingOccurrence = occurrencesDao.getByEventIdAndStartTs(
                     masterEventId,
                     exceptionEvent.startTs
                 )
                 if (conflictingOccurrence != null) {
-                    // Delete the conflicting occurrence - it will be replaced by the moved exception
                     occurrencesDao.deleteById(conflictingOccurrence.id)
                 }
             }
 
-            // Step 3: Update master's occurrence with exception link and times
             val rowsUpdated = occurrencesDao.updateOccurrenceForException(
                 masterEventId,
                 occurrenceTimeMs,
@@ -369,8 +317,6 @@ class OccurrenceGenerator @Inject constructor(
                 newEndDay
             )
 
-            // Step 4: Fallback - if no master occurrence existed, create one
-            // This handles edge case where exception is outside sync window
             if (rowsUpdated == 0) {
                 occurrencesDao.insert(Occurrence(
                     eventId = masterEventId,
@@ -387,11 +333,8 @@ class OccurrenceGenerator @Inject constructor(
     }
 
     /**
-     * Expand RRULE to list of Occurrence entities.
-     *
-     * Delegates to [IcalDavRRuleEngine.expandToTimestamps] for the RFC 5545 expansion:
-     *   RecurrenceSet = (DTSTART ∪ RRULE ∪ RDATE) - EXDATE
-     * then maps each timestamp to an Occurrence entity with the event's duration.
+     * Expands [event]'s RRULE, RDATE and EXDATE with [IcalDavRRuleEngine.expandToTimestamps]
+     * and returns an [Occurrence] per start, each with the event's duration.
      */
     private fun expandRRule(
         event: Event,
@@ -425,9 +368,7 @@ class OccurrenceGenerator @Inject constructor(
         }
     }
 
-    /**
-     * Create a single occurrence for a non-recurring event.
-     */
+    /** Returns the single occurrence of a non-recurring event. */
     private fun createSingleOccurrence(event: Event): Occurrence {
         val startDay = Occurrence.toDayFormat(event.startTs, event.isAllDay)
         val endDay = DateTimeUtils.eventTsToEndDayCode(
@@ -447,20 +388,12 @@ class OccurrenceGenerator @Inject constructor(
     }
 
     /**
-     * Expand RRULE without storing - for preview/validation.
+     * Returns the occurrence start times of [rrule] in the range without storing anything,
+     * through [IcalDavRRuleEngine.expandToTimestamps].
      *
-     * Delegates to [IcalDavRRuleEngine.expandToTimestamps]. Accepts `exdates` as
-     * pre-parsed YYYYMMDD codes for convenience at the preview call site; internally
-     * joined to a CSV and passed through.
-     *
-     * @param rrule The RRULE string
-     * @param dtstartMs Event start time in milliseconds
-     * @param rangeStartMs Range start in milliseconds
-     * @param rangeEndMs Range end in milliseconds
-     * @param exdates List of excluded dates in YYYYMMDD format
-     * @param timezone Optional timezone ID
-     * @param isAllDay Whether this is an all-day event (forces UTC for date calculations)
-     * @return List of occurrence start times in milliseconds
+     * @param exdates excluded dates as YYYYMMDD codes, joined to the engine's
+     *   comma-separated form
+     * @param isAllDay forces UTC for date calculations
      */
     fun expandForPreview(
         rrule: String,

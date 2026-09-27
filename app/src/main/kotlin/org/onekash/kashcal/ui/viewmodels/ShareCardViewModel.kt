@@ -9,17 +9,13 @@ import org.onekash.kashcal.domain.share.ShareCardStylePicker
 import javax.inject.Inject
 
 /**
- * Holds the user's currently-selected [ShareCardStyle] for the share-as-card
- * preview sheet.
+ * Holds the selected [ShareCardStyle] for the share-as-card preview sheet.
  *
- * Auto-picks an initial style from the event title via
- * [ShareCardStylePicker]; the user can override via the chip in
- * [org.onekash.kashcal.ui.components.share.ShareCardSheet].
+ * The initial style is picked from the event title by [ShareCardStylePicker]; the user can
+ * change it with the style chips in [org.onekash.kashcal.ui.components.share.ShareCardSheet].
  *
- * Note: per the 2026-05-31 architectural pivot, this ViewModel does NOT own
- * the rendering pipeline. The [GraphicsLayer] used to capture the on-screen
- * preview lives in the sheet itself; the actual PNG write is handled by
- * [org.onekash.kashcal.domain.share.ShareCardRenderer.writePng].
+ * This ViewModel doesn't render. The `GraphicsLayer` that captures the on-screen preview lives
+ * in the sheet, and [org.onekash.kashcal.domain.share.ShareCardRenderer.writePng] writes the PNG.
  */
 @HiltViewModel
 class ShareCardViewModel @Inject constructor() : ViewModel() {
@@ -27,12 +23,12 @@ class ShareCardViewModel @Inject constructor() : ViewModel() {
     private val _selectedStyle = MutableStateFlow<ShareCardStyle>(ShareCardStyle.Standard)
     val selectedStyle: StateFlow<ShareCardStyle> = _selectedStyle
 
-    /** Auto-pick the style from the supplied event title. */
+    /** Picks the style for the event [title]. */
     fun loadEventTitle(title: String?) {
         _selectedStyle.value = ShareCardStylePicker.autoPickFor(title)
     }
 
-    /** User override from the chip row. */
+    /** Sets the style the user chose in the chip row. */
     fun setStyle(style: ShareCardStyle) {
         _selectedStyle.value = style
     }

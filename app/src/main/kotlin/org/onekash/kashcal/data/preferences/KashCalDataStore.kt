@@ -15,26 +15,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.io.IOException
 
-/**
- * DataStore wrapper for KashCal preferences.
- *
- * Provides type-safe access to user preferences with reactive Flow support.
- *
- * Usage:
- * ```
- * // Inject via Hilt
- * @Inject lateinit var dataStore: KashCalDataStore
- *
- * // Read preference as Flow
- * dataStore.theme.collect { theme -> ... }
- *
- * // Read preference once
- * val theme = dataStore.getTheme()
- *
- * // Write preference
- * dataStore.setTheme("dark")
- * ```
- */
+// A corrupt preferences file is replaced with empty preferences, so every setting reads its
+// default.
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
     name = "kashcal_preferences",
     corruptionHandler = ReplaceFileCorruptionHandler {
@@ -43,6 +25,12 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
     }
 )
 
+/**
+ * Wraps the app's preferences DataStore with typed properties per [PreferencesKeys] entry.
+ *
+ * Each setting is a `Flow` property, often with a suspend getter that reads it once and a
+ * setter. [overrideDataStore] replaces the file-backed store in tests.
+ */
 class KashCalDataStore(
     private val context: Context,
     private val overrideDataStore: DataStore<Preferences>? = null
@@ -54,12 +42,11 @@ class KashCalDataStore(
     // ========== Generic Preference Access ==========
 
     /**
-     * Get a preference value as a Flow with default value.
+     * Returns [key]'s value as a Flow, or [defaultValue] when unset or when the read fails
+     * with an IOException.
      *
-     * Uses distinctUntilChanged() to prevent unnecessary downstream emissions
-     * when the preference value hasn't actually changed. This is important because
-     * DataStore emits the entire preferences object on any write, which would
-     * otherwise cause all observers to re-emit even for unrelated preference changes.
+     * DataStore emits the whole preferences object on any write, so without
+     * `distinctUntilChanged()` every observer would re-emit on unrelated writes.
      */
     fun <T> getPreference(key: Preferences.Key<T>, defaultValue: T): Flow<T> {
         return dataStore.data
@@ -76,12 +63,7 @@ class KashCalDataStore(
             .distinctUntilChanged()
     }
 
-    /**
-     * Get an optional preference value as a Flow.
-     *
-     * Uses distinctUntilChanged() to prevent unnecessary downstream emissions.
-     * See getPreference() for rationale.
-     */
+    /** Returns [key]'s value as a Flow, or null when unset; otherwise as [getPreference]. */
     fun <T> getOptionalPreference(key: Preferences.Key<T>): Flow<T?> {
         return dataStore.data
             .catch { exception ->
@@ -97,37 +79,26 @@ class KashCalDataStore(
             .distinctUntilChanged()
     }
 
-    /**
-     * Set a preference value.
-     */
     suspend fun <T> setPreference(key: Preferences.Key<T>, value: T) {
         dataStore.edit { preferences ->
             preferences[key] = value
         }
     }
 
-    /**
-     * Remove a preference.
-     */
     suspend fun <T> removePreference(key: Preferences.Key<T>) {
         dataStore.edit { preferences ->
             preferences.remove(key)
         }
     }
 
-    /**
-     * Update a preference atomically.
-     */
+    /** Replaces [key]'s value with [transform] of the current one, atomically. */
     suspend fun <T> updatePreference(key: Preferences.Key<T>, transform: (T?) -> T) {
         dataStore.edit { preferences ->
             preferences[key] = transform(preferences[key])
         }
     }
 
-    /**
-     * Apply multiple preference writes in a single DataStore transaction. One disk write,
-     * one proto serialization pass, instead of N.
-     */
+    /** Applies several preference writes in one DataStore transaction and one disk write. */
     suspend fun edit(block: suspend (androidx.datastore.preferences.core.MutablePreferences) -> Unit) {
         dataStore.edit { preferences -> block(preferences) }
     }
@@ -148,7 +119,7 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.SHOW_WEEK_NUMBERS, show)
     }
 
-    /** Whether the event form's tag row sits above the notes/attendees block. */
+    /** Whether the event form's tag row sits above the notes and attendees block. */
     val tagsAboveNotes: Flow<Boolean>
         get() = getPreference(PreferencesKeys.TAGS_ABOVE_NOTES, false)
 
@@ -195,34 +166,26 @@ class KashCalDataStore(
     }
 
     /**
-     * Default calendar for new events (prefixed string format).
-     *
-     * Supports both Room calendars (local/iCloud/CalDAV) and device calendars.
-     * Returns null if not set or if stored value has invalid format.
-     *
-     * Format: "room:123" or "device:456"
+     * Default calendar for new events from [PreferencesKeys.DEFAULT_CALENDAR] alone, or null
+     * when unset or unparseable. [getDefaultCalendar] also reads the legacy key.
      */
     val defaultCalendar: Flow<DefaultCalendar?>
         get() = getOptionalPreference(PreferencesKeys.DEFAULT_CALENDAR)
             .map { value -> DefaultCalendar.parse(value) }
 
     /**
-     * Get default calendar with legacy migration support.
+     * Returns the default calendar for new events, or null if none is set.
      *
-     * Priority:
-     * 1. New format (DEFAULT_CALENDAR key): "room:123" or "device:456"
-     * 2. Legacy format (DEFAULT_CALENDAR_ID key): Plain Long -> Room calendar
-     *
-     * @return DefaultCalendar or null if not set
+     * A set [PreferencesKeys.DEFAULT_CALENDAR] wins, even when it doesn't parse (null). Only
+     * when it is unset is the legacy [PreferencesKeys.DEFAULT_CALENDAR_ID] read, as a Room
+     * calendar.
      */
     suspend fun getDefaultCalendar(): DefaultCalendar? {
-        // Try new format first
         val newValue = dataStore.data.first()[PreferencesKeys.DEFAULT_CALENDAR]
         if (newValue != null) {
             return DefaultCalendar.parse(newValue)
         }
 
-        // Fall back to legacy format
         val legacyId = dataStore.data.first()[PreferencesKeys.DEFAULT_CALENDAR_ID]
         return if (legacyId != null && legacyId >= 0) {
             DefaultCalendar.Room(legacyId)
@@ -231,18 +194,12 @@ class KashCalDataStore(
         }
     }
 
-    /**
-     * Set default calendar for new events.
-     *
-     * Stores in new prefixed format ("room:123" or "device:456").
-     */
+    /** Stores [calendar] under [PreferencesKeys.DEFAULT_CALENDAR]; the legacy key is left as is. */
     suspend fun setDefaultCalendar(calendar: DefaultCalendar) {
         setPreference(PreferencesKeys.DEFAULT_CALENDAR, calendar.toStorageString())
     }
 
-    /**
-     * Clear default calendar preference.
-     */
+    /** Removes [PreferencesKeys.DEFAULT_CALENDAR]; a legacy id, if stored, then applies again. */
     suspend fun clearDefaultCalendar() {
         removePreference(PreferencesKeys.DEFAULT_CALENDAR)
     }
@@ -324,7 +281,7 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.USER_INITIALS, initials)
     }
 
-    /** Stored color-source value ("dynamic"/"seed"), or null if the user never chose one. */
+    /** Stored color-source value ("dynamic" or "seed"), or null if the user never chose one. */
     val colorSource: Flow<String?>
         get() = getOptionalPreference(PreferencesKeys.COLOR_SOURCE)
 
@@ -340,9 +297,9 @@ class KashCalDataStore(
     }
 
     /**
-     * Stored widget color-source value ("follow_app"/"dynamic"/"seed"), or null if the user
-     * never chose one — the widgets then mirror the app's colors (see
-     * [org.onekash.kashcal.widget.WidgetColorSource]).
+     * Stored widget color-source value ("follow_app", "dynamic" or "seed"), or null if the user
+     * never chose one; the widgets then mirror the app's colors
+     * ([org.onekash.kashcal.widget.WidgetColorSource]).
      */
     val widgetColorSource: Flow<String?>
         get() = getOptionalPreference(PreferencesKeys.WIDGET_COLOR_SOURCE)
@@ -351,7 +308,7 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.WIDGET_COLOR_SOURCE, value)
     }
 
-    /** Widget-only accent seed, independent of [accentSeed]; used when the widget source is "seed". */
+    /** Widget-only accent seed, apart from [accentSeed]; used when the widget source is "seed". */
     val widgetAccentSeed: Flow<Int>
         get() = getPreference(PreferencesKeys.WIDGET_ACCENT_SEED, ACCENT_SEED_DEFAULT)
 
@@ -360,10 +317,10 @@ class KashCalDataStore(
     }
 
     /**
-     * Stored widget theme-source value ("follow_app"/"light"/"dark"), or null if the user never
-     * chose one — the widget then follows the app's face (see
-     * [org.onekash.kashcal.widget.WidgetThemeSource]). A legacy "system" value from the earlier
-     * widget-theme setting also falls back to follow-app, which is the intended target.
+     * Stored widget theme-source value ("follow_app", "light" or "dark"), or null if the user
+     * never chose one; the widget then follows the app's face
+     * ([org.onekash.kashcal.widget.WidgetThemeSource]). A legacy "system" value also falls back
+     * to follow-app, which is the intended target.
      */
     val widgetThemeSource: Flow<String?>
         get() = getOptionalPreference(PreferencesKeys.WIDGET_THEME_SOURCE)
@@ -404,10 +361,7 @@ class KashCalDataStore(
 
     // ========== Privacy ==========
 
-    /**
-     * App lock enabled — require device biometric / screen-lock on reopen.
-     * Default: false (off).
-     */
+    /** Requires device biometric or screen lock on reopen (default false). */
     val appLockEnabled: Flow<Boolean>
         get() = getPreference(PreferencesKeys.APP_LOCK_ENABLED, false)
 
@@ -417,10 +371,7 @@ class KashCalDataStore(
 
     // ========== Display Settings ==========
 
-    /**
-     * Show auto-detected emojis in event titles.
-     * Default: true (enabled)
-     */
+    /** Shows auto-detected emojis in event titles (default true). */
     val showEventEmojis: Flow<Boolean>
         get() = getPreference(PreferencesKeys.SHOW_EVENT_EMOJIS, true)
 
@@ -428,10 +379,7 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.SHOW_EVENT_EMOJIS, show)
     }
 
-    /**
-     * Whether the Agenda view's top week bar is expanded (shown) vs collapsed.
-     * Default: true (expanded). Persisted so the user's last choice reopens.
-     */
+    /** Whether the Agenda view's top week bar is shown (default true); the last choice reopens. */
     val agendaWeekBarExpanded: Flow<Boolean>
         get() = getPreference(PreferencesKeys.AGENDA_WEEK_BAR_EXPANDED, true)
 
@@ -440,9 +388,8 @@ class KashCalDataStore(
     }
 
     /**
-     * Whether the Day view's top week-strip date picker is expanded (shown) vs
-     * collapsed. Default: true (expanded). Persisted independently of the agenda
-     * bar so collapsing one leaves the other untouched.
+     * Whether the Day view's top week-strip date picker is shown (default true). Stored apart
+     * from [agendaWeekBarExpanded], so collapsing one leaves the other.
      */
     val dayWeekBarExpanded: Flow<Boolean>
         get() = getPreference(PreferencesKeys.DAY_WEEK_BAR_EXPANDED, true)
@@ -451,11 +398,7 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.DAY_WEEK_BAR_EXPANDED, expanded)
     }
 
-    /**
-     * Whether the all-day strip in the Day/3-Day/Week time-grid views is expanded
-     * (up to 3 rows) vs collapsed (1 row). Default: false (collapsed) so existing
-     * users see today's behavior after upgrading. Persisted so the choice sticks.
-     */
+    /** Whether the all-day strip is expanded; see [PreferencesKeys.ALL_DAY_ROWS_EXPANDED]. */
     val allDayRowsExpanded: Flow<Boolean>
         get() = getPreference(PreferencesKeys.ALL_DAY_ROWS_EXPANDED, false)
 
@@ -464,8 +407,8 @@ class KashCalDataStore(
     }
 
     /**
-     * Maximum events per day in widgets (agenda + week).
-     * Default: 5. Valid options: 3, 5, 8, 10, 15.
+     * Maximum events per day in the Agenda and Week widgets. Default 5; the setter stores any
+     * value other than 3, 5, 8, 10 or 15 as 5.
      */
     val widgetMaxEventsPerDay: Flow<Int>
         get() = getPreference(PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY, 5)
@@ -476,11 +419,7 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY, safeCount)
     }
 
-    /**
-     * Whether widget event rows render in the detailed two-line style (title, then
-     * start-end time) instead of the compact single-line style. Applies to the Agenda,
-     * Week, and Upcoming list widgets. Default: false (compact).
-     */
+    /** Whether widget rows use the two-line style; see [PreferencesKeys.WIDGET_DETAILED_ROWS]. */
     val widgetDetailedRows: Flow<Boolean>
         get() = getPreference(PreferencesKeys.WIDGET_DETAILED_ROWS, false)
 
@@ -489,8 +428,8 @@ class KashCalDataStore(
     }
 
     /**
-     * Last time-grid scroll position as minutes from midnight (0..1439).
-     * -1 means never saved: fresh installs fall back to the default scroll hour.
+     * Last time-grid scroll position as minutes from midnight (0..1439), or
+     * [WEEK_VIEW_SCROLL_NOT_SAVED] when never saved; the grid then opens at its default hour.
      */
     val weekViewScrollMinutes: Flow<Int>
         get() = getPreference(PreferencesKeys.WEEK_VIEW_SCROLL_MINUTES, WEEK_VIEW_SCROLL_NOT_SAVED)
@@ -498,17 +437,16 @@ class KashCalDataStore(
     suspend fun getWeekViewScrollMinutes(): Int = weekViewScrollMinutes.first()
 
     suspend fun setWeekViewScrollMinutes(minutesOfDay: Int) {
-        // Only real positions are persisted; clamp into the day so a bad input
-        // can never store the never-saved sentinel or an out-of-grid value.
+        // Clamp into the day so a bad input never stores the never-saved sentinel or a value
+        // off the grid.
         val safe = minutesOfDay.coerceIn(0, MINUTES_PER_DAY - 1)
         setPreference(PreferencesKeys.WEEK_VIEW_SCROLL_MINUTES, safe)
     }
 
     /**
-     * Pinch-to-zoom level of the time grid as hour-row height in dp. Defaults to
-     * [DEFAULT_HOUR_HEIGHT_DP] when never saved (fresh install). The valid range is
-     * enforced by the ViewModel on restore, keeping a single source of truth for the
-     * pinch bounds in WeekViewUtils.
+     * Pinch-to-zoom level of the time grid as hour-row height in dp, or
+     * [DEFAULT_HOUR_HEIGHT_DP] when never saved. Not clamped here: the ViewModel clamps on
+     * restore, so the pinch bounds have one source of truth in `WeekViewUtils`.
      */
     val weekViewHourHeight: Flow<Float>
         get() = getPreference(PreferencesKeys.WEEK_VIEW_HOUR_HEIGHT, DEFAULT_HOUR_HEIGHT_DP)
@@ -520,10 +458,8 @@ class KashCalDataStore(
     }
 
     /**
-     * Time format preference.
-     * - "system": Follow device's 24-hour setting
-     * - "12h": Always 12-hour (2:30 PM)
-     * - "24h": Always 24-hour (14:30)
+     * Time format: "system" follows the device's 24-hour setting, "12h" shows 2:30 PM, "24h"
+     * shows 14:30. The setter throws on any other value.
      */
     val timeFormat: Flow<String>
         get() = getPreference(PreferencesKeys.TIME_FORMAT, TIME_FORMAT_SYSTEM)
@@ -540,10 +476,8 @@ class KashCalDataStore(
     // ========== Default Calendar View ==========
 
     /**
-     * Default calendar view preference.
-     * - "month": Month grid (default)
-     * - "agenda": 30-day upcoming events list
-     * - "three_days": 3-day scrollable time grid
+     * Default calendar view, one of the `VIEW_` values (default [VIEW_MONTH]). The setter throws
+     * on any other value.
      */
     val defaultCalendarView: Flow<String>
         get() = getPreference(PreferencesKeys.DEFAULT_CALENDAR_VIEW, VIEW_MONTH)
@@ -604,11 +538,10 @@ class KashCalDataStore(
     }
 
     /**
-     * True once the user has tapped "No thanks" on the attendee picker's
-     * contacts-permission card (or denied the system dialog). Suppresses the
-     * banner permanently — Android exposes no "user said no for good" signal,
-     * so we persist the decision ourselves. Only gates the banner; if contacts
-     * are later granted in system settings, suggestions still work.
+     * True once the user tapped "No thanks" on the attendee picker's contacts-permission card
+     * or denied the system dialog. It hides the banner for good: Android exposes no "user said
+     * no for good" signal, so the app stores the decision. It gates only the banner; if
+     * contacts are later granted in system settings, suggestions still work.
      */
     val contactSuggestionsDeclined: Flow<Boolean>
         get() = getPreference(PreferencesKeys.CONTACT_SUGGESTIONS_DECLINED, false)
@@ -618,9 +551,10 @@ class KashCalDataStore(
     }
 
     /**
-     * True when a background contact sync was skipped because WRITE_CONTACTS
-     * was revoked. Drives an inline re-grant affordance in settings; cleared
-     * on the next run that finds the permission granted.
+     * True when contact sync lacks its permission: a background sync skipped because
+     * WRITE_CONTACTS was revoked, or settings found the contacts permissions missing on
+     * enable or sync-now. Drives an inline re-grant row in settings; cleared when either finds
+     * the permission granted.
      */
     val contactSyncPermissionNeeded: Flow<Boolean>
         get() = getPreference(PreferencesKeys.CONTACT_SYNC_PERMISSION_NEEDED, false)
@@ -640,38 +574,26 @@ class KashCalDataStore(
 
     // ========== Permission Tracking ==========
 
-    /**
-     * Number of times notification permission was denied.
-     * Used to determine if we should show rationale or consider it permanently denied.
-     */
+    /** Times the notification permission was denied; decides rationale vs permanently denied. */
     val notificationPermissionDeniedCount: Flow<Int>
         get() = getPreference(PreferencesKeys.NOTIFICATION_PERMISSION_DENIED_COUNT, 0)
 
-    /**
-     * Get the denial count synchronously (for permission state check).
-     */
+    /** Reads the denial count once, for the permission state check. */
     suspend fun getNotificationPermissionDeniedCountBlocking(): Int =
         notificationPermissionDeniedCount.first()
 
-    /**
-     * Increment denial count when user denies permission.
-     */
+    /** Adds one denial; called when the user denies the permission. */
     suspend fun incrementNotificationPermissionDeniedCount() {
         updatePreference(PreferencesKeys.NOTIFICATION_PERMISSION_DENIED_COUNT) { (it ?: 0) + 1 }
     }
 
-    /**
-     * Reset denial count when permission is granted.
-     */
+    /** Zeroes the denial count; called when the permission is granted. */
     suspend fun resetNotificationPermissionDeniedCount() {
         setPreference(PreferencesKeys.NOTIFICATION_PERMISSION_DENIED_COUNT, 0)
     }
 
     // ========== Contact Birthdays ==========
 
-    /**
-     * Whether contact birthdays calendar is enabled.
-     */
     val contactBirthdaysEnabled: Flow<Boolean>
         get() = getPreference(PreferencesKeys.CONTACT_BIRTHDAYS_ENABLED, false)
 
@@ -681,9 +603,7 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.CONTACT_BIRTHDAYS_ENABLED, enabled)
     }
 
-    /**
-     * Last sync time for contact birthdays.
-     */
+    /** Last sync time for contact birthdays, in epoch millis (0 = never). */
     val contactBirthdaysLastSync: Flow<Long>
         get() = getPreference(PreferencesKeys.CONTACT_BIRTHDAYS_LAST_SYNC, 0L)
 
@@ -694,9 +614,9 @@ class KashCalDataStore(
     }
 
     /**
-     * Birthday reminder minutes (signed "minutes before midnight": negative = after
-     * local midnight). Uses ALL_DAY_REMINDER_MINUTES values, e.g. -540 = 9 AM day of,
-     * 900 = 9 AM the day before. Default: -540 (9 AM on day of birthday).
+     * Birthday reminder in signed minutes before local midnight (negative = after), from the
+     * `ALL_DAY_REMINDER_MINUTES` options: -540 = 9 AM the day of, 900 = 9 AM the day before.
+     * Default -540.
      */
     val birthdayReminder: Flow<Int>
         get() = getPreference(PreferencesKeys.BIRTHDAY_REMINDER, DEFAULT_BIRTHDAY_REMINDER_MINUTES)
@@ -709,9 +629,6 @@ class KashCalDataStore(
 
     // ========== Contact Anniversaries ==========
 
-    /**
-     * Whether contact anniversaries calendar is enabled.
-     */
     val contactAnniversariesEnabled: Flow<Boolean>
         get() = getPreference(PreferencesKeys.CONTACT_ANNIVERSARIES_ENABLED, false)
 
@@ -721,9 +638,7 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.CONTACT_ANNIVERSARIES_ENABLED, enabled)
     }
 
-    /**
-     * Last sync time for contact anniversaries.
-     */
+    /** Last sync time for contact anniversaries, in epoch millis (0 = never). */
     val contactAnniversariesLastSync: Flow<Long>
         get() = getPreference(PreferencesKeys.CONTACT_ANNIVERSARIES_LAST_SYNC, 0L)
 
@@ -733,11 +648,7 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.CONTACT_ANNIVERSARIES_LAST_SYNC, timeMillis)
     }
 
-    /**
-     * Anniversary reminder minutes (signed "minutes before midnight": negative = after
-     * local midnight). Uses ALL_DAY_REMINDER_MINUTES values, e.g. -540 = 9 AM day of,
-     * 900 = 9 AM the day before. Default: -540 (9 AM on day of anniversary).
-     */
+    /** Anniversary reminder, in the units of [birthdayReminder]. Default -540 (9 AM the day of). */
     val anniversaryReminder: Flow<Int>
         get() = getPreference(PreferencesKeys.ANNIVERSARY_REMINDER, DEFAULT_ANNIVERSARY_REMINDER_MINUTES)
 
@@ -749,9 +660,6 @@ class KashCalDataStore(
 
     // ========== Device Calendars ==========
 
-    /**
-     * Whether device calendar integration is enabled.
-     */
     val deviceCalendarsEnabled: Flow<Boolean>
         get() = getPreference(PreferencesKeys.DEVICE_CALENDARS_ENABLED, false)
 
@@ -762,8 +670,8 @@ class KashCalDataStore(
     }
 
     /**
-     * Set of enabled device calendar IDs.
-     * Stored as Set<String> (DataStore limitation), converted to/from Set<Long>.
+     * Enabled device calendar ids. DataStore has no Long set, so they are stored as strings;
+     * an entry that isn't a number is dropped on read.
      */
     val enabledDeviceCalendarIds: Flow<Set<Long>>
         get() = getPreference(PreferencesKeys.ENABLED_DEVICE_CALENDAR_IDS, emptySet<String>())
@@ -776,9 +684,8 @@ class KashCalDataStore(
     }
 
     /**
-     * Set of hidden device calendar IDs.
-     * These calendars are enabled (integration + reminders active) but hidden from the calendar view.
-     * Stored as Set<String> (DataStore limitation), converted to/from Set<Long>.
+     * Device calendar ids that stay enabled, reminders included, but are hidden from the
+     * calendar view. Stored as strings like [enabledDeviceCalendarIds].
      */
     val hiddenDeviceCalendarIds: Flow<Set<Long>>
         get() = getPreference(PreferencesKeys.HIDDEN_DEVICE_CALENDAR_IDS, emptySet<String>())
@@ -790,10 +697,7 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.HIDDEN_DEVICE_CALENDAR_IDS, ids.map { it.toString() }.toSet())
     }
 
-    /**
-     * Toggle a device calendar's hidden state.
-     * If the calendar is currently hidden, it becomes visible. If visible, it becomes hidden.
-     */
+    /** Hides [calendarId] if visible, shows it if hidden. */
     suspend fun toggleDeviceCalendarHidden(calendarId: Long) {
         val current = getHiddenDeviceCalendarIds().toMutableSet()
         if (calendarId in current) current.remove(calendarId) else current.add(calendarId)
@@ -801,8 +705,8 @@ class KashCalDataStore(
     }
 
     /**
-     * Remove a calendar from hidden IDs.
-     * Called when a device calendar is disabled to ensure clean slate on re-enable.
+     * Unhides [calendarId]. Called when a device calendar is disabled, so it comes back visible
+     * if re-enabled.
      */
     suspend fun removeFromHiddenDeviceCalendarIds(calendarId: Long) {
         val current = getHiddenDeviceCalendarIds().toMutableSet()
@@ -812,8 +716,8 @@ class KashCalDataStore(
     }
 
     /**
-     * Whether KashCal should fire reminders for device calendar events.
-     * Default: true (users expect reminders when they add device calendars to KashCal)
+     * Whether KashCal fires reminders for device calendar events. Default true: users expect
+     * reminders when they add device calendars to KashCal.
      */
     val deviceCalendarRemindersEnabled: Flow<Boolean>
         get() = getPreference(PreferencesKeys.DEVICE_CALENDAR_REMINDERS_ENABLED, true)
@@ -826,27 +730,18 @@ class KashCalDataStore(
 
     // ========== Parse Failure Retry (v16.7.0) ==========
 
-    /**
-     * Parse failure retry counts per calendar as a Flow.
-     * Map of calendarId -> retryCount.
-     */
+    /** Parse failure retry counts, calendarId to count. */
     val parseFailureRetryCount: Flow<Map<Long, Int>>
         get() = getPreference(PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS, "")
             .map { json -> parseRetryCountsJson(json) }
 
-    /**
-     * Get current retry count for a calendar.
-     * Returns 0 if calendar has no tracked failures.
-     */
+    /** Returns [calendarId]'s retry count, or 0 when it has none. */
     suspend fun getParseFailureRetryCount(calendarId: Long): Int {
         val json = dataStore.data.first()[PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS].orEmpty()
         return parseRetryCountsJson(json)[calendarId] ?: 0
     }
 
-    /**
-     * Increment retry count for a calendar.
-     * Returns the new count after incrementing.
-     */
+    /** Adds one to [calendarId]'s retry count and returns the new count. */
     suspend fun incrementParseFailureRetry(calendarId: Long): Int {
         var newCount = 0
         dataStore.edit { preferences ->
@@ -860,8 +755,8 @@ class KashCalDataStore(
     }
 
     /**
-     * Reset retry count for a specific calendar.
-     * Called when sync succeeds or after giving up (max retries reached).
+     * Drops [calendarId]'s retry count. The pull calls it when it advances the sync-token: with
+     * no parse errors, or after giving up at the maximum retries.
      */
     suspend fun resetParseFailureRetry(calendarId: Long) {
         dataStore.edit { preferences ->
@@ -876,18 +771,15 @@ class KashCalDataStore(
         }
     }
 
-    /**
-     * Clear all retry counts.
-     * Called on force full sync to give a fresh start.
-     */
+    /** Drops every retry count; a forced full sync calls it for a fresh start. */
     suspend fun clearAllParseFailureRetries() {
         removePreference(PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS)
     }
 
     /**
-     * Parse JSON string to retry counts map.
-     * Format: "calendarId:count,calendarId:count,..."
-     * Simple format avoids Gson dependency for this small use case.
+     * Parses "calendarId:count,calendarId:count" (not JSON, despite the name), which needs no
+     * JSON library. Skips entries without a colon; returns an empty map if any id or count
+     * doesn't parse.
      */
     private fun parseRetryCountsJson(json: String): Map<Long, Int> {
         if (json.isBlank()) return emptyMap()
@@ -903,72 +795,48 @@ class KashCalDataStore(
         }
     }
 
-    /**
-     * Serialize retry counts map to JSON string.
-     */
+    /** Writes [counts] in the format [parseRetryCountsJson] reads. */
     private fun serializeRetryCountsJson(counts: Map<Long, Int>): String {
         return counts.entries.joinToString(",") { "${it.key}:${it.value}" }
     }
 
     // ========== Reminder Migration ==========
 
-    /**
-     * Get the reminder migration version.
-     * Returns 0 if no migrations have been applied.
-     */
+    /** Returns the reminder migration version, or 0 if none has been applied. */
     suspend fun getReminderMigrationVersion(): Int {
         return dataStore.data.first()[PreferencesKeys.REMINDER_MIGRATION_VERSION] ?: 0
     }
 
-    /**
-     * Set the reminder migration version.
-     * Called after a migration is successfully applied.
-     */
+    /** Records [version]; called after that migration has been applied. */
     suspend fun setReminderMigrationVersion(version: Int) {
         setPreference(PreferencesKeys.REMINDER_MIGRATION_VERSION, version)
     }
 
     // ========== Parser Version (v20.12.39) ==========
 
-    /**
-     * Get the stored parser version.
-     * Returns 0 if never set (pre-v20.12.39 installations).
-     */
+    /** Returns the stored parser version, or 0 if never set (installs before v20.12.39). */
     suspend fun getParserVersion(): Int {
         return dataStore.data.first()[PreferencesKeys.PARSER_VERSION] ?: 0
     }
 
-    /**
-     * Set the parser version after clearing etags.
-     */
+    /** Records [version]; called after the etags have been cleared. */
     suspend fun setParserVersion(version: Int) {
         setPreference(PreferencesKeys.PARSER_VERSION, version)
     }
 
     // ========== iCloud URL Migration ==========
 
-    /**
-     * Check if iCloud URL migration has been completed.
-     */
+    /** Whether the iCloud URL migration has completed. */
     val icloudUrlMigrationCompleted: Flow<Boolean>
         get() = getPreference(PreferencesKeys.ICLOUD_URL_MIGRATION_COMPLETED, false)
 
-    /**
-     * Get migration status synchronously.
-     */
     suspend fun getICloudUrlMigrationCompleted(): Boolean = icloudUrlMigrationCompleted.first()
 
-    /**
-     * Mark iCloud URL migration as completed.
-     */
     suspend fun setICloudUrlMigrationCompleted(completed: Boolean) {
         setPreference(PreferencesKeys.ICLOUD_URL_MIGRATION_COMPLETED, completed)
     }
 
-    /**
-     * Reset iCloud URL migration status (for debugging/testing).
-     * Allows re-running the migration on next sync.
-     */
+    /** Clears the iCloud URL migration flag so the next sync reruns it (debugging and tests). */
     suspend fun resetICloudUrlMigration() {
         setICloudUrlMigrationCompleted(false)
     }
@@ -976,8 +844,8 @@ class KashCalDataStore(
     // ========== Share Availability ==========
 
     /**
-     * Number of days to include in the share-availability summary.
-     * Default: 7. Valid range: 1..14.
+     * Days in the share-availability summary (default 7, valid 1..14); the setter stores an
+     * out-of-range value as the default.
      */
     val shareAvailabilityDays: Flow<Int>
         get() = getPreference(PreferencesKeys.SHARE_AVAILABILITY_DAYS, SHARE_AVAILABILITY_DEFAULT_DAYS)
@@ -987,8 +855,8 @@ class KashCalDataStore(
     }
 
     /**
-     * Working-hours window start, expressed as minutes from midnight.
-     * Default: 540 (09:00). Valid range: 0..1440.
+     * Working-hours window start in minutes from midnight (default 540, 09:00; valid 0..1439).
+     * The setter checks it against the stored end with [sanitizeWorkStartMin].
      */
     val shareAvailabilityWorkStartMinutes: Flow<Int>
         get() = getPreference(
@@ -1005,10 +873,9 @@ class KashCalDataStore(
     }
 
     /**
-     * Working-hours window end, expressed as minutes from midnight.
-     * Default: 1020 (17:00). Valid range: 0..1440 (1440 = end of day).
-     * The window is required to be at least 60 minutes wide; out-of-range or
-     * inverted values are rejected and the default is restored.
+     * Working-hours window end in minutes from midnight (default 1020, 17:00; valid 1..1440,
+     * 1440 = end of day). The setter checks it against the stored start with
+     * [sanitizeWorkEndMin].
      */
     val shareAvailabilityWorkEndMinutes: Flow<Int>
         get() = getPreference(
@@ -1024,10 +891,7 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.SHARE_AVAILABILITY_WORK_END_MIN, safe)
     }
 
-    /**
-     * Treat all-day events as busy when computing free blocks.
-     * Default: false (all-day events ignored).
-     */
+    /** Treats all-day events as busy when computing free blocks (default false: ignored). */
     val shareAvailabilityIncludeAllDay: Flow<Boolean>
         get() = getPreference(PreferencesKeys.SHARE_AVAILABILITY_INCLUDE_ALL_DAY, false)
 
@@ -1036,51 +900,47 @@ class KashCalDataStore(
     }
 
     companion object {
-        // Reminder constants
-        const val REMINDER_OFF = -1  // Sentinel: no reminder set
+        const val REMINDER_OFF = -1  // no reminder set
         const val DEFAULT_REMINDER_MINUTES = 15
-        // Signed "minutes before start" (Android CalendarProvider convention): positive = before, negative = after.
-        const val DEFAULT_ALL_DAY_REMINDER_MINUTES = 15 * 60 // 9 AM the day before (-PT15H, Int 900)
-        const val DEFAULT_BIRTHDAY_REMINDER_MINUTES = -9 * 60 // 9 AM day of birthday (PT9H, Int -540)
-        const val DEFAULT_ANNIVERSARY_REMINDER_MINUTES = -9 * 60 // 9 AM day of anniversary (PT9H, Int -540)
+        // Signed minutes before start (the Android CalendarProvider convention): positive =
+        // before, negative = after.
+        const val DEFAULT_ALL_DAY_REMINDER_MINUTES = 15 * 60 // 9 AM the day before (-PT15H)
+        const val DEFAULT_BIRTHDAY_REMINDER_MINUTES = -9 * 60 // 9 AM the day of (PT9H)
+        const val DEFAULT_ANNIVERSARY_REMINDER_MINUTES = -9 * 60 // 9 AM the day of (PT9H)
 
-        // Sync constants
-        const val DEFAULT_SYNC_INTERVAL_MINUTES = 60  // 1 hour
-        const val DEFAULT_SYNC_INTERVAL_MS = 1L * 60 * 60 * 1000 // 1 hour in ms
-        const val MIN_SYNC_INTERVAL_MS = 15L * 60 * 1000 // 15 minutes in ms
+        const val DEFAULT_SYNC_INTERVAL_MINUTES = 60
+        const val DEFAULT_SYNC_INTERVAL_MS = 1L * 60 * 60 * 1000
+        const val MIN_SYNC_INTERVAL_MS = 15L * 60 * 1000
         const val DEFAULT_SYNC_PAST_DAYS = 365
         const val DEFAULT_SYNC_FUTURE_DAYS = 365
 
-        // Other defaults
         const val DEFAULT_EVENT_DURATION_MINUTES = 30
 
-        // Week-view scroll restore
-        const val WEEK_VIEW_SCROLL_NOT_SAVED = -1  // Sentinel: no position saved yet
+        const val WEEK_VIEW_SCROLL_NOT_SAVED = -1  // no position saved yet
         const val MINUTES_PER_DAY = 24 * 60
 
-        // Week-view zoom restore: default hour-row height in dp (matches WeekViewUtils.HOUR_HEIGHT)
+        // Default hour-row height in dp; must match `WeekViewUtils.HOUR_HEIGHT`.
         const val DEFAULT_HOUR_HEIGHT_DP = 60f
 
-        // Share-availability defaults
         const val SHARE_AVAILABILITY_DEFAULT_DAYS = 7
-        const val SHARE_AVAILABILITY_DEFAULT_WORK_START_MIN = 9 * 60 // 09:00 (540)
-        const val SHARE_AVAILABILITY_DEFAULT_WORK_END_MIN = 17 * 60 // 17:00 (1020)
+        const val SHARE_AVAILABILITY_DEFAULT_WORK_START_MIN = 9 * 60 // 09:00
+        const val SHARE_AVAILABILITY_DEFAULT_WORK_END_MIN = 17 * 60 // 17:00
         const val SHARE_AVAILABILITY_MIN_WORK_WINDOW_MIN = 60
         const val SHARE_AVAILABILITY_MAX_DAYS = 14
-        const val SHARE_AVAILABILITY_MAX_MINUTES = 1440 // end-of-day sentinel
+        const val SHARE_AVAILABILITY_MAX_MINUTES = 1440 // end of day
 
         /**
-         * Snap a candidate days value into [1, SHARE_AVAILABILITY_MAX_DAYS].
-         * Used by both the setter and the backup importer so a malformed
-         * backup cannot persist out-of-range values.
+         * Returns [days] if in 1..[SHARE_AVAILABILITY_MAX_DAYS], else the default. Shared by the
+         * setter and the settings backup importer, so a malformed backup can't store an
+         * out-of-range value.
          */
         fun sanitizeShareAvailabilityDays(days: Int): Int =
             if (days in 1..SHARE_AVAILABILITY_MAX_DAYS) days else SHARE_AVAILABILITY_DEFAULT_DAYS
 
         /**
-         * Snap a candidate workStart value into a valid window. If the result
-         * would invert or shrink the window below 60 minutes against the
-         * supplied [currentEnd], fall back to the default.
+         * Returns [minutes] as the window start, or the default start when it is outside
+         * 0..1439 or leaves under [SHARE_AVAILABILITY_MIN_WORK_WINDOW_MIN] before [currentEnd].
+         * An out-of-range [currentEnd] is read as the default end.
          */
         fun sanitizeWorkStartMin(minutes: Int, currentEnd: Int): Int {
             if (minutes !in 0 until SHARE_AVAILABILITY_MAX_MINUTES) {
@@ -1099,9 +959,9 @@ class KashCalDataStore(
         }
 
         /**
-         * Snap a candidate workEnd value into a valid window. 1440 is allowed
-         * as the end-of-day sentinel; values that would invert or shrink the
-         * window below 60 minutes against [currentStart] fall back to default.
+         * Returns [minutes] as the window end, or the default end when it is outside 1..1440
+         * (1440 = end of day) or leaves under [SHARE_AVAILABILITY_MIN_WORK_WINDOW_MIN] after
+         * [currentStart]. An out-of-range [currentStart] is read as the default start.
          */
         fun sanitizeWorkEndMin(minutes: Int, currentStart: Int): Int {
             if (minutes !in 1..SHARE_AVAILABILITY_MAX_MINUTES) {
@@ -1119,17 +979,15 @@ class KashCalDataStore(
             }
         }
 
-        // Theme values
         const val THEME_SYSTEM = "system"
         const val THEME_LIGHT = "light"
         const val THEME_DARK = "dark"
-        // Retired theme option; retained only to migrate existing users onto a seed accent.
+        // Retired theme option, kept only to migrate its users onto a seed accent.
         const val THEME_TEAL = "teal"
 
-        /** Default accent seed = brand teal, as a packed ARGB int. */
+        /** Default accent seed: brand teal as a packed ARGB int. */
         const val ACCENT_SEED_DEFAULT: Int = 0xFF0E6E62.toInt()
 
-        // View values
         const val VIEW_MONTH = "month"
         const val VIEW_AGENDA = "agenda"
         const val VIEW_DAY = "day"
@@ -1140,26 +998,23 @@ class KashCalDataStore(
 
         private val VALID_VIEWS = setOf(VIEW_MONTH, VIEW_AGENDA, VIEW_DAY, VIEW_THREE_DAYS, VIEW_WEEK, VIEW_MONTH_FULL, VIEW_YEAR)
 
-        // Time format values
         const val TIME_FORMAT_SYSTEM = "system"
         const val TIME_FORMAT_12H = "12h"
         const val TIME_FORMAT_24H = "24h"
 
-        // First day of week values
-        /** Special value for "follow system locale" */
+        /** First-day-of-week value that follows the system locale. */
         const val FIRST_DAY_SYSTEM = 0
 
-        // Parser version - bump when parsing logic changes to force re-parse
         /**
-         * Current parser version. Bump this when iCalendar parsing logic changes.
+         * Current iCalendar parser version. Bump it when iCalendar parsing logic changes: a bump
+         * clears every event etag on the next app start, so the next sync re-parses all events.
          *
-         * History:
-         * - v0: Pre-v20.12.39 (no version tracking)
-         * - v1: VALUE=DATE timezone fix (use UTC instead of local timezone)
-         * - v2: Windows timezone name resolution (Issue #45)
-         * - v3: Locally-defined VTIMEZONE with non-IANA TZID no longer drops
-         *   events (Issue #346): resolvable X-LIC-LOCATION zones are honored,
-         *   the rest fall back to floating instead of being lost.
+         * Versions:
+         * - v0: before v20.12.39, no version tracking
+         * - v1: VALUE=DATE dates in UTC, not the local zone
+         * - v2: Windows timezone names resolved (#45)
+         * - v3: a local VTIMEZONE with a non-IANA TZID keeps its events (#346): a resolvable
+         *   X-LIC-LOCATION zone is used, the rest fall back to floating instead of being lost
          */
         const val CURRENT_PARSER_VERSION = 3
     }

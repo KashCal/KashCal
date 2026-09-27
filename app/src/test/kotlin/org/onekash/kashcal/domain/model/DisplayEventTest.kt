@@ -11,9 +11,8 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 
 /**
- * Unit tests for DisplayEvent sealed interface.
- *
- * Tests property delegation for both Room and Device variants.
+ * Tests [DisplayEvent]'s Room and Device variants: property delegation, the calendar and event
+ * color channels, isFree, isDeclinedByMe and isCancelled, and [toEventForShareCard].
  */
 class DisplayEventTest {
 
@@ -261,8 +260,10 @@ class DisplayEventTest {
     fun `Room calendarColor reflects calendar even when event has override`() {
         val eventWithColor = testEvent.copy(color = 0xFF00FF00.toInt())
         val display = DisplayEvent.Room(eventWithColor, testOccurrence, testCalendar)
-        assertEquals(0xFF2196F3.toInt(), display.calendarColor)   // calendar's color — override ignored
-        assertEquals(0xFF00FF00.toInt(), display.eventColor)      // override surfaced via eventColor
+        // calendarColor is the calendar's color, ignoring the override
+        assertEquals(0xFF2196F3.toInt(), display.calendarColor)
+        // The override shows on eventColor
+        assertEquals(0xFF00FF00.toInt(), display.eventColor)
     }
 
     @Test
@@ -419,12 +420,12 @@ class DisplayEventTest {
 
     // ========== toEventForShareCard ==========
     //
-    // The synthetic Event is fed into the existing share-card pipeline
-    // (singleOccurrenceForShare → IcsExporter). It is never persisted,
-    // so id and calendarId are 0L; it MUST carry a fresh UID so the
-    // recipient sees a brand-new insert; and it MUST carry the device
-    // event's raw timezone string verbatim so the share helper's
-    // ZoneId.of(...).getOrNull() ?: systemDefault() fallback governs.
+    // The synthetic Event goes through the share-card pipeline
+    // (singleOccurrenceForShare, then IcsExporter). It is never persisted,
+    // so id and calendarId are 0L. It must carry a fresh UID so the
+    // recipient sees a new event, and a timed event must carry the device
+    // event's raw timezone string verbatim so shareCardZone's fallback to
+    // the system zone decides. All-day events are forced to UTC (below).
 
     @Test
     fun `toEventForShareCard preserves title`() {
@@ -469,11 +470,10 @@ class DisplayEventTest {
 
     @Test
     fun `toEventForShareCard preserves non-IANA timezone string verbatim`() {
-        // Some sync adapters store legacy/Outlook timezone names in
-        // Events.EVENT_TIMEZONE. The share-card helper handles this
-        // downstream via ZoneId.of(...).getOrNull() ?: systemDefault().
-        // The mapper must NOT silently rewrite to system default — the
-        // caller needs to see the original string.
+        // Some sync adapters store Windows timezone names in
+        // Events.EVENT_TIMEZONE. shareCardZone falls back to the system zone
+        // for them downstream, so the mapper must not rewrite the string to
+        // the system default; the caller needs the original.
         val outlook = testInstance.copy(timezone = "Pacific Standard Time")
         val event = DisplayEvent.Device(outlook).toEventForShareCard()
         assertEquals("Pacific Standard Time", event.timezone)
@@ -489,8 +489,8 @@ class DisplayEventTest {
     @Test
     fun `toEventForShareCard preserves empty timezone string as empty`() {
         // CalendarProvider may surface empty strings for some sync adapters.
-        // Round-trip the raw value; the share helper's runCatching fallback
-        // will substitute the system default at use time.
+        // The raw value is kept; shareCardZone uses the system zone for a
+        // blank id at use time.
         val emptyTz = testInstance.copy(timezone = "")
         val event = DisplayEvent.Device(emptyTz).toEventForShareCard()
         assertEquals("", event.timezone)
@@ -511,7 +511,7 @@ class DisplayEventTest {
     @Test
     fun `toEventForShareCard assigns a fresh UUID, not the device id`() {
         val event = DisplayEvent.Device(testInstance).toEventForShareCard()
-        // Must not be empty, must not be the device-instance id stringified.
+        // Not blank, and neither the device event id nor the instance id as a string.
         assertTrue("uid should be non-blank", event.uid.isNotBlank())
         assertFalse("uid must not be the device eventId", event.uid == "50")
         assertFalse("uid must not be the instanceId", event.uid == "200")
@@ -547,8 +547,8 @@ class DisplayEventTest {
 
     @Test
     fun `toEventForShareCard does not set rawIcal, organizer, or caldavUrl`() {
-        // Defense-in-depth: the share pipeline strips these too, but
-        // there's no reason for the device-event mapper to populate them.
+        // Defense in depth: singleOccurrenceForShare strips these too, and
+        // the device-event mapper has no reason to set them.
         val event = DisplayEvent.Device(testInstance).toEventForShareCard()
         assertNull(event.rawIcal)
         assertNull(event.organizerEmail)
@@ -559,11 +559,11 @@ class DisplayEventTest {
 
     // ========== Parity with Room share path ==========
     //
-    // The synthetic Event flows through the same IcsExporter that Room
-    // events use. Any field the Room sheet preserves end-to-end (transp,
-    // status, reminders, eventColor) should also flow from the device
-    // sheet — otherwise sharing the same event from two different entry
-    // points produces different .ics output.
+    // The synthetic Event goes through the same IcsExporter that Room
+    // events use. Every field a Room share keeps end to end (transp,
+    // status, reminders, eventColor) must also come through from a device
+    // share, or sharing one event from the two entry points gives
+    // different .ics output.
 
     @Test
     fun `toEventForShareCard maps AVAILABILITY_FREE to TRANSPARENT`() {
@@ -627,11 +627,11 @@ class DisplayEventTest {
 
     @Test
     fun `toEventForShareCard normalizes empty description to null`() {
-        // CalendarProvider repository surfaces missing DESCRIPTION as ""
-        // (cursor.getString(...).orEmpty()). Keeping the empty string would
-        // emit a literal `DESCRIPTION:` line in the .ics; Room shares with
-        // a null description emit no line. Normalize at this boundary so
-        // both share paths produce the same output.
+        // The CalendarProvider repository reads a missing DESCRIPTION as ""
+        // (cursor.getString(...).orEmpty()). An empty string would emit a
+        // bare `DESCRIPTION:` line in the .ics, while a Room share with a
+        // null description emits none. Mapping it to null here makes both
+        // share paths produce the same output.
         val empty = testInstance.copy(description = "")
         val event = DisplayEvent.Device(empty).toEventForShareCard()
         assertNull(event.description)
@@ -654,12 +654,11 @@ class DisplayEventTest {
     // ========== All-day timezone normalization ==========
     //
     // Android's CalendarProvider stores all-day BEGIN as UTC midnight
-    // regardless of the row's EVENT_TIMEZONE. KashCal-written rows use
-    // EVENT_TIMEZONE='UTC' (consistent with the BEGIN convention), but
-    // some sync adapters (Outlook/Exchange bridges) write a non-UTC
-    // EVENT_TIMEZONE. If toEventForShareCard surfaces that non-UTC
-    // string, normalizeAllDay reinterprets the UTC ms in the wrong
-    // zone and the emitted DTSTART/DTEND shift one day.
+    // whatever the row's EVENT_TIMEZONE. KashCal-written rows use
+    // EVENT_TIMEZONE='UTC', matching BEGIN, but some sync adapters write
+    // a non-UTC EVENT_TIMEZONE. If toEventForShareCard passed that string
+    // on, normalizeAllDay would read the UTC ms in the wrong zone and the
+    // emitted DTSTART/DTEND would shift one day.
 
     @Test
     fun `toEventForShareCard forces timezone UTC for all-day events`() {

@@ -1,38 +1,34 @@
 package org.onekash.icaldav.model
 
 /**
- * CONFERENCE property per RFC 7986 Section 5.11.
- * Provides information for accessing a conference (video call, audio call, etc.).
+ * Holds one CONFERENCE property (RFC 7986 §5.11): how to join a conferencing system, such as a
+ * video call URL or a phone dial-in. An event can carry more than one.
  *
- * The CONFERENCE property allows calendar applications to store video conferencing
- * URLs and details directly in events, supporting services like Zoom, Google Meet,
- * Microsoft Teams, etc.
- *
- * Example iCalendar format:
+ * Example:
  * ```
- * CONFERENCE;VALUE=URI;FEATURE=VIDEO,AUDIO;LABEL=Join Zoom Meeting:https://zoom.us/j/123456789
+ * CONFERENCE;VALUE=URI;FEATURE=VIDEO,AUDIO;LABEL=Join meeting:https://video.example.com/j/123456789
  * CONFERENCE;VALUE=URI;FEATURE=PHONE;LABEL=Dial-in:tel:+1-555-123-4567
  * ```
  *
  * @see <a href="https://tools.ietf.org/html/rfc7986#section-5.11">RFC 7986 Section 5.11</a>
  */
 data class ICalConference(
-    /** Conference URI (e.g., https://zoom.us/j/123456, tel:+1-555-123-4567) */
+    /** Conference URI, for example `https://video.example.com/j/123` or `tel:+1-555-123-4567`. */
     val uri: String,
 
-    /** Feature types supported by this conference entry */
+    /**
+     * FEATURE values. The parser gives an empty set when FEATURE is absent, not this default.
+     */
     val features: Set<ConferenceFeature> = setOf(ConferenceFeature.VIDEO),
 
-    /** Human-readable label for display (e.g., "Join Zoom Meeting") */
+    /** LABEL: human-readable text that tells entries apart, for example "Moderator dial-in". */
     val label: String? = null,
 
-    /** Language tag for the label (e.g., "en", "de") */
+    /** LANGUAGE tag of [label], for example "en" or "de". */
     val language: String? = null
 ) {
     /**
-     * Convert to iCalendar property string format.
-     *
-     * @return CONFERENCE property line (without line folding)
+     * Returns the unfolded CONFERENCE content line; FEATURE is left out when [features] is empty.
      */
     fun toICalString(): String {
         val params = mutableListOf<String>()
@@ -48,7 +44,7 @@ data class ICalConference(
     }
 
     private fun escapeParamValue(value: String): String {
-        // Quote if contains special characters
+        // Quotes a value containing ':', ';' or ','; other characters pass through as is.
         return if (value.contains(":") || value.contains(";") || value.contains(",")) {
             "\"$value\""
         } else {
@@ -56,32 +52,20 @@ data class ICalConference(
         }
     }
 
-    /**
-     * Check if this conference supports video calls.
-     */
     fun hasVideo(): Boolean = features.contains(ConferenceFeature.VIDEO)
 
-    /**
-     * Check if this conference supports audio calls.
-     */
+    /** Returns true for an AUDIO or PHONE entry. */
     fun hasAudio(): Boolean = features.contains(ConferenceFeature.AUDIO) ||
             features.contains(ConferenceFeature.PHONE)
 
-    /**
-     * Check if this is a phone dial-in entry.
-     */
+    /** Returns true for a `tel:` URI or a PHONE entry. */
     fun isPhoneDialIn(): Boolean = uri.startsWith("tel:") ||
             features.contains(ConferenceFeature.PHONE)
 
     companion object {
         /**
-         * Parse CONFERENCE property parameters from ical4j.
-         *
-         * @param uri The conference URI value
-         * @param featureValue The FEATURE parameter value (comma-separated)
-         * @param labelValue The LABEL parameter value
-         * @param languageValue The LANGUAGE parameter value
-         * @return Parsed ICalConference
+         * Builds a conference from raw parameter values; [featureValue] is parsed with
+         * [ConferenceFeature.parseFeatures].
          */
         fun fromParameters(
             uri: String,
@@ -97,13 +81,7 @@ data class ICalConference(
             )
         }
 
-        /**
-         * Create a simple video conference entry.
-         *
-         * @param uri The video conference URL
-         * @param label Optional display label
-         * @return ICalConference configured for video
-         */
+        /** Creates a VIDEO and AUDIO entry for [uri]. */
         fun video(uri: String, label: String? = null): ICalConference {
             return ICalConference(
                 uri = uri,
@@ -113,11 +91,8 @@ data class ICalConference(
         }
 
         /**
-         * Create a phone dial-in entry.
-         *
-         * @param phoneNumber The phone number (with or without tel: prefix)
-         * @param label Optional display label
-         * @return ICalConference configured for phone
+         * Creates a PHONE and AUDIO entry, adding the `tel:` prefix to [phoneNumber] when it is
+         * missing.
          */
         fun phone(phoneNumber: String, label: String? = null): ICalConference {
             val uri = if (phoneNumber.startsWith("tel:")) phoneNumber else "tel:$phoneNumber"
@@ -131,57 +106,42 @@ data class ICalConference(
 }
 
 /**
- * Conference feature types per RFC 7986.
- *
- * These indicate what capabilities a conference entry provides:
- * - AUDIO: Audio-only conference
- * - CHAT: Text chat capability
- * - FEED: Blog or RSS feed
- * - MODERATOR: Moderator access URL
- * - PHONE: Phone dial-in
- * - SCREEN: Screen sharing capability
- * - VIDEO: Video conference
+ * FEATURE values (RFC 7986 §6.3): what a conference entry provides. Experimental and other IANA
+ * values aren't modelled; [fromString] returns null for them.
  */
 enum class ConferenceFeature {
-    /** Audio-only conference capability */
+    /** Audio capability. */
     AUDIO,
 
-    /** Text chat capability */
+    /** Chat or instant messaging. */
     CHAT,
 
-    /** Blog or RSS feed */
+    /** Blog or Atom feed. */
     FEED,
 
-    /** Moderator access (different from regular attendee) */
+    /**
+     * The entry is for the conference owner, for example a moderator code that differs from the
+     * attendees' code.
+     */
     MODERATOR,
 
-    /** Phone dial-in capability */
+    /** Phone conference. */
     PHONE,
 
-    /** Screen sharing capability */
+    /** Screen sharing. */
     SCREEN,
 
-    /** Video conference capability */
+    /** Video capability. */
     VIDEO;
 
     companion object {
-        /**
-         * Parse single feature from string, case-insensitive.
-         *
-         * @param value The string value to parse
-         * @return Matching ConferenceFeature or null if not found
-         */
+        /** Maps [value] ignoring case and surrounding space; null for a blank or unknown value. */
         fun fromString(value: String?): ConferenceFeature? {
             if (value.isNullOrBlank()) return null
             return entries.find { it.name.equals(value.trim(), ignoreCase = true) }
         }
 
-        /**
-         * Parse comma-separated feature string into a Set.
-         *
-         * @param value Comma-separated features (e.g., "VIDEO,AUDIO,SCREEN")
-         * @return Set of parsed ConferenceFeature values
-         */
+        /** Parses a comma-separated list such as "VIDEO,AUDIO,SCREEN", dropping unknown values. */
         fun parseFeatures(value: String?): Set<ConferenceFeature> {
             if (value.isNullOrBlank()) return emptySet()
             return value.split(",")

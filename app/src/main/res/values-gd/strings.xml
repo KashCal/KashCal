@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Cha deach mìosachan sam bith a lorg air an fhrithealaiche seo.</string>
     <string name="caldav_error_unexpected">Mearachd ris nach robh dùil. Feuch ris a-rithist.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nMas e frithealaiche air an lìonra ionadail agad a tha seo, ceadaich inntrigeadh don lìonra ionadail gus ceangal.</string>
+    <string name="caldav_error_connection_refused_insecure">Dh\'ath-stiùir am frithealaiche an ceangal gu àite nach lean KashCal (seòladh gun chrioptachadh no lùb ath-stiùiridh), mar sin stad KashCal mus deach am facal-faire agad a chur. Thoir sùil air seòladh an fhrithealaiche.</string>
     <string name="local_network_banner_title">Tha feum air inntrigeadh don lìonra ionadail</string>
     <string name="local_network_banner_body">Tha coltas gu bheil am frithealaiche seo air an lìonra ionadail agad. Ceadaich inntrigeadh don lìonra ionadail gus an urrainn do KashCal ceangal ris.</string>
     <string name="local_network_banner_allow">Ceadaich inntrigeadh</string>
@@ -888,6 +889,8 @@
     <string name="dialog_edit_recurring_title">Sàbhail atharraichean</string>
     <string name="dialog_delete_recurring_title">Sguab às</string>
     <string name="dialog_move_recurring_title">Gluais</string>
+    <string name="snackbar_event_rescheduled">Chaidh an tachartas a ghluasad</string>
+    <string name="snackbar_reschedule_failed">Cha b\'urrainnear an tachartas a ghluasad</string>
     <string name="recurring_this_event">An tachartas seo</string>
     <string name="recurring_all_events">Gach tachartas</string>
 

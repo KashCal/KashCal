@@ -24,11 +24,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests that validate KashCal correctly handles various ICS exception patterns.
+ * Tests exception linking for ICS exception patterns (for example first or last occurrence,
+ * moved, all-day, timezone, UNTIL, monthly) and its survival across regeneration.
  *
- * These ICS files were created by interacting with real iCloud CalDAV server.
- * Each test parses the ICS, creates events, generates occurrences, and verifies
- * the correct linking of exceptions.
+ * These ICS files were created by interacting with a real iCloud CalDAV server. Each test
+ * parses the ICS, inserts the events, generates occurrences and checks how the exceptions
+ * link.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -78,11 +79,11 @@ class IcsIterationTest {
 
         val occurrences = database.occurrencesDao().getForEvent(result.masterId)
 
-        // First occurrence should be linked to exception
+        // The first occurrence is linked to the exception
         val firstOcc = occurrences.minByOrNull { it.startTs }!!
         assertNotNull("First occurrence should have exception link", firstOcc.exceptionEventId)
 
-        // Verify no duplicates
+        // No duplicates
         val uniqueTimes = occurrences.map { it.startTs }.toSet()
         assertEquals("All occurrences should have unique times", occurrences.size, uniqueTimes.size)
     }
@@ -97,10 +98,10 @@ class IcsIterationTest {
 
         val occurrences = database.occurrencesDao().getForEvent(result!!.masterId)
 
-        // Should have exactly COUNT occurrences (5)
+        // COUNT occurrences (5)
         assertEquals("Should have 5 occurrences", 5, occurrences.size)
 
-        // Last occurrence should be linked to exception
+        // The last occurrence is linked to the exception
         val lastOcc = occurrences.maxByOrNull { it.startTs }!!
         assertNotNull("Last occurrence should have exception link", lastOcc.exceptionEventId)
     }
@@ -115,13 +116,13 @@ class IcsIterationTest {
 
         val occurrences = database.occurrencesDao().getForEvent(result!!.masterId)
 
-        // Feb 8 was moved to Feb 15's time - this should NOT cause duplicate
-        // The exception replaces Feb 8 (original occurrence is linked to exception)
-        // Feb 15 still exists as regular occurrence
+        // Feb 8 is moved to Feb 15's time, which must not cause a duplicate. linkException
+        // deletes the master's Feb 15 occurrence and moves the Feb 8 row there, linked to
+        // the exception.
         val uniqueTimes = occurrences.map { it.startTs }.toSet()
         assertEquals("No duplicate times after overlap handling", occurrences.size, uniqueTimes.size)
 
-        // Should have one exception linked
+        // One exception linked
         val linkedCount = occurrences.count { it.exceptionEventId != null }
         assertEquals("Should have exactly 1 exception linked", 1, linkedCount)
     }
@@ -135,11 +136,11 @@ class IcsIterationTest {
         assertNotNull("Should parse successfully", result)
         assertEquals("Should have master and exception", 2, result!!.totalEvents)
 
-        // Verify master is all-day
+        // The master is all-day
         val master = database.eventsDao().getById(result.masterId)!!
         assertTrue("Master should be all-day", master.isAllDay)
 
-        // Verify exception is also all-day
+        // The exception is all-day too
         val exceptions = database.eventsDao().getExceptionsForMaster(result.masterId)
         assertTrue("Exception should be all-day", exceptions.first().isAllDay)
     }
@@ -154,7 +155,7 @@ class IcsIterationTest {
 
         val occurrences = database.occurrencesDao().getForEvent(result!!.masterId)
 
-        // Feb 3 was re-added as exception at different time
+        // Feb 3 is re-added as an exception at a different time
         val linkedCount = occurrences.count { it.exceptionEventId != null }
         assertEquals("Should have exactly 1 exception linked", 1, linkedCount)
 
@@ -195,13 +196,12 @@ class IcsIterationTest {
 
         assertEquals("Should have 1 exception", 1, exceptions.size)
 
-        // Exception should have extended duration (3 hours instead of 1)
+        // The exception runs 3 hours instead of 1
         val exception = exceptions.first()
         val durationMs = exception.endTs - exception.startTs
         assertEquals("Exception should have 3-hour duration", 3 * 60 * 60 * 1000L, durationMs)
 
-        // Start time should be same as original occurrence time
-        // (only duration changed, not start time)
+        // Only the duration changed, not the start; the occurrence is linked
         val linkedOcc = occurrences.find { it.exceptionEventId == exception.id }
         assertNotNull("Exception should be linked to occurrence", linkedOcc)
     }
@@ -220,7 +220,7 @@ class IcsIterationTest {
         val exceptions = database.eventsDao().getExceptionsForMaster(result.masterId)
         assertEquals("Should have 1 exception", 1, exceptions.size)
 
-        // Exception should also have timezone
+        // The exception has the same timezone
         assertEquals("Exception should have same timezone", "America/New_York", exceptions.first().timezone)
     }
 
@@ -237,10 +237,10 @@ class IcsIterationTest {
 
         val occurrences = database.occurrencesDao().getForEvent(result.masterId)
 
-        // Should have occurrences up to UNTIL date
+        // Occurrences up to the UNTIL date
         assertTrue("Should have multiple occurrences", occurrences.size >= 3)
 
-        // Exception should be linked
+        // The exception is linked
         val linkedCount = occurrences.count { it.exceptionEventId != null }
         assertEquals("Should have 1 exception linked", 1, linkedCount)
     }
@@ -281,7 +281,7 @@ class IcsIterationTest {
 
         assertEquals("Should have 5 exceptions linked", 5, linkedCount)
 
-        // Verify all exceptions have different times
+        // All exceptions have different times
         val exceptionOccs = occurrences.filter { it.exceptionEventId != null }
         val uniqueExceptionTimes = exceptionOccs.map { it.startTs }.toSet()
         assertEquals("All exceptions should have unique times", 5, uniqueExceptionTimes.size)
@@ -305,7 +305,7 @@ class IcsIterationTest {
 
         val occurrences = database.occurrencesDao().getForEvent(result.masterId)
 
-        // All 3 exceptions should still be linked
+        // All 3 exceptions stay linked
         val linkedCount = occurrences.count { it.exceptionEventId != null }
         assertEquals("All 3 exceptions should survive regeneration", 3, linkedCount)
 
@@ -316,7 +316,8 @@ class IcsIterationTest {
 
     @Test
     fun `moved exception survives RRULE regeneration without creating original occurrence`() = runTest {
-        // This tests the bug fix for v21.5.2
+        // Regeneration must not recreate the occurrence at a moved exception's original
+        // time (v21.5.2)
         val result = parseAndProcess("ical/exceptions/iterations/iter1_first_occurrence.ics")
         assertNotNull("Should parse successfully", result)
 
@@ -328,12 +329,11 @@ class IcsIterationTest {
         val originalTime = exception.originalInstanceTime
         assertNotNull("Exception should have originalInstanceTime", originalTime)
 
-        // Regenerate occurrences
         occurrenceGenerator.regenerateOccurrences(master)
 
         val occurrences = database.occurrencesDao().getForEvent(result.masterId)
 
-        // Should NOT have occurrence at original time (replaced by exception)
+        // No unlinked occurrence at the original time
         val atOriginalTime = occurrences.filter {
             kotlin.math.abs(it.startTs - originalTime!!) < 60000 && it.exceptionEventId == null
         }
@@ -342,7 +342,7 @@ class IcsIterationTest {
             0, atOriginalTime.size
         )
 
-        // Exception should still be linked
+        // The exception is still linked
         val linkedOcc = occurrences.find { it.exceptionEventId == exception.id }
         assertNotNull("Exception should still be linked after regeneration", linkedOcc)
     }
@@ -363,31 +363,28 @@ class IcsIterationTest {
         val parsedEvents = parseResult.value
         if (parsedEvents.isEmpty()) return null
 
-        // Separate master from exceptions
         val master = parsedEvents.find { it.recurrenceId == null } ?: return null
         val exceptions = parsedEvents.filter { it.recurrenceId != null }
 
-        // RFC 5545: Multiple exceptions with same RECURRENCE-ID - keep highest SEQUENCE
+        // Of exceptions sharing a RECURRENCE-ID, keep the highest SEQUENCE, the latest
+        // revision (RFC 5545 §3.8.7.4)
         val uniqueExceptions = exceptions
             .groupBy { it.recurrenceId?.timestamp }
             .mapNotNull { (_, excs) -> excs.maxByOrNull { it.sequence } }
 
-        // Insert master
         val masterEvent = ICalEventMapper.toEntity(master, icsContent, testCalendarId, null, null).event
         val masterId = database.eventsDao().insert(masterEvent)
         val savedMaster = masterEvent.copy(id = masterId)
 
-        // Generate occurrences for master
         occurrenceGenerator.regenerateOccurrences(savedMaster)
 
-        // Insert and link exceptions
         for (exception in uniqueExceptions) {
             val exceptionEvent = ICalEventMapper.toEntity(exception, null, testCalendarId, null, null).event
                 .copy(originalEventId = masterId)
             val exceptionId = database.eventsDao().insert(exceptionEvent)
             val savedExceptionEvent = exceptionEvent.copy(id = exceptionId)
 
-            // Link exception using RECURRENCE-ID timestamp
+            // Link at the RECURRENCE-ID time
             val originalTime = exception.recurrenceId?.timestamp
             if (originalTime != null) {
                 occurrenceGenerator.linkException(masterId, originalTime, savedExceptionEvent)

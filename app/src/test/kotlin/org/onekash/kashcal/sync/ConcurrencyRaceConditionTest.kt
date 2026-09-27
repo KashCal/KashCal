@@ -31,16 +31,12 @@ import java.util.UUID
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * Concurrency and race condition tests for sync operations.
- *
- * Tests verify data integrity under concurrent operations:
- * - Concurrent local edits during sync
- * - Race between DELETE and MOVE operations
- * - Multi-account simultaneous sync
- * - PendingOperation queue consistency
- * - Database transaction isolation
- *
- * These tests are critical for production stability.
+ * Tests data integrity when database writes interleave, using coroutines under `runTest`:
+ * - A local edit racing a simulated pull, and repeated updates to one event
+ * - A DELETE racing a MOVE
+ * - Updates to events in two accounts at once
+ * - PendingOperation inserts and status updates
+ * - Transaction rollback and nesting
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -118,7 +114,7 @@ class ConcurrencyRaceConditionTest {
             }
         ).awaitAll()
 
-        // Verify: Last write wins, but data is consistent (no corruption)
+        // Last write wins, and the row holds one whole version
         val finalEvent = database.eventsDao().getById(eventId)
         assertNotNull(finalEvent)
         // Either title is acceptable, but it must be one of them
@@ -191,12 +187,12 @@ class ConcurrencyRaceConditionTest {
             )
         )
 
-        // Now delete the event (simulating user action during sync)
+        // Delete the event (a user action during sync)
         database.eventsDao().deleteById(eventId)
 
-        // Verify: PendingOperation should still exist (for cleanup)
+        // No foreign key ties the op to the event, so it stays queued; the push then fails it
+        // with "Event not found for MOVE"
         val pendingOps = database.pendingOperationsDao().getForEvent(eventId)
-        // The operation might still be there, which is fine - it will fail gracefully on execution
 
         // Verify event is deleted
         val deletedEvent = database.eventsDao().getById(eventId)
@@ -228,7 +224,7 @@ class ConcurrencyRaceConditionTest {
         moveJob.await()
         deleteJob.await()
 
-        // Verify database is consistent (event either exists in new calendar or is deleted)
+        // The event is either deleted or still in one of the two calendars
         val existingEvent = database.eventsDao().getById(eventId)
         if (existingEvent != null) {
             // If event exists, it should be in one of the calendars
@@ -306,13 +302,13 @@ class ConcurrencyRaceConditionTest {
                         )
                     )
                 } catch (e: Exception) {
-                    // Constraint violation expected for duplicates
+                    // No unique constraint on the queue, so no insert is expected to throw
                 }
             }
         }
         jobs.awaitAll()
 
-        // Should have at least one operation (duplicates may be blocked by constraint)
+        // At least one op is queued; nothing blocks the duplicates
         val ops = database.pendingOperationsDao().getForEvent(eventId)
         assertTrue(ops.isNotEmpty())
     }

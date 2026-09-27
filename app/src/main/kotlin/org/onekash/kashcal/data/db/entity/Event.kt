@@ -7,12 +7,11 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Calendar event entity.
+ * Stores one Room event (RFC 5545 VEVENT): a one-off, a recurring master (with [rrule]) or an
+ * exception of a master (with [originalEventId]).
  *
- * RFC 5545 compliant - stores both master events and exception instances.
- * Master events have rrule set; exceptions have originalEventId set.
- *
- * Sync metadata supports offline-first architecture with CalDAV sync.
+ * The sync fields let local edits apply at once and push later. [endTs] is the first
+ * occurrence's end, not the series end; time-range queries go through the occurrences table.
  */
 @Entity(
     tableName = "events",
@@ -53,386 +52,279 @@ data class Event(
     // ========== Identity ==========
 
     /**
-     * RFC 5545 UID - globally unique identifier.
-     * Format: UUID@domain or similar unique string.
-     * Note: Exception events share the same UID as their master.
+     * RFC 5545 UID, such as `uuid@domain`. An exception has the same UID as its master
+     * (RFC 5545), told apart by [originalInstanceTime].
      */
     @ColumnInfo(name = "uid")
     val uid: String,
 
     /**
-     * Unique identifier for database lookup during sync.
-     * Format: "{uid}" for master events, "{uid}:RECID:{datetime}" for exceptions.
-     * This differentiates exception events that share the same UID.
+     * Sync lookup key: `{uid}` for a master, `{uid}:RECID:{datetime}` for an exception, which
+     * tells apart exceptions sharing a UID.
      */
     @ColumnInfo(name = "import_id")
     val importId: String? = null,
 
-    /**
-     * Parent calendar ID.
-     * CASCADE delete: when calendar is deleted, all its events are deleted.
-     */
+    /** Owning calendar; deleting the calendar cascades to its events. */
     @ColumnInfo(name = "calendar_id")
     val calendarId: Long,
 
     // ========== Content ==========
 
-    /**
-     * Event title/summary (RFC 5545 SUMMARY).
-     */
+    /** RFC 5545 SUMMARY. */
     @ColumnInfo(name = "title")
     val title: String,
 
-    /**
-     * Event location (RFC 5545 LOCATION).
-     */
+    /** RFC 5545 LOCATION. */
     @ColumnInfo(name = "location")
     val location: String? = null,
 
-    /**
-     * Event description (RFC 5545 DESCRIPTION).
-     */
+    /** RFC 5545 DESCRIPTION. */
     @ColumnInfo(name = "description")
     val description: String? = null,
 
-    /**
-     * Start time as epoch milliseconds.
-     * For all-day events, represents start of day in event timezone.
-     */
+    /** Start as epoch millis; UTC midnight of the first day for an all-day event. */
     @ColumnInfo(name = "start_ts")
     val startTs: Long,
 
     /**
-     * End time as epoch milliseconds.
-     * For all-day events, represents end of last day (inclusive - 1 second
-     * subtracted from exclusive DTEND during parsing for correct day display).
+     * End as epoch millis. For an all-day event it is inclusive: the exclusive RFC 5545 DTEND
+     * minus 1 ms, so the event shows on its last day.
      */
     @ColumnInfo(name = "end_ts")
     val endTs: Long,
 
-    /**
-     * IANA timezone identifier (e.g., "America/New_York").
-     * Null for floating time or UTC.
-     */
+    /** IANA zone of the start, e.g. "America/New_York"; null for UTC or floating time. */
     @ColumnInfo(name = "timezone")
     val timezone: String? = null,
 
     /**
-     * IANA timezone identifier for the event end time.
-     * Allows different timezones for start and end (e.g., flights).
-     * Null means same timezone as start (the common case).
-     * Issue #39: Different timezone for beginning and end of event.
+     * IANA zone of the end when it differs from the start's, e.g. a flight (#39); null means
+     * the same zone as [timezone].
      */
     @ColumnInfo(name = "end_timezone")
     val endTimezone: String? = null,
 
-    /**
-     * Whether this is an all-day event.
-     * All-day events use DATE instead of DATE-TIME in iCal.
-     */
+    /** Whether the event is all-day: DATE instead of DATE-TIME in iCal. */
     @ColumnInfo(name = "is_all_day", defaultValue = "0")
     val isAllDay: Boolean = false,
 
-    /**
-     * Event status (RFC 5545 STATUS).
-     * Values: "TENTATIVE", "CONFIRMED", "CANCELLED"
-     */
+    /** RFC 5545 STATUS: "TENTATIVE", "CONFIRMED" or "CANCELLED". */
     @ColumnInfo(name = "status", defaultValue = "'CONFIRMED'")
     val status: String = "CONFIRMED",
 
     // ========== RFC 5545 Round-Trip Fields ==========
 
-    /**
-     * Time transparency (RFC 5545 TRANSP).
-     * Values: "OPAQUE" (busy), "TRANSPARENT" (free/available)
-     * Used for free/busy calculation.
-     */
+    /** RFC 5545 TRANSP: "OPAQUE" (busy) or "TRANSPARENT" (free). */
     @ColumnInfo(name = "transp", defaultValue = "'OPAQUE'")
     val transp: String = "OPAQUE",
 
-    /**
-     * Access classification (RFC 5545 CLASS).
-     * Values: "PUBLIC", "PRIVATE", "CONFIDENTIAL"
-     * Used for privacy settings.
-     */
+    /** RFC 5545 CLASS: "PUBLIC", "PRIVATE" or "CONFIDENTIAL". Round-tripped only. */
     @ColumnInfo(name = "classification", defaultValue = "'PUBLIC'")
     val classification: String = "PUBLIC",
 
     // ========== Organizer ==========
 
-    /**
-     * Organizer email address (RFC 5545 ORGANIZER).
-     */
+    /** RFC 5545 ORGANIZER address. */
     @ColumnInfo(name = "organizer_email")
     val organizerEmail: String? = null,
 
-    /**
-     * Organizer display name (CN parameter).
-     */
+    /** The ORGANIZER's CN parameter. */
     @ColumnInfo(name = "organizer_name")
     val organizerName: String? = null,
 
     /**
-     * Organizer SENT-BY parameter (RFC 5545 §3.2.18).
-     * Identifies the calendar user that is sending on behalf of the organizer
-     * (e.g., an assistant scheduling for an executive).
+     * The ORGANIZER's SENT-BY parameter (RFC 5545 §3.2.18): who sends on the organizer's
+     * behalf, such as an assistant.
      */
     @ColumnInfo(name = "organizer_sent_by")
     val organizerSentBy: String? = null,
 
     /**
-     * Organizer SCHEDULE-STATUS parameter (RFC 6638 §7.3).
-     * Server-written delivery status code(s) for the organizer's outgoing
-     * scheduling messages, e.g., "1.2;Delivered".
+     * The ORGANIZER's SCHEDULE-STATUS parameter (RFC 6638 §7.3): the server-written delivery
+     * status code, e.g. "1.2", without its description. The pull keeps only the first code.
      */
     @ColumnInfo(name = "organizer_schedule_status")
     val organizerScheduleStatus: String? = null,
 
     // ========== Recurrence ==========
 
-    /**
-     * RFC 5545 RRULE - recurrence rule.
-     * Example: "FREQ=WEEKLY;BYDAY=MO,WE,FR"
-     * Only set on master events (not exceptions).
-     */
+    /** RFC 5545 RRULE, e.g. "FREQ=WEEKLY;BYDAY=MO,WE,FR". Only a master has one. */
     @ColumnInfo(name = "rrule")
     val rrule: String? = null,
 
-    /**
-     * RFC 5545 RDATE - additional recurrence dates.
-     * Comma-separated ISO timestamps for extra occurrences.
-     */
+    /** RFC 5545 RDATE: extra occurrences as comma-separated epoch millis. */
     @ColumnInfo(name = "rdate")
     val rdate: String? = null,
 
-    /**
-     * RFC 5545 EXDATE - exception dates.
-     * Comma-separated ISO timestamps for cancelled occurrences.
-     */
+    /** RFC 5545 EXDATE: removed occurrences as comma-separated epoch millis. */
     @ColumnInfo(name = "exdate")
     val exdate: String? = null,
 
-    /**
-     * RFC 5545 DURATION - event duration.
-     * Format: "PT1H30M" (1 hour 30 minutes)
-     * Alternative to specifying end time.
-     */
+    /** RFC 5545 DURATION, e.g. "PT1H30M", the alternative to an end time. */
     @ColumnInfo(name = "duration")
     val duration: String? = null,
 
     // ========== Exception Linking ==========
 
-    /**
-     * For exception events: ID of the master recurring event.
-     * CASCADE delete: when master is deleted, exceptions are deleted.
-     */
+    /** For an exception, its master's id; deleting the master cascades to its exceptions. */
     @ColumnInfo(name = "original_event_id")
     val originalEventId: Long? = null,
 
     /**
-     * For exception events: original occurrence time being modified.
-     * Combined with originalEventId forms unique constraint.
+     * For an exception, the start of the occurrence it replaces (its RECURRENCE-ID). Unique
+     * together with [calendarId] and [uid].
      */
     @ColumnInfo(name = "original_instance_time")
     val originalInstanceTime: Long? = null,
 
-    /**
-     * Server-side UID for sync purposes.
-     * May differ from uid during sync operations.
-     */
+    /** Set to [uid] on an exception the pull writes, null otherwise. Nothing reads it. */
     @ColumnInfo(name = "original_sync_id")
     val originalSyncId: String? = null,
 
     // ========== Reminders & Extras ==========
 
     /**
-     * JSON array of reminder configurations.
-     * Example: ["-PT15M", "-PT1H"] for 15 min and 1 hour before.
-     * Stores only first 5 alarms for compatibility; use alarmCount + rawIcal for more.
+     * Reminder offsets from the start as a JSON array, e.g. `["-PT15M", "-PT1H"]`. A pull keeps
+     * at most 5, the ones closest to DTSTART; [alarmCount] and [rawIcal] cover the rest.
      */
     @ColumnInfo(name = "reminders")
     val reminders: List<String>? = null,
 
     /**
-     * Total number of VALARM components in the original ICS.
-     * When alarmCount > 5, use RawIcsParser to extract all alarms from rawIcal.
+     * Number of alarms. A pull counts every alarm except END-relative and ACTION:NONE ones,
+     * before the cap of 5 on [reminders]; a local save counts the reminders it stores.
+     * ReminderScheduler re-reads [rawIcal] when this exceeds 3, and the event form reports the
+     * alarms beyond 5.
      */
     @ColumnInfo(name = "alarm_count", defaultValue = "0")
     val alarmCount: Int = 0,
 
     /**
-     * JSON object for preserving unknown iCal properties.
-     * Stores X-APPLE-*, X-GOOGLE-*, etc. for round-trip fidelity.
+     * Unknown iCal properties such as X- extensions, as a JSON object, written back on push.
+     * The CalDAV pull and ICS subscriptions also keep their own `X-KASHCAL-` markers here.
      */
     @ColumnInfo(name = "extra_properties")
     val extraProperties: Map<String, String>? = null,
 
     /**
-     * Original ICS data from server for round-trip preservation.
-     * Used by IcsPatcher to preserve alarms, attendees, and other properties
-     * that are not stored in entity columns.
+     * The server's ICS for this event. IcsPatcher, for example, patches it so alarms,
+     * attendees and other properties without a column survive a push.
      */
     @ColumnInfo(name = "raw_ical")
     val rawIcal: String? = null,
 
     // ========== iCal Required ==========
 
-    /**
-     * RFC 5545 DTSTAMP - when the event was created/modified in iCal.
-     * Required by RFC 5545 for VEVENT.
-     */
+    /** RFC 5545 DTSTAMP, required on a VEVENT. */
     @ColumnInfo(name = "dtstamp")
     val dtstamp: Long,
 
     // ========== Sync Metadata ==========
 
-    /**
-     * CalDAV URL for this event resource.
-     * Example: https://caldav.icloud.com/.../event.ics
-     */
+    /** URL of the event's CalDAV resource, e.g. `https://caldav.icloud.com/.../event.ics`. */
     @ColumnInfo(name = "caldav_url")
     val caldavUrl: String? = null,
 
-    /**
-     * HTTP ETag from server.
-     * Used for optimistic concurrency (If-Match header).
-     */
+    /** The server's ETag, sent as If-Match for optimistic concurrency. */
     @ColumnInfo(name = "etag")
     val etag: String? = null,
 
     /**
-     * RFC 5545 SEQUENCE number.
-     * Incremented on significant changes for sync conflict detection.
+     * RFC 5545 SEQUENCE. [org.onekash.kashcal.domain.scheduling.SequenceBumper] decides which
+     * edits bump it; conflict resolution also compares it.
      */
     @ColumnInfo(name = "sequence", defaultValue = "0")
     val sequence: Int = 0,
 
-    /**
-     * Current sync status.
-     * Determines if event needs to be pushed to server.
-     */
+    /** Whether the event needs pushing, and how. */
     @ColumnInfo(name = "sync_status", defaultValue = "'SYNCED'")
     val syncStatus: SyncStatus = SyncStatus.SYNCED,
 
-    /**
-     * Last sync error message for diagnostics.
-     */
+    /** The last push error, for diagnostics; no UI shows it. */
     @ColumnInfo(name = "last_sync_error")
     val lastSyncError: String? = null,
 
-    /**
-     * Count of consecutive sync failures.
-     * Used for exponential backoff.
-     */
+    /** Push errors since the last success. Nothing reads it. */
     @ColumnInfo(name = "sync_retry_count", defaultValue = "0")
     val syncRetryCount: Int = 0,
 
-    /**
-     * Timestamp of last local modification.
-     */
+    /** Time of the last local edit. */
     @ColumnInfo(name = "local_modified_at")
     val localModifiedAt: Long? = null,
 
     /**
-     * Server-reported last modification time.
+     * Server-side modification time: a pull stores LAST-MODIFIED, or the pull time without one;
+     * a successful push stores the push time.
      */
     @ColumnInfo(name = "server_modified_at")
     val serverModifiedAt: Long? = null,
 
     // ========== RFC 5545/7986 Extended Properties ==========
 
-    /**
-     * RFC 5545 PRIORITY - event priority.
-     * Values: 0=undefined, 1=highest, 9=lowest.
-     */
+    /** RFC 5545 PRIORITY: 0 undefined, 1 highest, 9 lowest. */
     @ColumnInfo(name = "priority", defaultValue = "0")
     val priority: Int = 0,
 
-    /**
-     * RFC 5545 GEO latitude (WGS84 decimal degrees).
-     * Parsed from "latitude;longitude" format.
-     */
+    /** Latitude from RFC 5545 GEO ("latitude;longitude"), WGS84 decimal degrees. */
     @ColumnInfo(name = "geo_lat")
     val geoLat: Double? = null,
 
-    /**
-     * RFC 5545 GEO longitude (WGS84 decimal degrees).
-     * Parsed from "latitude;longitude" format.
-     */
+    /** Longitude from RFC 5545 GEO ("latitude;longitude"), WGS84 decimal degrees. */
     @ColumnInfo(name = "geo_lon")
     val geoLon: Double? = null,
 
-    /**
-     * RFC 7986 COLOR - per-event color override.
-     * Stored as ARGB integer. Overrides calendar color when set.
-     */
+    /** RFC 7986 COLOR as ARGB; when set it wins over the calendar color. */
     @ColumnInfo(name = "color")
     val color: Int? = null,
 
-    /**
-     * RFC 5545 URL - link associated with the event.
-     */
+    /** RFC 5545 URL. */
     @ColumnInfo(name = "url")
     val url: String? = null,
 
-    /**
-     * RFC 5545 CATEGORIES - event tags/labels.
-     * Stored as JSON array via TypeConverter.
-     */
+    /** RFC 5545 CATEGORIES (the event's tags) as a JSON array; see [Category]. */
     @ColumnInfo(name = "categories")
     val categories: List<String>? = null,
 
     // ========== Timestamps ==========
 
-    /**
-     * Local creation timestamp.
-     */
+    /** Creation time; a pull takes the server's CREATED when present. */
     @ColumnInfo(name = "created_at")
     val createdAt: Long = System.currentTimeMillis(),
 
     /**
-     * Local update timestamp.
+     * Time of the row's last update. Some single-column writes (etag, resource URL, organizer
+     * SCHEDULE-STATUS) leave it unchanged.
      */
     @ColumnInfo(name = "updated_at")
     val updatedAt: Long = System.currentTimeMillis()
 ) {
     // ========== Computed Properties ==========
 
-    /**
-     * Whether this is a recurring event (has RRULE).
-     */
+    /** True when the event has an RRULE. */
     val isRecurring: Boolean
         get() = rrule != null
 
-    /**
-     * Whether this is an exception to a recurring event.
-     */
+    /** True for an exception of a recurring master. */
     val isException: Boolean
         get() = originalEventId != null
 
-    /**
-     * Whether this event has local changes pending sync.
-     */
+    /** True when the event isn't SYNCED. */
     val needsSync: Boolean
         get() = syncStatus != SyncStatus.SYNCED
 
-    /**
-     * Whether this event is soft-deleted, awaiting server deletion.
-     */
+    /** True when the event is soft-deleted, waiting for the server delete. */
     val isPendingDelete: Boolean
         get() = syncStatus == SyncStatus.PENDING_DELETE
 
     /**
-     * Whether this event has pending local changes that should NOT be overwritten
-     * by server data during pull sync.
+     * Returns true when the event has local changes a pull must not overwrite: local changes
+     * win until pushed, and server data overwrites only SYNCED events.
      *
-     * LOCAL-FIRST ARCHITECTURE: Local changes take precedence until pushed.
-     * Server data only overwrites SYNCED events (no pending local modifications).
-     *
-     * This protects:
-     * - PENDING_CREATE: New local event not yet on server
-     * - PENDING_UPDATE: Local modifications not yet pushed
-     * - PENDING_DELETE: Local deletion awaiting server confirmation
+     * Protected states:
+     * - PENDING_CREATE: a local event not yet on the server
+     * - PENDING_UPDATE: local edits not yet pushed
+     * - PENDING_DELETE: a local delete waiting for the server
      *
      * See: https://developer.android.com/topic/architecture/data-layer/offline-first
      */
@@ -443,15 +335,12 @@ data class Event(
     }
 
     /**
-     * Project this master event onto a single occurrence: the master's fields
-     * with the start/end shifted to that occurrence's time and the recurrence
-     * fields cleared (an occurrence is a single instance, not a series).
+     * Returns this master projected onto one occurrence: start and end moved to that
+     * occurrence, keeping the master's duration, and RRULE, EXDATE and RDATE cleared.
      *
-     * Used both to seed the exception a user is about to edit and to form the
-     * pristine baseline a SEQUENCE-bump decision compares against, so the
-     * structural master→exception difference (RRULE present vs absent, first
-     * occurrence's time vs this one's) doesn't masquerade as an edit. The
-     * occurrence's end preserves the master's duration.
+     * It seeds the exception a user is about to edit and is the baseline a SEQUENCE-bump
+     * decision compares against, so the structural master-to-exception difference (RRULE
+     * present or not, the first occurrence's time or this one's) doesn't read as an edit.
      */
     fun projectOntoOccurrence(occurrenceStartTs: Long): Event = copy(
         startTs = occurrenceStartTs,

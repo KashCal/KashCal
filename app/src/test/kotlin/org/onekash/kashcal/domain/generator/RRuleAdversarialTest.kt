@@ -23,17 +23,20 @@ import org.robolectric.annotation.Config
 import java.util.TimeZone
 
 /**
- * Adversarial tests for RRULE parsing and occurrence generation.
+ * Tests RRULE parsing and occurrence generation on input that could crash or hang the app.
  *
- * Tests probe edge cases that could crash or hang the app:
- * - Malformed RRULE strings
- * - Extreme parameter values
- * - MAX_ITERATIONS safety limit
- * - EXDATE/RDATE parsing edge cases
- * - Timezone trap scenarios
- * - Memory exhaustion attempts
+ * Covers:
+ * - Malformed RRULE and UNTIL strings, and UNTIL in the past or before DTSTART.
+ * - Extreme INTERVAL and COUNT values.
+ * - The 10,000-timestamp cap in [IcalDavRRuleEngine] on unbounded DAILY, MINUTELY and
+ *   SECONDLY rules.
+ * - BYDAY and BYMONTHDAY edge values: an invalid day code, a DTSTART off the rule, days no
+ *   month or no February has, the last Friday and Feb 29.
+ * - EXDATE parsing edge cases.
+ * - [OccurrenceGenerator.expandForPreview] on an empty or malformed rule.
+ * - All-day expansion in UTC and an invalid TZID.
  *
- * These tests verify defensive coding in OccurrenceGenerator.
+ * Tests asserting only count >= 0 pass whenever expansion doesn't throw or hang.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -52,7 +55,6 @@ class RRuleAdversarialTest {
 
         occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
 
-        // Setup test calendar
         val accountId = database.accountsDao().insert(
             Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
@@ -85,7 +87,7 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Non-recurring (empty rrule) should generate exactly 1 occurrence
+        // A blank rrule is non-recurring: 1 occurrence.
         assertEquals(1, count)
     }
 
@@ -101,7 +103,7 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Should handle gracefully - returns 0 occurrences
+        // An RRULE that fails to parse expands to nothing.
         assertEquals(0, count)
     }
 
@@ -149,11 +151,10 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // lib-recur may be permissive and parse COUNT=1 ignoring the rest
-        // The key assertion is the table still exists (no SQL injection)
+        // The parser may accept COUNT=1 and ignore the rest, so any count passes.
         assertTrue("Should handle gracefully", count >= 0)
 
-        // Verify table and event still exist (the real security test)
+        // The event row surviving is what this test checks.
         val verifyEvent = database.eventsDao().getById(eventId)
         assertNotNull("Event should still exist - SQL injection failed", verifyEvent)
     }
@@ -171,7 +172,6 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Should handle gracefully
         assertTrue(count >= 0)
     }
 
@@ -189,7 +189,7 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // lib-recur should handle this (may default to 1 or fail)
+        // May be read as 1 or fail to parse; the assert checks only that it doesn't throw.
         assertTrue(count >= 0)
     }
 
@@ -205,7 +205,7 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Should fail gracefully
+        // Asserts only that it doesn't throw.
         assertTrue(count >= 0)
     }
 
@@ -221,7 +221,7 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 10 * 365 * 24 * 60 * 60 * 1000L // 10 years
         )
 
-        // With 999999-day interval, few occurrences in 10 years
+        // A 999999-day interval leaves only DTSTART within 10 years; the assert allows up to 5.
         assertTrue(count <= 5)
     }
 
@@ -237,7 +237,7 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // COUNT=0 should generate no occurrences (or lib-recur treats as unlimited)
+        // The assert accepts any count, so it checks only that COUNT=0 doesn't throw.
         assertTrue(count >= 0)
     }
 
@@ -253,15 +253,15 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Should fail gracefully
+        // Asserts only that it doesn't throw.
         assertTrue(count >= 0)
     }
 
-    // ==================== MAX_ITERATIONS Safety Tests ====================
+    // ==================== Unbounded Rule Cap ====================
 
     @Test
     fun `infinite recurrence is limited by MAX_ITERATIONS`() = runTest {
-        // No COUNT or UNTIL - potentially infinite
+        // No COUNT or UNTIL.
         val event = createTestEvent("Infinite Daily").copy(rrule = "FREQ=DAILY")
         val eventId = database.eventsDao().insert(event)
         val savedEvent = database.eventsDao().getById(eventId)!!
@@ -272,13 +272,13 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 100 * 365 * 24 * 60 * 60 * 1000L // 100 years
         )
 
-        // MAX_ITERATIONS is 10000 - should not exceed
+        // IcalDavRRuleEngine returns at most 10,000 timestamps.
         assertTrue("Should be limited by MAX_ITERATIONS", count <= 10000)
     }
 
     @Test
     fun `secondly recurrence is limited by MAX_ITERATIONS`() = runTest {
-        // FREQ=SECONDLY would generate massive occurrences
+        // Unbounded SECONDLY would give 31.5 million occurrences in a year.
         val event = createTestEvent("Secondly").copy(rrule = "FREQ=SECONDLY")
         val eventId = database.eventsDao().insert(event)
         val savedEvent = database.eventsDao().getById(eventId)!!
@@ -289,7 +289,6 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Should be capped at MAX_ITERATIONS
         assertTrue("Should be limited", count <= 10000)
     }
 
@@ -341,7 +340,7 @@ class RRuleAdversarialTest {
             now + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // DTSTART might still be included, or 0 if UNTIL excludes it
+        // DTSTART may still be included, or UNTIL may exclude it; the assert accepts 0 or 1.
         assertTrue(count <= 1)
     }
 
@@ -357,7 +356,7 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Should fail parsing
+        // Expected to fail parsing; the assert checks only that it doesn't throw.
         assertTrue(count >= 0)
     }
 
@@ -380,7 +379,7 @@ class RRuleAdversarialTest {
 
     @Test
     fun `BYDAY on wrong start day - event on Tuesday with BYDAY=MO`() = runTest {
-        // Start on a Tuesday (2024-01-02 was Tuesday)
+        // DTSTART on a Tuesday (2024-01-02).
         val tuesdayStart = 1704153600000L // 2024-01-02 00:00 UTC
         val event = createTestEvent("Tuesday Start MO BYDAY").copy(
             startTs = tuesdayStart,
@@ -396,14 +395,14 @@ class RRuleAdversarialTest {
             tuesdayStart + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // DTSTART on Tuesday but BYDAY=MO - first Monday after should be included
-        // This tests DTSTART alignment behavior
+        // A DTSTART that doesn't match BYDAY=MO gives an undefined recurrence set
+        // (RFC 5545 §3.8.5.3); the Mondays after it are expected, and the assert checks count > 0.
         assertTrue(count > 0)
     }
 
     @Test
     fun `BYDAY with ordinal outside valid range`() = runTest {
-        // 6MO = 6th Monday, which may not exist in some months
+        // 6MO is a 6th Monday, which no month has.
         val event = createTestEvent("6th Monday").copy(rrule = "FREQ=MONTHLY;BYDAY=6MO;COUNT=12")
         val eventId = database.eventsDao().insert(event)
         val savedEvent = database.eventsDao().getById(eventId)!!
@@ -414,13 +413,11 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // 6th Monday never exists - should generate 0
         assertEquals(0, count)
     }
 
     @Test
     fun `BYDAY=-1FR - last Friday of month`() = runTest {
-        // Use a fixed start date that is a Friday: 2024-01-26 was a Friday (last Friday of Jan 2024)
         val fridayStart = 1706227200000L // 2024-01-26 00:00 UTC (last Friday of Jan 2024)
         val event = createTestEvent("Last Friday").copy(
             startTs = fridayStart,
@@ -436,7 +433,6 @@ class RRuleAdversarialTest {
             fridayStart + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Should generate exactly 12 occurrences
         assertEquals(12, count)
     }
 
@@ -454,13 +450,14 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Only months with 31 days: Jan, Mar, May, Jul, Aug, Oct, Dec = 7 months
+        // Only months with 31 days qualify (Jan, Mar, May, Jul, Aug, Oct, Dec); the assert
+        // accepts 0 to 12.
         assertTrue(count <= 12 && count >= 0)
     }
 
     @Test
     fun `BYMONTHDAY=30 in February`() = runTest {
-        // February never has 30th
+        // February never has a 30th.
         val event = createTestEvent("30th Feb").copy(rrule = "FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=30;COUNT=5")
         val eventId = database.eventsDao().insert(event)
         val savedEvent = database.eventsDao().getById(eventId)!!
@@ -471,13 +468,12 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 10 * 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Feb 30 never exists
         assertEquals(0, count)
     }
 
     @Test
     fun `BYMONTHDAY=29 in February - leap year handling`() = runTest {
-        // Feb 29 only in leap years
+        // Feb 29 exists only in leap years.
         val event = createTestEvent("Feb 29").copy(rrule = "FREQ=YEARLY;BYMONTH=2;BYMONTHDAY=29;COUNT=10")
         val eventId = database.eventsDao().insert(event)
         val savedEvent = database.eventsDao().getById(eventId)!!
@@ -488,7 +484,8 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 50 * 365 * 24 * 60 * 60 * 1000L // 50 years
         )
 
-        // Approximately 12-13 leap years in 50 years
+        // 50 years hold 12 or 13 leap years, and COUNT=10 caps the series; the assert accepts
+        // 1 to 13.
         assertTrue("Should have leap year occurrences", count > 0 && count <= 13)
     }
 
@@ -509,7 +506,7 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Malformed EXDATE should be ignored, not crash
+        // The malformed EXDATE is ignored.
         assertEquals(5, count)
     }
 
@@ -517,7 +514,7 @@ class RRuleAdversarialTest {
     fun `EXDATE excludes all occurrences`() = runTest {
         val now = System.currentTimeMillis()
         val startTs = now
-        // Create dates that will be excluded
+        // YYYYMMDD EXDATEs (UTC days) for each of the 5 occurrences.
         val dates = (0..4).map { day ->
             val ts = startTs + day * 86400000L
             val cal = java.util.Calendar.getInstance(TimeZone.getTimeZone("UTC"))
@@ -544,7 +541,6 @@ class RRuleAdversarialTest {
             startTs + 10 * 86400000L
         )
 
-        // All 5 excluded = 0 occurrences
         assertEquals(0, count)
     }
 
@@ -563,7 +559,6 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Should handle gracefully
         assertTrue(count >= 0)
     }
 
@@ -615,7 +610,6 @@ class RRuleAdversarialTest {
 
         assertEquals(5, count)
 
-        // Verify occurrences are at UTC midnight
         val occurrences = database.occurrencesDao().getForEvent(eventId)
         occurrences.forEach { occ ->
             val cal = java.util.Calendar.getInstance(TimeZone.getTimeZone("UTC"))
@@ -639,7 +633,8 @@ class RRuleAdversarialTest {
             System.currentTimeMillis() + 365 * 24 * 60 * 60 * 1000L
         )
 
-        // Should still generate occurrences using fallback
+        // `IcalDavRRuleAdapter.resolveZone` drops an invalid TZID, so the series expands in the
+        // JVM default zone instead of failing.
         assertEquals(5, count)
     }
 

@@ -35,16 +35,12 @@ import org.onekash.kashcal.domain.EmojiMatcher
 import org.onekash.kashcal.ui.util.DayPagerUtils
 
 /**
- * Main content composable for the agenda widget.
+ * Renders the agenda widget: today's date header over the event list, or an empty state.
  *
- * Displays today's date header and a list of events.
- * Supports tap actions to open the app.
- *
- * @param events List of events to display
- * @param currentDate Formatted current date for header
- * @param showEventEmojis Whether to show auto-detected emojis in event titles
- * @param timePattern Time format pattern (e.g., "h:mm a" for 12h, "HH:mm" for 24h)
- * @param maxEventsPerDay Maximum events to show before overflow indicator
+ * @param currentDate the formatted date for the header
+ * @param showEventEmojis whether titles get auto-detected emojis
+ * @param timePattern the time format, for example "h:mm a" or "HH:mm"
+ * @param maxEventsPerDay events shown before the "more" row
  */
 @Composable
 fun AgendaWidgetContent(
@@ -62,10 +58,8 @@ fun AgendaWidgetContent(
             .background(WidgetTheme.contentBackground)
             .cornerRadius(16.dp)
     ) {
-        // Header with date
         WidgetHeader(currentDate, isRefreshing)
 
-        // Event list or empty state
         if (events.isEmpty()) {
             EmptyState()
         } else {
@@ -75,19 +69,16 @@ fun AgendaWidgetContent(
     }
 }
 
-/**
- * Widget header showing the current date.
- * Tapping opens the app at today's view.
- */
+/** Shows the date header; tapping the date opens the app at today. */
 @Composable
 private fun WidgetHeader(date: String, isRefreshing: Boolean) {
     Row(
         modifier = GlanceModifier
             .fillMaxWidth()
             .background(WidgetTheme.headerBackground)
-            // No vertical padding: the 48dp add button defines the header height, so all
-            // widget headers stay a uniform 48dp. No end inset either — the add button's own
-            // glyph centering provides the right margin (same as the month widget header).
+            // No vertical padding: the 48dp add button sets the header height, so every widget
+            // header is 48dp. No end inset: the add button's glyph centering gives the right
+            // margin, as in the month widget header.
             .padding(start = WIDGET_HORIZONTAL_MARGIN_DP.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -117,21 +108,18 @@ private fun WidgetHeader(date: String, isRefreshing: Boolean) {
                     fontSize = WidgetTypography.headerTitle,
                     fontWeight = FontWeight.Medium
                 ),
-                // The refresh + add buttons reserve ~96dp on the right; on a narrow widget a long
-                // localized date must ellipsize on one line rather than wrap/grow the header.
+                // The refresh and add buttons take ~96dp on the right, so on a narrow widget a long
+                // localized date must ellipsize on one line, not wrap and grow the header.
                 maxLines = 1
             )
         }
-        // Right region: refresh + add cluster, each a plain glyph with a 48dp touch target
+        // Right region: refresh and add, each a plain glyph with a 48dp touch target
         WidgetRefreshButton(kind = WidgetKind.AGENDA, isRefreshing = isRefreshing)
         WidgetAddButton()
     }
 }
 
-/**
- * List of today's events.
- * Limited to maxEventsPerDay with overflow indicator.
- */
+/** Lists the first [maxEventsPerDay] events, then a "more" row for the rest. */
 @Composable
 private fun EventList(
     events: List<WidgetDataRepository.WidgetEvent>,
@@ -161,10 +149,7 @@ private fun EventList(
     }
 }
 
-/**
- * Single event row showing time, title, and calendar color.
- * Tapping opens the event quick view.
- */
+/** Shows one event's time, title and calendar color; tapping opens its quick view. */
 @Composable
 private fun EventRow(
     event: WidgetDataRepository.WidgetEvent,
@@ -174,8 +159,8 @@ private fun EventRow(
     detailedRows: Boolean
 ) {
     val rowContext = LocalContext.current
-    // A cancelled event only reads as a strikethrough visually; name that state
-    // for TalkBack by labelling the whole row (time, title, cancelled).
+    // A cancelled event shows only as a strikethrough, so label the whole row for TalkBack
+    // (time, title, cancelled).
     val cancelledLabel = if (event.isCancelled) {
         cancelledRowLabel(
             rowContext, event, dayCode, timePattern,
@@ -209,10 +194,7 @@ private fun EventRow(
     }
 }
 
-/**
- * Empty state shown when there are no events today.
- * Tapping creates a new event.
- */
+/** Shows the no-events-today state; tapping it creates an event. */
 @Composable
 private fun EmptyState() {
     Column(
@@ -247,10 +229,7 @@ private fun EmptyState() {
     }
 }
 
-/**
- * Overflow indicator showing how many more events exist.
- * Tapping opens the app at today's view.
- */
+/** Shows how many events didn't fit; tapping opens the app at today. */
 @Composable
 private fun OverflowIndicator(count: Int) {
     Row(

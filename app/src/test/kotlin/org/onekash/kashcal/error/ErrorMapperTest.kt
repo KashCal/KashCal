@@ -11,13 +11,11 @@ import java.net.UnknownHostException
 import javax.net.ssl.SSLHandshakeException
 
 /**
- * Comprehensive tests for ErrorMapper.
- *
- * Tests all mappings:
- * - CalendarError → ErrorPresentation
- * - HTTP codes → CalendarError
- * - Exceptions → CalendarError
- * - Retryable detection
+ * Tests [ErrorMapper]'s mappings, each on a sample of cases:
+ * - HTTP codes to CalendarError
+ * - exceptions to CalendarError
+ * - CalendarError to ErrorPresentation, including its message arguments
+ * - retryable detection
  */
 class ErrorMapperTest {
 
@@ -254,7 +252,7 @@ class ErrorMapperTest {
         assertFalse(ErrorMapper.isRetryable(CalendarError.Storage.StorageFull))
     }
 
-    // ==================== Edge Cases ====================
+    // ==================== Message Arguments ====================
 
     @Test
     fun `Conflict with eventTitle includes title in messageArgs`() {
@@ -303,15 +301,15 @@ class ErrorMapperTest {
         assertTrue(presentation is ErrorPresentation.Dialog)
         val dialog = presentation as ErrorPresentation.Dialog
 
-        // Should have OpenUrl callback pointing to GitHub issues
+        // The primary action opens the GitHub issues page
         assertTrue(dialog.primaryAction.callback is ErrorActionCallback.OpenUrl)
         val openUrl = dialog.primaryAction.callback as ErrorActionCallback.OpenUrl
         assertEquals("https://github.com/KashCal/KashCal/issues", openUrl.url)
 
-        // Should be dismissible (user can close and reinstall/resync)
+        // Dismissible: the user can close it and reinstall or resync
         assertTrue(dialog.dismissible)
 
-        // Should have secondary Close button
+        // A secondary Close button dismisses it
         assertNotNull(dialog.secondaryAction)
         assertEquals(ErrorActionCallback.Dismiss, dialog.secondaryAction?.callback)
     }

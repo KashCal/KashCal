@@ -10,10 +10,9 @@ import org.onekash.kashcal.ui.components.weekview.roomDisplayEvent
 import java.time.LocalDate
 
 /**
- * Unit tests for [WeekEventsUiState.fromEvents], the routing that decides whether
- * a multi-day *timed* event is shown in the timed grid or lifted into the all-day
- * strip. The partition must stay mutually exclusive and exhaustive: every input
- * event lands in exactly one of the two output lists regardless of the toggle.
+ * Tests [WeekEventsUiState.fromEvents], which puts all-day events in the all-day strip and
+ * lifts a multi-day timed event there only when the toggle is on. Every input event must land
+ * in one of the two output lists, never both, whatever the toggle.
  */
 class WeekEventsPartitionTest {
 

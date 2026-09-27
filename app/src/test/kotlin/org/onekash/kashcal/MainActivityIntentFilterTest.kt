@@ -11,11 +11,12 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Verifies that MainActivity's intent filters match system-sent intents.
+ * Checks that MainActivity and its default launcher alias resolve the intents the system and
+ * other apps send: calendar and launcher entry, event and CalendarContract views, and share.
  *
- * Issue #129: Tapping the date in the notification shade sends
- * ACTION_MAIN + CATEGORY_APP_CALENDAR. KashCal must resolve for this
- * intent to appear in the "default calendar app" picker.
+ * Issue #129: tapping the date in the notification shade sends ACTION_MAIN +
+ * CATEGORY_APP_CALENDAR. KashCal must resolve it to appear in the "default calendar app"
+ * picker.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -24,8 +25,8 @@ class MainActivityIntentFilterTest {
     private val pm: PackageManager = RuntimeEnvironment.getApplication().packageManager
 
     private companion object {
-        // The launcher/calendar filters moved from MainActivity onto the default activity-alias
-        // (which targets MainActivity) so the app icon can be swapped. Either resolving is correct.
+        // The launcher and calendar filters live on the default activity-alias, which targets
+        // MainActivity, so the app icon can be swapped. Either name resolving is correct.
         val LAUNCHER_COMPONENT_NAMES = setOf(
             "org.onekash.kashcal.MainActivity",
             "org.onekash.kashcal.MainActivityDefault",
@@ -34,8 +35,6 @@ class MainActivityIntentFilterTest {
 
     @Test
     fun `resolves ACTION_MAIN with CATEGORY_APP_CALENDAR`() {
-        // The launcher/calendar entry lives on the default activity-alias so the app icon can be
-        // swapped; the alias targets MainActivity, so either name resolving satisfies issue #129.
         val intent = Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_APP_CALENDAR)
         }

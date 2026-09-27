@@ -39,18 +39,17 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Integration tests for local-first sync behavior.
+ * Checks that a pull keeps events with pending local changes, using PullStrategy over an
+ * in-memory Room database with a mocked CalDAV client.
  *
- * These tests verify the complete flow of sync operations when
- * events have pending local changes. They use a real Room database
- * with a mocked CalDAV client.
- *
- * Key scenarios tested:
- * 1. Events with PENDING_CREATE are not overwritten by server data
- * 2. Events with PENDING_UPDATE are not overwritten by server data
- * 3. Events with PENDING_DELETE are not deleted during pull sync
- * 4. Exception events with pending changes are preserved
- * 5. Occurrence links are preserved during regeneration
+ * Scenarios:
+ * 1. A PENDING_CREATE event isn't overwritten by the server's version.
+ * 2. A PENDING_UPDATE event isn't overwritten by the server's version.
+ * 3. A PENDING_DELETE event isn't deleted when a full pull no longer lists it.
+ * 4. A PENDING_UPDATE event isn't deleted when a delta reports it removed.
+ * 5. An exception with pending changes survives a server update of its master.
+ * 6. Occurrence links to an exception survive regeneration.
+ * 7. In a mixed calendar the SYNCED event updates and the pending ones don't.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -81,10 +80,9 @@ class LocalFirstSyncIntegrationTest {
 
         every { dataStore.defaultReminderMinutes } returns flowOf(15)
         every { dataStore.defaultAllDayReminder } returns flowOf(1440)
-        // PullStrategy reads the sync-lookback window during pull; stub it like
-        // the sibling PullStrategy tests so the pull doesn't fail on a missing
-        // Flow. Int.MAX_VALUE = "All" lookback, which keeps these fixtures' events
-        // (no past-window clamping) in scope.
+        // PullStrategy reads the sync lookback during pull, and the relaxed mock has no
+        // Flow for it. Int.MAX_VALUE is the "All" lookback, so no fixture event falls
+        // outside the past window.
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
         pullStrategy = PullStrategy(
@@ -100,7 +98,7 @@ class LocalFirstSyncIntegrationTest {
             reminderScheduler = mockk(relaxed = true)
         )
 
-        // Create test account and calendar
+        // Test account and calendar
         runTest {
             testAccountId = database.accountsDao().insert(
                 Account(provider = AccountProvider.ICLOUD, email = "test@icloud.com")
@@ -153,7 +151,7 @@ class LocalFirstSyncIntegrationTest {
         // When - pull from server
         val result = pullStrategy.pull(testCalendar, client = client)
 
-        // Then - local event should be preserved (not overwritten)
+        // Then - the local event keeps its title and status
         assertTrue(result is PullResult.Success)
         val savedEvent = database.eventsDao().getById(localEvent.id)
         assertNotNull(savedEvent)
@@ -163,7 +161,7 @@ class LocalFirstSyncIntegrationTest {
 
     @Test
     fun `full sync preserves local event with PENDING_UPDATE when server has older version`() = runTest {
-        // Given - local event that was modified offline
+        // Given - a local event edited offline
         val localEvent = insertEvent(
             uid = "modified-event@test.com",
             title = "Updated Title (Local)",
@@ -199,7 +197,7 @@ class LocalFirstSyncIntegrationTest {
 
     @Test
     fun `full sync does not delete local event with PENDING_DELETE even if server says deleted`() = runTest {
-        // Given - local event marked for deletion (waiting for push sync)
+        // Given - a local event marked for deletion, not yet pushed
         val localEvent = insertEvent(
             uid = "to-delete@test.com",
             title = "Event To Delete",
@@ -207,13 +205,13 @@ class LocalFirstSyncIntegrationTest {
             syncStatus = SyncStatus.PENDING_DELETE
         )
 
-        // Server returns empty list (event was deleted by someone else or doesn't have it)
+        // The server lists nothing (deleted elsewhere, or never had it)
         mockFullSyncResponse(ctag = "new-ctag", events = emptyList())
 
         // When
         val result = pullStrategy.pull(testCalendar, client = client)
 
-        // Then - local event is NOT deleted (our delete needs to push first)
+        // Then - the local event stays; its delete has to push first
         assertTrue(result is PullResult.Success)
         assertEquals(0, (result as PullResult.Success).eventsDeleted)
         val savedEvent = database.eventsDao().getById(localEvent.id)
@@ -225,7 +223,7 @@ class LocalFirstSyncIntegrationTest {
 
     @Test
     fun `incremental sync skips deletion of event with pending local changes`() = runTest {
-        // Given - calendar with sync token
+        // Given - a calendar with a sync-token
         val calendarWithToken = testCalendar.copy(
             ctag = "old-ctag",
             syncToken = "sync-token-123"
@@ -240,7 +238,7 @@ class LocalFirstSyncIntegrationTest {
             syncStatus = SyncStatus.PENDING_UPDATE
         )
 
-        // Server says this event was deleted
+        // The delta reports this event removed
         coEvery { client.getCtag(any()) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(any(), "sync-token-123") } returns CalDavResult.success(
             SyncReport(
@@ -253,7 +251,7 @@ class LocalFirstSyncIntegrationTest {
         // When
         val result = pullStrategy.pull(calendarWithToken, client = client)
 
-        // Then - event should NOT be deleted
+        // Then - the event isn't deleted
         assertTrue(result is PullResult.Success)
         assertEquals(0, (result as PullResult.Success).eventsDeleted)
         assertNotNull(database.eventsDao().getById(localEvent.id))
@@ -273,7 +271,7 @@ class LocalFirstSyncIntegrationTest {
         )
         occurrenceGenerator.regenerateOccurrences(masterEvent)
 
-        // Get the second occurrence and create a local exception
+        // Make a local exception of the second occurrence
         val occurrences = database.occurrencesDao().getForEvent(masterEvent.id)
         assertTrue("Should have at least 2 occurrences", occurrences.size >= 2)
         val secondOccurrence = occurrences[1]
@@ -289,10 +287,10 @@ class LocalFirstSyncIntegrationTest {
             originalInstanceTime = secondOccurrence.startTs
         )
 
-        // Link the exception to occurrence
+        // Link the exception to its occurrence
         occurrenceGenerator.linkException(masterEvent.id, secondOccurrence.startTs, exceptionEvent.id)
 
-        // Server has updated master with different exception
+        // The server has an updated master and a different exception
         val serverIcal = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -331,11 +329,11 @@ class LocalFirstSyncIntegrationTest {
         // When
         val result = pullStrategy.pull(testCalendar, client = client)
 
-        // Then - local exception with pending changes should be preserved
+        // Then - the local exception with pending changes is kept
         assertTrue(result is PullResult.Success)
         val savedException = database.eventsDao().getById(exceptionEvent.id)
         assertNotNull("Local exception should still exist", savedException)
-        assertEquals("Modified Meeting (Local Edit)", savedException!!.title) // Local title preserved
+        assertEquals("Modified Meeting (Local Edit)", savedException!!.title)
         assertEquals(SyncStatus.PENDING_UPDATE, savedException.syncStatus)
     }
 
@@ -356,7 +354,7 @@ class LocalFirstSyncIntegrationTest {
         val occurrences = database.occurrencesDao().getForEvent(masterEvent.id)
         val targetOccurrence = occurrences[2] // 3rd occurrence
 
-        // Create exception and link
+        // Create the exception, link it, and cancel the occurrence it replaces
         val exceptionEvent = insertEvent(
             uid = "linked-recurring@test.com",
             title = "Modified Occurrence",
@@ -368,13 +366,13 @@ class LocalFirstSyncIntegrationTest {
         occurrenceGenerator.linkException(masterEvent.id, targetOccurrence.startTs, exceptionEvent.id)
         occurrenceGenerator.cancelOccurrence(masterEvent.id, targetOccurrence.startTs)
 
-        // Verify link exists before sync
+        // The link exists before the sync
         val beforeSync = database.occurrencesDao().getForEvent(masterEvent.id)
         val linkedBefore = beforeSync.find { it.startTs == targetOccurrence.startTs }
         assertEquals(exceptionEvent.id, linkedBefore?.exceptionEventId)
         assertTrue(linkedBefore?.isCancelled == true)
 
-        // Server sends the same event (no changes, but triggers regeneration)
+        // The server sends the same series with a new etag, which triggers regeneration
         val serverIcal = createRecurringIcal(
             uid = "linked-recurring@test.com",
             title = "Recurring Event",
@@ -396,14 +394,14 @@ class LocalFirstSyncIntegrationTest {
         // When
         pullStrategy.pull(testCalendar, client = client)
 
-        // Then - exception links should still be preserved after regeneration
-        // v15.0.6: Find by exceptionEventId since regeneration now updates occurrence times to exception's times
+        // Then - the exception link survives regeneration. Find it by exceptionEventId:
+        // regeneration moves the linked occurrence to the exception's times.
         val afterSync = database.occurrencesDao().getForEvent(masterEvent.id)
         val linkedAfter = afterSync.find { it.exceptionEventId == exceptionEvent.id }
         assertNotNull("Occurrence should exist after sync", linkedAfter)
         assertEquals("Exception link should be preserved", exceptionEvent.id, linkedAfter?.exceptionEventId)
         assertTrue("Cancelled status should be preserved", linkedAfter?.isCancelled == true)
-        // Verify times were updated to exception event's times
+        // The occurrence has the exception's start
         assertEquals("Times should match exception event", exceptionEvent.startTs, linkedAfter?.startTs)
     }
 
@@ -411,7 +409,7 @@ class LocalFirstSyncIntegrationTest {
 
     @Test
     fun `sync correctly handles mix of synced and pending events`() = runTest {
-        // Given - mix of events with different sync statuses
+        // Given - events with different sync statuses
         val syncedEvent = insertEvent(
             uid = "synced@test.com",
             title = "Synced Event",
@@ -433,7 +431,7 @@ class LocalFirstSyncIntegrationTest {
             syncStatus = SyncStatus.PENDING_UPDATE
         )
 
-        // Server has updates for synced event, and different versions for others
+        // The server has an update for the synced event and its own versions of the others
         mockFullSyncResponse(
             ctag = "new-ctag",
             events = listOf(
@@ -464,11 +462,11 @@ class LocalFirstSyncIntegrationTest {
         // Then
         assertTrue(result is PullResult.Success)
 
-        // Synced event should be updated
+        // The synced event is updated
         val updatedSynced = database.eventsDao().getById(syncedEvent.id)
         assertEquals("Synced Event Updated", updatedSynced?.title)
 
-        // Pending events should NOT be overwritten
+        // The pending events aren't overwritten
         val preservedCreate = database.eventsDao().getById(pendingCreateEvent.id)
         assertEquals("Local Only Event", preservedCreate?.title)
         assertEquals(SyncStatus.PENDING_CREATE, preservedCreate?.syncStatus)
@@ -509,9 +507,9 @@ class LocalFirstSyncIntegrationTest {
 
     private fun mockFullSyncResponse(ctag: String, events: List<CalDavEvent>) {
         coEvery { client.getCtag(any()) } returns CalDavResult.success(CalendarMetadataProbe(ctag = ctag, displayName = null, color = null, isReadOnly = null))
-        // Two-step: etags via calendar-query, then data via calendar-multiget.
-        // Derive absolute-path hrefs from event URLs to match real server behavior
-        // (servers return "/12345/calendars/home/event.ics", not "event.ics").
+        // Two steps: etags via calendar-query, then data via calendar-multiget. The etag
+        // hrefs are absolute paths taken from the event URLs, as servers return them
+        // ("/12345/calendars/home/event.ics", not "event.ics").
         val etagPairs = events.map { event ->
             val href = java.net.URI(event.url).path
             Pair(href, event.etag)

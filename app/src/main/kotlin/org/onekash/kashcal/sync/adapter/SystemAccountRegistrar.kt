@@ -7,18 +7,15 @@ import android.content.Context
 import android.util.Log
 
 /**
- * Ensures a KashCal account exists in Android AccountManager.
+ * Ensures the singleton KashCal calendar account exists in Android AccountManager.
  *
- * This is required for Android to recognize KashCal as a calendar app
- * and route CalendarProvider intents (`content://com.android.calendar`)
- * to it. The account is a registration stub — real sync uses WorkManager.
+ * Android needs it to recognize KashCal as a calendar app and route CalendarProvider intents
+ * (`content://com.android.calendar`) to it. The account syncs nothing; sync runs on WorkManager.
  *
- * Safe to call multiple times (idempotent). Handles:
- * - First install: creates account
- * - Subsequent launches: no-op (account exists)
- * - User manually removed account: re-creates on next launch
- * - Backup/restore: re-creates if missing on new device
- * - OEM quirks: try-catch prevents startup crash
+ * Runs at every app start and is idempotent:
+ * - First install, an account the user removed, or a restore to a new device: creates it.
+ * - Account present: a no-op.
+ * - Any exception, including OEM-ROM failures: logged, never crashes startup.
  */
 class SystemAccountRegistrar(private val context: Context) {
 
@@ -42,8 +39,8 @@ class SystemAccountRegistrar(private val context: Context) {
             val created = accountManager.addAccountExplicitly(account, null, null)
 
             if (created) {
-                // Syncable (recognized by CalendarProvider) but no auto-sync
-                // (real sync is via WorkManager)
+                // Syncable so CalendarProvider recognizes it, but no auto-sync: sync runs on
+                // WorkManager.
                 ContentResolver.setIsSyncable(account, CALENDAR_AUTHORITY, 1)
                 ContentResolver.setSyncAutomatically(account, CALENDAR_AUTHORITY, false)
                 Log.i(TAG, "Registered KashCal account for CalendarProvider visibility")
@@ -51,9 +48,9 @@ class SystemAccountRegistrar(private val context: Context) {
                 Log.w(TAG, "Failed to create account (may already exist)")
             }
         } catch (e: Exception) {
-            // Don't crash app startup for a non-critical registration feature.
-            // Known edge cases: SecurityException on some OEM ROMs when authenticator
-            // isn't fully registered yet (race between manifest parsing and onCreate).
+            // Registration is non-critical; never crash app startup. Some OEM ROMs throw
+            // SecurityException when the authenticator isn't registered yet (a race between
+            // manifest parsing and onCreate).
             Log.w(TAG, "Failed to register CalendarProvider account", e)
         }
     }

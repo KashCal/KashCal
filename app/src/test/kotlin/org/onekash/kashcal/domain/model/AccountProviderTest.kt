@@ -7,7 +7,8 @@ import org.junit.Test
 import org.onekash.kashcal.data.db.converter.Converters
 
 /**
- * Unit tests for [AccountProvider] enum and its TypeConverter.
+ * Tests [AccountProvider]: fromString, the capability flags, display names, and the Room
+ * TypeConverter in [Converters].
  */
 class AccountProviderTest {
 
@@ -197,7 +198,7 @@ class AccountProviderTest {
 
     @Test
     fun `TypeConverter reads existing database values`() {
-        // These are the values currently stored in the database
+        // The values the database stores
         assertEquals(AccountProvider.LOCAL, converters.toAccountProvider("local"))
         assertEquals(AccountProvider.ICLOUD, converters.toAccountProvider("icloud"))
         assertEquals(AccountProvider.ICS, converters.toAccountProvider("ics"))

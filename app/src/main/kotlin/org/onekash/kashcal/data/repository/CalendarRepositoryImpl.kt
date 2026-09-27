@@ -8,13 +8,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Implementation of CalendarRepository.
+ * [CalendarRepository] over [CalendarsDao].
  *
- * Provides calendar CRUD operations with proper abstraction over CalendarsDao.
- * Handles visibility management and sync metadata updates.
- *
- * Note: Calendar deletion cascades automatically via Room FK constraints
- * (events → occurrences → scheduled_reminders).
+ * Deleting a calendar cascades through Room foreign keys to its events, and from them to their
+ * occurrences, attendees and scheduled_reminders rows.
  */
 @Singleton
 class CalendarRepositoryImpl @Inject constructor(

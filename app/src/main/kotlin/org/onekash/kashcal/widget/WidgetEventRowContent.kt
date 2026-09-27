@@ -16,14 +16,14 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.EmojiMatcher
 
 /**
- * The inner content of a list-widget event row — the leading color pill plus the
- * event's time and title — shared by the agenda, week, and upcoming widgets so their
- * rows stay visually identical. Each widget wraps this in its own clickable Row
- * (which owns the row padding and tap action).
+ * Renders the inside of a list-widget event row: the leading color pill, the time and the title.
+ * Shared by the Agenda, Week and Upcoming widgets so their rows look the same; each wraps it in
+ * its own clickable Row, which owns the padding and tap action. Past and cancelled events are
+ * grayed and struck through.
  *
- * @param detailedRows when false, renders a compact single line (pill, start time in a
- *   fixed-width column, title). When true, renders a two-line stack (title on line 1 at
- *   full width, start-end time on line 2) beside a taller pill that spans both lines.
+ * @param detailedRows false renders one compact line (pill, start time in a fixed-width column,
+ *   title); true renders a two-line stack (title at full width, then the start-end time) beside
+ *   a taller pill that spans both lines.
  */
 @Composable
 internal fun RowScope.EventRowInner(
@@ -56,7 +56,7 @@ internal fun RowScope.EventRowInner(
                 ),
                 maxLines = 1
             )
-            // Start-end range on line 2, same color as the title so the row reads as one unit.
+            // Same color as the title so the row reads as one unit.
             Text(
                 text = formatWidgetEventTimeRange(context, event, dayCode, timePattern, allDayText),
                 style = TextStyle(
@@ -70,8 +70,8 @@ internal fun RowScope.EventRowInner(
     } else {
         CalendarColorBar(event.calendarColor)
         Spacer(modifier = GlanceModifier.width(BAR_TO_TIME_GAP_DP.dp))
-        // Time column — width tracks the resolved 12h/24h format. Time shares the title's
-        // color (primaryText) so the row reads as one unit rather than a two-tone split.
+        // The time column's width follows the resolved 12h/24h format. The time shares the
+        // title's color so the row reads as one unit, not a two-tone split.
         Text(
             text = formatWidgetEventTime(event, dayCode, timePattern, allDayText),
             style = TextStyle(
@@ -98,15 +98,15 @@ internal fun RowScope.EventRowInner(
 }
 
 /**
- * The row-level vertical padding for the chosen row style. Compact rows are denser
- * (~28dp) than detailed rows (~48dp with a two-line stack).
+ * Returns the row's vertical padding for the row style: compact rows come to ~28dp, detailed
+ * two-line rows to ~48dp.
  */
 internal fun eventRowVerticalPaddingDp(detailedRows: Boolean): Int =
     if (detailedRows) EVENT_ROW_VERTICAL_PADDING_DP else EVENT_ROW_VERTICAL_PADDING_COMPACT_DP
 
 /**
- * Build the TalkBack label for a cancelled event row, matching the visual strikethrough.
- * Uses the compact start-time string for both row styles so the spoken label stays terse.
+ * Builds the TalkBack label for a cancelled event row, which shows only as a strikethrough.
+ * Both row styles use the compact time string so the spoken label stays short.
  */
 internal fun cancelledRowLabel(
     context: android.content.Context,

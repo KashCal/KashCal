@@ -57,19 +57,14 @@ import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 import org.onekash.kashcal.ui.util.asString
 
 /**
- * Bottom sheet for CalDAV account sign-in.
+ * Shows the sign-in bottom sheet for a generic CalDAV server (Nextcloud, Baikal, Fastmail,
+ * Radicale and others).
  *
- * Supports generic CalDAV servers (Nextcloud, Baikal, Fastmail, Radicale, etc.)
- *
- * Simplified flow (v21.5.0):
- * 1. NotConnected: Show server/username/password fields -> Connect button
- * 2. Discovering: Show fields disabled + spinner (auto-adds all calendars)
- * 3. Success: Sheet closes, success sheet shown (handled by SettingsActivity)
- *
- * Features:
- * - Server URL with auto-https
- * - Username and password fields
- * - "Trust insecure connection" toggle for self-signed certificates and local HTTP servers
+ * 1. NotConnected: server URL, username, password and display-name fields, a
+ *    "Trust insecure connection" toggle for self-signed certificates and local HTTP servers,
+ *    and the Connect button. Discovery adds https:// to a URL typed without a scheme.
+ * 2. Discovering: the fields disabled with a spinner while every discovered calendar is added.
+ * 3. On success the caller closes the sheet and shows `AccountConnectedSheet`.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,9 +77,8 @@ fun CalDavSignInSheet(
     onTrustInsecureChange: (Boolean) -> Unit,
     onDiscover: () -> Unit,
     onDismiss: () -> Unit,
-    // Android 17+ local-network permission ask for LAN servers. Defaulted so the
-    // pre-existing secondary call site compiles unchanged; the authoritative
-    // top-level sheet passes real values.
+    // Android 17+ local-network permission ask for LAN servers. SettingsRoute passes
+    // real values; the AccountSettingsScreen call site keeps the defaults (no banner).
     showLocalNetworkBanner: Boolean = false,
     onRequestLocalNetwork: () -> Unit = {},
     onDismissLocalNetworkBanner: () -> Unit = {},
@@ -106,7 +100,6 @@ fun CalDavSignInSheet(
                 .padding(top = 16.dp, bottom = 32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Icon
             Icon(
                 imageVector = Icons.Default.CalendarMonth,
                 contentDescription = null,
@@ -116,7 +109,6 @@ fun CalDavSignInSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Title
             Text(
                 text = stringResource(R.string.signin_caldav_title),
                 style = MaterialTheme.typography.headlineSmall,
@@ -173,8 +165,7 @@ private fun NotConnectedContent(
     Column(
         modifier = Modifier.fillMaxWidth()
     ) {
-        // Local-network permission banner (Android 17+): inline, dismissible,
-        // never blocks the fields below.
+        // Inline and dismissible; never blocks the fields below.
         if (showLocalNetworkBanner) {
             LocalNetworkPermissionBanner(
                 onAllow = onRequestLocalNetwork,
@@ -183,7 +174,6 @@ private fun NotConnectedContent(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        // Server URL field
         OutlinedTextField(
             value = state.serverUrl,
             onValueChange = onServerUrlChange,
@@ -204,7 +194,6 @@ private fun NotConnectedContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Username field
         OutlinedTextField(
             value = state.username,
             onValueChange = onUsernameChange,
@@ -224,7 +213,6 @@ private fun NotConnectedContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Password field
         OutlinedTextField(
             value = state.password,
             onValueChange = onPasswordChange,
@@ -269,7 +257,7 @@ private fun NotConnectedContent(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Display Name field (auto-populated from server URL + username, user can override)
+        // Filled in from the server URL and username until the user edits it.
         val displayNameHasError = state.errorField == CalDavConnectionState.ErrorField.DISPLAY_NAME
         val errorText = state.error?.asString()
         OutlinedTextField(
@@ -301,7 +289,6 @@ private fun NotConnectedContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Trust insecure connection checkbox
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -338,7 +325,6 @@ private fun NotConnectedContent(
             }
         }
 
-        // Error message
         if (errorText != null) {
             Spacer(modifier = Modifier.height(8.dp))
             Card(
@@ -349,10 +335,10 @@ private fun NotConnectedContent(
             ) {
                 Text(
                     errorText,
-                    // Announce the connection failure immediately (it appears
-                    // after tapping Sign in with no focus change) and mark it as
-                    // an error. On the Text (which carries the label), not the
-                    // Card, since the Card doesn't merge its child's text.
+                    // Announce the failure at once (it appears after tapping Sign
+                    // in with no focus change) and mark it as an error. The
+                    // semantics sit on the Text, which carries the label, because
+                    // the Card doesn't merge its child's text.
                     modifier = Modifier
                         .padding(16.dp)
                         .semantics {
@@ -367,7 +353,6 @@ private fun NotConnectedContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Connect button
         Button(
             onClick = onConnect,
             modifier = Modifier
@@ -382,7 +367,6 @@ private fun NotConnectedContent(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Cancel button
         TextButton(onClick = onDismiss) {
             Text(stringResource(R.string.action_cancel))
         }
@@ -391,7 +375,6 @@ private fun NotConnectedContent(
 
 @Composable
 private fun ConnectingContent(state: CalDavConnectionState.Discovering) {
-    // Show fields disabled during connection
     OutlinedTextField(
         value = state.serverUrl,
         onValueChange = {},

@@ -5,10 +5,10 @@ import org.onekash.kashcal.sync.quirks.CalDavQuirks
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * Configuration for a CalDAV server used in parameterized integration tests.
+ * Describes one CalDAV server for the parameterized integration tests.
  *
- * Each server has credential keys for local.properties, a quirks factory,
- * and optional URL transforms (e.g., Baikal appends /dav.php/).
+ * Each server has its local.properties keys ([CalDavTestServerLoader]), a quirks factory and an
+ * optional endpoint suffix (Baikal appends /dav.php/).
  */
 data class CalDavServerConfig(
     val name: String,
@@ -21,13 +21,10 @@ data class CalDavServerConfig(
     val usesWellKnownDiscovery: Boolean = false,
     val supportsCtag: Boolean = true,
     /**
-     * When the server's iSchedule pipeline strips ATTENDEE rows on PUT
-     * because the supplied ORGANIZER mailto doesn't match the authenticated
-     * account. Documented behavior on iCloud / Stalwart / Radicale / Zoho
-     * (per the documented per-server scheduling quirks). Tests that need
-     * a synthetic ORGANIZER (different from auth account) must skip on
-     * these servers — there's nothing to assert against once attendees are
-     * gone.
+     * True when the server's scheduling pipeline strips ATTENDEE lines on PUT because the
+     * ORGANIZER mailto doesn't match the authenticated account. Set for iCloud, Stalwart,
+     * Radicale (and its proxied copies), Zoho and Mailbox. Tests that need a synthetic ORGANIZER
+     * must skip these servers: once the attendees are gone there is nothing to assert.
      */
     val stripsAttendeesOnSyntheticOrganizer: Boolean = false
 ) {
@@ -111,10 +108,9 @@ data class CalDavServerConfig(
             usernameKey = "ZOHO_USERNAME",
             passwordKey = "ZOHO_PASSWORD",
             defaultServerUrl = "https://calendar.zoho.com",
-            // Zoho's CalDAV endpoint is /caldav (no trailing slash — /caldav/
-            // returns 501). Bare root returns HTTP 400 on OPTIONS, which the
-            // reachability probe rejects; /caldav returns 401 (auth required)
-            // which the probe accepts as "server up."
+            // Zoho's CalDAV endpoint is /caldav with no trailing slash (/caldav/ returns 501).
+            // The bare root returns 400 on OPTIONS, which the reachability probe rejects;
+            // /caldav returns 401, which it accepts as "server up."
             davEndpointSuffix = "/caldav",
             quirksFactory = { url -> DefaultQuirks(url) },
             usesWellKnownDiscovery = false,
@@ -134,13 +130,11 @@ data class CalDavServerConfig(
             supportsCtag = true
         )
 
-        // Open-Xchange / OX App Suite (hosted). Discovery: PROPFIND on
-        // /caldav/ resolves current-user-principal to /principals/users/<n>,
-        // whose calendar-home-set points back at /caldav/; the real calendar
-        // collection lives at an opaque base64-ish child (e.g. /caldav/<id>/).
-        // OX runs a full RFC 6638 scheduling pipeline (schedule-inbox/outbox
-        // are present), so it can route synthetic-organizer attendees like
-        // iCloud does.
+        // Open-Xchange / OX App Suite (hosted). A PROPFIND on /caldav/ resolves
+        // current-user-principal to /principals/users/<n>, whose calendar-home-set points back at
+        // /caldav/; the calendar collection is an opaque base64-like child (e.g. /caldav/<id>/).
+        // OX runs an RFC 6638 scheduling pipeline (schedule-inbox and outbox are present), so it
+        // can route synthetic-organizer attendees as iCloud does.
         val MAILBOX = CalDavServerConfig(
             name = "Mailbox",
             serverKey = "MAILBOX_SERVER",
@@ -154,37 +148,31 @@ data class CalDavServerConfig(
             stripsAttendeesOnSyntheticOrganizer = true
         )
 
-        // Fastmail (Cyrus-based CalDAV, hosted). Discovery via RFC 6764
-        // well-known; the principal resolves under /dav/. Cyrus runs a full
-        // RFC 6638 scheduling pipeline, so the expectation is implicit-PUT
-        // delivery (stamps SCHEDULE-STATUS) like iCloud — but that is what the
-        // probe fleet measures rather than assumes. App-specific password
-        // required (Fastmail rejects the primary password for CalDAV).
+        // Fastmail (Cyrus-based CalDAV, hosted). Cyrus runs an RFC 6638 scheduling pipeline, so
+        // implicit-PUT delivery that stamps SCHEDULE-STATUS is expected, as on iCloud; the
+        // probes measure it rather than assume it.
         val FASTMAIL = CalDavServerConfig(
             name = "Fastmail",
             serverKey = "FASTMAIL_SERVER",
             usernameKey = "FASTMAIL_USERNAME",
             passwordKey = "FASTMAIL_PASSWORD",
             defaultServerUrl = "https://caldav.fastmail.com",
-            // Fastmail serves CalDAV under /dav/ (root 404s). The principal
-            // resolves directly via PROPFIND there
-            // (/dav/principals/user/<addr>/), so target /dav/ and skip the
-            // well-known indirection. App-specific password required (the
-            // primary password is rejected for CalDAV).
+            // Fastmail serves CalDAV under /dav/ (the root 404s). A PROPFIND there resolves the
+            // principal (/dav/principals/user/<addr>/), so target /dav/ and skip well-known
+            // discovery. It needs an app-specific password; the primary one is rejected for
+            // CalDAV.
             davEndpointSuffix = "/dav/",
             quirksFactory = { url -> DefaultQuirks(url) },
             usesWellKnownDiscovery = false,
             supportsCtag = true
         )
 
-        // Cyrus (the CalDAV engine Fastmail runs). Local container from the
-        // Cyrus project's own test-server image, so it tracks real Cyrus
-        // behavior rather than a hand-rolled approximation. Runs a full RFC 6638
-        // scheduling pipeline like Fastmail/iCloud. Accepts any password
-        // (fakesaslauthd) for the seeded users user1..user5. Well-known
-        // discovery redirects (301) from /dav/ to the calendar home; the
-        // principal resolves under /dav/principals/user/<user>/ and the
-        // calendar home is /dav/calendars/user/<user>/. Emits STRONG etags.
+        // Cyrus (the CalDAV engine Fastmail runs), a local container from the Cyrus project's own
+        // test-server image, so it tracks real Cyrus behavior. Runs an RFC 6638 scheduling
+        // pipeline like Fastmail and iCloud. Accepts any password (fakesaslauthd) for the seeded
+        // users user1..user5. Well-known discovery redirects (301) from /dav/ to the calendar
+        // home; the principal is /dav/principals/user/<user>/ and the calendar home
+        // /dav/calendars/user/<user>/. Emits strong etags.
         val CYRUS = CalDavServerConfig(
             name = "Cyrus",
             serverKey = "CYRUS_SERVER",
@@ -197,11 +185,10 @@ data class CalDavServerConfig(
             supportsCtag = true
         )
 
-        // Xandikos (lightweight Python CalDAV/CardDAV server). Runs locally with
-        // no auth (any credentials accepted, like Radicale). Principal discovery
-        // resolves from the root; the calendar home is /user/calendars/. Notable
-        // for advertising the RFC 3744 <all> aggregate privilege rather than leaf
-        // <write>/<write-content> — the regression guard for issue #281.
+        // Xandikos (a Python CalDAV/CardDAV server) runs locally with no auth, so any credentials
+        // pass, as on Radicale. The principal resolves from the root; the calendar home is
+        // /user/calendars/. It grants the RFC 3744 <all> aggregate privilege, not leaf
+        // <write>/<write-content>, which `XandikosReadOnlyDiscoveryTest` covers for #281.
         val XANDIKOS = CalDavServerConfig(
             name = "Xandikos",
             serverKey = "XANDIKOS_SERVER",
@@ -213,9 +200,25 @@ data class CalDavServerConfig(
             supportsCtag = true
         )
 
+        // The local Radicale behind a local TLS proxy, included only when KASHCAL_TLS_PROXY=1.
+        // Each entry is a server setup the redirect and cleartext rules must handle:
+        // - RadicaleTLS, https://localhost:9443: a plain https proxy in front of Radicale.
+        // - RadicaleHttpUpgrade, http://localhost:9480: answers every request with a 301 to
+        //   the same path on https://localhost:9443, like a server that forces https.
+        // - RadicaleAbsHttpHrefs, https://localhost:9444: an https proxy that rewrites every
+        //   `<href>/...` in its replies to `<href>http://localhost:9480/...`, like a server
+        //   behind TLS that doesn't know it is.
+        // The proxy's certificate must be in the JVM truststore the tests run with.
+        private fun proxied(name: String, url: String) = RADICALE.copy(name = name, serverKey = null, defaultServerUrl = url)
+        private val PROXIES get() = if (System.getenv("KASHCAL_TLS_PROXY") == "1") listOf(
+            proxied("RadicaleTLS", "https://localhost:9443"),
+            proxied("RadicaleHttpUpgrade", "http://localhost:9480"),
+            proxied("RadicaleAbsHttpHrefs", "https://localhost:9444"),
+        ) else emptyList()
+
         fun allServers(): List<CalDavServerConfig> = listOf(
             ICLOUD, STALWART, BAIKAL, BAIKAL_DIGEST, RADICALE, NEXTCLOUD,
             ZOHO, SOGO, MAILBOX, FASTMAIL, CYRUS, XANDIKOS
-        )
+        ) + PROXIES
     }
 }

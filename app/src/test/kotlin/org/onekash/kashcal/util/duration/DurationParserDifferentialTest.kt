@@ -10,22 +10,20 @@ import org.onekash.kashcal.util.DateTimeUtils
 import kotlin.random.Random
 
 /**
- * Differential/oracle fuzz test for the hand-rolled RFC 5545 duration parsers.
+ * Checks the three independent RFC 5545 duration parsers against generated ground truth.
  *
- * KashCal has three independent duration parsers, none delegating to each other:
- *  - `DateTimeUtils.parseDurationToMillis` (app) — device-calendar DURATION column
- *  - `ReminderScheduler.parseIsoDuration` (app) — VALARM TRIGGER strings
- *  - `icaldav-core` `DurationUtils.parse` — the library parser, well-tested
+ * None of the parsers delegates to another:
+ *  - `DateTimeUtils.parseDurationToMillis` (app): the device-calendar DURATION column
+ *  - `parseIsoDuration` in ReminderScheduler.kt (app): reminder and VALARM trigger durations
+ *  - `DurationUtils.parse` (icaldav-core): the library parser
  *
- * This test generates random, well-formed *positive* RFC 5545 durations (the
- * shared space all three claim to handle) and — because it generates the
- * component values itself — knows the ground-truth milliseconds. It checks each
- * parser against that ground truth, so a mismatch identifies *which* parser is
- * wrong, not merely that two disagree.
+ * The generator builds random well-formed positive durations (the space all three claim to
+ * handle) from component values it chose, so it knows the true milliseconds. Each parser is
+ * checked against that value, so a mismatch names the wrong parser, not only a disagreement.
  *
- * Seed + iterations are fixed constants, overridable via -Dfuzz.duration.seed=
- * and -Dfuzz.duration.iterations= for longer nightly runs. A failure prints the
- * exact input, the ground truth, and each parser's answer.
+ * Seed and iterations are fixed constants, overridable with -Dfuzz.duration.seed= and
+ * -Dfuzz.duration.iterations= for longer runs. A failure prints the input, the ground truth
+ * and each parser's answer.
  */
 class DurationParserDifferentialTest {
 
@@ -75,12 +73,10 @@ class DurationParserDifferentialTest {
 
     @Test
     fun `overflowing durations fail safe across all parsers - never a negative`() {
-        // The generator above caps magnitudes so it can assert ground truth, which
-        // means it can NEVER exercise Long overflow — yet a silent overflow to a
-        // negative duration was the actual production bug. This case guards that
-        // class explicitly, ground-truth-free: on inputs whose true millisecond
-        // total exceeds Long, no parser may return a negative (end-before-start),
-        // and the two null-returning parsers must fail safe to null.
+        // The generator caps magnitudes to know ground truth, so it never reaches Long
+        // overflow, where a silent wrap gives a negative (end-before-start) duration. On
+        // inputs whose true total exceeds Long, no parser may return a negative, and the
+        // two app parsers must return null.
         val overflowing = listOf(
             "P999999999999W",
             "PT99999999999999999H",
@@ -94,8 +90,7 @@ class DurationParserDifferentialTest {
             assertNull("parseDurationToMillis must fail safe (null) on overflow: $input", dtUtils)
             assertNull("parseIsoDuration must fail safe (null) on overflow: $input", reminder)
 
-            // icaldav may either fail safe (null) or throw on .toMillis(); what it
-            // must never do is return a negative. Mirror the caller's guarded call.
+            // icaldav may return null or throw from .toMillis(), but never a negative.
             val icaldav = try {
                 DurationUtils.parse(input)?.toMillis()
             } catch (_: ArithmeticException) {
@@ -112,8 +107,7 @@ class DurationParserDifferentialTest {
 
     private fun nextDuration(random: Random): GeneratedDuration {
         // Two RFC 5545 shapes: week form (P{n}W) or date-time form (P{d}DT{h}H{m}M{s}S).
-        // Keep magnitudes modest so ground-truth millis never overflows Long and the
-        // input stays in the space all three parsers claim to handle.
+        // Magnitudes stay small so the ground truth never overflows a Long.
         return if (random.nextInt(4) == 0) {
             val weeks = random.nextInt(1, 100).toLong()
             GeneratedDuration("P${weeks}W", weeks * 7 * DAY_MS)
@@ -132,7 +126,7 @@ class DurationParserDifferentialTest {
                 if (minutes > 0) sb.append("${minutes}M")
                 if (seconds > 0) sb.append("${seconds}S")
             }
-            // Guarantee at least one component so we never emit a bare "P".
+            // At least one component, so a bare "P" is never emitted.
             if (sb.length == 1) {
                 sb.append("T1M")
                 return GeneratedDuration(sb.toString(), 60_000L)

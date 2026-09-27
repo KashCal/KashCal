@@ -14,16 +14,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [CalDavXmlParser.extractCalendarUserAddresses] against
- * real-shape fixtures captured during a calendar-user-address discovery
- * probe across seven CalDAV implementations.
+ * Tests [CalDavXmlParser.extractCalendarUserAddresses] against real-shape fixtures captured from
+ * seven CalDAV servers during a calendar-user-address discovery probe.
  *
- * Fixtures: `app/src/test/resources/caldav/<server>/06_calendar_user_address_set.xml`
- * (Zoho uses 07_ to avoid collision with existing 06_calendar_multiget.xml).
+ * Fixtures: `app/src/test/resources/caldav/<server>/06_calendar_user_address_set.xml` (Zoho uses
+ * 07_ because 06_calendar_multiget.xml is taken).
  *
- * Real personal email addresses in iCloud and Zoho probe data have been
- * redacted to `@example.com`. Shape (count, schemes, preferred attribute,
- * wire ordering) is preserved verbatim.
+ * Personal email addresses in the iCloud and Zoho probe data are redacted to example domains. The
+ * shape (count, schemes, preferred attribute, wire order) is kept verbatim.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -57,10 +55,10 @@ class CalDavXmlParserAddressSetTest {
         val addresses = parser.extractCalendarUserAddresses(xml)
 
         assertEquals(7, addresses.size)
-        // The preferred="1" entry must be position 0, not the wire-order-first
-        // path-relative entry. This is the iCloud-specific hoisting requirement.
+        // iCloud puts preferred="1" on a mailto that isn't first on the wire; it must be
+        // hoisted to position 0 ahead of the path-relative principal href.
         assertEquals("mailto:alice@example.com", addresses[0])
-        // Remaining entries preserve relative wire order
+        // The other six are present (the parser keeps their wire order; not asserted here)
         assertTrue(addresses.contains("/123456789/principal"))
         assertTrue(addresses.contains("urn:uuid:123456789"))
         assertTrue(addresses.contains("mailto:alice.work@example.com"))

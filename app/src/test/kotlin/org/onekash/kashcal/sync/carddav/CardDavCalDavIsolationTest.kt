@@ -5,31 +5,22 @@ import org.junit.Test
 import java.io.File
 
 /**
- * Architectural firewall: the CardDAV contact-sync stack and the CalDAV
- * calendar-sync stack must stay mutually isolated at the source level.
+ * Keeps the CardDAV contact-sync stack and the CalDAV calendar-sync stack isolated at the source
+ * level.
  *
- * Why this is a test, not a comment. Contact sync deliberately ships its own
- * WebDAV client (`OkHttpCardDavClient`) instead of refactoring the mature,
- * heavily-tested CalDAV client to extract a shared base. Accepting a little
- * duplicated WebDAV-verb code is the cheap price for a strong guarantee: a bug
- * in the new contact-sync path cannot reach calendar sync, and calendar sync
- * cannot silently grow a dependency on the new feature. That guarantee only
- * holds as long as neither side imports the other's protocol-specific innards.
- * This guard fails loudly the day someone wires the two together, instead of
- * the two stacks quietly fusing and re-opening the regression surface the
- * isolation was meant to close.
+ * Contact sync ships its own WebDAV client (`OkHttpCardDavClient`) instead of extracting a shared
+ * base from the CalDAV client. The duplicated WebDAV-verb code buys a guarantee: a bug in the
+ * contact-sync path can't reach calendar sync, and calendar sync can't grow a dependency on
+ * contact sync. That holds only while neither side imports the other's protocol-specific code,
+ * so this test fails the day someone wires the two together.
  *
- * The boundary is drawn around *protocol-specific* symbols, NOT whole packages,
- * so genuinely-generic infrastructure stays shared (used, not duplicated):
- * `DigestAuthenticator` (same `sync.client` package), the `CalDavXmlParser`
- * multistatus/href/etag skeleton (`sync.parser`), the scheduler, and the
- * credential store are all fair game for both stacks. What neither side may
- * import is the *other protocol's* client, strategy, or engine.
+ * The boundary is drawn around protocol-specific symbols, not whole packages, so generic
+ * infrastructure stays shared: `DigestAuthenticator` (in the same `sync.client` package), the
+ * `CalDavXmlParser` multistatus, href and etag skeleton (`sync.parser`), the scheduler and the
+ * credential store. Neither side may import the other protocol's client, strategy or engine.
  *
- * Implemented as a source scan (no ArchUnit/Konsist on the classpath), matching
- * the sibling boundary tests DevicePathFirewallTest and
- * ContactsProviderWriteBoundaryTest. The CardDAV/contacts source packages are
- * populated, so this actively enforces the boundary on every scanned file.
+ * Implemented as a source scan (no ArchUnit or Konsist on the classpath), like
+ * `DevicePathFirewallTest` and `ContactsProviderWriteBoundaryTest`.
  */
 class CardDavCalDavIsolationTest {
 
@@ -41,12 +32,10 @@ class CardDavCalDavIsolationTest {
         )
 
         /**
-         * CalDAV *orchestration* symbols the contact-sync stack may never import.
-         * Matched against `import` lines only. These are the protocol-specific
-         * client/strategy/engine types — NOT the shared generic infrastructure.
-         * `.sync.client.CalDavClient` also covers `CalDavClientFactory` (prefix);
-         * `DigestAuthenticator` and `CalDavXmlParser` are intentionally absent so
-         * they stay shareable.
+         * CalDAV client, strategy and engine symbols the contact-sync stack may never import,
+         * matched against `import` lines only. `.sync.client.CalDavClient` also matches
+         * `CalDavClientFactory` as a prefix. `DigestAuthenticator` and `CalDavXmlParser` are
+         * absent on purpose so they stay shareable.
          */
         val FORBIDDEN_CALDAV_IMPORTS = listOf(
             ".sync.client.CalDavClient",       // interface + CalDavClientFactory
@@ -56,10 +45,8 @@ class CardDavCalDavIsolationTest {
         )
 
         /**
-         * Path fragments identifying the CalDAV client/strategy/engine source
-         * files — the ones whose isolation protects shipped calendar sync. Any
-         * of these importing a contact-sync symbol would couple the working
-         * path to the new feature.
+         * Path fragments of the CalDAV client, strategy and engine source files. Any of these
+         * importing a contact-sync symbol would couple calendar sync to contact sync.
          */
         val CALDAV_CORE_FILE_FRAGMENTS = listOf(
             "org/onekash/kashcal/sync/client/CalDavClient",
@@ -150,10 +137,9 @@ class CardDavCalDavIsolationTest {
     }
 
     /**
-     * Self-check: the matcher must actually flag known cross-stack imports in
-     * both directions. Without this, a refactor that broke the matcher (renamed
-     * packages, wrong normalization) would silently turn the firewall into a
-     * no-op that always passes.
+     * Checks the matcher flags known cross-stack imports in both directions. Without this, a
+     * refactor that broke the matcher (renamed packages, wrong normalization) would silently
+     * turn the firewall into a no-op that always passes.
      */
     @Test
     fun `matcher flags known cross-stack imports both directions`() {
@@ -184,10 +170,8 @@ class CardDavCalDavIsolationTest {
     }
 
     /**
-     * Self-check the other direction: the genuinely-shared generic
-     * infrastructure must NOT be flagged, or the guard would block the reuse it
-     * is meant to permit and push contact sync toward pointless duplication of
-     * auth/parser code.
+     * Checks the matcher doesn't flag shared generic infrastructure, or the guard would block
+     * the reuse it permits and push contact sync toward duplicating auth and parser code.
      */
     @Test
     fun `matcher permits shared generic infrastructure`() {

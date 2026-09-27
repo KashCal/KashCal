@@ -11,18 +11,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for [AttendeeUiModel.fromDevice] and
- * [AttendeeStatus.fromDeviceStatus] — the mapping from CalendarProvider's
- * `Attendees` rows to the shared read-only UI model.
+ * Tests [AttendeeUiModel.fromDevice], [AttendeeStatus.fromDeviceStatus] and
+ * [AttendeeStatus.toDeviceStatus]: the mapping between CalendarProvider `Attendees` rows and
+ * the shared UI model, and back for an RSVP write.
  *
- * Robolectric is required because the mapping references
- * `CalendarContract.Attendees.*` constants, which are stubbed to 0 in plain
- * JVM tests (so RELATIONSHIP_ORGANIZER vs RELATIONSHIP_ATTENDEE collapse and
- * the test would assert nothing).
+ * The `CalendarContract.Attendees` status and relationship values are compile-time constants
+ * inlined from the SDK stubs with their real values; the test runs under Robolectric anyway.
  *
- * Unlike the Room path, the device provider carries an explicit
- * RELATIONSHIP_ORGANIZER row, so there is no ORGANIZER/ATTENDEE synthesis to
- * reconcile — the organizer is just the row flagged as such.
+ * Unlike the Room path, the provider carries an explicit RELATIONSHIP_ORGANIZER row, so
+ * nothing is synthesized: the organizer is the row flagged as such.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -63,7 +60,7 @@ class AttendeeUiModelFromDeviceTest {
         assertEquals(AttendeeStatus.NeedsAction, AttendeeStatus.fromDeviceStatus(Attendees.ATTENDEE_STATUS_INVITED))
     }
 
-    // ========== toDeviceStatus (inverse, for RSVP write) ==========
+    // ========== toDeviceStatus (the inverse, for an RSVP write) ==========
 
     @Test
     fun `toDeviceStatus maps Accepted`() {
@@ -116,7 +113,7 @@ class AttendeeUiModelFromDeviceTest {
                 guest(id = 1L, name = "Me", email = "me@example.com"),
                 guest(id = 2L, name = "Alice", email = "alice@example.com"),
             ),
-            ownerEmail = "ME@example.com", // case-insensitive canonical match
+            ownerEmail = "ME@example.com", // a case-insensitive canonical match
         )
         assertTrue(models.first { it.bareAddress == "me@example.com" }.isYou)
         assertFalse(models.first { it.bareAddress == "alice@example.com" }.isYou)
@@ -148,9 +145,8 @@ class AttendeeUiModelFromDeviceTest {
 
     @Test
     fun `fromDevice handles an already-mailto-prefixed provider email without double-prefixing`() {
-        // Some sync adapters write ATTENDEE_EMAIL with a leading mailto:.
-        // Canonical form must be the bare lowercased address, and the owner
-        // match must still succeed when the owner is supplied bare.
+        // Some sync adapters write ATTENDEE_EMAIL with a leading mailto:. The canonical form
+        // is the bare lowercased address, and the owner still matches when supplied bare.
         val models = AttendeeUiModel.fromDevice(
             listOf(guest(email = "mailto:Mixed.Case@Example.com")),
             ownerEmail = "mixed.case@example.com",
@@ -192,9 +188,8 @@ class AttendeeUiModelFromDeviceTest {
 
     @Test
     fun `fromDevice does not duplicate an organizer that is also listed as a guest row`() {
-        // Provider may carry exactly one row per person; if the organizer row
-        // exists it is THE organizer — there is no separate synthesized chip
-        // (contrast the Room path). One row in => one model out.
+        // The organizer row is the organizer; unlike the Room path no separate chip is
+        // synthesized. One row in, one model out.
         val models = AttendeeUiModel.fromDevice(
             listOf(guest(id = 1L, email = "host@example.com", relationship = Attendees.RELATIONSHIP_ORGANIZER)),
             ownerEmail = "host@example.com",

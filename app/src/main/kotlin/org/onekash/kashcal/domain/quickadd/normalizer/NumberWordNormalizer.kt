@@ -18,15 +18,14 @@ object NumberWordNormalizer : Normalizer {
         "eighty" to 80, "ninety" to 90
     )
 
-    // Compound pattern: "forty-five" → 45 (case-insensitive)
+    // Hyphenated compounds such as "forty-five", ignoring case.
     private val compoundRegex = Regex(
         "(${tens.keys.joinToString("|")})-(${ones.keys.filter { it.length > 2 }.joinToString("|")})",
         RegexOption.IGNORE_CASE
     )
 
-    // Standalone word replacements (sorted by length, case-insensitive)
-    // Short words (1-2 chars like "a", "an") use negative lookahead for dot
-    // to avoid corrupting "a.m." / "a.m" → "1.m." / "1.m"
+    // Single words, longest first, ignoring case. A word of one or two letters ("a", "an")
+    // must not be followed by a dot, so "a.m." doesn't become "1.m."
     private val wordReplacements = (ones + tens).entries
         .sortedByDescending { it.key.length }
         .map { (word, number) ->
@@ -37,14 +36,13 @@ object NumberWordNormalizer : Normalizer {
     override fun normalize(input: String): String {
         var result = input
 
-        // Replace compounds first (e.g., "forty-five" → "45")
+        // Compounds first, so "forty-five" isn't read as "forty" and "five".
         result = compoundRegex.replace(result) { match ->
             val tensVal = tens[match.groupValues[1].lowercase()] ?: 0
             val onesVal = ones[match.groupValues[2].lowercase()] ?: 0
             (tensVal + onesVal).toString()
         }
 
-        // Replace standalone words (word boundary aware)
         for ((regex, replacement) in wordReplacements) {
             result = regex.replace(result, replacement)
         }

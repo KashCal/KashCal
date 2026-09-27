@@ -14,9 +14,10 @@ import java.net.URI
 import java.util.Properties
 
 /**
- * Diagnostic test for Docker CalDAV servers (Radicale, Baikal, SOGo).
- * Tests each step of the pull flow individually, matching the app's
- * discovery logic: well-known → direct principal → path probing fallback.
+ * Diagnoses the Docker CalDAV servers (Radicale, Baikal, Baikal Digest, SOGo) by running each
+ * discovery and pull step on its own and printing the result. Discovery follows the app's
+ * order: well-known, then the principal directly, then path probing. Nothing asserts; a
+ * server without credentials or calendars is skipped.
  *
  * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*DockerServerDiagnosticTest*"
  */
@@ -25,7 +26,7 @@ class DockerServerDiagnosticTest {
     private val factory = OkHttpCalDavClientFactory()
     private val props = Properties()
 
-    // Same paths as CalDavAccountDiscoveryService.KNOWN_CALDAV_PATHS
+    // CalDavAccountDiscoveryService's `KNOWN_CALDAV_PATHS` plus /SOGo/dav/, which it lacks
     private val knownCaldavPaths = listOf(
         "/dav/",              // Davis, generic sabre/dav
         "/remote.php/dav/",   // Nextcloud
@@ -98,7 +99,7 @@ class DockerServerDiagnosticTest {
             quirks
         )
 
-        // Step 0: Well-known discovery (same as app)
+        // Step 0: well-known discovery, as the app does
         println("=== $serverName: Step 0 - discoverWellKnown ===")
         val wellKnownResult = client.discoverWellKnown(serverUrl)
         val discoveryUrl = if (wellKnownResult.isSuccess()) {
@@ -109,7 +110,7 @@ class DockerServerDiagnosticTest {
             serverUrl
         }
 
-        // Step 1: Discover principal (with path probing fallback like the app)
+        // Step 1: principal, falling back to path probing as the app does
         println("=== $serverName: Step 1 - discoverPrincipal ===")
         var principalResult = client.discoverPrincipal(discoveryUrl)
         var principalUrl: String? = null

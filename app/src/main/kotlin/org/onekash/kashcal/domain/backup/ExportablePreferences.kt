@@ -4,14 +4,15 @@ import androidx.datastore.preferences.core.Preferences
 import org.onekash.kashcal.data.preferences.PreferencesKeys
 
 /**
- * Controls which DataStore preference keys are included in (or excluded from) a settings backup.
+ * Decides which DataStore preference keys a settings backup includes.
  *
- * `KEYS` is the explicit allow-list. `EXCLUDED_KEY_NAMES` names every preference that must not
- * leave the device — runtime state, migration flags, onboarding flags, device-calendar selection
- * sets (IDs aren't portable across installs), and legacy superseded keys.
+ * [KEYS] is the allow-list. [EXCLUDED_KEY_NAMES] names every preference that must not leave the
+ * device: runtime state, migration and onboarding flags, device-local choices, IDs that aren't
+ * portable across installs (device-calendar selections, the default calendar), and superseded
+ * keys.
  *
- * A reflection-backed test enforces that every key declared in `PreferencesKeys` is categorised
- * into exactly one of these two lists, so adding a new preference without classifying it fails CI.
+ * `ExportablePreferencesTest` checks by reflection that every key in [PreferencesKeys] is in
+ * exactly one of the two, so a new preference that isn't classified fails the test suite.
  */
 object ExportablePreferences {
 
@@ -66,22 +67,18 @@ object ExportablePreferences {
         // Calendar view
         PreferencesKeys.FIRST_DAY_OF_WEEK,
         PreferencesKeys.SHOW_WEEK_NUMBERS,
-        // Agenda week bar expanded/collapsed — a deliberate, persistent display
-        // choice (like SHOW_WEEK_NUMBERS), so it travels in a settings backup.
+        // Agenda week bar expanded/collapsed: a persistent display choice, so it's exported.
         PreferencesKeys.AGENDA_WEEK_BAR_EXPANDED,
-        // Day view week-strip date picker expanded/collapsed — same rationale as
-        // the agenda bar; a persistent display choice that travels in a backup.
+        // Day view week-strip date picker expanded/collapsed: a persistent display choice.
         PreferencesKeys.DAY_WEEK_BAR_EXPANDED,
-        // All-day strip expanded/collapsed in the time-grid views — same rationale
-        // as the agenda week bar: a persistent display choice, so it's exportable.
+        // All-day strip expanded/collapsed in the time-grid views: a persistent display choice.
         PreferencesKeys.ALL_DAY_ROWS_EXPANDED,
         PreferencesKeys.TAGS_ABOVE_NOTES,
         PreferencesKeys.SHOW_DECLINED_EVENTS,
-        // Whether multi-day timed events show in the all-day strip — same rationale as
-        // SHOW_WEEK_NUMBERS: a persistent display choice, so it's exportable.
+        // Whether multi-day timed events show in the all-day strip: a persistent display choice.
         PreferencesKeys.SHOW_MULTIDAY_TIMED_IN_ALLDAY_STRIP,
         PreferencesKeys.DEFAULT_EVENT_DURATION,
-        // Event defaults (DEFAULT_CALENDAR excluded — stores non-portable row IDs)
+        // Event defaults (DEFAULT_CALENDAR is excluded: it stores non-portable row IDs)
         PreferencesKeys.DEFAULT_REMINDER_MINUTES,
         PreferencesKeys.DEFAULT_ALL_DAY_REMINDER,
         // Sync
@@ -94,7 +91,7 @@ object ExportablePreferences {
         PreferencesKeys.THEME,
         PreferencesKeys.COLOR_SOURCE,
         PreferencesKeys.ACCENT_SEED,
-        // Widget appearance — deliberate, persistent choices like the app face above
+        // Widget appearance: persistent choices, like the app's theme and colors above
         PreferencesKeys.WIDGET_COLOR_SOURCE,
         PreferencesKeys.WIDGET_ACCENT_SEED,
         PreferencesKeys.WIDGET_THEME_SOURCE,
@@ -113,7 +110,7 @@ object ExportablePreferences {
         PreferencesKeys.BIRTHDAY_REMINDER,
         PreferencesKeys.CONTACT_ANNIVERSARIES_ENABLED,
         PreferencesKeys.ANNIVERSARY_REMINDER,
-        // Device calendars master toggles only (ID sets excluded — not portable)
+        // Device calendar toggles only (the ID sets are excluded: not portable)
         PreferencesKeys.DEVICE_CALENDARS_ENABLED,
         PreferencesKeys.DEVICE_CALENDAR_REMINDERS_ENABLED,
         // Share-availability sheet preferences
@@ -121,7 +118,7 @@ object ExportablePreferences {
         PreferencesKeys.SHARE_AVAILABILITY_WORK_START_MIN,
         PreferencesKeys.SHARE_AVAILABILITY_WORK_END_MIN,
         PreferencesKeys.SHARE_AVAILABILITY_INCLUDE_ALL_DAY,
-        // Profile — user's avatar initials travel with a settings backup
+        // Profile: the user's avatar initials
         PreferencesKeys.USER_INITIALS,
     ).also {
         // Bump this and the matching ExportablePreferencesTest assertion together
@@ -134,17 +131,15 @@ object ExportablePreferences {
     val EXCLUDED_KEY_NAMES: Set<String> = setOf(
         // Runtime state
         PreferencesKeys.LAST_SYNC_TIME.name,
-        // Ephemeral UI scroll position — where the timeline was last scrolled to;
-        // per-device view state, not a portable user setting
+        // Where the timeline was last scrolled to: per-device view state, not a setting
         PreferencesKeys.WEEK_VIEW_SCROLL_MINUTES.name,
-        // Ephemeral UI zoom level — the timeline's last pinch-to-zoom hour-height;
-        // per-device view state, not a portable user setting
+        // The timeline's last pinch-to-zoom hour height: per-device view state, not a setting
         PreferencesKeys.WEEK_VIEW_HOUR_HEIGHT.name,
         PreferencesKeys.CONTACT_BIRTHDAYS_LAST_SYNC.name,
         PreferencesKeys.CONTACT_ANNIVERSARIES_LAST_SYNC.name,
         PreferencesKeys.NOTIFICATION_PERMISSION_DENIED_COUNT.name,
-        // Device-local runtime state: set when a background contact sync hit a
-        // revoked WRITE_CONTACTS, drives a settings re-grant banner on this device
+        // Set when a background contact sync hit a revoked WRITE_CONTACTS; drives a re-grant
+        // banner on this device
         PreferencesKeys.CONTACT_SYNC_PERMISSION_NEEDED.name,
         PreferencesKeys.PARSE_FAILURE_RETRY_COUNTS.name,
         PreferencesKeys.LAST_APP_VERSION_CODE.name,
@@ -160,15 +155,15 @@ object ExportablePreferences {
         PreferencesKeys.SHOWN_SHARE_CARD_TOOLTIP.name,
         PreferencesKeys.ONBOARDING_DISMISSED.name,
         PreferencesKeys.LAST_WHATSNEW_VERSION_SHOWN.name,
-        // Permission-banner dismissal — tied to this device's contacts permission, not portable
+        // Permission-banner dismissal, tied to this device's contacts permission
         PreferencesKeys.CONTACT_SUGGESTIONS_DECLINED.name,
-        // App lock — device-local privacy policy tied to this device's enrolled
-        // biometric / screen lock; each device decides its own, not portable
+        // App lock: tied to this device's enrolled biometric or screen lock, so each device
+        // decides its own
         PreferencesKeys.APP_LOCK_ENABLED.name,
-        // Device calendar selection IDs — not portable across installs
+        // Device calendar selection IDs: not portable across installs
         PreferencesKeys.ENABLED_DEVICE_CALENDAR_IDS.name,
         PreferencesKeys.HIDDEN_DEVICE_CALENDAR_IDS.name,
-        // Default calendar pref stores "room:<id>" — row IDs are not portable across installs
+        // Stores "room:<id>" or "device:<id>"; neither ID is portable across installs
         PreferencesKeys.DEFAULT_CALENDAR.name,
         // Legacy (superseded)
         PreferencesKeys.DEFAULT_CALENDAR_ID.name,

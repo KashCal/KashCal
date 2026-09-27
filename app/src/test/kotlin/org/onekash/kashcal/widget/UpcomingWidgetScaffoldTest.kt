@@ -8,12 +8,11 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Unit tests for [UpcomingWidgetScaffold] — verifies the scaffold renders the correct
- * sub-composable for each [UpcomingState] variant.
+ * Tests that [UpcomingWidgetScaffold] renders the matching content for each [UpcomingState]:
+ * Loading and Error by their text, Loaded only by the loading text being absent.
  *
- * Uses [runGlanceAppWidgetUnitTest] (docs: kb://android/develop/ui/compose/glance/testing)
- * with `provideComposable { ... }` to inject parameterized state. Robolectric provides
- * the LocalContext that composables need.
+ * Uses [runGlanceAppWidgetUnitTest] with `provideComposable { ... }` to pass the state in.
+ * Robolectric provides the context the composables need.
  */
 @RunWith(RobolectricTestRunner::class)
 class UpcomingWidgetScaffoldTest {
@@ -49,8 +48,8 @@ class UpcomingWidgetScaffoldTest {
         provideComposable {
             UpcomingWidgetScaffold(state = loaded)
         }
-        // The existing empty-state string "No upcoming events" appears when Loaded with no events.
-        // We assert Loading is NOT shown — proving the scaffold branched into Loaded.
+        // Loaded with no events shows the "No upcoming events" empty state (not asserted here);
+        // the absent loading text shows only that the scaffold left the Loading branch.
         onNode(hasText("Loading upcoming events…")).assertDoesNotExist()
     }
 }

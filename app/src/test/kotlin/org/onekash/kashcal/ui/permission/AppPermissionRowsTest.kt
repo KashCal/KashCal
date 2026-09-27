@@ -5,22 +5,22 @@ import org.junit.Test
 import org.onekash.kashcal.R
 
 /**
- * Pure-logic tests for the app-permissions row builder.
+ * Tests the app-permissions screen's pure logic, [buildAppPermissionRows] and
+ * [allowRequestNeedsSettingsFallback].
  *
- * The builder turns the current OS level plus a granted reading per permission
- * into the ordered list of rows the sheet renders. Two properties matter:
+ * The builder turns the OS level plus a granted reading per permission into the ordered rows
+ * the screen renders. Two properties matter:
  *
- * 1. OS gating — Contacts and Calendars have been runtime permissions on every
- *    supported level and are always listed; Notifications appears from API 33,
- *    Local network from API 37. Below those levels the OS grants them
- *    implicitly, so a row would be a no-op.
- * 2. Trailing action — a granted permission shows the quiet "Allowed" state;
- *    anything not granted shows the "Allow" action. Crucially, not-granted maps
- *    to Allow even when the permission is permanently denied, so the sheet never
- *    presents a dead end (the deep-link fallback lives in the composable).
+ * 1. OS gating: Contacts and Calendars are runtime permissions on every supported level and
+ *    are always listed; Notifications appears from API 33, Local network from API 37. Below
+ *    those levels the OS grants them implicitly, so a row would be a no-op.
+ * 2. Trailing action: a granted permission shows the quiet "Allowed" state; anything not
+ *    granted shows the "Allow" action, even when permanently denied, so the screen never
+ *    presents a dead end. A request that comes back permanently denied opens system
+ *    settings ([allowRequestNeedsSettingsFallback]).
  *
- * Row order follows the sheet mockup: Notifications, Contacts, Calendars,
- * Local network — with the gated rows simply absent on older OS levels.
+ * Rows run Notifications, Contacts, Calendars, Local network, with the gated rows absent on
+ * older OS levels. Each row also carries its own name and tooltip strings.
  */
 class AppPermissionRowsTest {
 
@@ -159,9 +159,9 @@ class AppPermissionRowsTest {
 
     @Test
     fun `re-reading a revoked grant flips the row from Allowed back to Allow`() {
-        // Models what the sheet does on resume: it rebuilds the rows from a fresh
-        // grant reading, so a permission revoked in system settings during a
-        // deep-link round trip reverts from the quiet Allowed state to Allow.
+        // Models what the screen does on resume: it rebuilds the rows from a fresh grant
+        // reading, so a permission revoked in system settings during a deep-link round trip
+        // reverts from the quiet Allowed state to Allow.
         val granted = buildAppPermissionRows(
             sdkInt = 37,
             notificationsGranted = true,
@@ -183,9 +183,9 @@ class AppPermissionRowsTest {
         assertEquals(PermissionTrailing.ALLOWED, afterRevoke.getValue(AppPermissionKind.CALENDARS).trailing)
     }
 
-    // ===== each row carries its own name + tooltip text =====
+    // ===== settings fallback, then per-row strings =====
 
-    // ===== escape-hatch: a fired Allow that can't surface a dialog falls back to settings =====
+    // A fired Allow that can't surface a dialog falls back to settings.
 
     @Test
     fun `a granted request does not need the settings fallback`() {
@@ -194,16 +194,18 @@ class AppPermissionRowsTest {
 
     @Test
     fun `a denial that can still be re-asked does not need the settings fallback`() {
-        // Rationale still offered afterwards -> the next Allow tap can surface a dialog.
+        // A rationale still offered afterwards means the next Allow tap can surface a dialog.
         assertEquals(false, allowRequestNeedsSettingsFallback(granted = false, rationaleAfter = true))
     }
 
     @Test
     fun `a permanently-denied request needs the settings fallback`() {
-        // Denied with no rationale afterwards -> "don't ask again"; only system settings can grant it.
+        // Denied with no rationale afterwards is "don't ask again"; only system settings can
+        // grant it.
         assertEquals(true, allowRequestNeedsSettingsFallback(granted = false, rationaleAfter = false))
     }
 
+    // Each row carries its own name and tooltip strings.
     @Test
     fun `each kind carries its own name and why strings`() {
         val rows = buildAppPermissionRows(

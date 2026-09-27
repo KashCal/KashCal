@@ -6,8 +6,9 @@ import org.junit.Test
 import org.onekash.kashcal.widget.WidgetDataRepository.WidgetEvent
 
 /**
- * Pure-logic tests for [computeMonthWidgetWeekRender] — the week slot layout behind the
- * month widget's titles mode (multi-day bars, per-cell snippets, overflow).
+ * Tests [computeMonthWidgetWeekRender], the week slot layout behind the month widget's titles
+ * mode: empty weeks and a zero slot budget, multi-day bars and spans outside the week, lanes,
+ * per-cell events, overflow markers and event order.
  *
  * Week under test: Monday 2026-08-03 .. Sunday 2026-08-09 (day codes 20260803..20260809).
  */
@@ -89,7 +90,7 @@ class MonthWidgetSpanLayoutTest {
         val b = multiDay(startDay = 20260805, endDay = 20260807, title = "B")
         val render = computeMonthWidgetWeekRender(week, mapOf(week[1] to listOf(a, b)), maxSlots = 3)
         assertEquals(2, render.slots.size)
-        // A (earlier start) takes lane 0, B lane 1 — they overlap on columns 2..3.
+        // A (earlier start) takes lane 0, B lane 1; they overlap on columns 2..3.
         val aSeg = render.slots[0][2] as MonthWidgetSlot.BarSegment
         val bSeg = render.slots[1][2] as MonthWidgetSlot.BarSegment
         assertEquals("A", aSeg.span.event.title)
@@ -109,8 +110,8 @@ class MonthWidgetSpanLayoutTest {
     @Test
     fun `span is deduplicated across the day buckets it appears in`() {
         val span = multiDay(startDay = 20260804, endDay = 20260806)
-        // The repository groups a multi-day event into EVERY day it touches — the layout
-        // must still render exactly one bar for it.
+        // The repository groups a multi-day event into every day it touches; the layout must
+        // still render one bar for it.
         val events = mapOf(
             week[1] to listOf(span),
             week[2] to listOf(span),
@@ -147,9 +148,9 @@ class MonthWidgetSpanLayoutTest {
 
     @Test
     fun `a single-row week shows the top event's title instead of a bare overflow marker`() {
-        // With only one row for the whole week there is no room for both a title and a "+n". A
-        // lone "+n" with no event name reads worse than naming the top event, so the extras are
-        // hidden silently (like the dots cap). No overflow marker should appear anywhere.
+        // With one row for the whole week there is no room for both a title and a "+n". A lone
+        // "+n" with no event name reads worse than naming the top event, so the extras are
+        // hidden silently, like the dots cap. No overflow marker appears anywhere.
         val events = mapOf(week[2] to List(3) { timed(day = 5, title = "E$it") })
         val render = computeMonthWidgetWeekRender(week, events, maxSlots = 1)
         assertEquals(1, render.slots.size)
@@ -159,10 +160,9 @@ class MonthWidgetSpanLayoutTest {
 
     @Test
     fun `a multi-row week keeps the overflow marker even when a bar leaves one free slot`() {
-        // The one-row title-instead-of-marker rule is scoped to single-row weeks only. Here a
-        // week-long bar takes one of two lanes, leaving a single free slot for two single-day
-        // events; the marker still appears (the bar gives the cell context), so the day reports
-        // its real count rather than silently dropping to one title.
+        // The title-instead-of-marker rule applies only to single-row weeks. Here a week-long
+        // bar takes one of two lanes, leaving one free slot for two single-day events; the marker
+        // still appears (the bar gives the cell context) and counts both events, not one title.
         val bar = multiDay(startDay = 20260803, endDay = 20260809, title = "Trip")
         val events = mapOf(
             week[0] to listOf(bar),
@@ -193,10 +193,10 @@ class MonthWidgetSpanLayoutTest {
 
     @Test
     fun `span ending the day before this week renders no bar`() {
-        // Event 2026-07-31 .. 2026-08-02 ends the day BEFORE this week's Monday (08-03).
-        // The grid fetch range starts at the grid's first cell (here 07-27), so the event
-        // IS present in the month data — it must not leak into this week as a flush bar
-        // "between" Friday and Saturday that shoves the week's real content one lane down.
+        // Event 2026-07-31 .. 2026-08-02 ends the day before this week's Monday (08-03). The
+        // grid fetch range starts at the grid's first cell (here 07-27), so the event is in the
+        // month data; it must not leak into this week as a flush bar that pushes the week's
+        // content one lane down.
         val span = multiDay(startDay = 20260731, endDay = 20260802)
         val events = mapOf(20260731 to listOf(span), 20260801 to listOf(span), 20260802 to listOf(span))
         val render = computeMonthWidgetWeekRender(week, events, maxSlots = 3)
@@ -205,7 +205,7 @@ class MonthWidgetSpanLayoutTest {
 
     @Test
     fun `span starting the day after this week renders no bar`() {
-        // Event 2026-08-10 .. 2026-08-12 starts the day AFTER this week's Sunday (08-09).
+        // Event 2026-08-10 .. 2026-08-12 starts the day after this week's Sunday (08-09).
         val span = multiDay(startDay = 20260810, endDay = 20260812)
         val events = mapOf(20260810 to listOf(span), 20260811 to listOf(span), 20260812 to listOf(span))
         val render = computeMonthWidgetWeekRender(week, events, maxSlots = 3)

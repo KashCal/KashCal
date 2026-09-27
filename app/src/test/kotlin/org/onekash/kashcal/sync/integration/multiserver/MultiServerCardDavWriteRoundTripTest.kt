@@ -24,33 +24,29 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Live write-path chaos reconcile across every configured CardDAV server. Unlike
- * the sibling [MultiServerCardDavFieldFidelityTest] (which seeds via a raw
- * authenticated PUT as test setup), this exercises the *application* write verb —
- * [CardDavClient.putContact] with a conditional header — then reads the resource
- * back through the production [CardDavContactReader] and asserts the mapped,
- * identity-shaping properties survive the server's store → serve round-trip.
+ * Checks the contact write path live across every configured CardDAV server. Unlike
+ * [MultiServerCardDavFieldFidelityTest], which seeds with a raw authenticated PUT as test
+ * setup, this uses the app's write verb, [CardDavClient.putContact] with a conditional header,
+ * then reads the resource back through the production [CardDavContactReader] and asserts the
+ * mapped identity fields survive the server's store and serve round trip.
  *
- * "Chaos reconcile": the assertions key on the neutral
- * [org.onekash.vcard.model.Contact] the reader maps, NOT on the raw wire bytes. A
- * server is free to downgrade what it stores — reorder or refold lines, drop an
- * X-property, re-serialize 3.0 vs 4.0, rewrite the resource href — as long as the
- * fields a user actually sees come back intact. Baikal and Cyrus (the passthrough
- * engines most likely to normalize on store) are in the matrix precisely to catch
- * a downgrade that loses a mapped field, which would be a real regression rather
- * than conformant server behavior.
+ * The assertions key on the neutral [org.onekash.vcard.model.Contact] the reader maps, not on
+ * the raw wire bytes. A server may change what it stores (reorder or refold lines, drop an
+ * X-property, re-serialize 3.0 as 4.0, rewrite the resource href) as long as the fields a user
+ * sees come back intact. Baikal and Cyrus, the passthrough engines most likely to normalize on
+ * store, are in the matrix to catch a change that loses a mapped field, which would be a real
+ * regression, not conformant server behavior.
  *
- * The body is entirely synthetic — RFC 6761 reserved `@example.test` and an
- * unassigned `+1-555-01xx` number — so no real person is contacted or exposed, and
- * the assertions key only on the write's own UID and its synthetic values.
+ * The bodies are synthetic (RFC 6761 reserved `@example.test` and an unassigned `+1-555-01xx`
+ * number), so no real person is contacted or exposed, and the assertions key only on each
+ * write's own UID and its synthetic values.
  *
- * Each run cleans up after itself via the [CardDavClient.deleteContact] verb, so
- * the write is idempotent across repeated runs (a leftover from a prior run is
- * overwritten with `If-Match`, and a fresh resource is created with
- * `If-None-Match: *`).
+ * Each test deletes its contact at the end with [CardDavClient.deleteContact]. Writes are
+ * idempotent across runs: a new resource is created with `If-None-Match: *`, and a leftover
+ * from a prior run is overwritten with `If-Match`.
  *
- * Skips (never fails) servers without credentials, unreachable, without CardDAV,
- * or with no writable address book to target.
+ * Skips (never fails) servers without credentials, unreachable ones, ones without CardDAV, and
+ * ones with no writable address book to target.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -118,18 +114,18 @@ class MultiServerCardDavWriteRoundTripTest(
 
         val resourceUrl = book!!.url.trimEnd('/') + "/" + contactResourceName(WRITE_UID)
 
-        // --- Write through the APP verb (conditional PUT), idempotent across runs ---
+        // --- Write through the app verb (conditional PUT), idempotent across runs ---
         val uploaded = when (val first = c.putContact(resourceUrl, WRITE_BODY, ContactPrecondition.IfAbsent)) {
             is ContactUploadResult.Success -> true
-            // A leftover from a prior run: overwrite it with the version we hold.
+            // A leftover from a prior run: overwrite it at its current etag.
             is ContactUploadResult.PreconditionFailed -> {
                 val existingEtag = currentEtag(c, book.url, resourceUrl)
                 existingEtag != null &&
                     c.putContact(resourceUrl, WRITE_BODY, ContactPrecondition.IfMatch(existingEtag)) is ContactUploadResult.Success
             }
-            // The server rejected the write for a policy/permission reason (e.g. a
-            // name-policy 401 or a read-only book that slipped the discovery gate) —
-            // that is a server constraint, not a mapping regression, so skip.
+            // The server refused the write (403, 404 or 410, or any other failure, e.g. a
+            // name-policy 401 or a read-only book that slipped the discovery gate): a server
+            // constraint, not a mapping regression, so skip.
             is ContactUploadResult.PermissionDenied,
             is ContactUploadResult.Gone,
             is ContactUploadResult.Failed -> false
@@ -150,8 +146,8 @@ class MultiServerCardDavWriteRoundTripTest(
             )
             val contact = written!!
 
-            // Mapped identity fields must survive even if the server downgraded the
-            // stored bytes. Synthetic values are safe to print; no raw body.
+            // Mapped identity fields must survive even if the server changed the stored bytes.
+            // Synthetic values are safe to print; no raw body.
             val email = contact.emails.firstOrNull { it.address == EXP_EMAIL }
             val phone = contact.phones.firstOrNull {
                 it.number.filter(Char::isDigit).contains(EXP_PHONE_DIGITS)
@@ -167,8 +163,9 @@ class MultiServerCardDavWriteRoundTripTest(
             assertNotNull("${config.name}: EMAIL $EXP_EMAIL lost on write round-trip", email)
             assertNotNull("${config.name}: TEL $EXP_PHONE_DIGITS lost on write round-trip", phone)
         } finally {
-            // Best-effort cleanup so repeated runs stay idempotent and no synthetic
-            // contact lingers on a shared test server.
+            // Cleanup, so no synthetic contact lingers on a shared test server. Skipped when the
+            // resource isn't listed; a delete outcome other than deleted, already gone or a
+            // precondition failure fails the test.
             currentEtag(c, book.url, resourceUrl)?.let { etag ->
                 val deleted = c.deleteContact(resourceUrl, etag)
                 assertTrue(
@@ -182,13 +179,11 @@ class MultiServerCardDavWriteRoundTripTest(
     }
 
     /**
-     * Diagnostic probe: does a freshly-created resource's server-returned enumerate
-     * href BYTE-MATCH the path we would stamp onto SOURCE_ID after a net-new create
-     * (`java.net.URI(putUrl).path`)? The net-new duplicate fix stamps that path as the
-     * dedup key, and the pull dedups by an EXACT `SOURCE_ID = ?` match against the
-     * server's returned href — so any server whose enumerate href is not byte-identical
-     * to the PUT-url path would still insert a duplicate on the following pull. This
-     * prints the verdict per server; it does not assert (it is evidence-gathering).
+     * Prints, per server, whether a newly created resource's listed href byte-matches the path
+     * stamped onto SOURCE_ID after a net-new create (`java.net.URI(putUrl).path`, in
+     * `ContactPushStrategy`). The pull matches device rows to the server's listed href exactly,
+     * so a server whose listed href differs from the PUT path would get a duplicate on the next
+     * pull. It doesn't assert.
      */
     @Test
     fun `net-new SOURCE_ID stamp byte-matches the server enumerate href form`() = runBlocking {
@@ -217,7 +212,7 @@ class MultiServerCardDavWriteRoundTripTest(
         assumeTrue("${config.name}: server would not accept the probe write", uploaded)
 
         try {
-            val stamped = java.net.URI(resourceUrl).path  // what the net-new fix writes to SOURCE_ID
+            val stamped = java.net.URI(resourceUrl).path  // the net-new SOURCE_ID
             val name = resourceUrl.substringAfterLast('/')
             val enumeratedHref = collectHrefs(c, book.url).firstOrNull { it.substringAfterLast('/') == name }
             assumeTrue("${config.name}: probe resource not enumerated after write", enumeratedHref != null)
@@ -232,19 +227,15 @@ class MultiServerCardDavWriteRoundTripTest(
     }
 
     /**
-     * A phone-only device contact (no name row at all) serializes through the app's
-     * [VCardWriter] with a mandatory FN synthesized from the phone. The hard invariant
-     * is RFC 6350 §6.2.1: FN MUST be present and non-blank on the written card — that
-     * is the fix, and a regression here fails the test on every server.
+     * Writes a phone-only device contact (no name at all) through [VCardWriter] and checks the
+     * card carries an FN synthesized from the phone and an empty `N:;;;;`. Both are asserted
+     * client-side, so a regression fails on every server: RFC 6350 §6.2.1 requires FN
+     * (cardinality `1*`), and RFC 6350 §6.2.2 makes N optional (`*1`), but iCloud 403s a card
+     * without N while accepting the empty form. N stays empty: a fake N built from the phone
+     * would round-trip as a contact named after its number.
      *
-     * N is deliberately absent: RFC 6350 §6.2.2 makes N optional (`*1`), so a nameless
-     * contact legitimately has none, and synthesizing a fake N from the phone would
-     * round-trip back as a contact literally *named* after its number. Server
-     * ACCEPTANCE of this RFC-conformant card is therefore characterized, not asserted:
-     * conformant servers accept it (assert the FN round-trips); a server that rejects a
-     * valid N-less card (iCloud requires N, contrary to §6.2.2) is a documented server
-     * quirk, skipped like the sibling round-trip test's "server would not accept" path,
-     * not a mapping bug we should paper over.
+     * Server acceptance: on success the FN must round-trip; a 403 is a server policy refusal
+     * and skips; any other rejection fails, since a malformed body comes back as Failed.
      */
     @Test
     fun `a nameless phone-only contact serializes with a mandatory FN`() = runBlocking {
@@ -265,11 +256,10 @@ class MultiServerCardDavWriteRoundTripTest(
             rawVCard = "",
         )
         val body = VCardWriter().write(nameless, book.vcardVersion)
-        // THE fix, asserted hard on every server (deterministic, no network): a written
-        // card MUST carry a non-blank FN (RFC 6350 §6.2.1) AND a structurally-present N.
-        // N is optional per §6.2.2, but strict servers (iCloud) 403 a card that omits it
-        // while accepting an all-empty `N:;;;;`; emitting the empty form is what lets a
-        // nameless contact sync everywhere without fabricating a name.
+        // Deterministic, no network: the written card must carry a non-blank FN (RFC 6350
+        // §6.2.1) and an N property. N is optional per §6.2.2, but strict servers (iCloud)
+        // 403 a card that omits it while accepting an all-empty `N:;;;;`; the empty form lets
+        // a nameless contact sync everywhere without inventing a name.
         assertTrue(
             "${config.name}: writer emitted no FN for a nameless contact (RFC 6350 §6.2.1 mandates it)",
             body.lineSequence().any { it.startsWith("FN") && it.substringAfter(":", "").isNotBlank() },
@@ -291,16 +281,15 @@ class MultiServerCardDavWriteRoundTripTest(
         try {
             when (result) {
                 is ContactUploadResult.Success -> Unit
-                // 403: a server-POLICY refusal of an otherwise-valid card (a strict name
-                // policy). Characterize and skip — it is the server's conformance stance,
-                // not a mapping bug on our side.
+                // 403: a server policy refusal of an otherwise valid card (a strict name
+                // policy). Record and skip: the server's conformance stance, not a mapping bug.
                 is ContactUploadResult.PermissionDenied -> {
                     println("=== ${config.name} nameless write: server REFUSED (403 policy) a valid card ===")
                     assumeTrue("${config.name}: server refuses this card on policy (403); characterized, not a mapping bug", false)
                 }
-                // Anything else (400-class Failed, 404/410 Gone, residual precondition):
-                // NOT a documented policy quirk. A malformed body maps to 400 → Failed, so
-                // fail loudly rather than swallowing a serialization regression as a skip.
+                // Anything else (Failed, 404/410 Gone, a precondition failure left after the
+                // retry) isn't a documented policy quirk. A malformed body's 400 is Failed, so
+                // fail instead of hiding a serialization regression as a skip.
                 else -> fail(
                     "${config.name}: nameless write rejected unexpectedly (${result::class.simpleName}) — " +
                         "a malformed body or server error, not a policy refusal",
@@ -321,7 +310,7 @@ class MultiServerCardDavWriteRoundTripTest(
         }
     }
 
-    /** Discover the login's first writable address book, or null if none is writable. */
+    /** Returns the first writable address book in the login's first home, or null. */
     private suspend fun resolveWritableBook(c: CardDavClient, cr: ServerCredentials) = run {
         val root = if (config.usesWellKnownDiscovery) {
             c.discoverWellKnown(cr.serverUrl).getOrNull() ?: cr.serverUrl
@@ -335,15 +324,18 @@ class MultiServerCardDavWriteRoundTripTest(
         books.firstOrNull { !it.isReadOnly }
     }
 
-    /** The current server ETag for [resourceUrl] in [bookUrl], or null if not listed. */
+    /**
+     * Returns the server ETag of the listed resource in [bookUrl] whose last path segment
+     * matches [resourceUrl]'s, or null if none is listed.
+     */
     private suspend fun currentEtag(c: CardDavClient, bookUrl: String, resourceUrl: String): String? {
         val listed = (c.listAllContactHrefs(bookUrl) as? CalDavResult.Success)?.data.orEmpty()
-        // Href may be an absolute URL or a server-root-relative path; match by suffix.
+        // A listed href may be an absolute URL or a root-relative path; match the last segment.
         val name = resourceUrl.substringAfterLast('/')
         return listed.firstOrNull { it.first.substringAfterLast('/') == name }?.second
     }
 
-    /** Read hrefs via sync-collection when available, else the full PROPFIND listing. */
+    /** Returns the book's hrefs from sync-collection when it lists any, else a full listing. */
     private suspend fun collectHrefs(c: CardDavClient, bookUrl: String): List<String> {
         (c.syncCollection(bookUrl, null) as? CalDavResult.Success)?.data?.let { report ->
             if (report.changed.isNotEmpty()) return report.changed.map { it.href }

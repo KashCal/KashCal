@@ -13,38 +13,42 @@ import org.onekash.kashcal.ui.components.ScopeTint
 import org.onekash.kashcal.util.RruleUtils
 
 /**
- * Pure helpers that compute the list of [ScopeOption]s for a given
- * recurring-event flow. Splitting the option-set logic out of the
- * sheet itself keeps the rules unit-testable; the sheet stays a
- * stateless renderer.
+ * Computes the [ScopeOption]s for each recurring-event scope sheet. The rules live outside
+ * `RecurringScopeSheet` so they are unit-testable and the sheet stays a stateless renderer.
  *
- * Each option carries an icon for instant scope recognition. The
- * sheet itself shows just the title + the cards + Cancel — no
- * sub-copy, no body description. The user just tapped a date so
- * we don't echo it back; greyed-state speaks for itself when an
- * option doesn't apply.
+ * Each option has an icon so its scope reads at a glance. The sheet shows only the title, the
+ * cards and Cancel: no description, and no echo of the date the user tapped. A greyed card says
+ * the option doesn't apply.
  */
 
 /**
- * Minimal context the option-set rules need to decide which scopes
- * are enabled. Built from the live event at request time by the
- * ViewModel — the helper itself doesn't fabricate any data.
+ * Holds what the option rules need to decide which scopes are enabled, taken from the pending
+ * save or delete.
  *
- * @param masterStartTs The master event's true startTs. Used by the
- *   first-occurrence rule; do NOT pass occurrenceTs or any
- *   user-editable form value here.
- * @param occurrenceTs The instance the user tapped (or, for drag,
- *   the source of the drag).
- * @param isDetachedException True when the event is an exception
- *   row already detached from its master series.
- * @param isAllDay Reserved for downstream consumers; the sheet
- *   itself doesn't render a date.
+ * @param masterStartTs the master event's startTs, for the first-occurrence rule. Never pass
+ *   occurrenceTs or a user-editable form value here.
+ * @param occurrenceTs the occurrence the user opened.
+ * @param isDetachedException true when the event is an exception row of a series.
+ * @param isAllDay not read by the option rules; the sheet shows no date.
+ * @param occurrenceDateChanged true when the user moved the opened occurrence to another day
+ *   before saving. "All events" is then withheld for a later occurrence: applying the new date
+ *   to the series would cut or move it.
  */
 data class ScopeContext(
     val masterStartTs: Long,
     val occurrenceTs: Long,
     val isDetachedException: Boolean,
     val isAllDay: Boolean,
+    val occurrenceDateChanged: Boolean = false,
+)
+
+/** The scope context for a form save awaiting its scope. */
+fun PendingFormSave.toScopeContext(): ScopeContext = ScopeContext(
+    masterStartTs = masterStartTs,
+    occurrenceTs = occurrenceTs,
+    isDetachedException = isDetachedException,
+    isAllDay = loadedIsAllDay,
+    occurrenceDateChanged = occurrenceDateChanged,
 )
 
 private val ICON_THIS: ImageVector = Icons.Default.CalendarToday
@@ -53,33 +57,26 @@ private val ICON_ALL: ImageVector = Icons.Default.Repeat
 private val ICON_DELETE_ALL: ImageVector = Icons.Default.DeleteOutline
 
 /**
- * Options for the form-save scope sheet on an editable recurring
- * event opened via per-occurrence edit.
+ * Returns the options for the form-save scope sheet on a recurring event opened at one
+ * occurrence.
  *
  * Edge cases:
- * - First occurrence: THIS_AND_FUTURE collapses with ALL_EVENTS;
- *   disable it.
- * - Detached exception: only THIS_EVENT applies; disable the others.
- * - Caller changed RRULE on an off-master occurrence: THIS_EVENT and
- *   ALL_EVENTS are both disabled. THIS_EVENT can't apply because
- *   exception events strip RRULE per RFC 5545 §3.8.5. ALL_EVENTS can't
- *   apply because rewriting the master's cadence at an off-master
- *   DTSTART anchor is ambiguous; THIS_AND_FUTURE is the legitimate
- *   "change cadence going forward" path.
- * - Caller changed RRULE on the FIRST occurrence: ALL_EVENTS stays
- *   enabled. The form is open on the master at its own DTSTART, so
- *   applying the cadence/UNTIL change to the whole series is
- *   unambiguous. THIS_AND_FUTURE remains disabled (it collapses with
- *   ALL_EVENTS here) and THIS_EVENT remains disabled (can't carry an
- *   RRULE). Without this carve-out, first-occurrence + RRULE-change
- *   disabled every option and left no way to save (issue #274).
- * An attendee-set change does NOT gate any scope: a single-occurrence
- * edit routes the edited guest set to the exception path, THIS_AND_FUTURE
- * to the series split, and ALL_EVENTS to the master update — each carries
- * the change. (An RRULE change still disables THIS_EVENT independently,
- * per the rule above.)
+ * - First occurrence: THIS_AND_FUTURE is the same as ALL_EVENTS, so it is disabled.
+ * - Detached exception: only THIS_EVENT applies; the others are disabled.
+ * - RRULE changed on a later occurrence: THIS_EVENT and ALL_EVENTS are disabled. THIS_EVENT
+ *   can't apply because an exception carries no RRULE. ALL_EVENTS can't, because rewriting the
+ *   master's rule at a later DTSTART is ambiguous; THIS_AND_FUTURE is the "change it from here
+ *   on" path.
+ * - RRULE changed on the first occurrence: ALL_EVENTS stays enabled, since the form is open on
+ *   the master at its own DTSTART. THIS_AND_FUTURE and THIS_EVENT stay disabled, so without
+ *   this case no option would be left to save with (#274).
+ * - Date changed on a later occurrence ([ScopeContext.occurrenceDateChanged]): ALL_EVENTS is
+ *   disabled.
  *
- * "All events" is tinted Warn — a subtle visual brake on misclicks.
+ * An attendee change gates no scope: THIS_EVENT writes the guest set to the exception,
+ * THIS_AND_FUTURE to the series split and ALL_EVENTS to the master update.
+ *
+ * "All events" is tinted Warn, a brake on misclicks.
  */
 fun computeEditScopeOptions(
     context: ScopeContext,
@@ -88,15 +85,15 @@ fun computeEditScopeOptions(
     resources: Resources,
 ): List<ScopeOption> {
     val isFirstOccurrence = context.occurrenceTs <= context.masterStartTs
-    // Compare by meaning, not bytes: the picker can re-emit a
-    // cosmetically different but identical rule (reordered parts, case,
-    // whitespace), which a raw compare would misread as a user change
-    // and spuriously disable save options.
+    // Compare by meaning, not bytes: the picker can re-emit the same rule with reordered parts,
+    // different case or whitespace, which a raw compare would read as a user change and wrongly
+    // disable save options.
     val rruleChanged = !RruleUtils.rrulesEquivalent(originalRrule, currentRrule)
 
     val thisEventEnabled = !rruleChanged
     val thisAndFutureEnabled = !context.isDetachedException && !isFirstOccurrence
-    val allEventsEnabled = !context.isDetachedException && (!rruleChanged || isFirstOccurrence)
+    val allEventsEnabled = !context.isDetachedException && (!rruleChanged || isFirstOccurrence) &&
+        (isFirstOccurrence || !context.occurrenceDateChanged)
 
     return listOf(
         ScopeOption(
@@ -124,17 +121,17 @@ fun computeEditScopeOptions(
 }
 
 /**
- * Options for the drag-to-reschedule scope sheet. Thinner than the
- * form-save flow — the user can't have changed the RRULE on a drop
- * and the drag always lands on a real occurrence (so the
- * detached-exception rule doesn't apply).
+ * Returns the options for the drag-to-reschedule scope sheet. A drop can't change the RRULE and
+ * always starts from a real occurrence, so the RRULE and detached-exception rules of
+ * [computeEditScopeOptions] don't apply. THIS_EVENT is always enabled. THIS_AND_FUTURE is
+ * disabled on the first occurrence, and THIS_AND_FUTURE or ALL_EVENTS when in [blockedScopes]
+ * (the caller passes [dragScopesToGrey]).
  *
- * Device branch hides ALL_EVENTS entirely. The Room path can split a
- * series cleanly via materialized occurrences; the CalendarProvider
- * can't, so an ALL_EVENTS device drag would shift the master's
- * DTSTART and move every past occurrence with it.
+ * A device event gets no ALL_EVENTS option. The Room path can split a series through its
+ * materialized occurrences; the CalendarProvider can't, so an ALL_EVENTS device drag would
+ * shift the master's DTSTART and move every past occurrence with it.
  *
- * "All events" gets the Warn tint when present — a misclick brake.
+ * "All events", when present, is tinted Warn as a brake on misclicks.
  */
 fun computeDragScopeOptions(
     masterStartTs: Long,
@@ -142,6 +139,7 @@ fun computeDragScopeOptions(
     isAllDay: Boolean,
     isDevice: Boolean,
     resources: Resources,
+    blockedScopes: Set<EditScope> = emptySet(),
 ): List<ScopeOption> {
     val isFirstOccurrence = targetOccurrenceTs <= masterStartTs
 
@@ -157,7 +155,7 @@ fun computeDragScopeOptions(
             scope = EditScope.THIS_AND_FUTURE,
             label = resources.getString(R.string.recurring_this_and_future),
             icon = ICON_FUTURE,
-            enabled = !isFirstOccurrence,
+            enabled = !isFirstOccurrence && EditScope.THIS_AND_FUTURE !in blockedScopes,
             tint = ScopeTint.Neutral,
         ),
     )
@@ -166,22 +164,26 @@ fun computeDragScopeOptions(
         scope = EditScope.ALL_EVENTS,
         label = resources.getString(R.string.recurring_all_events),
         icon = ICON_ALL,
-        enabled = true,
+        enabled = EditScope.ALL_EVENTS !in blockedScopes,
         tint = ScopeTint.Warn,
     )
 }
 
 /**
- * Options for the delete scope sheet on a recurring event.
+ * The scopes the drag sheet greys out for [pending]: its checked result, or
+ * both series scopes while the check is still running.
+ */
+fun dragScopesToGrey(pending: PendingDragReschedule): Set<EditScope> =
+    pending.blockedScopes ?: setOf(EditScope.ALL_EVENTS, EditScope.THIS_AND_FUTURE)
+
+/**
+ * Returns the options for the delete scope sheet on a recurring event.
  *
- * Edge cases:
- * - First occurrence: THIS_AND_FUTURE collapses with ALL_EVENTS;
- *   disable it (matches the edit flow).
- * - Detached exception: only THIS_EVENT applies; disable the others.
+ * Edge cases, as in [computeEditScopeOptions]:
+ * - First occurrence: THIS_AND_FUTURE is the same as ALL_EVENTS, so it is disabled.
+ * - Detached exception: only THIS_EVENT applies; the others are disabled.
  *
- * "All events" is tinted Destructive (red) since delete actually
- * removes data — the stronger visual weight matches the consequence.
- * The trash icon doubles the warning weight.
+ * "All events" is tinted Destructive and has a trash icon, since this delete removes data.
  */
 fun computeDeleteScopeOptions(
     context: ScopeContext,

@@ -23,14 +23,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for ScheduledRemindersDao - the reminder scheduling system.
+ * Tests [ScheduledRemindersDao], the rows behind reminder alarms.
  *
- * Critical for ensuring users don't miss events. Tests ensure:
- * - Reminders are properly scheduled and retrieved
- * - Status transitions (PENDING -> SHOWN -> DISMISSED/SNOOZED)
- * - Snooze functionality works correctly
- * - Cleanup of old reminders
- * - Cascade delete when event is deleted
+ * Covers:
+ * - Insert and lookup: pending, time-range, duplicate and sibling lookups
+ * - Status transitions (PENDING to FIRED to DISMISSED) and snooze
+ * - Deletes, including cleanup of old reminders
+ * - Counts
+ * - Cascade delete when the event is deleted
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -87,7 +87,7 @@ class ScheduledRemindersDaoTest {
         eventId: Long = testEventId,
         triggerTime: Long = System.currentTimeMillis() + 1800000, // 30 min from now
         occurrenceTime: Long = System.currentTimeMillis() + 3600000,
-        reminderOffset: String = "-PT${++reminderCounter}M", // Unique offset for each call
+        reminderOffset: String = "-PT${++reminderCounter}M", // Distinct per call (unique index)
         status: ReminderStatus = ReminderStatus.PENDING
     ): ScheduledReminder {
         return ScheduledReminder(
@@ -216,11 +216,10 @@ class ScheduledRemindersDaoTest {
 
     @Test
     fun `findExisting matches the exact occurrence, not a neighbouring one`() = runTest {
-        // Duplicate prevention keys on a single occurrence. If this predicate ever
-        // relaxed to an inequality, a reminder already set on a neighbouring
-        // occurrence would look like a duplicate of this one and scheduling would be
-        // skipped, so the user would silently lose the reminder. Rows on both sides,
-        // so neither direction of comparison can pass.
+        // Duplicate prevention keys on a single occurrence. If this predicate relaxed to an
+        // inequality, a reminder already set on a neighbouring occurrence would look like a
+        // duplicate of this one and scheduling would be skipped, so the user would silently
+        // lose the reminder. Rows on both sides, so neither direction of comparison can pass.
         val queriedOccurrence = 5_000_000L
         val sharedOffset = "-PT15M"
         remindersDao.insert(createReminder(
@@ -253,11 +252,11 @@ class ScheduledRemindersDaoTest {
     fun `status transitions PENDING to SHOWN to DISMISSED`() = runTest {
         val id = remindersDao.insert(createReminder(status = ReminderStatus.PENDING))
 
-        // PENDING -> SHOWN
+        // PENDING -> FIRED
         remindersDao.updateStatus(id, ReminderStatus.FIRED)
         assertEquals(ReminderStatus.FIRED, remindersDao.getById(id)?.status)
 
-        // SHOWN -> DISMISSED
+        // FIRED -> DISMISSED
         remindersDao.updateStatus(id, ReminderStatus.DISMISSED)
         assertEquals(ReminderStatus.DISMISSED, remindersDao.getById(id)?.status)
     }
@@ -287,12 +286,24 @@ class ScheduledRemindersDaoTest {
         val newTrigger = System.currentTimeMillis() + 600000
         remindersDao.snooze(id, newTrigger)
 
-        // After snooze time passes, status should allow retrieval
+        // getPendingForEvent, getAllPendingAfter, getPendingForCalendar and getPendingCount
+        // include SNOOZED; getPendingInRange doesn't. Only the status is asserted here.
         val snoozed = remindersDao.getById(id)
         assertEquals(ReminderStatus.SNOOZED, snoozed?.status)
     }
 
     // ==================== Delete Tests ====================
+
+    @Test
+    fun `deleteById removes only that reminder`() = runTest {
+        val keptId = remindersDao.insert(createReminder())
+        val removedId = remindersDao.insert(createReminder())
+
+        remindersDao.deleteById(removedId)
+
+        assertNull(remindersDao.getById(removedId))
+        assertNotNull(remindersDao.getById(keptId))
+    }
 
     @Test
     fun `deleteForEvent removes all reminders for event`() = runTest {
@@ -360,7 +371,8 @@ class ScheduledRemindersDaoTest {
         remindersDao.deleteOldReminders(now)
 
         val count = remindersDao.getPendingCount()
-        // Only the future pending reminder should remain
+        // The FIRED and DISMISSED rows should be gone, but getPendingCount counts only PENDING
+        // and SNOOZED, so this checks only that the recent reminder survives
         assertTrue(count >= 1)
     }
 
@@ -459,19 +471,21 @@ class ScheduledRemindersDaoTest {
 
     // ==================== Sibling Lookup Tests ====================
     //
-    // When one reminder for an occurrence fires, it needs the ids of the *other*
-    // reminders on that same occurrence so it can clear their notifications and
-    // leave only one on screen. These pin the exact shape of that lookup: the
-    // occurrence must match on both event and time, and status must not be
-    // filtered (see below).
+    // When one reminder for an occurrence fires, it needs the ids of the other reminders on
+    // that same occurrence so it can clear their notifications and leave only one on screen.
+    // These pin the shape of that lookup: the occurrence must match on both event and time,
+    // and status must not be filtered.
 
-    /** Fixed occurrence timestamp: createReminder's default is call-time, so two defaulted rows can land 1 ms apart and silently not be siblings. */
+    /**
+     * Fixed occurrence timestamp: createReminder's default is call-time, so two defaulted rows
+     * can land 1 ms apart and silently not be siblings.
+     */
     private val siblingOccurrence = 1_800_000_000_000L
 
     @Test
     fun `sibling lookup returns an already-fired reminder on the same occurrence`() = runTest {
-        // The whole point: the fired reminder is the one whose notification is on
-        // screen, so filtering it out would defeat the lookup entirely.
+        // The fired reminder is the one whose notification is on screen, so filtering it out
+        // would defeat the lookup.
         val firedId = remindersDao.insert(
             createReminder(
                 occurrenceTime = siblingOccurrence,
@@ -525,7 +539,7 @@ class ScheduledRemindersDaoTest {
 
     @Test
     fun `sibling lookup excludes other occurrences on both sides`() = runTest {
-        // Earlier AND later, so neither a >= nor a <= comparison can pass.
+        // Earlier and later, so neither a >= nor a <= comparison can pass.
         val earlierId = remindersDao.insert(
             createReminder(occurrenceTime = siblingOccurrence - 3_600_000, reminderOffset = "-PT15M")
         )
@@ -541,8 +555,8 @@ class ScheduledRemindersDaoTest {
 
         val siblings = remindersDao.getSiblingIdsForOccurrence(testEventId, siblingOccurrence, firingId)
 
-        // Exact match, so the neighbouring occurrences are excluded by assertion
-        // rather than by a follow-up check that could never fail.
+        // Exact match, so the neighbouring occurrences are excluded by assertion rather than
+        // by a follow-up check that could never fail.
         assertEquals(
             "Only the same occurrence's reminder is a sibling, not $earlierId or $laterId",
             listOf(siblingId),

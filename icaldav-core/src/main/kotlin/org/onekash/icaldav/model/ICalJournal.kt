@@ -1,83 +1,79 @@
 package org.onekash.icaldav.model
 
 /**
- * VJOURNAL component representing a journal entry per RFC 5545 Section 3.6.3.
+ * Holds one VJOURNAL component (RFC 5545 §3.6.3): descriptive text notes tied to a calendar
+ * date, such as a daily record of activities. Every property except [uid] has a default.
  *
- * VJOURNAL is used to represent one or more descriptive text notes associated
- * with a particular calendar date. Examples include a daily record of activities,
- * accomplishments, or thoughts.
- *
- * All properties except uid have defaults for easy construction.
- *
- * @see <a href="https://tools.ietf.org/html/rfc5545#section-3.6.3">RFC 5545 Section 3.6.3 - Journal Component</a>
+ * @see <a href="https://tools.ietf.org/html/rfc5545#section-3.6.3">RFC 5545 Section 3.6.3</a>
  */
 data class ICalJournal(
-    /** Unique identifier from UID property (required) */
+    /** UID property; the parser generates a random one when it's missing or blank. */
     val uid: String,
 
-    /**
-     * Unique import ID for database storage.
-     * Format: "{uid}" or "{uid}:RECID:{datetime}" for modified instances.
-     */
+    /** "{uid}", or "{uid}:RECID:{datetime}" for an exception; built by [generateImportId]. */
     val importId: String = "",
 
-    /** Journal summary/title from SUMMARY property */
+    /** SUMMARY property. */
     val summary: String? = null,
 
-    /** Journal description/content from DESCRIPTION property */
+    /** DESCRIPTION property (the entry's text). */
     val description: String? = null,
 
-    /** Start date/time the journal entry is associated with from DTSTART property */
+    /** DTSTART property: the date the entry is associated with. */
     val dtStart: ICalDateTime? = null,
 
-    /** Journal status from STATUS property */
+    /** STATUS property; absent or unknown values read as DRAFT. */
     val status: JournalStatus = JournalStatus.DRAFT,
 
-    /** Sequence number for conflict detection from SEQUENCE property */
+    /** SEQUENCE property (revision number), 0 when absent. */
     val sequence: Int = 0,
 
-    /** Creation timestamp from DTSTAMP property */
+    /** DTSTAMP property; meaning as on [ICalEvent.dtstamp]. */
     val dtstamp: ICalDateTime? = null,
 
-    /** Created timestamp from CREATED property */
+    /** CREATED property. */
     val created: ICalDateTime? = null,
 
-    /** Last modified timestamp from LAST-MODIFIED property */
+    /** LAST-MODIFIED property. */
     val lastModified: ICalDateTime? = null,
 
-    /** Categories/tags from CATEGORIES property */
+    /** CATEGORIES values, blank entries dropped. */
     val categories: List<String> = emptyList(),
 
-    /** Journal organizer from ORGANIZER property */
+    /** ORGANIZER property. */
     val organizer: Organizer? = null,
 
-    /** Attendees who should receive the journal from ATTENDEE properties */
+    /** ATTENDEE properties. */
     val attendees: List<Attendee> = emptyList(),
 
-    /** Attachments from ATTACH properties (URIs or inline data) */
+    /** ATTACH values as text: a URI or the inline data. */
     val attachments: List<String> = emptyList(),
 
-    /** Recurrence rule from RRULE property (for recurring journal entries) */
+    /** RRULE property; the parser leaves it null on an exception. */
     val rrule: RRule? = null,
 
-    /**
-     * RECURRENCE-ID for modified instances of recurring journals.
-     * Non-null indicates this is a modified occurrence.
-     */
+    /** RECURRENCE-ID property; non-null only on an exception. */
     val recurrenceId: ICalDateTime? = null,
 
-    /** URL associated with the journal from URL property */
+    /** URL property. */
     val url: String? = null,
 
-    /** Class/access classification from CLASS property */
+    /** CLASS property as its raw value. */
     val classification: String? = null,
 
-    /** Preserve unknown properties for round-trip fidelity */
-    val rawProperties: Map<String, String> = emptyMap()
-) {
     /**
-     * Generate importId for a journal.
+     * Unknown properties as name to value, kept for round trips. The generator writes them only
+     * when [unknownPropertyLines] is empty.
      */
+    val rawProperties: Map<String, String> = emptyMap(),
+
+    /**
+     * Unknown properties as the original, unfolded content lines, in document order. When
+     * non-empty the generator writes these and ignores [rawProperties].
+     */
+    val unknownPropertyLines: List<String> = emptyList()
+) {
+    /** Builds importIds in the same format as [ICalEvent.generateImportId]. */
     companion object {
         fun generateImportId(uid: String, recurrenceId: ICalDateTime?): String {
             return if (recurrenceId != null) {
@@ -88,26 +84,20 @@ data class ICalJournal(
         }
     }
 
-    /**
-     * Check if this is a recurring journal.
-     */
+    /** Returns whether this journal has an RRULE. */
     fun isRecurring(): Boolean = rrule != null
 
-    /**
-     * Check if this is a modified instance of a recurring journal.
-     */
+    /** Returns whether this is an exception (has a RECURRENCE-ID). */
     fun isModifiedInstance(): Boolean = recurrenceId != null
 }
 
-/**
- * VJOURNAL status values per RFC 5545.
- */
+/** VJOURNAL STATUS values (RFC 5545 §3.8.1.11); [fromString] maps absent or unknown to DRAFT. */
 enum class JournalStatus {
-    /** Journal is a draft, not yet finalized */
+    /** Not yet final. */
     DRAFT,
-    /** Journal is finalized and complete */
+    /** Final. */
     FINAL,
-    /** Journal has been cancelled */
+    /** Cancelled. */
     CANCELLED;
 
     fun toICalString(): String = name

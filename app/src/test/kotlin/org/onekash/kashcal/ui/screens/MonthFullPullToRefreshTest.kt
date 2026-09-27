@@ -35,21 +35,18 @@ import org.robolectric.annotation.Config
 import java.util.Calendar as JavaCalendar
 
 /**
- * Regression guard for the full-height month view (MONTH_FULL) missing
- * pull-to-refresh.
+ * Checks pull-to-refresh on the full-height month view (MONTH_FULL).
  *
- * Material3 pull-to-refresh is nested-scroll driven: it only sees a drag when a
- * descendant propagates vertical scroll deltas up the nested-scroll chain. The
- * full-height month grid is fit-to-screen (weighted rows) with no scrollable
- * child, so the enclosing pull-to-refresh Box never received a gesture and the
- * pull silently did nothing. The fix donates the vertical gesture to the parent
- * with a zero-consuming `scrollable` modifier on the month page.
+ * Material3 pull-to-refresh is nested-scroll driven: it sees a drag only when a descendant passes
+ * vertical scroll deltas up the chain. The full-height grid fits the screen (weighted rows) with no
+ * scrollable child, so without help the pull silently does nothing. A zero-consuming `scrollable`
+ * on the month page hands the vertical gesture to pull-to-refresh.
  *
- * The wrapper here mirrors production: a `pullToRefresh` Box wrapping a
- * `HorizontalPager` (month paging) whose page hosts the donor Column + the real
- * [FullHeightMonthGrid]. Keeping the pager in the replica is deliberate — the
- * key interaction to protect is that the vertical donor coexists with the
- * pager's horizontal swipe without either stealing the other's gesture.
+ * The wrapper is an inline copy of production: a `pullToRefresh` Box around a `HorizontalPager`
+ * whose page hosts the donor Column and the real [FullHeightMonthGrid]. The pager stays in the
+ * copy because the vertical donor must coexist with the pager's horizontal swipe without either
+ * stealing the other's gesture. The tests also check the donor exposes no scroll axis range to
+ * accessibility.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h720dp-mdpi")
@@ -65,8 +62,8 @@ class MonthFullPullToRefreshTest {
         onRefresh: () -> Unit,
     ) {
         val pullToRefreshState = rememberPullToRefreshState()
-        // Called unconditionally to satisfy the composition rules; only wired in
-        // when `withDonor` is true.
+        // Called unconditionally to satisfy the composition rules; wired in only when
+        // `withDonor` is true.
         val scrollDonor = rememberScrollableState { 0f }
         Box(
             modifier = Modifier
@@ -148,10 +145,9 @@ class MonthFullPullToRefreshTest {
 
     @Test
     fun `without the scroll donor the fit-to-screen grid cannot trigger refresh`() {
-        // Proves the donor is load-bearing: a plain (non-scrollable) Column never
-        // propagates vertical deltas, so this is exactly the broken behavior the
-        // fix addresses. If this ever starts passing, the grid gained a scrollable
-        // of its own and the donor may be reconsidered.
+        // Shows the donor is load-bearing: a plain, non-scrollable Column never passes
+        // vertical deltas up. If this starts failing, the grid gained a scrollable of its own
+        // and the donor may be reconsidered.
         var refreshed = false
         renderWith(withDonor = false, onRefresh = { refreshed = true })
 
@@ -165,8 +161,7 @@ class MonthFullPullToRefreshTest {
 
     @Test
     fun `horizontal swipe still pages between months with the donor present`() {
-        // The donor is orientation-locked to vertical; it must not steal the
-        // pager's horizontal swipe.
+        // The donor is vertical-only; it must not steal the pager's horizontal swipe.
         val pager = renderWith(withDonor = true)
         assertTrue("precondition: starts on page 1", pager.currentPage == 1)
 
@@ -182,10 +177,9 @@ class MonthFullPullToRefreshTest {
 
     @Test
     fun `the scroll donor does not expose a scrollable region to accessibility`() {
-        // A bare `scrollable` registers ScrollBy actions but no ScrollAxisRange;
-        // TalkBack's scrollable-region announcement and ACTION_SCROLL_FORWARD/
-        // BACKWARD are driven by the axis range, so the fit-to-screen page must
-        // not advertise itself as a scrollable region.
+        // A bare `scrollable` registers ScrollBy actions but no ScrollAxisRange. TalkBack's
+        // scrollable-region announcement and ACTION_SCROLL_FORWARD and BACKWARD are driven by
+        // the axis range, so the fit-to-screen page must not advertise itself as scrollable.
         renderWith(withDonor = true)
 
         val config = composeTestRule

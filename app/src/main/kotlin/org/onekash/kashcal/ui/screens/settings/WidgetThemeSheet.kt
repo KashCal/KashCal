@@ -8,9 +8,9 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.widget.WidgetThemeSource
 
 /**
- * A widget-theme option: which [WidgetThemeSource] it selects and the string resources that
- * describe it. Kept as a pure list ([widgetThemeSheetOptions]) so ordering and label mapping are
- * unit-testable without a Compose render harness.
+ * Describes a widget-theme option: the [WidgetThemeSource] it selects and the strings that
+ * describe it. Kept as a plain list ([widgetThemeSheetOptions]) so order and labels are
+ * unit-testable without a Compose render harness (`WidgetThemeSheetTest`).
  */
 data class WidgetThemeSheetOption(
     val source: WidgetThemeSource,
@@ -26,11 +26,11 @@ fun widgetThemeSheetOptions(): List<WidgetThemeSheetOption> =
     WidgetThemeSource.entries.map { WidgetThemeSheetOption(it, it.labelRes, it.descriptionRes) }
 
 /**
- * Bottom sheet for selecting the widgets' light/dark face.
+ * Shows a bottom sheet for choosing the widgets' light or dark face.
  *
- * Unlike the app's theme picker, this offers "Follow app" instead of "System": the widget tracks
- * the app's face, and when the app itself follows the device, the widget follows the device too.
- * Light and Dark pin the widget regardless of the app or device.
+ * Unlike [ThemeSheet], this offers "Follow app" instead of "System": the widget tracks the app's
+ * face, so when the app follows the device, so does the widget. Light and Dark pin the widget
+ * regardless of the app or device.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

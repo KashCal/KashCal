@@ -40,40 +40,37 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Regression coverage for a class of bug where editing an event that
- * ORIGINATED ON THE SERVER (created by another client, then pulled) fails to
- * sync back — the local↔server link freezes and further edits/deletes stop
- * reconciling in either direction. Reported against a Cyrus-backed provider
- * (issue #311), where the observable symptom was a `Push … conflict (412)`.
+ * Checks that editing an event created on the server by another client, then pulled, syncs
+ * back. When it doesn't, the link between the local row and the server freezes and later edits
+ * and deletes stop reconciling in either direction. Reported against a Cyrus-backed provider
+ * (issue #311) as a `Push … conflict (412)`.
  *
- * The distinction that matters: every other round-trip test in this package
- * edits an event KashCal itself CREATED (it never leaves the client's own
- * serialized body / etag). This one instead drives the exact production chain
- * the reporter hits:
+ * Unlike a round trip over an event the app created, which never leaves the app's own
+ * serialized body and etag, this drives the chain the reporter hit:
  *
- *   raw server PUT (server-origin event, NOT KashCal serialized)
- *     -> PullStrategy.pull  (ingest into real Room: caldavUrl + etag + rawIcal)
- *     -> EventWriter.updateEvent / editSingleOccurrence  (queues a pending op)
- *     -> PushStrategy.pushForCalendar  (drains it via an If-Match PUT)
- *     -> fetch back from the server and assert the edit landed
+ *   raw server PUT (a body the app didn't serialize)
+ *     -> PullStrategy.pull (into real Room: caldavUrl, etag, rawIcal)
+ *     -> EventWriter.updateEvent or editSingleOccurrence (queues a pending op)
+ *     -> PushStrategy.pushForCalendar (drains it with an If-Match PUT)
+ *     -> fetch back from the server and check the edit landed
  *
- * A 412 on the drain (stale/mismatched If-Match built from the pulled etag),
- * or a push that reports success without the server body changing, fails the
- * test — either would reproduce the frozen-link report.
+ * A 412 on the drain (an If-Match from the pulled etag that no longer matches), or a push that
+ * reports success while the server body stays unchanged, fails the test: either reproduces the
+ * frozen link.
  *
- * Uses a REAL in-memory Room DB and the REAL Pull/Push strategies so the
- * pulled etag, caldavUrl, and rawIcal are the ones the strategies actually
- * persist — not fixtures. Only side-effect collaborators (credential store,
- * reminder scheduler, WorkManager, invite notifier) are relaxed mocks.
+ * Uses a real in-memory Room database and the real Pull and Push strategies, so the etag,
+ * caldavUrl and rawIcal are the ones the strategies persist. The other collaborators are relaxed
+ * mocks: the data store (its reminder and lookback flows stubbed), PullStrategy's account
+ * repository, the invite notifier, the reminder schedulers, the credential manager, WorkManager
+ * and the contacts collaborators.
  *
- * Parameterized across every configured server so the pulled-event edit path
- * is exercised wherever creds are present; each case gates on reachability and
- * silently skips otherwise (see assumeReady). The plain single-event body has
- * no ORGANIZER/ATTENDEE, so no server routes it through iTIP scheduling
- * delivery — the fetched body echoes the edit directly.
+ * Runs on every configured server and skips one without credentials or unreachable ([assumeReady]),
+ * or where discovery, the server-side create or the pull fails. The bodies have no ORGANIZER or
+ * ATTENDEE, so no server routes them through iTIP delivery and the fetched body shows the edit as
+ * sent.
  *
- * Safety: only mutates events created by this run (unique uid prefix); cleanup
- * deletes only those hrefs. Failure-message ICS bodies are PII-redacted.
+ * Mutates only events this run created (unique UID prefix), and cleanup deletes only those
+ * hrefs. ICS bodies in failure messages are PII-redacted.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -93,7 +90,7 @@ class MultiServerServerOriginEditRoundTripTest(
         private val classStartMs = System.currentTimeMillis()
         private val UID_PREFIX = "server-origin-edit-$classStartMs-"
         private const val DAY_MS = 86_400_000L
-        // Far-future anchor so strict servers don't reject "event in the past".
+        // 21 days out, so a strict server doesn't reject an event in the past.
         private val START_MS = ((System.currentTimeMillis() / DAY_MS) + 21) * DAY_MS + 9 * 3_600_000L
 
         private val icsUtc = SimpleDateFormat("yyyyMMdd'T'HHmmss'Z'", Locale.US).apply {
@@ -126,8 +123,8 @@ class MultiServerServerOriginEditRoundTripTest(
         val dataStore = mockk<KashCalDataStore>(relaxed = true)
         every { dataStore.defaultReminderMinutes } returns flowOf(15)
         every { dataStore.defaultAllDayReminder } returns flowOf(1440)
-        // PullStrategy reads the sync-lookback window; without a real Flow the
-        // relaxed default is non-functional and the pull fails. MAX = "All".
+        // PullStrategy reads the sync lookback; the relaxed default isn't a working Flow and
+        // the pull fails. Int.MAX_VALUE means "All".
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
         pullStrategy = PullStrategy(
@@ -207,8 +204,8 @@ class MultiServerServerOriginEditRoundTripTest(
             ?.substringAfter(':')?.trim()
 
     /**
-     * Insert a local account + calendar row pointing at a real server calendar
-     * URL, so the pulled events land under it and the push routes to it.
+     * Inserts a CalDAV account and a calendar row for [calendarUrl], so pulled events land under it
+     * and the push routes to it.
      */
     private fun localCalendarFor(calendarUrl: String): Calendar {
         val accountId = runBlocking {
@@ -229,8 +226,8 @@ class MultiServerServerOriginEditRoundTripTest(
         return runBlocking { database.calendarsDao().getById(calendarId)!! }
     }
 
-    // A plain, invitee-free VEVENT — the "single event" the reporter creates on
-    // the server. No ORGANIZER/ATTENDEE so no server reroutes it through iTIP.
+    // The single event the reporter created on the server. No ORGANIZER or ATTENDEE, so no server
+    // routes it through iTIP.
     private fun singleEventIcs(uid: String): String =
         """
 BEGIN:VCALENDAR
@@ -272,14 +269,14 @@ END:VCALENDAR
 
         val uid = "$UID_PREFIX${config.name.lowercase()}-${UUID.randomUUID()}-single"
 
-        // 1. Create the event ON THE SERVER (server-origin, not KashCal-serialized).
+        // 1. Create the event on the server with a body the app didn't serialize.
         val createResult = client!!.createEvent(calendarUrl!!, uid, singleEventIcs(uid))
         assumeTrue("create failed on ${config.name}: ${(createResult as? CalDavResult.Error)?.message}",
             createResult.isSuccess())
         val (url, createEtag) = createResult.getOrNull()!!
         trackEvent(url, createEtag)
 
-        // 2. Pull it into KashCal (this is the leg every other test skips).
+        // 2. Pull it in: the step a round trip over an app-created event skips.
         val calendar = localCalendarFor(calendarUrl)
         val pullResult = pullStrategy.pull(calendar, forceFullSync = true, client = client!!)
         val pulled = database.eventsDao().getByUid(uid).firstOrNull()
@@ -289,17 +286,17 @@ END:VCALENDAR
         assertFalse("${config.name}: pulled event must carry a non-empty server etag",
             pulled.etag.isNullOrEmpty())
 
-        // 3. Edit the pulled event through the normal write path. It's a synced
-        //    CalDAV event (isLocal = false), so this queues a PENDING_UPDATE for
-        //    the push to drain — a device-only (isLocal = true) event wouldn't.
+        // 3. Edit the pulled event through the normal write path. It's a synced CalDAV event
+        //    (isLocal = false), so this queues an UPDATE for the push to drain; a local-calendar
+        //    event (isLocal = true) wouldn't queue one.
         val newTitle = "Server-origin single (edited)"
         eventWriter.updateEvent(pulled.copy(title = newTitle), isLocal = false)
 
-        // 4. Drain the pending op — the If-Match PUT built from the pulled etag.
+        // 4. Drain the pending op: an If-Match PUT built from the pulled etag.
         val pushResult = pushStrategy.pushForCalendar(calendar, client!!)
         assertPushClean(pushResult)
 
-        // 5. The server body must reflect the edit (no frozen link).
+        // 5. The server body must show the edit (no frozen link).
         val stored = client!!.fetchEvent(url).getOrNull()!!.icalData
         assertTrue(
             "${config.name}: edit must round-trip to the server, got SUMMARY=" +
@@ -321,7 +318,7 @@ END:VCALENDAR
 
         val uid = "$UID_PREFIX${config.name.lowercase()}-${UUID.randomUUID()}-recurring"
 
-        // 1. Create the recurring master ON THE SERVER.
+        // 1. Create the recurring master on the server.
         val createResult = client!!.createEvent(calendarUrl!!, uid, recurringMasterIcs(uid))
         assumeTrue("create failed on ${config.name}: ${(createResult as? CalDavResult.Error)?.message}",
             createResult.isSuccess())
@@ -335,7 +332,7 @@ END:VCALENDAR
         assumeTrue("master did not pull into Room on ${config.name} (pull=$pullResult)", master != null)
         assumeTrue("${config.name}: pulled master must be recurring", master!!.isRecurring)
 
-        // 3. Edit the SECOND occurrence (a weekly step from the pulled DTSTART).
+        // 3. Edit the second occurrence, one week after the pulled DTSTART.
         val occurrenceTimeMs = master.startTs + 7 * DAY_MS
         val newTitle = "Server-origin recurring (instance edited)"
         eventWriter.editSingleOccurrence(
@@ -345,11 +342,11 @@ END:VCALENDAR
             isLocal = false
         )
 
-        // 4. Drain — the exception is bundled with the master via an If-Match PUT.
+        // 4. Drain: the exception goes up bundled with the master in an If-Match PUT.
         val pushResult = pushStrategy.pushForCalendar(calendar, client!!)
         assertPushClean(pushResult)
 
-        // 5. The server body must now carry the edited override (RECURRENCE-ID VEVENT).
+        // 5. The server body must carry the edited title, which only the exception has.
         val stored = client!!.fetchEvent(url).getOrNull()!!.icalData
         assertTrue(
             "${config.name}: instance edit must round-trip; server body: " +
@@ -361,9 +358,9 @@ END:VCALENDAR
     }
 
     /**
-     * A push that reached the server has zero pushErrors and no 412 warning.
-     * A 412 conflict surfaces as a pushWarning (the frozen-link symptom); a
-     * hard failure surfaces as pushErrors. Either fails the round-trip.
+     * Fails unless [result] is a Success with no pushErrors, no 412 conflict among its
+     * pushWarnings, and at least one event updated. A 412 lands in pushWarnings (the frozen-link
+     * symptom); a failure that won't be retried lands in pushErrors.
      */
     private fun assertPushClean(result: PushResult) {
         assertTrue(

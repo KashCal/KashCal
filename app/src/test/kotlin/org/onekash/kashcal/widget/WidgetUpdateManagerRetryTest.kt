@@ -29,13 +29,17 @@ import java.io.IOException
 import java.net.SocketTimeoutException
 
 /**
- * Unit tests for WidgetUpdateManager retry mechanism.
+ * Tests [WidgetUpdateManager.updateAllWidgets]'s retry scheduling, with `updateAll` mocked.
  *
- * Tests:
- * - Immediate update success path (no retry scheduled)
- * - Retry scheduled on transient errors (IOException, RemoteException)
- * - No retry on permanent errors (SecurityException)
- * - WidgetRetryWorker retry logic
+ * Covers:
+ * - no retry after a successful update
+ * - a retry scheduled on transient errors (IOException, SocketTimeoutException, RemoteException)
+ * - no retry on other errors (SecurityException, IllegalStateException)
+ * - [WidgetUpdateManager.cancelAllUpdates] cancelling the retry
+ * - repeated failures coalescing into one retry (REPLACE)
+ *
+ * The three classification tests at the end assert nothing; the scheduling tests above cover
+ * those cases.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -57,7 +61,7 @@ class WidgetUpdateManagerRetryTest {
 
         context = RuntimeEnvironment.getApplication()
 
-        // Initialize WorkManager for testing
+        // Test WorkManager, so the retry work can be read back.
         val config = Configuration.Builder()
             .setMinimumLoggingLevel(Log.DEBUG)
             .setExecutor(java.util.concurrent.Executors.newSingleThreadExecutor())
@@ -68,7 +72,7 @@ class WidgetUpdateManagerRetryTest {
 
         manager = WidgetUpdateManager(context)
 
-        // Mock the updateAll extension function
+        // Mocks Glance's updateAll extension function.
         mockkStatic("androidx.glance.appwidget.GlanceAppWidgetKt")
     }
 
@@ -197,26 +201,23 @@ class WidgetUpdateManagerRetryTest {
         assertEquals("Multiple failures should coalesce into single retry", 1, workInfos.size)
     }
 
-    // ==================== WidgetRetryWorker isTransientError Tests ====================
+    // ==================== Classification placeholders (always pass) ====================
 
     @Test
     fun `IOException is classified as transient error`() {
-        // This is tested implicitly via updateAllWidgets tests
-        // IOException triggers retry scheduling
+        // Asserts nothing; `updateAllWidgets schedules retry on IOException` covers it.
         assertTrue("IOException should be transient (covered by retry scheduling test)", true)
     }
 
     @Test
     fun `RemoteException is classified as transient error`() {
-        // This is tested implicitly via updateAllWidgets tests
-        // RemoteException triggers retry scheduling
+        // Asserts nothing; `updateAllWidgets schedules retry on RemoteException` covers it.
         assertTrue("RemoteException should be transient (covered by retry scheduling test)", true)
     }
 
     @Test
     fun `SecurityException is NOT classified as transient error`() {
-        // This is tested implicitly via updateAllWidgets tests
-        // SecurityException does NOT trigger retry scheduling
+        // Asserts nothing; the SecurityException no-retry test above covers it.
         assertTrue("SecurityException should NOT be transient (covered by no-retry test)", true)
     }
 }

@@ -78,7 +78,7 @@ class SettingsSearchFilterTest {
     @Test
     fun `null subtitle with non-matching label is excluded`() {
         val result = filterSettings(rows, "30")
-        // Notifications has null subtitle; "30" does not match "Notifications"
+        // Notifications has a null subtitle, and "30" doesn't match its label.
         assertTrue(result.none { it.id == "notifications" })
     }
 

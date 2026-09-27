@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Ni chanfuwyd unrhyw galendrau ar y gweinydd hwn.</string>
     <string name="caldav_error_unexpected">Gwall annisgwyl. Rhowch gynnig arall arni.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nOs yw hwn yn weinydd ar eich rhwydwaith lleol, caniatewch fynediad i\'r rhwydwaith lleol i gysylltu.</string>
+    <string name="caldav_error_connection_refused_insecure">Ailgyfeiriodd y gweinydd y cysylltiad i rywle na fydd KashCal yn ei ddilyn (cyfeiriad heb ei amgryptio, neu ddolen ailgyfeirio), felly stopiodd KashCal cyn anfon dy gyfrinair. Gwiria gyfeiriad y gweinydd.</string>
     <string name="local_network_banner_title">Mae angen mynediad i\'r rhwydwaith lleol</string>
     <string name="local_network_banner_body">Mae\'n edrych fel bod y gweinydd hwn ar eich rhwydwaith lleol. Caniatewch fynediad i\'r rhwydwaith lleol fel y gall KashCal gysylltu ag ef.</string>
     <string name="local_network_banner_allow">Caniatáu mynediad</string>
@@ -952,6 +953,8 @@
     <string name="dialog_edit_recurring_title">Cadw newidiadau</string>
     <string name="dialog_delete_recurring_title">Dileu</string>
     <string name="dialog_move_recurring_title">Symud</string>
+    <string name="snackbar_event_rescheduled">Digwyddiad wedi\'i aildrefnu</string>
+    <string name="snackbar_reschedule_failed">Methu aildrefnu\'r digwyddiad</string>
     <string name="recurring_this_event">Y digwyddiad hwn</string>
     <string name="recurring_all_events">Pob digwyddiad</string>
 

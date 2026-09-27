@@ -177,9 +177,7 @@ fun CalendarPickerRow(
     }
 }
 
-/**
- * Individual calendar item in the picker list.
- */
+/** Shows one Room calendar row in the picker list. */
 @Composable
 private fun CalendarItem(
     calendar: Calendar,
@@ -225,7 +223,8 @@ private fun CalendarItem(
 }
 
 /**
- * Individual picker calendar item (supports both Room and Device calendars).
+ * Shows one [PickerCalendar] row. The type covers Room and device calendars; this file passes
+ * device calendars.
  */
 @Composable
 private fun PickerCalendarItem(
@@ -272,12 +271,9 @@ private fun PickerCalendarItem(
 }
 
 /**
- * Simple calendar picker without expansion state management.
- * Use when you want to manage expansion state externally.
+ * Shows a flat Room calendar list grouped by account, with no expand state of its own.
  *
- * @param calendarGroups Calendars grouped by account
- * @param selectedCalendarId Currently selected calendar ID
- * @param onCalendarSelect Called with calendar ID when selection changes
+ * @param onCalendarSelect called with the tapped calendar's ID.
  */
 @Composable
 fun SimpleCalendarPicker(
@@ -297,7 +293,6 @@ fun SimpleCalendarPicker(
             )
         } else {
             calendarGroups.forEach { group ->
-                // Account header
                 Text(
                     text = group.accountName,
                     style = MaterialTheme.typography.labelMedium,
@@ -308,7 +303,6 @@ fun SimpleCalendarPicker(
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                         .padding(top = 4.dp)
                 )
-                // Calendars in group
                 group.calendars.forEach { calendar ->
                     CalendarItem(
                         calendar = calendar,

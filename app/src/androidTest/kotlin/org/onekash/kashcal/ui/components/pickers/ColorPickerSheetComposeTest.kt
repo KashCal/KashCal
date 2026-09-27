@@ -17,16 +17,16 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Compose UI tests for ColorPickerSheet.
+ * Compose UI tests for [ColorPickerSheet].
  *
- * Tests use ColorPickerSheetContent directly (without ModalBottomSheet)
- * to avoid animation timing issues that can cause flaky tests.
+ * They render [ColorPickerSheetContent] without the ModalBottomSheet, whose animation timing
+ * makes tests flaky.
  *
- * Tests cover:
- * - Sheet displays all components (preview, slider, hex input, buttons)
- * - Hex input validation and error states
- * - Cancel/Select button behavior
- * - Accessibility labels
+ * Covered:
+ * - The header, hex input label, Cancel and Select buttons, and the initial hex value show
+ * - Select is enabled for a valid starting color
+ * - Cancel calls onCancel; Select returns the current color
+ * - The hue slider's content description names the color (red, blue, green)
  */
 @RunWith(AndroidJUnit4::class)
 class ColorPickerSheetComposeTest {
@@ -94,7 +94,7 @@ class ColorPickerSheetComposeTest {
             }
         }
 
-        // The hex value should be visible in the text field
+        // The hex value shows in the text field.
         composeTestRule.onNode(hasText("2196F3")).assertExists()
     }
 
@@ -155,7 +155,7 @@ class ColorPickerSheetComposeTest {
         composeTestRule.waitForIdle()
 
         assertNotNull("Select should call onColorSelected", selectedColor)
-        // Red at hue 0 should return red
+        // Red at hue 0 comes back as red.
         assertEquals("Should return red color", 0xFFFF0000.toInt(), selectedColor)
     }
 
@@ -173,7 +173,7 @@ class ColorPickerSheetComposeTest {
             }
         }
 
-        // The slider should have accessibility description containing "Red"
+        // The slider's content description contains "Red".
         composeTestRule.onNode(
             hasContentDescription(value = "Red", substring = true, ignoreCase = true)
         ).assertExists()
@@ -184,14 +184,14 @@ class ColorPickerSheetComposeTest {
         composeTestRule.setContent {
             MaterialTheme {
                 ColorPickerSheetContent(
-                    currentColor = 0xFF0000FF.toInt(), // Blue (hue ~240)
+                    currentColor = 0xFF0000FF.toInt(), // Blue (hue 240)
                     onColorSelected = {},
                     onCancel = {}
                 )
             }
         }
 
-        // The slider should have accessibility description containing "Blue"
+        // The slider's content description contains "Blue".
         composeTestRule.onNode(
             hasContentDescription(value = "Blue", substring = true, ignoreCase = true)
         ).assertExists()
@@ -209,7 +209,7 @@ class ColorPickerSheetComposeTest {
             }
         }
 
-        // The slider should have accessibility description containing "Green"
+        // The slider's content description contains "Green".
         composeTestRule.onNode(
             hasContentDescription(value = "Green", substring = true, ignoreCase = true)
         ).assertExists()

@@ -10,16 +10,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests the share-card scaling step. Regardless of the device's native
- * density (and therefore the captured bitmap's pixel size), the final PNG
- * must be exactly 1080×1350 px so chat clients render every share with
- * the same crispness.
+ * Tests [scaleToShareCardOutput]. Whatever the device's native density, and so the captured
+ * bitmap's pixel size, the final PNG must be exactly 1080×1350 px so chat clients render every
+ * share with the same crispness. Also tests that the source is recycled and the size constants.
  *
- * This is the regression test for v23.7.71 where the LocalDensity-swap
- * approach silently captured at the wrong size on some devices, causing
- * top + bottom content to be cut off.
+ * Regression test for v23.7.71, where swapping LocalDensity silently captured at the wrong size
+ * on some devices and cut off the top and bottom content.
  *
- * Robolectric — Bitmap is android.graphics.Bitmap.
+ * Runs under Robolectric for android.graphics.Bitmap.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -45,8 +43,8 @@ class ShareCardScalingTest {
 
     @Test
     fun `scaleToShareCardOutput produces exactly 1080x1350 from a 1080x1350 source`() {
-        // Source matches what a 3.0-density device would capture — already
-        // target size; helper still returns the same dimensions.
+        // Source matches what a 3.0-density device would capture: already the target size,
+        // so the helper returns the source itself (not asserted here).
         val source = Bitmap.createBitmap(1080, 1350, Bitmap.Config.ARGB_8888)
         val out = scaleToShareCardOutput(source)
         assertEquals(SHARE_CARD_PNG_WIDTH, out.width)

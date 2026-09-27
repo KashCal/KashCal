@@ -19,13 +19,12 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 /**
- * Unit tests for [DateWidgetContent]'s size-responsive face selection.
+ * Tests [DateWidgetContent]'s choice of face by size.
  *
- * Two layers: the pure [dateWidgetLayout] decision (icon vs card, font-scale aware) is
- * asserted directly; the rendered content is exercised through Glance's real RemoteViews
- * translation at a chosen [DpSize] (the layer that reads [androidx.glance.LocalSize]), so a
- * small size shows the short weekday + day number and a large size shows the full weekday +
- * month/day.
+ * The [dateWidgetLayout] decision (icon or card, with thresholds scaled by font scale) is
+ * asserted directly. The rendered content goes through Glance's RemoteViews translation at a
+ * chosen [DpSize], the layer that reads [androidx.glance.LocalSize]: a small size shows the
+ * short weekday and day number, a large size the full weekday and month/day.
  */
 @OptIn(ExperimentalGlanceRemoteViewsApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -50,13 +49,14 @@ class DateWidgetContentTest {
 
     @Test
     fun `a wide but very short widget stays ICON`() {
-        // Below the height floor — a thin horizontal strip can't host the two-line card.
+        // Below the height floor: a thin horizontal strip can't hold the two-line card.
         assertEquals(DateWidgetLayout.ICON, dateWidgetLayout(200f, 40f, 1f))
     }
 
     @Test
     fun `a larger font scale raises the width needed for the card`() {
-        // 100dp wide is a card at font scale 1 but not at 1.5 (85 * 1.5 = 127.5).
+        // 100dp wide is a card at font scale 1 but not at 1.5 (85 * 1.5 = 127.5). The 57dp
+        // height also misses the scaled floor at 1.5 (44 * 1.5 = 66), so either check gives ICON.
         assertEquals(DateWidgetLayout.CARD, dateWidgetLayout(100f, 57f, 1f))
         assertEquals(DateWidgetLayout.ICON, dateWidgetLayout(100f, 57f, 1.5f))
     }
@@ -89,7 +89,7 @@ class DateWidgetContentTest {
         assertTrue("expected full month/day '${full.monthDay}' in $texts", texts.contains(full.monthDay))
     }
 
-    /** Translate [DateWidgetContent] at [size] and collect every rendered TextView string. */
+    /** Translates [DateWidgetContent] at [size] and returns every rendered TextView string. */
     private fun renderTexts(size: DpSize): List<String> {
         val result = translate(size) { GlanceTheme { DateWidgetContent() } }
         return collectTexts(result.remoteViews)

@@ -16,19 +16,15 @@ import org.onekash.kashcal.sync.parser.CalDavXmlParser
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * Parser tests for Open-Xchange CalDAV responses (mailbox.org).
+ * Tests [CalDavXmlParser] and [DefaultQuirks] on Open-Xchange CalDAV responses. Open-Xchange
+ * runs mailbox.org and 1&1 / IONOS, among other deployments.
  *
- * Open-Xchange is a popular groupware platform used by:
- * - mailbox.org
- * - 1&1 / IONOS
- * - Various enterprise deployments
+ * Differences from SabreDAV (Nextcloud, Baikal):
+ * - Uppercase namespace prefixes (D:, CAL:, CARD:)
+ * - The calendar home URL often equals the principal URL
+ * - URL-style sync-tokens (`http://www.open-xchange.com/sync/...`)
  *
- * Key differences from SabreDAV (Nextcloud/Baikal):
- * - Uses uppercase namespace prefixes (D:, CAL:, CARD:)
- * - Calendar home URL often equals principal URL
- * - Uses OX-specific sync token format
- *
- * Run: ./gradlew test --tests "*OpenXchangeCalDavParserTest*"
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*OpenXchangeCalDavParserTest*"
  *
  * Related issue: https://github.com/KashCal/KashCal/issues/38
  */
@@ -137,11 +133,9 @@ class OpenXchangeCalDavParserTest {
 
         val calendars = xmlParser.extractCalendars(xml)
 
-        // Should find 3 calendars (Kalender, Arbeit, German Holidays)
-        // Should NOT include the calendar home collection
+        // Kalender, Arbeit and German Holidays; the calendar home collection is left out.
         assertEquals("Should find 3 calendars", 3, calendars.size)
 
-        // Verify first calendar (Kalender)
         val kalender = calendars.find { it.displayName == "Kalender" }
         assertNotNull("Should find Kalender calendar", kalender)
         assertEquals("/caldav/testuser@mailbox.org/Kalender/", kalender!!.href)
@@ -149,13 +143,12 @@ class OpenXchangeCalDavParserTest {
         assertEquals("1706889600", kalender.ctag)
         assertFalse("Kalender should be writable", kalender.isReadOnly)
 
-        // Verify second calendar (Arbeit)
         val arbeit = calendars.find { it.displayName == "Arbeit" }
         assertNotNull("Should find Arbeit calendar", arbeit)
         assertEquals("/caldav/testuser@mailbox.org/Arbeit/", arbeit!!.href)
         assertFalse("Arbeit should be writable", arbeit.isReadOnly)
 
-        // Verify shared calendar (read-only)
+        // Shared with read privilege only.
         val holidays = calendars.find { it.displayName == "German Holidays" }
         assertNotNull("Should find German Holidays calendar", holidays)
         assertTrue("Shared calendar should be read-only", holidays!!.isReadOnly)
@@ -167,7 +160,6 @@ class OpenXchangeCalDavParserTest {
 
         val calendars = xmlParser.extractCalendars(xml)
 
-        // Calendar home collection should NOT be included
         val home = calendars.find { it.href == "/caldav/testuser@mailbox.org/" }
         assertNull("Calendar home should not be detected as calendar", home)
     }
@@ -209,11 +201,9 @@ class OpenXchangeCalDavParserTest {
 
         val syncData = xmlParser.extractSyncCollectionData(xml)
 
-        // Verify sync token
         assertNotNull("Sync token should be extracted", syncData.syncToken)
         assertEquals("http://www.open-xchange.com/sync/1706889999", syncData.syncToken)
 
-        // Verify changed items (2 events)
         assertEquals("Should have 2 changed items", 2, syncData.changedItems.size)
 
         val event1 = syncData.changedItems.find { it.first.contains("event-123") }
@@ -224,7 +214,6 @@ class OpenXchangeCalDavParserTest {
         assertNotNull(event2)
         assertEquals("ox-etag-def456", event2!!.second)
 
-        // Verify deleted items (1 deleted)
         assertEquals("Should have 1 deleted item", 1, syncData.deletedHrefs.size)
         assertTrue(syncData.deletedHrefs[0].contains("deleted-event"))
     }
@@ -236,7 +225,7 @@ class OpenXchangeCalDavParserTest {
         val syncToken = xmlParser.extractSyncToken(xml)
 
         assertNotNull(syncToken)
-        // OX uses URL-style sync tokens
+        // OX uses URL-style sync-tokens.
         assertTrue(syncToken!!.startsWith("http://www.open-xchange.com/sync/"))
     }
 
@@ -250,7 +239,6 @@ class OpenXchangeCalDavParserTest {
 
         assertEquals("Should extract 2 events", 2, events.size)
 
-        // Verify simple event
         val simpleEvent = events.find { it.href.contains("event-123") }
         assertNotNull(simpleEvent)
         assertEquals("ox-etag-abc123", simpleEvent!!.etag)
@@ -258,7 +246,7 @@ class OpenXchangeCalDavParserTest {
         assertTrue(simpleEvent.icalData.contains("UID:event-123@mailbox.org"))
         assertTrue(simpleEvent.icalData.contains("SUMMARY:Team Meeting"))
 
-        // Verify recurring event with exception
+        // A recurring event and its exception in one resource.
         val recurringEvent = events.find { it.href.contains("recurring-456") }
         assertNotNull(recurringEvent)
         assertTrue(recurringEvent!!.icalData.contains("RRULE:FREQ=WEEKLY"))
@@ -273,7 +261,6 @@ class OpenXchangeCalDavParserTest {
         val events = xmlParser.extractICalData(xml)
 
         assertTrue(events.isNotEmpty())
-        // OX uses its own PRODID
         assertTrue(events[0].icalData.contains("PRODID:-//Open-Xchange//"))
     }
 

@@ -35,7 +35,7 @@ class VTimezoneGeneratorTest {
             assertTrue(result.contains("TZOFFSETFROM:+0530"))
             assertTrue(result.contains("END:STANDARD"))
             assertTrue(result.contains("END:VTIMEZONE"))
-            // No DAYLIGHT component for fixed offset
+            // No DAYLIGHT component for a fixed offset.
             assertFalse(result.contains("BEGIN:DAYLIGHT"))
         }
 
@@ -63,14 +63,13 @@ class VTimezoneGeneratorTest {
         @Test
         @DisplayName("Asia/Shanghai generates +0800 with no DST (ical4j issue #720)")
         fun `Asia Shanghai generates correct format`() {
-            // ical4j issue #720: Embedded VTIMEZONE for Asia/Shanghai was incorrect
-            // China uses fixed UTC+8 with no DST since 1991
+            // ical4j issue #720 reports ical4j's embedded VTIMEZONE for Asia/Shanghai as wrong.
+            // China has used a fixed UTC+8 with no DST since 1991, so no DAYLIGHT component.
             val result = generator.generate("Asia/Shanghai")
 
             assertTrue(result.contains("TZID:Asia/Shanghai"))
             assertTrue(result.contains("TZOFFSETTO:+0800"))
             assertTrue(result.contains("BEGIN:STANDARD"))
-            // China abolished DST in 1991 - no DAYLIGHT component
             assertFalse(result.contains("BEGIN:DAYLIGHT"),
                 "Asia/Shanghai should NOT have DAYLIGHT component - China has no DST")
         }
@@ -93,11 +92,11 @@ class VTimezoneGeneratorTest {
             assertTrue(result.contains("END:DAYLIGHT"))
             assertTrue(result.contains("END:VTIMEZONE"))
 
-            // Check offsets
+            // Standard and daylight offsets.
             assertTrue(result.contains("-0500") || result.contains("-05:00"))
             assertTrue(result.contains("-0400") || result.contains("-04:00"))
 
-            // Check RRULE for DST transitions
+            // Yearly RRULE for the transitions.
             assertTrue(result.contains("RRULE:"))
             assertTrue(result.contains("FREQ=YEARLY"))
         }
@@ -111,7 +110,7 @@ class VTimezoneGeneratorTest {
             assertTrue(result.contains("BEGIN:STANDARD"))
             assertTrue(result.contains("BEGIN:DAYLIGHT"))
 
-            // PST/PDT offsets
+            // PST and PDT offsets.
             assertTrue(result.contains("-0800"))
             assertTrue(result.contains("-0700"))
         }
@@ -125,7 +124,7 @@ class VTimezoneGeneratorTest {
             assertTrue(result.contains("BEGIN:STANDARD"))
             assertTrue(result.contains("BEGIN:DAYLIGHT"))
 
-            // CST/CDT offsets
+            // CST and CDT offsets.
             assertTrue(result.contains("-0600"))
             assertTrue(result.contains("-0500"))
         }
@@ -246,7 +245,7 @@ class VTimezoneGeneratorTest {
             assertTrue(result.contains("TZID:Europe/London"))
             assertTrue(result.contains("TZID:Asia/Tokyo"))
 
-            // Count VTIMEZONE blocks
+            // One VTIMEZONE per zone.
             val vtimezoneCount = result.split("BEGIN:VTIMEZONE").size - 1
             assertEquals(3, vtimezoneCount)
         }
@@ -269,7 +268,7 @@ class VTimezoneGeneratorTest {
         fun `US DST spring forward RRULE`() {
             val result = generator.generate("America/New_York")
 
-            // US DST starts 2nd Sunday of March
+            // US DST starts the 2nd Sunday of March; asserts only BYMONTH=3 and a Sunday.
             assertTrue(result.contains("BYMONTH=3"))
             assertTrue(result.contains("BYDAY=") && result.contains("SU"))
         }
@@ -279,7 +278,7 @@ class VTimezoneGeneratorTest {
         fun `US DST fall back RRULE`() {
             val result = generator.generate("America/New_York")
 
-            // US DST ends 1st Sunday of November
+            // US DST ends the 1st Sunday of November; asserts only BYMONTH=11.
             assertTrue(result.contains("BYMONTH=11"))
         }
 
@@ -288,8 +287,8 @@ class VTimezoneGeneratorTest {
         fun `European DST uses Sunday patterns`() {
             val result = generator.generate("Europe/London")
 
-            // Europe DST transitions on Sundays in March and October
-            // The exact week representation depends on JVM timezone data
+            // European DST changes on Sundays in March and October. The week number depends on
+            // the JVM's timezone data, so only the Sunday and one of the months are asserted.
             assertTrue(result.contains("SU"), "Should have Sunday transitions")
             assertTrue(result.contains("BYMONTH=3") || result.contains("BYMONTH=10"),
                 "Should have March or October transition")
@@ -371,10 +370,9 @@ class VTimezoneGeneratorTest {
             val allDayEvent = createAllDayEvent()
             val tzids = generator.collectTimezones(listOf(allDayEvent))
 
-            // All-day events technically have timezone but VTIMEZONE is not needed
-            // This is a design decision - DATE values don't need VTIMEZONE
-            // The current impl may include it - adjust based on actual behavior
-            assertTrue(tzids.isEmpty() || tzids.isNotEmpty()) // Either behavior is acceptable
+            // collectTimezones skips DATE values (this one also has no zone), so the set is
+            // empty, but this always-true assert accepts any result.
+            assertTrue(tzids.isEmpty() || tzids.isNotEmpty())
         }
 
         @Test
@@ -395,12 +393,13 @@ class VTimezoneGeneratorTest {
         fun `VTIMEZONE structure is valid`() {
             val result = generator.generate("America/New_York")
 
-            // Required structure
+            // Required VTIMEZONE structure.
             assertTrue(result.contains("BEGIN:VTIMEZONE"))
             assertTrue(result.contains("END:VTIMEZONE"))
             assertTrue(result.contains("TZID:"))
 
-            // Each component must have required properties
+            // RFC 5545 §3.6.5 requires DTSTART, TZOFFSETTO and TZOFFSETFROM in each STANDARD
+            // and DAYLIGHT; these asserts check only that each appears somewhere.
             assertTrue(result.contains("DTSTART:"))
             assertTrue(result.contains("TZOFFSETFROM:"))
             assertTrue(result.contains("TZOFFSETTO:"))

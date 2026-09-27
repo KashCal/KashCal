@@ -4,19 +4,16 @@ import androidx.annotation.StringRes
 import org.onekash.kashcal.R
 
 /**
- * Where the widgets' light/dark face comes from — independent of, but able to track, the app's
- * own [org.onekash.kashcal.ui.theme.ThemeMode].
+ * Chooses where the widgets' light/dark face comes from, separate from but able to track the app's
+ * [org.onekash.kashcal.ui.theme.ThemeMode].
  *
- * - [FOLLOW_APP]: mirror the app's face (default). When the app itself follows the device, the
- *   widget follows the device too — so this transitively covers device-following without a
- *   separate "system" option. For a user whose app is on the default (follow-device) theme this
- *   is indistinguishable from the earlier "system" default; a user who has pinned the app to
- *   Light or Dark now gets a widget that adopts that pin rather than tracking the device.
- * - [LIGHT]/[DARK]: pin the widget to that face regardless of the app or the device setting.
+ * - [FOLLOW_APP]: use the app's face (default). An app that follows the device makes the widget
+ *   follow it too, so there is no separate "system" option.
+ * - [LIGHT], [DARK]: pin the widget to that face whatever the app or device uses.
  *
- * The stored pref value ("follow_app"/"light"/"dark") reuses the same key the earlier widget-theme
- * setting wrote. A legacy "system" value is unknown here and therefore falls back to [FOLLOW_APP],
- * which is exactly the desired target: an unpinned widget that tracks the app (and thus the device).
+ * [prefValue] is stored under the `widget_theme_mode` key, which an older widget-theme setting
+ * also wrote. Its "system" value is unknown here and falls back to [FOLLOW_APP], the intended
+ * target: an unpinned widget that tracks the app, and through it the device.
  */
 enum class WidgetThemeSource(
     val prefValue: String,
@@ -40,7 +37,7 @@ enum class WidgetThemeSource(
     );
 
     companion object {
-        /** Maps a stored pref value to a source, falling back to [FOLLOW_APP] for unknown/null. */
+        /** Maps a stored pref value to a source; null or unknown falls back to [FOLLOW_APP]. */
         fun fromPrefValue(value: String?): WidgetThemeSource =
             entries.firstOrNull { it.prefValue == value } ?: FOLLOW_APP
     }

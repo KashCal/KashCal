@@ -9,9 +9,8 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.util.text.containsCaseInsensitive
 
 /**
- * A single subscribable holiday calendar from the bundled catalog: a display
- * name plus the public feed URL it points at. The catalog hosts no calendar
- * data itself — only pointers to the externally-hosted feeds.
+ * A subscribable holiday calendar from the bundled catalog: a display name and the public feed
+ * URL it points at. The catalog holds no calendar data, only pointers to externally hosted feeds.
  */
 @Serializable
 data class HolidayCatalogEntry(
@@ -26,9 +25,8 @@ data class MarkedHolidayEntry(
 )
 
 /**
- * Deserialization shape of the bundled catalog file. Only [entries] is read;
- * the file also carries source/license metadata which [HolidayCatalogJson]
- * ignores via `ignoreUnknownKeys`.
+ * Shape of the bundled catalog file. Only [entries] is read; the file's source and license
+ * metadata is skipped by `ignoreUnknownKeys` in [HolidayCatalogJson].
  */
 @Serializable
 private data class HolidayCatalogFile(
@@ -40,11 +38,11 @@ private val HolidayCatalogJson: Json = Json {
 }
 
 /**
- * Parse the catalog JSON into entries sorted case-insensitively by name.
+ * Parses the catalog JSON into entries sorted case-insensitively by name, dropping entries with
+ * a blank name or URL.
  *
- * Total by design: any malformed/empty input or a file without an entries
- * array yields an empty list rather than throwing, so a corrupt bundled asset
- * degrades to an empty picker instead of crashing.
+ * Never throws: malformed or empty input, or a file without an entries array, yields an empty
+ * list, so a corrupt bundled asset shows an empty picker instead of crashing.
  */
 fun parseHolidayCatalog(json: String): List<HolidayCatalogEntry> {
     return try {
@@ -58,9 +56,8 @@ fun parseHolidayCatalog(json: String): List<HolidayCatalogEntry> {
 }
 
 /**
- * Filter entries to those whose name contains [query] (case-insensitive
- * substring). The query is trimmed first, so a blank or whitespace-only query
- * returns all entries and a stray leading/trailing space doesn't drop matches.
+ * Returns the entries whose name contains [query], ignoring case. The query is trimmed first,
+ * so a blank query returns all entries and a stray leading or trailing space drops no match.
  */
 fun filterCatalog(
     entries: List<HolidayCatalogEntry>,
@@ -71,10 +68,9 @@ fun filterCatalog(
 }
 
 /**
- * Pair each entry with whether [subscribedUrls] already contains its URL.
- * Matching is trimmed equality: catalog URLs are always https, and stored
- * subscription URLs are normalized (webcal→https) and trimmed at write time,
- * so a plain trimmed comparison is sufficient.
+ * Pairs each entry with whether [subscribedUrls] already contains its URL, by trimmed equality.
+ * That suffices because catalog URLs are always https, and a subscription added in the app is
+ * stored trimmed with webcal rewritten to https.
  */
 fun markAlreadyAdded(
     entries: List<HolidayCatalogEntry>,
@@ -85,8 +81,8 @@ fun markAlreadyAdded(
 }
 
 /**
- * Load and parse the bundled holiday catalog from `res/raw`. Returns an empty
- * list on any IO/parse failure (see [parseHolidayCatalog]).
+ * Loads and parses the bundled holiday catalog from `res/raw`. Returns an empty list on any read
+ * or parse failure ([parseHolidayCatalog]).
  */
 fun loadHolidayCatalog(
     context: Context,

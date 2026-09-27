@@ -26,20 +26,17 @@ data class ContactEmail(
 /**
  * Reads contact email addresses for the attendee picker's type-ahead.
  *
- * Queries the Email rows of the Contacts provider filtered by a typed prefix
- * ([Email.CONTENT_FILTER_URI] with the prefix as an appended path segment),
- * with a narrow projection (contact name + address only — the provider docs
- * warn that fetching all detail columns hurts performance), off the main
- * thread. Distinct from [ContactEventManager], which reads birthday/anniversary
- * START_DATE rows and never projects an email column.
+ * Queries `Email.CONTENT_FILTER_URI` with the typed prefix as a path segment, off the main
+ * thread, projecting only the contact name and address (the provider docs warn that fetching
+ * all detail columns hurts performance). The birthday and anniversary reader
+ * ([BaseContactEventRepository]) is separate and never projects an email column.
  *
- * Name comes from [Contacts.DISPLAY_NAME] (the joined contact's name), NOT
- * [Email.DISPLAY_NAME] — the latter is the per-email-row label (DATA4), which
- * is almost always blank, so projecting it made every suggestion render as a
- * bare address even when matched by name.
+ * The name is [Contacts.DISPLAY_NAME], the joined contact's name. [Email.DISPLAY_NAME] is the
+ * per-email label (DATA4), usually blank, so projecting it shows a bare address even for a
+ * suggestion matched by name.
  *
- * The query is gated on READ_CONTACTS: without the grant it returns empty
- * rather than throwing, so the picker degrades to manual email entry.
+ * Without READ_CONTACTS the query returns empty instead of throwing, so the picker falls back
+ * to manual email entry.
  */
 @Singleton
 class ContactEmailReader(
@@ -47,9 +44,8 @@ class ContactEmailReader(
     private val contentResolver: ContentResolver,
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
 ) {
-    // Hilt can't inject a ContentResolver directly, so the injected entry
-    // point derives it from the application context; the primary constructor
-    // stays resolver-injectable so tests can supply a fake.
+    // Hilt can't inject a ContentResolver, so this entry point derives it from the application
+    // context; the primary constructor takes one so tests can supply a fake.
     @Inject
     constructor(
         @ApplicationContext context: Context,
@@ -61,9 +57,9 @@ class ContactEmailReader(
             PackageManager.PERMISSION_GRANTED
 
     /**
-     * Return contact emails whose name or address matches [prefix], de-duped by
-     * canonical address and capped at [LIMIT]. Empty when the prefix is blank
-     * or READ_CONTACTS isn't granted.
+     * Returns contact emails whose name or address matches [prefix], de-duplicated by
+     * canonical address and capped at [LIMIT]. Empty when the prefix is blank or READ_CONTACTS
+     * isn't granted.
      */
     suspend fun query(prefix: String): List<ContactEmail> {
         val trimmed = prefix.trim()
@@ -83,17 +79,16 @@ class ContactEmailReader(
                     while (cursor.moveToNext() && results.size < LIMIT) {
                         val address = cursor.getString(addrIdx)?.trim().orEmpty()
                         if (address.isEmpty()) continue
-                        // Contact rows are bare emails; canonical() only
-                        // lowercases mailto: forms, so lowercase the dedup key
-                        // to collapse the same address typed in mixed case
-                        // across two contact rows. Display keeps original case.
+                        // canonical() folds bare emails; lowercase() also folds rows that
+                        // aren't mailbox-shaped, so one address typed in mixed case on two
+                        // rows dedups. The display keeps the original case.
                         if (!seen.add(AddressNormalizer.canonical(address).lowercase())) continue
                         val name = if (nameIdx >= 0) cursor.getString(nameIdx)?.trim().orEmpty() else ""
                         results.add(ContactEmail(displayName = name, address = address))
                     }
                 }
             } catch (e: SecurityException) {
-                // Permission revoked between the check and the query — degrade.
+                // Permission revoked between the check and the query: return what was read.
                 Log.w(TAG, "Contacts query denied: ${e.javaClass.simpleName}")
             }
             results

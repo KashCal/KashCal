@@ -25,14 +25,17 @@ import org.robolectric.annotation.Config
 import java.util.concurrent.TimeUnit
 
 /**
- * Tests for PendingOperationsDao - the sync queue.
+ * Tests [PendingOperationsDao], the offline-first sync queue.
  *
- * Critical for offline-first architecture. Tests ensure:
- * - FIFO ordering of operations
- * - Duplicate prevention via operationExists
- * - Status transitions (pending -> in_progress -> completed/failed)
+ * Covers:
+ * - FIFO ordering and retry gating of ready operations
+ * - Duplicate checks via operationExists
+ * - Status transitions (PENDING, IN_PROGRESS, FAILED, ABANDONED)
  * - Retry scheduling with backoff
  * - Consolidation of CREATE+UPDATE operations
+ * - Per-calendar conflict lookup
+ * - Resetting failed and stale IN_PROGRESS operations, and deleting old failed ones
+ * - The 30-day expiry and abandon lifecycle
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -171,10 +174,10 @@ class PendingOperationsDaoTest {
     fun `getReadyOperations excludes future retry operations`() = runTest {
         val now = System.currentTimeMillis()
 
-        // Pending operation with no delay - should be included
+        // Pending operation with no delay: included
         pendingOpsDao.insert(createOperation(nextRetryAt = 0))
 
-        // Operation scheduled for future retry - should be excluded
+        // Operation scheduled for a future retry: excluded
         pendingOpsDao.insert(createOperation(nextRetryAt = now + 60000))
 
         val ready = pendingOpsDao.getReadyOperations(now)
@@ -734,7 +737,7 @@ class PendingOperationsDaoTest {
         val now = System.currentTimeMillis()
         val oldTime = now - 86400000 * 7 // 7 days ago
 
-        // Create and fail an operation, then manually update its timestamp
+        // Fail an operation with a timestamp a week old
         val id = pendingOpsDao.insert(createOperation())
         pendingOpsDao.markFailed(id, "Old error", oldTime)
 
@@ -742,12 +745,13 @@ class PendingOperationsDaoTest {
         val id2 = pendingOpsDao.insert(createOperation())
         pendingOpsDao.markFailed(id2, "Recent error", now)
 
-        // Delete operations older than 1 day
+        // Delete FAILED operations last updated over a day ago
         pendingOpsDao.deleteOldFailed(now - 86400000)
 
         val remaining = pendingOpsDao.getAll()
-        // Both remain because markFailed uses the `now` parameter for updated_at
-        // The old one was marked failed with oldTime, so updated_at = oldTime < cutoff
+        // markFailed sets updated_at to its `now` argument, so the old op's updated_at is
+        // oldTime, before the cutoff, and only the recent op should remain (the assert checks
+        // only that at least one does)
         assertTrue(remaining.size >= 1)
     }
 
@@ -842,7 +846,7 @@ class PendingOperationsDaoTest {
         val twoHoursAgo = now - TimeUnit.HOURS.toMillis(2)
         val thirtyMinutesAgo = now - TimeUnit.MINUTES.toMillis(30)
 
-        // Stuck operation (2 hours old) - create PendingOperation directly for updatedAt control
+        // Stuck operation (2 hours old), built directly to control updatedAt
         val stuckOpId = pendingOpsDao.insert(PendingOperation(
             eventId = testEventId,
             operation = PendingOperation.OPERATION_UPDATE,
@@ -850,7 +854,7 @@ class PendingOperationsDaoTest {
             updatedAt = twoHoursAgo
         ))
 
-        // Recent operation (30 min - should NOT be reset)
+        // Recent operation (30 min): not reset
         val recentOpId = pendingOpsDao.insert(PendingOperation(
             eventId = testEventId,
             operation = PendingOperation.OPERATION_UPDATE,
@@ -858,7 +862,7 @@ class PendingOperationsDaoTest {
             updatedAt = thirtyMinutesAgo
         ))
 
-        // PENDING operation (should NOT be affected)
+        // PENDING operation: not affected
         val pendingOpId = pendingOpsDao.insert(PendingOperation(
             eventId = testEventId,
             operation = PendingOperation.OPERATION_CREATE,
@@ -898,10 +902,7 @@ class PendingOperationsDaoTest {
 
     // ==================== Abandon / Expiry Lifecycle Tests ====================
 
-    /**
-     * Helper: insert an operation already past the 30-day lifetime window so it
-     * is detected by getExpiredOperations.
-     */
+    /** Inserts an operation already past the 30-day lifetime, so getExpiredOperations finds it. */
     private suspend fun insertExpiredOperation(
         status: String = PendingOperation.STATUS_PENDING
     ): Long {
@@ -931,9 +932,9 @@ class PendingOperationsDaoTest {
 
     @Test
     fun `abandonOperation is a no-op on an already-abandoned row`() = runTest {
-        // Compare-and-set: only the first caller transitions the op. A concurrent
-        // sync that re-abandons the same op gets 0, so the "sync expired"
-        // notification alerts once instead of once per overlapping sync.
+        // Compare-and-set: only the first caller transitions the op. A concurrent sync that
+        // re-abandons the same op gets 0, so the "sync expired" notification alerts once
+        // instead of once per overlapping sync.
         val now = System.currentTimeMillis()
         val id = insertExpiredOperation()
         assertEquals(1, pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now))
@@ -946,9 +947,8 @@ class PendingOperationsDaoTest {
 
     @Test
     fun `getExpiredOperations excludes already-abandoned operations`() = runTest {
-        // This is the notify-once guarantee: once abandoned, an expired op must
-        // never be re-detected on subsequent syncs (otherwise the notification
-        // re-posts forever after the user dismisses it).
+        // The notify-once guarantee: once abandoned, an expired op must never be re-detected
+        // on later syncs, or the notification re-posts forever after the user dismisses it.
         val now = System.currentTimeMillis()
         val cutoff = now - PendingOperation.OPERATION_LIFETIME_MS
         val id = insertExpiredOperation()
@@ -960,15 +960,15 @@ class PendingOperationsDaoTest {
         // Worker abandons it.
         pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now)
 
-        // Next sync must NOT re-detect it.
+        // The next sync must not re-detect it.
         val secondPass = pendingOpsDao.getExpiredOperations(cutoff)
         assertTrue("Abandoned op must not be re-detected", secondPass.isEmpty())
     }
 
     @Test
     fun `resetAllFailed re-arms ABANDONED operations with fresh lifetime`() = runTest {
-        // Honors the notification's "Force Sync to retry" promise: an abandoned
-        // op must become retryable again with a fresh 30-day window.
+        // Honors the notification's "Force Sync to retry" promise: an abandoned op must become
+        // retryable again with a fresh 30-day window.
         val now = System.currentTimeMillis()
         val cutoff = now - PendingOperation.OPERATION_LIFETIME_MS
         val id = insertExpiredOperation()
@@ -989,8 +989,8 @@ class PendingOperationsDaoTest {
 
     @Test
     fun `autoResetOldFailed does not resurrect ABANDONED operations`() = runTest {
-        // ABANDONED is terminal except for explicit Force Sync. The 24h auto-reset
-        // must never pull an abandoned op back into the retry loop.
+        // ABANDONED is terminal except for an explicit Force Sync. The 24h auto-reset must
+        // never pull an abandoned op back into the retry loop.
         val now = System.currentTimeMillis()
         val cutoff = now - PendingOperation.OPERATION_LIFETIME_MS
         val id = insertExpiredOperation()
@@ -1008,8 +1008,8 @@ class PendingOperationsDaoTest {
 
     @Test
     fun `ABANDONED operations are invisible to processing queries`() = runTest {
-        // Regression-lock (review F-rec): ABANDONED is terminal and must not be
-        // picked up for processing nor counted as pending work in the UI badge.
+        // ABANDONED is terminal: it must not be picked up for processing or counted by
+        // getPendingCount.
         val now = System.currentTimeMillis()
         val id = insertExpiredOperation()
         pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now)
@@ -1027,10 +1027,9 @@ class PendingOperationsDaoTest {
 
     @Test
     fun `hasPendingForEvent treats ABANDONED as still present`() = runTest {
-        // Documents the != 'FAILED' semantics: an event whose only op
-        // is ABANDONED reads as "has pending". Both hasPendingForEvent and
-        // operationExists are test-only today; the live queue path dedups via
-        // STATUS_PENDING, so this flip is harmless. Pinned here so it's a decision.
+        // Pins the != 'FAILED' semantics as a decision: an event whose only op is ABANDONED
+        // reads as "has pending". Both hasPendingForEvent and operationExists are test-only;
+        // EventWriter's queue dedups on STATUS_PENDING, so this is harmless.
         val now = System.currentTimeMillis()
         val id = insertExpiredOperation()
         pendingOpsDao.abandonOperation(id, "Exceeded 30-day lifetime", now)

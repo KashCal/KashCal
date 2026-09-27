@@ -15,14 +15,12 @@ import androidx.compose.ui.graphics.Color
 import org.onekash.kashcal.ui.shared.EventColorPalette
 
 /**
- * Palette-only color sheet for surfaces where the selection IS the color
- * (no calendar-default fallback): birthday/anniversary calendar colors and
- * ICS subscription colors.
+ * Picks a color where the selection is the color, with no calendar-default fallback: the
+ * birthday and anniversary calendars, ICS subscriptions, and tags.
  *
- * Visually consistent with [EventColorSheet] — same grid + wheel — but
- * without the leading "Calendar default" cell. Renders all 12 palette
- * entries in a 4×3 grid. A "More colors" link opens the same 92-color
- * CSS3 wheel picker; wheel selection requires tapping Done.
+ * Same grid and wheel as [EventColorSheet] without the leading "Calendar default" cell, so all
+ * 12 palette entries fill a 4×3 grid. "More colors" opens the 92-color CSS3 wheel, whose
+ * selection commits only on Done.
  *
  * @param selectedArgb current color ARGB
  * @param onColorSelected invoked with the chosen ARGB

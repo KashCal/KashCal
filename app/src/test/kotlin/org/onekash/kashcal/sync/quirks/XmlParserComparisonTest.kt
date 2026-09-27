@@ -10,15 +10,12 @@ import java.io.StringReader
 import kotlin.system.measureNanoTime
 
 /**
- * Comparison test: Regex-based parsing vs XmlPullParser.
+ * Compares the production quirks parsing ([ICloudQuirks], [DefaultQuirks]) with the reference
+ * [XmlPullParserImpl] on the same fixtures, and prints timings for both.
  *
- * XmlPullParser is Android's recommended XML parser:
- * - Streaming/pull-based (low memory)
- * - Handles namespaces properly
- * - Automatic entity decoding
- * - Available in unit tests via org.xmlpull.v1
- *
- * Reference: https://developer.android.com/reference/org/xmlpull/v1/XmlPullParser
+ * The `regex` names and printed labels refer to the quirks side, which parses through
+ * `CalDavXmlParser`, a namespace-aware [XmlPullParser], not regexes. The benchmark tests only
+ * print; they assert nothing.
  *
  * Run with: ./gradlew :app:testDebugUnitTest --tests "*XmlParserComparisonTest*"
  */
@@ -109,7 +106,6 @@ class XmlParserComparisonTest {
 
         assertEquals("Same number of calendars", regexCalendars.size, pullCalendars.size)
 
-        // Compare each calendar
         regexCalendars.forEachIndexed { i, regex ->
             val pull = pullCalendars[i]
             assertEquals("href match", regex.href, pull.href)
@@ -193,7 +189,7 @@ class XmlParserComparisonTest {
 
         assertEquals("Same number of events", regexEvents.size, pullEvents.size)
 
-        // Compare etags (critical for sync)
+        // Etags must match: sync compares them to decide what to fetch.
         regexEvents.forEachIndexed { i, regex ->
             val pull = pullEvents[i]
             println("\nComparing event ${i + 1}:")
@@ -272,7 +268,7 @@ class XmlParserComparisonTest {
         println("Regex etag: ${regexItems.firstOrNull()?.second}")
         println("Pull etag:  ${pullItems.firstOrNull()?.second}")
 
-        // Both should decode &quot; to "
+        // Both decode &quot; and strip the quotes.
         assertEquals("abc123", regexItems.firstOrNull()?.second)
         assertEquals("abc123", pullItems.firstOrNull()?.second)
     }
@@ -302,10 +298,9 @@ class XmlParserComparisonTest {
         println("Regex displayName: ${regexCalendars.firstOrNull()?.displayName}")
         println("Pull displayName:  ${pullCalendars.firstOrNull()?.displayName}")
 
-        // XmlPullParser auto-decodes, regex may not
+        // Only the reference parser's decoding is asserted; the quirks side is printed.
         assertEquals("Work & Personal <2024>", pullCalendars.firstOrNull()?.displayName)
 
-        // Document regex behavior
         val regexName = regexCalendars.firstOrNull()?.displayName
         if (regexName != "Work & Personal <2024>") {
             println("WARNING: Regex does NOT decode XML entities in displayName!")
@@ -446,16 +441,11 @@ class XmlParserComparisonTest {
     }
 
     /**
-     * XmlPullParser-based CalDAV XML parser.
+     * Parses CalDAV XML with a namespace-aware [XmlPullParser]; the reference side of the
+     * comparison.
      *
-     * Uses Android's recommended streaming XML parser.
-     * Reference: https://developer.android.com/reference/org/xmlpull/v1/XmlPullParser
-     *
-     * Benefits over regex:
-     * - Proper namespace handling
-     * - Automatic XML entity decoding (&amp; → &)
-     * - Single-pass extraction (more efficient for multiple fields)
-     * - Validates XML structure
+     * The pull parser decodes XML entities (`&amp;` to `&`) and can read a sync-collection reply
+     * in one pass ([extractSyncCollectionData]).
      */
     class XmlPullParserImpl {
         private val factory = XmlPullParserFactory.newInstance().apply {
@@ -631,7 +621,8 @@ class XmlParserComparisonTest {
                                     val href = currentHref!!
                                     val name = currentDisplayName ?: "Unnamed"
 
-                                    // Skip inbox/outbox/notification/tasks
+                                    // Skips hrefs containing inbox, outbox or notification and
+                                    // names containing tasks or reminders.
                                     val hrefLower = href.lowercase()
                                     val nameLower = name.lowercase()
                                     if (!hrefLower.contains("inbox") &&
@@ -830,10 +821,7 @@ class XmlParserComparisonTest {
             return deleted
         }
 
-        /**
-         * Single-pass extraction of all sync-collection data.
-         * More efficient than 3 separate regex passes.
-         */
+        /** Holds what one pass over a sync-collection reply reads. */
         data class SyncCollectionData(
             val syncToken: String?,
             val changedItems: List<Pair<String, String?>>,

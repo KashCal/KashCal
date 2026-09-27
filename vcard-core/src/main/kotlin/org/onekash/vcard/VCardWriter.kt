@@ -32,62 +32,52 @@ import ezvcard.property.Photo as EzPhoto
 import ezvcard.property.StructuredName as EzStructuredName
 
 /**
- * Serializes the neutral [Contact] model back into vCard text — the inverse of
- * [VCardParser]. ez-vcard is confined entirely behind this class exactly as it is
- * for the parser: no ez-vcard type appears on any public signature.
+ * Serializes the neutral [Contact] model back into vCard text, the inverse of [VCardParser]. As
+ * with the parser, no ez-vcard type appears on any public signature.
  *
- * ## Patch-preferring by design
+ * ## Patch mode
  *
- * The neutral model is lossy — it carries only the fields the app maps, not every
- * property, parameter, or grouping a server body can hold. Regenerating a body
- * purely from the model would silently drop the rest. So when a [Contact] still
- * carries the verbatim [Contact.rawVCard] it was parsed from, this writer works in
- * **patch mode**: it re-parses that original body, compares it field-by-field
- * against the passed contact, and rewrites ONLY the facets whose value changed.
- * Unmapped properties (X-props, unknown parameters, `itemN` groupings) and every
- * unchanged facet are left byte-faithful — they remain the original ez-vcard
- * property objects, untouched. Editing one phone number therefore changes exactly
- * that one line and preserves everything else.
+ * The model is lossy: it carries only the fields the app maps, not every property, parameter or
+ * grouping a server body can hold, so regenerating a body from the model alone would silently
+ * drop the rest. When [Contact.rawVCard] holds one parseable card, the writer re-parses it,
+ * compares each facet with the passed contact, and rewrites only the facets whose value changed.
+ * A rewritten facet replaces all of its properties (editing one phone re-emits every TEL line
+ * and its label). Unmapped properties (X- properties, unknown parameters, `itemN` groups) and
+ * unchanged facets stay the original ez-vcard property objects, re-serialized by ez-vcard.
  *
- * When there is no prior body to patch — a blank, unparseable, or multi-card
- * [Contact.rawVCard] — it falls back to **generate mode**: a clean, valid single
- * card built from the mapped fields at the requested version.
+ * With a blank, unparseable or multi-card [Contact.rawVCard] it generates one card from the
+ * mapped fields at the requested version instead.
  *
  * ## The diff baseline
  *
- * Patch mode diffs the passed contact against `VCardParser.parse(rawVCard)` — i.e.
- * the parser's neutral representation sits on BOTH sides. Any later producer of the
- * passed contact (a device-row reverse mapper) must yield a representation that is
- * facet-equal to the parser's for unedited fields, or the diff would regenerate
- * facets the user never touched.
+ * Patch mode diffs the passed contact against `VCardParser.parse(rawVCard)`, so the parser's
+ * representation sits on both sides. Any other producer of the passed contact, such as the app's
+ * device-row mapper, must yield facets equal to the parser's for unedited fields, or the diff
+ * rewrites facets the user never touched.
  *
  * ## Version handling
  *
- * The output version is caller-controlled ([version], defaulting to the contact's
- * own [Contact.version]); it is never hardcoded. In patch mode the natural call
- * passes the body's stored version, which is a no-op conversion.
+ * The caller picks the output version ([write]'s `version`, defaulting to [Contact.version]); it
+ * is never hardcoded. Patching a 3.0 or 4.0 body at its stored version converts nothing.
  *
  * ## Dual-spelling facets
  *
- * A handful of fields have two on-the-wire spellings — a native property and an Apple
- * raw-property idiom the parser hand-routes: the anniversary (`itemN.X-ABDATE`),
- * relations (`X-ABRELATEDNAMES`), social/IM handles (`X-SOCIALPROFILE`), and the
- * group marker (`X-ADDRESSBOOKSERVER-KIND`). An edit to one of these IS applied in
- * patch mode: the writer clears BOTH spellings and re-emits the single form correct
- * for the target version, so the body never carries both at once. Version matters:
- * ANNIVERSARY, RELATED, and KIND are 4.0-only properties ez-vcard silently drops from
- * a 3.0 body, so a 3.0 card must carry them as the raw idiom (`itemN.X-ABDATE` +
- * labeled `Anniversary`, `X-ABRELATEDNAMES`, `X-ADDRESSBOOKSERVER-KIND`) or the value
- * is lost; at 4.0 they emit as the native property. IMPP is valid at both versions, so
- * IM handles regenerate natively either way. When such a field is unchanged it is not
- * touched, so its original spelling is preserved byte-faithful.
+ * Four fields have two spellings on the wire, a native property and an Apple raw-property idiom
+ * the parser routes by hand: the anniversary (`itemN.X-ABDATE`), relations (`X-ABRELATEDNAMES`),
+ * IM handles (`X-SOCIALPROFILE`), and the group marker (`X-ADDRESSBOOKSERVER-KIND`). An edit to
+ * one clears both spellings and emits the single form right for the target version, so the body
+ * never carries both. ANNIVERSARY, RELATED and KIND are 4.0-only properties ez-vcard silently
+ * drops from a 3.0 body, so a 3.0 card must carry them as the raw idiom (`itemN.X-ABDATE` with
+ * an `Anniversary` label, `X-ABRELATEDNAMES`, `X-ADDRESSBOOKSERVER-KIND`) or the value is lost;
+ * at 4.0 they are native properties. IMPP is valid at both versions, so IM handles are
+ * emitted as IMPP. An unchanged dual-spelling field isn't touched and keeps its original
+ * spelling.
  */
 class VCardWriter {
 
     /**
-     * Serialize [contact] to vCard text at [version] ("3.0" or "4.0"; any other
-     * value is treated as 3.0, matching the parser's version fallback). Defaults to
-     * the contact's own parsed version.
+     * Serializes [contact] to vCard text at [version], defaulting to the contact's own. "4.0"
+     * writes 4.0; any other value, a parsed "2.1" included, writes 3.0.
      */
     fun write(contact: Contact, version: String = contact.version): String {
         val target = if (version.trim() == "4.0") VCardVersion.V4_0 else VCardVersion.V3_0
@@ -96,14 +86,14 @@ class VCardWriter {
         return Ezvcard.write(card).version(target).prodId(false).go()
     }
 
-    /** The original body, but only when it is a single parseable card worth patching. */
+    /** Returns the original body's card when it is one parseable card, else null. */
     private fun parseSingleBase(rawVCard: String): VCard? {
         if (rawVCard.isBlank()) return null
         val cards = runCatching { Ezvcard.parse(rawVCard).all() }.getOrNull() ?: return null
         return cards.singleOrNull()
     }
 
-    /** Rewrite only the facets whose model value differs from the parsed original. */
+    /** Rewrites only the facets whose model value differs from the parsed original. */
     private fun patch(base: VCard, contact: Contact, target: VCardVersion): VCard {
         val original = VCardParser().parse(contact.rawVCard).single()
         val groups = collectGroups(base)
@@ -123,8 +113,7 @@ class VCardWriter {
         if (contact.uid != original.uid) applyUid(base, contact)
         if (photoContentChanged(contact.photo, original.photo)) applyPhoto(base, contact)
         if (contact.birthday != original.birthday) applyBirthday(base, contact)
-        // The four dual-spelling facets (see the class KDoc for why): apply each only
-        // when it changed, so an unchanged facet keeps its original spelling byte-faithful.
+        // The four dual-spelling facets (see the class doc).
         if (contact.anniversary != original.anniversary) applyAnniversary(base, contact, target, groups)
         if (contact.relations != original.relations) applyRelations(base, contact, target, groups)
         if (contact.imHandles != original.imHandles) applyImHandles(base, contact)
@@ -132,7 +121,7 @@ class VCardWriter {
         return base
     }
 
-    /** Build a fresh, valid card from every populated mapped field. */
+    /** Builds a new card from every populated mapped field. */
     private fun generate(contact: Contact, target: VCardVersion): VCard {
         val card = VCard()
         val groups = HashSet<String>()
@@ -158,8 +147,8 @@ class VCardWriter {
         return card
     }
 
-    // --- Facet writers: each clears its own properties then re-adds from the model,
-    //     so they are reused unchanged by both generate (on an empty card) and patch.
+    // --- Facet writers: each clears its own properties then re-adds them from the model, so
+    //     generate (on an empty card) and patch share them.
 
     private fun applyFormattedName(card: VCard, contact: Contact) {
         card.removeProperties(FormattedName::class.java)
@@ -168,19 +157,18 @@ class VCardWriter {
     }
 
     /**
-     * The FN value to write. FN is mandatory in a vCard (RFC 6350 §6.2.1, RFC 2426
-     * §3.1.1) and strict servers reject a card that omits it — but a device contact
-     * can carry only a phone or email and no name row at all, which leaves the mapped
-     * [Contact.displayName] and [Contact.structuredName] blank. So when there is no
-     * display name, fall back through the best available human identifier — the
-     * structured name, then organization, nickname, first email, first phone — the
-     * same order a contacts UI uses to label a nameless entry. Returns blank only for
-     * a contact with no identifying field at all (which then legitimately emits no FN).
+     * Returns the FN value to write, blank only for a contact with no identifying field (which
+     * then emits no FN).
+     *
+     * FN is mandatory (RFC 6350 §6.2.1, RFC 2426 §3.1.1) and strict servers reject a card
+     * without it, but a device contact can carry only a phone or email and no name row, leaving
+     * [Contact.displayName] and [Contact.structuredName] blank. Without a display name this
+     * falls back to the structured name, then organization, nickname, first email and first
+     * phone, the order a contacts UI uses to label a nameless entry.
      */
     private fun formattedNameFor(contact: Contact): String {
         contact.displayName.trim().takeIf { it.isNotBlank() }?.let { return it }
-        // Reuse the same structured-name → display form the parser derives displayName
-        // from (VCardParser), so FN synthesis can never drift from that ordering.
+        // The same display form the parser derives displayName from, so the two can't drift.
         contact.structuredName.toDisplayName().takeIf { it.isNotBlank() }?.let { return it }
         contact.organization.map { it.trim() }.filter { it.isNotEmpty() }.joinToString(" ")
             .takeIf { it.isNotBlank() }?.let { return it }
@@ -208,13 +196,11 @@ class VCardWriter {
             sn.suffix?.let { n.suffixes.add(it) }
             card.setStructuredName(n)
         } else {
-            // N is optional (RFC 6350 §6.2.2), so a nameless contact carries no name
-            // components — but some servers (iCloud among them) reject a card that omits
-            // the N property outright with a 403, while accepting a structurally-present
-            // N whose five components are all empty (`N:;;;;`). Emit that empty form: it
-            // asserts no false name (the phone-derived FN remains the only label) yet
-            // satisfies the property-present requirement, and re-parses back to an empty
-            // structured name so the round-trip is unchanged.
+            // N is optional at 4.0 (RFC 6350 §6.2.2) but required at 3.0 (RFC 2426 §3.1.2),
+            // and some servers (iCloud among them) 403 a card without N while accepting one
+            // whose five components are all empty (`N:;;;;`). Emit that empty form: it
+            // asserts no false name (FN stays the only label) and re-parses to an empty
+            // structured name, so the round trip is unchanged.
             card.setStructuredName(EzStructuredName())
         }
         sn.phoneticGiven?.let { card.addExtendedProperty("X-PHONETIC-FIRST-NAME", it) }
@@ -336,11 +322,10 @@ class VCardWriter {
     }
 
     /**
-     * The image type to stamp on a regenerated PHOTO. The neutral model's declared
-     * [Photo.contentType] wins; when it is absent (a photo sourced from a device row,
-     * which carries no MIME subtype), sniff the type from the inline bytes' magic
-     * number so a PNG/GIF/WebP/HEIF is not blindly relabeled as JPEG. Falls back to
-     * JPEG only when there is neither a declared type nor recognizable bytes.
+     * Returns the image type for a regenerated PHOTO. A declared [Photo.contentType] wins. Without
+     * one (a photo from a device row has no MIME subtype) the type is sniffed from the inline
+     * bytes so a PNG, GIF, WebP or HEIF isn't relabeled as JPEG. Falls back to JPEG only when there
+     * is neither a declared type nor recognizable bytes.
      */
     private fun imageType(p: Photo): ImageType {
         p.contentType?.let { return ImageType.get(it, null, it) }
@@ -349,10 +334,10 @@ class VCardWriter {
     }
 
     /**
-     * Map the neutral [ImageFormat] sniff to an ez-vcard image type; null when unknown
-     * (the caller then defaults to JPEG). ez-vcard 0.12.2 has no predefined WebP/HEIC
-     * constant, so those are constructed with an explicit value/media-type/extension so
-     * a 3.0 body carries TYPE=webp/heic and a 4.0 body carries data:image/webp|heic.
+     * Maps the [ImageFormat] sniff to an ez-vcard image type; null when unknown (the caller then
+     * uses JPEG). ez-vcard 0.12.2 has no predefined WebP or HEIC constant, so those get an
+     * explicit value, media type and extension: a 3.0 body carries TYPE=webp or heic, a 4.0
+     * body `data:image/webp` or `data:image/heic`.
      */
     private fun detectImageType(bytes: ByteArray): ImageType? = when (ImageFormat.sniff(bytes)) {
         ImageFormat.JPEG -> ImageType.JPEG
@@ -364,11 +349,10 @@ class VCardWriter {
     }
 
     /**
-     * Whether the photo's regenerable CONTENT changed — its bytes or URL — ignoring
-     * [Photo.contentType]. A device Contacts Photo row has no MIME column, so a photo
-     * read back from a device round trip loses only its contentType; treating that as a
-     * change would rewrite (and relabel) the PHOTO on every sync without ever converging.
-     * A genuine bytes/URL edit, or adding/removing the photo, still regenerates.
+     * Returns whether the photo's bytes or URL changed, ignoring [Photo.contentType]. A device
+     * Contacts Photo row has no MIME column, so a photo read back from the device loses only its
+     * contentType; counting that as a change would rewrite and relabel the PHOTO on every sync
+     * without converging. A bytes or URL edit, or adding or removing the photo, still counts.
      */
     private fun photoContentChanged(new: Photo?, old: Photo?): Boolean =
         new?.copy(contentType = null) != old?.copy(contentType = null)
@@ -388,7 +372,7 @@ class VCardWriter {
         target: VCardVersion,
         groups: MutableSet<String>,
     ) {
-        // Clear both spellings so an edit can never leave the old value in the other form.
+        // Clear both spellings so an edit can't leave the old value in the other form.
         card.removeProperties(Anniversary::class.java)
         removeAnniversaryRawIdiom(card)
         val a = contact.anniversary ?: return
@@ -398,8 +382,8 @@ class VCardWriter {
                 a.text != null -> card.setAnniversary(Anniversary(a.text))
             }
         } else {
-            // At 3.0, carry the anniversary as Apple's itemN.X-ABDATE with an
-            // "Anniversary" labeled group — the idiom the parser routes back into this field.
+            // At 3.0, carry the anniversary as Apple's itemN.X-ABDATE in an "Anniversary"
+            // labeled group, the idiom the parser routes back into this field.
             val value = a.date?.toString() ?: a.text ?: return
             val group = allocateGroup(groups)
             card.addExtendedProperty("X-ABDATE", value).group = group
@@ -416,8 +400,7 @@ class VCardWriter {
         card.removeProperties(Related::class.java)
         removeRelationRawIdiom(card)
         // The parser lower-cases the relation type on read, so emit it lower-cased too;
-        // otherwise a producer yielding a differently-cased type would diff unequal every
-        // sync and re-emit forever without converging.
+        // otherwise a differently-cased type would diff unequal and re-emit on every sync.
         if (target == VCardVersion.V4_0) {
             contact.relations.forEach { r ->
                 val prop = Related()
@@ -426,8 +409,8 @@ class VCardWriter {
                 card.addProperty(prop)
             }
         } else {
-            // At 3.0, carry each relation as Apple's raw itemN.X-ABRELATEDNAMES,
-            // with the relation type in a labeled group.
+            // At 3.0, carry each relation as Apple's raw itemN.X-ABRELATEDNAMES, with the
+            // relation type as the group's label.
             contact.relations.forEach { r ->
                 val group = allocateGroup(groups)
                 card.addExtendedProperty("X-ABRELATEDNAMES", r.name).group = group
@@ -439,18 +422,18 @@ class VCardWriter {
     }
 
     private fun applyImHandles(card: VCard, contact: Contact) {
-        // IMPP is valid at both 3.0 (RFC 4770) and 4.0, so IM handles regenerate to the
-        // native property at either version; clear the Apple raw X-SOCIALPROFILE spelling
-        // too, so an edit routed in from that idiom does not leave the stale handle behind.
+        // IMPP is valid at both 3.0 (RFC 4770) and 4.0, so IM handles are emitted as IMPP at
+        // either version. Clear the Apple raw X-SOCIALPROFILE spelling too, so an edit to a
+        // handle read from it doesn't leave the stale handle behind.
         card.removeProperties(Impp::class.java)
         removeAppleRawProps(card, "X-SOCIALPROFILE")
         contact.imHandles.forEach { im ->
-            // Lower-case the protocol to match the parser's read-side normalization (it
-            // lower-cases IMPP and X-SOCIALPROFILE service on read), so a mixed-case
-            // protocol can't diff-unequal and re-emit every sync — same convergence guard
-            // as relation type and KIND above.
+            // The parser lower-cases the IMPP protocol and X-SOCIALPROFILE service on read, so
+            // emit the protocol lower-cased too, or a mixed-case one would diff unequal and
+            // re-emit on every sync (as for the relation type and KIND).
             val protocol = im.protocol?.lowercase()
             val uri = if (protocol.isNullOrBlank()) im.handle else "$protocol:${im.handle}"
+            // A handle neither Impp constructor accepts is dropped.
             val prop = runCatching { Impp(uri) }.getOrNull()
                 ?: runCatching { Impp(protocol ?: "", im.handle) }.getOrNull()
             prop?.let { card.addProperty(it) }
@@ -462,9 +445,9 @@ class VCardWriter {
         // marker is carried as Apple's X-ADDRESSBOOKSERVER-KIND.
         card.removeProperties(Kind::class.java)
         card.removeExtendedProperty("X-ADDRESSBOOKSERVER-KIND")
-        // The parser lower-cases KIND on read (RFC 6350 §6.1.4 values are lower-case
-        // canonical), so emit it lower-cased too, else a differently-cased value would
-        // diff unequal and re-emit every sync without converging.
+        // The parser lower-cases KIND on read (RFC 6350 §6.1.4 lists its values in lower
+        // case), so emit it lower-cased too, else a differently-cased value would diff unequal
+        // and re-emit on every sync.
         val k = contact.kind?.lowercase() ?: return
         if (target == VCardVersion.V4_0) {
             card.setKind(Kind(k))
@@ -475,11 +458,11 @@ class VCardWriter {
 
     // --- Custom-label (itemN.X-ABLabel) grouping helpers.
 
-    /** All `itemN`-style groups already present on the card, so re-emit never collides. */
+    /** Returns every group already on the card, so a new `itemN` group never collides. */
     private fun collectGroups(card: VCard): MutableSet<String> =
         card.properties.mapNotNullTo(HashSet()) { it.group }
 
-    /** Attach an Apple-style custom label to [prop] via a fresh, unused group. */
+    /** Attaches an Apple-style custom label to [prop] through a new, unused group. */
     private fun attachLabel(
         card: VCard,
         prop: VCardProperty,
@@ -501,9 +484,9 @@ class VCardWriter {
     }
 
     /**
-     * Remove every extended property named [propertyName] (an Apple raw idiom such as
-     * `X-SOCIALPROFILE`) and any `X-ABLabel` left orphaned in its `itemN` group, so
-     * re-applying the mapped property can't leave a contradictory second spelling.
+     * Removes every extended property named [propertyName] (an Apple raw idiom such as
+     * `X-SOCIALPROFILE`) and the `X-ABLabel` in its `itemN` group, so re-applying the mapped
+     * property can't leave a contradictory second spelling.
      */
     private fun removeAppleRawProps(card: VCard, propertyName: String) {
         val removed = card.extendedProperties.filter { it.propertyName.equals(propertyName, ignoreCase = true) }
@@ -513,10 +496,10 @@ class VCardWriter {
     }
 
     /**
-     * Remove only the anniversary raw idiom — an `X-ABDATE` whose `itemN` group is
-     * labeled `Anniversary` — plus its label. A differently-labeled `X-ABDATE` (Apple's
-     * generic custom-date form) is an unmapped property and must survive the edit, so the
-     * removal is scoped by label rather than by property name.
+     * Removes only the anniversary raw idiom, an `X-ABDATE` whose `itemN` group is labeled
+     * `Anniversary`, plus its label. A differently labeled `X-ABDATE` (Apple's generic
+     * custom-date form) is an unmapped property and must survive the edit, so the removal is
+     * scoped by label, not by property name.
      */
     private fun removeAnniversaryRawIdiom(card: VCard) {
         val labels = labelsByGroup(card)
@@ -529,10 +512,10 @@ class VCardWriter {
         removeLabelsFor(card, removed)
     }
 
-    /** Remove every `X-ABRELATEDNAMES` (all are relations) plus any orphaned label. */
+    /** Removes every `X-ABRELATEDNAMES` (all are relations) plus its label. */
     private fun removeRelationRawIdiom(card: VCard) = removeAppleRawProps(card, "X-ABRELATEDNAMES")
 
-    /** `itemN` group → unwrapped `X-ABLabel` text, mirroring the parser's resolution. */
+    /** Maps each `itemN` group to its unwrapped `X-ABLabel` text, as the parser resolves it. */
     private fun labelsByGroup(card: VCard): Map<String?, String?> =
         card.extendedProperties
             .filter { it.propertyName.equals("X-ABLabel", ignoreCase = true) && it.group != null }
@@ -544,10 +527,10 @@ class VCardWriter {
         return v.removePrefix("_\$!<").removeSuffix(">!\$_").trim().takeIf { it.isNotBlank() }
     }
 
-    /** Wrap [text] in Apple's custom-label syntax `_$!<text>!$_` — the inverse of [unwrapAppleLabel]. */
+    /** Wraps [text] in Apple's label syntax `_$!<text>!$_`, the inverse of [unwrapAppleLabel]. */
     private fun wrapAppleLabel(text: String): String = "_\$!<$text>!\$_"
 
-    /** Drop `X-ABLabel` raw props orphaned by removing their grouped host properties. */
+    /** Drops the `X-ABLabel` properties in the groups of the [removed] properties. */
     private fun removeLabelsFor(card: VCard, removed: List<VCardProperty>) {
         val orphaned = removed.mapNotNullTo(HashSet()) { it.group }
         if (orphaned.isEmpty()) return

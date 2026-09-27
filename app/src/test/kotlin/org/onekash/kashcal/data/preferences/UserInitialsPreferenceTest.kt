@@ -25,11 +25,9 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Unit tests for the user-initials DataStore preference backing the avatar hub.
- *
- * Covers: default (empty when absent), round-trip, set-then-clear reverts to
- * empty (so the avatar falls back to its generic glyph), and a stable key
- * identifier (so an upgrade doesn't silently reset the user's initials).
+ * Tests the user-initials preference shown in the account avatar: empty when absent, round-trips,
+ * clearing returns it to empty (the avatar then shows its person icon), and keeps its key string
+ * so an upgrade doesn't silently reset the user's initials.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)

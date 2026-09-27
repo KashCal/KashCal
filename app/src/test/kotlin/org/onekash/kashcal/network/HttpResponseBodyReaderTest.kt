@@ -14,11 +14,11 @@ import org.junit.Test
 import java.io.IOException
 
 /**
- * Tests for the shared bounded response-body reader.
+ * Tests the shared bounded response-body readers, [readBoundedBody] and [readBoundedBytes].
  *
- * The reader caps how much of an HTTP response body is buffered into memory,
- * preventing OOM when a server returns a pathologically large (or malicious)
- * body. Both the CalDAV client and the ICS fetch paths read through it.
+ * They cap how much of an HTTP response body is buffered into memory, preventing OOM when a
+ * server returns a pathologically large or malicious body. The CalDAV and CardDAV clients and
+ * the ICS fetch paths read through them.
  */
 class HttpResponseBodyReaderTest {
 
@@ -79,9 +79,9 @@ class HttpResponseBodyReaderTest {
 
     @Test
     fun `decodes using the body's declared charset`() {
-        // A non-UTF-8 charset must be honored; the old CalDAV reader hardcoded
-        // UTF-8, which would corrupt an ISO-8859-1 ICS feed.
-        val text = "Città" // "Città" — é-class char differs across charsets
+        // A non-UTF-8 charset must be honored: decoding as UTF-8 would corrupt an
+        // ISO-8859-1 ICS feed.
+        val text = "Città" // à encodes differently in ISO-8859-1 and UTF-8
         server.enqueue(
             MockResponse()
                 .setResponseCode(200)
@@ -124,8 +124,8 @@ class HttpResponseBodyReaderTest {
 
     @Test
     fun `body with no Content-Type falls back to UTF-8`() {
-        // No Content-Type header -> charset() is null -> UTF-8 default. A
-        // multibyte char round-trips only if UTF-8 is actually used.
+        // No Content-Type header, so charset() is null and UTF-8 is the default. A
+        // multibyte char round-trips only if UTF-8 is used.
         val text = "café €"
         server.enqueue(
             MockResponse()
@@ -139,7 +139,7 @@ class HttpResponseBodyReaderTest {
 
     @Test
     fun `readBoundedBytes returns the raw bytes verbatim`() {
-        // A byte sequence that is NOT valid UTF-8: 0xFF 0xD8 (JPEG SOI) followed by
+        // A byte sequence that is not valid UTF-8: 0xFF 0xD8 (JPEG SOI) followed by
         // a lone 0x80 continuation byte. Reading it through a String reader would
         // replace the invalid bytes with U+FFFD and corrupt the image; the binary
         // reader must return every byte untouched.

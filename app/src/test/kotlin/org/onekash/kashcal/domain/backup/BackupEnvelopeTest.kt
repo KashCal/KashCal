@@ -134,7 +134,7 @@ class BackupEnvelopeTest {
 
     @Test
     fun `legacy envelope with accounts and calendars fields parses cleanly and ignores them`() {
-        // Verifies backward compatibility: accounts/calendars fields are safely ignored.
+        // Older backups carry accounts and calendars fields; decoding ignores them.
         val legacyJson = """
             {
               "file_format_version": 1,

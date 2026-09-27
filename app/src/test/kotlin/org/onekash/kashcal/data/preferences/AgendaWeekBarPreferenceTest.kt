@@ -27,11 +27,8 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Unit tests for the Agenda week-bar expand/collapse DataStore preference.
- *
- * Covers: default (expanded/true when absent), round-trip both ways, and
- * stable key string identifier (so an upgrade doesn't silently reset the
- * user's choice).
+ * Tests the Agenda week-bar expanded preference: true when absent, round-trips both ways, and
+ * keeps its key string so an upgrade doesn't silently reset the user's choice.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)

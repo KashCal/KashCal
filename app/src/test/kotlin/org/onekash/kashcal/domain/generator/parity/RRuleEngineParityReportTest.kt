@@ -9,21 +9,18 @@ import org.onekash.kashcal.testutil.resolveProjectRoot
 import java.io.File
 
 /**
- * Full-corpus parity run. Drives all four pools through both engines and
- * writes three artifacts:
+ * Runs the four corpus pools through both engines and overwrites three artifacts:
  *
  *   1. `app/src/test/resources/parity/baseline-librecur.json`
  *   2. `app/src/test/resources/parity/baseline-ical4j.json`
- *   3. a human-readable parity report
+ *   3. a Markdown parity report
  *
- * The test PASSES as long as report generation succeeds. Divergences are
- * DATA, not failures. A separate [RRuleEngineBaselineTest] locks the
- * per-engine output against the checked-in baseline and fails on drift.
+ * The test passes whenever the artifacts are written; divergences are data, not failures.
+ * [RRuleEngineBaselineTest] locks each engine's output to its baseline and fails on drift.
  *
- * Per-engine 10-second wall-clock timeouts are applied via
- * [ParityHarnessRunner]; timeouts are captured as Category C entries.
- *
- * Re-running this test will overwrite the three artifacts above.
+ * The classification and RFC comparison go through [ParityHarnessRunner], whose 10-second
+ * wall-clock timeout per engine call turns a hang into a Category C entry. The baseline
+ * expansions call each engine directly, without that timeout.
  */
 class RRuleEngineParityReportTest {
 
@@ -47,9 +44,7 @@ class RRuleEngineParityReportTest {
             val result = ParityHarnessRunner.runCase(case)
             caseResults += result
 
-            // Capture per-engine raw output for baselines. Re-run to record both
-            // individually (runCase already ran them; but we re-run here through
-            // the same wrapped-timeout path so output is consistent).
+            // Expand again for the baselines: runCase doesn't expose the per-engine output.
             val libResult = expandForBaseline(LibRecurParityEngine, case)
             val icalResult = expandForBaseline(ICal4jParityEngine, case)
             libEntries += case to libResult
@@ -63,7 +58,7 @@ class RRuleEngineParityReportTest {
         writeBaseline(projectRoot, "ical4j", icalEntries)
         writeReport(projectRoot, caseResults, rfcComparisons)
 
-        // Print a terse summary so CI logs carry the headline numbers.
+        // Print a summary so CI logs carry the headline numbers.
         val counts = caseResults.groupingBy { it.classification }.eachCount().toSortedMap()
         println("Classification counts: $counts (total=${caseResults.size})")
         println("RFC comparisons: ${rfcComparisons.size}; both-match=" +
@@ -71,12 +66,9 @@ class RRuleEngineParityReportTest {
     }
 
     private fun expandForBaseline(engine: RRuleEngine, case: RRuleCase): ExpansionResult {
-        // Delegate to the same timeout-wrapping path as runCase by calling
-        // runCase's path through a single-engine re-invocation. Using the
-        // ParityHarnessRunner.runCase output directly would require two
-        // accessors; simpler to just re-invoke here through the same engine
-        // interface — the wall-clock is also guarded by the engine's own
-        // exception handling.
+        // Calls the engine directly, without ParityHarnessRunner's timeout, so a hanging case
+        // hangs this test. RRuleEngineBaselineTest expands the same way, so both see the same
+        // output.
         return engine.expand(case)
     }
 

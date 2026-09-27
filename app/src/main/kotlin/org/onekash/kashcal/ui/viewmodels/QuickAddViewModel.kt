@@ -53,13 +53,13 @@ class QuickAddViewModel @Inject constructor(
 
     private var referenceTime: LocalDateTime = LocalDateTime.now()
 
-    // Share-target fallback location pinned to the seeded text. Used as the
-    // location only while the input matches the seed, so the snapshotFlow
-    // re-emit that follows seedInput() doesn't drop it. Cleared on edit.
+    // Share-target fallback location, pinned to the seeded text. Applies only while the input
+    // matches the seed, so the snapshotFlow re-emit after seedInput() keeps it. Cleared on edit.
     private var seededFallbackLocation: String? = null
     private var seededText: String? = null
 
-    // Cached for synchronous reads in onInputChanged (parser WKST routing).
+    // Read synchronously in onInputChanged and seedInput; the parser uses it as a weekly
+    // rule's WKST.
     private val firstDayOfWeek: StateFlow<Int> = dataStore.firstDayOfWeek
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), KashCalDataStore.FIRST_DAY_SYSTEM)
 
@@ -79,8 +79,8 @@ class QuickAddViewModel @Inject constructor(
 
     fun onInputChanged(text: String) {
         _inputText.value = text
-        // The user has typed past the seed — drop the share-supplied fallback
-        // so subsequent edits don't silently inherit a URL from the original share.
+        // The user edited the seed: drop the share-supplied fallback so later edits don't
+        // silently inherit a URL from the original share.
         if (seededText != null && text != seededText) {
             seededFallbackLocation = null
             seededText = null
@@ -97,20 +97,17 @@ class QuickAddViewModel @Inject constructor(
     }
 
     /**
-     * Seed the dialog from an external source (Intent.ACTION_SEND share target).
+     * Seeds the dialog from shared text (the `Intent.ACTION_SEND` share target).
      *
-     * Parses [text] against the current reference time and merges [location] into
-     * the result only when the parser does not derive its own location — parser
-     * wins on conflict so that "Lunch at Mission Cantina" with a fallback URL
-     * still records the parsed venue.
+     * Parses [text] against the current reference time and uses [location] only when the parser
+     * finds no location of its own. The parser wins, so "Lunch at Mission Cantina" with a
+     * fallback URL still records the parsed venue.
      *
-     * The fallback [location] is pinned to [text]: any subsequent
-     * [onInputChanged] with the same string keeps applying the fallback (so the
-     * dialog's snapshotFlow first-emit doesn't drop it), and any edit clears it.
+     * The fallback [location] is pinned to [text]: a later [onInputChanged] with the same string
+     * keeps it (so the dialog's snapshotFlow first emit doesn't drop it), and any edit clears it.
      *
-     * Callers should call [setReferenceTime] before [seedInput] so "tomorrow" in
-     * the shared text resolves relative to share-arrival, not to whatever date
-     * the calling UI happened to be browsing.
+     * Callers should call [setReferenceTime] first so "tomorrow" in the shared text resolves
+     * against the share's arrival, not the date the calling UI was showing.
      */
     fun seedInput(text: String, location: String?) {
         seededFallbackLocation = location
@@ -184,9 +181,8 @@ class QuickAddViewModel @Inject constructor(
 
                 val now = System.currentTimeMillis()
                 val event = Event(
-                    // Blank uid: EventWriter mints the canonical
-                    // @kashcal.onekash.org UID so the UI layer isn't a second
-                    // minting authority.
+                    // Blank uid: EventWriter mints the @kashcal.onekash.org UID, so the
+                    // UI layer isn't a second minting authority.
                     uid = "",
                     calendarId = calendarId,
                     title = result.title,
@@ -215,10 +211,9 @@ class QuickAddViewModel @Inject constructor(
         val result = _parseResult.value
         val zone = ZoneId.systemDefault()
 
-        // Empty / nothing-parsed: open the full form anchored to the selected
-        // date at next-hour, not all-day at today. QuickAddResult.isAllDay
-        // defaults to (startTime == null), which would otherwise force an
-        // all-day fallback whenever the user taps Expand without typing.
+        // Nothing parsed: open the full form timed at the next hour on the result's start date.
+        // QuickAddResult.isAllDay defaults to (startTime == null), which would otherwise make
+        // it all-day whenever the user taps Expand without typing.
         val nothingParsed = result.title.isBlank() && result.startTime == null &&
             result.location == null && result.endDate == null && result.rrule == null &&
             result.categories.isEmpty() && result.note == null
@@ -293,5 +288,8 @@ class QuickAddViewModel @Inject constructor(
     }
 }
 
-/** Signals that save should redirect to EventFormSheet (default calendar is a device calendar). */
+/**
+ * Returned as the failure of [QuickAddViewModel.save] when the default calendar is a device
+ * calendar; MainActivity then opens the event form with [QuickAddViewModel.toCalendarIntentData].
+ */
 class DeviceCalendarException : Exception("Default calendar is a device calendar")

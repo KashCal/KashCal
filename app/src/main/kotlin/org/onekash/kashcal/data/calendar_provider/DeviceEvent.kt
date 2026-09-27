@@ -3,16 +3,10 @@ package org.onekash.kashcal.data.calendar_provider
 import androidx.compose.runtime.Immutable
 
 /**
- * Full event data from CalendarProvider's Events table.
+ * A row of CalendarProvider's Events table.
  *
- * Unlike [DeviceCalendarInstance] (from Instances table), this contains
- * complete event information needed for editing:
- * - RRULE string (not just hasRrule boolean)
- * - Duration (for recurring events)
- * - RDATE/EXDATE/EXRULE
- * - Original event ID for exceptions
- *
- * Used by EventFormSheet when editing device events.
+ * Unlike [DeviceCalendarInstance] it carries the recurrence as stored (RRULE, DURATION, RDATE,
+ * EXDATE, EXRULE) and the exception link to the master.
  */
 @Immutable
 data class DeviceEvent(
@@ -22,39 +16,39 @@ data class DeviceEvent(
     val description: String?,
     val location: String?,
     val startTs: Long,
-    /** End timestamp (null for recurring events that use duration). */
+    /** End in epoch ms; null for a series, which uses [duration]. */
     val endTs: Long?,
-    /** RFC 5545 duration string for recurring events (e.g., "PT1H30M"). */
+    /** RFC 5545 duration of a series' occurrences, e.g. "PT1H30M". */
     val duration: String?,
     val isAllDay: Boolean,
-    /** RFC 5545 RRULE string (e.g., "FREQ=WEEKLY;BYDAY=MO,WE,FR"). */
+    /** RFC 5545 RRULE, e.g. "FREQ=WEEKLY;BYDAY=MO,WE,FR". */
     val rrule: String?,
-    /** RFC 5545 RDATE string (additional recurrence dates). */
+    /** RFC 5545 RDATE: extra occurrence dates. */
     val rdate: String?,
-    /** RFC 5545 EXDATE string (exception dates). */
+    /** RFC 5545 EXDATE: excluded occurrence dates. */
     val exdate: String?,
-    /** RFC 5545 EXRULE string (exception rules). */
+    /** RFC 5545 EXRULE: excluded occurrence rule. */
     val exrule: String?,
-    /** IANA timezone ID (e.g., "America/New_York"). */
+    /** Zone id, e.g. "America/New_York"; the device zone when the row has none. */
     val timezone: String,
-    /** Master event ID if this is an exception, null otherwise. */
+    /** The master's id for an exception, null otherwise. */
     val originalId: Long?,
-    /** Original occurrence time if this is an exception, null otherwise. */
+    /** The start of the occurrence an exception replaces, null otherwise. */
     val originalInstanceTime: Long?,
-    /** Event status: STATUS_TENTATIVE=0, STATUS_CONFIRMED=1, STATUS_CANCELED=2. */
+    /** STATUS_TENTATIVE = 0, STATUS_CONFIRMED = 1, STATUS_CANCELED = 2. */
     val status: Int,
-    /** Availability: AVAILABILITY_BUSY=0, AVAILABILITY_FREE=1, AVAILABILITY_TENTATIVE=2. */
+    /** AVAILABILITY_BUSY = 0, AVAILABILITY_FREE = 1, AVAILABILITY_TENTATIVE = 2. */
     val availability: Int,
-    /** Access level: ACCESS_DEFAULT=0, ACCESS_CONFIDENTIAL=1, ACCESS_PRIVATE=2, ACCESS_PUBLIC=3. */
+    /** ACCESS_DEFAULT = 0, ACCESS_CONFIDENTIAL = 1, ACCESS_PRIVATE = 2, ACCESS_PUBLIC = 3. */
     val accessLevel: Int,
-    /** Calendar color (from Calendars table). */
+    /** The calendar's color (`Calendars.CALENDAR_COLOR`). */
     val calendarColor: Int?,
-    /** Event-specific color override (from Events table). */
+    /** `Events.EVENT_COLOR`, the event's color override. */
     val eventColor: Int?,
     /**
-     * RFC 5545 CATEGORIES (tags) attached via the sync-adapter `categories`
-     * extended property. Empty when the event carries none. Fetched separately
-     * from the Events projection (which has no extended-property columns).
+     * Tags (RFC 5545 CATEGORIES) from the event's [EXTNAME_CATEGORIES] extended property, read
+     * in a separate query since the Events projection has no extended-property columns. Empty
+     * when it has none.
      */
     val categories: List<String> = emptyList()
 )

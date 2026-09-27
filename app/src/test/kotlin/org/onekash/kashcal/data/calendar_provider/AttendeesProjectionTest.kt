@@ -9,15 +9,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Drift guard for [AndroidCalendarProviderRepository.ATTENDEES_PROJECTION].
+ * Pins [AndroidCalendarProviderRepository.ATTENDEES_PROJECTION] to its five columns in order.
  *
- * `mapToDeviceAttendee` reads cursor columns positionally, so the projection
- * order is load-bearing — a reordered or extended column would silently
- * misread name/email/relationship/status. This test pins the
- * `CalendarContract.Attendees` five-column projection in order.
- *
- * Robolectric is required: the `Attendees.*` column-name constants are
- * stubbed to null/0 under plain JVM, so the comparison would be vacuous.
+ * `mapToDeviceAttendee` reads cursor columns by position, so a reordered or inserted column
+ * would silently misread name, email, relationship or status.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])

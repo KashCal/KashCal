@@ -35,23 +35,19 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Verifies [VCardContactMapper] turns the neutral [Contact] model into the correct
- * set of [ContactsContract] Data rows for one RawContact.
+ * Tests that [VCardContactMapper] turns a [Contact] into the [ContactsContract] Data rows of
+ * one RawContact.
  *
- * Fixtures are parsed through the REAL [VCardParser] (the same committed bodies the
- * vcard-core parser suite uses) and then mapped, so parser and mapper stay in
- * lockstep: a parser change that reshapes the neutral model is caught here too.
+ * Fixtures (the same bodies the vcard-core parser tests use) go through the real
+ * [VCardParser] first, so a parser change that reshapes the model is caught here too.
  *
- * The load-bearing assertion is the birthday/anniversary alignment: KashCal already
- * ships readers that query `Event.CONTENT_ITEM_TYPE` rows by `Event.TYPE` =
- * `TYPE_BIRTHDAY` / `TYPE_ANNIVERSARY`. If the mapper emitted anything else, a synced
- * date would silently never reach those calendars — so both the 4.0-native
- * `ANNIVERSARY` and the 3.0 `itemN.X-ABDATE` syntaxes are asserted to land on the
- * exact same constant.
+ * The birthday and anniversary readers ([BaseContactEventRepository]) query
+ * `Event.CONTENT_ITEM_TYPE` rows by `Event.TYPE` = `TYPE_BIRTHDAY` or `TYPE_ANNIVERSARY`. Any
+ * other value means a synced date silently never reaches those calendars, so both the 4.0
+ * `ANNIVERSARY` and the 3.0 `itemN.X-ABDATE` forms are asserted to land on the same constant.
  *
- * Robolectric is used only so `ContentValues` is the real Android class (identical to
- * the sibling `BuildEventValuesTest`); no ContentResolver / provider shadow is
- * touched — the mapper is pure.
+ * Robolectric supplies only the real `ContentValues`, as in `BuildEventValuesTest`; the mapper
+ * touches no ContentResolver.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -171,7 +167,7 @@ class VCardContactMapperTest {
 
         val work = rows.single { it.getAsString(Email.ADDRESS) == "work@example.test" }
         assertEquals(Email.TYPE_WORK, work.getAsInteger(Email.TYPE))
-        // Not preferred -> not primary (0 or null, never 1).
+        // Not preferred, so not primary: 0 or null, never 1.
         assertNotEquals(1, work.getAsInteger(Email.IS_PRIMARY) ?: 0)
     }
 
@@ -228,7 +224,7 @@ class VCardContactMapperTest {
     fun `im handles map to Im rows carrying the protocol`() {
         val rows = map("kashcal_full_v3.vcf").dataRows.ofType(Im.CONTENT_ITEM_TYPE)
         val xmpp = rows.single { it.getAsString(Im.DATA) == "cal@example.test" }
-        // Non-standard protocols ride the custom-protocol channel.
+        // Every protocol is written as PROTOCOL_CUSTOM with its name in CUSTOM_PROTOCOL.
         assertEquals(Im.PROTOCOL_CUSTOM, xmpp.getAsInteger(Im.PROTOCOL))
         assertEquals("xmpp", xmpp.getAsString(Im.CUSTOM_PROTOCOL))
         assertTrue(rows.any { it.getAsString(Im.DATA) == "https://example.test/@kashcal" })
@@ -315,8 +311,8 @@ class VCardContactMapperTest {
 
     @Test
     fun `degenerate empty-bytes photo with a url falls back to the deferred url`() {
-        // A Photo with non-null but zero-length bytes yields no valid blob row; the URL must
-        // still be carried for deferred fetch rather than the photo vanishing entirely.
+        // Zero-length bytes give no blob row; the URL must still be carried for the deferred
+        // fetch, or the photo is lost.
         val contact = Contact(
             version = "4.0",
             uid = "kashcal-degenerate-photo",
@@ -332,9 +328,9 @@ class VCardContactMapperTest {
 
     @Test
     fun `an inline photo over the byte cap emits no blob row (would trip TransactionTooLargeException)`() {
-        // The Photo blob rides into an applyBatch insert that crosses Binder (~1MB
-        // ceiling). An oversized inline body would fail the whole batch — so it is
-        // dropped rather than emitted, exactly like the URL-fetch path caps its download.
+        // The Photo blob goes into an applyBatch insert that crosses Binder (~1MB limit), so
+        // an oversized inline body would fail the whole batch. It is dropped, as the URL fetch
+        // caps its download at the same [MAX_PHOTO_SIZE_BYTES].
         val oversized = ByteArray((MAX_PHOTO_SIZE_BYTES + 1).toInt()) { 1 }
         val contact = Contact(
             version = "3.0",
@@ -354,9 +350,9 @@ class VCardContactMapperTest {
 
     @Test
     fun `an over-cap inline photo with a url falls back to the deferred url`() {
-        // Some servers carry BOTH an oversized inline blob and a URI. When the inline
-        // bytes are too large to write, the URL must still be recovered for deferred
-        // fetch rather than the contact ending up with no photo at all.
+        // Some servers send both an oversized inline blob and a URI. When the bytes are too
+        // large to write, the URL must still be carried for the deferred fetch, or the
+        // contact gets no photo.
         val oversized = ByteArray((MAX_PHOTO_SIZE_BYTES + 1).toInt()) { 1 }
         val contact = Contact(
             version = "3.0",
@@ -387,15 +383,15 @@ class VCardContactMapperTest {
         assertEquals(MAX_PHOTO_SIZE_BYTES.toInt(), photo.getAsByteArray(Photo.PHOTO).size)
     }
 
-    // ========== Event rows — the load-bearing alignment ==========
+    // ========== Event rows the birthday and anniversary readers query ==========
 
     @Test
     fun `birthday maps to an Event row with TYPE_BIRTHDAY in ISO start date`() {
         val events = map("kashcal_full_v3.vcf").dataRows.ofType(Event.CONTENT_ITEM_TYPE)
         val bday = events.single { it.getAsInteger(Event.TYPE) == Event.TYPE_BIRTHDAY }
         assertEquals("1990-01-15", bday.getAsString(Event.START_DATE))
-        // The shipped reader must parse the emitted string back to the same date, not just
-        // a string that happens to look right — exercise the actual reader, don't re-assert a literal.
+        // The birthday reader's own parser must read the emitted string back to the same
+        // date; a literal alone could look right and still not parse.
         assertEquals(
             ContactEventDate(1, 15, 1990),
             ContactEventUtils.parseContactDate(bday.getAsString(Event.START_DATE)),
@@ -411,9 +407,9 @@ class VCardContactMapperTest {
 
     @Test
     fun `3-0 itemN X-ABDATE anniversary reaches the same TYPE_ANNIVERSARY constant`() {
-        // ez-vcard leaves the 3.0 itemN.X-ABDATE as a RawProperty; the parser hand-routes
-        // it onto Contact.anniversary. This guards the code path that would otherwise
-        // silently drop a 3.0 anniversary before it ever reaches the shipped calendar.
+        // ez-vcard leaves the 3.0 itemN.X-ABDATE as a RawProperty and the parser routes it
+        // onto Contact.anniversary by hand. Without that route a 3.0 anniversary is silently
+        // dropped before it reaches the calendar.
         val events = map("kashcal_full_v3.vcf").dataRows.ofType(Event.CONTENT_ITEM_TYPE)
         val anniv = events.single { it.getAsInteger(Event.TYPE) == Event.TYPE_ANNIVERSARY }
         assertEquals("2015-06-20", anniv.getAsString(Event.START_DATE))
@@ -430,23 +426,22 @@ class VCardContactMapperTest {
 
     @Test
     fun `year-less birthday still produces an Event row in the year-less start-date form`() {
-        // A reduced-accuracy vCard date (--MM-DD, RFC 6350) carries no LocalDate but must
-        // not be dropped: it maps to the provider's year-less START_DATE, which the shipped
-        // ContactEventUtils.parseContactDate reads back via its "--MM-DD" branch.
+        // A reduced-accuracy vCard date (--MM-DD, RFC 6350) has no LocalDate but must not be
+        // dropped: it maps to the provider's year-less START_DATE, which
+        // ContactEventUtils.parseContactDate reads back through its "--MM-DD" branch.
         val contact = parse("kashcal_partial_bday_v4.vcf")
         assertNull("fixture guards the year-less path", contact.birthday?.date)
 
         val events = VCardContactMapper.toEntity(contact).dataRows.ofType(Event.CONTENT_ITEM_TYPE)
         val bday = events.single { it.getAsInteger(Event.TYPE) == Event.TYPE_BIRTHDAY }
         assertEquals("--04-15", bday.getAsString(Event.START_DATE))
-        // The reader's "--MM-DD" branch must accept the year-less form and return a null year,
-        // proving the emitted string round-trips through the shipped parser rather than being dropped.
+        // The reader's "--MM-DD" branch accepts it with a null year.
         assertEquals(
             ContactEventDate(4, 15, null),
             ContactEventUtils.parseContactDate(bday.getAsString(Event.START_DATE)),
         )
 
-        // Same code path for the year-less anniversary — locked for symmetry.
+        // The year-less anniversary takes the same path.
         val anniv = events.single { it.getAsInteger(Event.TYPE) == Event.TYPE_ANNIVERSARY }
         assertEquals("--06-20", anniv.getAsString(Event.START_DATE))
         assertEquals(
@@ -483,8 +478,8 @@ class VCardContactMapperTest {
                 imHandles = listOf(ImHandle(protocol = "xmpp", handle = ""), ImHandle(protocol = "xmpp", handle = "cal@example.test")),
             ),
         )
-        // Only the non-blank value of each kind survives — a blank property line
-        // (some servers store `EMAIL:` / `TEL:`) must not become a tappable empty row.
+        // Only the non-blank value of each kind survives: a blank property line (some servers
+        // store `EMAIL:` or `TEL:`) must not become a tappable empty row.
         assertEquals(1, mapped.dataRows.ofType(Email.CONTENT_ITEM_TYPE).size)
         assertEquals(1, mapped.dataRows.ofType(Phone.CONTENT_ITEM_TYPE).size)
         assertEquals(1, mapped.dataRows.ofType(Im.CONTENT_ITEM_TYPE).size)
@@ -504,7 +499,7 @@ class VCardContactMapperTest {
                 ),
             ),
         )
-        // The provider expects a single primary per mimetype; only the first preferred wins.
+        // The provider expects one primary per mimetype; only the first preferred gets it.
         assertEquals(1, mapped.dataRows.ofType(Email.CONTENT_ITEM_TYPE).count { it.getAsInteger(Email.IS_PRIMARY) == 1 })
         assertEquals(1, mapped.dataRows.ofType(Phone.CONTENT_ITEM_TYPE).count { it.getAsInteger(Phone.IS_PRIMARY) == 1 })
         // The first preferred address is the one that keeps IS_PRIMARY.
@@ -515,16 +510,15 @@ class VCardContactMapperTest {
     @Test
     fun `free-text birthday the reader cannot parse emits no Event row`() {
         val mapped = VCardContactMapper.toEntity(contact(birthday = ContactDate(date = null, text = "circa 1990")))
-        // A free-text date would land unparseably in START_DATE and silently never reach the
-        // birthday calendar; guard by only emitting values the shipped reader accepts.
+        // A free-text date in START_DATE would silently never reach the birthday calendar, so
+        // the mapper emits only values the reader accepts.
         assertNull(ContactEventUtils.parseContactDate("circa 1990"))
         assertTrue(mapped.dataRows.ofType(Event.CONTENT_ITEM_TYPE).isEmpty())
     }
 
     @Test
     fun `year-less text birthday still emits a readable Event row`() {
-        // The provider-shaped --MM-DD text must still pass the guard (regression fence so the
-        // free-text guard above doesn't over-reject the legitimate reduced-accuracy form).
+        // The free-text guard above must still accept the reduced-accuracy --MM-DD text.
         val mapped = VCardContactMapper.toEntity(contact(birthday = ContactDate(date = null, text = "--03-21")))
         val bday = mapped.dataRows.ofType(Event.CONTENT_ITEM_TYPE).single()
         assertEquals("--03-21", bday.getAsString(Event.START_DATE))
@@ -536,7 +530,7 @@ class VCardContactMapperTest {
     @Test
     fun `full fixture yields exactly one row per expected mimetype group`() {
         val rows = map("kashcal_full_v3.vcf").dataRows
-        // StructuredName is always exactly one; the presence of the rest proves the full sweep.
+        // One StructuredName row always; the counts below cover six other mimetypes.
         assertEquals(1, rows.ofType(StructuredName.CONTENT_ITEM_TYPE).size)
         // Three EMAILs: home, work, and the grouped item1.EMAIL custom address.
         assertEquals(3, rows.ofType(Email.CONTENT_ITEM_TYPE).size)
@@ -545,7 +539,7 @@ class VCardContactMapperTest {
         assertEquals(1, rows.ofType(Organization.CONTENT_ITEM_TYPE).size)
         assertEquals(1, rows.ofType(Note.CONTENT_ITEM_TYPE).size)
         assertEquals(1, rows.ofType(Website.CONTENT_ITEM_TYPE).size)
-        // No Data row carries a RAW_CONTACT_ID — that back-reference belongs to the write layer.
+        // No Data row has a RAW_CONTACT_ID; the write layer adds that back-reference.
         assertTrue(rows.none { it.containsKey(ContactsContract.Data.RAW_CONTACT_ID) })
     }
 

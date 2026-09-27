@@ -26,13 +26,8 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.model.CalendarGroup
 
 /**
- * Calendar visibility picker sheet with account grouping.
- * Allows users to show/hide individual calendars from the view.
- *
- * @param calendarGroups Calendars grouped by account
- * @param onToggleCalendar Called when a calendar's visibility is toggled
- * @param onShowAll Called to show all calendars
- * @param onDismiss Called when sheet is dismissed
+ * Shows a sheet of calendars grouped by account, each with a checkbox that shows or hides it,
+ * plus a Show all button.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,7 +39,6 @@ fun CalendarVisibilitySheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Compute visible calendar IDs for checkbox state
     val visibleCalendarIds = remember(calendarGroups) {
         calendarGroups.flatMap { it.calendars }
             .filter { it.isVisible }
@@ -89,7 +83,6 @@ fun CalendarVisibilitySheet(
 
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
 
-            // Calendar list grouped by account
             if (calendarGroups.isEmpty() || calendarGroups.all { it.calendars.isEmpty() }) {
                 Box(
                     modifier = Modifier
@@ -115,7 +108,6 @@ fun CalendarVisibilitySheet(
 
                 HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
 
-                // Show All button
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

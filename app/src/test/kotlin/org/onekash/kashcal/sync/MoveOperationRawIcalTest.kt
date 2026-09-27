@@ -28,15 +28,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for MOVE operation rawIcal behavior.
+ * Tests what happens to rawIcal when [EventWriter.moveEventToCalendar] moves an event.
  *
- * Verifies how rawIcal is handled when events are moved between calendars:
- * - rawIcal preservation during EventWriter.moveEventToCalendar()
- * - Serialization behavior with preserved vs cleared rawIcal
- * - Impact on round-trip fidelity
- * - Edge cases: corrupted rawIcal, null rawIcal, etc.
- *
- * These tests help determine if rawIcal should be cleared on MOVE.
+ * The move keeps rawIcal and extraProperties, so the body pushed to the new calendar still
+ * carries the source's attendees and X-properties, the old calendar's included. Also covers
+ * serialization with rawIcal kept versus cleared, the ops queued, a corrupted or null rawIcal,
+ * a move to a local calendar, and a large rawIcal.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -159,7 +156,7 @@ class MoveOperationRawIcalTest {
 
     @Test
     fun `MOVE preserves rawIcal in current implementation`() = runTest {
-        // Create event with rawIcal (simulating server sync)
+        // An event with rawIcal, as a server sync leaves it
         val event = createEventWithRawIcal(richServerIcs, calendarAId)
 
         // Verify rawIcal is set before move
@@ -171,7 +168,7 @@ class MoveOperationRawIcalTest {
         // Get moved event
         val movedEvent = database.eventsDao().getById(event.id)!!
 
-        // Current behavior: rawIcal is preserved
+        // rawIcal is kept
         assertNotNull(
             "rawIcal should be preserved after MOVE (current behavior)",
             movedEvent.rawIcal
@@ -238,9 +235,9 @@ class MoveOperationRawIcalTest {
         val pushIcs = IcsPatcher.serialize(movedEvent)
         val parsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
 
-        // richServerIcs has 4 alarms, all within the displayed window (index < 5).
-        // The stored entity keeps only 2 reminders, so the other 2 are deleted —
-        // MOVE must not resurrect them. (rawIcal still preserves attendees/X-props.)
+        // richServerIcs has 4 alarms, all in the displayed window (the first 5). The entity
+        // stores 2 reminders, so the other 2 were deleted and the move must not bring them
+        // back. rawIcal still supplies the attendees and X-properties.
         assertEquals(
             "Displayed alarms beyond the stored 2 are dropped after MOVE",
             2,
@@ -360,12 +357,12 @@ class MoveOperationRawIcalTest {
 
         val movedEvent = database.eventsDao().getById(event.id)!!
 
-        // Scenario A: Current behavior (rawIcal preserved)
+        // Scenario A: rawIcal kept, as the move does
         val withPreservedRawIcal = movedEvent
         val pushIcsPreserved = IcsPatcher.serialize(withPreservedRawIcal)
         val parsedPreserved = parser.parseAllEvents(pushIcsPreserved).getOrNull()!!.first()
 
-        // Scenario B: If we cleared rawIcal
+        // Scenario B: rawIcal cleared
         val withClearedRawIcal = movedEvent.copy(rawIcal = null)
         val pushIcsCleared = IcsPatcher.serialize(withClearedRawIcal)
         val parsedCleared = parser.parseAllEvents(pushIcsCleared).getOrNull()!!.first()
@@ -377,7 +374,7 @@ class MoveOperationRawIcalTest {
         println("Preserved X-props: ${parsedPreserved.rawProperties.keys.filter { it.startsWith("X-") }}")
         println("Cleared X-props:   ${parsedCleared.rawProperties.keys.filter { it.startsWith("X-") }}")
 
-        // Preserved version has MORE data
+        // The kept version has at least as many alarms
         assertTrue(
             "Preserved rawIcal should have more alarms",
             parsedPreserved.alarms.size >= parsedCleared.alarms.size
@@ -421,7 +418,7 @@ class MoveOperationRawIcalTest {
 
     @Test
     fun `MOVE to local calendar auto-detects local target`() = runTest {
-        // Create event with caldavUrl so it's considered "synced"
+        // SYNCED with a caldavUrl, so the move queues a DELETE for the server copy
         val event = createEventWithRawIcal(richServerIcs, calendarAId).let {
             val synced = it.copy(
                 caldavUrl = "https://caldav.icloud.com/calendar-a/event.ics",
@@ -432,7 +429,7 @@ class MoveOperationRawIcalTest {
             database.eventsDao().getById(it.id)!!
         }
 
-        // Auto-detects local target from AccountProvider
+        // The writer treats the target as local from its account's provider
         eventWriter.moveEventToCalendar(event.id, localCalendarId)
 
         val movedEvent = database.eventsDao().getById(event.id)!!
@@ -449,15 +446,14 @@ class MoveOperationRawIcalTest {
 
     @Test
     fun `multiple MOVE operations - rawIcal accumulates old calendar X-props`() = runTest {
-        // This test documents potential issue with preserving rawIcal across moves
+        // Documents a side effect of keeping rawIcal: the old calendar's X-properties follow
 
         val event = createEventWithRawIcal(richServerIcs, calendarAId)
 
         // Move to Calendar B
         eventWriter.moveEventToCalendar(event.id, calendarBId)
 
-        // Simulate sync completion - rawIcal would get updated from Calendar B
-        // But for now, rawIcal still has Calendar A data
+        // Until a pull from Calendar B replaces it, rawIcal holds Calendar A's data
         var currentEvent = database.eventsDao().getById(event.id)!!
 
         // The rawIcal still has X-CALENDAR-A-SYNC-ID
@@ -504,9 +500,10 @@ class MoveOperationRawIcalTest {
         // Verify all data preserved
         val parsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
         assertEquals("Should preserve all 50 attendees", 50, parsed.attendees.size)
-        // 10 alarms: first 5 are the displayed window (stored reminder set keeps 2,
-        // so 3 displayed are dropped); alarms at index >= 5 were never shown to the
-        // user and are preserved verbatim. 2 kept + 5 hidden = 7.
+        // 10 alarms, at -5M through -50M. The first 5 are the displayed window: -PT15M
+        // matches one and the other 4 are dropped. The 5 hidden ones (index 5 and up) were
+        // never shown and are kept verbatim. -PT1H matches none, so it is added as a new
+        // alarm: 1 kept + 1 new + 5 hidden = 7.
         assertEquals("Displayed deletions honored, hidden alarms preserved", 7, parsed.alarms.size)
     }
 

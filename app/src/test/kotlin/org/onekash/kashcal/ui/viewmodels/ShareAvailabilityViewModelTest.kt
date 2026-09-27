@@ -39,15 +39,12 @@ import java.time.ZoneId
 import java.util.Locale
 
 /**
- * Tests for ShareAvailabilityViewModel.
+ * Tests [ShareAvailabilityViewModel] through its public surface: loading persisted settings, the
+ * preview and share text, and the days, work-hours and all-day handlers. No test calls
+ * [FreeBlockFinder] or [AvailabilityFormatter] directly.
  *
- * Drives the VM through its public surface (no direct calls into FreeBlockFinder
- * or AvailabilityFormatter — those are internal collaborators; the tests exercise
- * user-observable outcomes through the public surface).
- *
- * Uses a real DataStore (in-memory via overrideDataStore), real FreeBlockFinder,
- * real AvailabilityFormatter, and a mocked InsightsRepository so canned
- * occurrences flow into the recompute path.
+ * Uses a real file-backed DataStore, a real FreeBlockFinder and AvailabilityFormatter, and a
+ * mocked [InsightsRepository] that feeds canned occurrences into the recompute.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -159,7 +156,7 @@ class ShareAvailabilityViewModelTest {
 
     @Test
     fun `preview is empty-state when no qualifying blocks`() = runTest(testDispatcher) {
-        // Wipe the entire 09:00-17:00 working window with one event.
+        // One 09:00-17:00 event on each of the 7 days fills every working window.
         coEvery { insightsRepository.getOccurrencesForRange(any(), any(), any()) } returns
             listOf(timed(mon, 9, 0, 17, 0)) +
             (1..6).map { timed(mon.plusDays(it.toLong()), 9, 0, 17, 0) }
@@ -208,11 +205,9 @@ class ShareAvailabilityViewModelTest {
         vm.onDaysChange(5)
         advanceUntilIdle()
 
-        // A fresh snapshot means the repository was queried for the *new* 5-day
-        // window (today .. today+5), a range the initial 7-day load never used —
-        // so this call can only come from the post-change recompute. Matching the
-        // exact new range (with the full 3-arg signature the VM actually calls) is
-        // both deterministic and stronger than a bare call count.
+        // The initial 7-day load never queries the 5-day window (today to today+5), so a call
+        // with that exact range can only come from the recompute after the change. This is
+        // stronger than a bare call count.
         val expectedEndForFiveDays = mon.plusDays(5).atStartOfDay(zone).toInstant().toEpochMilli()
         coVerify {
             insightsRepository.getOccurrencesForRange(mondayMidnightUtc, expectedEndForFiveDays, zone)

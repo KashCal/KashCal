@@ -4,10 +4,10 @@ import android.graphics.Color
 import org.onekash.kashcal.ui.shared.EventColorPalette
 
 /**
- * Parses RFC 7986 COLOR strings from CalDAV servers to Android ARGB.
+ * Parses a server's `calendar-color` value to Android ARGB.
  *
- * Returns null on anything unparseable (preserves local on the refresh path).
- * Handles `#RRGGBB`, `#RRGGBBAA` (iCloud), `#RGB`, and CSS3 named colors.
+ * Accepts `#RRGGBB`, `#RRGGBBAA` (iCloud), `#RGB` and the CSS3 color names RFC 7986 COLOR
+ * uses. Returns null for anything else; on metadata refresh a null keeps the local color.
  */
 object ServerColorParser {
 

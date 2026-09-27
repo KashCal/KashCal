@@ -11,16 +11,12 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * Timezone edge case tests for calendar operations.
+ * Pins the java.time zone arithmetic calendar code relies on; no test calls app code.
  *
- * Tests verify correct handling of:
- * - Daylight Saving Time (DST) transitions
- * - Cross-timezone event creation and display
- * - All-day event timezone handling (UTC vs local)
- * - Recurring events across DST boundaries
- * - Edge cases at midnight/day boundaries
- *
- * These scenarios are critical for a CalDAV calendar app syncing with iCloud.
+ * Covers DST durations and offsets, one instant shown in several zones, all-day dates at UTC
+ * midnight, day codes, midnight boundaries, a UTC round-trip, floating time, fixed wall times
+ * on dates either side of a DST change or at month ends (no recurrence is expanded), the date
+ * line and the year boundary.
  */
 class TimezoneEdgeCasesTest {
 
@@ -28,49 +24,42 @@ class TimezoneEdgeCasesTest {
 
     @Test
     fun `event during spring forward DST transition`() {
-        // US Spring Forward: 2:00 AM becomes 3:00 AM
-        // March 10, 2024 at 2:00 AM EST -> 3:00 AM EDT
+        // March 10, 2024: 2:00 AM EST becomes 3:00 AM EDT.
         val zone = ZoneId.of("America/New_York")
 
-        // Create event at 2:30 AM on DST day (this time doesn't exist!)
         val beforeDst = ZonedDateTime.of(2024, 3, 10, 1, 30, 0, 0, zone)
         val afterDst = ZonedDateTime.of(2024, 3, 10, 3, 30, 0, 0, zone)
 
-        // Duration between 1:30 AM and 3:30 AM on DST day should be 1 hour, not 2
+        // 1:30 AM to 3:30 AM spans the skipped hour: 1 hour elapsed, not 2.
         val durationHours = java.time.Duration.between(beforeDst, afterDst).toHours()
         assertEquals(1, durationHours)
     }
 
     @Test
     fun `event during fall back DST transition`() {
-        // US Fall Back: 2:00 AM becomes 1:00 AM
-        // November 3, 2024 at 2:00 AM EDT -> 1:00 AM EST
+        // November 3, 2024: 2:00 AM EDT becomes 1:00 AM EST.
         val zone = ZoneId.of("America/New_York")
 
-        // Create event spanning the DST transition
         val beforeFallback = ZonedDateTime.of(2024, 11, 3, 0, 30, 0, 0, zone)
         val afterFallback = ZonedDateTime.of(2024, 11, 3, 2, 30, 0, 0, zone)
 
-        // Duration should be 3 hours (extra hour gained)
+        // 12:30 AM to 2:30 AM repeats an hour: 3 hours elapsed.
         val durationHours = java.time.Duration.between(beforeFallback, afterFallback).toHours()
         assertEquals(3, durationHours)
     }
 
     @Test
     fun `recurring event time stays consistent across DST`() {
-        // A daily 9 AM meeting should stay at 9 AM local time
+        // 9 AM local on either side of the DST change.
         val zone = ZoneId.of("America/New_York")
 
-        // Before DST (EST)
         val beforeDst = ZonedDateTime.of(2024, 3, 9, 9, 0, 0, 0, zone)
-        // After DST (EDT)
         val afterDst = ZonedDateTime.of(2024, 3, 11, 9, 0, 0, 0, zone)
 
-        // Both should be at 9 AM local time
         assertEquals(9, beforeDst.hour)
         assertEquals(9, afterDst.hour)
 
-        // But UTC times differ by 1 hour
+        // The UTC hours differ by 1.
         val beforeUtcHour = beforeDst.withZoneSameInstant(ZoneOffset.UTC).hour
         val afterUtcHour = afterDst.withZoneSameInstant(ZoneOffset.UTC).hour
         assertEquals(1, beforeUtcHour - afterUtcHour) // EST is UTC-5, EDT is UTC-4
@@ -80,51 +69,45 @@ class TimezoneEdgeCasesTest {
 
     @Test
     fun `event created in one timezone displayed in another`() {
-        // Event created in Tokyo
         val tokyoZone = ZoneId.of("Asia/Tokyo")
         val tokyoTime = ZonedDateTime.of(2024, 6, 15, 10, 0, 0, 0, tokyoZone)
 
-        // Displayed in New York
         val nyZone = ZoneId.of("America/New_York")
         val nyTime = tokyoTime.withZoneSameInstant(nyZone)
 
-        // 10 AM Tokyo = 9 PM previous day in NY (during summer)
-        // Tokyo is UTC+9, NY EDT is UTC-4, difference is 13 hours
-        assertEquals(15, tokyoTime.dayOfMonth) // June 15 in Tokyo
-        assertEquals(14, nyTime.dayOfMonth)    // June 14 in NY (previous day)
-        assertEquals(21, nyTime.hour)          // 9 PM
+        // 10 AM June 15 in Tokyo (UTC+9) is 9 PM June 14 in NY (EDT, UTC-4), 13 hours apart.
+        assertEquals(15, tokyoTime.dayOfMonth)
+        assertEquals(14, nyTime.dayOfMonth)
+        assertEquals(21, nyTime.hour)
     }
 
     @Test
     fun `event spans multiple days in different timezone`() {
-        // Event at 11 PM in LA spans to next day in London
         val laZone = ZoneId.of("America/Los_Angeles")
         val londonZone = ZoneId.of("Europe/London")
 
-        // 11 PM June 15 in LA
         val laTime = ZonedDateTime.of(2024, 6, 15, 23, 0, 0, 0, laZone)
 
-        // Convert to London (BST = UTC+1, PDT = UTC-7, diff = 8 hours)
+        // 11 PM June 15 in LA (PDT, UTC-7) is 7 AM June 16 in London (BST, UTC+1).
         val londonTime = laTime.withZoneSameInstant(londonZone)
 
-        // Should be 7 AM June 16 in London
         assertEquals(16, londonTime.dayOfMonth)
         assertEquals(7, londonTime.hour)
     }
 
     @Test
     fun `UTC timestamp is timezone invariant`() {
-        val timestamp = 1718438400000L // Some fixed timestamp
+        // 2024-06-15 08:00 UTC.
+        val timestamp = 1718438400000L
 
         val nyTime = Instant.ofEpochMilli(timestamp).atZone(ZoneId.of("America/New_York"))
         val tokyoTime = Instant.ofEpochMilli(timestamp).atZone(ZoneId.of("Asia/Tokyo"))
         val utcTime = Instant.ofEpochMilli(timestamp).atZone(ZoneOffset.UTC)
 
-        // All represent the same instant
+        // One instant, different local hours.
         assertEquals(nyTime.toInstant(), tokyoTime.toInstant())
         assertEquals(tokyoTime.toInstant(), utcTime.toInstant())
 
-        // But different local times
         assertNotEquals(nyTime.hour, tokyoTime.hour)
     }
 
@@ -132,21 +115,19 @@ class TimezoneEdgeCasesTest {
 
     @Test
     fun `all-day event is date-based not time-based`() {
-        // All-day events should be the same date regardless of timezone
         val date = LocalDate.of(2024, 6, 15)
 
-        // In CalDAV, all-day events are stored as DATE (not DATE-TIME)
-        // They don't have a timezone component
+        // In CalDAV an all-day event is a DATE with no timezone. Its UTC day here runs from
+        // midnight to 1 ms before the next midnight.
         val startOfDayUtc = date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
         val endOfDayUtc = date.plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() - 1
 
-        // Should span exactly 24 hours minus 1 ms
         assertEquals(86400000 - 1, endOfDayUtc - startOfDayUtc)
     }
 
     @Test
     fun `all-day event spans correct local day`() {
-        // An all-day event for June 15 should appear on June 15 in any timezone
+        // Only Tokyo is checked; a zone behind UTC would read June 14.
         val date = LocalDate.of(2024, 6, 15)
 
         // iCloud stores all-day events at midnight UTC
@@ -158,17 +139,15 @@ class TimezoneEdgeCasesTest {
             .atZone(tokyoZone)
             .toLocalDate()
 
-        // The event should still display on June 15
         assertEquals(date, tokyoLocalDate)
     }
 
     @Test
     fun `all-day event day code calculation is timezone aware`() {
-        // All-day events use date-only (no timezone), converted to day code
+        // Computes the day code from the date alone, with no zone and no app code.
         val date = LocalDate.of(2024, 6, 15)
         val expectedDayCode = 20240615
 
-        // For all-day events, we use the date directly
         val dayCode = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
 
         assertEquals(expectedDayCode, dayCode)
@@ -180,15 +159,15 @@ class TimezoneEdgeCasesTest {
     fun `event ending at midnight belongs to previous day`() {
         val zone = ZoneId.of("America/New_York")
 
-        // Event from 11 PM to midnight
+        // 11 PM to midnight: the end's wall date is June 16, and the test takes the event's
+        // day from its start. The app's end-day rule is [DateTimeUtils.eventTsToEndDayCode],
+        // not called here.
         val start = ZonedDateTime.of(2024, 6, 15, 23, 0, 0, 0, zone)
         val end = ZonedDateTime.of(2024, 6, 16, 0, 0, 0, 0, zone)
 
-        // Event should be associated with June 15, not June 16
         assertEquals(15, start.dayOfMonth)
         assertEquals(16, end.dayOfMonth)
 
-        // But logically belongs to June 15
         val eventDay = start.toLocalDate()
         assertEquals(LocalDate.of(2024, 6, 15), eventDay)
     }
@@ -197,11 +176,9 @@ class TimezoneEdgeCasesTest {
     fun `event starting at midnight belongs to that day`() {
         val zone = ZoneId.of("America/New_York")
 
-        // Event from midnight to 1 AM
         val start = ZonedDateTime.of(2024, 6, 15, 0, 0, 0, 0, zone)
         val end = ZonedDateTime.of(2024, 6, 15, 1, 0, 0, 0, zone)
 
-        // Event belongs to June 15
         assertEquals(15, start.dayOfMonth)
         assertEquals(LocalDate.of(2024, 6, 15), start.toLocalDate())
     }
@@ -214,11 +191,10 @@ class TimezoneEdgeCasesTest {
         val localZone = ZoneId.of("America/New_York")
         val localTime = ZonedDateTime.of(2024, 6, 15, 14, 30, 0, 0, localZone)
 
-        // Convert to UTC for storage
         val utcTime = localTime.withZoneSameInstant(ZoneOffset.UTC)
         val utcTimestamp = utcTime.toInstant().toEpochMilli()
 
-        // When reading back, convert to local timezone
+        // Stored as UTC and read back in the local zone.
         val restoredLocal = Instant.ofEpochMilli(utcTimestamp).atZone(localZone)
 
         assertEquals(localTime.toInstant(), restoredLocal.toInstant())
@@ -232,14 +208,12 @@ class TimezoneEdgeCasesTest {
         // These should be interpreted in local timezone
         val floatingTime = LocalDateTime.of(2024, 6, 15, 9, 0, 0)
 
-        // Same local time in different zones = different UTC times
+        // The same wall time in two zones is two instants.
         val nyTime = floatingTime.atZone(ZoneId.of("America/New_York"))
         val laTime = floatingTime.atZone(ZoneId.of("America/Los_Angeles"))
 
-        // Different instants
         assertNotEquals(nyTime.toInstant(), laTime.toInstant())
 
-        // But same local hour
         assertEquals(9, nyTime.hour)
         assertEquals(9, laTime.hour)
     }
@@ -250,15 +224,13 @@ class TimezoneEdgeCasesTest {
     fun `weekly recurring event handles DST correctly`() {
         val zone = ZoneId.of("America/New_York")
 
-        // Weekly meeting every Monday at 9 AM
-        val monday1 = ZonedDateTime.of(2024, 3, 4, 9, 0, 0, 0, zone) // Before DST
-        val monday2 = ZonedDateTime.of(2024, 3, 11, 9, 0, 0, 0, zone) // After DST
+        // Mondays at 9 AM before and after the DST change: same local hour, different UTC hour.
+        val monday1 = ZonedDateTime.of(2024, 3, 4, 9, 0, 0, 0, zone)
+        val monday2 = ZonedDateTime.of(2024, 3, 11, 9, 0, 0, 0, zone)
 
-        // Both should be at 9 AM local
         assertEquals(9, monday1.hour)
         assertEquals(9, monday2.hour)
 
-        // UTC hours differ due to DST
         val utc1 = monday1.withZoneSameInstant(ZoneOffset.UTC).hour
         val utc2 = monday2.withZoneSameInstant(ZoneOffset.UTC).hour
         assertNotEquals(utc1, utc2)
@@ -266,21 +238,19 @@ class TimezoneEdgeCasesTest {
 
     @Test
     fun `monthly recurring event on last day handles variable month lengths`() {
-        // Event on the last day of each month at 10 AM
+        // The last day of four months at 10 AM, written out by hand; 2024 is a leap year.
         val zone = ZoneId.of("America/New_York")
 
         val jan31 = ZonedDateTime.of(2024, 1, 31, 10, 0, 0, 0, zone)
-        val feb29 = ZonedDateTime.of(2024, 2, 29, 10, 0, 0, 0, zone) // 2024 is leap year
+        val feb29 = ZonedDateTime.of(2024, 2, 29, 10, 0, 0, 0, zone)
         val mar31 = ZonedDateTime.of(2024, 3, 31, 10, 0, 0, 0, zone)
         val apr30 = ZonedDateTime.of(2024, 4, 30, 10, 0, 0, 0, zone)
 
-        // All should be at 10 AM
         assertEquals(10, jan31.hour)
         assertEquals(10, feb29.hour)
         assertEquals(10, mar31.hour)
         assertEquals(10, apr30.hour)
 
-        // All should be last day of their month
         assertEquals(31, jan31.dayOfMonth)
         assertEquals(29, feb29.dayOfMonth)
         assertEquals(31, mar31.dayOfMonth)
@@ -291,17 +261,16 @@ class TimezoneEdgeCasesTest {
 
     @Test
     fun `event crossing international date line`() {
-        // Event in Tokyo on Monday
+        // 10 AM Monday June 17 in Tokyo (UTC+9) is Sunday June 16 in Hawaii (UTC-10), across
+        // the date line.
         val tokyoZone = ZoneId.of("Asia/Tokyo")
-        val tokyoTime = ZonedDateTime.of(2024, 6, 17, 10, 0, 0, 0, tokyoZone) // Monday
+        val tokyoTime = ZonedDateTime.of(2024, 6, 17, 10, 0, 0, 0, tokyoZone)
 
-        // Same instant in Hawaii (other side of date line)
         val hawaiiZone = ZoneId.of("Pacific/Honolulu")
         val hawaiiTime = tokyoTime.withZoneSameInstant(hawaiiZone)
 
-        // Should be Sunday in Hawaii (Hawaii is UTC-10, Tokyo is UTC+9)
-        assertEquals(17, tokyoTime.dayOfMonth) // Monday in Tokyo
-        assertEquals(16, hawaiiTime.dayOfMonth) // Sunday in Hawaii
+        assertEquals(17, tokyoTime.dayOfMonth)
+        assertEquals(16, hawaiiTime.dayOfMonth)
     }
 
     // ==================== Day Code Tests ====================
@@ -311,7 +280,6 @@ class TimezoneEdgeCasesTest {
         val date = LocalDate.of(2024, 6, 15)
         val expectedDayCode = 20240615
 
-        // Calculate day code
         val dayCode = date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
 
         assertEquals(expectedDayCode, dayCode)
@@ -327,7 +295,7 @@ class TimezoneEdgeCasesTest {
         val nyDate = Instant.ofEpochMilli(utcTimestamp).atZone(ZoneId.of("America/New_York")).toLocalDate()
 
         assertEquals(LocalDate.of(2024, 6, 15), utcDate)
-        assertEquals(LocalDate.of(2024, 6, 14), nyDate) // Previous day in NY
+        assertEquals(LocalDate.of(2024, 6, 14), nyDate)
     }
 
     // ==================== Edge Case: Year Boundary ====================
@@ -336,14 +304,13 @@ class TimezoneEdgeCasesTest {
     fun `event spanning year boundary`() {
         val zone = ZoneId.of("America/New_York")
 
-        // New Year's Eve party: Dec 31 10 PM to Jan 1 2 AM
+        // Dec 31 10 PM to Jan 1 2 AM: 4 hours.
         val start = ZonedDateTime.of(2024, 12, 31, 22, 0, 0, 0, zone)
         val end = ZonedDateTime.of(2025, 1, 1, 2, 0, 0, 0, zone)
 
         assertEquals(2024, start.year)
         assertEquals(2025, end.year)
 
-        // Duration should be 4 hours
         val hours = java.time.Duration.between(start, end).toHours()
         assertEquals(4, hours)
     }
@@ -357,7 +324,7 @@ class TimezoneEdgeCasesTest {
         val winter = ZonedDateTime.of(2024, 1, 15, 12, 0, 0, 0, zone)
         val summer = ZonedDateTime.of(2024, 7, 15, 12, 0, 0, 0, zone)
 
-        // Offset changes with DST
+        // Only the offsets are asserted, not the abbreviations.
         assertEquals(ZoneOffset.ofHours(-5), winter.offset) // EST
         assertEquals(ZoneOffset.ofHours(-4), summer.offset) // EDT
     }

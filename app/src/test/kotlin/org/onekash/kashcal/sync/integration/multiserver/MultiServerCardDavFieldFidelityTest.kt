@@ -20,39 +20,33 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Live field-fidelity round-trip across every configured CardDAV server: seed a
- * single rich vCard (idempotent raw authenticated PUT — TEST SETUP only, never an
- * app write path), read it back through the production [CardDavClient] +
- * [CardDavContactReader], and assert the identity-shaping properties survive the
- * server's store → serve round-trip on the neutral
- * [org.onekash.vcard.model.Contact].
+ * Round-trips one rich vCard through every configured CardDAV server and asserts the
+ * identity-shaping properties survive on the neutral [org.onekash.vcard.model.Contact].
  *
- * The sibling [MultiServerCardDavReadTest] proves only FN + one email + one phone
- * survive; the neutral-model parse of the *richer* properties — multi-value `N`
- * components, `ORG`/`TITLE`/`ROLE`, `X-PHONETIC-*` reading aids, and grouped
- * `itemN.X-ABLabel` custom labels on email/phone/adr/url — is exercised only by the
- * pure-JVM [org.onekash.kashcal.data.contacts.VCardContactMapper] unit test, never
- * against a real server. This test closes that gap: it confirms a server actually
- * stores and re-serves the wire bytes those fields parse from, which is where server
- * quirks (an X-property dropped, a structured value flattened, a label rewritten)
- * would surface.
+ * The seed goes up with an idempotent raw authenticated PUT (test setup, never an app write
+ * path) and comes back through the production [CardDavClient] and [CardDavContactReader].
  *
- * Why the assertions are hard rather than tolerant: every currently-wired CardDAV
- * server is either a Sabre-family / Cyrus passthrough (preserves the authored bytes
- * verbatim) or iCloud (the originator of the `X-PHONETIC-*` and `X-ABLabel`
- * conventions, which it round-trips natively). So a dropped or mangled field here is
- * a real regression to surface, not conformant server behavior to tolerate. The one
- * value printed-not-asserted is the phonetic MIDDLE name — Apple's UI exposes only
- * first/last phonetics, so a server normalizing the middle away is expected. If a
- * future non-passthrough server that legitimately normalizes X-properties joins the
- * matrix, give it a documented per-server tolerance then.
+ * [MultiServerCardDavReadTest] checks only FN, one email and one phone. The richer properties
+ * (multi-value `N` components, `ORG`, `TITLE`, `ROLE`, `X-PHONETIC-*` reading aids, grouped
+ * `itemN.X-ABLabel` labels on email, phone, adr and url, BDAY and the `X-ABDATE` anniversary)
+ * are otherwise parsed only in the pure-JVM `VCardContactMapperTest`. This test confirms a real
+ * server stores and re-serves the bytes those fields parse from, which is where server quirks
+ * (an X-property dropped, a structured value flattened, a label rewritten) would surface.
  *
- * The seed is entirely synthetic — RFC 6761 reserved `@example.test`, an unassigned
- * `+1-555-00xx` number, and an `example.test` URL — so no real person is contacted or
- * exposed. Assertions key only on the seed's own UID and its synthetic values; any
- * body surfaced for debugging goes through [redactContactBody] first.
+ * The assertions are hard, not tolerant: a dropped or mangled field fails on every server in
+ * [CardDavServerConfig.allServers]. iCloud originated the `X-PHONETIC-*` and `X-ABLabel`
+ * conventions and round-trips them natively, and the other servers are expected to store these
+ * fields as authored, so a loss is a regression to surface. The phonetic middle name is printed,
+ * not asserted: iCloud's contact UI exposes only first and last phonetics, so a server normalizing
+ * the middle away is expected. A future server that legitimately normalizes X-properties gets a
+ * documented per-server tolerance then.
  *
- * Skips (never fails) servers without credentials, unreachable, or without CardDAV.
+ * The seed is synthetic (RFC 6761 reserved `@example.test`, an unassigned `+1-555-00xx`
+ * number, an `example.test` URL), so no real person is contacted or exposed. Assertions key
+ * only on the seed's UID and its synthetic values, and no raw body is printed;
+ * [redactContactBody] exists for a diagnostic that must print one.
+ *
+ * Skips (never fails) servers without credentials, unreachable ones, and ones without CardDAV.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -89,7 +83,7 @@ class MultiServerCardDavFieldFidelityTest(
         private const val EXP_ADR_LABEL = "Vacation Home"
         private const val EXP_URL = "https://example.test/blog"
         private const val EXP_URL_LABEL = "Blog"
-        // Native BDAY (full calendar date) and the Apple itemN.X-ABDATE + X-ABLabel
+        // Native BDAY (full calendar date) and the iCloud itemN.X-ABDATE + X-ABLabel
         // anniversary form (vCard 3.0 has no native ANNIVERSARY property).
         private const val EXP_BDAY = "1985-03-14"
         private const val EXP_ANNIVERSARY = "2010-09-22"
@@ -133,7 +127,7 @@ class MultiServerCardDavFieldFidelityTest(
         val book = resolveWritableBook(c, cr)
         assumeTrue("${config.name}: no writable address book to seed the fixture into", book != null)
 
-        // --- Idempotent seed (TEST SETUP — raw authenticated PUT, not an app path) ---
+        // --- Idempotent seed (test setup: raw authenticated PUT, not an app path) ---
         val seedUrl = book!!.url.trimEnd('/') + "/" + FIDELITY_FILENAME
         assumeTrue("${config.name}: could not seed the fidelity fixture", putSeed(seedUrl, cr))
 
@@ -143,12 +137,12 @@ class MultiServerCardDavFieldFidelityTest(
         val read = (reader.readContacts(book.url, hrefs, book.vcardVersion) as? CalDavResult.Success)
             ?.data?.contacts.orEmpty()
 
-        // Tolerate pre-existing contacts: assert only on OUR seed, keyed by UID.
+        // Tolerate pre-existing contacts: assert only on this test's seed, keyed by UID.
         val seed = read.firstOrNull { it.contact.uid == FIDELITY_UID }?.contact
         assertNotNull("${config.name}: seed UID $FIDELITY_UID not found among ${read.size} contacts", seed)
         val contact = seed!!
 
-        // Characterization line — synthetic values are safe to print; no raw body.
+        // Characterization line: synthetic values are safe to print; no raw body.
         val email = contact.emails.firstOrNull { it.address == EXP_EMAIL }
         val phone = contact.phones.firstOrNull { it.number.filter { ch -> ch.isDigit() }.contains(EXP_PHONE_DIGITS) }
         val adr = contact.addresses.firstOrNull { it.street == EXP_ADR_STREET }
@@ -183,7 +177,7 @@ class MultiServerCardDavFieldFidelityTest(
         assertEquals("${config.name}: TITLE", EXP_TITLE, contact.title)
         assertEquals("${config.name}: ROLE", EXP_ROLE, contact.role)
 
-        // --- X-PHONETIC-* reading aids (first/last; middle printed only, see kdoc) ---
+        // --- X-PHONETIC-* reading aids (first and last; middle printed only, see class doc) ---
         assertEquals("${config.name}: X-PHONETIC-FIRST-NAME", EXP_PHONETIC_GIVEN, contact.structuredName.phoneticGiven)
         assertEquals("${config.name}: X-PHONETIC-LAST-NAME", EXP_PHONETIC_FAMILY, contact.structuredName.phoneticFamily)
 
@@ -209,7 +203,7 @@ class MultiServerCardDavFieldFidelityTest(
             contact.birthday!!.date?.toString(),
         )
 
-        // --- ANNIVERSARY (Apple itemN.X-ABDATE + X-ABLabel form) maps to the neutral date ---
+        // --- ANNIVERSARY (iCloud itemN.X-ABDATE + X-ABLabel form) maps to the neutral date ---
         assertNotNull("${config.name}: ANNIVERSARY lost (anniversary null)", contact.anniversary)
         assertEquals(
             "${config.name}: ANNIVERSARY value",
@@ -218,7 +212,7 @@ class MultiServerCardDavFieldFidelityTest(
         )
     }
 
-    /** Assert [actual] is non-null and contains every one of [needles] as a substring. */
+    /** Asserts [actual] is non-null and contains every one of [needles] as a substring. */
     private fun assertContainsAll(message: String, actual: String?, vararg needles: String) {
         assertNotNull("$message: value absent", actual)
         needles.forEach { needle ->
@@ -226,7 +220,10 @@ class MultiServerCardDavFieldFidelityTest(
         }
     }
 
-    /** Discover the login's first writable address book (else the first book), or null. */
+    /**
+     * Returns the first writable address book in the login's first home (else its first book),
+     * or null when discovery finds none.
+     */
     private suspend fun resolveWritableBook(c: CardDavClient, cr: ServerCredentials) = run {
         val root = if (config.usesWellKnownDiscovery) {
             c.discoverWellKnown(cr.serverUrl).getOrNull() ?: cr.serverUrl
@@ -241,7 +238,7 @@ class MultiServerCardDavFieldFidelityTest(
         books.firstOrNull { !it.isReadOnly } ?: books.first()
     }
 
-    /** Idempotent PUT of the seed body with the harness credentials. Returns true on 2xx / 412 / 204. */
+    /** PUTs the seed body with the harness credentials (idempotent). Returns true on 2xx or 412. */
     private fun putSeed(url: String, cr: ServerCredentials): Boolean = try {
         val request = Request.Builder()
             .url(url)
@@ -253,7 +250,7 @@ class MultiServerCardDavFieldFidelityTest(
         false
     }
 
-    /** Read hrefs via sync-collection when available, else the full PROPFIND listing. */
+    /** Returns the book's hrefs from sync-collection when it lists any, else a full listing. */
     private suspend fun collectHrefs(c: CardDavClient, bookUrl: String): List<String> {
         (c.syncCollection(bookUrl, null) as? CalDavResult.Success)?.data?.let { report ->
             if (report.changed.isNotEmpty()) return report.changed.map { it.href }
@@ -262,10 +259,9 @@ class MultiServerCardDavFieldFidelityTest(
     }
 
     /**
-     * Contact-aware redactor for debug output — masks the identity-bearing vCard
-     * properties the calendar-side email-only redactor would leak. Not used on the
-     * passing path (the seed is synthetic); kept for any diagnostic that must print
-     * a non-seed body.
+     * Masks the identity-bearing vCard properties the calendar-side email-only redactor would
+     * leak. Nothing calls it (the seed is synthetic); it is kept for any diagnostic that must
+     * print a non-seed body.
      */
     @Suppress("unused")
     private fun redactContactBody(body: String): String =

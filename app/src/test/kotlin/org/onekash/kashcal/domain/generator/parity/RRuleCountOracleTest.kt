@@ -7,27 +7,24 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /**
- * Third-party count oracle for the production RRULE engine.
+ * Checks the production RRULE engine's occurrence counts against a third-party oracle.
  *
- * Every case here carries an independently-authored expected occurrence count
- * transcribed from a widely-used C iCalendar library's recurrence conformance
- * corpus (each fixture there records an `X-EXPECT-NUMEVENTS` line). That count
- * is a *third* opinion — independent of both ical4j and the retired reference
- * engine. The existing differential harness only proves the two JVM engines
- * *agree*; it cannot catch the case where both are wrong the same way. An
- * absolute count from an unrelated implementation can.
+ * Each expected count is transcribed from a widely used C iCalendar library's recurrence
+ * conformance corpus (each fixture there records an `X-EXPECT-NUMEVENTS` line), independent of
+ * both ical4j and the retired lib-recur reference. The differential harness only shows the two
+ * JVM engines agree, so it can't catch both being wrong the same way; an absolute count from an
+ * unrelated implementation can.
  *
- * These four combinations were absent from the parity corpus:
- *   - FREQ=DAILY;BYDAY=<weekdays>  (the "every weekday" pattern many desktop
- *     clients emit; the corpus had zero DAILY+BYDAY cases)
+ * The parity corpus has none of these four combinations:
+ *   - FREQ=DAILY;BYDAY=<weekdays>  (the "every weekday" pattern many desktop clients emit)
  *   - FREQ=DAILY;BYDAY;WKST        (WKST must not change a DAILY+BYDAY count)
- *   - FREQ=DAILY;BYMONTH          (day-level filtering by month, leap-year span)
- *   - FREQ=MINUTELY;BYHOUR        (sub-daily expansion constrained by hour)
+ *   - FREQ=DAILY;BYMONTH           (day-level filtering by month, leap-year span)
+ *   - FREQ=MINUTELY;BYHOUR         (sub-daily expansion constrained by hour)
  *
- * The assertion is on COUNT only (matching the corpus oracle), not on exact
- * timestamps — DST/zone offsets are deliberately out of scope here; the RFC
- * example suite in [org.onekash.kashcal.domain.generator.parity.fixtures.RfcExamplesCorpus]
- * covers exact-timestamp ground truth.
+ * Only the count is asserted, as the corpus oracle gives, not exact timestamps: DST and zone
+ * offsets are out of scope here. The RFC examples in
+ * [org.onekash.kashcal.domain.generator.parity.fixtures.RfcExamplesCorpus] cover exact
+ * timestamps.
  */
 class RRuleCountOracleTest {
 
@@ -52,7 +49,7 @@ class RRuleCountOracleTest {
         ZonedDateTime.of(y, m, d, hour, minute, 0, 0, ZoneId.of(zone)).toInstant().toEpochMilli()
 
     // "Every weekday, 50 occurrences." DTSTART Tue 2002-01-01 09:00 UTC.
-    // COUNT-bounded — 50 weekdays land by mid-March 2002; range is generous.
+    // COUNT-bounded: 50 weekdays land by mid-March 2002, well inside the range.
     @Test
     fun `daily on weekdays COUNT=50 yields 50 occurrences`() {
         val n = countOf(
@@ -67,7 +64,7 @@ class RRuleCountOracleTest {
 
     // "Every weekday until 2002-01-20, WKST=SU." DTSTART Tue 2002-01-01 09:00 UTC.
     // Weekdays Jan 1-4, 7-11, 14-18 = 14 (Jan 19/20 are Sat/Sun). WKST must not
-    // change a DAILY expansion — the count is 14 regardless of week-start.
+    // change a DAILY expansion, so the count is 14 for any week start.
     @Test
     fun `daily on weekdays until date with WKST=SU yields 14 occurrences`() {
         val n = countOf(

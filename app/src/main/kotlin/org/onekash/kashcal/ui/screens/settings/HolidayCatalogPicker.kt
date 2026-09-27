@@ -52,16 +52,16 @@ import org.onekash.kashcal.domain.catalog.markAlreadyAdded
 private const val LICENSE_URL = "https://creativecommons.org/licenses/by-sa/3.0/"
 
 /**
- * Bottom sheet that lets the user subscribe to a country's public holiday
- * calendar in one tap. Entries come from the bundled catalog (pointers to
- * externally-hosted feeds); tapping one validates the feed via the shared
- * [fetchCalendarInfo] before [onPick] is invoked. Already-subscribed entries
- * are shown disabled. The caller supplies the subscription color.
+ * Shows a bottom sheet for subscribing to a country's public holiday calendar in one tap.
  *
- * @param subscribedUrls URLs of feeds the user already subscribes to, used to
- *   mark catalog entries as already added.
- * @param onPick Invoked with (url, name) once a tapped feed validates.
- * @param onDismiss Invoked when the sheet is dismissed.
+ * Entries come from the bundled catalog (pointers to externally hosted feeds). Tapping one
+ * validates the feed with [fetchCalendarInfo], the check the add-subscription dialog also runs,
+ * before [onPick] is called. Already-subscribed entries are shown disabled. The caller picks the
+ * subscription color.
+ *
+ * @param subscribedUrls URLs of feeds the user already subscribes to, which mark catalog entries
+ *   as already added.
+ * @param onPick called with (url, name) once a tapped feed validates.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -76,8 +76,7 @@ fun HolidayCatalogPicker(
     var query by rememberSaveable { mutableStateOf("") }
     // URL of the entry currently being validated, or null when idle.
     var validatingUrl by remember { mutableStateOf<String?>(null) }
-    // A generic validation error is shown as a fixed message, so this only
-    // needs to track whether to show it (the specific cause isn't surfaced here).
+    // Validation failures show one fixed message; the specific cause isn't surfaced here.
     var showValidationError by remember { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -86,9 +85,8 @@ fun HolidayCatalogPicker(
         markAlreadyAdded(filterCatalog(entries, query), subscribedUrls)
     }
 
-    // Validate the tapped feed in an effect keyed to its URL: dismissing the
-    // sheet or tapping another entry changes/clears the key, cancelling the
-    // in-flight fetch so a late result can never fire onPick.
+    // Validate the tapped feed in an effect keyed to its URL. Dismissing the sheet leaves
+    // composition and cancels the in-flight fetch, so a late result never fires onPick.
     LaunchedEffect(validatingUrl) {
         val url = validatingUrl ?: return@LaunchedEffect
         val entry = entries.firstOrNull { it.url == url } ?: return@LaunchedEffect
@@ -109,8 +107,8 @@ fun HolidayCatalogPicker(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
     ) {
-        // Pin the sheet to the top of the screen so the list has a stable,
-        // full-height area to scroll within instead of resizing to content.
+        // Fill the sheet's full height so the list scrolls in a stable area instead of the
+        // sheet resizing to its content.
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -253,8 +251,7 @@ private fun CatalogEmptyState() {
 private fun AttributionFooter() {
     val licenseName = stringResource(R.string.holiday_catalog_attribution_license)
     val template = stringResource(R.string.holiday_catalog_attribution, licenseName)
-    // Split the template around the license token so the license becomes a
-    // tappable link while the rest stays plain text.
+    // Split the template around the license name so only the name becomes a tappable link.
     val before = template.substringBefore(licenseName)
     val after = template.substringAfter(licenseName)
     val annotated = buildAnnotatedString {

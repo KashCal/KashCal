@@ -22,11 +22,11 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 /**
- * Regression for GitHub #319: after one event is rescheduled, the day/3-day/week
- * grid re-sorts the day's events (by start time) and the keyless forEach in
- * DayColumn rebinds each positional EventBlock slot to a *different* DisplayEvent.
- * Grabbing an event after that reorder must start dragging the event the user
- * actually touched — not whichever event first occupied that positional slot.
+ * Regression for GitHub #319: after one event is rescheduled, the day, 3-day and week grid
+ * re-sorts the day's events by start time. Keyed by position, [DayColumn] would rebind each
+ * EventBlock slot to a different DisplayEvent; it keys each block on the event's stableKey.
+ * Grabbing an event after the reorder must drag the event the user touched, not whichever
+ * event first held that position.
  *
  * Runs under Robolectric in the unit source set (no emulator).
  */
@@ -49,8 +49,8 @@ class DayColumnReorderDragTest {
         val alpha = displayEvent(1L, "Alpha", 9)
         val bravo = displayEvent(2L, "Bravo", 11)
 
-        // Reschedule Alpha to 12:00 so the sorted order flips to Bravo, Alpha —
-        // slot 0 now holds Bravo, slot 1 now holds Alpha.
+        // Rescheduling Alpha to 12:00 flips the sorted order to Bravo, Alpha: position 0 now
+        // holds Bravo and position 1 holds Alpha.
         val alphaMoved = displayEvent(1L, "Alpha", 12)
 
         var events by mutableStateOf(listOf(alpha, bravo))
@@ -74,13 +74,13 @@ class DayColumnReorderDragTest {
         composeTestRule.waitForIdle()
         assertEquals("Bravo", draggedTitle)
 
-        // Reschedule Alpha -> the day re-sorts and slots rebind.
+        // Reschedule Alpha; the day re-sorts.
         draggedTitle = null
         events = listOf(alphaMoved, bravo)
         composeTestRule.waitForIdle()
 
-        // Now grab Bravo again. It must still be Bravo that starts dragging,
-        // not Alpha (whose lambda first occupied Bravo's new positional slot).
+        // Grab Bravo again. Bravo must start dragging, not Alpha, whose block first held Bravo's
+        // new position.
         composeTestRule.onNodeWithText("Bravo").performTouchInput { longClick() }
         composeTestRule.waitForIdle()
         assertEquals(

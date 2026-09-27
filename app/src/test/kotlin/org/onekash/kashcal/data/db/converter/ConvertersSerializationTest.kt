@@ -6,11 +6,9 @@ import org.junit.Assert.assertThrows
 import org.junit.Test
 
 /**
- * Verifies kotlinx.serialization produces identical JSON to Gson for
- * Room TypeConverter types (List<String>, Map<String, String>).
- *
- * Includes backward compat tests with known Gson-produced JSON strings
- * from existing Room data.
+ * Checks that kotlinx.serialization reads and writes the JSON the Room converters store for
+ * `List<String>` and `Map<String, String>`, including Gson-produced strings in existing rows.
+ * Only the list test pins the encoded string; the map test checks the round trip.
  */
 class ConvertersSerializationTest {
 
@@ -55,7 +53,7 @@ class ConvertersSerializationTest {
 
     @Test
     fun `malformed JSON throws SerializationException caught by Exception handler`() {
-        // Converters.kt uses catch (e: Exception) which handles SerializationException
+        // Converters catches Exception, which covers SerializationException, and returns empty.
         assertThrows(Exception::class.java) {
             Json.decodeFromString<List<String>>("not json")
         }

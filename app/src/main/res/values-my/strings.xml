@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">ဤဆာဗာတွင် ပြက္ခဒိန်များ မတွေ့ရှိပါ။</string>
     <string name="caldav_error_unexpected">မမျှော်လင့်သော အမှားတစ်ခု။ ထပ်စမ်းကြည့်ပါ။</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nဤသည်မှာ သင့်ဒေသတွင်း ကွန်ရက်ရှိ ဆာဗာဖြစ်ပါက ချိတ်ဆက်ရန် ဒေသတွင်း ကွန်ရက်သုံးခွင့်ကို ခွင့်ပြုပါ။</string>
+    <string name="caldav_error_connection_refused_insecure">ဆာဗာက ချိတ်ဆက်မှုကို KashCal မလိုက်သည့်နေရာ (ကုဒ်မပြောင်းထားသော လိပ်စာ သို့မဟုတ် လမ်းကြောင်းလွှဲ ပတ်လည်) သို့ လွှဲလိုက်သဖြင့် သင့်စကားဝှက်ကို မပို့မီ KashCal ရပ်လိုက်ပါသည်။ ဆာဗာလိပ်စာကို စစ်ဆေးပါ။</string>
     <string name="local_network_banner_title">ဒေသတွင်း ကွန်ရက်သုံးခွင့် လိုအပ်သည်</string>
     <string name="local_network_banner_body">ဤဆာဗာသည် သင့်ဒေသတွင်း ကွန်ရက်ပေါ်တွင် ရှိပုံရသည်။ KashCal က ၎င်းသို့ ချိတ်ဆက်နိုင်ရန် ဒေသတွင်း ကွန်ရက်သုံးခွင့်ကို ခွင့်ပြုပါ။</string>
     <string name="local_network_banner_allow">သုံးခွင့်ပြု</string>
@@ -792,6 +793,8 @@
     <string name="dialog_edit_recurring_title">ပြောင်းလဲမှုများကို သိမ်းရန်</string>
     <string name="dialog_delete_recurring_title">ဖျက်ရန်</string>
     <string name="dialog_move_recurring_title">ရွှေ့ရန်</string>
+    <string name="snackbar_event_rescheduled">ပွဲကို အချိန်ပြောင်းပြီးပါပြီ</string>
+    <string name="snackbar_reschedule_failed">ပွဲကို အချိန်ပြောင်း၍ မရပါ</string>
     <string name="recurring_this_event">ဤပွဲ</string>
     <string name="recurring_all_events">ပွဲအားလုံး</string>
 

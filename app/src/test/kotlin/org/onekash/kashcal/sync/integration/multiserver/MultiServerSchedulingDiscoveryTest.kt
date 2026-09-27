@@ -12,24 +12,20 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Live regression across the CalDAV fleet for the two scheduling-discovery
- * probes the app performs at sync time (RFC 6638):
- *   - `discoverScheduleOutboxUrl` (§2.1.1) — PROPFIND on the principal.
- *   - `supportsAutoSchedule` (§2) — OPTIONS on the calendar collection,
- *     reading the `calendar-auto-schedule` DAV-header token.
+ * Pins, per server, the two RFC 6638 scheduling-discovery probes that account setup and calendar
+ * refresh run (`persistSchedulingDiscovery`):
+ *  - `discoverScheduleOutboxUrl` (§2.1.1): PROPFIND on the principal.
+ *  - `supportsAutoSchedule` (§2): OPTIONS on the calendar collection, reading the
+ *    `calendar-auto-schedule` DAV-header token.
  *
- * This pins the per-server disposition observed live so a regression is caught
- * in either direction (a server we expect to advertise an outbox/capability
- * silently stopping, or a non-advertising server starting). It is DISCOVERY
- * ONLY — it never POSTs to the outbox or sends an invite.
+ * A change fails in either direction: a server that advertised stops, or one that didn't starts.
+ * Discovery only: it never POSTs to the outbox or sends an invite.
  *
- * The OPTIONS capability MUST be probed on the calendar COLLECTION, not the
- * service root: at least one server advertises the token only on the
- * collection. This test asserts the in-app `supportsAutoSchedule` reproduces
- * the capability matrix the audit captured by hand.
+ * The OPTIONS capability must be probed on the calendar collection, not the service root: at
+ * least one server advertises the token only on the collection.
  *
- * Skips (never fails) on unreachable / no-credential / discovery-failure
- * servers so it is safe in CI without the local fleet.
+ * Skips, never fails, on a server with no credentials, no baseline, no reachable endpoint, or a
+ * failed discovery step, so it is safe in CI without the local servers.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -47,19 +43,16 @@ class MultiServerSchedulingDiscoveryTest(
             CalDavServerConfig.allServers().map { arrayOf<Any>(it) }
 
         /**
-         * Whether each server advertises a schedule-outbox-URL on its principal
-         * (verified live 2026-06-09 against the in-app discovery path):
-         * Sabre-family + Stalwart + Zoho + Mailbox + SOGo advertise one; bare
-         * Radicale and the per-user-partitioned iCloud principal do not.
+         * Whether each server advertises a schedule-outbox-URL on its principal, verified live
+         * 2026-06-09 through the app's discovery: the Sabre-based servers, Stalwart, Zoho, Mailbox,
+         * SOGo and Fastmail do; bare Radicale doesn't. The per-user-partitioned iCloud principal
+         * doesn't either, but iCloud has no entry and skips.
          *
-         * SOGo: advertises a populated schedule-outbox-URL whose href points at
-         * the calendar collection itself (e.g. `/SOGo/dav/<user>/Calendar/
-         * personal/`) rather than a dedicated `/outbox/`. The raw PROPFIND body
-         * carries the href INSIDE the `<schedule-outbox-URL>` element (the
-         * response self-href is the principal), so the parser correctly reads
-         * the property value. This corrects the earlier hand-captured note that
-         * SOGo returned the property empty — that was a different container
-         * state; this fleet advertises it.
+         * SOGo's schedule-outbox-URL points at the calendar collection itself (e.g.
+         * `/SOGo/dav/<user>/Calendar/personal/`), not a dedicated `/outbox/`. The href sits inside
+         * the `<schedule-outbox-URL>` element (the response's own href is the principal), so the
+         * parser reads the property value. A SOGo container in a different state has returned the
+         * property empty.
          */
         private val OUTBOX_ADVERTISED: Map<String, Boolean> = mapOf(
             "Stalwart" to true,
@@ -74,18 +67,15 @@ class MultiServerSchedulingDiscoveryTest(
         )
 
         /**
-         * Whether the calendar collection advertises calendar-auto-schedule via
-         * OPTIONS (verified live 2026-06-09 against the in-app discovery path):
-         * Baikal-family + Nextcloud + Stalwart + SOGo advertise it; bare
-         * Radicale does not. iCloud and Zoho are intentionally absent — their
-         * disposition is driven by the runtime read-back, not the OPTIONS flag,
-         * so we don't pin a capability baseline for them.
+         * Whether the calendar collection advertises calendar-auto-schedule via OPTIONS, verified
+         * live 2026-06-09 through the app's discovery: Baikal, BaikalDigest, Nextcloud, Stalwart,
+         * SOGo and Fastmail do; bare Radicale doesn't. iCloud and Zoho are left out on purpose:
+         * their delivery is classified from the read-back, not this flag. Servers without an
+         * entry skip.
          *
-         * SOGo's authenticated OPTIONS DAV header includes calendar-auto-schedule
-         * (alongside calendar-schedule); the flag is advisory only and does not
-         * by itself mean SOGo delivers on a plain PUT (see
-         * ServerSideSchedulingProbeTest, which classifies SOGo's actual delivery
-         * separately off the runtime signal).
+         * SOGo's authenticated OPTIONS DAV header includes calendar-auto-schedule (with
+         * calendar-schedule), but that alone doesn't mean SOGo delivers on a plain PUT;
+         * `ServerSideSchedulingProbeTest` classifies its delivery from the read-back.
          */
         private val CAPABILITY_ADVERTISED: Map<String, Boolean> = mapOf(
             "Stalwart" to true,

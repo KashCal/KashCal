@@ -6,8 +6,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for ExpandablePickerCard component.
- * Tests expansion state logic and animation timing constants.
+ * Tests expansion, enabled and accordion logic over local variables, and copies of
+ * [ExpandablePickerCard]'s tween durations and disabled alpha (0.6). None calls or renders
+ * [ExpandablePickerCard] or [ExpandablePickerCardWithCustomHeader], so a change to either doesn't
+ * fail these tests.
  */
 class ExpandablePickerCardTest {
 
@@ -87,11 +89,11 @@ class ExpandablePickerCardTest {
         var isExpanded = true
         val enabled = false
 
-        // Even when disabled, the expansion state is preserved
+        // Disabling doesn't collapse the picker.
         assertTrue(isExpanded)
 
-        // The picker just doesn't respond to user input
-        // (This is a behavior test - actual click handling is in Compose)
+        // A disabled picker only stops responding to input; that click handling lives in the
+        // composable (not asserted here).
     }
 
     // ==================== Label and Value Tests ====================
@@ -126,19 +128,19 @@ class ExpandablePickerCardTest {
 
     @Test
     fun `animation durations are consistent`() {
-        // These values match the tween() durations in ExpandablePickerCard
+        // Copies of the tween() durations in ExpandablePickerCard.
         val expandDuration = 200
         val fadeInDuration = 150
         val shrinkDuration = 150
         val fadeOutDuration = 100
 
-        // Expand animation is slightly longer than collapse for better UX
+        // Expand runs at least as long as collapse.
         assertTrue(expandDuration >= shrinkDuration)
 
-        // Fade in is faster than expand to complete within expand time
+        // Fade-in finishes within the expand time.
         assertTrue(fadeInDuration <= expandDuration)
 
-        // Fade out is fastest to prevent content flash during collapse
+        // Fade-out finishes within the shrink, so content doesn't flash during collapse.
         assertTrue(fadeOutDuration <= shrinkDuration)
     }
 
@@ -146,7 +148,7 @@ class ExpandablePickerCardTest {
 
     @Test
     fun `only one picker expanded at a time pattern`() {
-        // Common pattern: collapse others when one expands
+        // Expanding one picker collapses the others.
         var currentExpanded: String? = null
 
         fun togglePicker(picker: String) {
@@ -160,11 +162,11 @@ class ExpandablePickerCardTest {
         togglePicker("calendar")
         assertEquals("calendar", currentExpanded)
 
-        // Expand reminder - calendar should close
+        // Expanding reminder closes calendar.
         togglePicker("reminder")
         assertEquals("reminder", currentExpanded)
 
-        // Toggle reminder again - should close
+        // Toggling reminder again closes it.
         togglePicker("reminder")
         assertEquals(null, currentExpanded)
     }
@@ -191,7 +193,7 @@ class ExpandablePickerCardTest {
         assertFalse(pickers["reminder"]!!.expanded)
         assertFalse(pickers["recurrence"]!!.expanded)
 
-        // Expand reminder - calendar collapses
+        // Expanding reminder collapses calendar.
         expandOnly("reminder")
         assertFalse(pickers["calendar"]!!.expanded)
         assertTrue(pickers["reminder"]!!.expanded)

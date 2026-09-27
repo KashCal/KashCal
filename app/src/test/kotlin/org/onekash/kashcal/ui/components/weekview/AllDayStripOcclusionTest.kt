@@ -18,16 +18,13 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 /**
- * Regression guard: the all-day strip must sit above the timed grid and reserve
- * its own height, never overlaying and hiding the grid's earliest hours
- * (midnight onward). A previous overlay layout floated the strip on top of the
- * grid, which started at y=0 under the opaque strip, so the more all-day events
- * a day had, the more of the early morning was covered and could never be
+ * Checks that the all-day strip sits above the timed grid and reserves its own height, never
+ * overlaying the grid's earliest hours. A strip floated over a grid starting at y=0 would hide
+ * more of the early morning the more all-day events a day had, and that part could never be
  * scrolled into view.
  *
- * The contract, verified through the real composable at scroll-top: the first
- * time label (midnight / hour 0) must sit at or below the strip's bottom edge,
- * never behind it.
+ * Through the real [WeekViewContent] at scroll-top, the first time label (midnight) must sit at
+ * or below the strip's bottom edge (0.5 px tolerance), and the strip must stay under 200 dp tall.
  *
  * Runs headless under Robolectric in the unit source set (no emulator).
  */
@@ -38,8 +35,8 @@ class AllDayStripOcclusionTest {
     @get:Rule
     val composeTestRule = createComposeRule()
 
-    // The day/3-day pager opens on today, so the events must land on today's
-    // page to populate the visible strip.
+    // The 3-day pager opens on today, so the events must land on today's page to fill the
+    // visible strip.
     private val day: LocalDate = LocalDate.now()
 
     private fun render(allDay: List<DisplayEvent>) {
@@ -50,7 +47,7 @@ class AllDayStripOcclusionTest {
                     allDayEvents = allDay.toImmutableList(),
                     isLoading = false,
                     error = null,
-                    // scroll-top: the grid is at midnight, where occlusion bites.
+                    // Scroll-top: the grid is at midnight, where the strip would hide it.
                     scrollPosition = 0,
                     savedScrollMinutes = 0,
                     visibleDays = 3,
@@ -85,8 +82,8 @@ class AllDayStripOcclusionTest {
 
     @Test
     fun midnight_is_visible_below_strip_with_many_all_day_events() {
-        // A pile of all-day events makes the strip its tallest; this is the case
-        // that hid the most morning hours before the fix.
+        // A pile of all-day events makes the strip its tallest, the case where an overlaid strip
+        // would hide the most morning hours.
         val events = (1..6).map { allDayDisplayEvent(id = it.toLong(), title = "AllDay $it", date = day) }
         render(events)
         assertMidnightBelowStrip()
@@ -94,16 +91,13 @@ class AllDayStripOcclusionTest {
 
     @Test
     fun all_day_strip_stays_bounded_and_does_not_starve_the_timed_grid() {
-        // Distinct from the occlusion checks above (which only assert midnight is
-        // not *behind* the strip): a fill-height modifier on the strip's day-column
-        // box let the non-weighted strip consume the whole screen height, starving
-        // the weighted, scrollable timed grid below it to zero px (blank screen, no
-        // scroll). Both midnight and the strip bottom then sit at the screen bottom,
-        // so the occlusion assertion still passed and missed it. Use an overflow
-        // scenario (a pile of all-day events -> "+N" badge) so the bottom-anchoring
-        // min-height is actually engaged, then guard the strip height directly: it
-        // must stay bounded to a couple of rows, not balloon toward the ~720dp
-        // viewport, which is what starvation looked like.
+        // The occlusion checks above only assert midnight isn't behind the strip. A fill-height
+        // modifier on the strip's day-column box would let the non-weighted strip take the whole
+        // screen height and starve the weighted, scrollable timed grid to zero px (blank screen,
+        // no scroll); midnight and the strip bottom would both sit at the screen bottom, so the
+        // occlusion check would still pass. An overflow case (a pile of all-day events, a "+N"
+        // badge) engages the bottom-anchoring min-height, and the strip height is checked
+        // directly: under 200 dp, not ballooning toward the 720 dp viewport.
         val events = (1..6).map { allDayDisplayEvent(id = it.toLong(), title = "AllDay $it", date = day) }
         render(events)
         val strip = composeTestRule.onNodeWithTag(TEST_TAG_ALL_DAY_STRIP).getUnclippedBoundsInRoot()

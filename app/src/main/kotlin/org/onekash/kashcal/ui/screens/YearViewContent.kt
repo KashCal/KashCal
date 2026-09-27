@@ -57,9 +57,7 @@ private fun getLocalizedMonthNames(): List<String> {
     }
 }
 
-/**
- * Year view: 12 mini-months in 4x3 grid with horizontal paging by year.
- */
+/** Shows a year as 12 mini-months, 4 rows by 3 columns, paged horizontally by year. */
 @Composable
 fun YearViewContent(
     eventDots: ImmutableMap<String, ImmutableMap<Int, ImmutableList<Int>>>,
@@ -80,7 +78,7 @@ fun YearViewContent(
     )
     val scope = rememberCoroutineScope()
 
-    // Sync pager → year changes
+    // Page YEAR_PAGER_CENTER is the current year.
     val displayedYear by remember {
         derivedStateOf {
             val page = pagerState.currentPage
@@ -88,7 +86,7 @@ fun YearViewContent(
         }
     }
 
-    // Notify ViewModel of year changes for dots loading
+    // Reports each current page's year so the host loads that year's event dots.
     LaunchedEffect(Unit) {
         snapshotFlow { pagerState.currentPage }
             .collect { page ->
@@ -97,7 +95,7 @@ fun YearViewContent(
             }
     }
 
-    // Handle navigate to today
+    // Scrolls back to the current year, then consumes the request.
     LaunchedEffect(pendingNavigateToToday) {
         if (pendingNavigateToToday) {
             pagerState.animateScrollToPage(YEAR_PAGER_CENTER)
@@ -105,11 +103,10 @@ fun YearViewContent(
         }
     }
 
-    // Back press → MONTH view
+    // Back returns to the month view.
     BackHandler { onBackToMonth() }
 
     Column(modifier = modifier.fillMaxSize()) {
-        // Year header strip
         YearHeaderStrip(
             displayedYear = displayedYear,
             startYear = currentYear - YEAR_PAGER_CENTER,
@@ -120,7 +117,6 @@ fun YearViewContent(
             }
         )
 
-        // Year pager
         HorizontalPager(
             state = pagerState,
             modifier = Modifier.fillMaxSize(),
@@ -138,9 +134,7 @@ fun YearViewContent(
     }
 }
 
-/**
- * Scrollable row of year numbers synced with the pager.
- */
+/** Shows a scrollable row of year numbers; tapping one calls [onYearClick]. */
 @Composable
 private fun YearHeaderStrip(
     displayedYear: Int,
@@ -151,11 +145,10 @@ private fun YearHeaderStrip(
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
 
-    // Auto-scroll header to keep displayed year visible
+    // Keeps the displayed year visible, with up to two earlier years before it.
     LaunchedEffect(displayedYear) {
         val index = displayedYear - startYear
         if (index in 0 until totalYears) {
-            // Scroll to center the year in the strip
             listState.animateScrollToItem(
                 index = maxOf(0, index - 2)
             )
@@ -186,9 +179,7 @@ private fun YearHeaderStrip(
     }
 }
 
-/**
- * Single year page: 4 rows x 3 columns of MiniMonth.
- */
+/** Lays out one year as 4 rows of 3 [MiniMonth]s. */
 @Composable
 private fun YearPage(
     year: Int,
@@ -209,7 +200,7 @@ private fun YearPage(
                 horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 for (col in 0..2) {
-                    val month = row * 3 + col // 0-indexed
+                    val month = row * 3 + col // 0-based, like Calendar.MONTH
                     Box(modifier = Modifier.weight(1f)) {
                         MiniMonth(
                             year = year,
@@ -227,8 +218,8 @@ private fun YearPage(
 }
 
 /**
- * Mini-month: compact calendar grid for year overview.
- * Fixed 6 rows (no animateContentSize) for uniform grid height.
+ * Draws one compact month grid. It always has 6 rows ([MonthGrid.compute]) and no
+ * animateContentSize, so every mini-month in the year has the same height.
  */
 @Composable
 private fun MiniMonth(
@@ -254,7 +245,6 @@ private fun MiniMonth(
     val monthLabel = monthNames[month]
     val accessibilityLabel = "${monthNames[month]} $year"
 
-    // Day-of-week header letters
     val dayHeaders = remember(firstDayOfWeek) {
         getDayOfWeekHeaders(firstDayOfWeek)
     }
@@ -265,7 +255,6 @@ private fun MiniMonth(
             .clickable(onClick = onClick)
             .padding(4.dp)
     ) {
-        // Month name header
         Text(
             text = monthLabel,
             style = MaterialTheme.typography.labelSmall,
@@ -278,7 +267,6 @@ private fun MiniMonth(
                 .padding(bottom = 2.dp)
         )
 
-        // Day-of-week headers
         Row(modifier = Modifier.fillMaxWidth()) {
             dayHeaders.forEach { letter ->
                 Text(
@@ -291,7 +279,6 @@ private fun MiniMonth(
             }
         }
 
-        // 6-row grid (always all 6 rows — uniform height)
         monthGrid.weeks.forEach { row ->
             Row(modifier = Modifier.fillMaxWidth()) {
                 row.forEach { cell ->
@@ -311,8 +298,8 @@ private fun MiniMonth(
 }
 
 /**
- * Single day cell in a mini-month.
- * No aspectRatio — cells are narrow (~16dp) so square constraint clips content.
+ * Draws one day of a mini-month. No aspectRatio: cells are narrow (about 16dp), so a square
+ * constraint clips the content.
  */
 @Composable
 private fun MiniDayCell(
@@ -353,7 +340,7 @@ private fun MiniDayCell(
             )
         }
 
-        // Event dot
+        // The Spacer keeps the row height when the day has no event dot.
         if (dotColor != null) {
             Box(
                 modifier = Modifier
@@ -368,7 +355,8 @@ private fun MiniDayCell(
 }
 
 /**
- * Get single-letter day-of-week headers respecting firstDayOfWeek.
+ * Returns narrow day-of-week names in display order, starting at [firstDayOfWeek] (a Calendar
+ * constant; 0 means the locale's first day).
  */
 private fun getDayOfWeekHeaders(firstDayOfWeek: Int): List<String> {
     val resolved = if (firstDayOfWeek == 0) {

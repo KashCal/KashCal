@@ -3,76 +3,60 @@ package org.onekash.icaldav.model
 import java.time.Duration
 
 /**
- * PARTICIPANT component per RFC 9073 Section 6.2.
- * Provides richer attendee information than the ATTENDEE property.
+ * Holds one PARTICIPANT component (RFC 9073 §7.1): attendee details beyond the ATTENDEE
+ * property, such as types, roles and a location reference. The parser and generator don't read
+ * or write it.
  *
- * PARTICIPANT extends the capabilities of ATTENDEE with additional
- * metadata like participant types, multiple roles, location references,
- * and scheduling preferences.
+ * Name, participation status, roles, RSVP, scheduling agent, expected duration and language are
+ * not RFC 9073 PARTICIPANT properties, and [participantTypes] holds CUTYPE-style values, not the
+ * RFC's PARTICIPANT-TYPE values (§6.2: ACTIVE, SPEAKER and others).
  *
- * Example iCalendar format:
- * ```
- * BEGIN:PARTICIPANT
- * UID:participant-1
- * CALENDAR-ADDRESS:mailto:john@example.com
- * NAME:John Doe
- * PARTICIPANT-TYPE:INDIVIDUAL
- * PARTICIPATION-STATUS:ACCEPTED
- * END:PARTICIPANT
- * ```
- *
- * @see <a href="https://tools.ietf.org/html/rfc9073#section-6.2">RFC 9073 Section 6.2</a>
+ * @see <a href="https://tools.ietf.org/html/rfc9073#section-7.1">RFC 9073 Section 7.1</a>
  */
 data class ICalParticipant(
-    /** Unique identifier for this participant */
+    /** UID property. */
     val uid: String,
 
-    /** Calendar address (typically mailto: URI) */
+    /** CALENDAR-ADDRESS, usually a mailto: URI. */
     val calendarAddress: String,
 
-    /** Display name */
+    /** Display name. */
     val name: String? = null,
 
-    /** Participation status */
+    /** Participation status. */
     val participationStatus: PartStat = PartStat.NEEDS_ACTION,
 
-    /** Types of participant */
+    /** Participant types. */
     val participantTypes: Set<ParticipantType> = setOf(ParticipantType.INDIVIDUAL),
 
-    /** Roles in the event */
+    /** Roles in the event. */
     val roles: Set<ParticipantRole> = setOf(ParticipantRole.ATTENDEE),
 
-    /** Contact information */
+    /** Contact information. */
     val contact: String? = null,
 
-    /** Reference to a VLOCATION uid */
+    /** UID of a VLOCATION ([ICalLocation.uid]). */
     val locationId: String? = null,
 
-    /** Expected participation duration */
+    /** Expected participation duration. */
     val expectedDuration: Duration? = null,
 
-    /** Scheduling agent mode */
+    /** Who handles scheduling for this participant. */
     val schedulingAgent: SchedulingAgent = SchedulingAgent.SERVER,
 
-    /** Whether RSVP is requested */
+    /** Whether a reply is requested. */
     val rsvp: Boolean = false,
 
-    /** Language preference */
+    /** Language preference. */
     val language: String? = null
 ) {
-    /**
-     * Check if this participant has accepted.
-     */
+    /** Returns whether [participationStatus] is ACCEPTED. */
     fun hasAccepted(): Boolean = participationStatus == PartStat.ACCEPTED
 
-    /**
-     * Check if this participant is the chair/organizer.
-     */
+    /** Returns whether [roles] contains CHAIR. */
     fun isChair(): Boolean = roles.contains(ParticipantRole.CHAIR)
 
-    /**
-     * Extract email from calendar address.
-     */
+    /** Returns [calendarAddress] without a leading "mailto:" or "MAILTO:", trimmed. */
     fun email(): String {
         return calendarAddress
             .removePrefix("mailto:")
@@ -82,7 +66,8 @@ data class ICalParticipant(
 
     companion object {
         /**
-         * Create a simple participant from email.
+         * Creates a participant from [email], adding "mailto:" unless it already contains a
+         * `:`, with a random UID by default.
          */
         fun fromEmail(
             email: String,
@@ -100,22 +85,23 @@ data class ICalParticipant(
 }
 
 /**
- * Participant type per RFC 9073.
+ * Participant types, the same set as the ATTENDEE CUTYPE values ([CUType]), not RFC 9073's
+ * PARTICIPANT-TYPE values. [fromString] maps null, blank or unknown to UNKNOWN.
  */
 enum class ParticipantType {
-    /** An individual person */
+    /** An individual person. */
     INDIVIDUAL,
 
-    /** A group of people */
+    /** A group of people. */
     GROUP,
 
-    /** A bookable resource (projector, etc.) */
+    /** A bookable resource, for example a projector. */
     RESOURCE,
 
-    /** A physical room */
+    /** A physical room. */
     ROOM,
 
-    /** Unknown participant type */
+    /** Unknown type. */
     UNKNOWN;
 
     fun toICalString(): String = name
@@ -129,26 +115,26 @@ enum class ParticipantType {
 }
 
 /**
- * Participant role per RFC 9073.
- * Extended from RFC 5545 attendee roles.
+ * Participant roles: the RFC 5545 ATTENDEE roles, with REQ-PARTICIPANT named ATTENDEE, plus
+ * CONTACT and INFORMATIONAL. [fromString] maps null, blank or unknown to ATTENDEE.
  */
 enum class ParticipantRole {
-    /** Meeting chair/organizer */
+    /** Meeting chair. */
     CHAIR,
 
-    /** Required attendee */
+    /** Required attendee. */
     ATTENDEE,
 
-    /** Optional participant */
+    /** Optional participant. */
     OPT_PARTICIPANT,
 
-    /** Non-participating (FYI) */
+    /** Copied for information, not participating. */
     NON_PARTICIPANT,
 
-    /** Contact person for the event */
+    /** Contact person for the event. */
     CONTACT,
 
-    /** Informational recipient only */
+    /** Informational recipient only. */
     INFORMATIONAL;
 
     fun toICalString(): String = name.replace("_", "-")
@@ -163,17 +149,17 @@ enum class ParticipantRole {
 }
 
 /**
- * Scheduling agent mode per RFC 9073.
- * Determines how scheduling operations are handled.
+ * Who handles scheduling, with the same values as the RFC 6638 SCHEDULE-AGENT parameter.
+ * [fromString] maps null, blank or unknown to SERVER.
  */
 enum class SchedulingAgent {
-    /** Server handles all scheduling */
+    /** The server handles scheduling. */
     SERVER,
 
-    /** Client handles scheduling */
+    /** The client handles scheduling. */
     CLIENT,
 
-    /** No automatic scheduling */
+    /** No automatic scheduling. */
     NONE;
 
     fun toICalString(): String = name

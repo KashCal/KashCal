@@ -4,9 +4,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Pure-logic tests for [AttendeeInputParser] — the lenient (RFC 5322 §3.4.1)
- * parse of free-typed attendee input into a name + email, gated by the shared
- * email-shape predicate.
+ * Tests [AttendeeInputParser]: the lenient (RFC 5322 §3.4.1) parse of free-typed attendee input
+ * into a name and email, gated by the shared email-shape predicate.
  */
 class AttendeeInputParserTest {
 
@@ -139,9 +138,8 @@ class AttendeeInputParserTest {
 
     @Test
     fun `greedy bracket match keeps the last angle group as the address`() {
-        // BRACKETED's leading `.*` is greedy, so it backtracks to the final '<':
-        // the earlier "<y>" stays in the display name and the last group is the
-        // address. Characterizes the current behavior for a doubled-bracket input.
+        // BRACKETED's leading `.*` is greedy, so it backtracks to the final '<': the earlier
+        // "<y>" stays in the display name and the last group is the address.
         assertEquals(
             AttendeeInput.Valid(displayName = "x <y>", email = "a@b.com"),
             AttendeeInputParser.parse("x <y> <a@b.com>"),

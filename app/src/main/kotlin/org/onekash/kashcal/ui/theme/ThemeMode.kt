@@ -8,11 +8,10 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 enum class ThemeFace { FOLLOW_SYSTEM, FORCE_LIGHT, FORCE_DARK }
 
 /**
- * The user's light/dark face choice, persisted as a [KashCalDataStore] theme string.
+ * Holds the user's light or dark face choice, persisted as a [KashCalDataStore] theme string.
  *
- * A face only decides light vs dark; the actual colors come from the app's [ColorSource]
- * (dynamic Material You / baseline, or an accent-seed-derived scheme). [SYSTEM] follows the
- * device setting; [LIGHT]/[DARK] pin the face.
+ * A face only decides light or dark; the colors come from the [ColorSource]. [SYSTEM] follows
+ * the device setting; [LIGHT] and [DARK] pin the face.
  */
 enum class ThemeMode(
     val prefValue: String,
@@ -46,7 +45,7 @@ enum class ThemeMode(
         ThemeFace.FORCE_DARK -> true
     }
 
-    /** The pinned dark face, or null when this mode follows the device: null / false / true. */
+    /** Whether the pinned face is dark, or null when this mode follows the device. */
     val forcedDark: Boolean?
         get() = when (face) {
             ThemeFace.FOLLOW_SYSTEM -> null
@@ -55,7 +54,7 @@ enum class ThemeMode(
         }
 
     companion object {
-        /** Maps a stored theme string to a mode, falling back to [SYSTEM] for unknown/null. */
+        /** Maps a stored theme string to a mode; an unknown or null one gives [SYSTEM]. */
         fun fromPrefValue(value: String?): ThemeMode =
             entries.firstOrNull { it.prefValue == value } ?: SYSTEM
     }

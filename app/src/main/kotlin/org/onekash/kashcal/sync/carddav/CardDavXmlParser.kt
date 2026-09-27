@@ -9,32 +9,26 @@ import org.xmlpull.v1.XmlPullParserFactory
 import java.io.StringReader
 
 /**
- * XmlPullParser-based CardDAV (RFC 6352) response parser.
+ * Parses CardDAV (RFC 6352) responses with XmlPullParser.
  *
- * This is a standalone sibling of [CalDavXmlParser], living entirely inside
- * `sync/carddav/`. It borrows no CalDAV *client* symbol: the generic WebDAV
- * multistatus bits that CardDAV and CalDAV share verbatim — principal discovery,
- * sync-token / ctag extraction, and the sync-collection changed/deleted split —
- * are **delegated** to a held [CalDavXmlParser] instance rather than
- * re-implemented, because those responses are protocol-agnostic (RFC 4918 /
- * RFC 6578 shapes with no CalDAV- or CardDAV-specific elements). The extractors
- * that key on CardDAV elements (`addressbook-home-set`, the `addressbook`
- * resourcetype, `supported-address-data`, `address-data`) are implemented here.
+ * A standalone sibling of [CalDavXmlParser] that borrows no CalDAV client symbol. The WebDAV
+ * multistatus parts both protocols share (principal discovery, sync-token and ctag extraction,
+ * the sync-collection changed/deleted split) are RFC 4918 / RFC 6578 shapes with no
+ * protocol-specific elements, so they delegate to a held [CalDavXmlParser]. The extractors that
+ * key on CardDAV elements (`addressbook-home-set`, the `addressbook` resourcetype,
+ * `supported-address-data`, `address-data`) live here.
  *
- * Like its CalDAV counterpart the parser runs namespace-aware, so element
- * matching keys on the local-name ([XmlPullParser.name] with a prefix-agnostic
- * parser); namespace URIs live in [CardDavXmlNamespaces] for wire-body building.
+ * The parser runs namespace-aware and matches on the local-name ([XmlPullParser.name]); the
+ * CardDAV local-names are in [CardDavXmlNamespaces]. Request bodies write namespace URIs inline.
  *
- * The parser-output types [ParsedAddressBook] and [ParsedAddressData] are
- * declared alongside the parser (they are what these extractors produce); the
- * client maps them onto the resolved-URL public models in `carddav.model`.
+ * The client maps the outputs [ParsedAddressBook] and [ParsedAddressData] onto the
+ * resolved-URL models in `carddav.model`.
  */
 class CardDavXmlParser {
 
     /**
-     * Shared multistatus skeleton, delegated to for protocol-agnostic extraction.
-     * Reused unmodified (never subclassed or edited) — the CardDAV read path is
-     * permitted to call generic WebDAV helpers directly.
+     * Shared multistatus skeleton for protocol-agnostic extraction. Held, never subclassed:
+     * `CardDavCalDavIsolationTest` allows [CalDavXmlParser] as shared generic infrastructure.
      */
     private val delegate = CalDavXmlParser()
 
@@ -54,10 +48,9 @@ class CardDavXmlParser {
     fun extractCtag(xml: String): String? = delegate.extractCtag(xml)
 
     /**
-     * Split a sync-collection / PROPFIND Depth:1 response into changed
-     * (href + etag) and deleted hrefs plus the new sync-token (RFC 6578). The
-     * multistatus shape is identical between CalDAV and CardDAV, so this reuses
-     * the shared skeleton verbatim.
+     * Splits a sync-collection or PROPFIND Depth:1 response into changed (href + etag) and
+     * deleted hrefs plus the new sync-token (RFC 6578). The multistatus shape is the same for
+     * CalDAV and CardDAV.
      */
     fun extractSyncCollectionData(xml: String): CalDavQuirks.SyncCollectionData =
         delegate.extractSyncCollectionData(xml)
@@ -65,8 +58,8 @@ class CardDavXmlParser {
     // ---- CardDAV-specific extraction (RFC 6352) ----
 
     /**
-     * Extract `CARDDAV:addressbook-home-set` hrefs from a principal PROPFIND
-     * response (RFC 6352 §7.1.1). Mirrors the CalDAV `calendar-home-set` walk.
+     * Extracts `CARDDAV:addressbook-home-set` hrefs from a principal PROPFIND response
+     * (RFC 6352 §7.1.1), like the CalDAV `calendar-home-set` walk.
      */
     fun extractAddressBookHomeUrls(xml: String): List<String> {
         if (xml.isBlank()) return emptyList()
@@ -106,17 +99,15 @@ class CardDavXmlParser {
     }
 
     /**
-     * Extract address book collections from a PROPFIND Depth:1 response.
+     * Extracts address book collections from a PROPFIND Depth:1 response.
      *
-     * A response is treated as an address book only when its `resourcetype`
-     * carries `CARDDAV:addressbook` (RFC 6352 §5.2); plain collections and other
-     * resource types are skipped. Per book: `DAV:displayname`,
-     * `CARDDAV:addressbook-description` (§6.2.1), `CS:getctag`, read-only status
-     * derived from the current-user-privilege-set, and the negotiated vCard
-     * version from `CARDDAV:supported-address-data` (§6.2.2 — highest advertised,
-     * defaulting to 3.0 when the property is absent).
+     * A response is an address book only when its `resourcetype` carries `CARDDAV:addressbook`
+     * (RFC 6352 §5.2); plain collections and other resource types are skipped. Per book:
+     * `DAV:displayname`, `CARDDAV:addressbook-description` (§6.2.1), `CS:getctag`, read-only
+     * status from the current-user-privilege-set, and the vCard version from
+     * `CARDDAV:supported-address-data` chosen by [negotiateVersion].
      *
-     * Mirrors [CalDavXmlParser.extractCalendars] in structure.
+     * Same structure as [CalDavXmlParser.extractCalendars].
      */
     fun extractAddressBooks(xml: String): List<ParsedAddressBook> {
         if (xml.isBlank()) return emptyList()
@@ -137,9 +128,9 @@ class CardDavXmlParser {
             var hasWritePrivilege = false
             var isReadOnly = false
             val advertisedVersions = mutableSetOf<String>()
-            // Per-propstat tracking for RFC 4918 multi-propstat servers (Radicale,
-            // Stalwart): a resourcetype returned inside a 404/403 propstat must not
-            // count as a readable address book. Mirrors the hardened extractCalendars.
+            // Per-propstat tracking for RFC 4918 multi-propstat servers (Radicale, Stalwart): a
+            // resourcetype returned inside a 404/403 propstat must not count as a readable
+            // address book. Same check as extractCalendars.
             var currentPropstatHasResourceType = false
             var currentPropstatStatus: String? = null
             var resourceTypeStatusOk = true
@@ -208,9 +199,9 @@ class CardDavXmlParser {
                     XmlPullParser.END_TAG -> {
                         when (parser.name) {
                             "response" -> {
-                                // Only surface the book when the propstat that carried
-                                // its resourcetype was itself 2xx (RFC 4918 default:
-                                // an absent status is OK).
+                                // Surface the book only when the propstat that carried its
+                                // resourcetype was 2xx (RFC 4918 default: an absent status
+                                // is OK).
                                 if (isAddressBook && currentHref != null && resourceTypeStatusOk) {
                                     books.add(
                                         ParsedAddressBook(
@@ -252,12 +243,11 @@ class CardDavXmlParser {
     }
 
     /**
-     * Negotiate the vCard version to request for a collection from the versions
-     * it advertises in `CARDDAV:supported-address-data` (RFC 6352 §6.2.2).
+     * Picks the vCard version to request for a collection from the versions it advertises in
+     * `CARDDAV:supported-address-data` (RFC 6352 §6.2.2).
      *
-     * Requests 4.0 (RFC 6350) when the server offers it, otherwise 3.0
-     * (RFC 2426). When the property is absent — the set is empty — the spec
-     * mandates 3.0 as the default.
+     * Returns 4.0 (RFC 6350) when the server offers it, otherwise 3.0 (RFC 2426). An absent
+     * property (empty set) means 3.0, the spec default.
      */
     fun negotiateVersion(advertisedVersions: Set<String>): String =
         if (advertisedVersions.contains(CardDavXmlNamespaces.VCARD_VERSION_4_0)) {
@@ -267,12 +257,12 @@ class CardDavXmlParser {
         }
 
     /**
-     * Extract `CARDDAV:address-data` bodies from an addressbook-multiget REPORT
-     * response (RFC 6352 §8.7 / §10.4): per member, its href, normalized etag,
-     * and the raw vCard body.
+     * Extracts `CARDDAV:address-data` bodies from an addressbook-multiget REPORT response
+     * (RFC 6352 §8.7 / §10.4): per member, its href, normalized etag and raw vCard body.
      *
-     * A response carrying only an etag and no `address-data` (e.g. the collection
-     * self-row) is skipped. Mirrors [CalDavXmlParser.extractICalData].
+     * A response with an etag but no `address-data` (e.g. the collection self-row) is
+     * skipped, as is one whose body lacks `BEGIN:VCARD`. Same shape as
+     * [CalDavXmlParser.extractICalData].
      */
     fun extractAddressData(xml: String): List<ParsedAddressData> {
         if (xml.isBlank()) return emptyList()
@@ -323,9 +313,8 @@ class CardDavXmlParser {
                                 // materialize, or the collection self-row. Not fatal.
                                 Log.w(TAG, "Response for $href has no address-data")
                             } else if (href != null && vcard != null) {
-                                // address-data present but not a recognizable vCard (missing
-                                // BEGIN:VCARD — truncated or garbled). Dropped; log so a real
-                                // fetch failure is visible rather than silently missing.
+                                // address-data without BEGIN:VCARD (truncated or garbled) is
+                                // dropped; log it so a real fetch failure is visible.
                                 Log.w(TAG, "Response for $href has address-data without BEGIN:VCARD; skipping")
                             }
                             inResponse = false
@@ -348,7 +337,7 @@ class CardDavXmlParser {
         return parser
     }
 
-    /** Read text content of the current element, advancing to the next token. */
+    /** Reads the current element's text, advancing to the next token. */
     private fun readText(parser: XmlPullParser): String? {
         parser.next()
         return if (parser.eventType == XmlPullParser.TEXT) {
@@ -358,7 +347,7 @@ class CardDavXmlParser {
         }
     }
 
-    /** Read text or CDATA content of the current element (RFC servers may CDATA-wrap bodies). */
+    /** Reads the current element's text or CDATA content (servers may CDATA-wrap bodies). */
     private fun readTextOrCdata(parser: XmlPullParser): String? {
         parser.next()
         return when (parser.eventType) {
@@ -372,20 +361,17 @@ class CardDavXmlParser {
         private const val TAG = "CardDavXmlParser"
 
         /**
-         * WebDAV privilege local-names that confer content-write rights
-         * (RFC 3744 §3.11/§3.12 aggregation): an address book granting any of
-         * these is writable, else it is surfaced as read-only. Shares the single
-         * definition on [CalDavXmlParser] rather than keeping a parallel copy, so
-         * the CalDAV and CardDAV read paths can't drift out of sync.
+         * WebDAV privilege local-names that confer content-write rights (RFC 3744 §3.11/§3.12
+         * aggregation): an address book granting any of these is writable, else read-only. Uses
+         * the one definition on [CalDavXmlParser] so the CalDAV and CardDAV paths can't drift.
          */
         private val WRITE_PRIVILEGE_ELEMENTS = CalDavXmlParser.WRITE_PRIVILEGE_ELEMENTS
     }
 }
 
 /**
- * Parser output for one address book collection (RFC 6352 §5.2). The href is
- * verbatim from the server; the client resolves it to an absolute URL against
- * the home host and maps this onto
+ * Holds the parsed properties of one address book collection (RFC 6352 §5.2). The href is
+ * verbatim from the server; the client resolves it against the home host and maps this onto
  * [org.onekash.kashcal.sync.carddav.model.CardDavAddressBook].
  */
 data class ParsedAddressBook(
@@ -398,8 +384,8 @@ data class ParsedAddressBook(
 )
 
 /**
- * Parser output for one addressbook-multiget member (RFC 6352 §8.7): its href,
- * normalized etag (null when the server omitted it), and the raw vCard body.
+ * Holds one addressbook-multiget member (RFC 6352 §8.7): its href, normalized etag (null when
+ * the server omitted it) and raw vCard body.
  */
 data class ParsedAddressData(
     val href: String,

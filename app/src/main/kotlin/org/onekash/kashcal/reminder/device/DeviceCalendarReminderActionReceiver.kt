@@ -9,13 +9,14 @@ import org.onekash.kashcal.util.maskEventId
 import javax.inject.Inject
 
 /**
- * BroadcastReceiver for device calendar reminder actions (Snooze/Dismiss).
+ * Handles the Snooze and Dismiss buttons of a device event reminder notification.
  *
- * Handles:
- * - ACTION_DEVICE_SNOOZE: Snooze reminder for 15 minutes
- * - ACTION_DEVICE_DISMISS: Dismiss notification
+ * - [DeviceCalendarReminderNotificationManager.ACTION_DEVICE_SNOOZE] clears the notification
+ *   and arms a snooze alarm [DeviceCalendarReminderNotificationManager.DEFAULT_SNOOZE_MINUTES]
+ *   ahead.
+ * - [DeviceCalendarReminderNotificationManager.ACTION_DEVICE_DISMISS] clears the notification.
  *
- * @see DeviceCalendarReminderNotificationManager for notification creation
+ * @see DeviceCalendarReminderNotificationManager
  */
 @AndroidEntryPoint
 class DeviceCalendarReminderActionReceiver : BroadcastReceiver() {
@@ -68,10 +69,9 @@ class DeviceCalendarReminderActionReceiver : BroadcastReceiver() {
 
         Log.d(TAG, "Snoozing device calendar reminder for event ${eventId.maskEventId()}")
 
-        // Cancel current notification
         notificationManager.cancelNotification(notificationId)
 
-        // Schedule snooze alarm with all event data
+        // The snooze alarm carries the whole event: nothing is stored for device reminders.
         scheduler.scheduleSnooze(
             eventId = eventId,
             occurrenceTs = occurrenceTs,

@@ -9,13 +9,12 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
 /**
- * Comprehensive tests for ICalFreeBusy model per RFC 5545.
- *
- * Tests cover:
- * - FreeBusy construction
- * - FreeBusyPeriod construction and validation
- * - FreeBusyType enum parsing
- * - Edge cases and validation
+ * Tests the ICalFreeBusy model (RFC 5545 §3.6.4):
+ * - construction with organizer, attendees and busy periods
+ * - FreeBusyPeriod construction, its BUSY default and its timezone
+ * - FreeBusyType parsing, with the BUSY fallback, and its value
+ * - mixed period types and a request with several attendees
+ * - edge cases: zero-length ranges and periods, multi-day and all-day spans, equality and copy
  */
 class ICalFreeBusyTest {
 
@@ -230,7 +229,7 @@ class ICalFreeBusyTest {
 
             assertEquals(4, freeBusy.freeBusyPeriods.size)
 
-            // Verify different types
+            // One period of each type.
             val byType = freeBusy.freeBusyPeriods.groupBy { it.type }
             assertEquals(1, byType[FreeBusyType.BUSY]?.size)
             assertEquals(1, byType[FreeBusyType.BUSY_TENTATIVE]?.size)
@@ -306,7 +305,7 @@ class ICalFreeBusyTest {
 
         @Test
         fun `free busy period with same start and end`() {
-            // Zero-duration busy period (instant event)
+            // Zero-duration busy period, as for an instant event.
             val time = ICalDateTime.parse("20231215T100000Z")
             val period = FreeBusyPeriod(
                 start = time,
@@ -326,7 +325,6 @@ class ICalFreeBusyTest {
                 dtend = ICalDateTime.parse("20231217T235959Z")
             )
 
-            // Verify span
             val durationMs = freeBusy.dtend.timestamp - freeBusy.dtstart.timestamp
             assertTrue(durationMs > 2 * 24 * 60 * 60 * 1000) // More than 2 days
         }

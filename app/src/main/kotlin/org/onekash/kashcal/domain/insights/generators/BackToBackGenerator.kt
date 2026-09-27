@@ -48,6 +48,6 @@ class BackToBackGenerator @Inject constructor() : InsightGenerator {
     }
 
     companion object {
-        const val BACK_TO_BACK_THRESHOLD_MS = 5 * 60 * 1000L // 5 minutes
+        const val BACK_TO_BACK_THRESHOLD_MS = 5 * 60 * 1000L
     }
 }

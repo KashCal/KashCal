@@ -3,44 +3,34 @@ package org.onekash.kashcal.util.text
 import java.net.URI
 
 /**
- * URL detection and handling utilities for event quick view.
+ * Link detection for event text in the quick view sheets: web, meeting, tel:, mailto: and US
+ * phone number links ([extractUrls]), HTML detection ([looksLikeHtml]) and entity decoding
+ * ([cleanHtmlEntities]).
  *
- * Features:
- * - Detect URLs in text (http/https, tel:, mailto:)
- * - Identify meeting platform links (Zoom, Teams, Google Meet, etc.)
- * - Format phone numbers for tel: URI
- * - Clean HTML entities from CalDAV descriptions
- * - Format reminder durations for display
- *
- * Note: Uses java.net.URI instead of android.net.Uri for testability
- * without Robolectric.
- *
- * @see extractUrls for URL detection in text
- * @see isMeetingUrl for meeting platform detection
+ * Uses java.net.URI, not android.net.Uri, so the functions run in plain JVM tests without
+ * Robolectric.
  */
 
-/**
- * Types of detected URLs.
- */
+/** Kinds of link [extractUrls] detects. */
 enum class UrlType {
-    /** Standard web URL (http/https) */
+    /** An http or https URL that isn't a meeting link. */
     WEB,
-    /** Meeting platform URL (Zoom, Teams, etc.) */
+    /** A URL on one of the [MEETING_DOMAINS] or a subdomain of one. */
     MEETING,
-    /** Phone number (tel: or detected pattern) */
+    /** A tel: URI or a detected phone number. */
     PHONE,
-    /** Email address (mailto:) */
+    /** A mailto: URI. */
     EMAIL
 }
 
 /**
- * Represents a detected URL in text.
+ * A link found in text.
  *
- * @param url The URL string (normalized)
- * @param startIndex Start position in original text
- * @param endIndex End position in original text (exclusive)
- * @param type Type of URL for display/handling
- * @param displayText Accessibility text (e.g., "zoom.us", "Phone number")
+ * @param url the link to open: an http or https URL after [normalizeUrl], a schemeless meeting link
+ *   with https:// prefixed, a tel: URI, or the mailto: URI as found
+ * @param endIndex exclusive
+ * @param displayText the name the accessibility label uses: the platform name ("Zoom"), the
+ *   host, or the email address. The label for [UrlType.PHONE] ignores it.
  */
 data class DetectedUrl(
     val url: String,
@@ -51,8 +41,10 @@ data class DetectedUrl(
 )
 
 /**
- * Known meeting platform domains.
- * Add domains here to enable meeting link detection.
+ * Meeting platform domains; a URL on one of them or a subdomain is a meeting link.
+ *
+ * A domain added here is also matched without a scheme. [getUrlDisplayText] labels it by its host
+ * unless it has its own platform name there.
  */
 val MEETING_DOMAINS = setOf(
     "teams.microsoft.com",
@@ -65,64 +57,55 @@ val MEETING_DOMAINS = setOf(
     "meet.jit.si"
 )
 
-// URL pattern - matches http/https URLs with case insensitivity
+// http and https URLs, any case.
 private val URL_PATTERN = Regex(
     """https?://[^\s<>"{}|\\^`\[\]]+""",
     RegexOption.IGNORE_CASE
 )
 
-// URL-like pattern without protocol (for domains like zoom.us/j/123)
+// A meeting domain with a path but no scheme, such as zoom.us/j/123, not preceded by / or @.
 private val URL_NO_PROTOCOL_PATTERN = Regex(
     """(?<![/@])(?:${MEETING_DOMAINS.joinToString("|") { Regex.escape(it) }})/[^\s<>"{}|\\^`\[\]]+""",
     RegexOption.IGNORE_CASE
 )
 
-// Tel URI pattern
 private val TEL_URI_PATTERN = Regex(
     """tel:[+\d\-().]+""",
     RegexOption.IGNORE_CASE
 )
 
-// Mailto URI pattern
 private val MAILTO_URI_PATTERN = Regex(
     """mailto:[\w._%+-]+@[\w.-]+\.[a-zA-Z]{2,}""",
     RegexOption.IGNORE_CASE
 )
 
-// US phone patterns (common formats)
-// Order matters: more specific patterns (international) first to prevent shorter patterns
-// from matching a substring of longer phone numbers
+// US phone formats, most specific first: a later pattern skips text an earlier one matched,
+// so the +1 form must run before the shorter forms can match its last ten digits.
 private val PHONE_PATTERNS = listOf(
-    // +1-555-123-4567 or +1 (555) 123-4567 or +1.555.123.4567 (check first - most specific)
+    // +1-555-123-4567, +1 (555) 123-4567 or +1.555.123.4567
     Regex("""\+1[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]\d{4}"""),
     // (555) 123-4567 or (555) 123 4567
     Regex("""\(\d{3}\)\s*\d{3}[-.\s]\d{4}"""),
-    // 555-123-4567 or 555.123.4567 or 555 123 4567 (least specific - check last)
+    // 555-123-4567, 555.123.4567 or 555 123 4567
     Regex("""\d{3}[-.\s]\d{3}[-.\s]\d{4}""")
 )
 
-// Trailing punctuation to strip from URLs
+// Trailing punctuation [normalizeUrl] strips from a URL.
 private val TRAILING_PUNCT = charArrayOf('.', ',', ')', ']', '>', ';', ':', '!', '?')
 
 /**
- * Extract all URLs from text.
+ * Returns up to [limit] links in [text], sorted by position; the default of 50 bounds the work.
  *
- * Detects:
- * - Web URLs (http/https)
- * - Meeting URLs (recognized by domain)
- * - Tel: and mailto: URIs
- * - US phone number patterns
- *
- * @param text Text to search
- * @param limit Maximum URLs to return (default 50 for performance)
- * @return List of detected URLs with position and type info
+ * Finds http and https URLs (a meeting link when [isMeetingUrl]), meeting domains without a
+ * scheme, tel: and mailto: URIs, and US phone numbers. Web URLs failing [isValidUrl] are
+ * dropped. A schemeless meeting link inside an earlier URL and a phone number overlapping any
+ * earlier link are skipped; tel: and mailto: matches are not checked for overlap.
  */
 fun extractUrls(text: String, limit: Int = 50): List<DetectedUrl> {
     if (text.isBlank()) return emptyList()
 
     val results = mutableListOf<DetectedUrl>()
 
-    // Find all http/https URLs
     URL_PATTERN.findAll(text).forEach { match ->
         if (results.size >= limit) return@forEach
         val normalized = normalizeUrl(match.value)
@@ -139,10 +122,9 @@ fun extractUrls(text: String, limit: Int = 50): List<DetectedUrl> {
         }
     }
 
-    // Find meeting URLs without protocol
     URL_NO_PROTOCOL_PATTERN.findAll(text).forEach { match ->
         if (results.size >= limit) return@forEach
-        // Skip if this range overlaps with an already-found URL
+        // Skip a match inside an already-found URL.
         if (results.any { it.startIndex <= match.range.first && it.endIndex >= match.range.last + 1 }) {
             return@forEach
         }
@@ -160,7 +142,6 @@ fun extractUrls(text: String, limit: Int = 50): List<DetectedUrl> {
         }
     }
 
-    // Find tel: URIs
     TEL_URI_PATTERN.findAll(text).forEach { match ->
         if (results.size >= limit) return@forEach
         results.add(
@@ -174,7 +155,6 @@ fun extractUrls(text: String, limit: Int = 50): List<DetectedUrl> {
         )
     }
 
-    // Find mailto: URIs
     MAILTO_URI_PATTERN.findAll(text).forEach { match ->
         if (results.size >= limit) return@forEach
         val email = match.value.removePrefix("mailto:")
@@ -189,11 +169,10 @@ fun extractUrls(text: String, limit: Int = 50): List<DetectedUrl> {
         )
     }
 
-    // Find phone numbers (not already found as tel:)
     PHONE_PATTERNS.forEach { pattern ->
         pattern.findAll(text).forEach { match ->
             if (results.size >= limit) return@forEach
-            // Skip if overlaps with existing match
+            // Skip a number overlapping any link found so far, a tel: URI included.
             if (results.any { overlaps(it.startIndex, it.endIndex, match.range.first, match.range.last + 1) }) {
                 return@forEach
             }
@@ -209,12 +188,12 @@ fun extractUrls(text: String, limit: Int = 50): List<DetectedUrl> {
         }
     }
 
-    // Sort by position for consistent ordering
     return results.sortedBy { it.startIndex }
 }
 
 /**
- * Check if text contains any URL.
+ * Returns whether [text] matches any pattern [extractUrls] uses, without its validity and overlap
+ * checks, so it can be true when [extractUrls] finds nothing.
  */
 fun containsUrl(text: String): Boolean {
     if (text.isBlank()) return false
@@ -225,9 +204,7 @@ fun containsUrl(text: String): Boolean {
            PHONE_PATTERNS.any { it.containsMatchIn(text) }
 }
 
-/**
- * Check if URL is a known meeting platform.
- */
+/** Returns whether [url]'s host is one of the [MEETING_DOMAINS] or a subdomain of one. */
 fun isMeetingUrl(url: String): Boolean {
     val host = try {
         URI(url.lowercase()).host ?: return false
@@ -238,18 +215,16 @@ fun isMeetingUrl(url: String): Boolean {
 }
 
 /**
- * Normalize a URL for consistent handling.
+ * Strips trailing punctuation from [url] and prefixes https:// unless it starts with http://,
+ * https://, tel: or mailto:.
  *
- * - Strips trailing punctuation
- * - Adds https:// if no protocol
- * - Lowercases the scheme and host
+ * A trailing `)` is stripped only while the URL has more `)` than `(`, and `]` likewise, so a
+ * path like `wiki/Foo_(bar)` keeps its own. Case is left as is.
  */
 fun normalizeUrl(url: String): String {
     var result = url.trim()
 
-    // Strip trailing punctuation (but preserve if part of URL path)
     while (result.isNotEmpty() && result.last() in TRAILING_PUNCT) {
-        // Check if this punctuation is balanced (parentheses)
         if (result.last() == ')' && result.count { it == '(' } < result.count { it == ')' }) {
             result = result.dropLast(1)
         } else if (result.last() == ']' && result.count { it == '[' } < result.count { it == ']' }) {
@@ -261,7 +236,6 @@ fun normalizeUrl(url: String): String {
         }
     }
 
-    // Add protocol if missing
     if (!result.startsWith("http://", ignoreCase = true) &&
         !result.startsWith("https://", ignoreCase = true) &&
         !result.startsWith("tel:", ignoreCase = true) &&
@@ -273,7 +247,8 @@ fun normalizeUrl(url: String): String {
 }
 
 /**
- * Validate URL format using java.net.URI.
+ * Returns whether [url] parses as an http or https URL with a host, a non-empty tel: URI, or a
+ * mailto: URI containing @.
  */
 fun isValidUrl(url: String): Boolean {
     return try {
@@ -293,9 +268,8 @@ fun isValidUrl(url: String): Boolean {
 private val SAFE_OPEN_SCHEMES = setOf("http", "https", "tel", "mailto")
 
 /**
- * Check if URL should be opened externally (not a deep link to own app).
- *
- * Only allows http(s), tel, and mailto schemes.
+ * Returns whether [url] is safe to hand to another app: only http, https, tel and mailto pass,
+ * so a link can't deep-link into this app or open another scheme.
  */
 fun shouldOpenExternally(url: String): Boolean {
     return try {
@@ -306,11 +280,7 @@ fun shouldOpenExternally(url: String): Boolean {
     }
 }
 
-/**
- * Format phone number as tel: URI.
- *
- * Preserves leading + for international format, strips all other non-numeric characters.
- */
+/** Returns [phone] as a tel: URI of its digits, keeping a leading +. */
 fun formatPhoneUri(phone: String): String {
     val trimmed = phone.trim()
     val hasPlus = trimmed.startsWith("+")
@@ -319,7 +289,8 @@ fun formatPhoneUri(phone: String): String {
 }
 
 /**
- * Get display text for URL (domain or platform name).
+ * Returns a platform name when [url]'s host contains a known meeting domain, else the host
+ * without www., or [url] itself when it has no host or doesn't parse.
  */
 internal fun getUrlDisplayText(url: String): String {
     return try {
@@ -339,45 +310,37 @@ internal fun getUrlDisplayText(url: String): String {
     }
 }
 
-/**
- * Check if two ranges overlap.
- */
+/** Returns whether the half-open ranges overlap. */
 private fun overlaps(start1: Int, end1: Int, start2: Int, end2: Int): Boolean {
     return start1 < end2 && start2 < end1
 }
 
 // ========== HTML Detection ==========
 
-// Allow-list of tag names that mark a description as HTML.
-// Must be narrow: plain text like "see you <3" or "a < b" must NOT match.
+// Tag names that mark a description as HTML. Keep the list narrow: plain text like
+// "see you <3" or "a < b" must not match.
 private const val HTML_TAG_NAMES =
     "a|br|p|div|span|b|strong|i|em|u|s|strike|del|" +
         "ul|ol|li|h[1-6]|html|html-blob|head|body|meta|font|img|" +
         "table|tr|td|th|thead|tbody|blockquote|pre|code|hr"
 
-// Matches a well-formed-looking tag: `<name>`, `<name/>`, `<name attr=…>`,
-// `<name attr/>`, or `</name>` — always terminated by `>`. Also matches
-// `<!--` for comments.
+// Matches a tag closed by `>`: `<name>`, `<name/>`, `<name attr=…>`, `<name attr/>` or
+// `</name>`, plus `<!--` for comments.
 //
-// Requires `>` in the same tag so that stray `<a lot of options` or
-// `<i am busy` (single-letter tag name followed by a word but no closing
-// `>`) are NOT treated as HTML. This prevents HtmlCompat.fromHtml from
-// silently dropping text after an innocent `<`.
+// The `>` must be in the same tag so stray `<a lot of options` or `<i am busy` (a one-letter
+// tag name, a word and no `>`) aren't taken as HTML: the HTML renderer would silently drop the
+// text after such a `<`.
 private val HTML_TAG_REGEX = Regex(
     "<(?:/?(?:$HTML_TAG_NAMES)(?:\\s+[^<>]*)?/?>|!--)",
     RegexOption.IGNORE_CASE
 )
 
 /**
- * Heuristic check: does this text contain structural HTML that should be
- * rendered via `AnnotatedString.fromHtml`?
+ * Returns whether [text] contains an allow-listed HTML tag or an HTML comment, so it renders
+ * through `AnnotatedString.fromHtml`.
  *
- * Returns `false` for plain text that merely contains `<` (e.g. "see you <3",
- * "a < b"), because passing such text through an HTML parser would silently
- * drop those characters.
- *
- * Returns `true` when a recognizable tag name (anchor, paragraph, list item,
- * bold, italic, etc.) or an HTML comment is present.
+ * Plain text that only contains `<` ("see you <3", "a < b") returns false, because an HTML
+ * parser would silently drop those characters.
  */
 fun looksLikeHtml(text: String): Boolean {
     if (text.isEmpty()) return false
@@ -400,35 +363,36 @@ private val HTML_ENTITIES = mapOf(
 )
 
 /**
- * Clean common HTML entities from text.
+ * Decodes common named HTML entities and numeric entities in [text], for display only; the
+ * stored description is unchanged.
  *
- * CalDAV descriptions may contain HTML entities from web clients.
- * This cleans them for display without modifying the stored data.
+ * CalDAV descriptions may carry entities from web clients. A numeric entity that isn't a
+ * Unicode scalar value stays literal.
  */
 fun cleanHtmlEntities(text: String): String {
     var result = text
     HTML_ENTITIES.forEach { (entity, replacement) ->
         result = result.replace(entity, replacement, ignoreCase = true)
     }
-    // Handle numeric entities in both decimal (&#NNN;) and hex (&#xHH;) forms —
-    // the hex form is at least as common as decimal for emoji in real HTML.
+    // Decimal (&#NNN;) and hex (&#xHH;) forms; hex is at least as common as decimal for emoji
+    // in real HTML.
     result = result.replace(NUMERIC_ENTITY) { match ->
-        val hex = match.groupValues[1].isNotEmpty() // the 'x'/'X' marker matched
+        val hex = match.groupValues[1].isNotEmpty()
         val digits = match.groupValues[2]
         decodeCodePoint(digits, radix = if (hex) 16 else 10) ?: match.value
     }
     return result
 }
 
-/** Matches a decimal or hex numeric HTML entity, capturing the 'x' marker and the digits. */
+/** Matches a decimal or hex numeric HTML entity, capturing the x marker and the digits. */
 private val NUMERIC_ENTITY = Regex("&#([xX]?)([0-9a-fA-F]+);")
 
 /**
- * Decode a numeric HTML entity's digits to its character(s), or null if the value
- * is not a Unicode scalar value (out of range, or a bare surrogate half) so the
- * caller can leave the entity literal. Builds via [Character.toChars] so code
- * points above U+FFFF are emitted as a surrogate pair rather than truncated to
- * their low 16 bits.
+ * Decodes a numeric entity's digits to its character, or null when the value isn't a Unicode
+ * scalar value (out of range or a lone surrogate) so the caller leaves the entity literal.
+ *
+ * `Character.toChars` emits a code point above U+FFFF as a surrogate pair instead of
+ * truncating it to its low 16 bits.
  */
 private fun decodeCodePoint(digits: String, radix: Int): String? {
     val code = digits.toIntOrNull(radix) ?: return null

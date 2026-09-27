@@ -29,21 +29,15 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Orchestrates CalDAV synchronization.
+ * Runs CalDAV sync for one calendar ([syncCalendar]) or every calendar of an account
+ * ([syncAccount]), coordinating [PushStrategy], [ConflictResolver] and [PullStrategy].
  *
- * This is THE entry point for all sync operations. It coordinates:
- * - Pull (server → local) via PullStrategy
- * - Push (local → server) via PushStrategy
- * - Conflict resolution via ConflictResolver
+ * Order per writable calendar:
+ * 1. Push local changes first, which narrows the conflict window.
+ * 2. Resolve the push's conflicts, abandoning one after [MAX_CONFLICT_SYNC_CYCLES].
+ * 3. Pull server changes.
  *
- * Sync order (per Android and CalDAV best practices):
- * 1. Push local changes first (reduces conflict window)
- * 2. Pull server changes
- * 3. Resolve any remaining conflicts
- *
- * Usage:
- * - syncCalendar(calendar) - Sync a single calendar
- * - syncAccount(account) - Sync all calendars for an account
+ * Read-only calendars are only pulled.
  */
 @Singleton
 class CalDavSyncEngine @Inject constructor(
@@ -61,23 +55,20 @@ class CalDavSyncEngine @Inject constructor(
         private const val TAG = "CalDavSyncEngine"
 
         /**
-         * Maximum sync cycles with conflict before abandoning local changes.
-         * Each cycle: push→412→scheduleRetry→retryCount++→conflict resolution.
-         * After this many cycles, we give up and let pull overwrite with server version.
+         * Sync cycles a conflict may fail to resolve before its local change is abandoned and
+         * the pull takes the server version. Each cycle is a push that gets 412, a retry that
+         * increments retryCount, and a failed resolution.
          */
         private const val MAX_CONFLICT_SYNC_CYCLES = 3
     }
 
     /**
-     * Sync a single calendar.
+     * Pushes, resolves conflicts for, and pulls one calendar.
      *
-     * @param calendar The calendar to sync
-     * @param forceFullSync If true, ignores sync token and fetches all events
-     * @param conflictStrategy How to resolve conflicts (default: SERVER_WINS)
-     * @param quirks Optional provider-specific quirks. If null, uses default (iCloud).
-     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
-     * @param trigger The trigger source for this sync (for session tracking)
-     * @return SyncResult with aggregated statistics
+     * @param forceFullSync ignores the sync-token and fetches all events.
+     * @param quirks provider quirks; null uses the iCloud default.
+     * @param client the account's client, created by the caller.
+     * @param trigger the sync's source, recorded in the session.
      */
     suspend fun syncCalendar(
         calendar: Calendar,
@@ -89,7 +80,6 @@ class CalDavSyncEngine @Inject constructor(
     ): SyncResult {
         val startTime = System.currentTimeMillis()
 
-        // Create session builder for tracking
         val syncType = if (forceFullSync || calendar.syncToken == null) SyncType.FULL else SyncType.INCREMENTAL
         val sessionBuilder = SyncSessionBuilder(
             calendarId = calendar.id,
@@ -98,7 +88,6 @@ class CalDavSyncEngine @Inject constructor(
             triggerSource = trigger
         )
 
-        // Track statistics
         var pushCreated = 0
         var pushUpdated = 0
         var pushDeleted = 0
@@ -111,7 +100,7 @@ class CalDavSyncEngine @Inject constructor(
         var anyConflictsAbandoned = false
 
         try {
-            // Step 1: Push local changes first
+            // Step 1: push local changes.
             val pushResult = pushStrategy.pushForCalendar(calendar, client)
 
             when (pushResult) {
@@ -120,19 +109,17 @@ class CalDavSyncEngine @Inject constructor(
                     pushUpdated = pushResult.eventsUpdated
                     pushDeleted = pushResult.eventsDeleted
 
-                    // Forward per-operation warnings to session (soft/retryable).
+                    // Retryable per-operation problems are session warnings.
                     pushResult.pushWarnings.forEach { sessionBuilder.addWarning(it) }
-                    // Forward permanent per-operation failures as ERRORS — the
-                    // change did not reach the server and won't be retried, so it
-                    // must surface as a failure, not a warning. Preserve the HTTP
-                    // code so downstream classification (auth vs server vs not-
-                    // found) survives rather than collapsing to a generic error.
+                    // A permanent per-operation failure didn't reach the server and won't be
+                    // retried, so it must surface as an error, not a warning. Its HTTP code is
+                    // kept so later classification (auth, server, not found) still works.
                     pushResult.pushErrors.forEach {
                         errors.add(SyncError(phase = SyncPhase.PUSH, code = it.code, message = it.message))
                     }
 
                     if (pushResult.operationsFailed > 0) {
-                        // Some operations failed - try to resolve conflicts
+                        // Step 2: resolve the failed operations' conflicts.
                         Log.d(TAG, "Step 1b: Resolving ${pushResult.operationsFailed} push conflicts")
                         val conflictOps = pendingOperationsDao.getConflictOperationsForCalendar(calendar.id)
                         var abandonedCount = 0
@@ -143,12 +130,11 @@ class CalDavSyncEngine @Inject constructor(
                             if (resolved.isSuccess()) {
                                 conflictsResolved++
                             } else {
-                                // Check if we should abandon after max sync cycles
                                 if (op.retryCount >= MAX_CONFLICT_SYNC_CYCLES) {
                                     val title = abandonConflictedOperation(op)
                                     if (abandonedCount == 0) lastAbandonedTitle = title
                                     abandonedCount++
-                                    conflictsResolved++ // Count as resolved (abandoned)
+                                    conflictsResolved++ // An abandoned conflict counts as resolved.
                                     anyConflictsAbandoned = true
                                 } else {
                                     errors.add(SyncError(
@@ -161,7 +147,6 @@ class CalDavSyncEngine @Inject constructor(
                             }
                         }
 
-                        // Notify user if any conflicts were abandoned
                         if (abandonedCount > 0) {
                             val titleForNotification = if (abandonedCount == 1) lastAbandonedTitle else null
                             notificationManager.showConflictAbandonedNotification(titleForNotification, abandonedCount)
@@ -180,7 +165,7 @@ class CalDavSyncEngine @Inject constructor(
                         message = pushResult.message
                     ))
 
-                    // Check if it's an auth error - don't continue
+                    // An auth failure stops the sync before the pull.
                     if (pushResult.code == 401) {
                         return SyncResult.AuthError(
                             message = pushResult.message,
@@ -190,24 +175,22 @@ class CalDavSyncEngine @Inject constructor(
                 }
             }
 
-            // Pass push stats to session builder (regardless of push result)
+            // Recorded whatever the push result.
             sessionBuilder.setPushStats(pushCreated, pushUpdated, pushDeleted)
 
-            // Step 2: Pull server changes
-            // Re-read calendar if conflicts were abandoned (ctag was cleared in DB)
+            // Step 3: pull server changes. Abandoning a conflict cleared the ctag in the
+            // database, so the calendar is re-read to pull the server version.
             val calendarForPull = if (anyConflictsAbandoned) {
                 calendarRepository.getCalendarById(calendar.id) ?: calendar
             } else {
                 calendar
             }
-            // Pass pushed event IDs so pull can skip recently-pushed events
-            // (prevents stale CDN reads from overwriting just-pushed data)
-            val pushedEventIds = when (pushResult) {
-                is PushResult.Success -> pushResult.pushedEventIds
-                else -> emptySet()
-            }
+            // The pull skips just-pushed events so a stale CDN read can't overwrite them, except
+            // those whose write carried a server change their rows lack.
+            val pushed = pushResult as? PushResult.Success
             val pullResult = pullStrategy.pull(calendarForPull, forceFullSync, quirks, client, sessionBuilder,
-                recentlyPushedEventIds = pushedEventIds)
+                recentlyPushedEventIds = pushed?.pushedEventIds.orEmpty(),
+                refetchEventIds = pushed?.refetchEventIds.orEmpty())
 
             when (pullResult) {
                 is PullResult.Success -> {
@@ -215,7 +198,6 @@ class CalDavSyncEngine @Inject constructor(
                     pullUpdated = pullResult.eventsUpdated
                     pullDeleted = pullResult.eventsDeleted
                     sessionBuilder.addDeleted(pullResult.eventsDeleted)
-                    // Collect changes for UI notification
                     changes.addAll(pullResult.changes)
                 }
                 is PullResult.NoChanges -> {
@@ -234,9 +216,8 @@ class CalDavSyncEngine @Inject constructor(
                         message = pullResult.message
                     ))
 
-                    // Auth error
                     if (pullResult.code == 401) {
-                        // Still record the session
+                        // The session is recorded even on an auth failure.
                         syncSessionStore.add(sessionBuilder.build())
                         return SyncResult.AuthError(
                             message = pullResult.message,
@@ -246,11 +227,10 @@ class CalDavSyncEngine @Inject constructor(
                 }
             }
 
-            // Record sync session
             val session = sessionBuilder.build()
             syncSessionStore.add(session)
 
-            // Notify user if parse errors were abandoned after max retries (v16.7.0)
+            // Events that failed to parse too many times are given up on; tell the user.
             if (session.abandonedParseErrors > 0) {
                 notificationManager.showParseFailureNotification(
                     calendarName = calendar.displayName,
@@ -258,17 +238,14 @@ class CalDavSyncEngine @Inject constructor(
                 )
             }
 
-            // Log sync completion
             val duration = System.currentTimeMillis() - startTime
             Log.i(TAG, "Sync complete in ${duration}ms: " +
                 "pushed(c=$pushCreated,u=$pushUpdated,d=$pushDeleted) " +
                 "pulled(a=$pullAdded,u=$pullUpdated,d=$pullDeleted) " +
                 "conflicts=$conflictsResolved errors=${errors.size}")
 
-            // Record sync log
             logSync(calendar.id, "SYNC_COMPLETE", "SUCCESS", duration, errors.size)
 
-            // Return result
             return if (errors.isEmpty()) {
                 SyncResult.Success(
                     calendarsSynced = 1,
@@ -298,14 +275,14 @@ class CalDavSyncEngine @Inject constructor(
                 )
             }
         } catch (e: java.util.concurrent.CancellationException) {
-            // Rethrow cancellation to properly handle coroutine cancellation
+            // Coroutine cancellation must propagate.
             Log.d(TAG, "Sync cancelled for calendar: ${calendar.displayName}")
             throw e
         } catch (e: Exception) {
             Log.e(TAG, "Sync failed with exception", e)
             logSync(calendar.id, "SYNC_COMPLETE", "ERROR", 0, 1)
 
-            // Record the error in session history for debugging
+            // Recorded in the session history for debugging.
             val errorType = when (e) {
                 is java.net.SocketTimeoutException -> org.onekash.kashcal.sync.session.ErrorType.TIMEOUT
                 is java.io.IOException -> org.onekash.kashcal.sync.session.ErrorType.NETWORK
@@ -323,15 +300,13 @@ class CalDavSyncEngine @Inject constructor(
     }
 
     /**
-     * Sync all calendars for an account.
+     * Syncs every calendar of [account] and aggregates the results. The first auth failure
+     * returns [SyncResult.AuthError] and stops the remaining calendars.
      *
-     * @param account The account to sync
-     * @param forceFullSync If true, ignores sync tokens
-     * @param conflictStrategy How to resolve conflicts
-     * @param quirks Optional provider-specific quirks. If null, uses default (iCloud).
-     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
-     * @param trigger The trigger source for this sync (for session tracking)
-     * @return SyncResult with aggregated statistics
+     * @param forceFullSync ignores sync-tokens.
+     * @param quirks provider quirks; null uses the iCloud default.
+     * @param client the account's client, created by the caller.
+     * @param trigger the sync's source, recorded in the session.
      */
     suspend fun syncAccount(
         account: Account,
@@ -347,7 +322,7 @@ class CalDavSyncEngine @Inject constructor(
         val calendars = calendarRepository.getCalendarsForAccountOnce(account.id)
         if (calendars.isEmpty()) {
             Log.d(TAG, "No calendars for account")
-            // Record session for debugging
+            // Recorded for debugging.
             val sessionBuilder = SyncSessionBuilder(
                 calendarId = -1L,
                 calendarName = "Account: ${account.email.maskEmail()}",
@@ -359,7 +334,6 @@ class CalDavSyncEngine @Inject constructor(
             return SyncResult.Success(calendarsSynced = 0, durationMs = 0)
         }
 
-        // Aggregate results
         var totalCalendars = 0
         var totalPushCreated = 0
         var totalPushUpdated = 0
@@ -373,7 +347,7 @@ class CalDavSyncEngine @Inject constructor(
 
         for ((_, calendar) in calendars.withIndex()) {
             if (calendar.isReadOnly) {
-                // Read-only calendars only need pull - create session builder
+                // Read-only calendars have nothing to push, so they are only pulled.
                 val syncType = if (forceFullSync || calendar.syncToken == null) SyncType.FULL else SyncType.INCREMENTAL
                 val sessionBuilder = SyncSessionBuilder(
                     calendarId = calendar.id,
@@ -401,7 +375,6 @@ class CalDavSyncEngine @Inject constructor(
                         if (pullResult.code == 401) {
                             val session = sessionBuilder.build()
                             syncSessionStore.add(session)
-                            // Notify if parse errors were abandoned
                             if (session.abandonedParseErrors > 0) {
                                 notificationManager.showParseFailureNotification(
                                     calendarName = calendar.displayName,
@@ -423,7 +396,6 @@ class CalDavSyncEngine @Inject constructor(
                 }
                 val session = sessionBuilder.build()
                 syncSessionStore.add(session)
-                // Notify if parse errors were abandoned (ICS subscription)
                 if (session.abandonedParseErrors > 0) {
                     notificationManager.showParseFailureNotification(
                         calendarName = calendar.displayName,
@@ -431,7 +403,7 @@ class CalDavSyncEngine @Inject constructor(
                     )
                 }
             } else {
-                // Full sync for writable calendars
+                // Writable calendars push, resolve conflicts and pull.
                 val result = syncCalendar(calendar, forceFullSync, conflictStrategy, quirks, client, trigger)
 
                 when (result) {
@@ -505,18 +477,8 @@ class CalDavSyncEngine @Inject constructor(
     }
 
     /**
-     * Sync all calendars for an account using provider context.
-     *
-     * This is the preferred method when using ProviderRegistry.
-     * Extracts quirks from the provider and passes to sync operations.
-     *
-     * @param account The account to sync
-     * @param quirks Provider-specific quirks for parsing and handling server responses.
-     * @param forceFullSync If true, ignores sync tokens
-     * @param conflictStrategy How to resolve conflicts
-     * @param client CalDavClient to use for HTTP operations (created per-account by caller).
-     * @param trigger The trigger source for this sync (for session tracking)
-     * @return SyncResult with aggregated statistics
+     * Calls [syncAccount] with [quirks] as a required, leading argument, for callers that take
+     * the quirks from the provider registry.
      */
     suspend fun syncAccountWithQuirks(
         account: Account,
@@ -530,11 +492,10 @@ class CalDavSyncEngine @Inject constructor(
     }
 
     /**
-     * Abandon a conflicted operation after max sync cycles.
-     * Resets event to SYNCED so pull can update it with server version.
+     * Abandons a conflicted operation: deletes it and marks the event SYNCED so the pull
+     * overwrites it with the server version.
      *
-     * @param op The pending operation to abandon
-     * @return The event title if available (for notification)
+     * @return the event's title for the notification, or null if the event is gone.
      */
     private suspend fun abandonConflictedOperation(op: PendingOperation): String? {
         val now = System.currentTimeMillis()
@@ -542,29 +503,28 @@ class CalDavSyncEngine @Inject constructor(
 
         Log.w(TAG, "Abandoning conflict for event ${op.eventId} (${event?.title}) after ${op.retryCount} sync cycles")
 
-        // Reset event to SYNCED so pull can update it (if event still exists)
         if (event != null) {
             eventsDao.updateSyncStatus(op.eventId, SyncStatus.SYNCED, now)
 
-            // Clear calendar ctag to force pull to fetch server version
+            // Without a ctag the pull can't skip the calendar as unchanged.
             calendarRepository.updateCtag(event.calendarId, null)
             Log.d(TAG, "Cleared ctag for calendar ${event.calendarId} to force server fetch")
         }
 
-        // Always delete the stuck pending operation
+        // Deleted even when the event is gone.
         pendingOperationsDao.deleteById(op.id)
 
         return event?.title
     }
 
     /**
-     * Map error code to ErrorType for sync session tracking.
+     * Maps a result code to the session's ErrorType.
      *
-     * Error code conventions:
-     * - HTTP status codes (401, 403, 5xx) map to their respective types
-     * - -408: SocketTimeoutException (mirrors HTTP 408)
-     * - 0: Generic network error (IOException)
-     * - -1: Non-IO exceptions (parse, processing errors)
+     * - HTTP 401 and 403 are AUTH, 408 is TIMEOUT, 5xx is SERVER.
+     * - -408 ([org.onekash.kashcal.sync.client.model.CalDavResult.CODE_TIMEOUT]) is a socket
+     *   timeout, mirroring HTTP 408.
+     * - -1 is a non-IO exception (parse or processing error), mapped to PARSE.
+     * - Everything else, including 0 (a generic IOException), is NETWORK.
      */
     private fun mapErrorCodeToType(code: Int): org.onekash.kashcal.sync.session.ErrorType = when (code) {
         401, 403 -> org.onekash.kashcal.sync.session.ErrorType.AUTH
@@ -574,9 +534,7 @@ class CalDavSyncEngine @Inject constructor(
         else -> org.onekash.kashcal.sync.session.ErrorType.NETWORK
     }
 
-    /**
-     * Record a sync log entry.
-     */
+    /** Writes a sync_logs row; a failed write is logged and ignored. */
     private suspend fun logSync(
         calendarId: Long?,
         action: String,
@@ -600,9 +558,7 @@ class CalDavSyncEngine @Inject constructor(
     }
 }
 
-/**
- * Phases of the sync process.
- */
+/** The sync step an error came from. */
 enum class SyncPhase {
     PUSH,
     PULL,
@@ -611,9 +567,7 @@ enum class SyncPhase {
     SYNC
 }
 
-/**
- * A sync error with context.
- */
+/** One error from a sync, with the calendar or event it concerns when known. */
 data class SyncError(
     val phase: SyncPhase,
     val calendarId: Long? = null,
@@ -622,13 +576,9 @@ data class SyncError(
     val message: String
 )
 
-/**
- * Result of a sync operation.
- */
+/** Outcome of a calendar or account sync. */
 sealed class SyncResult {
-    /**
-     * Sync completed successfully.
-     */
+    /** Every step succeeded. */
     data class Success(
         val calendarsSynced: Int,
         val eventsPushedCreated: Int = 0,
@@ -639,7 +589,7 @@ sealed class SyncResult {
         val eventsPulledDeleted: Int = 0,
         val conflictsResolved: Int = 0,
         val durationMs: Long,
-        /** Individual changes for UI notification (snackbar, bottom sheet) */
+        /** The pulled changes, one per event. */
         val changes: List<SyncChange> = emptyList()
     ) : SyncResult() {
         val totalChanges: Int get() =
@@ -647,9 +597,7 @@ sealed class SyncResult {
                 eventsPulledAdded + eventsPulledUpdated + eventsPulledDeleted
     }
 
-    /**
-     * Sync completed with some errors.
-     */
+    /** The sync finished but some steps or calendars failed ([errors]). */
     data class PartialSuccess(
         val calendarsSynced: Int,
         val eventsPushedCreated: Int = 0,
@@ -661,7 +609,7 @@ sealed class SyncResult {
         val conflictsResolved: Int = 0,
         val errors: List<SyncError>,
         val durationMs: Long,
-        /** Individual changes for UI notification (snackbar, bottom sheet) */
+        /** The pulled changes, one per event. */
         val changes: List<SyncChange> = emptyList()
     ) : SyncResult() {
         val totalChanges: Int get() =
@@ -669,16 +617,15 @@ sealed class SyncResult {
                 eventsPulledAdded + eventsPulledUpdated + eventsPulledDeleted
     }
 
-    /**
-     * Authentication error - credentials need refresh.
-     */
+    /** The server returned 401, or no credentials are stored; the user must sign in again. */
     data class AuthError(
         val message: String,
         val calendarId: Long? = null
     ) : SyncResult()
 
     /**
-     * Sync failed completely.
+     * The sync failed outright: it threw, or its calendar, account, credential provider or
+     * quirks are missing.
      */
     data class Error(
         val code: Int,

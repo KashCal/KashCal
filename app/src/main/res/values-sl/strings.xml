@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Na tem strežniku ni najdenih koledarjev.</string>
     <string name="caldav_error_unexpected">Nepričakovana napaka. Poskusite znova.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nČe je to strežnik v tvojem lokalnem omrežju, dovoli dostop do lokalnega omrežja za povezavo.</string>
+    <string name="caldav_error_connection_refused_insecure">Strežnik je povezavo preusmeril tja, kamor KashCal ne gre (na nešifriran naslov ali v zanko preusmeritev), zato se je KashCal ustavil, preden je poslal tvoje geslo. Preveri naslov strežnika.</string>
     <string name="local_network_banner_title">Potreben dostop do lokalnega omrežja</string>
     <string name="local_network_banner_body">Videti je, da je ta strežnik v tvojem lokalnem omrežju. Dovoli dostop do lokalnega omrežja, da se KashCal lahko poveže z njim.</string>
     <string name="local_network_banner_allow">Dovoli dostop</string>
@@ -888,6 +889,8 @@
     <string name="dialog_edit_recurring_title">Shrani spremembe v</string>
     <string name="dialog_delete_recurring_title">Izbriši</string>
     <string name="dialog_move_recurring_title">Premakni</string>
+    <string name="snackbar_event_rescheduled">Dogodek premaknjen</string>
+    <string name="snackbar_reschedule_failed">Dogodka ni bilo mogoče premakniti</string>
     <string name="recurring_this_event">Ta dogodek</string>
     <string name="recurring_all_events">Vse dogodke</string>
 

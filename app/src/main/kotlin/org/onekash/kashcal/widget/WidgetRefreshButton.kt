@@ -17,23 +17,20 @@ import androidx.glance.layout.size
 import org.onekash.kashcal.R
 
 /**
- * "Refresh" glyph for widget headers — sibling of [WidgetAddButton].
+ * Draws the header refresh glyph, sized and tinted like its neighbor [WidgetAddButton].
  *
- * Sized and toned to match the add button exactly: the same 48dp
- * [WIDGET_ADD_BUTTON_TOUCH_TARGET_DP] touch target and [WIDGET_HEADER_GLYPH_SIZE_DP] glyph, tinted
- * [WidgetTheme.onHeaderBackground] so it clears WCAG contrast against the header for every accent
- * seed. The two buttons abut with no Spacer between them; the ~28dp of clear space between the
- * glyphs comes from each glyph being centered in its own 48dp box.
+ * It uses the same [WIDGET_ADD_BUTTON_TOUCH_TARGET_DP] (48dp) touch target and
+ * [WIDGET_HEADER_GLYPH_SIZE_DP] glyph, tinted [WidgetTheme.onHeaderBackground] so it clears WCAG
+ * contrast against the header for every accent seed. The two buttons abut with no Spacer; the
+ * ~28dp of clear space between the glyphs comes from centering each in its own 48dp box.
  *
- * Tapping fires [WidgetRefreshAction] for [kind], which kicks off a CalDAV sync and repaints.
- * While that sync is in flight the caller passes [isRefreshing] = true and the glyph dims
- * ([WidgetTheme.dimmedOnHeaderBackground]) as an immediate "syncing" cue. The cue is a token swap,
- * not a fade — Glance has no alpha modifier — and self-expires via [isRefreshCueActive], so it can
- * never get stuck on.
+ * A tap fires [WidgetRefreshAction] for [kind], which requests a sync and repaints. While the cue
+ * is on, the glyph dims to [WidgetTheme.dimmedOnHeaderBackground]; the cue expires by itself
+ * ([isRefreshCueActive]).
  *
- * @param kind Which widget this button lives in, so the action can repaint the right widget class.
- * @param isRefreshing Whether the syncing cue should show (glyph dimmed). Computed by the caller
- *   from [WIDGET_REFRESHING_UNTIL]; kept as a plain param so this composable stays render-test-pure.
+ * @param kind the widget this button lives in, so the action repaints that widget class.
+ * @param isRefreshing whether to dim the glyph. The caller computes it from
+ *   [WIDGET_REFRESHING_UNTIL], so this composable stays pure for render tests.
  */
 @Composable
 fun WidgetRefreshButton(kind: WidgetKind, isRefreshing: Boolean) {

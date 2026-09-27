@@ -14,9 +14,11 @@ import org.onekash.kashcal.ui.screens.AccountSettingsScreen
 import org.onekash.kashcal.ui.screens.AccountSettingsUiState
 
 /**
- * Verifies that nested settings screens render the screen-name as a body
- * heading, and that Settings root does NOT (the bar already says "KashCal" so
- * finding the screen-name text means the body heading is present).
+ * Tests that the Accounts, Subscriptions and Birthdays & Anniversaries screens each render
+ * their screen name once as a body heading, and that the Settings root shows no "Settings" text.
+ *
+ * Each nested screen's bar title is `R.string.settings_title`, not its screen name, so the one
+ * node carrying the screen name is the body heading.
  */
 @RunWith(AndroidJUnit4::class)
 class NestedSettingsBodyHeadingComposeTest {
@@ -46,8 +48,7 @@ class NestedSettingsBodyHeadingComposeTest {
                 )
             }
         }
-        // The bar title is "KashCal" (C4), so any node with "Accounts" must be
-        // the body heading.
+        // The bar title is "Settings", so the one "Accounts" node is the body heading.
         rule.onAllNodesWithText(accountsTitle).assertCountEquals(1)
     }
 
@@ -98,8 +99,8 @@ class NestedSettingsBodyHeadingComposeTest {
     }
 
     /**
-     * Settings root must NOT render its screen name as a body heading.
-     * Unified-bar contract already prevents the bar; this prevents the body.
+     * Expects no "Settings" node on the Settings root, neither a body heading nor a bar title.
+     * The root passes `R.string.settings_title` as its bar title, which this count of 0 rejects.
      */
     @Test
     fun accountSettingsScreen_doesNotRenderSettingsAsBodyHeading() {

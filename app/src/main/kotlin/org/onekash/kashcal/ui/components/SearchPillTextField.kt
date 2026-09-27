@@ -31,17 +31,15 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
 /**
- * Pill-shaped inline search field shared across the app. A
- * [surfaceContainerHigh] rounded background holds the text, an optional
- * [leadingIcon], and a trailing clear button that appears once [query] is
- * non-empty. The clear button's slot is reserved with a [Spacer] when empty so
- * the field width stays stable as the user types.
+ * Shows a pill-shaped inline search field: a `surfaceContainerHigh` rounded background holding
+ * an optional [leadingIcon], the text, and a clear button once [query] is non-empty. The field
+ * fills the width it is given; with no clear button a 16dp [Spacer] pads the end.
  *
- * This mirrors the inline search bars in the home and settings top bars; those
- * can adopt this composable to drop their duplicated copies.
+ * It mirrors the inline search bars in the home and settings top bars, which keep their own
+ * copies and could use this one instead.
  *
- * @param leadingIcon Optional glyph shown before the text (e.g. a magnifier
- *   when the field is always visible rather than toggled from a bar button).
+ * @param leadingIcon glyph before the text, e.g. a magnifier when the field is always visible
+ *   rather than opened from a bar button.
  */
 @Composable
 fun SearchPillTextField(
@@ -96,8 +94,7 @@ fun SearchPillTextField(
                     innerTextField()
                 }
                 if (query.isNotEmpty()) {
-                    // 48dp touch target (Material accessibility minimum) with the
-                    // Close glyph inset to 20dp inside.
+                    // 48dp touch target (Material accessibility minimum) around a 20dp glyph.
                     IconButton(onClick = { onQueryChange("") }) {
                         Icon(
                             Icons.Default.Close,
@@ -107,8 +104,7 @@ fun SearchPillTextField(
                         )
                     }
                 } else {
-                    // Reserve space so the field width is stable whether or not
-                    // the clear button is showing.
+                    // End padding while the clear button is hidden.
                     Spacer(modifier = Modifier.width(16.dp))
                 }
             }

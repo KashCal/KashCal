@@ -1,5 +1,6 @@
 package org.onekash.kashcal.ui.viewmodels
 
+import androidx.lifecycle.viewModelScope
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -8,6 +9,9 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.yield
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -21,7 +25,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
-import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.settingsManagerMock
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.contacts.ContactEventManager
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.SyncLog
@@ -38,7 +45,6 @@ import org.onekash.kashcal.domain.backup.SettingsBackupImporter
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.SyncLogReader
-import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
@@ -47,8 +53,9 @@ import org.onekash.kashcal.ui.screens.BackupRestoreUiState
 import org.onekash.kashcal.widget.WidgetUpdateManager
 
 /**
- * Unit tests for AccountSettingsViewModel's backup/restore state machine:
- * state transitions driven by onBackupFileSelected / confirmRestore / dismissDialog.
+ * Tests AccountSettingsViewModel's backup restore state machine: the transitions driven by
+ * onBackupFileSelected, confirmRestore and dismissDialog, and the device calendar observer
+ * re-sync after a restore succeeds, fails or is cancelled mid-apply.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class BackupRestoreViewModelStateTest {
@@ -64,10 +71,9 @@ class BackupRestoreViewModelStateTest {
     private lateinit var syncLogReader: SyncLogReader
     private lateinit var contactEventManager: ContactEventManager
     private lateinit var calendarProviderManager: CalendarProviderManager
-    private lateinit var calendarProviderRepository: CalendarProviderRepository
+    private lateinit var calendarProviderRepository: FakeCalendarProviderRepository
     private lateinit var dataStore: KashCalDataStore
     private lateinit var widgetUpdateManager: WidgetUpdateManager
-    private lateinit var eventWriter: EventWriter
     private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
     private lateinit var backupExporter: SettingsBackupExporter
     private lateinit var backupImporter: SettingsBackupImporter
@@ -84,16 +90,15 @@ class BackupRestoreViewModelStateTest {
         eventCoordinator = mockk(relaxed = true)
         syncLogReader = mockk(relaxed = true)
         contactEventManager = mockk(relaxed = true)
-        calendarProviderManager = mockk(relaxed = true)
-        calendarProviderRepository = mockk(relaxed = true)
+        calendarProviderManager = settingsManagerMock()
+        calendarProviderRepository = FakeCalendarProviderRepository()
         dataStore = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
-        eventWriter = mockk(relaxed = true)
         deviceCalendarReminderScheduler = mockk(relaxed = true)
         backupExporter = mockk(relaxed = true)
         backupImporter = mockk(relaxed = true)
 
-        // Minimal flow plumbing — the VM's init block observes many flows.
+        // Flows the VM's init block observes.
         every { eventCoordinator.getAllCalendars() } returns MutableStateFlow(emptyList<Calendar>())
         every { eventCoordinator.getAllAccounts() } returns flowOf(emptyList())
         every { eventCoordinator.getICloudCalendarCount() } returns MutableStateFlow(0)
@@ -145,11 +150,11 @@ class BackupRestoreViewModelStateTest {
         discoveryService = discoveryService,
         calDavDiscoveryService = calDavDiscoveryService,
         eventCoordinator = eventCoordinator,
-        eventWriter = eventWriter,
         syncLogReader = syncLogReader,
         contactEventManager = contactEventManager,
         calendarProviderManager = calendarProviderManager,
-        calendarProviderRepository = calendarProviderRepository,
+        deviceEventReader = calendarProviderRepository.deviceEventReader(),
+        deviceEventWriter = calendarProviderRepository.deviceEventWriter(dataStore, calendarProviderManager),
         dataStore = dataStore,
         widgetUpdateManager = widgetUpdateManager,
         deviceCalendarReminderScheduler = deviceCalendarReminderScheduler,
@@ -226,6 +231,7 @@ class BackupRestoreViewModelStateTest {
 
         assertEquals(BackupRestoreUiState.Idle, viewModel.backupRestoreState.value)
         coVerify(exactly = 0) { backupImporter.applyBackup(any()) }
+        coVerify(exactly = 0) { calendarProviderManager.applyDeviceCalendarsSetting() }
     }
 
     @Test
@@ -315,6 +321,8 @@ class BackupRestoreViewModelStateTest {
         assertTrue("expected Success, was $state", state is BackupRestoreUiState.Success)
         assertEquals(result, (state as BackupRestoreUiState.Success).result)
         coVerify(exactly = 1) { backupImporter.applyBackup(env) }
+        // The restored device-calendars switch decides whether the provider is observed.
+        coVerify(exactly = 1) { calendarProviderManager.applyDeviceCalendarsSetting() }
     }
 
     @Test
@@ -335,5 +343,36 @@ class BackupRestoreViewModelStateTest {
         assertTrue("expected Error, was $state", state is BackupRestoreUiState.Error)
         val err = (state as BackupRestoreUiState.Error).error
         assertTrue("expected ApplyFailed, was $err", err is BackupImportError.ApplyFailed)
+        // A failed apply may still have written some settings, so the observer is re-synced.
+        coVerify(exactly = 1) { calendarProviderManager.applyDeviceCalendarsSetting() }
+    }
+
+    @Test
+    fun `a restore cancelled mid-apply still re-syncs device calendar observing`() = runTest {
+        // The settings edit can commit before the cancellation reaches the caller, so the
+        // observer must be re-synced even then.
+        val env = envelope()
+        every { backupImporter.parseAndValidate(any()) } returns BackupParseResult.Ok(env)
+        coEvery { backupImporter.applyBackup(env) } coAnswers { awaitCancellation() }
+        // The real re-sync suspends (it reads DataStore), so a cancelled caller only reaches its
+        // end when shielded from the cancellation.
+        var resynced = false
+        coEvery { calendarProviderManager.applyDeviceCalendarsSetting() } coAnswers {
+            yield()
+            resynced = true
+        }
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onBackupFileSelected("{}")
+        viewModel.confirmRestore()
+        advanceUntilIdle()
+        coVerify(exactly = 0) { calendarProviderManager.applyDeviceCalendarsSetting() }
+
+        viewModel.viewModelScope.cancel()
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { calendarProviderManager.applyDeviceCalendarsSetting() }
+        assertTrue("the re-sync ran to completion despite the cancellation", resynced)
     }
 }

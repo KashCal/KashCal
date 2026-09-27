@@ -56,31 +56,29 @@ import org.onekash.kashcal.ui.components.SettingsTopAppBar
 import org.onekash.kashcal.ui.shared.maskEmail
 import org.onekash.kashcal.ui.theme.KashCalTheme
 
-/**
- * Sub-sheet types for the account detail flow.
- * Sequential pattern: only one sheet visible at a time.
- */
+/** Names the account detail flow's sheets; one shows at a time, NONE meaning the detail sheet. */
 private enum class SubSheet { NONE, RENAME, CHANGE_PASSWORD, SIGN_OUT }
 
-/** Constants for sync warning indicator on account rows. */
+/** Thresholds for the sync warning on account rows. */
 internal object SyncWarningConstants {
-    /** Minimum consecutive sync failures before showing warning indicator. */
+    /** Consecutive sync failures at which the row shows the warning icon. */
     const val SYNC_FAILURE_THRESHOLD = 3
-    /** Time window (24 hours in ms) — beyond this, subtitle changes to "Sync issue". */
+    /**
+     * 24 hours in ms. A warned row whose last successful sync is older than this, or never
+     * happened, shows "Sync issue" as its subtitle.
+     */
     const val SYNC_ISSUE_SUBTITLE_THRESHOLD_MS = 24 * 60 * 60 * 1000L
 }
 
 /**
- * Accounts detail screen.
+ * Shows the connected iCloud and CalDAV accounts and the buttons to add more.
  *
- * Dedicated screen for managing connected accounts (iCloud and CalDAV).
- * Features:
- * - List of connected accounts with calendar counts
- * - Tap account to open AccountDetailSheet for management
- * - Add iCloud and Add CalDAV buttons
- * - Empty state when no accounts connected
+ * - Each account row shows its calendar count and sync warning; tapping it opens
+ *   [AccountDetailSheet], which leads to the rename, change password and sign out sheets
+ * - Add iCloud (hidden unless [showAddICloud]) and Add CalDAV buttons
+ * - An empty state with both buttons, Add iCloud always shown, when no account is connected
  *
- * Follows SubscriptionsScreen navigation pattern.
+ * Follows the [SubscriptionsScreen] navigation pattern.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -93,7 +91,6 @@ fun AccountsScreen(
     onICloudSignOut: () -> Unit,
     onAddCalDav: () -> Unit,
     onCalDavSignOut: (Long) -> Unit,
-    // Account detail state + callbacks
     accountDetail: AccountDetailUiModel? = null,
     accountDetailSyncStatus: AccountDetailSyncStatus = AccountDetailSyncStatus.Idle,
     accountDetailDiscoverStatus: AccountDetailDiscoverStatus = AccountDetailDiscoverStatus.Idle,
@@ -110,15 +107,13 @@ fun AccountsScreen(
     onChangeAccountPassword: (Long, String, (Result<Unit>) -> Unit) -> Unit = { _, _, _ -> },
     onDiscoverCalendars: (Long) -> Unit = {}
 ) {
-    // Selected account and sub-sheet state (survives config change)
+    // rememberSaveable so the open sheet survives a configuration change.
     var selectedAccountId by rememberSaveable { mutableStateOf<Long?>(null) }
     var activeSubSheet by rememberSaveable { mutableStateOf(SubSheet.NONE) }
 
-    // Password change state
     var isPasswordValidating by remember { mutableStateOf(false) }
     var passwordError by remember { mutableStateOf<String?>(null) }
 
-    // Sheet states
     val detailSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val subSheetState = rememberModalBottomSheetState()
 
@@ -145,12 +140,10 @@ fun AccountsScreen(
             }
 
             if (hasAccounts) {
-                // Connected section header
                 item(key = "connected_header", contentType = "section_header") {
                     SectionHeader(stringResource(R.string.accounts_section_connected))
                 }
 
-                // iCloud account (if connected)
                 iCloudAccount?.let { account ->
                     item(key = "icloud_account", contentType = "account_row") {
                         AccountRow(
@@ -173,7 +166,6 @@ fun AccountsScreen(
                     }
                 }
 
-                // CalDAV accounts
                 items(
                     items = calDavAccounts,
                     key = { it.id },
@@ -200,7 +192,6 @@ fun AccountsScreen(
                     }
                 }
 
-                // Add Account section
                 item(key = "add_header", contentType = "section_header") {
                     Spacer(modifier = Modifier.height(24.dp))
                     SectionHeader(stringResource(R.string.accounts_section_add))
@@ -215,7 +206,6 @@ fun AccountsScreen(
                     )
                 }
             } else {
-                // Empty state
                 item(key = "empty_state", contentType = "empty_state") {
                     EmptyState(
                         onAddICloud = onAddICloud,
@@ -227,7 +217,6 @@ fun AccountsScreen(
         }
     }
 
-    // Account detail sheet
     if (selectedAccountId != null && activeSubSheet == SubSheet.NONE && accountDetail != null) {
         AccountDetailSheet(
             sheetState = detailSheetState,
@@ -255,7 +244,6 @@ fun AccountsScreen(
         )
     }
 
-    // Rename sub-sheet
     if (selectedAccountId != null && activeSubSheet == SubSheet.RENAME && accountDetail != null) {
         RenameAccountSheet(
             sheetState = subSheetState,
@@ -265,13 +253,12 @@ fun AccountsScreen(
             },
             onDismiss = {
                 activeSubSheet = SubSheet.NONE
-                // Reload detail with fresh data
+                // Re-observe so the detail sheet shows the new name.
                 selectedAccountId?.let { id -> onObserveAccountDetail(id) }
             }
         )
     }
 
-    // Change password sub-sheet
     if (selectedAccountId != null && activeSubSheet == SubSheet.CHANGE_PASSWORD && accountDetail != null) {
         ChangePasswordSheet(
             sheetState = subSheetState,
@@ -304,7 +291,6 @@ fun AccountsScreen(
         )
     }
 
-    // Sign out confirmation sub-sheet
     if (selectedAccountId != null && activeSubSheet == SubSheet.SIGN_OUT && accountDetail != null) {
         GenericSignOutConfirmationSheet(
             sheetState = subSheetState,
@@ -327,7 +313,8 @@ fun AccountsScreen(
 }
 
 /**
- * Row displaying a connected account with provider icon, name, email, and calendar count.
+ * Shows one connected account: icon, name, and a subtitle of email and calendar count, or
+ * "Sync issue" or a syncing hint. Thresholds are in [SyncWarningConstants].
  */
 @Composable
 private fun AccountRow(
@@ -422,9 +409,8 @@ private fun AccountRow(
 }
 
 /**
- * Add account buttons - iCloud (filled) and CalDAV (outlined).
- *
- * @param showAddICloud Whether to show the Add iCloud button (false when already connected)
+ * Shows the Add iCloud (filled) and Add CalDAV (outlined) buttons and the expandable
+ * "What is CalDAV?" help.
  */
 @Composable
 private fun AddAccountButtons(
@@ -439,7 +425,6 @@ private fun AddAccountButtons(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Add iCloud button (filled/primary) - only show if not connected
         if (showAddICloud) {
             Button(
                 onClick = onAddICloud,
@@ -457,7 +442,6 @@ private fun AddAccountButtons(
             }
         }
 
-        // Add CalDAV button (outlined) with subtitle
         OutlinedButton(
             onClick = onAddCalDav,
             modifier = Modifier.fillMaxWidth()
@@ -488,7 +472,6 @@ private fun AddAccountButtons(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // What is CalDAV? help toggle
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -511,7 +494,6 @@ private fun AddAccountButtons(
             )
         }
 
-        // Expandable CalDAV help
         AnimatedVisibility(
             visible = showCalDavHelp,
             enter = expandVertically(),
@@ -545,9 +527,7 @@ private fun AddAccountButtons(
     }
 }
 
-/**
- * Empty state shown when no accounts are connected.
- */
+/** Shows the empty state, with both add buttons, when no account is connected. */
 @Composable
 private fun EmptyState(
     onAddICloud: () -> Unit,

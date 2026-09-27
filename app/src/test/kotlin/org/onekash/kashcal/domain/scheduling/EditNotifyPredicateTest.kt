@@ -6,11 +6,10 @@ import org.junit.Test
 import org.onekash.kashcal.data.db.entity.Event
 
 /**
- * Pure-logic tests for [shouldNotifyAttendees] — the predicate that drives the
- * inline "Save & notify" banner. It must delegate the "is this change
- * scheduling-significant?" decision to the shipped [SequenceBumper] (single
- * source of truth) and only add the attendee-count gate, so the banner copy
- * matches the wire behaviour exactly.
+ * Tests [shouldNotifyAttendees], the predicate behind the inline "Save & notify" banner. It must
+ * take the scheduling-significance decision from [SequenceBumper] (the source of truth) so the
+ * banner matches the wire behavior, and add only the new-event case (never notifies), the
+ * attendee-count gate, the attendee-set change and the removal case.
  */
 class EditNotifyPredicateTest {
 
@@ -94,9 +93,9 @@ class EditNotifyPredicateTest {
 
     @Test
     fun `adding an attendee notifies even with no scheduling change`() {
-        // Adding a guest sends them a REQUEST (RFC 5546 §3.2.2.2 update), so
-        // the banner must surface — but this is NOT a SequenceBumper change
-        // (ATTENDEE is not in the §2.1.4 bump set), so shouldBump stays false.
+        // Adding a guest sends them a REQUEST (RFC 5546 §3.2.2.2 update), so the banner must
+        // show, but it isn't a SequenceBumper change (ATTENDEE isn't in the §2.1.4 bump set),
+        // so shouldBump stays false.
         val old = event()
         val new = old.copy() // identical scheduling fields
         assertFalse(SequenceBumper.shouldBump(old, new))
@@ -107,7 +106,7 @@ class EditNotifyPredicateTest {
 
     @Test
     fun `an add edited back down to empty does not notify`() {
-        // An add-only delta with no one left to invite — nothing to notify.
+        // An add-only delta with no one left to invite: nothing to notify.
         val old = event()
         assertFalse(
             shouldNotifyAttendees(old, old.copy(), attendeeCount = 0, attendeeSetChanged = true),
@@ -116,8 +115,8 @@ class EditNotifyPredicateTest {
 
     @Test
     fun `removing the last guest notifies even with zero attendees left`() {
-        // Removal-to-empty: the dropped guest still gets a CANCEL, so the banner
-        // must surface despite the resulting set being empty.
+        // The dropped guest still gets a CANCEL, so the banner must show though the resulting
+        // set is empty.
         val old = event()
         assertTrue(
             shouldNotifyAttendees(old, old.copy(), attendeeCount = 0, attendeeRemoved = true),
@@ -134,8 +133,8 @@ class EditNotifyPredicateTest {
 
     @Test
     fun `a cosmetic edit to a zero-attendee event with no removal does not notify`() {
-        // Regression guard: relaxing the empty-set gate must apply ONLY when a
-        // removal is present, never to a plain cosmetic edit on a zero-attendee event.
+        // The empty-set gate is lifted only for a removal, never for a plain cosmetic edit on
+        // a zero-attendee event.
         val old = event(description = "Agenda A")
         val new = event(description = "Agenda B")
         assertFalse(
@@ -161,8 +160,8 @@ class EditNotifyPredicateTest {
 
     @Test
     fun `delegates to SequenceBumper - no independent field list`() {
-        // Parity check: the predicate's significance decision must equal
-        // SequenceBumper.shouldBump for any old/new pair (with attendees).
+        // With attendees, the predicate must equal SequenceBumper.shouldBump for any old/new
+        // pair; checked on a timing change and a cosmetic one.
         val old = event()
         val timing = event(startTs = old.startTs + 1000L, endTs = old.endTs + 1000L)
         assertTrue(

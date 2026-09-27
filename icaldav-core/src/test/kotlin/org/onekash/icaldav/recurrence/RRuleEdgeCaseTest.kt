@@ -25,18 +25,14 @@ import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 /**
- * Edge case tests for RRuleExpander.
- *
- * Tests RFC 5545 recurrence expansion edge cases:
- * - DST transitions
- * - Leap year handling (February 29)
- * - Month boundary conditions
- * - Last day of month rules
- * - EXDATE/RDATE interactions
- * - Timezone-aware expansion
- * - RECURRENCE-ID overrides
- * - Large occurrence sets
- * - Ordinal edge cases (-1 = last)
+ * Tests [RRuleExpander] on RFC 5545 recurrence edge cases:
+ * - DST transitions, and UTC, Asia/Tokyo and Asia/Shanghai (no DST) series
+ * - Feb 29 and BYMONTHDAY 29, 30 and 31 in shorter months
+ * - Last day and ordinal rules (BYMONTHDAY=-1, BYDAY=-1FR, BYDAY=5MO)
+ * - EXDATE and RDATE, alone and together, and a RECURRENCE-ID override
+ * - Large sets (COUNT=365, an unbounded weekly rule, COUNT=120)
+ * - All-day series, and events with neither RRULE nor RDATE
+ * - The [TimeRange] factories
  */
 class RRuleEdgeCaseTest {
 
@@ -91,7 +87,7 @@ class RRuleEdgeCaseTest {
 
         @Test
         fun `daily rule across spring forward DST transition`() {
-            // US DST: March 10, 2024 at 2:00 AM -> 3:00 AM
+            // US DST: March 10, 2024 at 2:00 AM -> 3:00 AM.
             val zone = ZoneId.of("America/New_York")
             val startTime = LocalDateTime.of(2024, 3, 8, 10, 0)
             val startZdt = startTime.atZone(zone)
@@ -111,7 +107,7 @@ class RRuleEdgeCaseTest {
 
             assertEquals(5, occurrences.size)
 
-            // All occurrences should be at 10:00 AM local time
+            // Every occurrence stays at 10:00 local time.
             occurrences.forEach { occ ->
                 val occZdt = occ.dtStart.toZonedDateTime()
                 assertEquals(10, occZdt.hour, "Hour should be preserved across DST")
@@ -120,7 +116,7 @@ class RRuleEdgeCaseTest {
 
         @Test
         fun `daily rule across fall back DST transition`() {
-            // US DST: November 3, 2024 at 2:00 AM -> 1:00 AM
+            // US DST: November 3, 2024 at 2:00 AM -> 1:00 AM.
             val zone = ZoneId.of("America/New_York")
             val startTime = LocalDateTime.of(2024, 11, 1, 10, 0)
             val startZdt = startTime.atZone(zone)
@@ -144,7 +140,7 @@ class RRuleEdgeCaseTest {
         @Test
         fun `weekly rule preserves local time across DST`() {
             val zone = ZoneId.of("Europe/London")
-            // BST ends last Sunday of October - Oct 27, 2024
+            // BST ends on the last Sunday of October, Oct 27, 2024.
             val startTime = LocalDateTime.of(2024, 10, 21, 14, 30)
             val startZdt = startTime.atZone(zone)
 
@@ -163,7 +159,7 @@ class RRuleEdgeCaseTest {
 
             assertEquals(3, occurrences.size)
 
-            // All should be at 14:30 local time
+            // Every occurrence stays at 14:30 local time.
             occurrences.forEach { occ ->
                 val occZdt = occ.dtStart.toZonedDateTime()
                 assertEquals(14, occZdt.hour)
@@ -179,7 +175,7 @@ class RRuleEdgeCaseTest {
 
         @Test
         fun `yearly rule on Feb 29 in leap year`() {
-            // Event starts on Feb 29, 2024 (leap year)
+            // Starts on Feb 29, 2024, a leap year.
             val startZdt = LocalDateTime.of(2024, 2, 29, 12, 0)
                 .atZone(ZoneId.systemDefault())
 
@@ -189,7 +185,7 @@ class RRuleEdgeCaseTest {
                 rrule = RRule(freq = Frequency.YEARLY, count = 4)
             )
 
-            // Expand over 5 years
+            // A 5-year range.
             val range = TimeRange(
                 startZdt.toInstant(),
                 startZdt.plusYears(5).toInstant()
@@ -197,8 +193,8 @@ class RRuleEdgeCaseTest {
 
             val occurrences = expander.expand(event, range)
 
-            // ical4j typically generates Feb 28 in non-leap years, or skips
-            // The exact behavior depends on ical4j's LEAP_MONTH_HANDLING
+            // RRuleExpander sets no ical4j Recur.Skip, so ical4j omits Feb 29 in non-leap years.
+            // Asserts only that some occurrences exist.
             assertTrue(occurrences.isNotEmpty())
         }
 
@@ -224,8 +220,7 @@ class RRuleEdgeCaseTest {
 
             val occurrences = expander.expand(event, range)
 
-            // Should include Feb 29 in leap year 2024
-            // In non-leap years, Feb 29 doesn't exist
+            // Leap year 2024 has a Feb 29. Asserts only that some occurrences exist.
             assertTrue(occurrences.isNotEmpty())
         }
 
@@ -251,8 +246,8 @@ class RRuleEdgeCaseTest {
 
             val occurrences = expander.expand(event, range)
 
-            // Should have 11 occurrences (Feb doesn't have 30th)
-            // Or 12 if ical4j adjusts to Feb 28
+            // February has no 30th, and with no Recur.Skip set ical4j omits it rather than
+            // moving it. Asserts at least 11.
             assertTrue(occurrences.size >= 11)
         }
 
@@ -278,7 +273,7 @@ class RRuleEdgeCaseTest {
 
             val occurrences = expander.expand(event, range)
 
-            // Only 7 months have 31 days
+            // Only 7 months have 31 days.
             assertTrue(occurrences.size >= 7)
         }
     }
@@ -312,7 +307,7 @@ class RRuleEdgeCaseTest {
 
             assertEquals(6, occurrences.size)
 
-            // Verify each occurrence is the last day of its month
+            // Each occurrence is the last day of its month.
             occurrences.forEach { occ ->
                 val occZdt = occ.dtStart.toZonedDateTime()
                 val lastDayOfMonth = occZdt.toLocalDate().lengthOfMonth()
@@ -345,7 +340,7 @@ class RRuleEdgeCaseTest {
 
             assertEquals(6, occurrences.size)
 
-            // Each occurrence should be a Friday
+            // Asserts each is a Friday, not that it is the last one.
             occurrences.forEach { occ ->
                 val occZdt = occ.dtStart.toZonedDateTime()
                 assertEquals(DayOfWeek.FRIDAY, occZdt.dayOfWeek)
@@ -354,7 +349,7 @@ class RRuleEdgeCaseTest {
 
         @Test
         fun `monthly rule BYDAY=5MO handles months without 5th Monday`() {
-            // January 2024 has 5 Mondays, February 2024 does not
+            // January 2024 has 5 Mondays, February 2024 does not.
             val startZdt = LocalDateTime.of(2024, 1, 29, 10, 0)  // 5th Monday
                 .atZone(ZoneId.systemDefault())
 
@@ -375,7 +370,7 @@ class RRuleEdgeCaseTest {
 
             val occurrences = expander.expand(event, range)
 
-            // Not all months have 5 Mondays, so fewer than 12 occurrences
+            // Not every month has a 5th Monday, so fewer than 12 fall in the year.
             assertTrue(occurrences.size < 12)
             assertTrue(occurrences.isNotEmpty())
         }
@@ -391,7 +386,7 @@ class RRuleEdgeCaseTest {
             val startZdt = LocalDateTime.of(2024, 1, 1, 10, 0)
                 .atZone(ZoneId.systemDefault())
 
-            // Exclude January 3rd
+            // Exclude January 3.
             val exdateZdt = LocalDateTime.of(2024, 1, 3, 10, 0)
                 .atZone(ZoneId.systemDefault())
 
@@ -409,10 +404,10 @@ class RRuleEdgeCaseTest {
 
             val occurrences = expander.expand(event, range)
 
-            // 5 daily occurrences minus 1 exdate = 4
+            // 5 daily occurrences minus 1 EXDATE.
             assertEquals(4, occurrences.size)
 
-            // Verify Jan 3rd is not in results
+            // Jan 3 is absent.
             val jan3DayCode = "20240103"
             occurrences.forEach { occ ->
                 assertNotEquals(jan3DayCode, occ.dtStart.toDayCode())
@@ -483,7 +478,7 @@ class RRuleEdgeCaseTest {
             val startZdt = LocalDateTime.of(2024, 1, 1, 10, 0)
                 .atZone(ZoneId.systemDefault())
 
-            // Add an extra occurrence on Jan 10th
+            // An extra occurrence on Jan 10.
             val rdateZdt = LocalDateTime.of(2024, 1, 10, 10, 0)
                 .atZone(ZoneId.systemDefault())
 
@@ -501,10 +496,10 @@ class RRuleEdgeCaseTest {
 
             val occurrences = expander.expand(event, range)
 
-            // 2 from RRULE + 1 from RDATE = 3
+            // 2 from the RRULE plus 1 RDATE.
             assertEquals(3, occurrences.size)
 
-            // Verify Jan 10th is included
+            // Jan 10 is included.
             val jan10DayCode = "20240110"
             assertTrue(occurrences.any { it.dtStart.toDayCode() == jan10DayCode })
         }
@@ -534,9 +529,8 @@ class RRuleEdgeCaseTest {
 
             val occurrences = expander.expand(event, range)
 
-            // Original event + 3 RDATE occurrences
-            // Note: Event without RRULE/RDATE returns single occurrence
-            // With RDATE, should return RDATE occurrences
+            // DTSTART isn't added on its own, so these are the three RDATEs (an event with
+            // neither RRULE nor RDATE would return itself). Asserts at least 3.
             assertTrue(occurrences.size >= 3)
         }
 
@@ -545,7 +539,7 @@ class RRuleEdgeCaseTest {
             val startZdt = LocalDateTime.of(2024, 1, 1, 10, 0)
                 .atZone(ZoneId.systemDefault())
 
-            // Add RDATE that matches an RRULE occurrence (Jan 8 = second Monday)
+            // An RDATE on an RRULE occurrence (Jan 8, the second Monday).
             val rdateZdt = LocalDateTime.of(2024, 1, 8, 10, 0)
                 .atZone(ZoneId.systemDefault())
 
@@ -563,7 +557,7 @@ class RRuleEdgeCaseTest {
 
             val occurrences = expander.expand(event, range)
 
-            // Should still be 3, not 4 (duplicate deduplicated)
+            // Still 3: the RDATE on an RRULE day is dropped.
             assertEquals(3, occurrences.size)
         }
 
@@ -575,7 +569,7 @@ class RRuleEdgeCaseTest {
             val rdateZdt = LocalDateTime.of(2024, 1, 10, 10, 0)
                 .atZone(ZoneId.systemDefault())
 
-            // EXDATE for the RDATE
+            // An EXDATE on the RDATE.
             val exdateZdt = LocalDateTime.of(2024, 1, 10, 10, 0)
                 .atZone(ZoneId.systemDefault())
 
@@ -594,10 +588,10 @@ class RRuleEdgeCaseTest {
 
             val occurrences = expander.expand(event, range)
 
-            // 2 from RRULE, RDATE removed by EXDATE = 2
+            // The 2 RRULE occurrences; the EXDATE removes the RDATE.
             assertEquals(2, occurrences.size)
 
-            // Verify Jan 10th is NOT included
+            // Jan 10 is absent.
             val jan10DayCode = "20240110"
             assertFalse(occurrences.any { it.dtStart.toDayCode() == jan10DayCode })
         }
@@ -620,7 +614,7 @@ class RRuleEdgeCaseTest {
                 rrule = RRule(freq = Frequency.DAILY, count = 5)
             )
 
-            // Create override for Jan 3rd with different time
+            // An override moving Jan 3 to 14:00.
             val overrideZdt = LocalDateTime.of(2024, 1, 3, 14, 0)
                 .atZone(ZoneId.systemDefault())
             val recIdZdt = LocalDateTime.of(2024, 1, 3, 10, 0)
@@ -647,7 +641,7 @@ class RRuleEdgeCaseTest {
 
             assertEquals(5, occurrences.size)
 
-            // Find the Jan 3rd occurrence
+            // The Jan 3 occurrence is the override.
             val jan3Occ = occurrences.find { it.dtStart.toDayCode() == "20240103" }
             assertNotNull(jan3Occ)
             assertEquals("Modified Event", jan3Occ?.summary)
@@ -672,7 +666,7 @@ class RRuleEdgeCaseTest {
             assertEquals(3, startZdt.monthValue)
             assertEquals(1, startZdt.dayOfMonth)
 
-            // End should be April 1st (exclusive)
+            // The end is April 1, midnight.
             assertEquals(4, endZdt.monthValue)
             assertEquals(1, endZdt.dayOfMonth)
         }
@@ -741,7 +735,7 @@ class RRuleEdgeCaseTest {
                 rrule = RRule(freq = Frequency.WEEKLY)  // No COUNT, infinite
             )
 
-            // Only expand 1 year at a time to avoid memory issues
+            // The series has no end, so the range bounds it to one year.
             val range = TimeRange(
                 startZdt.toInstant(),
                 startZdt.plusYears(1).toInstant()
@@ -749,7 +743,7 @@ class RRuleEdgeCaseTest {
 
             val occurrences = expander.expand(event, range)
 
-            // ~52 weeks in a year
+            // 52 or 53 weekly occurrences in a year.
             assertTrue(occurrences.size in 52..53)
         }
 
@@ -782,7 +776,6 @@ class RRuleEdgeCaseTest {
 
         @Test
         fun `UTC event expands correctly regardless of local timezone`() {
-            // UTC start time
             val startInstant = Instant.parse("2024-01-01T10:00:00Z")
             val startZdt = ZonedDateTime.ofInstant(startInstant, ZoneId.of("UTC"))
 
@@ -822,7 +815,7 @@ class RRuleEdgeCaseTest {
 
             assertEquals(3, occurrences.size)
 
-            // All occurrences should be at 9:00 in Tokyo
+            // Every occurrence is at 9:00 in Tokyo.
             occurrences.forEach { occ ->
                 val occInTokyo = ZonedDateTime.ofInstant(
                     Instant.ofEpochMilli(occ.dtStart.timestamp),
@@ -834,8 +827,8 @@ class RRuleEdgeCaseTest {
 
         @Test
         fun `Asia Shanghai timezone preserves local time (ical4j issue 720)`() {
-            // ical4j issue #720: Embedded VTIMEZONE for Asia/Shanghai was incorrect
-            // China uses fixed UTC+8 with no DST since 1991
+            // ical4j issue #720 reports ical4j's embedded VTIMEZONE for Asia/Shanghai as wrong.
+            // China has used a fixed UTC+8 with no DST since 1991.
             val shanghaiZone = ZoneId.of("Asia/Shanghai")
             val startZdt = LocalDateTime.of(2024, 6, 15, 10, 30).atZone(shanghaiZone)
 
@@ -854,7 +847,7 @@ class RRuleEdgeCaseTest {
 
             assertEquals(4, occurrences.size)
 
-            // All occurrences should be at 10:30 in Shanghai (fixed UTC+8)
+            // Every occurrence is at 10:30 in Shanghai.
             occurrences.forEach { occ ->
                 val occInShanghai = ZonedDateTime.ofInstant(
                     Instant.ofEpochMilli(occ.dtStart.timestamp),
@@ -867,11 +860,10 @@ class RRuleEdgeCaseTest {
 
         @Test
         fun `Asia Shanghai daily recurrence maintains fixed UTC+8 offset`() {
-            // Verify no DST transitions affect Shanghai timezone
-            // China abolished DST in 1991 - should be fixed UTC+8 year-round
+            // A year of monthly occurrences keeps 8:00 and +08:00, since Shanghai has no DST.
             val shanghaiZone = ZoneId.of("Asia/Shanghai")
 
-            // Start in winter
+            // Starts in winter.
             val winterStart = LocalDateTime.of(2024, 1, 15, 8, 0).atZone(shanghaiZone)
 
             val event = createEvent(
@@ -889,7 +881,6 @@ class RRuleEdgeCaseTest {
 
             assertEquals(12, occurrences.size)
 
-            // All occurrences should be at 8:00 Shanghai time (no DST shifts)
             occurrences.forEach { occ ->
                 val occInShanghai = ZonedDateTime.ofInstant(
                     Instant.ofEpochMilli(occ.dtStart.timestamp),
@@ -898,7 +889,6 @@ class RRuleEdgeCaseTest {
                 assertEquals(8, occInShanghai.hour,
                     "Hour should remain 8 in Shanghai (no DST) for ${occInShanghai.month}")
 
-                // Verify offset is always +08:00
                 assertEquals(ZoneOffset.ofHours(8), occInShanghai.offset,
                     "Shanghai offset should always be +08:00")
             }
@@ -936,7 +926,7 @@ class RRuleEdgeCaseTest {
 
         @Test
         fun `weekly all-day event on specific days`() {
-            // Weekly on Mon, Wed, Fri
+            // Weekly on Mon, Wed and Fri.
             val startZdt = LocalDate.of(2024, 1, 1).atStartOfDay(ZoneId.systemDefault())  // Monday
 
             val event = createEvent(
@@ -962,7 +952,7 @@ class RRuleEdgeCaseTest {
 
             assertEquals(9, occurrences.size)
 
-            // Verify each occurrence is Mon, Wed, or Fri
+            // Each occurrence is a Mon, Wed or Fri.
             occurrences.forEach { occ ->
                 val dow = occ.dtStart.toZonedDateTime().dayOfWeek
                 assertTrue(
@@ -1013,7 +1003,7 @@ class RRuleEdgeCaseTest {
                 rrule = null
             )
 
-            // Range that doesn't include the event
+            // A range that doesn't include the event.
             val range = TimeRange(
                 startZdt.plusDays(5).toInstant(),
                 startZdt.plusDays(10).toInstant()
@@ -1021,9 +1011,8 @@ class RRuleEdgeCaseTest {
 
             val occurrences = expander.expand(event, range)
 
-            // Non-recurring event outside range returns the single event
-            // (filtering is typically done at query level)
-            // The expander returns the event; range filtering happens elsewhere
+            // An event with neither RRULE nor RDATE comes back whatever the range; filtering it
+            // is up to the caller.
             assertEquals(1, occurrences.size)
         }
     }

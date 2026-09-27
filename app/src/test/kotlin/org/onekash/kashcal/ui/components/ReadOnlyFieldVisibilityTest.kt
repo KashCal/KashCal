@@ -5,14 +5,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for [shouldShowReadOnlyOptionalField], the pure predicate deciding
- * whether an optional event field (location, notes) renders on the form.
+ * Tests [shouldShowReadOnlyOptionalField], which decides whether an optional event field
+ * (location, notes) renders on the form.
  *
- * In editable mode the row is always shown so the user can add a value
- * (it carries an "Add …" placeholder). In read-only / attendee-viewer mode
- * an empty field is just dead space with a misleading "Add" affordance, so
- * a blank value hides the row entirely; a present value still shows (as
- * read-only display text).
+ * In editable mode the row always shows, with its placeholder, so the user can add a value.
+ * In read-only mode an empty row would invite an edit the viewer can't make, so a blank or
+ * whitespace-only value hides it; a present value shows as read-only text.
  */
 class ReadOnlyFieldVisibilityTest {
 

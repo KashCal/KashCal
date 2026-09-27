@@ -4,40 +4,48 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 
 /**
- * Shared type scale for all KashCal widgets.
+ * Sets the type scale of the agenda, week, upcoming, month and date widgets; the single source of
+ * truth for widget text sizes. Sizes are in sp, so they follow the system font scale.
  *
- * One source of truth so the agenda, week, upcoming, month, and date widgets
- * render a single consistent scale. Sizes are in sp so they honor the system
- * font-scale accessibility setting.
+ * Every user-facing role is at least the 11sp label floor and body content is 14sp, so text
+ * reads at a glance (#279).
  *
- * The scale lifts every user-facing role to at least the 11sp label floor and
- * sets body content at 14sp, addressing reports that widget text rendered too
- * small to read at a glance (issue #279).
- *
- * Glance's TextStyle supports fontSize/fontWeight but not lineHeight or
- * letterSpacing, so this is a size/weight scale only — weights are applied at
- * each call site (titles Medium, today/selected Bold).
+ * Glance's TextStyle has no lineHeight or letterSpacing, so this is a size scale only; call sites
+ * set the weights (titles Medium, today or selected Bold).
  */
 object WidgetTypography {
 
     /** Widget header title (date range, month/year, widget name). */
     val headerTitle: TextUnit = 16.sp
 
-    /** Primary content — event titles. */
+    /**
+     * Primary content, for example event titles, the week and upcoming day headers, and the agenda
+     * and upcoming empty states.
+     */
     val contentTitle: TextUnit = 14.sp
 
-    /** Month-grid day-of-month numbers and the single-letter day-of-week header above them (one shared size so the header reads as part of the grid). Slightly larger than body content for at-a-glance legibility, sized to stay within the fixed day-cell height while leaving room below for an event-title row. */
+    /**
+     * Month-grid day numbers and the day-of-week letters above them, one size so the letters read
+     * as part of the grid. Sized to fit the fixed day-cell height with room below for an
+     * event-title row.
+     */
     val monthDayNumber: TextUnit = 14.sp
 
-    /** Supporting text — event times, day headers, counts, empty/overflow rows. */
+    /**
+     * Supporting text: event times, empty and overflow rows, Upcoming's footer and the date card's
+     * weekday.
+     */
     val secondary: TextUnit = 12.sp
 
-    /** Smallest label — week-widget day-of-week header, date-widget day name, "today" pill, month-widget week-number gutter. */
+    /**
+     * Smallest label, for example month-grid event titles and week numbers, day-header event
+     * counts, the week widget's "today" tag and the date widget's short day name.
+     */
     val label: TextUnit = 11.sp
 
-    /** Navigation chevrons (month widget prev/next). Sized as touch affordances, not body text. */
+    /** Month widget prev/next chevrons, sized as touch affordances, not body text. */
     val navGlyph: TextUnit = 22.sp
 
-    /** Oversized glanceable number — the date widget's day-of-month. */
+    /** The date widget's oversized day-of-month number. */
     val dateNumber: TextUnit = 24.sp
 }

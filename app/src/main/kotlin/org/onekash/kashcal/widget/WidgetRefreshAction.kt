@@ -22,16 +22,15 @@ import org.onekash.kashcal.sync.session.SyncTrigger
 private const val TAG = "WidgetRefreshAction"
 
 /**
- * The event-driven widgets that carry a header refresh button. Used to route [WidgetRefreshAction]
- * back to the correct widget class so only the tapped widget's session repaints.
- * (Month has its own nav arrows; Date is date-only — neither gets a refresh button.)
+ * Names the widgets with a header refresh button, so [WidgetRefreshAction] repaints only the tapped
+ * widget's session. Month and Date have no refresh button.
  */
 enum class WidgetKind {
     AGENDA,
     WEEK,
     UPCOMING;
 
-    /** The [GlanceAppWidget] instance to repaint for this kind. */
+    /** Returns the [GlanceAppWidget] to repaint for this kind. */
     fun widget(): GlanceAppWidget = when (this) {
         AGENDA -> AgendaWidget()
         WEEK -> WeekWidget()
@@ -40,10 +39,9 @@ enum class WidgetKind {
 }
 
 /**
- * Hilt access to the injected [SyncScheduler] singleton from a widget action, which has no
- * constructor injection. Mirrors the per-widget `*EntryPoint` interfaces used for
- * [WidgetDataRepository]; reaching the scheduler this way (rather than building an explicit
- * PendingIntent) keeps the sync trigger inside the app process and avoids CWE-927.
+ * Gives a widget action, which has no constructor injection, the [SyncScheduler] singleton, the
+ * way each widget's entry point gives it [WidgetDataRepository]. Calling the scheduler keeps the
+ * sync trigger inside the app process with no PendingIntent to misroute (CWE-927).
  */
 @EntryPoint
 @InstallIn(SingletonComponent::class)
@@ -52,26 +50,25 @@ interface WidgetSyncEntryPoint {
 }
 
 /**
- * Header "refresh" tap handler for the agenda, week, and upcoming widgets.
+ * Handles a header refresh tap on the agenda, week and upcoming widgets: sync, then redraw, with a
+ * brief syncing cue.
  *
- * Refresh = sync + redraw with a brief syncing cue:
- * 1. If this widget instance's cue is already active, the tap is ignored — the stored deadline
- *    doubles as a cheap per-instance debounce against mashing one widget.
- *    [SyncScheduler.requestImmediateSync] uses `REPLACE`, so two syncs kicked off close together
- *    (e.g. tapping two different placed widgets) still cancel-and-restart; that is the scheduler's
- *    existing behavior, not something this debounce prevents. It is bounded — a restarted sync
- *    loses no data — and the common single-widget mash case is fully covered.
- * 2. Otherwise write [WIDGET_REFRESHING_UNTIL] and repaint immediately so the glyph dims (the cue).
- * 3. Kick off an immediate CalDAV sync.
- * 4. After the cue window, re-fetch local data ([bumpRefreshStamp]) and repaint so the glyph
- *    settles back to idle. Fresh *server* data lands later via the existing sync-completion path
- *    ([WidgetUpdateManager.updateAllWidgets], gated on changes).
+ * 1. If this widget instance's cue is still active, ignore the tap; the stored deadline is a
+ *    per-instance debounce. Taps on two different widgets still both sync, and since
+ *    [SyncScheduler.requestImmediateSync] uses `REPLACE` the second cancels and restarts the
+ *    first, which loses no data.
+ * 2. Write [WIDGET_REFRESHING_UNTIL] and repaint, so the glyph dims.
+ * 3. Request an immediate sync.
+ * 4. After the cue window, bump the stamp ([bumpRefreshStamp]) and repaint, so the widget
+ *    re-reads local data and the glyph settles to idle. Server data arrives later through the
+ *    sync worker's [WidgetUpdateManager.updateAllWidgets], called only when the sync changed
+ *    something.
  *
- * The cue is stored as a self-expiring deadline: a failed/throttled sync or a killed coroutine
- * cannot leave the glyph *logically* stuck dim, because any recomposition past the deadline reads
- * it as idle. If the coroutine is killed before the settle repaint runs, the glyph may stay
- * visually dim until the next recomposition (sync-completion, data change, midnight, or the 30-min
- * periodic update) — bounded, and always resolves to idle without further taps.
+ * The cue is a self-expiring deadline, so a failed sync or a killed coroutine can't leave it
+ * logically on: any recomposition past the deadline reads it as idle. If the coroutine dies
+ * before the settle repaint, the glyph can stay visibly dim until the next recomposition, for
+ * example after a sync with changes, a data or settings change, midnight, or the 30-minute
+ * update; it settles to idle then without another tap.
  */
 class WidgetRefreshAction : ActionCallback {
 
@@ -84,10 +81,9 @@ class WidgetRefreshAction : ActionCallback {
         val widget = kind.widget()
 
         val now = System.currentTimeMillis()
-        // Debounce: a tap while the cue is still showing means a sync is already in flight.
-        // Checked BEFORE the try so a debounced tap returns without running the settle `finally` —
-        // otherwise it would prematurely clear the first tap's in-flight cue and force a redundant
-        // re-fetch. REPLACE-based requestImmediateSync makes mashing cancel-and-restart the sync.
+        // A tap while the cue shows means a sync is already in flight. Checked before the try so
+        // a debounced tap skips the settle `finally`, which would clear the first tap's cue early
+        // and re-fetch for nothing.
         val currentUntil = getRefreshingUntil(context, glanceId)
         if (isRefreshCueActive(currentUntil, now)) {
             Log.d(TAG, "Refresh already in flight for $kind; ignoring tap")
@@ -110,8 +106,8 @@ class WidgetRefreshAction : ActionCallback {
         } catch (e: Exception) {
             Log.e(TAG, "Refresh action failed for $kind", e)
         } finally {
-            // Settle the glyph back to idle and re-fetch local data, regardless of how the sync went.
-            // Clearing the deadline here is best-effort; the render-time self-expiry is the guarantee.
+            // Settle to idle and re-fetch local data however the sync went. Clearing the deadline
+            // is best-effort; the render-time expiry is the guarantee.
             try {
                 clearRefreshing(context, glanceId)
                 bumpRefreshStamp(context, widget.javaClass)
@@ -141,7 +137,7 @@ class WidgetRefreshAction : ActionCallback {
     }
 
     companion object {
-        /** ActionParameter carrying the [WidgetKind] name so the handler knows which widget to repaint. */
+        /** Carries the [WidgetKind] name, which picks the widget to repaint. */
         val KIND = ActionParameters.Key<String>("widget_refresh_kind")
     }
 }

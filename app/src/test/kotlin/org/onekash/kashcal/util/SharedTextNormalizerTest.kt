@@ -77,13 +77,13 @@ class SharedTextNormalizerTest {
 
         assertTrue(result is NormalizedShareText.Long)
         result as NormalizedShareText.Long
-        // Title is first non-blank line truncated at 80 chars
+        // The title is the first non-blank line, capped at 80 chars.
         assertTrue(
             "title should start with first line, was: ${result.title}",
             firstLine.startsWith(result.title) || result.title == firstLine
         )
         assertTrue("title <= 80 chars, was ${result.title.length}", result.title.length <= 80)
-        // Description is the entire original text with newlines preserved
+        // The description is the whole original text, newlines kept.
         assertEquals(input, result.description)
     }
 
@@ -116,12 +116,13 @@ class SharedTextNormalizerTest {
 
     @Test
     fun `length triage uses post-newline-strip length`() {
-        // 250-char line repeated twice with newline = 501 raw chars but 500 once joined.
-        // This codifies the rule: the cap is on logical length the parser will see.
+        // The 500-char limit applies to the text with newlines turned into spaces. Two
+        // 250-char lines are 501 chars both raw and joined, so this input doesn't tell the
+        // two lengths apart.
         val line = "a".repeat(250)
         val input = "$line\n$line"
         val result = SharedTextNormalizer.normalize(input)
-        // After newline-strip the joined string is 501 chars (250 + space + 250). Long.
+        // Joined: 250 + space + 250 = 501 chars, so Long.
         assertTrue(result is NormalizedShareText.Long)
     }
 
@@ -196,7 +197,7 @@ class SharedTextNormalizerTest {
         assertTrue(result is NormalizedShareText.Short)
         result as NormalizedShareText.Short
         assertEquals("https://first.com", result.location)
-        // Second URL stays in text — keeps the contract simple (only one location field).
+        // The second URL stays in the text; there is one location field.
         assertTrue(result.text.contains("https://second.com"))
     }
 
@@ -211,8 +212,8 @@ class SharedTextNormalizerTest {
         val result = SharedTextNormalizer.normalize("   \n\t  ")
         assertTrue(result is NormalizedShareText.Short)
         result as NormalizedShareText.Short
-        // Caller (ShareTextIntentParser) is responsible for dropping blank shares.
-        // Here we just ensure no crash and that the text is whitespace or empty.
+        // ShareTextIntentParser drops blank shares before normalizing; this asserts only no
+        // crash, a blank text and no location.
         assertTrue(result.text.isBlank())
         assertNull(result.location)
     }

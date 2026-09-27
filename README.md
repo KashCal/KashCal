@@ -20,7 +20,7 @@
 
 **APK Signing Certificate (SHA-256):**
 `B0:47:6C:12:88:28:BE:04:7B:64:FE:43:F7:9B:1D:5F:2C:34:60:B0:72:6F:B3:99:33:B1:16:20:D8:95:46:22`
-<br>This certificate applies to GitHub Release, IzzyOnDroid, and Obtainium APKs. Verify those with [AppVerifier](https://github.com/soupslurpr/AppVerifier) or Obtainium. F-Droid builds use F-Droid's own signing key, and Google Play builds use Google Play's app signing key, so their certificates differ.
+<br>This certificate signs the GitHub Release, IzzyOnDroid, and Obtainium APKs. Verify them with [AppVerifier](https://github.com/soupslurpr/AppVerifier) or Obtainium. F-Droid builds carry F-Droid's own signing key and Google Play builds carry Google Play's app signing key, so their certificates differ.
 
 ---
 
@@ -55,23 +55,23 @@ Family stuff on iCloud. Holidays from some website. Birthdays buried in your con
 
 ## Your schedule, together
 
-- **iCloud**: Switched to Android but your family is still on Apple? Sync with iCloud calendars directly. No workaround needed.
-- **CalDAV**: Nextcloud, Radicale, Baïkal, Stalwart, Purelymail, FastMail, Zoho, SOGo, and more. Native sync, no middleware.
+- **iCloud**: Switched to Android but your family is still on Apple? Sync with iCloud calendars directly.
+- **CalDAV**: Nextcloud, Radicale, Baïkal, Stalwart, Purelymail, Fastmail, Zoho, SOGo, and more. Native sync, no middleware.
 - **Device calendar**: See and edit events from your phone's built-in calendar alongside everything else.
 - **Holidays & schedules**: Subscribe to any ICS calendar. Holidays, school schedules, sports seasons.
 - **Contacts**: Two-way CardDAV contact sync, including photos.
-- **Birthdays**: Pulls from your contacts automatically.
+- **Birthdays and anniversaries**: Turn them on and KashCal builds calendars from your contacts.
 - **Local**: Don't need sync? Works fully offline out of the box.
 
 Material You with dynamic theming. Home screen widgets. Full-text search across all events. Per-event timezone for travel.
 
 ## Private by default
 
-No analytics, no tracking, no KashCal account required. Data is stored locally unless you explicitly set up sync.
+No analytics, no tracking, no KashCal account required. Your data stays on the phone unless you set up sync.
 
 - **Fort Knox Mode**: other apps have no access to your events
 - **Encrypted credentials** via Android Keystore (AES-256-GCM)
-- **HTTPS only**: cleartext traffic blocked
+- **HTTPS by default**: an account uses plain http only if you enter an http:// address, and an https account never falls back to http
 - **No WebViews**: native UI only
 - **Minimal permissions**: only what's necessary
 - **Fully auditable**: open source codebase
@@ -88,9 +88,9 @@ Community-made add-ons that enhance KashCal features.
 
 | Add-on | Description | Author |
 |--------|-------------|--------|
-| [long-reminder-sounds](https://github.com/SchrodingersCpp/long-reminder-sounds) | Notification sound files that keep alerting at intervals until you dismiss. Effectively enables repeat-until-dismissed reminders ([#178](https://github.com/KashCal/KashCal/issues/178)) | [@SchrodingersCpp](https://github.com/SchrodingersCpp) |
+| [long-reminder-sounds](https://github.com/SchrodingersCpp/long-reminder-sounds) | Notification sound files that keep alerting at intervals until you dismiss them, which gives repeat-until-dismissed reminders ([#178](https://github.com/KashCal/KashCal/issues/178)) | [@SchrodingersCpp](https://github.com/SchrodingersCpp) |
 
-Built something that pairs with KashCal? [Open an issue](https://github.com/KashCal/KashCal/issues) and we'll add it here.
+Built something that pairs with KashCal? [Open an issue](https://github.com/KashCal/KashCal/issues) to have it listed here.
 
 ## Tested CalDAV Providers
 
@@ -104,7 +104,7 @@ Built something that pairs with KashCal? [Open an issue](https://github.com/Kash
 | mailbox.org | ✓ | [@h1nnak](https://github.com/h1nnak) |
 | Infomaniak | ✓ | [@dirko-madrileno](https://github.com/dirko-madrileno) |
 | Stalwart | ✓ | [@OneCreek](https://github.com/OneCreek) |
-| FastMail | ✓ | [@mittensicle](https://github.com/mittensicle) |
+| Fastmail | ✓ | [@mittensicle](https://github.com/mittensicle) |
 | [Davis](https://github.com/tchapi/davis) | ✓ | [@Ivan-Roger](https://github.com/Ivan-Roger) |
 | [Purelymail](https://purelymail.com/) | ✓ | [@babyhuehnchen](https://github.com/babyhuehnchen) |
 | [Posteo](https://posteo.de/) | ✓ | [@4nndee](https://github.com/4nndee) |
@@ -115,7 +115,7 @@ Found a CalDAV server that doesn't work? [Let us know](https://github.com/KashCa
 
 ## Device Calendar
 
-KashCal reads and edits your phone's built-in system calendar, so any app that syncs there works too. Google Calendar, Outlook (with Android calendar sync on), an end-to-end-encrypted service like [SilentSuite](https://github.com/silent-suite/silentsuite): their events show up in KashCal, and you can create, edit, and delete them. KashCal writes to the device calendar, and each app syncs its own changes back to its server.
+KashCal reads and edits your phone's built-in system calendar, so any app that syncs there works too: Google Calendar, Outlook (with Android calendar sync on), or an end-to-end-encrypted service like [SilentSuite](https://github.com/silent-suite/silentsuite). Their events show up in KashCal, and you can create, edit, and delete them. KashCal writes to the device calendar, and each app syncs the changes back to its own server.
 
 SilentSuite two-way sync was tested by [@silent-suite](https://github.com/silent-suite). Using another app that syncs to your device calendar? [Let us know](https://github.com/KashCal/KashCal/issues)!
 
@@ -129,7 +129,7 @@ SilentSuite two-way sync was tested by [@silent-suite](https://github.com/silent
 | Category | Technology |
 |----------|------------|
 | CalDAV/ICS | `icaldav-core` (in-tree, wraps ical4j 4.3.0) |
-| CardDAV/contacts | `vcard-core` (in-tree, wraps ez-vcard) |
+| CardDAV/contacts | `vcard-core` (in-tree, wraps ez-vcard 0.12.2) |
 | UI | Jetpack Compose, Material 3 |
 | Widgets | Jetpack Glance |
 | Database | Room + FTS4 full-text search |

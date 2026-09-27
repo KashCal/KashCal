@@ -48,17 +48,16 @@ import org.onekash.kashcal.sync.session.SyncTrigger
 import org.onekash.kashcal.sync.session.SyncType
 
 /**
- * Tests for PullStrategy - CalDAV server to local database sync.
+ * Tests [PullStrategy], which pulls CalDAV server changes into Room, over a mocked client and
+ * mocked DAOs.
  */
 class PullStrategyTest {
 
     companion object {
-        // Fixed event timestamp for createEvent(). Using a constant (rather than
-        // System.currentTimeMillis() evaluated three separate times) keeps the
-        // helper deterministic: two createEvent() calls produce byte-identical
-        // start/end/dtstamp, so content-equality tests can't flake on a clock
-        // tick between the calls. 2025-06-01T12:00:00Z, well inside any sync
-        // window. Tests that care about a specific time still .copy() their own.
+        // Start, end and dtstamp base for createEvent(). A constant keeps two createEvent()
+        // calls identical, so content-equality tests can't flake on a clock tick between
+        // them. 2025-06-01T12:00:00Z, inside any sync window. Tests that need a specific
+        // time .copy() their own.
         private const val FIXED_START_TS = 1_748_779_200_000L
     }
 
@@ -91,7 +90,7 @@ class PullStrategyTest {
     fun setup() {
         MockKAnnotations.init(this, relaxed = true)
 
-        // Mock database.runInTransaction to execute the block directly
+        // runInTransaction runs the block directly.
         coEvery {
             database.runInTransaction(any<suspend () -> Any>())
         } coAnswers {
@@ -107,12 +106,12 @@ class PullStrategyTest {
         // Race condition tests override this to simulate concurrent edits.
         coEvery { eventsDao.getSyncStatus(any()) } returns SyncStatus.SYNCED
 
-        // Default: "All" lookback routes to existing getEtagsByCalendarId() (unfiltered)
-        // in pullWithEtagComparison(). Only relevant for token-expiry fallback path.
+        // Default: an "All" lookback, so pullFull lists from startMs = 0 and
+        // pullWithEtagComparison() reads the unfiltered getEtagsByCalendarId().
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
-        // Default: PROPFIND Depth:1 not supported — forces fallback to calendar-query.
-        // This preserves existing test behavior. Tests for PROPFIND path override this.
+        // Default: PROPFIND Depth:1 fails, so the full pull falls back to calendar-query.
+        // Tests of the PROPFIND path override this.
         coEvery { client.fetchAllEtags(any()) } returns CalDavResult.error(501, "Not supported")
 
         pullStrategy = PullStrategy(
@@ -234,12 +233,11 @@ class PullStrategyTest {
 
     @Test
     fun `incremental sync deletes event when server re-encodes at-sign in deletion href`() = runTest {
-        // Regression for issue #333: KashCal stores caldav_url with a literal '@'
-        // (its UID contains "@kashcal.onekash.org"). Radicale echoes the deleted href
-        // with the '@' percent-encoded as %40. Exact string match then fails and the
-        // deletion is silently skipped. The stub below mimics real exact-match DB
-        // behavior: it returns the row ONLY for the stored literal-'@' url, null for
-        // the %40 form the server reports.
+        // #333: the stored caldav_url has a literal '@' (the UID contains
+        // "@kashcal.onekash.org"), and Radicale echoes the deleted href with the '@'
+        // percent-encoded as %40. An exact string match misses the row and the deletion is
+        // silently skipped. The stubs mimic the DB's exact match: the row only for the
+        // stored literal-'@' url, null for the %40 form the server reports.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
         val storedUrl = "https://caldav.example.com/calendars/home/uuid@kashcal.onekash.org.ics"
         val deletedHref = "/calendars/home/uuid%40kashcal.onekash.org.ics"
@@ -298,7 +296,7 @@ class PullStrategyTest {
     // ========== Deletion resolution is calendar-scoped ==========
     //
     // caldav_url is indexed non-uniquely because rows legitimately share it: a
-    // recurring master and its overrides ride in the same server resource. After
+    // recurring master and its exceptions ride in the same server resource. After
     // an event is moved out of a CalDAV calendar, its exception rows keep the
     // source resource URL while living in another calendar, so a global URL
     // lookup lets one calendar's deletion report reap another calendar's rows.
@@ -356,9 +354,9 @@ class PullStrategyTest {
 
     @Test
     fun `an out-of-calendar url match does not mask an in-calendar match`() = runTest {
-        // Master and override share one resource URL, so the global exact-match
-        // query can return either row. Scoping must not degrade into "no match":
-        // the in-calendar row is still the one that gets deleted.
+        // Rows in two calendars share one resource URL, so the global exact-match query
+        // can return either. Scoping must not degrade into "no match": the in-calendar
+        // row is still the one that gets deleted.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
         val deletedHref = "/calendars/home/shared.ics"
         val deletedUrl = "https://caldav.example.com$deletedHref"
@@ -374,7 +372,7 @@ class PullStrategyTest {
             ))
         // Exact-match query happens to return the out-of-calendar row.
         coEvery { eventsDao.getByCaldavUrl(any()) } returns outOfCalendarRow
-        // The calendar-scoped candidate set holds the row that really belongs here.
+        // The calendar-scoped candidate set holds the row that belongs here.
         coEvery { eventsDao.getEventsWithCaldavUrl(calendar.id) } returns listOf(inCalendarRow)
 
         val result = pullStrategy.pull(calendar, client = client)
@@ -387,10 +385,10 @@ class PullStrategyTest {
 
     @Test
     fun `deleted resource resolves to the master, not one of its overrides`() = runTest {
-        // A master and its modified occurrences share one server resource, so several
-        // in-calendar rows carry the same URL. Removing the master cascades to its
-        // overrides; resolving to an override instead would drop one occurrence and
-        // leave the master pointing at a resource the server no longer has.
+        // A master and its exceptions share one server resource, so several in-calendar
+        // rows carry the same URL. Removing the master cascades to its exceptions;
+        // resolving to an exception instead would drop one occurrence and leave the
+        // master pointing at a resource the server no longer has.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
         val deletedHref = "/calendars/home/series.ics"
         val deletedUrl = "https://caldav.example.com$deletedHref"
@@ -404,9 +402,10 @@ class PullStrategyTest {
                 changed = emptyList(),
                 deleted = listOf(deletedHref)
             ))
-        // The global exact-match query happens to hand back the override.
+        // The global exact-match query happens to hand back the exception.
         coEvery { eventsDao.getByCaldavUrl(any()) } returns override
-        // Candidate order puts the override first, so a last-wins map would pick it.
+        // Candidate order puts the exception first, so an unsorted last-wins map would
+        // pick it.
         coEvery { eventsDao.getEventsWithCaldavUrl(calendar.id) } returns listOf(override, master)
 
         val result = pullStrategy.pull(calendar, client = client)
@@ -418,9 +417,9 @@ class PullStrategyTest {
 
     @Test
     fun `changed href does not adopt a row that lives in another calendar`() = runTest {
-        // The UID lookup is already calendar-scoped; its URL fallback was not, so a
-        // changed resource could overwrite a moved row in place and drag it back
-        // into the pulled calendar.
+        // The UID lookup is calendar-scoped, and the URL fallback must be too: otherwise a
+        // changed resource overwrites a moved row in place and drags it back into the
+        // pulled calendar.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
         val changedHref = "/calendars/home/event.ics"
         val changedUrl = "${calendar.caldavUrl}event.ics"
@@ -493,9 +492,9 @@ class PullStrategyTest {
 
     @Test
     fun `incremental sync dedupes duplicate hrefs from sync-collection`() = runTest {
-        // Regression test: iCloud can return duplicate hrefs in sync-collection response
-        // Without deduplication, hrefsReported != eventsFetched even when all events are fetched,
-        // causing confusing "Missing: N" in Sync History when nothing is actually missing
+        // iCloud can return duplicate hrefs in a sync-collection reply. Without
+        // deduplication hrefsReported exceeds eventsFetched when every event arrived, and
+        // Sync History shows a false "Missing: N".
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
         val href1 = "/calendars/home/event1.ics"
         val href2 = "/calendars/home/event2.ics"
@@ -513,7 +512,7 @@ class PullStrategyTest {
                 deleted = emptyList()
             ))
 
-        // Server returns unique events (deduped request should only have 2 unique hrefs)
+        // The server returns each event once; the deduped request has 2 hrefs.
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
             CalDavResult.success(listOf(
                 CalDavEvent(
@@ -534,15 +533,15 @@ class PullStrategyTest {
 
         val result = pullStrategy.pull(calendar, client = client)
 
-        // Verify: Both events added successfully
+        // Both events are added
         assertTrue(result is PullResult.Success)
         val success = result as PullResult.Success
         assertEquals(2, success.eventsAdded)
 
-        // Verify: Token should advance (no actual missing events)
+        // The token advances: no event is missing
         assertEquals("sync-token-456", success.newSyncToken)
 
-        // Verify: fetchEventsByHref should be called with deduped list (2 unique hrefs, not 3)
+        // fetchEventsByHref gets the deduped list: 2 hrefs, not 3
         coVerify { client.fetchEventsByHref(calendar.caldavUrl, match { it.size == 2 }) }
     }
 
@@ -582,10 +581,10 @@ class PullStrategyTest {
 
     @Test
     fun `full sync does not delete event when server encodes at-sign differently`() = runTest {
-        // Regression for issue #333 (full-sync stale-deletion path): the local row
-        // stores a literal-'@' url; the server (Radicale) reports the SAME resource
-        // with the '@' percent-encoded as %40. Before the fix, the raw '!in serverUrls'
-        // membership test was true, so the still-present event was deleted (data loss).
+        // #333 on the full-sync stale-deletion path: the local row stores a literal-'@'
+        // url; the server (Radicale) reports the same resource with the '@'
+        // percent-encoded as %40. A raw '!in serverUrls' membership test reads the
+        // still-present event as gone and deletes it.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val storedUrl = "https://caldav.example.com/calendars/home/uuid@kashcal.onekash.org.ics"
         val serverHref = "/calendars/home/uuid%40kashcal.onekash.org.ics"
@@ -673,11 +672,11 @@ class PullStrategyTest {
         assertEquals(1, result.eventsUpdated)
     }
 
-    // ========== Two-Step Fetch Tests (pullFull refactor) ==========
+    // ========== Two-Step Fetch Tests (pullFull) ==========
 
     @Test
     fun `pullFull uses two-step fetch - etags then multiget`() = runTest {
-        // Verifies the core two-step flow: fetchEtagsInRange → fetchEventsByHref
+        // The two-step flow: fetchEtagsInRange, then fetchEventsByHref
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event.ics"
 
@@ -700,7 +699,7 @@ class PullStrategyTest {
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
-        // Verify two-step: etags fetched first, then multiget
+        // Etags are fetched first, then the multiget
         coVerify(ordering = Ordering.ORDERED) {
             client.fetchEtagsInRange(calendar.caldavUrl, any(), any())
             client.fetchEventsByHref(calendar.caldavUrl, any())
@@ -709,7 +708,7 @@ class PullStrategyTest {
 
     @Test
     fun `pullFull skips multiget when server has no events`() = runTest {
-        // Empty etag list → skip multiget entirely
+        // An empty etag list skips the multiget
         val calendar = createCalendar(ctag = null, syncToken = null)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
@@ -722,7 +721,7 @@ class PullStrategyTest {
 
         assertTrue(result is PullResult.Success)
         assertEquals(0, (result as PullResult.Success).eventsAdded)
-        // Multiget should NOT be called when there are no hrefs
+        // No multiget without hrefs
         coVerify(exactly = 0) { client.fetchEventsByHref(any(), any()) }
     }
 
@@ -739,14 +738,14 @@ class PullStrategyTest {
         assertTrue(result is PullResult.Error)
         assertEquals(503, (result as PullResult.Error).code)
         assertTrue(result.isRetryable)
-        // Multiget should NOT be attempted after etag error
+        // No multiget after an etag error
         coVerify(exactly = 0) { client.fetchEventsByHref(any(), any()) }
     }
 
     @Test
     fun `pullFull deletion detection converts hrefs to full URLs`() = runTest {
-        // Verifies that deletion detection uses quirks.buildEventUrl() to convert
-        // hrefs from etag response to full URLs matching event.caldavUrl in the DB.
+        // Deletion detection converts the etag listing's hrefs to full URLs with
+        // quirks.buildEventUrl() before comparing them with event.caldavUrl.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventHref = "/calendars/home/event.ics"
         val eventUrl = "https://caldav.example.com$eventHref"
@@ -756,7 +755,7 @@ class PullStrategyTest {
         )
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
-        // Server has one event (href format) — orphan event is NOT on server
+        // The server lists one event by href; the orphan isn't on the server
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(eventHref, "etag-1")))
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
@@ -772,7 +771,7 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Orphan should be deleted (its URL wasn't in server etag list)
+        // The orphan is deleted: its URL isn't in the server's etag listing
         assertEquals(1, (result as PullResult.Success).eventsDeleted)
         coVerify { eventsDao.deleteById(orphanEvent.id) }
     }
@@ -792,7 +791,7 @@ class PullStrategyTest {
             CalDavResult.success(listOf(
                 CalDavEvent("event.ics", eventUrl, "etag-1",
                     createSimpleIcal("uid-1", "Event 1"))
-                // event2 "failed" to fetch — only 1 of 2 returned
+                // event2 fails to fetch: 1 of 2 returned
             ))
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
@@ -816,14 +815,14 @@ class PullStrategyTest {
 
     @Test
     fun `pullFull multiget batch error falls back to individual fetches`() = runTest {
-        // A3: When batched multiget fails, fall back to individual fetches per href.
-        // If individual fetches also fail, events are skipped (not the entire sync).
+        // A failed batched multiget falls back to one fetch per href. When those fail
+        // too, the events are skipped, not the whole sync.
         val calendar = createCalendar(ctag = null, syncToken = null)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair("event.ics", "etag-1")))
-        // All fetches fail (batch and individual)
+        // Every fetch fails, batched and single
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
             CalDavResult.error(500, "Server error", isRetryable = true)
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
@@ -831,7 +830,7 @@ class PullStrategyTest {
 
         val result = pullStrategy.pull(calendar, client = client)
 
-        // A3: Sync completes (with 0 events) instead of returning Error
+        // The sync completes with 0 events instead of returning Error
         assertTrue("Expected Success but got $result", result is PullResult.Success)
         assertEquals(0, (result as PullResult.Success).eventsAdded)
         // Called twice: batch multiget (fails) + individual fallback (also fails)
@@ -865,15 +864,15 @@ class PullStrategyTest {
 
         val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
 
-        // Should NOT return NoChanges
+        // Not NoChanges
         assertTrue(result is PullResult.Success)
     }
 
     @Test
     fun `forceFullSync skips deletion of local events not on server`() = runTest {
-        // Issue #87 Bug 1: Force full sync should NOT delete local events missing from
-        // server response. The server's time-range REPORT may not return all events
-        // (server truncation, RRULE expansion bugs, URL mismatches).
+        // #87: a forced full sync doesn't delete local events missing from the server's
+        // reply. The time-range REPORT may not return every event (server truncation,
+        // RRULE expansion bugs, URL mismatches).
         val calendar = createCalendar(ctag = "old-ctag", syncToken = null)
         val localEvent = createEvent(
             id = 42L,
@@ -881,7 +880,7 @@ class PullStrategyTest {
         )
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
-        // Server returns empty — event not in response (but still exists on server)
+        // The reply is empty: the event is missing from it but still on the server
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(localEvent)
@@ -890,15 +889,15 @@ class PullStrategyTest {
 
         assertTrue(result is PullResult.Success)
         assertEquals(0, (result as PullResult.Success).eventsDeleted)
-        // Event should NOT have been deleted
+        // The event isn't deleted
         coVerify(exactly = 0) { eventsDao.deleteById(42L) }
     }
 
     @Test
     fun `token expiry fallback to pullFull still deletes stale events`() = runTest {
-        // pullIncremental() line 253 calls pullFull() as a fallback when sync token expires
-        // AND etag comparison returns null. This path should NOT skip deletion (forceFullSync
-        // defaults to false) — only user-initiated force full sync skips deletion.
+        // pullIncremental() falls back to pullFull() when the sync-token is rejected and
+        // the etag comparison returns null. That call doesn't pass forceFullSync, so it
+        // deletes stale events; only a forced full sync skips deletion.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
         val orphanEvent = createEvent(
             id = 99L,
@@ -906,10 +905,10 @@ class PullStrategyTest {
         )
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
-        // Sync token expired → 403
+        // The sync-token is rejected with 403
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
-        // Etag fallback: no local etags → returns null → falls through to pullFull
+        // Etag fallback: no local etags, so it returns null and pullFull runs
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns emptyList()
         // pullFull: server returns empty
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
@@ -920,7 +919,7 @@ class PullStrategyTest {
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsDeleted)
-        // Event SHOULD be deleted in the normal fallback path
+        // The fallback path deletes the event
         coVerify { eventsDao.deleteById(99L) }
     }
 
@@ -954,7 +953,8 @@ class PullStrategyTest {
 
     @Test
     fun `pull returns error with network error`() = runTest {
-        // Network error on ctag falls through (not auth/permission), then sync also fails
+        // A network error on the ctag probe isn't 401/403, so the pull continues; the listing
+        // then fails too
         val calendar = createCalendar(syncToken = null)
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.networkError("Connection timeout")
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
@@ -970,7 +970,7 @@ class PullStrategyTest {
     @Test
     fun `pull exception with null message uses class name not Unknown error`() = runTest {
         val calendar = createCalendar(syncToken = null)
-        // NullPointerException() has null message
+        // NullPointerException() has a null message
         coEvery { client.getCtag(calendar.caldavUrl) } throws NullPointerException()
 
         val result = pullStrategy.pull(calendar, client = client)
@@ -1095,9 +1095,9 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Should have added both master and exception
+        // Both master and exception are added
         assertEquals(2, (result as PullResult.Success).eventsAdded)
-        // Exception events use linkException to normalize to Model B (prevents duplicates)
+        // The exception is linked to the master's occurrence (Model B), so it doesn't show twice
         coVerify { occurrenceGenerator.generateOccurrences(any(), any(), any()) }
         coVerify { occurrenceGenerator.linkException(any<Long>(), any<Long>(), any<Event>()) }
     }
@@ -1138,7 +1138,7 @@ class PullStrategyTest {
         coVerify(exactly = 0) { calendarRepository.updateSyncToken(any(), any(), any()) }
     }
 
-    // ========== LOCAL-FIRST: Pending Changes Protection Tests ==========
+    // ========== Local-First: Pending Changes Protection Tests ==========
 
     @Test
     fun `pull does not overwrite event with PENDING_CREATE status`() = runTest {
@@ -1167,10 +1167,10 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Should NOT have updated because event has pending local changes
+        // Not updated: the event has pending local changes
         assertEquals(0, (result as PullResult.Success).eventsUpdated)
         assertEquals(0, result.eventsAdded)
-        // eventsDao.upsert should NOT have been called for this event
+        // No upsert for this event
         coVerify(exactly = 0) { eventsDao.upsert(match { it.caldavUrl == eventUrl }) }
     }
 
@@ -1201,7 +1201,7 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Event with PENDING_UPDATE should be skipped
+        // The PENDING_UPDATE event is skipped
         assertEquals(0, (result as PullResult.Success).eventsUpdated)
         coVerify(exactly = 0) { eventsDao.upsert(match { it.caldavUrl == eventUrl }) }
     }
@@ -1216,14 +1216,14 @@ class PullStrategyTest {
         ).copy(syncStatus = SyncStatus.PENDING_DELETE)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
-        mockTwoStepFetch(calendar.caldavUrl, emptyList()) // Server doesn't have this event
+        mockTwoStepFetch(calendar.caldavUrl, emptyList()) // the server doesn't have this event
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(pendingDeleteEvent)
 
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Should NOT delete events with pending local changes
+        // Events with pending local changes aren't deleted
         assertEquals(0, (result as PullResult.Success).eventsDeleted)
         coVerify(exactly = 0) { eventsDao.deleteById(pendingDeleteEvent.id) }
     }
@@ -1244,14 +1244,14 @@ class PullStrategyTest {
             CalDavResult.success(SyncReport(
                 syncToken = "sync-token-456",
                 changed = emptyList(),
-                deleted = listOf(deletedHref) // Server says this was deleted
+                deleted = listOf(deletedHref) // the server reports it deleted
             ))
         coEvery { eventsDao.getByCaldavUrl(any()) } returns pendingEvent
 
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Should NOT delete because event has pending local changes
+        // Not deleted: the event has pending local changes
         assertEquals(0, (result as PullResult.Success).eventsDeleted)
         coVerify(exactly = 0) { eventsDao.deleteById(pendingEvent.id) }
     }
@@ -1264,7 +1264,7 @@ class PullStrategyTest {
             .copy(rrule = "FREQ=WEEKLY")
         val existingException = createEvent(
             id = 501L,
-            caldavUrl = null, // Exception events may not have caldavUrl
+            caldavUrl = null, // an exception may have no caldavUrl
             title = "Local Modified Exception"
         ).copy(
             syncStatus = SyncStatus.PENDING_UPDATE,
@@ -1314,8 +1314,7 @@ class PullStrategyTest {
 
         pullStrategy.pull(calendar, client = client)
 
-        // Exception event with PENDING_UPDATE should NOT have been upserted
-        // Only the master event should be upserted
+        // The PENDING_UPDATE exception isn't upserted; only the master is
         coVerify(exactly = 0) {
             eventsDao.upsert(match {
                 it.originalEventId != null && it.syncStatus == SyncStatus.PENDING_UPDATE
@@ -1323,12 +1322,12 @@ class PullStrategyTest {
         }
     }
 
-    // ========== Etag Comparison Tests (Prevents stale data overwrite after push) ==========
+    // ========== Etag Comparison Tests (no stale overwrite after a push) ==========
 
     @Test
     fun `pull skips event when etag unchanged - prevents stale data overwrite`() = runTest {
-        // This test verifies the fix for iCloud eventual consistency issue:
-        // After push, pull may return stale data with same etag. We skip upsert to prevent overwrite.
+        // iCloud is eventually consistent: after a push, a pull may return stale data with
+        // the same etag. An unchanged etag skips the upsert, so the local edit stays.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event.ics"
         val existingEvent = createEvent(
@@ -1336,8 +1335,8 @@ class PullStrategyTest {
             caldavUrl = eventUrl,
             title = "Local Title with Updated Reminder"
         ).copy(
-            etag = "etag-123",  // Same etag as server
-            reminders = listOf("-PT30M")  // User just changed reminder to 30 mins
+            etag = "etag-123",  // same etag as the server
+            reminders = listOf("-PT30M")  // the user changed the reminder to 30 minutes
         )
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
@@ -1345,7 +1344,7 @@ class PullStrategyTest {
             CalDavEvent(
                 href = "event.ics",
                 url = eventUrl,
-                etag = "etag-123",  // Same etag - server may have stale 15 min reminder
+                etag = "etag-123",  // same etag; the server copy may be stale
                 icalData = createSimpleIcal("uid-1", "Title")
             )
         )
@@ -1357,7 +1356,7 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Event should be skipped because etag matches - no upsert called
+        // The etag matches, so the event is skipped without an upsert
         assertEquals(0, (result as PullResult.Success).eventsUpdated)
         assertEquals(0, result.eventsAdded)
         coVerify(exactly = 0) { eventsDao.upsert(match { it.caldavUrl == eventUrl }) }
@@ -1365,7 +1364,7 @@ class PullStrategyTest {
 
     @Test
     fun `pull updates event when etag differs - server has newer data`() = runTest {
-        // When etag differs, server has genuinely new data - should update
+        // A different etag means the server has new data, so the event is updated
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event.ics"
         val existingEvent = createEvent(
@@ -1379,7 +1378,7 @@ class PullStrategyTest {
             CalDavEvent(
                 href = "event.ics",
                 url = eventUrl,
-                etag = "new-etag",  // Different etag - server has new data
+                etag = "new-etag",  // different etag: the server has new data
                 icalData = createSimpleIcal("uid-1", "Updated Title")
             )
         )
@@ -1392,14 +1391,14 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Event should be updated because etag differs
+        // Updated: the etag differs
         assertEquals(1, (result as PullResult.Success).eventsUpdated)
         coVerify { eventsDao.upsert(match { it.caldavUrl == eventUrl }) }
     }
 
     @Test
     fun `pull adds new event when no existing event found`() = runTest {
-        // New event from server (no existing event) should always be added
+        // A server event with no local row is added
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}new-event.ics"
 
@@ -1415,7 +1414,7 @@ class PullStrategyTest {
         mockTwoStepFetch(calendar.caldavUrl, serverEvents)
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
-        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null  // No existing event
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null  // no existing event
         coEvery { eventsDao.upsert(any()) } returns 1L
 
         val result = pullStrategy.pull(calendar, client = client)
@@ -1427,7 +1426,7 @@ class PullStrategyTest {
 
     @Test
     fun `pull skips exception event when etag unchanged`() = runTest {
-        // Etag comparison should also work for exception events
+        // The etag comparison applies to exceptions too
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}master-with-exception.ics"
         val masterEvent = createEvent(id = 500L, caldavUrl = eventUrl, title = "Master Event")
@@ -1437,7 +1436,7 @@ class PullStrategyTest {
             caldavUrl = eventUrl,
             title = "Local Modified Exception"
         ).copy(
-            etag = "exception-etag-123",  // Same etag as server
+            etag = "exception-etag-123",  // same etag as the server
             originalEventId = 500L,
             originalInstanceTime = parseDate("2024-01-08 10:00")
         )
@@ -1470,7 +1469,7 @@ class PullStrategyTest {
             CalDavEvent(
                 href = "master-with-exception.ics",
                 url = eventUrl,
-                etag = "exception-etag-123",  // Same etag - should skip exception
+                etag = "exception-etag-123",  // same etag, so the exception is skipped
                 icalData = masterWithExceptionIcal
             )
         )
@@ -1484,14 +1483,14 @@ class PullStrategyTest {
 
         pullStrategy.pull(calendar, client = client)
 
-        // Exception event should be skipped due to etag match
-        // Master event update depends on master's etag check
+        // The exception is skipped on its etag match. Whether the master is upserted
+        // depends on its own etag check (not asserted here).
         coVerify(exactly = 0) {
             eventsDao.upsert(match { it.originalEventId == 500L })
         }
     }
 
-    // Helper for date parsing in tests
+    // Parses "yyyy-MM-dd HH:mm" as UTC.
     private fun parseDate(dateStr: String): Long {
         val parts = dateStr.split(" ")
         val dateParts = parts[0].split("-")
@@ -1522,7 +1521,7 @@ class PullStrategyTest {
 
         pullStrategy.pull(calendar, client = client)
 
-        // Should call dedup at start of pullFull
+        // pullFull dedups at its start
         coVerify { eventsDao.deleteDuplicateMasterEvents() }
     }
 
@@ -1533,7 +1532,7 @@ class PullStrategyTest {
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
-        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 3 // Found 3 duplicates
+        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 3 // 3 duplicates found
 
         val result = pullStrategy.pull(calendar, client = client)
 
@@ -1543,7 +1542,8 @@ class PullStrategyTest {
 
     @Test
     fun `pullIncremental calls deleteDuplicateMasterEvents after processing`() = runTest {
-        // C2 fix: Incremental sync should also clean up duplicates from hostname changes
+        // Incremental sync also removes duplicate masters, for example from a server
+        // hostname change
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
@@ -1559,18 +1559,18 @@ class PullStrategyTest {
             ))
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
         coEvery { eventsDao.upsert(any()) } returns 1L
-        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 2 // Found 2 duplicates
+        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 2 // 2 duplicates found
 
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Verify dedup was called during incremental sync
+        // Incremental sync dedups
         coVerify { eventsDao.deleteDuplicateMasterEvents() }
     }
 
     @Test
     fun `pullIncremental logs when duplicates are cleaned during incremental sync`() = runTest {
-        // C2 fix: Verify logging for incremental sync dedup
+        // No changed hrefs and no duplicates
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-123") } returns
@@ -1579,13 +1579,12 @@ class PullStrategyTest {
                 changed = emptyList(),
                 deleted = emptyList()
             ))
-        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0 // No duplicates
+        coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0 // no duplicates
 
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Dedup should still be called even when no events changed
-        // (handles accumulated duplicates from past syncs)
+        // Dedup runs even when no event changed, for duplicates left by earlier syncs
         coVerify { eventsDao.deleteDuplicateMasterEvents() }
     }
 
@@ -1595,7 +1594,7 @@ class PullStrategyTest {
         val eventUrl = "${calendar.caldavUrl}event.ics"
         val existingEvent = createEvent(
             id = 100L,
-            caldavUrl = "https://different-server.example.com/event.ics", // Different URL
+            caldavUrl = "https://different-server.example.com/event.ics", // different URL
             title = "Existing Event"
         )
 
@@ -1611,17 +1610,17 @@ class PullStrategyTest {
         mockTwoStepFetch(calendar.caldavUrl, serverEvents)
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
-        // UID lookup finds the event (primary lookup)
+        // The UID lookup, tried first, finds the event
         coEvery { eventsDao.getMasterByUidAndCalendar("existing-uid", calendar.id) } returns existingEvent
         coEvery { eventsDao.upsert(any()) } returns 100L
 
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Should have updated (not added) because UID lookup found the event
+        // Updated, not added: the UID lookup found the event
         assertEquals(1, (result as PullResult.Success).eventsUpdated)
         assertEquals(0, result.eventsAdded)
-        // UID lookup should have been called
+        // The UID lookup ran
         coVerify { eventsDao.getMasterByUidAndCalendar("existing-uid", calendar.id) }
     }
 
@@ -1647,9 +1646,9 @@ class PullStrategyTest {
         mockTwoStepFetch(calendar.caldavUrl, serverEvents)
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
-        // UID lookup returns null (not found)
+        // The UID lookup finds nothing
         coEvery { eventsDao.getMasterByUidAndCalendar("some-uid", calendar.id) } returns null
-        // Fallback to caldavUrl lookup finds the event
+        // The caldavUrl fallback finds the event
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
         coEvery { eventsDao.upsert(any()) } returns 100L
 
@@ -1657,7 +1656,7 @@ class PullStrategyTest {
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsUpdated)
-        // Should have tried UID lookup first, then caldavUrl
+        // The UID lookup ran, then the caldavUrl lookup
         coVerify { eventsDao.getMasterByUidAndCalendar("some-uid", calendar.id) }
         coVerify { eventsDao.getByCaldavUrl(eventUrl) }
     }
@@ -1695,7 +1694,7 @@ class PullStrategyTest {
 
     @Test
     fun `pull does not apply default reminders to events without alarms`() = runTest {
-        // Server event has NO VALARM — reminders should stay null
+        // The server event has no VALARM, so reminders stay null
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}no-alarm.ics"
         val ical = createSimpleIcal("uid-no-alarm", "No Alarm Event")
@@ -1719,7 +1718,7 @@ class PullStrategyTest {
 
     @Test
     fun `pull preserves server-provided reminders`() = runTest {
-        // Server event has VALARM with -PT30M — should be preserved
+        // The server event's VALARM with -PT30M is kept
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}with-alarm.ics"
         val ical = """
@@ -1761,7 +1760,7 @@ class PullStrategyTest {
 
     @Test
     fun `pull does not apply default reminders to all-day events without alarms`() = runTest {
-        // All-day event with NO VALARM — reminders should stay null
+        // An all-day event with no VALARM keeps null reminders
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}allday-no-alarm.ics"
         val ical = """
@@ -1802,7 +1801,7 @@ class PullStrategyTest {
     fun `pull parses real iCloud recurring event`() = runTest {
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}ac-maintenance.ics"
-        // Real iCloud event pattern
+        // The shape of an iCloud event
         val icloudIcal = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -1863,7 +1862,7 @@ class PullStrategyTest {
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
 
-        // Verify the captured event has correct properties
+        // The captured event's fields
         assertEquals("AC maintenance vinegar thru pipe", capturedEvent.captured.title)
         assertEquals("FREQ=WEEKLY;INTERVAL=16;BYDAY=SU", capturedEvent.captured.rrule)
         assertEquals("America/Chicago", capturedEvent.captured.timezone)
@@ -1913,7 +1912,7 @@ class PullStrategyTest {
 
     @Test
     fun `pull returns TIMEOUT error code for ConnectTimeoutException`() = runTest {
-        // ConnectTimeoutException is also a SocketTimeoutException subclass
+        // A connect timeout arrives as a SocketTimeoutException too
         val calendar = createCalendar()
         coEvery { client.getCtag(any()) } throws java.net.SocketTimeoutException("Connect timed out")
 
@@ -1941,8 +1940,8 @@ class PullStrategyTest {
 
     @Test
     fun `pull preserves existing etag when server returns null etag`() = runTest {
-        // Given: existing event with valid etag, server returns same event with null etag
-        // (server omitted <getetag> from REPORT response — CDN inconsistency)
+        // An existing event with an etag; the server returns it with a null etag (it
+        // omitted <getetag> from the REPORT reply, a CDN inconsistency)
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event-1.ics"
         val existingEvent = createEvent(id = 42L, caldavUrl = eventUrl).copy(
@@ -1969,7 +1968,7 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
-        // The key assertion: existing etag must be preserved, not overwritten with null
+        // The existing etag is kept, not overwritten with null
         assertEquals(
             "Existing etag should be preserved when server returns null",
             "valid-etag", capturedEvent.captured.etag
@@ -1978,7 +1977,7 @@ class PullStrategyTest {
 
     @Test
     fun `pull uses server etag when both exist`() = runTest {
-        // Given: existing event with old etag, server returns same event with new etag
+        // An existing event with an old etag; the server returns it with a new etag
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event-1.ics"
         val existingEvent = createEvent(id = 42L, caldavUrl = eventUrl).copy(
@@ -2005,7 +2004,7 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
-        // Server etag should win when both exist
+        // The server etag wins when both exist
         assertEquals(
             "Server etag should overwrite old etag",
             "new-etag", capturedEvent.captured.etag
@@ -2014,8 +2013,8 @@ class PullStrategyTest {
 
     @Test
     fun `pull preserves exception event etag when server returns null etag`() = runTest {
-        // Given: existing exception event with valid etag, server returns null etag
-        // The exception path at line 979 uses the same `meta.etag ?: existingException.etag` pattern
+        // An existing exception with an etag; the server returns a null etag. The exception
+        // path uses the same `meta.etag ?: existingException.etag` fallback as masters.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}master-with-exception.ics"
         val masterEvent = createEvent(id = 500L, caldavUrl = eventUrl, title = "Master Event")
@@ -2058,7 +2057,7 @@ class PullStrategyTest {
             CalDavEvent(
                 href = "master-with-exception.ics",
                 url = eventUrl,
-                etag = null,  // Server omitted etag
+                etag = null,  // the server omitted the etag
                 icalData = masterWithExceptionIcal
             )
         )
@@ -2077,7 +2076,7 @@ class PullStrategyTest {
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
 
-        // Find the captured exception event (has originalEventId set)
+        // The captured exception has originalEventId set
         val capturedExceptionEvent = capturedEvents.find { it.originalEventId == 500L }
         assertNotNull("Exception event should have been upserted", capturedExceptionEvent)
         assertEquals(
@@ -2085,7 +2084,7 @@ class PullStrategyTest {
             "valid-exception-etag", capturedExceptionEvent!!.etag
         )
 
-        // Also verify master event etag is preserved
+        // The master's etag is kept too
         val capturedMasterEvent = capturedEvents.find { it.originalEventId == null }
         assertNotNull("Master event should have been upserted", capturedMasterEvent)
         assertEquals(
@@ -2096,8 +2095,8 @@ class PullStrategyTest {
 
     @Test
     fun `pull re-fetches event when both etags are null`() = runTest {
-        // Null etag means "unknown state" — should always re-fetch, not skip.
-        // null == null is true in Kotlin, but null should mean "re-fetch" not "unchanged".
+        // A null etag means "unknown state", so the event is re-fetched, not skipped.
+        // null == null is true in Kotlin, so the skip check requires a non-null local etag.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event-1.ics"
         val existingEvent = createEvent(id = 42L, caldavUrl = eventUrl).copy(
@@ -2122,13 +2121,13 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
-        // Null etag = unknown → event should be upserted (re-fetched), not skipped
+        // Null etag is unknown, so the event is upserted, not skipped
         coVerify(atLeast = 1) { eventsDao.upsert(match { it.uid == "uid-1" }) }
     }
 
     @Test
     fun `pull re-fetches exception event when both etags are null`() = runTest {
-        // Same null-etag fix applies to exception events
+        // The same null-etag rule applies to exceptions
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}master-with-exception.ics"
         val masterEvent = createEvent(id = 500L, caldavUrl = eventUrl, title = "Master Event")
@@ -2138,7 +2137,7 @@ class PullStrategyTest {
             caldavUrl = eventUrl,
             title = "Existing Exception"
         ).copy(
-            etag = null,  // Null etag on exception
+            etag = null,  // null etag on the exception
             originalEventId = 500L,
             originalInstanceTime = parseDate("2024-01-08 10:00")
         )
@@ -2171,7 +2170,7 @@ class PullStrategyTest {
             CalDavEvent(
                 href = "master-with-exception.ics",
                 url = eventUrl,
-                etag = null,  // Server also returns null etag
+                etag = null,  // the server returns a null etag too
                 icalData = masterWithExceptionIcal
             )
         )
@@ -2185,7 +2184,7 @@ class PullStrategyTest {
 
         pullStrategy.pull(calendar, client = client)
 
-        // Exception with null etag should be upserted, not skipped
+        // The exception with a null etag is upserted, not skipped
         coVerify(atLeast = 1) {
             eventsDao.upsert(match { it.originalEventId != null })
         }
@@ -2195,7 +2194,8 @@ class PullStrategyTest {
 
     @Test
     fun `pullFull uses calendar-query when forceFullSync is true`() = runTest {
-        // forceFullSync bypasses probe — getSyncToken should NOT be called as probe
+        // forceFullSync skips the sync-token probe and uses calendar-query (the probe call
+        // itself isn't asserted here)
         val calendar = createCalendar(ctag = null, syncToken = null)
         val events = listOf(
             CalDavEvent("event-1.ics", "${calendar.caldavUrl}event-1.ics", "etag-1",
@@ -2212,14 +2212,14 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client, forceFullSync = true)
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
-        // fetchEtagsInRange used (calendar-query), NOT fetchAllEtags (PROPFIND)
+        // calendar-query (fetchEtagsInRange), not PROPFIND (fetchAllEtags)
         coVerify(exactly = 1) { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
         coVerify(exactly = 0) { client.fetchAllEtags(any()) }
     }
 
     @Test
     fun `pullFull uses calendar-query when syncToken is not null`() = runTest {
-        // Non-null syncToken bypasses probe — goes straight to calendar-query
+        // A non-null syncToken skips the probe and goes straight to calendar-query
         val calendar = createCalendar(ctag = null, syncToken = "existing-token")
         val events = listOf(
             CalDavEvent("event-1.ics", "${calendar.caldavUrl}event-1.ics", "etag-1",
@@ -2227,10 +2227,9 @@ class PullStrategyTest {
         )
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
-        // syncToken non-null → incremental path, but let's force to pullFull via forceFullSync
-        // Actually, non-null syncToken goes to pullIncremental, not pullFull.
-        // To test non-null syncToken in pullFull, use forceFullSync=true (which overrides).
-        // But forceFullSync also bypasses probe. So this test verifies the combined bypass.
+        // A non-null syncToken takes pullIncremental, so forceFullSync=true is needed to reach
+        // pullFull. forceFullSync alone also skips the probe, so this test covers both
+        // bypasses together.
         mockTwoStepFetch(calendar.caldavUrl, events)
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
@@ -2246,7 +2245,8 @@ class PullStrategyTest {
 
     @Test
     fun `pullFull probes getSyncToken and uses calendar-query when server has token`() = runTest {
-        // First sync on capable server (iCloud): syncToken=null, probe returns token → calendar-query
+        // First sync on a server with sync-tokens (iCloud): syncToken=null and the probe
+        // returns a token, so calendar-query
         val calendar = createCalendar(ctag = null, syncToken = null)
         val events = listOf(
             CalDavEvent("event-1.ics", "${calendar.caldavUrl}event-1.ics", "etag-1",
@@ -2255,7 +2255,7 @@ class PullStrategyTest {
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, events)
-        // Probe returns a token — server supports sync-token
+        // The probe returns a token: the server supports sync-tokens
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("probe-token")
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
@@ -2264,21 +2264,21 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
-        // calendar-query used (fetchEtagsInRange), NOT PROPFIND (fetchAllEtags)
+        // calendar-query (fetchEtagsInRange), not PROPFIND (fetchAllEtags)
         coVerify(exactly = 1) { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
         coVerify(exactly = 0) { client.fetchAllEtags(any()) }
     }
 
     @Test
     fun `pullFull probes getSyncToken and uses PROPFIND when server lacks token`() = runTest {
-        // Purelymail path: syncToken=null, probe returns null → PROPFIND Depth:1
+        // Purelymail path: syncToken=null and the probe returns null, so PROPFIND Depth:1
         val calendar = createCalendar(ctag = null, syncToken = null)
         val calendarUrl = calendar.caldavUrl
 
         coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
-        // Probe returns null — server does NOT support sync-token
+        // The probe returns null: the server doesn't support sync-tokens
         coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.success(null)
-        // PROPFIND returns etags
+        // PROPFIND lists the etags
         coEvery { client.fetchAllEtags(calendarUrl) } returns CalDavResult.success(
             listOf(Pair("event-1.ics", "etag-1"), Pair("event-2.ics", "etag-2"))
         )
@@ -2298,14 +2298,14 @@ class PullStrategyTest {
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
         assertEquals(2, (result as PullResult.Success).eventsAdded)
-        // PROPFIND used, NOT calendar-query
+        // PROPFIND, not calendar-query
         coVerify(exactly = 1) { client.fetchAllEtags(calendarUrl) }
         coVerify(exactly = 0) { client.fetchEtagsInRange(calendarUrl, any(), any()) }
     }
 
     @Test
     fun `pullFull falls back to calendar-query when PROPFIND fails`() = runTest {
-        // PROPFIND fails → fallback to calendar-query, with Log.w warning
+        // A failed PROPFIND falls back to calendar-query and adds a session warning
         val calendar = createCalendar(ctag = null, syncToken = null)
         val calendarUrl = calendar.caldavUrl
         val events = listOf(
@@ -2314,11 +2314,11 @@ class PullStrategyTest {
         )
 
         coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
-        // Probe returns null → PROPFIND path
+        // The probe returns null: PROPFIND path
         coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.success(null)
         // PROPFIND fails
         coEvery { client.fetchAllEtags(calendarUrl) } returns CalDavResult.error(501, "PROPFIND not supported")
-        // Fallback to calendar-query
+        // The calendar-query fallback
         mockTwoStepFetch(calendarUrl, events)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
@@ -2335,10 +2335,10 @@ class PullStrategyTest {
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
-        // Both PROPFIND and calendar-query called (PROPFIND failed, fell back)
+        // PROPFIND, then the calendar-query fallback
         coVerify(exactly = 1) { client.fetchAllEtags(calendarUrl) }
         coVerify(exactly = 1) { client.fetchEtagsInRange(calendarUrl, any(), any()) }
-        // Warning should be added to session
+        // The session carries the warning
         val session = sessionBuilder.build()
         assertTrue("Session should have warnings", session.hasWarnings)
         assertTrue("Warning should mention PROPFIND",
@@ -2347,7 +2347,7 @@ class PullStrategyTest {
 
     @Test
     fun `pullFull PROPFIND success detects new and changed events`() = runTest {
-        // End-to-end: PROPFIND returns etags, detect new + changed events
+        // PROPFIND lists the etags; the pull finds one new and one changed event
         val calendar = createCalendar(ctag = null, syncToken = null)
         val calendarUrl = calendar.caldavUrl
         val existingEvent = createEvent(id = 42L, caldavUrl = "${calendarUrl}existing.ics").copy(
@@ -2355,13 +2355,13 @@ class PullStrategyTest {
         )
 
         coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
-        // Probe → no token
+        // The probe returns no token
         coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.success(null)
-        // PROPFIND returns 2 events: one with changed etag, one new
+        // PROPFIND lists 2 events: one with a changed etag, one new
         coEvery { client.fetchAllEtags(calendarUrl) } returns CalDavResult.success(
             listOf(
-                Pair("existing.ics", "new-etag"),   // Changed etag
-                Pair("brand-new.ics", "etag-new")   // New event
+                Pair("existing.ics", "new-etag"),   // changed etag
+                Pair("brand-new.ics", "etag-new")   // new event
             )
         )
         coEvery { client.fetchEventsByHref(calendarUrl, any()) } returns CalDavResult.success(
@@ -2385,19 +2385,19 @@ class PullStrategyTest {
         // 1 new + 1 updated
         assertEquals(1, success.eventsAdded)
         assertEquals(1, success.eventsUpdated)
-        // PROPFIND used
+        // PROPFIND, not calendar-query
         coVerify(exactly = 1) { client.fetchAllEtags(calendarUrl) }
         coVerify(exactly = 0) { client.fetchEtagsInRange(calendarUrl, any(), any()) }
     }
 
     @Test
     fun `pullFull uses PROPFIND path when getSyncToken probe returns network error`() = runTest {
-        // Probe fails with network error → treats as no-token → PROPFIND path
+        // A probe that fails with a network error counts as no token: PROPFIND path
         val calendar = createCalendar(ctag = null, syncToken = null)
         val calendarUrl = calendar.caldavUrl
 
         coEvery { client.getCtag(calendarUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
-        // Probe returns error (network failure)
+        // The probe fails (network)
         coEvery { client.getSyncToken(calendarUrl) } returns CalDavResult.error(0, "Network error")
         // PROPFIND succeeds
         coEvery { client.fetchAllEtags(calendarUrl) } returns CalDavResult.success(
@@ -2416,7 +2416,7 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
-        // PROPFIND used (probe error → no-token path)
+        // PROPFIND: a probe error takes the no-token path
         coVerify(exactly = 1) { client.fetchAllEtags(calendarUrl) }
         coVerify(exactly = 0) { client.fetchEtagsInRange(calendarUrl, any(), any()) }
     }
@@ -2424,9 +2424,8 @@ class PullStrategyTest {
     // ========== Helper Methods ==========
 
     /**
-     * Mocks the two-step fetch pattern used by pullFull():
-     * Step 1: fetchEtagsInRange returns href+etag pairs
-     * Step 2: fetchEventsByHref returns full CalDavEvent data
+     * Stubs the calendar-query path of pullFull(): fetchEtagsInRange lists each event's href
+     * and etag, then fetchEventsByHref returns [events].
      */
     private fun mockTwoStepFetch(calendarUrl: String, events: List<CalDavEvent>) {
         coEvery { client.fetchEtagsInRange(calendarUrl, any(), any()) } returns
@@ -2481,12 +2480,12 @@ class PullStrategyTest {
         """.trimIndent()
     }
 
-    // ========== FK Constraint Error Handling Tests (Issue #55) ==========
+    // ========== FK Constraint Error Handling Tests (#55) ==========
 
     @Test
     fun `FK error on second event still commits first event and continues to third`() = runTest {
-        // Verifies: Events processed before the FK error are committed individually.
-        // Each event upsert runs in its own transaction, so earlier events survive.
+        // Each event's upsert runs in its own transaction, so events before the FK error
+        // stay committed and the events after it are still processed.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val event1Url = "${calendar.caldavUrl}event1.ics"
         val event2Url = "${calendar.caldavUrl}event2.ics"
@@ -2503,23 +2502,23 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
 
-        // First event succeeds
+        // The first event succeeds
         coEvery { eventsDao.upsert(match { it.uid == "uid-1" }) } returns 1L
-        // Second event throws FK violation
+        // The second throws an FK violation
         coEvery { eventsDao.upsert(match { it.uid == "uid-2" }) } throws
             android.database.sqlite.SQLiteConstraintException(
                 "FOREIGN KEY constraint failed (code 787 SQLITE_CONSTRAINT_FOREIGNKEY)"
             )
         coEvery { eventsDao.getMasterByUidAndCalendar("uid-2", calendar.id) } returns null
-        // Third event would succeed but is never reached
+        // The third succeeds
         coEvery { eventsDao.upsert(match { it.uid == "uid-3" }) } returns 3L
 
         val result = pullStrategy.pull(calendar, client = client)
 
-        // After fix: FK error is skipped, sync continues to third event
+        // The FK error is skipped and the sync continues to the third event
         assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
-        assertEquals(2, (result as PullResult.Success).eventsAdded) // Events 1 and 3 succeed
-        // All three events were attempted
+        assertEquals(2, (result as PullResult.Success).eventsAdded) // events 1 and 3
+        // All three events are attempted
         coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-1" }) }
         coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-2" }) }
         coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-3" }) }
@@ -2527,8 +2526,8 @@ class PullStrategyTest {
 
     @Test
     fun `FK error no longer prevents sync token advancement`() = runTest {
-        // After fix: FK error is skipped, sync succeeds, token advances.
-        // This breaks the infinite failure loop.
+        // The FK error is skipped, the sync succeeds and the token advances, so the same
+        // event can't fail every sync forever.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}problem-event.ics"
 
@@ -2547,20 +2546,20 @@ class PullStrategyTest {
             )
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
 
-        // First attempt — succeeds (event skipped)
+        // The sync succeeds with the event skipped
         val result1 = pullStrategy.pull(calendar, client = client)
         assertTrue("First sync should succeed", result1 is PullResult.Success)
 
-        // Sync token WAS updated — loop is broken
+        // The sync-token is stored
         coVerify(atLeast = 1) { calendarRepository.updateSyncToken(any(), any(), any()) }
     }
 
-    // ========== FK Constraint Error Handling Fix Tests (Issue #55 - desired behavior) ==========
+    // ========== FK Constraint Skips (#55) ==========
 
     @Test
     fun `FK constraint on master event skips event and continues sync`() = runTest {
-        // After fix: FK error on one master event should skip it and continue processing others.
-        // Result should be Success (not Error), and sync token should advance.
+        // An FK error on one master skips it and the others are still processed. The result
+        // is Success, not Error, and the sync-token advances.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val event1Url = "${calendar.caldavUrl}event1.ics"
         val event2Url = "${calendar.caldavUrl}event2.ics"
@@ -2575,31 +2574,30 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
 
-        // First event throws FK violation
+        // The first event throws an FK violation
         coEvery { eventsDao.upsert(match { it.uid == "uid-1" }) } throws
             android.database.sqlite.SQLiteConstraintException(
                 "FOREIGN KEY constraint failed (code 787 SQLITE_CONSTRAINT_FOREIGNKEY)"
             )
         coEvery { eventsDao.getMasterByUidAndCalendar("uid-1", calendar.id) } returns null
-        // Second event succeeds
+        // The second succeeds
         coEvery { eventsDao.upsert(match { it.uid == "uid-2" }) } returns 2L
 
         val result = pullStrategy.pull(calendar, client = client)
 
-        // Should be Success, not Error — FK error skipped, sync continued
+        // Success, not Error: the FK error is skipped and the sync continues
         assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
-        // Sync token should advance (loop broken)
+        // The sync-token advances
         coVerify { calendarRepository.updateSyncToken(any(), any(), any()) }
-        // Both events should have been attempted
+        // Both events are attempted
         coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-1" }) }
         coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-2" }) }
     }
 
     @Test
     fun `FK constraint on exception event skips and continues sync`() = runTest {
-        // After fix: FK error on exception event upsert should skip it.
-        // Master event should still be intact in the database.
+        // An FK error on the exception's upsert skips it; the master stays saved.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}master-with-exception.ics"
         val masterWithExceptionIcal = """
@@ -2636,9 +2634,9 @@ class PullStrategyTest {
         coEvery { eventsDao.getByUid("master-uid") } returns emptyList()
         coEvery { eventsDao.getExceptionByUidAndInstanceTime(any(), any(), any()) } returns null
 
-        // Master event upsert succeeds
+        // The master's upsert succeeds
         coEvery { eventsDao.upsert(match { it.rrule != null }) } returns 1L
-        // Exception event upsert throws FK violation
+        // The exception's upsert throws an FK violation
         coEvery { eventsDao.upsert(match { it.rrule == null }) } throws
             android.database.sqlite.SQLiteConstraintException(
                 "FOREIGN KEY constraint failed (code 787 SQLITE_CONSTRAINT_FOREIGNKEY)"
@@ -2646,21 +2644,20 @@ class PullStrategyTest {
 
         val result = pullStrategy.pull(calendar, client = client)
 
-        // Should be Success — master event saved, exception skipped
+        // Success: the master is saved and the exception skipped
         assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
-        // Sync token should advance
+        // The sync-token advances
         coVerify { calendarRepository.updateSyncToken(any(), any(), any()) }
-        // Master event WAS upserted (verify it's intact)
+        // The master is upserted
         coVerify(exactly = 1) { eventsDao.upsert(match { it.rrule != null }) }
-        // Master's occurrences were generated (intact)
+        // The master's occurrences are generated
         coVerify { occurrenceGenerator.generateOccurrences(any(), any(), any()) }
     }
 
     @Test
     fun `multiple FK errors skip individually without aborting`() = runTest {
-        // After fix: Multiple FK errors should each be skipped individually.
-        // Events that succeed should still be processed.
+        // Each FK error skips only its own event; the one that succeeds is processed.
         val calendar = createCalendar(ctag = null, syncToken = null)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
@@ -2687,10 +2684,10 @@ class PullStrategyTest {
 
         val result = pullStrategy.pull(calendar, client = client)
 
-        // Should succeed with 1 event added (event 2)
+        // Success with 1 event added (event 2)
         assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
-        // All 3 events should have been attempted
+        // All 3 events are attempted
         coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-1" }) }
         coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-2" }) }
         coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "uid-3" }) }
@@ -2698,8 +2695,8 @@ class PullStrategyTest {
 
     @Test
     fun `FK constraint error no longer creates persistent failure loop`() = runTest {
-        // After fix: Two consecutive syncs with FK errors should both succeed.
-        // Sync token should advance, breaking the infinite failure loop.
+        // Two consecutive syncs with FK errors both succeed, and the sync-token advances,
+        // so the event can't fail every sync forever.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}problem-event.ics"
 
@@ -2716,22 +2713,22 @@ class PullStrategyTest {
             android.database.sqlite.SQLiteConstraintException("FOREIGN KEY constraint failed")
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
 
-        // First attempt — should succeed (skip problematic event)
+        // The first sync succeeds, skipping the event
         val result1 = pullStrategy.pull(calendar, client = client)
         assertTrue("First sync should succeed", result1 is PullResult.Success)
 
-        // Sync token WAS updated — loop is broken
+        // The sync-token is stored
         coVerify(atLeast = 1) { calendarRepository.updateSyncToken(any(), any(), any()) }
 
-        // Second attempt — also succeeds
+        // The second sync succeeds too
         val result2 = pullStrategy.pull(calendar, client = client)
         assertTrue("Second sync should also succeed", result2 is PullResult.Success)
     }
 
     @Test
     fun `FK constraint error increments session already-synced counter`() = runTest {
-        // After fix: sessionBuilder.incrementSkipAlreadySynced() should be called
-        // for each constraint skip, so the counter appears in Sync History UI.
+        // Each constraint skip with no master of that UID to adopt calls
+        // sessionBuilder.incrementSkipAlreadySynced(), so the count shows in Sync History.
         val calendar = createCalendar(ctag = null, syncToken = null)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
@@ -2744,7 +2741,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
 
-        // Both events throw constraint violations (already synced in prior session)
+        // Both events throw constraint violations, as for events synced in an earlier session
         coEvery { eventsDao.upsert(any()) } throws
             android.database.sqlite.SQLiteConstraintException("UNIQUE constraint failed")
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
@@ -2760,7 +2757,7 @@ class PullStrategyTest {
 
         assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
 
-        // Build the session and verify the already-synced counter
+        // The session's already-synced count
         val session = sessionBuilder.build()
         assertTrue("Session should have already-synced skips", session.hasAlreadySynced)
         assertEquals("Should have 2 already-synced skips", 2, session.skippedAlreadySynced)
@@ -2770,7 +2767,7 @@ class PullStrategyTest {
 
     @Test
     fun `batched multiget chunks hrefs into batches of 20`() = runTest {
-        // 120 hrefs should be split into 6 batches: [20, 20, 20, 20, 20, 20]
+        // 120 hrefs split into 6 batches of 20
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventCount = 120
         val serverEvents = (1..eventCount).map { i ->
@@ -2819,13 +2816,13 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected Success but got $result", result is PullResult.Success)
-        // 15 hrefs < 20 batch size → 1 call
+        // 15 hrefs, under the batch size of 20: 1 call
         coVerify(exactly = 1) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
     }
 
     @Test
     fun `batched multiget collects results from all batches`() = runTest {
-        // 120 events across 3 batches should all be processed
+        // All 120 events across 6 batches are processed
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventCount = 120
         val serverEvents = (1..eventCount).map { i ->
@@ -2849,14 +2846,14 @@ class PullStrategyTest {
 
         assertTrue("Expected Success but got $result", result is PullResult.Success)
         val success = result as PullResult.Success
-        // All 120 events from all 3 batches should be processed
+        // All 120 events from the 6 batches are processed
         assertEquals(120, success.eventsAdded)
     }
 
     @Test
     fun `batched multiget error falls back to individual for all batches`() = runTest {
-        // A3: When all batches fail, each falls back to individual fetches.
-        // If individual fetches also fail, sync completes with 0 events (not Error).
+        // When every batch fails, each falls back to one fetch per href. When those fail
+        // too, the sync completes with 0 events, not Error.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventCount = 40  // 40 / 20 = 2 batches
         val serverEvents = (1..eventCount).map { i ->
@@ -2867,7 +2864,7 @@ class PullStrategyTest {
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEvents.map { Pair(it.href, it.etag) })
-        // All fetches fail (batch and individual)
+        // Every fetch fails, batched and single
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
             CalDavResult.error(500, "Server error", isRetryable = true)
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
@@ -2875,14 +2872,14 @@ class PullStrategyTest {
 
         val result = pullStrategy.pull(calendar, client = client)
 
-        // A3: Sync completes with 0 events (individual fallbacks also failed)
+        // The sync completes with 0 events
         assertTrue("Expected Success but got $result", result is PullResult.Success)
         assertEquals(0, (result as PullResult.Success).eventsAdded)
     }
 
     @Test
     fun `batched multiget with empty hrefs returns empty`() = runTest {
-        // 0 hrefs → fetchEventsByHref should not be called
+        // 0 hrefs: no fetchEventsByHref call
         val calendar = createCalendar(ctag = null, syncToken = null)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
@@ -2899,7 +2896,7 @@ class PullStrategyTest {
 
     @Test
     fun `batched multiget concurrent batches all execute`() = runTest {
-        // Verify all batches are launched by checking call count matches expected batches
+        // Every batch runs: the call count matches the batch count
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventCount = 200  // 200 / 20 = 10 batches
         val serverEvents = (1..eventCount).map { i ->
@@ -2923,16 +2920,15 @@ class PullStrategyTest {
 
         assertTrue("Expected Success but got $result", result is PullResult.Success)
         assertEquals(200, (result as PullResult.Success).eventsAdded)
-        // 200 / 20 = 10 batches, all should execute
+        // 200 / 20 = 10 batches, all run
         coVerify(exactly = 10) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
     }
 
-    // ========== Empty Multiget Fallback Tests (Zoho compatibility) ==========
+    // ========== Empty Multiget Fallback Tests (Zoho) ==========
 
     @Test
     fun `non-empty multiget success returns immediately without fallback`() = runTest {
-        // Regression guard: working servers (iCloud, Nextcloud, etc.) that return non-empty
-        // multiget results should hit the early return and never trigger fallback.
+        // A non-empty multiget (iCloud, Nextcloud) gets no single-href fallback.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event.ics"
 
@@ -2958,15 +2954,15 @@ class PullStrategyTest {
 
         assertTrue(result is PullResult.Success)
         assertEquals(2, (result as PullResult.Success).eventsAdded)
-        // Should be called exactly 1 time — batch succeeded, no fallback
+        // One call: the batch succeeded, no fallback
         coVerify(exactly = 1) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
     }
 
     @Test
     fun `batched multiget falls back to single-href when batch returns empty`() = runTest {
-        // Zoho returns HTTP 200 empty body for multi-href calendar-multiget.
-        // When a batch returns 0 events for >1 hrefs, fetchEventsBatched should
-        // fall back to concurrent single-href fetches.
+        // Zoho answers a multi-href calendar-multiget with HTTP 200 and an empty body. A
+        // batch that returns 0 events for more than one href falls back to concurrent
+        // single-href fetches.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val hrefs = (1..10).map { "event-$it.ics" }
         val events = hrefs.map { href ->
@@ -2977,8 +2973,8 @@ class PullStrategyTest {
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(hrefs.map { Pair(it, "etag-$it") })
-        // Multi-href batch returns empty (Zoho quirk)
-        // Single-href requests return the individual event
+        // A multi-href batch returns nothing (the Zoho quirk); a single-href request
+        // returns its event
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } answers {
             val requestedHrefs = secondArg<List<String>>()
             if (requestedHrefs.size > 1) {
@@ -2998,14 +2994,14 @@ class PullStrategyTest {
 
         assertTrue("Expected Success but got $result", result is PullResult.Success)
         assertEquals(10, (result as PullResult.Success).eventsAdded)
-        // 1 batch call (returns empty) + 10 single-href fallback calls = 11 total
+        // 1 batch call (empty) + 10 single-href fallback calls = 11
         coVerify(exactly = 11) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
     }
 
     @Test
     fun `batched multiget single-href fallback skips individual failures`() = runTest {
-        // When falling back to single-href, individual failures should be skipped
-        // (partial data is better than none).
+        // In the single-href fallback a failed href is skipped: partial data is better
+        // than none.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val hrefs = (1..5).map { "event-$it.ics" }
         val events = hrefs.map { href ->
@@ -3019,11 +3015,11 @@ class PullStrategyTest {
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } answers {
             val requestedHrefs = secondArg<List<String>>()
             if (requestedHrefs.size > 1) {
-                CalDavResult.success(emptyList()) // Empty for multi-href
+                CalDavResult.success(emptyList()) // empty for multi-href
             } else {
                 val href = requestedHrefs[0]
                 if (href == "event-3.ics") {
-                    CalDavResult.error(500, "Server error") // One href fails
+                    CalDavResult.error(500, "Server error") // one href fails
                 } else {
                     val event = events.find { it.href == href }
                     CalDavResult.success(listOfNotNull(event))
@@ -3038,15 +3034,14 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected Success but got $result", result is PullResult.Success)
-        // 4 of 5 events should be written (event-3 failed individually)
+        // 4 of 5 events are written; event-3 failed
         assertEquals(4, (result as PullResult.Success).eventsAdded)
     }
 
     @Test
     fun `batched multiget error with individual fallback recovery`() = runTest {
-        // A3: When batch multiget returns error, individual fallback recovers events.
-        // This replaces the old "error preserves retryable flag" test since batch
-        // errors no longer produce PullResult.Error.
+        // A batch multiget error falls back to single-href fetches, which recover the
+        // events. A batch error doesn't produce PullResult.Error.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val href1 = "event1.ics"
         val href2 = "event2.ics"
@@ -3056,10 +3051,10 @@ class PullStrategyTest {
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(href1, "etag-1"), Pair(href2, "etag-2")))
-        // Batch (multi-href) fails
+        // The multi-href batch fails
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, match { it.size > 1 }) } returns
             CalDavResult.error(503, "Service Unavailable", isRetryable = true)
-        // Individual fetches succeed
+        // The single-href fetches succeed
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(href1)) } returns
             CalDavResult.success(listOf(
                 CalDavEvent(href1, url1, "etag-1", createSimpleIcal("uid-1", "Event 1"))
@@ -3079,18 +3074,18 @@ class PullStrategyTest {
         assertEquals(2, (result as PullResult.Success).eventsAdded)
     }
 
-    // ========== Parse Failure Retry Logic (GAP 6) ==========
+    // ========== Parse Failure Retry Logic ==========
 
     @Test
     fun `incremental pull holds sync token when parse errors exist and retries remain`() = runTest {
-        // When parse errors occur and we haven't exceeded MAX_PARSE_RETRIES,
-        // the sync token should NOT be advanced (held at old value for retry)
+        // With parse errors and fewer than MAX_PARSE_RETRIES retries so far, the sync-token
+        // is held at its old value for a retry
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "old-token")
         val eventHref = "${calendar.caldavUrl}event1.ics"
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
 
-        // sync-collection returns changed items (incremental path)
+        // sync-collection reports a changed item (incremental path)
         val syncReport = SyncReport(
             changed = listOf(SyncItem(eventHref, "etag-1", SyncItemStatus.OK)),
             deleted = emptyList(),
@@ -3098,13 +3093,14 @@ class PullStrategyTest {
         )
         coEvery { client.syncCollection(calendar.caldavUrl, "old-token") } returns CalDavResult.success(syncReport)
 
-        // Multiget returns event - href must match SyncItem.href for missing-event detection
+        // The multiget returns the event; its href matches SyncItem.href, so it isn't
+        // counted missing
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns CalDavResult.success(listOf(
             CalDavEvent(eventHref, eventHref, "etag-1",
                 "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nNO-UID-HERE\nEND:VEVENT\nEND:VCALENDAR")
         ))
 
-        // Parse failure retry: currently at 0 retries (below MAX=3)
+        // 0 retries so far (MAX_PARSE_RETRIES is 3)
         coEvery { dataStore.getParseFailureRetryCount(calendar.id) } returns 0
         coEvery { dataStore.incrementParseFailureRetry(calendar.id) } returns 1
 
@@ -3112,8 +3108,8 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
 
-        // Use spyk to control the parse error count returned by getSkippedParseError(),
-        // since we can't guarantee the icaldav parser's exact behavior with invalid ICS
+        // spyk pins the count getSkippedParseError() returns, since the parser's handling
+        // of this invalid ICS isn't guaranteed
         val sessionBuilder = spyk(SyncSessionBuilder(
             calendarId = calendar.id,
             calendarName = calendar.displayName,
@@ -3128,13 +3124,13 @@ class PullStrategyTest {
 
         assertTrue("Expected Success", result is PullResult.Success)
         val success = result as PullResult.Success
-        // Token should be held at old value (not advanced to new-token)
+        // The token stays at its old value, not new-token
         assertEquals("old-token", success.newSyncToken)
     }
 
     @Test
     fun `incremental pull advances sync token after max parse retries exceeded`() = runTest {
-        // When parse errors exceed MAX_PARSE_RETRIES, give up and advance the token
+        // Once MAX_PARSE_RETRIES retries are used, the pull gives up and advances the token
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "old-token")
         val eventHref = "${calendar.caldavUrl}event1.ics"
 
@@ -3147,13 +3143,14 @@ class PullStrategyTest {
         )
         coEvery { client.syncCollection(calendar.caldavUrl, "old-token") } returns CalDavResult.success(syncReport)
 
-        // Multiget returns event - href must match SyncItem.href for missing-event detection
+        // The multiget returns the event; its href matches SyncItem.href, so it isn't
+        // counted missing
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns CalDavResult.success(listOf(
             CalDavEvent(eventHref, eventHref, "etag-1",
                 "BEGIN:VCALENDAR\nVERSION:2.0\nBEGIN:VEVENT\nNO-UID-HERE\nEND:VEVENT\nEND:VCALENDAR")
         ))
 
-        // Parse failure retry: at max retries (3)
+        // At the retry limit (3)
         coEvery { dataStore.getParseFailureRetryCount(calendar.id) } returns 3
         coEvery { dataStore.resetParseFailureRetry(calendar.id) } just Runs
 
@@ -3161,8 +3158,8 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
 
-        // Use spyk to control the parse error count returned by getSkippedParseError(),
-        // since we can't guarantee the icaldav parser's exact behavior with invalid ICS
+        // spyk pins the count getSkippedParseError() returns, since the parser's handling
+        // of this invalid ICS isn't guaranteed
         val sessionBuilder = spyk(SyncSessionBuilder(
             calendarId = calendar.id,
             calendarName = calendar.displayName,
@@ -3177,16 +3174,15 @@ class PullStrategyTest {
 
         assertTrue("Expected Success", result is PullResult.Success)
         val success = result as PullResult.Success
-        // Token should be advanced to new value (gave up on parse errors)
+        // The token advances: the parse errors are abandoned
         assertEquals("new-token", success.newSyncToken)
-        // Retry count should be reset
+        // The retry count is reset
         coVerify { dataStore.resetParseFailureRetry(calendar.id) }
     }
 
     @Test
     fun `successful incremental pull resets parse failure retry count`() = runTest {
-        // When an incremental sync has no parse errors but had previous retries,
-        // the retry count should be reset
+        // An incremental sync without parse errors, after earlier retries, resets the count
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "old-token")
         val eventUrl = "${calendar.caldavUrl}event1.ics"
 
@@ -3199,13 +3195,13 @@ class PullStrategyTest {
         )
         coEvery { client.syncCollection(calendar.caldavUrl, "old-token") } returns CalDavResult.success(syncReport)
 
-        // href must match SyncItem.href for missing-event detection
+        // The href matches SyncItem.href, so the event isn't counted missing
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns CalDavResult.success(listOf(
             CalDavEvent(eventUrl, eventUrl, "etag-1",
                 createSimpleIcal("uid-1", "Valid Event"))
         ))
 
-        // Previous retry count was > 0
+        // Earlier retries: the count is above 0
         coEvery { dataStore.getParseFailureRetryCount(calendar.id) } returns 2
         coEvery { dataStore.resetParseFailureRetry(calendar.id) } just Runs
 
@@ -3217,21 +3213,21 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected Success", result is PullResult.Success)
-        // Retry count should be reset since sync succeeded without parse errors
+        // Reset: the sync had no parse errors
         coVerify { dataStore.resetParseFailureRetry(calendar.id) }
     }
 
-    // ========== No Ctag Fallback (GAP 4 + GAP 6) ==========
+    // ========== No Ctag Fallback ==========
 
     @Test
     fun `pull proceeds when getCtag returns error - no ctag server support`() = runTest {
-        // Zoho and some servers don't support getctag. Pull should still proceed.
+        // Zoho and some other servers don't support getctag; the pull still proceeds.
         val calendar = createCalendar(ctag = null, syncToken = null)
 
-        // getCtag returns error (server doesn't support it)
+        // getCtag fails: the server doesn't support it
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.error(404, "Not Found")
 
-        // Full pull proceeds
+        // The full pull proceeds
         val serverEvents = listOf(
             CalDavEvent("event1.ics", "${calendar.caldavUrl}event1.ics", "etag-1",
                 createSimpleIcal("uid-1", "Event 1"))
@@ -3253,8 +3249,8 @@ class PullStrategyTest {
 
     @Test
     fun `pull skips recently pushed event even when etag differs`() = runTest {
-        // When an event was just pushed in this sync cycle, pull should skip it
-        // even if the server returns a different etag (CDN staleness protection).
+        // An event pushed in this sync cycle is skipped even when the server returns a
+        // different etag: the server copy may be stale CDN data.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}pushed-event.ics"
         val existingEvent = createEvent(id = 42, caldavUrl = eventUrl, title = "Local Version").copy(
@@ -3288,18 +3284,78 @@ class PullStrategyTest {
         )
 
         assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
-        // Event should NOT have been upserted (it was skipped)
+        // The event is skipped, not upserted
         coVerify(exactly = 0) { eventsDao.upsert(match { it.uid == "uid-pushed" }) }
 
-        // Session should record the skip
+        // The session records the skip
         val session = sessionBuilder.build()
         assertEquals("Should have 1 recently-pushed skip", 1, session.skippedRecentlyPushed)
     }
 
+    @Test
+    fun `a full pull refreshes a pushed event whose upload merged in a server change`() = runTest {
+        // The merged upload left the row without the server's side of the merge, so this
+        // cycle's pull must bring the server copy in even though the event was just pushed.
+        val calendar = createCalendar(ctag = null, syncToken = null)
+        val eventUrl = "${calendar.caldavUrl}pushed-event.ics"
+        val existingEvent = createEvent(id = 42, caldavUrl = eventUrl, title = "Local Version").copy(
+            uid = "uid-pushed",
+            etag = "etag-before-merge"
+        )
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent("pushed-event.ics", eventUrl, "etag-merged", createSimpleIcal("uid-pushed", "Merged Version"))
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
+        coEvery { eventsDao.getMasterByUidAndCalendar("uid-pushed", calendar.id) } returns existingEvent
+        coEvery { eventsDao.upsert(any()) } returns 42L
+
+        val result = pullStrategy.pull(
+            calendar, client = client, recentlyPushedEventIds = setOf(42L), refetchEventIds = setOf(42L)
+        )
+
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        coVerify { eventsDao.upsert(match { it.id == 42L && it.title == "Merged Version" && it.etag == "etag-merged" }) }
+    }
+
+    @Test
+    fun `an etag-comparison pull refreshes a pushed event whose upload merged in a server change`() = runTest {
+        // The sync-token is refused, so the pull compares etags; the merged event's old etag
+        // differs from the server's and the event is refreshed, not skipped as just pushed.
+        val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
+        val eventUrl = "${calendar.caldavUrl}pushed-event.ics"
+        val existingEvent = createEvent(id = 42, caldavUrl = eventUrl, title = "Local Version").copy(
+            uid = "uid-pushed",
+            etag = "etag-before-merge"
+        )
+
+        coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
+        coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
+            CalDavResult.error(403, "Sync token invalid")
+        coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(EtagEntry(eventUrl, "etag-before-merge"))
+        mockTwoStepFetch(calendar.caldavUrl, listOf(
+            CalDavEvent("pushed-event.ics", eventUrl, "etag-merged", createSimpleIcal("uid-pushed", "Merged Version"))
+        ))
+        coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
+        coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
+        coEvery { eventsDao.getMasterByUidAndCalendar("uid-pushed", calendar.id) } returns existingEvent
+        coEvery { eventsDao.upsert(any()) } returns 42L
+
+        val result = pullStrategy.pull(
+            calendar, client = client, recentlyPushedEventIds = setOf(42L), refetchEventIds = setOf(42L)
+        )
+
+        assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
+        coVerify { eventsDao.upsert(match { it.id == 42L && it.title == "Merged Version" }) }
+    }
+
     // ========== Recently Pushed Event Deletion Protection (v23.2.1) ==========
-    // RFC 4791 does not guarantee immediate visibility after PUT.
-    // Servers without sync-collection (e.g., Purelymail) always use pullFull.
-    // A just-pushed event may not appear in the server's etag response yet.
+    // RFC 4791 gives no visibility guarantee right after a PUT, so a just-pushed event may
+    // be missing from the server's etag listing. Servers without sync-collection (for
+    // example Purelymail) always take pullFull.
 
     @Test
     fun `pullFull does not delete recently pushed event missing from server etags`() = runTest {
@@ -3312,7 +3368,7 @@ class PullStrategyTest {
         )
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
-        // Server returns empty etag list — event not indexed yet
+        // The etag listing is empty: the event isn't indexed yet
         mockTwoStepFetch(calendar.caldavUrl, emptyList())
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(pushedEvent)
@@ -3342,7 +3398,7 @@ class PullStrategyTest {
         val result = pullStrategy.pull(
             calendar,
             client = client,
-            recentlyPushedEventIds = setOf(42L)  // Different ID
+            recentlyPushedEventIds = setOf(42L)  // a different id
         )
 
         assertTrue(result is PullResult.Success)
@@ -3388,7 +3444,7 @@ class PullStrategyTest {
         val todoHref = "todo-1.ics"
         val vtodoUrl = "${calendar.caldavUrl}todo-1.ics"
 
-        // sync-collection returns one VTODO href
+        // sync-collection reports one VTODO href
         coEvery { client.syncCollection(calendar.caldavUrl, "sync-token-1") } returns
             CalDavResult.success(SyncReport(
                 syncToken = "sync-token-2",
@@ -3415,7 +3471,7 @@ class PullStrategyTest {
         val session = sessionBuilder.build()
         assertEquals("VTODO should NOT be counted as parse error", 0, session.skippedParseError)
         assertEquals("Session should be SUCCESS, not PARTIAL", org.onekash.kashcal.sync.session.SyncStatus.SUCCESS, session.status)
-        // Token should advance (no parse errors holding it back)
+        // The token advances: no parse error holds it
         assertEquals("sync-token-2", (result as PullResult.Success).newSyncToken)
     }
 
@@ -3509,7 +3565,7 @@ class PullStrategyTest {
                 changed = listOf(SyncItem(badHref, "etag-bad", SyncItemStatus.OK)),
                 deleted = emptyList()
             ))
-        // Malformed ICS: has VCALENDAR but no valid component inside
+        // Malformed ICS: a VCALENDAR with no component inside
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
             CalDavResult.success(listOf(
                 CalDavEvent(badHref, badUrl, "etag-bad",
@@ -3540,8 +3596,9 @@ class PullStrategyTest {
 
     @Test
     fun `full pull — VTODO resource in processEvents is silently skipped`() = runTest {
-        // Defense-in-depth: pullFull uses fetchEtagsInRange which has comp-filter VEVENT,
-        // so VTODOs shouldn't reach processEvents. But if they do, they should be skipped.
+        // pullFull's calendar-query (fetchEtagsInRange) filters on VEVENT, but its PROPFIND
+        // path lists every resource, so a VTODO can reach processEvents. It is skipped. This
+        // test serves the VTODO through the calendar-query stub.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}event-1.ics"
         val vtodoUrl = "${calendar.caldavUrl}todo-1.ics"
@@ -3574,14 +3631,13 @@ class PullStrategyTest {
         assertEquals("Session should be SUCCESS", org.onekash.kashcal.sync.session.SyncStatus.SUCCESS, session.status)
     }
 
-    // ========== A1: Parse Exception Resilience Tests ==========
+    // ========== Parse Exception Resilience Tests ==========
 
     @Test
     fun `parser exception skips event and continues to next`() = runTest {
-        // A1: Verify that an Exception thrown by icalParser.parseAllEvents() is caught
-        // and the event is skipped, rather than aborting processEvents().
-        // ICalParser internally catches Exception and returns ParseResult.Error, so this
-        // is defense-in-depth. We use mockkConstructor to force a throw for testing.
+        // An exception thrown by parseAllEvents() skips the event instead of aborting
+        // processEvents(). ICalParser catches Exception itself and returns
+        // ParseResult.Error, so mockkConstructor forces the throw.
         mockkConstructor(org.onekash.icaldav.parser.ICalParser::class)
         try {
             val calendar = createCalendar(ctag = null, syncToken = null)
@@ -3601,7 +3657,7 @@ class PullStrategyTest {
             coEvery { eventsDao.getByCaldavUrl(any()) } returns null
             coEvery { eventsDao.upsert(any()) } returns 1L
 
-            // Mock parser: crash on bad data, real parser for good data
+            // The parser throws on the bad data and runs for the good data
             every {
                 anyConstructed<org.onekash.icaldav.parser.ICalParser>().parseAllEvents(badIcal)
             } throws RuntimeException("Unexpected parser crash")
@@ -3618,7 +3674,7 @@ class PullStrategyTest {
 
             val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
 
-            // Verify: sync completes successfully (bad event skipped, good event processed)
+            // The sync succeeds: the bad event is skipped, the good one processed
             assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
             assertEquals(1, (result as PullResult.Success).eventsAdded)
             val session = sessionBuilder.build()
@@ -3628,12 +3684,12 @@ class PullStrategyTest {
         }
     }
 
-    // ========== A3: Batch Fallback Resilience Tests ==========
+    // ========== Batch Fallback Resilience Tests ==========
 
     @Test
     fun `batch multiget failure falls back to individual fetches`() = runTest {
-        // A3: When a multiget batch fails, fall back to fetchSingleHrefConcurrent
-        // for that batch. Other batches (if any) continue normally.
+        // A failed multiget batch falls back to fetchSingleHrefConcurrent for that batch;
+        // other batches are unaffected (this test has one).
         val calendar = createCalendar(ctag = null, syncToken = null)
         val href1 = "event1.ics"
         val href2 = "event2.ics"
@@ -3641,15 +3697,15 @@ class PullStrategyTest {
         val url2 = "${calendar.caldavUrl}event2.ics"
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
-        // Step 1: fetchEtagsInRange returns two hrefs
+        // fetchEtagsInRange lists two hrefs
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(href1, "etag-1"), Pair(href2, "etag-2")))
 
-        // Step 2: multiget batch FAILS
+        // The multiget batch fails
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, match { it.size > 1 }) } returns
             CalDavResult.error(500, "Internal Server Error")
 
-        // Step 3: individual fetches succeed
+        // The single-href fetches succeed
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(href1)) } returns
             CalDavResult.success(listOf(
                 CalDavEvent(href1, url1, "etag-1", createSimpleIcal("uid-1", "Event 1"))
@@ -3666,14 +3722,14 @@ class PullStrategyTest {
 
         val result = pullStrategy.pull(calendar, client = client)
 
-        // Verify: both events recovered via individual fallback
+        // The fallback recovers both events
         assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
         assertEquals(2, (result as PullResult.Success).eventsAdded)
     }
 
     @Test
     fun `batch multiget failure with one bad individual event recovers the rest`() = runTest {
-        // A3 + individual fallback: batch fails, individual fetches recover all except one bad event
+        // The batch fails; the single-href fetches recover all but the failing event
         val calendar = createCalendar(ctag = null, syncToken = null)
         val href1 = "event1.ics"
         val href2 = "bad-event.ics"
@@ -3683,11 +3739,11 @@ class PullStrategyTest {
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(href1, "etag-1"), Pair(href2, "etag-2")))
 
-        // Multiget batch fails
+        // The multiget batch fails
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, match { it.size > 1 }) } returns
             CalDavResult.error(500, "Internal Server Error")
 
-        // Individual: first succeeds, second fails
+        // Single-href: the first succeeds, the second fails
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(href1)) } returns
             CalDavResult.success(listOf(
                 CalDavEvent(href1, url1, "etag-1", createSimpleIcal("uid-1", "Good Event"))
@@ -3702,25 +3758,25 @@ class PullStrategyTest {
 
         val result = pullStrategy.pull(calendar, client = client)
 
-        // Verify: good event recovered, bad event silently skipped
+        // The good event is recovered; the failed one is silently skipped
         assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
     }
 
     @Test
     fun `MULTIGET_BATCH_SIZE is 20`() {
-        // Verify batch size was reduced from 50 to 20
+        // The multiget batch size is 20
         val field = PullStrategy::class.java.getDeclaredField("MULTIGET_BATCH_SIZE")
         field.isAccessible = true
         assertEquals(20, field.getInt(null))
     }
 
-    // ========== A1: Adverse Tests — All Events Fail Parse ==========
+    // ========== Adverse Tests: All Events Fail Parse ==========
 
     @Test
     fun `all events have parse exceptions — returns Success with zero events`() = runTest {
-        // A1 adverse: When EVERY event throws a parse exception, sync should still
-        // complete with Success(eventsAdded=0), not abort or return Error.
+        // When every event throws a parse exception, the sync still completes with
+        // Success(eventsAdded=0), not an abort or Error.
         mockkConstructor(org.onekash.icaldav.parser.ICalParser::class)
         try {
             val calendar = createCalendar(ctag = null, syncToken = null)
@@ -3733,7 +3789,7 @@ class PullStrategyTest {
             coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
             coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
 
-            // All events crash the parser
+            // Every event makes the parser throw
             every {
                 anyConstructed<org.onekash.icaldav.parser.ICalParser>().parseAllEvents(any())
             } throws RuntimeException("Corrupt ICS data")
@@ -3758,7 +3814,7 @@ class PullStrategyTest {
 
     @Test
     fun `multiple parse exceptions counts each one in session stats`() = runTest {
-        // A1: Verify session.skippedParseError accurately counts multiple failures
+        // session.skippedParseError counts each failure
         mockkConstructor(org.onekash.icaldav.parser.ICalParser::class)
         try {
             val calendar = createCalendar(ctag = null, syncToken = null)
@@ -3777,7 +3833,7 @@ class PullStrategyTest {
             coEvery { eventsDao.getByCaldavUrl(any()) } returns null
             coEvery { eventsDao.upsert(any()) } returns 1L
 
-            // Bad data crashes, good data uses real parser
+            // The parser throws on the bad data and runs for the good data
             every {
                 anyConstructed<org.onekash.icaldav.parser.ICalParser>().parseAllEvents(match { it.startsWith("BAD-") })
             } throws RuntimeException("Corrupt")
@@ -3805,8 +3861,8 @@ class PullStrategyTest {
 
     @Test
     fun `parser exception in incremental pull skips event and continues`() = runTest {
-        // A1 on incremental path: parse exception during pullIncremental should
-        // skip the event and continue, same as pullFull.
+        // On the incremental path a parse exception skips the event and the pull
+        // continues, as in pullFull.
         mockkConstructor(org.onekash.icaldav.parser.ICalParser::class)
         try {
             val calendar = createCalendar(ctag = "old-ctag", syncToken = "old-token")
@@ -3865,12 +3921,12 @@ class PullStrategyTest {
         }
     }
 
-    // ========== A3: Adverse Tests — Multi-Batch Partial Failure ==========
+    // ========== Adverse Tests: Multi-Batch Partial Failure ==========
 
     @Test
     fun `multi-batch sync with middle batch failing recovers via fallback`() = runTest {
-        // A3 adverse: 60 events = 3 batches of 20. Batch 2 fails, batches 1 and 3 succeed.
-        // Events from batch 2 should be recovered via individual fallback.
+        // 60 events = 3 batches of 20. The second batch call fails, the others succeed, and
+        // the failed batch's events are recovered by the single-href fallback.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventCount = 60
         val serverEvents = (1..eventCount).map { i ->
@@ -3882,22 +3938,22 @@ class PullStrategyTest {
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEvents.map { Pair(it.href, it.etag) })
 
-        // Track which batch call this is
+        // Counts the batch calls
         var batchCallCount = 0
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } answers {
             val hrefs = secondArg<List<String>>()
             if (hrefs.size > 1) {
-                // Multi-href batch call
+                // A multi-href batch call
                 batchCallCount++
                 if (batchCallCount == 2) {
-                    // Batch 2 fails
+                    // The second batch call fails
                     CalDavResult.error(500, "Internal Server Error")
                 } else {
-                    // Batches 1 and 3 succeed
+                    // The other batch calls succeed
                     CalDavResult.success(serverEvents.filter { it.href in hrefs })
                 }
             } else {
-                // Single-href fallback call (for batch 2 events)
+                // A single-href fallback call, for the failed batch's events
                 val href = hrefs[0]
                 val event = serverEvents.find { it.href == href }
                 CalDavResult.success(listOfNotNull(event))
@@ -3912,14 +3968,14 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected PullResult.Success but got $result", result is PullResult.Success)
-        // All 60 events should be processed: 40 from successful batches + 20 from fallback
+        // All 60 events are processed: 40 from the good batches, 20 from the fallback
         assertEquals(60, (result as PullResult.Success).eventsAdded)
     }
 
     @Test
     fun `incremental pull batch failure falls back to individual fetches`() = runTest {
-        // A3 on incremental path: batch multiget failure during pullIncremental
-        // should fall back to individual fetches, same as pullFull.
+        // On the incremental path a failed batch multiget falls back to single-href
+        // fetches, as in pullFull.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "old-token")
         val href1 = "event1.ics"
         val href2 = "event2.ics"
@@ -3937,11 +3993,11 @@ class PullStrategyTest {
                 deleted = emptyList()
             ))
 
-        // Batch fetch fails
+        // The batch fetch fails
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, match { it.size > 1 }) } returns
             CalDavResult.error(500, "Internal Server Error")
 
-        // Individual fetches succeed
+        // The single-href fetches succeed
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, listOf(href1)) } returns
             CalDavResult.success(listOf(
                 CalDavEvent(href1, url1, "etag-1", createSimpleIcal("uid-1", "Event 1"))
@@ -3964,8 +4020,8 @@ class PullStrategyTest {
 
     @Test
     fun `batch fallback with all individual fetches failing returns Success with zero events`() = runTest {
-        // A3 adverse: batch fails AND every individual fallback also fails.
-        // Sync should still complete with Success(eventsAdded=0).
+        // The batch fails and every single-href fallback fails too. The sync still
+        // completes with Success(eventsAdded=0).
         val calendar = createCalendar(ctag = null, syncToken = null)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
@@ -3975,7 +4031,7 @@ class PullStrategyTest {
                 Pair("event2.ics", "etag-2"),
                 Pair("event3.ics", "etag-3")
             ))
-        // All fetches fail — batch and individual
+        // Every fetch fails, batched and single
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
             CalDavResult.error(503, "Service Unavailable", isRetryable = true)
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
@@ -3992,7 +4048,7 @@ class PullStrategyTest {
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
         assertEquals(0, (result as PullResult.Success).eventsAdded)
-        // Verify fetchEventsByHref was called: 1 batch + 3 individual fallbacks = 4
+        // 1 batch + 3 single-href fallbacks = 4 calls; asserted as at least 2
         coVerify(atLeast = 2) { client.fetchEventsByHref(calendar.caldavUrl, any()) }
     }
 
@@ -4000,7 +4056,7 @@ class PullStrategyTest {
 
     @Test
     fun `pullFull uses configurable sync lookback from preferences`() = runTest {
-        // Set lookback to 730 days (2 years) instead of default 365
+        // A 730-day (2-year) lookback instead of the default 365
         every { dataStore.syncPastDays } returns flowOf(730)
 
         val calendar = createCalendar(ctag = null, syncToken = null)
@@ -4009,7 +4065,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
         coEvery { eventsDao.deleteDuplicateMasterEvents() } returns 0
 
-        // Capture startMs argument from fetchEtagsInRange
+        // Captures fetchEtagsInRange's startMs
         val startMsSlot = slot<Long>()
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, capture(startMsSlot), any()) } returns
             CalDavResult.success(emptyList())
@@ -4021,12 +4077,12 @@ class PullStrategyTest {
         val expected730DaysAgo = now - (730L * 24 * 60 * 60 * 1000)
         val expected365DaysAgo = now - (365L * 24 * 60 * 60 * 1000)
 
-        // startMs should be ~730 days ago (within 5 second tolerance)
+        // startMs is about 730 days ago (within 5 seconds)
         assertTrue(
             "startMs should be ~730 days ago, but was ${(now - capturedStartMs) / (24 * 60 * 60 * 1000)} days ago",
             kotlin.math.abs(capturedStartMs - expected730DaysAgo) < 5000
         )
-        // startMs should NOT be ~365 days ago (proves it's not hardcoded)
+        // startMs isn't about 365 days ago, so the lookback isn't hardcoded
         assertTrue(
             "startMs should NOT be ~365 days ago (hardcoded value)",
             kotlin.math.abs(capturedStartMs - expected365DaysAgo) > 100 * 24 * 60 * 60 * 1000
@@ -4035,7 +4091,7 @@ class PullStrategyTest {
 
     @Test
     fun `pullFull uses unfiltered range when sync lookback is All`() = runTest {
-        // "All" lookback = Int.MAX_VALUE should use startMs = 0L
+        // An "All" lookback (Int.MAX_VALUE) uses startMs = 0L
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
         val calendar = createCalendar(ctag = null, syncToken = null)
@@ -4055,10 +4111,10 @@ class PullStrategyTest {
 
     @Test
     fun `forceFullSync pullFull uses configurable lookback not hardcoded`() = runTest {
-        // Set lookback to 180 days (6 months)
+        // A 180-day (6-month) lookback
         every { dataStore.syncPastDays } returns flowOf(180)
 
-        // Calendar WITH syncToken — would normally go incremental, but forceFullSync overrides
+        // A calendar with a syncToken would go incremental; forceFullSync overrides that
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "sync-token-123")
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-sync-token")
@@ -4069,14 +4125,14 @@ class PullStrategyTest {
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, capture(startMsSlot), any()) } returns
             CalDavResult.success(emptyList())
 
-        // forceFullSync = true forces pullFull despite having syncToken
+        // forceFullSync = true takes pullFull despite the syncToken
         pullStrategy.pull(calendar, client = client, forceFullSync = true)
 
         val capturedStartMs = startMsSlot.captured
         val now = System.currentTimeMillis()
         val expected180DaysAgo = now - (180L * 24 * 60 * 60 * 1000)
 
-        // startMs should be ~180 days ago (within 5 second tolerance)
+        // startMs is about 180 days ago (within 5 seconds)
         assertTrue(
             "startMs should be ~180 days ago, but was ${(now - capturedStartMs) / (24 * 60 * 60 * 1000)} days ago",
             kotlin.math.abs(capturedStartMs - expected180DaysAgo) < 5000
@@ -4087,32 +4143,31 @@ class PullStrategyTest {
 
     @Test
     fun `pullFull skips download for events with matching etags`() = runTest {
-        // Scenario: 3 events on server, 2 already exist locally with matching etags
-        // Expected: Only 1 event (new/changed) should be downloaded
+        // 3 events on the server, 2 local with matching etags: only the third downloads
         val calendar = createCalendar(ctag = null, syncToken = null)
         every { dataStore.syncPastDays } returns flowOf(365)
 
-        // Use absolute paths - ICloudQuirks.buildEventUrl combines baseHost + href
+        // Absolute paths: ICloudQuirks.buildEventUrl joins the base host and the href
         val href1 = "/calendars/home/event1.ics"
         val href2 = "/calendars/home/event2.ics"
         val href3 = "/calendars/home/event3.ics"
-        // buildEventUrl produces: baseHost (https://caldav.example.com) + href
+        // buildEventUrl gives the base host (https://caldav.example.com) + href
         val url1 = "https://caldav.example.com/calendars/home/event1.ics"
         val url2 = "https://caldav.example.com/calendars/home/event2.ics"
         val url3 = "https://caldav.example.com/calendars/home/event3.ics"
 
-        // Server returns 3 events with their etags
+        // The server lists 3 events with their etags
         val serverEtags = listOf(
             Pair(href1, "etag-1"),
             Pair(href2, "etag-2"),
             Pair(href3, "etag-3")
         )
 
-        // Local DB has 2 events with matching etags
+        // The local DB has 2 events with matching etags
         val localEtagEntries = listOf(
-            EtagEntry(caldavUrl = url1, etag = "etag-1"),  // Matches server
-            EtagEntry(caldavUrl = url2, etag = "etag-2")   // Matches server
-            // event3 is NOT in local DB
+            EtagEntry(caldavUrl = url1, etag = "etag-1"),  // matches the server
+            EtagEntry(caldavUrl = url2, etag = "etag-2")   // matches the server
+            // event3 isn't in the local DB
         )
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
@@ -4121,7 +4176,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCalendarIdInRange(any<Long>(), any<Long>(), any<Long>()) } returns emptyList()
         coEvery { eventsDao.getEtagMapForCalendar(any<Long>(), any<Long>(), any<Long>()) } returns localEtagEntries
 
-        // Track which hrefs are actually fetched
+        // Captures the fetched hrefs
         val fetchedHrefsSlot = slot<List<String>>()
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, capture(fetchedHrefsSlot)) } returns
             CalDavResult.success(listOf(
@@ -4134,34 +4189,34 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
-        // Only event3 should be fetched (event1 and event2 have matching etags)
+        // Only event3 is fetched; event1 and event2 have matching etags
         assertEquals(listOf(href3), fetchedHrefsSlot.captured)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
     }
 
     @Test
     fun `pullFull downloads events with different etags`() = runTest {
-        // Scenario: 2 events on server, 1 exists locally with DIFFERENT etag (modified on server)
-        // Expected: The modified event should be downloaded
+        // 2 events on the server, 1 local with a different etag (modified on the server):
+        // the modified event is downloaded
         val calendar = createCalendar(ctag = null, syncToken = null)
         every { dataStore.syncPastDays } returns flowOf(365)
 
-        // Use absolute paths - ICloudQuirks.buildEventUrl combines baseHost + href
+        // Absolute paths: ICloudQuirks.buildEventUrl joins the base host and the href
         val href1 = "/calendars/home/event1.ics"
         val href2 = "/calendars/home/event2.ics"
         val url1 = "https://caldav.example.com/calendars/home/event1.ics"
         val url2 = "https://caldav.example.com/calendars/home/event2.ics"
 
-        // Server: event1 has new etag (modified), event2 unchanged
+        // On the server event1 has a new etag (modified) and event2 is unchanged
         val serverEtags = listOf(
-            Pair(href1, "etag-1-MODIFIED"),  // Changed on server
-            Pair(href2, "etag-2")            // Unchanged
+            Pair(href1, "etag-1-MODIFIED"),  // changed on the server
+            Pair(href2, "etag-2")            // unchanged
         )
 
-        // Local DB has old etag for event1
+        // The local DB has event1's old etag
         val localEtagEntries = listOf(
-            EtagEntry(caldavUrl = url1, etag = "etag-1-OLD"),  // Mismatches server
-            EtagEntry(caldavUrl = url2, etag = "etag-2")       // Matches server
+            EtagEntry(caldavUrl = url1, etag = "etag-1-OLD"),  // differs from the server
+            EtagEntry(caldavUrl = url2, etag = "etag-2")       // matches the server
         )
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
@@ -4182,19 +4237,18 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
-        // Only event1 should be fetched (different etag)
+        // Only event1 is fetched: its etag differs
         assertEquals(listOf(href1), fetchedHrefsSlot.captured)
         assertEquals(1, (result as PullResult.Success).eventsUpdated)
     }
 
     @Test
     fun `pullFull downloads events not in local DB`() = runTest {
-        // Scenario: Server has events that don't exist locally at all
-        // Expected: All new events should be downloaded
+        // The server has events that don't exist locally: all are downloaded
         val calendar = createCalendar(ctag = null, syncToken = null)
         every { dataStore.syncPastDays } returns flowOf(365)
 
-        // Use absolute paths - ICloudQuirks.buildEventUrl combines baseHost + href
+        // Absolute paths: ICloudQuirks.buildEventUrl joins the base host and the href
         val href1 = "/calendars/home/new-event1.ics"
         val href2 = "/calendars/home/new-event2.ics"
         val url1 = "https://caldav.example.com/calendars/home/new-event1.ics"
@@ -4205,7 +4259,7 @@ class PullStrategyTest {
             Pair(href2, "etag-2")
         )
 
-        // Local DB is empty (no etag entries)
+        // The local DB is empty (no etag entries)
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "server-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(serverEtags)
@@ -4225,19 +4279,18 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
-        // Both events should be fetched
+        // Both events are fetched
         assertEquals(listOf(href1, href2), fetchedHrefsSlot.captured)
         assertEquals(2, (result as PullResult.Success).eventsAdded)
     }
 
     @Test
     fun `pullFull returns Success with zero downloads when all etags match`() = runTest {
-        // Scenario: All server events already exist locally with matching etags
-        // Expected: No downloads, Success result
+        // Every server event is local with a matching etag: no downloads, Success
         val calendar = createCalendar(ctag = null, syncToken = null)
         every { dataStore.syncPastDays } returns flowOf(365)
 
-        // Use absolute paths - ICloudQuirks.buildEventUrl combines baseHost + href
+        // Absolute paths: ICloudQuirks.buildEventUrl joins the base host and the href
         val href1 = "/calendars/home/event1.ics"
         val href2 = "/calendars/home/event2.ics"
         val url1 = "https://caldav.example.com/calendars/home/event1.ics"
@@ -4248,7 +4301,7 @@ class PullStrategyTest {
             Pair(href2, "etag-2")
         )
 
-        // All events exist locally with matching etags
+        // Every event is local with a matching etag
         val localEtagEntries = listOf(
             EtagEntry(caldavUrl = url1, etag = "etag-1"),
             EtagEntry(caldavUrl = url2, etag = "etag-2")
@@ -4264,7 +4317,7 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
-        // fetchEventsByHref should NOT be called since all etags match
+        // No fetchEventsByHref: every etag matches
         coVerify(exactly = 0) { client.fetchEventsByHref(any(), any()) }
         assertEquals(0, (result as PullResult.Success).eventsAdded)
         assertEquals(0, result.eventsUpdated)
@@ -4272,7 +4325,7 @@ class PullStrategyTest {
 
     @Test
     fun `incremental sync still works correctly after etag comparison feature`() = runTest {
-        // Regression: Ensure etag comparison in pullFull doesn't break incremental sync path
+        // pullFull's etag comparison stays off the incremental path
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "old-token")
         val changedHref = "changed-event.ics"
         val changedUrl = "${calendar.caldavUrl}changed-event.ics"
@@ -4297,7 +4350,7 @@ class PullStrategyTest {
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
 
-        // getEtagMapForCalendar should NOT be called for incremental sync
+        // Incremental sync doesn't call getEtagMapForCalendar
         coVerify(exactly = 0) { eventsDao.getEtagMapForCalendar(any(), any(), any()) }
     }
 
@@ -4323,7 +4376,7 @@ class PullStrategyTest {
 
     @Test
     fun `hasValidTimestamps accepts historical event with negative startTs`() {
-        // Pre-1970 events have negative timestamps — legitimate
+        // Pre-1970 events have negative timestamps and are legitimate
         val event = createEvent().copy(startTs = -1000000, endTs = -999000)
         assertTrue(PullStrategy.hasValidTimestamps(event))
     }
@@ -4337,7 +4390,7 @@ class PullStrategyTest {
 
     @Test
     fun `historical event from 2005 is NOT skipped`() = runTest {
-        // Events with old but valid timestamps are legitimate — must not be rejected.
+        // Old but valid timestamps are legitimate and must not be rejected.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}historical.ics"
 
@@ -4409,18 +4462,18 @@ class PullStrategyTest {
         coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "milestone-uid" }) }
     }
 
-    // ========== Race Condition: hasPendingChanges() TOCTOU Fix (#9) ==========
+    // ========== Race Condition: hasPendingChanges() TOCTOU (#9) ==========
 
     @Test
     fun `pull skips upsert when event gains pending changes between check and transaction`() = runTest {
-        // RACE SCENARIO: User edits event between the outer hasPendingChanges() check (line 865)
-        // and the inner upsert transaction (line 927). The outer check sees SYNCED, but by the
-        // time the transaction runs, the event is PENDING_UPDATE. Without the fix, the server
-        // version silently overwrites the user's local edit (data loss).
+        // The user edits the event between the outer hasPendingChanges() check and the
+        // upsert transaction. The outer check sees SYNCED, but when the transaction runs the
+        // event is PENDING_UPDATE. Without the re-read, the server version silently
+        // overwrites the local edit.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}race-event.ics"
 
-        // Existing event starts as SYNCED — passes the outer hasPendingChanges() check
+        // The existing event starts SYNCED and passes the outer hasPendingChanges() check
         val existingEvent = createEvent(
             id = 500L,
             caldavUrl = eventUrl,
@@ -4436,11 +4489,11 @@ class PullStrategyTest {
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(existingEvent)
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
-        // UID lookup returns the existing event (SYNCED at outer check time)
+        // The UID lookup returns the existing event (SYNCED at the outer check)
         coEvery { eventsDao.getMasterByUidAndCalendar("race-uid", calendar.id) } returns existingEvent
 
-        // THE RACE: getSyncStatus returns PENDING_UPDATE inside the transaction,
-        // simulating a user edit that happened after the outer check
+        // The race: getSyncStatus returns PENDING_UPDATE inside the transaction, as after a
+        // user edit that followed the outer check
         coEvery { eventsDao.getSyncStatus(500L) } returns SyncStatus.PENDING_UPDATE
 
         val sessionBuilder = SyncSessionBuilder(
@@ -4453,9 +4506,9 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client, sessionBuilder = sessionBuilder)
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
-        // Upsert must NOT be called — the event has pending local changes
+        // No upsert: the event has pending local changes
         coVerify(exactly = 0) { eventsDao.upsert(match { it.uid == "race-uid" }) }
-        // The skip should be counted in session metrics
+        // The session counts the skip
         val session = sessionBuilder.build()
         assertTrue("Should count race-skipped event as skippedPendingLocal",
             session.skippedPendingLocal > 0)
@@ -4463,7 +4516,7 @@ class PullStrategyTest {
 
     @Test
     fun `pull proceeds with upsert when getSyncStatus confirms SYNCED inside transaction`() = runTest {
-        // HAPPY PATH: No race — event is still SYNCED when re-checked inside transaction
+        // No race: the event is still SYNCED when re-checked inside the transaction
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}normal-event.ics"
 
@@ -4484,7 +4537,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingEvent
         coEvery { eventsDao.getMasterByUidAndCalendar("normal-uid", calendar.id) } returns existingEvent
 
-        // No race: getSyncStatus returns SYNCED (consistent with outer check)
+        // getSyncStatus returns SYNCED, as the outer check saw
         coEvery { eventsDao.getSyncStatus(600L) } returns SyncStatus.SYNCED
         coEvery { eventsDao.upsert(any()) } returns 600L
 
@@ -4492,7 +4545,7 @@ class PullStrategyTest {
 
         assertTrue("Expected PullResult.Success", result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsUpdated)
-        // Upsert SHOULD be called — no race detected
+        // Upserted: no race
         coVerify(exactly = 1) { eventsDao.upsert(match { it.uid == "normal-uid" }) }
     }
 
@@ -4586,25 +4639,23 @@ class PullStrategyTest {
         assertFalse(PullStrategy.hasContentChanged(existing, incoming))
     }
 
-    // ========== Sync Change Suppression for Recurring Series ==========
+    // ========== Recurring Series: Exception Pruning, Matching, Change Suppression ==========
 
     @Test
     fun `exception removed server-side is deleted locally when master resource omits it`() = runTest {
-        // Reproduces the device-tested bug: an occurrence was edited into an
-        // exception, then deleted on another client (iPhone). iCloud adds an
-        // EXDATE to the master AND drops the override VEVENT from the resource.
-        // RFC 4791 §4.1: all same-UID components live in one resource, so when
-        // the master is present, the exceptions in that resource are the
-        // COMPLETE authoritative set. A local exception row whose instance is no
-        // longer present must be deleted — otherwise the stale occurrence
-        // lingers on the calendar (observed: "exception not deleted").
+        // An occurrence was edited into an exception, then deleted on another client (an
+        // iPhone). iCloud adds an EXDATE to the master and drops the exception VEVENT from
+        // the resource. RFC 4791 §4.1: same-UID components in a calendar collection must be
+        // in one resource, so when the master is present, the exceptions in that resource
+        // are the complete set. A local exception row whose instance is gone must be
+        // deleted, or the stale occurrence lingers on the calendar.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}recur.ics"
         val goneInstanceTime = parseDate("2024-01-09 10:00")
 
         val masterEvent = createEvent(id = 800L, caldavUrl = eventUrl, title = "Daily")
             .copy(uid = "recur-uid", rrule = "FREQ=DAILY;COUNT=10", etag = "etag-1")
-        // Local exception row for the occurrence that was deleted on the phone.
+        // The local exception row for the occurrence deleted on the phone.
         val staleException = createEvent(id = 801L, caldavUrl = eventUrl, title = "Daily (edited)")
             .copy(
                 uid = "recur-uid",
@@ -4615,8 +4666,8 @@ class PullStrategyTest {
                 endTs = parseDate("2024-01-09 08:25")
             )
 
-        // Server now returns ONLY the master, with the deleted slot EXDATE'd.
-        // No exception VEVENT in the resource.
+        // The server returns only the master, with the deleted slot in EXDATE and no
+        // exception VEVENT.
         val masterOnlyIcal = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -4634,11 +4685,10 @@ class PullStrategyTest {
         """.trimIndent()
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-2", displayName = null, color = null, isReadOnly = null))
-        // href is the FULL resource URL so buildEventUrl round-trips to exactly
-        // eventUrl — the bundled exception shares the master's caldavUrl, so the
-        // generic URL-based stale-delete path (caldavUrl not in server set) does
-        // NOT fire. Only exception-aware pruning can delete the stale row, so
-        // this isolates the real gap.
+        // The href is the full resource URL, so buildEventUrl returns eventUrl unchanged.
+        // The bundled exception shares the master's caldavUrl, so the generic URL-based
+        // stale-delete (caldavUrl not in the server set) doesn't fire; only
+        // exception-aware pruning can delete the stale row.
         mockTwoStepFetch(calendar.caldavUrl, listOf(
             CalDavEvent(eventUrl, eventUrl, "etag-2", masterOnlyIcal)
         ))
@@ -4654,17 +4704,15 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Pull should succeed", result is PullResult.Success)
-        // The stale exception row must be deleted — it no longer exists on the
-        // server (bundled with the master, which now omits it) and its slot is
-        // EXDATE'd. The generic URL path can't catch it (URL matches the master).
+        // The stale exception row is deleted: the master's resource omits it and its slot
+        // is in EXDATE. The generic URL path can't catch it (its URL matches the master).
         coVerify { eventsDao.deleteById(801L) }
     }
 
     @Test
     fun `exception still present in master resource is NOT pruned`() = runTest {
-        // Over-deletion guard: the normal case where the master AND its
-        // exception are both in the resource. Pruning must NOT delete the
-        // exception that is still present.
+        // Over-deletion guard: the master and its exception are both in the resource, so
+        // pruning must not delete the exception.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}recur.ics"
         val instanceTime = parseDate("2024-01-09 10:00")
@@ -4681,7 +4729,7 @@ class PullStrategyTest {
                 endTs = parseDate("2024-01-09 08:25")
             )
 
-        // Resource still contains BOTH master and the exception VEVENT.
+        // The resource holds both the master and the exception VEVENT.
         val bundledIcal = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -4721,20 +4769,18 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Pull should succeed", result is PullResult.Success)
-        // The still-present exception must NOT be deleted.
+        // The exception still present isn't deleted.
         coVerify(exactly = 0) { eventsDao.deleteById(801L) }
     }
 
     @Test
     fun `exception is NOT pruned when master absent from batch`() = runTest {
-        // RFC 4791 §4.1 allows a resource carrying only overrides (no master).
-        // Such a batch is not authoritative for pruning — the master and other
-        // overrides may simply be outside this sync window. An exception-only
-        // resource must NOT trigger deletion of sibling exceptions.
+        // RFC 4791 §4.1 allows a resource holding only exceptions (no master). Such a batch
+        // isn't authoritative for pruning: the master and other exceptions may be outside
+        // this sync window. An exception-only resource must not delete sibling exceptions.
         //
-        // Both local rows share the master resource URL, which IS returned by
-        // the batch, so the generic URL-based stale-delete path spares them —
-        // isolating the exception-pruning guard as the only thing that could
+        // Both local rows share the master resource URL, which the batch returns, so the
+        // generic URL-based stale-delete spares them; only the exception-pruning guard could
         // delete row 802.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val masterUrl = "${calendar.caldavUrl}master.ics"
@@ -4744,13 +4790,13 @@ class PullStrategyTest {
         val masterEvent = createEvent(id = 800L, caldavUrl = masterUrl, title = "Daily")
             .copy(uid = "recur-uid", rrule = "FREQ=DAILY;COUNT=10", etag = "m-etag",
                 startTs = parseDate("2024-01-01 10:00"), endTs = parseDate("2024-01-01 11:00"), timezone = null)
-        // A local exception for a DIFFERENT instance than the one in this batch.
+        // A local exception for another instance than the one in this batch.
         val otherException = createEvent(id = 802L, caldavUrl = masterUrl, title = "Other edited")
             .copy(uid = "recur-uid", etag = "m-etag", originalEventId = 800L, originalInstanceTime = otherInstanceTime)
 
-        // The batch returns the master's resource, but only the ETag row for it
-        // in this window carries just an override (RECURRENCE-ID), no master
-        // VEVENT — mirroring a windowed fetch that surfaced only one instance.
+        // The batch returns the master's resource URL, but its body holds only an exception
+        // (RECURRENCE-ID) and no master VEVENT, as from a windowed fetch that surfaced a
+        // single instance.
         val excOnlyIcal = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -4767,7 +4813,7 @@ class PullStrategyTest {
         """.trimIndent()
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-2", displayName = null, color = null, isReadOnly = null))
-        // href == masterUrl so buildEventUrl round-trips and the URL path spares
+        // href == masterUrl, so buildEventUrl returns it unchanged and the URL path spares
         // both local rows (their caldavUrl is in the server set).
         mockTwoStepFetch(calendar.caldavUrl, listOf(
             CalDavEvent(masterUrl, masterUrl, "etag-2", excOnlyIcal)
@@ -4784,16 +4830,16 @@ class PullStrategyTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue("Pull should succeed", result is PullResult.Success)
-        // The master VEVENT was NOT parsed in this batch → uid not in the
-        // authoritative-master set → exception pruning must NOT fire for 802.
+        // No master VEVENT was parsed in this batch, so the UID isn't among the saved
+        // masters and pruning doesn't touch 802.
         coVerify(exactly = 0) { eventsDao.deleteById(802L) }
     }
 
     /**
-     * Shared fixture for the EXDATE-gated prune tests. The server resource
-     * contains only the master (the override VEVENT is gone). Callers control
-     * whether the master carries an EXDATE for the missing instance, the
-     * exception's sync status, and recentlyPushedEventIds.
+     * Runs a pull for the EXDATE-gated prune tests. The server resource holds only the
+     * master (the exception VEVENT is gone). Callers set whether the master carries an
+     * EXDATE for the missing instance, the exception's sync status, and
+     * recentlyPushedEventIds.
      */
     private suspend fun runPruneScenario(
         masterExdate: String?,
@@ -4846,9 +4892,9 @@ class PullStrategyTest {
 
     @Test
     fun `absent exception NOT pruned when master has no covering EXDATE`() = runTest {
-        // Split-resource server / parser-dropped override: the override is
-        // absent from the batch but the master has NO EXDATE for it, so it may
-        // still be live on the server. Must NOT prune (erring toward keeping).
+        // A split-resource server or a parser-dropped exception: the exception is absent
+        // from the batch but the master has no EXDATE for it, so it may still be live on
+        // the server. Not pruned (erring toward keeping).
         val result = runPruneScenario(masterExdate = null)
         assertTrue(result is PullResult.Success)
         coVerify(exactly = 0) { eventsDao.deleteById(801L) }
@@ -4858,7 +4904,7 @@ class PullStrategyTest {
     fun `absent exception pruned only when EXDATE covers it - occurrence cancelled and change emitted`() = runTest {
         val result = runPruneScenario(masterExdate = parseDate("2024-01-09 10:00").toString())
         assertTrue(result is PullResult.Success)
-        // Row deleted, occurrence cancelled, and exactly one DELETED change surfaced.
+        // The row is deleted, the occurrence cancelled, and one DELETED change surfaced.
         coVerify { database.occurrencesDao().markCancelledByException(801L) }
         coVerify { eventsDao.deleteById(801L) }
         val deletes = (result as PullResult.Success).changes.filter { it.type == ChangeType.DELETED }
@@ -4889,30 +4935,27 @@ class PullStrategyTest {
 
     @Test
     fun `value-type-mismatched RECURRENCE-ID matches its stored exception instead of duplicating`() = runTest {
-        // A recurring master (timed) with an exception whose RECURRENCE-ID is a
-        // DATE-form value (value-type mismatch: RFC 5545 §3.8.4.4 says it MUST
-        // share DTSTART's value type, but peer clients emit the mismatch and
-        // servers preserve it verbatim). ICalEventMapper stores the exception's
-        // originalInstanceTime NORMALIZED to the master's local time-of-day, so
-        // the exception's pull-back lookup MUST normalize the same way. The DAO
-        // here returns the stored exception only for the normalized instance
-        // time (10:00Z) and null for the raw midnight-UTC value — mirroring a
-        // real DB. If the lookup keys off the raw value it misses, and the
-        // exception is wrongly re-added as a NEW event (the spurious "N events
-        // updated" alert plus a duplicate row).
+        // A timed recurring master with an exception whose RECURRENCE-ID is a DATE value.
+        // RFC 5545 §3.8.4.4 says it must have DTSTART's value type, but peer clients emit the
+        // mismatch and servers keep it verbatim. ICalEventMapper stores the exception's
+        // originalInstanceTime normalized to the master's time of day, so the pull-back
+        // lookup must normalize the same way. As in the real DB, the DAO returns the stored
+        // exception only for the normalized time (10:00Z), null for the raw midnight-UTC
+        // value. A lookup on the raw value misses and re-adds the exception as NEW (a
+        // spurious "N events updated" alert plus a duplicate row).
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}recurring-with-exception.ics"
 
-        // Master DTSTART 10:00Z (timed). Normalizing a DATE-form RECURRENCE-ID of
-        // 2024-01-08 against it promotes to the master's time-of-day => 10:00Z.
+        // Master DTSTART 10:00Z (timed). Normalizing a DATE RECURRENCE-ID of 2024-01-08
+        // against it gives the master's time of day: 10:00Z.
         val normalizedInstanceTime = parseDate("2024-01-08 10:00")
         val rawMidnightInstanceTime = parseDate("2024-01-08 00:00")
 
         val masterEvent = createEvent(id = 700L, caldavUrl = eventUrl, title = "Weekly Meeting")
             .copy(uid = "master-uid", rrule = "FREQ=WEEKLY", etag = "resource-etag-2")
-        // The exception as stored locally: originalInstanceTime is the NORMALIZED
-        // value the mapper wrote. Content matches the echoed VEVENT below so that,
-        // once correctly matched, no spurious MODIFIED notification fires either.
+        // The exception as stored locally: originalInstanceTime is the normalized value
+        // the mapper wrote. Its content matches the echoed VEVENT below, so once matched no
+        // spurious MODIFIED notification fires either.
         val existingException = createEvent(id = 701L, caldavUrl = eventUrl, title = "Weekly Meeting")
             .copy(
                 uid = "master-uid",
@@ -4955,7 +4998,7 @@ class PullStrategyTest {
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns masterEvent
         coEvery { eventsDao.getMasterByUidAndCalendar("master-uid", calendar.id) } returns masterEvent
         coEvery { eventsDao.getByUid("master-uid") } returns listOf(masterEvent)
-        // Real-DB behavior: only the NORMALIZED instance time finds the stored row.
+        // As in the real DB, only the normalized instance time finds the stored row.
         coEvery {
             eventsDao.getExceptionByUidAndInstanceTime("master-uid", calendar.id, normalizedInstanceTime)
         } returns existingException
@@ -4968,32 +5011,32 @@ class PullStrategyTest {
 
         assertTrue("Pull should succeed", result is PullResult.Success)
         val success = result as PullResult.Success
-        // The core invariant: echoing an EXISTING edited occurrence must never
-        // surface it as a brand-new event...
+        // Echoing an existing exception never surfaces it as a new event...
         assertTrue(
             "Existing exception must not be re-added as NEW: " +
                 success.changes.map { "${it.type}: ${it.eventTitle}" },
             success.changes.none { it.type == ChangeType.NEW }
         )
-        // ...and the matched exception must upsert IN PLACE (existing id 701),
-        // never insert a second row for the same instance.
+        // ...and the matched exception upserts in place (existing id 701), never as a
+        // second row for the same instance.
         coVerify { eventsDao.upsert(match { it.id == 701L && it.originalEventId == 700L }) }
     }
 
     @Test
     fun `value-type-mismatched RECURRENCE-ID matches on incremental pull with master only in DB`() = runTest {
-        // Same value-type mismatch, but the INCREMENTAL path: the pulled .ics
-        // contains ONLY the changed exception VEVENT — the unchanged master is
-        // not re-fetched, so it is absent from this batch and resolved from Room
-        // instead. The instance-time key must still normalize against the Room
-        // master's DTSTART (reconstructed), or the exception re-adds as NEW.
+        // The same value-type mismatch with the master only in Room: the fetched .ics holds
+        // only the changed exception VEVENT, as when a delta re-fetches just that resource,
+        // so the master is resolved from Room. The test drives it through a full pull
+        // (syncToken is null); both paths share processEvents. The instance-time key must
+        // still normalize against the Room master's reconstructed DTSTART, or the exception
+        // re-adds as NEW.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}exception-only.ics"
 
         val normalizedInstanceTime = parseDate("2024-01-08 10:00")
         val rawMidnightInstanceTime = parseDate("2024-01-08 00:00")
 
-        // Master lives only in Room (timed, 10:00Z), NOT in the fetched batch.
+        // The master is only in Room (timed, 10:00Z), not in the fetched batch.
         val masterEvent = createEvent(id = 700L, caldavUrl = "${calendar.caldavUrl}master.ics", title = "Weekly Meeting")
             .copy(
                 uid = "master-uid",
@@ -5001,7 +5044,7 @@ class PullStrategyTest {
                 etag = "master-etag",
                 startTs = parseDate("2024-01-01 10:00"),
                 endTs = parseDate("2024-01-01 11:00"),
-                timezone = null // UTC — matches DTSTART ...T100000Z
+                timezone = null // UTC, matching DTSTART ...T100000Z
             )
         val existingException = createEvent(id = 701L, caldavUrl = eventUrl, title = "Weekly Meeting")
             .copy(
@@ -5036,7 +5079,7 @@ class PullStrategyTest {
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("token-2")
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(masterEvent, existingException)
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingException
-        // Master resolved from Room (the batch has no master component).
+        // The master is resolved from Room (the batch has no master component).
         coEvery { eventsDao.getMasterByUidAndCalendar("master-uid", calendar.id) } returns masterEvent
         coEvery { eventsDao.getByUid("master-uid") } returns listOf(masterEvent, existingException)
         coEvery {
@@ -5060,18 +5103,18 @@ class PullStrategyTest {
 
     @Test
     fun `incremental exception normalizes against an RDATE-only master`() = runTest {
-        // A master can recur via RDATE with no RRULE (RFC 5545 §3.8.5.2). On the
-        // incremental path the Room master is used to reconstruct the DTSTART for
-        // normalization; the recurring check must include rdate, not just rrule,
-        // or a value-type-mismatched exception is keyed off the RAW value and its
-        // stored (normalized) row is missed -> re-added as NEW.
+        // A master can recur by RDATE with no RRULE (RFC 5545 §3.8.5.2). When the master
+        // comes from Room, its DTSTART is reconstructed for normalization, and the recurring
+        // check must count rdate, not only rrule. Otherwise a value-type-mismatched exception
+        // is keyed on the raw value, its stored (normalized) row is missed, and it is
+        // re-added as NEW. Driven through a full pull, as the test above.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}exception-only.ics"
 
         val normalizedInstanceTime = parseDate("2024-01-08 10:00")
         val rawMidnightInstanceTime = parseDate("2024-01-08 00:00")
 
-        // Master recurs via RDATE only (rrule = null) — timed, 10:00Z.
+        // The master recurs by RDATE only (rrule = null); timed, 10:00Z.
         val masterEvent = createEvent(id = 700L, caldavUrl = "${calendar.caldavUrl}master.ics", title = "RDATE Meeting")
             .copy(
                 uid = "master-uid",
@@ -5137,12 +5180,12 @@ class PullStrategyTest {
 
     @Test
     fun `recurring series etag-only change on master suppresses SyncChange`() = runTest {
-        // Scenario: A recurring event resource (.ics) is re-fetched with a new etag
-        // (because a sibling VEVENT in the same resource changed). The master's content
-        // is identical. It should be upserted (new etag) but NOT generate a SyncChange.
+        // A recurring resource (.ics) is re-fetched with a new etag because a sibling VEVENT
+        // in it changed; the master's content is identical. It is upserted (new etag) but
+        // generates no SyncChange.
         //
-        // Strategy: First sync creates the event. We capture what ICalEventMapper produces
-        // and use it as the "existing" event for the second sync with only etag changed.
+        // The first sync creates the event; what ICalEventMapper produced is captured and
+        // used as the existing event for a second sync where only the etag changed.
         val calendar = createCalendar(ctag = null, syncToken = null)
         val eventUrl = "${calendar.caldavUrl}recurring.ics"
 
@@ -5161,7 +5204,7 @@ class PullStrategyTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // --- First sync: capture the mapped event ---
+        // First sync: capture the mapped event
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-1", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, listOf(
             CalDavEvent(eventUrl, eventUrl, "etag-1", serverIcal)
@@ -5178,10 +5221,10 @@ class PullStrategyTest {
         assertTrue("First sync should succeed", firstResult is PullResult.Success)
         assertEquals(1, (firstResult as PullResult.Success).eventsAdded)
 
-        // Build the "existing" event: what was saved + the DB-assigned id
+        // The existing event: what was saved, with the DB-assigned id
         val existingMaster = upsertSlot.captured.copy(id = 100L)
 
-        // --- Second sync: same content, new etag ---
+        // Second sync: same content, new etag
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "ctag-2", displayName = null, color = null, isReadOnly = null))
         mockTwoStepFetch(calendar.caldavUrl, listOf(
             CalDavEvent(eventUrl, eventUrl, "etag-2", serverIcal)
@@ -5197,7 +5240,7 @@ class PullStrategyTest {
 
         assertTrue("Second sync should succeed", secondResult is PullResult.Success)
         val success = secondResult as PullResult.Success
-        // Upsert still happens (saves new etag) but no SyncChange notification
+        // The upsert still happens (it saves the new etag), with no SyncChange
         coVerify(atLeast = 2) { eventsDao.upsert(any()) }
         assertEquals(
             "Etag-only change should not produce notifications: ${success.changes.map { "${it.type}: ${it.eventTitle}" }}",

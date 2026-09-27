@@ -1,11 +1,11 @@
 package org.onekash.kashcal.domain.generator.parity
 
 /**
- * Compares outputs of two RRULE engines for a single case, producing a typed result
- * that can be classified and reported.
+ * Compares the two RRULE engines' outputs for one case. Timestamps are compared as sets, so
+ * order and duplicates don't count.
  */
 sealed class ParityResult {
-    /** Both engines succeeded and produced the same sorted timestamps. */
+    /** Both engines succeeded with the same set of timestamps; holds lib-recur's list, sorted. */
     data class BothAgree(val timestampsMs: List<Long>) : ParityResult()
 
     /** Both engines succeeded but returned different timestamps. */
@@ -31,9 +31,8 @@ sealed class ParityResult {
 }
 
 /**
- * RFC-ground-truth comparison. Pool A cases carry [RRuleCase.rfcExpected]; this
- * compares each engine to the spec independently, so we can see which engine (if any)
- * matches the spec and whether they agree with each other too.
+ * Compares each engine independently with a Pool A case's [RRuleCase.rfcExpected], showing which
+ * engine, if any, matches the RFC and whether the engines agree with each other.
  */
 data class RfcComparison(
     val caseName: String,
@@ -47,7 +46,7 @@ data class RfcComparison(
 
 object ParityComparator {
 
-    /** Compare the two engine outputs for a single case (no RFC baseline). */
+    /** Compares the two engine outputs for one case, without an RFC baseline. */
     fun compare(
         libRecur: ExpansionResult,
         ical4j: ExpansionResult,
@@ -86,7 +85,7 @@ object ParityComparator {
         }
     }
 
-    /** Compare both engine outputs against an RFC-specified expected output. */
+    /** Compares both engine outputs with the RFC's expected output; an error never matches. */
     fun compareAgainstRfc(
         caseName: String,
         rfcExpected: List<Long>,

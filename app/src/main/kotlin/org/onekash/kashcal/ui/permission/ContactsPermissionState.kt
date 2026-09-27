@@ -1,44 +1,43 @@
 package org.onekash.kashcal.ui.permission
 
 /**
- * Contacts-permission state for the attendee picker's inline banner.
+ * Holds the contacts-permission state behind the attendee picker's inline banner.
  *
- * Mirrors the shape of the notification-permission state machine but drops the
- * denial-count heuristic in favour of the rationale-flip signal the Android
- * docs recommend (see [classifyAfterRequest]). The picker never blocks: manual
- * email entry works in every state, so [PermanentlyDenied] simply hides the
- * banner rather than redirecting to system settings.
+ * Shaped like [NotificationPermissionManager.PermissionState] but detects permanent denial from
+ * the post-request rationale signal ([classifyAfterRequest]) instead of a denial count. The
+ * picker never blocks: manual email entry works in every state, so [PermanentlyDenied] hides the
+ * banner instead of sending the user to system settings.
  */
 sealed interface ContactsPermissionState {
-    /** Permission is granted — contact suggestions are available. */
+    /** Granted: contact suggestions are available. */
     data object Granted : ContactsPermissionState
 
-    /** Not yet requested in this picker session — show the educational banner. */
+    /**
+     * Not granted and no rationale due: never asked, or denied for good before this form opened.
+     * Shows the educational banner.
+     */
     data object NotRequested : ContactsPermissionState
 
-    /** Denied without "don't ask again" — the banner can offer the ask again. */
+    /** Denied without "don't ask again": the banner can offer the ask again. */
     data object ShouldShowRationale : ContactsPermissionState
 
-    /** Denied with "don't ask again" — hide the banner; manual entry remains. */
+    /** Denied with "don't ask again": the banner hides; manual entry remains. */
     data object PermanentlyDenied : ContactsPermissionState
 }
 
 /**
- * Classify the outcome of a permission request from the grant result and the
- * `shouldShowRequestPermissionRationale()` value sampled immediately before
- * and after the request.
+ * Classifies a permission request's outcome from the grant result and the
+ * `shouldShowRequestPermissionRationale()` values sampled before and after it.
  *
- * - Granted → [ContactsPermissionState.Granted].
- * - Denied while the system still offers a rationale afterwards → the user can
- *   be asked again ([ContactsPermissionState.ShouldShowRationale]).
- * - Denied with no rationale afterwards → "don't ask again"
- *   ([ContactsPermissionState.PermanentlyDenied]). This covers both the flip
- *   (rationale true→false) and a first-ask denial with the checkbox ticked
- *   (false→false).
+ * - Granted: [ContactsPermissionState.Granted].
+ * - Denied with a rationale afterwards: the user can be asked again
+ *   ([ContactsPermissionState.ShouldShowRationale]).
+ * - Denied with no rationale afterwards: "don't ask again"
+ *   ([ContactsPermissionState.PermanentlyDenied]). This covers the flip (rationale true to
+ *   false) and a first-ask denial with the checkbox ticked (false to false).
  *
- * [rationaleBefore] is accepted for call-site symmetry and documentation of
- * the flip; the decision keys on the post-request state, which is the
- * authoritative Android signal.
+ * [rationaleBefore] is unused; it documents the flip at the call site. The decision keys on the
+ * post-request value, the authoritative Android signal.
  */
 fun classifyAfterRequest(
     granted: Boolean,
@@ -51,17 +50,14 @@ fun classifyAfterRequest(
 }
 
 /**
- * Resolve the current permission state from a fresh `checkSelfPermission` +
- * `shouldShowRequestPermissionRationale` reading — used each time the form
- * opens so a grant or revoke performed in system Settings (while the app was
- * alive) is always reflected.
+ * Resolves the state from a fresh `checkSelfPermission` and
+ * `shouldShowRequestPermissionRationale` reading, taken each time the event form opens so a grant
+ * or revoke made in system settings while the app was alive always shows.
  *
- * Unlike [classifyAfterRequest] (the post-request rationale-flip), this is the
- * steady-state read and so never returns [ContactsPermissionState.PermanentlyDenied]:
- * "no rationale and not granted" is ambiguous between never-asked and
- * permanently-denied, so it resolves to [ContactsPermissionState.NotRequested]
- * (banner offers the ask; a denial there reclassifies via [classifyAfterRequest]).
- * The key property is that a revoked permission never resolves to Granted.
+ * A steady-state read never returns [ContactsPermissionState.PermanentlyDenied]: "not granted,
+ * no rationale" can be never-asked or permanently denied, so it resolves to
+ * [ContactsPermissionState.NotRequested]. The banner offers the ask, and a denial there
+ * reclassifies through [classifyAfterRequest]. A revoked permission never resolves to Granted.
  */
 fun resolveContactsPermissionState(
     granted: Boolean,

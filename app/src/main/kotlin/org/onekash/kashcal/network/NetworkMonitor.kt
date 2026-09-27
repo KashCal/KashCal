@@ -13,27 +13,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Singleton for monitoring network connectivity state.
+ * Tracks whether the default network is online and metered, and runs a callback when it comes
+ * back after being offline.
  *
- * Part of the offline-first architecture - enables reactive UI updates
- * for network status and triggers sync when connectivity is restored.
- *
- * Features:
- * - Exposes StateFlow<Boolean> isOnline for reactive UI updates
- * - Exposes StateFlow<Boolean> isMetered for metered network handling
- * - Proper lifecycle management to prevent memory leaks
- * - Callback support for network restore events (e.g., trigger sync)
- *
- * Usage:
- * - Inject via Hilt (@Inject constructor)
- * - Call startMonitoring() in Application.onCreate()
- * - Call stopMonitoring() when app terminates (optional)
- * - Collect isOnline flow in ViewModels/Composables for UI updates
- *
- * Best Practices:
- * - NetworkCallback MUST be unregistered to prevent memory leaks
- * - Uses registerDefaultNetworkCallback() for reliable offline detection
- * - onLost callback means no default network available
+ * [KashCalApplication][org.onekash.kashcal.KashCalApplication] calls [startMonitoring] in
+ * `onCreate`, with a callback that requests a sync, and [stopMonitoring] in `onTerminate`. The
+ * network callback must be unregistered or it leaks. It uses `registerDefaultNetworkCallback`,
+ * so `onLost` means no default network is left.
  */
 @Singleton
 class NetworkMonitor @Inject constructor(
@@ -51,36 +37,28 @@ class NetworkMonitor @Inject constructor(
             null
         }
 
-    // Network callback - kept as instance variable for unregistration
+    // Kept for unregistration; non-null while monitoring.
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
-    // StateFlows for reactive observation
     private val _isOnline = MutableStateFlow(safeCheckCurrentConnectivity())
     val isOnline: StateFlow<Boolean> = _isOnline.asStateFlow()
 
     private val _isMetered = MutableStateFlow(safeCheckIfMetered())
     val isMetered: StateFlow<Boolean> = _isMetered.asStateFlow()
 
-    // Callback for network restore events
     private var onNetworkRestored: (() -> Unit)? = null
 
-    /**
-     * Safe wrapper for connectivity check that doesn't throw.
-     * Returns true (assume online) if check fails.
-     */
+    /** Returns [checkCurrentConnectivity], or true if it throws (assume online, so sync runs). */
     private fun safeCheckCurrentConnectivity(): Boolean {
         return try {
             checkCurrentConnectivity()
         } catch (e: Exception) {
             Log.e(TAG, "Failed initial connectivity check, assuming online", e)
-            true // Assume online to allow sync attempts
+            true
         }
     }
 
-    /**
-     * Safe wrapper for metered check that doesn't throw.
-     * Returns false (not metered) if check fails.
-     */
+    /** Returns [checkIfMetered], or false (not metered) if it throws. */
     private fun safeCheckIfMetered(): Boolean {
         return try {
             checkIfMetered()
@@ -91,42 +69,35 @@ class NetworkMonitor @Inject constructor(
     }
 
     /**
-     * Check current connectivity synchronously.
-     * Used for initial state and non-reactive checks.
+     * Returns true if the active network has the INTERNET capability, or if there is no
+     * ConnectivityManager. Synchronous; seeds [isOnline] and the callback's offline state.
      *
-     * Requires only the INTERNET capability, not VALIDATED. VALIDATED means the
-     * OS confirmed a route to the public internet (its connectivity probe
-     * succeeded); a self-hosted CalDAV/ICS server on a LAN or VPN is fully
-     * reachable but has no public-internet route, so such a network reports
-     * INTERNET without VALIDATED. Requiring VALIDATED would wrongly treat it as
-     * offline and leave sync stuck forever (#296).
-     *
-     * @return true if the active network is set up to access the internet
+     * VALIDATED is not required: it means the OS's public-internet probe succeeded, and a
+     * network that reaches a self-hosted CalDAV or ICS server on a LAN or VPN may have no
+     * public route. Requiring it would treat that network as offline and leave sync stuck
+     * forever (#296).
      */
     fun checkCurrentConnectivity(): Boolean {
-        val cm = connectivityManager ?: return true // Assume online if unavailable
+        val cm = connectivityManager ?: return true
         val network = cm.activeNetwork ?: return false
         val capabilities = cm.getNetworkCapabilities(network) ?: return false
         return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
-    /**
-     * Check if current connection is metered (e.g., cellular).
-     */
+    /** Returns true if the active network lacks NOT_METERED (for example cellular). */
     private fun checkIfMetered(): Boolean {
-        val cm = connectivityManager ?: return false // Assume not metered if unavailable
+        val cm = connectivityManager ?: return false
         val network = cm.activeNetwork ?: return false
         val capabilities = cm.getNetworkCapabilities(network) ?: return false
         return !capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
     }
 
     /**
-     * Start monitoring network connectivity.
+     * Registers the default-network callback that keeps [isOnline] and [isMetered] current. A
+     * second call while monitoring is ignored.
      *
-     * Call this in Application.onCreate() or main Activity.onCreate().
-     *
-     * @param onNetworkRestored Optional callback when network becomes available.
-     *                          Used to trigger sync when connectivity is restored.
+     * @param onNetworkRestored runs when a network becomes available after the monitor saw
+     *   none.
      */
     fun startMonitoring(onNetworkRestored: (() -> Unit)? = null) {
         if (networkCallback != null) {
@@ -145,7 +116,6 @@ class NetworkMonitor @Inject constructor(
                 _isOnline.value = true
                 wasOffline = false
 
-                // Trigger callback if transitioning from offline to online
                 if (wasOfflineBefore) {
                     Log.d(TAG, "Network restored, triggering callback")
                     this@NetworkMonitor.onNetworkRestored?.invoke()
@@ -165,9 +135,9 @@ class NetworkMonitor @Inject constructor(
                 val hasInternet = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
                 val isNotMetered = networkCapabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_METERED)
 
-                // Require only INTERNET, not VALIDATED — see checkCurrentConnectivity.
-                // This must match the synchronous check or the flag flickers back
-                // to offline when capabilities update on an unvalidated network.
+                // Requires only INTERNET, as [checkCurrentConnectivity] does. The two must
+                // match or the flag flickers back to offline when capabilities update on an
+                // unvalidated network.
                 _isOnline.value = hasInternet
                 _isMetered.value = !isNotMetered
 
@@ -197,10 +167,8 @@ class NetworkMonitor @Inject constructor(
     }
 
     /**
-     * Stop monitoring network connectivity.
-     *
-     * Call this to prevent memory leaks.
-     * Safe to call even if startMonitoring() wasn't called.
+     * Unregisters the network callback and drops the restore callback, so neither leaks. Safe
+     * to call without [startMonitoring].
      */
     fun stopMonitoring() {
         val cm = connectivityManager
@@ -216,18 +184,11 @@ class NetworkMonitor @Inject constructor(
         onNetworkRestored = null
     }
 
-    /**
-     * Set callback for network restore events.
-     *
-     * @param callback Function to invoke when network is restored.
-     *                 Typically used to trigger pending sync operations.
-     */
+    /** Replaces the callback [startMonitoring] runs when the network is restored. */
     fun setOnNetworkRestored(callback: (() -> Unit)?) {
         onNetworkRestored = callback
     }
 
-    /**
-     * Check if monitoring is currently active.
-     */
+    /** Returns true while the network callback is registered. */
     fun isMonitoring(): Boolean = networkCallback != null
 }

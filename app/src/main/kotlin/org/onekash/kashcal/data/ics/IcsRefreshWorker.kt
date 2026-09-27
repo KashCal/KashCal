@@ -24,14 +24,10 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 /**
- * WorkManager worker for ICS subscription refresh.
- *
- * Handles:
- * - Periodic background refresh of ICS subscriptions
- * - One-shot refresh for user-initiated sync
- * - Individual subscription refresh
- *
- * Uses Hilt for dependency injection.
+ * Refreshes ICS subscriptions in WorkManager, by [KEY_REFRESH_TYPE]: the periodic run refreshes
+ * due feeds ([REFRESH_TYPE_DUE]); one-shot requests refresh every enabled feed
+ * ([REFRESH_TYPE_ALL]) or one feed ([REFRESH_TYPE_SINGLE]). Nothing in app code enqueues the
+ * one-shot requests today.
  */
 @HiltWorker
 class IcsRefreshWorker @AssistedInject constructor(
@@ -63,25 +59,23 @@ class IcsRefreshWorker @AssistedInject constructor(
         const val REFRESH_TYPE_DUE = "due"
         const val REFRESH_TYPE_SINGLE = "single"
 
-        // Intervals. No default: the period is always derived from the feeds in
-        // the database, so a forgotten argument should be a compile error rather
-        // than a silent fallback to some fixed period.
+        // schedulePeriodicRefresh's interval has no default: the period always comes from
+        // the feeds in the database, so a forgotten argument is a compile error, not a
+        // silent fixed period.
         //
-        // The floor on the job period is the same policy as the floor on a feed's
-        // own interval, so it is derived from it rather than restated: a job that
-        // woke more often than any feed may be checked would only ever find
-        // nothing due.
+        // The job's floor is the feed interval floor: a job waking more often than any
+        // feed may be checked would only ever find nothing due.
         val MIN_REFRESH_INTERVAL_HOURS = IcsSubscription.MIN_SYNC_INTERVAL_HOURS.toLong()
 
         // Tags
         const val TAG_ICS = "ics_refresh"
 
         /**
-         * Schedule periodic ICS refresh.
+         * Schedules the periodic refresh of due feeds, at no less than
+         * [MIN_REFRESH_INTERVAL_HOURS].
          *
-         * Suspends until WorkManager has committed the spec, so a caller that
-         * reads the work back immediately afterwards sees the new period rather
-         * than racing the write.
+         * Suspends until WorkManager has committed the spec, so a caller that reads the work
+         * back right after sees the new period.
          */
         suspend fun schedulePeriodicRefresh(
             context: Context,
@@ -92,10 +86,10 @@ class IcsRefreshWorker @AssistedInject constructor(
 
             Log.i(TAG, "Scheduling periodic ICS refresh every $actualInterval hours")
 
-            // No battery-not-low constraint, matching CalDAV sync. A periodic
-            // run whose constraint is unmet at the window boundary is skipped
-            // rather than deferred, so a phone that habitually sits under the
-            // low-battery threshold would silently lose refresh windows.
+            // No battery-not-low constraint, matching CalDAV sync. A periodic run whose
+            // constraint is unmet at the window boundary is skipped, not deferred, so a
+            // phone that habitually sits under the low-battery threshold would silently
+            // lose refresh windows.
             val constraints = SyncNetworkConstraints.builder()
                 .build()
 
@@ -124,19 +118,17 @@ class IcsRefreshWorker @AssistedInject constructor(
         }
 
         /**
-         * Cancel periodic ICS refresh.
+         * Cancels the periodic refresh.
          *
-         * Suspends until the cancellation is committed, so a caller that reads the
-         * work back immediately afterwards does not still see the live spec.
+         * Suspends until the cancellation is committed, so a caller that reads the work back
+         * right after doesn't still see the live spec.
          */
         suspend fun cancelPeriodicRefresh(context: Context) {
             Log.i(TAG, "Cancelling periodic ICS refresh")
             WorkManager.getInstance(context).cancelUniqueWork(PERIODIC_REFRESH_WORK).await()
         }
 
-        /**
-         * Request immediate refresh of all subscriptions.
-         */
+        /** Enqueues a one-shot refresh of every enabled feed, replacing a queued or running one. */
         fun requestImmediateRefresh(context: Context): java.util.UUID {
             Log.i(TAG, "Requesting immediate ICS refresh")
 
@@ -168,7 +160,7 @@ class IcsRefreshWorker @AssistedInject constructor(
         }
 
         /**
-         * Request refresh of a specific subscription.
+         * Enqueues a one-shot refresh of [subscriptionId], replacing its queued or running one.
          */
         fun requestSubscriptionRefresh(context: Context, subscriptionId: Long): java.util.UUID {
             Log.i(TAG, "Requesting refresh for subscription: $subscriptionId")
@@ -213,12 +205,10 @@ class IcsRefreshWorker @AssistedInject constructor(
         try {
             val results = when (refreshType) {
                 REFRESH_TYPE_ALL -> {
-                    // Refresh all enabled subscriptions
                     repository.forceRefreshAll()
                 }
 
                 REFRESH_TYPE_DUE -> {
-                    // Only refresh subscriptions that are due
                     repository.refreshAllDueSubscriptions()
                 }
 
@@ -238,7 +228,6 @@ class IcsRefreshWorker @AssistedInject constructor(
                 }
             }
 
-            // Aggregate results
             var subscriptionsRefreshed = 0
             var eventsAdded = 0
             var eventsUpdated = 0
@@ -259,7 +248,7 @@ class IcsRefreshWorker @AssistedInject constructor(
                     }
 
                     is IcsSubscriptionRepository.SyncResult.Skipped -> {
-                        // Don't count skipped
+                        // Not counted as refreshed.
                     }
 
                     is IcsSubscriptionRepository.SyncResult.Error -> {
@@ -273,21 +262,20 @@ class IcsRefreshWorker @AssistedInject constructor(
                     "${errors.size} errors")
 
             if (errors.isNotEmpty() && subscriptionsRefreshed == 0) {
-                // Nothing refreshed and at least one feed errored. Never end a
-                // periodic run in failure: WorkManager treats that as terminal for
-                // the spec and stops running it, so one unreachable server would
-                // end background refresh until the next app start. Skipped feeds
-                // don't count as refreshed either, so a single failing feed
-                // alongside one that isn't due yet lands here too.
+                // Nothing refreshed and at least one feed errored. Never end a periodic
+                // run in failure: WorkManager treats that as terminal for the spec, so one
+                // unreachable server would end background refresh until the next app
+                // start. Skipped feeds don't count as refreshed, so one failing feed
+                // alongside one not yet due lands here too.
                 if (runAttemptCount < MAX_RETRY_ATTEMPTS) {
                     Result.retry()
                 } else {
-                    // Retries spent; the next period is the retry. The per-feed
-                    // error is already stored on the subscription row for settings.
+                    // Retries spent; the next period is the retry. The per-feed error is
+                    // already stored on the subscription row for settings.
                     Result.success(createErrorOutput(errors.first()))
                 }
             } else if (errors.isNotEmpty()) {
-                // Partial success
+                // Partial success.
                 Result.success(
                     createSuccessOutput(
                         subscriptionsRefreshed,

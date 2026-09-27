@@ -8,17 +8,15 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for [buildUpcomingReminderSelection], the SQL selection clause
- * backing [AndroidCalendarProviderRepository.getNextUpcomingReminder].
+ * Tests [buildUpcomingReminderSelection], the selection behind
+ * [AndroidCalendarProviderRepository.getNextUpcomingReminder].
  *
- * The selection is unconditional — the "Show declined events" toggle is a
- * display preference that never reaches this query. Outcome 6: whether the
- * toggle is ON or OFF, the alarm pipeline never fires for self-declined
- * events on the device calendar.
+ * The selection is unconditional: the "Show declined events" toggle is a display preference that
+ * never reaches this query, so with the toggle on or off no reminder fires for a self-declined
+ * device event.
  *
- * Note: Actual ContentResolver behavior cannot be unit-tested. These tests
- * verify the selection string includes the right clauses; integration tests
- * exercise the query end-to-end.
+ * These tests check the selection string only. `DeviceGuestsTagsRoundTripTest` runs the query
+ * through [SqliteCalendarProvider] after a decline.
  */
 class AndroidCalendarProviderRepositoryDeclinedReminderTest {
 
@@ -53,10 +51,8 @@ class AndroidCalendarProviderRepositoryDeclinedReminderTest {
 
     @Test
     fun `selection is unconditional - no parameter to bypass decline filter`() {
-        // Outcome 6: the show-declined toggle is a display preference and
-        // must NOT reach this query. Helper takes no parameters; if a future
-        // refactor adds a `hideDeclined: Boolean` parameter the test breaks
-        // and forces a re-read of the outcome.
+        // The show-declined toggle must not reach this query. The helper takes no parameters;
+        // adding one such as `hideDeclined: Boolean` breaks this test.
         val selection: String = buildUpcomingReminderSelection()
         assertEquals(
             "${Instances.HAS_ALARM} = 1 AND ${Calendars.VISIBLE} = 1 AND " +

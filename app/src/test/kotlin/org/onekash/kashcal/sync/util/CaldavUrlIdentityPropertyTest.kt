@@ -7,32 +7,28 @@ import org.junit.Test
 import kotlin.random.Random
 
 /**
- * Property tests for the resource-identity invariant the pull and push paths lean on
- * for EVERY server event. [PullStrategy] matches a server-echoed href to a local row
- * by canonical-URL equality at four sites (etag skip, deletion reconciliation on both
- * the incremental and sync-collection loops, and the UID-or-URL fallback). #333 and its
- * push-side twin were both failures of this match: two RFC-legal encodings of one
- * logical resource ('@' vs '%40') compared unequal, so a deletion or etag was never
- * applied.
+ * Property tests for the resource-identity match the pull leans on for every server event.
+ * [org.onekash.kashcal.sync.strategy.PullStrategy] matches a server href to a local row by
+ * canonical-URL equality in the full-listing deletion and etag skip, the etag-comparison
+ * changed/new/deleted split, and the resolver behind the sync-collection and etag-comparison
+ * deletions. #333 and its push-side twin were failures of this match: two RFC-legal encodings
+ * of one resource ('@' vs '%40') compared unequal, so a deletion or etag was never applied.
  *
- * [CaldavUrlNormalizerTest] pins 14 hand-picked cases; this generalizes them into the
- * matching CONTRACT over randomized, RFC-3986-legal encodings, in the seeded-generator
- * idiom already used by [org.onekash.kashcal.sync.strategy.PullStrategyPredicatePropertyTest]
- * (override with -Dfuzz.urlmatch.seed / .iterations). Failures reproduce deterministically.
+ * [CaldavUrlNormalizerTest] pins hand-picked cases; this generalizes them over randomized
+ * RFC 3986-legal encodings, seeded like
+ * [org.onekash.kashcal.sync.strategy.PullStrategyPredicatePropertyTest] (override with
+ * -Dfuzz.urlmatch.seed / .iterations), so failures reproduce.
  *
- * The contract (each is a real matching guarantee, not an implementation detail):
- *  - REFLEXIVE / IDEMPOTENT: a URL always matches itself; folding twice is a no-op.
- *  - ENCODING-INSENSITIVE for pchar octets: any two encodings of the SAME logical
- *    resource canonicalize-equal — this is what makes '@'<->'%40' (and the other
- *    pchar sub-delims) match. Grounds the #333 fix as a property, not an example.
- *  - STRUCTURE-PRESERVING: an encoded slash (%2F) is NOT decoded, so two resources
- *    that differ only by a real segment boundary vs an encoded one never collapse
- *    into one row (would silently merge distinct server resources).
- *  - MEMBERSHIP: the exact `canonicalKey in canonicalServerKeys` predicate the
- *    deletion loop uses holds across encodings — a re-encoded href is "present", a
- *    genuinely-absent one is "deleted".
- *
- * Pure function under test; no servers, no Room, no mocks. No production change implied.
+ * The contract:
+ *  - Reflexive and idempotent: a URL always matches itself; folding twice is a no-op.
+ *  - Encoding-insensitive for pchar octets: any two encodings of the same resource
+ *    canonicalize equal, which is what makes '@' and '%40' (and the other pchar sub-delims)
+ *    match.
+ *  - Distinct stems stay distinct, and an encoded slash (%2F) is not decoded, so a
+ *    one-segment resource never merges with a two-segment path (that would silently merge
+ *    distinct server resources).
+ *  - Membership: the `canonicalKey in canonicalServerKeys` predicate the deletion loop uses
+ *    holds across encodings; a re-encoded href is present, an absent one is deleted.
  */
 class CaldavUrlIdentityPropertyTest {
 
@@ -40,8 +36,8 @@ class CaldavUrlIdentityPropertyTest {
         val SEED = System.getProperty("fuzz.urlmatch.seed")?.toLong() ?: 0xCA1DA5L
         val ITERATIONS = System.getProperty("fuzz.urlmatch.iterations")?.toInt() ?: 5_000
 
-        // The pchar-legal reserved octets CaldavUrlNormalizer folds (RFC 3986 §3.3):
-        // sub-delims + ':' + '@'. Each has a literal form and a %XX form that MUST match.
+        // The pchar-legal reserved octets CaldavUrlNormalizer folds (RFC 3986 §3.3): the
+        // sub-delims, ':' and '@'. Each has a literal form and a %XX form that must match.
         val PCHAR_RESERVED = listOf('@', '!', '$', '&', '\'', '(', ')', '*', '+', ',', ';', '=', ':')
     }
 
@@ -51,10 +47,9 @@ class CaldavUrlIdentityPropertyTest {
     }
 
     /**
-     * Emit one path segment for a logical stem, encoding each pchar-reserved char
-     * either literally or as %XX (random hex case). Unreserved chars stay literal.
-     * Two independent calls with the same stem produce two RFC-legal spellings of the
-     * SAME logical resource — the exact situation a re-encoding server creates.
+     * Emits one path segment for [stem], writing each pchar-reserved char either literally or
+     * as %XX in random hex case; other chars stay literal. Two calls with the same stem give
+     * two RFC-legal spellings of one resource, as a re-encoding server does.
      */
     private fun encodeSegment(stem: String, rnd: Random): String = buildString {
         for (ch in stem) {
@@ -66,7 +61,7 @@ class CaldavUrlIdentityPropertyTest {
         }
     }
 
-    /** A logical filename stem: a uuid-ish head + a random pick of pchar-reserved chars + a domain tail. */
+    /** Returns a filename stem: a hex head, 1 to 3 pchar-reserved chars and a domain tail. */
     private fun randomStem(rnd: Random): String {
         val head = (0 until rnd.nextInt(4, 12)).map { "0123456789abcdef"[rnd.nextInt(16)] }.joinToString("")
         val reservedCount = rnd.nextInt(1, 4)
@@ -108,7 +103,7 @@ class CaldavUrlIdentityPropertyTest {
         repeat(ITERATIONS) {
             val stemA = randomStem(rnd)
             var stemB = randomStem(rnd)
-            // Ensure the two stems are genuinely different logical resources.
+            // Make the two stems different resources.
             if (stemA == stemB) stemB += "x"
             val a = "https://s.example/cal/" + encodeSegment(stemA, rnd) + ".ics"
             val b = "https://s.example/cal/" + encodeSegment(stemB, rnd) + ".ics"
@@ -136,7 +131,7 @@ class CaldavUrlIdentityPropertyTest {
                 CaldavUrlNormalizer.canonicalize(encodedSlash),
                 CaldavUrlNormalizer.canonicalize(realSlash),
             )
-            // And %2F specifically is preserved verbatim (not decoded to '/').
+            // %2F itself survives canonicalization.
             assertTrue(
                 "encoded slash must survive canonicalization",
                 CaldavUrlNormalizer.canonicalize(encodedSlash)!!.contains("%2F", ignoreCase = true),
@@ -146,16 +141,15 @@ class CaldavUrlIdentityPropertyTest {
 
     @Test
     fun `deletion-loop membership predicate holds across encodings`() {
-        // Mirrors PullStrategy's `canonicalize(localUrl) !in canonicalServerKeys` check:
-        // a re-encoded server href must count as PRESENT; a genuinely-absent local URL
-        // must count as DELETED.
+        // Mirrors PullStrategy's `canonicalize(localUrl) !in canonicalServerKeys` check: a
+        // re-encoded server href counts as present, an absent local URL as deleted.
         val rnd = Random(SEED xor 0x4444L)
         repeat(ITERATIONS) {
             val presentStem = randomStem(rnd)
             val absentStem = randomStem(rnd).let { if (it == presentStem) it + "z" else it }
             val base = "https://s.example/cal/"
 
-            // Server reports the present resource in one encoding...
+            // The server reports the present resource in one encoding...
             val serverHref = base + encodeSegment(presentStem, rnd) + ".ics"
             val canonicalServerKeys = setOf(CaldavUrlNormalizer.canonicalize(serverHref)!!)
 

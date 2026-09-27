@@ -18,15 +18,14 @@ import org.onekash.kashcal.sync.carddav.model.ContactPrecondition
 import org.onekash.kashcal.sync.carddav.model.ContactUploadResult
 
 /**
- * MockWebServer exit-gate test for the CardDAV write-path verbs
- * ([OkHttpCardDavClient.putContact], [OkHttpCardDavClient.deleteContact]).
+ * Tests the CardDAV write verbs ([OkHttpCardDavClient.putContact],
+ * [OkHttpCardDavClient.deleteContact]) against MockWebServer.
  *
- * Covers the full status matrix (create/update success, missing-ETag,
- * precondition-failed, permission-denied, gone) plus the conditional-header wire
- * compliance (If-None-Match:* vs If-Match, Content-Type) and the two server
- * quirks the naming/href policy defends against (Zoho name-policy 401, iCloud
- * verbatim absolute-partition hrefs). Nothing in the app calls these verbs yet;
- * this test is their only acceptance surface.
+ * Covers the status matrix (create and update success, a weak or missing ETag, precondition
+ * failed, permission denied, gone, 5xx, transport failure), the no-retry rule, an etag that
+ * can't be sent as a header, the conditional headers on the wire (If-None-Match: * or If-Match,
+ * Content-Type), and the two server quirks the naming and href rules handle (Zoho's
+ * name-policy 401, iCloud's absolute partition hrefs sent verbatim).
  */
 class CardDavWriteClientTest {
 
@@ -77,8 +76,8 @@ class CardDavWriteClientTest {
 
     @Test
     fun `update success on 200 captures etag`() = runTest {
-        // A conditional update PUT may answer 200 OK (not just 204); the shared
-        // verb must treat it as success, matching the CalDAV update path.
+        // A conditional update PUT may answer 200 OK as well as 204; the verb must treat it as
+        // success, as the CalDAV update path does.
         server.enqueue(MockResponse().setResponseCode(200).setHeader("ETag", "\"etag-200\""))
 
         val result = client.putContact(
@@ -189,9 +188,8 @@ class CardDavWriteClientTest {
         result as ContactUploadResult.Failed
         assertEquals(503, result.code)
         assertTrue(result.isRetryable)
-        // No-retry contract: a conditional write is issued exactly once, even on a
-        // normally-retryable 5xx (a blind retry could misreport a lost-response
-        // success as a precondition failure).
+        // A conditional write is sent once, even on a retryable 5xx: a blind retry could
+        // misreport a lost-response success as a precondition failure.
         assertEquals(1, server.requestCount)
     }
 
@@ -209,11 +207,10 @@ class CardDavWriteClientTest {
 
     @Test
     fun `put with a control-char etag short-circuits to PreconditionFailed without a request`() = runTest {
-        // A stored etag carrying a char OkHttp would reject in a header value (here an
-        // interior CR) must not throw an uncaught IllegalArgumentException out of the
-        // write verb — that would leave the push holding the token and stall the whole
-        // account's contact sync. The conditional can't be expressed, so the
-        // precondition can't hold: report PreconditionFailed (server-wins next pull).
+        // A stored etag with a char OkHttp rejects in a header value (here an interior CR) must
+        // not throw IllegalArgumentException out of the write verb, which would stall the
+        // account's contact sync. The conditional can't be expressed, so the precondition
+        // can't hold: PreconditionFailed, and the server wins on the next pull.
         val result = client.putContact(
             url("/ab/alice/u1.vcf"), vcard, ContactPrecondition.IfMatch("etag\r\nv1"),
         )
@@ -234,8 +231,8 @@ class CardDavWriteClientTest {
 
     @Test
     fun `uid-derived name is accepted where an arbitrary name would 401`() = runTest {
-        // The resource-name policy hands the client a <uid>.vcf href; a server that
-        // 401s arbitrary names accepts this one. The client PUTs the href verbatim.
+        // contactResourceName gives a <uid>.vcf href, which a server that 401s arbitrary names
+        // accepts. The client PUTs the href verbatim.
         val name = contactResourceName("zoho-uid-123")
         assertEquals("zoho-uid-123.vcf", name)
         server.enqueue(MockResponse().setResponseCode(204).setHeader("ETag", "\"z1\""))

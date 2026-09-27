@@ -18,14 +18,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [CardDavContactReader]: end-to-end composition of the client's raw
- * vCard bodies through the real [VCardParser] into the neutral contact model,
- * plus the robustness contract (empty short-circuit, per-body parse isolation,
- * body-driven version, transport-error passthrough).
+ * Tests [CardDavContactReader]: the client's raw vCard bodies through the real [VCardParser]
+ * into the contact model, plus its contract (empty short-circuit, per-body parse isolation,
+ * unreadable-href reporting, group drop, bounded batches, body-driven version, transport-error
+ * passthrough).
  *
- * The client is a hand-written [FakeCardDavClient] rather than a relaxed mock:
- * the data-bearing method returns real bodies whose parse we assert on, so a
- * silent wrong-stub can't hide behind a green suite.
+ * The client is a hand-written [FakeCardDavClient], not a relaxed mock: the fetch returns real
+ * bodies whose parse is asserted, so a wrong stub can't hide behind a green suite.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -66,15 +65,14 @@ class CardDavContactReaderTest {
         assertEquals("3.0", read.single().contact.version)
         assertEquals("Alice Example", read.single().contact.displayName)
         assertEquals("alice@example.test", read.single().contact.emails.single().address)
-        // Seam guard: the reader is a pure multiget composer — it must reach ONLY
-        // fetchContactsByHref, never the discovery/change-detection surface.
+        // The reader must reach only the fetch methods, never discovery or change detection.
         assertEquals("reader must touch only the fetch surface", 0, client.nonFetchCalls)
     }
 
     @Test
     fun `parses a 4_0 body end-to-end with the version from the body`() = runTest {
-        // Request 3.0 over the wire but the body is 4.0 — the parsed version must
-        // follow the body's VERSION line, never the requested version.
+        // 3.0 is requested but the body is 4.0: the parsed version must follow the body's
+        // VERSION line, never the requested version.
         val client = FakeCardDavClient(
             listOf(
                 CardDavContactData(
@@ -120,13 +118,11 @@ class CardDavContactReaderTest {
 
     @Test
     fun `a body that yields no contact is reported unreadable, not silently dropped`() = runTest {
-        // The point of the sync-cursor fix: an href the read couldn't turn into a
-        // contact must be reported so the caller holds its cursor rather than
-        // advancing past it. ez-vcard 0.12.2 does NOT throw on junk — a non-vCard
-        // string parses to an empty card list — so the zero-card body is the
-        // testable stand-in for the production R8/stripped-ctor failure (which threw
-        // only under minification). Its href lands in unreadableHrefs while the valid
-        // sibling parses and is NOT reported.
+        // An href the read couldn't turn into a contact must be reported so the caller holds
+        // its sync-token instead of advancing past it. ez-vcard 0.12.2 doesn't throw on junk (a
+        // non-vCard string parses to an empty card list), so the zero-card body stands in for
+        // the R8-stripped constructor failure, which threw only under minification. Its href
+        // lands in unreadableHrefs; the valid sibling parses and isn't reported.
         val client = FakeCardDavClient(
             listOf(
                 CardDavContactData("/ab/a/good.vcf", "https://dav.example.test/ab/a/good.vcf", "eg", VCARD_3_0),
@@ -148,9 +144,9 @@ class CardDavContactReaderTest {
 
     @Test
     fun `an href the server omits from the multiget is reported unreadable`() = runTest {
-        // The multiget can come back missing a requested href entirely (server dropped
-        // it from the response). We requested it and got nothing, so it is unreadable —
-        // the caller must not advance its cursor as if that href were reconciled.
+        // The server can leave a requested href out of the multiget response. It was requested
+        // and nothing came back, so it's unreadable: the caller must not advance its sync-token
+        // as if that href were reconciled.
         val client = FakeCardDavClient(
             listOf(
                 CardDavContactData("/ab/a/present.vcf", "https://dav.example.test/ab/a/present.vcf", "ep", VCARD_3_0),
@@ -171,14 +167,12 @@ class CardDavContactReaderTest {
 
     @Test
     fun `the collection self-href is not counted unreadable`() = runTest {
-        // iCloud's sync-collection REPORT lists the collection itself (no trailing
-        // slash, no resourcetype), so the collection URL can slip into the requested
-        // href set. The client's multiget deliberately drops it (it would 400 the
-        // whole batch), so it never comes back — and here the fake mirrors that: no
-        // body has the collection URL as its href, so it's simply absent from the
-        // response. It must NOT be reported unreadable, or the caller would hold its
-        // sync cursor forever and permanently disable the orphan sweep. Both the
-        // slashless self-href and the canonical collection form must be excluded.
+        // iCloud's sync-collection REPORT lists the collection itself (no trailing slash, no
+        // resourcetype), so the collection URL can reach the requested href set. The client's
+        // multiget drops it (it would 400 the whole batch), so it never comes back; the fake
+        // likewise returns no body for it. It must not be reported unreadable, or the caller
+        // would hold its sync-token forever and never run the orphan sweep. The slashless
+        // self-href must match the collection URL.
         val client = FakeCardDavClient(
             listOf(
                 CardDavContactData("/ab/a/alice.vcf", "https://dav.example.test/ab/a/alice.vcf", "ea", VCARD_3_0),
@@ -218,9 +212,9 @@ class CardDavContactReaderTest {
 
     @Test
     fun `a KIND group vCard is dropped so it never mirrors as a phantom contact`() = runTest {
-        // A KIND:group vCard (RFC 6350 §6.1.4) is a distribution list, not a person.
-        // Mirrored to the device it becomes an empty phantom contact, so the reader
-        // drops it while keeping every real person in the same batch.
+        // A KIND:group vCard (RFC 6350 §6.1.4) is a distribution list, not a person. On the
+        // device it would become an empty phantom contact, so the reader drops it and keeps
+        // every real person in the same batch.
         val client = FakeCardDavClient(
             listOf(
                 CardDavContactData("/ab/a/alice.vcf", "https://dav.example.test/ab/a/alice.vcf", "ea", VCARD_3_0),
@@ -269,9 +263,9 @@ class CardDavContactReaderTest {
 
     @Test
     fun `a body with a malformed tel is kept, not dropped as unparseable`() = runTest {
-        // Regression: a contact whose TEL is a spec-violating tel URI (global number
-        // without a leading "+") must still be read. The phone degrades to its raw
-        // text; the contact itself is never discarded.
+        // A contact whose TEL is a spec-violating tel URI (global number without a leading "+")
+        // must still be read. The phone degrades to its raw text; the contact is never
+        // discarded.
         val client = FakeCardDavClient(
             listOf(
                 CardDavContactData(
@@ -301,10 +295,9 @@ class CardDavContactReaderTest {
 
     @Test
     fun `large href lists are fetched in bounded batches`() = runTest {
-        // iCloud rejects/empties a single oversized addressbook-multiget, so the
-        // reader must split hrefs into bounded batches. Give it more hrefs than one
-        // batch holds and assert every batch stays within the cap and all bodies
-        // still come back parsed.
+        // iCloud rejects or empties an oversized addressbook-multiget, so the reader must split
+        // hrefs into bounded batches. More hrefs than one batch holds: every batch stays within
+        // the cap and every body still comes back parsed.
         val count = 45
         val bodies = (0 until count).map { i ->
             CardDavContactData(

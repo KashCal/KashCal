@@ -53,13 +53,13 @@ import kotlin.math.abs
 
 private const val CIRCULAR_MULTIPLIER = 1000
 
-/** Map virtual index → actual index. Handles modulo wrap. */
+/** Maps a virtual list index to an index into the items, wrapping when [isCircular]. */
 internal fun virtualToActualIndex(virtualIndex: Int, itemCount: Int, isCircular: Boolean): Int {
     if (!isCircular || itemCount <= 0) return virtualIndex.coerceIn(0, maxOf(0, itemCount - 1))
     return ((virtualIndex % itemCount) + itemCount) % itemCount  // Safe for negative
 }
 
-/** Find virtual index nearest to current scroll that maps to target actual index. */
+/** Returns the virtual index nearest [currentVirtualIndex] that maps to [targetActualIndex]. */
 internal fun actualToNearestVirtualIndex(
     targetActualIndex: Int,
     currentVirtualIndex: Int,
@@ -69,22 +69,17 @@ internal fun actualToNearestVirtualIndex(
     if (!isCircular) return targetActualIndex
     val currentActual = virtualToActualIndex(currentVirtualIndex, itemCount, true)
     var delta = targetActualIndex - currentActual
-    // Choose shorter path (wrap if needed)
+    // Take the shorter way round the wheel
     if (delta > itemCount / 2) delta -= itemCount
     else if (delta < -itemCount / 2) delta += itemCount
     return currentVirtualIndex + delta
 }
 
 /**
- * Vertical snapping wheel picker component.
- * Uses LazyColumn with snap behavior for smooth scrolling and center-item selection.
+ * Shows a vertical wheel that snaps to its center item and reports the centered item through
+ * [onItemSelected], mid-fling included.
  *
- * Best practices applied:
- * - State hoisting: receives selectedItem, emits onItemSelected
- * - derivedStateOf: for computed centerIndex from scroll position
- * - rememberSnapFlingBehavior: for center-snap fling behavior
- *
- * @param isCircular If true, enables infinite/circular scrolling (wraps around)
+ * @param isCircular wraps around endlessly; ignored for fewer than two items.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -98,10 +93,9 @@ fun <T> VerticalWheelPicker(
     isCircular: Boolean = false,
     itemContent: @Composable (item: T, isSelected: Boolean) -> Unit
 ) {
-    // Disable circular for single-item lists only
     val effectiveCircular = isCircular && items.size >= 2
 
-    // Virtual list sizing
+    // A circular wheel is a long virtual list that starts in the middle.
     val virtualCount = if (effectiveCircular) items.size * CIRCULAR_MULTIPLIER else items.size
     val middleOffset = if (effectiveCircular) (CIRCULAR_MULTIPLIER / 2) * items.size else 0
 
@@ -109,7 +103,6 @@ fun <T> VerticalWheelPicker(
     // contentPadding cannot center items in the middle of a large virtual list.
     val centeringOffset = visibleItems / 2
 
-    // Initial scroll position (start in middle for circular, offset to center)
     val selectedIndex = items.indexOf(selectedItem).coerceAtLeast(0)
     val initialIndex = if (effectiveCircular) {
         middleOffset + selectedIndex - centeringOffset
@@ -122,18 +115,16 @@ fun <T> VerticalWheelPicker(
     val coroutineScope = rememberCoroutineScope()
     val hapticFeedback = LocalHapticFeedback.current
 
-    // Track previous actual index for wrap detection
+    // Last emitted index; a jump over half the wheel is a wrap
     var previousActualIndex by remember { mutableIntStateOf(selectedIndex) }
 
-    // Calculate center index based on actual pixel position in viewport.
-    // This finds the item whose center is closest to the viewport's center pixel,
-    // which is accurate regardless of contentPadding or scroll position.
+    // The item whose center is closest to the viewport's center pixel, which holds whatever
+    // the contentPadding or scroll position.
     val centerIndex by remember {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
             val viewportCenterPx = layoutInfo.viewportSize.height / 2
 
-            // Find the item whose center is closest to viewport center
             layoutInfo.visibleItemsInfo.minByOrNull { itemInfo ->
                 val itemCenterPx = itemInfo.offset + itemInfo.size / 2
                 abs(itemCenterPx - viewportCenterPx)
@@ -141,10 +132,9 @@ fun <T> VerticalWheelPicker(
         }
     }
 
-    // Continuous selection emission as the centered item changes — including
-    // mid-fling. This lets the parent commit the visually-centered value when
-    // the user taps Done before the snap settles. The collector outlives any
-    // single composition, so live params are read via rememberUpdatedState.
+    // Emits the centered item as it changes, mid-fling included, so a Done tap before the snap
+    // settles commits the value the user sees. The collector outlives a single composition,
+    // so it reads the parameters through rememberUpdatedState.
     val currentItems by rememberUpdatedState(items)
     val currentSelected by rememberUpdatedState(selectedItem)
     val currentEffectiveCircular by rememberUpdatedState(effectiveCircular)
@@ -173,8 +163,8 @@ fun <T> VerticalWheelPicker(
             }
     }
 
-    // Settle-only: virtual-list edge recentering for circular wheels.
-    // Triggering scrollToItem mid-fling would fight the snap fling behavior.
+    // Recenters a circular wheel that drifted toward a virtual-list edge, only once scrolling
+    // stops: a scrollToItem mid-fling would fight the snap fling.
     LaunchedEffect(listState.isScrollInProgress) {
         if (!listState.isScrollInProgress && effectiveCircular) {
             val centerVirtualIndex = centerIndex
@@ -186,21 +176,17 @@ fun <T> VerticalWheelPicker(
         }
     }
 
-    // Scroll to selected item when it changes externally
+    // Scrolls to selectedItem when it changes from outside
     LaunchedEffect(selectedItem) {
-        // If a user fling is in progress, wait for it to settle before deciding
-        // whether to scroll. The continuous emission above keeps selectedItem
-        // in sync with what's centered during the fling, so by the time the
-        // fling settles `targetActualIndex` typically already equals
-        // `currentCenterActual` and no scroll fires. If an external update
-        // races against the fling, the post-settle re-check still honors it.
+        // Wait out a fling first. The emission above keeps selectedItem on the centered item,
+        // so after a user fling the target is usually centered and nothing scrolls; an outside
+        // update that raced the fling is still applied by the check after it settles.
         if (listState.isScrollInProgress) {
             snapshotFlow { listState.isScrollInProgress }.first { !it }
         }
         val targetActualIndex = items.indexOf(selectedItem)
         if (targetActualIndex >= 0) {
-            // Compare against pixel-based centerIndex to avoid unnecessary scroll
-            // when the target item is already at center
+            // No scroll when the target is already at the pixel center
             val currentCenterActual = virtualToActualIndex(centerIndex, items.size, effectiveCircular)
             if (targetActualIndex != currentCenterActual) {
                 val currentVirtualIndex = listState.firstVisibleItemIndex
@@ -264,7 +250,6 @@ fun <T> VerticalWheelPicker(
             }
         }
 
-        // Center selection highlight
         Box(
             modifier = Modifier
                 .align(Alignment.Center)
@@ -276,7 +261,6 @@ fun <T> VerticalWheelPicker(
                 )
         )
 
-        // Top fade gradient
         Box(
             modifier = Modifier
                 .align(Alignment.TopCenter)
@@ -292,7 +276,6 @@ fun <T> VerticalWheelPicker(
                 )
         )
 
-        // Bottom fade gradient
         Box(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
@@ -311,13 +294,14 @@ fun <T> VerticalWheelPicker(
 }
 
 /**
- * Wheel-based time picker with separate wheels for hours, minutes, and optionally AM/PM.
+ * Shows circular wheels for hour, minute and, in 12-hour mode, AM/PM, reporting each change as
+ * a 24-hour time.
  *
- * @param selectedHour Hour in 24-hour format (0-23) - internal state
- * @param selectedMinute Minute (0-59)
- * @param onTimeSelected Callback with (hour24, minute)
- * @param use24Hour If true, shows 2 wheels (00-23, minutes). If false, shows 3 wheels (1-12, minutes, AM/PM)
- * @param minuteInterval Interval for minute options (default 5)
+ * @param selectedHour hour in 24-hour form (0-23) in either mode.
+ * @param selectedMinute minute (0-59), snapped to the nearest minute option.
+ * @param onTimeSelected receives the hour in 24-hour form (0-23) and the minute.
+ * @param use24Hour shows 00-23 and minutes; otherwise 1-12, minutes and AM/PM.
+ * @param minuteInterval step between minute options, which run from 0 up to 55.
  */
 @Composable
 fun WheelTimePicker(
@@ -330,10 +314,8 @@ fun WheelTimePicker(
     visibleItems: Int = 5,
     itemHeight: Dp = 36.dp
 ) {
-    // State for minute (same in both modes)
     var currentMinute by remember(selectedMinute) { mutableIntStateOf(selectedMinute) }
 
-    // Generate minute options (same for both modes)
     val minuteOptions = (0..55 step minuteInterval).toList()
     val closestMinute = minuteOptions.minByOrNull { abs(it - currentMinute) } ?: 0
 
@@ -344,7 +326,6 @@ fun WheelTimePicker(
     }
 
     if (use24Hour) {
-        // ========== 24-HOUR MODE: 2 wheels ==========
         var currentHour24 by remember(selectedHour) { mutableIntStateOf(selectedHour) }
         val hourOptions = (0..23).toList()
 
@@ -363,7 +344,6 @@ fun WheelTimePicker(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Hour wheel (00-23) - CIRCULAR
                 VerticalWheelPicker(
                     items = hourOptions,
                     selectedItem = currentHour24,
@@ -377,7 +357,7 @@ fun WheelTimePicker(
                     isCircular = true
                 ) { hour, isSelected ->
                     Text(
-                        text = String.format(java.util.Locale.ROOT, "%02d", hour),  // Zero-padded
+                        text = String.format(java.util.Locale.ROOT, "%02d", hour),
                         fontSize = if (isSelected) 18.sp else 14.sp,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                         color = if (isSelected) MaterialTheme.colorScheme.primary
@@ -386,7 +366,6 @@ fun WheelTimePicker(
                     )
                 }
 
-                // Colon separator
                 Text(
                     text = ":",
                     fontSize = 18.sp,
@@ -394,7 +373,6 @@ fun WheelTimePicker(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                // Minute wheel - CIRCULAR
                 VerticalWheelPicker(
                     items = minuteOptions,
                     selectedItem = currentMinute,
@@ -419,8 +397,6 @@ fun WheelTimePicker(
             }
         }
     } else {
-        // ========== 12-HOUR MODE: 3 wheels ==========
-        // Convert 24-hour to 12-hour format
         val hour12 = when {
             selectedHour == 0 -> 12
             selectedHour > 12 -> selectedHour - 12
@@ -432,7 +408,7 @@ fun WheelTimePicker(
         var currentIsPM by remember(selectedHour) { mutableStateOf(isPM) }
 
         val hourOptions = (1..12).toList()
-        // Use localized AM/PM strings
+        // The locale's AM/PM labels
         val amPmStrings = remember { java.text.DateFormatSymbols.getInstance().amPmStrings }
         val amPmOptions = amPmStrings.toList()
 
@@ -457,7 +433,6 @@ fun WheelTimePicker(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Hour wheel (1-12) - CIRCULAR
                 VerticalWheelPicker(
                     items = hourOptions,
                     selectedItem = currentHour12,
@@ -480,7 +455,6 @@ fun WheelTimePicker(
                     )
                 }
 
-                // Colon separator
                 Text(
                     text = ":",
                     fontSize = 18.sp,
@@ -488,7 +462,6 @@ fun WheelTimePicker(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                // Minute wheel - CIRCULAR
                 VerticalWheelPicker(
                     items = minuteOptions,
                     selectedItem = currentMinute,
@@ -511,7 +484,7 @@ fun WheelTimePicker(
                     )
                 }
 
-                // AM/PM wheel - CIRCULAR (consistent centering with other wheels)
+                // Circular like the other wheels so it centers the same way
                 VerticalWheelPicker(
                     items = amPmOptions,
                     selectedItem = if (currentIsPM) amPmOptions[1] else amPmOptions[0],

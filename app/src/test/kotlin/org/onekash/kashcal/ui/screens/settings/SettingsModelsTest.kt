@@ -8,8 +8,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for Settings models.
- * Tests ICloudConnectionState, IcsSubscriptionUiModel, and FetchCalendarState.
+ * Tests the Settings models [ICloudConnectionState], [IcsSubscriptionUiModel] and
+ * [FetchCalendarState], and filtering and lookup over a subscription list.
  */
 class SettingsModelsTest {
 

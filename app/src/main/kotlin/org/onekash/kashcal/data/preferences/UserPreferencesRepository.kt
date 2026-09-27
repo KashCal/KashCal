@@ -12,11 +12,9 @@ import javax.inject.Singleton
 import kotlin.math.abs
 
 /**
- * Repository for user preferences, wrapping KashCalDataStore with convenient APIs.
- *
- * This provides a clean interface for ViewModels to access preferences
- * with appropriate type conversions (e.g., minutes to milliseconds for sync interval).
- * Also includes validation helpers for reminder and sync interval values.
+ * Exposes [KashCalDataStore] preferences to ViewModels, converting units where the stored form
+ * differs (the sync interval is stored in minutes, exposed in milliseconds). Also holds
+ * validation helpers for reminder and sync interval values.
  */
 @Singleton
 class UserPreferencesRepository @Inject constructor(
@@ -24,9 +22,7 @@ class UserPreferencesRepository @Inject constructor(
 ) {
     // ========== Default Calendar ==========
 
-    /**
-     * Default calendar ID for new events (legacy format).
-     */
+    /** Default calendar ID for new events in the legacy format (a Room calendar ID only). */
     val defaultCalendarId: Flow<Long?>
         get() = dataStore.defaultCalendarId
 
@@ -34,9 +30,7 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.setDefaultCalendarId(calendarId)
     }
 
-    /**
-     * Default calendar for new events (new format supporting Room and Device).
-     */
+    /** Default calendar for new events, a Room or a device calendar. */
     val defaultCalendar: Flow<DefaultCalendar?>
         get() = dataStore.defaultCalendar
 
@@ -47,9 +41,8 @@ class UserPreferencesRepository @Inject constructor(
     // ========== Sync Settings ==========
 
     /**
-     * Sync interval in milliseconds.
-     * Converts from stored minutes to milliseconds.
-     * Long.MAX_VALUE represents "manual only".
+     * Sync interval in milliseconds; Long.MAX_VALUE means manual only. A stored value of 0 or less,
+     * or Int.MAX_VALUE, reads as manual only.
      */
     val syncIntervalMs: Flow<Long>
         get() = dataStore.syncIntervalMinutes.map { minutes ->
@@ -60,10 +53,7 @@ class UserPreferencesRepository @Inject constructor(
             }
         }
 
-    /**
-     * Set sync interval in milliseconds.
-     * Converts to minutes for storage.
-     */
+    /** Stores [intervalMs] as whole minutes; Long.MAX_VALUE or 0 or less stores manual only. */
     suspend fun setSyncIntervalMs(intervalMs: Long) {
         val minutes = if (intervalMs == Long.MAX_VALUE || intervalMs <= 0) {
             Int.MAX_VALUE // Manual only
@@ -73,9 +63,6 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.setSyncIntervalMinutes(minutes)
     }
 
-    /**
-     * Auto-sync enabled state.
-     */
     val autoSyncEnabled: Flow<Boolean>
         get() = dataStore.autoSyncEnabled
 
@@ -83,9 +70,6 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.setAutoSyncEnabled(enabled)
     }
 
-    /**
-     * Sync on Wi-Fi only.
-     */
     val syncWifiOnly: Flow<Boolean>
         get() = dataStore.syncWifiOnly
 
@@ -93,9 +77,7 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.setSyncWifiOnly(wifiOnly)
     }
 
-    /**
-     * Last successful sync timestamp.
-     */
+    /** Last successful sync time in epoch millis, 0 if none. */
     val lastSyncTime: Flow<Long>
         get() = dataStore.lastSyncTime
 
@@ -105,10 +87,7 @@ class UserPreferencesRepository @Inject constructor(
 
     // ========== Default Reminders ==========
 
-    /**
-     * Default reminder for timed events (in minutes before event).
-     * -1 = no reminder
-     */
+    /** Default reminder for timed events in minutes before start; -1 means none. */
     val defaultReminderTimed: Flow<Int>
         get() = dataStore.defaultReminderMinutes
 
@@ -117,9 +96,8 @@ class UserPreferencesRepository @Inject constructor(
     }
 
     /**
-     * Default reminder for all-day events (in minutes before event).
-     * Typically a large value like 1440 (1 day before).
-     * -1 = no reminder
+     * Default reminder for all-day events in signed minutes before the day's start (negative is
+     * after it); defaults to 900, 9 AM the day before. -1 means none.
      */
     val defaultReminderAllDay: Flow<Int>
         get() = dataStore.defaultAllDayReminder
@@ -130,9 +108,7 @@ class UserPreferencesRepository @Inject constructor(
 
     // ========== UI Settings ==========
 
-    /**
-     * Theme setting: "system", "light", "dark".
-     */
+    /** Theme setting: "system", "light" or "dark"; a stored value may be the retired "teal". */
     val theme: Flow<String>
         get() = dataStore.theme
 
@@ -145,9 +121,10 @@ class UserPreferencesRepository @Inject constructor(
         get() = dataStore.colorSource
 
     /**
-     * Resolved color source (dynamic vs. accent seed), combining the explicit stored value with
-     * the legacy theme string so a user who had picked the retired "teal" theme lands on the seed
-     * path. Single source of truth shared by the home and settings ViewModels.
+     * Resolves the color source (dynamic or accent seed) from the stored value and the legacy
+     * theme, so a user of the retired "teal" theme lands on the seed path. Single source of truth
+     * for [org.onekash.kashcal.ui.viewmodels.AppearanceViewModel] and
+     * [org.onekash.kashcal.ui.viewmodels.AccountSettingsViewModel].
      */
     val resolvedColorSource: Flow<ColorSource>
         get() = combine(dataStore.colorSource, dataStore.theme) { explicit, legacyTheme ->
@@ -159,7 +136,8 @@ class UserPreferencesRepository @Inject constructor(
         get() = dataStore.accentSeed
 
     /**
-     * First day of week (Calendar.SUNDAY = 1, Calendar.MONDAY = 2, etc.).
+     * First day of week as a `java.util.Calendar` day (SUNDAY = 1, MONDAY = 2), or
+     * [KashCalDataStore.FIRST_DAY_SYSTEM] (0, the default) to follow the locale.
      */
     val firstDayOfWeek: Flow<Int>
         get() = dataStore.firstDayOfWeek
@@ -168,9 +146,6 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.setFirstDayOfWeek(day)
     }
 
-    /**
-     * Show week numbers in calendar view.
-     */
     val showWeekNumbers: Flow<Boolean>
         get() = dataStore.showWeekNumbers
 
@@ -178,9 +153,7 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.setShowWeekNumbers(show)
     }
 
-    /**
-     * Default event duration in minutes.
-     */
+    /** Default event duration in minutes. */
     val defaultEventDuration: Flow<Int>
         get() = dataStore.defaultEventDuration
 
@@ -190,10 +163,7 @@ class UserPreferencesRepository @Inject constructor(
 
     // ========== Privacy ==========
 
-    /**
-     * App lock enabled — require device biometric / screen-lock on reopen.
-     * Default false.
-     */
+    /** Whether reopening the app requires device biometrics or screen lock. Default false. */
     val appLockEnabled: Flow<Boolean>
         get() = dataStore.appLockEnabled
 
@@ -203,9 +173,6 @@ class UserPreferencesRepository @Inject constructor(
 
     // ========== Onboarding ==========
 
-    /**
-     * Onboarding completed flag.
-     */
     val onboardingCompleted: Flow<Boolean>
         get() = dataStore.onboardingCompleted
 
@@ -213,9 +180,7 @@ class UserPreferencesRepository @Inject constructor(
         dataStore.setOnboardingCompleted(completed)
     }
 
-    /**
-     * Onboarding sheet dismissed flag.
-     */
+    /** Whether the onboarding sheet was dismissed. */
     val onboardingDismissed: Flow<Boolean>
         get() = dataStore.onboardingDismissed
 
@@ -225,46 +190,28 @@ class UserPreferencesRepository @Inject constructor(
 
     // ========== Permission Tracking ==========
 
-    /**
-     * Get number of times notification permission was denied.
-     */
+    /** Returns how many times the user denied notification permission. */
     suspend fun getNotificationPermissionDeniedCount(): Int =
         dataStore.getNotificationPermissionDeniedCountBlocking()
 
-    /**
-     * Increment denial count after user denies notification permission.
-     */
     suspend fun incrementNotificationPermissionDeniedCount() {
         dataStore.incrementNotificationPermissionDeniedCount()
     }
 
-    /**
-     * Reset denial count after permission is granted.
-     */
+    /** Resets the denial count; call once the permission is granted. */
     suspend fun resetNotificationPermissionDeniedCount() {
         dataStore.resetNotificationPermissionDeniedCount()
     }
 
     // ========== Validation Helpers ==========
 
-    /**
-     * Validate a reminder value for a specific event type.
-     *
-     * @param minutes Reminder minutes before event
-     * @param isAllDay Whether the event is all-day
-     * @return True if valid for the event type
-     */
+    /** Returns true if [minutes] is one of the reminder options for the event type. */
     fun isValidReminder(minutes: Int, isAllDay: Boolean): Boolean {
         val validMinutes = if (isAllDay) ALL_DAY_REMINDER_MINUTES else TIMED_REMINDER_MINUTES
         return validMinutes.contains(minutes)
     }
 
-    /**
-     * Get the default reminder for an event type.
-     *
-     * @param isAllDay Whether the event is all-day
-     * @return Default reminder minutes
-     */
+    /** Returns the built-in default reminder for the event type, not the user's setting. */
     fun getDefaultReminder(isAllDay: Boolean): Int {
         return if (isAllDay) {
             KashCalDataStore.DEFAULT_ALL_DAY_REMINDER_MINUTES
@@ -274,45 +221,28 @@ class UserPreferencesRepository @Inject constructor(
     }
 
     /**
-     * Migrate a reminder value when event type changes.
-     * If current reminder is invalid for new type, returns default for new type.
-     *
-     * @param currentMinutes Current reminder value
-     * @param newIsAllDay New event type
-     * @return Valid reminder for new event type
+     * Returns a reminder valid for the new event type: [currentMinutes] if it is off or already
+     * valid, else the new type's [getDefaultReminder].
      */
     fun migrateReminder(currentMinutes: Int, newIsAllDay: Boolean): Int {
-        // If no reminder, keep it
         if (currentMinutes == KashCalDataStore.REMINDER_OFF) {
             return KashCalDataStore.REMINDER_OFF
         }
 
-        // If current value is valid for new type, keep it
         if (isValidReminder(currentMinutes, newIsAllDay)) {
             return currentMinutes
         }
 
-        // Otherwise, use default for new type
         return getDefaultReminder(newIsAllDay)
     }
 
-    /**
-     * Validate a sync interval value.
-     *
-     * @param intervalMs Sync interval in milliseconds
-     * @return True if valid, false otherwise
-     */
+    /** Returns true if [intervalMs] is one of [SYNC_INTERVALS_MS] and at least the minimum. */
     fun isValidSyncInterval(intervalMs: Long): Boolean {
         return intervalMs >= KashCalDataStore.MIN_SYNC_INTERVAL_MS &&
             SYNC_INTERVALS_MS.contains(intervalMs)
     }
 
-    /**
-     * Get the closest valid sync interval for a given value.
-     *
-     * @param intervalMs Desired interval in milliseconds
-     * @return Closest valid sync interval
-     */
+    /** Returns the [SYNC_INTERVALS_MS] entry closest to [intervalMs], at least the minimum. */
     fun getClosestSyncInterval(intervalMs: Long): Long {
         if (intervalMs < KashCalDataStore.MIN_SYNC_INTERVAL_MS) {
             return KashCalDataStore.MIN_SYNC_INTERVAL_MS

@@ -12,20 +12,18 @@ import org.onekash.kashcal.ui.components.ScopeTint
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Unit tests for the option-set rules. The helpers are the testable
- * nucleus of the save-time scope sheet: they decide which options are
- * enabled, what the sub-copy says, and which option carries the
- * destructive tint.
+ * Tests the scope-sheet option rules: which options [computeEditScopeOptions],
+ * [computeDeleteScopeOptions] and [computeDragScopeOptions] enable and tint, the scopes
+ * [dragScopesToGrey] greys for a pending drop, and [toScopeContext] on a pending form save.
  *
- * Helpers take a small [ScopeContext] rather than an Event row;
- * callers don't need to fabricate Events to drive the rules.
+ * The rules take a small [ScopeContext], so no test fabricates an Event row.
  */
 @RunWith(RobolectricTestRunner::class)
 class RecurringScopeOptionsTest {
 
     private val resources: Resources = ApplicationProvider.getApplicationContext<Context>().resources
 
-    // Master start (Mon midnight UTC, Nov 14, 2023).
+    // Master start: Tue Nov 14, 2023, 22:13:20 UTC.
     private val masterStart = 1_700_000_000_000L
     // Occurrence one week later.
     private val laterOccurrence = masterStart + 7L * 86_400_000L
@@ -35,12 +33,64 @@ class RecurringScopeOptionsTest {
         occurrenceTs: Long = laterOccurrence,
         isDetachedException: Boolean = false,
         isAllDay: Boolean = false,
+        occurrenceDateChanged: Boolean = false,
     ): ScopeContext = ScopeContext(
         masterStartTs = masterStartTs,
         occurrenceTs = occurrenceTs,
         isDetachedException = isDetachedException,
         isAllDay = isAllDay,
+        occurrenceDateChanged = occurrenceDateChanged,
     )
+
+    private fun editOptions(context: ScopeContext) = computeEditScopeOptions(
+        context = context,
+        originalRrule = "FREQ=WEEKLY;COUNT=10",
+        currentRrule = "FREQ=WEEKLY;COUNT=10",
+        resources = resources,
+    ).associate { it.scope to it.enabled }
+
+    // ========== a changed date on a later occurrence ==========
+
+    @Test
+    fun `all events is not offered when a later occurrence's date was changed`() {
+        val enabled = editOptions(ctx(occurrenceDateChanged = true))
+
+        assertEquals(false, enabled[EditScope.ALL_EVENTS])
+        assertEquals(true, enabled[EditScope.THIS_EVENT])
+        assertEquals(true, enabled[EditScope.THIS_AND_FUTURE])
+    }
+
+    @Test
+    fun `all events is still offered when the first occurrence's date was changed`() {
+        val enabled = editOptions(ctx(occurrenceTs = masterStart, occurrenceDateChanged = true))
+
+        assertEquals(true, enabled[EditScope.ALL_EVENTS])
+    }
+
+    @Test
+    fun `a pending form save carries the date change into the scope context`() {
+        val pending = PendingFormSave(
+            formState = org.onekash.kashcal.ui.components.EventFormState(),
+            occurrenceTs = laterOccurrence,
+            originalRrule = "FREQ=WEEKLY",
+            masterStartTs = masterStart,
+            isDetachedException = true,
+            isRecurringDevice = true,
+            loadedIsAllDay = true,
+            occurrenceDateChanged = true,
+        )
+
+        assertEquals(
+            ScopeContext(
+                masterStartTs = masterStart,
+                occurrenceTs = laterOccurrence,
+                isDetachedException = true,
+                isAllDay = true,
+                occurrenceDateChanged = true,
+            ),
+            pending.toScopeContext(),
+        )
+    }
 
     // ========== EDIT options ==========
 
@@ -104,12 +154,9 @@ class RecurringScopeOptionsTest {
 
     @Test
     fun `edit options when caller changed RRULE disable THIS_EVENT and ALL_EVENTS`() {
-        // Per-occurrence edits open the form on a tapped instance. If
-        // the user changed the recurrence rule, neither THIS_EVENT
-        // (RFC 5545 §3.8.5: exceptions strip RRULE) nor ALL_EVENTS
-        // (applying a new cadence at an off-master DTSTART is
-        // ambiguous) can apply. THIS_AND_FUTURE is the legitimate
-        // "change cadence going forward" path and remains enabled.
+        // The form is open on a later occurrence. A changed rule can't go to THIS_EVENT (an
+        // exception carries no RRULE) or ALL_EVENTS (a new cadence at an off-master DTSTART is
+        // ambiguous). THIS_AND_FUTURE is the "change it from here on" path and stays enabled.
         val options = computeEditScopeOptions(
             context = ctx(),
             originalRrule = "FREQ=WEEKLY;COUNT=10",
@@ -126,14 +173,10 @@ class RecurringScopeOptionsTest {
 
     @Test
     fun `edit options on first occurrence with changed RRULE keep ALL_EVENTS enabled`() {
-        // Regression for the save dead-end: correcting a recurring
-        // series' end date (RRULE UNTIL) while the form is open on the
-        // first occurrence changed every scope option to disabled,
-        // leaving no way to save. On the first occurrence the user is
-        // editing the master at its own DTSTART, so rewriting the
-        // cadence for the whole series via ALL_EVENTS is unambiguous and
-        // must stay enabled. THIS_AND_FUTURE still collapses with
-        // ALL_EVENTS here, and THIS_EVENT still can't carry an RRULE.
+        // Correcting the series' end date (RRULE UNTIL) on the first occurrence edits the master
+        // at its own DTSTART, so ALL_EVENTS must stay enabled or no option is left to save with
+        // (#274). THIS_AND_FUTURE still collapses with ALL_EVENTS here, and THIS_EVENT still
+        // can't carry an RRULE.
         val options = computeEditScopeOptions(
             context = ctx(occurrenceTs = masterStart), // first occurrence
             originalRrule = "FREQ=WEEKLY;UNTIL=20271231T000000Z",
@@ -157,10 +200,9 @@ class RecurringScopeOptionsTest {
 
     @Test
     fun `edit options treat a cosmetically reordered RRULE as unchanged`() {
-        // The recurrence picker can re-emit the same rule with parts in
-        // a different order. That is not a user change, so all three
-        // options must stay enabled (rruleChanged is computed by
-        // meaning, not raw string equality).
+        // The recurrence picker can re-emit the same rule with parts in a different order. That
+        // isn't a user change, so all three options must stay enabled: rruleChanged compares by
+        // meaning, not raw string equality.
         val options = computeEditScopeOptions(
             context = ctx(),
             originalRrule = "FREQ=WEEKLY;BYDAY=MO,WE",
@@ -174,17 +216,11 @@ class RecurringScopeOptionsTest {
         )
     }
 
-    // Regression: the previous synth-Event approach used
-    // formState.dateMillis as event.startTs, so editing the date later
-    // spuriously made occurrenceTs <= startTs (false-positive
-    // first-occurrence). With ScopeContext.masterStartTs anchored to
-    // the master's true start, the rule fires correctly even when the
-    // user has shifted the form date.
+    // The first-occurrence rule reads ScopeContext.masterStartTs, the master's own start. A
+    // user-edited form date passed as the start would make a later occurrence read as the first
+    // and disable THIS_AND_FUTURE.
     @Test
     fun `edit options use masterStartTs anchor not user-edited date`() {
-        // User shifted the start to a date AFTER the occurrence; under
-        // the old synth-Event API this would have flipped
-        // isFirstOccurrence to true.
         val options = computeEditScopeOptions(
             context = ctx(
                 masterStartTs = masterStart,
@@ -195,8 +231,7 @@ class RecurringScopeOptionsTest {
             resources = resources,
         )
 
-        // THIS_AND_FUTURE remains enabled because the rule keys off
-        // masterStartTs, not a derived value.
+        // THIS_AND_FUTURE stays enabled because the rule keys off masterStartTs.
         assertTrue(
             "THIS_AND_FUTURE must remain enabled when masterStartTs is anchored correctly",
             options.first { it.scope == EditScope.THIS_AND_FUTURE }.enabled
@@ -241,15 +276,12 @@ class RecurringScopeOptionsTest {
         assertFalse(options.first { it.scope == EditScope.ALL_EVENTS }.enabled)
     }
 
-    // Regression: the previous synth-Event for device
-    // delete set startTs = occurrenceTs, so isFirstOccurrence was
-    // always true and THIS_AND_FUTURE was permanently disabled for
-    // every device recurring delete. ScopeContext.masterStartTs lets
-    // the consumer thread the actual master startTs through.
+    // Passing occurrenceTs as the master start would make every occurrence read as the first
+    // and disable THIS_AND_FUTURE for every device recurring delete; the caller passes the
+    // master's own start as masterStartTs.
     @Test
     fun `delete options use masterStartTs not occurrenceTs anchor`() {
-        // Mid-series delete: master started a month ago, we're
-        // deleting from a recent occurrence.
+        // Mid-series delete: the master started a week before the occurrence being deleted.
         val options = computeDeleteScopeOptions(
             context = ctx(
                 masterStartTs = masterStart,
@@ -283,11 +315,35 @@ class RecurringScopeOptionsTest {
     }
 
     @Test
+    fun `drag options grey out the scopes a drop can't use`() {
+        val options = computeDragScopeOptions(
+            masterStartTs = masterStart,
+            targetOccurrenceTs = laterOccurrence,
+            isAllDay = false,
+            isDevice = false,
+            resources = resources,
+            blockedScopes = setOf(EditScope.ALL_EVENTS),
+        ).associate { it.scope to it.enabled }
+
+        assertEquals(mapOf(EditScope.THIS_EVENT to true, EditScope.THIS_AND_FUTURE to true, EditScope.ALL_EVENTS to false), options)
+    }
+
+    @Test
+    fun `a drop still being checked greys both series scopes`() {
+        val pending = PendingDragReschedule(
+            // The sheet's greying doesn't read the event.
+            displayEvent = io.mockk.mockk<org.onekash.kashcal.domain.model.DisplayEvent>(),
+            targetDate = java.time.LocalDate.of(2024, 3, 12),
+            targetStartMinutes = 600,
+            blockedScopes = null,
+        )
+        assertEquals(setOf(EditScope.ALL_EVENTS, EditScope.THIS_AND_FUTURE), dragScopesToGrey(pending))
+        assertEquals(emptySet<EditScope>(), dragScopesToGrey(pending.copy(blockedScopes = emptySet())))
+    }
+
+    @Test
     fun `drag options for device recurring hide ALL_EVENTS`() {
-        // Device drag with ALL_EVENTS would shift the master's DTSTART
-        // and move every past occurrence. The Room path can split via
-        // materialized occurrences; the CalendarProvider can't.
-        // Hide ALL_EVENTS entirely for device drags.
+        // A device drag gets no ALL_EVENTS option; the reason is on [computeDragScopeOptions].
         val options = computeDragScopeOptions(
             masterStartTs = masterStart,
             targetOccurrenceTs = laterOccurrence,

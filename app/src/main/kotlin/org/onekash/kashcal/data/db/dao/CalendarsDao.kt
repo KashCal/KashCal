@@ -10,179 +10,117 @@ import kotlinx.coroutines.flow.Flow
 import org.onekash.kashcal.data.db.entity.Calendar
 
 /**
- * Data Access Object for Calendar operations.
+ * Reads and writes the `calendars` table.
  *
- * Provides CRUD operations and queries for calendar collections.
+ * Deleting a calendar row cascades to its events (and their occurrences) and to its ICS
+ * subscription row.
  */
 @Dao
 interface CalendarsDao {
 
     // ========== Read Operations ==========
 
-    /**
-     * Get all calendars as reactive Flow.
-     */
+    /** Emits every calendar, ordered by sort order then display name. */
     @Query("SELECT * FROM calendars ORDER BY sort_order ASC, display_name ASC")
     fun getAll(): Flow<List<Calendar>>
 
-    /**
-     * Get all calendars as one-shot query.
-     */
+    /** One-shot variant of [getAll]. */
     @Query("SELECT * FROM calendars ORDER BY sort_order ASC, display_name ASC")
     suspend fun getAllOnce(): List<Calendar>
 
-    /**
-     * Get calendar by ID.
-     */
     @Query("SELECT * FROM calendars WHERE id = :id")
     suspend fun getById(id: Long): Calendar?
 
-    /**
-     * Get multiple calendars by IDs.
-     * Used by PushStrategy to batch load calendars.
-     */
+    /** Returns the calendars with [ids], in no particular order; unknown ids are skipped. */
     @Query("SELECT * FROM calendars WHERE id IN (:ids)")
     suspend fun getByIds(ids: List<Long>): List<Calendar>
 
-    /**
-     * Get calendar by CalDAV URL (unique).
-     */
+    /** Returns the calendar at [caldavUrl], or null. `caldav_url` has a unique index. */
     @Query("SELECT * FROM calendars WHERE caldav_url = :caldavUrl")
     suspend fun getByCaldavUrl(caldavUrl: String): Calendar?
 
-    /**
-     * Get calendars for a specific account.
-     */
     @Query("SELECT * FROM calendars WHERE account_id = :accountId ORDER BY sort_order ASC")
     fun getByAccountId(accountId: Long): Flow<List<Calendar>>
 
-    /**
-     * Get calendars for account (one-shot).
-     */
+    /** One-shot variant of [getByAccountId]. */
     @Query("SELECT * FROM calendars WHERE account_id = :accountId ORDER BY sort_order ASC")
     suspend fun getByAccountIdOnce(accountId: Long): List<Calendar>
 
-    /**
-     * Get all visible calendars.
-     */
     @Query("SELECT * FROM calendars WHERE is_visible = 1 ORDER BY sort_order ASC")
     fun getVisibleCalendars(): Flow<List<Calendar>>
 
-    /**
-     * Get all enabled (visible, non-read-only) calendars for sync.
-     */
+    /** Returns the visible calendars, read-only ones included. */
     @Query("SELECT * FROM calendars WHERE is_visible = 1")
     suspend fun getEnabledCalendars(): List<Calendar>
 
-    /**
-     * Get default calendar for an account.
-     */
     @Query("SELECT * FROM calendars WHERE account_id = :accountId AND is_default = 1 LIMIT 1")
     suspend fun getDefaultCalendar(accountId: Long): Calendar?
 
-    /**
-     * Get any default calendar (for quick event creation).
-     */
+    /** Returns the default calendar of an arbitrary account, or null if no calendar is default. */
     @Query("SELECT * FROM calendars WHERE is_default = 1 LIMIT 1")
     suspend fun getAnyDefaultCalendar(): Calendar?
 
     // ========== Write Operations ==========
 
-    /**
-     * Insert new calendar. Returns row ID.
-     */
+    /** Inserts [calendar] and returns its row id; throws on an id or `caldav_url` conflict. */
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(calendar: Calendar): Long
 
-    /**
-     * Insert or update calendar by CalDAV URL.
-     */
+    /** Inserts [calendar], replacing any row that conflicts on id or `caldav_url`. */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(calendar: Calendar): Long
 
-    /**
-     * Update existing calendar.
-     */
     @Update
     suspend fun update(calendar: Calendar)
 
-    /**
-     * Delete calendar.
-     * CASCADE: All events and occurrences will be deleted.
-     */
     @Delete
     suspend fun delete(calendar: Calendar)
 
-    /**
-     * Delete calendar by ID.
-     */
     @Query("DELETE FROM calendars WHERE id = :id")
     suspend fun deleteById(id: Long)
 
-    /**
-     * Delete all calendars for an account.
-     */
     @Query("DELETE FROM calendars WHERE account_id = :accountId")
     suspend fun deleteByAccountId(accountId: Long)
 
     // ========== Sync Metadata Updates ==========
 
-    /**
-     * Update sync token and ctag after sync.
-     */
+    /** Stores the sync-token and ctag after a sync. */
     @Query("UPDATE calendars SET sync_token = :syncToken, ctag = :ctag WHERE id = :id")
     suspend fun updateSyncToken(id: Long, syncToken: String?, ctag: String?)
 
-    /**
-     * Update ctag only (for servers without sync-token support).
-     */
+    /** Stores the ctag only, for servers without sync-token support. */
     @Query("UPDATE calendars SET ctag = :ctag WHERE id = :id")
     suspend fun updateCtag(id: Long, ctag: String?)
 
     /**
-     * Update this collection's auto-schedule capability (RFC 6638 §2).
-     * Tri-state: null = unknown/not probed, false = not advertised,
-     * true = advertised. Targeted UPDATE to avoid read-modify-write races.
+     * Stores [Calendar.autoScheduleSupported] (RFC 6638 §2), whose tri-state is documented there.
+     * A single-column UPDATE, so it can't race a read-modify-write of the row.
      */
     @Query("UPDATE calendars SET auto_schedule_supported = :supported WHERE id = :id")
     suspend fun updateAutoScheduleSupported(id: Long, supported: Boolean?)
 
     // ========== Display Settings ==========
 
-    /**
-     * Set calendar visibility.
-     */
     @Query("UPDATE calendars SET is_visible = :visible WHERE id = :id")
     suspend fun setVisible(id: Long, visible: Boolean)
 
-    /**
-     * Set visibility for all calendars in an account (batch).
-     */
+    /** Sets the visibility of every calendar in the account. */
     @Query("UPDATE calendars SET is_visible = :visible WHERE account_id = :accountId")
     suspend fun setVisibleForAccount(accountId: Long, visible: Boolean)
 
-    /**
-     * Set calendar as default (clears other defaults in same account).
-     */
+    /** Makes [calendarId] the account's default and clears the flag on its other calendars. */
     @Query("UPDATE calendars SET is_default = (id = :calendarId) WHERE account_id = :accountId")
     suspend fun setDefaultCalendar(accountId: Long, calendarId: Long)
 
-    /**
-     * Update calendar color.
-     */
     @Query("UPDATE calendars SET color = :color WHERE id = :id")
     suspend fun updateColor(id: Long, color: Int)
 
-    /**
-     * Update display name.
-     */
     @Query("UPDATE calendars SET display_name = :displayName WHERE id = :id")
     suspend fun updateDisplayName(id: Long, displayName: String)
 
     /**
-     * Refresh calendar metadata from a server probe. Null means "leave
-     * unchanged" — preserves local values for fields the server did not
-     * return.
+     * Refreshes calendar metadata from a server probe. A null argument leaves that column
+     * unchanged, so a field the server didn't return keeps its local value.
      */
     @Query(
         """
@@ -200,23 +138,18 @@ interface CalendarsDao {
         isReadOnly: Boolean?
     )
 
-    /**
-     * Update sort order.
-     */
     @Query("UPDATE calendars SET sort_order = :sortOrder WHERE id = :id")
     suspend fun updateSortOrder(id: Long, sortOrder: Int)
 
-    /**
-     * Update CalDAV URL (for iCloud URL normalization migration).
-     */
+    /** Rewrites the CalDAV URL; the iCloud regional-URL normalization uses it. */
     @Query("UPDATE calendars SET caldav_url = :caldavUrl WHERE id = :id")
     suspend fun updateCaldavUrl(id: Long, caldavUrl: String)
 
     // ========== Provider-based Queries ==========
 
     /**
-     * Get calendars by provider (e.g., "icloud", "local").
-     * Joins with accounts table to filter by provider type.
+     * Emits the calendars of accounts whose provider is [provider], the stored lowercase name
+     * (for example "icloud", "local").
      */
     @Query("""
         SELECT c.* FROM calendars c
@@ -226,9 +159,7 @@ interface CalendarsDao {
     """)
     fun getCalendarsByProvider(provider: String): Flow<List<Calendar>>
 
-    /**
-     * Get calendar count by provider (e.g., count iCloud calendars).
-     */
+    /** Emits the calendar count for [provider], matched like [getCalendarsByProvider]. */
     @Query("""
         SELECT COUNT(*) FROM calendars c
         INNER JOIN accounts a ON c.account_id = a.id

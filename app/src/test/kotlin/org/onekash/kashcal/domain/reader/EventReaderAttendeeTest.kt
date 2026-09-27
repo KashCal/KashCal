@@ -131,8 +131,7 @@ class EventReaderAttendeeTest {
         // eventId2 has no attendees
         val map = reader.getAttendeesForEvents(listOf(eventId1, eventId2)).first()
         assertEquals(1, map[eventId1]?.size)
-        // Map either omits the empty key or returns an empty list — both acceptable;
-        // composables call map[id].orEmpty() at render time.
+        // The map may omit the key or hold an empty list; composables read map[id].orEmpty().
         val ev2 = map[eventId2] ?: emptyList()
         assertTrue(ev2.isEmpty())
     }

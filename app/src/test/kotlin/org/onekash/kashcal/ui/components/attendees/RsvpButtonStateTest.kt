@@ -15,7 +15,7 @@ class RsvpButtonStateTest {
 
     @Test
     fun `respond section hidden when user is the organizer`() {
-        // Organizers don't RSVP to their own events — they edit them.
+        // Organizers don't RSVP to their own events; they edit them.
         assertFalse(
             shouldShowRespondSection(
                 currentUserPartstat = AttendeeStatus.Accepted,
@@ -36,7 +36,7 @@ class RsvpButtonStateTest {
 
     @Test
     fun `respond section stays visible after user already responded`() {
-        // After tap-Accept, section remains so the user can change their mind.
+        // After a response the section stays so the user can change it.
         assertTrue(
             shouldShowRespondSection(
                 currentUserPartstat = AttendeeStatus.Accepted,
@@ -100,8 +100,8 @@ class RsvpButtonStateTest {
 
     @Test
     fun `series disclosure visible when recurring AND respond section is visible`() {
-        // The whole point of the disclosure: a recurring event where the user
-        // can RSVP. Tap on Friday's instance applies to every Friday.
+        // A recurring event where the user can RSVP: a response on Friday's occurrence
+        // applies to every Friday.
         for (status in listOf(
             AttendeeStatus.NeedsAction,
             AttendeeStatus.Accepted,

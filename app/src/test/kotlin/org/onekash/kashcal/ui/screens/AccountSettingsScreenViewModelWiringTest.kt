@@ -31,30 +31,21 @@ import org.robolectric.annotation.Config
 import java.util.Locale
 
 /**
- * A VM-boundary wiring guard for the settings screen: mounts the REAL production
- * [SettingsRoute] — the composable that owns the view-model collection and the
- * flow→param→`viewModel::method` binding block — against the REAL
- * [AccountSettingsViewModel] TYPE (a mockk, not a hand-rolled fake) and proves, for
- * representative rows, that
- *  (a) a flow value set on the VM reaches the visible row, and
- *  (b) driving the row calls the EXACT VM setter with the right value while every
- *      same-typed sibling setter stays silent.
+ * Mounts the production [SettingsRoute], which collects the view-model flows and binds each row
+ * to a `viewModel::method`, over a mockk of [AccountSettingsViewModel], and checks for a few rows
+ * that:
+ *  - a flow value set on the VM reaches the visible row (the widget limit), and
+ *  - driving the row calls its VM setter with the picked value while the listed sibling setters
+ *    stay silent (widget limit, show week numbers, detailed widget rows, sync frequency).
  *
- * The data-bearing flow getters are stubbed EXPLICITLY (never relaxed) so a wrong
- * return can't pass silently; only the Unit-returning setters use `relaxUnitFun`,
- * which is safe (they return Unit and just launch a coroutine) and keeps `verify`
- * able to see the call. This matches the repo's test-double guidance: relaxed for
- * side-effect Unit collaborators, explicit stubs for anything data-bearing.
+ * Because the route's binding block runs here, a swap inside it (wiring the widget-limit row to
+ * `setShowWeekNumbers`) is caught. The data-bearing flow getters are stubbed explicitly so a wrong
+ * return can't pass silently; only the Unit setters use `relaxUnitFun` (they launch a coroutine),
+ * which keeps `verify` able to see the call. There is no `confirmVerified(vm)`: the route reads
+ * over 40 flows during composition, so a whole-mock confirm would have to list every getter and
+ * would break on each new flow, without catching a swap the `exactly = 0` checks miss.
  *
- * Unlike the earlier iteration, this test mounts [SettingsRoute] itself, so the
- * production binding block IS executed here — a same-typed swap introduced inside the
- * route (e.g. wiring the widget-limit row to `setShowWeekNumbers`) is now caught. We
- * deliberately do not `confirmVerified(vm)`: the route reads ~44 flows during
- * composition, so a whole-mock confirm would force enumerating every getter and would
- * break on any new flow — brittleness that catches no swap the exhaustive same-typed
- * `exactly = 0` assertions below don't already catch.
- *
- * Runs under Robolectric; run the class in isolation given the repo's multi-class
+ * Runs under Robolectric; run the class in isolation because of the repo's multi-class
  * native-crash flake.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -87,11 +78,10 @@ class AccountSettingsScreenViewModelWiringTest {
     )
 
     /**
-     * A mockk of the real VM type with EVERY flow getter stubbed explicitly (never
-     * relaxed) and Unit setters relaxed. The two flows under test —
-     * [AccountSettingsViewModel.widgetMaxEventsPerDay] and
-     * [AccountSettingsViewModel.showWeekNumbers] — are parameterized; the rest carry
-     * production defaults so the screen renders normally.
+     * Builds a VM mockk with every flow getter the route reads stubbed explicitly and Unit setters
+     * relaxed. [AccountSettingsViewModel.widgetMaxEventsPerDay] and
+     * [AccountSettingsViewModel.showWeekNumbers] come from the arguments; the rest carry fixed
+     * values so the screen renders normally.
      */
     private fun mockVm(widget: Int, weekNumbers: Boolean): AccountSettingsViewModel {
         val vm = mockk<AccountSettingsViewModel>(relaxUnitFun = true)
@@ -144,7 +134,8 @@ class AccountSettingsScreenViewModelWiringTest {
         every { vm.showDeclinedEvents } returns MutableStateFlow(false)
         every { vm.deviceCalendarRemindersEnabled } returns MutableStateFlow(true)
         every { vm.backupRestoreState } returns MutableStateFlow(BackupRestoreUiState.Idle)
-        // Collected only inside the CalDAV sheet (not shown here), stubbed for safety.
+        // The route collects the permission state at the top for the ICS subscription dialog;
+        // the hint flow is collected only inside the CalDAV sheet (not shown here).
         every { vm.localNetworkPermissionState } returns
             MutableStateFlow(LocalNetworkPermissionState.NotRequested)
         every { vm.localNetworkHintActive } returns MutableStateFlow(false)
@@ -159,8 +150,8 @@ class AccountSettingsScreenViewModelWiringTest {
                 initialColorSource = ColorSource.DYNAMIC,
                 initialAccentSeed = 0,
                 syncSessionStore = mockk<SyncSessionStore>(relaxed = true),
-                // The four I/O lambdas are required; these display/preference rows
-                // under test never invoke them, so throwaway stubs suffice.
+                // The four I/O lambdas have no defaults; the rows under test never invoke
+                // them, so throwaway stubs suffice.
                 readIcsContent = { Result.failure(UnsupportedOperationException()) },
                 importIcsToRoom = { _, _ -> 0 },
                 writeBackup = { _, _ -> },
@@ -188,7 +179,7 @@ class AccountSettingsScreenViewModelWiringTest {
         composeTestRule.waitForIdle()
 
         verify(exactly = 1) { vm.setWidgetMaxEventsPerDay(10) }
-        // No same-typed sibling setter fired.
+        // No sibling setter fired.
         verify(exactly = 0) { vm.setShowWeekNumbers(any()) }
         verify(exactly = 0) { vm.onDefaultEventDurationChange(any()) }
         verify(exactly = 0) { vm.onDefaultReminderTimedChange(any()) }
@@ -207,7 +198,7 @@ class AccountSettingsScreenViewModelWiringTest {
         composeTestRule.waitForIdle()
 
         verify(exactly = 1) { vm.setShowWeekNumbers(true) }
-        // No same-typed sibling setter fired.
+        // No sibling setter fired.
         verify(exactly = 0) { vm.setWidgetMaxEventsPerDay(any()) }
         verify(exactly = 0) { vm.setShowEventEmojis(any()) }
         verify(exactly = 0) { vm.setWidgetDetailedRows(any()) }
@@ -231,7 +222,7 @@ class AccountSettingsScreenViewModelWiringTest {
         verify(exactly = 0) { vm.setQuickAddEnabled(any()) }
         verify(exactly = 0) { vm.setTitleSuggestionsEnabled(any()) }
         verify(exactly = 0) { vm.onToggleShowDeclinedEvents(any()) }
-        // No same-typed (Int) neighbour fired either.
+        // Nor the (Int) widget-limit neighbour.
         verify(exactly = 0) { vm.setWidgetMaxEventsPerDay(any()) }
     }
 
@@ -247,8 +238,7 @@ class AccountSettingsScreenViewModelWiringTest {
         composeTestRule.waitForIdle()
 
         verify(exactly = 1) { vm.onSyncIntervalChange(60 * 60 * 1000L) }
-        // No sibling value-carrying setter fired (the (Int) lookback neighbour is the
-        // most likely mis-wire; the rest guard the broader value cluster).
+        // No sibling value setter fired; the (Int) lookback neighbour is the likeliest mis-wire.
         verify(exactly = 0) { vm.onSyncLookbackChange(any()) }
         verify(exactly = 0) { vm.setWidgetMaxEventsPerDay(any()) }
         verify(exactly = 0) { vm.onDefaultEventDurationChange(any()) }

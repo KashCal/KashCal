@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">මෙම සේවාදායකයේ දින දසුන් හමු නොවීය.</string>
     <string name="caldav_error_unexpected">බලාපොරොත්තු නොවූ දෝෂයක්. නැවත උත්සාහ කරන්න.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nමෙය ඔබේ ස්ථානීය ජාලයේ සේවාදායකයක් නම්, සම්බන්ධ වීමට ස්ථානීය ජාල ප්‍රවේශයට ඉඩ දෙන්න.</string>
+    <string name="caldav_error_connection_refused_insecure">KashCal නොයන තැනකට (සංකේතනය නොකළ ලිපිනයකට, හෝ නැවත යොමු කිරීමේ ලූපයකට) සේවාදායකය සම්බන්ධතාවය හරවා යැවූ නිසා, ඔබේ මුරපදය යැවීමට පෙර KashCal නැවතුණි. සේවාදායක ලිපිනය පරීක්ෂා කරන්න.</string>
     <string name="local_network_banner_title">ස්ථානීය ජාල ප්‍රවේශය අවශ්‍යයි</string>
     <string name="local_network_banner_body">මෙම සේවාදායකය ඔබේ ස්ථානීය ජාලයේ ඇති බව පෙනේ. KashCal හට එයට සම්බන්ධ විය හැකි වන පරිදි ස්ථානීය ජාල ප්‍රවේශයට ඉඩ දෙන්න.</string>
     <string name="local_network_banner_allow">ප්‍රවේශයට ඉඩ දෙන්න</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">වෙනස්කම් සුරකින්න</string>
     <string name="dialog_delete_recurring_title">මකන්න</string>
     <string name="dialog_move_recurring_title">ගෙනයන්න</string>
+    <string name="snackbar_event_rescheduled">සිදුවීම නැවත කාලසටහන් කරන ලදී</string>
+    <string name="snackbar_reschedule_failed">සිදුවීම නැවත කාලසටහන් කළ නොහැකි විය</string>
     <string name="recurring_this_event">මෙම සිදුවීම</string>
     <string name="recurring_all_events">සියලු සිදුවීම්</string>
 

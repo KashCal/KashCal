@@ -29,12 +29,12 @@ import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.session.SyncSessionStore
 
 /**
- * Tests for the exception event duplicate bug.
+ * Tests that re-pulling a series whose exception another client edited updates the stored
+ * exception instead of adding a duplicate event.
  *
- * Bug: When exception is created on iPhone, KashCal sometimes interprets
- * the whole entry as new, causing duplicate events.
- *
- * Run with: ./gradlew testDebugUnitTest --tests "*ExceptionDuplicateBugTest*"
+ * The pull finds the exception by UID and original instance time, so parsing and mapping the
+ * same RECURRENCE-ID must give the same instant every time, and the lookup must survive a change
+ * of master row id.
  */
 class ExceptionDuplicateBugTest {
 
@@ -51,7 +51,7 @@ class ExceptionDuplicateBugTest {
 
     private val quirks = ICloudQuirks()
 
-    // Track upsert calls to detect duplicates
+    // Every upserted event, to count duplicates.
     private val upsertedEvents = mutableListOf<Event>()
 
     @Before
@@ -66,13 +66,14 @@ class ExceptionDuplicateBugTest {
         dataStore = mockk(relaxed = true)
         syncSessionStore = mockk(relaxed = true)
 
-        // Mock syncPastDays to return all events (no time filtering)
+        // Int.MAX_VALUE is the "All" lookback: no past-window filtering.
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
-        // Default: sync status returns SYNCED (matching createEvent default).
+        // SYNCED, the Event default, so the pull's re-read before the upsert sees no pending
+        // edit.
         coEvery { eventsDao.getSyncStatus(any()) } returns SyncStatus.SYNCED
 
-        // Mock database.runInTransaction
+        // The transaction stub runs the block directly.
         coEvery {
             database.runInTransaction(any<suspend () -> Any>())
         } coAnswers {
@@ -81,17 +82,15 @@ class ExceptionDuplicateBugTest {
             block()
         }
 
-        // Track upsert calls
-        // @Upsert returns:
-        // - Row ID (positive) for INSERT
-        // - -1L for UPDATE (when entity already exists by primary key)
+        // Like Room's @Upsert: a new row id for an insert, -1L for an update of an existing
+        // primary key.
         coEvery { eventsDao.upsert(capture(upsertedEvents)) } answers {
             val event = upsertedEvents.last()
             if (event.id > 0) {
-                // Event has existing ID - this is an update, return -1
+                // An existing id: an update.
                 -1L
             } else {
-                // New event - assign sequential ID
+                // A new event gets the next sequential id.
                 upsertedEvents.size.toLong()
             }
         }
@@ -116,11 +115,11 @@ class ExceptionDuplicateBugTest {
         upsertedEvents.clear()
     }
 
-    // ========== Timestamp Consistency Tests ==========
+    // ========== Timestamp consistency ==========
 
     @Test
     fun `RECURRENCE-ID timestamp is consistent across parses`() {
-        // This verifies that parsing the same ICS twice produces identical timestamps
+        // Parsing the same ICS twice gives the same RECURRENCE-ID instant.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -144,21 +143,19 @@ class ExceptionDuplicateBugTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Parse twice
         val events1 = parser.parseAllEvents(ics).getOrNull()!!
         val events2 = parser.parseAllEvents(ics).getOrNull()!!
 
         val exception1 = events1.find { it.recurrenceId != null }!!
         val exception2 = events2.find { it.recurrenceId != null }!!
 
-        // Timestamps should be identical
         assertEquals(
             "RECURRENCE-ID timestamp should be consistent",
             exception1.recurrenceId!!.timestamp,
             exception2.recurrenceId!!.timestamp
         )
 
-        // Log the actual value for debugging
+        // Printed for debugging.
         println("RECURRENCE-ID timestamp: ${exception1.recurrenceId!!.timestamp}")
         println("Expected: 20250127T100000Z = Mon Jan 27 2025 10:00 UTC")
     }
@@ -183,7 +180,6 @@ class ExceptionDuplicateBugTest {
         val events = parser.parseAllEvents(ics).getOrNull()!!
         val exception = events.first()
 
-        // Map to entity twice
         val entity1 = ICalEventMapper.toEntity(exception, ics, 1L, "/cal/event.ics", "etag1").event
         val entity2 = ICalEventMapper.toEntity(exception, ics, 1L, "/cal/event.ics", "etag2").event
 
@@ -196,11 +192,11 @@ class ExceptionDuplicateBugTest {
         println("originalInstanceTime: ${entity1.originalInstanceTime}")
     }
 
-    // ========== Duplicate Scenario Tests ==========
+    // ========== Re-pulled exception ==========
 
     @Test
     fun `second sync of exception event should update not create duplicate`() = runTest {
-        // Setup: First sync already created master (id=100) and exception (id=101)
+        // A first sync already stored the master (id 100) and the exception (id 101).
         val calendar = createCalendar()
         val eventUrl = "${calendar.caldavUrl}recurring.ics"
 
@@ -233,7 +229,7 @@ class ExceptionDuplicateBugTest {
             syncStatus = SyncStatus.SYNCED
         )
 
-        // Server returns same ICS with updated etag (exception was modified on iPhone)
+        // The server returns the resource with a new etag: another client edited the exception.
         val icsWithException = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -257,7 +253,6 @@ class ExceptionDuplicateBugTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Setup mocks
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair("recurring.ics", "etag-v2")))
@@ -266,20 +261,19 @@ class ExceptionDuplicateBugTest {
                 CalDavEvent(
                     href = "recurring.ics",
                     url = eventUrl,
-                    etag = "etag-v2", // New etag
+                    etag = "etag-v2", // new etag
                     icalData = icsWithException
                 )
             ))
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
 
-        // Master lookup should succeed
+        // The master is found.
         coEvery { eventsDao.getMasterByUidAndCalendar("recurring-uid", calendar.id) } returns existingMaster
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns existingMaster
         coEvery { eventsDao.getByUid("recurring-uid") } returns listOf(existingMaster, existingException)
 
-        // Exception lookup - THIS IS THE KEY
-        // Should find existing exception by UID + instance time (RFC 5545 compliant)
+        // The stored exception is found by UID and instance time.
         val capturedTimestamps = mutableListOf<Long>()
         coEvery {
             eventsDao.getExceptionByUidAndInstanceTime("recurring-uid", calendar.id, capture(capturedTimestamps))
@@ -290,13 +284,10 @@ class ExceptionDuplicateBugTest {
             existingException
         }
 
-        // Execute pull
         val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
 
-        // Verify: Should update existing exception, NOT create duplicate
         assertTrue("Pull should succeed", result is PullResult.Success)
 
-        // Count how many exception events were upserted
         val exceptionUpserts = upsertedEvents.filter { it.originalEventId != null }
 
         println("=== Upserted Events ===")
@@ -307,31 +298,31 @@ class ExceptionDuplicateBugTest {
             println("  originalInstanceTime: ${event.originalInstanceTime}")
         }
 
-        // There should be exactly 1 exception upsert (update), not 2 (duplicate)
+        // One exception upsert (the update), not two.
         assertEquals(
             "Should upsert exactly 1 exception event (update, not duplicate)",
             1,
             exceptionUpserts.size
         )
 
-        // The upserted exception should preserve the existing ID
+        // It keeps the stored id.
         val upsertedException = exceptionUpserts.first()
         assertEquals("Should preserve existing exception ID", 101L, upsertedException.id)
     }
 
     @Test
     fun `UID-based lookup finds exception when masterEventId changes`() = runTest {
-        // This test verifies the RFC 5545 compliant lookup:
-        // When master event is recreated with a new ID, UID + originalInstanceTime still finds the existing exception
+        // After the master is recreated with a new id, UID and originalInstanceTime still find
+        // the stored exception.
 
         val calendar = createCalendar()
         val eventUrl = "${calendar.caldavUrl}recurring.ics"
 
-        // Old master (was deleted/recreated with new ID)
+        // The master row that was deleted and recreated with a new id.
         val oldMasterId = 100L
 
-        // Existing exception linked to OLD master ID
-        // Per RFC 5545, exception shares UID with master and has originalInstanceTime
+        // The stored exception still links to the old master id. It shares the master's UID
+        // (RFC 5545) and has an originalInstanceTime.
         val existingException = Event(
             id = 101L,
             calendarId = calendar.id,
@@ -341,8 +332,8 @@ class ExceptionDuplicateBugTest {
             startTs = parseDate("2025-01-27 14:00"),
             endTs = parseDate("2025-01-27 15:00"),
             dtstamp = parseDate("2025-01-25 10:00"),
-            originalEventId = oldMasterId, // Points to OLD master (stale ID)
-            originalInstanceTime = parseDate("2025-01-27 10:00"), // Stable identifier
+            originalEventId = oldMasterId, // the stale master id
+            originalInstanceTime = parseDate("2025-01-27 10:00"), // stable across pulls
             caldavUrl = eventUrl,
             etag = "etag-v1",
             syncStatus = SyncStatus.SYNCED
@@ -371,7 +362,6 @@ class ExceptionDuplicateBugTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Setup mocks
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair("recurring.ics", "etag-v2")))
@@ -387,13 +377,13 @@ class ExceptionDuplicateBugTest {
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success(null)
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
 
-        // Master lookup returns null (master wasn't in DB)
+        // No stored master.
         coEvery { eventsDao.getMasterByUidAndCalendar("recurring-uid", calendar.id) } returns null
         coEvery { eventsDao.getByCaldavUrl(eventUrl) } returns null
         coEvery { eventsDao.getByUid("recurring-uid") } returns listOf(existingException)
 
-        // UID-based lookup succeeds! Uses stable identifiers (UID + originalInstanceTime)
-        // This works even when master ID changes because it doesn't depend on local DB IDs
+        // The lookup uses UID and originalInstanceTime, not local row ids, so it finds the
+        // exception although the master id changed.
         coEvery {
             eventsDao.getExceptionByUidAndInstanceTime(
                 uid = "recurring-uid",
@@ -402,7 +392,6 @@ class ExceptionDuplicateBugTest {
             )
         } returns existingException
 
-        // Execute pull
         val result = pullStrategy.pull(calendar, forceFullSync = true, client = client)
 
         println("=== Upserted Events (With importId Fallback) ===")
@@ -414,14 +403,13 @@ class ExceptionDuplicateBugTest {
 
         assertTrue("Pull should succeed", result is PullResult.Success)
 
-        // With UID-based lookup, the exception should be UPDATED (id=101), not created as duplicate
-        // This works because UID + originalInstanceTime are server-stable identifiers
+        // The exception is updated in place (id 101), not added as a duplicate.
         val exceptionUpserts = upsertedEvents.filter { it.originalEventId != null }
         assertEquals("Should have exactly 1 exception upsert", 1, exceptionUpserts.size)
         assertEquals("Should preserve existing exception ID via UID lookup", 101L, exceptionUpserts.first().id)
     }
 
-    // ========== Helper Methods ==========
+    // ========== Helpers ==========
 
     private fun createCalendar(
         id: Long = 1,

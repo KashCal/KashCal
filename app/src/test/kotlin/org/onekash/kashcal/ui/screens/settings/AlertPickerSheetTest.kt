@@ -23,13 +23,13 @@ import org.robolectric.annotation.Config
 import java.util.Locale
 
 /**
- * Tests for [AlertPickerSheet] — the split timed / all-day default-alert picker.
+ * Tests [AlertPickerSheet], the timed and all-day default-alert picker, and its Done commit rule
+ * [committedAlertValue].
  *
- * The load-bearing regression: all-day stored values (900 = "9 AM the day before",
- * etc.) are 9-AM offsets, NOT raw durations, so they must never be fed into the
- * duration wheel as a seed (doing so mis-decomposes into a bogus day count). The
- * all-day picker therefore always opens on the preset list, and its Custom wheel
- * seeds neutrally.
+ * All-day presets (900 = "9 AM the day before") are 9 AM offsets, not raw durations, so they must
+ * never seed the duration wheel: it would decompose them into a wrong day count. The picker
+ * always opens on the preset list, and Custom opened from a preset seeds the wheel neutrally.
+ * The wheel commits only on Done, never mid-scroll, and an un-dialed Done keeps the current value.
  *
  * Runs under Robolectric; run the class in isolation given the repo's multi-class
  * native-crash flake.
@@ -69,8 +69,8 @@ class AlertPickerSheetTest {
 
     @Test
     fun `all-day default value shows the preset list, not the wheel`() {
-        // 900 = "9 AM the day before" (a preset offset). It must NOT auto-open the
-        // duration wheel (that mis-decomposes the 9 AM offset into a bogus day count).
+        // 900 = "9 AM the day before" (a preset offset). It must not auto-open the duration
+        // wheel, which would decompose the 9 AM offset into a wrong day count.
         renderAllDay(currentValue = 900)
         composeTestRule.onNodeWithText("1 day before").assertIsDisplayed()
         composeTestRule.onNodeWithText("Custom").assertIsDisplayed()
@@ -90,7 +90,7 @@ class AlertPickerSheetTest {
         renderAllDay(currentValue = 900)
         composeTestRule.onNodeWithText("Custom").performClick()
         composeTestRule.waitForIdle()
-        // The wheel's Done button is now shown; the preset "Custom…" row is gone.
+        // The wheel's Done button shows.
         composeTestRule.onNodeWithText("Done").assertIsDisplayed()
     }
 
@@ -135,8 +135,8 @@ class AlertPickerSheetTest {
 
     @Test
     fun `saved custom timed value shows preset list with a selected Custom row, not the wheel`() {
-        // 45 is not a preset. Regression: it must NOT auto-open the wheel and trap
-        // the user; the preset list stays reachable with Custom marked selected.
+        // 45 is not a preset. It must not auto-open the wheel and trap the user; the preset
+        // list stays reachable with Custom marked selected.
         renderTimed(currentValue = 45)
         composeTestRule.onNodeWithText("15 minutes before").assertIsDisplayed()
         // Custom row reflects the saved custom duration.
@@ -155,10 +155,9 @@ class AlertPickerSheetTest {
 
     @Test
     fun `scrolling the custom wheel does not commit or dismiss before Done`() {
-        // Regression: the wheel emits onDurationSelected continuously as the centered
-        // item changes (including mid-fling), so wiring that emission to commit+dismiss
-        // closes the sheet on the first scroll tick and the user can never reach their
-        // target value. Scrolling must NOT commit; only Done commits.
+        // The wheel emits onDurationSelected on every change of its centered item, mid-fling
+        // included. Wired to commit and dismiss, it would close the sheet on the first scroll
+        // tick before the user reaches their value. Scrolling must not commit; only Done does.
         var selectCount = 0
         var dismissCount = 0
         renderTimed(currentValue = 15, onSelect = { selectCount++ }, onDismiss = { dismissCount++ })
@@ -179,10 +178,9 @@ class AlertPickerSheetTest {
 
     @Test
     fun `Done commits the scrolled custom value once and dismisses`() {
-        // Asserts the committed VALUE, not just the call count: Done must commit what
-        // the wheel scrolled to, not the neutral seed (0) or a stale staged value. This
-        // guards the stage-then-commit wiring — if Done committed the seed instead of the
-        // scrolled value, count-only assertions would still pass but this would not.
+        // Asserts the committed value, not only the call count: Done must commit what the
+        // wheel scrolled to, not the neutral seed (0) or a stale staged value. If Done
+        // committed the seed, count-only assertions would still pass but this would not.
         var picked: Int? = null
         var dismissCount = 0
         renderTimed(currentValue = 15, onSelect = { picked = it }, onDismiss = { dismissCount++ })
@@ -198,11 +196,10 @@ class AlertPickerSheetTest {
         composeTestRule.waitForIdle()
 
         assertEquals("Done dismisses the sheet exactly once", 1, dismissCount)
-        // currentValue = 15 is a preset, so the wheel seeds the keep-current sentinel
-        // and opens neutral (0). A WORKING scroll commits the dialed duration; a
-        // silently-broken (no-op) swipe would fall back to the keep-current value 15.
-        // Asserting != 15 (and > 0) discriminates the two — a plain "> 0" would pass
-        // on the broken fallback too.
+        // currentValue = 15 is a preset, so the wheel seeds the keep-current sentinel and
+        // opens neutral (0). A working scroll commits the dialed duration; a swipe that
+        // silently did nothing would fall back to the keep-current 15. Asserting != 15 and
+        // > 0 tells the two apart; "> 0" alone would pass on the fallback too.
         assertNotNull("Done must commit a value", picked)
         assertTrue(
             "committed value must be the dialed duration, not the keep-current fallback (15)",
@@ -212,9 +209,9 @@ class AlertPickerSheetTest {
 
     @Test
     fun `timed preset preserved when Custom opened and Done tapped without scrolling`() {
-        // Opening Custom from a preset seeds the wheel neutrally (0d 0h 0m). Tapping
-        // Done without scrolling must KEEP the existing value, not reset it to 0
-        // ("at time of event"). Regression: the old code committed the neutral 0.
+        // Opening Custom from a preset seeds the wheel neutrally (0d 0h 0m). Tapping Done
+        // without scrolling must keep the existing value, not reset it to 0 ("at time of
+        // event").
         var picked: Int? = null
         renderTimed(currentValue = 15, onSelect = { picked = it })
         composeTestRule.onNodeWithText("Custom").performClick()
@@ -226,8 +223,8 @@ class AlertPickerSheetTest {
 
     @Test
     fun `all-day preset preserved when Custom opened and Done tapped without scrolling`() {
-        // 900 = "9 AM the day before" — a 9-AM offset the wheel can't represent, so it
-        // opens neutral. Un-scrolled Done must keep 900, not drop it to None.
+        // 900 = "9 AM the day before", a preset, so the wheel opens neutral. Un-scrolled Done
+        // must keep 900, not drop it to None.
         var picked: Int? = null
         renderAllDay(currentValue = 900, onSelect = { picked = it })
         composeTestRule.onNodeWithText("Custom").performClick()
@@ -239,9 +236,9 @@ class AlertPickerSheetTest {
 
     @Test
     fun `all-day non-preset negative offset preserved on un-scrolled Done`() {
-        // A synced/imported all-day offset that isn't a preset (e.g. -600) shows as a
-        // selected "Custom (...)" row. The wheel can't represent a negative offset, so
-        // opening it and tapping Done without scrolling must keep -600, not drop to None.
+        // An all-day offset that isn't a preset, such as a synced or imported -600, shows as a
+        // selected "Custom (...)" row. The wheel can't represent a negative offset, so opening
+        // it and tapping Done without scrolling must keep -600, not drop to None.
         var picked: Int? = null
         renderAllDay(currentValue = -600, onSelect = { picked = it })
         composeTestRule.onNodeWithText("Custom", substring = true).performClick()
@@ -253,10 +250,10 @@ class AlertPickerSheetTest {
 
     @Test
     fun `off-grid positive custom preserved on un-scrolled Done, not rounded to a wheel step`() {
-        // 23 min is a custom duration not on the 5-min wheel grid (synced from another
-        // client). Opening Custom seeds the wheel, which snaps the minute component to
-        // 25; an un-scrolled Done must still preserve 23, not silently commit the
-        // rounded 25. Only an actual dial should change the value.
+        // 23 min is a custom duration off the 5-min wheel grid, as another client can sync.
+        // Seeded into the wheel it would snap to 25, so it seeds the keep-current sentinel:
+        // an un-scrolled Done must preserve 23, not silently commit 25. Only a dial changes
+        // the value.
         var picked: Int? = null
         renderTimed(currentValue = 23, onSelect = { picked = it })
         composeTestRule.onNodeWithText("Custom", substring = true).performClick()
@@ -268,8 +265,8 @@ class AlertPickerSheetTest {
 
     @Test
     fun `on-grid positive custom is editable and preserved on un-scrolled Done`() {
-        // 45 min IS on the 5-min grid, so it seeds the wheel editable; an un-scrolled
-        // Done must still commit 45 (the round-trip is lossless).
+        // 45 min is on the 5-min grid, so it seeds the wheel editable; an un-scrolled Done
+        // must still commit 45 (the round-trip is lossless).
         var picked: Int? = null
         renderTimed(currentValue = 45, onSelect = { picked = it })
         composeTestRule.onNodeWithText("Custom", substring = true).performClick()
@@ -296,9 +293,8 @@ class AlertPickerSheetTest {
     }
 
     // ==================== committedAlertValue (Done commit logic) ====================
-    // These pin the branches of the Done commit decision deterministically — the
-    // all-day neutral→None and keep-current paths are hard to reach reliably through
-    // the wheel's gesture layer, so they're tested at the pure-function level.
+    // The all-day neutral-to-None and keep-current branches of the Done commit are hard to
+    // reach reliably through the wheel's gestures, so they're pinned on the pure function.
 
     @Test
     fun `committedAlertValue keeps current when the wheel was never dialed`() {
@@ -319,7 +315,7 @@ class AlertPickerSheetTest {
 
     @Test
     fun `committedAlertValue keeps timed zero as at-time-of-event`() {
-        // Timed 0 is the valid "at time of event" value, NOT converted to None.
+        // Timed 0 is the valid "at time of event" value, not converted to None.
         assertEquals(0, committedAlertValue(staged = 0, currentValue = 60, isAllDay = false))
     }
 

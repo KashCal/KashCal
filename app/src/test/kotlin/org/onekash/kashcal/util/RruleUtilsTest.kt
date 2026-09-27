@@ -8,15 +8,13 @@ import java.util.Calendar
 import java.util.TimeZone
 
 /**
- * Tests for RruleUtils RRULE UNTIL manipulation.
+ * Tests [RruleUtils].
  *
- * Covers:
- * - Adding UNTIL to simple RRULE
- * - Replacing existing UNTIL
- * - Replacing COUNT with UNTIL
- * - DateTime format for timed events
- * - Date-only format for all-day events (RFC 5545 §3.3.10)
- * - COUNT + all-day combinatorial edge case
+ * - [RruleUtils.addUntilToRrule]: adds UNTIL, replaces an UNTIL or a COUNT, in the date-time
+ *   form for a timed series and the DATE form for an all-day one (RFC 5545 §3.3.10).
+ * - [RruleUtils.formatUntilDate]: both forms.
+ * - [RruleUtils.splitRruleAtTime], [RruleUtils.isDegenerateCountSplit] and
+ *   [RruleUtils.rrulesEquivalent], each in its section below.
  */
 class RruleUtilsTest {
 
@@ -96,24 +94,13 @@ class RruleUtilsTest {
 
     // ====== splitRruleAtTime ======================================
     //
-    // Splits a recurring series's RRULE at a chosen instance so the
-    // total occurrence count is preserved across the split:
-    //   - COUNT branch: master keeps COUNT=pastCount, new series gets
-    //     COUNT=(N - pastCount). No UNTIL on either side.
-    //   - UNTIL/unbounded branch: master gets UNTIL=splitTime-1; new
-    //     series carries the original UNTIL forward (or stays
-    //     unbounded by returning null).
-    //
-    // The helper takes a separate userRrule argument so the new
-    // series carries the user's edited recurrence pattern when they
-    // changed it as part of "this and future." When userRrule and
-    // masterRrule match (no edit), the helper preserves the master's
-    // structure verbatim across the split.
-    //
-    // Returns null on the new series for two cases: (a) unbounded
-    // master with no user edit (caller leaves new row unbounded);
-    // (b) degenerate COUNT split where pastCount==0 or pastCount>=total
-    // (caller should fall back to in-place ALL_EVENTS update on master).
+    // With no edit (userRrule == masterRrule):
+    //   - COUNT master: master gets COUNT=pastCount, new series COUNT=(N - pastCount), no
+    //     UNTIL on either side.
+    //   - UNTIL or unbounded master: master gets UNTIL=untilMs; the new series keeps the
+    //     master's rule, its UNTIL or its lack of one.
+    // The new series is null only when userRrule is null; the rules for an edited rule are
+    // in the sections below and on the function.
 
     @Test
     fun `splitRruleAtTime COUNT branch keeps total count split between halves`() {
@@ -156,8 +143,8 @@ class RruleUtilsTest {
 
     @Test
     fun `splitRruleAtTime unbounded RRULE without user edit truncates master and carries rrule on new series`() {
-        // null new-series is reserved for "user dropped recurrence."
-        // No-edit unbounded: new row carries master's rrule verbatim.
+        // A null new series is reserved for dropped recurrence; an unbounded rule with no
+        // edit carries over verbatim.
         val (master, newSeries) = RruleUtils.splitRruleAtTime(
             masterRrule = "FREQ=DAILY",
             userRrule = "FREQ=DAILY",
@@ -225,11 +212,9 @@ class RruleUtilsTest {
 
     @Test
     fun `splitRruleAtTime COUNT user explicitly sets a different COUNT — new row carries user's COUNT verbatim`() {
-        // Master is WEEKLY;COUNT=10. User opens an occurrence, changes
-        // FREQ to DAILY *and* explicitly sets COUNT=5 (a number that
-        // can't be a no-op of the master's 10). That's a deliberate
-        // "5 daily occurrences from here" — honor it; do not recompute
-        // to preserve master's total.
+        // The user changes WEEKLY;COUNT=10 to DAILY and sets COUNT=5, which differs from the
+        // master's 10, so it means "5 daily occurrences from here": kept as is, not
+        // recomputed to preserve the master's total.
         val (master, newSeries) = RruleUtils.splitRruleAtTime(
             masterRrule = "FREQ=WEEKLY;BYDAY=MO;COUNT=10",
             userRrule = "FREQ=DAILY;COUNT=5",
@@ -243,10 +228,8 @@ class RruleUtilsTest {
 
     @Test
     fun `splitRruleAtTime COUNT user changes FREQ — new row carries user's FREQ with remaining COUNT`() {
-        // Master is WEEKLY;COUNT=10. User opens an occurrence and changes
-        // recurrence to DAILY before picking THIS_AND_FUTURE. The new
-        // series row should be DAILY (user's edit), not WEEKLY (master's
-        // pattern). COUNT splits as remaining: 10 - 4 = 6.
+        // The user changes WEEKLY;COUNT=10 to DAILY, keeping COUNT=10, and picks this and
+        // future. The new series is DAILY with the remaining count, 10 - 4 = 6.
         val (master, newSeries) = RruleUtils.splitRruleAtTime(
             masterRrule = "FREQ=WEEKLY;COUNT=10",
             userRrule = "FREQ=DAILY;COUNT=10",
@@ -260,8 +243,7 @@ class RruleUtilsTest {
 
     @Test
     fun `splitRruleAtTime unbounded user edit — new row carries user's rrule verbatim`() {
-        // Master is unbounded WEEKLY. User changes to DAILY and picks
-        // THIS_AND_FUTURE. New row should be unbounded DAILY.
+        // Unbounded WEEKLY edited to DAILY: the new series is unbounded DAILY.
         val (master, newSeries) = RruleUtils.splitRruleAtTime(
             masterRrule = "FREQ=WEEKLY",
             userRrule = "FREQ=DAILY",
@@ -273,20 +255,16 @@ class RruleUtilsTest {
         assertEquals("FREQ=DAILY", newSeries)
     }
 
-    // ====== bounds-shape changes (#1, #3, #5, #8) ====================
+    // ====== bounds-shape changes ====================================
     //
-    // The bounds shape on the new series follows the user's edited
-    // rrule, not the master's. If the user dropped COUNT or UNTIL,
-    // the new series stays unbounded (or carries only the user's
-    // bounds). If the user added UNTIL where master had COUNT, the
-    // new series carries UNTIL only — never both.
+    // The new series' bounds follow the user's edited rule, not the master's: a dropped
+    // COUNT or UNTIL leaves it unbounded, a user UNTIL is kept (on a COUNT master, UNTIL
+    // only, never both), and dropped recurrence gives a null new series.
 
     @Test
     fun `splitRruleAtTime user replaces master COUNT with UNTIL — new series carries only user UNTIL, no COUNT`() {
-        // RFC 5545 §3.3.10 forbids COUNT and UNTIL in the same recur.
-        // ical4j's Recur enforces this on parse, so emitting both
-        // crashes downstream. The fix: when user supplied UNTIL,
-        // drop the COUNT-append branch.
+        // RFC 5545 §3.3.10: UNTIL and COUNT MUST NOT occur in the same recur. A user rule
+        // without COUNT is taken verbatim, so no COUNT is added to the user's UNTIL.
         val (master, newSeries) = RruleUtils.splitRruleAtTime(
             masterRrule = "FREQ=WEEKLY;COUNT=10",
             userRrule = "FREQ=DAILY;UNTIL=20270101T000000Z",
@@ -296,16 +274,13 @@ class RruleUtilsTest {
         )
         assertEquals("FREQ=WEEKLY;COUNT=4", master)
         assertEquals("FREQ=DAILY;UNTIL=20270101T000000Z", newSeries)
-        // Defensive — never both.
         assertFalse("new series must not contain COUNT", newSeries!!.contains("COUNT="))
     }
 
     @Test
     fun `splitRruleAtTime user removes COUNT — new series stays unbounded`() {
-        // User opens a COUNT-bounded master and deliberately drops
-        // COUNT to make the future tail unbounded. The total-
-        // preservation rule must yield to the user's deliberate
-        // bounds removal.
+        // The user drops COUNT to make the future unbounded; keeping the series total
+        // yields to that.
         val (master, newSeries) = RruleUtils.splitRruleAtTime(
             masterRrule = "FREQ=DAILY;COUNT=10",
             userRrule = "FREQ=DAILY",
@@ -319,8 +294,7 @@ class RruleUtilsTest {
 
     @Test
     fun `splitRruleAtTime user removes UNTIL — new series stays unbounded`() {
-        // Symmetric: user opens an UNTIL-bounded master and drops
-        // the UNTIL to make the future tail unbounded.
+        // The same for an UNTIL master: the user drops UNTIL to make the future unbounded.
         val (master, newSeries) = RruleUtils.splitRruleAtTime(
             masterRrule = "FREQ=WEEKLY;UNTIL=20270101T000000Z",
             userRrule = "FREQ=DAILY",
@@ -334,9 +308,8 @@ class RruleUtilsTest {
 
     @Test
     fun `splitRruleAtTime user dropped recurrence COUNT master — new series is non-recurring`() {
-        // User picked "Does not repeat" on the form's recurrence
-        // picker (formState.rrule=null). Caller passes userRrule=null.
-        // The new series row should be non-recurring.
+        // The user picked "Does not repeat" (formState.rrule = null), so the caller passes
+        // userRrule = null and the new series doesn't repeat.
         val (master, newSeries) = RruleUtils.splitRruleAtTime(
             masterRrule = "FREQ=DAILY;COUNT=10",
             userRrule = null,
@@ -363,10 +336,8 @@ class RruleUtilsTest {
 
     @Test
     fun `splitRruleAtTime user picks earlier UNTIL — new series honors user value`() {
-        // The COUNT branch already honors a deliberate user-set COUNT
-        // (test above). UNTIL must be symmetric: when user explicitly
-        // picks a different end date, honor it; don't silently
-        // override with master's UNTIL.
+        // Like a user-set COUNT, a user-set UNTIL is kept and never silently replaced with
+        // the master's UNTIL.
         val (master, newSeries) = RruleUtils.splitRruleAtTime(
             masterRrule = "FREQ=WEEKLY;UNTIL=20270101T000000Z",
             userRrule = "FREQ=DAILY;UNTIL=20260601T000000Z",
@@ -380,13 +351,9 @@ class RruleUtilsTest {
 
     // ====== degenerate-split detection (separate predicate) ========
     //
-    // splitRruleAtTime's null new-series now means "non-recurring new
-    // row" (user dropped recurrence). Degenerate-split detection
-    // (where producing master COUNT=0 / new COUNT=0 would be invalid
-    // per RFC 5545) is the caller's responsibility via
-    // `isDegenerateCountSplit`. Callers check this BEFORE invoking
-    // splitRruleAtTime; on true, fall back to in-place ALL_EVENTS
-    // update on the master.
+    // A split that would give the master or the new series COUNT=0 is caught by
+    // isDegenerateCountSplit, which callers check before splitRruleAtTime; on true they
+    // update the master in place as an "all events" edit.
 
     @Test
     fun `isDegenerateCountSplit COUNT pastCount=0 is degenerate`() {
@@ -415,18 +382,14 @@ class RruleUtilsTest {
 
     @Test
     fun `isDegenerateCountSplit UNTIL-bounded rrule is never degenerate`() {
-        // UNTIL-bounded splits never produce COUNT=0; the degenerate
-        // case is COUNT-specific.
+        // An UNTIL split never produces COUNT=0; the degenerate case is COUNT-only.
         assertFalse(RruleUtils.isDegenerateCountSplit("FREQ=WEEKLY;UNTIL=20270101T000000Z", pastCount = 0))
     }
 
     // ===== rrulesEquivalent =====
-    // The scope sheet decides whether the user changed the recurrence
-    // rule by comparing the loaded RRULE against the form's. A raw
-    // string compare misfires when the picker re-emits a cosmetically
-    // different but semantically identical rule (reordered parts, case,
-    // whitespace, trailing separators), spuriously disabling save
-    // options. rrulesEquivalent compares by meaning instead.
+    // The picker can re-emit an unchanged rule in another form: reordered parts or list
+    // values, other case, whitespace, a trailing separator, an RRULE: prefix. A string
+    // compare would read that as a user change (why it matters is on the function).
 
     @Test
     fun `rrulesEquivalent treats identical strings as equal`() {
@@ -481,8 +444,8 @@ class RruleUtilsTest {
 
     @Test
     fun `rrulesEquivalent does not equate COUNT with UNTIL`() {
-        // Different bounds shape is a real semantic difference; we only
-        // normalize cosmetics, not COUNT-to-UNTIL conversion.
+        // Different bounds are a real change; only cosmetics are normalized, and COUNT is
+        // never converted to UNTIL.
         assertFalse(RruleUtils.rrulesEquivalent("FREQ=DAILY;COUNT=10", "FREQ=DAILY;UNTIL=20260115T000000Z"))
     }
 }

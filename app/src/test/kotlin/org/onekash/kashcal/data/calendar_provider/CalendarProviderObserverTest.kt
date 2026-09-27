@@ -11,10 +11,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Unit tests for CalendarProviderObserver.
- *
- * Tests debounce behavior (3-second default) and callback dispatching.
- * Follows ContactBirthdayObserverTest pattern.
+ * Tests [CalendarProviderObserver]'s debounce and callback dispatch, with the debounce passed
+ * explicitly (the 3-second default isn't exercised).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CalendarProviderObserverTest {
@@ -53,7 +51,7 @@ class CalendarProviderObserverTest {
             onCalendarChanged = { callCount++ }
         )
 
-        // Simulate rapid changes from sync adapter
+        // Rapid changes, as from a sync adapter.
         observer.onChange(false)
         advanceTimeBy(500)
         observer.onChange(false)
@@ -62,7 +60,7 @@ class CalendarProviderObserverTest {
         advanceTimeBy(500)
         observer.onChange(false)
 
-        // Still within debounce of last call
+        // Still within the debounce of the last call.
         advanceTimeBy(2500)
         assertEquals("Should not fire during debounce", 0, callCount)
 
@@ -103,7 +101,7 @@ class CalendarProviderObserverTest {
         advanceTimeBy(3100)
         assertEquals(1, callCount)
 
-        // Second change (new debounce cycle)
+        // Second change, a new debounce cycle.
         observer.onChange(false)
         advanceTimeBy(3100)
         assertEquals(2, callCount)
@@ -111,8 +109,8 @@ class CalendarProviderObserverTest {
 
     @Test
     fun `selfChange true still triggers callback`() = testScope.runTest {
-        // Unlike ContactBirthdayObserver, we DO want self-change callbacks
-        // because KashCal writes to CalendarProvider and UI needs refresh
+        // Self-changes aren't filtered: the app writes to CalendarProvider too, and its own
+        // writes need a UI refresh.
         var callCount = 0
         val observer = CalendarProviderObserver(
             handler = handler,
@@ -135,7 +133,7 @@ class CalendarProviderObserverTest {
             onCalendarChanged = { }
         )
 
-        // Should not throw
+        // Must not throw.
         observer.cancelPending()
         observer.cancelPending()
     }

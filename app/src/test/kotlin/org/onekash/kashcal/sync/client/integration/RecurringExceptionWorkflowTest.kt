@@ -17,18 +17,18 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Integration test documenting iCloud's recurring event + exception workflow.
+ * Prints iCloud's ICS at each step of a recurring event's exception workflow.
  *
- * This test:
- * 1. Creates a recurring event via CalDAV
- * 2. Creates an exception (edit one instance) via CalDAV
- * 3. Edits the exception again via CalDAV
- * 4. Logs ICS format at each step
+ * The test:
+ * 1. Creates a weekly series
+ * 2. Adds an exception that moves the second occurrence
+ * 3. Edits the exception again
+ * 4. Prints the fetched ICS after each write
  *
- * Run: ./gradlew testDebugUnitTest --tests "*RecurringExceptionWorkflowTest*"
+ * It creates one real event on iCloud and deletes only that one, by the URL its create returned.
+ * Requires local.properties with iCloud credentials; skipped without them.
  *
- * IMPORTANT: This test creates real events on iCloud and cleans them up.
- * Requires local.properties with valid iCloud credentials.
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*RecurringExceptionWorkflowTest*"
  */
 class RecurringExceptionWorkflowTest {
 
@@ -62,7 +62,7 @@ class RecurringExceptionWorkflowTest {
             val factory = OkHttpCalDavClientFactory()
             client = factory.createClient(credentials, quirks)
         } else {
-            // Create a client with dummy credentials for tests that will be skipped
+            // Dummy credentials: every test is skipped without real ones
             val dummyCredentials = Credentials(
                 username = "test@example.com",
                 password = "test-password",
@@ -75,7 +75,7 @@ class RecurringExceptionWorkflowTest {
 
     @After
     fun cleanup() = runBlocking {
-        // Clean up test event if it was created
+        // Deletes the test's own event, when it was created and an etag is known
         if (testEventUrl != null && testEventEtag != null) {
             println("\n=== CLEANUP: Deleting test event ===")
             val result = client.deleteEvent(testEventUrl!!, testEventEtag!!)
@@ -123,13 +123,13 @@ class RecurringExceptionWorkflowTest {
         val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null
         val calendars = client.listCalendars(home).getOrNull() ?: return null
 
-        // Find first non-inbox/outbox calendar
+        // The first calendar whose URL contains neither "inbox" nor "outbox"
         return calendars.firstOrNull { cal ->
             !cal.url.contains("inbox") && !cal.url.contains("outbox")
         }?.url
     }
 
-    // ========== WORKFLOW TEST ==========
+    // ========== Workflow ==========
 
     @Test
     fun `document recurring event exception workflow`() = runBlocking {
@@ -146,31 +146,31 @@ class RecurringExceptionWorkflowTest {
         assumeTrue("No calendar found", calendarUrl != null)
         println("Using calendar: $calendarUrl\n")
 
-        // Calculate dates
+        // Occurrence dates, at 10:00 UTC
         val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
         cal.set(Calendar.HOUR_OF_DAY, 10)
         cal.set(Calendar.MINUTE, 0)
         cal.set(Calendar.SECOND, 0)
         cal.set(Calendar.MILLISECOND, 0)
 
-        // Find next Monday
+        // Today if it is a Monday, else the next Monday
         while (cal.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY) {
             cal.add(Calendar.DAY_OF_MONTH, 1)
         }
         val firstOccurrence = cal.time
         val firstOccurrenceStr = icsDateFormat.format(firstOccurrence)
 
-        // Second occurrence (1 week later)
+        // Second occurrence, one week later
         cal.add(Calendar.WEEK_OF_YEAR, 1)
         val secondOccurrence = cal.time
         val secondOccurrenceStr = icsDateFormat.format(secondOccurrence)
 
-        // Modified time for exception (2pm instead of 10am)
+        // The exception's first time: 2pm instead of 10am
         cal.set(Calendar.HOUR_OF_DAY, 14)
         val exceptionTime = cal.time
         val exceptionTimeStr = icsDateFormat.format(exceptionTime)
 
-        // Re-modified time for second edit (4pm)
+        // The exception's second time: 4pm
         cal.set(Calendar.HOUR_OF_DAY, 16)
         val reEditTime = cal.time
         val reEditTimeStr = icsDateFormat.format(reEditTime)
@@ -182,22 +182,22 @@ class RecurringExceptionWorkflowTest {
         println("  Exception edit 2: $reEditTimeStr (4pm)")
         println()
 
-        // ========== STEP 1: Create Recurring Event ==========
+        // ========== Step 1: create the series ==========
         step1_createRecurringEvent(firstOccurrenceStr)
 
-        // ========== STEP 2: Fetch and verify ==========
+        // ========== Step 2: fetch and check ==========
         step2_fetchAndVerify()
 
-        // ========== STEP 3: Create Exception ==========
+        // ========== Step 3: add the exception ==========
         step3_createException(firstOccurrenceStr, secondOccurrenceStr, exceptionTimeStr)
 
-        // ========== STEP 4: Fetch and verify exception ==========
+        // ========== Step 4: fetch and check the exception ==========
         step4_fetchAndVerifyException()
 
-        // ========== STEP 5: Edit Exception Again ==========
+        // ========== Step 5: edit the exception again ==========
         step5_editExceptionAgain(firstOccurrenceStr, secondOccurrenceStr, reEditTimeStr)
 
-        // ========== STEP 6: Fetch and verify re-edited exception ==========
+        // ========== Step 6: fetch and check the re-edited exception ==========
         step6_fetchAndVerifyReEdit()
 
         println("\n" + "=".repeat(80))
@@ -259,7 +259,7 @@ END:VCALENDAR
         println("ETag: ${event.etag}")
         println()
 
-        // Verify structure
+        // The series has an RRULE and a VEVENT
         assert(event.icalData.contains("RRULE:")) { "Should have RRULE" }
         assert(event.icalData.count { it == 'B' && event.icalData.indexOf("BEGIN:VEVENT") >= 0 } >= 1) {
             "Should have at least one VEVENT"
@@ -273,7 +273,8 @@ END:VCALENDAR
     ) {
         println("=== STEP 3: Create Exception (Edit Second Occurrence) ===\n")
 
-        // RFC 5545: Exception is same UID, different VEVENT with RECURRENCE-ID
+        // RFC 5545 §3.8.4.4: the exception is another VEVENT with the same UID and a
+        // RECURRENCE-ID
         val icsContent = """
 BEGIN:VCALENDAR
 VERSION:2.0
@@ -329,10 +330,10 @@ END:VCALENDAR
         println(event.icalData)
         println()
 
-        // Verify structure
+        // The exception kept its RECURRENCE-ID
         assert(event.icalData.contains("RECURRENCE-ID:")) { "Should have RECURRENCE-ID" }
 
-        // Count VEVENTs
+        // Master and exception
         val veventCount = event.icalData.split("BEGIN:VEVENT").size - 1
         println("VEVENT count: $veventCount (expected: 2 - master + exception)")
         assert(veventCount >= 2) { "Should have at least 2 VEVENTs (master + exception)" }
@@ -401,28 +402,28 @@ END:VCALENDAR
         println(event.icalData)
         println()
 
-        // Key observations
+        // What iCloud kept or changed
         println("KEY OBSERVATIONS:")
         println("-".repeat(40))
 
-        // Check RECURRENCE-ID is preserved
+        // Whether RECURRENCE-ID survived
         if (event.icalData.contains("RECURRENCE-ID:")) {
             println("- RECURRENCE-ID: Present (exception preserved)")
         } else {
             println("- RECURRENCE-ID: MISSING (exception lost!)")
         }
 
-        // Check SEQUENCE was incremented
+        // Every SEQUENCE value in the fetched ICS
         val sequenceMatch = Regex("SEQUENCE:(\\d+)").findAll(event.icalData)
         sequenceMatch.forEach { match ->
             println("- SEQUENCE: ${match.groupValues[1]}")
         }
 
-        // Count VEVENTs
+        // VEVENT count
         val veventCount = event.icalData.split("BEGIN:VEVENT").size - 1
         println("- VEVENT count: $veventCount")
 
-        // Check if iCloud modified anything
+        // Whether iCloud added X-APPLE properties
         if (event.icalData.contains("X-APPLE")) {
             println("- iCloud added X-APPLE properties")
         }

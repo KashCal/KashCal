@@ -3,12 +3,11 @@ package org.onekash.kashcal.domain.model
 import androidx.compose.runtime.Immutable
 
 /**
- * Wrapper for search results that pairs a [DisplayEvent] with its display timestamp.
+ * Pairs a search hit with the time the result shows.
  *
- * For Room recurring events, [displayTs] is the next occurrence's startTs
- * (so the search result shows when the event next occurs, not when it was created).
- * For Device events, [displayTs] is the instance's startTs.
- * For Room non-recurring events, [displayTs] is the event's startTs.
+ * For a Room event [displayTs] is the start of its next occurrence, so a recurring hit
+ * shows when it next happens, falling back to the event's start. For a device event it is the
+ * Instances row's start.
  */
 @Immutable
 data class SearchResult(

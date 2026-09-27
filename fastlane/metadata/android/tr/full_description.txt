@@ -1,0 +1,36 @@
+Takvimlerin her yerde. Ailen iCloud'da. Tatiller bir web sitesinde. Doğum günleri kişilerinde gömülü. İş, telefon takviminde. KashCal hepsini Android'de tek bir uygulamada toplar.
+
+Daha fazlası: https://kashcal.onekash.org
+
+• iCloud: Android'e geçtin ama ailen hâlâ Apple'da mı? iCloud takvimlerini doğrudan senkronize et. Köprü yok, geçici çözüm yok.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo ve daha fazlası. Ara katman olmadan gerçek çift yönlü senkronizasyon. Telefonundaki Google ve Outlook takvimleri de görünür.
+
+• Yedi görünüm: ay, tam yükseklikte ay, gündem, gün, 3 gün, hafta ve yıl. Zaman çizelgesini yakınlaştırmak için parmaklarını sıkıştır, taşımak için bir etkinliği sürükle.
+
+• Planlama: kişileri davet et, toplantı davetleri gönder ve gelen davetleri yanıtla.
+
+• İçgörüler: zamanının nereye gittiğini gör. En yoğun günler, arka arkaya seriler, boş bloklar. Tümü cihazda hesaplanır.
+
+• Widget'lar: uygulamayı açmadan gününü ana ekranında tut. Gündem, tarih, hafta, ay ve yaklaşanlar.
+
+• ICS abonelikleri: herhangi bir takvim akışını takip et. Resmi tatiller, okul dönemleri, spor sezonları.
+
+• Doğum günleri ve yıl dönümleri: kişilerinden otomatik olarak alınır.
+
+• Etkinlik başına renkler: özenle seçilmiş bir paletten veya tam renk çarkından, böylece haftan bir bakışta okunur.
+
+• Sana göre yap: açık, koyu veya sistem teması, ayrıca bir KashCal Teal paleti. Destekçiler özel bir uygulama simgesine geçebilir.
+
+• Erişilebilirlik: tam ekran okuyucu (TalkBack) desteği ve uygulamanın dilini doğrudan Android ayarlarından 67 dilde ayarlama.
+
+• Kutudan çıkar çıkmaz tamamen çevrimdışı çalışır.
+
+Varsayılan olarak gizli
+
+Analiz yok. Telemetri yok. KashCal hesabı yok. Sunucumuz yok, yani toplanacak bir şey de yok.
+
+• Kimlik bilgileri Android Keystore ile şifrelenir
+• Uygulama kilidi: etkinliklerini parmak izinin, yüzünün veya ekran kilidinin arkasına gizle
+
+İfade özgürlüğündeki gibi özgür. Üstelik bedava da.

@@ -6,14 +6,13 @@ import android.content.Intent
 import org.onekash.kashcal.MainActivity
 
 /**
- * Chooser builder that hides KashCal from its own outbound share sheet.
+ * Builds a share chooser that hides KashCal from its own outbound shares.
  *
- * Without [Intent.EXTRA_EXCLUDE_COMPONENTS], KashCal's own MainActivity (which
- * registers as an `ACTION_SEND` `text/plain` target) appears in the chooser
- * users see when they tap "Share" inside KashCal. Tapping it loops the share
- * back into Quick Add — confusing, not destructive, but a polish defect.
+ * [MainActivity] registers as an `ACTION_SEND` target for plain text and calendar files, so
+ * without [Intent.EXTRA_EXCLUDE_COMPONENTS] it appears in the chooser of a share started inside
+ * KashCal, and picking it loops the share back into Quick Add or the import sheet.
  *
- * Available since API 24; KashCal's minSdk is 31.
+ * The extra exists since API 24; KashCal's minSdk is 31.
  */
 object ShareChooser {
 

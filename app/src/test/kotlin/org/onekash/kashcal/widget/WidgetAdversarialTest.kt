@@ -25,16 +25,18 @@ import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
 
 /**
- * Adversarial tests for widget data loading.
+ * Tests the [org.onekash.kashcal.data.db.dao.OccurrencesDao] day and range queries that widget data
+ * loading rests on, over an in-memory database.
  *
- * Tests edge cases:
- * - Zero events scenario
- * - Many events (100+) performance
- * - Events spanning midnight
- * - All-day events in various timezones
- * - Widget update during sync
- * - Stale data after event deletion
- * - Hidden calendar filtering
+ * Covers:
+ * - an empty database, and an event with no occurrence rows
+ * - 100 occurrences on one day (count only, no time bound), and start-time order
+ * - an occurrence crossing midnight, listed on both days
+ * - all-day occurrences keyed by UTC day, one day and three days long
+ * - the per-calendar query returning only that calendar's rows
+ * - occurrences cascade-deleted with their event
+ * - cancelled occurrences excluded
+ * - the range query including occurrences at both ends of the range
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -91,7 +93,7 @@ class WidgetAdversarialTest {
 
     @Test
     fun `no visible calendars returns filtered list`() = runTest {
-        // Hide all calendars
+        // Hide every calendar.
         val visibleCal = database.calendarsDao().getById(testCalendarId)!!
         database.calendarsDao().update(visibleCal.copy(isVisible = false))
 
@@ -102,8 +104,9 @@ class WidgetAdversarialTest {
         val today = getTodayDayCode()
         val occurrences = database.occurrencesDao().getForDayOnce(today)
 
-        // getForDayOnce doesn't filter by visibility - that's done at domain layer
-        // This tests the raw DAO behavior
+        // getForDayOnce doesn't filter by visibility; the domain layer does. The list is empty
+        // because inserting an event creates no occurrence rows, so hiding the calendar isn't
+        // what this asserts.
         assertTrue("All calendars hidden, no occurrences created", occurrences.isEmpty())
     }
 
@@ -114,7 +117,7 @@ class WidgetAdversarialTest {
         val now = System.currentTimeMillis()
         val today = getTodayDayCode()
 
-        // Create 100 events for today
+        // 100 events today.
         repeat(100) { i ->
             val event = Event(
                 uid = "bulk-$i@test.com",
@@ -127,7 +130,7 @@ class WidgetAdversarialTest {
             )
             val eventId = database.eventsDao().insert(event)
 
-            // Insert occurrence directly for speed
+            // Occurrence rows inserted directly, not generated.
             database.occurrencesDao().insert(
                 Occurrence(
                     eventId = eventId,
@@ -149,7 +152,7 @@ class WidgetAdversarialTest {
         val now = System.currentTimeMillis()
         val today = getTodayDayCode()
 
-        // Create events in random order
+        // Events inserted out of start order.
         listOf(3, 1, 4, 1, 5, 9, 2, 6).forEachIndexed { index, hour ->
             val startTs = now + hour * 3600000L
             val event = Event(
@@ -176,7 +179,7 @@ class WidgetAdversarialTest {
 
         val occurrences = database.occurrencesDao().getForDayOnce(today)
 
-        // Verify sorted order (DAO returns ORDER BY start_ts ASC)
+        // The DAO orders by start_ts ascending.
         for (i in 1 until occurrences.size) {
             assertTrue(
                 "Events should be sorted by startTs",
@@ -191,7 +194,7 @@ class WidgetAdversarialTest {
     fun `event spanning midnight appears on both days`() = runTest {
         val now = System.currentTimeMillis()
 
-        // Event from 11 PM today to 1 AM tomorrow
+        // 11 PM to 1 AM the next day, UTC.
         val todayMidnight = Instant.now().truncatedTo(ChronoUnit.DAYS)
         val startTs = todayMidnight.plusSeconds(23 * 3600).toEpochMilli() // 11 PM
         val endTs = todayMidnight.plusSeconds(25 * 3600).toEpochMilli() // 1 AM next day
@@ -210,7 +213,7 @@ class WidgetAdversarialTest {
         val today = Occurrence.toDayFormat(startTs, false)
         val tomorrow = Occurrence.toDayFormat(endTs, false)
 
-        // Insert occurrence spanning both days
+        // One occurrence spanning both days.
         database.occurrencesDao().insert(
             Occurrence(
                 eventId = eventId,
@@ -222,7 +225,6 @@ class WidgetAdversarialTest {
             )
         )
 
-        // Should appear on both days
         val todayOccs = database.occurrencesDao().getForDayOnce(today)
         val tomorrowOccs = database.occurrencesDao().getForDayOnce(tomorrow)
 
@@ -234,9 +236,9 @@ class WidgetAdversarialTest {
 
     @Test
     fun `all-day event uses UTC for day calculation`() = runTest {
-        // June 15, 2024 00:00 UTC
+        // June 15, 2024 00:00 UTC.
         val allDayStart = 1718409600000L
-        val allDayEnd = 1718495999999L // End of June 15
+        val allDayEnd = 1718495999999L // June 15 23:59:59.999 UTC
 
         val event = Event(
             uid = "allday@test.com",
@@ -270,9 +272,9 @@ class WidgetAdversarialTest {
 
     @Test
     fun `multi-day all-day event spans correct days`() = runTest {
-        // June 15-17, 2024 (3 days)
-        val startTs = 1718409600000L // June 15
-        val endTs = 1718668799999L // June 17 end
+        // June 15 to 17, 2024 (3 days), UTC.
+        val startTs = 1718409600000L // June 15 00:00
+        val endTs = 1718668799999L // June 17 23:59:59.999
 
         val event = Event(
             uid = "multiday-allday@test.com",
@@ -297,7 +299,6 @@ class WidgetAdversarialTest {
             )
         )
 
-        // Should appear on all 3 days
         listOf(20240615, 20240616, 20240617).forEach { day ->
             val occs = database.occurrencesDao().getForDayOnce(day)
             assertEquals("Should appear on day $day", 1, occs.size)
@@ -311,7 +312,7 @@ class WidgetAdversarialTest {
         val now = System.currentTimeMillis()
         val today = getTodayDayCode()
 
-        // Event in visible calendar
+        // One occurrence in the visible calendar.
         val visibleEvent = createEvent("Visible", now, testCalendarId)
         val visibleId = database.eventsDao().insert(visibleEvent)
         database.occurrencesDao().insert(
@@ -325,7 +326,7 @@ class WidgetAdversarialTest {
             )
         )
 
-        // Event in hidden calendar
+        // One in the hidden calendar.
         val hiddenEvent = createEvent("Hidden", now + 1800000, hiddenCalendarId)
         val hiddenId = database.eventsDao().insert(hiddenEvent)
         database.occurrencesDao().insert(
@@ -339,12 +340,11 @@ class WidgetAdversarialTest {
             )
         )
 
-        // Filter by visible calendar
+        // The per-calendar query filters by calendar id, not visibility.
         val visibleOccs = database.occurrencesDao().getForCalendarOnDay(testCalendarId, today)
         assertEquals("Should only show visible calendar", 1, visibleOccs.size)
         assertEquals(visibleId, visibleOccs.first().eventId)
 
-        // Hidden calendar also has occurrences
         val hiddenOccs = database.occurrencesDao().getForCalendarOnDay(hiddenCalendarId, today)
         assertEquals("Hidden calendar has events too", 1, hiddenOccs.size)
     }
@@ -369,14 +369,13 @@ class WidgetAdversarialTest {
             )
         )
 
-        // Query occurrences
         val occurrences = database.occurrencesDao().getForDayOnce(today)
         assertEquals(1, occurrences.size)
 
-        // Delete event (simulates deletion during widget render)
+        // Stands in for a delete while the widget renders.
         database.eventsDao().deleteById(eventId)
 
-        // Occurrence should be cascade deleted with event
+        // The occurrence FK cascades on event delete.
         val afterDelete = database.occurrencesDao().getForDayOnce(today)
         assertTrue("Occurrences should be cascade deleted", afterDelete.isEmpty())
     }
@@ -392,7 +391,7 @@ class WidgetAdversarialTest {
         val event = createEvent("With Cancelled", now, testCalendarId)
         val eventId = database.eventsDao().insert(event)
 
-        // Normal occurrence
+        // Today, not cancelled.
         database.occurrencesDao().insert(
             Occurrence(
                 eventId = eventId,
@@ -405,7 +404,7 @@ class WidgetAdversarialTest {
             )
         )
 
-        // Cancelled occurrence
+        // Tomorrow, cancelled.
         database.occurrencesDao().insert(
             Occurrence(
                 eventId = eventId,
@@ -422,7 +421,6 @@ class WidgetAdversarialTest {
         assertEquals("Should show non-cancelled", 1, todayOccs.size)
         assertFalse("Should not be cancelled", todayOccs.first().isCancelled)
 
-        // Cancelled occurrence excluded
         val tomorrowOccs = database.occurrencesDao().getForDayOnce(tomorrow)
         assertEquals("Cancelled should be excluded", 0, tomorrowOccs.size)
     }
@@ -435,7 +433,7 @@ class WidgetAdversarialTest {
         val startRange = now
         val endRange = now + 86400000 // 1 day
 
-        // Event at start of range
+        // Starts at the range start.
         val startEvent = createEvent("At Start", startRange, testCalendarId)
         val startId = database.eventsDao().insert(startEvent)
         database.occurrencesDao().insert(
@@ -449,7 +447,7 @@ class WidgetAdversarialTest {
             )
         )
 
-        // Event at end of range
+        // Ends at the range end.
         val endEvent = createEvent("At End", endRange - 3600000, testCalendarId)
         val endId = database.eventsDao().insert(endEvent)
         database.occurrencesDao().insert(

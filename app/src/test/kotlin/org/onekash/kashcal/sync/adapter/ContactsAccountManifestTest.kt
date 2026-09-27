@@ -11,23 +11,21 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Verifies the manifest + resource wiring that makes a per-login contacts
- * account appear in Android as its OWN source, independent of the singleton
- * "KashCal" calendar account.
+ * Verifies the manifest and resource wiring that makes a per-login contacts account appear in
+ * Android as its own source, independent of the singleton "KashCal" calendar account.
  *
- * Contacts need a dedicated account type (`org.onekash.kashcal.contacts`) with
- * its own authenticator + sync-adapter so a per-login, email-named account can
- * be registered without colliding with the calendar type. Without the
- * registered type Android would purge any RawContacts written under it, and
- * without `WRITE_CONTACTS` the sync adapter could never write them. This guard
- * fails loudly the day any of that wiring regresses.
+ * Contacts need a dedicated account type (`org.onekash.kashcal.contacts`) with its own
+ * authenticator and sync adapter so an email-named account per login doesn't collide with the
+ * calendar type. Without the registered type Android would purge any RawContacts written under
+ * it, and without `WRITE_CONTACTS` the sync adapter couldn't write them.
  *
- * Split responsibilities:
- * - PackageManager (Robolectric parses the merged manifest) proves the app
- *   *requests* `WRITE_CONTACTS` and *declares* both contacts services.
- * - A source scan of the two `res/xml` resources proves the account type and
- *   content authority are the contacts-specific values and differ from the
- *   calendar type — PackageManager can't read the meta-data XML contents.
+ * - PackageManager (Robolectric parses the merged manifest) proves the app requests
+ *   `WRITE_CONTACTS`, declares both contacts services, and gives the sync adapter its
+ *   CONTACTS_STRUCTURE meta-data.
+ * - PackageManager can't read meta-data XML contents, so a source scan of `res/xml` proves the
+ *   authenticator and sync-adapter XML use the contacts type, which differs from the calendar
+ *   type, and the contacts authority, and that `contacts.xml` declares every data kind
+ *   `VCardContactMapper` writes.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -144,11 +142,10 @@ class ContactsAccountManifestTest {
         val xml = File(resXmlRoot(), "contacts.xml").readText()
         assertTrue("must open a ContactsAccountType/EditSchema", xml.contains("<EditSchema>"))
 
-        // Derive the required kinds from the mapper SOURCE rather than a hand-copied
-        // literal, so adding a new row type to VCardContactMapper without declaring it
-        // in contacts.xml fails this test (the drift the guard exists to catch). The
-        // mapper emits every Data row as `row(<CommonDataKinds type>.CONTENT_ITEM_TYPE)`;
-        // scan those type names and translate each to its EditSchema `kind=` token.
+        // Derive the required kinds from the mapper source, not a hand-copied list, so a new
+        // row type in VCardContactMapper that contacts.xml doesn't declare fails this test.
+        // The mapper emits every Data row as `row(<CommonDataKinds type>.CONTENT_ITEM_TYPE)`;
+        // each type name translates to its EditSchema `kind=` token.
         val mapperSrc = File(mapperFile()).readText()
         val emittedTypes = Regex("""row\((\w+)\.CONTENT_ITEM_TYPE""")
             .findAll(mapperSrc)

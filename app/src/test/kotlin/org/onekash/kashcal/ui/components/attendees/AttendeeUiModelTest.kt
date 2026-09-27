@@ -11,14 +11,14 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Unit tests for the read-side UI display model. Pure logic — no Compose
- * runtime. Pairs with [AttendeeChipRowComposeTest] (in androidTest/) which
- * covers the rendering side.
+ * Tests the read-side attendee model without Compose: [AttendeeStatus.fromPartstat],
+ * [AttendeeUiModel.fromRoom] (mapping, organizer detection, isYou, organizer synthesis),
+ * [AttendeeUiModel.isCurrentUserOnList] and [AttendeeUiModel.sortForCollapsedView].
  */
 @RunWith(RobolectricTestRunner::class)
 class AttendeeUiModelTest {
 
-    // ===== AttendeeStatus.fromPartstat — partstat translation =====
+    // ===== AttendeeStatus.fromPartstat =====
 
     @Test
     fun `fromPartstat ACCEPTED returns Accepted`() {
@@ -52,11 +52,12 @@ class AttendeeUiModelTest {
 
     @Test
     fun `fromPartstat unknown x-extension returns NeedsAction`() {
-        // TEXT-lenient default per RFC 5545 — servers may emit X-vendor extensions
+        // RFC 5545 §3.2.12: an unrecognized x-name or iana-token PARTSTAT is treated as
+        // NEEDS-ACTION.
         assertEquals(AttendeeStatus.NeedsAction, AttendeeStatus.fromPartstat("X-VENDOR-CUSTOM"))
     }
 
-    // ===== AttendeeUiModel.fromRoom — base mapping =====
+    // ===== AttendeeUiModel.fromRoom: base mapping =====
 
     @Test
     fun `fromRoom maps mailto address with CN to displayName from CN`() {
@@ -100,7 +101,7 @@ class AttendeeUiModelTest {
     fun `bareAddress strips mailto prefix`() {
         val attendee = att(address = "MAILTO:Alice@Example.COM")
         val models = AttendeeUiModel.fromRoom(listOf(attendee), null, null, null)
-        // Lowercased per AddressNormalizer canonical
+        // Lowercased, as AddressNormalizer.canonical does.
         assertEquals("alice@example.com", models[0].bareAddress)
     }
 
@@ -118,6 +119,24 @@ class AttendeeUiModelTest {
             organizerAddress = "MAILTO:Alice@Example.com",
             organizerName = null
         )
+        assertTrue(models[0].isOrganizer)
+        assertFalse(models[1].isOrganizer)
+    }
+
+    @Test
+    fun `bare mixed-case organizer marks the matching attendee row and adds no extra chip`() {
+        // Pulled events store ORGANIZER without its mailto: prefix.
+        val attendees = listOf(
+            att(address = "mailto:organizer@example.test"),
+            att(address = "mailto:bob@example.test")
+        )
+        val models = AttendeeUiModel.fromRoom(
+            attendees = attendees,
+            currentAccount = null,
+            organizerAddress = "Organizer@Example.test",
+            organizerName = null
+        )
+        assertEquals(2, models.size)
         assertTrue(models[0].isOrganizer)
         assertFalse(models[1].isOrganizer)
     }
@@ -175,7 +194,7 @@ class AttendeeUiModelTest {
         assertFalse(AttendeeUiModel.isCurrentUserOnList(attendees, account))
     }
 
-    // ===== Sort: You at index 0 (≤3 attendees, all visible) =====
+    // ===== Sort: You at index 0 (3 or fewer attendees, all visible) =====
 
     @Test
     fun `sortForCollapsedView promotes You to index 0 when total is 3`() {
@@ -191,7 +210,7 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = false)
         assertEquals("alice@example.com", sorted[0].bareAddress)
-        // Bob and Carol retain sortOrder
+        // Bob and Carol keep their sortOrder.
         assertEquals("bob@example.com", sorted[1].bareAddress)
         assertEquals("carol@example.com", sorted[2].bareAddress)
     }
@@ -208,12 +227,12 @@ class AttendeeUiModelTest {
         assertEquals("carol@example.com", sorted[1].bareAddress)
     }
 
-    // ===== You at index 0 when total ≥4 keeps 4 chips visible =====
+    // ===== You at index 0 with 4 or more keeps 4 chips visible =====
 
     @Test
     fun `sortForCollapsedView with 5 attendees and You at sortOrder 4 keeps You plus 3 wire-first attendees`() {
-        // When "You" would otherwise be hidden, render 4 chips (You + first 3
-        // by sortOrder, excluding You). Matches Google Calendar parity.
+        // When "You" would otherwise be hidden, show 4 chips: You plus the first 3 others by
+        // sortOrder.
         val account = acc(
             email = "alice@example.com",
             calendarUserAddresses = listOf("mailto:alice@example.com")
@@ -227,8 +246,8 @@ class AttendeeUiModelTest {
         )
         val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = false)
-        // Contract: collapsed view returns at most 4 entries when You was
-        // hidden in the wire-order top-3, of which index 0 is You.
+        // The collapsed view returns 4 entries, You at index 0, when You was outside the
+        // wire-order first 3.
         assertEquals(4, sorted.size)
         assertEquals("alice@example.com", sorted[0].bareAddress)
         assertEquals("bob@example.com", sorted[1].bareAddress)
@@ -268,7 +287,7 @@ class AttendeeUiModelTest {
         val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = true)
         assertEquals(4, sorted.size)
-        // Even when expanded, You stays at index 0
+        // Expanded, You stays at index 0.
         assertEquals("alice@example.com", sorted[0].bareAddress)
     }
 
@@ -292,7 +311,7 @@ class AttendeeUiModelTest {
 
     @Test
     fun `fromRoom with non-email login and empty calendarUserAddresses marks isYou false`() {
-        // Nextcloud "alice" username, server returned no addresses
+        // A Nextcloud "alice" username; the server returned no addresses.
         val account = acc(email = "alice", calendarUserAddresses = emptyList())
         val attendees = listOf(att(address = "mailto:alice@nextcloud.example"))
         val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
@@ -302,8 +321,8 @@ class AttendeeUiModelTest {
 
     @Test
     fun `fromRoom uses email fallback when calendarUserAddresses empty but email is email-shaped`() {
-        // Older accounts didn't have calendarUserAddresses populated; matchesAttendee falls
-        // back to email when email shape parses.
+        // With no calendarUserAddresses (none discovered), matchesAttendee falls back to an
+        // email-shaped login.
         val account = acc(email = "alice@example.com", calendarUserAddresses = emptyList())
         val attendees = listOf(att(address = "mailto:alice@example.com"))
         val models = AttendeeUiModel.fromRoom(attendees, account, null, null)
@@ -329,7 +348,7 @@ class AttendeeUiModelTest {
             organizerName = null
         )
         assertEquals(3, models.size)
-        // Synthesized organizer chip is in the result
+        // The synthesized organizer chip is in the result.
         val you = models.firstOrNull { it.isYou }
         assertTrue(you != null && you.isOrganizer)
         assertEquals("alice@example.com", you?.bareAddress)
@@ -392,10 +411,9 @@ class AttendeeUiModelTest {
         assertTrue(alice.isOrganizer)
     }
 
-    // Issue #235 scenario B: when ORGANIZER is off the ATTENDEE list AND not the
-    // current user (mailbox.org-style invite), synthesize a non-You host chip
-    // with the crown pill so the host is visible. Pre-fix this returned a
-    // single user-only chip and the host was invisible.
+    // Issue #235 scenario B: when ORGANIZER is off the ATTENDEE list and not the current user (a
+    // mailbox.org-style invite), a non-You host chip flagged as organizer is synthesized so the
+    // host is visible.
     @Test
     fun `fromRoom synthesizes off-list host chip when organizer is not the current user`() {
         val account = acc(
@@ -458,8 +476,8 @@ class AttendeeUiModelTest {
         assertFalse(host.isYou)
         assertTrue(host.isSynthesized)
         assertEquals(AttendeeStatus.Accepted, host.status)
-        // isCurrentUserOnList stays false — organizer doesn't match the user — so
-        // AttendeeChipRowState.compute will fall to LavenderCount(1).
+        // isCurrentUserOnList stays false, since the organizer isn't the user, so
+        // InviteesBlock shows its off-list summary.
         assertFalse(
             AttendeeUiModel.isCurrentUserOnList(
                 attendees = emptyList(),
@@ -486,7 +504,7 @@ class AttendeeUiModelTest {
             organizerAddress = "mailto:carol@example.com",
             organizerName = "Carol Host"
         )
-        // 3 real + 1 synthesized = 4 total
+        // 3 real + 1 synthesized = 4
         assertEquals(4, models.size)
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = false)
         assertEquals(4, sorted.size)
@@ -500,9 +518,8 @@ class AttendeeUiModelTest {
 
     @Test
     fun `isCurrentUserOnList still true when user is real attendee even with synthesized non-self host`() {
-        // Regression guard: synthesizing a non-You host chip must NOT cause
-        // AttendeeChipRowState.compute to fall through to LavenderCount when the
-        // user is a real attendee row.
+        // A synthesized non-You host must not turn a user with a real attendee row into an
+        // off-list viewer.
         val account = acc(
             email = "alice@example.com",
             calendarUserAddresses = listOf("mailto:alice@example.com")
@@ -517,9 +534,8 @@ class AttendeeUiModelTest {
         )
     }
 
-    // Malformed `mailto:` (or whitespace-only) organizer canonicalizes to
-    // empty string. Without a blank-guard the synthesis branch fires and
-    // produces a ghost chip with empty bareAddress.
+    // A bare `mailto:` or whitespace-only organizer canonicalizes to "". Without the blank
+    // guard the synthesis branch would add a ghost chip with an empty bareAddress.
     @Test
     fun `fromRoom does NOT synthesize when organizerAddress canonicalizes to blank`() {
         val account = acc(
@@ -537,8 +553,8 @@ class AttendeeUiModelTest {
         assertEquals("bob@example.com", models[0].bareAddress)
     }
 
-    // Server-roundtripped self-organized event with no CN. The synthesized
-    // "You" chip should fall back to account.displayName before the local-part.
+    // A self-organized event back from the server with no CN: the synthesized "You" chip falls
+    // back to account.displayName before the local part.
     @Test
     fun `synthesized You chip falls back to account displayName when organizerName is null`() {
         val account = acc(
@@ -557,8 +573,8 @@ class AttendeeUiModelTest {
         assertEquals("Alice Anderson", you.displayName)
     }
 
-    // Non-self host (isYou=false) must NOT use account.displayName as a
-    // fallback — the account belongs to the user, not the host.
+    // A non-self host (isYou false) must not fall back to account.displayName: the account is
+    // the user's, not the host's.
     @Test
     fun `synthesized non-self host chip ignores account displayName when organizerName is null`() {
         val account = acc(
@@ -577,9 +593,8 @@ class AttendeeUiModelTest {
         assertEquals("carol", host.displayName)
     }
 
-    // Organizer is a real non-self attendee already on the list AND user is
-    // also on the list. No synthesis; both rows pass through with the
-    // organizer pill on the host's row.
+    // The organizer is a real non-self attendee on the list and the user is too: nothing is
+    // synthesized, and both rows pass through with the organizer flag on the host's.
     @Test
     fun `fromRoom does NOT synthesize when organizer is a real non-self attendee on the list`() {
         val account = acc(
@@ -696,32 +711,32 @@ class AttendeeUiModelTest {
             organizerAddress = "mailto:alice@example.com",
             organizerName = null
         )
-        // 4 real + 1 synthesized = 5 total
+        // 4 real + 1 synthesized = 5
         assertEquals(5, models.size)
         val sorted = AttendeeUiModel.sortForCollapsedView(models, expanded = false)
-        // Contract: 4 chips in collapsed view
+        // 4 chips in the collapsed view.
         assertEquals(4, sorted.size)
-        // Index 0 is the synthesized You+Organizer chip
+        // Index 0 is the synthesized You and organizer chip.
         assertTrue(sorted[0].isYou && sorted[0].isOrganizer)
         assertEquals("alice@example.com", sorted[0].bareAddress)
-        // Indices 1-3 are the first 3 real attendees by sortOrder
+        // Indices 1-3 are the first 3 real attendees by sortOrder.
         assertEquals("bob@example.com", sorted[1].bareAddress)
         assertEquals("carol@example.com", sorted[2].bareAddress)
         assertEquals("dave@example.com", sorted[3].bareAddress)
-        // Eve at sortOrder=3 is hidden
+        // Eve, at sortOrder 3, is hidden.
         assertTrue(sorted.none { it.bareAddress == "eve@example.com" })
     }
 
-    // Multi-alias edge case.
+    // An account with two aliases.
     @Test
     fun `fromRoom does NOT synthesize when account has multiple aliases and one alias is on attendee list`() {
         val account = acc(
             email = "alice@me.com",
             calendarUserAddresses = listOf("mailto:alice@me.com", "mailto:alice@icloud.com")
         )
-        // Organizer = me.com alias; attendees include the icloud.com alias — different
-        // but both belong to the same account. Synthesis must skip because the user
-        // is already represented via the icloud.com attendee row.
+        // The organizer is the me.com alias and the attendees include the icloud.com alias,
+        // both the same account's. Nothing is synthesized: the icloud.com row already
+        // represents the user.
         val attendees = listOf(
             att(address = "mailto:bob@example.com", sortOrder = 0),
             att(address = "mailto:alice@icloud.com", sortOrder = 1)
@@ -732,15 +747,16 @@ class AttendeeUiModelTest {
             organizerAddress = "mailto:alice@me.com",
             organizerName = null
         )
-        // No synthesized chip — only the 2 real attendees.
+        // Only the 2 real attendees.
         assertEquals(2, models.size)
         val you = models.first { it.bareAddress == "alice@icloud.com" }
         assertTrue(you.isYou)
-        // alice@icloud.com is NOT the organizer (me.com is), so this attendee is just the user, not the organizer
+        // The organizer is the me.com alias, so the icloud.com row is the user but not the
+        // organizer.
         assertFalse(you.isOrganizer)
     }
 
-    // Canonical-case test.
+    // Canonical case.
     @Test
     fun `synthesized organizer chip canonicalizes uppercase MAILTO and mixed-case email`() {
         val account = acc(
@@ -755,7 +771,7 @@ class AttendeeUiModelTest {
             organizerName = null
         )
         val you = models.first { it.isYou }
-        // canonical lowercase form, mailto prefix stripped (matches AddressNormalizer)
+        // Lowercased with the mailto: prefix stripped, as AddressNormalizer.canonical does.
         assertEquals("alice@example.com", you.bareAddress)
     }
 

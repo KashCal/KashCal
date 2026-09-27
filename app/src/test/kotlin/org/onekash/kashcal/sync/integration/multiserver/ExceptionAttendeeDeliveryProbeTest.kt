@@ -12,36 +12,27 @@ import org.robolectric.annotation.Config
 import java.util.UUID
 
 /**
- * Live delivery probe for PER-OCCURRENCE attendee invites — the gate that
- * decides whether per-occurrence attendee editing can ship.
+ * Probes, live per server, whether an attendee invited to one occurrence is delivered.
  *
- * Per-occurrence editing adds an attendee to ONE instance of a recurring
- * series by bundling an override VEVENT (same UID + RECURRENCE-ID) that
- * carries an ATTENDEE the master does NOT have. RFC 5546 permits a per-instance
- * REQUEST (RECURRENCE-ID | 0 or 1 | "Only if referring to an instance"), but it
- * does NOT promise that a given server actually DELIVERS a bundled,
- * exception-only attendee. That delivery question is per-server and can only be
- * answered live — this probe answers it.
+ * A per-occurrence add bundles an exception VEVENT (same UID plus RECURRENCE-ID) carrying an
+ * ATTENDEE the master doesn't have. RFC 5546 §3.2.2 allows a per-instance REQUEST
+ * (RECURRENCE-ID "Only if referring to an instance"), but nothing promises a server delivers
+ * a bundled, exception-only attendee. Only a live run answers that per server.
  *
- * The companion [ServerSideSchedulingProbeTest] pins the MASTER-level
- * disposition (a plain PUT with a matched ORGANIZER + one master ATTENDEE).
- * This probe asks the strictly harder question: when the invitee appears ONLY
- * on the override VEVENT — never on the master — does the server's scheduling
- * pipeline still notice and deliver to that exception-only attendee?
+ * [ServerSideSchedulingProbeTest] pins the master-level disposition (a plain PUT with a
+ * matched ORGANIZER and one master ATTENDEE). This probe asks the harder question: when the
+ * invitee is only on the exception VEVENT, does the scheduling pipeline still deliver to it?
  *
- * Classification mirrors the master probe so the two are directly comparable;
- * the only positive signals are a SCHEDULE-STATUS receipt stamped on the
- * override's invitee ATTENDEE, or that invitee being routed out of the stored
- * override. Preserving the ATTENDEE line verbatim is NOT delivery (a server can
- * store it and email no one — observed on the master probe for Mailbox/OX).
+ * Classification follows the master probe so the two compare directly. The only positive
+ * signals are a SCHEDULE-STATUS receipt on the exception's invitee ATTENDEE, or that invitee
+ * routed out of the stored exception. Keeping the ATTENDEE line verbatim isn't delivery: a
+ * server can store it and email no one, as the master probe observed on Mailbox (OX).
  *
- * This is a research/baseline probe: it RECORDS the observed per-server
- * disposition and asserts only against that recorded baseline, so a future
- * regression (a server we count on stops delivering exception-only invites, or
- * one that needs client iTIP starts auto-delivering) is caught in either
- * direction. It does not gate the build on any particular server delivering —
- * the product decision of which servers to enable per-occurrence editing for
- * is made from this baseline, not enforced by it.
+ * It prints each server's disposition and asserts it against the baseline pinned in
+ * `EXPECTED`, so a change either way fails: a server stops delivering exception-only invites,
+ * or one that needed client iTIP starts delivering. A server with no baseline records and
+ * passes. Which servers get per-occurrence attendee editing is decided from this baseline, not
+ * enforced by it.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -52,34 +43,42 @@ import java.util.UUID
 class ExceptionAttendeeDeliveryProbeTest(
     private val config: CalDavServerConfig
 ) {
-    /** What the server does with an attendee that exists ONLY on the override. */
+    /** What the server does with an attendee that exists only on the exception. */
     enum class Disposition {
-        /** Server stamps SCHEDULE-AGENT=CLIENT on the override invitee — it
-         *  explicitly will not deliver; the client must send the iTIP. */
+        /**
+         * The server stamps SCHEDULE-AGENT=CLIENT on the exception's invitee: it won't deliver,
+         * so the client must send the iTIP.
+         */
         CLIENT_MUST_DELIVER,
 
-        /** Positive signal: SCHEDULE-STATUS stamped on the override invitee, or
-         *  the invitee was routed out of the stored override. The bundled
-         *  exception-only attendee was delivered. */
+        /**
+         * SCHEDULE-STATUS is stamped on the exception's invitee, or the invitee was routed out
+         * of the stored exception: the exception-only attendee was delivered.
+         */
         SERVER_SCHEDULES,
 
-        /** Override invitee stored verbatim, no delivery signal. The server kept
-         *  the per-instance attendee but gave no evidence it will deliver;
-         *  per-occurrence invites would need an explicit client-side iTIP POST. */
+        /**
+         * The exception's invitee is stored with no delivery signal. Nothing shows the server
+         * will deliver, so per-occurrence invites need a client-side iTIP POST.
+         */
         NEEDS_CLIENT_ITIP,
 
-        /** Server dropped the override invitee entirely (the override VEVENT no
-         *  longer carries the exception-only attendee, and it wasn't routed out
-         *  as a scheduling action). Per-occurrence attendees are not viable
-         *  here — the data doesn't even survive the round-trip. */
+        /**
+         * The stored resource has no exception VEVENT: the server collapsed the bundle into the
+         * master. Per-occurrence attendees don't survive the round trip here.
+         */
         DROPPED,
 
-        /** App emits no ORGANIZER because the account exposes no mailto:
-         *  address; nothing to schedule (app-side limit, not a server stance). */
+        /**
+         * No email-shaped address was discovered or given as username, so there is no ORGANIZER
+         * to schedule with (a probe limit, not a server stance).
+         */
         NO_ORGANIZER,
 
-        /** Server refused to store the bundled override at all (some servers
-         *  reject an override whose RECURRENCE-ID they can't reconcile). */
+        /**
+         * The create of the bundled resource failed, for example a server that rejects an
+         * exception whose RECURRENCE-ID it can't reconcile.
+         */
         OVERRIDE_REJECTED,
     }
 
@@ -93,34 +92,27 @@ class ExceptionAttendeeDeliveryProbeTest(
         private val START_MS = ((System.currentTimeMillis() / DAY_MS) + 28) * DAY_MS + 9 * 3_600_000L
 
         /**
-         * Observed disposition per server for an EXCEPTION-ONLY attendee (an
-         * invitee present only on the bundled override VEVENT, never on the
-         * master). Probed live 2026-06-16. A missing entry means "record and
-         * report, do not fail"; a present entry pins the baseline so a
-         * regression in either direction fails the probe.
+         * Pinned disposition per server name for an exception-only attendee, probed live
+         * 2026-06-16. A server with no entry (Cyrus, Xandikos, the proxied Radicale copies)
+         * records and passes; an entry fails the probe on any change.
          *
-         * SERVER_SCHEDULES — stamps a SCHEDULE-STATUS receipt on the override
-         *   invitee: iCloud (5.1), Fastmail (1.1). Per-occurrence invites are
-         *   delivered implicitly here.
-         * NEEDS_CLIENT_ITIP — stores the override invitee verbatim with NO
-         *   receipt; a plain bundled PUT sends nothing for the per-instance add:
-         *   Stalwart, Baikal, BaikalDigest, Nextcloud, SOGo, Mailbox.
-         * DROPPED — collapses the bundle and discards the override VEVENT
-         *   entirely, so the per-occurrence attendee doesn't even survive the
-         *   round-trip: Zoho (also stamps SCHEDULE-AGENT=CLIENT on the master).
-         * NO_ORGANIZER — bare container, no email on the principal: Radicale.
+         * - SERVER_SCHEDULES, a SCHEDULE-STATUS receipt on the exception's invitee: iCloud
+         *   (5.1), Fastmail (1.1). Per-occurrence invites are delivered implicitly.
+         * - NEEDS_CLIENT_ITIP, the invitee stored verbatim with no receipt, so a bundled PUT
+         *   sends nothing for the per-instance add: Stalwart, Baikal, BaikalDigest, Nextcloud,
+         *   SOGo, Mailbox.
+         * - DROPPED, the bundle collapsed and the exception VEVENT discarded: Zoho, which also
+         *   stamps SCHEDULE-AGENT=CLIENT on the master.
+         * - NO_ORGANIZER, a bare container with no email on the principal: Radicale.
          *
-         * KEY DIVERGENCE from the MASTER probe (ServerSideSchedulingProbeTest):
-         * Baikal/BaikalDigest/Nextcloud are SERVER_SCHEDULES at the master level
-         * but DEGRADE to NEEDS_CLIENT_ITIP for an exception-only attendee — i.e.
-         * implicit delivery covers a whole-series attendee change but NOT a
-         * per-occurrence add. Zoho degrades further (CLIENT_MUST_DELIVER →
-         * DROPPED). Only iCloud and Fastmail deliver an exception-only invite
-         * implicitly. => Per-occurrence attendee editing CANNOT ship on
-         * implicit-PUT delivery alone; it requires the client-side outbox iTIP
-         * path for every NEEDS_CLIENT_ITIP/CLIENT_MUST_DELIVER server, and a
-         * DROPPED server (Zoho) can't carry per-occurrence attendees at all
-         * without a different representation.
+         * Against the master probe ([ServerSideSchedulingProbeTest]): Baikal, BaikalDigest and
+         * Nextcloud schedule at the master level but need client iTIP for an exception-only
+         * attendee, so implicit delivery covers a whole-series attendee change but not a
+         * per-occurrence add. Zoho goes from CLIENT_MUST_DELIVER to DROPPED. Only iCloud and
+         * Fastmail deliver an exception-only invite implicitly. So implicit-PUT delivery alone
+         * can't carry per-occurrence invites: every NEEDS_CLIENT_ITIP or CLIENT_MUST_DELIVER
+         * server needs the client-side outbox iTIP, and a DROPPED server (Zoho) can't hold
+         * per-occurrence attendees without a different representation.
          */
         private val EXPECTED: Map<String, Disposition> = mapOf(
             "iCloud" to Disposition.SERVER_SCHEDULES,
@@ -179,10 +171,8 @@ class ExceptionAttendeeDeliveryProbeTest(
     }
 
     /**
-     * Records the observed disposition. When a baseline is recorded in
-     * [EXPECTED], assert against it (catch regressions). When it isn't yet
-     * (first run), just print — the probe's job on a fresh server is to surface
-     * the behaviour, not to red-fail before any baseline exists.
+     * Prints [actual] and asserts it against the server's `EXPECTED` baseline. A server with
+     * no baseline only prints, so a new server surfaces its behavior instead of failing.
      */
     private fun verdict(actual: Disposition, detail: String) {
         println("  VERDICT: $actual${if (detail.isNotEmpty()) " ($detail)" else ""}")
@@ -225,23 +215,23 @@ class ExceptionAttendeeDeliveryProbeTest(
         assumeTrue("${config.name}: no calendar found", calendarUrl != null)
         println("  calendar: $calendarUrl")
 
-        // Master invitee (on every instance) vs the override-only invitee (the
-        // one whose delivery we're probing — present ONLY on the exception).
+        // The master invitee is on every occurrence; the probed invitee is only on the
+        // exception.
         val masterAttendee = "kashcal-master-invitee@example.test"
         val overrideAttendee = "kashcal-occurrence-invitee@example.test"
         val uid = "kashcal-exc-att-probe-${config.name.lowercase()}-${UUID.randomUUID()}@kashcal.test"
 
-        // Exception lands on occurrence index 2 (master + 2 days), shifted -8h —
-        // a real per-occurrence edit shape (RFC 5545 §3.8.4.4: override shares
-        // UID, adds RECURRENCE-ID). The override carries BOTH the master invitee
-        // and the new override-only invitee, so it's a legal superset add.
+        // The exception is occurrence index 2 (master start plus 2 days), moved 8 hours earlier:
+        // a per-occurrence edit shape (RFC 5545 §3.8.4.4, the exception shares the UID and adds
+        // RECURRENCE-ID). It carries both the master invitee and the new invitee, a superset
+        // add.
         val occMs = START_MS + 2L * DAY_MS
         val recurrenceId = utc(occMs)
         val excStart = utc(occMs - 8L * 3_600_000L)
         val excEnd = utc(occMs - 8L * 3_600_000L + 3_600_000L)
 
-        // PUT master + bundled override in one resource (how KashCal serializes
-        // a recurring event with an exception — serializeEventWithExceptions).
+        // PUT the master and the exception in one resource, as the app's push serializes a
+        // recurring event with an exception (`PushStrategy.serializeEventWithExceptions`).
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -273,9 +263,8 @@ class ExceptionAttendeeDeliveryProbeTest(
 
         val createResult = c.createEvent(calendarUrl!!, uid, ics)
         if (!createResult.isSuccess()) {
-            // Some servers reject a create that bundles an override; record that
-            // as its own disposition rather than skipping — it's a real "can't
-            // do per-occurrence here" signal.
+            // A failed create of the bundle is recorded as its own disposition, not skipped: it
+            // is a real "no per-occurrence here" signal.
             println("  create failed: ${(createResult as? CalDavResult.Error)?.message}")
             verdict(Disposition.OVERRIDE_REJECTED, "create rejected the bundled override")
             return@runBlocking
@@ -305,16 +294,15 @@ class ExceptionAttendeeDeliveryProbeTest(
             val body = unfold(stored!!.icalData)
             etagForDelete = stored.etag?.ifEmpty { createEtag } ?: createEtag
 
-            // Split into VEVENT blocks and pick the OVERRIDE — the block that
-            // carries RECURRENCE-ID — so we classify the override's invitee, not
-            // the master's. A naive substringAfter("RECURRENCE-ID") misclassifies
-            // when a server reorders so an ATTENDEE precedes RECURRENCE-ID within
-            // the same block, or emits the override before the master.
+            // Split into VEVENT blocks and pick the exception, the block with RECURRENCE-ID, so
+            // the exception's invitee is classified and not the master's. A
+            // substringAfter("RECURRENCE-ID") misclassifies when a server puts an ATTENDEE
+            // before RECURRENCE-ID in the block, or emits the exception before the master.
             val veventBlocks = Regex("""BEGIN:VEVENT(.*?)END:VEVENT""", RegexOption.DOT_MATCHES_ALL)
                 .findAll(body).map { it.groupValues[1] }.toList()
             val veventCount = veventBlocks.size
             val overrideVevent = veventBlocks.firstOrNull { it.contains("RECURRENCE-ID") }
-            // Find the override invitee's ATTENDEE line WITHIN the override block.
+            // The probed invitee's ATTENDEE line, looked up only within the exception block.
             val overrideInviteeLine = overrideVevent?.lines()
                 ?.filter { it.startsWith("ATTENDEE") }
                 ?.firstOrNull { it.contains(overrideAttendee, ignoreCase = true) }
@@ -336,9 +324,7 @@ class ExceptionAttendeeDeliveryProbeTest(
             val actual: Disposition
             val detail: String
             when {
-                // No override VEVENT survived (server collapsed the bundle back
-                // into a single master) — per-occurrence attendees don't survive
-                // the round-trip at all.
+                // No exception VEVENT survived: the server collapsed the bundle into the master.
                 overrideVevent == null -> {
                     actual = Disposition.DROPPED
                     detail = "override VEVENT (RECURRENCE-ID) not retained ($veventCount VEVENT)"
@@ -351,10 +337,9 @@ class ExceptionAttendeeDeliveryProbeTest(
                     actual = Disposition.SERVER_SCHEDULES
                     detail = "SCHEDULE-STATUS=$scheduleStatus on override invitee"
                 }
-                // Override VEVENT retained but the override-only invitee is gone
-                // from it, with no CLIENT/STATUS signal — the server routed that
-                // attendee out as a scheduling action. Positive delivery signal
-                // (iCloud-class), mirroring the master probe's routed-out rule.
+                // The exception VEVENT is kept but the probed invitee is gone from it: the server
+                // routed that attendee out as a scheduling action (as iCloud does), matching the
+                // master probe's routed-out rule.
                 !overrideSurvived -> {
                     actual = Disposition.SERVER_SCHEDULES
                     detail = "override invitee routed out of the retained override"

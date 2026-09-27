@@ -7,7 +7,7 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * Pool C — inputs adapted from existing test suites.
+ * Pool C: inputs adapted from existing test suites.
  *
  * App-side sources:
  *   - OccurrenceGeneratorTest
@@ -25,9 +25,9 @@ import java.time.ZonedDateTime
  *   - RRuleExpanderLeapYearTest
  *   - RRuleExpanderRdateTest
  *
- * These cases carry ONLY inputs — no `rfcExpected`. Expected outputs emerge
- * from running both engines; divergences here become classification
- * material, not failures.
+ * These cases carry only inputs, no `rfcExpected`. A divergence between the engines is
+ * classified in the parity report, not failed; each engine's output is pinned by
+ * `RRuleEngineBaselineTest`.
  */
 object ExistingTestsCorpus {
 
@@ -274,7 +274,7 @@ object ExistingTestsCorpus {
             rangeEndMs = utc(2026, 7, 1),
         ),
 
-        // ========== Library-side: RRuleExpanderTest / Comprehensive patterns ==========
+        // ======= Library-side: RRuleExpanderTest, RRuleExpanderComprehensiveTest patterns =======
 
         existingCase(
             name = "existing: FREQ=MONTHLY BYDAY=1FR first Friday COUNT=12",
@@ -306,7 +306,7 @@ object ExistingTestsCorpus {
             name = "existing: RDATE adds out-of-pattern date",
             rrule = "FREQ=WEEKLY;BYDAY=MO;COUNT=3",
             dtstartMs = utc(2025, 1, 6, 10, 0), // Monday
-            rdateStrings = "20250108T100000Z", // Wednesday — out of pattern
+            rdateStrings = "20250108T100000Z", // Wednesday, out of pattern
             rangeStartMs = utc(2025, 1, 1),
             rangeEndMs = utc(2025, 2, 1),
         ),

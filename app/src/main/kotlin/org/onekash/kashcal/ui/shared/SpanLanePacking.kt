@@ -1,16 +1,17 @@
 package org.onekash.kashcal.ui.shared
 
 /**
- * Greedily packs column-spans (anything with an inclusive [startCol]..[endCol]
- * range) into up to [maxLanes] non-overlapping lanes: sorted widest-first at
- * each start column, then each span claims the first lane whose last span ends
- * before it starts, or a new lane if capacity allows. Spans beyond [maxLanes]
- * are left out of the result entirely — callers decide how to surface them
- * (e.g. a per-column overflow badge).
+ * Packs column spans (inclusive [startCol]..[endCol]) greedily into at most [maxLanes]
+ * non-overlapping lanes.
  *
- * Shared by the week/day all-day strip ([org.onekash.kashcal.ui.components.weekview.computeAllDaySpans])
- * and the full month grid ([org.onekash.kashcal.ui.screens.monthfull.computeWeekSpans]),
- * which both need the identical placement algorithm for their spanning-bar rows.
+ * Spans are sorted by start column, widest first within a column; each takes the first lane whose
+ * last span ends before it starts, or opens a new lane while fewer than [maxLanes] exist. A span
+ * that fits nowhere is left out of the result, and the caller decides how to surface it (for
+ * example a per-column overflow badge).
+ *
+ * Shared by the week and day all-day strip
+ * ([org.onekash.kashcal.ui.components.weekview.computeAllDaySpans]) and the full month grid
+ * ([org.onekash.kashcal.ui.screens.monthfull.computeWeekSpans]) so their spanning bars place alike.
  */
 internal fun <T> packSpansIntoLanes(
     spans: List<T>,
@@ -25,7 +26,7 @@ internal fun <T> packSpansIntoLanes(
         when {
             laneIndex >= 0 -> lanes[laneIndex].add(span)
             lanes.size < maxLanes -> lanes.add(mutableListOf(span))
-            else -> { /* Beyond lane capacity — left unplaced; caller decides how to surface it. */ }
+            else -> { /* No lane left: the span stays unplaced. */ }
         }
     }
     return lanes

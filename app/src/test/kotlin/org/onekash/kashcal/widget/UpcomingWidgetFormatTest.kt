@@ -32,8 +32,8 @@ class UpcomingWidgetFormatTest {
 
     @Test
     fun `formatUpcomingDayHeader appends date in brackets after today label`() {
-        // 20260428 is Tuesday. Today/Tomorrow headers now carry the date so
-        // they are as informative as the Week widget's headers (issue #253).
+        // 20260428 is Tuesday. Today and Tomorrow headers carry the date so they are as
+        // informative as the Week widget's headers (#253).
         val result = formatUpcomingDayHeader(
             dayCode = 20260428,
             todayDayCode = 20260428,
@@ -47,8 +47,8 @@ class UpcomingWidgetFormatTest {
 
     @Test
     fun `formatUpcomingDayHeader without template returns plain relative label`() {
-        // Back-compat: callers that omit the template (e.g. the invitation card)
-        // get the bare "Today"/"Tomorrow" label, unchanged.
+        // A caller that omits the template (the in-app invitation card) gets the bare
+        // "Today" or "Tomorrow" label.
         val today = formatUpcomingDayHeader(
             dayCode = 20260428,
             todayDayCode = 20260428,
@@ -75,7 +75,7 @@ class UpcomingWidgetFormatTest {
 
     @Test
     fun `tomorrowDayCodeOf crosses month boundary correctly`() {
-        // Integer +1 on 20260430 would give 20260431 (invalid). Must produce 20260501.
+        // Integer +1 on 20260430 would give the invalid 20260431.
         assertEquals(20260501, tomorrowDayCodeOf(20260430))
     }
 
@@ -129,8 +129,8 @@ class UpcomingWidgetFormatTest {
 
     @Test
     fun `formatUpcomingDayHeader returns weekday and date for day far in future`() {
-        // 20260527 is Wednesday — exercises the "far future" branch of the formatter.
-        // (Input is far beyond the widget's 10-day horizon; formatter is horizon-agnostic.)
+        // 20260527 is Wednesday, far beyond the widget's 10-day horizon; the formatter ignores
+        // the horizon and formats it like any other day.
         val result = formatUpcomingDayHeader(
             dayCode = 20260527,
             todayDayCode = 20260428,
@@ -144,7 +144,7 @@ class UpcomingWidgetFormatTest {
 
     @Test
     fun `formatUpcomingDayHeader is unambiguous across months`() {
-        // Two days in different months must render differently.
+        // Two days in different months render differently.
         val tomorrow = tomorrowDayCodeOf(20260428)
         val apr30 = formatUpcomingDayHeader(20260430, 20260428, tomorrow, todayLabel, tomorrowLabel, withDateTemplate)
         val may30 = formatUpcomingDayHeader(20260530, 20260428, tomorrow, todayLabel, tomorrowLabel, withDateTemplate)

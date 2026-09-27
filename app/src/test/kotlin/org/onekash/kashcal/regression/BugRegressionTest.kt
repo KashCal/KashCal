@@ -34,16 +34,14 @@ import java.net.UnknownHostException
 import javax.net.ssl.SSLHandshakeException
 
 /**
- * Regression tests for a batch of bugs found and fixed in an early hardening sweep.
+ * Regression tests from an early hardening sweep. The `BugN` prefixes in test names are that
+ * sweep's numbering, not GitHub issues; each section header names the behavior.
  *
- * These tests ensure bugs that were fixed don't reappear. The numbering below is historical —
- * it comes from that sweep, not from GitHub issues; each section header names the actual defect.
- *
- * Bug Categories:
- * - Critical (crashes/failures): #1, #2, #4, #5, #6
- * - High (sync/data issues): #3, #7, #10, #11, #14, #15
- * - Medium (degraded experience): #13, #18, #19, #20, #23, #24
- * - Low (minor issues): #17, #21, #22
+ * Covers a null account lookup, [CalDavResult] on errors, [ErrorMapper] (retryable errors, HTTP
+ * codes, exceptions, presentations), reminder storage, SEQUENCE on update, the MOVE operation's
+ * stored context, exception UIDs and future occurrences of a recurring event. The month-index and
+ * safe-cast tests exercise Kotlin's `getOrElse` and `as?` directly, not app code, and the
+ * credentials test asserts nothing.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -97,52 +95,51 @@ class BugRegressionTest {
         )
     }
 
-    // ==================== Bug #2: Forced unwrap on account lookup ====================
+    // ==================== Missing account lookup ====================
 
     @Test
     fun `Bug2 LocalCalendarInitializer handles null account gracefully`() = runTest {
-        // This test ensures that account lookup failure is handled properly
-        // The fix was to add: ?: throw IllegalStateException("Local account not found")
+        // Only the DAO's null for a missing id is asserted. LocalCalendarInitializer turns a
+        // null after its own insert into an IllegalStateException via checkNotNull (not
+        // exercised here).
 
         val nonExistentAccountId = 999L
         val account = database.accountsDao().getById(nonExistentAccountId)
 
         assertNull("Non-existent account should return null", account)
-        // The application code should handle this null case properly
     }
 
-    // ==================== Bug #4, #5, #6: Forced unwraps on null values ====================
+    // ==================== CalDavResult.Error accessors ====================
 
     @Test
     fun `Bug4_5_6 CalDavResult handles null gracefully`() {
-        // CalDavResult.getOrNull() should return null, not throw
+        // getOrNull() on an Error returns null instead of throwing.
         val errorResult = CalDavResult.Error(500, "Server error", true)
 
         val value = errorResult.getOrNull()
         assertNull("Error result getOrNull should return null", value)
 
-        // Error result should be handled without throwing
         assertTrue("Error result should be error type", errorResult.isError())
         assertFalse("Error result should not be success", errorResult.isSuccess())
     }
 
-    // ==================== Bug #10: HTTP retry mechanism ====================
+    // ==================== Retryable errors ====================
 
     @Test
     fun `Bug10 ErrorMapper identifies retryable errors`() {
-        // Network errors should be retryable
+        // Network errors and a temporarily unavailable server are retryable.
         assertTrue(ErrorMapper.isRetryable(CalendarError.Network.Timeout))
         assertTrue(ErrorMapper.isRetryable(CalendarError.Network.Offline))
         assertTrue(ErrorMapper.isRetryable(CalendarError.Network.UnknownHost))
         assertTrue(ErrorMapper.isRetryable(CalendarError.Network.ConnectionFailed()))
         assertTrue(ErrorMapper.isRetryable(CalendarError.Server.TemporarilyUnavailable))
 
-        // Auth and event errors should NOT be retryable
+        // Auth and event errors are not.
         assertFalse(ErrorMapper.isRetryable(CalendarError.Auth.InvalidCredentials))
         assertFalse(ErrorMapper.isRetryable(CalendarError.Event.NotFound(1L)))
     }
 
-    // ==================== Bug #11: 429 rate limiting handling ====================
+    // ==================== HTTP 429 rate limiting ====================
 
     @Test
     fun `Bug11 HTTP 429 mapped to RateLimited error`() {
@@ -154,11 +151,11 @@ class BugRegressionTest {
         assertTrue(presentation is ErrorPresentation.Snackbar)
     }
 
-    // ==================== Bug #13: Request/response logging ====================
+    // ==================== Network error presentations ====================
 
     @Test
     fun `Bug13 ErrorMapper provides meaningful error messages`() {
-        // Ensure errors are converted to user-friendly presentations
+        // Each network error is presented as a snackbar.
 
         val networkErrors = listOf(
             CalendarError.Network.Timeout,
@@ -174,19 +171,16 @@ class BugRegressionTest {
         }
     }
 
-    // ==================== Bug #14: Credentials thread safety ====================
+    // ==================== Credentials thread safety ====================
 
     @Test
     fun `Bug14 concurrent credentials access is safe`() = runTest {
-        // This test documents that credentials should be @Volatile
-        // Actual thread safety is architectural, but we verify the pattern exists
-
-        // The fix was adding @Volatile annotation to username and password fields
-        // in OkHttpCalDavClient.kt. This test verifies the pattern.
+        // Asserts nothing. OkHttpCalDavClient holds username and password as immutable vals,
+        // and each account's credentials are fixed in its own client.
         assertTrue("Test documents volatile requirement", true)
     }
 
-    // ==================== Bug #18: Unsafe month array access ====================
+    // ==================== Bounds-checked month index ====================
 
     @Test
     fun `Bug18 month index access is bounds-checked`() {
@@ -201,29 +195,28 @@ class BugRegressionTest {
             assertFalse("Month $i should be valid", name == "Invalid")
         }
 
-        // Invalid indices should use fallback
+        // Out-of-range indices take the fallback.
         assertEquals("Invalid", monthNames.getOrElse(-1) { "Invalid" })
         assertEquals("Invalid", monthNames.getOrElse(12) { "Invalid" })
         assertEquals("Invalid", monthNames.getOrElse(100) { "Invalid" })
     }
 
-    // ==================== Bug #19, #20: Unchecked casts ====================
+    // ==================== Safe casts ====================
 
     @Test
     fun `Bug19_20 safe casts prevent ClassCastException`() {
         val result: Any = CalDavResult.Error(404, "Not found", false)
 
-        // Safe cast pattern - should not throw
         val error = result as? CalDavResult.Error
         assertNotNull("Safe cast should work", error)
         assertEquals(404, error?.code)
 
-        // Invalid cast should return null, not throw
+        // A cast to the wrong type gives null instead of throwing.
         val wrongType = result as? CalDavResult.Success<*>
         assertNull("Wrong type safe cast should be null", wrongType)
     }
 
-    // ==================== Bug #23: Reminders loaded in edit mode ====================
+    // ==================== Reminders stored on create ====================
 
     @Test
     fun `Bug23 event reminders are preserved`() = runTest {
@@ -233,7 +226,6 @@ class BugRegressionTest {
 
         val created = eventWriter.createEvent(event, isLocal = false)
 
-        // Verify reminders are stored
         val loaded = database.eventsDao().getById(created.id)
         assertNotNull(loaded)
         assertEquals(2, loaded!!.reminders?.size)
@@ -241,7 +233,7 @@ class BugRegressionTest {
         assertTrue(loaded.reminders!!.contains("-PT1H"))
     }
 
-    // ==================== Bug #24: Sequence incremented on update ====================
+    // ==================== SEQUENCE on update ====================
 
     @Test
     fun `Bug24 sequence increments on significant changes`() = runTest {
@@ -249,7 +241,7 @@ class BugRegressionTest {
         val created = eventWriter.createEvent(event, isLocal = false)
         assertEquals(0, created.sequence)
 
-        // Significant change: time change
+        // A time change is scheduling-significant.
         val updated = eventWriter.updateEvent(
             created.copy(
                 startTs = created.startTs + 3600000,
@@ -267,18 +259,17 @@ class BugRegressionTest {
         val created = eventWriter.createEvent(event, isLocal = false)
         val initialSequence = created.sequence
 
-        // Non-significant change: title only
+        // SequenceBumper counts a title change as significant, so this bumps; the assert only
+        // checks the sequence doesn't go down.
         val updated = eventWriter.updateEvent(
             created.copy(title = "New Title"),
             isLocal = false
         )
 
-        // Title-only change may or may not increment sequence (depends on implementation)
-        // This test documents the expected behavior
         assertTrue("Sequence should be preserved or incremented", updated.sequence >= initialSequence)
     }
 
-    // ==================== Exception fromException mapping ====================
+    // ==================== Exception and HTTP code mapping ====================
 
     @Test
     fun `fromException maps common network exceptions`() {
@@ -313,11 +304,10 @@ class BugRegressionTest {
 
     @Test
     fun `PendingOperation stores all required context for MOVE`() = runTest {
-        // Create and sync event
         val event = createTestEvent()
         val created = eventWriter.createEvent(event, isLocal = false)
 
-        // Simulate sync completed
+        // Mark it synced with a server URL.
         val synced = created.copy(
             caldavUrl = "https://caldav.icloud.com/old/event.ics",
             etag = "\"etag123\"",
@@ -325,7 +315,7 @@ class BugRegressionTest {
         )
         database.eventsDao().update(synced)
 
-        // Create second calendar for move
+        // A second calendar on the same iCloud account.
         val calendar2Id = database.calendarsDao().insert(
             Calendar(
                 accountId = 1L,
@@ -335,13 +325,13 @@ class BugRegressionTest {
             )
         )
 
-        // Clear existing ops
+        // Drop the CREATE queued above.
         database.pendingOperationsDao().deleteAll()
 
-        // Move event (auto-detects both calendars are iCloud/synced)
+        // A synced event moved within one syncing account queues a MOVE.
         eventWriter.moveEventToCalendar(synced.id, calendar2Id)
 
-        // Verify pending operation has all context
+        // The MOVE carries the old URL, captured before the event's URL is cleared.
         val pendingOps = database.pendingOperationsDao().getAll()
         assertEquals(1, pendingOps.size)
 
@@ -351,7 +341,6 @@ class BugRegressionTest {
         assertEquals("https://caldav.icloud.com/old/event.ics", moveOp.targetUrl)
         assertEquals(calendar2Id, moveOp.targetCalendarId)
 
-        // Verify event's caldavUrl is now null (cleared for new calendar)
         val movedEvent = database.eventsDao().getById(synced.id)
         assertNull("caldavUrl should be cleared after move", movedEvent?.caldavUrl)
     }
@@ -366,18 +355,16 @@ class BugRegressionTest {
         val created = eventWriter.createEvent(masterEvent, isLocal = false)
         val masterUid = created.uid
 
-        // Get first occurrence
         val occurrences = database.occurrencesDao().getForEvent(created.id)
         assertTrue(occurrences.isNotEmpty())
 
-        // Edit single occurrence
         val exception = eventWriter.editSingleOccurrence(
             created.id,
             occurrences.first().startTs,
             created.copy(title = "Exception")
         )
 
-        // Exception MUST have same UID (RFC 5545)
+        // RFC 5545 §3.8.4.4 identifies an exception by the master's UID plus RECURRENCE-ID.
         assertEquals(
             "Exception UID must match master UID",
             masterUid,
@@ -389,20 +376,20 @@ class BugRegressionTest {
 
     @Test
     fun `recurring event with future occurrences found via occurrences table`() = runTest {
-        // Create recurring event that started 30 days ago
+        // A daily series that started 30 days ago.
         val thirtyDaysAgo = System.currentTimeMillis() - 30L * 24 * 3600 * 1000
         val event = createTestEvent().copy(
             startTs = thirtyDaysAgo,
             endTs = thirtyDaysAgo + 3600000,
-            rrule = "FREQ=DAILY" // Daily event, has future occurrences
+            rrule = "FREQ=DAILY"
         )
 
         val created = eventWriter.createEvent(event, isLocal = false)
 
-        // Event.endTs is in the past (first occurrence's end time)
+        // Event.endTs is the first occurrence's end, so it is in the past.
         assertTrue(created.endTs < System.currentTimeMillis())
 
-        // But occurrences table should have future entries
+        // The occurrences table still has future rows.
         val futureOccurrences = database.occurrencesDao()
             .getForEvent(created.id)
             .filter { it.startTs >= System.currentTimeMillis() }

@@ -33,9 +33,14 @@
     <!-- Vibration for reminder notifications -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
-    <!-- Exact alarm permission for calendar reminders (Android 12+) -->
-    <!-- USE_EXACT_ALARM is auto-granted for calendar/alarm apps per Google Play policy -->
+    <!-- Exact alarms for reminders and the midnight widget rollover.
+         USE_EXACT_ALARM (Android 13+) is auto-granted for calendar/alarm apps per Google Play policy.
+         It does not exist on Android 12/12L, so SCHEDULE_EXACT_ALARM (granted at install there)
+         covers API 31-32 and is capped so 13+ relies on USE_EXACT_ALARM alone. -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+    <uses-permission
+        android:name="android.permission.SCHEDULE_EXACT_ALARM"
+        android:maxSdkVersion="32" />
 
     <!-- Contact birthdays: Read contacts to generate birthday calendar -->
     <uses-permission android:name="android.permission.READ_CONTACTS" />

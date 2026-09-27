@@ -21,15 +21,14 @@ import java.io.File
 import java.util.Properties
 
 /**
- * Integration tests for iCloud credential flow.
+ * Checks the iCloud credential flow:
+ * - credentials load from local.properties
+ * - the client factory builds a client from them
+ * - discovery, calendar listing, calendar-user-address-set and a DELETE-then-CREATE move
+ *   against live iCloud
  *
- * These tests verify:
- * - Credentials can be loaded from properties file
- * - CalDavClient can be configured with credentials
- * - Basic CalDAV operations work with real iCloud server
- *
- * NOTE: These tests require network access and valid iCloud credentials
- * in local.properties file.
+ * Needs network access and iCloud credentials in local.properties. Without credentials each
+ * test returns early and passes; the network tests print server errors instead of failing.
  */
 class ICloudCredentialIntegrationTest {
 
@@ -52,10 +51,10 @@ class ICloudCredentialIntegrationTest {
 
         clientFactory = OkHttpCalDavClientFactory()
 
-        // Try to load credentials from properties file
+        // Null when no file is found, or the first one found lacks a value or can't be read
         credentials = loadCredentialsFromProperties()
 
-        // Create client using factory pattern (replaces setCredentials)
+        // Placeholder credentials when none loaded; the tests then return early
         val quirks = ICloudQuirks()
         val creds = credentials ?: Credentials(
             username = "dummy",
@@ -70,13 +69,11 @@ class ICloudCredentialIntegrationTest {
         unmockkAll()
     }
 
-    /**
-     * Load credentials from local.properties if available.
-     */
+    /** Loads iCloud credentials from the first local.properties found, or returns null. */
     private fun loadCredentialsFromProperties(): Credentials? {
         println("DEBUG: Working directory = ${System.getProperty("user.dir")}")
 
-        // Look for properties file in project root
+        // Relative paths up to seven levels above the working directory
         val possiblePaths = listOf(
             "../../../../../../../$PROPERTIES_FILE",
             "../../../../../../$PROPERTIES_FILE",
@@ -95,7 +92,7 @@ class ICloudCredentialIntegrationTest {
             }
         }
 
-        // Also try absolute path based on project structure
+        // The working directory itself
         val projectRoot = System.getProperty("user.dir")
         val absoluteFile = File(projectRoot, PROPERTIES_FILE)
         if (absoluteFile.exists()) {
@@ -126,11 +123,11 @@ class ICloudCredentialIntegrationTest {
         return try {
             println("DEBUG: Loading from ${file.absolutePath}")
 
-            // Load using standard Java Properties
+            // java.util.Properties format
             val props = Properties()
             file.inputStream().use { props.load(it) }
 
-            // Try uppercase format first (ICLOUD_USERNAME), then lowercase (icloud username)
+            // ICLOUD_USERNAME first, then the key "icloud username"
             val username = props.getProperty("ICLOUD_USERNAME")
                 ?: props.getProperty("icloud username")
             val password = props.getProperty("ICLOUD_APP_PASSWORD")
@@ -159,8 +156,7 @@ class ICloudCredentialIntegrationTest {
 
     @Test
     fun `credentials can be loaded from properties file`() {
-        // This test verifies the properties file exists and has valid format
-        // If credentials aren't available, we skip with a meaningful message
+        // Checks the loaded values; without credentials it prints SKIPPED and passes
         if (credentials == null) {
             println("SKIPPED: No credentials available in $PROPERTIES_FILE")
             return
@@ -209,28 +205,26 @@ class ICloudCredentialIntegrationTest {
 
         val safeString = credentials!!.toSafeString()
 
-        // Should NOT contain full username (email is masked)
+        // The email is masked
         assertFalse(safeString.contains(credentials!!.username))
 
-        // Should NOT contain full password
+        // The password doesn't appear
         assertFalse(safeString.contains(credentials!!.password))
 
-        // Should contain masked password pattern
+        // The password is written as ****
         assertTrue(safeString.contains("****"))
 
-        // Should contain "Credentials(" prefix indicating it's a safe representation
+        // Has the "Credentials(" prefix
         assertTrue(safeString.contains("Credentials("))
     }
 
     // ==================== CalDavClient Configuration Tests ====================
-    // NOTE: The following tests for setCredentials/hasCredentials/clearCredentials
-    // have been removed because CalDavClient no longer uses the singleton pattern
-    // with mutable credentials. Instead, use OkHttpCalDavClientFactory to create
-    // immutable clients with credentials baked in.
+    // A CalDavClient gets its credentials at creation from OkHttpCalDavClientFactory
+    // and can't change them afterwards.
 
     @Test
     fun `CalDavClient factory creates client with credentials`() {
-        // Factory pattern replaces setCredentials/hasCredentials/clearCredentials
+        // Placeholder credentials; no network call
         val factory = OkHttpCalDavClientFactory()
         val testCredentials = Credentials(
             username = "test@example.com",
@@ -239,7 +233,7 @@ class ICloudCredentialIntegrationTest {
         )
         val client = factory.createClient(testCredentials, ICloudQuirks())
 
-        // Client is created successfully with credentials baked in
+        // The factory returns a client
         assertNotNull(client)
     }
 
@@ -250,16 +244,16 @@ class ICloudCredentialIntegrationTest {
             return
         }
 
-        // Factory pattern creates immutable client with credentials
+        // A client from the loaded credentials
         val factory = OkHttpCalDavClientFactory()
         val client = factory.createClient(credentials!!, ICloudQuirks())
 
-        // Client is created successfully
+        // The factory returns a client
         assertNotNull(client)
     }
 
     // ==================== Network Integration Tests ====================
-    // These tests actually connect to iCloud (require network)
+    // These connect to iCloud
 
     @Test
     fun `iCloud server responds to PROPFIND`() = runTest {
@@ -268,18 +262,18 @@ class ICloudCredentialIntegrationTest {
             return@runTest
         }
 
-        // Client already created with credentials in setup()
+        // setup() created the client with the credentials
 
-        // Try to discover calendar home
+        // Discover the calendar home
         val result = try {
             calDavClient.discoverCalendarHome(credentials!!.serverUrl)
         } catch (e: Exception) {
-            // Network errors are OK for unit test environment
+            // A network exception prints and passes
             println("Network test skipped: ${e.message}")
             null
         }
 
-        // If we got a result, verify it
+        // Check the result, if any
         if (result != null) {
             when (result) {
                 is CalDavResult.Success -> {
@@ -288,7 +282,7 @@ class ICloudCredentialIntegrationTest {
                     assertTrue("Result should be iCloud URL", url.contains("icloud.com"))
                 }
                 is CalDavResult.Error -> {
-                    // Auth errors indicate credentials were received
+                    // A CalDAV error, auth included, prints and passes
                     println("CalDAV error (expected in test env): ${result.message}")
                 }
             }
@@ -302,10 +296,10 @@ class ICloudCredentialIntegrationTest {
             return@runTest
         }
 
-        // Client already created with credentials in setup()
+        // setup() created the client with the credentials
 
         try {
-            // First discover calendar home
+            // Discover the calendar home
             val homeResult = calDavClient.discoverCalendarHome(credentials!!.serverUrl)
 
             when (homeResult) {
@@ -313,7 +307,7 @@ class ICloudCredentialIntegrationTest {
                     val calendarHome = homeResult.data.first()
                     assertNotNull("Should discover calendar home", calendarHome)
 
-                    // Then list calendars
+                    // List its calendars
                     val calendarsResult = calDavClient.listCalendars(calendarHome)
 
                     when (calendarsResult) {
@@ -322,7 +316,7 @@ class ICloudCredentialIntegrationTest {
                             // Should have at least one calendar (iCloud always has default)
                             assertTrue("Should have at least one calendar", calendars.isNotEmpty())
 
-                            // Each calendar should have required properties
+                            // Each has an href and a display name
                             for (calendar in calendars) {
                                 assertTrue("Calendar should have href", calendar.href.isNotEmpty())
                                 assertTrue("Calendar should have displayName", calendar.displayName.isNotEmpty())
@@ -338,7 +332,7 @@ class ICloudCredentialIntegrationTest {
                 }
             }
         } catch (e: Exception) {
-            // Network errors are acceptable in unit test environment
+            // A network exception prints and passes
             println("Network test skipped: ${e.message}")
         }
     }
@@ -350,7 +344,7 @@ class ICloudCredentialIntegrationTest {
             return@runTest
         }
 
-        // Client already created with credentials in setup()
+        // setup() created the client with the credentials
 
         try {
             val result = calDavClient.checkConnection(credentials!!.serverUrl)
@@ -360,7 +354,7 @@ class ICloudCredentialIntegrationTest {
                     println("Connection check successful - credentials valid")
                 }
                 is CalDavResult.Error -> {
-                    // 401 = invalid creds, other errors = network issues
+                    // 401 means invalid credentials; any error prints and passes
                     println("Connection check returned: ${result.code} - ${result.message}")
                 }
             }
@@ -379,7 +373,7 @@ class ICloudCredentialIntegrationTest {
         }
 
         try {
-            // Discover principal first to get the URL we PROPFIND against.
+            // The principal is the URL the address-set PROPFIND goes to.
             val principalResult = calDavClient.discoverPrincipal(credentials!!.serverUrl)
             if (principalResult !is CalDavResult.Success) {
                 println("SKIPPED: Could not discover principal: $principalResult")
@@ -392,9 +386,8 @@ class ICloudCredentialIntegrationTest {
                 is CalDavResult.Success -> {
                     val addresses = result.data
                     // iCloud accounts always have at least one mailto (the Apple ID
-                    // login) plus principal-relative paths. Multi-alias accounts
-                    // have more. We assert size >= 2 to allow accounts that haven't
-                    // configured aliases.
+                    // login) plus principal-relative paths; multi-alias accounts have
+                    // more. At least 2 allows accounts without aliases.
                     assertTrue(
                         "iCloud should return >= 2 address-set entries (got ${addresses.size})",
                         addresses.size >= 2
@@ -407,7 +400,7 @@ class ICloudCredentialIntegrationTest {
                         "iCloud should return at least one principal-relative path entry",
                         addresses.any { it.startsWith("/") && !it.startsWith("//") }
                     )
-                    // Do NOT print full addresses to test logs (PII).
+                    // Never print the addresses to test logs (PII).
                     println("iCloud returned ${addresses.size} CUA entries (values redacted)")
                 }
                 is CalDavResult.Error -> {
@@ -420,7 +413,8 @@ class ICloudCredentialIntegrationTest {
     }
 
     // ==================== Calendar Move Integration Test ====================
-    // Tests the MOVE pattern: DELETE from old calendar + CREATE in new calendar
+    // Deletes from the source calendar, then creates the same UID in the target. This is
+    // the reverse of PushStrategy's MOVE fallback, which creates in the target first.
 
     @Test
     fun `calendar move pattern DELETE then CREATE works`() = runTest {
@@ -429,10 +423,10 @@ class ICloudCredentialIntegrationTest {
             return@runTest
         }
 
-        // Client already created with credentials in setup()
+        // setup() created the client with the credentials
 
         try {
-            // Step 1: Discover calendars
+            // Step 1: discover calendars
             val homeResult = calDavClient.discoverCalendarHome(credentials!!.serverUrl)
             if (homeResult !is CalDavResult.Success) {
                 println("SKIPPED: Could not discover calendar home")
@@ -451,7 +445,7 @@ class ICloudCredentialIntegrationTest {
             println("Source calendar: ${sourceCalendar.displayName}")
             println("Target calendar: ${targetCalendar.displayName}")
 
-            // Step 2: Create test event in source calendar
+            // Step 2: create the event in the source calendar
             val testUid = "test-move-${System.currentTimeMillis()}"
             val icalData = """
                 BEGIN:VCALENDAR
@@ -477,7 +471,7 @@ class ICloudCredentialIntegrationTest {
             println("Created test event at: $sourceUrl")
 
             try {
-                // Step 3: DELETE from source calendar (like processMove does)
+                // Step 3: DELETE from the source calendar
                 println("Deleting from source calendar...")
                 val deleteResult = calDavClient.deleteEvent(sourceUrl, "")
 
@@ -486,11 +480,11 @@ class ICloudCredentialIntegrationTest {
                     deleteResult.isNotFound() -> println("DELETE: already deleted (404)")
                     else -> {
                         println("DELETE failed: ${(deleteResult as? CalDavResult.Error)?.message}")
-                        // Continue anyway to test CREATE
+                        // Go on to the CREATE regardless
                     }
                 }
 
-                // Step 4: CREATE in target calendar (like processMove does)
+                // Step 4: CREATE in the target calendar
                 println("Creating in target calendar...")
                 val moveCreateResult = calDavClient.createEvent(targetCalendar.href, testUid, icalData)
 
@@ -499,13 +493,13 @@ class ICloudCredentialIntegrationTest {
                         val (newUrl, newEtag) = moveCreateResult.getOrNull()!!
                         println("MOVE SUCCESS! New URL: $newUrl")
 
-                        // Clean up: delete from target calendar
+                        // Delete the copy this run created in the target
                         calDavClient.deleteEvent(newUrl, "")
                         println("Cleaned up test event")
                     }
                     moveCreateResult.isConflict() -> {
                         println("CREATE conflict (412) - UID already exists")
-                        // This is the iCloud quirk we documented - may need to delete first
+                        // The iCloud UID-conflict quirk; the old copy may need deleting first
                     }
                     else -> {
                         println("CREATE failed: ${(moveCreateResult as? CalDavResult.Error)?.message}")
@@ -513,7 +507,7 @@ class ICloudCredentialIntegrationTest {
                 }
 
             } catch (e: Exception) {
-                // Clean up on error
+                // On an exception, delete the event this run created
                 try {
                     calDavClient.deleteEvent(sourceUrl, "")
                 } catch (ignored: Exception) {}

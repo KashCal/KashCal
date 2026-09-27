@@ -162,7 +162,7 @@ class ITipBuilderTest {
             )
 
             val ics = builder.createReply(event, attendee)
-            // Should contain only one ATTENDEE (the responder)
+            // Only the responder's ATTENDEE.
             val attendeeCount = ics.split("ATTENDEE").size - 1
             assertEquals(1, attendeeCount)
             assertTrue(ics.contains("responder@example.com"))
@@ -227,8 +227,8 @@ class ITipBuilderTest {
             )
 
             val ics = builder.createCancel(event, attendeesToCancel)
-            // RFC 5546 §2.1.4: SEQUENCE MUST increment on CANCEL, including the
-            // disinvite (remove-specific-attendees) form.
+            // RFC 5546 §2.1.4: SEQUENCE MUST increment on CANCEL, including a disinvite that
+            // names specific attendees.
             assertTrue(ics.contains("SEQUENCE:11"), "Attendee-disinvite CANCEL must increment SEQUENCE")
         }
 
@@ -260,10 +260,9 @@ class ITipBuilderTest {
             val event = createTestEvent(sequence = 5)
 
             val ics = builder.createUpdate(event)
-            // The serializer must NOT auto-bump. RFC 5546 §2.1.4 bumps only on
-            // substantive change, a decision the single-ICalEvent serializer
-            // cannot make (it has no prior version to diff). The caller advances
-            // SEQUENCE before building the message; the builder emits it as-is.
+            // The builder must not bump SEQUENCE. RFC 5546 §2.1.4 requires a bump only when
+            // the organizer changes certain properties, which one ICalEvent with no prior
+            // version can't show. The caller sets SEQUENCE first; the builder emits it as given.
             assertTrue(ics.contains("SEQUENCE:5"), "Update must emit SEQUENCE verbatim")
             assertTrue(!ics.contains("SEQUENCE:6"), "Update must not auto-increment SEQUENCE")
         }
@@ -386,9 +385,10 @@ class ITipBuilderTest {
 
             val ics = builder.createRefresh(event, requester)
 
-            // RFC 5546 §3.2.6: a REFRESH VEVENT carries only UID, DTSTAMP,
-            // ORGANIZER, and the requesting ATTENDEE (RECURRENCE-ID only for an
-            // instance). Everything else has presence 0.
+            // RFC 5546 §3.2.6: a REFRESH VEVENT requires UID, DTSTAMP, ORGANIZER and the
+            // requesting ATTENDEE, and RECURRENCE-ID only for an instance. The §3.2.6 table
+            // gives every entry in `forbidden` presence 0 except COLOR, an RFC 7986 property
+            // its IANA-PROPERTY row allows; the assert message cites presence 0 for all.
             assertTrue(ics.contains("UID:test-event-123"), "REFRESH must include UID")
             assertTrue(ics.contains("DTSTAMP:"), "REFRESH must include DTSTAMP")
             assertTrue(ics.contains("ORGANIZER") && ics.contains("organizer@example.com"), "REFRESH must include ORGANIZER")
@@ -543,8 +543,8 @@ class ITipBuilderTest {
                 duration = null,
                 isAllDay = false,
                 status = EventStatus.CONFIRMED,
-                sequence = 99,  // Will be replaced with master sequence
-                rrule = RRule(  // Should be cleared
+                sequence = 99,  // Replaced by the master's SEQUENCE plus 1
+                rrule = RRule(  // Dropped by createAdd
                     freq = Frequency.DAILY,
                     interval = 1
                 ),
@@ -668,7 +668,7 @@ class ITipBuilderTest {
             )
 
             val ics = builder.createAdd(master, newInstance, attendees)
-            // RRULE should not appear in the output (instances don't have RRULE)
+            // The instance's RRULE is dropped; RFC 5546 §3.2.4 gives RRULE presence 0 in an ADD.
             assertTrue(!ics.contains("RRULE:FREQ=DAILY"), "ADD instance must NOT have RRULE")
         }
 
@@ -694,7 +694,7 @@ class ITipBuilderTest {
             )
 
             val ics = builder.createAdd(master, newInstance, attendees)
-            // All attendees should have PARTSTAT=NEEDS-ACTION
+            // Both attendees are reset to PARTSTAT=NEEDS-ACTION.
             val needsActionCount = ics.split("PARTSTAT=NEEDS-ACTION").size - 1
             assertEquals(2, needsActionCount, "All attendees must have PARTSTAT=NEEDS-ACTION")
         }
@@ -756,7 +756,7 @@ class ITipBuilderTest {
 
             val ics = builder.createAdd(master, newInstance, attendees)
 
-            // Instance-specific details should be preserved
+            // The instance's own SUMMARY, DESCRIPTION, LOCATION and times are kept.
             assertTrue(ics.contains("Special Team Meeting"), "ADD should preserve instance SUMMARY")
             assertTrue(ics.contains("Additional meeting"), "ADD should preserve instance DESCRIPTION")
             assertTrue(ics.contains("Conference Room B"), "ADD should preserve instance LOCATION")
@@ -772,7 +772,7 @@ class ITipBuilderTest {
 
             val ics = builder.createAdd(master, newInstance, attendees)
 
-            // DTSTAMP should be preserved (preserveDtstamp = true)
+            // createAdd passes preserveDtstamp = true, so the instance's DTSTAMP is kept.
             assertTrue(ics.contains("DTSTAMP:20231218T100000Z"), "ADD should preserve original DTSTAMP")
         }
 
@@ -782,7 +782,7 @@ class ITipBuilderTest {
             val newInstance = createNewInstance(ICalDateTime.parse("20231220T140000Z"))
             val attendees = emptyList<Attendee>()
 
-            // Should not throw, even with empty attendee list
+            // An empty attendee list doesn't throw.
             val ics = builder.createAdd(master, newInstance, attendees)
             assertTrue(ics.contains("METHOD:ADD"))
             assertTrue(ics.contains("UID:recurring-master-123"))
@@ -805,7 +805,6 @@ class ITipBuilderTest {
 
             val ics = builder.createAdd(master, newInstance, attendees)
 
-            // Parse it back and verify
             val parsed = parser.parseWithMethod(ics)
             assertTrue(parsed is ParseResult.Success)
 

@@ -18,15 +18,9 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Unit tests for DigestAuthenticator.
- *
- * Tests RFC 2617/7616 Digest authentication:
- * - Challenge parsing (WWW-Authenticate header)
- * - QoP negotiation
- * - Hash computation (MD5, SHA-256)
- * - Loop prevention
- * - Nonce count management
- * - Stale nonce handling
+ * Tests [DigestAuthenticator] (RFC 2617/7616 Digest authentication): challenge and auth-param
+ * parsing, qop negotiation, MD5 and SHA-256 hashes, loop prevention, nonce counts, stale nonces,
+ * and refusing to answer over plain http on an https account.
  */
 class DigestAuthenticatorTest {
 
@@ -40,7 +34,7 @@ class DigestAuthenticatorTest {
         every { Log.w(any(), any<String>()) } returns 0
         every { Log.e(any(), any<String>()) } returns 0
 
-        authenticator = DigestAuthenticator("testuser", "testpass")
+        authenticator = DigestAuthenticator("testuser", "testpass", allowCleartext = true)
     }
 
     @After
@@ -215,8 +209,7 @@ class DigestAuthenticatorTest {
     @Test
     fun `buildDigestHeader computes correct MD5 response`() {
         // Known-answer test based on RFC 2617 Section 3.5
-        // Using our own known values for deterministic testing
-        val auth = DigestAuthenticator("Mufasa", "Circle Of Life")
+        val auth = DigestAuthenticator("Mufasa", "Circle Of Life", allowCleartext = true)
         val challenge = DigestAuthenticator.DigestChallenge(
             realm = "testrealm@host.com",
             nonce = "dcd98b7102dd2f0e8b11d0f600bfb0c093",
@@ -230,9 +223,7 @@ class DigestAuthenticatorTest {
             .get()
             .build()
 
-        // Manually set nonceCount to 1 for deterministic test
-        // We need to call authenticate first to set nonce state, but for unit test
-        // we can test the hash computation directly
+        // The full header carries a random cnonce, so check HA1 and HA2 directly.
         val ha1 = auth.hash("Mufasa:testrealm@host.com:Circle Of Life", "MD5")
         assertEquals("939e7578ed9e3c518a452acee763bce9", ha1)
 
@@ -242,7 +233,7 @@ class DigestAuthenticatorTest {
 
     @Test
     fun `buildDigestHeader computes correct SHA-256 response`() {
-        val auth = DigestAuthenticator("testuser", "testpass")
+        val auth = DigestAuthenticator("testuser", "testpass", allowCleartext = true)
         val ha1 = auth.hash("testuser:testrealm:testpass", "SHA-256")
         // SHA-256 produces 64-char hex string
         assertEquals(64, ha1.length)
@@ -265,8 +256,7 @@ class DigestAuthenticatorTest {
             .method("PROPFIND", null)
             .build()
 
-        // Force nonceCount by calling authenticate with a proper response
-        val auth = DigestAuthenticator("user", "pass")
+        val auth = DigestAuthenticator("user", "pass", allowCleartext = true)
         val header = auth.buildDigestHeader(request, challenge)
 
         // Legacy mode: no qop, nc, or cnonce
@@ -362,7 +352,7 @@ class DigestAuthenticatorTest {
 
     @Test
     fun `authenticate returns null on second 401 (loop prevention)`() {
-        // Simulate: we already sent Digest auth, server rejected it (not stale)
+        // The request already carried Digest auth and the server rejected it (not stale).
         val response = build401Response(
             """Digest realm="SabreDAV", nonce="abc123", qop="auth"""",
             existingAuthHeader = """Digest username="testuser", realm="SabreDAV", nonce="abc123", response="wronghash""""
@@ -506,5 +496,28 @@ class DigestAuthenticatorTest {
     private fun extractField(header: String, field: String): String? {
         val regex = Regex("""$field="([^"]*)"""")
         return regex.find(header)?.groupValues?.get(1)
+    }
+
+    // ========== Plain http on an https account ==========
+
+    @Test
+    fun `a challenge over plain http is not answered when the account is https`() {
+        val https = DigestAuthenticator("testuser", "testpass", allowCleartext = false)
+        val challenge = """Digest realm="dav", nonce="n1", qop="auth""""
+
+        assertNull(
+            "no password-derived answer goes over http",
+            https.authenticate(null, build401Response(challenge, requestUrl = "http://example.com/dav.php/"))
+        )
+        assertNotNull(
+            "the same challenge over https is answered",
+            https.authenticate(null, build401Response(challenge, requestUrl = "https://example.com/dav.php/"))
+        )
+    }
+
+    @Test
+    fun `a challenge over plain http is answered when the account itself is http`() {
+        val challenge = """Digest realm="dav", nonce="n1", qop="auth""""
+        assertNotNull(authenticator.authenticate(null, build401Response(challenge, requestUrl = "http://example.com/dav.php/")))
     }
 }

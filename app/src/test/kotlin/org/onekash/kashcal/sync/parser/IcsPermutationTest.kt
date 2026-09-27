@@ -26,21 +26,19 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Comprehensive permutation tests for ICS exception handling.
- *
- * These tests verify all combinations of:
+ * Tests ICS exception handling over a selection of combinations of:
  * - Frequencies: DAILY, WEEKLY, MONTHLY
  * - End types: COUNT, UNTIL
  * - Event types: TIMED, ALL-DAY
- * - Exception counts: 1-5
+ * - Exception counts: 1 to 5
  * - Special cases: EXDATE, timezone, collision, multi-sequence
  *
  * Each test:
- * 1. Parses ICS from Nextcloud server
- * 2. Creates Event entities in KashCal
+ * 1. Parses ICS from a Nextcloud server
+ * 2. Inserts the master and exceptions as Event rows
  * 3. Generates occurrences
- * 4. Verifies exception linking
- * 5. Verifies round-trip ICS generation matches original
+ * 4. Checks exception linking
+ * 5. Round-trips the rows to ICS ([verifyRoundTrip])
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -221,7 +219,7 @@ class IcsPermutationTest {
 
         val occurrences = database.occurrencesDao().getForEvent(result.masterId)
 
-        // Should have COUNT occurrences minus EXDATE count, plus exception occurrences linked
+        // Feb 8 and Feb 22 are EXDATEs; the Feb 15 and Mar 1 exceptions are both linked
         val linkedCount = occurrences.count { it.exceptionEventId != null }
         assertEquals("Should have 2 exceptions linked", 2, linkedCount)
 
@@ -240,7 +238,7 @@ class IcsPermutationTest {
         val linkedCount = occurrences.count { it.exceptionEventId != null }
         assertEquals("Should have 5 exceptions linked", 5, linkedCount)
 
-        // Verify all 5 have unique times
+        // All 5 have unique times
         val exceptionOccs = occurrences.filter { it.exceptionEventId != null }
         val uniqueExTimes = exceptionOccs.map { it.startTs }.toSet()
         assertEquals("All 5 exceptions should have unique times", 5, uniqueExTimes.size)
@@ -261,7 +259,7 @@ class IcsPermutationTest {
         val exceptions = database.eventsDao().getExceptionsForMaster(result.masterId)
         assertEquals("Should have 2 exceptions", 2, exceptions.size)
 
-        // Exceptions should have same or compatible timezone
+        // Each exception has a timezone
         for (ex in exceptions) {
             assertNotNull("Exception should have timezone", ex.timezone)
         }
@@ -279,11 +277,11 @@ class IcsPermutationTest {
 
         val occurrences = database.occurrencesDao().getForEvent(result!!.masterId)
 
-        // The exception is moved to Feb 3 (same day as another occurrence, but different time)
-        // This should NOT cause duplicates - the exception replaces its original slot
+        // Feb 2 is moved to Feb 3 14:00, the day of another occurrence at a different time.
+        // No duplicates: the exception's row moves from its original slot.
         assertNoduplicates(occurrences)
 
-        // The linked exception should be correctly identified
+        // One occurrence is linked
         val linkedCount = occurrences.count { it.exceptionEventId != null }
         assertEquals("Should have 1 exception linked", 1, linkedCount)
 
@@ -296,8 +294,8 @@ class IcsPermutationTest {
 
         assertNotNull("Should parse successfully", result)
 
-        // When multiple exceptions have same RECURRENCE-ID but different SEQUENCE,
-        // KashCal should keep highest SEQUENCE (RFC 5545 conflict resolution)
+        // Three exceptions with SEQUENCE 1 to 3, each on its own RECURRENCE-ID. Where
+        // RECURRENCE-IDs repeat, parseAndProcess keeps the highest SEQUENCE.
         val exceptions = database.eventsDao().getExceptionsForMaster(result!!.masterId)
         assertTrue("Should have exceptions after deduplication", exceptions.isNotEmpty())
 
@@ -326,10 +324,9 @@ class IcsPermutationTest {
             val originalLinkedCount = database.occurrencesDao().getForEvent(result.masterId)
                 .count { it.exceptionEventId != null }
 
-            // Regenerate occurrences
             occurrenceGenerator.regenerateOccurrences(master)
 
-            // Verify exceptions still linked
+            // Exceptions still linked
             val newLinkedCount = database.occurrencesDao().getForEvent(result.masterId)
                 .count { it.exceptionEventId != null }
 
@@ -338,11 +335,11 @@ class IcsPermutationTest {
                 originalLinkedCount, newLinkedCount
             )
 
-            // Verify no duplicates after regeneration
+            // No duplicates after regeneration
             val occurrences = database.occurrencesDao().getForEvent(result.masterId)
             assertNoduplicates(occurrences, "$file after regeneration")
 
-            // Clean up for next iteration
+            // Clean up for the next file
             database.eventsDao().deleteByCalendarId(testCalendarId)
             database.occurrencesDao().deleteForCalendar(testCalendarId)
         }
@@ -366,24 +363,21 @@ class IcsPermutationTest {
         val parsedEvents = parseResult.value
         if (parsedEvents.isEmpty()) return null
 
-        // Separate master from exceptions
         val master = parsedEvents.find { it.recurrenceId == null } ?: return null
         val exceptions = parsedEvents.filter { it.recurrenceId != null }
 
-        // RFC 5545: Multiple exceptions with same RECURRENCE-ID - keep highest SEQUENCE
+        // Of exceptions sharing a RECURRENCE-ID, keep the highest SEQUENCE, the latest
+        // revision (RFC 5545 §3.8.7.4)
         val uniqueExceptions = exceptions
             .groupBy { it.recurrenceId?.timestamp }
             .mapNotNull { (_, excs) -> excs.maxByOrNull { it.sequence } }
 
-        // Insert master
         val masterEvent = ICalEventMapper.toEntity(master, icsContent, testCalendarId, null, null).event
         val masterId = database.eventsDao().insert(masterEvent)
         val savedMaster = masterEvent.copy(id = masterId)
 
-        // Generate occurrences for master
         occurrenceGenerator.regenerateOccurrences(savedMaster)
 
-        // Insert and link exceptions
         val savedExceptions = mutableListOf<Event>()
         for (exception in uniqueExceptions) {
             val exceptionEvent = ICalEventMapper.toEntity(exception, null, testCalendarId, null, null).event
@@ -392,7 +386,7 @@ class IcsPermutationTest {
             val savedExceptionEvent = exceptionEvent.copy(id = exceptionId)
             savedExceptions.add(savedExceptionEvent)
 
-            // Link exception using RECURRENCE-ID timestamp
+            // Link at the RECURRENCE-ID time
             val originalTime = exception.recurrenceId?.timestamp
             if (originalTime != null) {
                 occurrenceGenerator.linkException(masterId, originalTime, savedExceptionEvent)
@@ -424,32 +418,26 @@ class IcsPermutationTest {
     }
 
     /**
-     * Verify round-trip: ICS → Event entities → ICS output.
+     * Checks the round trip ICS to Event rows to ICS ([IcsPatcher.serializeWithExceptions]).
+     * Skipped when the master has no rawIcal.
      *
-     * Two levels of verification:
-     * 1. Parsed event object comparison (validates semantic equivalence)
-     * 2. ICS content comparison (validates essential properties match)
+     * Two checks:
+     * 1. ICS content: UID, SUMMARY, RRULE and EXDATE per VEVENT ([verifyIcsContentMatches]).
+     * 2. The reparsed output: master UID, title, all-day flag and RRULE frequency, the
+     *    exception count, and each exception's RECURRENCE-ID and title.
      *
-     * Exact string match won't work due to:
-     * - DTSTAMP updates
-     * - PRODID differences
-     * - Property ordering differences
-     * - Line folding variations
+     * An exact string match fails on DTSTAMP, PRODID, property order and line folding.
      */
     private suspend fun verifyRoundTrip(result: ProcessResult, name: String) {
         val master = database.eventsDao().getById(result.masterId)!!
         val exceptions = database.eventsDao().getExceptionsForMaster(result.masterId)
 
-        // Get original ICS from rawIcal
         val originalIcs = master.rawIcal ?: return // Skip if no original ICS stored
 
-        // Generate ICS from KashCal entities
         val generatedIcs = IcsPatcher.serializeWithExceptions(master, exceptions)
 
-        // Level 2: Verify ICS essential content matches (UID, SUMMARY, RRULE, EXDATE)
         verifyIcsContentMatches(originalIcs, generatedIcs, name)
 
-        // Parse the generated ICS
         val reparsed = icalParser.parseAllEvents(generatedIcs)
         assertTrue("$name: Generated ICS should parse successfully", reparsed is ParseResult.Success)
 
@@ -457,28 +445,25 @@ class IcsPermutationTest {
         val reparsedMaster = reparsedEvents.find { it.recurrenceId == null }
         val reparsedExceptions = reparsedEvents.filter { it.recurrenceId != null }
 
-        // Verify master properties match
         assertNotNull("$name: Reparsed should have master", reparsedMaster)
         assertEquals("$name: UID should match", master.uid, reparsedMaster!!.uid)
         assertEquals("$name: Title should match", master.title, reparsedMaster.summary)
         assertEquals("$name: isAllDay should match", master.isAllDay, reparsedMaster.isAllDay)
 
-        // Verify RRULE preserved
         if (master.rrule != null) {
             assertNotNull("$name: RRULE should be preserved", reparsedMaster.rrule)
-            // Check frequency is preserved (use RRule.freq enum)
+            // Compare the frequency through the reparsed RRule.freq enum
             val originalFreq = extractFrequency(master.rrule!!)
             val reparsedFreq = reparsedMaster.rrule?.freq?.name ?: ""
             assertEquals("$name: RRULE frequency should match", originalFreq, reparsedFreq)
         }
 
-        // Verify exceptions count matches
         assertEquals(
             "$name: Exception count should match",
             exceptions.size, reparsedExceptions.size
         )
 
-        // Verify each exception has correct RECURRENCE-ID
+        // Each exception keeps its RECURRENCE-ID and title
         for (exception in exceptions) {
             val matchingReparsed = reparsedExceptions.find { reparsedEx ->
                 reparsedEx.recurrenceId?.timestamp == exception.originalInstanceTime
@@ -500,22 +485,17 @@ class IcsPermutationTest {
     }
 
     /**
-     * Verify ICS content matches between original and generated.
+     * Checks that the generated ICS has the original's VEVENTs, matched by UID and
+     * RECURRENCE-ID, with the same UID, SUMMARY, RRULE and EXDATE values.
      *
-     * Normalizes both ICS files by:
-     * - Removing DTSTAMP (changes each generation)
-     * - Removing PRODID (differs between servers)
-     * - Removing CALSCALE (optional)
-     * - Sorting properties within each VEVENT
-     * - Normalizing line endings
-     *
-     * Then compares the essential content.
+     * Both files are normalized first: line endings, unfolding, and dropping DTSTAMP (changes
+     * each generation), PRODID (differs between servers) and CALSCALE (optional). Property
+     * order doesn't matter because properties are looked up by name.
      */
     private fun verifyIcsContentMatches(originalIcs: String, generatedIcs: String, name: String) {
         val normalizedOriginal = normalizeIcs(originalIcs)
         val normalizedGenerated = normalizeIcs(generatedIcs)
 
-        // Extract and compare VEVENTs
         val originalVevents = extractVeventsNormalized(normalizedOriginal)
         val generatedVevents = extractVeventsNormalized(normalizedGenerated)
 
@@ -524,7 +504,7 @@ class IcsPermutationTest {
             originalVevents.size, generatedVevents.size
         )
 
-        // For each original VEVENT, find matching generated VEVENT by UID + RECURRENCE-ID
+        // Match each original VEVENT to a generated one by UID and RECURRENCE-ID
         for (originalVevent in originalVevents) {
             val uid = extractProperty(originalVevent, "UID")
             val recurrenceId = extractProperty(originalVevent, "RECURRENCE-ID")
@@ -541,7 +521,6 @@ class IcsPermutationTest {
                 generatedVevent
             )
 
-            // Compare key properties
             verifyVeventPropertiesMatch(originalVevent, generatedVevent!!, name, key)
         }
     }
@@ -550,9 +529,8 @@ class IcsPermutationTest {
         return ics
             .replace("\r\n", "\n")
             .replace("\r", "\n")
-            // Unfold folded lines (lines starting with space/tab are continuations)
+            // Unfold: a line starting with space or tab continues the previous one
             .replace(Regex("\n[ \t]"), "")
-            // Remove DTSTAMP, PRODID, CALSCALE lines
             .lines()
             .filter { line ->
                 !line.startsWith("DTSTAMP:") &&
@@ -583,14 +561,14 @@ class IcsPermutationTest {
         name: String,
         key: String
     ) {
-        // Properties that MUST match
+        // Properties that must match
         val mustMatchProperties = listOf("UID", "SUMMARY", "RRULE", "EXDATE")
 
         for (prop in mustMatchProperties) {
             val originalValue = extractProperty(original, prop)
             val generatedValue = extractProperty(generated, prop)
 
-            // Only compare if original has the property
+            // Compared only when the original has the property
             if (originalValue != null) {
                 assertEquals(
                     "$name [$key]: $prop should match",
@@ -599,15 +577,15 @@ class IcsPermutationTest {
             }
         }
 
-        // DTSTART/DTEND times should match (ignoring parameter differences like TZID format)
+        // DTSTART values are extracted but not compared; DTEND isn't read
         val originalDtstart = extractProperty(original, "DTSTART")
         val generatedDtstart = extractProperty(generated, "DTSTART")
         if (originalDtstart != null && generatedDtstart != null) {
-            // Extract just the datetime value (ignoring TZID parameter format)
+            // The datetime value, without the TZID parameter
             val origTime = originalDtstart.substringAfterLast(":")
             val genTime = generatedDtstart.substringAfterLast(":")
-            // Note: Timestamps may have different formats (local vs UTC)
-            // The detailed comparison is already done in verifyRoundTrip via ICalEvent parsing
+            // Not compared: the two may differ in format (local vs UTC), and verifyRoundTrip
+            // doesn't compare start times either
         }
     }
 }

@@ -28,9 +28,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 
 /**
- * One selectable row in a [SelectableOptionSheet]: a label + description and whether it is the
- * current choice. [onSelect] runs when the row is tapped (typically applies the value and dismisses
- * the sheet).
+ * Describes one row in a [SelectableOptionSheet]: a label, a description and whether it is the
+ * current choice. [onSelect] runs when the row is tapped; both callers apply the value and
+ * dismiss the sheet.
  */
 data class SelectableOption(
     @param:StringRes val labelRes: Int,
@@ -40,9 +40,10 @@ data class SelectableOption(
 )
 
 /**
- * A titled bottom sheet of mutually-exclusive options rendered as radio-selectable rows. Used by
- * the app-theme and widget-theme pickers; both supply their own ordered option list and title,
- * so any accessibility or styling change to the rows lives in one place.
+ * Shows a titled bottom sheet of mutually exclusive options as radio-selectable rows.
+ *
+ * [ThemeSheet] and [WidgetThemeSheet] each supply their own ordered options and title, so an
+ * accessibility or styling change to the rows lives in one place.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,8 +83,8 @@ private fun SelectableOptionRow(option: SelectableOption) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            // Radio-button role + selected state so TalkBack announces the choice and its
-            // group position, not just the label (the checkmark alone is a sighted-only cue).
+            // Radio-button role and selected state so TalkBack announces the choice and its
+            // group position; the checkmark alone is a sighted-only cue.
             .selectable(selected = option.isSelected, role = Role.RadioButton, onClick = option.onSelect)
             .background(
                 if (option.isSelected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)

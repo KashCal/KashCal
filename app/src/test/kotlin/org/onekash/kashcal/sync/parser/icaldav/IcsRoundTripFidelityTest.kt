@@ -16,11 +16,12 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /**
- * Round-trip fidelity tests: Entity → IcsPatcher.generateFresh() → ICalParser → ICalEventMapper → Entity.
+ * Tests round-trip fidelity: an entity through IcsPatcher.generateFresh(), ICalParser and
+ * ICalEventMapper back to an entity.
  *
- * Complements Rfc7986ExtendedPropertiesTest (COLOR/GEO/URL/CATEGORIES) by testing
- * remaining properties: RRULE, EXDATE, RDATE, alarms, SEQUENCE, STATUS, CLASS,
- * TRANSP, LOCATION, DESCRIPTION, organizer, all-day, timezone.
+ * Complements [Rfc7986ExtendedPropertiesTest] (COLOR, GEO, URL, CATEGORIES) with RRULE, EXDATE,
+ * RDATE, alarms, SEQUENCE, STATUS, CLASS, TRANSP, LOCATION, DESCRIPTION, organizer, all-day,
+ * timezone, omitted null properties, the empty title, DTSTAMP and a midnight DTEND.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -61,7 +62,7 @@ class IcsRoundTripFidelityTest {
 
     @Test
     fun `EXDATE round-trip preserves exclusion dates`() {
-        // Store as CSV timestamps (how KashCal stores them in Room)
+        // CSV of epoch-millisecond timestamps, the form Room stores
         val ts1 = ZonedDateTime.of(2026, 2, 10, 9, 0, 0, 0, ZoneId.of("UTC")).toInstant().toEpochMilli()
         val ts2 = ZonedDateTime.of(2026, 2, 17, 9, 0, 0, 0, ZoneId.of("UTC")).toInstant().toEpochMilli()
         val event = createEvent(
@@ -85,7 +86,7 @@ class IcsRoundTripFidelityTest {
         val event = createEvent(rdate = "$ts1,$ts2")
         val ics = IcsPatcher.generateFresh(event)
 
-        // Verify RDATE appears in generated ICS
+        // RDATE appears in the generated ICS
         val rdateLine = ics.lines().find { it.startsWith("RDATE") }
         assertNotNull("RDATE should appear in generated ICS", rdateLine)
 
@@ -275,7 +276,7 @@ class IcsRoundTripFidelityTest {
 
         // DTSTAMP is required by RFC 5545 Section 3.6.1
         assertTrue("DTSTAMP should appear in generated ICS", ics.contains("DTSTAMP:"))
-        // Verify it's a valid UTC datetime format (YYYYMMDDTHHMMSSZ)
+        // The value is a UTC date-time (YYYYMMDDTHHMMSSZ)
         val dtstampLine = ics.lines().find { it.startsWith("DTSTAMP:") }
         assertNotNull("Should have DTSTAMP line", dtstampLine)
         assertTrue(
@@ -284,11 +285,11 @@ class IcsRoundTripFidelityTest {
         )
     }
 
-    // ========== Issue #209: RFC 5545 §3.6.1 — DTEND midnight boundary is byte-identical on wire ==========
+    // ========== Issue #209: midnight DTEND is unchanged on the wire ==========
     //
-    // The display-side fix for issue #209 must not leak into the wire format. The exclusive
-    // DTEND boundary (e.g., 20260505T000000Z for an event that occupies only May 4) is the
-    // canonical server representation and must survive round-trips unchanged.
+    // The display handling for issue #209 must not reach the wire format. The exclusive DTEND
+    // boundary (RFC 5545 §3.6.1), such as 20260505T000000Z for an event that occupies only May 4,
+    // is the server's form and must survive round-trips unchanged.
 
     @Test
     fun `issue 209 DTEND at midnight round-trips byte-identical for 00 to 00 timed event`() {

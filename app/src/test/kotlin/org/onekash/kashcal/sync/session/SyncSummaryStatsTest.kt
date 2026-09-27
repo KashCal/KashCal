@@ -4,7 +4,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Unit tests for SyncSummaryStats computation.
+ * Tests the [SyncSummaryStats] totals and issue count as computed by [computeStats], a copy of
+ * [SyncSessionStore.getSummaryStats].
  */
 class SyncSummaryStatsTest {
 
@@ -59,7 +60,7 @@ class SyncSummaryStatsTest {
         errorType = ErrorType.NETWORK
     )
 
-    // totalSyncs tests
+    // totalSyncs
 
     @Test
     fun `totalSyncs counts all sessions`() {
@@ -78,7 +79,7 @@ class SyncSummaryStatsTest {
         assertEquals(0, stats.totalSyncs)
     }
 
-    // totalPushed tests
+    // totalPushed
 
     @Test
     fun `totalPushed sums push stats across sessions`() {
@@ -100,7 +101,7 @@ class SyncSummaryStatsTest {
         assertEquals(0, stats.totalPushed)
     }
 
-    // totalPulled tests
+    // totalPulled
 
     @Test
     fun `totalPulled sums pull changes across sessions`() {
@@ -122,7 +123,7 @@ class SyncSummaryStatsTest {
         assertEquals(0, stats.totalPulled)
     }
 
-    // Combined push/pull tests
+    // Combined push/pull
 
     @Test
     fun `stats capture both push and pull totals`() {
@@ -141,7 +142,7 @@ class SyncSummaryStatsTest {
         assertEquals(11, stats.totalPulled)  // 8 from first, 3 from second
     }
 
-    // issueCount tests
+    // issueCount
 
     @Test
     fun `issueCount is zero when all sessions succeed`() {
@@ -190,7 +191,7 @@ class SyncSummaryStatsTest {
         assertEquals(0, stats.issueCount)
     }
 
-    // Helper function mimicking SyncSessionStore.getSummaryStats
+    // A copy of [SyncSessionStore.getSummaryStats]; a change there isn't caught by these tests.
     private fun computeStats(sessions: List<SyncSession>): SyncSummaryStats {
         return SyncSummaryStats(
             totalSyncs = sessions.size,

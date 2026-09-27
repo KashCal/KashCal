@@ -130,7 +130,7 @@ class StructuredDateRuleTest {
 
     @Test
     fun `5 slash 13 slash 2026 under en_GB stays month-first because day cannot be 13 when month is 5`() {
-        // part2=13 > 12, so the first position must be month → MDY regardless of locale
+        // A second part over 12 can't be a month, so the first part is, whatever the locale.
         val ctx = parse("5/13/2026", locale = Locale.UK)
         assertEquals(LocalDate.of(2026, 5, 13), ctx.resolveDate())
     }
@@ -155,7 +155,7 @@ class StructuredDateRuleTest {
 
     @Test
     fun `5 slash 10 under Locale Japan resolves MDY-style year-month-day ordering to month-first`() {
-        // Japan's short pattern is "y/MM/dd" — M appears before d → our rule picks MDY
+        // Japan's short pattern is "y/MM/dd": M comes before d, so the rule reads month first.
         val ctx = parse("5/10", locale = Locale.JAPAN)
         assertEquals(LocalDate.of(2026, 5, 10), ctx.resolveDate())
     }

@@ -16,24 +16,22 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * Matrix for the EXDATE/RDATE value-type flattening concern: a DATE-form EXDATE
- * (YYYYMMDD) on a TIMED recurring master is stored by the mapper as a bare epoch
- * millisecond, losing the value type. RFC 5545 §3.8.5.1 says EXDATE's value type
- * MUST match DTSTART, but peer clients emit a DATE form against a timed master and
- * most CalDAV servers preserve it verbatim, so KashCal's pull path must defend
- * against the mismatch.
+ * Tests that a DATE-form EXDATE (YYYYMMDD) on a timed recurring master excludes the intended
+ * day. The mapper stores EXDATE as bare epoch milliseconds, so the value type is gone by
+ * expansion time; [ICalEventMapper.normalizeToMasterValueType] first promotes a DATE value to
+ * the master's time of day in the master's zone. RFC 5545 §3.8.5.1 allows EXDATE as DATE or
+ * DATE-TIME, peer clients emit a DATE form against a timed master, and most CalDAV servers
+ * preserve it verbatim.
  *
- * A DATE form parses to UTC midnight. Reinterpreting that instant in a
- * negative-offset (Americas) master zone rolls the day BACK one, so the wrong day
- * is excluded and the intended occurrence survives. Positive-offset zones keep the
- * same calendar day (UTC midnight + a positive offset never crosses into the next
- * day), so they were never affected — these cases guard against an over-correction.
+ * A DATE form parses to UTC midnight. Read in a negative-offset (Americas) master zone, that
+ * instant falls on the previous day, so without the promotion the wrong day is excluded and the
+ * intended occurrence survives. Positive-offset zones keep the same calendar day, so those cases
+ * guard against an over-correction.
  *
- * Every test here asserts the CORRECT end-to-end behavior: the intended day is
- * suppressed, the neighbor day survives, and a 5-occurrence series minus one
- * exception yields 4 occurrences. The path exercised is the real pull pipeline:
- * parse server ICS -> ICalEventMapper.toEntity (the flatten) ->
- * IcalDavRRuleEngine.expand (using the stored event.exdate).
+ * Each test asserts that the intended day is suppressed and the 5-occurrence series yields 4;
+ * the zoned cases also assert that a neighbor day survives. The path is the real pull pipeline:
+ * parse server ICS -> [ICalEventMapper.toEntity] -> [IcalDavRRuleEngine.expandToTimestamps]
+ * over the stored `event.exdate`.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -58,7 +56,7 @@ class ExdateValueTypeProbeTest {
     @Test
     fun `DATE-form EXDATE on a UTC timed master suppresses the intended occurrence`() {
         // Timed daily master at 10:00 UTC, 5 occurrences (Dec 25-29).
-        // EXDATE is DATE-form (20251227) — a real-world value-type mismatch.
+        // EXDATE is DATE-form (20251227), a real-world value-type mismatch.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -100,8 +98,8 @@ class ExdateValueTypeProbeTest {
 
     @Test
     fun `DATE-TIME EXDATE matching the timed master suppresses the intended occurrence`() {
-        // EXDATE carries the matching DATE-TIME value type (RFC-correct). This is the
-        // baseline that must keep working — the fix must not regress the matched case.
+        // EXDATE carries the matching DATE-TIME value type: the baseline the normalization
+        // must not break.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -141,8 +139,8 @@ class ExdateValueTypeProbeTest {
 
     @Test
     fun `DATE-form EXDATE on an all-day master suppresses the intended day`() {
-        // All-day master with a DATE-form EXDATE — value types already match, so this
-        // path was always correct. Guards against the fix touching the all-day case.
+        // All-day master with a DATE-form EXDATE: the value types already match, and the
+        // normalization must leave this case alone.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -183,8 +181,8 @@ class ExdateValueTypeProbeTest {
     @Test
     fun `DATE-form EXDATE on a negative-offset timed master suppresses the correct local day`() {
         // Master in America/Los_Angeles (UTC-8). A DATE-form EXDATE of 20251227 means
-        // "the Dec 27 occurrence". Flattened to UTC midnight, reinterpreting in LA rolls
-        // back to Dec 26 ~16:00 local -> day code 20251226, suppressing the WRONG day.
+        // "the Dec 27 occurrence". Left at UTC midnight it reads in LA as Dec 26 16:00
+        // local, day code 20251226, which would suppress the wrong day.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -230,9 +228,9 @@ class ExdateValueTypeProbeTest {
 
     @Test
     fun `DATE-form EXDATE on a positive-offset timed master suppresses the correct local day`() {
-        // Master in Asia/Tokyo (UTC+9). UTC midnight + a positive offset stays on the
-        // same calendar day, so this case was already correct — it guards against the
-        // fix over-correcting and shifting a positive-offset exclusion to the wrong day.
+        // Master in Asia/Tokyo (UTC+9). UTC midnight plus a positive offset stays on the
+        // same calendar day, so this guards against an over-correction shifting the
+        // exclusion to the wrong day.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0

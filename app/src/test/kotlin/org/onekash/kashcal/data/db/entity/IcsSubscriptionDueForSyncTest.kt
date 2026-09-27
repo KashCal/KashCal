@@ -5,15 +5,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for [IcsSubscription.isDueForSync].
- *
- * The due-check allows a tenth of the interval as slack. The periodic refresh
- * job wakes at the shortest interval across all enabled feeds, so a feed whose
- * interval is longer than that job period is only ever checked at job-period
- * multiples. Because `lastSync` is stamped part-way through a run, the check
- * that lands at exactly one interval measures slightly less than the interval,
- * finds the feed not due, and makes it wait a whole extra job period. The slack
- * absorbs that.
+ * Tests [IcsSubscription.isDueForSync]: the tenth-of-interval slack (why it exists is on that
+ * function), the disabled case, the floor on a stored zero or negative interval, and a feed
+ * never synced.
  */
 class IcsSubscriptionDueForSyncTest {
 
@@ -36,8 +30,8 @@ class IcsSubscriptionDueForSyncTest {
 
     @Test
     fun `hourly feed checked five minutes early is due`() {
-        // A check landing just short of the full hour must not defer the feed to
-        // the next job period, which would make an hourly feed ~2-hourly.
+        // A check landing just short of the full hour must not defer the feed to the next job
+        // period, which would make an hourly feed ~2-hourly.
         assertTrue(subscription(intervalHours = 1, lastSyncAgoMs = 55 * oneMinute).isDueForSync())
     }
 
@@ -58,8 +52,8 @@ class IcsSubscriptionDueForSyncTest {
 
     @Test
     fun `slack is proportional so it never spans a whole shorter interval`() {
-        // Guards the shape of the tolerance, not just one value: a tenth of the
-        // interval, so a feed is never due before 90% of its interval has passed.
+        // Guards the shape of the tolerance, not one value: a tenth of the interval, so a feed
+        // is never due before 90% of its interval has passed.
         assertFalse(subscription(intervalHours = 24, lastSyncAgoMs = 21 * oneHour).isDueForSync())
         assertTrue(subscription(intervalHours = 24, lastSyncAgoMs = 22 * oneHour).isDueForSync())
     }
@@ -74,10 +68,9 @@ class IcsSubscriptionDueForSyncTest {
 
     @Test
     fun `a zero interval on disk is floored instead of making the feed always due`() {
-        // Without the floor a 0 makes this unconditionally true, so the feed is
-        // re-fetched on every wake of the shared job. A row restored from a
-        // hand-edited or corrupt backup written before the importer coerced the
-        // value is still on disk, so the reader has to guard it.
+        // Without the floor a 0 makes this unconditionally true, so the feed is re-fetched on
+        // every wake of the shared job. Rows the importer restored from a hand-edited or
+        // corrupt backup before it floored the value are still on disk, so the reader guards it.
         assertFalse(subscription(intervalHours = 0, lastSyncAgoMs = 30 * oneMinute).isDueForSync())
         assertTrue(subscription(intervalHours = 0, lastSyncAgoMs = 55 * oneMinute).isDueForSync())
     }

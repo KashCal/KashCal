@@ -7,11 +7,13 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.screens.settings.SubscriptionColors
 
 /**
- * Configuration enum for contact event types (birthday, anniversary).
+ * Holds every per-type difference between the birthday and anniversary calendars, so
+ * [BaseContactEventRepository] implements the sync once.
  *
- * Carries all per-type differences so that [BaseContactEventRepository] can implement
- * the shared sync algorithm once. Adding a new contact event type (e.g., custom dates)
- * requires only a new enum entry + thin repository subclass for Hilt DI.
+ * A new type needs an entry here and a repository subclass. Code outside this enum names each
+ * type explicitly and needs one too, for example [ContactEventManager],
+ * [ContactEventSyncWorker], [org.onekash.kashcal.domain.coordinator.EventCoordinator],
+ * [org.onekash.kashcal.data.preferences.KashCalDataStore] and the settings screen.
  */
 enum class ContactEventType(
     val accountEmail: String,
@@ -54,6 +56,10 @@ enum class ContactEventType(
     fun calendarDisplayName(resources: Resources): String =
         resources.getString(calendarDisplayNameRes)
 
+    /**
+     * Returns the synthetic key stored in `caldavUrl` that matches an event to its contact and
+     * date; [fromCaldavUrl] reads the type back from its prefix.
+     */
     fun getCaldavUrl(lookupKey: String, month: Int, day: Int): String =
         "$sourcePrefix:$lookupKey:$month-$day"
 

@@ -25,25 +25,24 @@ import org.robolectric.annotation.Config
 import java.util.Locale
 
 /**
- * Autofill contract for every credential-entry field the user types into.
+ * Tests the autofill contract of the iCloud and CalDAV sign-in fields and the
+ * change-password field.
  *
- * Each account sign-in and password-change field must advertise an autofill
- * ContentType so the user's chosen credential provider can fill it (and offer to
- * save it), keeping secrets off the clipboard. This is a contract on the field's
- * exposed semantics, not on how they're produced: Compose's value-based text
- * field derives ContentType from KeyboardType (Email -> EmailAddress,
- * Password -> Password), so the identifier and password fields that set a
- * KeyboardType satisfy this incidentally — the test guards against that wiring
- * being dropped, and against a credential field that sets no KeyboardType (the
- * change-password field was such a gap).
+ * Each must advertise an autofill ContentType so the user's credential provider
+ * can fill it (and offer to save it), keeping secrets off the clipboard. The
+ * contract is on the field's exposed semantics, not on how they're produced:
+ * Compose's value-based text field derives ContentType from KeyboardType (Email
+ * -> EmailAddress, Password -> Password), so a field that sets a KeyboardType
+ * meets it through that wiring. The tests guard against the wiring being dropped
+ * and against a credential field that sets no KeyboardType.
  *
  * Password fields are pinned to the exact sensitive type; identifier fields are
  * pinned to "carries a content type" because EmailAddress is a cached singleton
  * but a combined value would not be (AndroidContentType defines no equals), so
- * keyIsDefined is the strongest assertion that stays robust either way.
+ * keyIsDefined is the strongest assertion that holds either way.
  *
  * Runs under Robolectric; run the class in isolation given the repo's multi-class
- * native-crash flake. Each @Test renders exactly one sheet.
+ * native-crash flake. Each @Test renders one sheet.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @RunWith(RobolectricTestRunner::class)

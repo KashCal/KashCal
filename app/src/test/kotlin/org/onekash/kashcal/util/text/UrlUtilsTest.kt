@@ -6,7 +6,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for URL detection and handling utilities.
+ * Tests the description text utilities: [extractUrls] (web, meeting, phone and email links),
+ * [isMeetingUrl], [containsUrl], [normalizeUrl], [isValidUrl], [shouldOpenExternally],
+ * [formatPhoneUri] and [cleanHtmlEntities].
  */
 class UrlUtilsTest {
 
@@ -260,7 +262,7 @@ class UrlUtilsTest {
 
     @Test
     fun `extractUrls - no false positive for partial numbers`() {
-        // 10-digit numbers without separators should NOT be detected
+        // A 10-digit number without separators isn't a phone number.
         val text = "Reference number: 5551234567"
         assertEquals(emptyList<DetectedUrl>(), extractUrls(text))
     }
@@ -374,16 +376,16 @@ class UrlUtilsTest {
 
     @Test
     fun `cleanHtmlEntities - leaves invalid code points as literal text`() {
-        // Bare surrogate halves are not valid scalar values, and values above
-        // U+10FFFF are out of range — both must be left untouched, not corrupted.
+        // Bare surrogate halves aren't valid scalar values and values above U+10FFFF are out
+        // of range; both must be left untouched.
         assertEquals("&#55296;", cleanHtmlEntities("&#55296;")) // U+D800 high surrogate
         assertEquals("&#1114112;", cleanHtmlEntities("&#1114112;")) // U+110000, out of range
     }
 
     @Test
     fun `cleanHtmlEntities - decodes hexadecimal numeric entities`() {
-        // &#xHH; is the hex form of a numeric entity — at least as common as the
-        // decimal form for emoji in real HTML. Case-insensitive on the x and digits.
+        // &#xHH; is the hex form of a numeric entity, at least as common as the decimal form
+        // for emoji in real HTML. The x and the digits are case-insensitive.
         assertEquals("A", cleanHtmlEntities("&#x41;"))
         assertEquals("😀", cleanHtmlEntities("&#x1F600;"))
         assertEquals("😀", cleanHtmlEntities("&#X1f600;"))
@@ -503,7 +505,7 @@ class UrlUtilsTest {
         val text = "Call tel:555-123-4567 for support"
         val urls = extractUrls(text)
 
-        // Should only detect ONE phone, not two (tel: + pattern)
+        // One phone link, not a tel: link plus a phone-pattern match.
         assertEquals(1, urls.size)
         assertEquals("tel:555-123-4567", urls[0].url)
     }
@@ -513,7 +515,7 @@ class UrlUtilsTest {
         val text = "Join https://zoom.us/j/123 now"
         val urls = extractUrls(text)
 
-        // Should not double-detect as both https:// and no-protocol
+        // One link, not an https:// match plus a no-protocol match.
         assertEquals(1, urls.size)
     }
 
@@ -546,7 +548,7 @@ class UrlUtilsTest {
     @Test
     fun `extractUrls - no false positive for IP-like numbers`() {
         val text = "Server at 192.168.1.1"
-        // IP addresses without protocol are not detected (intentional)
+        // An IP address without a protocol is deliberately not a link.
         assertEquals(emptyList<DetectedUrl>(), extractUrls(text))
     }
 

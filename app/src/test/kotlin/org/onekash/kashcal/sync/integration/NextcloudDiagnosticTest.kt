@@ -12,7 +12,9 @@ import java.io.File
 import java.util.Properties
 
 /**
- * Diagnostic test to isolate Nextcloud 500 error.
+ * Isolates a Nextcloud 500 error by running each discovery and pull step on its own against
+ * the remote Nextcloud server and printing the result. It asserts nothing past the credential
+ * check.
  *
  * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*NextcloudDiagnosticTest*"
  */
@@ -52,7 +54,7 @@ class NextcloudDiagnosticTest {
         )
         val davEndpoint = "$server/remote.php/dav/"
 
-        // Step 1: Discovery
+        // Step 1: principal discovery
         println("=== Step 1: discoverPrincipal ===")
         val principalResult = client.discoverPrincipal(davEndpoint)
         println("Principal: success=${principalResult.isSuccess()}, value=${principalResult.getOrNull()}")
@@ -113,7 +115,7 @@ class NextcloudDiagnosticTest {
             println("ERROR: code=${err.code}, message=${err.message}")
         }
 
-        // Step 6: fetchEventsByHref
+        // Steps 6 and 7: fetchEventsByHref with one href, then with all of them
         if (etagResult.isSuccess() && etagResult.getOrNull()!!.isNotEmpty()) {
             val hrefs = etagResult.getOrNull()!!
 

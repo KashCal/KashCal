@@ -30,12 +30,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [TagsViewModel] — the state holder behind the tag-management screen.
- * Exercises the observed tag list (sorted, colors resolved) and the mutating
- * actions. Color, delete, and undo delegate to [CategoryRepository]; rename goes
- * through [EventCoordinator] so it can propagate to the server (the DAO cascade
- * itself is covered under EventWriter/CategoryDao). Backed by a real in-memory
- * Room DB for the metadata surface and a mock coordinator for rename routing.
+ * Tests [TagsViewModel], the tag-management screen's state holder: the observed tag list (sorted,
+ * colors resolved, custom-color flag) and the color, rename, delete and undo actions. Color,
+ * delete and undo go through [CategoryRepository] over a real in-memory Room DB. Rename is only
+ * checked to reach a mocked [EventCoordinator]; the rename cascade is tested in
+ * `EventWriterRenameCategoryTest`.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -126,9 +125,8 @@ class TagsViewModelTest {
         vm.onRename("Work", "Job")
         advanceUntilIdle()
 
-        // Rename goes through the domain layer (not the data-layer repository) so
-        // affected syncable events are marked dirty and re-uploaded — the whole
-        // point of S5. The cascade itself is proven at the EventWriter/DAO level.
+        // Rename goes through the domain layer, not the repository, so affected syncable events
+        // are re-uploaded. The cascade is tested in `EventWriterRenameCategoryTest`.
         coVerify(exactly = 1) { coordinator.renameTag("Work", "Job") }
     }
 
@@ -154,7 +152,7 @@ class TagsViewModelTest {
 
         vm.onDelete("Temp")
 
-        // Empty re-emit is the delete's commit signal — the DAO read below is now safe.
+        // The empty re-emit is the delete's commit signal, so the DAO read below sees it.
         vm.tags.first { it.isEmpty() }
         assertNull(database.categoryDao().getByName("Temp"))
     }
@@ -187,7 +185,7 @@ class TagsViewModelTest {
         vm.onUndoDelete()
         advanceUntilIdle()
 
-        // No prior delete — the existing row is untouched and nothing is re-inserted.
+        // No prior delete: the existing row is untouched and nothing is re-inserted.
         assertEquals(1, vm.tags.first { it.isNotEmpty() }.size)
     }
 }

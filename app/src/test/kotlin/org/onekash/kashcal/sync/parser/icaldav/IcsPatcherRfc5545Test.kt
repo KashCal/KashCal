@@ -18,18 +18,16 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * RFC 5545 compliance tests for IcsPatcher serialization.
- *
- * Tests ICS output against RFC 5545 requirements:
- * - All-day events use VALUE=DATE format for DTSTART/DTEND (Section 3.3.4)
- * - Timed events use DATETIME format (Section 3.3.5)
- * - Exception events have RECURRENCE-ID (Section 3.8.4.4)
- * - Exception events share master UID (Section 3.8.4.7)
- * - SEQUENCE incremented on patch (Section 3.8.7.4)
- * - STATUS values serialized correctly (Section 3.8.1.11)
- * - TRANSP values serialized correctly (Section 3.8.1.12)
- * - CLASS values serialized correctly (Section 3.8.1.3)
- * - Round-trip fidelity for key properties
+ * Tests [IcsPatcher]'s ICS output against RFC 5545:
+ * - all-day DTSTART/DTEND use VALUE=DATE (§3.3.4) with an exclusive DTEND (§3.6.1)
+ * - timed events use DATE-TIME (§3.3.5)
+ * - exceptions carry RECURRENCE-ID (§3.8.4.4), share the master UID (§3.8.4.7) and have no
+ *   RRULE
+ * - the stored SEQUENCE is written as is on patch (§3.8.7.4)
+ * - STATUS (§3.8.1.11), TRANSP (§3.8.2.7) and CLASS (§3.8.1.3) values
+ * - RRULE, EXDATE, RDATE, VALARM and the RFC 7986 extended properties
+ * - VTIMEZONE for a bundled exception's TZID (§3.6.5)
+ * - round-trip fidelity for key properties, and the patch or fresh choice in `serialize`
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -101,7 +99,7 @@ class IcsPatcherRfc5545Test {
 
     @Test
     fun `generateFresh all-day event uses VALUE=DATE format`() {
-        // RFC 5545 Section 3.3.4: DATE format is "YYYYMMDD" with VALUE=DATE parameter
+        // RFC 5545 §3.3.4: a DATE is "YYYYMMDD", marked with the VALUE=DATE parameter.
         val startTs = ZonedDateTime.of(2026, 1, 15, 0, 0, 0, 0, ZoneOffset.UTC).toInstant().toEpochMilli()
         val endTs = startTs + 86400000 - 1 // End of day
 
@@ -115,12 +113,10 @@ class IcsPatcherRfc5545Test {
 
         val ics = IcsPatcher.generateFresh(event)
 
-        // Verify all-day events use VALUE=DATE
         assertTrue("All-day DTSTART should contain VALUE=DATE or date-only format",
             ics.contains("VALUE=DATE") || ics.contains("DTSTART:2026"))
 
-        // Should NOT contain time component (T) in the date value
-        // The line should be like DTSTART;VALUE=DATE:20260115
+        // Expected shape: DTSTART;VALUE=DATE:20260115, with no time component.
         val dtStartLine = ics.lines().find { it.startsWith("DTSTART") }
         assertNotNull("Should have DTSTART line", dtStartLine)
     }
@@ -134,12 +130,9 @@ class IcsPatcherRfc5545Test {
         //   DTSTART;VALUE=DATE:20070628
         //   DTEND;VALUE=DATE:20070709  (July 8 inclusive → DTEND = July 9)
         //
-        // Single-day event on Feb 18: DTEND must be Feb 19, not Feb 18.
-        //
-        // BUG: IcsPatcher passes inclusive endTs directly to ICalDateTime.fromTimestamp(),
-        // which produces DTEND;VALUE=DATE:20260218 instead of 20260219.
-        // ICalEventMapper correctly subtracts 1ms on parse (exclusive→inclusive),
-        // but IcsPatcher never adds it back on serialization (inclusive→exclusive).
+        // Single-day event on Feb 18: DTEND must be Feb 19, not Feb 18. ICalEventMapper
+        // subtracts 1 ms on parse (exclusive → inclusive), and serialization must add it
+        // back ([EventToICalEventMapper.exclusiveEndTs]).
         val startTs = ZonedDateTime.of(2026, 2, 18, 0, 0, 0, 0, ZoneOffset.UTC).toInstant().toEpochMilli()
         val endTs = startTs + 86400000 - 1 // Feb 18 23:59:59.999 UTC (inclusive)
 
@@ -153,13 +146,11 @@ class IcsPatcherRfc5545Test {
 
         val ics = IcsPatcher.generateFresh(event)
 
-        // DTSTART should be Feb 18
         assertTrue("DTSTART should reference Feb 18",
             ics.contains("20260218"))
 
-        // DTEND must be Feb 19 (exclusive end = next day)
-        // Must check the actual DTEND line, not just any occurrence of "20260219"
-        // (DTSTAMP could also contain today's date)
+        // Checks the DTEND line itself, not any "20260219" in the file: DTSTAMP could
+        // carry that date too.
         val dtEndLine = ics.lines().find { it.startsWith("DTEND") }
         assertNotNull("Should have DTEND line", dtEndLine)
         assertTrue(
@@ -188,7 +179,6 @@ class IcsPatcherRfc5545Test {
 
         val ics = IcsPatcher.generateFresh(event)
 
-        // DTEND must be Feb 21 (day after inclusive end Feb 20)
         assertTrue(
             "Multi-day all-day DTEND must be exclusive (Feb 21). " +
                 "3-day event Feb 18-20 should have DTEND=20260221.\n" +
@@ -199,7 +189,7 @@ class IcsPatcherRfc5545Test {
 
     @Test
     fun `all-day event round-trips correctly through serialize and parse`() {
-        // End-to-end: create event → serialize → parse → verify dates match
+        // Event → serialize → parse → Event keeps both dates.
         val startTs = ZonedDateTime.of(2026, 2, 18, 0, 0, 0, 0, ZoneOffset.UTC).toInstant().toEpochMilli()
         val endTs = startTs + 86400000 - 1 // Single day, inclusive
 
@@ -212,17 +202,14 @@ class IcsPatcherRfc5545Test {
             timezone = null
         )
 
-        // Serialize
         val ics = IcsPatcher.generateFresh(event)
 
-        // Parse back
         val parsed = parser.parseAllEvents(ics).getOrNull()
         assertNotNull("Should parse back successfully", parsed)
         assertTrue("Should have 1 event", parsed!!.isNotEmpty())
 
         val roundTripped = ICalEventMapper.toEntity(parsed.first(), ics, 1L, null, null).event
 
-        // Round-trip should preserve the original dates
         assertEquals("startTs should survive round-trip", event.startTs, roundTripped.startTs)
         assertEquals(
             "endTs should survive round-trip (inclusive end date preserved)",
@@ -240,7 +227,6 @@ class IcsPatcherRfc5545Test {
 
         val ics = IcsPatcher.generateFresh(event)
 
-        // Timed events should have full DATETIME
         val dtStartLine = ics.lines().find { it.startsWith("DTSTART") }
         assertNotNull("Should have DTSTART line", dtStartLine)
         assertTrue("Timed DTSTART should contain T separator for time",
@@ -282,10 +268,9 @@ class IcsPatcherRfc5545Test {
 
     @Test
     fun `patch serializes stored SEQUENCE verbatim`() {
-        // RFC 5546 §2.1.4: SEQUENCE is bumped only on scheduling-significant
-        // changes, and that decision lives upstream in EventWriter
-        // (SequenceBumper) — not in the patcher. The patcher serializes the
-        // SEQUENCE the entity already carries, so a title-only edit keeps it.
+        // RFC 5546 §2.1.4: SEQUENCE is bumped only on scheduling-significant changes, and
+        // EventWriter decides that (SequenceBumper), not the patcher. The patcher writes
+        // the SEQUENCE the entity carries, so a title-only edit keeps it.
         val originalIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -304,7 +289,7 @@ class IcsPatcherRfc5545Test {
         val event = createEvent(
             uid = "seq-test@kashcal.test",
             title = "Updated Title",
-            sequence = 3, // Stored sequence — emitted verbatim
+            sequence = 3, // Stored sequence, emitted as is
             rawIcal = originalIcs
         )
 
@@ -358,7 +343,7 @@ class IcsPatcherRfc5545Test {
         assertTrue("Should contain CLASS:CONFIDENTIAL", ics.contains("CLASS:CONFIDENTIAL"))
     }
 
-    // ==================== RFC 5545 Section 3.8.1.12: TRANSP ====================
+    // ==================== RFC 5545 Section 3.8.2.7: TRANSP ====================
 
     @Test
     fun `generateFresh includes TRANSPARENT transparency`() {
@@ -372,7 +357,7 @@ class IcsPatcherRfc5545Test {
 
     @Test
     fun `serializeWithExceptions bundles master and exception in single VCALENDAR`() {
-        // RFC 5545: Exception events are bundled with master in same VCALENDAR
+        // An exception is bundled with its master in one VCALENDAR.
         val master = createEvent(
             uid = "series@kashcal.test",
             title = "Weekly Meeting",
@@ -389,23 +374,21 @@ class IcsPatcherRfc5545Test {
 
         val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
 
-        // Should have exactly one VCALENDAR
         assertEquals("Should have one BEGIN:VCALENDAR", 1,
             ics.split("BEGIN:VCALENDAR").size - 1)
         assertEquals("Should have one END:VCALENDAR", 1,
             ics.split("END:VCALENDAR").size - 1)
 
-        // Should have exactly two VEVENTs (master + exception)
+        // Two VEVENTs: master and exception.
         assertEquals("Should have two BEGIN:VEVENT", 2,
             ics.split("BEGIN:VEVENT").size - 1)
 
-        // Exception should have RECURRENCE-ID
         assertTrue("Exception should have RECURRENCE-ID", ics.contains("RECURRENCE-ID"))
     }
 
     @Test
     fun `exception event uses master UID`() {
-        // RFC 5545 Section 3.8.4.7: Exception events share master UID
+        // RFC 5545 §3.8.4.7: an exception shares its master's UID.
         val master = createEvent(
             uid = "master-uid@kashcal.test",
             rrule = "FREQ=DAILY"
@@ -421,7 +404,6 @@ class IcsPatcherRfc5545Test {
 
         val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
 
-        // Parse back and verify both VEVENTs have same UID
         val events = parser.parseAllEvents(ics).getOrNull()
         if (events != null) {
             assertTrue("All events should share master UID",
@@ -502,8 +484,8 @@ class IcsPatcherRfc5545Test {
 
     @Test
     fun `generateFresh all-day EXDATE uses VALUE=DATE format`() {
-        // RFC 5545 Section 3.8.5.1: EXDATE value type must match DTSTART.
-        // For all-day events (DTSTART VALUE=DATE), EXDATE must also be VALUE=DATE.
+        // RFC 5545 §3.8.5.1 allows EXDATE as DATE or DATE-TIME. An all-day event
+        // (DTSTART VALUE=DATE) must write its EXDATE as VALUE=DATE too.
         val startTs = ZonedDateTime.of(2026, 1, 5, 0, 0, 0, 0, ZoneOffset.UTC).toInstant().toEpochMilli()
         val endTs = startTs + 86400000 - 1
 
@@ -530,7 +512,6 @@ class IcsPatcherRfc5545Test {
                 "EXDATE line: $exdateLine",
             exdateLine!!.contains("VALUE=DATE")
         )
-        // Should NOT contain time component
         assertFalse(
             "All-day EXDATE should not contain time component (T separator).\n" +
                 "EXDATE line: $exdateLine",
@@ -619,12 +600,12 @@ class IcsPatcherRfc5545Test {
         assertTrue("Should contain CATEGORIES", ics.contains("CATEGORIES:"))
     }
 
-    // ==================== Bug 4b: All-Day DTEND in patch() ====================
+    // ==================== All-Day DTEND in patch() ====================
 
     @Test
     fun `patch all-day event has exclusive DTEND`() {
-        // Bug 4 affects patch() too (line 71), not just generateFresh()
-        // Same root cause: inclusive endTs passed directly to ICalDateTime.fromTimestamp()
+        // patch() must also turn the inclusive endTs into an exclusive DTEND, as
+        // generateFresh() does.
         val startTs = ZonedDateTime.of(2026, 2, 18, 0, 0, 0, 0, ZoneOffset.UTC).toInstant().toEpochMilli()
         val endTs = startTs + 86400000 - 1 // Feb 18 23:59:59.999 UTC (inclusive)
 
@@ -666,13 +647,12 @@ class IcsPatcherRfc5545Test {
         )
     }
 
-    // ==================== Bug 5: RDATE Lost in generateFresh ====================
+    // ==================== RDATE in generateFresh ====================
 
     @Test
     fun `generateFresh preserves RDATE from event`() {
-        // IcsPatcher.generateFresh() line 149 sets rdates = emptyList(),
-        // dropping any RDATEs stored in event.rdate field.
-        // RFC 5545 Section 3.8.5.2: RDATE specifies additional dates for recurrence set.
+        // generateFresh() must write the RDATEs stored in event.rdate.
+        // RFC 5545 §3.8.5.2: RDATE adds dates to the recurrence set.
         val rdateTs1 = ZonedDateTime.of(2026, 3, 15, 10, 0, 0, 0, ZoneOffset.UTC)
             .toInstant().toEpochMilli()
         val rdateTs2 = ZonedDateTime.of(2026, 4, 20, 10, 0, 0, 0, ZoneOffset.UTC)
@@ -686,7 +666,7 @@ class IcsPatcherRfc5545Test {
 
         val ics = IcsPatcher.generateFresh(event)
 
-        // Check for actual RDATE property line (not just substring match)
+        // An RDATE property line, not a substring match.
         val rdateLine = ics.lines().find { it.startsWith("RDATE") }
         assertNotNull(
             "generateFresh should serialize RDATE from event.rdate field. " +
@@ -698,20 +678,13 @@ class IcsPatcherRfc5545Test {
         )
     }
 
-    // ==================== Bug 6: Exception Events Missing VTIMEZONE ====================
+    // ==================== VTIMEZONE for Exception Events ====================
 
     @Test
     fun `serializeWithExceptions includes VTIMEZONE for exception events - compliance gap`() {
-        // IcsPatcher.generateException() line 303 uses includeVTimezone=false.
-        // RFC 5545 Section 3.6.5: VTIMEZONE is required when TZID is referenced.
-        //
-        // Since generateException is private and only called within serializeWithExceptions,
-        // the master's VTIMEZONE (from serialize path with includeVTimezone=true) covers
-        // the exception's TZID references in the combined VCALENDAR. This is technically
-        // correct for the bundled case.
-        //
-        // Compliance gap: if generateException were ever exposed or used standalone,
-        // exception ICS would lack VTIMEZONE. Not a bug today, but fragile.
+        // RFC 5545 §3.6.5: a VTIMEZONE MUST be specified for each unique TZID in the
+        // object. serializeWithExceptions generates the master and its exceptions as one
+        // VCALENDAR with includeVTimezone = true, which covers the exception's TZID.
         val master = createEvent(
             uid = "tz-test@kashcal.test",
             title = "Weekly NYC Meeting",
@@ -732,14 +705,12 @@ class IcsPatcherRfc5545Test {
 
         val ics = IcsPatcher.serializeWithExceptions(master, listOf(exception))
 
-        // Verify the combined ICS has VTIMEZONE (from master's serialize path)
         assertTrue(
             "Combined ICS should include VTIMEZONE for America/New_York.\n" +
                 "Generated ICS:\n$ics",
             ics.contains("VTIMEZONE")
         )
 
-        // Document: exception VEVENT references TZID but relies on master's VTIMEZONE
         assertTrue("Exception should reference America/New_York timezone",
             ics.contains("America/New_York"))
     }
@@ -772,7 +743,7 @@ class IcsPatcherRfc5545Test {
 
         val patched = IcsPatcher.patch(originalIcs, event)
 
-        // Attendees should be preserved even though KashCal doesn't edit them
+        // No attendee set is passed, so the original's attendees are kept.
         assertTrue("Should preserve bob attendee", patched.contains("bob@example.com"))
         assertTrue("Should preserve alice attendee", patched.contains("alice@example.com"))
     }
@@ -803,7 +774,6 @@ class IcsPatcherRfc5545Test {
 
         val patched = IcsPatcher.patch(originalIcs, event)
 
-        // Verify RRULE is preserved
         assertTrue("Should contain RRULE", patched.contains("RRULE:"))
         assertTrue("Should contain updated title", patched.contains("Weekly Event Updated"))
     }
@@ -836,9 +806,8 @@ class IcsPatcherRfc5545Test {
 
         val ics = IcsPatcher.serialize(event)
 
-        // Should be patched (not fresh) since rawIcal is available. SEQUENCE is
-        // serialized verbatim — the patcher no longer bumps (EventWriter owns
-        // the bump decision via SequenceBumper).
+        // Patched, not fresh, since rawIcal is set. SEQUENCE is written as is; EventWriter
+        // decides any bump (SequenceBumper).
         assertTrue("Should serialize stored SEQUENCE verbatim", ics.contains("SEQUENCE:2"))
         assertTrue("Should have updated title", ics.contains("SUMMARY:Updated"))
     }
@@ -853,7 +822,6 @@ class IcsPatcherRfc5545Test {
 
         val ics = IcsPatcher.serialize(event)
 
-        // Should be a fresh VCALENDAR
         assertTrue("Should have VCALENDAR", ics.contains("BEGIN:VCALENDAR"))
         assertTrue("Should have title", ics.contains("SUMMARY:Fresh Event"))
     }

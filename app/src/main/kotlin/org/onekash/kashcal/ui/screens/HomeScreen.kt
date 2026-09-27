@@ -188,6 +188,7 @@ import org.onekash.kashcal.ui.viewmodels.AgendaUiState
 import org.onekash.kashcal.ui.viewmodels.HomeUiState
 import org.onekash.kashcal.ui.viewmodels.ViewMode
 import org.onekash.kashcal.ui.viewmodels.WeekEventsUiState
+import org.onekash.kashcal.ui.viewmodels.toScopeContext
 import org.onekash.kashcal.util.DateTimeUtils
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -199,15 +200,8 @@ import java.util.Locale
 import java.util.Calendar as JavaCalendar
 
 /**
- * Main calendar screen for KashCal.
- *
- * Features:
- * - Month view with horizontal paging
- * - Event dots on calendar days
- * - Day selection with event list
- * - Search functionality
- * - Pull-to-refresh sync
- * - Offline indicator
+ * Shows the main calendar screen: every [ViewMode], search, the calendar drawer, the account hub
+ * overlay, the sync banner, pull-to-refresh and the offline indicator.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -243,16 +237,16 @@ fun HomeScreen(
     onSearchDateSelected: (Long) -> Unit = {},
     // Settings callback
     onSettingsClick: () -> Unit = {},
-    // App lock (owned by the host activity's BiometricPrompt; surfaced in the hub)
+    // App lock, owned by the host activity's BiometricPrompt and shown in the hub
     appLockEnabled: Boolean = false,
     onToggleAppLock: (Boolean) -> Unit = {},
-    // Deep-link to the system settings page for a given permission kind (the
-    // app-permissions screen's granted-row tap and permanently-denied escape hatch)
+    // Opens the system settings page for a permission kind (the app-permissions screen's
+    // granted-row tap and permanently-denied escape hatch)
     onOpenPermissionSettings: (AppPermissionKind) -> Unit = {},
-    // Tag management (launched on top of the hub, like Settings)
+    // Tag management, launched on top of the hub like Settings
     onTagsClick: () -> Unit = {},
     onShareAvailabilityClick: () -> Unit = {},
-    // Invitation inbox surface (count + open + dismiss + RSVP)
+    // Invitation inbox: count, open, dismiss and RSVP
     pendingInvitesCount: Int = 0,
     pendingInvitations: List<org.onekash.kashcal.domain.reader.PendingInvitation> = emptyList(),
     onOpenInvitationInbox: () -> Unit = {},
@@ -295,7 +289,7 @@ fun HomeScreen(
     onCancelPendingFormSave: () -> Unit = {},
     onConfirmDelete: (EditScope) -> Unit = {},
     onCancelPendingDelete: () -> Unit = {},
-    // Resume callback (reload stale data on app resume)
+    // Called on each resume; the host jumps to today when the day changed while away
     onResume: () -> Unit = {},
     // Agenda scroll callback
     onClearScrollAgendaToTop: () -> Unit = {},
@@ -314,7 +308,7 @@ fun HomeScreen(
     dayAttendees: Map<Long, List<org.onekash.kashcal.ui.components.attendees.AttendeeUiModel>> = emptyMap(),
     onSetVisibleEventIds: (List<Long>) -> Unit = {},
 ) {
-    // HorizontalPager for smooth month swiping (~100 years each direction)
+    // Month pager, about 100 years each direction
     val initialPage = MonthPagerUtils.INITIAL_PAGE
     val pagerState = rememberPagerState(initialPage = initialPage) { MonthPagerUtils.TOTAL_PAGES }
     val coroutineScope = rememberCoroutineScope()
@@ -331,41 +325,41 @@ fun HomeScreen(
         DateTimeUtils.getTimePattern(uiState.timeFormat, is24HourDevice)
     }
 
-    // Handle system back button - close search overlay
+    // System back closes search
     BackHandler(enabled = uiState.isSearchActive) {
         onSearchClose()
     }
 
-    // Refresh key for today-dependent values - increments on app resume
-    // This triggers recomposition of today highlights, day numbers, and agenda filters
+    // Bumped on each resume so today-dependent values (for example today highlights, past
+    // dimming and the agenda week bar) recompute
     var refreshKey by remember { mutableIntStateOf(0) }
 
     LifecycleResumeEffect(Unit) {
-        refreshKey++  // Triggers recomposition of today-dependent values
-        onResume()    // Reload stale data (THREE_DAYS/WEEK one-shot queries)
+        refreshKey++
+        onResume()
         onPauseOrDispose { }
     }
 
-    // Today's date for reference - refreshes on resume via refreshKey
+    // Today's date, re-read on resume through refreshKey
     val todayCal = remember(refreshKey) { JavaCalendar.getInstance() }
     val todayYear = todayCal.get(JavaCalendar.YEAR)
     val todayMonth = todayCal.get(JavaCalendar.MONTH)
 
-    // Wall-clock snapshot for past-event dimming in the day-events pager.
-    // Re-read on resume so an event that ended while the app was backgrounded
-    // dims as soon as the user returns, without needing a sync write or swipe.
+    // Wall-clock snapshot for past-event dimming in the day-events pager. Re-read on resume so
+    // an event that ended while the app was in the background dims when the user returns,
+    // without a sync write or a swipe.
     val (nowMs, todayDayCode) = remember(refreshKey) {
         val now = System.currentTimeMillis()
         now to DateTimeUtils.eventTsToDayCode(now, isAllDay = false)
     }
 
-    // Agenda list scroll state is hoisted here (above the top bar) so the top-bar
-    // title can reflect the month of the topmost visible agenda item as the user
-    // scrolls. Falls back to today's month when the list is empty/unparseable.
+    // Agenda list scroll state is hoisted above the top bar so its title can show the month of
+    // the topmost visible agenda item. Falls back to today's month when the list is empty or
+    // the key doesn't parse.
     val agendaListState = rememberLazyListState()
     val agendaTitleMonth by remember(refreshKey) {
-        // Fallback date captured per refreshKey (same resume semantics as `today`),
-        // so an empty agenda's title stays consistent with the rest of the bar.
+        // Fallback date captured per refreshKey, like the top bar's `today`, so an empty
+        // agenda's title matches the rest of the bar.
         val fallbackDate = LocalDate.now()
         derivedStateOf {
             val firstKey = agendaListState.layoutInfo.visibleItemsInfo.firstOrNull()?.key as? String
@@ -373,22 +367,19 @@ fun HomeScreen(
         }
     }
 
-    // Agenda week-bar state. The selected day (null = none in the shown week) is
-    // sticky and only changes on tap. While a tap-driven scroll animates, the bar
-    // holds the tapped week (agendaBarSuppressed + agendaBarHeldAnchor) so it
-    // doesn't flicker through intermediate weeks; otherwise it tracks the topmost
-    // visible list item.
+    // Agenda week-bar state. The selected day (null for none) changes only on a tap and resets
+    // on resume. While a tap-driven scroll animates, the bar holds the tapped week
+    // (agendaBarSuppressed and agendaBarHeldAnchor) so it doesn't flicker through the weeks in
+    // between; otherwise it tracks the topmost visible list item.
     var agendaSelectedDayCode by rememberSaveable(refreshKey) { mutableStateOf<Int?>(null) }
     var agendaBarSuppressed by remember { mutableStateOf(false) }
     var agendaBarHeldAnchor by remember { mutableStateOf<LocalDate?>(null) }
-    // Bumped per tap so a rapid second tap's scroll animation doesn't get its
-    // suppression cleared by the first tap's cancelled coroutine — only the
-    // latest tap's coroutine clears the flag.
+    // Bumped per tap; only the latest tap's coroutine clears the suppression, so the first
+    // tap's cancelled coroutine can't clear it during a second tap's scroll.
     var agendaTapGeneration by remember { mutableIntStateOf(0) }
-    // The agenda LazyColumn's top contentPadding lets the item just above the
-    // first fully-visible one peek into it, so skip peekers when picking the
-    // anchor (else tapping a week's first day snaps the bar to the prior week).
-    // Sourced from AGENDA_CONTENT_PADDING so it tracks the list's actual inset.
+    // The agenda list's top contentPadding lets the item above the first fully visible one
+    // peek into it, so the anchor skips peekers; otherwise tapping a week's first day snaps the
+    // bar to the week before. Read from AGENDA_CONTENT_PADDING so it matches the list's inset.
     val agendaContentPaddingTopPx = with(LocalDensity.current) { AGENDA_CONTENT_PADDING.roundToPx() }
     val agendaWeekDates by remember(refreshKey, uiState.firstDayOfWeek) {
         val fallbackDate = LocalDate.now()
@@ -407,34 +398,31 @@ fun HomeScreen(
         }
     }
 
-    // Focus requester for search field
     val searchFocusRequester = remember { FocusRequester() }
 
-    // Request focus when search becomes active
+    // Focus the search field when search opens
     LaunchedEffect(uiState.isSearchActive) {
         if (uiState.isSearchActive) {
             try {
                 searchFocusRequester.requestFocus()
             } catch (_: Exception) {
-                // Focus may not be available yet
+                // The field may not be attached yet
             }
         }
     }
 
-    // Declared before the snackbar effect below because that effect routes to the
-    // hub's own snackbar host while the hub overlay is up (see hubSnackbarHostState).
+    // Declared before the snackbar effect, which routes to the hub's own host while the hub is
+    // up (hubSnackbarHostState).
     var showHub by rememberSaveable { mutableStateOf(false) }
 
-    // Snackbar state
     val snackbarHostState = remember { SnackbarHostState() }
-    // A second host mounted on the account-hub overlay. The hub is an opaque
-    // Surface above the Scaffold, so a snackbar shown on the Scaffold's host
-    // would render behind it (invisible). When the hub is up — e.g. the app-lock
-    // toggle confirming — route the message to this host instead.
+    // A second host mounted on the account-hub overlay. The hub is an opaque Surface above the
+    // Scaffold, so a snackbar on the Scaffold's host would render hidden behind it. While the
+    // hub is up (the app-lock toggle confirming, for example) messages go to this host.
     val hubSnackbarHostState = remember { SnackbarHostState() }
     val viewActionLabel = stringResource(R.string.action_view)
 
-    // Handle snackbar messages
+    // Show pending snackbar messages
     LaunchedEffect(uiState.pendingSnackbarMessage) {
         uiState.pendingSnackbarMessage?.let { message ->
             val host = if (showHub) hubSnackbarHostState else snackbarHostState
@@ -450,7 +438,7 @@ fun HomeScreen(
         }
     }
 
-    // Handle pending URL to open (from error actions)
+    // Open a pending URL from an error action
     LaunchedEffect(uiState.pendingUrlToOpen) {
         uiState.pendingUrlToOpen?.let { url ->
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
@@ -459,7 +447,7 @@ fun HomeScreen(
         }
     }
 
-    // Sync pager with ViewModel when pager settles
+    // Report the settled month page to the ViewModel
     LaunchedEffect(pagerState.settledPage) {
         val monthOffset = pagerState.settledPage - initialPage
         val targetCal = JavaCalendar.getInstance().apply {
@@ -473,7 +461,7 @@ fun HomeScreen(
         }
     }
 
-    // Handle Today button navigation (user-initiated: animate the scroll)
+    // Today button: user-initiated, so the scroll animates
     LaunchedEffect(uiState.pendingNavigateToToday) {
         if (uiState.pendingNavigateToToday) {
             pagerState.animateScrollToPage(initialPage)
@@ -481,8 +469,8 @@ fun HomeScreen(
         }
     }
 
-    // Handle cold-start land (programmatic: jump instantly so the pager settles
-    // in one frame with no in-flight animation for concurrent writes to fight)
+    // Cold-start landing: jump at once so the pager settles in one frame, with no running
+    // animation for concurrent writes to fight
     LaunchedEffect(uiState.pendingNavigateToTodayInstant) {
         if (uiState.pendingNavigateToTodayInstant) {
             pagerState.scrollToPage(initialPage)
@@ -490,7 +478,7 @@ fun HomeScreen(
         }
     }
 
-    // Handle year overlay month navigation
+    // Month picked in the year overlay
     LaunchedEffect(uiState.pendingNavigateToMonth) {
         uiState.pendingNavigateToMonth?.let { (targetYear, targetMonth) ->
             val monthsDiff = (targetYear - todayYear) * 12 + (targetMonth - todayMonth)
@@ -500,7 +488,7 @@ fun HomeScreen(
         }
     }
 
-    // Year overlay for quick month navigation (tap month header to open)
+    // Year overlay for quick month navigation, opened from the month title
     YearOverlay(
         visible = uiState.showYearOverlay,
         currentYear = uiState.viewingYear,
@@ -511,30 +499,27 @@ fun HomeScreen(
 
     val drawerScope = rememberCoroutineScope()
     var showJumpToDatePicker by rememberSaveable { mutableStateOf(false) }
-    // App-permissions full-screen destination, opened over the hub (like Manage
-    // tags). It carries its own back-arrow + BackHandler; this flag drives its
-    // opaque overlay below.
+    // App-permissions full-screen destination, opened over the hub. It has its own back arrow
+    // and BackHandler; this flag drives its opaque overlay below.
     var showAppPermissions by rememberSaveable { mutableStateOf(false) }
-    // Tracks the hub overlay through its enter/exit slide, not just the target flag.
-    // Coverage-sensitive behaviour (drawer edge-swipe suppression below) must stay
-    // active while the Surface is still animating out, so it keys off this state —
-    // which only reports "gone" once the exit slide finishes — rather than showHub,
-    // which flips to false the instant back is pressed.
+    // Tracks the hub overlay through its enter and exit slides. The drawer edge-swipe
+    // suppression below must stay on while the Surface animates out, so it keys off this
+    // state, which reports gone only once the exit slide finishes; showHub turns false the
+    // moment back is pressed.
     val hubTransition = remember { MutableTransitionState(false) }
     hubTransition.targetState = showHub
     val hubFullyHidden = hubTransition.isIdle && !hubTransition.currentState
 
-    // Captures view mode + date right before "Jump to date" navigates so a
-    // back press restores both. Cleared once consumed (or set to null when no
-    // jump is pending).
+    // View mode and date captured before Jump to date or a week/3-day day-header drill-in
+    // navigates, so a back press restores both. Null when nothing is pending; cleared once
+    // consumed.
     var preJumpViewMode by rememberSaveable { mutableStateOf<ViewMode?>(null) }
     var preJumpDate by rememberSaveable { mutableStateOf(0L) }
 
     ModalNavigationDrawer(
         drawerState = drawerState ?: rememberDrawerState(DrawerValue.Closed),
-        // Suppress the edge-swipe while the full-screen hub overlay is up — and
-        // while it's still sliding out — so a swipe can't slide the calendar drawer
-        // over it. hubFullyHidden stays false until the exit animation completes.
+        // No edge-swipe while the hub overlay is up or still sliding out, so a swipe can't pull
+        // the calendar drawer over it.
         gesturesEnabled = hubFullyHidden,
         drawerContent = {
             CalendarDrawer(
@@ -598,7 +583,7 @@ fun HomeScreen(
             )
         },
         floatingActionButton = {
-            // Insights is a read-only analytics view; event creation is off-context there.
+            // Insights is a read-only analytics view, so it has no create button.
             if (uiState.viewMode != ViewMode.INSIGHTS) {
                 FloatingActionButton(
                     onClick = onCreateEvent,
@@ -608,14 +593,12 @@ fun HomeScreen(
                 }
             }
         },
-        // No bottom bar - week view is now in agenda panel
     ) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Sync progress banner
             AnimatedVisibility(visible = uiState.showSyncBanner) {
                 SyncBanner(
                     state = uiState.syncBannerState,
@@ -643,7 +626,6 @@ fun HomeScreen(
                             }
                         }
                         uiState.isSearchActive && uiState.searchQuery.isNotEmpty() -> {
-                            // SearchContent with 4 date filter chips
                             SearchContent(
                                 results = uiState.searchResults,
                                 currentFilter = uiState.searchDateFilter,
@@ -681,8 +663,8 @@ fun HomeScreen(
                                 pendingNavigateToToday = uiState.pendingNavigateToToday,
                                 onNavigateToTodayConsumed = onClearNavigateToToday,
                                 onMonthClick = { year, month ->
-                                    // Update selectedDate BEFORE switching view so that
-                                    // syncPagerToSelectedDate() navigates to the correct month
+                                    // Set selectedDate before switching view: the switch to MONTH
+                                    // moves the pager to selectedDate's month.
                                     val cal = JavaCalendar.getInstance().apply { set(year, month, 1) }
                                     onDateSelected(cal.timeInMillis)
                                     onViewSelect(ViewMode.MONTH)
@@ -693,7 +675,7 @@ fun HomeScreen(
                         }
                         uiState.viewMode == ViewMode.AGENDA || uiState.viewMode.isTimeGrid -> {
                             Column(modifier = Modifier.fillMaxSize()) {
-                                // Handle scroll to top when Today button is pressed in agenda view
+                                // Today in the agenda scrolls the list to the top
                                 LaunchedEffect(uiState.pendingScrollAgendaToTop) {
                                     if (uiState.pendingScrollAgendaToTop) {
                                         agendaListState.animateScrollToItem(0)
@@ -703,10 +685,10 @@ fun HomeScreen(
 
                                 when (uiState.viewMode) {
                                     ViewMode.AGENDA -> {
-                                        // Pinned week bar above the list, collapsible via the top-bar
-                                        // title chevron (state persisted). Tapping a date selects it
-                                        // and scrolls the list to that day's header; the bar tracks
-                                        // the scrolled week otherwise.
+                                        // Pinned week bar above the list, collapsed and expanded by
+                                        // the title chevron (persisted). Tapping a date selects it
+                                        // and scrolls the list to that day's header; otherwise the
+                                        // bar tracks the scrolled week.
                                         if (uiState.agendaWeekBarExpanded) {
                                             AgendaWeekBar(
                                                 weekDates = agendaWeekDates,
@@ -723,8 +705,8 @@ fun HomeScreen(
                                                         try {
                                                             if (target >= 0) agendaListState.animateScrollToItem(target)
                                                         } finally {
-                                                            // Only the latest tap clears suppression, so a
-                                                            // rapid double-tap can't unsuppress mid-animation.
+                                                            // Only the latest tap clears
+                                                            // suppression (agendaTapGeneration).
                                                             if (generation == agendaTapGeneration) {
                                                                 agendaBarSuppressed = false
                                                             }
@@ -739,8 +721,9 @@ fun HomeScreen(
                                             Box(
                                                 modifier = Modifier
                                                     .fillMaxSize()
-                                                    // The spinner has no text; give it a spoken label and
-                                                    // announce it politely so TalkBack says "Loading events".
+                                                    // The spinner has no text; a spoken label in a
+                                                    // polite live region makes TalkBack say
+                                                    // "Loading events".
                                                     .semantics {
                                                         liveRegion = LiveRegionMode.Polite
                                                         contentDescription = loadingLabel
@@ -769,22 +752,21 @@ fun HomeScreen(
                                         }
                                     }
                                     ViewMode.DAY, ViewMode.THREE_DAYS, ViewMode.WEEK -> {
-                                        // Day view gets a pinned week strip above the grid,
-                                        // toggled by the title chevron (state persisted). Tapping a
-                                        // date drives the day pager to it. The strip reads the same
-                                        // weekViewPagerPosition the title does, so the two stay in
-                                        // lockstep. Only render once the position is a settled
-                                        // day-scale page: the default (0) and a stale week-scale
-                                        // page from a WEEK->DAY switch would otherwise flash an
-                                        // absurd date (see isSettledDayPage).
+                                        // Day view has a pinned week strip above the grid, toggled
+                                        // by the title chevron (persisted). Tapping a date moves
+                                        // the day pager to it. The strip reads the same
+                                        // weekViewPagerPosition as the title, so the two stay in
+                                        // step. It renders only on a settled day-scale page: the
+                                        // default (0) and a stale week-scale page after a WEEK to
+                                        // DAY switch would flash a wrong date (isSettledDayPage).
                                         if (uiState.viewMode == ViewMode.DAY &&
                                             uiState.dayWeekBarExpanded &&
                                             WeekViewUtils.isSettledDayPage(uiState.weekViewPagerPosition)
                                         ) {
-                                            // Memoize keyed on the two inputs so the strip's date
-                                            // arithmetic and 7-day list aren't rebuilt on unrelated
-                                            // recompositions (event loads, scroll). Plain remember —
-                                            // no layout dependency, unlike the agenda strip's anchor.
+                                            // Keyed on its inputs so the date arithmetic and 7-day
+                                            // list aren't rebuilt on unrelated recompositions
+                                            // (event loads, scroll). A plain remember: unlike the
+                                            // agenda bar's anchor, it doesn't depend on layout.
                                             val shownDate = remember(uiState.weekViewPagerPosition) {
                                                 WeekViewUtils.pageToDate(uiState.weekViewPagerPosition)
                                             }
@@ -801,9 +783,9 @@ fun HomeScreen(
                                                 onDayClick = { tappedDayCode ->
                                                     onWeekDateSelected(DayPagerUtils.dayCodeToMs(tappedDayCode))
                                                 },
-                                                // Inset past the grid's time-axis gutter so the strip
-                                                // aligns with the day column below, like the multi-day
-                                                // views' headers, instead of overrunning the left bar.
+                                                // Inset past the grid's time-axis gutter so the
+                                                // strip lines up with the day column below, like
+                                                // the multi-day views' headers.
                                                 modifier = Modifier
                                                     .fillMaxWidth()
                                                     .padding(start = WeekViewUtils.TIME_COLUMN_WIDTH)
@@ -846,21 +828,19 @@ fun HomeScreen(
                                             onNavigationConsumed = onClearPendingWeekPagerPosition,
                                             onReschedule = onReschedule,
                                             onDayHeaderClick = { date ->
-                                                // Snapshot the current view + date before
-                                                // drilling into DAY, reusing the same
-                                                // mechanism as "Jump to date" so a back
-                                                // press restores the week/3-day view and
-                                                // date we came from. The drill-in itself
-                                                // stays a transient switch (does not change
-                                                // the startup default).
+                                                // Snapshot the view and date before drilling
+                                                // into DAY, the same way Jump to date does, so
+                                                // a back press restores the week or 3-day view
+                                                // and date. The drill-in doesn't change the
+                                                // startup view.
                                                 //
-                                                // The week/3-day grid tracks its position in
-                                                // weekViewPagerPosition, not selectedDate (which
-                                                // only month-view taps write), so derive the
-                                                // shown date from the pager page — mode-aware,
-                                                // since WEEK uses week pages and 3-day uses day
-                                                // pages. Restoring selectedDate would jump back
-                                                // to a stale week or, at cold start, to today.
+                                                // The week and 3-day grids keep their position
+                                                // in weekViewPagerPosition and don't write
+                                                // selectedDate, so the shown date comes from
+                                                // the pager page: week pages for WEEK, day
+                                                // pages for 3-day. Restoring selectedDate
+                                                // would jump back to a stale week or, at cold
+                                                // start, to today.
                                                 preJumpViewMode = uiState.viewMode
                                                 val shownDate = if (uiState.viewMode == ViewMode.WEEK) {
                                                     WeekViewUtils.weekPageToStartDate(
@@ -881,7 +861,6 @@ fun HomeScreen(
                             }
                         }
                         uiState.viewMode == ViewMode.MONTH_FULL -> {
-                            // Full-height month view with event snippets in day cells
                             HorizontalPager(
                                 state = pagerState,
                                 modifier = Modifier.fillMaxSize(),
@@ -896,14 +875,12 @@ fun HomeScreen(
                                 val pageYear = pageCal.get(JavaCalendar.YEAR)
                                 val pageMonth = pageCal.get(JavaCalendar.MONTH)
 
-                                // The grid is fit-to-screen (weighted rows), so it has no
-                                // vertically scrollable child. Material3 pull-to-refresh is
-                                // nested-scroll driven and never sees a drag unless some
-                                // descendant propagates vertical scroll deltas. This
-                                // zero-consuming scrollable donates the vertical gesture to
-                                // the parent pull-to-refresh connection without moving the
-                                // grid (the enclosing HorizontalPager only handles the
-                                // horizontal axis).
+                                // The grid fits the screen (weighted rows), so nothing in it
+                                // scrolls vertically. Material3 pull-to-refresh is driven by
+                                // nested scroll and sees no drag unless a descendant passes
+                                // vertical deltas up. This scrollable consumes nothing, so it
+                                // hands the vertical gesture to pull-to-refresh without moving
+                                // the grid; the HorizontalPager takes only the horizontal axis.
                                 val monthFullScrollDonor = rememberScrollableState { 0f }
                                 Column(
                                     modifier = Modifier
@@ -938,14 +915,13 @@ fun HomeScreen(
                             }
                         }
                         else -> {
-                            // Prevent one-frame flicker on view transition:
-                            // When switching from THREE_DAYS/WEEK to MONTH, the pager
-                            // re-enters composition at its saved (stale) page. The
-                            // LaunchedEffect that scrolls to the correct page fires
-                            // AFTER the first draw. Hide content until the scroll lands.
-                            // Only active on fresh entry (isFirstComposition resets when
-                            // the else branch is disposed); in-view navigation (YearOverlay,
-                            // Today) is unaffected because isFirstComposition is already false.
+                            // Prevents a one-frame flicker on entering MONTH: the pager
+                            // re-enters composition at its saved, stale page, and the
+                            // LaunchedEffect that scrolls to the right page runs after the
+                            // first draw. Content stays hidden until the scroll lands. This
+                            // applies only on a fresh entry (isFirstComposition resets when
+                            // this branch is disposed); in-view navigation (year overlay,
+                            // Today) finds isFirstComposition already false.
                             var isFirstComposition by remember { mutableStateOf(true) }
                             LaunchedEffect(uiState.pendingNavigateToMonth) {
                                 if (uiState.pendingNavigateToMonth == null) {
@@ -954,7 +930,7 @@ fun HomeScreen(
                             }
                             val hideForTransition = isFirstComposition && uiState.pendingNavigateToMonth != null
 
-                            // Month pager content (shared between portrait and landscape)
+                            // Month pager page, shared by portrait and landscape
                             val monthPagerContent: @Composable (pageYear: Int, pageMonth: Int) -> Unit = { pageYear, pageMonth ->
                                 Column(
                                     modifier = Modifier.fillMaxWidth(),
@@ -980,8 +956,8 @@ fun HomeScreen(
 
                             val transitionAlpha = if (hideForTransition) 0f else 1f
 
-                            // Hoist day pager state above the landscape/portrait branch
-                            // so it survives orientation changes without recreation.
+                            // Day pager state sits above the landscape/portrait branch so it
+                            // survives orientation changes.
                             val dayPagerTodayMs = remember { DayPagerUtils.getTodayMidnightMs() }
                             val dayPagerInitialPage = if (uiState.selectedDate != 0L) {
                                 DayPagerUtils.dateToPage(uiState.selectedDate, dayPagerTodayMs)
@@ -993,13 +969,12 @@ fun HomeScreen(
                             ) { DayPagerUtils.TOTAL_PAGES }
 
                             if (isLandscape) {
-                                // Landscape: calendar grid left, day events right
+                                // Landscape: month grid on the left, day events on the right
                                 Row(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .alpha(transitionAlpha)
                                 ) {
-                                    // Month pager (left)
                                     HorizontalPager(
                                         state = pagerState,
                                         modifier = Modifier.weight(0.45f),
@@ -1013,7 +988,8 @@ fun HomeScreen(
                                         }
                                         monthPagerContent(pageCal.get(JavaCalendar.YEAR), pageCal.get(JavaCalendar.MONTH))
                                     }
-                                    // Day events sheet (right) — rises off the grid via tone + radius
+                                    // Day events sheet, set off from the grid by tone and corner
+                                    // radius
                                     Surface(
                                         modifier = Modifier.weight(0.55f).fillMaxHeight(),
                                         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -1048,7 +1024,7 @@ fun HomeScreen(
                                     }
                                 }
                             } else {
-                                // Portrait: calendar grid top, day events below
+                                // Portrait: month grid on top, day events below
                                 Column(
                                     modifier = Modifier
                                         .fillMaxSize()
@@ -1067,7 +1043,8 @@ fun HomeScreen(
                                         }
                                         monthPagerContent(pageCal.get(JavaCalendar.YEAR), pageCal.get(JavaCalendar.MONTH))
                                     }
-                                    // Day events sheet — rises off the grid via tone + radius
+                                    // Day events sheet, set off from the grid by tone and corner
+                                    // radius
                                     Surface(
                                         modifier = Modifier.fillMaxWidth().weight(1f),
                                         color = MaterialTheme.colorScheme.surfaceContainerLow,
@@ -1103,9 +1080,9 @@ fun HomeScreen(
                         }
                     }
                 }
-                // Defense-in-depth: a device-calendar-only user (isConfigured == false)
-                // structurally never renders the pull-to-refresh indicator, so a replayed
-                // sync status can't surface a spinner for them.
+                // The indicator renders only when isConfigured, so a device-calendar-only user
+                // never sees a spinner from a replayed sync status, even though
+                // canPullToRefresh already disables the gesture.
                 if (uiState.isConfigured) {
                     PullToRefreshDefaults.Indicator(
                         state = pullToRefreshState,
@@ -1117,7 +1094,6 @@ fun HomeScreen(
         }
     }
 
-    // Search date picker bottom sheet
     if (uiState.showSearchDatePicker) {
         SearchDatePickerSheet(
             selectedDateMs = uiState.searchDateRangeStart,
@@ -1127,7 +1103,7 @@ fun HomeScreen(
         )
     }
 
-    // Week view date picker bottom sheet
+    // Date picker for the 3-day and week views
     if (uiState.showWeekViewDatePicker) {
         WeekViewDatePickerSheet(
             currentWeekStartMs = System.currentTimeMillis(),
@@ -1137,9 +1113,8 @@ fun HomeScreen(
         )
     }
 
-    // "Jump to date" — uses the same month-grid sheet as the week view so a
-    // tap navigates immediately. Switches to DAY before navigating so the
-    // pager page is computed in day-mode, not week-mode.
+    // Jump to date uses the 3-day and week views' sheet, so one tap navigates. It switches to DAY
+    // before navigating so the pager page is computed for day pages, not week pages.
     if (showJumpToDatePicker) {
         WeekViewDatePickerSheet(
             currentWeekStartMs = uiState.selectedDate.takeIf { it != 0L } ?: System.currentTimeMillis(),
@@ -1149,8 +1124,8 @@ fun HomeScreen(
                 onViewSelect(ViewMode.DAY)
                 onWeekDateSelected(dateMs)
                 showJumpToDatePicker = false
-                // Picking a date navigates the calendar, so the hub (still mounted
-                // behind the picker) must close to reveal the result.
+                // Picking a date moves the calendar, so the hub, still mounted behind the
+                // picker, closes to show the result.
                 showHub = false
             },
             onDismiss = { showJumpToDatePicker = false },
@@ -1158,9 +1133,8 @@ fun HomeScreen(
         )
     }
 
-    // Back press after a Jump-to-date navigation restores the view + date the
-    // user was on before the jump. Single-shot — clears the snapshot so a
-    // second back press falls through to normal back behavior.
+    // Back after a Jump to date or a day-header drill-in restores the view and date from before
+    // it. Single-shot: it clears the snapshot, so a second back press falls through.
     val pending = preJumpViewMode
     BackHandler(enabled = pending != null && !showJumpToDatePicker && !showHub) {
         onViewSelect(pending!!)
@@ -1169,19 +1143,17 @@ fun HomeScreen(
         preJumpDate = 0L
     }
 
-    // Full-screen destination (like the Insights view) rendered as an opaque
-    // overlay above the Scaffold, so it covers the calendar's own top bar and
-    // FAB. A boolean flag is invisible to the top-bar `when` and the FAB's
-    // viewMode gate, so the overlay — not those branches — owns coverage.
-    // Surface (not a bare Box) is load-bearing here: its pointer-input barrier
-    // stops taps from reaching the FAB behind it, and gesturesEnabled=hubFullyHidden
-    // above suppresses the drawer edge-swipe. Keep both if this is refactored.
-    // AnimatedVisibility slides the hub in from the trailing edge (the avatar sits
-    // on the trailing corner, so a trailing-edge push reads as drilling in) and
-    // reverses on back; the Surface stays mounted through the exit slide so the FAB
-    // stays covered. visibleState (not visible) drives it so hubFullyHidden can
-    // observe the exit completing. The offset is negated in RTL so "trailing edge"
-    // stays the leading corner of the incoming screen regardless of layout direction.
+    // The account hub: a full-screen destination drawn as an opaque overlay above the
+    // Scaffold, so it covers the calendar's top bar and FAB. The top-bar `when` and the FAB's
+    // viewMode gate don't see a boolean flag, so the overlay owns coverage.
+    // It must stay a Surface, not a bare Box: its pointer-input barrier stops taps reaching
+    // the FAB behind it, while gesturesEnabled = hubFullyHidden above stops the drawer
+    // edge-swipe. Keep both in a refactor.
+    // AnimatedVisibility slides the hub in from the trailing edge (the avatar sits in the
+    // trailing corner, so this reads as drilling in) and reverses on back; the Surface stays
+    // mounted through the exit slide, so the FAB stays covered. It's driven by visibleState so
+    // hubFullyHidden can see the exit finish. The offset is negated in RTL so the hub still
+    // enters from the trailing edge.
     val hubSlideSign = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1 else 1
     AnimatedVisibility(
         visibleState = hubTransition,
@@ -1193,11 +1165,10 @@ fun HomeScreen(
                 pendingInvitesCount = pendingInvitesCount,
                 userInitials = uiState.userInitials,
                 onInitialsChange = onInitialsChange,
-                // Destinations that open a sheet/Activity ON TOP of the hub keep it
-                // mounted — the destination covers it, so there's no bare-calendar
-                // flash, and dismissing the destination returns to the hub. Only
-                // Jump-to-date changes the calendar itself (closed when a date is
-                // actually picked, below).
+                // Destinations that open a sheet or Activity on top of the hub keep it
+                // mounted: the destination covers it, so the bare calendar doesn't flash,
+                // and dismissing the destination returns to the hub. Only Jump to date
+                // changes the calendar; the hub closes when a date is picked (above).
                 onInvitesClick = onOpenInvitationInbox,
                 onJumpToDateClick = { showJumpToDatePicker = true },
                 onShareAvailabilityClick = onShareAvailabilityClick,
@@ -1208,16 +1179,16 @@ fun HomeScreen(
                 appLockEnabled = appLockEnabled,
                 onToggleAppLock = onToggleAppLock,
                 onAppPermissionsClick = { showAppPermissions = true },
-                // App-lock enable/enroll/unsupported confirmations fire while the
-                // hub is up; host them here so they're not hidden behind the overlay.
+                // App-lock enable, enroll and unsupported messages show while the hub is up;
+                // hosted here so they aren't hidden behind the overlay.
                 snackbarHost = { SnackbarHost(hostState = hubSnackbarHostState) },
             )
         }
     }
 
-    // App permissions: full-screen destination rendered as an opaque overlay
-    // above the hub (which stays mounted beneath), mirroring how the hub covers
-    // the calendar. Its own back arrow + BackHandler dismiss it back to the hub.
+    // App permissions: an opaque full-screen overlay above the hub, which stays mounted
+    // beneath, the way the hub covers the calendar. Its own back arrow and BackHandler return
+    // to the hub.
     AnimatedVisibility(
         visible = showAppPermissions,
         enter = slideInHorizontally { width -> hubSlideSign * width } + fadeIn(),
@@ -1231,7 +1202,6 @@ fun HomeScreen(
         }
     }
 
-    // Invitation inbox bottom sheet
     if (uiState.isInvitationInboxOpen) {
         InvitationInboxSheet(
             invitations = pendingInvitations,
@@ -1241,7 +1211,7 @@ fun HomeScreen(
         )
     }
 
-    // Day events bottom sheet (month view)
+    // Day events sheet for the full-height month view
     if (uiState.showDayDetailSheet) {
         val dayCode = DayPagerUtils.msToDayCode(uiState.dayDetailDate)
         val dayEvents = monthEvents[dayCode] ?: persistentListOf()
@@ -1258,9 +1228,8 @@ fun HomeScreen(
         )
     }
 
-    // Recurring scope sheets — drag-to-reschedule, form-save, and
-    // delete all share the same component. The option set differs
-    // per flow; computed by helpers in the ViewModel layer.
+    // Recurring scope sheets: drag-to-reschedule, form save and delete share one component.
+    // Each flow's options come from its helper in the ViewModel layer.
     val scopeResources = LocalResources.current
 
     uiState.pendingDragReschedule?.let { pending ->
@@ -1275,6 +1244,7 @@ fun HomeScreen(
             isAllDay = isAllDay,
             isDevice = isDevice,
             resources = scopeResources,
+            blockedScopes = org.onekash.kashcal.ui.viewmodels.dragScopesToGrey(pending),
         )
         org.onekash.kashcal.ui.components.RecurringScopeSheet(
             title = stringResource(R.string.dialog_move_recurring_title),
@@ -1286,12 +1256,7 @@ fun HomeScreen(
 
     uiState.pendingFormSave?.let { pending ->
         val context = remember(pending) {
-            org.onekash.kashcal.ui.viewmodels.ScopeContext(
-                masterStartTs = pending.masterStartTs,
-                occurrenceTs = pending.occurrenceTs,
-                isDetachedException = pending.isDetachedException,
-                isAllDay = pending.loadedIsAllDay,
-            )
+            pending.toScopeContext()
         }
         val options = remember(context, pending.originalRrule, pending.formState.rrule) {
             org.onekash.kashcal.ui.viewmodels.computeEditScopeOptions(
@@ -1454,9 +1419,9 @@ private fun HomeTopAppBar(
         }
         else -> {
             val yearLabel = stringResource(R.string.view_year)
-            // Agenda's title tracks the topmost visible day's month; all other views
-            // use their own viewing month. The formatter reads viewingYear/viewingMonth,
-            // so substitute the scroll-derived month only for AGENDA.
+            // The agenda title follows the topmost visible day's month; other views use their
+            // viewing month. The formatter reads viewingYear and viewingMonth, so only AGENDA
+            // substitutes the scroll-derived month.
             val isAgenda = uiState.viewMode == ViewMode.AGENDA
             val titleText = TopBarTitleFormatter.format(
                 viewMode = uiState.viewMode,
@@ -1467,9 +1432,8 @@ private fun HomeTopAppBar(
                 yearLabel = yearLabel,
                 today = today,
             )
-            // AGENDA and DAY both show a collapsible week bar, toggled by the title
-            // chevron. The rest of the views (including the other time-grid views,
-            // which open a date picker instead) use a plain clickable title.
+            // AGENDA and DAY show a collapsible week bar, toggled by the title chevron. The other
+            // views use a plain title (see the else branch).
             val showWeekBarChevron = uiState.viewMode == ViewMode.AGENDA || uiState.viewMode == ViewMode.DAY
             val weekBarExpanded = if (uiState.viewMode == ViewMode.DAY) {
                 uiState.dayWeekBarExpanded
@@ -1480,15 +1444,15 @@ private fun HomeTopAppBar(
             CenterAlignedTopAppBar(
                 title = {
                     if (showWeekBarChevron) {
-                        // Chevron points up when the week bar is expanded (tap to
-                        // collapse), down when collapsed (tap to expand).
+                        // The chevron points up when the week bar is expanded (tap to collapse)
+                        // and down when collapsed (tap to expand).
                         val weekBarChevronRotation by animateFloatAsState(
                             targetValue = if (weekBarExpanded) 180f else 0f,
                             animationSpec = tween(300),
                             label = "weekBarChevronRotation"
                         )
-                        // onClickLabel describes the toggle action to TalkBack while
-                        // the title text ("July 2026") stays the node's spoken content.
+                        // onClickLabel describes the toggle to TalkBack, while the title text
+                        // ("July 2026") stays the node's spoken content.
                         val toggleLabel = if (weekBarExpanded) {
                             stringResource(R.string.cd_collapse_week_bar)
                         } else {
@@ -1512,7 +1476,8 @@ private fun HomeTopAppBar(
                             )
                         }
                     } else {
-                        // Year has no title action; other date-driven views open a picker.
+                        // YEAR has no title action; MONTH and MONTH_FULL open the year overlay,
+                        // THREE_DAYS and WEEK the date picker.
                         val titleModifier = if (uiState.viewMode != ViewMode.YEAR) {
                             Modifier.clickable(onClick = onTitleClick)
                         } else {
@@ -1551,7 +1516,7 @@ private fun HomeTopAppBar(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .size(20.dp)
-                                // Announce the transition to offline to TalkBack.
+                                // Announces going offline to TalkBack.
                                 .semantics { liveRegion = LiveRegionMode.Polite }
                         )
                     }
@@ -1574,12 +1539,10 @@ private fun HomeTopAppBar(
 }
 
 /**
- * Top-bar trigger that opens the account hub. Renders the user's initials
- * avatar (or a neutral glyph when unset) with a numeric badge when
- * [pendingInvitesCount] > 0; tapping invokes [onClick]. The accessibility label
- * still resolves through [overflowContentDescription] so the announcement and
- * badge never disagree on the count, and TalkBack keeps the familiar "More
- * menu" affordance even though the glyph is now an avatar.
+ * Shows the top-bar avatar that opens the account hub: the user's initials, or a neutral glyph
+ * when unset, with a count badge when [pendingInvitesCount] > 0. Tapping calls [onClick]. The
+ * accessibility label comes from [overflowContentDescription], so the announcement and badge
+ * never disagree on the count, and TalkBack still announces it as "More menu".
  */
 @Composable
 private fun AvatarTrigger(
@@ -1611,9 +1574,8 @@ private fun AvatarTrigger(
                 }
             }
         ) {
-            // Tuned against the 26.dp sibling glyphs (Menu/Search): the disc is
-            // slightly larger but its inner content (glyph/monogram) is inset, so
-            // it reads at about the same visual weight rather than oversized.
+            // Sized against the 26.dp Menu and Search glyphs: the disc is slightly larger, but
+            // its glyph or monogram is inset, so it reads at about the same visual weight.
             AccountAvatar(initials = userInitials, size = 30.dp, fontSize = 13.sp)
         }
     }
@@ -1738,9 +1700,9 @@ private fun CalendarGrid(
                                             else -> Color.Transparent
                                         }
                                     )
-                                    // The today fill can wash out against the surface for pale accent
-                                    // seeds; a hairline outline keeps the cell visible on any theme
-                                    // (selected uses a strong fill and needs no border).
+                                    // The today fill can wash out against the surface for pale
+                                    // accent seeds; a hairline outline keeps the cell visible on
+                                    // any theme. Selected uses a strong fill and needs no border.
                                     .then(
                                         if (isToday && !isSelected) {
                                             Modifier.border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
@@ -1789,9 +1751,9 @@ private fun CalendarGrid(
 }
 
 /**
- * Day events pager with horizontal swipe navigation.
- * Swiping left/right navigates to next/previous day.
- * Syncs with calendar grid and month pager when crossing boundaries.
+ * Shows the day events pager below the month grid: a swipe moves to the next or previous day,
+ * a user swipe updates the selected date, and crossing a month boundary moves the month pager.
+ * When the selected date isn't in the viewing month it shows a "pick a day" message instead.
  */
 @Composable
 private fun ColumnScope.DayEventsPager(
@@ -1817,31 +1779,27 @@ private fun ColumnScope.DayEventsPager(
 
     val coroutineScope = rememberCoroutineScope()
 
-    // Breaks the settle↔selectedDate feedback loop (issue #267): only a settle
-    // that concluded a real user swipe may push back up to selectedDate. A
-    // programmatic scroll (grid tap, Today, cold-start) emits no drag, so its
-    // settle is suppressed and rapid taps can't oscillate.
+    // Breaks the settle and selectedDate feedback loop (#267): only a settle that ends a user
+    // swipe may push up to selectedDate. A programmatic scroll (grid tap, Today, cold start)
+    // emits no drag, so its settle is suppressed and rapid taps can't oscillate.
     val syncCoordinator = rememberDayPagerSyncCoordinator(dayPagerState.interactionSource)
 
-    // SYNC 1: Day pager settled → Update selectedDate + navigate month if boundary crossed
+    // Day pager settled: update selectedDate, and move the month pager if the month changed
     LaunchedEffect(dayPagerState.settledPage) {
         val newDateMs = DayPagerUtils.pageToDateMs(dayPagerState.settledPage, todayMs)
 
-        // Consume the user-drag intent on every settle (no carry-over to a later
-        // programmatic settle), then update selectedDate only for user-driven
-        // settles; suppressing the echo of a programmatic scroll is what stops
-        // rapid taps from oscillating (#267).
+        // Consume the drag intent on every settle so it can't carry over to a later
+        // programmatic settle, then update selectedDate only for a user settle (#267).
         val isUserSettle = syncCoordinator.shouldPropagateSettle()
         if (newDateMs != uiState.selectedDate && isUserSettle) {
             onDateSelected(newDateMs)
         }
 
-        // Refresh cache if needed
         if (shouldRefreshCache(newDateMs)) {
             onLoadEventsForRange(newDateMs)
         }
 
-        // Navigate month pager if crossed boundary
+        // Move the month pager when the day crossed into another month
         val newCal = JavaCalendar.getInstance().apply { timeInMillis = newDateMs }
         val newYear = newCal.get(JavaCalendar.YEAR)
         val newMonth = newCal.get(JavaCalendar.MONTH)
@@ -1852,9 +1810,9 @@ private fun ColumnScope.DayEventsPager(
         }
     }
 
-    // Push visible event IDs upward only for the settled page. The pager
-    // composes neighbour pages eagerly (beyondViewportPageCount), so doing
-    // this per-page would race — last neighbour wins.
+    // Report visible event IDs for the settled page only. The pager composes neighbour pages
+    // ahead (beyondViewportPageCount), so reporting per page would race and the last neighbour
+    // would win.
     val settledDayCode = remember(dayPagerState.settledPage, todayMs) {
         DayPagerUtils.msToDayCode(DayPagerUtils.pageToDateMs(dayPagerState.settledPage, todayMs))
     }
@@ -1866,7 +1824,8 @@ private fun ColumnScope.DayEventsPager(
         onSetVisibleEventIds(visibleEventIds)
     }
 
-    // SYNC 2: Calendar tap → Scroll day pager (instant to prevent race with SYNC 1)
+    // selectedDate changed (a grid tap, for example): jump the day pager, without animation so it
+    // can't race the settle effect above
     LaunchedEffect(uiState.selectedDate) {
         if (uiState.selectedDate != 0L) {
             val targetPage = DayPagerUtils.dateToPage(uiState.selectedDate, todayMs)
@@ -1876,14 +1835,14 @@ private fun ColumnScope.DayEventsPager(
         }
     }
 
-    // Initial load
+    // Initial load when no range is cached yet
     LaunchedEffect(Unit) {
         if (uiState.cacheRangeCenter == 0L && uiState.selectedDate != 0L) {
             onLoadEventsForRange(uiState.selectedDate)
         }
     }
 
-    // Check if selected date is in viewing month (for empty state)
+    // Whether the selected date is in the viewing month; if not, show the pick-a-day message
     val selectedCal = remember(uiState.selectedDate) {
         JavaCalendar.getInstance().apply { timeInMillis = uiState.selectedDate }
     }
@@ -1891,7 +1850,7 @@ private fun ColumnScope.DayEventsPager(
         selectedCal.get(JavaCalendar.YEAR) == uiState.viewingYear
 
     if (!isSelectedInViewingMonth) {
-        // Show message when user swipes month pager without selecting a day
+        // For example after swiping the month pager without picking a day
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -1944,9 +1903,7 @@ private fun ColumnScope.DayEventsPager(
     }
 }
 
-/**
- * Content for a single day page in the day pager.
- */
+/** Shows one day page of the day pager: a spinner, the empty-day message, or the event cards. */
 @Composable
 private fun DayEventsPage(
     dateMs: Long,
@@ -1972,10 +1929,9 @@ private fun DayEventsPage(
             }
         }
         events.isEmpty() -> {
-            // Rotate the playful empty-day line per calendar day so it varies
-            // between empty days but is stable across recomposition (no random).
-            // Keyed on epoch-day for clean day-to-day cycling with no month/year
-            // boundary repeats.
+            // Rotate the empty-day line per calendar day, so it varies between days but is
+            // stable across recomposition. Keyed on the epoch day, so it cycles without repeats
+            // at month or year boundaries.
             val emptyDayPhrases = remember {
                 intArrayOf(
                     R.string.empty_no_events_day_1,
@@ -2066,11 +2022,12 @@ private fun SearchResultCard(
     val fillColor = Color(displayEvent.eventColor ?: displayEvent.calendarColor)
     val fillAlpha = displayEvent.cardFillAlpha()
 
-    // Format date: for Room recurring events, show "Next: date" format using displayTs
+    // For a Room recurring event, show "Next: date" from displayTs
     val dateString = remember(searchResult, timePattern) {
         when (displayEvent) {
             is DisplayEvent.Room -> {
-                // Determine nextOccurrenceTs: non-null if displayTs differs from event start (recurring with future occ)
+                // displayTs differs from the event start for a recurring event with a later
+                // occurrence
                 val nextOccTs = searchResult.displayTs.takeIf { it != displayEvent.event.startTs }
                 formatSearchResultDateWithOccurrence(displayEvent.event, nextOccTs, timePattern = timePattern)
             }
@@ -2080,7 +2037,7 @@ private fun SearchResultCard(
         }
     }
 
-    // Format title with age for birthday events and optional emoji
+    // Title with the age for birthday events and the optional emoji
     val resources = LocalResources.current
     val displayTitle = remember(searchResult, showEventEmojis) {
         when (displayEvent) {
@@ -2130,9 +2087,8 @@ private fun SearchResultCard(
 }
 
 /**
- * Search content - displays search results with date filter chips.
- * Chips outside LazyColumn to avoid crash (no horizontalScroll needed).
- * Simplified to 4 essential chips: All, Week, Month, Date picker.
+ * Shows search results under four date filter chips: All, Week, Month and a date picker.
+ * The chips sit outside the LazyColumn to avoid a crash, in a plain Row without horizontalScroll.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -2147,7 +2103,7 @@ private fun SearchContent(
     onCustomDateClick: () -> Unit
 ) {
     Column(modifier = Modifier.fillMaxSize()) {
-        // Filter chips row - OUTSIDE LazyColumn, no scroll needed for 4 chips
+        // Four chips fit without scrolling
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -2169,7 +2125,7 @@ private fun SearchContent(
                 onClick = { onFilterSelect(DateFilter.ThisMonth) },
                 label = { Text(stringResource(R.string.view_month)) }
             )
-            // Date picker chip - shows selected date or calendar icon
+            // Date chip: shows the picked date or range, else the "Date" label
             val isCustom = currentFilter is DateFilter.SingleDay || currentFilter is DateFilter.CustomRange
             val dateLabel = stringResource(R.string.filter_date)
             FilterChip(
@@ -2179,7 +2135,6 @@ private fun SearchContent(
             )
         }
 
-        // Content area with weight(1f)
         if (results.isEmpty()) {
             Box(
                 modifier = Modifier
@@ -2209,7 +2164,7 @@ private fun SearchContent(
                     contentType = { "search_result" }
                 ) { result ->
                     val displayEvent = result.displayEvent
-                    // Determine if event is recurring (Room exceptions count as recurring)
+                    // Room exceptions count as recurring; recurring results never dim as past
                     val isRecurring = when (displayEvent) {
                         is DisplayEvent.Room -> displayEvent.event.isRecurring || displayEvent.event.isException
                         is DisplayEvent.Device -> displayEvent.hasRrule
@@ -2236,24 +2191,20 @@ private fun SearchContent(
 }
 
 /**
- * Uniform padding around the agenda list. The top inset is also the peek
- * threshold the week bar uses to skip a previous item bleeding into the padding
- * (see the anchor derivation in [HomeScreen]) — keep them sourced from here so
- * the two can't drift.
+ * Padding around the agenda list. The top inset is also the peek threshold the week bar uses
+ * to skip an item bleeding into the padding (the anchor derivation in [HomeScreen]); both read
+ * it from here so they can't drift.
  */
 private val AGENDA_CONTENT_PADDING = 16.dp
 
 /**
- * Agenda content - shows upcoming 90 days of occurrences.
- * Each recurring event instance is shown separately.
- * Multi-day events appear on each day they span with "Day X of Y" indicator.
- * Groups occurrences by date with date headers; today/tomorrow headers carry a
- * relative word ("Today"/"Tomorrow") beside the full date.
+ * Shows the agenda list: the upcoming 90 days of occurrences, grouped under date headers, one
+ * card per occurrence. A multi-day event appears on each day it spans with a "Day X of Y" line.
+ * Today's and tomorrow's headers add "Today" or "Tomorrow" beside the full date.
  *
- * The expansion / dedup / grouping is precomputed into [model] by the caller so
- * the same grouping (and its header-index map) drives both this list and the
- * week bar's tap-to-scroll. [todayDayCode] is the single today reference shared
- * with the header formatter and week bar.
+ * The caller precomputes the expansion, dedup and grouping into [model], so the same grouping
+ * and header-index map drive both this list and the week bar's tap-to-scroll. [todayDayCode]
+ * is the one today reference shared with the header formatter and the week bar.
  */
 @Composable
 private fun AgendaContent(
@@ -2289,9 +2240,9 @@ private fun AgendaContent(
                         AgendaDayHeader.format(displayDay, todayDayCode, todayLabel, tomorrowLabel)
                     }
                     if (parts.relativeLabel != null) {
-                        // Two-tone: accent the relative word, mute the rest. The
-                        // join + accent-range logic is reorder-safe (see
-                        // AgendaDayHeader.joinedHeader) so date-first locales work.
+                        // Two-tone: accent the relative word, mute the rest. The join and
+                        // accent range survive reordering (AgendaDayHeader.joinedHeader), so
+                        // date-first locales work.
                         val header = remember(parts, relativeWithDateTemplate) {
                             AgendaDayHeader.joinedHeader(parts, relativeWithDateTemplate)
                         }
@@ -2345,9 +2296,8 @@ private fun AgendaContent(
 }
 
 /**
- * Card for displaying an agenda event.
- * Shows time using DisplayEvent common properties.
- * Shows "Day X of Y" for multi-day events.
+ * Shows one agenda card from the [DisplayEvent] common properties, with "Day X of Y" for a
+ * multi-day event.
  */
 @Composable
 private fun AgendaCard(
@@ -2365,7 +2315,7 @@ private fun AgendaCard(
     val resources = LocalResources.current
     val dateString = formatAgendaCardDate(displayEvent, item.dayNumber, item.totalDays, resources, timePattern)
 
-    // Format title with age for birthday events and optional emoji
+    // Title with the age for birthday events and the optional emoji
     val displayTitle = remember(displayEvent, showEventEmojis) {
         formatDisplayEventTitle(displayEvent, showEventEmojis, resources)
     }
@@ -2413,12 +2363,12 @@ private fun AgendaCard(
 
 
 /**
- * Format event time display with multi-day indicator.
- * Shows "Day X of Y" for multi-day events.
+ * Formats an event's time line: the time range, "All day", or "Day X of Y" for a multi-day
+ * event, with a recurring marker for a series or exception. This overload writes English text;
+ * the overload taking `resources` uses string resources.
  *
- * @param event The event to format
- * @param selectedDateMillis The currently selected date (to determine which day of multi-day)
- * @param zoneId Timezone for conversion (default: system default, injectable for testing)
+ * @param selectedDateMillis the day being shown, which picks the day number of a multi-day event.
+ * @param zoneId zone for the conversion; injectable for tests.
  */
 internal fun formatEventTimeDisplay(
     event: Event,
@@ -2431,7 +2381,7 @@ internal fun formatEventTimeDisplay(
     val isMultiDay = DateTimeUtils.spansMultipleDays(event.startTs, event.endTs, event.isAllDay, zoneId)
 
     if (!isMultiDay) {
-        // Single day event - include recurring indicator for recurring/exception events
+        // Single-day event, with the recurring marker for a series or exception
         val recurringIndicator = if (event.isRecurring || event.isException) " \uD83D\uDD01" else ""
         return if (event.isAllDay) "All day$recurringIndicator"
         else {
@@ -2441,12 +2391,11 @@ internal fun formatEventTimeDisplay(
         }
     }
 
-    // Multi-day event - use DateTimeUtils for correct day calculation
+    // Multi-day event
     val totalDays = DateTimeUtils.calculateTotalDays(event.startTs, event.endTs, event.isAllDay, zoneId)
-    // Use helper that correctly handles selectedDateMillis as ALWAYS local time
+    // selectedDateMillis is always local time, for all-day events too
     val currentDay = calculateCurrentDayForEvent(event.startTs, selectedDateMillis, event.isAllDay, zoneId)
         .coerceIn(1, totalDays)
-    // Include recurring indicator for both master recurring events and exception events
     val recurringIndicator = if (event.isRecurring || event.isException) " \uD83D\uDD01" else ""
 
     return when {
@@ -2536,19 +2485,16 @@ private fun formatAgendaCardDate(
 }
 
 /**
- * Format search result date display string.
- *
- * Returns:
- * - Multi-day: "Dec 20, 2023 → Dec 25, 2023 🔁" (with recur indicator if applicable)
+ * Formats a search result's date line:
+ * - Multi-day: "Dec 20, 2023 → Dec 25, 2023"
  * - Single-day all-day: "Dec 20, 2023"
  * - Single-day timed: "Dec 20, 2023 · 9:00 AM"
  *
- * For all-day events, DTEND is exclusive per RFC 5545 (3-day event Dec 20-22 has endTs = Dec 23).
+ * A series or exception adds " 🔁". An all-day [Event.endTs] is inclusive (the exclusive RFC 5545
+ * DTEND minus 1 ms), so a Dec 20-22 event, DTEND Dec 23, shows as ending Dec 22.
  *
- * @param event The event to format
- * @param zoneId Timezone for date calculations (injectable for testing)
- * @param timePattern Time format pattern (default "h:mm a" for 12-hour)
- * @return Formatted date string for search/agenda display
+ * @param zoneId zone for the date calculations; injectable for tests.
+ * @param timePattern time pattern; the default "h:mm a" is 12-hour.
  */
 internal fun formatSearchResultDate(
     event: Event,
@@ -2561,7 +2507,7 @@ internal fun formatSearchResultDate(
     val startDate = DateTimeUtils.eventTsToLocalDate(event.startTs, event.isAllDay, zoneId)
     val displayEndDate = DateTimeUtils.eventTsToLocalDate(event.endTs, event.isAllDay, zoneId)
     val isMultiDay = DateTimeUtils.spansMultipleDays(event.startTs, event.endTs, event.isAllDay, zoneId)
-    // Exception events have originalEventId but no rrule
+    // An exception has originalEventId but no rrule
     val isRecurring = event.isRecurring || event.isException
 
     val startDateStr = startDate.format(dateFormatter)
@@ -2580,8 +2526,8 @@ internal fun formatSearchResultDate(
 }
 
 /**
- * Format search result date for a device calendar event.
- * Uses DisplayEvent common properties (no Event-specific fields needed).
+ * Formats a device calendar search result's date line like the [Event] overload, from the
+ * [DisplayEvent] common properties.
  */
 private fun formatSearchResultDate(
     displayEvent: DisplayEvent,
@@ -2608,16 +2554,13 @@ private fun formatSearchResultDate(
 }
 
 /**
- * Format search result date with next occurrence for recurring events.
+ * Formats a search result's date line with the next occurrence for a series or exception with
+ * [nextOccurrenceTs]: "Next: Jan 15, 2025 🔁", or "Next: Jan 15, 2025 · 9:00 AM 🔁" when timed.
+ * Anything else falls back to [formatSearchResultDate].
  *
- * For recurring events with nextOccurrenceTs: shows "Next: Jan 15, 2025 🔁"
- * For non-recurring or no nextOccurrenceTs: delegates to formatSearchResultDate()
- *
- * @param event The event to format
- * @param nextOccurrenceTs Next occurrence timestamp for recurring events (null for non-recurring)
- * @param zoneId Timezone for date calculations (injectable for testing)
- * @param timePattern Time format pattern (default "h:mm a" for 12-hour)
- * @return Formatted date string for search display
+ * @param nextOccurrenceTs the next occurrence's start, or null.
+ * @param zoneId zone for the date calculations; injectable for tests.
+ * @param timePattern time pattern; the default "h:mm a" is 12-hour.
  */
 internal fun formatSearchResultDateWithOccurrence(
     event: Event,
@@ -2627,12 +2570,10 @@ internal fun formatSearchResultDateWithOccurrence(
 ): String {
     val isRecurring = event.isRecurring || event.isException
 
-    // For non-recurring events or missing nextOccurrenceTs, use existing format
     if (!isRecurring || nextOccurrenceTs == null) {
         return formatSearchResultDate(event, zoneId, timePattern)
     }
 
-    // For recurring events with nextOccurrenceTs, show "Next: date" format
     val dateFormatter = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMMd"), Locale.getDefault())
     val timeFormatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
 
@@ -2655,13 +2596,11 @@ internal fun formatSearchResultDateWithOccurrence(
 // ==================== Search Date Picker Components ====================
 
 /**
- * Modal bottom sheet for selecting a custom date or date range.
- * Uses InlineDatePickerContent for consistent calendar picker UX.
- *
- * Selection behavior:
- * - First tap: Highlights date (stored in selectedDateMs)
- * - Second tap same date: Creates SingleDay filter
- * - Second tap different date: Creates CustomRange filter
+ * Shows the search date sheet for picking a single day or a date range, with
+ * InlineDatePickerContent. Each tap goes to [onDateSelected]; the ViewModel decides:
+ * - First tap: stores the range start, which comes back as [selectedDateMs]
+ * - Second tap on the same day: a SingleDay filter
+ * - Second tap on another day: a CustomRange filter
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -2673,13 +2612,13 @@ private fun SearchDatePickerSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Stable selected date - prevents recomposition during animation
-    // System.currentTimeMillis() returns different value each frame, causing jank
+    // Remembered so the fallback to now doesn't change on every frame of the sheet animation,
+    // which causes jank
     val stableSelectedDate = remember(selectedDateMs) {
         selectedDateMs ?: System.currentTimeMillis()
     }
 
-    // Track displayed month - opens to selected date's month (or current month)
+    // Displayed month; opens on the selected date's month, or the current month
     var displayedMonth by remember {
         mutableStateOf(
             JavaCalendar.getInstance().apply {
@@ -2697,7 +2636,6 @@ private fun SearchDatePickerSheet(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // Header with instructions
             Text(
                 text = if (selectedDateMs == null) {
                     stringResource(R.string.label_select_date)
@@ -2708,7 +2646,6 @@ private fun SearchDatePickerSheet(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // Calendar picker
             InlineDatePickerContent(
                 selectedDateMillis = stableSelectedDate,
                 displayedMonth = displayedMonth,
@@ -2723,7 +2660,6 @@ private fun SearchDatePickerSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Cancel button
             TextButton(
                 onClick = onDismiss,
                 modifier = Modifier.align(Alignment.End)
@@ -2739,8 +2675,8 @@ private fun SearchDatePickerSheet(
 // ==================== Week View Date Picker ====================
 
 /**
- * Modal bottom sheet for selecting a date to navigate to in the 3-day view.
- * Single tap on any date navigates to the week containing that date.
+ * Shows the go-to-date sheet used by the 3-day and week views and by Jump to date. One tap
+ * calls [onDateSelected] with the date and closes the sheet.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -2752,12 +2688,12 @@ private fun WeekViewDatePickerSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Stable current date - prevents recomposition jank
+    // Remembered so the fallback to now doesn't change on every frame, which causes jank
     val stableCurrentDate = remember(currentWeekStartMs) {
         if (currentWeekStartMs != 0L) currentWeekStartMs else System.currentTimeMillis()
     }
 
-    // Track displayed month - opens to current week's month
+    // Displayed month; opens on the shown date's month
     var displayedMonth by remember {
         mutableStateOf(
             JavaCalendar.getInstance().apply {
@@ -2775,14 +2711,12 @@ private fun WeekViewDatePickerSheet(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // Header
             Text(
                 text = stringResource(R.string.label_go_to_date),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // Calendar picker
             InlineDatePickerContent(
                 selectedDateMillis = stableCurrentDate,
                 displayedMonth = displayedMonth,
@@ -2798,7 +2732,6 @@ private fun WeekViewDatePickerSheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Cancel button
             TextButton(
                 onClick = onDismiss,
                 modifier = Modifier.align(Alignment.End)

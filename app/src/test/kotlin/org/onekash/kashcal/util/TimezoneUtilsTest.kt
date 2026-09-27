@@ -10,9 +10,12 @@ import java.time.Instant
 import java.time.ZoneId
 
 /**
- * Unit tests for TimezoneUtils.
+ * Tests [TimezoneUtils]: the zone list, search, abbreviations, offsets from the device zone,
+ * time conversion, zone info, the device zone, validity, the local-time preview, the
+ * [TimezoneUtils.TimezoneInfo] fields, and DST, no-DST, UTC and unusual-input edge cases.
  *
- * Tests timezone search, abbreviation, offset calculation, and time conversion.
+ * No zone is set, so tests that name the device zone depend on the host's; several of them
+ * assert only a format or non-null.
  */
 class TimezoneUtilsTest {
 
@@ -49,12 +52,11 @@ class TimezoneUtilsTest {
     fun `getAvailableTimezones sorted by offset`() {
         val timezones = TimezoneUtils.getAvailableTimezones()
 
-        // Find indices of known timezones
         val tokyoIndex = timezones.indexOfFirst { it.zoneId == "Asia/Tokyo" }
         val londonIndex = timezones.indexOfFirst { it.zoneId == "Europe/London" }
         val newYorkIndex = timezones.indexOfFirst { it.zoneId == "America/New_York" }
 
-        // Tokyo (UTC+9) should come after London (UTC+0) which should come after New York (UTC-5)
+        // Sorted by UTC offset: New York, then London, then Tokyo.
         assertTrue("New York should come before London", newYorkIndex < londonIndex)
         assertTrue("London should come before Tokyo", londonIndex < tokyoIndex)
     }
@@ -111,17 +113,17 @@ class TimezoneUtilsTest {
 
     @Test
     fun `searchTimezones limited to 10 results`() {
-        val results = TimezoneUtils.searchTimezones("a")  // Many matches
+        // "a" matches far more than 10 zones.
+        val results = TimezoneUtils.searchTimezones("a")
 
         assertTrue("Should return at most 10 results", results.size <= 10)
     }
 
     @Test
     fun `searchTimezones by abbreviation`() {
-        // Note: Abbreviations can be ambiguous (EST = Eastern Standard Time or Eastern European Summer Time)
+        // Abbreviations can be ambiguous, so this asserts only that "PST" finds a match.
         val results = TimezoneUtils.searchTimezones("PST")
 
-        // Should find at least one result
         assertTrue("Should find timezones matching PST", results.isNotEmpty())
     }
 
@@ -138,7 +140,7 @@ class TimezoneUtilsTest {
     fun `getAbbreviation returns short form`() {
         val abbrev = TimezoneUtils.getAbbreviation("America/New_York")
 
-        // Could be EST or EDT depending on time of year
+        // EST or EDT, depending on the time of year.
         assertTrue("Should be EST or EDT", abbrev == "EST" || abbrev == "EDT")
     }
 
@@ -151,7 +153,7 @@ class TimezoneUtilsTest {
 
     @Test
     fun `getAbbreviation at specific instant winter`() {
-        // Jan 15, 2026 - winter, should be EST
+        // Jan 15, 2025, 00:00 UTC: EST.
         val winterInstant = Instant.ofEpochMilli(1736899200000L)
 
         val abbrev = TimezoneUtils.getAbbreviation("America/New_York", winterInstant)
@@ -161,7 +163,7 @@ class TimezoneUtilsTest {
 
     @Test
     fun `getAbbreviation at specific instant summer`() {
-        // July 15, 2026 - summer, should be EDT
+        // July 15, 2025, 00:00 UTC: EDT.
         val summerInstant = Instant.ofEpochMilli(1752537600000L)
 
         val abbrev = TimezoneUtils.getAbbreviation("America/New_York", summerInstant)
@@ -195,11 +197,12 @@ class TimezoneUtilsTest {
 
     @Test
     fun `getOffsetFromDevice returns offset string`() {
-        // This test depends on device timezone, so we test format
+        // Depends on the device zone, so only the format is checked, and nothing when the
+        // result is "Device".
         val offset = TimezoneUtils.getOffsetFromDevice("Asia/Tokyo")
 
         if (offset != "Device") {
-            // Should be in format like "+9h" or "-5h" or "+5:30"
+            // "+9h", "-5h" or "+5:30".
             assertTrue("Should contain h or colon", offset.contains("h") || offset.contains(":"))
         }
     }
@@ -213,11 +216,10 @@ class TimezoneUtilsTest {
 
     @Test
     fun `getOffsetFromDevice handles half-hour offsets`() {
-        // India is UTC+5:30
+        // India is UTC+5:30. Asserts only that the result isn't null, never the half hour.
         val offset = TimezoneUtils.getOffsetFromDevice("Asia/Kolkata")
 
         if (offset != "Device") {
-            // Should show the offset, possibly with half hour
             assertNotNull(offset)
         }
     }
@@ -244,21 +246,20 @@ class TimezoneUtilsTest {
 
     @Test
     fun `convertTime between different timezones`() {
-        // Jan 6, 2026 10:00 AM in New York
-        val nyTime = 1767717600000L  // Jan 6, 2026 15:00:00 UTC (= 10 AM EST)
+        // Jan 6, 2026, 16:40 UTC (11:40 AM EST).
+        val nyTime = 1767717600000L
 
-        // Convert to Tokyo time (same instant)
         val tokyoTime = TimezoneUtils.convertTime(nyTime, "America/New_York", "Asia/Tokyo")
 
-        // Should be the same instant (just displayed differently)
+        // The conversion keeps the instant.
         assertEquals("Same instant should produce same timestamp", nyTime, tokyoTime)
     }
 
     @Test
     fun `convertTime preserves instant`() {
-        val originalMs = 1767657600000L  // Jan 6, 2026 00:00:00 UTC
+        // Jan 6, 2026, 00:00 UTC.
+        val originalMs = 1767657600000L
 
-        // Converting between any timezones should preserve the instant
         val result = TimezoneUtils.convertTime(originalMs, "UTC", "America/New_York")
 
         assertEquals("Instant should be preserved", originalMs, result)
@@ -287,7 +288,8 @@ class TimezoneUtilsTest {
         val info = TimezoneUtils.getTimezoneInfo("Asia/Kolkata")
 
         assertNotNull(info)
-        assertEquals("Mumbai", info?.displayName)  // Overridden from Kolkata
+        // The display name override replaces "Kolkata".
+        assertEquals("Mumbai", info?.displayName)
     }
 
     // ==================== getDeviceTimezone Tests ====================
@@ -342,16 +344,16 @@ class TimezoneUtilsTest {
 
     @Test
     fun `formatLocalTimePreview includes time and abbreviation`() {
-        // Skip if device is already in Tokyo
+        // Returns early, passing without asserting, when the device zone is Tokyo.
         if (ZoneId.systemDefault().id == "Asia/Tokyo") return
 
-        // Jan 6, 2026 10:00 AM UTC
+        // Jan 6, 2026, 10:00 UTC.
         val eventTimeMs = 1767693600000L
 
         val result = TimezoneUtils.formatLocalTimePreview(eventTimeMs, "Asia/Tokyo")
 
         assertNotNull("Should return preview for different timezone", result)
-        // Should contain AM or PM and timezone abbreviation
+        // Only AM or PM is checked, not the abbreviation.
         assertTrue("Should contain time format",
             result!!.contains("AM") || result.contains("PM") ||
             result.contains("am") || result.contains("pm"))
@@ -359,17 +361,13 @@ class TimezoneUtilsTest {
 
     @Test
     fun `formatLocalTimePreview shows next day indicator`() {
-        // This test is timezone-dependent, so we create a specific scenario
-        // Create an event at 11 PM in a timezone that's ahead of device
-        // The result depends on device timezone, so just verify format
-
-        // Jan 6, 2026 23:00 UTC
+        // Despite the name, no next-day suffix is asserted. The event is at Jan 6, 2026, 23:00
+        // UTC in the UTC zone; the result is null when the device zone ID is "UTC", and
+        // otherwise only a ":" is checked.
         val lateNightUtc = 1767740400000L
 
-        // Testing with UTC as event timezone
         val result = TimezoneUtils.formatLocalTimePreview(lateNightUtc, "UTC")
 
-        // Result format should be valid if returned
         if (result != null) {
             assertTrue("Should contain time", result.contains(":"))
         }
@@ -396,16 +394,14 @@ class TimezoneUtilsTest {
 
     @Test
     fun `handles DST transitions`() {
-        // DST in US 2026: March 8 at 2:00 AM local becomes 3:00 AM
-        // March 8, 2026 01:00 EST = March 8, 2026 06:00 UTC
-        val beforeDst = Instant.ofEpochMilli(1772949600000L)  // March 8, 2026 06:00 UTC (= 1 AM EST)
-        // March 8, 2026 08:00 UTC = March 8, 2026 04:00 AM EDT (after 3 AM switch)
-        val afterDst = Instant.ofEpochMilli(1772956800000L)   // March 8, 2026 08:00 UTC
+        // US DST 2026: March 8 at 2:00 AM local becomes 3:00 AM. 06:00 UTC is 1 AM EST;
+        // 08:00 UTC is 4 AM EDT.
+        val beforeDst = Instant.ofEpochMilli(1772949600000L)
+        val afterDst = Instant.ofEpochMilli(1772956800000L)
 
         val abbrevBefore = TimezoneUtils.getAbbreviation("America/New_York", beforeDst)
         val abbrevAfter = TimezoneUtils.getAbbreviation("America/New_York", afterDst)
 
-        // Before DST should be EST, after should be EDT
         assertEquals("EST", abbrevBefore)
         assertEquals("EDT", abbrevAfter)
     }
@@ -413,8 +409,9 @@ class TimezoneUtilsTest {
     @Test
     fun `handles timezones without DST`() {
         // Arizona doesn't observe DST
-        val summerInstant = Instant.ofEpochMilli(1752537600000L)  // July 2026
-        val winterInstant = Instant.ofEpochMilli(1736899200000L)  // January 2026
+        // July 15 and January 15, 2025.
+        val summerInstant = Instant.ofEpochMilli(1752537600000L)
+        val winterInstant = Instant.ofEpochMilli(1736899200000L)
 
         val summerAbbrev = TimezoneUtils.getAbbreviation("America/Phoenix", summerInstant)
         val winterAbbrev = TimezoneUtils.getAbbreviation("America/Phoenix", winterInstant)
@@ -433,15 +430,14 @@ class TimezoneUtilsTest {
 
     @Test
     fun `search handles unicode characters`() {
-        // Should not crash with unicode input
+        // Asserts only that unicode input doesn't crash; a match isn't required.
         val results = TimezoneUtils.searchTimezones("東京")
-        // May or may not find results, but should not crash
         assertNotNull(results)
     }
 
     @Test
     fun `search handles special characters`() {
-        // Should not crash with special characters
+        // Asserts only that a hyphen doesn't crash.
         val results = TimezoneUtils.searchTimezones("New-York")
         assertNotNull(results)
     }

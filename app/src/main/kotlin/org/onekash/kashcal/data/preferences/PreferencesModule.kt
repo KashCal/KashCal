@@ -8,9 +8,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
-/**
- * Hilt module providing preferences-related dependencies.
- */
+/** Provides the Hilt singleton [KashCalDataStore]; widgets build their own over the same file. */
 @Module
 @InstallIn(SingletonComponent::class)
 object PreferencesModule {

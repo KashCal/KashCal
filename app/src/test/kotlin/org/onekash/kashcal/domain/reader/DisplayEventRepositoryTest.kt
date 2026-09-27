@@ -12,10 +12,14 @@ import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
 
 /**
- * Unit tests for DisplayEventRepository merge logic.
+ * Tests the day-code helpers of [DisplayEventRepository], [generateDayCodesInRange] and
+ * [spannedDayCodesWithinWindow], and the instance, search and SecurityException behavior of
+ * [FakeCalendarProviderRepository].
  *
- * Tests the core merge/grouping/sort logic that the composite repository uses.
- * The combine() Flow integration is tested implicitly via full suite.
+ * The merge, grouping, multi-day expansion and search-merge tests run inline `sortedBy`,
+ * `groupBy` and unclamped expansion code modeled on the repository and don't call it; the
+ * repository expands through [spannedDayCodesWithinWindow].
+ * [DisplayEventRepositoryDeviceRealProviderTest] drives its Flow and one-shot reads.
  */
 class DisplayEventRepositoryTest {
 
@@ -120,10 +124,9 @@ class DisplayEventRepositoryTest {
     }
 
     // ========== Multi-Day Expansion clamped to the query window ==========
-    // A multi-day event must only occupy day buckets INSIDE the requested
-    // window. Expanding across the event's own full span leaks buckets before
-    // the window start (issue #306: the upcoming widget's first row became the
-    // event's start date instead of today for an event that began earlier).
+    // A multi-day event occupies only the day buckets inside the requested window. Expanding
+    // over its full span leaks buckets before the window start (#306: the upcoming widget's
+    // first row showed the event's start date instead of today for an event that began earlier).
 
     @Test
     fun `multi-day event starting before the window clamps to the window start`() {
@@ -132,7 +135,7 @@ class DisplayEventRepositoryTest {
             startDay = 20260213, endDay = 20260217,
             windowStartDayCode = 20260215, windowEndDayCode = 20260220
         )
-        // No bucket before the window start; first bucket is the window start.
+        // No bucket before the window start; the first bucket is the window start.
         assertEquals(listOf(20260215, 20260216, 20260217), days)
     }
 
@@ -250,7 +253,8 @@ class DisplayEventRepositoryTest {
 
     @Test
     fun `generateDayCodesInRange valid range at 366-day cap works`() {
-        val result = generateDayCodesInRange(20260101, 20270102) // 366 days between = at cap, 367 entries (inclusive)
+        // 366 days apart, at the cap: 367 entries.
+        val result = generateDayCodesInRange(20260101, 20270102)
         assertEquals(367, result.size)
         assertEquals(20260101, result.first())
         assertEquals(20270102, result.last())
@@ -409,7 +413,7 @@ class DisplayEventRepositoryTest {
 
     @Test
     fun `search merge with Room recurring uses nextOccurrenceTs`() {
-        // Room recurring event with startTs=1000 but nextOccurrenceTs=5000
+        // A recurring Room event with startTs=1000 whose next occurrence is at 5000.
         val roomResult = SearchResult(
             displayEvent = roomEvent(startTs = 1000L, title = "Recurring Room"),
             displayTs = 5000L // nextOccurrenceTs

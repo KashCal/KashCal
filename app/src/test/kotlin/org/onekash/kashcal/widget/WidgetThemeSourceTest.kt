@@ -5,9 +5,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pure unit tests for [WidgetThemeSource]: pref-value mapping and the follow-app fallback.
- * A legacy "system" value (written by the earlier widget-theme setting) is unknown here and
- * must map to [WidgetThemeSource.FOLLOW_APP], the current default.
+ * Tests [WidgetThemeSource]: pref-value round trips, the [WidgetThemeSource.FOLLOW_APP] fallback,
+ * the stored pref values and each source's label and description resources. The "system" value an
+ * older widget-theme setting stored is unknown here and must map to FOLLOW_APP, the default.
  */
 class WidgetThemeSourceTest {
 
@@ -22,7 +22,7 @@ class WidgetThemeSourceTest {
     fun `fromPrefValue falls back to FOLLOW_APP for unknown or null`() {
         assertEquals(WidgetThemeSource.FOLLOW_APP, WidgetThemeSource.fromPrefValue(null))
         assertEquals(WidgetThemeSource.FOLLOW_APP, WidgetThemeSource.fromPrefValue(""))
-        // The retired "system" value from the earlier widget-theme setting.
+        // The "system" value an older widget-theme setting stored.
         assertEquals(WidgetThemeSource.FOLLOW_APP, WidgetThemeSource.fromPrefValue("system"))
         assertEquals(WidgetThemeSource.FOLLOW_APP, WidgetThemeSource.fromPrefValue("bogus"))
     }

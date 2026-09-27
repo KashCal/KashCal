@@ -27,9 +27,8 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
 /**
- * Bottom sheet for renaming an account.
- *
- * Pre-fills with current name. Save is disabled for empty/whitespace-only input.
+ * Shows a bottom sheet for renaming an account. Pre-fills the current name; Save is disabled
+ * while the input is blank.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

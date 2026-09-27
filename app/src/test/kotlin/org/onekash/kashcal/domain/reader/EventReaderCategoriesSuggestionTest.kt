@@ -17,10 +17,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [EventReader.getRecentCategories] — the tag-suggestion source. The
- * tag metadata table is the source of truth, so suggestions rank purely by
- * recency (most-recently used first) with a stable name-ASC tiebreak, and
- * deletes/renames are reflected immediately.
+ * Tests [EventReader.getRecentCategories], the tag-suggestion source: most recently used first,
+ * ties by name ascending, capped at 20. The tag table is the source of truth, so deletes and
+ * renames show at once.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])

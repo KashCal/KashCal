@@ -42,16 +42,12 @@ fun EventFormRow(
     showExpandIcon: Boolean = false,
     onToggle: (() -> Unit)? = null,
     enabled: Boolean = true,
-    // Vertical alignment of the icon and content. Rows whose content is a
-    // single line stay centered (the default); a row with a tall multi-line
-    // field (e.g. Notes) passes Top so the icon lines up with the first line
-    // instead of floating to the field's vertical middle.
+    // Single-line rows stay centered. A row with tall content (Notes, the tag row) passes Top
+    // so the icon lines up with the first line instead of floating to the middle.
     verticalAlignment: Alignment.Vertical = Alignment.CenterVertically,
-    // Extra top offset for the icon when [verticalAlignment] is Top. Tall rows
-    // start their content below the row top by different amounts — a text
-    // field carries internal top padding, a chip/button row is centered in a
-    // taller box — so each Top-aligned row sets the offset that drops its icon
-    // onto its own first line. Ignored when centered.
+    // Extra top offset for the icon when [verticalAlignment] is Top. Tall rows start their
+    // first line at different depths (a text field has internal top padding, a chip row is
+    // centered in a taller box), so each sets its own. Ignored when centered.
     iconTopPadding: Dp = 0.dp,
     expandedContent: (@Composable () -> Unit)? = null,
     content: @Composable RowScope.() -> Unit
@@ -74,9 +70,6 @@ fun EventFormRow(
                     icon,
                     contentDescription = iconContentDescription,
                     tint = iconTint,
-                    // When top-aligned, drop the icon by the row-specific
-                    // offset so it meets that row's first line (a text field's
-                    // first line, a chip row's chips, etc.).
                     modifier = Modifier
                         .then(
                             if (verticalAlignment == Alignment.Top && iconTopPadding > 0.dp)

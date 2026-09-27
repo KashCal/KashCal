@@ -5,24 +5,26 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests verifying that the centerOffset crash (commit 5de85a7) is fixed.
+ * Tests that a wheel's initial index and scroll targets are never negative.
  *
- * Original crash root cause: centerOffset was subtracted from ALL lists including
- * non-circular AM/PM (2 items, middleOffset=0), producing negative indices.
+ * Subtracting the centering offset (`visibleItems / 2`) from a non-circular two-item AM/PM list
+ * (middleOffset 0) gives a negative index. A wheel of two or more items can be circular, and
+ * every app wheel passes `isCircular = true`, so AM/PM starts at middleOffset 1000 and the
+ * subtraction stays positive. Every circular wheel subtracts the same offset so all center
+ * alike.
  *
- * Current fix: AM/PM is now circular (isCircular=true, threshold lowered to items.size >= 2).
- * With circular mode, middleOffset=1000 ensures centerOffset subtraction never goes negative.
- * centeringOffset is applied uniformly to all circular lists for consistent centering.
+ * The index formulas are local copies of `VerticalWheelPicker`'s arithmetic.
  */
 class WheelPickerCenterOffsetCrashTest {
 
     companion object {
+        // Same value as the picker's private CIRCULAR_MULTIPLIER.
         private const val CIRCULAR_MULTIPLIER = 1000
     }
 
     /**
-     * Simulates VerticalWheelPicker's initialIndex calculation (current implementation).
-     * All wheels are circular with centeringOffset applied.
+     * Copies the circular branch of `VerticalWheelPicker`'s initialIndex. For a non-circular
+     * list it drops the offset, where the picker subtracts it and clamps at 0.
      */
     private fun computeInitialIndex(
         items: List<Any>,
@@ -37,8 +39,8 @@ class WheelPickerCenterOffsetCrashTest {
     }
 
     /**
-     * Simulates the CRASHED initialIndex calculation (commit 5de85a7).
-     * Bug: applied centerOffset to non-circular AM/PM (middleOffset=0).
+     * Computes the initial index with a three-item circular threshold and the offset always
+     * subtracted, which goes negative for a non-circular AM/PM list (middleOffset 0).
      */
     private fun computeCrashedInitialIndex(
         items: List<Any>,
@@ -46,17 +48,18 @@ class WheelPickerCenterOffsetCrashTest {
         isCircular: Boolean,
         visibleItems: Int
     ): Int {
-        val effectiveCircular = isCircular && items.size >= 3  // Old threshold: >= 3
+        // Threshold >= 3, so AM/PM isn't circular
+        val effectiveCircular = isCircular && items.size >= 3
         val middleOffset = if (effectiveCircular) (CIRCULAR_MULTIPLIER / 2) * items.size else 0
-        val centerOffset = visibleItems / 2  // Applied unconditionally — the bug
+        val centerOffset = visibleItems / 2  // Applied unconditionally, so it can go negative
         return middleOffset + selectedIndex - centerOffset
     }
 
-    // ==================== Historical Crash Scenarios (documenting what went wrong) ====================
+    // ==================== Offset Subtracted From a Non-Circular AM/PM List ====================
 
     @Test
     fun `crashed version - AM with non-circular visibleItems 3 was negative`() {
-        // The old approach: AM/PM non-circular, centerOffset applied unconditionally
+        // Non-circular AM/PM with the offset subtracted unconditionally:
         // middleOffset=0, selectedIndex=0, centerOffset=1 → -1
         val items = listOf("AM", "PM")
         val crashedIndex = computeCrashedInitialIndex(items, selectedIndex = 0, isCircular = false, visibleItems = 3)
@@ -77,7 +80,7 @@ class WheelPickerCenterOffsetCrashTest {
         assertEquals("Old approach: PM index was -1 (crash)", -1, crashedIndex)
     }
 
-    // ==================== Current Fix: AM/PM Circular - No Crash ====================
+    // ==================== Circular AM/PM: Non-Negative Index ====================
 
     @Test
     fun `fixed - AM circular with visibleItems 3 produces valid index`() {
@@ -117,7 +120,7 @@ class WheelPickerCenterOffsetCrashTest {
     @Test
     fun `fixed - all configurations produce non-negative initialIndex`() {
         val testConfigs = listOf(
-            2 to true,    // AM/PM (now circular)
+            2 to true,    // AM/PM (circular)
             12 to true,   // Hours 1-12
             24 to true,   // Hours 0-23
             12 to true    // Minutes (0-55 step 5)
@@ -180,8 +183,8 @@ class WheelPickerCenterOffsetCrashTest {
 
     @Test
     fun `pixel-based centerIndex is unchanged by fix`() {
-        // The fix only changes scroll targets and circular threshold.
-        // The pixel-based centerIndex derivedStateOf is NOT modified.
+        // Asserts nothing: the picker selects through its pixel-based centerIndex
+        // derivedStateOf, which the index arithmetic above doesn't touch.
         assertTrue("Pixel-based centerIndex is preserved (code review assertion)", true)
     }
 }

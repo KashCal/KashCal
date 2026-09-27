@@ -78,19 +78,13 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.Calendar as JavaCalendar
 
-/**
- * Selection mode for date range picker.
- * Tracks which date (start or end) the user is currently editing.
- */
+/** Names which date of a range, start or end, the user is editing. */
 enum class DateSelectionMode {
     START,
     END
 }
 
-/**
- * Active datetime sheet state.
- * Tracks which combined datetime sheet is currently open.
- */
+/** Names which [DateTimeSheet], start or end, is open. */
 enum class ActiveDateTimeSheet {
     NONE,
     START,
@@ -98,18 +92,14 @@ enum class ActiveDateTimeSheet {
 }
 
 /**
- * Date/time picker card that displays the selected date and time.
- * Clicking opens a datetime picker sheet.
+ * Shows the selected date and time as a read-only outlined field; a tap calls [onClick].
  *
- * @param label "Starts" or "Ends" - floats on border like OutlinedTextField
- * @param dateMillis Date timestamp for display
- * @param hour Hour (0-23)
- * @param minute Minute (0-59)
- * @param isAllDay Hide time when true
- * @param onClick Opens datetime picker sheet
- * @param isError Show error state with red border and strikethrough text
- * @param errorMessage Error message to display below the field
- * @param timezone Timezone ID for display (null = device default, no suffix shown)
+ * @param label "Starts" or "Ends", floating on the border like an OutlinedTextField label.
+ * @param hour 0-23.
+ * @param isAllDay hides the time.
+ * @param isError shows the error border and strikes through the text.
+ * @param errorMessage shown below the field.
+ * @param timezone shown as an abbreviation badge only when timed and not the device zone.
  */
 @Deprecated("Use DateTimeDisplayRow instead", level = DeprecationLevel.WARNING)
 @Composable
@@ -128,7 +118,6 @@ fun DateTimePickerCard(
 ) {
     val focusManager = LocalFocusManager.current
 
-    // Get timezone abbreviation for badge (only when different from device timezone)
     val deviceTimezone = TimezoneUtils.getDeviceTimezone()
     val timezoneAbbrev = if (!isAllDay && timezone != null && timezone != deviceTimezone) {
         TimezoneUtils.getAbbreviation(timezone)
@@ -162,7 +151,7 @@ fun DateTimePickerCard(
             )
         )
 
-        // Timezone badge - floats on top-right border, mirrors "Starts" label on left
+        // Floats on the top-right border, mirroring the label on the left.
         if (timezoneAbbrev != null) {
             Text(
                 text = timezoneAbbrev,
@@ -176,7 +165,7 @@ fun DateTimePickerCard(
             )
         }
 
-        // Invisible clickable overlay (OutlinedTextField readOnly still shows cursor on tap)
+        // A readOnly OutlinedTextField still shows a cursor on tap, so an overlay takes the tap.
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -192,17 +181,15 @@ fun DateTimePickerCard(
 }
 
 /**
- * Format date for picker display.
- * Always uses local timezone since form state is already in local time.
+ * Formats a form date in the local zone, since form state is in local time.
  *
- * Note: For all-day events, form state contains local midnight (converted from
- * UTC via utcMidnightToLocalDate). We must NOT pass isAllDay=true here, as that
- * would re-interpret the local timestamp as UTC, causing wrong date display in
- * UTC+ timezones (e.g., Australia UTC+11 would show Jan 5 instead of Jan 6).
+ * For all-day events the form holds local midnight (converted from UTC by
+ * `DateTimeUtils.utcMidnightToLocalDate`), so the formatter must not get isAllDay = true: it
+ * would read that local timestamp as UTC and show the previous day east of UTC (at UTC+11,
+ * Jan 5 for Jan 6).
  */
 @Suppress("UNUSED_PARAMETER") // isAllDay kept for API compatibility
 private fun formatDateForPicker(dateMillis: Long, isAllDay: Boolean): String {
-    // Always use local timezone - form state is already converted to local time
     return DateTimeUtils.formatEventDate(dateMillis, isAllDay = false)
 }
 
@@ -233,10 +220,9 @@ fun DateTimeDisplayRow(
     } else null
 
     Column(modifier = modifier) {
-        // All-day toggle with clock icon. A Switch reserves a 48dp interactive
-        // box, which inflates this row's height above the single-line rows and
-        // opens a larger gap above the label after the divider. Opt the switch
-        // out of that minimum so the row sits at the text/switch height.
+        // A Switch reserves a 48dp interactive box, which makes this row taller than the
+        // single-line rows and widens the gap after the divider. The switch opts out of that
+        // minimum so the row sits at the text height.
         EventFormRow(
             icon = Icons.Default.Schedule,
             iconContentDescription = stringResource(R.string.label_all_day),
@@ -255,7 +241,7 @@ fun DateTimeDisplayRow(
             }
         }
 
-        // Start date/time — indented to align with text (past icon column)
+        // Start date and time, indented past the icon column to align with the row text.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -294,7 +280,6 @@ fun DateTimeDisplayRow(
             )
         }
 
-        // End date/time
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -336,22 +321,15 @@ fun DateTimeDisplayRow(
 }
 
 /**
- * Combined date + time picker sheet with buffered state and blocked gestural dismiss.
- * Shows calendar and wheel time picker in a single sheet.
+ * Shows a sheet with a date grid and, for timed events, a time wheel.
  *
- * Features:
- * - Local buffered state (changes don't apply until Done)
- * - Gestural dismiss blocked (explicit Cancel/Done buttons only)
- * - Done button to commit changes
- * - Timezone picker chip (for timed events)
+ * Changes stay in local state until Done, and sheet gestures are off so a drag can't dismiss
+ * it. Done first collapses an open month/year wheel.
  *
- * @param selectedDateMillis Initial date timestamp
- * @param selectedHour Initial hour (0-23)
- * @param selectedMinute Initial minute (0-59)
- * @param selectedTimezone Initial timezone ID (null = device default)
- * @param isAllDay Hide time picker when true
- * @param onConfirm Called with new date/time/timezone when user taps Done
- * @param onDismiss Called when user dismisses without saving
+ * @param selectedTimezone not read by the sheet.
+ * @param isAllDay hides the time picker.
+ * @param onConfirm called with the new date, hour (0-23) and minute on Done.
+ * @param onDismiss called on Cancel or a dismiss request (back, scrim), without saving.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -367,7 +345,6 @@ fun DateTimeSheet(
     onDismiss: () -> Unit,
     firstDayOfWeek: Int = java.util.Calendar.SUNDAY
 ) {
-    // Local buffered state
     var localDateMillis by remember { mutableStateOf(selectedDateMillis) }
     var localHour by remember { mutableIntStateOf(selectedHour) }
     var localMinute by remember { mutableIntStateOf(selectedMinute) }
@@ -380,7 +357,7 @@ fun DateTimeSheet(
 
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Done: collapse wheel if open, otherwise confirm and dismiss
+    // Collapses the wheel if open, else confirms.
     val onDoneClick: () -> Unit = {
         if (showMonthYearPicker) showMonthYearPicker = false
         else onConfirm(localDateMillis, localHour, localMinute)
@@ -434,7 +411,6 @@ fun DateTimeSheet(
 
             HorizontalDivider()
 
-            // Calendar picker - updates LOCAL state (compact)
             InlineDatePickerContent(
                 selectedDateMillis = localDateMillis,
                 displayedMonth = displayedMonth,
@@ -445,7 +421,6 @@ fun DateTimeSheet(
                 onShowMonthYearPickerChange = { showMonthYearPicker = it }
             )
 
-            // Time picker - updates LOCAL state (unless all-day)
             if (!isAllDay) {
                 HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
@@ -454,12 +429,11 @@ fun DateTimeSheet(
                 var showTimeDialog by remember { mutableStateOf(false) }
                 val timePattern = if (use24Hour) "HH:mm" else "h:mm a"
 
-                // No fixed height: the wheel renders at its intrinsic size (as it did before
-                // the exact-time entry was added), and the Box wraps it so the overlaid icon
-                // aligns to the wheel's own top-right corner, just below the divider.
+                // No fixed height: the wheel renders at its intrinsic size, and the Box wraps it
+                // so the overlaid icon aligns to the wheel's top-right corner below the divider.
                 Box(modifier = Modifier.fillMaxWidth()) {
                     if (isOnWheelGrid(localMinute)) {
-                        // Common case: the 5-minute wheel can represent this time exactly.
+                        // The 5-minute wheel can show this time exactly.
                         WheelTimePicker(
                             selectedHour = localHour,
                             selectedMinute = localMinute,
@@ -549,8 +523,11 @@ fun DateTimeSheet(
 }
 
 /**
- * Inline date picker content (calendar grid).
- * Supports swipe gestures for month navigation.
+ * Shows a month grid with swipe and arrow month navigation, and a month/year wheel behind the
+ * header.
+ *
+ * @param showMonthYearPicker the wheel's visibility when the caller manages it with
+ *   [onShowMonthYearPickerChange]; null keeps it internal.
  */
 @Composable
 fun InlineDatePickerContent(
@@ -574,7 +551,8 @@ fun InlineDatePickerContent(
 
     var totalDrag by remember { mutableFloatStateOf(0f) }
     val monthYearFormat = remember { SimpleDateFormat(DateTimeUtils.localizedPattern("yMMMM"), Locale.getDefault()) }
-    // Fall back to internal state when the caller isn't managing visibility (e.g., RecurrencePicker "Until" date).
+    // Internal when the caller doesn't manage visibility (the RecurrencePicker "Until" date,
+    // the home screen date pickers).
     var localShowMonthYearPicker by remember { mutableStateOf(false) }
     val effectiveShowMonthYearPicker = showMonthYearPicker ?: localShowMonthYearPicker
     val setShowMonthYearPicker: (Boolean) -> Unit = { value ->
@@ -612,7 +590,6 @@ fun InlineDatePickerContent(
                 } else Modifier
             )
     ) {
-        // Month navigation header
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -681,7 +658,6 @@ fun InlineDatePickerContent(
             }
         }
 
-        // Crossfade between calendar grid and month/year wheel picker
         Box(modifier = Modifier.heightIn(min = 220.dp)) {
             Crossfade(
                 targetState = effectiveShowMonthYearPicker,
@@ -703,7 +679,6 @@ fun InlineDatePickerContent(
                     )
                 } else {
                     Column {
-                        // Day of week headers
                         val orderedDays = remember(firstDayOfWeek) {
                             DateTimeUtils.getOrderedDaysOfWeek(firstDayOfWeek)
                         }
@@ -725,7 +700,6 @@ fun InlineDatePickerContent(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        // Calendar grid
                         val firstDayOfMonth = displayedMonth.clone() as JavaCalendar
                         firstDayOfMonth.set(JavaCalendar.DAY_OF_MONTH, 1)
                         val gridOffset = DateTimeUtils.getFirstDayOffset(firstDayOfMonth, firstDayOfWeek)
@@ -763,9 +737,9 @@ fun InlineDatePickerContent(
                                                         DayCellStyle.PLAIN -> Color.Transparent
                                                     }
                                                 )
-                                                // The today fill can wash out against the surface for
-                                                // pale accent seeds; a hairline outline keeps the ring
-                                                // visible on any theme (selected uses a strong fill).
+                                                // The today fill can wash out for pale accent
+                                                // seeds; a hairline outline keeps it visible on any
+                                                // theme.
                                                 .then(
                                                     if (cellStyle == DayCellStyle.TODAY) {
                                                         Modifier.border(1.dp, MaterialTheme.colorScheme.outline, CircleShape)
@@ -806,15 +780,14 @@ fun InlineDatePickerContent(
     }
 }
 
-// ==================== Helper Functions ====================
+// ==================== Helpers ====================
 
 /**
- * Visual state of a single day cell in the calendar grid.
+ * Names the look of one day cell in the grid.
  *
- * Today and the selected day are independent states that can land on the same
- * cell. When they do, the SELECTED treatment wins (its fill already makes the
- * cell unmistakable). Otherwise today keeps its own fill, so it stays visible
- * whenever a different date is selected.
+ * Today and the selected day can land on the same cell; then [SELECTED] wins, its fill already
+ * marks the cell. Otherwise today keeps its own fill, so it stays visible while another date is
+ * selected.
  */
 enum class DayCellStyle {
     PLAIN,
@@ -822,9 +795,7 @@ enum class DayCellStyle {
     SELECTED
 }
 
-/**
- * Resolve a day cell's visual state. Selection takes precedence over today.
- */
+/** Returns a day cell's look; selection wins over today. */
 fun dayCellStyle(isToday: Boolean, isSelected: Boolean): DayCellStyle = when {
     isSelected -> DayCellStyle.SELECTED
     isToday -> DayCellStyle.TODAY
@@ -832,17 +803,15 @@ fun dayCellStyle(isToday: Boolean, isSelected: Boolean): DayCellStyle = when {
 }
 
 /**
- * The wheel only offers minutes in 5-minute steps, so it can represent a minute
- * exactly only when it is a multiple of five. Off-grid minutes (e.g. 9:47, entered
- * via the exact-time dialog) route to a tappable text display instead of the wheel.
+ * Returns whether the 5-minute wheel can show [minute] exactly. An off-grid minute (9:47 from
+ * the exact-time dialog) shows as tappable text instead of the wheel.
  */
 fun isOnWheelGrid(minute: Int): Boolean = minute % 5 == 0
 
 /**
- * Exact-time entry dialog: a centered text-input picker (hour/minute fields, plus
- * AM/PM in 12-hour mode) with no clock dial. Because it is a centered dialog rather
- * than inline sheet content, it floats above the soft keyboard instead of being
- * covered by it. Accepts any minute, so a value like 9:47 round-trips exactly.
+ * Shows a dialog for typing an exact time: hour and minute fields, plus AM/PM in 12-hour mode.
+ * As a centered dialog it floats above the soft keyboard, which would cover inline sheet
+ * content. Any minute is accepted, so 9:47 round-trips exactly.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -882,16 +851,14 @@ fun ExactTimeDialog(
 }
 
 /**
- * True when two calendars fall on the same civil day (year + day-of-year), so a
- * "today" instant sampled at 11:59 PM does not match tomorrow's grid cell.
+ * Returns whether two calendars fall on the same civil day (year and day of year), so a
+ * "today" sampled at 11:59 PM doesn't match tomorrow's grid cell.
  */
 fun isSameCalendarDay(a: JavaCalendar, b: JavaCalendar): Boolean =
     a.get(JavaCalendar.YEAR) == b.get(JavaCalendar.YEAR) &&
         a.get(JavaCalendar.DAY_OF_YEAR) == b.get(JavaCalendar.DAY_OF_YEAR)
 
-/**
- * Check if time range crosses midnight (requires +1 badge on end date).
- */
+/** Returns whether the end time is earlier in the day than the start, crossing midnight. */
 fun isMidnightCrossing(
     startHour: Int,
     startMinute: Int,

@@ -15,9 +15,11 @@ import java.time.LocalTime
 import java.util.Locale
 
 /**
- * Tests for AvailabilityFormatter.
+ * Tests [AvailabilityFormatter.format]: empty state, header, 12- and 24-hour times, day labels
+ * and order, one line per day with days without blocks left out, and the end of day (the 1440
+ * sentinel and `LocalTime.MAX`).
  *
- * Pure formatter; uses Robolectric only for context.getString string-resource lookup.
+ * The formatter is pure; Robolectric is here only for its string and plural resource lookups.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -55,7 +57,7 @@ class AvailabilityFormatterTest {
             is24Hour = false,
             context = context
         )
-        // Empty-state string resource is used; not the header.
+        // The empty-state string, not the header.
         assertFalse(out.contains("Free over the next"))
         assertTrue(out.isNotBlank())
     }
@@ -74,7 +76,7 @@ class AvailabilityFormatterTest {
             is24Hour = false,
             context = context
         )
-        // Header references the day count (1 day) somewhere in the first line.
+        // The first line (the header) contains the day count, 1.
         val firstLine = out.lineSequence().first()
         assertTrue("Header should reference day count: $firstLine", firstLine.contains("1"))
     }
@@ -93,7 +95,7 @@ class AvailabilityFormatterTest {
             is24Hour = false,
             context = context
         )
-        // 14:00 -> "2 PM" or "2:00 PM" — at minimum we expect "PM" to appear.
+        // 14:00 may render as "2 PM" or "2:00 PM"; the assert checks only for "PM".
         assertTrue("Expected PM marker in 12h output: $out", out.contains("PM"))
     }
 
@@ -176,7 +178,7 @@ class AvailabilityFormatterTest {
         )
         val mondayLines = out.lines().filter { it.contains("Mon") }
         assertEquals("Expected exactly one Monday line: $mondayLines", 1, mondayLines.size)
-        // Both ranges appear on the same line.
+        // Both ranges are on that line.
         val mondayLine = mondayLines.first()
         assertTrue("Expected first range: $mondayLine", mondayLine.contains("09:00"))
         assertTrue("Expected second range: $mondayLine", mondayLine.contains("13:00"))
@@ -186,7 +188,7 @@ class AvailabilityFormatterTest {
 
     @Test
     fun `days with no qualifying block are omitted from body`() {
-        // 3-day window, but only Mon and Wed have blocks. Tue not in input.
+        // A 3-day window with blocks on Mon and Wed only.
         val out = formatter.format(
             blocks = listOf(
                 block(mon, 10, 0, 12, 0),
@@ -219,7 +221,7 @@ class AvailabilityFormatterTest {
             is24Hour = true,
             context = context
         )
-        // Header should reference the 24:00 end-of-day, not "00:00".
+        // The header shows the end of day as 24:00, not 00:00.
         val firstLine = out.lineSequence().first()
         assertTrue("Expected 24:00 in 24h header: $firstLine", firstLine.contains("24:00"))
     }

@@ -20,8 +20,8 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
 /**
- * Unit tests for [persistSchedulingDiscovery] — RFC 6638 outbox + per-collection
- * auto-schedule capability discovery, persisted non-fatally.
+ * Tests [persistSchedulingDiscovery]: RFC 6638 schedule-outbox URL and per-collection
+ * auto-schedule capability discovery, persisted without ever failing the sync.
  */
 class SchedulingDiscoveryTest {
 
@@ -117,9 +117,9 @@ class SchedulingDiscoveryTest {
 
     @Test
     fun `repository write failure during discovery is swallowed and never aborts the sync`() = runTest {
-        // A DAO write can throw (e.g. SQLiteException: disk full / DB locked).
-        // The spec requires scheduling discovery to be non-fatal — a write
-        // failure must not propagate out of the helper and sink account-add.
+        // A repository write can throw (for example SQLiteException: disk full, DB locked).
+        // Scheduling discovery is non-fatal, so the failure must not propagate out of the
+        // helper and abort account discovery.
         val calendars = listOf(calendar(1, "https://dav.example.com/cal/1/"))
         coEvery { client.discoverScheduleOutboxUrl(principalUrl) } returns
             CalDavResult.success("https://dav.example.com/cal/outbox/")
@@ -127,7 +127,7 @@ class SchedulingDiscoveryTest {
         coEvery { accountRepository.updateScheduleOutboxUrl(any(), any()) } throws
             RuntimeException("disk full")
 
-        // Must NOT throw.
+        // Must not throw.
         persistSchedulingDiscovery(
             client, principalUrl, accountId, calendars,
             accountRepository, calendarRepository, "TAG"
@@ -156,7 +156,7 @@ class SchedulingDiscoveryTest {
 
     @Test
     fun `CancellationException from a repo write propagates (not swallowed)`() = runTest {
-        // Structured concurrency: the non-fatal catch must NOT eat cancellation.
+        // Structured concurrency: the non-fatal catch must not swallow cancellation.
         val calendars = listOf(calendar(1, "https://dav.example.com/cal/1/"))
         coEvery { client.discoverScheduleOutboxUrl(principalUrl) } returns
             CalDavResult.success("https://dav.example.com/cal/outbox/")

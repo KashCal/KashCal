@@ -17,10 +17,10 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * Tests for [OkHttpCalDavClient.postToOutbox] — the client-side scheduling
- * Outbox POST (RFC 6638 §6). Verifies the request shape (POST, text/calendar,
- * Originator + one Recipient header per recipient, body == the iTIP bytes) and
- * the parsing of the schedule-response into a per-recipient request-status.
+ * Tests [OkHttpCalDavClient.postToOutbox], the client-side scheduling Outbox POST: the request
+ * shape (POST, text/calendar, Originator and one Recipient header per recipient, the iTIP bytes
+ * as the body) and the schedule-response parsed into a request-status per recipient. RFC 6638
+ * §5 defines an Outbox POST only for busy-time requests.
  */
 class OkHttpCalDavClientOutboxPostTest {
 

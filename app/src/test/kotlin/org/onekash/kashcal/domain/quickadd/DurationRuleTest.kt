@@ -48,7 +48,7 @@ class DurationRuleTest {
     @Test
     fun `for 30 minutes with no prior time uses reference time`() {
         val context = parseWithDuration("for 30 minutes")
-        // reference is 10:00
+        // The reference time, 10:00, is the start.
         assertEquals(LocalTime.of(10, 30), context.endTime)
     }
 
@@ -101,7 +101,7 @@ class DurationRuleTest {
         context.time = LocalTime.of(14, 0)
         context.timeSet = true
         DurationRule.apply(tokens, context)
-        // "for" at index 1, "90" at index 2, "minutes" at index 3 should be consumed
+        // "for", "90" and "minutes" are indices 1 to 3.
         assertTrue(context.isConsumed(1))
         assertTrue(context.isConsumed(2))
         assertTrue(context.isConsumed(3))
@@ -117,7 +117,7 @@ class DurationRuleTest {
         context.timeSet = true
         DurationRule.apply(tokens, context)
         assertEquals(LocalTime.of(21, 0), context.endTime)
-        // First "for" (index 1) NOT consumed, second "for" (index 3) IS consumed
+        // The first "for" (index 1) isn't consumed; the second (index 3) is.
         assertTrue(!context.isConsumed(1))
         assertTrue(context.isConsumed(3))
     }

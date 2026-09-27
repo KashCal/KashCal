@@ -4,14 +4,13 @@ import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 /**
- * Magic-byte recognition for the raster formats a contact photo can carry. The
- * sniffer is neutral (an [ImageFormat] enum, no ez-vcard type) so both
- * [VCardWriter] and the device-side photo transform can share it across the
- * module boundary.
+ * Tests [ImageFormat.sniff], the magic-byte recognition [VCardWriter] and the app's
+ * `ContactPhotoTranscoder` share: each recognized format, a RIFF or `ftyp` container that isn't
+ * an image, a too-short or empty buffer, and unrecognized bytes.
  */
 class ImageFormatTest {
 
-    /** Concatenate byte groups, coercing ints to bytes, into one buffer. */
+    /** Builds a byte array from int literals, so values above 0x7F need no cast. */
     private fun bytesOf(vararg parts: Int): ByteArray =
         ByteArray(parts.size) { parts[it].toByte() }
 
@@ -44,7 +43,7 @@ class ImageFormatTest {
 
     @Test
     fun `a RIFF container that is not WEBP does not sniff to WEBP`() {
-        // 'RIFF' but 'WAVE' at offset 8 (an audio container) — must not be misread as WEBP.
+        // 'RIFF' but 'WAVE' at offset 8 (an audio container) must not be misread as WEBP.
         val wav = bytesOf(
             0x52, 0x49, 0x46, 0x46, // RIFF
             0x24, 0x00, 0x00, 0x00, // size
@@ -77,7 +76,7 @@ class ImageFormatTest {
 
     @Test
     fun `an ftyp box with an unrelated brand is not HEIF`() {
-        // 'ftyp' but an mp4 brand ('isom') — HEIF sniff must require a known image brand.
+        // 'ftyp' with an mp4 brand ('isom'): HEIF needs a known image brand.
         val mp4 = bytesOf(
             0x00, 0x00, 0x00, 0x18,
             0x66, 0x74, 0x79, 0x70, // ftyp

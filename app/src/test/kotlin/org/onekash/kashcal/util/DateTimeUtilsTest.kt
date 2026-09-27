@@ -15,21 +15,23 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Unit tests for DateTimeUtils.
+ * Tests [DateTimeUtils] and [formatReminderShort].
  *
- * These tests verify the core bug fix: all-day events stored as UTC midnight
- * must use UTC for date calculations to preserve the calendar date.
+ * The central rule: an all-day event is stored as UTC midnight, so its date must be read in UTC to
+ * keep the calendar date; a timed event's date is read in the local zone. Later sections cover
+ * UTC-midnight conversion, formatting, first-day-of-week resolution, end-day codes under an
+ * exclusive end (RFC 5545 §3.6.1) and all-day reminder math.
  */
 @RunWith(RobolectricTestRunner::class)
 class DateTimeUtilsTest {
 
     private val resources: Resources = ApplicationProvider.getApplicationContext<Context>().resources
 
-    // ==================== Core Bug Fix Tests ====================
+    // ==================== All-day Dates Read in UTC ====================
 
     @Test
     fun `all-day event at UTC midnight preserves date in negative offset timezone`() {
-        // THE BUG: Jan 6 00:00 UTC displayed as Jan 5 in America/New_York (UTC-5)
+        // Read in America/New_York (UTC-5), Jan 6 00:00 UTC would show as Jan 5.
         val jan6MidnightUtc = 1767657600000L  // Jan 6, 2026 00:00:00 UTC
 
         // All-day should use UTC, ignoring local timezone
@@ -93,8 +95,7 @@ class DateTimeUtilsTest {
 
     @Test
     fun `timed event crossing midnight shows as multi-day`() {
-        // Jan 6, 2026 11:00 PM EST = Jan 7, 2026 04:00 UTC
-        // = 1767657600 (Jan 6 00:00 UTC) + 28h = 1767657600000 + 28*3600*1000
+        // Jan 6, 2026 23:00 UTC = Jan 6, 6:00 PM EST
         val startTs = 1767657600000L + (23 * 3600 * 1000)  // Jan 6 23:00 UTC
         // Jan 7, 2026 02:00 AM EST = Jan 7, 2026 07:00 UTC
         val endTs = 1767657600000L + (31 * 3600 * 1000)  // Jan 7 07:00 UTC
@@ -105,7 +106,7 @@ class DateTimeUtilsTest {
             localZone = ZoneId.of("America/New_York")
         )
 
-        // In New York time: Jan 6 18:00 to Jan 7 02:00 - crosses midnight
+        // In New York time: Jan 6 18:00 to Jan 7 02:00, crossing midnight
         assertTrue(isMultiDay)
     }
 
@@ -138,7 +139,7 @@ class DateTimeUtilsTest {
 
     @Test
     fun `eventTsToDayCode uses UTC for all-day`() {
-        // Jan 6, 2026 00:00:00 UTC - in EST this would be Jan 5
+        // Jan 6, 2026 00:00:00 UTC; read in EST this would be Jan 5
         val jan6Utc = 1767657600000L
 
         val dayCode = DateTimeUtils.eventTsToDayCode(
@@ -201,8 +202,8 @@ class DateTimeUtilsTest {
 
     @Test
     fun `DST spring forward handled correctly`() {
-        // March 10, 2024 2:30 AM UTC - DST transition day
-        val marchDst = 1710043800000L  // Mar 10 2024 02:30 UTC
+        // New York's spring-forward day; this instant is before the 2 AM local change.
+        val marchDst = 1710043800000L  // Mar 10 2024 04:10 UTC
 
         val date = DateTimeUtils.eventTsToLocalDate(
             marchDst,
@@ -210,7 +211,7 @@ class DateTimeUtilsTest {
             localZone = ZoneId.of("America/New_York")
         )
 
-        // 02:30 UTC = 21:30 EST (Mar 9) - still Mar 9 in New York
+        // 04:10 UTC = 23:10 EST on Mar 9, so still Mar 9 in New York
         assertEquals(LocalDate.of(2024, 3, 9), date)
     }
 
@@ -300,7 +301,7 @@ class DateTimeUtilsTest {
 
     @Test
     fun `formatEventDate all-day uses UTC for correct date`() {
-        // THE BUG FIX TEST: Jan 6 00:00 UTC should show Jan 6, not Jan 5
+        // Jan 6 00:00 UTC must show Jan 6, not Jan 5
         val jan6MidnightUtc = 1767657600000L  // Jan 6, 2026 00:00:00 UTC
 
         val result = DateTimeUtils.formatEventDate(
@@ -384,7 +385,7 @@ class DateTimeUtilsTest {
 
     @Test
     fun `formatEventDateShort all-day uses UTC`() {
-        // THE BUG FIX: Same test for short format
+        // The same UTC rule for the short format
         val jan6MidnightUtc = 1767657600000L
 
         val result = DateTimeUtils.formatEventDateShort(
@@ -451,12 +452,12 @@ class DateTimeUtilsTest {
         assertEquals("14:30", result)
     }
 
-    // ==================== Integration Tests: Real-World TripIt Scenario ====================
+    // ==================== Travel-feed All-day Events ====================
 
     @Test
     fun `TripIt ICS all-day event displays correct date`() {
-        // Simulates TripIt ICS feed: all-day event stored as UTC midnight
-        // User in Central time (UTC-6) should see correct date
+        // An ICS travel feed's all-day event, stored as UTC midnight, must show its own date to
+        // a user in Central time (UTC-6).
 
         // Flight on December 25, 2024 - stored as VALUE=DATE in ICS = Dec 25 00:00 UTC
         val tripItFlightDate = 1735084800000L  // Dec 25, 2024 00:00:00 UTC
@@ -501,9 +502,9 @@ class DateTimeUtilsTest {
 
     @Test
     fun `localDateToUtcMidnight converts local date to UTC midnight`() {
-        // User picks Jan 6 in date picker (local time Chicago, UTC-6)
+        // User picks Jan 6 in the date picker (Chicago, UTC-6)
         // Jan 6, 2026 00:00:00 Chicago = Jan 6, 2026 06:00:00 UTC
-        val jan6MidnightChicago = 1767679200000L  // Jan 6, 2026 06:00:00 UTC (= Jan 6 00:00 Chicago)
+        val jan6MidnightChicago = 1767679200000L
 
         val utcMidnight = DateTimeUtils.localDateToUtcMidnight(
             jan6MidnightChicago,
@@ -573,7 +574,8 @@ class DateTimeUtilsTest {
 
     @Test
     fun `utcMidnightToLocalDate roundtrips correctly`() {
-        // Roundtrip: local → UTC → local should give same calendar date
+        // Local to UTC midnight keeps the calendar date; the date after converting back to
+        // local is computed but not asserted.
         val testTimezones = listOf(
             "America/New_York",
             "America/Chicago",
@@ -582,7 +584,8 @@ class DateTimeUtilsTest {
             "Asia/Tokyo"
         )
 
-        val originalLocalMidnight = 1767679200000L  // Some arbitrary local midnight
+        // Jan 6 00:00 Chicago; not midnight in the other zones.
+        val originalLocalMidnight = 1767679200000L
 
         for (timezone in testTimezones) {
             val zone = ZoneId.of(timezone)
@@ -596,7 +599,7 @@ class DateTimeUtilsTest {
             // Convert back to local
             val backToLocal = DateTimeUtils.utcMidnightToLocalDate(utcMidnight, zone)
 
-            // Verify calendar date is preserved
+            // The UTC midnight carries the original calendar date
             val resultDate = DateTimeUtils.eventTsToLocalDate(backToLocal, false, zone)
             val utcDate = DateTimeUtils.eventTsToLocalDate(utcMidnight, true, zone)
 
@@ -644,8 +647,8 @@ class DateTimeUtilsTest {
 
     @Test
     fun `event form edit mode loads correct date for all-day event`() {
-        // Simulates EventFormSheet loading an all-day event for editing
-        // Event stored as UTC midnight should display correct date in local picker
+        // Loading an all-day event into the form: the stored UTC midnight must show its own
+        // date in the local picker.
 
         val storedUtcMidnight = 1767657600000L  // Jan 6, 2026 00:00:00 UTC
         val localZone = ZoneId.of("America/Chicago")
@@ -660,12 +663,13 @@ class DateTimeUtilsTest {
 
     @Test
     fun `event form save converts local date to UTC for all-day event`() {
-        // Simulates HomeViewModel.saveEvent() for all-day events
-        // User picks date in local picker, should be stored as UTC midnight
+        // Mirrors the all-day save conversion in EventFormState.toStartEndTs: the date picked
+        // in the local picker is stored as UTC midnight.
 
         val localZone = ZoneId.of("America/Chicago")
         // User picks Jan 6 in Chicago date picker
-        val pickedLocalMidnight = 1767679200000L  // Jan 6, 2026 06:00:00 UTC (= Jan 6 00:00 Chicago)
+        // Jan 6, 2026 06:00:00 UTC (= Jan 6 00:00 Chicago)
+        val pickedLocalMidnight = 1767679200000L
 
         // Convert to UTC midnight for storage
         val storageTs = DateTimeUtils.localDateToUtcMidnight(pickedLocalMidnight, localZone)
@@ -680,7 +684,7 @@ class DateTimeUtilsTest {
 
     @Test
     fun `all-day event roundtrip through form preserves date`() {
-        // Complete roundtrip: stored UTC → edit form → save → stored UTC
+        // Stored UTC, to the edit form, saved unchanged, back to stored UTC
         val localZone = ZoneId.of("America/Chicago")
 
         // 1. Original stored UTC midnight
@@ -773,7 +777,8 @@ class DateTimeUtilsTest {
     @Test
     fun `formatReminderShort handles arbitrary hour values from external calendars`() {
         // iCloud can set reminders like -PT15H (15 hours = 900 minutes)
-        assertEquals("4h", formatReminderShort(240, resources = resources))   // 4 hours (new UI option)
+        // 4 hours, a picker option
+        assertEquals("4h", formatReminderShort(240, resources = resources))
         assertEquals("15h", formatReminderShort(900, resources = resources))
         assertEquals("2h", formatReminderShort(120, resources = resources))
         assertEquals("12h", formatReminderShort(720, resources = resources))
@@ -927,7 +932,7 @@ class DateTimeUtilsTest {
             java.time.DayOfWeek.SUNDAY -> java.util.Calendar.SUNDAY
             java.time.DayOfWeek.MONDAY -> java.util.Calendar.MONDAY
             java.time.DayOfWeek.SATURDAY -> java.util.Calendar.SATURDAY
-            else -> java.util.Calendar.SUNDAY // Rare locales fall back to Sunday
+            else -> java.util.Calendar.SUNDAY // e.g. Friday-first locales
         }
         assertEquals(
             "resolveFirstDayOfWeek(0) should match getLocaleFirstDayOfWeek()",
@@ -938,7 +943,7 @@ class DateTimeUtilsTest {
     @Test
     fun `getLocaleFirstDayOfWeek returns valid DayOfWeek`() {
         val result = DateTimeUtils.getLocaleFirstDayOfWeek()
-        // Result should be a valid DayOfWeek (not null)
+        // A valid, non-null DayOfWeek
         assertNotNull(result)
         assertTrue(result in java.time.DayOfWeek.values())
     }
@@ -974,7 +979,7 @@ class DateTimeUtilsTest {
         assertTrue(wf.firstDayOfWeek in java.time.DayOfWeek.values())
     }
 
-    // ==================== calendarConstantToDayOfWeek (Issue 214) ====================
+    // ==================== calendarConstantToDayOfWeek (#214) ====================
 
     @Test
     fun `calendarConstantToDayOfWeek SUNDAY maps to DayOfWeek_SUNDAY`() {
@@ -1071,7 +1076,8 @@ class DateTimeUtilsTest {
     @Test
     fun `getFirstDayOffset_system default resolves correctly`() {
         // firstDayOfWeek=0 should resolve to locale default and compute a valid offset
-        val calendar = java.util.Calendar.getInstance().apply { set(2026, 0, 1) } // Jan 1 2026 = Thursday
+        // Jan 1 2026 = Thursday
+        val calendar = java.util.Calendar.getInstance().apply { set(2026, 0, 1) }
         val offset = DateTimeUtils.getFirstDayOffset(calendar, 0)
         // Offset must be in [0, 6] regardless of which locale day is resolved
         assertTrue("Offset $offset should be in [0, 6]", offset in 0..6)
@@ -1079,7 +1085,6 @@ class DateTimeUtilsTest {
 
     @Test
     fun `getDayOfWeekOffset_wednesday_sunday first`() {
-        // Jan 15, 2026 is a Thursday (let's use a Wednesday instead: Jan 14, 2026)
         val date = LocalDate.of(2026, 1, 14) // Wednesday
         val offset = DateTimeUtils.getDayOfWeekOffset(date, java.util.Calendar.SUNDAY)
         // Wednesday is the 4th day when Sunday is first (Sun=0, Mon=1, Tue=2, Wed=3)
@@ -1201,9 +1206,9 @@ class DateTimeUtilsTest {
 
     // ==================== eventTsToEndDayCode (RFC 5545 §3.6.1) ====================
     //
-    // RFC 5545 §3.6.1: DTSTART is the inclusive start, DTEND is the non-inclusive end.
-    // A timed event [startTs, endTs) whose endTs lands exactly at 00:00:00.000 local
-    // occupies only the prior calendar day. See issue #209.
+    // RFC 5545 §3.6.1: DTSTART is the inclusive start, DTEND the non-inclusive end. A timed
+    // event [startTs, endTs) whose endTs lands exactly at 00:00:00.000 local occupies only the
+    // prior calendar day (#209).
 
     private fun utcMs(year: Int, month: Int, day: Int, hour: Int = 0, minute: Int = 0): Long =
         java.time.LocalDateTime.of(year, month, day, hour, minute)
@@ -1213,7 +1218,7 @@ class DateTimeUtilsTest {
 
     @Test
     fun `eventTsToEndDayCode T1 timed midnight-to-midnight maps to start day`() {
-        // Bug exact: 00:00 May 4 → 00:00 May 5 UTC. Should be May 4 only.
+        // 00:00 May 4 → 00:00 May 5 UTC occupies May 4 only.
         val startTs = utcMs(2026, 5, 4, 0, 0)
         val endTs = utcMs(2026, 5, 5, 0, 0)
         val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("UTC"))
@@ -1222,7 +1227,7 @@ class DateTimeUtilsTest {
 
     @Test
     fun `eventTsToEndDayCode T2 timed evening-to-midnight maps to start day`() {
-        // 20:00 May 4 → 00:00 May 5 UTC. Should be May 4 only.
+        // 20:00 May 4 → 00:00 May 5 UTC occupies May 4 only.
         val startTs = utcMs(2026, 5, 4, 20, 0)
         val endTs = utcMs(2026, 5, 5, 0, 0)
         val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("UTC"))
@@ -1231,7 +1236,7 @@ class DateTimeUtilsTest {
 
     @Test
     fun `eventTsToEndDayCode T3 timed crossing midnight still spans two days`() {
-        // 22:00 May 4 → 02:00 May 5 UTC. Regression control: must span May 5.
+        // 22:00 May 4 → 02:00 May 5 UTC. Control: must span May 5.
         val startTs = utcMs(2026, 5, 4, 22, 0)
         val endTs = utcMs(2026, 5, 5, 2, 0)
         val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("UTC"))
@@ -1248,7 +1253,8 @@ class DateTimeUtilsTest {
 
     @Test
     fun `eventTsToEndDayCode T5 all-day multi-day event unchanged`() {
-        // All-day path is already correct (ingestion subtracts 1ms). Helper delegates.
+        // An all-day end is stored inclusive (the day's last ms), so the helper applies no
+        // midnight rule and delegates to eventTsToDayCode.
         val startTs = utcMs(2026, 5, 4, 0, 0)
         val endTs = utcMs(2026, 5, 7, 0, 0) - 1L // May 6 23:59:59.999 UTC (inclusive)
         val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = true)
@@ -1265,7 +1271,7 @@ class DateTimeUtilsTest {
     @Test
     fun `eventTsToEndDayCode T7 non-UTC zone midnight at local boundary`() {
         // America/New_York EDT (UTC-4) on May 5, 2026.
-        // endTs = May 5 04:00 UTC = May 5 00:00 EDT. Should resolve to May 4 (prior day).
+        // endTs = May 5 04:00 UTC = May 5 00:00 EDT, which resolves to May 4 (prior day).
         val startTs = utcMs(2026, 5, 4, 13, 0) // May 4 09:00 EDT
         val endTs = utcMs(2026, 5, 5, 4, 0)    // May 5 00:00 EDT
         val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("America/New_York"))
@@ -1274,8 +1280,8 @@ class DateTimeUtilsTest {
 
     @Test
     fun `eventTsToEndDayCode T8 midnight UTC but non-midnight local stays on start day`() {
-        // endTs = May 5 00:00 UTC = May 4 20:00 EDT. Not local midnight; no adjustment
-        // needed because day math already resolves to May 4.
+        // endTs = May 5 00:00 UTC = May 4 20:00 EDT. Not local midnight, so no adjustment;
+        // the local date is already May 4.
         val startTs = utcMs(2026, 5, 4, 14, 0) // May 4 10:00 EDT
         val endTs = utcMs(2026, 5, 5, 0, 0)    // May 4 20:00 EDT
         val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("America/New_York"))
@@ -1284,7 +1290,7 @@ class DateTimeUtilsTest {
 
     @Test
     fun `eventTsToEndDayCode T9 negative-duration event preserves endTs day`() {
-        // Invalid data: endTs < startTs. Guard: no adjustment.
+        // Invalid data: endTs < startTs. The guard skips the midnight adjustment.
         val startTs = utcMs(2026, 5, 4, 10, 0)
         val endTs = utcMs(2026, 5, 4, 9, 0)
         val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("UTC"))
@@ -1302,18 +1308,18 @@ class DateTimeUtilsTest {
 
     @Test
     fun `eventTsToEndDayCode T11 multi-day timed ending mid-day preserves span`() {
-        // Conference Mon 09:00 → Wed 15:00 UTC. Regression control.
+        // Conference Mon 09:00 → Wed 15:00 UTC. Control.
         val startTs = utcMs(2026, 5, 4, 9, 0)
         val endTs = utcMs(2026, 5, 6, 15, 0)
         val result = DateTimeUtils.eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = ZoneId.of("UTC"))
         assertEquals(20260506, result)
     }
 
-    // ==================== spansMultipleDays (RFC 5545 §3.6.1 follow-up) ====================
+    // ==================== spansMultipleDays (RFC 5545 §3.6.1) ====================
     //
-    // These lock the helper to the same midnight-exclusion rule as eventTsToEndDayCode
-    // so the seven UI callers (EventCard, HomeScreen, quick-view sheets) stop showing
-    // "Day 1 of 2" for 09:00 → next-day 00:00 events.
+    // These lock the helper to eventTsToEndDayCode's midnight-exclusion rule, so its timed-event
+    // UI callers (EventCard, HomeScreen, the quick-view sheets) don't show "Day 1 of 2" for a
+    // 09:00 to next-day 00:00 event.
 
     @Test
     fun `spansMultipleDays bug-exact 09_00 to next-day 00_00 is single-day`() {
@@ -1342,7 +1348,7 @@ class DateTimeUtilsTest {
         )
     }
 
-    // ==================== calculateTotalDays (RFC 5545 §3.6.1 follow-up) ====================
+    // ==================== calculateTotalDays (RFC 5545 §3.6.1) ====================
 
     @Test
     fun `calculateTotalDays bug-exact 09_00 to next-day 00_00 returns 1`() {
@@ -1375,10 +1381,10 @@ class DateTimeUtilsTest {
     }
 
     // ==================== allDayRelativeDays ====================
-    // All-day events store start as UTC midnight but begin at the user's LOCAL
-    // midnight. The notification subtitle is a calendar-date day count (Today /
-    // Tomorrow / In N days), measured from the fire day's local date to the event's
-    // local date, so it is timezone-stable and never sign-flips.
+    // All-day events store start as UTC midnight but begin at the user's local midnight. The
+    // notification subtitle is a calendar-date day count (Today / Tomorrow / In N days) from the
+    // fire day's local date to the event's date, so it is timezone-stable, and it is clamped at
+    // 0 so a fire after the event date never goes negative.
 
     @Test
     fun `allDayRelativeDays is 0 when firing on the event date (Today)`() {

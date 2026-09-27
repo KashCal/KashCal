@@ -12,29 +12,16 @@ import java.time.zone.ZoneOffsetTransitionRule
 import java.util.Locale
 
 /**
- * Generates RFC 5545 compliant VTIMEZONE components.
+ * Generates RFC 5545 VTIMEZONE components for the timezone IDs events use, for clients that
+ * don't recognize IANA timezone IDs.
  *
- * This generator creates VTIMEZONE definitions for timezone IDs found in events,
- * enabling interoperability with calendar clients that don't recognize IANA timezone IDs.
+ * An inline VTIMEZONE has one STANDARD or DAYLIGHT component per java.time transition rule,
+ * each with a yearly RRULE, or a single fixed-offset STANDARD component for a zone without
+ * DST. The [VTimezoneStrategy] decides whether it is inlined, replaced by a TZURL, or both.
+ * UTC IDs (`UTC`, `Z`, `Etc/UTC`, `GMT`) and IDs `ZoneId.of` rejects produce an empty string.
  *
- * The generated VTIMEZONEs include:
- * - STANDARD component for non-DST periods (or fixed-offset timezones)
- * - DAYLIGHT component for DST periods (if applicable)
- * - RRULE for recurring transitions
- *
- * Supports three generation strategies via [VTimezoneStrategy]:
- * - INLINE: Full VTIMEZONE component (default, existing behavior)
- * - TZURL_ONLY: Just TZURL reference to timezone service
- * - BOTH: Full VTIMEZONE with TZURL property for authoritative source
- *
- * Implementation notes:
- * - UTC timezones are skipped (no VTIMEZONE needed)
- * - Invalid timezone IDs return empty string
- * - Uses RRULE-based recurring transitions for DST rules
- * - Constructor defaults preserve backward compatibility: `VTimezoneGenerator()` works as before
- *
- * @param timezoneService Optional service for fetching timezones (used for TZURL_ONLY strategy)
- * @param strategy Generation strategy (defaults to INLINE for backward compatibility)
+ * @param timezoneService source of TZURLs for [getTzurl]; when null, tzurl.org URLs are used
+ * @param strategy defaults to INLINE, which is what `VTimezoneGenerator()` gives
  *
  * @see <a href="https://www.calconnect.org/resources/tzurl">CalConnect TZURL Service</a>
  */
@@ -43,43 +30,29 @@ class VTimezoneGenerator(
     private val strategy: VTimezoneStrategy = VTimezoneStrategy.INLINE
 ) {
 
-    /**
-     * Strategy for VTIMEZONE generation.
-     */
+    /** Chooses how [generate] writes each VTIMEZONE. */
     enum class VTimezoneStrategy {
-        /**
-         * Generate full inline VTIMEZONE component (default, existing behavior).
-         * Most compatible with all calendar clients.
-         */
+        /** Writes the full component inline; every client can read it. */
         INLINE,
 
         /**
-         * Generate only TZURL reference to timezone service.
-         * Smallest output but requires client to fetch timezone.
-         * Use only when you know the receiving client supports TZURL.
+         * Writes only TZID and a TZURL. The receiving client must fetch the definition, so use
+         * it only when the receiver is known to support TZURL.
          */
         TZURL_ONLY,
 
-        /**
-         * Generate full VTIMEZONE with TZURL property for authoritative source.
-         * Best of both worlds: immediate compatibility + authoritative reference.
-         */
+        /** Writes the full component plus a TZURL pointing at the authoritative definition. */
         BOTH
     }
 
     /**
-     * Generate VTIMEZONE component for a single timezone ID.
+     * Generates the VTIMEZONE for [tzid] (for example "America/New_York") with the configured
+     * [VTimezoneStrategy].
      *
-     * Uses the strategy configured in the constructor:
-     * - INLINE: Full VTIMEZONE component (default)
-     * - TZURL_ONLY: Just TZURL reference
-     * - BOTH: Full VTIMEZONE with TZURL property
-     *
-     * @param tzid The timezone ID (e.g., "America/New_York")
-     * @return VTIMEZONE component string, or empty if invalid/UTC
+     * @return the component, or an empty string for a UTC or invalid ID
      */
     fun generate(tzid: String): String {
-        // Skip UTC - no VTIMEZONE needed
+        // UTC needs no VTIMEZONE.
         if (tzid == "UTC" || tzid == "Z" || tzid == "Etc/UTC" || tzid == "GMT") {
             return ""
         }
@@ -91,9 +64,6 @@ class VTimezoneGenerator(
         }
     }
 
-    /**
-     * Generate full inline VTIMEZONE component (existing behavior).
-     */
     private fun generateInline(tzid: String): String {
         return buildString {
             appendTimezone(this, tzid, includeTzurl = false)
@@ -101,55 +71,39 @@ class VTimezoneGenerator(
     }
 
     /**
-     * Generate VTIMEZONE with just TZURL reference.
-     *
-     * Smallest output but requires client to fetch timezone definition.
-     * Falls back to inline generation if timezone service is unavailable.
+     * Generates a VTIMEZONE with only TZID and TZURL. Without a [timezoneService] the TZURL
+     * is the tzurl.org one ([getTzurl]); it never falls back to an inline definition.
      */
     private fun generateTzurlOnly(tzid: String): String {
         val tzurl = getTzurl(tzid)
 
         return buildString {
             try {
-                ZoneId.of(tzid) // Validate tzid exists
+                ZoneId.of(tzid) // Throws for an unknown ID
 
                 crlfLine("BEGIN:VTIMEZONE")
                 crlfLine("TZID:$tzid")
                 crlfLine("TZURL:$tzurl")
                 crlfLine("END:VTIMEZONE")
             } catch (e: Exception) {
-                // Skip invalid timezone IDs
+                // An invalid ID produces nothing.
             }
         }
     }
 
-    /**
-     * Generate full VTIMEZONE with TZURL property.
-     *
-     * Best of both worlds: immediate compatibility + authoritative reference.
-     */
     private fun generateWithTzurl(tzid: String): String {
         return buildString {
             appendTimezone(this, tzid, includeTzurl = true)
         }
     }
 
-    /**
-     * Get the TZURL for a timezone ID.
-     *
-     * Uses the configured timezone service, or falls back to tzurl.org.
-     */
+    /** Returns [timezoneService]'s TZURL for [tzid], or the tzurl.org URL when there is none. */
     fun getTzurl(tzid: String): String {
         return timezoneService?.getTzurl(tzid)
             ?: "https://www.tzurl.org/zoneinfo/$tzid.ics"
     }
 
-    /**
-     * Generate VTIMEZONE components for multiple timezone IDs.
-     *
-     * @param tzids Set of timezone IDs to generate
-     * @return Concatenated VTIMEZONE components
-     */
+    /** Generates and concatenates the VTIMEZONE of each of [tzids]. */
     fun generate(tzids: Set<String>): String {
         return buildString {
             tzids.forEach { tzid ->
@@ -159,13 +113,8 @@ class VTimezoneGenerator(
     }
 
     /**
-     * Collect unique timezone IDs from a list of events.
-     *
-     * Extracts TZIDs from DTSTART, DTEND, and other datetime properties.
-     * Excludes UTC timezones as they don't require VTIMEZONE.
-     *
-     * @param events List of events to scan
-     * @return Set of unique non-UTC timezone IDs
+     * Collects the timezone IDs that [events] use in DTSTART, DTEND, RECURRENCE-ID, EXDATE and
+     * RDATE. UTC, DATE and floating values contribute nothing.
      */
     fun collectTimezones(events: List<ICalEvent>): Set<String> {
         val tzids = mutableSetOf<String>()
@@ -174,9 +123,8 @@ class VTimezoneGenerator(
     }
 
     /**
-     * Collect unique timezone IDs from every component in a calendar:
-     * VEVENTs, VTODOs, and VJOURNALs. Deduplicated across component types,
-     * UTC-equivalent zones excluded.
+     * Collects the timezone IDs used by every VEVENT, VTODO and VJOURNAL in [calendar],
+     * deduplicated, with UTC, DATE and floating values excluded.
      */
     fun collectTimezones(calendar: org.onekash.icaldav.model.ICalCalendar): Set<String> {
         val tzids = mutableSetOf<String>()
@@ -186,14 +134,14 @@ class VTimezoneGenerator(
         return tzids
     }
 
-    /** Collect TZIDs referenced by a VTODO's datetime properties. */
+    /** Collects the TZIDs of a VTODO's DTSTART, DUE, COMPLETED and RECURRENCE-ID. */
     fun collectTimezones(todo: org.onekash.icaldav.model.ICalTodo): Set<String> {
         val tzids = mutableSetOf<String>()
         addTodoTzids(todo, tzids)
         return tzids
     }
 
-    /** Collect TZIDs referenced by a VJOURNAL's datetime properties. */
+    /** Collects the TZIDs of a VJOURNAL's DTSTART and RECURRENCE-ID. */
     fun collectTimezones(journal: org.onekash.icaldav.model.ICalJournal): Set<String> {
         val tzids = mutableSetOf<String>()
         addJournalTzids(journal, tzids)
@@ -220,9 +168,7 @@ class VTimezoneGenerator(
         journal.recurrenceId?.let { collectFromDateTime(it, tzids) }
     }
 
-    /**
-     * Extract timezone ID from a datetime and add to set if not UTC.
-     */
+    /** Adds [dt]'s zone ID to [tzids] unless [dt] is UTC, a DATE, floating, or a UTC alias. */
     private fun collectFromDateTime(dt: ICalDateTime, tzids: MutableSet<String>) {
         if (!dt.isUtc && !dt.isDate && dt.timezone != null) {
             val tzid = dt.timezone.id
@@ -232,13 +178,7 @@ class VTimezoneGenerator(
         }
     }
 
-    /**
-     * Append VTIMEZONE component for a timezone ID.
-     *
-     * @param builder StringBuilder to append to
-     * @param tzid Timezone ID
-     * @param includeTzurl Whether to include TZURL property
-     */
+    /** Appends the inline VTIMEZONE for [tzid], with a TZURL when [includeTzurl]. */
     private fun appendTimezone(builder: StringBuilder, tzid: String, includeTzurl: Boolean = false) {
         try {
             val zoneId = ZoneId.of(tzid)
@@ -247,20 +187,19 @@ class VTimezoneGenerator(
             builder.crlfLine("BEGIN:VTIMEZONE")
             builder.crlfLine("TZID:$tzid")
 
-            // Add TZURL if requested
             if (includeTzurl) {
                 builder.crlfLine("TZURL:${getTzurl(tzid)}")
             }
 
-            // Get transition rules for repeating DST patterns
+            // The rules that repeat every year; empty for a zone without DST.
             val transitionRules = rules.transitionRules
 
             if (transitionRules.isEmpty()) {
-                // No DST - single STANDARD component with fixed offset
+                // No DST: one STANDARD component at today's offset.
                 val offset = rules.getOffset(Instant.now())
                 appendFixedTimezoneComponent(builder, offset, tzid)
             } else {
-                // Has DST - generate STANDARD and DAYLIGHT components from rules
+                // DST: one STANDARD or DAYLIGHT component per rule.
                 for (rule in transitionRules) {
                     appendTimezoneComponent(builder, rule, zoneId)
                 }
@@ -268,12 +207,13 @@ class VTimezoneGenerator(
 
             builder.crlfLine("END:VTIMEZONE")
         } catch (e: Exception) {
-            // Skip invalid timezone IDs - return empty content
+            // ZoneId.of throws before anything is appended, so an invalid ID produces nothing.
         }
     }
 
     /**
-     * Append a fixed-offset timezone component (no DST).
+     * Appends a STANDARD component with [offset] on both sides and a TZNAME of the first four
+     * letters of the ID's last segment, uppercased.
      */
     private fun appendFixedTimezoneComponent(builder: StringBuilder, offset: ZoneOffset, tzid: String) {
         val offsetStr = formatOffset(offset)
@@ -287,22 +227,19 @@ class VTimezoneGenerator(
         builder.crlfLine("END:STANDARD")
     }
 
-    /**
-     * Append a STANDARD or DAYLIGHT component from a transition rule.
-     */
+    /** Appends a STANDARD or DAYLIGHT component for one yearly transition [rule]. */
     private fun appendTimezoneComponent(builder: StringBuilder, rule: ZoneOffsetTransitionRule, zoneId: ZoneId) {
-        // Determine if transitioning TO daylight time (clocks spring forward)
-        // Use totalSeconds because ZoneOffset comparison is non-intuitive (-05:00 < -06:00)
+        // DAYLIGHT when the clocks go forward. Compare totalSeconds: ZoneOffset.compareTo
+        // orders -05:00 before -06:00.
         val isDst = rule.offsetAfter.totalSeconds > rule.offsetBefore.totalSeconds
         val componentType = if (isDst) "DAYLIGHT" else "STANDARD"
 
         builder.crlfLine("BEGIN:$componentType")
 
-        // DTSTART: Use 1970 as base year per common practice
+        // DTSTART in 1970, the usual base year.
         val month = rule.month.value
         val time = rule.localTime
 
-        // Format DTSTART as YYYYMMDDTHHMMSS
         val dtstart = String.format(
             "1970%02d%02dT%02d%02d%02d",
             month,
@@ -313,15 +250,12 @@ class VTimezoneGenerator(
         )
         builder.crlfLine("DTSTART:$dtstart")
 
-        // RRULE for recurring transition
         val rrule = buildRrule(rule)
         builder.crlfLine("RRULE:$rrule")
 
-        // Offsets
         builder.crlfLine("TZOFFSETFROM:${formatOffset(rule.offsetBefore)}")
         builder.crlfLine("TZOFFSETTO:${formatOffset(rule.offsetAfter)}")
 
-        // Timezone abbreviation - use standard Java API to get proper name
         val abbrev = getTimezoneAbbreviation(zoneId, rule.offsetAfter, isDst)
         builder.crlfLine("TZNAME:$abbrev")
 
@@ -329,42 +263,37 @@ class VTimezoneGenerator(
     }
 
     /**
-     * Get timezone abbreviation using standard Java time API.
-     * Falls back to offset-based format if unavailable.
+     * Returns the zone's short name ("CST", "CDT") for a mid-July (DST) or mid-January
+     * (standard) 2024 date, or the [formatOffset] string if formatting throws.
      */
     private fun getTimezoneAbbreviation(zoneId: ZoneId, offset: ZoneOffset, isDst: Boolean): String {
         return try {
-            // Create a sample instant in the target offset period to get correct abbreviation
-            // Use a date in the middle of summer (July) for DST, winter (January) for standard
             val sampleYear = 2024
             val sampleMonth = if (isDst) 7 else 1
             val sampleInstant = LocalDateTime.of(sampleYear, sampleMonth, 15, 12, 0)
                 .toInstant(offset)
             val zdt = sampleInstant.atZone(zoneId)
 
-            // Use DateTimeFormatter to get proper abbreviation (e.g., "CST", "CDT", "JST")
             val formatter = java.time.format.DateTimeFormatter.ofPattern("zzz", Locale.US)
             zdt.format(formatter)
         } catch (e: Exception) {
-            // Fallback to offset string format
             formatOffset(offset)
         }
     }
 
     /**
-     * Calculate DTSTART day for a transition rule.
-     * Returns a day in 1970 that matches the rule pattern.
+     * Returns the day of month for a rule's 1970 DTSTART: a positive day-of-month indicator
+     * (capped at 28 for a day-of-week rule), or 28 plus a negative one. For a day-of-week rule
+     * the day isn't checked to fall on that weekday.
      */
     private fun calculateDtstartDay(rule: ZoneOffsetTransitionRule): Int {
         val dayOfMonthIndicator = rule.dayOfMonthIndicator
         val dayOfWeek = rule.dayOfWeek
 
         return if (dayOfWeek == null) {
-            // Fixed day of month
             if (dayOfMonthIndicator > 0) dayOfMonthIndicator else 28 + dayOfMonthIndicator
         } else {
-            // Day of week in month (e.g., 2nd Sunday)
-            // For DTSTART, we just need a valid date - RRULE handles the pattern
+            // Day of week in month, for example the 2nd Sunday.
             when {
                 dayOfMonthIndicator > 0 -> dayOfMonthIndicator.coerceAtMost(28)
                 dayOfMonthIndicator < 0 -> 28 + dayOfMonthIndicator
@@ -374,7 +303,9 @@ class VTimezoneGenerator(
     }
 
     /**
-     * Build RRULE string for a transition rule.
+     * Builds the yearly RRULE for [rule]: BYMONTH plus BYDAY with a week number read from the
+     * day-of-month indicator (8-14 is the 2nd, 15-21 the 3rd, 22-28 the 4th, negative the
+     * last, anything else the 1st), or BYMONTHDAY for a fixed day.
      */
     private fun buildRrule(rule: ZoneOffsetTransitionRule): String {
         val parts = mutableListOf("FREQ=YEARLY")
@@ -388,7 +319,7 @@ class VTimezoneGenerator(
                 dayOfMonthIndicator >= 8 && dayOfMonthIndicator <= 14 -> 2
                 dayOfMonthIndicator >= 15 && dayOfMonthIndicator <= 21 -> 3
                 dayOfMonthIndicator >= 22 && dayOfMonthIndicator <= 28 -> 4
-                dayOfMonthIndicator < 0 -> -1  // Last occurrence
+                dayOfMonthIndicator < 0 -> -1  // Last in the month
                 else -> 1
             }
             val dayAbbrev = dayOfWeekToIcal(dayOfWeek)
@@ -400,9 +331,6 @@ class VTimezoneGenerator(
         return parts.joinToString(";")
     }
 
-    /**
-     * Convert DayOfWeek to iCal abbreviation.
-     */
     private fun dayOfWeekToIcal(dow: DayOfWeek): String {
         return when (dow) {
             DayOfWeek.MONDAY -> "MO"
@@ -415,9 +343,7 @@ class VTimezoneGenerator(
         }
     }
 
-    /**
-     * Format ZoneOffset as iCal offset string (e.g., "-0500", "+0900", "+0530").
-     */
+    /** Formats [offset] as an iCalendar UTC offset ("-0500", "+0530"), dropping seconds. */
     fun formatOffset(offset: ZoneOffset): String {
         val totalSeconds = offset.totalSeconds
         val sign = if (totalSeconds >= 0) "+" else "-"

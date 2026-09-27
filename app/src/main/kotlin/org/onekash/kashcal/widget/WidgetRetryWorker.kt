@@ -12,14 +12,11 @@ private const val TAG = "WidgetRetryWorker"
 private const val MAX_RETRY_ATTEMPTS = 3
 
 /**
- * WorkManager worker for retrying failed widget updates.
+ * Retries a failed widget refresh.
  *
- * Uses simple constructor (no @HiltWorker) since no DI needed.
- * Follows pattern of existing WidgetUpdateWorker.
- *
- * This worker is only enqueued when the immediate update fails with a
- * transient error (IOException, TimeoutException, RemoteException).
- * It uses exponential backoff: 10s -> 20s -> 40s.
+ * [WidgetUpdateManager] enqueues it only when an immediate refresh fails with a transient error
+ * (IOException or RemoteException). Backoff is exponential from 10s (10s, 20s, 40s), and after
+ * [MAX_RETRY_ATTEMPTS] retries, or on any other error, the work fails.
  */
 class WidgetRetryWorker(
     context: Context,
@@ -45,10 +42,7 @@ class WidgetRetryWorker(
         }
     }
 
-    /**
-     * Determine if error is transient and worth retrying.
-     * Note: SocketTimeoutException extends IOException, included for clarity.
-     */
+    /** Returns whether [e] is worth retrying; SocketTimeoutException counts as an IOException. */
     private fun isTransientError(e: Exception): Boolean = when (e) {
         is IOException -> true              // Network issues (includes SocketTimeoutException)
         is RemoteException -> true          // Binder communication failed

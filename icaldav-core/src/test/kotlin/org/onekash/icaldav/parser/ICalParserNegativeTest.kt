@@ -7,14 +7,14 @@ import org.junit.jupiter.api.Test
 import org.onekash.icaldav.model.ParseResult
 
 /**
- * Negative tests for ICalParser - tests for inputs that SHOULD fail or be handled gracefully.
+ * Tests that [ICalParser.parseAllEvents] returns on invalid input: missing required
+ * properties, broken syntax, non-iCalendar content, invalid property values, oversized and
+ * odd-character input, and conflicting properties.
  *
- * These tests verify:
- * - Invalid iCalendar syntax is rejected or handled
- * - Malformed data doesn't crash the parser
- * - Missing required properties are detected
- * - Invalid property values are handled
- * - Security-sensitive inputs are handled safely
+ * parseAllEvents catches every exception into an error result, and most tests here have no
+ * assertion, so they fail only if something escapes it. Only the property-without-value test
+ * asserts a success; the missing-UID, invalid STATUS, unicode and backslash checks run only
+ * when the event parsed.
  */
 class ICalParserNegativeTest {
 
@@ -40,13 +40,11 @@ class ICalParserNegativeTest {
 
             val result = parser.parseAllEvents(ical)
 
-            // Should either fail or return empty/error result
-            // Implementation may vary - either is acceptable
+            // The parser gives a VEVENT without UID a random UUID; an error or a dropped
+            // event also passes.
             if (result is ParseResult.Success) {
-                // If it "succeeds", the event should be skipped or have generated UID
                 val events = result.getOrNull()
                 if (events != null && events.isNotEmpty()) {
-                    // Parser may generate a UID - verify it exists
                     assertNotNull(events[0].uid)
                 }
             }
@@ -67,8 +65,8 @@ class ICalParserNegativeTest {
 
             val result = parser.parseAllEvents(ical)
 
-            // Parser should handle missing DTSTART gracefully
-            // Either return error or skip the event
+            // With neither DTSTART nor DTEND, parseVEvent refuses the VEVENT and it is left
+            // out. Nothing is asserted.
         }
 
         @Test
@@ -83,9 +81,8 @@ class ICalParserNegativeTest {
                 END:VCALENDAR
             """.trimIndent()
 
-            // Should not crash - VERSION is technically required but often omitted
+            // RFC 5545 requires VERSION, but it is often omitted. Nothing is asserted.
             val result = parser.parseAllEvents(ical)
-            // May succeed or fail depending on strictness
         }
 
         @Test
@@ -100,7 +97,7 @@ class ICalParserNegativeTest {
                 END:VCALENDAR
             """.trimIndent()
 
-            // Should not crash
+            // RFC 5545 requires PRODID. Nothing is asserted.
             val result = parser.parseAllEvents(ical)
         }
     }
@@ -123,7 +120,7 @@ class ICalParserNegativeTest {
             """.trimIndent() // Missing END:VCALENDAR
 
             val result = parser.parseAllEvents(ical)
-            // Should handle gracefully - either return what was parsed or error
+            // Nothing is asserted; either outcome passes.
         }
 
         @Test
@@ -190,19 +187,19 @@ class ICalParserNegativeTest {
             """.trimIndent() // SUMMARY missing colon
 
             val result = parser.parseAllEvents(ical)
-            // Line should be ignored or handled
+            // Nothing is asserted.
         }
 
         @Test
         fun `handles completely empty input`() {
             val result = parser.parseAllEvents("")
-            // Should return empty or error, not crash
+            // Nothing is asserted.
         }
 
         @Test
         fun `handles whitespace-only input`() {
             val result = parser.parseAllEvents("   \n\t\n   ")
-            // Should return empty or error, not crash
+            // Nothing is asserted.
         }
 
         @Test
@@ -213,7 +210,7 @@ class ICalParserNegativeTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Should return empty or error
+            // Nothing is asserted.
         }
 
         @Test
@@ -224,7 +221,7 @@ class ICalParserNegativeTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(html)
-            // Should return empty or error
+            // Nothing is asserted.
         }
 
         @Test
@@ -232,7 +229,7 @@ class ICalParserNegativeTest {
             val json = """{"events": [{"title": "Test"}]}"""
 
             val result = parser.parseAllEvents(json)
-            // Should return empty or error
+            // Nothing is asserted.
         }
     }
 
@@ -255,7 +252,7 @@ class ICalParserNegativeTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Should handle gracefully
+            // Nothing is asserted.
         }
 
         @Test
@@ -389,7 +386,8 @@ class ICalParserNegativeTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Should default to CONFIRMED or handle gracefully
+            // An unknown STATUS maps to CONFIRMED (EventStatus.fromString); only a non-null
+            // status is asserted here.
             if (result is ParseResult.Success) {
                 val events = result.getOrNull()
                 if (events != null && events.isNotEmpty()) {
@@ -452,13 +450,13 @@ class ICalParserNegativeTest {
                 END:VCALENDAR
             """.trimIndent()
 
-            // Should not cause OOM or hang
+            // Must not run out of memory or hang
             val result = parser.parseAllEvents(ical)
         }
 
         @Test
         fun `handles many nested components`() {
-            // Not valid iCalendar but tests parser robustness
+            // Not valid iCalendar: 100 nested VEVENTs
             val nested = buildString {
                 appendLine("BEGIN:VCALENDAR")
                 appendLine("VERSION:2.0")
@@ -478,7 +476,7 @@ class ICalParserNegativeTest {
             val ical = "BEGIN:VCALENDAR\u0000VERSION:2.0\u0000END:VCALENDAR"
 
             val result = parser.parseAllEvents(ical)
-            // Should not crash
+            // Nothing is asserted.
         }
 
         @Test
@@ -540,7 +538,7 @@ class ICalParserNegativeTest {
             if (result is ParseResult.Success) {
                 val events = result.getOrNull()
                 if (events != null && events.isNotEmpty()) {
-                    // Verify escapes are properly handled
+                    // The SUMMARY's `\n` escapes are decoded to newlines or kept as written.
                     assertTrue(events[0].summary?.contains("\n") == true ||
                             events[0].summary?.contains("\\n") == true)
                 }
@@ -555,7 +553,7 @@ class ICalParserNegativeTest {
 
         @Test
         fun `handles both DTEND and DURATION`() {
-            // RFC 5545 says they're mutually exclusive
+            // RFC 5545 §3.6.1: DTEND and DURATION must not occur in the same VEVENT.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -570,12 +568,12 @@ class ICalParserNegativeTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Parser should pick one (typically DTEND) or reject
+            // The parser keeps both; nothing is asserted.
         }
 
         @Test
         fun `handles both COUNT and UNTIL in RRULE`() {
-            // RFC 5545 says they're mutually exclusive
+            // RFC 5545 §3.3.10: UNTIL and COUNT must not occur in the same RRULE.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -611,7 +609,7 @@ class ICalParserNegativeTest {
             """.trimIndent()
 
             val result = parser.parseAllEvents(ical)
-            // Could be valid for RECURRENCE-ID scenario, or could be rejected
+            // Two VEVENTs share a UID without a RECURRENCE-ID. Nothing is asserted.
         }
     }
 }

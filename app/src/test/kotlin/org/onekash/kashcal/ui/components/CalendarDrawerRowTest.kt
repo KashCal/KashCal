@@ -15,18 +15,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Compose tests for the drawer's calendar row ([CalendarCheckboxRow]).
+ * Tests the drawer's calendar row ([CalendarCheckboxRow]): it stays a 48dp touch
+ * target and a tap on it toggles the calendar. The row's small vertical padding
+ * isn't asserted; any change to it must keep these two properties. The 48dp floor
+ * comes from the Material3 Checkbox's minimum interactive size.
  *
- * Both tests are regression LOCKS, not red-green drivers: the density tweak
- * (reducing the row's vertical padding) has no natural unit assertion, so the
- * padding value itself is verified by build + on-device measurement. What these
- * tests guard is the property the tightening must never break — the row stays a
- * 48dp-compliant touch target and a tap on it still toggles the calendar. The
- * 48dp floor comes from the Material3 Checkbox's minimum interactive size. The
- * row is rendered in isolation here, so this locks the row composable itself; it
- * does not exercise the drawer's composition, so it would not catch a future
- * caller that wrapped the drawer in a provider disabling minimum-interactive
- * enforcement.
+ * The row is rendered in isolation, not in the drawer, so a caller that wrapped
+ * the drawer in a provider disabling minimum-interactive enforcement would not
+ * be caught.
  *
  * Runs under Robolectric; run in isolation given the repo's multi-class
  * native-crash flake.

@@ -12,14 +12,9 @@ import org.onekash.kashcal.ui.shared.SYNC_INTERVALS_MS
 import org.onekash.kashcal.ui.shared.TIMED_REMINDER_MINUTES
 
 /**
- * Unit tests for UserPreferencesRepository validation helpers.
- *
- * Tests cover:
- * - Reminder validation (isValidReminder)
- * - Default reminder retrieval (getDefaultReminder)
- * - Reminder migration when toggling all-day (migrateReminder)
- * - Sync interval validation (isValidSyncInterval)
- * - Closest sync interval selection (getClosestSyncInterval)
+ * Tests the validation helpers of [UserPreferencesRepository] (reminder validity, defaults and
+ * all-day migration; sync interval validity and closest match) and the reminder and sync
+ * interval constants they read.
  */
 class UserPreferencesRepositoryTest {
 
@@ -41,7 +36,8 @@ class UserPreferencesRepositoryTest {
 
     @Test
     fun `KashCalDataStore has correct all-day reminder default`() {
-        assertEquals(900, KashCalDataStore.DEFAULT_ALL_DAY_REMINDER_MINUTES) // 9 AM the day before (-PT15H)
+        // 9 AM the day before (-PT15H).
+        assertEquals(900, KashCalDataStore.DEFAULT_ALL_DAY_REMINDER_MINUTES)
     }
 
     @Test
@@ -140,13 +136,13 @@ class UserPreferencesRepositoryTest {
 
     @Test
     fun `isValidReminder rejects all-day reminder for timed event`() {
-        // 540 minutes (9 AM day of) is only valid for all-day events
+        // 540 isn't a timed option. It isn't an all-day option either: 9 AM on the day is -540.
         assertFalse(repository.isValidReminder(540, isAllDay = false))
     }
 
     @Test
     fun `isValidReminder rejects 5 minutes for all-day event`() {
-        // 5 minutes before doesn't make sense for all-day events
+        // 5 minutes before is a timed option only.
         assertFalse(repository.isValidReminder(5, isAllDay = true))
     }
 
@@ -183,15 +179,15 @@ class UserPreferencesRepositoryTest {
 
     @Test
     fun `migrateReminder changes invalid all-day reminder to timed default`() {
-        // 540 minutes (9 AM) is valid for all-day, invalid for timed
+        // 540 isn't a timed option, so it migrates to the timed default. It isn't an all-day
+        // option either: 9 AM on the day is -540.
         val result = repository.migrateReminder(540, newIsAllDay = false)
         assertEquals(KashCalDataStore.DEFAULT_REMINDER_MINUTES, result)
     }
 
     @Test
     fun `migrateReminder keeps valid reminder when switching types`() {
-        // If a value happens to be valid for both types, keep it
-        // REMINDER_OFF is the only value valid for both
+        // A value valid for both types is kept; REMINDER_OFF is the only such value.
         assertEquals(REMINDER_OFF, repository.migrateReminder(REMINDER_OFF, newIsAllDay = true))
         assertEquals(REMINDER_OFF, repository.migrateReminder(REMINDER_OFF, newIsAllDay = false))
     }
@@ -216,24 +212,20 @@ class UserPreferencesRepositoryTest {
 
     @Test
     fun `switching all-day toggle migrates reminder correctly`() {
-        // Simulate user creating timed event with 15 min reminder
+        // A timed event with a 15-minute reminder, toggled to all-day and back.
         var reminder = 15
         var isAllDay = false
         assertTrue(repository.isValidReminder(reminder, isAllDay))
 
-        // User toggles to all-day
         isAllDay = true
         reminder = repository.migrateReminder(reminder, isAllDay)
 
-        // Should now have valid all-day reminder
         assertTrue(repository.isValidReminder(reminder, isAllDay))
         assertEquals(KashCalDataStore.DEFAULT_ALL_DAY_REMINDER_MINUTES, reminder)
 
-        // User toggles back to timed
         isAllDay = false
         reminder = repository.migrateReminder(reminder, isAllDay)
 
-        // Should now have valid timed reminder
         assertTrue(repository.isValidReminder(reminder, isAllDay))
         assertEquals(KashCalDataStore.DEFAULT_REMINDER_MINUTES, reminder)
     }

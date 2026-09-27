@@ -1,16 +1,13 @@
 package org.onekash.kashcal.sync.parser.migration
 
-/**
- * Utility for loading ICS test resources in parser tests.
- */
+/** Loads ICS test resources for parser tests. */
 object TestDataLoader {
 
     /**
-     * Load an ICS test file from resources.
+     * Returns the contents of the test resource at [path].
      *
-     * @param path Path relative to resources root, e.g., "ical/basic/simple_event.ics"
-     * @return File contents as string
-     * @throws IllegalArgumentException if resource not found
+     * @param path relative to the resources root, e.g. "ical/basic/simple_event.ics"
+     * @throws IllegalArgumentException if the resource isn't found
      */
     fun loadTestResource(path: String): String {
         return TestDataLoader::class.java.classLoader?.getResourceAsStream(path)
@@ -19,21 +16,20 @@ object TestDataLoader {
     }
 
     /**
-     * Load all ICS files from a directory.
+     * Returns filename to contents for the known files in [directory]; an unknown directory
+     * gives an empty map.
      *
-     * @param directory Directory relative to resources/ical/, e.g., "basic"
-     * @return Map of filename to contents
+     * @param directory relative to resources/ical/, e.g. "basic"
      */
     fun loadAllFromDirectory(directory: String): Map<String, String> {
         val basePath = "ical/$directory"
-        // List of known test files (since we can't list resources dynamically)
         return getKnownFilesInDirectory(directory)
             .associateWith { filename -> loadTestResource("$basePath/$filename") }
     }
 
     /**
-     * Get known test files in a directory.
-     * This is a workaround since Java classloader can't list resources.
+     * Returns the hard-coded file list for [directory], since the classloader can't list
+     * resources. A file added to a directory must be added here too.
      */
     private fun getKnownFilesInDirectory(directory: String): List<String> {
         return when (directory) {

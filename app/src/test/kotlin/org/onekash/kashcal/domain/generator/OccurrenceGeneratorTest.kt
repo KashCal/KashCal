@@ -24,15 +24,23 @@ import org.robolectric.annotation.Config
 import java.util.TimeZone
 
 /**
- * Comprehensive tests for OccurrenceGenerator.
+ * Tests [OccurrenceGenerator] over an in-memory Room database.
  *
- * Tests cover:
- * - Non-recurring events (single occurrence)
- * - Daily, weekly, monthly, yearly recurrence
- * - EXDATE handling (cancelled occurrences)
- * - RDATE handling (additional occurrences)
- * - Edge cases (DST, month boundaries, leap year)
- * - BYSETPOS patterns (e.g., 2nd Tuesday)
+ * Covers:
+ * - A synthetic master (no occurrence) and non-recurring events (one occurrence).
+ * - Daily, weekly, monthly and yearly recurrence, with month-end and leap-day starts and
+ *   BYSETPOS patterns (2nd Tuesday, last Friday).
+ * - EXDATE in date and date-time form, including one that excludes every occurrence.
+ * - Regeneration, cancelOccurrence, and both linkException overloads: moving the occurrence to
+ *   the exception's times, a re-edit, normalizing Model A to Model B, and the fallback insert.
+ * - Exception links and cancelled flags kept across regeneration.
+ * - expandForPreview, startDay and endDay codes, and all-day events expanding in UTC.
+ * - All-day series with a DATE UNTIL, with and without EXDATE (#62).
+ * - A failed expansion keeping existing occurrences.
+ * - regenerateOccurrences on long-running series.
+ * - A timed DTEND at midnight ending on the prior day (#209).
+ *
+ * [parseDate] reads times as UTC.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -78,8 +86,8 @@ class OccurrenceGeneratorTest {
         // Orphan-exception support inserts a placeholder master carrying
         // status=CANCELLED, rrule=null, and the synthetic sentinel in
         // extraProperties. It exists only as an FK target and must never
-        // materialize an occurrence — otherwise the display layer would
-        // render a phantom crossed-out row for it.
+        // materialize an occurrence, or the display layer would render a
+        // phantom crossed-out row for it.
         val startTs = parseDate("2025-03-10 09:00")
         val synthetic = Event(
             uid = "orphan-master-${System.nanoTime()}@test.com",
@@ -285,8 +293,8 @@ class OccurrenceGeneratorTest {
             parseDate("2025-01-31 23:59")
         )
 
-        // Assert - Jan has: MO(6,13,20,27), WE(8,15,22,29), FR(10,17,24,31) = 11 occurrences after Jan 6
-        assertTrue(count >= 10) // At least 10 (depends on exact BYDAY expansion)
+        // Jan 6 onward: MO(6,13,20,27), WE(8,15,22,29), FR(10,17,24,31) = 12 occurrences
+        assertTrue(count >= 10) // The assert allows at least 10
     }
 
     @Test
@@ -617,7 +625,7 @@ class OccurrenceGeneratorTest {
         assertEquals(exceptionEvent.id, linked?.exceptionEventId)
     }
 
-    // ========== v15.0.6 Exception Time Update Tests ==========
+    // ========== Exception Time Update ==========
 
     @Test
     fun `linkException with Event updates occurrence times`() = runTest {
@@ -654,7 +662,7 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `re-editing exception finds occurrence by exceptionEventId`() = runTest {
-        // This tests the OR condition in updateOccurrenceForException
+        // Exercises the exceptionEventId arm of `OccurrencesDao.updateOccurrenceForException`.
         // Setup - master event at 10:00 AM daily
         val startTs = parseDate("2025-01-01 10:00")
         val masterEvent = createAndInsertEvent(
@@ -681,8 +689,8 @@ class OccurrenceGeneratorTest {
         assertEquals(exception1.startTs, linked?.startTs)
 
         // Re-edit: move to 6:00 PM
-        // CRITICAL: Use originalStartTs (10am) but occurrence is now at 4pm!
-        // This should still find the occurrence via exceptionEventId
+        // originalStartTs (10 AM) doesn't match the row, which is at 4 PM, so it is found by
+        // exceptionEventId.
         val updatedEvent = exception1.copy(
             startTs = originalStartTs + 8 * 3600000,  // 6:00 PM
             endTs = originalStartTs + 9 * 3600000,    // 7:00 PM
@@ -765,15 +773,14 @@ class OccurrenceGeneratorTest {
         assertEquals(20250120, linked?.endDay)
     }
 
-    // ========== v15.0.8 Model A to Model B Normalization Tests ==========
+    // ========== Model A to Model B Normalization ==========
 
     @Test
     fun `linkException normalizes Model A to Model B - deletes exception occurrence`() = runTest {
-        // This test verifies the fix for the bug where iCloud-created exception
-        // occurrences (Model A) were not being removed when editing locally
+        // A local edit removes an exception's own occurrence (Model A).
         //
-        // Model A (PullStrategy creates): cancelled master occ + separate exception occ
-        // Model B (EventWriter creates): single linked occ on master
+        // Model A: cancelled master occ + separate occ owned by the exception
+        // Model B: single linked occ on the master, which linkException produces
         //
         // Setup - master event at 10:00 AM daily
         val startTs = parseDate("2025-01-01 10:00")
@@ -788,15 +795,15 @@ class OccurrenceGeneratorTest {
         val targetOccurrence = occurrences[2] // Jan 3, 10:00 AM
         val originalStartTs = targetOccurrence.startTs
 
-        // Create exception event (simulating what PullStrategy does)
+        // Create exception event
         val exceptionEvent = createAndInsertEvent(
             startTs = originalStartTs + 6 * 3600000,  // 4:00 PM
             endTs = originalStartTs + 7 * 3600000,    // 5:00 PM
             title = "Moved to 4pm"
         )
 
-        // Simulate Model A: Create separate occurrence for exception event
-        // (This is what PullStrategy does via regenerateOccurrences(exception))
+        // Model A: the exception owns an occurrence, as regenerateOccurrences(exception) gives
+        // it.
         database.occurrencesDao().insert(
             org.onekash.kashcal.data.db.entity.Occurrence(
                 eventId = exceptionEvent.id,  // Model A: occ has exception's eventId
@@ -808,11 +815,10 @@ class OccurrenceGeneratorTest {
             )
         )
 
-        // Simulate Model A: Cancel master occurrence
-        // (This is what PullStrategy does via cancelOccurrence(master, originalTime))
+        // Model A: the master's occurrence is cancelled.
         occurrenceGenerator.cancelOccurrence(masterEvent.id, originalStartTs)
 
-        // Verify Model A is set up correctly
+        // Verify Model A is in place
         val exceptionOccBefore = database.occurrencesDao().getForEvent(exceptionEvent.id)
         assertEquals("Model A should have separate exception occurrence", 1, exceptionOccBefore.size)
         val masterOccs = database.occurrencesDao().getForEvent(masterEvent.id)
@@ -836,7 +842,7 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `linkException uncancels master occurrence`() = runTest {
-        // This test verifies the is_cancelled = 0 fix
+        // updateOccurrenceForException sets is_cancelled = 0.
         // Setup - master event at 10:00 AM daily
         val startTs = parseDate("2025-01-01 10:00")
         val masterEvent = createAndInsertEvent(
@@ -850,7 +856,7 @@ class OccurrenceGeneratorTest {
         val targetOccurrence = occurrences[2] // Jan 3, 10:00 AM
         val originalStartTs = targetOccurrence.startTs
 
-        // Cancel the occurrence (simulating PullStrategy behavior)
+        // Cancel the occurrence
         occurrenceGenerator.cancelOccurrence(masterEvent.id, originalStartTs)
 
         // Verify it's cancelled
@@ -887,7 +893,7 @@ class OccurrenceGeneratorTest {
             endTs = startTs + 3600000,
             rrule = "FREQ=DAILY;COUNT=5"
         )
-        // Note: NOT calling regenerateOccurrences - simulating exception outside sync window
+        // No regenerateOccurrences, as for an exception outside the materialized window.
 
         // Create exception event
         val exceptionStartTs = parseDate("2025-06-15 14:00") // Far in future
@@ -915,14 +921,11 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `linkException full Model A to Model B workflow`() = runTest {
-        // End-to-end test simulating the full iCloud exception edit workflow
-        //
-        // Scenario:
+        // End to end, an occurrence edited on iCloud and then in KashCal:
         // 1. User creates recurring event in KashCal
-        // 2. User edits one instance in iCloud (creates Model A)
-        // 3. User edits same instance in KashCal (should normalize to Model B)
-        // 4. Verify UI would show updated data
-        //
+        // 2. The iCloud edit is set up as Model A
+        // 3. User edits same instance in KashCal, which normalizes to Model B
+        // 4. The non-cancelled occurrences show the edit
         val startTs = parseDate("2025-01-06 10:00") // Monday 10am
         val masterEvent = createAndInsertEvent(
             startTs = startTs,
@@ -945,7 +948,7 @@ class OccurrenceGeneratorTest {
             title = "Weekly Meeting (Rescheduled)"
         )
 
-        // Simulate PullStrategy Model A creation
+        // Set up Model A
         database.occurrencesDao().insert(
             org.onekash.kashcal.data.db.entity.Occurrence(
                 eventId = iCloudException.id,
@@ -985,8 +988,8 @@ class OccurrenceGeneratorTest {
         assertEquals(updatedException.startTs, linked?.startTs) // 4pm
         assertFalse("Model B: occurrence not cancelled", linked?.isCancelled == true)
 
-        // - UI query should find the event
-        // Using the same pattern as EventReader: occ.exceptionEventId ?: occ.eventId
+        // - The non-cancelled occurrences include the edit; EventReader resolves each with
+        //   occ.exceptionEventId ?: occ.eventId
         val visibleOccs = database.occurrencesDao().getForEvent(masterEvent.id)
             .filter { !it.isCancelled }
         assertEquals("Should have 4 visible occurrences", 4, visibleOccs.size)
@@ -1024,7 +1027,7 @@ class OccurrenceGeneratorTest {
             exceptionEvent.id
         )
 
-        // Verify link exists (using old linkException - doesn't update times)
+        // Verify link exists (the ID overload of linkException leaves the times)
         val beforeRegeneration = database.occurrencesDao().getForEvent(masterEvent.id)
         val linkedBefore = beforeRegeneration.find { it.exceptionEventId == exceptionEvent.id }
         assertNotNull(linkedBefore)
@@ -1038,7 +1041,7 @@ class OccurrenceGeneratorTest {
         val linkedAfter = afterRegeneration.find { it.exceptionEventId == exceptionEvent.id }
         assertNotNull(linkedAfter)
         assertEquals(exceptionEvent.id, linkedAfter?.exceptionEventId)
-        // v15.0.6: Regeneration now restores exception times from exception event
+        // Regeneration moves the linked occurrence to the exception event's times.
         assertEquals(exceptionEvent.startTs, linkedAfter?.startTs)
         assertEquals(exceptionEvent.endTs, linkedAfter?.endTs)
     }
@@ -1059,7 +1062,7 @@ class OccurrenceGeneratorTest {
         val toCancel = occurrences[1] // 2nd occurrence (Jan 2)
         occurrenceGenerator.cancelOccurrence(masterEvent.id, toCancel.startTs)
 
-        // Link an exception (which also marks it cancelled via RECURRENCE-ID)
+        // Link an exception, then cancel its occurrence
         val targetOccurrence = occurrences[3] // 4th occurrence (Jan 4)
         val exceptionEvent = createAndInsertEvent(
             startTs = targetOccurrence.startTs + 3600000,
@@ -1076,7 +1079,8 @@ class OccurrenceGeneratorTest {
         // Verify state before regeneration
         val beforeRegeneration = database.occurrencesDao().getForEvent(masterEvent.id)
         assertTrue(beforeRegeneration.find { it.startTs == toCancel.startTs }?.isCancelled == true)
-        // Note: Using old linkException doesn't update times, but cancelOccurrence uses tolerance
+        // The ID overload of linkException leaves the times, so the cancel at the original time
+        // matches the linked row.
         val linkedBeforeOcc = beforeRegeneration.find { it.exceptionEventId == exceptionEvent.id }
         assertTrue(linkedBeforeOcc?.isCancelled == true)
 
@@ -1084,7 +1088,7 @@ class OccurrenceGeneratorTest {
         occurrenceGenerator.regenerateOccurrences(masterEvent)
 
         // Assert - cancelled status should be preserved for linked exceptions
-        // v15.0.6: Now find by exceptionEventId since times are updated to exception's times
+        // Found by exceptionEventId: regeneration moved it to the exception's times.
         val afterRegeneration = database.occurrencesDao().getForEvent(masterEvent.id)
         val linkedCancelled = afterRegeneration.find { it.exceptionEventId == exceptionEvent.id }
         assertNotNull(linkedCancelled)
@@ -1132,7 +1136,7 @@ class OccurrenceGeneratorTest {
         occurrenceGenerator.regenerateOccurrences(masterEvent)
 
         // Assert - all links preserved
-        // v15.0.6: Find by exceptionEventId since times are updated to exception's times
+        // Found by exceptionEventId: regeneration moved them to the exceptions' times.
         val afterRegeneration = database.occurrencesDao().getForEvent(masterEvent.id)
         val linked1 = afterRegeneration.find { it.exceptionEventId == exception1.id }
         val linked2 = afterRegeneration.find { it.exceptionEventId == exception2.id }
@@ -1178,7 +1182,7 @@ class OccurrenceGeneratorTest {
         occurrenceGenerator.generateOccurrences(masterEvent, rangeStart, rangeEnd)
 
         // Assert - link preserved
-        // v15.0.6: Find by exceptionEventId since times are updated to exception's times
+        // Found by exceptionEventId: regeneration moved it to the exception's times.
         val afterRegeneration = database.occurrencesDao().getForEvent(masterEvent.id)
         val linkedAfter = afterRegeneration.find { it.exceptionEventId == exceptionEvent.id }
         assertNotNull(linkedAfter)
@@ -1207,13 +1211,12 @@ class OccurrenceGeneratorTest {
         assertEquals(0, database.occurrencesDao().getTotalCount())
     }
 
-    // ========== expandForPreview All-Day DATE UNTIL Tests (Issue #62) ==========
-    // expandForPreview() had the same bug as expandRRule(): always using timed DateTime
-    // for DTSTART, which throws when UNTIL is DATE-format (all-day).
+    // ========== expandForPreview All-Day UNTIL (Issue #62) ==========
+    // An all-day DTSTART with a DATE-format UNTIL must expand in the preview as in storage.
 
     @Test
     fun `expandForPreview with all-day DATE UNTIL returns occurrences`() {
-        // Same bug as expandRRule: FREQ=YEARLY;UNTIL=20350927 with all-day DTSTART
+        // FREQ=YEARLY;UNTIL=20350927 with an all-day DTSTART
         val dtstartMs = parseDate("2012-02-21 00:00")
         val occurrences = occurrenceGenerator.expandForPreview(
             rrule = "FREQ=YEARLY;UNTIL=20350927",
@@ -1246,7 +1249,7 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `expandForPreview with all-day DATETIME UNTIL still works`() {
-        // Ensure DATETIME UNTIL still works after the fix
+        // A DATE-TIME UNTIL on an all-day series also expands.
         val dtstartMs = parseDate("2026-01-15 00:00")
         val occurrences = occurrenceGenerator.expandForPreview(
             rrule = "FREQ=MONTHLY;UNTIL=20260615T000000Z",
@@ -1297,13 +1300,12 @@ class OccurrenceGeneratorTest {
         assertEquals(20250617, occurrences[0].endDay)
     }
 
-    // ========== All-Day Events - UTC Timezone Fix Tests ==========
+    // ========== All-Day Events Expand in UTC ==========
 
     @Test
     fun `all-day recurring event uses UTC for RRULE expansion - weekly`() = runTest {
         // Setup: All-day event on Monday Jan 6, 2025 (stored as UTC midnight)
-        // This tests the fix for the bug where all-day events used local timezone
-        // which caused occurrences to appear on the wrong day
+        // Expanding in the local zone would put occurrences on the wrong day.
         val startTs = parseDate("2025-01-06 00:00") // Jan 6, 2025 00:00 UTC (Monday)
         val endTs = parseDate("2025-01-06 23:59")
         val event = createAndInsertAllDayEvent(startTs, endTs, rrule = "FREQ=WEEKLY;BYDAY=MO")
@@ -1332,7 +1334,7 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `all-day recurring event occurrences have correct day codes`() = runTest {
-        // This test verifies that the startDay/endDay calculation uses UTC for all-day events
+        // startDay and endDay of an all-day event are UTC days.
         val startTs = parseDate("2025-01-15 00:00") // Jan 15, 2025 00:00 UTC
         val endTs = parseDate("2025-01-15 23:59")
         val event = createAndInsertAllDayEvent(startTs, endTs, rrule = "FREQ=DAILY;COUNT=3")
@@ -1379,8 +1381,7 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `all-day event without timezone uses UTC for RRULE expansion`() = runTest {
-        // This specifically tests the bug fix: when event.timezone is null,
-        // all-day events should use UTC, not system default timezone
+        // An all-day event with a null timezone expands in UTC, not the device zone.
         val startTs = parseDate("2025-01-06 00:00") // Monday Jan 6 UTC midnight
         val endTs = parseDate("2025-01-06 23:59")
 
@@ -1393,7 +1394,7 @@ class OccurrenceGeneratorTest {
             endTs = endTs,
             dtstamp = System.currentTimeMillis(),
             isAllDay = true,
-            timezone = null, // KEY: null timezone should use UTC for all-day
+            timezone = null, // Expands in UTC as all-day
             rrule = "FREQ=WEEKLY;BYDAY=MO;COUNT=4",
             syncStatus = SyncStatus.SYNCED
         )
@@ -1437,8 +1438,7 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `yearly all-day birthday event has correct single day per occurrence`() = runTest {
-        // Simulates iCloud birthday: Jan 6 yearly recurring
-        // This is the exact bug scenario reported by user
+        // An iCloud birthday: all-day, yearly on Jan 6
         val startTs = parseDate("2026-01-06 00:00") // Jan 6 00:00 UTC
         val endTs = parseDate("2026-01-06 23:59")   // Jan 6 23:59 UTC (single day)
         val event = createAndInsertAllDayEvent(
@@ -1456,8 +1456,7 @@ class OccurrenceGeneratorTest {
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         assertEquals("Should have 3 yearly occurrences", 3, occurrences.size)
 
-        // CRITICAL: Each occurrence should be single-day (startDay == endDay)
-        // The bug was that startDay != endDay, causing event to show on 2 days
+        // Each occurrence must be single-day (startDay == endDay), or it shows on 2 days.
         for ((index, occ) in occurrences.withIndex()) {
             assertEquals(
                 "Occurrence $index should be single-day (startDay == endDay)",
@@ -1474,8 +1473,8 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `yearly all-day event with null timezone uses UTC`() = runTest {
-        // Tests the specific fix: null timezone should use UTC for all-day events
-        // Previously, null timezone fell back to device timezone, causing date shift
+        // An all-day event with a null timezone expands in UTC; the device zone would shift
+        // the date.
         val startTs = parseDate("2026-01-06 00:00") // Jan 6 00:00 UTC
         val endTs = parseDate("2026-01-06 23:59")
 
@@ -1488,7 +1487,7 @@ class OccurrenceGeneratorTest {
             endTs = endTs,
             dtstamp = System.currentTimeMillis(),
             isAllDay = true,
-            timezone = null, // KEY: null timezone - should still use UTC
+            timezone = null, // Still expands in UTC
             rrule = "FREQ=YEARLY;COUNT=2",
             syncStatus = SyncStatus.SYNCED
         )
@@ -1512,15 +1511,13 @@ class OccurrenceGeneratorTest {
     }
 
     // ========== All-Day UNTIL Tests (Issue #62) ==========
-    // These test the fix for lib-recur requiring DTSTART and UNTIL to match in
-    // isAllDay()/isFloating(). DATE-format UNTIL (e.g., "20350927") is all-day —
-    // DTSTART must also be created as date-only DateTime, not timed DateTime.
+    // A DATE-format UNTIL (e.g. "20350927") is a date, so it bounds an all-day DTSTART,
+    // which is also a date.
 
     @Test
     fun `all-day yearly event with DATE-format UNTIL generates occurrences`() = runTest {
-        // Reproduces: RRULE:FREQ=YEARLY;UNTIL=20350927 with DTSTART;VALUE=DATE:20120221
-        // Before fix: lib-recur threw "floating start times with absolute until values"
-        // and expandRRule returned emptyList(), leaving event invisible.
+        // RRULE:FREQ=YEARLY;UNTIL=20350927 with DTSTART;VALUE=DATE:20120221. An empty
+        // expansion would leave the event with no occurrences, so it wouldn't show.
         val startTs = parseDate("2012-02-21 00:00") // Feb 21, 2012 UTC midnight
         val endTs = parseDate("2012-02-21 23:59")
         val event = createAndInsertAllDayEvent(
@@ -1555,7 +1552,7 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `all-day weekly event with DATE-format UNTIL generates occurrences`() = runTest {
-        // Weekly all-day event with DATE UNTIL — same type mismatch bug
+        // Weekly all-day event with DATE UNTIL
         val startTs = parseDate("2026-01-05 00:00") // Mon Jan 5, 2026 UTC
         val endTs = parseDate("2026-01-05 23:59")
         val event = createAndInsertAllDayEvent(
@@ -1573,7 +1570,7 @@ class OccurrenceGeneratorTest {
         assertTrue("Should generate occurrences (got $count)", count > 0)
 
         val occurrences = database.occurrencesDao().getForEvent(event.id)
-        // Jan 5, 12, 19, 26, Feb 2 (5 Mondays — UNTIL is inclusive per RFC 5545)
+        // Jan 5, 12, 19, 26, Feb 2 (5 Mondays; UNTIL is inclusive, RFC 5545 §3.3.10)
         assertEquals("Should have 5 weekly occurrences", 5, occurrences.size)
         assertEquals(20260105, occurrences[0].startDay)
         assertEquals(20260112, occurrences[1].startDay)
@@ -1584,7 +1581,7 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `all-day monthly event with DATETIME-format UNTIL still works`() = runTest {
-        // DATETIME-format UNTIL should also work (already worked before fix)
+        // A DATE-TIME UNTIL on an all-day series also expands.
         val startTs = parseDate("2026-01-15 00:00")
         val endTs = parseDate("2026-01-15 23:59")
         val event = createAndInsertAllDayEvent(
@@ -1609,10 +1606,8 @@ class OccurrenceGeneratorTest {
     }
 
     // ========== All-Day DATE UNTIL + EXDATE Tests (Issue #62) ==========
-    // These test that EXDATE correctly excludes occurrences when DTSTART is date-only.
-    // parseDateCode() must create date-only DateTime matching the RRULE's date-only
-    // occurrences — otherwise lib-recur's Difference falls back to timestamp comparison
-    // and EXDATE silently fails to exclude.
+    // EXDATE must exclude occurrences of a date-only DTSTART. All-day EXDATE codes parse as
+    // dates at UTC midnight (`IcalDavRRuleAdapter.parseCsvDates`), matching the occurrences.
 
     @Test
     fun `all-day event with DATE UNTIL and EXDATE excludes correctly`() = runTest {
@@ -1666,7 +1661,7 @@ class OccurrenceGeneratorTest {
         assertEquals("Should have 4 occurrences after exclusions", 4, occurrences.size)
     }
 
-    // ========== Data Loss Prevention Tests ==========
+    // ========== Failed Expansion Keeps Occurrences ==========
 
     @Test
     fun `generateOccurrences preserves existing occurrences when RRULE expansion fails`() = runTest {
@@ -1758,9 +1753,9 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `regenerateOccurrences generates current occurrences for old daily event`() = runTest {
-        // Create daily event that started 10 years ago (3650+ days).
-        // Bug: old code starts RRULE iteration from DTSTART, hits MAX_ITERATIONS=1000
-        // at ~2.7 years, never reaches the present.
+        // Daily event that started 10 years ago (3650+ days). With the "All events" lookback
+        // the range starts at DTSTART, so a cap counted from DTSTART must not stop expansion
+        // before today.
         val tenYearsAgo = System.currentTimeMillis() - (10L * 365 * 24 * 60 * 60 * 1000)
         val event = createAndInsertEvent(
             startTs = tenYearsAgo,
@@ -1782,9 +1777,9 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `regenerateOccurrences handles high frequency within expansion window`() = runTest {
-        // Hourly event started 1 year ago — within the past expansion window.
-        // 365 days × 24 hours = 8,760 occurrences in past year alone.
-        // With MAX_ITERATIONS=10000, should exceed old 1000 cap AND reach present.
+        // Hourly event started 1 year ago: 365 days x 24 hours = 8,760 occurrences to today.
+        // The engine's 10,000 cap, counted from DTSTART, still reaches the present. The asserts
+        // check more than 1000 and some in the last 30 days.
         val oneYearAgo = System.currentTimeMillis() - (365L * 24 * 60 * 60 * 1000)
         val event = createAndInsertEvent(
             startTs = oneYearAgo,
@@ -1810,9 +1805,8 @@ class OccurrenceGeneratorTest {
 
     @Test
     fun `regenerateOccurrences preserves full range for recent event`() = runTest {
-        // 6-month-old daily event — within the 24-month window.
-        // coerceAtLeast(event.startTs) should keep rangeStart = event.startTs,
-        // so occurrences start from the actual event start, not now-24months.
+        // 6-month-old daily event. With the "All events" lookback, coerceAtLeast keeps
+        // rangeStart at the (second-aligned) event start, so occurrences start there.
         val sixMonthsAgo = System.currentTimeMillis() - (180L * 24 * 60 * 60 * 1000)
         val event = createAndInsertEvent(
             startTs = sixMonthsAgo,
@@ -1822,12 +1816,12 @@ class OccurrenceGeneratorTest {
 
         val count = occurrenceGenerator.regenerateOccurrences(event)
 
-        // Should have ~180 past + ~720 future ≈ 900 occurrences
+        // About 180 past + 720 future = 900 occurrences; the assert checks at least 180
         assertTrue(
             "Expected >= 180 occurrences but got $count",
             count >= 180
         )
-        // Verify oldest occurrence is near the event start (not clipped to now-24months)
+        // Verify oldest occurrence is near the event start (not clipped to a lookback)
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         val oldest = occurrences.minByOrNull { it.startTs }!!
         val diffFromStart = oldest.startTs - sixMonthsAgo
@@ -1841,8 +1835,8 @@ class OccurrenceGeneratorTest {
     //
     // RFC 5545 §3.6.1: DTSTART is the inclusive start, DTEND is the non-inclusive end.
     // A timed event [startTs, endTs) ending exactly at local 00:00:00.000 occupies only
-    // the prior calendar day. Expectation: the derived endDay matches that rule, and the
-    // raw endTs ms value is preserved unchanged (fix is display-derivation only).
+    // the prior calendar day. The derived endDay follows that rule, and the raw endTs ms
+    // value is stored unchanged.
 
     @Test
     fun `issue 209 timed event ending at midnight generates single-day occurrence`() = runTest {
@@ -2008,7 +2002,7 @@ class OccurrenceGeneratorTest {
             val occurrences = database.occurrencesDao().getForEvent(masterEvent.id).sortedBy { it.startTs }
             val targetOccurrence = occurrences[1] // May 5 master instance
 
-            // Exception reshapes to 20:00→00:00 on the same day (endTs lands at next-day midnight UTC)
+            // Exception reshapes to 20:00→00:00 on the same day (endTs at next-day UTC midnight)
             val exceptionStart = parseDate("2026-05-05 20:00")
             val exceptionEnd = parseDate("2026-05-06 00:00")
             val exceptionEvent = createAndInsertEvent(
@@ -2031,10 +2025,7 @@ class OccurrenceGeneratorTest {
 
     // ========== Helper Functions ==========
 
-    /**
-     * Create and insert an all-day event (isAllDay = true).
-     * All-day events are stored as UTC midnight and should use UTC for calculations.
-     */
+    /** Inserts an all-day event. All-day events are stored at UTC midnight and expand in UTC. */
     private suspend fun createAndInsertAllDayEvent(
         startTs: Long,
         endTs: Long,
@@ -2083,10 +2074,7 @@ class OccurrenceGeneratorTest {
         return event.copy(id = eventId)
     }
 
-    /**
-     * Parse date string to milliseconds.
-     * Format: "yyyy-MM-dd HH:mm"
-     */
+    /** Parses "yyyy-MM-dd HH:mm" as UTC and returns epoch milliseconds. */
     private fun parseDate(dateStr: String): Long {
         val parts = dateStr.split(" ")
         val dateParts = parts[0].split("-")

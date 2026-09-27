@@ -6,10 +6,9 @@ import org.junit.Test
 import org.onekash.kashcal.R
 
 /**
- * Verifies the precedence of the event-state screen-reader label: cancelled
- * outranks declined outranks past, and a normal event has no label. Guards the
- * ordering so a future reshuffle of the `when` can't silently announce the
- * wrong state.
+ * Tests the precedence of [eventStateRes], the event-state screen-reader label: cancelled
+ * outranks declined outranks past, and a normal event has no label. A reshuffle of its `when`
+ * would silently announce the wrong state.
  */
 class EventStateDescriptionTest {
 

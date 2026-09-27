@@ -6,11 +6,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/**
- * Unit tests for Event entity.
- *
- * Tests computed properties and default values.
- */
+/** Tests [Event]'s computed properties, default values, nullable fields and copy. */
 class EventTest {
 
     private fun createEvent(
@@ -221,8 +217,8 @@ class EventTest {
 
     @Test
     fun `event can be both recurring and exception`() {
-        // Edge case: Exception event that also has its own RRULE
-        // (rare but valid in RFC 5545)
+        // An exception with its own RRULE: rare, but RFC 5545's VEVENT grammar allows both
+        // RECURRENCE-ID and RRULE (§3.6.1)
         val event = createEvent(
             rrule = "FREQ=DAILY",
             originalEventId = 100L

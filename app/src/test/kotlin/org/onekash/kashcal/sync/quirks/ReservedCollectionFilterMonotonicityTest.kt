@@ -7,30 +7,24 @@ import org.onekash.kashcal.sync.carddav.DefaultCardDavQuirks
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 
 /**
- * Differential proof that the current reserved-collection skip filters can only ever
- * skip a SUBSET of what the last publicly-released version skipped — so tightening the
- * filter can only REVEAL collections that were wrongly hidden, never newly hide one a
- * user currently sees.
+ * Checks that the reserved-collection skip filters skip only a subset of what release
+ * v2026.08.08-3 skipped, so they can reveal a wrongly hidden collection but never hide one a
+ * user saw.
  *
- * The reserved-word skip filter (`shouldSkipCalendar` / `shouldSkipAddressBook`) is pure
- * redundancy layered on top of the positive `<calendar>` / `<addressbook>` resourcetype
- * gate. It runs only on collections that already carry that resourcetype, and its result
- * drops the collection UNCONDITIONALLY. So its only failure mode is a false-drop — hiding
- * a real collection — which is exactly a user-facing regression. This test pins that the
- * current filter never introduces such a regression relative to what shipped.
+ * The reserved-word filter (`shouldSkipCalendar`, `shouldSkipAddressBook`) is redundancy on top
+ * of the positive `<calendar>` or `<addressbook>` resourcetype gate: it runs only on collections
+ * that carry that resourcetype, and a skip drops the collection unconditionally. Its only
+ * failure mode is hiding a real collection, a user-facing regression.
  *
- * Method: the last publicly-released predicates (release v2026.08.08-3) are transcribed
- * verbatim below as reference oracles. A broad corpus of (href, displayName) pairs — real
- * collection shapes, reserved words as whole segments and as substrings, reserved display
- * names, and adversarial edges — is run through both the reference oracle and the current
- * production predicate. The invariant asserted for every input:
+ * The v2026.08.08-3 predicates are transcribed verbatim below as reference oracles. A corpus of
+ * (href, displayName) pairs (real collection shapes, reserved words as whole segments and as
+ * substrings, reserved display names, edge cases) runs through the oracle and the production
+ * predicate, asserting for every input:
  *
  *     currentSkips(x)  ⇒  shippedSkips(x)
  *
- * i.e. the current skip-set is a subset of the shipped skip-set. A violation means the
- * current code hides a collection the shipped code showed — a regression. The test also
- * records that the current filter is a STRICT subset (it skips strictly fewer inputs), so
- * the corpus actually exercises the difference rather than trivially passing on equality.
+ * Each corpus test also asserts the subset is strict (some input the oracle skips is kept now),
+ * so the corpus exercises the difference and can't pass on equality.
  */
 class ReservedCollectionFilterMonotonicityTest {
 
@@ -38,9 +32,9 @@ class ReservedCollectionFilterMonotonicityTest {
     private val icloudQuirks = ICloudQuirks()
     private val cardDavQuirks = DefaultCardDavQuirks(serverBaseUrl = "https://dav.example.test/")
 
-    // ---- Reference oracles: the predicates as they shipped in release v2026.08.08-3 ----
-    // Transcribed verbatim from commit 1cf0aefc6. Do NOT "fix" these to match current
-    // behavior — they are the historical baseline the subset property is proven against.
+    // ---- Reference oracles: the predicates shipped in v2026.08.08-3 ----
+    // Transcribed verbatim from commit 1cf0aefc6. Don't "fix" these to match current
+    // behavior: they are the baseline the subset property is checked against.
 
     private fun shippedDefaultSkipsCalendar(href: String, displayName: String?): Boolean {
         val hrefLower = href.lowercase()
@@ -81,15 +75,15 @@ class ReservedCollectionFilterMonotonicityTest {
         "/calendars/user/work/",
         "/calendars/user/family-events/",
         "/addressbooks/alice/default/",
-        // Reserved words as WHOLE segments (skipped by both).
+        // Reserved words as whole segments (skipped by both).
         "/calendars/user/inbox/",
         "/calendars/user/outbox/",
         "/calendars/user/notification/",
         "/calendars/user/notifications/",
         "/addressbooks/alice/inbox/",
         "/addressbooks/alice/notifications/",
-        // Reserved words as SUBSTRINGS of a real segment (the original bug — shipped hid
-        // these, current keeps them; this is the intended reveal).
+        // Reserved words as substrings of a real segment: the oracle hides these and the
+        // current filter keeps them, the intended reveal.
         "/calendars/user/my-inbox-friends/",
         "/calendars/user/outbox-archive/",
         "/calendars/notifications-events/personal/",
@@ -191,14 +185,14 @@ class ReservedCollectionFilterMonotonicityTest {
 
     @Test
     fun `the reveal is real - a substring-in-segment collection the last release hid is now kept`() {
-        // Concrete anchors for the user-facing win: the exact shapes the original bug hid.
+        // Concrete shapes the oracle hid and the current filter keeps.
         assertTrue(shippedCardDavSkipsAddressBook("/testuser1/notifications-contacts/", "Notifications Contacts"))
         assertFalse(cardDavQuirks.shouldSkipAddressBook("/testuser1/notifications-contacts/", "Notifications Contacts"))
 
         assertTrue(shippedDefaultSkipsCalendar("/calendars/user/my-inbox-friends/", "My Inbox Friends"))
         assertFalse(defaultQuirks.shouldSkipCalendar("/calendars/user/my-inbox-friends/", "My Inbox Friends"))
 
-        // And the display-name-only reveal: a real events calendar the user named "Tasks".
+        // The display-name-only reveal: a real events calendar the user named "Tasks".
         assertTrue(shippedDefaultSkipsCalendar("/calendars/user/todo/", "Tasks"))
         assertFalse(defaultQuirks.shouldSkipCalendar("/calendars/user/todo/", "Tasks"))
     }

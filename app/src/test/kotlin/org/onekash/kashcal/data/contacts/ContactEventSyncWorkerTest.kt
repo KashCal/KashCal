@@ -15,10 +15,10 @@ import org.junit.Test
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 
 /**
- * Unit tests for ContactEventSyncWorker.
- *
- * Tests doWork() logic: feature guard, sync result handling,
- * retry logic, permission error handling, and dual-repository sync.
+ * Tests [ContactEventSyncWorker.doWork]: the both-disabled skip, which repositories sync and
+ * record a last-sync time, retry versus failure by attempt count, and not retrying a
+ * SecurityException; plus the work-name and output-key constants. Output data values aren't
+ * asserted.
  */
 class ContactEventSyncWorkerTest {
 
@@ -53,7 +53,6 @@ class ContactEventSyncWorkerTest {
         val result = worker.doWork()
 
         assertTrue("Should succeed when both disabled", result is Result.Success)
-        // Should not attempt sync on either repository
         coVerify(exactly = 0) { birthdayRepository.syncEvents() }
         coVerify(exactly = 0) { anniversaryRepository.syncEvents() }
     }
@@ -74,9 +73,7 @@ class ContactEventSyncWorkerTest {
         val worker = createWorker()
         val result = worker.doWork()
 
-        // Verify last sync time was recorded
         coVerify { dataStore.setContactBirthdaysLastSync(any()) }
-        // Should not sync anniversaries
         coVerify(exactly = 0) { anniversaryRepository.syncEvents() }
     }
 
@@ -96,10 +93,8 @@ class ContactEventSyncWorkerTest {
         val worker = createWorker()
         val result = worker.doWork()
 
-        // Should sync anniversaries
         coVerify { anniversaryRepository.syncEvents() }
         coVerify { dataStore.setContactAnniversariesLastSync(any()) }
-        // Should not sync birthdays
         coVerify(exactly = 0) { birthdayRepository.syncEvents() }
     }
 
@@ -125,7 +120,6 @@ class ContactEventSyncWorkerTest {
         val worker = createWorker()
         val result = worker.doWork()
 
-        // Should sync both
         coVerify { birthdayRepository.syncEvents() }
         coVerify { anniversaryRepository.syncEvents() }
         coVerify { dataStore.setContactBirthdaysLastSync(any()) }
@@ -158,7 +152,7 @@ class ContactEventSyncWorkerTest {
         val worker = createWorker(runAttemptCount = 0)
         val result = worker.doWork()
 
-        // Under max retries (3), should retry
+        // Below MAX_RETRY_ATTEMPTS (3), so it retries.
         assertTrue("Should retry on error: $result", result == Result.retry())
     }
 
@@ -184,7 +178,7 @@ class ContactEventSyncWorkerTest {
             "Persistent error"
         )
 
-        val worker = createWorker(runAttemptCount = 3) // At max
+        val worker = createWorker(runAttemptCount = 3) // at MAX_RETRY_ATTEMPTS
         val result = worker.doWork()
 
         assertTrue("Should fail after max retries: $result", result is Result.Failure)
@@ -201,7 +195,7 @@ class ContactEventSyncWorkerTest {
         val worker = createWorker(runAttemptCount = 0)
         val result = worker.doWork()
 
-        // SecurityException should fail immediately, NOT retry
+        // A SecurityException isn't retried, even on the first attempt.
         assertTrue("Should fail on SecurityException, not retry: $result", result != Result.retry())
     }
 
@@ -237,7 +231,7 @@ class ContactEventSyncWorkerTest {
         coEvery { dataStore.getContactAnniversariesEnabled() } returns false
         coEvery { birthdayRepository.syncEvents() } throws NullPointerException()
 
-        val worker = createWorker(runAttemptCount = 3) // At max, will produce failure
+        val worker = createWorker(runAttemptCount = 3) // at the limit; the message isn't asserted
         val result = worker.doWork()
 
         assertTrue("Should fail after max retries: $result", result != Result.retry())

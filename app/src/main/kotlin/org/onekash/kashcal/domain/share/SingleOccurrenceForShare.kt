@@ -7,62 +7,31 @@ import java.time.ZoneOffset
 import java.util.UUID
 
 /**
- * Synthesize a standalone single-occurrence [Event] for share-card .ics
- * export.
+ * Builds a standalone, non-recurring copy of one occurrence of [event] for the .ics the share
+ * card attaches, so the recipient can add that one event and never the series.
  *
- * The share-card flow attaches a .ics next to the rendered PNG so recipients
- * can tap to add. The .ics should describe ONE event — the specific
- * occurrence the user is sharing — not the entire recurring series. This
- * helper takes a master (or exception) event plus the user-tapped occurrence
- * timestamps and returns a non-recurring, non-exception, fresh-UID event
- * stripped of any data that should not be shared with a recipient.
- *
- * What's stripped, and why:
- *  - `rawIcal`: forces IcsExporter / IcsPatcher down the `generateFresh`
- *    code path. The patch path preserves ATTENDEE, ORGANIZER, RECURRENCE-ID,
- *    and X-* properties verbatim from the original CalDAV body. Without
- *    this clearing, a recurring event synced from iCloud / Nextcloud /
- *    Radicale would leak every attendee's email and RSVP into the
- *    share-card .ics.
- *  - `originalEventId` / `originalInstanceTime` / `rrule`: clears
- *    series-membership state so the emitted VEVENT has no RRULE or
+ * Cleared, so none of the sender's data or series state reaches the recipient:
+ *  - `rawIcal`, so IcsPatcher takes `generateFresh`. The patch path keeps ATTENDEE,
+ *    ORGANIZER, RECURRENCE-ID and X-* properties from the original CalDAV body, so a synced
+ *    event would leak every attendee's email and RSVP.
+ *  - `rrule`, `originalEventId` and `originalInstanceTime`, so the VEVENT has no RRULE or
  *    RECURRENCE-ID.
- *  - `organizerEmail` / `organizerName` / `organizerSentBy` /
- *    `organizerScheduleStatus`: defensive — the recipient should not
- *    receive an ORGANIZER property pointing at the sender's email; some
- *    receiving calendars treat ORGANIZER as an iTIP-routing trigger.
- *  - `extraProperties`: sender's X-* extensions stay with the sender.
- *  - `etag` / `caldavUrl`: server-bound state that has no meaning after
- *    a copy.
+ *  - `organizerEmail`, `organizerName`, `organizerSentBy` and `organizerScheduleStatus`: the
+ *    recipient shouldn't get an ORGANIZER naming the sender, and some receiving calendars treat
+ *    ORGANIZER as an iTIP-routing trigger.
+ *  - `extraProperties` (the sender's X-* extensions), `etag` and `caldavUrl`.
  *
- * What's normalized:
- *  - **All-day timestamps**: snapped to UTC midnight of the local calendar
- *    day in the event's timezone. KashCal stores all-day events as "local
- *    midnight in event TZ" (e.g. May 31 00:00:00 PDT = ms epoch
- *    1748674800000). The CalDAV-side ICS DATE serializer reads these
- *    timestamps via UTC, which can shift the displayed date by a day
- *    when the event TZ is east of UTC. For the share-card flow we
- *    convert the timestamp into a LocalDate in the event's TZ first,
- *    then re-anchor to UTC midnight (the canonical RFC 5545 DATE
- *    storage). This guarantees DTSTART/DTEND on a 4-day event in
- *    Australia/Sydney emit `20260531`/`20260604` instead of
- *    `20260530`/`20260603`. Non-all-day timestamps are left alone —
- *    DATE-TIME values use TZID and are TZ-correct already.
+ * Set fresh:
+ *  - `uid`: a random UUID, so the recipient's calendar inserts a new event instead of updating
+ *    the sender's.
+ *  - `startTs` and `endTs`: the tapped occurrence, all-day ranges re-anchored by
+ *    [normalizeAllDay].
+ *  - `dtstamp`, `createdAt` and `updatedAt`: [nowMs]; DTSTAMP is when the iCalendar object was
+ *    created (RFC 5545 §3.8.7.2).
+ *  - `id`: 0, since the copy is never stored in Room.
  *
- * What's set fresh:
- *  - `uid`: random UUID so the recipient's calendar treats this as a
- *    brand-new insert, not an update to the sender's master.
- *  - `startTs` / `endTs`: from the occurrence the user tapped (then
- *    normalized for all-day, see above).
- *  - `dtstamp` / `createdAt` / `updatedAt`: set to [nowMs] per RFC 5545
- *    §3.8.7.2 — DTSTAMP is the time the iCalendar object was created.
- *  - `id`: 0 (this Event is never persisted to Room).
- *
- * Display fields preserved: title, description, location, timezone,
- * isAllDay, color, etc.
- *
- * Pure: no side effects, no I/O. [nowMs] is a parameter so tests can pin
- * the timestamp.
+ * Every other field (title, description, location, timezone, all-day flag, color and so on) is
+ * kept. Does no I/O; [nowMs] is a parameter so tests can pin it.
  */
 fun singleOccurrenceForShare(
     event: Event,
@@ -96,15 +65,10 @@ fun singleOccurrenceForShare(
 }
 
 /**
- * For all-day events, snap [startTs] / [endTs] to UTC midnight of the
- * local calendar date in the event's [tzid]. Returns a (start, end) pair
- * where `end` is the inclusive end (last day's UTC midnight + 23:59:59.999)
- * — the exporter applies its standard +1 ms exclusive-end transform on
- * top of that.
- *
- * For non-all-day events, returns the input unchanged.
- *
- * Visible for testing.
+ * Re-anchors an all-day range to UTC: returns (start, end) where start is UTC midnight of
+ * [startTs]'s date and end is 23:59:59.999 UTC of [endTs]'s date, both dates read in [tzid] (the
+ * system zone when it is null or not a valid zone id). The ICS DATE serializer reads all-day
+ * timestamps in UTC. A timed range is returned unchanged.
  */
 internal fun normalizeAllDay(
     startTs: Long,
@@ -118,38 +82,25 @@ internal fun normalizeAllDay(
     val startDate = Instant.ofEpochMilli(startTs).atZone(zone).toLocalDate()
     val endDate = Instant.ofEpochMilli(endTs).atZone(zone).toLocalDate()
     val newStart = startDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
-    // Inclusive end timestamp is the LAST DAY's UTC midnight + 23:59:59.999.
-    // The mapper's exclusiveEndTs(event) adds 1 ms to make it RFC 5545
-    // exclusive (next day 00:00 UTC) for serialization.
-    //
-    // Example: a 4-day event May 31 → Jun 3 (inclusive) yields
-    //   startDate = May 31; newStart = May 31 00:00 UTC
-    //   endDate   = Jun 3;  newEnd   = Jun 3 23:59:59.999 UTC
-    //   exclusive (mapper adds +1 ms) = Jun 4 00:00 UTC → DTEND=20260604
+    // The end is inclusive, like a stored all-day endTs; EventToICalEventMapper.exclusiveEndTs
+    // adds 1 ms for the RFC 5545 exclusive DTEND. May 31 to Jun 3 gives an end of
+    // Jun 3 23:59:59.999 UTC and DTEND=20260604.
     val newEnd = endDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() +
         (24L * 60 * 60 * 1000 - 1)
     return newStart to newEnd
 }
 
 /**
- * Pick the [ZoneId] the share-card preview should read [Event.startTs] /
- * [Event.endTs] in.
+ * Returns the zone the share-card preview reads [Event.startTs] and [Event.endTs] in.
  *
- * For all-day events, all three storage paths (locally-created, ICS /
- * CalDAV-imported, device CalendarProvider) anchor `startTs` to UTC
- * midnight — but `Event.timezone` is inconsistent across them
- * (null for ICS DATE values, the user's IANA zone for locally-created,
- * "UTC" or whatever the sync adapter wrote for device events). Reading
- * a UTC-anchored timestamp through any non-UTC zone day-shifts the
- * displayed calendar date for users west of UTC. Always read all-day
- * timestamps as UTC.
+ * All-day events always read in UTC. Local, ICS, CalDAV and device events all store an all-day
+ * start at UTC midnight, but `Event.timezone` differs between them (null for ICS DATE values,
+ * the user's zone for local events, "UTC" or whatever the sync adapter wrote for device
+ * events), and reading a UTC midnight in a zone west of UTC shows the previous day.
  *
- * For timed events, the zone is the event's own IANA zone — falling
- * back to system default for null / blank / non-IANA values so the
- * share flow doesn't crash on legacy Outlook-style timezone names
- * like "Pacific Standard Time".
- *
- * Pure: no side effects, no I/O.
+ * Timed events read in their own zone, falling back to the system zone for a null, blank or
+ * invalid id, so a non-IANA name such as "Pacific Standard Time" doesn't crash the share
+ * flow.
  */
 fun shareCardZone(timezone: String?, isAllDay: Boolean): ZoneId {
     if (isAllDay) return UTC_ZONE

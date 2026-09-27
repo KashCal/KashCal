@@ -26,24 +26,23 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Verifies [ReminderScheduler.hasLiveOccurrenceForReminder] — the occurrence-level
- * fire-time guard.
+ * Tests [ReminderScheduler.hasLiveOccurrenceForReminder], the occurrence-level fire-time guard,
+ * over mocked DAOs.
  *
- * Bug: a reminder armed for one instance of a recurring series keeps firing after
- * that single instance is cancelled by a background CalDAV pull (organizer skips
- * "next Tuesday's standup"). The whole-event guard [ReminderScheduler.shouldFireReminder]
- * misses it because the master event is still live; the cancellation is
- * occurrence-level. Two representations both hit this:
- *  - EXDATE on the master: [org.onekash.kashcal.domain.generator.OccurrenceGenerator]
- *    deletes + reinserts the series' occurrence rows excluding the EXDATE'd one, so
- *    no row exists at that slot.
- *  - cancelled exception: the occurrence row remains with is_cancelled = 1.
+ * An armed reminder for one occurrence of a series would still fire after a background CalDAV
+ * pull cancels that occurrence (the organizer skips next Tuesday's standup). The whole-event
+ * guard [ReminderScheduler.shouldFireReminder] passes because the master is still live. Three
+ * forms are suppressed here:
+ *  - EXDATE on the master: [org.onekash.kashcal.domain.generator.OccurrenceGenerator] deletes
+ *    and reinserts the series' occurrence rows without the excluded one, so no row exists at
+ *    that slot.
+ *  - A cancelled exception: its occurrence row remains with is_cancelled = 1.
+ *  - A local single-occurrence delete: the master's row remains with is_cancelled = 1.
  *
- * The trap this guard must avoid is OVER-suppression — silently dropping reminders
- * for valid events. The lookup key differs between exceptions and masters: a reminder
- * for a modified instance is keyed under the exception event's id, but the occurrence
- * row stores event_id = master and exception_event_id = exception. So the guard
- * branches on [Event.isException].
+ * The trap is over-suppression, silently dropping reminders for valid occurrences. A reminder
+ * for a changed occurrence is stored under the exception's id, but the occurrence row stores
+ * event_id = master and exception_event_id = exception, so the guard branches on
+ * [Event.isException]. A missing event also suppresses.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -127,7 +126,7 @@ class ReminderSchedulerOccurrenceGuardTest {
         status = ReminderStatus.PENDING
     )
 
-    // ==================== Still fires (must NOT over-suppress) ====================
+    // ==================== Still fires (must not over-suppress) ====================
 
     @Test
     fun `fires for a non-recurring event with a live occurrence at its slot`() = runTest {
@@ -141,9 +140,9 @@ class ReminderSchedulerOccurrenceGuardTest {
 
     @Test
     fun `fires for a timed recurring instance whose row start_ts drifts within tolerance`() = runTest {
-        // The reminder's occurrenceTime can differ from the regenerated row's
-        // start_ts by sub-second amounts after re-expansion. The DAO's 60s
-        // tolerance bridges it; the guard must honor whatever the DAO returns.
+        // The reminder's occurrenceTime can differ from the regenerated row's start_ts by
+        // sub-second amounts after re-expansion. The DAO's 60s tolerance bridges it; the
+        // guard must accept whatever row the DAO returns.
         val masterId = 200L
         coEvery { eventReader.getEventById(masterId) } returns event(masterId, rrule = "FREQ=WEEKLY")
         coEvery { occurrencesDao.getOccurrenceNearTime(masterId, occurrenceTime) } returns
@@ -164,23 +163,23 @@ class ReminderSchedulerOccurrenceGuardTest {
 
     @Test
     fun `fires for an edited recurring instance keyed under the exception event id`() = runTest {
-        // MAIN TRAP: reminder.eventId is the exception event id, but the occurrence
-        // row stores event_id = master / exception_event_id = exception. Looking up
-        // by getOccurrenceNearTime(exceptionId, ...) returns null and would wrongly
-        // suppress. The guard must branch to getByExceptionEventId.
+        // The main trap: reminder.eventId is the exception's id, but the occurrence row
+        // stores event_id = master and exception_event_id = exception. Looking up by
+        // getOccurrenceNearTime(exceptionId, ...) returns null and would wrongly suppress,
+        // so the guard must use getByExceptionEventId.
         val masterId = 300L
         val exceptionId = 301L
         coEvery { eventReader.getEventById(exceptionId) } returns
             event(exceptionId, originalEventId = masterId)
         coEvery { occurrencesDao.getByExceptionEventId(exceptionId) } returns
             occurrence(eventId = masterId, exceptionEventId = exceptionId)
-        // A naive lookup keyed on the exception id finds nothing — proves the branch.
+        // A lookup keyed on the exception id finds nothing, so passing proves the branch.
         coEvery { occurrencesDao.getOccurrenceNearTime(exceptionId, any()) } returns null
 
         assertTrue(newScheduler().hasLiveOccurrenceForReminder(reminder(exceptionId)))
     }
 
-    // ==================== Suppressed (the fix) ====================
+    // ==================== Suppressed ====================
 
     @Test
     fun `suppresses an EXDATE'd instance of a live series (no row at the slot)`() = runTest {
@@ -205,8 +204,8 @@ class ReminderSchedulerOccurrenceGuardTest {
 
     @Test
     fun `suppresses an EXDATE'd instance whose master row is cancelled in place`() = runTest {
-        // Local single-occurrence delete marks the master's row is_cancelled = 1
-        // rather than removing it. Still a suppression.
+        // A local single-occurrence delete marks the master's row is_cancelled = 1
+        // instead of removing it. Still suppressed.
         val masterId = 600L
         coEvery { eventReader.getEventById(masterId) } returns event(masterId, rrule = "FREQ=WEEKLY")
         coEvery { occurrencesDao.getOccurrenceNearTime(masterId, occurrenceTime) } returns

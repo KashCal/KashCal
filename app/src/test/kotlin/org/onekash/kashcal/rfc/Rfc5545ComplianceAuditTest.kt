@@ -19,21 +19,19 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /**
- * RFC 5545 conformance audit driven by a coverage matrix between RFC clauses
- * and KashCal production code paths (IcsPatcher, ICalGenerator, ICalParser,
- * EventToICalEventMapper, ICalEventMapper). Each test cites the RFC section
- * it exercises, so failures point straight at the clause that's broken.
+ * Tests RFC 5545 conformance of the event serialize and parse paths ([IcsPatcher],
+ * [ICalGenerator], [ICalParser], [EventToICalEventMapper], [ICalEventMapper]). Each test names
+ * the RFC section it exercises.
  *
- * In scope: VEVENT/VCALENDAR producer + consumer paths, including
- * line folding (§3.1), TEXT escaping (§3.3.11), DATE-TIME forms (§3.3.5),
- * RRULE (§3.3.10), VEVENT (§3.6.1), calendar properties (§3.7),
- * descriptive component properties (§3.8.1) including TRANSP/free-busy
- * semantics (§3.8.1.7), date/time component properties (§3.8.2),
- * relationship properties (§3.8.4), recurrence component properties (§3.8.5),
- * and change-management (§3.8.7).
+ * Covered: line folding and CRLF (§3.1), UTF-8 (§3.1.4), DATE-TIME forms (§3.3.5), RRULE
+ * (§3.3.10), TEXT escaping (§3.3.11), all-day and recurring DTEND (§3.6.1), PRODID and VERSION
+ * (§3.7.3, §3.7.4), CLASS, GEO and PRIORITY (§3.8.1), TRANSP (§3.8.2.7), UID and RECURRENCE-ID
+ * (§3.8.4), EXDATE and RDATE (§3.8.5), change management (§3.8.7), one VCALENDAR for a master
+ * and its exceptions, and one VTIMEZONE per shared TZID (§3.6.5). The TRANSP test names cite
+ * §3.8.1.7, which is LOCATION.
  *
- * Out of scope: VTODO, VJOURNAL, VFREEBUSY components (PullStrategy skips
- * non-VEVENT resources), and iTIP scheduling acks beyond METHOD round-trip.
+ * Out of scope: VTODO, VJOURNAL and VFREEBUSY (PullStrategy skips a resource holding one of
+ * them and no VEVENT), and iTIP scheduling.
  */
 class Rfc5545ComplianceAuditTest {
 
@@ -61,10 +59,8 @@ class Rfc5545ComplianceAuditTest {
     @Test
     fun `RFC 5545 §3-1 - generator output uses CRLF as required line break`() {
         val ics = IcsPatcher.serialize(baseEvent(title = "CRLF check"))
-        // RFC 5545 §3.1: "Lines of text SHOULD NOT be longer than 75 octets,
-        // excluding the line break. Long content lines SHOULD be split into
-        // a multiple line representations using a line 'folding' technique."
-        // The line break itself MUST be CRLF.
+        // RFC 5545 §3.1: "Content lines are delimited by a line break, which is a CRLF
+        // sequence (CR character followed by LF character)."
         assertTrue(
             "Output must contain CRLF line breaks",
             ics.contains("\r\n")
@@ -116,8 +112,8 @@ class Rfc5545ComplianceAuditTest {
     @Test
     fun `RFC 5545 §3-3-5 - DTSTAMP is always emitted in UTC Form 2`() {
         val ics = IcsPatcher.serialize(baseEvent())
-        // RFC 5545 §3.8.7.2: "value type is DATE-TIME ... The value MUST be specified in
-        // the UTC time format." Look for DTSTAMP:YYYYMMDDTHHMMSSZ
+        // RFC 5545 §3.8.7.2: DTSTAMP is a DATE-TIME, and "The value MUST be specified in the
+        // UTC time format." Looks for DTSTAMP:YYYYMMDDTHHMMSSZ.
         assertTrue(
             "DTSTAMP must be UTC (Form 2):\n$ics",
             Regex("DTSTAMP:[0-9]{8}T[0-9]{6}Z").containsMatchIn(ics)
@@ -179,8 +175,8 @@ class Rfc5545ComplianceAuditTest {
 
     @Test
     fun `RFC 5545 §3-3-11 - escaped newline lowercase n is unescaped on parse`() {
-        // RFC 5545 §3.3.11: "The character sequences ... 'BACKSLASH', 'n', or 'BACKSLASH', 'N',
-        // [are] encoded into a single line break."
+        // RFC 5545 §3.3.11: a line break in a TEXT value is written as BACKSLASH followed by
+        // "n" or "N".
         val ics = """BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Test//EN
@@ -199,7 +195,7 @@ END:VCALENDAR
 
     @Test
     fun `RFC 5545 §3-3-11 - escaped newline uppercase N is unescaped on parse`() {
-        // RFC 5545 §3.3.11 explicitly allows '\N' (uppercase) as a newline escape.
+        // RFC 5545 §3.3.11 allows '\N' (uppercase) as a newline escape.
         val ics = """BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Test//EN
@@ -228,8 +224,8 @@ END:VCALENDAR
     fun `RFC 5545 §3-6-1 - all-day VEVENT emits exclusive DTEND on next day`() {
         val zone = ZoneId.of("UTC")
         val day = ZonedDateTime.of(2026, 3, 5, 0, 0, 0, 0, zone).toInstant().toEpochMilli()
-        // KashCal stores all-day endTs as inclusive (last ms of last day);
-        // exporter must reconstitute exclusive DTEND (next day 00:00).
+        // An all-day [Event.endTs] is inclusive (the last ms of the last day); the serializer
+        // must emit the exclusive DTEND (next day 00:00).
         val event = baseEvent(
             isAllDay = true,
             startTs = day,
@@ -248,11 +244,10 @@ END:VCALENDAR
 
     @Test
     fun `RFC 5545 §3-6-1 - recurring VEVENT emits DTEND not DURATION`() {
-        // RFC 5545 §3.6.1 allows either DTEND or DURATION (never both). KashCal emits
-        // DTEND for every event so all serialize paths agree (the patch path and the
-        // exception overload already do), and for interop: iCloud rejects an EXDATE
-        // update on a bounded recurring scheduling object expressed with DURATION,
-        // while DTEND is accepted across servers.
+        // RFC 5545 §3.6.1 allows DTEND or DURATION, never both. Every serialize path emits
+        // DTEND (rule on [EventToICalEventMapper.toICalEvent]), which also serves interop: iCloud
+        // rejects an EXDATE update on a bounded recurring scheduling object expressed with
+        // DURATION, while DTEND is accepted across servers.
         val zone = ZoneId.of("America/New_York")
         val start = ZonedDateTime.of(2026, 3, 1, 9, 0, 0, 0, zone).toInstant().toEpochMilli()
         val event = baseEvent(
@@ -273,7 +268,7 @@ END:VCALENDAR
     }
 
     // ----------------------------------------------------------------------
-    // §3.7  Calendar properties (CALSCALE, METHOD, PRODID, VERSION)
+    // §3.7  Calendar properties (PRODID, VERSION)
     // ----------------------------------------------------------------------
 
     @Test
@@ -284,14 +279,14 @@ END:VCALENDAR
     }
 
     // ----------------------------------------------------------------------
-    // §3.8.1.7  TRANSP — free/busy semantics
+    // §3.8.2.7  TRANSP: free/busy semantics
     // ----------------------------------------------------------------------
 
     @Test
     fun `RFC 5545 §3-8-1-7 - default TRANSP is OPAQUE and is omitted on the wire to match default`() {
         val ics = IcsPatcher.serialize(baseEvent(transp = "OPAQUE"))
-        // Generator omits TRANSP when value equals OPAQUE (the default); a parser MUST treat
-        // the absence as OPAQUE. We assert both halves of that contract.
+        // The generator omits TRANSP when it is OPAQUE, the RFC default, so the parser must
+        // read the absence as OPAQUE. Both halves are asserted.
         assertFalse("Default OPAQUE should not be emitted:\n$ics", ics.contains("TRANSP:OPAQUE"))
         val reparsed = parseFirstEvent(ics)
         assertEquals(Transparency.OPAQUE, reparsed.transparency)
@@ -304,14 +299,15 @@ END:VCALENDAR
         assertTrue("TRANSPARENT must be emitted:\n$ics", ics.contains("TRANSP:TRANSPARENT"))
         val parsed = parseFirstEvent(ics)
         assertEquals(Transparency.TRANSPARENT, parsed.transparency)
-        // Mapper must preserve TRANSP back into the Event row (free/busy depends on it).
+        // The mapper must keep TRANSP on the Event row (free/busy depends on it).
         val entity = ICalEventMapper.toEntity(parsed, ics, calendarId = 1L, caldavUrl = null, etag = null).event
         assertEquals("TRANSPARENT", entity.transp)
     }
 
     @Test
     fun `RFC 5545 §3-8-1-7 - unknown TRANSP value falls back to OPAQUE per Transparency-fromString`() {
-        // RFC 5545 §3.8.1.7 defines exactly two values; an unknown value should not crash.
+        // RFC 5545 §3.8.2.7 defines two values, OPAQUE and TRANSPARENT; an unknown value
+        // should not crash.
         val ics = """BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Test//EN
@@ -334,7 +330,7 @@ END:VCALENDAR
     }
 
     // ----------------------------------------------------------------------
-    // §3.8.1.3 / .9 / .11 / .12  — descriptive component properties
+    // §3.8.1.3 / .6 / .9  Descriptive component properties (CLASS, GEO, PRIORITY)
     // ----------------------------------------------------------------------
 
     @Test
@@ -469,7 +465,7 @@ END:VCALENDAR
     }
 
     // ----------------------------------------------------------------------
-    // §3.8.7  Change management — DTSTAMP, SEQUENCE, LAST-MODIFIED, CREATED
+    // §3.8.7  Change management: DTSTAMP, SEQUENCE, LAST-MODIFIED, CREATED
     // ----------------------------------------------------------------------
 
     @Test
@@ -505,7 +501,7 @@ END:VCALENDAR
     }
 
     // ----------------------------------------------------------------------
-    // §3.6.1 + §3.8.5  Calendar bundling (master + exceptions in one VCALENDAR)
+    // §3.4 + §3.6  Calendar bundling (master and exceptions in one VCALENDAR)
     // ----------------------------------------------------------------------
 
     @Test

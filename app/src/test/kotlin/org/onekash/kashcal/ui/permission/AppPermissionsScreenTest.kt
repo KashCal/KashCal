@@ -17,16 +17,15 @@ import org.robolectric.annotation.Config
 import java.util.Locale
 
 /**
- * Compose tests for the app-permissions screen body.
+ * Compose tests for [AppPermissionsScreenContent], the app-permissions screen body.
  *
- * The regressable surface is the row rendering + trailing wiring: a granted
- * permission shows the quiet "Allowed" state and taps route to that permission's
- * system settings; a not-granted permission shows the accent "Allow" action that
- * fires the request. The outer screen (launchers, resume re-resolve) owns
- * Activity-bound state, so the body is hoisted to take a fixed row list plus
- * callbacks — no Hilt graph or Activity, mirroring the hub's makeItYours slot.
- * Runs under Robolectric; run the class in isolation given the repo's
- * multi-class native-crash flake.
+ * They pin row rendering and trailing wiring: a granted row shows the quiet "Allowed" state
+ * and a tap routes to that permission's system settings; a not-granted row shows the accent
+ * "Allow" action, and a tap fires the request. The outer [AppPermissionsScreen] owns the
+ * launchers and resume re-reads, which need an Activity, so the body takes a fixed row list
+ * and callbacks and renders with no Hilt graph or Activity, like the hub's makeItYours slot.
+ * Runs under Robolectric; run the class alone, since multi-class runs hit the repo's native
+ * crash flake.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h9999dp-mdpi")
@@ -124,7 +123,7 @@ class AppPermissionsScreenTest {
             ),
             cb,
         )
-        // Two Allow actions; tap the first (Notifications is ordered first).
+        // Two Allow actions; tap the first, Notifications.
         composeTestRule.onAllNodesWithText("Allow")[0].performClick()
         assertEquals(listOf(AppPermissionKind.NOTIFICATIONS), cb.allowed)
     }
@@ -139,7 +138,7 @@ class AppPermissionsScreenTest {
             ),
             cb,
         )
-        // Two "Allowed" rows; tap the second (Calendars).
+        // Two "Allowed" rows; tap the second, Calendars.
         composeTestRule.onAllNodesWithText("Allowed")[1].performClick()
         assertEquals(listOf(AppPermissionKind.CALENDARS), cb.openedSettings)
     }

@@ -16,10 +16,12 @@ import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 
 /**
- * Unit tests for TimezoneChangeHandler.
- *
- * Tests the timezone/time change logic extracted from TimezoneChangeReceiver.
- * No Hilt, no Android framework, no reflection — just a plain class with mocks.
+ * Tests [TimezoneChangeHandler], the timezone and clock change steps [TimezoneChangeReceiver]
+ * delegates to: widgets update with the reason, then Room reminders reschedule, and an exception
+ * out of the widget update propagates before the reschedule. The real
+ * [WidgetUpdateManager.updateAllWidgets] catches its own failures except cancellation. The
+ * device calendar reminder step isn't asserted here. Plain JUnit with mocks; only `Log` is
+ * mocked statically.
  */
 class TimezoneChangeHandlerTest {
 
@@ -80,7 +82,7 @@ class TimezoneChangeHandlerTest {
             assert(e.message == "Widget error")
         }
 
-        // rescheduleAllPending should NOT be called if widget update throws
+        // A throwing widget update stops before rescheduleAllPending.
         coVerify(exactly = 0) { reminderScheduler.rescheduleAllPending() }
     }
 }

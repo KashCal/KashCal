@@ -10,20 +10,16 @@ import org.onekash.kashcal.network.dns.TxtResolver
 import org.onekash.kashcal.network.dns.TxtResult
 
 /**
- * Unit tests for [CardDavHostResolver] — the RFC 6764 §6 host-resolution policy.
+ * Tests [CardDavHostResolver], the RFC 6764 §6 host resolution: only an SRV lookup that yields
+ * a usable in-domain target builds the base URL (target, port and any TXT `path=`); anything
+ * else returns the caller's fallback. The cross-domain rejection comes from
+ * [shouldAttachCredentials], so a forged SRV can't redirect credentials off the account's
+ * registrable domain.
  *
- * The resolver's contract: run an SRV lookup for the account's email domain and,
- * only when it yields a usable in-domain target, build the seed base URL from that
- * target (+ port, + any TXT `path=`); otherwise return the caller's fallback (the
- * provider bootstrap constant / user-configured host). It leans on the existing
- * [shouldAttachCredentials] credential-domain guard for the security-critical
- * cross-domain-target rejection, so a forged SRV can't redirect credentials off
- * the account's registrable domain.
- *
- * Every case drives fake resolvers with canned results — no DNS, no network. The
- * registrable-domain resolver is faked too (the production one needs the OkHttp
- * public-suffix asset, absent in a JVM worker): here it returns the last two
- * labels, enough to model same-vs-different registrable domain for test hosts.
+ * Every case drives fake resolvers with canned results, with no DNS or network. The
+ * registrable-domain resolver is faked too, since the production one needs the OkHttp
+ * public-suffix asset, absent in a JVM worker; returning the last two labels is enough to
+ * model same and different registrable domains for the test hosts.
  */
 class CardDavHostResolverTest {
 
@@ -107,7 +103,7 @@ class CardDavHostResolverTest {
 
     @Test
     fun `TXT is not queried when SRV did not resolve a host`() = runTest {
-        // RFC 6764 §6 step 3: TXT is queried only after a SUCCESSFUL SRV lookup.
+        // RFC 6764 §6 step 3: TXT is queried only after a successful SRV lookup.
         val txtResolver = txt(TxtResult.Path("/should-not-be-used/"))
         val r = resolver(srv(SrvResult.NoRecords), txtResolver)
         assertEquals(FALLBACK, r.resolveBaseUrl("example.com", FALLBACK))
@@ -153,9 +149,9 @@ class CardDavHostResolverTest {
 
     @Test
     fun `an internationalized email domain is punycode-normalized before the SRV lookup`() = runTest {
-        // DNS is ASCII-only; "münchen.de" must be queried as its A-label form or it
-        // could never resolve. The target comes back within the same A-label domain,
-        // so the credential guard (last-two-labels here) still accepts it.
+        // DNS is ASCII-only, so "münchen.de" must be queried in its A-label form or it can't
+        // resolve. The target is in the same A-label domain, so the credential guard (last two
+        // labels here) accepts it.
         var queried: String? = null
         val srvResolver = object : SrvResolver {
             override suspend fun resolve(service: String, proto: String, domain: String): SrvResult {
@@ -171,9 +167,9 @@ class CardDavHostResolverTest {
 
     @Test
     fun `a malformed domain falls back before any DNS query rather than crashing`() = runTest {
-        // An empty label (e.g. "a..b") makes IDN.toASCII throw IllegalArgumentException.
-        // The resolver must swallow it and return the fallback WITHOUT ever querying
-        // DNS — so the SRV resolver is wired to a hit it must never reach.
+        // An empty label (e.g. "a..b") makes IDN.toASCII throw IllegalArgumentException. The
+        // resolver must return the fallback without querying DNS, so the SRV resolver is wired
+        // to a hit it must never reach.
         val srvResolver = srv(found("contacts.icloud.com"))
         val r = resolver(srvResolver, txt(TxtResult.NoPath))
         assertEquals(FALLBACK, r.resolveBaseUrl("a..b", FALLBACK))

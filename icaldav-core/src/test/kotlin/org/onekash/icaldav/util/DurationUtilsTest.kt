@@ -14,14 +14,19 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Comprehensive tests for DurationUtils.
+ * Tests [DurationUtils] parsing and formatting of RFC 5545 §3.3.6 DURATION values.
  *
  * Covers:
- * - RFC 5545 duration format parsing
- * - ISO 8601 duration format parsing
- * - Edge cases and malformed input
- * - Formatting back to iCalendar format
- * - Round-trip consistency
+ * - parsing minutes, hours, days, weeks, seconds, combined and negative forms, through
+ *   [Duration.parse] (ISO 8601) and the iCalendar fallback it hands weeks to
+ * - edge input: null, empty and blank (null), surrounding whitespace, lower and mixed case, a
+ *   plus sign, zero, large day and week counts
+ * - invalid input: no P, gibberish, a date and a bare number (null), and a bare "P"
+ * - formatting back to DURATION text, and round trips both ways
+ * - [DurationUtils.isDurationString] and [DurationUtils.parseOrDefault]
+ * - common alarm-trigger offsets
+ * - parsing and formatting from 10 threads; an assert failing inside a worker thread doesn't
+ *   fail the test
  */
 @DisplayName("DurationUtils")
 class DurationUtilsTest {
@@ -199,9 +204,10 @@ class DurationUtilsTest {
 
         @Test
         fun `parse with only P returns null`() {
-            // Java's Duration.parse might handle this differently
+            // Duration.parse rejects "P" and the iCalendar fallback reads it as zero, so this
+            // returns zero, not null.
             val result = DurationUtils.parse("P")
-            // Either null or zero duration is acceptable
+            // The test accepts null or zero.
             if (result != null) {
                 assertEquals(0, result.toSeconds())
             }

@@ -47,18 +47,12 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * Bottom sheet displaying sync changes with details.
+ * Lists the events a sync added, changed or deleted, under a count summary. Each row shows a
+ * change icon (green add, blue edit, red delete), the calendar color, the title, and the date
+ * and time with a repeat icon for recurring events.
  *
- * Shows a list of events that were added, modified, or deleted during sync.
- * Each item shows:
- * - Color-coded icon (green=add, blue=edit, red=delete)
- * - Event title
- * - Event date/time
- * - Calendar color indicator
- *
- * @param changes List of sync changes to display
- * @param onDismiss Called when sheet is dismissed
- * @param onEventClick Called when an event is tapped (with event ID)
+ * @param onEventClick called with the event ID on a tap; deleted events and changes without an
+ *   ID aren't tappable.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,7 +79,7 @@ fun SyncChangesBottomSheet(
                 modifier = Modifier.padding(bottom = 8.dp)
             )
 
-            // Summary
+            // Summary, e.g. "2 new, 1 updated".
             val newCount = changes.count { it.type == ChangeType.NEW }
             val modCount = changes.count { it.type == ChangeType.MODIFIED }
             val delCount = changes.count { it.type == ChangeType.DELETED }
@@ -104,7 +98,6 @@ fun SyncChangesBottomSheet(
 
             HorizontalDivider()
 
-            // Changes list
             LazyColumn(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -115,7 +108,6 @@ fun SyncChangesBottomSheet(
                     SyncChangeItem(
                         change = change,
                         onClick = {
-                            // Only navigate for non-deleted events with valid ID
                             if (change.type != ChangeType.DELETED && change.eventId != null) {
                                 onEventClick(change.eventId)
                             }
@@ -124,15 +116,13 @@ fun SyncChangesBottomSheet(
                 }
             }
 
-            // Bottom padding for gesture navigation
+            // Room above the gesture navigation bar.
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
-/**
- * Individual sync change item in the list.
- */
+/** Shows one sync change row. */
 @Composable
 private fun SyncChangeItem(
     change: SyncChange,
@@ -159,7 +149,6 @@ private fun SyncChangeItem(
             .padding(vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Change type icon
         Icon(
             imageVector = icon,
             contentDescription = change.type.name,
@@ -169,7 +158,6 @@ private fun SyncChangeItem(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // Calendar color indicator
         Box(
             modifier = Modifier
                 .size(12.dp)
@@ -179,7 +167,6 @@ private fun SyncChangeItem(
 
         Spacer(modifier = Modifier.width(12.dp))
 
-        // Event details
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = change.eventTitle,
@@ -209,15 +196,11 @@ private fun SyncChangeItem(
 
 
 /**
- * Format event timestamp for display with smart year handling.
+ * Formats an event start, with the year only when it isn't the current year.
  *
- * Following Android DateUtils pattern: show year only when different from current year.
- *
- * @param timestampMs Event start timestamp in milliseconds
- * @param isAllDay Whether this is an all-day event
- * @return Formatted date/time string:
- *   - All-day events: "Tue, Jan 7" or "Tue, Jan 7, 2024" (UTC date, no time)
- *   - Timed events: "Tue, Jan 7 at 2:30 PM" or "Tue, Jan 7, 2024 at 2:30 PM"
+ * - All-day: the UTC date, no time: "Tue, Jan 7" or "Tue, Jan 7, 2024".
+ * - Timed: the device-zone date and a 12-hour time: "Tue, Jan 7, 2:30 PM" or
+ *   "Tue, Jan 7, 2024, 2:30 PM".
  */
 internal fun formatEventTime(timestampMs: Long, isAllDay: Boolean): String {
     val instant = Instant.ofEpochMilli(timestampMs)

@@ -19,15 +19,11 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Advanced recurrence pattern tests per RFC 5545 and CalConnect recommendations.
+ * Tests that [RRule.parse] and [ICalParser] keep advanced RRULE parts (RFC 5545 §3.3.10) and that
+ * [RRule.toICalString] round-trips them. Nothing here is expanded.
  *
- * Tests cover:
- * - BYSETPOS for limiting occurrences within a set
- * - BYYEARDAY for day-of-year patterns
- * - BYWEEKNO for week-number patterns
- * - WKST for week start day
- * - Complex combinations
- * - Edge cases from CalConnect guide
+ * Covers BYSETPOS, BYYEARDAY, BYWEEKNO, WKST (default MONDAY), ordinal BYDAY, BYMONTHDAY
+ * combinations, every FREQ, and edge cases from the CalConnect guide.
  *
  * @see https://devguide.calconnect.org/iCalendar-Topics/Recurrences/
  */
@@ -155,7 +151,7 @@ class RRuleAdvancedPatternsTest {
 
         @Test
         fun `BYYEARDAY range from end of year`() {
-            // Last 7 days of year
+            // Last 7 days of the year.
             val rrule = RRule.parse("FREQ=YEARLY;BYYEARDAY=-7,-6,-5,-4,-3,-2,-1;COUNT=14")
 
             assertEquals(7, rrule.byYearDay?.size)
@@ -178,7 +174,7 @@ class RRuleAdvancedPatternsTest {
 
         @Test
         fun `BYWEEKNO multiple weeks`() {
-            // First and last week of year
+            // Weeks 1 and 52.
             val rrule = RRule.parse("FREQ=YEARLY;BYWEEKNO=1,52;COUNT=6")
 
             assertEquals(listOf(1, 52), rrule.byWeekNo)
@@ -232,7 +228,7 @@ class RRuleAdvancedPatternsTest {
 
         @Test
         fun `WKST affects BYWEEKNO calculations`() {
-            // With different WKST, week boundaries differ
+            // WKST moves week boundaries; this asserts only that each WKST is parsed.
             val rruleMo = RRule.parse("FREQ=YEARLY;BYWEEKNO=1;WKST=MO;COUNT=1")
             val rruleSu = RRule.parse("FREQ=YEARLY;BYWEEKNO=1;WKST=SU;COUNT=1")
 
@@ -572,9 +568,9 @@ class RRuleAdvancedPatternsTest {
 
         @Test
         fun `UNTIL and COUNT mutually exclusive - COUNT takes precedence`() {
-            // If both appear (invalid), implementation should handle gracefully
+            // RFC 5545 §3.3.10 forbids COUNT and UNTIL in one rule. RRule.parse keeps both, and
+            // this assert accepts that, so COUNT taking precedence isn't checked.
             val rrule = RRule.parse("FREQ=DAILY;COUNT=5;UNTIL=20241231T235959Z")
-            // Implementation typically picks one
             assertTrue(rrule.count == 5 || rrule.until != null)
         }
     }
@@ -633,7 +629,7 @@ class RRuleAdvancedPatternsTest {
         }
     }
 
-    // Helper to create events for expansion tests
+    // Builds a one-hour event; no test here calls it.
     private fun createEvent(
         uid: String = "test-event",
         dtStart: ICalDateTime,

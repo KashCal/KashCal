@@ -3,7 +3,7 @@ package org.onekash.icaldav.model
 import java.time.DayOfWeek
 
 /**
- * Recurrence rule from RRULE property per RFC 5545 Section 3.3.10.
+ * Holds one RRULE value (RFC 5545 §3.3.10).
  *
  * Examples:
  * - RRULE:FREQ=DAILY;INTERVAL=1
@@ -13,51 +13,49 @@ import java.time.DayOfWeek
  * - RRULE:FREQ=YEARLY;BYMONTH=12;BYMONTHDAY=25
  */
 data class RRule(
-    /** Recurrence frequency: DAILY, WEEKLY, MONTHLY, YEARLY */
+    /** FREQ, SECONDLY through YEARLY. */
     val freq: Frequency,
 
-    /** Interval between occurrences (default 1) */
+    /** INTERVAL: how many FREQ periods between repetitions (default 1). */
     val interval: Int = 1,
 
-    /** Number of occurrences (mutually exclusive with until) */
+    /** COUNT; mutually exclusive with [until]. */
     val count: Int? = null,
 
-    /** End date of recurrence (mutually exclusive with count) */
+    /** UNTIL; mutually exclusive with [count]. */
     val until: ICalDateTime? = null,
 
-    /** Days of week for WEEKLY or MONTHLY recurrence */
+    /** BYDAY; an ordinal is allowed only with MONTHLY or YEARLY. */
     val byDay: List<WeekdayNum>? = null,
 
-    /** Days of month for MONTHLY recurrence (1-31 or -1 to -31) */
+    /** BYMONTHDAY, 1..31 or -31..-1; not allowed with WEEKLY. */
     val byMonthDay: List<Int>? = null,
 
-    /** Months for YEARLY recurrence (1-12) */
+    /** BYMONTH, 1..12. */
     val byMonth: List<Int>? = null,
 
-    /** Week numbers for YEARLY recurrence (1-53 or -1 to -53) */
+    /** BYWEEKNO, 1..53 or -53..-1; YEARLY only. */
     val byWeekNo: List<Int>? = null,
 
-    /** Days of year for YEARLY recurrence (1-366 or -1 to -366) */
+    /** BYYEARDAY, 1..366 or -366..-1; not allowed with DAILY, WEEKLY or MONTHLY. */
     val byYearDay: List<Int>? = null,
 
-    /** Hours for sub-daily expansion (RFC 5545 §3.3.10 BYHOUR, valid range 0..23). */
+    /** BYHOUR, 0..23. */
     val byHour: List<Int>? = null,
 
-    /** Minutes for sub-daily expansion (RFC 5545 §3.3.10 BYMINUTE, valid range 0..59). */
+    /** BYMINUTE, 0..59. */
     val byMinute: List<Int>? = null,
 
-    /** Seconds for sub-daily expansion (RFC 5545 §3.3.10 BYSECOND, valid range 0..60; 60 permits leap seconds). */
+    /** BYSECOND, 0..60; 60 permits a leap second. */
     val bySecond: List<Int>? = null,
 
-    /** Position within set (e.g., -1 for last occurrence) */
+    /** BYSETPOS: positions within each period's set, for example -1 for the last. */
     val bySetPos: List<Int>? = null,
 
-    /** Week start day (default MONDAY per RFC 5545) */
+    /** WKST; MONDAY, the RFC 5545 default, is not written. */
     val wkst: DayOfWeek = DayOfWeek.MONDAY
 ) {
-    /**
-     * Convert to iCalendar RRULE string.
-     */
+    /** Returns the RRULE value without the "RRULE:" prefix, omitting INTERVAL=1 and WKST=MO. */
     fun toICalString(): String {
         val parts = mutableListOf<String>()
 
@@ -117,10 +115,11 @@ data class RRule(
         private val RRULE_PATTERN = Regex("""([A-Z]+)=([^;]+)""")
 
         /**
-         * Parse RRULE string to RRule object.
+         * Parses an RRULE value given without the "RRULE:" prefix.
          *
-         * @param rruleString The RRULE value (without "RRULE:" prefix)
-         * @return Parsed RRule
+         * Throws when FREQ is missing or unknown, UNTIL doesn't parse, or a BYDAY entry is
+         * invalid. Non-numeric entries in the other BY-lists are dropped, a non-numeric INTERVAL
+         * reads as 1, and an unknown WKST reads as MONDAY.
          */
         fun parse(rruleString: String): RRule {
             val parts = mutableMapOf<String, String>()
@@ -173,9 +172,7 @@ data class RRule(
     }
 }
 
-/**
- * Recurrence frequency.
- */
+/** FREQ values (RFC 5545 §3.3.10). */
 enum class Frequency {
     SECONDLY,
     MINUTELY,
@@ -186,13 +183,10 @@ enum class Frequency {
     YEARLY
 }
 
-/**
- * Weekday with optional ordinal number.
- * Examples: MO, TU, 2TU (second Tuesday), -1FR (last Friday)
- */
+/** Holds one BYDAY entry: a weekday with an optional ordinal, for example MO, 2TU or -1FR. */
 data class WeekdayNum(
     val dayOfWeek: DayOfWeek,
-    val ordinal: Int? = null  // null means every occurrence, 1-5 or -1 to -5
+    val ordinal: Int? = null  // null means every such weekday; otherwise 1..53 or -53..-1
 ) {
     fun toICalString(): String {
         val dayStr = when (dayOfWeek) {
@@ -209,9 +203,7 @@ data class WeekdayNum(
 
     companion object {
         // RFC 5545 §3.3.10: weekdaynum = [[plus / minus] ordwk] weekday, where
-        // ordwk = 1*2DIGIT (1..53). Accept an optional +/- sign and one or two
-        // ordinal digits (the earlier single-digit pattern rejected valid values
-        // like 53SU / -12MO / +1FR and threw on them).
+        // ordwk = 1*2DIGIT (1..53), so values like 53SU, -12MO and +1FR are valid.
         private val WEEKDAY_PATTERN = Regex("""([+-]?\d{1,2})?([A-Z]{2})""")
 
         fun parse(value: String): WeekdayNum {

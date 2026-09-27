@@ -10,20 +10,18 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /**
- * End-to-end pin for issue #214 — biweekly recurrences with day-of-week sets
- * that include Sunday produce wrong occurrences when DTSTART falls on Sunday
- * (or when WKST is otherwise mis-anchored relative to the user's locale).
+ * Pins issue #214: a biweekly rule whose days include Sunday gives the wrong occurrences when
+ * DTSTART falls on a Sunday or WKST otherwise doesn't match the user's week start.
  *
- * These tests drive the full path the picker uses: RruleBuilder.weekly with
- * the user's first-day-of-week-derived `wkst` -> RruleBuilder.withCount ->
- * IcalDavRRuleEngine.expandToTimestamps. They verify that picking Sun/Tue/Thu
- * + Fortnightly under a Sunday-first user produces the user-expected pattern,
- * and that the same picker under a Monday-first user produces the natural
- * Monday-first pattern.
+ * The expansion tests build the rule the way the picker does for a new Custom weekly rule
+ * ([RruleBuilder.weekly] with the user's week start as `wkst`, then [RruleBuilder.withCount])
+ * and expand it with [IcalDavRRuleEngine.expandToTimestamps]. Sun/Tue/Thu every two weeks gives
+ * the Sunday-first pattern for a Sunday-first user, from a Sunday or a mid-week DTSTART, and the
+ * Monday-first pattern for a Monday-first user.
  *
- * The 4th test pins the locked round-trip decision: third-party RRULEs with
- * a foreign WKST (e.g. WKST=SA from a CalDAV server) get re-emitted with the
- * KashCal user's setting on save, dropping the foreign WKST.
+ * The last test parses a rule carrying WKST=SA, rebuilds it with an explicit WKST=SU and checks
+ * only that the result has WKST=SU and not WKST=SA. The picker keeps an inbound WKST on save
+ * (`RecurrencePickerSelections.parsedWkst`); this test doesn't go through the picker.
  *
  * https://github.com/KashCal/KashCal/issues/214
  */
@@ -37,7 +35,7 @@ class Issue214WkstIntegrationTest {
 
     @Test
     fun `issue 214 headline — Sunday-first user, DTSTART=Sun May 4 2025, biweekly Sun_Tue_Thu`() {
-        // Picker emits: FREQ=WEEKLY;INTERVAL=2;BYDAY=TU,TH,SU;WKST=SU;COUNT=6
+        // Builds FREQ=WEEKLY;INTERVAL=2;BYDAY=TU,TH,SU;WKST=SU;COUNT=6.
         val days = setOf(DayOfWeek.SUNDAY, DayOfWeek.TUESDAY, DayOfWeek.THURSDAY)
         val base = RruleBuilder.weekly(interval = 2, days = days, wkst = DayOfWeek.SUNDAY)
         val rrule = RruleBuilder.withCount(base, 6)
@@ -68,9 +66,9 @@ class Issue214WkstIntegrationTest {
 
     @Test
     fun `Sunday-first user with mid-week DTSTART=Tue Apr 29 2025, biweekly Sun_Tue_Thu`() {
-        // Regression guard: DTSTART not at the WKST boundary still anchors weeks
-        // by WKST=SU. Week containing Apr 29 is [Sun Apr 27..Sat May 3]; Apr 27
-        // < DTSTART so its Sun is dropped. COUNT=6 stretches into week 5.
+        // A DTSTART off the WKST boundary still anchors weeks by WKST=SU. The week holding
+        // Apr 29 is Sun Apr 27 to Sat May 3; Apr 27 is before DTSTART, so that Sunday is left
+        // out and COUNT=6 reaches into week 5.
         val days = setOf(DayOfWeek.SUNDAY, DayOfWeek.TUESDAY, DayOfWeek.THURSDAY)
         val base = RruleBuilder.weekly(interval = 2, days = days, wkst = DayOfWeek.SUNDAY)
         val rrule = RruleBuilder.withCount(base, 6)
@@ -131,12 +129,9 @@ class Issue214WkstIntegrationTest {
 
     @Test
     fun `round-trip — third-party WKST=SA RRULE rebuilt with user's WKST=SU drops foreign WKST`() {
-        // A CalDAV server sends FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,TU,TH;WKST=SA.
-        // KashCal opens the event for editing; parseRrule extracts FREQ/INTERVAL/BYDAY
-        // but deliberately does NOT carry WKST into ParsedRecurrence (locked decision —
-        // user's setting wins on save). The picker rebuilds via weekly(2, days,
-        // wkst=user's setting). This test pins that the foreign WKST=SA is gone and
-        // the user's WKST=SU is what gets emitted.
+        // A rule with WKST=SA, as a CalDAV server might send it. parseRrule keeps WKST=SA in
+        // ParsedRecurrence.wkst, but the rebuild below passes WKST=SU explicitly, so only
+        // RruleBuilder.weekly's use of the wkst it is given is checked.
         val parsed = RruleBuilder.parseRrule(
             "FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,TU,TH;WKST=SA",
             defaultWeekday = DayOfWeek.SUNDAY,

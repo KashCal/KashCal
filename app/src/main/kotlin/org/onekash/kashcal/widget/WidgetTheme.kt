@@ -7,108 +7,91 @@ import androidx.glance.color.ColorProvider
 import androidx.glance.unit.ColorProvider
 
 /**
- * Theme colors for all KashCal widgets.
+ * Names the color roles every KashCal widget paints with.
  *
- * Uses Material You dynamic colors via GlanceTheme on Android 12+ (minSdk 31).
- * Properties that delegate to GlanceTheme.colors are @Composable getters — all call sites
- * are already in @Composable functions, so this is transparent.
- *
- * One stays static (no M3 token, but pin-aware):
- * - adjacentMonthText: needs to be nearly invisible (no outlineVariant in Glance)
+ * Each property is a @Composable getter over `GlanceTheme.colors`, which the widget sets to its
+ * accent seed's providers ([accentColorProviders]) or the platform's Material You palette.
+ * [adjacentMonthText] alone is static, since Glance has no outlineVariant for a nearly invisible
+ * tone; it still follows the light/dark pin.
  */
 object WidgetTheme {
 
     /**
-     * Header background — the muted accent container (Material You secondary container). This
-     * carries the user's chosen accent — whether it comes from the wallpaper (dynamic Material You)
-     * or the in-app accent-color picker — at a low-emphasis, low-chroma tone rather than the loud
-     * primary-container band. At the widget's low contrast level this role sits at nearly the same
-     * tone as the body ([contentBackground], `surfaceVariant`), so the widget reads as one
-     * near-uniform tinted panel; the header is set apart by its bold title far more than by any
-     * tonal step.
+     * Header background: `secondaryContainer`, the user's accent (wallpaper or picked seed) at a
+     * muted tone, not the loud primary container. At the widget's low contrast level it sits at
+     * nearly the body's tone ([contentBackground]), so the widget reads as one tinted panel and
+     * the bold title sets the header apart.
      */
     val headerBackground: ColorProvider
         @Composable get() = GlanceTheme.colors.secondaryContainer
 
     /**
-     * Text/icon color for content ON [headerBackground] — the M3 on-role for a secondaryContainer
-     * surface. onSecondaryContainer/secondaryContainer is a guaranteed-contrast M3 pair; using
-     * onSurface or primary here is not, and fails for some accent seeds.
+     * Text and icon color on [headerBackground]: `onSecondaryContainer`, a guaranteed-contrast M3
+     * pair with it. onSurface or primary here isn't, and fails for some accent seeds.
      */
     val onHeaderBackground: ColorProvider
         @Composable get() = GlanceTheme.colors.onSecondaryContainer
 
     /**
-     * Lower-emphasis tint for a header glyph while a transient action is in flight (the refresh
-     * "syncing" cue). Glance has no alpha modifier, so the cue is a token swap rather than a fade:
-     * `outline` reads as a dimmed/greyed glyph against the header. This is a brief de-emphasis, not
-     * persistent content, so it is intentionally NOT held to the AA contrast bar that
-     * [onHeaderBackground] must clear.
+     * Tints a header glyph while the refresh cue is on. Glance has no alpha modifier, so the cue
+     * swaps to `outline`, which reads as a greyed glyph on the header. It is a brief
+     * de-emphasis, so it deliberately isn't held to the AA contrast bar [onHeaderBackground]
+     * clears.
      */
     val dimmedOnHeaderBackground: ColorProvider
         @Composable get() = GlanceTheme.colors.outline
 
     /**
-     * Content/widget background — Glance's widget background role.
-     *
-     * For the in-app SEED accent, `accentColorProviders` overrides this role to `surfaceVariant` —
-     * the most-tinted body role that keeps item text at full contrast for every seed. It carries a
-     * visible accent tint yet sits at nearly the header's tone at the widget's low contrast level, so
-     * the widget reads as one near-uniform tinted panel. `secondaryContainer` carries more chroma but
-     * its non-guaranteed pairing with the item/secondary text roles drops below AA for saturated
-     * seeds, so it is not a safe body. Item text on `surfaceVariant` (onSurface) clears AA with margin
-     * for every seed.
-     *
-     * The automatic (Material You) source does not build these providers; it renders on the device's
-     * genuine dynamic palette, so this role is then the platform's own widgetBackground.
+     * Body background: Glance's `widgetBackground` role. For a seed accent,
+     * [accentColorProviders] sets it to `surfaceVariant`; its KDoc gives the contrast reasons.
+     * The automatic Material You source uses the platform's own widgetBackground.
      */
     val contentBackground: ColorProvider
         @Composable get() = GlanceTheme.colors.widgetBackground
 
-    /** Primary text color — Material You on-surface */
+    /** Primary text: `onSurface`. */
     val primaryText: ColorProvider
         @Composable get() = GlanceTheme.colors.onSurface
 
-    /** Secondary text color (times, labels) — Material You on-surface-variant */
+    /** Secondary text, such as empty-day rows, overflow counts and week numbers. */
     val secondaryText: ColorProvider
         @Composable get() = GlanceTheme.colors.onSurfaceVariant
 
-    /** Past event text color (dimmed) — Material You outline */
+    /** Dimmed text of past events: `outline`. */
     val pastEventText: ColorProvider
         @Composable get() = GlanceTheme.colors.outline
 
-    /** Accent color for interactive elements — Material You primary */
+    /** Accent for interactive elements: `primary`. */
     val accentColor: ColorProvider
         @Composable get() = GlanceTheme.colors.primary
 
     /**
-     * Background for footer rows (Upcoming's show-more/less rows). Rides `secondaryContainer`, the
-     * same role as the header, so the footer echoes the header tone at the top and bottom of the
-     * near-uniform tinted panel; it reads as a distinct row through its own text label ("Open
-     * calendar") and tap target rather than a separate background band. Pairs with [rowTintText]
-     * (onSecondaryContainer) to satisfy WCAG AA in both light and dark dynamic-color themes.
+     * Background of Upcoming's more-days footer: `secondaryContainer`, the header's role, so the
+     * footer echoes the header tone at the bottom of the panel. Its "Open calendar" label and tap
+     * target set it apart, not a separate band. Pairs with [rowTintText] for WCAG AA in light and
+     * dark dynamic-color themes.
      */
     val rowTintBackground: ColorProvider
         @Composable get() = GlanceTheme.colors.secondaryContainer
 
-    /** Text color paired with [rowTintBackground] — Material You onSecondaryContainer. */
+    /** Text on [rowTintBackground]: `onSecondaryContainer`. */
     val rowTintText: ColorProvider
         @Composable get() = GlanceTheme.colors.onSecondaryContainer
 
-    /** Fill behind today's day number in the month grid — Material You primary. */
+    /** Fill behind today's day number in the month grid: `primary`. */
     val todayMarkerBackground: ColorProvider
         @Composable get() = GlanceTheme.colors.primary
 
-    /** Day-number color on top of [todayMarkerBackground] — Material You onPrimary. */
+    /** Day number on [todayMarkerBackground]: `onPrimary`. */
     val onTodayMarker: ColorProvider
         @Composable get() = GlanceTheme.colors.onPrimary
 
     /**
-     * Adjacent month text color (very faded, for InDate/OutDate cells) — static, no M3 token.
+     * Returns the faded static gray for adjacent-month (InDate/OutDate) cells.
      *
-     * [forcedDark] is the widget's light/dark pin (see [WidgetColorConfig]): when the face is
-     * pinned, day and night collapse onto the forced face's gray so the static pair can't flip
-     * against the pinned scheme; null follows the system day/night setting as before.
+     * [forcedDark] is the widget's light/dark pin ([WidgetColorConfig]). A pinned face uses its
+     * gray for both day and night, so the pair can't flip against the pinned scheme; null follows
+     * the system day/night setting.
      */
     fun adjacentMonthText(forcedDark: Boolean? = null) = when (forcedDark) {
         null -> ColorProvider(
@@ -121,35 +104,29 @@ object WidgetTheme {
 }
 
 /**
- * Token-name enum for widget colors.
- *
- * Returned by pure selectors so the contrast contract (which token a row uses)
- * can be unit-tested without a Compose render harness. The composable
- * [provider] extension below is the only place enum -> ColorProvider mapping
- * lives, and is mechanically inspectable.
+ * Names widget color tokens, returned by pure selectors so which token a row uses is
+ * unit-testable without a Compose render harness. [provider] is the only token to
+ * ColorProvider mapping.
  */
 internal enum class WidgetThemeColor {
     HeaderBackground,
     OnHeaderBackground
 }
 
-/** Background + text token pair for a day-header row. */
+/** Pairs the background and text tokens of a day-header row. */
 internal data class DayHeaderColors(
     val background: WidgetThemeColor,
     val text: WidgetThemeColor
 )
 
 /**
- * Pure selector for day-header row colors.
- *
- * Every day header uses the shared header background so the list of days reads
- * as one uniform banner scale; today is distinguished by bold text and a "today"
- * label rather than a different background color.
+ * Selects the day-header row colors: the header tokens for every day, so the days read as one
+ * banner scale. Callers mark today with bold text and a "today" label instead.
  */
 internal fun dayHeaderColors(isToday: Boolean): DayHeaderColors =
     DayHeaderColors(WidgetThemeColor.HeaderBackground, WidgetThemeColor.OnHeaderBackground)
 
-/** Composable mapping from a [WidgetThemeColor] token name to its concrete provider. */
+/** Maps a [WidgetThemeColor] token to its [WidgetTheme] provider. */
 @Composable
 internal fun WidgetThemeColor.provider(): ColorProvider = when (this) {
     WidgetThemeColor.HeaderBackground -> WidgetTheme.headerBackground

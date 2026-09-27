@@ -3,42 +3,32 @@ package org.onekash.kashcal.sync.model
 import androidx.compose.runtime.Immutable
 
 /**
- * Represents a single change detected during calendar sync.
- * Used for snackbar notifications and bottom sheet display.
+ * One event change a pull brought in. Feeds the sync snackbar and bottom sheet, and the
+ * reminder scheduling for pulled events.
  */
 @Immutable
 data class SyncChange(
-    /** Type of change (NEW, MODIFIED, DELETED) */
     val type: ChangeType,
-    /** Event ID (null for deleted events where we only have the href) */
+    /** Null for a deleted event, whose row is gone. */
     val eventId: Long?,
-    /** Event title for display */
     val eventTitle: String,
-    /** Event start timestamp for display */
     val eventStartTs: Long,
-    /** Whether this is an all-day event (affects date display - uses UTC, no time) */
+    /** All-day dates display in UTC with no time. */
     val isAllDay: Boolean,
-    /** Whether this is a recurring event (shows repeat icon) */
+    /** Shows the repeat icon. */
     val isRecurring: Boolean,
-    /** Calendar name for context */
     val calendarName: String,
-    /** Calendar color for visual indicator */
     val calendarColor: Int,
-    /**
-     * Whether this change originated from an initial sync (calendar's first-ever sync).
-     * Used to skip applying default reminders to events during initial sync.
-     */
+    /** Set on a calendar's first sync; such new events get no default reminder. */
     val isFromInitialSync: Boolean = false
 )
 
-/**
- * Type of sync change.
- */
+/** What a pull did to an event. */
 enum class ChangeType {
-    /** New event added from server */
+    /** Added on the server. */
     NEW,
-    /** Existing event modified on server */
+    /** Changed on the server. */
     MODIFIED,
-    /** Event deleted from server */
+    /** Deleted on the server. */
     DELETED
 }

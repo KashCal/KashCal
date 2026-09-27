@@ -38,8 +38,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 
 /**
- * Bottom sheet showing all events for a selected day.
- * Replaces DayEventsPager in the full-height month view.
+ * Shows a bottom sheet of every event on a day tapped in the full-height month view, which uses
+ * it in place of the month view's `DayEventsPager`, with a New event button for that day.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +63,7 @@ internal fun DayEventsSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        dragHandle = { Box(Modifier) } // No drag handle — header serves as visual anchor
+        dragHandle = { Box(Modifier) } // No drag handle; the date header anchors the sheet
     ) {
         Column(
             modifier = Modifier
@@ -73,7 +73,6 @@ internal fun DayEventsSheet(
                 // Announce the sheet (by its date) when it opens.
                 .semantics { paneTitle = dateLabel }
         ) {
-            // Date header
             Text(
                 text = dateLabel,
                 style = MaterialTheme.typography.titleMedium,
@@ -84,7 +83,6 @@ internal fun DayEventsSheet(
             )
 
             if (events.isEmpty()) {
-                // Empty state
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -138,7 +136,6 @@ internal fun DayEventsSheet(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // New event button
             TextButton(
                 onClick = { onCreateEvent(dateMs) },
                 modifier = Modifier.fillMaxWidth()

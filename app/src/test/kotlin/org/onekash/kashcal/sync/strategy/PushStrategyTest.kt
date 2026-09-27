@@ -24,6 +24,7 @@ import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.CalendarRepository
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.client.model.CalDavEvent
+import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
@@ -50,6 +51,14 @@ class PushStrategyTest {
         isDefault = false,
         isReadOnly = false,
         sortOrder = 0
+    )
+
+    /** What a GET of [event]'s resource returns after another client changed it. */
+    private fun serverCopy(event: Event, etag: String) = CalDavResult.success(
+        CalDavEvent(
+            href = event.caldavUrl!!, url = event.caldavUrl!!, etag = etag,
+            icalData = IcsPatcher.serialize(event.copy(description = "Changed elsewhere"), null)
+        )
     )
 
     private val testEvent = Event(
@@ -96,15 +105,15 @@ class PushStrategyTest {
         attendeesDao = mockk()
         pendingCancelsDao = mockk()
 
-        // Default batch query mocks - return empty so fallback to getById is used
-        // Individual tests can override these for specific scenarios
+        // Batch loads return nothing by default, so the push falls back to per-id reads;
+        // batch tests override them.
         coEvery { eventsDao.getByIds(any()) } returns emptyList()
         coEvery { calendarRepository.getCalendarsByIds(any()) } returns emptyList()
-        // Push path loads attendees before serialize; default to none so
-        // existing tests are unaffected. Attendee-specific tests override.
+        // The push loads attendees before serializing: none by default, attendee tests
+        // override.
         coEvery { attendeesDao.getForEventOnce(any()) } returns emptyList()
-        // Cancel drain: default to an empty queue so existing tests are
-        // unaffected; removal-specific tests override getForEvent.
+        // The cancel drain reads pending_cancels: empty by default, removal tests override
+        // getForEvent.
         coEvery { pendingCancelsDao.getForEvent(any()) } returns emptyList()
 
         pushStrategy = PushStrategy(
@@ -155,6 +164,7 @@ class PushStrategyTest {
         coEvery { client.createEvent(eq(testCalendar.caldavUrl), eq(testEvent.uid), any()) } returns
             CalDavResult.success(Pair(serverUrl, serverEtag))
         coEvery { eventsDao.markCreatedOnServer(testEvent.id, serverUrl, serverEtag, any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(testEvent.id, serverUrl, serverEtag, any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -166,17 +176,16 @@ class PushStrategyTest {
         assert(success.eventsDeleted == 0)
         assert(success.operationsFailed == 0)
 
-        coVerify { eventsDao.markCreatedOnServer(testEvent.id, serverUrl, serverEtag, any()) }
+        coVerify { eventsDao.markCreatedOnServerWithCopy(testEvent.id, serverUrl, serverEtag, any(), any()) }
         coVerify { pendingOperationsDao.deleteById(operation.id) }
     }
 
     @Test
     fun `create re-points bundled exceptions at the master's new server url`() = runTest {
-        // An override rides in the same server resource as its master, so the
-        // master's new url IS the exception's resource url. Leaving the exception
-        // on a stale url makes a later pull of this calendar classify it as
-        // server-deleted and reap it (which is how a cross-account move used to
-        // lose the modified occurrence).
+        // An exception rides in its master's server resource, so the master's new url is
+        // the exception's too. An exception left on a stale url is classified server-deleted
+        // by a later pull of this calendar and reaped, so a cross-account move would lose the
+        // changed occurrence.
         val master = testEvent.copy(rrule = "FREQ=WEEKLY")
         val exception = testEvent.copy(
             id = 201L,
@@ -205,15 +214,17 @@ class PushStrategyTest {
         coEvery { client.createEvent(eq(testCalendar.caldavUrl), eq(master.uid), any()) } returns
             CalDavResult.success(Pair(serverUrl, serverEtag))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         val result = pushStrategy.pushForCalendar(testCalendar, client)
 
         assert(result is PushResult.Success)
         // One atomic write carries both the new url and the new etag.
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(exception.id, serverUrl, serverEtag, any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(exception.id, serverUrl, serverEtag, any(), any()) }
         coVerify(exactly = 0) { eventsDao.markSynced(exception.id, any(), any()) }
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(master.id, serverUrl, serverEtag, any()) }
+        coVerify(exactly = 0) { eventsDao.markSyncedWithCopy(exception.id, any(), any(), any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(master.id, serverUrl, serverEtag, any(), any()) }
     }
 
     @Test
@@ -254,16 +265,19 @@ class PushStrategyTest {
         coEvery { client.createEvent(eq(testCalendar.caldavUrl), eq(master.uid), any()) } returns
             CalDavResult.success(Pair(serverUrl, serverEtag))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         pushStrategy.pushForCalendar(testCalendar, client)
 
         coVerify(exactly = 0) { eventsDao.markCreatedOnServer(lateException.id, any(), any(), any()) }
+        coVerify(exactly = 0) { eventsDao.markCreatedOnServerWithCopy(lateException.id, any(), any(), any(), any()) }
         coVerify(exactly = 0) { eventsDao.markSynced(lateException.id, any(), any()) }
+        coVerify(exactly = 0) { eventsDao.markSyncedWithCopy(lateException.id, any(), any(), any()) }
         // The pushed one still adopts the url, including from a null starting value
         // (this fixture's exception has never been on a server).
         assertEquals(null, pushedException.caldavUrl)
-        coVerify(exactly = 1) { eventsDao.markCreatedOnServer(pushedException.id, serverUrl, serverEtag, any()) }
+        coVerify(exactly = 1) { eventsDao.markCreatedOnServerWithCopy(pushedException.id, serverUrl, serverEtag, any(), any()) }
     }
 
     @Test
@@ -320,6 +334,7 @@ class PushStrategyTest {
         coEvery { client.updateEvent(eq(eventWithUrl.caldavUrl!!), any(), eq(eventWithUrl.etag!!)) } returns
             CalDavResult.success(newEtag)
         coEvery { eventsDao.markSynced(eventWithUrl.id, newEtag, any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(eventWithUrl.id, newEtag, any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -329,16 +344,15 @@ class PushStrategyTest {
         assert(success.eventsUpdated == 1)
         assert(success.operationsFailed == 0)
 
-        coVerify { eventsDao.markSynced(eventWithUrl.id, newEtag, any()) }
+        coVerify { eventsDao.markSyncedWithCopy(eventWithUrl.id, newEtag, any(), any()) }
     }
 
     @Test
     fun `pushAll preserves rawIcal attendees when the attendee table is empty`() = runTest {
-        // Regression: an event synced before the attendees table existed (or
-        // whose etag is unchanged so the pull-side backfill never ran) keeps its
-        // ATTENDEEs only in rawIcal; getForEventOnce returns empty. Pushing a
-        // cosmetic edit must NOT clear them on the wire (an empty table is not an
-        // authoritative "no attendees" signal).
+        // An event synced before the attendees table existed, or whose unchanged etag kept
+        // the pull from backfilling it, has its ATTENDEEs only in rawIcal, and
+        // getForEventOnce returns empty. A cosmetic edit must not clear them on the wire: an
+        // empty table isn't an authoritative "no attendees".
         val rawIcal = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -372,6 +386,7 @@ class PushStrategyTest {
         val bodySlot = slot<String>()
         coEvery { client.updateEvent(any(), capture(bodySlot), any()) } returns CalDavResult.success("etag-new")
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
         pushStrategy.pushAll(client)
@@ -402,8 +417,8 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
         coEvery { client.updateEvent(any(), any(), any()) } returns CalDavResult.conflictError("Modified on server")
-        // 412 retry: fetchEtag fails → falls through to conflict
-        coEvery { client.fetchEtag(any()) } returns CalDavResult.networkError("Connection failed")
+        // The refetch finds the resource gone: left to conflict resolution, never re-created.
+        coEvery { client.fetchEvent(any()) } returns CalDavResult.notFoundError("Event not found")
         coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
 
@@ -413,6 +428,8 @@ class PushStrategyTest {
         assert((result as PushResult.Success).operationsFailed == 1)
 
         coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
+        coVerify(exactly = 1) { client.updateEvent(any(), any(), any()) }
+        coVerify(exactly = 0) { client.createEvent(any(), any(), any()) }
     }
 
     @Test
@@ -441,6 +458,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
                 coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.success(Pair(serverUrl, serverEtag))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -488,7 +506,7 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll handles DELETE for event never synced (no caldavUrl)`() = runTest {
-        // Event has no caldavUrl - should just delete locally
+        // Event has no caldavUrl, so it is only deleted locally
         val eventNoUrl = testEvent.copy(caldavUrl = null, syncStatus = SyncStatus.PENDING_DELETE)
 
         val operation = PendingOperation(
@@ -509,9 +527,9 @@ class PushStrategyTest {
         assert(result is PushResult.Success)
         assert((result as PushResult.Success).eventsDeleted == 1)
 
-        // Should NOT call server delete
+        // No server delete
         coVerify(exactly = 0) { client.deleteEvent(any(), any()) }
-        // Should still delete locally
+        // Still deleted locally
         coVerify { eventsDao.deleteById(eventNoUrl.id) }
     }
 
@@ -569,12 +587,11 @@ class PushStrategyTest {
 
     // ========== DELETE 412 Conflict Retry ==========
     //
-    // A scheduling object's ETag drifts asynchronously when the server
-    // auto-processes an attendee reply (RFC 6638 §3.2.10 keeps the schedule-tag
-    // stable but the ETag changes). A DELETE with the drifted ETag then 412s
-    // even though nothing the user cares about changed. The delete path must
-    // refetch the current ETag and retry once — the same self-heal the UPDATE
-    // path already has — instead of rescheduling forever with the stale ETag.
+    // A scheduling object's ETag changes when the server auto-processes an attendee
+    // reply (RFC 6638 §3.2.10 keeps the schedule-tag unchanged). A DELETE with the old
+    // ETag then 412s though nothing the user cares about changed. The delete refetches
+    // the ETag and retries once, as the UPDATE path does, instead of rescheduling
+    // forever with the stale ETag.
 
     @Test
     fun `pushAll retries delete with fresh etag on 412 conflict`() = runTest {
@@ -593,14 +610,13 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.getReadyOperations(any()) } returns listOf(operation)
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
-        // First DELETE with the stale etag → 412.
+        // First DELETE with the stale etag: 412.
         coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-stale")) } returns
             CalDavResult.conflictError("Modified on server")
-        // Refetch → fresh etag.
+        // Refetch: fresh etag.
         coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success("etag-fresh")
-        // Retry DELETE with the fresh etag → success. Stubbed on the fresh value
-        // ONLY: an impl that reused the stale etag would hit no matching stub and
-        // the test would fail — this proves the retry uses the refetched etag.
+        // Retry DELETE with the fresh etag: success. Stubbed only for the fresh etag, so a
+        // retry reusing the stale one hits no stub and fails the test.
         coEvery { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-fresh")) } returns
             CalDavResult.success(Unit)
         coEvery { eventsDao.deleteById(eventWithUrl.id) } just Runs
@@ -623,10 +639,9 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll delete retry is bounded to exactly one retry`() = runTest {
-        // Adversarial: guard against an unbounded retry loop. Every DELETE 412s
-        // and every refetch returns a (different) etag. The delete must be
-        // attempted exactly twice total (first + one retry), the refetch exactly
-        // once, then defer — never loop within a single push.
+        // Every DELETE 412s and every refetch returns a new etag. The delete runs twice
+        // (first plus one retry) and the refetch once, then the op defers; one push never
+        // loops.
         val eventWithUrl = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "etag-stale",
@@ -656,7 +671,7 @@ class PushStrategyTest {
 
         coVerify(exactly = 2) { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) }
         coVerify(exactly = 1) { client.fetchEtag(eventWithUrl.caldavUrl!!) }
-        // Not deleted locally — it still exists on the server.
+        // Not deleted locally: it still exists on the server.
         coVerify(exactly = 0) { eventsDao.deleteById(any()) }
         // Deferred to the normal conflict reschedule path.
         coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
@@ -664,8 +679,8 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll delete falls back to conflict when refetch fails on 412`() = runTest {
-        // Refetch network-fails → no fresh etag to retry with → defer to the
-        // existing reschedule path (do NOT delete locally, do NOT loop).
+        // A refetch network failure leaves no etag to retry with: the op is rescheduled as a
+        // conflict, with no local delete and no loop.
         val eventWithUrl = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "etag-stale",
@@ -692,9 +707,7 @@ class PushStrategyTest {
         assert(result is PushResult.Success)
         assertEquals(1, (result as PushResult.Success).operationsFailed)
 
-        // The refetch WAS attempted (proves we entered the new retry path, not
-        // the old straight-to-conflict path) but failed, so only the first
-        // delete ran and no retry followed.
+        // The refetch ran but failed, so only the first delete ran and no retry followed.
         coVerify(exactly = 1) { client.fetchEtag(eventWithUrl.caldavUrl!!) }
         coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) }
         coVerify(exactly = 0) { eventsDao.deleteById(any()) }
@@ -703,9 +716,9 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll delete treats refetch 404 as already deleted`() = runTest {
-        // Adversarial race: the resource is removed elsewhere between our 412'd
-        // DELETE and the refetch. A 404 on refetch means it is gone — the user's
-        // intent (remove it) is satisfied; delete locally rather than re-freeze.
+        // The resource is removed elsewhere between the 412'd DELETE and the refetch. A 404
+        // on refetch means it is gone, which is what the user asked for, so the row is
+        // deleted locally.
         val eventWithUrl = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "etag-stale",
@@ -733,7 +746,7 @@ class PushStrategyTest {
         assert(result is PushResult.Success)
         assertEquals("gone-on-refetch counts as a completed delete", 1, (result as PushResult.Success).eventsDeleted)
 
-        // No second delete attempt — refetch already proved it is gone.
+        // No second delete: the refetch showed it is gone.
         coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) }
         coVerify { eventsDao.deleteById(eventWithUrl.id) }
         coVerify { pendingOperationsDao.deleteById(operation.id) }
@@ -741,9 +754,8 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll delete falls back to conflict when refetch returns no etag`() = runTest {
-        // Server answers PROPFIND 207 but omits <getetag> (some CDN/edge cases).
-        // Without an etag there is nothing to retry with — defer, don't delete,
-        // don't loop.
+        // Server answers PROPFIND 207 but omits <getetag> (some CDN/edge cases). Without an
+        // etag there is nothing to retry with: defer, don't delete, don't loop.
         val eventWithUrl = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "etag-stale",
@@ -771,8 +783,7 @@ class PushStrategyTest {
         assert(result is PushResult.Success)
         assertEquals(1, (result as PushResult.Success).operationsFailed)
 
-        // The refetch was attempted (new path) but yielded no usable etag, so no
-        // retry delete followed and the op deferred.
+        // The refetch gave no usable etag, so no retry delete followed and the op deferred.
         coVerify(exactly = 1) { client.fetchEtag(eventWithUrl.caldavUrl!!) }
         coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) }
         coVerify(exactly = 0) { eventsDao.deleteById(any()) }
@@ -781,10 +792,9 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll delete falls back to conflict when refetch returns empty etag`() = runTest {
-        // Empty-string etag edge case (some servers, e.g. Zoho, return "" rather
-        // than a real validator). An empty etag is not usable for a retry — the
-        // guard must treat it like a missing etag and defer, NOT retry the delete
-        // with an empty If-Match. Distinguishes isNullOrEmpty() from == null.
+        // Some servers, e.g. Zoho, return "" instead of a real validator. An empty etag is
+        // treated like a missing one: the op defers, with no retry delete carrying an empty
+        // If-Match. Distinguishes isNullOrEmpty() from == null.
         val eventWithUrl = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "etag-stale",
@@ -812,7 +822,7 @@ class PushStrategyTest {
         assert(result is PushResult.Success)
         assertEquals(1, (result as PushResult.Success).operationsFailed)
 
-        // Refetch attempted, but empty etag → no retry delete, defer.
+        // Refetch ran but gave an empty etag: no retry delete, the op defers.
         coVerify(exactly = 1) { client.fetchEtag(eventWithUrl.caldavUrl!!) }
         coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, any()) }
         coVerify(exactly = 0) { eventsDao.deleteById(any()) }
@@ -821,11 +831,10 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll delete retry permanent error marks failed instead of conflict`() = runTest {
-        // The first delete 412s (drift), refetch succeeds, but the retry delete
-        // hits a PERMANENT error (e.g. 403 auth). That is not a benign conflict:
-        // it must surface as a non-retryable Error so the caller marks the
-        // operation failed immediately, not reschedule it as a conflict for the
-        // full 30-day lifetime.
+        // The first delete 412s, the refetch succeeds, and the retry delete hits a
+        // permanent error (here an auth error, 401). That isn't a benign conflict: it
+        // surfaces as a non-retryable Error, so the op is marked failed at once instead of
+        // rescheduled as a conflict for its 30-day lifetime.
         val eventWithUrl = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "etag-stale",
@@ -856,7 +865,7 @@ class PushStrategyTest {
         assertEquals(1, (result as PushResult.Success).operationsFailed)
 
         coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-fresh")) }
-        // Permanent error → marked failed, NOT rescheduled as a conflict, NOT deleted locally.
+        // Permanent error: marked failed, not rescheduled as a conflict, not deleted locally.
         coVerify { pendingOperationsDao.markFailed(operation.id, any(), any()) }
         coVerify(exactly = 0) { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) }
         coVerify(exactly = 0) { eventsDao.deleteById(any()) }
@@ -864,9 +873,9 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll delete retry transient error reschedules with error not generic conflict`() = runTest {
-        // The retry delete hits a TRANSIENT error (network). It should reschedule
-        // (retryable) but carry the real error message, and must NOT be marked
-        // failed. This distinguishes a real failure from a benign re-conflict.
+        // The retry delete hits a transient network error. The op is rescheduled with the
+        // real error message and not marked failed, which tells a real failure apart from a
+        // benign re-conflict.
         val eventWithUrl = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "etag-stale",
@@ -897,8 +906,8 @@ class PushStrategyTest {
         assertEquals(1, (result as PushResult.Success).operationsFailed)
 
         coVerify(exactly = 1) { client.deleteEvent(eventWithUrl.caldavUrl!!, eq("etag-fresh")) }
-        // Transient error → rescheduled (retryable) with the real message, NOT the
-        // generic "Conflict" string, and NOT marked failed.
+        // Transient error: rescheduled with the real message, not the generic "Conflict"
+        // string, and not marked failed.
         coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Connection reset") }, any()) }
         coVerify(exactly = 0) { pendingOperationsDao.markFailed(any(), any(), any()) }
         coVerify(exactly = 0) { eventsDao.deleteById(any()) }
@@ -906,12 +915,12 @@ class PushStrategyTest {
 
     // ========== DELETE after a calendar move: row ownership ==========
     //
-    // A move re-uses the event's row id for the destination copy while queueing a
-    // DELETE keyed on that same id. The DELETE owns the source-collection resource,
-    // not the row, so once the row has left sourceCalendarId the local reap must be
-    // suppressed — otherwise the server copy is removed AND the moved event is
-    // destroyed (#365). Genuine deletes soft-delete to PENDING_DELETE first, which
-    // is how they stay distinguishable from a moved row.
+    // A move reuses the event's row for the destination copy and queues a DELETE keyed
+    // on the same id. The DELETE owns the source-collection resource, not the row, so
+    // once the row has left sourceCalendarId it isn't reaped; otherwise the server copy
+    // is removed and the moved event destroyed (#365). A user delete soft-deletes to
+    // PENDING_DELETE first, which tells it apart from a moved row. The rule lives in
+    // `PushStrategy.deleteOwnsLocalRow`.
 
     /** Source calendar the move originated from; matches testCalendar.id. */
     private val sourceCalendarId = 1L
@@ -948,7 +957,7 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(movedEvent.id) } returns movedEvent
         coEvery { client.deleteEvent(movedSourceUrl, any()) } returns CalDavResult.success(Unit)
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
-        // deleteById deliberately NOT stubbed: strict mockk throws if it is called.
+        // deleteById deliberately not stubbed: strict mockk throws if it is called.
 
         val result = pushStrategy.pushForCalendar(testCalendar, client)
 
@@ -983,7 +992,7 @@ class PushStrategyTest {
         val result = pushStrategy.pushForCalendar(testCalendar, client)
 
         assert(result is PushResult.Success)
-        // The OLD url is deleted, never the row's current (destination) url.
+        // The old url is deleted, never the row's current (destination) url.
         coVerify(exactly = 1) { client.deleteEvent(movedSourceUrl, any()) }
         coVerify(exactly = 0) { client.deleteEvent(movedEvent.caldavUrl!!, any()) }
         coVerify(exactly = 0) { eventsDao.deleteById(any()) }
@@ -991,9 +1000,9 @@ class PushStrategyTest {
 
     @Test
     fun `delete with no source calendar scope still reaps a row that is not a tombstone`() = runTest {
-        // The unscoped-op case: nothing says this row was moved, so the DELETE
-        // still owns it. Existing behavior depends on this — the mixed-operations
-        // test drives a PENDING_CREATE row through the DELETE path.
+        // Nothing says this unscoped op's row was moved, so the DELETE still owns it. The
+        // mixed-operations test relies on this: it drives a PENDING_CREATE row through the
+        // DELETE path.
         val eventWithUrl = testEvent.copy(
             caldavUrl = movedSourceUrl,
             etag = "etag-123",
@@ -1023,11 +1032,10 @@ class PushStrategyTest {
 
     @Test
     fun `delete still reaps a tombstone row whose op inherited a stale source calendar`() = runTest {
-        // queueOperation mutates an existing pending op in place rather than
-        // inserting, so a genuine delete can inherit a prior MOVE's
-        // sourceCalendarId. The row is a real tombstone, so it must still be
-        // reaped — scoping alone would leave an invisible row that nothing
-        // cleans up, since the pull path skips PENDING_DELETE rows.
+        // Queueing updates an existing pending op in place instead of inserting, so a real
+        // delete can inherit a prior move's sourceCalendarId. The row is a tombstone, so it
+        // must still be reaped: scoping alone would leave an invisible row nothing cleans
+        // up, since the pull skips PENDING_DELETE rows.
         val tombstone = testEvent.copy(
             calendarId = 7L,
             caldavUrl = movedSourceUrl,
@@ -1124,9 +1132,9 @@ class PushStrategyTest {
 
     @Test
     fun `delete after move keeps the row when there is no url to delete`() = runTest {
-        // Defensive: a move-origin op with no captured targetUrl against a row
-        // whose server identity is already cleared. Nothing to delete on the
-        // server, and the row is not ours to reap.
+        // A move-origin op with no captured targetUrl against a row whose server identity
+        // is already cleared. Nothing to delete on the server, and the row isn't the
+        // DELETE's to reap.
         val movedEvent = testEvent.copy(
             calendarId = 9L,
             caldavUrl = null,
@@ -1205,10 +1213,10 @@ class PushStrategyTest {
 
     @Test
     fun `delete decides ownership from current state, not the batch snapshot`() = runTest {
-        // The push loop snapshots rows before the network round-trip. If the user
-        // moves the event out of the source calendar while the server DELETE is in
-        // flight, the snapshot still shows it in the source calendar — deciding from
-        // it would destroy the row the move just re-pointed.
+        // The push loop snapshots rows before the network round-trip. If the user moves the
+        // event out of the source calendar while the server DELETE is in flight, the
+        // snapshot still shows it in the source calendar, and deciding from it would destroy
+        // the row the move just re-pointed.
         val snapshot = testEvent.copy(
             calendarId = sourceCalendarId,
             caldavUrl = movedSourceUrl,
@@ -1284,7 +1292,9 @@ class PushStrategyTest {
         coEvery { client.updateEvent(any(), any(), any()) } returns CalDavResult.success("new-etag")
         coEvery { client.deleteEvent(any(), any()) } returns CalDavResult.success(Unit)
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.deleteById(any()) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -1328,7 +1338,7 @@ class PushStrategyTest {
         coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), any(), any()) }
         coVerify { eventsDao.recordSyncError(testEvent.id, any(), any()) }
 
-        // A retryable failure (will retry next sync) is a soft WARNING, not an error.
+        // A retryable failure (retried next sync) is a warning, not an error.
         val success = result as PushResult.Success
         assertEquals("retryable failure should be a warning", 1, success.pushWarnings.size)
         assertTrue("retryable failure must NOT be an error", success.pushErrors.isEmpty())
@@ -1361,7 +1371,7 @@ class PushStrategyTest {
         coVerify { pendingOperationsDao.markFailed(operation.id, any(), any()) }
         coVerify(exactly = 0) { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) }
 
-        // A permanently-failed push (change lost, no retry) is an ERROR, not a warning.
+        // A permanently failed push (change lost, no retry) is an error, not a warning.
         val success = result as PushResult.Success
         assertEquals("permanent failure should be an error", 1, success.pushErrors.size)
         assertTrue("permanent failure must NOT be a warning", success.pushWarnings.isEmpty())
@@ -1421,23 +1431,25 @@ class PushStrategyTest {
         coEvery { eventsDao.getExceptionsForMaster(masterEvent.id) } returns listOf(exceptionEvent)
         coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.success(Pair("url", "etag"))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
         pushStrategy.pushAll(client)
 
         // The bundled exception adopts the master's resource url and etag (v14.2.20).
-        coVerify { eventsDao.markCreatedOnServer(exceptionEvent.id, "url", "etag", any()) }
+        coVerify { eventsDao.markCreatedOnServerWithCopy(exceptionEvent.id, "url", "etag", any(), any()) }
     }
 
     @Test
     fun `pushAll emits master AND per-exception attendees on the wire`() = runTest {
-        // Organizer push of a recurring series: the master's attendees AND each
-        // exception VEVENT's own attendees must round-trip. Exception attendees
-        // were silently dropped before the per-exception fix.
-        // ATTENDEE requires ORGANIZER (RFC 6638 §3.1) — a real organizer push
-        // resolves one, so the fixture carries it.
+        // Organizer push of a recurring series: the master's attendees and each exception
+        // VEVENT's own attendees must round-trip. The serializer emits ATTENDEEs only with
+        // an ORGANIZER (`EventToICalEventMapper.attendeesIfOrganized`), which a real
+        // organizer push resolves, so the fixture carries one.
         val masterEvent = testEvent.copy(
             rrule = "FREQ=WEEKLY;BYDAY=MO",
             originalEventId = null,
@@ -1476,8 +1488,11 @@ class PushStrategyTest {
             )
         )
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
         val bodySlot = slot<String>()
@@ -1494,8 +1509,8 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll skips exception events - they are bundled with master`() = runTest {
-        // Exception events (with originalEventId set) should be skipped entirely.
-        // They get pushed as part of the master event via serializeWithExceptions().
+        // An exception event (originalEventId set) is skipped: it is pushed inside its
+        // master's body (`IcsPatcher.serializeWithExceptions`).
         val exceptionEvent = testEvent.copy(
             originalEventId = 99L,
             originalInstanceTime = System.currentTimeMillis(),
@@ -1516,21 +1531,21 @@ class PushStrategyTest {
 
         val result = pushStrategy.pushAll(client)
 
-        // Should succeed but NOT call any server methods
+        // Succeeds without calling the server
         assert(result is PushResult.Success)
         val success = result as PushResult.Success
         // Counts as created since operation succeeded (no-op is success)
         assert(success.eventsCreated == 1)
 
-        // Verify NO server calls were made
+        // No server calls
         coVerify(exactly = 0) { client.createEvent(any(), any(), any()) }
         coVerify(exactly = 0) { calendarRepository.getCalendarById(any()) }
     }
 
     @Test
     fun `pushAll skips exception events for UPDATE operations`() = runTest {
-        // Exception events should also be skipped for UPDATE operations.
-        // The master's UPDATE will include all exceptions via IcsPatcher.serializeWithExceptions().
+        // An exception is skipped for UPDATE too; the master's UPDATE carries every
+        // exception (`IcsPatcher.serializeWithExceptions`).
         val exceptionEvent = testEvent.copy(
             originalEventId = 99L,
             originalInstanceTime = System.currentTimeMillis(),
@@ -1558,13 +1573,13 @@ class PushStrategyTest {
         val success = result as PushResult.Success
         assert(success.eventsUpdated == 1)
 
-        // Verify NO server calls were made
+        // No server calls
         coVerify(exactly = 0) { client.updateEvent(any(), any(), any()) }
     }
 
     @Test
     fun `pushAll processes master UPDATE and includes all exceptions`() = runTest {
-        // When master event is updated, it should include all its exceptions
+        // A master's UPDATE includes all its exceptions
         val masterEvent = testEvent.copy(
             id = 200L,
             rrule = "FREQ=DAILY;COUNT=5",
@@ -1599,8 +1614,12 @@ class PushStrategyTest {
         coEvery { eventsDao.getById(masterEvent.id) } returns masterEvent
         coEvery { eventsDao.getExceptionsForMaster(masterEvent.id) } returns listOf(exception1, exception2)
         coEvery { client.updateEvent(masterEvent.caldavUrl!!, any(), masterEvent.etag!!) } returns CalDavResult.success("new-etag")
-        coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs  // v14.2.20: update master and exception etags
+        // markSyncedWithCopy stores the master's etag and body; exceptions go through
+        // markCreatedOnServerWithCopy
+        coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -1612,16 +1631,16 @@ class PushStrategyTest {
         // Verify update was called with correct URL and etag
         coVerify { client.updateEvent(masterEvent.caldavUrl!!, any(), masterEvent.etag!!) }
         // Verify master etag was updated
-        coVerify { eventsDao.markSynced(masterEvent.id, "new-etag", any()) }
-        // Verify exception etags were updated (v14.2.20)
-        coVerify { eventsDao.markCreatedOnServer(exception1.id, "https://caldav.icloud.com/123/calendar/master.ics", "new-etag", any()) }
-        coVerify { eventsDao.markCreatedOnServer(exception2.id, "https://caldav.icloud.com/123/calendar/master.ics", "new-etag", any()) }
+        coVerify { eventsDao.markSyncedWithCopy(masterEvent.id, "new-etag", any(), any()) }
+        // Each exception adopts the master's url and new etag
+        coVerify { eventsDao.markCreatedOnServerWithCopy(exception1.id, "https://caldav.icloud.com/123/calendar/master.ics", "new-etag", any(), any()) }
+        coVerify { eventsDao.markCreatedOnServerWithCopy(exception2.id, "https://caldav.icloud.com/123/calendar/master.ics", "new-etag", any(), any()) }
     }
 
     // ========== 412 Conflict Retry (v22.5.6) ==========
 
     @Test
-    fun `pushAll retries update with fresh etag on 412 conflict`() = runTest {
+    fun `pushAll retries a 412 update once with the etag of the copy it refetched`() = runTest {
         val eventWithUrl = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "etag-stale",
@@ -1639,16 +1658,16 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        coEvery { calendarRepository.getCalendarById(any()) } returns null
         // First PUT with stale etag → 412
         coEvery { client.updateEvent(eventWithUrl.caldavUrl!!, any(), eq("etag-stale")) } returns
             CalDavResult.conflictError("Modified on server")
-        // fetchEtag → fresh etag
-        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success("etag-fresh")
-        coEvery { eventsDao.updateEtag(eventWithUrl.id, "etag-fresh") } just Runs
-        // Retry PUT with fresh etag → success
+        // The server's current copy, changed elsewhere
+        coEvery { client.fetchEvent(eventWithUrl.caldavUrl!!) } returns serverCopy(eventWithUrl, "etag-fresh")
+        // Retry PUT with the refetched copy's etag → success
         coEvery { client.updateEvent(eventWithUrl.caldavUrl!!, any(), eq("etag-fresh")) } returns
             CalDavResult.success("etag-new")
-        coEvery { eventsDao.markSynced(eventWithUrl.id, "etag-new", any()) } just Runs
+        coEvery { eventsDao.markSynced(eventWithUrl.id, "etag-stale", any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -1657,15 +1676,17 @@ class PushStrategyTest {
         val success = result as PushResult.Success
         assert(success.eventsUpdated == 1)
         assert(success.operationsFailed == 0) { "Expected 0 failures but got ${success.operationsFailed}" }
+        assertTrue("the same cycle's pull fetches the merged copy", eventWithUrl.id in success.refetchEventIds)
 
-        // Verify the retry sequence
-        coVerify { eventsDao.updateEtag(eventWithUrl.id, "etag-fresh") }
-        coVerify { eventsDao.markSynced(eventWithUrl.id, "etag-new", any()) }
+        // The row keeps its old etag and body, and no etag is stored before the retry.
+        coVerify { eventsDao.markSynced(eventWithUrl.id, "etag-stale", any()) }
+        coVerify(exactly = 0) { eventsDao.updateEtag(any(), any()) }
+        coVerify(exactly = 0) { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) }
         coVerify { pendingOperationsDao.deleteById(operation.id) }
     }
 
     @Test
-    fun `pushAll falls back to conflict when fetchEtag fails on 412`() = runTest {
+    fun `a 412 whose refetch fails on the network is retried later, not left to conflict resolution`() = runTest {
         val eventWithUrl = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "etag-stale",
@@ -1683,10 +1704,10 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        coEvery { calendarRepository.getCalendarById(any()) } returns null
         coEvery { client.updateEvent(any(), any(), any()) } returns
             CalDavResult.conflictError("Modified on server")
-        // fetchEtag fails
-        coEvery { client.fetchEtag(any()) } returns CalDavResult.networkError("Connection failed")
+        coEvery { client.fetchEvent(any()) } returns CalDavResult.networkError("Connection failed")
         coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
 
@@ -1695,9 +1716,12 @@ class PushStrategyTest {
         assert(result is PushResult.Success)
         assert((result as PushResult.Success).operationsFailed == 1)
 
-        // Should fall through to normal conflict handling
-        coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
-        // Should NOT have tried updateEtag or second PUT
+        // Rescheduled with an error conflict resolution doesn't pick up, with no second PUT and
+        // no etag stored.
+        coVerify {
+            pendingOperationsDao.scheduleRetry(operation.id, any(), match { "Conflict" !in it && "412" !in it }, any())
+        }
+        coVerify(exactly = 1) { client.updateEvent(any(), any(), any()) }
         coVerify(exactly = 0) { eventsDao.updateEtag(any(), any()) }
     }
 
@@ -1720,12 +1744,11 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
+        coEvery { calendarRepository.getCalendarById(any()) } returns null
         // First PUT → 412
         coEvery { client.updateEvent(eventWithUrl.caldavUrl!!, any(), eq("etag-stale")) } returns
             CalDavResult.conflictError("Modified on server")
-        // fetchEtag succeeds
-        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success("etag-fresh")
-        coEvery { eventsDao.updateEtag(eventWithUrl.id, "etag-fresh") } just Runs
+        coEvery { client.fetchEvent(eventWithUrl.caldavUrl!!) } returns serverCopy(eventWithUrl, "etag-fresh")
         // Retry PUT → also 412 (another concurrent edit)
         coEvery { client.updateEvent(eventWithUrl.caldavUrl!!, any(), eq("etag-fresh")) } returns
             CalDavResult.conflictError("Modified again")
@@ -1737,14 +1760,12 @@ class PushStrategyTest {
         assert(result is PushResult.Success)
         assert((result as PushResult.Success).operationsFailed == 1)
 
-        // updateEtag was called (intermediate step)
-        coVerify { eventsDao.updateEtag(eventWithUrl.id, "etag-fresh") }
-        // But ultimately fell through to conflict
+        coVerify(exactly = 2) { client.updateEvent(any(), any(), any()) }
         coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
     }
 
     @Test
-    fun `pushAll retry updates exception event etags on success`() = runTest {
+    fun `a merged retry keeps the old etag on the series and on each bundled exception`() = runTest {
         val masterEvent = testEvent.copy(
             id = 200L,
             rrule = "FREQ=DAILY;COUNT=5",
@@ -1778,17 +1799,24 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(masterEvent.id) } returns masterEvent
         coEvery { eventsDao.getExceptionsForMaster(masterEvent.id) } returns listOf(exception1, exception2)
-        // First PUT → 412
+        // First PUT: 412
         coEvery { client.updateEvent(masterEvent.caldavUrl!!, any(), eq("etag-stale")) } returns
             CalDavResult.conflictError("Modified on server")
-        // fetchEtag → fresh
-        coEvery { client.fetchEtag(masterEvent.caldavUrl!!) } returns CalDavResult.success("etag-fresh")
-        coEvery { eventsDao.updateEtag(masterEvent.id, "etag-fresh") } just Runs
-        // Retry → success
+        coEvery { calendarRepository.getCalendarById(any()) } returns null
+        // The server's current copy holds the series and both exceptions.
+        coEvery { client.fetchEvent(masterEvent.caldavUrl!!) } returns CalDavResult.success(
+            CalDavEvent(
+                href = masterEvent.caldavUrl!!, url = masterEvent.caldavUrl!!, etag = "etag-fresh",
+                icalData = IcsPatcher.serializeWithExceptions(masterEvent, listOf(exception1, exception2))
+            )
+        )
+        // Retry: success
         coEvery { client.updateEvent(masterEvent.caldavUrl!!, any(), eq("etag-fresh")) } returns
             CalDavResult.success("etag-new")
         coEvery { eventsDao.markSynced(any(), any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(any()) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -1796,16 +1824,16 @@ class PushStrategyTest {
         assert(result is PushResult.Success)
         assert((result as PushResult.Success).operationsFailed == 0)
 
-        // Verify master + both exceptions all picked up the retry's etag, the
-        // exceptions against the master's resource url (which is also theirs).
-        coVerify { eventsDao.markSynced(masterEvent.id, "etag-new", any()) }
-        coVerify { eventsDao.markCreatedOnServer(exception1.id, "https://caldav.icloud.com/123/calendar/master.ics", "etag-new", any()) }
-        coVerify { eventsDao.markCreatedOnServer(exception2.id, "https://caldav.icloud.com/123/calendar/master.ics", "etag-new", any()) }
+        // The series keeps its old etag and both exceptions take it, at the master's resource
+        // url (which is also theirs), so the pull fetches the merged copy whichever row it reads.
+        coVerify { eventsDao.markSynced(masterEvent.id, "etag-stale", any()) }
+        coVerify { eventsDao.markCreatedOnServer(exception1.id, "https://caldav.icloud.com/123/calendar/master.ics", "etag-stale", any()) }
+        coVerify { eventsDao.markCreatedOnServer(exception2.id, "https://caldav.icloud.com/123/calendar/master.ics", "etag-stale", any()) }
     }
 
     @Test
-    fun `pushAll falls back to conflict when fetchEtag returns same stale etag`() = runTest {
-        // CDN staleness: fetchEtag returns the same etag that caused the 412
+    fun `a refetched copy still carrying the refused etag defers after one retry`() = runTest {
+        // CDN staleness: the GET returns the etag that caused the 412
         val eventWithUrl = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "etag-stale",
@@ -1823,12 +1851,11 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(eventWithUrl.id) } returns eventWithUrl
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        // All PUTs with any etag → 412 (simulates stale CDN returning same etag)
+        coEvery { calendarRepository.getCalendarById(any()) } returns null
+        // All PUTs with any etag → 412
         coEvery { client.updateEvent(any(), any(), any()) } returns
             CalDavResult.conflictError("Modified on server")
-        // fetchEtag returns same stale etag (CDN hasn't caught up)
-        coEvery { client.fetchEtag(eventWithUrl.caldavUrl!!) } returns CalDavResult.success("etag-stale")
-        coEvery { eventsDao.updateEtag(eventWithUrl.id, "etag-stale") } just Runs
+        coEvery { client.fetchEvent(eventWithUrl.caldavUrl!!) } returns serverCopy(eventWithUrl, "etag-stale")
         coEvery { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) } just Runs
         coEvery { eventsDao.recordSyncError(any(), any(), any()) } just Runs
 
@@ -1837,8 +1864,8 @@ class PushStrategyTest {
         assert(result is PushResult.Success)
         assert((result as PushResult.Success).operationsFailed == 1)
 
-        // Retry was attempted with stale etag, also got 412, fell through to conflict
-        coVerify { eventsDao.updateEtag(eventWithUrl.id, "etag-stale") }
+        // One retry, which also got 412, then conflict
+        coVerify(exactly = 2) { client.updateEvent(any(), any(), any()) }
         coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), match { it.contains("Conflict") }, any()) }
     }
 
@@ -1871,6 +1898,7 @@ class PushStrategyTest {
         coEvery { client.updateEvent(eventNullEtag.caldavUrl!!, any(), eq("recovered-etag")) } returns
             CalDavResult.success("new-etag")
         coEvery { eventsDao.markSynced(eventNullEtag.id, "new-etag", any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(eventNullEtag.id, "new-etag", any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -1886,15 +1914,14 @@ class PushStrategyTest {
         coVerify { eventsDao.updateEtag(eventNullEtag.id, "recovered-etag") }
         // Verify PUT used recovered etag
         coVerify { client.updateEvent(eventNullEtag.caldavUrl!!, any(), eq("recovered-etag")) }
-        // Verify final markSynced
-        coVerify { eventsDao.markSynced(eventNullEtag.id, "new-etag", any()) }
+        // Verify final markSyncedWithCopy
+        coVerify { eventsDao.markSyncedWithCopy(eventNullEtag.id, "new-etag", any(), any()) }
     }
 
     @Test
     fun `pushAll retries when null etag and PROPFIND fails with network error`() = runTest {
-        // Given: event with caldavUrl but etag=null, PROPFIND returns networkError (isRetryable=true)
-        // This should FAIL before the fix is implemented because the current
-        // code returns isRetryable=false unconditionally.
+        // Given: event with caldavUrl but etag=null, PROPFIND returns networkError
+        // (isRetryable=true). The op keeps the error's retryability.
         val eventNullEtag = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = null,
@@ -1924,9 +1951,9 @@ class PushStrategyTest {
 
         // Verify PROPFIND was attempted
         coVerify { client.fetchEtag(eventNullEtag.caldavUrl!!) }
-        // Verify scheduleRetry was called (network error IS retryable)
+        // Verify scheduleRetry was called (a network error is retryable)
         coVerify { pendingOperationsDao.scheduleRetry(operation.id, any(), any(), any()) }
-        // Verify markFailed was NOT called
+        // Verify markFailed was not called
         coVerify(exactly = 0) { pendingOperationsDao.markFailed(any(), any(), any()) }
         // Verify no updateEvent call was made (can't update without etag)
         coVerify(exactly = 0) { client.updateEvent(any(), any(), any()) }
@@ -1935,7 +1962,7 @@ class PushStrategyTest {
     @Test
     fun `pushAll fails permanently when null etag and PROPFIND fails with auth error`() = runTest {
         // Given: event with caldavUrl but etag=null, PROPFIND returns authError (isRetryable=false)
-        // Auth errors should NOT be retried - they need user intervention
+        // Auth errors aren't retried: they need user intervention
         val eventNullEtag = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = null,
@@ -1953,7 +1980,7 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(eventNullEtag.id) } returns eventNullEtag
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        // PROPFIND fails with auth error (should NOT be retryable)
+        // PROPFIND fails with auth error (not retryable)
         coEvery { client.fetchEtag(eventNullEtag.caldavUrl!!) } returns CalDavResult.authError("Invalid credentials")
         coEvery { pendingOperationsDao.markFailed(any(), any(), any()) } just Runs
 
@@ -1964,17 +1991,16 @@ class PushStrategyTest {
 
         // Verify PROPFIND was attempted
         coVerify { client.fetchEtag(eventNullEtag.caldavUrl!!) }
-        // Verify markFailed was called (auth error is NOT retryable)
+        // Verify markFailed was called (an auth error is not retryable)
         coVerify { pendingOperationsDao.markFailed(operation.id, any(), any()) }
-        // Verify scheduleRetry was NOT called
+        // Verify scheduleRetry was not called
         coVerify(exactly = 0) { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) }
     }
 
     @Test
     fun `pushAll triggers PROPFIND when etag is empty string`() = runTest {
-        // Given: event with empty string etag (edge case from Zoho servers)
-        // This should FAIL before the fix is implemented because current code
-        // only checks `!= null`, not `isNullOrEmpty()`.
+        // Given: event with empty string etag (edge case from Zoho servers). The recovery
+        // checks isNullOrEmpty(), not only `!= null`.
         val eventEmptyEtag = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "",  // Empty string, not null
@@ -2000,6 +2026,7 @@ class PushStrategyTest {
         coEvery { client.updateEvent(eventEmptyEtag.caldavUrl!!, any(), eq("recovered-etag")) } returns
             CalDavResult.success("new-etag")
         coEvery { eventsDao.markSynced(eventEmptyEtag.id, "new-etag", any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(eventEmptyEtag.id, "new-etag", any(), any()) } just Runs
 
         val result = pushStrategy.pushAll(client)
 
@@ -2018,8 +2045,8 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll with empty etag and PROPFIND network error schedules retry`() = runTest {
-        // Combined test: empty string etag + PROPFIND network failure.
-        // Verifies both fixes work together
+        // Empty string etag plus a PROPFIND network failure: the op is rescheduled, not
+        // failed.
         val eventEmptyEtag = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = "",  // Empty string
@@ -2050,13 +2077,13 @@ class PushStrategyTest {
         coVerify { client.fetchEtag(eventEmptyEtag.caldavUrl!!) }
         // Network error should schedule retry
         coVerify { pendingOperationsDao.scheduleRetry(any(), any(), any(), any()) }
-        // Should NOT mark as failed
+        // Not marked failed
         coVerify(exactly = 0) { pendingOperationsDao.markFailed(any(), any(), any()) }
     }
 
     @Test
     fun `pushAll recovers null etag via PROPFIND then handles 412 retry`() = runTest {
-        // Given: null etag → PROPFIND recovers → PUT gets 412 → normal 412 retry flow
+        // Given: null etag, PROPFIND recovers it, the PUT gets 412, then the merged retry
         val eventNullEtag = testEvent.copy(
             caldavUrl = "https://caldav.icloud.com/123/calendar/test-event.ics",
             etag = null,
@@ -2074,20 +2101,19 @@ class PushStrategyTest {
         coEvery { pendingOperationsDao.markInProgress(any(), any()) } just Runs
         coEvery { eventsDao.getById(eventNullEtag.id) } returns eventNullEtag
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        // 1st PROPFIND: recover null etag → "recovered-etag"
-        // 2nd fetchEtag: 412 retry → "fresh-etag"
-        coEvery { client.fetchEtag(eventNullEtag.caldavUrl!!) } returnsMany listOf(
-            CalDavResult.success("recovered-etag"),
-            CalDavResult.success("fresh-etag")
-        )
+        // PROPFIND recovers the null etag: "recovered-etag"
+        coEvery { client.fetchEtag(eventNullEtag.caldavUrl!!) } returns CalDavResult.success("recovered-etag")
+        // The GET for the 412 retry: "fresh-etag"
+        coEvery { client.fetchEvent(eventNullEtag.caldavUrl!!) } returns serverCopy(eventNullEtag, "fresh-etag")
+        coEvery { calendarRepository.getCalendarById(any()) } returns null
         coEvery { eventsDao.updateEtag(eventNullEtag.id, any()) } just Runs
-        // PUT with recovered etag → 412
+        // PUT with the recovered etag: 412
         coEvery { client.updateEvent(eventNullEtag.caldavUrl!!, any(), eq("recovered-etag")) } returns
             CalDavResult.conflictError("Modified on server")
-        // 412 retry PUT with fresh etag → success
+        // 412 retry PUT with the fresh etag: success
         coEvery { client.updateEvent(eventNullEtag.caldavUrl!!, any(), eq("fresh-etag")) } returns
             CalDavResult.success("final-etag")
-        coEvery { eventsDao.markSynced(eventNullEtag.id, "final-etag", any()) } just Runs
+        coEvery { eventsDao.markSynced(eventNullEtag.id, "recovered-etag", any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -2097,9 +2123,11 @@ class PushStrategyTest {
         assert(success.eventsUpdated == 1)
         assert(success.operationsFailed == 0) { "Expected 0 failures but got ${success.operationsFailed}" }
 
-        // Verify the full sequence: PROPFIND → PUT(412) → PROPFIND → PUT(success)
-        coVerify(exactly = 2) { client.fetchEtag(eventNullEtag.caldavUrl!!) }
-        coVerify { eventsDao.markSynced(eventNullEtag.id, "final-etag", any()) }
+        // The full sequence: PROPFIND, PUT (412), GET, PUT (success); the row keeps the
+        // recovered etag so the pull fetches the merged copy.
+        coVerify(exactly = 1) { client.fetchEtag(eventNullEtag.caldavUrl!!) }
+        coVerify(exactly = 1) { client.fetchEvent(eventNullEtag.caldavUrl!!) }
+        coVerify { eventsDao.markSynced(eventNullEtag.id, "recovered-etag", any()) }
     }
 
     // ========== Batch Query Optimization (v16.5.5) ==========
@@ -2112,7 +2140,7 @@ class PushStrategyTest {
 
         val event1 = testEvent.copy(id = 1L, calendarId = 1L, caldavUrl = null)
         val event2 = testEvent.copy(id = 2L, calendarId = 1L, caldavUrl = null)
-        val event3 = testEvent.copy(id = 3L, calendarId = 2L, caldavUrl = null)  // Different calendar
+        val event3 = testEvent.copy(id = 3L, calendarId = 2L, caldavUrl = null)  // Other calendar
 
         val op1 = PendingOperation(id = 1L, eventId = 1L, operation = PendingOperation.OPERATION_CREATE, status = PendingOperation.STATUS_PENDING)
         val op2 = PendingOperation(id = 2L, eventId = 2L, operation = PendingOperation.OPERATION_CREATE, status = PendingOperation.STATUS_PENDING)
@@ -2129,11 +2157,12 @@ class PushStrategyTest {
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
         coEvery { client.createEvent(any(), any(), any()) } returns CalDavResult.success(Pair("url", "etag"))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
 
         // When
         val result = pushStrategy.pushForCalendar(calendar1, client)
 
-        // Then: getByIds called once (batch), getById NEVER called
+        // Then: getByIds called once (batch), getById never called
         coVerify(exactly = 1) { eventsDao.getByIds(any()) }
         coVerify(exactly = 0) { eventsDao.getById(any()) }
 
@@ -2173,9 +2202,8 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll partstat_only UPDATE uses patchAttendeeReply path with patched body`() = runTest {
-        // The PARTSTAT-only branch must NOT serialize the local event verbatim
-        // (which would lose the server's other attendees). Instead it must
-        // patch only self's PARTSTAT in the rawIcal.
+        // The PARTSTAT-only branch patches only self's PARTSTAT in the stored rawIcal;
+        // serializing the local event would lose the server's other attendees.
         val event = testEvent.copy(
             caldavUrl = "https://caldav.example.com/rsvp.ics",
             etag = "etag-old",
@@ -2201,9 +2229,15 @@ class PushStrategyTest {
         coEvery { client.updateEvent(eq(event.caldavUrl!!), capture(sentBody), eq(event.etag!!)) } returns
             CalDavResult.success("etag-new")
         coEvery { eventsDao.markSynced(event.id, any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(event.id, any(), any(), any()) } just Runs
+        val storedBody = slot<String>()
+        coEvery {
+            eventsDao.updateResourceCopy(event.id, event.caldavUrl!!, event.caldavUrl!!, "etag-new", capture(storedBody))
+        } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         val result = pushStrategy.pushAll(client)
+        assertEquals("the body sent is stored with its etag", sentBody.captured, storedBody.captured)
 
         assert(result is PushResult.Success)
         // The body that hit the wire must contain the new PARTSTAT and preserve Alice.
@@ -2211,16 +2245,16 @@ class PushStrategyTest {
         assertTrue("self PARTSTAT must update to ACCEPTED", body.contains("PARTSTAT=ACCEPTED"))
         assertTrue("Alice must survive", body.contains("alice@example.test"))
         assertTrue("Self mailto must survive", body.contains("self@example.test"))
-        // SEQUENCE NOT bumped — RFC 5546 §2.1.4
+        // SEQUENCE not bumped (RFC 5546 §2.1.4)
         assertTrue("SEQUENCE must remain at 3", body.contains("SEQUENCE:3"))
-        // DESCRIPTION not in body, that's fine; SUMMARY must survive
+        // SUMMARY survives (the fixture has no DESCRIPTION)
         assertTrue("SUMMARY must survive", body.contains("Quarterly review"))
     }
 
     @Test
     fun `pushAll partstat_only UPDATE on 412 refetches body and retries`() = runTest {
-        // 412 retry path: fetchEtag refreshes the etag AND fetchEvent
-        // refreshes rawIcal, then re-run patch and retry once.
+        // On a 412, fetchEtag gives a fresh etag and fetchEvent a fresh body, which is
+        // re-patched and retried once.
         val event = testEvent.copy(
             caldavUrl = "https://caldav.example.com/rsvp.ics",
             etag = "etag-old",
@@ -2237,7 +2271,7 @@ class PushStrategyTest {
             status = PendingOperation.STATUS_PENDING
         )
 
-        // Server's fresh body has a NEW attendee (Carol) the local copy didn't know about.
+        // The server's fresh body has a new attendee (Carol) the local copy lacks.
         val freshIcal = rsvpRawIcal.replace(
             "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION:mailto:self@example.test",
             "ATTENDEE;CN=Self;PARTSTAT=NEEDS-ACTION:mailto:self@example.test\nATTENDEE;CN=Carol;PARTSTAT=ACCEPTED:mailto:carol@example.test"
@@ -2266,13 +2300,14 @@ class PushStrategyTest {
         )
         coEvery { eventsDao.updateEtag(event.id, "etag-fresh") } just Runs
         coEvery { eventsDao.markSynced(event.id, any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(event.id, any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         val result = pushStrategy.pushAll(client)
         assert(result is PushResult.Success)
         assertEquals(2, putCount)
 
-        // Retried body must be against the FRESH ICS — Carol must be present.
+        // The retried body is patched from the fresh ICS, so Carol is present.
         val retryBody = putBodies[1]
         assertTrue("retry must include Carol from refreshed body", retryBody.contains("carol@example.test"))
         assertTrue("retry must reflect TENTATIVE PARTSTAT", retryBody.contains("PARTSTAT=TENTATIVE"))
@@ -2280,7 +2315,7 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll partstat_only UPDATE on second 412 surfaces snackbar warning`() = runTest {
-        // Two 412s in a row — surface "event was modified" warning, don't retry indefinitely.
+        // Two 412s in a row: an "event was modified" warning, no further retry.
         val event = testEvent.copy(
             caldavUrl = "https://caldav.example.com/rsvp.ics",
             etag = "etag-old",
@@ -2317,7 +2352,8 @@ class PushStrategyTest {
         val success = result as PushResult.Success
         assertEquals(1, success.operationsFailed)
 
-        // Warning string must mention RSVP and the event title so HomeViewModel can surface it.
+        // The warning mentions RSVP (the event title too, not asserted here). Push warnings
+        // are recorded on the sync session ([org.onekash.kashcal.sync.engine.CalDavSyncEngine]).
         val warning = success.pushWarnings.firstOrNull { it.contains("RSVP", ignoreCase = true) }
         assertTrue(
             "expected an RSVP-modified warning, got warnings: ${success.pushWarnings}",
@@ -2327,11 +2363,10 @@ class PushStrategyTest {
 
     @Test
     fun `pushAll partstat_only UPDATE uses operation targetUrl when event caldavUrl was cleared`() = runTest {
-        // If the queued op captured caldavUrl at queue time, the PUT must succeed
-        // even when Event.caldavUrl is cleared between queue and drain. Without
-        // this, a future code path that nulls caldavUrl without clearing pending
-        // ops would silently turn the queued RSVP into a no-op and other invitees
-        // would still see us as NEEDS-ACTION.
+        // The PUT goes to the URL the op captured at queue time, so it succeeds when
+        // Event.caldavUrl is cleared between queue and drain. Otherwise a path that nulls
+        // caldavUrl without clearing pending ops would lose the queued RSVP, and other
+        // invitees would still see NEEDS-ACTION.
         val capturedUrl = "https://caldav.example.com/rsvp-captured.ics"
         val event = testEvent.copy(
             caldavUrl = null,            // cleared after queue insert
@@ -2358,6 +2393,8 @@ class PushStrategyTest {
         coEvery { client.updateEvent(eq(capturedUrl), any(), eq(event.etag!!)) } returns
             CalDavResult.success("etag-new")
         coEvery { eventsDao.markSynced(event.id, any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(event.id, any(), any(), any()) } just Runs
+        coEvery { eventsDao.updateResourceCopy(event.id, capturedUrl, capturedUrl, "etag-new", any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         val result = pushStrategy.pushAll(client)
@@ -2365,17 +2402,15 @@ class PushStrategyTest {
         assert(result is PushResult.Success) {
             "expected success when targetUrl carries the URL even with null caldavUrl, got $result"
         }
-        // PUT must have hit the captured URL; the mock above will fail to match
-        // any other URL value (eq matcher) and an unsuccessful result would
-        // surface as a failed operation, not Success.
+        // The stub matches only the captured URL (eq matcher), so a PUT to any other URL
+        // fails the test.
         coVerify(exactly = 1) { client.updateEvent(eq(capturedUrl), any(), any()) }
     }
 
     @Test
     fun `pushAll partstat_only UPDATE 412 retry also uses operation targetUrl when caldavUrl is null`() = runTest {
-        // Regression-prevention assertion: the 412 retry branch reads the same
-        // caldavUrl local var as the first PUT, so when event.caldavUrl is null,
-        // BOTH PUTs must hit operation.targetUrl.
+        // With event.caldavUrl null, both PUTs, the 412 retry included, go to
+        // operation.targetUrl.
         val capturedUrl = "https://caldav.example.com/rsvp-retry-captured.ics"
         val event = testEvent.copy(
             caldavUrl = null,
@@ -2412,13 +2447,13 @@ class PushStrategyTest {
         )
         coEvery { eventsDao.updateEtag(event.id, any()) } just Runs
         coEvery { eventsDao.markSynced(event.id, any(), any()) } just Runs
+        coEvery { eventsDao.markSyncedWithCopy(event.id, any(), any(), any()) } just Runs
         coEvery { pendingOperationsDao.deleteById(operation.id) } just Runs
 
         val result = pushStrategy.pushAll(client)
         assert(result is PushResult.Success)
         assertEquals(2, putCount)
-        // Both PUTs must have used capturedUrl — the eq() matcher above
-        // proves that, since a mismatch would have left putCount=0.
+        // Both PUTs used capturedUrl: the stub above matches only it.
         coVerify(exactly = 2) { client.updateEvent(eq(capturedUrl), any(), any()) }
         coVerify(exactly = 1) { client.fetchEtag(eq(capturedUrl)) }
         coVerify(exactly = 1) { client.fetchEvent(eq(capturedUrl)) }

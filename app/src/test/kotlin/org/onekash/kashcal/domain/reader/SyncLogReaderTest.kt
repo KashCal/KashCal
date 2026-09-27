@@ -14,13 +14,8 @@ import org.onekash.kashcal.data.db.dao.SyncLogsDao
 import org.onekash.kashcal.data.db.entity.SyncLog
 
 /**
- * Unit tests for SyncLogReader.
- *
- * Tests cover:
- * - Delegation to SyncLogsDao
- * - Default limit parameter
- * - Custom limit parameter
- * - Flow emission
+ * Tests that [SyncLogReader.getRecentLogs] passes its limit (100 by default) to a mocked
+ * [SyncLogsDao] and emits the DAO's rows unchanged, in the DAO's order.
  */
 class SyncLogReaderTest {
 
@@ -119,13 +114,13 @@ class SyncLogReaderTest {
 
     @Test
     fun `getRecentLogs preserves log order from dao`() = runTest {
-        // Logs should be in descending timestamp order (most recent first)
+        // The DAO returns logs most recent first.
         val orderedLogs = testLogs.sortedByDescending { it.timestamp }
         every { syncLogsDao.getRecentLogs(any()) } returns flowOf(orderedLogs)
 
         syncLogReader.getRecentLogs().test {
             val logs = awaitItem()
-            // Verify order is preserved
+            // The reader keeps that order.
             assertEquals(3L, logs[0].id) // Most recent
             assertEquals(2L, logs[1].id)
             assertEquals(1L, logs[2].id) // Oldest

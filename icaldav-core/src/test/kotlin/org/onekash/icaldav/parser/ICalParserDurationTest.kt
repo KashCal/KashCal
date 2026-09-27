@@ -13,10 +13,11 @@ import org.onekash.icaldav.model.ParseResult
 import java.time.Duration
 
 /**
- * Tests for DURATION property parsing and floating time handling.
+ * Tests DURATION parsing, floating, UTC and TZID start times, a VEVENT with both DTEND and
+ * DURATION, and a negative VALARM trigger.
  *
- * RFC 5545 Section 3.8.2.5: DURATION property
- * RFC 5545 Section 3.3.5: DATE-TIME with no timezone = floating
+ * DURATION is RFC 5545 §3.8.2.5. Per §3.3.5, a DATE-TIME with neither a TZID nor a Z suffix
+ * is floating.
  */
 @DisplayName("ICalParser Duration and Floating Time Tests")
 class ICalParserDurationTest {
@@ -54,7 +55,7 @@ class ICalParserDurationTest {
             assertNotNull(event.duration, "Event should have duration parsed")
             assertEquals(Duration.ofMinutes(90), event.duration)
 
-            // effectiveEnd should calculate from duration
+            // effectiveEnd is dtStart plus the duration; only its presence is asserted.
             val effectiveEnd = event.effectiveEnd()
             assertNotNull(effectiveEnd)
         }
@@ -251,8 +252,7 @@ class ICalParserDurationTest {
             assertTrue(result is ParseResult.Success)
             val event = result.getOrNull()!![0]
 
-            // Floating time: isUtc=false, timezone may be null or system default
-            // The key distinction is isUtc=false (vs UTC which has isUtc=true)
+            // A floating time is read in the device zone with isUtc false; a Z time has isUtc true.
             assertFalse(event.dtStart.isUtc, "Floating time should not be marked as UTC")
             assertFalse(event.isAllDay)
         }
@@ -329,7 +329,7 @@ class ICalParserDurationTest {
             assertTrue(result is ParseResult.Success)
             val event = result.getOrNull()!![0]
 
-            // Floating time: isUtc=false
+            // A floating time has isUtc false.
             assertFalse(event.dtStart.isUtc, "Floating time should not be marked as UTC")
             assertNotNull(event.rrule)
         }
@@ -371,7 +371,7 @@ class ICalParserDurationTest {
             val floatingEvent = floatingResult.getOrNull()!![0]
             val utcEvent = utcResult.getOrNull()!![0]
 
-            // Same datetime string, but different interpretations
+            // The same time, floating in one and UTC in the other.
             assertFalse(floatingEvent.dtStart.isUtc)
             assertTrue(utcEvent.dtStart.isUtc)
         }
@@ -383,7 +383,8 @@ class ICalParserDurationTest {
 
         @Test
         fun `when both DURATION and DTEND present - DTEND takes precedence per RFC 5545`() {
-            // RFC 5545 says these are mutually exclusive, but we should handle gracefully
+            // RFC 5545 §3.6.1: DTEND and DURATION must not occur in the same VEVENT; it gives
+            // neither precedence. The parse must still succeed.
             val ical = """
                 BEGIN:VCALENDAR
                 VERSION:2.0
@@ -404,7 +405,7 @@ class ICalParserDurationTest {
             assertTrue(result is ParseResult.Success)
             val event = result.getOrNull()!![0]
 
-            // DTEND should be present (takes precedence)
+            // DTEND is kept, and effectiveEnd prefers it over DURATION.
             assertNotNull(event.dtEnd)
         }
     }

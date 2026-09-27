@@ -13,48 +13,34 @@ import androidx.glance.currentState
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 
 /**
- * Date widget showing today's date in an icon-like format.
+ * Date widget: today's date and no event content.
  *
- * Size-responsive: at a small size it looks like an adaptive app icon showing the
- * current date; grown larger it becomes a rounded date-card with the full date.
- * Users can use the small form instead of the app icon for quick access.
+ * Small, a circular face with the short weekday over the day number ("SAT" over "19"), usable in
+ * place of the app icon. Larger, a rounded card with the full weekday over the localized month
+ * and day ("Saturday" over "September 19"). [dateWidgetLayout] picks the face from the size.
+ * Tapping anywhere opens the app at today.
  *
- * Features:
- * - Small: circular face with short weekday (e.g., "SAT") over the date number (e.g., "19")
- * - Larger: rounded card with the full weekday (e.g., "Saturday") over the full
- *   localized month + day (e.g., "September 19"); the face is chosen from the widget size
- * - Date only — no event content at any size
- * - Background matching system theme; tap anywhere opens app at today's view
- *
- * Updates:
- * - At midnight (new day)
- * - On event changes (via WidgetUpdateManager)
- * - Periodically (every 30 minutes)
+ * Event-driven refreshes skip this widget, midnight included:
+ * [WidgetUpdateManager.updateAllWidgets] leaves it out. It redraws on the system's 30-minute
+ * `updatePeriodMillis` update and on [WidgetUpdateManager.updateAllWidgetsForColorChange].
  */
 class DateWidget : GlanceAppWidget() {
 
-    /**
-     * Use exact size mode for consistent rendering.
-     */
     override val sizeMode = SizeMode.Exact
 
     override val previewSizeMode = WidgetPreviewSizes.DATE
 
-    /**
-     * Provide widget content.
-     */
     override suspend fun provideGlance(context: Context, id: GlanceId) {
         val dataStore = KashCalDataStore(context)
-        // Resolve the accent BEFORE provideContent so the very first RemoteViews already carry the
-        // picked seed. Seeding produceState with null would render one frame on the platform dynamic
-        // palette (null ?: GlanceTheme.colors) and only swap to the seed on a later push — which, if
-        // the host snapshots the widget before that push lands, leaves a SEED user showing wallpaper
-        // colors ("randomly didn't take the tint"). null here still means the genuine DYNAMIC source.
+        // Resolve the accent before provideContent so the first RemoteViews carry the picked seed.
+        // Seeding produceState with null renders a frame on the platform dynamic palette, and a
+        // host that snapshots it then leaves a seed user on wallpaper colors. Null colors mean the
+        // DYNAMIC source on the system face.
         val initialAccent = resolveWidgetAccentColors(context, dataStore).colors
         provideContent {
-            // Key the accent fetch on the refresh stamp so a color change forces produceState to
-            // re-run on a warm session (updateAll alone recomposes but does not re-run a keyless
-            // producer). WidgetUpdateManager bumps this stamp for DateWidget on color changes.
+            // Key the accent fetch on the refresh stamp: updateAll recomposes a warm session but
+            // doesn't re-run a keyless producer. The stamp is bumped for this widget only on a
+            // color change ([WidgetUpdateManager.updateAllWidgetsForColorChange]).
             val stamp = currentState<Preferences>()[WIDGET_REFRESH_STAMP] ?: 0L
             val accentColors by produceState(initialValue = initialAccent, key1 = stamp) {
                 value = resolveWidgetAccentColors(context, dataStore).colors
@@ -65,10 +51,7 @@ class DateWidget : GlanceAppWidget() {
         }
     }
 
-    /**
-     * Renders today's date into the widget picker. This widget's content is already
-     * derived from the current date, so there is no sample data to supply.
-     */
+    /** Renders today's date into the widget picker; the widget has no sample data to supply. */
     override suspend fun providePreview(context: Context, widgetCategory: Int) {
         provideContent { DatePreviewContent() }
     }

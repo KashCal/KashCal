@@ -11,20 +11,16 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * Timezone-specific tests for VALUE=DATE handling.
+ * Tests that VALUE=DATE values stay calendar dates in every zone.
  *
- * RFC 5545: DATE values are calendar dates without time zone.
- * These tests verify that VALUE=DATE produces consistent results
- * regardless of system timezone.
- *
- * Key invariant: "20260123" should always represent Jan 23, 2026
- * as a calendar date, not a moment in time shifted by timezone.
+ * A DATE has no time zone (RFC 5545 §3.3.4), so [ICalDateTime] stores it as UTC midnight and
+ * reads it in UTC: "20260123" is always Jan 23, 2026, never a moment shifted by a zone. The
+ * tests pass zones explicitly to the factories; none changes the system default.
  */
 @DisplayName("ICalDateTime VALUE=DATE Timezone Tests")
 class ICalDateTimeTimezoneTest {
 
-    // Jan 23, 2026 00:00:00 UTC in milliseconds
-    // Calculated: LocalDate.of(2026, 1, 23).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+    // Jan 23, 2026 00:00:00 UTC in milliseconds.
     private val jan23_2026_utc_midnight = LocalDate.of(2026, 1, 23)
         .atStartOfDay(ZoneOffset.UTC)
         .toInstant()
@@ -35,7 +31,7 @@ class ICalDateTimeTimezoneTest {
     fun `parse DATE produces UTC midnight timestamp`() {
         val dt = ICalDateTime.parse("20260123")
 
-        // The timestamp should be UTC midnight for Jan 23
+        // UTC midnight for Jan 23.
         val expectedUtcMidnight = jan23_2026_utc_midnight
         assertEquals(expectedUtcMidnight, dt.timestamp,
             "DATE value should be stored as UTC midnight. " +
@@ -101,7 +97,7 @@ class ICalDateTimeTimezoneTest {
     @Test
     @DisplayName("Multi-day all-day event: DTEND exclusive should work correctly")
     fun `multi-day all-day event DTEND is exclusive`() {
-        // 2-day event: Jan 23-24 (DTEND=25 is exclusive per RFC 5545)
+        // A 2-day event, Jan 23 and 24: DTEND is exclusive (RFC 5545 §3.6.1).
         val dtStart = ICalDateTime.parse("20260123")
         val dtEnd = ICalDateTime.parse("20260125")
 
@@ -111,14 +107,13 @@ class ICalDateTimeTimezoneTest {
         assertEquals(LocalDate.of(2026, 1, 23), startDate)
         assertEquals(LocalDate.of(2026, 1, 25), endDate)  // Exclusive end
 
-        // Duration calculation: Jan 23, 24 = 2 days
-        // (Application code subtracts 1 day from exclusive end)
+        // The app stores an inclusive end, the exclusive DTEND minus 1 ms, which falls on Jan 24.
     }
 
     @Test
     @DisplayName("EXDATE with VALUE=DATE should use UTC")
     fun `EXDATE DATE produces UTC timestamp`() {
-        // EXDATE with VALUE=DATE should produce same UTC-based timestamp
+        // An EXDATE DATE parses to the same UTC midnight.
         val exdate = ICalDateTime.parse("20260123")
         assertEquals(jan23_2026_utc_midnight, exdate.timestamp,
             "EXDATE DATE should be UTC midnight")
@@ -169,8 +164,7 @@ class ICalDateTimeTimezoneTest {
     @DisplayName("fromLocalDate should produce UTC midnight for all-day events")
     fun `fromLocalDate produces UTC for date operations`() {
         val date = LocalDate.of(2026, 1, 23)
-        // Note: fromLocalDate currently takes timezone param, but for DATE values
-        // the result should be usable for UTC-based operations
+        // fromLocalDate ignores its zone argument and always stores UTC midnight.
         val dt = ICalDateTime.fromLocalDate(date, ZoneOffset.UTC)
 
         assertEquals(jan23_2026_utc_midnight, dt.timestamp,
@@ -212,8 +206,8 @@ class ICalDateTimeTimezoneTest {
     @Test
     @DisplayName("fromLocalDate with UTC+12 should preserve calendar date")
     fun `fromLocalDate UTC+12 preserves calendar date`() {
-        // Timezone ahead of UTC: Jan 23 00:00 UTC+12 = Jan 22 12:00 UTC
-        // toLocalDate() should still return Jan 23 (the intended date)
+        // A zone ahead of UTC. fromLocalDate ignores the zone, so toLocalDate() returns
+        // Jan 23, not the Jan 22 that Auckland midnight is in UTC.
         val date = LocalDate.of(2026, 1, 23)
         val utcPlus12 = ZoneId.of("Pacific/Auckland")  // UTC+12/+13
         val dt = ICalDateTime.fromLocalDate(date, utcPlus12)
@@ -232,8 +226,7 @@ class ICalDateTimeTimezoneTest {
     @Test
     @DisplayName("fromLocalDate with UTC-10 should preserve calendar date")
     fun `fromLocalDate UTC-10 preserves calendar date`() {
-        // Timezone behind UTC: Jan 23 00:00 UTC-10 = Jan 23 10:00 UTC
-        // toLocalDate() should still return Jan 23
+        // A zone behind UTC; fromLocalDate ignores it, so toLocalDate() returns Jan 23.
         val date = LocalDate.of(2026, 1, 23)
         val utcMinus10 = ZoneId.of("Pacific/Honolulu")  // UTC-10
         val dt = ICalDateTime.fromLocalDate(date, utcMinus10)
@@ -274,7 +267,7 @@ class ICalDateTimeTimezoneTest {
     @Test
     @DisplayName("fromTimestamp with UTC midnight should produce correct DATE")
     fun `fromTimestamp UTC midnight produces correct DATE`() {
-        // This is how KashCal creates all-day events
+        // The app's all-day form: a UTC midnight timestamp with isDate = true.
         val utcMidnight = LocalDate.of(2026, 1, 23)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant()
@@ -289,9 +282,8 @@ class ICalDateTimeTimezoneTest {
     @Test
     @DisplayName("fromTimestamp with non-UTC midnight should still work for DATE")
     fun `fromTimestamp non-UTC midnight works for DATE`() {
-        // If someone passes a local midnight timestamp, the result depends
-        // on how toLocalDate() interprets it. For DATE values, we use UTC.
-        // So passing local Jan 23 00:00 EST (Jan 23 05:00 UTC) should give Jan 23.
+        // A local midnight timestamp: toLocalDate() reads a DATE in UTC, so Jan 23 00:00 EST
+        // (Jan 23 05:00 UTC) gives Jan 23. A zone ahead of UTC would give the day before.
         val estMidnight = LocalDate.of(2026, 1, 23)
             .atStartOfDay(ZoneId.of("America/New_York"))
             .toInstant()
@@ -311,7 +303,7 @@ class ICalDateTimeTimezoneTest {
     @Test
     @DisplayName("fromZonedDateTime preserves date for all-day events")
     fun `fromZonedDateTime preserves date for DATE`() {
-        // Create a ZonedDateTime in UTC+12
+        // Midnight in Auckland (UTC+13 in January), the previous day in UTC.
         val zdt = LocalDate.of(2026, 1, 23)
             .atStartOfDay(ZoneId.of("Pacific/Auckland"))
 

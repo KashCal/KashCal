@@ -8,8 +8,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import java.util.concurrent.TimeUnit
 
 /**
- * Simple CalDAV client for integration testing.
- * Not for production use - just for testing the parser with real iCloud data.
+ * Fetches real iCloud CalDAV data for parser tests. Test-only: regex XML parsing, no retries,
+ * responses printed to stdout.
  */
 class TestCalDavClient(
     private val username: String,
@@ -36,9 +36,7 @@ class TestCalDavClient(
             .build()
     }
 
-    /**
-     * Discover the user's principal URL.
-     */
+    /** Returns the current-user-principal URL from a Depth 0 PROPFIND on the iCloud root. */
     fun discoverPrincipal(): Result<String> {
         val propfindBody = """
             <?xml version="1.0" encoding="utf-8"?>
@@ -66,7 +64,7 @@ class TestCalDavClient(
                 return Result.failure(Exception("PROPFIND failed: ${response.code} - $body"))
             }
 
-            // Extract principal URL from XML response - try various namespace formats
+            // Try each namespace form in turn; the first match wins.
             val patterns = listOf(
                 """<d:current-user-principal>\s*<d:href>([^<]+)</d:href>""",
                 """<D:current-user-principal>\s*<D:href>([^<]+)</D:href>""",
@@ -103,10 +101,7 @@ class TestCalDavClient(
         }
     }
 
-    /**
-     * Discover calendar home URLs from principal.
-     * Returns all hrefs in calendar-home-set (RFC 4791 allows multiple).
-     */
+    /** Returns every calendar-home-set href; RFC 4791 §6.2.1 allows more than one. */
     fun discoverCalendarHome(principalUrl: String): Result<List<String>> {
         val propfindBody = """
             <?xml version="1.0" encoding="utf-8"?>
@@ -134,7 +129,7 @@ class TestCalDavClient(
                 return Result.failure(Exception("PROPFIND failed: ${response.code}"))
             }
 
-            // Extract all calendar-home-set URLs
+            // Hrefs inside the first calendar-home-set element.
             val homeSetRegex = Regex(
                 """calendar-home-set.*?</[^>]*calendar-home-set>""",
                 setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL)
@@ -172,7 +167,8 @@ class TestCalDavClient(
     }
 
     /**
-     * Get list of calendars from calendar home.
+     * Lists the calendar collections one level below [calendarHomeUrl], skipping any response that
+     * mentions tasks or reminders.
      */
     fun getCalendars(calendarHomeUrl: String): Result<List<CalendarInfo>> {
         val propfindBody = """
@@ -204,7 +200,7 @@ class TestCalDavClient(
                 return Result.failure(Exception("PROPFIND failed: ${response.code}"))
             }
 
-            // Parse response elements - iCloud uses non-prefixed namespaces
+            // iCloud uses non-prefixed namespaces.
             val calendars = mutableListOf<CalendarInfo>()
             // Match both <d:response> and <response xmlns="...">
             val responseRegex = Regex("""<(?:d:)?response[^>]*>(.*?)</(?:d:)?response>""", setOf(RegexOption.DOT_MATCHES_ALL, RegexOption.IGNORE_CASE))
@@ -218,7 +214,7 @@ class TestCalDavClient(
                     responseXml.contains("caldav", ignoreCase = true)
 
                 if (isCalendar) {
-                    // Skip if it's tasks/reminders
+                    // Skip task and reminder collections.
                     if (responseXml.contains("tasks", ignoreCase = true) ||
                         responseXml.contains("reminder", ignoreCase = true)) {
                         continue
@@ -253,7 +249,8 @@ class TestCalDavClient(
     }
 
     /**
-     * Fetch events from a calendar using REPORT.
+     * Returns the iCalendar bodies of VEVENTs from [daysBack] days ago to [daysForward] days
+     * ahead, each bound cut to UTC midnight, via a calendar-query REPORT.
      */
     fun fetchEvents(calendarUrl: String, daysBack: Int = 30, daysForward: Int = 90): Result<List<String>> {
         val now = System.currentTimeMillis()
@@ -294,11 +291,11 @@ class TestCalDavClient(
                 return Result.failure(Exception("REPORT failed: ${response.code} - ${body.take(500)}"))
             }
 
-            // Extract calendar-data (iCal) from each response
-            // iCloud uses: <calendar-data xmlns="..."><![CDATA[BEGIN:VCALENDAR...]]></calendar-data>
+            // Extract calendar-data from each response. iCloud uses: <calendar-data
+            // xmlns="..."><![CDATA[BEGIN:VCALENDAR...]]></calendar-data>
             val icalDataList = mutableListOf<String>()
 
-            // Try multiple patterns for calendar-data extraction
+            // Patterns are tried in order; the first that yields any VCALENDAR wins.
             val calDataPatterns = listOf(
                 // iCloud format with CDATA
                 """<(?:c:|cal:)?calendar-data[^>]*><!\[CDATA\[(.*?)\]\]></(?:c:|cal:)?calendar-data>""",
@@ -321,7 +318,6 @@ class TestCalDavClient(
                         icalDataList.add(icalData)
                     }
                 }
-                // If we found data with this pattern, don't try others
                 if (icalDataList.isNotEmpty()) break
             }
 

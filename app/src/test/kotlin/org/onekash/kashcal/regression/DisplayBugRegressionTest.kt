@@ -26,17 +26,12 @@ import java.time.ZoneOffset
 import java.util.TimeZone
 
 /**
- * Regression tests for display-related bugs.
+ * Regression tests for which days an occurrence is shown on.
  *
- * These tests ensure bugs that were fixed stay fixed.
- * Each test documents:
- * - The bug description
- * - Version where it was fixed
- * - The root cause
- * - The fix applied
- *
- * CRITICAL: Do not modify or remove these tests without understanding
- * the original bug they are protecting against.
+ * Each test parses or builds an event, generates its occurrences with [OccurrenceGenerator] and
+ * queries the occurrences DAO by day code (`getForDayOnce`): a one-day all-day event, an all-day
+ * series, exclusive DTEND on multi-day all-day events, a cancelled occurrence, and per-day queries
+ * across a month. Don't remove one without knowing the display bug it guards.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -73,40 +68,20 @@ class DisplayBugRegressionTest {
         database.close()
     }
 
-    // ==================== BUG: All-Day Event Shows on Wrong Day (v3.6.13 Fix) ====================
+    // ==================== All-Day Event on One Day (v3.6.13) ====================
 
     /**
-     * BUG: All-day events displayed on both the correct day AND the previous day
-     *      in negative UTC offset timezones (US timezones like CST, PST).
+     * Checks that an all-day event is found only on its own day when queried by day code.
      *
-     * VERSIONS AFFECTED: v3.6.11, v3.6.12
-     * FIXED IN: v3.6.13
-     *
-     * ROOT CAUSE:
-     * The HomeViewModel used timestamp-based queries with LOCAL timezone boundaries:
-     * ```kotlin
-     * val dayStart = calendar.apply { set(Calendar.HOUR_OF_DAY, 0) }.timeInMillis
-     * val dayEnd = calendar.apply { add(Calendar.DAY_OF_MONTH, 1) }.timeInMillis
-     * eventReader.getVisibleOccurrencesInRange(dayStart, dayEnd)
-     * ```
-     *
-     * For CST (UTC-6), querying Jan 14 local time:
-     * - dayEnd = Jan 15 00:00:00 CST = Jan 15 06:00:00 UTC
-     * - Event Jan 15 all-day has startTs = Jan 15 00:00:00 UTC
-     * - SQL: `WHERE start_ts <= :dayEnd` matched because 00:00 UTC <= 06:00 UTC
-     *
-     * THE FIX:
-     * Use dayCode-based queries instead of timestamp-based queries:
-     * ```kotlin
-     * val dayCode = localDate.year * 10000 + localDate.monthValue * 100 + localDate.dayOfMonth
-     * eventReader.getVisibleOccurrencesForDay(dayCode)
-     * ```
-     *
-     * This test ensures the bug stays fixed.
+     * An all-day event starts at UTC midnight, so a timestamp window with local-midnight bounds
+     * shows it on the previous day too in a negative-offset zone. For CST (UTC-6), the Jan 14
+     * window ends at Jan 15 06:00 UTC, and `start_ts <= :dayEnd` matches a Jan 15 all-day event
+     * starting at Jan 15 00:00 UTC. Day-code queries don't depend on the zone, so the test
+     * sets no zone.
      */
     @Test
     fun `REGRESSION v3_6_13 - all-day event does not show on previous day in negative UTC offset`() = runTest {
-        // Setup: All-day event on Jan 15
+        // All-day event on Jan 15.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -123,7 +98,6 @@ class DisplayBugRegressionTest {
         val event = events[0]
         assertTrue("Event should be all-day", event.isAllDay)
 
-        // Save and generate occurrences
         val eventId = database.eventsDao().insert(event)
         val savedEvent = event.copy(id = eventId)
 
@@ -135,9 +109,6 @@ class DisplayBugRegressionTest {
 
         val occurrences = database.occurrencesDao().getForEvent(savedEvent.id)
         assertEquals(1, occurrences.size)
-
-        // THE TEST: Query using dayCode (the fix) should return correct results
-        // This simulates what HomeViewModel does in v3.6.13+
 
         val jan14Results = database.occurrencesDao().getForDayOnce(20260114)
         val jan15Results = database.occurrencesDao().getForDayOnce(20260115)
@@ -158,8 +129,8 @@ class DisplayBugRegressionTest {
     }
 
     /**
-     * Same bug as above but specifically for iCloud birthday events.
-     * These are yearly recurring all-day events that were showing on 2 days.
+     * Checks the same one-day rule for an iCloud-style birthday: a yearly all-day series,
+     * which must show on its day only and have startDay equal to endDay.
      */
     @Test
     fun `REGRESSION v3_6_13 - iCloud birthday shows on single day only`() = runTest {
@@ -194,14 +165,13 @@ class DisplayBugRegressionTest {
 
         val occ = occurrences[0]
 
-        // CRITICAL: For single-day all-day events, startDay must equal endDay
+        // A single-day all-day occurrence has startDay equal to endDay.
         assertEquals(
             "REGRESSION CHECK: Birthday should be single day (startDay == endDay)",
             occ.startDay, occ.endDay
         )
         assertEquals(20260106, occ.startDay)
 
-        // Query check
         val jan5Results = database.occurrencesDao().getForDayOnce(20260105)
         val jan6Results = database.occurrencesDao().getForDayOnce(20260106)
         val jan7Results = database.occurrencesDao().getForDayOnce(20260107)
@@ -211,14 +181,13 @@ class DisplayBugRegressionTest {
         assertEquals("Should NOT appear on Jan 7", 0, jan7Results.size)
     }
 
-    // ==================== BUG: Multi-Day Event Wrong End Day ====================
+    // ==================== Multi-Day All-Day End Day ====================
 
     /**
-     * BUG: Multi-day all-day events showed on an extra day because
-     *      DTEND was not properly adjusted for RFC 5545 exclusive semantics.
+     * Checks that a multi-day all-day event ends the day before its DTEND.
      *
-     * RFC 5545 says DTEND for VALUE=DATE is exclusive (the day after the last day).
-     * So DTSTART=20260115, DTEND=20260118 means Jan 15-17 (3 days), NOT Jan 15-18.
+     * RFC 5545 §3.6.1 makes DTEND the non-inclusive end, so DTSTART=20260115 with
+     * DTEND=20260118 is Jan 15-17 (3 days), not Jan 15-18.
      */
     @Test
     fun `REGRESSION - multi-day all-day event does not show on exclusive end day`() = runTest {
@@ -257,7 +226,6 @@ class DisplayBugRegressionTest {
             20260117, occ.endDay
         )
 
-        // Should NOT show on Jan 18
         val jan18Results = database.occurrencesDao().getForDayOnce(20260118)
         assertEquals(
             "REGRESSION CHECK: Should NOT appear on Jan 18 (exclusive end)",
@@ -265,16 +233,15 @@ class DisplayBugRegressionTest {
         )
     }
 
-    // ==================== BUG: Recurring Event Exception Not Hidden ====================
+    // ==================== Cancelled Occurrence Hidden ====================
 
     /**
-     * BUG: When an exception event exists for a recurring occurrence,
-     *      the original occurrence should be "cancelled" (hidden) and only
-     *      the exception should show.
+     * Checks that an occurrence marked cancelled is left out of the day query while the
+     * series' other occurrences still show. The test marks it with `markCancelled` directly;
+     * it creates no exception event.
      */
     @Test
     fun `REGRESSION - cancelled occurrence does not appear in day query`() = runTest {
-        // Create master event
         val masterEvent = Event(
             uid = "master@test.com",
             calendarId = testCalendarId,
@@ -295,18 +262,17 @@ class DisplayBugRegressionTest {
             parseUtcDate("2026-02-28")
         )
 
-        // Cancel the Jan 19 occurrence (simulates EXDATE or exception)
+        // Cancel the Jan 19 occurrence, as deleting that one occurrence (EXDATE) does.
         val jan19Ts = parseUtcDateTime("2026-01-19 10:00")
         database.occurrencesDao().markCancelled(masterId, jan19Ts)
 
-        // Verify Jan 19 does not appear in day query
         val jan19Results = database.occurrencesDao().getForDayOnce(20260119)
         assertEquals(
             "REGRESSION CHECK: Cancelled occurrence should NOT appear in day query",
             0, jan19Results.size
         )
 
-        // But Jan 12 and Jan 26 should still appear
+        // Jan 12 and Jan 26 still appear.
         val jan12Results = database.occurrencesDao().getForDayOnce(20260112)
         val jan26Results = database.occurrencesDao().getForDayOnce(20260126)
 
@@ -314,17 +280,15 @@ class DisplayBugRegressionTest {
         assertEquals("Jan 26 should still appear", 1, jan26Results.size)
     }
 
-    // ==================== BUG: Event Dots Wrong Days in Month View ====================
+    // ==================== Month-View Dots by Day Code ====================
 
     /**
-     * BUG: Event dots in month view showed on wrong days when
-     *      getDaysWithEventsInMonth used timestamp ranges instead of day codes.
-     *
-     * The fix ensures we query by day code, not timestamp ranges.
+     * Checks that per-day day-code queries across January find exactly the four days with
+     * events. The month view's dots come from events grouped by day code; this test runs
+     * `getForDayOnce` for each day in place of that path.
      */
     @Test
     fun `REGRESSION - event dots use day codes not timestamp ranges`() = runTest {
-        // Create events on specific days
         val events = listOf(
             createEvent("Event 1", 20260110),
             createEvent("Event 2", 20260115),
@@ -341,7 +305,6 @@ class DisplayBugRegressionTest {
             )
         }
 
-        // Query for days with events (simulates month view dot calculation)
         val daysWithEvents = mutableSetOf<Int>()
         for (day in 1..31) {
             val dayCode = 20260100 + day
@@ -358,15 +321,15 @@ class DisplayBugRegressionTest {
         )
     }
 
-    // ==================== BUG: TripIt Multi-Day Event Wrong Days ====================
+    // ==================== Travel-Feed Multi-Day Event ====================
 
     /**
-     * BUG: TripIt-style multi-day events (hotel stays) showed incorrect day range.
-     * TripIt uses standard RFC 5545 with exclusive DTEND.
+     * Checks the day range of a travel-itinerary feed's multi-day all-day event (a hotel
+     * stay), which uses the RFC 5545 non-inclusive DTEND.
      */
     @Test
     fun `REGRESSION - TripIt multi-day event shows correct days`() = runTest {
-        // TripIt: Oct 11-12 hotel stay (DTEND=Oct 13 is exclusive)
+        // Oct 11-12 hotel stay (DTEND=Oct 13 is exclusive).
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -401,7 +364,6 @@ class DisplayBugRegressionTest {
         assertEquals(20251011, occ.startDay)
         assertEquals(20251012, occ.endDay) // NOT Oct 13
 
-        // Verify day queries
         val oct10 = database.occurrencesDao().getForDayOnce(20251010)
         val oct11 = database.occurrencesDao().getForDayOnce(20251011)
         val oct12 = database.occurrencesDao().getForDayOnce(20251012)

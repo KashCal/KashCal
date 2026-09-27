@@ -25,16 +25,13 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Unit tests for KashCalDataStore.
+ * Tests [KashCalDataStore]: defaults and updates through [KashCalDataStore.getPreference] and
+ * [KashCalDataStore.getOptionalPreference] (null when unset), no duplicate or cross-preference
+ * emissions, and the defaults, clamps and validation of individual preferences (theme, accent,
+ * reminders, auto sync, tags above notes, app lock, sync interval, week view scroll and zoom,
+ * first day of week, default view).
  *
- * Tests cover:
- * - Default value emission for getPreference
- * - Value updates and emissions
- * - Optional preference handling (null values)
- * - Complex preference parsing (visibleCalendarIds)
- * - distinctUntilChanged behavior (no duplicate emissions)
- *
- * Uses Robolectric for Android Context and Turbine for Flow assertions.
+ * Uses Robolectric for the Context and Turbine for Flow assertions.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -79,10 +76,8 @@ class KashCalDataStoreTest {
     @Test
     fun `getPreference emits updated value after set`() = runTest {
         dataStore.theme.test {
-            // Initial default value
             assertEquals(KashCalDataStore.THEME_SYSTEM, awaitItem())
 
-            // Set new value
             dataStore.setTheme(KashCalDataStore.THEME_DARK)
             assertEquals(KashCalDataStore.THEME_DARK, awaitItem())
 
@@ -93,17 +88,14 @@ class KashCalDataStoreTest {
     @Test
     fun `getPreference does NOT emit duplicate values`() = runTest {
         dataStore.theme.test {
-            // Initial default value
             assertEquals(KashCalDataStore.THEME_SYSTEM, awaitItem())
 
-            // Set to same value - should NOT emit after distinctUntilChanged is added
+            // Writing the current value emits nothing; only the change to dark emits.
             dataStore.setTheme(KashCalDataStore.THEME_SYSTEM)
 
-            // Set to different value - SHOULD emit
             dataStore.setTheme(KashCalDataStore.THEME_DARK)
             assertEquals(KashCalDataStore.THEME_DARK, awaitItem())
 
-            // Verify no intermediate emission occurred
             expectNoEvents()
 
             cancelAndIgnoreRemainingEvents()
@@ -133,18 +125,14 @@ class KashCalDataStoreTest {
     @Test
     fun `getPreference emits multiple distinct changes`() = runTest {
         dataStore.defaultReminderMinutes.test {
-            // Default value
             assertEquals(KashCalDataStore.DEFAULT_REMINDER_MINUTES, awaitItem())
 
-            // Change to 30
             dataStore.setDefaultReminderMinutes(30)
             assertEquals(30, awaitItem())
 
-            // Change to 60
             dataStore.setDefaultReminderMinutes(60)
             assertEquals(60, awaitItem())
 
-            // Change back to 30
             dataStore.setDefaultReminderMinutes(30)
             assertEquals(30, awaitItem())
 
@@ -165,10 +153,8 @@ class KashCalDataStoreTest {
     @Test
     fun `getOptionalPreference emits value when set`() = runTest {
         dataStore.defaultCalendarId.test {
-            // Initially null
             assertNull(awaitItem())
 
-            // Set value
             dataStore.setDefaultCalendarId(42L)
             assertEquals(42L, awaitItem())
 
@@ -178,16 +164,14 @@ class KashCalDataStoreTest {
 
     @Test
     fun `getOptionalPreference does NOT emit duplicate values`() = runTest {
-        // First set a value
         dataStore.setDefaultCalendarId(42L)
 
         dataStore.defaultCalendarId.test {
             assertEquals(42L, awaitItem())
 
-            // Set same value - should NOT emit after distinctUntilChanged is added
+            // Writing the current value emits nothing; only the change to 99 emits.
             dataStore.setDefaultCalendarId(42L)
 
-            // Set different value - SHOULD emit
             dataStore.setDefaultCalendarId(99L)
             assertEquals(99L, awaitItem())
 
@@ -200,17 +184,12 @@ class KashCalDataStoreTest {
 
     @Test
     fun `changing one preference does NOT trigger emission in another`() = runTest {
-        // Start observing theme
         dataStore.theme.test {
             assertEquals(KashCalDataStore.THEME_SYSTEM, awaitItem())
 
-            // Change a DIFFERENT preference (defaultReminderMinutes)
+            // Another preference's write leaves theme's value unchanged, so theme doesn't emit.
             dataStore.setDefaultReminderMinutes(45)
 
-            // After distinctUntilChanged, theme should NOT emit again
-            // (because its value didn't change, only another preference did)
-
-            // Change theme - this SHOULD emit
             dataStore.setTheme(KashCalDataStore.THEME_DARK)
             assertEquals(KashCalDataStore.THEME_DARK, awaitItem())
 
@@ -224,10 +203,8 @@ class KashCalDataStoreTest {
     @Test
     fun `boolean preference returns default and updates`() = runTest {
         dataStore.autoSyncEnabled.test {
-            // Default is true
             assertEquals(true, awaitItem())
 
-            // Set to false
             dataStore.setAutoSyncEnabled(false)
             assertEquals(false, awaitItem())
 
@@ -240,10 +217,9 @@ class KashCalDataStoreTest {
         dataStore.autoSyncEnabled.test {
             assertEquals(true, awaitItem())
 
-            // Set to same value - should NOT emit
+            // Writing the current value emits nothing; only the change to false emits.
             dataStore.setAutoSyncEnabled(true)
 
-            // Set to different value - SHOULD emit
             dataStore.setAutoSyncEnabled(false)
             assertEquals(false, awaitItem())
 
@@ -271,7 +247,6 @@ class KashCalDataStoreTest {
     @Test
     fun `appLockEnabled defaults to false and round-trips`() = runTest {
         dataStore.appLockEnabled.test {
-            // Off by default
             assertEquals(false, awaitItem())
 
             dataStore.setAppLockEnabled(true)
@@ -289,10 +264,9 @@ class KashCalDataStoreTest {
         dataStore.appLockEnabled.test {
             assertEquals(false, awaitItem())
 
-            // Same value - should NOT emit
+            // Writing the current value emits nothing; only the change to true emits.
             dataStore.setAppLockEnabled(false)
 
-            // Different value - SHOULD emit
             dataStore.setAppLockEnabled(true)
             assertEquals(true, awaitItem())
 
@@ -317,8 +291,7 @@ class KashCalDataStoreTest {
 
     @Test
     fun `default sync interval is 1 hour`() {
-        // Verify default sync interval is 1 hour (60 minutes) for efficient battery usage
-        // with lightweight ctag-based incremental sync
+        // Hourly, for battery life with lightweight ctag-based sync.
         assertEquals(60, KashCalDataStore.DEFAULT_SYNC_INTERVAL_MINUTES)
         assertEquals(1L * 60 * 60 * 1000, KashCalDataStore.DEFAULT_SYNC_INTERVAL_MS)
     }
@@ -354,8 +327,8 @@ class KashCalDataStoreTest {
 
     @Test
     fun `setWeekViewScrollMinutes clamps negative input to 0`() = runTest {
-        // Only real positions are written; a negative reaching the setter clamps to
-        // the start of day rather than persisting the never-saved sentinel.
+        // A negative input clamps to the start of the day, so the never-saved sentinel (-1) is
+        // never persisted.
         dataStore.setWeekViewScrollMinutes(-99)
         assertEquals(0, dataStore.getWeekViewScrollMinutes())
     }
@@ -397,7 +370,7 @@ class KashCalDataStoreTest {
     @Test
     fun `firstDayOfWeek defaults to FIRST_DAY_SYSTEM (0) not Sunday`() = runTest {
         dataStore.firstDayOfWeek.test {
-            // Must be 0 (system locale), not 1 (Calendar.SUNDAY)
+            // 0 means follow the system locale; 1 would be Calendar.SUNDAY.
             assertEquals(KashCalDataStore.FIRST_DAY_SYSTEM, awaitItem())
             cancelAndIgnoreRemainingEvents()
         }
@@ -420,7 +393,6 @@ class KashCalDataStoreTest {
 
     @Test
     fun `FIRST_DAY_SYSTEM constant is 0`() {
-        // Guard against accidental constant change
         assertEquals(0, KashCalDataStore.FIRST_DAY_SYSTEM)
     }
 
@@ -475,11 +447,11 @@ class KashCalDataStoreTest {
     }
 
     /**
-     * Locks the VALID_VIEWS allowlist to the ViewMode enum: every persistable
-     * ViewMode key must round-trip through setDefaultCalendarView. Adding a new
-     * ViewMode without updating VALID_VIEWS will fail this test.
+     * Locks the `VALID_VIEWS` allowlist to [ViewMode]: every persistable key must round-trip
+     * through setDefaultCalendarView, so adding a ViewMode without updating `VALID_VIEWS` fails
+     * here.
      *
-     * INSIGHTS is excluded — HomeViewModel.setViewMode() never persists it.
+     * INSIGHTS is excluded: HomeViewModel.setViewMode() never persists it.
      */
     @Test
     fun `every persistable ViewMode key round-trips through setDefaultCalendarView`() = runTest {

@@ -7,9 +7,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for ICloudUrlNormalizer.
- *
- * Tests URL normalization from regional iCloud servers to canonical form.
+ * Tests [ICloudUrlNormalizer]: rewriting regional iCloud hosts to the canonical host, and the
+ * regional and iCloud URL checks.
  */
 class ICloudUrlNormalizerTest {
 
@@ -96,7 +95,7 @@ class ICloudUrlNormalizerTest {
 
     @Test
     fun `isRegionalUrl returns false for similar non-icloud patterns`() {
-        // Should not match p180-caldav on other domains
+        // p180-caldav on another domain doesn't match.
         assertFalse(ICloudUrlNormalizer.isRegionalUrl("https://p180-caldav.notcloud.com/path"))
         assertFalse(ICloudUrlNormalizer.isRegionalUrl("https://p180-caldav.icloud.net/path"))
     }
@@ -122,13 +121,10 @@ class ICloudUrlNormalizerTest {
         val regional = "https://p180-caldav.icloud.com/path"
         val canonical = "https://caldav.icloud.com/path"
 
-        // Normalizing regional gives canonical
         assertEquals(canonical, ICloudUrlNormalizer.normalize(regional))
 
-        // Normalizing canonical again gives same result (idempotent)
         assertEquals(canonical, ICloudUrlNormalizer.normalize(canonical))
 
-        // Normalizing twice gives same result
         assertEquals(canonical, ICloudUrlNormalizer.normalize(ICloudUrlNormalizer.normalize(regional)))
     }
 
@@ -171,7 +167,7 @@ class ICloudUrlNormalizerTest {
 
     @Test
     fun `normalize handles non-443 port`() {
-        // Edge case: non-standard port should be preserved
+        // Any explicit port on a regional host is dropped with the host, 8443 included.
         val input = "https://p180-caldav.icloud.com:8443/path"
         val expected = "https://caldav.icloud.com/path"
         assertEquals(expected, ICloudUrlNormalizer.normalize(input))

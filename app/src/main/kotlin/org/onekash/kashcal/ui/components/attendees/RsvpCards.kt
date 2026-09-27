@@ -21,29 +21,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
-// Material 3's default button contentPadding (24.dp horizontal) is sized
-// for full-width CTA buttons. In a 3-up weighted row at narrow phone
-// widths, the per-card text budget shrinks to ~57dp — long labels at
-// SemiBold weight clip. Use compact padding so each card has ~80dp+
-// for the label, plus a minimum touch height that respects M3's 48dp
-// accessibility floor.
+// M3's default button padding (24.dp horizontal) leaves each card of a 3-up row about 57dp
+// for text on a narrow phone, and long SemiBold labels clip. Compact padding gives the label
+// about 80dp+, with a touch height that respects M3's 48dp accessibility floor.
 private val RSVP_CARD_CONTENT_PADDING = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
 private val RSVP_CARD_HEIGHT = 44.dp
 
 /**
- * RSVP three-card row used by [InviteesBlock] (QuickView + form
- * read-only banner) and [InvitationCard] (inbox).
+ * Shows the Yes / Maybe / No RSVP row for [InviteesBlock] and [InvitationCard].
  *
- * Word labels (Yes / Maybe / No), with the chosen status filled in
- * primary blue. When no status is chosen yet (NeedsAction or null),
- * "Yes" gets the weighted primary fill as the hopeful default.
+ * The chosen status is filled in primary. With no response yet (NeedsAction or null), "Yes"
+ * is filled with a SemiBold label as the hopeful default.
  *
- * Behavior:
- * - Tap any card → [onRsvp] fires with the corresponding status.
- *   Light haptic on commit, matching the form's save haptic.
- * - Disabled cards stay visible at reduced opacity; today's path
- *   doesn't actually disable any card, but [enabled] supports
- *   future use cases (e.g., past-event RSVP suppression).
+ * A tap calls [onRsvp] with the card's status after the same LongPress haptic as the form's
+ * save. Disabled cards stay visible at reduced opacity; no caller passes [enabled] today.
  */
 @Composable
 fun RsvpCards(
@@ -56,10 +47,8 @@ fun RsvpCards(
     val hasResponded = currentUserPartstat != null &&
         currentUserPartstat != AttendeeStatus.NeedsAction
 
-    // Pre-response: "Yes" is weighted-primary, others are outlined
-    // alternatives. Post-response: only the chosen one is filled;
-    // the others fall back to outlined so the user sees what they
-    // can switch to.
+    // Pre-response only "Yes" is filled; post-response only the chosen card is, and the
+    // outlined others show what the user can switch to.
     val yesIsFilled = currentUserPartstat == AttendeeStatus.Accepted ||
         (!hasResponded && currentUserPartstat == AttendeeStatus.NeedsAction) ||
         (!hasResponded && currentUserPartstat == null)
@@ -73,7 +62,7 @@ fun RsvpCards(
         RsvpCard(
             label = stringResource(R.string.rsvp_action_yes),
             isFilled = yesIsFilled,
-            isPrimaryDefault = !hasResponded, // wider weight pre-response
+            isPrimaryDefault = !hasResponded, // SemiBold label pre-response
             enabled = enabled,
             onClick = {
                 haptic.performHapticFeedback(HapticFeedbackType.LongPress)

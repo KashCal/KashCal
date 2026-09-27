@@ -16,10 +16,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Which calendar(s) a batch of expired sync operations belongs to, used to pick
- * the wording of the "sync expired" notification. Modeling the three cases as a
- * closed set (rather than a nullable name) keeps them mutually exclusive: a
- * single named calendar, several calendars, or no resolvable calendar at all.
+ * Which calendars a batch of expired sync operations belongs to; picks the wording of the
+ * "sync expired" notification. The three cases are mutually exclusive: one named calendar,
+ * several calendars, or none that could be resolved.
  */
 sealed interface ExpiredCalendarScope {
     /** All expired ops share one calendar with this display name. */
@@ -28,23 +27,17 @@ sealed interface ExpiredCalendarScope {
     /** Expired ops span [count] distinct calendars. */
     data class Multiple(val count: Int) : ExpiredCalendarScope
 
-    /** No calendar could be resolved (event/calendar rows gone). */
+    /** No calendar could be resolved: the event or calendar rows are gone. */
     data object Unknown : ExpiredCalendarScope
 }
 
 /**
- * Manages sync-related notifications.
+ * Builds and posts the sync notifications: the foreground progress notification, and the
+ * completion, error, parse-failure, conflict-abandoned and expired-operation notifications.
+ * Channels and IDs are in [SyncNotificationChannels].
  *
- * Provides:
- * - Progress notifications for foreground service
- * - Completion notifications
- * - Error notifications
- * - ForegroundInfo for WorkManager expedited work
- *
- * Per Android WorkManager best practices:
- * - Uses ForegroundInfo for long-running/expedited work
- * - Specifies foreground service type for Android 14+
- * - Provides cancel action for user control
+ * The progress notification goes out as WorkManager ForegroundInfo with the dataSync service
+ * type, which Android 14 requires, and an optional cancel action.
  */
 @Singleton
 class SyncNotificationManager @Inject constructor(
@@ -52,16 +45,12 @@ class SyncNotificationManager @Inject constructor(
     private val channels: SyncNotificationChannels
 ) {
     companion object {
-        // Request codes for pending intents
         private const val REQUEST_CODE_OPEN_APP = 100
     }
 
     /**
-     * Create ForegroundInfo for expedited/long-running work.
-     *
-     * @param progress Current progress message
-     * @param cancelIntent Optional intent to cancel the work
-     * @return ForegroundInfo for setForeground()
+     * Returns the ForegroundInfo for `setForeground()` and `getForegroundInfo()`, showing
+     * [progress] and a cancel action when [cancelIntent] is given.
      */
     fun createForegroundInfo(
         progress: String,
@@ -83,13 +72,7 @@ class SyncNotificationManager @Inject constructor(
         }
     }
 
-    /**
-     * Create a progress notification for ongoing sync.
-     *
-     * @param progress Progress message
-     * @param cancelIntent Optional cancel action
-     * @return Notification for foreground service
-     */
+    /** Builds the ongoing, low-priority sync notification with [progress] as its text. */
     fun createProgressNotification(
         progress: String,
         cancelIntent: PendingIntent? = null
@@ -104,7 +87,6 @@ class SyncNotificationManager @Inject constructor(
             .setCategory(NotificationCompat.CATEGORY_PROGRESS)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
 
-        // Add cancel action if provided
         cancelIntent?.let {
             builder.addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
@@ -116,14 +98,7 @@ class SyncNotificationManager @Inject constructor(
         return builder.build()
     }
 
-    /**
-     * Create a progress notification with indeterminate progress.
-     *
-     * @param title Notification title
-     * @param content Content text
-     * @param cancelIntent Optional cancel action
-     * @return Notification with indeterminate progress bar
-     */
+    /** Builds a sync notification with an indeterminate progress bar. Nothing calls it today. */
     fun createIndeterminateProgressNotification(
         title: String,
         content: String,
@@ -152,13 +127,8 @@ class SyncNotificationManager @Inject constructor(
     }
 
     /**
-     * Create a progress notification with determinate progress.
-     *
-     * @param title Notification title
-     * @param content Content text
-     * @param progress Current progress (0-100)
-     * @param cancelIntent Optional cancel action
-     * @return Notification with progress bar
+     * Builds a sync notification with a progress bar at [progress], clamped to 0-100. Nothing
+     * calls it today.
      */
     fun createDeterminateProgressNotification(
         title: String,
@@ -189,16 +159,14 @@ class SyncNotificationManager @Inject constructor(
     }
 
     /**
-     * Show sync completion notification.
+     * Posts the notification for [result].
      *
-     * @param result The sync result
-     * @param showOnlyOnChanges If true, only show if there were changes
+     * @param showOnlyOnChanges skips a [SyncResult.Success] with no changes.
      */
     fun showCompletionNotification(result: SyncResult, showOnlyOnChanges: Boolean = true) {
         when (result) {
             is SyncResult.Success -> {
                 if (showOnlyOnChanges && result.totalChanges == 0) {
-                    // No changes, don't show notification
                     return
                 }
                 showSuccessNotification(result)
@@ -215,9 +183,6 @@ class SyncNotificationManager @Inject constructor(
         }
     }
 
-    /**
-     * Show success notification.
-     */
     private fun showSuccessNotification(result: SyncResult.Success) {
         val res = context.resources
         val content = buildString {
@@ -240,9 +205,7 @@ class SyncNotificationManager @Inject constructor(
         notify(SyncNotificationChannels.NOTIFICATION_ID_SYNC_COMPLETE, notification)
     }
 
-    /**
-     * Show partial success notification with error count.
-     */
+    /** Shows the calendar count and the error count. */
     private fun showPartialSuccessNotification(result: SyncResult.PartialSuccess) {
         val res = context.resources
         val content = buildString {
@@ -263,10 +226,7 @@ class SyncNotificationManager @Inject constructor(
         notify(SyncNotificationChannels.NOTIFICATION_ID_SYNC_COMPLETE, notification)
     }
 
-    /**
-     * Show authentication error notification.
-     * This is high priority as user action is required.
-     */
+    /** High priority: the user must sign in again. */
     private fun showAuthErrorNotification(result: SyncResult.AuthError) {
         val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
             .setSmallIcon(R.drawable.ic_notification)
@@ -281,9 +241,6 @@ class SyncNotificationManager @Inject constructor(
         notify(SyncNotificationChannels.NOTIFICATION_ID_SYNC_ERROR, notification)
     }
 
-    /**
-     * Show general error notification.
-     */
     private fun showErrorNotification(result: SyncResult.Error) {
         val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
             .setSmallIcon(R.drawable.ic_notification)
@@ -298,12 +255,7 @@ class SyncNotificationManager @Inject constructor(
         notify(SyncNotificationChannels.NOTIFICATION_ID_SYNC_ERROR, notification)
     }
 
-    /**
-     * Show a custom error notification.
-     *
-     * @param title Notification title
-     * @param message Error message
-     */
+    /** Posts an error notification with the caller's [title] and [message]. */
     fun showErrorNotification(title: String, message: String) {
         val notification = NotificationCompat.Builder(context, SyncNotificationChannels.CHANNEL_SYNC_STATUS)
             .setSmallIcon(R.drawable.ic_notification)
@@ -319,11 +271,8 @@ class SyncNotificationManager @Inject constructor(
     }
 
     /**
-     * Show notification when parse errors were abandoned after max retries.
-     * This alerts the user that some events couldn't be synced.
-     *
-     * @param calendarName Name of the calendar with abandoned events
-     * @param abandonedCount Number of events that couldn't be parsed
+     * Tells the user that [abandonedCount] events in [calendarName] stayed unparseable after the
+     * maximum retries and weren't synced. A no-op for a count of 0.
      */
     fun showParseFailureNotification(calendarName: String, abandonedCount: Int) {
         if (abandonedCount <= 0) return
@@ -346,11 +295,10 @@ class SyncNotificationManager @Inject constructor(
     }
 
     /**
-     * Show notification when sync conflicts were abandoned after max retries.
-     * Alerts user that local changes were lost due to unresolvable conflicts.
+     * Tells the user that local changes to [abandonedCount] events were lost to conflicts that
+     * stayed unresolved after the maximum sync cycles. A no-op for a count of 0.
      *
-     * @param eventTitle Title of the event (shown when only 1 event abandoned)
-     * @param abandonedCount Number of events with abandoned conflicts
+     * @param eventTitle named in the text only when one event was abandoned.
      */
     fun showConflictAbandonedNotification(eventTitle: String?, abandonedCount: Int) {
         if (abandonedCount <= 0) return
@@ -377,12 +325,10 @@ class SyncNotificationManager @Inject constructor(
     }
 
     /**
-     * Show notification when operations were abandoned due to 30-day lifetime expiry.
-     * Alerts user that some local changes couldn't be synced.
+     * Tells the user that [expiredCount] local changes were abandoned at the 30-day operation
+     * lifetime and never synced. A no-op for a count of 0.
      *
-     * @param expiredCount Number of operations that were abandoned
-     * @param scope The calendar(s) the expired ops belong to, selecting the
-     *   wording: a single named calendar, a count of calendars, or count-only.
+     * @param scope the calendars the operations belong to, which picks the wording.
      */
     fun showOperationExpiredNotification(expiredCount: Int, scope: ExpiredCalendarScope) {
         if (expiredCount <= 0) return
@@ -407,8 +353,8 @@ class SyncNotificationManager @Inject constructor(
             .setContentText(content)
             .setStyle(NotificationCompat.BigTextStyle().bigText(content))
             .setAutoCancel(true)
-            // Re-posting this fixed-id notification (e.g. a later sync abandons
-            // more ops) must update silently, not buzz/heads-up again.
+            // Re-posting this fixed-id notification (a later sync abandons more operations)
+            // must update silently, with no sound or heads-up.
             .setOnlyAlertOnce(true)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setCategory(NotificationCompat.CATEGORY_STATUS)
@@ -418,24 +364,19 @@ class SyncNotificationManager @Inject constructor(
         notify(SyncNotificationChannels.NOTIFICATION_ID_OPERATION_EXPIRED, notification)
     }
 
-    /**
-     * Cancel progress notification.
-     * Should be called when sync completes (success or failure).
-     */
+    /** Cancels the progress notification; call when a sync ends, whether it succeeded or not. */
     fun cancelProgressNotification() {
         channels.cancel(SyncNotificationChannels.NOTIFICATION_ID_SYNC_PROGRESS)
     }
 
-    /**
-     * Cancel all sync notifications.
-     */
+    /** Cancels every sync notification. Nothing calls it today. */
     fun cancelAllNotifications() {
         channels.cancelAll()
     }
 
     /**
-     * Create pending intent to open the app.
-     * Uses explicit intent to avoid security vulnerability (implicit PendingIntent).
+     * Opens the app. The intent names [MainActivity], since an implicit PendingIntent can be
+     * hijacked (CWE-927).
      */
     private fun createOpenAppIntent(): PendingIntent {
         val intent = Intent(context, MainActivity::class.java).apply {
@@ -450,9 +391,6 @@ class SyncNotificationManager @Inject constructor(
         )
     }
 
-    /**
-     * Post a notification.
-     */
     private fun notify(id: Int, notification: Notification) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE)
             as android.app.NotificationManager

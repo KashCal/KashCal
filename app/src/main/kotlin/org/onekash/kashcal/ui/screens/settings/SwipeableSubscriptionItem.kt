@@ -40,19 +40,11 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
 /**
- * Swipeable subscription item with swipe-left-to-delete gesture.
+ * Shows one subscription row: color dot, name, status line, refresh button and enable switch.
+ * A swipe from the end deletes it, a tap calls [onEdit], and a warning icon marks a failed sync.
  *
- * Features:
- * - Swipe left to delete
- * - Error indicator when sync fails
- * - Refresh button for manual sync
- * - Clickable to open edit dialog
- *
- * @param subscription The subscription to display
- * @param onToggle Callback when enabled/disabled toggle changes (subscriptionId, enabled)
- * @param onDelete Callback when item is swiped to delete (subscriptionId)
- * @param onRefresh Callback when refresh button is clicked (subscriptionId)
- * @param onEdit Callback when item is clicked to edit
+ * @param onToggle called with (subscriptionId, enabled).
+ * @param onDelete called with the subscription id from the swipe or the accessibility action.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,12 +55,10 @@ fun SwipeableSubscriptionItem(
     onRefresh: (Long) -> Unit,
     onEdit: (IcsSubscriptionUiModel) -> Unit
 ) {
-    // Fire onDelete from confirmValueChange and reject the dismiss transition
-    // (return false). The row stays in Settled state visually; the StateFlow
-    // filter removes it from the LazyColumn, so the user sees a clean removal
-    // animation. Critically, this prevents stale EndToStart state from
-    // surviving an undo (issue #133): when the row reappears, dismissState
-    // is still Settled, not stuck mid-swipe.
+    // Call onDelete from confirmValueChange and reject the transition (return false). The row
+    // stays Settled; the ViewModel's pending-deletion filter removes it from the list. A
+    // stale EndToStart state would survive an undo (#133): the row would reappear stuck
+    // mid-swipe.
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) {
@@ -79,8 +69,7 @@ fun SwipeableSubscriptionItem(
     )
     val hasError = subscription.hasError()
 
-    // Swipe-to-delete is gesture-only; expose the same action to Switch Access
-    // and TalkBack (which can't perform the swipe) as a custom action.
+    // Switch Access and TalkBack can't perform the swipe, so delete is also a custom action.
     val deleteLabel = stringResource(R.string.cd_delete)
     val deleteActions = subscription.id?.let { id ->
         listOf(CustomAccessibilityAction(deleteLabel) { onDelete(id); true })
@@ -122,7 +111,6 @@ fun SwipeableSubscriptionItem(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Left side: color dot + name/status
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -135,7 +123,6 @@ fun SwipeableSubscriptionItem(
                             .background(Color(subscription.color))
                     )
                     Column(modifier = Modifier.weight(1f)) {
-                        // Name row with optional error icon
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -156,12 +143,10 @@ fun SwipeableSubscriptionItem(
                                 )
                             }
                         }
-                        // Status text: error message (red) or last sync time
                         SubscriptionStatusText(subscription, hasError)
                     }
                 }
 
-                // Right side: refresh button + toggle switch
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(4.dp)
@@ -191,8 +176,8 @@ fun SwipeableSubscriptionItem(
 }
 
 /**
- * Status text for subscription item.
- * Shows error message (red) or last sync time.
+ * Shows the subscription's status line: the error in red, "Sync paused" when disabled, else
+ * "Not synced" or the time since the last sync.
  */
 @Composable
 private fun SubscriptionStatusText(

@@ -12,37 +12,37 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Cross-server characterization of the RFC 6764 CardDAV discovery walk, run to
- * decide whether contacts sync can rely on *independent* well-known discovery
- * (start from a domain/host, let the provider point at its own CardDAV home)
- * rather than reusing the account's CalDAV host.
+ * Records, per server, where the RFC 6764 CardDAV discovery walk resolves an addressbook-home
+ * from, to show whether contacts sync can rely on independent well-known discovery (start from
+ * a domain or host and let the provider point at its own CardDAV home) instead of reusing the
+ * account's CalDAV host.
  *
- * Why this matters: today the contact-sync worker feeds the CalDAV-derived base
- * URL into the discovery chain. That is correct only for providers that serve
- * CardDAV and CalDAV from the same host. A provider whose contacts live on a
- * different host than its calendars (Zoho serves contacts from `contacts.zoho.com`,
- * not its `calendar.zoho.com` CalDAV endpoint) can only be reached if discovery
- * starts from the domain and follows the provider's own `/.well-known/carddav`
- * redirect. This probe measures, per server, whether the chain resolves an
- * addressbook-home from each candidate starting point:
- *  - the bare registrable domain (`https://zoho.com`) — the "feed the domain" model,
- *  - the full configured host (`https://contacts.zoho.com`) — the host as we know it,
- *  - the direct endpoint (with any `davEndpointSuffix`) as a no-well-known control
- *    that tells us the server has contacts at all, independent of well-known.
+ * A provider whose contacts live on a different host than its calendars (Zoho serves contacts
+ * from `contacts.zoho.com`, not its `calendar.zoho.com` CalDAV endpoint) is reachable from the
+ * domain only through its own `/.well-known/carddav` redirect or a DNS SRV record. The
+ * contact-sync worker starts from the quirks' base URL, or from an SRV-resolved host when the
+ * quirks allow it (`ContactSyncWorker`, [org.onekash.kashcal.sync.carddav.CardDavHostResolver]).
+ * The candidate starting points ([candidatesFor]):
+ *  - the account's CalDAV host through well-known, for split-host providers
+ *    ([CardDavServerConfig.caldavHostUrl]),
+ *  - the bare registrable domain (`https://zoho.com`), the "feed the domain" model,
+ *  - the full configured host (`https://contacts.zoho.com`),
+ *  - the direct endpoint (with any `davEndpointSuffix`), a no-well-known control that shows
+ *    the server has contacts at all.
  *
- * It RECORDS the full per-candidate matrix (resolved? which home host? how many
- * books?) and only softly asserts that *some* candidate resolved — so a server
- * that legitimately lacks well-known (targeted directly in production) stays green
- * while the printed matrix, not a brittle assertion, carries the design signal.
- * Promote a finding into a hard per-server assertion only once the durable path is
- * built around it.
+ * It prints the per-candidate matrix (resolved? which home host? how many books?) and asserts
+ * only that some candidate reached a CardDAV endpoint; when every reached candidate was
+ * auth-rejected it skips. A server that lacks well-known (targeted directly in production)
+ * stays green, and the printed matrix carries the design signal. Promote a result into a hard
+ * per-server assertion only once the durable path is built around it.
  *
- * Zoho is included here (unlike [CardDavServerConfig.allServers], which omits it)
- * precisely because characterizing Zoho's split-host discovery is the point.
+ * Runs over [CardDavServerConfig.allDiscoveryProbeServers], which adds Zoho and Fastmail to
+ * [CardDavServerConfig.allServers], because characterizing Zoho's split-host discovery is the
+ * point.
  *
- * PII discipline: on cloud accounts the resolved home path carries an account id
- * (iCloud DSID, Zoho user), so every printed URL is reduced to scheme+host via
- * [hostShape] — never a full path, fetched body, or account address.
+ * PII: on cloud accounts the resolved home path carries an account id (iCloud DSID, Zoho
+ * user), so every printed URL is reduced to scheme and host via [hostShape]: never a full path,
+ * fetched body, or account address.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -85,11 +85,9 @@ class MultiServerCardDavWellKnownProbeTest(
             candidate to walk(c, candidate)
         }
 
-        // RFC 6764 §6 makes DNS SRV (`_carddavs._tcp.<domain>`) the PRIMARY
-        // discovery mechanism; well-known is the fallback. The client does not do
-        // SRV, but recording whether the provider publishes one tells us whether an
-        // SRV client COULD reach it from the bare domain — the difference between
-        // "needs a bootstrap constant forever" and "SRV would find it for free."
+        // RFC 6764 §6 looks up DNS SRV (`_carddavs._tcp.<domain>`) before well-known.
+        // Recording whether the provider publishes one shows whether an SRV lookup can reach
+        // it from the bare domain, or it needs a bootstrap constant.
         val srv = srvLookup(dnsDomainOf(cr.serverUrl))
 
         println("=== ${config.name} CardDAV discovery matrix ===")
@@ -101,12 +99,11 @@ class MultiServerCardDavWellKnownProbeTest(
         }
         println("    [dns-srv _carddavs._tcp] -> $srv")
 
-        // A characterization probe, so the matrix above is the deliverable. The
-        // only hard claim: the server was reachable via SOME route. An auth-rejected
-        // candidate still proves discovery reached a CardDAV endpoint, so treat stale
-        // credentials as a skip (assumeTrue), not a failure — otherwise an expired
-        // app-password would masquerade as "well-known unreachable." Fail only if no
-        // route resolved AND none even reached an endpoint.
+        // The matrix above is the result. The only hard claim: some route reached the
+        // server. An auth-rejected candidate still reached a CardDAV endpoint, so all-stale
+        // credentials skip instead of failing; otherwise an expired app-password would read
+        // as "well-known unreachable". Fail only if no route resolved and none reached an
+        // endpoint.
         val anyResolved = results.any { (_, o) -> o is Outcome.Resolved }
         val anyReached = results.any { (_, o) -> o is Outcome.Resolved || o is Outcome.AuthRejected }
         assumeTrue(
@@ -120,9 +117,10 @@ class MultiServerCardDavWellKnownProbeTest(
     }
 
     /**
-     * Candidate discovery entry points, most-portable first. The full host and the
-     * bare domain are exercised through well-known; the configured endpoint is a
-     * direct (no-well-known) control.
+     * Returns the candidate discovery entry points in probe order: the CalDAV host (when set),
+     * the bare domain and the full host through well-known, then the configured endpoint as a
+     * direct, no-well-known control. Duplicate hosts are left out; an unparseable URL gives only
+     * the direct endpoint.
      */
     private fun candidatesFor(cr: ServerCredentials): List<Candidate> {
         val host = schemeHost(cr.serverUrl) ?: return listOf(
@@ -130,9 +128,9 @@ class MultiServerCardDavWellKnownProbeTest(
         )
         val domain = registrableDomainUrl(cr.serverUrl)
         return buildList {
-            // The host a real account stored from CalDAV setup — first, because it
-            // decides whether a split-host provider (Zoho) can reach contacts from
-            // what the account already knows, or needs a bootstrap constant.
+            // The host a real account stored from CalDAV setup comes first: it decides whether
+            // a split-host provider (Zoho) can reach contacts from what the account already
+            // knows, or needs a bootstrap constant.
             config.caldavHostUrl?.let { caldavHost ->
                 add(Candidate("well-known @ caldav-host", caldavHost, useWellKnown = true))
             }
@@ -146,7 +144,7 @@ class MultiServerCardDavWellKnownProbeTest(
         }
     }
 
-    /** Run well-known (optional) -> principal -> addressbook-home for one candidate. */
+    /** Runs well-known (optional), then principal, then addressbook-home for one candidate. */
     private suspend fun walk(c: CardDavClient, candidate: Candidate): Outcome {
         val base = if (candidate.useWellKnown) {
             c.discoverWellKnown(candidate.startUrl).getOrNull() ?: candidate.startUrl
@@ -176,26 +174,23 @@ class MultiServerCardDavWellKnownProbeTest(
         data class Resolved(val homeHost: String, val homeCount: Int, val bookCount: Int) : Outcome {
             override fun toString() = "RESOLVED home=$homeHost homes=$homeCount books=$bookCount"
         }
-        // 401 at the principal step means well-known/redirect DID reach a CardDAV
-        // endpoint (it answered), but our credentials were rejected — a credential
-        // problem, not a discovery gap. Distinguished so stale creds don't read as
-        // "well-known unreachable."
+        // 401 at the principal step means the walk reached a CardDAV endpoint but the
+        // credentials were rejected: a credential problem, not a discovery gap. Kept apart so
+        // stale credentials don't read as "well-known unreachable".
         object AuthRejected : Outcome { override fun toString() = "auth rejected (401) — endpoint reached" }
         object NoPrincipal : Outcome { override fun toString() = "no principal" }
         object NoHome : Outcome { override fun toString() = "principal but no addressbook-home" }
     }
 
-    /** scheme://host[:port] of a URL, or null if it can't be parsed. */
+    /** Returns scheme://host[:port] of a URL, or null if it can't be parsed. */
     private fun schemeHost(url: String): String? =
         Regex("""^(\w+://[^/]+)""").find(url)?.groupValues?.get(1)
 
     /**
-     * scheme://<registrable-domain> — strips the leading subdomain labels so a
-     * host like `contacts.zoho.com` yields `https://zoho.com`, modelling the domain
-     * a user would type at setup. Deliberately simplistic (last two labels): the
-     * server set here uses single-suffix domains (zoho.com, icloud.com) or a bare
-     * host (localhost[:port], an IP), for which the whole host is returned unchanged.
-     * Not a public-suffix-list implementation.
+     * Returns scheme://<registrable-domain>[:port], keeping only the last two host labels, so
+     * `contacts.zoho.com` yields `https://zoho.com`, the domain a user would type at setup.
+     * Not a public-suffix-list implementation: the servers here use single-suffix domains
+     * (zoho.com, icloud.com) or a bare host (localhost, an IP), which is returned unchanged.
      */
     private fun registrableDomainUrl(url: String): String {
         val scheme = url.substringBefore("://", "https")
@@ -213,11 +208,11 @@ class MultiServerCardDavWellKnownProbeTest(
         return "$scheme://$domain$suffix"
     }
 
-    /** Scheme+host of a URL for logging, without the account-identifying path. */
+    /** Returns scheme and host of a URL plus `/<path>` for logging, hiding the account path. */
     private fun hostShape(url: String?): String =
         url?.let { schemeHost(it)?.plus("/<path>") ?: "<opaque>" } ?: "(none)"
 
-    /** Bare DNS domain (last two labels) for the SRV query, or the host for local servers. */
+    /** Returns the DNS domain (last two labels) for the SRV query, or a local server's host. */
     private fun dnsDomainOf(url: String): String {
         val host = url.substringAfter("://").substringBefore('/').substringBefore(':')
         val labels = host.split('.')
@@ -234,10 +229,9 @@ class MultiServerCardDavWellKnownProbeTest(
     }
 
     /**
-     * Resolve `_carddavs._tcp.<domain>` via the JDK's built-in JNDI DNS provider
-     * (no external dependency). Returns the SRV target host, or Absent when the
-     * provider publishes none. Local/loopback domains are Skipped — they have no
-     * public DNS and SRV is irrelevant to a directly-targeted local server.
+     * Resolves `_carddavs._tcp.<domain>` via the JDK's built-in JNDI DNS provider (no external
+     * dependency). Returns the first SRV target host, or [Srv.Absent] when none is published or
+     * the lookup fails. Local and loopback domains are [Srv.Skipped]: they have no public DNS.
      */
     private fun srvLookup(domain: String): Srv {
         if (domain == "localhost" || domain.all { it.isDigit() || it == '.' } || !domain.contains('.')) {
@@ -256,15 +250,15 @@ class MultiServerCardDavWellKnownProbeTest(
             if (srv == null) {
                 Srv.Absent
             } else {
-                // SRV rdata: "priority weight port target." — target is the last field.
+                // SRV rdata: "priority weight port target."; the target is the last field.
                 val target = srv.trim().split(Regex("\\s+")).lastOrNull()?.trimEnd('.').orEmpty()
                 if (target.isBlank()) Srv.Absent else Srv.Present(target)
             }
         } catch (_: javax.naming.NameNotFoundException) {
             Srv.Absent
         } catch (_: Exception) {
-            // Any resolver failure (no network, DNS blocked) — record as absent
-            // rather than fail the probe; the well-known columns still carry signal.
+            // Any resolver failure (no network, DNS blocked) records absent instead of failing
+            // the probe; the well-known columns still carry signal.
             Srv.Absent
         }
     }

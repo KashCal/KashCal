@@ -6,31 +6,19 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.identity.matchesAttendee
 
 /**
- * Pure helper that resolves "which event IDs are declined by their
- * owning account" from the inputs available to the composite-reader
- * layer (DisplayEventRepository).
+ * Returns the IDs of events whose owning account has declined them.
  *
- * Multi-account scoping rule: each event maps to a calendar, each
- * calendar to an account; the attendee row's address must match THAT
- * account's `calendar_user_addresses`, not just any configured account.
- * An event in account B's calendar with an attendee that happens to
- * share account A's address is NOT considered self-declined under A's
- * preference — it belongs to B's identity scope.
+ * An attendee row counts only when its address matches the account that owns the event's
+ * calendar ([Account.matchesAttendee]), not any configured account. An event in account B's
+ * calendar with an attendee sharing account A's address isn't self-declined: it belongs to B.
  *
- * Inputs are pre-filtered Room data:
- * - [declinedAttendees] is the result of
- *   [org.onekash.kashcal.data.db.dao.AttendeesDao.getDeclinedAttendeesForEvents]
- *   (already SQL-filtered to `partstat = 'DECLINED'`).
- * - [accountsById] / [calendarsById] are full snapshots from
- *   AccountsDao / CalendarsDao at emission time.
- * - [eventIdToCalendarId] is the per-emission event→calendar map (the
- *   composite already has each event's calendar in scope via the
- *   occurrence row).
+ * [declinedAttendees] is already filtered to `partstat = 'DECLINED'`
+ * ([org.onekash.kashcal.data.db.dao.AttendeesDao.getDeclinedAttendeesForEvents]).
+ * [eventIdToCalendarId] maps each event to its calendar. Callers are [DisplayEventRepository],
+ * which hides or marks declined events, and the reminder scheduler, which skips their alarms.
  *
- * Lookup misses (orphaned event, calendar pointing at unknown account,
- * account with no usable address) are graceful skips — return without
- * adding the event ID. The data the composite layer feeds in is
- * authoritative; this helper does not validate it.
+ * A lookup miss (unknown event, calendar or account) or an account with no usable address skips
+ * the event. The inputs aren't validated.
  */
 fun selfDeclinedEventIds(
     declinedAttendees: List<Attendee>,

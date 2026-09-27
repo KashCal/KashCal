@@ -24,12 +24,9 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Unit tests for device calendar reminders preference.
- *
- * Tests cover:
- * - Default value is false (opt-in feature)
- * - Setting true/false persists correctly
- * - Flow emits changes
+ * Tests the device calendar reminders preference: true when absent, persists both values, its
+ * flow emits each change once with no duplicate for a repeated value, and the one-shot getter
+ * reads the current value.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -72,10 +69,8 @@ class DeviceCalendarRemindersPreferenceTest {
     @Test
     fun `setDeviceCalendarRemindersEnabled stores false`() = runTest {
         dataStore.deviceCalendarRemindersEnabled.test {
-            // Default
             assertTrue(awaitItem())
 
-            // Set to false
             dataStore.setDeviceCalendarRemindersEnabled(false)
             assertFalse(awaitItem())
 
@@ -85,13 +80,11 @@ class DeviceCalendarRemindersPreferenceTest {
 
     @Test
     fun `setDeviceCalendarRemindersEnabled stores true after false`() = runTest {
-        // Set to false first
         dataStore.setDeviceCalendarRemindersEnabled(false)
 
         dataStore.deviceCalendarRemindersEnabled.test {
             assertFalse(awaitItem())
 
-            // Set back to true
             dataStore.setDeviceCalendarRemindersEnabled(true)
             assertTrue(awaitItem())
 
@@ -122,14 +115,12 @@ class DeviceCalendarRemindersPreferenceTest {
         dataStore.deviceCalendarRemindersEnabled.test {
             assertTrue(awaitItem())
 
-            // Set to same value (true) - should NOT emit
+            // Writing the current value (true) emits nothing; the change to false emits once.
             dataStore.setDeviceCalendarRemindersEnabled(true)
 
-            // Set to different value - SHOULD emit
             dataStore.setDeviceCalendarRemindersEnabled(false)
             assertFalse(awaitItem())
 
-            // No intermediate emission
             expectNoEvents()
 
             cancelAndIgnoreRemainingEvents()
@@ -138,14 +129,11 @@ class DeviceCalendarRemindersPreferenceTest {
 
     @Test
     fun `getDeviceCalendarRemindersEnabled returns current value`() = runTest {
-        // Default
         assertTrue(dataStore.getDeviceCalendarRemindersEnabled())
 
-        // After setting false
         dataStore.setDeviceCalendarRemindersEnabled(false)
         assertFalse(dataStore.getDeviceCalendarRemindersEnabled())
 
-        // After setting true
         dataStore.setDeviceCalendarRemindersEnabled(true)
         assertTrue(dataStore.getDeviceCalendarRemindersEnabled())
     }

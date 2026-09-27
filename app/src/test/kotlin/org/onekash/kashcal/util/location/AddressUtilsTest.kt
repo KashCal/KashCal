@@ -27,18 +27,16 @@ class AddressUtilsTest {
         openInMaps(context, "")
         openInMaps(context, "   ")
 
-        // Verify no startActivity calls were made
         verify(exactly = 0) { context.startActivity(any()) }
     }
 
     @Test
     fun `openInMaps falls back to OpenStreetMap when no handlers`() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        // Don't add any handlers - this simulates no maps app installed
+        // No handler registered: no maps app installed.
 
         openInMaps(context, "123 Main Street")
 
-        // Verify OpenStreetMap URL was opened
         val startedIntent = Shadows.shadowOf(context as android.app.Application).nextStartedActivity
         assertTrue(
             "Should open OpenStreetMap",
@@ -49,11 +47,10 @@ class AddressUtilsTest {
     @Test
     fun `openInMaps encodes special characters in address`() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        // Don't add handlers - so we get the fallback URL which is easier to verify
+        // No handler registered, so the OpenStreetMap fallback URL carries the address.
 
         openInMaps(context, "123 Main St & Pike, Seattle WA")
 
-        // Verify the URL was properly encoded
         val startedIntent = Shadows.shadowOf(context as android.app.Application).nextStartedActivity
         val url = startedIntent?.data?.toString() ?: ""
         assertTrue("Should encode ampersand", url.contains("%26"))
@@ -63,7 +60,7 @@ class AddressUtilsTest {
     @Test
     fun `openInMaps adds FLAG_ACTIVITY_NEW_TASK`() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        // Don't add handlers - so we get the fallback path
+        // No handler registered: the fallback path.
 
         openInMaps(context, "123 Main Street")
 
@@ -77,7 +74,7 @@ class AddressUtilsTest {
     @Test
     fun `openInMaps uses correct OpenStreetMap URL format`() {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-        // Don't add handlers - so we get the fallback URL
+        // No handler registered: the fallback URL.
 
         openInMaps(context, "123 Main Street")
 
@@ -113,14 +110,12 @@ class AddressUtilsTest {
 
         openInMaps(context, "123 Main Street")
 
-        // Verify chooser intent was started
         val startedIntent = Shadows.shadowOf(context as android.app.Application).nextStartedActivity
         assertTrue(
             "Should use Intent.createChooser (ACTION_CHOOSER)",
             startedIntent?.action == Intent.ACTION_CHOOSER
         )
 
-        // Verify the wrapped intent is a geo: intent
         val targetIntent = startedIntent?.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
         assertTrue(
             "Wrapped intent should be geo: URI",
@@ -137,7 +132,7 @@ class AddressUtilsTest {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         val shadowPm = Shadows.shadowOf(context.packageManager)
 
-        // Register a handler so we take the chooser path
+        // A geo: handler, so openInMaps takes the chooser path.
         val componentName = ComponentName("com.example.maps", "com.example.maps.MapsActivity")
         val intentFilter = IntentFilter(Intent.ACTION_VIEW).apply {
             addDataScheme("geo")

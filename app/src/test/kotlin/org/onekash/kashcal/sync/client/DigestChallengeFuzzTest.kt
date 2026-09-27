@@ -14,15 +14,13 @@ import org.junit.Test
 import kotlin.random.Random
 
 /**
- * Fuzz oracle for Digest challenge parsing — the hand-rolled tokenizer over the
- * attacker/server-controlled `WWW-Authenticate: Digest ...` header.
+ * Fuzzes Digest challenge parsing of the server-controlled `WWW-Authenticate: Digest ...` header.
  *
- * `parseAuthParams` is a bespoke regex tokenizer and `parseDigestChallenge`
- * builds a DigestChallenge from its output; both run on bytes KashCal does not
- * control (any CalDAV server, or a MITM on a misconfigured endpoint). The
- * contract is simply: **never throw** for any header value. A malformed or
- * adversarial challenge must degrade to null or a best-effort parse, never crash
- * the auth path.
+ * `parseAuthParams` is a hand-written regex tokenizer and `parseDigestChallenge` builds a
+ * DigestChallenge from its output; both run on bytes KashCal doesn't control (any CalDAV
+ * server, or a MITM on a misconfigured endpoint). The contract: never throw for any header
+ * value. A malformed or hostile challenge must degrade to null or a best-effort parse, never
+ * crash the auth path.
  *
  * Two surfaces are fuzzed:
  *  - `parseAuthParams(String)` directly, with raw adversarial bytes that OkHttp's
@@ -48,7 +46,7 @@ class DigestChallengeFuzzTest {
         every { Log.i(any(), any()) } returns 0
         every { Log.w(any(), any<String>()) } returns 0
         every { Log.e(any(), any<String>()) } returns 0
-        authenticator = DigestAuthenticator("testuser", "testpass")
+        authenticator = DigestAuthenticator("testuser", "testpass", allowCleartext = true)
     }
 
     @After
@@ -83,7 +81,7 @@ class DigestChallengeFuzzTest {
             val response = try {
                 buildResponse(value)
             } catch (_: IllegalArgumentException) {
-                continue // value rejected by OkHttp header validation — not our target
+                continue // rejected by OkHttp header validation, not the parser under test
             }
             built++
             try {

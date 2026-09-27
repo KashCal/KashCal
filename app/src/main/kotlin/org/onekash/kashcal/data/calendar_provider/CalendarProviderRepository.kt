@@ -2,36 +2,33 @@ package org.onekash.kashcal.data.calendar_provider
 
 
 /**
- * Repository interface for device calendars from Android's CalendarProvider.
+ * Reads and writes device calendars and events in Android's CalendarProvider.
  *
- * Read operations return empty results on SecurityException.
- * Write operations return Result with CalendarError.DeviceCalendar on failure.
+ * Reads return an empty result (empty list or map, null, or false) when permission is denied;
+ * [getMaxReminders] falls back to 5.
+ * Writes that return [Result] fail with a
+ * [org.onekash.kashcal.error.CalendarError.DeviceCalendar] error: `PermissionDenied`,
+ * `EventNotFound` or `WriteFailed`. [pruneStaleCalendarIds] and [ensureCalendarVisible] return
+ * Unit.
  */
 interface CalendarProviderRepository {
 
-    /**
-     * Get all visible device calendars.
-     *
-     * @return List of device calendars, or empty list if permission denied
-     */
+    /** Returns every device calendar, visible or not; see [DeviceCalendar.visible]. */
     suspend fun getDeviceCalendars(): List<DeviceCalendar>
 
     /**
-     * Get a single device calendar by id (WHERE _ID = ?), or null if it
-     * doesn't exist or permission is denied. Used for owner-email and
-     * delivery-capability lookups that need exactly one calendar, avoiding a
-     * full [getDeviceCalendars] scan.
+     * Returns one device calendar by id, or null if it doesn't exist. Reads only that row, for
+     * lookups (owner email, invite delivery) that would otherwise scan [getDeviceCalendars].
      */
     suspend fun getDeviceCalendar(id: Long): DeviceCalendar?
 
     /**
-     * Get calendar instances (pre-expanded occurrences) for a day range.
+     * Returns the Instances rows (expanded occurrences) of [enabledCalendarIds] for a day range,
+     * with reminders and tags filled in. Only calendars with `VISIBLE = 1` are read.
      *
-     * @param startDayCode Start day in YYYYMMDD format (inclusive)
-     * @param endDayCode End day in YYYYMMDD format (inclusive)
-     * @param enabledCalendarIds Set of calendar IDs to include
-     * @param hideDeclined Whether to hide declined events
-     * @return List of instances, or empty list if permission denied
+     * @param startDayCode first day, YYYYMMDD, inclusive
+     * @param endDayCode last day, YYYYMMDD, inclusive
+     * @param hideDeclined drops occurrences the user declined
      */
     suspend fun getInstancesForDayRange(
         startDayCode: Int,
@@ -41,16 +38,13 @@ interface CalendarProviderRepository {
     ): List<DeviceCalendarInstance>
 
     /**
-     * Search calendar instances by text query within a day range.
+     * Searches the occurrences of [enabledCalendarIds] in a day range through the provider's
+     * Instances search, which matches title, description, location and guest names and emails.
+     * A blank [query] returns an empty list.
      *
-     * Uses Instances.CONTENT_SEARCH_URI for CalendarProvider text search.
-     *
-     * @param query Search text (matched against title, description, location)
-     * @param startDayCode Start day in YYYYMMDD format (inclusive)
-     * @param endDayCode End day in YYYYMMDD format (inclusive)
-     * @param enabledCalendarIds Set of calendar IDs to include
-     * @param hideDeclined Whether to hide declined events
-     * @return List of matching instances, or empty list if permission denied
+     * @param startDayCode first day, YYYYMMDD, inclusive
+     * @param endDayCode last day, YYYYMMDD, inclusive
+     * @param hideDeclined drops occurrences the user declined
      */
     suspend fun searchInstances(
         query: String,
@@ -61,26 +55,18 @@ interface CalendarProviderRepository {
     ): List<DeviceCalendarInstance>
 
     /**
-     * Suggest device-calendar event titles matching a prefix, aggregated by
-     * normalized title with frequency and last-used timestamp. Used by the
-     * event-form autocomplete dropdown.
+     * Suggests device-event titles starting with [prefix], grouped case-insensitively with use
+     * count and last-used time, for the event-form autocomplete.
      *
-     * Returns empty list when [visibleCalendarIds] is empty, permission is
-     * denied, or no events match.
+     * Returns an empty list when [visibleCalendarIds] is empty or [prefix] is blank. Exceptions
+     * and deleted rows don't count. A series (non-empty RRULE) counts whatever its DTSTART;
+     * a one-off counts only with DTSTART in [sinceMs, untilMs], both inclusive. One title and
+     * DTSTART seen on several calendars, such as an invite on a personal and a work account,
+     * counts as one use.
      *
-     * Recency: recurring events (RRULE non-null and non-empty) bypass the
-     * window. Non-recurring events require DTSTART in [sinceMs, untilMs].
-     *
-     * Cross-calendar dedup: a (title, dtstart) pair visible on multiple
-     * calendars is counted as ONE use. This prevents dual-account Google
-     * invites (same event on personal + work) from inflating frequency.
-     *
-     * @param prefix Text the user has typed (no wildcards)
-     * @param sinceMs Lower-bound of the non-recurring window (epoch ms, inclusive)
-     * @param untilMs Upper-bound of the non-recurring window (epoch ms, inclusive)
-     * @param visibleCalendarIds Calendar IDs to include
-     * @param minFreq Minimum use count for a title to appear in results
-     * @param limit Max suggestions to return
+     * @param prefix text the user typed, without wildcards
+     * @param minFreq minimum use count for a title to be suggested
+     * @param limit maximum number of suggestions
      */
     suspend fun suggestTitlesByPrefix(
         prefix: String,
@@ -92,74 +78,48 @@ interface CalendarProviderRepository {
     ): List<org.onekash.kashcal.data.db.dao.TitleSuggestion>
 
     /**
-     * Remove stored enabled calendar IDs that no longer exist in CalendarProvider.
-     *
-     * Handles uninstalled sync adapters, removed accounts, and deleted calendars.
-     * Compares stored enabledDeviceCalendarIds against actual calendars from
-     * [getDeviceCalendars] and removes stale IDs.
-     *
-     * @param dataStore KashCalDataStore to read/write enabled calendar IDs
+     * Removes enabled device-calendar ids in [dataStore] that [getDeviceCalendars] no longer
+     * returns: an uninstalled sync adapter, a removed account or a deleted calendar.
      */
     suspend fun pruneStaleCalendarIds(dataStore: org.onekash.kashcal.data.preferences.KashCalDataStore)
 
     /**
-     * Ensure the given calendar's events are downloaded AND visible.
+     * Makes the calendar's events download and show: writes `SYNC_EVENTS = 1` and `VISIBLE = 1`
+     * on its Calendars row, then requests a manual sync on its account.
      *
-     * On Xiaomi/MIUI, Google calendars ship with both `VISIBLE = 0` and
-     * `SYNC_EVENTS = 0` by default — not as a user preference, but as the
-     * initial state. Our `Instances` query filters on `VISIBLE = 1`, and
-     * events are never downloaded unless `SYNC_EVENTS = 1`. The result is a
-     * blank view even after the user ticks the calendar in KashCal. See
-     * issue #170 — independently verified by toggling the per-calendar
-     * visibility flag through CalendarContract directly, which restores
-     * the events.
+     * On Xiaomi/MIUI, Google calendars start with `VISIBLE = 0` and `SYNC_EVENTS = 0`, not as a
+     * user choice. The Instances reads filter on `VISIBLE = 1` and nothing downloads without
+     * `SYNC_EVENTS = 1`, so the view stays blank after the user ticks the calendar (#170;
+     * flipping the flags through CalendarContract restores the events).
      *
-     * This method:
-     *  1. Writes `SYNC_EVENTS = 1` and `VISIBLE = 1` on the Calendars row,
-     *     normalizing the Xiaomi/MIUI default-off state.
-     *  2. Requests a manual sync on the owning account so events populate
-     *     within a minute rather than on the next idle cycle. Honors metered
-     *     connection preferences (no expedited flag).
+     * The sync request lets events arrive within a minute instead of on the next idle cycle. It
+     * isn't expedited, so metered-connection preferences hold, and a local account, which has
+     * no sync adapter, gets none. Failures (a missing row, a SecurityException, an account the
+     * sync request rejects) are logged and never propagated, so the UI stays usable on devices
+     * that block the write.
      *
-     * Failures (SecurityException, IllegalArgumentException from bad account,
-     * missing row, etc.) are logged but never propagated — the UI remains
-     * usable on devices that block the write.
-     *
-     * Only called when the user ticks a calendar in KashCal's settings.
-     * Unticking does NOT flip `VISIBLE = 0` back — the user's untick only
-     * means "hide from KashCal" (governed by `hiddenDeviceCalendarIds`), not
-     * "hide system-wide".
-     *
-     * @param calendarId Calendar ID to enable sync and visibility for
+     * Called only when the user ticks a calendar in settings. Unticking doesn't write
+     * `VISIBLE = 0`: it means "hide from KashCal" (`hiddenDeviceCalendarIds`), not "hide
+     * system-wide".
      */
     suspend fun ensureCalendarVisible(calendarId: Long)
 
-    // ==================== Write Operations (Phase 3) ====================
+    // ==================== Writes ====================
 
     /**
-     * Create a new event in CalendarProvider.
+     * Creates an event and returns its id. The event, its reminders and its guests are written
+     * in one batch; the tags are written after it.
      *
-     * Uses ContentProviderOperation batch for atomicity (event + reminders).
-     *
-     * @param calendarId Target calendar ID
-     * @param title Event title
-     * @param description Event description (nullable)
-     * @param location Event location (nullable)
-     * @param startTs Start timestamp in epoch millis
-     * @param endTs End timestamp in epoch millis (for single events)
-     * @param isAllDay Whether this is an all-day event
-     * @param rrule RFC 5545 RRULE string (nullable for non-recurring)
-     * @param duration RFC 5545 duration string for recurring events (nullable)
-     * @param timezone Event timezone ID (e.g., "America/New_York")
-     * @param reminders List of reminder minutes before event
-     * @param attendees Guests to write as `Attendees` rows, or null when the
-     *   caller isn't managing attendees (no rows written — the device default).
-     *   When non-empty, an owner/organizer row and `HAS_ATTENDEE_DATA=1` are
-     *   written too.
-     * @param categories Tag names to store, or null when the caller isn't
-     *   managing tags (no tag row written). A non-null non-empty list is stored
-     *   as a single extended-property row; a non-null empty list writes no row.
-     * @return Result containing created event ID or CalendarError.DeviceCalendar
+     * @param endTs end in epoch ms for a one-off; null for a series, which uses [duration]
+     * @param rrule RFC 5545 RRULE, or null for a one-off
+     * @param duration RFC 5545 duration for a series, or null
+     * @param timezone zone id, e.g. "America/New_York"
+     * @param reminders minutes before the start, written as pop-up alerts
+     * @param attendees guests to write as `Attendees` rows, or null to write none. A non-empty
+     *   list also sets `HAS_ATTENDEE_DATA = 1` and adds an organizer row when the calendar's
+     *   owner address is a valid organizer; guests without an email are skipped.
+     * @param categories tag names, stored as one extended-property row; null or a list with no
+     *   usable name writes no row. A failed tag write leaves the event saved without tags.
      */
     suspend fun createEvent(
         calendarId: Long,
@@ -180,33 +140,20 @@ interface CalendarProviderRepository {
     ): Result<Long>
 
     /**
-     * Update an existing event in CalendarProvider.
+     * Updates an event row, then its reminders, guests and tags as given; these steps aren't one
+     * batch. Parameters are as in [createEvent], except as noted.
      *
-     * Sequential operation: update event, then clear-and-rewrite reminders.
-     *
-     * @param eventId Event ID to update
-     * @param title Event title
-     * @param description Event description (nullable)
-     * @param location Event location (nullable)
-     * @param startTs Start timestamp in epoch millis
-     * @param endTs End timestamp in epoch millis (for single events)
-     * @param isAllDay Whether this is an all-day event
-     * @param rrule RFC 5545 RRULE string (nullable for non-recurring)
-     * @param duration RFC 5545 duration string for recurring events (nullable)
-     * @param timezone Event timezone ID
-     * @param reminders List of reminder minutes before event
-     * @param attendees Authoritative guest set, or null when the caller isn't
-     *   managing attendees (existing rows left entirely alone). When non-null
-     *   it's applied as an add/remove diff against the event's existing
-     *   `Attendees` rows: only added guests are inserted and only removed
-     *   guests are deleted, so untouched guests keep their synced status. A
-     *   non-null empty list removes all guests.
-     * @param categories Authoritative tag set, or null when the caller isn't
-     *   managing tags (the existing tag row is left entirely alone). A non-null
-     *   list replaces the stored tags: a non-empty list rewrites the row, and a
-     *   non-null empty list clears it. Passing null on reschedule/exception
-     *   edits preserves tags the user didn't touch.
-     * @return Result.success or CalendarError.DeviceCalendar
+     * @param eventColor the color override, or null to clear it
+     * @param reminders minutes before the start, written as pop-up alerts in place of the
+     *   existing rows; or null to leave the rows untouched, types included (a reschedule changes
+     *   only the time, and an email or SMS reminder must stay one)
+     * @param attendees the full guest set, or null to leave the rows untouched. A non-null set is
+     *   applied as a diff: only added guests are inserted and only removed ones deleted, so
+     *   unchanged guests keep their synced status. An empty list removes every guest; the
+     *   organizer row stays ([computeAttendeeDiff]).
+     * @param categories the full tag set, or null to leave the tag row untouched, so a
+     *   reschedule or an exception edit keeps tags the user didn't touch. An empty list clears
+     *   the row.
      */
     suspend fun updateEvent(
         eventId: Long,
@@ -219,7 +166,7 @@ interface CalendarProviderRepository {
         rrule: String?,
         duration: String?,
         timezone: String,
-        reminders: List<Int>,
+        reminders: List<Int>?,
         availability: Int = 0,
         eventColor: Int? = null,
         attendees: List<DeviceAttendee>? = null,
@@ -227,32 +174,29 @@ interface CalendarProviderRepository {
     ): Result<Unit>
 
     /**
-     * Delete an event from CalendarProvider.
-     *
-     * Sets deleted=1 for sync adapter cleanup.
-     *
-     * @param eventId Event ID to delete
-     * @return Result.success or CalendarError.DeviceCalendar
+     * Deletes an event as an app: the provider marks a synced row `DELETED = 1` for its sync
+     * adapter to purge and removes an unsynced row.
      */
     suspend fun deleteEvent(eventId: Long): Result<Unit>
 
     /**
-     * Create an exception event (modified occurrence of a recurring event).
+     * Creates an exception row for one occurrence of a series and returns its id. The row points
+     * to the master through ORIGINAL_ID and ORIGINAL_INSTANCE_TIME.
      *
-     * Inserts a new event with ORIGINAL_ID + ORIGINAL_INSTANCE_TIME pointing to the master.
+     * Guests, organizer, tags and reminders are stored per event row, so the new row gets a copy
+     * of the master's guest rows, ORGANIZER and tag value (and, with [reminders] null, its
+     * reminder rows) in the same batch. If any of them can't be read, nothing is written and a
+     * failure is returned.
      *
-     * @param calendarId Target calendar ID
-     * @param masterEventId Master event ID
-     * @param originalInstanceTime Original occurrence timestamp
-     * @param title Event title
-     * @param description Event description (nullable)
-     * @param location Event location (nullable)
-     * @param startTs New start timestamp for this occurrence
-     * @param endTs New end timestamp for this occurrence
-     * @param isAllDay Whether this is an all-day event
-     * @param timezone Event timezone ID
-     * @param reminders List of reminder minutes before event
-     * @return Result containing created exception event ID or CalendarError.DeviceCalendar
+     * The occurrence it replaces is named by the master's all-day flag, not [isAllDay]: a timed
+     * occurrence saved as all-day still replaces the timed slot. If the master can't be found,
+     * nothing is written.
+     *
+     * @param originalInstanceTime the start of the occurrence being replaced
+     * @param isAllDay whether the changed occurrence is all-day
+     * @param reminders minutes before the occurrence, written as pop-up alerts; or null to copy
+     *   the master's reminder rows with their types (email, SMS and so on), so the occurrence
+     *   never silently loses them
      */
     suspend fun createException(
         calendarId: Long,
@@ -265,19 +209,18 @@ interface CalendarProviderRepository {
         endTs: Long,
         isAllDay: Boolean,
         timezone: String,
-        reminders: List<Int>,
+        reminders: List<Int>?,
         availability: Int = 0,
         eventColor: Int? = null
     ): Result<Long>
 
     /**
-     * Delete a single occurrence of a recurring event.
+     * Deletes one occurrence of a series: inserts a STATUS_CANCELED exception, or cancels the
+     * occurrence's existing exception row.
      *
-     * Creates a STATUS_CANCELED exception event.
-     *
-     * @param masterEventId Master event ID
-     * @param originalInstanceTime Original occurrence timestamp to cancel
-     * @return Result.success or CalendarError.DeviceCalendar
+     * @param isAllDay used only when the master can't be read; otherwise the master's all-day
+     *   flag names the occurrence (a changed occurrence can show with a different flag than its
+     *   series)
      */
     suspend fun deleteSingleOccurrence(
         masterEventId: Long,
@@ -286,16 +229,13 @@ interface CalendarProviderRepository {
     ): Result<Unit>
 
     /**
-     * Delete this and all future occurrences of a recurring event.
+     * Deletes the occurrences of a series from [fromTimeMs] on, inclusive, by ending the
+     * master's RRULE with an UNTIL. When [fromTimeMs] is at or before the master's start, the
+     * whole event is deleted.
      *
-     * Truncates the master event's RRULE with an UNTIL clause.
-     * If fromTimeMs <= master event's startTs, deletes the entire event.
-     * CalendarProvider handles instance cleanup automatically when RRULE is modified.
-     *
-     * @param masterEventId Master recurring event ID
-     * @param fromTimeMs Occurrence timestamp from which to delete (inclusive)
-     * @param isAllDay Whether the event is all-day (affects UNTIL date format)
-     * @return Result.success or CalendarError.DeviceCalendar
+     * The provider drops the truncated occurrences itself but keeps their exception rows, so
+     * those are deleted too, best effort: a failure there still returns success. UNTIL takes the
+     * master's all-day flag; [isAllDay] only appears in the log.
      */
     suspend fun deleteThisAndFuture(
         masterEventId: Long,
@@ -304,30 +244,35 @@ interface CalendarProviderRepository {
     ): Result<Unit>
 
     /**
-     * Split a recurring event into two halves: keep the past
-     * occurrences on the master, and create a new event row carrying
-     * the modified fields for the future half.
+     * Splits a series at [fromTimeMs]: the master keeps the earlier occurrences and a new row
+     * carries the edited fields for the rest. Returns the new row's id, or the master's id when
+     * the master is edited in place.
      *
-     * Mirrors [deleteThisAndFuture] for the truncate-master half and
-     * the orphaned-exception cleanup, but instead of bailing on the
-     * first-occurrence path it updates the master in place with the
-     * new fields.
+     * The master is edited in place ([updateEvent], as "edit all events") when [fromTimeMs] is
+     * at or before its start, or when a COUNT rule would leave no occurrences on one side. For a
+     * COUNT rule the split keeps the total: the new row gets the occurrences the master loses,
+     * and a failure to count them fails the call with nothing written.
      *
-     * The split steps are wrapped in a single
-     * `ContentResolver.applyBatch` so a failure during the new-row
-     * INSERT leaves the master's RRULE untouched (no half-split
-     * state).
+     * The new row's insert and the master's truncation are one `applyBatch`, so a failed insert
+     * leaves the master's RRULE untouched. Exception rows in the truncated half are deleted
+     * afterwards, best effort, as in [deleteThisAndFuture].
      *
-     * @param masterEventId Master recurring event ID
-     * @param fromTimeMs Occurrence timestamp from which the split
-     *   applies (inclusive). When `<= masterEvent.startTs` the master
-     *   is updated in place — equivalent to "edit all events."
-     * @param isAllDay Whether the event is all-day (drives UNTIL form
-     *   on the truncated master)
-     * @param calendarId Target calendar ID for the new row
-     * @return Result containing the new event id (or master id when
-     *   the first-occurrence shortcut fired) or
-     *   [org.onekash.kashcal.error.CalendarError.DeviceCalendar].
+     * Guests, the organizer and tags are stored per event row, so the new row gets a copy of the
+     * master's guest rows, ORGANIZER and tag value in the same batch, as a new exception does. If
+     * any of them can't be read, nothing is written and a failure is returned. When the master is
+     * edited in place its guest rows are left untouched.
+     *
+     * @param fromTimeMs start of the first occurrence the edit applies to, inclusive
+     * @param isAllDay the edited all-day flag; the truncated master's UNTIL takes the master's
+     *   own flag
+     * @param calendarId the calendar for the new row
+     * @param reminders minutes before the start for the future half, written as pop-up alerts;
+     *   or null to keep the series' reminders with their types: the new row gets a copy of the
+     *   master's rows (failing, with nothing written, if they can't be read), and when the
+     *   master is edited in place its rows are left untouched.
+     * @param categories tags for the future half, replacing the series' tags (an empty list
+     *   means none); or null to keep the series' tags: the new row gets a copy of the master's
+     *   stored value, and when the master is edited in place its tags are untouched.
      */
     suspend fun editThisAndFuture(
         masterEventId: Long,
@@ -342,98 +287,68 @@ interface CalendarProviderRepository {
         rrule: String?,
         duration: String?,
         timezone: String,
-        reminders: List<Int>,
+        reminders: List<Int>?,
         availability: Int = 0,
         eventColor: Int? = null,
+        categories: List<String>? = null,
     ): Result<Long>
 
     /**
-     * Move an event to a different calendar.
-     *
-     * @param eventId Event ID to move
-     * @param newCalendarId Target calendar ID
-     * @return Result.success or CalendarError.DeviceCalendar
+     * Moves an event to [newCalendarId] by rewriting its CALENDAR_ID, then that of its exception
+     * rows, best effort, since the provider doesn't cascade the change.
      */
     suspend fun moveEventToCalendar(eventId: Long, newCalendarId: Long): Result<Unit>
 
-    /**
-     * Get maximum number of reminders allowed for a calendar.
-     *
-     * @param calendarId Calendar ID
-     * @return Maximum reminders, or 5 as default fallback
-     */
+    /** Returns the calendar's MAX_REMINDERS, at least 1, or 5 when the row can't be read. */
     suspend fun getMaxReminders(calendarId: Long): Int
 
     /**
-     * Get full event data from Events table (not Instances).
-     *
-     * Used for editing: provides RRULE string, timezone, etc.
-     *
-     * @param eventId Event ID
-     * @return DeviceEvent with full data, or null if not found
+     * Returns an Events row with its tags, or null if it can't be read. Doesn't filter on
+     * `DELETED`; see [isEventActive].
      */
     suspend fun getDeviceEvent(eventId: Long): DeviceEvent?
 
     /**
-     * Find the begin timestamp of the next occurrence of an event at or after [afterMs],
-     * read from the Instances view (so RRULE expansion, RDATE, and EXDATE are all honored).
+     * Returns the start of the event's first occurrence around [afterMs], read from the
+     * Instances view so RRULE, RDATE and EXDATE all apply. For a series this is an upcoming
+     * occurrence, not the master's DTSTART, which may be long past.
      *
-     * For a recurring series this is the next upcoming instance — NOT the master row's
-     * DTSTART, which is the first (possibly long-past) occurrence. Returns null when the
-     * event has no occurrence at or after [afterMs] (e.g. a fully-ended series) or the event
-     * doesn't exist / permission is denied.
-     *
-     * @param eventId CalendarProvider event ID
-     * @param afterMs Lower bound for the occurrence begin (epoch ms, inclusive)
-     * @return Begin timestamp (epoch ms) of the next occurrence, or null
+     * The window reaches one day before [afterMs], so today's occurrence is found even when it
+     * began earlier (an all-day one begins at UTC midnight); the result can therefore be before
+     * [afterMs]. It reaches about ten years ahead. Returns null when no occurrence falls in the
+     * window (an ended series) or the event doesn't exist.
      */
     suspend fun getNextOccurrenceStart(eventId: Long, afterMs: Long): Long?
 
     /**
-     * Get a master event together with all its exception rows, read directly from
-     * the Events table (NOT the Instances view).
+     * Returns a master and all its exception rows, sorted by ORIGINAL_INSTANCE_TIME, each with
+     * its tags; or null if the master or the exceptions can't be read.
      *
-     * Why Events and not Instances: STATUS_CANCELED exception rows represent
-     * deleted occurrences of a recurring series. The Instances view filters them
-     * out; exporting must preserve them as cancelled VEVENTs for RFC 5545
-     * round-trip fidelity. Reading Events directly surfaces every ORIGINAL_ID
-     * row regardless of status.
-     *
-     * Exceptions are returned sorted by ORIGINAL_INSTANCE_TIME ascending.
-     *
-     * @param masterEventId Master event ID
-     * @return (master, exceptions) pair, or null if master not found /
-     *         permission revoked / provider error
+     * Reads the Events table, not the Instances view: a STATUS_CANCELED exception is a deleted
+     * occurrence, which Instances leaves out, and export must keep it as a cancelled VEVENT to
+     * round-trip (RFC 5545). Every ORIGINAL_ID row is returned whatever its status.
      */
     suspend fun getDeviceEventWithExceptions(masterEventId: Long): Pair<DeviceEvent, List<DeviceEvent>>?
 
     /**
-     * Get the attendees (guests) of an event from the `Attendees` table.
+     * Returns an event's `Attendees` rows in provider order, or an empty list when it has none
+     * or the read fails.
      *
-     * On-demand single-event read used by the quick-view / edit form — NOT
-     * projected into the bulk Instances query that backs the calendar grid
-     * (avoids an N+1 per grid row). Returns an empty list when the event has
-     * no attendee rows, has no attendee data, or the read is denied.
-     *
-     * @param eventId Event ID
-     * @return Attendee rows in provider order, or empty
+     * Read for one event on demand (quick view, edit form); the Instances reads behind the
+     * calendar views don't load attendees, which would cost a query per row.
      */
     suspend fun getAttendees(eventId: Long): List<DeviceAttendee>
 
     /**
-     * Update the current user's own RSVP status on a device event by updating
-     * exactly one `Attendees` row (the one with [attendeeId] = `Attendees._ID`).
-     * No other attendee rows are inserted, deleted, or modified — so a guest's
-     * synced status is never clobbered by the user's own reply.
+     * Sets the user's own RSVP by updating only the `Attendees` row whose `_ID` is
+     * [attendeeId], so no guest's synced status is overwritten. Fails with `EventNotFound`
+     * when no row matched.
      *
-     * On a LOCAL account the row is written but no reply is delivered (no sync
-     * adapter); KashCal does not promise the organizer is notified.
+     * On a local account the row is written but no reply is delivered (no sync adapter); the app
+     * doesn't promise the organizer is notified.
      *
-     * @param eventId the event the attendee belongs to (for logging/scoping)
-     * @param attendeeId the `Attendees._ID` of the user's own row
-     * @param status the new status as a provider `ATTENDEE_STATUS_*` int
-     * @return Result.success when the row was updated; failure on permission
-     *   revoke or provider error
+     * @param eventId the attendee's event, for logging
+     * @param status a provider `ATTENDEE_STATUS_*` value
      */
     suspend fun updateSelfAttendeeStatus(
         eventId: Long,
@@ -441,66 +356,42 @@ interface CalendarProviderRepository {
         status: Int
     ): Result<Unit>
 
-    /**
-     * Get reminders for an event.
-     *
-     * @param eventId Event ID
-     * @return List of reminder minutes before event
-     */
+    /** Returns the minutes before the start of each of the event's reminders. */
     suspend fun getReminders(eventId: Long): List<Int>
 
     /**
-     * Get reminders for a batch of events in a single query.
-     *
-     * Used to avoid N+1 cursors when an operation needs reminders across a set
-     * of events (e.g. series export fetching both master + every exception).
-     * Impl must chunk to respect SQLite variable limits.
-     *
-     * @param eventIds Set of event IDs to fetch reminders for
-     * @return Map of eventId to list of reminder minutes before event
+     * Returns reminder minutes per event for [eventIds] in batched queries instead of one per
+     * event (range loads, series export). Implementations must chunk [eventIds] to stay under
+     * SQLite's bound-variable limit.
      */
     suspend fun getRemindersForEvents(eventIds: Set<Long>): Map<Long, List<Int>>
 
     /**
-     * Get the tag categories for a batch of events in a single query.
-     *
-     * Tags live in the generic per-event extended-property store, not on the
-     * event row, so a range load fetches them here in one batched query keyed on
-     * the visible event IDs (rather than one query per event). The read
-     * tolerates arbitrary foreign content — any casing, names this app never
-     * wrote — and returns an empty map if the read is denied. Events with no
-     * tags are simply absent from the map.
-     *
-     * @param eventIds Set of event IDs to fetch categories for
-     * @return Map of eventId to its list of tag names (only events that have any)
+     * Returns the tag names per event for [eventIds] in batched queries; events without tags are
+     * absent. Tags live in the extended-property store, not on the event row (see
+     * [decodeCategories] for what the read accepts).
      */
     suspend fun getCategoriesForEvents(eventIds: Set<Long>): Map<Long, List<String>>
 
     /**
-     * Find an existing exception event by master event ID and original instance time.
+     * Returns the id of the occurrence's exception row, or null if it has none, so an edit
+     * updates that row instead of creating a second one.
      *
-     * Used to detect if an occurrence has already been modified (exception exists).
-     * If so, we should update the existing exception rather than creating a new one.
+     * Only live rows count: a row that is deleted but not yet purged (`DELETED = 1`) or cancelled
+     * (`STATUS_CANCELED`) shows as no occurrence at all, so it is never returned. Writing to such
+     * a row would change nothing the user can see.
      *
-     * @param masterEventId Master recurring event ID
-     * @param originalInstanceTime Original occurrence timestamp
-     * @return Exception event ID if found, null otherwise
+     * @param isAllDay used only when the master can't be read; otherwise the master's all-day
+     *   flag names the occurrence
      */
     suspend fun findExceptionEventId(masterEventId: Long, originalInstanceTime: Long, isAllDay: Boolean = false): Long?
 
-    // ==================== Reminder Operations (Phase 4) ====================
+    // ==================== Reminders ====================
 
     /**
-     * Get the next upcoming device calendar reminder.
-     *
-     * Queries CalendarProvider for events with alarms, calculates trigger times,
-     * and returns the earliest upcoming reminder where triggerTime > afterMs.
-     *
-     * Uses (eventId, occurrenceStartTs) as stable composite key - NOT instanceId.
-     *
-     * @param enabledCalendarIds Set of calendar IDs to include
-     * @param afterMs Only return reminders with triggerTime after this (default: now)
-     * @return The next upcoming reminder, or null if none found
+     * Returns the reminder with the earliest trigger time after [afterMs] among occurrences of
+     * [enabledCalendarIds] with alarms in the next 30 days, or null if there is none.
+     * Occurrences the user declined are skipped. See [UpcomingDeviceReminder] for its key.
      */
     suspend fun getNextUpcomingReminder(
         enabledCalendarIds: Set<Long>,
@@ -508,17 +399,12 @@ interface CalendarProviderRepository {
     ): UpcomingDeviceReminder?
 
     /**
-     * Is the event present and not soft-deleted?
+     * Returns true if the Events row exists with `DELETED = 0`; false when it's missing, the
+     * read is denied or the provider fails.
      *
-     * CalendarProvider marks a user-deleted event as `DELETED = 1` and leaves
-     * the row in place until the sync adapter purges it. Queries by primary
-     * key (e.g. [getDeviceEvent]) do NOT filter on deletion state, so the
-     * reminder-fire path — which must not notify for events the user has
-     * already deleted — needs this dedicated predicate.
-     *
-     * @param eventId Event ID
-     * @return true iff the Events row exists with DELETED = 0 and the caller
-     *         holds READ_CALENDAR; false on any provider error or missing row
+     * The provider keeps a user-deleted event as `DELETED = 1` until the sync adapter purges it,
+     * and reads by id such as [getDeviceEvent] don't filter on that, so the reminder-fire path,
+     * which must not notify for an event the user deleted, checks here.
      */
     suspend fun isEventActive(eventId: Long): Boolean
 }

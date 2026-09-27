@@ -6,7 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for SyncSession status determination and computed properties.
+ * Tests [SyncSession.status] and the computed change, push, parse-failure and warning properties.
  */
 class SyncSessionTest {
 
@@ -38,7 +38,7 @@ class SyncSessionTest {
         errorType = errorType
     )
 
-    // Status determination tests
+    // Status
 
     @Test
     fun `status is FAILED when errorType is set`() {
@@ -60,7 +60,7 @@ class SyncSessionTest {
 
     @Test
     fun `status is FAILED even with parse errors if errorType is set`() {
-        // errorType takes priority over parse failures
+        // errorType wins over parse failures.
         val session = createSession(
             errorType = ErrorType.AUTH,
             skippedParseError = 5
@@ -68,7 +68,7 @@ class SyncSessionTest {
         assertEquals(SyncStatus.FAILED, session.status)
     }
 
-    // totalChanges tests
+    // totalChanges
 
     @Test
     fun `totalChanges sums written, updated, deleted`() {
@@ -86,7 +86,7 @@ class SyncSessionTest {
         assertEquals(0, session.totalChanges)
     }
 
-    // hasChanges tests
+    // hasChanges
 
     @Test
     fun `hasChanges is true when totalChanges greater than zero`() {
@@ -100,7 +100,7 @@ class SyncSessionTest {
         assertFalse(session.hasChanges)
     }
 
-    // hasParseFailures tests
+    // hasParseFailures
 
     @Test
     fun `hasParseFailures is true when skippedParseError greater than zero`() {
@@ -124,7 +124,7 @@ class SyncSessionTest {
         }
     }
 
-    // Push statistics tests
+    // Push statistics
 
     @Test
     fun `totalPushed sums created, updated, deleted`() {
@@ -181,7 +181,7 @@ class SyncSessionTest {
         assertFalse(session.hasAnyChanges)
     }
 
-    // Warnings tests
+    // Warnings
 
     @Test
     fun `hasWarnings is false when warnings is null (default)`() {
@@ -201,19 +201,19 @@ class SyncSessionTest {
         assertTrue(session.hasWarnings)
     }
 
-    // Backward compatibility tests
+    // Pull aliases: totalPullChanges and hasPullChanges match totalChanges and hasChanges
 
     @Test
     fun `hasChanges still works for pull-only (backward compat)`() {
         val session = createSession(eventsWritten = 1)
-        assertTrue(session.hasChanges)  // Original property
-        assertTrue(session.hasPullChanges)  // New alias
+        assertTrue(session.hasChanges)
+        assertTrue(session.hasPullChanges)  // alias
     }
 
     @Test
     fun `totalChanges still works for pull-only (backward compat)`() {
         val session = createSession(eventsWritten = 5, eventsUpdated = 3, eventsDeleted = 2)
-        assertEquals(10, session.totalChanges)  // Original property
-        assertEquals(10, session.totalPullChanges)  // New alias
+        assertEquals(10, session.totalChanges)
+        assertEquals(10, session.totalPullChanges)  // alias
     }
 }

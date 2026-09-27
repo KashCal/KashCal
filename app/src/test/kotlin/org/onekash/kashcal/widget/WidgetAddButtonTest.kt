@@ -12,13 +12,12 @@ import org.onekash.kashcal.R
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Unit tests for [WidgetAddButton] — the shared "add event" control in every
- * action-bearing widget header (agenda, week, month, upcoming).
+ * Tests [WidgetAddButton], the shared "add event" control in the agenda, week, month and
+ * upcoming widget headers.
  *
- * The button is a plain glyph with no filled chip behind it, so its accessibility rests
- * entirely on the two properties asserted here — a content description for screen readers
- * and a click action — plus a touch target at Material's 48dp guidance. Removing the
- * visible box must not weaken any of those.
+ * The button is a plain glyph with no filled chip behind it, so its accessibility rests on a
+ * content description for screen readers, a click action and a touch target at Material's 48dp
+ * guidance, the three things asserted here.
  */
 @RunWith(RobolectricTestRunner::class)
 class WidgetAddButtonTest {

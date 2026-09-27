@@ -21,13 +21,16 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Integration tests for cascade delete behavior.
+ * Tests the foreign-key delete rules over an in-memory database.
  *
- * Tests the FK CASCADE constraints:
+ * CASCADE:
  * - Delete Account → Calendars deleted
  * - Delete Calendar → Events deleted
  * - Delete Event → Occurrences deleted
  * - Delete Master Event → Exception Events deleted
+ * - Delete Account → the whole chain deleted
+ *
+ * SET_NULL: Delete Exception Event → its occurrence stays, with `exception_event_id` null.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])

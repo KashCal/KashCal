@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.MainActivity
 import org.onekash.kashcal.R
 
-/** Touch-target size for the header "add" button — Material's 48dp accessibility guidance. */
+/** Touch-target size of the header buttons, in dp, per Material's 48dp accessibility guidance. */
 internal const val WIDGET_ADD_BUTTON_TOUCH_TARGET_DP = 48
 
 /**
@@ -27,14 +27,13 @@ internal const val WIDGET_ADD_BUTTON_TOUCH_TARGET_DP = 48
 internal const val WIDGET_HEADER_GLYPH_SIZE_DP = 24
 
 /**
- * Plain "add event" glyph for widget headers.
+ * Renders the "add event" button for widget headers.
  *
- * A bare "+" tinted in [WidgetTheme.onHeaderBackground] — the same tone as the header's
- * title text, so it clears WCAG contrast against the accent-container header for every seed — with
- * no filled chip or shadow behind it. The visible glyph is small, but the clickable Box is
- * a full 48dp so the touch target still meets the accessibility guidance. The glyph is
- * centered in that box, giving equal inset on every side; a header that wants the glyph
- * symmetric with its top edge sets its own end padding equal to its top padding.
+ * A bare "+" with no chip or shadow, tinted [WidgetTheme.onHeaderBackground] like the header's
+ * title so it clears WCAG contrast against the header for every seed. The glyph is small but
+ * centered in a full 48dp clickable Box, which meets the touch-target guidance and gives equal
+ * inset on every side; a header that wants the glyph symmetric with its top edge sets its end
+ * padding equal to its top padding.
  */
 @Composable
 fun WidgetAddButton() {

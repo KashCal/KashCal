@@ -19,7 +19,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Exhaustive tests for VTODO generation per RFC 5545 Section 3.6.2.
+ * Tests VTODO generation (RFC 5545 §3.6.2).
  */
 @DisplayName("ICalGenerator VTODO Tests")
 class ICalGeneratorVTodoTest {
@@ -487,7 +487,7 @@ class ICalGeneratorVTodoTest {
             val ics = generator.generate(todo, method = null)
 
             assertTrue(ics.contains("RECURRENCE-ID:20231218T090000Z"))
-            assertFalse(ics.contains("RRULE:"))  // Instances don't have RRULE
+            assertFalse(ics.contains("RRULE:"))  // No RRULE; this exception sets none
         }
     }
 
@@ -646,7 +646,7 @@ class ICalGeneratorVTodoTest {
 
             val ics = generator.generate(todo, method = null)
 
-            // The description should be folded per RFC 5545
+            // Only checks that DESCRIPTION is written; folding isn't asserted.
             assertTrue(ics.contains("DESCRIPTION:"))
         }
     }

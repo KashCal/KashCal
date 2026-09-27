@@ -10,16 +10,15 @@ class NormalizerChain(private val lowercase: Boolean = true) : Normalizer {
         if (lowercase) {
             add(Normalizer { it.lowercase() })
         }
-        // Character cleanup: keep letters, digits, whitespace, and allowed punctuation
+        // Replaces every character outside CHAR_CLEANUP's keep set with a space.
         add(Normalizer { input -> CHAR_CLEANUP.replace(input, " ") })
-        // Whitespace normalization
+        // Collapses whitespace runs and trims.
         add(Normalizer { WHITESPACE.replace(it, " ").trim() })
-        // Fuzzy quantities ("a couple", "half an hour") → concrete number+unit.
-        // MUST precede NumberWordNormalizer, which maps "a"/"an" → 1.
+        // Must precede NumberWordNormalizer, which maps "a" and "an" to 1.
         add(FuzzyQuantifierNormalizer)
-        // Number words → digits (case-insensitive internally)
+        // Number words to digits, ignoring case.
         add(NumberWordNormalizer)
-        // Multi-word expressions → underscored (case-insensitive internally)
+        // Multi-word expressions to one underscored word, ignoring case.
         add(MultiWordNormalizer)
     }
 
@@ -28,7 +27,7 @@ class NormalizerChain(private val lowercase: Boolean = true) : Normalizer {
     }
 
     companion object {
-        // Keep Unicode letters/digits, whitespace, allowed punctuation, and emoji (So = Symbol, other)
+        // Keeps Unicode letters, digits, emoji (So, other symbol), whitespace and / ' : . -
         private val CHAR_CLEANUP = Regex("[^\\p{L}\\p{N}\\p{So}\\s/':.\\-]")
         private val WHITESPACE = Regex("\\s+")
     }

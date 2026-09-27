@@ -2,7 +2,7 @@ package org.onekash.kashcal.ui.viewmodels
 
 import app.cash.turbine.test
 import io.mockk.Ordering
-import io.mockk.clearMocks
+import io.mockk.confirmVerified
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -26,14 +26,19 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import org.onekash.kashcal.R
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
-import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
+import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
+import org.onekash.kashcal.data.calendar_provider.settingsManagerMock
 import org.onekash.kashcal.data.contacts.ContactEventManager
 import org.onekash.kashcal.data.contacts.ContactEventSyncResult
 import org.onekash.kashcal.data.credential.AccountCredentials
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.SyncLog
 import org.onekash.kashcal.data.ics.IcsSubscriptionRepository
@@ -44,46 +49,54 @@ import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.SyncLogReader
-import org.onekash.kashcal.domain.writer.EventWriter
+import org.onekash.kashcal.error.CalendarError
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.sync.discovery.AccountDiscoveryService
 import org.onekash.kashcal.sync.discovery.DiscoveredCalendar
+import org.onekash.kashcal.sync.discovery.DiscoveryErrorReason
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 import org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.AccountDetailSyncStatus
+import org.onekash.kashcal.ui.screens.settings.CalDavConnectionState
 import org.onekash.kashcal.ui.screens.settings.ContactSyncConfirmation
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.shared.EventColorPalette
+import org.onekash.kashcal.ui.util.UiMessage
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import java.util.UUID
 
 /**
- * Unit tests for AccountSettingsViewModel.
+ * Tests AccountSettingsViewModel.
  *
- * Tests cover:
- * - Initial state loading (Loading → Connected or NotConnected)
- * - Apple ID/Password input changes
- * - Help toggle
- * - Sign in flow (credentials validation, save, sync trigger)
- * - Sign out flow
- * - Calendar visibility toggle
- * - Default calendar selection
- * - Sync interval changes
- * - Reminder preference changes
- * - Notification permission state
- * - Flow integration with backend services
+ * Covers:
+ * - Initial state (Loading, then Connected or NotConnected), theme mode, accent color source and
+ *   seed, and the contact calendar color seeds
+ * - Apple ID, password and help inputs
+ * - iCloud and CalDAV sign-in (validation, timeout, errors, masked logging, display-name check,
+ *   account-scoped sync, initial setup mode) and sign-out
+ * - Force full sync, calendar visibility and the default calendar, Room and device
+ * - Sync interval, default reminders, event duration, event emojis, time format, widget events
+ *   per day, first day of week and week numbers
+ * - ICS subscriptions: add, toggle, update, refresh, and delete with undo (#133)
+ * - Sync logs, contact birthdays and anniversaries, and syncs after a reminder change
+ * - Sheet and snackbar state, and the iCloud Connected state across a CalDAV account creation
+ *   and an early calendar count
+ * - Edge cases: an empty calendar list, a null default calendar, whitespace around credentials
+ * - Account detail: sync now, the enable toggle, contact sync toggle and confirmation, rename,
+ *   password change and calendar discovery
+ * - Device calendars: refresh, toggles, list loading and ICS import
+ * - Settings search state
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AccountSettingsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
 
-    // Independent scheduler so tests can advance viewModelScope and
-    // applicationScope separately (issue #133 — proves the deferred commit
-    // is queued on a process-lifetime scope, not viewModelScope).
+    // A separate scheduler lets tests advance viewModelScope and applicationScope apart, proving
+    // a deferred commit is queued on the process-lifetime scope, not viewModelScope (#133).
     private val appDispatcher = StandardTestDispatcher()
     private val applicationScope = kotlinx.coroutines.CoroutineScope(
         kotlinx.coroutines.SupervisorJob() + appDispatcher
@@ -99,10 +112,9 @@ class AccountSettingsViewModelTest {
     private lateinit var syncLogReader: SyncLogReader
     private lateinit var contactEventManager: ContactEventManager
     private lateinit var calendarProviderManager: CalendarProviderManager
-    private lateinit var calendarProviderRepository: CalendarProviderRepository
+    private lateinit var calendarProviderRepository: FakeCalendarProviderRepository
     private lateinit var dataStore: KashCalDataStore
     private lateinit var widgetUpdateManager: WidgetUpdateManager
-    private lateinit var eventWriter: EventWriter
     private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
     private lateinit var backupExporter: org.onekash.kashcal.domain.backup.SettingsBackupExporter
     private lateinit var backupImporter: org.onekash.kashcal.domain.backup.SettingsBackupImporter
@@ -164,7 +176,6 @@ class AccountSettingsViewModelTest {
     fun setup() {
         Dispatchers.setMain(testDispatcher)
 
-        // Initialize mocks
         accountRepository = mockk(relaxed = true)
         userPreferences = mockk(relaxed = true)
         syncScheduler = mockk(relaxed = true)
@@ -173,17 +184,17 @@ class AccountSettingsViewModelTest {
         eventCoordinator = mockk(relaxed = true)
         syncLogReader = mockk(relaxed = true)
         contactEventManager = mockk(relaxed = true)
-        calendarProviderManager = mockk(relaxed = true)
-        calendarProviderRepository = mockk(relaxed = true)
+        // Strict: an unexpected manager call throws, and absence of a call is proved with
+        // verify(exactly = 0).
+        calendarProviderManager = settingsManagerMock()
+        calendarProviderRepository = FakeCalendarProviderRepository()
         dataStore = mockk(relaxed = true)
         widgetUpdateManager = mockk(relaxed = true)
-        eventWriter = mockk(relaxed = true)
         deviceCalendarReminderScheduler = mockk(relaxed = true)
         backupExporter = mockk(relaxed = true)
         backupImporter = mockk(relaxed = true)
         permissionChecker = org.onekash.kashcal.ui.permission.FakePermissionChecker()
 
-        // Setup flows
         calendarsFlow = MutableStateFlow(emptyList())
         iCloudCalendarCountFlow = MutableStateFlow(0)
         calDavAccountCountFlow = MutableStateFlow(0)
@@ -201,8 +212,8 @@ class AccountSettingsViewModelTest {
         anniversaryReminderFlow = MutableStateFlow(540)
         defaultEventDurationFlow = MutableStateFlow(60) // Default 60 minutes
 
-        // Setup default behaviors - EventCoordinator for calendars (architecture compliant)
-        // IMPORTANT: ViewModel uses combine() on getAllCalendars + getAllAccounts + defaultCalendarId
+        // The ViewModel combines getAllCalendars and getAllAccounts for the calendar list, so both
+        // must emit.
         every { eventCoordinator.getAllCalendars() } returns calendarsFlow
         every { eventCoordinator.getAllAccounts() } returns flowOf(emptyList())
         every { eventCoordinator.getICloudCalendarCount() } returns iCloudCalendarCountFlow
@@ -219,16 +230,13 @@ class AccountSettingsViewModelTest {
         coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns emptyList()
         coEvery { accountRepository.hasCredentials(any()) } returns false
 
-        // Mock ICS subscriptions flow
         every { eventCoordinator.getAllIcsSubscriptions() } returns flowOf(emptyList())
 
-        // Mock contact birthdays flows
         every { dataStore.contactBirthdaysEnabled } returns contactBirthdaysEnabledFlow
         every { dataStore.contactBirthdaysLastSync } returns contactBirthdaysLastSyncFlow
         every { dataStore.birthdayReminder } returns birthdayReminderFlow
         coEvery { eventCoordinator.getContactBirthdaysColor() } returns null
 
-        // Mock contact anniversaries flows
         every { dataStore.contactAnniversariesEnabled } returns contactAnniversariesEnabledFlow
         every { dataStore.contactAnniversariesLastSync } returns contactAnniversariesLastSyncFlow
         every { dataStore.anniversaryReminder } returns anniversaryReminderFlow
@@ -236,8 +244,8 @@ class AccountSettingsViewModelTest {
         coEvery { eventCoordinator.getContactBirthdayEventCount() } returns 0
         coEvery { eventCoordinator.getContactAnniversaryEventCount() } returns 0
 
-        // Accent color source/seed defaults (relaxed mock would return an empty flow, which
-        // would stall collectors). Explicit per de-relax guidance.
+        // Theme and accent flows are stubbed: a relaxed mock returns a flow with no emission,
+        // which stalls collectors.
         every { dataStore.theme } returns flowOf(KashCalDataStore.THEME_SYSTEM)
         every { dataStore.colorSource } returns flowOf(null)
         every { dataStore.accentSeed } returns flowOf(KashCalDataStore.ACCENT_SEED_DEFAULT)
@@ -250,8 +258,8 @@ class AccountSettingsViewModelTest {
     }
 
     private fun createViewModel(): AccountSettingsViewModel {
-        // Stub context.getString(...) to return the resource id's symbolic name so
-        // assertions on Exception.message remain stable under the relaxed mock.
+        // Stubs context.getString for the strings tests assert on, so messages are stable under
+        // the relaxed mock.
         val stubContext: android.content.Context = io.mockk.mockk(relaxed = true) {
             every { getString(org.onekash.kashcal.R.string.password_change_error_account_not_found) } returns "Account not found"
             every { getString(org.onekash.kashcal.R.string.password_change_error_no_credentials) } returns "No existing credentials"
@@ -272,10 +280,10 @@ class AccountSettingsViewModelTest {
             syncLogReader = syncLogReader,
             contactEventManager = contactEventManager,
             calendarProviderManager = calendarProviderManager,
-            calendarProviderRepository = calendarProviderRepository,
+            deviceEventReader = calendarProviderRepository.deviceEventReader(),
+            deviceEventWriter = calendarProviderRepository.deviceEventWriter(dataStore, calendarProviderManager),
             dataStore = dataStore,
             widgetUpdateManager = widgetUpdateManager,
-            eventWriter = eventWriter,
             deviceCalendarReminderScheduler = deviceCalendarReminderScheduler,
             backupExporter = backupExporter,
             backupImporter = backupImporter,
@@ -291,13 +299,13 @@ class AccountSettingsViewModelTest {
     fun `initial state is Loading`() = runTest {
         val viewModel = createViewModel()
 
-        // Should start with Loading state before coroutines complete
+        // Loading until the init coroutines run.
         assertTrue(viewModel.uiState.value.isLoading)
     }
 
     @Test
     fun `themeMode maps a stored value with no default seed`() = runTest {
-        // Cold flow: first emission is the stored value itself (no SYSTEM seed), which is what
+        // Cold flow: the first emission is the stored value itself, with no SYSTEM seed, which
         // lets the activity avoid a flash of the default theme on cold start.
         every { dataStore.theme } returns flowOf(KashCalDataStore.THEME_DARK)
         val viewModel = createViewModel()
@@ -319,12 +327,12 @@ class AccountSettingsViewModelTest {
         }
     }
 
-    // ---- accent color source + seed ----
+    // ---- accent color source and seed ----
 
     @Test
     fun `colorSource reflects the repository's resolved source`() = runTest {
-        // The migration/resolution logic lives in UserPreferencesRepository.resolvedColorSource
-        // (covered by ColorSourceTest); the VM simply surfaces it.
+        // Resolution lives in UserPreferencesRepository.resolvedColorSource (ColorSourceTest
+        // covers ColorSource.fromPrefValue); the VM surfaces it.
         every { userPreferences.resolvedColorSource } returns flowOf(org.onekash.kashcal.ui.theme.ColorSource.SEED)
         val viewModel = createViewModel()
 
@@ -418,7 +426,7 @@ class AccountSettingsViewModelTest {
         coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testDbAccount)
         coEvery { accountRepository.hasCredentials(testDbAccount.id) } returns true
         calendarsFlow.value = testCalendars
-        iCloudCalendarCountFlow.value = 3  // Checkpoint 2: Now uses iCloud-only count
+        iCloudCalendarCountFlow.value = 3  // Connected shows the iCloud-only count
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -467,13 +475,12 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Initially help is hidden
+        // Help starts hidden.
         viewModel.uiState.test {
             val state = expectMostRecentItem().iCloudState as ICloudConnectionState.NotConnected
             assertEquals(false, state.showHelp)
         }
 
-        // Toggle help on
         viewModel.onToggleHelp()
         advanceUntilIdle()
 
@@ -482,7 +489,6 @@ class AccountSettingsViewModelTest {
             assertEquals(true, state.showHelp)
         }
 
-        // Toggle help off
         viewModel.onToggleHelp()
         advanceUntilIdle()
 
@@ -496,7 +502,6 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onSignIn shows Connecting state then Connected`() = runTest {
-        // Mock successful discovery
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
             account = testDbAccount,
             calendars = testCalendars
@@ -513,7 +518,6 @@ class AccountSettingsViewModelTest {
         viewModel.onSignIn()
         advanceUntilIdle()
 
-        // After sign in completes, should be Connected
         viewModel.uiState.test {
             val state = expectMostRecentItem()
             assertTrue(state.iCloudState is ICloudConnectionState.Connected)
@@ -568,8 +572,8 @@ class AccountSettingsViewModelTest {
             viewModel.onSignIn()
             advanceUntilIdle()
 
-            // Guard against a vacuous pass: the discovery log line must actually
-            // have been emitted, and it must carry the masked form, not the raw id.
+            // Against a vacuous pass: the discovery log line must be emitted, and it must carry
+            // the masked form, not the raw id.
             assertTrue(
                 "Expected a discovery log line to be emitted; captured: $logMessages",
                 logMessages.any { it.contains("Starting iCloud discovery") }
@@ -589,7 +593,7 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onSignIn shows Connected on successful discovery`() = runTest {
-        // Mock successful discovery (credentials are saved inside discovery service)
+        // The discovery service saves the credentials.
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
             account = testDbAccount,
             calendars = testCalendars
@@ -614,7 +618,7 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onSignIn triggers account-scoped sync`() = runTest {
-        // Mock successful discovery (credentials saved inside discovery service)
+        // The discovery service saves the credentials.
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
             account = testDbAccount,
             calendars = testCalendars
@@ -635,7 +639,6 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onSignIn shows error when discovery fails with auth error`() = runTest {
-        // Mock auth failure
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.AuthError(
             message = "Invalid credentials"
         )
@@ -663,10 +666,9 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onSignIn times out and shows error after 30 seconds`() = runTest {
-        // Mock slow discovery that takes longer than timeout
+        // Discovery outlasts the 30 s timeout.
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } coAnswers {
-            // Simulate network delay longer than the 30s timeout
-            delay(60_000L) // 60 seconds
+            delay(60_000L)
             DiscoveryResult.Success(
                 account = testDbAccount,
                 calendars = testCalendars
@@ -681,7 +683,7 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         viewModel.onSignIn()
-        // Advance time past the timeout (30 seconds)
+        // Advances virtual time past the timeout.
         advanceUntilIdle()
 
         viewModel.uiState.test {
@@ -699,7 +701,6 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onSignIn shows error when discovery fails with general error`() = runTest {
-        // Mock general failure
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Error(
             message = "Network error"
         )
@@ -765,7 +766,6 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Verify connected first
         assertTrue(viewModel.uiState.value.iCloudState is ICloudConnectionState.Connected)
 
         viewModel.onSignOut()
@@ -776,17 +776,15 @@ class AccountSettingsViewModelTest {
             assertTrue(state.iCloudState is ICloudConnectionState.NotConnected)
         }
 
-        // Verify account removal was called (which handles credential cleanup)
+        // Account removal also cleans up the credentials.
         coVerify { discoveryService.removeAccountByEmail(testDbAccount.email) }
     }
 
     @Test
     fun `onSignOut delegates removal and does not cancel periodic sync itself`() = runTest {
-        // Periodic sync is shared across accounts, so sign-out must NOT cancel it
-        // unconditionally — that decision (cancel only when the LAST syncable
-        // account is gone) belongs to account removal (deleteAccount), reached
-        // here via removeAccountByEmail. An unconditional cancel here would kill
-        // periodic sync for other accounts that remain.
+        // Periodic sync is shared across accounts, so sign-out must not cancel it. Account
+        // removal (deleteAccount, reached through removeAccountByEmail) cancels it only when no
+        // syncable account remains; a cancel here would stop sync for the remaining accounts.
         coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(testDbAccount)
         coEvery { accountRepository.hasCredentials(testDbAccount.id) } returns true
 
@@ -802,10 +800,10 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onCalDavSignOut delegates removal so orphaned sync work is cancelled by deleteAccount`() = runTest {
-        // The CalDAV sign-out path funnels through calDavDiscoveryService.removeAccount,
-        // which delegates to AccountRepository.deleteAccount — the single choke point
-        // that cancels the shared one-shot (and last-account periodic) sync work. The
-        // ViewModel must not cancel periodic itself here either.
+        // CalDAV sign-out goes through calDavDiscoveryService.removeAccount to
+        // AccountRepository.deleteAccount, which cancels the shared one-shot sync work and, once
+        // no syncable account remains, the periodic work. The ViewModel must not cancel periodic
+        // sync itself.
         val accountId = 42L
 
         val viewModel = createViewModel()
@@ -828,8 +826,8 @@ class AccountSettingsViewModelTest {
         viewModel.forceFullSync()
         advanceUntilIdle()
 
-        // Verify banner flag is set BEFORE sync request. Force sync is user-initiated,
-        // so it opts into the visible sync notifications (showNotification=true).
+        // The banner flag is set before the sync request. Force sync is user-initiated, so it opts
+        // into the visible sync notifications (showNotification = true).
         verify(ordering = io.mockk.Ordering.ORDERED) {
             syncScheduler.setShowBannerForSync(true)
             syncScheduler.requestImmediateSync(forceFullSync = true, showNotification = true)
@@ -846,7 +844,6 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Hide calendar 1
         viewModel.onToggleCalendar(1L, false)
         advanceUntilIdle()
 
@@ -861,7 +858,6 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Show calendar 1
         viewModel.onToggleCalendar(1L, true)
         advanceUntilIdle()
 
@@ -879,7 +875,6 @@ class AccountSettingsViewModelTest {
         viewModel.onShowAllCalendars()
         advanceUntilIdle()
 
-        // Should call setCalendarVisibility(true) for each calendar
         coVerify { eventCoordinator.setCalendarVisibility(1L, true) }
         coVerify { eventCoordinator.setCalendarVisibility(2L, true) }
         coVerify { eventCoordinator.setCalendarVisibility(3L, true) }
@@ -896,7 +891,7 @@ class AccountSettingsViewModelTest {
         viewModel.onHideAllCalendars()
         advanceUntilIdle()
 
-        // First calendar stays visible, others hidden
+        // The first calendar stays visible; the others are hidden.
         coVerify { eventCoordinator.setCalendarVisibility(1L, true) }
         coVerify { eventCoordinator.setCalendarVisibility(2L, false) }
         coVerify { eventCoordinator.setCalendarVisibility(3L, false) }
@@ -911,14 +906,11 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Verify initial value
         assertEquals(1L, viewModel.defaultCalendarId.value)
 
-        // Change default calendar
         defaultCalendarIdFlow.value = 2L
         advanceUntilIdle()
 
-        // Verify updated value
         assertEquals(2L, viewModel.defaultCalendarId.value)
     }
 
@@ -993,14 +985,11 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Verify initial value
         assertEquals(15, viewModel.defaultReminderTimed.value)
 
-        // Update reminder value
         defaultReminderTimedFlow.value = 60
         advanceUntilIdle()
 
-        // Verify updated value
         assertEquals(60, viewModel.defaultReminderTimed.value)
     }
 
@@ -1095,9 +1084,9 @@ class AccountSettingsViewModelTest {
         }
     }
 
-    // Scheduling on add-success (and NOT on add-error) is asserted in
-    // EventCoordinatorTest: the coordinator owns every feed mutation, so the
-    // contract lives with it rather than with one of the screens that call it.
+    // EventCoordinatorTest asserts that a successful add reconciles the refresh schedule and a
+    // failed one doesn't: the coordinator owns every feed mutation, so the contract lives there,
+    // not with one of the screens that call it.
 
     @Test
     fun `onAddSubscription handles error gracefully`() = runTest {
@@ -1107,7 +1096,6 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Should not throw exception
         viewModel.onAddSubscription(
             url = "invalid-url",
             name = "Test",
@@ -1116,7 +1104,6 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
         appDispatcher.scheduler.advanceUntilIdle()
 
-        // Verify the method was called
         coVerify { eventCoordinator.addIcsSubscription("invalid-url", "Test", 0xFF000000.toInt()) }
     }
 
@@ -1171,9 +1158,8 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onAddSubscription duplicate with null message stays silent`() = runTest {
-        // Locks in the contract: if the caller forgets to pass
-        // duplicateUrlMessage, a duplicate is logged but does NOT
-        // surface a snackbar (won't crash, won't show wrong text).
+        // Without duplicateUrlMessage a duplicate is logged but surfaces no snackbar, so it
+        // neither crashes nor shows the wrong text.
         coEvery { eventCoordinator.addIcsSubscription(any(), any(), any()) } returns
             IcsSubscriptionRepository.SubscriptionResult.Error(
                 message = "Subscription already exists for this URL",
@@ -1187,7 +1173,7 @@ class AccountSettingsViewModelTest {
             url = "https://example.com/holidays.ics",
             name = "Holidays",
             color = 0xFFFF5722.toInt(),
-            // duplicateUrlMessage omitted — exercises the null default
+            // duplicateUrlMessage omitted: the null default
         )
         advanceUntilIdle()
         appDispatcher.scheduler.advanceUntilIdle()
@@ -1195,12 +1181,11 @@ class AccountSettingsViewModelTest {
         assertNull(viewModel.uiState.value.pendingSnackbarMessage)
     }
 
-    // Feed mutations run on applicationScope, not viewModelScope. Each one now
-    // ends by bringing the periodic refresh job in line with the database, and
-    // each sits downstream of a network fetch, so closing the settings screen
-    // mid-fetch on viewModelScope would cancel the coroutine before the schedule
-    // was updated and leave the feed with no job at all. Same reasoning as the
-    // deferred delete-commit below.
+    // The add, toggle and update feed mutations run on applicationScope, not viewModelScope; a
+    // manual refresh stays on viewModelScope. Each ends by reconciling the periodic refresh
+    // schedule, and some wait on a network fetch first, so closing the settings screen mid-fetch
+    // would cancel a viewModelScope coroutine before the schedule was updated and could leave the
+    // feed with no refresh job. The deferred delete commit below runs there for the same reason.
 
     @Test
     fun `onAddSubscription runs on applicationScope so it survives ViewModel destruction`() = runTest {
@@ -1223,7 +1208,7 @@ class AccountSettingsViewModelTest {
             name = "US Holidays",
             color = 0xFFFF5722.toInt()
         )
-        // Drain ONLY viewModelScope. If the add were queued there, it would run.
+        // Drains only viewModelScope; an add queued there would run.
         advanceUntilIdle()
         coVerify(exactly = 0) { eventCoordinator.addIcsSubscription(any(), any(), any()) }
 
@@ -1246,8 +1231,8 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onUpdateSubscription runs on applicationScope so it survives ViewModel destruction`() = runTest {
-        // The interval change is the one that most needs to survive: the user
-        // picks "Every hour" and immediately backs out of the sheet.
+        // The interval change most needs to survive: the user picks "Every hour" and backs out
+        // of the sheet at once.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -1271,9 +1256,8 @@ class AccountSettingsViewModelTest {
     // ==================== ICS Subscription delete-with-undo (issue #133) ====================
 
     /**
-     * Build the underlying-flow MutableStateFlow used to drive the
-     * eventCoordinator.getAllIcsSubscriptions() mock for this group of tests.
-     * Each test calls this once before createViewModel() so the VM observes it.
+     * Returns the flow behind the eventCoordinator.getAllIcsSubscriptions() stub. Call it once
+     * before createViewModel() so the VM observes it.
      */
     private fun buildSubscriptionFlow(
         initial: List<IcsSubscription> = emptyList()
@@ -1307,7 +1291,7 @@ class AccountSettingsViewModelTest {
         )
         advanceUntilIdle()
 
-        // Pending state set; coordinator NOT called yet.
+        // Pending state is set; the coordinator isn't called yet.
         assertEquals(42L, viewModel.uiState.value.pendingSubscriptionDeletionId)
         coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(any()) }
     }
@@ -1342,7 +1326,7 @@ class AccountSettingsViewModelTest {
 
         val viewModel = createViewModel()
         advanceUntilIdle()
-        // Both visible before swipe
+        // Both visible before the swipe.
         assertEquals(2, viewModel.subscriptions.value.size)
 
         viewModel.onDeleteSubscription(
@@ -1355,7 +1339,7 @@ class AccountSettingsViewModelTest {
         val ids = viewModel.subscriptions.value.map { it.id }
         assertFalse("pending id 42 must be filtered", ids.contains(42L))
         assertTrue("non-pending id 43 must remain", ids.contains(43L))
-        // Sanity: keep raw flow as untouched evidence
+        // The raw flow is untouched.
         assertEquals(2, raw.value.size)
     }
 
@@ -1377,9 +1361,9 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.pendingSubscriptionDeletionId)
-        // Subscription is back in the displayed list
+        // The subscription is back in the displayed list.
         assertTrue(viewModel.subscriptions.value.any { it.id == 42L })
-        // Coordinator NEVER called
+        // The coordinator is never called.
         coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(any()) }
     }
 
@@ -1408,9 +1392,8 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `commit runs on applicationScope so it survives ViewModel destruction`() = runTest {
-        // Proves the deferred commit is launched on a scope that outlives the
-        // ViewModel — required for the scenario where the user swipes and
-        // immediately exits the Activity (issue #133, v23.7.8).
+        // The deferred commit is launched on a scope that outlives the ViewModel, for a user who
+        // swipes and exits the Activity at once (#133, v23.7.8).
         buildSubscriptionFlow(listOf(sampleSubscription(42L)))
         coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
 
@@ -1424,21 +1407,20 @@ class AccountSettingsViewModelTest {
         )
         advanceUntilIdle()
         viewModel.onSubscriptionDeletionSettled()
-        // Drain ONLY the viewModelScope's scheduler. If the commit were on
-        // viewModelScope, it would run here.
+        // Drains only viewModelScope's scheduler; a commit on viewModelScope would run here.
         advanceUntilIdle()
 
         coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(any()) }
 
-        // Now drain the applicationScope's scheduler. The commit must fire here.
+        // Draining applicationScope's scheduler must fire the commit.
         appDispatcher.scheduler.advanceUntilIdle()
         coVerify(exactly = 1) { eventCoordinator.removeIcsSubscription(42L) }
     }
 
     @Test
     fun `eager-replace commit also runs on applicationScope`() = runTest {
-        // The "swipe B while A is still pending" path must also commit A on
-        // applicationScope, not viewModelScope (issue #133, v23.7.8).
+        // Swiping B while A is pending must also commit A on applicationScope, not
+        // viewModelScope (#133, v23.7.8).
         buildSubscriptionFlow(
             listOf(sampleSubscription(42L), sampleSubscription(43L))
         )
@@ -1450,8 +1432,8 @@ class AccountSettingsViewModelTest {
         viewModel.onDeleteSubscription(42L, "Removed", "Undo")
         advanceUntilIdle()
         viewModel.onDeleteSubscription(43L, "Removed", "Undo")
-        // Drain viewModelScope. The eager-replace commit for 42 must be queued
-        // on applicationScope, not fired here.
+        // Drains viewModelScope; the eager-replace commit for 42 must be queued on
+        // applicationScope, not fired here.
         advanceUntilIdle()
         coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(42L) }
 
@@ -1484,9 +1466,9 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `ViewModel destruction commits any pending subscription deletion`() = runTest {
-        // Reproduces the v23.7.8 user report: swipe a subscription, then exit
-        // the Activity (back twice → finish() → ViewModel.onCleared) before
-        // the snackbar times out. The deferred commit must still fire.
+        // The v23.7.8 user report: swipe a subscription, then exit the Activity (back twice,
+        // finish(), ViewModel.onCleared) before the snackbar times out. The deferred commit must
+        // still fire.
         buildSubscriptionFlow(listOf(sampleSubscription(42L)))
         coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
 
@@ -1500,9 +1482,9 @@ class AccountSettingsViewModelTest {
         )
         advanceUntilIdle()
 
-        // Snackbar's LaunchedEffect coroutine throws CancellationException
-        // when the Activity is destroyed; SnackbarResult.Dismissed never
-        // fires. The commit must come from onCleared instead.
+        // The snackbar's LaunchedEffect coroutine throws CancellationException when the Activity
+        // is destroyed, so SnackbarResult.Dismissed never fires; the commit must come from
+        // onCleared.
         viewModel.onClearedForTest()
         advanceUntilIdle()
         appDispatcher.scheduler.advanceUntilIdle()
@@ -1527,8 +1509,7 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `ViewModel destruction after undo does not commit`() = runTest {
-        // After undo, pending state is cleared; ViewModel destruction must
-        // NOT commit a stale value.
+        // Undo clears the pending state, so ViewModel destruction must not commit a stale value.
         buildSubscriptionFlow(listOf(sampleSubscription(42L)))
         coEvery { eventCoordinator.removeIcsSubscription(any()) } returns Unit
 
@@ -1571,7 +1552,7 @@ class AccountSettingsViewModelTest {
         // Eager-replace commit runs on applicationScope.
         appDispatcher.scheduler.advanceUntilIdle()
 
-        // First (42) committed; second (43) staged.
+        // The first (42) is committed; the second (43) is staged.
         coVerify(exactly = 1) { eventCoordinator.removeIcsSubscription(42L) }
         assertEquals(43L, viewModel.uiState.value.pendingSubscriptionDeletionId)
     }
@@ -1592,13 +1573,13 @@ class AccountSettingsViewModelTest {
             undoActionLabel = "Undo"
         )
         advanceUntilIdle()
-        // External actor (server-side delete) removes id=42 from underlying flow.
+        // Something else, such as a server-side delete, removes 42 from the underlying flow.
         raw.value = listOf(sampleSubscription(43L))
         advanceUntilIdle()
 
         assertNull(viewModel.uiState.value.pendingSubscriptionDeletionId)
 
-        // A subsequent settle is now a no-op.
+        // A later settle is a no-op.
         viewModel.onSubscriptionDeletionSettled()
         advanceUntilIdle()
         coVerify(exactly = 0) { eventCoordinator.removeIcsSubscription(any()) }
@@ -1637,7 +1618,7 @@ class AccountSettingsViewModelTest {
     fun `onSyncAllSubscriptions sets subscriptionSyncing during sync`() = runTest {
         val syncCount = IcsSubscriptionRepository.SyncCount(added = 5, updated = 2, deleted = 1)
         coEvery { eventCoordinator.forceRefreshAllIcsSubscriptions() } coAnswers {
-            delay(100) // Simulate async work
+            delay(100) // async work
             listOf(IcsSubscriptionRepository.SyncResult.Success(syncCount))
         }
 
@@ -1646,16 +1627,15 @@ class AccountSettingsViewModelTest {
 
         viewModel.onSyncAllSubscriptions()
 
-        // Need to advance scheduler slightly to let the coroutine start and set the flag
+        // Advances the scheduler enough for the coroutine to start and set the flag.
         testScheduler.advanceTimeBy(10)
         testScheduler.runCurrent()
 
-        // Should be syncing during the async work
         assertTrue(viewModel.subscriptionSyncing.value)
 
         advanceUntilIdle()
 
-        // Should be false after completion
+        // Cleared after completion.
         assertEquals(false, viewModel.subscriptionSyncing.value)
     }
 
@@ -1686,7 +1666,6 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Should not throw exception
         viewModel.onSyncAllSubscriptions()
         advanceUntilIdle()
 
@@ -1702,11 +1681,11 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Should not throw exception to caller
+        // The exception doesn't reach the caller.
         viewModel.onSyncAllSubscriptions()
         advanceUntilIdle()
 
-        // subscriptionSyncing should be reset even after error
+        // subscriptionSyncing is reset even after the error.
         assertEquals(false, viewModel.subscriptionSyncing.value)
     }
 
@@ -1760,12 +1739,10 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Initially empty
         viewModel.subscriptions.test {
             assertTrue(expectMostRecentItem().isEmpty())
         }
 
-        // Add subscription
         val newSubscription = IcsSubscription(
             id = 1L,
             url = "https://example.com/cal.ics",
@@ -1776,7 +1753,6 @@ class AccountSettingsViewModelTest {
         subscriptionsFlow.value = listOf(newSubscription)
         advanceUntilIdle()
 
-        // Should reflect new subscription
         viewModel.subscriptions.test {
             assertEquals(1, expectMostRecentItem().size)
         }
@@ -1797,16 +1773,13 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Initially has one subscription
         viewModel.subscriptions.test {
             assertEquals(1, expectMostRecentItem().size)
         }
 
-        // Remove subscription
         subscriptionsFlow.value = emptyList()
         advanceUntilIdle()
 
-        // Should be empty
         viewModel.subscriptions.test {
             assertTrue(expectMostRecentItem().isEmpty())
         }
@@ -1924,14 +1897,11 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Verify initial value
         assertEquals(2, viewModel.calendars.value.size)
 
-        // Update calendars
         calendarsFlow.value = testCalendars
         advanceUntilIdle()
 
-        // Verify updated value
         assertEquals(3, viewModel.calendars.value.size)
     }
 
@@ -2005,8 +1975,8 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         coVerify { dataStore.setFirstDayOfWeek(java.util.Calendar.MONDAY) }
-        // The month/week widgets lay out from the first-day-of-week, so the change must reach
-        // them now rather than waiting for the next periodic update.
+        // The month and week widgets lay out from the first day of the week, so the change must
+        // reach them now, not at the next periodic update.
         coVerify { widgetUpdateManager.updateAllWidgets(any()) }
     }
 
@@ -2252,7 +2222,7 @@ class AccountSettingsViewModelTest {
     @Test
     fun `rapid onContactBirthdaysReminderChange calls cancel prior in-flight sync`() = runTest {
         contactBirthdaysEnabledFlow.value = true
-        // Make sync slow so the second call cancels the first before it reaches sync
+        // A slow sync, so an in-flight first call would still be running when the second arrives.
         coEvery { eventCoordinator.syncContactBirthdays() } coAnswers {
             delay(1_000L)
             ContactEventSyncResult.Success(0, 0, 0)
@@ -2265,9 +2235,8 @@ class AccountSettingsViewModelTest {
         viewModel.onContactBirthdaysReminderChange(60)
         advanceUntilIdle()
 
-        // The first coroutine is cancelled before it runs (queued on StandardTestDispatcher,
-        // cancelled by the second call before either reaches its first suspension point).
-        // Only the most recent value is persisted, and only one sync call fires.
+        // The first coroutine is queued on StandardTestDispatcher and cancelled by the second call
+        // before it runs, so only the latest value is persisted and one sync call fires.
         coVerify(exactly = 0) { dataStore.setBirthdayReminder(30) }
         coVerify(exactly = 1) { dataStore.setBirthdayReminder(60) }
         coVerify(exactly = 1) { eventCoordinator.syncContactBirthdays() }
@@ -2381,7 +2350,6 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onSignIn shows success sheet when not in initial setup`() = runTest {
-        // Mock successful discovery
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
             account = testDbAccount,
             calendars = testCalendars
@@ -2391,7 +2359,7 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // NOT in initial setup mode (default)
+        // Not in initial setup mode (the default).
         viewModel.onAppleIdChange("test@icloud.com")
         viewModel.onPasswordChange("xxxx-xxxx-xxxx-xxxx")
         advanceUntilIdle()
@@ -2408,7 +2376,6 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onSignIn skips success sheet in initial setup mode`() = runTest {
-        // Mock successful discovery
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
             account = testDbAccount,
             calendars = testCalendars
@@ -2418,7 +2385,6 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Set initial setup mode
         viewModel.setInitialSetupMode(true)
         viewModel.onAppleIdChange("test@icloud.com")
         viewModel.onPasswordChange("xxxx-xxxx-xxxx-xxxx")
@@ -2460,7 +2426,6 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `handles credentials with whitespace`() = runTest {
-        // Mock successful discovery
         coEvery { discoveryService.discoverAndCreateAccount(any(), any()) } returns DiscoveryResult.Success(
             account = testDbAccount,
             calendars = testCalendars
@@ -2477,7 +2442,7 @@ class AccountSettingsViewModelTest {
         viewModel.onSignIn()
         advanceUntilIdle()
 
-        // Verify trimmed credentials are passed to discovery
+        // Discovery gets the trimmed credentials.
         coVerify {
             discoveryService.discoverAndCreateAccount(
                 "test@icloud.com",
@@ -2486,7 +2451,7 @@ class AccountSettingsViewModelTest {
         }
     }
 
-    // ==================== Account-Scoped Sync Tests (Bug 1 regression) ====================
+    // ==================== Account-scoped sync after sign-in ====================
 
     @Test
     fun `iCloud sign-in syncs only new account not all accounts`() = runTest {
@@ -2507,9 +2472,8 @@ class AccountSettingsViewModelTest {
         viewModel.onSignIn()
         advanceUntilIdle()
 
-        // Should sync only the new account
+        // Syncs only the new account, never a global sync of all accounts.
         verify { syncScheduler.syncAccount(7L, forceFullSync = true) }
-        // Should NOT trigger a global sync of all accounts
         verify(exactly = 0) { syncScheduler.requestImmediateSync(any()) }
     }
 
@@ -2531,10 +2495,9 @@ class AccountSettingsViewModelTest {
             )
         )
 
-        // Mock display name available
         coEvery { calDavDiscoveryService.isDisplayNameAvailable(any()) } returns true
 
-        // Mock discovery phase
+        // Discovery, then account creation.
         coEvery {
             calDavDiscoveryService.discoverCalendars(any(), any(), any(), any())
         } returns DiscoveryResult.CalendarsFound(
@@ -2545,7 +2508,6 @@ class AccountSettingsViewModelTest {
             calendars = discoveredCalendars
         )
 
-        // Mock account creation phase
         coEvery {
             calDavDiscoveryService.createAccountWithSelectedCalendars(
                 any(), any(), any(), any(), any(), any(), any(), any()
@@ -2566,7 +2528,6 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Set CalDAV inputs
         viewModel.onCalDavServerUrlChange("https://nextcloud.example.com")
         viewModel.onCalDavDisplayNameChange("Nextcloud")
         viewModel.onCalDavUsernameChange("user")
@@ -2576,17 +2537,16 @@ class AccountSettingsViewModelTest {
         viewModel.onCalDavDiscover()
         advanceUntilIdle()
 
-        // Should sync only the new CalDAV account
+        // Syncs only the new CalDAV account, never a global sync of all accounts.
         verify { syncScheduler.syncAccount(42L, forceFullSync = true) }
-        // Should NOT trigger a global sync of all accounts
         verify(exactly = 0) { syncScheduler.requestImmediateSync(any()) }
     }
 
-    // ==================== iCloud Race Condition Tests (Bug 2 regression) ====================
+    // ==================== iCloud state stays Connected ====================
 
     @Test
     fun `iCloud account visible in uiState after CalDAV creation`() = runTest {
-        // Set up iCloud account as already connected
+        // iCloud is already connected.
         val iCloudAccount = testDbAccount.copy(lastSuccessfulSyncAt = System.currentTimeMillis())
         coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(iCloudAccount)
         coEvery { accountRepository.hasCredentials(iCloudAccount.id) } returns true
@@ -2595,14 +2555,13 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Verify iCloud is Connected
         val stateBeforeCalDav = viewModel.uiState.value.iCloudState
         assertTrue(
             "Expected Connected but was $stateBeforeCalDav",
             stateBeforeCalDav is ICloudConnectionState.Connected
         )
 
-        // Now create a CalDAV account
+        // Then a CalDAV account is created.
         val calDavAccount = Account(
             id = 42L,
             provider = AccountProvider.CALDAV,
@@ -2647,7 +2606,7 @@ class AccountSettingsViewModelTest {
         viewModel.onCalDavDiscover()
         advanceUntilIdle()
 
-        // iCloud should STILL be Connected after CalDAV creation
+        // iCloud is still Connected after the CalDAV creation.
         val stateAfterCalDav = viewModel.uiState.value.iCloudState
         assertTrue(
             "Expected Connected but was $stateAfterCalDav",
@@ -2661,25 +2620,24 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `iCloudState Connected survives early calendar count emission`() = runTest {
-        // Set up: iCloud account exists with credentials
+        // An iCloud account with credentials.
         val iCloudAccount = testDbAccount.copy(lastSuccessfulSyncAt = System.currentTimeMillis())
         coEvery { accountRepository.getAccountsByProvider(AccountProvider.ICLOUD) } returns listOf(iCloudAccount)
         coEvery { accountRepository.hasCredentials(iCloudAccount.id) } returns true
 
-        // Calendar count flow starts with non-zero value (emits immediately)
+        // The calendar count flow emits a non-zero value at once.
         iCloudCalendarCountFlow.value = 3
 
-        // Create ViewModel — init launches both loadInitialState() and observeICloudCalendarCount()
+        // Init launches both loadInitialState() and observeICloudCalendarCount().
         val viewModel = createViewModel()
 
-        // Advance one step: Flow collector runs, reads NotConnected (loadInitialState hasn't completed),
-        // but the removed else-branch means no side effect of setting _iCloudAccount = null
+        // One step: the count collector runs while the state is still NotConnected and must leave
+        // it alone.
         testDispatcher.scheduler.advanceTimeBy(0)
 
-        // Now let everything complete — loadInitialState() finishes, sets Connected
+        // loadInitialState() then finishes and sets Connected.
         advanceUntilIdle()
 
-        // iCloudState should be Connected with the calendar count
         val state = viewModel.uiState.value.iCloudState
         assertTrue(
             "Expected Connected but was $state",
@@ -2803,9 +2761,8 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `syncAccountNow also pulls contacts when contact sync is enabled for the account`() = runTest {
-        // "Sync now" in the account sheet must cover contacts too when the user
-        // has contact sync on — otherwise the manual sync silently skips them and
-        // they only refresh at the next periodic tick.
+        // "Sync now" in the account sheet must cover contacts when contact sync is on; otherwise
+        // the manual sync silently skips them until the next periodic tick.
         val workId = UUID.randomUUID()
         val syncStatusFlow = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
         every { syncScheduler.syncAccount(10L) } returns workId
@@ -2818,8 +2775,8 @@ class AccountSettingsViewModelTest {
         viewModel.syncAccountNow(10L)
         advanceUntilIdle()
 
-        // Scoped to this account — a single-account "Sync now" must not re-sweep
-        // every other contact-sync login's address books.
+        // Scoped to this account: a single-account "Sync now" must not re-sweep every other
+        // contact-sync login's address books.
         verify { syncScheduler.requestImmediateContactSync(10L) }
     }
 
@@ -2842,8 +2799,8 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `syncAccountNow does not pull contacts when contacts permission is missing`() = runTest {
-        // Even with the flag on, a revoked WRITE_CONTACTS grant means the pull would
-        // only skip-and-flag — don't kick it (mirrors the enable-path gate).
+        // Even with the flag on, without the contacts grants the pull would only skip and flag,
+        // so it isn't kicked (the same gate as the enable path).
         permissionChecker.readContacts = false
         permissionChecker.writeContacts = false
         val workId = UUID.randomUUID()
@@ -2863,10 +2820,9 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `syncAccountNow raises the re-grant banner when contact sync is on but permission is missing`() = runTest {
-        // "Sync now" is a manual entry point that can run for a login whose periodic
-        // contact job was never scheduled, so the background worker never fires to
-        // raise the banner. Raise it here, mirroring the enable path, so the user sees
-        // why contacts didn't refresh.
+        // "Sync now" can run for a login whose periodic contact job was never scheduled, so the
+        // background worker never raises the banner. It is raised here, as on the enable path,
+        // so the user sees why contacts didn't refresh.
         permissionChecker.readContacts = false
         permissionChecker.writeContacts = false
         val workId = UUID.randomUUID()
@@ -2903,8 +2859,8 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `syncAccountNow does not touch the re-grant banner when contact sync is off`() = runTest {
-        // A login without contact sync shouldn't flip the contact-sync feature's
-        // re-grant flag — that flag belongs to the feature, not to calendar sync.
+        // A login without contact sync must not flip the contact-sync re-grant flag; the flag
+        // belongs to that feature, not to calendar sync.
         val workId = UUID.randomUUID()
         val syncStatusFlow = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
         every { syncScheduler.syncAccount(10L) } returns workId
@@ -2961,18 +2917,18 @@ class AccountSettingsViewModelTest {
         viewModel.onToggleContactSync(10L, true)
         advanceUntilIdle()
 
-        // Without the immediate kick, contacts wouldn't sync until the next
-        // periodic tick (>=15 min) — and only if periodic was ever scheduled.
+        // Without the immediate kick, contacts wouldn't sync until the next periodic tick
+        // (>= 15 min), and only if periodic work was ever scheduled.
         verify { syncScheduler.requestImmediateContactSync() }
-        // Ensure the recurring job exists too, so it isn't a one-time import.
+        // The recurring job is ensured too, so it isn't a one-time import.
         verify { syncScheduler.ensureContactSyncScheduled(any()) }
     }
 
     @Test
     fun `onToggleContactSync enable shows an inline confirmation naming the masked account`() = runTest {
-        // The confirmation lives in a sheet-local uiState field, NOT the snackbar:
-        // the SnackbarHost sits in the base window and renders behind the open
-        // ModalBottomSheet, so a snackbar only appears after the sheet is dismissed.
+        // The confirmation lives in a sheet-local uiState field, not the snackbar: the
+        // SnackbarHost sits in the base window and renders behind the open ModalBottomSheet, so a
+        // snackbar only appears after the sheet is dismissed.
         coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -2984,12 +2940,12 @@ class AccountSettingsViewModelTest {
             "Syncing contacts for u***@example.com",
             viewModel.uiState.value.contactSyncConfirmation?.message
         )
-        // Enabling is benign — the checkmark tone, not a warning.
+        // Enabling is benign: the checkmark tone, not a warning.
         assertEquals(
             ContactSyncConfirmation.Tone.POSITIVE,
             viewModel.uiState.value.contactSyncConfirmation?.tone
         )
-        // Must not leak into the (behind-the-sheet) snackbar channel.
+        // It must not leak into the snackbar channel behind the sheet.
         assertNull(viewModel.uiState.value.pendingSnackbarMessage)
     }
 
@@ -3008,8 +2964,8 @@ class AccountSettingsViewModelTest {
             "Device contacts for u***@example.com removed",
             viewModel.uiState.value.contactSyncConfirmation?.message
         )
-        // Removing device contacts is destructive — it must carry the warning tone so
-        // the sheet doesn't render it with the same celebratory checkmark as enabling.
+        // Removing device contacts is destructive, so it carries the warning tone, not the
+        // checkmark enabling shows.
         assertEquals(
             ContactSyncConfirmation.Tone.WARNING,
             viewModel.uiState.value.contactSyncConfirmation?.tone
@@ -3019,9 +2975,8 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onToggleContactSync disable kept by a sibling stays a positive-tone confirmation`() = runTest {
-        // Contacts weren't removed — a same-email sibling still syncs them, so the
-        // purge was NOT_ATTEMPTED. Nothing destructive happened, so the confirmation
-        // must read as benign (positive tone), not a warning.
+        // A same-email sibling still syncs the contacts, so the purge was NOT_ATTEMPTED and
+        // nothing was removed; the confirmation must read as benign (positive tone).
         coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
         coEvery { accountRepository.setContactSyncEnabled(10L, false) } returns
             org.onekash.kashcal.data.repository.ContactPurgeOutcome.NOT_ATTEMPTED
@@ -3054,10 +3009,9 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onToggleContactSync enable without contacts permission persists flag but does not kick sync`() = runTest {
-        // Defense-in-depth: the UI gates enabling behind a permission request,
-        // but if the VM enable path is reached without READ+WRITE the pull would
-        // only skip-and-flag downstream. Persist the flag (so the re-grant banner
-        // shows) but don't kick a pull or claim we're syncing.
+        // The UI gates enabling behind a permission request, but if the VM enable path is reached
+        // without read and write the pull would only skip and flag. The flag is persisted, so the
+        // re-grant banner shows, but no pull is kicked and no syncing is claimed.
         permissionChecker.readContacts = false
         permissionChecker.writeContacts = false
         val viewModel = createViewModel()
@@ -3070,14 +3024,14 @@ class AccountSettingsViewModelTest {
         verify(exactly = 0) { syncScheduler.requestImmediateContactSync() }
         verify(exactly = 0) { syncScheduler.ensureContactSyncScheduled(any()) }
         assertNull(viewModel.uiState.value.pendingSnackbarMessage)
-        // No "Syncing contacts for…" claim when the pull can't actually run.
+        // No "Syncing contacts for…" claim when the pull can't run.
         assertNull(viewModel.uiState.value.contactSyncConfirmation)
     }
 
     @Test
     fun `onToggleContactSync enable with only write permission does not kick sync`() = runTest {
-        // A partial grant (write but not read) can't mirror server contacts, so
-        // it must not enable the pull — mirrors contactSyncPermissionGranted.
+        // A partial grant (write but not read) can't copy server contacts to the device, so it
+        // must not start the pull (contactSyncPermissionGranted).
         permissionChecker.readContacts = false
         permissionChecker.writeContacts = true
         val viewModel = createViewModel()
@@ -3092,11 +3046,10 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `hasContactsSyncPermission requires both read and write`() = runTest {
-        // The sync toggle needs READ + WRITE (it mirrors server contacts onto the
-        // device). It must NOT reuse the read-only hasContactsPermission signal
-        // (that one gates the birthday/anniversary reads, which need READ alone) —
-        // otherwise a read-granted/write-denied login flips the toggle on but never
-        // requests WRITE, never pulls, and shows nothing.
+        // The sync toggle needs read and write, since it writes server contacts to the device.
+        // Reusing the read-only hasContactsPermission (which gates the birthday and anniversary
+        // reads) would let a read-granted, write-denied login turn the toggle on and then never
+        // request write, never pull, and show nothing.
         permissionChecker.readContacts = true
         permissionChecker.writeContacts = false
         val viewModel = createViewModel()
@@ -3114,10 +3067,9 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onToggleContactSync enable without permission flags the re-grant banner`() = runTest {
-        // The re-grant banner reads contactSyncPermissionNeeded. If we relied only
-        // on the background worker to set it, a never-scheduled login (manual-only,
-        // or predating the feature) would show no feedback at all — the worker
-        // never runs. Flag it at enable time.
+        // The re-grant banner reads contactSyncPermissionNeeded. Left to the background worker, a
+        // never-scheduled login (manual-only, or older than the feature) would get no feedback,
+        // since the worker never runs, so it is flagged at enable time.
         permissionChecker.readContacts = false
         permissionChecker.writeContacts = false
         val viewModel = createViewModel()
@@ -3142,9 +3094,9 @@ class AccountSettingsViewModelTest {
 
     @Test
     fun `onToggleContactSync enable on manual-only interval imports once without scheduling periodic`() = runTest {
-        // Manual-only is the repository's Long.MAX_VALUE sentinel. As with calendar
-        // sync, we don't schedule a periodic contact job in that mode, but we still
-        // fire the one-time pull so enabling has an immediate effect.
+        // Manual-only is the repository's Long.MAX_VALUE sentinel. As with calendar sync, no
+        // periodic contact job is scheduled in that mode, but the one-time pull still fires so
+        // enabling has an immediate effect.
         syncIntervalFlow.value = Long.MAX_VALUE
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -3181,7 +3133,7 @@ class AccountSettingsViewModelTest {
         viewModel.renameAccount(10L, "   ")
         advanceUntilIdle()
 
-        // Should not call updateAccount for empty names
+        // No updateAccount for a blank name.
         coVerify(exactly = 0) { accountRepository.updateAccount(any()) }
     }
 
@@ -3231,7 +3183,7 @@ class AccountSettingsViewModelTest {
 
         assertTrue(callbackResult!!.isFailure)
         assertEquals("Invalid password", callbackResult!!.exceptionOrNull()?.message)
-        // Verify old credentials restored
+        // The new password is saved, then the old one restored.
         coVerify(ordering = Ordering.ORDERED) {
             accountRepository.saveCredentials(10L, match { it.password == "wrong-pass" })
             accountRepository.saveCredentials(10L, match { it.password == "old-pass" })
@@ -3259,7 +3211,7 @@ class AccountSettingsViewModelTest {
 
         assertTrue(callbackResult!!.isFailure)
         assertEquals("Network error, try again", callbackResult!!.exceptionOrNull()?.message)
-        // Verify old credentials restored
+        // The old credentials are restored.
         coVerify {
             accountRepository.saveCredentials(10L, match { it.password == "old-pass" })
         }
@@ -3290,7 +3242,7 @@ class AccountSettingsViewModelTest {
         assertEquals(2, (status as AccountDetailDiscoverStatus.Done).newCount)
         assertEquals(5, status.totalCount)
 
-        // Discovery of new calendars must trigger sync
+        // New calendars trigger a sync.
         coVerify { syncScheduler.syncAccount(10L) }
     }
 
@@ -3315,7 +3267,7 @@ class AccountSettingsViewModelTest {
         assertTrue(status is AccountDetailDiscoverStatus.Done)
         assertEquals(0, (status as AccountDetailDiscoverStatus.Done).newCount)
 
-        // No new calendars → no sync trigger
+        // No new calendars, no sync.
         coVerify(exactly = 0) { syncScheduler.syncAccount(10L) }
     }
 
@@ -3356,7 +3308,67 @@ class AccountSettingsViewModelTest {
 
         val status = viewModel.uiState.value.accountDetailDiscoverStatus
         assertTrue(status is AccountDetailDiscoverStatus.Error)
-        assertTrue((status as AccountDetailDiscoverStatus.Error).message.contains("Authentication failed"))
+        val message = (status as AccountDetailDiscoverStatus.Error).message
+        assertTrue(message is UiMessage.Literal && message.text.contains("Authentication failed"))
+    }
+
+    @Test
+    fun `discoverNewCalendars shows the refused-connection message inline`() = runTest {
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { eventCoordinator.getCalendarCountForAccount(10L) } returns 3
+        coEvery { calDavDiscoveryService.refreshCalendars(10L) } returns
+            DiscoveryResult.Error("Could not refresh", reason = DiscoveryErrorReason.INSECURE_CONNECTION_REFUSED)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.discoverNewCalendars(10L)
+        advanceUntilIdle()
+
+        assertEquals(
+            AccountDetailDiscoverStatus.Error(UiMessage.ResId(R.string.caldav_error_connection_refused_insecure)),
+            viewModel.uiState.value.accountDetailDiscoverStatus
+        )
+    }
+
+    @Test
+    fun `discoverNewCalendars keeps the service's text for other failures`() = runTest {
+        coEvery { accountRepository.getAccountById(10L) } returns testDetailAccount
+        coEvery { eventCoordinator.getCalendarCountForAccount(10L) } returns 3
+        coEvery { calDavDiscoveryService.refreshCalendars(10L) } returns DiscoveryResult.Error("Server error")
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.discoverNewCalendars(10L)
+        advanceUntilIdle()
+
+        assertEquals(
+            AccountDetailDiscoverStatus.Error(UiMessage.Literal("Server error")),
+            viewModel.uiState.value.accountDetailDiscoverStatus
+        )
+    }
+
+    @Test
+    fun `CalDAV sign-in shows the refused-connection message on the server field`() = runTest {
+        coEvery { calDavDiscoveryService.isDisplayNameAvailable(any()) } returns true
+        coEvery { calDavDiscoveryService.discoverCalendars(any(), any(), any(), any()) } returns
+            DiscoveryResult.Error("CalDAV service not found", reason = DiscoveryErrorReason.INSECURE_CONNECTION_REFUSED)
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.onCalDavServerUrlChange("https://dav.example.test")
+        viewModel.onCalDavDisplayNameChange("Work")
+        viewModel.onCalDavUsernameChange("user")
+        viewModel.onCalDavPasswordChange("password123")
+        advanceUntilIdle()
+
+        viewModel.onCalDavDiscover()
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.value.calDavState as CalDavConnectionState.NotConnected
+        assertEquals(UiMessage.ResId(R.string.caldav_error_connection_refused_insecure), state.error)
+        assertEquals(CalDavConnectionState.ErrorField.SERVER, state.errorField)
     }
 
     // ==================== Device Calendar Refresh Tests ====================
@@ -3366,15 +3378,16 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Forget any init-time interactions; we only care about refresh's effect.
-        clearMocks(calendarProviderRepository, answers = false)
+        // Only refresh's effect matters, so measure from after init.
+        val callsBefore = calendarProviderRepository.getDeviceCalendarsCallCount
 
-        // Permission is not granted by default in tests
+        // FakePermissionChecker grants calendar read by default; the device-calendars switch is
+        // off here (the relaxed dataStore flow never emits), and that is what stops the refresh.
         viewModel.refreshDeviceCalendars()
         advanceUntilIdle()
 
-        // "Does nothing" = refresh triggers no device-calendar query
-        coVerify(exactly = 0) { calendarProviderRepository.getDeviceCalendars() }
+        // "Does nothing" means refresh triggers no device-calendar query.
+        assertEquals(callsBefore, calendarProviderRepository.getDeviceCalendarsCallCount)
     }
 
     @Test
@@ -3384,20 +3397,20 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Forget any init-time interactions; we only care about refresh's effect.
-        clearMocks(calendarProviderRepository, answers = false)
+        // Only refresh's effect matters, so measure from after init.
+        val callsBefore = calendarProviderRepository.getDeviceCalendarsCallCount
 
         viewModel.refreshDeviceCalendars()
         advanceUntilIdle()
 
-        // Feature disabled -> refresh triggers no device-calendar query
-        coVerify(exactly = 0) { calendarProviderRepository.getDeviceCalendars() }
+        // Feature disabled: refresh triggers no device-calendar query.
+        assertEquals(callsBefore, calendarProviderRepository.getDeviceCalendarsCallCount)
     }
 
-    // Issue #170: MIUI Google calendars install with SYNC_EVENTS=0 so the sync
-    // adapter never populates the Events table. Ticking a calendar must flip
-    // that flag on and kick off a sync; unticking must NOT flip it off
-    // (the user only meant "hide from KashCal", not "disable system sync").
+    // #170: some OEM builds install synced calendars with SYNC_EVENTS=0, so the sync adapter
+    // never fills the Events table. Ticking a calendar calls ensureCalendarVisible, which turns the
+    // flag on and requests a sync; unticking must not turn it off, since the user only meant "hide
+    // from KashCal", not "disable system sync".
     @Test
     fun `onToggleDeviceCalendar enabled calls ensureCalendarVisible`() = runTest {
         val viewModel = createViewModel()
@@ -3406,7 +3419,7 @@ class AccountSettingsViewModelTest {
         viewModel.onToggleDeviceCalendar(calendarId = 42L, enabled = true)
         advanceUntilIdle()
 
-        coVerify(exactly = 1) { calendarProviderRepository.ensureCalendarVisible(42L) }
+        assertEquals(listOf(42L), calendarProviderRepository.ensureCalendarVisibleCalls)
     }
 
     @Test
@@ -3417,7 +3430,7 @@ class AccountSettingsViewModelTest {
         viewModel.onToggleDeviceCalendar(calendarId = 42L, enabled = false)
         advanceUntilIdle()
 
-        coVerify(exactly = 0) { calendarProviderRepository.ensureCalendarVisible(any()) }
+        assertEquals(emptyList<Long>(), calendarProviderRepository.ensureCalendarVisibleCalls)
     }
 
     @Test
@@ -3432,7 +3445,115 @@ class AccountSettingsViewModelTest {
         viewModel.onToggleDeviceCalendar(calendarId = 42L, enabled = true)
         advanceUntilIdle()
 
-        coVerify(exactly = 2) { calendarProviderRepository.ensureCalendarVisible(42L) }
+        assertEquals(listOf(42L, 42L), calendarProviderRepository.ensureCalendarVisibleCalls)
+    }
+
+    // ==================== Device calendar list, toggles and ICS import ====================
+
+    private fun settingsDeviceCalendar(id: Long) = DeviceCalendar(
+        id = id,
+        displayName = "Cal $id",
+        color = 0,
+        accountName = "acct",
+        accountType = "LOCAL",
+        visible = true,
+        accessLevel = 700,
+    )
+
+    @Test
+    fun `loading device calendars drops enabled ids that no longer exist and lists the rest`() = runTest {
+        permissionChecker.calendarRead = true
+        coEvery { dataStore.deviceCalendarsEnabled } returns MutableStateFlow(true)
+        coEvery { dataStore.getEnabledDeviceCalendarIds() } returns setOf(1L, 99L)
+        calendarProviderRepository.calendars = listOf(settingsDeviceCalendar(1L))
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        coVerify { dataStore.setEnabledDeviceCalendarIds(setOf(1L)) }
+        assertEquals(listOf(settingsDeviceCalendar(1L)), viewModel.deviceCalendars.value)
+    }
+
+    @Test
+    fun `losing calendar permission while loading leaves the device calendar list empty`() = runTest {
+        permissionChecker.calendarRead = true
+        coEvery { dataStore.deviceCalendarsEnabled } returns MutableStateFlow(true)
+        coEvery { dataStore.getEnabledDeviceCalendarIds() } returns emptySet()
+        calendarProviderRepository.shouldThrowSecurityException = true
+
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        assertEquals(emptyList<DeviceCalendar>(), viewModel.deviceCalendars.value)
+        assertTrue(calendarProviderRepository.getDeviceCalendarsCallCount > 0)
+    }
+
+    @Test
+    fun `ticking a device calendar refreshes device views through the settings-change hook`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleDeviceCalendar(calendarId = 42L, enabled = true)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { calendarProviderManager.onDeviceCalendarSettingsChanged() }
+        verify(exactly = 0) { calendarProviderManager.onEnabled() }
+        verify(exactly = 0) { calendarProviderManager.notifyDeviceCalendarChanged() }
+    }
+
+    @Test
+    fun `changing show declined events refreshes device views through the settings-change hook`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleShowDeclinedEvents(true)
+        advanceUntilIdle()
+
+        coVerify(exactly = 1) { calendarProviderManager.onDeviceCalendarSettingsChanged() }
+        verify(exactly = 0) { calendarProviderManager.onEnabled() }
+        verify(exactly = 0) { calendarProviderManager.notifyDeviceCalendarChanged() }
+    }
+
+    @Test
+    fun `importing ICS into a device calendar from settings refreshes device views`() = runTest {
+        coEvery { dataStore.defaultReminderMinutes } returns flowOf(20)
+        coEvery { dataStore.defaultAllDayReminder } returns flowOf(600)
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val count = viewModel.importIcsToDeviceCalendar(
+            events = listOf(
+                Event(id = 0L, calendarId = 0L, uid = "a", title = "Timed", startTs = 1_000L, endTs = 2_000L, dtstamp = 0L),
+                Event(id = 0L, calendarId = 0L, uid = "b", title = "All day", startTs = 0L, endTs = 86_399_999L, dtstamp = 0L, isAllDay = true),
+            ),
+            calendarId = 7L,
+        )
+        advanceUntilIdle()
+
+        assertEquals(2, count)
+        assertEquals(listOf(listOf(20), listOf(600)), calendarProviderRepository.createdEvents.map { it.reminders })
+        verify(exactly = 1) { calendarProviderManager.notifyDeviceCalendarChanged() }
+        verify(exactly = 0) { calendarProviderManager.onEnabled() }
+        verify(exactly = 0) { calendarProviderManager.onDisabled() }
+        confirmVerified(calendarProviderManager)
+    }
+
+    @Test
+    fun `an ICS import from settings that creates nothing does not refresh device views`() = runTest {
+        coEvery { dataStore.defaultReminderMinutes } returns flowOf(20)
+        coEvery { dataStore.defaultAllDayReminder } returns flowOf(600)
+        calendarProviderRepository.writeFailure = CalendarError.DeviceCalendar.WriteFailed("boom")
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val count = viewModel.importIcsToDeviceCalendar(
+            events = listOf(Event(id = 0L, calendarId = 0L, uid = "a", title = "Timed", startTs = 1_000L, endTs = 2_000L, dtstamp = 0L)),
+            calendarId = 7L,
+        )
+        advanceUntilIdle()
+
+        assertEquals(0, count)
+        verify(exactly = 0) { calendarProviderManager.notifyDeviceCalendarChanged() }
     }
 
     // ==================== Default Calendar (DefaultCalendar type) Tests ====================
@@ -3442,7 +3563,7 @@ class AccountSettingsViewModelTest {
         permissionChecker.calendarRead = true
         permissionChecker.calendarWrite = true
 
-        // Mock writable device calendars (accessLevel >= 500 = writable)
+        // accessLevel 500 and above is writable.
         val deviceCalendars = listOf(
             DeviceCalendar(
                 id = 100L,
@@ -3451,7 +3572,7 @@ class AccountSettingsViewModelTest {
                 accountName = "Google",
                 accountType = "com.google",
                 visible = true,
-                accessLevel = 700 // OWNER - writable
+                accessLevel = 700 // OWNER, writable
             ),
             DeviceCalendar(
                 id = 101L,
@@ -3460,7 +3581,7 @@ class AccountSettingsViewModelTest {
                 accountName = "Google",
                 accountType = "com.google",
                 visible = true,
-                accessLevel = 500 // CONTRIBUTOR - writable
+                accessLevel = 500 // CONTRIBUTOR, writable
             ),
             DeviceCalendar(
                 id = 102L,
@@ -3469,18 +3590,18 @@ class AccountSettingsViewModelTest {
                 accountName = "Samsung",
                 accountType = "com.samsung",
                 visible = true,
-                accessLevel = 200 // READ - not writable
+                accessLevel = 200 // READ, not writable
             )
         )
-        coEvery { calendarProviderRepository.getDeviceCalendars() } returns deviceCalendars
+        calendarProviderRepository.calendars = deviceCalendars
 
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         viewModel.writableDeviceCalendarGroups.test {
             val groups = expectMostRecentItem()
-            // Should have 1 group (Google) with 2 writable calendars
-            // Samsung Holiday has accessLevel 200 (READ), so not writable
+            // One account group with its 2 writable calendars; the read-only Holidays calendar
+            // (200) is left out.
             assertEquals(1, groups.size)
             assertEquals("Google", groups[0].accountName)
             assertEquals(2, groups[0].pickerCalendars.size)
@@ -3491,9 +3612,9 @@ class AccountSettingsViewModelTest {
     fun `writableDeviceCalendarGroups withoutWritePermission returnsEmpty`() = runTest {
         permissionChecker.calendarRead = false
         permissionChecker.calendarWrite = false
-        // If the read-path were accidentally taken, this non-empty stub would surface
-        // in the assertion — guards against false-positive "empty because empty source".
-        coEvery { calendarProviderRepository.getDeviceCalendars() } returns listOf(
+        // A non-empty stub, so the empty result can't come from an empty source: a wrongly taken
+        // read path would surface it.
+        calendarProviderRepository.calendars = listOf(
             DeviceCalendar(
                 id = 100L,
                 displayName = "Should Not Appear",
@@ -3545,7 +3666,6 @@ class AccountSettingsViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Emit Room type
         defaultCalendarFlow.value = DefaultCalendar.Room(calendarId = 5L)
         advanceUntilIdle()
 
@@ -3555,7 +3675,6 @@ class AccountSettingsViewModelTest {
             assertEquals(5L, (current as DefaultCalendar.Room).calendarId)
         }
 
-        // Emit Device type
         defaultCalendarFlow.value = DefaultCalendar.Device(calendarId = 200L)
         advanceUntilIdle()
 

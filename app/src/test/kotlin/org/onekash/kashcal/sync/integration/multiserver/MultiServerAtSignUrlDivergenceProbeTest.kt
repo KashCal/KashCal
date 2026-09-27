@@ -14,28 +14,29 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Empirical probe for the push-side "@"-URL divergence question raised after #333.
+ * Probes the push side of the "@"-URL divergence from #333.
  *
- * KashCal builds a resource URL by interpolating its event UID (which contains a
- * literal "@", e.g. "<uuid>@kashcal.onekash.org") straight into
- * "{calendar}/{uid}.ics", stores THAT constructed string as caldav_url, and never
- * adopts the server's Location header. #333 proved Radicale stores the resource at
- * a re-encoded href ("%40") and echoes "%40" in sync-collection — which is why the
- * PULL path now canonicalizes before matching.
+ * KashCal builds a resource URL from its event UID, which holds a literal "@" (e.g.
+ * "<uuid>@kashcal.onekash.org"), as "{calendar}/{uid}.ics", and stores that constructed URL as
+ * caldav_url unless the PUT was redirected; it doesn't read a Location header on success. #333
+ * showed Radicale stores the resource at a re-encoded href ("%40") and echoes "%40" in
+ * sync-collection, which is why the pull path compares URLs canonically.
  *
- * The open question is whether the PUSH path is actually broken: on a server that
- * stores at "%40", does a follow-up UPDATE / GET / DELETE aimed at the literal-"@"
- * URL (the app's stored guess) still succeed, or does the server 404 it? If every
- * server aliases "@" ≡ "%40" on the path, the divergence is benign and only worth
- * defensive hardening. If any server rejects the literal form, it is a real bug of
- * the same class as #333, on the write side.
+ * The question: on a server that stores at "%40", does an UPDATE, GET or DELETE aimed at the
+ * literal-"@" URL the app stored still succeed, or does the server 404 it? If every server
+ * treats "@" and "%40" as the same path, the divergence is benign. If any rejects the literal
+ * form, it is a bug of the same class as #333 on the write side.
  *
- * This test does NOT assert a fix — it MEASURES and prints per-server behavior so
- * we can decide. It only hard-fails if a server exhibits the genuine-bug shape
- * (re-encodes the stored href AND rejects an operation on the literal URL), which
- * is exactly the signal we're hunting.
+ * It prints per-server behavior and fails on the bug shape: the server re-encodes the stored
+ * href and an operation on the app's literal-'@' URL fails. The client retries a 404 on a stored
+ * resource URL with the '@' written the other way (`OkHttpCalDavClient.executeForResource`),
+ * which Stalwart needs (it answers GET and DELETE only on the %40 form). A DELETE counts as
+ * working only if the server stops listing the resource: the client treats a 404 as "already
+ * gone", so its result alone can't show a lost delete.
  *
- * Run: ./gradlew :app:testDebugUnitTest -Pintegration --tests "*MultiServerAtSignUrlDivergenceProbeTest*"
+ * Run:
+ *   ./gradlew :app:testDebugUnitTest -Pintegration \
+ *       --tests "*MultiServerAtSignUrlDivergenceProbeTest*"
  */
 @RunWith(Parameterized::class)
 class MultiServerAtSignUrlDivergenceProbeTest(
@@ -46,18 +47,6 @@ class MultiServerAtSignUrlDivergenceProbeTest(
         @Parameterized.Parameters(name = "{0}")
         fun servers(): List<CalDavServerConfig> = CalDavServerConfig.allServers()
 
-        /**
-         * Servers KNOWN to exhibit the genuine-bug shape (re-encode the stored href AND
-         * reject a literal-'@' op) while the push-side fix is unshipped. This is an
-         * expected-failure allowlist: the bug is documented and deferred, so its presence
-         * on these servers is not a fresh regression and must not turn the integration
-         * suite red. The probe still HARD-FAILS if the shape appears on any server NOT in
-         * this set (a new server regressing into the bug), and hard-fails in REVERSE if a
-         * listed server stops exhibiting it — that means the fix effectively landed and
-         * this allowance (plus the xfail wiring) should be removed and the probe returned
-         * to a plain hard-fail. Names match CalDavServerConfig.name exactly.
-         */
-        val KNOWN_DIVERGENT_SERVERS: Set<String> = setOf("Stalwart")
     }
 
     private var client: CalDavClient? = null
@@ -138,10 +127,10 @@ END:VCALENDAR
         val calendarUrl = discoverCalendar()
         assumeTrue("${config.name}: no calendar found", calendarUrl != null)
 
-        // UID shaped exactly like KashCal's own — literal '@' in the filename.
+        // A UID shaped like KashCal's own: a literal '@' in the resource name.
         val uid = "${UUID.randomUUID()}@kashcal.onekash.org"
 
-        // 1. CREATE — the app path. createEvent returns the CONSTRUCTED url (literal '@').
+        // 1. CREATE, the app path. createEvent returns the constructed URL (literal '@').
         val createResult = c.createEvent(calendarUrl!!, uid, ics(uid, "AtSign probe - safe to delete"))
         assumeTrue("${config.name}: create failed (${codeOf(createResult)}) - cannot probe", createResult.isSuccess())
         val (storedUrl, createEtag) = createResult.getOrNull()!!
@@ -150,8 +139,8 @@ END:VCALENDAR
         val storedHasLiteralAt = storedUrl.contains("@")
         val storedHasEncodedAt = storedUrl.contains("%40", ignoreCase = true)
 
-        // 2. Enumerate what href the server ACTUALLY stored (calendar-query REPORT
-        // returns the server's own hrefs). Detect re-encoding by comparing stems.
+        // 2. List the href the server stored (a calendar-query REPORT returns the server's own
+        // hrefs) and detect re-encoding by comparing stems.
         val stem = uid // '@'-containing filename stem, before .ics
         val encodedStem = uid.replace("@", "%40")
         val rangeEnd = 1_900_000_000_000L // ~2030, comfortably after DTSTART (2026)
@@ -161,7 +150,7 @@ END:VCALENDAR
         val serverReEncoded = serverHref?.contains("%40", ignoreCase = true) == true &&
             serverHref?.contains("@") != true
 
-        // 3. UPDATE at the LITERAL-'@' stored URL (what the app would do on edit).
+        // 3. UPDATE at the literal-'@' stored URL (what the app does on edit).
         val updateResult = c.updateEvent(storedUrl, ics(uid, "AtSign probe - EDITED"), createEtag)
         val updateEtag = if (updateResult.isSuccess()) updateResult.getOrNull() else null
         if (updateEtag != null) {
@@ -172,27 +161,29 @@ END:VCALENDAR
         // 4. GET at the literal-'@' stored URL (read-back path).
         val fetchResult = c.fetchEvent(storedUrl)
 
-        // 5. DELETE at the literal-'@' stored URL (what the app would do on delete).
+        // 5. DELETE at the literal-'@' stored URL (what the app does on delete).
         val deleteEtag = updateEtag ?: createEtag
         val deleteResult = c.deleteEvent(storedUrl, deleteEtag)
-        if (deleteResult.isSuccess() || deleteResult.isNotFound()) {
-            cleanupUrls.clear() // resource gone (or was never at this url); nothing to clean
+        val stillListed = serverHref != null && (c.fetchEtagsInRange(calendarUrl, 0L, rangeEnd).getOrNull()
+            ?.any { it.first == serverHref } ?: false) // a failed listing proves nothing either way
+        cleanupUrls.clear()
+        if (stillListed) {
+            // The delete didn't take: clean up at the href the server itself lists.
+            cleanupUrls.add(java.net.URI(calendarUrl).resolve(serverHref!!).toString() to deleteEtag)
         }
 
         // 6. Report.
         val updateOk = updateResult.isSuccess()
         val fetchOk = fetchResult.isSuccess()
-        val deleteOk = deleteResult.isSuccess()
+        val deleteOk = deleteResult.isSuccess() && !stillListed
         val literalOpsAllSucceeded = updateOk && fetchOk && deleteOk
 
         val genuineBug = serverReEncoded && !literalOpsAllSucceeded
-        val isKnownDivergent = config.name in KNOWN_DIVERGENT_SERVERS
 
         val verdict = when {
             serverHref == null -> "INCONCLUSIVE (server href not enumerable via calendar-query)"
-            genuineBug && isKnownDivergent -> "XFAIL: genuine bug, but a KNOWN-divergent server (push-side fix deferred)"
             genuineBug -> "GENUINE BUG: re-encodes stored href AND rejects a literal-@ op"
-            serverReEncoded && literalOpsAllSucceeded -> "BENIGN: re-encodes href but ALIASES @ ≡ %40 (all literal-@ ops OK)"
+            serverReEncoded && literalOpsAllSucceeded -> "OK: re-encodes href; every op on the literal-@ URL reaches it (server alias or client retry)"
             !serverReEncoded -> "NOT APPLICABLE: server preserves literal @ in stored href"
             else -> "UNCLASSIFIED"
         }
@@ -207,35 +198,17 @@ END:VCALENDAR
             |    server re-encoded @ : $serverReEncoded
             |  literal-@ UPDATE      : ${codeOf(updateResult)}
             |  literal-@ GET         : ${codeOf(fetchResult)}
-            |  literal-@ DELETE      : ${codeOf(deleteResult)}
+            |  literal-@ DELETE      : ${codeOf(deleteResult)}${if (stillListed) " (but still listed)" else ""}
             |  VERDICT               : $verdict
             """.trimMargin()
         )
 
-        // Hard-fail on the genuine-bug shape ONLY for a server not already known to
-        // exhibit it (a fresh regression). Known-divergent servers are an expected
-        // failure while the push-side fix is deferred — recorded above as XFAIL, not thrown.
-        if (genuineBug && !isKnownDivergent) {
+        if (genuineBug) {
             throw AssertionError(
-                "${config.name}: push-side @-URL divergence is a REAL bug — server stores at " +
-                    "'$serverHref' but the app keeps its literal-@ guess '$storedUrl'; " +
-                    "UPDATE=${codeOf(updateResult)} GET=${codeOf(fetchResult)} DELETE=${codeOf(deleteResult)}. " +
-                    "This is the write-side twin of #333 and needs the same canonicalization/Location-adoption fix. " +
-                    "If this is a known, deferred case, add '${config.name}' to KNOWN_DIVERGENT_SERVERS."
-            )
-        }
-
-        // Reverse guard: a server on the known-divergent allowlist that NO LONGER shows
-        // the bug means the divergence was effectively fixed (code or server change).
-        // Fail loudly so the stale allowance can't silently mask a future real regression —
-        // the maintainer should drop it from KNOWN_DIVERGENT_SERVERS and, once the set is
-        // empty, restore the plain hard-fail.
-        if (isKnownDivergent && serverHref != null && !genuineBug) {
-            throw AssertionError(
-                "${config.name} is on KNOWN_DIVERGENT_SERVERS but no longer exhibits the push-side " +
-                    "@-URL divergence (verdict: $verdict). The bug appears fixed — remove " +
-                    "'${config.name}' from KNOWN_DIVERGENT_SERVERS so the probe hard-fails on any " +
-                    "future regression."
+                "${config.name}: push-side @-URL divergence is back: the server stores at " +
+                    "'$serverHref' but the app keeps its literal-@ URL '$storedUrl'; " +
+                    "UPDATE=${codeOf(updateResult)} GET=${codeOf(fetchResult)} " +
+                    "DELETE=${codeOf(deleteResult)}${if (stillListed) " (still listed)" else ""}."
             )
         }
     }

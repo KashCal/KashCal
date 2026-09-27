@@ -3,8 +3,8 @@ package org.onekash.kashcal.domain.generator.parity
 import org.onekash.kashcal.domain.generator.LibRecurEngine
 
 /**
- * Drives LibRecurEngine (dmfs/lib-recur backend) for the parity harness.
- * Catches exceptions and surfaces them as [ExpansionResult.Error] rather than propagating.
+ * Runs the test-only [LibRecurEngine] (lib-recur) oracle for the parity harness. A throw is
+ * returned as [ExpansionResult.Error].
  */
 object LibRecurParityEngine : RRuleEngine {
     override val name: String = "lib-recur"
@@ -21,8 +21,8 @@ object LibRecurParityEngine : RRuleEngine {
                 rdateStrings = case.rdateStrings,
                 exdateStrings = case.exdateStrings,
             )
-            // LibRecurEngine already catches internally and returns empty on error — but
-            // we wrap here anyway in case future versions throw.
+            // LibRecurEngine catches its own exceptions and returns an empty list, so its
+            // failures arrive here as an empty Success; this catch is a backstop.
             ExpansionResult.Success(timestamps)
         } catch (e: Throwable) {
             ExpansionResult.Error(

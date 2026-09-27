@@ -9,20 +9,19 @@ import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.OccurrenceWithEventData
 
 /**
- * Data Access Object for Occurrence operations.
+ * Reads and writes materialized occurrences, so date range queries are index lookups instead of
+ * RRULE expansions.
  *
- * Manages materialized RRULE expansions for efficient date range queries.
- * Occurrences are pre-computed and stored for O(1) lookup by date.
+ * An occurrence edited into an exception stays the master's row (`event_id` = master) with
+ * `exception_event_id` pointing at the exception. Queries that join events return the exception
+ * event for such occurrences.
  */
 @Dao
 interface OccurrencesDao {
 
     // ========== Read Operations - Range Queries ==========
 
-    /**
-     * Get occurrences in time range (primary query for calendar views).
-     * Excludes cancelled occurrences.
-     */
+    /** Observes the non-cancelled occurrences overlapping [startTs]..[endTs]. */
     @Query("""
         SELECT * FROM occurrences
         WHERE end_ts >= :startTs
@@ -32,9 +31,7 @@ interface OccurrencesDao {
     """)
     fun getInRange(startTs: Long, endTs: Long): Flow<List<Occurrence>>
 
-    /**
-     * Get occurrences in range (one-shot).
-     */
+    /** Returns the non-cancelled occurrences overlapping [startTs]..[endTs]. */
     @Query("""
         SELECT * FROM occurrences
         WHERE end_ts >= :startTs
@@ -44,9 +41,7 @@ interface OccurrencesDao {
     """)
     suspend fun getInRangeOnce(startTs: Long, endTs: Long): List<Occurrence>
 
-    /**
-     * Get occurrences for specific calendar in range.
-     */
+    /** Observes [calendarId]'s non-cancelled occurrences overlapping [startTs]..[endTs]. */
     @Query("""
         SELECT * FROM occurrences
         WHERE calendar_id = :calendarId
@@ -57,9 +52,7 @@ interface OccurrencesDao {
     """)
     fun getForCalendarInRange(calendarId: Long, startTs: Long, endTs: Long): Flow<List<Occurrence>>
 
-    /**
-     * Get occurrences for specific calendar in range (one-shot).
-     */
+    /** Returns [calendarId]'s non-cancelled occurrences overlapping [startTs]..[endTs]. */
     @Query("""
         SELECT * FROM occurrences
         WHERE calendar_id = :calendarId
@@ -73,17 +66,12 @@ interface OccurrencesDao {
     // ========== JOIN Queries (Reactive to Event Changes) ==========
 
     /**
-     * Get occurrences with event data in time range.
+     * Observes non-cancelled occurrences in range with their event.
      *
-     * IMPORTANT: Room tracks BOTH tables in this JOIN query, so the Flow emits
-     * when EITHER the occurrences OR events table changes. This fixes the
-     * reactivity issue where event metadata changes (location, title, etc.)
-     * didn't trigger UI updates.
-     *
-     * Uses e_ prefix for @Embedded(prefix = "e_") Event mapping.
-     *
-     * Exception handling: Uses OR condition to correctly select the exception
-     * event (if present) instead of the master event for modified occurrences.
+     * Room tracks both joined tables, so the Flow emits on an event edit (title, location) as
+     * well as an occurrence change. The join picks the exception event when
+     * `exception_event_id` is set, else the master. Event columns carry the `e_` prefix of
+     * [OccurrenceWithEventData]'s embedded Event; `raw_ical` is selected as NULL.
      */
     @Query("""
         SELECT o.id, o.event_id, o.exception_event_id, o.calendar_id,
@@ -115,12 +103,8 @@ interface OccurrencesDao {
     fun getOccurrencesWithEventsInRange(startTs: Long, endTs: Long): Flow<List<OccurrenceWithEventData>>
 
     /**
-     * One-shot query for insights analytics.
-     *
-     * Same JOIN as getOccurrencesWithEventsInRange, plus:
-     * - Filters out PENDING_DELETE events (logically deleted)
-     * - Filters out events in hidden calendars
-     * - One-shot (suspend) for snapshot loading
+     * Returns the [getOccurrencesWithEventsInRange] rows for insights, minus PENDING_DELETE
+     * events and events in hidden calendars.
      */
     @Query("""
         SELECT o.id, o.event_id, o.exception_event_id, o.calendar_id,
@@ -155,11 +139,10 @@ interface OccurrencesDao {
     suspend fun getOccurrencesWithEventsForInsights(startTs: Long, endTs: Long): List<OccurrenceWithEventData>
 
     /**
-     * Get occurrences with event data for a specific day.
+     * Observes the [getOccurrencesWithEventsInRange] rows that span [day] (YYYYMMDD).
      *
-     * Same as getOccurrencesWithEventsInRange but uses day code (YYYYMMDD) for
-     * timezone-correct day matching. Uses start_day/end_day columns which are
-     * pre-calculated with proper timezone handling for all-day events.
+     * Matches on the precomputed `start_day`/`end_day` codes, which already carry the
+     * all-day timezone handling, instead of timestamps.
      */
     @Query("""
         SELECT o.id, o.event_id, o.exception_event_id, o.calendar_id,
@@ -190,10 +173,7 @@ interface OccurrencesDao {
     """)
     fun getOccurrencesWithEventsForDay(day: Int): Flow<List<OccurrenceWithEventData>>
 
-    /**
-     * Get occurrences for specific day (YYYYMMDD format).
-     * Fast lookup using start_day index.
-     */
+    /** Observes the non-cancelled occurrences spanning [day] (YYYYMMDD). */
     @Query("""
         SELECT * FROM occurrences
         WHERE start_day <= :day AND end_day >= :day
@@ -202,9 +182,7 @@ interface OccurrencesDao {
     """)
     fun getForDay(day: Int): Flow<List<Occurrence>>
 
-    /**
-     * Get occurrences for day (one-shot).
-     */
+    /** Returns the non-cancelled occurrences spanning [day] (YYYYMMDD). */
     @Query("""
         SELECT * FROM occurrences
         WHERE start_day <= :day AND end_day >= :day
@@ -213,9 +191,7 @@ interface OccurrencesDao {
     """)
     suspend fun getForDayOnce(day: Int): List<Occurrence>
 
-    /**
-     * Get occurrences for calendar on specific day.
-     */
+    /** Returns [calendarId]'s non-cancelled occurrences spanning [day] (YYYYMMDD). */
     @Query("""
         SELECT * FROM occurrences
         WHERE calendar_id = :calendarId
@@ -227,46 +203,32 @@ interface OccurrencesDao {
 
     // ========== Read Operations - By Event ==========
 
-    /**
-     * Get all occurrences for an event.
-     */
+    /** Returns every occurrence row of [eventId], cancelled ones included. */
     @Query("SELECT * FROM occurrences WHERE event_id = :eventId ORDER BY start_ts ASC")
     suspend fun getForEvent(eventId: Long): List<Occurrence>
 
     /**
-     * Get occurrences for multiple events in a single query.
-     * Used to avoid N+1 queries when loading occurrences for search results.
-     *
-     * @param eventIds List of event IDs to fetch occurrences for
-     * @return All occurrences for the given events, sorted by start time
+     * Returns every occurrence of [eventIds] by start time, cancelled ones included, in one
+     * query; search loads its results' occurrences this way instead of one query per event.
      */
     @Query("SELECT * FROM occurrences WHERE event_id IN (:eventIds) ORDER BY start_ts ASC")
     suspend fun getForEvents(eventIds: List<Long>): List<Occurrence>
 
-    /**
-     * Get occurrence count for an event.
-     */
+    /** Returns how many occurrence rows [eventId] has. */
     @Query("SELECT COUNT(*) FROM occurrences WHERE event_id = :eventId")
     suspend fun getCountForEvent(eventId: Long): Int
 
-    /**
-     * Get latest occurrence time for event (for forward expansion boundary).
-     */
+    /** Returns [eventId]'s latest occurrence start, the boundary for forward extension. */
     @Query("SELECT MAX(start_ts) FROM occurrences WHERE event_id = :eventId")
     suspend fun getMaxStartTs(eventId: Long): Long?
 
-    /**
-     * Get earliest occurrence time for event (for past expansion boundary).
-     */
+    /** Returns [eventId]'s earliest occurrence start, the boundary for past extension. */
     @Query("SELECT MIN(start_ts) FROM occurrences WHERE event_id = :eventId")
     suspend fun getMinStartTs(eventId: Long): Long?
 
     /**
-     * Find recurring master events whose occurrences don't extend to target date.
-     * Used for on-demand occurrence extension when user navigates far into the future.
-     *
-     * @param targetTs Target timestamp - events with max occurrence before this need extension
-     * @return List of event IDs that need occurrence extension
+     * Returns the recurring masters whose latest occurrence starts before [targetTs], for
+     * on-demand extension when the user navigates far into the future.
      */
     @Query("""
         SELECT DISTINCT o.event_id FROM occurrences o
@@ -279,14 +241,10 @@ interface OccurrencesDao {
     suspend fun getRecurringEventsNeedingExtension(targetTs: Long): List<Long>
 
     /**
-     * Find recurring master events whose occurrences don't extend back to target date.
-     * Used for on-demand past occurrence extension when user navigates far into the past.
+     * Returns the recurring masters whose earliest occurrence starts after [targetTs] and
+     * after their DTSTART, for on-demand extension when the user navigates far into the past.
      *
-     * Returns events where DTSTART is before the earliest materialized occurrence,
-     * indicating a gap that can be filled by RRULE expansion.
-     *
-     * @param targetTs Target timestamp - events with min occurrence after this need past extension
-     * @return List of event IDs that need past occurrence extension
+     * A master whose DTSTART is already materialized has nothing earlier to expand.
      */
     @Query("""
         SELECT DISTINCT o.event_id FROM occurrences o
@@ -299,9 +257,7 @@ interface OccurrencesDao {
     """)
     suspend fun getRecurringEventsNeedingPastExtension(targetTs: Long): List<Long>
 
-    /**
-     * Find recurring master events with zero materialized occurrences.
-     */
+    /** Returns the recurring masters, not PENDING_DELETE, with no occurrence rows. */
     @Query("""
         SELECT e.id FROM events e
         LEFT JOIN occurrences o ON e.id = o.event_id
@@ -313,22 +269,17 @@ interface OccurrencesDao {
     """)
     suspend fun getRecurringEventsWithNoOccurrences(): List<Long>
 
-    /**
-     * Get occurrence at specific time for event.
-     */
+    /** Returns [eventId]'s occurrence starting exactly at [startTs], or null. */
     @Query("SELECT * FROM occurrences WHERE event_id = :eventId AND start_ts = :startTs")
     suspend fun getOccurrenceAtTime(eventId: Long, startTs: Long): Occurrence?
 
     /**
-     * Get the occurrence for an event near a given time, regardless of whether
-     * it is cancelled.
+     * Returns [eventId]'s occurrence within 60 seconds of [occurrenceTime], cancelled or not.
      *
-     * Unlike [getOccurrenceAtTime] (exact `start_ts` match), this uses the same
-     * 60-second (60000ms) tolerance as [markCancelled]/[linkException] so a
-     * reminder's stored occurrence time still resolves to its row after an RRULE
-     * re-expansion shifts `start_ts` by sub-second amounts. And unlike the
-     * calendar-view queries it does NOT filter `is_cancelled = 0`: the fire-time
-     * guard needs to see a cancelled row in order to suppress its reminder.
+     * The tolerance matches [markCancelled] and [linkException], so a reminder's stored
+     * occurrence time still resolves to its row after an RRULE re-expansion shifts `start_ts`
+     * by sub-second amounts. Cancelled rows are kept because the fire-time guard needs to see
+     * one to suppress its reminder.
      */
     @Query("""
         SELECT * FROM occurrences
@@ -340,61 +291,44 @@ interface OccurrencesDao {
 
     // ========== Write Operations ==========
 
-    /**
-     * Insert single occurrence.
-     */
+    /** Inserts [occurrence], replacing a row with the same id or (event_id, start_ts). */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insert(occurrence: Occurrence): Long
 
-    /**
-     * Insert multiple occurrences (batch for RRULE expansion).
-     */
+    /** Inserts an RRULE expansion batch, replacing rows with the same (event_id, start_ts). */
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(occurrences: List<Occurrence>)
 
     /**
-     * Delete a single occurrence by its ID.
-     * Used for conflict resolution when linking exceptions.
+     * Deletes one occurrence; used to drop the row an exception moves onto when it is linked.
      */
     @Query("DELETE FROM occurrences WHERE id = :id")
     suspend fun deleteById(id: Long)
 
-    /**
-     * Delete all occurrences for an event (before regeneration).
-     */
+    /** Deletes every occurrence of [eventId], for example before regeneration. */
     @Query("DELETE FROM occurrences WHERE event_id = :eventId")
     suspend fun deleteForEvent(eventId: Long)
 
     /**
-     * Delete occurrences for event after a certain time (for series split).
+     * Deletes [eventId]'s occurrences starting at or after [afterTs], for a this-and-future
+     * split or delete.
      */
     @Query("DELETE FROM occurrences WHERE event_id = :eventId AND start_ts >= :afterTs")
     suspend fun deleteForEventAfter(eventId: Long, afterTs: Long)
 
-    /**
-     * Delete all occurrences for a calendar.
-     */
+    /** Deletes every occurrence in [calendarId]. */
     @Query("DELETE FROM occurrences WHERE calendar_id = :calendarId")
     suspend fun deleteForCalendar(calendarId: Long)
-
-    /**
-     * Delete occurrences before a cutoff timestamp.
-     * Used when shrinking sync lookback to remove old occurrences.
-     *
-     * @param cutoffTs Timestamp cutoff - occurrences ending before this are deleted
-     * @return Number of occurrences deleted
-     */
-    @Query("DELETE FROM occurrences WHERE end_ts < :cutoffTs")
-    suspend fun deleteBeforeCutoff(cutoffTs: Long): Int
 
     // ========== Exception Handling ==========
 
     /**
-     * Link an exception event to an occurrence.
-     * Called when creating an exception for a specific occurrence.
+     * Links [exceptionEventId] to the master's occurrence within 60 seconds of
+     * [occurrenceTime], without changing its times ([updateOccurrenceForException] also moves
+     * them).
      *
-     * Uses 60-second (60000ms) tolerance for timezone/DST edge cases where
-     * RECURRENCE-ID timestamp may not exactly match RRULE-generated time.
+     * The tolerance covers timezone and DST cases where the RECURRENCE-ID doesn't exactly match
+     * the RRULE-generated time.
      */
     @Query("""
         UPDATE occurrences
@@ -405,28 +339,15 @@ interface OccurrencesDao {
     suspend fun linkException(masterEventId: Long, occurrenceTime: Long, exceptionEventId: Long)
 
     /**
-     * Link exception to occurrence AND update occurrence times to match exception.
+     * Links an exception to the master's occurrence and moves the occurrence to the
+     * exception's times; returns the rows updated, 0 if no occurrence matched.
      *
-     * CRITICAL: Uses OR condition to handle re-editing case:
-     * - First edit: No existing link, finds by tolerance (original time)
-     * - Re-edit: Has existing link, finds by exception_event_id (already linked)
+     * The row matches within 60 seconds of [occurrenceTime] (the original instance time) or by
+     * an existing link to [exceptionEventId]. The second arm finds a re-edited exception, whose
+     * row's `start_ts` already holds the earlier edit's time.
      *
-     * When re-editing an exception, occurrenceTime is the ORIGINAL time (from
-     * event.originalInstanceTime), but the occurrence's start_ts has already
-     * been modified. The OR condition ensures we still find the occurrence.
-     *
-     * IMPORTANT: Also sets is_cancelled = 0 to uncancel the occurrence.
-     * PullStrategy cancels the master occurrence when creating Model A.
-     * When normalizing to Model B via local edit, we must uncancel it.
-     *
-     * @param masterEventId The master recurring event ID
-     * @param occurrenceTime The original occurrence time (before any modifications)
-     * @param exceptionEventId The exception event ID
-     * @param newStartTs Exception event's start time
-     * @param newEndTs Exception event's end time
-     * @param newStartDay Exception event's start day code (YYYYMMDD)
-     * @param newEndDay Exception event's end day code (YYYYMMDD)
-     * @return Number of rows updated (0 if no occurrence found)
+     * Also clears `is_cancelled`, so linking revives a cancelled row; a caller restoring a
+     * cancelled link cancels it again afterwards.
      */
     @Query("""
         UPDATE occurrences
@@ -453,15 +374,13 @@ interface OccurrencesDao {
     ): Int
 
     /**
-     * Get occurrence by event ID and exact start timestamp.
-     * Used to check for conflicts when linking exception events.
+     * Returns [eventId]'s occurrence starting exactly at [startTs], or null; used to find the
+     * row a moved exception would collide with, and an unlinked exception's row on pull.
      */
     @Query("SELECT * FROM occurrences WHERE event_id = :eventId AND start_ts = :startTs LIMIT 1")
     suspend fun getByEventIdAndStartTs(eventId: Long, startTs: Long): Occurrence?
 
-    /**
-     * Unlink exception from occurrence (when exception is deleted).
-     */
+    /** Clears the link to [exceptionEventId] from its occurrence. */
     @Query("""
         UPDATE occurrences
         SET exception_event_id = NULL
@@ -470,17 +389,17 @@ interface OccurrencesDao {
     suspend fun unlinkException(exceptionEventId: Long)
 
     /**
-     * Get the occurrence linked to an exception event.
-     * Used for scheduling reminders for exception events.
+     * Returns the occurrence linked to [exceptionEventId], or null; reminder scheduling and the
+     * reminder fire-time guard read an exception's occurrence this way.
      */
     @Query("SELECT * FROM occurrences WHERE exception_event_id = :exceptionEventId LIMIT 1")
     suspend fun getByExceptionEventId(exceptionEventId: Long): Occurrence?
 
     /**
-     * Mark occurrence as cancelled (EXDATE applied).
+     * Cancels [eventId]'s occurrence within 60 seconds of [occurrenceTime], as an EXDATE does.
      *
-     * Uses 60-second (60000ms) tolerance for timezone/DST edge cases where
-     * EXDATE timestamp may not exactly match RRULE-generated time.
+     * The tolerance covers timezone and DST cases where the EXDATE doesn't exactly match the
+     * RRULE-generated time.
      */
     @Query("""
         UPDATE occurrences
@@ -491,14 +410,12 @@ interface OccurrencesDao {
     suspend fun markCancelled(eventId: Long, occurrenceTime: Long)
 
     /**
-     * Mark the occurrence linked to an exception event as cancelled.
+     * Cancels the occurrence linked to [exceptionEventId].
      *
-     * Required for the edit-then-delete flow: when an occurrence has been
-     * edited into an exception, the master's occurrence row carries the
-     * exception's modified start_ts (set by linkException) — not the
-     * original RRULE time. Using markCancelled with the original instance
-     * time misses the row because the 60s tolerance can't bridge the
-     * user's edit shift. Match by exception_event_id instead.
+     * An occurrence edited into an exception has the exception's start_ts (set by
+     * [updateOccurrenceForException]), so [markCancelled] with the original instance time misses
+     * it whenever the edit moved it more than 60 seconds. Deleting an edited occurrence needs
+     * this match by link.
      */
     @Query("""
         UPDATE occurrences
@@ -508,9 +425,8 @@ interface OccurrencesDao {
     suspend fun markCancelledByException(exceptionEventId: Long)
 
     /**
-     * Unmark occurrence as cancelled (EXDATE removed).
-     *
-     * Uses 60-second (60000ms) tolerance for consistency with markCancelled.
+     * Un-cancels [eventId]'s occurrence within 60 seconds of [occurrenceTime], as removing an
+     * EXDATE does; the tolerance matches [markCancelled].
      */
     @Query("""
         UPDATE occurrences
@@ -522,24 +438,17 @@ interface OccurrencesDao {
 
     // ========== Calendar Move ==========
 
-    /**
-     * Update calendar ID for all occurrences of an event.
-     * Used when moving an event to a different calendar.
-     */
+    /** Moves every occurrence of [eventId] to [newCalendarId], for an event calendar move. */
     @Query("UPDATE occurrences SET calendar_id = :newCalendarId WHERE event_id = :eventId")
     suspend fun updateCalendarIdForEvent(eventId: Long, newCalendarId: Long)
 
     // ========== Utility Queries ==========
 
-    /**
-     * Get total occurrence count (for diagnostics).
-     */
+    /** Returns the number of occurrence rows, for diagnostics. */
     @Query("SELECT COUNT(*) FROM occurrences")
     suspend fun getTotalCount(): Int
 
-    /**
-     * Check if any occurrences exist in range (for UI hints).
-     */
+    /** Returns whether any non-cancelled occurrence overlaps [startTs]..[endTs]. */
     @Query("""
         SELECT EXISTS(
             SELECT 1 FROM occurrences

@@ -12,11 +12,7 @@ import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.PushResult
 import org.onekash.kashcal.sync.strategy.SinglePushResult
 
-/**
- * Tests for SyncErrorBridge.
- *
- * Verifies conversion from sync layer errors to CalendarError.
- */
+/** Checks that [SyncErrorBridge] maps sync results and errors to [CalendarError]. */
 class SyncErrorBridgeTest {
 
     // ==================== SyncResult Mapping ====================

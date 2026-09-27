@@ -14,16 +14,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for ICalDateTime boundary conversions in the icaldav integration.
+ * Tests millisecond conversions between Room [Event] and icaldav's [ICalDateTime]:
+ * `ICalDateTime.fromTimestamp(ms, zone, isAllDay)` in, `ICalDateTime.timestamp` out.
  *
- * These tests verify that millisecond timestamps are correctly converted
- * between KashCal's Event entity and the icaldav library's ICalDateTime.
- *
- * Key conversion points:
- * - ICalDateTime.fromTimestamp(ms, zone, isAllDay) - ms → ICalDateTime
- * - ICalDateTime.timestamp - ICalDateTime → ms
- *
- * Created as part of iCalDAV integration audit (Task #1).
+ * Covers second truncation on an ICS round trip, all-day DATE values, TZID versus UTC, edge
+ * dates and durations, and the [ICalEventMapper] and [IcsPatcher] round trip.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -39,11 +34,10 @@ class ICalDateTimeBoundaryTest {
 
     @Test
     fun `ICalDateTime timestamp is in milliseconds`() {
-        // Create ICalDateTime from known milliseconds
         val knownMs = 1737590400000L // Jan 23, 2025 00:00:00 UTC
         val dateTime = ICalDateTime.fromTimestamp(knownMs, null, false)
 
-        // Verify timestamp is in milliseconds (13 digits)
+        // Milliseconds have 13 digits.
         assertTrue(
             "timestamp should be in milliseconds (>1e12), got ${dateTime.timestamp}",
             dateTime.timestamp > 1_000_000_000_000L
@@ -53,12 +47,11 @@ class ICalDateTimeBoundaryTest {
 
     @Test
     fun `ICalDateTime preserves exact milliseconds for timed events`() {
-        // Test with a timestamp that has specific milliseconds
         val startMs = 1737590400123L // Has 123 milliseconds
         val dateTime = ICalDateTime.fromTimestamp(startMs, null, false)
 
-        // ICalDateTime preserves exact milliseconds - no truncation at object level
-        // Truncation only happens during ICS serialization/parse (ICS format has second precision)
+        // ICalDateTime keeps milliseconds; truncation happens only in ICS serialization
+        // and parsing, since the ICS format has second precision.
         assertEquals(
             "ICalDateTime preserves exact milliseconds",
             startMs,
@@ -68,7 +61,7 @@ class ICalDateTimeBoundaryTest {
 
     @Test
     fun `ICS serialization truncates milliseconds to seconds`() {
-        // This documents that millisecond truncation happens at ICS level, not ICalDateTime level
+        // Milliseconds are truncated at the ICS level, not in ICalDateTime.
         val startMs = 1737590400123L // Has 123 milliseconds
         val endMs = startMs + 3600000L
 
@@ -78,7 +71,7 @@ class ICalDateTimeBoundaryTest {
             endTs = endMs
         )
 
-        // Generate ICS (truncates to seconds) and parse back
+        // Generating ICS truncates to seconds.
         val ics = IcsPatcher.generateFresh(event)
         val parsed = parser.parseAllEvents(ics).getOrNull()!!.first()
 
@@ -102,11 +95,9 @@ class ICalDateTimeBoundaryTest {
             endTs = endMs
         )
 
-        // Generate ICS and parse back
         val ics = IcsPatcher.generateFresh(event)
         val parsed = parser.parseAllEvents(ics).getOrNull()!!.first()
 
-        // Verify timestamps match
         assertEquals(startMs, parsed.dtStart.timestamp)
         assertEquals(endMs, parsed.effectiveEnd().timestamp)
     }
@@ -118,7 +109,6 @@ class ICalDateTimeBoundaryTest {
         val utcMidnight = 1737504000000L // Jan 22, 2025 00:00:00 UTC
         val dateTime = ICalDateTime.fromTimestamp(utcMidnight, null, isDate = true)
 
-        // All-day events should use date-only format
         assertTrue("All-day should be date-only", dateTime.isDate)
     }
 
@@ -134,7 +124,6 @@ class ICalDateTimeBoundaryTest {
         val ics = IcsPatcher.generateFresh(event)
         val parsed = parser.parseAllEvents(ics).getOrNull()!!.first()
 
-        // Verify all-day is preserved
         assertTrue("Should be all-day", parsed.isAllDay)
         assertTrue("dtStart should be date-only", parsed.dtStart.isDate)
     }
@@ -151,12 +140,11 @@ class ICalDateTimeBoundaryTest {
 
         val ics = IcsPatcher.generateFresh(event)
 
-        // ICS should contain VALUE=DATE format
         assertTrue(
             "ICS should contain DATE value",
             ics.contains("VALUE=DATE") || ics.contains(";VALUE=DATE")
         )
-        // Should NOT contain time component for start
+        // DTSTART carries no time component.
         assertFalse(
             "All-day DTSTART should not have time",
             ics.contains("DTSTART:20250122T")
@@ -200,7 +188,7 @@ class ICalDateTimeBoundaryTest {
 
         val ics = IcsPatcher.generateFresh(event)
 
-        // UTC events should use Z suffix, not TZID
+        // UTC times use the Z suffix, not a TZID.
         assertTrue("UTC event should have Z suffix", ics.contains("Z\r\n") || ics.contains("Z\n"))
     }
 
@@ -216,7 +204,6 @@ class ICalDateTimeBoundaryTest {
 
         val ics = IcsPatcher.generateFresh(event)
 
-        // Non-UTC events should have TZID
         assertTrue(
             "Non-UTC event should have TZID",
             ics.contains("TZID=America/Los_Angeles")
@@ -350,7 +337,6 @@ class ICalDateTimeBoundaryTest {
         val parsed = parser.parseAllEvents(ics).getOrNull()!!.first()
         val entity = ICalEventMapper.toEntity(parsed, ics, 1L, null, null).event
 
-        // Verify timestamps are in milliseconds
         assertTrue(
             "startTs should be in milliseconds",
             entity.startTs > 1_000_000_000_000L
@@ -380,7 +366,6 @@ class ICalDateTimeBoundaryTest {
         val regeneratedIcs = IcsPatcher.serialize(entity)
         val event2 = parser.parseAllEvents(regeneratedIcs).getOrNull()!!.first()
 
-        // Timestamps should match
         assertEquals(event1.dtStart.timestamp, event2.dtStart.timestamp)
         assertEquals(event1.effectiveEnd().timestamp, event2.effectiveEnd().timestamp)
     }

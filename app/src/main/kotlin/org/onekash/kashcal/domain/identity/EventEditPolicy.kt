@@ -4,24 +4,22 @@ import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Event
 
 /**
- * Centralizes the "can the current user edit this event as its organizer?"
- * predicate. Single home for the rule that drives:
+ * Returns true when the user may edit [event] as its organizer through this account.
  *
- * - the read-only banner + disabled fields in `EventFormSheet` when the
- *   user is an attendee, not the organizer (client-enforced read-only
- *   gate — server-side enforcement is unreliable, verified across
- *   multiple servers),
- * - whether the in-app editor surfaces "Save" or "Done" affordances.
+ * It drives the read-only banner and disabled fields in `EventFormSheet` for an attendee
+ * (`HomeViewModel.formIsReadOnly`) and the organizer-only push steps in `PushStrategy`
+ * (SCHEDULE-STATUS read-back and outbox cancels). The quick view's Edit or Open label
+ * (`EventQuickViewSheet`) derives its own answer from the attendee list. The gate is enforced
+ * by the client because server-side enforcement is unreliable, verified across multiple
+ * servers.
  *
- * RSVP buttons remain interactive regardless of this predicate — they're
- * what an attendee CAN do on someone else's event.
- *
- * Decision table:
+ * RSVP buttons stay interactive regardless: they're what an attendee can do on someone
+ * else's event.
  *
  * | Account | Event ORGANIZER     | canEdit |
  * |---------|---------------------|---------|
  * | null    | anything            | false   |
- * | any     | null/blank          | true    |  (lone-author event — user is implicitly the organizer)
+ * | any     | null/blank          | true    |  (lone-author event: the user is the organizer)
  * | any     | matches account     | true    |
  * | any     | doesn't match       | false   |
  */

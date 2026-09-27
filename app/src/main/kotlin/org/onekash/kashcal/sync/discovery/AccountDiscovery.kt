@@ -2,22 +2,20 @@ package org.onekash.kashcal.sync.discovery
 
 import org.onekash.kashcal.data.db.entity.Account
 import org.onekash.kashcal.data.db.entity.Calendar
+import org.onekash.kashcal.sync.client.CalDavClient
+import org.onekash.kashcal.sync.client.model.CalDavResult
 
-/**
- * Result of account discovery operation.
- */
+/** Outcome of discovering an account's calendars. */
 sealed class DiscoveryResult {
-    /**
-     * Discovery succeeded - account and calendars created.
-     */
+    /** The account and its calendars were created or refreshed in Room. */
     data class Success(
         val account: Account,
         val calendars: List<Calendar>
     ) : DiscoveryResult()
 
     /**
-     * Calendars discovered but account not yet created.
-     * Used for two-phase flow where user selects which calendars to sync.
+     * Calendars were found but no account is created yet: the user picks which calendars to
+     * sync first.
      */
     data class CalendarsFound(
         val serverUrl: String,
@@ -27,21 +25,57 @@ sealed class DiscoveryResult {
         val calendars: List<DiscoveredCalendar>
     ) : DiscoveryResult()
 
-    /**
-     * Authentication failed - invalid credentials.
-     */
+    /** The server rejected the credentials, or none are stored. */
     data class AuthError(val message: String) : DiscoveryResult()
 
     /**
-     * Discovery failed - network or server error.
+     * Discovery failed for any other reason: network, server, or missing account data.
+     *
+     * @property reason a failure the UI explains with its own message, or null.
      */
-    data class Error(val message: String) : DiscoveryResult()
+    data class Error(
+        val message: String,
+        val reason: DiscoveryErrorReason? = null
+    ) : DiscoveryResult()
+}
+
+/** Discovery failures the UI shows with a dedicated, translated message. */
+enum class DiscoveryErrorReason {
+    /**
+     * KashCal refused a connection the server asked for: a redirect from https to
+     * plain http (other than on the same host), plain http on an https account, or
+     * a redirect loop. The password was not sent.
+     */
+    INSECURE_CONNECTION_REFUSED,
 }
 
 /**
- * Data model for discovered calendar before Room entity creation.
- * Used in two-phase discovery flow.
+ * The discovery client for one run, recording whether its latest discovery request
+ * (well-known, principal, calendar home, calendar listing) was a connection KashCal
+ * refused. A failure of the run then says so ([error]) only when the step that failed
+ * was refused, not when an earlier refusal was followed by a fallback that worked.
+ * Wrapping the client, not each call, also covers the fallback probes.
  */
+internal class RefusalRecordingClient(private val client: CalDavClient) : CalDavClient by client {
+    var lastCallRefused: Boolean = false
+        private set
+
+    private fun <T> note(result: CalDavResult<T>): CalDavResult<T> {
+        lastCallRefused = result is CalDavResult.Error && result.code == CalDavResult.CODE_TRANSPORT_REFUSED
+        return result
+    }
+
+    override suspend fun discoverWellKnown(serverUrl: String) = note(client.discoverWellKnown(serverUrl))
+    override suspend fun discoverPrincipal(serverUrl: String) = note(client.discoverPrincipal(serverUrl))
+    override suspend fun discoverCalendarHome(principalUrl: String) = note(client.discoverCalendarHome(principalUrl))
+    override suspend fun listCalendars(calendarHomeUrl: String) = note(client.listCalendars(calendarHomeUrl))
+
+    /** Returns a failure with [message], marked refused only if the failing step was refused. */
+    fun error(message: String): DiscoveryResult.Error =
+        DiscoveryResult.Error(message, reason = if (lastCallRefused) DiscoveryErrorReason.INSECURE_CONNECTION_REFUSED else null)
+}
+
+/** A calendar found on the server before its Room row exists ([DiscoveryResult.CalendarsFound]). */
 data class DiscoveredCalendar(
     val href: String,
     val displayName: String,
@@ -51,30 +85,23 @@ data class DiscoveredCalendar(
 )
 
 /**
- * Interface for account discovery services.
+ * Discovers an account's calendars and creates them in Room.
  *
- * Each calendar provider (iCloud, Google, etc.) implements this interface
- * to handle the discovery and setup of accounts and calendars.
- *
- * Discovery flow:
- * 1. Validate credentials against server
- * 2. Discover principal/user URL
- * 3. Discover calendar home URL
- * 4. List available calendars
- * 5. Create Account and Calendar entities in Room
+ * Only the iCloud service implements this interface; the generic CalDAV service has its own
+ * methods of the same shape. Discovery runs:
+ * 1. Discover the principal URL, which also validates the credentials.
+ * 2. Discover the calendar home URLs.
+ * 3. List the calendars in every home.
+ * 4. Create the Account and Calendar rows.
  */
 interface AccountDiscoveryService {
-    /**
-     * Provider identifier (e.g., "icloud", "google").
-     */
+    /** Provider identifier, e.g. "icloud". */
     val providerId: String
 
     /**
-     * Discover and create an account with all its calendars.
+     * Discovers the account and creates it with all its calendars.
      *
-     * @param username Username or email for the account
-     * @param password Password or app-specific password
-     * @return DiscoveryResult with created Account and Calendars, or error
+     * @param password the password or app-specific password.
      */
     suspend fun discoverAndCreateAccount(
         username: String,
@@ -82,27 +109,14 @@ interface AccountDiscoveryService {
     ): DiscoveryResult
 
     /**
-     * Refresh calendar list for an existing account.
-     * Adds new calendars, updates existing ones, removes deleted ones.
-     *
-     * @param accountId The account ID to refresh
-     * @return DiscoveryResult with updated Account and Calendars
+     * Refreshes an existing account's calendar list: adds new calendars, updates existing ones,
+     * and removes the ones the server confirms are gone ([confirmUnlistedCalendars]).
      */
     suspend fun refreshCalendars(accountId: Long): DiscoveryResult
 
-    /**
-     * Remove all data for an account (used during sign-out).
-     *
-     * @param accountId The account ID to remove
-     */
+    /** Removes all data for an account on sign-out. */
     suspend fun removeAccount(accountId: Long)
 
-    /**
-     * Remove account by email address.
-     *
-     * Convenience method for sign-out flow when only email is available.
-     *
-     * @param email The email address of the account to remove
-     */
+    /** Removes the account with [email], for a sign-out that only knows the email. */
     suspend fun removeAccountByEmail(email: String)
 }

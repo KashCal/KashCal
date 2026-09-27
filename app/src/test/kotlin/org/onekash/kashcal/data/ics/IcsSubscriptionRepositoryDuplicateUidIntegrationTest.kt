@@ -22,21 +22,16 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Integration test for issue #227 Bug B fix.
+ * Tests the master-uniqueness trigger against the duplicate-UID and synthetic-master handling of
+ * #227, in an in-memory Room database.
  *
- * Drives the production master-uniqueness trigger end-to-end through a real
- * Room database in memory, proving:
+ * - [KashCalDatabase.testCallback] installs the trigger.
+ * - Two masters renamed to distinct `#dup=` UIDs both persist.
+ * - Two masters with the same UID in the same calendar, both with `original_event_id IS NULL`,
+ *   still abort, so the trigger isn't relaxed.
+ * - A synthetic master and its linked exceptions persist.
  *
- * 1. The trigger is still installed via [KashCalDatabase.testCallback].
- * 2. After the disambiguation pre-pass, two duplicate-UID master events
- *    persist as two distinct rows (mutated `uid` column = no trigger fire).
- * 3. The trigger still protects against truly-identical masters (same UID,
- *    same calendar, both with `original_event_id IS NULL`) — sanity check
- *    that we didn't inadvertently relax it.
- *
- * Mocked unit tests cannot exercise the SQL trigger, so this test class is
- * the trigger-aware safety net. Mirrors the Robolectric pattern in
- * `ConstraintDiagnosticTest.kt`.
+ * Mocked unit tests can't run the SQL trigger. The setup follows `ConstraintDiagnosticTest`.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -126,9 +121,8 @@ class IcsSubscriptionRepositoryDuplicateUidIntegrationTest {
             buildMaster(uid = sharedUid, startTs = nowMs)
         )
 
-        // The same UID + same calendar + both original_event_id IS NULL is
-        // exactly what the trigger guards against. If this assertion ever
-        // breaks, somebody accidentally relaxed the trigger.
+        // Same UID, same calendar, both original_event_id IS NULL: what the trigger guards
+        // against. If this stops throwing, the trigger was relaxed.
         assertThrows(android.database.sqlite.SQLiteConstraintException::class.java) {
             runBlocking {
                 db.eventsDao().insert(
@@ -144,18 +138,16 @@ class IcsSubscriptionRepositoryDuplicateUidIntegrationTest {
 
     @Test
     fun `disambiguation helper produces UIDs that pass through the trigger`() = runBlocking {
-        // Wire just enough of the production helper to verify the contract.
-        // We construct two duplicate-UID Event objects, run them through the
-        // helper, and insert the result — proving the production pre-pass is
-        // sufficient to bypass the trigger.
+        // Renames two duplicate-UID masters and inserts them. The renaming is a local copy of
+        // [IcsSubscriptionRepository.disambiguateDuplicateUidMasters] (uid, importId and the
+        // original-UID key; not caldavUrl), so this checks that the UID scheme passes the
+        // trigger, not the production function itself.
         val originalUid = "shared@google.com"
         val raw = listOf(
             buildIncomingMaster(uid = originalUid, startTs = nowMs),
             buildIncomingMaster(uid = originalUid, startTs = nowMs + 60_000L)
         )
 
-        // Mirror the production disambiguation logic. Keeping the test
-        // self-contained avoids having to wire the full repository.
         val disambiguated = run {
             val masterCounts = raw.filter { it.originalInstanceTime == null }
                 .groupingBy { it.uid }.eachCount()
@@ -188,18 +180,12 @@ class IcsSubscriptionRepositoryDuplicateUidIntegrationTest {
     }
 
     /**
-     * Issue #227 Bug A trigger-aware end-to-end: a synthetic master
-     * (status=CANCELLED, originalEventId=null) inserted via the production
-     * synthesis path must NOT trip the master-uniqueness trigger, even
-     * when an orphan exception with the same UID was previously
-     * mistakenly inserted as a standalone (no synthesis path) — the
-     * legacy-orphan sweep must run first.
+     * Inserts a synthetic master (CANCELLED, originalEventId null) and then two exceptions
+     * linked to it, the order the sync writes them in, without tripping the trigger (#227).
      *
-     * This test mirrors the production sequence: insert one synthetic
-     * master per UID, then insert each orphan exception linked to it.
-     * The trigger fires on (uid, calendar_id, original_event_id IS NULL)
-     * collisions, so the test pins that the synthesis order yields no
-     * collision.
+     * The trigger fires on a (uid, calendar_id, original_event_id IS NULL) collision; the linked
+     * exceptions have an original_event_id, so the UID has one master row. The rows are built by
+     * hand, and no legacy standalone row is present.
      */
     @Test
     fun `synthetic master plus linked orphan exceptions persist without trigger abort`() = runBlocking {
@@ -207,7 +193,7 @@ class IcsSubscriptionRepositoryDuplicateUidIntegrationTest {
         val recId1 = nowMs
         val recId2 = nowMs + 86_400_000L
 
-        // Step 1: synthesize the master for the orphan UID.
+        // The synthetic master for the exception-only UID.
         val syntheticId = db.eventsDao().insert(
             Event(
                 uid = uid,
@@ -226,7 +212,7 @@ class IcsSubscriptionRepositoryDuplicateUidIntegrationTest {
         )
         assertNotEquals("Synthetic must be persisted", 0L, syntheticId)
 
-        // Step 2: insert two orphan exceptions linked to the synthetic.
+        // Two exceptions linked to it.
         val exceptionId1 = db.eventsDao().insert(
             Event(
                 uid = uid,
@@ -274,7 +260,7 @@ class IcsSubscriptionRepositoryDuplicateUidIntegrationTest {
             exceptionId2
         )
 
-        // Verify final state: 1 master + 2 linked exceptions.
+        // One master row for the UID, and it is the synthetic.
         val masters = db.eventsDao().getAllMasterEventsForCalendar(calendarId)
             .filter { it.uid == uid }
         assertEquals("Exactly one master row for the orphan UID", 1, masters.size)

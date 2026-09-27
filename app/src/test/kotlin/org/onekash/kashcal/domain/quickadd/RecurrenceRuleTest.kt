@@ -22,8 +22,8 @@ class RecurrenceRuleTest {
     private val normalizer = NormalizerChain()
 
     /**
-     * Helper: normalizes input, tokenizes, applies RecurrenceRule.
-     * Optionally applies TimeRule first (for tests that combine recurrence + time).
+     * Normalizes and tokenizes [input], then applies [RecurrenceRule], after [TimeRule] when
+     * [applyTime] is set.
      */
     private fun parse(input: String, applyTime: Boolean = false): ParseContext {
         val normalized = normalizer.normalize(input)
@@ -100,7 +100,7 @@ class RecurrenceRuleTest {
     @Test
     fun `every Monday sets weekdayDate to next Monday`() {
         val ctx = parse("every Monday")
-        // Reference is Monday April 13, 2026. Bare weekday for same day advances 7 days.
+        // Reference is Monday April 13, 2026. A bare weekday on the same day is a week later.
         assertEquals(LocalDate.of(2026, 4, 20), ctx.weekdayDate)
         assertTrue(ctx.dateSet)
     }
@@ -108,7 +108,7 @@ class RecurrenceRuleTest {
     @Test
     fun `every Wednesday sets weekdayDate to next Wednesday`() {
         val ctx = parse("every Wednesday")
-        // Reference is Monday April 13. Wednesday is 2 days ahead → April 15.
+        // Reference is Monday April 13. Wednesday is 2 days ahead: April 15.
         assertEquals(LocalDate.of(2026, 4, 15), ctx.weekdayDate)
     }
 
@@ -118,7 +118,7 @@ class RecurrenceRuleTest {
         val tokens = WordTokenizer.tokenize(normalized)
         val context = ParseContext(reference)
         RecurrenceRule.apply(tokens, context)
-        // Both "every" (index 0) and "monday" (index 1) should be consumed
+        // "every" (index 0) and "monday" (index 1) are consumed.
         assertTrue(context.isConsumed(0))
         assertTrue(context.isConsumed(1))
     }
@@ -185,7 +185,7 @@ class RecurrenceRuleTest {
         assertTrue(ctx.dateSet)
     }
 
-    // ==================== Combined with time (full pipeline partial) ====================
+    // ==================== Combined with time (TimeRule, then RecurrenceRule) ====================
 
     @Test
     fun `every Monday at 10am - recurrence with time`() {
@@ -209,9 +209,9 @@ class RecurrenceRuleTest {
         val tokens = WordTokenizer.tokenize(normalized)
         val context = ParseContext(reference)
         RecurrenceRule.apply(tokens, context)
-        // "weekly" should be consumed
+        // "weekly" is consumed.
         assertTrue(context.isConsumed(0))
-        // "standup" should NOT be consumed
+        // "standup" isn't.
         assertTrue(!context.isConsumed(1))
     }
 
@@ -249,7 +249,7 @@ class RecurrenceRuleTest {
     fun `every 2 weeks without on - no BYDAY`() {
         val ctx = parse("every 2 weeks")
         assertEquals("FREQ=WEEKLY;INTERVAL=2", ctx.rrule)
-        // No BYDAY component
+        // No BYDAY.
         assertTrue(!ctx.rrule!!.contains("BYDAY"))
     }
 
@@ -280,10 +280,10 @@ class RecurrenceRuleTest {
         val tokens = WordTokenizer.tokenize(normalized)
         val context = ParseContext(reference)
         RecurrenceRule.apply(tokens, context)
-        // "every" (index 1) and "weekday" (index 2) should be consumed
+        // "every" (index 1) and "weekday" (index 2) are consumed.
         assertTrue(context.isConsumed(1))
         assertTrue(context.isConsumed(2))
-        // "standup" (index 0) should NOT be consumed
+        // "standup" (index 0) isn't.
         assertTrue(!context.isConsumed(0))
     }
 
@@ -376,7 +376,7 @@ class RecurrenceRuleTest {
 
     @Test
     fun `every Monday Wednesday and Friday sets BYDAY=MO,WE,FR`() {
-        // Commas normalize to spaces upstream, so "Monday, Wednesday, and Friday"
+        // Character cleanup turns commas into spaces, so "Monday, Wednesday, and Friday"
         // reaches the rule as "monday wednesday and friday".
         val ctx = parse("every Monday, Wednesday, and Friday")
         assertEquals("FREQ=WEEKLY;BYDAY=MO,WE,FR", ctx.rrule)
@@ -385,7 +385,7 @@ class RecurrenceRuleTest {
     @Test
     fun `every Tuesday and Thursday sets BYDAY in weekday order`() {
         val ctx = parse("every Thursday and Tuesday")
-        // Output is canonically Monday-first ordered by RruleBuilder.
+        // RruleBuilder orders BYDAY Monday first.
         assertEquals("FREQ=WEEKLY;BYDAY=TU,TH", ctx.rrule)
     }
 
@@ -406,9 +406,9 @@ class RecurrenceRuleTest {
     @Test
     fun `every Monday and Wednesday anchors start on the earliest upcoming selected day`() {
         val ctx = parse("every Monday and Wednesday")
-        // Reference is Monday April 13; bare Monday advances to April 20, Wednesday
-        // is April 15 — the earliest upcoming selected day, so DTSTART must be Apr 15
-        // (a day the rule actually recurs on), not the reference Monday.
+        // Reference is Monday April 13. A bare Monday is April 20 and Wednesday April 15, the
+        // earliest selected day, so DTSTART is Apr 15 (a day the rule recurs on), not the
+        // reference Monday.
         assertEquals(LocalDate.of(2026, 4, 15), ctx.weekdayDate)
         assertTrue(ctx.dateSet)
     }
@@ -481,7 +481,7 @@ class RecurrenceRuleTest {
         assertTrue(context.isConsumed(3))
     }
 
-    // ==================== Monthly ordinal-weekday ("first Monday of the month") ====================
+    // ==================== Monthly Nth weekday ("first Monday of the month") ====================
 
     @Test
     fun `first Monday of the month sets BYDAY=1MO`() {
@@ -491,8 +491,8 @@ class RecurrenceRuleTest {
 
     @Test
     fun `first Monday of the month anchors start on the first occurrence`() {
-        // Reference Monday April 13; April's 1st Monday (Apr 6) is already past,
-        // so the first occurrence on/after the reference is May's 1st Monday.
+        // Reference Monday April 13; April's 1st Monday (Apr 6) is past, so the first
+        // occurrence on or after the reference is May's 1st Monday.
         val ctx = parse("first Monday of the month")
         assertEquals(LocalDate.of(2026, 5, 4), ctx.resolveDate())
         assertTrue(ctx.dateSet)
@@ -506,7 +506,7 @@ class RecurrenceRuleTest {
 
     @Test
     fun `last Friday of every month anchors start on the first occurrence`() {
-        // Last Friday of April 2026 is Apr 24, which is on/after the reference.
+        // Last Friday of April 2026 is Apr 24, on or after the reference.
         val ctx = parse("last Friday of every month")
         assertEquals(LocalDate.of(2026, 4, 24), ctx.resolveDate())
         assertTrue(ctx.dateSet)
@@ -514,14 +514,14 @@ class RecurrenceRuleTest {
 
     @Test
     fun `second Tuesday of the month sets BYDAY=2TU`() {
-        // "second" tokenizes as UNIT(SECONDS); the rule must map it to ordinal 2.
+        // "second" tokenizes as UNIT(SECONDS); the rule maps it to ordinal 2.
         val ctx = parse("second Tuesday of the month")
         assertEquals("FREQ=MONTHLY;BYDAY=2TU", ctx.rrule)
     }
 
     @Test
     fun `second Tuesday of the month anchors start on the first occurrence`() {
-        // 2nd Tuesday of April 2026 is Apr 14, on/after the reference Monday Apr 13.
+        // 2nd Tuesday of April 2026 is Apr 14, on or after the reference Monday Apr 13.
         val ctx = parse("second Tuesday of the month")
         assertEquals(LocalDate.of(2026, 4, 14), ctx.resolveDate())
         assertTrue(ctx.dateSet)
@@ -535,8 +535,8 @@ class RecurrenceRuleTest {
 
     @Test
     fun `the 2nd Friday of every month anchors start on the first occurrence`() {
-        // April's 2nd Friday (Apr 10) is past the reference, so it rolls to May's
-        // 2nd Friday, May 8.
+        // April's 2nd Friday (Apr 10) is before the reference, so it moves to May's 2nd
+        // Friday, May 8.
         val ctx = parse("the 2nd Friday of every month")
         assertEquals(LocalDate.of(2026, 5, 8), ctx.resolveDate())
         assertTrue(ctx.dateSet)
@@ -552,7 +552,7 @@ class RecurrenceRuleTest {
 
     @Test
     fun `on the 15th of every month anchors start on the first occurrence`() {
-        // April 15 is on/after the reference Monday Apr 13.
+        // April 15 is on or after the reference Monday Apr 13.
         val ctx = parse("on the 15th of every month")
         assertEquals(LocalDate.of(2026, 4, 15), ctx.resolveDate())
         assertTrue(ctx.dateSet)
@@ -566,7 +566,7 @@ class RecurrenceRuleTest {
 
     @Test
     fun `the 1st of the month anchors start on the first occurrence`() {
-        // April 1 is already past the reference Apr 13, so it rolls to May 1.
+        // April 1 is before the reference Apr 13, so it moves to May 1.
         val ctx = parse("the 1st of the month")
         assertEquals(LocalDate.of(2026, 5, 1), ctx.resolveDate())
         assertTrue(ctx.dateSet)
@@ -574,8 +574,8 @@ class RecurrenceRuleTest {
 
     @Test
     fun `the 31st of every month skips short months rather than clamping`() {
-        // April 2026 has only 30 days, so the by-date anchor must skip April
-        // entirely (not clamp to Apr 30) and land on May 31.
+        // April 2026 has 30 days, so the start skips April instead of clamping to Apr 30 and
+        // lands on May 31.
         val ctx = parse("the 31st of every month")
         assertEquals("FREQ=MONTHLY;BYMONTHDAY=31", ctx.rrule)
         assertEquals(LocalDate.of(2026, 5, 31), ctx.resolveDate())
@@ -584,9 +584,8 @@ class RecurrenceRuleTest {
 
     @Test
     fun `fifth Friday of every month skips months without a 5th Friday`() {
-        // April 2026 has only four Fridays (3, 10, 17, 24); the ordinal-5 anchor
-        // must skip April rather than spilling into May, landing on May 29 —
-        // May's actual 5th Friday.
+        // April 2026 has four Fridays (3, 10, 17, 24), so the start skips April and lands on
+        // May 29, May's 5th Friday.
         val ctx = parse("fifth Friday of every month")
         assertEquals("FREQ=MONTHLY;BYDAY=5FR", ctx.rrule)
         assertEquals(LocalDate.of(2026, 5, 29), ctx.resolveDate())
@@ -599,8 +598,8 @@ class RecurrenceRuleTest {
     fun `last day of the month sets BYMONTHDAY=-1`() {
         val ctx = parse("last day of the month")
         assertEquals("FREQ=MONTHLY;BYMONTHDAY=-1", ctx.rrule)
-        // "the month" shares the recurring anchor path with "every month"; pin the
-        // start date here too so a regression can't diverge the two connectives.
+        // "the month" takes the same recurring path as "every month"; the start date is
+        // pinned here too so the two connectives can't diverge.
         assertEquals(LocalDate.of(2026, 4, 30), ctx.resolveDate())
         assertTrue(ctx.dateSet)
     }
@@ -613,7 +612,7 @@ class RecurrenceRuleTest {
 
     @Test
     fun `last day of every month anchors start on the reference month end`() {
-        // The reference month's last day (Apr 30) is always on/after the reference
+        // The reference month's last day (Apr 30) is always on or after the reference
         // (Mon Apr 13), so the recurring last-day rule starts there.
         val ctx = parse("last day of every month")
         assertEquals(LocalDate.of(2026, 4, 30), ctx.resolveDate())
@@ -622,8 +621,8 @@ class RecurrenceRuleTest {
 
     @Test
     fun `last day of this month is a one-off at month end with no rrule`() {
-        // "this month" is a single occurrence in the current month, not a
-        // recurrence — February 2026 ends on the 28th.
+        // "this month" is one occurrence in the current month, not a recurrence. February
+        // 2026 ends on the 28th.
         val ctx = parseAt("last day of this month", feb2026)
         assertNull(ctx.rrule)
         assertEquals(LocalDate.of(2026, 2, 28), ctx.resolveDate())
@@ -648,10 +647,8 @@ class RecurrenceRuleTest {
 
     @Test
     fun `first day of every month is not claimed as a last-day rule`() {
-        // Only "last day" maps to BYMONTHDAY=-1. "first day" carries an ordinal
-        // other than "last", so the day-unit case must decline; the phrase then
-        // falls through to the plain EVERY + month path (FREQ=MONTHLY), never the
-        // last-day rule.
+        // Only "last day" maps to BYMONTHDAY=-1. The day-unit branch declines "first day", so
+        // the phrase falls through to the plain EVERY + month path (FREQ=MONTHLY).
         val ctx = parse("first day of every month")
         assertEquals("FREQ=MONTHLY", ctx.rrule)
     }
@@ -672,11 +669,11 @@ class RecurrenceRuleTest {
         assertTrue(context.isConsumed(7)) // month
     }
 
-    // ==================== "of this month" → one-off in the current month (NOT recurrence) ====================
+    // ==================== "of this month": one date, no recurrence ====================
 
     @Test
     fun `last Friday of this month is a one-off on the current month's last Friday`() {
-        // "this month" means the current month (April 2026), NOT a recurrence.
+        // "this month" is the current month (April 2026), not a recurrence.
         // Last Friday of April 2026 is Apr 24.
         val ctx = parse("last Friday of this month")
         assertNull("of this month must not be recurring", ctx.rrule)
@@ -686,8 +683,8 @@ class RecurrenceRuleTest {
 
     @Test
     fun `first Monday of this month is a one-off even when already past the reference`() {
-        // April's 1st Monday (Apr 6) is before the reference Mon Apr 13, but
-        // "this month" anchors to the current month regardless — no roll-forward.
+        // April's 1st Monday (Apr 6) is before the reference Mon Apr 13, but "this month"
+        // stays in the current month; it doesn't move forward.
         val ctx = parse("first Monday of this month")
         assertNull(ctx.rrule)
         assertEquals(LocalDate.of(2026, 4, 6), ctx.resolveDate())
@@ -718,10 +715,10 @@ class RecurrenceRuleTest {
         assertTrue("rent must NOT be consumed (it's the title)", !context.isConsumed(0))
     }
 
-    // ==================== "of this month" degenerate cases → clamp within the month ====================
+    // ==================== "of this month": clamp to the month ====================
 
-    // Reference for clamp tests: Tue Feb 10, 2026. February 2026 has 28 days and
-    // only four Fridays (6, 13, 20, 27) — no 5th Friday, and no 29/30/31.
+    // Reference for clamp tests: Tue Feb 10, 2026. February 2026 has 28 days and four Fridays
+    // (6, 13, 20, 27): no 5th Friday and no 29th, 30th or 31st.
     private val feb2026 = LocalDateTime.of(2026, 2, 10, 10, 0)
 
     @Test
@@ -742,8 +739,8 @@ class RecurrenceRuleTest {
 
     @Test
     fun `fifth Friday of this month falls back to the last Friday when the month has none`() {
-        // "this month" must stay in the month, so with no 5th Friday it uses the
-        // last Friday (Feb 27) rather than rolling forward to another month.
+        // "this month" stays in the month, so with no 5th Friday it takes the last Friday
+        // (Feb 27) instead of moving to another month.
         val ctx = parseAt("fifth Friday of this month", feb2026)
         assertNull(ctx.rrule)
         assertEquals(LocalDate.of(2026, 2, 27), ctx.resolveDate())
@@ -766,7 +763,7 @@ class RecurrenceRuleTest {
         assertEquals(LocalDate.of(2026, 2, 28), context.resolveDate())
     }
 
-    // Leap-year boundary for the day-of-month clamp (pins minOf() behavior).
+    // Leap-year boundary for the day-of-month clamp (pins the minOf() clamp).
     private val feb2028Leap = LocalDateTime.of(2028, 2, 10, 10, 0)
 
     @Test
@@ -785,7 +782,7 @@ class RecurrenceRuleTest {
         assertTrue(ctx.dateSet)
     }
 
-    // ==================== "of this month" unresolvable → consume-and-decline (no title leak) ====================
+    // ==================== "of this month" with no date: still consumed ====================
 
     @Test
     fun `first of this month (word ordinal, no weekday) is consumed so it does not leak into the title`() {
@@ -831,9 +828,8 @@ class RecurrenceRuleTest {
 
     @Test
     fun `best of this month is NOT consumed because best is not an ordinal`() {
-        // Guard against over-consuming: only recognizable ordinals/numbers before
-        // "of ... month" are treated as a (declined) date phrase. A plain word
-        // like "best" must stay part of the title.
+        // Guards against over-consuming: only a recognized ordinal or number before "of ...
+        // month" makes it a date phrase. A plain word like "best" stays in the title.
         val normalized = normalizer.normalize("best of this month")
         val tokens = WordTokenizer.tokenize(normalized)
         val context = ParseContext(feb2026)
@@ -847,23 +843,21 @@ class RecurrenceRuleTest {
 
     @Test
     fun `second Monday of this month resolves the weekday date and is not hijacked by the ordinal-decline path`() {
-        // "second" satisfies the Case C ordinal-decline predicate, but the weekday
-        // form must take the ordinal-weekday path (Case A) and produce a real
-        // date, NOT be swallowed as a no-op decline. Feb 2026's 2nd Monday is
-        // Feb 9. This pins the Case-A-before-Case-C ordering.
+        // The ordinal-weekday branch takes the phrase and sets a real date (Feb 2026's 2nd Monday
+        // is Feb 9), so it isn't consumed with no date like "first of this month".
         val ctx = parseAt("second Monday of this month", feb2026)
         assertNull(ctx.rrule)
         assertEquals(LocalDate.of(2026, 2, 9), ctx.resolveDate())
         assertTrue(ctx.dateSet)
     }
 
-    // ==================== Regression guards (must NOT become monthly recurrence) ====================
+    // ==================== Regression guards: no monthly recurrence ====================
 
     @Test
     fun `last Friday without month anchor stays a one-off date not monthly`() {
         val ctx = parse("last Friday")
-        // No "of ... month" tail: RecurrenceRule must not claim it; WeekdayRule
-        // resolves the most-recent Friday (April 10 from Monday April 13).
+        // No "of ... month" tail, so RecurrenceRule leaves it alone. In the parser WeekdayRule
+        // then resolves the most recent Friday (April 10 from Monday April 13; not run here).
         assertNull(ctx.rrule)
     }
 }

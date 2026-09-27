@@ -1,0 +1,36 @@
+Seus calendários estão em todo lugar. A família no iCloud. Os feriados de algum site. Os aniversários perdidos nos seus contatos. O trabalho no calendário do celular. O KashCal reúne todos eles em um app no Android.
+
+Saiba mais em https://kashcal.onekash.org
+
+• iCloud: mudou para Android mas sua família ainda está no Apple? Sincronize os calendários do iCloud diretamente. Sem ponte, sem gambiarra.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo e mais. Sincronização bidirecional nativa, sem intermediários. Os calendários do Google e do Outlook do seu telefone também aparecem.
+
+• Sete visualizações: mês, mês em tela cheia, agenda, dia, 3 dias, semana e ano. Belisque para ampliar a linha do tempo e arraste um evento para movê-lo.
+
+• Agendamento: convide pessoas, envie convites de reunião e responda aos convites que receber.
+
+• Insights: veja para onde vai o seu tempo. Dias mais cheios, sequências sem pausa, blocos livres. Calculado no dispositivo.
+
+• Widgets: mantenha o seu dia na tela inicial sem abrir o app. Agenda, data, semana, mês e próximos.
+
+• Assinaturas ICS: siga qualquer feed de calendário. Feriados, calendários escolares, temporadas esportivas.
+
+• Aniversários: obtidos automaticamente dos seus contatos.
+
+• Cores por evento: de uma paleta selecionada ou da roda de cores completa, para que a sua semana seja lida num relance.
+
+• Do seu jeito: tema claro, escuro ou do sistema, além de uma paleta KashCal Teal. Quem apoia pode trocar por um ícone especial.
+
+• Acessibilidade: suporte completo a leitor de tela (TalkBack), e defina o idioma do app direto nas configurações do Android, em 67 idiomas.
+
+• Funciona totalmente offline desde o início.
+
+Privado por padrão
+
+Sem análises. Sem telemetria. Sem conta KashCal. Não temos servidores, então não há nada a coletar.
+
+• Credenciais criptografadas com o Android Keystore
+• Bloqueio do app: esconda os seus eventos atrás da digital, do rosto ou do bloqueio de tela
+
+Livre como liberdade. E de graça também.

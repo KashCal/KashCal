@@ -50,13 +50,16 @@ import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.viewmodels.ViewMode
 
 /**
- * Navigation drawer combining view mode switching and calendar visibility.
+ * Shows the navigation drawer: view-mode switching and calendar visibility.
  *
- * Top: "KashCal" branding header.
- * View section: Compact rows for each view mode with selected state.
- * Calendars section: Room calendars grouped by account with checkboxes (left side).
- * Contacts section: Birthday/anniversary calendars under a single "Contacts" header.
- * Device calendars section: Only when feature enabled, with visibility toggles.
+ * From the top:
+ * - the "KashCal" branding header, then Insights and a compact row per view mode, each
+ *   showing its selected state
+ * - Room calendars grouped by account, with leading checkboxes
+ * - birthday and anniversary calendars under one "Contacts" header
+ * - device calendars grouped by account, only when the feature is enabled and at least one
+ *   device calendar is enabled
+ * - Settings and the Feedback link
  */
 @Composable
 fun CalendarDrawer(
@@ -230,7 +233,7 @@ fun CalendarDrawer(
                     )
                 }
 
-                // Flatten all contacts calendars — no per-account sub-headers
+                // No per-account sub-headers for contacts calendars.
                 contactsGroups.forEach { group ->
                     items(
                         items = group.calendars,

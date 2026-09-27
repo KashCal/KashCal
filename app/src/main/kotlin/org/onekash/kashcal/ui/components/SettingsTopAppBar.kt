@@ -39,15 +39,12 @@ import androidx.compose.ui.unit.sp
 import org.onekash.kashcal.R
 
 /**
- * Shared top app bar for Settings and its sub-screens. Renders
- * `[back] [spacer] [logo]` in the navigation slot, the screen [title]
- * centered, and optional [actions] on the trailing edge. The logo's tap target
- * also fires [onNavigateBack] so it behaves consistently with how the logo
- * navigates "home" elsewhere.
+ * Shows the top app bar of Settings and its sub-screens: back and logo in the navigation slot,
+ * [title] centered, [actions] trailing. The logo also calls [onNavigateBack], as the logo
+ * navigates home elsewhere.
  *
- * When [isSearchActive] is true, the bar swaps the title for an inline
- * search field; the back button closes search instead of navigating away.
- * Visual style mirrors the home-screen search bar at HomeScreen.kt:962-1014.
+ * With [isSearchActive], an inline search field styled like the home-screen search bar takes
+ * the title's place, and back calls [onSearchClose] instead of navigating away.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,9 +53,8 @@ fun SettingsTopAppBar(
     onNavigateBack: () -> Unit,
     backContentDescription: String = stringResource(R.string.cd_back),
     actions: @Composable RowScope.() -> Unit = {},
-    // The logo doubles as a "jump home to today" shortcut, which fits screens
-    // reached from a calendar view. Detail screens opened from the account hub
-    // can hide it, where a today shortcut is off-context.
+    // The logo doubles as a jump-home-to-today shortcut, which fits screens reached from a
+    // calendar view. Detail screens opened from the account hub can hide it.
     showLogo: Boolean = true,
     isSearchActive: Boolean = false,
     searchQuery: String = "",
@@ -113,7 +109,7 @@ private fun SearchActiveTopAppBar(
         try {
             focusRequester.requestFocus()
         } catch (_: Exception) {
-            // Focus may not be available yet on first composition.
+            // The field may not be focusable yet on first composition.
         }
     }
 
@@ -155,7 +151,7 @@ private fun SearchActiveTopAppBar(
                         }
                         if (searchQuery.isNotEmpty()) {
                             // 48dp touch target (Material accessibility minimum)
-                            // with the Close glyph inset to 20dp inside.
+                            // around a 20dp glyph.
                             IconButton(onClick = { onSearchQueryChange("") }) {
                                 Icon(
                                     Icons.Default.Close,
@@ -165,8 +161,8 @@ private fun SearchActiveTopAppBar(
                                 )
                             }
                         } else {
-                            // Reserve space so the field width is stable
-                            // whether or not the clear button is showing.
+                            // End padding matching the start while the
+                            // clear button is hidden.
                             Spacer(modifier = Modifier.width(16.dp))
                         }
                     }

@@ -5,24 +5,22 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for [DayPagerSyncCoordinator], the pure decision logic that breaks
- * the day-pager <-> selectedDate feedback loop behind issue #267.
+ * Tests [DayPagerSyncCoordinator], the decision logic that breaks the feedback loop between the
+ * day pager and selectedDate (#267).
  *
- * The rule: a pager settle should only be echoed back to the ViewModel when it
- * concluded a genuine USER DRAG. A programmatic scroll (grid tap, Today,
- * cold-start) produces no drag, so its settle must never propagate — that is the
- * stale-echo path that caused the infinite oscillation.
+ * A pager settle is pushed back to the ViewModel only when it concluded a user drag. A
+ * programmatic scroll (grid tap, Today, cold start) produces no drag, so its settle must never
+ * propagate; echoing it is what made the selection oscillate forever.
  *
- * The pager settles AFTER the finger lifts (post-fling), so "is the finger down
- * right now" is the wrong signal. Instead a user drag latches intent that is
- * consumed by the settle that follows it.
+ * The pager settles after the finger lifts and the fling ends, so "is the finger down" is the
+ * wrong signal. A user drag latches intent that the following settle consumes.
  */
 class DayPagerSyncCoordinatorTest {
 
     @Test
     fun `programmatic-only settle does not propagate`() {
         val coordinator = DayPagerSyncCoordinator()
-        // No drag ever happened (pure programmatic scroll).
+        // No drag happened: a programmatic scroll.
         assertFalse(coordinator.shouldPropagateSettle())
     }
 
@@ -31,7 +29,7 @@ class DayPagerSyncCoordinatorTest {
         val coordinator = DayPagerSyncCoordinator()
         coordinator.onDragStarted()
         coordinator.onDragStopped()
-        // The settle that fires right after the fling settles must propagate.
+        // The settle that fires after the fling must propagate.
         assertTrue(coordinator.shouldPropagateSettle())
     }
 
@@ -41,7 +39,7 @@ class DayPagerSyncCoordinatorTest {
         coordinator.onDragStarted()
         coordinator.onDragStopped()
         assertTrue(coordinator.shouldPropagateSettle())
-        // A subsequent programmatic settle (no new drag) must NOT propagate.
+        // A later programmatic settle, with no new drag, must not propagate.
         assertFalse(coordinator.shouldPropagateSettle())
     }
 
@@ -49,8 +47,8 @@ class DayPagerSyncCoordinatorTest {
     fun `drag start alone latches intent before stop arrives`() {
         val coordinator = DayPagerSyncCoordinator()
         coordinator.onDragStarted()
-        // Even if the settle is evaluated before Stop is observed, it is a user
-        // gesture and must propagate.
+        // A settle evaluated before Stop is observed is still a user gesture and must
+        // propagate.
         assertTrue(coordinator.shouldPropagateSettle())
     }
 

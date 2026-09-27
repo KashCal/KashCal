@@ -12,20 +12,19 @@ import org.robolectric.annotation.Config
 import java.time.ZoneId
 
 /**
- * RFC 5545 §3.8.4.4 says RECURRENCE-ID's value type MUST match the master's
- * DTSTART value type. Some clients in the wild get this wrong — emitting
- * `RECURRENCE-ID;VALUE=DATE` against a timed master, or DATE-TIME against an
- * all-day master. Live multi-server tests show 7 of 10 CalDAV servers preserve
- * the mismatched form.
+ * Tests [ICalEventMapper.normalizeRecurrenceId], which repairs a RECURRENCE-ID whose value type
+ * differs from the master's DTSTART.
  *
- * Without normalization, the timestamp KashCal stores for the exception lands
- * at midnight UTC (DATE form parsed) while the master's RRULE expansion at
- * the same calendar day puts the instance at the master's local time-of-day.
- * The 60-second linkException tolerance can't bridge the gap, leaving two
- * occurrence rows for that day.
+ * RFC 5545 §3.8.4.4 says RECURRENCE-ID MUST have the same value type as DTSTART. Some clients
+ * send `RECURRENCE-ID;VALUE=DATE` against a timed master, or DATE-TIME against an all-day
+ * master, and live multi-server tests show 7 of 10 CalDAV servers keep the mismatched form.
  *
- * This file covers the pure normalization helper. The wire-level capture
- * across servers lives in MultiServerScopeSheetWireTest.
+ * Unnormalized, the stored exception time is midnight UTC (the DATE form) while the master's
+ * RRULE expansion puts that day's occurrence at the master's local time of day. The 60-second
+ * match window in [org.onekash.kashcal.data.db.dao.OccurrencesDao.linkException] can't bridge
+ * the gap, leaving two occurrence rows for the day.
+ *
+ * The wire-level capture across servers is in `MultiServerScopeSheetWireTest`.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -66,8 +65,8 @@ class RecurrenceIdNormalizationTest {
         // Master: all-day, June 1 2026 (UTC midnight per ICalDateTime convention).
         val masterStart = ICalDateTime.parse("20260601")
         assertTrue("sanity: master is DATE", masterStart.isDate)
-        // Exception arrives with RECURRENCE-ID;TZID=America/Chicago:20260603T000000
-        // — DATE-TIME form against an all-day master.
+        // Exception arrives with RECURRENCE-ID;TZID=America/Chicago:20260603T000000, a
+        // DATE-TIME against an all-day master.
         val exceptionRecurrenceIdRaw = ICalDateTime.parse("20260603T000000", "America/Chicago")
 
         val normalized = ICalEventMapper.normalizeRecurrenceId(
@@ -94,7 +93,7 @@ class RecurrenceIdNormalizationTest {
 
     @Test
     fun `matched value-type passes through unchanged`() {
-        // Master timed, exception RECURRENCE-ID also timed — no change.
+        // Master and exception RECURRENCE-ID both timed: no change.
         val masterStart = ICalDateTime.parse("20260601T100000", "America/Chicago")
         val recurrenceId = ICalDateTime.parse("20260603T100000", "America/Chicago")
 
@@ -127,8 +126,7 @@ class RecurrenceIdNormalizationTest {
 
     @Test
     fun `null master pass-through preserves recurrence id verbatim`() {
-        // No master available — we can't normalize. Pass through unchanged
-        // rather than guess.
+        // With no master there is nothing to match, so the value passes through unchanged.
         val recurrenceId = ICalDateTime.parse("20260603")
         val normalized = ICalEventMapper.normalizeRecurrenceId(
             recurrenceId = recurrenceId,

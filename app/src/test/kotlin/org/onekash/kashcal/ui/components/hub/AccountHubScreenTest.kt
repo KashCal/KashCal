@@ -22,14 +22,12 @@ import org.robolectric.annotation.Config
 import java.util.Locale
 
 /**
- * Compose tests for [AccountHubScreen].
- *
- * The hub's own regressable surface is its callback wiring (each row invokes the
- * matching lambda, not a neighbour) and the hero's edit -> save flow; the
- * open/close of the overlay lives in the caller. The personalization section is
- * stubbed via the [AccountHubScreen] slot so no Hilt graph is needed. Runs under
- * Robolectric; run the class in isolation given the repo's multi-class
- * native-crash flake.
+ * Compose tests for [AccountHubScreen]: each row invokes its own callback, the back arrow, the
+ * hero's edit and save of initials, the three section headers with no nested Widgets sub-header,
+ * the app-lock and app-permissions rows, and the data-ownership link. Opening and closing the
+ * overlay lives in the caller and isn't tested here. The `makeItYours` slot is stubbed so no Hilt
+ * graph is needed, and a test checks it renders under its section header. Run the class alone:
+ * Robolectric runs of more than one class hit a native crash.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h9999dp-mdpi")
@@ -115,7 +113,7 @@ class AccountHubScreenTest {
         composeTestRule.onNodeWithText("About").performClick()
         assertEquals(1, cb.about)
 
-        // No sibling callback fired more than its own single tap.
+        // No row's tap fired a sibling's callback.
         assertEquals(1, cb.invites)
         assertEquals(0, cb.back)
     }
@@ -137,7 +135,7 @@ class AccountHubScreenTest {
         composeTestRule.onNodeWithContentDescription("Edit your initials").performClick()
         composeTestRule.waitForIdle()
 
-        // Replace the draft and save; input is normalized to two uppercase letters.
+        // Replace the draft and save; the input is normalized to two uppercase letters.
         composeTestRule.onNodeWithText("KC").performTextClearance()
         composeTestRule.onNodeWithText("Initials").performTextInput("ann")
         composeTestRule.onNodeWithText("Save").performClick()

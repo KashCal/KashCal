@@ -6,13 +6,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for [SettingsDestination] navigation direction.
+ * Tests [SettingsDestination]'s depths, its forward/back decision and [SettingsDestination.from].
  *
- * The Settings root and its detail screens are swapped by [SettingsDestination];
- * the animated transition between them needs to know whether the user is drilling
- * *into* a detail (slide the incoming screen in from the trailing edge) or backing
- * *out* to the root (reverse). That forward/back decision is pure logic and is what
- * these tests pin down; the Compose slide itself is verified on device.
+ * The Settings transition slides the incoming screen in from the trailing edge when the user
+ * drills into a detail and reverses when backing out to the root. These tests pin the pure
+ * forward/back decision; the Compose slide itself is verified on device, not here.
  */
 class SettingsDestinationTest {
 

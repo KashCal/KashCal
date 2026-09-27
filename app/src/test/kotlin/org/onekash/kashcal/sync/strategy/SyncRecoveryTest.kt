@@ -8,15 +8,11 @@ import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.db.entity.SyncStatus
 
 /**
- * Tests for sync recovery and resilience scenarios.
+ * Checks [PendingOperation] and [SyncStatus] values and fields, and [ConflictStrategy]'s values.
  *
- * Tests verify:
- * - PendingOperation queue behavior
- * - Sync status state machine
- * - Recovery after interruption
- * - Operation idempotency
- *
- * These scenarios are critical for offline-first architecture reliability.
+ * None of these tests run the push or the production queue: the state-transition, recovery and
+ * idempotency tests assign and compare values, and the ordering, dedup and coalescing tests run
+ * test-local logic over operations.
  */
 class SyncRecoveryTest {
 
@@ -210,8 +206,8 @@ class SyncRecoveryTest {
 
     @Test
     fun `pending operations survive app restart`() {
-        // PendingOperation is persisted in Room database
-        // This test verifies the data structure supports persistence
+        // PendingOperation is a Room entity; this test only checks its fields are set, not
+        // persistence
         val op = PendingOperation(
             id = 1L,
             eventId = 123L,
@@ -231,7 +227,7 @@ class SyncRecoveryTest {
         // Event stays in PENDING state until successfully synced
         val status = SyncStatus.PENDING_CREATE
 
-        // Sync fails - status should remain PENDING_CREATE
+        // Sync fails: status stays PENDING_CREATE
         val statusAfterFailure = status // No change
 
         assertEquals(SyncStatus.PENDING_CREATE, statusAfterFailure)
@@ -285,8 +281,9 @@ class SyncRecoveryTest {
 
     @Test
     fun `CREATE operation can be safely retried`() {
-        // If CREATE partially succeeded, retry should handle duplicate
-        // This is enforced by UID uniqueness in CalDAV
+        // A retried CREATE whose first PUT landed gets a 412 from `If-None-Match: *`
+        // (`CalDavClient.createEvent`) instead of overwriting; this test only compares two
+        // operations' fields
         val op1 = PendingOperation(eventId = 1L, operation = PendingOperation.OPERATION_CREATE)
         val op2 = PendingOperation(eventId = 1L, operation = PendingOperation.OPERATION_CREATE)
 
@@ -316,7 +313,7 @@ class SyncRecoveryTest {
 
     @Test
     fun `CREATE then UPDATE coalesces to CREATE`() {
-        // If we CREATE then UPDATE before sync, only CREATE is needed
+        // A CREATE then an UPDATE before sync needs only the CREATE
         val operations = listOf(
             PendingOperation(eventId = 1L, operation = PendingOperation.OPERATION_CREATE, createdAt = 1000L),
             PendingOperation(eventId = 1L, operation = PendingOperation.OPERATION_UPDATE, createdAt = 2000L)
@@ -339,7 +336,7 @@ class SyncRecoveryTest {
 
     @Test
     fun `CREATE then DELETE coalesces to nothing`() {
-        // If we CREATE then DELETE before sync, nothing needs syncing
+        // A CREATE then a DELETE before sync leaves nothing to sync
         val operations = listOf(
             PendingOperation(eventId = 1L, operation = PendingOperation.OPERATION_CREATE, createdAt = 1000L),
             PendingOperation(eventId = 1L, operation = PendingOperation.OPERATION_DELETE, createdAt = 2000L)

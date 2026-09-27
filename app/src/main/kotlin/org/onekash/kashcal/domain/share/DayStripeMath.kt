@@ -4,11 +4,10 @@ import java.time.Instant
 import java.time.ZoneId
 
 /**
- * Position of an event within a 24-hour day stripe, normalized to [0, 1].
+ * Position of an event on a 24-hour day stripe, as fractions of the day in 0..1.
  *
- * @param startFraction left edge of the highlighted segment, 0 = midnight, 1 = next midnight.
- * @param widthFraction fractional width of the highlighted segment.
- * @param visible       false for multi-day, all-day, or malformed (end ≤ start) events.
+ * @param startFraction left edge of the highlighted segment: 0 is midnight, 1 the next midnight.
+ * @param visible false when [DayStripeMath.compute] hides the stripe.
  */
 data class StripePosition(
     val startFraction: Float,
@@ -21,15 +20,11 @@ data class StripePosition(
 }
 
 /**
- * Pure math: turns an event's epoch-ms range + timezone into a [StripePosition]
- * for the day-stripe rendering on a share card.
+ * Places an event's time range, read in its zone, on the share card's one-day stripe.
  *
- * Hidden when:
- *  - all-day (the day stripe is meaningless for full-day events)
- *  - multi-day (the stripe represents one day; spans > 24h get a date range
- *    label instead)
- *  - exactly 24h (boundary of multi-day; same rationale)
- *  - malformed (end ≤ start)
+ * The stripe is hidden for an all-day event, a malformed range (end at or before start), a
+ * span of 24 hours or more, and a range whose start and end fall on different dates in the
+ * zone. Multi-day events get a date range label instead.
  */
 object DayStripeMath {
 
@@ -51,7 +46,7 @@ object DayStripeMath {
         val startZdt = startInstant.atZone(zone)
         val endZdt = endInstant.atZone(zone)
 
-        // Multi-day: different calendar dates in the event's zone.
+        // Crosses midnight in the event's zone.
         if (startZdt.toLocalDate() != endZdt.toLocalDate()) {
             return StripePosition.Hidden
         }

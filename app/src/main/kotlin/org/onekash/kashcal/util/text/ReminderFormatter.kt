@@ -4,11 +4,10 @@ import android.content.res.Resources
 import org.onekash.kashcal.R
 
 /**
- * Format reminder list for display.
+ * Formats Room reminder offsets, ISO 8601 durations such as "-PT15M", as a comma-joined list
+ * ("15 min before, 1 day before"), or null when there are none.
  *
- * @param reminders List of ISO duration strings (e.g., ["-PT15M", "-P1D"])
- * @param resources Android resources for plural string resolution
- * @return Formatted string (e.g., "15 min before, 1 day before") or null if empty
+ * Offsets [formatDuration] can't parse are left out.
  */
 fun formatRemindersForDisplay(reminders: List<String>?, resources: Resources): String? {
     if (reminders.isNullOrEmpty()) return null
@@ -16,13 +15,11 @@ fun formatRemindersForDisplay(reminders: List<String>?, resources: Resources): S
 }
 
 /**
- * Format ISO 8601 duration to human-readable string.
+ * Formats one ISO 8601 reminder offset: "-PT15M" as "15 min before", "PT30M" as "30 min after".
  *
- * Handles negative durations (before event start).
- *
- * @param isoDuration ISO duration string (e.g., "-PT15M", "-P1D", "PT30M")
- * @param resources Android resources for plural string resolution
- * @return Human-readable format (e.g., "15 min before", "1 day before", "30 min after")
+ * Shows days, hours and minutes, and seconds only when none of those is set; a zero offset is
+ * "At time of event". Returns null for a blank string or one outside that shape, such as a week
+ * duration.
  */
 fun formatDuration(isoDuration: String, resources: Resources): String? {
     if (isoDuration.isBlank()) return null
@@ -62,14 +59,11 @@ fun formatDuration(isoDuration: String, resources: Resources): String? {
 }
 
 /**
- * Format reminder minutes list for display.
+ * Formats device-calendar reminders, stored as minutes before the event, as a sorted,
+ * comma-joined list ("15 min before, 1 hour before, 1 day before"), or null when there are none.
  *
- * Used for device calendar reminders which store minutes as integers,
- * unlike Room events which use ISO duration strings.
- *
- * @param minutes List of reminder minutes before event (e.g., [15, 60, 1440])
- * @param resources Android resources for plural string resolution
- * @return Formatted string (e.g., "15 min before, 1 hour before, 1 day before") or null if empty
+ * A negative value reads as 0 ("At time of event"). From one day up only whole days show, so
+ * 1500 minutes reads "1 day before".
  */
 fun formatRemindersFromMinutes(minutes: List<Int>, resources: Resources): String? {
     if (minutes.isEmpty()) return null

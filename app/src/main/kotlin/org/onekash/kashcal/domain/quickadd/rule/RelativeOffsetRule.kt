@@ -9,19 +9,18 @@ object RelativeOffsetRule : ParseRule {
     private val TIME_UNITS = setOf(ChronoUnit.SECONDS, ChronoUnit.MINUTES, ChronoUnit.HOURS)
 
     override fun apply(tokens: List<Token>, context: ParseContext) {
-        // Pattern 1: "in NUMBER UNIT" (forward offset)
+        // The first of these that matches wins: "in NUMBER UNIT", "NUMBER UNIT ago",
+        // then "NUMBER UNIT from now" or "NUMBER UNIT later".
         if (tryInPattern(tokens, context)) return
 
-        // Pattern 2: "NUMBER UNIT ago" (backward offset)
         if (tryAgoPattern(tokens, context)) return
 
-        // Pattern 3: "NUMBER UNIT from now" / "NUMBER UNIT later" (forward offset)
         tryForwardTrailerPattern(tokens, context)
     }
 
     /**
-     * "NUMBER UNIT from now" and "NUMBER UNIT later" — forward offsets equivalent
-     * to "in NUMBER UNIT". "from"/"now" are KEYWORDs; "later" is UNKNOWN.
+     * Matches "NUMBER UNIT from now" and "NUMBER UNIT later", which mean the same as
+     * "in NUMBER UNIT". "from" and "now" tokenize as KEYWORDs, "later" as UNKNOWN.
      */
     private fun tryForwardTrailerPattern(tokens: List<Token>, context: ParseContext): Boolean {
         for ((i, token) in tokens.withIndex()) {
@@ -37,7 +36,6 @@ object RelativeOffsetRule : ParseRule {
             val amount = token.value as? Int ?: continue
             val unit = unitToken.value as? ChronoUnit ?: continue
 
-            // "... from now"
             val trailerIndex = unitIndex + 1
             if (trailerIndex >= tokens.size) continue
             val trailer = tokens[trailerIndex]
@@ -143,7 +141,7 @@ object RelativeOffsetRule : ParseRule {
         context.relativeDateTime = result
         context.dateSet = true
 
-        // Time units also set the time component
+        // An offset in seconds, minutes or hours also sets the time.
         if (unit in TIME_UNITS) {
             context.timeSet = true
         }

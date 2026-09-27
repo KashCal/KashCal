@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Nijedan kalendar nije pronađen na ovom serveru.</string>
     <string name="caldav_error_unexpected">Neočekivana greška. Pokušajte ponovo.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nAko je ovo server na tvojoj lokalnoj mreži, dozvoli pristup lokalnoj mreži za povezivanje.</string>
+    <string name="caldav_error_connection_refused_insecure">Server je preusmerio vezu na mesto na koje KashCal ne ide (nešifrovanu adresu ili petlju preusmeravanja), pa je KashCal stao pre slanja tvoje lozinke. Proveri adresu servera.</string>
     <string name="local_network_banner_title">Potreban pristup lokalnoj mreži</string>
     <string name="local_network_banner_body">Ovaj server izgleda kao da je na tvojoj lokalnoj mreži. Dozvoli pristup lokalnoj mreži kako bi KashCal mogao da se poveže s njim.</string>
     <string name="local_network_banner_allow">Dozvoli pristup</string>
@@ -856,6 +857,8 @@
     <string name="dialog_edit_recurring_title">Sačuvaj izmene u</string>
     <string name="dialog_delete_recurring_title">Obriši</string>
     <string name="dialog_move_recurring_title">Premesti</string>
+    <string name="snackbar_event_rescheduled">Događaj premešten</string>
+    <string name="snackbar_reschedule_failed">Premeštanje događaja nije uspelo</string>
     <string name="recurring_this_event">Ovaj događaj</string>
     <string name="recurring_all_events">Sve događaje</string>
 

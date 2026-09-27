@@ -26,20 +26,15 @@ import org.onekash.kashcal.domain.model.DisplayEvent
 import java.time.LocalDate
 
 /**
- * Displays a single day column in the week view time grid.
+ * Displays one day column of the time grid, placing timed events by start time and duration.
  *
- * Shows timed events positioned based on their start time and duration.
- * Handles overlapping events by stacking up to [maxVisibleOverlap] side-by-side, then "+N more" badge.
+ * Overlapping events sit side by side in up to [maxVisibleOverlap] slots; events in later slots
+ * go behind a "+N more" badge.
  *
- * @param date The date this column represents
- * @param events List of DisplayEvent for this day
- * @param hourHeight Height of one hour in the grid
- * @param isToday True if this column is today
- * @param maxVisibleOverlap Max number of overlapping events shown side-by-side before overflow badge
- * @param onEventClick Called when an event is tapped
- * @param onOverflowClick Called when "+N more" badge is tapped (with list of overflow events)
- * @param onEmptyTap Called when user taps on empty space (hour, minute snapped to 15-min intervals)
- * @param modifier Modifier for the column
+ * @param maxVisibleOverlap side-by-side slots shown before the badge
+ * @param onOverflowClick called with the group's hidden events when the badge is tapped
+ * @param onEmptyTap called with the date, hour and minute of a tap on empty space, the minute
+ *   rounded to the nearest 15
  */
 @Composable
 fun DayColumn(
@@ -61,7 +56,6 @@ fun DayColumn(
     isDropTarget: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    // Calculate positioned events
     val endHour = WeekViewUtils.END_HOUR
     val positionedEvents = remember(events, date, startHour, hourHeight, maxVisibleOverlap) {
         val dayIndex = date.dayOfWeek.value % 7  // 0=Sunday
@@ -70,7 +64,7 @@ fun DayColumn(
         )
     }
 
-    // Group by overlap to show only 2 + badge
+    // Each group shows the events in its first maxVisibleOverlap slots, plus a badge.
     val groupedEvents = remember(positionedEvents) {
         groupOverlappingEvents(positionedEvents)
     }
@@ -105,7 +99,7 @@ fun DayColumn(
     ) {
         val columnWidth = maxWidth
 
-        // Background tap target — below events in z-order so event taps hit EventBlock first
+        // Background tap target, below the events in z-order so an event tap hits EventBlock.
         Box(
             modifier = Modifier
                 .matchParentSize()
@@ -119,19 +113,15 @@ fun DayColumn(
                 }
         )
 
-        // Render event groups
         groupedEvents.forEach { group ->
             val (visibleEvents, overflowCount) = WeekViewUtils.groupForDisplay(group, maxVisibleOverlap)
 
             visibleEvents.forEach { positioned ->
-                // Keyed on the event's stable identity so that when the day
-                // re-sorts after a reschedule, Compose moves each EventBlock
-                // node (and its long-lived gesture pointerInput coroutine) with
-                // its event instead of reusing the node by position and rebinding
-                // it to a different event — which would fire the wrong event's
-                // tap/drag callbacks.
+                // Key each EventBlock on its event's stableKey so that when the day re-sorts
+                // after a reschedule, Compose moves the node and its long-lived pointerInput
+                // coroutine with its event. Keyed by position, the node would be rebound to
+                // another event and fire that event's tap and drag callbacks.
                 key(positioned.displayEvent.stableKey) {
-                    // Calculate position within the column
                     val eventWidth = columnWidth * positioned.widthFraction
                     val eventLeft = columnWidth * positioned.leftFraction
 
@@ -160,7 +150,7 @@ fun DayColumn(
                 }
             }
 
-            // Show overflow badge if more than 2 events overlap
+            // Badge when some of the group's events sit in a slot past the cap.
             if (overflowCount > 0 && visibleEvents.isNotEmpty()) {
                 val firstVisible = visibleEvents.first()
                 val badgeTop = firstVisible.topOffset + firstVisible.height - 16.dp
@@ -180,7 +170,7 @@ fun DayColumn(
             }
         }
 
-        // Vertical day separator at the right edge
+        // Day separator at the right edge.
         VerticalDivider(
             modifier = Modifier
                 .align(Alignment.CenterEnd)
@@ -192,8 +182,7 @@ fun DayColumn(
 }
 
 /**
- * Groups overlapping events together.
- * Events in the same group have overlapping time ranges.
+ * Groups events by start time, adding each to the first group holding an event it overlaps.
  */
 private fun groupOverlappingEvents(
     events: List<WeekViewUtils.PositionedEvent>

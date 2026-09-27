@@ -24,17 +24,15 @@ import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 
 /**
- * Real-world ICS feed regression tests.
+ * Runs [IcsSubscriptionRepository.refreshSubscription] over real ICS feeds, with mocked DAOs that
+ * record each inserted event.
  *
- * These tests verify that the ICS subscription sync handles real-world ICS feeds
- * correctly, including:
- * - Large feeds (350+ events)
- * - All-day events
- * - Recurring events with exceptions (RECURRENCE-ID)
- * - Various RECURRENCE-ID formats (UTC, TZID)
- * - Different calendar producers (Thunderbird, Outlook, Google)
+ * Covers a 700-event all-day feed, recurring series with exceptions (RECURRENCE-ID with a
+ * Windows zone name, an IANA TZID or UTC), CANCELLED exceptions, orphaned exceptions and
+ * duplicate UIDs (#227), the iCloud holiday feed (#219), other holiday fixtures, non-ASCII titles
+ * and the choice between `regenerateOccurrences` and `linkException`.
  *
- * Test fixtures are stored in: app/src/test/resources/ics/
+ * Fixtures live in `app/src/test/resources/ics/`.
  */
 class IcsRealWorldFeedsTest {
 
@@ -84,7 +82,7 @@ class IcsRealWorldFeedsTest {
 
         insertedEvents.clear()
 
-        // Mock database.runInTransaction to just execute the block
+        // runInTransaction runs the block directly
         coEvery { database.runInTransaction(any<suspend () -> Any>()) } coAnswers {
             val block = firstArg<suspend () -> Any>()
             block()
@@ -111,7 +109,7 @@ class IcsRealWorldFeedsTest {
             isEnabled = true
         )
 
-        // Capture inserted events with proper ID assignment
+        // Records each inserted event with the sequential id insert returns
         var nextInsertId = 1000L
         coEvery { eventsDao.insert(any()) } answers {
             val event = firstArg<Event>()
@@ -121,9 +119,7 @@ class IcsRealWorldFeedsTest {
         }
     }
 
-    /**
-     * Load ICS content from test resources.
-     */
+    /** Reads a test resource; throws if it is missing. */
     private fun loadResource(path: String): String {
         return javaClass.classLoader?.getResourceAsStream(path)
             ?.bufferedReader()
@@ -131,15 +127,12 @@ class IcsRealWorldFeedsTest {
             ?: throw IllegalArgumentException("Resource not found: $path")
     }
 
-    // ==================== Thunderbird US Holidays Tests ====================
+    // ==================== US Holidays Feed ====================
 
     /**
-     * Regression test: Thunderbird US Holidays (large feed, 350+ events, all-day).
-     *
-     * This verifies:
-     * - Large feeds sync without error
-     * - All-day events are parsed correctly
-     * - No UNIQUE constraint violations (importId == uid for non-exceptions)
+     * Syncs the 700-event all-day US holidays feed: the result is Success with more than 100
+     * added, every caldavUrl (built from the importId) is unique, and more than 100 events are
+     * all-day.
      */
     @Test
     fun `regression - Thunderbird US Holidays syncs without error`() = runTest {
@@ -155,7 +148,6 @@ class IcsRealWorldFeedsTest {
 
         val result = repository.refreshSubscription(1L)
 
-        // Should succeed
         assertTrue(
             "Large feed should sync successfully",
             result is IcsSubscriptionRepository.SyncResult.Success
@@ -163,13 +155,13 @@ class IcsRealWorldFeedsTest {
 
         val success = result as IcsSubscriptionRepository.SyncResult.Success
 
-        // Thunderbird US Holidays has 350+ events
+        // The fixture has 700 VEVENTs
         assertTrue(
             "Should sync many events (>100)",
             success.count.added > 100
         )
 
-        // All events should have unique caldavUrls (importId-based)
+        // Each caldavUrl, built from the importId, is unique
         val caldavUrls = insertedEvents.map { it.caldavUrl }.toSet()
         assertEquals(
             "Each event should have unique caldavUrl",
@@ -177,7 +169,7 @@ class IcsRealWorldFeedsTest {
             caldavUrls.size
         )
 
-        // All events should be all-day (holidays are DATE, not DATE-TIME)
+        // Every VEVENT in the fixture has a DATE DTSTART; the assert only needs more than 100
         val allDayCount = insertedEvents.count { it.isAllDay }
         assertTrue(
             "Most events should be all-day",
@@ -186,8 +178,8 @@ class IcsRealWorldFeedsTest {
     }
 
     /**
-     * Verify that Thunderbird holidays have no recurring event exceptions.
-     * This ensures the simple importId == uid path works.
+     * Checks a feed without RECURRENCE-ID: no event is an exception or linked to a master, and
+     * each gets `regenerateOccurrences`.
      */
     @Test
     fun `Thunderbird US Holidays - no recurring exceptions`() = runTest {
@@ -203,7 +195,7 @@ class IcsRealWorldFeedsTest {
 
         repository.refreshSubscription(1L)
 
-        // No events should have originalInstanceTime (no RECURRENCE-ID)
+        // No event has an originalInstanceTime
         val exceptionsCount = insertedEvents.count { it.originalInstanceTime != null }
         assertEquals(
             "Thunderbird holidays should have no exceptions",
@@ -211,7 +203,7 @@ class IcsRealWorldFeedsTest {
             exceptionsCount
         )
 
-        // No events should have originalEventId
+        // No event has an originalEventId
         val linkedCount = insertedEvents.count { it.originalEventId != null }
         assertEquals(
             "No events should be linked to master",
@@ -219,21 +211,18 @@ class IcsRealWorldFeedsTest {
             linkedCount
         )
 
-        // regenerateOccurrences should be called for each event (no linkException)
+        // regenerateOccurrences runs once per event
         coVerify(exactly = insertedEvents.size) {
             occurrenceGenerator.regenerateOccurrences(any())
         }
     }
 
-    // ==================== Outlook Recurring with Exceptions Tests ====================
+    // ==================== Recurring Series with Windows-Zone Exceptions ====================
 
     /**
-     * Regression test: Issue #36 exact reproduction.
-     *
-     * Outlook ICS with recurring event + exceptions should sync correctly:
-     * - Master event with RRULE
-     * - Exception events with RECURRENCE-ID (same UID)
-     * - CANCELLED exception filtered out
+     * Reproduces #36: a master with RRULE and two exceptions sharing its UID, RECURRENCE-ID with a
+     * Windows zone name (`TZID=India Standard Time`). The CANCELLED exception is dropped; the
+     * other is linked to the master and gets its own caldavUrl.
      */
     @Test
     fun `regression - Issue 36 Outlook recurring with exceptions`() = runTest {
@@ -249,7 +238,7 @@ class IcsRealWorldFeedsTest {
 
         val result = repository.refreshSubscription(1L)
 
-        // Should succeed (not fail with UNIQUE constraint)
+        // Succeeds instead of failing on a UNIQUE constraint
         assertTrue(
             "Outlook ICS should sync successfully",
             result is IcsSubscriptionRepository.SyncResult.Success
@@ -257,35 +246,33 @@ class IcsRealWorldFeedsTest {
 
         val success = result as IcsSubscriptionRepository.SyncResult.Success
 
-        // 1 master + 1 non-cancelled exception = 2 events
-        // (CANCELLED exception is filtered by IcsParserService)
+        // 1 master + 1 exception; IcsParserService drops the CANCELLED one
         assertEquals(
             "Should add master + 1 exception (cancelled filtered)",
             2,
             success.count.added
         )
 
-        // Verify structure
         val master = insertedEvents.find { it.rrule != null }
         val exception = insertedEvents.find { it.originalInstanceTime != null }
 
         assertNotNull("Master event should exist", master)
         assertNotNull("Exception event should exist", exception)
 
-        // Exception should be linked to master
+        // The exception is linked to the master
         assertNotNull(
             "Exception should have originalEventId",
             exception!!.originalEventId
         )
 
-        // Both share same UID
+        // Both share the UID
         assertEquals(
             "Master and exception should share UID",
             master!!.uid,
             exception.uid
         )
 
-        // Different importIds (caldavUrls)
+        // Different importIds, so different caldavUrls
         assertTrue(
             "caldavUrls should be different",
             master.caldavUrl != exception.caldavUrl
@@ -293,7 +280,8 @@ class IcsRealWorldFeedsTest {
     }
 
     /**
-     * Verify Outlook exception uses TZID format for RECURRENCE-ID.
+     * Checks the exception with a Windows-zone RECURRENCE-ID gets an originalInstanceTime, one
+     * `linkException` call, and `regenerateOccurrences` runs for the master only.
      */
     @Test
     fun `Outlook exceptions use TZID format correctly`() = runTest {
@@ -313,23 +301,20 @@ class IcsRealWorldFeedsTest {
 
         assertNotNull("Exception should have originalInstanceTime", exception!!.originalInstanceTime)
 
-        // linkException should be called for the exception
         coVerify(exactly = 1) {
             occurrenceGenerator.linkException(any(), any(), any<Event>())
         }
 
-        // regenerateOccurrences should be called for the master only
         coVerify(exactly = 1) {
             occurrenceGenerator.regenerateOccurrences(any())
         }
     }
 
-    // ==================== Google Calendar Export Tests ====================
+    // ==================== Recurring Series with IANA-Zone Exceptions ====================
 
     /**
-     * Regression test: Google Calendar recurring with exceptions.
-     *
-     * Google uses different RECURRENCE-ID format and has multiple exceptions.
+     * Syncs a master with three exceptions whose RECURRENCE-ID has an IANA TZID
+     * (`America/New_York`), one of them CANCELLED.
      */
     @Test
     fun `regression - Google Calendar recurring with exceptions`() = runTest {
@@ -352,24 +337,21 @@ class IcsRealWorldFeedsTest {
 
         val success = result as IcsSubscriptionRepository.SyncResult.Success
 
-        // 1 master + 2 non-cancelled exceptions = 3 events
-        // (1 CANCELLED exception filtered)
+        // 1 master + 2 exceptions; the CANCELLED one is dropped
         assertEquals(
             "Should add master + 2 exceptions (cancelled filtered)",
             3,
             success.count.added
         )
 
-        // Verify master
         val master = insertedEvents.find { it.rrule != null }
         assertNotNull("Master should exist", master)
         assertEquals("Team Standup", master!!.title)
 
-        // Verify exceptions
         val exceptions = insertedEvents.filter { it.originalInstanceTime != null }
         assertEquals("Should have 2 exceptions", 2, exceptions.size)
 
-        // All exceptions should be linked to master
+        // Every exception is linked to the master and shares its UID
         exceptions.forEach { exception ->
             assertNotNull(
                 "Exception should have originalEventId",
@@ -382,7 +364,7 @@ class IcsRealWorldFeedsTest {
             )
         }
 
-        // Each event should have unique caldavUrl
+        // Each event has its own caldavUrl
         val caldavUrls = insertedEvents.map { it.caldavUrl }.toSet()
         assertEquals(
             "Each event should have unique caldavUrl",
@@ -391,9 +373,7 @@ class IcsRealWorldFeedsTest {
         )
     }
 
-    /**
-     * Verify Google exceptions preserve their modified properties.
-     */
+    /** Checks exceptions keep their own title, location and description. */
     @Test
     fun `Google exceptions preserve modified properties`() = runTest {
         val content = loadResource("ics/google_recurring_with_exceptions.ics")
@@ -410,23 +390,19 @@ class IcsRealWorldFeedsTest {
 
         val exceptions = insertedEvents.filter { it.originalInstanceTime != null }
 
-        // Find the rescheduled one
         val rescheduled = exceptions.find { it.title.contains("Rescheduled") }
         assertNotNull("Should have rescheduled exception", rescheduled)
         assertEquals("Conference Room B", rescheduled!!.location)
         assertEquals("Rescheduled due to client meeting", rescheduled.description)
 
-        // Find the extended one
         val extended = exceptions.find { it.title.contains("Extended") }
         assertNotNull("Should have extended exception", extended)
         assertEquals("Large Conference Room", extended!!.location)
     }
 
-    // ==================== Existing Holiday Files Tests ====================
+    // ==================== Holiday Fixtures ====================
 
-    /**
-     * Regression test: Brazil Holidays (existing fixture).
-     */
+    /** Syncs the Brazil holidays fixture: at least one event added, every caldavUrl unique. */
     @Test
     fun `regression - Brazil Holidays syncs without error`() = runTest {
         val content = loadResource("ics/BrazilHolidays.ics")
@@ -458,9 +434,7 @@ class IcsRealWorldFeedsTest {
         )
     }
 
-    /**
-     * Regression test: German Holidays (existing fixture).
-     */
+    /** Syncs the German holidays fixture: at least one event added, every caldavUrl unique. */
     @Test
     fun `regression - German Holidays syncs without error`() = runTest {
         val content = loadResource("ics/GermanHolidays.ics")
@@ -492,9 +466,7 @@ class IcsRealWorldFeedsTest {
         )
     }
 
-    /**
-     * Regression test: Japan Holidays (existing fixture).
-     */
+    /** Syncs the Japan holidays fixture: at least one event added, every caldavUrl unique. */
     @Test
     fun `regression - Japan Holidays syncs without error`() = runTest {
         val content = loadResource("ics/JapanHolidays.ics")
@@ -526,15 +498,14 @@ class IcsRealWorldFeedsTest {
         )
     }
 
-    // ==================== Issue #219 reproduction: Apple iCloud Holidays ====================
+    // ==================== Issue #219: iCloud Holiday Feed ====================
 
     /**
-     * Issue #219: subscribing to https://calendars.icloud.com/holidays/us_en.ics
-     * resulted in zero events on the calendar. Fixed by the parser update;
-     * this test pins the post-fix behavior so the regression can't return.
+     * Pins #219: subscribing to https://calendars.icloud.com/holidays/us_en.ics must import events,
+     * not zero.
      *
-     * Real Apple-served iCloud holiday feed (PRODID:icalendar-ruby), all-day
-     * recurring events with yearly RRULEs.
+     * The fixture is the iCloud-served feed (PRODID:icalendar-ruby): 120 all-day events, 28 of
+     * them with yearly RRULEs.
      */
     @Test
     fun `regression - Issue 219 Apple iCloud US holidays subscription imports events`() = runTest {
@@ -565,17 +536,15 @@ class IcsRealWorldFeedsTest {
         assertTrue("Most iCloud holidays are all-day events", allDayCount > 50)
     }
 
-    // ==================== Issue #227 reproduction: Google ICS export quirks ====================
+    // ==================== Issue #227: Orphaned Exception and Duplicate UID ====================
 
     /**
-     * Issue #227: Google's private ICS export emits two adversarial patterns
-     * in a single feed — an orphaned RECURRENCE-ID (master sliced out of the
-     * export window) and two non-exception VEVENTs sharing a UID. Pre-fix,
-     * KashCal imported only 1 of 3 events.
+     * Reproduces #227: a private calendar export with an orphaned RECURRENCE-ID (its master is
+     * outside the export window) and two non-exception VEVENTs sharing a UID.
      *
-     * Post-fix: 4 rows inserted (synthetic master + 1 linked exception for
-     * abc@google.com, plus 2 disambiguated xxx@google.com#dup=* masters);
-     * 3 rows visible to user (synthetic has no occurrences).
+     * The sync inserts 4 rows: a synthetic master and its linked exception for abc@google.com, and
+     * the two xxx@google.com masters renamed `xxx@google.com#dup=*`. The synthetic master gets no
+     * occurrences, so 3 events show; the test asserts the rows, not the rendering.
      */
     @Test
     fun `regression - Issue 227 Google ICS feed inserts 4 rows and renders 3`() = runTest {
@@ -595,7 +564,7 @@ class IcsRealWorldFeedsTest {
             (result as IcsSubscriptionRepository.SyncResult.Success).count.added
         )
 
-        // Bug A: orphaned RECURRENCE-ID linked to synthetic master.
+        // The orphaned RECURRENCE-ID is linked to a synthetic master
         val abcRows = insertedEvents.filter { it.uid == "abc@google.com" }
         assertEquals("abc@google.com: 1 synthetic + 1 linked exception", 2, abcRows.size)
         val abcSynthetic = abcRows.single { it.originalInstanceTime == null }
@@ -612,7 +581,7 @@ class IcsRealWorldFeedsTest {
             abcException.originalEventId
         )
 
-        // Bug B: duplicate-UID masters disambiguated by startTs.
+        // Masters sharing a UID are renamed apart by startTs
         val mutated = insertedEvents.filter { it.uid.startsWith("xxx@google.com#dup=") }
         assertEquals("Both xxx@google.com events imported with mutated UIDs", 2, mutated.size)
         assertEquals("Mutated UIDs are distinct", 2, mutated.map { it.uid }.toSet().size)
@@ -625,12 +594,11 @@ class IcsRealWorldFeedsTest {
         }
     }
 
-    // ==================== Locale/script coverage: Thunderbird non-ASCII calendars ====================
+    // ==================== Locale and Script Coverage: Non-ASCII Holiday Feeds ====================
 
     /**
-     * Thunderbird China holidays — Chinese-script SUMMARY/LOCATION/DESCRIPTION,
-     * RRULE-based recurring all-day events. Regression guard for non-ASCII
-     * content handling on the import path.
+     * Syncs a feed of 66 all-day events with Chinese SUMMARY and DESCRIPTION: at least one event is
+     * added and at least one title keeps non-ASCII characters.
      */
     @Test
     fun `regression - Thunderbird China holidays import non-ASCII content`() = runTest {
@@ -647,7 +615,6 @@ class IcsRealWorldFeedsTest {
         val success = result as IcsSubscriptionRepository.SyncResult.Success
         assertTrue("China holidays import multiple events", success.count.added > 0)
 
-        // At least one event has a non-ASCII title (Chinese characters).
         val hasNonAscii = insertedEvents.any { ev ->
             ev.title.any { it.code > 127 }
         }
@@ -655,8 +622,8 @@ class IcsRealWorldFeedsTest {
     }
 
     /**
-     * Thunderbird Canadian-French holidays — accented characters (é, à, ç),
-     * higher event count. Regression guard for Latin-script extended characters.
+     * Syncs a feed of 139 all-day events with accented French titles (é, ê, â, ë, É): at least one
+     * event is added and at least one title keeps a character in À..ÿ.
      */
     @Test
     fun `regression - Thunderbird Canadian French holidays import accented content`() = runTest {
@@ -682,10 +649,8 @@ class IcsRealWorldFeedsTest {
     // ==================== Occurrence Generation Tests ====================
 
     /**
-     * Verify correct occurrence method is called based on event type.
-     *
-     * - Master events: regenerateOccurrences()
-     * - Exception events: linkException()
+     * Checks the occurrence call per row type: `regenerateOccurrences` once for the master,
+     * `linkException` once per exception.
      */
     @Test
     fun `occurrence methods called correctly for mixed feed`() = runTest {
@@ -713,21 +678,14 @@ class IcsRealWorldFeedsTest {
     }
 
     /**
-     * Issue #227 reporter's full sanitized feed: 120 VEVENTs spanning
-     * 20 distinct UIDs. Three of the UIDs ship a master VEVENT
-     * (uid-000012, uid-000016, uid-000018); the other 17 UIDs ship
-     * exception VEVENTs only — Google's truncated-private-export pattern
-     * where the master is sliced out of the export window.
+     * Syncs the #227 reporter's full sanitized feed: 120 VEVENTs over 20 UIDs. Three UIDs have a
+     * master VEVENT (uid-000012, uid-000016, uid-000018); the other 17 have only exceptions, their
+     * master outside the private export's window.
      *
-     * Pre-fix: ~10 of 120 events rendered (one per UID, dropped via
-     * the master-uniqueness trigger silently catching second-and-
-     * subsequent same-UID orphan-promotion INSERTs).
-     *
-     * Post-fix: 137 rows inserted — 17 synthetic masters + 117 linked
-     * exceptions + 3 real masters. 120 events visible (synthetic
-     * masters produce no occurrences). Each orphan exception keeps
-     * its originalInstanceTime intact and links to the synthetic for
-     * its UID.
+     * The sync inserts 137 rows: 17 synthetic masters, 117 linked exceptions and 3 real masters.
+     * Each synthetic master is CANCELLED, zero-duration and has no RRULE, and gets no occurrences,
+     * so the 120 feed events show (not asserted here). Every exception has an originalEventId
+     * (which master isn't asserted).
      */
     @Test
     fun `regression - Issue 227 reporter's 120-event sanitized feed materializes all events`() = runTest {
@@ -789,10 +747,9 @@ class IcsRealWorldFeedsTest {
         }
         assertEquals("3 real masters in the feed", 3, realMasters.size)
 
-        // No occurrence regeneration for synthetics — only the 3 real
-        // masters get regenerateOccurrences called.
+        // Only the 3 real masters get regenerateOccurrences; synthetics get none
         coVerify(exactly = 3) { occurrenceGenerator.regenerateOccurrences(any()) }
-        // 117 linked exceptions all hit linkException.
+        // Each of the 117 exceptions gets linkException
         coVerify(exactly = 117) {
             occurrenceGenerator.linkException(any(), any(), any<Event>())
         }

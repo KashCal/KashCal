@@ -14,9 +14,9 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Robolectric tests for [EventsDao.getMasterEventsWithFutureOccurrenceFlow].
- * Asserts the SQL filter: master-only (originalEventId IS NULL),
- * future-only (occurrence end_ts >= now), not PENDING_DELETE, not cancelled.
+ * Tests the SQL filter of [EventsDao.getMasterEventsWithFutureOccurrenceFlow]: masters and
+ * one-off events only (no exceptions), a non-cancelled occurrence ending at or after now, not
+ * PENDING_DELETE, sorted by next occurrence ascending.
  */
 class EventsDaoPendingInvitationsTest : BaseDaoTest() {
 

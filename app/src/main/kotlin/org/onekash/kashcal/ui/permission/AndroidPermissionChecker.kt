@@ -11,13 +11,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Android implementation of [PermissionChecker] backed by
- * [ContextCompat.checkSelfPermission] and [AlarmManager.canScheduleExactAlarms].
+ * Implements [PermissionChecker] with [ContextCompat.checkSelfPermission] and
+ * [AlarmManager.canScheduleExactAlarms].
  *
- * Each method performs a fresh query — no caching. SDK-level gates preserve
- * pre-existing behavior where runtime permissions were introduced in later
- * Android versions (`POST_NOTIFICATIONS` on API 33+, exact-alarm scheduling
- * on API 31+).
+ * Each call queries afresh; nothing is cached. Below the level where a permission became a
+ * runtime one (`POST_NOTIFICATIONS` on API 33, exact alarms on API 31) it reports granted. A
+ * missing AlarmManager reports no exact-alarm permission.
  */
 @Singleton
 class AndroidPermissionChecker @Inject constructor(

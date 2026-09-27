@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Akukho amakhalenda atholakele kule seva.</string>
     <string name="caldav_error_unexpected">Iphutha elingalindelekile. Sicela uzame futhi.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nUma le seva ikwinethiwekhi yakho yendawo, vumela ukufinyelela kwinethiwekhi yendawo ukuze uxhume.</string>
+    <string name="caldav_error_connection_refused_insecure">Iseva iqondise kabusha uxhumano endaweni i-KashCal engayilandeli (ikheli elingabethelwe, noma uluphu lokuqondisa kabusha), ngakho i-KashCal imile ngaphambi kokuthumela iphasiwedi yakho. Hlola ikheli leseva.</string>
     <string name="local_network_banner_title">Kudingeka ukufinyelela kwinethiwekhi yendawo</string>
     <string name="local_network_banner_body">Le seva ibukeka ingathi ikwinethiwekhi yakho yendawo. Vumela ukufinyelela kwinethiwekhi yendawo ukuze i-KashCal ikwazi ukuxhuma kuyo.</string>
     <string name="local_network_banner_allow">Vumela ukufinyelela</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Londoloza izinguquko</string>
     <string name="dialog_delete_recurring_title">Susa</string>
     <string name="dialog_move_recurring_title">Hambisa</string>
+    <string name="snackbar_event_rescheduled">Umcimbi uhlelwe kabusha</string>
+    <string name="snackbar_reschedule_failed">Ayikwazanga ukuhlela kabusha umcimbi</string>
     <string name="recurring_this_event">Lo mcimbi</string>
     <string name="recurring_all_events">Yonke imicimbi</string>
 

@@ -21,6 +21,8 @@ import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -35,11 +37,16 @@ import java.time.Instant
 import java.util.TimeZone
 
 /**
- * Tests for HomeViewModel.getDeviceEventForQuickView().
- *
- * Verifies that widget taps correctly find device calendar events,
- * including all-day events in negative UTC offsets where UTC midnight
- * maps to the previous local day.
+ * Tests the [HomeViewModel] lookups behind the device-event quick view, over
+ * [FakeCalendarProviderRepository] and a mocked [DisplayEventRepository]:
+ * - [HomeViewModel.getDeviceEventForQuickView] finds an occurrence by event id and start,
+ *   including an all-day event in a negative, positive or zero UTC offset (in a negative one,
+ *   UTC midnight falls on the previous local day), and returns null for an unknown id.
+ * - [HomeViewModel.getDeviceEventDayCode] gives the event's start day, honoring all-day.
+ * - [HomeViewModel.getDeviceEventForQuickViewById] opens a one-off at its start and a series at
+ *   its first instance from a day before now, and returns null for an ended series.
+ * - [HomeViewModel.getDeviceEventAttendeeState] maps guests and marks the calendar owner as on
+ *   the list; no guests, or no calendar id, marks no one.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelDeviceQuickViewTest {
@@ -111,7 +118,8 @@ class HomeViewModelDeviceQuickViewTest {
             accountRepository = accountRepository,
             syncScheduler = syncScheduler,
             networkMonitor = networkMonitor,
-            calendarProviderRepository = fakeCalendarProviderRepository,
+            deviceEventReader = fakeCalendarProviderRepository.deviceEventReader(),
+            deviceEventWriter = fakeCalendarProviderRepository.deviceEventWriter(dataStore),
             attendeeBackfill = io.mockk.mockk(relaxed = true),
             contactEmailReader = io.mockk.mockk(relaxed = true),
             context = io.mockk.mockk(relaxed = true),
@@ -164,7 +172,7 @@ class HomeViewModelDeviceQuickViewTest {
     fun `timed event found by eventId and startTs`() = runTest {
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York")) // UTC-5
 
-        // Timed event: March 7, 2026 10:00 AM ET = 15:00 UTC
+        // Timed event: March 7, 2026 10:00 AM ET, 15:00 UTC.
         val startTs = Instant.parse("2026-03-07T15:00:00Z").toEpochMilli()
         val endTs = Instant.parse("2026-03-07T16:00:00Z").toEpochMilli()
         val instance = makeDeviceInstance(42L, startTs, endTs, isAllDay = false)
@@ -210,18 +218,18 @@ class HomeViewModelDeviceQuickViewTest {
     fun `all-day event found in negative UTC offset`() = runTest {
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York")) // UTC-5
 
-        // All-day event March 7: CalendarProvider BEGIN = March 7 00:00 UTC
-        // In UTC-5: eventTsToDayCode(ts, false) = March 6 (wrong!)
-        // In UTC:   eventTsToDayCode(ts, true) = March 7 (correct)
+        // All-day event on March 7: CalendarProvider BEGIN is March 7 00:00 UTC.
+        // Read as timed in UTC-5, eventTsToDayCode(ts, false) gives March 6; read as all-day,
+        // eventTsToDayCode(ts, true) gives March 7, the event's day.
         val startTs = Instant.parse("2026-03-07T00:00:00Z").toEpochMilli()
         val endTs = Instant.parse("2026-03-07T23:59:59.999Z").toEpochMilli()
         val instance = makeDeviceInstance(42L, startTs, endTs, isAllDay = true, title = "All Day Event")
         val displayEvent = DisplayEvent.Device(instance)
 
-        val correctDayCode = 20260307 // event's actual day (computed with isAllDay=true)
-        val wrongDayCode = 20260306   // what isAllDay=false would give in UTC-5
+        val correctDayCode = 20260307 // the event's day, with isAllDay = true
+        val wrongDayCode = 20260306   // what isAllDay = false gives in UTC-5
 
-        // The repository returns the event under its correct day code
+        // The lookup queries both days; the repository returns the event under its own day.
         coEvery {
             displayEventRepository.getDisplayEventsGroupedByDayOnce(wrongDayCode, correctDayCode)
         } returns persistentMapOf(correctDayCode to persistentListOf(displayEvent))
@@ -240,9 +248,8 @@ class HomeViewModelDeviceQuickViewTest {
     fun `all-day event found in positive UTC offset`() = runTest {
         TimeZone.setDefault(TimeZone.getTimeZone("Asia/Kolkata")) // UTC+5:30
 
-        // All-day event March 7: CalendarProvider BEGIN = March 7 00:00 UTC
-        // In UTC+5:30: eventTsToDayCode(ts, false) = March 7 05:30 local = still March 7
-        // Both day codes are the same, so single-day query suffices
+        // All-day event on March 7: CalendarProvider BEGIN is March 7 00:00 UTC, 05:30 local in
+        // UTC+5:30, still March 7. Both day codes match, so the lookup queries one day.
         val startTs = Instant.parse("2026-03-07T00:00:00Z").toEpochMilli()
         val endTs = Instant.parse("2026-03-07T23:59:59.999Z").toEpochMilli()
         val instance = makeDeviceInstance(42L, startTs, endTs, isAllDay = true)
@@ -288,14 +295,14 @@ class HomeViewModelDeviceQuickViewTest {
     }
 
     // ==================== getDeviceEventDayCode Tests ====================
-    // Used by the external-VIEW-intent fallback when no occurrence timestamp is supplied:
-    // resolve the event's start day so the app can navigate there instead of landing on today.
+    // Used when an id-only open resolves no occurrence or an exact-occurrence lookup misses:
+    // resolve the event's start day so the app navigates there instead of landing on today.
 
     @Test
     fun `getDeviceEventDayCode returns start day code for timed event`() = runTest {
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York")) // UTC-5
 
-        // March 7, 2026 10:00 ET = 15:00 UTC
+        // March 7, 2026 10:00 ET, 15:00 UTC.
         val startTs = Instant.parse("2026-03-07T15:00:00Z").toEpochMilli()
         fakeCalendarProviderRepository.deviceEvents[42L] =
             makeDeviceEvent(id = 42L, startTs = startTs, isAllDay = false)
@@ -313,8 +320,8 @@ class HomeViewModelDeviceQuickViewTest {
     fun `getDeviceEventDayCode honors isAllDay in negative UTC offset`() = runTest {
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York")) // UTC-5
 
-        // All-day March 7: BEGIN = March 7 00:00 UTC. Interpreted as timed in UTC-5 this is
-        // March 6; interpreted all-day (UTC) it is March 7. The day code must use isAllDay.
+        // All-day March 7: BEGIN is March 7 00:00 UTC. Read as timed in UTC-5 this is March 6;
+        // read as all-day (UTC) it is March 7. The day code must use isAllDay.
         val startTs = Instant.parse("2026-03-07T00:00:00Z").toEpochMilli()
         fakeCalendarProviderRepository.deviceEvents[42L] =
             makeDeviceEvent(id = 42L, startTs = startTs, isAllDay = true)
@@ -342,14 +349,15 @@ class HomeViewModelDeviceQuickViewTest {
     }
 
     // ==================== getDeviceEventForQuickViewById Tests ====================
-    // Used by external VIEW intents that carry only the event ID (no occurrence timestamp):
-    // resolve the event's own start (first occurrence) so the quick-view sheet can open.
+    // Used by external VIEW intents that carry only the event ID, and to re-read an open one-off's
+    // quick view: resolve an occurrence so the sheet can open, a one-off's own start or a series'
+    // first instance from a day before now.
 
     @Test
     fun `getDeviceEventForQuickViewById opens at the event's start occurrence`() = runTest {
         TimeZone.setDefault(TimeZone.getTimeZone("America/New_York")) // UTC-5
 
-        // March 7, 2026 10:00 ET = 15:00 UTC
+        // March 7, 2026 10:00 ET, 15:00 UTC.
         val startTs = Instant.parse("2026-03-07T15:00:00Z").toEpochMilli()
         val endTs = Instant.parse("2026-03-07T16:00:00Z").toEpochMilli()
         fakeCalendarProviderRepository.deviceEvents[42L] =
@@ -390,15 +398,15 @@ class HomeViewModelDeviceQuickViewTest {
     fun `getDeviceEventForQuickViewById opens recurring event at its next instance, not its first`() = runTest {
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
 
-        // Weekly series whose master DTSTART (first occurrence) is far in the past, but the
-        // series is still active. The sheet must open at the NEXT instance, not the 2030-far
-        // future first one. Use a fixed future timestamp so the test is deterministic.
+        // A weekly series whose master DTSTART (2023) is long past but which is still active.
+        // The sheet must open at the next instance (2030), not at DTSTART. A fixed future
+        // timestamp keeps the test deterministic.
         val firstOccurrence = Instant.parse("2023-01-02T09:00:00Z").toEpochMilli()
         val nextOccurrence = Instant.parse("2030-06-10T09:00:00Z").toEpochMilli()
         val nextEnd = Instant.parse("2030-06-10T10:00:00Z").toEpochMilli()
         fakeCalendarProviderRepository.deviceEvents[42L] =
             makeDeviceEvent(id = 42L, startTs = firstOccurrence, isAllDay = false, rrule = "FREQ=WEEKLY")
-        // The Fake resolves the next instance from this list (begin >= now).
+        // The fake resolves the next instance from this list (begin at or after a day before now).
         fakeCalendarProviderRepository.instances = listOf(
             makeDeviceInstance(42L, nextOccurrence, nextEnd, isAllDay = false, title = "Weekly sync")
         )
@@ -428,11 +436,11 @@ class HomeViewModelDeviceQuickViewTest {
     fun `getDeviceEventForQuickViewById finds a recurring instance whose start is earlier today than now`() = runTest {
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
 
-        // The instance start is a few hours BEFORE the real clock (modelling an all-day
-        // occurrence whose UTC-midnight BEGIN precedes a mid-day "now", or a timed occurrence
-        // already started today). The lookup uses System.currentTimeMillis() as its anchor, so
-        // without the lower-bound pad this instance (start < now) would be filtered out and the
-        // sheet would skip to next week. With the pad it must resolve to THIS instance.
+        // The instance starts 6 hours before the real clock, like an all-day occurrence whose
+        // UTC-midnight BEGIN precedes a mid-day "now", or a timed occurrence already started
+        // today. The lookup anchors on System.currentTimeMillis(), so without the one-day
+        // lower-bound pad this instance would be filtered out and the sheet would skip to next
+        // week. With the pad it must resolve to this instance.
         val now = System.currentTimeMillis()
         val instanceStart = now - 6L * 60L * 60L * 1000L // 6 hours ago
         val instanceEnd = instanceStart + 60L * 60L * 1000L
@@ -471,8 +479,8 @@ class HomeViewModelDeviceQuickViewTest {
     fun `getDeviceEventForQuickViewById returns null for an ended recurring series`() = runTest {
         TimeZone.setDefault(TimeZone.getTimeZone("UTC"))
 
-        // Recurring event with no remaining future instances. The caller falls back to
-        // navigate-to-date; here we just assert the lookup yields null (no sheet).
+        // A recurring event with no remaining instances. The caller falls back to navigating to
+        // the date; this asserts only that the lookup yields null (no sheet).
         val firstOccurrence = Instant.parse("2023-01-02T09:00:00Z").toEpochMilli()
         fakeCalendarProviderRepository.deviceEvents[42L] =
             makeDeviceEvent(id = 42L, startTs = firstOccurrence, isAllDay = false, rrule = "FREQ=WEEKLY;COUNT=3")
@@ -534,9 +542,9 @@ class HomeViewModelDeviceQuickViewTest {
         val state = viewModel.getDeviceEventAttendeeState(eventId = 42L, calendarId = 1L)
         advanceUntilIdle()
 
-        // Organizer-flag mapping is asserted under Robolectric in
-        // AttendeeUiModelFromDeviceTest; this plain-JVM VM test covers the
-        // plumbing (count + owner→on-list by email match, both constant-free).
+        // The organizer flag is asserted under Robolectric in AttendeeUiModelFromDeviceTest;
+        // this plain-JVM test covers the plumbing: the count, and the owner on the list by
+        // email match.
         assertEquals(2, state.models.size)
         org.junit.Assert.assertTrue("Owner should be on the list", state.isCurrentUserOnList)
     }

@@ -5,13 +5,11 @@ import org.junit.Test
 import org.onekash.kashcal.ui.viewmodels.ViewMode
 
 /**
- * Unit tests for the top-bar title-tap action dispatch.
- *
- * The title tap means different things per view: AGENDA and DAY toggle their
- * inline week bar, the remaining time-grid views (THREE_DAYS, WEEK) open the
- * modal date picker, and month-family views jump to the month header. This is a
- * behavioral branch (a silent regression would route DAY to the date picker
- * instead of the toggle), so it is resolved by a pure function and tested here.
+ * Tests [TopBarTitleAction.forViewMode], what tapping the top-bar title does per view: AGENDA
+ * and DAY toggle their inline week bar, the other time-grid views (THREE_DAYS, WEEK) open the
+ * modal date picker, and MONTH and MONTH_FULL take the month-header action, which toggles the
+ * year overlay (YEAR and INSIGHTS take it too, not asserted here). A silent regression would
+ * route DAY to the date picker in place of its toggle.
  */
 class TopBarTitleActionTest {
 
@@ -37,8 +35,8 @@ class TopBarTitleActionTest {
 
     @Test
     fun `DAY does not open the date picker (regression guard)`() {
-        // DAY is a time-grid view; without the explicit DAY branch it would fall
-        // through to OPEN_DATE_PICKER. Guard that it routes to the toggle instead.
+        // DAY is a time-grid view, so without its own branch it would fall through to
+        // OPEN_DATE_PICKER.
         val action = TopBarTitleAction.forViewMode(ViewMode.DAY)
         assertEquals(TopBarTitleAction.TOGGLE_DAY_WEEK_BAR, action)
     }

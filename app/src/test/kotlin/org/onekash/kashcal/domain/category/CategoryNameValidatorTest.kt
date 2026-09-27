@@ -6,9 +6,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pure-logic tests for [CategoryNameValidator] — the single source of truth for
- * tag-name rules, reused by the form chip input, the "+ New" field, the inline
- * "#" autocomplete, and the Quick Add "#tag" extraction.
+ * Tests [CategoryNameValidator], the single source of truth for tag-name rules: validation
+ * outcomes, case-insensitive matching against existing tags, and [CategoryNameValidator.normalize].
  */
 class CategoryNameValidatorTest {
 
@@ -64,8 +63,7 @@ class CategoryNameValidatorTest {
 
     @Test
     fun `only one leading hash is stripped`() {
-        // "##work" -> strip one '#' -> "#work"; a remaining '#' is not a comma
-        // and not a leading-strip target, so it stays as an ordinary character.
+        // "##work" loses one '#'; the second stays as an ordinary character.
         assertEquals(
             CategoryName.Valid("#work"),
             CategoryNameValidator.validate("##work"),
@@ -100,8 +98,7 @@ class CategoryNameValidatorTest {
 
     @Test
     fun `length is measured after trim and hash strip`() {
-        // 64 'a's wrapped in a leading '#' and surrounding spaces: after
-        // trim + strip the effective length is exactly 64 -> valid.
+        // 64 'a's with a leading '#' and surrounding spaces: 64 after trim and strip.
         val name = "a".repeat(64)
         assertEquals(
             CategoryName.Valid(name),
@@ -136,7 +133,7 @@ class CategoryNameValidatorTest {
         )
     }
 
-    // ==================== normalize() convenience for the parser path ====================
+    // ==================== normalize() ====================
 
     @Test
     fun `normalize returns the cleaned name for a valid input`() {

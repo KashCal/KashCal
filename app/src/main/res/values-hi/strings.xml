@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">इस सर्वर पर कोई कैलेंडर नहीं मिला।</string>
     <string name="caldav_error_unexpected">अप्रत्याशित त्रुटि। कृपया पुनः प्रयास करें।</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nयदि यह आपके स्थानीय नेटवर्क पर कोई सर्वर है, तो कनेक्ट करने के लिए स्थानीय नेटवर्क एक्सेस की अनुमति दें।</string>
+    <string name="caldav_error_connection_refused_insecure">सर्वर ने कनेक्शन को ऐसी जगह भेजा जहाँ KashCal नहीं जाता (बिना एन्क्रिप्शन वाला पता, या रीडायरेक्ट लूप), इसलिए आपका पासवर्ड भेजने से पहले KashCal रुक गया। सर्वर का पता जाँचें।</string>
     <string name="local_network_banner_title">स्थानीय नेटवर्क एक्सेस आवश्यक है</string>
     <string name="local_network_banner_body">यह सर्वर आपके स्थानीय नेटवर्क पर प्रतीत होता है। स्थानीय नेटवर्क एक्सेस की अनुमति दें ताकि KashCal इससे कनेक्ट हो सके।</string>
     <string name="local_network_banner_allow">एक्सेस की अनुमति दें</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">बदलाव सहेजें</string>
     <string name="dialog_delete_recurring_title">हटाएं</string>
     <string name="dialog_move_recurring_title">स्थानांतरित करें</string>
+    <string name="snackbar_event_rescheduled">इवेंट का समय बदल दिया गया</string>
+    <string name="snackbar_reschedule_failed">इवेंट का समय नहीं बदला जा सका</string>
     <string name="recurring_this_event">यह इवेंट</string>
     <string name="recurring_all_events">सभी इवेंट</string>
 

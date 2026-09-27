@@ -1,0 +1,36 @@
+Calendarele tale sunt peste tot. Familia pe iCloud. Sărbătorile de pe un site oarecare. Zilele de naștere pierdute în contacte. Serviciul în calendarul telefonului. KashCal le adună pe toate într-o singură aplicație pe Android.
+
+Află mai multe: https://kashcal.onekash.org
+
+• iCloud: ai trecut la Android, dar familia e încă pe Apple? Sincronizează direct calendarele iCloud. Fără punte, fără soluții ocolitoare.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo și altele. Sincronizare bidirecțională reală, fără strat intermediar. Apar și calendarele Google și Outlook de pe telefon.
+
+• Șapte vizualizări: lună, lună pe înălțime completă, agendă, zi, 3 zile, săptămână și an. Apropie degetele pentru a mări cronologia, trage un eveniment pentru a-l muta.
+
+• Programare: invită persoane, trimite invitații la întâlniri și răspunde la invitațiile primite.
+
+• Statistici: vezi pe ce se duce timpul tău. Cele mai aglomerate zile, serii fără pauză, intervale libere. Totul se calculează pe dispozitiv.
+
+• Widgeturi: ține-ți ziua pe ecranul principal fără să deschizi aplicația. Agendă, dată, săptămână, lună și următoarele.
+
+• Abonamente ICS: urmărește orice flux de calendar. Sărbători, perioade școlare, sezoane sportive.
+
+• Zile de naștere și aniversări: preluate automat din contacte.
+
+• Culori pentru fiecare eveniment: dintr-o paletă selectată sau din roata de culori completă, ca săptămâna ta să se citească dintr-o privire.
+
+• Fă-o a ta: temă deschisă, întunecată sau de sistem, plus o paletă KashCal Teal. Susținătorii pot trece la o pictogramă specială.
+
+• Accesibilitate: suport complet pentru cititorul de ecran (TalkBack) și setează limba aplicației direct din setările Android, în 67 de limbi.
+
+• Funcționează complet offline din prima clipă.
+
+Privat în mod implicit
+
+Fără analize. Fără telemetrie. Fără cont KashCal. Nu avem servere, așa că nu e nimic de colectat.
+
+• Datele de autentificare criptate cu Android Keystore
+• Blocare aplicație: ascunde-ți evenimentele în spatele amprentei, feței sau blocării ecranului
+
+Liber ca libertatea. Și gratis pe deasupra.

@@ -43,13 +43,12 @@ import org.onekash.kashcal.ui.shared.minutesToComponents
 import org.onekash.kashcal.ui.shared.roundToWheelStep
 
 /**
- * Sentinel seed for the custom wheel meaning "keep the current setting". The wheel
- * only produces non-negative durations and hands a negative, untouched seed straight
- * back (WheelDurationPicker keeps `selectedMinutes` when `!touched && < 0`), so a
- * staged value still equal to this sentinel means the user opened Custom but never
- * dialed — the current value is preserved rather than reset. Int.MIN_VALUE can never
- * collide with a real reminder offset and is never decomposed (the wheel clamps a
- * <= 0 seed to a neutral 0d 0h 0m display).
+ * Seeds the custom wheel with "keep the current setting". The wheel only produces
+ * non-negative durations and hands an untouched negative seed straight back
+ * ([WheelDurationPicker] keeps `selectedMinutes` when `!touched && < 0`), so a staged value
+ * still equal to this means the user opened Custom but never dialed, and the current value is
+ * kept. Int.MIN_VALUE can't collide with a real reminder offset and is never decomposed: the
+ * wheel shows any <= 0 seed as 0d 0h 0m.
  */
 internal const val WHEEL_KEEP_CURRENT = Int.MIN_VALUE
 
@@ -57,12 +56,11 @@ internal const val WHEEL_KEEP_CURRENT = Int.MIN_VALUE
 private const val WHEEL_MAX_DAYS = 30
 
 /**
- * Whether the duration wheel can seed [minutes] and hand back the SAME value when the
- * user taps Done without dialing. True only for a positive duration that fits the day
- * wheel (0..[WHEEL_MAX_DAYS]) and already lies on the wheel's 5-minute grid — mirroring
- * the wheel's own decompose → snap-minutes → recompose path. An off-grid value (e.g. 23
- * → snapped to 25) or an out-of-range day count would be silently altered on an
- * un-scrolled Done, so those seed the keep-current sentinel instead.
+ * Returns whether the wheel, seeded with [minutes], hands back the same value when the user
+ * taps Done without dialing. True only for a positive duration that fits the day wheel
+ * (0..[WHEEL_MAX_DAYS]) and already lies on the 5-minute grid, mirroring the wheel's
+ * decompose, snap-minutes, recompose path. An off-grid value (23 snaps to 25) or too many days
+ * would be silently altered on an untouched Done, so those seed [WHEEL_KEEP_CURRENT].
  */
 private fun isWheelRepresentable(minutes: Int): Boolean {
     if (minutes <= 0) return false
@@ -72,17 +70,16 @@ private fun isWheelRepresentable(minutes: Int): Boolean {
 }
 
 /**
- * The value the custom wheel's Done commits, given the [staged] wheel value, the
- * [currentValue] the sheet opened with, and whether this is the [isAllDay] picker.
+ * Returns the value the custom wheel's Done commits, given the [staged] wheel value and the
+ * [currentValue] the sheet opened with.
  *
- * Extracted as a pure function so its branches are deterministically testable
- * (the [WHEEL_KEEP_CURRENT] preserve path and the all-day neutral→None path are
- * hard to reach reliably through the wheel's gesture layer):
- * - [WHEEL_KEEP_CURRENT] staged → the user opened Custom without dialing; keep the
- *   current setting (a preset, or a non-representable all-day offset).
- * - all-day dialed to a neutral (<= 0) value → None ([REMINDER_OFF]); a midnight
- *   all-day alarm is meaningless.
- * - otherwise → the staged value (timed 0 = "at time of event" is kept here).
+ * A pure function so its branches can be tested directly; the first two are hard to reach
+ * through the wheel's gestures:
+ * - [WHEEL_KEEP_CURRENT] staged: the user opened Custom without dialing; keep [currentValue],
+ *   whatever it is (a preset, an off-grid duration, a non-representable all-day offset).
+ * - all-day with a staged value <= 0: None ([REMINDER_OFF]); a midnight all-day alarm is
+ *   meaningless.
+ * - otherwise the staged value; a timed 0 ("at time of event") is kept.
  */
 internal fun committedAlertValue(staged: Int, currentValue: Int, isAllDay: Boolean): Int = when {
     staged == WHEEL_KEEP_CURRENT -> currentValue
@@ -91,23 +88,19 @@ internal fun committedAlertValue(staged: Int, currentValue: Int, isAllDay: Boole
 }
 
 /**
- * Bottom sheet for picking a single default alert (timed OR all-day).
+ * Shows a picker for one default alert, timed or all-day.
  *
- * A one-tap radio list of presets plus a final "Custom" row that swaps the
- * sheet body to the 3-wheel days/hours/minutes [WheelDurationPicker], so
- * arbitrary durations are never lost. The preset list is always the entry view
- * — the wheel is only shown after the user taps Custom, and a Back control
- * returns to the list, so a saved custom value never traps the user on the
- * wheel. Maps to a single `onDefaultReminder*Change` callback.
+ * A one-tap radio list of presets plus a final Custom row that swaps the body to the
+ * days/hours/minutes [WheelDurationPicker], so any duration can be set. The preset list is
+ * always the entry view: the wheel shows only after a tap on Custom, and a Back control returns
+ * to the list, so a saved custom value never traps the user on the wheel.
  *
- * @param sheetState Material3 sheet state
- * @param title Sheet header (e.g. "Timed event alert")
- * @param options Preset reminder options (includes "None" as [REMINDER_OFF])
- * @param currentValue Currently selected reminder minutes
- * @param isAllDay Whether this is the all-day picker (affects the wheel + labels)
- * @param use24Hour Whether to render times in 24-hour format
- * @param onSelect Callback with the chosen reminder minutes
- * @param onDismiss Callback when the sheet is dismissed
+ * @param title sheet header, for example "Timed event alert"
+ * @param options preset options, "None" ([REMINDER_OFF]) included
+ * @param currentValue selected reminder minutes
+ * @param isAllDay whether this is the all-day picker; changes the wheel, the labels and the
+ *   9 AM hint
+ * @param onSelect called with the chosen minutes, then [onDismiss] is called
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -121,31 +114,23 @@ fun AlertPickerSheet(
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // When true, the sheet body shows the custom wheel instead of the preset list.
-    // The wheel is only ever reached by tapping Custom; a saved custom value shows
-    // as a selected "Custom" row on the list, never auto-opening the wheel.
+    // True while the body shows the custom wheel. Only a tap on Custom opens it; a saved
+    // custom value shows as a selected Custom row on the list.
     var showCustomWheel by remember { mutableStateOf(false) }
-    // The wheel emits onDurationSelected continuously as its centered item changes
-    // (including mid-fling), so that signal only STAGES the value here — it must not
-    // commit or dismiss, or the sheet would close on the first scroll tick and the
-    // user could never reach their target. The commit happens once, on the wheel's
-    // Done control, which fires onDurationSelected(final) then its onDismiss.
-    // Seeded with the "keep current" sentinel: the wheel only ever produces
-    // non-negative durations, so a negative staged value means the user tapped Done
-    // without dialing anything, and the current setting is preserved (see onDismiss).
+    // The wheel calls onDurationSelected on every change of its centered item, mid-fling
+    // included, so that only stages the value here. It must not commit or dismiss, or the
+    // sheet would close on the first scroll tick. The commit happens once, on the wheel's Done,
+    // which calls onDurationSelected(final) and then its onDismiss. Starts at
+    // [WHEEL_KEEP_CURRENT], so an undialed Done keeps the current setting.
     var stagedCustomMinutes by remember { mutableStateOf(WHEEL_KEEP_CURRENT) }
     val resources = LocalResources.current
 
-    // A saved value that isn't one of the presets is a custom duration. All-day
-    // presets are "9 AM, N days before" offsets, so only positive non-preset values
-    // are treated as custom durations for the wheel; all-day offsets stay on presets.
+    // A saved value other than None that isn't a preset shows as the selected Custom row.
     val isCurrentCustom = currentValue != REMINDER_OFF && options.none { it.minutes == currentValue }
-    // Seed the wheel with the current value only when the wheel can represent it
-    // losslessly — a positive duration on the 5-minute grid. Anything else (a 9-AM
-    // all-day offset, or an off-grid custom like 23 min the wheel would snap to 25)
-    // seeds the sentinel so an un-scrolled Done preserves the exact current value
-    // rather than committing a rounded or mis-decomposed one. A <= 0 seed also renders
-    // as a neutral 0d 0h 0m and, if untouched, is handed straight back.
+    // Only a custom value that [isWheelRepresentable] accepts seeds the wheel. Anything else
+    // (None, a preset, or a custom value the wheel would alter, like 23 minutes) seeds the
+    // sentinel so an untouched Done keeps the exact current value instead of a rounded or
+    // mis-decomposed one.
     val wheelSeed = if (isCurrentCustom && isWheelRepresentable(currentValue)) {
         currentValue
     } else {
@@ -155,10 +140,9 @@ fun AlertPickerSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
-        // While the custom wheel is showing, disable the sheet's drag gestures so
-        // its swipe-to-dismiss doesn't steal the wheel's vertical scroll (which
-        // otherwise makes a touch dismiss the sheet or drop mid-scroll). The wheel
-        // has its own Back control, and tap-outside still dismisses.
+        // While the wheel shows, the sheet's drag gestures are off so swipe-to-dismiss can't
+        // steal the wheel's vertical scroll and dismiss the sheet or drop mid-scroll. The
+        // wheel has its own Back control, and a tap outside still dismisses.
         sheetGesturesEnabled = !showCustomWheel
     ) {
         Column(
@@ -175,8 +159,8 @@ fun AlertPickerSheet(
                     bottom = if (isAllDay) 2.dp else 12.dp
                 )
             )
-            // All-day presets all fire at 9 AM; the labels stay terse and this hint
-            // conveys the time (both 12h and 24h) once for the whole list.
+            // All-day presets fire at 9 AM; this hint gives the time once, in 12h and 24h,
+            // so the preset labels stay terse.
             if (isAllDay) {
                 Text(
                     stringResource(R.string.all_day_alert_9am_hint),
@@ -190,8 +174,7 @@ fun AlertPickerSheet(
             )
 
             if (showCustomWheel) {
-                // Back to the preset list — the wheel's own "Done" commits a value,
-                // so this is the only non-committing way back.
+                // The only way back to the list that commits nothing; the wheel's Done commits.
                 TextButton(onClick = { showCustomWheel = false }) {
                     Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
@@ -206,12 +189,10 @@ fun AlertPickerSheet(
                     isAllDay = isAllDay,
                     use24Hour = use24Hour,
                     presets = emptyList(),
-                    // Fires on every wheel change (incl. mid-fling): stage only, never
-                    // commit/dismiss. Done calls this with the final value, then onDismiss.
+                    // Stages only; see stagedCustomMinutes.
                     onDurationSelected = { minutes -> stagedCustomMinutes = minutes },
                     onDismiss = {
-                        // Done: commit the staged value (see committedAlertValue for the
-                        // keep-current and all-day-neutral→None rules) and close the sheet.
+                        // Done: commit per [committedAlertValue] and close the sheet.
                         onSelect(committedAlertValue(stagedCustomMinutes, currentValue, isAllDay))
                         onDismiss()
                     }
@@ -227,8 +208,7 @@ fun AlertPickerSheet(
                         }
                     )
                 }
-                // Custom row: opens the wheel. Reflects a saved custom duration so the
-                // user sees their current value and can tell it's selected.
+                // Opens the wheel. A saved custom value shows in the label and selects the row.
                 val customLabel = if (isCurrentCustom) {
                     resources.getString(
                         R.string.settings_custom_alert_value,
@@ -248,10 +228,8 @@ fun AlertPickerSheet(
 }
 
 /**
- * Simplified alerts sheet for single picker (timed OR all-day).
- *
- * Use this when you want separate sheets for each type.
- * Uses expanded list view (for backward compatibility with existing callers).
+ * Shows a one-tap radio list of preset alerts, timed or all-day, with no Custom row. Picking a
+ * preset calls [onSelect] and then [onDismiss].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -282,8 +260,8 @@ fun SingleAlertPickerSheet(
                     bottom = if (isAllDay) 2.dp else 12.dp
                 )
             )
-            // All-day presets fire at 9 AM; the hint conveys the time once so the
-            // terse option labels ("Day of event", "1 day before") stay clean.
+            // All-day presets fire at 9 AM; the hint gives the time once so the option labels
+            // ("Day of event", "1 day before") stay terse.
             if (isAllDay) {
                 Text(
                     stringResource(R.string.all_day_alert_9am_hint),
@@ -311,9 +289,7 @@ fun SingleAlertPickerSheet(
     }
 }
 
-/**
- * Single reminder option row (shared by the alert picker sheets).
- */
+/** Draws one radio row of the alert picker sheets, tinted with a check icon when selected. */
 @Composable
 private fun ReminderOptionRow(
     label: String,

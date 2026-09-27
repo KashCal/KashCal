@@ -1,6 +1,7 @@
 package org.onekash.kashcal.ui.components.pickers
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -12,15 +13,17 @@ import org.onekash.kashcal.domain.rrule.RecurrenceFrequency
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.domain.rrule.toFrequency
 import java.time.DayOfWeek
+import java.time.LocalDate
+import org.onekash.kashcal.testutil.phoneLocalDate
+import org.onekash.kashcal.testutil.phoneMidnight
+import org.onekash.kashcal.testutil.withDeviceTimeZone
 
 /**
- * Pure-helper tests for the recurrence picker state mapping logic.
- *
- * Covers selectInitialFrequencyOption, mapFrequencyToCustomUnit,
- * applyUnitTransition, FrequencyOption.toFrequency(), and the
- * RecurrencePickerSelections holder — the state that previously lived
- * inline in the composable and is now extracted for direct testability
- * without Robolectric.
+ * Tests the recurrence picker's state helpers without Robolectric: [selectInitialFrequencyOption],
+ * [mapFrequencyToCustomUnit], [applyUnitTransition], `FrequencyOption.toFrequency()`, the
+ * [RecurrencePickerSelections] holder (`from` and `toRrule`: presets, intervals, COUNT and UNTIL,
+ * WKST, extra tokens, monthly nth-weekday), and the end-date helpers [untilForPickedDate],
+ * [untilDisplayMillis], [defaultUntilMillis] and [onlyUntilDiffers].
  */
 class RecurrencePickerStateTest {
 
@@ -180,7 +183,7 @@ class RecurrencePickerStateTest {
         assertEquals(CustomRecurrenceUnit.WEEK, mapFrequencyToCustomUnit(RecurrenceFrequency.CUSTOM))
     }
 
-    // ==================== toRrule with COUNT end condition ====================
+    // ==================== toRrule: COUNT, intervals and presets ====================
 
     @Test
     fun `toRrule WEEKLY with COUNT appends COUNT token`() {
@@ -261,10 +264,10 @@ class RecurrencePickerStateTest {
             monthlyPattern = MonthlyPattern.SameDay(15),
             startDayOfWeek = DayOfWeek.MONDAY,
         )
-        // After Week→Month, weekdays must be preserved AS-IS so coming back to Week
-        // doesn't lose the user's selection.
+        // After Week to Month the weekdays are kept as is, so coming back to Week doesn't lose
+        // the user's selection.
         assertEquals(initialWeekdays, weekdays)
-        // Monthly pattern carried in is preserved (not reset to a default).
+        // The monthly pattern carried in is kept, not reset to a default.
         assertEquals(MonthlyPattern.SameDay(15), monthly)
     }
 
@@ -277,8 +280,8 @@ class RecurrencePickerStateTest {
             monthlyPattern = MonthlyPattern.LastDay,
             startDayOfWeek = DayOfWeek.MONDAY,
         )
-        // Even though Year unit doesn't render a monthly pattern, the value must
-        // round-trip back if the user returns to Month — preserved AS-IS.
+        // The Year unit doesn't render a monthly pattern, but the value is kept as is so it
+        // comes back if the user returns to Month.
         assertEquals(MonthlyPattern.LastDay, monthly)
     }
 
@@ -331,7 +334,7 @@ class RecurrencePickerStateTest {
             monthlyPattern = initialPattern,
             startDayOfWeek = DayOfWeek.MONDAY,
         )
-        // Coming back to MONTH must restore LastDay, not reset to SameDay default.
+        // Coming back to MONTH must restore LastDay, not reset to the SameDay default.
         val (_, monthly2) = applyUnitTransition(
             previous = CustomRecurrenceUnit.WEEK,
             new = CustomRecurrenceUnit.MONTH,
@@ -350,7 +353,8 @@ class RecurrencePickerStateTest {
             new = CustomRecurrenceUnit.MONTH,
             weekdays = initialDays,
             monthlyPattern = null,
-            startDayOfWeek = DayOfWeek.TUESDAY, // start day NOT in initialDays — was the bug trigger
+            // A start day outside initialDays must not replace them.
+            startDayOfWeek = DayOfWeek.TUESDAY,
         )
         val (weekdays2, _) = applyUnitTransition(
             previous = CustomRecurrenceUnit.MONTH,
@@ -609,7 +613,7 @@ class RecurrencePickerStateTest {
         assertEquals("FREQ=MONTHLY;INTERVAL=3;BYMONTHDAY=22", rrule)
     }
 
-    // ==================== Chip detour: 200 survives Custom→Weekly→Custom ====================
+    // ==================== Chip detour with interval 200 ====================
 
     @Test
     fun `chip detour preserves interval 200 across Custom to Weekly to Custom`() {
@@ -634,11 +638,9 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `chip detour through parent recomposition loses interval without echo guard`() {
-        // Simulates the picker's full lifecycle: holder emits a preset RRULE
-        // → parent stores it → parent recomposes with selectedRrule=newRrule
-        // → remember(parsed) re-keys → from(parsed) rebuilds the holder.
-        // The .copy()-only test (above) misses this because it never re-runs
-        // from(parsed). This is the surface where the chip-detour bug lives.
+        // Simulates the picker's lifecycle without its guard: the holder emits a preset RRULE,
+        // the parent stores it and recomposes with it, and from(parsed) rebuilds the holder. The
+        // copy-only test above never re-runs from(parsed), so it can't see this loss.
         val initial = RecurrencePickerSelections.from(
             parsed = ParsedRecurrence(
                 frequency = RecurrenceFrequency.WEEKLY,
@@ -649,12 +651,12 @@ class RecurrencePickerStateTest {
             startDayOfMonth = 15,
         )
 
-        // User taps Weekly chip → holder emits clean preset RRULE
+        // The user taps the Weekly chip; the holder emits a preset RRULE.
         val afterWeeklyTap = initial.copy(frequencyOption = FrequencyOption.WEEKLY)
         val emittedAfterWeekly = afterWeeklyTap.toRrule(DayOfWeek.SUNDAY)!!
 
-        // Parent recomposes with the emitted value → from(parsed) rebuilds the
-        // holder. The naive (no-guard) reload path resets interval to 1.
+        // The parent recomposes with the emitted value and from(parsed) rebuilds the holder;
+        // without the guard this reload resets the interval to 1.
         val reparsed = org.onekash.kashcal.domain.rrule.RruleBuilder.parseRrule(
             emittedAfterWeekly,
             defaultWeekday = DayOfWeek.MONDAY,
@@ -667,26 +669,24 @@ class RecurrencePickerStateTest {
             startDayOfMonth = 15,
         )
 
-        // User taps Custom chip → if the rebuild happened, interval is now 1
+        // The user taps the Custom chip; after the rebuild the interval is 1.
         val afterCustomTap = rebuilt.copy(frequencyOption = FrequencyOption.CUSTOM)
         val finalRrule = afterCustomTap.toRrule(DayOfWeek.SUNDAY)!!
 
-        // Documents the lossy-reload behavior: 200 is gone after the round-trip.
-        // The fix is in the picker (self-echo guard skips the reload), not in
-        // the holder. This test is a guard against accidentally fixing it
-        // by changing toRrule() preset semantics — the compose tests that drive
-        // the actual user surface and assert 200 SURVIVES are
+        // 200 is gone after the reload. The picker's self-echo guard skips the reload, so the
+        // holder keeps this loss; the test fails if a toRrule() preset change hides it.
+        // The compose tests that assert 200 survives on the user's surface are
         // chipDetour_preservesInterval200_throughWeeklyThenCustom in
         // RecurrencePickerChipDetourComposeTest (Robolectric, PR-gated) and
-        // chipDetour_preservesInterval200_throughChipClicks in
-        // RecurrencePickerComposeTest (on-device instrumentation).
+        // chipDetour_preservesInterval200_throughChipClicks in RecurrencePickerComposeTest
+        // (on-device instrumentation).
         assertTrue(
             "lifecycle simulation: parent round-trip loses interval (fix lives in RecurrencePickerRow), got $finalRrule",
             !finalRrule.contains("INTERVAL=200"),
         )
     }
 
-    // ==================== Stepper edit: 200 → 99 single-source semantics ====================
+    // ==================== Interval edits from 200 ====================
 
     @Test
     fun `stepper edit from 200 to 99 emits INTERVAL 99 not 200`() {
@@ -734,10 +734,9 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `toRrule preserves inbound WKST=SU over device wkst MONDAY for biweekly multi-day rule`() {
-        // CalDAV-pulled rule with explicit WKST=SU. Opening on a Monday-week
-        // device must emit WKST=SU on save, not silently rewrite to WKST=MO —
-        // that would shift occurrences for biweekly multi-day rules where
-        // Sunday and Monday land in different ISO weeks.
+        // A synced rule with an explicit WKST=SU. Opening it on a Monday-week device must emit
+        // WKST=SU on save, not silently rewrite it to WKST=MO: that would shift occurrences of
+        // biweekly multi-day rules where Sunday and Monday land in different weeks.
         val selections = RecurrencePickerSelections.from(
             parsed = ParsedRecurrence(
                 frequency = RecurrenceFrequency.WEEKLY,
@@ -754,9 +753,8 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `toRrule falls back to device wkst when parsed wkst is null`() {
-        // New rule (or rule that omitted WKST). Builder still applies the
-        // emission gate (interval>=2 AND days.size>=2), so device wkst flows
-        // through untouched here.
+        // No parsed WKST, so the device wkst passed in is used. This rule passes the builder's
+        // emission gate (interval 2 or more and two or more days), so it gets WKST.
         val selections = RecurrencePickerSelections.from(
             parsed = ParsedRecurrence(
                 frequency = RecurrenceFrequency.WEEKLY,
@@ -773,9 +771,9 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `toRrule does not emit WKST when builder gate suppresses it (single-day BYDAY)`() {
-        // RFC §3.3.10: WKST is only useful for WEEKLY rules with multi-day
-        // BYDAY at interval>=2. Holder still stores parsedWkst, but the
-        // builder drops it for single-day rules — verify that pass-through.
+        // RruleBuilder.weekly writes WKST only for two or more days at interval 2 or more (RFC 5545
+        // §3.3.10 makes WKST significant for a WEEKLY rule with an interval over 1 and BYDAY).
+        // The holder still stores parsedWkst, but a single-day rule drops it.
         val selections = RecurrencePickerSelections.from(
             parsed = ParsedRecurrence(
                 frequency = RecurrenceFrequency.WEEKLY,
@@ -805,14 +803,13 @@ class RecurrencePickerStateTest {
         assertEquals(DayOfWeek.SUNDAY, selections.parsedWkst)
     }
 
-    // ==================== WKST nullable deviceWkst (loaded-omitted preservation) ====================
+    // ==================== WKST: null deviceWkst keeps a loaded omission ====================
 
     @Test
     fun `toRrule with parsedWkst=null and deviceWkst=null emits no WKST for biweekly multi-day rule`() {
-        // Loaded rule that omitted WKST + caller (picker) signals "not a new
-        // rule" by passing null. Builder gate would otherwise trigger; we
-        // must respect the omission so RFC §3.3.10 default-MO anchoring is
-        // preserved on save.
+        // A loaded rule without WKST; the picker signals "not a new rule" by passing null. The
+        // builder gate would otherwise emit one, and the omission must survive the save so the
+        // RFC 5545 §3.3.10 default of MO still applies.
         val selections = RecurrencePickerSelections.from(
             parsed = ParsedRecurrence(
                 frequency = RecurrenceFrequency.WEEKLY,
@@ -829,8 +826,8 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `toRrule with parsedWkst=SUNDAY and deviceWkst=null still emits WKST=SU`() {
-        // Explicit inbound WKST always wins; deviceWkst=null only matters
-        // when parsedWkst is also null.
+        // An explicit inbound WKST always wins; deviceWkst=null only matters when parsedWkst is
+        // also null.
         val selections = RecurrencePickerSelections.from(
             parsed = ParsedRecurrence(
                 frequency = RecurrenceFrequency.WEEKLY,
@@ -847,9 +844,8 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `toRrule with parsedWkst=null and deviceWkst=SUNDAY emits WKST=SU for new rule`() {
-        // New rule: caller passes the device wkst; builder gate triggers and
-        // emits WKST. This is the existing seed-from-device behavior, now
-        // gated on isNewRule rather than always-on.
+        // A new rule: the picker passes the device wkst (it does so only when isNewRule), and the
+        // builder gate emits WKST.
         val selections = RecurrencePickerSelections.from(
             parsed = ParsedRecurrence(
                 frequency = RecurrenceFrequency.WEEKLY,
@@ -864,7 +860,7 @@ class RecurrencePickerStateTest {
         assertTrue("expected WKST=SU for new rule on Sunday-week device, got $rrule", rrule.contains("WKST=SU"))
     }
 
-    // ==================== Extra-token round-trip (BYMONTH / BYSETPOS / BYWEEKNO / BYYEARDAY) ====================
+    // ==================== Extra-token round-trip (BYMONTH, BYSETPOS) ====================
 
     @Test
     fun `from preserves extraTokens from parsed`() {
@@ -882,9 +878,9 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `toRrule round-trips BYMONTH-bearing yearly rule verbatim`() {
-        // CalDAV-pulled "every Jan 15" rule. parseRrule routes to CUSTOM and
-        // captures BYMONTH=1. Emission must include BYMONTH=1 so a no-op save
-        // doesn't silently rewrite to plain monthly.
+        // A synced "every Jan 15" rule. parseRrule routes it to CUSTOM and captures BYMONTH=1.
+        // The emitted rule must include BYMONTH=1 so a no-op save doesn't silently rewrite it to
+        // plain monthly.
         val selections = RecurrencePickerSelections.from(
             parsed = RruleBuilder.parseRrule(
                 "FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15",
@@ -903,9 +899,8 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `toRrule round-trips BYSETPOS rule verbatim`() {
-        // "Last weekday of the month" via BYSETPOS=-1. Without preservation
-        // the picker drops the qualifier and the rule degrades to plain
-        // weekday-of-month recurrence.
+        // "Last weekday of the month" through BYSETPOS=-1. If the token were dropped, the rule
+        // would become every weekday of the month.
         val selections = RecurrencePickerSelections.from(
             parsed = RruleBuilder.parseRrule(
                 "FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1",
@@ -938,7 +933,7 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `toRrule with parsedWkst=null and deviceWkst=null emits no WKST for single-day rule (gate suppresses)`() {
-        // Sanity: single-day BYDAY hits the builder gate regardless of args.
+        // A single-day BYDAY fails the builder gate whatever the arguments.
         val selections = RecurrencePickerSelections.from(
             parsed = ParsedRecurrence(
                 frequency = RecurrenceFrequency.WEEKLY,
@@ -953,7 +948,7 @@ class RecurrencePickerStateTest {
         assertTrue("expected no WKST for single-day rule, got $rrule", !rrule.contains("WKST="))
     }
 
-    // ==================== Monthly nth-weekday: last-weekday (ordinal -1) through the holder ====================
+    // ==================== Monthly nth-weekday through the holder ====================
 
     @Test
     fun `toRrule MONTHLY preset with NthWeekday last Friday emits BYDAY -1FR`() {
@@ -971,8 +966,8 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `toRrule CUSTOM Month interval 2 with NthWeekday last Friday emits canonical order`() {
-        // "Last Friday of every 2 months" through the CUSTOM(month) path. Assert the
-        // exact canonical token order the builder produces.
+        // "Last Friday of every 2 months" through the CUSTOM(month) path, asserting the builder's
+        // exact token order.
         val selections = RecurrencePickerSelections.from(
             parsed = ParsedRecurrence(
                 frequency = RecurrenceFrequency.MONTHLY,
@@ -987,8 +982,8 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `ordinal switch 1st to Last to 2nd stays consistent through holder copies`() {
-        // Simulates the user flipping the ordinal chip repeatedly. Each copy is
-        // read back through toRrule; the last write wins with no residue.
+        // Simulates the user flipping the ordinal chip repeatedly. Each copy is read back through
+        // toRrule; the last write wins with no residue.
         val base = RecurrencePickerSelections.from(
             parsed = ParsedRecurrence(
                 frequency = RecurrenceFrequency.MONTHLY,
@@ -1016,8 +1011,8 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `from seeds monthlyPattern NthWeekday last Friday from parsed regardless of start weekday`() {
-        // Holder-level guard: a parsed last-Friday rule reaches the holder
-        // as NthWeekday(-1, FRIDAY) even though the start date is a Saturday.
+        // A parsed last-Friday rule reaches the holder as NthWeekday(-1, FRIDAY) even though the
+        // start date is a Saturday.
         val selections = RecurrencePickerSelections.from(
             parsed = RruleBuilder.parseRrule(
                 "FREQ=MONTHLY;BYDAY=-1FR",
@@ -1036,9 +1031,8 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `BYSETPOS last-weekday rule routes to CUSTOM and round-trips without being hijacked`() {
-        // FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1 ("last weekday"). The
-        // picker must NOT interpret this as an nth-weekday selection; it routes to
-        // CUSTOM via extraTokens and round-trips verbatim.
+        // FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1 ("last weekday"). The picker must not read
+        // this as an nth-weekday selection; it routes to CUSTOM and keeps BYSETPOS=-1.
         val selections = RecurrencePickerSelections.from(
             parsed = RruleBuilder.parseRrule(
                 "FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-1",
@@ -1056,11 +1050,10 @@ class RecurrencePickerStateTest {
 
     @Test
     fun `imported BYDAY -2FR second-to-last weekday round-trips through the holder verbatim`() {
-        // The picker offers only 1st-4th + Last, so it can't author a
-        // second-to-last (-2) ordinal, but a synced rule may carry one. It must
-        // reach the holder as NthWeekday(-2, FRIDAY) and re-emit BYDAY=-2FR
-        // unchanged — the value is preserved even though the selector has no chip
-        // for it (the ordinal label degrades gracefully but the rule round-trips).
+        // The picker offers only 1st-4th and Last, so it can't author a second-to-last (-2)
+        // ordinal, but a synced rule may carry one. It must reach the holder as
+        // NthWeekday(-2, FRIDAY) and re-emit BYDAY=-2FR unchanged, though the selector has no
+        // chip for it and its radio label falls back to a generic ordinal.
         val selections = RecurrencePickerSelections.from(
             parsed = RruleBuilder.parseRrule(
                 "FREQ=MONTHLY;BYDAY=-2FR",
@@ -1077,4 +1070,80 @@ class RecurrencePickerStateTest {
         )
         assertEquals("FREQ=MONTHLY;BYDAY=-2FR", selections.toRrule(DayOfWeek.SUNDAY))
     }
+
+    // ==================== End date ("Ends on") ====================
+    //
+    // RFC 5545 section 3.3.10: UNTIL is inclusive and has the same value type as DTSTART, so
+    // all-day rules end with a date and timed rules with a UTC date-time. A picked end date means
+    // that day in the event's own timezone.
+
+    private fun until(rrule: String): String = Regex("UNTIL=([^;]+)").find(rrule)!!.groupValues[1]
+
+    private fun daily(endCondition: EndCondition) = RecurrencePickerSelections.from(
+        parsed = ParsedRecurrence(frequency = RecurrenceFrequency.DAILY, interval = 1, endCondition = endCondition),
+        startDayOfWeek = DayOfWeek.MONDAY,
+        startDayOfMonth = 1,
+    )
+
+    @Test
+    fun `a picked end date keeps that day's occurrence`() = withDeviceTimeZone("America/Los_Angeles") {
+        val end = untilForPickedDate(phoneMidnight(LocalDate.of(2024, 3, 20)), isAllDay = false, timezone = "America/Los_Angeles")
+        // Last second of Mar 20 in Los Angeles; a 10:00 PDT occurrence that day is inside it.
+        assertEquals("20240321T065959Z", until(daily(EndCondition.Until(end)).toRrule(DayOfWeek.SUNDAY)!!))
+    }
+
+    @Test
+    fun `a picked end date is that day in the event's zone when the phone is ahead of it`() =
+        withDeviceTimeZone("Asia/Tokyo") {
+            // A Los Angeles event edited on a Tokyo phone: Mar 20 means Mar 20 in Los Angeles,
+            // so its 22:00 PDT occurrence that day (05:00Z Mar 21) is kept.
+            val end = untilForPickedDate(phoneMidnight(LocalDate.of(2024, 3, 20)), isAllDay = false, timezone = "America/Los_Angeles")
+            assertEquals("20240321T065959Z", until(daily(EndCondition.Until(end)).toRrule(DayOfWeek.SUNDAY)!!))
+        }
+
+    @Test
+    fun `a picked end date is that day in the event's zone when the phone is behind it`() =
+        withDeviceTimeZone("America/Los_Angeles") {
+            // A Tokyo event: Mar 20 ends at the last second of Mar 20 in Tokyo, so no Mar 21.
+            val end = untilForPickedDate(phoneMidnight(LocalDate.of(2024, 3, 20)), isAllDay = false, timezone = "Asia/Tokyo")
+            assertEquals("20240320T145959Z", until(daily(EndCondition.Until(end)).toRrule(DayOfWeek.SUNDAY)!!))
+        }
+
+    @Test
+    fun `an all-day rule ends with a date`() = withDeviceTimeZone("America/Los_Angeles") {
+        val end = untilForPickedDate(phoneMidnight(LocalDate.of(2024, 3, 20)), isAllDay = true, timezone = null)
+        assertEquals("20240320", until(daily(EndCondition.Until(end)).toRrule(DayOfWeek.SUNDAY, isAllDay = true)!!))
+    }
+
+    @Test
+    fun `an all-day rule from a server keeps its end date`() = withDeviceTimeZone("Asia/Tokyo") {
+        val parsed = RruleBuilder.parseRrule("FREQ=DAILY;UNTIL=20240320", DayOfWeek.MONDAY, 1, 1)
+        val selections = RecurrencePickerSelections.from(parsed, DayOfWeek.MONDAY, 1)
+        assertEquals("20240320", until(selections.toRrule(null, isAllDay = true)!!))
+    }
+
+    @Test
+    fun `the end date shown is the date the rule ends on`() = withDeviceTimeZone("Asia/Tokyo") {
+        val allDayEnd = (RruleBuilder.parseRrule("FREQ=DAILY;UNTIL=20240320", DayOfWeek.MONDAY, 1, 1).endCondition as EndCondition.Until).dateMillis
+        assertEquals(LocalDate.of(2024, 3, 20), phoneLocalDate(untilDisplayMillis(allDayEnd, isAllDay = true, timezone = null)))
+
+        val timedEnd = 1_711_004_399_000L // 2024-03-21 06:59:59Z, the end of Mar 20 in Los Angeles
+        assertEquals(LocalDate.of(2024, 3, 20), phoneLocalDate(untilDisplayMillis(timedEnd, isAllDay = false, timezone = "America/Los_Angeles")))
+    }
+
+    @Test
+    fun `the default end date is one calendar year after the start date`() = withDeviceTimeZone("America/Los_Angeles") {
+        // Nov 3 is a daylight saving change; a fixed 365 x 24h would land on Nov 2.
+        val end = defaultUntilMillis(phoneMidnight(LocalDate.of(2024, 11, 3)), isAllDay = false, timezone = "America/Los_Angeles")
+        assertEquals(LocalDate.of(2025, 11, 3), phoneLocalDate(untilDisplayMillis(end, isAllDay = false, timezone = "America/Los_Angeles")))
+    }
+
+    @Test
+    fun `rules that differ only in their end date are recognised`() {
+        assertTrue(onlyUntilDiffers("FREQ=WEEKLY;BYDAY=MO;UNTIL=20270101T075959Z;WKST=SU", "FREQ=WEEKLY;BYDAY=MO;UNTIL=20261231;WKST=SU"))
+        assertFalse(onlyUntilDiffers("FREQ=WEEKLY;BYDAY=MO;UNTIL=20261231", "FREQ=WEEKLY;BYDAY=TU;UNTIL=20261231"))
+        assertFalse(onlyUntilDiffers("FREQ=WEEKLY;BYDAY=MO", "FREQ=WEEKLY;BYDAY=MO;UNTIL=20261231"))
+        assertFalse(onlyUntilDiffers(null, "FREQ=DAILY;UNTIL=20261231"))
+    }
 }
+

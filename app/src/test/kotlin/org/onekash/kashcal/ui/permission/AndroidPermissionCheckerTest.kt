@@ -15,11 +15,12 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowAlarmManager
 
 /**
- * Verifies [AndroidPermissionChecker] reads permission state from the
- * system at the moment of each call — no caching, correct SDK gates.
+ * Tests that [AndroidPermissionChecker] reports each system grant, reports POST_NOTIFICATIONS
+ * granted below API 33, and re-reads on every call with no caching (READ_CONTACTS revoked
+ * between two calls).
  *
- * Tests run with two SDK targets (Android 13 / TIRAMISU for POST_NOTIFICATIONS,
- * and default / current for exact-alarm behavior) to exercise the version gates.
+ * The class runs on SDK 34; the pre-Tiramisu test runs on SDK 32. hasWriteContactsPermission
+ * has no test here.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -64,7 +65,7 @@ class AndroidPermissionCheckerTest {
     @Test
     @Config(sdk = [32])
     fun `hasNotificationPermission returns true on pre-Tiramisu regardless of grant`() {
-        // minSdk=31, so 32 is the lowest pre-Tiramisu slot available.
+        // SDK 32 is below Tiramisu (33) and at or above minSdk 31.
         shadowOf(context as android.app.Application)
             .denyPermissions(Manifest.permission.POST_NOTIFICATIONS)
 
@@ -133,10 +134,9 @@ class AndroidPermissionCheckerTest {
         assertFalse(checker.hasExactAlarmPermission())
     }
 
-    // Note: pre-S SDK (API < 31) branch of hasExactAlarmPermission() is defensive
-    // — the app's minSdk = 31, so pre-S code paths never execute in production.
-    // Robolectric also can't downsample compileSdk=36 to SDK 30 without parser
-    // errors, so this branch is deliberately not covered by a Robolectric test.
+    // The pre-S (API below 31) branch of hasExactAlarmPermission() never runs in production,
+    // since minSdk is 31. Robolectric also can't run this compileSdk at SDK 30 without parser
+    // errors, so the branch deliberately has no Robolectric test.
 
     @Test
     fun `each query is fresh — revoking between calls reflects immediately`() {

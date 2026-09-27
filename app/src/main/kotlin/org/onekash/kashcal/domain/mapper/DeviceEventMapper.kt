@@ -6,28 +6,30 @@ import org.onekash.kashcal.data.calendar_provider.DeviceEvent
 import org.onekash.kashcal.data.contacts.ContactEventUtils
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.ui.components.EventFormState
+import org.onekash.kashcal.ui.components.allDayFormDateFields
+import org.onekash.kashcal.ui.components.timedFormDateFields
+import org.onekash.kashcal.ui.components.withDateFields
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.shared.MAX_REMINDERS
 import org.onekash.kashcal.util.DateTimeUtils
-import java.util.Calendar
+import org.onekash.kashcal.util.TimezoneUtils
 
 private const val TAG = "DeviceEventMapper"
 
 /**
- * Convert a DeviceEvent to EventFormState for editing.
+ * Maps a device event to an [EventFormState] for editing.
  *
- * Handles:
- * - Duration parsing for recurring events (CalendarProvider stores DURATION, not DTEND)
- * - All-day UTC to local date conversion
- * - Reminder mapping (first 5 only, logs warning if truncated)
- * - Two color channels: selectedCalendarColor = calendar identity (picker dot),
- *   eventColor = per-event override (separate field on form state)
+ * - A recurring event's end comes from DURATION, which CalendarProvider stores instead of
+ *   DTEND.
+ * - All-day UTC times become local dates.
+ * - Only the first MAX_REMINDERS (5) reminders are kept; the rest are counted for a UI
+ *   warning and logged.
+ * - Two color channels: selectedCalendarColor is the calendar's (picker dot), eventColor the
+ *   per-event override.
  *
- * @param reminders List of reminder minutes from CalendarProvider
- * @param calendarColor Calendar's default color
- * @param calendarName Calendar display name
- * @param deviceCalendarGroups Device calendar groups for picker
- * @return EventFormState populated with device event data
+ * @param reminders reminder minutes from CalendarProvider
+ * @param calendarColor the calendar's default color
+ * @param occurrenceTs start of the occurrence being edited, shown instead of the series start
  */
 fun DeviceEvent.toFormState(
     reminders: List<Int>,
@@ -36,40 +38,33 @@ fun DeviceEvent.toFormState(
     deviceCalendarGroups: List<CalendarGroup>,
     occurrenceTs: Long? = null
 ): EventFormState {
-    // Compute end timestamp from duration or endTs
     val computedEndTs = computeEndTs()
 
-    // For single occurrence edit, use occurrenceTs to show the correct date.
-    // Exception events (originalId != null) already have their own startTs.
-    // Same pattern as Room events (EventFormSheet.kt:402).
+    // A single-occurrence edit shows occurrenceTs; an exception (originalId != null) has its
+    // own startTs. Same rule as Event.toFormDateFields for Room events.
     val eventDuration = (computedEndTs ?: startTs) - startTs
     val actualStartTs = if (originalId != null) startTs else (occurrenceTs ?: startTs)
     val actualEndTs = actualStartTs + eventDuration
 
-    // For all-day events, convert UTC midnight to local date
-    val (startDateMillis, endDateMillis) = if (isAllDay) {
-        val localStart = DateTimeUtils.utcMidnightToLocalDate(actualStartTs)
-        val localEnd = DateTimeUtils.utcMidnightToLocalDate(actualEndTs)
-        localStart to localEnd
+    // The form edits a timed event's clock time in the event's own timezone, the
+    // zone the save reads it back in. All-day events carry the provider's "UTC"
+    // placeholder and use the device's dates, so they get no form timezone. An ID
+    // the app can't resolve falls back to the device zone and is kept aside so an
+    // unchanged save writes it back.
+    val recognisedTimezone = timezone.takeIf { TimezoneUtils.resolveZoneOrNull(it) != null }
+    val formTimezone = if (isAllDay) null else recognisedTimezone
+    val sourceTimezoneId = if (!isAllDay && timezone.isNotBlank() && recognisedTimezone == null) timezone else null
+
+    val dateFields = if (isAllDay) {
+        allDayFormDateFields(actualStartTs, actualEndTs)
     } else {
-        actualStartTs to actualEndTs
+        timedFormDateFields(actualStartTs, actualEndTs, formTimezone)
     }
 
-    // Extract time components
-    val startCal = Calendar.getInstance().apply { timeInMillis = actualStartTs }
-    val endCal = Calendar.getInstance().apply { timeInMillis = actualEndTs }
-
-    // Map reminders (take first 5, track truncated count for UI warning)
     val (mappedReminders, truncatedCount) = mapReminders(reminders)
 
     return EventFormState(
         title = title,
-        dateMillis = startDateMillis,
-        endDateMillis = endDateMillis,
-        startHour = startCal.get(Calendar.HOUR_OF_DAY),
-        startMinute = startCal.get(Calendar.MINUTE),
-        endHour = endCal.get(Calendar.HOUR_OF_DAY),
-        endMinute = endCal.get(Calendar.MINUTE),
         selectedCalendarId = calendarId,
         selectedCalendarName = calendarName,
         selectedCalendarColor = calendarColor,
@@ -79,7 +74,7 @@ fun DeviceEvent.toFormState(
         description = description.orEmpty(),
         categories = categories,
         rrule = rrule,
-        timezone = timezone,
+        timezone = formTimezone,
         transp = availabilityIntToTransp(availability),
         eventColor = this.eventColor,
         deviceCalendarGroups = deviceCalendarGroups,
@@ -87,22 +82,21 @@ fun DeviceEvent.toFormState(
         isDeviceCalendar = true,
         editingDeviceEventId = originalId ?: id,
         truncatedReminderCount = truncatedCount,
-        isEditMode = true
-    )
+        isEditMode = true,
+        sourceTimezoneId = sourceTimezoneId,
+    ).withDateFields(dateFields)
 }
 
 /**
- * Compute end timestamp from duration (for recurring) or endTs (for single events).
+ * Returns the end from DURATION when it parses (recurring events), else endTs.
  *
- * For recurring all-day events, parseDurationToMillis returns whole-day milliseconds
- * (P1D = 86_400_000), so startTs + duration yields the exclusive next-day midnight.
- * Roll back 1 ms to match KashCal's inclusive last-ms-of-last-day convention — the
- * same convention non-recurring all-day events arrive in via inclusiveEndForDeviceEvent.
- * Without this, the edit form's date picker would show the day after the event's
- * actual last day for any recurring all-day event.
+ * For an all-day event, startTs + a whole-day DURATION (P1D = 86_400_000) is the exclusive
+ * next-day midnight, so 1 ms is taken off to match the app's inclusive last-ms-of-last-day
+ * convention, which non-recurring all-day events already arrive in via
+ * `inclusiveEndForDeviceEvent`. Without it the edit form's date picker shows the day after a
+ * recurring all-day event's last day.
  */
 private fun DeviceEvent.computeEndTs(): Long? {
-    // For recurring events, CalendarProvider uses DURATION instead of DTEND
     if (!duration.isNullOrEmpty()) {
         val durationMs = DateTimeUtils.parseDurationToMillis(duration)
         if (durationMs != null) {
@@ -111,15 +105,12 @@ private fun DeviceEvent.computeEndTs(): Long? {
         }
     }
 
-    // Fall back to endTs (for non-recurring events)
     return endTs
 }
 
 /**
- * Map reminder minutes to form state.
- * Takes first MAX_REMINDERS (5), logs warning and tracks truncated count if exceeded.
- *
- * @return Pair of (reminderMinutes, truncatedCount)
+ * Returns the first MAX_REMINDERS (5) reminder minutes and how many were dropped, logging a
+ * warning when any were.
  */
 private fun mapReminders(reminders: List<Int>): Pair<List<Int>, Int> {
     val truncatedCount = (reminders.size - MAX_REMINDERS).coerceAtLeast(0)
@@ -131,27 +122,23 @@ private fun mapReminders(reminders: List<Int>): Pair<List<Int>, Int> {
 }
 
 /**
- * Convert a device calendar event to a synthetic Room [Event] for ICS export.
+ * Maps a device event to a synthetic Room [Event] for ICS export.
  *
- * The returned [Event] is never persisted — it's a transport object that
- * feeds [org.onekash.kashcal.sync.parser.icaldav.IcsPatcher.serialize] /
- * [serializeWithExceptions], so device-event export reuses the same serialization
- * pipeline Room events go through.
+ * The [Event] is never persisted. It feeds
+ * [org.onekash.kashcal.sync.parser.icaldav.IcsPatcher.serialize] or
+ * [org.onekash.kashcal.sync.parser.icaldav.IcsPatcher.serializeWithExceptions], so device
+ * events export through the same serialization as Room events.
  *
- * Key mappings:
- * - UID: always `device-{masterId}@kashcal` where `masterId = originalId ?: id`.
- *   For an exception row this uses the master's id, giving master + exception
- *   the shared UID that RFC 5545 requires.
- * - RRULE: nulled for exceptions (CalendarProvider's Events-table exception rows
- *   have RRULE=NULL, but defensive null-out protects against Instances-derived
- *   inputs and future refactors).
- * - STATUS: CalendarProvider int → RFC 5545 string. STATUS_CANCELED preserves
- *   cancelled occurrences on export.
- * - AVAILABILITY: CalendarProvider int → TRANSP string. BUSY/TENTATIVE → OPAQUE,
- *   FREE → TRANSPARENT.
- * - Reminders: caller passes minutes-before-start (fetched separately via
- *   [org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository.getReminders]);
- *   mapped to ISO durations via [ContactEventUtils.minutesToIsoDuration].
+ * - UID is `device-{masterId}@kashcal` with `masterId = originalId ?: id`, so an exception
+ *   shares its master's UID as RFC 5545 requires.
+ * - RRULE is null for exceptions. CalendarProvider's exception rows already have none; the
+ *   null-out guards against Instances-derived input.
+ * - STATUS maps through [statusIntToString]; STATUS_CANCELED keeps cancelled occurrences on
+ *   export.
+ * - AVAILABILITY maps through [availabilityIntToTransp].
+ * - [reminderMinutes] are minutes before start (fetched separately, e.g. by
+ *   [org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository.getRemindersForEvents]),
+ *   mapped to ISO durations by [ContactEventUtils.minutesToIsoDuration].
  */
 fun DeviceEvent.toExportEvent(reminderMinutes: List<Int> = emptyList()): Event {
     val masterId = originalId ?: id
@@ -185,9 +172,9 @@ fun DeviceEvent.toExportEvent(reminderMinutes: List<Int> = emptyList()): Event {
 }
 
 /**
- * CalendarProvider STATUS int → RFC 5545 status string. Shared by
- * [toExportEvent] and [DisplayEvent.Device.toEventForShareCard] so a
- * TENTATIVE device event preserves its status across both share paths.
+ * Maps a CalendarProvider STATUS int to an RFC 5545 status string; anything else is
+ * CONFIRMED. Shared by [toExportEvent] and `DisplayEvent.Device.toEventForShareCard` so a
+ * TENTATIVE device event keeps its status on both share paths.
  */
 internal fun statusIntToString(status: Int): String = when (status) {
     CalendarContract.Events.STATUS_TENTATIVE -> "TENTATIVE"
@@ -196,9 +183,8 @@ internal fun statusIntToString(status: Int): String = when (status) {
 }
 
 /**
- * CalendarProvider AVAILABILITY int → RFC 5545 TRANSP string.
- * BUSY/TENTATIVE → OPAQUE, FREE → TRANSPARENT. Shared across [toFormState],
- * [toExportEvent], and [DisplayEvent.Device.toEventForDuplicate].
+ * Maps a CalendarProvider AVAILABILITY int to an RFC 5545 TRANSP string: FREE is TRANSPARENT,
+ * anything else (BUSY, TENTATIVE) is OPAQUE.
  */
 internal fun availabilityIntToTransp(availability: Int): String = when (availability) {
     CalendarContract.Events.AVAILABILITY_FREE -> "TRANSPARENT"

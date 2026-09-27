@@ -39,21 +39,14 @@ import org.onekash.kashcal.ui.shared.minutesToComponents
 import org.onekash.kashcal.ui.shared.roundToWheelStep
 
 /**
- * Inline three-wheel duration picker for reminders.
- * Composes three [VerticalWheelPicker] instances for days, hours, and minutes.
+ * Shows preset chips above circular day, hour and minute [VerticalWheelPicker]s for a reminder
+ * offset, with a summary label and a Done button.
  *
- * Follows WheelTimePicker.kt patterns:
- * - Uses centeringOffset (not contentPadding) for centering
- * - All wheels circular (isCircular = true)
- * - Pixel-based derivedStateOf center detection
- * - Haptic feedback on selection
- *
- * @param selectedMinutes Current total minutes for the reminder
- * @param isAllDay Whether the event is all-day (affects summary labels)
- * @param use24Hour Whether to use 24-hour format for time labels
- * @param presets Quick preset chips to show above the wheels
- * @param onDurationSelected Callback with total minutes when user changes value
- * @param onDismiss Called when user taps "Done"
+ * @param selectedMinutes the reminder's offset in minutes; negative is after the start (for
+ *   all-day events, after midnight)
+ * @param isAllDay switches the summary label to all-day wording
+ * @param onDurationSelected called with the total minutes on each wheel move, chip tap and Done
+ * @param onDismiss called on Done and after a chip tap
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -69,10 +62,9 @@ fun WheelDurationPicker(
     val hapticFeedback = LocalHapticFeedback.current
     val resources = LocalResources.current
 
-    // Decompose total minutes into wheel components.
-    // The wheel only represents non-negative "before" durations. After-start (negative)
-    // offsets such as the all-day "9 AM day of" (-540) are authored via the chip; opening
-    // the wheel on one shows a neutral 0d 0h 0m, and scrolling produces a normal value.
+    // The wheels show only non-negative "before" offsets. A negative offset such as the
+    // all-day "9 AM day of" (-540) comes from a chip; opening the wheels on one shows 0d 0h 0m,
+    // and scrolling produces a normal value.
     val (initDays, initHours, initMinsRaw) =
         if (selectedMinutes <= 0) Triple(0, 0, 0) else minutesToComponents(selectedMinutes)
     val initMins = roundToWheelStep(initMinsRaw)
@@ -81,21 +73,19 @@ fun WheelDurationPicker(
     var currentHours by remember(selectedMinutes) { mutableIntStateOf(initHours) }
     var currentMins by remember(selectedMinutes) { mutableIntStateOf(initMins) }
 
-    // Wheel item lists
     val dayItems = (0..30).toList()
     val hourItems = (0..23).toList()
     val minuteItems = (0..55 step 5).toList()
 
-    // Tracks whether the user actually moved a wheel. Until then, an after-midnight
-    // value (e.g. the all-day "9 AM day of" = -540) that the wheel can't represent
-    // shows a neutral 0d 0h 0m but must NOT be silently rewritten to 0 on Done.
+    // Whether the user moved a wheel. Until then, a negative value the wheels can't show (the
+    // all-day "9 AM day of" = -540) shows 0d 0h 0m but must not be silently rewritten to 0 on
+    // Done.
     var touched by remember(selectedMinutes) { mutableStateOf(false) }
 
-    // Current total for summary and chip matching
+    // Drives the summary and the selected chip.
     val currentTotal = componentsToMinutes(currentDays, currentHours, currentMins)
 
-    // Value to commit: the live wheel total once touched, otherwise the original
-    // (preserves a chip-only negative offset when the wheel was merely opened).
+    // The wheel total, except a negative original is kept until a wheel moves.
     val committedValue = if (touched || selectedMinutes >= 0) currentTotal else selectedMinutes
 
     fun notifyChange() {
@@ -108,7 +98,6 @@ fun WheelDurationPicker(
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp)
     ) {
-        // Preset chips
         FlowRow(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -141,7 +130,6 @@ fun WheelDurationPicker(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Three-wheel row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -149,7 +137,7 @@ fun WheelDurationPicker(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Days wheel (0-30, circular)
+            // Days 0-30.
             VerticalWheelPicker(
                 items = dayItems,
                 selectedItem = currentDays,
@@ -172,14 +160,13 @@ fun WheelDurationPicker(
                 )
             }
 
-            // "days" label
             Text(
                 text = stringResource(R.string.label_duration_days),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Hours wheel (0-23, circular)
+            // Hours 0-23.
             VerticalWheelPicker(
                 items = hourItems,
                 selectedItem = currentHours,
@@ -202,14 +189,13 @@ fun WheelDurationPicker(
                 )
             }
 
-            // "hours" label
             Text(
                 text = stringResource(R.string.label_duration_hrs),
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Minutes wheel (0-55 step 5, circular)
+            // Minutes 0-55 in steps of 5.
             VerticalWheelPicker(
                 items = minuteItems,
                 selectedItem = currentMins,
@@ -232,7 +218,6 @@ fun WheelDurationPicker(
                 )
             }
 
-            // "min" label
             Text(
                 text = stringResource(R.string.label_duration_min),
                 fontSize = 12.sp,
@@ -242,7 +227,6 @@ fun WheelDurationPicker(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Duration summary
         Text(
             text = formatReminderDuration(currentTotal, isAllDay, use24Hour, resources),
             style = MaterialTheme.typography.bodyMedium,
@@ -253,7 +237,6 @@ fun WheelDurationPicker(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Done button
         FilledTonalButton(
             onClick = {
                 onDurationSelected(committedValue)

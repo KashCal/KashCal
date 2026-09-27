@@ -21,10 +21,13 @@ import org.onekash.kashcal.ui.viewmodels.ViewMode
 import java.util.Calendar as JavaCalendar
 
 /**
- * Drives HomeScreen through its public surface to verify Insights back-stack
- * behavior: tapping the back arrow (or system back) invokes onViewSelect with
- * uiState.previousNonInsightsMode, including the case where the persisted
- * default seeded that field instead of an explicit prior view-mode tap.
+ * Drives HomeScreen in Insights to test its top bar and back stack: the back arrow and system
+ * back call `onViewSelect` with `uiState.previousNonInsightsMode` (Month, Agenda or Week),
+ * including when the persisted default view seeded that field rather than a view-mode tap.
+ *
+ * The bar test expects the app name as title and no "More menu", but HomeScreen's Insights bar
+ * shows `R.string.insights_title` and the avatar "More menu" action, so those assertions don't
+ * match the screen as built.
  */
 @RunWith(AndroidJUnit4::class)
 class InsightsBackStackComposeTest {
@@ -76,7 +79,7 @@ class InsightsBackStackComposeTest {
 
         rule.onNodeWithText(appName).assertIsDisplayed()
         rule.onNodeWithContentDescription(backCd).assertIsDisplayed()
-        // Insights bar must not show Home's trailing actions
+        // The Insights bar must not show Home's Today, More menu or Search actions.
         rule.onNodeWithContentDescription("Today").assertDoesNotExist()
         rule.onNodeWithContentDescription("More menu").assertDoesNotExist()
         rule.onNodeWithContentDescription("Search").assertDoesNotExist()
@@ -172,11 +175,10 @@ class InsightsBackStackComposeTest {
     }
 
     /**
-     * Initial-view path — Insights is the very first view-mode after process
-     * restart or a deep-link tap. The VM seeds `previousNonInsightsMode` from
-     * the persisted `defaultCalendarView` (verified in
-     * [[HomeViewModelInsightsBackStackTest]]); here we verify the surface
-     * honors it. Persisted default = Agenda → back lands on Agenda, not Month.
+     * Tests the seeded path: with no view-mode tap since launch, the ViewModel seeds
+     * `previousNonInsightsMode` from the persisted default calendar view
+     * (`HomeViewModelInsightsBackStackTest`). With a seeded Agenda, back lands on Agenda, not
+     * the Month default.
      */
     @Test
     fun insightsInitialView_persistedDefaultAgenda_backLandsOnAgenda() {
@@ -184,9 +186,8 @@ class InsightsBackStackComposeTest {
         rule.setContent {
             MaterialTheme {
                 HomeScreen(
-                    // Simulates: user opens app fresh with persisted default=Agenda,
-                    // then immediately taps Insights — VM's seed makes
-                    // previousNonInsightsMode=AGENDA from the start.
+                    // The user opens the app with a persisted default of Agenda and taps
+                    // Insights at once, so the seed sets previousNonInsightsMode to AGENDA.
                     uiState = insightsUiState(ViewMode.AGENDA),
                     isOnline = true,
                     onDateSelected = {},

@@ -15,12 +15,12 @@ import org.junit.Test
 import org.onekash.kashcal.ui.components.EventFormState
 
 /**
- * Regression tests for Room event editing after device calendar edit changes.
+ * Tests [EventFormState]'s Room and device fields: the defaults are Room mode, and each
+ * field set for a Room or device edit, create, occurrence edit or duplicate reads back as set.
  *
- * Verifies that:
- * 1. Room event edit flow remains unchanged
- * 2. EventFormState correctly differentiates Room vs Device
- * 3. Save routing works correctly for both types
+ * No ViewModel or production router runs. The save and delete routing tests evaluate inline
+ * conditions on isDeviceCalendar and the editing ids, modeled on the routing, and the
+ * duplicate tests build the state a duplicate is assumed to have.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelRoomEditRegressionTest {
@@ -37,7 +37,7 @@ class HomeViewModelRoomEditRegressionTest {
         Dispatchers.resetMain()
     }
 
-    // ==================== Room Event Edit Regression ====================
+    // ==================== Room and Device Form Flags ====================
 
     @Test
     fun `EventFormState defaults to Room calendar mode`() {
@@ -118,7 +118,7 @@ class HomeViewModelRoomEditRegressionTest {
             isEditMode = true
         )
 
-        // Verify routing conditions
+        // An inline copy of the routing condition.
         val shouldUseDeviceSave = state.isDeviceCalendar
         assertFalse("Room event should not use device save path", shouldUseDeviceSave)
     }
@@ -132,7 +132,7 @@ class HomeViewModelRoomEditRegressionTest {
             isEditMode = true
         )
 
-        // Verify routing conditions
+        // An inline copy of the routing condition.
         val shouldUseDeviceSave = state.isDeviceCalendar
         assertTrue("Device event should use device save path", shouldUseDeviceSave)
     }
@@ -169,7 +169,7 @@ class HomeViewModelRoomEditRegressionTest {
         assertTrue("Should be able to delete Device event", canDeleteDevice)
     }
 
-    // ==================== Occurrence Edit Regression ====================
+    // ==================== Occurrence Edit ====================
 
     @Test
     fun `Room occurrence edit has correct flags`() {
@@ -259,11 +259,11 @@ class HomeViewModelRoomEditRegressionTest {
         assertTrue(state.isDeviceCalendar)
     }
 
-    // ==================== Duplicate Flow Regression ====================
+    // ==================== Duplicate ====================
 
     @Test
     fun `Duplicate from Room event creates Room state`() {
-        // When duplicating from Room event, should create new Room event
+        // A Room duplicate is a Room create.
         val state = EventFormState(
             title = "Duplicated Meeting",
             isEditMode = false, // Create mode for duplicate
@@ -279,12 +279,13 @@ class HomeViewModelRoomEditRegressionTest {
 
     @Test
     fun `Duplicate from Device event creates Room state`() {
-        // When duplicating from Device event, should create new Room event (not device)
-        // This is the expected behavior - duplicates go to Room calendar
+        // Builds a Room create state and reads it back; no duplicate code runs. A real
+        // device-event duplicate defaults to the source device calendar while it is writable
+        // (resolveDuplicateSourceCalendar in EventFormSheet).
         val state = EventFormState(
             title = "Duplicated Device Event",
             isEditMode = false,
-            isDeviceCalendar = false, // Duplicates go to Room
+            isDeviceCalendar = false,
             editingEventId = null,
             editingDeviceEventId = null
         )
@@ -293,7 +294,7 @@ class HomeViewModelRoomEditRegressionTest {
         assertFalse("Duplicate from Device should create Room event", state.isDeviceCalendar)
     }
 
-    // ==================== All-Day Event Regression ====================
+    // ==================== All-Day Event ====================
 
     @Test
     fun `Room all-day event state preserved`() {
@@ -319,7 +320,7 @@ class HomeViewModelRoomEditRegressionTest {
         assertTrue("Should be device calendar", state.isDeviceCalendar)
     }
 
-    // ==================== Timezone Regression ====================
+    // ==================== Timezone ====================
 
     @Test
     fun `Room event timezone preserved`() {
@@ -350,7 +351,7 @@ class HomeViewModelRoomEditRegressionTest {
         assertNull("Null timezone should use device default", state.timezone)
     }
 
-    // ==================== RRULE Regression ====================
+    // ==================== RRULE ====================
 
     @Test
     fun `Room recurring event RRULE preserved`() {

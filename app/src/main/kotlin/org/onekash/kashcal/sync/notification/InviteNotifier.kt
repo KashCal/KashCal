@@ -11,14 +11,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Fires the per-invite system notification when the sync engine pulls
- * an event with the user's PARTSTAT=NEEDS-ACTION and the dedup
- * timestamp on the attendee row hasn't yet been set.
+ * Fires the system notification for a pulled invite: an event where the user's attendee row
+ * has PARTSTAT=NEEDS-ACTION and no `notified_at` yet.
  *
- * The dedup contract is owned by `AttendeesDao.replaceForEvent`, which
- * preserves `notified_at` from the prior row keyed on canonical address.
- * The notifier writes `notified_at` after firing so subsequent pulls
- * see the row as "already notified."
+ * [AttendeesDao.replaceForEvent] owns the dedup: it keeps `notified_at` from the prior row with
+ * the same canonical address. The notifier sets `notified_at` after firing so later pulls skip
+ * the row.
  */
 @Singleton
 class InviteNotifier @Inject constructor(
@@ -30,14 +28,11 @@ class InviteNotifier @Inject constructor(
     }
 
     /**
-     * Inspect attendee rows for [event] and fire a notification for any
-     * row that has `partstat = NEEDS-ACTION`, matches [account] via
-     * [Account.matchesAttendee], and has `notified_at IS NULL`.
+     * Notifies for each of [event]'s attendee rows that has `partstat = NEEDS-ACTION`, matches
+     * [account] via `matchesAttendee`, and has `notified_at IS NULL`. An event with no organizer
+     * name or address gets no notification.
      *
-     * Callers in the pull path already have `event` and `account` in
-     * scope, so passing them in avoids redundant DAO reads on the hot
-     * path. [cancelForEvent] is the entry point for callers that only
-     * have an event ID.
+     * Takes the event and account the pull already holds, to save DAO reads on the pull path.
      */
     suspend fun notifyNew(event: Event, account: Account) {
         val rows = attendeesDao.getForEventOnce(event.id)
@@ -64,9 +59,8 @@ class InviteNotifier @Inject constructor(
     }
 
     /**
-     * Cancel any invite notifications associated with [eventId]. Called
-     * when the user responds from any in-app surface so the system
-     * notification clears.
+     * Cancels [eventId]'s invite notifications. Called once the user's RSVP is recorded, from
+     * any in-app surface, so the system notification clears.
      */
     suspend fun cancelForEvent(eventId: Long) {
         val rows = attendeesDao.getForEventOnce(eventId)

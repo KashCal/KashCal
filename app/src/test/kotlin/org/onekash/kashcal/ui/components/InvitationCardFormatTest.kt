@@ -7,10 +7,9 @@ import org.onekash.kashcal.widget.formatUpcomingDayHeader
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Pins the relative-day-label policy used by [InvitationCard] (today /
- * tomorrow / weekday). The card delegates to [formatUpcomingDayHeader],
- * which uses Android's locale-aware date pattern resolver and therefore
- * needs Robolectric.
+ * Pins the day label [InvitationCard] shows: today, tomorrow, or else a formatted date that
+ * is neither label. The card calls [formatUpcomingDayHeader] with no date template, which
+ * takes its pattern from Android's locale-aware resolver and so needs Robolectric.
  */
 @RunWith(RobolectricTestRunner::class)
 class InvitationCardFormatTest {

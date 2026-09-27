@@ -3,16 +3,14 @@ package org.onekash.kashcal.network.dns
 import org.onekash.kashcal.network.dns.DnsWire.WireFormatException
 
 /**
- * Decodes a DNS SRV response (RFC 1035 message format, RFC 2782 SRV rdata) into
- * a typed [SrvParseResult]. Used to discover CalDAV/CardDAV hosts from an email
- * domain per RFC 6764.
+ * Decodes a DNS SRV response (RFC 1035 message, RFC 2782 SRV rdata) into a [SrvParseResult],
+ * for finding CalDAV and CardDAV hosts from an email domain (RFC 6764).
  *
- * The message framing, RCODE handling, bounds checks, and the compression-aware
- * name reader all live in [DnsWire] (shared with [TxtRecordParser]); this parser
- * adds only the SRV-specific rdata shape. Any malformed structure surfaces as
- * [SrvParseResult.Failed] rather than an exception or a partially-built record.
+ * Framing, RCODE handling, bounds checks and the name reader live in [DnsWire]; this parser
+ * adds only the SRV rdata shape. Malformed structure returns [SrvParseResult.Failed], never
+ * an exception or a partial record.
  *
- * Pure JVM logic (no Android APIs) so it is unit- and fuzz-testable off-device.
+ * Pure JVM, with no Android APIs, so it is unit- and fuzz-testable off-device.
  */
 object SrvWireParser {
 
@@ -37,15 +35,13 @@ object SrvWireParser {
             val priority = DnsWire.u16(buf, rr.rdataStart)
             val weight = DnsWire.u16(buf, rr.rdataStart + 2)
             val port = DnsWire.u16(buf, rr.rdataStart + 4)
-            // The target must be read within THIS RR's rdata window, not merely the
-            // buffer — a malformed target that runs past its own RDLENGTH must fail,
-            // not read into the following record's bytes. (A compression pointer may
-            // still chase backward outside the window; the name reader relaxes the
-            // bound once it follows one.)
+            // The target must be read within this RR's rdata window, so a target past
+            // its RDLENGTH fails instead of reading into the next record. A followed
+            // compression pointer may still chase backward outside the window.
             val target = DnsWire.readName(buf, rr.rdataStart + 6, rr.rdataStart + rr.rdlength).name
-            // RFC 2782: the root target "." is the "service decidedly not offered
-            // here" sentinel, never a host — drop it (a hostile server may even mix
-            // it with real records) and remember we saw it.
+            // RFC 2782: a root "." target means the service is decidedly not offered here
+            // and is never a host. Drop it, even when a hostile server mixes it with real
+            // records, and remember it was seen.
             if (target.isEmpty()) sawRootTarget = true else records.add(SrvRecord(priority, weight, port, target))
         }
 

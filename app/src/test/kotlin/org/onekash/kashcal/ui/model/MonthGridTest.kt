@@ -27,20 +27,20 @@ class MonthGridTest {
 
     @Test
     fun `Jan 2026 Sunday-first -- day 1 at offset 4`() {
-        // Jan 1, 2026 is Thursday. Sunday-first offset = 4
+        // Jan 1, 2026 is a Thursday, so the Sunday-first offset is 4.
         val grid = MonthGrid.compute(2026, 0, Calendar.SUNDAY)
-        // First 4 cells are InDate
+        // The first 4 cells are InDate.
         for (i in 0..3) {
             assertEquals(MonthGrid.DayPosition.InDate, grid.weeks[0][i].position)
         }
-        // Cell at index 4 is day 1
+        // The cell at index 4 is day 1.
         assertEquals(MonthGrid.DayPosition.MonthDate, grid.weeks[0][4].position)
         assertEquals(1, grid.weeks[0][4].dayOfMonth)
     }
 
     @Test
     fun `Jan 2026 Monday-first -- day 1 at offset 3`() {
-        // Jan 1, 2026 is Thursday. Monday-first offset = 3
+        // Jan 1, 2026 is a Thursday, so the Monday-first offset is 3.
         val grid = MonthGrid.compute(2026, 0, Calendar.MONDAY)
         for (i in 0..2) {
             assertEquals(MonthGrid.DayPosition.InDate, grid.weeks[0][i].position)
@@ -51,7 +51,7 @@ class MonthGridTest {
 
     @Test
     fun `Jan 2026 Saturday-first -- day 1 at offset 5`() {
-        // Jan 1, 2026 is Thursday. Saturday-first offset = 5
+        // Jan 1, 2026 is a Thursday, so the Saturday-first offset is 5.
         val grid = MonthGrid.compute(2026, 0, Calendar.SATURDAY)
         for (i in 0..4) {
             assertEquals(MonthGrid.DayPosition.InDate, grid.weeks[0][i].position)
@@ -91,7 +91,7 @@ class MonthGridTest {
 
     @Test
     fun `InDate cells have prev month day numbers`() {
-        // Jan 2026 Sunday-first: offset=4, so InDate cells are Dec 28,29,30,31
+        // Jan 2026 Sunday-first has offset 4, so the InDate cells are Dec 28 to 31.
         val grid = MonthGrid.compute(2026, 0, Calendar.SUNDAY)
         val inDates = grid.weeks.flatten()
             .filter { it.position == MonthGrid.DayPosition.InDate }
@@ -101,9 +101,8 @@ class MonthGridTest {
 
     @Test
     fun `OutDate cells have next month day numbers`() {
-        // Jan 2026 has 31 days, offset=4 (Sunday-first).
-        // 4 InDate + 31 MonthDate = 35 cells. 42 - 35 = 7 OutDate cells.
-        // OutDate should be Feb 1,2,3,4,5,6,7
+        // Jan 2026 Sunday-first: 4 InDate + 31 MonthDate = 35 cells, leaving 42 - 35 = 7
+        // OutDate cells, Feb 1 to 7.
         val grid = MonthGrid.compute(2026, 0, Calendar.SUNDAY)
         val outDates = grid.weeks.flatten()
             .filter { it.position == MonthGrid.DayPosition.OutDate }
@@ -151,34 +150,35 @@ class MonthGridTest {
 
     @Test
     fun `week numbers -- Jan 2026`() {
-        // Jan 2026, Sunday-first. Verify week numbers match WeekFields computation.
+        // Jan 2026 Sunday-first; the week number matches WeekFields with the locale's
+        // minimalDaysInFirstWeek.
         val grid = MonthGrid.compute(2026, 0, Calendar.SUNDAY)
         val weekFields = WeekFields.of(
             java.time.DayOfWeek.SUNDAY,
             WeekFields.of(Locale.getDefault()).minimalDaysInFirstWeek
         )
 
-        // Row 0: first MonthDate is Jan 1
+        // Row 0's first MonthDate is Jan 1.
         val jan1WeekNum = LocalDate.of(2026, 1, 1).get(weekFields.weekOfWeekBasedYear())
         assertEquals(jan1WeekNum, grid.weeks[0][4].weekNumber) // Jan 1 at offset 4
     }
 
     @Test
     fun `all-OutDate rows have correct weekNumber from next-month dates`() {
-        // Feb 2015 Sunday-first: Feb 1 is Sunday (offset=0), 28 days = exactly 4 rows.
-        // Rows 4 and 5 are all OutDate (March dates).
+        // Feb 2015 Sunday-first: Feb 1 is a Sunday (offset 0) and its 28 days fill 4 rows, so
+        // rows 4 and 5 are all OutDate March dates.
         val grid = MonthGrid.compute(2015, 1, Calendar.SUNDAY)
         val weekFields = WeekFields.of(
             java.time.DayOfWeek.SUNDAY,
             WeekFields.of(Locale.getDefault()).minimalDaysInFirstWeek
         )
 
-        // Row 4: all OutDate, starts with Mar 1
+        // Row 4 is all OutDate, starting Mar 1.
         assertTrue(grid.weeks[4].all { it.position == MonthGrid.DayPosition.OutDate })
         val mar1WeekNum = LocalDate.of(2015, 3, 1).get(weekFields.weekOfWeekBasedYear())
         assertEquals(mar1WeekNum, grid.weeks[4][0].weekNumber)
 
-        // Row 5: all OutDate, starts with Mar 8
+        // Row 5 is all OutDate, starting Mar 8.
         assertTrue(grid.weeks[5].all { it.position == MonthGrid.DayPosition.OutDate })
         val mar8WeekNum = LocalDate.of(2015, 3, 8).get(weekFields.weekOfWeekBasedYear())
         assertEquals(mar8WeekNum, grid.weeks[5][0].weekNumber)
@@ -203,19 +203,19 @@ class MonthGridTest {
 
     @Test
     fun `Feb 2015 -- 4 content rows still produces 6`() {
-        // Feb 2015: Feb 1 is Sunday, Sunday-first offset=0, 28 days = 4 rows of MonthDate.
-        // Should still produce 6 rows total (2 all-OutDate rows).
+        // Feb 2015: Feb 1 is a Sunday, so Sunday-first its 28 days fill 4 rows. The grid still
+        // has 6 rows, the last 2 all OutDate.
         val grid = MonthGrid.compute(2015, 1, Calendar.SUNDAY)
         assertEquals(6, grid.weeks.size)
 
-        // Verify rows 0-3 contain MonthDate cells
+        // Rows 0 to 3 contain MonthDate cells.
         for (row in 0..3) {
             assertTrue(
                 "Row $row should have MonthDate cells",
                 grid.weeks[row].any { it.position == MonthGrid.DayPosition.MonthDate }
             )
         }
-        // Verify rows 4-5 are all OutDate
+        // Rows 4 and 5 are all OutDate.
         for (row in 4..5) {
             assertTrue(
                 "Row $row should be all OutDate",
@@ -253,25 +253,24 @@ class MonthGridTest {
                 val flat = grid.weeks.flatten()
                 val positions = flat.map { it.position }
 
-                // Find first MonthDate and last MonthDate
                 val firstMonth = positions.indexOfFirst { it == MonthGrid.DayPosition.MonthDate }
                 val lastMonth = positions.indexOfLast { it == MonthGrid.DayPosition.MonthDate }
 
-                // All before firstMonth should be InDate
+                // Every cell before firstMonth is InDate.
                 for (i in 0 until firstMonth) {
                     assertEquals(
                         "Year $year month $month: cell $i before first MonthDate should be InDate",
                         MonthGrid.DayPosition.InDate, positions[i]
                     )
                 }
-                // All between firstMonth and lastMonth should be MonthDate
+                // Every cell from firstMonth to lastMonth is MonthDate.
                 for (i in firstMonth..lastMonth) {
                     assertEquals(
                         "Year $year month $month: cell $i between first/last MonthDate should be MonthDate",
                         MonthGrid.DayPosition.MonthDate, positions[i]
                     )
                 }
-                // All after lastMonth should be OutDate
+                // Every cell after lastMonth is OutDate.
                 for (i in (lastMonth + 1) until 42) {
                     assertEquals(
                         "Year $year month $month: cell $i after last MonthDate should be OutDate",
@@ -333,9 +332,9 @@ class MonthGridTest {
         val outDates = grid.weeks.flatten()
             .filter { it.position == MonthGrid.DayPosition.OutDate }
             .map { it.dayOfMonth }
-        // OutDate cells should start from 1 (Jan 2026)
+        // OutDate cells start at 1 (Jan 2026).
         assertTrue("OutDate should start from 1", outDates.first() == 1)
-        // Should be sequential
+        // And run in sequence.
         assertEquals(outDates, (1..outDates.size).toList())
     }
 }

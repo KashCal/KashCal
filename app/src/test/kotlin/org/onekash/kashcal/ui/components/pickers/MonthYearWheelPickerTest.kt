@@ -5,8 +5,10 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for [MonthYearWheelPicker] helper functions.
- * Tests locale-independent logic; month names depend on test locale (en_US in CI).
+ * Unit tests for the [MonthYearWheelPicker] helpers [getLocalizedMonthNames], [monthIndexToName]
+ * and [yearToIndex]. The range-size tests count plain `IntRange`s, and the guard tests run inline
+ * copies of the composable's `require` checks without calling it. Month names come from the
+ * default locale, which these tests don't pin; the name assertions assume an English one.
  */
 class MonthYearWheelPickerTest {
 
@@ -29,7 +31,7 @@ class MonthYearWheelPickerTest {
     @Test
     fun `month names first and last match locale`() {
         val names = getLocalizedMonthNames()
-        // In en_US locale (default for JVM tests)
+        // Assumes an English default locale.
         assertEquals("January", names.first())
         assertEquals("December", names.last())
     }
@@ -112,14 +114,14 @@ class MonthYearWheelPickerTest {
 
     @Test(expected = IllegalArgumentException::class)
     fun `inverted range throws`() {
-        // This tests the require guard logic; in practice the composable calls require()
+        // A copy of the composable's yearRange require().
         val range = 2100..1900
         require(range.first <= range.last) { "yearRange must not be empty" }
     }
 
     @Test(expected = IllegalArgumentException::class)
     fun `single-value range is valid but empty IntRange throws`() {
-        // IntRange(5, 4) is empty
+        // IntRange(5, 4) is empty.
         val range = 5..4
         require(range.first <= range.last) { "yearRange must not be empty" }
     }

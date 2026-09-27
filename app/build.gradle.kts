@@ -15,11 +15,10 @@ composeCompiler {
     stabilityConfigurationFiles.add(rootProject.layout.projectDirectory.file("stability_config.conf"))
     reportsDestination = layout.buildDirectory.dir("compose_compiler")
     metricsDestination = layout.buildDirectory.dir("compose_compiler")
-    // Kotlin 2.3's compose compiler plugin attempts to resolve a
-    // `compose-group-mapping` artifact whose version is derived at runtime
-    // from getKotlinPluginVersion(project) — a stale value ends up being
-    // "2.2.10" in our build environment, which isn't published. This mapping
-    // file only improves release-build stack traces; disabling is safe.
+    // Kotlin 2.3's compose compiler plugin resolves a `compose-group-mapping`
+    // artifact at a version taken from getKotlinPluginVersion(project), which
+    // comes out as the unpublished "2.2.10" in this build environment. The
+    // mapping file only improves release-build stack traces, so it stays off.
     includeComposeMappingFile = false
 }
 
@@ -40,8 +39,8 @@ android {
     namespace = "org.onekash.kashcal"
     compileSdk = 37
 
-    // Disable encrypted dependency metadata (only Google can read it)
-    // Required for F-Droid/IzzyOnDroid transparency
+    // Leave out the encrypted dependency metadata, which only Google can read.
+    // F-Droid and IzzyOnDroid require this for transparency.
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
@@ -64,13 +63,12 @@ android {
         }
     }
 
-    // Expose Room's exported schemas as a debug-only asset so
-    // `MigrationTestHelper` can load `<dbClass>/<version>.json` at
-    // runtime and validate identityHash equivalence after each
-    // migration. The Robolectric unit test (`MigrationHashValidationTest`)
-    // reads `mergeDebugAssets`, which AGP sources from the `main` and
-    // `debug` build-type source sets but NOT from `test`. Wiring schemas
-    // into `debug` keeps them out of release APKs.
+    // Expose Room's exported schemas as assets so `MigrationTestHelper` can
+    // load `<dbClass>/<version>.json` and validate the identityHash after each
+    // migration. The Robolectric test (`MigrationHashValidationTest`) reads
+    // `mergeDebugAssets`, which AGP sources from the `main` and `debug` source
+    // sets but not from `test`. Wiring them into `debug` and `androidTest`
+    // keeps them out of release APKs.
     sourceSets {
         getByName("androidTest") {
             assets.srcDirs("$projectDir/schemas")
@@ -81,7 +79,7 @@ android {
     }
 
     signingConfigs {
-        // Release signing config - check env vars (CI) first, then local.properties
+        // Release signing: env vars (CI) first, then local.properties
         val keystorePath = System.getenv("KEYSTORE_FILE") ?: localProps.getProperty("KEYSTORE_FILE")
         val keystorePassword = System.getenv("KEYSTORE_PASSWORD") ?: localProps.getProperty("KEYSTORE_PASSWORD")
         val keyAliasValue = System.getenv("KEY_ALIAS") ?: localProps.getProperty("KEY_ALIAS")
@@ -95,8 +93,9 @@ android {
                 storePassword = keystorePassword
                 keyAlias = keyAliasValue
                 keyPassword = keyPasswordValue
-                // minSdk 31 is well above v3's API-28 floor; keep v1/v2 on for
-                // belt-and-suspenders. v3 is the prerequisite for future key rotation.
+                // The release APK carries only a v3 signature: minSdk 31 is above v3's
+                // API-28 floor, so no v1/v2 fallback is written. v3 is the prerequisite
+                // for future key rotation.
                 enableV3Signing = true
             }
         }
@@ -106,7 +105,7 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            // Use release signing if available (F-Droid builds unsigned)
+            // Null when no release signing config exists (F-Droid builds unsigned)
             signingConfig = signingConfigs.findByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -128,10 +127,9 @@ android {
         compilerOptions {
             jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21
             // Opt into Kotlin 2.4's default annotation target for constructor
-            // params: annotations now apply to both the param and the backing
-            // property/field, not just the param. Matches the intent for
-            // @Inject, @Volatile, @Immutable etc. at ~36 sites in this project.
-            // (Warning KT-73255.)
+            // params: an annotation applies to the param and to the backing
+            // property or field. That matches the intent for @Inject, @Volatile,
+            // @Immutable and others at ~36 sites in this project (warning KT-73255).
             freeCompilerArgs.add("-Xannotation-default-target=param-property")
         }
     }
@@ -172,12 +170,12 @@ android {
     }
 
     lint {
-        // Workaround: NonNullableMutableLiveDataDetector crashes with NoClassDefFoundError
-        // in lifecycle-runtime-ktx 2.8.7 lint. This project doesn't use LiveData at all.
+        // NonNullableMutableLiveDataDetector crashed with NoClassDefFoundError in
+        // lifecycle-runtime-ktx 2.8.7 lint. The app code uses no LiveData.
         disable += "NullSafeMutableLiveData"
         // Bare-label plurals (e.g., "Calendar"/"Calendars") intentionally omit %d
         disable += "ImpliedQuantity"
-        // Strings with %d that could be plurals — most are always >1 or use
+        // Strings with %d that could be plurals: most are always >1 or use
         // adjectives that don't inflect ("new", "updated", "more")
         disable += "PluralsCandidate"
         // Fail the build on missing content descriptions on interactive/image
@@ -193,7 +191,7 @@ android {
             isIncludeAndroidResources = true
             isReturnDefaultValues = true
             all {
-                // Disable C2 JIT compiler - crashes on Robolectric's SQLite shadow bytecode
+                // Disable the C2 JIT compiler: it crashes on Robolectric's SQLite shadow bytecode
                 // See: https://github.com/corretto/corretto-17/issues
                 it.jvmArgs("-XX:TieredStopAtLevel=1", "-XX:ReservedCodeCacheSize=512m")
                 it.maxHeapSize = "1g"
@@ -209,15 +207,17 @@ android {
                         (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
                 }
 
-                // Forward the screenshot-capture mode from a Gradle -P property into
-                // the test-fork JVM (a daemon-side -D does not reach the fork). When
-                // none is present, screenshot capture is a no-op, so the normal test
-                // sweep stays fast. Record: -Proborazzi.test.record=true; verify (the
-                // CI gate): -Proborazzi.test.verify=true.
+                // Forward opt-in test switches from Gradle -P properties into the test-fork JVM
+                // (a daemon-side -D does not reach the fork). Screenshot capture is a no-op when
+                // none is present, so the normal sweep stays fast. Record:
+                // -Proborazzi.test.record=true; verify (the CI gate): -Proborazzi.test.verify=true.
                 listOf(
                     "roborazzi.test.record",
                     "roborazzi.test.verify",
                     "roborazzi.test.compare",
+                    // Month-widget translation fuzz: -Pmonthwidget.fuzz.seed / .iterations.
+                    "monthwidget.fuzz.seed",
+                    "monthwidget.fuzz.iterations",
                 ).forEach { key ->
                     if (project.hasProperty(key)) {
                         it.systemProperty(key, project.property(key).toString())
@@ -228,7 +228,7 @@ android {
     }
 }
 
-// Disable release unit tests — identical to debug and doubles test time
+// Disable release unit tests: identical to debug, and they double test time
 tasks.matching { it.name == "testReleaseUnitTest" }.configureEach {
     enabled = false
 }
@@ -273,10 +273,10 @@ dependencies {
     // JSON
     implementation(libs.kotlinx.serialization.json)
 
-    // iCal Parsing (RFC 5545) — in-tree subproject that wraps ical4j 4.3.0
+    // iCal Parsing (RFC 5545): in-tree subproject that wraps ical4j 4.3.0
     implementation(project(":icaldav-core"))
 
-    // vCard Parsing (RFC 2426 / RFC 6350) — in-tree pure-JVM subproject that
+    // vCard Parsing (RFC 2426 / RFC 6350): in-tree pure-JVM subproject that
     // quarantines the vCard library behind a compile boundary
     implementation(project(":vcard-core"))
 
@@ -298,8 +298,8 @@ dependencies {
     implementation(libs.androidx.glance.material3)
 
     // MaterialKolor (seed -> M3 ColorScheme).
-    // Exclude its Compose-Multiplatform transitives — the app already supplies the
-    // androidx Compose equivalents, and MaterialKolor's CMP graph otherwise drags
+    // Exclude its Compose Multiplatform transitives: the app supplies the androidx
+    // Compose equivalents, and MaterialKolor's CMP graph otherwise drags
     // androidx.compose.material3 up to an alpha (1.5.0-alpha08) past the pinned BOM.
     implementation(libs.materialkolor) {
         exclude(group = "org.jetbrains.compose.material3")
@@ -320,22 +320,23 @@ dependencies {
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.androidx.work.testing)
     testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.okhttp.tls)
     testImplementation("net.sf.kxml:kxml2:2.3.0")  // XmlPullParser for JVM tests
     testImplementation(libs.androidx.glance.testing)
     testImplementation(libs.androidx.glance.appwidget.testing)
-    // lib-recur is retained as a test-only RRULE cross-engine oracle
-    // (drives LibRecurParityEngine against ical4j in the parity harness)
-    // after the production migration to icaldav-core in v23.6.20.
+    // lib-recur is test-only: the RRULE cross-engine oracle behind
+    // LibRecurParityEngine, checked against ical4j in the parity tests.
+    // Production recurrence runs on icaldav-core (since v23.6.20).
     testImplementation(libs.lib.recur)
-    // Compose UI tests under Robolectric — used by ShareCardComposable layout
-    // tests. Test-only; not shipped. Mirrors androidTest counterparts below.
+    // Compose UI tests under Robolectric, for example EventCardTest. Test-only;
+    // not shipped. Mirrors the androidTest counterparts below.
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.ui.test.junit4)
     testImplementation(libs.androidx.ui.test.manifest)
 
-    // Roborazzi screenshot-testing spike: JVM-side (Robolectric native graphics)
-    // visual capture, no emulator/device. Libraries only — no Gradle plugin —
-    // to avoid coupling to the AGP variant API on this bleeding-edge toolchain.
+    // Roborazzi screenshot tests: JVM-side capture (Robolectric native graphics),
+    // no emulator or device. Libraries only, no Gradle plugin, to avoid coupling
+    // to the AGP variant API on this bleeding-edge toolchain.
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
 

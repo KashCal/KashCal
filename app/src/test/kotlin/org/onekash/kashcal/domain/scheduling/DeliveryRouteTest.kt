@@ -4,13 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Truth table for the delivery routing decision (RFC 6638 §3 / §6): given the
- * server's captured [DeliveryState] and whether the account has a usable
- * scheduling-outbox URL, what action does the client take?
- *
- * This is the single home for the routing rule the push path turns on — the
- * production send gate ([routeDelivery]) is asserted here so the rule cannot
- * drift between a test copy and the code.
+ * Tests the full truth table of [routeDelivery] (RFC 6638 §3, §6): the client action for each
+ * captured [DeliveryState], with and without a usable scheduling-outbox URL. It asserts the
+ * production function the push path calls, so there is no test copy of the rule to drift.
  */
 class DeliveryRouteTest {
 
@@ -27,16 +23,16 @@ class DeliveryRouteTest {
 
     @Test
     fun `client-must-deliver without an outbox has no remedy`() {
-        // The server declined (SCHEDULE-AGENT=CLIENT) but there is no channel to
-        // POST through — nothing the client can do over CalDAV.
+        // The server declined (SCHEDULE-AGENT=CLIENT) but there is no outbox to POST to, so
+        // the client can do nothing over CalDAV.
         assertEquals(DeliveryAction.NoRemedy, routeDelivery(DeliveryState.ClientMustDeliver, hasOutboxUrl = false))
     }
 
     @Test
     fun `no receipt has no remedy whether or not an outbox is advertised`() {
-        // NoReceipt = server stamped nothing and didn't decline-as-client. Even
-        // with an advertised outbox (SOGo), a plain PUT sent nothing and the
-        // outbox doesn't accept event REQUESTs — no client remedy.
+        // NoReceipt: the server stamped nothing and didn't decline as CLIENT. Even with an
+        // advertised outbox (SOGo), a plain PUT sent nothing and the outbox doesn't accept
+        // event REQUESTs, so there is no client remedy.
         assertEquals(DeliveryAction.NoRemedy, routeDelivery(DeliveryState.NoReceipt, hasOutboxUrl = true))
         assertEquals(DeliveryAction.NoRemedy, routeDelivery(DeliveryState.NoReceipt, hasOutboxUrl = false))
     }

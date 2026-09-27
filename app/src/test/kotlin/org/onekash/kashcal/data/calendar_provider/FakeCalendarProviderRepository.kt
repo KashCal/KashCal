@@ -3,15 +3,18 @@ package org.onekash.kashcal.data.calendar_provider
 import org.onekash.kashcal.error.CalendarError
 
 /**
- * Fake CalendarProviderRepository for testing.
+ * Implements [CalendarProviderRepository] over in-memory maps and lists that tests seed and read.
  *
- * Returns pre-configured lists of device calendars and instances.
- * Throws SecurityException when configured to simulate permission revocation.
+ * With [shouldThrowSecurityException] set, the calendar list, day-range, search and
+ * title-suggestion reads throw `SecurityException`, most other reads return null, false or empty,
+ * and every write returning a `Result` fails with a `SecurityException`. [ensureCalendarVisible]
+ * ignores both failure switches and only records the call.
  *
- * For write operations:
- * - Set [writeFailure] to simulate write failures
- * - [createdEventId] auto-increments for each successful create
- * - [createdEvents] / [updatedEventIds] / [deletedEventIds] track operations
+ * For writes:
+ * - set [writeFailure] to fail every write returning a `Result`
+ * - [createdEventId] is the next id handed out; each create, new exception and split row
+ *   takes one
+ * - calls are recorded, for example in [createdEvents], [updatedEvents] and [deletedEventIds]
  */
 class FakeCalendarProviderRepository : CalendarProviderRepository {
 
@@ -28,18 +31,18 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     var createdEventId: Long = 100L
 
     /**
-     * 1-based index of a createEvent call that should fail with a generic
-     * write error, leaving earlier/later calls to succeed. -1 disables it.
-     * Use this to exercise "one event in a batch fails, the rest continue"
-     * without failing every write the way [writeFailure] does.
+     * 1-based index of the createEvent call that fails with a generic
+     * write error; the calls before and after it succeed. -1 disables it.
+     * Exercises "one event in a batch fails, the rest continue" without
+     * failing every write the way [writeFailure] does.
      */
     var failCreateOnCall: Int = -1
     private var createCallCount = 0
 
     /**
-     * When true, deleteEvent fails while other writes still succeed. Use to
-     * exercise the create-then-delete move path where the target copy is
-     * created but the source delete fails (must not be a hard save failure).
+     * When true, deleteEvent fails while other writes succeed. Exercises the
+     * create-then-delete move where the target copy is created but the
+     * source delete fails, which must not be a hard save failure.
      */
     var failDelete: Boolean = false
 
@@ -57,17 +60,65 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     // Read operation data
     var deviceEvents: MutableMap<Long, DeviceEvent> = mutableMapOf()
     var eventReminders: MutableMap<Long, List<Int>> = mutableMapOf()
+
+    /** One provider Reminders row: minutes before the event and its METHOD. */
+    data class ReminderRow(val minutes: Int, val method: Int)
+
+    /**
+     * Reminder rows with their methods, per event: the one reminder store the
+     * fake writes. A create, or an update given minutes, writes them as
+     * METHOD_ALERT rows; an update given null leaves them; a new exception or
+     * split row given null copies the master's rows. Minutes seeded only in
+     * [eventReminders] read as METHOD_ALERT rows, so tests seeding minutes
+     * there still work; [getReminders] and [getRemindersForEvents] read here
+     * first.
+     */
+    val reminderRows: MutableMap<Long, List<ReminderRow>> = mutableMapOf()
+
+    /**
+     * When true, copying the master's reminders onto a new exception or split
+     * fails (the provider read threw or returned no cursor): nothing is
+     * written and the call returns a failure.
+     */
+    var failReminderCopy: Boolean = false
+
+    /**
+     * When true, copying the master's guests and tags onto a new row (a new
+     * exception, or the future half of a split) fails the way a failed
+     * provider read does: nothing is written and the call returns a failure.
+     */
+    var failAttendeeAndTagCopy: Boolean = false
+
+    private fun storedReminderRows(eventId: Long): List<ReminderRow> =
+        reminderRows[eventId]
+            ?: eventReminders[eventId].orEmpty()
+                .map { ReminderRow(it, android.provider.CalendarContract.Reminders.METHOD_ALERT) }
+
+    private fun alertRows(minutes: List<Int>): List<ReminderRow> =
+        minutes.map { ReminderRow(it, android.provider.CalendarContract.Reminders.METHOD_ALERT) }
+
+    private fun seriesCopyFailure(): Result<Nothing> =
+        Result.failure(CalendarError.DeviceCalendar.WriteFailed("series read failed").toException())
     var deviceAttendees: MutableMap<Long, List<DeviceAttendee>> = mutableMapOf()
     var maxReminders: Int = 5
 
     /**
-     * Event IDs that are present in CalendarProvider AND not soft-deleted
-     * (i.e. `DELETED = 0`). Kept as a positive set, independent of
-     * [deviceEvents], so tests can express the "Events row exists but
-     * DELETED = 1" state by populating [deviceEvents] without adding the id
-     * here.
+     * Event ids present in CalendarProvider and not soft-deleted
+     * (`DELETED = 0`). A positive set independent of [deviceEvents], so a
+     * test can express "Events row exists but DELETED = 1" by seeding
+     * [deviceEvents] without adding the id here.
      */
     var activeEventIds: MutableSet<Long> = mutableSetOf()
+
+    /**
+     * Event IDs whose Events row is soft-deleted (`DELETED = 1`, waiting for
+     * the sync adapter to purge it). The negative counterpart of
+     * [activeEventIds], for tests that seed rows through [deviceEvents] or
+     * [exceptionEvents] and need one of them to be dead: such a row is never
+     * returned by [findExceptionEventId] and is reported inactive by
+     * [isEventActive] even if it is also in [activeEventIds].
+     */
+    val softDeletedEventIds: MutableSet<Long> = mutableSetOf()
 
     data class CreatedEvent(
         val calendarId: Long,
@@ -88,11 +139,23 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         val categories: List<String>? = null,
     )
 
-    /** Records an updateEvent call with the attendee + tag sets the caller passed. */
+    /** Records the arguments of one updateEvent call. */
     data class UpdatedEvent(
         val eventId: Long,
         val attendees: List<DeviceAttendee>? = null,
         val categories: List<String>? = null,
+        val availability: Int = 0,
+        val eventColor: Int? = null,
+        val startTs: Long = 0L,
+        val endTs: Long? = null,
+        val timezone: String = "",
+        val title: String = "",
+        val description: String? = null,
+        val location: String? = null,
+        val isAllDay: Boolean = false,
+        val rrule: String? = null,
+        val duration: String? = null,
+        val reminders: List<Int>? = emptyList(),
     )
 
     data class DeviceTitleRow(
@@ -106,14 +169,32 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         val calendarId: Long,
         val masterEventId: Long,
         val originalInstanceTime: Long,
-        val resultId: Long
-    )
+        val resultId: Long,
+        val availability: Int = 0,
+        val eventColor: Int? = null,
+        val startTs: Long = 0L,
+        val endTs: Long = 0L,
+        val title: String = "",
+        val description: String? = null,
+        val location: String? = null,
+        val isAllDay: Boolean = false,
+        val timezone: String = "",
+        val reminders: List<Int>? = emptyList(),
+    ) {
+        // The occurrence the new row names, resolved by [slotOf]. Kept out of
+        // equality so tests comparing whole records ignore it.
+        var slot: Pair<Long, Boolean>? = null
+    }
 
+    /** [originalInstanceTime] and [isAllDay] are the caller's arguments. */
     data class DeletedOccurrence(
         val masterEventId: Long,
         val originalInstanceTime: Long,
-        val isAllDay: Boolean = false
-    )
+        val isAllDay: Boolean = false,
+    ) {
+        // The occurrence resolved by [slotOf], kept out of equality.
+        var slot: Pair<Long, Boolean>? = null
+    }
 
     data class DeletedFutureOccurrence(
         val masterEventId: Long,
@@ -129,6 +210,16 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         val title: String,
         val rrule: String?,
         val newEventId: Long,
+        val availability: Int = 0,
+        val eventColor: Int? = null,
+        val startTs: Long = 0L,
+        val endTs: Long? = null,
+        val duration: String? = null,
+        val description: String? = null,
+        val location: String? = null,
+        val timezone: String = "",
+        val reminders: List<Int>? = emptyList(),
+        val categories: List<String>? = null,
     )
 
     data class MovedEvent(
@@ -136,7 +227,11 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         val newCalendarId: Long
     )
 
+    /** Number of getDeviceCalendars calls, counted before any configured throw. */
+    var getDeviceCalendarsCallCount: Int = 0
+
     override suspend fun getDeviceCalendars(): List<DeviceCalendar> {
+        getDeviceCalendarsCallCount++
         if (shouldThrowSecurityException) throw SecurityException("Calendar permission revoked")
         return calendars
     }
@@ -175,9 +270,10 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     }
 
     /**
-     * Backing store for suggestTitlesByPrefix. Mirrors the structure of the real
-     * device query: title + DTSTART + calendarId + optional RRULE. Tests populate
-     * this, then assert the aggregated [TitleSuggestion] output.
+     * Backing store for suggestTitlesByPrefix: one row per event, with the
+     * columns the real query filters on and reads (title, DTSTART, calendar id,
+     * RRULE). Tests seed this, then assert the aggregated
+     * [org.onekash.kashcal.data.db.dao.TitleSuggestion] output.
      */
     var deviceTitleRows: List<DeviceTitleRow> = emptyList()
 
@@ -193,8 +289,8 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         if (visibleCalendarIds.isEmpty() || prefix.isBlank()) return emptyList()
         val lowerPrefix = prefix.trim().lowercase()
 
-        // Filter: prefix, visible calendar, non-blank title, and recurring-aware
-        // window. Recurring (rrule non-null, non-empty) bypasses the DTSTART bounds.
+        // Prefix, visible calendar, non-blank title, and the DTSTART window,
+        // which a series (non-null, non-empty rrule) bypasses.
         val matching = deviceTitleRows.filter { row ->
             row.calendarId in visibleCalendarIds &&
                 row.title.isNotBlank() &&
@@ -205,8 +301,8 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
                 )
         }
 
-        // Cross-calendar dedup: same (title.lowercase().trim(), dtstart) on two
-        // calendars (e.g., a Google invite visible on personal + work) counts once.
+        // The same (trimmed, lower-cased title, dtstart) on two calendars, such
+        // as one invite on a personal and a work account, counts once.
         val deduped = matching.distinctBy {
             it.title.trim().lowercase() to it.dtstart
         }
@@ -277,6 +373,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         }
 
         val eventId = createdEventId++
+        reminderRows[eventId] = alertRows(reminders)
         createdEvents.add(
             CreatedEvent(
                 calendarId = calendarId,
@@ -311,7 +408,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         rrule: String?,
         duration: String?,
         timezone: String,
-        reminders: List<Int>,
+        reminders: List<Int>?,
         availability: Int,
         eventColor: Int?,
         attendees: List<DeviceAttendee>?,
@@ -322,8 +419,27 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
             return Result.failure(CalendarError.DeviceCalendar.PermissionDenied.toException())
         }
 
+        if (reminders != null) reminderRows[eventId] = alertRows(reminders)
         updatedEventIds.add(eventId)
-        updatedEvents.add(UpdatedEvent(eventId = eventId, attendees = attendees, categories = categories))
+        updatedEvents.add(
+            UpdatedEvent(
+                eventId = eventId,
+                attendees = attendees,
+                categories = categories,
+                availability = availability,
+                eventColor = eventColor,
+                startTs = startTs,
+                endTs = endTs,
+                timezone = timezone,
+                title = title,
+                description = description,
+                location = location,
+                isAllDay = isAllDay,
+                rrule = rrule,
+                duration = duration,
+                reminders = reminders,
+            )
+        )
         return Result.success(Unit)
     }
 
@@ -351,7 +467,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         endTs: Long,
         isAllDay: Boolean,
         timezone: String,
-        reminders: List<Int>,
+        reminders: List<Int>?,
         availability: Int,
         eventColor: Int?
     ): Result<Long> {
@@ -360,8 +476,40 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
             return Result.failure(CalendarError.DeviceCalendar.PermissionDenied.toException())
         }
 
+        val rows = if (reminders != null) {
+            alertRows(reminders)
+        } else {
+            if (failReminderCopy) return seriesCopyFailure()
+            storedReminderRows(masterEventId)
+        }
+        if (failAttendeeAndTagCopy) return seriesCopyFailure()
         val exceptionId = createdEventId++
-        createdExceptions.add(CreatedException(calendarId, masterEventId, originalInstanceTime, exceptionId))
+        val slot = slotOf(masterEventId, originalInstanceTime, isAllDay)
+        reminderRows[exceptionId] = rows
+        // Like the real repository, a new exception row gets its own copy of
+        // the series' guests and tags (they are stored per event row).
+        deviceAttendees[masterEventId]?.takeIf { it.isNotEmpty() }?.let { deviceAttendees[exceptionId] = it }
+        eventCategories[masterEventId]?.takeIf { it.isNotEmpty() }?.let { eventCategories[exceptionId] = it }
+        createdExceptions.add(
+            CreatedException(
+                calendarId,
+                masterEventId,
+                originalInstanceTime,
+                exceptionId,
+                availability = availability,
+                eventColor = eventColor,
+                startTs = startTs,
+                endTs = endTs,
+                title = title,
+                description = description,
+                location = location,
+                isAllDay = isAllDay,
+                timezone = timezone,
+                reminders = reminders,
+            ).apply {
+                this.slot = slot
+            }
+        )
         return Result.success(exceptionId)
     }
 
@@ -375,7 +523,12 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
             return Result.failure(CalendarError.DeviceCalendar.PermissionDenied.toException())
         }
 
-        deletedOccurrences.add(DeletedOccurrence(masterEventId, originalInstanceTime, isAllDay))
+        val slot = slotOf(masterEventId, originalInstanceTime, isAllDay)
+        deletedOccurrences.add(
+            DeletedOccurrence(masterEventId, originalInstanceTime, isAllDay).apply {
+                this.slot = slot
+            }
+        )
         return Result.success(Unit)
     }
 
@@ -406,23 +559,46 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         rrule: String?,
         duration: String?,
         timezone: String,
-        reminders: List<Int>,
+        reminders: List<Int>?,
         availability: Int,
         eventColor: Int?,
+        categories: List<String>?,
     ): Result<Long> {
         writeFailure?.let { return Result.failure(it.toException()) }
         if (shouldThrowSecurityException) {
             return Result.failure(CalendarError.DeviceCalendar.PermissionDenied.toException())
         }
 
-        // Match the real impl: at-or-before-start collapses to an
-        // in-place update; otherwise produces a new event id.
+        // As in the real implementation, a split at or before the master's
+        // start is an in-place update; otherwise it makes a new event id.
         val targetEvent = deviceEvents[masterEventId]
         val newEventId = if (targetEvent != null && fromTimeMs <= targetEvent.startTs) {
             masterEventId
         } else {
-            // Allocate a synthetic id distinct from the master.
-            (deviceEvents.keys.maxOrNull() ?: masterEventId) + 1L
+            // A new row, allocated like createException so copied guests and
+            // tags can't land on an id a test seeded.
+            createdEventId++
+        }
+        if (newEventId == masterEventId) {
+            // In-place edit of the master: reminders as updateEvent writes
+            // them, guests untouched, and edited tags replace the master's
+            // (stored cleaned, as the provider stores them).
+            if (reminders != null) reminderRows[masterEventId] = alertRows(reminders)
+            categories?.let { eventCategories[masterEventId] = cleanCategoryNames(it) }
+        } else {
+            val rows = if (reminders != null) {
+                alertRows(reminders)
+            } else {
+                if (failReminderCopy) return seriesCopyFailure()
+                storedReminderRows(masterEventId)
+            }
+            if (failAttendeeAndTagCopy) return seriesCopyFailure()
+            reminderRows[newEventId] = rows
+            // Like the real repository, the future half gets its own copy of
+            // the series' guests and of its tags, or the caller's edited tags.
+            deviceAttendees[masterEventId]?.takeIf { it.isNotEmpty() }?.let { deviceAttendees[newEventId] = it }
+            (categories?.let(::cleanCategoryNames) ?: eventCategories[masterEventId])?.takeIf { it.isNotEmpty() }
+                ?.let { eventCategories[newEventId] = it }
         }
         editedFutureSeries.add(
             EditedFutureSeries(
@@ -433,6 +609,16 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
                 title = title,
                 rrule = rrule,
                 newEventId = newEventId,
+                availability = availability,
+                eventColor = eventColor,
+                startTs = startTs,
+                endTs = endTs,
+                duration = duration,
+                description = description,
+                location = location,
+                timezone = timezone,
+                reminders = reminders,
+                categories = categories,
             )
         )
         return Result.success(newEventId)
@@ -459,8 +645,8 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
 
     override suspend fun getNextOccurrenceStart(eventId: Long, afterMs: Long): Long? {
         if (shouldThrowSecurityException) return null
-        // Mirror the real impl's lower-bound pad (afterMs - 1 day) so today's all-day or
-        // already-started occurrence is still surfaced. See AndroidCalendarProviderRepository.
+        // The real implementation's lower-bound pad (afterMs - 1 day), so today's all-day
+        // or already-started occurrence is still found.
         val lowerBound = afterMs - ONE_DAY_MS
         return instances
             .filter { it.eventId == eventId && it.startTs >= lowerBound }
@@ -470,7 +656,7 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
 
     override suspend fun isEventActive(eventId: Long): Boolean {
         if (shouldThrowSecurityException) return false
-        return eventId in activeEventIds
+        return eventId in activeEventIds && eventId !in softDeletedEventIds
     }
 
     override suspend fun getDeviceEventWithExceptions(
@@ -508,12 +694,12 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
 
     override suspend fun getReminders(eventId: Long): List<Int> {
         if (shouldThrowSecurityException) return emptyList()
-        return eventReminders[eventId] ?: emptyList()
+        return storedReminderRows(eventId).map { it.minutes }
     }
 
     override suspend fun getRemindersForEvents(eventIds: Set<Long>): Map<Long, List<Int>> {
         if (shouldThrowSecurityException) return emptyMap()
-        return eventIds.associateWith { eventReminders[it] ?: emptyList() }
+        return eventIds.associateWith { id -> storedReminderRows(id).map { it.minutes } }
             .filterValues { it.isNotEmpty() }
     }
 
@@ -535,14 +721,38 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         isAllDay: Boolean
     ): Long? {
         if (shouldThrowSecurityException) return null
-        val normalizedTime = if (isAllDay)
-            org.onekash.kashcal.util.DateTimeUtils.normalizeToUtcMidnight(originalInstanceTime) else originalInstanceTime
-        return exceptionEvents[masterEventId to normalizedTime]
+        val normalizedTime = slotOf(masterEventId, originalInstanceTime, isAllDay).first
+        // Exception rows come from [exceptionEvents] or from [deviceEvents] rows
+        // carrying the master's id and this instance time. Like the real query,
+        // only live rows count: not soft-deleted, not STATUS_CANCELED.
+        val candidates = listOfNotNull(exceptionEvents[masterEventId to normalizedTime]) +
+            deviceEvents.values
+                .filter { it.originalId == masterEventId && it.originalInstanceTime == normalizedTime }
+                .sortedBy { it.id }
+                .map { it.id }
+        return candidates.distinct().firstOrNull { isLiveRow(it) }
     }
+
+    /**
+     * Returns the occurrence slot [originalInstanceTime] names, as the real
+     * repository resolves it: by the series' all-day flag, falling back to
+     * [callerAllDay] when the series isn't seeded in [deviceEvents]. Unlike
+     * the real createException, which fails when the series is gone, the
+     * fake's still writes, so tests that never seed the series still work.
+     */
+    private fun slotOf(masterEventId: Long, originalInstanceTime: Long, callerAllDay: Boolean): Pair<Long, Boolean> {
+        val allDay = deviceEvents[masterEventId]?.isAllDay ?: callerAllDay
+        val time = if (allDay) org.onekash.kashcal.util.DateTimeUtils.normalizeToUtcMidnight(originalInstanceTime) else originalInstanceTime
+        return time to allDay
+    }
+
+    private fun isLiveRow(eventId: Long): Boolean =
+        eventId !in softDeletedEventIds &&
+            deviceEvents[eventId]?.status != android.provider.CalendarContract.Events.STATUS_CANCELED
 
     // ==================== Reminder Operations ====================
 
-    /** Pre-configured upcoming reminder to return, or null */
+    /** The upcoming reminder to return, or null for none. */
     var nextUpcomingReminder: UpcomingDeviceReminder? = null
 
     override suspend fun getNextUpcomingReminder(
@@ -552,7 +762,6 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         if (shouldThrowSecurityException) return null
         if (enabledCalendarIds.isEmpty()) return null
         val reminder = nextUpcomingReminder ?: return null
-        // Filter by enabled calendars and time
         return if (reminder.calendarId in enabledCalendarIds && reminder.triggerTime > afterMs) {
             reminder
         } else {
@@ -561,7 +770,8 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
     }
 
     /**
-     * Reset all tracked operations for test isolation.
+     * Resets configuration and recorded calls for test isolation, except
+     * [editedFutureSeries] and [deviceTitleRows], which it leaves as they are.
      */
     fun reset() {
         calendars = emptyList()
@@ -582,19 +792,24 @@ class FakeCalendarProviderRepository : CalendarProviderRepository {
         movedEvents.clear()
         deviceEvents.clear()
         eventReminders.clear()
+        reminderRows.clear()
+        failReminderCopy = false
+        failAttendeeAndTagCopy = false
         eventCategories.clear()
         deviceAttendees.clear()
         activeEventIds.clear()
         exceptionEvents.clear()
+        softDeletedEventIds.clear()
         selfRsvpUpdates.clear()
         nextUpcomingReminder = null
         maxReminders = 5
         ensureCalendarVisibleCalls.clear()
+        getDeviceCalendarsCallCount = 0
     }
 }
 
 /**
- * Convert CalendarError.DeviceCalendar to Exception for Result.failure.
+ * Converts a CalendarError.DeviceCalendar to the exception the fake's Result.failure carries.
  */
 private fun CalendarError.DeviceCalendar.toException(): Exception {
     return when (this) {

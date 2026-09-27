@@ -20,9 +20,7 @@ import org.onekash.kashcal.domain.backup.BackupSummary
 import org.onekash.kashcal.domain.backup.ImportResult
 import org.onekash.kashcal.ui.components.SimpleErrorDialog
 
-/**
- * Pre-restore confirmation dialog. Shows what will be imported; user must tap Restore to apply.
- */
+/** Shows what a restore will import; nothing is applied until the user taps Restore. */
 @Composable
 fun RestoreConfirmationDialog(
     summary: BackupSummary,
@@ -72,7 +70,8 @@ fun RestoreConfirmationDialog(
 }
 
 /**
- * Post-restore success dialog. Adds the device-calendars note when applicable.
+ * Shows what a restore imported, plus the device calendars note when
+ * [ImportResult.deviceCalendarsNoteNeeded].
  */
 @Composable
 fun RestoreSuccessDialog(
@@ -132,8 +131,8 @@ private fun RestoreNote(@StringRes stringResId: Int) {
 }
 
 /**
- * Restore error dialog. The `when` is exhaustive over [BackupImportError] subtypes so new
- * variants force a compile-time update here.
+ * Shows why a restore failed. The `when` is exhaustive over [BackupImportError] subtypes, so a
+ * new variant fails the build until it gets a message here.
  */
 @Composable
 fun RestoreErrorDialog(

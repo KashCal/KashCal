@@ -40,48 +40,30 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
 /**
- * Unified attendees + RSVP component used by EventQuickViewSheet and
- * EventFormSheet's read-only banner. Combines the older separate
- * attendee-chip-row and RSVP-pill-row into one block:
+ * Shows an event's attendees and the user's RSVP in one block, for the quick views and the
+ * event form. Renders nothing for an empty [attendees].
  *
- * 1. **Summary line** — organizer name (with "Host" tag) + "You + N"
- *    or "N invited" off-list, plus a caret affordance to drill into
- *    the full attendee list.
- * 2. **RSVP cards** — Yes / Maybe / No, weighted primary on Yes
- *    pre-response.
- * 3. **Post-response** (QuickView only) — block collapses to a
- *    colored state band ("You're going · Change") with the cards
- *    re-expandable inline. The collapsed band stays clickable to drill
- *    into the attendee list and renders any series disclosure passed
- *    through.
+ * 1. Summary line: the organizer with a "Host" tag, "You + N", or "N invited" when off-list,
+ *    with a caret to drill into the full list.
+ * 2. RSVP cards: Yes, Maybe, No, shown only per [shouldShowRespondSection] and not
+ *    [suppressRsvp].
+ * 3. After a response, unless [alwaysExpanded]: the block collapses to a colored state band
+ *    ("You're going · Change") whose Change re-expands the cards. The band still drills into
+ *    the list and shows [seriesDisclosure].
  *
- * The form passes [alwaysExpanded] = true so the cards never
- * collapse — the form is the dedicated review surface where the
- * user might be re-reading their answer.
- *
- * @param attendees Full attendee list (with [AttendeeUiModel.isYou]
- *   and [AttendeeUiModel.isOrganizer] populated by the caller).
- * @param isCurrentUserOnList True when the active account matches
- *   any attendee. False = off-list / guest viewer.
- * @param isCurrentUserOrganizer True when the user is the event's
- *   ORGANIZER (RFC 5545 sense). Drives the summary phrasing — kept
- *   distinct from [suppressRsvp] so an editing-non-organizer doesn't
- *   get mislabeled.
- * @param suppressRsvp When true, the RSVP cards never render even if
- *   the user is on the list. Used by editable forms (where editing
- *   the event itself is the way to change attendance) without
- *   misrepresenting the user as the organizer.
- * @param onRsvp Fired when the user taps a card.
- * @param onDrillIntoAttendees Fired when the user taps the caret /
- *   summary / collapsed band. Caller decides what opens (today: nested
- *   attendee sheet; future: any other attendee surface).
- * @param seriesDisclosure Optional small line below the cards/band
- *   for recurring events ("This RSVP applies to the whole series").
- *   Rendered in both Expanded and Collapsed modes so the warning
- *   persists post-response.
- * @param alwaysExpanded When true, the cards stay always rendered
- *   even after the user has responded. Form uses this; QuickView
- *   doesn't.
+ * @param attendees the full list, with [AttendeeUiModel.isYou] and
+ *   [AttendeeUiModel.isOrganizer] set.
+ * @param isCurrentUserOnList false for an off-list or guest viewer, which changes the summary.
+ * @param isCurrentUserOrganizer true when the user is the event's ORGANIZER. Drives the
+ *   summary phrasing; separate from [suppressRsvp] so a non-organizer editing the event isn't
+ *   labeled the organizer.
+ * @param suppressRsvp hides the RSVP cards even when the user is on the list, for surfaces
+ *   where RSVP isn't offered, for example the editable form or a read-only device calendar.
+ * @param onDrillIntoAttendees called on a tap of the summary, caret or band; the caller
+ *   decides what opens.
+ * @param seriesDisclosure optional line below the cards or band for a recurring event ("This
+ *   RSVP applies to the whole series"), shown in both modes so it stays after a response.
+ * @param alwaysExpanded keeps the cards after a response; the read-only event form sets it.
  */
 @Composable
 fun InviteesBlock(
@@ -103,16 +85,13 @@ fun InviteesBlock(
         currentUserPartstat = currentUserPartstat,
         isOrganizer = isCurrentUserOrganizer,
     )
-    // Delegated is RFC-valid but not a status we offer the user as a
-    // pick — treat it like "no response yet" so the cards stay
-    // interactive instead of showing a colored band whose label
-    // doesn't match.
+    // Delegated is valid PARTSTAT but not a choice the cards offer, so treat it as no response
+    // yet: the cards stay up instead of a band whose label wouldn't match.
     val isInteractiveResponse = currentUserPartstat != null &&
         currentUserPartstat != AttendeeStatus.NeedsAction &&
         currentUserPartstat != AttendeeStatus.Delegated
 
-    // Local re-expand state for QuickView's "Change" affordance.
-    // Form's alwaysExpanded = true bypasses this entirely.
+    // Set by the band's Change; unused when alwaysExpanded. Resets when the partstat changes.
     var changing by remember(currentUserPartstat) { mutableStateOf(false) }
 
     val mode = when {
@@ -144,11 +123,9 @@ fun InviteesBlock(
             isCurrentUserOrganizer = isCurrentUserOrganizer,
             currentUserPartstat = currentUserPartstat,
             onRsvp = { status ->
-                // Invoke onRsvp first so the upstream partstat update
-                // arrives before we collapse — the remember keyed on
-                // currentUserPartstat then resets `changing` for free.
-                // Setting `changing = false` first would briefly render
-                // Collapsed with the OLD partstat for one frame.
+                // onRsvp first, so the new partstat arrives before the collapse and the
+                // remember keyed on it resets `changing`. Clearing `changing` first would
+                // render the band with the old partstat for one frame.
                 onRsvp(status)
                 changing = false
             },
@@ -191,9 +168,8 @@ private fun ExpandedBlock(
         )
         if (currentUserPartstat != null) {
             Spacer(Modifier.height(8.dp))
-            // The chosen card is filled-blue, so the user can see their
-            // current state at a glance — no separate "Currently going"
-            // hint needed when re-expanding via Change.
+            // The chosen card is filled, so re-expanding through Change needs no separate
+            // "currently going" hint.
             Text(
                 text = stringResource(R.string.rsvp_question_going),
                 style = MaterialTheme.typography.bodyMedium,
@@ -228,10 +204,9 @@ private fun SummaryOnlyBlock(
     modifier: Modifier = Modifier,
 ) {
     val (background, foreground, leadingIcon) = if (!isCurrentUserOnList) {
-        // Off-list: a Group icon + muted text on the plain surface. The
-        // earlier lavender fill read as "selected" on this full-width row;
-        // the icon alone carries the "you aren't invited" cue and matches
-        // the (fill-free) day-card attendee badge.
+        // Off-list: a Group icon and muted text on the plain surface. A tinted fill would read
+        // as "selected" on this full-width row; the icon carries the "you aren't invited" cue,
+        // like the fill-free day-card attendee badge.
         Triple(
             MaterialTheme.colorScheme.surface,
             MaterialTheme.colorScheme.onSurfaceVariant,
@@ -260,7 +235,7 @@ private fun SummaryOnlyBlock(
             attendees = attendees,
             isCurrentUserOnList = isCurrentUserOnList,
             isCurrentUserOrganizer = isCurrentUserOrganizer,
-            onClick = null, // outer Box owns the click; suppress inner ripple
+            onClick = null, // the outer Box owns the click, so no inner ripple
             leadingGroupIcon = leadingIcon,
             textColor = foreground,
             modifier = Modifier.padding(vertical = 4.dp),
@@ -296,10 +271,8 @@ private fun CollapsedStateBand(
             border = MaterialTheme.colorScheme.error.copy(alpha = 0.25f),
             stateRes = R.string.rsvp_state_not_going,
         )
-        // Delegated is filtered before we get here (mode is Expanded for
-        // Delegated). NeedsAction never reaches this branch either.
-        // Fall back to a neutral scheme so a future PARTSTAT addition
-        // doesn't silently render the wrong "going" copy.
+        // Delegated and NeedsAction never collapse, so they don't reach here. A neutral scheme
+        // keeps a new status from silently getting the "going" colors.
         else -> RsvpStateColors(
             background = MaterialTheme.colorScheme.surfaceContainerHighest,
             foreground = MaterialTheme.colorScheme.onSurface,
@@ -342,9 +315,8 @@ private fun CollapsedStateBand(
                 )
                 SummaryText(
                     attendees = attendees,
-                    // Collapsed is reachable only when showCards=true,
-                    // which requires you != null. So treat as on-list
-                    // and not-self-organizer for the meta line.
+                    // Collapsed needs rsvpVisible, which needs a You row and a non-organizer
+                    // user, so the meta line treats the user as on-list and not organizing.
                     isCurrentUserOnList = true,
                     isCurrentUserOrganizer = false,
                     style = MaterialTheme.typography.bodySmall,
@@ -465,11 +437,7 @@ private fun SummaryText(
     )
 }
 
-/**
- * Composable wrapper that resolves a [SummaryLine] (pure data) into a
- * localized [String] using string resources. Lives inside the Compose
- * world so [pluralStringResource] / [stringResource] can be called.
- */
+/** Resolves the [formatSummaryLine] result into a localized string. */
 @Composable
 internal fun composeSummaryLine(
     attendees: List<AttendeeUiModel>,
@@ -520,9 +488,8 @@ internal fun composeSummaryLine(
 }
 
 /**
- * Pure summary-line variant. Mirrors the priority list documented on
- * [formatSummaryLine]. The Compose layer resolves each variant into a
- * localized string via [composeSummaryLine].
+ * A summary-line variant, chosen by [formatSummaryLine] and resolved to text by
+ * [composeSummaryLine].
  */
 internal sealed interface SummaryLine {
     data object Empty : SummaryLine
@@ -537,27 +504,25 @@ internal sealed interface SummaryLine {
 }
 
 /**
- * Build the [SummaryLine] variant for the given inputs. Pure — no
- * Compose, no string resources — so the priority logic is unit-
- * testable directly.
+ * Chooses the [SummaryLine] variant, without Compose or resources so it is unit-testable.
  *
- * Priority:
- * - Empty list → [SummaryLine.Empty]
- * - You're the organizer:
- *     - 1 attendee (just you) → [SummaryLine.YouAlone]
- *     - more → [SummaryLine.YouOrganizing] (others = total - 1)
+ * The first matching case wins. "Organizer" means a row that is the organizer and not You.
+ * - Empty list: [SummaryLine.Empty]
+ * - The user organizes and has a You row:
+ *     - no one else: [SummaryLine.YouAlone]
+ *     - others: [SummaryLine.YouOrganizing] (others = total - 1)
  * - Off-list:
- *     - no organizer surfaced → [SummaryLine.OffListTotal]
- *     - organizer surfaced → [SummaryLine.OffListWithHost]
- * - On-list with organizer who isn't you:
- *     - just you + organizer → [SummaryLine.OrganizerPlusYou]
- *     - + others → [SummaryLine.OrganizerPlusYouPlusN]
- * - On-list with no organizer in list:
- *     - just you → [SummaryLine.YouAlone]
- *     - + others → [SummaryLine.YouPlusN]
- * - On-list-but-no-you (rare, projection edge case):
- *     - organizer surfaced → [SummaryLine.OrganizerOtherMore]
- *     - else → [SummaryLine.OffListTotal]
+ *     - no organizer: [SummaryLine.OffListTotal]
+ *     - organizer: [SummaryLine.OffListWithHost]
+ * - On-list, You and organizer:
+ *     - no one else: [SummaryLine.OrganizerPlusYou]
+ *     - others: [SummaryLine.OrganizerPlusYouPlusN]
+ * - On-list, You and no organizer:
+ *     - no one else: [SummaryLine.YouAlone]
+ *     - others: [SummaryLine.YouPlusN]
+ * - On-list with no You row:
+ *     - organizer: [SummaryLine.OrganizerOtherMore]
+ *     - else: [SummaryLine.OffListTotal]
  */
 internal fun formatSummaryLine(
     attendees: List<AttendeeUiModel>,

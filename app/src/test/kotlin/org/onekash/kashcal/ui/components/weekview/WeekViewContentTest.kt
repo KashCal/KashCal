@@ -15,8 +15,9 @@ import java.time.ZoneOffset
 import java.util.UUID
 
 /**
- * Integration tests for week view content and data transformations.
- * Tests event grouping, filtering, and data flow.
+ * Tests week start and day index through [WeekViewUtils.getWeekStart] and
+ * [WeekViewUtils.getDayIndex], and date grouping of occurrences through a test-local
+ * groupEventsByDate (see its KDoc). Times are built in the JVM default zone.
  */
 class WeekViewContentTest {
 
@@ -24,7 +25,6 @@ class WeekViewContentTest {
     private val now = System.currentTimeMillis()
     private val zone = ZoneId.systemDefault()
 
-    // Helper to create a test event
     private fun createTestEvent(
         id: Long = 1L,
         title: String = "Test Event",
@@ -46,7 +46,6 @@ class WeekViewContentTest {
         dtstamp = now
     )
 
-    // Helper to create test occurrence
     private fun createTestOccurrence(
         eventId: Long,
         date: LocalDate,
@@ -91,7 +90,7 @@ class WeekViewContentTest {
         val mondayWeekStart = getWeekStartMs(monday)
         val fridayWeekStart = getWeekStartMs(friday)
 
-        // All days in the same week should have the same week start
+        // Every day of one week has the same week start.
         assertEquals(sundayWeekStart, mondayWeekStart)
         assertEquals(mondayWeekStart, fridayWeekStart)
     }
@@ -106,7 +105,7 @@ class WeekViewContentTest {
 
         assertNotEquals(week1Start, week2Start)
 
-        // Difference should be 7 days in milliseconds
+        // The week starts are 7 days of milliseconds apart.
         val sevenDaysMs = 7L * 24 * 60 * 60 * 1000
         assertEquals(sevenDaysMs, week2Start - week1Start)
     }
@@ -118,7 +117,6 @@ class WeekViewContentTest {
         val sunday = LocalDate.of(2025, 1, 5)
         val weekStart = getWeekStartMs(sunday)
 
-        // Test each day of the week
         for (dayOffset in 0..6) {
             val date = sunday.plusDays(dayOffset.toLong())
             val timestamp = date.atTime(12, 0).atZone(zone).toInstant().toEpochMilli()
@@ -132,13 +130,13 @@ class WeekViewContentTest {
         val sunday = LocalDate.of(2025, 1, 5)
         val weekStart = getWeekStartMs(sunday)
 
-        // Event from previous week - should clamp to 0 (Sunday)
+        // An event from the previous week clamps to 0 (Sunday).
         val prevWeekDate = sunday.minusDays(2)
         val prevWeekTs = prevWeekDate.atTime(12, 0).atZone(zone).toInstant().toEpochMilli()
         val prevDayIndex = WeekViewUtils.getDayIndex(prevWeekTs, weekStart)
         assertEquals(0, prevDayIndex) // Clamped to 0
 
-        // Event from next week - should clamp to 6 (Saturday)
+        // An event from the next week clamps to 6 (Saturday).
         val nextWeekDate = sunday.plusDays(8)
         val nextWeekTs = nextWeekDate.atTime(12, 0).atZone(zone).toInstant().toEpochMilli()
         val nextDayIndex = WeekViewUtils.getDayIndex(nextWeekTs, weekStart)
@@ -149,7 +147,7 @@ class WeekViewContentTest {
 
     @Test
     fun `groupEventsByDate expands multi-day event to all days`() {
-        // 3-day event: Jan 15-17
+        // A 3-day event, Jan 15-17.
         val jan15 = LocalDate.of(2026, 1, 15)
         val jan17 = LocalDate.of(2026, 1, 17)
 
@@ -166,13 +164,13 @@ class WeekViewContentTest {
 
         val grouped = groupEventsByDate(listOf(occurrence), listOf(event))
 
-        // Should appear on all 3 days
+        // It appears on all 3 days.
         assertEquals(3, grouped.size)
         assertTrue(grouped.containsKey(jan15))
         assertTrue(grouped.containsKey(LocalDate.of(2026, 1, 16)))
         assertTrue(grouped.containsKey(jan17))
 
-        // Each day should have the same event
+        // Each day has the same event.
         assertEquals("Conference", grouped[jan15]?.first()?.first?.title)
         assertEquals("Conference", grouped[LocalDate.of(2026, 1, 16)]?.first()?.first?.title)
         assertEquals("Conference", grouped[jan17]?.first()?.first?.title)
@@ -201,9 +199,8 @@ class WeekViewContentTest {
 
     @Test
     fun `groupEventsByDate uses UTC for all-day events via startDay`() {
-        // All-day on Jan 15 stored as Jan 15 00:00 UTC
-        // In negative UTC offset (e.g., PST = UTC-8), local time would be Jan 14 4PM
-        // But startDay is pre-calculated with UTC, so it should be 20260115
+        // An all-day event on Jan 15 is stored as Jan 15 00:00 UTC. At a negative UTC offset
+        // (PST, UTC-8) that is Jan 14 4 PM local, but startDay is computed in UTC: 20260115.
         val jan15 = LocalDate.of(2026, 1, 15)
 
         val event = createTestEvent(id = 100, title = "Holiday", isAllDay = true)
@@ -219,14 +216,14 @@ class WeekViewContentTest {
 
         val grouped = groupEventsByDate(listOf(occurrence), listOf(event))
 
-        // Should be Jan 15, not Jan 14 (regardless of local timezone)
+        // Jan 15, not Jan 14, in any local timezone.
         assertEquals(1, grouped.size)
         assertTrue(grouped.containsKey(jan15))
     }
 
     @Test
     fun `groupEventsByDate handles month boundary multi-day event`() {
-        // Event spanning Jan 30 - Feb 2
+        // Spans Jan 30 - Feb 2 by its day codes; the timestamps aren't read.
         val event = createTestEvent(id = 100, title = "Workshop", isAllDay = false)
         val occurrence = Occurrence(
             eventId = 100,
@@ -268,15 +265,17 @@ class WeekViewContentTest {
         val grouped = groupEventsByDate(listOf(occurrence), listOf(masterEvent, exceptionEvent))
 
         assertEquals(1, grouped.size)
-        // Should use exception event, not master
+        // The exception's event is used, not the master's.
         assertEquals("Modified Exception", grouped[jan15]?.first()?.first?.title)
     }
 
     // ==================== Helper: groupEventsByDate ====================
 
     /**
-     * Copy of groupEventsByDate from WeekViewContent for testing.
-     * Uses pre-calculated startDay/endDay and expands multi-day events.
+     * Groups occurrences by date, listing a multi-day one under each day from startDay to endDay
+     * and resolving an exception through exceptionEventId. Modeled on WeekViewContent's private
+     * groupEventsByDate, which takes DisplayEvents and has no exceptionEventId lookup; these
+     * tests don't call it.
      */
     private fun groupEventsByDate(
         occurrences: List<Occurrence>,

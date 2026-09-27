@@ -33,11 +33,10 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Verifies the sync pull path seeds the tag metadata table: when an event
- * arrives from the server carrying a category the app has never seen, a
- * `categories` row appears so the tag shows up in suggestions and the
- * management screen. Uses a real in-memory Room DB (so the seed actually
- * persists) with a mocked CalDAV client and peripheral collaborators.
+ * Tests that a pull seeds the tag table: a pulled event with a category the app hasn't seen
+ * adds a `categories` row, so the tag shows in suggestions and the management screen. The seed
+ * keeps a newer local recency and a custom color. Runs over an in-memory Room database, so the
+ * seed persists, with a mocked CalDAV client and collaborators.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -65,8 +64,8 @@ class PullStrategyCategorySeedTest {
         database = Room.inMemoryDatabaseBuilder(context, KashCalDatabase::class.java)
             .allowMainThreadQueries()
             .build()
-        // The events table foreign-keys account and calendar rows; seed both so
-        // the pulled event's upsert isn't silently rejected by the constraint.
+        // An event references its calendar, which references its account; seed both so the
+        // pulled event's upsert isn't rejected by the foreign key.
         database.accountsDao().insert(account)
         database.calendarsDao().insert(calendar())
         val occurrenceGenerator = OccurrenceGenerator(
@@ -115,7 +114,7 @@ class PullStrategyCategorySeedTest {
         END:VCALENDAR
     """.trimIndent()
 
-    /** Prime the client mock to deliver [ical] as a single fresh event on full sync. */
+    /** Stubs the client to serve [ical] as a single new event on a full sync. */
     private fun primeFullSync(calendar: Calendar, ical: String) {
         val href = "evt.ics"
         val url = "${calendar.caldavUrl}$href"
@@ -146,13 +145,13 @@ class PullStrategyCategorySeedTest {
     @Test
     fun `pulling an event dates the tag's recency to the event, not wall-clock now`() = runTest {
         val cal = calendar()
-        // The fixture's DTSTART is 2035 — far from any plausible test wall-clock.
+        // The fixture's DTSTART is 2035, far from any test run date.
         primeFullSync(cal, icalWithCategories("uid-new", "Conference"))
 
         pullStrategy.pull(cal, client = client)
 
-        // 2035-06-01T10:00:00Z in epoch millis. A wall-clock `now` seed would be
-        // ~2025-2026 instead, so this pins recency to the event itself.
+        // 2035-06-01T10:00:00Z in epoch millis. A seed from wall-clock `now` would be near the
+        // run date, so this pins recency to the event itself.
         val expected = 2064304800000L
         assertEquals(
             "recency reflects the event's own time, not the moment of pull",
@@ -166,7 +165,7 @@ class PullStrategyCategorySeedTest {
         // A locally very-recent use of the tag.
         database.categoryDao().touch("Work", 9_000_000_000_000L)
         val cal = calendar()
-        // Server event's DTSTART (2035) is older than the local recency above.
+        // The server event's DTSTART (2035) is older than the local recency above.
         primeFullSync(cal, icalWithCategories("uid-known", "Work"))
 
         pullStrategy.pull(cal, client = client)

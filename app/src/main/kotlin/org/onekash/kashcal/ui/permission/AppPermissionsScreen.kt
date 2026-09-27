@@ -54,25 +54,21 @@ import org.onekash.kashcal.ui.screens.settings.SettingsInfoButton
 import org.onekash.kashcal.ui.screens.settings.SettingsRowInfo
 
 /**
- * Full-screen destination that lists every runtime permission the app uses,
- * with a one-tap grant. Opened from the account hub's Privacy & security
- * section and rendered as an opaque overlay above the hub, mirroring the way
- * Manage tags opens over the calendar. Its own top bar with a back arrow
- * dismisses it through the same [onBack] path as the system back gesture.
+ * Shows every runtime permission the app uses, each with a one-tap grant, as a full-screen
+ * destination.
  *
- * Self-contained like the hub's personalization section: it owns the permission
- * launchers and the live grant reads (which need an Activity), and re-resolves
- * every row on resume so a grant or revoke performed in system settings during a
- * deep-link round trip is reflected when the user returns. The renderable body
- * is hoisted into [AppPermissionsScreenContent] so it can be unit-tested with a
- * fixed row list and no Activity or Hilt graph.
+ * Opened from the account hub's Privacy & security section and drawn as an opaque overlay above
+ * the hub. Its top bar's back arrow and the system back gesture both call [onBack].
  *
- * @param onOpenPermissionSettings deep-link to the system settings page for a
- *   given permission kind. Used both when tapping an already-granted row and as
- *   the escape hatch when a fired request turns out to be permanently denied (so
- *   Allow is never a dead end). Notifications routes to its own notification
- *   settings; the rest fall back to the app info page. The host routes this
- *   through its internal-activity launch so app lock does not re-lock on return.
+ * It owns the permission launchers and the live grant reads, which need an Activity, and
+ * re-reads every row on resume and after each request, so a grant or revoke made in system
+ * settings shows when the user returns. The body is [AppPermissionsScreenContent].
+ *
+ * @param onOpenPermissionSettings opens the system settings page for a permission kind: on a
+ *   tap on a granted row, and when a fired request comes back permanently denied, so Allow is
+ *   never a dead end. The host opens notification settings for Notifications and the app info
+ *   page for the rest, through its internal-activity launch so app lock doesn't re-lock on
+ *   return.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -96,8 +92,7 @@ fun AppPermissionsScreen(
     fun localNetworkGranted(): Boolean =
         sdkInt < LOCAL_NETWORK_PERMISSION_MIN_SDK || isGranted(Manifest.permission.ACCESS_LOCAL_NETWORK)
 
-    // Live grant readings, recomputed on resume and after every request result so
-    // the rows reflect the current system state rather than a stale open-time read.
+    // Live grant readings, recomputed on resume and after every request result.
     var rows by remember {
         mutableStateOf(
             buildAppPermissionRows(
@@ -124,10 +119,8 @@ fun AppPermissionsScreen(
         onPauseOrDispose { }
     }
 
-    // A request that comes back permanently denied ("don't ask again") can't
-    // surface a dialog on a further tap, so route to that permission's system
-    // settings page instead of leaving a dead Allow button. Keyed on the
-    // post-request rationale signal.
+    // A request that comes back permanently denied opens that permission's system settings
+    // ([allowRequestNeedsSettingsFallback]).
     fun onResult(kind: AppPermissionKind, permission: String, granted: Boolean) {
         val rationaleAfter = activity?.let {
             ActivityCompat.shouldShowRequestPermissionRationale(it, permission)
@@ -150,8 +143,7 @@ fun AppPermissionsScreen(
         ActivityResultContracts.RequestPermission(),
     ) { granted -> onResult(AppPermissionKind.LOCAL_NETWORK, Manifest.permission.ACCESS_LOCAL_NETWORK, granted) }
 
-    // Calendars is multi-permission (READ + WRITE); the row's granted signal keys
-    // on READ, matching the calendars-permission classifier.
+    // Calendars requests READ and WRITE; the row's granted signal keys on READ only.
     val calendarsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { grants -> onResult(AppPermissionKind.CALENDARS, Manifest.permission.READ_CALENDAR, grants[Manifest.permission.READ_CALENDAR] == true) }
@@ -173,8 +165,8 @@ fun AppPermissionsScreen(
             SettingsTopAppBar(
                 title = stringResource(R.string.hub_app_permissions),
                 onNavigateBack = onBack,
-                // Reached from the account hub, where a "jump home to today" logo
-                // shortcut is off-context.
+                // Reached from the account hub, where a "jump home to today" logo is out of
+                // place.
                 showLogo = false,
             )
         },
@@ -192,11 +184,12 @@ fun AppPermissionsScreen(
 }
 
 /**
- * The renderable body of the app-permissions screen: one row per permission. A
- * granted row reads as the quiet "Allowed" state and routes taps to that
- * permission's system settings; a not-granted row offers the accent "Allow"
- * action that fires [onAllow]. Hoisted out of [AppPermissionsScreen] so it
- * renders from a fixed row list with no Activity or Hilt graph.
+ * Draws the app-permissions screen body, one row per permission.
+ *
+ * A granted row shows the quiet "Allowed" state and a tap calls [onOpenPermissionSettings]; a
+ * not-granted row offers the accent "Allow" button, which calls [onAllow]. Split out of
+ * [AppPermissionsScreen] so `AppPermissionsScreenTest` renders it from a fixed row list with no
+ * Activity or Hilt graph.
  */
 @Composable
 internal fun AppPermissionsScreenContent(
@@ -224,9 +217,8 @@ private fun AppPermissionRowItem(
 ) {
     val name = stringResource(row.nameRes)
     val why = stringResource(row.whyRes)
-    // A granted row is itself the affordance to review the grant in system
-    // settings; a not-granted row's Allow button owns the tap, so the row body
-    // is inert there.
+    // A granted row opens system settings to review the grant; on a not-granted row the Allow
+    // button owns the tap, so the row body is inert.
     val rowModifier = if (row.trailing == PermissionTrailing.ALLOWED) {
         Modifier.clickable(role = Role.Button, onClick = onOpenSettings)
     } else {
@@ -235,8 +227,7 @@ private fun AppPermissionRowItem(
     Row(
         modifier = rowModifier
             .fillMaxWidth()
-            // A roomy 64dp minimum height with generous vertical padding so each
-            // permission sits clearly apart from its neighbours.
+            // A 64dp minimum height and generous vertical padding keep the rows apart.
             .heightIn(min = 64.dp)
             .padding(horizontal = 20.dp, vertical = 18.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -253,16 +244,16 @@ private fun AppPermissionRowItem(
             style = MaterialTheme.typography.bodyLarge,
             modifier = Modifier.weight(1f),
         )
-        // The info button keeps its full 48dp accessible touch target on this
-        // taller row (not the compact settings-row variant).
+        // The info button keeps its full 48dp touch target on this taller row, not the compact
+        // settings-row variant.
         SettingsInfoButton(SettingsRowInfo(title = name, text = why), compact = false)
         Spacer(Modifier.width(8.dp))
         when (row.trailing) {
             PermissionTrailing.ALLOWED -> Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
-                // Match the Allow button's 48dp target so granted and not-granted
-                // rows sit at the same height.
+                // Matches the Allow button's 48dp target so granted and not-granted rows sit at
+                // the same height.
                 modifier = Modifier.heightIn(min = 48.dp),
             ) {
                 Icon(

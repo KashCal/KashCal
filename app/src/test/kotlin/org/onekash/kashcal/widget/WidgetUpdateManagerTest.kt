@@ -28,17 +28,18 @@ import java.time.ZoneId
 import kotlin.math.abs
 
 /**
- * Unit tests for WidgetUpdateManager scheduling methods.
+ * Tests [WidgetUpdateManager]'s scheduling methods.
  *
- * - schedulePeriodicUpdates() enqueues periodic WorkManager work (unchanged).
- * - scheduleMidnightUpdate() schedules an exact AlarmManager alarm
- *   pointing at MidnightWidgetUpdateReceiver, with setAndAllowWhileIdle
- *   fallback when exact alarms aren't permitted. AlarmManager is used
- *   (instead of WorkManager) because Doze defers JobScheduler/WorkManager
- *   entirely; setExactAndAllowWhileIdle fires through Doze.
- * - cancelAllUpdates() cancels both the periodic work and the midnight alarm.
+ * - schedulePeriodicUpdates enqueues one periodic WorkManager work, kept on a repeat call.
+ * - scheduleMidnightUpdate sets an exact RTC_WAKEUP alarm at the next local midnight, targeting
+ *   [MidnightWidgetUpdateReceiver] and replacing, not stacking, on a repeat call; it falls back
+ *   to setAndAllowWhileIdle when exact alarms aren't permitted. AlarmManager, not WorkManager,
+ *   because Doze defers JobScheduler and so WorkManager entirely, while
+ *   setExactAndAllowWhileIdle fires through Doze.
+ * - cancelAllUpdates cancels the periodic work and the midnight alarm, and is idempotent.
  *
- * Retry and updateAllWidgets() are covered in WidgetUpdateManagerRetryTest.
+ * Retry and updateAllWidgets are covered in `WidgetUpdateManagerRetryTest`, the alarm limit in
+ * `WidgetUpdateManagerAlarmCapTest`.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -78,8 +79,7 @@ class WidgetUpdateManagerTest {
 
     @After
     fun tearDown() {
-        // Clear ShadowAlarmManager state — it's shared across tests in the same JVM
-        // and our scheduled midnight alarms would otherwise leak into other suites.
+        // Cancels the periodic work and midnight alarm this test scheduled.
         manager.cancelAllUpdates()
         unmockkAll()
     }
@@ -154,7 +154,7 @@ class WidgetUpdateManagerTest {
         manager.scheduleMidnightUpdate()
         manager.scheduleMidnightUpdate()
 
-        // Same request code + FLAG_UPDATE_CURRENT should yield a single scheduled alarm
+        // The same request code with FLAG_UPDATE_CURRENT yields one PendingIntent, so one alarm.
         assertEquals(
             "Rescheduling should replace, not stack",
             1,

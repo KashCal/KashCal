@@ -1,0 +1,36 @@
+A naptáraid mindenhol ott vannak. A család az iCloudon. Az ünnepnapok valamelyik weboldalról. A születésnapok elveszve a névjegyek között. A munka a telefon naptárában. A KashCal mindet egyetlen alkalmazásba gyűjti Androidon.
+
+Tudj meg többet: https://kashcal.onekash.org
+
+• iCloud: átváltottál Androidra, de a családod még Apple-ön van? Szinkronizáld közvetlenül az iCloud-naptárakat. Nincs híd, nincs kerülőút.
+
+• CalDAV: Nextcloud, Fastmail, Radicale, Baikal, Zoho, Mailbox, Stalwart, SOGo és mások. Valódi kétirányú szinkronizálás köztes réteg nélkül. A telefonod Google- és Outlook-naptárai is megjelennek.
+
+• Hét nézet: hónap, teljes magasságú hónap, ütemterv, nap, 3 nap, hét és év. Csippentéssel nagyíthatod az idővonalat, húzással áthelyezheted az eseményt.
+
+• Ütemezés: hívj meg embereket, küldj meghívókat megbeszélésekre, és válaszolj mások meghívóira.
+
+• Betekintés: nézd meg, mire megy az időd. A legzsúfoltabb napok, megszakítás nélküli sorozatok, szabad idősávok. Minden a készüléken számítódik.
+
+• Modulok: tartsd a napodat a kezdőképernyőn az alkalmazás megnyitása nélkül. Ütemterv, dátum, hét, hónap és közelgő.
+
+• ICS-feliratkozások: kövess bármilyen naptárcsatornát. Ünnepnapok, iskolai időszakok, sportszezonok.
+
+• Születésnapok és évfordulók: automatikusan a névjegyeidből.
+
+• Színek eseményenként: egy válogatott palettáról vagy a teljes színkörből, hogy a heted egy pillantással olvasható legyen.
+
+• Tedd a magadévá: világos, sötét vagy rendszertéma, plusz egy KashCal Teal paletta. A támogatók különleges alkalmazásikonra válthatnak.
+
+• Akadálymentesség: teljes képernyőolvasó (TalkBack) támogatás, és állítsd be az alkalmazás nyelvét közvetlenül az Android beállításaiból, 67 nyelven.
+
+• Az első pillanattól teljesen offline működik.
+
+Alapból privát
+
+Nincs analitika. Nincs telemetria. Nincs KashCal-fiók. Nincsenek szervereink, így nincs mit gyűjteni.
+
+• A hitelesítő adatok az Android Keystore-ral titkosítva
+• Alkalmazászár: rejtsd el az eseményeidet ujjlenyomat, arc vagy képernyőzár mögé
+
+Szabad, mint a szabadság. És ingyenes is.

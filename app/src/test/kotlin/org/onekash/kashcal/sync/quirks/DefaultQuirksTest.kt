@@ -10,11 +10,10 @@ import org.junit.Test
 import org.onekash.kashcal.sync.parser.CalDavXmlParser
 
 /**
- * Tests for DefaultQuirks - generic CalDAV parsing implementation.
+ * Tests [DefaultQuirks], the generic CalDAV parsing, filtering and URL building.
  *
- * Uses test fixtures from:
- * - test/resources/caldav/nextcloud/ - Nextcloud-style responses
- * - test/resources/caldav/generic/ - RFC-compliant responses
+ * Fixtures come from test/resources/caldav/nextcloud/ (Nextcloud-style responses) and
+ * test/resources/caldav/generic/ (RFC-compliant responses).
  */
 class DefaultQuirksTest {
 
@@ -163,25 +162,22 @@ class DefaultQuirksTest {
         val xml = loadResource("caldav/nextcloud/03_calendar_list.xml")
         val calendars = quirks.extractCalendars(xml, "https://nextcloud.example.com")
 
-        // Should find Personal, Work, and Company Holidays (3 calendars)
-        // Should skip: root collection, Tasks, inbox, outbox
+        // Keeps Personal, Work and Company Holidays; skips the root collection, Tasks, inbox
+        // and outbox.
         assertEquals(3, calendars.size)
 
-        // Personal calendar
         val personal = calendars.find { it.displayName == "Personal" }
         assertNotNull(personal)
         assertEquals("/remote.php/dav/calendars/testuser/personal/", personal!!.href)
         assertEquals("#0082C9FF", personal.color)
         assertFalse(personal.isReadOnly)
 
-        // Work calendar
         val work = calendars.find { it.displayName == "Work" }
         assertNotNull(work)
         assertEquals("/remote.php/dav/calendars/testuser/work/", work!!.href)
         assertEquals("#FF6B6BFF", work.color)
         assertFalse(work.isReadOnly)
 
-        // Shared read-only calendar
         val shared = calendars.find { it.displayName == "Company Holidays" }
         assertNotNull(shared)
         assertEquals("/remote.php/dav/calendars/testuser/shared-holidays/", shared!!.href)
@@ -207,7 +203,6 @@ class DefaultQuirksTest {
         val xml = loadResource("caldav/nextcloud/03_calendar_list.xml")
         val calendars = quirks.extractCalendars(xml, "https://nextcloud.example.com")
 
-        // Root collection href should NOT be in results
         val root = calendars.find { it.href == "/remote.php/dav/calendars/testuser/" }
         assertNull(root)
     }
@@ -294,7 +289,7 @@ class DefaultQuirksTest {
 
         val calendars = quirks.extractCalendars(xml, "https://example.com")
 
-        // No supported-calendar-component-set → permissive fallback, keep the calendar
+        // No supported-calendar-component-set: the server advertised none, so it's kept.
         assertEquals(1, calendars.size)
         assertEquals("Personal", calendars[0].displayName)
     }
@@ -323,7 +318,7 @@ class DefaultQuirksTest {
 
         val calendars = quirks.extractCalendars(xml, "https://example.com")
 
-        // Calendar supports both VEVENT and VTODO → keep (has events)
+        // VEVENT and VTODO: kept, because it holds events.
         assertEquals(1, calendars.size)
         assertEquals("Personal", calendars[0].displayName)
     }
@@ -333,7 +328,7 @@ class DefaultQuirksTest {
     @Test
     fun `extractCalendars parses VEVENT component from Nextcloud`() {
         val xml = loadResource("caldav/nextcloud/03_calendar_list.xml")
-        // Parse at XML parser level (before quirks filtering) to see all calendars including Tasks
+        // The XML parser runs before the quirks filter, so it still sees Tasks.
         val allCalendars = xmlParser.extractCalendars(xml)
 
         val personal = allCalendars.find { it.displayName == "Personal" }
@@ -352,14 +347,14 @@ class DefaultQuirksTest {
 
         assertEquals(1, calendars.size)
         assertEquals("Personal", calendars[0].displayName)
-        // No supported-calendar-component-set in XML → empty set
+        // No supported-calendar-component-set parses to an empty set.
         assertEquals(emptySet<String>(), calendars[0].supportedComponents)
     }
 
     @Test
     fun `extractCalendars parses VTODO-only from Nextcloud Tasks`() {
         val xml = loadResource("caldav/nextcloud/03_calendar_list.xml")
-        // Parse at XML parser level (before quirks filtering) to see Tasks calendar
+        // The XML parser runs before the quirks filter, so it still sees Tasks.
         val allCalendars = xmlParser.extractCalendars(xml)
 
         val tasks = allCalendars.find { it.displayName == "Tasks" }
@@ -376,19 +371,16 @@ class DefaultQuirksTest {
 
         assertEquals(3, events.size)
 
-        // Single event
         val standup = events.find { it.href.contains("event1.ics") }
         assertNotNull(standup)
         assertEquals("abc123def456", standup!!.etag)  // Quotes are stripped
         assertTrue(standup.icalData.contains("SUMMARY:Team Standup"))
         assertTrue(standup.icalData.contains("BEGIN:VCALENDAR"))
 
-        // Recurring event
         val weekly = events.find { it.href.contains("event2.ics") }
         assertNotNull(weekly)
         assertTrue(weekly!!.icalData.contains("RRULE:FREQ=WEEKLY"))
 
-        // All-day event
         val allDay = events.find { it.href.contains("event3.ics") }
         assertNotNull(allDay)
         assertTrue(allDay!!.icalData.contains("VALUE=DATE"))
@@ -484,7 +476,7 @@ END:VCALENDAR</cal:calendar-data>
     fun `extractCtag handles quoted ctag`() {
         val xml = loadResource("caldav/nextcloud/03_calendar_list.xml")
         val ctag = quirks.extractCtag(xml)
-        // Should find the first ctag
+        // Takes the first ctag, quotes kept.
         assertNotNull(ctag)
         assertTrue(ctag!!.startsWith("\""))
     }
@@ -516,12 +508,10 @@ END:VCALENDAR</cal:calendar-data>
 
         assertEquals(2, items.size)
 
-        // Changed event
         val changed = items.find { it.first.contains("event1.ics") }
         assertNotNull(changed)
         assertEquals("abc123def456-v2", changed!!.second)  // Quotes are stripped
 
-        // New event
         val newEvent = items.find { it.first.contains("event4.ics") }
         assertNotNull(newEvent)
         assertEquals("new123event", newEvent!!.second)  // Quotes are stripped
@@ -532,14 +522,14 @@ END:VCALENDAR</cal:calendar-data>
         val xml = loadResource("caldav/nextcloud/05_sync_collection.xml")
         val items = quirks.extractChangedItems(xml)
 
-        // Should not include deleted-event.ics (404)
+        // deleted-event.ics (404) is left out.
         val deleted = items.find { it.first.contains("deleted-event.ics") }
         assertNull(deleted)
     }
 
     @Test
     fun `extractChangedItems handles XML entity encoded etags`() {
-        // Nextcloud returns &quot; instead of literal quotes in getetag
+        // Nextcloud returns &quot; for the quotes in getetag.
         val xml = """
             <d:multistatus xmlns:d="DAV:">
                 <d:response>
@@ -554,19 +544,19 @@ END:VCALENDAR</cal:calendar-data>
         val items = quirks.extractChangedItems(xml)
 
         assertEquals(1, items.size)
-        // Should decode &quot; and strip quotes
+        // &quot; is decoded and the quotes stripped.
         assertEquals("820584d69f6962bbb113a0cc9b446de4", items[0].second)
     }
 
     @Test
     fun `extractChangedItems excludes collection self-row identified by trailing slash`() {
-        // The collection self-row is identified by href.endsWith("/") (RFC 4918 §5.2
-        // SHOULD: "Wherever a server produces a URL referring to a collection, the
-        // server SHOULD include the trailing slash."). Filename extension is unreliable
-        // — some servers store events at extensionless UID hrefs. Resourcetype-collection
-        // is retained as a defensive fallback in the parser, but the wire body no longer
-        // requests resourcetype (iCloud bloats responses with per-member propstat-404 on
-        // empty resourcetype queries past the read timeout).
+        // The collection self-row is identified by a trailing "/" (RFC 4918 §5.2: "Wherever
+        // a server produces a URL referring to a collection, the server SHOULD include the
+        // trailing slash."), not by filename extension: some servers store events at
+        // extensionless UID hrefs. A resourcetype holding <collection/> is the parser's
+        // fallback. The sync-collection and etag requests never ask for resourcetype: iCloud
+        // answers with a propstat-404 per member and the response grows past the read
+        // timeout.
         val xml = """
             <d:multistatus xmlns:d="DAV:">
                 <d:response>
@@ -654,11 +644,11 @@ END:VCALENDAR</cal:calendar-data>
 
     @Test
     fun `shouldSkipCalendar does not skip a real calendar by its display name alone`() {
-        // A display name is NOT a safe discriminator: a real events calendar the user
-        // named "Tasks" or "Reminders" carries the <calendar> resourcetype and, when it
-        // advertises VEVENT, must surface. The only genuine task/reminder collection is
-        // VTODO-only, which the co-located VEVENT component gate in extractCalendars
-        // drops on its own — the name filter would only add a false-drop here.
+        // A display name can't tell a task list apart: a real events calendar the user named
+        // "Tasks" or "Reminders" carries the <calendar> resourcetype and, when it advertises
+        // VEVENT, must surface. A task list is VTODO-only, which the VEVENT component gate in
+        // extractCalendars drops when the server advertises the component set; a name filter
+        // would only drop real calendars.
         assertFalse(quirks.shouldSkipCalendar("/calendars/todo/", "Tasks"))
         assertFalse(quirks.shouldSkipCalendar("/calendars/reminders-list/", "Reminders"))
     }
@@ -670,10 +660,9 @@ END:VCALENDAR</cal:calendar-data>
 
     @Test
     fun `shouldSkipCalendar matches tasks terminal segment only WITH a trailing slash`() {
-        // The terminal `tasks` skip requires the trailing-slash segment form
-        // (`.../tasks/`). A collection href without the trailing slash is kept at the
-        // quirk level; a real VTODO-only tasks list is still dropped downstream by the
-        // VEVENT component gate, so nothing surfaces that shouldn't.
+        // The terminal `tasks` skip requires the trailing-slash form (`.../tasks/`). A href
+        // without the slash is kept here; a VTODO-only tasks list is still dropped by the
+        // VEVENT component gate in extractCalendars when the server advertises the set.
         assertTrue(quirks.shouldSkipCalendar("/calendars/user/tasks/", null))
         assertFalse(quirks.shouldSkipCalendar("/calendars/user/tasks", null))
     }
@@ -686,9 +675,9 @@ END:VCALENDAR</cal:calendar-data>
 
     @Test
     fun `shouldSkipCalendar keeps a calendar whose path merely contains a reserved word as a substring`() {
-        // A reserved word must match only as a whole PATH SEGMENT, never as a
-        // substring of one. A user's real calendar — or any account whose
-        // username embeds one of these letters — must survive discovery.
+        // A reserved word must match only as a whole path segment, never as a substring of
+        // one, so a user's real calendar, or an account whose username embeds one of these
+        // words, survives discovery.
         assertFalse(quirks.shouldSkipCalendar("/calendars/user/my-inbox-friends/", "My Inbox Friends"))
         assertFalse(quirks.shouldSkipCalendar("/calendars/user/outbox-archive/", "Outbox Archive"))
         assertFalse(quirks.shouldSkipCalendar("/calendars/notifications-events/personal/", "Personal"))
@@ -698,9 +687,8 @@ END:VCALENDAR</cal:calendar-data>
 
     @Test
     fun `shouldSkipCalendar matches tasks only as the final path segment`() {
-        // The task-list skip fires only for a terminal `.../tasks/` segment. An
-        // account whose USERNAME segment is literally "tasks" must keep all its
-        // calendars — an intermediate "tasks" segment must not trigger the skip.
+        // The task-list skip fires only for a terminal `.../tasks/` segment, so an account
+        // whose username segment is "tasks" keeps all its calendars.
         assertTrue(quirks.shouldSkipCalendar("/calendars/user/tasks/", null))
         assertFalse(quirks.shouldSkipCalendar("/calendars/tasks/personal/", "Personal"))
         assertFalse(quirks.shouldSkipCalendar("/calendars/tasks/work/", "Work"))
@@ -721,7 +709,7 @@ END:VCALENDAR</cal:calendar-data>
 
     @Test
     fun `isSyncTokenInvalid returns false for bare 403`() {
-        // Issue #51: bare 403 is "permission denied", not sync-token expiry
+        // A bare 403 is "permission denied", not sync-token expiry (#51).
         assertFalse(quirks.isSyncTokenInvalid(403, ""))
     }
 
@@ -750,7 +738,7 @@ END:VCALENDAR</cal:calendar-data>
 
     @Test
     fun `formatDateForQuery formats to UTC`() {
-        // Jan 15, 2024 12:00:00 UTC
+        // Jan 15, 2024 12:00:00 UTC; the time of day is dropped.
         val millis = 1705320000000L
         val formatted = quirks.formatDateForQuery(millis)
         assertEquals("20240115T000000Z", formatted)

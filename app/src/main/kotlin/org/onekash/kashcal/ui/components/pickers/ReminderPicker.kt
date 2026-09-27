@@ -47,17 +47,14 @@ import org.onekash.kashcal.ui.shared.formatReminderDuration
 import org.onekash.kashcal.ui.shared.formatReminderSummary
 
 /**
- * Dynamic reminder picker card for event forms.
+ * Shows an expandable card of up to [MAX_REMINDERS] reminders, each edited with an inline
+ * [WheelDurationPicker]; only one picker is open at a time.
  *
- * Supports up to [MAX_REMINDERS] (5) reminders, each configurable via
- * an inline [WheelDurationPicker]. Only one picker is open at a time.
- *
- * @param reminders Current list of reminder minutes
- * @param isAllDay Whether the event is all-day (affects presets and labels)
- * @param use24Hour Whether to use 24-hour format for time labels
- * @param onRemindersChange Callback with updated list when user changes any reminder
- * @param truncatedReminderCount Number of reminders that were truncated on load
- * @param modifier Modifier for the card
+ * @param reminders reminder offsets in minutes
+ * @param isAllDay switches the presets and labels to all-day ones
+ * @param use24Hour whether labels that show a time of day, such as 9 AM, use 24-hour format
+ * @param onRemindersChange called with the whole updated list on any change
+ * @param truncatedReminderCount reminders dropped on load; above 0 shows a warning
  */
 @Deprecated("Use ReminderPickerRow instead", level = DeprecationLevel.WARNING)
 @Composable
@@ -70,12 +67,11 @@ fun ReminderPickerCard(
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    // -1 = no picker open; 0..N-1 = index of open inline picker
+    // -1 when no picker is open, else the index of the open one.
     var expandedPickerIndex by remember { mutableIntStateOf(-1) }
 
     val presets = if (isAllDay) ALL_DAY_PRESET_CHIPS else TIMED_PRESET_CHIPS
 
-    // Build summary text
     val summaryText = formatReminderSummary(reminders, use24Hour, LocalResources.current, isAllDay)
 
     OutlinedCard(
@@ -83,7 +79,6 @@ fun ReminderPickerCard(
         shape = MaterialTheme.shapes.medium
     ) {
         Column {
-            // Header row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -126,7 +121,6 @@ fun ReminderPickerCard(
                 }
             }
 
-            // Expanded content
             AnimatedVisibility(
                 visible = expanded,
                 enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(150)),
@@ -138,7 +132,6 @@ fun ReminderPickerCard(
                         .padding(horizontal = 8.dp)
                         .padding(bottom = 8.dp)
                 ) {
-                    // Dynamic reminder rows
                     reminders.forEachIndexed { index, minutes ->
                         ReminderItemRow(
                             index = index,
@@ -159,7 +152,7 @@ fun ReminderPickerCard(
                                 val updated = reminders.toMutableList()
                                 updated.removeAt(index)
                                 onRemindersChange(updated)
-                                // Adjust expanded picker index
+                                // Keep the open picker on the same reminder after the removal.
                                 expandedPickerIndex = when {
                                     expandedPickerIndex == index -> -1
                                     expandedPickerIndex > index -> expandedPickerIndex - 1
@@ -172,13 +165,13 @@ fun ReminderPickerCard(
                         )
                     }
 
-                    // "+ Add Alert" button (hidden at MAX_REMINDERS)
+                    // Add button, hidden at MAX_REMINDERS.
                     if (reminders.size < MAX_REMINDERS) {
                         TextButton(
                             onClick = {
                                 val updated = reminders + 15 // Default new reminder: 15 min
                                 onRemindersChange(updated)
-                                // Open picker for new reminder
+                                // Open the new reminder's picker.
                                 expandedPickerIndex = updated.size - 1
                             },
                             modifier = Modifier
@@ -197,7 +190,6 @@ fun ReminderPickerCard(
                         }
                     }
 
-                    // Warning when reminders were truncated
                     if (truncatedReminderCount > 0) {
                         val totalReminders = reminders.size + truncatedReminderCount
                         Row(
@@ -363,9 +355,7 @@ fun ReminderPickerRow(
     }
 }
 
-/**
- * Single reminder row with optional inline WheelDurationPicker.
- */
+/** Shows one reminder with a delete button; tapping it toggles its inline [WheelDurationPicker]. */
 @Composable
 private fun ReminderItemRow(
     index: Int,
@@ -380,7 +370,6 @@ private fun ReminderItemRow(
     onDismissPicker: () -> Unit
 ) {
     Column {
-        // Row header: label + delete button
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -421,7 +410,6 @@ private fun ReminderItemRow(
             }
         }
 
-        // Inline wheel duration picker
         AnimatedVisibility(
             visible = isPickerOpen,
             enter = expandVertically(animationSpec = tween(200)) + fadeIn(animationSpec = tween(150)),

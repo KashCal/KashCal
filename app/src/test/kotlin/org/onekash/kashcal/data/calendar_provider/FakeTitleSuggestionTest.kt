@@ -7,14 +7,12 @@ import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository.DeviceTitleRow
 
 /**
- * Tests for [FakeCalendarProviderRepository.suggestTitlesByPrefix] — documents
- * the contract that [AndroidCalendarProviderRepository] must match.
- *
- * Key semantics:
- *  - start_ts window bounded both sides via sinceMs/untilMs
- *  - Recurring events (rrule != null, rrule != "") bypass the window
- *  - Cross-calendar dedup: same (title, dtstart) counted once regardless of
- *    how many calendars surface it (dual-account Google invite pollution)
+ * Tests [FakeCalendarProviderRepository.suggestTitlesByPrefix], pinning the contract
+ * [AndroidCalendarProviderRepository] must match:
+ *  - a DTSTART window bounded on both sides by sinceMs and untilMs
+ *  - series (a non-null, non-empty rrule) bypass the window
+ *  - the same (title, dtstart) counts once however many calendars show it, as when one invite
+ *    reaches two accounts
  */
 class FakeTitleSuggestionTest {
 
@@ -115,8 +113,7 @@ class FakeTitleSuggestionTest {
 
     @Test
     fun `cross-calendar dedup - same title and dtstart on two calendars counts once`() = runTest {
-        // User has the same Google invite on both personal (cal1) and work (cal2) accounts.
-        // Both surface the same event — must count as ONE use, not two.
+        // The same invite on a personal (cal1) and a work (cal2) account is one use, not two.
         val fake = FakeCalendarProviderRepository()
         val ts = now - 5 * dayMs
         fake.deviceTitleRows = listOf(
@@ -129,7 +126,7 @@ class FakeTitleSuggestionTest {
             visibleCalendarIds = visible, minFreq = 2, limit = 5
         )
 
-        // freq=1 after dedup — does NOT meet minFreq=2 — must be empty.
+        // freq=1 after dedup, below minFreq=2, so nothing is suggested.
         assertTrue(
             "Cross-calendar duplicates must dedup so minFreq=2 excludes a truly one-off event",
             results.isEmpty()
@@ -138,8 +135,7 @@ class FakeTitleSuggestionTest {
 
     @Test
     fun `cross-calendar dedup - different dtstart still counts separately`() = runTest {
-        // Different occurrences of the same title on different calendars:
-        // the user actually engaged with it twice, so both should count.
+        // Two dates of the same title on different calendars are two uses.
         val fake = FakeCalendarProviderRepository()
         fake.deviceTitleRows = listOf(
             DeviceTitleRow("All Hands", dtstart = now - 7 * dayMs, calendarId = cal1),

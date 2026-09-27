@@ -24,13 +24,12 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 
 /**
- * Tests for CalDavAccountDiscoveryService.discoverCalendars() with well-known discovery.
+ * Tests [CalDavAccountDiscoveryService.discoverCalendars] with RFC 6764 well-known discovery,
+ * a step discoverAndCreateAccount doesn't have. The app calls discoverCalendars when adding a
+ * CalDAV account. Covers several providers, the fallback when well-known fails, and path
+ * probing after a redirect.
  *
- * The discoverCalendars() method (used by the UI when adding a CalDAV account) includes
- * an RFC 6764 well-known discovery step that discoverAndCreateAccount() does NOT have.
- * These tests cover the well-known interaction and verify behavior for various providers.
- *
- * See also: CalDavAccountDiscoveryServiceTest.kt for discoverAndCreateAccount() tests.
+ * `CalDavAccountDiscoveryServiceTest` covers the rest of the service.
  */
 class CalDavAccountDiscoveryServiceWellKnownTest {
 
@@ -87,8 +86,8 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
 
     @Test
     fun `discoverCalendars - Fastmail - well-known discovery succeeds`() = runTest {
-        // Issue #51 fix: well-known redirect URL is preserved as-is (cleanRedirectUrl),
-        // so Fastmail's /dav/principals/user/email/ path is not stripped to /dav.
+        // The well-known result goes to principal discovery unchanged, so Fastmail's
+        // /dav/principals/user/email/ path isn't cut to /dav (#51).
 
         val principalUrl = "https://caldav.fastmail.com/dav/principals/user/user@fastmail.com/"
         val calendarHomeUrl = "https://caldav.fastmail.com/dav/calendars/user/user@fastmail.com/"
@@ -123,8 +122,8 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
 
     @Test
     fun `discoverCalendars - Fastmail - all three user URL formats discover calendars`() = runTest {
-        // Issue #51 fix: All common Fastmail URL formats should discover calendars
-        // successfully via well-known redirect.
+        // Every common Fastmail URL form discovers calendars through the well-known
+        // redirect (#51).
 
         val principalUrl = "https://caldav.fastmail.com/dav/principals/user/user@fastmail.com/"
         val calendarHomeUrl = "https://caldav.fastmail.com/dav/calendars/user/user@fastmail.com/"
@@ -136,7 +135,6 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
         )
 
         for (url in urls) {
-            // Reset mocks for each URL
             clearMocks(mockClient, answers = true)
 
             setupSuccessfulDiscovery(
@@ -307,8 +305,7 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
 
     @Test
     fun `discoverCalendars - well-known not supported - falls back to direct principal`() = runTest {
-        // When well-known returns an error, discoverCalendars falls back to using
-        // the normalized URL directly for principal discovery.
+        // When well-known returns an error, principal discovery uses the normalized URL.
 
         coEvery { mockClient.discoverWellKnown(any()) } returns
             CalDavResult.Error(404, "Not found")
@@ -344,16 +341,13 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
         assertEquals(1, found.calendars.size)
         assertEquals("calendar", found.calendars[0].displayName)
 
-        // Verify well-known was attempted first
         coVerify { mockClient.discoverWellKnown("https://radicale.example.com") }
-        // Verify fallback to normalized URL for principal
         coVerify { mockClient.discoverPrincipal("https://radicale.example.com") }
     }
 
     @Test
     fun `discoverCalendars - well-known auth error still returns AuthError`() = runTest {
-        // Even when well-known succeeds, a 401 from principal discovery should
-        // be correctly classified as AuthError.
+        // Even after well-known succeeds, a 401 from principal discovery is an AuthError.
 
         coEvery { mockClient.discoverWellKnown(any()) } returns
             CalDavResult.Success("https://server.com/dav")
@@ -379,7 +373,7 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
 
     @Test
     fun `discoverCalendars - well-known redirect preserves trailing slash`() = runTest {
-        // Davis well-known redirects to /dav/ — trailing slash must be preserved
+        // Davis's well-known redirects to /dav/; the trailing slash must be kept.
         val principalUrl = "https://davis.example.com/dav/principals/user/"
         val calendarHomeUrl = "https://davis.example.com/dav/calendars/user/"
 
@@ -401,13 +395,12 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
         )
 
         assertTrue("Expected CalendarsFound but got $result", result is DiscoveryResult.CalendarsFound)
-        // Verify trailing slash was preserved in the discoverPrincipal call
         coVerify { mockClient.discoverPrincipal("https://davis.example.com/dav/") }
     }
 
     @Test
     fun `discoverCalendars - probes paths when well-known and root fail`() = runTest {
-        // Well-known returns error, fallback to root also fails (HTML), probing finds /dav/
+        // Well-known fails, the root fails too (an HTML page), and probing finds /dav/.
         coEvery { mockClient.discoverWellKnown(any()) } returns
             CalDavResult.Error(404, "Not found")
         coEvery { mockClient.discoverPrincipal("https://davis.example.com") } returns
@@ -432,13 +425,12 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
 
     @Test
     fun `discoverCalendars - probes use original URL not well-known redirect URL as base`() = runTest {
-        // Well-known redirects to a different host which then fails.
-        // Probing should use original host, not the redirect host.
+        // Well-known redirects to another host, which then fails. Probing uses the entered
+        // host, not the redirect's.
         coEvery { mockClient.discoverWellKnown("https://myserver.example.com") } returns
             CalDavResult.Success("https://other-host.example.com/dav/")
         coEvery { mockClient.discoverPrincipal("https://other-host.example.com/dav/") } returns
             CalDavResult.Error(500, "Server error")
-        // Probing uses original host (myserver.example.com), not other-host
         coEvery { mockClient.discoverPrincipal("https://myserver.example.com/dav/") } returns
             CalDavResult.Success("https://myserver.example.com/dav/principals/user/")
         coEvery { mockClient.discoverCalendarHome(any()) } returns
@@ -455,7 +447,6 @@ class CalDavAccountDiscoveryServiceWellKnownTest {
         )
 
         assertTrue("Expected CalendarsFound but got $result", result is DiscoveryResult.CalendarsFound)
-        // Verify probing used original host, not redirect host
         coVerify { mockClient.discoverPrincipal("https://myserver.example.com/dav/") }
     }
 

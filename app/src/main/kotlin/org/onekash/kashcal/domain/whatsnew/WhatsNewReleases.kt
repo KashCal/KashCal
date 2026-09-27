@@ -5,14 +5,11 @@ import kotlinx.collections.immutable.persistentListOf
 import org.onekash.kashcal.R
 
 /**
- * Authored release notes shown by the What's New sheet.
+ * Every release note the What's New sheet can show.
  *
- * To announce a release: append a [ReleaseNote] for that release's
- * versionCode here, add the matching string + (optional) string-array
- * resources, and generate the translations for them. Releases without an
- * entry stay silent.
- *
- * Entries can be in any order; [WhatsNewGate] sorts by versionCode.
+ * To announce a release, add a [ReleaseNote] for its versionCode, add its strings (and any
+ * string array), and generate their translations. A release without an entry shows nothing.
+ * Order doesn't matter; [WhatsNewGate] sorts by versionCode.
  */
 val ALL_RELEASE_NOTES: ImmutableList<ReleaseNote> = persistentListOf(
     ReleaseNote(

@@ -23,9 +23,9 @@ import org.onekash.kashcal.widget.WidgetThemeSource
 import org.onekash.kashcal.widget.WidgetUpdateManager
 
 /**
- * Unit tests for [AppearanceViewModel] — the small state holder that drives the
- * hub's "Make it yours" section (theme, accent color, color source). App icon is
- * handled composable-locally via AppIconUtility and is not part of this VM.
+ * Tests [AppearanceViewModel], which drives the account hub's "Make it yours" section: theme
+ * mode, accent seed, color source and widget theme source, and the widget refresh after the
+ * color and widget setters. The app icon row uses AppIconUtility and isn't part of this VM.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AppearanceViewModelTest {

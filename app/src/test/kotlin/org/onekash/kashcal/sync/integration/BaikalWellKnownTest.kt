@@ -17,12 +17,13 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Integration test for Baikal well-known discovery flow.
+ * Diagnoses well-known discovery against a live Baikal server.
  *
- * Tests the discoverCalendars() method of CalDavAccountDiscoveryService
- * against a real Baikal server to debug well-known discovery issues.
+ * Runs [CalDavAccountDiscoveryService.discoverCalendars] and the client's individual
+ * discovery steps, and prints each result. These tests assert nothing; they skip when the
+ * server isn't reachable.
  *
- * Run: ./gradlew testDebugUnitTest --tests "*BaikalWellKnownTest*"
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*BaikalWellKnownTest*"
  *
  * Prerequisites:
  * - Baikal server running at localhost:8081
@@ -38,7 +39,7 @@ class BaikalWellKnownTest {
     private lateinit var clientFactory: OkHttpCalDavClientFactory
     private lateinit var client: CalDavClient
 
-    // Mocked dependencies (we don't need DB operations for discovery-only test)
+    // discoverCalendars doesn't touch the repositories, so relaxed mocks are enough
     private val accountRepository: AccountRepository = mockk(relaxed = true)
     private val calendarRepository: CalendarRepository = mockk(relaxed = true)
 
@@ -51,15 +52,14 @@ class BaikalWellKnownTest {
     fun setup() {
         clientFactory = OkHttpCalDavClientFactory()
 
-        // Create the discovery service with mocked repositories
-        // We inject the real client factory
+        // Real client factory, mocked repositories
         discoveryService = CalDavAccountDiscoveryService(
             calDavClientFactory = clientFactory,
             accountRepository = accountRepository,
             calendarRepository = calendarRepository
         )
 
-        // Also create a direct client for debugging individual steps
+        // A direct client for running the discovery steps one at a time
         val quirks = DefaultQuirks(serverUrl)
         val credentials = Credentials(
             username = username,
@@ -100,7 +100,7 @@ class BaikalWellKnownTest {
         println("Username: $username")
         println("=".repeat(60) + "\n")
 
-        // Step 1: Test well-known directly with the client
+        // Step 1: well-known through the client
         println("Step 1: Testing well-known endpoint directly...")
         val wellKnownResult = client.discoverWellKnown(serverUrl)
         println("Well-known result: $wellKnownResult")
@@ -112,7 +112,7 @@ class BaikalWellKnownTest {
 
         println()
 
-        // Step 2: Test principal discovery
+        // Step 2: principal discovery
         println("Step 2: Testing principal discovery...")
         // Baikal uses /dav.php/ as the DAV endpoint
         val davEndpoint = "$serverUrl/dav.php/"
@@ -126,7 +126,7 @@ class BaikalWellKnownTest {
 
         println()
 
-        // Step 3: Use the full discovery service
+        // Step 3: the full discovery service
         println("Step 3: Testing full discoverCalendars() flow...")
         val discoveryResult = discoveryService.discoverCalendars(
             serverUrl = serverUrl,
@@ -174,7 +174,7 @@ class BaikalWellKnownTest {
         println("STEP-BY-STEP DISCOVERY DEBUG")
         println("=".repeat(60) + "\n")
 
-        // Test various URL formats that might be entered by users
+        // URL forms a user might enter
         val testUrls = listOf(
             serverUrl,                          // http://localhost:8081
             "$serverUrl/",                      // http://localhost:8081/
@@ -186,7 +186,7 @@ class BaikalWellKnownTest {
             println("Testing URL: $testUrl")
             println("-".repeat(40))
 
-            // Create fresh client for each URL
+            // A new client per URL
             val quirks = DefaultQuirks(testUrl)
             val credentials = Credentials(
                 username = username,
@@ -200,20 +200,20 @@ class BaikalWellKnownTest {
             val wellKnownResult = testClient.discoverWellKnown(testUrl)
             println("  well-known: ${if (wellKnownResult.isSuccess()) "OK - ${wellKnownResult.getOrNull()}" else "FAIL - $wellKnownResult"}")
 
-            // Get the CalDAV URL to use for further discovery
+            // Continue from the well-known target, or the entered URL if well-known failed
             val caldavUrl = wellKnownResult.getOrNull() ?: testUrl
 
             // Try principal
             val principalResult = testClient.discoverPrincipal(caldavUrl)
             println("  principal: ${if (principalResult.isSuccess()) "OK - ${principalResult.getOrNull()}" else "FAIL - $principalResult"}")
 
-            // If principal worked, try calendar home
+            // Then calendar home, if principal worked
             if (principalResult.isSuccess()) {
                 val principalUrl = principalResult.getOrNull()!!
                 val homeResult = testClient.discoverCalendarHome(principalUrl)
                 println("  calendar-home: ${if (homeResult.isSuccess()) "OK - ${homeResult.getOrNull()}" else "FAIL - $homeResult"}")
 
-                // If home worked, list calendars from first home set
+                // Then the first home set's calendars, if home worked
                 if (homeResult.isSuccess()) {
                     val homeUrl = homeResult.getOrNull()!!.first()
                     val calendarsResult = testClient.listCalendars(homeUrl)
@@ -276,7 +276,7 @@ class BaikalWellKnownTest {
 
             connection.connectTimeout = 5000
             connection.readTimeout = 5000
-            connection.instanceFollowRedirects = false  // Don't auto-follow to see redirects
+            connection.instanceFollowRedirects = false  // Show the redirect itself
 
             val responseCode = connection.responseCode
             println("Response code: $responseCode")

@@ -27,16 +27,12 @@ import java.util.UUID
 import kotlin.system.measureTimeMillis
 
 /**
- * Performance baseline tests.
+ * Sets time ceilings on an in-memory Room database, printing each measured time.
  *
- * Tests verify acceptable performance for:
- * - Large dataset loading (1000+ events)
- * - Range queries (month view, week view)
- * - Search queries (FTS)
- * - RRULE expansion limits
- * - Batch operations
- *
- * These tests establish performance expectations and detect regressions.
+ * Covers inserting 1000 events, month-range and day queries, FTS search, occurrence
+ * expansion through [OccurrenceGenerator.regenerateOccurrences] (daily, weekly BYDAY, monthly
+ * BYSETPOS, and a rule with no COUNT or UNTIL), deleting and updating 200 events one by one, and
+ * a day Flow's first emission.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -121,7 +117,6 @@ class PerformanceBaselineTest {
             val event = createTestEvent("Month Event $i", baseTime + dayOffset)
             val eventId = database.eventsDao().insert(event)
 
-            // Insert occurrence
             database.occurrencesDao().insert(
                 Occurrence(
                     eventId = eventId,
@@ -140,7 +135,7 @@ class PerformanceBaselineTest {
 
         val queryTime = measureTimeMillis {
             val occurrences = database.occurrencesDao().getInRangeOnce(monthStart, monthEnd)
-            assertTrue(occurrences.size >= 400) // At least most events
+            assertTrue(occurrences.size >= 400) // all 500 fall in the range; 400 required
         }
 
         println("Month range query with 500 events: ${queryTime}ms")
@@ -201,7 +196,7 @@ class PerformanceBaselineTest {
         // Search for "Meeting"
         val searchTime = measureTimeMillis {
             val results = database.eventsDao().search("Meeting")
-            assertTrue(results.size > 50) // ~71 "Meeting" events
+            assertTrue(results.size > 50) // 72 "Meeting" titles
         }
 
         println("FTS search 'Meeting' across 500 events: ${searchTime}ms")
@@ -219,9 +214,10 @@ class PerformanceBaselineTest {
         }
 
         val searchTime = measureTimeMillis {
-            // Exact word search - "Important" is a common word in all events
+            // "Important" is a word in all 300 titles.
             val results = database.eventsDao().search("Important")
-            // FTS results may be limited by various factors - just verify search completes
+            // Search returns up to 1000 rows, so all 300 should match; the assert only
+            // requires a non-empty result.
             assertTrue("Expected some results, got ${results.size}", results.isNotEmpty())
         }
 
@@ -236,9 +232,8 @@ class PerformanceBaselineTest {
 
     @Test
     fun `daily recurring for 2 years should expand within threshold`() = runTest {
-        // Note: OccurrenceGenerator has MAX_ITERATIONS = 1000 safety limit.
-        // Also uses a 24-month expansion window from now.
-        // COUNT=730 will be bounded by whichever limit is reached first.
+        // regenerateOccurrences expands 24 x 30 days (720 days) from now, so COUNT=730 is cut
+        // short by the window.
         val event = createRecurringTestEvent(
             "Daily for 2 Years",
             "FREQ=DAILY;COUNT=730" // ~2 years
@@ -257,7 +252,7 @@ class PerformanceBaselineTest {
         )
 
         val occurrences = database.occurrencesDao().getForEvent(eventId)
-        // May be less than 730 due to 24-month expansion window or MAX_ITERATIONS
+        // Fewer than 730 because of the 720-day window.
         assertTrue(
             "Expected at least 365 occurrences, got ${occurrences.size}",
             occurrences.size >= 365
@@ -305,9 +300,8 @@ class PerformanceBaselineTest {
         )
 
         val occurrences = database.occurrencesDao().getForEvent(eventId)
-        // BYSETPOS=2 with BYDAY=TU gets the 2nd Tuesday of each month.
-        // Result may be fewer than 24 if expansion window < 24 months or
-        // some months don't have a 2nd Tuesday within the window.
+        // BYSETPOS=2 with BYDAY=TU gets the 2nd Tuesday of each month. Every month has one,
+        // but the 720-day window can end before the 24th.
         assertTrue(
             "Expected at least 12 occurrences for 2nd-Tuesday-monthly, got ${occurrences.size}",
             occurrences.size >= 12
@@ -363,11 +357,12 @@ class PerformanceBaselineTest {
         )
     }
 
-    // ==================== Memory Bounds Tests ====================
+    // ==================== Expansion Bounds Tests ====================
 
     @Test
     fun `RRULE with MAX_ITERATIONS should not exceed limit`() = runTest {
-        // This would generate infinite occurrences without the safety limit
+        // Unbounded rule: the 720-day window keeps it under the asserted 1000, and
+        // IcalDavRRuleEngine caps any expansion at 10,000 timestamps.
         val event = createRecurringTestEvent(
             "Infinite Daily",
             "FREQ=DAILY" // No COUNT or UNTIL

@@ -4,10 +4,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Unit tests for SubscriptionsScreen derived state calculations.
- *
- * Tests verify the correctness of subscription count and preview names
- * calculation logic used in the Settings summary row.
+ * Tests a subscriptions summary's count, preview names (at most two, contact birthdays first)
+ * and ellipsis through inline copies of that logic; no test calls production code.
  */
 class SubscriptionsScreenTest {
 
@@ -120,8 +118,7 @@ class SubscriptionsScreenTest {
 
     @Test
     fun `preview names with birthdays takes one ICS slot`() {
-        // When birthdays is enabled, it takes one of the two preview slots
-        // So only 1 ICS name should be shown
+        // Enabled birthdays take one of the two preview slots, so only one ICS name shows.
         val subscriptions = listOf(
             createSubscription(1, "Holidays"),
             createSubscription(2, "Sports"),
@@ -166,9 +163,7 @@ class SubscriptionsScreenTest {
         color = 0xFF2196F3.toInt()
     )
 
-    /**
-     * Mirrors the preview names logic from AccountSettingsScreen.
-     */
+    /** Builds the preview names inline; the tests call no production counterpart. */
     private fun buildPreviewNames(
         subscriptions: List<IcsSubscriptionUiModel>,
         contactBirthdaysEnabled: Boolean

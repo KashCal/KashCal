@@ -18,54 +18,49 @@ import java.time.LocalDate
 /**
  * Parses vCard bodies into the neutral [Contact] model.
  *
- * ez-vcard is confined entirely behind this class: no ez-vcard type appears in
- * any public signature, so callers never need the library on their classpath.
- * Both vCard 3.0 (RFC 2426) and 4.0 (RFC 6350) flow through one code path, and
- * the parsed version is always taken from the body's `VERSION:` line — never from
- * a version the caller requested.
+ * No ez-vcard type appears in any public signature, so callers never need the library on their
+ * classpath. vCard 3.0 (RFC 2426) and 4.0 (RFC 6350) share one code path, and the version always
+ * comes from the body's `VERSION:` line.
  *
- * The load-bearing correction the design records: ez-vcard leaves the 3.0 Apple
- * `itemN.X-…` forms as raw/extended properties, so this parser hand-routes them
- * by `itemN` group + `X-ABLabel` (anniversary, related name) and treats
- * `X-SOCIALPROFILE` as a social handle rather than a native IMPP.
+ * ez-vcard leaves the 3.0 Apple `itemN.X-...` forms as raw extended properties, so this parser
+ * routes them by hand: `X-ABDATE` and `X-ABRELATEDNAMES` by their `itemN` group's `X-ABLabel`
+ * (anniversary, relation type), and `X-SOCIALPROFILE` into [Contact.imHandles] beside `IMPP`.
  */
 class VCardParser {
 
     /**
-     * Parse a vCard body given as text. [requestedVersion] is accepted for API
-     * symmetry with callers that negotiated a version, but is deliberately
-     * ignored for the actual parse — the body's own `VERSION:` line wins.
+     * Parses a vCard body given as text, one [Contact] per card. [requestedVersion] is accepted
+     * for symmetry with callers that negotiated a version but deliberately ignored: the body's
+     * own `VERSION:` line wins.
      */
     fun parse(body: String, @Suppress("UNUSED_PARAMETER") requestedVersion: String? = null): List<Contact> {
         val cards = Ezvcard.parse(body).all()
-        // CardDAV address objects are one vCard per resource, so for the common
-        // single-card body we retain the original text verbatim (true round-trip
-        // fidelity: property order, folding, and any unmapped X- properties are
-        // preserved). Only a rare multi-card body falls back to re-serialization.
+        // CardDAV serves one vCard per resource, so a single-card body is kept verbatim as
+        // rawVCard (property order, folding and unmapped X- properties intact). Each card of a
+        // multi-card body is re-serialized instead.
         return cards.map { toContact(it, rawOverride = if (cards.size == 1) body else null) }
     }
 
-    /** Parse a vCard body given as raw bytes (decoded as UTF-8). */
+    /** Parses a vCard body given as raw bytes (decoded as UTF-8). */
     fun parse(bytes: ByteArray, requestedVersion: String? = null): List<Contact> =
         parse(bytes.decodeToString(), requestedVersion)
 
     private fun toContact(card: VCard, rawOverride: String?): Contact {
-        // Custom labels attached to any grouped property (itemN.X-ABLabel) — Apple's
-        // 3.0 idiom, but the group is retained on native EMAIL/TEL/ADR/URL too, so a
-        // labeled email/phone/address/url can recover its label instead of collapsing
-        // to a generic type. ez-vcard leaves X-ABLabel as a raw/extended property.
+        // Custom labels (itemN.X-ABLabel) by group. The idiom is Apple's 3.0 one, but the
+        // group also sits on native EMAIL, TEL, ADR and URL, so those keep their label
+        // instead of collapsing to a generic type. ez-vcard leaves X-ABLabel as a raw property.
         val labelsByGroup = card.extendedProperties
             .filter { it.propertyName.equals("X-ABLabel", ignoreCase = true) && it.group != null }
             .associate { it.group to normalizeAppleLabel(it.value) }
 
-        // Phonetic reading aids come from X-PHONETIC-* properties, independent of N, so
-        // they're read once and attached whether or not the card carries a structured N.
+        // The X-PHONETIC-* reading aids are separate properties, read whether or not the card
+        // has an N.
         val n = card.structuredName
         val structuredName = StructuredName(
             family = n?.family.blankToNull(),
             given = n?.given.blankToNull(),
-            // Each N component is a comma-separated list; join the extras (a second
-            // middle name, "Dr. Prof.") rather than keeping only the first.
+            // Join every value of these list components (a second middle name, "Dr. Prof."),
+            // not only the first.
             middle = n?.additionalNames?.joinNonBlank(),
             prefix = n?.prefixes?.joinNonBlank(),
             suffix = n?.suffixes?.joinNonBlank(),
@@ -136,14 +131,13 @@ class VCardParser {
         var anniversary = card.anniversary?.let { toContactDate(it) }
         val birthday = card.birthday?.let { toContactDate(it) }
 
-        // Hand-route the 3.0 Apple itemN.X-… forms that ez-vcard leaves as raw properties.
-        // (labelsByGroup was resolved above to also label native EMAIL/TEL/ADR/URL.)
+        // Route the 3.0 Apple forms that ez-vcard leaves as raw properties (see the class doc).
         val raw = card.extendedProperties
         for (prop in raw) {
             when {
                 prop.propertyName.equals("X-ABDATE", ignoreCase = true) -> {
                     val label = prop.group?.let { labelsByGroup[it] }
-                    // Native 4.0 ANNIVERSARY, when present, takes precedence over the Apple raw form.
+                    // A native ANNIVERSARY, when present, wins over the Apple raw form.
                     if (label.equals("Anniversary", ignoreCase = true) && anniversary == null) {
                         anniversary = dateFromText(prop.value)
                     }
@@ -163,9 +157,8 @@ class VCardParser {
             }
         }
 
-        // KIND (RFC 6350 §6.1.4): native 4.0 property, else the 3.0 Apple
-        // X-ADDRESSBOOKSERVER-KIND fallback. Lower-cased so callers can compare
-        // against "group" regardless of the source syntax or server casing.
+        // Lower-cased so callers can compare against "group" whatever the source spelling or
+        // server casing ([Contact.kind]).
         val kind = (card.kind?.value.blankToNull()
             ?: card.getExtendedProperty("X-ADDRESSBOOKSERVER-KIND")?.value.blankToNull())
             ?.lowercase()
@@ -198,13 +191,11 @@ class VCardParser {
     }
 
     /**
-     * Native ez-vcard BDAY/ANNIVERSARY. A full calendar date resolves to
-     * [ContactDate.date]; otherwise the value is retained as text. That text can
-     * come from an explicit free-text value OR — crucially — from a
-     * reduced-accuracy date such as `--0415` (RFC 6350 §4.3.1, an unknown-year
-     * birthday), which ez-vcard exposes only via `partialDate`, populating
-     * neither `date` nor `text`. Consulting `partialDate` keeps those from being
-     * silently dropped.
+     * Converts a native BDAY or ANNIVERSARY; null when it has no usable value. A full calendar
+     * date becomes [ContactDate.date]; anything else is kept as text. That text is either a
+     * free-text value or a reduced-accuracy date such as `--0415` (RFC 6350 §4.3.1, a birthday
+     * without a year), which ez-vcard exposes only through `partialDate`, with neither `date`
+     * nor `text` set. Without the `partialDate` read those would be silently dropped.
      */
     private fun toContactDate(prop: ezvcard.property.DateOrTimeProperty): ContactDate? {
         val localDate = prop.date?.let { runCatching { LocalDate.from(it) }.getOrNull() }
@@ -214,7 +205,10 @@ class VCardParser {
         return ContactDate(date = localDate, text = text)
     }
 
-    /** Apple raw X-ABDATE value: an ISO or basic-ISO date string, retained as text if unparseable. */
+    /**
+     * Converts an Apple raw X-ABDATE value, an ISO or basic-ISO date. The trimmed string is
+     * always kept as text; null only when blank.
+     */
     private fun dateFromText(value: String?): ContactDate? {
         val v = value?.trim().blankToNull() ?: return null
         val localDate = runCatching { LocalDate.parse(v) }.getOrNull()
@@ -223,13 +217,13 @@ class VCardParser {
     }
 
     /**
-     * The dialable text of a TEL property, degrading rather than dropping the
-     * contact on a malformed value. A 4.0 `TEL;VALUE=uri` whose value isn't a
-     * spec-valid tel URI (e.g. a global number missing the leading "+") makes
-     * ez-vcard reject it: the current reader falls back to the raw `text`, but a
-     * URI that parses yet fails a lazy accessor (`uri.number` / `uri.toString()`)
-     * would throw and, via the caller's per-body catch, discard the WHOLE contact.
-     * Guard each source so a bad phone costs only that number, never the contact.
+     * Returns the dialable text of a TEL property, or "" when no source yields one.
+     *
+     * A 4.0 `TEL;VALUE=uri` whose value isn't a valid tel URI (for example a global number
+     * without the leading "+") makes ez-vcard fall back to the raw `text`. A URI that parses but
+     * fails a lazy accessor (`uri.number`, `uri.toString()`) would throw, and the caller's
+     * per-body catch would discard the whole contact. Each source is guarded so a bad phone
+     * costs only that number.
      */
     private fun phoneNumber(t: ezvcard.property.Telephone): String {
         t.text.blankToNull()?.let { return it }
@@ -239,11 +233,11 @@ class VCardParser {
 
     private fun String?.blankToNull(): String? = this?.takeIf { it.isNotBlank() }
 
-    /** Space-join the non-blank values of a multi-valued `N` component; null when empty. */
+    /** Space-joins the non-blank values of a multi-valued `N` component; null when empty. */
     private fun List<String>.joinNonBlank(): String? =
         filter { it.isNotBlank() }.joinToString(" ").blankToNull()
 
-    /** First non-blank value of a phonetic X- property (e.g. X-PHONETIC-FIRST-NAME). */
+    /** Value of the first [name] X- property (e.g. X-PHONETIC-FIRST-NAME), null when blank. */
     private fun VCard.phonetic(name: String): String? =
         getExtendedProperty(name)?.value.blankToNull()
 
@@ -257,7 +251,7 @@ class VCardParser {
     private fun socialType(prop: RawProperty): String? =
         prop.parameters.type?.takeIf { it.isNotBlank() }
 
-    /** Serialize this single card back to its vCard text for round-trip retention. */
+    /** Serializes this card to vCard text at its own version, for [Contact.rawVCard]. */
     private fun VCard.rawText(): String =
         Ezvcard.write(this).version(this.version).go()
 }

@@ -36,13 +36,12 @@ import androidx.compose.ui.unit.sp
 import org.onekash.kashcal.R
 
 /**
- * Full-screen branded veil shown while the app is locked.
+ * Draws the full-screen branded veil shown while the app is locked.
  *
- * It is rendered ABOVE the calendar content so nothing underneath is ever
- * visible, and it swallows all pointer input so the hidden UI can't be touched.
- * The [onUnlock] button is always present (even while the system prompt is
- * showing) so dismissing the OS sheet never shifts the layout — the user simply
- * sees the veil with a retry button.
+ * The host draws it above the calendar content; its opaque background hides everything
+ * underneath and it swallows pointer input so the hidden UI can't be touched. The [onUnlock]
+ * button is always present, even while the system prompt shows, so dismissing the prompt never
+ * shifts the layout: the user sees the veil with a retry button.
  */
 @Composable
 fun AppLockVeil(
@@ -53,11 +52,12 @@ fun AppLockVeil(
     Box(
         modifier = modifier
             .fillMaxSize()
-            // Swallow taps/gestures so the veiled calendar can't be interacted with.
+            // Swallows taps and gestures so the veiled calendar can't be touched.
             .pointerInput(Unit) {}
             .background(
+                // Plum shades darker than [iconBackground], so the icon tile stands out.
                 Brush.radialGradient(
-                    colors = listOf(Color(0xFF1B2230), Color(0xFF11151D), iconBackground),
+                    colors = listOf(Color(0xFF2C1932), Color(0xFF201225), Color(0xFF170C1A)),
                 )
             )
             .systemBarsPadding(),
@@ -71,7 +71,7 @@ fun AppLockVeil(
         ) {
             Spacer(Modifier.height(120.dp))
 
-            // Real app icon: launcher foreground on the launcher background, clipped square-ish.
+            // The app icon: launcher foreground on the launcher background, as a rounded square.
             Box(
                 modifier = Modifier
                     .size(92.dp)

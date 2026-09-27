@@ -19,35 +19,33 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * End-to-end coverage of the SHIPPED photo-fetch code path against a live server.
+ * Covers the production photo download, [CardDavClient.fetchPhoto], end to end against a live
+ * server.
  *
- * Its sibling [MultiServerCardDavPhotoProbeTest] characterizes the *reader/mapper*
- * (does a URI photo survive as a URI, does iCloud rewrite inline to a gateway URL)
- * and probes the gateway auth model with a hand-rolled OkHttp GET. That probe never
- * exercises the production download: [CardDavClient.fetchPhoto]. This test does — it
- * drives the real `fetchPhoto` (redirect-disabled photo client, same-registrable-
- * domain credential guard, raster-only + non-empty-body checks) against the URL the
- * server actually mints, so the guards ship with live coverage rather than only
- * MockWebServer coverage.
+ * The sibling [MultiServerCardDavPhotoProbeTest] characterizes the reader and mapper (does a
+ * URI photo survive as a URI, does iCloud rewrite inline bytes to a gateway URL) and probes
+ * the gateway auth model with a hand-rolled OkHttp GET, so it never calls `fetchPhoto`. This
+ * test drives the real `fetchPhoto` (redirect-disabled photo client, same-registrable-domain
+ * credential guard, raster-only and non-empty-body checks) against the URL the server mints,
+ * so those guards have live coverage beyond MockWebServer.
  *
- * Only servers that mint a *real* photo URL on a host they own exercise the fetch
- * (iCloud rewrites an inline photo to `gateway.icloud.com`). Passthrough servers keep
- * the synthetic `*.example.test` seed URI, which resolves to nothing — those skip via
- * assumeTrue (a real fetch would need a reachable seed photo, which we deliberately do
- * not host). So in practice this asserts the iCloud gateway path today.
+ * Only servers that mint a real photo URL on a host they own exercise the fetch (iCloud
+ * rewrites an inline photo to `gateway.icloud.com`). Servers that keep the inline bytes or
+ * the synthetic `*.example.test` seed URI mint none and skip through `assumeTrue`; a real
+ * fetch would need a reachable seed photo, which we deliberately don't host. In practice this
+ * asserts the iCloud gateway path.
  *
- * **Harness limitation this test skips around honestly:** the credential guard's
- * same-registrable-domain check calls OkHttp's `topPrivateDomain()`, whose public-suffix
- * list is an Android asset absent from a JVM/Robolectric worker — so the call throws and
- * the guard fails closed to exact-host. iCloud serves photos from `gateway.icloud.com`
- * while the CardDAV endpoint is on `pNN-contacts.icloud.com` (same registrable domain,
- * different host), so off-device the guard refuses the fetch before any request — the
- * documented `code == 0, isRetryable == false` sentinel. That is the on-device-only path
- * (asset present → cross-subdomain permitted); when this test sees it, it SKIPS rather
- * than asserting, since the harness can't reproduce the device's public-suffix data.
+ * Harness limitation: the credential guard's same-registrable-domain check calls OkHttp's
+ * `topPrivateDomain()`, whose public-suffix list is an Android asset absent from a JVM
+ * Robolectric worker, so the call throws and the guard falls back to exact-host. iCloud
+ * serves photos from `gateway.icloud.com` while the CardDAV endpoint is on
+ * `pNN-contacts.icloud.com` (same registrable domain, different host), so off-device the
+ * guard refuses the fetch before any request, with `code == 0, isRetryable == false`. On
+ * device the asset is present and the cross-subdomain fetch is permitted, so this test skips
+ * on that result instead of asserting.
  *
- * PII discipline: never prints the minted URL or response bytes — only status, host,
- * content-type, and byte count; the minted iCloud URL embeds the account DSID.
+ * Never prints the minted URL or response bytes, only status, host, content type and byte
+ * count: the minted iCloud URL embeds the account DSID.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -106,8 +104,8 @@ class MultiServerContactPhotoFetchTest(
         val book = resolveWritableBook(c, cr)
         assumeTrue("${config.name}: no writable address book to seed a photo into", book != null)
 
-        // Seed the inline-photo contact — the server-mint case (iCloud turns inline
-        // bytes into an authenticated gateway URL); seeding is idempotent.
+        // Seed the inline-photo contact, the server-mint case (iCloud turns inline bytes
+        // into an authenticated gateway URL). Seeding is idempotent.
         val inlineSeedUrl = book!!.url.trimEnd('/') + "/" + INLINE_FILENAME
         assumeTrue(
             "${config.name}: could not seed inline-photo contact",
@@ -127,7 +125,7 @@ class MultiServerContactPhotoFetchTest(
             mintedUrl != null,
         )
 
-        // Drive the SHIPPED download path — same client instance the sync layer uses.
+        // Drive the production download path on the same client type the sync layer uses.
         val result = c.fetchPhoto(mintedUrl!!)
 
         when (result) {
@@ -154,16 +152,17 @@ class MultiServerContactPhotoFetchTest(
                         "ERROR code=${result.code} retryable=${result.isRetryable} ===",
                 )
                 // code == 0 && !retryable is the credential guard refusing before any
-                // request — off-device that means only that the public-suffix list is
-                // absent (a cross-subdomain host like gateway.icloud.com can't be proven
-                // same-registrable-domain), NOT a product failure. Skip rather than fail:
-                // on device the asset loads and the fetch is permitted.
+                // request. Off-device that only means the public-suffix list is absent (a
+                // cross-subdomain host like gateway.icloud.com can't be proven
+                // same-registrable-domain), not a product failure; on device the asset
+                // loads and the fetch is permitted. An over-cap body gives the same result
+                // and also skips here.
                 assumeTrue(
                     "${config.name}: credential guard fell back to exact-host (public-suffix " +
                         "list absent in the JVM worker) — cross-subdomain fetch is device-only",
                     !(result.code == 0 && !result.isRetryable),
                 )
-                // Any other error IS a real failure: a live minted URL should authenticate
+                // Any other error is a real failure: a live minted URL should authenticate
                 // with the account's Basic creds (the auth-model probe confirmed 200
                 // image/jpeg). Surface the status, never the URL (DSID) or body.
                 assertFalse(
@@ -175,7 +174,7 @@ class MultiServerContactPhotoFetchTest(
         }
     }
 
-    /** Discover the login's first writable address book (else the first book), or null. */
+    /** Returns the login's first writable address book, else its first book, or null if none. */
     private suspend fun resolveWritableBook(c: CardDavClient, cr: ServerCredentials) = run {
         val root = if (config.usesWellKnownDiscovery) {
             c.discoverWellKnown(cr.serverUrl).getOrNull() ?: cr.serverUrl
@@ -190,7 +189,10 @@ class MultiServerContactPhotoFetchTest(
         books.firstOrNull { !it.isReadOnly } ?: books.first()
     }
 
-    /** Idempotent PUT of a body with the harness credentials. Returns true on 2xx / 412 / 204. */
+    /**
+     * PUTs [body] with the harness credentials (idempotent). Returns true on any 2xx or a 412,
+     * false on another status or an exception.
+     */
     private fun putSeed(url: String, body: String, cr: ServerCredentials): Boolean = try {
         val request = Request.Builder()
             .url(url)
@@ -202,7 +204,10 @@ class MultiServerContactPhotoFetchTest(
         false
     }
 
-    /** Read hrefs via sync-collection when available, else the full PROPFIND listing. */
+    /**
+     * Returns the book's hrefs from sync-collection, or from the PROPFIND listing when that
+     * fails or lists none.
+     */
     private suspend fun collectHrefs(c: CardDavClient, bookUrl: String): List<String> {
         (c.syncCollection(bookUrl, null) as? CalDavResult.Success)?.data?.let { report ->
             if (report.changed.isNotEmpty()) return report.changed.map { it.href }
@@ -210,11 +215,11 @@ class MultiServerContactPhotoFetchTest(
         return (c.listAllContactHrefs(bookUrl) as? CalDavResult.Success)?.data?.map { it.first }.orEmpty()
     }
 
-    /** Scheme+host of a URL for logging, without the account-identifying path. */
+    /** Returns a URL's scheme and host for logging, without the account-identifying path. */
     private fun hostOf(url: String): String =
         Regex("""^(\w+://[^/]+)""").find(url)?.groupValues?.get(1) ?: "<opaque>"
 
-    /** True when [url]'s host is under the RFC 6761 reserved `example.test` TLD (a synthetic seed). */
+    /** Returns whether [url]'s host is `example.test` or under it, a synthetic seed (RFC 6761). */
     private fun isSyntheticSeedUrl(url: String): Boolean {
         val host = Regex("""^\w+://([^/:]+)""").find(url)?.groupValues?.get(1) ?: return false
         return host == "example.test" || host.endsWith(".example.test")

@@ -16,11 +16,11 @@ import org.robolectric.annotation.Config
 import java.util.Locale
 
 /**
- * The tag-management screen carries a short intro at the top plus an info button
- * that reveals the detail inline: that removing a tag here is a local change
- * (events keep their labels) and how tags travel over CalDAV sync. The intro is
- * always visible; the detail is hidden until the info button is tapped. Driven
- * through the public [TagsScreen] — the surface the user taps.
+ * Verifies the tag-management screen's short intro and its info button, which reveals the
+ * detail inline: removing a tag here is a local change (events keep their labels), and how tags
+ * travel over CalDAV sync. The intro is always visible, with or without tags; the detail is
+ * hidden until the info button is tapped. Driven through the public [TagsScreen], the surface
+ * the user taps.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h9999dp-mdpi")
@@ -53,7 +53,7 @@ class TagsScreenManageNoteTest {
         // Short intro: always visible.
         composeTestRule.onNodeWithText("Color, rename, or remove your tags", substring = true)
             .assertIsDisplayed()
-        // Removal + sync detail: hidden until the info button is tapped.
+        // Removal and sync detail: hidden until the info button is tapped.
         composeTestRule.onNodeWithText("your events keep their labels", substring = true)
             .assertDoesNotExist()
 

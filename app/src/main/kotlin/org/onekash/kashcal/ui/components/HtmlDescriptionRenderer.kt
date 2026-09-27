@@ -8,21 +8,18 @@ import androidx.compose.ui.text.fromHtml
 import org.onekash.kashcal.util.text.shouldOpenExternally
 
 /**
- * Convert an HTML description to an [AnnotatedString] for display.
+ * Converts an HTML description to an [AnnotatedString] for display.
  *
- * Delegates to [AnnotatedString.fromHtml] (Compose `ui-text`), which wraps
- * `HtmlCompat.fromHtml(text, FROM_HTML_MODE_COMPACT, null, tagHandler)` —
- * the `null` `ImageGetter` ensures `<img>` tags never trigger a network
- * fetch.
+ * [AnnotatedString.fromHtml] (Compose `ui-text`) wraps
+ * `HtmlCompat.fromHtml(text, FROM_HTML_MODE_COMPACT, null, tagHandler)`; the `null`
+ * `ImageGetter` means an `<img>` tag never triggers a network fetch.
  *
- * Link taps are gated through [shouldOpenExternally] so that dangerous
- * schemes (`javascript:`, `data:`, `file:`, custom deep links) are silently
- * ignored and never reach [onNavigate]. This matches the safety contract of
- * the plain-text rendering path.
+ * A tapped link reaches [onNavigate] only if [shouldOpenExternally] allows its scheme (http,
+ * https, tel, mailto); any other, such as `javascript:`, `data:`, `file:` or a deep link, is
+ * silently ignored, as in [LinkifiedText].
  *
- * Caller contract: `htmlText` must actually contain HTML (use `looksLikeHtml`
- * to decide). Plain text passed here would have stray `<` characters dropped
- * by the parser.
+ * [htmlText] must contain HTML (decide with `looksLikeHtml`): the parser drops stray `<`
+ * characters from plain text.
  */
 fun buildHtmlDescriptionAnnotatedString(
     htmlText: String,

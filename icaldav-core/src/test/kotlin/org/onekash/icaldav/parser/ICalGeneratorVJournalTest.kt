@@ -18,7 +18,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Exhaustive tests for VJOURNAL generation per RFC 5545 Section 3.6.3.
+ * Tests VJOURNAL generation (RFC 5545 §3.6.3).
  */
 @DisplayName("ICalGenerator VJOURNAL Tests")
 class ICalGeneratorVJournalTest {

@@ -16,23 +16,22 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [ICalEventMapper.toEntity]'s ATTENDEE translation layer.
+ * Tests [ICalEventMapper.toEntity]'s ATTENDEE translation from icaldav-core to Room.
  *
- * Each test parses a VEVENT through the icaldav-core parser, runs it
- * through `toEntity`, and asserts the resulting Room [Attendee] has the
- * correct field shape. This locks the icaldav-core → Room translation
- * contract:
+ * Each test parses a VEVENT with the icaldav-core parser, maps it with `toEntity`, and checks
+ * the fields of the resulting Room [Attendee]:
  *
- * - `email` → `address` with `mailto:` prefix re-prepended
+ * - `email` → `address`, with `mailto:` restored for an email-shaped value; a `urn:uuid:` or
+ *   principal-href CAL-ADDRESS is stored as is
  * - `partStat` enum → TEXT via `toICalString()` (NEEDS_ACTION → NEEDS-ACTION)
  * - `role` enum → TEXT via `toICalString()` (REQ_PARTICIPANT → REQ-PARTICIPANT)
  * - `cutype` enum → `.name` (INDIVIDUAL passes through)
- * - `rsvp: Boolean?` → passthrough (nullable, three-state semantics)
- * - `member: List<String>` → passthrough (list)
- * - `delegatedFrom`/`delegatedTo`: List<String> → passthrough
+ * - `rsvp: Boolean?` → passthrough (nullable, three-state)
+ * - `member`, `delegatedFrom`, `delegatedTo` (List<String>) and `sentBy` → passthrough
  * - `scheduleAgent`/`scheduleForceSend` enums → `.name`
- * - `scheduleStatus: List<ScheduleStatus>?` → first.code → TEXT
+ * - `scheduleStatus: List<ScheduleStatus>?` → first code → TEXT
  * - `sortOrder` → wire-order index from icalEvent.attendees
+ * - `eventId` → 0L until the caller rewrites it
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -100,9 +99,9 @@ class ICalEventMapperAttendeeTest {
 
     @Test
     fun `urn-uuid CAL-ADDRESS is stored verbatim, not prefixed with mailto`() {
-        // RFC 5545 §3.3.3: ATTENDEE is any URI. A urn:uuid form must not become
-        // mailto:urn:uuid: in the table — that breaks display, matchesAttendee,
-        // and avatar canonicalization, and round-trips wrong on the next push.
+        // RFC 5545 §3.3.3: a CAL-ADDRESS is any URI. A urn:uuid form must not become
+        // mailto:urn:uuid: in the table, which breaks display, matchesAttendee and avatar
+        // canonicalization.
         val a = parseAndMap(
             listOf("ATTENDEE;CN=Alice:urn:uuid:0c3f2d4e-9b1a-4f6e-8a2b-1c2d3e4f5061")
         )[0]
@@ -174,7 +173,7 @@ class ICalEventMapperAttendeeTest {
                 """ATTENDEE;MEMBER="mailto:dlist@example.com":mailto:alice@example.com"""
             )
         )[0]
-        // parseMailtoList strips mailto: prefix on parse — that's intentional for delegatedTo/From parity.
+        // The parser strips mailto: from MEMBER, as for DELEGATED-TO and DELEGATED-FROM.
         assertEquals(listOf("dlist@example.com"), a.member)
     }
 

@@ -15,14 +15,11 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * RDATE pushable on patch path.
+ * Tests that [IcsPatcher.patch] pushes local RDATE edits: like EXDATEs, RDATEs come from
+ * `Event.rdate`, not the server body, so an edit isn't silently dropped on push.
  *
- * `IcsPatcher.patchToICalEvent` previously preserved server RDATEs via Kotlin
- * `copy()` omission — local edits to `Event.rdate` were silently dropped on push.
- * Mirror the existing `exdates` handling by adding rdates to the copy() call.
- *
- * Note on timestamps: `Event.rdate` CSV must be stringified millisecond-epoch
- * longs (parseTimestampCsv uses toLongOrNull).
+ * `Event.rdate` must hold comma-separated millisecond-epoch longs;
+ * `EventToICalEventMapper.parseTimestampCsv` drops any entry that isn't one.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -60,8 +57,8 @@ class RDatePatchPathTest {
     private fun createEvent(
         uid: String = "a04-test@kashcal.test",
         title: String = "RDATE Patch-Path Test",
-        startTs: Long = 1_767_088_800_000L,   // 2025-12-30T14:00:00Z
-        endTs: Long = 1_767_092_400_000L,     // 2025-12-30T15:00:00Z (1 hour)
+        startTs: Long = 1_767_088_800_000L,   // 2025-12-30T10:00:00Z
+        endTs: Long = 1_767_092_400_000L,     // 2025-12-30T11:00:00Z (1 hour)
         isAllDay: Boolean = false,
         timezone: String? = "UTC",
         rrule: String? = "FREQ=WEEKLY;BYDAY=TU",
@@ -91,8 +88,8 @@ class RDatePatchPathTest {
     )
 
     /**
-     * Build a rawIcal fixture for patch-path tests. ICS timestamp format is OK
-     * here (this feeds the parser, not parseTimestampCsv).
+     * Builds a rawIcal fixture for patch-path tests. It takes ICS timestamps, since it feeds
+     * the parser, not parseTimestampCsv.
      */
     private fun buildRawIcal(
         uid: String = "a04-test@kashcal.test",
@@ -118,7 +115,7 @@ class RDatePatchPathTest {
         appendLine("END:VCALENDAR")
     }
 
-    // ========== Patch path override (core bug fix) ==========
+    // ========== Patch path override ==========
 
     @Test
     fun `patch path emits RDATE when Event rdate set and rawIcal has no RDATE`() {
@@ -187,8 +184,8 @@ class RDatePatchPathTest {
 
     @Test
     fun `patch path emits multiple RDATE lines for CSV with multiple timestamps`() {
-        // Two RDATEs in Event.rdate column → two separate RDATE lines in output
-        // (the generator emits forEach, one line per entry).
+        // Two RDATEs in the Event.rdate column give two RDATE lines: the generator writes one
+        // line per entry.
         val raw = buildRawIcal(rdateIcs = emptyList())
         val event = createEvent(
             rdate = "$rdateMs_Feb14,$rdateMs_Jun1",
@@ -217,9 +214,8 @@ class RDatePatchPathTest {
 
     @Test
     fun `patch path emits all-day RDATE as DATE value without TZID`() {
-        // All-day event with rdate populated. Output RDATE should use VALUE=DATE form
-        // (or a DATE-only timestamp without T0...) and carry no TZID.
-        // Midnight UTC for Feb 14 2026.
+        // All-day event with an rdate: the output RDATE must be VALUE=DATE with a date-only
+        // value and no TZID. The rdate is midnight UTC on Feb 14 2026.
         val allDayMs = ZonedDateTime.of(2026, 2, 14, 0, 0, 0, 0, ZoneOffset.UTC)
             .toInstant().toEpochMilli()
         val allDayStart = ZonedDateTime.of(2025, 12, 30, 0, 0, 0, 0, ZoneOffset.UTC)
@@ -264,7 +260,7 @@ class RDatePatchPathTest {
             "All-day RDATE must carry VALUE=DATE parameter; got: $line",
             line.contains("VALUE=DATE")
         )
-        // Extract the value after the final colon; for DATE form, must be YYYYMMDD with no 'T' delimiter.
+        // The value after the final colon must be YYYYMMDD, with no 'T' delimiter.
         val valuePart = line.substringAfterLast(':')
         assertFalse(
             "All-day RDATE value must be date-only (no T time marker); got value '$valuePart' in line: $line",
@@ -316,14 +312,14 @@ class RDatePatchPathTest {
             "RRULE must remain FREQ=WEEKLY;BYDAY=TU; got: $rruleLines",
             rruleLines.any { it.contains("FREQ=WEEKLY") && it.contains("BYDAY=TU") }
         )
-        // X-* property preserved from rawIcal via copy() omission
+        // X-* property kept from rawIcal
         assertTrue(
             "X-APPLE-MARKER custom prop must be preserved from rawIcal",
             ics.contains("X-APPLE-MARKER:foo")
         )
     }
 
-    // ========== No-regression guards (green pre-fix) ==========
+    // ========== No-regression guards ==========
 
     @Test
     fun `patch path emits no RDATE when both Event rdate and server RDATE are null`() {
@@ -341,8 +337,7 @@ class RDatePatchPathTest {
 
     @Test
     fun `fresh path still emits RDATE from Event rdate unchanged`() {
-        // Regression guard: fresh path (no rawIcal) must continue to emit RDATE
-        // from Event.rdate. This change does not touch EventToICalEventMapper.
+        // The fresh path (no rawIcal) emits RDATE from Event.rdate.
         val event = createEvent(
             rdate = "$rdateMs_Feb14",
             rawIcal = null

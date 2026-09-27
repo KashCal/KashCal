@@ -13,9 +13,10 @@ import org.onekash.kashcal.MainActivity
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Verifies the Quick Settings tile produces exactly the intent the existing
- * MainActivity route consumes to open Quick Add. This is the unit-testable seam
- * for the otherwise framework-bound TileService.
+ * Tests [buildQuickAddCaptureIntent], the Quick Settings tile's intent: ACTION_VIEW to
+ * MainActivity, the create_event widget action its route reads, FLAG_ACTIVITY_NEW_TASK, and no
+ * start timestamp; it also pins the action constants' values. The builder is the unit-testable
+ * seam for the framework-bound TileService.
  */
 @RunWith(RobolectricTestRunner::class)
 class QuickAddLaunchIntentTest {
@@ -54,7 +55,7 @@ class QuickAddLaunchIntentTest {
 
     @Test
     fun `extra value matches the constant, not a hardcoded literal drift`() {
-        // Guards against the route and the tile drifting apart.
+        // Pins the wire values, which shortcuts.xml also writes as literals.
         assertEquals("create_event", ACTION_CREATE_EVENT)
         assertEquals("widget_action", EXTRA_ACTION)
         assertNotEquals(ACTION_CREATE_EVENT, ACTION_GO_TO_TODAY)

@@ -11,27 +11,24 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Manages notification channels for sync operations.
+ * Creates the sync notification channels and owns their notification IDs.
  *
- * Creates and manages two channels:
- * 1. SYNC_PROGRESS - Low importance, for ongoing sync foreground service
- * 2. SYNC_STATUS - Default importance, for sync completion/error notifications
+ * - [CHANNEL_SYNC_PROGRESS]: low importance, for the foreground sync notification.
+ * - [CHANNEL_SYNC_STATUS]: default importance, for completion, error, parse-failure, conflict
+ *   and expiry notifications.
  *
- * Per Android best practices:
- * - Channels are created once and persisted
- * - Users can customize channel settings
- * - Channel settings cannot be changed programmatically after creation
+ * Once a channel exists, re-creating it updates only its name and description, and lowers its
+ * importance only if the user hasn't changed the channel. A raised importance reaches only
+ * devices where the channel doesn't exist yet.
  */
 @Singleton
 class SyncNotificationChannels @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {
-        // Channel IDs
         const val CHANNEL_SYNC_PROGRESS = "sync_progress"
         const val CHANNEL_SYNC_STATUS = "sync_status"
 
-        // Notification IDs
         const val NOTIFICATION_ID_SYNC_PROGRESS = 1001
         const val NOTIFICATION_ID_SYNC_COMPLETE = 1002
         const val NOTIFICATION_ID_SYNC_ERROR = 1003
@@ -43,24 +40,17 @@ class SyncNotificationChannels @Inject constructor(
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     }
 
-    /**
-     * Create all notification channels.
-     * Should be called at app startup.
-     */
+    /** Creates both channels; called from `KashCalApplication.onCreate`. */
     fun createChannels() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
-            return // Channels not needed before Android 8
+            return // No channels before Android 8.
         }
 
         createSyncProgressChannel()
         createSyncStatusChannel()
     }
 
-    /**
-     * Create the sync progress channel.
-     * Used for foreground service notification during sync.
-     * Low importance to avoid disturbing the user.
-     */
+    /** Silent and badgeless, so a running sync doesn't disturb the user. */
     private fun createSyncProgressChannel() {
         val channel = NotificationChannel(
             CHANNEL_SYNC_PROGRESS,
@@ -77,11 +67,7 @@ class SyncNotificationChannels @Inject constructor(
         notificationManager.createNotificationChannel(channel)
     }
 
-    /**
-     * Create the sync status channel.
-     * Used for sync completion and error notifications.
-     * Default importance to alert user of important sync events.
-     */
+    /** Default importance, so sync results and errors alert the user. */
     private fun createSyncStatusChannel() {
         val channel = NotificationChannel(
             CHANNEL_SYNC_STATUS,
@@ -95,39 +81,28 @@ class SyncNotificationChannels @Inject constructor(
         notificationManager.createNotificationChannel(channel)
     }
 
-    /**
-     * Check if notifications are enabled for the app.
-     */
+    /** Returns whether the app may post notifications at all. */
     fun areNotificationsEnabled(): Boolean {
         return NotificationManagerCompat.from(context).areNotificationsEnabled()
     }
 
-    /**
-     * Check if a specific channel is enabled.
-     *
-     * @return true if channel exists and is not disabled, false otherwise
-     */
+    /** Returns true if the channel exists and the user hasn't turned it off. */
     fun isChannelEnabled(channelId: String): Boolean {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) {
             return areNotificationsEnabled()
         }
 
         val channel = notificationManager.getNotificationChannel(channelId)
-            ?: return false // Non-existent channel is not enabled
+            ?: return false
 
         return channel.importance != NotificationManager.IMPORTANCE_NONE
     }
 
-    /**
-     * Cancel a notification by ID.
-     */
     fun cancel(notificationId: Int) {
         notificationManager.cancel(notificationId)
     }
 
-    /**
-     * Cancel all sync-related notifications.
-     */
+    /** Cancels every sync notification ID above. */
     fun cancelAll() {
         cancel(NOTIFICATION_ID_SYNC_PROGRESS)
         cancel(NOTIFICATION_ID_SYNC_COMPLETE)

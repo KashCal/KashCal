@@ -15,18 +15,10 @@ import java.net.URL
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLHandshakeException
 
-/**
- * iCloud connection state - tracks sign-in flow.
- *
- * Used by AccountSettingsViewModel and AccountSettingsScreen to manage
- * the iCloud connection UI state.
- */
+/** Tracks the iCloud sign-in flow for the account settings UI. */
 @Immutable
 sealed class ICloudConnectionState {
-    /**
-     * Not connected to iCloud.
-     * Shows sign-in form with email/password fields.
-     */
+    /** Not connected: the sign-in form's Apple ID, password, help toggle and error. */
     data class NotConnected(
         val appleId: String = "",
         val password: String = "",
@@ -34,16 +26,10 @@ sealed class ICloudConnectionState {
         val error: UiMessage? = null
     ) : ICloudConnectionState()
 
-    /**
-     * Currently connecting to iCloud.
-     * Shows loading indicator.
-     */
+    /** Sign-in in progress. */
     data object Connecting : ICloudConnectionState()
 
-    /**
-     * Successfully connected to iCloud.
-     * Shows account info and sync status.
-     */
+    /** Connected: the account and its sync status. */
     data class Connected(
         val accountId: Long,
         val appleId: String,
@@ -54,85 +40,68 @@ sealed class ICloudConnectionState {
 }
 
 /**
- * iCloud account UI model for AccountsScreen display.
- *
- * Provides a simplified view of the connected iCloud account
- * for the accounts list, separate from the full ICloudConnectionState.
+ * Describes the connected iCloud account for the accounts list, derived from
+ * [ICloudConnectionState.Connected].
  */
 @Immutable
 data class ICloudAccountUiModel(
-    /** Account database ID */
     val accountId: Long,
-    /** User's Apple ID (email) */
+    /** The Apple ID (email). */
     val email: String,
-    /** Number of calendars synced from this account */
     val calendarCount: Int,
-    /** Number of consecutive sync failures (0 = healthy) */
+    /** 0 when healthy. */
     val consecutiveSyncFailures: Int = 0,
-    /** Timestamp of last successful sync (null = never synced) */
+    /** Null when the account never synced. */
     val lastSuccessfulSyncAt: Long? = null
 )
 
 /**
- * ICS Calendar subscription UI model.
- *
- * IMPORTANT: This is the UI model, NOT the database entity.
- * The database entity is at data/db/entity/IcsSubscription.kt
- *
- * Renamed from `IcsSubscription` to `IcsSubscriptionUiModel` to avoid
- * confusion with the database entity class.
+ * Describes an ICS subscription for the UI. The Room entity is
+ * [org.onekash.kashcal.data.db.entity.IcsSubscription].
  */
 @Immutable
 data class IcsSubscriptionUiModel(
-    /** Database ID (null for new subscriptions not yet saved) */
+    /** Null for a subscription not yet saved. */
     val id: Long?,
-    /** ICS feed URL */
     val url: String,
-    /** Display name for the subscription */
     val name: String,
-    /** Calendar color as ARGB integer */
+    /** ARGB. */
     val color: Int,
-    /** Whether sync is enabled for this subscription */
     val enabled: Boolean = true,
-    /** Last sync timestamp (0 = never synced) */
+    /** 0 when never synced. */
     val lastSync: Long = 0,
-    /** Associated calendar ID for event storage */
+    /** The Room calendar holding the subscription's events. */
     val eventTypeId: Long? = null,
-    /** Error message from last sync attempt (null = no error) */
+    /** The last sync attempt's error, or null. */
     val lastError: String? = null,
-    /** Sync interval in hours (default 24) */
     val syncIntervalHours: Int = 24
 ) {
-    /**
-     * Check if last sync resulted in an error.
-     */
+    /** Returns true when the last sync left a non-blank error. */
     fun hasError(): Boolean = !lastError.isNullOrBlank()
 }
 
 /**
- * State for fetching and validating ICS calendar URLs.
- * Used in the Add Subscription dialog.
+ * Holds the result of validating an ICS feed with [fetchCalendarInfo], for the add-subscription
+ * dialog and [HolidayCatalogPicker].
  */
 @Immutable
 sealed class FetchCalendarState {
-    /** Initial state - no fetch in progress */
     data object Idle : FetchCalendarState()
 
-    /** Currently fetching and validating the URL */
     data object Loading : FetchCalendarState()
 
-    /** Successfully fetched calendar info */
+    /** The feed's calendar name (blank when it has none) and VEVENT count. */
     data class Success(val name: String, val eventCount: Int) : FetchCalendarState()
 
     /**
-     * Fetch failed with error. Message is a [UiMessage] so the UI localizes it.
+     * The fetch failed; [message] is a [UiMessage] so the UI localizes it.
      *
-     * @property connectionFailed true only when the request failed at the
-     *   socket/connection layer (never reached the server). Distinguishes a
-     *   blocked local-network socket from a server that responded with an HTTP
-     *   error, empty body, or non-calendar content — mirrors the CalDAV path's
-     *   DiscoveryResult.Error (connection) vs AuthError (server responded) split
-     *   so the Android 17 local-network hint only fires on a genuine block.
+     * @property connectionFailed true when the fetch threw an exception [fetchCalendarInfo]
+     *   doesn't map to a message: a connect timeout, a refused connection or an unknown host,
+     *   but also a malformed URL, an oversize body or an SSL error other than a handshake
+     *   failure. An HTTP error, a handshake failure, an empty body or non-calendar content
+     *   leaves it false. Only a true value can arm the Android 17 local-network hint
+     *   ([resolveSubscriptionLanUi]).
      */
     data class Error(
         val message: UiMessage,
@@ -141,17 +110,14 @@ sealed class FetchCalendarState {
 }
 
 /**
- * Fetch and validate an ICS calendar URL.
- * Returns calendar name and event count on success, or error message on failure.
+ * Fetches and validates an ICS feed, returning [FetchCalendarState.Success] or
+ * [FetchCalendarState.Error]. Every exception the fetch throws becomes an Error.
  *
- * @param rawUrl The ICS feed URL to fetch (webcal:// is accepted and rewritten to https://)
- * @return FetchCalendarState with either Success or Error
+ * @param rawUrl the feed URL; webcal:// and webcals:// are rewritten to https://.
  */
 suspend fun fetchCalendarInfo(rawUrl: String): FetchCalendarState = withContext(Dispatchers.IO) {
-    // Convert webcal:// (and webcals://) to https:// before handing the URL to
-    // OkHttp, which only speaks http/https and throws on any other scheme. This
-    // matters when the field was pre-filled from a webcal:// subscription link,
-    // so the fetch matches what the save path stores.
+    // OkHttp speaks only http and https and throws on any other scheme. The field can be
+    // pre-filled from a webcal:// link, and the save path stores the same rewrite.
     val url = normalizeSubscriptionUrl(rawUrl)
     try {
         val client = OkHttpClient.Builder()
@@ -168,7 +134,7 @@ suspend fun fetchCalendarInfo(rawUrl: String): FetchCalendarState = withContext(
         val response = try {
             client.newCall(request).execute()
         } catch (e: SSLHandshakeException) {
-            // Attempt AIA certificate chain completion (same as IcsFetcher)
+            // Try AIA certificate chain completion, as IcsFetcher does.
             Log.w("fetchCalendarInfo", "SSL failed, attempting AIA chain completion: ${e.message}")
             val parsedUrl = URL(url)
             val completer = AiaCertificateChainCompleter()
@@ -210,9 +176,8 @@ suspend fun fetchCalendarInfo(rawUrl: String): FetchCalendarState = withContext(
                 UiMessage.ResId(R.string.ics_fetch_error_not_calendar))
         }
 
-        // Parse only the VCALENDAR preamble (cheap) to get the human-readable
-        // name. Counting VEVENTs via regex avoids a full parse on large feeds
-        // (subscriptions can be tens of MB with tens of thousands of events).
+        // Parse only the VCALENDAR preamble for the name, and count VEVENTs with a regex: a full
+        // parse is slow on large feeds (tens of MB, tens of thousands of events).
         val preamble = content.substringBefore("BEGIN:VEVENT")
             .substringBefore("BEGIN:VTODO")
             .substringBefore("BEGIN:VJOURNAL") + "END:VCALENDAR"
@@ -222,11 +187,9 @@ suspend fun fetchCalendarInfo(rawUrl: String): FetchCalendarState = withContext(
 
         FetchCalendarState.Success(name, eventCount)
     } catch (e: Exception) {
-        // A network/parse exception: surface its own text (already a system
-        // message), via Literal since it is not an app resource. This is the
-        // socket/connection layer (connect timeout, refused, unknown host) — the
-        // request never got a server response, so a blocked local-network socket
-        // lands here and this is the only failure that arms the LAN hint.
+        // Show the exception's text as a Literal, since it isn't an app resource. Every exception
+        // here sets connectionFailed: a blocked local-network socket, the case the flag is for,
+        // but also a malformed URL or an oversize body.
         FetchCalendarState.Error(
             UiMessage.Literal(e.message ?: e.javaClass.simpleName),
             connectionFailed = true,

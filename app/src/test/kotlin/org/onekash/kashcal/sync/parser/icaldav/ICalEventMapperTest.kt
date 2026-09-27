@@ -13,10 +13,7 @@ import org.onekash.icaldav.parser.ICalParser
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
-/**
- * Tests for ICalEventMapper: verifies correct mapping from icaldav ICalEvent
- * to KashCal Event entity.
- */
+/** Tests [ICalEventMapper]'s mapping from an icaldav ICalEvent to a Room Event. */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
 class ICalEventMapperTest {
@@ -74,9 +71,9 @@ class ICalEventMapperTest {
 
     @Test
     fun `toEntity drops ACTION_NONE sentinel from reminders and alarmCount`() {
-        // Apple's RFC 9074 ACTION:NONE sentinel (1976 absolute trigger) must never
-        // become a reminder duration or inflate alarmCount on pull — otherwise its
-        // (trigger - dtStart) offset surfaces as a ~-18000-day phantom reminder.
+        // Apple's RFC 9074 ACTION:NONE sentinel (1976 absolute trigger) must never become
+        // a reminder or count in alarmCount on pull, or its (trigger - dtStart) offset
+        // shows as a phantom reminder about 18000 days early.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -137,9 +134,8 @@ class ICalEventMapperTest {
         val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertTrue("Should be all-day", entity.isAllDay)
-        // Verify startTs is Dec 25 2025 00:00:00 UTC (1766620800000 ms)
         assertEquals("Dec 25 2025 00:00 UTC in ms", 1766620800000L, entity.startTs)
-        // endTs should be Dec 25 23:59:59.999 (exclusive DTEND adjusted)
+        // The exclusive DTEND becomes an inclusive Dec 25 23:59:59.999.
         assertTrue("endTs should be same day as startTs", entity.endTs / 86400000 == entity.startTs / 86400000)
     }
 
@@ -241,7 +237,6 @@ class ICalEventMapperTest {
         val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
         assertTrue("Should be exception", ICalEventMapper.isException(events.first()))
-        // originalInstanceTime should be the RECURRENCE-ID timestamp
         assertNotNull("Should have originalInstanceTime", entity.originalInstanceTime)
     }
 
@@ -277,15 +272,13 @@ class ICalEventMapperTest {
 
     @Test
     fun `stored EXDATE and stored originalInstanceTime agree for the same excluded slot - TZID datetime`() {
-        // Guards the prune's EXDATE-gate for the real device shape: master
-        // DTSTART, EXDATE, and RECURRENCE-ID are all TZID=America/Chicago
-        // datetimes at the SAME original slot. The prune compares an exception's
-        // stored originalInstanceTime (normalized via normalizeRecurrenceId
-        // against the resolved master) against the master's stored exdate set
-        // (normalized via normalizeToMasterValueType against the master's own
-        // DTSTART). Those are two different code paths; if they ever produced
-        // different ms for the same slot, the prune would silently never fire
-        // and the "occurrence not deleted" bug would return. Assert they agree.
+        // Guards the pull's EXDATE-gated exception prune for the real device shape: master
+        // DTSTART, EXDATE and RECURRENCE-ID are all TZID=America/Chicago datetimes at the
+        // same original slot. The prune checks an exception's stored originalInstanceTime
+        // (normalizeRecurrenceId against the resolved master) against the master's stored
+        // exdate set (normalizeToMasterValueType against the master's own DTSTART). If the
+        // two paths gave different ms for one slot, the prune would silently never fire and
+        // an occurrence deleted on another client would stay on the calendar.
         val masterIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -319,11 +312,11 @@ class ICalEventMapperTest {
         val master = parser.parseAllEvents(masterIcs).getOrNull()!!.first()
         val exception = parser.parseAllEvents(exceptionIcs).getOrNull()!!.first()
 
-        // Master stored exdate (the set the prune's exdateSet is parsed from).
+        // The master's stored exdate, which the prune's exdateSet is parsed from.
         val storedExdate = ICalEventMapper.toEntity(master, masterIcs, 1L, null, null)
             .event.exdate!!.split(",").map { it.trim().toLong() }.toSet()
 
-        // Exception stored originalInstanceTime (what the prune tests membership of).
+        // The exception's stored originalInstanceTime, which the prune looks up in it.
         val storedInstance = ICalEventMapper.toEntity(
             exception, exceptionIcs, 1L, null, null, masterDtStart = master.dtStart
         ).event.originalInstanceTime
@@ -338,14 +331,12 @@ class ICalEventMapperTest {
 
     @Test
     fun `normalized lookup key matches stored originalInstanceTime for value-type-mismatched RECURRENCE-ID`() {
-        // Timed master, but the exception carries a DATE-form RECURRENCE-ID
-        // (value-type mismatch: RFC 5545 §3.8.4.4 says RECURRENCE-ID MUST share
-        // DTSTART's value type, but peer clients emit the mismatch and servers
-        // preserve it). The mapper NORMALIZES the stored originalInstanceTime to
-        // the master's local time-of-day. The exception pull-back LOOKUP must
-        // normalize the same way, or the raw midnight-UTC key misses the stored
-        // row and the exception is wrongly treated as NEW. This asserts the two
-        // derivations agree once both are normalized against the master DTSTART.
+        // Timed master, but the exception carries a DATE-form RECURRENCE-ID. RFC 5545
+        // §3.8.4.4 says RECURRENCE-ID MUST share DTSTART's value type, but peer clients emit
+        // the mismatch and servers preserve it. The mapper normalizes the stored
+        // originalInstanceTime to the master's local time of day, and the pull's exception
+        // lookup must normalize the same way, or the raw midnight-UTC key misses the stored
+        // row and the exception is treated as new.
         val masterIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -379,11 +370,10 @@ class ICalEventMapperTest {
         val master = parser.parseAllEvents(masterIcs).getOrNull()!!.first()
         val exception = parser.parseAllEvents(exceptionIcs).getOrNull()!!.first()
 
-        // What the mapper STORES. The caller passes the MASTER's DTSTART; the
-        // stored originalInstanceTime must be normalized against THAT, not the
-        // exception's own DTSTART. (Regression guard: a local named masterDtStart
-        // once shadowed this parameter and normalized against the exception's own
-        // DTSTART, severing the caller's value.)
+        // What the mapper stores. The caller passes the master's DTSTART, and the stored
+        // originalInstanceTime must be normalized against that, not the exception's own
+        // DTSTART; a local named masterDtStart in toEntity would shadow the parameter and
+        // cut the caller's value off.
         val storedInstanceTime = ICalEventMapper.toEntity(
             icalEvent = exception,
             rawIcal = exceptionIcs,
@@ -393,16 +383,16 @@ class ICalEventMapperTest {
             masterDtStart = master.dtStart,
         ).event.originalInstanceTime
 
-        // The lookup key PullStrategy builds: RECURRENCE-ID normalized against the
-        // master DTSTART. The store path must agree with it or the exception
-        // pull-back lookup misses the stored row and re-adds it as a NEW event.
+        // The lookup key PullStrategy builds: RECURRENCE-ID normalized against the master
+        // DTSTART. The stored value must match it or the lookup misses the stored row and
+        // re-adds it as a new event.
         val normalizedLookupTime = ICalEventMapper.normalizeRecurrenceId(
             recurrenceId = exception.recurrenceId,
             masterDtStart = master.dtStart,
         )?.timestamp
 
-        // Guard: the raw midnight-UTC form genuinely diverges from the normalized
-        // value, so this fixture exercises a real mismatch, not a trivial equality.
+        // The raw midnight-UTC form differs from the normalized value, so the fixture
+        // exercises a real mismatch.
         assertNotEquals(
             "Fixture must exercise a real value-type mismatch (raw != normalized)",
             normalizedLookupTime, exception.recurrenceId?.timestamp
@@ -420,11 +410,9 @@ class ICalEventMapperTest {
 
     @Test
     fun `toEntity with null masterDtStart falls back to raw RECURRENCE-ID timestamp`() {
-        // Documented fallback: when the master DTSTART isn't available (orphan
-        // exception, or master not resolved), the mapper stores the RECURRENCE-ID
-        // verbatim. The pull-side lookup uses the same null-master fallback, so
-        // both still agree. Guards normalizeRecurrenceId's masterDtStart==null
-        // pass-through branch.
+        // Without a master DTSTART (an orphan exception, or no resolvable master) the
+        // mapper stores the RECURRENCE-ID as is. The pull's lookup uses the same null-master
+        // pass-through in normalizeRecurrenceId, so both still agree.
         val exceptionIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -517,8 +505,8 @@ class ICalEventMapperTest {
 
     @Test
     fun `maps multiple alarms - keeps closest 5 by duration`() {
-        // Alarms happen to be in sorted order here (15m, 30m, 1h, 1d, 1w)
-        // All 5 fit within the limit
+        // Alarms are already in sorted order here (15m, 30m, 1h, 1d, 1w), and all 5 fit
+        // within the limit.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -566,10 +554,9 @@ class ICalEventMapperTest {
 
         val entity = ICalEventMapper.toEntity(icalEvent, ics, 1L, null, null).event
 
-        // Entity stores all 5 reminders (within limit of 5, sorted by duration)
         assertNotNull("Should have reminders", entity.reminders)
         assertEquals("Should store all 5 reminders", 5, entity.reminders!!.size)
-        // Verify sorted order: 15m, 30m, 1h, 1d, 1w (DurationUtils normalizes 1W to 7D)
+        // Sorted 15m, 30m, 1h, 1d, 1w; DurationUtils writes 1W as 7D.
         assertEquals("-PT15M", entity.reminders!![0])
         assertEquals("-PT30M", entity.reminders!![1])
         assertEquals("-PT1H", entity.reminders!![2])
@@ -606,7 +593,6 @@ class ICalEventMapperTest {
         val events = parser.parseAllEvents(ics).getOrNull()!!
         val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
-        // Should only include the START-related alarm
         assertNotNull(entity.reminders)
         assertEquals("Should have only 1 reminder (RELATED=END skipped)", 1, entity.reminders!!.size)
         assertEquals("-PT15M", entity.reminders!!.first())
@@ -652,7 +638,7 @@ class ICalEventMapperTest {
 
         assertNotNull("Should have reminders", entity.reminders)
         assertEquals("Should have 3 reminders", 3, entity.reminders!!.size)
-        // Verify sorted order: smallest duration first
+        // Smallest duration first.
         assertEquals("First should be 15 min", "-PT15M", entity.reminders!![0])
         assertEquals("Second should be 1 hour", "-PT1H", entity.reminders!![1])
         assertEquals("Third should be 1 day", "-P1D", entity.reminders!![2])
@@ -660,7 +646,8 @@ class ICalEventMapperTest {
 
     @Test
     fun `positive triggers sorted after negative triggers`() {
-        // Positive trigger (after event start) should sort to end
+        // A positive trigger (after the start) sorts by magnitude among the negative ones;
+        // it doesn't go to the end.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -786,7 +773,7 @@ class ICalEventMapperTest {
         assertNotNull("Should have reminders", entity.reminders)
         assertEquals("Should store all 5 reminders", 5, entity.reminders!!.size)
         // Verify sorted by duration: 15 min, 30 min, 1 hour, 1 day, 1 week
-        // Note: DurationUtils.format() normalizes 1W to 7D
+        // DurationUtils.format() writes 1W as 7D.
         assertEquals("First should be 15 min", "-PT15M", entity.reminders!![0])
         assertEquals("Second should be 30 min", "-PT30M", entity.reminders!![1])
         assertEquals("Third should be 1 hour", "-PT1H", entity.reminders!![2])
@@ -1152,14 +1139,12 @@ class ICalEventMapperTest {
 
         assertTrue("Should be all-day", entity.isAllDay)
 
-        // startTs should be Mar 16 00:00:00 UTC
         val startDate = java.time.Instant.ofEpochMilli(entity.startTs)
             .atZone(java.time.ZoneOffset.UTC)
             .toLocalDate()
         assertEquals("Start should be Mar 16", java.time.LocalDate.of(2026, 3, 16), startDate)
 
-        // endTs should be Mar 20 23:59:59.999 UTC (exclusive DTEND adjusted by -1ms)
-        // NOT Mar 21!
+        // endTs is Mar 20 23:59:59.999 UTC (the exclusive DTEND minus 1 ms), not Mar 21.
         val endDate = java.time.Instant.ofEpochMilli(entity.endTs)
             .atZone(java.time.ZoneOffset.UTC)
             .toLocalDate()
@@ -1169,7 +1154,6 @@ class ICalEventMapperTest {
             endDate
         )
 
-        // Verify total days = 5
         val totalDays = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate) + 1
         assertEquals("Should span 5 days (Mar 16, 17, 18, 19, 20)", 5, totalDays.toInt())
     }
@@ -1197,14 +1181,12 @@ class ICalEventMapperTest {
 
         assertTrue("Should be all-day", entity.isAllDay)
 
-        // startTs should be Feb 16 00:00:00 UTC
         val startDate = java.time.Instant.ofEpochMilli(entity.startTs)
             .atZone(java.time.ZoneOffset.UTC)
             .toLocalDate()
         assertEquals("Start should be Feb 16", java.time.LocalDate.of(2026, 2, 16), startDate)
 
-        // endTs should be Feb 16 23:59:59.999 UTC (exclusive DTEND adjusted by -1ms)
-        // NOT Feb 17!
+        // endTs is Feb 16 23:59:59.999 UTC (the exclusive DTEND minus 1 ms), not Feb 17.
         val endDate = java.time.Instant.ofEpochMilli(entity.endTs)
             .atZone(java.time.ZoneOffset.UTC)
             .toLocalDate()
@@ -1214,7 +1196,6 @@ class ICalEventMapperTest {
             endDate
         )
 
-        // Verify it's a single day event
         val totalDays = java.time.temporal.ChronoUnit.DAYS.between(startDate, endDate) + 1
         assertEquals("Should be 1 day", 1, totalDays.toInt())
     }
@@ -1395,10 +1376,9 @@ class ICalEventMapperTest {
 
     @Test
     fun `server-supplied CREATED from 2020 is not overwritten with sync clock`() {
-        // Regression guard for the bug where a server-supplied CREATED was
-        // overwritten with the local sync clock:
-        // pre-fix code stomped CREATED with System.currentTimeMillis().
-        // Any 2020 timestamp is well below 2020-09-13T12:26:40Z (1_600_000_000_000 ms).
+        // A server-supplied CREATED must not be replaced by the local sync clock
+        // (System.currentTimeMillis()). Any early-2020 timestamp is below
+        // 2020-09-13T12:26:40Z (1_600_000_000_000 ms).
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -1482,7 +1462,7 @@ class ICalEventMapperTest {
         assertEquals("-PT1H", entity.reminders!!.first())
     }
 
-    // ========== ORGANIZER scheduling-parameter mapping (RFC 6638 §7.3) ==========
+    // ========== ORGANIZER SCHEDULE-STATUS (RFC 6638 §7.3) and SENT-BY ==========
 
     @Test
     fun `maps ORGANIZER SCHEDULE-STATUS into organizerScheduleStatus`() {

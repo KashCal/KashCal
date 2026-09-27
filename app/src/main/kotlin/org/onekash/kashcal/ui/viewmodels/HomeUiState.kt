@@ -20,272 +20,247 @@ import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.util.CalendarIntentData
 import java.time.LocalDate
 
-/**
- * Immutable UI state for the HomeScreen (main calendar view).
- *
- * Follows Jetpack Compose best practices:
- * - @Immutable annotation for stable recomposition
- * - Clear separation of view state, data state, and UI events
- *
- * Architecture:
- * - Local-first: Works offline with Room database
- * - Optional sync: iCloud sync can be added without changing UI state
- */
+/** Holds the state HomeScreen renders, published by [HomeViewModel]. */
 @Immutable
 data class HomeUiState(
     // === VIEWING STATE (changes on swipe) ===
-    /** Currently viewing year */
+    /** Year being viewed. */
     val viewingYear: Int = java.util.Calendar.getInstance().get(java.util.Calendar.YEAR),
-    /** Currently viewing month (0-indexed, January = 0) */
+    /** Month being viewed, 0-indexed (January = 0). */
     val viewingMonth: Int = java.util.Calendar.getInstance().get(java.util.Calendar.MONTH),
 
     // === EVENT DOTS (pre-cached for calendar display) ===
     /**
-     * Event dots for calendar indicators.
-     * Key: "YYYY-MM" (e.g., "2024-12")
-     * Value: Map of dayOfMonth → List of color ints
+     * Event dots for the month and year grids: "YYYY-MM" key ([getDotsKey], e.g. "2024-12")
+     * to a map of day of month to the dots' color ints.
      */
     val eventDots: ImmutableMap<String, ImmutableMap<Int, ImmutableList<Int>>> = persistentMapOf(),
     /**
-     * Set of months that have successfully loaded dots.
-     * Uses encoded month format: year * 12 + month
-     * Only months in this Set have valid dots in eventDots map.
-     * Prevents false cache hits when fast-swipe cancels intermediate month loads.
+     * Months whose dots finished loading, encoded as year * 12 + month. Only these months have
+     * valid entries in [eventDots]; a fast swipe cancels intermediate loads, so a key alone
+     * would be a false cache hit.
      */
     val loadedMonths: PersistentSet<Int> = persistentSetOf(),
-    /**
-     * Set of years that have successfully loaded dots for year view.
-     * Prevents re-query when swiping back to a previously loaded year.
-     */
+    /** Years whose year-view dots finished loading, so swiping back to one doesn't re-query. */
     val loadedYears: PersistentSet<Int> = persistentSetOf(),
 
     // === SELECTED DAY STATE ===
-    /** Currently selected date (epoch millis), 0 = no selection */
+    /** Selected date in epoch millis, 0 when none. */
     val selectedDate: Long = 0L,
-    /** Formatted label for selected day (e.g., "December 17, 2024") */
+    /** Localized label for the selected day, e.g. "December 17, 2024". */
     val selectedDayLabel: String = "",
 
     // === DAY EVENTS CACHE (for swipe pager) ===
     /**
-     * Cache of events grouped by dayCode for smooth day pager scrolling.
-     * Key: dayCode (YYYYMMDD format, e.g., 20260115)
-     * Value: List of DisplayEvent for that day
-     * Loaded as a 7-day sliding window centered on selectedDate.
+     * Events for the day pager by dayCode (YYYYMMDD, e.g. 20260115), loaded from 3 days before
+     * [cacheRangeCenter] to 4 days after.
      */
     val dayEventsCache: ImmutableMap<Int, ImmutableList<DisplayEvent>> = persistentMapOf(),
-    /** Center date of the current cache (epoch millis at midnight) */
+    /** Center date of [dayEventsCache] in epoch millis, 0 when nothing is loaded. */
     val cacheRangeCenter: Long = 0L,
     /**
-     * Set of dayCode values that have been loaded.
-     * Used to distinguish "no events" from "not yet loaded".
+     * The 7 dayCodes from 3 days before [cacheRangeCenter] to 3 after, so "no events" differs
+     * from "not loaded yet".
      */
     val loadedDayCodes: PersistentSet<Int> = persistentSetOf(),
 
     // === CALENDARS ===
-    /** All available calendars (visibility determined by Calendar.isVisible) */
+    /** All Room calendars; [Calendar.isVisible] decides which show. */
     val calendars: ImmutableList<Calendar> = persistentListOf(),
-    /** Calendars grouped by account for UI display */
+    /** Room calendars grouped by account. */
     val calendarGroups: ImmutableList<CalendarGroup> = persistentListOf(),
-    /** Device calendars grouped by account (for EventFormSheet picker) */
+    /** Writable device calendars grouped by account, for the EventFormSheet picker. */
     val deviceCalendarGroups: ImmutableList<CalendarGroup> = persistentListOf(),
-    /** Default calendar for new events (supports both Room and Device) */
+    /** Default calendar for new events, a Room or a device calendar. */
     val defaultCalendar: DefaultCalendar? = null,
-    /** Usage-ranked tag suggestions for the event form's tag chip row */
+    /** Usage-ranked tag suggestions for the event form's tag chip row. */
     val categorySuggestions: ImmutableList<String> = persistentListOf(),
-    /** Per-tag custom colors (name to color, null = fall back to hash color) */
+    /** Custom color per tag name; null falls back to the name's hash color. */
     val tagColors: ImmutableMap<String, Int?> = persistentMapOf(),
-    /** Device calendars feature enabled */
+    /** Whether the device calendars feature is on. */
     val deviceCalendarsEnabled: Boolean = false,
-    /** Enabled device calendars (for drawer visibility toggles) */
+    /** Enabled device calendars, for the drawer's visibility toggles. */
     val enabledDeviceCalendars: ImmutableList<DeviceCalendar> = persistentListOf(),
-    /** Hidden device calendar IDs (enabled but hidden from view) */
+    /** Device calendar ids that are enabled but hidden from view. */
     val hiddenDeviceCalendarIds: PersistentSet<Long> = persistentSetOf(),
 
     // === SYNC STATE ===
-    /** Is sync currently in progress (duplicate-sync guard only; NOT a UI signal). */
+    /** Whether sync work is live; only the duplicate-sync guard reads it, not the UI. */
     val isSyncing: Boolean = false,
     /**
-     * Whether the pull-to-refresh spinner should be shown. Set true only for an
-     * in-session, user-initiated pull-to-refresh that is still running; cleared on
-     * every terminal sync status. Deliberately separate from [isSyncing] so a
-     * persisted/replayed WorkManager status on a fresh process can never resurrect
-     * the spinner (that was the offline "stuck spinner" bug).
+     * Whether the pull-to-refresh spinner shows. Set only for a running pull-to-refresh started
+     * in this session; cleared on every terminal sync status. Kept apart from [isSyncing] so a
+     * WorkManager status replayed on a fresh process never brings the spinner back.
      */
     val showRefreshSpinner: Boolean = false,
-    /** Message describing current sync state */
+    /** Set only when initialization fails; nothing in the UI reads it. */
     val syncMessage: String? = null,
-    /** Has any sync-capable account with credentials (iCloud or CalDAV) */
+    /** Whether any CalDAV-capable account (iCloud or CalDAV) has credentials. */
     val isConfigured: Boolean = false,
 
     // === LOADING STATE ===
-    /** General loading indicator */
+    /** Shows HomeScreen's full-screen spinner; [HomeViewModel] never sets it true. */
     val isLoading: Boolean = false,
 
     // === SEARCH STATE ===
-    /** Is search mode active */
+    /** Whether search mode is on. */
     val isSearchActive: Boolean = false,
-    /** Current search query */
+    /** Current search query. */
     val searchQuery: String = "",
-    /** Search results (Room + device events) with display timestamp */
+    /** Search results, Room and device events, each with its display timestamp. */
     val searchResults: ImmutableList<SearchResult> = persistentListOf(),
-    /** Date filter for search. Upcoming = future-only (default, no chip selected). AnyTime = include past. */
+    /**
+     * Date filter for search. [DateFilter.Upcoming], the default with no chip selected, skips
+     * past events; [DateFilter.AnyTime] includes them.
+     */
     val searchDateFilter: DateFilter = DateFilter.Upcoming,
-    /** Show search date picker bottom sheet */
+    /** Whether the search date picker sheet shows. */
     val showSearchDatePicker: Boolean = false,
     /**
-     * Range selection start date (millis) for date picker.
-     * When non-null, user has tapped once to start range selection.
-     * Second tap on same date = single day, different date = range.
+     * First tap of the search date picker in millis, null before it. A second tap on the same
+     * day makes a [DateFilter.SingleDay], on another day a [DateFilter.CustomRange].
      */
     val searchDateRangeStart: Long? = null,
 
-    // === WEEK VIEW STATE (used by ViewMode.THREE_DAYS) ===
-    /** Scroll position in week time grid (pixels) for in-session state preservation */
+    // === TIME GRID STATE (DAY, THREE_DAYS, WEEK) ===
+    /** Time-grid scroll position in pixels, kept for the session only. */
     val weekViewScrollPosition: Int = 0,
     /**
-     * Persisted time-grid scroll position as minutes from midnight (0..1439), restored
-     * across app restarts. -1 = never saved (fresh install) -> falls back to the default hour.
+     * Saved time-grid scroll position in minutes from midnight (0..1439), restored across app
+     * restarts. -1 when never saved, which falls back to the default hour.
      */
     val weekViewSavedScrollMinutes: Int = -1,
-    /** Hour height in dp for pinch-to-zoom (30-150 range) */
+    /** Hour height in dp for pinch-to-zoom, clamped to 30-150. */
     val weekViewHourHeight: Float = 60f,
-    /** Current pager position (day index 0-6) for context-aware FAB */
+    /**
+     * Leftmost page of the day or week pager, read by the top bar title, the Day week strip and
+     * the pager navigation. A page is a day in DAY and THREE_DAYS and a week in WEEK; the center
+     * page is today or the week holding it.
+     */
     val weekViewPagerPosition: Int = 0,
-    /** Pending pager position to scroll to (null = no pending navigation) */
+    /** Pager page to scroll to, or null when no navigation is pending. */
     val pendingWeekViewPagerPosition: Int? = null,
-    /** Show week view date picker dialog */
+    /** Whether the time-grid date picker dialog shows. */
     val showWeekViewDatePicker: Boolean = false,
 
-    // === DAY DETAIL SHEET (for month view) ===
-    /** Show day events bottom sheet */
+    // === DAY DETAIL SHEET (full-height month view) ===
+    /** Whether the day events sheet shows. */
     val showDayDetailSheet: Boolean = false,
-    /** Date for day detail sheet (epoch millis) */
+    /** Date of the day events sheet in epoch millis. */
     val dayDetailDate: Long = 0L,
 
     // === UI DIALOGS/SHEETS ===
-    /** Show onboarding for first-time users */
+    /** Whether the first-run onboarding sheet shows. */
     val showOnboardingSheet: Boolean = false,
-    /** Release notes the upgraded user hasn't acknowledged yet (sorted ascending by versionCode). */
+    /** Release notes the upgraded user hasn't acknowledged yet, ascending by versionCode. */
     val whatsNewReleases: ImmutableList<org.onekash.kashcal.domain.whatsnew.ReleaseNote> = persistentListOf(),
-    /** Show app info sheet */
+    /** Whether the app info sheet shows. */
     val showAppInfoSheet: Boolean = false,
-    /** Show share-availability bottom sheet */
+    /** Whether the share-availability sheet shows. */
     val showShareAvailabilitySheet: Boolean = false,
-    /** Show invitation inbox bottom sheet */
+    /** Whether the invitation inbox sheet shows. */
     val isInvitationInboxOpen: Boolean = false,
-    /** Show sync changes bottom sheet */
+    /** Whether the sync changes sheet shows. */
     val showSyncChangesSheet: Boolean = false,
-    /** Sync changes for bottom sheet display */
+    /** Changes from the latest sync that reported any, for the sync changes sheet. */
     val syncChanges: ImmutableList<SyncChange> = persistentListOf(),
-    /** Current calendar view mode (month grid, agenda list, or 3-day grid) */
+    /** Current calendar view. */
     val viewMode: ViewMode = ViewMode.MONTH,
     /**
-     * Last non-INSIGHTS view the user was on. Used as the back-target when
-     * leaving the Insights screen so back returns to whichever view the user
-     * came from (or their persisted default if Insights is the initial view).
-     * Never holds INSIGHTS — see HomeViewModel.setViewMode guard.
+     * Last view other than INSIGHTS, where back from Insights returns. Seeded from the persisted
+     * default view. Never holds INSIGHTS: [HomeViewModel.setViewMode] skips it.
      */
     val previousNonInsightsMode: ViewMode = ViewMode.MONTH,
-    /** Show year overlay for quick navigation */
+    /** Whether the year overlay for quick navigation shows. */
     val showYearOverlay: Boolean = false,
 
     // === NAVIGATION EVENTS (one-shot) ===
-    /** Navigate to today with an animated scroll (user-initiated; consumed after use) */
+    /** Navigates to today with an animated scroll; consumed after use. */
     val pendingNavigateToToday: Boolean = false,
     /**
-     * Navigate to today with an instant (non-animated) scroll - consumed after use.
-     * Used for the programmatic cold-start land so the pager settles in one frame
-     * with no in-flight animation for concurrent state writes to fight.
+     * Navigates to today without animation; consumed after use. The cold-start landing uses it
+     * so the pager settles in one frame, with no animation for concurrent state writes to fight.
      */
     val pendingNavigateToTodayInstant: Boolean = false,
-    /** Navigate to specific month (year, month) - consumed after use */
+    /** Navigates to a (year, month); consumed after use. */
     val pendingNavigateToMonth: Pair<Int, Int>? = null,
-    /** Scroll agenda list to top (today) - consumed after use */
+    /** Scrolls the agenda list to its top (today); consumed after use. */
     val pendingScrollAgendaToTop: Boolean = false,
 
     // === SNACKBAR EVENTS ===
-    /** Pending snackbar message */
+    /** Snackbar message waiting to show. */
     val pendingSnackbarMessage: String? = null,
-    /** Pending snackbar action */
+    /** Action for the pending snackbar's View button, or null for no button. */
     val pendingSnackbarAction: (() -> Unit)? = null,
 
     // === PENDING ACTIONS (from intents) ===
-    /**
-     * Pending action from notification/widget/shortcut/deep link.
-     * Consumed once by UI via LaunchedEffect, then cleared.
-     * Follows same pattern as pendingSnackbarMessage.
-     */
+    /** Action from an intent, consumed once by the UI; see [PendingAction]. */
     val pendingAction: PendingAction? = null,
 
     // === SYNC BANNER STATE ===
-    /** Show sync progress banner */
+    /** Whether the sync progress banner shows. */
     val showSyncBanner: Boolean = false,
-    /** Sync banner visual state (dots animation, check icon, warning icon) */
+    /** Sync banner state: syncing, preparing, success, partial error or error. */
     val syncBannerState: SyncBannerState = SyncBannerState.Syncing,
-    /** Raw error detail for Failed state (Compose resolves the full message) */
+    /** Raw error detail for a failed sync; Compose resolves the full message. */
     val syncErrorDetail: String? = null,
 
     // === ERROR STATE ===
     /**
-     * Current error to display.
-     * Determined by ErrorMapper based on error type.
-     * - Snackbar: Transient, auto-dismisses
-     * - Dialog: Blocking, requires user action
-     * - Banner: Persistent, shown at top
-     * - Silent: Logged only, no UI
+     * Error set by [HomeViewModel.showError]; ErrorMapper picks the presentation: Snackbar,
+     * Dialog (blocking, needs an action) or Banner (persistent, at top). A Silent error is only
+     * logged and never lands here. No screen reads this field.
      */
     val currentError: ErrorPresentation? = null,
-    /** Show error dialog (when currentError is Dialog type) */
+    /** True when [currentError] is a Dialog. */
     val showErrorDialog: Boolean = false,
-    /** Show error banner (when currentError is Banner type) */
+    /** True when [currentError] is a Banner. */
     val showErrorBanner: Boolean = false,
-    /** URL to open in browser (set by error actions) */
+    /** URL to open in the browser, set by an error action. */
     val pendingUrlToOpen: String? = null,
 
-    /** Pending drag reschedule for recurring event (shows edit scope dialog) */
+    /** Drag reschedule of a recurring event awaiting its edit scope. */
     val pendingDragReschedule: PendingDragReschedule? = null,
 
-    /** Pending form save awaiting scope selection (shows edit scope sheet over the form) */
+    /** Form save awaiting its scope; the scope sheet shows over the form. */
     val pendingFormSave: PendingFormSave? = null,
 
-    /** Pending delete awaiting scope selection (shows delete scope sheet) */
+    /** Delete awaiting its scope; the delete scope sheet shows. */
     val pendingDelete: PendingDelete? = null,
 
     /**
-     * Tick counter incremented when a form-save deferral path needs
-     * to release the form's `isSaving = true` flag back to false —
-     * after a save failure or a scope-sheet cancel. The form
-     * observes this via LaunchedEffect; the value isn't read, only
-     * the change.
+     * Increments after a deferred save fails or the scope sheet is cancelled, so the form clears
+     * its `isSaving` flag. The form reacts to the change, not the value.
      */
     val formSaveFailedTick: Int = 0,
 
     // === DISPLAY PREFERENCES ===
-    /** Show auto-detected emojis in event titles */
+    /** Whether event titles show auto-detected emojis. */
     val showEventEmojis: Boolean = true,
-    /** Time format preference: "system", "12h", or "24h" */
+    /** Time format preference: "system", "12h" or "24h". */
     val timeFormat: String = "system",
-    /** First day of week: 0=system, 1=Sunday, 2=Monday, 7=Saturday */
+    /**
+     * First day of week: 0 for the system default, else a Calendar constant (1 Sunday, 2 Monday,
+     * 7 Saturday).
+     */
     val firstDayOfWeek: Int = java.util.Calendar.SUNDAY,
-    /** Show week numbers in month calendar grid */
+    /** Whether the month grid shows week numbers. */
     val showWeekNumbers: Boolean = false,
-    /** Render the event form's tag row above the notes/attendees block */
+    /** Puts the event form's tag row above the notes; false puts it between notes and guests. */
     val tagsAboveNotes: Boolean = false,
-    /** Whether the Agenda view's top week bar is expanded (shown). Default: expanded */
+    /** Whether the Agenda view's top week bar is expanded (shown), the default. */
     val agendaWeekBarExpanded: Boolean = true,
-    /** Whether the Day view's top week-strip date picker is expanded (shown). Default: expanded */
+    /** Whether the Day view's top week-strip date picker is expanded (shown), the default. */
     val dayWeekBarExpanded: Boolean = true,
     /**
-     * Whether the all-day strip in the Day/3-Day/Week time-grid views is expanded
-     * (up to 3 rows per day) vs collapsed (1 row). Default: collapsed.
+     * Whether the all-day strip in the Day, 3-Day and Week views is expanded (up to 3 rows per
+     * day) or collapsed (1 row); collapsed by default.
      */
     val allDayRowsExpanded: Boolean = false,
-    /** User's up-to-2-letter avatar initials; empty renders the generic glyph */
+    /** User's avatar initials, up to 2 letters; empty shows the generic glyph. */
     val userInitials: String = ""
 ) {
-    /**
-     * Format the current viewing month/year for display.
-     */
+    /** Returns the viewed month and year as a localized label. */
     fun getMonthYearLabel(): String {
         val cal = java.util.Calendar.getInstance().apply {
             set(java.util.Calendar.YEAR, viewingYear)
@@ -296,33 +271,24 @@ data class HomeUiState(
         return java.text.SimpleDateFormat(pattern, java.util.Locale.getDefault()).format(cal.time)
     }
 
-    /**
-     * Get the key for event dots lookup.
-     */
+    /** Returns the [eventDots] key for a 0-indexed [month]. */
     fun getDotsKey(year: Int, month: Int): String {
         return String.format(java.util.Locale.ROOT, "%04d-%02d", year, month + 1)
     }
 
-    /**
-     * Check if there are events for a specific day.
-     */
+    /** Returns whether the day has any event dots. */
     fun hasEventsOnDay(year: Int, month: Int, day: Int): Boolean {
         val key = getDotsKey(year, month)
         return eventDots[key]?.get(day)?.isNotEmpty() == true
     }
 
-    /**
-     * Get event colors for a specific day.
-     */
+    /** Returns the day's event dot colors, empty when none are loaded. */
     fun getEventColors(year: Int, month: Int, day: Int): ImmutableList<Int> {
         val key = getDotsKey(year, month)
         return eventDots[key]?.get(day) ?: persistentListOf()
     }
 
-    /**
-     * Check if a calendar is visible.
-     * Uses Calendar.isVisible as source of truth.
-     */
+    /** Returns [Calendar.isVisible], the source of truth; true for an unknown id. */
     fun isCalendarVisible(calendarId: Long): Boolean {
         return calendars.find { it.id == calendarId }?.isVisible ?: true
     }
@@ -330,25 +296,21 @@ data class HomeUiState(
 }
 
 /**
- * Represents a pending action triggered by an intent (notification, widget, shortcut, deep link).
- * Consumed once by UI, then cleared via ViewModel.clearPendingAction().
+ * An action from an intent, for example a notification, widget, shortcut, share or deep link.
  *
- * This follows Android's recommended pattern for UI events:
- * - Convert events to state (not Channels)
- * - StateFlow for one-shot events with clear after consumption
- * - ViewModel owns state, UI observes
- * - Survives configuration changes
+ * MainActivity handles it once, then calls [HomeViewModel.clearPendingAction] after all its
+ * suspend work, since clearing changes the LaunchedEffect key and cancels the handler. Held as
+ * ViewModel state, not a Channel, so it survives a configuration change.
  *
  * @see <a href="https://developer.android.com/topic/architecture/ui-layer/events">UI events</a>
  */
 @Immutable
 sealed class PendingAction {
     /**
-     * Show event quick view sheet from reminder notification or widget tap.
+     * Opens a Room event's quick view sheet, from a reminder notification or a widget tap.
      *
-     * @param eventId Database ID of the event to show
-     * @param occurrenceTs Timestamp of the specific occurrence (for recurring events)
-     * @param source Where this action originated from
+     * @param eventId Room id of the event.
+     * @param occurrenceTs start of the occurrence to show.
      */
     data class ShowEventQuickView(
         val eventId: Long,
@@ -359,35 +321,30 @@ sealed class PendingAction {
     }
 
     /**
-     * Open event form to create new event (from widget).
+     * Opens a new event, from a widget, the New Event app shortcut or the Quick Settings tile.
+     * With no [startTs], Quick Add opens when it is enabled, else the full form.
      *
-     * @param startTs Optional start timestamp in milliseconds (epoch ms), or null for current time
+     * @param startTs start in epoch millis, set by the week widget; null for the next hour.
      */
     data class CreateEvent(val startTs: Long? = null) : PendingAction()
 
-    /**
-     * Open search screen (from app shortcut).
-     */
+    /** Opens search, from the Search app shortcut. */
     data object OpenSearch : PendingAction()
 
-    /**
-     * Import ICS file (from file share or content:// URI).
-     *
-     * @param uri Content URI of the ICS file to import
-     */
+    /** Opens the import sheet for a shared or opened ICS file at [uri] (content or file). */
     data class ImportIcsFile(val uri: Uri) : PendingAction()
 
-    /**
-     * Navigate to today's date (from widget header tap).
-     */
+    /** Navigates to today, from a widget or the Today app shortcut. */
     data object GoToToday : PendingAction()
 
     /**
-     * Show device event quick view sheet from widget tap.
-     * Queries CalendarProvider to find the device event instance.
+     * Opens a device event's quick view at a known occurrence, from a device reminder
+     * notification, a widget tap or a CalendarContract VIEW /events/{id} with a begin time. When
+     * no instance matches, the calendar navigates to the event's start date, or shows a "not
+     * found" snackbar when that fails too.
      *
-     * @param eventId CalendarProvider event ID
-     * @param occurrenceTs Timestamp of the specific occurrence
+     * @param eventId CalendarProvider event id.
+     * @param occurrenceTs start of the occurrence to show.
      */
     data class ShowDeviceEventQuickView(
         val eventId: Long,
@@ -395,35 +352,31 @@ sealed class PendingAction {
     ) : PendingAction()
 
     /**
-     * Open a device event from an external VIEW intent that supplied only the event ID (no
-     * occurrence timestamp). The quick-view sheet opens at the resolved occurrence — the next
-     * instance for a recurring series, or DTSTART for a single event. If no occurrence can be
-     * resolved (e.g. a fully-ended series), the calendar navigates to the event's start date,
-     * and only if even that fails is a "not found" snackbar shown. Distinct from
-     * [ShowDeviceEventQuickView], which targets a known occurrence timestamp.
+     * Opens a device event from an external VIEW intent that gave only its id. The quick view
+     * opens at the resolved occurrence: the next instance of a series, or DTSTART for a single
+     * event. If none resolves (for example an ended series), the calendar navigates to the
+     * event's start date, and only if that fails shows a "not found" snackbar.
      *
-     * @param eventId CalendarProvider event ID
+     * @param eventId CalendarProvider event id.
      */
     data class OpenDeviceEventById(
         val eventId: Long
     ) : PendingAction()
 
     /**
-     * Navigate to a specific date (from week widget day tap).
+     * Navigates to a date, from a week widget day tap or a CalendarContract /time URI.
      *
-     * @param dayCode Target date in YYYYMMDD format
+     * @param dayCode target date as YYYYMMDD.
      */
     data class GoToDate(val dayCode: Int) : PendingAction()
 
     /**
-     * Create event from external calendar intent (ACTION_INSERT).
-     * Pre-fills EventFormSheet with data from CalendarContract extras.
+     * Opens EventFormSheet pre-filled from another app's "Add to Calendar" intent (ACTION_INSERT
+     * or ACTION_EDIT, or an EDIT on the CalendarContract /events URI), or from a long text share,
+     * which [org.onekash.kashcal.util.ShareIntentRouter] puts in the description.
      *
-     * Used when other apps trigger "Add to Calendar" via standard Android intents.
-     * Examples: calendar invites, browser event links, etc.
-     *
-     * @param data Parsed intent data (title, location, times, etc.)
-     * @param invitees List of invitee emails (appended to description)
+     * @param data parsed intent data: title, location, times and the rest.
+     * @param invitees invitee emails, appended to the description.
      */
     data class CreateEventFromCalendarIntent(
         val data: CalendarIntentData,
@@ -431,15 +384,14 @@ sealed class PendingAction {
     ) : PendingAction()
 
     /**
-     * Open Quick Add dialog seeded with text shared from another app
-     * (Intent.ACTION_SEND, text/plain). Reference time is the moment the
-     * intent was received, so "tomorrow" resolves relative to share-arrival,
-     * not whatever date the user was browsing.
+     * Opens the Quick Add dialog seeded with a short text share from another app
+     * (`Intent.ACTION_SEND`, text/plain). The reference time is the intent's arrival, so
+     * "tomorrow" resolves against the share, not the date the user was browsing.
      *
-     * @param text Pre-cleaned single-line text destined for the Quick Add input.
-     * @param location First http(s) URL extracted from the share, or null.
-     *                 Applied only when the parser does not derive its own location.
-     * @param referenceMs Intent-arrival timestamp in epoch ms, used as parse anchor.
+     * @param text cleaned single-line text for the Quick Add input.
+     * @param location first http(s) URL in the share, or null; applied only when the parser
+     *   finds no location of its own.
+     * @param referenceMs intent arrival in epoch millis, the parse anchor.
      */
     data class QuickAddFromText(
         val text: String,
@@ -448,29 +400,23 @@ sealed class PendingAction {
     ) : PendingAction()
 }
 
-/**
- * Calendar view mode. Replaces the old showAgendaPanel + AgendaViewType two-field model
- * with a single enum for all views.
- *
- * Named ViewMode (not CalendarViewType) to avoid confusion with the removed CalendarViewType
- * enum (commit 2ee370a7).
- */
+/** Calendar view; [key] is the persisted value. */
 enum class ViewMode(val key: String) {
-    /** Month calendar grid with day events below */
+    /** Month grid with the selected day's events below. */
     MONTH("month"),
-    /** 30-day upcoming events list */
+    /** Upcoming events list, 90 days ahead. */
     AGENDA("agenda"),
-    /** Single-day scrollable time grid */
+    /** Single-day scrollable time grid. */
     DAY("day"),
-    /** 3-day scrollable time grid */
+    /** 3-day scrollable time grid. */
     THREE_DAYS("three_days"),
-    /** 7-day scrollable time grid (full 24-hour range) */
+    /** 7-day scrollable time grid. */
     WEEK("week"),
-    /** Full-height month grid with event snippets */
+    /** Full-height month grid with event snippets. */
     MONTH_FULL("month_full"),
-    /** 12-month year overview grid */
+    /** 12-month year overview grid. */
     YEAR("year"),
-    /** Premium insights analytics screen (drawer-only, not persisted as default) */
+    /** Insights analytics screen; opened from the drawer only, never persisted as the default. */
     INSIGHTS("insights");
 
     /** True for views that render a scrollable time grid (DAY, THREE_DAYS, WEEK). */
@@ -485,9 +431,8 @@ enum class ViewMode(val key: String) {
     }
 
     /**
-     * Pager-page step for next/prev gestures, in pager units. DAY and THREE_DAYS use a
-     * 1-day-per-page pager (1 or 3 pages = 1 or 3 days), WEEK uses a 1-week-per-page pager
-     * (1 page = 1 week).
+     * Pager pages to move per next or previous step. DAY and THREE_DAYS use a pager of one day
+     * per page (1 or 3 pages), WEEK one week per page (1 page). Null for non-time-grid views.
      */
     val pagerNextStep: Int? get() = when (this) {
         DAY -> 1
@@ -507,21 +452,29 @@ enum class EditScope { THIS_EVENT, THIS_AND_FUTURE, ALL_EVENTS }
 data class PendingDragReschedule(
     val displayEvent: DisplayEvent,
     val targetDate: LocalDate,
-    val targetStartMinutes: Int
-)
+    val targetStartMinutes: Int,
+    /**
+     * Scopes the drop can't use: a cross-day move the repeat rule can't
+     * express, or (for a Room series) one that would strand deleted, added or
+     * edited occurrences. null while that is still being checked (the sheet
+     * greys the series scopes until it knows). Same-day drops block nothing.
+     */
+    val blockedScopes: Set<EditScope>? = emptySet(),
+) {
+    /** Returns whether [other] is the same drop, whatever its check result. */
+    fun isSameDropAs(other: PendingDragReschedule): Boolean =
+        displayEvent == other.displayEvent && targetDate == other.targetDate &&
+            targetStartMinutes == other.targetStartMinutes
+}
 
 /**
- * A form save that was deferred so the user can pick a scope. The
- * sheet is rendered over the form; the form state is held verbatim
- * so a Cancel from the sheet leaves the user's edits intact.
+ * A form save deferred until the user picks a scope. The sheet shows over the form, and the
+ * form state is held verbatim so Cancel keeps the user's edits.
  *
- * `originalRrule` is the rrule the form was opened with — needed by
- * [computeEditScopeOptions][org.onekash.kashcal.ui.viewmodels.computeEditScopeOptions]
- * to detect whether the user changed it.
- *
- * `masterStartTs` and `isDetachedException` are captured at request
- * time from the live event so the option-set rules don't have to
- * derive them from the (possibly user-edited) form state.
+ * `originalRrule` is the rule the form opened with, so [computeEditScopeOptions] can tell
+ * whether the user changed it. `masterStartTs` and `isDetachedException` are taken from the
+ * loaded event when the save is requested, so the option rules don't derive them from the
+ * form state the user may have edited.
  */
 @Immutable
 data class PendingFormSave(
@@ -532,25 +485,25 @@ data class PendingFormSave(
     val isDetachedException: Boolean,
     val isRecurringDevice: Boolean = false,
     /**
-     * The loaded event's `isAllDay` at form-load time. ScopeContext
-     * uses this rather than `formState.isAllDay` so toggling all-day
-     * in the form before save can't change the date format the
-     * scope-sheet sub-copy applies to the occurrence timestamp.
+     * The loaded event's `isAllDay`; [occurrenceDateChanged] reads the date of [occurrenceTs]
+     * with it. `formState.isAllDay` won't do: the user can toggle all-day in the form before
+     * saving.
      */
     val loadedIsAllDay: Boolean = false,
+    /**
+     * True when the user moved the opened occurrence of a series to another
+     * day; see [ScopeContext.occurrenceDateChanged].
+     */
+    val occurrenceDateChanged: Boolean = false,
 )
 
 /**
- * A delete awaiting scope selection (recurring events only).
- * Non-recurring deletes never set this state; the ViewModel routes
- * them directly via the existing `deleteEventOptimistic` /
- * `deleteDeviceEvent` paths.
+ * A recurring-event delete awaiting its scope. Non-recurring deletes never set it; their
+ * callers go straight to `deleteEventOptimistic` or `deleteDeviceEvent`.
  *
- * Sealed by Room vs Device so the consumer (HomeScreen + confirm
- * dispatch in the ViewModel) can branch exhaustively at the type
- * level rather than via nullable-field probes. `masterStartTs` and
- * `isDetachedException` are captured at request time, same as
- * [PendingFormSave].
+ * Sealed by Room and Device so HomeScreen and the confirm dispatch in the ViewModel branch
+ * exhaustively on the type. `masterStartTs` and `isDetachedException` are taken when the delete
+ * is requested, as in [PendingFormSave].
  */
 sealed interface PendingDelete {
     val occurrenceTs: Long

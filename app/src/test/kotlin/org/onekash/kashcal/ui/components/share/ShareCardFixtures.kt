@@ -6,11 +6,9 @@ import org.onekash.kashcal.domain.share.ShareCardStyle
 import org.onekash.kashcal.domain.share.StripePosition
 
 /**
- * Shared synthetic share-card fixtures. Both the behavioral test
- * ([ShareCardComposableTest]) and the visual goldens ([ShareCardScreenshotTest])
- * render these same inputs, so a golden can't silently drift from what the
- * behavioral assertions cover. Each fixture is the bare `ShareCardComposable`
- * call — the caller supplies its own theme wrapper.
+ * Synthetic share-card fixtures rendered by both [ShareCardComposableTest] and the goldens in
+ * [ShareCardScreenshotTest], so a golden can't silently drift from what the behavioral assertions
+ * cover. Each fixture is a bare [ShareCardComposable] call; the caller supplies the theme.
  */
 internal object ShareCardFixtures {
 

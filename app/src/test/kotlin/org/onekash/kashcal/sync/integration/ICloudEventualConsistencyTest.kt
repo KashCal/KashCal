@@ -13,12 +13,14 @@ import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import java.io.File
 
 /**
- * Test to validate iCloud eventual consistency hypothesis.
+ * Probes whether iCloud is eventually consistent between sync-collection and multiget.
  *
- * Hypothesis: sync-collection returns hrefs before calendar-data server
- * has the actual data, causing fetchEventsByHref to return fewer events.
+ * Hypothesis: sync-collection lists an href before the calendar-data server has the body, so
+ * fetchEventsByHref returns fewer events than requested. The test prints the outcome and
+ * asserts nothing; a single run may not show it, since the effect is timing-dependent.
  *
- * Run with: ./gradlew testDebugUnitTest --tests "*ICloudEventualConsistencyTest*"
+ * `@Ignore`d; remove the annotation, then run with
+ * ./gradlew testDebugUnitTest -Pintegration --tests "*ICloudEventualConsistencyTest*"
  */
 @Ignore("Integration test - requires iCloud credentials in local.properties")
 class ICloudEventualConsistencyTest {
@@ -35,7 +37,7 @@ class ICloudEventualConsistencyTest {
         clientFactory = OkHttpCalDavClientFactory()
         loadCredentials()
 
-        // Create client using factory pattern (replaces setCredentials)
+        // Placeholder credentials when none loaded; the test then skips
         val credentials = if (username != null && password != null) {
             Credentials(
                 username = username!!,
@@ -64,7 +66,7 @@ class ICloudEventualConsistencyTest {
                         // iCloud-specific credentials
                         "ICLOUD_USERNAME" -> username = parts[1]
                         "ICLOUD_APP_PASSWORD" -> password = parts[1]
-                        // Legacy format
+                        // Fallback keys, read only when the iCloud keys are absent
                         "caldav.username" -> if (username == null) username = parts[1]
                         "caldav.app_password" -> if (password == null) password = parts[1]
                     }
@@ -78,26 +80,26 @@ class ICloudEventualConsistencyTest {
 
         println("=== EVENTUAL CONSISTENCY HYPOTHESIS TEST ===\n")
 
-        // Step 1: Discover calendar
+        // Step 1: discover a calendar
         val principal = client.discoverPrincipal(serverUrl).getOrNull()!!
         val home = client.discoverCalendarHome(principal).getOrNull()!!.first()
         val calendars = client.listCalendars(home).getOrNull()!!
         val calendar = calendars.first { !it.url.contains("inbox") && !it.url.contains("outbox") }
         println("Calendar: ${calendar.displayName}")
 
-        // Step 2: Get current sync token
+        // Step 2: current sync-token
         val syncToken = client.getSyncToken(calendar.url).getOrNull()
         assumeTrue("Need sync token", syncToken != null)
         println("Sync token: ${syncToken!!.take(50)}...")
 
-        // Step 3: Create event via PUT
+        // Step 3: create an event with PUT
         val testUid = "eventual-consistency-test-${System.currentTimeMillis()}"
         val eventUrl = "${calendar.url.trimEnd('/')}/$testUid.ics"
         val createResult = client.createEvent(calendar.url, testUid, createTestIcal(testUid))
         assumeTrue("Event created", createResult.isSuccess())
         println("Created event: $testUid")
 
-        // Step 4: IMMEDIATELY call sync-collection
+        // Step 4: sync-collection straight after the PUT
         println("\nIMMEDIATELY calling sync-collection...")
         val syncResult = client.syncCollection(calendar.url, syncToken)
         assumeTrue("sync-collection succeeded", syncResult.isSuccess())
@@ -107,7 +109,7 @@ class ICloudEventualConsistencyTest {
         println("sync-collection returned ${changedHrefs.size} hrefs")
         changedHrefs.forEach { println("  - $it") }
 
-        // Step 5: IMMEDIATELY call fetchEventsByHref
+        // Step 5: fetchEventsByHref straight after
         println("\nIMMEDIATELY calling fetchEventsByHref...")
         val fetchResult = client.fetchEventsByHref(calendar.url, changedHrefs)
         assumeTrue("fetchEventsByHref succeeded", fetchResult.isSuccess())
@@ -116,7 +118,7 @@ class ICloudEventualConsistencyTest {
         println("fetchEventsByHref returned ${events.size} events")
         events.forEach { println("  - ${it.href}") }
 
-        // Step 6: Compare!
+        // Step 6: compare requested and received hrefs
         println("\n=== RESULT ===")
         println("Requested hrefs: ${changedHrefs.size}")
         println("Received events: ${events.size}")
@@ -132,7 +134,7 @@ class ICloudEventualConsistencyTest {
             println("(May need multiple runs - eventual consistency is timing-dependent)")
         }
 
-        // Cleanup
+        // Delete the event this run created, by its UID-named URL
         client.deleteEvent(eventUrl, "")
     }
 

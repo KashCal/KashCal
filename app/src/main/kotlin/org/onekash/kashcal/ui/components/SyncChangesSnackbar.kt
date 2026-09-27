@@ -6,16 +6,11 @@ import org.onekash.kashcal.sync.model.ChangeType
 import org.onekash.kashcal.sync.model.SyncChange
 
 /**
- * Generate human-readable snackbar message from sync changes.
+ * Returns the English snackbar message for [changes], or null if there are none.
  *
- * Examples:
- * - "New event: Team Meeting"
- * - "3 new events"
- * - "1 event updated"
- * - "5 calendar updates"
- *
- * @param changes List of sync changes
- * @return Human-readable message, or null if no changes
+ * One kind of change gets its own message ("New event: Team Meeting", with the title cut at 30
+ * characters, "3 new events", "1 event updated", "2 events removed"); a mix gets
+ * "5 calendar updates".
  */
 fun generateSnackbarMessage(changes: List<SyncChange>): String? {
     if (changes.isEmpty()) return null
@@ -25,7 +20,6 @@ fun generateSnackbarMessage(changes: List<SyncChange>): String? {
     val delCount = changes.count { it.type == ChangeType.DELETED }
 
     return when {
-        // Single new event - show title
         newCount == 1 && modCount == 0 && delCount == 0 -> {
             val event = changes.first { it.type == ChangeType.NEW }
             val truncatedTitle = event.eventTitle.take(30)
@@ -35,26 +29,21 @@ fun generateSnackbarMessage(changes: List<SyncChange>): String? {
                 "New event: $truncatedTitle"
             }
         }
-        // Multiple new events only
         newCount > 0 && modCount == 0 && delCount == 0 ->
             "$newCount new events"
-        // Single update only
         modCount == 1 && newCount == 0 && delCount == 0 ->
             "1 event updated"
-        // Multiple updates only
         modCount > 0 && newCount == 0 && delCount == 0 ->
             "$modCount events updated"
-        // Single deletion only
         delCount == 1 && newCount == 0 && modCount == 0 ->
             "1 event removed"
-        // Multiple deletions only
         delCount > 0 && newCount == 0 && modCount == 0 ->
             "$delCount events removed"
-        // Mixed changes
         else -> "${changes.size} calendar updates"
     }
 }
 
+/** Returns the same messages as the overload above, from string resources. */
 fun generateSnackbarMessage(changes: List<SyncChange>, resources: Resources): String? {
     if (changes.isEmpty()) return null
 

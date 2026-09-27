@@ -3,13 +3,12 @@ package org.onekash.kashcal.ui.components
 import org.onekash.kashcal.ui.viewmodels.ViewMode
 
 /**
- * What tapping the top-app-bar title does, resolved from the current [ViewMode].
+ * Maps the current [ViewMode] to what tapping the top-app-bar title does.
  *
- * Kept as a pure mapping (not inlined in the composable) because the title tap
- * is a genuine behavioral branch: AGENDA and DAY toggle their inline week bar,
- * the other time-grid views open the modal date picker, and month-family views
- * jump to the month header. Extracting it keeps the routing unit-testable so a
- * DAY tap can't silently regress into opening the date picker.
+ * AGENDA and DAY toggle their inline week bar, the other time-grid views open the modal date
+ * picker, and every other view takes the month-header action, which toggles the year overlay.
+ * A pure mapping so `TopBarTitleActionTest` can stop a DAY tap from silently regressing into
+ * opening the date picker.
  */
 enum class TopBarTitleAction {
     TOGGLE_AGENDA_WEEK_BAR,

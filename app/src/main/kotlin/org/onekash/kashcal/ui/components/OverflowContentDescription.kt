@@ -1,15 +1,11 @@
 package org.onekash.kashcal.ui.components
 
 /**
- * Resolve the top-bar hub trigger's [contentDescription] from the
- * pending-invitation count.
+ * Returns the top-bar hub trigger's content description for a pending-invitation [count].
  *
- * Returns [baseLabel] when [count] is zero so screen-reader users hear
- * the same announcement they'd hear if invitations weren't a feature
- * at all. Returns [withInvitesLabel] (the caller-resolved plural string
- * with the count baked in) otherwise. The helper takes both labels as
- * parameters so it stays Context-free and unit-testable; callers
- * resolve via `pluralStringResource`.
+ * At zero or below it is [baseLabel], the announcement with no mention of invitations;
+ * otherwise [withInvitesLabel], a plural the caller resolves with the count in it. Taking both
+ * labels keeps the helper Context-free and unit-testable.
  */
 internal fun overflowContentDescription(
     count: Int,

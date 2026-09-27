@@ -22,15 +22,13 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Locks in the DataStore invariant that "insights" cannot be persisted as
- * the user's default calendar view. This is the precondition for
- * [HomeViewModelInsightsBackStackTest] — if a user could ever have their
- * persisted default set to "insights", the back-from-Insights seed at
- * VM init would itself be INSIGHTS, and back from Insights as initial
- * view would loop forever instead of returning to a real view.
+ * Checks the invariant that [KashCalDataStore.setDefaultCalendarView] refuses "insights" and
+ * accepts every real view key. `HomeViewModelInsightsBackStackTest` relies on this: a persisted
+ * "insights" default would seed the back-from-Insights target with INSIGHTS, so back from Insights
+ * as the initial view would loop instead of returning to a real view.
  *
- * VALID_VIEWS in [KashCalDataStore] is the source of truth; this test
- * guards against future drift.
+ * `VALID_VIEWS` in [KashCalDataStore] is the source of truth; the key list here fails if a real
+ * view is dropped from it.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -72,7 +70,7 @@ class KashCalDataStoreInvariantTest {
 
     @Test
     fun `setDefaultCalendarView accepts all real view keys`() = runTest {
-        // Each real key is accepted (require() doesn't fire) AND persisted.
+        // Each real key is accepted (require() doesn't fire) and persisted.
         for (view in listOf("month", "agenda", "day", "three_days", "week", "month_full", "year")) {
             dataStore.setDefaultCalendarView(view)
             assertEquals(view, dataStore.getDefaultCalendarView())

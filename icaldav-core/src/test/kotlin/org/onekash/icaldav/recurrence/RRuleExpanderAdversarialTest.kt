@@ -16,19 +16,18 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /**
- * Adversarial tests for RRULE parsing and occurrence expansion - ported from KashCal.
+ * Tests that [RRuleExpander] doesn't crash or hang on hostile RRULEs:
+ * - no RRULE, and an empty BYDAY list
+ * - zero, negative and huge INTERVAL; zero and negative COUNT
+ * - unbounded DAILY and MINUTELY rules, and a 10000-count SECONDLY rule
+ * - UNTIL in the past and before DTSTART
+ * - BYDAY with a 6th Monday, -1FR and a weekday DTSTART doesn't match
+ * - BYMONTHDAY 31, Feb 30 and Feb 29
+ * - EXDATEs, including ones removing every occurrence
+ * - all-day and America/New_York series, BYSETPOS and WKST
  *
- * Tests probe edge cases that could crash or hang:
- * - Malformed RRULE strings
- * - Extreme parameter values (INTERVAL=0, negative COUNT)
- * - MAX_ITERATIONS safety limit for infinite recurrence
- * - EXDATE parsing edge cases
- * - BYDAY edge cases (invalid day codes, out of range ordinals)
- * - BYMONTHDAY edge cases (31st in months with <31 days)
- * - UNTIL edge cases
- * - Timezone trap scenarios
- *
- * These tests verify defensive coding in RRuleExpander.
+ * The zero and negative INTERVAL and COUNT tests and the BYMONTHDAY=31 test assert only that
+ * expansion returns.
  */
 @DisplayName("RRuleExpander Adversarial Tests")
 class RRuleExpanderAdversarialTest {
@@ -37,7 +36,7 @@ class RRuleExpanderAdversarialTest {
     private val zone = ZoneId.of("UTC")
     private val defaultStart = ZonedDateTime.of(2024, 1, 1, 10, 0, 0, 0, zone)
 
-    // Large time range for testing
+    // Ranges that start the day before DTSTART.
     private val oneYearRange = TimeRange(
         defaultStart.minusDays(1).toInstant(),
         defaultStart.plusYears(1).toInstant()
@@ -71,7 +70,8 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, oneYearRange)
 
-        // Empty byDay should default to event's start day
+        // ical4j treats an empty BYDAY as absent, so WEEKLY takes DTSTART's weekday; asserts
+        // only that occurrences exist.
         assertTrue(occurrences.isNotEmpty(), "Should generate occurrences with empty byDay")
     }
 
@@ -88,7 +88,8 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, oneYearRange)
 
-        // lib-recur may default to 1 or handle differently
+        // ical4j steps by at least 1 (Recur.increment uses max(INTERVAL, 1)). The assert is
+        // always true.
         assertTrue(occurrences.size >= 0, "Should handle zero interval gracefully")
     }
 
@@ -117,7 +118,7 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, tenYearRange)
 
-        // With 999999-day interval, very few (if any) occurrences in 10 years
+        // Only DTSTART falls in 10 years.
         assertTrue(occurrences.size <= 5, "Should have few occurrences with huge interval")
     }
 
@@ -132,7 +133,8 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, oneYearRange)
 
-        // COUNT=0 may be treated as no occurrences or as unlimited depending on impl
+        // ical4j 4.3.0 applies COUNT only when above 0, so COUNT=0 expands unbounded over the
+        // range. The assert is always true.
         assertTrue(occurrences.size >= 0, "Should handle zero count")
     }
 
@@ -150,11 +152,11 @@ class RRuleExpanderAdversarialTest {
         assertTrue(occurrences.size >= 0, "Should handle negative count gracefully")
     }
 
-    // ==================== MAX_ITERATIONS Safety Tests ====================
+    // ==================== Unbounded and Sub-daily Rule Tests ====================
 
     @Test
     fun `infinite daily recurrence is limited`() {
-        // No COUNT or UNTIL - potentially infinite
+        // No COUNT or UNTIL.
         val rrule = RRule(
             freq = Frequency.DAILY,
             interval = 1
@@ -169,27 +171,27 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, hundredYearRange)
 
-        // Should be limited by internal MAX_ITERATIONS or time range
+        // RRuleExpander has no iteration cap; the 100-year range bounds the result, asserted
+        // as at most 36525.
         assertTrue(occurrences.size <= 1000 || occurrences.size <= 36525,
             "Should be limited by MAX_ITERATIONS or time range")
     }
 
     @Test
     fun `SECONDLY frequency is limited or rejected`() {
-        // FREQ=SECONDLY would generate massive occurrences
+        // An unbounded SECONDLY rule would be huge, so COUNT caps it.
         val rrule = RRule(
             freq = Frequency.SECONDLY,
             interval = 1,
-            count = 10000  // Even with count, could be huge
+            count = 10000
         )
         val event = createTestEvent(rrule = rrule)
 
-        // Should complete without hanging
         val startTime = System.currentTimeMillis()
         val occurrences = expander.expand(event, oneYearRange)
         val duration = System.currentTimeMillis() - startTime
 
-        // Should complete reasonably fast (< 5 seconds) and be limited
+        // Under 5 seconds and at most COUNT occurrences.
         assertTrue(duration < 5000, "SECONDLY expansion should complete quickly")
         assertTrue(occurrences.size <= 10000, "SECONDLY should be limited")
     }
@@ -199,14 +201,13 @@ class RRuleExpanderAdversarialTest {
         val rrule = RRule(
             freq = Frequency.MINUTELY,
             interval = 1
-            // No count - infinite
+            // No COUNT or UNTIL.
         )
         val event = createTestEvent(rrule = rrule)
 
         val occurrences = expander.expand(event, oneYearRange)
 
-        // 1 year = ~525600 minutes - should complete (even if large)
-        // Just verify it completes without hanging
+        // About 525600 minutes in a year; asserts only that expansion returns some.
         assertTrue(occurrences.isNotEmpty(),
             "MINUTELY should generate some occurrences")
     }
@@ -225,7 +226,7 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, oneYearRange)
 
-        // UNTIL is 1970, range starts 2024 - no overlap
+        // UNTIL is 1970 and the range starts in 2023, so nothing overlaps.
         assertEquals(0, occurrences.size, "UNTIL in past should generate 0 in future range")
     }
 
@@ -241,7 +242,7 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, oneYearRange)
 
-        // DTSTART might still be included, or 0 if UNTIL excludes it
+        // DTSTART may be kept or excluded by UNTIL; asserts at most one.
         assertTrue(occurrences.size <= 1, "UNTIL before DTSTART should have 0-1 occurrences")
     }
 
@@ -249,7 +250,7 @@ class RRuleExpanderAdversarialTest {
 
     @Test
     fun `6th Monday of month - does not exist`() {
-        // 6MO = 6th Monday, which never exists
+        // No month has a 6th Monday.
         val rrule = RRule(
             freq = Frequency.MONTHLY,
             interval = 1,
@@ -260,14 +261,12 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, oneYearRange)
 
-        // 6th Monday never exists in any month
         assertEquals(0, occurrences.size, "6th Monday should generate 0 occurrences")
     }
 
     @Test
     fun `last Friday of month works correctly`() {
-        // -1FR = last Friday
-        // Use Jan 26, 2024 which is a Friday (last Friday of Jan 2024)
+        // -1FR is the last Friday; Jan 26, 2024 is the last Friday of January.
         val fridayStart = ZonedDateTime.of(2024, 1, 26, 10, 0, 0, 0, zone)
         val rrule = RRule(
             freq = Frequency.MONTHLY,
@@ -287,7 +286,7 @@ class RRuleExpanderAdversarialTest {
 
     @Test
     fun `BYDAY on different start day - alignment behavior`() {
-        // Start on Tuesday (Jan 2, 2024 was Tuesday) with BYDAY=MO
+        // Starts on Tuesday, Jan 2, 2024, with BYDAY=MO.
         val tuesdayStart = ZonedDateTime.of(2024, 1, 2, 10, 0, 0, 0, zone)
         val rrule = RRule(
             freq = Frequency.WEEKLY,
@@ -302,7 +301,8 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, oneYearRange)
 
-        // DTSTART on Tuesday but BYDAY=MO - behavior varies by RFC interpretation
+        // RFC 5545 §3.8.5.3 leaves the set undefined when DTSTART isn't synchronized with the
+        // rule; asserts only that occurrences exist.
         assertTrue(occurrences.isNotEmpty(), "Should generate some Monday occurrences")
     }
 
@@ -320,7 +320,8 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, oneYearRange)
 
-        // Only months with 31 days: Jan, Mar, May, Jul, Aug, Oct, Dec = 7 months
+        // Seven months have a 31st (Jan, Mar, May, Jul, Aug, Oct, Dec); the assert accepts 0
+        // to 12.
         assertTrue(occurrences.size <= 12 && occurrences.size >= 0,
             "BYMONTHDAY=31 should skip months without 31st")
     }
@@ -338,7 +339,6 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, tenYearRange)
 
-        // Feb 30 never exists
         assertEquals(0, occurrences.size, "Feb 30 should never exist")
     }
 
@@ -353,7 +353,7 @@ class RRuleExpanderAdversarialTest {
         )
         val event = createTestEvent(rrule = rrule)
 
-        // 50 year range - should have ~12-13 leap years
+        // A 50-year range holds 13 leap years.
         val fiftyYearRange = TimeRange(
             defaultStart.minusDays(1).toInstant(),
             defaultStart.plusYears(50).toInstant()
@@ -361,7 +361,7 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, fiftyYearRange)
 
-        // Up to 10 (COUNT limit) but may be fewer if range is too short
+        // At most 10 (COUNT) and at least one.
         assertTrue(occurrences.size <= 10 && occurrences.size > 0,
             "Should have leap year occurrences")
     }
@@ -375,7 +375,7 @@ class RRuleExpanderAdversarialTest {
             interval = 1,
             count = 5
         )
-        // Exclude day 2 and 4
+        // Exclude days 2 and 4.
         val exdates = listOf(
             ICalDateTime.fromZonedDateTime(defaultStart.plusDays(1)),  // Day 2
             ICalDateTime.fromZonedDateTime(defaultStart.plusDays(3))   // Day 4
@@ -387,7 +387,6 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, oneYearRange)
 
-        // 5 - 2 excluded = 3
         assertEquals(3, occurrences.size, "EXDATE should exclude 2 occurrences")
     }
 
@@ -398,7 +397,7 @@ class RRuleExpanderAdversarialTest {
             interval = 1,
             count = 3
         )
-        // Exclude all 3 occurrences
+        // Exclude all 3 occurrences.
         val exdates = listOf(
             ICalDateTime.fromZonedDateTime(defaultStart),
             ICalDateTime.fromZonedDateTime(defaultStart.plusDays(1)),
@@ -434,7 +433,7 @@ class RRuleExpanderAdversarialTest {
 
         assertEquals(5, occurrences.size)
 
-        // All occurrences should be at UTC midnight
+        // Every occurrence is at UTC midnight.
         occurrences.forEach { occ ->
             val hour = occ.dtStart.toZonedDateTime().hour
             assertEquals(0, hour, "All-day occurrence should be at midnight")
@@ -471,7 +470,7 @@ class RRuleExpanderAdversarialTest {
 
     @Test
     fun `BYSETPOS with 2nd Tuesday works`() {
-        // 2nd Tuesday of each month
+        // The 2nd Tuesday of each month.
         val rrule = RRule(
             freq = Frequency.MONTHLY,
             interval = 1,
@@ -483,13 +482,12 @@ class RRuleExpanderAdversarialTest {
 
         val occurrences = expander.expand(event, oneYearRange)
 
-        // Should generate 12 occurrences (one per month)
         assertEquals(12, occurrences.size, "Should have 12 2nd Tuesdays")
     }
 
     @Test
     fun `WKST affects week numbering`() {
-        // Weekly starting Monday vs Sunday
+        // WKST=MO with BYDAY=SU; asserts only the count.
         val rrule = RRule(
             freq = Frequency.WEEKLY,
             interval = 1,
@@ -515,7 +513,7 @@ class RRuleExpanderAdversarialTest {
         exdates: List<ICalDateTime> = emptyList(),
         recurrenceId: ICalDateTime? = null,
         isAllDay: Boolean = false,
-        timezone: String? = null  // Kept for compatibility, stored in dtStart.timezone
+        timezone: String? = null  // Unused; the zone comes from startDate.
     ): ICalEvent {
         val actualEnd = endDate ?: startDate.plusHours(1)
 

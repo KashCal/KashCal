@@ -11,35 +11,17 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * CredentialProvider implementation for generic CalDAV accounts.
+ * Provides the credentials of generic CalDAV accounts, keyed by account ID, and carries each
+ * account's `trustInsecure` (self-signed certificate) setting.
  *
- * Delegates to unified CredentialManager for encrypted storage.
- * Supports multiple CalDAV accounts with independent credentials.
- *
- * Architecture:
  * ```
- * CalDavSyncWorker
+ * CalDavSyncWorker, ContactSyncWorker (through ProviderRegistry)
  *       |
  * CalDavCredentialProvider (this class)
  *       |
  * CredentialManager (UnifiedCredentialManager)
  *       |
  * EncryptedSharedPreferences → Android Keystore (AES-256-GCM)
- * ```
- *
- * Usage:
- * ```
- * // Get credentials for sync
- * val credentials = credentialProvider.getCredentials(accountId)
- *
- * // Save credentials after account setup
- * credentialProvider.saveCredentials(accountId, credentials)
- *
- * // Check if specific account has credentials
- * if (credentialProvider.hasCredentials(accountId)) { ... }
- *
- * // Get self-signed certificate setting
- * val trustInsecure = credentialProvider.getTrustInsecure(accountId)
  * ```
  */
 @Singleton
@@ -52,12 +34,7 @@ class CalDavCredentialProvider @Inject constructor(
         private const val TAG = "CalDavCredentialProvider"
     }
 
-    /**
-     * Get credentials for a specific CalDAV account.
-     *
-     * @param accountId The database account ID
-     * @return Credentials if available, null if not configured
-     */
+    /** Returns null also when encryption is unavailable. */
     override suspend fun getCredentials(accountId: Long): Credentials? {
         if (!credentialManager.isEncryptionAvailable()) {
             Log.w(TAG, "Encryption not available")
@@ -80,17 +57,8 @@ class CalDavCredentialProvider @Inject constructor(
         )
     }
 
-    /**
-     * Get credentials for the "primary" CalDAV account.
-     * Since CalDAV supports multiple accounts, this returns credentials for
-     * the first enabled CalDAV account found, or null if none exist.
-     *
-     * For explicit account access, use [getCredentials(accountId)] instead.
-     *
-     * @return Credentials for first enabled CalDAV account, or null
-     */
+    /** Picks the first enabled CalDAV account; callers knowing the account use [getCredentials]. */
     override suspend fun getPrimaryCredentials(): Credentials? {
-        // Find first enabled CalDAV account
         val caldavAccounts = accountRepository.getAccountsByProvider(AccountProvider.CALDAV)
         val enabledAccount = caldavAccounts.firstOrNull { account -> account.isEnabled }
 
@@ -101,33 +69,16 @@ class CalDavCredentialProvider @Inject constructor(
         }
     }
 
-    /**
-     * Check if credentials are available for an account.
-     *
-     * @param accountId The database account ID
-     * @return true if credentials exist
-     */
     override suspend fun hasCredentials(accountId: Long): Boolean {
         return credentialManager.hasCredentials(accountId)
     }
 
-    /**
-     * Check if any CalDAV accounts have credentials configured.
-     *
-     * @return true if at least one CalDAV account has credentials
-     */
     override suspend fun hasAnyCredentials(): Boolean {
         val caldavAccounts = accountRepository.getAccountsByProvider(AccountProvider.CALDAV)
         return caldavAccounts.any { credentialManager.hasCredentials(it.id) }
     }
 
-    /**
-     * Save credentials for a CalDAV account.
-     *
-     * @param accountId The database account ID
-     * @param credentials The credentials to save
-     * @return true if saved successfully
-     */
+    /** Returns false when encryption is unavailable. */
     override suspend fun saveCredentials(accountId: Long, credentials: Credentials): Boolean {
         if (!credentialManager.isEncryptionAvailable()) {
             Log.e(TAG, "Cannot save credentials: encryption not available")
@@ -150,12 +101,8 @@ class CalDavCredentialProvider @Inject constructor(
     }
 
     /**
-     * Save credentials with self-signed certificate trust setting.
-     *
-     * @param accountId The database account ID
-     * @param credentials The credentials to save
-     * @param trustInsecure Whether to trust self-signed certificates
-     * @return true if saved successfully
+     * Saves [credentials] with [trustInsecure] in place of their own setting, like
+     * [saveCredentials]. Returns true on success.
      */
     suspend fun saveCredentialsWithTrust(
         accountId: Long,
@@ -182,56 +129,33 @@ class CalDavCredentialProvider @Inject constructor(
         return saved
     }
 
-    /**
-     * Delete credentials for a CalDAV account.
-     *
-     * @param accountId The database account ID
-     * @return true if deleted (or didn't exist)
-     */
     override suspend fun deleteCredentials(accountId: Long): Boolean {
         credentialManager.deleteCredentials(accountId)
         Log.i(TAG, "Deleted credentials for account $accountId")
         return true
     }
 
-    /**
-     * Clear all stored CalDAV credentials.
-     * Use when user wants to remove all CalDAV accounts.
-     */
+    /** Clears every stored credential of every provider, iCloud included, not only CalDAV's. */
     override suspend fun clearAllCredentials() {
         credentialManager.clearAllCredentials()
         Log.i(TAG, "Cleared all CalDAV credentials")
     }
 
-    /**
-     * Check if an account should trust self-signed certificates.
-     *
-     * @param accountId The database account ID
-     * @return true if trustInsecure is enabled, false otherwise
-     */
+    /** Returns whether the account trusts self-signed certificates; false if none are stored. */
     suspend fun getTrustInsecure(accountId: Long): Boolean {
         val credentials = credentialManager.getCredentials(accountId)
         return credentials?.trustInsecure ?: false
     }
 
-    /**
-     * Update the trust setting for an account.
-     *
-     * @param accountId The database account ID
-     * @param trustInsecure Whether to trust self-signed certificates
-     * @return true if updated successfully
-     */
+    /** Updates the account's `trustInsecure`; returns false if no credentials are stored. */
     suspend fun setTrustInsecure(accountId: Long, trustInsecure: Boolean): Boolean {
         val credentials = credentialManager.getCredentials(accountId) ?: return false
         return credentialManager.saveCredentials(accountId, credentials.copy(trustInsecure = trustInsecure))
     }
 
     /**
-     * Get the raw AccountCredentials with all fields including trustInsecure.
-     * Used by CalDavClientFactory to configure SSL trust.
-     *
-     * @param accountId The database account ID
-     * @return AccountCredentials or null if not found
+     * Returns the stored [AccountCredentials] with every field, or null if none are stored.
+     * Nothing in the app calls it today.
      */
     suspend fun getAccountCredentials(accountId: Long): AccountCredentials? {
         return credentialManager.getCredentials(accountId)

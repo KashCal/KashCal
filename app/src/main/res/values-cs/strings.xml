@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Na tomto serveru nebyly nalezeny žádné kalendáře.</string>
     <string name="caldav_error_unexpected">Neočekávaná chyba. Zkuste to znovu.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nPokud je to server ve vaší místní síti, povolte přístup k místní síti, abyste se mohli připojit.</string>
+    <string name="caldav_error_connection_refused_insecure">Server přesměroval připojení tam, kam KashCal nepokračuje (na nešifrovanou adresu nebo do smyčky přesměrování), takže KashCal skončil dřív, než odeslal tvé heslo. Zkontroluj adresu serveru.</string>
     <string name="local_network_banner_title">Je potřeba přístup k místní síti</string>
     <string name="local_network_banner_body">Tento server vypadá, že je ve vaší místní síti. Povolte přístup k místní síti, aby se k němu KashCal mohl připojit.</string>
     <string name="local_network_banner_allow">Povolit přístup</string>
@@ -888,6 +889,8 @@
     <string name="dialog_edit_recurring_title">Uložit změny</string>
     <string name="dialog_delete_recurring_title">Smazat</string>
     <string name="dialog_move_recurring_title">Přesunout</string>
+    <string name="snackbar_event_rescheduled">Událost přesunuta</string>
+    <string name="snackbar_reschedule_failed">Událost se nepodařilo přesunout</string>
     <string name="recurring_this_event">Tuto událost</string>
     <string name="recurring_all_events">Všechny události</string>
 

@@ -20,27 +20,22 @@ import java.util.Calendar
 import java.util.Locale
 
 /**
- * Utility functions for the week view component.
- *
- * Handles:
- * - Week/date calculations
- * - Range formatting for header
- * - Time snapping for event creation
- * - Event positioning and overlap detection
+ * Holds the day, 3-day and week views' date math, header formatting, scroll and zoom offsets,
+ * time snapping, event layout with overlap packing, and drag-to-reschedule targets.
  */
 object WeekViewUtils {
 
-    // Time grid constants (full 24-hour grid for all views)
+    // Every view's timed grid spans the full 24 hours.
     const val START_HOUR = 0
     const val END_HOUR = 24
-    const val TOTAL_HOURS = END_HOUR - START_HOUR  // 24 hours
+    const val TOTAL_HOURS = END_HOUR - START_HOUR
     const val MINUTES_PER_HOUR = 60
     const val SNAP_INTERVAL_MINUTES = 15
 
     /**
-     * Hour the week/3-day grid scrolls to on first composition when no in-session
-     * scroll position has been saved. Lands the user near typical wake/work hours
-     * instead of midnight. See [resolveInitialScrollPx] and issue #188.
+     * Hour the timed grid scrolls to on first composition when neither an in-session position
+     * nor a persisted scroll time exists, so it opens near waking hours instead of midnight.
+     * See [resolveInitialScrollPx] and #188.
      */
     const val DEFAULT_SCROLL_START_HOUR = 6
 
@@ -49,52 +44,37 @@ object WeekViewUtils {
     val MIN_EVENT_HEIGHT = 20.dp
 
     /**
-     * Width of the leading time-axis (hour labels) column in the timed grid. The
-     * per-column day headers and the Day view's pinned week strip inset their content
-     * by this width so both align with the day column(s) rather than overrunning the
-     * time gutter.
+     * Width of the timed grid's hour-label column. The day headers and the Day view's pinned
+     * week strip start after this width so they line up with the day columns.
      */
     val TIME_COLUMN_WIDTH = 48.dp
     const val MIN_HOUR_HEIGHT_DP = 30f
     const val MAX_HOUR_HEIGHT_DP = 150f
-    const val MAX_VISIBLE_OVERLAP = 2  // Show max 2 events stacked, rest in "+N more"
+    const val MAX_VISIBLE_OVERLAP = 2  // Slots shown; the rest go in the "+N more" badge
 
-    // All-day strip: rows shown per day when collapsed (today's default) vs expanded.
+    // All-day strip rows shown per day, collapsed (the default) and expanded.
     const val MAX_ALLDAY_ROWS_COLLAPSED = 1
     const val MAX_ALLDAY_ROWS_EXPANDED = 3
 
-    // Infinite day pager constants (THREE_DAYS mode)
-    // Using large page count for pseudo-infinite scrolling
-    // HorizontalPager is lazy - large pageCount costs nothing
+    // Day pager (DAY and THREE_DAYS). HorizontalPager is lazy, so an Int.MAX_VALUE page count
+    // costs nothing and scrolls pseudo-infinitely.
     const val TOTAL_DAY_PAGES = Int.MAX_VALUE
     const val CENTER_DAY_PAGE = TOTAL_DAY_PAGES / 2
 
-    // Week pager constants (WEEK mode — 1 page = 1 week)
-    const val TOTAL_WEEK_PAGES = 1000  // ~500 weeks each direction
+    // Week pager (WEEK): one page per week, about 500 weeks each direction.
+    const val TOTAL_WEEK_PAGES = 1000
     const val CENTER_WEEK_PAGE = TOTAL_WEEK_PAGES / 2
 
     // ==================== Day Pager Functions ====================
 
-    /**
-     * Convert a pager page index to an absolute date.
-     * CENTER_DAY_PAGE corresponds to today.
-     *
-     * @param page The pager page index
-     * @return LocalDate for that page
-     */
+    /** Returns the date of day-pager [page]; [CENTER_DAY_PAGE] is today. */
     fun pageToDate(page: Int): LocalDate {
         val today = LocalDate.now()
         val dayOffset = page.toLong() - CENTER_DAY_PAGE.toLong()
         return today.plusDays(dayOffset)
     }
 
-    /**
-     * Convert an absolute date to a pager page index.
-     * Today corresponds to CENTER_DAY_PAGE.
-     *
-     * @param date The date to convert
-     * @return Page index for that date
-     */
+    /** Returns the day-pager page of [date]; the inverse of [pageToDate]. */
     fun dateToPage(date: LocalDate): Int {
         val today = LocalDate.now()
         val dayOffset = ChronoUnit.DAYS.between(today, date)
@@ -102,27 +82,17 @@ object WeekViewUtils {
     }
 
     /**
-     * Whether [pagerPosition] is a settled day-scale page (safe to feed to
-     * [pageToDate]).
+     * Returns whether [pagerPosition] is a settled day-scale page, safe to pass to [pageToDate].
      *
-     * The DAY/3-DAY and WEEK pagers share one stored position but use different
-     * scales: day pages sit near [CENTER_DAY_PAGE] (~1.07e9) while week pages are
-     * in 0..[TOTAL_WEEK_PAGES]. The default (0) and a stale week page left over
-     * from a WEEK->DAY switch are therefore both far below any real day page, and
-     * interpreting them as day pages yields absurd dates millions of years off.
-     * Anything above [TOTAL_WEEK_PAGES] can only be a day-scale page: reaching it
-     * as a week page is impossible, and reaching it as a day page ~2.9M years
-     * before today isn't either.
+     * The day and week pagers share one stored position on different scales: day pages sit
+     * near [CENTER_DAY_PAGE] (about 1.07e9), week pages in 0..[TOTAL_WEEK_PAGES]. The default 0
+     * and a week page left over from a WEEK to DAY switch would read as dates millions of years
+     * off. A week page can't exceed [TOTAL_WEEK_PAGES], and a day page that low would be about
+     * 2.9M years before today.
      */
     fun isSettledDayPage(pagerPosition: Int): Boolean = pagerPosition > TOTAL_WEEK_PAGES
 
-    /**
-     * Get the date range for currently visible days.
-     *
-     * @param currentPage The current (leftmost) visible page
-     * @param visibleDays Number of visible days (default: 3)
-     * @return Pair of (startDate, endDate) inclusive
-     */
+    /** Returns the inclusive first and last date of [visibleDays] days from page [currentPage]. */
     fun getVisibleDateRange(currentPage: Int, visibleDays: Int = 3): Pair<LocalDate, LocalDate> {
         val startDate = pageToDate(currentPage)
         val endDate = startDate.plusDays((visibleDays - 1).toLong())
@@ -130,13 +100,8 @@ object WeekViewUtils {
     }
 
     /**
-     * Get the date range for event loading (visible + buffer).
-     * Loads extra days to ensure smooth scrolling.
-     *
-     * @param currentPage The current (leftmost) visible page
-     * @param visibleDays Number of visible days
-     * @param bufferDays Days to load before and after visible range
-     * @return Pair of (startDate, endDate) inclusive
+     * Returns the inclusive date range to load events for: the [visibleDays] days from day-pager
+     * [currentPage] plus [bufferDays] on each side, so a swipe lands on loaded days.
      */
     fun getLoadingDateRange(
         currentPage: Int,
@@ -151,13 +116,8 @@ object WeekViewUtils {
     // ==================== Week Pager Functions ====================
 
     /**
-     * Convert a week pager page index to the start date of that week.
-     * CENTER_WEEK_PAGE corresponds to the current week.
-     *
-     * @param weekPage The week pager page index
-     * @param firstDayOfWeek User's preferred first day of week (Calendar.SUNDAY, etc.)
-     * @param referenceDate Reference date for "today" (default: now; injectable for tests)
-     * @return LocalDate for the first day of that week
+     * Returns the first day of week-pager [weekPage]; [CENTER_WEEK_PAGE] is the week holding
+     * [referenceDate]. [firstDayOfWeek] is read as in [getWeekStart].
      */
     fun weekPageToStartDate(
         weekPage: Int,
@@ -170,13 +130,8 @@ object WeekViewUtils {
     }
 
     /**
-     * Convert a date to a week pager page index.
-     * Inverse of [weekPageToStartDate].
-     *
-     * @param date The date to convert (any day in the target week)
-     * @param firstDayOfWeek User's preferred first day of week (Calendar.SUNDAY, etc.)
-     * @param referenceDate Reference date for "today" (default: now; injectable for tests)
-     * @return Week pager page index
+     * Returns the week-pager page of the week holding [date]; the inverse of
+     * [weekPageToStartDate].
      */
     fun dateToWeekPage(
         date: LocalDate,
@@ -190,17 +145,10 @@ object WeekViewUtils {
     }
 
     /**
-     * Format a week range for the header (e.g., "Mar 9 - 15, 2026").
-     *
-     * Rules:
+     * Formats the 7 days of week-pager [weekPage] as a range:
      * - Same month: "Mar 9 - 15, 2026"
      * - Cross month, same year: "Mar 30 - Apr 5, 2026"
-     * - Cross year: "Dec 29, 2025 - Jan 4, 2026" (shows both years)
-     *
-     * @param weekPage The week pager page index
-     * @param firstDayOfWeek User's preferred first day of week
-     * @param referenceDate Reference date for "today" (injectable for tests)
-     * @return Formatted week range string
+     * - Cross year, both years shown: "Dec 29, 2025 - Jan 4, 2026"
      */
     fun formatWeekRange(
         weekPage: Int,
@@ -224,7 +172,7 @@ object WeekViewUtils {
                 val endMonth = endDate.format(monthFormatter)
                 "$startMonth ${startDate.dayOfMonth} - $endMonth ${endDate.dayOfMonth}, ${startDate.year}"
             }
-            // Cross year — show both years for clarity
+            // Cross year: both years
             else -> {
                 val startMonth = startDate.format(monthFormatter)
                 val endMonth = endDate.format(monthFormatter)
@@ -233,16 +181,12 @@ object WeekViewUtils {
         }
     }
 
-    /**
-     * Convert LocalDate to epoch milliseconds at start of day in system timezone.
-     */
+    /** Returns the start of [date] in the system zone, in epoch ms. */
     fun dateToEpochMs(date: LocalDate): Long {
         return date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
 
-    /**
-     * Convert epoch milliseconds to LocalDate in system timezone.
-     */
+    /** Returns the system-zone date of [epochMs]. */
     fun epochMsToDate(epochMs: Long): LocalDate {
         return Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()).toLocalDate()
     }
@@ -250,25 +194,17 @@ object WeekViewUtils {
     // ==================== Week Calculations ====================
 
     /**
-     * Get the start of the week for a given date.
+     * Returns the first day of the week holding [date].
      *
-     * @param date The date to find the week start for
-     * @param firstDayOfWeek User's preferred first day of week (Calendar.SUNDAY, etc.)
-     * @return LocalDate representing the first day of that week
+     * @param firstDayOfWeek `Calendar.SUNDAY`, `MONDAY` or `SATURDAY`, or 0 for the locale default;
+     *   any other value counts as SUNDAY ([DateTimeUtils.getDayOfWeekOffset])
      */
     fun getWeekStart(date: LocalDate, firstDayOfWeek: Int = Calendar.SUNDAY): LocalDate {
         val daysToSubtract = DateTimeUtils.getDayOfWeekOffset(date, firstDayOfWeek)
         return date.minusDays(daysToSubtract.toLong())
     }
 
-    /**
-     * Get the start of the week for a given timestamp.
-     *
-     * @param timestampMs Timestamp in milliseconds
-     * @param zoneId Timezone to use (default: system default)
-     * @param firstDayOfWeek User's preferred first day of week (Calendar.SUNDAY, etc.)
-     * @return Timestamp of the first day of the week at midnight in the given timezone
-     */
+    /** Returns the week start of [timestampMs] at midnight in [zoneId], in epoch ms. */
     fun getWeekStartMs(
         timestampMs: Long,
         zoneId: ZoneId = ZoneId.systemDefault(),
@@ -282,12 +218,8 @@ object WeekViewUtils {
     }
 
     /**
-     * Get the day index (0-6) within a week for a given timestamp.
-     * Sunday = 0, Monday = 1, ..., Saturday = 6
-     *
-     * @param timestampMs Timestamp in milliseconds
-     * @param weekStartMs Start of the week in milliseconds
-     * @return Day index (0-6)
+     * Returns how many days [timestampMs] falls after [weekStartMs], by system-zone dates,
+     * clamped to 0..6. Index 0 is whichever weekday the week starts on.
      */
     fun getDayIndex(timestampMs: Long, weekStartMs: Long): Int {
         val daysDiff = ChronoUnit.DAYS.between(
@@ -300,16 +232,11 @@ object WeekViewUtils {
     // ==================== Range Formatting ====================
 
     /**
-     * Format a compact date range for the header (e.g., "Jan 6-8" or "Dec 30 - Jan 1, 2026").
-     *
-     * Rules:
-     * - Same month: "Jan 6-8"
-     * - Cross month (same year, current year): "Dec 30 - Jan 1"
-     * - Cross month (different year OR not current year): "Dec 30 - Jan 1, 2026"
-     *
-     * @param startDate First day of visible range
-     * @param endDate Last day of visible range
-     * @return Formatted string for header
+     * Formats [startDate]..[endDate] as a compact range. The year is appended when either date
+     * is outside the current year:
+     * - Same month: "Jan 6-8", or "Jan 6-8, 2027"
+     * - Cross month, same year: "Jan 30 - Feb 1", or "Jan 30 - Feb 1, 2027"
+     * - Cross year, both years always shown: "Dec 30, 2025 - Jan 1, 2026"
      */
     fun formatCompactRange(startDate: LocalDate, endDate: LocalDate): String {
         val now = LocalDate.now()
@@ -337,7 +264,7 @@ object WeekViewUtils {
                     "$startMonth ${startDate.dayOfMonth} - $endMonth ${endDate.dayOfMonth}"
                 }
             }
-            // Cross year — show both years for clarity
+            // Cross year: both years
             else -> {
                 val startMonth = startDate.format(monthFormatter)
                 val endMonth = endDate.format(monthFormatter)
@@ -347,9 +274,9 @@ object WeekViewUtils {
     }
 
     /**
-     * Format a date as "Apr 2026" with abbreviated month name. Used by the
-     * top-bar title in month/agenda/week/3-day views; abbreviation keeps the
-     * label short enough to fit alongside the logo and navigation controls.
+     * Formats [date] as the locale's abbreviated month and year ("Apr 2026"), for the top-bar
+     * title in the month, agenda, week and 3-day views. The abbreviation keeps the label short
+     * enough to fit alongside the logo and navigation controls.
      */
     fun formatMonthYear(date: LocalDate): String {
         return DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("yMMM"), Locale.getDefault())
@@ -357,12 +284,10 @@ object WeekViewUtils {
     }
 
     /**
-     * Format a week label as "${prefix}N" where N is the locale-aware week-of-year
-     * for [date]. The [prefix] is passed in by the caller so the host can supply a
-     * localized stringResource — keeps the formatter Composable-free. No space
-     * between prefix and number so the en-US output reads "W21" rather than "W 21";
-     * locales whose translated prefix needs trailing whitespace must include it in
-     * the resource value.
+     * Formats [prefix] followed by the locale-aware week-of-year of [date]. The caller passes a
+     * localized string resource as [prefix], which keeps this Composable-free. No space is added,
+     * so en-US reads "W21"; a locale whose prefix needs trailing whitespace must include it in the
+     * resource value.
      */
     fun formatWeekLabel(date: LocalDate, firstDayOfWeek: Int = 0, prefix: String): String {
         val weekFields = DateTimeUtils.getLocaleWeekFields(firstDayOfWeek)
@@ -373,27 +298,24 @@ object WeekViewUtils {
     // ==================== Scroll Defaults ====================
 
     /**
-     * Resolve the initial scroll position (in pixels) for the week/3-day time grid.
+     * Returns the initial scroll offset in px for the timed grid.
      *
-     * First-composition-only default: Compose's [androidx.compose.foundation.rememberScrollState]
-     * uses `rememberSaveable` internally with no keys, so `initial` is read once per
-     * composition lifetime. This function provides a useful starting pixel on cold launch
-     * without overriding any in-session scroll the user has already made.
+     * [androidx.compose.foundation.rememberScrollState] uses `rememberSaveable` with no keys, so
+     * its `initial` is read once per composition lifetime. This gives a useful start on cold
+     * launch without overriding a scroll the user made this session.
      *
-     * @param savedPosition Cached pixel offset from the ViewModel. Values > 0 indicate the
-     *   user has scrolled this session and we honor their position verbatim. Non-positive
-     *   values (0 or unexpected negatives) are treated as "not yet scrolled" and fall into
-     *   the default-hour branch. The gate is `> 0` rather than `>= 0` because a positive
-     *   value is the only unambiguous signal of a user-initiated scroll: after the debounced
-     *   onScrollPositionChange settles, any real scroll has already moved past pixel 0.
-     * @param hourHeightDp Current hour-row height in dp (pinch-zoomable at runtime, clamped
-     *   to [MIN_HOUR_HEIGHT_DP]..[MAX_HOUR_HEIGHT_DP] by the caller).
-     * @param density Display density factor from `LocalDensity.current.density`.
-     * @param savedMinutes Persisted clock time (minutes from midnight, 0..1439) restored across
-     *   app restarts. `< 0` means "never saved" (fresh install) and falls through to [defaultHour].
-     *   Stored as clock minutes rather than pixels so a zoom change between sessions still lands on
-     *   the same time. Only consulted when there is no in-session [savedPosition].
-     * @param defaultHour Target hour (0..23) to scroll to when no saved position exists.
+     * @param savedPosition the ViewModel's cached pixel offset. Above 0 means the user scrolled
+     *   this session, and it is returned as is. 0 and negatives count as not scrolled because,
+     *   after the debounced onScrollPositionChange settles, any real scroll has moved past pixel 0,
+     *   so only a positive value proves one.
+     * @param hourHeightDp the current, pinch-zoomable hour-row height, clamped to
+     *   [MIN_HOUR_HEIGHT_DP]..[MAX_HOUR_HEIGHT_DP] by the caller.
+     * @param density `LocalDensity.current.density`.
+     * @param savedMinutes the persisted clock time (minutes from midnight, 0..1439) restored
+     *   across restarts; below 0 means never saved. Stored as minutes, not pixels, so a zoom
+     *   change between sessions still lands on the same time. Read only when [savedPosition]
+     *   isn't positive.
+     * @param defaultHour hour (0..23) to scroll to when neither position is saved.
      */
     fun resolveInitialScrollPx(
         savedPosition: Int,
@@ -407,16 +329,15 @@ object WeekViewUtils {
             savedPosition > 0 -> savedPosition
             // Cold-launch restore from a persisted clock time.
             savedMinutes >= 0 -> minutesOfDayToPixels(savedMinutes, hourHeightDp * density)
-            // Fresh install / never scrolled: land on the default hour.
+            // Fresh install or never scrolled: land on the default hour.
             else -> (defaultHour * hourHeightDp * density).toInt()
         }
     }
 
     /**
-     * Convert a vertical scroll offset (pixels) to a clock time in minutes from midnight,
-     * clamped to a valid time-of-day (0..1439). Used to persist the scroll position as
-     * zoom-independent clock time. A non-positive [hourHeightPx] returns 0 rather than
-     * dividing by zero.
+     * Converts a vertical scroll offset in px to minutes from midnight, clamped to 0..1439, so the
+     * scroll position persists as a zoom-independent clock time. A non-positive [hourHeightPx]
+     * returns 0 instead of dividing by zero.
      */
     fun pixelsToMinutesOfDay(pixels: Float, hourHeightPx: Float): Int {
         if (hourHeightPx <= 0f) return 0
@@ -425,33 +346,28 @@ object WeekViewUtils {
     }
 
     /**
-     * Convert a clock time (minutes from midnight) to a vertical scroll offset in pixels
-     * at the given hour-row height. Inverse of [pixelsToMinutesOfDay] at a fixed zoom.
+     * Converts minutes from midnight to a vertical scroll offset in px at [hourHeightPx]; the
+     * inverse of [pixelsToMinutesOfDay] at a fixed zoom.
      */
     fun minutesOfDayToPixels(minutesOfDay: Int, hourHeightPx: Float): Int {
         return (minutesOfDay.toFloat() / MINUTES_PER_HOUR * hourHeightPx).toInt()
     }
 
     /**
-     * Compute the vertical scroll offset (px) that keeps the clock time at the viewport's
-     * vertical center fixed while the hour-row height changes during a pinch-zoom.
+     * Returns the scroll offset in px that keeps the clock time at the viewport's vertical center
+     * fixed while a pinch-zoom changes the hour-row height.
      *
-     * The center time is derived from the pre-zoom geometry, re-projected onto the new
-     * hour-row height, then clamped to the scrollable range. Clamping must use the
-     * POST-zoom content height (`newHourHeightPx * totalHours`): when zooming in the grid
-     * grows taller, so a target that is valid once the grid re-measures gets wrongly
-     * clamped if measured against the smaller pre-zoom range — parking the current-time
-     * line and every event away from center.
+     * The center time comes from the pre-zoom geometry, is re-projected onto the new hour height,
+     * then clamped to the scrollable range. The clamp must use the post-zoom content height
+     * (`newHourHeightPx * totalHours`): zooming in grows the grid, and clamping to the smaller
+     * pre-zoom range would park the current-time line and every event away from center. A
+     * non-positive [oldHourHeightPx] returns [currentScrollPx] unchanged.
      *
-     * @param currentScrollPx Scroll offset before the zoom step.
-     * @param viewportHeightPx Height of the visible grid viewport in px (> 0).
-     * @param oldHourHeightPx Hour-row height in px before the zoom step (> 0).
-     * @param newHourHeightPx Hour-row height in px after the zoom step (> 0).
-     * @param totalHours Number of hours rendered by the grid ([TOTAL_HOURS]).
-     * @param panYPx Vertical pan (px) applied by the same two-finger gesture, folded in
-     *   before the clamp so the returned offset always stays within the scrollable range —
-     *   an upward pan must not push the target past the post-zoom max, or the caller's
-     *   "wait for the grid to reach this offset" step could never complete.
+     * @param viewportHeightPx height of the visible grid viewport, above 0.
+     * @param totalHours hours the grid renders ([TOTAL_HOURS]).
+     * @param panYPx vertical pan from the same two-finger gesture, folded in before the clamp so
+     *   the result always stays in range. An upward pan must not push the target past the
+     *   post-zoom max, or the caller's wait for the grid to reach this offset never completes.
      */
     fun resolveZoomScrollPx(
         currentScrollPx: Float,
@@ -470,19 +386,16 @@ object WeekViewUtils {
     }
 
     /**
-     * Resolve the hour currently at the top of the visible grid, for callers that
-     * need to seed a new event's start time (e.g. the "+" FAB).
+     * Returns the hour at the top of the visible grid, clamped to [gridStartHour]..23, for
+     * seeding a new event's start time.
      *
-     * Sibling of [resolveInitialScrollPx]: uses the same `savedPosition > 0` sentinel
-     * so that on cold launch — before the user has scrolled and before the debounced
-     * onScrollPositionChange has written back — the FAB picks the same default hour
-     * that the grid is visually landing on.
+     * Uses the same `savedPosition > 0` test as [resolveInitialScrollPx]. Otherwise it returns
+     * [defaultHour] unclamped, which ignores the persisted scroll time [resolveInitialScrollPx]
+     * restores, so after a restart it can differ from the hour the grid lands on.
      *
-     * @param savedPosition Cached pixel offset from the ViewModel. Values > 0 mean
-     *   the user has scrolled; non-positive values fall into the default-hour branch.
-     * @param hourHeightPx Current hour-row height in pixels (dp * density).
-     * @param gridStartHour First hour rendered by the grid (typically [START_HOUR] 0).
-     * @param defaultHour Hour to use when no saved position exists.
+     * @param savedPosition the ViewModel's cached pixel offset; above 0 means the user scrolled.
+     * @param hourHeightPx the current hour-row height in px (dp * density).
+     * @param gridStartHour first hour the grid renders, [START_HOUR] by default.
      */
     fun resolveVisibleStartHour(
         savedPosition: Int,
@@ -500,22 +413,16 @@ object WeekViewUtils {
     // ==================== Time Snapping ====================
 
     /**
-     * Snap minutes to the nearest quarter hour (15-minute interval).
-     *
-     * @param minutes Minutes to snap
-     * @return Snapped minutes (0, 15, 30, or 45)
+     * Rounds [minutes] to the nearest multiple of [SNAP_INTERVAL_MINUTES]. 53 gives 60, so a
+     * caller snapping minutes within an hour must carry into the next hour.
      */
     fun snapToQuarterHour(minutes: Int): Int {
         return ((minutes + SNAP_INTERVAL_MINUTES / 2) / SNAP_INTERVAL_MINUTES) * SNAP_INTERVAL_MINUTES
     }
 
     /**
-     * Calculate the time from a Y offset in the time grid.
-     *
-     * @param yOffset Y position in the grid (pixels)
-     * @param hourHeightPx Height of one hour in pixels
-     * @param snap Whether to snap to 15-minute intervals
-     * @return Pair of (hour, minute)
+     * Returns the (hour, minute) at [yOffset] px in a grid that starts at [startHour], snapped to
+     * the quarter hour when [snap]. The hour is clamped to 0..23 and the minute to 0..59.
      */
     fun offsetToTime(yOffset: Float, hourHeightPx: Float, snap: Boolean = true, startHour: Int = START_HOUR): Pair<Int, Int> {
         val totalMinutes = startHour * MINUTES_PER_HOUR + (yOffset / hourHeightPx * MINUTES_PER_HOUR).toInt()
@@ -533,13 +440,7 @@ object WeekViewUtils {
         return hour.coerceIn(0, 23) to minute.coerceIn(0, 59)
     }
 
-    /**
-     * Format hour for time grid labels (e.g., "6a", "12p" or "06", "12").
-     *
-     * @param hour Hour (0-23)
-     * @param is24Hour True for 24-hour format (e.g., "06"), false for 12-hour (e.g., "6a")
-     * @return Formatted hour string
-     */
+    /** Formats [hour] (0-23) as a grid label: "6a", "12p" in 12-hour, "06", "12" in 24-hour. */
     fun formatHourLabel(hour: Int, is24Hour: Boolean = false): String {
         return if (is24Hour) {
             String.format(Locale.getDefault(), "%02d", hour)
@@ -555,48 +456,41 @@ object WeekViewUtils {
 
     // ==================== Event Positioning ====================
 
-    /**
-     * Time span for an event in minutes from midnight.
-     * Used for overlap detection during layout.
-     */
+    /** An event's layout window in minutes from midnight, used for overlap detection. */
     private data class EventTimeSpan(
         val startMinutes: Int,
         val endMinutes: Int
     ) {
         /**
-         * Check if this time span overlaps with another.
-         * Events that touch at exact boundaries (one ends at 10:00, other starts at 10:00)
-         * are NOT considered overlapping - they can stack vertically in the same slot.
+         * Returns whether the spans overlap. Spans that only touch (one ends at 10:00, the other
+         * starts at 10:00) don't, so they can stack vertically in the same slot.
          */
         fun overlapsWith(other: EventTimeSpan): Boolean {
             return startMinutes < other.endMinutes && endMinutes > other.startMinutes
         }
     }
 
-    /**
-     * A vertical layout slot that holds non-overlapping events.
-     * Events in the same slot are stacked vertically without horizontal overlap.
-     */
+    /** A layout column whose events never overlap, so they stack vertically. */
     private class LayoutSlot(val slotIndex: Int) {
         private val spans = mutableListOf<EventTimeSpan>()
 
-        /**
-         * Check if an event can fit in this slot (no overlap with existing events).
-         */
         fun canAccommodate(span: EventTimeSpan): Boolean {
             return spans.none { it.overlapsWith(span) }
         }
 
-        /**
-         * Place an event in this slot.
-         */
         fun place(span: EventTimeSpan) {
             spans.add(span)
         }
     }
 
     /**
-     * Positioned event for rendering in the week view.
+     * An event's placement in one day column.
+     *
+     * @property overlapIndex the event's slot; [groupForDisplay] hides slots past the cap.
+     * @property overlapTotal slots in the event's overlap cluster, including hidden ones.
+     * @property startMinutes start of the layout window, clipped to the column's date.
+     * @property endMinutes end of the layout window, clipped to the column's date. Short events
+     *   stretch it toward the rendered minimum height, up to the cap [positionEventsForDay] sets.
      */
     data class PositionedEvent(
         val displayEvent: DisplayEvent,
@@ -612,17 +506,16 @@ object WeekViewUtils {
     )
 
     /**
-     * Calculate positions for events in a single day column.
-     * Uses a Layout Slot algorithm for consistent overlap handling:
-     * 1. Sort events by start time, then duration (longer first)
-     * 2. Place each event in the leftmost available slot
-     * 3. Group transitively overlapping events into clusters
-     * 4. Calculate width based on slots used in each cluster
+     * Positions [events] in the day column for [date]:
+     * 1. Sort by start time, then duration, longer first.
+     * 2. Place each event in the leftmost slot it doesn't overlap.
+     * 3. Group transitively overlapping events into clusters.
+     * 4. Split the column width evenly among a cluster's slots, up to [maxVisibleOverlap].
      *
-     * @param events List of DisplayEvent for the day
-     * @param dayIndex Day index (0-6)
-     * @param hourHeight Height of one hour
-     * @return List of positioned events
+     * Parts of an event on other dates are clipped off. An event whose clipped window falls
+     * outside [startHour]..[endHour] is dropped.
+     *
+     * @param dayIndex copied into each [PositionedEvent].
      */
     fun positionEventsForDay(
         events: List<DisplayEvent>,
@@ -635,33 +528,28 @@ object WeekViewUtils {
     ): List<PositionedEvent> {
         if (events.isEmpty()) return emptyList()
 
-        // Step 1: Sort by start time, then by duration (longer events first for better stacking)
+        // Step 1: sort by start time, then by duration, longer first for better stacking.
         val sorted = events.sortedWith(compareBy(
             { it.startTs },
             { -(it.endTs - it.startTs) }
         ))
 
-        // Events shorter than MIN_EVENT_HEIGHT render floored to that height, but
-        // their true (sub-floor) layout window is thinner than the block drawn on
-        // screen — so overlap detection would pack them into one slot and draw them
-        // on top of each other. Give every such event a layout window at least as
-        // tall as the rendered block, so packing matches what the user sees. This
-        // also rescues zero-duration (point-in-time) and sub-minute events, whose
-        // raw span would otherwise collapse to nothing and be dropped by the
-        // grid-clamp guard below. Off-grid events still clamp to a point and drop.
+        // An event shorter than MIN_EVENT_HEIGHT renders at that height, so a thinner layout
+        // window would pack two such events into one slot and draw them on top of each other.
+        // Every event gets a window at least as tall as its rendered block, up to the cap
+        // below. This also keeps zero-duration and sub-minute events, which the grid-clamp
+        // guard below would drop; off-grid events still clamp to a point and drop.
         //
-        // Cap the window at its default-zoom size: zooming out makes a floored block
-        // cover more real minutes, but inflating the overlap window to match would
-        // force back-to-back meetings (e.g. two 30-min events at min zoom) into
-        // half-width columns — a worse read than a few px of block overlap, which
-        // the user resolves by zooming in or switching to Agenda/Day view. Zooming
-        // in still shrinks the window (more accurate packing) since it stays below
-        // the cap.
+        // The window is capped at its default-zoom size. Zoomed out, a floored block covers
+        // more minutes, but matching that would force back-to-back meetings (two 30-min events
+        // at min zoom) into half-width columns, a worse read than a few px of block overlap
+        // that zooming in or the Agenda or Day view resolves. Zooming in still shrinks the
+        // window, since it stays below the cap.
         val defaultMinHeightMinutes = (MIN_EVENT_HEIGHT.value / HOUR_HEIGHT.value * MINUTES_PER_HOUR).toInt()
         val minHeightMinutes = (MIN_EVENT_HEIGHT.value / hourHeight.value * MINUTES_PER_HOUR)
             .toInt().coerceIn(1, defaultMinHeightMinutes)
 
-        // Step 2: Convert to time spans (clamp cross-midnight events to day boundaries)
+        // Step 2: convert to time spans, clamping cross-midnight events to this date.
         val timeSpans = sorted.map { displayEvent ->
             val start = Instant.ofEpochMilli(displayEvent.startTs).atZone(ZoneId.systemDefault())
             val end = Instant.ofEpochMilli(displayEvent.endTs).atZone(ZoneId.systemDefault())
@@ -674,12 +562,10 @@ object WeekViewUtils {
             val rawEndMinutes = if (eventEndDate > date) END_HOUR * MINUTES_PER_HOUR
                 else end.hour * MINUTES_PER_HOUR + end.minute
 
-            // Bump the layout window up to the rendered height for events shorter
-            // than the floor. But a multi-day event whose end-day portion is a
-            // zero-length sliver at midnight (it began on a prior day and ends at
-            // exactly 00:00 today) must still collapse and drop off that day — so
-            // exclude that case. Same-day short/zero/sub-minute events are NOT
-            // slivers and do get bumped.
+            // Stretch short events to the rendered height, except a multi-day event that began
+            // on a prior date and ends at exactly 00:00 today: that zero-length sliver must
+            // collapse and drop off this day. Same-day short, zero-length or sub-minute events
+            // aren't slivers and do stretch.
             val isMidnightSliver = eventStartDate < date && rawEndMinutes == startMinutes
             val endMinutes = if (!isMidnightSliver && rawEndMinutes - startMinutes < minHeightMinutes) {
                 startMinutes + minHeightMinutes
@@ -690,7 +576,7 @@ object WeekViewUtils {
             EventTimeSpan(startMinutes = startMinutes, endMinutes = endMinutes)
         }
 
-        // Step 3: Assign each event to a layout slot
+        // Step 3: assign each event to a layout slot.
         val slots = mutableListOf<LayoutSlot>()
         val slotAssignments = IntArray(sorted.size)
 
@@ -709,15 +595,14 @@ object WeekViewUtils {
             }
         }
 
-        // Step 4: Find connected event clusters (events that transitively overlap)
+        // Step 4: find clusters of transitively overlapping events.
         val clusters = findConnectedClusters(timeSpans)
 
-        // Step 5: Build positioned events with correct layout fractions
+        // Step 5: build positioned events with their layout fractions.
         return sorted.mapIndexedNotNull { i, displayEvent ->
             val span = timeSpans[i]
             val slotIndex = slotAssignments[i]
 
-            // Find cluster containing this event
             val cluster = clusters.first { i in it }
             val slotsInCluster = cluster.map { slotAssignments[it] }.toSet().size
 
@@ -760,36 +645,27 @@ object WeekViewUtils {
     }
 
     /**
-     * Find clusters of events that transitively overlap.
-     * Events A and C are in the same cluster if there's an event B
-     * that overlaps both, even if A and C don't directly overlap.
-     *
-     * Example: A(9-10), B(9:30-11), C(10-11)
-     * - A overlaps B, B overlaps C → All in one cluster {A, B, C}
-     *
-     * @param spans List of event time spans
-     * @return List of clusters, where each cluster is a set of event indices
+     * Returns clusters of transitively overlapping spans, as sets of indices into [spans]. A and C
+     * share a cluster when some B overlaps both, even if A and C don't overlap: A(9-10),
+     * B(9:30-11), C(10-11) form one cluster.
      */
     private fun findConnectedClusters(spans: List<EventTimeSpan>): List<Set<Int>> {
         val clusters = mutableListOf<MutableSet<Int>>()
 
         for (i in spans.indices) {
-            // Find all existing clusters this event overlaps with
             val overlappingClusters = clusters.filter { cluster ->
                 cluster.any { j -> spans[i].overlapsWith(spans[j]) }
             }
 
             when (overlappingClusters.size) {
                 0 -> {
-                    // No overlap - create new cluster
                     clusters.add(mutableSetOf(i))
                 }
                 1 -> {
-                    // Overlaps one cluster - add to it
                     overlappingClusters[0].add(i)
                 }
                 else -> {
-                    // Overlaps multiple clusters - merge them all
+                    // The event bridges clusters: merge them.
                     val merged = mutableSetOf(i)
                     for (cluster in overlappingClusters) {
                         merged.addAll(cluster)
@@ -804,15 +680,11 @@ object WeekViewUtils {
     }
 
     /**
-     * Group positioned events for display, separating visible events from overflow.
+     * Splits one overlap group into the events to draw and the count for the overflow badge.
      *
-     * Filters by slot assignment (`overlapIndex`) rather than list order. This
-     * preserves the layout computed by [positionEventsForDay] — events packed
-     * into slots within the cap all render, even when a long event transitively
-     * connects them into one cluster (see issue #175).
-     *
-     * @param events All positioned events for a time slot
-     * @return Pair of (visible events, overflow count)
+     * Filters by slot (`overlapIndex`), not list order, which keeps the layout
+     * [positionEventsForDay] computed: every event in a slot within the cap renders, even when a
+     * long event connects them into one cluster (#175).
      */
     fun groupForDisplay(
         events: List<PositionedEvent>,
@@ -825,12 +697,10 @@ object WeekViewUtils {
     // ==================== Time Formatting ====================
 
     /**
-     * Format a time range for display (e.g., "9:00am - 10:30am" or "09:00 - 10:30").
+     * Formats [startTs]..[endTs] in the system zone, lowercased: "9:00am - 10:30am" or
+     * "09:00 - 10:30".
      *
-     * @param startTs Start timestamp in milliseconds
-     * @param endTs End timestamp in milliseconds
-     * @param timePattern DateTimeFormatter pattern (e.g., "h:mma" for 12h, "HH:mm" for 24h)
-     * @return Formatted time range string
+     * @param timePattern a `DateTimeFormatter` pattern, "h:mma" for 12-hour or "HH:mm" for 24-hour
      */
     fun formatTimeRange(startTs: Long, endTs: Long, timePattern: String = "h:mma"): String {
         val formatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
@@ -844,13 +714,7 @@ object WeekViewUtils {
         return "${startTime.format(formatter).lowercase()} - ${endTime.format(formatter).lowercase()}"
     }
 
-    /**
-     * Format a single point in time for display (e.g., "9:00am" or "09:00").
-     *
-     * @param ts Timestamp in milliseconds
-     * @param timePattern DateTimeFormatter pattern (e.g., "h:mma" for 12h, "HH:mm" for 24h)
-     * @return Formatted time string
-     */
+    /** Formats [ts] like one end of [formatTimeRange]: "9:00am" or "09:00". */
     fun formatTime(ts: Long, timePattern: String = "h:mma"): String {
         val formatter = DateTimeFormatter.ofPattern(timePattern, Locale.getDefault())
         val time = Instant.ofEpochMilli(ts)
@@ -859,26 +723,16 @@ object WeekViewUtils {
         return time.format(formatter).lowercase()
     }
 
-    /**
-     * Check if a date is today.
-     */
+    /** Returns whether [date] is today in the system zone. */
     fun isToday(date: LocalDate): Boolean = date == LocalDate.now()
 
-    /**
-     * Check if a date is a weekend (Saturday or Sunday).
-     */
+    /** Returns whether [date] is a Saturday or Sunday, whatever the locale's weekend. */
     fun isWeekend(date: LocalDate): Boolean {
         val dayOfWeek = date.dayOfWeek.value
         return dayOfWeek == 6 || dayOfWeek == 7  // Saturday or Sunday
     }
 
-    /**
-     * Get the LocalDate for a day index in a week.
-     *
-     * @param weekStartMs Start of the week in milliseconds
-     * @param dayIndex Day index (0=Sunday)
-     * @return LocalDate for that day
-     */
+    /** Returns the system-zone date [dayIndex] days after the date of [weekStartMs]. */
     fun getDateForDayIndex(weekStartMs: Long, dayIndex: Int): LocalDate {
         val weekStart = Instant.ofEpochMilli(weekStartMs)
             .atZone(ZoneId.systemDefault())
@@ -886,24 +740,15 @@ object WeekViewUtils {
         return weekStart.plusDays(dayIndex.toLong())
     }
 
-    /**
-     * Format day header (e.g., "Mon 6").
-     *
-     * @param date The date to format
-     * @return Formatted string with day name and day of month
-     */
+    /** Formats [date] with the locale's pattern for short weekday and day of month. */
     fun formatDayHeader(date: LocalDate): String {
         val dayFormatter = DateTimeFormatter.ofPattern(DateTimeUtils.localizedPattern("EEEd"), Locale.getDefault())
         return date.format(dayFormatter)
     }
 
     /**
-     * Format individual date for week header (e.g., "Jan 4").
-     * Shows year only if not current year.
-     *
-     * @param weekStartMs Start of the week in milliseconds
-     * @param dayIndex Day index (0=Sunday, 1=Monday, ...)
-     * @return Formatted date string (e.g., "Jan 4" or "Jan 4, 2027")
+     * Formats the date [dayIndex] days after the date of [weekStartMs] as month and day ("Jan 4"),
+     * adding the year only outside the current year ("Jan 4, 2027").
      */
     fun formatIndividualDate(weekStartMs: Long, dayIndex: Int): String {
         val date = getDateForDayIndex(weekStartMs, dayIndex)
@@ -995,9 +840,8 @@ object WeekViewUtils {
     // ==================== All-Day Strip Expand/Collapse ====================
 
     /**
-     * Whether the expand/collapse chevron is meaningful for the current window:
-     * true only when at least one visible day has more all-day events than the
-     * collapsed cap can show. Otherwise there is nothing to expand.
+     * Returns whether the all-day expand chevron has anything to do: true only when at least one
+     * day in [perDayCounts] has more all-day events than [MAX_ALLDAY_ROWS_COLLAPSED].
      */
     fun anyAllDayColumnHasOverflowWhenCollapsed(perDayCounts: List<Int>): Boolean =
         perDayCounts.any { it > MAX_ALLDAY_ROWS_COLLAPSED }

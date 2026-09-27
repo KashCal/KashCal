@@ -20,16 +20,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Handles all event read/query operations.
+ * Reads Room events, occurrences, calendars, attendees and tags for the domain and UI layers.
  *
- * Provides:
- * - Event lookups by ID, UID, calendar
- * - Occurrence queries by date range (for calendar views)
- * - Day/week/month view data
- * - Search functionality
- * - Sync-related queries
- *
- * Uses Flow for reactive UI updates.
+ * ViewModels read through this class instead of the DAOs. Queries the UI observes return a
+ * Room [Flow], so views update while a sync writes. Its one write is [setCalendarVisibility].
  */
 @Singleton
 class EventReader @Inject constructor(
@@ -51,9 +45,8 @@ class EventReader @Inject constructor(
     // ========== Event Lookups ==========
 
     /**
-     * Suggest Room event titles matching a prefix for the form autocomplete.
-     * Pure pass-through — see [org.onekash.kashcal.data.db.dao.EventsDao.suggestTitlesByPrefix]
-     * for filter semantics.
+     * Suggests Room event titles matching [prefix] for the form autocomplete; filtering is
+     * documented on [org.onekash.kashcal.data.db.dao.EventsDao.suggestTitlesByPrefix].
      */
     suspend fun suggestTitles(
         prefix: String,
@@ -65,68 +58,46 @@ class EventReader @Inject constructor(
         eventsDao.suggestTitlesByPrefix(prefix, sinceMs, untilMs, minFreq, limit)
 
     /**
-     * Recency-ranked tag suggestions for the tag chip row and inline `#`
-     * autocomplete, read straight from the tag metadata table (most-recently
-     * used first, with a stable name-ASC tiebreak for tags that share a
-     * last-used time), capped to [MAX_CATEGORY_SUGGESTIONS].
+     * Emits up to [MAX_CATEGORY_SUGGESTIONS] tag names for the tag chip row and inline `#`
+     * autocomplete, most recently used first, ties by name.
      *
-     * The table is the source of truth for what tags exist, so renames and
-     * deletes are reflected immediately. Backed by a Room [Flow] (recomputes on
-     * table change) with `distinctUntilChanged` so a bulk sync pull doesn't
-     * thrash recomposition.
+     * The tag table is the source of truth for which tags exist, so renames and deletes show at
+     * once. `distinctUntilChanged` keeps a bulk sync pull from re-emitting an unchanged list.
      */
     fun getRecentCategories(): Flow<List<String>> =
         categoryDao.observeSuggestions(MAX_CATEGORY_SUGGESTIONS)
             .distinctUntilChanged()
 
     /**
-     * Reactive per-tag custom colors (name to color, null = no custom color),
-     * for the chip color resolver. Repaints chips when the user recolors a tag
-     * without disturbing the event/occurrence stream.
+     * Emits each tag's custom color by name, null for none, so a recolor repaints chips without
+     * touching the event and occurrence streams.
      */
     fun observeTagColors(): Flow<Map<String, Int?>> =
         categoryDao.observeAll()
             .map { rows -> rows.associate { it.name to it.color } }
             .distinctUntilChanged()
 
-    /**
-     * Get event by ID.
-     */
     suspend fun getEventById(eventId: Long): Event? {
         return eventsDao.getById(eventId)
     }
 
     /**
-     * Reactive single-event read by ID. Re-emits whenever the event row
-     * changes (e.g. after an edit persists a new title/time/location), so
-     * a UI observing this always reflects the latest persisted event
-     * rather than a snapshot captured at tap time. Emits null when the
-     * event doesn't exist (e.g. after deletion).
+     * Observes one event, re-emitting when its row changes, so the UI shows the persisted event
+     * and not the one captured at tap time. Emits null when the event doesn't exist.
      */
     fun getEventByIdFlow(eventId: Long): Flow<Event?> =
         eventsDao.getByIdFlow(eventId).distinctUntilChanged()
 
-    /**
-     * Get event by UID.
-     * Returns list because UID may be shared by master and exceptions.
-     */
+    /** Returns every event with [uid]: a master and its exceptions share it. */
     suspend fun getEventsByUid(uid: String): List<Event> {
         return eventsDao.getByUid(uid)
     }
 
-    /**
-     * Get event by CalDAV URL.
-     */
     suspend fun getEventByCaldavUrl(url: String): Event? {
         return eventsDao.getByCaldavUrl(url)
     }
 
-    /**
-     * Get events by IDs in a single batch query.
-     * Returns map for O(1) lookup by event ID.
-     *
-     * Used to avoid N+1 queries when loading events for multiple occurrences.
-     */
+    /** Loads [ids] in one query, keyed by event ID. */
     suspend fun getEventsByIds(ids: List<Long>): Map<Long, Event> {
         if (ids.isEmpty()) return emptyMap()
         return eventsDao.getByIds(ids).associateBy { it.id }
@@ -135,20 +106,15 @@ class EventReader @Inject constructor(
     // ========== Attendee Lookups ==========
 
     /**
-     * Reactive attendee list for a single event. Empty when the event has no
-     * persisted attendee rows. UI layer combines this with [AttendeeBackfill]
-     * for events whose [Event.rawIcal] contains ATTENDEE lines but whose
-     * `attendees` table rows haven't been persisted (covers the
-     * etag-unchanged-skip path on the inbound persistence layer).
+     * Observes one event's attendee rows; empty when none are stored. [AttendeeBackfill] fills
+     * the rows from [Event.rawIcal] for an event the pull skipped on an unchanged etag.
      */
     fun getAttendeesForEvent(eventId: Long): Flow<List<Attendee>> =
         attendeesDao.getForEvent(eventId).distinctUntilChanged()
 
     /**
-     * Bulk reactive read for day-view-style chip rendering. Returns a map
-     * keyed by `eventId` so callers can slice per-card without a per-event
-     * Flow collection — single Flow per visible-event-set. Empty IDs list
-     * short-circuits to an empty map without touching the DAO.
+     * Observes the attendees of [eventIds] in one Flow, keyed by event ID, so a list of cards
+     * needs no Flow per event. An empty [eventIds] emits an empty map without a query.
      */
     fun getAttendeesForEvents(eventIds: List<Long>): Flow<Map<Long, List<Attendee>>> {
         if (eventIds.isEmpty()) return flowOf(emptyMap())
@@ -158,23 +124,12 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Reactive list of pending CalDAV invitations for the inbox surface.
+     * Observes the pending CalDAV invitations for the inbox; the filter is documented on
+     * [buildPendingInvitations].
      *
-     * Combines:
-     * 1. Master events with at least one future, non-cancelled occurrence
-     *    (SQL-filtered by [org.onekash.kashcal.data.db.dao.EventsDao.getMasterEventsWithFutureOccurrenceFlow]).
-     * 2. NEEDS-ACTION attendee rows for those events (Flow re-emits when
-     *    a row's partstat changes — drives the optimistic empty-state
-     *    transition after the user RSVPs).
-     * 3. Account + calendar snapshots for owning-account scoping.
-     *
-     * `now` is captured at subscription time, NOT a real-time wall clock;
-     * the inbox's expected dwell time (read-and-act-and-dismiss) is short
-     * enough that cards do not auto-expire as wall-clock advances within
-     * a session.
-     *
-     * See [buildPendingInvitations] for the full filter policy
-     * (organizer-self exclusion, per-account address matching, etc.).
+     * The NEEDS-ACTION attendee Flow re-emits when a row's partstat changes, so a card leaves the
+     * inbox as soon as the user's RSVP is stored. [now] is fixed at subscription: a card whose
+     * last occurrence ends while the inbox is open stays until the next subscription.
      */
     @OptIn(ExperimentalCoroutinesApi::class)
     fun getPendingInvitations(now: Long = System.currentTimeMillis()): Flow<List<PendingInvitation>> {
@@ -202,17 +157,13 @@ class EventReader @Inject constructor(
         }.distinctUntilChanged()
     }
 
-    /**
-     * Get all exception events for a master recurring event.
-     */
     suspend fun getExceptionsForMaster(masterEventId: Long): List<Event> {
         return eventsDao.getExceptionsForMaster(masterEventId)
     }
 
     /**
-     * Get all exception events for multiple master recurring events in a single batch.
-     * Returns a map of masterId -> list of exceptions.
-     * Uses chunked(500) to stay within SQLite's IN clause variable limit (999).
+     * Returns the exceptions of [masterIds] keyed by master ID. Queries in chunks of 500 to stay
+     * within SQLite's limit of 999 bound variables.
      */
     suspend fun getExceptionsForMasters(masterIds: List<Long>): Map<Long, List<Event>> {
         if (masterIds.isEmpty()) return emptyMap()
@@ -221,9 +172,6 @@ class EventReader @Inject constructor(
             .groupBy { it.originalEventId!! }
     }
 
-    /**
-     * Get master event for an exception.
-     */
     suspend fun getMasterForException(exceptionEvent: Event): Event? {
         val masterId = exceptionEvent.originalEventId ?: return null
         return eventsDao.getById(masterId)
@@ -232,27 +180,17 @@ class EventReader @Inject constructor(
     // ========== Export Queries ==========
 
     /**
-     * Get all master events for a calendar (for ICS export).
-     *
-     * Returns master recurring events and standalone events (not exceptions).
-     * Excludes events pending deletion. Exception events are retrieved
-     * separately via getExceptionsForMaster() for RFC 5545 compliant bundling.
-     *
-     * @param calendarId Calendar to export
-     * @return List of master events, ordered by start time
+     * Returns [calendarId]'s masters and one-off events by start time, without exceptions or
+     * PENDING_DELETE rows. ICS export loads the exceptions separately
+     * ([getExceptionsForMasters]) to bundle each under its master's UID (RFC 5545).
      */
     suspend fun getAllMasterEventsForCalendar(calendarId: Long): List<Event> {
         return eventsDao.getAllMasterEventsForCalendar(calendarId)
     }
 
     /**
-     * Get event with its exceptions (for single event ICS export).
-     *
-     * Returns the event and all its exception events for bundling
-     * into a single VCALENDAR with multiple VEVENTs sharing the same UID.
-     *
-     * @param eventId The master or standalone event ID
-     * @return Pair of event and its exceptions (empty list if not recurring), or null if not found
+     * Returns [eventId] and its exceptions, for one VCALENDAR whose VEVENTs share the UID.
+     * The list is empty for a non-recurring event; returns null if the event doesn't exist.
      */
     suspend fun getEventWithExceptions(eventId: Long): Pair<Event, List<Event>>? {
         val event = eventsDao.getById(eventId) ?: return null
@@ -266,117 +204,74 @@ class EventReader @Inject constructor(
 
     // ========== Calendar Queries ==========
 
-    /**
-     * Get all calendars as Flow for reactive updates.
-     */
     fun getAllCalendars(): Flow<List<Calendar>> {
         return calendarsDao.getAll()
     }
 
-    /**
-     * Get all visible calendars.
-     */
     fun getVisibleCalendars(): Flow<List<Calendar>> {
         return calendarsDao.getAll().map { calendars ->
             calendars.filter { it.isVisible }
         }
     }
 
-    /**
-     * Get calendars for an account.
-     */
     fun getCalendarsForAccount(accountId: Long): Flow<List<Calendar>> {
         return calendarsDao.getByAccountId(accountId)
     }
 
-    /**
-     * Get calendar by ID.
-     */
     suspend fun getCalendarById(calendarId: Long): Calendar? {
         return calendarsDao.getById(calendarId)
     }
 
-    /**
-     * Get calendars for a specific provider (e.g., "icloud", "local").
-     * Uses JOIN with accounts table to filter by provider type.
-     */
+    /** Emits the calendars of accounts whose provider is [provider], e.g. "icloud", "local". */
     fun getCalendarsByProvider(provider: String): Flow<List<Calendar>> {
         return calendarsDao.getCalendarsByProvider(provider)
     }
 
-    /**
-     * Get iCloud calendar count.
-     * Returns Flow that updates when calendars change.
-     */
     fun getICloudCalendarCount(): Flow<Int> {
         return calendarsDao.getCalendarCountByProvider("icloud")
     }
 
-    /**
-     * Get calendar count for an account.
-     */
     suspend fun getCalendarCountForAccount(accountId: Long): Int {
         return calendarsDao.getByAccountIdOnce(accountId).size
     }
 
-    /**
-     * Set calendar visibility.
-     * This is the source of truth for which calendars are visible.
-     */
+    /** Stores [visible] in the calendar's `is_visible`, the source of truth for visibility. */
     suspend fun setCalendarVisibility(calendarId: Long, visible: Boolean) {
         calendarsDao.setVisible(calendarId, visible)
     }
 
     // ========== Occurrence Queries (for Calendar Views) ==========
 
-    /**
-     * Get occurrences in date range (reactive).
-     * This is the primary query for calendar views.
-     * Excludes cancelled occurrences.
-     */
+    /** Observes the non-cancelled occurrences overlapping [startTs]..[endTs]. */
     fun getOccurrencesInRange(startTs: Long, endTs: Long): Flow<List<Occurrence>> {
         return occurrencesDao.getInRange(startTs, endTs)
     }
 
-    /**
-     * Get occurrences in range (one-shot).
-     */
     suspend fun getOccurrencesInRangeOnce(startTs: Long, endTs: Long): List<Occurrence> {
         return occurrencesDao.getInRangeOnce(startTs, endTs)
     }
 
     /**
-     * Find recurring events that need occurrence extension to reach target date.
-     * Used for on-demand expansion when user navigates far into the future.
-     *
-     * @param targetTs Target timestamp - events with max occurrence before this need extension
-     * @return List of event IDs that need occurrence extension
+     * Returns the IDs of recurring masters whose latest occurrence starts before [targetTs], for
+     * on-demand expansion when the user navigates far into the future.
      */
     suspend fun getRecurringEventsNeedingExtension(targetTs: Long): List<Long> {
         return occurrencesDao.getRecurringEventsNeedingExtension(targetTs)
     }
 
     /**
-     * Find recurring events that need past occurrence extension to reach target date.
-     * Used for on-demand expansion when user navigates far into the past.
-     *
-     * @param targetTs Target timestamp - events with min occurrence after this need past extension
-     * @return List of event IDs that need past occurrence extension
+     * Returns the IDs of recurring masters whose earliest occurrence starts after [targetTs] and
+     * after their DTSTART, for on-demand expansion when the user navigates far into the past.
      */
     suspend fun getRecurringEventsNeedingPastExtension(targetTs: Long): List<Long> {
         return occurrencesDao.getRecurringEventsNeedingPastExtension(targetTs)
     }
 
-    /**
-     * Find recurring master events with zero materialized occurrences.
-     */
+    /** Returns the IDs of recurring masters, not PENDING_DELETE, with no occurrence rows. */
     suspend fun getRecurringEventsWithNoOccurrences(): List<Long> {
         return occurrencesDao.getRecurringEventsWithNoOccurrences()
     }
 
-    /**
-     * Get occurrences for specific calendar in range.
-     */
     fun getOccurrencesForCalendar(
         calendarId: Long,
         startTs: Long,
@@ -385,24 +280,16 @@ class EventReader @Inject constructor(
         return occurrencesDao.getForCalendarInRange(calendarId, startTs, endTs)
     }
 
-    /**
-     * Get occurrences for specific day (YYYYMMDD format).
-     */
+    /** Observes the non-cancelled occurrences spanning [day] (YYYYMMDD). */
     fun getOccurrencesForDay(day: Int): Flow<List<Occurrence>> {
         return occurrencesDao.getForDay(day)
     }
 
-    /**
-     * Get occurrences for day (one-shot).
-     */
     suspend fun getOccurrencesForDayOnce(day: Int): List<Occurrence> {
         return occurrencesDao.getForDayOnce(day)
     }
 
-    /**
-     * Get occurrences for multiple visible calendars in range.
-     * Filters by calendar visibility.
-     */
+    /** Observes [getOccurrencesInRange] limited to visible calendars. */
     fun getVisibleOccurrencesInRange(startTs: Long, endTs: Long): Flow<List<Occurrence>> {
         return combine(
             getVisibleCalendars(),
@@ -413,10 +300,7 @@ class EventReader @Inject constructor(
         }.distinctUntilChanged()
     }
 
-    /**
-     * Get visible occurrences for specific day (YYYYMMDD format).
-     * Filters by calendar visibility.
-     */
+    /** Observes [getOccurrencesForDay] limited to visible calendars. */
     fun getVisibleOccurrencesForDay(day: Int): Flow<List<Occurrence>> {
         return combine(
             getVisibleCalendars(),
@@ -428,18 +312,11 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Get visible occurrences WITH event data for specific day (YYYYMMDD format).
+     * Observes the occurrences on [day] (YYYYMMDD, e.g. 20241225) in visible calendars, each
+     * with its event and calendar.
      *
-     * Similar to getVisibleOccurrencesForDay but includes event details directly.
-     * Uses JOIN query so Room tracks BOTH tables - emits when occurrences OR events change.
-     *
-     * This fixes the reactivity issue where event metadata changes (location, title, etc.)
-     * didn't trigger UI updates in the day events list.
-     *
-     * Uses debounce(50) to batch rapid updates during sync.
-     *
-     * @param day Day code in YYYYMMDD format (e.g., 20241225 for Dec 25, 2024)
-     * @return Flow of OccurrenceWithEvent list, filtered by visible calendars
+     * The query joins events, so Room re-emits when an event's title or location changes, not
+     * only its occurrences. `debounce(50)` batches the burst of updates during a sync.
      */
     @Suppress("OPT_IN_USAGE")
     fun getVisibleOccurrencesWithEventsForDay(day: Int): Flow<List<OccurrenceWithEvent>> {
@@ -464,8 +341,9 @@ class EventReader @Inject constructor(
     // ========== Event with Occurrence Data ==========
 
     /**
-     * Data class combining occurrence with its event details.
-     * Used for displaying event info in calendar views.
+     * Pairs an occurrence with an event and its calendar. The range and day readers load the
+     * exception for a changed occurrence; [searchEventsWithOccurrences] pairs each occurrence
+     * with the matched event.
      */
     data class OccurrenceWithEvent(
         val occurrence: Occurrence,
@@ -474,8 +352,8 @@ class EventReader @Inject constructor(
     )
 
     /**
-     * Get occurrences with full event details for date range.
-     * Uses batch loading to avoid N+1 queries (3 queries instead of 2N+1).
+     * Returns the non-cancelled occurrences overlapping [startTs]..[endTs] with their events and
+     * calendars, in three queries.
      */
     suspend fun getOccurrencesWithEventsInRange(
         startTs: Long,
@@ -484,11 +362,9 @@ class EventReader @Inject constructor(
         val occurrences = occurrencesDao.getInRangeOnce(startTs, endTs)
         if (occurrences.isEmpty()) return emptyList()
 
-        // Batch load events (1 query instead of N)
         val eventIds = occurrences.map { it.exceptionEventId ?: it.eventId }.distinct()
         val eventsMap = eventsDao.getByIds(eventIds).associateBy { it.id }
 
-        // Batch load calendars (1 query instead of N)
         val calendarIds = occurrences.map { it.calendarId }.distinct()
         val calendarsMap = calendarsDao.getByIds(calendarIds).associateBy { it.id }
 
@@ -501,19 +377,11 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Get occurrences with full event details for date range (reactive Flow).
+     * Observes the non-cancelled occurrences overlapping [startTs]..[endTs] with their events
+     * and calendars, so events appear while a sync writes them.
      *
-     * Returns a Flow that automatically emits updates when occurrences OR events change.
-     * Used for progressive UI updates during sync - events appear as they're synced.
-     *
-     * IMPORTANT: Uses JOIN query so Room tracks BOTH tables. This fixes the reactivity
-     * issue where event metadata changes (location, title, etc.) didn't trigger UI updates.
-     *
-     * Uses debounce(50) to batch rapid updates during bulk sync (prevents 500 emissions
-     * for 500 event updates).
-     *
-     * Android best practice: Use Flow for observable data sources.
-     * See: https://developer.android.com/topic/architecture/data-layer/offline-first
+     * The query joins events, so Room re-emits when an event changes, not only its occurrences.
+     * `debounce(50)` keeps a bulk sync of 500 events from emitting 500 times.
      */
     @Suppress("OPT_IN_USAGE")
     fun getOccurrencesWithEventsInRangeFlow(
@@ -525,14 +393,14 @@ class EventReader @Inject constructor(
             .map { data ->
                 if (data.isEmpty()) return@map emptyList()
 
-                // Batch load calendars (still needed - not in JOIN)
+                // Calendars aren't in the join.
                 val calendarIds = data.map { it.calendarId }.distinct()
                 val calendarsMap = calendarsDao.getByIds(calendarIds).associateBy { it.id }
 
                 data.map { item ->
                     OccurrenceWithEvent(
                         occurrence = item.toOccurrence(),
-                        event = item.event,  // Already available via @Embedded
+                        event = item.event,
                         calendar = calendarsMap[item.calendarId]
                     )
                 }
@@ -540,17 +408,11 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Get VISIBLE occurrences with event data for date range (reactive Flow).
+     * Observes [getOccurrencesWithEventsInRangeFlow] (range inclusive) limited to visible
+     * calendars.
      *
-     * Uses combine() with getVisibleCalendars() so UI updates automatically
-     * when EITHER visibility changes OR events change. This fixes the bug where
-     * toggling calendar visibility didn't update week view, agenda, etc.
-     *
-     * Uses debounce(50) to batch rapid updates during bulk sync.
-     *
-     * @param startTs Start timestamp (inclusive)
-     * @param endTs End timestamp (inclusive)
-     * @return Flow of visible OccurrenceWithEvent list, auto-filtered by calendar visibility
+     * Combining with [getVisibleCalendars] re-emits when a calendar's visibility is toggled, so
+     * the week view and agenda follow it. `debounce(50)` batches updates during a bulk sync.
      */
     @Suppress("OPT_IN_USAGE")
     fun getVisibleOccurrencesWithEventsInRangeFlow(
@@ -578,7 +440,8 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Get single occurrence with event details.
+     * Returns [eventId]'s occurrence at [occurrenceTimeMs] with the event it shows (the
+     * exception for a changed occurrence), or null if either is missing.
      */
     suspend fun getOccurrenceWithEvent(
         eventId: Long,
@@ -595,19 +458,16 @@ class EventReader @Inject constructor(
     // ========== Day/Week/Month View Helpers ==========
 
     /**
-     * Get events for a specific day.
-     * Returns OccurrenceWithEvent list sorted by start time.
-     * Uses batch loading to avoid N+1 queries (3 queries instead of 2N+1).
+     * Returns the non-cancelled occurrences spanning [dayCode] with their events and calendars,
+     * by start time, in three queries.
      */
     suspend fun getEventsForDay(dayCode: Int): List<OccurrenceWithEvent> {
         val occurrences = occurrencesDao.getForDayOnce(dayCode)
         if (occurrences.isEmpty()) return emptyList()
 
-        // Batch load events (1 query instead of N)
         val eventIds = occurrences.map { it.exceptionEventId ?: it.eventId }.distinct()
         val eventsMap = eventsDao.getByIds(eventIds).associateBy { it.id }
 
-        // Batch load calendars (1 query instead of N)
         val calendarIds = occurrences.map { it.calendarId }.distinct()
         val calendarsMap = calendarsDao.getByIds(calendarIds).associateBy { it.id }
 
@@ -619,21 +479,17 @@ class EventReader @Inject constructor(
         }.sortedBy { it.occurrence.startTs }
     }
 
-    /**
-     * Check if any events exist on a day.
-     * Useful for calendar month view dots.
-     */
+    /** Returns true if a non-cancelled occurrence spans [dayCode]. */
     suspend fun hasEventsOnDay(dayCode: Int): Boolean {
         val occurrences = occurrencesDao.getForDayOnce(dayCode)
         return occurrences.isNotEmpty()
     }
 
     /**
-     * Get day codes that have events in a month.
-     * Returns set of YYYYMMDD integers for days with events.
+     * Returns the start day (YYYYMMDD) of each non-cancelled occurrence overlapping [month] of
+     * [year] (1-based), in the device's default zone.
      */
     suspend fun getDaysWithEventsInMonth(year: Int, month: Int): Set<Int> {
-        // Calculate month start/end timestamps
         val calendar = java.util.Calendar.getInstance()
         calendar.set(year, month - 1, 1, 0, 0, 0)
         calendar.set(java.util.Calendar.MILLISECOND, 0)
@@ -649,36 +505,23 @@ class EventReader @Inject constructor(
     // ========== Search ==========
 
     /**
-     * Search events by title, location, or description using FTS4 full-text search.
+     * Searches events with FTS4, returning up to 1000 by start time, without PENDING_DELETE
+     * rows or synthetic masters.
      *
-     * Query syntax supports:
-     * - Simple terms: "meeting" (matches word "meeting")
-     * - Prefix search: "meet*" (matches "meeting", "meetup", etc.)
-     * - Multiple words: "team meeting" (matches events with both words)
-     * - Phrases: '"team meeting"' (matches exact phrase)
-     *
-     * @param query Search query (prefix matching applied automatically)
-     * @return Events matching the search, ordered by start time, max 1000 results
+     * Every search method here turns each whitespace-separated word of [query] into a prefix
+     * term (`meet` matches "meeting"), and an event must match every word.
      */
     suspend fun searchEvents(query: String): List<Event> {
         if (query.isBlank()) return emptyList()
-        // Format for FTS: add * suffix for prefix matching on each word
         val ftsQuery = query.trim().split("\\s+".toRegex())
             .joinToString(" ") { "$it*" }
         return eventsDao.search(ftsQuery)
     }
 
     /**
-     * Search events with at least one current/future occurrence.
-     *
-     * This follows Android CalendarProvider's pattern of using the Instances table
-     * for time-based queries. An event is included if it has ANY occurrence that
-     * hasn't ended yet (occurrence.endTs >= now).
-     *
-     * Use this when not including past events.
-     *
-     * @param query Search query (prefix matching applied automatically)
-     * @return Events with at least one non-ended occurrence
+     * Searches with [searchEvents]' terms, keeping events with a non-cancelled occurrence that
+     * hasn't ended. The occurrences table decides this, since `Event.endTs` is only the first
+     * occurrence's end.
      */
     suspend fun searchEventsExcludingPast(query: String): List<Event> {
         if (query.isBlank()) return emptyList()
@@ -688,15 +531,8 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Search events with occurrences in a specific date range.
-     *
-     * Combines FTS text matching with occurrence time range filtering.
-     * Use this for date-filtered search.
-     *
-     * @param query Search query (prefix matching applied automatically)
-     * @param rangeStart Start of range in millis (inclusive)
-     * @param rangeEnd End of range in millis (inclusive)
-     * @return Events with at least one occurrence in range
+     * Searches with [searchEvents]' terms, keeping events with a non-cancelled occurrence
+     * overlapping [rangeStart]..[rangeEnd] (inclusive).
      */
     suspend fun searchEventsInRange(query: String, rangeStart: Long, rangeEnd: Long): List<Event> {
         if (query.isBlank()) return emptyList()
@@ -708,11 +544,8 @@ class EventReader @Inject constructor(
     // ========== Search with Next Occurrence ==========
 
     /**
-     * Search events and return with next occurrence timestamp.
-     * For "All" filter - includes past events.
-     *
-     * @param query Search query (plain text, will be formatted for FTS)
-     * @return Events with their start timestamp as nextOccurrenceTs
+     * Searches masters and one-off events, past ones included, for the "All" filter.
+     * `nextOccurrenceTs` is the event's own start; results are ordered by distance from now.
      */
     suspend fun searchEventsWithNextOccurrence(query: String): List<EventWithNextOccurrence> {
         if (query.isBlank()) return emptyList()
@@ -722,11 +555,8 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Search events excluding past, with next occurrence timestamp.
-     * For default search (excludes past).
-     *
-     * @param query Search query (plain text, will be formatted for FTS)
-     * @return Events with their next future occurrence timestamp
+     * Searches events with a non-cancelled occurrence not yet ended, for the default search.
+     * `nextOccurrenceTs` is the earliest such occurrence's start, and results are ordered by it.
      */
     suspend fun searchEventsExcludingPastWithNextOccurrence(query: String): List<EventWithNextOccurrence> {
         if (query.isBlank()) return emptyList()
@@ -736,13 +566,9 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Search events in date range with next occurrence timestamp.
-     * For date-filtered search (Week, Month, custom date).
-     *
-     * @param query Search query (plain text, will be formatted for FTS)
-     * @param rangeStart Start of range (inclusive)
-     * @param rangeEnd End of range (inclusive)
-     * @return Events with their next occurrence timestamp within the range
+     * Searches events with a non-cancelled occurrence overlapping [rangeStart]..[rangeEnd]
+     * (inclusive), for the Week, Month and custom-date filters. `nextOccurrenceTs` is the
+     * earliest such occurrence's start.
      */
     suspend fun searchEventsInRangeWithNextOccurrence(
         query: String,
@@ -756,8 +582,8 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Search events with occurrence info.
-     * Uses batch loading to avoid N+1 queries (3 queries instead of 1+N+M).
+     * Searches like [searchEvents] and returns up to 5 non-cancelled occurrences per event, by
+     * start time, in three queries. With [futureOnly], only occurrences starting at or after now.
      */
     suspend fun searchEventsWithOccurrences(
         query: String,
@@ -768,21 +594,17 @@ class EventReader @Inject constructor(
 
         val now = if (futureOnly) System.currentTimeMillis() else 0L
 
-        // Batch load occurrences (1 query instead of N)
         val eventIds = events.map { it.id }
         val allOccurrences = occurrencesDao.getForEvents(eventIds)
             .filter { it.startTs >= now && !it.isCancelled }
 
-        // Group by event and take 5 per event
         val occurrencesByEvent = allOccurrences.groupBy { it.eventId }
         val limitedOccurrences = occurrencesByEvent.flatMap { (_, occs) -> occs.take(5) }
 
         if (limitedOccurrences.isEmpty()) return emptyList()
 
-        // Create events map for O(1) lookup
         val eventsMap = events.associateBy { it.id }
 
-        // Batch load calendars (1 query instead of M)
         val calendarIds = limitedOccurrences.map { it.calendarId }.distinct()
         val calendarsMap = calendarsDao.getByIds(calendarIds).associateBy { it.id }
 
@@ -795,60 +617,39 @@ class EventReader @Inject constructor(
 
     // ========== Sync-Related Queries ==========
 
-    /**
-     * Get events pending sync.
-     */
+    /** Returns every event whose sync status isn't SYNCED. */
     suspend fun getPendingSyncEvents(): List<Event> {
         return eventsDao.getPendingSyncEvents()
     }
 
-    /**
-     * Get events pending sync for a specific calendar.
-     */
+    /** Returns [calendarId]'s events whose sync status isn't SYNCED. */
     suspend fun getPendingSyncEventsForCalendar(calendarId: Long): List<Event> {
         return eventsDao.getPendingForCalendar(calendarId)
     }
 
-    /**
-     * Get events with sync errors.
-     */
+    /** Returns events with a stored `last_sync_error`. */
     suspend fun getEventsWithSyncErrors(): List<Event> {
         return eventsDao.getEventsWithSyncErrors()
     }
 
-    /**
-     * Get pending operation count (for UI badge).
-     */
     fun getPendingOperationCount(): Flow<Int> {
         return database.pendingOperationsDao().getPendingCount()
     }
 
     // ========== Statistics ==========
 
-    /**
-     * Get total event count.
-     */
     suspend fun getTotalEventCount(): Int {
         return eventsDao.getTotalCount()
     }
 
-    /**
-     * Get event count for calendar.
-     */
     suspend fun getEventCountForCalendar(calendarId: Long): Int {
         return eventsDao.getCountByCalendar(calendarId)
     }
 
-    /**
-     * Get total occurrence count (for diagnostics).
-     */
     suspend fun getTotalOccurrenceCount(): Int {
         return occurrencesDao.getTotalCount()
     }
 
-    /**
-     * Check if occurrences exist in range.
-     */
     suspend fun hasOccurrencesInRange(startTs: Long, endTs: Long): Boolean {
         return occurrencesDao.hasOccurrencesInRange(startTs, endTs)
     }
@@ -856,18 +657,9 @@ class EventReader @Inject constructor(
     // ========== Reminder Scheduling ==========
 
     /**
-     * Get events with reminders that have occurrences in the given window.
-     * Used by ReminderScheduler to find events that may need reminders scheduled.
-     *
-     * Returns events where:
-     * - Event has non-empty reminders list
-     * - Event has occurrences in [fromTime, toTime] range
-     * - Calendar is visible (user hasn't hidden it)
-     * - Occurrence is not cancelled
-     *
-     * @param fromTime Start of window (epoch ms)
-     * @param toTime End of window (epoch ms)
-     * @return List of events with their occurrence times and calendar colors
+     * Returns one row per non-cancelled occurrence starting in [fromTime]..[toTime] (epoch ms,
+     * inclusive) in a visible calendar whose event has reminders. An exception without its own
+     * reminders inherits the master's ([EventWithOccurrenceAndColor]).
      */
     suspend fun getEventsWithRemindersInRange(
         fromTime: Long,
@@ -877,16 +669,13 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Get future occurrences for an event within the reminder schedule window.
-     * Used for scheduling reminder alarms.
-     *
-     * @param eventId The event ID
-     * @param windowDays Number of days ahead to include (default 7)
-     * @return Future occurrences within the window
+     * Returns [eventId]'s non-cancelled occurrences starting between now and [windowDays] days
+     * ahead, for scheduling reminder alarms. Callers pass the reminder scheduler's occurrence
+     * look-ahead, and the scheduler arms only the reminders due soon.
      */
     suspend fun getOccurrencesForEventInScheduleWindow(
         eventId: Long,
-        windowDays: Int = 7
+        windowDays: Int
     ): List<Occurrence> {
         val now = System.currentTimeMillis()
         val windowEnd = now + (windowDays.toLong() * 24 * 60 * 60 * 1000)
@@ -896,11 +685,8 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Get the occurrence linked to an exception event.
-     * Used for scheduling reminders for exception events.
-     *
-     * @param exceptionEventId The exception event ID
-     * @return The linked occurrence, or null if not found
+     * Returns the occurrence [exceptionEventId] replaces, or null if none is linked; used to
+     * schedule an exception's reminders.
      */
     suspend fun getOccurrenceByExceptionEventId(exceptionEventId: Long): Occurrence? {
         return occurrencesDao.getByExceptionEventId(exceptionEventId)
@@ -908,24 +694,11 @@ class EventReader @Inject constructor(
 
     // ========== Calendar Lookups for Reminder Cleanup ==========
 
-    /**
-     * Get calendars for an account (one-shot).
-     * Used for bulk operations like reminder cleanup.
-     *
-     * @param accountId The account ID
-     * @return List of calendars belonging to the account
-     */
     suspend fun getCalendarsByAccountIdOnce(accountId: Long): List<Calendar> {
         return calendarsDao.getByAccountIdOnce(accountId)
     }
 
-    /**
-     * Get all master events for a calendar (one-shot).
-     * Used for bulk operations like reminder cleanup.
-     *
-     * @param calendarId The calendar ID
-     * @return List of master events (excludes exception events)
-     */
+    /** Returns the same rows as [getAllMasterEventsForCalendar]. */
     suspend fun getEventsForCalendar(calendarId: Long): List<Event> {
         return eventsDao.getAllMasterEventsForCalendar(calendarId)
     }

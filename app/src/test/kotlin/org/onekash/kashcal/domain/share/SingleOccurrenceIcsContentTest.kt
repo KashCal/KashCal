@@ -11,28 +11,25 @@ import org.onekash.kashcal.domain.model.toEventForShareCard
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 
 /**
- * Contract test: when [singleOccurrenceForShare] feeds a synthesized event
- * through [IcsPatcher.serialize] — the SAME path used by IcsExporter at
- * runtime — the resulting VCALENDAR body must be a single standalone event
- * with no series-membership data and no leaked-from-master attendee or
- * organizer information.
+ * Tests that an event from [singleOccurrenceForShare], serialized through [IcsPatcher.serialize]
+ * (the path IcsExporter uses at runtime), gives a VCALENDAR with one standalone event: a fresh
+ * UID, the title and location kept, no series data, and no attendee, organizer or X- properties
+ * from the master. Covers Room masters and exceptions, multi-day all-day events west and east
+ * of UTC, and device events through `toEventForShareCard`.
  *
- * Why IcsPatcher.serialize and not the mapper directly: any event synced
- * from a CalDAV server (iCloud, Nextcloud, Radicale, etc.) carries the
- * server-provided ICS body in `Event.rawIcal`. `IcsExporter.exportEvent`
- * delegates to `IcsPatcher.serialize`, which patches that raw body in
- * place — preserving ATTENDEE, ORGANIZER, and X-* properties from the
- * server. If `singleOccurrenceForShare` doesn't clear `rawIcal`, the
- * recipient who taps the share-card .ics gets every attendee's email and
- * RSVP. Testing only `EventToICalEventMapper.toICalEvent(...)` (as the
- * v23.7.71 version of this test did) bypasses that path entirely and
- * silently passes while the production path leaks PII.
+ * Why IcsPatcher.serialize and not the mapper: an event synced from a CalDAV server (iCloud,
+ * Nextcloud, Radicale and others) carries the server's ICS body in `Event.rawIcal`.
+ * `IcsExporter.exportEvent` delegates to `IcsPatcher.serialize`, which patches that body in
+ * place and keeps its ATTENDEE, ORGANIZER and X-* properties. If `singleOccurrenceForShare`
+ * doesn't clear `rawIcal`, the recipient of the share-card .ics gets every attendee's email and
+ * RSVP. A test of only `EventToICalEventMapper.toICalEvent(...)`, as this test's v23.7.71
+ * version was, bypasses that path and passes while production leaks PII.
  *
- * Pure JVM — IcsPatcher has no Android dependencies.
+ * Pure JVM: IcsPatcher has no Android dependencies.
  */
 class SingleOccurrenceIcsContentTest {
 
-    /** Realistic CalDAV-fetched master event with attendees + organizer. */
+    /** A realistic CalDAV-fetched master event with attendees and an organizer. */
     private val recurringMasterWithAttendees: Event = run {
         val rawIcal = """
             BEGIN:VCALENDAR
@@ -96,9 +93,8 @@ class SingleOccurrenceIcsContentTest {
     }
 
     /**
-     * Extract just the VEVENT body. VTIMEZONE blocks legitimately contain
-     * RRULE for DST transitions per RFC 5545 — we only care that the VEVENT
-     * itself isn't recurring.
+     * Returns the VEVENT body only. A VTIMEZONE has RRULEs for its DST transitions (RFC 5545),
+     * so the series checks look at the VEVENT alone.
      */
     private fun extractVeventBody(ics: String): String {
         val begin = ics.indexOf("BEGIN:VEVENT")
@@ -112,7 +108,7 @@ class SingleOccurrenceIcsContentTest {
             event,
             occurrenceStartTs = 1749311400000L,
             occurrenceEndTs = 1749316800000L,
-            nowMs = 1748736000000L, // 2026-05-31T12:00:00Z, deterministic
+            nowMs = 1748736000000L, // 2025-06-01T00:00:00Z, deterministic
         )
         return IcsPatcher.serialize(occurrence)
     }
@@ -148,8 +144,8 @@ class SingleOccurrenceIcsContentTest {
     @Test
     fun `share-card ics does NOT contain ORGANIZER property`() {
         val ics = shareIcs(recurringMasterWithAttendees)
-        // ORGANIZER on a share-card .ics could trigger iTIP routing on
-        // the recipient's calendar. Strip it.
+        // ORGANIZER on a share-card .ics could trigger iTIP routing on the recipient's
+        // calendar, so it's stripped.
         assertFalse(
             "share-card .ics must not contain ORGANIZER (iTIP-routing risk)",
             ics.contains("ORGANIZER")
@@ -222,7 +218,7 @@ class SingleOccurrenceIcsContentTest {
 
     // =================== Exception event share ===================
 
-    /** Modified-occurrence (exception) event. */
+    /** A modified-occurrence (exception) event. */
     private val exceptionEvent: Event = run {
         val rawIcal = """
             BEGIN:VCALENDAR
@@ -270,14 +266,15 @@ class SingleOccurrenceIcsContentTest {
     // =================== Multi-day all-day events ===================
 
     /**
-     * Reproduces the v23.7.76 bug: a 4-day all-day event starting May 31
-     * 2026 in America/Los_Angeles serializes with wrong dates / collapsed
-     * duration in the share-card .ics. The user reported "just sends
-     * May 31, no matter which day I click" + "date shows a day before".
+     * Returns the v23.7.76 regression fixture: a 4-day all-day event starting May 31 2026 in
+     * America/Los_Angeles, which serialized with wrong dates or a collapsed duration in the
+     * share-card .ics. The user reported "just sends May 31, no matter which day I click" and
+     * "date shows a day before".
      *
-     * KashCal stores all-day events as "local midnight in event TZ":
-     *   May 31 00:00:00 PDT = 1748674800000 ms epoch
-     *   Jun 03 23:59:59.999 PDT = 1749023999999 ms epoch (inclusive end)
+     * The range is stored as local midnight in the event's zone, which [normalizeAllDay]
+     * re-anchors to UTC:
+     *   May 31 00:00:00 PDT = 1780210800000 ms epoch
+     *   Jun 03 23:59:59.999 PDT = 1780556399999 ms epoch (inclusive end)
      */
     private fun multiDayAllDayEvent(): Event = Event(
         id = 50L,
@@ -305,8 +302,8 @@ class SingleOccurrenceIcsContentTest {
         val ics = IcsPatcher.serialize(occurrence)
         val veventBody = extractVeventBody(ics)
 
-        // DTSTART must be 20260531 (May 31 in event TZ), NOT 20260530.
-        // Use VALUE=DATE marker to find the line.
+        // DTSTART must be 20260531 (May 31 in the event's zone), not 20260530. The regex takes
+        // the 8 digits after DTSTART and any parameters.
         val dtstartMatch = Regex("""DTSTART(?:;[^:]*)?:(\d{8})""")
             .find(veventBody)
         assertTrue(
@@ -332,10 +329,8 @@ class SingleOccurrenceIcsContentTest {
         val ics = IcsPatcher.serialize(occurrence)
         val veventBody = extractVeventBody(ics)
 
-        // RFC 5545 DTEND for all-day events is EXCLUSIVE — first day NOT
-        // covered. May 31 + 4 days = Jun 4 (exclusive). So the .ics
-        // should emit DTEND=20260604 to mean "covers May 31, Jun 1,
-        // Jun 2, Jun 3" (4 inclusive days).
+        // An all-day DTEND is exclusive (RFC 5545): the first day not covered. May 31 + 4 days
+        // is Jun 4, so the .ics emits DTEND=20260604 to cover May 31, Jun 1, Jun 2 and Jun 3.
         val dtendMatch = Regex("""DTEND(?:;[^:]*)?:(\d{8})""")
             .find(veventBody)
         assertTrue(
@@ -361,10 +356,9 @@ class SingleOccurrenceIcsContentTest {
         val ics = IcsPatcher.serialize(occurrence)
         val veventBody = extractVeventBody(ics)
 
-        // The bug: when fromTimestamp uses UTC for an all-day timestamp
-        // stored as local-midnight-in-event-TZ, both DTSTART and DTEND
-        // can shift by up to a day, sometimes collapsing the visible
-        // span to a single day. Verify start and end differ by ≥1 day.
+        // Reading an all-day timestamp stored as local midnight in the event's zone as UTC can
+        // shift DTSTART and DTEND by up to a day and collapse the span to one day. Checks that
+        // DTEND is after DTSTART and 4 days on.
         val dtstart = Regex("""DTSTART(?:;[^:]*)?:(\d{8})""").find(veventBody)?.groupValues?.get(1)
         val dtend = Regex("""DTEND(?:;[^:]*)?:(\d{8})""").find(veventBody)?.groupValues?.get(1)
         assertTrue("Both DTSTART and DTEND must be present: $veventBody", dtstart != null && dtend != null)
@@ -372,10 +366,10 @@ class SingleOccurrenceIcsContentTest {
             "DTEND ($dtend) must be strictly after DTSTART ($dtstart) for a multi-day event",
             dtend!! > dtstart!!
         )
-        // 4-day span (May 31..Jun 3 inclusive) → DTEND - DTSTART = 4 days
+        // A 4-day span (May 31..Jun 3 inclusive), so DTEND - DTSTART = 4 days.
         val startDay = dtstart.substring(6, 8).toInt()
         val endDay = dtend.substring(6, 8).toInt()
-        // Same month (May 31 → Jun 4 crosses months; Jun 4 - May 31 = 4 days difference at month-boundary)
+        // Compared as dates, since May 31 to Jun 4 crosses a month boundary.
         assertEquals(
             "Day delta between DTSTART (May 31) and DTEND (Jun 4) should be 4 days",
             4,
@@ -386,10 +380,9 @@ class SingleOccurrenceIcsContentTest {
 
     @Test
     fun `multi-day all-day in east-of-UTC TZ does not drift the start date`() {
-        // The "day before" bug: a Sydney user (UTC+10) creates an all-day
-        // event May 31; the timestamp is May 31 00:00 AEST = May 30 14:00
-        // UTC. The CalDAV mapper's UTC-based DATE serializer would show
-        // May 30 unless the helper normalizes correctly.
+        // The "day before" bug: a Sydney user (UTC+10) creates an all-day event May 31; the
+        // timestamp is May 31 00:00 AEST = May 30 14:00 UTC. The CalDAV mapper's UTC-based DATE
+        // serializer would show May 30 unless the helper re-anchors it to UTC.
         val sydney = Event(
             id = 51L,
             uid = "sydney-allday",
@@ -439,11 +432,9 @@ class SingleOccurrenceIcsContentTest {
 
     // =================== Device-event share-card path ===================
     //
-    // Mirrors the runtime device-event flow: DisplayEvent.Device →
-    // toEventForShareCard() → singleOccurrenceForShare(...) →
-    // IcsPatcher.serialize(...). Confirms the synthetic Event survives
-    // the existing pipeline and produces a privacy-clean .ics — same
-    // contract as Room events.
+    // Mirrors the runtime device-event flow: DisplayEvent.Device → toEventForShareCard() →
+    // singleOccurrenceForShare(...) → IcsPatcher.serialize(...). The synthetic Event must
+    // produce a privacy-clean .ics, the same contract as Room events.
 
     private fun deviceInstance(
         title: String = "Project Sync",
@@ -519,9 +510,8 @@ class SingleOccurrenceIcsContentTest {
 
     @Test
     fun `device-event share carries no ATTENDEE or ORGANIZER`() {
-        // Device events from CalendarProvider can have attendee data on
-        // separate Attendees rows; the share-card mapper deliberately
-        // does not read those, so nothing should appear in the .ics.
+        // Device events from CalendarProvider can have attendee data on separate Attendees
+        // rows; the share-card mapper deliberately doesn't read them, so none reach the .ics.
         val instance = deviceInstance(
             startTs = 1700100000000L,
             endTs = 1700103600000L,
@@ -548,10 +538,9 @@ class SingleOccurrenceIcsContentTest {
 
     @Test
     fun `device-event single-day all-day share emits matching DTSTART date`() {
-        // Android's CalendarProvider stores all-day BEGIN as UTC midnight
-        // (Events.EVENT_TIMEZONE is conventionally 'UTC'). Mirroring this
-        // real shape catches bugs where the share path reinterprets an
-        // all-day timestamp in the wrong zone.
+        // Android's CalendarProvider stores an all-day BEGIN as UTC midnight
+        // (Events.EVENT_TIMEZONE is conventionally 'UTC'). This real shape catches a share path
+        // that reads an all-day timestamp in the wrong zone.
         val instance = deviceInstance(
             title = "Holiday",
             description = "",
@@ -598,12 +587,10 @@ class SingleOccurrenceIcsContentTest {
 
     @Test
     fun `all-day device event with non-UTC EVENT_TIMEZONE does not day-shift`() {
-        // Some sync adapters (Outlook/Exchange bridges) write a non-UTC
-        // EVENT_TIMEZONE on all-day events even though Android's BEGIN
-        // value is always UTC-anchored midnight. Without normalization,
-        // normalizeAllDay would reinterpret the UTC ms in America/New_York
-        // and emit DTSTART=20260530 instead of 20260531. The mapper
-        // forces timezone='UTC' for all-day events to defend against this.
+        // Some sync adapters write a non-UTC EVENT_TIMEZONE on all-day events even though
+        // Android's BEGIN is always UTC-anchored midnight. Read in America/New_York,
+        // normalizeAllDay would emit DTSTART=20260530 instead of 20260531, so the mapper sets
+        // timezone='UTC' for all-day events.
         val instance = deviceInstance(
             title = "Holiday",
             description = "",
@@ -631,13 +618,11 @@ class SingleOccurrenceIcsContentTest {
 
     @Test
     fun `device-event with non-IANA timezone string emits a UTC DTSTART`() {
-        // Some sync adapters write Outlook-style timezone names (e.g.,
-        // "Pacific Standard Time") into Events.EVENT_TIMEZONE. The mapper
-        // round-trips the string verbatim; the downstream resolveZone
-        // returns null for non-IANA values, and ICalDateTime serializes
-        // a null-zoned timestamp as a UTC instant (DTSTART:...Z, no TZID).
-        // Asserting the UTC suffix and absence of TZID locks down what
-        // the recipient actually sees, not just that we didn't crash.
+        // Some sync adapters write Windows-style zone names (e.g. "Pacific Standard Time") into
+        // Events.EVENT_TIMEZONE. The mapper keeps the string verbatim; the downstream
+        // resolveZone returns null for a non-IANA value, and ICalDateTime serializes a null-zoned
+        // timestamp as a UTC instant (DTSTART:...Z, no TZID). The asserts pin what the recipient
+        // sees, beyond not crashing.
         val instance = deviceInstance(
             startTs = 1700100000000L,
             endTs = 1700103600000L,
@@ -647,7 +632,7 @@ class SingleOccurrenceIcsContentTest {
         val veventBody = extractVeventBody(ics)
         val dtstartLine = veventBody.lines().firstOrNull { it.startsWith("DTSTART") }
         assertTrue("DTSTART must exist: $veventBody", dtstartLine != null)
-        // Non-IANA → no TZID, value ends with Z (UTC instant).
+        // Non-IANA: no TZID, and the value ends with Z (a UTC instant).
         assertFalse(
             "DTSTART must NOT carry a TZID for non-IANA timezone strings",
             dtstartLine!!.contains("TZID=")

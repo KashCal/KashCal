@@ -1,26 +1,22 @@
 package org.onekash.kashcal.sync.util
 
-/**
- * Utility functions for ETag handling per RFC 7232.
- */
+/** ETag handling per RFC 7232. */
 object EtagUtils {
     /**
-     * Normalize etag by removing W/ prefix, surrounding quotes, and decoding XML entities.
-     * RFC 7232: ETags can be "strong" ("abc") or "weak" (W/"abc").
+     * Strips the weak `W/` prefix, surrounding quotes and `&quot;` entities from a raw etag from
+     * a header or XML. RFC 7232 etags are strong (`"abc"`) or weak (`W/"abc"`).
      *
-     * Handles formats:
-     * - "abc123" -> abc123
-     * - W/"abc123" -> abc123
-     * - abc123 -> abc123 (unquoted)
-     * - &quot;abc123&quot; -> abc123 (XML entity encoded)
+     * - `"abc123"` -> `abc123`
+     * - `W/"abc123"` -> `abc123`
+     * - `abc123` -> `abc123`
+     * - `&quot;abc123&quot;` -> `abc123`
      *
-     * @param etag Raw etag string from server or XML
-     * @return Normalized etag without W/ prefix, quotes, or XML entities, or null if input is null/blank
+     * @return the bare etag, or null if [etag] is null or nothing is left after stripping.
      */
     fun normalizeEtag(etag: String?): String? {
         if (etag == null) return null
         var result = etag.trim()
-        // Decode XML entity for quotes first (from regex parsing)
+        // Decode quote entities first; regex-parsed XML leaves them encoded.
         result = result.replace("&quot;", "\"")
         if (result.startsWith("W/")) {
             result = result.substring(2)

@@ -30,16 +30,10 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.shared.getEventDurationOptions
 
 /**
- * Bottom sheet for default event duration setting.
+ * Shows a one-tap radio list of default durations for new events, like [FirstDayOfWeekSheet]
+ * and [SyncLookbackSheet]: tapping an option calls [onEventDurationChange], then [onDismiss].
  *
- * A one-tap radio list of duration options for new events, matching the
- * [FirstDayOfWeekSheet]/[SyncLookbackSheet] pattern: tap an option to select
- * it and dismiss.
- *
- * @param sheetState Material3 sheet state
- * @param defaultEventDuration Current default event duration (minutes)
- * @param onEventDurationChange Callback when duration changes
- * @param onDismiss Callback when sheet is dismissed
+ * @param defaultEventDuration current default duration in minutes
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,15 +86,9 @@ fun EventDurationSheet(
 private val WIDGET_EVENT_LIMIT_OPTIONS = listOf(3, 5, 8, 10, 15)
 
 /**
- * Bottom sheet for configuring widget event limit.
- *
- * A one-tap radio list; labels read "N per day" to match the value shown on
- * the settings row.
- *
- * @param sheetState Material3 sheet state
- * @param currentLimit Current widget event limit
- * @param onLimitChange Callback when limit changes
- * @param onDismiss Callback when sheet is dismissed
+ * Shows a one-tap radio list of widget events-per-day limits; tapping one calls
+ * [onLimitChange], then [onDismiss]. Labels read "N per day", the same string the settings
+ * row shows.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -150,10 +138,7 @@ fun WidgetEventLimitSheet(
     }
 }
 
-/**
- * A single selectable option row in a picker sheet: label + trailing check
- * when selected, highlighted background when selected. Tapping selects.
- */
+/** Draws one radio row of these sheets, tinted with a check icon when selected. */
 @Composable
 private fun OptionRow(
     label: String,

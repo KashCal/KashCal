@@ -5,11 +5,10 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 /**
- * Pure-logic tests for [formatBadgeCount]. The helper is the single
- * source of truth for badge text shown on both the AppBar rail toggle
- * and the right-rail Invites icon, so the rule must be unambiguous:
- * non-positive counts hide the badge, 1..99 render verbatim, anything
- * larger renders the capped "99+" overflow string.
+ * Tests [formatBadgeCount], which sets the badge text on both the top-bar
+ * account button and the account hub's Invites row: non-positive counts
+ * give null (no badge), 1..99 render verbatim, anything larger renders
+ * "99+".
  */
 class BadgeCountFormatterTest {
 

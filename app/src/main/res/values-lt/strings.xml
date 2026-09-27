@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Šiame serveryje kalendorių nerasta.</string>
     <string name="caldav_error_unexpected">Netikėta klaida. Bandykite dar kartą.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nJei tai serveris tavo vietiniame tinkle, leisk prieigą prie vietinio tinklo, kad galėtum prisijungti.</string>
+    <string name="caldav_error_connection_refused_insecure">Serveris nukreipė ryšį ten, kur KashCal neseka (į nešifruotą adresą arba peradresavimų ciklą), todėl KashCal sustojo prieš išsiųsdama tavo slaptažodį. Patikrink serverio adresą.</string>
     <string name="local_network_banner_title">Reikia vietinio tinklo prieigos</string>
     <string name="local_network_banner_body">Panašu, kad šis serveris yra tavo vietiniame tinkle. Leisk prieigą prie vietinio tinklo, kad KashCal galėtų prie jo prisijungti.</string>
     <string name="local_network_banner_allow">Leisti prieigą</string>
@@ -888,6 +889,8 @@
     <string name="dialog_edit_recurring_title">Įrašyti pakeitimus į</string>
     <string name="dialog_delete_recurring_title">Ištrinti</string>
     <string name="dialog_move_recurring_title">Perkelti</string>
+    <string name="snackbar_event_rescheduled">Įvykis perkeltas</string>
+    <string name="snackbar_reschedule_failed">Nepavyko perkelti įvykio</string>
     <string name="recurring_this_event">Šis įvykis</string>
     <string name="recurring_all_events">Visi įvykiai</string>
 

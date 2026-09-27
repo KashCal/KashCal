@@ -31,28 +31,21 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.ui.model.CalendarGroup
 
-/**
- * Selection mode for grouped calendar list.
- */
+/** Selection mode of [GroupedCalendarList]. */
 enum class CalendarSelectionMode {
-    /** Checkbox mode - multiple selections (for visibility toggle) */
+    /** Multiple selection with checkboxes, read from `selectedCalendarIds`. */
     CHECKBOX,
-    /** Radio mode - single selection (for calendar picker) */
+    /** Single selection with a check mark, read from `selectedCalendarId`; no caller uses it. */
     RADIO
 }
 
 /**
- * Grouped calendar list with account headers.
+ * Lists calendars under an account header per group, or an empty-state text when [groups] is
+ * empty.
  *
- * Displays calendars grouped by account with headers.
- * Supports both checkbox (visibility) and radio (selection) modes.
- *
- * @param groups List of calendar groups (pre-grouped by ViewModel)
- * @param selectionMode CHECKBOX for multi-select, RADIO for single-select
- * @param selectedCalendarIds Set of selected calendar IDs (for CHECKBOX mode, use isVisible)
- * @param selectedCalendarId Currently selected calendar ID (for RADIO mode)
- * @param onCalendarClick Called when a calendar is clicked
- * @param modifier Modifier for the LazyColumn
+ * @param groups calendars already grouped by account.
+ * @param selectedCalendarIds checked calendars in [CalendarSelectionMode.CHECKBOX] mode.
+ * @param selectedCalendarId the selected calendar in [CalendarSelectionMode.RADIO] mode.
  */
 @Composable
 fun GroupedCalendarList(
@@ -91,10 +84,7 @@ fun GroupedCalendarList(
     }
 }
 
-/**
- * Extension to add grouped calendar items to a LazyListScope.
- * Use this when embedding in an existing LazyColumn.
- */
+/** Adds one group's header and calendar rows to an existing LazyColumn. */
 fun LazyListScope.groupedCalendarItems(
     group: CalendarGroup,
     selectionMode: CalendarSelectionMode,
@@ -102,12 +92,10 @@ fun LazyListScope.groupedCalendarItems(
     selectedCalendarId: Long? = null,
     onCalendarClick: (Calendar) -> Unit
 ) {
-    // Account header
     item(key = "header_${group.accountId}", contentType = "account_header") {
         AccountHeader(accountName = group.accountName)
     }
 
-    // Calendars in this group
     items(
         items = group.calendars,
         key = { "calendar_${it.id}" },

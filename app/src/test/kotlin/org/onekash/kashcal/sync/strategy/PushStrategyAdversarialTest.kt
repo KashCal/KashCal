@@ -23,10 +23,8 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.model.CalDavResult
 
 /**
- * Adversarial tests for PushStrategy.
- *
- * Tests server errors (5xx), large queues, and edge cases
- * not covered by the main PushStrategyTest.
+ * Tests [PushStrategy] against 5xx errors, a 50-operation queue, a queue with mixed
+ * results, an unknown operation type, and an operation whose event or calendar is missing.
  */
 class PushStrategyAdversarialTest {
 
@@ -218,7 +216,7 @@ class PushStrategyAdversarialTest {
         coEvery { eventsDao.getById(1L) } returns event
         coEvery { calendarRepository.getCalendarById(1L) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
-        // Server explicitly says not retryable
+        // The server error is flagged non-retryable
         coEvery { client.createEvent(any(), any(), any()) } returns
             CalDavResult.error(500, "Permanent failure", isRetryable = false)
         coEvery { pendingOperationsDao.markFailed(any(), any(), any()) } just Runs
@@ -253,7 +251,8 @@ class PushStrategyAdversarialTest {
         coEvery { eventsDao.getByIds(any()) } returns events
         coEvery { calendarRepository.getCalendarsByIds(any()) } returns listOf(testCalendar)
 
-        // Use getById fallback for events not in batch (shouldn't be needed but just in case)
+        // The batch reads above return everything; the per-id lookups the push falls back to
+        // are stubbed too.
         for (event in events) {
             coEvery { eventsDao.getById(event.id) } returns event
         }
@@ -262,6 +261,7 @@ class PushStrategyAdversarialTest {
         coEvery { client.createEvent(any(), any(), any()) } returns
             CalDavResult.success(Pair("url", "etag"))
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
 
         val result = pushStrategy.pushAll(client)
 
@@ -296,6 +296,7 @@ class PushStrategyAdversarialTest {
         coEvery { calendarRepository.getCalendarById(any()) } returns testCalendar
         coEvery { eventsDao.getExceptionsForMaster(any()) } returns emptyList()
         coEvery { eventsDao.markCreatedOnServer(any(), any(), any(), any()) } just Runs
+        coEvery { eventsDao.markCreatedOnServerWithCopy(any(), any(), any(), any(), any()) } just Runs
 
         // Op1: server error, Op2: success, Op3: server error
         coEvery { client.createEvent(eq(testCalendar.caldavUrl), eq("uid-1"), any()) } returns
@@ -425,7 +426,7 @@ class PushStrategyAdversarialTest {
         assertTrue(result is PushResult.Success)
         assertEquals(1, (result as PushResult.Success).operationsFailed)
 
-        // Should NOT call any server methods
+        // No server call is made
         coVerify(exactly = 0) { client.createEvent(any(), any(), any()) }
     }
 

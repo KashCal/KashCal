@@ -1,6 +1,19 @@
 package org.onekash.kashcal.widget
 
 import android.content.res.Resources
+import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import androidx.glance.action.ActionParameters
+import androidx.glance.action.actionParametersOf
+import androidx.glance.appwidget.testing.unit.GlanceAppWidgetUnitTest
+import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
+import androidx.glance.testing.unit.hasAnyDescendant
+import androidx.glance.testing.unit.hasClickAction
+import androidx.glance.testing.unit.hasContentDescription
+import androidx.glance.testing.unit.hasContentDescriptionEqualTo
+import androidx.glance.testing.unit.hasNoClickAction
+import androidx.glance.testing.unit.hasStartActivityClickAction
+import androidx.glance.testing.unit.hasTextEqualTo
 import androidx.test.core.app.ApplicationProvider
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -8,9 +21,12 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.kashcal.MainActivity
+import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.model.MonthGrid
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
+import java.time.LocalDate
 import java.util.Calendar
 import java.util.Locale
 
@@ -92,9 +108,8 @@ class MonthWidgetContentTest {
     // ==================== getDayOfWeekHeaders ====================
 
     // Headers use CLDR NARROW (single letter) so they render at the same size as the day
-    // numbers below. In the default (English) test locale that is S M T W T F S; the repeats
-    // (Sun/Sat both "S", Tue/Thu both "T") are disambiguated by column position, as in the
-    // Material/Google Calendar month grid.
+    // numbers below. In the English test locale that is S M T W T F S; the repeats (Sun/Sat
+    // both "S", Tue/Thu both "T") are told apart by column position.
     @Test
     fun `getDayOfWeekHeaders Sunday start returns single-letter names Sunday first`() {
         val headers = getDayOfWeekHeaders(Calendar.SUNDAY)
@@ -113,8 +128,8 @@ class MonthWidgetContentTest {
         assertEquals("S", headers[6]) // Sunday
     }
 
-    // Full localized day names back the NARROW single-letter headers as accessibility labels,
-    // so TalkBack still announces "Sunday"/"Monday" rather than ambiguous bare letters.
+    // Full localized day names are the accessibility labels behind the single-letter headers,
+    // so TalkBack announces "Sunday" or "Monday", not an ambiguous letter.
     @Test
     fun `dayOfWeekAccessibilityLabels Sunday start returns full names Sunday first`() {
         val labels = dayOfWeekAccessibilityLabels(Calendar.SUNDAY)
@@ -145,7 +160,7 @@ class MonthWidgetContentTest {
     fun `weekNumberGutterLabels has one label per visible week when on`() {
         val grid = MonthGrid.compute(2026, 0, Calendar.MONDAY)
         val labels = weekNumberGutterLabels(grid, showWeekNumbers = true)
-        // One gutter cell per rendered week — never the padded 6 rows if the month spans fewer.
+        // One gutter cell per rendered week, never the padded 6 rows when the month spans fewer.
         assertEquals(visibleWeeks(grid).size, labels.size)
     }
 
@@ -182,7 +197,7 @@ class MonthWidgetContentTest {
         assertEquals("December", result)
     }
 
-    // ==================== buildAccessibilityDescription (dayCode overload) ====================
+    // ==================== buildAccessibilityDescription (dayCode) ====================
 
     @Test
     fun `buildAccessibilityDescription dayCode overload for InDate previous month`() {
@@ -205,7 +220,7 @@ class MonthWidgetContentTest {
         assertEquals("January 2, 1 event", desc)
     }
 
-    // ==================== buildAccessibilityDescription (original) ====================
+    // ==================== buildAccessibilityDescription (year, month, day) ====================
 
     @Test
     fun `buildAccessibilityDescription singular event`() {
@@ -229,8 +244,8 @@ class MonthWidgetContentTest {
 
     @Test
     fun `maxEventRows returns 0 when not even one row fits below the day number`() {
-        // 19 (number) + 16 (row) + 1 (its leading gap) = 36dp minimum; below that the cell
-        // falls back to dots rather than commit to a title row the number would clip away.
+        // 19 (number) + 16 (row) + 1 (its leading gap) = 36dp minimum; below that it returns 0,
+        // not a row the number would clip.
         assertEquals(0, maxEventRows(35f))
     }
 
@@ -253,9 +268,9 @@ class MonthWidgetContentTest {
 
     @Test
     fun `maxEventRows fits fewer rows at a larger font scale`() {
-        // A cell that fits two rows at font-scale 1.0 fits none at 1.5: the scaled 16dp rows
-        // (24dp each) plus the scaled 19dp number (28.5dp) no longer clear the 53dp cell, so the
-        // layout backs off to dots instead of clipping a row off the bottom.
+        // A cell that fits two rows at font scale 1.0 fits none at 1.5: the scaled number
+        // (28.5dp) plus one scaled row and its gap (24 + 1dp) overrun the 53dp cell, so it
+        // returns 0, not a row clipped off the bottom.
         assertEquals(2, maxEventRows(53f, fontScale = 1.0f))
         assertEquals(0, maxEventRows(53f, fontScale = 1.5f))
     }
@@ -265,15 +280,15 @@ class MonthWidgetContentTest {
     @Test
     fun `minWidgetHeightForTitlesDp derives the one-row threshold from real element heights`() {
         // Header 40 + day-of-week 21 + 6 weeks * (19 number + 1 * (16 row + 1 gap)) = 277dp,
-        // which is exactly the height a 6-week one-row grid renders at — so a widget past the
-        // threshold fits its row with none clipped. This sits comfortably under the placed 4x4
-        // default (304dp), so a freshly placed widget shows titles and only the smallest resizes fall to dots.
+        // the height a 6-week one-row grid renders at, so a widget at the threshold fits its row
+        // unclipped. It is under the placed 4x4 default (304dp), so a newly placed widget shows
+        // titles and only the smallest resizes fall to dots.
         assertEquals(277f, minWidgetHeightForTitlesDp(TITLES_MIN_ROWS), 0.001f)
     }
 
     @Test
     fun `minWidgetHeightForTitlesDp for two rows still matches the six-week two-row height`() {
-        // Guards the derivation itself independent of TITLES_MIN_ROWS: 40 + 21 + 6 * (19 + 2*17).
+        // Checks the formula apart from TITLES_MIN_ROWS: 40 + 21 + 6 * (19 + 2*17).
         assertEquals(379f, minWidgetHeightForTitlesDp(2), 0.001f)
     }
 
@@ -284,21 +299,33 @@ class MonthWidgetContentTest {
 
     @Test
     fun `minWidgetHeightForTitlesDp rises with the font scale`() {
-        // A larger system font grows the text, so titles need a taller widget before they fit —
-        // the threshold tracks the font scale so a scaled-up widget shows dots until it is
-        // genuinely tall enough for un-clipped titles.
+        // A larger system font grows the text, so titles need a taller widget; a scaled-up
+        // widget shows dots until it is tall enough for unclipped titles.
         assertTrue(minWidgetHeightForTitlesDp(2, fontScale = 1.5f) > minWidgetHeightForTitlesDp(2, fontScale = 1.0f))
     }
 
     @Test
     fun `MAX_EVENT_ROWS stays small so the widget never exhausts its view-ID pool`() {
-        // Each widget can allocate at most 500 views, and every slot row draws from that pool across
-        // all 7 columns and 6 week rows — so the row count is the dominant multiplier and the budget
-        // is capped by it, not by widget size. Three rows only fit once each event collapsed from a
-        // Box+Text (two views) to a single Text; a fully-booked six-week month at three rows then
-        // measures well inside the pool at every size. MonthWidgetTranslationTest measures the
-        // worst-case count to hold this margin.
+        // Glance translates each widget size from a pool of 500 view IDs; six weeks at three rows
+        // plus the header come to about 464 and a fourth row would overflow (cost breakdown on
+        // [MAX_EVENT_ROWS]). `MonthWidgetTranslationTest` checks the bound through Glance.
         assertEquals(3, MAX_EVENT_ROWS)
+    }
+
+    // ==================== weekColumnWidthDp ====================
+
+    @Test
+    fun `weekColumnWidthDp fills the week row exactly so event runs line up with day tap targets`() {
+        // Event runs use fixed column widths while day numbers and day tap targets split the week
+        // row into equal weights. They line up only if seven columns plus the gutter are the full
+        // width; any extra inset shifts every run left of its day, so a tap near a run's edge opens
+        // the neighbouring day.
+        for (width in listOf(250f, 400f, 617.5f)) {
+            for (weekNumbers in listOf(false, true)) {
+                val gutter = if (weekNumbers) WEEK_NUMBER_GUTTER_WIDTH_DP else 0
+                assertEquals(width, 7 * weekColumnWidthDp(width, weekNumbers) + gutter, 0.001f)
+            }
+        }
     }
 
     // ==================== maxTitleChars ====================
@@ -323,8 +350,8 @@ class MonthWidgetContentTest {
 
     @Test
     fun `truncateTitle clips to whole characters with no ellipsis`() {
-        // The narrow widget cell keeps every character for the title itself, so the whole
-        // budget renders text: take(5) of "Design Review" is "Desig", no trailing "…".
+        // The narrow cell spends every character on the title: take(5) of "Design Review" is
+        // "Desig", no trailing "…".
         assertEquals("Desig", truncateTitle("Design Review", 5))
     }
 
@@ -379,179 +406,190 @@ class MonthWidgetContentTest {
         )
     }
 
-    // ==================== deep-link target gating ====================
+    // ==================== titles-mode tap targets (composition) ====================
 
-    @Test
-    fun `isFirstCellEventInLane picks only the leading pill`() {
-        val a = createWidgetEvent().copy(eventId = 1L)
-        val b = createWidgetEvent().copy(eventId = 2L)
-        val c = createWidgetEvent().copy(eventId = 3L)
-        val row = listOf(
-            MonthWidgetSlot.CellEvent(a),
-            MonthWidgetSlot.CellEvent(b),
-            MonthWidgetSlot.CellEvent(c),
+    /**
+     * May 2026 at a three-row size, today on the 13th. Week of May 10: a bar on the 10th-11th, day
+     * 12 with five events (two pills and a "+3"), day 13 with one pill, and a second bar on the
+     * 15th-16th, all sharing the first lane. So that lane holds the first bar, the first pill, a
+     * second pill and a second bar. April 26, an adjacent-month day in the first week, has one
+     * event too.
+     */
+    private fun tapFixture(): Map<Int, List<WidgetDataRepository.WidgetEvent>> {
+        fun ev(id: Long, title: String, start: Int, end: Int = start) = createWidgetEvent().copy(
+            eventId = id, occurrenceStartTs = id, title = title, startDay = start, endDay = end
         )
-        // First pill in the lane carries the deep link.
-        assertEquals(true, isFirstCellEventInLane(row, 0))
-        // A pill preceded by another pill does not — this is the view-pool guard.
-        assertEquals(false, isFirstCellEventInLane(row, 1))
-        assertEquals(false, isFirstCellEventInLane(row, 2))
+        val barA = ev(100, "BarA", 20260510, 20260511)
+        val barB = ev(101, "BarB", 20260515, 20260516)
+        val day12 = listOf("P12a", "P12b", "P12c", "P12d", "P12e").mapIndexed { i, t -> ev(200L + i, t, 20260512) }
+        return mapOf(
+            20260426 to listOf(ev(50, "Apr26", 20260426)),
+            20260510 to listOf(barA), 20260511 to listOf(barA),
+            20260512 to day12,
+            20260513 to listOf(ev(300, "P13", 20260513)),
+            20260515 to listOf(barB), 20260516 to listOf(barB),
+        )
     }
 
-    @Test
-    fun `isFirstCellEventInLane ignores non-pill slots before the first pill`() {
-        val span = MonthWidgetSpan(
-            event = createWidgetEvent(),
-            startCol = 0,
-            endCol = 0,
-            leftFlush = false,
-            rightFlush = false,
-        )
-        val row = listOf(
-            MonthWidgetSlot.BarSegment(span),
-            MonthWidgetSlot.Overflow(3),
-            MonthWidgetSlot.CellEvent(createWidgetEvent()),
-        )
-        // A leading bar/overflow are not CellEvents, so the pill at col 2 is still "first".
-        assertEquals(true, isFirstCellEventInLane(row, 2))
-    }
-
-    @Test
-    fun `isFirstBarSegmentInLane picks only the leading bar segment`() {
-        val span = MonthWidgetSpan(
-            event = createWidgetEvent(),
-            startCol = 1,
-            endCol = 2,
-            leftFlush = false,
-            rightFlush = false,
-        )
-        val row = listOf(
-            MonthWidgetSlot.BarSegment(span),
-            MonthWidgetSlot.BarSegment(span),
-            MonthWidgetSlot.Empty,
-        )
-        // First segment deep-links to Quick View.
-        assertEquals(true, isFirstBarSegmentInLane(row, 0))
-        // A continuation segment is not the deep-link target, but it still opens the day
-        // (both branches are clickable) — this only chooses which action the segment gets.
-        assertEquals(false, isFirstBarSegmentInLane(row, 1))
-    }
-
-    // ==================== estimateMonthWidgetViewUnits (adaptive row budget) ====================
-
-    private fun spanOf(startCol: Int, endCol: Int) = MonthWidgetSpan(
-        event = createWidgetEvent(), startCol = startCol, endCol = endCol, leftFlush = false, rightFlush = false
+    private fun dayParams(dayCode: Int): ActionParameters = actionParametersOf(
+        ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_GO_TO_DATE,
+        ActionParameters.Key<Int>(EXTRA_DAY_CODE) to dayCode
     )
 
-    private fun weekOf(vararg rows: List<MonthWidgetSlot>) = MonthWidgetWeekRender(rows.toList())
-
-    @Test
-    fun `estimateMonthWidgetViewUnits is base chrome for an empty grid`() {
-        assertEquals(
-            VIEW_UNITS_CHROME_BASE,
-            estimateMonthWidgetViewUnits(emptyList(), showWeekNumbers = false, hasTodayInMonth = false)
-        )
-    }
-
-    @Test
-    fun `estimateMonthWidgetViewUnits adds per-week day cells, gutter, and today marker`() {
-        val oneEmptyWeek = listOf(weekOf()) // a week that renders no slot rows
-        val base = estimateMonthWidgetViewUnits(oneEmptyWeek, showWeekNumbers = false, hasTodayInMonth = false)
-        assertEquals(VIEW_UNITS_CHROME_BASE + 7 * VIEW_UNITS_DAY_CELL, base)
-
-        val withGutter = estimateMonthWidgetViewUnits(oneEmptyWeek, showWeekNumbers = true, hasTodayInMonth = false)
-        assertEquals(base + VIEW_UNITS_WEEK_GUTTER, withGutter)
-
-        val withToday = estimateMonthWidgetViewUnits(oneEmptyWeek, showWeekNumbers = false, hasTodayInMonth = true)
-        assertEquals(base + VIEW_UNITS_TODAY_MARKER, withToday)
-    }
-
-    @Test
-    fun `estimateMonthWidgetViewUnits weights a bars-or-overflow mix above equal-count pills`() {
-        val pillsWeek = listOf(
-            weekOf(listOf(MonthWidgetSlot.CellEvent(createWidgetEvent()), MonthWidgetSlot.CellEvent(createWidgetEvent()), MonthWidgetSlot.CellEvent(createWidgetEvent())))
-        )
-        val mixWeek = listOf(
-            weekOf(listOf(MonthWidgetSlot.BarSegment(spanOf(0, 0)), MonthWidgetSlot.Overflow(2), MonthWidgetSlot.BarSegment(spanOf(2, 2))))
-        )
-        // Same element COUNT (3) and same chrome, but bars + overflow are the heavy elements —
-        // this is the property the crash hinges on (a mix overflows where plain pills do not).
-        val pills = estimateMonthWidgetViewUnits(pillsWeek, showWeekNumbers = false, hasTodayInMonth = false)
-        val mix = estimateMonthWidgetViewUnits(mixWeek, showWeekNumbers = false, hasTodayInMonth = false)
-        assertTrue("mix ($mix) must estimate higher than equal-count pills ($pills)", mix > pills)
-    }
-
-    @Test
-    fun `estimateMonthWidgetViewUnits counts a merged bar run once, not per column`() {
-        val span = spanOf(0, 1)
-        val mergedRun = listOf(weekOf(listOf(MonthWidgetSlot.BarSegment(span), MonthWidgetSlot.BarSegment(span))))
-        val twoDistinctBars = listOf(weekOf(listOf(MonthWidgetSlot.BarSegment(spanOf(0, 0)), MonthWidgetSlot.BarSegment(spanOf(1, 1)))))
-        val merged = estimateMonthWidgetViewUnits(mergedRun, showWeekNumbers = false, hasTodayInMonth = false)
-        val distinct = estimateMonthWidgetViewUnits(twoDistinctBars, showWeekNumbers = false, hasTodayInMonth = false)
-        // The merged run is one SpanBar; the two distinct spans are two — exactly one bar apart.
-        assertEquals(VIEW_UNITS_BAR, distinct - merged)
-    }
-
-    // ==================== chooseMonthWidgetRowCount (adaptive step-down) ====================
-
-    /** Week w occupies day codes [w*7+1 .. w*7+7] — synthetic, strictly increasing, layout-valid. */
-    private fun weekCodes(nWeeks: Int): List<List<Int>> = (0 until nWeeks).map { w -> (w * 7 + 1..w * 7 + 7).toList() }
-
-    private fun pillOn(code: Int, i: Int) =
-        createWidgetEvent().copy(eventId = code * 10L + i, occurrenceStartTs = i.toLong(), startDay = code, endDay = code)
-
-    /** A two-day bar starting at [startCode]; placed in both buckets it spans, as the repository does. */
-    private fun addBar(map: MutableMap<Int, MutableList<WidgetDataRepository.WidgetEvent>>, startCode: Int, id: Int) {
-        val bar = createWidgetEvent().copy(
-            eventId = 900_000L + id, occurrenceStartTs = id.toLong(), startDay = startCode, endDay = startCode + 1
-        )
-        map.getOrPut(startCode) { mutableListOf() }.add(bar)
-        map.getOrPut(startCode + 1) { mutableListOf() }.add(bar)
-    }
-
-    /** Every cell packed with [perDay] pills, plus optional two-day bars at cols 0/2/4 of each week. */
-    private fun densMonth(weeks: List<List<Int>>, perDay: Int, barsPerWeek: Boolean): Map<Int, List<WidgetDataRepository.WidgetEvent>> {
-        val map = mutableMapOf<Int, MutableList<WidgetDataRepository.WidgetEvent>>()
-        weeks.forEach { codes ->
-            codes.forEach { c -> repeat(perDay) { i -> map.getOrPut(c) { mutableListOf() }.add(pillOn(c, i)) } }
-            if (barsPerWeek) listOf(0, 2, 4).forEachIndexed { k, sc -> addBar(map, codes[sc], codes.first() * 10 + k) }
+    private fun renderTapFixture(block: GlanceAppWidgetUnitTest.() -> Unit) =
+        runGlanceAppWidgetUnitTest {
+            setContext(ApplicationProvider.getApplicationContext())
+            setAppWidgetSize(DpSize(400.dp, 600.dp))
+            val grid = MonthGrid.compute(2026, 4, Calendar.SUNDAY)
+            provideComposable {
+                MonthWidgetContent(
+                    monthGrid = grid, monthEvents = tapFixture(), monthOffset = 0,
+                    targetYear = 2026, targetMonth0 = 4, firstDayOfWeek = Calendar.SUNDAY,
+                    today = LocalDate.of(2026, 5, 13)
+                )
+            }
+            block()
         }
-        return map.mapValues { it.value.toList() }
+
+    @Test
+    fun `day numbers and plus-n markers are not inside any tap target`() = renderTapFixture {
+        // "+3" appears only at three rows (two rows would show "+4"), so its presence also shows
+        // the dense month renders at full height.
+        val plusThree = resources.getString(R.string.status_more_events_compact, 3)
+        onAllNodes(hasTextEqualTo(plusThree)).assertCountEquals(1)
+        // Taps on them fall through to the day's own tap target underneath.
+        onAllNodes(hasClickAction() and hasAnyDescendant(hasTextEqualTo("12"))).assertCountEquals(0)
+        onAllNodes(hasClickAction() and hasAnyDescendant(hasTextEqualTo(plusThree))).assertCountEquals(0)
     }
 
     @Test
-    fun `chooseMonthWidgetRowCount keeps full height for a sparse month`() {
-        val weeks = weekCodes(6)
-        val sparse = mapOf(weeks[0][1] to listOf(pillOn(weeks[0][1], 0)), weeks[2][3] to listOf(pillOn(weeks[2][3], 0)))
-        assertEquals(3, chooseMonthWidgetRowCount(weeks, sparse, heightDerivedMax = 3, showWeekNumbers = true, hasTodayInMonth = false).rows)
+    fun `each day has exactly one open-day tap target carrying its description`() = renderTapFixture {
+        val targets = onAllNodes(hasStartActivityClickAction<MainActivity>(dayParams(20260512)))
+        targets.assertCountEquals(1)
+        targets[0].assert(hasContentDescriptionEqualTo(buildAccessibilityDescription(resources, 20260512, 5)))
+        // Adjacent-month days announce no events even when they have some.
+        val adjacent = onAllNodes(hasStartActivityClickAction<MainActivity>(dayParams(20260426)))
+        adjacent.assertCountEquals(1)
+        adjacent[0].assert(hasContentDescriptionEqualTo(buildAccessibilityDescription(resources, 20260426, 0)))
     }
 
     @Test
-    fun `chooseMonthWidgetRowCount steps a dense pills-plus-bars month down below full height`() {
-        val weeks = weekCodes(6)
-        val denseMix = densMonth(weeks, perDay = 3, barsPerWeek = true)
-        val chosen = chooseMonthWidgetRowCount(weeks, denseMix, heightDerivedMax = 3, showWeekNumbers = true, hasTodayInMonth = false).rows
-        // The 3-row layout of this mix overflows the pool; the chooser must drop below 3 but still
-        // show at least one title row (dots is the last resort, not the first).
-        assertTrue("expected a reduced row count in 1..2, got $chosen", chosen in 1..2)
+    fun `each day description is announced by exactly one node`() = renderTapFixture {
+        // A second node with the same description makes TalkBack read the day twice when swiping.
+        onAllNodes(hasContentDescriptionEqualTo(buildAccessibilityDescription(resources, 20260512, 5))).assertCountEquals(1)
+        onAllNodes(hasContentDescriptionEqualTo(buildAccessibilityDescription(resources, 20260513, 1))).assertCountEquals(1)
+        // The day number reads as its plain number; hasContentDescription("") matches any.
+        onNode(hasTextEqualTo("12")).assert(hasContentDescription("").not())
+        // Today's number sits inside its marker; nothing containing it has a description.
+        onAllNodes(hasAnyDescendant(hasTextEqualTo("13")) and hasContentDescription("")).assertCountEquals(0)
     }
 
     @Test
-    fun `chooseMonthWidgetRowCount pill-heavy full month keeps three rows`() {
-        val weeks = weekCodes(6)
-        val allPills = densMonth(weeks, perDay = 3, barsPerWeek = false)
-        // A fully pill-packed month is measured-safe at 3 rows — pills are the cheap element.
-        assertEquals(3, chooseMonthWidgetRowCount(weeks, allPills, heightDerivedMax = 3, showWeekNumbers = true, hasTodayInMonth = false).rows)
+    fun `only the first pill and first bar in a row open their event`() = renderTapFixture {
+        val fixture = tapFixture()
+        onAllNodes(hasStartActivityClickAction<MainActivity>(eventActionParameters(fixture.getValue(20260512).first()))).assertCountEquals(1)
+        onAllNodes(hasStartActivityClickAction<MainActivity>(eventActionParameters(fixture.getValue(20260510).single()))).assertCountEquals(1)
+        for (title in listOf("P13", "BarB")) {
+            onNode(hasTextEqualTo(title)).assert(hasNoClickAction())
+            onAllNodes(hasClickAction() and hasAnyDescendant(hasTextEqualTo(title))).assertCountEquals(0)
+        }
     }
 
     @Test
-    fun `chooseMonthWidgetRowCount returns zero (dots) when nothing fits`() {
-        // A real month is at most 6 weeks and always fits >= 1 title row, so this exercises the
-        // defensive dots floor with an over-large grid whose fixed chrome alone exceeds the budget.
-        val hugeGrid = weekCodes(30)
-        val choice = chooseMonthWidgetRowCount(hugeGrid, emptyMap(), heightDerivedMax = 3, showWeekNumbers = true, hasTodayInMonth = false)
-        assertEquals(0, choice.rows)
-        assertTrue("dots fallback should carry no layouts", choice.weekRenders.isEmpty())
+    fun `blank space and plus-n markers add no tap targets of their own`() = renderTapFixture {
+        // Every tap target in the widget, counted: the header's 4 (previous, title, next, add), one
+        // per day for the 6 visible weeks, and the deep links (BarA and P12a in the first lane,
+        // P12b in the second, the April 26 pill). A tappable blank, "+n" or non-first pill/bar
+        // would add more.
+        onAllNodes(hasClickAction()).assertCountEquals(4 + 7 * 6 + 4)
+    }
+
+    // ==================== slotRowRuns (bounded slot-row layout) ====================
+
+    private fun span(startCol: Int, endCol: Int, id: Long = 1L) = MonthWidgetSpan(
+        event = createWidgetEvent().copy(eventId = id), startCol = startCol, endCol = endCol, leftFlush = false, rightFlush = false
+    )
+
+    private fun pill(id: Long) = MonthWidgetSlot.CellEvent(createWidgetEvent().copy(eventId = id))
+
+    private val empty = MonthWidgetSlot.Empty
+
+    private fun assertCoversSevenColumns(runs: List<SlotRun>) {
+        var col = 0
+        runs.forEach { run ->
+            assertEquals("run $run must start where the previous one ended", col, run.startCol)
+            assertTrue("run $run must have a positive width", run.width > 0)
+            col += run.width
+        }
+        assertEquals("runs must cover exactly seven columns", 7, col)
+    }
+
+    @Test
+    fun `slotRowRuns merges an all-empty row into one blank`() {
+        val runs = slotRowRuns(List(7) { empty })
+        assertEquals(listOf(SlotRun.Blank(startCol = 0, width = 7)), runs)
+    }
+
+    @Test
+    fun `slotRowRuns merges consecutive empties between pills`() {
+        val runs = slotRowRuns(listOf(empty, empty, pill(1), empty, empty, empty, pill(2)))
+        assertCoversSevenColumns(runs)
+        assertEquals(listOf(SlotRun.Blank::class, SlotRun.Pill::class, SlotRun.Blank::class, SlotRun.Pill::class), runs.map { it::class })
+        assertEquals(2, (runs[0] as SlotRun.Blank).width)
+        assertEquals(3, (runs[2] as SlotRun.Blank).width)
+    }
+
+    @Test
+    fun `slotRowRuns merges a multi-column bar into one run`() {
+        val bar = span(1, 3)
+        val seg = MonthWidgetSlot.BarSegment(bar)
+        val runs = slotRowRuns(listOf(empty, seg, seg, seg, empty, empty, empty))
+        assertCoversSevenColumns(runs)
+        val barRun = runs.single { it is SlotRun.Bar } as SlotRun.Bar
+        assertEquals(1, barRun.startCol)
+        assertEquals(3, barRun.width)
+        assertTrue(barRun.span === bar)
+    }
+
+    @Test
+    fun `slotRowRuns deep-links only the first pill and the first bar`() {
+        val a = span(0, 1, id = 10)
+        val b = span(4, 5, id = 11)
+        val row = listOf(
+            MonthWidgetSlot.BarSegment(a), MonthWidgetSlot.BarSegment(a), pill(1), pill(2),
+            MonthWidgetSlot.BarSegment(b), MonthWidgetSlot.BarSegment(b), pill(3)
+        )
+        val runs = slotRowRuns(row)
+        assertCoversSevenColumns(runs)
+        assertEquals(listOf(true, false), runs.filterIsInstance<SlotRun.Bar>().map { it.deepLink })
+        assertEquals(listOf(true, false, false), runs.filterIsInstance<SlotRun.Pill>().map { it.deepLink })
+    }
+
+    @Test
+    fun `slotRowRuns never gives an overflow marker an action and caps a row at seven runs`() {
+        val row = listOf(pill(1), MonthWidgetSlot.Overflow(2), MonthWidgetSlot.Overflow(3), pill(4),
+            MonthWidgetSlot.Overflow(5), pill(6), MonthWidgetSlot.Overflow(7))
+        val runs = slotRowRuns(row)
+        assertCoversSevenColumns(runs)
+        assertEquals(7, runs.size)
+        assertEquals(listOf(2, 3, 5, 7), runs.filterIsInstance<SlotRun.Overflow>().map { it.count })
+        assertEquals(1, runs.count { (it as? SlotRun.Pill)?.deepLink == true })
+    }
+
+    @Test
+    fun `slotRowRuns does not merge adjacent spans that are equal but distinct`() {
+        // Merging follows span identity, which is how the week layout marks one bar's columns.
+        // Two separate bars with identical fields stay two bars.
+        val first = span(0, 0, id = 5)
+        val second = span(0, 0, id = 5)
+        assertTrue(first == second && first !== second)
+        val runs = slotRowRuns(listOf(MonthWidgetSlot.BarSegment(first), MonthWidgetSlot.BarSegment(second), empty, empty, empty, empty, empty))
+        assertEquals(2, runs.count { it is SlotRun.Bar })
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun `slotRowRuns rejects a row that is not seven columns`() {
+        slotRowRuns(List(6) { empty })
     }
 
     private fun createWidgetEvent(

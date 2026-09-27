@@ -8,12 +8,14 @@ import org.onekash.kashcal.ui.screens.settings.SyncWarningConstants.SYNC_FAILURE
 import org.onekash.kashcal.ui.screens.settings.SyncWarningConstants.SYNC_ISSUE_SUBTITLE_THRESHOLD_MS
 
 /**
- * Unit tests for AccountsScreen logic.
+ * Tests accounts-screen logic through inline copies; no test calls production code, and only the
+ * sync-warning thresholds come from [SyncWarningConstants].
  *
- * Tests the calculation logic for:
- * - Account count (iCloud + CalDAV)
- * - Preview names for summary row
- * - Summary row label text
+ * - Account count (iCloud + CalDAV), preview names (at most two, iCloud first, ellipsis past two)
+ *   and the summary row label.
+ * - Account row subtitle: "Syncing…" at zero calendars, else the calendar count.
+ * - Sync warning: the icon at [SyncWarningConstants.SYNC_FAILURE_THRESHOLD] or more failures, and
+ *   the sync-issue subtitle when also never synced or last synced more than 24 hours ago.
  */
 class AccountsScreenTest {
 
@@ -173,7 +175,7 @@ class AccountsScreenTest {
         assertEquals("3 accounts", label)
     }
 
-    // ==================== Syncing State Tests ====================
+    // ==================== Account Row Subtitle Tests ====================
 
     @Test
     fun `shows Syncing when calendarCount is 0`() {

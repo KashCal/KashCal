@@ -8,16 +8,12 @@ import org.junit.Test
 import org.onekash.kashcal.data.db.entity.PendingOperation
 
 /**
- * Adversarial tests for sync conflict handling and PendingOperation queue.
+ * Checks [PendingOperation]'s retry and readiness rules (`shouldRetry`, `isReady`,
+ * [PendingOperation.calculateRetryDelay]) at their edges, its constants, fields and defaults,
+ * the [ConflictStrategy] values and [ConflictResult.isSuccess].
  *
- * Tests probe edge cases:
- * - Retry exhaustion
- * - Exponential backoff limits
- * - Operation state machine violations
- * - ConflictResult handling
- * - Concurrent operation scenarios
- *
- * These tests verify defensive coding in sync infrastructure.
+ * The ordering, filtering and coalescing tests run test-local logic over operations, not the
+ * production queue.
  */
 class SyncConflictAdversarialTest {
 
@@ -139,7 +135,7 @@ class SyncConflictAdversarialTest {
         val delay15 = PendingOperation.calculateRetryDelay(15)
         val delay100 = PendingOperation.calculateRetryDelay(100)
 
-        // All should be capped at 5 hours (MAX_BACKOFF_MS) per v21.5.3
+        // All are capped at MAX_BACKOFF_MS (5 hours)
         assertEquals(PendingOperation.MAX_BACKOFF_MS, delay10)
         assertEquals(delay10, delay15)
         assertEquals(delay10, delay100)
@@ -147,8 +143,8 @@ class SyncConflictAdversarialTest {
 
     @Test
     fun `calculateRetryDelay - handles negative retryCount gracefully`() {
-        // Negative retryCount is coerced to 0, returning base delay (30s)
-        // This prevents undefined bit-shift behavior and immediate retry loops
+        // A negative retryCount counts as 0 and gives the base delay (30s); shifting by -1
+        // would give a zero delay and an immediate retry loop
         val delay = PendingOperation.calculateRetryDelay(-1)
         assertEquals(30_000L, delay) // Same as retryCount = 0
     }
@@ -156,7 +152,7 @@ class SyncConflictAdversarialTest {
     @Test
     fun `calculateRetryDelay - maximum delay is 5 hours`() {
         val maxDelay = PendingOperation.calculateRetryDelay(10)
-        // v21.5.3: Cap at 5 hours (Android WorkManager standard)
+        // Capped at 5 hours, WorkManager's maximum backoff
         assertEquals(5L * 60 * 60 * 1000, maxDelay)
     }
 
@@ -287,7 +283,7 @@ class SyncConflictAdversarialTest {
 
     @Test
     fun `PendingOperation with zero eventId is valid`() {
-        // eventId is not a FK, so 0 is technically valid (though unusual)
+        // eventId isn't a foreign key, so 0 is accepted (though unusual)
         val op = PendingOperation(
             eventId = 0L,
             operation = PendingOperation.OPERATION_DELETE

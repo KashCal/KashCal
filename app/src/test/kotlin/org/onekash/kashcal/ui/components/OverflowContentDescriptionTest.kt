@@ -4,10 +4,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Pins the AppBar overflow trigger's contentDescription policy. The
- * helper takes the raw count + already-resolved strings (base label,
- * formatted plural with-count form) so it stays Context-free and
- * the test can run without Robolectric.
+ * Pins [overflowContentDescription], the top-bar avatar trigger's content description: the
+ * base label at a count of 0 or less, else the with-count label. The helper takes
+ * already-resolved strings, so the test runs without Robolectric.
  */
 class OverflowContentDescriptionTest {
 

@@ -10,63 +10,46 @@ import java.time.format.DateTimeFormatter
 import java.util.TreeMap
 
 /**
- * DateTime that preserves timezone information from iCalendar.
+ * Holds an iCalendar DATE or DATE-TIME with the time zone it was written in.
  *
- * Handles three iCalendar date/time formats:
- * - UTC: 20231215T140000Z (ends with Z)
+ * [parse] reads four forms:
+ * - UTC: 20231215T140000Z
  * - Local with TZID: DTSTART;TZID=America/New_York:20231215T140000
- * - Floating: 20231215T140000 (no Z, no TZID - uses device timezone)
- * - Date only: 20231215 (all-day events)
- *
- * Production-tested with various CalDAV servers for reliable timezone handling.
+ * - Floating: 20231215T140000, no Z and no TZID; read in the device time zone
+ * - DATE: 20231215, for all-day events; stored as UTC midnight
  */
 data class ICalDateTime(
     val timestamp: Long,              // Unix timestamp in milliseconds
-    val timezone: ZoneId?,            // null for UTC or floating
-    val isUtc: Boolean,               // true if originally specified as UTC (Z suffix)
+    val timezone: ZoneId?,            // null for UTC and DATE; a floating time gets the device zone
+    val isUtc: Boolean,               // true for a Z time and for DATE values
     val isDate: Boolean               // true for DATE (all-day), false for DATE-TIME
 ) {
     /**
-     * Convert to LocalDate (for all-day events or date comparison).
+     * Returns the calendar date: in UTC for a DATE value, else in [timezone] or the system default.
      *
-     * For DATE values (isDate=true): Uses UTC to preserve the calendar date.
-     * RFC 5545 DATE values represent calendar dates, not moments in time.
-     * Using local timezone would shift the date incorrectly:
-     *   Jan 23 00:00 UTC → Jan 22 19:00 EST → Jan 22 (WRONG)
-     *
-     * For DATE-TIME values: Uses stored timezone (or system default for floating).
+     * A DATE value is a calendar date, not a moment (RFC 5545 §3.3.4), stored as UTC midnight,
+     * so it must be read in UTC. Read in the local zone it shifts the day: Jan 23 00:00 UTC is
+     * Jan 22 19:00 EST, so Jan 22.
      */
     fun toLocalDate(): LocalDate {
-        // DATE values must use UTC to preserve the calendar date
         val zone = if (isDate) ZoneOffset.UTC else (timezone ?: ZoneId.systemDefault())
         return Instant.ofEpochMilli(timestamp).atZone(zone).toLocalDate()
     }
 
-    /**
-     * Convert to Instant (for precise timestamp operations).
-     */
     fun toInstant(): Instant = Instant.ofEpochMilli(timestamp)
 
-    /**
-     * Convert to ZonedDateTime with preserved or system timezone.
-     *
-     * For DATE values: Uses UTC to preserve the calendar date.
-     * For DATE-TIME values: Uses stored timezone (or system default for floating).
-     */
+    /** Returns the moment in the same zone as [toLocalDate] uses. */
     fun toZonedDateTime(): ZonedDateTime {
-        // DATE values must use UTC to preserve the calendar date
         val zone = if (isDate) ZoneOffset.UTC else (timezone ?: ZoneId.systemDefault())
         return Instant.ofEpochMilli(timestamp).atZone(zone)
     }
 
-    /**
-     * Convert to LocalDateTime in the event's timezone.
-     */
+    /** Returns the wall-clock time in the zone [toZonedDateTime] uses. */
     fun toLocalDateTime(): LocalDateTime = toZonedDateTime().toLocalDateTime()
 
     /**
-     * Get day code in format YYYYMMDD for calendar grid matching.
-     * Critical for RECURRENCE-ID date matching.
+     * Returns [toLocalDate] as YYYYMMDD. `RRuleExpander` matches EXDATEs and RDATEs to
+     * occurrences by it, so a zone change here moves which day they hit.
      */
     fun toDayCode(): String {
         val local = toLocalDate()
@@ -74,7 +57,8 @@ data class ICalDateTime(
     }
 
     /**
-     * Format as iCalendar string.
+     * Formats the value as DATE, UTC (Z) or local time; the TZID parameter isn't included, so a
+     * caller writing a zoned time adds it.
      */
     fun toICalString(): String {
         return if (isDate) {
@@ -96,12 +80,11 @@ data class ICalDateTime(
         private val DATE_PATTERN = Regex("""(\d{8})""")
 
         /**
-         * Parse iCalendar datetime string.
+         * Parses one of the forms in the class doc, such as "20231215T140000Z" or "20231215".
          *
-         * @param value The datetime string (e.g., "20231215T140000Z", "20231215")
-         * @param tzid Optional timezone ID from TZID parameter
-         * @return Parsed ICalDateTime
-         * @throws IllegalArgumentException if format is invalid
+         * @param tzid TZID parameter for a local time, resolved by [parseTimezone]; ignored for
+         *   UTC and DATE values. Without it a local time is read in the device zone.
+         * @throws IllegalArgumentException if the format is invalid
          */
         fun parse(value: String, tzid: String? = null): ICalDateTime {
             val trimmed = value.trim()
@@ -120,14 +103,11 @@ data class ICalDateTime(
                 )
             }
 
-            // DATE format: 20231215 (all-day events)
-            // RFC 5545: DATE values are calendar dates without time zone.
-            // Store as UTC midnight to preserve the calendar date across time zones.
-            // Example: "20260123" → Jan 23 00:00:00 UTC (not local midnight)
-            // This ensures consistent day calculation regardless of device timezone.
+            // DATE format: 20231215 (all-day events). A DATE has no time zone (RFC 5545), so it is
+            // stored as UTC midnight: "20260123" is Jan 23 00:00:00 UTC, not local midnight, and
+            // gives the same day in every device zone.
             if (trimmed.length == 8 && DATE_PATTERN.matches(trimmed)) {
                 val date = LocalDate.parse(trimmed, DateTimeFormatter.BASIC_ISO_DATE)
-                // Use UTC midnight to preserve calendar date
                 val instant = date.atStartOfDay(ZoneOffset.UTC).toInstant()
                 return ICalDateTime(
                     timestamp = instant.toEpochMilli(),
@@ -153,9 +133,7 @@ data class ICalDateTime(
             throw IllegalArgumentException("Invalid iCalendar datetime format: $value")
         }
 
-        /**
-         * Create current UTC timestamp.
-         */
+        /** Returns the current time as a UTC DATE-TIME. */
         fun now(): ICalDateTime {
             return ICalDateTime(
                 timestamp = System.currentTimeMillis(),
@@ -165,9 +143,7 @@ data class ICalDateTime(
             )
         }
 
-        /**
-         * Create from Unix timestamp (milliseconds).
-         */
+        /** Creates a value from epoch milliseconds; a null [timezone] makes it UTC. */
         fun fromTimestamp(
             timestamp: Long,
             timezone: ZoneId? = null,
@@ -182,17 +158,12 @@ data class ICalDateTime(
         }
 
         /**
-         * Create from LocalDate (for all-day events).
+         * Creates a DATE value for [date], stored as UTC midnight like [parse] does.
          *
-         * RFC 5545: DATE values are calendar dates without time zone.
-         * Store as UTC midnight to preserve the calendar date across all timezones.
-         *
-         * @param date The calendar date to store
-         * @param timezone Ignored for DATE values (kept for API compatibility)
+         * @param timezone Ignored; kept so existing callers compile.
          */
         @Suppress("UNUSED_PARAMETER")
         fun fromLocalDate(date: LocalDate, timezone: ZoneId = ZoneId.systemDefault()): ICalDateTime {
-            // Use UTC midnight to preserve the calendar date (RFC 5545)
             val instant = date.atStartOfDay(ZoneOffset.UTC).toInstant()
             return ICalDateTime(
                 timestamp = instant.toEpochMilli(),
@@ -203,16 +174,11 @@ data class ICalDateTime(
         }
 
         /**
-         * Create from ZonedDateTime.
-         *
-         * For DATE values (isDate=true): Extracts the LocalDate and stores as UTC midnight
-         * to preserve the calendar date across timezones.
-         *
-         * For DATE-TIME values: Uses the exact instant and preserves the timezone.
+         * Creates a value from [zdt]. With [isDate] it keeps only the date in [zdt]'s zone, stored
+         * as UTC midnight; otherwise it keeps the instant and the zone.
          */
         fun fromZonedDateTime(zdt: ZonedDateTime, isDate: Boolean = false): ICalDateTime {
             return if (isDate) {
-                // For DATE values, extract calendar date and store as UTC midnight
                 val instant = zdt.toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant()
                 ICalDateTime(
                     timestamp = instant.toEpochMilli(),
@@ -231,16 +197,17 @@ data class ICalDateTime(
         }
 
         /**
-         * Pluggable resolver for non-standard timezone IDs (e.g., Windows timezone names).
-         * Set by app layer at startup. Called after ZoneId.of() fails, before properties fallback.
-         * Must be thread-safe. Set once at startup.
+         * Resolves a non-standard TZID such as a Windows zone name; [parseTimezone] calls it after
+         * `ZoneId.of` fails and before [timezoneAliases]. Must be thread-safe; set once at
+         * startup (`KashCalApplication.onCreate` sets one backed by Android ICU).
          */
         @Volatile
         var customTimezoneResolver: ((String) -> ZoneId?)? = null
 
         /**
-         * Lazily loaded case-insensitive alias map from ical4j's msTimezoneNames properties file.
-         * Maps Windows timezone names → IANA IDs. Entries with invalid IANA targets are skipped.
+         * Maps Windows zone names to IANA IDs, ignoring case, from ical4j's msTimezoneNames
+         * file. Loaded lazily; entries whose target `ZoneId.of` rejects are skipped, and a
+         * missing file gives an empty map.
          */
         internal val timezoneAliases: Map<String, String> by lazy {
             loadTimezoneAliases()
@@ -264,33 +231,27 @@ data class ICalDateTime(
                     try {
                         ZoneId.of(tzid)
                         target[key.toString()] = tzid
-                    } catch (_: Exception) { /* skip invalid entries like US/Hwaii */ }
+                    } catch (_: Exception) { /* skip a target ZoneId.of rejects */ }
                 }
-            } catch (_: Exception) { /* classpath not available */ }
+            } catch (_: Exception) { /* unreadable file: no aliases */ }
         }
 
         /**
-         * Parse timezone ID with multi-layer resolution.
-         *
-         * Resolution chain:
-         * 1. Standard IANA ID (ZoneId.of)
-         * 2. Custom resolver (e.g., Android ICU getIDForWindowsID)
-         * 3. Properties file aliases (ical4j msTimezoneNames)
-         * 4. System default fallback
+         * Resolves [tzid], trying in order:
+         * 1. `ZoneId.of`, which takes IANA IDs and legacy aliases like US/Eastern
+         * 2. [customTimezoneResolver]
+         * 3. [timezoneAliases]
+         * 4. the system default, when none of these resolve it
          */
         private fun parseTimezone(tzid: String): ZoneId {
-            // 1. Try standard IANA ID (handles canonical + legacy aliases like US/Eastern)
             try { return ZoneId.of(tzid) } catch (_: Exception) {}
 
-            // 2. Try custom resolver (e.g., Android ICU getIDForWindowsID)
             customTimezoneResolver?.invoke(tzid)?.let { return it }
 
-            // 3. Try properties file aliases (msTimezoneNames — Windows timezone names)
             timezoneAliases[tzid]?.let {
                 try { return ZoneId.of(it) } catch (_: Exception) {}
             }
 
-            // 4. Fall back to system default
             return ZoneId.systemDefault()
         }
     }

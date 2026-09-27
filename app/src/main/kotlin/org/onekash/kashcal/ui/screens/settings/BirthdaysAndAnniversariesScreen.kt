@@ -50,29 +50,14 @@ import org.onekash.kashcal.ui.shared.getAllDayReminderOptions
 import org.onekash.kashcal.util.DateTimeUtils
 
 /**
- * Dedicated screen for managing Contact Birthdays and Anniversaries.
+ * Shows the contact birthdays and anniversaries settings as two cards, each a
+ * [ContactEventSection], then a footer about the contacts permission.
  *
- * Two-card layout with Birthdays section and Anniversaries section.
- * Each section has: enable toggle, color picker, reminder picker, event count.
- * Footer shows contacts permission info.
- *
- * @param birthdaysEnabled Whether contact birthdays is enabled
- * @param birthdaysColor Current birthday calendar color
- * @param birthdaysReminder Current birthday reminder (minutes)
- * @param birthdayCount Number of birthday events
- * @param anniversariesEnabled Whether contact anniversaries is enabled
- * @param anniversariesColor Current anniversary calendar color
- * @param anniversariesReminder Current anniversary reminder (minutes)
- * @param anniversaryCount Number of anniversary events
- * @param hasPermission Whether READ_CONTACTS permission is granted
- * @param timeFormat Time format preference ("system", "12h", or "24h")
- * @param onToggleBirthdays Callback to enable/disable birthdays
- * @param onBirthdaysColorChange Callback for birthday color change
- * @param onBirthdaysReminderChange Callback for birthday reminder change
- * @param onToggleAnniversaries Callback to enable/disable anniversaries
- * @param onAnniversariesColorChange Callback for anniversary color change
- * @param onAnniversariesReminderChange Callback for anniversary reminder change
- * @param onNavigateBack Callback to navigate back
+ * @param birthdaysReminder reminder minutes, in the all-day reminder encoding
+ * @param anniversariesReminder reminder minutes, in the all-day reminder encoding
+ * @param hasPermission whether READ_CONTACTS is granted; when not and either type is on, the
+ *   footer shows a permission-required line
+ * @param timeFormat time format preference: "system", "12h" or "24h"
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,7 +80,6 @@ fun BirthdaysAndAnniversariesScreen(
     onAnniversariesReminderChange: (Int) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    // Compute use24Hour from timeFormat
     val context = LocalContext.current
     val resources = LocalResources.current
     val use24Hour = DateTimeUtils.isUse24Hour(timeFormat, DateFormat.is24HourFormat(context))
@@ -178,8 +162,8 @@ fun BirthdaysAndAnniversariesScreen(
 }
 
 /**
- * Reusable section for a contact event type (birthday or anniversary).
- * Contains toggle, color picker, reminder picker, and event count.
+ * Shows one contact event type, birthday or anniversary: a toggle with the event count, a
+ * description, and while enabled the color and reminder pickers.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -206,7 +190,6 @@ private fun ContactEventSection(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Toggle row
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -231,14 +214,12 @@ private fun ContactEventSection(
             )
         }
 
-        // Description
         Text(
             description,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
 
-        // Color and Reminder (visible when enabled)
         AnimatedVisibility(
             visible = isEnabled,
             enter = expandVertically(),
@@ -252,7 +233,6 @@ private fun ContactEventSection(
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
 
-                // Color picker row
                 Text(
                     stringResource(R.string.settings_calendar_color),
                     style = MaterialTheme.typography.labelMedium,
@@ -287,7 +267,6 @@ private fun ContactEventSection(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Reminder row
                 Text(
                     stringResource(R.string.settings_default_reminder),
                     style = MaterialTheme.typography.labelMedium,
@@ -315,7 +294,6 @@ private fun ContactEventSection(
         }
     }
 
-    // Reminder picker sheet
     if (showReminderPicker) {
         val reminderSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
         SingleAlertPickerSheet(
@@ -332,7 +310,7 @@ private fun ContactEventSection(
         )
     }
 
-    // Color picker sheet
+    // Picking the current color again doesn't call onColorChange.
     if (showColorPicker) {
         ColorPaletteSheet(
             selectedArgb = calendarColor,

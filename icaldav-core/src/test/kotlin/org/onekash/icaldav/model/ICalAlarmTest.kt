@@ -12,15 +12,16 @@ import org.junit.jupiter.api.assertThrows
 import java.time.Duration
 
 /**
- * Comprehensive tests for ICalAlarm model per RFC 5545 and RFC 9074.
- *
- * Tests cover:
- * - Alarm construction with different triggers
- * - Duration parsing (RFC 5545 Section 3.3.6)
- * - AlarmAction enum parsing
- * - AlarmProximity enum parsing (RFC 9074)
- * - RFC 9074 extensions (ACKNOWLEDGED, UID, DEFAULT-ALARM)
- * - Edge cases and validation
+ * Tests the ICalAlarm model (RFC 5545 §3.6.6, RFC 9074):
+ * - construction with relative and absolute triggers, and [ICalAlarm.triggerMinutes]
+ * - duration parsing (RFC 5545 §3.3.6), including the invalid and empty inputs that throw,
+ *   and formatting
+ * - AlarmAction parsing, with the DISPLAY fallback and the NONE sentinel
+ * - AlarmProximity parsing and formatting (RFC 9074 §8.1)
+ * - the RFC 9074 properties UID, ACKNOWLEDGED, RELATED-TO and PROXIMITY, plus DEFAULT-ALARM,
+ *   which RFC 9074 doesn't define
+ * - REPEAT, RELATED=END, and edge cases: no trigger, a week-long offset, every optional
+ *   field, equality and copy
  */
 class ICalAlarmTest {
 
@@ -314,9 +315,9 @@ class ICalAlarmTest {
 
         @Test
         fun `fromString parses NONE (RFC 9074 sentinel)`() {
-            // ACTION:NONE marks a "no action" placeholder (Apple writes one with a
-            // 1976 absolute trigger to suppress default alarms). It must be modeled
-            // distinctly so it is never laundered into a live DISPLAY alarm.
+            // ACTION:NONE marks a "no action" placeholder, which some clients write with a 1976
+            // absolute trigger to suppress default alarms. RFC 9074 doesn't define it. It must
+            // stay distinct so it never becomes a live DISPLAY alarm.
             assertEquals(AlarmAction.NONE, AlarmAction.fromString("NONE"))
             assertEquals(AlarmAction.NONE, AlarmAction.fromString("none"))
         }
@@ -392,7 +393,7 @@ class ICalAlarmTest {
         fun `alarm with relatedTo for snooze`() {
             val alarm = ICalAlarm(
                 action = AlarmAction.DISPLAY,
-                trigger = Duration.ofMinutes(5), // 5 minutes from now (snooze)
+                trigger = Duration.ofMinutes(5), // 5 minutes after the start
                 triggerAbsolute = null,
                 description = "Snoozed reminder",
                 summary = null,
@@ -420,7 +421,7 @@ class ICalAlarmTest {
         fun `alarm with proximity trigger`() {
             val alarm = ICalAlarm(
                 action = AlarmAction.DISPLAY,
-                trigger = null, // Proximity alarms don't use time triggers
+                trigger = null, // RFC 9074 §8: a proximity alarm's TRIGGER is ignored
                 triggerAbsolute = null,
                 description = "Location reminder",
                 summary = null,

@@ -41,9 +41,10 @@ import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.ui.components.SettingsTopAppBar
 
 /**
- * Stateless Device Calendars screen. Permission launchers live in the host
- * (SettingsActivity) so toggling Enable without READ_CALENDAR can prompt for
- * permission and route the result back to onToggle.
+ * Shows the device calendars settings; stateless. The host (SettingsRoute, in
+ * SettingsActivity) owns the permission launchers, so turning Enable on without
+ * READ_CALENDAR through [onToggle] prompts for the calendar permissions, and the
+ * host enables the feature once READ is granted.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -104,14 +105,12 @@ fun DeviceCalendarsScreen(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            // Description
             Text(
                 stringResource(R.string.device_calendars_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
-            // Enable Toggle
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -129,7 +128,7 @@ fun DeviceCalendarsScreen(
                 )
             }
 
-            // Read permission warning (if enabled but no READ permission)
+            // Enabled without READ_CALENDAR.
             AnimatedVisibility(
                 visible = isEnabled && !hasReadPermission,
                 enter = expandVertically(),
@@ -142,7 +141,7 @@ fun DeviceCalendarsScreen(
                 )
             }
 
-            // Write permission banner (if has READ but not WRITE)
+            // READ_CALENDAR without WRITE_CALENDAR; tapping calls [onRequestWritePermission].
             AnimatedVisibility(
                 visible = isEnabled && hasReadPermission && !hasWritePermission,
                 enter = expandVertically(),
@@ -180,7 +179,6 @@ fun DeviceCalendarsScreen(
                 }
             }
 
-            // Calendar list (only visible when enabled and has read permission)
             AnimatedVisibility(
                 visible = isEnabled && hasReadPermission,
                 enter = expandVertically(),
@@ -201,7 +199,7 @@ fun DeviceCalendarsScreen(
                         }
 
                         grouped.forEach { (accountName, calendars) ->
-                            // Account header
+                            // An empty account name shows as "Local".
                             Text(
                                 accountName.ifEmpty { stringResource(R.string.device_calendars_local) },
                                 style = MaterialTheme.typography.labelMedium,
@@ -209,7 +207,6 @@ fun DeviceCalendarsScreen(
                                 modifier = Modifier.padding(top = 8.dp, bottom = 4.dp)
                             )
 
-                            // Calendar rows
                             calendars.forEach { calendar ->
                                 val isChecked = calendar.id in enabledCalendarIds
                                 Column(
@@ -225,7 +222,6 @@ fun DeviceCalendarsScreen(
                                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        // Calendar color dot
                                         Box(
                                             modifier = Modifier
                                                 .size(12.dp)
@@ -258,7 +254,6 @@ fun DeviceCalendarsScreen(
                             }
                         }
 
-                        // Count footer
                         Spacer(modifier = Modifier.height(8.dp))
                         val enabledCount = enabledCalendarIds.size
                         val totalCount = deviceCalendars.size
@@ -268,7 +263,6 @@ fun DeviceCalendarsScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
 
-                        // Device calendar reminders toggle
                         HorizontalDivider(
                             modifier = Modifier.padding(vertical = 8.dp),
                             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)

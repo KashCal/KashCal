@@ -23,13 +23,11 @@ import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 
 /**
- * Inline, dismissible banner asking for local-network access when the entered
- * URL looks like a LAN address (Android 17+). Follows the app's
- * inline-over-popup philosophy: it never blocks the fields, and manual entry
- * works whether or not the user allows.
+ * Shows an inline, dismissible banner asking for local-network access when the entered URL
+ * looks like a LAN address (Android 17+). It never blocks the fields, and manual entry works
+ * whether or not the user allows.
  *
- * Shared by the CalDAV sign-in sheet and the ICS add-subscription dialog so both
- * render the identical affordance.
+ * Shared by the CalDAV sign-in sheet and the ICS add-subscription dialog.
  */
 @Composable
 fun LocalNetworkPermissionBanner(

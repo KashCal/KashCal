@@ -24,12 +24,10 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 
 /**
- * Tests for default calendar preference with prefixed string storage.
+ * Tests [DefaultCalendar]'s stored form: "room:123" or "device:456", with a legacy plain Long
+ * ("123") read by [DefaultCalendar.parseLegacy] as a Room calendar.
  *
- * Format: "room:123" or "device:456"
- * Legacy: Plain Long (e.g., "123") treated as Room calendar
- *
- * TDD pre-tests for C2: DataStore default calendar prefixed string.
+ * Every test calls [DefaultCalendar] directly; the DataStore built in [setup] isn't read.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class DefaultCalendarPreferenceTest {
@@ -88,7 +86,7 @@ class DefaultCalendarPreferenceTest {
 
     @Test
     fun `parseDefaultCalendar is case sensitive for prefix`() = runTest {
-        // Only lowercase prefixes are valid
+        // Only lowercase prefixes parse.
         assertNull("Uppercase ROOM should not parse", DefaultCalendar.parse("ROOM:123"))
         assertNull("Uppercase DEVICE should not parse", DefaultCalendar.parse("DEVICE:456"))
         assertNull("Mixed case should not parse", DefaultCalendar.parse("Room:123"))
@@ -155,7 +153,6 @@ class DefaultCalendarPreferenceTest {
 
     @Test
     fun `parseLegacy converts plain Long to Room`() = runTest {
-        // Plain numeric string (legacy format) should be treated as Room
         val result = DefaultCalendar.parseLegacy("123")
 
         assertTrue("Legacy Long should parse as Room", result is DefaultCalendar.Room)
@@ -179,7 +176,7 @@ class DefaultCalendarPreferenceTest {
 
     @Test
     fun `parseLegacy prefers new format over legacy`() = runTest {
-        // If already in new format, parse as new format
+        // A value already in the prefixed format parses as that format.
         val roomResult = DefaultCalendar.parseLegacy("room:123")
         assertTrue("New room format should parse correctly", roomResult is DefaultCalendar.Room)
 

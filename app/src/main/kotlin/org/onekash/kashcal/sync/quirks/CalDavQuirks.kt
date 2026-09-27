@@ -3,133 +3,122 @@ package org.onekash.kashcal.sync.quirks
 import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 
 /**
- * Abstraction for CalDAV provider-specific behaviors.
- *
- * Different CalDAV servers have quirks
- * in their XML responses, authentication flows, and supported features.
- * This interface allows the sync layer to handle these differences cleanly.
+ * Holds the per-provider differences in CalDAV XML responses, authentication and supported
+ * features, so the sync layer stays provider-neutral.
  */
 interface CalDavQuirks {
 
-    /** Provider identifier (e.g., "icloud", "fastmail") */
+    /** Provider identifier ("icloud", "caldav"). */
     val providerId: String
 
-    /** Human-readable provider name */
+    /** Human-readable provider name. */
     val displayName: String
 
-    /** Base CalDAV URL for this provider */
+    /** Base CalDAV URL for this provider. */
     val baseUrl: String
 
-    /** Whether this provider requires app-specific passwords */
+    /** Whether this provider requires app-specific passwords. */
     val requiresAppSpecificPassword: Boolean
 
-    /**
-     * Extract principal URL from PROPFIND response.
-     * Different providers use different XML namespace formats.
-     */
+    /** Extracts the principal URL from a PROPFIND response; providers differ in XML namespaces. */
     fun extractPrincipalUrl(responseBody: String): String?
 
     /**
-     * Extract all calendar home URLs from principal PROPFIND response.
-     * RFC 4791 Section 6.2.1 allows multiple hrefs in calendar-home-set.
+     * Extracts every calendar home URL from a principal PROPFIND response. RFC 4791 §6.2.1
+     * allows several hrefs in calendar-home-set.
      */
     fun extractCalendarHomeUrls(responseBody: String): List<String>
 
-    /**
-     * Extract first calendar home URL from principal PROPFIND response.
-     */
+    /** Returns the first of [extractCalendarHomeUrls], or null if there is none. */
     fun extractCalendarHomeUrl(responseBody: String): String? = extractCalendarHomeUrls(responseBody).firstOrNull()
 
     /**
-     * Extract `calendar-user-address-set` entries from principal
-     * PROPFIND response (RFC 6638 §2.4.1). Returns the user's
-     * CAL-ADDRESS forms (mailto, urn:uuid, principal-relative path,
-     * full HTTP principal URI). iCloud's `preferred="1"` attribute
-     * hoists matching entries to the front of the list. Returns empty
-     * list on any extraction failure — the discovery flow treats
-     * missing/empty as non-fatal.
+     * Extracts the `calendar-user-address-set` entries (RFC 6638 §2.4.1) from a principal
+     * PROPFIND response: the user's CAL-ADDRESS forms (mailto, urn:uuid, principal-relative
+     * path, full HTTP principal URI). Entries marked `preferred="1"` (iCloud) come first.
+     * Returns an empty list on any extraction failure; discovery treats missing or empty as
+     * non-fatal.
      */
     fun extractCalendarUserAddresses(responseBody: String): List<String>
 
     /**
-     * Extract the scheduling Outbox URL from a principal PROPFIND response
-     * (RFC 6638 §2.1.1 CALDAV:schedule-outbox-URL). Returns null when the
-     * property is empty or absent — per the RFC, the calendar user is then
-     * not enabled for sending scheduling messages. The discovery flow treats
+     * Extracts the scheduling Outbox URL (RFC 6638 §2.1.1 CALDAV:schedule-outbox-URL) from a
+     * principal PROPFIND response. Returns null when the property is empty or absent, which
+     * per the RFC means the user isn't enabled to send scheduling messages. Discovery treats
      * null as non-fatal.
      */
     fun extractScheduleOutboxUrl(responseBody: String): String?
 
-    /**
-     * Extract calendar list from calendar-home PROPFIND response.
-     */
+    /** Extracts the listable calendars from a calendar-home PROPFIND response. */
     fun extractCalendars(responseBody: String, baseHost: String): List<ParsedCalendar>
 
     /**
-     * Extract iCal data from REPORT response.
-     * Some providers wrap in CDATA, others use XML entities.
+     * Extracts iCal data from a REPORT response; some providers wrap it in CDATA, others
+     * escape it.
      */
     fun extractICalData(responseBody: String): List<ParsedEventData>
 
-    /**
-     * Extract sync-token from response for incremental sync.
-     */
+    /** Extracts the sync-token (RFC 6578) from a response. */
     fun extractSyncToken(responseBody: String): String?
 
-    /**
-     * Extract ctag (collection tag) for change detection.
-     */
+    /** Extracts the ctag (collection tag) used for change detection. */
     fun extractCtag(responseBody: String): String?
 
     /**
-     * Extract per-calendar metadata (ctag + displayName + color + isReadOnly)
-     * from the extended getCtag PROPFIND response. Used by the per-pull
-     * metadata refresh path in PullStrategy. Returns null when ctag is absent.
+     * Extracts one calendar's ctag, displayName, color and isReadOnly from the extended
+     * getCtag PROPFIND response, which PullStrategy issues on every pull. Returns null when
+     * the ctag is absent.
      */
     fun extractCalendarMetadata(responseBody: String): CalendarMetadataProbe?
 
     /**
-     * Build the full URL for a calendar given its href.
+     * Reads a Depth-0 probe of one calendar URL and says whether it is still a calendar this
+     * provider's listing would include.
+     *
+     * true: still a listable calendar. false: the server describes the resource at
+     * [requestedPath] and it isn't one (plain collection, tasks-only, or a reserved collection
+     * the listing skips), or says nothing is there. null: the reply can't be read as an
+     * answer about that path, so nothing may be concluded from it. The skip rules judge
+     * [requestedPath], the form the calendar was stored under, not the reply's spelling of
+     * the href.
      */
+    fun classifyCalendarProbe(responseBody: String, requestedPath: String): Boolean?
+
+    /**
+     * Returns whether a redirect from [requestedHost] to [finalHost] stays on this provider's
+     * own server, so the final answer still speaks for the calendar. Default: the same host,
+     * ignoring case.
+     */
+    fun isSameServerRedirect(requestedHost: String, finalHost: String): Boolean =
+        requestedHost.equals(finalHost, ignoreCase = true)
+
+    /** Builds a calendar's full URL from its href. */
     fun buildCalendarUrl(href: String, baseHost: String): String
 
-    /**
-     * Build the full URL for an event given its href.
-     */
+    /** Builds an event's full URL from its href. */
     fun buildEventUrl(href: String, calendarUrl: String): String
 
-    /**
-     * Get additional headers required by this provider.
-     */
+    /** Returns the extra headers this provider needs on every request. */
     fun getAdditionalHeaders(): Map<String, String>
 
-    /**
-     * Check if a response indicates the sync-token is invalid/expired.
-     */
+    /** Returns whether a response says the sync-token is invalid or expired. */
     fun isSyncTokenInvalid(responseCode: Int, responseBody: String): Boolean
 
-    /**
-     * Extract deleted resource hrefs from sync-collection response.
-     * In CalDAV, deleted items are indicated by 404 status in the response.
-     * @param responseBody The XML response body from sync-collection
-     * @return List of hrefs for deleted resources
-     */
+    /** Extracts the hrefs a sync-collection response reports deleted (a 404 status). */
     fun extractDeletedHrefs(responseBody: String): List<String>
 
     /**
-     * Extract changed item hrefs and etags from sync-collection response.
-     * Unlike extractICalData(), this does NOT require calendar-data to be present.
-     * Used for incremental sync (RFC 6578) where sync-collection returns hrefs/etags,
-     * and we then fetch full event data via calendar-multiget.
-     * @param responseBody The XML response body from sync-collection
-     * @return List of (href, etag) pairs for changed/added resources with 200 OK status
+     * Extracts (href, etag) pairs from a sync-collection, PROPFIND Depth-1 or calendar-query
+     * response, skipping collections, deleted members and members without an etag. Unlike
+     * [extractICalData] it needs no calendar-data; the caller fetches event bodies afterwards
+     * with calendar-multiget.
      */
     fun extractChangedItems(responseBody: String): List<Pair<String, String?>>
 
     /**
-     * Single-pass extraction of sync token, changed items, and deleted hrefs.
-     * Default implementation calls the three individual methods (3 XML passes).
-     * Override with CalDavXmlParser.extractSyncCollectionData() for single-pass efficiency.
+     * Extracts the sync-token, changed items and deleted hrefs of a sync-collection response.
+     * The default makes three XML passes and can't detect truncation; implementations
+     * override it with the single-pass [CalDavXmlParser.extractSyncCollectionData].
      */
     fun extractSyncCollectionData(responseBody: String): SyncCollectionData {
         return SyncCollectionData(
@@ -140,15 +129,13 @@ interface CalDavQuirks {
     }
 
     /**
-     * Result of single-pass sync-collection response parsing.
+     * Holds the parsed parts of a sync-collection response.
      *
-     * @property truncated True when the response reported RFC 6578 §3.6 truncation
-     *   *inside* the multistatus body — a `<response>` for the collection whose
-     *   `<status>` is `507 Insufficient Storage` — rather than as a top-level HTTP
-     *   507. The client must re-issue the report on [syncToken] to fetch the rest.
-     *   The 3-pass default cannot see this (it makes no status pass), so it leaves
-     *   this false; only the single-pass [CalDavXmlParser.extractSyncCollectionData]
-     *   sets it.
+     * @property truncated true when the multistatus body reports RFC 6578 §3.6 truncation: a
+     *   `<response>` for the collection with `<status>` `507 Insufficient Storage`, as opposed
+     *   to a top-level HTTP 507. The client must re-issue the report on [syncToken] to fetch
+     *   the rest. Only [CalDavXmlParser.extractSyncCollectionData] sets it; the three-pass
+     *   default has no status pass and leaves it false.
      */
     data class SyncCollectionData(
         val syncToken: String?,
@@ -158,32 +145,24 @@ interface CalDavQuirks {
     )
 
     /**
-     * Check if a calendar href should be skipped (inbox, outbox, etc).
+     * Returns whether a calendar href is a reserved collection to skip (inbox, outbox,
+     * notifications).
      */
     fun shouldSkipCalendar(href: String, displayName: String?): Boolean
 
-    /**
-     * Format date for time-range filter in REPORT query.
-     * @param epochMillis timestamp in milliseconds
-     * @return formatted date string (e.g., "20240101T000000Z")
-     */
+    /** Formats [epochMillis] for a REPORT time-range filter, e.g. "20240101T000000Z". */
     fun formatDateForQuery(epochMillis: Long): String
 
-    /**
-     * Default sync range - how far back to sync.
-     * @return milliseconds (default: 1 year)
-     */
+    /** Returns how far back to sync, in milliseconds (default one year). Only tests call it. */
     fun getDefaultSyncRangeBack(): Long = 365L * 24 * 60 * 60 * 1000
 
     /**
-     * Default sync range - how far forward to sync.
-     * @return milliseconds (default: far future - Jan 1, 2100 UTC)
+     * Returns how far forward to sync, as epoch milliseconds (default 2100-01-01 UTC). Only
+     * tests call it.
      */
     fun getDefaultSyncRangeForward(): Long = 4102444800000L  // Jan 1, 2100 UTC
 
-    /**
-     * Parsed calendar info from PROPFIND response.
-     */
+    /** One calendar parsed from a calendar-home PROPFIND response. */
     data class ParsedCalendar(
         val href: String,
         val displayName: String,
@@ -194,8 +173,18 @@ interface CalDavQuirks {
     )
 
     /**
-     * Parsed event data from REPORT response.
+     * Describes one collection from a Depth-0 PROPFIND reply. [absent] is true when the server
+     * answered that nothing exists at that href; otherwise [isCalendar] comes from a
+     * resourcetype the server returned.
      */
+    data class ProbedCollection(
+        val displayName: String,
+        val isCalendar: Boolean,
+        val supportedComponents: Set<String>,
+        val absent: Boolean = false
+    )
+
+    /** One event parsed from a REPORT response. */
     data class ParsedEventData(
         val href: String,
         val etag: String?,

@@ -10,10 +10,10 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.sync.parser.icaldav.IcsPatcher
 
 /**
- * Tests for IcsExporter - Event export to ICS files.
+ * Tests [IcsExporter]'s file names and calendar ICS building (both private, called by
+ * reflection), plus single-event serialization through [IcsPatcher].
  *
- * Tests filename generation, ICS content building, and VEVENT extraction.
- * Android-specific file operations (FileProvider) are not tested here.
+ * Android file operations (FileProvider) are not tested here.
  */
 class IcsExporterTest {
 
@@ -76,9 +76,8 @@ class IcsExporterTest {
         assertTrue("Should use default name", fileName.contains("event"))
     }
 
-    // VEVENT extraction and escape tests removed: extractVEventBlocks / escapeIcsText
-    // are deleted from IcsExporter — ICalGenerator now handles both. Escape behavior
-    // is covered by icaldav-core's ICalGeneratorCalendarTest.
+    // Text escaping is ICalGenerator's: icaldav-core's ICalGeneratorEdgeCaseTest covers event
+    // text and ICalGeneratorCalendarTest calendar-level text.
 
     // ========== Calendar ICS Building Tests ==========
 
@@ -126,8 +125,8 @@ class IcsExporterTest {
 
     @Test
     fun `buildCalendarIcs emits VTIMEZONE blocks for event timezones deduplicated`() {
-        // Two events share America/New_York, one uses Asia/Tokyo.
-        // Expect exactly 1 VTIMEZONE for each distinct TZID.
+        // Two events share America/New_York, one uses Asia/Tokyo, so one VTIMEZONE per distinct
+        // TZID gives 2 blocks. Only the block count is asserted.
         val nyStart = 1735099200000L
         val event1 = createBasicEvent(uid = "ny-1").copy(timezone = "America/New_York", startTs = nyStart, endTs = nyStart + 3600000)
         val event2 = createBasicEvent(uid = "ny-2").copy(timezone = "America/New_York", startTs = nyStart + 86400000, endTs = nyStart + 86400000 + 3600000)
@@ -140,13 +139,14 @@ class IcsExporterTest {
 
         val ics = invokeBuildCalendarIcs(events, "Multi-TZ Calendar")
 
-        val nyCount = ics.split("TZID:America/New_York\n").size - 1  // matches VTIMEZONE TZID line, not parameter
+        // Matches the VTIMEZONE TZID line, not the parameter
+        val nyCount = ics.split("TZID:America/New_York\n").size - 1
         val tokyoVtimezoneCount = ics.split("TZID:Asia/Tokyo\n").size - 1
         val vtimezoneBlockCount = Regex("BEGIN:VTIMEZONE").findAll(ics).count()
         assertEquals("Expected 2 VTIMEZONE blocks (NY + Tokyo), got:\n$ics", 2, vtimezoneBlockCount)
     }
 
-    // ========== Round-trip Tests ==========
+    // ========== Single-event Serialization ==========
 
     @Test
     fun `serialized single event can be parsed back`() {
@@ -158,7 +158,7 @@ class IcsExporterTest {
 
         val ics = IcsPatcher.serialize(event)
 
-        // Basic validation - contains required fields
+        // Checks the serialized fields only; nothing is parsed back.
         assertTrue("Should contain VCALENDAR", ics.contains("BEGIN:VCALENDAR"))
         assertTrue("Should contain VEVENT", ics.contains("BEGIN:VEVENT"))
         assertTrue("Should contain title", ics.contains("SUMMARY:Round Trip Test"))

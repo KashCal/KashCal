@@ -17,12 +17,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Direct unit tests for CalDavXmlParser.
+ * Tests [CalDavXmlParser]'s extract methods and [CalDavXmlParser.decodeXmlEntities] against XML
+ * fixtures from CalDAV servers (for example iCloud, Nextcloud, Stalwart, Zoho, Open-Xchange,
+ * SabreDAV, Baikal, Radicale, SOGo, Xandikos) and a generic RFC-compliant set.
  *
- * Tests all 9 public methods using real XML fixtures from multiple CalDAV providers:
- * iCloud, Nextcloud, Stalwart, Zoho, Open-Xchange, Radicale, and generic RFC-compliant.
+ * Calendar-user addresses and the metadata probe have their own test classes
+ * (`CalDavXmlParserAddressSetTest`, `CalDavXmlParserMetadataTest`); extractProbedCollection isn't
+ * tested here.
  *
- * Fixtures are in: test/resources/caldav/{provider}/
+ * Fixtures are in `app/src/test/resources/caldav/<provider>/`.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -147,8 +150,8 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractScheduleOutboxUrl ignores the response self-href and returns the property href`() {
-        // RFC 6638 §2.1.1: the property wraps its OWN href. The response's
-        // self-href (the principal URL) must NOT be mistaken for the outbox.
+        // RFC 6638 §2.1.1: the property wraps its own href. The response's
+        // self-href (the principal URL) must not be taken for the outbox.
         val xml = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
@@ -167,7 +170,7 @@ class CalDavXmlParserTest {
         """.trimIndent()
         val result = parser.extractScheduleOutboxUrl(xml)
         assertEquals("/dav.php/calendars/testuser1/outbox/", result)
-        // Explicitly assert it is NOT the principal self-href.
+        // Not the principal self-href.
         assertTrue(result != "/dav.php/principals/testuser1/")
     }
 
@@ -314,9 +317,10 @@ class CalDavXmlParserTest {
         val xml = loadResource("caldav/icloud/03_calendar_list.xml")
         val calendars = parser.extractCalendars(xml)
 
-        // iCloud fixture has: calendars/ (collection, no calendar type), Personal Calendar, inbox, notification, tasks (VTODO), work, outbox
-        // Only Personal Calendar and Work Calendar should be extracted (have <calendar/> resourcetype)
-        // inbox has schedule-inbox, outbox has schedule-outbox, tasks has VTODO only, notification isn't a calendar
+        // The iCloud fixture lists the home (a plain collection), Personal Calendar, inbox,
+        // notification, tasks ("Reminders", VTODO only), Work Calendar and outbox. Personal,
+        // Reminders and Work have a <calendar/> resourcetype and are extracted; the home, inbox
+        // (schedule-inbox), outbox (schedule-outbox) and notification aren't calendars.
         assertTrue("Should find at least 2 calendars", calendars.size >= 2)
 
         val personal = calendars.find { it.displayName == "Personal Calendar" }
@@ -336,8 +340,8 @@ class CalDavXmlParserTest {
         val xml = loadResource("caldav/icloud/03_calendar_list.xml")
         val calendars = parser.extractCalendars(xml)
 
-        // The tasks calendar has only VTODO, should still be parsed by extractCalendars
-        // (filtering by VEVENT is done at the quirks layer, not parser layer)
+        // The VTODO-only tasks calendar is still parsed here; the VEVENT filter is in the
+        // quirks layer (isListable in ICloudQuirks and DefaultQuirks), not the parser.
         val tasks = calendars.find { it.displayName == "Reminders" }
         if (tasks != null) {
             assertTrue("Tasks calendar should have VTODO", tasks.supportedComponents.contains("VTODO"))
@@ -361,16 +365,16 @@ class CalDavXmlParserTest {
         val xml = loadResource("caldav/stalwart/03_calendar_list_resourcetype_404.xml")
         val calendars = parser.extractCalendars(xml)
 
-        // Calendar with resourcetype in 404 propstat should NOT be included
+        // A calendar whose resourcetype sits in a 404 propstat is not included
         assertEquals(0, calendars.size)
     }
 
     @Test
     fun `extractCalendars treats DAV all aggregate privilege as writable`() {
-        // Real Xandikos response: the calendar grants the RFC 3744 <all>
-        // aggregate privilege rather than the leaf <write>/<write-content>.
-        // RFC 3744 §3.11 + §3.12: DAV:all contains DAV:write contains
-        // DAV:write-content, so the calendar must be writable, not read-only.
+        // Real Xandikos response: the calendar grants the RFC 3744 <all> aggregate
+        // privilege, not the leaf <write>/<write-content>. RFC 3744 §3.11 and §3.12:
+        // DAV:all contains DAV:write, which contains DAV:write-content, so the calendar
+        // must be writable.
         val xml = loadResource("caldav/xandikos/03_calendar_list.xml")
         val calendars = parser.extractCalendars(xml)
 
@@ -386,7 +390,7 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractCalendars treats explicit DAV all privilege element as writable`() {
-        // Minimal synthetic case isolating the <all> mapping from fixture noise.
+        // Minimal synthetic case: the <all> mapping without the rest of the fixture.
         val xml = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
@@ -413,10 +417,10 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractCalendars treats write-properties only as read-only`() {
-        // Guard against over-broadening the fix: a calendar granting only
-        // read + write-properties (dead-property writes, not content) must
-        // stay read-only. This is the shape real read-only shared calendars
-        // return (Nextcloud contact_birthdays, Mailbox shared).
+        // Keeps the <all> mapping from widening: a calendar granting only read and
+        // write-properties (dead-property writes, not content) must stay read-only. Real
+        // read-only shared calendars return this shape (Nextcloud contact_birthdays,
+        // Mailbox shared).
         val xml = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:multistatus xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
@@ -450,8 +454,8 @@ class CalDavXmlParserTest {
         val xml = loadResource("caldav/generic/rfc_compliant_response.xml")
         val calendars = parser.extractCalendars(xml)
 
-        // The generic fixture has one calendar entry and one event entry
-        // Only the calendar (with <collection/><calendar/> resourcetype) should be extracted
+        // The generic fixture has one calendar entry and one event entry; only the
+        // calendar (resourcetype <collection/><calendar/>) is extracted
         assertTrue("Should find at least 1 calendar", calendars.isNotEmpty())
         val cal = calendars[0]
         assertEquals("My Calendar", cal.displayName)
@@ -466,7 +470,7 @@ class CalDavXmlParserTest {
         val xml = loadResource("caldav/generic/no_component_set.xml")
         val calendars = parser.extractCalendars(xml)
 
-        // Calendar without supported-calendar-component-set should have empty set
+        // A calendar without supported-calendar-component-set gets an empty set
         assertTrue(calendars.isNotEmpty())
         assertTrue("Components should be empty when not advertised", calendars[0].supportedComponents.isEmpty())
     }
@@ -497,7 +501,7 @@ class CalDavXmlParserTest {
 
     @Test
     fun `decodeXmlEntities handles amp-last ordering to avoid double decode`() {
-        // If text contains "&amp;lt;" it should become "&lt;", not "<"
+        // "&amp;lt;" must become "&lt;", not "<"
         assertEquals("&lt;tag&gt;", CalDavXmlParser.decodeXmlEntities("&amp;lt;tag&amp;gt;"))
     }
 
@@ -595,7 +599,7 @@ class CalDavXmlParserTest {
     fun `extractCtag returns null when ctag missing from Zoho`() {
         val xml = loadResource("caldav/zoho/04_ctag_missing.xml")
         val ctag = parser.extractCtag(xml)
-        // The ctag element is in a 404 propstat and is empty, so should be null
+        // The ctag element is empty and in a 404 propstat, so the result is null
         assertNull(ctag)
     }
 
@@ -647,7 +651,7 @@ class CalDavXmlParserTest {
         assertEquals("ox-etag-abc123", events[0].etag)
         assertTrue(events[0].icalData.contains("Team Meeting"))
 
-        // Second event has both master and exception (RECURRENCE-ID)
+        // The second resource holds a master and an exception (RECURRENCE-ID)
         assertTrue(events[1].icalData.contains("RECURRENCE-ID"))
         assertTrue(events[1].icalData.contains("Weekly Review (Rescheduled)"))
     }
@@ -660,7 +664,7 @@ class CalDavXmlParserTest {
         assertEquals(2, events.size)
         assertTrue(events[0].icalData.contains("Team Standup"))
         assertTrue(events[0].icalData.contains("BEGIN:VCALENDAR"))
-        // Zoho etags are numeric timestamps (not quoted)
+        // Zoho etags are unquoted numeric timestamps
         assertEquals("1770859402675", events[0].etag)
 
         assertTrue(events[1].icalData.contains("Project Review"))
@@ -671,7 +675,7 @@ class CalDavXmlParserTest {
         val xml = loadResource("caldav/generic/rfc_compliant_response.xml")
         val events = parser.extractICalData(xml)
 
-        // Only the event response (not the calendar collection) should be extracted
+        // Only the event response is extracted, not the calendar collection
         assertEquals(1, events.size)
         assertEquals("/calendars/user/default/meeting.ics", events[0].href)
         assertEquals("etag-meeting-v1", events[0].etag)
@@ -683,7 +687,7 @@ class CalDavXmlParserTest {
         val xml = loadResource("caldav/zoho/05_calendar_query_no_data.xml")
         val events = parser.extractICalData(xml)
 
-        // Zoho calendar-query returns etags but NO calendar-data
+        // Zoho's calendar-query reply has etags but no calendar-data
         assertEquals(0, events.size)
     }
 
@@ -699,7 +703,7 @@ class CalDavXmlParserTest {
         val xml = loadResource("caldav/nextcloud/05_sync_collection.xml")
         val items = parser.extractChangedItems(xml)
 
-        // 2 changed events, 1 deleted (should be excluded)
+        // 2 changed events; the 1 deleted is excluded
         assertEquals(2, items.size)
         assertEquals("/remote.php/dav/calendars/testuser/personal/event1.ics", items[0].first)
         assertEquals("abc123def456-v2", items[0].second)
@@ -724,7 +728,7 @@ class CalDavXmlParserTest {
 
         // 2 changed, 1 deleted
         assertEquals(2, items.size)
-        // Deleted item should not be in the list
+        // The deleted item is not in the list
         assertTrue(items.none { it.first.contains("deleted-event") })
     }
 
@@ -740,9 +744,9 @@ class CalDavXmlParserTest {
         val xml = loadResource("caldav/sabredav/04_propfind_bare_uid.xml")
         val items = parser.extractChangedItems(xml)
 
-        // Expect 3 changed items: 2 bare-UID + 1 .ics-named.
-        // Collection self-row is skipped (resourcetype/collection, no etag).
-        // Response-level 404 row is excluded (deletion, not change).
+        // 3 changed items: 2 bare-UID and 1 .ics-named. The collection self-row
+        // (resourcetype/collection, no etag) is skipped, and the response-level 404 row
+        // is a deletion, not a change.
         assertEquals(3, items.size)
 
         val hrefs = items.map { it.first }
@@ -763,7 +767,7 @@ class CalDavXmlParserTest {
             hrefs.none { it == "/index.php/calendars/test-account/test-cal/" }
         )
 
-        // Etags should be normalized (quotes stripped).
+        // Etags have their quotes stripped.
         val firstBare = items.first { it.first.endsWith("345cf39b-27fd-413f-a8c3-98fb85fd5240") }
         assertEquals("sabre-bare-uid-etag-abc", firstBare.second)
     }
@@ -782,9 +786,9 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractChangedItems does not treat propstat-404 on collection self-row as deletion`() {
-        // The collection self-row has propstat 404 on getetag (a perfectly RFC-conformant
-        // way to report "this property doesn't apply to me"). That must NOT cause it to
-        // be treated as a deletion or to leak into changed items.
+        // The collection self-row has a propstat 404 on getetag, the RFC-conformant way
+        // to report a property that doesn't apply. It must not be read as a deletion or
+        // show up in changed items.
         val xml = loadResource("caldav/sabredav/04_propfind_bare_uid.xml")
         val items = parser.extractChangedItems(xml)
 
@@ -811,9 +815,9 @@ class CalDavXmlParserTest {
         val xml = loadResource("caldav/sabredav/04_propfind_bare_uid.xml")
         val deleted = parser.extractDeletedHrefs(xml)
 
-        // Propstat-level 404 (e.g., getetag absent on a collection) must NOT mark the
-        // entire response as deleted. RFC 4918 §13: propstat status applies only to
-        // those properties; response-level status applies to the whole resource.
+        // A propstat-level 404 (for example getetag absent on a collection) must not mark
+        // the whole response as deleted. RFC 4918 §13: a propstat status applies only to
+        // its properties; a response-level status applies to the whole resource.
         assertTrue(
             "Collection self-row must not be reported as deleted (propstat 404 != response 404)",
             deleted.none { it == "/index.php/calendars/test-account/test-cal/" }
@@ -822,9 +826,10 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractSyncCollectionData keeps bare-UID hrefs and skips collection self-row`() {
-        // While SabreDAV sync-collection responses typically use .ics extensions, this
-        // verifies the discriminator behaves consistently across all sync-related
-        // extraction paths if a server happens to return resourcetype-bearing rows.
+        // SabreDAV sync-collection replies usually use .ics hrefs. This runs the PROPFIND
+        // fixture through the combined extractor, so a server that returns bare-UID or
+        // resourcetype-bearing rows there gets the same self-row and deletion rules as
+        // extractChangedItems and extractDeletedHrefs.
         val xml = loadResource("caldav/sabredav/04_propfind_bare_uid.xml")
         val data = parser.extractSyncCollectionData(xml)
 
@@ -841,10 +846,9 @@ class CalDavXmlParserTest {
     }
 
     // ========== Real-server PROPFIND captures ==========
-    // These fixtures are captured (or structurally derived) from live servers,
-    // so the parser is tested against real-world XML quirks (default xmlns,
-    // uppercase prefix, status-before-prop, real etags on collection self-rows,
-    // member rows with propstat-404 on resourcetype, etc.).
+    // Fixtures captured from, or derived in structure from, live servers, so the parser
+    // meets real XML quirks: default xmlns, uppercase prefix, status before prop, real
+    // etags on collection self-rows, member rows with a propstat-404 on resourcetype.
 
     @Test
     fun `extractChangedItems parses real Baikal PROPFIND with bare-UID member`() {
@@ -880,9 +884,9 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractChangedItems parses real Radicale PROPFIND with collection-row etag`() {
-        // Radicale serializes elements with default xmlns="DAV:" (no prefix) AND advertises
-        // a real synthetic etag on the collection self-row alongside resourcetype/collection.
-        // The discriminator must privilege the collection marker over the etag.
+        // Radicale serializes elements with a default xmlns="DAV:" (no prefix) and puts a
+        // synthetic etag on the collection self-row beside resourcetype/collection. The
+        // collection marker must win over the etag.
         val xml = loadResource("caldav/radicale/04_propfind_etag_listing.xml")
         val items = parser.extractChangedItems(xml)
         val hrefs = items.map { it.first }
@@ -903,8 +907,8 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractChangedItems parses real SOGo PROPFIND with status-before-prop`() {
-        // SOGo emits <D:..> uppercase prefix, status BEFORE prop inside propstat,
-        // and synthesizes a literal "None" etag on the collection self-row alongside
+        // SOGo emits an uppercase <D:..> prefix, puts status before prop inside propstat,
+        // and synthesizes a literal "None" etag on the collection self-row beside
         // resourcetype/collection.
         val xml = loadResource("caldav/sogo/04_propfind_etag_listing.xml")
         val items = parser.extractChangedItems(xml)
@@ -958,10 +962,10 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractChangedItems parses iCloud PROPFIND with member resourcetype propstat-404`() {
-        // iCloud serializes with default xmlns="DAV:" (redundant per-element). The
-        // collection self-row carries a real ctag-style etag in a single 200 propstat.
-        // Member rows split resourcetype into a separate 404 propstat ("doesn't apply
-        // to me") which must NOT be conflated with response-level deletion.
+        // iCloud repeats a default xmlns="DAV:" on each element. The collection self-row
+        // carries a real ctag-style etag in a single 200 propstat. Member rows put
+        // resourcetype in a separate 404 propstat ("doesn't apply"), which must not be
+        // read as a response-level deletion.
         val xml = loadResource("caldav/icloud/04_propfind_etag_listing.xml")
         val items = parser.extractChangedItems(xml)
         val hrefs = items.map { it.first }
@@ -984,8 +988,8 @@ class CalDavXmlParserTest {
     @Test
     fun `extractDeletedHrefs does not flag iCloud member propstat-404 as deletion`() {
         // The two member rows have a propstat-404 on resourcetype, but no response-level
-        // 404 and they DO have a successful sibling propstat with the etag. The parser
-        // must NOT treat them as deletions (RFC 4918 §13).
+        // 404 and a successful sibling propstat with the etag, so they are not deletions
+        // (RFC 4918 §13).
         val xml = loadResource("caldav/icloud/04_propfind_etag_listing.xml")
         val deleted = parser.extractDeletedHrefs(xml)
 
@@ -995,19 +999,18 @@ class CalDavXmlParserTest {
         )
     }
 
-    // ========== Trailing-slash discriminator (post-v23.7.53) ==========
-    // Wire bodies for fetchAllEtags / fetchEtagsInRange request only <d:getetag/>;
-    // resourcetype is no longer asked for. Servers that follow RFC 4918 §5.2 emit
-    // a trailing slash on the collection self-row and no trailing slash on members.
-    // The parser uses href.endsWith("/") as the primary collection discriminator,
-    // with the legacy resourcetype/collection marker kept as a defensive fallback
-    // for any server that volunteers the element unprompted.
+    // ========== Trailing-slash discriminator ==========
+    // The fetchAllEtags and fetchEtagsInRange bodies request only <d:getetag/>, not
+    // resourcetype. Servers following RFC 4918 §5.2 put a trailing slash on the
+    // collection self-row and none on members. The parser takes href.endsWith("/") as
+    // the main collection signal, with a resourcetype/collection marker as the fallback
+    // for a server that volunteers the element unprompted.
 
     @Test
     fun `extractChangedItems classifies by trailing slash when no resourcetype is returned`() {
-        // Mirrors the wire reality after v23.7.53: server omits resourcetype entirely.
-        // Self-row identified ONLY by trailing slash. Bare-UID + .ics members kept.
-        // Response-level 404 row is a deletion (excluded from changed).
+        // The current wire shape: no resourcetype at all, so the self-row is known only by
+        // its trailing slash. Bare-UID and .ics members are kept; the response-level 404
+        // row is a deletion, excluded from changed.
         val xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <d:multistatus xmlns:d="DAV:">
@@ -1096,10 +1099,9 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractChangedItems uses resourcetype fallback for slashless self-row volunteered by server`() {
-        // RFC 4918 §5.2 is a SHOULD, not MUST. A non-conforming server might omit the
-        // trailing slash on a collection self-row but still volunteer
-        // <resourcetype><collection/></resourcetype>. The parser keeps the resourcetype
-        // path as a defensive fallback so this row is still skipped.
+        // RFC 4918 §5.2 is a SHOULD. A server may omit the trailing slash on a collection
+        // self-row but still volunteer <resourcetype><collection/></resourcetype>; the
+        // resourcetype fallback still skips the row.
         val xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <d:multistatus xmlns:d="DAV:">
@@ -1137,10 +1139,10 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractChangedItems treats slashless member with mixed propstat as changed not deleted`() {
-        // Slashless member href (no .ics extension) carries TWO propstats: 200 OK with
-        // getetag, plus 404 Not Found on some other prop. RFC 4918 §13: propstat status
-        // applies only to those properties; the response itself is alive. The parser
-        // must keep the row as changed (etag intact), not flag it as deleted.
+        // A slashless member href (no .ics extension) carries two propstats: 200 OK with
+        // getetag, and 404 Not Found on another prop. RFC 4918 §13: a propstat status
+        // applies only to its properties, so the resource exists. The row stays changed
+        // with its etag, not deleted.
         val xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <d:multistatus xmlns:d="DAV:">
@@ -1217,7 +1219,7 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractDeletedHrefs returns empty when no deletions`() {
-        // Use a response with no 404 entries
+        // A response with no 404 entries
         val xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <D:multistatus xmlns:D="DAV:">
@@ -1281,11 +1283,10 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractSyncCollectionData flags truncation from an embedded 507 status`() {
-        // RFC 6578 §3.6: a server that truncates a large sync-collection returns
-        // HTTP 207 (NOT a top-level 507) with a <response> for the collection whose
-        // <status> is "507 Insufficient Storage", plus a partial sync-token to
-        // resume from. The client must page again on the returned token, so the
-        // parser has to surface this as truncated=true.
+        // RFC 6578 §3.6: a server that truncates a sync-collection returns HTTP 207 (not
+        // a top-level 507) with a <response> for the collection whose <status> is "507
+        // Insufficient Storage", plus a sync-token for the partial set. The client pages
+        // again on that token, so the parser must report truncated=true.
         val xml = """
             <?xml version="1.0" encoding="utf-8"?>
             <d:multistatus xmlns:d="DAV:">
@@ -1316,8 +1317,8 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractSyncCollectionData leaves truncated false on a normal 207`() {
-        // A complete response (no 507 anywhere) must not be misread as truncated,
-        // or the client would page forever against a non-advancing token.
+        // A complete response (no 507 anywhere) must not read as truncated, or the client
+        // would page forever against a token that doesn't advance.
         val xml = loadResource("caldav/nextcloud/05_sync_collection.xml")
         val data = parser.extractSyncCollectionData(xml)
         assertFalse("a complete response is not truncated", data.truncated)
@@ -1325,8 +1326,8 @@ class CalDavXmlParserTest {
 
     @Test
     fun `extractSyncCollectionData consistent with individual extract methods`() {
-        // Verify that extractSyncCollectionData returns the same results as
-        // calling extractSyncToken, extractChangedItems, and extractDeletedHrefs individually
+        // extractSyncCollectionData gives the same token and the same number of changed and
+        // deleted items as extractSyncToken, extractChangedItems and extractDeletedHrefs
         val xml = loadResource("caldav/nextcloud/05_sync_collection.xml")
 
         val combined = parser.extractSyncCollectionData(xml)
@@ -1343,8 +1344,8 @@ class CalDavXmlParserTest {
 
     @Test
     fun `parser handles different namespace prefixes for same elements`() {
-        // iCloud uses xmlns="DAV:" (no prefix), Nextcloud uses d:, Stalwart uses D:
-        // All should parse correctly since XmlPullParser is namespace-aware
+        // iCloud uses xmlns="DAV:" (no prefix), Nextcloud d:, Stalwart D:. All parse
+        // because the parser factory is namespace-aware.
         val icloudPrincipal = parser.extractPrincipalUrl(
             loadResource("caldav/icloud/01_current_user_principal.xml")
         )
@@ -1371,9 +1372,9 @@ class CalDavXmlParserTest {
             loadResource("caldav/zoho/06_calendar_multiget.xml")
         )
 
-        // Nextcloud etag should be stripped of quotes
+        // The Nextcloud etag has its quotes stripped
         assertEquals("abc123def456", nextcloudEvents[0].etag)
-        // Zoho etag should be kept as-is (no quotes to strip)
+        // The Zoho etag is kept as is (no quotes to strip)
         assertEquals("1770859402675", zohoEvents[0].etag)
     }
 
@@ -1382,7 +1383,7 @@ class CalDavXmlParserTest {
         val xml = loadResource("caldav/nextcloud/05_sync_collection.xml")
         val items = parser.extractChangedItems(xml)
 
-        // Etags in sync-collection should also be normalized
+        // Sync-collection etags have their quotes stripped too
         assertEquals("abc123def456-v2", items[0].second)
     }
 }

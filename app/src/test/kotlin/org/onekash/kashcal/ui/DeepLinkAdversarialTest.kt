@@ -24,15 +24,16 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Adversarial tests for deep link and intent handling.
- *
- * Tests edge cases:
- * - Reminder intent with deleted event
- * - Widget click with stale eventId
- * - Shortcut with invalid calendarId
- * - Rapid consecutive deep links
- * - Intent with negative/invalid timestamps
- * - Malformed URI schemes
+ * Tests the lookups a deep link or notification/widget intent depends on, with edge-case
+ * inputs. No test calls the app's intent handling; each drives the piece directly:
+ * - Event lookup by id over a real in-memory Room DB returns null for a deleted,
+ *   never-existing, negative, zero or Long.MAX_VALUE id, and still returns a PENDING_DELETE
+ *   row.
+ * - A calendar range query for an unknown calendar id is empty.
+ * - Occurrence range queries with negative, zero and year-3000 bounds return a list.
+ * - `Uri.parse` of `kashcal://event/...`: path, query parameter, empty path, non-numeric id.
+ * - Intent extras: missing, of the wrong type, and valid.
+ * - 100 lookups in a row over a mix of existing and missing ids complete.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -103,7 +104,7 @@ class DeepLinkAdversarialTest {
     fun `deep link with soft-deleted event`() = runTest {
         val now = System.currentTimeMillis()
 
-        // Create event marked for deletion (not yet synced)
+        // An event whose delete is queued but not yet pushed
         val event = Event(
             uid = "soft-deleted@test.com",
             calendarId = testCalendarId,
@@ -158,9 +159,8 @@ class DeepLinkAdversarialTest {
     fun `negative timestamp in deep link`() = runTest {
         val negativeTs = -1L
 
-        // Query with negative timestamp should not crash
+        // Asserts only that the query returns instead of throwing
         val occurrences = database.occurrencesDao().getInRange(negativeTs, 0L)
-        // Should return empty or handle gracefully
         assertNotNull("Should handle negative timestamp", occurrences)
     }
 
@@ -255,7 +255,7 @@ class DeepLinkAdversarialTest {
         assertEquals(1704067200000L, occurrenceTs)
     }
 
-    // ==================== Concurrent Access Tests ====================
+    // ==================== Repeated Lookup Tests ====================
 
     @Test
     fun `rapid event lookups do not crash`() = runTest {
@@ -276,7 +276,7 @@ class DeepLinkAdversarialTest {
             )
         }
 
-        // Rapid lookups (simulating fast widget/notification clicks)
+        // Back-to-back lookups, as from fast widget or notification taps
         repeat(100) { i ->
             val eventId = (i % 15).toLong() + 1 // Mix of valid and invalid IDs
             database.eventsDao().getById(eventId)

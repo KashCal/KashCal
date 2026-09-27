@@ -28,13 +28,13 @@ import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * Integration test that traces the full account creation workflow
- * using real Nextcloud server but mocked database.
+ * Traces account creation against a live Nextcloud server, with the repositories mocked over
+ * in-memory lists.
  *
- * This test verifies whether adding two accounts with different usernames
- * results in "Creating new account" or "Updating existing account" logs.
+ * Adds two accounts with different usernames on the same server and checks that each logs
+ * "Creating new account", never "Updating existing account", and that two accounts result.
  *
- * Run: ./gradlew testDebugUnitTest --tests "*NextcloudAccountCreationFlowTest*"
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*NextcloudAccountCreationFlowTest*"
  */
 class NextcloudAccountCreationFlowTest {
 
@@ -43,13 +43,13 @@ class NextcloudAccountCreationFlowTest {
     private lateinit var accountRepository: AccountRepository
     private lateinit var calendarRepository: CalendarRepository
 
-    // Track accounts created in mock database
+    // In-memory rows behind the mocked repositories
     private val accountsInDb = CopyOnWriteArrayList<Account>()
     private val calendarsInDb = CopyOnWriteArrayList<Calendar>()
     private var nextAccountId = 1L
     private var nextCalendarId = 1L
 
-    // Track log messages to verify behavior
+    // Captured log lines; the create-vs-update check reads them
     private val logMessages = CopyOnWriteArrayList<String>()
 
     private var serverUrl: String? = null
@@ -62,7 +62,7 @@ class NextcloudAccountCreationFlowTest {
     fun setup() {
         loadCredentials()
 
-        // Mock Log to capture messages
+        // Capture and print every Log call
         mockkStatic(Log::class)
         every { Log.i(any(), any()) } answers {
             val tag = firstArg<String>()
@@ -100,7 +100,7 @@ class NextcloudAccountCreationFlowTest {
             0
         }
 
-        // Mock Color.parseColor
+        // Color.parseColor reads "#"-prefixed hex; anything else, or a parse failure, is blue
         mockkStatic(Color::class)
         every { Color.parseColor(any()) } answers {
             val colorStr = firstArg<String>()
@@ -115,11 +115,10 @@ class NextcloudAccountCreationFlowTest {
             }
         }
 
-        // Create real client factory
+        // Real client factory
         clientFactory = OkHttpCalDavClientFactory()
 
-        // Create mock repositories that simulate real database behavior
-        // AccountRepository handles credential storage internally
+        // Repositories mocked over the in-memory lists above
         accountRepository = createMockAccountRepository()
         calendarRepository = createMockCalendarRepository()
 
@@ -168,7 +167,7 @@ class NextcloudAccountCreationFlowTest {
 
     private fun createMockAccountRepository(): AccountRepository {
         return io.mockk.mockk {
-            // getAccountByProviderAndEmail - find existing account (2-param, legacy)
+            // getAccountByProviderAndEmail: the 2-param lookup, which the create flow doesn't use
             every {
                 runBlocking { getAccountByProviderAndEmail(any(), any()) }
             } answers {
@@ -179,11 +178,10 @@ class NextcloudAccountCreationFlowTest {
                 found
             }
 
-            // getAccountByProviderEmailAndHomeSetUrl - the 3-param lookup the
-            // production create/update flow actually calls (same username on
-            // different servers stays distinct via homeSetUrl). Must be stubbed
-            // against the same in-memory DB or the flow can't tell create from
-            // update.
+            // getAccountByProviderEmailAndHomeSetUrl: the 3-param lookup the create/update
+            // flow calls (the same username on different servers stays distinct by
+            // homeSetUrl). It must read the same in-memory rows or the flow can't tell
+            // create from update.
             every {
                 runBlocking { getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) }
             } answers {
@@ -238,7 +236,7 @@ class NextcloudAccountCreationFlowTest {
                 runBlocking { countByDisplayName(any(), any()) }
             } returns 0
 
-            // saveCredentials - always succeeds in test
+            // saveCredentials always succeeds
             every {
                 runBlocking { saveCredentials(any(), any()) }
             } returns true
@@ -353,7 +351,7 @@ class NextcloudAccountCreationFlowTest {
             principalUrl = calendarsFound1.principalUrl,
             calendarHomeUrl = calendarsFound1.calendarHomeUrl,
             selectedCalendars = calendarsFound1.calendars,
-            displayName = null  // Use default (server hostname)
+            displayName = null  // Default name (server hostname)
         )
 
         println("\nResult 1: ${result1::class.simpleName}")
@@ -370,7 +368,7 @@ class NextcloudAccountCreationFlowTest {
             else -> println("  Unexpected result type: ${result1::class.simpleName}")
         }
 
-        // Check for "Creating new" vs "Updating existing"
+        // Which branch the create flow logged
         val creatingNew1 = logMessages.any { it.contains("Creating new account") }
         val updatingExisting1 = logMessages.any { it.contains("Updating existing account") }
         println("\nAccount 1 - Creating new: $creatingNew1, Updating existing: $updatingExisting1")
@@ -403,7 +401,7 @@ class NextcloudAccountCreationFlowTest {
             principalUrl = calendarsFound2.principalUrl,
             calendarHomeUrl = calendarsFound2.calendarHomeUrl,
             selectedCalendars = calendarsFound2.calendars,
-            displayName = null  // Use default (server hostname)
+            displayName = null  // Default name (server hostname)
         )
 
         println("\nResult 2: ${result2::class.simpleName}")
@@ -420,7 +418,7 @@ class NextcloudAccountCreationFlowTest {
             else -> println("  Unexpected result type: ${result2::class.simpleName}")
         }
 
-        // Check for "Creating new" vs "Updating existing"
+        // Which branch the create flow logged
         val creatingNew2 = logMessages.any { it.contains("Creating new account") }
         val updatingExisting2 = logMessages.any { it.contains("Updating existing account") }
         println("\nAccount 2 - Creating new: $creatingNew2, Updating existing: $updatingExisting2")
@@ -455,11 +453,9 @@ class NextcloudAccountCreationFlowTest {
         assertNotNull("Account 2 should exist with email=$username2", account2)
         assertNotEquals("Account IDs should be different", account1?.id, account2?.id)
 
-        // Every account created via the picker UI flow must have
-        // calendar-user-address-set discovered and persisted. The
-        // discovery is non-fatal, so size==0 is acceptable when the
-        // server didn't return entries — but the mock would never have
-        // been called at all if the wiring is missing.
+        // An account created through the calendar picker must get its
+        // calendar-user-address-set discovered and persisted. Discovery is non-fatal,
+        // so an empty list passes when the server returns no entries.
         assertNotNull(
             "Account 1 should have calendarUserAddresses populated (address discovery wired into createAccountWithSelectedCalendars)",
             account1?.calendarUserAddresses

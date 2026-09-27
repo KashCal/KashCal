@@ -12,12 +12,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for DeviceCalendarReminderActionReceiver.
+ * Tests [DeviceCalendarReminderActionReceiver].
  *
- * Tests cover:
- * - Snooze action handling
- * - Dismiss action handling
- * - Intent action filtering
+ * The `onReceive` tests (null intent, wrong action, snooze, dismiss) check only that it doesn't
+ * throw: Hilt's generated `onReceive` injects the receiver's real fields, so a test can't swap in
+ * mocks to assert on. The constant tests pin the snooze and dismiss action strings.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -36,14 +35,12 @@ class DeviceCalendarReminderActionReceiverTest {
 
     @Test
     fun `onReceive ignores null intent`() {
-        // Should not crash
         receiver.onReceive(context, null)
     }
 
     @Test
     fun `onReceive ignores intent with wrong action`() {
         val intent = Intent("com.example.WRONG_ACTION")
-        // Should not crash
         receiver.onReceive(context, intent)
     }
 
@@ -55,7 +52,7 @@ class DeviceCalendarReminderActionReceiverTest {
             putExtra(DeviceCalendarReminderNotificationManager.EXTRA_NOTIFICATION_ID, 20001)
         }
 
-        // Should not crash (actual functionality requires Hilt injection)
+        // Snoozing goes through the Hilt-injected fields, so only no-throw is checked.
         receiver.onReceive(context, intent)
         assertTrue("Snooze intent should be processed without crash", true)
     }
@@ -66,7 +63,6 @@ class DeviceCalendarReminderActionReceiverTest {
             putExtra(DeviceCalendarReminderNotificationManager.EXTRA_NOTIFICATION_ID, 20001)
         }
 
-        // Should not crash
         receiver.onReceive(context, intent)
         assertTrue("Dismiss intent should be processed without crash", true)
     }

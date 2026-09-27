@@ -31,15 +31,13 @@ import org.robolectric.annotation.Config
 import java.util.concurrent.TimeUnit
 
 /**
- * Regression guard for the silent-scheduling failure mode.
+ * Tests that [WorkManagerIcsScheduler] leaves the expected periodic ICS refresh spec in a test
+ * WorkManager: its name, tag, period, network constraint, and how a repeat, a new period, a
+ * stale battery constraint or a cancelled job is handled.
  *
- * If a future edit accidentally breaks ICS periodic refresh scheduling, users
- * see no error — subscriptions just stop updating. This test catches that by
- * asserting `WorkManager` actually enqueues the expected work after
- * [WorkManagerIcsScheduler.ensurePeriodicRefresh].
- *
- * Tag assertion uses [IcsRefreshWorker.TAG_ICS] constant (not the raw string)
- * so a rename can't quietly defeat the assertion.
+ * Broken scheduling shows users no error; subscriptions stop updating. The tag assertion uses
+ * the [IcsRefreshWorker.TAG_ICS] constant, not the raw string, so a rename can't quietly defeat
+ * it.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -60,12 +58,11 @@ class WorkManagerIcsSchedulerTest {
 
         val config = Configuration.Builder()
             .setMinimumLoggingLevel(Log.DEBUG)
-            // Worker bodies stay on a background executor: this test has no
-            // WorkerFactory, so a worker that actually ran would fail to build.
+            // Worker bodies stay on a background executor: this test has no WorkerFactory, so
+            // a worker that ran would fail to build.
             .setExecutor(java.util.concurrent.Executors.newSingleThreadExecutor())
-            // WorkManager's own bookkeeping runs inline, so a work-info read
-            // immediately after an enqueue sees the committed spec rather than
-            // racing it.
+            // WorkManager's own bookkeeping runs inline, so a work-info read right after an
+            // enqueue sees the committed spec instead of racing it.
             .setTaskExecutor(SynchronousExecutor())
             .build()
 
@@ -141,10 +138,10 @@ class WorkManagerIcsSchedulerTest {
 
         assertEquals(1, workInfos.size)
         val constraints = workInfos[0].constraints
-        // A self-hosted ICS URL on a LAN/VPN reports INTERNET without VALIDATED.
-        // Refresh must run there, so the constraint requires INTERNET but not
-        // VALIDATED (#296). Do NOT assert requiredNetworkType — a custom
-        // NetworkRequest sets it to NOT_REQUIRED on SDK 34.
+        // A self-hosted ICS URL on a LAN or VPN reports INTERNET without VALIDATED. Refresh
+        // must run there, so the constraint requires INTERNET but not VALIDATED (#296).
+        // Don't assert requiredNetworkType: a custom NetworkRequest sets it to NOT_REQUIRED
+        // on SDK 34.
         val request = constraints.requiredNetworkRequest
         assertNotNull("ICS refresh should carry a custom NetworkRequest", request)
         assertTrue(
@@ -168,8 +165,8 @@ class WorkManagerIcsSchedulerTest {
     }
 
     /**
-     * Arms the job the way an install from before the battery constraint was
-     * dropped would have it: right period, stale constraint.
+     * Arms the job as an older install has it: the right period, with a battery-not-low
+     * constraint that [IcsRefreshWorker.schedulePeriodicRefresh] doesn't set.
      */
     private suspend fun armLegacyJobWithBatteryConstraint(intervalHours: Long) {
         val legacy = PeriodicWorkRequestBuilder<IcsRefreshWorker>(intervalHours, TimeUnit.HOURS)
@@ -191,10 +188,9 @@ class WorkManagerIcsSchedulerTest {
         scheduler.ensurePeriodicRefresh(6)
         val second = livePeriodicWork()!!
 
-        // Assert on generation, not id: UPDATE preserves the spec's UUID, so an
-        // id-equality check passes whether or not the no-op branch was taken.
-        // Generation is what UPDATE bumps, so it is the only observable that
-        // distinguishes "left alone" from "re-enqueued".
+        // Assert on generation, not id: UPDATE keeps the spec's UUID, so an id check passes
+        // whether or not the no-op branch was taken. UPDATE bumps the generation, so it is
+        // the only observable that tells "left alone" from "re-enqueued".
         assertEquals(
             "Unchanged interval should not churn the work spec",
             first.generation,
@@ -208,9 +204,9 @@ class WorkManagerIcsSchedulerTest {
 
     @Test
     fun `ensurePeriodicRefresh drops a stale battery constraint at an unchanged interval`() = runTest {
-        // 6 hours is a selectable feed interval AND the period older installs were
-        // armed with, so a period-only comparison would leave those installs
-        // skipping refresh windows forever.
+        // 6 hours is both a selectable feed interval and the period older installs were
+        // armed with, so a period-only comparison would leave those installs skipping
+        // refresh windows forever.
         armLegacyJobWithBatteryConstraint(6)
         val before = livePeriodicWork()!!
         assertTrue(
@@ -235,9 +231,8 @@ class WorkManagerIcsSchedulerTest {
 
     @Test
     fun `ensurePeriodicRefresh at a new interval moves the period`() = runTest {
-        // The reported bug: a feed's configured interval never reached the
-        // scheduler, so the job stayed at whatever period it was first armed
-        // with and "Every hour" was unreachable.
+        // A feed's configured interval must reach the scheduler, or the job stays at the
+        // period it was first armed with and "Every hour" is unreachable.
         scheduler.ensurePeriodicRefresh(6)
         scheduler.ensurePeriodicRefresh(1)
 
@@ -265,9 +260,9 @@ class WorkManagerIcsSchedulerTest {
 
     @Test
     fun `ensurePeriodicRefresh re-arms a cancelled job`() = runTest {
-        // Deleting the last feed cancels the job; adding one back must revive it.
-        // This is why the enqueue policy has to branch: UPDATE alone reports
-        // NOT_APPLIED against a finished spec and would leave the job dead.
+        // Deleting the last feed cancels the job; adding one back must revive it. So the
+        // enqueue policy branches: UPDATE alone reports NOT_APPLIED against a finished spec
+        // and would leave the job dead.
         scheduler.ensurePeriodicRefresh(6)
         scheduler.cancelPeriodicRefresh()
         assertEquals(null, livePeriodicWork())
@@ -298,7 +293,7 @@ class WorkManagerIcsSchedulerTest {
         val after = workManager
             .getWorkInfosForUniqueWork(IcsRefreshWorker.PERIODIC_REFRESH_WORK)
             .get()
-        // After cancel, remaining infos are either absent or in a terminal state.
+        // After cancel, no remaining info is enqueued or running.
         assertTrue(
             "No enqueued/running work should remain after cancel; got ${after.map { it.state }}",
             after.none { it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING }

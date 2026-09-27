@@ -18,15 +18,11 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * Unit tests for UnifiedCredentialManager.
+ * Tests [AccountCredentials] directly and [UnifiedCredentialManager] with encryption
+ * unavailable: EncryptedSharedPreferences needs the Android Keystore, which a JVM test with a
+ * mocked Context doesn't have, so reads return null or empty and saves return false.
  *
- * Note: EncryptedSharedPreferences requires Android Keystore which is not
- * available in Robolectric. These tests verify UnifiedCredentialManager behavior
- * by testing the AccountCredentials data class directly and verifying graceful
- * degradation when encryption is unavailable.
- *
- * For full integration testing of encrypted storage, use instrumented tests
- * in androidTest folder running on actual device/emulator.
+ * Encrypted storage itself needs an instrumented test on a device or emulator; none exists.
  */
 class UnifiedCredentialManagerTest {
 
@@ -169,7 +165,7 @@ class UnifiedCredentialManagerTest {
 
     @Test
     fun `isEncryptionAvailable returns false in test environment`() {
-        // In Robolectric, EncryptedSharedPreferences won't work
+        // On the JVM with a mocked Context the MasterKey or prefs can't be created.
         assertFalse(credentialManager.isEncryptionAvailable())
     }
 
@@ -209,23 +205,23 @@ class UnifiedCredentialManagerTest {
 
     @Test
     fun `deleteCredentials completes without error when encryption unavailable`() = runBlocking {
-        // Should not throw
+        // Passes if it doesn't throw.
         credentialManager.deleteCredentials(1L)
     }
 
     @Test
     fun `clearAllCredentials completes without error when encryption unavailable`() = runBlocking {
-        // Should not throw
+        // Passes if it doesn't throw.
         credentialManager.clearAllCredentials()
     }
 
     @Test
     fun `getEncryptionError returns message when encryption fails`() {
         val manager = UnifiedCredentialManager(context)
-        // Force encryption initialization
+        // Triggers the lazy MasterKey and prefs creation.
         manager.isEncryptionAvailable()
 
-        // In test env, there should be an error message
+        // The creation failure's message is kept.
         val error = manager.getEncryptionError()
         assertNotNull(error)
     }
@@ -234,24 +230,22 @@ class UnifiedCredentialManagerTest {
 
     @Test
     fun `key format uses account prefix`() = runBlocking {
-        // Testing internal key format through behavior
-        // When encryption works, keys should be: account_1_username, account_1_password, etc.
+        // With encryption available the keys are account_1_username, account_1_password and
+        // so on; here only the save's false result is asserted.
         val credentials = AccountCredentials(
             username = "user",
             password = "pass",
             serverUrl = "https://server.com"
         )
 
-        // Won't succeed in test env, but verifies no crash with valid account ID
         val result = credentialManager.saveCredentials(1L, credentials)
-        assertFalse(result) // Expected in test environment
+        assertFalse(result) // encryption unavailable
     }
 
     @Test
     fun `different account IDs are isolated`() = runBlocking {
-        // In production, account 1 and account 2 would have separate keys:
-        // - account_1_password
-        // - account_2_password
+        // With encryption available, accounts 1 and 2 have separate keys (account_1_password,
+        // account_2_password); here both reads return null.
 
         val cred1 = AccountCredentials("user1", "pass1", "https://server1.com")
         val cred2 = AccountCredentials("user2", "pass2", "https://server2.com")
@@ -259,7 +253,6 @@ class UnifiedCredentialManagerTest {
         credentialManager.saveCredentials(1L, cred1)
         credentialManager.saveCredentials(2L, cred2)
 
-        // In test env, both fail gracefully
         assertNull(credentialManager.getCredentials(1L))
         assertNull(credentialManager.getCredentials(2L))
     }
@@ -268,7 +261,7 @@ class UnifiedCredentialManagerTest {
 
     @Test
     fun `iCloud credentials workflow`() {
-        // iCloud uses Apple ID as username
+        // The Apple ID is the username.
         val credentials = AccountCredentials(
             username = "user@icloud.com",  // Apple ID
             password = "xxxx-xxxx-xxxx-xxxx",  // App-specific password
@@ -316,7 +309,7 @@ class UnifiedCredentialManagerTest {
     fun `handles Long MAX_VALUE account ID`() = runBlocking {
         val credentials = AccountCredentials("user", "pass", "https://server.com")
 
-        // Should not throw with large account ID
+        // Passes if nothing throws for the largest account ID.
         credentialManager.saveCredentials(Long.MAX_VALUE, credentials)
         credentialManager.getCredentials(Long.MAX_VALUE)
         credentialManager.hasCredentials(Long.MAX_VALUE)
@@ -327,7 +320,7 @@ class UnifiedCredentialManagerTest {
     fun `handles zero account ID`() = runBlocking {
         val credentials = AccountCredentials("user", "pass", "https://server.com")
 
-        // Should not throw with zero account ID
+        // Passes if nothing throws for account ID 0.
         credentialManager.saveCredentials(0L, credentials)
         credentialManager.getCredentials(0L)
         credentialManager.hasCredentials(0L)
@@ -342,7 +335,6 @@ class UnifiedCredentialManagerTest {
             serverUrl = "https://server.com"
         )
 
-        // Should handle special characters
         assertTrue(credentials.password.contains("@"))
         assertTrue(credentials.password.contains("#"))
     }
@@ -379,7 +371,7 @@ class UnifiedCredentialManagerTest {
 
     @Test
     fun `updateDiscoveryUrls completes without error when encryption unavailable`() = runBlocking {
-        // Should not throw
+        // Passes if it doesn't throw.
         credentialManager.updateDiscoveryUrls(
             accountId = 1L,
             principalUrl = "https://server.com/principal",

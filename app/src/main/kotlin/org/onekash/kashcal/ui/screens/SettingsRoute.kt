@@ -77,22 +77,20 @@ import java.time.ZoneId
 private const val TAG = "SettingsRoute"
 
 /**
- * Stateful wrapper for [AccountSettingsScreen]. Owns the [AccountSettingsViewModel]
- * collection, the seven activity-result launchers, and the [KashCalTheme] wrapper —
- * everything that used to live inline in `SettingsActivity.setContent`.
- * [AccountSettingsScreen] itself stays stateless and param-driven so its compose
- * tests drive it directly with no Hilt/Robolectric activity.
+ * Wraps [AccountSettingsScreen] with state: owns the [AccountSettingsViewModel] collection, the
+ * activity-result launchers, the detail-screen navigation and the [KashCalTheme] wrapper.
+ * [AccountSettingsScreen] stays stateless and param-driven, so its compose tests drive it
+ * without a Hilt activity.
  *
- * The view model is passed in (not obtained via `hiltViewModel()` inside the route)
- * because the host activity retains it for its `FragmentActivity`-bound side effects
- * (the biometric app-lock flow) and its post-render intent-extra bootstrap: both must
- * reference the same instance. Passing it in also lets the wiring guard inject a
- * `mockk` of the real type. The three cold-start theme values are read synchronously
- * in the host before render and passed in as seeds so the first frame doesn't flash
- * the default theme.
+ * The view model is passed in, not taken from `hiltViewModel()` here, because the host activity
+ * calls the same instance for its `onResume` permission refresh, its intent-extra bootstrap after
+ * `setContent`, and its export snackbars. Passing it in also lets
+ * `AccountSettingsScreenViewModelWiringTest` inject a `mockk` of the real type. The three
+ * cold-start theme values are read synchronously in the host and passed in as seeds, so the first
+ * frame doesn't flash the default theme.
  *
- * Genuinely host-bound work (needs the `FragmentActivity`, an injected collaborator,
- * or the content resolver) is passed down as narrow lambdas; everything else lives here.
+ * Work that needs the activity, an injected collaborator or the content resolver comes in as
+ * narrow lambdas; everything else lives here.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -102,17 +100,16 @@ fun SettingsRoute(
     initialColorSource: ColorSource,
     initialAccentSeed: Int,
     syncSessionStore: SyncSessionStore,
-    // When true the host launched us straight into tag management (from the account
-    // hub). We open on the Tags screen, and backing out of it finishes the activity
-    // to the hub rather than revealing the Settings root the user never chose.
+    // True when the account hub launched straight into tag management: the route opens on the
+    // Tags screen, and backing out of it finishes the activity to the hub instead of revealing
+    // the Settings root the user never chose.
     openTagsInitially: Boolean = false,
     onFinish: () -> Unit = {},
     onExportCalendar: (Long) -> Unit = {},
-    // The four content-resolver I/O lambdas are required, not defaulted: a no-op
-    // default would silently write an empty backup / import zero events while
-    // showing a success message. A caller that forgets to wire one must fail to
-    // compile, not ship silent data loss. (The UI side-effect lambdas above/below
-    // stay defaulted — omitting one yields an inert control, never lost data.)
+    // The four I/O lambdas below have no defaults: a no-op default would silently write an
+    // empty backup or import zero events while showing a success message. A caller that
+    // forgets one must fail to compile, not ship silent data loss. The other lambdas stay
+    // defaulted; omitting one gives an inert control, never lost data.
     readIcsContent: suspend (Uri) -> Result<String>,
     importIcsToRoom: suspend (events: List<Event>, calendarId: Long) -> Int,
     writeBackup: suspend (uri: Uri, json: String) -> Unit,
@@ -171,7 +168,7 @@ fun SettingsRoute(
         val showDeclinedEvents by viewModel.showDeclinedEvents.collectAsStateWithLifecycle()
         val deviceCalendarRemindersEnabled by viewModel.deviceCalendarRemindersEnabled.collectAsStateWithLifecycle()
 
-        // iCloud account for AccountsScreen — derived from uiState (single source of truth)
+        // iCloud account for AccountsScreen, derived from uiState (the single source of truth)
         val iCloudAccount = remember(uiState.iCloudState) {
             (uiState.iCloudState as? ICloudConnectionState.Connected)?.let {
                 ICloudAccountUiModel(
@@ -184,7 +181,7 @@ fun SettingsRoute(
             }
         }
 
-        // Track which toggle triggered contacts permission request
+        // Which toggle started the contacts permission request
         var pendingContactPermissionAction by remember {
             mutableStateOf<String?>(null) // "birthdays" or "anniversaries"
         }
@@ -203,9 +200,10 @@ fun SettingsRoute(
             pendingContactPermissionAction = null
         }
 
-        // Per-account CardDAV contact-sync toggle. Enabling requires BOTH
-        // READ + WRITE_CONTACTS (the sync mirrors server contacts onto the device);
-        // a denial surfaces as an inline banner in the sheet rather than a dialog.
+        // Per-account CardDAV contact-sync toggle. Enabling needs both READ_CONTACTS and
+        // WRITE_CONTACTS, since the sync writes server contacts to the device. A denied request
+        // leaves sync off. The sheet's inline re-grant row follows `contactSyncPermissionNeeded`,
+        // whose set and clear conditions are on `KashCalDataStore.contactSyncPermissionNeeded`.
         val contactSyncPermissionNeeded by viewModel.contactSyncPermissionNeeded
             .collectAsStateWithLifecycle()
         var pendingContactSyncAccountId by remember { mutableStateOf<Long?>(null) }
@@ -224,10 +222,9 @@ fun SettingsRoute(
             pendingContactSyncAccountId = null
         }
         val onToggleContactSync: (Long, Boolean) -> Unit = { accountId, enabled ->
-            // Sync needs READ + WRITE, so gate on hasContactsSyncPermission — not
-            // hasContactsPermission, which is READ-only (it gates the birthday
-            // reads). Using the read-only signal here would skip the WRITE request
-            // for a read-granted/write-denied login, leaving a silent dead toggle.
+            // Gate on hasContactsSyncPermission (read and write), not hasContactsPermission
+            // (read only, for the birthday reads). The read-only signal would skip the WRITE
+            // request for a read-granted, write-denied login, leaving a dead toggle.
             if (contactSyncToggleRequiresPermissionRequest(enabled, viewModel.hasContactsSyncPermission.value)) {
                 // Defer the enable until the permission returns granted.
                 pendingContactSyncAccountId = accountId
@@ -250,13 +247,13 @@ fun SettingsRoute(
             )
         }
 
-        // Local-network permission (Android 17+) for LAN CalDAV servers.
-        // The host owns the rationale/state reads (they need the activity ref); the
-        // resolved state is pushed to the VM so the sign-in sheet can proactively ask.
-        // User dismissal of the banner for the current sheet session.
+        // Local-network permission (Android 17+) for LAN CalDAV servers and subscription URLs.
+        // The host owns the rationale and state reads (they need the activity); the resolved
+        // state is pushed to the VM so the sign-in sheet can ask proactively.
+        // Whether the user dismissed the banner in the current sheet session.
         var localNetworkBannerDismissed by remember { mutableStateOf(false) }
-        // Rationale sampled just before launching, so the callback can
-        // detect the rationale-flip that signals "don't ask again".
+        // Rationale sampled just before launching, so the callback can detect the
+        // rationale flip that signals "don't ask again".
         var localNetworkRationaleBefore by remember { mutableStateOf(false) }
         val localNetworkPermissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission()
@@ -269,8 +266,9 @@ fun SettingsRoute(
                 )
             )
         }
-        // Shared local-network wiring reused by the CalDAV sign-in sheet and the
-        // ICS add-subscription dialog: one launcher, one on-open state seed.
+        // Local-network wiring for the ICS add-subscription dialog (Settings root and the
+        // Subscriptions screen). The CalDAV sign-in sheet below uses the same launcher but seeds
+        // its state in its own LaunchedEffect.
         val localNetworkPermissionState by viewModel.localNetworkPermissionState
             .collectAsStateWithLifecycle()
         val onRequestLocalNetwork = {
@@ -281,20 +279,20 @@ fun SettingsRoute(
             viewModel.updateLocalNetworkPermissionState(resolveLanPermissionState())
         }
 
-        // Calendar permission launcher (for Device Calendars - READ + WRITE)
-        // Requests both permissions upfront so users can create/edit device calendar events
+        // Calendar permission launcher for device calendars. Requests READ and WRITE up front so
+        // users can also create and edit device calendar events.
         val calendarPermissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
             viewModel.refreshCalendarPermission()
-            // Enable if at least READ was granted (WRITE is optional but preferred)
+            // Enable if at least READ was granted; WRITE is optional
             val readGranted = permissions[android.Manifest.permission.READ_CALENDAR] == true
             if (readGranted) {
                 viewModel.onToggleDeviceCalendars(true)
             }
         }
 
-        // Snackbar state (defined early for use in permission launchers)
+        // Snackbar state, declared before the write-permission launcher that uses it
         val coroutineScope = rememberCoroutineScope()
         val snackbarHostState = remember { SnackbarHostState() }
 
@@ -302,13 +300,13 @@ fun SettingsRoute(
         val calendarPermissionDeniedMessage =
             stringResource(R.string.error_device_calendar_permission_denied)
 
-        // Calendar permission launcher (for Device Calendars - WRITE)
+        // WRITE_CALENDAR permission launcher for device calendars
         val writeCalendarPermissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission()
         ) { isGranted ->
             viewModel.refreshCalendarPermission()
             if (!isGranted) {
-                // Permission denied - show instructions to toggle Calendar permission in Settings
+                // Denied: tell the user to toggle the Calendar permission in system Settings
                 coroutineScope.launch {
                     snackbarHostState.showSnackbar(
                         message = calendarPermissionDeniedMessage
@@ -320,12 +318,12 @@ fun SettingsRoute(
         // Debug log sheet state
         var showDebugLogSheet by remember { mutableStateOf(false) }
 
-        // Navigation state for detail screens (rememberSaveable for config change survival)
+        // Detail-screen navigation state; rememberSaveable keeps it across config changes
         var showAccountsScreen by rememberSaveable { mutableStateOf(false) }
         var showSubscriptionsScreen by rememberSaveable { mutableStateOf(false) }
         var showBirthdaysAnniversariesScreen by rememberSaveable { mutableStateOf(false) }
-        // Seeded from the launch intent so a hub-initiated open lands on Tags
-        // immediately; rememberSaveable then preserves the choice across rotation.
+        // Seeded from the launch intent so a hub-initiated open lands on Tags at once;
+        // rememberSaveable keeps the choice across rotation.
         var showTagsScreen by rememberSaveable { mutableStateOf(openTagsInitially) }
         var showDeviceCalendarsScreen by rememberSaveable { mutableStateOf(false) }
 
@@ -333,9 +331,8 @@ fun SettingsRoute(
         var showIcsImportSheet by remember { mutableStateOf(false) }
         var icsImportEvents by remember { mutableStateOf<List<Event>>(emptyList()) }
 
-        // Subscription snackbar strings (issue #133). Hoisted so both
-        // bind sites resolve them the same way and the ViewModel stays
-        // Context-free.
+        // Subscription snackbar strings (issue #133), hoisted so the root and Subscriptions
+        // screens pass the same strings and the ViewModel stays Context-free.
         val subscriptionRemovedMessage = stringResource(R.string.snackbar_subscription_removed)
         val subscriptionUndoLabel = stringResource(R.string.snackbar_action_undo)
         val subscriptionAlreadyExistsMessage = stringResource(R.string.snackbar_subscription_already_exists)
@@ -351,13 +348,13 @@ fun SettingsRoute(
         val backupWriteFailedMessage = stringResource(R.string.backup_error_write_failed)
         val backupReadFailedMessage = stringResource(R.string.backup_error_read_failed)
 
-        // Account connected success sheet state. Skip the partial-expansion
-        // anchor: this sheet's content is short and non-scrolling, so a partial
-        // detent leaves no stable resting height and the sheet jitters on drag.
+        // Account connected sheet state. Skips the partial-expansion anchor: the content is
+        // short and doesn't scroll, so a partial detent has no stable resting height and the
+        // sheet jitters on drag.
         val accountConnectedSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-        // Snackbar action (when present) belongs to the subscription
-        // delete-with-undo flow: ActionPerformed → undo, Dismissed → commit.
+        // The only pending snackbar with an action is the subscription delete undo: ActionPerformed
+        // undoes, Dismissed commits. Settling is a no-op when no deletion is pending.
         LaunchedEffect(uiState.pendingSnackbarMessage, uiState.pendingSnackbarActionLabel) {
             uiState.pendingSnackbarMessage?.let { message ->
                 val action = uiState.pendingSnackbarAction
@@ -374,7 +371,7 @@ fun SettingsRoute(
             }
         }
 
-        // Auto-finish activity after initial iCloud setup (navigate back to HomeScreen)
+        // Finish on request: after initial iCloud setup, or on Done in the connected sheet
         LaunchedEffect(uiState.pendingFinishActivity) {
             if (uiState.pendingFinishActivity) {
                 Log.d(TAG, "Auto-navigating back to HomeScreen after iCloud setup")
@@ -382,8 +379,8 @@ fun SettingsRoute(
             }
         }
 
-        // ICS import snackbar strings, resolved at composable scope for the
-        // launcher/callback coroutines below.
+        // ICS import snackbar strings, resolved at composable scope for the launcher and
+        // callback coroutines below.
         val icsImportNoEventsMessage = stringResource(R.string.error_import_no_events)
         val icsImportInvalidMessage = stringResource(R.string.error_import_invalid_format)
         val icsImportReadFailedMessage = stringResource(R.string.error_import_file_not_found)
@@ -450,9 +447,9 @@ fun SettingsRoute(
 
         val backupRestoreState by viewModel.backupRestoreState.collectAsStateWithLifecycle()
 
-        // Backing out of the Tags screen finishes the activity when it was the
-        // launch destination (hub-initiated), so we don't reveal the Settings root
-        // the user never navigated to. Otherwise it just closes the detail screen.
+        // Backing out of Tags finishes the activity when Tags was the launch destination
+        // (opened from the hub), so the Settings root the user never opened stays hidden.
+        // Otherwise it closes the detail screen.
         val closeTags = {
             if (openTagsInitially) onFinish() else showTagsScreen = false
         }
@@ -474,9 +471,8 @@ fun SettingsRoute(
             showDeviceCalendarsScreen = false
         }
 
-        // State-based navigation between settings and detail screens, animated as a
-        // directional slide: drilling into a detail slides it in from the trailing
-        // edge, backing out to the root reverses it.
+        // State-based navigation between the root and detail screens, animated as a directional
+        // slide: a detail slides in from the trailing edge, and backing out reverses it.
         val settingsDestination = SettingsDestination.from(
             accounts = showAccountsScreen,
             birthdaysAnniversaries = showBirthdaysAnniversariesScreen,
@@ -489,10 +485,9 @@ fun SettingsRoute(
             AnimatedContent(
                 targetState = settingsDestination,
                 transitionSpec = {
-                    // Start/End (not Left/Right) so the drill-in direction follows
-                    // layout direction and reads correctly in RTL locales. All panes
-                    // are fillMaxSize, so a null SizeTransform avoids the default
-                    // clip/size animation and gives a clean cross-slide.
+                    // Start/End, not Left/Right, so the direction follows layout direction in
+                    // RTL locales. All panes are fillMaxSize, so a null SizeTransform skips the
+                    // default clip and size animation.
                     val towards = if (initialState.isForwardTo(targetState)) {
                         AnimatedContentTransitionScope.SlideDirection.Start
                     } else {
@@ -584,8 +579,8 @@ fun SettingsRoute(
                         val tagsViewModel: TagsViewModel = hiltViewModel()
                         val tags by tagsViewModel.tags.collectAsStateWithLifecycle()
                         val tagDeleteUndoLabel = stringResource(R.string.tags_delete_undo)
-                        // Resources (not LocalContext) so the deleted-message format
-                        // reflects a locale change; the tag name is only known at tap.
+                        // Resources, not LocalContext, so the deleted-message format follows a
+                        // locale change; the tag name is only known at tap.
                         val resources = LocalResources.current
                         TagsScreen(
                             tags = tags,
@@ -593,9 +588,8 @@ fun SettingsRoute(
                             onSetColor = { name, color -> tagsViewModel.onSetColor(name, color) },
                             onRename = tagsViewModel::onRename,
                             onDelete = { name ->
-                                // Optimistic delete with an undo window: the row
-                                // disappears immediately (live Room flow) and the
-                                // snackbar restores it verbatim if the user undoes.
+                                // Deletes at once with an undo window: the row disappears through
+                                // the live Room flow, and Undo on the snackbar restores it.
                                 tagsViewModel.onDelete(name)
                                 val deletedMessage =
                                     resources.getString(R.string.tags_deleted, name)
@@ -743,7 +737,7 @@ fun SettingsRoute(
                             enabledDeviceCalendarIds = enabledDeviceCalendarIds,
                             onToggleDeviceCalendars = { enabled ->
                                 if (enabled && !hasReadCalendarPermission) {
-                                    // Request both READ and WRITE permissions upfront
+                                    // Request READ and WRITE up front
                                     calendarPermissionLauncher.launch(arrayOf(
                                         android.Manifest.permission.READ_CALENDAR,
                                         android.Manifest.permission.WRITE_CALENDAR
@@ -797,7 +791,6 @@ fun SettingsRoute(
                 }
             }
 
-            // Snackbar host for displaying messages
             SnackbarHost(
                 hostState = snackbarHostState,
                 modifier = Modifier
@@ -869,8 +862,8 @@ fun SettingsRoute(
 
             // CalDAV Sign-In Sheet (at top level so it shows from any screen)
             if (uiState.showCalDavSignInSheet) {
-                // Resolve live permission state when the sheet opens and
-                // reset the per-session dismissal.
+                // Resolve the live permission state when the sheet opens and reset the
+                // per-session dismissal.
                 LaunchedEffect(Unit) {
                     localNetworkBannerDismissed = false
                     viewModel.updateLocalNetworkPermissionState(resolveLanPermissionState())
@@ -878,9 +871,8 @@ fun SettingsRoute(
                 val lanPermissionState by viewModel.localNetworkPermissionState.collectAsStateWithLifecycle()
                 val lanHintActive by viewModel.localNetworkHintActive.collectAsStateWithLifecycle()
                 val serverUrl = (uiState.calDavState as? CalDavConnectionState.NotConnected)?.serverUrl.orEmpty()
-                // Show the banner proactively for a recognizably-local URL, OR
-                // reactively after a discovery failure that looks like a blocked
-                // LAN socket (covers bare hostnames isLanHost can't classify).
+                // Show the banner for a recognizably local URL, or after a discovery failure
+                // that looks like a blocked LAN socket (bare hostnames isLanHost can't classify).
                 val showLanBanner = !localNetworkBannerDismissed &&
                     shouldShowLanBanner(isLanHost(serverUrl) || lanHintActive, lanPermissionState)
 
@@ -919,7 +911,7 @@ fun SettingsRoute(
                 BackupRestoreUiState.Idle -> Unit
             }
 
-            // Account Connected Success Sheet (shown after iCloud or CalDAV connection)
+            // Account connected sheet, shown after an iCloud or CalDAV connection
             if (uiState.showAccountConnectedSheet) {
                 AccountConnectedSheet(
                     sheetState = accountConnectedSheetState,

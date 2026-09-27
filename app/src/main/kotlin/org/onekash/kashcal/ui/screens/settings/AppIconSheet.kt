@@ -47,11 +47,11 @@ import org.onekash.kashcal.ui.appicon.AppIconPreset
 private val SupporterHeartRed = Color(0xFFD6304A)
 
 /**
- * Bottom sheet for picking the launcher icon.
+ * Shows the launcher icon picker; picking a row calls [onPresetSelect] and then [onDismiss].
  *
- * Layout: the icon options as one uninterrupted list, then a divider, a "Support KashCal" footer
- * link (the honor-system nudge tied to the supporter icons), and an inline note about the
- * switch behavior. No blocking dialog — the note lives in-context per the app's UX philosophy.
+ * Layout: the icon options as one uninterrupted list, a divider, a "Support KashCal" footer link
+ * (the honor-system nudge tied to the supporter icons), and an inline note on what switching
+ * does. The note stays in the sheet instead of a blocking dialog.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,7 +100,7 @@ fun AppIconSheet(
                 modifier = Modifier.padding(top = 8.dp),
             )
 
-            // Footer: donate nudge for the supporter icons.
+            // Donate nudge for the supporter icons.
             val supportCta = stringResource(R.string.app_icon_support_cta)
             val opensInBrowser = stringResource(R.string.cd_opens_in_browser)
             Row(
@@ -118,8 +118,8 @@ fun AppIconSheet(
                 Icon(
                     imageVector = Icons.Default.Favorite,
                     contentDescription = null,
-                    // Red heart (matching the supporter launcher icon) reads as a warm donate cue,
-                    // not a generic UI accent.
+                    // A red heart matching the supporter launcher icon reads as a donate cue,
+                    // not a UI accent.
                     tint = SupporterHeartRed,
                     modifier = Modifier.size(20.dp),
                 )
@@ -138,7 +138,7 @@ fun AppIconSheet(
                 )
             }
 
-            // Inline note: what to expect when switching (no blocking dialog).
+            // What to expect when switching.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -186,8 +186,8 @@ private fun AppIconOptionRow(
             modifier = Modifier.weight(1f),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            // Composite the adaptive icon's foreground over its background color. painterResource
-            // can't inflate the adaptive-icon XML itself, so we render the layers (as AppLockVeil does).
+            // Composites the adaptive icon's foreground over its background color, as
+            // AppLockVeil does: painterResource can't inflate the adaptive-icon XML itself.
             Box(
                 modifier = Modifier
                     .size(44.dp)

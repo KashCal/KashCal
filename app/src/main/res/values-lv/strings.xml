@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Šajā serverī kalendāri nav atrasti.</string>
     <string name="caldav_error_unexpected">Negaidīta kļūda. Mēģiniet vēlreiz.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nJa šis ir serveris tavā lokālajā tīklā, atļauj piekļuvi lokālajam tīklam, lai izveidotu savienojumu.</string>
+    <string name="caldav_error_connection_refused_insecure">Serveris pāradresēja savienojumu uz vietu, kur KashCal neseko (uz nešifrētu adresi vai pāradresāciju cilpu), tāpēc KashCal apstājās, pirms nosūtīja tavu paroli. Pārbaudi servera adresi.</string>
     <string name="local_network_banner_title">Nepieciešama piekļuve lokālajam tīklam</string>
     <string name="local_network_banner_body">Šķiet, ka šis serveris ir tavā lokālajā tīklā. Atļauj piekļuvi lokālajam tīklam, lai KashCal varētu ar to izveidot savienojumu.</string>
     <string name="local_network_banner_allow">Atļaut piekļuvi</string>
@@ -856,6 +857,8 @@
     <string name="dialog_edit_recurring_title">Saglabāt izmaiņas</string>
     <string name="dialog_delete_recurring_title">Dzēst</string>
     <string name="dialog_move_recurring_title">Pārvietot</string>
+    <string name="snackbar_event_rescheduled">Notikums pārcelts</string>
+    <string name="snackbar_reschedule_failed">Neizdevās pārcelt notikumu</string>
     <string name="recurring_this_event">Šo notikumu</string>
     <string name="recurring_all_events">Visus notikumus</string>
 

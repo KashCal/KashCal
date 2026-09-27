@@ -12,14 +12,12 @@ sealed interface AttendeeInput {
 }
 
 /**
- * Parses what the user types in the attendee field into a name + email.
+ * Parses what the user types in the attendee field into a name and email.
  *
- * Lenient per RFC 5322 §3.4.1 (the strict ABNF is impractical client-side):
- * accepts a bare `local@domain.tld`, a `Display Name <email>` form (quotes
- * around the name are stripped), and a leading `mailto:`. Validity is decided
- * by the shared [AddressNormalizer.isEmailShaped] predicate — the single
- * source of truth for "is this a mailto-emittable address" — so the parser
- * never introduces its own competing `@`-check.
+ * Lenient per RFC 5322 §3.4.1 (the strict ABNF is impractical client-side): accepts a bare
+ * `local@domain.tld`, a `Display Name <email>` form (quotes around the name are stripped), and a
+ * leading `mailto:`. Validity is decided by [AddressNormalizer.isEmailShaped], the source of truth
+ * for a mailto-emittable address, so the parser never adds its own `@` check.
  */
 object AttendeeInputParser {
 
@@ -37,11 +35,9 @@ object AttendeeInputParser {
         }
 
         val email = AddressNormalizer.stripMailto(addressPart).trim()
-        // Defense-in-depth against address-list / angle-bracket punctuation
-        // (< > , ;) — the picker adds one clean address at a time, never a
-        // "a@b.com>" or "a@b.com,c@d.com" list. The strict shape below already
-        // rejects these chars; this guard keeps that guarantee explicit should
-        // the shared mailbox pattern ever loosen.
+        // The picker adds one address at a time, never "a@b.com>" or "a@b.com,c@d.com". The
+        // shape check below already rejects < > , ; and this guard still rejects them if the
+        // shared mailbox pattern ever loosens.
         if (email.any { it in "<>,;" }) return AttendeeInput.Invalid
         if (!AddressNormalizer.isEmailShaped(email)) return AttendeeInput.Invalid
 

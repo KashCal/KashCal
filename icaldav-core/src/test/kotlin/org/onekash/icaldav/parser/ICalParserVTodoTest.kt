@@ -15,7 +15,10 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Exhaustive tests for VTODO parsing per RFC 5545 Section 3.6.2.
+ * Tests VTODO parsing (RFC 5545 §3.6.2): text, STATUS, date-times, PRIORITY,
+ * PERCENT-COMPLETE and SEQUENCE, CATEGORIES, ORGANIZER and ATTENDEE, VALARM, recurrence, more
+ * than one to-do per calendar, a missing UID or empty calendar, [ICalParser.parse] filling
+ * ICalCalendar.todos, and [TodoStatus].
  */
 @DisplayName("ICalParser VTODO Tests")
 class ICalParserVTodoTest {
@@ -595,7 +598,7 @@ class ICalParserVTodoTest {
 
             assertTrue(todo.isModifiedInstance())
             assertNotNull(todo.recurrenceId)
-            assertNull(todo.rrule)  // Modified instances don't have RRULE
+            assertNull(todo.rrule)  // An exception's RRULE is never read
         }
 
         @Test

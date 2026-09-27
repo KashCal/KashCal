@@ -13,16 +13,13 @@ import java.time.Duration
 import java.time.Instant
 
 /**
- * Validation tests for iCalendar model constraints.
+ * Tests how the model handles RFC 5545 constraints.
  *
- * Tests RFC 5545 constraints:
- * - Required properties
- * - Mutually exclusive properties
- * - Value ranges
- * - Format validation
- *
- * These tests verify the library handles constraint violations gracefully
- * and enforces RFC compliance where appropriate.
+ * RRule.parse throws on a missing or unknown FREQ and WeekdayNum.parse on an invalid day; the
+ * parser keeps an out-of-spec INTERVAL or COUNT and a COUNT with UNTIL as given, and an
+ * unknown WKST reads as MONDAY. The BY-list range tests parse only in-range values. Also
+ * covered: the ICalDateTime formats, the ICalEvent helpers, enum parsing and defaults,
+ * attendee and organizer properties, and RRULE round trips.
  */
 class ValidationTest {
 
@@ -53,22 +50,22 @@ class ValidationTest {
 
         @Test
         fun `INTERVAL of 0 is accepted but may produce no occurrences`() {
-            // RFC 5545 doesn't explicitly forbid INTERVAL=0
-            // Parser accepts it; behavior during expansion may vary
+            // RFC 5545 §3.3.10 makes INTERVAL a positive integer, but the parser keeps 0;
+            // expansion isn't tested here.
             val rule = RRule.parse("FREQ=DAILY;INTERVAL=0")
             assertEquals(0, rule.interval)
         }
 
         @Test
         fun `negative INTERVAL is parsed as-is`() {
-            // Parser accepts negative values; validation at expansion time
+            // The parser keeps a negative value; expansion isn't tested here.
             val rule = RRule.parse("FREQ=DAILY;INTERVAL=-1")
             assertEquals(-1, rule.interval)
         }
 
         @Test
         fun `COUNT and UNTIL can both be specified (RFC violation but parseable)`() {
-            // RFC 5545 says they're mutually exclusive, but parser may accept both
+            // RFC 5545 §3.3.10: COUNT and UNTIL MUST NOT share a rule; the parser keeps both.
             val rule = RRule.parse("FREQ=DAILY;COUNT=10;UNTIL=20231231T235959Z")
             assertEquals(10, rule.count)
             assertNotNull(rule.until)
@@ -81,18 +78,18 @@ class ValidationTest {
 
             val negativeRule = RRule.parse("FREQ=DAILY;COUNT=-5")
             assertEquals(-5, negativeRule.count)
-            // Behavior with invalid counts is implementation-defined
+            // The parser keeps a zero or negative COUNT; nothing here enforces the positive rule.
         }
 
         @Test
         fun `BYDAY ordinals must be in range -5 to 5`() {
-            // Valid ordinals for BYDAY in MONTHLY: -5 to -1 and 1 to 5
-            // (e.g., "5th Tuesday" is the maximum for any month)
+            // A month has at most five of any weekday, so a MONTHLY BYDAY ordinal is -5 to -1
+            // or 1 to 5. The parser itself accepts up to 53.
             val validRule = RRule.parse("FREQ=MONTHLY;BYDAY=2TU,-1FR")
             assertEquals(2, validRule.byDay?.firstOrNull()?.ordinal)
             assertEquals(-1, validRule.byDay?.lastOrNull()?.ordinal)
 
-            // Maximum valid ordinals for monthly recurrence
+            // The largest ordinals a month can use.
             val extremeRule = RRule.parse("FREQ=MONTHLY;BYDAY=5MO,-5SU")
             assertEquals(5, extremeRule.byDay?.firstOrNull()?.ordinal)
             assertEquals(-5, extremeRule.byDay?.lastOrNull()?.ordinal)
@@ -270,7 +267,7 @@ class ValidationTest {
             val now = Instant.now()
             val dt = ICalDateTime.fromTimestamp(now.toEpochMilli(), null, false)
 
-            // Should be within a second of original
+            // fromTimestamp keeps the value; the assertion allows up to a second.
             val diff = kotlin.math.abs(dt.timestamp - now.toEpochMilli())
             assertTrue(diff < 1000, "Timestamp conversion should preserve milliseconds")
         }
@@ -539,7 +536,7 @@ class ValidationTest {
 
         @Test
         fun `enum toICalString round-trips correctly`() {
-            // Test that enum values survive round-trip serialization
+            // Every EventStatus and Transparency value survives a round trip.
             EventStatus.entries.forEach { status ->
                 val serialized = status.toICalString()
                 val parsed = EventStatus.fromString(serialized)

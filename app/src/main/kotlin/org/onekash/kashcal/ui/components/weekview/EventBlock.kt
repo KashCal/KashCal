@@ -66,7 +66,7 @@ fun EventBlock(
         }
     }
 
-    // Determine what content fits based on height
+    // What fits depends on the block's height; thresholds at the end of the file.
     val showTime = height >= HEIGHT_THRESHOLD_TIME
     val showLocation = height >= HEIGHT_THRESHOLD_LOCATION && !displayEvent.location.isNullOrBlank()
     val showTags = height >= HEIGHT_THRESHOLD_LOCATION && displayEvent.categories.isNotEmpty()
@@ -100,9 +100,9 @@ fun EventBlock(
         modifier = modifier
             .height(height)
             .alpha(declinedCardAlpha(isPast = false, isDeclined = displayEvent.isDeclinedByMe, isCancelled = displayEvent.isCancelled))
-            // The tap is wired via pointerInput (below) which, unlike clickable,
-            // sets no semantics and no merge boundary — so mergeDescendants is
-            // needed for the state label to attach to the block's spoken title.
+            // The tap is a pointerInput (below), which unlike clickable sets no semantics
+            // and no merge boundary, so mergeDescendants is needed for the state label to
+            // attach to the block's spoken title.
             .then(
                 if (stateLabel != null) {
                     Modifier.semantics(mergeDescendants = true) { stateDescription = stateLabel }
@@ -123,7 +123,7 @@ fun EventBlock(
                 .fillMaxSize()
                 .padding(horizontal = 6.dp, vertical = 4.dp)
         ) {
-            // Title (always shown)
+            // Title, always shown.
             Text(
                 text = formattedTitle,
                 style = MaterialTheme.typography.bodySmall,
@@ -134,9 +134,8 @@ fun EventBlock(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Time (if height >= 36dp). All-day events get their label
-            // even though they normally render in the all-day strip — this
-            // defends against any future path that places one in the grid.
+            // Time, at 36dp and taller. All-day events render in the all-day strip, but
+            // one placed in the grid still gets the "All day" label.
             if (showTime) {
                 Text(
                     text = eventTimeLabel(displayEvent, timePattern),
@@ -148,7 +147,7 @@ fun EventBlock(
                 )
             }
 
-            // Location (if height >= 56dp)
+            // Location, at 56dp and taller.
             if (showLocation) {
                 Text(
                     text = displayEvent.location!!,
@@ -159,7 +158,7 @@ fun EventBlock(
                 )
             }
 
-            // Tags (same height gate as location; hidden when the block is short)
+            // Tags, same height gate as the location.
             if (showTags) {
                 org.onekash.kashcal.ui.components.category.CategoryPillRow(
                     categories = displayEvent.categories,
@@ -171,11 +170,13 @@ fun EventBlock(
 }
 
 /**
- * Compact event block for overflow display ("+N more" list).
- * Shows only title and time in a single line.
- * Solid fill with contrasting text.
+ * Shows an event as one line, title and time, in the [OverlapListSheet] list.
  *
- * @param timePattern DateTimeFormatter pattern for time range (e.g., "h:mma" for 12h, "HH:mm" for 24h)
+ * A busy event has a solid calendar-color fill with contrasting text; a free one has a light
+ * tint, a calendar-color border and on-surface text.
+ *
+ * @param timePattern DateTimeFormatter pattern for the time range, for example "h:mma" for 12h
+ *   or "HH:mm" for 24h
  */
 @Composable
 fun CompactEventBlock(
@@ -227,9 +228,7 @@ fun CompactEventBlock(
     }
 }
 
-/**
- * Badge showing overflow count ("+N more").
- */
+/** Shows the "+N more" count for a time-grid overlap group. */
 @Composable
 fun OverflowBadge(
     count: Int,
@@ -252,10 +251,9 @@ fun OverflowBadge(
 }
 
 /**
- * Resolves the time-line label for an event row: the localized "All day"
- * string for all-day events, otherwise the formatted time range. Single
- * source of truth so any future change to either branch reaches every
- * surface that renders an event row.
+ * Returns the time line of an event row: the localized "All day" string for all-day events,
+ * otherwise the formatted time range. Shared by [EventBlock] and [CompactEventBlock] so both
+ * change together.
  */
 @Composable
 private fun eventTimeLabel(displayEvent: DisplayEvent, timePattern: String): String =
@@ -265,7 +263,7 @@ private fun eventTimeLabel(displayEvent: DisplayEvent, timePattern: String): Str
         WeekViewUtils.formatTimeRange(displayEvent.startTs, displayEvent.endTs, timePattern)
     }
 
-// Height thresholds for content visibility
+// Minimum block heights for each piece of content.
 private val HEIGHT_THRESHOLD_TIME = 36.dp
 private val HEIGHT_THRESHOLD_LOCATION = 56.dp
 private val HEIGHT_THRESHOLD_TWO_LINE_TITLE = 40.dp

@@ -11,12 +11,11 @@ import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.domain.reader.PendingInvitation
 
 /**
- * Pins the count-derivation policy used by HomeViewModel.pendingInvitationsCount.
+ * Pins the count chain behind [HomeViewModel.pendingInvitationsCount], `map { it.size }` then
+ * `distinctUntilChanged()`, run inline over a [MutableStateFlow] without building the view model.
  *
- * The single-source-of-truth Flow is built as
- *     getPendingInvitations().map { it.size }.distinctUntilChanged()
- * so the AppBar badge and the Invites menu item never disagree, even
- * when sync churn re-emits the same list twice in a row.
+ * The top-bar avatar badge and the account hub's Invites row both read that one count, so they
+ * never disagree, and a sync re-emitting a same-size list doesn't re-emit the count.
  */
 class PendingInvitationsCountTest {
 
@@ -51,7 +50,7 @@ class PendingInvitationsCountTest {
         val source = MutableStateFlow(listOf(stub(1L), stub(2L), stub(3L)))
         source.map { it.size }.distinctUntilChanged().test {
             assertEquals(3, awaitItem())
-            // Same size, different identity — should NOT re-emit
+            // Same size, different events: no re-emit.
             source.value = listOf(stub(4L), stub(5L), stub(6L))
             source.value = listOf(stub(7L), stub(8L), stub(9L))
             expectNoEvents()

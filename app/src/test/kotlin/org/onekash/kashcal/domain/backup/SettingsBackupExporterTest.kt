@@ -79,12 +79,12 @@ class SettingsBackupExporterTest {
     @Test
     fun `exports only allow-listed preferences`() = runBlocking {
         stubPrefs {
-            // Should be included
+            // Allow-listed
             set(PreferencesKeys.THEME, "dark")
             set(PreferencesKeys.FIRST_DAY_OF_WEEK, 2)
             set(PreferencesKeys.AUTO_SYNC_ENABLED, true)
             set(PreferencesKeys.DEVICE_CALENDARS_ENABLED, true)
-            // Should be excluded (runtime state + device ID set)
+            // Excluded: runtime state, a device ID set and an onboarding flag
             set(PreferencesKeys.LAST_SYNC_TIME, 123456789L)
             set(PreferencesKeys.ENABLED_DEVICE_CALENDAR_IDS, setOf("42", "43"))
             set(PreferencesKeys.ONBOARDING_COMPLETED, true)
@@ -126,7 +126,7 @@ class SettingsBackupExporterTest {
 
         val json = newExporter().exportSettings()
 
-        // Runtime/diagnostic fields must not leak
+        // Runtime and diagnostic fields stay out of the file.
         assertFalse("lastSync must not appear", json.contains("lastSync"))
         assertFalse("etag must not appear", json.contains("etag"))
         assertFalse("lastModified must not appear", json.contains("lastModified"))
@@ -162,8 +162,8 @@ class SettingsBackupExporterTest {
     fun `exports only tags with a custom color`() = runBlocking {
         stubPrefs { }
         stubNoSubs()
-        // getColoredOnce is the source of truth — it already filters out null-color
-        // tags in SQL, so the exporter carries only the rows it returns.
+        // getColoredOnce drops null-color tags in SQL; the exporter carries only the rows it
+        // returns.
         stubColoredTags(
             Category(name = "Work", color = 0xFF4457C9.toInt(), lastUsedAt = 5000L),
             Category(name = "Personal", color = 0xFF2E7D32.toInt(), lastUsedAt = 3000L),

@@ -14,12 +14,12 @@ import org.onekash.kashcal.sync.strategy.PullResult
 import org.onekash.kashcal.sync.strategy.SinglePushResult
 
 /**
- * Edge case tests for error classification and mapping.
+ * Edge cases for error classification and mapping in [ErrorMapper] and [SyncErrorBridge].
  *
- * Tests unusual HTTP codes, message-based classification variations,
- * retryability boundaries, and sync error bridge edge cases.
+ * Covers unusual HTTP codes, message-based classification, retryability by error kind, silent
+ * and conflict presentations, and the bridge's sync, pull and single-push conversions.
  *
- * Complements ErrorMapperTest (40 tests) and SyncErrorBridgeTest (24 tests).
+ * Complements `ErrorMapperTest` and `SyncErrorBridgeTest`.
  */
 class ErrorClassificationEdgeCaseTest {
 
@@ -33,7 +33,7 @@ class ErrorClassificationEdgeCaseTest {
 
     @Test
     fun `fromHttpCode 200 maps to Unknown`() {
-        // Success codes shouldn't be passed as errors, but handle gracefully
+        // A success code isn't an error; one passed in still maps to Unknown
         val error = ErrorMapper.fromHttpCode(200, "OK")
         assertTrue("Success code as error should map to Unknown", error is CalendarError.Unknown)
     }
@@ -205,7 +205,7 @@ class ErrorClassificationEdgeCaseTest {
         )
     }
 
-    // ========== SyncErrorBridge.fromErrorCode Internal Error (-1) ==========
+    // ========== SyncErrorBridge.fromSyncError Internal Error (-1) ==========
 
     @Test
     fun `fromErrorCode -1 with timeout maps to Timeout`() {

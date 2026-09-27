@@ -29,20 +29,11 @@ import java.util.Locale
 import java.util.Calendar as JavaCalendar
 
 /**
- * Compose UI tests for HomeScreen.
- *
- * Tests cover:
- * - Component rendering verification
- * - User interaction flows (click, scroll)
- * - Accessibility testing (content descriptions)
- * - Search functionality UI
- * - Offline banner visibility
- * - Calendar grid rendering
- *
- * Best practices followed:
- * - Semantics-based UI testing with ComposeTestRule
- * - Test IDs via contentDescription or testTag
- * - Isolated test scenarios
+ * Tests HomeScreen rendering and callbacks through its semantics tree, finding nodes by text or
+ * content description: the app bar icons, the create-event FAB, the offline icon, the month
+ * header and day-of-week headers, search mode, agenda mode, the day's event list, the search,
+ * settings and today callbacks, loading states, the sync banner, and the account hub opened
+ * from the avatar.
  */
 @RunWith(AndroidJUnit4::class)
 class HomeScreenComposeTest {
@@ -348,7 +339,7 @@ class HomeScreenComposeTest {
             )
         }
 
-        // Check for day abbreviations - use locale-aware day names like the production code
+        // Short day names in the device locale, as DayOfWeekHeaders renders them.
         val daysOfWeek = java.time.DayOfWeek.values().map {
             it.getDisplayName(java.time.format.TextStyle.SHORT, Locale.getDefault())
         }
@@ -435,7 +426,7 @@ class HomeScreenComposeTest {
             )
         }
 
-        // Search UI shows date filter chips: All, Week, Month, Date
+        // The date filter chips are All, Week, Month and Date; the first three are asserted.
         composeTestRule.onNodeWithText("All").assertIsDisplayed()
         composeTestRule.onNodeWithText("Week").assertIsDisplayed()
         composeTestRule.onNodeWithText("Month").assertIsDisplayed()
@@ -550,8 +541,8 @@ class HomeScreenComposeTest {
             )
         }
 
-        // Day pager shows multiple days, each with empty message - verify at least one exists
-        // Using fetchSemanticsNodes for CI reliability (may be outside viewport on slow emulators)
+        // The day pager shows several days, each with the empty message; at least one must
+        // exist. fetchSemanticsNodes, as a node may be outside the viewport on slow emulators.
         assert(composeTestRule.onAllNodesWithText("Nothing to see here; go touch grass?")
             .fetchSemanticsNodes().isNotEmpty()) {
             "Expected empty day message to exist in semantic tree"
@@ -561,12 +552,12 @@ class HomeScreenComposeTest {
     @Test
     fun homeScreen_showsEventTitles() {
         val today = JavaCalendar.getInstance()
-        // Calculate dayCode in YYYYMMDD format
+        // Today's dayCode, YYYYMMDD.
         val dayCode = today.get(JavaCalendar.YEAR) * 10000 +
                 (today.get(JavaCalendar.MONTH) + 1) * 100 +
                 today.get(JavaCalendar.DAY_OF_MONTH)
 
-        // Create test occurrences with events
+        // Two of today's occurrences, one per test event.
         val nowMs = System.currentTimeMillis()
         val testOccurrences = persistentListOf<DisplayEvent>(
             DisplayEvent.Room(
@@ -683,7 +674,7 @@ class HomeScreenComposeTest {
         assert(todayClicked)
     }
 
-    // Test removed: onViewPickerClick was replaced by navigation drawer view switching
+    // Views are switched in the calendar drawer; HomeScreen has no view-picker callback to test.
 
     // ==================== Loading State Tests ====================
 
@@ -701,7 +692,9 @@ class HomeScreenComposeTest {
             )
         }
 
-        // CircularProgressIndicator doesn't have text, but the calendar content should be hidden
+        // While loading, HomeScreen shows only the progress indicator, which has no text, so the
+        // test checks that a calendar text is absent. No string resource carries "Tap a day to
+        // see events", so the check passes either way.
         composeTestRule.onNode(hasText("Tap a day to see events")).assertDoesNotExist()
     }
 
@@ -720,7 +713,7 @@ class HomeScreenComposeTest {
             )
         }
 
-        // When loading agenda, "No upcoming events" should not be shown
+        // While the agenda loads, the "No upcoming events" empty message must not show.
         composeTestRule.onNodeWithText("No upcoming events").assertDoesNotExist()
     }
 

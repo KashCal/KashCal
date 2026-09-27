@@ -4,20 +4,19 @@ import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.ui.shared.packSpansIntoLanes
 
 /**
- * Layout model for the week/day all-day strip. Multi-day events (whether genuine
- * all-day events or timed events long enough to span more than one visible day)
- * are laid out as single spanning bars across the day columns they cover, instead
- * of being duplicated as independent chips in every day column — mirroring the
- * spanning-bar approach used by the full month grid ([org.onekash.kashcal.ui.screens.monthfull.MonthFullSpanLayout]).
+ * Layout model for the week and day all-day strip. A multi-day event, all-day or a timed one the
+ * caller routes to the strip, is laid out as one bar across the day columns it covers, not as a
+ * chip in every column. The full month grid uses the same lane packing
+ * ([org.onekash.kashcal.ui.screens.monthfull.computeWeekSpans]).
  */
 
 data class AllDaySpan(
     val displayEvent: DisplayEvent,
     val startCol: Int,
     val endCol: Int,
-    /** True when the event actually started before the visible window (no left cap on the bar). */
+    /** True when the event starts before the visible window (no left cap on the bar). */
     val leftFlush: Boolean,
-    /** True when the event actually ends after the visible window (no right cap on the bar). */
+    /** True when the event ends after the visible window (no right cap on the bar). */
     val rightFlush: Boolean,
 )
 
@@ -33,11 +32,9 @@ sealed interface AllDaySlot {
 }
 
 /**
- * Events for one day column that didn't fit in the grid's rows — surfaced as a
- * "+N" badge overlaid on that column (see [AllDayStripRender.overflowByColumn]),
- * rather than as a slot that would itself consume a row. A column can be fully
- * hidden this way (e.g. every row taken by spanning bars), so the badge must
- * never depend on a free row existing.
+ * Events for one day column that didn't fit in the grid's rows, shown as a "+N" badge overlaid
+ * on that column ([AllDayStripRender.overflowByColumn]). Every row of a column can be taken by
+ * spanning bars, so the badge must never depend on a free row existing.
  */
 data class ColumnOverflow(val count: Int, val events: List<DisplayEvent>)
 
@@ -48,10 +45,9 @@ data class AllDayStripRender(
 )
 
 /**
- * Packs multi-day events (startDay != endDay) that overlap [visibleDayCodes] into
- * non-overlapping lanes, greedily, up to [maxLanes]. Events beyond capacity are
- * left unplaced (their [AllDaySpanLayout.placedEventKeys] omits them) and fall
- * back to per-day cell treatment in [computeAllDayStripRender].
+ * Packs multi-day events (startDay != endDay) that overlap [visibleDayCodes] into up to
+ * [maxLanes] lanes with [packSpansIntoLanes]. An event beyond capacity is left out of
+ * [AllDaySpanLayout.placedEventKeys] and [computeAllDayStripRender] shows it as a per-day cell.
  */
 internal fun computeAllDaySpans(
     visibleDayCodes: List<Int>,
@@ -84,14 +80,11 @@ internal fun computeAllDaySpans(
 }
 
 /**
- * Builds the full [rowIndex][col] render grid for the all-day strip: multi-day
- * spans occupy their lane's row across every column they cover, and each
- * column's remaining rows are filled with that day's single-day events (and any
- * multi-day events that didn't fit in a lane). Whatever doesn't fit — whether
- * because a column ran out of free rows, or every row in a column is taken by
- * spanning bars — is reported per column in [AllDayStripRender.overflowByColumn]
- * rather than claiming a row of its own, so a "+N" indicator is never lost even
- * when a column has zero free rows.
+ * Builds the `[rowIndex][col]` render grid for the all-day strip. Each placed span fills its
+ * lane's row across the columns it covers; each column's free rows take that day's other events,
+ * single-day ones and multi-day ones that didn't get a lane, by start time. The rest go to
+ * [AllDayStripRender.overflowByColumn] instead of a row, so the "+N" badge shows even when a
+ * column has no free row.
  */
 fun computeAllDayStripRender(
     visibleDayCodes: List<Int>,

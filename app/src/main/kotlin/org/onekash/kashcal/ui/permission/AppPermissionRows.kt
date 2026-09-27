@@ -6,10 +6,10 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.permission.LocalNetworkPermissionManager.Companion.LOCAL_NETWORK_PERMISSION_MIN_SDK
 
 /**
- * The runtime permissions the app-permissions sheet can surface, in the order
- * they appear in the sheet. Contacts and Calendars have been runtime
- * permissions on every supported OS level; Notifications and Local network are
- * only enforced from later levels (see [buildAppPermissionRows]).
+ * Lists the runtime permissions the app-permissions screen can show, in screen order.
+ *
+ * Contacts and Calendars are runtime permissions on every supported OS level; Notifications
+ * and Local network only from later levels ([buildAppPermissionRows]).
  */
 enum class AppPermissionKind {
     NOTIFICATIONS,
@@ -19,23 +19,20 @@ enum class AppPermissionKind {
 }
 
 /**
- * The trailing affordance for a row. A granted permission reads as [ALLOWED]
- * (quiet, tapping the row deep-links to system settings); anything not granted
- * reads as [ALLOW] (an accent action that fires the runtime request). There is
- * deliberately no permanently-denied trailing: the steady-state read can't tell
- * never-asked from permanently-denied, so the sheet always offers Allow and the
- * composable falls back to the settings deep-link only if the fired request
- * turns out to be a no-op.
+ * Names a row's trailing affordance.
+ *
+ * A granted permission shows [ALLOWED] (quiet; tapping the row opens system settings); anything
+ * else shows [ALLOW], an accent button that fires the runtime request. There is deliberately no
+ * permanently-denied value: a steady-state read can't tell never-asked from permanently denied,
+ * so the screen always offers Allow and opens settings only when the fired request comes back
+ * as [allowRequestNeedsSettingsFallback] describes.
  */
 enum class PermissionTrailing {
     ALLOWED,
     ALLOW,
 }
 
-/**
- * A single row in the app-permissions sheet: which permission, the label and
- * tooltip text to show, and the resolved trailing affordance.
- */
+/** Holds one row of the app-permissions screen: permission, label, tooltip and trailing. */
 data class AppPermissionRow(
     val kind: AppPermissionKind,
     @StringRes val nameRes: Int,
@@ -47,17 +44,16 @@ data class AppPermissionRow(
 private const val NOTIFICATIONS_PERMISSION_MIN_SDK = Build.VERSION_CODES.TIRAMISU
 
 /**
- * Build the ordered list of permission rows for the current OS level.
+ * Builds the permission rows for [sdkInt], in the order Notifications, Contacts, Calendars,
+ * Local network.
  *
- * Contacts and Calendars are always listed. Notifications is added from API 33
- * and Local network from API 37 — below those levels the OS grants the
- * capability implicitly, so a row would be a no-op. Order matches the sheet
- * design: Notifications, Contacts, Calendars, Local network.
+ * Contacts and Calendars are always listed. Notifications is added from API 33 and Local network
+ * from API 37; below those levels the OS grants the capability implicitly, so a row would do
+ * nothing.
  *
- * Each `*Granted` flag is a fresh `checkSelfPermission`-style reading taken when
- * the sheet opens (and re-read on resume); a granted reading yields the quiet
- * [PermissionTrailing.ALLOWED], anything else yields [PermissionTrailing.ALLOW]
- * so the sheet never rests on a dead end.
+ * Each `*Granted` flag is a fresh `checkSelfPermission` reading, taken when the screen opens, on
+ * resume and after each request. Granted gives [PermissionTrailing.ALLOWED], anything else
+ * [PermissionTrailing.ALLOW], so no row is a dead end.
  */
 fun buildAppPermissionRows(
     sdkInt: Int,
@@ -108,16 +104,13 @@ private fun trailingFor(granted: Boolean): PermissionTrailing =
     if (granted) PermissionTrailing.ALLOWED else PermissionTrailing.ALLOW
 
 /**
- * Whether, after firing the runtime request for a not-granted row, the sheet
- * should fall back to opening system settings instead of leaving a dead Allow
- * button.
+ * Returns whether, after a not-granted row's request returns, the screen opens system settings
+ * instead of leaving a dead Allow button.
  *
- * A request that was denied with no rationale afterwards is "don't ask again":
- * a further in-app request can't surface a dialog, so the only way to grant is
- * via system settings. A grant (or a denial that can still be re-asked) needs
- * no fallback. Keyed on the post-request rationale signal
- * ([androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale]
- * read after the result).
+ * A denial with no rationale afterwards
+ * ([androidx.core.app.ActivityCompat.shouldShowRequestPermissionRationale] read after the result)
+ * is "don't ask again": a further request can't show a dialog, so only system settings can
+ * grant. A grant, or a denial that can still be re-asked, needs no fallback.
  */
 fun allowRequestNeedsSettingsFallback(granted: Boolean, rationaleAfter: Boolean): Boolean =
     !granted && !rationaleAfter

@@ -28,18 +28,18 @@ import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.CalDavClientFactory
 import org.onekash.kashcal.sync.client.model.CalDavCalendar
 import org.onekash.kashcal.sync.client.model.CalDavResult
+import org.onekash.kashcal.sync.discovery.DiscoveryErrorReason
 import org.onekash.kashcal.sync.discovery.DiscoveryResult
 
 /**
- * Unit tests for CalDavAccountDiscoveryService.
- *
- * Tests verify:
+ * Tests [CalDavAccountDiscoveryService]:
  * - URL normalization
- * - Discovery flow (principal -> calendar home -> calendars)
- * - Account and calendar creation/update
- * - Credential saving
- * - Error handling (auth, network, SSL)
- * - Calendar refresh
+ * - Discovery flow (principal -> calendar home -> calendars), including several home sets
+ * - Account and calendar creation and update, and same-username accounts on two servers
+ * - Credential saving, and cleanup when the save fails
+ * - Error handling (auth, network, SSL, refused connections)
+ * - Calendar refresh, including confirming a calendar is gone before deleting it
+ * - Path probing, display names, color parsing
  * - Account removal
  */
 class CalDavAccountDiscoveryServiceTest {
@@ -59,11 +59,9 @@ class CalDavAccountDiscoveryServiceTest {
         every { Log.e(any(), any()) } returns 0
         every { Log.e(any(), any(), any()) } returns 0
 
-        // Mock android.graphics.Color.parseColor
         mockkStatic(Color::class)
         every { Color.parseColor(any()) } answers {
             val colorStr = firstArg<String>()
-            // Simple hex color parsing for tests
             parseHexColor(colorStr)
         }
 
@@ -72,7 +70,6 @@ class CalDavAccountDiscoveryServiceTest {
         calendarRepository = mockk(relaxed = true)
         mockClient = mockk(relaxed = true)
 
-        // Factory returns our mock client
         every { calDavClientFactory.createClient(any(), any()) } returns mockClient
 
         // Default: credential save succeeds (overridden in credential-failure tests)
@@ -86,7 +83,8 @@ class CalDavAccountDiscoveryServiceTest {
     }
 
     /**
-     * Simple hex color parser for tests (mimics android.graphics.Color.parseColor)
+     * Stands in for android.graphics.Color.parseColor: `#RRGGBB` gets full alpha, `#AARRGGBB`
+     * is taken as is, any other length gives 0.
      */
     private fun parseHexColor(colorStr: String): Int {
         val clean = if (colorStr.startsWith("#")) colorStr.substring(1) else colorStr
@@ -114,7 +112,6 @@ class CalDavAccountDiscoveryServiceTest {
             password = "pass"
         )
 
-        // Verify factory was called with normalized URL
         verify {
             calDavClientFactory.createClient(
                 match<Credentials> { it.serverUrl == "https://nextcloud.example.com" },
@@ -195,7 +192,6 @@ class CalDavAccountDiscoveryServiceTest {
         assertEquals("https://nextcloud.example.com/dav/calendars/user/", success.account.homeSetUrl)
         assertEquals(2, success.calendars.size)
 
-        // Verify credentials were saved
         coVerify { accountRepository.saveCredentials(1L, any()) }
     }
 
@@ -214,8 +210,8 @@ class CalDavAccountDiscoveryServiceTest {
             password = "pass"
         )
 
-        // Entry-surface guard: removing the wiring from discoverAndCreateAccount
-        // must fail here (relaxed repo mocks won't catch an absent call).
+        // Fails if discoverAndCreateAccount stops persisting these; the relaxed repository
+        // mocks wouldn't notice a missing call.
         coVerify { accountRepository.updateScheduleOutboxUrl(1L, "https://nextcloud.example.com/dav/calendars/user/outbox/") }
         coVerify { calendarRepository.updateAutoScheduleSupported(1L, true) }
     }
@@ -269,7 +265,7 @@ class CalDavAccountDiscoveryServiceTest {
         assertTrue(result is DiscoveryResult.Success)
         val success = result as DiscoveryResult.Success
 
-        // CRITICAL: homeSetUrl must be set for DefaultQuirks
+        // Sync builds DefaultQuirks from homeSetUrl and throws without it.
         assertNotNull(success.account.homeSetUrl)
         assertEquals("https://nextcloud.example.com/dav/calendars/user/", success.account.homeSetUrl)
     }
@@ -290,7 +286,6 @@ class CalDavAccountDiscoveryServiceTest {
             trustInsecure = true
         )
 
-        // Verify client factory received trustInsecure
         verify {
             calDavClientFactory.createClient(
                 match<Credentials> { it.trustInsecure },
@@ -298,7 +293,6 @@ class CalDavAccountDiscoveryServiceTest {
             )
         }
 
-        // Verify credentials saved with trustInsecure
         coVerify {
             accountRepository.saveCredentials(1L, match<AccountCredentials> { it.trustInsecure })
         }
@@ -353,7 +347,7 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         assertTrue(result is DiscoveryResult.Success)
-        // Discovery service creates all listed calendars — filtering is done by quirks layer
+        // The service creates every listed calendar; filtering happens in the quirks.
         assertEquals(3, (result as DiscoveryResult.Success).calendars.size)
     }
 
@@ -400,7 +394,8 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         assertTrue(result is DiscoveryResult.Success)
-        // Birthday calendars are no longer filtered — quirks layer handles non-VEVENT filtering
+        // The service keeps every listed calendar; the quirks' component check drops
+        // non-VEVENT collections.
         assertEquals(2, (result as DiscoveryResult.Success).calendars.size)
     }
 
@@ -445,7 +440,7 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         assertTrue(result is DiscoveryResult.Success)
-        // "Birthday Party Planning" is no longer a false positive — discovery service doesn't filter by name
+        // The service doesn't filter by name.
         assertEquals(2, (result as DiscoveryResult.Success).calendars.size)
     }
 
@@ -487,7 +482,8 @@ class CalDavAccountDiscoveryServiceTest {
 
         assertTrue(result is DiscoveryResult.CalendarsFound)
         val found = result as DiscoveryResult.CalendarsFound
-        // Birthday calendars are no longer filtered — quirks layer handles non-VEVENT filtering
+        // The service keeps every listed calendar; the quirks' component check drops
+        // non-VEVENT collections.
         assertEquals(2, found.calendars.size)
     }
 
@@ -529,7 +525,7 @@ class CalDavAccountDiscoveryServiceTest {
 
         assertTrue(result is DiscoveryResult.CalendarsFound)
         val found = result as DiscoveryResult.CalendarsFound
-        // "Birthday Party Planning" is no longer a false positive — discovery service doesn't filter by name
+        // The service doesn't filter by name.
         assertEquals(2, found.calendars.size)
     }
 
@@ -572,7 +568,7 @@ class CalDavAccountDiscoveryServiceTest {
         val result = discoveryService.refreshCalendars(1L)
 
         assertTrue(result is DiscoveryResult.Success)
-        // Birthday calendars are not filtered — consistent with discoverAndCreateAccount and discoverCalendars
+        // Not filtered, as in discoverAndCreateAccount and discoverCalendars.
         coVerify(exactly = 2) { calendarRepository.createCalendar(any()) }
     }
 
@@ -607,7 +603,7 @@ class CalDavAccountDiscoveryServiceTest {
 
         discoveryService.refreshCalendars(1L)
 
-        // Entry-surface guard for the refresh hook.
+        // Fails if refreshCalendars stops persisting these.
         coVerify { accountRepository.updateScheduleOutboxUrl(1L, "https://server/calendars/user/outbox/") }
         coVerify { calendarRepository.updateAutoScheduleSupported(9L, true) }
     }
@@ -658,7 +654,7 @@ class CalDavAccountDiscoveryServiceTest {
 
         assertTrue(result is DiscoveryResult.CalendarsFound)
         val found = result as DiscoveryResult.CalendarsFound
-        // Discovery service returns all listed calendars — filtering is done by quirks layer
+        // The service returns every listed calendar; filtering happens in the quirks.
         assertEquals(3, found.calendars.size)
     }
 
@@ -693,7 +689,7 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         assertTrue(result is DiscoveryResult.Error)
-        // After Issue #54: probing runs on network errors, all probes fail with same error
+        // A network error also triggers path probing (#54); every probe fails the same way.
         assertTrue((result as DiscoveryResult.Error).message.contains("CalDAV service not found"))
     }
 
@@ -732,6 +728,59 @@ class CalDavAccountDiscoveryServiceTest {
     }
 
     @Test
+    fun `a refused connection is reported as such even after the fallback paths fail`() = runTest {
+        // The server redirects discovery to plain http elsewhere: the principal lookup
+        // and every probed fallback path are refused the same way.
+        coEvery { mockClient.discoverWellKnown(any()) } returns
+            CalDavResult.error(CalDavResult.CODE_TRANSPORT_REFUSED, "refused", isRetryable = true)
+        coEvery { mockClient.discoverPrincipal(any()) } returns
+            CalDavResult.error(CalDavResult.CODE_TRANSPORT_REFUSED, "refused", isRetryable = true)
+
+        val created = discoveryService.discoverAndCreateAccount("https://dav.example.test", "user", "pass")
+        val listed = discoveryService.discoverCalendars("https://dav.example.test", "user", "pass")
+
+        assertEquals(DiscoveryErrorReason.INSECURE_CONNECTION_REFUSED, (created as DiscoveryResult.Error).reason)
+        assertEquals(DiscoveryErrorReason.INSECURE_CONNECTION_REFUSED, (listed as DiscoveryResult.Error).reason)
+    }
+
+    @Test
+    fun `a refused well-known followed by a working fallback does not blame the refusal`() = runTest {
+        coEvery { mockClient.discoverWellKnown(any()) } returns
+            CalDavResult.error(CalDavResult.CODE_TRANSPORT_REFUSED, "refused", isRetryable = true)
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success("https://dav.example.test/principals/user/")
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(listOf("https://dav.example.test/calendars/user/"))
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(emptyList())
+
+        val result = discoveryService.discoverCalendars("https://dav.example.test", "user", "pass")
+
+        result as DiscoveryResult.Error
+        assertTrue(result.message.contains("No calendars"))
+        assertEquals(null, result.reason)
+    }
+
+    @Test
+    fun `an ordinary failure carries no reason`() = runTest {
+        coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Error(500, "Internal server error")
+
+        val result = discoveryService.discoverAndCreateAccount("https://dav.example.test", "user", "pass")
+
+        assertEquals(null, (result as DiscoveryResult.Error).reason)
+    }
+
+    @Test
+    fun `a refresh whose listings were all refused says so`() = runTest {
+        val cal = createCalendar(2L, 1L, "https://server/calendars/user/home/")
+        stubRefreshAccount(listOf(cal))
+        coEvery { mockClient.listCalendars(any()) } returns
+            CalDavResult.error(CalDavResult.CODE_TRANSPORT_REFUSED, "refused", isRetryable = true)
+
+        val result = discoveryService.refreshCalendars(1L)
+
+        assertEquals(DiscoveryErrorReason.INSECURE_CONNECTION_REFUSED, (result as DiscoveryResult.Error).reason)
+        coVerify(exactly = 0) { calendarRepository.deleteCalendar(any()) }
+    }
+
+    @Test
     fun `discoverAndCreateAccount returns Error on 500`() = runTest {
         coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Error(
             500, "Internal server error"
@@ -744,7 +793,7 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         assertTrue(result is DiscoveryResult.Error)
-        // After Issue #54: probing runs on 500 errors, all probes fail with same error
+        // A 500 also triggers path probing (#54); every probe fails the same way.
         assertTrue((result as DiscoveryResult.Error).message.contains("CalDAV service not found"))
     }
 
@@ -806,7 +855,7 @@ class CalDavAccountDiscoveryServiceTest {
     fun `refreshCalendars adopts server color change for existing calendar`() = runTest {
         val account = createAccount(1L)
         val existingCalendar = createCalendar(1L, account.id, "https://server/cal1/")
-        // existingCalendar.color is 0xFF4CAF50 (green) from the helper
+        // The helper gives existingCalendar the color 0xFF4CAF50 (green).
 
         coEvery { accountRepository.getAccountById(1L) } returns account
         coEvery { accountRepository.getCredentials(1L) } returns AccountCredentials(
@@ -854,7 +903,7 @@ class CalDavAccountDiscoveryServiceTest {
                     href = "/cal1/",
                     url = "https://server/cal1/",
                     displayName = "Cal 1",
-                    color = null, // server doesn't support RFC 7986
+                    color = null, // server sends no calendar-color
                     ctag = "new-ctag",
                     isReadOnly = false
                 )
@@ -866,7 +915,7 @@ class CalDavAccountDiscoveryServiceTest {
         coVerify { calendarRepository.updateCalendar(match { it.color == localColor }) }
     }
 
-    // ==================== refreshCalendars ctag/syncToken Preservation (issue #249) ====================
+    // ==================== refreshCalendars keeps ctag/syncToken (#249) ====================
 
     @Test
     fun `refreshCalendars preserves local ctag when server returns new ctag`() = runTest {
@@ -912,9 +961,8 @@ class CalDavAccountDiscoveryServiceTest {
 
     @Test
     fun `refreshCalendars preserves local syncToken when server returns new ctag`() = runTest {
-        // Defense-in-depth invariant: CalDavCalendar has no syncToken field, so .copy()
-        // already preserves it. Pins the contract so a refactor that adds syncToken to
-        // the discovery model can't silently overwrite it.
+        // CalDavCalendar has no syncToken, so the .copy() update keeps it today. This pins
+        // the contract so adding syncToken to the discovery model can't silently overwrite it.
         val account = createAccount(1L)
         val existingCalendar = Calendar(
             id = 1L,
@@ -1010,10 +1058,208 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns listOf(existingCalendar)
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(emptyList())
+        // The server confirms the calendar is gone when asked about it directly.
+        coEvery { mockClient.probeCalendarCollection(existingCalendar.caldavUrl) } returns
+            CalDavResult.notFoundError("Resource not found")
 
         discoveryService.refreshCalendars(1L)
 
         coVerify { calendarRepository.deleteCalendar(existingCalendar.id) }
+    }
+
+    // ==================== refreshCalendars: confirm before removing ====================
+
+    private fun stubRefreshAccount(existing: List<Calendar>) {
+        coEvery { accountRepository.getAccountById(1L) } returns createAccount(1L)
+        coEvery { accountRepository.getCredentials(1L) } returns AccountCredentials(
+            username = "user",
+            password = "pass",
+            serverUrl = "https://server"
+        )
+        coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns existing
+        coEvery { calendarRepository.getCalendarByUrl(any()) } answers {
+            existing.firstOrNull { it.caldavUrl == firstArg<String>() }
+        }
+        coEvery { calendarRepository.createCalendar(any()) } returns 99L
+    }
+
+    private fun listed(calendar: Calendar) = CalDavCalendar(
+        href = calendar.caldavUrl.removePrefix("https://server"),
+        url = calendar.caldavUrl,
+        displayName = calendar.displayName,
+        color = null,
+        ctag = "ctag",
+        isReadOnly = false
+    )
+
+    @Test
+    fun `refreshCalendars keeps every calendar when the listing comes back empty and probes are unreadable`() = runTest {
+        val work = createCalendar(1L, 1L, "https://server/calendars/user/work/")
+        val home = createCalendar(2L, 1L, "https://server/calendars/user/home/")
+        stubRefreshAccount(listOf(work, home))
+        // A hotspot login page parses as an empty listing...
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(emptyList())
+        // ...and the per-calendar probe can't read the page either.
+        coEvery { mockClient.probeCalendarCollection(any()) } returns
+            CalDavResult.error(500, "resourcetype not found in response")
+
+        val result = discoveryService.refreshCalendars(1L)
+
+        assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
+        coVerify(exactly = 0) { calendarRepository.deleteCalendar(any()) }
+        assertEquals(
+            "Kept calendars are still reported, so the calendar count stays right",
+            setOf(work.id, home.id),
+            (result as DiscoveryResult.Success).calendars.map { it.id }.toSet()
+        )
+    }
+
+    @Test
+    fun `refreshCalendars keeps a calendar missing from a partial listing when the server says it still exists`() = runTest {
+        val listedCal = createCalendar(1L, 1L, "https://server/calendars/user/work/")
+        val unlisted = createCalendar(2L, 1L, "https://server/calendars/user/home/")
+        stubRefreshAccount(listOf(listedCal, unlisted))
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(listOf(listed(listedCal)))
+        coEvery { mockClient.probeCalendarCollection(unlisted.caldavUrl) } returns CalDavResult.success(true)
+
+        discoveryService.refreshCalendars(1L)
+
+        coVerify(exactly = 0) { calendarRepository.deleteCalendar(any()) }
+        coVerify { calendarRepository.updateCalendar(match { it.id == listedCal.id }) }
+    }
+
+    @Test
+    fun `refreshCalendars removes an unlisted calendar the server answers 410 for`() = runTest {
+        val gone = createCalendar(2L, 1L, "https://server/calendars/user/home/")
+        stubRefreshAccount(listOf(gone))
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(emptyList())
+        coEvery { mockClient.probeCalendarCollection(gone.caldavUrl) } returns CalDavResult.error(410, "Gone")
+
+        discoveryService.refreshCalendars(1L)
+
+        coVerify { calendarRepository.deleteCalendar(gone.id) }
+    }
+
+    @Test
+    fun `refreshCalendars removes an unlisted calendar that is no longer a calendar`() = runTest {
+        val gone = createCalendar(2L, 1L, "https://server/calendars/user/home/")
+        stubRefreshAccount(listOf(gone))
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(emptyList())
+        coEvery { mockClient.probeCalendarCollection(gone.caldavUrl) } returns CalDavResult.success(false)
+
+        discoveryService.refreshCalendars(1L)
+
+        coVerify { calendarRepository.deleteCalendar(gone.id) }
+    }
+
+    @Test
+    fun `refreshCalendars removes an unlisted calendar the server answers 403 for`() = runTest {
+        // Mailbox (Open-Xchange) answers 403, not 404, for a calendar that was deleted.
+        val cal = createCalendar(2L, 1L, "https://server/calendars/user/home/")
+        stubRefreshAccount(listOf(cal))
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(emptyList())
+        coEvery { mockClient.probeCalendarCollection(cal.caldavUrl) } returns
+            CalDavResult.error(403, "Permission denied")
+
+        discoveryService.refreshCalendars(1L)
+
+        coVerify { calendarRepository.deleteCalendar(cal.id) }
+    }
+
+    @Test
+    fun `refreshCalendars removes the calendars of a home set the account lost access to`() = runTest {
+        // One home set answers 403 (a delegation or share was revoked) and so does each
+        // of its calendars: they are gone for this account. The other home set's stay.
+        val inRevokedHome = createCalendar(1L, 1L, "https://server/calendars/user/aaa/work/")
+        val inGoodHome = createCalendar(2L, 1L, "https://server/calendars/user/bbb/shared/")
+        stubRefreshAccount(listOf(inRevokedHome, inGoodHome))
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            listOf("https://server/calendars/user/aaa/", "https://server/calendars/user/bbb/")
+        )
+        coEvery { mockClient.listCalendars("https://server/calendars/user/aaa/") } returns
+            CalDavResult.error(403, "Permission denied")
+        coEvery { mockClient.listCalendars("https://server/calendars/user/bbb/") } returns
+            CalDavResult.Success(listOf(listed(inGoodHome)))
+        coEvery { mockClient.probeCalendarCollection(inRevokedHome.caldavUrl) } returns
+            CalDavResult.error(403, "Permission denied")
+
+        discoveryService.refreshCalendars(1L)
+
+        coVerify(exactly = 1) { calendarRepository.deleteCalendar(inRevokedHome.id) }
+        coVerify(exactly = 0) { calendarRepository.deleteCalendar(inGoodHome.id) }
+    }
+
+    @Test
+    fun `refreshCalendars keeps calendars of a home set whose listing failed`() = runTest {
+        val inFailedHome = createCalendar(1L, 1L, "https://server/calendars/user/aaa/work/")
+        val inGoodHome = createCalendar(2L, 1L, "https://server/calendars/user/bbb/shared/")
+        stubRefreshAccount(listOf(inFailedHome, inGoodHome))
+        coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
+            listOf("https://server/calendars/user/aaa/", "https://server/calendars/user/bbb/")
+        )
+        coEvery { mockClient.listCalendars("https://server/calendars/user/aaa/") } returns
+            CalDavResult.error(500, "Server error")
+        coEvery { mockClient.listCalendars("https://server/calendars/user/bbb/") } returns
+            CalDavResult.Success(listOf(listed(inGoodHome)))
+        coEvery { mockClient.probeCalendarCollection(inFailedHome.caldavUrl) } returns CalDavResult.success(true)
+
+        discoveryService.refreshCalendars(1L)
+
+        coVerify(exactly = 0) { calendarRepository.deleteCalendar(any()) }
+    }
+
+    @Test
+    fun `refreshCalendars probes only the calendars missing from the listing`() = runTest {
+        val listedCal = createCalendar(1L, 1L, "https://server/calendars/user/work/")
+        val unlisted = createCalendar(2L, 1L, "https://server/calendars/user/home/")
+        stubRefreshAccount(listOf(listedCal, unlisted))
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(listOf(listed(listedCal)))
+        coEvery { mockClient.probeCalendarCollection(any()) } returns CalDavResult.success(true)
+
+        discoveryService.refreshCalendars(1L)
+
+        coVerify(exactly = 1) { mockClient.probeCalendarCollection(unlisted.caldavUrl) }
+        coVerify(exactly = 0) { mockClient.probeCalendarCollection(listedCal.caldavUrl) }
+    }
+
+    @Test
+    fun `refreshCalendars reports listed, new and kept calendars together`() = runTest {
+        val listedCal = createCalendar(1L, 1L, "https://server/calendars/user/work/")
+        val kept = createCalendar(2L, 1L, "https://server/calendars/user/home/")
+        stubRefreshAccount(listOf(listedCal, kept))
+        val brandNew = CalDavCalendar(
+            href = "/calendars/user/new/",
+            url = "https://server/calendars/user/new/",
+            displayName = "New",
+            color = null,
+            ctag = "ctag",
+            isReadOnly = false
+        )
+        coEvery { mockClient.listCalendars(any()) } returns
+            CalDavResult.Success(listOf(listed(listedCal), brandNew))
+        coEvery { mockClient.probeCalendarCollection(kept.caldavUrl) } returns
+            CalDavResult.error(500, "resourcetype not found in response")
+
+        val result = discoveryService.refreshCalendars(1L) as DiscoveryResult.Success
+
+        // 2 existing + 1 new: the calendar count and the "new calendars" count both stay right.
+        assertEquals(3, result.calendars.size)
+        assertEquals(setOf(1L, 2L, 99L), result.calendars.map { it.id }.toSet())
+    }
+
+    @Test
+    fun `refreshCalendars stops probing after a timeout and keeps the rest`() = runTest {
+        val a = createCalendar(1L, 1L, "https://server/calendars/user/a/")
+        val b = createCalendar(2L, 1L, "https://server/calendars/user/b/")
+        val c = createCalendar(3L, 1L, "https://server/calendars/user/c/")
+        stubRefreshAccount(listOf(a, b, c))
+        coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(emptyList())
+        coEvery { mockClient.probeCalendarCollection(any()) } returns CalDavResult.timeoutError("Request timed out")
+
+        discoveryService.refreshCalendars(1L)
+
+        coVerify(exactly = 1) { mockClient.probeCalendarCollection(any()) }
+        coVerify(exactly = 0) { calendarRepository.deleteCalendar(any()) }
     }
 
     @Test
@@ -1045,7 +1291,8 @@ class CalDavAccountDiscoveryServiceTest {
     fun `removeAccount calls deleteAccount on repository`() = runTest {
         discoveryService.removeAccount(1L)
 
-        // Repository handles all cleanup internally (credentials, reminders, pending ops)
+        // AccountRepository.deleteAccount does all the cleanup, for example cancelling sync work
+        // and reminders and deleting pending operations and credentials.
         coVerify { accountRepository.deleteAccount(1L) }
     }
 
@@ -1087,10 +1334,9 @@ class CalDavAccountDiscoveryServiceTest {
 
     @Test
     fun `discoverAndCreateAccount creates separate account when same username on different server`() = runTest {
-        // Server B discovery succeeds
         setupSuccessfulDiscovery("https://server-b.example.com")
 
-        // 3-param lookup returns null — no account for this server
+        // The lookup keyed on provider, username and home set finds no account on this server.
         coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 2L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
@@ -1103,14 +1349,14 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
-        // FIX: createAccount is called — a new separate account is created
+        // A separate account is created; the other server's account isn't touched.
         coVerify { accountRepository.createAccount(any()) }
         coVerify(exactly = 0) { accountRepository.updateAccount(any()) }
     }
 
     @Test
     fun `createAccountWithSelectedCalendars creates separate account when same username on different server`() = runTest {
-        // 3-param lookup returns null — no account for this server
+        // The lookup keyed on provider, username and home set finds no account on this server.
         coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
         coEvery { accountRepository.createAccount(any()) } returns 2L
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
@@ -1133,7 +1379,7 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
-        // FIX: createAccount is called — a new separate account is created
+        // A separate account is created; the other server's account isn't touched.
         coVerify { accountRepository.createAccount(any()) }
         coVerify(exactly = 0) { accountRepository.updateAccount(any()) }
     }
@@ -1151,7 +1397,7 @@ class CalDavAccountDiscoveryServiceTest {
             homeSetUrl = "https://server-a.example.com/dav/calendars/user/",
             isEnabled = true
         )
-        // Same server — 3-param lookup finds the existing account
+        // Same server: the lookup finds the existing account.
         coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns existingAccount
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
@@ -1164,19 +1410,19 @@ class CalDavAccountDiscoveryServiceTest {
 
         assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
         assertEquals(1L, (result as DiscoveryResult.Success).account.id)
-        // Re-login updates, doesn't duplicate
+        // Signing in again updates the account instead of adding a second one.
         coVerify { accountRepository.updateAccount(any()) }
         coVerify(exactly = 0) { accountRepository.createAccount(any()) }
     }
 
     @Test
     fun `discoverAndCreateAccount matches existing account despite trailing slash variation`() = runTest {
-        // Server returns URL without trailing slash
+        // The server returns the home set without a trailing slash.
         coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
             "https://server.example.com/dav/principals/admin/"
         )
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
-            listOf("https://server.example.com/dav/calendars/admin")  // No trailing slash!
+            listOf("https://server.example.com/dav/calendars/admin")
         )
         coEvery { mockClient.listCalendars(any()) } returns CalDavResult.Success(
             listOf(
@@ -1197,10 +1443,10 @@ class CalDavAccountDiscoveryServiceTest {
             email = "admin",
             displayName = "server.example.com",
             principalUrl = "https://server.example.com/dav/principals/admin/",
-            homeSetUrl = "https://server.example.com/dav/calendars/admin/",  // Normalized with trailing slash
+            homeSetUrl = "https://server.example.com/dav/calendars/admin/",  // stored normalized
             isEnabled = true
         )
-        // Normalization adds trailing slash — matches stored account
+        // Normalization adds the trailing slash, so the lookup matches the stored account.
         coEvery {
             accountRepository.getAccountByProviderEmailAndHomeSetUrl(
                 AccountProvider.CALDAV, "admin", "https://server.example.com/dav/calendars/admin/"
@@ -1216,7 +1462,6 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
-        // Normalization prevents duplication — update, not create
         coVerify { accountRepository.updateAccount(any()) }
         coVerify(exactly = 0) { accountRepository.createAccount(any()) }
     }
@@ -1368,7 +1613,7 @@ class CalDavAccountDiscoveryServiceTest {
 
         assertTrue(result is DiscoveryResult.Success)
         val calendar = (result as DiscoveryResult.Success).calendars.first()
-        // RRGGBBAA -> AARRGGBB
+        // #RRGGBBAA is reordered to AARRGGBB.
         assertEquals(0xCCFF5733.toInt(), calendar.color)
     }
 
@@ -1379,21 +1624,18 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
             "https://server.example.com/dav/principals/user/"
         )
-        // Server returns 2 home sets
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
             listOf(
                 "https://server.example.com/dav/calendars/user/aaa/",
                 "https://server.example.com/dav/calendars/user/bbb/"
             )
         )
-        // Home set A has 2 calendars
         coEvery { mockClient.listCalendars("https://server.example.com/dav/calendars/user/aaa/") } returns CalDavResult.Success(
             listOf(
                 CalDavCalendar("/dav/calendars/user/aaa/personal/", "https://server.example.com/dav/calendars/user/aaa/personal/", "Personal", "#FF0000", "ctag1", false),
                 CalDavCalendar("/dav/calendars/user/aaa/work/", "https://server.example.com/dav/calendars/user/aaa/work/", "Work", "#00FF00", "ctag2", false)
             )
         )
-        // Home set B has 1 calendar
         coEvery { mockClient.listCalendars("https://server.example.com/dav/calendars/user/bbb/") } returns CalDavResult.Success(
             listOf(
                 CalDavCalendar("/dav/calendars/user/bbb/shared/", "https://server.example.com/dav/calendars/user/bbb/shared/", "Shared", "#0000FF", "ctag3", true)
@@ -1413,12 +1655,10 @@ class CalDavAccountDiscoveryServiceTest {
 
         assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
         val success = result as DiscoveryResult.Success
-        // All 3 calendars from both home sets should be merged
         assertEquals(3, success.calendars.size)
-        // listCalendars called once per home set
         coVerify(exactly = 1) { mockClient.listCalendars("https://server.example.com/dav/calendars/user/aaa/") }
         coVerify(exactly = 1) { mockClient.listCalendars("https://server.example.com/dav/calendars/user/bbb/") }
-        // homeSetUrl should be first sorted URL
+        // The account keeps the first home set in sorted order.
         assertEquals("https://server.example.com/dav/calendars/user/aaa/", success.account.homeSetUrl)
     }
 
@@ -1433,13 +1673,11 @@ class CalDavAccountDiscoveryServiceTest {
                 "https://server.example.com/dav/calendars/user/bbb/"
             )
         )
-        // Home set A succeeds
         coEvery { mockClient.listCalendars("https://server.example.com/dav/calendars/user/aaa/") } returns CalDavResult.Success(
             listOf(
                 CalDavCalendar("/dav/calendars/user/aaa/personal/", "https://server.example.com/dav/calendars/user/aaa/personal/", "Personal", "#FF0000", "ctag1", false)
             )
         )
-        // Home set B fails
         coEvery { mockClient.listCalendars("https://server.example.com/dav/calendars/user/bbb/") } returns CalDavResult.Error(500, "Internal error")
 
         coEvery { accountRepository.getAccountByProviderEmailAndHomeSetUrl(any(), any(), any()) } returns null
@@ -1455,7 +1693,6 @@ class CalDavAccountDiscoveryServiceTest {
 
         assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
         val success = result as DiscoveryResult.Success
-        // Only calendars from successful home set A
         assertEquals(1, success.calendars.size)
         assertEquals("Personal", success.calendars.first().displayName)
     }
@@ -1502,7 +1739,7 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { mockClient.discoverPrincipal(any()) } returns CalDavResult.Success(
             "https://server.example.com/dav/principals/user/"
         )
-        // Returned in reverse alphabetical order
+        // Returned in reverse order, so the result must be sorted.
         coEvery { mockClient.discoverCalendarHome(any()) } returns CalDavResult.Success(
             listOf(
                 "https://server.example.com/dav/calendars/user/zzz/",
@@ -1523,7 +1760,6 @@ class CalDavAccountDiscoveryServiceTest {
 
         assertTrue("Expected CalendarsFound, got $result", result is DiscoveryResult.CalendarsFound)
         val found = result as DiscoveryResult.CalendarsFound
-        // First sorted URL is used for calendarHomeUrl
         assertEquals("https://server.example.com/dav/calendars/user/aaa/", found.calendarHomeUrl)
     }
 
@@ -1572,7 +1808,6 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns emptyList()
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
-        // Re-discovery returns 2 home sets
         coEvery { mockClient.discoverCalendarHome("https://server/principal/user/") } returns CalDavResult.Success(
             listOf(
                 "https://server/calendars/user/aaa/",
@@ -1589,9 +1824,8 @@ class CalDavAccountDiscoveryServiceTest {
         val result = discoveryService.refreshCalendars(1L)
 
         assertTrue("Expected Success, got $result", result is DiscoveryResult.Success)
-        // Both home sets' calendars should be created
         coVerify(exactly = 2) { calendarRepository.createCalendar(any()) }
-        // Should have re-discovered from principal, not used stored URL
+        // Home sets come from the principal, not the stored homeSetUrl.
         coVerify { mockClient.discoverCalendarHome("https://server/principal/user/") }
     }
 
@@ -1609,9 +1843,8 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { calendarRepository.getCalendarsForAccountOnce(1L) } returns emptyList()
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
-        // Re-discovery from principal fails
         coEvery { mockClient.discoverCalendarHome("https://server/principal/user/") } returns CalDavResult.Error(500, "Server error")
-        // Fallback to stored URL works
+        // Re-discovery fails, so the stored homeSetUrl is listed.
         coEvery { mockClient.listCalendars("https://server/calendars/user/") } returns CalDavResult.Success(
             listOf(CalDavCalendar("/cal/personal/", "https://server/cal/personal/", "Personal", "#FF0000", "ctag1", false))
         )
@@ -1651,9 +1884,8 @@ class CalDavAccountDiscoveryServiceTest {
                 )
             )
         )
-        // Scheduling-delivery discovery (RFC 6638 §2 / §2.1.1). CalDavResult is
-        // a sealed type, so the relaxed mock can't synthesize a usable default —
-        // stub explicitly.
+        // Scheduling-delivery discovery (RFC 6638 §2, §2.1.1). CalDavResult is a sealed
+        // type, so the relaxed mock can't synthesize a usable default; stub explicitly.
         coEvery { mockClient.discoverScheduleOutboxUrl(any()) } returns
             CalDavResult.Success("$serverUrl/dav/calendars/user/outbox/")
         coEvery { mockClient.supportsAutoSchedule(any()) } returns CalDavResult.Success(true)
@@ -1934,16 +2166,12 @@ class CalDavAccountDiscoveryServiceTest {
         // KNOWN_CALDAV_PATHS has /caldav before /caldav/ so Zoho is found first.
         coEvery { mockClient.discoverPrincipal("https://calendar.zoho.com") } returns
             CalDavResult.Error(404, "Not found")
-        // /dav/ fails
         coEvery { mockClient.discoverPrincipal("https://calendar.zoho.com/dav/") } returns
             CalDavResult.Error(404, "Not found")
-        // /remote.php/dav/ fails
         coEvery { mockClient.discoverPrincipal("https://calendar.zoho.com/remote.php/dav/") } returns
             CalDavResult.Error(404, "Not found")
-        // /dav.php/ fails
         coEvery { mockClient.discoverPrincipal("https://calendar.zoho.com/dav.php/") } returns
             CalDavResult.Error(404, "Not found")
-        // /caldav succeeds (no trailing slash)
         coEvery { mockClient.discoverPrincipal("https://calendar.zoho.com/caldav") } returns
             CalDavResult.Success("https://calendar.zoho.com/caldav/user@example.com/")
         coEvery { mockClient.discoverCalendarHome(any()) } returns
@@ -1962,7 +2190,7 @@ class CalDavAccountDiscoveryServiceTest {
         )
 
         assertTrue("Expected Success but got $result", result is DiscoveryResult.Success)
-        // /caldav/ (with trailing slash) should never have been tried
+        // /caldav/ is never tried.
         coVerify(exactly = 0) { mockClient.discoverPrincipal("https://calendar.zoho.com/caldav/") }
     }
 
@@ -1977,7 +2205,7 @@ class CalDavAccountDiscoveryServiceTest {
         coEvery { calendarRepository.getCalendarByUrl(any()) } returns null
         coEvery { calendarRepository.createCalendar(any()) } returns 1L
 
-        // Simulate EncryptedSharedPreferences failure (e.g., Android Keystore broken)
+        // Secure storage fails, e.g. a broken Android Keystore.
         coEvery { accountRepository.saveCredentials(any(), any()) } returns false
 
         val result = discoveryService.discoverAndCreateAccount(
@@ -2014,7 +2242,7 @@ class CalDavAccountDiscoveryServiceTest {
             password = "pass"
         )
 
-        // Account should be cleaned up since it can't sync without credentials
+        // An account without credentials can't sync, so it is deleted.
         coVerify { accountRepository.deleteAccount(1L) }
     }
 
@@ -2150,7 +2378,7 @@ class CalDavAccountDiscoveryServiceTest {
             password = "pass"
         )
 
-        // Verify factory was called with http:// preserved (not upgraded to https://)
+        // An explicit http:// is kept, not upgraded to https://.
         verify {
             calDavClientFactory.createClient(
                 match<Credentials> { it.serverUrl == "http://192.168.1.100:8080" },

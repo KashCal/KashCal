@@ -14,10 +14,8 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * [androidx.work.WorkManager]-backed implementation of [IcsScheduler].
- *
- * Forwards to [IcsRefreshWorker]'s companion methods so the worker's constraint
- * definitions stay in one place.
+ * Implements [IcsScheduler] on [androidx.work.WorkManager], through [IcsRefreshWorker]'s
+ * companion methods so the worker's constraints are defined in one place.
  */
 @Singleton
 class WorkManagerIcsScheduler @Inject constructor(
@@ -25,10 +23,9 @@ class WorkManagerIcsScheduler @Inject constructor(
 ) : IcsScheduler {
 
     /**
-     * Serializes the read-then-decide below against itself and against
-     * cancellation. Callers include app startup and every feed mutation, so two of
-     * them can overlap; without this, both could read "nothing armed" and both
-     * enqueue, or one could read a spec the other is in the middle of cancelling.
+     * Serializes the read-then-decide below against itself and against cancellation. App
+     * start and feed mutations can overlap; without it both could read "nothing armed" and
+     * both enqueue, or one could read a spec the other is cancelling.
      */
     private val mutex = Mutex()
 
@@ -41,18 +38,16 @@ class WorkManagerIcsScheduler @Inject constructor(
             .first()
             .firstOrNull { !it.state.isFinished }
 
-        // An install armed before the battery-not-low constraint was dropped keeps
-        // that constraint for as long as the period matches, and "every 6 hours" is
-        // a selectable feed interval that matches the period the job used to be
-        // armed with — so comparing the period alone would leave those installs
-        // skipping refresh windows forever.
+        // A job armed while the worker still required battery-not-low keeps that
+        // constraint as long as the period matches, and "every 6 hours" is both a
+        // selectable feed interval and the period such jobs were armed with. Comparing
+        // the period alone would leave those installs skipping refresh windows forever.
         val carriesStaleConstraint = live?.constraints?.requiresBatteryNotLow() == true
 
         when {
-            // Nothing armed, or only a finished (cancelled/failed) spec. KEEP is
-            // required here rather than UPDATE: updating a job that has already
-            // finished does not apply, so a job cancelled when the last feed was
-            // removed would never come back when a feed is added again. KEEP
+            // Nothing armed, or only a finished (cancelled or failed) spec. KEEP, not
+            // UPDATE: UPDATE doesn't apply to a finished job, so a job cancelled when the
+            // last feed was removed would never come back when a feed is added. KEEP
             // prunes the finished spec and arms a fresh one.
             live == null -> {
                 Log.i(TAG, "Arming periodic ICS refresh every $desiredHours hours")
@@ -63,11 +58,10 @@ class WorkManagerIcsScheduler @Inject constructor(
                 )
             }
 
-            // Armed but at the wrong period, or carrying constraints this app no
-            // longer asks for. UPDATE keeps the existing run history (it preserves
-            // the last-run anchor and period count and only bumps the spec
-            // generation), so changing a feed's interval does not starve the job or
-            // restart its window.
+            // Armed at the wrong period, or with a constraint the worker no longer sets.
+            // UPDATE keeps the run history (the last-run anchor and period count; only
+            // the spec generation changes), so changing a feed's interval doesn't
+            // starve the job or restart its window.
             live.periodicityInfo?.repeatIntervalMillis != desiredIntervalMs ||
                 carriesStaleConstraint -> {
                 Log.i(TAG, "Moving periodic ICS refresh to every $desiredHours hours")
@@ -78,8 +72,8 @@ class WorkManagerIcsScheduler @Inject constructor(
                 )
             }
 
-            // Already correct. Not re-enqueueing matters: this runs on every app
-            // start, and the platform throttles frequent job-scheduling calls.
+            // Already correct. Don't re-enqueue: this runs on every app start, and the
+            // platform throttles frequent job-scheduling calls.
             else -> Log.d(TAG, "Periodic ICS refresh already every $desiredHours hours")
         }
     }

@@ -16,19 +16,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Unit tests for SyncSessionStore.
+ * Tests [SyncSessionStore] under Robolectric, which supplies the application context whose files
+ * directory the store writes to; Log is mocked.
  *
- * Uses Robolectric for ApplicationContext and mocked Log.
- *
- * Tests:
- * - Initial state is empty
- * - add() stores sessions
- * - Newest-first ordering
- * - 48-hour retention
- * - MAX_SESSIONS limit
- * - clear() empties store
- * - getSummaryStats correctness
- * - getExportText format
+ * Covers the empty initial state, [SyncSessionStore.add], newest-first order, the 48-hour
+ * retention, [SyncSessionStore.clear], [SyncSessionStore.getSummaryStats] and the
+ * [SyncSessionStore.getExportText] header, status icons and push/pull arrows. The 200-session
+ * cap isn't tested here.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -134,7 +128,7 @@ class SyncSessionStoreTest {
         store.add(old)
         store.add(recent)
 
-        // Old session should be filtered by retention policy
+        // Older than the 48-hour retention, so dropped.
         assertEquals(1, store.sessions.value.size)
         assertEquals("Recent", store.sessions.value[0].calendarName)
     }
@@ -198,7 +192,7 @@ class SyncSessionStoreTest {
     fun `getExportText includes status icons`() = runTest {
         store.add(createSession()) // SUCCESS → ✓
         store.add(createSession(skippedParseError = 1)) // PARTIAL → ⚠
-        store.add(createSession(errorType = ErrorType.NETWORK, status = SyncStatus.FAILED)) // FAILED → ✗
+        store.add(createSession(errorType = ErrorType.NETWORK, status = SyncStatus.FAILED)) // ✗
 
         val text = store.getExportText()
         assertTrue("Should contain success icon", text.contains("✓"))

@@ -7,24 +7,20 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 /**
- * Runs a single [RRuleCase] through both engines with a per-case wall-clock
- * timeout, returning a [CaseResult] with computed classification.
+ * Runs one [RRuleCase] through both engines, each call under a wall-clock timeout, and returns a
+ * classified [CaseResult].
  *
- * A wall-clock timeout is required because adversarial cases (unbounded
- * SECONDLY expansions, infinite recurrences against open ranges) can hang
- * an engine indefinitely. Timeouts surface as [ExpansionResult.Error] with
- * `throwableClass="TimeoutException"` so they are classified as Category C
- * (scope gap) rather than failing the whole run.
+ * Adversarial cases (unbounded SECONDLY expansions, infinite recurrences against open ranges)
+ * can hang an engine indefinitely. A timeout becomes an [ExpansionResult.Error] with
+ * `throwableClass="TimeoutException"`, classified C, instead of failing the whole run.
  *
- * Classification rules:
- * - **D** (identical): both engines succeed and produce the same set of timestamps.
- * - **A** (clear bug per RFC): Pool A case, both engines succeed, exactly one
- *   matches the RFC ground truth. The engine that disagrees is wrong.
- * - **B** (RFC ambiguity or engine-level divergence without authority): any
- *   divergence where no RFC ground truth is available (non-Pool-A), or where
- *   Pool A ground truth isn't dispositive (both engines match, both engines
- *   disagree but agree with each other).
- * - **C** (scope gap): one or both engines errored or timed out.
+ * Mechanical classification, which an entry in [ParityAnalystNotes.overrides] replaces:
+ * - D (identical): both engines succeed with the same set of timestamps.
+ * - A (clear bug per RFC): the engines diverge, the case has [RRuleCase.rfcExpected] (Pool A),
+ *   and exactly one engine matches it. The other engine is wrong.
+ * - B (RFC ambiguity or divergence without authority): the engines diverge and the case has no
+ *   `rfcExpected`, or neither engine matches it.
+ * - C (scope gap): one or both engines errored or timed out.
  */
 object ParityHarnessRunner {
 
@@ -87,18 +83,18 @@ object ParityHarnessRunner {
         is ParityResult.BothErrored -> "C"
         is ParityResult.OneErrored -> "C"
         is ParityResult.Divergence -> {
-            // Pool A: RFC is authority — use it to pick A vs B.
+            // Pool A: the RFC is the authority that picks A or B.
             val rfc = case.rfcExpected
             if (rfc != null && lib is ExpansionResult.Success && ical is ExpansionResult.Success) {
                 val rfcSet = rfc.toSet()
                 val libMatches = lib.timestampsMs.toSet() == rfcSet
                 val icalMatches = ical.timestampsMs.toSet() == rfcSet
                 when {
-                    libMatches xor icalMatches -> "A" // exactly one matches RFC — other is wrong
-                    else -> "B" // neither matches (shared deviation or genuine ambiguity)
+                    libMatches xor icalMatches -> "A" // one matches the RFC; the other is wrong
+                    else -> "B" // neither matches (shared deviation or ambiguity)
                 }
             } else {
-                // Non-Pool-A: no authority, classify as ambiguity-or-interpretation.
+                // No RFC authority: ambiguity or interpretation.
                 "B"
             }
         }
@@ -110,7 +106,7 @@ object ParityHarnessRunner {
         classification: String,
     ): String? {
         if (parity is ParityResult.BothAgree) return null
-        // Preserve any pre-declared knownDivergenceReason as the starting note.
+        // A pre-declared knownDivergenceReason becomes the note.
         return case.knownDivergenceReason?.let { "[pre-classified] $it" }
     }
 }

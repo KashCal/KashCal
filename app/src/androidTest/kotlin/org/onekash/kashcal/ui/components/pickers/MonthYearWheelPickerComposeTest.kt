@@ -26,10 +26,13 @@ import java.text.DateFormatSymbols
 import java.util.Calendar as JavaCalendar
 
 /**
- * Compose UI integration tests for the month/year wheel picker toggle
- * in [InlineDatePickerContent].
+ * Compose UI tests for the month/year wheel toggle in [InlineDatePickerContent] and for
+ * [MonthYearWheelPicker] on its own.
  *
- * Tests the header click → wheel picker swap → calendar grid swap flow.
+ * Covered: a header tap swaps the grid for the wheels and a second tap brings the grid back;
+ * the wheels open on the current month and year; toggling doesn't call onDateSelect; the month
+ * arrows are gone while the wheels show; the standalone picker shows its month, year and
+ * content description; a month-wheel swipe fires onMonthChange with a new month.
  */
 @RunWith(AndroidJUnit4::class)
 class MonthYearWheelPickerComposeTest {
@@ -39,9 +42,7 @@ class MonthYearWheelPickerComposeTest {
 
     private val monthNames = DateFormatSymbols.getInstance().months.filter { it.isNotBlank() }
 
-    /**
-     * Creates a test harness wrapping InlineDatePickerContent with state management.
-     */
+    /** Renders [InlineDatePickerContent] holding its selected date and displayed month. */
     private fun setUpDatePicker(
         initialDateMillis: Long = System.currentTimeMillis(),
         onDateSelect: (Long) -> Unit = {},
@@ -76,14 +77,12 @@ class MonthYearWheelPickerComposeTest {
     fun headerClick_showsWheelPicker_hidesDayHeaders() {
         setUpDatePicker()
 
-        // Day-of-week headers should be visible initially (S appears twice: Sun + Sat)
+        // Day-of-week headers show first; "S" appears twice (Sun and Sat).
         composeTestRule.onAllNodesWithText("S").onFirst().assertIsDisplayed()
 
-        // Click the header to show wheel picker
         composeTestRule.onNodeWithContentDescription("Pick month and year").performClick()
         composeTestRule.waitForIdle()
 
-        // Wheel picker should be visible
         composeTestRule.onNodeWithContentDescription("Month and year picker").assertIsDisplayed()
     }
 
@@ -91,15 +90,14 @@ class MonthYearWheelPickerComposeTest {
     fun headerClickTwice_returnsToCalendarGrid() {
         setUpDatePicker()
 
-        // Toggle on
         composeTestRule.onNodeWithContentDescription("Pick month and year").performClick()
         composeTestRule.waitForIdle()
 
-        // Toggle off — now the icon changes to "Show calendar"
+        // With the wheels open, the header's content description is "Show calendar".
         composeTestRule.onNodeWithContentDescription("Show calendar").performClick()
         composeTestRule.waitForIdle()
 
-        // Day-of-week headers should be back (S appears twice: Sun + Sat)
+        // The day-of-week headers are back.
         composeTestRule.onAllNodesWithText("S").onFirst().assertIsDisplayed()
     }
 
@@ -113,11 +111,10 @@ class MonthYearWheelPickerComposeTest {
 
         setUpDatePicker(initialDateMillis = cal.timeInMillis)
 
-        // Show wheel picker
         composeTestRule.onNodeWithContentDescription("Pick month and year").performClick()
         composeTestRule.waitForIdle()
 
-        // Current month and year should be visible in the wheels
+        // The wheels show the current month and year.
         composeTestRule.onNodeWithText(currentMonth).assertIsDisplayed()
         composeTestRule.onNodeWithText(currentYear).assertIsDisplayed()
     }
@@ -148,13 +145,12 @@ class MonthYearWheelPickerComposeTest {
             }
         }
 
-        // Toggle to wheels and back
         composeTestRule.onNodeWithContentDescription("Pick month and year").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithContentDescription("Show calendar").performClick()
         composeTestRule.waitForIdle()
 
-        // onDateSelect should NOT have been called during toggle
+        // The toggle never calls onDateSelect.
         assertEquals("Date should not change during toggle", 0L, lastSelectedDate)
     }
 
@@ -164,15 +160,13 @@ class MonthYearWheelPickerComposeTest {
     fun arrowButtons_hiddenWhenWheelsShowing() {
         setUpDatePicker()
 
-        // Arrows should be visible initially
         composeTestRule.onNodeWithContentDescription("Previous month").assertIsDisplayed()
         composeTestRule.onNodeWithContentDescription("Next month").assertIsDisplayed()
 
-        // Show wheel picker
         composeTestRule.onNodeWithContentDescription("Pick month and year").performClick()
         composeTestRule.waitForIdle()
 
-        // Arrows should no longer be displayed
+        // The month arrows leave the tree.
         composeTestRule.onNodeWithContentDescription("Previous month").assertDoesNotExist()
         composeTestRule.onNodeWithContentDescription("Next month").assertDoesNotExist()
     }
@@ -214,7 +208,7 @@ class MonthYearWheelPickerComposeTest {
 
     @Test
     fun wheelScroll_firesOnMonthChange() {
-        // Start at January 2025
+        // January 2025.
         val cal = JavaCalendar.getInstance().apply {
             set(JavaCalendar.YEAR, 2025)
             set(JavaCalendar.MONTH, JavaCalendar.JANUARY)
@@ -241,16 +235,16 @@ class MonthYearWheelPickerComposeTest {
             }
         }
 
-        // Show wheel picker
         composeTestRule.onNodeWithContentDescription("Pick month and year").performClick()
         composeTestRule.waitForIdle()
 
-        // Swipe up on the month wheel to advance months
+        // The picker's center lies in the month wheel (the left 55%), so this swipe advances
+        // months.
         composeTestRule.onNodeWithContentDescription("Month and year picker")
             .performTouchInput { swipeUp() }
         composeTestRule.waitForIdle()
 
-        // onMonthChange should have fired at least once with a different month
+        // onMonthChange fired at least once, last with a month other than January.
         assertTrue(
             "Wheel scroll should trigger onMonthChange (count=$monthChangeCount)",
             monthChangeCount > 0

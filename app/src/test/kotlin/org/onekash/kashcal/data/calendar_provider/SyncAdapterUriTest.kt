@@ -9,12 +9,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for the sync-adapter ExtendedProperties write URI.
+ * Tests [syncAdapterExtendedPropertiesUri], the ExtendedProperties write URI.
  *
- * Writing ExtendedProperties on a synced calendar silently no-ops unless the
- * writer identifies as a sync adapter: CALLER_IS_SYNCADAPTER=true plus the
- * owning calendar's account name/type as query params. This helper builds that
- * URI; these tests pin the three load-bearing params.
+ * The platform refuses an ExtendedProperties write unless the writer identifies as a sync
+ * adapter: CALLER_IS_SYNCADAPTER=true plus the owning calendar's account name and type as query
+ * params. These tests pin those three params and the base URI.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])

@@ -18,9 +18,8 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.viewmodels.ShareAvailabilityUiState
 
 /**
- * Compose UI tests for ShareAvailabilitySheet. Drives the stateless variant
- * (ShareAvailabilitySheetContent) so we
- * don't need a real ViewModel or ModalBottomSheet host in the test harness.
+ * Compose UI tests for [ShareAvailabilitySheet]. They drive the stateless
+ * [ShareAvailabilitySheetContent], so no ViewModel or ModalBottomSheet host is needed.
  */
 @RunWith(AndroidJUnit4::class)
 class ShareAvailabilitySheetComposeTest {
@@ -115,7 +114,7 @@ class ShareAvailabilitySheetComposeTest {
                 )
             }
         }
-        // The preview text is rendered verbatim somewhere in the sheet.
+        // The preview text is rendered verbatim in the sheet.
         rule.onNodeWithText(state.previewText, substring = true).assertIsDisplayed()
     }
 
@@ -243,7 +242,8 @@ class ShareAvailabilitySheetComposeTest {
                 )
             }
         }
-        // 24h axis labels (00 / 06 / 12 / 18) and pills (09:00 / 17:00).
+        // 24h axis labels 00, 06 and 18 (12 renders too, not asserted here), and the
+        // working-hour pills 09:00 and 17:00.
         rule.onNodeWithText("00").assertIsDisplayed()
         rule.onNodeWithText("06").assertIsDisplayed()
         rule.onNodeWithText("18").assertIsDisplayed()
@@ -268,7 +268,8 @@ class ShareAvailabilitySheetComposeTest {
                 )
             }
         }
-        // 12h axis labels and pills ("12 AM" / "6 AM" / "6 PM" / "9:00 AM" / "5:00 PM").
+        // 12h axis labels 12 AM, 6 AM and 6 PM (12 PM renders too, not asserted here), and
+        // the pills 9:00 AM and 5:00 PM.
         rule.onNodeWithText("12 AM").assertIsDisplayed()
         rule.onNodeWithText("6 AM").assertIsDisplayed()
         rule.onNodeWithText("6 PM").assertIsDisplayed()

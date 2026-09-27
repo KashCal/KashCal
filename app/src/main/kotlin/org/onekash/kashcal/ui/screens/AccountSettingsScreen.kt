@@ -91,68 +91,69 @@ import org.onekash.kashcal.ui.shared.formatSyncLookback
 import org.onekash.kashcal.util.DateTimeUtils
 
 /**
- * UI state for the account settings screen.
- * Now uses a unified state with separate iCloudState and calDavState for sign-in flows.
- * This allows showing all settings sections regardless of account connection status.
+ * Holds the settings screen state. The iCloud and CalDAV sign-in flows keep separate states
+ * ([iCloudState], [calDavState]), so every section shows whether or not an account is connected.
  */
 data class AccountSettingsUiState(
     val isLoading: Boolean = false,
     val iCloudState: ICloudConnectionState = ICloudConnectionState.NotConnected(),
     val showICloudSignInSheet: Boolean = false,
-    /** CalDAV connection state for generic CalDAV servers */
+    /** Sign-in state for generic CalDAV servers. */
     val calDavState: CalDavConnectionState = CalDavConnectionState.NotConnected(),
     val showCalDavSignInSheet: Boolean = false,
-    /** Number of connected CalDAV accounts */
+    /** Number of connected CalDAV accounts. */
     val calDavAccountCount: Int = 0,
-    /** List of connected CalDAV accounts for display */
+    /** Connected CalDAV accounts, for display. */
     val calDavAccounts: List<CalDavAccountUiModel> = emptyList(),
-    /** Show add subscription dialog (controlled by ViewModel for external intents) */
+    /** Shows the add-subscription dialog; set by the ViewModel for a webcal:// link. */
     val showAddSubscriptionDialog: Boolean = false,
-    /** Pre-fill URL for subscription dialog (from webcal:// intent) */
+    /** URL to pre-fill in the add-subscription dialog, from a webcal:// link. */
     val prefillSubscriptionUrl: String? = null,
-    /** Pending snackbar message to display */
+    /** Snackbar message waiting to be shown. */
     val pendingSnackbarMessage: String? = null,
-    /** Action label for the pending snackbar (null = no action button shown) */
+    /** Action label for the pending snackbar; null shows no action button. */
     val pendingSnackbarActionLabel: String? = null,
-    /** Action callback invoked when the user taps the snackbar action */
+    /** Called when the user taps the snackbar action. */
     val pendingSnackbarAction: (() -> Unit)? = null,
     /**
-     * ID of the ICS subscription currently in the undo window.
-     * Set by [AccountSettingsViewModel.onDeleteSubscription], cleared by
-     * undo or settle. Filtered out of [AccountSettingsViewModel.subscriptions]
-     * so the row hides immediately while the snackbar is displayed.
+     * ID of the ICS subscription in the delete undo window. Set by
+     * [AccountSettingsViewModel.onDeleteSubscription]; cleared by undo, by settle, or when the
+     * row disappears from the database. Filtered out of [AccountSettingsViewModel.subscriptions]
+     * so the row hides while the snackbar shows.
      */
     val pendingSubscriptionDeletionId: Long? = null,
-    /** Signal to finish Activity after successful initial iCloud setup */
+    /**
+     * Asks the host to finish the Activity: after iCloud sign-in during initial setup, or on
+     * Done in the connected sheet.
+     */
     val pendingFinishActivity: Boolean = false,
-    /** Show success sheet after account connection */
+    /** Shows the success sheet after an account connects. */
     val showAccountConnectedSheet: Boolean = false,
-    /** Provider name for success sheet (e.g., "iCloud", "Nextcloud") */
+    /** Provider name for the success sheet, for example "iCloud" or "Nextcloud". */
     val connectedProviderName: String = "",
-    /** Email for success sheet */
+    /** Account email for the success sheet. */
     val connectedEmail: String = "",
-    /** Calendar count for success sheet */
+    /** Calendar count for the success sheet. */
     val connectedCalendarCount: Int = 0,
-    /** Account detail sheet state */
+    /** Account shown in the account detail sheet; null hides the sheet. */
     val accountDetail: AccountDetailUiModel? = null,
-    /** Sync status for account detail sheet */
+    /** Sync status shown in the account detail sheet. */
     val accountDetailSyncStatus: AccountDetailSyncStatus = AccountDetailSyncStatus.Idle,
-    /** Discovery status for account detail sheet */
+    /** Discovery status shown in the account detail sheet. */
     val accountDetailDiscoverStatus: AccountDetailDiscoverStatus = AccountDetailDiscoverStatus.Idle,
     /**
-     * Short-lived inline confirmation shown inside the account detail sheet after
-     * toggling contact sync (e.g. "Syncing contacts for j***@icloud.com"), carrying
-     * the tone that should style it so a destructive outcome doesn't read as
-     * celebratory. Cleared by [AccountSettingsViewModel.clearContactSyncConfirmation].
+     * Short-lived inline confirmation in the account detail sheet after toggling contact sync
+     * (for example "Syncing contacts for j***@icloud.com"). It carries the tone that styles it,
+     * so a destructive outcome doesn't read as celebratory. Cleared by
+     * [AccountSettingsViewModel.clearContactSyncConfirmation].
      */
     val contactSyncConfirmation: ContactSyncConfirmation? = null
 )
 
 /**
- * Account settings screen for managing iCloud connection and calendars.
- *
- * Redesigned in v14.2.0 to use flat list layout instead of nested accordions.
- * Each row taps to open a bottom sheet or navigate to a detail screen.
+ * Shows the settings hub: calendars, appearance, event defaults, sync, and backup sections, with
+ * search. It is a flat list; each row opens a bottom sheet, opens a detail screen, runs an
+ * action, or toggles a switch.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -180,7 +181,7 @@ fun AccountSettingsScreen(
     calendars: List<Calendar> = emptyList(),
     calendarGroups: List<CalendarGroup> = emptyList(),
     onToggleCalendar: (Long, Boolean) -> Unit = { _, _ -> },
-    // Hidden from UI but preserved for future use
+    // Not shown in the UI; kept for future use.
     onShowAllCalendars: () -> Unit = {},
     onHideAllCalendars: () -> Unit = {},
     // Sync settings
@@ -203,7 +204,7 @@ fun AccountSettingsScreen(
     onRefreshSubscription: (Long) -> Unit = {},
     onUpdateSubscription: (subscriptionId: Long, name: String, color: Int, syncIntervalHours: Int) -> Unit = { _, _, _, _ -> },
     onSyncAllSubscriptions: () -> Unit = {},
-    // Android 17+ local-network permission plumbing for the add-subscription dialog
+    // Android 17+ local-network permission for the add-subscription dialog
     localNetworkPermissionState: LocalNetworkPermissionState =
         LocalNetworkPermissionState.NotRequired,
     onRequestLocalNetwork: () -> Unit = {},
@@ -264,7 +265,7 @@ fun AccountSettingsScreen(
     onWidgetMaxEventsPerDayChange: (Int) -> Unit = {},
     widgetDetailedRows: Boolean = false,
     onWidgetDetailedRowsChange: (Boolean) -> Unit = {},
-    // Version footer (Checkpoint 9)
+    // Version footer
     versionName: String = "",
     // Settings search
     isSearchActive: Boolean = false,
@@ -273,12 +274,10 @@ fun AccountSettingsScreen(
     onSearchClose: () -> Unit = {},
     onSearchQueryChange: (String) -> Unit = {},
 ) {
-    // Two-stage back: first clears the query, second closes the bar.
-    // Note: while the search field has focus and the IME is open, Android
-    // first hides the IME on system-back without firing the BackHandler.
-    // The IME's "Search" key (ImeAction.Search wired in SettingsTopAppBar)
-    // gives the user an explicit IME-dismiss path so they don't have to
-    // exhaust a "phantom" back press to reach the two-stage flow.
+    // Two-stage back: the first clears the query, the second closes the bar. While the search
+    // field has focus and the IME is open, system back hides the IME without reaching this
+    // BackHandler; the IME's Search key (ImeAction.Search in SettingsTopAppBar) is a direct
+    // way to dismiss the IME, so the user doesn't spend a back press on it.
     androidx.activity.compose.BackHandler(enabled = isSearchActive) {
         if (searchQuery.isNotEmpty()) {
             onSearchQueryChange("")
@@ -353,7 +352,7 @@ fun AccountSettingsScreen(
 
                 val use24Hour = DateTimeUtils.isUse24Hour(timeFormat, DateFormat.is24HourFormat(context))
 
-                // Memoized: resolve default calendar name (supports both Room and Device)
+                // Default calendar name, from a Room or a device calendar
                 val defaultCalendarName = remember(calendars, deviceCalendars, defaultCalendar) {
                     when (defaultCalendar) {
                         is DefaultCalendar.Room ->
@@ -364,12 +363,12 @@ fun AccountSettingsScreen(
                     }
                 }
 
-                // Memoized: find local calendar for export
+                // Local calendar, for export
                 val localCalendar = remember(calendars) {
                     calendars.find { it.caldavUrl == org.onekash.kashcal.domain.initializer.LocalCalendarInitializer.LOCAL_CALENDAR_URL }
                 }
 
-                // Add Subscription Dialog - show if local trigger OR intent trigger
+                // Add-subscription dialog: opened from this screen or by a webcal:// link
                 if (showAddSubscriptionDialog || uiState.showAddSubscriptionDialog) {
                     AddSubscriptionDialog(
                         initialUrl = uiState.prefillSubscriptionUrl,
@@ -393,10 +392,9 @@ fun AccountSettingsScreen(
                         .fillMaxSize()
                         .verticalScroll(scrollState)
                 ) {
-                    // Track whether any SearchableSection emitted UI; if every section
-                    // collapses, render the empty-state composable. Driven by each
-                    // section's onEmitted callback so the value is correct regardless
-                    // of compose ordering — no imperative-var fragility.
+                    // Tracks whether any SearchableSection emitted UI; if none did, the
+                    // empty state renders. Each section reports through the tracker during
+                    // composition, and the empty-state check below runs after all of them.
                     val emittedTracker = remember { SearchEmissionTracker() }
                     emittedTracker.reset()
 
@@ -779,7 +777,7 @@ fun AccountSettingsScreen(
                     }
 
                     // ==================== Version Footer ====================
-                    // Only render when not actively searching.
+                    // Hidden while a search query is entered.
                     if (versionName.isNotEmpty() && searchQuery.isBlank()) {
                         VersionFooter(
                             versionName = versionName,
@@ -791,9 +789,8 @@ fun AccountSettingsScreen(
 
                 // ==================== Bottom Sheets ====================
 
-                // Default Calendar Sheet (exclude read-only calendars like ICS subscriptions)
+                // Default Calendar Sheet (excludes read-only calendars such as ICS subscriptions)
                 if (showDefaultCalendarSheet) {
-                    // Filter out read-only calendars from groups
                     val writableGroups = remember(calendarGroups) {
                         calendarGroups.mapNotNull { group: CalendarGroup ->
                             val writableCals = group.calendars.filter { cal -> !cal.isReadOnly }

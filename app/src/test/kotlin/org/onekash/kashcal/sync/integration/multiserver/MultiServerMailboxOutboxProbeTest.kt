@@ -23,31 +23,37 @@ import java.util.UUID
 import okhttp3.Credentials as OkCredentials
 
 /**
- * Re-probe of the Mailbox / OX App Suite scheduling channels, closing the
- * ambiguous result the T4 delivery audit recorded (an empty `<schedule-response/>`
- * for an event REQUEST). The audit left three unresolved hypotheses for that
- * emptiness: (a) it needs a real, deliverable recipient; (b) it needs a
- * per-attendee `Recipient` header / different request shape; (c) OX's outbox is
- * genuinely event-inert. The original spike only ever tried a single
- * reserved-TLD recipient, so (a) and (b) were never exercised.
+ * Probes the Mailbox (OX App Suite) scheduling channels to explain an empty
+ * `<schedule-response/>` for an event REQUEST POSTed to its outbox. Three hypotheses for the
+ * emptiness: (a) it needs a real, deliverable recipient; (b) it needs a per-attendee
+ * `Recipient` header or another request shape; (c) OX's outbox ignores event REQUESTs. A
+ * lone reserved-TLD recipient exercises neither (a) nor (b), so this probe sends to a real
+ * recipient with the per-attendee header.
  *
- * This probe is deliberately empirical and prints every observation; it pins
- * the disposition only via soft assumptions where the result is still
- * environment-dependent, and asserts hard only on the unambiguous control
- * (VFREEBUSY must work if the endpoint is alive at all).
+ * Every observation is printed. The VFREEBUSY control is asserted (it must work if the
+ * outbox is alive at all), and when a real recipient is configured the event REQUEST is
+ * pinned to an HTTP 200 with no per-recipient response. The implicit-PUT leg only prints.
  *
- * OUTWARD-FACING SIDE EFFECT: unlike the reserved-TLD probes, the event-REQUEST
- * leg here POSTs to a REAL, CONSENTING recipient supplied via the
- * `MAILBOX_PROBE_RECIPIENT` local.properties key (the account owner's own
- * mailbox). That address is never hardcoded in source — absent the key the
- * delivering legs skip — and it is redacted from every assertion/log message
- * (only `@example.test` survives the redactor), so it cannot reach junit-xml.
+ * Outward-facing side effect: unlike the reserved-TLD probes, the event-REQUEST leg POSTs
+ * to a real, consenting recipient from the `MAILBOX_PROBE_RECIPIENT` local.properties key
+ * (the account owner's own mailbox). That address is never hardcoded in source; without the
+ * key the event-REQUEST leg skips and the implicit-PUT leg uses an `@example.test` attendee.
+ * It is redacted from every assertion and log message (only `@example.test` survives the
+ * redactor), so it can't reach junit-xml.
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
  *       --tests '*MultiServerMailboxOutboxProbeTest*'
  */
 class MultiServerMailboxOutboxProbeTest {
+
+    /** A probe event 28 days out at 14:00Z, so no server treats it as a past event. */
+    private val probeStartMs = ((System.currentTimeMillis() / 86_400_000L) + 28) * 86_400_000L + 14 * 3_600_000L
+
+    /** [ms] as an iCalendar UTC date-time, e.g. 20261023T140000Z. */
+    private fun icsUtc(ms: Long): String =
+        java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'")
+            .withZone(java.time.ZoneOffset.UTC).format(java.time.Instant.ofEpochMilli(ms))
 
     private val config = CalDavServerConfig.allServers().first { it.name == "Mailbox" }
     private val builder = ITipBuilder()
@@ -81,9 +87,8 @@ class MultiServerMailboxOutboxProbeTest {
         val outbox = discoverOutbox(principal)
         println("  schedule-outbox-URL: ${outbox ?: "(none advertised)"}")
 
-        // ---- Control: VFREEBUSY REQUEST. The audit saw this return 2.0;Success,
-        // proving the endpoint is alive. If it fails, the whole outbox is down
-        // and the event-leg result below is meaningless. ----
+        // ---- Control: VFREEBUSY REQUEST, seen returning 2.0;Success. If it fails,
+        // the outbox is down and the event-leg result below is meaningless. ----
         if (outbox != null && organizer != null) {
             val (fbCode, fbBody) = postOutbox(
                 absolute(outbox), organizer, organizer,
@@ -93,9 +98,8 @@ class MultiServerMailboxOutboxProbeTest {
                 Regex("""request-status>\s*2\.\d""", RegexOption.IGNORE_CASE).containsMatchIn(fbBody.orEmpty())
             println("  [control] VFREEBUSY outbox POST: HTTP $fbCode, 2.x=$fbOk")
             println("    body: ${redact(fbBody.orEmpty()).take(300)}")
-            // Positive control: the endpoint must service free/busy. If this
-            // fails, the outbox is down and the event-leg verdict below would be
-            // a false 'inert' — so assert the control holds.
+            // Asserted so a dead outbox can't pass the event leg below as a false
+            // 'inert' verdict.
             org.junit.Assert.assertTrue(
                 "Mailbox/OX VFREEBUSY control failed (HTTP $fbCode) — outbox endpoint not alive; " +
                     "event-inertness verdict would be unreliable",
@@ -103,8 +107,8 @@ class MultiServerMailboxOutboxProbeTest {
             )
         }
 
-        // ---- Hypothesis (a)+(b): event REQUEST to a REAL recipient, with the
-        // per-attendee Recipient header. Only runs when the consenting recipient
+        // ---- Hypotheses (a) and (b): event REQUEST to a real recipient, with the
+        // per-attendee Recipient header. Runs only when the consenting recipient
         // key is present. ----
         val realRecipient = CalDavTestServerLoader.property("MAILBOX_PROBE_RECIPIENT")
         if (outbox != null && organizer != null && realRecipient != null) {
@@ -121,11 +125,11 @@ class MultiServerMailboxOutboxProbeTest {
                 )
             )
             val (evCode, evBody) = postOutbox(absolute(outbox), organizer, realRecipient, ics)
-            // A real per-recipient result is a <CAL:response> ELEMENT with a
-            // <recipient>/<request-status> pair. The inert case is a
-            // self-closing <schedule-response/> with no response child — so
-            // require an OPENING <...response> tag that is NOT the
-            // schedule-response wrapper and NOT self-closed.
+            // A real per-recipient result is a <CAL:response> element with a
+            // <recipient>/<request-status> pair. The inert case is a self-closing
+            // <schedule-response/> with no response child, so require an opening
+            // <...response> tag that is neither the schedule-response wrapper nor
+            // self-closed.
             val hasResponseChild = Regex(
                 """<(?:[A-Za-z]+:)?response[\s>]""", RegexOption.IGNORE_CASE
             ).containsMatchIn(evBody.orEmpty())
@@ -141,11 +145,11 @@ class MultiServerMailboxOutboxProbeTest {
                 else -> "outbox rejected the event REQUEST (HTTP $evCode)"
             })
 
-            // Regression pins (the audit's 'no remedy' for Mailbox/OX): the
-            // control proves the endpoint is alive, and the event REQUEST to a
-            // REAL recipient must NOT yield a per-recipient delivery response.
-            // If OX ever starts honoring event REQUESTs via the outbox, this
-            // flips and the no-remedy classification must be revisited.
+            // Pins the no-remedy classification for Mailbox/OX: with the control
+            // proving the outbox alive, an event REQUEST to a real recipient must
+            // not yield a per-recipient delivery response. If OX starts honoring
+            // event REQUESTs through the outbox, this fails and the no-remedy
+            // classification must be revisited.
             org.junit.Assert.assertEquals(
                 "Mailbox/OX outbox event REQUEST unexpectedly returned HTTP != 200", 200, evCode
             )
@@ -158,8 +162,8 @@ class MultiServerMailboxOutboxProbeTest {
             println("  [event REQUEST] SKIPPED — no MAILBOX_PROBE_RECIPIENT configured")
         }
 
-        // ---- Implicit PUT leg: create on a real calendar, re-fetch, classify
-        // via the app's own read-back parse path. ----
+        // ---- Implicit PUT leg: create on a real calendar, re-fetch, and classify
+        // through the app's read-back parser. Deletes only the URL it created. ----
         val calendarUrl = discoverCalendar(principal)
         if (calendarUrl != null && organizer != null) {
             val recipient = CalDavTestServerLoader.property("MAILBOX_PROBE_RECIPIENT")
@@ -172,8 +176,8 @@ class MultiServerMailboxOutboxProbeTest {
                 BEGIN:VEVENT
                 UID:$uid
                 DTSTAMP:20260615T120000Z
-                DTSTART:20260615T140000Z
-                DTEND:20260615T150000Z
+                DTSTART:${icsUtc(probeStartMs)}
+                DTEND:${icsUtc(probeStartMs + 3_600_000L)}
                 SUMMARY:KashCal Mailbox implicit-PUT probe
                 ORGANIZER:mailto:$organizer
                 ATTENDEE;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:$recipient
@@ -199,12 +203,12 @@ class MultiServerMailboxOutboxProbeTest {
         }
 
         println("=== END MAILBOX/OX RE-PROBE ===\n")
-        // Verdict (re-probe 2026-06-10, against a real consenting recipient):
-        // VFREEBUSY works (2.0;Success) but an event REQUEST returns an empty
+        // Verdict (2026-06-10, against a real consenting recipient): VFREEBUSY
+        // works (2.0;Success) but an event REQUEST returns an empty
         // <schedule-response/>, and the implicit PUT stores the attendee with no
         // SCHEDULE-STATUS. So Mailbox/OX has no client-drivable CalDAV
-        // scheduling channel — delivery runs through OX's own web/EAS stack.
-        // The control + event-REQUEST assertions above pin that disposition.
+        // scheduling channel; delivery runs through OX's own web/EAS stack. The
+        // control and event-REQUEST assertions above pin that.
     }
 
     private fun discoverOutbox(principal: String): String? {
@@ -245,8 +249,8 @@ class MultiServerMailboxOutboxProbeTest {
         importId = "kashcal-mailbox-outbox@kashcal.test",
         summary = "KashCal Mailbox outbox re-probe",
         description = null, location = null,
-        dtStart = ICalDateTime.parse("20260615T140000Z"),
-        dtEnd = ICalDateTime.parse("20260615T150000Z"),
+        dtStart = ICalDateTime.parse(icsUtc(probeStartMs)),
+        dtEnd = ICalDateTime.parse(icsUtc(probeStartMs + 3_600_000L)),
         duration = null, isAllDay = false,
         status = EventStatus.CONFIRMED, sequence = 0,
         rrule = null, exdates = emptyList(), recurrenceId = null,
@@ -288,7 +292,7 @@ class MultiServerMailboxOutboxProbeTest {
         return origin + (if (pathOrUrl.startsWith("/")) pathOrUrl else "/$pathOrUrl")
     }
 
-    /** Mask every address that is not the reserved @example.test TLD (S4). */
+    /** Masks every address outside the reserved `@example.test` domain. */
     private fun redact(text: String): String =
         Regex("""[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+""").replace(text) { m ->
             if (m.value.endsWith("@example.test", ignoreCase = true)) m.value else "<redacted-email>"

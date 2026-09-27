@@ -29,14 +29,11 @@ import org.onekash.kashcal.R
 private val AccentBlue = Color(0xFF5AC8FA)
 
 /**
- * Onboarding banner shown to first-time users.
- * Prompts to connect iCloud calendar.
+ * Shows the onboarding sheet prompting the user to connect an iCloud calendar.
  *
- * Appears once on first launch when:
- * - iCloud is NOT configured
- * - User has NOT dismissed before
- *
- * After dismissal, it will not appear again (persisted to DataStore).
+ * The host shows it at launch while no CalDAV-capable account (iCloud or CalDAV) has
+ * credentials and the user hasn't dismissed it. Connect, Not Now and dismissing the sheet each
+ * persist the dismissal to DataStore, so it doesn't return.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

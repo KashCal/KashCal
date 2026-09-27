@@ -12,19 +12,16 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * Adapter contract for the production RRULE → ical4j path.
+ * Tests [IcalDavRRuleAdapter.buildICalEvent] and [IcalDavRRuleAdapter.extractTimestamps], which
+ * turn the engine's primitive arguments (rrule string, epoch ms, timezone string, isAllDay, CSV
+ * RDATE/EXDATE) into the [org.onekash.icaldav.model.ICalEvent] that
+ * [org.onekash.icaldav.recurrence.RRuleExpander] expands.
  *
- * Bridges the OccurrenceGenerator's primitive-argument signature
- * (rrule string, epoch ms, timezone string, isAllDay, CSV RDATE/EXDATE)
- * into an [org.onekash.icaldav.model.ICalEvent] consumed by
- * [org.onekash.icaldav.recurrence.RRuleExpander].
+ * Two of the adapter's quirks, shared with the test-only `LibRecurEngine` oracle, are pinned here:
  *
- * The adapter encapsulates two behavior-preserving quirks ported from
- * `LibRecurEngine` so migration doesn't regress real-world-malformed inputs:
- *
- *   (b) COUNT+UNTIL both present → strip UNTIL (lib-recur's sanitizer).
- *   (g) DATE-format RDATE/EXDATE against a timed DTSTART → inherit DTSTART's
- *       hour/minute/second so `toDayCode()` returns the correct local day.
+ *   (b) COUNT and UNTIL both present: UNTIL is stripped.
+ *   (g) A DATE-format RDATE/EXDATE on a timed DTSTART inherits DTSTART's hour, minute and
+ *       second, so `toDayCode()` returns the expected local day.
  */
 class IcalDavRRuleAdapterTest {
 
@@ -122,14 +119,13 @@ class IcalDavRRuleAdapterTest {
         assertTrue(event.rdates.isEmpty())
     }
 
-    // ========== QUIRK (g) — DATE-format RDATE/EXDATE inherit DTSTART time ==========
+    // ========== Quirk (g): DATE-format RDATE/EXDATE inherit DTSTART time ==========
 
     @Test
     fun `QUIRK g — DATE-format EXDATE against TIMED event with TZID inherits DTSTART hour`() {
-        // DTSTART: 2025-07-01 10:30 America/New_York (local); EXDATE "20250703".
-        // Expected: EXDATE's toDayCode is "20250703", matching lib-recur's
-        // inheritance semantics. Pre-fix behavior would have produced "20250702"
-        // because UTC-midnight of 2025-07-03 is 20:00 EDT on 2025-07-02.
+        // DTSTART 2025-07-01 10:30 America/New_York, EXDATE "20250703". Its day code must be
+        // "20250703", as lib-recur gives. Without the inheritance it would be "20250702":
+        // UTC midnight of 2025-07-03 is 20:00 EDT on 2025-07-02.
         val dtstart = ZonedDateTime.of(2025, 7, 1, 10, 30, 0, 0, ZoneId.of("America/New_York"))
             .toInstant().toEpochMilli()
         val event = IcalDavRRuleAdapter.buildICalEvent(
@@ -147,9 +143,8 @@ class IcalDavRRuleAdapterTest {
 
     @Test
     fun `QUIRK g — DATE-format EXDATE against TIMED event with floating timezone inherits DTSTART hour`() {
-        // The dominant shape in existing OccurrenceGenerator tests: timezone=null,
-        // timed event constructed via parseDate() at a specific hour. The quirk-g
-        // inheritance must work in this shape too.
+        // The common shape in OccurrenceGenerator tests: timezone=null and a timed event
+        // built with parseDate() at a specific hour. Quirk (g) must hold here too.
         val dtstart = ZonedDateTime.of(2025, 7, 1, 14, 0, 0, 0, ZoneOffset.UTC)
             .toInstant().toEpochMilli()
         val event = IcalDavRRuleAdapter.buildICalEvent(
@@ -161,16 +156,15 @@ class IcalDavRRuleAdapterTest {
             exdateStrings = "20250703",
         )
         assertEquals(1, event.exdates.size)
-        // With floating zone and DTSTART hour=14, inheriting hour 14 gives
-        // exdate at 2025-07-03 14:00 local time, whose day code in the system
-        // default zone is 20250703.
+        // With a floating zone the exdate inherits DTSTART's hour in the system default zone,
+        // so its day code in that zone is 20250703.
         assertEquals("20250703", event.exdates[0].toDayCode())
     }
 
     @Test
     fun `QUIRK g — DATE-format RDATE against ALL-DAY event still converts to UTC midnight`() {
-        // Quirk g applies only to timed events. For all-day, DATE-format RDATE
-        // remains UTC-midnight (matching the existing all-day semantics).
+        // Quirk (g) applies only to timed events; an all-day DATE-format RDATE stays UTC
+        // midnight.
         val event = IcalDavRRuleAdapter.buildICalEvent(
             rrule = "FREQ=WEEKLY;COUNT=3",
             dtstartMs = utcMidnight(2024, 1, 1),
@@ -183,7 +177,7 @@ class IcalDavRRuleAdapterTest {
         assertEquals(1705276800000L, event.rdates[0].timestamp)
     }
 
-    // ========== QUIRK (b) — COUNT+UNTIL sanitization ==========
+    // ========== Quirk (b): COUNT+UNTIL sanitization ==========
 
     @Test
     fun `QUIRK b — RRULE with both COUNT and UNTIL has UNTIL stripped`() {
@@ -232,10 +226,9 @@ class IcalDavRRuleAdapterTest {
 
     @Test
     fun `dtEnd equals dtStart — RRuleExpander ignores duration for expansion`() {
-        // IcalDavRRuleEngine throws away each occurrence's dtEnd (only reads
-        // dtStart.timestamp); reusing dtStart here saves an allocation per call.
-        // If this assertion changes, re-verify that RRuleExpander still
-        // selects occurrences independent of duration.
+        // IcalDavRRuleEngine reads only each occurrence's dtStart.timestamp, so the adapter
+        // reuses dtStart as dtEnd. If this assertion changes, re-verify that RRuleExpander
+        // still selects occurrences independent of duration.
         val event = buildDefault()
         assertNotNull(event.dtEnd)
         assertEquals(baseStartUtc, event.dtEnd!!.timestamp)

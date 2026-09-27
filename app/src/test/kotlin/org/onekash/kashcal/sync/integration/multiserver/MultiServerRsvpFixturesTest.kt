@@ -24,26 +24,22 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 /**
- * Parameterized integration tests that capture how each supported CalDAV
- * server handles the RSVP write path. Output is the matrix of observed
- * behavior (Schedule-Tag exposure, If-Schedule-Tag-Match enforcement, 412
- * on stale tags, recurring-RSVP shape, SEQUENCE handling, server-side
- * read-only enforcement). The resulting findings inform the 412-retry path
- * and `If-Schedule-Tag-Match` wiring, grounding it in real per-server
- * behavior rather than the spec alone.
+ * Probes how each CalDAV server handles the RSVP write path and prints what it observed: the
+ * PARTSTAT round trip, Schedule-Tag and Schedule-Status exposure, If-Schedule-Tag-Match
+ * enforcement, stale-tag and stale-ETag rejection, the shape of a recurring RSVP, PARTSTAT case,
+ * SEQUENCE handling and read-only enforcement on attendee edits. The tests fail only on outcomes
+ * outside [OutcomeBands] (see [loudFailIfUnexpected]); the per-server data points are printed, not
+ * asserted.
  *
- * The production `CalDavClient` interface doesn't yet expose `Schedule-Tag`
- * / `Schedule-Status` response headers or the `If-Schedule-Tag-Match`
- * request header. This test uses a raw OkHttp client to probe those
- * directly, so we can decide which subset production needs.
+ * `CalDavClient` exposes no `Schedule-Tag` or `Schedule-Status` response header and sends no
+ * `If-Schedule-Tag-Match`, so the probes go through a raw OkHttp client ([rawHttp]).
  *
  * Run: `./gradlew :app:testDebugUnitTest -Pintegration --tests
- * '*MultiServerRsvpFixturesTest*'`. Servers unreachable at runtime skip
- * via `assumeTrue`; minimum coverage is iCloud + 3 Docker servers.
+ * '*MultiServerRsvpFixturesTest*'`. A server without credentials or unreachable at runtime skips
+ * via `assumeTrue`.
  *
- * PII redaction follows the same pattern as `MultiServerAttendeePersistenceTest`:
- * non-`@example.test` email addresses are masked before any test failure
- * assertion message reaches junit-xml output.
+ * Non-`@example.test` addresses are masked ([redactPii]) before an ICS line reaches output, the
+ * same pattern as `MultiServerAttendeePersistenceTest`.
  */
 @RunWith(Parameterized::class)
 class MultiServerRsvpFixturesTest(
@@ -57,54 +53,50 @@ class MultiServerRsvpFixturesTest(
         private val classStartMs = System.currentTimeMillis()
         internal val UID_PREFIX = "t2fix-$classStartMs-"
 
-        // RFC 5545 §8.1 — iCalendar media type for PUT bodies.
+        // iCalendar media type for PUT bodies (RFC 5545 §8.1).
         internal val ICAL_MEDIA_TYPE = "text/calendar; charset=utf-8".toMediaType()
 
-        // Per-server calendar URL cache. JUnit Parameterized constructs a
-        // new instance per (server × test) pair; without this cache each
-        // test re-runs 3 chained PROPFINDs (~2-3s on iCloud × 8 tests).
+        // Calendar URL per server. Parameterized builds a new instance per server and test, so
+        // without this each of the 8 tests re-runs 3 chained PROPFINDs (about 2-3s each on iCloud).
         private val calendarUrlCache = ConcurrentHashMap<String, String>()
     }
 
-    // CalDavClient is used only for PROPFIND-based calendar discovery and
-    // for the per-test deleteEvent cleanup. All RSVP probe traffic uses
-    // [rawHttp] directly so we can read Schedule-Tag / Schedule-Status /
-    // ETag and set If-Schedule-Tag-Match — none of which the production
-    // interface exposes today.
+    // Used only for calendar discovery and the cleanup in [cleanup]. Probe traffic goes through
+    // [rawHttp], which can read Schedule-Tag, Schedule-Status and ETag and send
+    // If-Schedule-Tag-Match.
     private var caldavClient: CalDavClient? = null
     private var creds: ServerCredentials? = null
     private var calendarUrl: String? = null
-    private val createdEventUrls = mutableListOf<Pair<String, String>>()
+    // Every URL this run sent a create to, recorded before the request goes out
+    // so a lost reply is still cleaned up. Some servers answer a create with no
+    // ETag and change it later, so the list holds URLs only.
+    private val createdEventUrls = linkedSetOf<String>()
 
     /**
-     * Outcome bands for [loudFailIfUnexpected]. Each test passes the band
-     * matching its expected data-point outcomes; anything outside the band
-     * (5xx, 401, 4xx not in the band) is loud-fail.
+     * Non-2xx codes each probe accepts as a data point in [loudFailIfUnexpected]. A 5xx or 401
+     * fails even if listed, and so does any other non-2xx code outside the band.
      */
     private object OutcomeBands {
-        // Stale-tag PUT: 412 (server enforces) or 409 (alternate phrasing).
+        // Stale Schedule-Tag or ETag: 412, or 409 from a server that phrases it that way.
         val STALE_TAG = setOf(412, 409)
-        // Read-only-mode reject (server-enforced policy denial).
+        // Attendee's substantive edit refused by server policy.
         val READ_ONLY_REJECT = setOf(403, 409, 422)
-        // Server-side malformed-input rejection (e.g. lowercase PARTSTAT).
+        // Malformed input refused, e.g. lowercase PARTSTAT.
         val MALFORMED_INPUT = setOf(400, 422)
-        // Server-side policy reject for SEQUENCE non-bump on attendee PUT.
+        // Attendee PUT that doesn't bump SEQUENCE, refused by server policy.
         val SEQUENCE_POLICY_REJECT = setOf(400, 409, 422)
-        // No-header PUT race — some servers accept regardless, others 412/403/409.
+        // PUT with no precondition header: some servers accept it, others answer 412, 403 or 409.
         val NO_HEADER_PUT = setOf(412, 403, 409)
     }
 
     /**
-     * Raw OkHttp client used for header-level probing of `Schedule-Tag`,
-     * `Schedule-Status`, and `If-Schedule-Tag-Match`. The production
-     * `CalDavClient` interface doesn't expose these (yet); this is the
-     * fixture-collection escape hatch.
+     * Sends the probes: it can read `Schedule-Tag` and `Schedule-Status` and send
+     * `If-Schedule-Tag-Match`, which `CalDavClient` can't.
      *
-     * Built in [setup] once credentials are known so it can carry the same
-     * [DigestAuthenticator] the production client uses. The preemptive Basic
-     * header on each request satisfies Basic-auth servers directly; on a
-     * Digest-only server (BaikalDigest) that header is rejected with 401 and
-     * the authenticator answers the challenge — without it, every write 401s.
+     * [setup] rebuilds it with the [DigestAuthenticator] the production client uses once
+     * credentials are known. The preemptive Basic header on each request satisfies Basic-auth
+     * servers; a Digest-only server (BaikalDigest) answers it with 401 and the authenticator
+     * answers the challenge. Without the authenticator every write there 401s.
      */
     private var rawHttp: OkHttpClient = OkHttpClient.Builder()
         .connectTimeout(15, TimeUnit.SECONDS)
@@ -123,7 +115,7 @@ class MultiServerRsvpFixturesTest(
             caldavClient = pair.first
             creds = pair.second
             rawHttp = rawHttp.newBuilder()
-                .authenticator(DigestAuthenticator(pair.second.username, pair.second.password))
+                .authenticator(DigestAuthenticator(pair.second.username, pair.second.password, allowCleartext = true))
                 .build()
         }
     }
@@ -131,9 +123,12 @@ class MultiServerRsvpFixturesTest(
     @After
     fun cleanup() = runBlocking {
         val c = caldavClient ?: return@runBlocking
-        for ((url, etag) in createdEventUrls.reversed()) {
+        for (url in createdEventUrls.reversed()) {
             try {
-                c.deleteEvent(url, etag)
+                // The server may have changed the ETag since this run last saw it,
+                // so delete with a fresh one, and without one if that still fails.
+                val deleted = c.deleteEvent(url, c.fetchEtag(url).getOrNull())
+                if (!deleted.isSuccess()) c.deleteEvent(url, null)
             } catch (_: Exception) {
                 // best-effort
             }
@@ -152,10 +147,8 @@ class MultiServerRsvpFixturesTest(
     }
 
     private suspend fun discoverCalendar(): String? {
-        // Reuse a previously-discovered calendar URL across the 8 tests
-        // for this server. Each test gets a fresh JUnit instance, so
-        // without the cache `setup()` would re-run 3 chained PROPFINDs
-        // per test — ~16-24s of redundant network on iCloud alone.
+        // Shared across this server's 8 tests; without it iCloud alone spends about 16-24s on
+        // repeated discovery.
         calendarUrlCache[config.name]?.let { return it }
 
         val c = caldavClient!!
@@ -174,23 +167,16 @@ class MultiServerRsvpFixturesTest(
         return url
     }
 
-    private fun trackEvent(url: String, etag: String) {
-        createdEventUrls.removeAll { it.first == url }
-        createdEventUrls.add(Pair(url, etag))
-    }
-
     /**
-     * Auth header for the raw OkHttp client. Reuses the same Basic-auth
-     * credentials the production `CalDavClient` factory uses internally.
+     * Returns the preemptive Basic header for [rawHttp], from the credentials [caldavClient] uses.
      */
     private fun authHeader(): String =
         Credentials.basic(creds!!.username, creds!!.password)
 
     /**
-     * Redact non-synthetic email addresses before letting an ICS body land in
-     * a test failure message / junit XML. Some servers (Zoho) rewrite
-     * ORGANIZER to the authenticated account holder's email — without this
-     * scrub, the real account address would surface in CI output and leak PII.
+     * Masks every email address not ending in `@example.test` before ICS text reaches test output.
+     * Some servers (Zoho) rewrite ORGANIZER to the account holder's address, which would otherwise
+     * leak into CI output.
      */
     private fun redactPii(text: String): String {
         val emailRegex = Regex("""[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}""")
@@ -201,10 +187,9 @@ class MultiServerRsvpFixturesTest(
     }
 
     /**
-     * RFC 6638 §6.1 — server-emitted iTIP delivery status. `2.0;Success`
-     * means the REPLY was queued for delivery; `5.x;...` means the server
-     * couldn't route it. Header absence on a 2xx PUT means the server
-     * doesn't implement RFC 6638 schedule responses (or doesn't surface them).
+     * Prints the response code and any `ETag`, `Schedule-Tag` (RFC 6638 §8.2) and `Schedule-Status`
+     * header. RFC 6638 defines no `Schedule-Status` header (delivery status is the SCHEDULE-STATUS
+     * parameter, §7.3, with codes in §3.2.9), so this records whether a server sends one.
      */
     private fun observe(label: String, response: Response) {
         val sb = StringBuilder("[${config.name}] $label: code=${response.code}")
@@ -215,19 +200,16 @@ class MultiServerRsvpFixturesTest(
     }
 
     /**
-     * Build the standard RSVP fixture: ORGANIZER mailto matches the
-     * authenticated account (so iCloud's iSchedule routing doesn't strip
-     * ATTENDEEs — the documented iCloud ATTENDEE-routing quirk), one
-     * ATTENDEE matching the auth account with PARTSTAT=NEEDS-ACTION, one
-     * external synthetic ATTENDEE.
+     * Builds the RSVP fixture: ORGANIZER is the authenticated account (so iCloud's iSchedule
+     * routing doesn't strip the ATTENDEEs), one ATTENDEE is the account with [partstat], and one is
+     * an external `@example.test` attendee who has accepted.
      *
-     * @param uid event UID; must start with [UID_PREFIX] for the sweep
-     * @param partstat PARTSTAT for the authenticated user's ATTENDEE row
-     * @param sequence SEQUENCE value for the VEVENT
-     * @param rrule optional RRULE for recurring-event tests
-     * @param organizerOverride when set, ORGANIZER mailto != auth account
-     *   (used by the read-only-mode probe; iSchedule-routing servers
-     *   strip ATTENDEEs in this case so they skip via config flag)
+     * @param uid event UID; every test starts it with [UID_PREFIX]
+     * @param partstat PARTSTAT on the authenticated account's ATTENDEE line
+     * @param rrule RRULE for the recurring-event test, or no RRULE line when null
+     * @param organizerOverride ORGANIZER address other than the account, for the read-only probe.
+     *   Servers flagged [CalDavServerConfig.stripsAttendeesOnSyntheticOrganizer] strip the
+     *   ATTENDEEs then, so that probe skips them.
      */
     private fun buildRsvpFixture(
         uid: String,
@@ -257,13 +239,13 @@ END:VCALENDAR
         """.trimIndent()
     }
 
-    /** Constant SUMMARY in the fixture; mutation tests `.replace` against this. */
+    /** SUMMARY of every fixture; the substantive-edit probe replaces it with [MUTATED_SUMMARY]. */
     private val ORIGINAL_SUMMARY get() = "T2 RSVP fixture on ${config.name}"
     private val MUTATED_SUMMARY get() = "MUTATED-BY-ATTENDEE on ${config.name}"
 
     /**
-     * Raw OkHttp PUT — bypasses production CalDavClient so we can inspect
-     * Schedule-Tag and Schedule-Status response headers directly.
+     * PUTs [ics] through [rawHttp] with the given preconditions. A create (`If-None-Match: *`)
+     * records [eventUrl] for [cleanup] before the request goes out.
      */
     private fun rawPut(
         eventUrl: String,
@@ -278,6 +260,7 @@ END:VCALENDAR
             .put(ics.toRequestBody(ICAL_MEDIA_TYPE))
         ifMatch?.let { builder.header("If-Match", "\"$it\"") }
         ifNoneMatch?.let { builder.header("If-None-Match", it) }
+        if (ifNoneMatch == "*") createdEventUrls += eventUrl
         ifScheduleTagMatch?.let { builder.header("If-Schedule-Tag-Match", "\"$it\"") }
         return rawHttp.newCall(builder.build()).execute()
     }
@@ -291,14 +274,13 @@ END:VCALENDAR
         return rawHttp.newCall(req).execute()
     }
 
-    /** PUT to a fresh URL within the discovered calendar. */
+    /** Returns the resource URL for [uid] in the discovered calendar. */
     private fun newEventUrl(uid: String): String =
         calendarUrl!!.trimEnd('/') + "/" + uid + ".ics"
 
     /**
-     * Loud-fail guards. Throw an AssertionError for outcomes that indicate
-     * a broken test fixture or unrelated server regression — NOT for
-     * documented data-point quirks.
+     * Throws an AssertionError for a 5xx, a 401 or any other non-2xx code outside [allowedCodes]:
+     * those mean a broken fixture, bad credentials or a server regression, not a data point.
      */
     private fun loudFailIfUnexpected(label: String, response: Response, allowedCodes: Set<Int>) {
         val code = response.code
@@ -332,24 +314,22 @@ END:VCALENDAR
         val uid = "${UID_PREFIX}roundtrip-${config.name.lowercase()}-${UUID.randomUUID()}"
         val url = newEventUrl(uid)
 
-        // First PUT — must succeed (test fixture creates the event).
+        // The create must succeed.
         val createIcs = buildRsvpFixture(uid, partstat = "NEEDS-ACTION", sequence = 0)
         val createResp = rawPut(url, createIcs, ifNoneMatch = "*")
         observe("create", createResp)
         loudFailIfUnexpected("create", createResp, allowedCodes = emptySet())
         val createEtag = createResp.header("ETag")?.trim('"')
-        if (createEtag != null) trackEvent(url, createEtag)
 
-        // Second PUT — change self's PARTSTAT to ACCEPTED, keep SEQUENCE:0
-        // (RFC 5546 §2.1.4 — attendee PARTSTAT-only change shouldn't bump).
+        // Change the account's PARTSTAT to ACCEPTED and keep SEQUENCE:0: RFC 5546 §2.1.4 says a
+        // REPLY must not increment SEQUENCE.
         val updateIcs = buildRsvpFixture(uid, partstat = "ACCEPTED", sequence = 0)
         val updateResp = rawPut(url, updateIcs, ifMatch = createEtag)
         observe("update-partstat", updateResp)
         loudFailIfUnexpected("update-partstat", updateResp, allowedCodes = emptySet())
         val updatedEtag = updateResp.header("ETag")?.trim('"') ?: createEtag
-        if (updatedEtag != null) trackEvent(url, updatedEtag)
 
-        // GET and inspect — PARTSTAT must be observable as ACCEPTED.
+        // Read back and report whether PARTSTAT=ACCEPTED survived.
         val getResp = rawGet(url)
         observe("get-after-update", getResp)
         loudFailIfUnexpected("get-after-update", getResp, allowedCodes = emptySet())
@@ -359,9 +339,9 @@ END:VCALENDAR
         val selfAttendeeLine = unfolded.lines()
             .firstOrNull { it.startsWith("ATTENDEE") && it.contains(selfAddr) }
         if (selfAttendeeLine == null) {
-            // Documented quirk on iCloud-class servers (iSchedule routing
-            // strips self-as-attendee when ORGANIZER mailto matches). Log
-            // and skip — this fixture records behavior, doesn't enforce it.
+            // iCloud-class servers' iSchedule routing strips the account's own ATTENDEE when the
+            // ORGANIZER mailto matches. Log and stop: this probe records behavior, it doesn't
+            // enforce it.
             println(
                 "[${config.name}] rsvp_partstat_roundtrip: self ATTENDEE row " +
                     "absent on GET (server-side iTIP routing). Documented quirk."
@@ -391,9 +371,8 @@ END:VCALENDAR
         val createEtag = createResp.header("ETag")?.trim('"')
         val createScheduleTag = createResp.header("Schedule-Tag")?.trim('"')
         val createScheduleStatus = createResp.header("Schedule-Status")
-        if (createEtag != null) trackEvent(url, createEtag)
 
-        // Update to capture headers on a PARTSTAT-change PUT (the actual T2 path).
+        // Capture the headers on a PARTSTAT-change PUT, the path an RSVP takes.
         val updateResp = rawPut(
             url,
             buildRsvpFixture(uid, partstat = "ACCEPTED"),
@@ -404,7 +383,6 @@ END:VCALENDAR
         val updateScheduleTag = updateResp.header("Schedule-Tag")?.trim('"')
         val updateScheduleStatus = updateResp.header("Schedule-Status")
         val updateEtag = updateResp.header("ETag")?.trim('"') ?: createEtag
-        if (updateEtag != null) trackEvent(url, updateEtag)
 
         println(
             "[${config.name}] rsvp_schedule_tag_and_status_provided: " +
@@ -429,15 +407,14 @@ END:VCALENDAR
         observe("create", createResp)
         val scheduleTag = createResp.header("Schedule-Tag")?.trim('"')
         val createEtag = createResp.header("ETag")?.trim('"')
-        if (createEtag != null) trackEvent(url, createEtag)
 
-        // Skip if server doesn't expose Schedule-Tag — graceful degradation.
+        // Without a Schedule-Tag there is nothing to match against, so skip.
         assumeTrue(
             "${config.name} doesn't expose Schedule-Tag (skipping If-Schedule-Tag-Match probe)",
             scheduleTag != null
         )
 
-        // (a) Stale tag — expect 412 if server enforces, 2xx if forgiving.
+        // (a) Stale tag: 412 or 409 if the server enforces it, 2xx if it doesn't.
         val staleTag = "stale-$scheduleTag"
         val staleResp = rawPut(
             url,
@@ -447,7 +424,7 @@ END:VCALENDAR
         observe("update-stale-tag", staleResp)
         loudFailIfUnexpected("update-stale-tag", staleResp, allowedCodes = OutcomeBands.STALE_TAG)
 
-        // (b) Current tag — must succeed.
+        // (b) Current tag: must succeed.
         val currentResp = rawPut(
             url,
             buildRsvpFixture(uid, partstat = "ACCEPTED"),
@@ -456,9 +433,8 @@ END:VCALENDAR
         observe("update-current-tag", currentResp)
         loudFailIfUnexpected("update-current-tag", currentResp, allowedCodes = emptySet())
         val newEtag = currentResp.header("ETag")?.trim('"') ?: createEtag
-        if (newEtag != null) trackEvent(url, newEtag)
 
-        // (c) No header at all — record what server does.
+        // (c) No precondition header: record what the server does.
         val noHeaderResp = rawPut(
             url,
             buildRsvpFixture(uid, partstat = "TENTATIVE"),
@@ -467,7 +443,6 @@ END:VCALENDAR
         observe("update-no-header", noHeaderResp)
         loudFailIfUnexpected("update-no-header", noHeaderResp, allowedCodes = OutcomeBands.NO_HEADER_PUT)
         val finalEtag = noHeaderResp.header("ETag")?.trim('"') ?: newEtag
-        if (finalEtag != null) trackEvent(url, finalEtag)
 
         println(
             "[${config.name}] rsvp_if_schedule_tag_match_honored: " +
@@ -488,7 +463,6 @@ END:VCALENDAR
         val createResp = rawPut(url, buildRsvpFixture(uid), ifNoneMatch = "*")
         loudFailIfUnexpected("create", createResp, allowedCodes = emptySet())
         val initialEtag = createResp.header("ETag")?.trim('"')
-        if (initialEtag != null) trackEvent(url, initialEtag)
 
         // Both clients hold initialEtag. Client A succeeds first.
         val clientAResp = rawPut(
@@ -499,9 +473,8 @@ END:VCALENDAR
         observe("client-A-update", clientAResp)
         loudFailIfUnexpected("client-A-update", clientAResp, allowedCodes = emptySet())
         val afterAEtag = clientAResp.header("ETag")?.trim('"') ?: initialEtag
-        if (afterAEtag != null) trackEvent(url, afterAEtag)
 
-        // Client B uses the now-stale initialEtag. Either 412 or silent overwrite.
+        // Client B sends the now-stale initialEtag: 412 or 409 if enforced, else it overwrites.
         val clientBResp = rawPut(
             url,
             buildRsvpFixture(uid, partstat = "DECLINED"),
@@ -539,7 +512,6 @@ END:VCALENDAR
         observe("create-recurring", createResp)
         loudFailIfUnexpected("create-recurring", createResp, allowedCodes = emptySet())
         val createEtag = createResp.header("ETag")?.trim('"')
-        if (createEtag != null) trackEvent(url, createEtag)
 
         val updateResp = rawPut(
             url,
@@ -549,7 +521,6 @@ END:VCALENDAR
         observe("update-recurring-partstat", updateResp)
         loudFailIfUnexpected("update-recurring-partstat", updateResp, allowedCodes = emptySet())
         val updatedEtag = updateResp.header("ETag")?.trim('"') ?: createEtag
-        if (updatedEtag != null) trackEvent(url, updatedEtag)
 
         val getResp = rawGet(url)
         loudFailIfUnexpected("get-recurring", getResp, allowedCodes = emptySet())
@@ -574,19 +545,18 @@ END:VCALENDAR
         val uid = "${UID_PREFIX}normalize-${config.name.lowercase()}-${UUID.randomUUID()}"
         val url = newEventUrl(uid)
 
-        // Uppercase ACCEPTED — RFC-canonical form.
+        // Uppercase ACCEPTED, the form RFC 5545 spells.
         val createResp = rawPut(url, buildRsvpFixture(uid, partstat = "ACCEPTED"), ifNoneMatch = "*")
         loudFailIfUnexpected("create-uppercase", createResp, allowedCodes = emptySet())
         val createEtag = createResp.header("ETag")?.trim('"')
-        if (createEtag != null) trackEvent(url, createEtag)
 
         val getUpperResp = rawGet(url)
         loudFailIfUnexpected("get-uppercase", getUpperResp, allowedCodes = emptySet())
         val upperBody = getUpperResp.body!!.string()
         val upperPreserved = upperBody.contains("PARTSTAT=ACCEPTED")
 
-        // Lowercase 'accepted' — RFC 5545 says case-insensitive on read,
-        // but does the server normalize on write or pass through verbatim?
+        // Lowercase 'accepted': RFC 5545 §2 makes parameter values case-insensitive. Does the
+        // server normalize it on write or store it verbatim?
         val lowerIcs = buildRsvpFixture(uid, partstat = "accepted")
         val lowerPutResp = rawPut(url, lowerIcs, ifMatch = createEtag)
         observe("update-lowercase", lowerPutResp)
@@ -596,7 +566,6 @@ END:VCALENDAR
             allowedCodes = OutcomeBands.MALFORMED_INPUT
         )
         val updateEtag = lowerPutResp.header("ETag")?.trim('"') ?: createEtag
-        if (updateEtag != null) trackEvent(url, updateEtag)
 
         val lowerOnWire = if (lowerPutResp.isSuccessful) {
             val getLowerResp = rawGet(url)
@@ -631,10 +600,9 @@ END:VCALENDAR
         val createResp = rawPut(url, buildRsvpFixture(uid, sequence = 0), ifNoneMatch = "*")
         loudFailIfUnexpected("create", createResp, allowedCodes = emptySet())
         val createEtag = createResp.header("ETag")?.trim('"')
-        if (createEtag != null) trackEvent(url, createEtag)
 
-        // RFC 5546 §2.1.4: attendee PARTSTAT change MUST NOT bump SEQUENCE.
-        // Some servers may reject; some may auto-increment; some may pass through.
+        // RFC 5546 §2.1.4: SEQUENCE MUST NOT be incremented for a REPLY. A server may refuse the
+        // PUT, increment SEQUENCE itself or store it as sent.
         val nonBumpResp = rawPut(
             url,
             buildRsvpFixture(uid, partstat = "ACCEPTED", sequence = 0),
@@ -649,13 +617,12 @@ END:VCALENDAR
 
         val nonBumpResultSequence = if (nonBumpResp.isSuccessful) {
             val etagAfter = nonBumpResp.header("ETag")?.trim('"') ?: createEtag
-            if (etagAfter != null) trackEvent(url, etagAfter)
             val getResp = rawGet(url)
             loudFailIfUnexpected("get-no-bump", getResp, allowedCodes = emptySet())
             extractSequence(getResp.body!!.string())
         } else null
 
-        // Now PUT with explicit SEQUENCE:1 (organizer-side increment).
+        // PUT with SEQUENCE:1, as an organizer's revision would.
         val etagForBump = nonBumpResp.header("ETag")?.trim('"') ?: createEtag
         val bumpResp = rawPut(
             url,
@@ -665,7 +632,6 @@ END:VCALENDAR
         observe("update-bump", bumpResp)
         loudFailIfUnexpected("update-bump", bumpResp, allowedCodes = emptySet())
         val bumpEtag = bumpResp.header("ETag")?.trim('"') ?: etagForBump
-        if (bumpEtag != null) trackEvent(url, bumpEtag)
         val getBumpResp = rawGet(url)
         loudFailIfUnexpected("get-bump", getBumpResp, allowedCodes = emptySet())
         val bumpResultSequence = extractSequence(getBumpResp.body!!.string())
@@ -683,11 +649,8 @@ END:VCALENDAR
         calendarUrl = discoverCalendar()
         assumeTrue("No calendar found on ${config.name}", calendarUrl != null)
 
-        // Use a synthetic ORGANIZER (not the auth account) — making the
-        // authenticated user an attendee, not the organizer. iCloud may
-        // strip ATTENDEEs via iSchedule routing in this case (the
-        // documented iCloud ATTENDEE-routing quirk); skip the test on
-        // iCloud rather than fail.
+        // A synthetic ORGANIZER makes the account an attendee. Servers whose iSchedule routing
+        // then strips the ATTENDEEs (iCloud among them) skip: nothing is left to probe.
         assumeFalse(
             "${config.name} strips ATTENDEEs when ORGANIZER mailto != auth account (iSchedule routing)",
             config.stripsAttendeesOnSyntheticOrganizer
@@ -704,9 +667,8 @@ END:VCALENDAR
         val createResp = rawPut(url, createIcs, ifNoneMatch = "*")
         loudFailIfUnexpected("create", createResp, allowedCodes = emptySet())
         val createEtag = createResp.header("ETag")?.trim('"')
-        if (createEtag != null) trackEvent(url, createEtag)
 
-        // Substantive edit by an attendee (non-PARTSTAT change to SUMMARY).
+        // Substantive edit by an attendee: SUMMARY changes, PARTSTAT doesn't.
         val mutatedIcs = createIcs.replace(ORIGINAL_SUMMARY, MUTATED_SUMMARY)
         val mutateResp = rawPut(url, mutatedIcs, ifMatch = createEtag)
         observe("attendee-substantive-edit", mutateResp)
@@ -716,7 +678,6 @@ END:VCALENDAR
             allowedCodes = OutcomeBands.READ_ONLY_REJECT
         )
         val updateEtag = mutateResp.header("ETag")?.trim('"') ?: createEtag
-        if (updateEtag != null) trackEvent(url, updateEtag)
 
         val finalState = if (mutateResp.isSuccessful) {
             val getResp = rawGet(url)

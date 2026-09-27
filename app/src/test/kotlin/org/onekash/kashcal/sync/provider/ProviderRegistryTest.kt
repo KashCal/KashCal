@@ -18,12 +18,11 @@ import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * Unit tests for ProviderRegistry.
- *
- * Tests verify:
- * - getQuirks returns correct quirks for each provider
- * - getQuirksForAccount returns correct quirks including DefaultQuirks for CALDAV
- * - getCredentialProvider returns correct credentials for each provider
+ * Tests [ProviderRegistry]:
+ * - getQuirks per provider, null for CALDAV
+ * - getQuirksForAccount, including [DefaultQuirks] from a CALDAV account's homeSetUrl
+ * - getCardDavQuirksForAccount, including the pinned Zoho contacts host
+ * - getCredentialProvider per provider
  */
 class ProviderRegistryTest {
 
@@ -73,8 +72,7 @@ class ProviderRegistryTest {
 
     @Test
     fun `getQuirks returns null for CALDAV provider - use getQuirksForAccount instead`() {
-        // getQuirks returns null for CALDAV because DefaultQuirks needs server URL from Account
-        // Use getQuirksForAccount() instead
+        // DefaultQuirks needs the server URL from the Account, which getQuirksForAccount has.
         val quirks = registry.getQuirks(AccountProvider.CALDAV)
 
         assertNull(quirks)
@@ -113,7 +111,7 @@ class ProviderRegistryTest {
             homeSetUrl = null
         )
 
-        registry.getQuirksForAccount(account)  // Should throw
+        registry.getQuirksForAccount(account)
     }
 
     @Test
@@ -147,11 +145,9 @@ class ProviderRegistryTest {
 
     @Test
     fun `getCardDavQuirksForAccount pins the contacts host for a Zoho CALDAV account`() {
-        // A Zoho account is a generic CALDAV account whose homeSetUrl points at the
-        // calendar host (calendar.zoho.com). Deriving the contacts host from that
-        // would target the wrong host; Zoho serves contacts from contacts.zoho.com.
-        // Detection keys off the SERVER host (homeSetUrl), never the login email —
-        // a Zoho login can be a custom or Gmail-backed address.
+        // A Zoho account is a generic CALDAV account whose homeSetUrl is on the calendar host
+        // (calendar.zoho.com), but Zoho serves contacts from contacts.zoho.com. Detection uses
+        // the server host, never the login email, which can be a custom or Gmail address.
         val account = createAccount(
             provider = AccountProvider.CALDAV,
             email = "someone@gmail.com",
@@ -166,9 +162,9 @@ class ProviderRegistryTest {
 
     @Test
     fun `getCardDavQuirksForAccount pins a Zoho host that carries an explicit port`() {
-        // The host match must ignore any :port; a port left on the host string would
-        // fail the .zoho.com suffix and misroute to generic discovery (which then
-        // seeds from the login email and falls back to the CALENDAR host).
+        // The host match must ignore any :port. A port left on the host would fail the
+        // .zoho.com suffix and misroute to generic discovery, which seeds from the login
+        // email and falls back to the calendar host.
         val account = createAccount(
             provider = AccountProvider.CALDAV,
             homeSetUrl = "https://calendar.zoho.com:443/caldav/123/calendars/",
@@ -182,9 +178,8 @@ class ProviderRegistryTest {
 
     @Test
     fun `getCardDavQuirksForAccount does not pin regional Zoho hosts (untested gap falls through to generic)`() {
-        // Regional Zoho contacts hosts (contacts.zoho.eu / .in / .com.cn) are not
-        // verified, so a regional home host falls through to generic discovery
-        // rather than being misrouted to a pinned host we haven't confirmed exists.
+        // Regional Zoho contacts hosts (contacts.zoho.eu, .in, .com.cn) aren't verified, so a
+        // regional home host goes to generic discovery instead of an unconfirmed pinned host.
         val account = createAccount(
             provider = AccountProvider.CALDAV,
             homeSetUrl = "https://calendar.zoho.eu/caldav/123/calendars/",

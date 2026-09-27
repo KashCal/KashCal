@@ -20,6 +20,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -33,20 +35,20 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Guard tests for the device-event tag write path.
+ * Tests the device-event tag write path through [HomeViewModel.saveDeviceEvent]
+ * over [FakeCalendarProviderRepository].
  *
- * Two invariants are locked in here:
- *  1. Tags typed on the form reach calendarProviderRepository.createEvent /
- *     updateEvent as a non-null categories list for the in-scope branches
- *     (create + whole-event update), and are left null (row untouched) for the
- *     out-of-scope branches (single-occurrence exception, this-and-future,
- *     cross-calendar move).
- *  2. A successful create / whole-event update reconciles the applied tags into
- *     the shared registry via eventCoordinator.recordTagUsage, so new names gain
- *     a suggestion entry and become colorable — mirroring the Room save path.
- *
- * Robolectric is required because the save path references CalendarContract
- * constants (stubbed to 0 under plain JVM).
+ * Two rules:
+ *  1. A create stores the form's tags. An update writes them only when the user
+ *     edited the tag row (an edited empty set clears the row) and passes null
+ *     otherwise, leaving the stored row alone. A single-occurrence edit and an
+ *     unedited this-and-future split pass no tags, so the new row copies the
+ *     series' tags, and a cross-calendar move carries the source's tags, or the
+ *     edited set.
+ *  2. A successful save records the stored tags, cleaned the way the repository
+ *     stores them, in the shared registry via eventCoordinator.recordTagUsage,
+ *     so new names gain a suggestion entry and become colorable, as on the Room
+ *     save path. A save that stores no tags records nothing.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -117,7 +119,8 @@ class HomeViewModelDeviceTagsTest {
         accountRepository = accountRepository,
         syncScheduler = syncScheduler,
         networkMonitor = networkMonitor,
-        calendarProviderRepository = fakeCalendarProviderRepository,
+        deviceEventReader = fakeCalendarProviderRepository.deviceEventReader(),
+        deviceEventWriter = fakeCalendarProviderRepository.deviceEventWriter(dataStore),
         attendeeBackfill = mockk(relaxed = true),
         contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),
@@ -165,10 +168,10 @@ class HomeViewModelDeviceTagsTest {
     @Test
     fun `an open-and-save that never touched the tag row leaves the stored row untouched`() = runTest {
         // The form seeds categories from the loaded event but keeps
-        // categoriesEdited=false until the user changes the tag set. An edit of
-        // some other field must pass categories=null so writeCategories leaves
-        // the row alone — otherwise a load-time read race (or tags a sync adapter
-        // added since load) would be silently clobbered.
+        // categoriesEdited = false until the user changes the tag set. An edit of
+        // another field must pass categories = null so writeCategories leaves the
+        // row alone; otherwise a load-time read race, or tags a sync adapter added
+        // since load, would be silently clobbered.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -210,20 +213,19 @@ class HomeViewModelDeviceTagsTest {
 
     @Test
     fun `the registry records the cleaned names the provider actually stores`() = runTest {
-        // The provider strips backslashes, trims, and collapses case-insensitive
-        // duplicates before storing (encodeCategories). The registry must record
-        // those SAME cleaned names, or a suggestion would resolve to a tag that
-        // never persisted. Fixtures here need cleaning so a regression that
-        // recorded the raw form values instead would be caught (clean-name
-        // fixtures make the assertion tautological).
+        // The repository's encodeCategories strips backslashes, trims, and
+        // collapses case-insensitive duplicates before storing. The registry must
+        // record the same cleaned names, or a suggestion would resolve to a tag
+        // that never persisted. The fixtures need cleaning, so recording the raw
+        // form values fails the test; clean fixtures would make it tautological.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         val formState = EventFormState(
             title = "Lunch",
             selectedCalendarId = 42L,
-            // "a\b" -> "ab" (backslash stripped); "  Work " -> "Work" (trimmed);
-            // "WORK" collapses into "Work" (case-insensitive dupe).
+            // "a\b" becomes "ab" (backslash stripped), "  Work " becomes "Work"
+            // (trimmed), and "WORK" collapses into "Work" (case-insensitive duplicate).
             categories = listOf("a\\b", "  Work ", "WORK"),
         )
 
@@ -231,17 +233,17 @@ class HomeViewModelDeviceTagsTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { eventCoordinator.recordTagUsage(listOf("ab", "Work")) }
-        // And never the raw, uncleaned form values.
+        // Never the raw form values.
         coVerify(exactly = 0) { eventCoordinator.recordTagUsage(listOf("a\\b", "  Work ", "WORK")) }
     }
 
     @Test
     fun `clearing all tags on an existing event threads a non-null empty list and skips the registry`() = runTest {
-        // Removing every tag is an EDITED empty set (categoriesEdited=true), which
+        // Removing every tag is an edited empty set (categoriesEdited = true), which
         // must reach updateEvent as a non-null empty list so writeCategories
-        // deletes the stored row rather than leaving a stale value. It is distinct
-        // from the unedited open-and-save case (which passes null). Nothing is
-        // reconciled into the registry — an empty set has no name to record.
+        // deletes the stored row instead of leaving a stale value; the unedited
+        // open-and-save passes null. The registry records nothing: an empty set
+        // has no name.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -279,16 +281,16 @@ class HomeViewModelDeviceTagsTest {
         viewModel.saveDeviceEvent(formState)
         advanceUntilIdle()
 
-        // Empty tag set is a no-op for the registry — nothing to reconcile.
+        // An empty tag set is a no-op for the registry.
         coVerify(exactly = 0) { eventCoordinator.recordTagUsage(any()) }
     }
 
     @Test
     fun `a per-occurrence exception edit leaves tags untouched`() = runTest {
-        // Per spec, single-occurrence tag edits are out of scope: the occurrence
-        // branch routes to createException, which carries no categories arg — so
-        // the master's tag row is intentionally NOT rewritten, and nothing is
-        // reconciled into the registry.
+        // The occurrence branch goes to DeviceEventWriter.editSingleOccurrence,
+        // whose createException takes no tag list (a new exception copies the
+        // series' tags), so no tag row is rewritten and nothing is recorded in
+        // the registry.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -310,10 +312,9 @@ class HomeViewModelDeviceTagsTest {
     }
 
     @Test
-    fun `this-and-future edit leaves tags untouched`() = runTest {
-        // THIS_AND_FUTURE splits the series via editThisAndFuture, which carries
-        // no categories arg. Tags are out of scope for the split, so the registry
-        // is not touched.
+    fun `this-and-future edit without edited tags records no tag usage`() = runTest {
+        // The tags weren't edited, so the split keeps the series' own tags
+        // (categories null) and the recent-tags registry is not touched.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -330,15 +331,16 @@ class HomeViewModelDeviceTagsTest {
 
         assertTrue("no whole-event create", fakeCalendarProviderRepository.createdEvents.isEmpty())
         assertTrue("no whole-event update", fakeCalendarProviderRepository.updatedEvents.isEmpty())
+        assertNull(fakeCalendarProviderRepository.editedFutureSeries.single().categories)
         coVerify(exactly = 0) { eventCoordinator.recordTagUsage(any()) }
     }
 
     @Test
     fun `a cross-calendar move carries the source event's existing tags to the target`() = runTest {
-        // A move is recreate-in-target + delete-source. Since the tag-bearing
-        // source row is deleted, the recreate must carry the source's existing
-        // tags (like it carries guests) or they'd be lost. The user didn't touch
-        // the tag row here, so the preserved set comes from the loaded event.
+        // A move creates the event in the target and deletes the source, so the
+        // new row must carry the source's tags, as it carries guests, or they'd be
+        // lost. The user didn't touch the tag row, so the writer reads the set
+        // from the stored source event.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -347,7 +349,7 @@ class HomeViewModelDeviceTagsTest {
 
         val formState = EventFormState(
             title = "Lunch",
-            selectedCalendarId = 42L, // differs from source calendar 7 → move
+            selectedCalendarId = 42L, // differs from source calendar 7, so a move
             editingDeviceEventId = 100L,
             categories = listOf("Work", "Errand"), // seeded from disk, not edited
             categoriesEdited = false,
@@ -368,7 +370,7 @@ class HomeViewModelDeviceTagsTest {
     @Test
     fun `a cross-calendar move with edited tags carries the edited set`() = runTest {
         // When the user edits the tag row during a move, the edited set wins over
-        // the source's stored tags (mirroring the edited-vs-existing guest rule).
+        // the source's stored tags, as edited guests do.
         val viewModel = createViewModel()
         advanceUntilIdle()
 

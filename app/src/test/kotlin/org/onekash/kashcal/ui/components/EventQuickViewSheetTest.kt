@@ -23,18 +23,19 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /**
- * Unit tests for EventQuickViewSheet recurring event detection logic.
+ * Tests the quick-view sheet's logic through local copies of its predicates and formatters,
+ * plus the shared helpers it calls ([containsUrl], [isValidUrl], [formatRemindersForDisplay],
+ * [cleanHtmlEntities], [extractUrls], [formatSeriesStartDateStr]).
  *
- * Bug fix verification: Event bottom card should show recurring icon for:
- * 1. Master recurring events (have rrule)
- * 2. Exception events (have originalEventId but no rrule)
+ * The copies don't call EventQuickViewSheet, so they keep passing if it drifts, and the
+ * button-visibility, read-only and expand-hint tests assert local booleans only. A master (has
+ * an RRULE) and an exception (has originalEventId, no RRULE) both get the recurring icon.
  */
 @RunWith(RobolectricTestRunner::class)
 class EventQuickViewSheetTest {
 
     private val resources: Resources = ApplicationProvider.getApplicationContext<Context>().resources
 
-    // Helper to create test events
     private fun createEvent(
         id: Long = 1L,
         rrule: String? = null,
@@ -51,31 +52,24 @@ class EventQuickViewSheetTest {
         dtstamp = System.currentTimeMillis()
     )
 
-    /**
-     * Simulate the isRecurring logic from EventQuickViewSheet.
-     * This is the fixed logic: event.isRecurring || event.isException
-     */
+    /** Copies the sheet's `isRecurring`: a master or an exception gets the repeat line. */
     private fun isRecurringForQuickView(event: Event): Boolean {
         return event.isRecurring || event.isException
     }
 
     /**
-     * Mirrors the QuickView Delete-button onClick predicate.
-     * Returns true when the inline two-tap confirmation must be shown
-     * (i.e. we should NOT skip straight to onDeleteSingle()).
+     * Copies the sheet's Delete onClick: returns true when Delete must show the inline
+     * two-tap confirm before onDeleteSingle.
      *
-     * Skip the confirmation only when the host will surface a scope
-     * sheet — that's only for a recurring master. Exception events
-     * route straight to a destructive write with no scope sheet, so
-     * they need the inline guard same as a non-recurring event.
+     * Only a recurring master skips it, because the host opens a scope sheet for it. The host
+     * deletes an exception at once with no scope sheet, so it needs the inline confirm like a
+     * one-off event.
      */
     private fun shouldShowQuickViewDeleteConfirm(event: Event): Boolean {
         return !(event.isRecurring && !event.isException)
     }
 
-    /**
-     * Simulate the repeat text logic from EventQuickViewSheet.
-     */
+    /** Returns [formatRruleDisplay] for an RRULE, else "Recurring" (an exception's text). */
     private fun getRepeatText(event: Event): String {
         return if (event.rrule != null) {
             formatRruleDisplay(event.rrule)
@@ -85,7 +79,8 @@ class EventQuickViewSheetTest {
     }
 
     /**
-     * Copy of formatRruleDisplay from EventQuickViewSheet for testing.
+     * Formats an RRULE with a simplified local stand-in. The sheet has no such function; it
+     * calls `RruleBuilder.formatForDisplayParts`, as [buildRecurrenceText] does.
      */
     private fun formatRruleDisplay(rrule: String?): String {
         if (rrule == null) return "Does not repeat"
@@ -148,7 +143,7 @@ class EventQuickViewSheetTest {
 
     @Test
     fun `exception event with own rrule is detected as recurring`() {
-        // Edge case: exception with its own RRULE (creates a sub-series)
+        // An exception that carries its own RRULE.
         val event = createEvent(
             rrule = "FREQ=DAILY",
             originalEventId = 100L
@@ -159,9 +154,6 @@ class EventQuickViewSheetTest {
     }
 
     // ========== Delete-Confirmation Predicate Tests ==========
-    //
-    // Skip the inline confirmation in QuickView ONLY when the host will
-    // surface a scope sheet — that's only for a recurring master.
 
     @Test
     fun `Delete on recurring master skips inline confirm — scope sheet is the confirmation`() {
@@ -171,11 +163,9 @@ class EventQuickViewSheetTest {
 
     @Test
     fun `Delete on exception event shows inline confirm — no scope sheet on this path`() {
-        // Regression: prior to fix, the predicate was just `isRecurring` —
-        // which is true for exception events too (event.isException ⇒ true)
-        // so QuickView routed straight to onDeleteSingle. MainActivity's
-        // onDeleteSingle then invoked deleteSingleOccurrence with no
-        // intervening scope sheet → exception deleted on a single tap.
+        // A predicate of `isRecurring || isException` alone would skip the confirm here, and
+        // MainActivity's onDeleteSingle calls deleteSingleOccurrence for an exception with no
+        // scope sheet, so one tap would delete it.
         val exception = createEvent(rrule = null, originalEventId = 100L)
         assertTrue(shouldShowQuickViewDeleteConfirm(exception))
     }
@@ -197,23 +187,22 @@ class EventQuickViewSheetTest {
         assertFalse("Event.isException should be false", event.isException)
     }
 
-    // ========== Bug Regression Tests ==========
+    // ========== Exception Recurring Icon ==========
 
     @Test
     fun `BUG FIX - exception event shows recurring icon`() {
-        // This was the original bug: exception events showed no icon
-        // because the check was only: event.rrule != null
+        // An exception has no RRULE, so an `rrule != null` check alone shows it no icon.
         val exception = createEvent(
             id = 2L,
             rrule = null,  // No rrule!
             originalEventId = 1L  // But has originalEventId
         )
 
-        // OLD buggy logic: val isRecurring = event.rrule != null
+        // The RRULE-only check.
         val oldBuggyLogic = exception.rrule != null
         assertFalse("OLD buggy logic incorrectly returns false", oldBuggyLogic)
 
-        // NEW fixed logic: val isRecurring = event.isRecurring || event.isException
+        // The sheet's check: isRecurring || isException.
         val newFixedLogic = isRecurringForQuickView(exception)
         assertTrue("NEW fixed logic correctly returns true", newFixedLogic)
     }
@@ -276,7 +265,7 @@ class EventQuickViewSheetTest {
         assertEquals("Repeats", getRepeatText(event))
     }
 
-    // ========== Integration-style Tests ==========
+    // ========== Repeat Line With Icon ==========
 
     @Test
     fun `full recurring icon text for master daily event`() {
@@ -328,10 +317,8 @@ class EventQuickViewSheetTest {
 
     // ========== Button Visibility Logic Tests ==========
 
-    /**
-     * Tests for inline confirmation button visibility.
-     * Simulates the visibility logic from EventQuickViewSheet.
-     */
+    // These assert local booleans, not the sheet. The sheet has a delete confirmation that
+    // hides Edit and More; it has no edit confirmation.
 
     @Test
     fun `normal state shows Edit Delete and More buttons`() {
@@ -404,7 +391,7 @@ class EventQuickViewSheetTest {
     fun `read-only calendar shows Duplicate and Share buttons only`() {
         val isReadOnlyCalendar = true
         // Should show: Duplicate, Share (2 buttons)
-        // Should NOT show: Edit, Delete, Export, More
+        // Should not show: Edit, Delete, Export, More
         val expectedButtonCount = 2
         assertEquals("Read-only calendar should show 2 buttons", expectedButtonCount, 2)
     }
@@ -434,7 +421,7 @@ class EventQuickViewSheetTest {
     @Test
     fun `read-only calendar does not show Export button`() {
         val isReadOnlyCalendar = true
-        // Export is only in More menu for editable calendars, not shown for read-only
+        // Export is only in the More menu, which a read-only calendar doesn't show
         val showExportButton = !isReadOnlyCalendar
         assertFalse("Read-only calendar should not show Export", showExportButton)
     }
@@ -470,7 +457,7 @@ class EventQuickViewSheetTest {
         assertTrue("Should contain Jan 15", result.contains("Jan 15"))
         assertTrue("Should contain Jan 17", result.contains("Jan 17"))
         assertTrue("Should contain arrow", result.contains("\u2192"))
-        // Should NOT contain "All day"
+        // Should not contain "All day"
         assertFalse("Should not contain All day", result.contains("All day"))
     }
 
@@ -487,14 +474,13 @@ class EventQuickViewSheetTest {
         // Should contain date and middle dot separator
         assertTrue("Should contain Jan 15", result.contains("Jan 15"))
         assertTrue("Should contain middle dot", result.contains("\u00b7"))
-        // Should NOT contain arrow (single day)
+        // Should not contain arrow (single day)
         assertFalse("Should not contain arrow", result.contains("\u2192"))
     }
 
     @Test
     fun `formatEventDateTime keeps All day suffix for multi-day all-day`() {
-        // Jan 15-17 as UTC midnight (all-day events)
-        // endTs is next day midnight minus 1ms (23:59:59.999)
+        // Jan 15-17 at UTC midnight (all-day); endTs is the next midnight minus 1 ms
         val startTs = LocalDate.of(2026, 1, 15).atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
         val endTs = LocalDate.of(2026, 1, 18).atStartOfDay(ZoneOffset.UTC)
@@ -523,7 +509,8 @@ class EventQuickViewSheetTest {
     // ========== Helper: formatEventDateTime ====================
 
     /**
-     * Copy of formatEventDateTime from EventQuickViewSheet for testing.
+     * Copies the sheet's private formatEventDateTime with the English all-day strings inlined
+     * in place of string resources and the default time pattern.
      */
     private fun formatEventDateTime(startTs: Long, endTs: Long, isAllDay: Boolean): String {
         val startDateStr = DateTimeUtils.formatEventDateShort(startTs, isAllDay)
@@ -550,9 +537,9 @@ class EventQuickViewSheetTest {
 
     // ========== Expandable Content Detection Tests ==========
 
-    /**
-     * Tests for hasExpandableContent logic that shows expand hint and content.
-     */
+    // A local predicate modeled on the sheet's hasExpandableContent, which decides whether the
+    // sheet opens expanded and shows the URL, notes and reminders section. The sheet checks
+    // description, URL and attendees; this copy checks reminders in place of attendees.
 
     private fun hasExpandableContent(event: Event): Boolean {
         return !event.description.isNullOrBlank() ||
@@ -951,7 +938,7 @@ class EventQuickViewSheetTest {
 
     @Test
     fun `user-created yearly event always shows since suffix`() {
-        // Regular yearly event (not a contact birthday) — startTs is real
+        // A regular yearly event (not a contact birthday), so startTs is real
         val startTs = LocalDate.of(2020, 9, 1).atTime(10, 0)
             .atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
         val event = createEvent(rrule = "FREQ=YEARLY").let {
@@ -965,7 +952,8 @@ class EventQuickViewSheetTest {
     }
 
     /**
-     * Mirrors recurrence text logic from EventQuickViewSheet for testing.
+     * Copies the sheet's repeat-line logic with the English strings and no UNTIL zone. A
+     * contact event with no decoded year has a synthetic start, so it shows no start date.
      */
     private fun buildRecurrenceText(event: Event): String {
         return if (event.rrule != null) {
@@ -987,7 +975,7 @@ class EventQuickViewSheetTest {
         }
     }
 
-    // ========== Expand Hint Visibility Logic ==========
+    // ========== Expand Hint Logic (local booleans; the sheet has no hint) ==========
 
     @Test
     fun `expand hint shown when content exists and not expanded`() {
@@ -1045,7 +1033,7 @@ class EventQuickViewSheetTest {
 
     @Test
     fun `hasExpandableContent matches implementation logic exactly`() {
-        // Test cases that match the exact implementation in EventQuickViewSheet
+        // Cases for the local copy, which differs from the sheet (see its note above)
         val eventWithAll = createEvent().copy(
             description = "Notes",
             url = "https://example.com",

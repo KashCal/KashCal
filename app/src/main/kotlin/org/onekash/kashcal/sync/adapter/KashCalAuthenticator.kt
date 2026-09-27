@@ -11,15 +11,12 @@ import org.onekash.kashcal.MainActivity
 import org.onekash.kashcal.sync.adapter.KashCalAuthenticator.Companion.ACCOUNT_TYPE
 
 /**
- * Stub AccountAuthenticator for CalendarProvider registration.
+ * Registers the calendar [ACCOUNT_TYPE] with AccountManager; a stub that holds no credentials.
  *
- * This authenticator does NOT manage real credentials — those are handled by
- * [org.onekash.kashcal.data.credential.CredentialManager] in EncryptedSharedPreferences.
- *
- * Its sole purpose is to register the [ACCOUNT_TYPE] with Android's AccountManager
- * system, which is required for the SyncAdapter to link to CalendarProvider.
- * Without this, Android doesn't recognize KashCal as a calendar app for
- * content://com.android.calendar intent routing.
+ * Credentials live in [org.onekash.kashcal.data.credential.CredentialManager]
+ * (EncryptedSharedPreferences). The registered type is what lets [KashCalSyncAdapter] link to
+ * CalendarProvider. Without it, Android doesn't recognize KashCal as a calendar app for
+ * `content://com.android.calendar` intent routing.
  */
 class KashCalAuthenticator(
     private val context: Context
@@ -36,8 +33,7 @@ class KashCalAuthenticator(
         requiredFeatures: Array<out String>?,
         options: Bundle?
     ): Bundle {
-        // Settings > Add account → open KashCal app.
-        // Account creation happens through KashCal's own UI, not system settings.
+        // Settings > Add account opens the app: accounts are created in KashCal's own UI.
         val intent = Intent(context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }

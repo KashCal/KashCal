@@ -7,29 +7,28 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Per-event ATTENDEE row (RFC 5545 §3.8.4.1).
+ * Stores one ATTENDEE line of an event (RFC 5545 §3.8.4.1).
  *
- * Child of `events` with FK CASCADE — when an event is deleted, all its
- * attendee rows are removed. One row per ATTENDEE line in the source iCal.
+ * Deleting the event cascades to its attendee rows.
  *
  * Storage policy:
- * - Address fields (`address`, `delegated_from`, `delegated_to`, `sent_by`,
- *   `member` entries) are stored verbatim. CalDAV servers return mixed
- *   forms — `mailto:`, `urn:uuid:`, principal-relative paths
- *   (`/646691839/principal/`), full HTTP principal URIs — and identity
- *   matching canonicalizes only at lookup time.
- * - Enum-shaped fields (`role`, `partstat`, `cutype`, `schedule_agent`,
- *   `schedule_force_send`) are TEXT-lenient — servers emit X-extensions
- *   and the schema absorbs them without a migration. Domain layer maps
- *   to Kotlin enums.
- * - Multi-value fields (`delegated_from`, `delegated_to`, `member`) are
- *   JSON arrays via `Converters.fromStringList`/`toStringList`. RFC 5545
- *   permits multi-value forms and `icaldav-core` already models them this
- *   way (`org.onekash.icaldav.model.ICalEvent.delegatedFrom`).
+ * - Addresses are not canonicalized on store; identity matching canonicalizes only at lookup
+ *   time. CalDAV servers return mixed forms (`mailto:`, `urn:uuid:`, principal-relative paths
+ *   like `/646691839/principal/`, full HTTP principal URIs). The pull parser strips `mailto:`;
+ *   [org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper] adds it back to an
+ *   email-shaped [address] and keeps other forms as parsed, while `delegated_from`,
+ *   `delegated_to`, `member` and `sent_by` stay bare.
+ * - Enum-shaped fields (`role`, `partstat`, `cutype`, `schedule_agent`, `schedule_force_send`) are
+ *   lenient TEXT, so a new value needs no migration. The pull parser maps each to an enum first,
+ *   though, so an X-extension or unmodelled value arrives as that enum's default (an unknown
+ *   PARTSTAT as `NEEDS-ACTION`), or is dropped for SCHEDULE-FORCE-SEND. Readers map the values they
+ *   use, for example `AttendeeStatus` for PARTSTAT.
+ * - Multi-value fields (`delegated_from`, `delegated_to`, `member`) are JSON arrays via
+ *   `Converters.fromStringList`/`toStringList`. RFC 5545 permits multi-value forms, and
+ *   `icaldav-core` models them the same way (`org.onekash.icaldav.model.Attendee.delegatedFrom`).
  *
- * Not to be confused with `org.onekash.icaldav.model.Attendee` — the
- * iCal-layer model in `icaldav-core`. Different package, different role
- * (wire-protocol parsing vs. Room storage).
+ * Not to be confused with `org.onekash.icaldav.model.Attendee`, the wire-parsing model in
+ * `icaldav-core`; this one is Room storage.
  */
 @Entity(
     tableName = "attendees",
@@ -50,156 +49,114 @@ data class Attendee(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
 
-    /**
-     * FK → events.id. Indexed.
-     */
     @ColumnInfo(name = "event_id")
     val eventId: Long,
 
     /**
-     * Raw CAL-ADDRESS as the server returned it (RFC 5545 §3.3.3). Common
-     * forms: `mailto:`, `urn:uuid:`, principal-relative paths, and full
-     * HTTP principal URIs. Indexed for identity-scoped lookups.
+     * The attendee's CAL-ADDRESS (RFC 5545 §3.3.3), stored as the class doc describes. Indexed
+     * for identity-scoped lookups.
      */
     @ColumnInfo(name = "address")
     val address: String,
 
-    /**
-     * `CN` parameter — the human-readable name for the attendee.
-     */
+    /** The `CN` parameter: the attendee's human-readable name. */
     @ColumnInfo(name = "display_name")
     val displayName: String? = null,
 
     /**
-     * RFC 5545 §3.2.16: `CHAIR`, `REQ-PARTICIPANT`, `OPT-PARTICIPANT`,
-     * `NON-PARTICIPANT`. TEXT-lenient — accepts X-extensions.
+     * RFC 5545 §3.2.16: `CHAIR`, `REQ-PARTICIPANT`, `OPT-PARTICIPANT`, `NON-PARTICIPANT`.
      */
     @ColumnInfo(name = "role")
     val role: String? = null,
 
     /**
-     * RFC 5545 §3.2.12: `NEEDS-ACTION`, `ACCEPTED`, `DECLINED`,
-     * `TENTATIVE`, `DELEGATED`, `COMPLETED`, `IN-PROCESS`. TEXT-lenient.
+     * RFC 5545 §3.2.12: `NEEDS-ACTION`, `ACCEPTED`, `DECLINED`, `TENTATIVE`, `DELEGATED`,
+     * `COMPLETED`, `IN-PROCESS`.
      */
     @ColumnInfo(name = "partstat")
     val partstat: String? = null,
 
-    /**
-     * RFC 5545 §3.2.3: `INDIVIDUAL`, `GROUP`, `RESOURCE`, `ROOM`,
-     * `UNKNOWN`. TEXT-lenient.
-     */
+    /** RFC 5545 §3.2.3: `INDIVIDUAL`, `GROUP`, `RESOURCE`, `ROOM`, `UNKNOWN`. */
     @ColumnInfo(name = "cutype")
     val cutype: String? = null,
 
-    /**
-     * RFC 5545 §3.2.17: boolean (`TRUE`/`FALSE`) stored as `0`/`1`.
-     * NULL = parameter not specified on the wire.
-     */
+    /** RFC 5545 §3.2.17 `TRUE`/`FALSE`, stored as 1/0; null when the wire omits it. */
     @ColumnInfo(name = "rsvp")
     val rsvp: Boolean? = null,
 
-    /**
-     * RFC 5545 §3.2.4: list of CAL-ADDRESSes from which this attendee was
-     * delegated. JSON `List<String>` mirroring
-     * `org.onekash.icaldav.model.ICalEvent.delegatedFrom`. Default `[]`.
-     */
+    /** RFC 5545 §3.2.4: the CAL-ADDRESSes that delegated to this attendee. */
     @ColumnInfo(name = "delegated_from", defaultValue = "[]")
     val delegatedFrom: List<String> = emptyList(),
 
-    /**
-     * RFC 5545 §3.2.5: list of CAL-ADDRESSes to which the attendee
-     * delegated. JSON `List<String>`. Default `[]`.
-     */
+    /** RFC 5545 §3.2.5: the CAL-ADDRESSes this attendee delegated to. */
     @ColumnInfo(name = "delegated_to", defaultValue = "[]")
     val delegatedTo: List<String> = emptyList(),
 
-    /**
-     * RFC 5545 §3.2.11: group memberships for this attendee. JSON
-     * `List<String>`. Default `[]`.
-     */
+    /** RFC 5545 §3.2.11: the groups this attendee is a member of. */
     @ColumnInfo(name = "member", defaultValue = "[]")
     val member: List<String> = emptyList(),
 
-    /**
-     * RFC 5545 §3.2.18: assistant scheduling on behalf of the attendee.
-     */
+    /** RFC 5545 §3.2.18: who scheduled on behalf of the attendee. */
     @ColumnInfo(name = "sent_by")
     val sentBy: String? = null,
 
-    /**
-     * RFC 6638 §7.1: `SERVER` / `CLIENT` / `NONE`. NULL = use server
-     * default. TEXT-lenient.
-     */
+    /** RFC 6638 §7.1: `SERVER`, `CLIENT` or `NONE`; null means the server default. */
     @ColumnInfo(name = "schedule_agent")
     val scheduleAgent: String? = null,
 
     /**
-     * RFC 6638 §7.3: server-written delivery status, e.g.
-     * `1.2;Delivered`, `5.3;No scheduling support for user`.
+     * RFC 6638 §7.3: the server-written delivery status code, e.g. `1.2` or `5.3`, without its
+     * description. The pull keeps only the first code.
      */
     @ColumnInfo(name = "schedule_status")
     val scheduleStatus: String? = null,
 
-    /**
-     * RFC 6638 §7.2: forces server to send `REQUEST` or `REPLY` even
-     * when normally not required. TEXT-lenient.
-     */
+    /** RFC 6638 §7.2: makes the server send a `REQUEST` or `REPLY` it otherwise wouldn't. */
     @ColumnInfo(name = "schedule_force_send")
     val scheduleForceSend: String? = null,
 
-    /**
-     * Wire-order preservation of ATTENDEE lines per event. Lower values
-     * sort first.
-     */
+    /** Position of the ATTENDEE line in the event, so the wire order survives; lower first. */
     @ColumnInfo(name = "sort_order", defaultValue = "0")
     val sortOrder: Int = 0,
 
     /**
-     * Epoch millis when the per-invite system notification fired for this
-     * attendee row. NULL = not yet notified. Internal notification-dedup
-     * state, NOT an RFC wire-protocol field.
+     * When the invite notification fired for this row (epoch millis); null if not yet. Local
+     * notification-dedup state, not a wire field.
      *
-     * The replace-on-pull semantics in `AttendeesDao.replaceForEvent`
-     * preserve this field across syncs when the prior row was non-NEEDS-
-     * ACTION (i.e., the user already responded), so a server pull that
-     * temporarily returns NEEDS-ACTION before its REPLY queue fires won't
-     * re-fire a duplicate notification.
+     * [org.onekash.kashcal.data.db.dao.AttendeesDao.replaceForEvent] carries it over from the
+     * prior row with the same canonical address whenever the incoming row has none, so a pull
+     * that returns NEEDS-ACTION before the server's REPLY queue runs doesn't notify again.
      */
     @ColumnInfo(name = "notified_at")
     val notifiedAt: Long? = null,
 
     /**
-     * The event SEQUENCE at which a client-side `METHOD:REQUEST` was last
-     * successfully POSTed to this attendee's scheduling outbox (RFC 6638 §6).
-     * NULL = no client-side REQUEST has been sent to this attendee yet.
+     * The event SEQUENCE at which a client-side `METHOD:REQUEST` was last POSTed to this
+     * attendee through the scheduling outbox (RFC 6638 §6); null if none was sent yet.
      *
-     * The idempotency marker for the client-outbox send path: a REQUEST is
-     * (re-)sent only when this is NULL (never sent, including a late-added
-     * invitee) or strictly less than the event's current SEQUENCE (a genuine
-     * reschedule per RFC 5546 §3.2.2.1). A same-SEQUENCE re-push does NOT
-     * re-send (RFC 5546 §3.2.2.2 — same SEQUENCE is an update, not a
-     * reschedule), which prevents duplicate-invite spam on every sync cycle.
-     * On a permanent send failure the marker is also advanced (to stop the
-     * loop); recovery then rides a later SEQUENCE bump or address correction.
+     * The idempotency marker for the outbox send: a REQUEST is sent only when this is null
+     * (never sent, including a late-added invitee) or below the event's current SEQUENCE (a
+     * reschedule, RFC 5546 §3.2.2.1). A same-SEQUENCE re-push doesn't re-send (RFC 5546
+     * §3.2.2.2: same SEQUENCE is an update, not a reschedule), which stops a duplicate invite
+     * on every sync. A permanent send failure also advances it, to stop the loop; a later
+     * SEQUENCE bump or address fix recovers.
      *
-     * Internal send-dedup state, NOT an RFC wire-protocol field — preserved
-     * across the server-authoritative replace in [AttendeesDao.replaceForEvent]
-     * the same way `notified_at` is.
+     * Local send-dedup state, not a wire field. It survives the server wins replace in
+     * [org.onekash.kashcal.data.db.dao.AttendeesDao.replaceForEvent] the same way as
+     * [notifiedAt].
      */
     @ColumnInfo(name = "itip_request_sequence")
     val itipRequestSequence: Int? = null,
 
     /**
-     * The raw per-recipient request-status the scheduling outbox returned for
-     * the last client-side `METHOD:REQUEST` to this attendee (RFC 6638 §10.4,
-     * e.g. `2.0;Success`, `3.7;Invalid calendar user`). NULL = no client-side
-     * send recorded.
+     * The raw request-status the scheduling outbox returned for the last client-side
+     * `METHOD:REQUEST` to this attendee (RFC 6638 §10.4, e.g. `2.0;Success`,
+     * `3.7;Invalid calendar user`); null when no send was recorded.
      *
-     * Kept distinct from [scheduleStatus] (the server-stamped delivery receipt
-     * from the implicit PUT, RFC 6638 §7.3): the delivery-routing classifier
-     * reads `schedule_status`/`schedule_agent`, so the client-POST outcome must
-     * never overwrite that input. Persisted now for a future delivery badge;
-     * the send path only branches on its leading status digit.
+     * Kept apart from [scheduleStatus], the server's delivery receipt from the implicit PUT
+     * (RFC 6638 §7.3): the delivery-routing classifier reads `schedule_status` and
+     * `schedule_agent`, so the outbox outcome must never overwrite that input. Nothing reads
+     * the stored value yet; the send path classifies the reply's status before storing it.
      */
     @ColumnInfo(name = "itip_request_status")
     val itipRequestStatus: String? = null

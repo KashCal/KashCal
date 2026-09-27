@@ -46,18 +46,15 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Fault-isolation contract for the pull processing loop: one event whose
- * post-map write path throws (occurrence generation blows up on a shape no
- * fixture anticipated) must NOT abort the whole calendar's sync. The good
- * events in the same batch must still land, and the failure must route through
- * the same parse-error accounting that holds the sync token for a retry —
- * exactly as a malformed-ICS parse failure already does upstream.
+ * Tests fault isolation in the pull processing loop: one event whose map step, occurrence
+ * generation or synthetic-master insert throws must not abort the calendar's sync. The good
+ * events in the same batch still land, and the failure is counted like a malformed-ICS parse
+ * failure, which on the incremental path holds the sync-token for a retry.
  *
- * The throw is injected via a spy on OccurrenceGenerator rather than a crafted
- * ICS: the committed property/corpus tests already push toEntity + the real
- * generator hard to lower the *probability* of a throw; this test bounds the
- * *blast radius* when one slips through anyway, so it must simulate the throw
- * deterministically regardless of which internal line would produce it.
+ * The throws are injected with spies and a mocked [ICalEventMapper], not crafted ICS. The
+ * property and corpus tests (`ICalEventMapperFuzzTest`, `IcsCorpusPipelineTest`) lower the
+ * chance of a throw from toEntity and the real generator; this test bounds the damage when one
+ * slips through, so the throw must be deterministic whichever internal line would produce it.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -96,9 +93,8 @@ class PullStrategyPoisonEventIsolationTest {
         database.accountsDao().insert(account)
         database.calendarsDao().insert(calendar())
 
-        // Spy the real generator so the good event persists normally, but the
-        // poison event's occurrence generation throws — simulating a mapper/
-        // generator failure on one event mid-batch.
+        // A spy on the real generator: the good event persists normally, and the poison event's
+        // occurrence generation throws, simulating a generator failure on one event mid-batch.
         occurrenceGenerator = spyk(
             OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), dataStore)
         )
@@ -106,9 +102,8 @@ class PullStrategyPoisonEventIsolationTest {
             occurrenceGenerator.regenerateOccurrences(match { it.uid == POISON_UID })
         } throws RuntimeException("simulated occurrence-generation failure")
 
-        // Spy the DAO so individual tests can make a single write throw. The
-        // default is callOriginal(), so tests that don't stub it behave exactly
-        // like the real in-memory DAO.
+        // A spy on the DAO lets a test make a single write throw. Unstubbed calls go to the real
+        // in-memory DAO.
         eventsDao = spyk(database.eventsDao())
 
         pullStrategy = PullStrategy(
@@ -157,9 +152,9 @@ class PullStrategyPoisonEventIsolationTest {
     """.trimIndent()
 
     /**
-     * An orphan exception: a VEVENT carrying RECURRENCE-ID whose master is
-     * absent from this batch and from Room. The pull path synthesizes a
-     * placeholder master so the exception's FK has a target.
+     * Builds an orphan exception: a VEVENT with a RECURRENCE-ID whose master is absent from this
+     * batch and from Room. The pull synthesizes a placeholder master so the exception's FK has a
+     * target.
      */
     private fun orphanException(uid: String): String = """
         BEGIN:VCALENDAR
@@ -177,8 +172,8 @@ class PullStrategyPoisonEventIsolationTest {
     """.trimIndent()
 
     /**
-     * Two events in one resource-fetch batch, poison FIRST so that under the
-     * pre-fix code its throw aborts the batch before the good event is reached.
+     * Returns two events in one resource-fetch batch, poison first, so a throw that aborted the
+     * batch would stop before the good event.
      */
     private fun poisonThenGood(): List<CalDavEvent> = listOf(
         CalDavEvent("poison.ics", "${calendar().caldavUrl}poison.ics", "etag-poison", ical(POISON_UID, "Poison")),
@@ -200,7 +195,7 @@ class PullStrategyPoisonEventIsolationTest {
 
         val result = pullStrategy.pull(cal, client = client)
 
-        // The whole pull must NOT collapse to an error because of one bad event.
+        // One bad event must not turn the whole pull into an error.
         assertTrue("pull must succeed despite one poison event, was $result", result is PullResult.Success)
         assertEquals("only the good event should count as added", 1, (result as PullResult.Success).eventsAdded)
 
@@ -210,17 +205,16 @@ class PullStrategyPoisonEventIsolationTest {
         assertTrue("good event's occurrence must be generated",
             database.occurrencesDao().getForEvent(good!!.id).isNotEmpty())
 
-        // The poison event must NOT be left half-written (transaction rolled back).
+        // The poison event must not be left half-written: its transaction rolled back.
         assertNull("poison event must not be persisted", database.eventsDao().getMasterByUidAndCalendar(POISON_UID, cal.id))
     }
 
     @Test
     fun `full sync survives one event whose map step throws before the transaction`() = runTest {
-        // The map step (ICalEventMapper.toEntity) runs BEFORE the upsert
-        // transaction. A parseable-but-hostile event can make it throw a shape
-        // no fixture anticipated; that throw must be isolated to the one event,
-        // not abort the whole calendar's pull. This is the pre-transaction
-        // sibling of the occurrence-generation poison test above.
+        // The map step (ICalEventMapper.toEntity) runs before the upsert transaction. A
+        // parseable but hostile event can make it throw; the throw must stay with that one event
+        // and not abort the calendar's pull. This is the pre-transaction sibling of the
+        // occurrence-generation test above.
         mockkObject(ICalEventMapper)
         every {
             ICalEventMapper.toEntity(match { it.uid == POISON_UID }, any(), any(), any(), any(), any())
@@ -279,8 +273,8 @@ class PullStrategyPoisonEventIsolationTest {
 
         assertTrue("pull must succeed despite one poison event, was $result", result is PullResult.Success)
         val success = result as PullResult.Success
-        // Token is HELD (not advanced to token-B) so the failed event is re-fetched
-        // next cycle — the same recovery a malformed-ICS parse failure already gets.
+        // The token is held, not advanced to token-B, so the failed event is re-fetched next
+        // cycle: the same recovery a malformed-ICS parse failure gets.
         assertEquals("sync token must be held for retry, not advanced", "token-A", success.newSyncToken)
         assertTrue("the processing failure must be counted as a parse/skip error",
             sessionBuilder.getSkippedParseError() > 0)
@@ -290,24 +284,21 @@ class PullStrategyPoisonEventIsolationTest {
     }
 
     /**
-     * Fault isolation must extend to the orphan-exception synthetic-master
-     * write, not just the map/upsert transaction. When an orphan exception has
-     * no master in the batch or Room, the exception pass synthesizes a
-     * placeholder master and inserts it. If that insert throws (a DB-layer
-     * failure on one row), the pull must still isolate the failure to that one
-     * event — the good event in the same batch must land and the whole pull
-     * must NOT collapse to an error.
+     * Fault isolation covers the orphan-exception synthetic-master insert, not only the map and
+     * upsert transaction. When an orphan exception has no master in the batch or Room, the
+     * exception pass inserts a placeholder master. If that insert throws (a DB failure on one
+     * row), the failure stays with that one exception: the other events in the batch land and
+     * the pull doesn't turn into an error.
      */
     @Test
     fun `full sync survives an orphan exception whose synthetic-master insert throws`() = runTest {
         val cal = calendar(ctag = null, syncToken = null)
-        // processEvents partitions by RECURRENCE-ID, not list order: masters
-        // (GOOD_UID) commit in pass 2 before the exception pass (pass 3) runs at
-        // all, so a master survives the pass-3 throw regardless of ordering. The
-        // discriminating case is a SECOND orphan exception (GOOD_ORPHAN_UID)
-        // queued AFTER the poison one in the same exception pass: if per-exception
-        // isolation regresses, the poison's throw would abort the remaining
-        // exceptions and this second orphan would silently vanish.
+        // processEvents partitions by RECURRENCE-ID, not list order: masters (GOOD_UID) commit
+        // in pass 2 before the exception pass (pass 3) runs, so a master survives a pass-3 throw
+        // whatever the order. The discriminating case is a second orphan exception
+        // (GOOD_ORPHAN_UID) queued after the poison one in the same pass: without per-exception
+        // isolation the poison's throw would abort the remaining exceptions and this second
+        // orphan would silently vanish.
         val events = listOf(
             CalDavEvent(
                 "orphan-poison.ics", "${cal.caldavUrl}orphan-poison.ics", "etag-orphan-poison",
@@ -323,10 +314,9 @@ class PullStrategyPoisonEventIsolationTest {
             ),
         )
 
-        // Make ONLY the poison orphan's synthetic-master insert throw. The match
-        // is scoped to POISON_UID so the second orphan's synthetic insert runs
-        // the real DAO and must land — proving the throw was isolated to the one
-        // failing exception, not the whole exception pass.
+        // Only the poison orphan's synthetic-master insert throws. The match is scoped to
+        // POISON_UID, so the second orphan's synthetic insert runs the real DAO and must land,
+        // proving the throw stayed with the one failing exception.
         coEvery {
             eventsDao.insert(match {
                 it.uid == POISON_UID &&
@@ -350,8 +340,8 @@ class PullStrategyPoisonEventIsolationTest {
             result is PullResult.Success
         )
 
-        // The good master must have landed (it commits in pass 2, before the
-        // pass-3 throw — a baseline sanity check, not the discriminating one).
+        // The good master must have landed. It commits in pass 2, before the pass-3 throw, so
+        // this is a baseline check, not the discriminating one.
         val good = database.eventsDao().getMasterByUidAndCalendar(GOOD_UID, cal.id)
         assertNotNull("good event must survive the synthetic-master insert failure", good)
         assertTrue(
@@ -359,18 +349,17 @@ class PullStrategyPoisonEventIsolationTest {
             database.occurrencesDao().getForEvent(good!!.id).isNotEmpty()
         )
 
-        // The discriminating assertion: the SECOND orphan exception — queued
-        // after the poison one in the same exception pass — must still be
-        // promoted via its own synthetic master. If per-exception isolation
-        // regresses, the poison throw aborts the rest of the pass and this row
-        // never appears.
+        // The discriminating assertion: the second orphan exception, queued after the poison one
+        // in the same pass, must still be promoted via its own synthetic master. Without
+        // per-exception isolation the poison throw aborts the rest of the pass and this row never
+        // appears.
         val secondOrphanMaster = database.eventsDao().getMasterByUidAndCalendar(GOOD_ORPHAN_UID, cal.id)
         assertNotNull(
             "second orphan exception must survive the poison orphan's failure in the same pass",
             secondOrphanMaster
         )
 
-        // The poison orphan itself must NOT have been persisted.
+        // The poison orphan itself must not have been persisted.
         assertNull(
             "poison orphan's master must not be persisted",
             database.eventsDao().getMasterByUidAndCalendar(POISON_UID, cal.id)

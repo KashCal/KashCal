@@ -7,8 +7,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Unit tests for SubscriptionComponents.
- * Tests color palette, sync intervals, and URL validation.
+ * Tests SubscriptionComponents.kt: the [SubscriptionColors] palette, the
+ * [subscriptionSyncIntervalOptions], [normalizeSubscriptionUrl], and [IcsSubscriptionUiModel]
+ * built from them.
  */
 class SubscriptionComponentsTest {
 
@@ -112,7 +113,7 @@ class SubscriptionComponentsTest {
         )
     }
 
-    // ==================== Integration Tests ====================
+    // ==================== IcsSubscriptionUiModel with the Constants ====================
 
     @Test
     fun `IcsSubscriptionUiModel works with SubscriptionColors`() {

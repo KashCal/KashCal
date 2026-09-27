@@ -7,21 +7,20 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * Pool A — RFC 5545 §3.8.5.3 worked examples.
+ * Pool A: RFC 5545 §3.8.5.3 worked examples.
  *
- * Every case here carries `rfcExpected` — the spec-documented list of occurrences
- * transcribed from the RFC text. These cases are ground truth: if either engine
- * disagrees with `rfcExpected`, the engine is wrong, not the fixture.
+ * Every case here carries `rfcExpected`, the list of occurrences transcribed from the RFC text.
+ * These cases are ground truth: if either engine disagrees with `rfcExpected`, the engine is
+ * wrong, not the fixture. Example 33 is the exception; see its `knownDivergenceReason`.
  *
  * Case naming convention (enforced by `ParityCorpusValidationTest`):
  *   "RFC 5545 §3.8.5.3 example N: <short description>"
  *
- * Timezone note: the RFC states "All examples assume the Eastern United States time zone."
- * Epoch ms are computed via `ZonedDateTime` over `America/New_York`, which uses the
- * IANA tz-data historical DST rules — EST/EDT transitions in 1997/1998 follow the
- * pre-2007 "first Sunday of April / last Sunday of October" rule, not the post-2007
- * "second Sunday of March / first Sunday of November" rule. Example 38 (year 2007)
- * uses January dates and is therefore unaffected by the 2007 DST rule change.
+ * Timezone: the RFC states "All examples assume the Eastern United States time zone." Epoch ms
+ * are computed via `ZonedDateTime` over `America/New_York`, which applies IANA tzdata's
+ * historical DST rules: EST/EDT transitions in 1996-2006 follow the pre-2007 "first Sunday of
+ * April / last Sunday of October" rule. Example 38 (2007) falls under the post-2006 "second
+ * Sunday of March" rule, so its March dates are EDT.
  */
 object RfcExamplesCorpus {
 
@@ -31,7 +30,7 @@ object RfcExamplesCorpus {
     private fun et9(y: Int, m: Int, d: Int, hour: Int = 9, minute: Int = 0): Long =
         ZonedDateTime.of(y, m, d, hour, minute, 0, 0, ETZ).toInstant().toEpochMilli()
 
-    /** UTC midnight for a given date (used for all-day cases — none in Pool A). */
+    /** Returns UTC midnight for a date, for all-day cases; Pool A has none. */
     @Suppress("unused")
     private fun utcMidnight(y: Int, m: Int, d: Int): Long =
         LocalDate.of(y, m, d).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
@@ -63,7 +62,7 @@ object RfcExamplesCorpus {
     )
 
     val cases: List<RRuleCase> = listOf(
-        // Example 1 — Daily for 10 occurrences.
+        // Example 1: daily for 10 occurrences.
         // DTSTART;TZID=America/New_York:19970902T090000
         // RRULE:FREQ=DAILY;COUNT=10
         // ==> (1997 9:00 AM EDT) September 2-11
@@ -77,9 +76,10 @@ object RfcExamplesCorpus {
             rfcExpected = (2..11).map { et9(1997, 9, it) },
         ),
 
-        // Example 2 — Daily until December 24, 1997.
+        // Example 2: daily until December 24, 1997.
         // RRULE:FREQ=DAILY;UNTIL=19971224T000000Z
-        // ==> September 2-30 (EDT); October 1-25 (EDT); October 26-31, November 1-30, December 1-23 (EST)
+        // ==> September 2-30 (EDT); October 1-25 (EDT);
+        //     October 26-31, November 1-30, December 1-23 (EST)
         // UNTIL=19971224T000000Z = 19971223T190000 EST = 19971223T190000-0500.
         // Every 09:00 ET occurrence between DTSTART and UNTIL, inclusive. DST ends 1997-10-26.
         rfcCase(
@@ -103,7 +103,7 @@ object RfcExamplesCorpus {
             },
         ),
 
-        // Example 3 — Every other day forever (RFC text truncated; bounded here).
+        // Example 3: every other day forever (the RFC truncates the list; bounded here).
         // DTSTART;TZID=America/New_York:19970902T090000
         // RRULE:FREQ=DAILY;INTERVAL=2
         // ==> (EDT) Sep 2,4,6,8,10,12,14,16,18,20,22,24,26,28,30;
@@ -123,7 +123,7 @@ object RfcExamplesCorpus {
                 for (d in 2..30 step 2) add(et9(1997, 9, d))
                 // Oct 2,4,..,24 (EDT)
                 for (d in 2..24 step 2) add(et9(1997, 10, d))
-                // Oct 26,28,30 (EST — DST ended Oct 26)
+                // Oct 26,28,30 (EST; DST ended Oct 26)
                 for (d in 26..30 step 2) add(et9(1997, 10, d))
                 // Nov 1,3,..,29 (EST)
                 for (d in 1..29 step 2) add(et9(1997, 11, d))
@@ -132,7 +132,7 @@ object RfcExamplesCorpus {
             },
         ),
 
-        // Example 4 — Every 10 days, 5 occurrences.
+        // Example 4: every 10 days, 5 occurrences.
         // RRULE:FREQ=DAILY;INTERVAL=10;COUNT=5
         // ==> September 2,12,22; October 2,12
         rfcCase(
@@ -148,7 +148,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 5 — Every day in January for 3 years.
+        // Example 5: every day in January for 3 years.
         // DTSTART;TZID=America/New_York:19980101T090000
         // RRULE:FREQ=YEARLY;UNTIL=20000131T140000Z;BYMONTH=1;BYDAY=SU,MO,TU,WE,TH,FR,SA
         // UNTIL=20000131T140000Z = 20000131T090000 EST. Includes Jan 31 9:00 of each year.
@@ -167,7 +167,7 @@ object RfcExamplesCorpus {
             },
         ),
 
-        // Example 6 — Weekly for 10 occurrences.
+        // Example 6: weekly for 10 occurrences.
         // RRULE:FREQ=WEEKLY;COUNT=10
         // ==> Sep 2,9,16,23,30; Oct 7,14,21 (EDT); Oct 28; Nov 4 (EST)
         rfcCase(
@@ -184,7 +184,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 7 — Weekly until December 24, 1997.
+        // Example 7: weekly until December 24, 1997.
         // RRULE:FREQ=WEEKLY;UNTIL=19971224T000000Z
         // ==> Sep 2,9,16,23,30; Oct 7,14,21 (EDT); Oct 28; Nov 4,11,18,25; Dec 2,9,16,23 (EST)
         rfcCase(
@@ -202,9 +202,11 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 8 — Every other week forever (truncated in RFC; bounded to listed occurrences here).
+        // Example 8: every other week forever (truncated in the RFC; bounded to the listed
+        // occurrences here).
         // RRULE:FREQ=WEEKLY;INTERVAL=2;WKST=SU
-        // ==> Sep 2,16,30; Oct 14 (EDT); Oct 28; Nov 11,25; Dec 9,23 (1997 EST); Jan 6,20; Feb 3,17 (1998 EST)
+        // ==> Sep 2,16,30; Oct 14 (EDT); Oct 28; Nov 11,25; Dec 9,23 (1997 EST);
+        //     Jan 6,20; Feb 3,17 (1998 EST)
         rfcCase(
             number = "8",
             description = "every other week forever (bounded to listed occurrences)",
@@ -222,7 +224,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 9 — Weekly on Tuesday and Thursday for five weeks.
+        // Example 9: weekly on Tuesday and Thursday for five weeks.
         // RRULE:FREQ=WEEKLY;COUNT=10;WKST=SU;BYDAY=TU,TH
         // ==> Sep 2,4,9,11,16,18,23,25,30; Oct 2 (EDT)
         rfcCase(
@@ -241,7 +243,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 10 — Every other week Mo,We,Fr until Dec 24 1997, starting Mon Sep 1 1997.
+        // Example 10: every other week Mo,We,Fr until Dec 24 1997, starting Mon Sep 1 1997.
         // DTSTART;TZID=America/New_York:19970901T090000
         // RRULE:FREQ=WEEKLY;INTERVAL=2;UNTIL=19971224T000000Z;WKST=SU;BYDAY=MO,WE,FR
         // ==> Sep 1,3,5,15,17,19,29; Oct 1,3,13,15,17 (EDT);
@@ -265,7 +267,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 11 — Every other week on Tuesday and Thursday for 8 occurrences.
+        // Example 11: every other week on Tuesday and Thursday for 8 occurrences.
         // RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=8;WKST=SU;BYDAY=TU,TH
         // ==> Sep 2,4,16,18,30; Oct 2,14,16 (EDT)
         rfcCase(
@@ -283,7 +285,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 12 — Monthly on the first Friday for 10 occurrences.
+        // Example 12: monthly on the first Friday for 10 occurrences.
         // DTSTART;TZID=America/New_York:19970905T090000
         // RRULE:FREQ=MONTHLY;COUNT=10;BYDAY=1FR
         // ==> Sep 5, Oct 3 (EDT); Nov 7, Dec 5 (EST);
@@ -304,7 +306,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 13 — Monthly on the first Friday until December 24, 1997.
+        // Example 13: monthly on the first Friday until December 24, 1997.
         // RRULE:FREQ=MONTHLY;UNTIL=19971224T000000Z;BYDAY=1FR
         // ==> Sep 5, Oct 3 (EDT); Nov 7, Dec 5 (EST)
         rfcCase(
@@ -320,7 +322,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 14 — Every other month on the first and last Sunday for 10 occurrences.
+        // Example 14: every other month on the first and last Sunday for 10 occurrences.
         // DTSTART;TZID=America/New_York:19970907T090000
         // RRULE:FREQ=MONTHLY;INTERVAL=2;COUNT=10;BYDAY=1SU,-1SU
         // ==> Sep 7,28 (EDT); Nov 2,30 (EST);
@@ -341,7 +343,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 15 — Monthly on the second-to-last Monday for 6 months.
+        // Example 15: monthly on the second-to-last Monday for 6 months.
         // DTSTART;TZID=America/New_York:19970922T090000
         // RRULE:FREQ=MONTHLY;COUNT=6;BYDAY=-2MO
         // ==> Sep 22, Oct 20 (EDT); Nov 17, Dec 22 (EST);
@@ -360,7 +362,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 16 — Monthly on the third-to-the-last day of the month, forever (bounded).
+        // Example 16: monthly on the third-to-the-last day of the month, forever (bounded).
         // DTSTART;TZID=America/New_York:19970928T090000
         // RRULE:FREQ=MONTHLY;BYMONTHDAY=-3
         // ==> Sep 28 (EDT); Oct 29, Nov 28, Dec 29 (EST); Jan 29, Feb 26 (1998 EST)
@@ -378,7 +380,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 17 — Monthly on the 2nd and 15th for 10 occurrences.
+        // Example 17: monthly on the 2nd and 15th for 10 occurrences.
         // RRULE:FREQ=MONTHLY;COUNT=10;BYMONTHDAY=2,15
         // ==> Sep 2,15; Oct 2,15 (EDT); Nov 2,15; Dec 2,15 (EST); Jan 2,15 (1998 EST)
         rfcCase(
@@ -397,7 +399,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 18 — Monthly on the first and last day for 10 occurrences.
+        // Example 18: monthly on the first and last day for 10 occurrences.
         // DTSTART;TZID=America/New_York:19970930T090000
         // RRULE:FREQ=MONTHLY;COUNT=10;BYMONTHDAY=1,-1
         // ==> Sep 30, Oct 1 (EDT); Oct 31, Nov 1, Nov 30, Dec 1, Dec 31 (EST);
@@ -419,7 +421,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 19 — Every 18 months on the 10th thru 15th for 10 occurrences.
+        // Example 19: every 18 months on the 10th thru 15th for 10 occurrences.
         // DTSTART;TZID=America/New_York:19970910T090000
         // RRULE:FREQ=MONTHLY;INTERVAL=18;COUNT=10;BYMONTHDAY=10,11,12,13,14,15
         // ==> Sep 10,11,12,13,14,15 (1997 EDT); Mar 10,11,12,13 (1999 EST)
@@ -438,7 +440,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 20 — Every Tuesday, every other month, forever (bounded).
+        // Example 20: every Tuesday, every other month, forever (bounded).
         // DTSTART;TZID=America/New_York:19970902T090000  (Tuesday)
         // RRULE:FREQ=MONTHLY;INTERVAL=2;BYDAY=TU
         // ==> Sep 2,9,16,23,30 (1997 EDT);
@@ -460,7 +462,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 21 — Yearly in June and July for 10 occurrences.
+        // Example 21: yearly in June and July for 10 occurrences.
         // DTSTART;TZID=America/New_York:19970610T090000
         // RRULE:FREQ=YEARLY;COUNT=10;BYMONTH=6,7
         // ==> Jun 10, Jul 10 each year 1997-2001 (all EDT)
@@ -479,7 +481,7 @@ object RfcExamplesCorpus {
             },
         ),
 
-        // Example 22 — Every other year on Jan/Feb/Mar for 10 occurrences.
+        // Example 22: every other year on Jan/Feb/Mar for 10 occurrences.
         // DTSTART;TZID=America/New_York:19970310T090000
         // RRULE:FREQ=YEARLY;INTERVAL=2;COUNT=10;BYMONTH=1,2,3
         // ==> Mar 10 (1997 EST);
@@ -500,14 +502,14 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 23 — Every third year on 1st, 100th, 200th day for 10 occurrences.
+        // Example 23: every third year on 1st, 100th, 200th day for 10 occurrences.
         // DTSTART;TZID=America/New_York:19970101T090000
         // RRULE:FREQ=YEARLY;INTERVAL=3;COUNT=10;BYYEARDAY=1,100,200
         // ==> Jan 1 (1997 EST); Apr 10, Jul 19 (1997 EDT);
         //     Jan 1 (2000 EST); Apr 9, Jul 18 (2000 EDT);
         //     Jan 1 (2003 EST); Apr 10, Jul 19 (2003 EDT);
         //     Jan 1 (2006 EST)
-        // Leap-year note: 2000 is a leap year (div by 400), so day-100 = Apr 9 and day-200 = Jul 18.
+        // 2000 is a leap year (divisible by 400), so day 100 = Apr 9 and day 200 = Jul 18.
         rfcCase(
             number = "23",
             description = "every 3 years on 1st 100th 200th day for 10 occurrences",
@@ -523,7 +525,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 24 — Every 20th Monday of the year, forever (bounded).
+        // Example 24: every 20th Monday of the year, forever (bounded).
         // DTSTART;TZID=America/New_York:19970519T090000  (Monday)
         // RRULE:FREQ=YEARLY;BYDAY=20MO
         // ==> May 19 (1997 EDT); May 18 (1998 EDT); May 17 (1999 EDT)
@@ -541,11 +543,11 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 25 — Monday of week number 20 (default WKST=MO), forever (bounded).
+        // Example 25: Monday of week number 20 (default WKST=MO), forever (bounded).
         // DTSTART;TZID=America/New_York:19970512T090000  (ISO week-20 Monday for 1997)
         // RRULE:FREQ=YEARLY;BYWEEKNO=20;BYDAY=MO
         // ==> May 12 (1997 EDT); May 11 (1998 EDT); May 17 (1999 EDT)
-        // Note: 1999 has Jan 1 on a Friday → ISO week 1 starts Jan 4, so week 20 Monday is May 17.
+        // 1999 has Jan 1 on a Friday, so ISO week 1 starts Jan 4 and the week-20 Monday is May 17.
         rfcCase(
             number = "25",
             description = "Monday of ISO week 20 forever (bounded to 1999)",
@@ -560,11 +562,11 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 26 — Every Thursday in March, forever (bounded).
+        // Example 26: every Thursday in March, forever (bounded).
         // DTSTART;TZID=America/New_York:19970313T090000  (Thursday)
         // RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=TH
         // ==> Mar 13,20,27 (1997 EST); Mar 5,12,19,26 (1998 EST); Mar 4,11,18,25 (1999 EST)
-        // DST begins first Sunday of April (pre-2007 rule) — all March dates are EST.
+        // DST begins the first Sunday of April (pre-2007 rule), so all March dates are EST.
         rfcCase(
             number = "26",
             description = "every Thursday in March forever (bounded to 1999)",
@@ -579,7 +581,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 27 — Every Thursday in June/July/August, forever (bounded).
+        // Example 27: every Thursday in June/July/August, forever (bounded).
         // DTSTART;TZID=America/New_York:19970605T090000  (Thursday)
         // RRULE:FREQ=YEARLY;BYDAY=TH;BYMONTH=6,7,8
         // ==> Jun 5,12,19,26; Jul 3,10,17,24,31; Aug 7,14,21,28 (1997 EDT)
@@ -608,7 +610,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 28 — Every Friday the 13th forever.
+        // Example 28: every Friday the 13th forever.
         // DTSTART;TZID=America/New_York:19970902T090000
         // EXDATE;TZID=America/New_York:19970902T090000  (excludes DTSTART itself)
         // RRULE:FREQ=MONTHLY;BYDAY=FR;BYMONTHDAY=13
@@ -619,8 +621,9 @@ object RfcExamplesCorpus {
             description = "every Friday 13th forever with EXDATE on DTSTART",
             rrule = "FREQ=MONTHLY;BYDAY=FR;BYMONTHDAY=13",
             dtstartMs = et9(1997, 9, 2),
-            // EXDATE format: pass DTSTART's local date/time as YYYYMMDDTHHMMSS — both engines
-            // treat this as a TZID-attached local time equal to DTSTART.
+            // EXDATE format: DTSTART's local date/time as YYYYMMDDTHHMMSS. lib-recur keeps only
+            // the date and applies DTSTART's time (quirk g); the ical4j path reads the time in the
+            // JVM default zone, not the TZID.
             exdateStrings = "19970902T090000",
             rangeStartMs = et9(1997, 9, 1),
             rangeEndMs = et9(2000, 10, 14),
@@ -630,7 +633,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 29 — First Saturday that follows the first Sunday of the month, forever (bounded).
+        // Example 29: first Saturday after the first Sunday of the month, forever (bounded).
         // DTSTART;TZID=America/New_York:19970913T090000  (Saturday)
         // RRULE:FREQ=MONTHLY;BYDAY=SA;BYMONTHDAY=7,8,9,10,11,12,13
         // ==> Sep 13, Oct 11 (1997 EDT); Nov 8, Dec 13 (1997 EST);
@@ -651,12 +654,12 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 30 — Every 4 years, the first Tuesday after a Monday in November
-        //              (U.S. Presidential Election day), forever (bounded).
+        // Example 30: every 4 years, the first Tuesday after a Monday in November
+        //             (U.S. Presidential Election day), forever (bounded).
         // DTSTART;TZID=America/New_York:19961105T090000  (Tuesday)
         // RRULE:FREQ=YEARLY;INTERVAL=4;BYMONTH=11;BYDAY=TU;BYMONTHDAY=2,3,4,5,6,7,8
         // ==> Nov 5 (1996 EST); Nov 7 (2000 EST); Nov 2 (2004 EST)
-        // DST end: pre-2007 rule = last Sunday of October — all listed dates are EST.
+        // DST ends the last Sunday of October (pre-2007 rule), so all listed dates are EST.
         rfcCase(
             number = "30",
             description = "every 4 years US Election Day forever (bounded to 2004)",
@@ -671,7 +674,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 31 — Third instance of Tu/We/Th for next 3 months.
+        // Example 31: third instance of Tu/We/Th for next 3 months.
         // DTSTART;TZID=America/New_York:19970904T090000
         // RRULE:FREQ=MONTHLY;COUNT=3;BYDAY=TU,WE,TH;BYSETPOS=3
         // ==> Sep 4, Oct 7 (EDT); Nov 6 (EST)
@@ -687,7 +690,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 32 — Second-to-last weekday of the month, forever (bounded).
+        // Example 32: second-to-last weekday of the month, forever (bounded).
         // DTSTART;TZID=America/New_York:19970929T090000  (Monday)
         // RRULE:FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-2
         // ==> Sep 29 (1997 EDT); Oct 30, Nov 27, Dec 30 (1997 EST);
@@ -713,15 +716,14 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 33 — Every 3 hours 9am to 5pm on Sep 2 1997.
+        // Example 33: every 3 hours 9am to 5pm on Sep 2 1997.
         // DTSTART;TZID=America/New_York:19970902T090000
         // RRULE:FREQ=HOURLY;INTERVAL=3;UNTIL=19970902T170000Z
         // UNTIL=19970902T170000Z = 13:00 EDT (Sep 2). So only 09:00 and 12:00 qualify.
         // The RFC prints "09:00,12:00,15:00" but under strict RFC semantics (UNTIL in UTC),
-        // 15:00 EDT = 19:00 UTC > UNTIL, so it's outside. The ical4j/lib-recur engines
-        // differ on this; this case exists specifically to surface that divergence.
-        // Use the RFC's literal text (3 occurrences) as ground truth; flag as
-        // knownDivergenceReason if engines produce fewer.
+        // 15:00 EDT = 19:00 UTC > UNTIL, so it's outside. Both engines honor the UTC
+        // UNTIL and produce 2. The RFC's literal text (3 occurrences) is kept as
+        // rfcExpected so the mismatch with the printed example stays visible.
         rfcCase(
             number = "33",
             description = "every 3 hours on Sep 2 1997 until 17Z",
@@ -729,8 +731,6 @@ object RfcExamplesCorpus {
             dtstartMs = et9(1997, 9, 2, 9, 0),
             rangeStartMs = et9(1997, 9, 2, 0, 0),
             rangeEndMs = et9(1997, 9, 3, 0, 0),
-            // RFC prints 09:00, 12:00, 15:00 — but UNTIL=17:00Z cuts before 15:00 EDT (=19:00Z).
-            // Transcribe the RFC literal text; the case's role is to expose the ambiguity.
             rfcExpected = listOf(
                 et9(1997, 9, 2, 9, 0),
                 et9(1997, 9, 2, 12, 0),
@@ -738,12 +738,11 @@ object RfcExamplesCorpus {
             ),
         ).copy(
             knownDivergenceReason = "RFC prints 09:00,12:00,15:00 but UNTIL=19970902T170000Z " +
-                "(13:00 EDT) excludes 15:00 EDT. This is a known RFC ambiguity/error — a literal " +
-                "UTC UNTIL comparison yields 2 occurrences. Engines differ on whether to honor the " +
-                "printed text or the literal UNTIL.",
+                "(13:00 EDT) excludes 15:00 EDT. The printed output contradicts the example's own " +
+                "UTC UNTIL; both engines honor the UNTIL and yield 2 occurrences.",
         ),
 
-        // Example 34 — Every 15 minutes for 6 occurrences.
+        // Example 34: every 15 minutes for 6 occurrences.
         // DTSTART;TZID=America/New_York:19970902T090000
         // RRULE:FREQ=MINUTELY;INTERVAL=15;COUNT=6
         // ==> 09:00,09:15,09:30,09:45,10:00,10:15 (EDT)
@@ -764,7 +763,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 35 — Every 90 minutes for 4 occurrences.
+        // Example 35: every 90 minutes for 4 occurrences.
         // RRULE:FREQ=MINUTELY;INTERVAL=90;COUNT=4
         // ==> 09:00, 10:30, 12:00, 13:30 (EDT)
         rfcCase(
@@ -782,7 +781,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 36 — Every 20 minutes from 9am to 4:40pm every day.
+        // Example 36: every 20 minutes from 9am to 4:40pm every day.
         // DTSTART;TZID=America/New_York:19970902T090000
         // RRULE:FREQ=DAILY;BYHOUR=9,10,11,12,13,14,15,16;BYMINUTE=0,20,40
         // ==> 9:00,9:20,9:40,10:00,...,16:00,16:20,16:40 each day
@@ -806,7 +805,7 @@ object RfcExamplesCorpus {
             },
         ),
 
-        // Example 37a — WKST=MO variant. DTSTART Tue Aug 5 1997.
+        // Example 37a: WKST=MO variant. DTSTART Tue Aug 5 1997.
         // RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=MO
         // ==> Aug 5, 10, 19, 24 (1997 EDT)
         rfcCase(
@@ -822,7 +821,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 37b — WKST=SU variant. DTSTART Tue Aug 5 1997.
+        // Example 37b: WKST=SU variant. DTSTART Tue Aug 5 1997.
         // RRULE:FREQ=WEEKLY;INTERVAL=2;COUNT=4;BYDAY=TU,SU;WKST=SU
         // ==> Aug 5, 17, 19, 31 (1997 EDT)
         rfcCase(
@@ -838,7 +837,7 @@ object RfcExamplesCorpus {
             ),
         ),
 
-        // Example 38 — Invalid date (Feb 30) ignored.
+        // Example 38: invalid date (Feb 30) ignored.
         // DTSTART;TZID=America/New_York:20070115T090000
         // RRULE:FREQ=MONTHLY;BYMONTHDAY=15,30;COUNT=5
         // ==> Jan 15, Jan 30 (2007 EST); Feb 15 (2007 EST); Mar 15, Mar 30 (2007 EDT)

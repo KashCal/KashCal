@@ -22,18 +22,16 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.vcard.VCardParser
 
 /**
- * Tests [ContactPushStrategy]: the push half of contact sync. It reads the
- * provider's DIRTY/DELETED pending set, joins each locator to its discovered
- * address book, and uploads edits (GET-before-PUT patch, or create/create-as-fresh)
- * and deletes back to the server, then records the outcome on the RawContact SYNC
- * columns via the write-back surface.
+ * Tests [ContactPushStrategy], the push half of contact sync. It reads the provider's
+ * DIRTY/DELETED pending set, matches each locator to its discovered address book, pushes edits
+ * (GET-before-PUT patch, a create, or create as fresh) and deletes, then records the outcome on
+ * the RawContact SYNC columns.
  *
- * Doubles: the shared [FakeCardDavClient] (records putContact/deleteContact, serves
- * the GET patch base via its contact pool, programmable results) and the shared
- * data-bearing [FakeContactsProviderRepository] (seeded pending set + write-back
- * capture). No Robolectric: the strategy composes vCards through the pure-JVM
- * VCardWriter/VCardParser and never touches a ContentProvider directly — only
- * `android.util.Log` is stubbed.
+ * Doubles: the shared [FakeCardDavClient] (records putContact and deleteContact, serves the GET
+ * patch base from its contact pool, programmable results) and the shared
+ * [FakeContactsProviderRepository] (seeded pending set, write-back capture). No Robolectric: the
+ * strategy builds vCards with the pure-JVM VCardWriter and VCardParser and never touches a
+ * ContentProvider directly, so only `android.util.Log` is stubbed.
  */
 class ContactPushStrategyTest {
 
@@ -74,7 +72,7 @@ class ContactPushStrategyTest {
     private fun serverVcard(uid: String, fn: String, extra: String = ""): String =
         "BEGIN:VCARD\r\nVERSION:3.0\r\nUID:$uid\r\nFN:$fn\r\nN:Doe;Jane;;;\r\n$extra" + "END:VCARD\r\n"
 
-    /** A vCard with NO UID — a device-created contact, RFC 6350 §6.7.6 (UID is `*1`). */
+    /** A vCard with no UID, like a device-created contact (RFC 6350 §6.7.6: UID is `*1`). */
     private fun serverVcardNoUid(fn: String): String =
         "BEGIN:VCARD\r\nVERSION:3.0\r\nFN:$fn\r\nN:Doe;Jane;;;\r\nEND:VCARD\r\n"
 
@@ -100,9 +98,9 @@ class ContactPushStrategyTest {
         assertEquals("$BOOK_HOST/ab/default/uid1.vcf", url)
         assertTrue("create must use If-None-Match:*", precondition is ContactPrecondition.IfAbsent)
         assertTrue("body is generated from device fields", body.contains("Jane Doe"))
-        // The created href + etag are written back to the ORIGINATING row by its _ID (the
-        // href was blank), which the href-keyed surface could never resolve. This is what
-        // stops the next pull mirroring the server copy as a duplicate row.
+        // The created href and etag are written back to the originating row by its _ID, since
+        // the href-keyed write-back can't resolve a blank href. This stops the next pull
+        // mirroring the server copy as a duplicate row.
         assertEquals(
             listOf(FakeContactsProviderRepository.MarkNewUploaded(ACCOUNT, 100L, "/ab/default/uid1.vcf", "srv-1")),
             provider.markNewUploadedCalls,
@@ -113,18 +111,18 @@ class ContactPushStrategyTest {
 
     @Test
     fun `a net-new precondition failure whose existing resource matches by UID is adopted and cleared`() = runTest {
-        // The create 412s because this same contact was already created on an earlier run
-        // whose local write-back failed (SOURCE_ID never stamped). Adopt it: GET the
-        // resource, confirm it is ours by UID, and stamp the created href + its server etag
-        // onto the originating row by _ID — closing the duplicate a later pull would mirror.
+        // The create 412s because an earlier run created this contact and its write-back
+        // failed (SOURCE_ID never stamped). Adopt it: GET the resource, confirm it is ours by
+        // UID, and stamp the created href and server etag onto the originating row by _ID, so
+        // a later pull doesn't mirror it as a duplicate.
         val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1")
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L)),
             deleted = emptyList(),
         )
         val client = FakeCardDavClient()
-        // The resource already exists server-side at the deterministic <uid>.vcf name,
-        // carrying the SAME UID as the edit — unmistakably this contact from a prior run.
+        // The resource already exists at the deterministic <uid>.vcf name with the same UID
+        // as the edit: this contact from a prior run.
         client.books += FakeAddressBook(
             book = writableBook(),
             contacts = mutableListOf(
@@ -150,8 +148,8 @@ class ContactPushStrategyTest {
 
     @Test
     fun `a net-new precondition failure whose existing resource is NOT ours defers without hijacking it`() = runTest {
-        // The name collides with a DIFFERENT contact (a foreign UID at the same resource
-        // name). We must not hijack it: leave the row DIRTY and defer to a later run.
+        // The name collides with a different contact (a foreign UID at the same resource
+        // name). It must not be hijacked: the row stays DIRTY for a later run.
         val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1")
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L)),
@@ -181,7 +179,7 @@ class ContactPushStrategyTest {
     @Test
     fun `a net-new precondition failure whose resource cannot be read defers and stays pending`() = runTest {
         // The create 412s but the GET can't confirm ownership (the resource is absent from
-        // the read — a transient omission). Adopt nothing: leave DIRTY, defer cleanly.
+        // the read, a transient omission). Adopt nothing: leave DIRTY and defer cleanly.
         val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1")
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L)),
@@ -202,9 +200,9 @@ class ContactPushStrategyTest {
 
     @Test
     fun `a UID-less device contact synthesizes and persists a UID before creating, then names the resource by it`() = runTest {
-        // A contact created in the device Contacts app has NO UID (blank SYNC1). The push
-        // mints a globally-unique UID, persists it to SYNC1 BEFORE the PUT, and names the
-        // resource by it — so the name is unique across every device on the account.
+        // A contact created in the device Contacts app has no UID (blank SYNC1). The push
+        // mints a globally unique UID, persists it to SYNC1 before the PUT, and names the
+        // resource by it, so the name is unique across every device on the account.
         val device = parse(serverVcardNoUid("Jane Doe")).copy(rawVCard = "", uid = "")
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "", storedEtag = null, contact = device, localId = 100L)),
@@ -237,10 +235,9 @@ class ContactPushStrategyTest {
 
     @Test
     fun `a UID-less create name is a globally-unique UUID, never the per-device local id`() = runTest {
-        // Cross-device data-loss guard: naming by the per-device RawContact _ID meant two
-        // devices minting the same _ID collided on local-<id>.vcf, and a blank==blank adopt
-        // guard let one device bind to the other's resource — losing a contact. Naming by a
-        // globally-unique UID makes that collision structurally impossible.
+        // Cross-device data-loss guard: the per-device RawContact _ID can't be the name. Two
+        // devices minting the same _ID would collide on local-<id>.vcf, and a blank-against-
+        // blank adopt would bind one device to the other's resource, losing a contact.
         val device = parse(serverVcardNoUid("Jane Doe")).copy(rawVCard = "", uid = "")
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "", storedEtag = null, contact = device, localId = 100L)),
@@ -259,9 +256,9 @@ class ContactPushStrategyTest {
 
     @Test
     fun `a UID-less create re-uses its persisted UID across runs so a re-attempt hits the same resource`() = runTest {
-        // The first create's write-back fails, so the edit stays pending for a second push —
-        // but its synthesized UID is now persisted (SYNC1). Run 2 must NOT mint a fresh one:
-        // it re-uses the persisted UID so it targets the SAME resource and can 412+adopt.
+        // The first create's write-back fails, so the edit stays pending for a second push,
+        // but its synthesized UID is persisted (SYNC1). Run 2 must not mint a new one: it
+        // re-uses the persisted UID, targets the same resource and can 412 and adopt.
         val device = parse(serverVcardNoUid("Jane Doe")).copy(rawVCard = "", uid = "")
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "", storedEtag = null, contact = device, localId = 100L)),
@@ -273,7 +270,7 @@ class ContactPushStrategyTest {
         provider.markNewUploadedResult = Result.failure(ContactWriteException(ContactWriteFailure.PROVIDER_ERROR))
 
         strategy.push(ACCOUNT, listOf(writableBook()), client) // run 1: synthesize + persist
-        strategy.push(ACCOUNT, listOf(writableBook()), client) // run 2: edit still pending, UID persisted
+        strategy.push(ACCOUNT, listOf(writableBook()), client) // run 2: edit pending, UID persisted
 
         assertEquals("the UID is synthesized once and persisted, not re-minted each run", 1, provider.assignUidCalls.size)
         assertEquals(2, client.putContactCalls.size)
@@ -285,11 +282,11 @@ class ContactPushStrategyTest {
 
     @Test
     fun `a UID-less create whose UID persistence fails does not PUT and defers pull-safe`() = runTest {
-        // Persisting the synthesized UID is the guard that makes the resource name stable and
-        // globally unique. If it fails, creating anyway would re-synthesize a fresh name next
-        // run and duplicate the server resource — so do NOT PUT; report not-clean so the token
-        // is held. But no server resource was created, so the pull is SAFE to run this cycle
-        // (a pre-PUT failure must never freeze inbound sync — that was the whole freeze bug).
+        // Persisting the synthesized UID keeps the resource name stable across runs. If it
+        // fails, creating anyway would pick a new name next run and duplicate the server
+        // resource, so there is no PUT, and the push is not clean so the token is held. No
+        // server resource was created, so the pull still runs: a pre-PUT failure must never
+        // freeze inbound sync.
         val device = parse(serverVcardNoUid("Jane Doe")).copy(rawVCard = "", uid = "")
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "", storedEtag = null, contact = device, localId = 100L)),
@@ -309,9 +306,9 @@ class ContactPushStrategyTest {
 
     @Test
     fun `a server-refused net-new create holds the token but leaves the pull safe`() = runTest {
-        // The server rejects the create outright (e.g. 422/507/persistent 5xx). Nothing landed
-        // server-side, so this is not-clean (hold the token, replay next run) but the pull is
-        // SAFE to run this cycle — a single rejected contact must NEVER freeze all inbound sync.
+        // The server rejects the create outright (for example 422, 507 or a persistent 5xx).
+        // Nothing landed, so the push is not clean (hold the token, replay next run) but the
+        // pull still runs: one rejected contact must never freeze all inbound sync.
         val device = parse(serverVcardNoUid("Jane Doe")).copy(rawVCard = "", uid = "")
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "", storedEtag = null, contact = device, localId = 100L)),
@@ -331,11 +328,10 @@ class ContactPushStrategyTest {
 
     @Test
     fun `a net-new create whose transport drops after PUT is pull-unsafe (creation state unknown)`() = runTest {
-        // A transport failure (code 0: connection reset / lost response, isRetryable) is NOT a
-        // server refusal — the PUT may have committed the resource server-side before the
-        // response was lost. Creation state is unknown, so running the pull this cycle could
-        // mirror a just-created resource as a duplicate row. Over-firing pull-unsafe here is a
-        // harmless one-run pull skip; under-firing would be a real duplicate. So: pull-UNSAFE.
+        // A transport failure (code 0: connection reset or lost response) isn't a server
+        // refusal: the PUT may have committed before the response was lost. Running the pull
+        // this cycle could mirror that resource as a duplicate row, so it's pull-unsafe;
+        // wrongly skipping one pull is harmless, a duplicate isn't.
         val device = parse(serverVcardNoUid("Jane Doe")).copy(rawVCard = "", uid = "")
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "", storedEtag = null, contact = device, localId = 100L)),
@@ -354,10 +350,10 @@ class ContactPushStrategyTest {
 
     @Test
     fun `a UID-less net-new precondition failure is adopted by its persisted-UID href`() = runTest {
-        // The blank-UID row already carries its persisted synthesized UID (a prior run stamped
-        // SYNC1) and a resource under that <uid>.vcf name exists server-side. The create 412s;
-        // adopt it by matching the server body's UID to the persisted UID — a real global-UID
-        // comparison, never blank==blank, so a foreign contact could never be hijacked.
+        // The row already carries its persisted synthesized UID (a prior run stamped SYNC1)
+        // and a resource under that <uid>.vcf name exists. The create 412s; adopt it by
+        // matching the server body's UID to the persisted UID, never blank against blank, so
+        // a foreign contact can't be hijacked.
         val device = parse(serverVcard(SYNTH_UID, "Jane Doe")).copy(rawVCard = "", uid = SYNTH_UID)
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = SYNTH_UID, storedEtag = null, contact = device, localId = 100L)),
@@ -390,8 +386,8 @@ class ContactPushStrategyTest {
     @Test
     fun `a net-new precondition failure whose adopt GET errors defers cleanly and holds nothing back`() = runTest {
         // The create 412s but the adopt GET hits a transient server error, so ownership
-        // can't be confirmed. Adopt nothing; defer cleanly (leave DIRTY) rather than hold
-        // the token — the same clean deferral the bare 412 gives, retried next run.
+        // can't be confirmed. Adopt nothing and defer cleanly (leave DIRTY) without holding
+        // the token, the same deferral as an unconfirmed 412, retried next run.
         val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1")
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L)),
@@ -410,9 +406,9 @@ class ContactPushStrategyTest {
 
     @Test
     fun `a net-new adopt whose write-back itself fails holds the sync token`() = runTest {
-        // The adopt matched and attempted the _ID write-back, but that provider write
-        // failed (short batch / permission). That is not-clean: hold the token so the run
-        // is retried, exactly like the create-success write-back failure.
+        // The adopt matched and attempted the _ID write-back, but that provider write failed
+        // (short batch or permission). Not clean: hold the token so the run is retried, like
+        // a write-back failure after a successful create.
         val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1")
         provider.pendingChanges = LocalContactChanges(
             edited = listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L)),
@@ -452,7 +448,7 @@ class ContactPushStrategyTest {
 
         strategy.push(ACCOUNT, listOf(writableBook()), client)
 
-        // The GET happened (patch base fetched) then exactly one conditional PUT.
+        // The GET fetched the patch base, then one conditional PUT followed.
         assertTrue("GET issued for the patch base", client.fetchByHrefCalls.any { HREF in it.second })
         assertEquals(1, client.putContactCalls.size)
         val (url, body, precondition) = client.putContactCalls.single()
@@ -461,8 +457,94 @@ class ContactPushStrategyTest {
         assertTrue("edited facet is rewritten", body.contains("New Name"))
         assertFalse("old value is gone", body.contains("Old Name"))
         assertTrue("unmapped X-prop is preserved from the server body", body.contains("keepme"))
-        // Write-back: SYNC2 <- server etag, DIRTY cleared.
+        // Write-back: SYNC2 gets the server etag, DIRTY is cleared.
         assertEquals(listOf(Triple(ACCOUNT, HREF, "v2")), provider.markUploadedCalls)
+    }
+
+    // ---------- redirected writes: the stored href follows the vCard ----------
+
+    @Test
+    fun `an update the server redirected stores the href it landed at`() = runTest {
+        val serverBody = serverVcard("c1", "Old Name")
+        val device = parse(serverBody).copy(displayName = "New Name", rawVCard = "")
+        provider.pendingChanges = LocalContactChanges(
+            edited = listOf(LocalContactEdit(href = HREF, uid = "c1", storedEtag = "v1", contact = device)),
+            deleted = emptyList(),
+        )
+        val client = clientServing(CardDavContactData(href = HREF, url = "$BOOK_HOST$HREF", etag = "v1", vcardBody = serverBody))
+        client.putContactResult = ContactUploadResult.Success(etag = "v2", finalUrl = "$BOOK_HOST/ab/moved/c1.vcf")
+
+        strategy.push(ACCOUNT, listOf(writableBook()), client)
+
+        assertEquals(listOf(Triple(ACCOUNT, HREF, "v2")), provider.markUploadedCalls)
+        assertEquals("stored as the path the pull lists", listOf(HREF to "/ab/moved/c1.vcf"), provider.movedHrefs)
+    }
+
+    @Test
+    fun `an update redirected to another server stores the whole URL`() = runTest {
+        val serverBody = serverVcard("c1", "Old Name")
+        val device = parse(serverBody).copy(displayName = "New Name", rawVCard = "")
+        provider.pendingChanges = LocalContactChanges(
+            edited = listOf(LocalContactEdit(href = HREF, uid = "c1", storedEtag = "v1", contact = device)),
+            deleted = emptyList(),
+        )
+        val client = clientServing(CardDavContactData(href = HREF, url = "$BOOK_HOST$HREF", etag = "v1", vcardBody = serverBody))
+        client.putContactResult = ContactUploadResult.Success(etag = "v2", finalUrl = "https://p01.dav.example.test/ab/c1.vcf")
+
+        strategy.push(ACCOUNT, listOf(writableBook()), client)
+
+        assertEquals(listOf(HREF to "https://p01.dav.example.test/ab/c1.vcf"), provider.movedHrefs)
+    }
+
+    @Test
+    fun `a redirected href keeps its percent-escapes, as the server lists it`() = runTest {
+        val serverBody = serverVcard("c1", "Old Name")
+        val device = parse(serverBody).copy(displayName = "New Name", rawVCard = "")
+        provider.pendingChanges = LocalContactChanges(
+            edited = listOf(LocalContactEdit(href = HREF, uid = "c1", storedEtag = "v1", contact = device)),
+            deleted = emptyList(),
+        )
+        val client = clientServing(CardDavContactData(href = HREF, url = "$BOOK_HOST$HREF", etag = "v1", vcardBody = serverBody))
+        client.putContactResult = ContactUploadResult.Success(etag = "v2", finalUrl = "$BOOK_HOST/ab/default/Jane%20Doe%40x.vcf")
+
+        strategy.push(ACCOUNT, listOf(writableBook()), client)
+
+        assertEquals(listOf(HREF to "/ab/default/Jane%20Doe%40x.vcf"), provider.movedHrefs)
+    }
+
+    @Test
+    fun `an update that was not redirected keeps its href`() = runTest {
+        val serverBody = serverVcard("c1", "Old Name")
+        val device = parse(serverBody).copy(displayName = "New Name", rawVCard = "")
+        provider.pendingChanges = LocalContactChanges(
+            edited = listOf(LocalContactEdit(href = HREF, uid = "c1", storedEtag = "v1", contact = device)),
+            deleted = emptyList(),
+        )
+        val client = clientServing(CardDavContactData(href = HREF, url = "$BOOK_HOST$HREF", etag = "v1", vcardBody = serverBody))
+        client.putContactResult = ContactUploadResult.Success(etag = "v2")
+
+        strategy.push(ACCOUNT, listOf(writableBook()), client)
+
+        assertTrue(provider.movedHrefs.isEmpty())
+    }
+
+    @Test
+    fun `a new contact whose create was redirected is stamped with the href it landed at`() = runTest {
+        val device = parse(serverVcard("uid1", "Jane Doe")).copy(rawVCard = "", uid = "uid1")
+        provider.pendingChanges = LocalContactChanges(
+            edited = listOf(LocalContactEdit(href = "", uid = "uid1", storedEtag = null, contact = device, localId = 100L)),
+            deleted = emptyList(),
+        )
+        val client = FakeCardDavClient()
+        client.books += FakeAddressBook(book = writableBook())
+        client.putContactResult = ContactUploadResult.Success(etag = "srv-1", finalUrl = "$BOOK_HOST/ab/other/uid1.vcf")
+
+        strategy.push(ACCOUNT, listOf(writableBook()), client)
+
+        assertEquals(
+            listOf(FakeContactsProviderRepository.MarkNewUploaded(ACCOUNT, 100L, "/ab/other/uid1.vcf", "srv-1")),
+            provider.markNewUploadedCalls,
+        )
     }
 
     // ---------- update: GET-etag mismatch -> defer ----------
@@ -523,7 +605,7 @@ class ContactPushStrategyTest {
         assertEquals(listOf(Triple(ACCOUNT, HREF, "fresh-1")), provider.markUploadedCalls)
     }
 
-    // ---------- update: PUT 412 -> server-wins swallow, DIRTY held ----------
+    // ---------- update: PUT 412 -> swallowed (server wins), DIRTY held ----------
 
     @Test
     fun `a PUT precondition failure is swallowed and leaves the edit DIRTY`() = runTest {
@@ -571,8 +653,8 @@ class ContactPushStrategyTest {
             edited = listOf(LocalContactEdit(href = HREF, uid = "c1", storedEtag = "v1", contact = device)),
             deleted = emptyList(),
         )
-        // A server error (not a 404/410 "gone"): we can't read the patch base, so the
-        // edit must be retried on a later run rather than pushed blind or dropped.
+        // A server error (not a 404/410 "gone") leaves no patch base, so the edit must be
+        // retried on a later run, never pushed blind or dropped.
         val client = FakeCardDavClient(fetchError = CalDavResult.error(503, "unavailable"))
         client.books += FakeAddressBook(book = writableBook())
 
@@ -618,8 +700,8 @@ class ContactPushStrategyTest {
             edited = listOf(LocalContactEdit(href = HREF, uid = "c1", storedEtag = "v1", contact = device)),
             deleted = emptyList(),
         )
-        // GET etag matches the stored etag, so the conditional PUT is attempted — but
-        // the resource vanished mid-flight, so the strategy retries once as fresh.
+        // The GET etag matches the stored etag, so the conditional PUT is attempted, but the
+        // resource vanished mid-flight, so the strategy retries once as fresh.
         val client = clientServing(CardDavContactData(href = HREF, url = "$BOOK_HOST$HREF", etag = "v1", vcardBody = serverBody))
         client.putContactResult = ContactUploadResult.Gone
 
@@ -669,14 +751,13 @@ class ContactPushStrategyTest {
         assertTrue(provider.restoreCalls.isEmpty())
     }
 
-    // ---------- delete: 412 -> restore (server-wins), never hard-delete ----------
+    // ---------- delete: 412 -> restore (server wins), never hard-delete ----------
 
     @Test
     fun `a delete precondition failure restores the tombstone so the pull reconciles server-wins`() = runTest {
-        // The server copy moved on since our version. We must NOT leave the tombstone:
-        // the pull would refresh its stored etag, and a later push would then HARD
-        // delete the concurrently-edited server copy. Un-deleting instead lets the
-        // pull re-materialize the server's current copy (server-wins).
+        // The server copy changed after the deleted version. A kept tombstone would get its
+        // stored etag refreshed by the pull, and a later push would delete the edited server
+        // copy. Un-deleting lets the pull restore the server's current copy (server wins).
         provider.pendingChanges = LocalContactChanges(
             edited = emptyList(),
             deleted = listOf(LocalContactTombstone(href = HREF, storedEtag = "v1")),
@@ -717,10 +798,9 @@ class ContactPushStrategyTest {
 
     @Test
     fun `an edit to a contact on a read-only book is not uploaded and stays pending`() = runTest {
-        // A read-only collection would 403 every PUT forever. The upload must be skipped
-        // BEFORE the GET-before-PUT round-trip, and the edit left DIRTY so it uploads if
-        // the book ever becomes writable — not looped as a guaranteed 403 each sync, and
-        // not silently dropped as server-wins.
+        // A read-only collection would 403 every PUT. The upload must be skipped before the
+        // GET-before-PUT round trip and the edit left DIRTY, so it uploads if the book becomes
+        // writable: never a guaranteed 403 each sync, never silently dropped.
         val serverBody = serverVcard("c1", "Old")
         val device = parse(serverBody).copy(displayName = "New", rawVCard = "")
         provider.pendingChanges = LocalContactChanges(
@@ -730,8 +810,8 @@ class ContactPushStrategyTest {
         val client = FakeCardDavClient()
         client.books += FakeAddressBook(
             book = readOnlyBook(),
-            // A patch base whose etag MATCHES the stored etag: without the guard this would
-            // GET then conditionally PUT, so an empty GET/PUT log proves the early skip.
+            // A patch base whose etag matches the stored etag: without the guard this would
+            // GET then conditionally PUT, so an empty GET and PUT log proves the early skip.
             contacts = mutableListOf(
                 CardDavContactData(href = HREF, url = "$BOOK_HOST$HREF", etag = "v1", vcardBody = serverBody),
             ),
@@ -761,7 +841,7 @@ class ContactPushStrategyTest {
 
         strategy.push(ACCOUNT, listOf(writableBook()), client)
 
-        // The delete's nonFetch call must be recorded before the upload's PUT.
+        // The fake keeps separate delete and PUT logs, so these counts don't prove the order.
         assertEquals(1, client.deleteContactCalls.size)
         assertEquals(1, client.putContactCalls.size)
     }
@@ -798,7 +878,9 @@ class ContactPushStrategyTest {
         const val HREF = "/ab/default/c1.vcf"
         const val HREF2 = "/ab/default/c2.vcf"
 
-        /** A UUID-shaped synthesized UID: a safe `.vcf` path segment (see contactResourceName). */
+        /**
+         * A UUID-shaped synthesized UID: a safe `.vcf` path segment (see `contactResourceName`).
+         */
         const val SYNTH_UID = "11111111-2222-3333-4444-555555555555"
     }
 }

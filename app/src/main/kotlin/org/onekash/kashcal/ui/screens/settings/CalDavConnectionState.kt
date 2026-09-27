@@ -4,19 +4,18 @@ import androidx.compose.runtime.Immutable
 import org.onekash.kashcal.ui.util.UiMessage
 
 /**
- * State for CalDAV sign-in flow.
+ * Holds the CalDAV sign-in sheet's state.
  *
- * Simplified flow (v21.5.0):
- * 1. NotConnected: User enters server/username/password
- * 2. Discovering: Querying server for calendars, then auto-adds all
- * 3. Success: Account added, success sheet shown, sign-in sheet dismissed
+ * 1. [NotConnected]: the user enters server, display name, username and password.
+ * 2. [Discovering]: the server is queried for calendars, then the account is added with all of
+ *    them.
+ * 3. On success the state resets to [NotConnected], the sign-in sheet closes and
+ *    [AccountConnectedSheet] shows. On failure it returns to [NotConnected] with an error.
  */
 @Immutable
 sealed class CalDavConnectionState {
 
-    /**
-     * Initial state - waiting for user to enter credentials.
-     */
+    /** Waits for the user's input; [error] and [errorField] hold the last failure. */
     data class NotConnected(
         val serverUrl: String = "",
         val displayName: String = "",
@@ -27,17 +26,13 @@ sealed class CalDavConnectionState {
         val errorField: ErrorField? = null
     ) : CalDavConnectionState()
 
-    /**
-     * Discovering calendars from server, then auto-adding account.
-     */
+    /** Discovers the server's calendars, then adds the account with all of them. */
     data class Discovering(
         val serverUrl: String,
         val username: String
     ) : CalDavConnectionState()
 
-    /**
-     * Which field has an error.
-     */
+    /** Names the field an error belongs to. */
     enum class ErrorField {
         SERVER,
         CREDENTIALS,
@@ -46,9 +41,7 @@ sealed class CalDavConnectionState {
     }
 }
 
-/**
- * UI model for displaying connected CalDAV accounts in Settings.
- */
+/** Holds one connected CalDAV account for its row in Settings. */
 @Immutable
 data class CalDavAccountUiModel(
     val id: Long,

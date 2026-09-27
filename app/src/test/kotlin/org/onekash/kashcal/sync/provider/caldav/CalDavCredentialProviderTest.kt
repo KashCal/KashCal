@@ -23,9 +23,7 @@ import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.sync.auth.Credentials
 
-/**
- * Unit tests for CalDavCredentialProvider.
- */
+/** Tests [CalDavCredentialProvider]. */
 class CalDavCredentialProviderTest {
 
     private lateinit var credentialManager: CredentialManager

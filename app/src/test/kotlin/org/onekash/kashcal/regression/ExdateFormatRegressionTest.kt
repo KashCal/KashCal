@@ -26,27 +26,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Regression tests for EXDATE format handling.
+ * Regression tests for the stored EXDATE format (v21.1.1).
  *
- * BUG REPORT (v21.1.1):
- * - User deletes occurrence on KashCal
- * - Syncs to iCloud
- * - EXDATE shows 1969 date instead of correct date
- * - iPhone doesn't recognize the deleted occurrence
- *
- * ROOT CAUSE:
- * - EventWriter.addToExdate stored day codes (YYYYMMDD like "20260120")
- * - IcsPatcher.parseExdates expected milliseconds
- * - "20260120" interpreted as 20,260,120 milliseconds from epoch = Dec 31, 1969
- *
- * ALSO AFFECTED:
- * - Server-synced EXDATE (milliseconds) not recognized by OccurrenceGenerator
- *   which expected day codes (YYYYMMDD)
- *
- * FIX:
- * - Unify on milliseconds format
- * - EventWriter.addToExdate stores milliseconds
- * - OccurrenceGenerator.parseMultiValueField handles both formats (backward compat)
+ * `Event.exdate` is comma-separated epoch milliseconds: a single-occurrence delete in [EventWriter]
+ * appends milliseconds, the pull stores them, and [IcsPatcher] reads them on push. A YYYYMMDD day
+ * code read as milliseconds ("20260120" is 20,260,120 ms) lands near the epoch, so the EXDATE
+ * pushed to iCloud names a 1969 or 1970 date and other clients keep showing the deleted occurrence.
+ * Expansion ([OccurrenceGenerator], through the engine adapter's `parseCsvDates`) also accepts
+ * legacy day codes, alone or mixed with milliseconds.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -86,11 +73,10 @@ class ExdateFormatRegressionTest {
         database.close()
     }
 
-    // ==================== EventWriter.addToExdate Tests ====================
+    // ==================== EXDATE Stored by a Single-Occurrence Delete ====================
 
     @Test
     fun `deleteSingleOccurrence stores milliseconds format`() = runTest {
-        // Create recurring event
         val startTs = 1768867200000L // Jan 20, 2026 00:00 UTC
         val event = eventWriter.createEvent(
             Event(
@@ -106,39 +92,35 @@ class ExdateFormatRegressionTest {
             isLocal = false
         )
 
-        // Delete the second occurrence (Jan 27, 2026)
+        // Delete the second occurrence (Jan 21, 2026).
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         assertEquals("Should have 5 occurrences", 5, occurrences.size)
 
-        val targetOccurrence = occurrences[1] // Second occurrence
+        val targetOccurrence = occurrences[1]
         eventWriter.deleteSingleOccurrence(event.id, targetOccurrence.startTs, isLocal = false)
 
-        // Verify exdate is stored as milliseconds
         val updated = database.eventsDao().getById(event.id)
         assertNotNull("Event should exist", updated)
         assertNotNull("Exdate should be set", updated!!.exdate)
 
-        // Key assertion: exdate should be milliseconds, not day code
+        // Milliseconds, not a day code.
         val exdateValue = updated.exdate!!
 
-        // Milliseconds are 13 digits (for dates around 2026)
-        // Day codes are 8 digits (YYYYMMDD)
+        // Milliseconds for 2026 have 13 digits; a YYYYMMDD day code has 8.
         assertTrue(
             "EXDATE should be milliseconds format (>= 10 digits), got: $exdateValue",
             exdateValue.length >= 10
         )
 
-        // Should be parseable as Long
         val timestamp = exdateValue.toLongOrNull()
         assertNotNull("EXDATE should be parseable as Long", timestamp)
 
-        // Should be a reasonable timestamp (after year 2000)
         assertTrue(
             "EXDATE timestamp should be after year 2000",
             timestamp!! > 946684800000L // Jan 1, 2000
         )
 
-        // Should NOT be a 1969/1970 date (the bug symptom)
+        // Not near the epoch, where a day code read as milliseconds lands.
         assertTrue(
             "EXDATE should not be near Unix epoch (the bug)",
             timestamp > 86400000L * 365 // More than 1 year from epoch
@@ -147,7 +129,7 @@ class ExdateFormatRegressionTest {
 
     @Test
     fun `exdate from deleteSingleOccurrence works with IcsPatcher`() = runTest {
-        // Create recurring event with rawIcal
+        // A recurring event with rawIcal, so the push patches it.
         val startTs = 1768867200000L // Jan 20, 2026 00:00 UTC
         val rawIcs = """
             BEGIN:VCALENDAR
@@ -179,39 +161,36 @@ class ExdateFormatRegressionTest {
             isLocal = false
         )
 
-        // Delete the second occurrence
+        // Delete the second occurrence.
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         val targetTs = occurrences[1].startTs
         eventWriter.deleteSingleOccurrence(event.id, targetTs, isLocal = false)
 
-        // Get updated event and generate ICS via IcsPatcher
         val updated = database.eventsDao().getById(event.id)!!
         val patchedIcs = IcsPatcher.patch(rawIcs, updated)
 
-        // The patched ICS should have a valid EXDATE (not 1969)
         assertFalse(
             "Patched ICS should not contain 1969 date (the bug)",
             patchedIcs.contains("1969")
         )
 
-        // Should contain EXDATE with 2026 date
         assertTrue(
             "Patched ICS should contain EXDATE",
             patchedIcs.contains("EXDATE")
         )
 
-        // EXDATE should reference January 2026
+        // Only checks that the ICS contains EXDATE and "2026" somewhere.
         assertTrue(
             "Patched ICS EXDATE should be in 2026, got:\n$patchedIcs",
             patchedIcs.contains("EXDATE") && patchedIcs.contains("2026")
         )
     }
 
-    // ==================== OccurrenceGenerator Tests ====================
+    // ==================== EXDATE Formats in Expansion ====================
 
     @Test
     fun `OccurrenceGenerator handles milliseconds format EXDATE`() = runTest {
-        // Use June 2024 dates (matching working OccurrenceEdgeCasesTest)
+        // June 2024 dates, as in OccurrenceEdgeCasesTest.
         val startTs = 1718409600000L // June 15, 2024 00:00 UTC
         val exdateMs = 1718496000000L // June 16, 2024 00:00 UTC (second occurrence)
 
@@ -223,7 +202,7 @@ class ExdateFormatRegressionTest {
             endTs = startTs + 3600000,
             dtstamp = System.currentTimeMillis(),
             rrule = "FREQ=DAILY;COUNT=5",
-            exdate = exdateMs.toString(), // Milliseconds format (from ICalEventMapper)
+            exdate = exdateMs.toString(), // Milliseconds, the format the pull stores.
             syncStatus = SyncStatus.SYNCED
         )
         val eventId = database.eventsDao().insert(event)
@@ -235,13 +214,13 @@ class ExdateFormatRegressionTest {
             startTs + 10 * 86400000
         )
 
-        // 5 from RRULE - 1 from EXDATE = 4
+        // 5 from the RRULE minus 1 EXDATE.
         assertEquals("Should have 4 occurrences (5 - 1 EXDATE)", 4, count)
     }
 
     @Test
     fun `OccurrenceGenerator handles day code format EXDATE for backward compat`() = runTest {
-        // Use June 2024 dates (matching working OccurrenceEdgeCasesTest)
+        // June 2024 dates, as in OccurrenceEdgeCasesTest.
         val startTs = 1718409600000L // June 15, 2024 00:00 UTC
 
         val event = Event(
@@ -252,7 +231,7 @@ class ExdateFormatRegressionTest {
             endTs = startTs + 3600000,
             dtstamp = System.currentTimeMillis(),
             rrule = "FREQ=DAILY;COUNT=5",
-            exdate = "20240616", // Day code format - June 16, 2024
+            exdate = "20240616", // Legacy day code: June 16, 2024.
             syncStatus = SyncStatus.SYNCED
         )
         val eventId = database.eventsDao().insert(event)
@@ -264,13 +243,13 @@ class ExdateFormatRegressionTest {
             startTs + 10 * 86400000
         )
 
-        // 5 from RRULE - 1 from EXDATE = 4
+        // 5 from the RRULE minus 1 EXDATE.
         assertEquals("Should have 4 occurrences (5 - 1 EXDATE)", 4, count)
     }
 
     @Test
     fun `OccurrenceGenerator handles mixed format EXDATE`() = runTest {
-        // Use June 2024 dates (matching working OccurrenceEdgeCasesTest)
+        // June 2024 dates, as in OccurrenceEdgeCasesTest.
         val startTs = 1718409600000L // June 15, 2024 00:00 UTC
         val exdateMs = 1718496000000L // June 16, 2024 00:00 UTC (milliseconds)
 
@@ -282,7 +261,7 @@ class ExdateFormatRegressionTest {
             endTs = startTs + 3600000,
             dtstamp = System.currentTimeMillis(),
             rrule = "FREQ=DAILY;COUNT=5",
-            exdate = "$exdateMs,20240618", // Mixed: milliseconds (June 16) + day code (June 18)
+            exdate = "$exdateMs,20240618", // Milliseconds (June 16) and a day code (June 18).
             syncStatus = SyncStatus.SYNCED
         )
         val eventId = database.eventsDao().insert(event)
@@ -294,7 +273,7 @@ class ExdateFormatRegressionTest {
             startTs + 10 * 86400000
         )
 
-        // 5 from RRULE - 2 from EXDATE = 3
+        // 5 from the RRULE minus 2 EXDATEs.
         assertEquals("Should have 3 occurrences (5 - 2 EXDATE)", 3, count)
     }
 
@@ -318,7 +297,7 @@ class ExdateFormatRegressionTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // 1. Create recurring event (simulating server sync)
+        // 1. A recurring event carrying its server ICS in rawIcal, standing in for a pulled one.
         val event = eventWriter.createEvent(
             Event(
                 uid = "full-roundtrip@kashcal.test",
@@ -334,25 +313,22 @@ class ExdateFormatRegressionTest {
             isLocal = false
         )
 
-        // 2. Delete second occurrence (Jan 27, 2026 14:00 UTC)
+        // 2. Delete the second occurrence (Jan 21, 2026 14:00 UTC).
         val occurrences = database.occurrencesDao().getForEvent(event.id)
         val targetTs = occurrences[1].startTs
         eventWriter.deleteSingleOccurrence(event.id, targetTs, isLocal = false)
 
-        // 3. Generate ICS for push to server
+        // 3. Patch the ICS the push would send.
         val updated = database.eventsDao().getById(event.id)!!
         val patchedIcs = IcsPatcher.patch(rawIcs, updated)
 
-        // 4. Verify the ICS
         println("Generated ICS:\n$patchedIcs")
 
-        // Should have EXDATE
         assertTrue("Should contain EXDATE", patchedIcs.contains("EXDATE"))
 
-        // Should NOT have 1969 date (the original bug)
         assertFalse("Should not contain 1969 (bug symptom)", patchedIcs.contains("1969"))
 
-        // Should have 2026 date in EXDATE
+        // The EXDATE line names a 2026 date.
         val exdateLine = patchedIcs.lines().find { it.startsWith("EXDATE") }
         assertNotNull("Should have EXDATE line", exdateLine)
         assertTrue(

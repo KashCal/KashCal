@@ -14,28 +14,21 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * On-demand attendee backfill from `Event.rawIcal`.
+ * Fills an event's attendee rows on demand from `Event.rawIcal`.
  *
- * Closes the gap left by the pull path's etag-unchanged-skip:
- * `PullStrategy` skips upsert when local etag matches server etag, so
- * events whose etag hasn't changed since the attendees table was added
- * have empty `attendees` rows. When the chip UI's
- * [EventReader.getAttendeesForEvent] Flow returns empty AND the event
- * has a `rawIcal` body containing ATTENDEE lines, this helper parses +
- * persists, and the Flow re-emits with the persisted set.
+ * `PullStrategy` skips the upsert when the local etag matches the server's, so an event whose
+ * etag hasn't changed since before attendees were stored has no attendee rows. The quick view
+ * and the event form run this before subscribing to [EventReader.getAttendeesForEvent], so the
+ * Flow emits the persisted set.
  *
- * **Idempotency contract.** [AttendeesDao.replaceForEvent] is delete-
- * then-insert in a `@Transaction`, so any number of concurrent calls
- * converge to the same final state at the row-set level. Best-effort
- * short-circuit on populated tables avoids unnecessary parse work, but
- * is NOT a hard invariant — a TOCTOU race may parse twice; the second
- * write replaces with an identical set. No Mutex required.
+ * Idempotent without a Mutex: [AttendeesDao.replaceForEvent] deletes and inserts in one
+ * transaction, so concurrent calls converge on the same row set. The populated-table
+ * short-circuit only saves parse work; a race may parse twice, and the second write replaces
+ * with an identical set.
  *
- * **Master-VEVENT preference.** When `rawIcal` contains both the master
- * event and an exception (RECURRENCE-ID), only the master's attendees
- * are persisted. Exceptions get their own row in `events` and their
- * own attendee set via the normal pull path; this helper is for the
- * master event's table row (ID passed by the caller).
+ * Only the master VEVENT's attendees are persisted. Exceptions (RECURRENCE-ID) get their own
+ * `events` row and attendee set from the pull; this helper writes the row whose ID the caller
+ * passes.
  */
 @Singleton
 class AttendeeBackfill @Inject constructor(
@@ -46,29 +39,23 @@ class AttendeeBackfill @Inject constructor(
     private val parser = ICalParser()
 
     /**
-     * Parse [Event.rawIcal] and persist its master VEVENT's attendees
-     * when [AttendeesDao.getForEvent] is empty. Returns the count of
-     * attendees written (0 if no-op).
+     * Parses `rawIcal` and persists its master VEVENT's attendees when the event has no
+     * attendee rows or any row's address is unusable. Returns the count written, 0 for a no-op.
      *
-     * Never throws — parse failures, malformed rawIcal, and missing
-     * VEVENTs all return 0 with a single PII-redacted log entry
-     * (UID is masked: first 4 + last 4 chars only).
+     * A parse that throws or fails returns 0 with one log line, the UID masked ([maskUid]). A
+     * missing event or `rawIcal`, no ATTENDEE text, no master VEVENT or no usable address return
+     * 0 without a log line. DAO exceptions propagate.
      */
     suspend fun backfillIfEmpty(eventId: Long): Int {
         val event = eventsDao.getById(eventId) ?: return 0
         val rawIcal = event.rawIcal?.takeIf { it.isNotEmpty() } ?: return 0
 
-        // Cheap pre-flight: skip parse if no ATTENDEE lines on the wire.
+        // Skip the parse when the body has no ATTENDEE text.
         if (!rawIcal.contains("ATTENDEE")) return 0
 
-        // Short-circuit when the table is already populated AND every
-        // persisted address is usable. Self-heal trigger: if any row was
-        // stored with a principal-href / bare mailto: / blank address
-        // (e.g. left over from a build that pre-dated the parser EMAIL=
-        // fallback), re-parse from rawIcal. Concurrent callers may race
-        // past this check; the @Transaction delete-then-insert in
-        // replaceForEvent makes the final state correct even when both
-        // hit the parse path.
+        // Return when rows exist and every address is usable. A row with a principal-href, bare
+        // mailto: or blank address (e.g. written by a build without the parser's EMAIL=
+        // fallback) re-parses from rawIcal. Racing callers converge (class doc).
         val existing = attendeesDao.getForEvent(eventId).first()
         if (existing.isNotEmpty() && existing.all { isUsableAddress(it.address) }) return 0
 
@@ -85,21 +72,17 @@ class AttendeeBackfill @Inject constructor(
                 return 0
             }
 
-        // Master VEVENT is the one with no RECURRENCE-ID — exception variants
-        // have their own Event row + own attendee set, written via the normal
-        // pull path. If no events at all (header-only ICS), no-op.
+        // The master is the VEVENT without RECURRENCE-ID. A header-only ICS is a no-op.
         val master = cal.events.firstOrNull { it.recurrenceId == null }
             ?: return 0
 
         val attendees = translateAttendees(master, eventId)
         if (attendees.isEmpty()) return 0
 
-        // Skip the delete-then-insert when the re-parse produced the same
-        // set as what's already persisted. Pathological case: an ATTENDEE
-        // with a principal-href primary and no EMAIL= parameter parses to
-        // the same un-usable address every time — without this guard, every
-        // sheet open re-runs the transactional rewrite for no observable
-        // change. Compare on (address, partstat) since those drive UI.
+        // Skip the rewrite when the re-parse matches the persisted set. An ATTENDEE with a
+        // principal-href value and no EMAIL= parameter parses to the same unusable address
+        // every time, so without this every sheet open rewrites the set for no change.
+        // Compared on (address, partstat), which drive the UI.
         val existingKey = existing.map { it.address to it.partstat }.toSet()
         val newKey = attendees.map { it.address to it.partstat }.toSet()
         if (existingKey == newKey) return 0
@@ -109,32 +92,28 @@ class AttendeeBackfill @Inject constructor(
     }
 
     /**
-     * Translate master VEVENT's icaldav-core attendees into Room rows.
-     * Uses [ICalEventMapper.toAttendeeRows] directly to skip the
-     * event-mapping work (DTSTART, alarms, EXDATE, color, …) we'd
-     * discard anyway. Attendees with no usable address are filtered:
-     * - empty/whitespace `address`
-     * - bare `mailto:` with no email (common when ATTENDEE has no value)
-     * - ical4j's `net.fortunal.ical4j.invalid:` defensive marker, which
-     *   the parser emits when an ATTENDEE value can't be parsed as URI.
-     *   The trailing 'l' (`fortunal`, not `fortuna`) is an upstream ical4j
-     *   typo — verified in the 4.2.2 jar's constants pool — and our match
-     *   string MUST keep it. "Fixing" the spelling here breaks the
-     *   predicate against what ical4j actually emits.
+     * Maps the master VEVENT's attendees to Room rows, dropping those without a usable address
+     * ([isUsableAddress]). Calls [ICalEventMapper.toAttendeeRows] to skip the event mapping
+     * (DTSTART, alarms, EXDATE, color) it would discard.
      */
     private fun translateAttendees(master: ICalEvent, eventId: Long): List<Attendee> =
         ICalEventMapper.toAttendeeRows(master, eventId)
             .filter { isUsableAddress(it.address) }
 
+    /**
+     * Rejects a blank address, a bare `mailto:` (an ATTENDEE with no value), a principal href,
+     * and ical4j's `net.fortunal.ical4j.invalid:` marker, which its relaxed parsing gives an
+     * ATTENDEE value that isn't a URI. `fortunal` is an upstream typo (`Uris.INVALID_SCHEME` in
+     * ical4j 4.3.0); the match must keep it, or it stops matching what ical4j emits.
+     */
     private fun isUsableAddress(address: String): Boolean {
         if (address.isBlank()) return false
         val withoutMailto = address.removePrefix("mailto:")
         if (withoutMailto.isBlank()) return false
         if (withoutMailto.startsWith("net.fortunal.ical4j.invalid:")) return false
-        // Reject principal-href forms ("/646691839/principal/") persisted by
-        // builds that didn't have the EMAIL= parameter fallback yet. A real
-        // CAL-ADDRESS is either a mailto: (handled above) or a non-`/`-prefixed
-        // URI (urn:uuid:, etc.).
+        // A principal href ("/646691839/principal/") is what builds without the EMAIL=
+        // fallback stored. A real CAL-ADDRESS is a mailto: or a URI not starting with `/`
+        // (e.g. urn:uuid:).
         if (withoutMailto.startsWith("/")) return false
         return true
     }

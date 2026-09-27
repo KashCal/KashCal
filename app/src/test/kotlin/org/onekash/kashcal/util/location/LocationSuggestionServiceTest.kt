@@ -4,10 +4,12 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 /**
- * Unit tests for LocationSuggestionService.
+ * Tests LocationSuggestionService's display-name rule and the [AddressSuggestion] fields.
  *
- * Tests the formatDisplayName logic (pure function, no Android deps).
- * getSuggestions() requires Android Geocoder — tested via formatDisplayName coverage.
+ * The formatDisplayName tests run an inline copy of the private
+ * `LocationSuggestionService.formatDisplayName`, which can drift from it: the helper looks the
+ * private method up by reflection (so a rename or signature change fails) but never invokes it.
+ * getSuggestions needs the Android Geocoder and isn't tested here.
  */
 class LocationSuggestionServiceTest {
 
@@ -81,7 +83,7 @@ class LocationSuggestionServiceTest {
 
     @Test
     fun `formatDisplayName allows alphanumeric feature names`() {
-        // "123A" is NOT all digits, so it should be treated as meaningful
+        // "123A" isn't all digits, so it counts as a feature name.
         val result = invokeFormatDisplayName("123A", "456 Elm St, Town")
         assertEquals("123A, 456 Elm St, Town", result)
     }
@@ -114,23 +116,19 @@ class LocationSuggestionServiceTest {
     // ========== Helper Methods ==========
 
     /**
-     * Invoke the private formatDisplayName method via reflection.
+     * Checks by reflection that the private formatDisplayName exists, then runs
+     * [formatDisplayNameLogic] instead of it.
      */
     private fun invokeFormatDisplayName(featureName: String?, addressLine: String?): String {
-        // Create instance with mocked constructor args (we only test formatDisplayName)
         val clazz = Class.forName("org.onekash.kashcal.util.location.LocationSuggestionService")
         val method = clazz.getDeclaredMethod("formatDisplayName", String::class.java, String::class.java)
         method.isAccessible = true
 
-        // We need an instance - use Unsafe or just test the logic directly
-        // Since the constructor requires Context and CoroutineDispatcher, we test the logic inline
+        // Invoking it needs an instance, whose constructor takes a Context and a dispatcher.
         return formatDisplayNameLogic(featureName, addressLine)
     }
 
-    /**
-     * Replicate formatDisplayName logic for unit testing without Android dependencies.
-     * This mirrors the exact logic in LocationSuggestionService.formatDisplayName().
-     */
+    /** Copies the steps of `LocationSuggestionService.formatDisplayName`; it can drift. */
     private fun formatDisplayNameLogic(featureName: String?, addressLine: String?): String {
         val address = addressLine ?: ""
         val feature = featureName?.trim()

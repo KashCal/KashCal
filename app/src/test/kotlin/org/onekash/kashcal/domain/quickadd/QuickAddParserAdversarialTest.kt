@@ -13,21 +13,28 @@ import java.time.LocalTime
 import java.util.Locale
 
 /**
- * Adversarial and exhaustive testing for QuickAddParser.
+ * Tests [QuickAddParser.parse] on adversarial and boundary inputs, with the default locale
+ * pinned to US.
  *
- * Categories:
+ * Sections:
  *  1. Crash resistance (fuzz-like inputs)
  *  2. Integer overflow and boundary values
  *  3. Ambiguity resolution (conflicting signals)
- *  4. Title extraction integrity
- *  5. False positive resistance (numbers/words that shouldn't parse)
+ *  4. Title extraction
+ *  5. False positive resistance (numbers and words that shouldn't parse)
  *  6. Unicode and special characters
  *  7. Rule interaction and ordering
  *  8. Structured date edge cases
  *  9. Time parsing edge cases
- * 10. Determinism and idempotency
+ * 10. Determinism and the reference time
  * 11. Real-world corpus
  * 12. Performance under adversarial inputs
+ * 13. Confidence scoring
+ * 14. isAllDay
+ * 15. Weekdays from several reference days
+ * 16. Year boundary and calendar edge cases
+ * 17. Normalizer edge cases
+ * 18. Weekday, month and date-keyword abbreviations
  */
 class QuickAddParserAdversarialTest {
 
@@ -51,12 +58,12 @@ class QuickAddParserAdversarialTest {
         QuickAddParser.parse(input, reference)
 
     // ════════════════════════════════════════════════════════════
-    //  1. CRASH RESISTANCE — must never throw regardless of input
+    //  1. Crash resistance: parse never throws, whatever the input
     // ════════════════════════════════════════════════════════════
 
     @Test
     fun `null-like inputs do not crash`() {
-        // Empty, whitespace variants, control characters
+        // Empty, whitespace variants and control characters.
         listOf(
             "", " ", "  ", "\t", "\n", "\r\n", "\t\n\r",
             "\u0000", "\u0001", "\u007F",          // NUL, SOH, DEL
@@ -122,7 +129,7 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `all keyword combinations do not crash`() {
-        // Every keyword followed by every other keyword
+        // Every pair of keywords, a keyword with itself included.
         val keywords = listOf("at", "in", "on", "the", "next", "last", "this", "for", "to", "of", "from", "ago")
         for (a in keywords) {
             for (b in keywords) {
@@ -132,12 +139,12 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    //  2. INTEGER OVERFLOW AND BOUNDARY VALUES
+    //  2. Integer overflow and boundary values
     // ════════════════════════════════════════════════════════════
 
     @Test
     fun `huge number does not crash (integer overflow guard)`() {
-        // Numbers beyond Int.MAX_VALUE (2147483647)
+        // Numbers beyond Int.MAX_VALUE (2147483647).
         listOf(
             "99999999999 things to do",
             "9999999999th birthday",
@@ -174,7 +181,7 @@ class QuickAddParserAdversarialTest {
         ).forEach { input ->
             val result = parse(input)
             assertNotNull("Crashed on: $input", result)
-            // Invalid dates should fall back to reference
+            // A date that doesn't exist sets nothing, so the date is the reference date.
             assertEquals("$input: expected reference date", ref.toLocalDate(), result.startDate)
         }
     }
@@ -200,13 +207,13 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `time boundary values`() {
-        // Valid boundaries
+        // Valid boundaries.
         assertEquals(LocalTime.of(0, 0), parse("at midnight").startTime)
         assertEquals(LocalTime.of(12, 0), parse("at noon").startTime)
         assertEquals(LocalTime.of(23, 59), parse("at 23:59").startTime)
         assertEquals(LocalTime.of(0, 0), parse("at 0:00").startTime)
 
-        // Invalid times — should not parse as time
+        // Out-of-range times don't parse as times.
         assertNull("25:00 should not parse", parse("at 25:00").startTime)
         assertNull("13pm should not parse", parse("at 13pm").startTime)
         assertNull("0pm should not parse", parse("at 0pm").startTime)
@@ -215,12 +222,12 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `minute value 60 does not parse as time`() {
-        // 3:60 — minute >= 60 should not be valid
+        // A minute of 60 or more isn't a time.
         assertNull(parse("at 3:60pm").startTime)
     }
 
     // ════════════════════════════════════════════════════════════
-    //  3. AMBIGUITY RESOLUTION
+    //  3. Ambiguity resolution
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -231,23 +238,23 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `two dates in input — weekday beats date keyword in resolve priority`() {
-        // weekdayDate has higher resolve priority than dateKeywordDate
-        // Priority: absoluteDate > relativeDateTime > weekdayDate > dateKeywordDate
+        // ParseContext.resolveDate takes absoluteDate, then relativeDateTime, then weekdayDate,
+        // then dateKeywordDate, so the weekday beats "tomorrow".
         val result = parse("tomorrow friday")
         assertEquals(LocalDate.of(2026, 4, 17), result.startDate) // friday wins
     }
 
     @Test
     fun `absolute date takes priority over weekday`() {
-        // AbsoluteDate > Weekday in resolve order
+        // absoluteDate comes before weekdayDate in ParseContext.resolveDate.
         val result = parse("January 15 friday")
         assertEquals(LocalDate.of(2027, 1, 15), result.startDate)
     }
 
     @Test
     fun `relative offset and explicit time — explicit time wins`() {
-        // "in 3 hours" sets relativeDateTime, "at 5pm" sets context.time
-        // resolveTime() returns context.time if set
+        // "in 3 hours" sets relativeDateTime and "at 5pm" sets context.time; resolveTime()
+        // returns context.time when it is set.
         val result = parse("in 3 hours at 5pm")
         assertEquals(LocalTime.of(17, 0), result.startTime)
     }
@@ -266,7 +273,7 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    //  4. TITLE EXTRACTION INTEGRITY
+    //  4. Title extraction
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -314,7 +321,8 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `title with only unconsumed stop words is empty`() {
-        // "at the in on" — all are keywords, filtered from title
+        // All four are keywords. LocationRule takes "the in on" after the "at" as the location,
+        // and the title drops keywords at either end anyway.
         val result = parse("at the in on")
         assertEquals("", result.title)
     }
@@ -333,12 +341,12 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    //  5. FALSE POSITIVE RESISTANCE
+    //  5. False positive resistance
     // ════════════════════════════════════════════════════════════
 
     @Test
     fun `bare small number is not parsed as date`() {
-        // "5" alone should not become a date
+        // A bare "5" isn't a date.
         val result = parse("5 things to do")
         assertTrue(result.title.contains("5"))
         assertEquals(ref.toLocalDate(), result.startDate) // Falls back to reference
@@ -354,7 +362,7 @@ class QuickAddParserAdversarialTest {
     @Test
     fun `bare year is not parsed as date`() {
         val result = parse("meeting about 2026 goals")
-        // "2026" is YEAR token, not consumed by any rule alone
+        // "2026" is a YEAR token, which no rule consumes on its own.
         assertNull(result.startTime)
     }
 
@@ -387,9 +395,10 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `month name as verb is consumed (known limitation)`() {
-        // "may" the verb is indistinguishable from "May" the month
+        // The tokenizer can't tell "may" the verb from "May" the month.
         val result = parse("I may go tomorrow")
-        // "may" is tokenized as MONTH — this is a known ambiguity
+        // "may" tokenizes as MONTH, a known ambiguity. With no day beside it, no date rule
+        // takes it.
         assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
     }
 
@@ -400,7 +409,7 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    //  6. UNICODE AND SPECIAL CHARACTERS
+    //  6. Unicode and special characters
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -457,7 +466,8 @@ class QuickAddParserAdversarialTest {
         // Zero-width space between "to" and "morrow"
         val result = parse("to\u200Bmorrow at 3pm")
         assertNotNull(result)
-        // May or may not parse as "tomorrow" depending on normalization
+        // Character cleanup turns the zero-width space into a space, so this doesn't read as
+        // "tomorrow" (not asserted here).
     }
 
     @Test
@@ -468,13 +478,13 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    //  7. RULE INTERACTION AND ORDERING
+    //  7. Rule interaction and ordering
     // ════════════════════════════════════════════════════════════
 
     @Test
     fun `date keyword consumed before weekday rule sees it`() {
-        // "today" is DATE_KEYWORD, should be consumed by RelativeDateRule
-        // not confused with any weekday logic
+        // "today" is a DATE_KEYWORD, which RelativeDateRule consumes; WeekdayRule doesn't
+        // touch it.
         val result = parse("today at 3pm")
         assertEquals(ref.toLocalDate(), result.startDate)
         assertEquals(LocalTime.of(15, 0), result.startTime)
@@ -482,15 +492,15 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `weekday not confused with month name`() {
-        // No weekday name overlaps with month name
+        // No weekday name is also a month name.
         val result = parse("friday january 15 at 3pm")
-        // AbsoluteDateRule (Jan 15) has higher priority than weekday
+        // The absolute date (Jan 15) wins over the weekday in ParseContext.resolveDate.
         assertEquals(LocalDate.of(2027, 1, 15), result.startDate)
     }
 
     @Test
     fun `relative offset does not consume time keyword tokens`() {
-        // "noon" is TIME_KEYWORD, not UNIT — RelativeOffsetRule should skip it
+        // "noon" is a TIME_KEYWORD, not a UNIT, so RelativeOffsetRule skips it.
         val result = parse("noon tomorrow")
         assertEquals(LocalTime.of(12, 0), result.startTime)
         assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
@@ -498,16 +508,17 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `at keyword consumed only when preceding a time`() {
-        // "at" before non-time word should not be consumed
+        // TimeRule leaves an "at" before a non-time word alone.
         val result = parse("look at this tomorrow")
         assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
-        // "at" and "this" are keywords (filtered), "look" is in title
+        // LocationRule then takes "this" as the location (not asserted here); "look" stays in
+        // the title.
         assertTrue(result.title.contains("look"))
     }
 
     @Test
     fun `in keyword not consumed without number + unit`() {
-        // "in" alone without "NUMBER UNIT" should not be consumed by RelativeOffsetRule
+        // RelativeOffsetRule consumes "in" only before NUMBER UNIT.
         val result = parse("meeting in the office tomorrow")
         assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
     }
@@ -528,13 +539,14 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `multiple consumed at keywords do not break title`() {
-        // Two "at" keywords — one consumed by time, one filtered
+        // TimeRule consumes the "at" before 3pm; LocationRule takes the first "at" and "the café"
+        // (not asserted here).
         val result = parse("meet at the café at 3pm tomorrow")
         assertEquals(LocalTime.of(15, 0), result.startTime)
     }
 
     // ════════════════════════════════════════════════════════════
-    //  8. STRUCTURED DATE EDGE CASES
+    //  8. Structured date edge cases
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -563,7 +575,7 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `ambiguous 12_11 treated as M_D (US default)`() {
-        // 12 <= 12, so M/D applies: month=12, day=11
+        // Neither part is over 12, so the US locale's month-first order applies: month 12, day 11.
         assertEquals(LocalDate.of(2026, 12, 11), parse("12/11").startDate)
     }
 
@@ -575,9 +587,9 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `structured date with invalid month does not set date`() {
-        // month > 12 — should fail gracefully
+        // The 15 can't be a month, so it is the day and the month is 0.
         val result = parse("0/15/2027")
-        // month=0 is invalid, resolveFutureDate returns null
+        // Month 0 doesn't exist, so resolveFutureDate returns null and no date is set.
         assertEquals(ref.toLocalDate(), result.startDate)
     }
 
@@ -590,14 +602,14 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `phone-number-like pattern does not crash`() {
-        // "555-12-34" would match structuredDateRegex but produce invalid date
+        // "555-12-34" matches structuredDateRegex but reads as a date that doesn't exist.
         val result = parse("Call 555-12-34 tomorrow")
         assertNotNull(result)
         assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
     }
 
     // ════════════════════════════════════════════════════════════
-    //  9. TIME PARSING EDGE CASES
+    //  9. Time parsing edge cases
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -649,8 +661,8 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `space-separated time without at does not false-positive`() {
-        // "2 30" without "at" prefix and without meridiem should NOT parse as time
-        // (would be too aggressive — "Room 2 30 people" shouldn't become 2:30)
+        // "2 30" with neither an "at" before it nor a meridiem isn't a time, so "Room 2 30
+        // people" doesn't become 2:30.
         val result = parse("2 30 things")
         assertNull(result.startTime)
     }
@@ -669,7 +681,7 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 10. DETERMINISM AND IDEMPOTENCY
+    // 10. Determinism and the reference time
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -711,7 +723,7 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 11. REAL-WORLD CORPUS
+    // 11. Real-world corpus
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -737,7 +749,7 @@ class QuickAddParserAdversarialTest {
     @Test
     fun `real-world - 1 on 1 with manager wednesday`() {
         val result = parse("1:1 with manager wednesday")
-        // "1:1" is a time token (01:01). First time wins.
+        // "1:1" isn't a time: the colon form needs two minute digits.
         assertEquals(LocalDate.of(2026, 4, 15), result.startDate)
     }
 
@@ -750,10 +762,9 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `real-world - PTO next week`() {
-        // "next" is KEYWORD(NEXT), "week" is UNIT — no weekday follows.
-        // No rule handles "next week" as a relative date (would need a RelativeDateRule
-        // entry for NEXT + UNIT). Unclaimed UNIT tokens now appear in the title so the
-        // user sees their intent wasn't fully parsed.
+        // "next" is KEYWORD(NEXT) and "week" a UNIT, with no weekday after them. No rule reads
+        // NEXT + UNIT as a relative date, so both stay in the title and the user sees the
+        // input wasn't fully parsed.
         val result = parse("PTO next week")
         assertEquals("PTO next week", result.title)
     }
@@ -841,12 +852,12 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 12. PERFORMANCE UNDER ADVERSARIAL INPUTS
+    // 12. Performance under adversarial inputs
     // ════════════════════════════════════════════════════════════
 
     @Test
     fun `many tokens do not cause quadratic blowup`() {
-        // 200 words — each rule iterates tokens, but should be O(n)
+        // 200 words, then a date and time; the parse must take under 100 ms.
         val input = (1..200).joinToString(" ") { "word$it" } + " tomorrow at 3pm"
         val start = System.nanoTime()
         val result = parse(input)
@@ -857,7 +868,7 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `many structured date candidates do not hang`() {
-        // Multiple items that look like structured dates
+        // 50 tokens that look like structured dates.
         val input = (1..50).joinToString(" ") { "1/$it" } + " at 3pm"
         val start = System.nanoTime()
         val result = parse(input)
@@ -877,13 +888,13 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 13. CONFIDENCE SCORING
+    // 13. Confidence scoring
     // ════════════════════════════════════════════════════════════
 
     @Test
     fun `date and time gives HIGH confidence`() {
         assertEquals(ParseConfidence.HIGH, parse("tomorrow at 3pm").confidence)
-        assertEquals(ParseConfidence.HIGH, parse("in 30 minutes").confidence) // sets both date + time
+        assertEquals(ParseConfidence.HIGH, parse("in 30 minutes").confidence) // sets date and time
         assertEquals(ParseConfidence.HIGH, parse("friday at noon").confidence)
     }
 
@@ -908,7 +919,7 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 14. ISALLDAY CORRECTNESS
+    // 14. isAllDay
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -930,7 +941,7 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 15. WEEKDAY EXHAUSTIVE TESTS (from Monday reference)
+    // 15. Weekdays from several reference days
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -974,7 +985,7 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 16. YEAR BOUNDARY AND CALENDAR EDGE CASES
+    // 16. Year boundary and calendar edge cases
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -985,26 +996,26 @@ class QuickAddParserAdversarialTest {
 
     @Test
     fun `future-biased month resolution wraps year`() {
-        // From December, "January 5" should resolve to next year
+        // From December, "January 5" resolves to next year.
         val decRef = LocalDateTime.of(2026, 12, 30, 10, 0)
         assertEquals(LocalDate.of(2027, 1, 5), parse("January 5", decRef).startDate)
     }
 
     @Test
     fun `future-biased month resolution stays in current year when date is ahead`() {
-        // From April, "December 25" should resolve to current year
+        // From April, "December 25" resolves to this year.
         assertEquals(LocalDate.of(2026, 12, 25), parse("December 25").startDate)
     }
 
     @Test
     fun `future-biased month resolution for same month later day`() {
-        // From April 13, "April 20" should be April 20 current year
+        // From April 13, "April 20" is April 20 this year.
         assertEquals(LocalDate.of(2026, 4, 20), parse("April 20").startDate)
     }
 
     @Test
     fun `future-biased month resolution for same month earlier day wraps`() {
-        // From April 13, "April 5" is past → wraps to April 5 next year
+        // From April 13, "April 5" is past, so it is April 5 next year.
         assertEquals(LocalDate.of(2027, 4, 5), parse("April 5").startDate)
     }
 
@@ -1012,16 +1023,16 @@ class QuickAddParserAdversarialTest {
     fun `leap year Feb 29 in various years`() {
         // 2028 is a leap year
         assertEquals(LocalDate.of(2028, 2, 29), parse("February 29 2028").startDate)
-        // 2027 is not — should fail gracefully
+        // 2027 isn't, so the date is the reference date.
         assertEquals(ref.toLocalDate(), parse("February 29 2027").startDate)
         // 2100 is not a leap year (divisible by 100 but not 400)
         assertEquals(ref.toLocalDate(), parse("February 29 2100").startDate)
-        // 2000 was a leap year (divisible by 400)
+        // 2000 is a leap year (divisible by 400)
         assertEquals(LocalDate.of(2000, 2, 29), parse("February 29 2000").startDate)
     }
 
     // ════════════════════════════════════════════════════════════
-    // 17. NORMALIZER EDGE CASES
+    // 17. Normalizer edge cases
     // ════════════════════════════════════════════════════════════
 
     @Test
@@ -1050,7 +1061,7 @@ class QuickAddParserAdversarialTest {
     }
 
     // ════════════════════════════════════════════════════════════
-    // 18. ABBREVIATION EXHAUSTIVE COVERAGE
+    // 18. Abbreviations
     // ════════════════════════════════════════════════════════════
 
     @Test

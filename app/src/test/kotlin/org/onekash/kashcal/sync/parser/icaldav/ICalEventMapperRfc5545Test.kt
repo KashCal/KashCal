@@ -12,18 +12,16 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * RFC 5545 compliance tests for ICalEventMapper.
- *
- * Tests behaviors required by RFC 5545 that are not covered by existing tests:
- * - DURATION-only events (Section 3.6.1: DTEND and DURATION are mutually exclusive)
- * - DTEND same as DTSTART for all-day events
- * - TENTATIVE status mapping (Section 3.8.1.11)
- * - Missing SUMMARY defaults to "Untitled"
- * - PRIORITY boundary values (0-9) (Section 3.8.1.9)
- * - CLASS/CLASSIFICATION mapping (Section 3.8.1.3)
- * - Event without UID (required per Section 3.8.4.7)
+ * Tests [ICalEventMapper.toEntity] against RFC 5545 rules:
+ * - DURATION-only events (§3.6.1: DTEND and DURATION are mutually exclusive)
+ * - STATUS mapping and its CONFIRMED default (§3.8.1.11)
+ * - missing or empty SUMMARY becomes "Untitled"
+ * - PRIORITY boundary values 0 to 9 (§3.8.1.9)
+ * - CLASS mapping and its PUBLIC default (§3.8.1.3)
  * - EXDATE and RDATE stored as millisecond CSV
- * - SEQUENCE field mapping (Section 3.8.7.4)
+ * - all-day events without DTEND or across month and year boundaries
+ * - SEQUENCE (§3.8.7.4), TRANSP default, UID, DTSTAMP, floating time, importId
+ * - a DATE RECURRENCE-ID on an all-day exception, and alarmCount
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -59,8 +57,7 @@ class ICalEventMapperRfc5545Test {
         val events = parser.parseAllEvents(ics).getOrNull()!!
         val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
-        // effectiveEnd() should calculate DTSTART + DURATION
-        // 10:00 + 1h30m = 11:30
+        // effectiveEnd() gives DTSTART + DURATION: 10:00 + 1h30m = 11:30.
         val expectedDurationMs = (1 * 60 + 30) * 60 * 1000L // 1h30m in ms
         assertEquals(
             "endTs should be startTs + DURATION",
@@ -170,7 +167,7 @@ class ICalEventMapperRfc5545Test {
 
     @Test
     fun `event without STATUS defaults to CONFIRMED`() {
-        // RFC 5545: STATUS is optional. KashCal should have a reasonable default.
+        // RFC 5545: STATUS is optional; the mapped event defaults to CONFIRMED.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -188,7 +185,6 @@ class ICalEventMapperRfc5545Test {
         val events = parser.parseAllEvents(ics).getOrNull()!!
         val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
-        // Default should be CONFIRMED (most common for active events)
         assertEquals("Default status should be CONFIRMED", "CONFIRMED", entity.status)
     }
 
@@ -217,11 +213,8 @@ class ICalEventMapperRfc5545Test {
 
     @Test
     fun `event with empty SUMMARY should default to Untitled`() {
-        // RFC 5545: SUMMARY is optional. When present but empty, it should still
-        // produce a usable title. The current code uses `icalEvent.summary ?: "Untitled"`
-        // which only handles null, not empty string.
-        // BUG: Empty SUMMARY ("") passes the null check and becomes entity.title = ""
-        // FIX NEEDED: Use `icalEvent.summary?.ifEmpty { null } ?: "Untitled"`
+        // RFC 5545: SUMMARY is optional. A present but empty SUMMARY must still give a
+        // usable title: the mapper treats "" like a missing SUMMARY.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -239,21 +232,20 @@ class ICalEventMapperRfc5545Test {
         val result = parser.parseAllEvents(ics).getOrNull()
         if (result != null && result.isNotEmpty()) {
             val entity = ICalEventMapper.toEntity(result.first(), ics, 1L, null, null).event
-            // Empty SUMMARY should become "Untitled", not empty string
             assertEquals(
                 "Empty SUMMARY should become 'Untitled'",
                 "Untitled",
                 entity.title
             )
         }
-        // If parser fails on empty SUMMARY, that's acceptable (parser-level handling)
+        // A parser rejection of the empty SUMMARY is acceptable too.
     }
 
     // ==================== RFC 5545 Section 3.8.1.9: PRIORITY ====================
 
     @Test
     fun `PRIORITY=0 means undefined`() {
-        // RFC 5545: 0 = undefined (default)
+        // RFC 5545 §3.8.1.9: 0 is an undefined priority.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -442,7 +434,6 @@ class ICalEventMapperRfc5545Test {
         assertNotNull("Should have exdate", entity.exdate)
         val exdates = entity.exdate!!.split(",")
         assertEquals("Should have 3 EXDATEs", 3, exdates.size)
-        // Each should be a valid millisecond timestamp
         exdates.forEach { ms ->
             assertTrue("EXDATE '$ms' should be a valid timestamp",
                 ms.toLongOrNull() != null && ms.toLong() > 0)
@@ -505,7 +496,7 @@ class ICalEventMapperRfc5545Test {
             val entity = ICalEventMapper.toEntity(result.first(), ics, 1L, null, null).event
 
             assertTrue("Should be all-day", entity.isAllDay)
-            // Should be a 1-day event: endTs should be same day as startTs
+            // A 1-day event: endTs falls on the same day as startTs.
             val startDate = java.time.Instant.ofEpochMilli(entity.startTs)
                 .atZone(java.time.ZoneOffset.UTC).toLocalDate()
             val endDate = java.time.Instant.ofEpochMilli(entity.endTs)
@@ -657,7 +648,7 @@ class ICalEventMapperRfc5545Test {
 
     @Test
     fun `UID with special characters is preserved`() {
-        // UIDs can contain various characters per RFC 5545
+        // A UID with a long hex prefix, hyphens and an @domain suffix.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -707,7 +698,7 @@ class ICalEventMapperRfc5545Test {
         assertTrue("Should be all-day", entity.isAllDay)
         assertNotNull("Should have originalInstanceTime from RECURRENCE-ID", entity.originalInstanceTime)
 
-        // RECURRENCE-ID VALUE=DATE:20260112 should map to Jan 12 2026 00:00 UTC
+        // RECURRENCE-ID VALUE=DATE:20260112 maps to Jan 12 2026 00:00 UTC.
         val recidDate = java.time.Instant.ofEpochMilli(entity.originalInstanceTime!!)
             .atZone(java.time.ZoneOffset.UTC).toLocalDate()
         assertEquals(
@@ -738,7 +729,6 @@ class ICalEventMapperRfc5545Test {
         val events = parser.parseAllEvents(ics).getOrNull()!!
         val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
-        // DTSTAMP should be non-zero and reasonable
         assertTrue("DTSTAMP should be positive", entity.dtstamp > 0)
     }
 
@@ -748,9 +738,8 @@ class ICalEventMapperRfc5545Test {
     fun `floating time event preserves timezone from parser`() {
         // RFC 5545 Section 3.3.5: Floating time has no timezone and no Z suffix.
         // "Floating time SHOULD only be used where that is the reasonable behavior"
-        // NOTE: The icaldav library may assign a timezone to floating time events
-        // depending on its implementation. This test verifies the entity is created
-        // correctly regardless.
+        // The icaldav library may assign a timezone to a floating time, so this test
+        // checks only that the entity is timed with ordered, positive timestamps.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -768,9 +757,7 @@ class ICalEventMapperRfc5545Test {
         val events = parser.parseAllEvents(ics).getOrNull()!!
         val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
-        // Verify event is not all-day (it has time components)
         assertFalse("Floating time event should not be all-day", entity.isAllDay)
-        // Verify the event was parsed with correct timestamps
         assertTrue("startTs should be positive", entity.startTs > 0)
         assertTrue("endTs should be after startTs", entity.endTs > entity.startTs)
         assertEquals("Floating Time Event", entity.title)
@@ -872,9 +859,8 @@ class ICalEventMapperRfc5545Test {
         val events = parser.parseAllEvents(ics).getOrNull()!!
         val entity = ICalEventMapper.toEntity(events.first(), ics, 1L, null, null).event
 
-        // reminders limited to 5 (all fit within the limit)
+        // Reminders are capped at 5; all five fit.
         assertEquals("Should store all 5 reminders", 5, entity.reminders?.size ?: 0)
-        // alarmCount tracks total
         assertEquals("alarmCount should track all 5", 5, entity.alarmCount)
     }
 }

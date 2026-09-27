@@ -13,11 +13,12 @@ import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import java.io.File
 
 /**
- * Integration test for OkHttpCalDavClient with real iCloud.
+ * Runs [org.onekash.kashcal.sync.client.OkHttpCalDavClient]'s discovery and read calls against
+ * real iCloud. Read-only: it creates, changes and deletes nothing.
  *
- * Run with: ./gradlew testDebugUnitTest --tests "*RealICloudClientTest*"
+ * Run with: ./gradlew testDebugUnitTest -Pintegration --tests "*RealICloudClientTest*"
  *
- * Requires: local.properties with:
+ * Requires local.properties with ICLOUD_USERNAME and ICLOUD_APP_PASSWORD, or:
  *   caldav.username=your_apple_id@icloud.com
  *   caldav.app_password=xxxx-xxxx-xxxx-xxxx
  *   caldav.server=https://caldav.icloud.com
@@ -29,7 +30,8 @@ class RealICloudClientTest {
     private var password: String? = null
     private var serverUrl: String = "https://caldav.icloud.com"
 
-    // Cached discovery results to avoid redundant network calls
+    // Discovery results. JUnit 4 makes a new instance per test, so they are never shared
+    // between tests; only calendars is read, by getFirstCalendarUrl within the same test.
     private var principalUrl: String? = null
     private var calendarHomeUrl: String? = null
     private var calendars: List<CalDavCalendar>? = null
@@ -37,7 +39,7 @@ class RealICloudClientTest {
     @Before
     fun setup() {
         val quirks = ICloudQuirks()
-        // Load credentials from properties file
+        // Credentials from local.properties
         loadCredentials()
 
         if (username != null && password != null) {
@@ -49,7 +51,7 @@ class RealICloudClientTest {
             val factory = OkHttpCalDavClientFactory()
             client = factory.createClient(credentials, quirks)
         } else {
-            // Create a client with dummy credentials for tests that will be skipped
+            // Dummy credentials: every test is skipped without real ones
             val dummyCredentials = Credentials(
                 username = "test@example.com",
                 password = "test-password",
@@ -75,10 +77,10 @@ class RealICloudClientTest {
                     val parts = line.split("=").map { it.trim() }
                     if (parts.size == 2) {
                         when (parts[0]) {
-                            // iCloud-specific credentials
+                            // iCloud keys, which win
                             "ICLOUD_USERNAME" -> username = parts[1]
                             "ICLOUD_APP_PASSWORD" -> password = parts[1]
-                            // Legacy format
+                            // Fallback keys, used only when the iCloud ones are absent
                             "caldav.username" -> if (username == null) username = parts[1]
                             "caldav.app_password" -> if (password == null) password = parts[1]
                             "caldav.server" -> serverUrl = parts[1]
@@ -99,7 +101,7 @@ class RealICloudClientTest {
         )
     }
 
-    // ========== Discovery Tests ==========
+    // ========== Discovery ==========
 
     @Test
     fun `discover principal URL from iCloud`() = runBlocking {
@@ -116,7 +118,7 @@ class RealICloudClientTest {
             "Principal URL should contain 'principal' or username segment"
         }
 
-        // Cache for other tests
+        // Never read: another test gets a new instance
         principalUrl = url
     }
 
@@ -124,12 +126,12 @@ class RealICloudClientTest {
     fun `discover calendar home from principal`() = runBlocking {
         assumeCredentialsAvailable()
 
-        // First discover principal
+        // Discover the principal first
         val principalResult = client.discoverPrincipal(serverUrl)
         assumeTrue("Should discover principal first", principalResult.isSuccess())
         val principal = principalResult.getOrNull()!!
 
-        // Then discover calendar home
+        // Then the calendar home
         val result = client.discoverCalendarHome(principal)
 
         println("Calendar home discovery result: $result")
@@ -139,7 +141,7 @@ class RealICloudClientTest {
         println("Calendar Home URL: $url")
         assert(url.isNotBlank()) { "Calendar home URL should not be blank" }
 
-        // Cache for other tests
+        // Never read: another test gets a new instance
         calendarHomeUrl = url
     }
 
@@ -147,14 +149,14 @@ class RealICloudClientTest {
     fun `list calendars from iCloud`() = runBlocking {
         assumeCredentialsAvailable()
 
-        // Full discovery chain
+        // The full discovery chain
         val principal = client.discoverPrincipal(serverUrl).getOrNull()
         assumeTrue("Should discover principal", principal != null)
 
         val home = client.discoverCalendarHome(principal!!).getOrNull()?.firstOrNull()
         assumeTrue("Should discover calendar home", home != null)
 
-        // List calendars
+        // List the calendars
         val result = client.listCalendars(home!!)
 
         println("List calendars result: $result")
@@ -171,11 +173,11 @@ class RealICloudClientTest {
 
         assert(cals.isNotEmpty()) { "Should have at least one calendar" }
 
-        // Cache for other tests
+        // Not seen by other tests: each gets a new instance
         calendars = cals
     }
 
-    // ========== Change Detection Tests ==========
+    // ========== Change detection ==========
 
     @Test
     fun `get ctag for calendar`() = runBlocking {
@@ -208,10 +210,10 @@ class RealICloudClientTest {
 
         val syncToken = result.getOrNull()
         println("Sync token: $syncToken")
-        // Sync token might be null if server doesn't support it
+        // The sync-token is null when the server doesn't support it
     }
 
-    // ========== Event Fetching Tests ==========
+    // ========== Event fetching ==========
 
     @Test
     fun `fetch events in range`() = runBlocking {
@@ -237,7 +239,7 @@ class RealICloudClientTest {
             println("    iCal preview: ${event.icalData.take(100)}...")
         }
 
-        // Verify event structure
+        // Each event has a URL and iCal data
         events.forEach { event ->
             assert(event.url.isNotBlank()) { "Event URL should not be blank" }
             assert(event.icalData.contains("BEGIN:VCALENDAR")) { "Should be valid iCal data" }
@@ -250,7 +252,7 @@ class RealICloudClientTest {
 
         val calendarUrl = getFirstCalendarUrl() ?: return@runBlocking
 
-        // First fetch all events to get hrefs
+        // Fetch the events of the last and next 30 days to get hrefs
         val now = System.currentTimeMillis()
         val allEventsResult = client.fetchEventsInRange(
             calendarUrl,
@@ -265,7 +267,7 @@ class RealICloudClientTest {
             return@runBlocking
         }
 
-        // Take first 3 hrefs
+        // The first 3 hrefs
         val hrefs = allEvents.take(3).map { it.href }
         println("Fetching ${hrefs.size} events by href: $hrefs")
 
@@ -273,19 +275,19 @@ class RealICloudClientTest {
 
         println("Multiget result: ${if (result.isSuccess()) "Success" else result}")
 
-        // Note: iCloud might not support multiget with certain href formats
-        // This is an integration test, so we use assumeTrue to skip on server quirks
+        // iCloud might not support multiget with some href formats, so a failed multiget
+        // skips the test with assumeTrue instead of failing it
         if (result.isError()) {
             val error = result as CalDavResult.Error
             println("Multiget not supported or failed: ${error.message}")
-            // Don't fail test - just skip, as this is server-specific behavior
+            // Skip, since this is server-specific behavior
             assumeTrue("Multiget not supported by server", false)
             return@runBlocking
         }
 
         val events = result.getOrNull()!!
         println("Fetched ${events.size} events by href (expected: ${hrefs.size})")
-        // Note: Server might not return all events if some were deleted
+        // The server may return fewer events if some were deleted meanwhile
         assert(events.isNotEmpty()) { "Should fetch at least some events" }
     }
 
@@ -296,7 +298,7 @@ class RealICloudClientTest {
         val calendarUrl = getFirstCalendarUrl() ?: return@runBlocking
         println("Testing sync collection for: $calendarUrl")
 
-        // First get a sync token
+        // Get a sync-token first
         val tokenResult = client.getSyncToken(calendarUrl)
         assumeTrue("Should get sync token", tokenResult.isSuccess())
 
@@ -306,11 +308,11 @@ class RealICloudClientTest {
             return@runBlocking
         }
 
-        // Now do sync collection with token
+        // Then a sync-collection from it
         val result = client.syncCollection(calendarUrl, syncToken)
 
         println("Sync collection result: $result")
-        // Might fail with 403/410 if token is expired, that's OK
+        // A 403 or 410 for an expired token is acceptable here
         if (result.isSuccess()) {
             val report = result.getOrNull()!!
             println("Sync report:")
@@ -323,7 +325,7 @@ class RealICloudClientTest {
         }
     }
 
-    // ========== Full Workflow Tests ==========
+    // ========== Full workflow ==========
 
     @Test
     fun `full discovery and fetch workflow`() = runBlocking {
@@ -331,28 +333,28 @@ class RealICloudClientTest {
 
         println("=== Starting Full Discovery Workflow ===\n")
 
-        // Step 1: Discover principal
+        // Step 1: discover the principal
         println("Step 1: Discovering principal...")
         val principalResult = client.discoverPrincipal(serverUrl)
         assert(principalResult.isSuccess()) { "Principal discovery failed" }
         val principal = principalResult.getOrNull()!!
         println("Principal: $principal\n")
 
-        // Step 2: Discover calendar home
+        // Step 2: discover the calendar home
         println("Step 2: Discovering calendar home...")
         val homeResult = client.discoverCalendarHome(principal)
         assert(homeResult.isSuccess()) { "Calendar home discovery failed" }
         val home = homeResult.getOrNull()!!.first()
         println("Calendar home: $home\n")
 
-        // Step 3: List calendars
+        // Step 3: list the calendars
         println("Step 3: Listing calendars...")
         val calendarsResult = client.listCalendars(home)
         assert(calendarsResult.isSuccess()) { "Calendar listing failed" }
         val cals = calendarsResult.getOrNull()!!
         println("Found ${cals.size} calendars\n")
 
-        // Step 4: For each calendar, get ctag and fetch events
+        // Step 4: for each calendar except inbox and outbox, get the ctag and fetch events
         var totalEvents = 0
         for (cal in cals) {
             if (cal.url.contains("inbox") || cal.url.contains("outbox")) {
@@ -404,7 +406,7 @@ class RealICloudClientTest {
     // ========== Helper Methods ==========
 
     private suspend fun getFirstCalendarUrl(): String? {
-        // Do full discovery if not cached
+        // Full discovery unless this test already listed the calendars
         if (calendars == null) {
             val principal = client.discoverPrincipal(serverUrl).getOrNull()
             if (principal == null) {
@@ -421,7 +423,7 @@ class RealICloudClientTest {
             calendars = client.listCalendars(home).getOrNull()
         }
 
-        // Find first non-inbox/outbox calendar
+        // The first calendar whose URL contains neither "inbox" nor "outbox"
         val calendar = calendars?.firstOrNull { cal ->
             !cal.url.contains("inbox") && !cal.url.contains("outbox")
         }

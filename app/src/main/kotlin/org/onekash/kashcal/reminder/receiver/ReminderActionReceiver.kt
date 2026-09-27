@@ -15,15 +15,12 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import javax.inject.Inject
 
 /**
- * BroadcastReceiver for reminder notification actions.
+ * Handles the Snooze and Dismiss actions of a reminder notification.
  *
- * Handles user interactions with reminder notifications:
- * - Snooze: Reschedule reminder for later
- * - Dismiss: Cancel the notification and mark as dismissed
- *
- * Per Android best practices:
- * - Uses goAsync() for work that takes > 10ms
- * - Cancels notification immediately on action
+ * Any action that carries a reminder id cancels the notification at once; the database and
+ * alarm work then runs under goAsync() and a 9-second timeout.
+ * - Snooze: re-arms the reminder the chosen number of minutes from now.
+ * - Dismiss: marks it DISMISSED, so a later alarm for it posts nothing.
  */
 @AndroidEntryPoint
 class ReminderActionReceiver : BroadcastReceiver() {
@@ -51,7 +48,6 @@ class ReminderActionReceiver : BroadcastReceiver() {
         // Cancel notification immediately for responsive UX
         notificationManager.cancelNotification(reminderId)
 
-        // Use goAsync() for database/alarm operations
         val pendingResult = goAsync()
 
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {

@@ -27,15 +27,14 @@ import org.robolectric.annotation.Config
 import kotlin.time.Duration.Companion.seconds
 
 /**
- * Comprehensive tests for EventsDao.
+ * Tests [EventsDao]:
+ * - CRUD (insert, update, delete, upsert)
+ * - lookups by ID, UID, CalDAV URL, calendar and time range
+ * - master and exception queries, and master deduplication
+ * - sync status, EXDATE/RRULE and reminder updates, and the ORGANIZER schedule status
+ * - search, the reminder-window query, the etag map and the lookback and exception cleanups
  *
- * Tests cover:
- * - CRUD operations (insert, update, delete, upsert)
- * - Query by ID, UID, CalDAV URL
- * - Query by calendar and time range
- * - Recurring event queries (master, exceptions)
- * - Sync status operations
- * - FTS search
+ * The database has no create callback, so the production master-uid triggers are absent.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -55,7 +54,6 @@ class EventsDaoTest {
             .build()
         eventsDao = database.eventsDao()
 
-        // Create test account and calendars
         accountId = database.accountsDao().insert(
             Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
@@ -101,12 +99,12 @@ class EventsDaoTest {
         val event = createTestEvent()
         val id = eventsDao.insert(event)
 
-        // Try to insert with same ID
+        // Inserting the same ID again conflicts.
         try {
             eventsDao.insert(event.copy(id = id))
             assertTrue("Should throw", false)
         } catch (e: Exception) {
-            // Expected
+            // The conflict.
         }
     }
 
@@ -226,9 +224,8 @@ class EventsDaoTest {
     @Test
     fun `getByUid returns all events with same UID`() = runTest {
         val uid = "shared-uid@test.com"
-        // Master event
         eventsDao.insert(createTestEvent(uid = uid, rrule = "FREQ=WEEKLY"))
-        // Exception event (same UID)
+        // The exception shares the master's UID.
         eventsDao.insert(createTestEvent(
             uid = uid,
             title = "Exception",
@@ -356,7 +353,7 @@ class EventsDaoTest {
             title = "Master",
             rrule = "FREQ=WEEKLY"
         ))
-        // Exception has RRULE but also originalEventId
+        // An exception with an RRULE; its originalEventId still excludes it.
         eventsDao.insert(createTestEvent(
             title = "Exception",
             rrule = "FREQ=WEEKLY",
@@ -440,20 +437,17 @@ class EventsDaoTest {
 
     @Test
     fun `getExceptionByUidAndInstanceTime finds exception regardless of which master it points to`() = runTest {
-        // This tests the RFC 5545 compliant lookup:
-        // UID + originalInstanceTime finds the exception regardless of originalEventId value
-        // This is key for sync where master ID might change
+        // The lookup keys on UID and originalInstanceTime (RFC 5545 RECURRENCE-ID), never on the
+        // originalEventId value, so it holds for sync where the master's row ID might change.
         val uid = "recurring-uid-${System.nanoTime()}"
         val instanceTime = parseDate("2025-01-13 10:00")
 
-        // Create master
         val masterId = eventsDao.insert(createTestEvent(
             uid = uid,
             title = "Master",
             rrule = "FREQ=WEEKLY"
         ))
 
-        // Create exception linked to master
         val exceptionId = eventsDao.insert(createTestEvent(
             uid = uid,
             title = "Exception Event",
@@ -461,8 +455,6 @@ class EventsDaoTest {
             originalInstanceTime = instanceTime
         ))
 
-        // UID-based lookup should find the exception using UID + instanceTime
-        // NOT using originalEventId (which is the old fragile approach)
         val exception = eventsDao.getExceptionByUidAndInstanceTime(
             uid = uid,
             calendarId = calendarId,
@@ -473,8 +465,7 @@ class EventsDaoTest {
         assertEquals(exceptionId, exception?.id)
         assertEquals("Exception Event", exception?.title)
 
-        // Also verify that searching with WRONG master ID still finds it
-        // (because the lookup uses UID, not originalEventId)
+        // The same lookup again; the function takes no master ID, so none can mislead it.
         val anotherLookup = eventsDao.getExceptionByUidAndInstanceTime(
             uid = uid,
             calendarId = calendarId,
@@ -485,7 +476,7 @@ class EventsDaoTest {
 
     @Test
     fun `getExceptionByUidAndInstanceTime returns null for master events`() = runTest {
-        // Master events have originalEventId = null, so they should NOT be returned
+        // A master has a null originalEventId, so the lookup doesn't return it.
         val uid = "master-uid-${System.nanoTime()}"
         val masterId = eventsDao.insert(createTestEvent(
             uid = uid,
@@ -494,7 +485,7 @@ class EventsDaoTest {
             startTs = parseDate("2025-01-13 10:00")
         ))
 
-        // Try to find with master's start time (as if it were an exception)
+        // Look up the master's start time as if it were an exception's.
         val result = eventsDao.getExceptionByUidAndInstanceTime(
             uid = uid,
             calendarId = calendarId,
@@ -570,6 +561,38 @@ class EventsDaoTest {
         assertEquals(SyncStatus.SYNCED, event?.syncStatus)
         assertEquals(caldavUrl, event?.caldavUrl)
         assertEquals(etag, event?.etag)
+    }
+
+    @Test
+    fun `markSyncedWithCopy stores the body with the etag and clears the error`() = runTest {
+        val id = eventsDao.insert(createTestEvent(syncStatus = SyncStatus.PENDING_UPDATE))
+        eventsDao.recordSyncError(id, "Test error", System.currentTimeMillis())
+
+        eventsDao.markSyncedWithCopy(id, "\"sent-etag\"", "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n", System.currentTimeMillis())
+
+        val event = eventsDao.getById(id)!!
+        assertEquals(SyncStatus.SYNCED, event.syncStatus)
+        assertEquals("\"sent-etag\"", event.etag)
+        assertEquals("BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n", event.rawIcal)
+        assertNull(event.lastSyncError)
+        assertEquals(0, event.syncRetryCount)
+    }
+
+    @Test
+    fun `markCreatedOnServerWithCopy stores the url, the etag and the body`() = runTest {
+        val id = eventsDao.insert(createTestEvent(syncStatus = SyncStatus.PENDING_CREATE))
+        eventsDao.recordSyncError(id, "Test error", System.currentTimeMillis())
+        val caldavUrl = "https://caldav.example.test/events/new123.ics"
+
+        eventsDao.markCreatedOnServerWithCopy(id, caldavUrl, "\"new-etag\"", "BODY", System.currentTimeMillis())
+
+        val event = eventsDao.getById(id)!!
+        assertEquals(SyncStatus.SYNCED, event.syncStatus)
+        assertEquals(caldavUrl, event.caldavUrl)
+        assertEquals("\"new-etag\"", event.etag)
+        assertEquals("BODY", event.rawIcal)
+        assertNull(event.lastSyncError)
+        assertEquals(0, event.syncRetryCount)
     }
 
     @Test
@@ -724,7 +747,7 @@ class EventsDaoTest {
 
         assertNotNull(result)
         assertEquals("Master", result?.title)
-        assertNull(result?.originalEventId) // Ensure it's the master, not exception
+        assertNull(result?.originalEventId) // the master, not the exception
     }
 
     @Test
@@ -735,7 +758,7 @@ class EventsDaoTest {
 
         assertEquals(2, eventsDao.getTotalCount())
 
-        // Each calendar should find its own master
+        // Each calendar finds its own master.
         val master1 = eventsDao.getMasterByUidAndCalendar(uid, calendarId)
         val master2 = eventsDao.getMasterByUidAndCalendar(uid, secondCalendarId)
 
@@ -752,28 +775,25 @@ class EventsDaoTest {
             rrule = "FREQ=DAILY"
         ))
 
-        // Insert multiple exceptions with same UID
         eventsDao.insert(createTestEvent(
-            uid = uid, // Same UID as master
+            uid = uid, // same UID as master
             title = "Exception 1",
             originalEventId = masterId,
             originalInstanceTime = parseDate("2025-01-16 10:00")
         ))
         eventsDao.insert(createTestEvent(
-            uid = uid, // Same UID as master
+            uid = uid, // same UID as master
             title = "Exception 2",
             originalEventId = masterId,
             originalInstanceTime = parseDate("2025-01-17 10:00")
         ))
 
-        // All 3 should exist (master + 2 exceptions)
         assertEquals(3, eventsDao.getTotalCount())
 
-        // getByUid should return all 3
+        // getByUid returns all three, getMasterByUidAndCalendar only the master.
         val allEvents = eventsDao.getByUid(uid)
         assertEquals(3, allEvents.size)
 
-        // getMasterByUidAndCalendar should only return the master
         val master = eventsDao.getMasterByUidAndCalendar(uid, calendarId)
         assertNotNull(master)
         assertNull(master?.originalEventId)
@@ -781,31 +801,28 @@ class EventsDaoTest {
 
     @Test
     fun `deleteDuplicateMasterEvents removes duplicates keeping oldest`() = runTest {
-        // Note: This test manually creates duplicates which wouldn't normally be possible
-        // with the unique constraint, but tests the cleanup query logic
+        // Production's create callback installs triggers that keep a master's uid unique per
+        // calendar. This database has none, and the unique (calendar_id, uid,
+        // original_instance_time) index doesn't catch masters (their instance time is NULL),
+        // so duplicates can be inserted to test the cleanup query.
         val uid = "duplicate-uid@test.com"
 
-        // Insert multiple events with same UID (simulating a race condition scenario)
-        // In production, the unique constraint would prevent this
         val id1 = eventsDao.insert(createTestEvent(uid = uid, title = "First"))
         val id2 = eventsDao.insert(createTestEvent(uid = uid, title = "Second"))
         val id3 = eventsDao.insert(createTestEvent(uid = uid, title = "Third"))
 
         assertEquals(3, eventsDao.getTotalCount())
 
-        // Run dedup
         val deleted = eventsDao.deleteDuplicateMasterEvents()
 
-        // Should have deleted 2 duplicates
         assertEquals(2, deleted)
 
-        // Only the oldest (lowest ID) should remain
+        // Only the lowest ID remains.
         assertEquals(1, eventsDao.getTotalCount())
         val remaining = eventsDao.getById(id1)
         assertNotNull(remaining)
         assertEquals("First", remaining?.title)
 
-        // The others should be gone
         assertNull(eventsDao.getById(id2))
         assertNull(eventsDao.getById(id3))
     }
@@ -819,7 +836,6 @@ class EventsDaoTest {
             rrule = "FREQ=DAILY"
         ))
 
-        // Insert exception with same UID
         val exceptionId = eventsDao.insert(createTestEvent(
             uid = uid,
             title = "Exception",
@@ -829,25 +845,23 @@ class EventsDaoTest {
 
         assertEquals(2, eventsDao.getTotalCount())
 
-        // Run dedup - should not remove exception (it has originalEventId set)
+        // Only masters are matched, so the exception stays.
         val deleted = eventsDao.deleteDuplicateMasterEvents()
 
-        assertEquals(0, deleted) // No duplicates among master events
-        assertEquals(2, eventsDao.getTotalCount()) // Both should remain
+        assertEquals(0, deleted)
+        assertEquals(2, eventsDao.getTotalCount())
         assertNotNull(eventsDao.getById(masterId))
         assertNotNull(eventsDao.getById(exceptionId))
     }
 
     @Test
     fun `deleteDuplicateMasterEvents keeps unique events`() = runTest {
-        // Create events with unique UIDs
         eventsDao.insert(createTestEvent(uid = "uid-1@test.com", title = "Event 1"))
         eventsDao.insert(createTestEvent(uid = "uid-2@test.com", title = "Event 2"))
         eventsDao.insert(createTestEvent(uid = "uid-3@test.com", title = "Event 3"))
 
         assertEquals(3, eventsDao.getTotalCount())
 
-        // Run dedup - should not remove anything
         val deleted = eventsDao.deleteDuplicateMasterEvents()
 
         assertEquals(0, deleted)
@@ -879,11 +893,8 @@ class EventsDaoTest {
 
     // ==================== getEventsWithRemindersInRange Tests ====================
 
-    /**
-     * Test suite for the complex UNION query used by ReminderScheduler.
-     * This query finds events with reminders that have occurrences in a time window,
-     * handling both events with their own reminders and exception events that inherit.
-     */
+    // The UNION query ReminderScheduler scans (through EventReader): events with reminders
+    // that have an occurrence in the window, including exceptions that inherit the master's.
 
     @Test
     fun `getEventsWithRemindersInRange returns event with reminders`() = runTest {
@@ -895,7 +906,6 @@ class EventsDaoTest {
             reminders = listOf("-PT15M")
         ))
 
-        // Create occurrence for the event
         database.occurrencesDao().insert(Occurrence(
             eventId = eventId,
             calendarId = calendarId,
@@ -999,7 +1009,6 @@ class EventsDaoTest {
 
     @Test
     fun `getEventsWithRemindersInRange excludes hidden calendars`() = runTest {
-        // Hide the calendar
         database.calendarsDao().setVisible(calendarId, false)
 
         val eventTime = parseDate("2025-01-15 10:00")
@@ -1038,19 +1047,19 @@ class EventsDaoTest {
             reminders = listOf("-PT15M")
         ))
 
-        // Exception with its own reminders (different from master)
+        // An exception with its own reminders, unlike the master's.
         val exceptionTime = parseDate("2025-01-16 14:00")
         val exceptionId = eventsDao.insert(createTestEvent(
-            uid = eventsDao.getById(masterId)!!.uid, // Same UID as master (RFC 5545)
+            uid = eventsDao.getById(masterId)!!.uid, // same UID as master (RFC 5545)
             title = "Modified occurrence",
             startTs = exceptionTime,
             endTs = exceptionTime + 3600000,
             originalEventId = masterId,
             originalInstanceTime = parseDate("2025-01-16 10:00"),
-            reminders = listOf("-PT30M", "-PT1H") // Different reminders
+            reminders = listOf("-PT30M", "-PT1H")
         ))
 
-        // Create occurrence that links to exception
+        // The occurrence links to the exception.
         database.occurrencesDao().insert(Occurrence(
             eventId = masterId,
             calendarId = calendarId,
@@ -1083,7 +1092,7 @@ class EventsDaoTest {
             reminders = listOf("-PT15M")
         ))
 
-        // Exception with NO reminders (should inherit from master)
+        // An exception without reminders, which inherits the master's.
         val exceptionTime = parseDate("2025-01-16 14:00")
         val exceptionId = eventsDao.insert(createTestEvent(
             uid = eventsDao.getById(masterId)!!.uid,
@@ -1092,10 +1101,10 @@ class EventsDaoTest {
             endTs = exceptionTime + 3600000,
             originalEventId = masterId,
             originalInstanceTime = parseDate("2025-01-16 10:00"),
-            reminders = null // No own reminders - inherits from master
+            reminders = null
         ))
 
-        // Create occurrence linked to exception
+        // The occurrence links to the exception.
         database.occurrencesDao().insert(Occurrence(
             eventId = masterId,
             calendarId = calendarId,
@@ -1111,11 +1120,11 @@ class EventsDaoTest {
             parseDate("2025-01-16 23:59")
         )
 
-        // The UNION query's second branch should find this:
-        // Exception with no reminders + master WITH reminders = returns master's reminders
+        // The UNION's second branch: an exception without reminders whose master has some
+        // returns the master's reminders.
         assertEquals(1, results.size)
         assertEquals(listOf("-PT15M"), results[0].event.reminders)
-        // targetEventId should point to exception (for click handling)
+        // targetEventId is the exception, for click handling.
         assertEquals(exceptionId, results[0].targetEventId)
     }
 
@@ -1130,7 +1139,7 @@ class EventsDaoTest {
             reminders = listOf("-PT15M")
         ))
 
-        // Exception with empty reminders array (should also inherit)
+        // An exception with an empty reminders array also inherits.
         val exceptionTime = parseDate("2025-01-16 14:00")
         val exceptionId = eventsDao.insert(createTestEvent(
             uid = eventsDao.getById(masterId)!!.uid,
@@ -1139,7 +1148,7 @@ class EventsDaoTest {
             endTs = exceptionTime + 3600000,
             originalEventId = masterId,
             originalInstanceTime = parseDate("2025-01-16 10:00"),
-            reminders = emptyList() // Empty array - should inherit
+            reminders = emptyList()
         ))
 
         database.occurrencesDao().insert(Occurrence(
@@ -1248,13 +1257,13 @@ class EventsDaoTest {
         )
 
         assertEquals(1, results.size)
-        // Calendar color was set to 0xFF0000FF (blue) in setup
+        // setup gave the calendar 0xFF0000FF.
         assertEquals(0xFF0000FF.toInt(), results[0].calendarColor)
     }
 
     @Test
     fun `getEventsWithRemindersInRange returns occurrence times not event times`() = runTest {
-        // Recurring event: master at 10 AM
+        // A daily series, master at 10:00.
         val masterTime = parseDate("2025-01-15 10:00")
         val masterId = eventsDao.insert(createTestEvent(
             title = "Recurring",
@@ -1264,7 +1273,7 @@ class EventsDaoTest {
             reminders = listOf("-PT15M")
         ))
 
-        // This occurrence is the second occurrence (Jan 16)
+        // The second occurrence, Jan 16.
         val occurrenceTime = parseDate("2025-01-16 10:00")
         database.occurrencesDao().insert(Occurrence(
             eventId = masterId,
@@ -1281,7 +1290,7 @@ class EventsDaoTest {
         )
 
         assertEquals(1, results.size)
-        // Should return occurrence time, not master event's start time
+        // The occurrence's times, not the master's.
         assertEquals(occurrenceTime, results[0].occurrenceStartTs)
         assertEquals(occurrenceTime + 3600000, results[0].occurrenceEndTs)
     }
@@ -1318,7 +1327,7 @@ class EventsDaoTest {
         )
 
         assertEquals(3, results.size)
-        // Should be ordered by occurrence time ASC
+        // Ordered by occurrence time, ascending.
         assertEquals(parseDate("2025-01-15 09:00"), results[0].occurrenceStartTs)
         assertEquals(parseDate("2025-01-15 11:00"), results[1].occurrenceStartTs)
         assertEquals(parseDate("2025-01-15 14:00"), results[2].occurrenceStartTs)
@@ -1330,7 +1339,7 @@ class EventsDaoTest {
     fun `deleteOutsideLookback deletes synced events before cutoff`() = runTest {
         val cutoffTs = parseDate("2025-01-15 00:00")
 
-        // Event ending before cutoff - should be deleted
+        // Ends before the cutoff: deleted.
         val oldEvent = createTestEvent(
             uid = "old-event",
             startTs = parseDate("2025-01-10 10:00"),
@@ -1340,7 +1349,7 @@ class EventsDaoTest {
         )
         val oldEventId = eventsDao.insert(oldEvent)
 
-        // Event ending after cutoff - should be preserved
+        // Ends after the cutoff: kept.
         val newEvent = createTestEvent(
             uid = "new-event",
             startTs = parseDate("2025-01-20 10:00"),
@@ -1361,7 +1370,7 @@ class EventsDaoTest {
     fun `deleteOutsideLookback preserves events with pending sync status`() = runTest {
         val cutoffTs = parseDate("2025-01-15 00:00")
 
-        // PENDING_CREATE - should be preserved
+        // PENDING_CREATE: kept.
         val pendingCreate = createTestEvent(
             uid = "pending-create",
             startTs = parseDate("2025-01-10 10:00"),
@@ -1371,7 +1380,7 @@ class EventsDaoTest {
         )
         val pendingCreateId = eventsDao.insert(pendingCreate)
 
-        // PENDING_UPDATE - should be preserved
+        // PENDING_UPDATE: kept.
         val pendingUpdate = createTestEvent(
             uid = "pending-update",
             startTs = parseDate("2025-01-10 10:00"),
@@ -1381,7 +1390,7 @@ class EventsDaoTest {
         )
         val pendingUpdateId = eventsDao.insert(pendingUpdate)
 
-        // PENDING_DELETE - should be preserved
+        // PENDING_DELETE: kept.
         val pendingDelete = createTestEvent(
             uid = "pending-delete",
             startTs = parseDate("2025-01-10 10:00"),
@@ -1403,7 +1412,7 @@ class EventsDaoTest {
     fun `deleteOutsideLookback preserves recurring master events`() = runTest {
         val cutoffTs = parseDate("2025-01-15 00:00")
 
-        // Recurring event with rrule - should be preserved even if old
+        // A series is kept however old.
         val recurringEvent = createTestEvent(
             uid = "recurring-event",
             startTs = parseDate("2025-01-01 10:00"),
@@ -1424,7 +1433,6 @@ class EventsDaoTest {
     fun `deleteOutsideLookback preserves exception events`() = runTest {
         val cutoffTs = parseDate("2025-01-15 00:00")
 
-        // First create a master event
         val masterEvent = createTestEvent(
             uid = "master-event",
             startTs = parseDate("2025-01-01 10:00"),
@@ -1435,10 +1443,10 @@ class EventsDaoTest {
         )
         val masterId = eventsDao.insert(masterEvent)
 
-        // Exception event linked to master - should be preserved
+        // An exception is kept.
         val exceptionEvent = createTestEvent(
-            uid = "master-event", // Same UID as master per RFC 5545
-            startTs = parseDate("2025-01-08 14:00"), // Moved from original 10:00
+            uid = "master-event", // same UID as master (RFC 5545)
+            startTs = parseDate("2025-01-08 14:00"), // moved from 10:00
             endTs = parseDate("2025-01-08 15:00"),
             syncStatus = SyncStatus.SYNCED,
             originalEventId = masterId,
@@ -1457,7 +1465,7 @@ class EventsDaoTest {
     fun `deleteOutsideLookback preserves local calendar events`() = runTest {
         val cutoffTs = parseDate("2025-01-15 00:00")
 
-        // Local event without caldav_url - should be preserved
+        // An event without caldav_url: kept.
         val localEvent = createTestEvent(
             uid = "local-event",
             startTs = parseDate("2025-01-10 10:00"),
@@ -1477,7 +1485,7 @@ class EventsDaoTest {
     fun `deleteOutsideLookback preserves birthday events`() = runTest {
         val cutoffTs = parseDate("2025-01-15 00:00")
 
-        // Birthday event - should be preserved
+        // A contact birthday: kept.
         val birthdayEvent = createTestEvent(
             uid = "birthday-event",
             title = "John's Birthday",
@@ -1488,7 +1496,7 @@ class EventsDaoTest {
         )
         val birthdayId = eventsDao.insert(birthdayEvent)
 
-        // Anniversary event - should be preserved
+        // A contact anniversary: kept.
         val anniversaryEvent = createTestEvent(
             uid = "anniversary-event",
             title = "Wedding Anniversary",
@@ -1510,7 +1518,7 @@ class EventsDaoTest {
     fun `deleteOutsideLookback returns count of deleted events`() = runTest {
         val cutoffTs = parseDate("2025-01-15 00:00")
 
-        // Create 3 old synced events that should be deleted
+        // Three old synced events, deleted.
         repeat(3) { i ->
             eventsDao.insert(createTestEvent(
                 uid = "old-event-$i",
@@ -1521,7 +1529,7 @@ class EventsDaoTest {
             ))
         }
 
-        // Create 2 new events that should be preserved
+        // Two new events, kept.
         repeat(2) { i ->
             eventsDao.insert(createTestEvent(
                 uid = "new-event-$i",
@@ -1647,7 +1655,7 @@ class EventsDaoTest {
 
     @Test
     fun `getEtagMapForCalendar excludes PENDING_DELETE events`() = runTest {
-        // PENDING_DELETE event - should be excluded
+        // PENDING_DELETE: excluded.
         val deletingEvent = createTestEvent(
             uid = "deleting-event",
             startTs = parseDate("2025-01-15 10:00"),
@@ -1658,7 +1666,7 @@ class EventsDaoTest {
         val deletingId = eventsDao.insert(deletingEvent)
         eventsDao.updateEtag(deletingId, "etag-deleting")
 
-        // SYNCED event - should be included
+        // SYNCED: included.
         val syncedEvent = createTestEvent(
             uid = "synced-event",
             startTs = parseDate("2025-01-15 10:00"),
@@ -1681,9 +1689,8 @@ class EventsDaoTest {
 
     @Test
     fun `getEtagMapForCalendar includes recurring events regardless of time range`() = runTest {
-        // Recurring event that started BEFORE the query range
-        // This simulates a weekly meeting that started 2 years ago
-        // CalDAV servers return it if ANY occurrence is in range, so we should too
+        // A weekly series that started 2 years before the range. A server returns a series
+        // when any occurrence is in range (RFC 4791 time-range), so the map includes it too.
         val recurringEvent = createTestEvent(
             uid = "recurring-old",
             startTs = parseDate("2023-01-01 10:00"),  // 2 years before range
@@ -1694,7 +1701,7 @@ class EventsDaoTest {
         val recurringId = eventsDao.insert(recurringEvent)
         eventsDao.updateEtag(recurringId, "etag-recurring")
 
-        // Non-recurring event BEFORE range - should be excluded
+        // A one-off event before the range: excluded.
         val oldEvent = createTestEvent(
             uid = "old-single",
             startTs = parseDate("2023-01-01 10:00"),
@@ -1704,7 +1711,7 @@ class EventsDaoTest {
         val oldId = eventsDao.insert(oldEvent)
         eventsDao.updateEtag(oldId, "etag-old")
 
-        // Query for 2025 range - recurring should be included, old single should not
+        // The 2025 range.
         val entries = eventsDao.getEtagMapForCalendar(
             calendarId,
             parseDate("2025-01-01 00:00"),
@@ -1717,7 +1724,7 @@ class EventsDaoTest {
 
     @Test
     fun `getEtagMapForCalendar includes recurring events in range and outside range`() = runTest {
-        // Recurring event IN the range
+        // A series in the range.
         val recurringInRange = createTestEvent(
             uid = "recurring-inrange",
             startTs = parseDate("2025-01-15 10:00"),
@@ -1728,7 +1735,7 @@ class EventsDaoTest {
         val inRangeId = eventsDao.insert(recurringInRange)
         eventsDao.updateEtag(inRangeId, "etag-inrange")
 
-        // Recurring event BEFORE the range (should still be included)
+        // A series starting before the range, still included.
         val recurringOutside = createTestEvent(
             uid = "recurring-outside",
             startTs = parseDate("2020-01-01 10:00"),
@@ -1745,212 +1752,10 @@ class EventsDaoTest {
             parseDate("2025-01-16 00:00")
         )
 
-        // Both recurring events should be included
         assertEquals(2, entries.size)
         val etags = entries.map { it.etag }.toSet()
         assertTrue(etags.contains("etag-inrange"))
         assertTrue(etags.contains("etag-outside"))
-    }
-
-    // ==================== Exception Events Cleanup Tests ====================
-
-    @Test
-    fun `deleteExceptionEventsBeforeCutoff deletes exception events before cutoff`() = runTest {
-        // Create master recurring event
-        val masterEvent = createTestEvent(
-            uid = "master-weekly",
-            startTs = parseDate("2024-01-01 10:00"),
-            endTs = parseDate("2024-01-01 11:00"),
-            rrule = "FREQ=WEEKLY",
-            caldavUrl = "https://caldav.example.com/master.ics"
-        )
-        val masterId = eventsDao.insert(masterEvent)
-
-        // Create exception event BEFORE cutoff (Jan 8 occurrence modified)
-        val oldException = createTestEvent(
-            uid = "master-weekly",  // Same UID as master (RFC 5545)
-            startTs = parseDate("2024-01-08 11:00"),  // Modified time
-            endTs = parseDate("2024-01-08 12:00"),
-            originalEventId = masterId,
-            originalInstanceTime = parseDate("2024-01-08 10:00"),  // Original time
-            caldavUrl = null  // Exceptions don't have caldavUrl
-        )
-        eventsDao.insert(oldException)
-
-        // Create exception event AFTER cutoff (Mar 11 occurrence modified)
-        val newException = createTestEvent(
-            uid = "master-weekly",
-            startTs = parseDate("2024-03-11 11:00"),
-            endTs = parseDate("2024-03-11 12:00"),
-            originalEventId = masterId,
-            originalInstanceTime = parseDate("2024-03-11 10:00"),
-            caldavUrl = null
-        )
-        eventsDao.insert(newException)
-
-        // Cutoff at Feb 1 - should delete Jan exception, keep Mar exception
-        val cutoff = parseDate("2024-02-01 00:00")
-        val deleted = eventsDao.deleteExceptionEventsBeforeCutoff(cutoff)
-
-        assertEquals(1, deleted)
-
-        // Verify: master and new exception remain, old exception deleted
-        val remaining = eventsDao.getByCalendarId(calendarId).first()
-        assertEquals(2, remaining.size)
-        assertTrue(remaining.any { it.originalEventId == null })  // Master
-        assertTrue(remaining.any { it.originalInstanceTime == parseDate("2024-03-11 10:00") })  // New exception
-        assertFalse(remaining.any { it.originalInstanceTime == parseDate("2024-01-08 10:00") })  // Old deleted
-    }
-
-    @Test
-    fun `deleteExceptionEventsBeforeCutoff preserves non-exception events`() = runTest {
-        // Non-recurring event before cutoff
-        val regularEvent = createTestEvent(
-            uid = "regular-event",
-            startTs = parseDate("2024-01-15 10:00"),
-            endTs = parseDate("2024-01-15 11:00"),
-            caldavUrl = "https://caldav.example.com/regular.ics"
-        )
-        eventsDao.insert(regularEvent)
-
-        // Recurring master before cutoff
-        val masterEvent = createTestEvent(
-            uid = "master-event",
-            startTs = parseDate("2024-01-01 10:00"),
-            endTs = parseDate("2024-01-01 11:00"),
-            rrule = "FREQ=DAILY",
-            caldavUrl = "https://caldav.example.com/master.ics"
-        )
-        eventsDao.insert(masterEvent)
-
-        // Cutoff after both events
-        val cutoff = parseDate("2024-06-01 00:00")
-        val deleted = eventsDao.deleteExceptionEventsBeforeCutoff(cutoff)
-
-        // No exception events, so nothing deleted
-        assertEquals(0, deleted)
-
-        // Both events preserved
-        val remaining = eventsDao.getByCalendarId(calendarId).first()
-        assertEquals(2, remaining.size)
-    }
-
-    @Test
-    fun `deleteExceptionEventsBeforeCutoff handles multiple master events`() = runTest {
-        // Master 1
-        val master1 = createTestEvent(
-            uid = "master1",
-            startTs = parseDate("2024-01-01 10:00"),
-            endTs = parseDate("2024-01-01 11:00"),
-            rrule = "FREQ=WEEKLY",
-            caldavUrl = "https://caldav.example.com/master1.ics"
-        )
-        val master1Id = eventsDao.insert(master1)
-
-        // Master 2
-        val master2 = createTestEvent(
-            uid = "master2",
-            startTs = parseDate("2024-01-02 10:00"),
-            endTs = parseDate("2024-01-02 11:00"),
-            rrule = "FREQ=WEEKLY",
-            caldavUrl = "https://caldav.example.com/master2.ics"
-        )
-        val master2Id = eventsDao.insert(master2)
-
-        // Old exception for master1 (should be deleted)
-        eventsDao.insert(createTestEvent(
-            uid = "master1",
-            startTs = parseDate("2024-01-08 11:00"),
-            endTs = parseDate("2024-01-08 12:00"),
-            originalEventId = master1Id,
-            originalInstanceTime = parseDate("2024-01-08 10:00")
-        ))
-
-        // New exception for master1 (should be kept)
-        eventsDao.insert(createTestEvent(
-            uid = "master1",
-            startTs = parseDate("2024-03-04 11:00"),
-            endTs = parseDate("2024-03-04 12:00"),
-            originalEventId = master1Id,
-            originalInstanceTime = parseDate("2024-03-04 10:00")
-        ))
-
-        // Old exception for master2 (should be deleted)
-        eventsDao.insert(createTestEvent(
-            uid = "master2",
-            startTs = parseDate("2024-01-09 11:00"),
-            endTs = parseDate("2024-01-09 12:00"),
-            originalEventId = master2Id,
-            originalInstanceTime = parseDate("2024-01-09 10:00")
-        ))
-
-        // Cutoff at Feb 1
-        val cutoff = parseDate("2024-02-01 00:00")
-        val deleted = eventsDao.deleteExceptionEventsBeforeCutoff(cutoff)
-
-        assertEquals(2, deleted)  // Two old exceptions from both masters
-
-        val remaining = eventsDao.getByCalendarId(calendarId).first()
-        assertEquals(3, remaining.size)  // 2 masters + 1 new exception
-    }
-
-    @Test
-    fun `deleteExceptionEventsBeforeCutoff uses originalInstanceTime not startTs`() = runTest {
-        // Master event
-        val master = createTestEvent(
-            uid = "master",
-            startTs = parseDate("2024-01-01 10:00"),
-            endTs = parseDate("2024-01-01 11:00"),
-            rrule = "FREQ=WEEKLY"
-        )
-        val masterId = eventsDao.insert(master)
-
-        // Exception: original time is Jan 8, but moved to Mar 1 (after cutoff)
-        // originalInstanceTime is before cutoff, so should be deleted
-        val movedException = createTestEvent(
-            uid = "master",
-            startTs = parseDate("2024-03-01 10:00"),  // Moved to March
-            endTs = parseDate("2024-03-01 11:00"),
-            originalEventId = masterId,
-            originalInstanceTime = parseDate("2024-01-08 10:00")  // Original was January
-        )
-        eventsDao.insert(movedException)
-
-        // Cutoff Feb 1 - originalInstanceTime (Jan 8) is before, so delete
-        val cutoff = parseDate("2024-02-01 00:00")
-        val deleted = eventsDao.deleteExceptionEventsBeforeCutoff(cutoff)
-
-        assertEquals(1, deleted)
-
-        val remaining = eventsDao.getByCalendarId(calendarId).first()
-        assertEquals(1, remaining.size)  // Only master remains
-    }
-
-    @Test
-    fun `deleteExceptionEventsBeforeCutoff returns count of deleted events`() = runTest {
-        val master = createTestEvent(
-            uid = "master",
-            startTs = parseDate("2024-01-01 10:00"),
-            endTs = parseDate("2024-01-01 11:00"),
-            rrule = "FREQ=DAILY"
-        )
-        val masterId = eventsDao.insert(master)
-
-        // Create 5 exception events, all before cutoff
-        repeat(5) { i ->
-            eventsDao.insert(createTestEvent(
-                uid = "master",
-                startTs = parseDate("2024-01-${10 + i} 11:00"),
-                endTs = parseDate("2024-01-${10 + i} 12:00"),
-                originalEventId = masterId,
-                originalInstanceTime = parseDate("2024-01-${10 + i} 10:00")
-            ))
-        }
-
-        val cutoff = parseDate("2024-02-01 00:00")
-        val deleted = eventsDao.deleteExceptionEventsBeforeCutoff(cutoff)
-
-        assertEquals(5, deleted)
     }
 
     // ==================== updateReminders Tests ====================
@@ -1964,17 +1769,15 @@ class EventsDaoTest {
         ).copy(updatedAt = originalTs)
         val eventId = eventsDao.insert(event)
 
-        // Update reminders
         val newRemindersJson = """["-PT30M", "-PT1H"]"""
         val updateTime = System.currentTimeMillis()
         eventsDao.updateReminders(eventId, newRemindersJson, updateTime)
 
-        // Verify
         val updated = eventsDao.getById(eventId)
         assertNotNull(updated)
-        assertEquals("Original Title", updated!!.title) // Title unchanged
-        assertEquals(listOf("-PT30M", "-PT1H"), updated.reminders) // Reminders updated
-        assertEquals(updateTime, updated.updatedAt) // updated_at changed
+        assertEquals("Original Title", updated!!.title)
+        assertEquals(listOf("-PT30M", "-PT1H"), updated.reminders)
+        assertEquals(updateTime, updated.updatedAt)
     }
 
     @Test
@@ -1985,7 +1788,7 @@ class EventsDaoTest {
         eventsDao.updateReminders(eventId, null, System.currentTimeMillis())
 
         val updated = eventsDao.getById(eventId)
-        // Room's Converter converts null to empty list
+        // The converter reads a NULL column as an empty list.
         assertTrue(updated?.reminders?.isEmpty() == true)
     }
 
@@ -2035,7 +1838,7 @@ class EventsDaoTest {
 
         val after = eventsDao.getById(id)!!
         assertEquals("1.2", after.organizerScheduleStatus)
-        // Unrelated columns untouched (mirrors the updateEtag-style targeted update).
+        // Other columns are untouched.
         assertEquals("Meeting", after.title)
         assertEquals("etag-before", after.etag)
         assertEquals(before.caldavUrl, after.caldavUrl)

@@ -38,8 +38,8 @@ class AgendaWeekBarTest {
                 )
             }
         }
-        // Each cell exposes its full date as the a11y label (the bare number is
-        // cleared), so tap the "Wednesday, July 15" cell.
+        // Each cell carries its full date as its content description, so tap the
+        // "Wednesday, July 15" cell.
         composeTestRule.onNodeWithContentDescription("Wednesday, July 15").performClick()
         assertEquals(20260715, clicked)
     }
@@ -56,7 +56,8 @@ class AgendaWeekBarTest {
                 )
             }
         }
-        // Full localized date labels replace the bare day numbers for screen readers.
+        // Each cell's content description is its full localized date, plus the
+        // selected and today states.
         listOf(
             "Sunday, July 12", "Monday, July 13", "Tuesday, July 14", "Wednesday, July 15",
             "Thursday, July 16, Selected", "Friday, July 17", "Saturday, July 18, Today"

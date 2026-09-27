@@ -14,9 +14,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Compose UI tests for the read-only tag row in [DeviceEventQuickViewSheet].
- * Device events route here (not the editor) for read-only viewing, so their
- * tags must surface here the same way Room-event tags do in [EventQuickViewSheet].
+ * Tests the read-only tag row in [DeviceEventQuickViewSheet]: a device event's
+ * tags must show there the same way Room-event tags do in [EventQuickViewSheet],
+ * with no add affordance.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h720dp-mdpi")
@@ -83,17 +83,18 @@ class DeviceEventQuickViewSheetTagsTest {
     fun no_add_affordance_on_a_tagged_read_only_device_event() {
         render(listOf("Work"))
         // On a tagged event the add-tag affordance is an icon button whose
-        // "New tag" label is a contentDescription, not visible text — so this
-        // asserts on the description, which surfaces even if readOnly regressed
-        // to false. countWithText("New tag") would NOT catch that regression.
+        // "New tag" label is a contentDescription, not visible text, so this
+        // asserts on the description: it would appear if readOnly regressed to
+        // false. countWithText("New tag") would not catch that regression.
         composeTestRule.onNodeWithContentDescription("New tag").assertDoesNotExist()
     }
 
     @Test
     fun untagged_device_event_renders_no_tag_row() {
         render(emptyList())
-        // With no tags the whole tag row is gated out, so neither the read-only
-        // chips nor the (edit-only) "New tag" add affordance may appear.
+        // With no tags the sheet leaves the tag row out. Asserts only that no
+        // "New tag" content description appears; the untagged add chip carries
+        // its label as text (not asserted here).
         composeTestRule.onNodeWithContentDescription("New tag").assertDoesNotExist()
     }
 }

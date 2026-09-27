@@ -9,15 +9,14 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Pure-helper tests for [selfDeclinedEventIds] — the policy that decides
- * which Room event IDs should be hidden / dimmed because the *owning*
- * account has declined them.
+ * Tests [selfDeclinedEventIds], which picks the Room events to hide or dim because the owning
+ * account declined them.
  *
- * Decision policy: each event maps to a calendar, each calendar to an
- * account; the attendee row's address must match THAT account, not just
- * any configured account. This isolates multi-account setups so an event
- * in account B's calendar with an attendee that happens to share account
- * A's address doesn't get hidden under A's preference.
+ * Each event maps to a calendar and each calendar to an account; the declined row's address
+ * must match that account, not any configured account, so an event in account B's calendar
+ * whose attendee shares account A's address isn't hidden under A. Also covers lookup misses,
+ * the login fallback for an account without discovered addresses, empty input, and several
+ * declined rows on one event.
  */
 class SelfDeclinedDetectorTest {
 
@@ -87,23 +86,21 @@ class SelfDeclinedDetectorTest {
         assertTrue(result.isEmpty())
     }
 
-    // ---- (d) MULTI-ACCOUNT FIXTURE ----
+    // ---- (d) multi-account fixture ----
 
     @Test
     fun `multi-account isolation - event in account B's calendar with A's address is not hidden under A`() {
-        // A's address shows up as a decliner on event in B's calendar.
-        // Matching account is determined by the calendar's accountId,
-        // not by any configured account.
+        // A's address declines an event in B's calendar. The calendar's accountId picks the
+        // account to match, not any configured account.
         val accountA = account(1, addresses = listOf("mailto:alice@icloud.com"))
         val accountB = account(2, addresses = listOf("mailto:bob@icloud.com"))
         val calA = calendar(10, accountId = 1)
         val calB = calendar(20, accountId = 2)
 
         val attendees = listOf(
-            // event1 in A's calendar, A's address declined → MATCH
+            // event1 in A's calendar, declined by A's address: a match.
             attendee(eventId = 100, address = "mailto:alice@icloud.com"),
-            // event2 in B's calendar, A's address listed as declined,
-            // but B's matchesAttendee on alice's address returns false
+            // event2 in B's calendar, declined by A's address, which B doesn't match.
             attendee(eventId = 200, address = "mailto:alice@icloud.com")
         )
 
@@ -155,7 +152,7 @@ class SelfDeclinedDetectorTest {
 
     @Test
     fun `account with empty addresses and non-email login does not match`() {
-        // matchesAttendee returns false in this case (no fallback).
+        // A non-email login gives no fallback address, so matchesAttendee returns false.
         val accountA = account(1, email = "alice", addresses = emptyList())
         val cal1 = calendar(10, accountId = 1)
         val attendees = listOf(attendee(eventId = 100, address = "mailto:alice@example.com"))

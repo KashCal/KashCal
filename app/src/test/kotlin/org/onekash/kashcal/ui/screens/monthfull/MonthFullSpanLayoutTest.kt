@@ -23,7 +23,7 @@ class MonthFullSpanLayoutTest {
         isReadOnly = false
     )
 
-    /** Build a Room DisplayEvent with overrides on the relevant fields. */
+    /** Builds a Room DisplayEvent with overrides on the fields under test. */
     private fun roomEvent(
         id: Long,
         startDay: Int,
@@ -63,7 +63,7 @@ class MonthFullSpanLayoutTest {
     /** Following week, Sun..Sat. */
     private val weekSunToSat2 = listOf(20260315, 20260316, 20260317, 20260318, 20260319, 20260320, 20260321)
 
-    /** Helper: build a bucket map duplicating multi-day events into each day they span. */
+    /** Builds a bucket map with each multi-day event in every day it spans. */
     private fun bucketize(events: List<DisplayEvent>): Map<Int, List<DisplayEvent>> {
         val out = mutableMapOf<Int, MutableList<DisplayEvent>>()
         for (e in events) {
@@ -75,20 +75,20 @@ class MonthFullSpanLayoutTest {
         return out
     }
 
-    /** Generate dayCodes from start to end inclusive (only handles same-month for fixtures). */
+    /** Returns the dayCodes from start to end inclusive; handles only a same-month range. */
     private fun generateDayCodes(startDay: Int, endDay: Int): List<Int> {
         require(startDay <= endDay)
         val out = mutableListOf<Int>()
         var d = startDay
         while (d <= endDay) {
             out.add(d)
-            // simple arithmetic — fixtures stay in 2026-03 with valid days
+            // Plain increment: the fixtures stay within 2026-03
             d++
         }
         return out
     }
 
-    // -------- Eligibility (2.1 - 2.4) --------
+    // -------- Eligibility --------
 
     @Test
     fun `2_1 single-day all-day event NOT in spans`() {
@@ -119,7 +119,7 @@ class MonthFullSpanLayoutTest {
         assertEquals(1, layout.lanes.sumOf { it.size })
     }
 
-    // -------- Identity & dedup (2.5 - 2.7) --------
+    // -------- Identity & dedup --------
 
     @Test
     fun `2_5 same identity key in N buckets produces ONE span`() {
@@ -156,11 +156,12 @@ class MonthFullSpanLayoutTest {
         assertEquals(a.multiDayEventKeys, b.multiDayEventKeys)
     }
 
-    // -------- Geometry — within week (2.8) --------
+    // -------- Geometry within a week --------
 
     @Test
     fun `2_8 4-day Tue to Fri produces span 2 to 5`() {
-        // Sun=20260308 (col0), Mon=09 (1), Tue=10 (2), Wed=11 (3), Thu=12 (4), Fri=13 (5), Sat=14 (6)
+        // Columns: Sun=20260308 (0), Mon=09 (1), Tue=10 (2), Wed=11 (3), Thu=12 (4), Fri=13 (5),
+        // Sat=14 (6)
         val e = roomEvent(id = 1, startDay = 20260310, endDay = 20260313, isAllDay = true)
         val layout = computeWeekSpans(weekSunToSat, bucketize(listOf(e)))
         val span = layout.lanes.flatten().single()
@@ -170,7 +171,7 @@ class MonthFullSpanLayoutTest {
         assertFalse(span.rightFlush)
     }
 
-    // -------- Boundary clipping (2.9 - 2.10) --------
+    // -------- Boundary clipping --------
 
     @Test
     fun `2_9 Thu week1 to Tue week2 - week1 view`() {
@@ -195,7 +196,7 @@ class MonthFullSpanLayoutTest {
         assertFalse(span.rightFlush)
     }
 
-    // -------- Outside-week (2.11 - 2.12) --------
+    // -------- Outside the week --------
 
     @Test
     fun `2_11 event ending before week does not appear`() {
@@ -211,7 +212,7 @@ class MonthFullSpanLayoutTest {
         assertEquals(0, layout.lanes.sumOf { it.size })
     }
 
-    // -------- Flush flags from event bounds (2.13) --------
+    // -------- Flush flags from event bounds --------
 
     @Test
     fun `2_13 flush flags use event bounds, not bucket presence`() {
@@ -226,7 +227,7 @@ class MonthFullSpanLayoutTest {
         assertFalse(span.rightFlush)
     }
 
-    // -------- Lane assignment (2.14 - 2.17) --------
+    // -------- Lane assignment --------
 
     @Test
     fun `2_14 non-overlapping spans share lane 0`() {
@@ -259,15 +260,16 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `2_17 spans within lane sorted by startCol`() {
-        val a = roomEvent(id = 1, startDay = 20260311, endDay = 20260312, isAllDay = true)  // later
-        val b = roomEvent(id = 2, startDay = 20260308, endDay = 20260309, isAllDay = true)  // earlier
+        // a is listed first but starts later than b
+        val a = roomEvent(id = 1, startDay = 20260311, endDay = 20260312, isAllDay = true)
+        val b = roomEvent(id = 2, startDay = 20260308, endDay = 20260309, isAllDay = true)
         val layout = computeWeekSpans(weekSunToSat, bucketize(listOf(a, b)))
         val lane = layout.lanes[0]
         assertEquals(0, lane[0].startCol)
         assertEquals(3, lane[1].startCol)
     }
 
-    // -------- snippetStyleFor (2.18 - 2.21) --------
+    // -------- snippetStyleFor --------
 
     @Test
     fun `2_18 snippetStyleFor timed single-day -- Stripe`() {
@@ -294,7 +296,7 @@ class MonthFullSpanLayoutTest {
         assertTrue(style is SnippetStyle.AllDayFree)
         val s = style as SnippetStyle.AllDayFree
         assertEquals(0xFF2196F3.toInt(), s.borderColor)
-        // Tint fill alpha approximately 0.2
+        // Tint fill alpha 0.2, within 0.01
         assertEquals(0.2f, s.tintFill.alpha, 0.01f)
     }
 
@@ -305,7 +307,7 @@ class MonthFullSpanLayoutTest {
         assertEquals(0xFFFF0000.toInt(), style.fillColor)
     }
 
-    // -------- spanStyleFor (2.22 - 2.25) --------
+    // -------- spanStyleFor --------
 
     @Test
     fun `2_22 spanStyleFor timed multi-day -- TimedSpan`() {
@@ -375,7 +377,8 @@ class MonthFullSpanLayoutTest {
         val bar = roomEvent(id = 1, startDay = 20260310, endDay = 20260313, isAllDay = true)
         val mon = roomEvent(id = 2, startDay = 20260309, endDay = 20260309, isAllDay = false)
         val render = computeMonthFullWeekRender(weekSunToSat, bucketize(listOf(bar, mon)))
-        // The fix: Mon (col 1) should fill slot 0 with its own event, not be empty just because slot 0 is the bar's lane.
+        // Mon (col 1) fills slot 0 with its own event; slot 0 being the bar's lane elsewhere
+        // doesn't leave it empty.
         val monSlot0 = render.slots[0][1]
         assertTrue("expected CellEvent at [0][1], got $monSlot0", monSlot0 is SlotContent.CellEvent)
         assertEquals(mon, (monSlot0 as SlotContent.CellEvent).displayEvent)
@@ -414,7 +417,8 @@ class MonthFullSpanLayoutTest {
         val allDayFree = roomEvent(id = 2, startDay = 20260310, endDay = 20260310, isAllDay = true, transp = "TRANSPARENT", occStartTs = 1_730_000_001_000L)
         val allDayBusy = roomEvent(id = 3, startDay = 20260310, endDay = 20260310, isAllDay = true, transp = "OPAQUE", occStartTs = 1_730_000_002_000L)
         val render = computeMonthFullWeekRender(weekSunToSat, mapOf(20260310 to listOf(timedAt9, allDayFree, allDayBusy)))
-        // Expected slot order at col 2: all-day busy, all-day free, timed (busy beats free; both beat timed; ties by startTs).
+        // Expected slot order at col 2: all-day busy, all-day free, timed (busy beats free, both
+        // beat timed, ties by startTs).
         assertEquals(allDayBusy, (render.slots[0][2] as SlotContent.CellEvent).displayEvent)
         assertEquals(allDayFree, (render.slots[1][2] as SlotContent.CellEvent).displayEvent)
         assertEquals(timedAt9, (render.slots[2][2] as SlotContent.CellEvent).displayEvent)
@@ -437,7 +441,7 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `2_37 lanes-win when bars fill all slots, cell events silently dropped`() {
-        // 3 bars all covering Tue, plus 2 cell events on Tue. All slots taken by bars.
+        // 3 bars all covering Tue, plus one cell event on Tue. Bars take every slot.
         val bar1 = roomEvent(id = 1, startDay = 20260309, endDay = 20260311, isAllDay = true, occStartTs = 1L)
         val bar2 = roomEvent(id = 2, startDay = 20260309, endDay = 20260311, isAllDay = true, occStartTs = 2L)
         val bar3 = roomEvent(id = 3, startDay = 20260309, endDay = 20260311, isAllDay = true, occStartTs = 3L)
@@ -453,7 +457,7 @@ class MonthFullSpanLayoutTest {
     fun `2_38 multi-day timed event collapses into spanning bar`() {
         val a = roomEvent(id = 1, startDay = 20260309, endDay = 20260311, isAllDay = false)
         val render = computeMonthFullWeekRender(weekSunToSat, bucketize(listOf(a)))
-        // Mon, Tue, Wed at slot 0 should all be BarSegment for the same event; not CellEvent.
+        // Mon, Tue and Wed at slot 0 are BarSegments, not CellEvents.
         for (col in 1..3) {
             val slot = render.slots[0][col]
             assertTrue("col $col: expected BarSegment, got $slot", slot is SlotContent.BarSegment)
@@ -461,14 +465,17 @@ class MonthFullSpanLayoutTest {
     }
 
     // ============================================================
-    // Adversarial / invariant tests
-    //
-    // Rather than describing one expected output, these assert
-    // invariants that should ALWAYS hold across input variations.
-    // A failing invariant test caught a real bug class.
+    // Edge and adversarial inputs: empty weeks, duplicated and
+    // out-of-week buckets, maxLanes = 0, lane and cell overflow,
+    // sort rank and tiebreak, single-column and clipped bars, and
+    // dayCodes passed through unchanged.
     // ============================================================
 
-    /** Invariant: a slot column never contains both a BarSegment AND a CellEvent. */
+    /**
+     * Asserts nothing: it is meant to check that no cell event in a bar's column duplicates the
+     * bar's event, but its collision predicate is always false. A bar and a different cell event
+     * may share a column (see the mixed bars test).
+     */
     private fun assertNoBarCellCollision(render: WeekSlotRender) {
         for (col in 0..6) {
             val hasBar = render.slots.any { it[col] is SlotContent.BarSegment }
@@ -476,14 +483,13 @@ class MonthFullSpanLayoutTest {
             for (slot in 0 until render.slots.size) {
                 val content = render.slots[slot][col]
                 if (content is SlotContent.BarSegment) {
-                    // If a bar is at this slot/col, no other slot at this column can have a CellEvent for the same event.
+                    // Intended: no slot in this column holds a CellEvent for the bar's event.
                     val barKey = content.span.eventKey
                     val collision = render.slots.any { row ->
                         val other = row[col]
                         other is SlotContent.CellEvent && barKey.let { _ ->
-                            // The cell event must not duplicate the multi-day event itself.
-                            // CellEvent in this column should never reference an event already spanning here.
-                            false  // pure structural check above is enough
+                            // Always false: the event itself is never compared.
+                            false
                         }
                     }
                     assertFalse("bar+cellEvent collision at col=$col slot=$slot", collision)
@@ -492,7 +498,7 @@ class MonthFullSpanLayoutTest {
         }
     }
 
-    /** Invariant: slot grid shape is always `[max(maxLanes, maxSnippets)][7]`. */
+    /** Asserts the slot grid is `[max(maxLanes, maxSnippets)][7]` with seven dayCodes. */
     private fun assertGridShape(render: WeekSlotRender, maxLanes: Int = MAX_LANES, maxSnippets: Int = MAX_SNIPPETS) {
         val expectedSlots = maxOf(maxLanes, maxSnippets)
         assertEquals("slot count", expectedSlots, render.slots.size)
@@ -536,10 +542,10 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `adv 3 - bar starting and ending OUTSIDE the week - flush both sides`() {
-        // Event covers an entire month (or wider); week is mid-event.
+        // The event covers the whole month; the week is mid-event.
         val a = roomEvent(id = 1, startDay = 20260301, endDay = 20260331, isAllDay = true)
         val render = computeMonthFullWeekRender(weekSunToSat, bucketize(listOf(a)))
-        // The whole row should be BarSegments
+        // The whole row is BarSegments
         for (col in 0..6) {
             val slot = render.slots[0][col]
             assertTrue("col $col", slot is SlotContent.BarSegment)
@@ -547,7 +553,7 @@ class MonthFullSpanLayoutTest {
         val span = (render.slots[0][0] as SlotContent.BarSegment).span
         assertTrue("leftFlush", span.leftFlush)
         assertTrue("rightFlush", span.rightFlush)
-        // Even the start/end column flags reflect within-week column edges
+        // startCol and endCol are the within-week column edges
         assertEquals(0, span.startCol)
         assertEquals(6, span.endCol)
     }
@@ -558,7 +564,7 @@ class MonthFullSpanLayoutTest {
         val a = roomEvent(id = 1, startDay = 20260310, endDay = 20260313, isAllDay = true)
         val map = mapOf(20260310 to listOf<DisplayEvent>(a, a, a))
         val render = computeMonthFullWeekRender(weekSunToSat, map)
-        // Only ONE bar should appear at slot 0
+        // One bar at slot 0
         val barColsAtSlot0 = (0..6).count { render.slots[0][it] is SlotContent.BarSegment }
         assertEquals("bar covers Tue-Fri = 4 cols", 4, barColsAtSlot0)
         assertNoBarCellCollision(render)
@@ -566,7 +572,7 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `adv 5 - same event in MULTIPLE buckets (data layer artifact) - one span`() {
-        // Multi-day events get duplicated by mergeAndGroupByDay; bucket map has the event in every covered day.
+        // DisplayEventRepository.mergeAndGroupByDay puts a multi-day event in every day it covers.
         val a = roomEvent(id = 1, startDay = 20260310, endDay = 20260313, isAllDay = true)
         val map = mapOf(
             20260310 to listOf<DisplayEvent>(a),
@@ -587,11 +593,11 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `adv 6 - bucket contains days OUTSIDE the week - those events don't appear`() {
-        // A cell event for a date NOT in this week (data leak).
+        // A cell event for a date outside this week.
         val outOfWeek = roomEvent(id = 1, startDay = 20260301, endDay = 20260301, isAllDay = false)
         val map = mapOf(20260301 to listOf<DisplayEvent>(outOfWeek))
         val render = computeMonthFullWeekRender(weekSunToSat, map)
-        // No slot in the week should contain it.
+        // No slot in the week contains it.
         for (slot in render.slots) {
             for (cell in slot) {
                 if (cell is SlotContent.CellEvent) {
@@ -609,8 +615,8 @@ class MonthFullSpanLayoutTest {
         // No bar segments anywhere
         val anyBar = render.slots.any { row -> row.any { it is SlotContent.BarSegment } }
         assertFalse("expected no bars when maxLanes=0", anyBar)
-        // BUT the bar event is still in multiDayEventKeys, so its cell-event copies are filtered.
-        // The single-day cell event SHOULD still appear at Tue.
+        // The bar event is still in multiDayEventKeys, so its cell-event copies are filtered.
+        // The single-day cell event still appears at Tue.
         val cellSlots = (0 until render.slots.size).map { render.slots[it][2] }
         val placedCellEvents = cellSlots.filterIsInstance<SlotContent.CellEvent>()
         assertEquals(1, placedCellEvents.size)
@@ -619,11 +625,11 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `adv 8 - same event_id but different occurrence startTs - distinct spans`() {
-        // A recurring multi-day event: master + exception both in week.
+        // Two occurrences of one recurring multi-day event, both in the week.
         val occ1 = roomEvent(id = 7, startDay = 20260308, endDay = 20260309, isAllDay = true, occStartTs = 1_000L)
         val occ2 = roomEvent(id = 7, startDay = 20260311, endDay = 20260312, isAllDay = true, occStartTs = 2_000L)
         val render = computeMonthFullWeekRender(weekSunToSat, bucketize(listOf(occ1, occ2)))
-        // Both spans should appear, sharing slot 0 (non-overlapping → greedy fits both in lane 0)
+        // Both spans share slot 0: they don't overlap, so greedy packing fits both in lane 0
         val barsInRow0 = render.slots[0].filterIsInstance<SlotContent.BarSegment>()
         val distinctEventKeys = barsInRow0.map { it.span.eventKey }.distinct()
         assertEquals("expected 2 distinct event keys at slot 0", 2, distinctEventKeys.size)
@@ -631,18 +637,19 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `adv 9 - many overlapping bars exceed maxLanes - exact slot fill, no collision`() {
-        // 5 multi-day all-day events all overlapping Tue-Wed.
+        // 5 multi-day all-day events, all Mon-Thu.
         val events = (1..5).map { i ->
             roomEvent(id = i.toLong(), startDay = 20260309, endDay = 20260312, isAllDay = true, occStartTs = i.toLong())
         }
         val render = computeMonthFullWeekRender(weekSunToSat, bucketize(events))
-        // Slots 0, 1, 2 should all be BarSegments at all overlap columns; 2 events overflow.
+        // Slots 0, 1 and 2 are BarSegments at every overlap column; the other 2 events
+        // overflow (not asserted here).
         for (slotIdx in 0..2) {
             for (col in 1..4) {
                 assertTrue("slot $slotIdx col $col", render.slots[slotIdx][col] is SlotContent.BarSegment)
             }
         }
-        // No two slots in the same column should reference the same event
+        // No two slots in one column reference the same event
         for (col in 1..4) {
             val keys = (0..2).map { (render.slots[it][col] as SlotContent.BarSegment).span.eventKey }
             assertEquals("each slot has distinct event at col $col", 3, keys.distinct().size)
@@ -651,13 +658,14 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `adv 10 - overflow indicator appears in last available slot when cell events exceed budget`() {
-        // 1 bar at slot 0 covers Tue. Tue has 5 cell events. Available slots 1+2 = 2; budget rule = (available-1)=1 visible + overflow.
+        // 1 bar at slot 0 covers Tue, which has 5 cell events. Slots 1 and 2 are free, so one
+        // cell event (free slots minus 1) is visible, then the overflow.
         val bar = roomEvent(id = 1, startDay = 20260309, endDay = 20260311, isAllDay = true, occStartTs = 1L)
         val cellEvents = (10..14).map { i ->
             roomEvent(id = i.toLong(), startDay = 20260310, endDay = 20260310, isAllDay = false, occStartTs = i.toLong())
         }
         val render = computeMonthFullWeekRender(weekSunToSat, bucketize(listOf(bar) + cellEvents))
-        // Tue (col 2): slot 0 = bar, slot 1 = first cell event, slot 2 = "+more".
+        // Tue (col 2): slot 0 = bar, slot 1 = first cell event, slot 2 = overflow.
         assertTrue(render.slots[0][2] is SlotContent.BarSegment)
         assertTrue(render.slots[1][2] is SlotContent.CellEvent)
         val overflow = render.slots[2][2]
@@ -668,7 +676,7 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `adv 11 - overflow indicator does NOT appear when cell events exactly fill available`() {
-        // 1 bar at slot 0 covers Tue. Tue has exactly 2 cell events (= available slots).
+        // 1 bar at slot 0 covers Tue, which has 2 cell events, one per free slot.
         val bar = roomEvent(id = 1, startDay = 20260309, endDay = 20260311, isAllDay = true, occStartTs = 1L)
         val cellEvents = (10..11).map { i ->
             roomEvent(id = i.toLong(), startDay = 20260310, endDay = 20260310, isAllDay = false, occStartTs = i.toLong())
@@ -677,7 +685,7 @@ class MonthFullSpanLayoutTest {
         assertTrue(render.slots[0][2] is SlotContent.BarSegment)
         assertTrue(render.slots[1][2] is SlotContent.CellEvent)
         assertTrue(render.slots[2][2] is SlotContent.CellEvent)
-        // None should be Overflow
+        // None is Overflow
         for (slot in 0..2) {
             assertFalse("slot $slot should not be Overflow", render.slots[slot][2] is SlotContent.Overflow)
         }
@@ -685,7 +693,7 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `adv 12 - cell event sort - all-day busy beats all-day free beats timed at same startTs`() {
-        // Three events with IDENTICAL startTs to test the rank ordering, not the tiebreak.
+        // Three events with the same startTs test the rank ordering, not the tiebreak.
         val ts = 1_730_000_000_000L
         val timed = roomEvent(id = 1, startDay = 20260310, endDay = 20260310, isAllDay = false, occStartTs = ts)
         val free = roomEvent(id = 2, startDay = 20260310, endDay = 20260310, isAllDay = true, transp = "TRANSPARENT", occStartTs = ts)
@@ -700,23 +708,25 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `adv 13 - cell event sort - same rank uses startTs ascending`() {
-        // Three timed events with different startTs; should appear in startTs order.
+        // Three timed events with different startTs appear in startTs order.
         val a = roomEvent(id = 1, startDay = 20260310, endDay = 20260310, isAllDay = false, occStartTs = 3_000L)
         val b = roomEvent(id = 2, startDay = 20260310, endDay = 20260310, isAllDay = false, occStartTs = 1_000L)
         val c = roomEvent(id = 3, startDay = 20260310, endDay = 20260310, isAllDay = false, occStartTs = 2_000L)
         val map = mapOf(20260310 to listOf<DisplayEvent>(a, b, c))
         val render = computeMonthFullWeekRender(weekSunToSat, map)
-        assertEquals(b, (render.slots[0][2] as SlotContent.CellEvent).displayEvent)  // ts=1000 first
-        assertEquals(c, (render.slots[1][2] as SlotContent.CellEvent).displayEvent)  // ts=2000
-        assertEquals(a, (render.slots[2][2] as SlotContent.CellEvent).displayEvent)  // ts=3000
+        // b (ts=1000), then c (ts=2000), then a (ts=3000)
+        assertEquals(b, (render.slots[0][2] as SlotContent.CellEvent).displayEvent)
+        assertEquals(c, (render.slots[1][2] as SlotContent.CellEvent).displayEvent)
+        assertEquals(a, (render.slots[2][2] as SlotContent.CellEvent).displayEvent)
     }
 
     @Test
     fun `adv 14 - bar covering only column 0 (single day at week start)`() {
-        // Edge: bar that starts in the previous week and ends on Sunday of this week.
+        // A bar that starts in the previous week and ends on Sunday of this week.
         val a = roomEvent(id = 1, startDay = 20260301, endDay = 20260308, isAllDay = true)
         val render = computeMonthFullWeekRender(weekSunToSat, bucketize(listOf(a)))
-        // Slot 0, col 0 only is a BarSegment with leftFlush=true, rightFlush=false (since 20260308 is in the week).
+        // Only slot 0, col 0 is a BarSegment, leftFlush=true and rightFlush=false (the event ends
+        // on 20260308, in the week).
         val sun = render.slots[0][0]
         assertTrue("Sun should be BarSegment", sun is SlotContent.BarSegment)
         val seg = sun as SlotContent.BarSegment
@@ -748,43 +758,44 @@ class MonthFullSpanLayoutTest {
     @Test
     fun `adv 16 - mixed bars and cell events - no slot collision`() {
         val bar1 = roomEvent(id = 1, startDay = 20260309, endDay = 20260311, isAllDay = true, occStartTs = 1L)
-        val bar2 = roomEvent(id = 2, startDay = 20260311, endDay = 20260313, isAllDay = true, occStartTs = 2L)  // overlaps bar1 on Wed
+        // bar2 overlaps bar1 on Wed
+        val bar2 = roomEvent(id = 2, startDay = 20260311, endDay = 20260313, isAllDay = true, occStartTs = 2L)
         val cellEv = roomEvent(id = 3, startDay = 20260310, endDay = 20260310, isAllDay = false, occStartTs = 3L)
         val render = computeMonthFullWeekRender(weekSunToSat, bucketize(listOf(bar1, bar2, cellEv)))
-        // Wed (col 3): both bars overlap → slot 0 = bar1, slot 1 = bar2, slot 2 = Empty
+        // Wed (col 3): both bars overlap, so slots 0 and 1 are bars (slot 2 is Empty, not
+        // asserted here)
         assertTrue(render.slots[0][3] is SlotContent.BarSegment)
         assertTrue(render.slots[1][3] is SlotContent.BarSegment)
-        // Tue (col 2): bar1 at slot 0; cell event should be at slot 1
+        // Tue (col 2): bar1 at slot 0; the cell event at slot 1
         assertTrue(render.slots[0][2] is SlotContent.BarSegment)
         assertTrue(
             "expected CellEvent at slot 1 col 2",
             render.slots[1][2] is SlotContent.CellEvent
         )
         assertEquals(cellEv, (render.slots[1][2] as SlotContent.CellEvent).displayEvent)
-        // No bar+cellEvent collision anywhere
+        // The collision helper asserts nothing (see its doc)
         assertNoBarCellCollision(render)
     }
 
     @Test
     fun `adv 17 - bar startCol equals endCol (single-column bar)`() {
-        // Edge: a 2-day all-day event Mon-Tue but only Mon is in this week.
+        // The fixture is a single-day all-day event on Mon (20260309 to 20260309), so it isn't a
+        // bar: it is a CellEvent at Mon.
         val a = roomEvent(id = 1, startDay = 20260309, endDay = 20260309, isAllDay = true)
         val render = computeMonthFullWeekRender(weekSunToSat, bucketize(listOf(a)))
-        // Wait: 20260309 to 20260309 is a single-day all-day event, not multi-day. Should NOT be a bar.
-        // Instead, it should be a CellEvent at Mon.
         for (slot in render.slots) {
             for (cell in slot) {
                 assertFalse("single-day event should never be a BarSegment", cell is SlotContent.BarSegment)
             }
         }
-        // It IS a CellEvent at Mon (col 1).
+        // A CellEvent at Mon (col 1).
         val mon = render.slots[0][1]
         assertTrue("Mon should be CellEvent for single-day event", mon is SlotContent.CellEvent)
     }
 
     @Test
     fun `adv 18 - empty cell row - no overflow indicator`() {
-        // Empty week → no event slots, no overflow.
+        // An empty week has no overflow.
         val render = computeMonthFullWeekRender(weekSunToSat, emptyMap())
         for (slot in render.slots) {
             for (cell in slot) {
@@ -795,7 +806,7 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `adv 19 - dayCodes preserved verbatim regardless of event count`() {
-        // The dayCodes list should match the input exactly, even with events.
+        // The dayCodes list matches the input, even with events.
         val events = (1..3).map { i ->
             roomEvent(id = i.toLong(), startDay = 20260310, endDay = 20260310, isAllDay = false)
         }
@@ -805,7 +816,8 @@ class MonthFullSpanLayoutTest {
 
     @Test
     fun `adv 20 - BarSegment isStartOfRun and isEndOfRun reflect WITHIN-week clipping`() {
-        // Bar Sat(week1) -> Mon(week2). For week1, Sat is the start AND end of run (clipped to week edge).
+        // Bar Sat (week 1) to Mon (week 2). In week 1, Sat is both start and end of the run
+        // (clipped to the week edge).
         val a = roomEvent(id = 1, startDay = 20260314, endDay = 20260316, isAllDay = true)
         val render = computeMonthFullWeekRender(weekSunToSat, bucketize(listOf(a)))
         val sat = render.slots[0][6] as SlotContent.BarSegment

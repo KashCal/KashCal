@@ -24,20 +24,19 @@ internal fun formatWidgetEventTime(
 }
 
 /**
- * Format the detailed-row time line: a start-end range instead of the compact single instant.
+ * Formats the detailed row's time line: a start-end range instead of the compact row's start time.
  *
- * Range formatting (dash glyph, shared am/pm collapse, RTL, locale digit shaping) is
- * delegated to [DateUtils.formatDateRange] rather than reimplemented. The 12/24h clock
- * is pinned from [timePattern] \u2014 the same resolved pattern the compact row uses \u2014 so the
- * detailed row honors the in-app time-format override, not just the device setting.
+ * [DateUtils.formatDateRange] does the range formatting (dash glyph, shared am/pm, RTL, locale
+ * digits). The 12/24h clock comes from [timePattern], the pattern the compact row uses, so the
+ * detailed row honors the in-app time-format override and not only the device setting.
  *
  * Branches:
  * - All-day -> [allDayText].
- * - Continuing from a previous day (the event started before [dayCode]) -> a continuation
- *   marker plus the end time, so a row on a middle/last day reads as "ends at X".
+ * - Started before [dayCode] -> a continuation marker plus the end time, with the end date when
+ *   the event ends after [dayCode], so a middle or last day's row reads as "ends at X".
  * - Same-day timed -> a plain start-end range ("9:30 - 10:30 AM").
- * - Starts on [dayCode] but ends on a later day -> the range with date context, so the two
- *   times aren't mistaken for a same-day range when they are actually days apart.
+ * - Starts on [dayCode] but ends on a later day -> the range with dates, so the two times
+ *   aren't read as one day's range.
  */
 internal fun formatWidgetEventTimeRange(
     context: Context,
@@ -48,16 +47,15 @@ internal fun formatWidgetEventTimeRange(
 ): String {
     if (event.isAllDay) return allDayText
 
-    // Pin the clock to the resolved pattern (which already folds in the in-app override)
-    // rather than letting DateUtils fall back to the device's 12/24h setting alone.
+    // Without a clock flag DateUtils uses the device's 12/24h setting and ignores the in-app
+    // override that the resolved pattern carries.
     val clockFlag = if (timePattern.contains('a')) DateUtils.FORMAT_12HOUR else DateUtils.FORMAT_24HOUR
 
-    // Started before this day: show only where it ends. Formatting a bare instant via
-    // DateUtils keeps the 12/24h + locale treatment consistent with the range path.
+    // Started before this day: show only the end, through DateUtils so the clock and locale
+    // match the range path.
     if (dayCode != event.startDay) {
         val endDay = DateTimeUtils.eventTsToEndDayCode(event.endTs, event.startTs, event.isAllDay)
-        // For a span that also ends on a later day (viewed on an interior day), a bare
-        // time reads as "ends today" \u2014 add a date token so it's clear the end is elsewhere.
+        // On an interior day of the span a bare time reads as "ends today", so add the date.
         val endFlags = clockFlag or if (endDay != dayCode) {
             DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_ABBREV_ALL
         } else {

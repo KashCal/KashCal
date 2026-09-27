@@ -22,13 +22,10 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Persistent store for sync session history.
+ * Keeps the sync session history in a JSON file in app storage, exposed as [sessions].
  *
- * Features:
- * - JSON file persistence (survives app restart)
- * - 48-hour retention with auto-cleanup
- * - StateFlow for reactive UI updates
- * - Export functionality for debugging
+ * Sessions older than 48 hours are dropped on load and on each [add]; [add] also keeps only the
+ * [MAX_SESSIONS] newest.
  */
 @Singleton
 class SyncSessionStore @Inject constructor(
@@ -38,7 +35,7 @@ class SyncSessionStore @Inject constructor(
         private const val TAG = "SyncSessionStore"
         private const val FILE_NAME = "sync_sessions.json"
         private const val RETENTION_MS = 48 * 60 * 60 * 1000L  // 48 hours
-        private const val MAX_SESSIONS = 200  // Safety limit
+        private const val MAX_SESSIONS = 200
     }
 
     private val file = File(context.filesDir, FILE_NAME)
@@ -55,10 +52,7 @@ class SyncSessionStore @Inject constructor(
         }
     }
 
-    /**
-     * Add a new sync session to the store.
-     * Automatically handles retention and persistence.
-     */
+    /** Adds [session] as the newest entry, applies retention and writes the file. */
     suspend fun add(session: SyncSession) = mutex.withLock {
         val current = _sessions.value.toMutableList()
         current.add(0, session)  // Newest first
@@ -75,9 +69,7 @@ class SyncSessionStore @Inject constructor(
         Log.d(TAG, "Added session for ${session.calendarName}: ${session.status}")
     }
 
-    /**
-     * Load sessions from disk on startup.
-     */
+    /** Loads the file at startup, dropping expired sessions; an unreadable file starts empty. */
     private suspend fun loadFromDisk() = mutex.withLock {
         if (!file.exists()) {
             Log.d(TAG, "No session file found, starting fresh")
@@ -100,9 +92,7 @@ class SyncSessionStore @Inject constructor(
         }
     }
 
-    /**
-     * Save sessions to disk.
-     */
+    /** Writes [sessions] to the file; a write failure is logged and the in-memory list kept. */
     private fun saveToDisk(sessions: List<SyncSession>) {
         try {
             file.writeText(json.encodeToString(sessions))
@@ -111,9 +101,7 @@ class SyncSessionStore @Inject constructor(
         }
     }
 
-    /**
-     * Get summary statistics for display.
-     */
+    /** Returns the header totals; an issue is any session not SUCCESS. */
     fun getSummaryStats(sessions: List<SyncSession> = _sessions.value): SyncSummaryStats {
         return SyncSummaryStats(
             totalSyncs = sessions.size,
@@ -123,10 +111,7 @@ class SyncSessionStore @Inject constructor(
         )
     }
 
-    /**
-     * Export all sessions as text for sharing.
-     * Simplified format matching the UI display.
-     */
+    /** Formats every session as plain text for sharing, in the Sync History sheet's layout. */
     fun getExportText(): String {
         val dateFormat = SimpleDateFormat(DateTimeUtils.localizedPattern("MMMdHmm"), Locale.getDefault())
         val sessions = _sessions.value
@@ -134,7 +119,7 @@ class SyncSessionStore @Inject constructor(
 
         return buildString {
             appendLine("KashCal Sync History")
-            // Header: "X syncs   ↑Y pushed   ↓Z pulled" or with issues
+            // Header: "X syncs   ↑Y pushed   ↓Z pulled", plus the issue count when any
             val headerParts = mutableListOf("${stats.totalSyncs} syncs")
             headerParts.add("↑${stats.totalPushed} pushed")
             headerParts.add("↓${stats.totalPulled} pulled")
@@ -151,16 +136,13 @@ class SyncSessionStore @Inject constructor(
                     SyncStatus.FAILED -> "✗"
                 }
 
-                // Build change summary
                 val changes = buildString {
                     if (session.status == SyncStatus.FAILED) {
                         append(session.errorMessage ?: session.errorType?.name ?: "Failed")
                     } else if (!session.hasAnyChanges) {
                         append("↑ 0   ↓ 0")
                     } else {
-                        // Push summary
                         append("↑ ${session.totalPushed}   ")
-                        // Pull summary with breakdown
                         val pullParts = mutableListOf<String>()
                         if (session.eventsWritten > 0) pullParts.add("+${session.eventsWritten}")
                         if (session.eventsUpdated > 0) pullParts.add("~${session.eventsUpdated}")
@@ -172,7 +154,6 @@ class SyncSessionStore @Inject constructor(
                 appendLine("$icon  ${session.calendarName}  •  ${session.triggerSource.icon} ${session.syncType.name.lowercase().replaceFirstChar { it.uppercase() }}  •  ${dateFormat.format(Date(session.timestamp))}")
                 appendLine("   $changes")
 
-                // Issue lines
                 if (session.hasParseFailures) {
                     appendLine("   ⚠ ${session.skippedParseError} failed to parse")
                 }
@@ -189,9 +170,7 @@ class SyncSessionStore @Inject constructor(
         }
     }
 
-    /**
-     * Clear all session history.
-     */
+    /** Deletes all session history, in memory and on disk. */
     fun clear() {
         _sessions.value = emptyList()
         file.delete()
@@ -199,9 +178,7 @@ class SyncSessionStore @Inject constructor(
     }
 }
 
-/**
- * Summary statistics for the sync history header.
- */
+/** Totals for the sync history header. */
 data class SyncSummaryStats(
     val totalSyncs: Int,
     val totalPushed: Int,

@@ -10,9 +10,8 @@ val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
-// Amber "near the limit" warning accent for the Quick Add character counter.
-// The dynamic/seed color schemes don't guarantee an amber slot, so this is a
-// fixed pair chosen to keep AA contrast against the dialog surface: a brighter
-// amber on dark surfaces, a deeper amber on light ones.
+// Amber "near the limit" accent for the Quick Add character counter. Neither the dynamic nor the
+// seed scheme has an amber role, so this fixed pair keeps AA contrast on the dialog surface: the
+// brighter amber on dark surfaces, the deeper one on light.
 val WarningAmberDark = Color(0xFFF0C24B)
 val WarningAmberLight = Color(0xFF9A6A00)

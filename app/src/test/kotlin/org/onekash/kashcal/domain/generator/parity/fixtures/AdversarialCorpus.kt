@@ -7,26 +7,23 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * Pool D — adversarial inputs.
+ * Pool D: adversarial inputs.
  *
- * Intentional edge cases and malformed inputs that stress-test engine
- * robustness. The goal isn't correctness per the RFC (that's Pool A) — it's
- * to surface crashes, hangs, or silent wrong-answers under pathological
- * inputs. Both engines should survive; divergences here become important
- * classification material for migration risk.
+ * Edge cases and malformed inputs meant to surface crashes, hangs or silent wrong answers, not
+ * to check RFC correctness (that's Pool A). Both engines should survive them; a divergence here
+ * is classified in the parity report.
  *
- * Categories covered:
- *   - COUNT+UNTIL both present (redundant with Pool B but differently shaped)
+ * Categories:
+ *   - COUNT and UNTIL both present (overlaps Pool B, shaped differently)
  *   - extreme INTERVAL (0, negative, Int.MAX_VALUE)
- *   - malformed RRULE (empty, garbage, missing FREQ, invalid FREQ, injection pattern)
+ *   - malformed RRULE (empty, garbage, missing FREQ, invalid FREQ, injection-shaped value)
  *   - unbounded recurrence against a bounded range
- *   - SECONDLY / high-frequency MINUTELY (MAX_ITERATIONS territory)
- *   - UNTIL in the past
- *   - UNTIL before DTSTART
- *   - BYDAY invalid ordinal (6th Monday doesn't exist)
- *   - Feb 30 / Feb 29 leap vs non-leap
- *   - DST spring-forward / fall-back landing ON the transition hour
- *   - cross-year spans, very-large COUNT
+ *   - unbounded SECONDLY and high-frequency MINUTELY (subject to the MAX_ITERATIONS cap)
+ *   - UNTIL before DTSTART, including UNTIL at the Unix epoch
+ *   - BYDAY with an ordinal no month has (6th Monday)
+ *   - BYMONTHDAY=30 across February, Feb 29 in non-leap years
+ *   - DST spring-forward and fall-back landing on the transition hour, all-day across DST
+ *   - very large COUNT, out-of-range BYSETPOS and BYMONTH
  */
 object AdversarialCorpus {
 
@@ -69,7 +66,7 @@ object AdversarialCorpus {
 
     val cases: List<RRuleCase> = listOf(
 
-        // COUNT+UNTIL both present — lib-recur's CRITICAL (b) strips UNTIL; ical4j may honor both.
+        // COUNT and UNTIL both present: both engines strip UNTIL (quirk b in each).
         adv(
             name = "adversarial: COUNT=5 and UNTIL=20250110 both present (ambiguity)",
             rrule = "FREQ=DAILY;COUNT=5;UNTIL=20250110T000000Z",
@@ -79,7 +76,7 @@ object AdversarialCorpus {
             knownDivergenceReason = "RFC 5545 §3.3.10 forbids both — behavior undefined; engines may differ",
         ),
 
-        // INTERVAL=0 — RFC says INTERVAL defaults to 1, zero is invalid.
+        // INTERVAL=0: the RFC defaults INTERVAL to 1; zero is invalid.
         adv(
             name = "adversarial: INTERVAL=0 (invalid per RFC)",
             rrule = "FREQ=DAILY;INTERVAL=0;COUNT=3",
@@ -89,7 +86,7 @@ object AdversarialCorpus {
             knownDivergenceReason = "INTERVAL=0 undefined per RFC; engines may silently use 1 or reject",
         ),
 
-        // INTERVAL=-1 — negative, invalid.
+        // INTERVAL=-1: negative, invalid.
         adv(
             name = "adversarial: INTERVAL=-1 (invalid negative)",
             rrule = "FREQ=DAILY;INTERVAL=-1;COUNT=3",
@@ -99,7 +96,7 @@ object AdversarialCorpus {
             knownDivergenceReason = "INTERVAL=-1 is invalid; engines may reject or crash",
         ),
 
-        // INTERVAL=Int.MAX_VALUE — legal per grammar but nonsensical; engine must not overflow.
+        // INTERVAL=Int.MAX_VALUE: legal per grammar but nonsensical; the engine must not overflow.
         adv(
             name = "adversarial: INTERVAL=2147483647 (Int.MAX_VALUE)",
             rrule = "FREQ=YEARLY;INTERVAL=2147483647;COUNT=3",
@@ -109,7 +106,8 @@ object AdversarialCorpus {
             knownDivergenceReason = "huge interval may only yield DTSTART within range; overflow risk",
         ),
 
-        // Empty RRULE — LibRecurEngine returns emptyList() on null/blank; ical4j's parse may throw.
+        // Empty RRULE: both engines return an empty list for a null or blank RRULE before
+        // parsing, so no parser runs or can throw.
         adv(
             name = "adversarial: empty RRULE",
             rrule = "",
@@ -129,7 +127,7 @@ object AdversarialCorpus {
             knownDivergenceReason = "unparseable RRULE — both engines should gracefully yield empty or DTSTART-only",
         ),
 
-        // Missing FREQ — grammatically invalid.
+        // Missing FREQ: grammatically invalid.
         adv(
             name = "adversarial: RRULE missing FREQ",
             rrule = "COUNT=5;BYDAY=MO",
@@ -159,7 +157,7 @@ object AdversarialCorpus {
             knownDivergenceReason = "parser must treat UNTIL value as opaque string, not evaluate it",
         ),
 
-        // Unbounded recurrence against bounded range — relies on range cut, not COUNT/UNTIL.
+        // Unbounded recurrence against a bounded range: only the range cut bounds it.
         adv(
             name = "adversarial: FREQ=DAILY forever over 1-month range",
             rrule = "FREQ=DAILY",
@@ -168,7 +166,7 @@ object AdversarialCorpus {
             rangeEndMs = utc(2025, 2, 1),
         ),
 
-        // FREQ=SECONDLY against a narrow range — MAX_ITERATIONS territory.
+        // Unbounded FREQ=SECONDLY against a narrow range, subject to the MAX_ITERATIONS cap.
         adv(
             name = "adversarial: FREQ=SECONDLY over 1-hour range (MAX_ITERATIONS territory)",
             rrule = "FREQ=SECONDLY;INTERVAL=60",
@@ -178,7 +176,7 @@ object AdversarialCorpus {
             knownDivergenceReason = "unbounded SECONDLY — lib-recur's MAX_ITERATIONS caps output",
         ),
 
-        // FREQ=MINUTELY unbounded across 1 day — 1440 iterations, under MAX_ITERATIONS.
+        // FREQ=MINUTELY unbounded across 1 day: 1440 occurrences, under MAX_ITERATIONS.
         adv(
             name = "adversarial: FREQ=MINUTELY unbounded over 1 day",
             rrule = "FREQ=MINUTELY",
@@ -187,7 +185,7 @@ object AdversarialCorpus {
             rangeEndMs = utc(2025, 1, 2),
         ),
 
-        // UNTIL in the past.
+        // UNTIL before DTSTART.
         adv(
             name = "adversarial: UNTIL before DTSTART yields empty expansion",
             rrule = "FREQ=DAILY;UNTIL=20240101T000000Z",
@@ -205,7 +203,7 @@ object AdversarialCorpus {
             rangeEndMs = utc(2025, 2, 1),
         ),
 
-        // BYDAY invalid ordinal — 6th Monday doesn't exist in any month.
+        // BYDAY ordinal no month has: there is never a 6th Monday.
         adv(
             name = "adversarial: FREQ=MONTHLY BYDAY=6MO (6th Monday never exists)",
             rrule = "FREQ=MONTHLY;BYDAY=6MO;COUNT=3",
@@ -215,7 +213,7 @@ object AdversarialCorpus {
             knownDivergenceReason = "no 6th Monday — engines may yield empty, skip months, or error",
         ),
 
-        // BYMONTHDAY=30 with DTSTART Feb 28 on non-leap year — "Feb 30" would skip Feb.
+        // BYMONTHDAY=30 from DTSTART Jan 30, non-leap year: February has no 30th and is skipped.
         adv(
             name = "adversarial: BYMONTHDAY=30 across Feb (non-leap)",
             rrule = "FREQ=MONTHLY;BYMONTHDAY=30;COUNT=6",
@@ -234,10 +232,9 @@ object AdversarialCorpus {
             knownDivergenceReason = "Feb 29 in non-leap years — both engines should skip",
         ),
 
-        // DST spring-forward landing on the transition hour. In America/New_York on
-        // 2025-03-09 the clock jumps from 02:00 EST to 03:00 EDT. A daily rule at
-        // 02:30 would normally hit a non-existent local time on 3/9. Engines vary
-        // on how they handle this (shift forward, skip, error).
+        // DST spring-forward landing on the transition hour. In America/New_York on 2025-03-09
+        // the clock jumps from 02:00 EST to 03:00 EDT, so a daily rule at 02:30 hits a local time
+        // that doesn't exist on 3/9. Engines may shift forward, skip or error.
         adv(
             name = "adversarial: DAILY at 02:30 landing on DST spring-forward (America/New_York)",
             rrule = "FREQ=DAILY;COUNT=5",
@@ -248,7 +245,7 @@ object AdversarialCorpus {
             knownDivergenceReason = "02:30 on 3/9 doesn't exist in local time — engines may shift to 03:30 EDT or skip",
         ),
 
-        // DST fall-back — 01:30 happens twice on 11/2/2025 in America/New_York.
+        // DST fall-back: 01:30 happens twice on 11/2/2025 in America/New_York.
         adv(
             name = "adversarial: DAILY at 01:30 landing on DST fall-back (America/New_York)",
             rrule = "FREQ=DAILY;COUNT=5",
@@ -259,7 +256,7 @@ object AdversarialCorpus {
             knownDivergenceReason = "01:30 on 11/2 is ambiguous — engines may choose EDT or EST",
         ),
 
-        // All-day across DST — the date shouldn't shift.
+        // All-day across DST: the date shouldn't shift.
         adv(
             name = "adversarial: all-day DAILY across DST (should not shift)",
             rrule = "FREQ=DAILY;COUNT=30",
@@ -270,7 +267,7 @@ object AdversarialCorpus {
             rangeEndMs = utcMidnight(2025, 4, 5),
         ),
 
-        // COUNT=10000 — large but within MAX_ITERATIONS, to check performance.
+        // COUNT=10000: large but within MAX_ITERATIONS, to check performance.
         adv(
             name = "adversarial: FREQ=DAILY COUNT=10000 (near MAX_ITERATIONS ceiling)",
             rrule = "FREQ=DAILY;COUNT=10000",
@@ -280,7 +277,7 @@ object AdversarialCorpus {
             knownDivergenceReason = "at/near lib-recur's MAX_ITERATIONS=10000 safety cap",
         ),
 
-        // Negative BYSETPOS beyond range.
+        // Negative BYSETPOS beyond the candidate count.
         adv(
             name = "adversarial: BYSETPOS=-100 exceeds candidates (should yield empty per month)",
             rrule = "FREQ=MONTHLY;BYDAY=MO,TU,WE,TH,FR;BYSETPOS=-100;COUNT=3",

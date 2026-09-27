@@ -5,25 +5,24 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Pre-tests for the non-circular centering fix in VerticalWheelPicker.
+ * Tests the non-circular centering math of [VerticalWheelPicker] on inline copies of its
+ * initial index, outside-change scroll target and fallback center index; they don't call the
+ * composable.
  *
- * Problem: centeringOffset = 0 for non-circular mode, so items appear at the
- * viewport TOP instead of CENTER. This was never exposed because all current
- * wheels use circular mode. A 201-item year wheel would expose it.
+ * The picker subtracts centeringOffset = visibleItems / 2 in both modes, clamped at 0 when
+ * non-circular, so the selected item lands at the viewport center, not the top. Every wheel in
+ * the app passes isCircular = true, so this path runs only for a list under two items; the
+ * 201-item year wheel (1900..2100) below is a fixture, not the app's year wheel.
  *
- * Fix: centeringOffset = visibleItems / 2 (always), with coerceAtLeast(0) for
- * non-circular initialIndex and scroll targets.
+ * Known limitation: items at indices 1 and 2 display off-center on the first render, from the
+ * contentPadding and the clamp to 0. Once the user scrolls, the pixel-based center pick
+ * corrects it.
  *
- * Known limitation: Items at indices 1 and 2 display slightly off-center on
- * initial render due to contentPadding + coerceAtLeast(0) interaction. Once
- * user scrolls, pixel-based center detection corrects it.
+ * The last test checks the circular formula with the same inline arithmetic.
  */
 class WheelPickerNonCircularCenteringTest {
 
-    /**
-     * Simulates the FIXED non-circular initialIndex calculation.
-     * centeringOffset always = visibleItems / 2, clamped to 0 for non-circular.
-     */
+    /** Copies the picker's non-circular initialIndex: selected - visibleItems / 2, min 0. */
     private fun computeNonCircularInitialIndex(
         itemCount: Int,
         selectedIndex: Int,
@@ -33,9 +32,7 @@ class WheelPickerNonCircularCenteringTest {
         return (selectedIndex - centeringOffset).coerceAtLeast(0)
     }
 
-    /**
-     * Simulates the FIXED non-circular external scroll target.
-     */
+    /** Copies the picker's non-circular scroll target for an outside selection change. */
     private fun computeNonCircularScrollTarget(
         targetIndex: Int,
         visibleItems: Int
@@ -44,9 +41,7 @@ class WheelPickerNonCircularCenteringTest {
         return (targetIndex - centeringOffset).coerceAtLeast(0)
     }
 
-    /**
-     * Simulates the FIXED fallback centerIndex for non-circular mode.
-     */
+    /** Copies the picker's centerIndex fallback, used while no item is laid out. */
     private fun computeFallbackCenterIndex(
         firstVisibleItemIndex: Int,
         visibleItems: Int
@@ -62,9 +57,8 @@ class WheelPickerNonCircularCenteringTest {
         val initialIndex = computeNonCircularInitialIndex(
             itemCount = 201, selectedIndex = 125, visibleItems = 5
         )
-        // initialIndex = (125 - 2).coerceAtLeast(0) = 123
-        // Viewport: [item123, item124, item125, item126, item127]
-        // item125 is at position 2 (center for visibleItems=5)
+        // (125 - 2).coerceAtLeast(0) = 123, so the viewport shows items 123-127 with 125 at
+        // position 2, the center for visibleItems = 5.
         assertEquals(123, initialIndex)
     }
 
@@ -73,14 +67,14 @@ class WheelPickerNonCircularCenteringTest {
         val initialIndex = computeNonCircularInitialIndex(
             itemCount = 201, selectedIndex = 0, visibleItems = 5
         )
-        // initialIndex = (0 - 2).coerceAtLeast(0) = 0
-        // contentPadding adds 2 items of space above → item 0 at viewport center
+        // (0 - 2).coerceAtLeast(0) = 0; the contentPadding of 2 items above puts item 0 at
+        // the viewport center.
         assertEquals(0, initialIndex)
     }
 
     @Test
     fun `year wheel - item 1 (year 1901) clamped to 0`() {
-        // Known limitation: item 1 will be 1 slot below center on initial display
+        // Known limitation: item 1 shows 1 slot below center on the first render.
         val initialIndex = computeNonCircularInitialIndex(
             itemCount = 201, selectedIndex = 1, visibleItems = 5
         )
@@ -89,7 +83,7 @@ class WheelPickerNonCircularCenteringTest {
 
     @Test
     fun `year wheel - item 2 (year 1902) clamped to 0`() {
-        // Known limitation: item 2 will be 2 slots below center on initial display
+        // Known limitation: item 2 shows 2 slots below center on the first render.
         val initialIndex = computeNonCircularInitialIndex(
             itemCount = 201, selectedIndex = 2, visibleItems = 5
         )
@@ -101,7 +95,7 @@ class WheelPickerNonCircularCenteringTest {
         val initialIndex = computeNonCircularInitialIndex(
             itemCount = 201, selectedIndex = 3, visibleItems = 5
         )
-        // (3 - 2) = 1, no clamping needed
+        // 3 - 2 = 1, no clamp.
         assertEquals(1, initialIndex)
     }
 
@@ -204,7 +198,7 @@ class WheelPickerNonCircularCenteringTest {
 
     @Test
     fun `fallback centerIndex correct for non-circular middle items`() {
-        // When firstVisibleItemIndex = 123 (for year 2025 centered)
+        // firstVisibleItemIndex 123 is year 2025 centered.
         val centerIndex = computeFallbackCenterIndex(
             firstVisibleItemIndex = 123, visibleItems = 5
         )
@@ -213,14 +207,12 @@ class WheelPickerNonCircularCenteringTest {
 
     @Test
     fun `fallback centerIndex correct for non-circular edge items`() {
-        // When firstVisibleItemIndex = 0 (item 0 centered via contentPadding)
+        // firstVisibleItemIndex 0, with item 0 centered by the contentPadding.
         val centerIndex = computeFallbackCenterIndex(
             firstVisibleItemIndex = 0, visibleItems = 5
         )
-        // Returns 2, which is the center position in viewport
-        // For item 0 at edge, contentPadding shifts things so actual center is item 0,
-        // but fallback approximation returns 2 — acceptable since pixel-based
-        // detection corrects this after first layout
+        // The fallback gives 2 although item 0 is at the center. The pixel-based pick
+        // replaces it after the first layout.
         assertEquals(2, centerIndex)
     }
 
@@ -231,7 +223,7 @@ class WheelPickerNonCircularCenteringTest {
         val visibleItems = 5
         val centeringOffset = visibleItems / 2
 
-        // For items well past the edge (index > centeringOffset):
+        // Items past the clamp (index > centeringOffset) round-trip.
         for (selectedIndex in 3..200) {
             val initialIndex = computeNonCircularInitialIndex(201, selectedIndex, visibleItems)
             val recoveredCenter = initialIndex + centeringOffset
@@ -257,7 +249,7 @@ class WheelPickerNonCircularCenteringTest {
         }
     }
 
-    // ==================== Verify Existing Circular Path Unchanged ====================
+    // ==================== Circular Path ====================
 
     @Test
     fun `circular centering formula unchanged`() {

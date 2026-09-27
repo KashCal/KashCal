@@ -54,22 +54,21 @@ import java.time.Duration
 import java.util.UUID
 
 /**
- * Kotlin-friendly wrapper around ical4j for parsing iCalendar data.
+ * Parses iCalendar text into the icaldav model types, on top of ical4j.
  *
- * Handles RECURRENCE-ID events that ical4j processes but doesn't group,
- * and provides the critical importId generation for database storage.
+ * Each VEVENT with a RECURRENCE-ID, which ical4j reads but doesn't group with its
+ * master, becomes its own [ICalEvent], and every component gets an importId from its
+ * UID and RECURRENCE-ID for database storage. In production use against iCloud and
+ * other CalDAV servers.
  *
- * Production-tested with various CalDAV servers including iCloud.
+ * Thread-safe: ical4j's JVM-global configuration runs once, under double-checked
+ * locking, when the first parser is created ([ensureConfigured]).
  *
- * Thread Safety: This class is thread-safe. The ical4j configuration is
- * initialized once using double-checked locking before first use.
+ * ## TimeZoneRegistry
  *
- * ## TimeZoneRegistry Configuration
+ * The no-argument constructor uses [SimpleTimeZoneRegistry], which is Android-safe.
+ * JVM servers that need richer timezone handling use [createWithFullRegistry].
  *
- * By default, ICalParser uses [SimpleTimeZoneRegistry] which is Android-safe.
- * For JVM servers that need richer timezone handling, use [createWithFullRegistry].
- *
- * Usage:
  * ```kotlin
  * // Android (default - safe)
  * val parser = ICalParser()
@@ -88,18 +87,15 @@ class ICalParser(
 ) {
 
     /**
-     * Create an ICalParser with the default Android-safe [SimpleTimeZoneRegistry].
-     *
-     * This constructor is recommended for most use cases, especially on Android.
-     * The SimpleTimeZoneRegistry:
-     * - Uses ZoneId.of() which is supported on Android via desugaring
-     * - Relies on embedded VTIMEZONE definitions in iCalendar data
-     * - Is lightweight and has no external dependencies
+     * Creates a parser with the Android-safe [SimpleTimeZoneRegistry], the choice for most
+     * callers and for Android. That registry resolves IDs with ZoneId.of, supported on Android
+     * via desugaring, relies on the data's embedded VTIMEZONE definitions, and has no external
+     * dependencies.
      */
     constructor() : this(SimpleTimeZoneRegistry())
 
     init {
-        // Ensure ical4j is configured before any parsing
+        // ical4j must be configured before any parse
         ensureConfigured()
     }
 
@@ -116,41 +112,31 @@ class ICalParser(
          */
         private val UPPERCASE_NEWLINE_ESCAPE = Regex("""(?<!\\)((?:\\\\)*)\\N""")
 
-        /** Captures the body of each embedded VTIMEZONE component (Fix 4). */
+        /** Captures the body of each embedded VTIMEZONE, for [rewriteUnresolvableVTimezones]. */
         private val VTIMEZONE_BLOCK =
             Regex("""BEGIN:VTIMEZONE\r?\n(.*?)END:VTIMEZONE""", RegexOption.DOT_MATCHES_ALL)
 
-        /** The TZID declared by a VTIMEZONE, e.g. `TZID:TZsfv` (Fix 4). */
+        /** The TZID a VTIMEZONE declares, for example `TZID:TZsfv`. */
         private val VTIMEZONE_TZID =
             Regex("""^TZID:(.+)$""", RegexOption.MULTILINE)
 
-        /** The X-LIC-LOCATION hint naming the intended IANA zone (Fix 4). */
+        /** The X-LIC-LOCATION hint naming the intended IANA zone. */
         private val VTIMEZONE_XLIC =
             Regex("""^X-LIC-LOCATION:(.+)$""", setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE))
 
         /**
-         * Create an ICalParser with [TimeZoneRegistryImpl] for full timezone support.
+         * Creates a parser with ical4j's `TimeZoneRegistryImpl`, for JVM servers where
+         * ZoneRulesProvider is available and that need pre-built TimeZone objects from the
+         * registry or the complete Windows timezone name mapping.
          *
-         * This factory method is intended for JVM server environments where:
-         * - ZoneRulesProvider is available (not on Android)
-         * - You need pre-built TimeZone objects from the registry
-         * - You need complete Windows timezone name mapping
-         *
-         * **Warning**: Do NOT use this on Android - it will crash at runtime
-         * because ZoneRulesProvider is not available via desugaring.
-         *
-         * @return ICalParser configured with TimeZoneRegistryImpl
+         * Never use it on Android: it crashes at runtime because ZoneRulesProvider isn't
+         * available via desugaring.
          */
         fun createWithFullRegistry(): ICalParser {
             return ICalParser(net.fortuna.ical4j.model.TimeZoneRegistryImpl())
         }
 
-        /**
-         * Ensure ical4j is configured exactly once, thread-safely.
-         *
-         * Uses double-checked locking pattern for efficient thread-safe
-         * lazy initialization. Safe to call multiple times.
-         */
+        /** Configures ical4j once per process, under double-checked locking; safe to repeat. */
         fun ensureConfigured() {
             if (!configured) {
                 synchronized(configLock) {
@@ -163,11 +149,9 @@ class ICalParser(
         }
 
         /**
-         * Configure ical4j system properties for Android/server compatibility.
-         *
-         * IMPORTANT: These are JVM-global settings. Call ensureConfigured()
-         * at application startup if you need to guarantee configuration before
-         * any ICalParser instances are created.
+         * Sets ical4j's system properties for Android and server use. They are JVM-global, so
+         * call [ensureConfigured] at application startup if configuration must precede the
+         * first ICalParser.
          */
         private fun configureIcal4j() {
             // Use MapTimeZoneCache (no file system cache, no network dependency)
@@ -177,26 +161,23 @@ class ICalParser(
             // Disable timezone updates (requires network access)
             System.setProperty("net.fortuna.ical4j.timezone.update.enabled", "false")
 
-            // Enable relaxed parsing for malformed iCal data from various servers
+            // Relaxed unfolding and parsing, for the malformed data servers send
             System.setProperty("ical4j.unfolding.relaxed", "true")
             System.setProperty("ical4j.parsing.relaxed", "true")
 
-            // Relaxed validation: never drop an otherwise-usable VEVENT because
-            // of a validation failure. The load-bearing case is a locally-defined
-            // VTIMEZONE (RFC 5545 §3.2.19) whose TZID is a non-IANA name ical4j
-            // cannot resolve via java.time.ZoneId.of at date-access time — strict
-            // validation makes the per-event parse throw, which would silently
-            // drop every event in the feed. With this hint the event is kept and
-            // its time falls back to the device zone (floating) when the zone is
-            // unresolvable. preprocessICalData rewrites resolvable custom zones to
-            // their IANA equivalent first, so this net only catches the residue.
+            // Relaxed validation: never drop an otherwise-usable VEVENT because of a
+            // validation failure. The case that matters is a VTIMEZONE defined in the data
+            // (RFC 5545 §3.2.19) whose TZID is a non-IANA name ical4j cannot resolve with
+            // java.time.ZoneId.of when a date is read: strict validation makes the per-event
+            // parse throw, which would silently drop every event in the feed. With this hint
+            // the event is kept and its time falls back to the device zone (floating) when
+            // the zone is unresolvable. rewriteUnresolvableVTimezones first maps the custom
+            // zones it can to their IANA zone, so this only catches the rest.
             System.setProperty("ical4j.validation.relaxed", "true")
         }
     }
 
-    /**
-     * Create a CalendarBuilder with the configured TimeZoneRegistry.
-     */
+    /** Creates a CalendarBuilder over [registry], with invalid-property suppression on. */
     private fun createCalendarBuilder(): CalendarBuilder {
         return CalendarBuilder(
             CalendarParserFactory.getInstance().get(),
@@ -206,13 +187,11 @@ class ICalParser(
     }
 
     /**
-     * Parse iCal string and return all VEVENTs as ICalEvent objects.
+     * Parses every VEVENT in [icalData]; a VEVENT that fails to parse is left out.
      *
-     * Critical for iCloud sync: A single .ics file may contain multiple VEVENTs
-     * with the same UID but different RECURRENCE-ID values (modified instances).
-     *
-     * @param icalData Raw iCalendar string
-     * @return List of parsed events, each with unique importId
+     * This matters for iCloud sync: one .ics file may hold more than one VEVENT with the same UID
+     * and different RECURRENCE-IDs (a master and its exceptions). Each becomes its own
+     * [ICalEvent] with a unique importId.
      */
     fun parseAllEvents(icalData: String): ParseResult<List<ICalEvent>> {
         return try {
@@ -220,57 +199,75 @@ class ICalParser(
             val builder = createCalendarBuilder()
             val calendar = builder.build(StringReader(unfolded))
 
-            val events = calendar.getComponents<VEvent>(Component.VEVENT)
-                .mapNotNull { vevent ->
-                    parseVEvent(vevent).getOrNull()
-                }
-
-            ParseResult.success(events)
+            ParseResult.success(parseEvents(unfolded, calendar))
         } catch (e: Exception) {
             ParseResult.error("Failed to parse iCalendar data: ${e.message}", e)
         }
     }
 
+    private fun parseEvents(prepared: String, calendar: net.fortuna.ical4j.model.Calendar): List<ICalEvent> =
+        parseWithLines<VEvent, ICalEvent>(prepared, calendar, Component.VEVENT, handledProperties,
+            { parseVEvent(it).getOrNull() }) { event, lines -> event.copy(unknownPropertyLines = lines) }
+
+    private fun parseTodos(prepared: String, calendar: net.fortuna.ical4j.model.Calendar): List<ICalTodo> =
+        parseWithLines<VToDo, ICalTodo>(prepared, calendar, Component.VTODO, handledTodoProperties,
+            { parseVTodo(it).getOrNull() }) { todo, lines -> todo.copy(unknownPropertyLines = lines) }
+
+    private fun parseJournals(prepared: String, calendar: net.fortuna.ical4j.model.Calendar): List<ICalJournal> =
+        parseWithLines<VJournal, ICalJournal>(prepared, calendar, Component.VJOURNAL, handledJournalProperties,
+            { parseVJournal(it).getOrNull() }) { journal, lines -> journal.copy(unknownPropertyLines = lines) }
+
     /**
-     * Parse iCal string and return all VTODOs as ICalTodo objects.
-     *
-     * @param icalData Raw iCalendar string
-     * @return List of parsed todos, each with unique importId
+     * Parses every [name] component and attaches its unknown properties as
+     * original lines. Lines are matched by position before failed components
+     * are dropped, so a skipped component can't shift the lines onto its
+     * neighbour.
      */
+    private inline fun <C : net.fortuna.ical4j.model.component.CalendarComponent, T : Any> parseWithLines(
+        prepared: String,
+        calendar: net.fortuna.ical4j.model.Calendar,
+        name: String,
+        modelled: Set<String>,
+        parse: (C) -> T?,
+        attach: (T, List<String>) -> T
+    ): List<T> {
+        val components = calendar.getComponents<C>(name)
+        if (components.isEmpty()) return emptyList()
+        val lines = UnknownPropertyLines.alignedLines(
+            UnknownPropertyLines.scan(prepared, name, modelled), components
+        ) { it.getProperty<Property>(Property.UID).orElse(null)?.value }
+        return components.mapIndexedNotNull { index, component ->
+            val parsed = parse(component) ?: return@mapIndexedNotNull null
+            lines?.get(index)?.takeIf { it.isNotEmpty() }?.let { attach(parsed, it) } ?: parsed
+        }
+    }
+
+    /** Parses every VTODO in [icalData]; a VTODO that fails to parse is left out. */
     fun parseAllTodos(icalData: String): ParseResult<List<ICalTodo>> {
         return try {
             val unfolded = prepareForParsing(icalData)
             val builder = createCalendarBuilder()
             val calendar = builder.build(StringReader(unfolded))
 
-            val todos = calendar.getComponents<VToDo>(Component.VTODO)
-                .mapNotNull { vtodo ->
-                    parseVTodo(vtodo).getOrNull()
-                }
-
-            ParseResult.success(todos)
+            ParseResult.success(parseTodos(unfolded, calendar))
         } catch (e: Exception) {
             ParseResult.error("Failed to parse VTODO data: ${e.message}", e)
         }
     }
 
-    /**
-     * Parse a single VTODO component to ICalTodo.
-     */
+    /** Converts one VTODO to an [ICalTodo]. */
     fun parseVTodo(vtodo: VToDo): ParseResult<ICalTodo> {
         return try {
-            // Get UID - generate random UUID if missing or blank (non-compliant servers)
+            // A missing or blank UID (non-compliant servers) gets a random UUID
             val uid = vtodo.getPropertyOrNull<Property>("UID")?.value?.ifBlank { null }
                 ?: UUID.randomUUID().toString()
 
-            // Parse RECURRENCE-ID if present (modified instance)
+            // A RECURRENCE-ID marks an exception
             val recurrenceId = vtodo.getPropertyOrNull<Property>("RECURRENCE-ID")
                 ?.let { parseDateTimeFromProperty(it) }
 
-            // Generate unique importId
             val importId = ICalTodo.generateImportId(uid, recurrenceId)
 
-            // Parse date/time properties
             val dtStart = vtodo.getPropertyOrNull<Property>("DTSTART")
                 ?.let { parseDateTimeFromProperty(it) }
             val due = vtodo.getPropertyOrNull<Property>("DUE")
@@ -284,7 +281,6 @@ class ICalParser(
             val lastModified = vtodo.getPropertyOrNull<Property>("LAST-MODIFIED")
                 ?.let { parseDateTimeFromProperty(it) }
 
-            // Parse text properties
             val summary = vtodo.getPropertyOrNull<Property>("SUMMARY")
                 ?.value
             val description = vtodo.getPropertyOrNull<Property>("DESCRIPTION")
@@ -295,7 +291,6 @@ class ICalParser(
             val geo = vtodo.getPropertyOrNull<Property>("GEO")?.value
             val classification = vtodo.getPropertyOrNull<Property>("CLASS")?.value
 
-            // Parse numeric properties
             val statusValue = vtodo.getPropertyOrNull<Property>("STATUS")?.value
             val sequenceValue = vtodo.getPropertyOrNull<Property>("SEQUENCE")
                 ?.value?.toIntOrNull() ?: 0
@@ -304,33 +299,26 @@ class ICalParser(
             val percentComplete = vtodo.getPropertyOrNull<Property>("PERCENT-COMPLETE")
                 ?.value?.toIntOrNull() ?: 0
 
-            // Parse RRULE (only for master todos, not modified instances)
+            // Only a master's RRULE is read; an exception's is ignored
             val rrule = if (recurrenceId == null) {
                 vtodo.getPropertyOrNull<Property>("RRULE")
                     ?.let { RRule.parse(it.value) }
             } else null
 
-            // Parse categories
             val categoriesProps = vtodo.getProperties<Property>("CATEGORIES")
             val categories = categoriesProps.flatMap { cat ->
-                // Drop blank elements at the source — a malformed value like
-                // "foo,,bar" would otherwise carry an empty category into Room
-                // and round-trip straight back to the server.
+                // Blank elements are dropped, for the reason in parseVEvent
                 cat.value.split(",").map { it.trim() }.filter { it.isNotEmpty() }
             }
 
-            // Parse ORGANIZER
             val organizer = parseTodoOrganizer(vtodo)
 
-            // Parse ATTENDEE list
             val attendees = parseTodoAttendees(vtodo)
 
-            // Parse VALARMs
             val alarms = vtodo.alarms.mapNotNull { valarm ->
                 parseVAlarm(valarm).getOrNull()
             }
 
-            // Collect raw properties
             val rawProperties = collectRawTodoProperties(vtodo)
 
             val todo = ICalTodo(
@@ -367,9 +355,7 @@ class ICalParser(
         }
     }
 
-    /**
-     * Parse ORGANIZER from VTODO.
-     */
+    /** Reads the VTODO's ORGANIZER, without the RFC 6638 parameters [parseOrganizer] reads. */
     private fun parseTodoOrganizer(vtodo: VToDo): Organizer? {
         val organizerProp = vtodo.getPropertyOrNull<Property>("ORGANIZER")
             ?: return null
@@ -383,9 +369,7 @@ class ICalParser(
         return Organizer(email = email, name = cn, sentBy = sentBy)
     }
 
-    /**
-     * Parse ATTENDEE list from VTODO.
-     */
+    /** Reads the VTODO's ATTENDEEs (CN, PARTSTAT, ROLE, RSVP), skipping any without an address. */
     private fun parseTodoAttendees(vtodo: VToDo): List<Attendee> {
         val attendeeProps = vtodo.getProperties<Property>("ATTENDEE")
 
@@ -409,7 +393,8 @@ class ICalParser(
     }
 
     /**
-     * Properties explicitly handled for VTODO (should NOT be in rawProperties).
+     * Properties parsed into [ICalTodo] fields, so left out of rawProperties and
+     * unknownPropertyLines.
      */
     private val handledTodoProperties = setOf(
         "UID", "DTSTART", "DUE", "COMPLETED", "DTSTAMP",
@@ -421,9 +406,7 @@ class ICalParser(
         "CATEGORIES", "URL", "GEO", "CLASS"
     )
 
-    /**
-     * Collect unhandled properties from VTODO for round-trip fidelity.
-     */
+    /** Collects VTODO properties not in [handledTodoProperties], as [collectRawProperties] does. */
     private fun collectRawTodoProperties(vtodo: VToDo): Map<String, String> {
         val raw = mutableMapOf<String, String>()
 
@@ -453,46 +436,32 @@ class ICalParser(
 
     // ============ VJOURNAL Parsing ============
 
-    /**
-     * Parse iCal string and return all VJOURNALs as ICalJournal objects.
-     *
-     * @param icalData Raw iCalendar string
-     * @return List of parsed journals, each with unique importId
-     */
+    /** Parses every VJOURNAL in [icalData]; a VJOURNAL that fails to parse is left out. */
     fun parseAllJournals(icalData: String): ParseResult<List<ICalJournal>> {
         return try {
             val unfolded = prepareForParsing(icalData)
             val builder = createCalendarBuilder()
             val calendar = builder.build(StringReader(unfolded))
 
-            val journals = calendar.getComponents<VJournal>(Component.VJOURNAL)
-                .mapNotNull { vjournal ->
-                    parseVJournal(vjournal).getOrNull()
-                }
-
-            ParseResult.success(journals)
+            ParseResult.success(parseJournals(unfolded, calendar))
         } catch (e: Exception) {
             ParseResult.error("Failed to parse VJOURNAL data: ${e.message}", e)
         }
     }
 
-    /**
-     * Parse a single VJOURNAL component to ICalJournal.
-     */
+    /** Converts one VJOURNAL to an [ICalJournal]. */
     fun parseVJournal(vjournal: VJournal): ParseResult<ICalJournal> {
         return try {
-            // Get UID - generate random UUID if missing or blank (non-compliant servers)
+            // A missing or blank UID (non-compliant servers) gets a random UUID
             val uid = vjournal.getPropertyOrNull<Property>("UID")?.value?.ifBlank { null }
                 ?: UUID.randomUUID().toString()
 
-            // Parse RECURRENCE-ID if present (modified instance)
+            // A RECURRENCE-ID marks an exception
             val recurrenceId = vjournal.getPropertyOrNull<Property>("RECURRENCE-ID")
                 ?.let { parseDateTimeFromProperty(it) }
 
-            // Generate unique importId
             val importId = ICalJournal.generateImportId(uid, recurrenceId)
 
-            // Parse date/time properties
             val dtStart = vjournal.getPropertyOrNull<Property>("DTSTART")
                 ?.let { parseDateTimeFromProperty(it) }
             val dtstamp = vjournal.getPropertyOrNull<Property>("DTSTAMP")
@@ -502,7 +471,6 @@ class ICalParser(
             val lastModified = vjournal.getPropertyOrNull<Property>("LAST-MODIFIED")
                 ?.let { parseDateTimeFromProperty(it) }
 
-            // Parse text properties
             val summary = vjournal.getPropertyOrNull<Property>("SUMMARY")
                 ?.value
             val description = vjournal.getPropertyOrNull<Property>("DESCRIPTION")
@@ -510,37 +478,29 @@ class ICalParser(
             val url = vjournal.getPropertyOrNull<Property>("URL")?.value
             val classification = vjournal.getPropertyOrNull<Property>("CLASS")?.value
 
-            // Parse numeric properties
             val statusValue = vjournal.getPropertyOrNull<Property>("STATUS")?.value
             val sequenceValue = vjournal.getPropertyOrNull<Property>("SEQUENCE")
                 ?.value?.toIntOrNull() ?: 0
 
-            // Parse RRULE (only for master journals, not modified instances)
+            // Only a master's RRULE is read; an exception's is ignored
             val rrule = if (recurrenceId == null) {
                 vjournal.getPropertyOrNull<Property>("RRULE")
                     ?.let { RRule.parse(it.value) }
             } else null
 
-            // Parse categories
             val categoriesProps = vjournal.getProperties<Property>("CATEGORIES")
             val categories = categoriesProps.flatMap { cat ->
-                // Drop blank elements at the source — a malformed value like
-                // "foo,,bar" would otherwise carry an empty category into Room
-                // and round-trip straight back to the server.
+                // Blank elements are dropped, for the reason in parseVEvent
                 cat.value.split(",").map { it.trim() }.filter { it.isNotEmpty() }
             }
 
-            // Parse attachments
             val attachmentProps = vjournal.getProperties<Property>("ATTACH")
             val attachments = attachmentProps.mapNotNull { it.value }
 
-            // Parse ORGANIZER
             val organizer = parseJournalOrganizer(vjournal)
 
-            // Parse ATTENDEE list
             val attendees = parseJournalAttendees(vjournal)
 
-            // Collect raw properties
             val rawProperties = collectRawJournalProperties(vjournal)
 
             val journal = ICalJournal(
@@ -571,9 +531,7 @@ class ICalParser(
         }
     }
 
-    /**
-     * Parse ORGANIZER from VJOURNAL.
-     */
+    /** Reads the VJOURNAL's ORGANIZER, without the RFC 6638 parameters [parseOrganizer] reads. */
     private fun parseJournalOrganizer(vjournal: VJournal): Organizer? {
         val organizerProp = vjournal.getPropertyOrNull<Property>("ORGANIZER")
             ?: return null
@@ -587,9 +545,7 @@ class ICalParser(
         return Organizer(email = email, name = cn, sentBy = sentBy)
     }
 
-    /**
-     * Parse ATTENDEE list from VJOURNAL.
-     */
+    /** Reads the VJOURNAL's ATTENDEEs (CN, PARTSTAT, ROLE, RSVP), skipping any with no address. */
     private fun parseJournalAttendees(vjournal: VJournal): List<Attendee> {
         val attendeeProps = vjournal.getProperties<Property>("ATTENDEE")
 
@@ -613,7 +569,8 @@ class ICalParser(
     }
 
     /**
-     * Properties explicitly handled for VJOURNAL (should NOT be in rawProperties).
+     * Properties parsed into [ICalJournal] fields, so left out of rawProperties and
+     * unknownPropertyLines.
      */
     private val handledJournalProperties = setOf(
         "UID", "DTSTART", "DTSTAMP",
@@ -626,7 +583,8 @@ class ICalParser(
     )
 
     /**
-     * Collect unhandled properties from VJOURNAL for round-trip fidelity.
+     * Collects the VJOURNAL properties not in [handledJournalProperties], as
+     * [collectRawProperties] does.
      */
     private fun collectRawJournalProperties(vjournal: VJournal): Map<String, String> {
         val raw = mutableMapOf<String, String>()
@@ -655,23 +613,16 @@ class ICalParser(
         return raw
     }
 
-    /**
-     * Parse result with METHOD and events.
-     * Used for iTIP message processing where METHOD indicates the scheduling action.
-     */
+    /** The METHOD and events of an iTIP message, where METHOD names the scheduling action. */
     data class CalendarParseResult(
         val method: ITipMethod?,
         val events: List<ICalEvent>
     )
 
     /**
-     * Parse complete iCalendar data into an ICalCalendar object.
-     *
-     * This method extracts all components (VEVENT, VTODO, VJOURNAL) and calendar-level
-     * properties (NAME, COLOR, etc.) from the iCalendar data.
-     *
-     * @param icalData Raw iCalendar string
-     * @return ICalCalendar containing all parsed components
+     * Parses [icalData] into an [ICalCalendar]: the calendar-level properties (NAME, COLOR,
+     * REFRESH-INTERVAL and others) and every VEVENT, VTODO and VJOURNAL. A missing VERSION
+     * reads as 2.0 and a missing CALSCALE as GREGORIAN.
      */
     fun parse(icalData: String): ParseResult<ICalCalendar> {
         return try {
@@ -679,7 +630,6 @@ class ICalParser(
             val builder = createCalendarBuilder()
             val calendar = builder.build(StringReader(unfolded))
 
-            // Parse calendar-level properties
             val prodId = calendar.getPropertyOrNull<Property>("PRODID")?.value
             val version = calendar.getPropertyOrNull<Property>("VERSION")?.value ?: "2.0"
             val calscale = calendar.getPropertyOrNull<Property>("CALSCALE")?.value ?: "GREGORIAN"
@@ -690,27 +640,12 @@ class ICalParser(
             val xWrCalname = calendar.getPropertyOrNull<Property>("X-WR-CALNAME")?.value
             val xAppleCalendarColor = calendar.getPropertyOrNull<Property>("X-APPLE-CALENDAR-COLOR")?.value
 
-            // Parse REFRESH-INTERVAL
             val refreshInterval = calendar.getPropertyOrNull<Property>("REFRESH-INTERVAL")
                 ?.value?.let { ICalAlarm.parseDuration(it) }
 
-            // Parse all VEVENT components
-            val events = calendar.getComponents<VEvent>(Component.VEVENT)
-                .mapNotNull { vevent ->
-                    parseVEvent(vevent).getOrNull()
-                }
-
-            // Parse all VTODO components
-            val todos = calendar.getComponents<VToDo>(Component.VTODO)
-                .mapNotNull { vtodo ->
-                    parseVTodo(vtodo).getOrNull()
-                }
-
-            // Parse all VJOURNAL components
-            val journals = calendar.getComponents<VJournal>(Component.VJOURNAL)
-                .mapNotNull { vjournal ->
-                    parseVJournal(vjournal).getOrNull()
-                }
+            val events = parseEvents(unfolded, calendar)
+            val todos = parseTodos(unfolded, calendar)
+            val journals = parseJournals(unfolded, calendar)
 
             val icalCalendar = ICalCalendar(
                 prodId = prodId,
@@ -735,11 +670,8 @@ class ICalParser(
     }
 
     /**
-     * Parse iCal string and return METHOD along with events.
-     * For iTIP scheduling messages (REQUEST, REPLY, CANCEL, etc.).
-     *
-     * @param icalData Raw iCalendar string
-     * @return CalendarParseResult with optional method and events
+     * Parses the METHOD and every VEVENT of an iTIP scheduling message (REQUEST, REPLY,
+     * CANCEL and others). The method is null when METHOD is absent or unrecognized.
      */
     fun parseWithMethod(icalData: String): ParseResult<CalendarParseResult> {
         return try {
@@ -747,64 +679,56 @@ class ICalParser(
             val builder = createCalendarBuilder()
             val calendar = builder.build(StringReader(unfolded))
 
-            // Extract METHOD from VCALENDAR
             val methodProp = calendar.getPropertyOrNull<Property>("METHOD")
             val method = methodProp?.value?.let { ITipMethod.fromString(it) }
 
-            val events = calendar.getComponents<VEvent>(Component.VEVENT)
-                .mapNotNull { vevent ->
-                    parseVEvent(vevent).getOrNull()
-                }
-
-            ParseResult.success(CalendarParseResult(method, events))
+            ParseResult.success(CalendarParseResult(method, parseEvents(unfolded, calendar)))
         } catch (e: Exception) {
             ParseResult.error("Failed to parse iCalendar data: ${e.message}", e)
         }
     }
 
     /**
-     * Parse a single VEVENT component to ICalEvent.
+     * Converts one VEVENT to an [ICalEvent]. Returns a missing-property result when it has
+     * neither DTSTART nor DTEND, and an error result when reading it throws.
      */
     fun parseVEvent(vevent: VEvent): ParseResult<ICalEvent> {
         return try {
-            // Get UID - generate random UUID if missing or blank (non-compliant
-            // servers). A blank UID is treated as missing so unrelated events
-            // can't share an empty-string key downstream (e.g. import grouping).
+            // A missing or blank UID (non-compliant servers) gets a random UUID. A blank
+            // UID counts as missing so unrelated events can't share an empty-string key
+            // downstream, for example in import grouping.
             val uid = vevent.getPropertyOrNull<Property>("UID")?.value?.ifBlank { null }
                 ?: UUID.randomUUID().toString()
 
-            // Get DTSTART - fall back to DTEND if missing (non-compliant servers)
+            // Without DTSTART (non-compliant servers), DTEND stands in
             val dtstartProp = vevent.getPropertyOrNull<Property>("DTSTART")
                 ?: vevent.getPropertyOrNull<Property>("DTEND")
                 ?: return ParseResult.missingProperty("DTSTART")
 
             val startDateTime = parseDateTimeFromProperty(dtstartProp)
-            // Detect all-day: check VALUE=DATE parameter, or 8-digit date format, or no "T"
+            // All-day when VALUE=DATE, an 8-digit date, or a value without "T"
             val valueParam = dtstartProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("VALUE")?.value
             val isAllDay = valueParam == "DATE" ||
                 (dtstartProp.value.length == 8 && dtstartProp.value.all { it.isDigit() }) ||
                 !dtstartProp.value.contains("T")
 
-            // Parse RECURRENCE-ID if present (modified instance)
+            // A RECURRENCE-ID marks an exception
             val recurrenceId = vevent.getPropertyOrNull<Property>("RECURRENCE-ID")
                 ?.let { parseDateTimeFromProperty(it) }
 
-            // Generate unique importId
             val importId = ICalEvent.generateImportId(uid, recurrenceId)
 
-            // Parse end time or duration
             val dtend = vevent.getPropertyOrNull<Property>("DTEND")
                 ?.let { parseDateTimeFromProperty(it) }
             val duration = vevent.getPropertyOrNull<Property>("DURATION")
                 ?.let { ICalAlarm.parseDuration(it.value) }
 
-            // Parse RRULE (only for master events, not modified instances)
+            // Only a master's RRULE is read; an exception's is ignored
             val rrule = if (recurrenceId == null) {
                 vevent.getPropertyOrNull<Property>("RRULE")
                     ?.let { RRule.parse(it.value) }
             } else null
 
-            // Parse EXDATE list
             val exdateProps = vevent.getProperties<Property>("EXDATE")
             val exdates = exdateProps.flatMap { exdate ->
                 val tzidParam = exdate.getParameterOrNull<net.fortuna.ical4j.model.parameter.TzId>("TZID")
@@ -830,21 +754,18 @@ class ICalParser(
                 }
             }
 
-            // Parse VALARMs
             val alarms = vevent.alarms.mapNotNull { valarm ->
                 parseVAlarm(valarm).getOrNull()
             }
 
-            // Parse categories
             val categoriesProps = vevent.getProperties<Property>("CATEGORIES")
             val categories = categoriesProps.flatMap { cat ->
-                // Drop blank elements at the source — a malformed value like
-                // "foo,,bar" would otherwise carry an empty category into Room
-                // and round-trip straight back to the server.
+                // Drop blank elements here: a malformed value like "foo,,bar" would
+                // otherwise carry an empty category into Room and round-trip back to
+                // the server.
                 cat.value.split(",").map { it.trim() }.filter { it.isNotEmpty() }
             }
 
-            // Get simple string properties
             val summary = vevent.getPropertyOrNull<Property>("SUMMARY")
                 ?.value
             val description = vevent.getPropertyOrNull<Property>("DESCRIPTION")
@@ -860,11 +781,11 @@ class ICalParser(
             val urlValue = vevent.getPropertyOrNull<Property>("URL")
                 ?.value
 
-            // Parse PRIORITY (RFC 5545) - 0=undefined, 1=highest, 9=lowest
+            // PRIORITY (RFC 5545 §3.8.1.9): 0 = undefined, 1 = highest, 9 = lowest; clamped to 0..9
             val priority = vevent.getPropertyOrNull<Property>("PRIORITY")
                 ?.value?.toIntOrNull()?.coerceIn(0, 9) ?: 0
 
-            // Parse GEO (RFC 5545) - "latitude;longitude" format
+            // GEO (RFC 5545 §3.8.1.6), kept as its "latitude;longitude" text
             val geo = vevent.getPropertyOrNull<Property>("GEO")?.value
 
             // Parse CLASS property (RFC 5545 Section 3.8.1.3)
@@ -895,26 +816,19 @@ class ICalParser(
                 parseRelatedToProperty(relProp)
             }
 
-            // Parse ORGANIZER
             val organizer = parseOrganizer(vevent)
 
-            // Parse ATTENDEE list
             val attendees = parseAttendees(vevent)
 
-            // Parse DTSTAMP
             val dtstamp = vevent.getPropertyOrNull<Property>("DTSTAMP")
                 ?.let { parseDateTimeFromProperty(it) }
 
-            // Parse LAST-MODIFIED
             val lastModified = vevent.getPropertyOrNull<Property>("LAST-MODIFIED")
                 ?.let { parseDateTimeFromProperty(it) }
 
-            // Parse CREATED
             val created = vevent.getPropertyOrNull<Property>("CREATED")
                 ?.let { parseDateTimeFromProperty(it) }
 
-            // Collect unknown/extra properties for round-trip fidelity
-            // This includes X-* vendor extensions and any other unhandled properties
             val rawProperties = collectRawProperties(vevent)
 
             val event = ICalEvent(
@@ -953,7 +867,7 @@ class ICalParser(
                 rawProperties = rawProperties
             )
 
-            // Repair: swap if DTEND < DTSTART (non-compliant servers)
+            // Non-compliant servers can send DTEND before DTSTART; swap them
             val repaired = if (event.dtEnd != null && event.dtEnd!!.timestamp < event.dtStart.timestamp) {
                 event.copy(dtStart = event.dtEnd!!, dtEnd = event.dtStart)
             } else {
@@ -966,9 +880,7 @@ class ICalParser(
         }
     }
 
-    /**
-     * Parse VALARM component.
-     */
+    /** Converts one VALARM to an [ICalAlarm]. */
     private fun parseVAlarm(valarm: VAlarm): ParseResult<ICalAlarm> {
         return try {
             val actionValue = valarm.getPropertyOrNull<Property>("ACTION")
@@ -993,7 +905,7 @@ class ICalParser(
                 triggerAbsolute = ICalDateTime.parse(triggerValue)
                 relatedToEnd = false
             } else {
-                trigger = Duration.ofMinutes(-15) // Default 15 min before
+                trigger = Duration.ofMinutes(-15) // No TRIGGER: 15 minutes before
                 triggerAbsolute = null
                 relatedToEnd = false
             }
@@ -1007,7 +919,8 @@ class ICalParser(
             val durationValue = valarm.getPropertyOrNull<Property>("DURATION")
                 ?.value
 
-            // RFC 9074 extensions
+            // RFC 9074 extensions (UID, ACKNOWLEDGED, RELATED-TO, PROXIMITY), plus
+            // DEFAULT-ALARM, which RFC 9074 doesn't define
             val uid = valarm.getPropertyOrNull<Property>("UID")?.value
 
             val acknowledged = valarm.getPropertyOrNull<Property>("ACKNOWLEDGED")
@@ -1044,39 +957,30 @@ class ICalParser(
     }
 
     /**
-     * Parse datetime from a property, handling TZID parameter.
-     * Detects DATE vs DATE-TIME using multiple checks for ical4j 3.x compatibility.
+     * Reads a date or date-time property, applying its TZID parameter.
      *
-     * ical4j 3.x normalizes date-only values (20231215) to datetime (20231215T000000).
-     * We detect DATE type using:
-     * 1. VALUE=DATE parameter (if present)
-     * 2. Property date object type (Date vs DateTime)
-     * 3. Original value format (8-digit date only)
+     * The value is date-only when any of these holds: a VALUE=DATE parameter, ical4j's
+     * parsed value is a LocalDate, or the value is 8 digits. A date-only value that arrives
+     * with a time part (ical4j 3.x wrote 20231215 as 20231215T000000) is cut to its date.
      */
     private fun parseDateTimeFromProperty(prop: Property): ICalDateTime {
         val value = prop.value
         val tzidParam = prop.getParameterOrNull<net.fortuna.ical4j.model.parameter.TzId>("TZID")
             ?.value
 
-        // Check VALUE parameter
         val valueParam = prop.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("VALUE")?.value
         val hasDateParameter = valueParam == "DATE"
 
-        // Check if property's internal date is Date (not DateTime)
-        // DtStart, DtEnd etc have getDate() which returns the temporal value
-        // ical4j 4.x: DateProperty<T> returns T which is a java.time.temporal.Temporal
+        // ical4j 4.x: a DateProperty's date is a java.time Temporal; LocalDate means
+        // date-only, LocalDateTime or ZonedDateTime date-time
         val dateProperty = prop as? net.fortuna.ical4j.model.property.DateProperty<*>
         val dateObj = dateProperty?.date
-        // In 4.x, LocalDate = date-only, LocalDateTime/ZonedDateTime = date-time
         val isDateType = dateObj != null && dateObj is java.time.LocalDate
 
-        // Also check if original value was 8-digit date (before ical4j normalization)
-        // This is stored in the property value before toString normalization
         val looks8DigitDate = value.length == 8 && value.all { it.isDigit() }
 
         val isDateOnly = hasDateParameter || isDateType || looks8DigitDate
 
-        // If DATE type but value was normalized to include T, extract just the date
         return if (isDateOnly && value.contains("T")) {
             ICalDateTime.parse(value.substringBefore("T"), tzidParam)
         } else {
@@ -1085,8 +989,8 @@ class ICalParser(
     }
 
     /**
-     * Extract just the UID from iCal data (for delete detection during sync).
-     * More efficient than full parsing when only UID is needed.
+     * Returns the value after the first `UID:` in [icalData], without a full parse. The match
+     * isn't anchored to a line start and the data isn't unfolded.
      */
     fun extractUid(icalData: String): String? {
         val uidMatch = Regex("""UID:(.+)""").find(icalData)
@@ -1094,7 +998,8 @@ class ICalParser(
     }
 
     /**
-     * Extract all UIDs from iCal data that may contain multiple VEVENTs.
+     * Returns the value after every `UID:` in [icalData], matched as [extractUid] does, so VTODO
+     * and VALARM UIDs are included.
      */
     fun extractAllUids(icalData: String): List<String> {
         return Regex("""UID:(.+)""").findAll(icalData)
@@ -1103,10 +1008,9 @@ class ICalParser(
     }
 
     /**
-     * Unfold iCalendar data per RFC 5545 Section 3.1.
-     * Long lines are folded with CRLF followed by whitespace.
-     *
-     * Note: Must unfold before parsing to handle long descriptions.
+     * Unfolds content lines (RFC 5545 §3.1): removes each line break, CRLF or bare LF,
+     * followed by a space or tab. Must run before parsing so long lines such as
+     * descriptions parse whole.
      */
     private fun unfoldICalData(data: String): String {
         return data
@@ -1117,20 +1021,21 @@ class ICalParser(
     }
 
     /**
-     * Fix known server bugs in raw iCalendar data before ical4j parsing.
-     *
-     * - Short UTC offsets: Synology sends +530 (should be +0530) or +5730 (should be +005730)
-     * - Misplaced T in day durations: some servers send -PT2D (should be -P2D)
-     * - DATE-typed timestamp metadata: icalendar-ruby gem and feeds derived from it
-     *   emit DTSTAMP/LAST-MODIFIED/CREATED as VALUE=DATE despite RFC 5545 §3.8.7
-     *   requiring DATE-TIME. ical4j's DateProperty serializer throws
-     *   UnsupportedTemporalTypeException (HourOfDay) when this hits LocalDate.
+     * Repairs known server bugs in the raw text before ical4j parses it:
+     * - Short UTC offsets: Synology sends `+530` for `+0530`. It also sends `+5730` for
+     *   `+005730`, which isn't repaired.
+     * - A T in a day duration: some servers send `-PT2D` for `-P2D`.
+     * - DATE-typed timestamp metadata: the icalendar-ruby gem and feeds derived from it emit
+     *   DTSTAMP, LAST-MODIFIED and CREATED as VALUE=DATE, though RFC 5545 §3.8.7 requires
+     *   DATE-TIME. ical4j's DateProperty serializer throws UnsupportedTemporalTypeException
+     *   (HourOfDay) on the resulting LocalDate.
+     * - A custom VTIMEZONE TZID ical4j can't resolve ([rewriteUnresolvableVTimezones]).
      */
     private fun preprocessICalData(data: String): String {
-        // Fix 1: Short UTC offsets — 3-digit offsets with missing leading zero
-        // RFC 5545: utc-offset = (+/-)HHMM or (+/-)HHMMSS
-        // Synology sends +530 instead of +0530 (IST). Pad 3-digit to 4-digit HHMM.
-        // Scoped to TZOFFSETFROM/TZOFFSETTO lines only — cannot corrupt freetext
+        // Short UTC offsets: pad a 3-digit offset to HHMM (Synology sends +530 for IST's
+        // +0530). RFC 5545: utc-offset = (+/-)HHMM or (+/-)HHMMSS. Only a TZOFFSETFROM or
+        // TZOFFSETTO value at the end of a line matches; the match isn't anchored to the
+        // line start.
         val offsetFixed = data.replace(
             Regex("""(TZOFFSETFROM|TZOFFSETTO):([+-])(\d{3})\s*$""", RegexOption.MULTILINE)
         ) { match ->
@@ -1140,47 +1045,40 @@ class ICalParser(
             "$prefix:$sign${digits.padStart(4, '0')}"   // +530 → +0530
         }
 
-        // Fix 2: Misplaced T in day durations: -PT2D → -P2D
-        // Scoped to TRIGGER and DURATION property lines only — cannot corrupt freetext
-        // Note: only fixes pure day durations (PTnD). Mixed day+time like PT2DT3H is not
-        // covered — those are rare and can be extended later if reports come in.
+        // Misplaced T in day durations: -PT2D → -P2D. Anchored to TRIGGER and DURATION
+        // lines, so free text can't match. Only a pure day duration (PTnD) is repaired;
+        // a mixed one like PT2DT3H is left as sent.
         val durationFixed = offsetFixed.replace(
             Regex("""^((?:TRIGGER|DURATION)[^:]*:)(-?)PT(\d+)D\s*$""", RegexOption.MULTILINE)
         ) { match ->
             "${match.groupValues[1]}${match.groupValues[2]}P${match.groupValues[3]}D"
         }
 
-        // Fix 3: DATE-typed timestamp metadata → upgrade to DATE-TIME at midnight UTC
-        // RFC 5545 §3.8.7 requires DATE-TIME for DTSTAMP / LAST-MODIFIED / CREATED.
-        // Non-compliant generators (e.g. icalendar-ruby) emit `VALUE=DATE:YYYYMMDD`,
-        // which ical4j parses as LocalDate and then throws when serializing
-        // (DateProperty.getValue → TemporalAdapter.toString needs HourOfDay).
-        // Convert preserves the publisher's date instead of falling back to "now".
-        // Anchored start-of-line + exactly three property names; cannot match
-        // freetext, folded continuation lines, or X-props.
+        // DATE-typed DTSTAMP, LAST-MODIFIED or CREATED → DATE-TIME at midnight UTC. ical4j
+        // parses `VALUE=DATE:YYYYMMDD` as a LocalDate and then throws when serializing
+        // (DateProperty.getValue → TemporalAdapter.toString needs HourOfDay). Converting
+        // keeps the publisher's date instead of falling back to "now". Anchored at the line
+        // start with only these three names, so free text, folded continuation lines and
+        // X- properties can't match.
         val dtstampFixed = durationFixed.replace(
             Regex("""^(DTSTAMP|LAST-MODIFIED|CREATED);VALUE=DATE:(\d{8})\s*$""", RegexOption.MULTILINE)
         ) { match ->
             "${match.groupValues[1]}:${match.groupValues[2]}T000000Z"
         }
 
-        // Fix 4: Locally-defined VTIMEZONE with an unresolvable TZID.
-        // RFC 5545 §3.2.19 permits a TZID with no leading solidus to name a
-        // timezone defined only by an embedded VTIMEZONE. ical4j 4.x resolves
-        // TZID via java.time.ZoneId.of(...) at date-access time, so a non-IANA
-        // name (e.g. "TZsfv") throws and every event is dropped. When such a
-        // VTIMEZONE carries X-LIC-LOCATION naming a resolvable IANA zone, rewrite
-        // the custom TZID to that zone so the offset is correct rather than
-        // floating. Zones that stay unresolvable are handled by relaxed
-        // validation (kept at device-local time) instead of being dropped.
         return rewriteUnresolvableVTimezones(dtstampFixed)
     }
 
     /**
-     * Rewrite the TZID of any embedded VTIMEZONE whose identifier ical4j cannot
-     * resolve to a real zone but that carries a resolvable X-LIC-LOCATION IANA
-     * zone, replacing every `TZID:`/`TZID=` reference to the custom name with the
-     * IANA zone. Leaves already-resolvable TZIDs untouched. See Fix 4 above.
+     * Rewrites every `TZID:` and `TZID=` reference to an embedded VTIMEZONE's custom TZID
+     * to the IANA zone its X-LIC-LOCATION names, when the TZID doesn't resolve and that
+     * zone does. A TZID that already resolves is left untouched.
+     *
+     * RFC 5545 §3.2.19 lets a TZID with no leading solidus name a zone defined only by an
+     * embedded VTIMEZONE. ical4j 4.x resolves a TZID with java.time.ZoneId.of when a date
+     * is read, so a non-IANA name such as "TZsfv" throws and every event is dropped. The
+     * rewrite gives the right offset instead of floating time. A zone that stays
+     * unresolvable is kept at device-local time by relaxed validation ([configureIcal4j]).
      */
     private fun rewriteUnresolvableVTimezones(data: String): String {
         if (!data.contains("X-LIC-LOCATION", ignoreCase = true)) return data
@@ -1208,30 +1106,8 @@ class ICalParser(
         try { java.time.ZoneId.of(id); true } catch (_: Exception) { false }
 
     /**
-     * Normalize the uppercase newline escape `\N` to lowercase `\n` in raw ICS
-     * text, before ical4j parses it.
-     *
-     * RFC 5545 §3.3.11 defines `\N` (uppercase) as equivalent to `\n` — both
-     * encode a newline in a TEXT value. ical4j 4.2.2's PropertyCodec only
-     * decodes the lowercase form, so an uppercase `\N` would otherwise survive
-     * verbatim into the parsed value.
-     *
-     * This must run on the raw (pre-parse) text, not on `Property.value`: once
-     * ical4j has decoded, a source `\N` (newline) and a source `\\N` (an escaped
-     * backslash followed by a literal `N`, e.g. a Windows path `C:\Notes`) both
-     * collapse to the same two characters, and no post-decode rule can tell them
-     * apart. The negative lookbehind for an odd backslash run below preserves
-     * that distinction: `\N` is rewritten only when its backslash is itself
-     * unescaped; `\\N` is left untouched for ical4j to decode to `\` + `N`.
-     *
-     * `(?:\\\\)*` consumes complete escaped-backslash pairs so the trailing `\N`
-     * is matched against a clean boundary, and those pairs are re-emitted via the
-     * capture group. Run after unfolding so a `\N` split across a fold boundary
-     * is seen whole.
-     */
-    /**
-     * The raw-text preparation pipeline every parse entry point runs before
-     * handing the body to ical4j. Stage order is load-bearing: quirk fixes
+     * Runs the raw-text preparation every parse entry point applies before
+     * handing the body to ical4j. The stage order matters: quirk fixes
      * ([preprocessICalData]) match on folded property lines and so must run
      * first; unfolding then joins continuation lines; the uppercase-`\N`
      * normalization runs last so a `\N` split across a fold boundary is seen
@@ -1241,19 +1117,36 @@ class ICalParser(
     private fun prepareForParsing(icalData: String): String =
         normalizeUppercaseNewlineEscape(unfoldICalData(preprocessICalData(icalData)))
 
+    /**
+     * Rewrites the uppercase newline escape `\N` to lowercase `\n` in raw ICS
+     * text, before ical4j parses it.
+     *
+     * RFC 5545 §3.3.11 defines `\N` (uppercase) as equivalent to `\n`: both
+     * encode a newline in a TEXT value. ical4j's PropertyCodec (checked in 4.3.0)
+     * only decodes the lowercase form, so an uppercase `\N` would otherwise
+     * survive verbatim into the parsed value.
+     *
+     * This must run on the raw text, not on `Property.value`: once ical4j has
+     * decoded, a source `\N` (newline) and a source `\\N` (an escaped backslash
+     * followed by a literal `N`, for example a Windows path `C:\Notes`) both
+     * collapse to the same two characters, and no post-decode rule can tell them
+     * apart. [UPPERCASE_NEWLINE_ESCAPE] keeps that distinction: `\N` is rewritten
+     * only when its backslash is itself unescaped; `\\N` is left for ical4j to
+     * decode to `\` + `N`. Its `(?:\\\\)*` consumes complete escaped-backslash
+     * pairs so the trailing `\N` is matched against a clean boundary, and the
+     * capture group re-emits those pairs.
+     */
     private fun normalizeUppercaseNewlineEscape(data: String): String {
-        // Cheap substring guard: `\N` is vanishingly rare in real payloads, so
-        // skip the lookbehind regex scan of the whole (potentially large) body
-        // whenever no backslash-N is present at all.
+        // `\N` is rare in real payloads, so skip the regex scan of the whole body
+        // when no backslash-N is present at all.
         if (!data.contains("\\N")) return data
         return UPPERCASE_NEWLINE_ESCAPE.replace(data) { match -> match.groupValues[1] + "\\n" }
     }
 
     /**
-     * Parse ORGANIZER property.
-     *
-     * Format: ORGANIZER;CN=John Doe;SENT-BY="mailto:assistant@example.com":mailto:john@example.com
-     * Extended to support RFC 6638 scheduling parameters.
+     * Reads the VEVENT's ORGANIZER, including the RFC 6638 parameters SCHEDULE-AGENT,
+     * SCHEDULE-STATUS and SCHEDULE-FORCE-SEND. Example:
+     * `ORGANIZER;CN=John Doe;SENT-BY="mailto:assistant@example.com":mailto:john@example.com`
      */
     private fun parseOrganizer(vevent: VEvent): Organizer? {
         val organizerProp = vevent.getPropertyOrNull<Property>("ORGANIZER")
@@ -1289,19 +1182,18 @@ class ICalParser(
         )
     }
 
-    /**
-     * Parse SCHEDULE-STATUS values (can be comma-separated).
-     */
+    /** Splits a SCHEDULE-STATUS value, which can list more than one code, comma-separated. */
     private fun parseScheduleStatuses(value: String): List<ScheduleStatus> {
         return value.split(",").map { ScheduleStatus.fromString(it.trim()) }
     }
 
     /**
-     * Parse ATTENDEE properties.
+     * Reads the VEVENT's ATTENDEEs, skipping any without an address. Example:
+     * `ATTENDEE;CN=Jane Doe;PARTSTAT=ACCEPTED;ROLE=REQ-PARTICIPANT:mailto:jane@example.com`
      *
-     * Format: ATTENDEE;CN=Jane Doe;PARTSTAT=ACCEPTED;ROLE=REQ-PARTICIPANT:mailto:jane@example.com
-     * Extended to support RFC 5545 parameters: CUTYPE, DIR, MEMBER, DELEGATED-TO, DELEGATED-FROM
-     * and RFC 6638 scheduling parameters: SENT-BY, SCHEDULE-AGENT, SCHEDULE-STATUS, SCHEDULE-FORCE-SEND
+     * Besides CN, PARTSTAT, ROLE and RSVP it reads the RFC 5545 parameters CUTYPE, DIR,
+     * MEMBER, DELEGATED-TO, DELEGATED-FROM and SENT-BY, and the RFC 6638 parameters
+     * SCHEDULE-AGENT, SCHEDULE-STATUS and SCHEDULE-FORCE-SEND.
      */
     private fun parseAttendees(vevent: VEvent): List<Attendee> {
         val attendeeProps = vevent.getProperties<Property>("ATTENDEE")
@@ -1323,8 +1215,8 @@ class ICalParser(
 
             val rsvpValue = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("RSVP")
                 ?.value
-            // RFC 5545 §3.2.17: RSVP is optional. Preserve null vs explicit-FALSE
-            // — required for T2 RSVP-affordance gating ("did organizer ask for a response?").
+            // RFC 5545 §3.2.17: RSVP is optional. Keep null apart from an explicit FALSE:
+            // null means the ATTENDEE didn't say whether the organizer asked for a response.
             val rsvp: Boolean? = rsvpValue?.equals("TRUE", ignoreCase = true)
 
             // RFC 5545 parameters
@@ -1335,8 +1227,8 @@ class ICalParser(
             val dir = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("DIR")
                 ?.value?.removeSurrounding("\"")
 
-            // RFC 5545 §3.2.11: MEMBER is multi-value (comma-separated quoted URIs).
-            // Same wire form as DELEGATED-TO/FROM below — reuse parseMailtoList.
+            // RFC 5545 §3.2.11: MEMBER is multi-value (comma-separated quoted URIs), the
+            // same wire form as DELEGATED-TO and DELEGATED-FROM below, so all use parseMailtoList.
             val memberValue = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("MEMBER")
                 ?.value
             val member = parseMailtoList(memberValue)
@@ -1349,7 +1241,7 @@ class ICalParser(
                 ?.value
             val delegatedFrom = parseMailtoList(delegatedFromValue)
 
-            // RFC 6638 scheduling parameters
+            // SENT-BY (RFC 5545 §3.2.18), then the RFC 6638 scheduling parameters
             val sentBy = attendeeProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("SENT-BY")
                 ?.value?.let { extractEmailFromCalAddress(it) }
 
@@ -1385,8 +1277,8 @@ class ICalParser(
     }
 
     /**
-     * Parse comma-separated mailto: list.
-     * Handles format: "mailto:a@b.com","mailto:c@d.com"
+     * Splits a comma-separated list of quoted CAL-ADDRESSes (`"mailto:a@b.com","mailto:c@d.com"`)
+     * into bare addresses, dropping empty ones.
      */
     private fun parseMailtoList(value: String?): List<String> {
         if (value.isNullOrBlank()) return emptyList()
@@ -1396,10 +1288,8 @@ class ICalParser(
     }
 
     /**
-     * Extract email from CAL-ADDRESS format.
-     *
-     * Input: "mailto:john@example.com" or "MAILTO:john@example.com"
-     * Output: "john@example.com"
+     * Strips surrounding quotes and a `mailto:` prefix in any case:
+     * `MAILTO:john@example.com` gives `john@example.com`.
      */
     private fun extractEmailFromCalAddress(calAddress: String): String {
         return calAddress
@@ -1411,41 +1301,31 @@ class ICalParser(
     }
 
     /**
-     * Mailto-shape detection used by the EMAIL= fallback. Strict enough to
-     * reject principal-hrefs (`/646691839/principal/`), HTTP/HTTPS principal
-     * URIs (`https://caldav.example.com/principals/users/foo/`), `urn:uuid:`
-     * forms, and pathological `@example.com` / `foo@` shapes.
+     * The mailbox shape [extractCalAddressEmail] requires of the value and of the `EMAIL=`
+     * fallback. It rejects principal hrefs (`/646691839/principal/`), HTTP and HTTPS
+     * principal URIs (`https://caldav.example.com/principals/users/foo/`), `urn:uuid:`
+     * forms, and shapes like `@example.com` or `foo@`.
      */
     private val mailtoShape = org.onekash.icaldav.util.CalAddress.mailtoShape
 
     /**
-     * Extract a mailto-shaped email from a CAL-ADDRESS property, falling
-     * back to the property's `EMAIL=` parameter when the primary value
-     * isn't a parseable mailto.
+     * Returns the address of a CAL-ADDRESS property: the value without `mailto:`
+     * when it matches [mailtoShape], else the property's `EMAIL=` parameter when
+     * that does, else the stripped value, for the caller to handle.
      *
-     * Apple's iSchedule binding rewrites ORGANIZER and ATTENDEE primary
-     * values to internal principal hrefs (`/.../principal/`) when the
-     * mailto matches the authenticated account; the original mailto is
-     * preserved as an `EMAIL=` parameter. The same shape can appear from
-     * other servers using `urn:uuid:` or HTTP-principal forms (RFC 5545
-     * §3.3.3 permits non-mailto CAL-ADDRESSes).
+     * iCloud (its iSchedule binding) rewrites ORGANIZER and ATTENDEE values to
+     * internal principal hrefs (`/.../principal/`) when the mailto matches the
+     * authenticated account, and keeps the original mailto as an `EMAIL=`
+     * parameter. Other servers can send `urn:uuid:` or HTTP-principal forms
+     * (RFC 5545 §3.3.3 permits non-mailto CAL-ADDRESSes).
      *
-     * RFC 5545 §3.2 mandates parameter names are case-insensitive — the
-     * `EMAIL=` lookup iterates `prop.parameters` instead of using
-     * ical4j's case-sensitive `getParameter(name)` accessor.
-     *
-     * Final fallback: when neither primary nor `EMAIL=` yields a
-     * mailto-shaped string, returns the original primary value (caller
-     * decides what to do — preserves current behavior for non-iCloud
-     * servers).
+     * RFC 5545 §3.1 makes parameter names case-insensitive, so `EMAIL=` is
+     * matched in any casing ([getParameterIgnoreCase]).
      */
     private fun extractCalAddressEmail(prop: net.fortuna.ical4j.model.Property): String {
         val primary = extractEmailFromCalAddress(prop.value)
         if (mailtoShape.matches(primary)) return primary
 
-        // RFC 5545 §3.2 mandates parameter names are case-insensitive — covers
-        // any conformant casing (EMAIL=, email=, Email=, eMaIl=, ...) without
-        // hardcoding a list of variants.
         val emailParamValue = prop.getParameterIgnoreCase("EMAIL")
             ?.value
             ?.takeUnless { it.isBlank() }
@@ -1458,12 +1338,9 @@ class ICalParser(
     // ============ RFC 7986 Property Parsing ============
 
     /**
-     * Parse IMAGE property (RFC 7986).
-     *
-     * Format: IMAGE;VALUE=URI;DISPLAY=BADGE;FMTTYPE=image/png:https://example.com/logo.png
-     *
-     * @param prop The IMAGE property from ical4j
-     * @return Parsed ICalImage or null if invalid
+     * Reads an RFC 7986 IMAGE property, or returns null when its value is blank. DISPLAY
+     * defaults to GRAPHIC. Example:
+     * `IMAGE;VALUE=URI;DISPLAY=BADGE;FMTTYPE=image/png:https://example.com/logo.png`
      */
     private fun parseImageProperty(prop: Property): ICalImage? {
         val uri = prop.value
@@ -1487,12 +1364,8 @@ class ICalParser(
     }
 
     /**
-     * Parse CONFERENCE property (RFC 7986).
-     *
-     * Format: CONFERENCE;VALUE=URI;FEATURE=VIDEO,AUDIO;LABEL=Join:https://zoom.us/j/123
-     *
-     * @param prop The CONFERENCE property from ical4j
-     * @return Parsed ICalConference or null if invalid
+     * Reads an RFC 7986 CONFERENCE property, or returns null when its value is blank. Example:
+     * `CONFERENCE;VALUE=URI;FEATURE=VIDEO,AUDIO;LABEL=Join:https://zoom.us/j/123`
      */
     private fun parseConferenceProperty(prop: Property): ICalConference? {
         val uri = prop.value
@@ -1519,12 +1392,8 @@ class ICalParser(
     // ============ RFC 9253 Property Parsing ============
 
     /**
-     * Parse LINK property (RFC 9253).
-     *
-     * Format: LINK;REL=alternate;FMTTYPE=text/html;TITLE="Details":https://example.com/event
-     *
-     * @param prop The LINK property from ical4j
-     * @return Parsed ICalLink or null if invalid
+     * Reads an RFC 9253 LINK property, or returns null when its value is blank. Example:
+     * `LINK;REL=alternate;FMTTYPE=text/html;TITLE="Details":https://example.com/event`
      */
     private fun parseLinkProperty(prop: Property): ICalLink? {
         val uri = prop.value
@@ -1555,12 +1424,8 @@ class ICalParser(
     }
 
     /**
-     * Parse RELATED-TO property (RFC 9253).
-     *
-     * Format: RELATED-TO;RELTYPE=PARENT:parent-event-uid
-     *
-     * @param prop The RELATED-TO property from ical4j
-     * @return Parsed ICalRelation or null if invalid
+     * Reads a RELATED-TO property with its RFC 9253 parameters, or returns null when its value
+     * is blank. Example: `RELATED-TO;RELTYPE=PARENT:parent-event-uid`
      */
     private fun parseRelatedToProperty(prop: Property): ICalRelation? {
         val uid = prop.value
@@ -1581,8 +1446,8 @@ class ICalParser(
     // ============ Raw Property Collection ============
 
     /**
-     * Properties that are explicitly handled and should NOT be in rawProperties.
-     * These are parsed into dedicated ICalEvent fields.
+     * Properties parsed into [ICalEvent] fields, so left out of rawProperties and
+     * unknownPropertyLines.
      */
     private val handledProperties = setOf(
         "UID", "DTSTART", "DTEND", "DURATION", "DTSTAMP",
@@ -1595,21 +1460,17 @@ class ICalParser(
         "ORGANIZER", "ATTENDEE",
         "LAST-MODIFIED", "CREATED",
         "CATEGORIES"
-        // Note: BEGIN, END, and VALARM are components, not properties
+        // BEGIN, END and VALARM aren't properties, so they aren't listed
     )
 
     /**
-     * Collect unhandled properties for round-trip fidelity.
+     * Collects the properties not in [handledProperties] for round trips: X- vendor
+     * extensions such as X-APPLE-STRUCTURED-LOCATION, and any other RFC 5545 property.
      *
-     * This preserves:
-     * - X-* vendor extensions (X-APPLE-STRUCTURED-LOCATION, X-GOOGLE-CONFERENCE, etc.)
-     * - Any other RFC 5545 property not explicitly handled
-     *
-     * Properties with parameters are stored with parameters in the key:
-     * "X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-TITLE=Apple Park" -> "geo:37.33..."
-     *
-     * @param vevent The VEvent component to extract properties from
-     * @return Map of property name (with params) to value
+     * The key is the name plus any parameters, the value the property value:
+     * "X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-TITLE=Apple Park" -> "geo:37.33...". A blank
+     * value is dropped, and repeats with the same key keep only the last value;
+     * [UnknownPropertyLines] keeps every line.
      */
     private fun collectRawProperties(vevent: VEvent): Map<String, String> {
         val raw = mutableMapOf<String, String>()
@@ -1617,28 +1478,21 @@ class ICalParser(
         for (prop in vevent.getAllProperties()) {
             val propName = prop.name?.uppercase() ?: continue
 
-            // Skip properties we handle explicitly
             if (propName in handledProperties) continue
 
-            // Skip component markers
             if (propName == "BEGIN" || propName == "END") continue
 
-            // Get parameters list via ical4j API
             val paramList = prop.getParameters()
 
-            // Build property key with parameters for properties that have them
             val key = if (paramList.isEmpty()) {
                 propName
             } else {
-                // Include parameters in key for X-* properties with parameters
-                // e.g., "X-APPLE-STRUCTURED-LOCATION;VALUE=URI;X-TITLE=Apple Park"
                 val paramStr = paramList.joinToString(";") { param ->
                     "${param.name}=${param.value}"
                 }
                 "$propName;$paramStr"
             }
 
-            // Store the value
             val value = prop.value
             if (!value.isNullOrBlank()) {
                 raw[key] = value
@@ -1651,10 +1505,8 @@ class ICalParser(
     // ============ VFREEBUSY Parsing ============
 
     /**
-     * Parse VFREEBUSY component from iCal data.
-     *
-     * @param icalData Raw iCalendar string containing VFREEBUSY
-     * @return Parsed ICalFreeBusy or null if not found/invalid
+     * Parses the first VFREEBUSY in [icalData], or returns null when there is none or
+     * parsing fails.
      */
     fun parseFreeBusy(icalData: String): ICalFreeBusy? {
         return try {
@@ -1672,7 +1524,9 @@ class ICalParser(
     }
 
     /**
-     * Parse a VFreeBusy component.
+     * Converts one VFREEBUSY. A missing UID gets an uppercase random UUID, and a missing
+     * DTSTAMP, DTSTART or DTEND becomes now. Attendees get NEEDS-ACTION, REQ-PARTICIPANT
+     * and RSVP false whatever their parameters say.
      */
     private fun parseVFreeBusy(vfb: VFreeBusy): ICalFreeBusy {
         val uid = vfb.getPropertyOrNull<Property>("UID")?.value
@@ -1690,7 +1544,7 @@ class ICalParser(
             ?.let { parseDateTimeFromProperty(it) }
             ?: ICalDateTime.now()
 
-        // Parse ORGANIZER (reuse from VEvent parsing logic)
+        // ORGANIZER without the RFC 6638 parameters parseOrganizer reads
         val organizerProp = vfb.getPropertyOrNull<Property>("ORGANIZER")
         val organizer = organizerProp?.let { prop ->
             val email = extractCalAddressEmail(prop)
@@ -1700,7 +1554,6 @@ class ICalParser(
             Organizer(email = email, name = cn, sentBy = sentBy)
         }
 
-        // Parse ATTENDEEs
         val attendeeProps = vfb.getProperties<Property>("ATTENDEE")
         val attendees = attendeeProps.mapNotNull { attendeeProp ->
             val email = extractCalAddressEmail(attendeeProp)
@@ -1715,7 +1568,7 @@ class ICalParser(
             )
         }
 
-        // Parse FREEBUSY periods
+        // FBTYPE defaults to BUSY
         val freeBusyProps = vfb.getProperties<Property>("FREEBUSY")
         val freeBusyPeriods = freeBusyProps.flatMap { fbProp ->
             val fbtypeParam = fbProp.getParameterOrNull<net.fortuna.ical4j.model.Parameter>("FBTYPE")?.value
@@ -1735,9 +1588,9 @@ class ICalParser(
     }
 
     /**
-     * Parse FREEBUSY periods from property value.
-     * Format: "20231215T090000Z/20231215T100000Z,20231215T140000Z/20231215T150000Z"
-     * or with duration: "20231215T090000Z/PT1H"
+     * Splits a FREEBUSY value into periods, skipping malformed ones. Each period is
+     * start/end ("20231215T090000Z/20231215T100000Z") or start/duration
+     * ("20231215T090000Z/PT1H"), comma-separated.
      */
     private fun parseFreeBusyPeriods(value: String, type: FreeBusyType): List<FreeBusyPeriod> {
         return value.split(",").mapNotNull { periodStr ->

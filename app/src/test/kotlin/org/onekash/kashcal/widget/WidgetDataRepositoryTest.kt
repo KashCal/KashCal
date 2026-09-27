@@ -19,15 +19,16 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Unit tests for WidgetDataRepository.
+ * Tests [WidgetDataRepository] over a mocked [DisplayEventRepository] returning Room events.
  *
- * Tests cover:
- * - Empty state (no events today)
- * - Event sorting (all-day first, then timed by start time)
- * - Past event detection
- * - DisplayEvent → WidgetEvent mapping
- * - Multi-day event display (via DisplayEventRepository grouping)
- * - getWeekEvents returns exactly 7 entries
+ * Covers:
+ * - empty results from getTodayEvents and getEventsInRange
+ * - sorting all-day first, then by start time, in each of the three methods
+ * - past detection, including an all-day event today that isn't past
+ * - the cancelled flag, with cancelled events kept, not dropped
+ * - DisplayEvent to WidgetEvent mapping, and the default color when there is no calendar color
+ * - getWeekEvents returning 7 entries, all empty with no events
+ * - getEventsInRange keyed by day across two days
  */
 class WidgetDataRepositoryTest {
 
@@ -171,9 +172,8 @@ class WidgetDataRepositoryTest {
 
     @Test
     fun `getTodayEvents keeps cancelled events visible alongside confirmed ones`() = runTest {
-        // The widget must render cancelled events (crossed off), not drop them.
-        // A cancelled + a confirmed event both survive, and only the cancelled
-        // one carries the isCancelled flag downstream.
+        // The widget must render cancelled events crossed off, not drop them: both events
+        // survive, and only the cancelled one carries isCancelled.
         val now = System.currentTimeMillis()
         val todayCode = DateTimeUtils.eventTsToDayCode(now, isAllDay = false)
         val start = now + 3600000

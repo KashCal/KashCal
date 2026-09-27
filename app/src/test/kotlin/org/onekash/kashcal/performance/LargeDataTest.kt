@@ -27,15 +27,11 @@ import java.util.UUID
 import kotlin.system.measureTimeMillis
 
 /**
- * Large data volume tests for performance validation.
+ * Times inserts, day and range queries, FTS search, deletes and a Flow's first emission over
+ * 50 to 1000 events or occurrences in an in-memory Room database. Each test asserts a time
+ * ceiling; the queries, the search and the calendar cascade delete also assert a result count.
  *
- * Tests verify that the app handles large datasets without:
- * - Unacceptable delays (defined thresholds per operation)
- * - Memory issues (OOM)
- * - Database timeouts
- *
- * These are not strict performance benchmarks, but sanity checks
- * to catch regressions that would impact user experience.
+ * These are sanity checks against regressions a user would feel, not strict benchmarks.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -61,7 +57,7 @@ class LargeDataTest {
             .allowMainThreadQueries()
             .build()
 
-        // Insert a test account (required for Calendar FK)
+        // Calendar rows need an account (foreign key).
         kotlinx.coroutines.runBlocking {
             testAccountId = database.accountsDao().insert(
                 Account(
@@ -240,7 +236,7 @@ class LargeDataTest {
 
         val elapsed = measureTimeMillis {
             val results = database.eventsDao().search("Meeting")
-            // Should find the 50 events with "Meeting with Team Alpha"
+            // 50 titles are "Meeting with Team Alpha"; the assert only requires 40.
             assertTrue("Should find matching events", results.size >= 40)
         }
 
@@ -284,7 +280,7 @@ class LargeDataTest {
 
         assertTrue("Cascade delete should complete in < 5s, took ${elapsed}ms", elapsed < 5000)
 
-        // Verify cascade worked
+        // Deleting the calendar cascades to its events.
         val remainingCount = database.eventsDao().getCountByCalendar(calendar.id)
         assertEquals("All events should be deleted", 0, remainingCount)
     }
@@ -354,7 +350,7 @@ class LargeDataTest {
         assertTrue("Flow first emission should be < 1s, took ${elapsed}ms", elapsed < 1000)
     }
 
-    // ==================== Concurrent Access Tests ====================
+    // ==================== Multi-Calendar Tests ====================
 
     @Test
     fun `multiple calendars with many events query correctly`() = runTest {

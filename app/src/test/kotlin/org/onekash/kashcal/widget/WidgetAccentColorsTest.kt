@@ -18,21 +18,21 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.theme.ColorSource
 
 /**
- * Verifies the widget color resolution. By default (FOLLOW_APP, never touched widget settings)
- * the widgets mirror the app: only the in-app SEED accent yields app-derived providers; the
- * automatic (Material You) source resolves to null so the widget renders on the device's genuine
- * dynamic palette (`GlanceTheme.colors` at the call site). A legacy teal user is migrated onto
- * the seed path.
+ * Tests [resolveWidgetAccentColors]. By default (FOLLOW_APP, widget settings never touched) the
+ * widgets mirror the app: only the in-app SEED accent yields app-derived providers; the automatic
+ * (Material You) source resolves to null so the widget renders on the device's dynamic palette
+ * (`GlanceTheme.colors` at the call site). A legacy teal user is migrated onto the seed path.
  *
- * The widget-specific overrides sit ON TOP of that: a widget-only SEED recolors the widgets
- * regardless of the app source, a widget DYNAMIC forces the genuine palette regardless of the
- * app accent, and the widget light/dark mode pins one face by publishing the forced scheme as
- * both the day and night palette — for DYNAMIC that means concrete pinned providers built from
- * the platform's own dynamic scheme instead of the null passthrough.
+ * The widget settings sit on top of that: a widget-only SEED recolors the widgets whatever the
+ * app source, a widget DYNAMIC forces the device palette whatever the app accent, and a widget
+ * light or dark mode pins one face by publishing the forced scheme as both the day and night
+ * palette. For DYNAMIC that means concrete pinned providers built from the platform's dynamic
+ * scheme, not the null passthrough. The follow-app theme takes the app's forced face, or none
+ * when the app follows the device. An unknown stored color or theme source is follow-app.
  */
 class WidgetAccentColorsTest {
 
-    /** Unused by the resolution under test — the dynamic scheme is always injected below. */
+    /** Unused: only the default dynamic scheme reads it, and every call injects one. */
     private val context: Context = mockk()
 
     /** Stand-in platform dynamic palette; the real default reads the device's (minSdk 31). */
@@ -56,7 +56,7 @@ class WidgetAccentColorsTest {
         every { this@mockk.widgetThemeSource } returns flowOf(widgetThemeSource)
     }
 
-    /** Resolves a Glance [ColorProvider]'s concrete color for the light (false) or dark (true) face. */
+    /** Returns a Glance [ColorProvider]'s color for the light (false) or dark (true) face. */
     private fun ColorProvider.resolve(dark: Boolean): Color =
         (this as DayNightColorProvider).getColor(dark)
 
@@ -115,7 +115,7 @@ class WidgetAccentColorsTest {
             fakeDynamicScheme,
         )
         assertNotNull(config.colors)
-        // Must be the WIDGET seed's scheme, not the app's seed.
+        // The widget seed's scheme, not the app's seed.
         val expected = accentColorProviders(widgetSeed)
         assertEquals(expected.primary.resolve(false), config.colors!!.primary.resolve(false))
         assertEquals(expected.primary.resolve(true), config.colors!!.primary.resolve(true))
@@ -175,7 +175,7 @@ class WidgetAccentColorsTest {
         assertEquals(true, config.forcedDark)
         val providers = config.colors!!
         assertEquals(providers.primary.resolve(false), providers.primary.resolve(true))
-        // ...and the pinned tone is the DARK scheme's, not the light one.
+        // The pinned tone is the dark scheme's, not the light one.
         val unpinned = accentColorProviders(KashCalDataStore.ACCENT_SEED_DEFAULT)
         assertEquals(unpinned.primary.resolve(true), providers.primary.resolve(false))
     }
@@ -191,8 +191,8 @@ class WidgetAccentColorsTest {
             fakeDynamicScheme,
         )
         assertEquals(true, config.forcedDark)
-        // No null passthrough here: the platform palette must be re-published pinned, so the
-        // forced face shows even when the system is in the opposite mode.
+        // No null passthrough: the platform palette is published pinned, so the forced face
+        // shows even when the system is in the opposite mode.
         val providers = config.colors!!
         assertEquals(fakeDark.primary, providers.primary.resolve(false))
         assertEquals(fakeDark.primary, providers.primary.resolve(true))
@@ -274,8 +274,8 @@ class WidgetAccentColorsTest {
 
     @Test
     fun `legacy widget theme value system falls back to follow-app`() = runTest {
-        // The earlier widget-theme setting persisted "system"; it's unknown to WidgetThemeSource and
-        // must resolve to FOLLOW_APP — here the app is forced dark, so the widget adopts dark.
+        // An older widget-theme setting stored "system" under the same key; it's unknown to
+        // WidgetThemeSource and resolves to FOLLOW_APP, so the widget takes the app's dark face.
         val config = resolveWidgetAccentColors(
             context,
             dataStore(

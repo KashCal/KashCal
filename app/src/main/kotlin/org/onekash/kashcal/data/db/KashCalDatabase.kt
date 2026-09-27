@@ -35,21 +35,24 @@ import org.onekash.kashcal.data.db.entity.ScheduledReminder
 import org.onekash.kashcal.data.db.entity.SyncLog
 
 /**
- * KashCal Room Database.
- *
- * Central database for calendar data with offline-first architecture.
- * Supports CalDAV sync with iCloud and local calendars.
+ * Stores the Room-backed calendar data offline-first: local, iCloud, CalDAV and ICS
+ * subscription calendars. Device-calendar events stay in CalendarProvider.
  *
  * Tables:
- * - accounts: CalDAV account credentials
- * - calendars: Calendar collections
- * - events: Calendar events (masters + exceptions)
- * - events_fts: FTS4 full-text search index for events (v4)
- * - occurrences: Materialized RRULE expansions
- * - pending_operations: Offline-first sync queue
- * - sync_logs: Debug/audit trail
- * - ics_subscriptions: ICS feed subscriptions (v2)
- * - scheduled_reminders: Alarm tracking for notifications (v3)
+ * - accounts: sync accounts; credentials are stored in
+ *   [org.onekash.kashcal.data.credential.UnifiedCredentialManager], not here
+ * - address_books: CardDAV address-book collections
+ * - attendees: per-event ATTENDEE rows
+ * - calendars: calendar collections
+ * - categories: per-tag color and recency
+ * - events: masters and exceptions
+ * - events_fts: FTS4 search index over events
+ * - ics_subscriptions: ICS feed subscriptions
+ * - occurrences: materialized RRULE expansions
+ * - pending_cancels: removed attendees awaiting an iTIP CANCEL
+ * - pending_operations: sync queue
+ * - scheduled_reminders: alarms scheduled for reminder notifications
+ * - sync_logs: sync debug and audit trail
  *
  * @see <a href="https://developer.android.com/training/data-storage/room">Room Documentation</a>
  */
@@ -78,89 +81,49 @@ import org.onekash.kashcal.data.db.entity.SyncLog
 @TypeConverters(Converters::class)
 abstract class KashCalDatabase : RoomDatabase() {
 
-    /**
-     * Access to Account operations.
-     */
     abstract fun accountsDao(): AccountsDao
 
-    /**
-     * Access to CardDAV address-book collection operations.
-     */
     abstract fun addressBookDao(): AddressBookDao
 
-    /**
-     * Access to Calendar operations.
-     */
     abstract fun calendarsDao(): CalendarsDao
 
-    /**
-     * Access to Event operations.
-     */
     abstract fun eventsDao(): EventsDao
 
-    /**
-     * Access to Occurrence operations (materialized RRULE expansions).
-     */
     abstract fun occurrencesDao(): OccurrencesDao
 
-    /**
-     * Access to Attendee operations (per-event ATTENDEE rows).
-     */
     abstract fun attendeesDao(): AttendeesDao
 
-    /**
-     * Access to PendingOperation operations (sync queue).
-     */
     abstract fun pendingOperationsDao(): PendingOperationsDao
 
-    /**
-     * Access to PendingCancel operations (removed attendees awaiting iTIP CANCEL).
-     */
     abstract fun pendingCancelsDao(): PendingCancelsDao
 
-    /**
-     * Access to SyncLog operations (debugging).
-     */
     abstract fun syncLogsDao(): SyncLogsDao
 
-    /**
-     * Access to IcsSubscription operations (ICS feed subscriptions).
-     */
     abstract fun icsSubscriptionsDao(): IcsSubscriptionsDao
 
-    /**
-     * Access to ScheduledReminder operations (reminder notifications).
-     */
     abstract fun scheduledRemindersDao(): ScheduledRemindersDao
 
-    /**
-     * Access to Category operations (per-tag color + recency metadata).
-     */
     abstract fun categoryDao(): CategoryDao
 
     /**
-     * Non-inline wrapper for Room's withTransaction.
+     * Runs [block] in a transaction and returns its result.
      *
-     * Room's withTransaction is inline, making it impossible to mock in unit tests.
-     * This wrapper is not inline, allowing it to be mocked while preserving
-     * the same transactional behavior in production.
-     *
-     * @param block The suspend block to run within a transaction
-     * @return The result of the block
+     * Room's `withTransaction` is inline, so unit tests can't mock it; this open wrapper can be
+     * mocked and behaves the same in production.
      */
     open suspend fun <R> runInTransaction(block: suspend () -> R): R = withTransaction(block)
 
     companion object {
         private const val TAG = "KashCalDatabase"
 
-        /**
-         * Database file name.
-         */
         const val DATABASE_NAME = "kashcal.db"
 
         /**
-         * Database callback to create triggers for master event duplicate prevention.
-         * Uses triggers instead of partial unique index (Room doesn't validate triggers).
+         * Returns a create callback for test databases: it installs the triggers that keep a
+         * master's uid unique per calendar and seeds the default tags. Production uses its own
+         * copy in [org.onekash.kashcal.di.DatabaseModule]; keep the two in step.
+         *
+         * Triggers stand in for a partial unique index because Room doesn't validate triggers.
          */
         fun testCallback(): RoomDatabase.Callback = databaseCallback
 
@@ -173,11 +136,7 @@ abstract class KashCalDatabase : RoomDatabase() {
             }
         }
 
-        /**
-         * Seed the curated starter tags on a fresh install so a new user lands on
-         * the same Work/Personal/Family set the v21→v22 migration gives an
-         * upgrading user. Mirrors the production callback in the DI module.
-         */
+        /** Seeds [Category.DEFAULT_SEEDS], like the production create callback. */
         private fun seedDefaultCategories(db: SupportSQLiteDatabase) {
             val now = System.currentTimeMillis()
             for ((name, color) in Category.DEFAULT_SEEDS) {

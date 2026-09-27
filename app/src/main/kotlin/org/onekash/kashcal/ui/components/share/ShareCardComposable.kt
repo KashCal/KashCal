@@ -46,10 +46,13 @@ import org.onekash.kashcal.domain.share.ShareCardStyle
 import org.onekash.kashcal.domain.share.StripePosition
 
 /**
- * Share-card layout. Pure visual; no side effects, no remember-state.
- * Authoring dimensions are 360 × 450 dp; renderer wraps in a fixed
- * [androidx.compose.ui.unit.Density] so the off-screen rasterization is
- * exactly 1080 × 1350 px.
+ * Lays out the share card: pure visual, no side effects, no remembered state. It measures
+ * 420 × 525 dp at the host's density; [ShareCardSheet] captures it and
+ * [org.onekash.kashcal.domain.share.ShareCardRenderer] scales the capture to a 1080 × 1350 px
+ * PNG.
+ *
+ * [isAllDay], [isMultiDay], [multiDayRangeText] and [allDayLabel] aren't read: the caller
+ * composes [timeRangeText] and [dateChip], and [stripe] carries the stripe's visibility.
  */
 @Composable
 fun ShareCardComposable(
@@ -67,11 +70,10 @@ fun ShareCardComposable(
     allDayLabel: String = "All day",
     modifier: Modifier = Modifier,
 ) {
-    // Accents shift to a brighter gold for Celebration. Both variants use
-    // a yellow family so a11y contrast on the teal background stays
-    // consistent (pink fails WCAG AA on teal for both the large-surface
-    // time-bar and the small-text month label). Celebration adds the
-    // background scatter + glyph + warmer title gradient below.
+    // Celebration uses a brighter gold. Both variants keep accents in the yellow family for
+    // contrast on the teal background: pink fails WCAG AA on teal for both the time bar and
+    // the small month label. Celebration also adds the background scatter, the glyph and a
+    // warmer title gradient below.
     val isCelebration = style == ShareCardStyle.Celebration
     val timeAccent = if (isCelebration) Palette.brandYellowBright else Palette.brandYellow
     val monthAccent = if (isCelebration) Palette.brandYellowBright else Palette.brandYellow
@@ -81,57 +83,31 @@ fun ShareCardComposable(
         Brush.verticalGradient(listOf(Palette.brandCream, Palette.brandWarmCream))
     }
 
-    // Card surface is a 360×450 dp capture region at the device's native
-    // density. ShareCardRenderer scales the captured bitmap to 1080×1350
-    // px after the fact (see scaleToShareCardOutput) so PNG output is
-    // constant across DPIs.
+    // The capture region is 420 × 525 dp, the 4:5 ratio of the 1080 × 1350 PNG. The renderer's
+    // scaleToShareCardOutput rescales any capture to that size, so the region's size doesn't
+    // change the PNG's.
     //
-    // Stacked-card layering, sized to nest cleanly inside the capture
-    // region. The capture region is 420×525 dp (4:5 aspect — matches the
-    // 1080×1350 PNG output ratio): big enough that the silhouettes'
-    // rotated/translated corners stay inside the bitmap bounds.
-    // ShareCardRenderer.scaleToShareCardOutput rescales the captured
-    // bitmap to 1080×1350 px regardless of source size, so growing the
-    // capture region doesn't change the final PNG dimensions.
+    // It must hold the rotated silhouettes' corners. A 340 dp wide silhouette rotated 4 degrees
+    // has a half-width of 170·cos(4°) + 212.5·sin(4°) ≈ 184.4 dp, and 208.7 dp with its
+    // 24.3 dp translation, so the 210 dp half-width leaves a 1.3 dp margin, and a 400 dp wide
+    // region would clip the corners.
     //
-    // Earlier (v23.7.71→v23.7.73) the capture was 360×450 dp but the
-    // silhouettes' rotation + translation pushed their corners ~15 dp
-    // past the right/left edges. v23.7.74→v23.7.76 enlarged to 400×500
-    // but the silhouette corners (340×425 dp rotated ±4° + translated
-    // ±24.3 dp) still extended ~9 dp past the right/left edges. After
-    // rotation, the half-width of a 340-dp wide silhouette is
-    // 170·cos(4°) + 212.5·sin(4°) ≈ 184.4 dp; with translation that
-    // becomes 208.7 dp — past the 200-dp outer half-width. v23.7.77
-    // bumps the outer to 420 dp (half-width 210 dp) which fits the
-    // rotated corner + 1.3 dp safety margin.
+    //   - capture region:  420 × 525 (outer Box)
+    //   - silhouettes:     340 × 425, centered, rotated ±4° and translated ±24.3 dp
+    //                      horizontally, corners visible inside the capture
+    //   - main card:       336 × 420, centered, on top
     //
-    //   - capture region:  420 × 525 (outer Box, 4:5 aspect)
-    //   - silhouettes:     340 × 425 (centered, rotated ±4° + translated
-    //                                   ±24.3 dp horizontally; corners
-    //                                   visible inside the capture)
-    //   - main card:       336 × 420 (centered, on top)
-    //
-    // requiredSize (vs size) is critical: the capture host in
-    // ShareCardSheet sits in a parent Box with .height(300.dp) and
-    // .padding(horizontal = 36.dp). On a 360-dp-wide phone the inner
-    // constraints are 288×300 dp. Plain .size(420, 525) would coerce to
-    // those constraints — silhouettes (340), main card (336), and outer
-    // (420) would all collapse to 288 dp, with no peek margin. Then
-    // GraphicsLayer.record would clip at 288×300 (NOT the 1080×1350 we
-    // want) and the captured PNG would lose the silhouettes entirely.
-    //
-    // requiredSize forces the layout system to allocate the requested
-    // 420×525 dp regardless of parent constraints. Visual overflow is
-    // hidden by the .scale(0.571) transform on the capture host's
-    // sibling-stage Box in ShareCardSheet.
+    // requiredSize, not size: ShareCardSheet hosts the card in a Box with .height(300.dp)
+    // and .padding(horizontal = 36.dp), which is 288 × 300 dp on a 360 dp wide phone. Plain
+    // size would coerce the outer Box, silhouettes and main card to 288 dp, and the
+    // GraphicsLayer would record a 288 × 300 capture without the silhouettes. The sheet's
+    // .scale(240 / 420) on the capture host shrinks the on-screen preview.
     Box(
         modifier = modifier.requiredSize(width = 420.dp, height = 525.dp),
         contentAlignment = Alignment.Center,
     ) {
-        // Stacked-card silhouettes peek past the main card's rounded
-        // corners. Sized smaller than the capture region so rotation +
-        // translation don't push the visible corners past the outer
-        // bounds where the GraphicsLayer would clip them.
+        // Stacked-card silhouettes peek past the main card's rounded corners. They are smaller
+        // than the capture region so the GraphicsLayer doesn't clip their rotated corners.
         Box(
             modifier = Modifier
                 .size(width = 340.dp, height = 425.dp)
@@ -157,8 +133,7 @@ fun ShareCardComposable(
                 .background(Palette.brandYellow),
         )
 
-        // The main card — slightly smaller than the silhouettes so their
-        // rounded corners visibly protrude past it.
+        // The main card, slightly smaller than the silhouettes so their corners show past it.
         Box(
             modifier = Modifier
                 .size(width = 336.dp, height = 420.dp)
@@ -173,10 +148,8 @@ fun ShareCardComposable(
                     ),
                 ),
         ) {
-            // Celebration-only background atmosphere: a soft gold radial
-            // glow behind the title and a deterministic scatter of stars,
-            // streamers, dots, and sparkle glyphs. Drawn behind the
-            // content Column so the body text always sits on top.
+            // Celebration only: a gold glow behind the title and a fixed scatter of stars,
+            // streamers, dots and sparkles, drawn before the content Column so text sits on top.
             if (isCelebration) {
                 CelebrationGlow(modifier = Modifier.fillMaxSize())
                 CelebrationScatter(
@@ -186,26 +159,19 @@ fun ShareCardComposable(
                 )
             }
 
-            // Three-zone layout: top header anchored to top, attribution
-            // anchored to bottom, body (title + location + time + stripe)
-            // anchored above the attribution. Header at top so the date
-            // chip never gets pushed; attribution at bottom so it never
-            // gets clipped — regardless of how dense the body content is.
+            // Three zones: the header at the top so the date chip never moves, the attribution
+            // at the bottom so it never gets clipped, and the body (title, time, location,
+            // stripe) between them, however dense it is.
             //
-            // Header height accounts for: date row (~36dp at fontScale=1)
-            // + 12dp spacer + 1dp divider = ~50dp. Padded by the column's
-            // 24dp top, the divider sits at ~74dp from card top.
-            //
-            // The body Box's verticalArrangement = Bottom hugs its
-            // children to the bottom of its remaining space, so when
-            // there's slack, it sits just above the attribution rather
-            // than floating up against the divider.
+            // The header is about 50dp: the date row (~36dp at fontScale=1), a 12dp spacer and
+            // a 1dp divider. With the column's 24dp top padding the divider sits about 74dp
+            // from the card's top.
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(PaddingValues(start = 26.dp, top = 24.dp, end = 26.dp, bottom = 22.dp)),
             ) {
-                // ---- Header (date chip + dot + divider) ----
+                // ---- Header: date chip, dot, divider ----
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
@@ -217,10 +183,8 @@ fun ShareCardComposable(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         if (isCelebration) {
-                            // The party glyph sits next to the pink dot —
-                            // the chat-thumbnail-readable "celebration"
-                            // signal at the card's most visually loaded
-                            // corner.
+                            // The party glyph next to the pink dot is the celebration signal
+                            // that stays readable in a chat thumbnail.
                             Text(
                                 text = "🎉",
                                 style = TextStyle(fontSize = 14.sp),
@@ -241,42 +205,27 @@ fun ShareCardComposable(
                 )
 
                 // ---- Body ----
-                // Information hierarchy (cluster by
-                // meaning, not by data presence):
-                //   • Title cluster (WHAT + WHEN): title + time/all-day/
-                //     range text glued together at top.
-                //   • Flex breathing room.
-                //   • Context cluster (WHERE): location + day-stripe
-                //     anchored to bottom above attribution.
+                // Clustered by meaning:
+                //   - title cluster (what and when): the title with the time text below it;
+                //   - flexible space;
+                //   - context cluster (where): location and day stripe, above the attribution.
                 //
-                // When the event has only title + time (no address, no
-                // stripe), the title cluster centers vertically. When
-                // the event has everything, dense clusters at top and
-                // bottom with intentional breathing room between.
-                //
-                // The earlier (v23.7.71→v23.7.75) layout placed time
-                // with the bottom meta-block, which left the title
-                // visually orphaned at the top with a 100+dp gap before
-                // any other text — reading as "broken layout" rather
-                // than "designed pause".
+                // Without a location or stripe the title cluster centers vertically. Keeping the
+                // time with the title avoids a title stranded at the top over a 100+dp gap.
 
-                // The caller composes the subtitle string. The composable
-                // doesn't branch on isAllDay/isMultiDay anymore — those
-                // flags only inform the day-stripe visibility now.
+                // The caller composes the time text, all-day and multi-day wording included.
                 val timeText = timeRangeText
                 val hasContextCluster = !location.isNullOrEmpty() || stripe.visible
 
-                // Center the title cluster vertically when there's no
-                // context cluster below (it would otherwise stick to the
-                // top with all the slack falling between title and
-                // attribution).
+                // Without a context cluster, center the title cluster; otherwise all the slack
+                // would fall between the title and the attribution.
                 if (!hasContextCluster) {
                     Spacer(Modifier.weight(1f))
                 } else {
                     Spacer(Modifier.height(18.dp))
                 }
 
-                // ---- Title cluster (WHAT + WHEN) ----
+                // ---- Title cluster ----
                 val titleMaxLines = if (location.isNullOrEmpty()) 3 else 2
                 if (!title.isNullOrEmpty()) {
                     Text(
@@ -306,10 +255,10 @@ fun ShareCardComposable(
                     )
                 }
 
-                // Designed breathing room between clusters.
+                // Space between the clusters.
                 Spacer(Modifier.weight(1f))
 
-                // ---- Context cluster (WHERE) ----
+                // ---- Context cluster ----
                 if (!location.isNullOrEmpty()) {
                     Row(verticalAlignment = Alignment.Top) {
                         Icon(
@@ -322,13 +271,11 @@ fun ShareCardComposable(
                         )
                         Spacer(Modifier.width(7.dp))
                         Text(
-                            // Venue+address values arrive multi-part: the
-                            // location picker joins name and address with
-                            // commas, and ICS import turns escaped \N into
-                            // real newlines. Collapse to one logical line so
-                            // the 2-line budget holds address text and wraps
-                            // on commas, instead of being spent on hard
-                            // breaks (which truncated mid-address).
+                            // Locations arrive multi-part: the location picker joins name
+                            // and address with commas, and ICS import turns escaped \N into
+                            // newlines. One logical line lets the 2-line budget hold address
+                            // text and wrap on commas; hard breaks would use it up and
+                            // truncate mid-address.
                             text = normalizeShareAddress(location),
                             style = TextStyle(
                                 color = Palette.brandCream,
@@ -353,7 +300,7 @@ fun ShareCardComposable(
                     )
                 }
 
-                // ---- Attribution: anchored to card bottom ----
+                // ---- Attribution, at the card's bottom ----
                 Spacer(Modifier.height(14.dp))
                 Box(
                     modifier = Modifier.fillMaxWidth(),
@@ -375,16 +322,13 @@ fun ShareCardComposable(
 }
 
 /**
- * Flatten a location into one logical line for the share card: collapse
- * every run of whitespace to a single space and trim the ends. A value
- * that is already a single clean line is returned unchanged. The card's
- * 2-line ellipsis remains the final safety net for addresses that are long
- * even after flattening.
+ * Flattens a location into one line for the share card: every run of whitespace becomes one
+ * space and the ends are trimmed, so a clean single line comes back unchanged. The card's
+ * 2-line ellipsis still handles addresses that stay long.
  *
- * The character class covers ASCII whitespace plus the non-breaking-space
- * family (U+00A0, figure space U+2007, narrow NBSP U+202F) that `\s` skips
- * — geocoded addresses, especially European ones, embed those between
- * street number and name.
+ * The class adds the non-breaking spaces that `\s` skips (U+00A0, figure space U+2007, narrow
+ * NBSP U+202F); geocoded addresses, especially European ones, put them between street number
+ * and name.
  */
 internal fun normalizeShareAddress(raw: String): String =
     raw.replace(Regex("[\\s\\u00A0\\u2007\\u202F]+"), " ").trim()
@@ -399,11 +343,9 @@ private fun DateChip(text: DateChipText, monthColor: Color) {
 
 @Composable
 private fun DateChipSingle(text: DateChipText.Single, monthColor: Color) {
-    // Sized so the row's total measured height stays around 36dp at
-    // fontScale=1: numeral 32sp/32lineHeight + a 2-line stacked
-    // month/dow column whose total fits inside the numeral's bounds.
-    // Larger sizes (38sp numeral) silently push the row past 50dp on
-    // some devices and shove the attribution off the card.
+    // Sized so the row stays about 36dp tall at fontScale=1: a 32sp numeral with 32sp line
+    // height beside a 2-line month and weekday column that fits within it. A 38sp numeral
+    // silently pushes the row past 50dp on some devices and the attribution off the card.
     Row(verticalAlignment = Alignment.Bottom) {
         Text(
             text = text.numeral,
@@ -440,10 +382,9 @@ private fun DateChipSingle(text: DateChipText.Single, monthColor: Color) {
 }
 
 /**
- * Multi-day chip — a single horizontal label like "MAY 31 – JUN 3" or
- * "MAY 5 – 8". Sized at 18sp / weight 700 / letter-spaced so it carries
- * visual weight comparable to the single-day chip's 32sp numeral while
- * fitting comfortably in the header row alongside the pink dot.
+ * Shows the multi-day chip, one label such as "MAY 31 – JUN 3" or "MAY 5 – 8". Bold, 18sp and
+ * letter-spaced, it weighs about as much as the single-day chip's 32sp numeral and still fits
+ * beside the pink dot.
  */
 @Composable
 private fun DateChipRange(text: DateChipText.Range, monthColor: Color) {
@@ -470,7 +411,7 @@ private fun DayStripe(
         Canvas(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(7.dp), // includes glow margin
+                .height(7.dp), // Includes the glow margin.
         ) {
             val barTop = 1.dp.toPx()
             val barHeight = 5.dp.toPx()
@@ -483,7 +424,7 @@ private fun DayStripe(
                 size = androidx.compose.ui.geometry.Size(w, barHeight),
             )
 
-            // Hour ticks at 6am / noon / 6pm.
+            // Hour ticks at 6 AM, noon and 6 PM.
             val tickColor = Palette.brandCream.copy(alpha = 0.6f)
             val tickHeight = 9.dp.toPx()
             for (frac in listOf(0.25f, 0.5f, 0.75f)) {
@@ -494,7 +435,7 @@ private fun DayStripe(
                 )
             }
 
-            // Event range with soft glow.
+            // The event's range, with a soft glow.
             val rangeStart = w * stripe.startFraction
             val rangeWidth = (w * stripe.widthFraction).coerceAtLeast(2.dp.toPx())
             // Glow.
@@ -531,9 +472,8 @@ private fun DayStripe(
 }
 
 /**
- * Soft radial glow behind the title. Adds a hint of warmth to the
- * Celebration variant without changing the canvas color. Centered
- * around 38% from the top so it sits behind the title block.
+ * Draws Celebration's soft radial glow, centered 38% from the top so it sits behind the title,
+ * warming the card without changing its background.
  */
 @Composable
 private fun CelebrationGlow(modifier: Modifier = Modifier) {
@@ -556,16 +496,14 @@ private fun CelebrationGlow(modifier: Modifier = Modifier) {
 }
 
 /**
- * Celebration background scatter — deterministic positions so renders
- * are stable across calls (no random seed needed for tests). Layered
- * for ambient depth:
- *  - **Stars** (cream ★, lowest tier — subtle "sky" feel)
- *  - **Streamers** (1.5dp × 16dp rotated rects in pink/yellow)
- *  - **Confetti dots** (3-5dp circles in pink/yellow/cream)
- *  - **Sparkles** (gold ✦ glyph at 7/10/16sp, top tier with drop shadow)
+ * Draws Celebration's background scatter at fixed positions, so every render is the same and
+ * tests need no random seed. Bottom to top:
+ *  - stars: cream ★
+ *  - streamers: 1.5dp × 16dp rotated rects in pink or yellow
+ *  - confetti dots: 3-5dp circles in pink, yellow or cream
+ *  - sparkles: gold ✦ at 7, 10 or 16sp with a drop shadow
  *
- * All colors run at low alpha so the scatter reads as ambient atmosphere
- * rather than competing with the body text.
+ * Everything runs at low alpha so the scatter doesn't compete with the text.
  */
 @Composable
 private fun CelebrationScatter(modifier: Modifier = Modifier) {
@@ -574,7 +512,7 @@ private fun CelebrationScatter(modifier: Modifier = Modifier) {
         android.graphics.Paint().apply {
             isAntiAlias = true
             color = android.graphics.Color.argb(140, 0xFF, 0xD6, 0x6B)
-            // Soft "drop shadow" feel — emulates the CSS drop-shadow on the mockup.
+            // A soft glow like a CSS drop-shadow.
             setShadowLayer(4f, 0f, 0f, android.graphics.Color.argb(120, 0xFF, 0xD6, 0x6B))
         }
     }
@@ -582,7 +520,7 @@ private fun CelebrationScatter(modifier: Modifier = Modifier) {
         val w = size.width
         val h = size.height
 
-        // Stars (cream, lowest tier).
+        // Stars, the lowest layer.
         val starPaint = android.graphics.Paint().apply {
             isAntiAlias = true
             color = android.graphics.Color.argb(64, 0xF5, 0xEF, 0xDC)
@@ -597,7 +535,7 @@ private fun CelebrationScatter(modifier: Modifier = Modifier) {
             )
         }
 
-        // Streamers (rotated rect strokes).
+        // Streamers.
         data class Streamer(val xFrac: Float, val yFrac: Float, val deg: Float, val pink: Boolean)
         listOf(
             Streamer(0.12f, 0.22f, 20f, true),
@@ -617,7 +555,7 @@ private fun CelebrationScatter(modifier: Modifier = Modifier) {
             }
         }
 
-        // Confetti dots — denser than the previous overlay, mixed sizes.
+        // Confetti dots in mixed sizes.
         data class Dot(val xFrac: Float, val yFrac: Float, val color: Color, val rDp: Float)
         listOf(
             Dot(0.20f, 0.08f, Palette.brandYellow, 2.5f),
@@ -639,7 +577,7 @@ private fun CelebrationScatter(modifier: Modifier = Modifier) {
             )
         }
 
-        // Sparkles (✦ in gold) — top tier with drop shadow.
+        // Sparkles, the top layer, with the drop shadow.
         data class Sparkle(val xFrac: Float, val yFrac: Float, val sizeSp: Float, val alpha: Int)
         listOf(
             Sparkle(0.75f, 0.08f, 16f, 180),
@@ -673,12 +611,12 @@ private object Palette {
     val brandWarmCream = Color(0xFFE6DFC4)
 }
 
-/** Test tags exposed for ShareCardComposableTest. Same package only. */
+/** Holds the test tags `ShareCardComposableTest` finds nodes by. */
 object ShareCardTags {
-    /** Test tag on the day-stripe composable; absent when stripe is hidden. */
+    /** Tags the day stripe; absent when the stripe is hidden. */
     const val TAG_DAY_STRIPE = "share_card_day_stripe"
 
-    /** Test tag on the confetti overlay; present only for Celebration. */
+    /** Tags the confetti scatter; present only for Celebration. */
     const val TAG_CONFETTI = "share_card_confetti"
 }
 
@@ -751,17 +689,14 @@ private fun ShareCardPreview_MultiDay() {
         ShareCardComposable(
             title = "Memorial weekend",
             location = "Tahoe",
-            // For multi-day all-day events the subtitle is "Sun – Wed · All day".
-            // The chip's range carries the calendar dates; the subtitle
-            // adds DOW + the all-day status.
+            // A multi-day all-day event: the chip carries the dates, the time text adds the
+            // weekdays and the all-day status.
             timeRangeText = "Sun – Wed · All day",
             style = ShareCardStyle.Standard,
             dateChip = DateChipText.Range("MAY 31 – JUN 3"),
             stripe = StripePosition.Hidden,
             stripeLabels = listOf("12a", "6a", "12p", "6p", "12a"),
-            // isAllDay = false here because the subtitle is composed by the
-            // caller when multi-day; ShareCardComposable would otherwise
-            // overwrite the timeRangeText with the standalone allDayLabel.
+            // The composable doesn't read these flags; the time text above already says it.
             isAllDay = false,
             isMultiDay = false,
             multiDayRangeText = null,

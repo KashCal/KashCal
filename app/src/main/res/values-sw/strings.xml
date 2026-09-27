@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Hakuna kalenda zilizopatikana kwenye seva hii.</string>
     <string name="caldav_error_unexpected">Hitilafu isiyotarajiwa. Jaribu tena.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nKama hii ni seva iliyo kwenye mtandao wako wa ndani, ruhusu ufikiaji wa mtandao wa ndani ili kuunganisha.</string>
+    <string name="caldav_error_connection_refused_insecure">Seva ilielekeza muunganisho mahali ambapo KashCal haiendi (anwani isiyosimbwa, au mzunguko wa kuelekeza upya), kwa hivyo KashCal ilisimama kabla ya kutuma nenosiri lako. Kagua anwani ya seva.</string>
     <string name="local_network_banner_title">Ufikiaji wa mtandao wa ndani unahitajika</string>
     <string name="local_network_banner_body">Seva hii inaonekana iko kwenye mtandao wako wa ndani. Ruhusu ufikiaji wa mtandao wa ndani ili KashCal iweze kuiunganisha.</string>
     <string name="local_network_banner_allow">Ruhusu ufikiaji</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Hifadhi mabadiliko</string>
     <string name="dialog_delete_recurring_title">Futa</string>
     <string name="dialog_move_recurring_title">Sogeza</string>
+    <string name="snackbar_event_rescheduled">Tukio limepangwa upya</string>
+    <string name="snackbar_reschedule_failed">Imeshindwa kupanga upya tukio</string>
     <string name="recurring_this_event">Tukio hili</string>
     <string name="recurring_all_events">Matukio yote</string>
 

@@ -25,15 +25,18 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * The title field should auto-focus (raising the keyboard) only when a brand-new
- * blank event opens, so the user can start typing immediately. It must stay
- * unfocused when editing an existing event or when the event opens with a title
- * already filled in (duplicate, share, Quick Add) — and a scroll of the form must
- * drop focus so the fields below aren't hidden behind the keyboard.
+ * Tests the event form's title auto-focus and keyboard dismissal.
  *
- * Keyboard visibility itself isn't observable under Robolectric, so these assert
- * the observable proxy: focus state on the title field, at the [EventFormContent]
- * seam (the same wrapper-free seam the sibling form tests render).
+ * The title field auto-focuses (raising the keyboard) only when a new blank event
+ * opens, and only once the host has settled, so the user can start typing at once.
+ * It stays unfocused when editing an existing event or when the event opens with a
+ * title already filled in (duplicate, share, Quick Add). A user drag on the form
+ * drops focus so the fields below aren't hidden behind the keyboard.
+ *
+ * Keyboard visibility isn't observable under Robolectric, so these assert the
+ * proxy: focus state on the title field, at the [EventFormContent] seam (the same
+ * wrapper-free seam the sibling form tests render). The scroll-source decision is
+ * tested directly on [isUserDrivenScroll] and [shouldDismissKeyboardOnScroll].
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h9999dp-mdpi")
@@ -167,10 +170,10 @@ class EventFormAutoFocusTest {
     @Test
     @Config(qualifiers = "w360dp-h640dp-mdpi")
     fun `a user drag on the form clears focus from the title`() {
-        // A scrollable viewport (short height) so the form actually scrolls.
-        // Also guards the one-shot property: once focus is cleared here the title
-        // is still blank and this is still create mode, yet auto-focus must NOT
-        // re-grab it (the effect fires once on load, it doesn't watch isBlank).
+        // A short viewport so the form scrolls. Also guards the one-shot property:
+        // once focus is cleared the title is still blank and this is still create
+        // mode, yet auto-focus must not re-grab it (the effect fires once on load;
+        // it doesn't watch isBlank).
         render()
         titleNode().assertIsFocused()
 
@@ -180,13 +183,13 @@ class EventFormAutoFocusTest {
         titleNode().assertIsNotFocused()
     }
 
-    // Only a user-driven scroll dismisses the keyboard. A programmatic scroll —
-    // notably Compose's bring-into-view when a lower field is focused or its
-    // cursor moves past the viewport — must NOT dismiss, or it would eject the
-    // field the user just tapped or is typing in. The end-to-end bring-into-view
-    // path isn't reliably reproducible under Robolectric (an off-screen field
-    // can't be tapped without first scrolling it in), so the discriminating
-    // decision is guarded here directly; the user-drag path is covered above.
+    // Only a user-driven scroll dismisses the keyboard ([isUserDrivenScroll]). A
+    // programmatic scroll, such as Compose's bring-into-view when a lower field is
+    // focused or its cursor moves past the viewport, must not dismiss, or it would
+    // eject the field the user just tapped or is typing in. The end-to-end
+    // bring-into-view path isn't reliably reproducible under Robolectric (an
+    // off-screen field can't be tapped without first scrolling it in), so the
+    // decision is tested here directly; the user-drag path is covered above.
     @Test
     fun `user-driven scroll dismisses the keyboard`() {
         assertTrue(isUserDrivenScroll(NestedScrollSource.UserInput))
@@ -202,8 +205,8 @@ class EventFormAutoFocusTest {
 
     @Test
     fun `keyboard dismiss requires a pressed finger`() {
-        // The bug fix: focusing a field fires a user-input-classified scroll (the
-        // animating IME inset), but with no finger down it must NOT dismiss.
+        // Focusing a field fires a user-input-classified scroll (the animating IME
+        // inset), but with no finger down it must not dismiss.
         assertFalse(shouldDismissKeyboardOnScroll(NestedScrollSource.UserInput, isFingerDown = false))
         // A real swipe (finger down + user-input scroll) still dismisses.
         assertTrue(shouldDismissKeyboardOnScroll(NestedScrollSource.UserInput, isFingerDown = true))

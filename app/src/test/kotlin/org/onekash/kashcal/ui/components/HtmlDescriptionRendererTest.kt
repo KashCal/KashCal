@@ -14,14 +14,13 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 /**
- * Tests for [buildHtmlDescriptionAnnotatedString], the pure helper that
- * wraps `AnnotatedString.fromHtml` with KashCal's URL-safety gate.
+ * Tests [buildHtmlDescriptionAnnotatedString], which wraps `AnnotatedString.fromHtml` with the
+ * URL-safety gate: tag parsing, which schemes reach `onNavigate`, images, malformed HTML and an
+ * `html-blob` invite.
  *
- * `AnnotatedString.fromHtml` delegates to `HtmlCompat.fromHtml` which needs
- * the Android runtime, so this test runs under Robolectric. The helper itself
- * has no Compose-UI dependencies — we can drive its `LinkInteractionListener`
- * directly and assert that unsafe schemes are blocked before `onNavigate`
- * is invoked.
+ * `AnnotatedString.fromHtml` delegates to `HtmlCompat.fromHtml`, which needs the Android
+ * runtime, so this runs under Robolectric. The helper needs no composition, so the tests call
+ * each link's `LinkInteractionListener` directly to simulate a tap.
  */
 @RunWith(RobolectricTestRunner::class)
 class HtmlDescriptionRendererTest {
@@ -30,7 +29,7 @@ class HtmlDescriptionRendererTest {
         style = SpanStyle(color = Color.Blue, textDecoration = TextDecoration.Underline)
     )
 
-    /** Collect every URL the safety-gated listener would navigate to. */
+    /** Returns every URL the safety-gated listener navigates to while [block] runs. */
     private fun runWithCapturedNavigations(
         html: String,
         block: (AnnotatedStringUnderTest) -> Unit = {}
@@ -45,7 +44,7 @@ class HtmlDescriptionRendererTest {
         return navigated
     }
 
-    /** Thin wrapper that exposes just the accessors we need in assertions. */
+    /** Exposes the text and URL links of the result for assertions. */
     private class AnnotatedStringUnderTest(val value: androidx.compose.ui.text.AnnotatedString) {
         val text: String get() = value.text
         fun urlLinks(): List<LinkAnnotation.Url> =
@@ -54,7 +53,7 @@ class HtmlDescriptionRendererTest {
             }
     }
 
-    /** Invoke each link's interaction listener (simulates tap). */
+    /** Calls each URL link's interaction listener, as a tap would. */
     private fun tapAllLinks(a: AnnotatedStringUnderTest) {
         a.value.getLinkAnnotations(0, a.value.length).forEach { range ->
             val link = range.item
@@ -208,8 +207,8 @@ class HtmlDescriptionRendererTest {
 
     @Test
     fun `img tag does not trigger a network request and does not crash`() {
-        // fromHtml passes null ImageGetter (verified in Compose ui-text 1.11.0 bytecode)
-        // so <img> becomes no-op rendering, not a network fetch.
+        // fromHtml passes a null ImageGetter ([buildHtmlDescriptionAnnotatedString]), so an
+        // <img> triggers no network fetch.
         val html = """Before <img src="https://tracker.invalid/px.gif"> after"""
         val navigated = runWithCapturedNavigations(html) { a ->
             assertNotNull(a.value)
@@ -247,7 +246,7 @@ class HtmlDescriptionRendererTest {
         }
     }
 
-    // ---------- Real-world Google invite shape ----------
+    // ---------- Real-world html-blob invite shape ----------
 
     @Test
     fun `google html-blob with links bold and br renders formatted`() {

@@ -34,9 +34,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-/**
- * Time format option with value, label, and dynamic example.
- */
+/** Describes a time format choice: the pref value, its label and a live-example description. */
 private data class TimeFormatOption(
     val value: String,
     val label: String,
@@ -44,12 +42,12 @@ private data class TimeFormatOption(
 )
 
 /**
- * Bottom sheet for selecting time format preference.
+ * Shows a bottom sheet for choosing the time format:
+ * - System default follows the device's 24-hour setting.
+ * - 12-hour always shows times like "2:30 PM".
+ * - 24-hour always shows times like "14:30".
  *
- * Shows three options:
- * - System default: Follows device's 24-hour setting
- * - 12-hour: Always shows times like "2:30 PM"
- * - 24-hour: Always shows times like "14:30"
+ * Each description shows the current time in that format.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +61,6 @@ fun TimeFormatSheet(
     val is24HourDevice = remember { DateFormat.is24HourFormat(context) }
     val now = remember { LocalTime.now() }
 
-    // Format current time as examples
     val example12h = remember(now) {
         now.format(DateTimeFormatter.ofPattern("h:mm a", Locale.getDefault()))
     }
@@ -71,7 +68,7 @@ fun TimeFormatSheet(
         now.format(DateTimeFormatter.ofPattern("HH:mm", Locale.getDefault()))
     }
 
-    // Resolve string resources outside remember block
+    // stringResource is composable, so it can't run inside remember.
     val labelSystem = stringResource(R.string.option_system_default)
     val label12h = stringResource(R.string.option_12_hour)
     val label24h = stringResource(R.string.option_24_hour)
@@ -80,7 +77,6 @@ fun TimeFormatSheet(
     val desc12h = stringResource(R.string.settings_time_format_example, example12h)
     val desc24h = stringResource(R.string.settings_time_format_example, example24h)
 
-    // Build options with dynamic descriptions
     val options = remember(is24HourDevice, example12h, example24h, labelSystem, label12h, label24h, descSystem, desc12h, desc24h) {
         listOf(
             TimeFormatOption(
@@ -111,7 +107,6 @@ fun TimeFormatSheet(
                 .padding(bottom = 32.dp)
                 .selectableGroup()
         ) {
-            // Header
             Text(
                 text = stringResource(R.string.settings_time_format),
                 style = MaterialTheme.typography.titleLarge,
@@ -122,7 +117,6 @@ fun TimeFormatSheet(
                 color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
             )
 
-            // Options
             options.forEach { option ->
                 TimeFormatOptionRow(
                     option = option,

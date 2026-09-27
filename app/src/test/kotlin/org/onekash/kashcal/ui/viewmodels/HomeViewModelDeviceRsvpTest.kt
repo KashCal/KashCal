@@ -3,6 +3,7 @@ package org.onekash.kashcal.ui.viewmodels
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,11 +21,16 @@ import org.junit.runner.RunWith
 import org.onekash.kashcal.data.calendar_provider.DeviceAttendee
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.deviceChangeNotifier
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.reader.DisplayEventRepository
 import org.onekash.kashcal.domain.reader.EventReader
+import org.onekash.kashcal.error.CalendarError
+import org.onekash.kashcal.error.ErrorMapper
 import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
@@ -33,17 +39,21 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for HomeViewModel.replyDeviceRsvp — the device-event self-RSVP write.
+ * Tests [HomeViewModel.replyDeviceRsvp], the device-event self-RSVP write.
  *
- * The invariant: it updates ONLY the user's own attendee row (matched by the
- * calendar's owner email), found by its provider _ID, and no-ops when the user
- * has no self row. Robolectric is required: the status mapping and self-row
- * matching reference CalendarContract.Attendees constants.
+ * It updates only the user's own attendee row, matched by the calendar's owner
+ * email and written by its provider _ID. It writes nothing, and still succeeds,
+ * when the user has no row, the calendar has no owner address or the calendar
+ * is gone. A successful write sends the device change signal; a failed one
+ * sets a write error and sends none.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
 class HomeViewModelDeviceRsvpTest {
+
+    /** Receives the device change signal the writer sends after each successful write. */
+    private val deviceManager = deviceChangeNotifier()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -109,7 +119,8 @@ class HomeViewModelDeviceRsvpTest {
         accountRepository = accountRepository,
         syncScheduler = syncScheduler,
         networkMonitor = networkMonitor,
-        calendarProviderRepository = fakeCalendarProviderRepository,
+        deviceEventReader = fakeCalendarProviderRepository.deviceEventReader(),
+        deviceEventWriter = fakeCalendarProviderRepository.deviceEventWriter(dataStore, deviceManager),
         attendeeBackfill = mockk(relaxed = true),
         contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),
@@ -144,7 +155,7 @@ class HomeViewModelDeviceRsvpTest {
         assertEquals(1, fakeCalendarProviderRepository.selfRsvpUpdates.size)
         val update = fakeCalendarProviderRepository.selfRsvpUpdates[0]
         assertEquals(55L, update.eventId)
-        assertEquals(1L, update.attendeeId) // the "me@" row, NOT alice's id=2
+        assertEquals(1L, update.attendeeId) // the "me@" row, not Alice's id 2
         assertEquals(android.provider.CalendarContract.Attendees.ATTENDEE_STATUS_ACCEPTED, update.status)
     }
 
@@ -163,5 +174,77 @@ class HomeViewModelDeviceRsvpTest {
         advanceUntilIdle()
 
         assertTrue("no self row → no write", fakeCalendarProviderRepository.selfRsvpUpdates.isEmpty())
+    }
+
+    @Test
+    fun `a failed RSVP write shows a write error and does not refresh`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        fakeCalendarProviderRepository.calendars = listOf(deviceCalendar(7L, "me@example.com"))
+        fakeCalendarProviderRepository.deviceAttendees[55L] = listOf(
+            DeviceAttendee(id = 1L, name = "Me", email = "me@example.com", relationship = 1, status = 0),
+        )
+        fakeCalendarProviderRepository.writeFailure = CalendarError.DeviceCalendar.WriteFailed("boom")
+
+        val result = viewModel.replyDeviceRsvp(eventId = 55L, calendarId = 7L, status = AttendeeStatus.Accepted)
+        advanceUntilIdle()
+
+        assertTrue(result.isFailure)
+        assertEquals(
+            ErrorMapper.toPresentation(CalendarError.DeviceCalendar.WriteFailed("boom")),
+            viewModel.uiState.value.currentError,
+        )
+        verify(exactly = 0) { deviceManager.notifyDeviceCalendarChanged() }
+    }
+
+    @Test
+    fun `a successful RSVP refreshes the device view`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        fakeCalendarProviderRepository.calendars = listOf(deviceCalendar(7L, "me@example.com"))
+        fakeCalendarProviderRepository.deviceAttendees[55L] = listOf(
+            DeviceAttendee(id = 1L, name = "Me", email = "me@example.com", relationship = 1, status = 0),
+        )
+
+        viewModel.replyDeviceRsvp(eventId = 55L, calendarId = 7L, status = AttendeeStatus.Accepted)
+        advanceUntilIdle()
+
+        verify(exactly = 1) { deviceManager.notifyDeviceCalendarChanged() }
+    }
+
+    @Test
+    fun `RSVP on a calendar with no owner address writes nothing`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        fakeCalendarProviderRepository.calendars = listOf(deviceCalendar(7L, ""))
+        fakeCalendarProviderRepository.deviceAttendees[55L] = listOf(
+            DeviceAttendee(id = 1L, name = "Me", email = "me@example.com", relationship = 1, status = 0),
+        )
+
+        val result = viewModel.replyDeviceRsvp(eventId = 55L, calendarId = 7L, status = AttendeeStatus.Accepted)
+        advanceUntilIdle()
+
+        assertTrue(result.isSuccess)
+        assertTrue(fakeCalendarProviderRepository.selfRsvpUpdates.isEmpty())
+        verify(exactly = 0) { deviceManager.notifyDeviceCalendarChanged() }
+    }
+
+    @Test
+    fun `RSVP on a calendar that no longer exists writes nothing`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        fakeCalendarProviderRepository.deviceAttendees[55L] = listOf(
+            DeviceAttendee(id = 1L, name = "Me", email = "me@example.com", relationship = 1, status = 0),
+        )
+
+        val result = viewModel.replyDeviceRsvp(eventId = 55L, calendarId = 7L, status = AttendeeStatus.Accepted)
+        advanceUntilIdle()
+
+        assertTrue(result.isSuccess)
+        assertTrue(fakeCalendarProviderRepository.selfRsvpUpdates.isEmpty())
     }
 }

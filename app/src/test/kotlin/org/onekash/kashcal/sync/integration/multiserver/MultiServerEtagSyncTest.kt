@@ -14,12 +14,11 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Parameterized ETag-based sync tests across all configured servers.
+ * Checks the ETag lifecycle sync depends on, on every configured server: a create returns a
+ * non-empty etag, an update changes it, and an update with the stale etag is refused as a
+ * conflict (412 or 409).
  *
- * Tests the ETag lifecycle: create → etag returned, update → etag changes,
- * stale etag → 412 conflict. These are fundamental to KashCal's sync correctness.
- *
- * Run: ./gradlew testDebugUnitTest --tests "*MultiServerEtagSyncTest*"
+ * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*MultiServerEtagSyncTest*"
  */
 @RunWith(Parameterized::class)
 class MultiServerEtagSyncTest(
@@ -181,7 +180,7 @@ END:VCALENDAR
         // Try update with stale etag1
         val conflictIcs = createTestIcs(uid, "Stale update", sequence = 2)
         val conflictResult = client!!.updateEvent(url, conflictIcs, etag1)
-        // RFC 4791 says 412, but some servers (Zoho) return 409
+        // A failed If-Match gets 412 (RFC 7232 §3.1), but some servers (Zoho) return 409.
         val isConflictResponse = conflictResult.isConflict() ||
             (conflictResult is CalDavResult.Error && (conflictResult as CalDavResult.Error).code == 409)
         assert(isConflictResponse) {

@@ -4,6 +4,11 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.Locale
 
+/**
+ * Tests [ShareCardStylePicker.autoPickFor]: plain, null and blank titles, emoji and keyword
+ * triggers, word-start matching and locale-independent case folding. "Regular" in the test names is
+ * [ShareCardStyle.Standard].
+ */
 class ShareCardStylePickerTest {
 
     @Test
@@ -130,9 +135,8 @@ class ShareCardStylePickerTest {
 
     @Test
     fun `partygoers as standalone word does trigger Celebration`() {
-        // "partygoers" begins with "party" on a word boundary — picker
-        // matches stem prefixes for the "party" keyword. This documents
-        // current intent: prefix-of-word matches trigger.
+        // "partygoers" starts a word with "party". Only the start of the keyword is anchored,
+        // so a keyword that begins a word triggers.
         assertEquals(ShareCardStyle.Celebration, ShareCardStylePicker.autoPickFor("partygoers welcome"))
     }
 
@@ -150,14 +154,13 @@ class ShareCardStylePickerTest {
 
     @Test
     fun `Turkish locale uppercase does not break keyword matching`() {
-        // Turkish has the famous "i / İ" and "ı / I" mappings. The picker
-        // must lowercase using a locale-independent rule (e.g., Locale.ROOT).
+        // Turkish maps "i / İ" and "ı / I". The picker must lowercase with a
+        // locale-independent rule (Locale.ROOT).
         val originalLocale = Locale.getDefault()
         try {
             Locale.setDefault(Locale.forLanguageTag("tr-TR"))
-            // The string "BIRTHDAY" upper→lower in tr-TR yields "bırthday"
-            // (dotless ı), which would NOT match "birthday" if we used
-            // locale-aware case folding. Verify Locale.ROOT is used.
+            // "BIRTHDAY" lowercased in tr-TR is "bırthday" (dotless ı), which wouldn't match
+            // "birthday" under locale-aware case folding.
             assertEquals(
                 ShareCardStyle.Celebration,
                 ShareCardStylePicker.autoPickFor("BIRTHDAY")

@@ -21,13 +21,13 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Android CalendarProvider implementation of [CalendarProviderRepository].
+ * Implements [CalendarProviderRepository] over CalendarContract through the ContentResolver.
  *
- * Queries CalendarContract via ContentResolver. All methods handle
- * SecurityException gracefully (returns empty results if permission revoked).
+ * A revoked permission is caught, never thrown; what each method returns then is documented on
+ * [CalendarProviderRepository].
  *
- * Uses Instances.CONTENT_URI (ms-based) for time range queries — not
- * CONTENT_BY_DAY_URI which uses Julian days (different from KashCal's YYYYMMDD day codes).
+ * Time-range queries use Instances.CONTENT_URI (epoch ms). CONTENT_BY_DAY_URI takes Julian days,
+ * which are not KashCal's YYYYMMDD day codes.
  */
 @Singleton
 class AndroidCalendarProviderRepository @Inject constructor(
@@ -38,8 +38,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         private const val TAG = "CalProviderRepo"
 
         /**
-         * Calendars projection shared by [getDeviceCalendars] and the
-         * single-row [getDeviceCalendar]. Order is load-bearing —
+         * Calendars projection of [getDeviceCalendars] and [getDeviceCalendar]. Order matters:
          * [mapToDeviceCalendar] reads by index.
          */
         private val CALENDARS_PROJECTION = arrayOf(
@@ -54,9 +53,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
         )
 
         /**
-         * Canonical attendee read projection. Order is load-bearing —
-         * [mapToDeviceAttendee] reads by index. `internal` so the projection
-         * drift guard test can assert these five columns in this order.
+         * Attendee read projection. Order matters: [mapToDeviceAttendee] reads by index.
+         * `internal` so `AttendeesProjectionTest` can assert these five columns in this order.
          */
         internal val ATTENDEES_PROJECTION = arrayOf(
             Attendees._ID,                   // 0
@@ -83,13 +81,13 @@ class AndroidCalendarProviderRepository @Inject constructor(
             Instances.HAS_ALARM,        // 13
             Instances.SELF_ATTENDEE_STATUS,  // 14
             Instances.CALENDAR_ACCESS_LEVEL, // 15
-            Instances.ORIGINAL_ID,       // 16 - Master event ID for exceptions
-            Instances.ORIGINAL_INSTANCE_TIME, // 17 - Original occurrence time for exceptions
-            Instances.EVENT_TIMEZONE,    // 18 - Event timezone (exception's for modified occurrences)
-            // Color channels — read via getColumnIndexOrThrow to decouple from projection order.
+            Instances.ORIGINAL_ID,       // 16 - master event ID, for exceptions
+            Instances.ORIGINAL_INSTANCE_TIME, // 17 - original occurrence time, for exceptions
+            Instances.EVENT_TIMEZONE,    // 18 - event zone; the exception's on a changed occurrence
+            // The color columns are read by name, so a projection reorder can't shift them.
             Instances.CALENDAR_COLOR,    // 19 - raw calendar color (identity)
             Instances.EVENT_COLOR,       // 20 - raw event override (0 = no override)
-            Instances.DTSTART            // 21 - master event row's DTSTART (anchors first-occurrence rule)
+            Instances.DTSTART            // 21 - the event row's DTSTART (first-occurrence anchor)
         )
 
         // Column indices
@@ -193,7 +191,6 @@ class AndroidCalendarProviderRepository @Inject constructor(
             )?.use { cursor -> mapToInstances(cursor, enabledCalendarIds) }
                 .orEmpty()
 
-            // Batch fetch reminders + tags to avoid N+1 queries
             populateRemindersAndCategories(instances)
         } catch (e: SecurityException) {
             Log.w(TAG, "Calendar permission revoked", e)
@@ -206,7 +203,6 @@ class AndroidCalendarProviderRepository @Inject constructor(
         enabledCalendarIds: Set<Long>
     ): List<DeviceCalendarInstance> {
         val results = mutableListOf<DeviceCalendarInstance>()
-        // Resolve new columns by name — defensive against future projection reorders.
         val colCalendarColor = cursor.getColumnIndexOrThrow(Instances.CALENDAR_COLOR)
         val colEventColor = cursor.getColumnIndexOrThrow(Instances.EVENT_COLOR)
         while (cursor.moveToNext()) {
@@ -218,12 +214,11 @@ class AndroidCalendarProviderRepository @Inject constructor(
             val isAllDay = cursor.getInt(COL_ALL_DAY) == 1
             val accessLevel = cursor.getInt(COL_ACCESS_LEVEL)
 
-            // All-day events: convert CalendarProvider's exclusive end (midnight next day)
-            // to inclusive end (last ms of last day), matching Room Event.endTs convention.
-            // Used for both endTs and endDay to maintain consistent inclusive semantics.
+            // All-day: the provider's exclusive end (next midnight) becomes the inclusive last
+            // ms of the last day, the Room Event.endTs convention, for both endTs and endDay.
             val inclusiveEndMs = if (isAllDay && endMs > beginMs) endMs - 1 else endMs
 
-            // ORIGINAL_ID is null for regular events, non-null for exceptions
+            // ORIGINAL_ID is set only on exceptions.
             val originalId = if (!cursor.isNull(COL_ORIGINAL_ID)) {
                 cursor.getLong(COL_ORIGINAL_ID)
             } else null
@@ -234,9 +229,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
 
             val status = cursor.getInt(COL_STATUS)
 
-            // Skip STATUS_CANCELED exception instances — these represent deleted
-            // occurrences of recurring events. CalendarProvider should suppress them
-            // automatically, but some OEM implementations don't.
+            // A STATUS_CANCELED exception is a deleted occurrence. CalendarProvider should
+            // suppress it, but some OEM implementations don't.
             if (status == CalendarContract.Events.STATUS_CANCELED && originalId != null) continue
 
             val rruleString = cursor.getString(COL_RRULE)
@@ -259,7 +253,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     isAllDay = isAllDay,
                     hasRrule = !rruleString.isNullOrEmpty(),
                     rrule = rruleString,
-                    reminders = emptyList(), // Populated by batch query after
+                    reminders = emptyList(), // filled by populateRemindersAndCategories
                     calendarId = calendarId,
                     calendarDisplayName = cursor.getString(COL_CALENDAR_DISPLAY_NAME).orEmpty(),
                     calendarColor = cursor.getInt(colCalendarColor),
@@ -292,7 +286,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
             val startMs = dayCodeToStartOfDayMs(startDayCode) - DateUtils.DAY_IN_MILLIS
             val endMs = dayCodeToEndOfDayMs(endDayCode) + DateUtils.DAY_IN_MILLIS
 
-            // Instances.CONTENT_SEARCH_URI uses path: instances/when/{begin}/{end}/{query}
+            // Path: instances/search/{begin}/{end}/{query}
             val builder = Instances.CONTENT_SEARCH_URI.buildUpon()
             ContentUris.appendId(builder, startMs)
             ContentUris.appendId(builder, endMs)
@@ -305,7 +299,6 @@ class AndroidCalendarProviderRepository @Inject constructor(
             )?.use { cursor -> mapToInstances(cursor, enabledCalendarIds) }
                 .orEmpty()
 
-            // Batch fetch reminders + tags to avoid N+1 queries
             populateRemindersAndCategories(instances)
         } catch (e: SecurityException) {
             Log.w(TAG, "Calendar permission revoked", e)
@@ -325,10 +318,9 @@ class AndroidCalendarProviderRepository @Inject constructor(
 
         try {
             val calendarIdList = visibleCalendarIds.joinToString(",")
-            // Recurring events (RRULE non-null, non-empty) bypass the DTSTART window;
-            // the master row's DTSTART is the first occurrence and may be very old even
-            // while the series is still active. Non-recurring events are bound to
-            // [sinceMs, untilMs]. LIKE with COLLATE NOCASE handles ASCII case folding.
+            // A series skips the DTSTART window: the master's DTSTART is its first occurrence,
+            // which can be old while the series is still active. LIKE with COLLATE NOCASE
+            // folds ASCII case only.
             val selection = """
                 ${CalendarContract.Events.TITLE} LIKE ? COLLATE NOCASE
                 AND ${CalendarContract.Events.CALENDAR_ID} IN ($calendarIdList)
@@ -366,10 +358,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 out
             }.orEmpty()
 
-            // Cross-calendar dedup: same (title.lowercase(), dtstart) on multiple calendars
-            // (e.g., a Google invite visible on personal + work accounts) counts as ONE use,
-            // not N. Case-insensitive to match the Fake's contract and handle providers that
-            // might round-trip the same invite with different casing.
+            // Case-insensitive, like the fake, in case a provider returns the same invite with
+            // different casing on two calendars.
             rows.distinctBy { it.first.lowercase() to it.second }
                 .groupBy { it.first.lowercase() }
                 .map { (_, entries) ->
@@ -393,11 +383,9 @@ class AndroidCalendarProviderRepository @Inject constructor(
     }
 
     /**
-     * Populate instances with reminder and tag data. Reminders live in
-     * CalendarContract.Reminders and tags in the categories extended property,
-     * so this is two batch queries — but the event-id set is built once and the
-     * instance list is copied once (both fields at a time), keeping the
-     * range-display path to a single pass. Returns a new list.
+     * Returns a copy of [instances] with reminders (CalendarContract.Reminders) and tags (the
+     * categories extended property) filled in, from one batch query each instead of one per
+     * event.
      */
     private suspend fun populateRemindersAndCategories(
         instances: List<DeviceCalendarInstance>
@@ -471,9 +459,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
     }
 
     /**
-     * Read the ACCOUNT_NAME/ACCOUNT_TYPE of a calendar row.
-     * Returns null if the row doesn't exist (race with sync adapter deletion)
-     * or if permission is revoked.
+     * Returns a calendar row's account, or null if the row is gone (a sync adapter deleted it),
+     * its name or type is blank, the permission is revoked, or the query fails.
      */
     private fun readCalendarAccount(calendarId: Long): Account? {
         return try {
@@ -485,8 +472,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 if (!cursor.moveToFirst()) return@use null
                 val name = cursor.getString(0).orEmpty()
                 val type = cursor.getString(1).orEmpty()
-                // Account(String, String) throws IllegalArgumentException on blanks;
-                // guard explicitly so shouldSkipRequestSync can assume non-blank inputs.
+                // Account(String, String) throws IllegalArgumentException on blanks, and
+                // shouldSkipRequestSync assumes non-blank inputs.
                 if (name.isBlank() || type.isBlank()) null else Account(name, type)
             }
         } catch (e: SecurityException) {
@@ -499,21 +486,18 @@ class AndroidCalendarProviderRepository @Inject constructor(
     }
 
     /**
-     * Write the tag extended property for an event, replacing any existing row.
+     * Replaces an event's tag extended property.
      *
-     * Tags live in the generic per-event extended-property store, which on a
-     * synced calendar only accepts writes in sync-adapter mode — so the delete
-     * and insert both go through a URI carrying the owning calendar's account.
-     * When the account can't be resolved (row raced away, permission revoked)
-     * the write is skipped rather than allowed to crash the surrounding save;
-     * the event still persists, just without the tag change. A provider
-     * exception on the delete/insert is likewise swallowed: the tag row is
-     * secondary to the event body, which by this point is already committed, so
-     * failing the whole save would report a spurious failure and (on create)
-     * invite a duplicating retry.
+     * On a synced calendar the extended-property store accepts writes only in sync-adapter
+     * mode, so the delete and insert go through a URI carrying the calendar's account. When the
+     * account can't be resolved (row gone, permission revoked) the write is skipped and the
+     * event keeps its old tags. A provider exception on the delete or insert is swallowed, so a
+     * failed insert after the delete leaves the event with no tags: the event body is already
+     * committed, so failing the save would report a false failure and, on create, invite a
+     * duplicating retry.
      *
-     * A non-null empty encoded value clears the row without re-inserting, so a
-     * user who removes every tag genuinely empties the stored value.
+     * When no usable name survives [encodeCategories] (an empty list, or only blanks) the row
+     * is deleted and nothing is inserted, so removing every tag empties the stored value.
      */
     private fun writeCategories(eventId: Long, calendarId: Long, categories: List<String>) {
         val account = readCalendarAccount(calendarId)
@@ -543,7 +527,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         }
     }
 
-    // ==================== Write Operations (Phase 3) ====================
+    // ==================== Write Operations ====================
 
     override suspend fun createEvent(
         calendarId: Long,
@@ -568,43 +552,29 @@ class AndroidCalendarProviderRepository @Inject constructor(
             values.put(CalendarContract.Events.CALENDAR_ID, calendarId)
             values.put(CalendarContract.Events.AVAILABILITY, availability)
             eventColor?.let { values.put(CalendarContract.Events.EVENT_COLOR, it) }
-            // Mark the event as carrying a guest list only when it actually has
-            // guests. Without this the sync adapter treats the event as
+            // Set only when there are guests. Without it the sync adapter treats the event as
             // attendee-free and never delivers invitations.
             if (guests.isNotEmpty()) {
                 values.put(CalendarContract.Events.HAS_ATTENDEE_DATA, 1)
             }
 
-            // Use batch operation for atomicity (event + reminders + attendees)
+            // One batch, so the event, reminders and attendees land together.
             val ops = ArrayList<android.content.ContentProviderOperation>()
 
-            // Insert event
             ops.add(
                 android.content.ContentProviderOperation.newInsert(CalendarContract.Events.CONTENT_URI)
                     .withValues(values)
                     .build()
             )
 
-            // Insert reminders (reference event by back-reference)
-            for (minutes in reminders) {
-                ops.add(
-                    android.content.ContentProviderOperation.newInsert(CalendarContract.Reminders.CONTENT_URI)
-                        .withValueBackReference(CalendarContract.Reminders.EVENT_ID, 0)
-                        .withValue(CalendarContract.Reminders.MINUTES, minutes)
-                        .withValue(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
-                        .build()
-                )
-            }
+            ops.addAll(reminderInsertOps(alertRows(reminders), eventBackReference = 0))
 
-            // Attendee rows (only when the event has guests). The owner row
-            // makes the organizer visible on the guest list; guest rows are the
-            // invitees. All reference the freshly-inserted event by
-            // back-reference, like the reminders above.
+            // Attendee rows, only when there are guests. The owner row shows the organizer on
+            // the guest list. Reminders and attendees reference the new event by back-reference.
             if (guests.isNotEmpty()) {
                 val ownerEmail = ownerEmailForCalendar(calendarId)
-                // Owner row only when needed (valid organizer address, not a
-                // machine address, no existing organizer — here always none on
-                // create); guests exclude the owner so it isn't written twice.
+                // [ownerRowNeeded] decides the owner row; a create has no existing organizer.
+                // Guests exclude the owner so it isn't written twice.
                 if (ownerRowNeeded(existing = emptyList(), desired = guests, ownerEmail = ownerEmail)) {
                     ops.add(
                         android.content.ContentProviderOperation.newInsert(Attendees.CONTENT_URI)
@@ -628,8 +598,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
             val eventUri = results[0].uri
             val eventId = ContentUris.parseId(eventUri!!)
 
-            // Tags live in a separate extended-property table, written in
-            // sync-adapter mode; a non-empty value is stored, an empty one is not.
+            // Tags are written after the batch, outside it; see [writeCategories].
             if (categories != null) {
                 writeCategories(eventId, calendarId, categories)
             }
@@ -656,7 +625,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         rrule: String?,
         duration: String?,
         timezone: String,
-        reminders: List<Int>,
+        reminders: List<Int>?,
         availability: Int,
         eventColor: Int?,
         attendees: List<DeviceAttendee>?,
@@ -668,10 +637,9 @@ class AndroidCalendarProviderRepository @Inject constructor(
             values.put(CalendarContract.Events.AVAILABILITY, availability)
             eventColor?.let { values.put(CalendarContract.Events.EVENT_COLOR, it) }
                 ?: values.putNull(CalendarContract.Events.EVENT_COLOR)
-            // Mark attendee data present when the edit introduces guests on an
-            // event that had none. Never flip it back off: an event that has
-            // ever carried a guest list keeps the flag (matches the provider's
-            // own behaviour and avoids confusing sync adapters).
+            // Set when the edit carries guests. Never clear it: an event that has ever had a
+            // guest list keeps the flag (matches the provider's own behaviour and avoids
+            // confusing sync adapters).
             if (!attendees.isNullOrEmpty()) {
                 values.put(CalendarContract.Events.HAS_ATTENDEE_DATA, 1)
             }
@@ -682,34 +650,33 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 return@withContext Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound))
             }
 
-            // Clear existing reminders and rewrite
-            contentResolver.delete(
-                CalendarContract.Reminders.CONTENT_URI,
-                "${CalendarContract.Reminders.EVENT_ID} = ?",
-                arrayOf(eventId.toString())
-            )
+            // Null leaves every reminder row untouched, so a reschedule keeps an email or SMS
+            // reminder instead of rewriting it as a pop-up alert.
+            if (reminders != null) {
+                contentResolver.delete(
+                    CalendarContract.Reminders.CONTENT_URI,
+                    "${CalendarContract.Reminders.EVENT_ID} = ?",
+                    arrayOf(eventId.toString())
+                )
 
-            for (minutes in reminders) {
-                val reminderValues = android.content.ContentValues().apply {
-                    put(CalendarContract.Reminders.EVENT_ID, eventId)
-                    put(CalendarContract.Reminders.MINUTES, minutes)
-                    put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+                for (minutes in reminders) {
+                    val reminderValues = android.content.ContentValues().apply {
+                        put(CalendarContract.Reminders.EVENT_ID, eventId)
+                        put(CalendarContract.Reminders.MINUTES, minutes)
+                        put(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
+                    }
+                    contentResolver.insert(CalendarContract.Reminders.CONTENT_URI, reminderValues)
                 }
-                contentResolver.insert(CalendarContract.Reminders.CONTENT_URI, reminderValues)
             }
 
-            // Apply the guest add/remove diff. Null means the caller isn't
-            // managing attendees — leave every existing row (and its synced
-            // status) untouched. Non-null is the authoritative set: insert only
-            // genuinely new guests, delete only genuinely removed ones.
+            // Null leaves every attendee row and its synced status untouched. Non-null is the
+            // full desired set: only new guests are inserted and only removed ones deleted.
             if (attendees != null) {
                 applyAttendeeDiff(eventId, attendees)
             }
 
-            // Replace the tag row only when the caller is managing tags. Null
-            // leaves the existing row untouched, so a drag-reschedule or a
-            // single-occurrence exception edit never wipes tags the user didn't
-            // touch. A non-null empty list genuinely clears the row.
+            // Null leaves the tag row untouched, so a drag-reschedule or an exception edit never
+            // wipes tags the user didn't touch. A non-null empty list clears the row.
             if (categories != null) {
                 val calId = calendarIdForEvent(eventId)
                 if (calId != null) {
@@ -760,7 +727,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         endTs: Long,
         isAllDay: Boolean,
         timezone: String,
-        reminders: List<Int>,
+        reminders: List<Int>?,
         availability: Int,
         eventColor: Int?
     ): Result<Long> = withContext(Dispatchers.IO) {
@@ -774,29 +741,30 @@ class AndroidCalendarProviderRepository @Inject constructor(
             if (masterSyncId != null) {
                 values.put(CalendarContract.Events.ORIGINAL_SYNC_ID, masterSyncId)
             }
-            val normalizedOrigTime = if (isAllDay)
+            // The occurrence this row replaces is a slot of the series, so the series' all-day
+            // flag names it, not the flag the row is saved with.
+            val seriesAllDay = seriesIsAllDay(masterEventId)
+                ?: return@withContext Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound))
+            val normalizedOrigTime = if (seriesAllDay)
                 DateTimeUtils.normalizeToUtcMidnight(originalInstanceTime) else originalInstanceTime
             values.put(CalendarContract.Events.ORIGINAL_INSTANCE_TIME, normalizedOrigTime)
-            values.put(CalendarContract.Events.ORIGINAL_ALL_DAY, if (isAllDay) 1 else 0)
+            values.put(CalendarContract.Events.ORIGINAL_ALL_DAY, if (seriesAllDay) 1 else 0)
             values.put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CONFIRMED)
 
-            // Use batch for atomicity
+            // Read what the new row copies from the series before any write.
+            val reminderRows = reminderRowsForNewRow(reminders, masterEventId)
+            val seriesCopy = readSeriesCopy(masterEventId, calendarId, categories = null)
+            seriesCopy.putOrganizerInto(values)
+
+            // One batch, so the row and what it copies land together.
             val ops = ArrayList<android.content.ContentProviderOperation>()
             ops.add(
                 android.content.ContentProviderOperation.newInsert(CalendarContract.Events.CONTENT_URI)
                     .withValues(values)
                     .build()
             )
-
-            for (minutes in reminders) {
-                ops.add(
-                    android.content.ContentProviderOperation.newInsert(CalendarContract.Reminders.CONTENT_URI)
-                        .withValueBackReference(CalendarContract.Reminders.EVENT_ID, 0)
-                        .withValue(CalendarContract.Reminders.MINUTES, minutes)
-                        .withValue(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
-                        .build()
-                )
-            }
+            ops.addAll(reminderInsertOps(reminderRows, eventBackReference = 0))
+            ops.addAll(seriesCopy.insertOps(eventBackReference = 0))
 
             val results = contentResolver.applyBatch(CalendarContract.AUTHORITY, ops)
             val eventUri = results[0].uri
@@ -819,12 +787,18 @@ class AndroidCalendarProviderRepository @Inject constructor(
         isAllDay: Boolean
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val normalizedTime = if (isAllDay)
+            // The series' own flag names the occurrence: the caller's is the flag of what it
+            // shows, which for a changed occurrence may differ.
+            val seriesAllDay = seriesIsAllDay(masterEventId) ?: isAllDay
+            val normalizedTime = if (seriesAllDay)
                 DateTimeUtils.normalizeToUtcMidnight(originalInstanceTime) else originalInstanceTime
 
-            // If an exception event already exists (previously edited occurrence),
-            // update its status to CANCELED
-            val existingExceptionId = findExceptionEventId(masterEventId, originalInstanceTime, isAllDay)
+            // An existing exception (an edited occurrence) is set to CANCELED. An already
+            // cancelled row is reused, so the occurrence never gets a second cancellation; a
+            // deleted row is skipped, since cancelling it would leave the occurrence in place.
+            val existingExceptionId = findExceptionRowId(
+                masterEventId, originalInstanceTime, seriesAllDay, includeCancelled = true,
+            )
             if (existingExceptionId != null) {
                 val values = android.content.ContentValues().apply {
                     put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CANCELED)
@@ -835,30 +809,29 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 contentResolver.update(exceptionUri, values, null, null)
                 Log.d(TAG, "Updated exception $existingExceptionId to STATUS_CANCELED")
             } else {
-                // No existing exception — insert a new STATUS_CANCELED exception event.
-                // CalendarProvider uses exception events (not EXDATE) to track canceled occurrences.
+                // Otherwise insert a STATUS_CANCELED exception: CalendarProvider tracks cancelled
+                // occurrences with exception rows, not EXDATE.
                 val masterEvent = getDeviceEvent(masterEventId)
                     ?: return@withContext Result.failure(
                         CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound)
                     )
 
-                // Build ContentValues directly — exception events are non-recurring and
-                // must use DTEND (not DURATION). CalendarProvider requires DTEND for
-                // non-recurring events; using DURATION causes the exception to be
-                // malformed and not properly suppress the original instance.
-                val durationMs = parseDurationMs(masterEvent.duration, isAllDay)
+                // An exception is non-recurring, so it takes DTEND. CalendarProvider requires
+                // DTEND on non-recurring events; with DURATION the exception is malformed and
+                // doesn't suppress the original occurrence.
+                val durationMs = parseDurationMs(masterEvent.duration, seriesAllDay)
                 val values = android.content.ContentValues().apply {
                     put(CalendarContract.Events.CALENDAR_ID, masterEvent.calendarId)
                     put(CalendarContract.Events.TITLE, masterEvent.title)
                     put(CalendarContract.Events.DTSTART, normalizedTime)
                     put(CalendarContract.Events.DTEND, normalizedTime + durationMs)
-                    put(CalendarContract.Events.ALL_DAY, if (isAllDay) 1 else 0)
-                    put(CalendarContract.Events.EVENT_TIMEZONE, if (isAllDay) "UTC" else masterEvent.timezone)
+                    put(CalendarContract.Events.ALL_DAY, if (seriesAllDay) 1 else 0)
+                    put(CalendarContract.Events.EVENT_TIMEZONE, if (seriesAllDay) "UTC" else masterEvent.timezone)
                     put(CalendarContract.Events.ORIGINAL_ID, masterEventId)
                     put(CalendarContract.Events.ORIGINAL_INSTANCE_TIME, normalizedTime)
-                    put(CalendarContract.Events.ORIGINAL_ALL_DAY, if (isAllDay) 1 else 0)
+                    put(CalendarContract.Events.ORIGINAL_ALL_DAY, if (seriesAllDay) 1 else 0)
                     put(CalendarContract.Events.STATUS, CalendarContract.Events.STATUS_CANCELED)
-                    // Exception events must not have recurrence fields
+                    // An exception has no recurrence fields.
                     putNull(CalendarContract.Events.RRULE)
                     putNull(CalendarContract.Events.RDATE)
                     putNull(CalendarContract.Events.EXDATE)
@@ -899,7 +872,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound)
                 )
 
-            // If deleting from the first occurrence, delete entire event
+            // Deleting from the first occurrence deletes the whole event.
             if (fromTimeMs <= masterEvent.startTs) {
                 return@withContext deleteEvent(masterEventId)
             }
@@ -911,13 +884,16 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     )
                 )
 
+            // UNTIL takes the series' value type (RFC 5545 section 3.3.10): the occurrence
+            // deleted from may show as all-day on a timed series.
             val truncatedRrule = org.onekash.kashcal.util.RruleUtils.addUntilToRrule(
-                rrule, fromTimeMs - 1, isAllDay
+                rrule, fromTimeMs - 1, masterEvent.isAllDay
             )
 
-            val values = android.content.ContentValues().apply {
-                put(CalendarContract.Events.RRULE, truncatedRrule)
-            }
+            val values = seriesEndValues(masterEventId, truncatedRrule)
+                ?: return@withContext Result.failure(
+                    CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound)
+                )
             val eventUri = ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, masterEventId)
             val rowsUpdated = contentResolver.update(eventUri, values, null, null)
             if (rowsUpdated == 0) {
@@ -926,9 +902,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 )
             }
 
-            // Delete orphaned exception events in the truncated range.
-            // CalendarProvider does not auto-cleanup exceptions when RRULE is shortened.
-            val normalizedFrom = if (isAllDay)
+            // CalendarProvider keeps the exceptions past a shortened RRULE, so delete them.
+            val normalizedFrom = if (masterEvent.isAllDay)
                 DateTimeUtils.normalizeToUtcMidnight(fromTimeMs) else fromTimeMs
             var deletedExceptions = 0
             try {
@@ -974,9 +949,10 @@ class AndroidCalendarProviderRepository @Inject constructor(
         rrule: String?,
         duration: String?,
         timezone: String,
-        reminders: List<Int>,
+        reminders: List<Int>?,
         availability: Int,
         eventColor: Int?,
+        categories: List<String>?,
     ): Result<Long> = withContext(Dispatchers.IO) {
         try {
             val masterEvent = getDeviceEvent(masterEventId)
@@ -984,8 +960,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound)
                 )
 
-            // First-occurrence shortcut: a split at-or-before the
-            // master's start collapses to "edit all events."
+            // A split at or before the master's start is an "all events" edit.
             if (fromTimeMs <= masterEvent.startTs) {
                 val updateResult = updateEvent(
                     eventId = masterEventId,
@@ -1001,6 +976,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     reminders = reminders,
                     availability = availability,
                     eventColor = eventColor,
+                    categories = categories,
                 )
                 return@withContext updateResult.map { masterEventId }
             }
@@ -1012,22 +988,25 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     )
                 )
 
-            // Count the master's expanded instances strictly before
-            // the split point so the COUNT-based RRULE branch can
-            // preserve the total instance count across the split.
-            // Without this, a COUNT=N series produces N more instances
-            // on the new row instead of N-pastCount.
-            val pastCount = countInstancesInRange(
-                masterEventId,
-                masterEvent.startTs,
-                fromTimeMs,
-            )
+            // On a COUNT rule, count the occurrences before the split so the two halves keep
+            // the total; otherwise a COUNT=N series gets N more on the new row instead of
+            // N - pastCount. The Instances window includes both ends, so it stops 1 ms before
+            // the split. If the count can't be read the split fails: a count of 0 would edit
+            // the whole series instead.
+            val pastCount = if (org.onekash.kashcal.util.RruleUtils.hasCount(masterRrule)) {
+                countInstancesInRange(masterEventId, masterEvent.startTs, fromTimeMs - 1)
+                    ?: return@withContext Result.failure(
+                        CalendarErrorException(
+                            CalendarError.DeviceCalendar.WriteFailed("Couldn't count the occurrences before the split")
+                        )
+                    )
+            } else {
+                0
+            }
 
-            // Degenerate COUNT split (pastCount==0 or pastCount>=total)
-            // would yield invalid COUNT=0. Fall back to in-place
-            // ALL_EVENTS update on the master — the user's rrule
-            // wins (including null, which converts the master to
-            // non-recurring).
+            // A degenerate COUNT split ([RruleUtils.isDegenerateCountSplit]) would yield an
+            // invalid COUNT=0, so update the master in place as an "all events" edit. The
+            // user's rrule wins, and null makes the master non-recurring.
             if (org.onekash.kashcal.util.RruleUtils.isDegenerateCountSplit(masterRrule, pastCount)) {
                 val updateResult = updateEvent(
                     eventId = masterEventId,
@@ -1043,13 +1022,13 @@ class AndroidCalendarProviderRepository @Inject constructor(
                     reminders = reminders,
                     availability = availability,
                     eventColor = eventColor,
+                    categories = categories,
                 )
                 return@withContext updateResult.map { masterEventId }
             }
 
-            // rrule == null is the user's "Does not repeat" pick — the
-            // helper returns null new-series for that, and we let the
-            // non-recurring new row pass through to buildEventValues.
+            // rrule == null is the user's "Does not repeat" pick: the helper returns a null
+            // new-series rule, and the new row is written as a one-off.
             val (truncatedRrule, splitNewSeriesRrule) =
                 org.onekash.kashcal.util.RruleUtils.splitRruleAtTime(
                     masterRrule = masterRrule,
@@ -1060,9 +1039,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 )
             val newSeriesRrule = splitNewSeriesRrule
 
-            // Build the new-row values (for the future series). Reuse
-            // the same shape as createEvent so reminder back-references
-            // line up.
+            // The future series' row, built like createEvent's.
             val newEventValues = buildEventValues(
                 title, description, location, startTs, endTs, isAllDay, newSeriesRrule, duration, timezone
             ).apply {
@@ -1071,32 +1048,30 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 eventColor?.let { put(CalendarContract.Events.EVENT_COLOR, it) }
             }
 
+            // Like a new exception, the future half copies the series' reminders (unless given
+            // new ones), guests, organizer and tags (unless edited). Read before any write.
+            val reminderRows = reminderRowsForNewRow(reminders, masterEventId)
+            val seriesCopy = readSeriesCopy(masterEventId, calendarId, categories)
+            seriesCopy.putOrganizerInto(newEventValues)
+
             val masterUri = ContentUris.withAppendedId(
                 CalendarContract.Events.CONTENT_URI, masterEventId
             )
-            val masterTruncate = android.content.ContentValues().apply {
-                put(CalendarContract.Events.RRULE, truncatedRrule)
-            }
+            val masterTruncate = seriesEndValues(masterEventId, truncatedRrule)
+                ?: return@withContext Result.failure(
+                    CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound)
+                )
 
-            // Wrap insert + master truncate in a single applyBatch so a
-            // failure during INSERT leaves the master untouched. Order:
-            // INSERT first (so any constraint failure bails before we
-            // mutate the master), then UPDATE the master.
+            // One applyBatch, INSERT first: a failed insert stops the batch before the master is
+            // truncated.
             val ops = ArrayList<android.content.ContentProviderOperation>()
             ops.add(
                 android.content.ContentProviderOperation.newInsert(CalendarContract.Events.CONTENT_URI)
                     .withValues(newEventValues)
                     .build()
             )
-            for (minutes in reminders) {
-                ops.add(
-                    android.content.ContentProviderOperation.newInsert(CalendarContract.Reminders.CONTENT_URI)
-                        .withValueBackReference(CalendarContract.Reminders.EVENT_ID, 0)
-                        .withValue(CalendarContract.Reminders.MINUTES, minutes)
-                        .withValue(CalendarContract.Reminders.METHOD, CalendarContract.Reminders.METHOD_ALERT)
-                        .build()
-                )
-            }
+            ops.addAll(reminderInsertOps(reminderRows, eventBackReference = 0))
+            ops.addAll(seriesCopy.insertOps(eventBackReference = 0))
             ops.add(
                 android.content.ContentProviderOperation.newUpdate(masterUri)
                     .withValues(masterTruncate)
@@ -1110,12 +1085,9 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 )
             val newEventId = ContentUris.parseId(newEventUri)
 
-            // Cleanup orphaned exception children whose
-            // originalInstanceTime falls in the truncated half.
-            // CalendarProvider doesn't auto-cleanup these when RRULE
-            // is shortened. Best-effort: a failure here doesn't
-            // invalidate the split; log and move on.
-            val normalizedFrom = if (isAllDay)
+            // CalendarProvider keeps the exceptions past a shortened RRULE, so delete them.
+            // Best effort: a failure here doesn't undo the split.
+            val normalizedFrom = if (masterEvent.isAllDay)
                 DateTimeUtils.normalizeToUtcMidnight(fromTimeMs) else fromTimeMs
             try {
                 contentResolver.query(
@@ -1160,7 +1132,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 return@withContext Result.failure(CalendarErrorException(CalendarError.DeviceCalendar.EventNotFound))
             }
 
-            // Move exception events to same calendar (CalendarProvider doesn't cascade)
+            // CalendarProvider doesn't cascade the move to exceptions.
             try {
                 val exValues = android.content.ContentValues().apply {
                     put(CalendarContract.Events.CALENDAR_ID, newCalendarId)
@@ -1198,12 +1170,12 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 if (cursor.moveToFirst()) {
                     cursor.getInt(0).coerceAtLeast(1)
                 } else {
-                    5 // Default fallback
+                    5 // fallback
                 }
             } ?: 5
         } catch (e: Exception) {
             Log.w(TAG, "Error getting max reminders", e)
-            5 // Default fallback
+            5 // fallback
         }
     }
 
@@ -1237,8 +1209,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 } else null
             } ?: return@withContext null
 
-            // The Events projection has no tag column — tags live in a separate
-            // extended-property table, so fetch them in a follow-up query.
+            // Tags live in the extended-property table, not the Events projection.
             val categories = getCategoriesForEvents(setOf(event.id))[event.id].orEmpty()
             event.copy(categories = categories)
         } catch (e: SecurityException) {
@@ -1255,14 +1226,13 @@ class AndroidCalendarProviderRepository @Inject constructor(
         afterMs: Long
     ): Long? = withContext(Dispatchers.IO) {
         try {
-            // Window [afterMs - 1 day, afterMs + ~10y]. The Instances view materializes
-            // RRULE/RDATE and drops EXDATE'd occurrences, so the first row (BEGIN ASC) is the
-            // genuine next occurrence — not the master DTSTART. We pad the lower bound back one
-            // day (as getInstancesForDayRange does) so TODAY's occurrence is still found when
-            // its BEGIN is before `afterMs`: an all-day occurrence's BEGIN is UTC midnight (well
-            // before a mid-day "now"), and a timed occurrence may already have started today.
-            // Without the pad those resolve to next week's instance instead of today's. The
-            // ~10y upper bound keeps the provider from expanding an unbounded series forever.
+            // Window [afterMs - 1 day, afterMs + ~10y]. The Instances view expands RRULE/RDATE
+            // and drops EXDATE'd occurrences, so the first row (BEGIN ASC) is the next
+            // occurrence, not the master DTSTART. The day of padding before afterMs, as in
+            // getInstancesForDayRange, keeps today's occurrence when its BEGIN is earlier: an
+            // all-day BEGIN is UTC midnight, and a timed one may have started already. Without
+            // it they resolve to next week's. The ~10y bound stops the provider expanding an
+            // unbounded series forever.
             val startMs = afterMs - DateUtils.DAY_IN_MILLIS
             val endMs = afterMs + TEN_YEARS_MS
             val builder = Instances.CONTENT_URI.buildUpon()
@@ -1314,8 +1284,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
             return@withContext null
         }
 
-        // Exceptions are mapped straight from the Events cursor, which has no tag
-        // column; batch-fetch their tags so each carries its own categories.
+        // The Events cursor has no tag column; one batch query gives each exception its tags.
         val exceptionsWithCategories = if (exceptions.isEmpty()) {
             exceptions
         } else {
@@ -1359,8 +1328,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
     )
 
     /**
-     * Read a calendar's `OWNER_ACCOUNT` (the organizer/"you" email) by id.
-     * Returns null when the row is missing or permission is denied.
+     * Returns a calendar's `OWNER_ACCOUNT` (the organizer, "you"), or null when it is blank, the
+     * row is missing or the query fails.
      */
     private fun ownerEmailForCalendar(calendarId: Long): String? {
         return try {
@@ -1381,19 +1350,14 @@ class AndroidCalendarProviderRepository @Inject constructor(
     }
 
     /**
-     * Apply the guest add/remove [computeAttendeeDiff] to an existing event:
-     * delete only the removed guests' rows (by `_ID`) and insert only the new
-     * ones. Unchanged guests are never touched, so their pulled-down
+     * Applies [computeAttendeeDiff] to an existing event: deletes the removed guests' rows (by
+     * `_ID`) and inserts the new ones. Unchanged guests are never touched, so their pulled-down
      * `ATTENDEE_STATUS` survives.
      *
-     * The owner is excluded from the guest set (it's the dedicated ORGANIZER
-     * row, not a guest), and an owner row is added when the event gains its
-     * first guests and doesn't already carry an organizer — so adding a guest
-     * to a previously-solo event writes the organizer too, matching create.
+     * The owner is left out of the guest set ([guestsExcludingOwner]), and [ownerRowNeeded]
+     * adds its row, so adding a guest to a solo event writes the organizer too, as create does.
      *
-     * Deletes + inserts go through a single `applyBatch` so a mid-diff failure
-     * leaves the guest list as it was rather than half-applied (matches the
-     * atomicity of the create path).
+     * One `applyBatch`, so a failure mid-diff leaves the guest list as it was.
      */
     private fun applyAttendeeDiff(eventId: Long, desired: List<DeviceAttendee>) {
         val existing = readAttendeesBlocking(eventId)
@@ -1436,8 +1400,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
     }
 
     /**
-     * Read the `CALENDAR_ID` of an event row, or null when missing / denied.
-     * Used by [applyAttendeeDiff] to resolve the owner email for the owner row.
+     * Returns an event row's `CALENDAR_ID`, or null when the row is missing or the query fails.
+     * [updateEvent] uses it for the tag write and [applyAttendeeDiff] for the owner email.
      */
     private fun calendarIdForEvent(eventId: Long): Long? {
         return try {
@@ -1455,9 +1419,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
     }
 
     /**
-     * Synchronous attendee read used by [applyAttendeeDiff] (already on the IO
-     * dispatcher inside the write). Mirrors [getAttendees] but without a fresh
-     * `withContext`. Returns empty on permission error.
+     * Reads attendees like [getAttendees], without a `withContext`, for [applyAttendeeDiff],
+     * which already runs on the IO dispatcher. Returns empty on any error.
      */
     private fun readAttendeesBlocking(eventId: Long): List<DeviceAttendee> {
         return try {
@@ -1489,8 +1452,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
             val values = android.content.ContentValues().apply {
                 put(Attendees.ATTENDEE_STATUS, status)
             }
-            // Update by the row's own _ID so only the user's row changes — no
-            // EVENT_ID-wide update that could touch other guests.
+            // By the row's own _ID, so no other guest's row changes.
             val rows = contentResolver.update(
                 ContentUris.withAppendedId(Attendees.CONTENT_URI, attendeeId),
                 values, null, null
@@ -1509,21 +1471,198 @@ class AndroidCalendarProviderRepository @Inject constructor(
         }
     }
 
+    /** One Reminders row as stored: minutes before the event and its METHOD. */
+    private data class ReminderRow(val minutes: Int, val method: Int)
+
+    /**
+     * Reads an event's reminder rows, METHOD included. It never degrades to "no reminders": a
+     * provider error propagates and a null cursor throws, so a write copying them onto a new
+     * row fails instead of silently dropping them ([getReminders] catches and shows none).
+     * Only METHOD_DEFAULT and METHOD_ALERT fire on the device, but the provider stores the
+     * other methods so the sync adapter can send the same reminder back to the server, so they
+     * are copied as they are.
+     */
+    private fun readReminderRows(eventId: Long): List<ReminderRow> {
+        val cursor = contentResolver.query(
+            CalendarContract.Reminders.CONTENT_URI,
+            arrayOf(CalendarContract.Reminders.MINUTES, CalendarContract.Reminders.METHOD),
+            "${CalendarContract.Reminders.EVENT_ID} = ?",
+            arrayOf(eventId.toString()),
+            "${CalendarContract.Reminders.MINUTES} ASC"
+        ) ?: throw IllegalStateException("Reminders query for event $eventId returned no cursor")
+        return cursor.use {
+            buildList { while (it.moveToNext()) add(ReminderRow(it.getInt(0), it.getInt(1))) }
+        }
+    }
+
+    /**
+     * Reads an event's attendee rows as insertable values for a new row cut from the series,
+     * with every column the provider copies when it creates an exception itself: name, email,
+     * relationship, type, status, identity and its namespace. An error or a null cursor throws,
+     * as in [readReminderRows], instead of reading as "no guests".
+     */
+    private fun readAttendeeRowsForCopy(eventId: Long): List<android.content.ContentValues> {
+        val columns = arrayOf(
+            Attendees.ATTENDEE_NAME,
+            Attendees.ATTENDEE_EMAIL,
+            Attendees.ATTENDEE_RELATIONSHIP,
+            Attendees.ATTENDEE_TYPE,
+            Attendees.ATTENDEE_STATUS,
+            Attendees.ATTENDEE_IDENTITY,
+            Attendees.ATTENDEE_ID_NAMESPACE,
+        )
+        val cursor = contentResolver.query(
+            Attendees.CONTENT_URI, columns, "${Attendees.EVENT_ID} = ?", arrayOf(eventId.toString()), null
+        ) ?: throw IllegalStateException("Attendees query for event $eventId returned no cursor")
+        return cursor.use {
+            buildList {
+                while (it.moveToNext()) {
+                    val row = android.content.ContentValues()
+                    columns.forEachIndexed { i, column ->
+                        when {
+                            it.isNull(i) -> Unit
+                            it.getType(i) == android.database.Cursor.FIELD_TYPE_INTEGER -> row.put(column, it.getInt(i))
+                            else -> row.put(column, it.getString(i))
+                        }
+                    }
+                    add(row)
+                }
+            }
+        }
+    }
+
+    /**
+     * Reads an event's tag VALUE as stored (foreign content included) for a new row cut from
+     * the series, or null when no row decodes to a tag. An error or a null cursor throws
+     * instead of reading as "no tags".
+     */
+    private fun readCategoriesValueForCopy(eventId: Long): String? {
+        val cursor = contentResolver.query(
+            CalendarContract.ExtendedProperties.CONTENT_URI,
+            arrayOf(CalendarContract.ExtendedProperties.VALUE),
+            "${CalendarContract.ExtendedProperties.EVENT_ID} = ? AND ${CalendarContract.ExtendedProperties.NAME} = ?",
+            arrayOf(eventId.toString(), EXTNAME_CATEGORIES),
+            null
+        ) ?: throw IllegalStateException("Tag query for event $eventId returned no cursor")
+        return cursor.use {
+            var found: String? = null
+            while (found == null && it.moveToNext()) {
+                found = it.getString(0)?.takeIf { value -> decodeCategories(value).isNotEmpty() }
+            }
+            found
+        }
+    }
+
+    /** Reminder minutes chosen in the app, stored as pop-up alerts. */
+    private fun alertRows(minutes: List<Int>) =
+        minutes.map { ReminderRow(it, CalendarContract.Reminders.METHOD_ALERT) }
+
+    /**
+     * Returns the reminder rows for a new row cut from a series: the caller's [reminders] as
+     * alerts, or when null a copy of the series' rows.
+     */
+    private fun reminderRowsForNewRow(reminders: List<Int>?, masterEventId: Long) =
+        reminders?.let(::alertRows) ?: readReminderRows(masterEventId)
+
+    /**
+     * Reads the series' ORGANIZER and HAS_ATTENDEE_DATA for a new row cut from the series. A
+     * missing row or null cursor throws, like the other copy reads.
+     */
+    private fun readOrganizerForCopy(eventId: Long): Pair<String?, Int> {
+        val cursor = contentResolver.query(
+            ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId),
+            arrayOf(CalendarContract.Events.ORGANIZER, CalendarContract.Events.HAS_ATTENDEE_DATA),
+            null, null, null
+        ) ?: throw IllegalStateException("Events query for event $eventId returned no cursor")
+        return cursor.use {
+            check(it.moveToFirst()) { "Series row $eventId not found" }
+            (if (it.isNull(0)) null else it.getString(0)) to (if (it.isNull(1)) 0 else it.getInt(1))
+        }
+    }
+
+    /**
+     * Holds what a new row cut from a series (an exception or the future half of a split)
+     * copies from it. Guests and tags live in their own tables keyed by event row, so the new
+     * row has none of its own; the provider's own exception path copies them for the same
+     * reason.
+     */
+    private class SeriesCopy(
+        val guestRows: List<android.content.ContentValues>,
+        val tag: TagCopy?,
+        val organizer: String?,
+        val hasAttendeeData: Int,
+    )
+
+    /** A tag row to write: the stored value and the account it's written under. */
+    private class TagCopy(val account: Account, val value: String)
+
+    /**
+     * Reads the series' guests, organizer and tags for a new row before anything is written,
+     * so a failed read fails the write with nothing written. Non-null [categories] replace the
+     * series' tags (an empty list means none); null copies the stored value verbatim. A tag row
+     * needs the calendar's account, so an unknown account fails the read when there is a tag
+     * to write.
+     */
+    private fun readSeriesCopy(masterEventId: Long, calendarId: Long, categories: List<String>?): SeriesCopy {
+        val guestRows = readAttendeeRowsForCopy(masterEventId)
+        val tagValue = if (categories != null) encodeCategories(categories) else readCategoriesValueForCopy(masterEventId)
+        val tag = tagValue?.let { value ->
+            val account = readCalendarAccount(calendarId)
+                ?: throw IllegalStateException("No account for calendar $calendarId to write tags under")
+            TagCopy(account, value)
+        }
+        val (organizer, hasAttendeeData) = readOrganizerForCopy(masterEventId)
+        return SeriesCopy(guestRows, tag, organizer, hasAttendeeData)
+    }
+
+    /**
+     * Puts the series' organizer and its "has a full guest list" flag on the new row, as the
+     * provider's own exception path does. Without ORGANIZER the provider would name the
+     * calendar owner, so a copy of someone else's meeting would claim the user organizes it.
+     */
+    private fun SeriesCopy.putOrganizerInto(values: android.content.ContentValues) {
+        organizer?.let { values.put(CalendarContract.Events.ORGANIZER, it) }
+        values.put(CalendarContract.Events.HAS_ATTENDEE_DATA, hasAttendeeData)
+    }
+
+    /**
+     * Returns batch inserts for the copied guests and tags, attached to the event inserted at
+     * [eventBackReference]. Tags are written in sync-adapter mode, as in [writeCategories], but
+     * inside the batch so the new row never exists without them. The batch still counts as an
+     * app write (the provider takes that from its first operation), so the change is uploaded
+     * as usual.
+     */
+    private fun SeriesCopy.insertOps(eventBackReference: Int): List<android.content.ContentProviderOperation> {
+        val guestOps = guestRows.map { guest ->
+            android.content.ContentProviderOperation.newInsert(Attendees.CONTENT_URI)
+                .withValues(guest)
+                .withValueBackReference(Attendees.EVENT_ID, eventBackReference)
+                .build()
+        }
+        val tagOp = tag?.let {
+            android.content.ContentProviderOperation
+                .newInsert(syncAdapterExtendedPropertiesUri(it.account.name, it.account.type))
+                .withValueBackReference(CalendarContract.ExtendedProperties.EVENT_ID, eventBackReference)
+                .withValue(CalendarContract.ExtendedProperties.NAME, EXTNAME_CATEGORIES)
+                .withValue(CalendarContract.ExtendedProperties.VALUE, it.value)
+                .build()
+        }
+        return guestOps + listOfNotNull(tagOp)
+    }
+
+    /** Returns batch inserts for [rows], attached to the event inserted at [eventBackReference]. */
+    private fun reminderInsertOps(rows: List<ReminderRow>, eventBackReference: Int) =
+        rows.map { row ->
+            android.content.ContentProviderOperation.newInsert(CalendarContract.Reminders.CONTENT_URI)
+                .withValueBackReference(CalendarContract.Reminders.EVENT_ID, eventBackReference)
+                .withValue(CalendarContract.Reminders.MINUTES, row.minutes)
+                .withValue(CalendarContract.Reminders.METHOD, row.method)
+                .build()
+        }
+
     override suspend fun getReminders(eventId: Long): List<Int> = withContext(Dispatchers.IO) {
         try {
-            contentResolver.query(
-                CalendarContract.Reminders.CONTENT_URI,
-                arrayOf(CalendarContract.Reminders.MINUTES),
-                "${CalendarContract.Reminders.EVENT_ID} = ?",
-                arrayOf(eventId.toString()),
-                "${CalendarContract.Reminders.MINUTES} ASC"
-            )?.use { cursor ->
-                val results = mutableListOf<Int>()
-                while (cursor.moveToNext()) {
-                    results.add(cursor.getInt(0))
-                }
-                results
-            }.orEmpty()
+            readReminderRows(eventId).map { it.minutes }
         } catch (e: Exception) {
             Log.w(TAG, "Error reading reminders", e)
             emptyList()
@@ -1531,11 +1670,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
     }
 
     /**
-     * Batch fetch reminders for multiple events in a single query.
-     * Avoids N+1 query problem when loading many instances.
-     *
-     * @param eventIds Set of event IDs to fetch reminders for
-     * @return Map of eventId to sorted list of reminder minutes
+     * Returns each event's reminder minutes, sorted, from one query per 500 ids. Returns an
+     * empty map on any error.
      */
     override suspend fun getRemindersForEvents(eventIds: Set<Long>): Map<Long, List<Int>> = withContext(Dispatchers.IO) {
         if (eventIds.isEmpty()) return@withContext emptyMap()
@@ -1543,7 +1679,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         try {
             val results = mutableMapOf<Long, MutableList<Int>>()
 
-            // Chunk to avoid SQLite variable limit (default 999)
+            // Chunked under SQLite's variable limit (default 999).
             for (chunk in eventIds.toList().chunked(500)) {
                 val placeholders = chunk.joinToString(",") { "?" }
                 val selection = "${CalendarContract.Reminders.EVENT_ID} IN ($placeholders)"
@@ -1585,8 +1721,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         try {
             val results = mutableMapOf<Long, List<String>>()
 
-            // Chunk to avoid SQLite variable limit (default 999). The extra fixed
-            // NAME arg counts against the limit, so keep chunk size well below it.
+            // Chunked under SQLite's variable limit (default 999); the NAME arg counts too.
             for (chunk in eventIds.toList().chunked(500)) {
                 val placeholders = chunk.joinToString(",") { "?" }
                 val selection =
@@ -1627,17 +1762,52 @@ class AndroidCalendarProviderRepository @Inject constructor(
         originalInstanceTime: Long,
         isAllDay: Boolean
     ): Long? = withContext(Dispatchers.IO) {
-        try {
-            val normalizedTime = if (isAllDay)
+        val seriesAllDay = try {
+            seriesIsAllDay(masterEventId)
+        } catch (e: Exception) {
+            Log.w(TAG, "Couldn't read the series' all-day flag", e)
+            null
+        } ?: isAllDay
+        findExceptionRowId(masterEventId, originalInstanceTime, seriesAllDay, includeCancelled = false)
+    }
+
+    /**
+     * Returns the exception row for one occurrence, skipping rows that are deleted but not yet
+     * purged (the platform says a deleted row "should be ignored"), or null if none or the
+     * query fails.
+     *
+     * A live row (not STATUS_CANCELED; a null status counts as live) always wins. Only when
+     * there is none and [includeCancelled] is set is a cancelled row returned: like a deleted
+     * one it shows as no occurrence, so it is never the row behind the occurrence the user is
+     * editing, but a delete may reuse it instead of cancelling the occurrence twice.
+     * [seriesAllDay] is the series' own all-day flag, which names the slot.
+     */
+    private fun findExceptionRowId(
+        masterEventId: Long,
+        originalInstanceTime: Long,
+        seriesAllDay: Boolean,
+        includeCancelled: Boolean,
+    ): Long? {
+        return try {
+            val normalizedTime = if (seriesAllDay)
                 DateTimeUtils.normalizeToUtcMidnight(originalInstanceTime) else originalInstanceTime
             contentResolver.query(
                 CalendarContract.Events.CONTENT_URI,
-                arrayOf(CalendarContract.Events._ID),
-                "${CalendarContract.Events.ORIGINAL_ID} = ? AND ${CalendarContract.Events.ORIGINAL_INSTANCE_TIME} = ?",
+                arrayOf(CalendarContract.Events._ID, CalendarContract.Events.STATUS),
+                "${CalendarContract.Events.ORIGINAL_ID} = ? AND " +
+                    "${CalendarContract.Events.ORIGINAL_INSTANCE_TIME} = ? AND " +
+                    "${CalendarContract.Events.DELETED} = 0",
                 arrayOf(masterEventId.toString(), normalizedTime.toString()),
-                null
+                "${CalendarContract.Events._ID} ASC"
             )?.use { cursor ->
-                if (cursor.moveToFirst()) cursor.getLong(0) else null
+                var cancelled: Long? = null
+                while (cursor.moveToNext()) {
+                    val isCancelled = !cursor.isNull(1) &&
+                        cursor.getInt(1) == CalendarContract.Events.STATUS_CANCELED
+                    if (!isCancelled) return@use cursor.getLong(0)
+                    if (cancelled == null) cancelled = cursor.getLong(0)
+                }
+                if (includeCancelled) cancelled else null
             }
         } catch (e: SecurityException) {
             Log.w(TAG, "Permission denied finding exception", e)
@@ -1649,21 +1819,17 @@ class AndroidCalendarProviderRepository @Inject constructor(
     }
 
     /**
-     * Check whether an event is an exception (has ORIGINAL_ID set).
-     * Used by [updateEvent] to determine whether to omit RRULE from ContentValues.
-     */
-    /**
-     * Count the number of instances of [eventId] whose Begin falls
-     * in `[rangeStartMs, rangeEndMs)`. Used by [editThisAndFuture]
-     * to compute the master's pre-split instance count for COUNT
-     * preservation. Returns 0 on permission errors or empty results.
+     * Counts the occurrences of [eventId] the provider shows in `[rangeStartMs, rangeEndMs]`
+     * (both ends included) for [editThisAndFuture]'s COUNT split. Returns 0 for an empty range
+     * and null when the query fails or returns no cursor; a SecurityException is rethrown for
+     * the caller to report as a permission error.
      */
     private fun countInstancesInRange(
         eventId: Long,
         rangeStartMs: Long,
         rangeEndMs: Long,
-    ): Int {
-        if (rangeEndMs <= rangeStartMs) return 0
+    ): Int? {
+        if (rangeEndMs < rangeStartMs) return 0
         return try {
             val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().apply {
                 ContentUris.appendId(this, rangeStartMs)
@@ -1675,16 +1841,51 @@ class AndroidCalendarProviderRepository @Inject constructor(
                 "${CalendarContract.Instances.EVENT_ID} = ?",
                 arrayOf(eventId.toString()),
                 null,
-            )?.use { it.count } ?: 0
+            )?.use { it.count }
         } catch (e: SecurityException) {
-            Log.w(TAG, "countInstancesInRange permission denied", e)
-            0
+            throw e
         } catch (e: Exception) {
             Log.w(TAG, "countInstancesInRange query failed", e)
-            0
+            null
         }
     }
 
+    /**
+     * Returns the update that ends series [eventId] with [truncatedRrule], or null when the row
+     * or its DTSTART is gone.
+     *
+     * The provider rebuilds a series' occurrences only from the values in the update itself:
+     * without DTSTART it keeps the old ones, and without RRULE it treats the row as a one-off.
+     * So the update carries the series' own start, length, zone and all-day flag, written back
+     * as stored; a column stored as null is left out, so it stays null. A failed read throws,
+     * so the caller writes nothing instead of an update the phone would not show.
+     */
+    private fun seriesEndValues(eventId: Long, truncatedRrule: String): android.content.ContentValues? {
+        val columns = arrayOf(
+            CalendarContract.Events.DTSTART,
+            CalendarContract.Events.DURATION,
+            CalendarContract.Events.EVENT_TIMEZONE,
+            CalendarContract.Events.ALL_DAY,
+        )
+        val cursor = contentResolver.query(
+            ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId), columns, null, null, null
+        ) ?: throw IllegalStateException("Couldn't read series $eventId")
+        return cursor.use { c ->
+            if (!c.moveToFirst() || c.isNull(0)) return@use null
+            android.content.ContentValues().apply {
+                put(CalendarContract.Events.DTSTART, c.getLong(0))
+                if (!c.isNull(1)) put(CalendarContract.Events.DURATION, c.getString(1))
+                if (!c.isNull(2)) put(CalendarContract.Events.EVENT_TIMEZONE, c.getString(2))
+                if (!c.isNull(3)) put(CalendarContract.Events.ALL_DAY, c.getInt(3))
+                put(CalendarContract.Events.RRULE, truncatedRrule)
+            }
+        }
+    }
+
+    /**
+     * Returns whether an event is an exception (ORIGINAL_ID set). [updateEvent] uses it to
+     * leave RRULE out of the update.
+     */
     private fun isExceptionEvent(eventId: Long): Boolean {
         val cursor = contentResolver.query(
             ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId),
@@ -1695,9 +1896,23 @@ class AndroidCalendarProviderRepository @Inject constructor(
     }
 
     /**
-     * Read the _SYNC_ID of an event (set by sync adapters).
-     * Used by [createException] to set ORIGINAL_SYNC_ID on exception events
-     * so sync adapters can associate exceptions with their master events.
+     * Returns whether series [eventId] is all-day (a null flag reads as timed), or null when
+     * its row is gone. The occurrence an exception replaces is one of the series' slots, so
+     * this flag, not the exception's own, decides how its original time is stored and matched.
+     */
+    private fun seriesIsAllDay(eventId: Long): Boolean? {
+        val cursor = contentResolver.query(
+            ContentUris.withAppendedId(CalendarContract.Events.CONTENT_URI, eventId),
+            arrayOf(CalendarContract.Events.ALL_DAY),
+            null, null, null
+        )
+        return cursor?.use { if (it.moveToFirst()) it.getInt(0) != 0 else null }
+    }
+
+    /**
+     * Returns an event's _SYNC_ID (set by sync adapters), or null. [createException] and
+     * [deleteSingleOccurrence] copy it into a new exception's ORIGINAL_SYNC_ID so sync adapters
+     * can match the exception to its master.
      */
     internal fun getMasterSyncId(eventId: Long): String? {
         val cursor = contentResolver.query(
@@ -1708,7 +1923,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         return cursor?.use { if (it.moveToFirst() && !it.isNull(0)) it.getString(0) else null }
     }
 
-    // ==================== Reminder Operations (Phase 4) ====================
+    // ==================== Reminder Operations ====================
 
     override suspend fun getNextUpcomingReminder(
         enabledCalendarIds: Set<Long>,
@@ -1717,7 +1932,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
         if (enabledCalendarIds.isEmpty()) return@withContext null
 
         try {
-            // Query instances for next 30 days that have alarms
+            // The next 30 days.
             val startMs = afterMs
             val endMs = afterMs + (30L * DateUtils.DAY_IN_MILLIS)
 
@@ -1725,9 +1940,6 @@ class AndroidCalendarProviderRepository @Inject constructor(
             ContentUris.appendId(builder, startMs)
             ContentUris.appendId(builder, endMs)
 
-            // Query instances with alarms. Selection unconditionally excludes
-            // self-declined events: the alarm pipeline treats decline as "no",
-            // independent of the display-side "Show declined" toggle.
             val selection = buildUpcomingReminderSelection()
 
             val instancesWithAlarms = mutableListOf<InstanceWithAlarm>()
@@ -1760,7 +1972,7 @@ class AndroidCalendarProviderRepository @Inject constructor(
                             title = title,
                             location = location,
                             isAllDay = isAllDay,
-                            // Reminder notifications show effective display (override if set, else calendar).
+                            // The event color if set, else the calendar's.
                             calendarColor = eventColorValue ?: calendarColorValue,
                             calendarId = calendarId
                         )
@@ -1770,7 +1982,6 @@ class AndroidCalendarProviderRepository @Inject constructor(
 
             if (instancesWithAlarms.isEmpty()) return@withContext null
 
-            // For each instance, get its reminders and calculate trigger times
             var earliest: UpcomingDeviceReminder? = null
 
             for (instance in instancesWithAlarms) {
@@ -1782,10 +1993,8 @@ class AndroidCalendarProviderRepository @Inject constructor(
                         isAllDay = instance.isAllDay
                     )
 
-                    // Skip if trigger time is in the past
                     if (triggerTime <= afterMs) continue
 
-                    // Check if this is the earliest
                     if (earliest == null || triggerTime < earliest.triggerTime) {
                         earliest = UpcomingDeviceReminder(
                             eventId = instance.eventId,
@@ -1813,31 +2022,28 @@ class AndroidCalendarProviderRepository @Inject constructor(
     }
 
     /**
-     * Calculate reminder trigger time.
-     *
-     * For timed events: occurrenceStartTs - (reminderMinutes * 60 * 1000)
-     * For all-day events: 9 AM local time, N days before (matches Room pattern)
+     * Returns when a reminder fires: the start minus [reminderMinutes] for a timed event, and
+     * for an all-day event the event day's local midnight minus [reminderMinutes].
      */
     private fun calculateReminderTriggerTime(
         occurrenceStartTs: Long,
         reminderMinutes: Int,
         isAllDay: Boolean
     ): Long {
-        // Android CalendarContract.Reminders.MINUTES is "minutes before start":
-        // positive = before, negative = after. The signed offset is the negation of that.
+        // Reminders.MINUTES is minutes before the start (negative = after); the signed offset is
+        // its negation.
         val offsetMs = -reminderMinutes.toLong() * 60 * 1000
 
         return if (isAllDay) {
-            // Signed offset from the event's LOCAL midnight (stored == fired == synced),
-            // identical formula to the Room scheduler's calculateAllDayTriggerTime.
+            // Same formula as the Room scheduler's calculateAllDayTriggerTime (stored == fired ==
+            // synced).
             DateTimeUtils.allDayReminderTriggerTime(occurrenceStartTs, offsetMs)
         } else {
-            // Timed events: simple subtraction
             occurrenceStartTs + offsetMs
         }
     }
 
-    /** Helper class for intermediate instance data before joining with reminders */
+    /** An occurrence with alarms, before its reminders are read. */
     private data class InstanceWithAlarm(
         val eventId: Long,
         val occurrenceStartTs: Long,
@@ -1878,11 +2084,9 @@ class AndroidCalendarProviderRepository @Inject constructor(
         val isAllDay = cursor.getInt(8) == 1
         val startTs = cursor.getLong(5)
         val rawEndTs = if (cursor.isNull(6)) null else cursor.getLong(6)
-        // Convert CalendarProvider's exclusive DTEND (midnight next day) to inclusive
-        // end (last ms of last day) for all-day events, matching the convention used
-        // by mapToInstances and Room Event.endTs. The edit form's date picker reads
-        // this back through DateTimeUtils.utcMidnightToLocalDate; without this
-        // conversion the picker would show the day after the event's actual last day.
+        // The edit form's date picker reads the all-day end back through
+        // DateTimeUtils.utcMidnightToLocalDate; the exclusive DTEND would show the day after
+        // the event's last day.
         val endTs = inclusiveEndForDeviceEvent(rawEndTs, startTs, isAllDay)
 
         return DeviceEvent(
@@ -1912,14 +2116,12 @@ class AndroidCalendarProviderRepository @Inject constructor(
 }
 
 /**
- * Convert CalendarProvider's exclusive DTEND to KashCal's inclusive endTs for an
- * all-day event read off the Events table.
+ * Converts an Events row's exclusive all-day DTEND (next midnight) to KashCal's inclusive
+ * endTs (last ms of the last day), as Room Event.endTs stores it.
  *
- * Mirrors the conversion in mapToInstances (line ~184). Both must agree so an event
- * shown on the calendar grid renders the same end date when reopened in the edit
- * form. Returns null when DTEND is null (recurring events use DURATION instead).
- * Guards against a degenerate `dtend == dtstart` row by leaving it unchanged
- * rather than going negative.
+ * Must agree with the conversion in mapToInstances, so an event on the grid shows the same end
+ * date when reopened in the edit form. Returns null when DTEND is null (a series uses DURATION).
+ * A degenerate `dtend <= dtstart` row is returned unchanged.
  */
 internal fun inclusiveEndForDeviceEvent(
     dtend: Long?,
@@ -1932,12 +2134,10 @@ internal fun inclusiveEndForDeviceEvent(
 }
 
 /**
- * Build the ExtendedProperties write URI that identifies the caller as a sync
- * adapter for the given account. Writing an ExtendedProperty on a synced
- * calendar silently no-ops unless CALLER_IS_SYNCADAPTER=true is set together
- * with the owning calendar's ACCOUNT_NAME/ACCOUNT_TYPE, so this is required on
- * every categories read-write. The account must match the calendar that owns
- * the event.
+ * Builds the ExtendedProperties URI that identifies the caller as the sync adapter for an
+ * account. Writing an ExtendedProperty on a synced calendar silently no-ops unless
+ * CALLER_IS_SYNCADAPTER=true is set with the owning calendar's ACCOUNT_NAME and ACCOUNT_TYPE,
+ * so every tag write uses it. The account must match the calendar that owns the event.
  */
 internal fun syncAdapterExtendedPropertiesUri(accountName: String, accountType: String) =
     CalendarContract.ExtendedProperties.CONTENT_URI.buildUpon()
@@ -1947,11 +2147,8 @@ internal fun syncAdapterExtendedPropertiesUri(accountName: String, accountType: 
         .build()
 
 /**
- * Selection clause for the upcoming-device-reminder query.
- *
- * Unconditionally hides self-declined events — the alarm pipeline treats a
- * self-decline as "no", regardless of the display-side "Show declined"
- * toggle.
+ * Returns the selection for the upcoming device reminder query. It always hides self-declined
+ * events: the alarm pipeline treats a decline as "no", whatever the "Show declined" toggle.
  */
 internal fun buildUpcomingReminderSelection(): String =
     "${Instances.HAS_ALARM} = 1 AND " +
@@ -1959,13 +2156,12 @@ internal fun buildUpcomingReminderSelection(): String =
         "${Instances.SELF_ATTENDEE_STATUS} != ${Attendees.ATTENDEE_STATUS_DECLINED}"
 
 /**
- * Build the ContentValues written when the user ticks a device calendar.
+ * Builds the values written when the user ticks a device calendar.
  *
- * Flips both flags together because on Xiaomi/MIUI Google calendars ship with
- * SYNC_EVENTS=0 AND VISIBLE=0 by default. Our Instances query filters on
- * VISIBLE=1, and events are never downloaded without SYNC_EVENTS=1.
- * Extracted to file level so tests can verify both keys are written (a typo
- * in either would silently break MIUI users).
+ * Sets both flags because on Xiaomi/MIUI Google calendars ship with SYNC_EVENTS=0 and
+ * VISIBLE=0. The Instances queries filter on VISIBLE=1, and events are never downloaded without
+ * SYNC_EVENTS=1. At file level so tests can check both keys; a typo in either would silently
+ * break MIUI users.
  */
 internal fun buildCalendarVisibleValues(): android.content.ContentValues {
     return android.content.ContentValues().apply {
@@ -1975,29 +2171,25 @@ internal fun buildCalendarVisibleValues(): android.content.ContentValues {
 }
 
 /**
- * True when an account type identifies a LOCAL device calendar — one with no
- * sync adapter. Both the requestSync skip and the device "can't send
- * invitations" notice key off this single comparison, so neither can drift
- * from the other.
+ * Returns true when an account type is a LOCAL device calendar, one with no sync adapter.
+ * [shouldSkipRequestSync] and [DeviceCalendar.canDeliverInvites] both use it, so they can't
+ * drift apart.
  */
 internal fun isLocalAccountType(accountType: String): Boolean =
     accountType.equals(android.provider.CalendarContract.ACCOUNT_TYPE_LOCAL, ignoreCase = true)
 
 /**
- * Whether `requestSync` should be skipped for this account.
- *
- * Skips LOCAL accounts since they have no sync adapter to receive the request.
- * Callers must ensure `account.name` and `account.type` are non-blank;
- * `readCalendarAccount` guards this.
+ * Returns whether to skip `requestSync` for an account: a LOCAL account has no sync adapter to
+ * receive it. Callers must pass a non-blank `account.name` and `account.type`;
+ * `readCalendarAccount` guarantees that.
  */
 internal fun shouldSkipRequestSync(account: android.accounts.Account): Boolean =
     isLocalAccountType(account.type)
 
 /**
- * The add/remove delta for a device-event guest edit. Only guest rows the
- * user actually added ([toInsert]) or removed ([toDelete]) appear here; an
- * unchanged guest is in neither set, so its provider row — and the
- * pulled-down `ATTENDEE_STATUS` on it — survives the edit untouched.
+ * Holds the guests a device-event edit added ([toInsert]) or removed ([toDelete]). An
+ * unchanged guest is in neither, so its provider row and the pulled-down `ATTENDEE_STATUS` on
+ * it survive the edit.
  */
 internal data class AttendeeDiff(
     val toInsert: List<DeviceAttendee>,
@@ -2005,9 +2197,8 @@ internal data class AttendeeDiff(
 )
 
 /**
- * Canonicalize a device-provider attendee email for compare-time equality:
- * strip any leading `mailto:` and lowercase. Matches the canonicalization the
- * read-side UI mapper uses so an unedited open-and-save produces no churn.
+ * Canonicalizes a device attendee email for comparison: strips a leading `mailto:` and
+ * lowercases. Matches the read-side UI mapper, so an unedited open-and-save changes no rows.
  */
 internal fun canonicalAttendeeEmail(raw: String): String =
     org.onekash.kashcal.util.AddressNormalizer.canonical(
@@ -2015,16 +2206,12 @@ internal fun canonicalAttendeeEmail(raw: String): String =
     )
 
 /**
- * Compute the guest add/remove delta between the rows currently on the event
- * ([existing]) and the set the user wants ([desired]), keyed on canonical
- * email. A guest present on both sides is left alone (preserves its synced
- * status); only genuinely new guests are inserted and only genuinely removed
- * guests are deleted.
+ * Computes the [AttendeeDiff] between the event's rows ([existing]) and the guests the user
+ * wants ([desired]), keyed on canonical email.
  *
- * The owner/organizer row is excluded from the delete side: it's managed
- * separately (written once when guests first appear) and must never be removed
- * by a guest edit. Rows with a blank/null email can't be keyed, so they
- * participate in neither set.
+ * The organizer row is never deleted: it's written once, when guests first appear
+ * ([ownerRowNeeded]), and a guest edit must never remove it. Rows with a blank or null email
+ * can't be keyed, so they are in neither set.
  */
 internal fun computeAttendeeDiff(
     existing: List<DeviceAttendee>,
@@ -2045,12 +2232,11 @@ internal fun computeAttendeeDiff(
 }
 
 /**
- * Whether [email] is a real address we should write as the event's ORGANIZER.
+ * Returns whether [email] is a real address to write as the event's organizer.
  *
- * Excludes blank/null and machine-generated group addresses (which end with
- * `calendar.google.com` — e.g. a shared Google calendar's
- * `…@group.calendar.google.com` `OWNER_ACCOUNT`). Surfacing such an address as
- * the organizer is meaningless, so the owner row is skipped for them.
+ * Excludes blank or null and machine-generated group addresses ending in
+ * `calendar.google.com`, such as a shared calendar's `...@group.calendar.google.com`
+ * `OWNER_ACCOUNT`. Such an address means nothing as the organizer, so no owner row is written.
  */
 internal fun isValidOrganizerEmail(email: String?): Boolean {
     val trimmed = email?.trim().orEmpty()
@@ -2059,13 +2245,11 @@ internal fun isValidOrganizerEmail(email: String?): Boolean {
 }
 
 /**
- * The guest rows to write, with the calendar owner removed. The owner is
- * represented by the dedicated ORGANIZER row, so a guest entry that resolves to
- * the same canonical address would create a duplicate — drop it.
+ * Returns the guests to write without the calendar owner, who has the organizer row; a guest
+ * with the same canonical address would duplicate it.
  *
- * Only excludes the owner when it's a valid organizer address ([isValidOrganizerEmail]):
- * if no owner row will be written (blank or machine-generated address), there's
- * no duplicate to avoid, so the matching guest is kept rather than silently lost.
+ * Removes the owner only when it's a valid organizer address ([isValidOrganizerEmail]). With
+ * no owner row there's no duplicate, so the matching guest is kept instead of silently lost.
  */
 internal fun guestsExcludingOwner(
     desired: List<DeviceAttendee>,
@@ -2079,14 +2263,10 @@ internal fun guestsExcludingOwner(
 }
 
 /**
- * Whether a dedicated owner/organizer row should be written for this save.
- *
- * True only when: the event will have guests ([desired] non-empty), the owner
- * email is a real organizer address ([isValidOrganizerEmail]), and an organizer
- * row isn't already present on the event ([existing]). The last condition makes
- * this correct on the update path too — a previously-solo event gaining a guest
- * gets an owner row, but an event that already carries the organizer doesn't get
- * a duplicate.
+ * Returns whether this save writes an owner (organizer) row: only when [desired] has guests,
+ * the owner email passes [isValidOrganizerEmail], and [existing] has no organizer row. The
+ * last condition serves updates: a solo event gaining a guest gets an owner row, but an event
+ * that already has its organizer doesn't get a duplicate.
  */
 internal fun ownerRowNeeded(
     existing: List<DeviceAttendee>,
@@ -2102,9 +2282,8 @@ internal fun ownerRowNeeded(
 }
 
 /**
- * ContentValues for the owner/organizer attendee row. Written only when an
- * event has guests: the host appears as a `RELATIONSHIP_ORGANIZER` /
- * `STATUS_ACCEPTED` row so the guest list reads correctly.
+ * Builds the owner's attendee row: `RELATIONSHIP_ORGANIZER`, `TYPE_REQUIRED`,
+ * `STATUS_ACCEPTED`, so the guest list shows the host. Written only when [ownerRowNeeded].
  */
 internal fun buildOwnerAttendeeValues(ownerEmail: String): android.content.ContentValues =
     android.content.ContentValues().apply {
@@ -2124,9 +2303,8 @@ internal fun buildOwnerAttendeeValues(ownerEmail: String): android.content.Conte
     }
 
 /**
- * ContentValues for a guest attendee row: `RELATIONSHIP_ATTENDEE`,
- * `TYPE_REQUIRED`, `STATUS_NONE` (no response yet). A null display name is
- * omitted rather than written as null.
+ * Builds a guest's attendee row: `RELATIONSHIP_ATTENDEE`, `TYPE_REQUIRED`, `STATUS_NONE` (no
+ * response yet). A null display name is left out, not written as null.
  */
 internal fun buildGuestAttendeeValues(attendee: DeviceAttendee): android.content.ContentValues =
     android.content.ContentValues().apply {
@@ -2149,22 +2327,20 @@ internal fun buildGuestAttendeeValues(attendee: DeviceAttendee): android.content
     }
 
 /**
- * Build ContentValues for CalendarProvider Events table.
+ * Builds the Events row values for an event body.
  *
- * Handles:
- * - All-day events: Uses UTC timezone, converts inclusive end to exclusive (+1 day)
- * - Recurring events: Uses DURATION instead of DTEND (RFC 5545 format)
- * - Single events: Uses DTEND
+ * - All-day: zone UTC, and the inclusive end becomes the exclusive next midnight.
+ * - Series: RFC 5545 DURATION, DTEND null.
+ * - One-off: DTEND, DURATION null.
  *
- * @param title Event title
- * @param description Event description (optional)
- * @param location Event location (optional)
- * @param startTs Start timestamp (UTC millis for all-day, local for timed)
- * @param endTs End timestamp (inclusive for KashCal's internal format)
- * @param isAllDay Whether event is all-day
- * @param rrule Recurrence rule (null for single events)
- * @param duration Duration string (optional, calculated from endTs if null)
- * @param timezone Event timezone (ignored for all-day events, uses UTC)
+ * @param startTs epoch ms; UTC midnight for all-day
+ * @param endTs inclusive end, KashCal's convention
+ * @param rrule null or empty for a one-off
+ * @param duration computed from [endTs] when null
+ * @param timezone ignored for all-day, which uses UTC
+ * @param isException for a one-off, the row is an exception: RRULE is left out of the values,
+ *   and RDATE, EXDATE and EXRULE are written as null. Otherwise a one-off writes RRULE as null,
+ *   so a series can become a one-off.
  */
 internal fun buildEventValues(
     title: String,
@@ -2195,29 +2371,21 @@ internal fun buildEventValues(
     values.put(android.provider.CalendarContract.Events.DTSTART, startTs)
     values.put(android.provider.CalendarContract.Events.ALL_DAY, if (isAllDay) 1 else 0)
 
-    // Timezone handling: all-day events always use UTC
     val effectiveTimezone = if (isAllDay) "UTC" else timezone
     values.put(android.provider.CalendarContract.Events.EVENT_TIMEZONE, effectiveTimezone)
 
     val isRecurring = !rrule.isNullOrEmpty()
 
     if (isRecurring) {
-        // Recurring events use DURATION, not DTEND
         values.put(android.provider.CalendarContract.Events.RRULE, rrule)
 
         val effectiveDuration = duration ?: calculateDuration(startTs, endTs, isAllDay)
         values.put(android.provider.CalendarContract.Events.DURATION, effectiveDuration)
-        // Explicitly set DTEND to null for recurring events
         values.putNull(android.provider.CalendarContract.Events.DTEND)
     } else {
         if (!isException) {
-            // Clear RRULE for regular non-recurring events (needed for recurring→non-recurring conversion).
-            // For exceptions: RRULE key must be ABSENT — putNull triggers CalendarProvider
-            // recurrence cleanup on master event via ORIGINAL_ID.
             values.putNull(android.provider.CalendarContract.Events.RRULE)
         }
-        // Exception events must not have recurrence fields.
-        // RDATE/EXDATE/EXRULE are safe to null explicitly (no cleanup side effects).
         if (isException) {
             values.putNull(android.provider.CalendarContract.Events.RDATE)
             values.putNull(android.provider.CalendarContract.Events.EXDATE)
@@ -2226,12 +2394,8 @@ internal fun buildEventValues(
         values.putNull(android.provider.CalendarContract.Events.DURATION)
 
         if (isAllDay && endTs != null) {
-            // Convert inclusive end to exclusive:
-            // KashCal stores end as last ms of last day (23:59:59.999)
-            // CalendarProvider expects 00:00:00 of next day
-            // Add 1ms to cross into next day, then round to midnight
+            // Last ms of the last day, plus 1 ms, rounded down to UTC midnight.
             val endPlusOne = endTs + 1
-            // Round to start of day (midnight UTC)
             val effectiveEndTs = (endPlusOne / 86_400_000) * 86_400_000
             values.put(android.provider.CalendarContract.Events.DTEND, effectiveEndTs)
         } else if (endTs != null) {
@@ -2243,25 +2407,18 @@ internal fun buildEventValues(
 }
 
 /**
- * Calculate RFC 5545 duration string from start/end timestamps.
- *
- * Format: P[n]D for days, PT[n]H[n]M for hours/minutes
- *
- * @param startTs Start timestamp
- * @param endTs End timestamp (null returns empty string)
- * @param isAllDay Whether event is all-day
+ * Returns the RFC 5545 duration from start to end: `P<n>D` (at least 1) for all-day,
+ * `PT<n>H<n>M` for timed, and `PT0M` when [endTs] is null.
  */
 private fun calculateDuration(startTs: Long, endTs: Long?, isAllDay: Boolean): String {
     if (endTs == null) return "PT0M"
 
     if (isAllDay) {
-        // For all-day events, calculate days
-        // endTs is inclusive (last ms of last day), so add 1ms to get exclusive end
+        // endTs is inclusive (last ms of the last day), so add 1 ms for the exclusive end.
         val durationMs = (endTs + 1) - startTs
         val days = (durationMs / 86_400_000).toInt().coerceAtLeast(1)
         return "P${days}D"
     } else {
-        // For timed events, calculate hours and minutes
         val durationMs = endTs - startTs
         val totalMinutes = (durationMs / 60_000).toInt()
         val hours = totalMinutes / 60
@@ -2277,22 +2434,21 @@ private fun calculateDuration(startTs: Long, endTs: Long?, isAllDay: Boolean): S
 }
 
 /**
- * Parse an RFC 5545 duration string to milliseconds.
- * Handles common formats: P1D, P2D (days), PT1H, PT30M, PT1H30M (time).
- * Falls back to 1 day for all-day events or 1 hour for timed events.
+ * Parses an RFC 5545 duration to milliseconds: `P<n>W`, `P<n>D`, and time durations such as
+ * PT1H30M. A null, empty, unparseable or overflowing value falls back to 1 day for all-day or
+ * 1 hour for timed; a W or D count that isn't a number reads as 1.
  */
 internal fun parseDurationMs(duration: String?, isAllDay: Boolean): Long {
     val defaultMs = if (isAllDay) 86_400_000L else 3_600_000L
     if (duration.isNullOrEmpty()) return defaultMs
     return try {
         if (duration.startsWith("P") && !duration.contains("T")) {
-            // Date-only duration: P1D, P2W, etc.
             val cleaned = duration.removePrefix("P")
             when {
                 cleaned.endsWith("W") -> {
                     val weeks = cleaned.removeSuffix("W").toLongOrNull() ?: 1
-                    // Exact arithmetic: an absurd count overflows into the catch
-                    // below (→ defaultMs), never a garbage negative DTEND.
+                    // An absurd count overflows into the catch below (defaultMs), never a
+                    // negative DTEND.
                     Math.multiplyExact(weeks, 7 * 86_400_000L)
                 }
                 cleaned.endsWith("D") -> {
@@ -2302,7 +2458,7 @@ internal fun parseDurationMs(duration: String?, isAllDay: Boolean): Long {
                 else -> defaultMs
             }
         } else {
-            // Time duration: PT1H, PT30M, PT1H30M — java.time.Duration handles these
+            // java.time.Duration parses time durations such as PT1H30M.
             java.time.Duration.parse(duration).toMillis()
         }
     } catch (_: Exception) {
@@ -2310,9 +2466,7 @@ internal fun parseDurationMs(duration: String?, isAllDay: Boolean): Long {
     }
 }
 
-/**
- * Convert YYYYMMDD day code to start-of-day epoch millis (local timezone).
- */
+/** Converts a YYYYMMDD day code to local start-of-day epoch ms. */
 internal fun dayCodeToStartOfDayMs(dayCode: Int): Long {
     val year = dayCode / 10000
     val month = (dayCode % 10000) / 100
@@ -2323,10 +2477,7 @@ internal fun dayCodeToStartOfDayMs(dayCode: Int): Long {
 }
 
 
-/**
- * Convert YYYYMMDD day code to end-of-day epoch millis (local timezone).
- * Returns 23:59:59.999 to include all events on that day.
- */
+/** Converts a YYYYMMDD day code to local end-of-day epoch ms (23:59:59.999). */
 internal fun dayCodeToEndOfDayMs(dayCode: Int): Long {
     val year = dayCode / 10000
     val month = (dayCode % 10000) / 100

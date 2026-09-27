@@ -14,23 +14,20 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Live counterpart to the deterministic read-only-detection unit guard
- * (`CardDavXmlParserTest`): drives real discovery against every configured
- * CardDAV server and asserts each reachable login resolves a WRITABLE address
- * book (the book is found and `isReadOnly == false`).
+ * Checks, live against every configured CardDAV server, that each reachable login discovers
+ * a writable address book (found, with `isReadOnly == false`). The deterministic
+ * read-only-detection guard is `CardDavXmlParserTest`.
  *
- * The load-bearing member is Xandikos. It advertises the RFC 3744 aggregate
- * `<all>` privilege on its contacts collection rather than the granular
- * `<write>` / `<write-content>` (verified live: a PROPFIND on
- * `/user/contacts/addressbook/` returns `current-user-privilege-set` with only
- * `<all>`). The privilege parser must map `<all>` to a write grant — a
- * regression that does not surfaces the book as read-only and the app silently
- * blocks contact push. That is the real-world failure from issue #281, and this
- * test fails loudly on it rather than skipping.
+ * The server that matters is Xandikos. It advertises the RFC 3744 aggregate `<all>` privilege
+ * on its contacts collection instead of the granular `<write>` or `<write-content>` (verified
+ * live: a PROPFIND on `/user/contacts/addressbook/` returns `current-user-privilege-set` with
+ * only `<all>`). The privilege parser must map `<all>` to a write grant; if it doesn't, the
+ * book surfaces as read-only and the app silently blocks contact push. That is the real-world
+ * failure from issue #281, and this test fails on it instead of skipping.
  *
- * Skips (never fails) a server without credentials, unreachable, or one whose
- * discovery yields no address book at all (an unprovisioned account, not a
- * privilege-parse regression).
+ * Skips (never fails) a server without credentials, an unreachable one, or one whose
+ * discovery yields no address book at all (an unprovisioned account, not a privilege-parse
+ * regression).
  *
  * Run:
  *   ./gradlew :app:testDebugUnitTest -Pintegration \
@@ -72,9 +69,9 @@ class MultiServerCardDavWritableBookDiscoveryTest(
         assumeReady()
         val books = discoverBooks(client!!, creds!!)
 
-        // No book at all is an unprovisioned account, not a privilege-parse
-        // regression — skip rather than fail so a bare test login doesn't red the
-        // suite. A book that comes back read-only IS the regression we guard.
+        // No book at all is an unprovisioned account, not a privilege-parse regression, so it
+        // skips and a bare test login doesn't fail the suite. A book that comes back read-only
+        // is the regression this test guards.
         assumeTrue(
             "${config.name}: discovery yielded no address book (unprovisioned login)",
             books.isNotEmpty(),
@@ -97,7 +94,7 @@ class MultiServerCardDavWritableBookDiscoveryTest(
         )
     }
 
-    /** List the address books under the login's addressbook-home-set. */
+    /** Lists the address books under the login's first addressbook-home-set, or none. */
     private suspend fun discoverBooks(c: CardDavClient, cr: ServerCredentials): List<CardDavAddressBook> {
         val root = if (config.usesWellKnownDiscovery) {
             c.discoverWellKnown(cr.serverUrl).getOrNull() ?: cr.serverUrl

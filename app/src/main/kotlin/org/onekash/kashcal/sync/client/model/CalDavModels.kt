@@ -1,8 +1,6 @@
 package org.onekash.kashcal.sync.client.model
 
-/**
- * Represents a calendar discovered from CalDAV server.
- */
+/** A calendar collection found by a calendar-home listing. */
 data class CalDavCalendar(
     val href: String,
     val url: String,
@@ -14,10 +12,9 @@ data class CalDavCalendar(
 )
 
 /**
- * Per-calendar metadata returned from the extended getCtag PROPFIND.
+ * Holds the ctag and calendar properties read by the getCtag PROPFIND.
  *
- * Nullable fields mean "server did not provide this property" — the caller
- * preserves the locally-stored value.
+ * A null field means the server didn't return that property; the caller keeps the stored value.
  */
 data class CalendarMetadataProbe(
     val ctag: String,
@@ -26,9 +23,7 @@ data class CalendarMetadataProbe(
     val isReadOnly: Boolean?
 )
 
-/**
- * Represents an event fetched from CalDAV server.
- */
+/** A calendar object resource fetched from the server, with its raw iCalendar body. */
 data class CalDavEvent(
     val href: String,
     val url: String,
@@ -37,11 +32,11 @@ data class CalDavEvent(
 )
 
 /**
- * Result of a sync-collection REPORT.
- * Contains changed/deleted items and new sync token.
+ * Holds the changed and deleted members of a sync-collection REPORT and its new sync-token.
  *
- * @param truncated If true (507 response), server truncated results due to storage constraints.
- *                  Client MUST continue syncing with the new syncToken (RFC 6578 Section 3.6).
+ * @param truncated the server cut the report short: a top-level 507, a 507 status in the
+ *   body, or number-of-matches-within-limits. The client must continue with the new
+ *   [syncToken] (RFC 6578 section 3.6).
  */
 data class SyncReport(
     val syncToken: String?,
@@ -50,9 +45,7 @@ data class SyncReport(
     val truncated: Boolean = false
 )
 
-/**
- * A single item in sync report.
- */
+/** One changed member of a [SyncReport]. */
 data class SyncItem(
     val href: String,
     val etag: String?,
@@ -65,11 +58,14 @@ enum class SyncItemStatus {
     ERROR
 }
 
-/**
- * Result of a CalDAV operation.
- */
+/** Holds the outcome of a CalDAV request: [Success] with data, or [Error] with a code. */
 sealed class CalDavResult<out T> {
-    data class Success<T>(val data: T) : CalDavResult<T>()
+    /**
+     * @property finalUrl where the request ended up when the server redirected it,
+     *   null otherwise. Set by writes so the stored URL can follow the resource.
+     *   [map] and [success] build a new Success without it.
+     */
+    data class Success<T>(val data: T, val finalUrl: String? = null) : CalDavResult<T>()
     data class Error(
         val code: Int,
         val message: String,
@@ -108,8 +104,37 @@ sealed class CalDavResult<out T> {
     }
 
     companion object {
-        /** Error code for SocketTimeoutException (mirrors HTTP 408 but negative to distinguish) */
+        /** A socket timeout: HTTP 408's number, negated so it can't be taken for a server reply. */
         const val CODE_TIMEOUT = -408
+
+        /**
+         * The client would not send the request: a redirect from https to plain http
+         * (other than to the same host), plain http on an account set up with https,
+         * or a redirect loop. See [org.onekash.kashcal.network.DavTransportGuard].
+         */
+        const val CODE_TRANSPORT_REFUSED = -310
+
+        /**
+         * A 2xx reply to a PROPFIND or REPORT that is not a WebDAV multistatus (a
+         * hotspot login page, a reply cut off): an error, never an empty answer.
+         */
+        const val CODE_NOT_MULTISTATUS = -207
+
+        /**
+         * Statuses that say a probed resource is no longer there for this account.
+         * 403 is one: Mailbox (Open-Xchange) answers 403 for a calendar that was deleted
+         * (404 for one that never existed), and a calendar the account can no
+         * longer read is gone for it too. Keeping it would fail every later sync of it
+         * with an auth-style 403 while the password is fine.
+         *
+         * Only the direct probe of a calendar that a readable listing left out reaches
+         * this; a hotspot page answered with 2xx, a refused connection or a network error
+         * keeps the calendar. A 403 counts whatever its body, so a front end that answers
+         * 403 itself (a firewall, or a portal on an http or trust-all account) is taken
+         * for the server, the same exposure a 404 already has. Over https with a
+         * verified certificate that front end is the server's or the user's own.
+         */
+        val RESOURCE_GONE_CODES = setOf(403, 404, 410)
 
         fun <T> success(data: T) = Success(data)
 
@@ -118,6 +143,17 @@ sealed class CalDavResult<out T> {
 
         fun networkError(message: String) =
             Error(0, message, isRetryable = true)
+
+        /**
+         * A request the client would not send; [message] holds masked hosts only.
+         * Retryable: a pending change waits for the server or network to be fixed.
+         */
+        fun transportRefused(message: String) =
+            Error(CODE_TRANSPORT_REFUSED, message, isRetryable = true)
+
+        /** A 2xx reply that isn't a WebDAV multistatus; retryable (a hotspot page goes away). */
+        fun notMultistatus(problem: String) =
+            Error(CODE_NOT_MULTISTATUS, "Server reply is not a WebDAV multistatus: $problem", isRetryable = true)
 
         fun timeoutError(message: String) =
             Error(CODE_TIMEOUT, message, isRetryable = true)
@@ -133,9 +169,7 @@ sealed class CalDavResult<out T> {
     }
 }
 
-/**
- * Exception for CalDAV errors.
- */
+/** Thrown by [CalDavResult.getOrThrow] for a [CalDavResult.Error]. */
 class CalDavException(
     val code: Int,
     override val message: String

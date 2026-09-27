@@ -11,11 +11,9 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * End-to-end behavior of ShareIntentRouter — the small mapper that turns an
- * incoming `Intent.ACTION_SEND` into the right `PendingAction`. Tests run at
- * this layer (rather than booting MainActivity) because the activity boot has
- * a heavy Hilt + Room + Compose fixture cost; the bug surface is the parser
- * → action mapping, which is mechanical and pure.
+ * Tests [ShareIntentRouter], which maps an incoming `Intent.ACTION_SEND` to a `PendingAction`
+ * through the real parser and normalizer. The tests run here instead of booting MainActivity,
+ * whose Hilt, Room and Compose setup is heavy; the parser to action mapping is pure.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])

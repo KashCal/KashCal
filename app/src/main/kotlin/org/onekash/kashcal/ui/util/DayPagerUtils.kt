@@ -7,34 +7,31 @@ import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 /**
- * Utility functions for day pager page ↔ date conversions.
+ * Converts between day pager pages and dates.
  *
- * The day pager uses a large page range (73,000 pages) to allow navigation
- * ~100 years in each direction. Pages are lazily composed, so the large
- * range has zero memory cost.
+ * The pager has [TOTAL_PAGES] (73,000) pages, about 100 years in each direction. Pages are
+ * composed lazily, so the range costs no memory.
  *
- * Page index is relative to "today" at app launch:
+ * A page index is relative to the `todayMs` reference the caller passes, taken once from
+ * [getTodayMidnightMs]:
  * - Page 36500 = today
  * - Page 36501 = tomorrow
  * - Page 36499 = yesterday
  */
 object DayPagerUtils {
-    /** Initial page index (represents "today") */
+    /** Page index of the `todayMs` reference day. */
     const val INITIAL_PAGE = 36500
 
-    /** Total number of pages (~100 years each direction) */
+    /** Total page count, about 100 years in each direction. */
     const val TOTAL_PAGES = 73000
 
-    /** Milliseconds in one day */
+    /** Milliseconds in a 24-hour day; not a calendar day across a DST change. */
     const val DAY_MS = 24 * 60 * 60 * 1000L
 
     /**
-     * Get today at local midnight (stable reference point).
+     * Returns the start of today in the system time zone, in epoch milliseconds.
      *
-     * Uses java.time APIs (Android recommended) for timezone-aware calculation.
-     * This ensures DST transitions are handled correctly.
-     *
-     * @return Epoch milliseconds at start of today in local timezone
+     * Callers take it once and keep it as the stable reference for page conversions.
      */
     fun getTodayMidnightMs(): Long {
         return LocalDate.now()
@@ -44,14 +41,12 @@ object DayPagerUtils {
     }
 
     /**
-     * Convert page index to date (epoch millis at local midnight).
+     * Returns the start of the page's day in the system time zone, in epoch milliseconds.
      *
-     * Uses calendar-based day arithmetic to correctly handle DST transitions
-     * where days can be 23 or 25 hours.
+     * Adds calendar days, not [DAY_MS] multiples, so a 23- or 25-hour DST day doesn't shift
+     * the result off midnight.
      *
-     * @param page Page index from pager
-     * @param todayMs Reference point (today at midnight, from [getTodayMidnightMs])
-     * @return Epoch milliseconds at midnight for the date represented by this page
+     * @param todayMs reference point from [getTodayMidnightMs]
      */
     fun pageToDateMs(page: Int, todayMs: Long): Long {
         val today = Instant.ofEpochMilli(todayMs)
@@ -64,15 +59,13 @@ object DayPagerUtils {
     }
 
     /**
-     * Convert date (epoch millis) to page index.
+     * Returns the page index for the day containing [dateMs] in the system time zone.
      *
-     * Uses calendar-based day arithmetic to correctly handle:
-     * - Negative partial days (e.g., 6 hours before midnight = yesterday)
-     * - DST transitions where days can be 23 or 25 hours
+     * Counts calendar days, not [DAY_MS] multiples, so 6 hours before today's midnight maps to
+     * yesterday and a 23- or 25-hour DST day counts as one.
      *
-     * @param dateMs Epoch milliseconds (any time of day)
-     * @param todayMs Reference point (today at midnight, from [getTodayMidnightMs])
-     * @return Page index for this date
+     * @param dateMs any time of day
+     * @param todayMs reference point from [getTodayMidnightMs]
      */
     fun dateToPage(dateMs: Long, todayMs: Long): Int {
         val today = Instant.ofEpochMilli(todayMs)
@@ -85,14 +78,7 @@ object DayPagerUtils {
         return INITIAL_PAGE + dayOffset
     }
 
-    /**
-     * Convert epoch millis to dayCode (YYYYMMDD format).
-     *
-     * Uses java.time APIs for timezone-aware conversion.
-     *
-     * @param ms Epoch milliseconds
-     * @return DayCode in YYYYMMDD format (e.g., 20260115 for Jan 15, 2026)
-     */
+    /** Returns the YYYYMMDD day code of [ms] in the system time zone, e.g. 20260115. */
     fun msToDayCode(ms: Long): Int {
         val localDate = Instant.ofEpochMilli(ms)
             .atZone(ZoneId.systemDefault())
@@ -100,22 +86,12 @@ object DayPagerUtils {
         return localDateToDayCode(localDate)
     }
 
-    /**
-     * Convert a LocalDate to dayCode (YYYYMMDD format).
-     *
-     * @param date The date to pack
-     * @return DayCode in YYYYMMDD format (e.g., 20260115 for Jan 15, 2026)
-     */
+    /** Packs [date] into a YYYYMMDD day code, e.g. 20260115 for Jan 15, 2026. */
     fun localDateToDayCode(date: LocalDate): Int {
         return date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
     }
 
-    /**
-     * Convert dayCode to LocalDate.
-     *
-     * @param dayCode DayCode in YYYYMMDD format
-     * @return LocalDate for this dayCode
-     */
+    /** Unpacks a YYYYMMDD [dayCode] into a [LocalDate]. */
     fun dayCodeToLocalDate(dayCode: Int): LocalDate {
         val year = dayCode / 10000
         val month = (dayCode % 10000) / 100
@@ -123,12 +99,7 @@ object DayPagerUtils {
         return LocalDate.of(year, month, day)
     }
 
-    /**
-     * Convert dayCode to epoch millis at midnight.
-     *
-     * @param dayCode DayCode in YYYYMMDD format
-     * @return Epoch milliseconds at midnight for this date
-     */
+    /** Returns the start of the YYYYMMDD [dayCode]'s day in the system time zone, in epoch ms. */
     fun dayCodeToMs(dayCode: Int): Long {
         return dayCodeToLocalDate(dayCode)
             .atStartOfDay(ZoneId.systemDefault())

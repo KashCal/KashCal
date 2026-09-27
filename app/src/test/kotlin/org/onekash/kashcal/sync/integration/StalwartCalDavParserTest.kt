@@ -15,18 +15,13 @@ import org.onekash.kashcal.sync.parser.CalDavXmlParser
 import org.onekash.kashcal.sync.quirks.DefaultQuirks
 
 /**
- * Parser tests for Stalwart CalDAV responses.
+ * Tests [CalDavXmlParser] and [DefaultQuirks] against Stalwart CalDAV response fixtures.
  *
- * Stalwart is a modern Rust-based mail server with CalDAV support.
- * It returns multiple propstat elements per RFC 4918 - one with 200 for
- * supported properties, one with 404 for missing optional properties.
- *
- * Bug: CalDavXmlParser.extractCalendars() tracked statusOk globally,
- * so a 404 propstat for calendar-color caused the entire calendar to be rejected.
- *
- * Fix: Track status per-propstat, use only the propstat containing resourcetype.
- *
- * Reference: GitHub Issue stalwartlabs/mail-server#1591
+ * Stalwart, a Rust-based mail server with CalDAV support, splits a response into several
+ * propstats (RFC 4918): one with 200 for supported properties, one with 404 for missing optional
+ * ones. [CalDavXmlParser.extractCalendars] decides by the status of the propstat holding
+ * resourcetype only, so a 404 for calendar-color doesn't reject the calendar
+ * (stalwartlabs/mail-server#1591).
  *
  * Run: ./gradlew app:testDebugUnitTest --tests "*StalwartCalDavParserTest*"
  */
@@ -66,17 +61,15 @@ class StalwartCalDavParserTest {
         assertEquals("stalwart-ctag-single-123", calendars[0].ctag)
     }
 
-    // ==================== Bug Reproduction Tests ====================
+    // ==================== 404 Propstat for Optional Properties ====================
 
     @Test
     fun `multiple propstat with 404 detects valid calendar`() {
-        // This test documents the bug (fails pre-fix) and verifies the fix (passes post-fix)
+        // The calendar-color 404 propstat must not reject the calendar.
         val xml = loadFixture("03_calendar_list_multiple_propstat.xml")
 
         val calendars = xmlParser.extractCalendars(xml)
 
-        // PRE-FIX: This returns 0 calendars (bug)
-        // POST-FIX: This should return 1 calendar
         assertEquals(
             "Calendar should be detected even with 404 propstat for optional properties",
             1,
@@ -107,7 +100,8 @@ class StalwartCalDavParserTest {
 
     @Test
     fun `propstat without status element treated as OK (RFC 4918 default)`() {
-        // RFC 4918 §9.2.1: If status is omitted, it defaults to 200 OK
+        // RFC 4918 §14.22 requires a status in every propstat; the parser treats a missing one
+        // as OK.
         val xml = loadFixture("03_calendar_list_no_status.xml")
 
         val calendars = xmlParser.extractCalendars(xml)
@@ -125,7 +119,7 @@ class StalwartCalDavParserTest {
 
     @Test
     fun `resourcetype in 404 propstat NOT detected as calendar`() {
-        // Edge case: If resourcetype itself is in a 404 propstat, it's NOT a calendar
+        // A resourcetype inside a 404 propstat isn't a calendar.
         val xml = loadFixture("03_calendar_list_resourcetype_404.xml")
 
         val calendars = xmlParser.extractCalendars(xml)
@@ -139,7 +133,7 @@ class StalwartCalDavParserTest {
 
     @Test
     fun `namespace variants all detected as calendars`() {
-        // Test C:calendar, A:calendar, and bare calendar element
+        // C:calendar, A:calendar and a bare calendar element.
         val xml = loadFixture("03_calendar_list_namespace_variants.xml")
 
         val calendars = xmlParser.extractCalendars(xml)
@@ -184,20 +178,19 @@ class StalwartCalDavParserTest {
 
         val data = xmlParser.extractSyncCollectionData(xml)
 
-        // Check sync token
         assertEquals(
             "http://stalwart.example.com/ns/sync/new-token-789",
             data.syncToken
         )
 
-        // Check changed items (2 events with etags)
+        // 2 changed events with etags.
         assertEquals("Should find 2 changed items", 2, data.changedItems.size)
 
         val changedHrefs = data.changedItems.map { it.first }
         assertTrue(changedHrefs.contains("/dav/cal/admin/test-calendar/event-changed.ics"))
         assertTrue(changedHrefs.contains("/dav/cal/admin/test-calendar/event-new.ics"))
 
-        // Check deleted items (1 event with 404)
+        // 1 deleted event, reported with 404.
         assertEquals("Should find 1 deleted item", 1, data.deletedHrefs.size)
         assertEquals(
             "/dav/cal/admin/test-calendar/event-deleted.ics",
@@ -222,7 +215,6 @@ class StalwartCalDavParserTest {
 
         assertEquals("Should find 2 changed .ics files", 2, changed.size)
 
-        // Verify etags are extracted
         val etagMap = changed.associate { it.first to it.second }
         assertEquals(
             "stalwart-etag-changed-abc123",
@@ -254,14 +246,13 @@ class StalwartCalDavParserTest {
 
         assertEquals("Should find 2 events", 2, events.size)
 
-        // Check first event
         val meeting = events.find { it.href.contains("meeting.ics") }
         assertNotNull("Meeting event should be found", meeting)
         assertEquals("stalwart-etag-meeting-111", meeting!!.etag)
         assertTrue(meeting.icalData.contains("SUMMARY:Team Meeting"))
         assertTrue(meeting.icalData.contains("UID:stalwart-meeting-uid-001"))
 
-        // Check second event (recurring)
+        // The second event is recurring.
         val recurring = events.find { it.href.contains("recurring.ics") }
         assertNotNull("Recurring event should be found", recurring)
         assertEquals("stalwart-etag-recurring-222", recurring!!.etag)

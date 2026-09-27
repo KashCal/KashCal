@@ -34,19 +34,17 @@ import org.onekash.kashcal.sync.notification.InviteNotifier
 import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 
 /**
- * Verifies the pull-side cancel hook for declined-reminder suppression:
- * a server-side decline arriving via pull cancels armed alarms inline,
- * without waiting for the daily worker.
+ * Tests that a decline arriving by pull cancels the event's armed alarms during the pull,
+ * without waiting for the daily reminder refresh.
  *
  * Cases:
- *  (a) DECLINED self attendee → cancelRemindersForEvent called once
- *  (b) ACCEPTED self → not called
- *  (c) no self attendee, none before → not called
- *  (d) accountForInvites null (orphan calendar) → not called
- *  (e) reminderScheduler throws → pull continues, no abort
- *  (f) UNINVITE: pre-replace had self row, post-replace does not → cancel
- *  (g) PARTSTAT-only delta (the etag-only short-circuit must NOT swallow
- *      the cancel hook)
+ *  (a) the user's attendee is DECLINED: cancelRemindersForEvent is called once
+ *  (b) the user's attendee is ACCEPTED: not called
+ *  (c) no attendee for the user before or after: not called
+ *  (d) no account for the calendar (orphan calendar): not called
+ *  (e) reminderScheduler throws: the pull still succeeds
+ *  (f) uninvite: the stored attendees had the user, the pulled ones don't: called
+ *  (g) a PARTSTAT-only change: the etag-only skip must not bypass the cancel
  */
 class PullStrategyDeclineCancelTest {
 
@@ -95,9 +93,7 @@ class PullStrategyDeclineCancelTest {
     fun setup() {
         MockKAnnotations.init(this, relaxed = true)
 
-        // runInTransaction executes the block directly so we can verify
-        // that hook calls landed AFTER attendee replace inside the same
-        // pass.
+        // runInTransaction runs the block directly.
         coEvery {
             database.runInTransaction(any<suspend () -> Any>())
         } coAnswers {
@@ -227,7 +223,7 @@ class PullStrategyDeclineCancelTest {
     @Test
     fun `case (c) - no self attendee anywhere does not trigger cancel`() = runTest {
         val cal = calendar()
-        // No prior attendee row, no incoming self row
+        // No stored attendee row and no pulled attendee for the user.
         coEvery { attendeesDao.getForEventOnce(any()) } returns emptyList()
         primeFullSync(cal, icalNoSelf("uid-c"))
 
@@ -265,8 +261,8 @@ class PullStrategyDeclineCancelTest {
     @Test
     fun `case (f) - UNINVITE pre-replace had self row post-replace does not triggers cancel`() = runTest {
         val cal = calendar()
-        // Prior attendee state has self on the row; the new ICS body
-        // omits self entirely (organizer removed me as attendee).
+        // The stored attendees include the user; the pulled body omits them (the organizer
+        // removed the user).
         coEvery { attendeesDao.getForEventOnce(any()) } returns listOf(
             Attendee(
                 id = 0L,
@@ -286,10 +282,8 @@ class PullStrategyDeclineCancelTest {
     fun `case (g) - PARTSTAT-only delta still triggers cancel even if etag-only short-circuit applies`() = runTest {
         val cal = calendar()
         val url = "${cal.caldavUrl}evt.ics"
-        // Existing event identical in body content but DECLINED is the
-        // only delta the server brings. This is the case where
-        // hasContentChanged might return false on a partstat-only delta,
-        // but the cancel hook must still fire.
+        // The stored event matches the pulled one except for the user's DECLINED. A
+        // PARTSTAT-only change leaves hasContentChanged false, and the cancel must still run.
         val existing = Event(
             id = 100L,
             uid = "uid-g",

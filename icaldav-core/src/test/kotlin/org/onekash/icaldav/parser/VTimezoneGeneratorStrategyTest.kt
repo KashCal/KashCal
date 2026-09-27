@@ -9,9 +9,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Tests for VTimezoneGenerator strategy support.
- *
- * Tests the three generation strategies: INLINE, TZURL_ONLY, BOTH
+ * Tests [VTimezoneGenerator]'s three strategies (INLINE, TZURL_ONLY, BOTH) and the no-argument
+ * constructor, plus an empty string for UTC aliases, invalid and empty IDs, the multi-ID
+ * generate, and formatOffset.
  */
 @DisplayName("VTimezoneGenerator Strategy Tests")
 class VTimezoneGeneratorStrategyTest {
@@ -22,7 +22,7 @@ class VTimezoneGeneratorStrategyTest {
 
         @Test
         fun `default constructor works without parameters`() {
-            // This is critical for backward compatibility
+            // Callers that pass no arguments get the INLINE output.
             val generator = VTimezoneGenerator()
 
             val result = generator.generate("America/New_York")
@@ -49,7 +49,7 @@ class VTimezoneGeneratorStrategyTest {
 
             val result = generator.generate("America/Chicago")
 
-            // Full VTIMEZONE with offsets and transitions
+            // A full VTIMEZONE: TZID and both offsets.
             assertTrue(result.contains("TZID:America/Chicago"))
             assertTrue(result.contains("TZOFFSETFROM:"))
             assertTrue(result.contains("TZOFFSETTO:"))
@@ -122,7 +122,7 @@ class VTimezoneGeneratorStrategyTest {
             // America/New_York has DST
             val result = generator.generate("America/New_York")
 
-            // Should have both STANDARD and DAYLIGHT
+            // Asserts only that STANDARD or DAYLIGHT is present, not both.
             assertTrue(result.contains("BEGIN:STANDARD") || result.contains("BEGIN:DAYLIGHT"))
         }
 
@@ -182,8 +182,8 @@ class VTimezoneGeneratorStrategyTest {
 
             val result = generator.generate("America/Chicago")
 
-            // Should NOT include full STANDARD/DAYLIGHT components with offsets
-            // (minimal output just has TZID and TZURL)
+            // TZURL_ONLY writes only TZID and TZURL; this asserts only the TZURL, not that
+            // STANDARD and DAYLIGHT are absent.
             assertTrue(result.contains("TZURL:"))
         }
     }
@@ -202,12 +202,12 @@ class VTimezoneGeneratorStrategyTest {
 
             val result = generator.generate("America/New_York")
 
-            // Full VTIMEZONE content
+            // Full VTIMEZONE content.
             assertTrue(result.contains("BEGIN:VTIMEZONE"))
             assertTrue(result.contains("TZID:America/New_York"))
             assertTrue(result.contains("TZOFFSETFROM:"))
             assertTrue(result.contains("TZOFFSETTO:"))
-            // Plus TZURL
+            // Plus the TZURL.
             assertTrue(result.contains("TZURL:"))
         }
 
@@ -234,7 +234,7 @@ class VTimezoneGeneratorStrategyTest {
 
             val result = generator.generate("Pacific/Auckland")
 
-            // Has everything
+            // Full component and TZURL.
             assertTrue(result.contains("BEGIN:VTIMEZONE"))
             assertTrue(result.contains("TZID:"))
             assertTrue(result.contains("END:VTIMEZONE"))
@@ -324,7 +324,7 @@ class VTimezoneGeneratorStrategyTest {
 
             val result = generator.generate(setOf("America/New_York", "Europe/London"))
 
-            // Should contain both
+            // Both zones are written.
             assertTrue(result.contains("TZID:America/New_York"))
             assertTrue(result.contains("TZID:Europe/London"))
         }
@@ -335,7 +335,7 @@ class VTimezoneGeneratorStrategyTest {
 
             val result = generator.generate(setOf("America/New_York", "America/New_York"))
 
-            // Count occurrences - should only have one
+            // setOf already drops the duplicate, so one TZID line.
             val count = Regex("TZID:America/New_York").findAll(result).count()
             assertEquals(1, count)
         }

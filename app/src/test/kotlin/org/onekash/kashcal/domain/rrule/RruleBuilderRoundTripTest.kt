@@ -12,23 +12,20 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 /**
- * Round-trip and adversarial conformance tests for [RruleBuilder].
+ * Tests [RruleBuilder] round trips and parser edge cases. [RruleBuilderTest] and
+ * [RruleBuilderRfc5545Test] cover unit behavior, [RruleBuilderAdversarialTest] bad inputs.
  *
- * Sister files cover unit behavior ([RruleBuilderTest], [RruleBuilderRfc5545Test])
- * and bad-input edges ([RruleBuilderAdversarialTest]). This file targets the
- * gaps those don't cover:
- *
- * 1. **Build → parse parity**: every public builder output must re-parse
- *    losslessly into the structural state that produced it. Catches drift
- *    between the two paths if either evolves.
- * 2. **CalDAV server fixtures**: rules verbatim from real iCloud / Nextcloud /
- *    Radicale / Baikal / Stalwart / SoGo / Zoho integration test bodies, so
- *    the parser is exercised against shapes the wire actually delivers.
- * 3. **Token-order and shape robustness**: parser uses `Regex.find` and
- *    `String.contains`, so it should be order-independent — assert that.
- * 4. **Documented gaps**: WKST is build-only (parser doesn't extract);
- *    parser is case-sensitive; conflicting BYMONTHDAY+BYDAY uses NthWeekday
- *    branch first. Pinning these as tests keeps a future refactor honest.
+ * 1. Build then parse: each builder's output (daily, weekly, monthly in all three patterns,
+ *    yearly, COUNT, UNTIL, WKST) parses back to the values that built it, a 5th-weekday rule
+ *    isn't coerced, and a parsed rule wins over the start-date defaults.
+ * 2. Server fixtures: rules from the Zoho, Stalwart and SOGo integration test bodies, plus
+ *    weekly-interval and monthly nth-weekday shapes.
+ * 3. Token order: the parser uses `Regex.find` and `String.contains`, so rule-part order,
+ *    a trailing semicolon and an unknown part don't change the result.
+ * 4. Pinned behavior: the parser is case-sensitive, reads WKST (null when absent or when the
+ *    builder dropped it from an interval-1 rule), NthWeekday wins over BYMONTHDAY, the
+ *    first FREQ in DAILY, WEEKLY, MONTHLY, YEARLY order wins, a negative INTERVAL reads as 1,
+ *    display of ordinals past 4 and below -1, and the date-time and date UNTIL forms.
  */
 class RruleBuilderRoundTripTest {
 
@@ -46,7 +43,7 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `weekly roundtrip preserves frequency interval and weekdays for all subsets`() {
-        // Single days, common pairs, weekday set, all-7
+        // A single day, a weekend pair, MO/WE/FR, the work week, all 7.
         val cases = listOf(
             setOf(DayOfWeek.MONDAY),
             setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY),
@@ -110,7 +107,7 @@ class RruleBuilderRoundTripTest {
         }
     }
 
-    // ==================== Monthly nth-weekday: exact BYDAY string over the bounded space ====================
+    // ==================== Monthly nth-weekday: exact BYDAY string ====================
 
     /** RFC 5545 day abbreviation for each DayOfWeek, for exact-string assertions. */
     private fun abbrev(day: DayOfWeek): String = when (day) {
@@ -125,10 +122,9 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `monthly nth-weekday emits exact BYDAY and round-trips for every ordinal x weekday`() {
-        // Bounded, fully enumerable space: {1,2,3,4,-1} x 7 weekdays. Exhaustive
-        // enumeration beats random fuzzing here — it guarantees coverage. Asserts
-        // the EXACT BYDAY token (e.g. -1 -> "-1FR", 2 -> "2MO") and that parseRrule
-        // returns the identical NthWeekday.
+        // Enumerates the whole space, {1,2,3,4,-1} x 7 weekdays, so every case is covered.
+        // Asserts the exact BYDAY token (e.g. -1 -> "-1FR", 2 -> "2MO") and that parseRrule
+        // returns the same NthWeekday.
         for (ordinal in listOf(1, 2, 3, 4, -1)) {
             for (day in DayOfWeek.entries) {
                 val prefix = if (ordinal == -1) "-1" else ordinal.toString()
@@ -148,8 +144,8 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `monthly nth-weekday with interval emits canonical FREQ INTERVAL BYDAY order and round-trips`() {
-        // The CUSTOM(month) path threads interval. Assert the builder's REAL token
-        // order (FREQ, then INTERVAL, then BYDAY) rather than guessing it.
+        // The picker's Custom month unit passes the interval through. Asserts the builder's
+        // token order: FREQ, then INTERVAL, then BYDAY.
         for (ordinal in listOf(1, 2, 3, 4, -1)) {
             for (day in DayOfWeek.entries) {
                 val prefix = if (ordinal == -1) "-1" else ordinal.toString()
@@ -171,10 +167,9 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `parseRrule BYDAY -1FR yields last Friday even when start is Saturday the 18th third occurrence`() {
-        // A "last Friday" rule opened on an event whose
-        // start date is Saturday the 18th (which is the 3rd Saturday) must parse
-        // to NthWeekday(-1, FRIDAY) — the rule wins, NOT the start-date-derived
-        // SATURDAY / ordinal 3.
+        // A "last Friday" rule opened on an event starting Saturday the 18th (the 3rd
+        // Saturday) parses to NthWeekday(-1, FRIDAY): the rule wins over the start-date
+        // defaults SATURDAY and ordinal 3.
         val parsed = RruleBuilder.parseRrule(
             "FREQ=MONTHLY;BYDAY=-1FR",
             defaultWeekday = DayOfWeek.SATURDAY,
@@ -197,8 +192,7 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `parseRrule BYMONTHDAY wins over start-date defaults`() {
-        // Mirror for the by-date branch: BYMONTHDAY=9 must win over the start
-        // date's day-of-month (18).
+        // The same for the by-date branch: BYMONTHDAY=9 wins over the start date's day (18).
         val parsed = RruleBuilder.parseRrule(
             "FREQ=MONTHLY;BYMONTHDAY=9",
             defaultWeekday = DayOfWeek.SATURDAY,
@@ -208,13 +202,13 @@ class RruleBuilderRoundTripTest {
         assertEquals(MonthlyPattern.SameDay(9), parsed.monthlyPattern)
     }
 
-    // ==================== Adversarial: 5FR (real but rare) round-trips uncoerced ====================
+    // ==================== Adversarial: 5FR round-trips uncoerced ====================
 
     @Test
     fun `monthly BYDAY 5FR round-trips verbatim and is not coerced to Last or 4th`() {
-        // A "5th Friday" rule is valid but rare. The picker offers only 1st-4th +
-        // Last, so it can't select it — but importing one must NOT silently coerce
-        // it to -1FR or 4FR. parse->build preserves BYDAY=5FR.
+        // The picker offers only 1st-4th and last, so it can't select a "5th Friday", but an
+        // imported one must not be silently coerced to -1FR or 4FR. Parse then build keeps
+        // BYDAY=5FR.
         val parsed = RruleBuilder.parseRrule("FREQ=MONTHLY;BYDAY=5FR", DayOfWeek.MONDAY, 1, 1)
         assertEquals(MonthlyPattern.NthWeekday(5, DayOfWeek.FRIDAY), parsed.monthlyPattern)
         val rebuilt = RruleBuilder.monthlyNthWeekday(5, DayOfWeek.FRIDAY)
@@ -233,8 +227,8 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `withUntil roundtrip preserves UTC instant across leap-year and end-of-year`() {
-        // Feb 29 2028 (leap), end-of-year, far future. All converted via the same
-        // formatter the parser uses, so they must round-trip exactly.
+        // Feb 29 2028 (leap), end of year, far future. The builder and parser use the same
+        // pattern, so each must round-trip to the millisecond.
         val cases = listOf(
             "2028-02-29T12:34:56Z",
             "2026-12-31T23:59:59Z",
@@ -251,9 +245,8 @@ class RruleBuilderRoundTripTest {
     }
 
     // ==================== Real CalDAV Server Fixtures ====================
-    // Verbatim shapes seen on the wire from server integration test bodies
-    // (Stalwart/SoGo/Zoho integration tests). If a parser change starts
-    // dropping data on these, sync regresses.
+    // Rule shapes from the server integration test bodies (Stalwart, SOGo, Zoho). If a parser
+    // change starts dropping data on these, sync regresses.
 
     @Test
     fun `Zoho weekly with BYDAY and COUNT roundtrips`() {
@@ -303,8 +296,8 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `iCloud-style weekly with INTERVAL=4 BYDAY=MO roundtrips with interval and weekday intact`() {
-        // The flagship round-trip: this is the rule shape that motivated the
-        // INTERVAL>1 fix. Server emits it, app parses, app re-emits, app saves.
+        // A server-sent rule the app parses, re-emits and saves; the interval and weekday must
+        // survive.
         val parsed = RruleBuilder.parseRrule(
             "FREQ=WEEKLY;INTERVAL=4;BYDAY=MO",
             DayOfWeek.MONDAY, 1, 1
@@ -318,7 +311,7 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `Zoho-style monthly with INTERVAL and BYDAY 1MO roundtrips`() {
-        // Common server-emitted form: "first Monday every two months"
+        // A common server-emitted form: "first Monday every two months".
         val parsed = RruleBuilder.parseRrule(
             "FREQ=MONTHLY;INTERVAL=2;BYDAY=1MO",
             DayOfWeek.MONDAY, 1, 1
@@ -331,8 +324,8 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `parser is independent of FREQ position in token list`() {
-        // RFC 5545 §3.3.10 ABNF allows any order for rule parts. Parser uses
-        // contains/find, so position doesn't matter — pin that.
+        // RFC 5545 §3.3.10: "Compliant applications MUST accept rule parts ordered in any
+        // sequence". The parser uses contains/find, so position doesn't matter.
         val parsed = RruleBuilder.parseRrule(
             "INTERVAL=3;BYDAY=MO,WE;FREQ=WEEKLY;COUNT=12",
             DayOfWeek.MONDAY, 1, 1
@@ -355,8 +348,8 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `parser ignores unknown extension tokens`() {
-        // RFC 5545 §3.8.8 allows X- experimental tokens. Our parser's regex
-        // approach naturally ignores them — confirm.
+        // The recur grammar (RFC 5545 §3.3.10) has no X- rule part; §3.8.8.2 X- names are for
+        // properties. The parser's regexes ignore an unknown part anyway.
         val parsed = RruleBuilder.parseRrule(
             "FREQ=WEEKLY;X-MICROSOFT-RSCID=foo;BYDAY=TU",
             DayOfWeek.MONDAY, 1, 1
@@ -365,16 +358,15 @@ class RruleBuilderRoundTripTest {
         assertEquals(setOf(DayOfWeek.TUESDAY), parsed.weekdays)
     }
 
-    // ==================== Documented Behavioral Gaps ====================
-    // These tests pin current behavior; if a future refactor changes them,
-    // the change becomes visible at review time.
+    // ==================== Pinned Parser Behavior ====================
+    // A refactor that changes any of these fails here.
 
     @Test
     fun `parser is case-sensitive — lowercase freq is not recognized`() {
-        // Lowercase tokens fall through to NONE because contains() is
-        // case-sensitive. Real-world CalDAV servers always emit uppercase
-        // per RFC, so this is acceptable; pin it so a future Locale-aware
-        // change is intentional.
+        // Lowercase tokens fall through to NONE because contains() is case-sensitive, though
+        // RFC 5545 §3.1 makes enumerated values case-insensitive. Real-world CalDAV servers
+        // always emit uppercase, so this is acceptable; pinned so a case-insensitive change is
+        // deliberate.
         val parsed = RruleBuilder.parseRrule(
             "freq=daily",
             DayOfWeek.MONDAY, 1, 1
@@ -415,11 +407,10 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `WKST is dropped from emission when interval lt 2 — round-trip yields null wkst`() {
-        // RFC 5545 §3.3.10 says WKST has no effect on weekly rules with
-        // interval=1; the builder's gate suppresses it. So a parse of the
-        // built rule sees no WKST token and reports null. Pin the contract:
-        // ParsedRecurrence.wkst null doesn't necessarily mean "device wkst"
-        // — it can also mean "WKST has no effect here, builder elided it".
+        // RFC 5545 §3.3.10 makes WKST significant for a WEEKLY rule only with an interval above
+        // 1 and a BYDAY, so the builder leaves it out here and the parse reports null. A null
+        // ParsedRecurrence.wkst can mean the builder dropped a WKST that had no effect, not
+        // only that the rule never had one.
         val rrule = RruleBuilder.weekly(
             interval = 1,
             days = setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY),
@@ -432,10 +423,9 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `parseRrule with both BYMONTHDAY and BYDAY-ordinal — NthWeekday wins`() {
-        // RFC permits both, semantics being intersection. Picker can't model
-        // both at once (MonthlyPattern is a sealed choice), so the parser's
-        // when{} prefers BYDAY-ordinal. Pin the priority so a refactor
-        // doesn't silently flip it.
+        // RFC 5545 allows both (BYDAY then limits the BYMONTHDAY days). MonthlyPattern holds
+        // one choice, so the parser prefers the BYDAY ordinal; pinned so a refactor doesn't
+        // silently flip it.
         val parsed = RruleBuilder.parseRrule(
             "FREQ=MONTHLY;BYMONTHDAY=15;BYDAY=2TU",
             DayOfWeek.MONDAY, 1, 1
@@ -448,9 +438,9 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `parseRrule with multiple FREQ tokens — DAILY wins over WEEKLY by order`() {
-        // Server emitting two FREQ tokens is malformed; parser's when{} is
-        // ordered DAILY/WEEKLY/MONTHLY/YEARLY, so first match wins regardless
-        // of order in the rule string. Pinned for awareness.
+        // Two FREQ parts are malformed (RFC 5545 §3.3.10: FREQ "MUST NOT occur more than
+        // once"). The parser checks DAILY, WEEKLY, MONTHLY, YEARLY in that order, so the first
+        // in that order wins whatever the rule string's order.
         val parsed = RruleBuilder.parseRrule(
             "FREQ=WEEKLY;FREQ=DAILY",
             DayOfWeek.MONDAY, 1, 1
@@ -460,9 +450,8 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `parseRrule with negative INTERVAL falls back to default 1`() {
-        // INTERVAL_REGEX is \d+ which doesn't match the minus sign, so the
-        // regex misses entirely and interval defaults to 1. RFC says
-        // INTERVAL must be ≥1, so accepting this gracefully is correct.
+        // The INTERVAL regex is \d+, which doesn't match the minus sign, so the interval
+        // defaults to 1. RFC 5545 requires a positive INTERVAL, so 1 is a safe reading.
         val parsed = RruleBuilder.parseRrule(
             "FREQ=DAILY;INTERVAL=-5",
             DayOfWeek.MONDAY, 1, 1
@@ -474,16 +463,15 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `formatForDisplay renders 5th-weekday via ordinalNth template`() {
-        // 5th Monday only exists in months with 5 Mondays. RFC permits 1..5.
-        // Display path's `else` branch uses the "%dth" template.
+        // A 5th Monday exists only in months with five Mondays. Ordinals past the four named
+        // ones use the "%dth" template.
         val display = RruleBuilder.formatForDisplay("FREQ=MONTHLY;BYDAY=5MO")
         assertTrue("expected '5th' in display, got: $display", display.contains("5th"))
     }
 
     @Test
     fun `formatForDisplay treats negative ordinal -2 as the nth template not last`() {
-        // Only -1 is mapped to "last"; -2 (second-to-last) falls through to
-        // the nth template. Pin the boundary.
+        // Only -1 maps to "last"; -2 (second-to-last) falls through to the nth template.
         val display = RruleBuilder.formatForDisplay("FREQ=MONTHLY;BYDAY=-2FR")
         assertFalse("'last' must not match -2: $display", display.contains("last Fri"))
     }
@@ -492,9 +480,8 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `withUntil emits exactly what parser's UNTIL_FULL_REGEX matches`() {
-        // Builder uses pattern "yyyyMMdd'T'HHmmss'Z'"; parser regex is
-        // \d{8}T\d{6}Z?. The Z is mandatory in the builder output. Verify
-        // the parser accepts what the builder writes for an arbitrary instant.
+        // The builder's pattern is "yyyyMMdd'T'HHmmss'Z'", so its output always ends in Z;
+        // the parser's regex is \d{8}T\d{6}Z?. The parser reads back what the builder writes.
         val instant = Instant.parse("2027-07-04T13:00:00Z").toEpochMilli()
         val rrule = RruleBuilder.withUntil("FREQ=WEEKLY", instant)
         val parsed = RruleBuilder.parseRrule(rrule, DayOfWeek.MONDAY, 1, 1)
@@ -504,12 +491,10 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `parser drops UNTIL without Z suffix despite regex tolerance — pins gap`() {
-        // UNTIL_FULL_REGEX is \d{8}T\d{6}Z? — Z is optional in the *regex*,
-        // so the rule looks parseable. But the LocalDateTime formatter is
-        // "yyyyMMdd'T'HHmmss'Z'" with Z as a literal, so without-Z input
-        // throws and the catch yields Never. RFC 5545 mandates Z for UTC
-        // datetime, so most servers comply, but a tolerant parser would
-        // accept this. Pinning the gap so a future fix is intentional.
+        // The regex \d{8}T\d{6}Z? makes Z optional, but the formatter "yyyyMMdd'T'HHmmss'Z'"
+        // has Z as a literal, so input without it throws and the catch gives Never. RFC 5545
+        // §3.3.10 allows a date-time UNTIL without Z only for a floating DTSTART, so most
+        // servers send Z, but a tolerant parser would accept this; pinned so a fix is deliberate.
         val parsed = RruleBuilder.parseRrule(
             "FREQ=WEEKLY;UNTIL=20260615T120000",
             DayOfWeek.MONDAY, 1, 1
@@ -526,8 +511,8 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `date-value UNTIL anchors to end-of-day UTC so the named day is included`() {
-        // Recently-added: FREQ=WEEKLY;UNTIL=20260106 (no T). Should resolve to
-        // 2026-01-06 23:59:59 UTC so the rule includes occurrences ON Jan 6.
+        // FREQ=WEEKLY;UNTIL=20260106 (no T) resolves to 2026-01-06 23:59:59 UTC, so the rule
+        // includes occurrences on Jan 6.
         val parsed = RruleBuilder.parseRrule(
             "FREQ=WEEKLY;UNTIL=20260106",
             DayOfWeek.MONDAY, 1, 1
@@ -558,11 +543,9 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `date-value UNTIL on impossible day Feb 30 silently clamps to Feb 28 — pins SMART resolver`() {
-        // Java's default DateTimeFormatter uses ResolverStyle.SMART, which
-        // accepts Feb 30 in a non-leap year by clamping to the last valid
-        // day of February (Feb 28 in 2026). The catch{} only fires for
-        // STRICT mode. Document the behavior so a switch to STRICT (which
-        // would fall back to Never) is intentional.
+        // The formatter's default ResolverStyle.SMART accepts Feb 30 by clamping to the last
+        // day of February (Feb 28 in 2026), so the catch doesn't fire. Pinned so a switch to
+        // STRICT, which would give Never, is deliberate.
         val parsed = RruleBuilder.parseRrule(
             "FREQ=YEARLY;UNTIL=20260230",
             DayOfWeek.MONDAY, 1, 1
@@ -576,9 +559,8 @@ class RruleBuilderRoundTripTest {
 
     @Test
     fun `datetime UNTIL takes priority over date-value UNTIL when both forms match`() {
-        // The date-value regex is broader (\d{8}) and would also match the
-        // first 8 chars of a datetime string. The parser short-circuits the
-        // date branch when the datetime branch matched. Pin that ordering.
+        // The date regex (\d{8}) also matches the first 8 characters of a date-time, so the
+        // parser tries it only when the date-time regex didn't match.
         val instant = Instant.parse("2026-06-15T12:00:00Z").toEpochMilli()
         val parsed = RruleBuilder.parseRrule(
             "FREQ=DAILY;UNTIL=20260615T120000Z",

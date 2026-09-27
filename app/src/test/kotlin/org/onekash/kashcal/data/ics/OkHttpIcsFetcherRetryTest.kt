@@ -15,11 +15,12 @@ import org.junit.Test
 import org.onekash.kashcal.data.db.entity.IcsSubscription
 
 /**
- * Tests for OkHttpIcsFetcher retry logic.
+ * Tests which responses [OkHttpIcsFetcher] retries, against a MockWebServer.
  *
- * Retry behavior:
- * - YES: SocketTimeoutException, ConnectException, UnknownHostException, HTTP 429/503/5xx
- * - NO: HTTP 401/403/404/413, SSLHandshakeException, invalid ICS content
+ * HTTP 429, 503 and 500 are retried, and retries run out after two requests. HTTP 401, 403, 404
+ * and 413, an oversize body, invalid ICS and a 304 aren't. Not tested here: the fetcher also
+ * retries the network errors `isRetryableError` accepts (socket timeout, unknown host, connect
+ * failure, connection reset), and retries an SSL handshake failure once after AIA completion.
  */
 class OkHttpIcsFetcherRetryTest {
 
@@ -42,7 +43,6 @@ class OkHttpIcsFetcherRetryTest {
 
     @Before
     fun setup() {
-        // Mock Android Log methods
         mockkStatic(Log::class)
         every { Log.d(any(), any()) } returns 0
         every { Log.i(any(), any()) } returns 0
@@ -73,13 +73,11 @@ class OkHttpIcsFetcherRetryTest {
     }
 
     // ==================== Retry on HTTP Errors ====================
-    // Note: Network-level retry tests (SocketTimeout, ConnectionReset) are omitted
-    // because MockWebServer + coroutine test dispatchers don't work reliably together.
-    // HTTP-level retry is tested below and covers the retry logic.
+    // Network-level retries (socket timeout, connection reset) aren't tested: MockWebServer and
+    // coroutine test dispatchers don't work reliably together.
 
     @Test
     fun `retries on HTTP 503 with exponential backoff`() = runTest {
-        // 503 should trigger retry
         mockServer.enqueue(MockResponse().setResponseCode(503))
         mockServer.enqueue(MockResponse()
             .setResponseCode(200)
@@ -106,10 +104,10 @@ class OkHttpIcsFetcherRetryTest {
 
     @Test
     fun `respects Retry-After header on 429`() = runTest {
-        // 429 with Retry-After should wait before retry
+        // A 429 with Retry-After waits, then retries.
         mockServer.enqueue(MockResponse()
             .setResponseCode(429)
-            .setHeader("Retry-After", "1"))  // 1 second
+            .setHeader("Retry-After", "1"))  // seconds
         mockServer.enqueue(MockResponse()
             .setResponseCode(200)
             .setBody(validIcsContent))
@@ -118,7 +116,7 @@ class OkHttpIcsFetcherRetryTest {
 
         assertTrue("Should succeed after retry", result is IcsFetcher.FetchResult.Success)
         assertEquals("Should have made 2 requests", 2, mockServer.requestCount)
-        // Note: Virtual time doesn't advance wall clock, so we just verify retry happened
+        // The wait isn't measured; only the retry is asserted.
     }
 
     @Test
@@ -134,10 +132,10 @@ class OkHttpIcsFetcherRetryTest {
 
         assertTrue("Should succeed after retry", result is IcsFetcher.FetchResult.Success)
         assertEquals("Should have made 2 requests", 2, mockServer.requestCount)
-        // Note: Virtual time doesn't advance wall clock, so we just verify retry happened
+        // The wait isn't measured; only the retry is asserted.
     }
 
-    // ==================== NO Retry Cases ====================
+    // ==================== No Retry ====================
 
     @Test
     fun `does NOT retry on HTTP 404`() = runTest {
@@ -193,15 +191,13 @@ class OkHttpIcsFetcherRetryTest {
 
     @Test
     fun `oversize body reports 'too large' and does NOT retry`() = runTest {
-        // A Content-Length far above the 50MB reader limit trips the cheap
-        // header check before any bytes are buffered. The locally-detected
-        // oversize case should mirror the server-reported 413 wording, not
-        // surface a generic "Network error".
+        // A Content-Length far above the 50 MB reader limit fails the header check before any
+        // bytes are buffered. The error reads like the server's 413, not a network error.
         mockServer.enqueue(
             MockResponse()
                 .setResponseCode(200)
                 .setBody("BEGIN:VCALENDAR")
-                // Override AFTER setBody, which would otherwise recompute it.
+                // After setBody, which would otherwise recompute it.
                 .setHeader("Content-Length", (60L * 1024 * 1024).toString())
         )
 
@@ -218,7 +214,7 @@ class OkHttpIcsFetcherRetryTest {
 
     @Test
     fun `does NOT retry on invalid ICS content`() = runTest {
-        // Return invalid ICS (not a VCALENDAR)
+        // Not a VCALENDAR.
         mockServer.enqueue(MockResponse()
             .setResponseCode(200)
             .setBody("This is not valid ICS content"))
@@ -236,7 +232,7 @@ class OkHttpIcsFetcherRetryTest {
 
     @Test
     fun `exhausts retries and returns error`() = runTest {
-        // All requests fail with 503
+        // Every request gets a 503; the fetcher stops after two.
         mockServer.enqueue(MockResponse().setResponseCode(503))
         mockServer.enqueue(MockResponse().setResponseCode(503))
         mockServer.enqueue(MockResponse().setResponseCode(503))

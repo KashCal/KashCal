@@ -8,9 +8,8 @@ import java.time.LocalDate
 import java.time.ZoneOffset
 
 /**
- * Unit tests for Occurrence entity.
- *
- * Tests the toDayFormat helper and default values.
+ * Tests [Occurrence]'s day-code helpers (toDayFormat, calculateDaysBetween, dayFormatToCalendar,
+ * incrementDayCode), its multi-day helpers, and its default values.
  */
 class OccurrenceTest {
 
@@ -84,14 +83,14 @@ class OccurrenceTest {
 
     @Test
     fun `toDayFormat all-day event preserves UTC calendar date`() {
-        // All-day events are stored as UTC midnight
+        // All-day events are stored at UTC midnight.
         // Jan 6, 2026 00:00:00 UTC = 1767657600000 ms
         val jan6UtcMidnight = LocalDate.of(2026, 1, 6)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant()
             .toEpochMilli()
 
-        // With isAllDay=true, should use UTC and get Jan 6
+        // isAllDay = true reads the date in UTC: Jan 6
         val result = Occurrence.toDayFormat(jan6UtcMidnight, isAllDay = true)
         assertEquals("All-day event should preserve UTC date", 20260106, result)
     }
@@ -112,7 +111,8 @@ class OccurrenceTest {
     fun `toDayFormat all-day multi-day event calculates correct span`() {
         // Dec 24-26 all-day event (3 days)
         // Start: Dec 24 00:00:00 UTC
-        // End: Dec 26 23:59:59 UTC (after RFC 5545 -1 adjustment)
+        // End: Dec 26 23:59:59 UTC, inside the last day like the stored inclusive end (the
+        // exclusive RFC 5545 DTEND minus 1 ms)
         val startMs = LocalDate.of(2024, 12, 24)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant()
@@ -133,24 +133,22 @@ class OccurrenceTest {
 
     @Test
     fun `toDayFormat timed event uses default timezone behavior`() {
-        // Timed events with isAllDay=false should use system default timezone
-        // This test verifies the parameter works - actual timezone behavior
-        // depends on system timezone
+        // A timed event's date is read in the JVM's default zone, so the result depends on it;
+        // this only checks the day lands within one of Dec 25
         val noonUtc = LocalDate.of(2024, 12, 25)
             .atStartOfDay(ZoneOffset.UTC)
             .plusHours(12) // 12:00 UTC
             .toInstant()
             .toEpochMilli()
 
-        // With isAllDay=false, uses local timezone
+        // isAllDay = false reads the local zone
         val result = Occurrence.toDayFormat(noonUtc, isAllDay = false)
-        // Result depends on system timezone - just verify it returns a valid day
         assert(result in 20241224..20241226) { "Should be around Dec 25 depending on TZ" }
     }
 
     @Test
     fun `toDayFormat default parameter is false`() {
-        // Verify backward compatibility - default should use local timezone
+        // The default reads the local zone, like isAllDay = false
         val utcMidnight = LocalDate.of(2024, 12, 25)
             .atStartOfDay(ZoneOffset.UTC)
             .toInstant()

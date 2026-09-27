@@ -22,14 +22,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [EventWriter.saveAttendeeReminders] — the local-only reminder
- * write path used by the read-only attendee form. Distinguishing
- * properties:
+ * Tests [EventWriter.saveAttendeeReminders], the local-only write of an attendee's own
+ * reminders (VALARMs, RFC 5545 §3.6.6) from the read-only attendee form. It:
  *
- * - Updates only `Event.reminders` and `Event.alarmCount` columns.
- * - Does NOT queue a PendingOperation (no server PUT).
- * - Does NOT change sync status (event remains SYNCED).
- * - Per-attendee VALARM editing per RFC 5545 §3.6.6.
+ * - writes only the `reminders` and `alarm_count` columns (plus `updated_at`), leaving the
+ *   other fields as they were
+ * - queues no PendingOperation, so no server PUT
+ * - leaves the sync status SYNCED
+ * - clears the reminders for an empty list
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -110,8 +110,8 @@ class EventWriterAttendeeRemindersTest {
         eventWriter.saveAttendeeReminders(existingEventId, listOf("-PT30M"))
 
         val updated = database.eventsDao().getById(existingEventId)
-        // Critical: a server PUT triggered by a sync_status flip would
-        // overwrite the organizer's event. Local-only path keeps SYNCED.
+        // A server PUT triggered by a sync_status flip would overwrite the organizer's
+        // event, so the status stays SYNCED.
         assertEquals(SyncStatus.SYNCED, updated?.syncStatus)
     }
 
@@ -143,10 +143,9 @@ class EventWriterAttendeeRemindersTest {
         eventWriter.saveAttendeeReminders(existingEventId, emptyList())
 
         val updated = database.eventsDao().getById(existingEventId)
-        // The DAO converter normalizes empty lists; either null or [] is acceptable
-        // semantically. Check via alarmCount which is unambiguous.
+        // The writer stores an empty list as null, which Room reads back as []; alarmCount
+        // is the unambiguous check.
         assertEquals(0, updated?.alarmCount)
-        // And reminders is either null or empty:
         val r = updated?.reminders
         assertTrue("Reminders should be empty or null, got: $r", r.isNullOrEmpty())
     }

@@ -7,11 +7,10 @@ import android.net.Uri
 import android.util.Log
 
 /**
- * Canonical outbound web links and a safe launcher for them.
+ * Holds the app's outbound web links, so screens don't duplicate them, and a launcher for them.
  *
- * Centralizing the URLs keeps them from drifting when duplicated across screens. [openUrl] guards
- * against [ActivityNotFoundException] so a device/profile with no browser (managed work profile,
- * kiosk build) never crashes when a link is tapped.
+ * [openUrl] catches [ActivityNotFoundException], so a device or profile with no browser
+ * (managed work profile, kiosk build) never crashes when a link is tapped.
  */
 object ExternalLinks {
 
@@ -20,8 +19,8 @@ object ExternalLinks {
     const val PRIVACY = "https://kashcal.onekash.org/docs/privacy/overview"
 
     /**
-     * Opens [url] in an external handler, returning false (and logging) if none exists instead of
-     * throwing. Adds [Intent.FLAG_ACTIVITY_NEW_TASK] so it is safe from non-Activity contexts too.
+     * Opens [url] in an external handler, or logs and returns false when none exists. Adds
+     * [Intent.FLAG_ACTIVITY_NEW_TASK] so it works from a non-Activity context too.
      */
     fun openUrl(context: Context, url: String): Boolean {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url)).apply {

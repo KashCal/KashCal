@@ -21,22 +21,19 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Verifies [DeviceContactRowMapper] is the faithful inverse of [VCardContactMapper]:
- * it reads the Contacts Provider Data rows of one aggregated contact back into the
- * neutral [Contact] model.
+ * Tests that [DeviceContactRowMapper] inverts [VCardContactMapper]: it reads the Contacts
+ * Provider Data rows of one RawContact back into the [Contact] model.
  *
- * Fixtures are parsed through the REAL [VCardParser], forward-mapped to Data rows via
- * the REAL [VCardContactMapper], then reverse-mapped here — so parser, forward mapper,
- * and reverse mapper stay in lockstep. Robolectric is used only so [ContentValues] and
- * the `ContactsContract` constants are the real Android classes; no ContentResolver /
- * provider shadow is touched (the mapper is pure).
+ * Fixtures go through the real [VCardParser], forward through the real [VCardContactMapper]
+ * and back through the mapper under test, so all three stay in step. Robolectric supplies only
+ * the real [ContentValues] and `ContactsContract` constants; the mapper touches no
+ * ContentResolver.
  *
- * The load-bearing property is the diff-baseline contract that [VCardWriter] depends on:
- * the reverse mapper's output must be facet-equal to the parser's for the facets the
- * writer regenerates, so a no-edit round trip doesn't rewrite untouched properties. The
- * forward mapper is inherently lossy on a few sub-facets (TYPE tokens, photo, anniversary
- * text) — those are asserted with explicit narrowed literals rather than full equality,
- * and the fixed-point test proves the reverse mapper is a true inverse ON the forward image.
+ * [VCardWriter] diffs against this output, so it must be facet-equal to the parser's on the
+ * facets the writer regenerates, or a no-edit round trip rewrites untouched properties. The
+ * forward mapper loses TYPE tokens, the photo's content type and URL, and anniversary text;
+ * those facets are asserted by projection or explicit literals, and the fixed-point test
+ * shows the reverse is an exact inverse on the forward image.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -54,7 +51,7 @@ class DeviceContactRowMapperTest {
     private fun forward(contact: Contact): List<ContentValues> =
         VCardContactMapper.toEntity(contact).dataRows
 
-    /** Reverse a fixture, holding identity params equal to the parsed source. */
+    /** Parses [name], maps it forward and back, and passes the parsed identity fields through. */
     private fun roundTrip(name: String): Pair<Contact, Contact> {
         val parsed = parse(name)
         val reversed = DeviceContactRowMapper.toContact(
@@ -67,7 +64,7 @@ class DeviceContactRowMapperTest {
         return parsed to reversed
     }
 
-    /** Every committed fixture — used for the fixed-point invariant, which holds universally. */
+    /** The fixtures under test; the fixed point holds for every one. */
     private val richFixtures = listOf(
         "kashcal_full_v3.vcf",
         "kashcal_full_v4.vcf",
@@ -83,14 +80,13 @@ class DeviceContactRowMapperTest {
 
     /**
      * Fixtures whose forward mapping is lossless on the strict-equality facets.
-     * `kashcal_folding_and_escapes_v3` is excluded: its `ORG` second component embeds
-     * `"; "`, and the forward mapper's department join / reverse split is a bijection
-     * only when no ORG unit contains that separator — a documented narrowing exercised
-     * by its own test below.
+     * `kashcal_folding_and_escapes_v3` is left out: its second `ORG` component contains `"; "`,
+     * and the department join and split invert each other only when no unit contains that
+     * separator. Its own test below covers it.
      */
     private val facetEqualFixtures = richFixtures - "kashcal_folding_and_escapes_v3.vcf"
 
-    // ========== Fixed point: reverse∘forward is a true inverse on the forward image ==========
+    // ========== Fixed point: reverse of forward is an inverse on the forward image ==========
 
     @Test
     fun `reverse of forward is a fixed point for every fixture`() {
@@ -104,7 +100,7 @@ class DeviceContactRowMapperTest {
                 dataRows = forward(once),
                 uid = once.uid, version = once.version, kind = once.kind, rawVCard = once.rawVCard,
             )
-            // FULL Contact equality: applying the round trip a second time changes nothing.
+            // Full Contact equality: a second round trip changes nothing.
             assertEquals("fixed point violated for $name", once, twice)
         }
     }
@@ -121,23 +117,22 @@ class DeviceContactRowMapperTest {
 
     @Test
     fun `folding and escapes fixture round-trips notes and escaped values`() {
-        // Line folding and vCard escaping are the parser/writer's concern; the reverse
-        // mapper only sees already-unescaped values on the Data rows, so the NOTE and
-        // escaped ADR/ORG characters must survive verbatim.
+        // Folding and escaping belong to the parser and writer; the Data rows hold
+        // unescaped values, so the NOTE and the escaped ADR and ORG characters survive
+        // verbatim.
         val (parsed, reversed) = roundTrip("kashcal_folding_and_escapes_v3.vcf")
         assertEquals(parsed.notes, reversed.notes)
         assertEquals(parsed.addresses.map { it.copy(types = emptyList()) },
             reversed.addresses.map { it.copy(types = emptyList()) })
-        // DOCUMENTED NARROWING: this fixture's ORG second component embeds "; " ("R&D; Sync").
-        // The forward mapper joins departments with "; " and the reverse splits on it, so a
-        // unit containing the separator is over-split. This is the org department (de)serialize
-        // limitation — full-equality-on-organization is fixture-scoped, and it self-heals under
-        // the fixed point (proven above), so it never causes runaway rewrites.
+        // The second ORG component contains "; " ("R&D; Sync"). The forward mapper joins
+        // departments with "; " and the reverse splits on it, so that unit comes back split.
+        // The split form is a fixed point (the test above), so it doesn't cause repeated
+        // rewrites.
         assertEquals(listOf("KashCal, Inc.", "R&D; Sync"), parsed.organization)
         assertEquals(listOf("KashCal, Inc.", "R&D", "Sync"), reversed.organization)
     }
 
-    // ========== Explicit TYPE-token narrowing (documented lossy inversion) ==========
+    // ========== TYPE tokens narrowed to one provider constant ==========
 
     @Test
     fun `email TYPE constants map back to a single canonical token`() {
@@ -164,8 +159,8 @@ class DeviceContactRowMapperTest {
 
     @Test
     fun `provider TYPE constants outside the forward image degrade to empty tokens without crashing`() {
-        // Users can set types on-device the forward mapper never emits. They must degrade
-        // gracefully: number/label/preferred survive, only the type token is dropped.
+        // A type set on the device that the forward mapper never emits drops only the type
+        // token; the phone number and email address survive.
         val rows = listOf(
             row(Phone.CONTENT_ITEM_TYPE) {
                 put(Phone.NUMBER, "+15550001111")
@@ -183,7 +178,7 @@ class DeviceContactRowMapperTest {
         assertEquals("x@example.test", c.emails.single().address)
     }
 
-    // ========== Preferred / custom-label / phonetic survival ==========
+    // ========== Preferred flag, custom labels and phonetic names ==========
 
     @Test
     fun `preferred flag survives via IS_PRIMARY`() {
@@ -201,7 +196,7 @@ class DeviceContactRowMapperTest {
         assertEquals("Beeper", reversed.phones.first { it.number == "+15550009999" }.label)
         assertEquals("Vacation Home", reversed.addresses.single().label)
         assertEquals("Blog", reversed.urls.first { it.url == "https://example.test/blog" }.label)
-        // and the parser agreed on those labels
+        // The parser read the same address label.
         assertEquals(parsed.addresses.single().label, reversed.addresses.single().label)
     }
 
@@ -216,9 +211,9 @@ class DeviceContactRowMapperTest {
 
     @Test
     fun `multiple primary rows of one mimetype clamp to a single preferred`() {
-        // A real RawContact can carry IS_PRIMARY=1 on several rows of one mimetype; the
-        // forward mapper honours only the first, so the reverse must clamp identically or
-        // forward(reverse(rows)) would drop the surplus PREF and drift on every sync.
+        // A real RawContact can have IS_PRIMARY=1 on several rows of one mimetype. The
+        // forward mapper sets it only on the first, so the reverse must clamp the same way,
+        // or forward(reverse(rows)) drops the extra PREF and drifts on every sync.
         val rows = listOf(
             row(Email.CONTENT_ITEM_TYPE) { put(Email.ADDRESS, "a@example.test"); put(Email.TYPE, Email.TYPE_HOME); put(Email.IS_PRIMARY, 1) },
             row(Email.CONTENT_ITEM_TYPE) { put(Email.ADDRESS, "b@example.test"); put(Email.TYPE, Email.TYPE_WORK); put(Email.IS_PRIMARY, 1) },
@@ -228,7 +223,7 @@ class DeviceContactRowMapperTest {
         val c = DeviceContactRowMapper.toContact(rows)
         assertEquals(listOf(true, false), c.emails.map { it.preferred })
         assertEquals(listOf(true, false), c.phones.map { it.preferred })
-        // Round-trip is now a fixed point despite the pathological input.
+        // The clamped result is a fixed point.
         val reforwarded = DeviceContactRowMapper.toContact(forward(c))
         assertEquals(listOf(true, false), reforwarded.emails.map { it.preferred })
         assertEquals(listOf(true, false), reforwarded.phones.map { it.preferred })
@@ -238,10 +233,9 @@ class DeviceContactRowMapperTest {
 
     @Test
     fun `editing one device row surfaces as exactly one changed facet`() {
-        // MAPPER-LEVEL change locality: mutating a single Data row changes exactly one
-        // facet vs the parser baseline (under the documented facet projection). This is a
-        // mapper-fidelity property, distinct from the writer's full-equality diff — see
-        // the writer integration test below for what the serializer actually rewrites.
+        // Changing one Data row changes one facet against the parser baseline, under the
+        // [assertFacetEqual] projection. This is a mapper property; the writer test below
+        // shows what the serializer rewrites.
         val parsed = parse("kashcal_full_v3.vcf")
         val rows = forward(parsed).map { ContentValues(it) }.toMutableList()
         val phoneRow = rows.first {
@@ -257,18 +251,17 @@ class DeviceContactRowMapperTest {
         // The phones facet differs...
         assertTrue(edited.phones.any { it.number == "+19998887777" })
         assertTrue(parsed.phones.none { it.number == "+19998887777" })
-        // ...and every OTHER facet stays facet-equal to the parser baseline.
+        // ...and every other facet stays equal to the parser baseline.
         assertFacetEqual("edit-delta", expected = parsed, actual = edited, ignorePhones = true)
     }
 
-    // ========== Writer integration: pins what the serializer actually rewrites ==========
+    // ========== Writer integration: what the serializer rewrites ==========
 
     @Test
     fun `reverse output drives the real writer and regenerates only narrowed and edited lines`() {
-        // Production data flow: reverse-map device rows, carry the ORIGINAL rawVCard, hand
-        // to VCardWriter for a patch. The writer diffs at FULL structural equality, so the
-        // narrowed secondary TYPE tokens (INTERNET/VOICE) DO regenerate on the first pass,
-        // then converge. This test pins that reality rather than over-claiming a single-line diff.
+        // As in the push: reverse-map the rows, attach the original body as rawVCard, and
+        // write a patch. The writer compares emails and phones by full equality, so the
+        // lines with narrowed TYPE tokens (INTERNET, VOICE) are rewritten on the first write.
         val parsed = parse("kashcal_full_v3.vcf")
         val reversed = DeviceContactRowMapper.toContact(
             dataRows = forward(parsed),
@@ -276,25 +269,23 @@ class DeviceContactRowMapperTest {
         )
         val out = VCardWriter().write(reversed)
 
-        // The email/phone lines are regenerated to the device-representable form (INTERNET
-        // and VOICE dropped) — the documented first-write narrowing.
+        // The email and phone values survive; the dropped tokens aren't asserted.
         assertTrue("home email retained", out.contains("home@example.test"))
         assertTrue("work email retained", out.contains("work@example.test"))
         assertTrue("cell number retained", out.contains("+15550000001"))
-        // Unmapped X-props the writer preserves verbatim from the patched base body survive.
+        // An unmapped X- property is kept verbatim from the base body.
         assertTrue("unmapped X-prop preserved", out.contains("X-CUSTOM-PROP:retain-me"))
-        // Fixed point at the writer: re-parsing the output and reverse-mapping is stable.
+        // Re-parsing the output keeps the preferred email.
         val reparsed = parser.parse(out).single()
         assertEquals("home@example.test", reparsed.emails.first { it.preferred }.address)
     }
 
     @Test
     fun `reverse-mapped inline photo is not rewritten or relabeled by the writer`() {
-        // The Photo row carries no MIME subtype, so reverse yields contentType=null. Feeding
-        // that to the writer with the ORIGINAL rawVCard must NOT rewrite the PHOTO line: the
-        // writer diffs the photo on bytes/URL and ignores the unrecoverable contentType, so
-        // the original TYPE=PNG line is preserved verbatim rather than relabeled to JPEG and
-        // re-uploaded on every sync.
+        // The Photo row has no MIME subtype, so the reverse gives contentType null. With the
+        // original rawVCard the writer must keep the PHOTO line: it compares the photo's bytes
+        // and URL and ignores contentType, so TYPE=PNG stays instead of being relabeled JPEG
+        // and re-uploaded on every sync.
         val parsed = parse("kashcal_photo_inline_v3.vcf")
         val reversed = DeviceContactRowMapper.toContact(
             dataRows = forward(parsed),
@@ -305,7 +296,7 @@ class DeviceContactRowMapperTest {
         val out = VCardWriter().write(reversed)
         assertTrue("PNG type preserved", out.contains("TYPE=PNG", ignoreCase = true))
         assertTrue("photo not relabeled JPEG", !out.contains("jpeg", ignoreCase = true))
-        // Re-parse confirms the type and bytes survived intact.
+        // Re-parsing gives back the type and bytes.
         val reparsed = parser.parse(out).single()
         assertEquals("png", reparsed.photo?.contentType)
         assertArrayEqualsNonNull(requireNotNull(parsed.photo?.data), reparsed.photo?.data)
@@ -320,7 +311,7 @@ class DeviceContactRowMapperTest {
         assertEquals(parsed.categories, reversed.categories)
     }
 
-    /** A GroupMembership Data row, keyed by GROUP_SOURCE_ID and/or GROUP_ROW_ID. */
+    /** Builds a GroupMembership Data row with a GROUP_SOURCE_ID, a GROUP_ROW_ID or both. */
     private fun groupRow(sourceId: String? = null, rowId: Long? = null) =
         ContentValues().apply {
             put(Data.MIMETYPE, GroupMembership.CONTENT_ITEM_TYPE)
@@ -335,7 +326,7 @@ class DeviceContactRowMapperTest {
             groupTitlesById = mapOf(7L to "Friends"),
         )
         assertEquals(listOf("Friends"), reversed.categories)
-        // Loop closer: the resolved label is emitted as a CATEGORIES value, not dropped.
+        // The writer emits the resolved label as CATEGORIES.
         assertTrue(
             "CATEGORIES emitted",
             VCardWriter().write(reversed).contains("CATEGORIES", ignoreCase = true),
@@ -370,7 +361,7 @@ class DeviceContactRowMapperTest {
     fun `cosmetic provider-only columns do not corrupt the reverse`() {
         val parsed = parse("kashcal_full_v3.vcf")
         val rows = forward(parsed).map { ContentValues(it) }
-        // The real provider adds these derived columns; they must be ignored, not mapped.
+        // The provider adds these derived columns; the reverse must ignore them.
         rows.first {
             it.getAsString(android.provider.ContactsContract.Data.MIMETYPE) == Phone.CONTENT_ITEM_TYPE
         }.put(Phone.NORMALIZED_NUMBER, "+15550000001")
@@ -384,7 +375,7 @@ class DeviceContactRowMapperTest {
         assertFacetEqual("cosmetic", expected = parsed, actual = reversed)
     }
 
-    // ========== poBox + extendedAddress -> NEIGHBORHOOD inversion (no fixture exercises it) ==========
+    // ========== poBox via POBOX, extendedAddress via NEIGHBORHOOD (no fixture has them) ==========
 
     @Test
     fun `postal poBox and extended address round-trip through NEIGHBORHOOD`() {
@@ -413,14 +404,14 @@ class DeviceContactRowMapperTest {
         assertEquals("USA", adr.country)
     }
 
-    // ========== Inline photo bytes recovered; URL photo not present in rows ==========
+    // ========== Inline photo bytes recovered; a URL photo has no row ==========
 
     @Test
     fun `inline photo bytes are recovered from the Photo row`() {
         val (parsed, reversed) = roundTrip("kashcal_photo_inline_v3.vcf")
         assertTrue(parsed.photo?.data != null)
         assertArrayEqualsNonNull(requireNotNull(parsed.photo?.data), reversed.photo?.data)
-        // contentType is not stored on the Photo row -> not recoverable from rows.
+        // The Photo row doesn't store contentType.
         assertNull(reversed.photo?.contentType)
     }
 
@@ -428,7 +419,7 @@ class DeviceContactRowMapperTest {
     fun `url-only photo yields no photo when reading rows`() {
         val (parsed, reversed) = roundTrip("kashcal_full_v3.vcf")
         assertTrue("fixture has a URL photo", parsed.photo?.url != null)
-        // URL photos ride MappedContact.photoUrl, not a Data row, so reverse-from-rows is null.
+        // A URL photo goes on MappedContact.photoUrl, not a Data row, so the reverse has none.
         assertNull(reversed.photo)
     }
 
@@ -471,10 +462,10 @@ class DeviceContactRowMapperTest {
     // ========== Facet comparator ==========
 
     /**
-     * Facet equality: FULL equality on the losslessly round-tripping facets; a documented
-     * PROJECTION on the facets the forward mapper narrows (emails/phones/addresses TYPE
-     * tokens, photo contentType/url, anniversary text). Identity fields (uid/version/kind/
-     * rawVCard) are excluded — they come from the RawContact SYNC columns, not Data rows.
+     * Asserts full equality on the facets that round-trip losslessly and a projection on those
+     * the forward mapper narrows: email, phone and address TYPE tokens, the photo's content
+     * type and URL, anniversary text. `uid`, `version`, `kind` and `rawVCard` are skipped:
+     * they aren't on Data rows ([DeviceContactRowMapper] class doc).
      */
     private fun assertFacetEqual(
         label: String,
@@ -496,7 +487,7 @@ class DeviceContactRowMapperTest {
         assertEquals("$label birthday", expected.birthday, actual.birthday)
         assertEquals("$label anniversary.date", expected.anniversary?.date, actual.anniversary?.date)
 
-        // Projected: emails compared on address/preferred/label (TYPE narrowed).
+        // Emails compared on address, preferred and label; TYPE is narrowed.
         assertEquals(
             "$label emails (address/preferred/label)",
             expected.emails.map { Triple(it.address, it.preferred, it.label) },
@@ -514,7 +505,7 @@ class DeviceContactRowMapperTest {
             expected.addresses.map { it.copy(types = emptyList()) },
             actual.addresses.map { it.copy(types = emptyList()) },
         )
-        // Projected: photo compared on data bytes only.
+        // The photo is compared on its bytes only.
         assertArrayEqualsNullable("$label photo.data", expected.photo?.data, actual.photo?.data)
     }
 

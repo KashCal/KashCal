@@ -29,40 +29,31 @@ import javax.inject.Singleton
 private const val TAG = "IcsSubscriptionRepo"
 
 /**
- * extraProperties key used to preserve the original UID of an ICS-subscription
- * master that was disambiguated due to duplicate-UID input (issue #227). The
- * stored uid column carries the synthetic `{originalUid}#dup={startTs}`. A
- * future export-fidelity PR can teach IcsPatcher.serialize to restore the
- * original UID from this key on outbound ICS.
+ * extraProperties key holding the original UID of an ICS-subscription master renamed for
+ * duplicate-UID input (#227); the uid column carries `{originalUid}#dup={startTs}`.
+ *
+ * Nothing reads it yet: it is kept so outbound ICS can restore the original UID, which
+ * `IcsPatcher.serialize` doesn't do.
  */
 internal const val ORIGINAL_UID_EXTRA_KEY = "X-KASHCAL-ORIGINAL-UID"
 
 /**
- * extraProperties sentinel marking a master row as a synthetic placeholder
- * synthesized by ICS sync because the feed contained orphan exception events
- * (UID + RECURRENCE-ID) but no master VEVENT for that UID. Synthetic masters
- * exist solely as FK targets so orphan exceptions can link to a master and
- * survive the master-uniqueness trigger; they have status=CANCELLED, no
- * RRULE, zero duration, and produce no occurrences. When a real master
- * later arrives in the feed, the upsert path matches by importId=uid and
- * the synthetic row is mutated in place into a real master (rrule populated,
- * status flipped, sentinel cleared).
+ * extraProperties sentinel marking a synthetic master, built by
+ * [IcsSubscriptionRepository.synthesizeMastersForOrphanUids] for exceptions whose master VEVENT
+ * isn't in the feed.
+ *
+ * [OccurrenceGenerator] generates no occurrences for such a row and some `EventsDao` queries
+ * skip it. CalDAV pull writes the same value (`PULL_SYNTHETIC_MASTER_EXTRA_KEY`).
  */
 internal const val SYNTHETIC_MASTER_EXTRA_KEY = "X-KASHCAL-SYNTHETIC-MASTER"
 
 /**
- * Repository for managing ICS calendar subscriptions.
+ * Adds, removes and refreshes ICS subscriptions, writing each feed's events into the
+ * subscription's read-only calendar.
  *
- * Handles:
- * - Adding/removing ICS subscriptions
- * - Fetching and parsing ICS feeds
- * - Syncing events to database
- * - Deleting orphaned events (removed from feed)
- *
- * Industry standard behavior:
- * - Events are read-only (overwritten on sync)
- * - Deleted events from feed are removed locally
- * - Auto-creates "ICS Subscriptions" account on first subscription
+ * - Events are read-only and overwritten on each refresh.
+ * - Events gone from the feed are deleted locally.
+ * - The first subscription creates the ICS account, named by `R.string.subscriptions_title`.
  */
 @Singleton
 class IcsSubscriptionRepository @Inject constructor(
@@ -80,30 +71,23 @@ class IcsSubscriptionRepository @Inject constructor(
 
     // ========== Subscription Management ==========
 
-    /**
-     * Get all subscriptions as reactive Flow.
-     */
+    /** Observes every subscription. */
     fun getAllSubscriptions(): Flow<List<IcsSubscription>> {
         return icsSubscriptionsDao.getAll()
     }
 
-    /**
-     * Get subscription by ID.
-     */
     suspend fun getSubscriptionById(id: Long): IcsSubscription? {
         return icsSubscriptionsDao.getById(id)
     }
 
     /**
-     * Add a new ICS subscription.
+     * Adds a subscription and its calendar, creating the ICS account if needed, then refreshes it.
      *
-     * Creates the ICS account and calendar if needed, then fetches and parses
-     * the ICS feed to populate events.
+     * A failed first refresh still returns success; the error is stored on the subscription.
+     * An already subscribed URL returns an error with `isDuplicate` set.
      *
-     * @param url The ICS feed URL (supports webcal:// and https://)
-     * @param name Display name for the subscription
-     * @param color Calendar color (ARGB integer)
-     * @return Result containing the subscription or error
+     * @param url the feed URL; webcal:// and webcals:// are rewritten to https://.
+     * @param color calendar color (ARGB).
      */
     suspend fun addSubscription(
         url: String,
@@ -111,7 +95,6 @@ class IcsSubscriptionRepository @Inject constructor(
         color: Int
     ): SubscriptionResult = withContext(Dispatchers.IO) {
         try {
-            // Check for duplicate URL
             if (icsSubscriptionsDao.urlExists(normalizeUrl(url))) {
                 return@withContext SubscriptionResult.Error(
                     message = "Subscription already exists for this URL",
@@ -119,23 +102,20 @@ class IcsSubscriptionRepository @Inject constructor(
                 )
             }
 
-            // Ensure ICS account exists (auto-create on first subscription)
             val accountId = ensureIcsAccountExists()
 
-            // Create calendar for this subscription
             val normalizedUrl = normalizeUrl(url)
             val calendar = Calendar(
                 accountId = accountId,
-                caldavUrl = normalizedUrl, // Use ICS URL as caldav_url for subscriptions
+                caldavUrl = normalizedUrl, // the feed URL
                 displayName = name,
                 color = color,
-                isReadOnly = true, // ICS subscriptions are read-only
+                isReadOnly = true,
                 isVisible = true,
                 isDefault = false
             )
             val calendarId = calendarsDao.insert(calendar)
 
-            // Create subscription record
             val subscription = IcsSubscription(
                 url = normalizeUrl(url),
                 name = name,
@@ -144,10 +124,9 @@ class IcsSubscriptionRepository @Inject constructor(
             )
             val subscriptionId = icsSubscriptionsDao.insert(subscription)
 
-            // Fetch and sync events
             val syncResult = refreshSubscription(subscriptionId)
             if (syncResult is SyncResult.Error) {
-                // Update subscription with error but don't fail - subscription is created
+                // The subscription exists; keep it and record the error.
                 icsSubscriptionsDao.updateSyncError(subscriptionId, syncResult.message)
             }
 
@@ -159,34 +138,26 @@ class IcsSubscriptionRepository @Inject constructor(
     }
 
     /**
-     * Remove an ICS subscription.
+     * Deletes a subscription's calendar, which cascades to its events and the subscription row.
      *
-     * Deletes the subscription, its calendar, and all associated events.
-     * Calendar deletion cascades to events via FK.
-     *
-     * IMPORTANT: Cancels reminders BEFORE cascade delete to prevent orphaned
-     * AlarmManager alarms. This is Android best practice - AlarmManager.cancel()
-     * is safe on non-existent alarms (no-op).
+     * Cancels the master events' reminders first, or their AlarmManager alarms would outlive the
+     * rows. AlarmManager.cancel() on a missing alarm is a no-op.
      */
     suspend fun removeSubscription(subscriptionId: Long) = withContext(Dispatchers.IO) {
         val subscription = icsSubscriptionsDao.getById(subscriptionId) ?: return@withContext
 
-        // Cancel reminders for all events BEFORE cascade delete
         val events = eventsDao.getAllMasterEventsForCalendar(subscription.calendarId)
         for (event in events) {
             reminderScheduler.cancelRemindersForEvent(event.id)
         }
         Log.i(TAG, "Cancelled reminders for ${events.size} events before removing subscription")
 
-        // Delete calendar (cascades to events and subscription via FK)
         calendarsDao.deleteById(subscription.calendarId)
 
         Log.i(TAG, "Removed subscription: ${subscription.name}")
     }
 
-    /**
-     * Update subscription settings.
-     */
+    /** Updates a subscription's name, color and interval, and the calendar's name and color. */
     suspend fun updateSubscriptionSettings(
         subscriptionId: Long,
         name: String,
@@ -195,23 +166,21 @@ class IcsSubscriptionRepository @Inject constructor(
     ) = withContext(Dispatchers.IO) {
         icsSubscriptionsDao.updateSettings(subscriptionId, name, color, syncIntervalHours)
 
-        // Also update the associated calendar
         val subscription = icsSubscriptionsDao.getById(subscriptionId) ?: return@withContext
         calendarsDao.updateDisplayName(subscription.calendarId, name)
         calendarsDao.updateColor(subscription.calendarId, color)
     }
 
     /**
-     * Enable or disable a subscription.
+     * Enables or disables a subscription.
      *
-     * When disabling, cancels all reminders for the subscription's events.
-     * When enabling, triggers a refresh which will reschedule reminders.
+     * Disabling cancels the master events' reminders. Enabling refreshes the feed, which
+     * reschedules reminders only when the feed returns a body; a 304 schedules none.
      */
     suspend fun setSubscriptionEnabled(subscriptionId: Long, enabled: Boolean) = withContext(Dispatchers.IO) {
         val subscription = icsSubscriptionsDao.getById(subscriptionId)
 
         if (!enabled && subscription != null) {
-            // Cancel reminders when disabling
             val events = eventsDao.getAllMasterEventsForCalendar(subscription.calendarId)
             for (event in events) {
                 reminderScheduler.cancelRemindersForEvent(event.id)
@@ -222,8 +191,6 @@ class IcsSubscriptionRepository @Inject constructor(
         icsSubscriptionsDao.setEnabled(subscriptionId, enabled)
 
         if (enabled && subscription != null) {
-            // Reschedule reminders when enabling by refreshing subscription
-            // This will re-sync and schedule reminders for all events
             refreshSubscription(subscriptionId)
         }
     }
@@ -231,10 +198,10 @@ class IcsSubscriptionRepository @Inject constructor(
     // ========== Sync Operations ==========
 
     /**
-     * Refresh a single subscription.
+     * Fetches a subscription's feed with its ETag and Last-Modified, and writes the events.
      *
-     * Fetches the ICS feed, parses events, and updates the database.
-     * Handles ETag/Last-Modified for conditional requests.
+     * Returns [SyncResult.Skipped] for a disabled subscription. Every error except a missing
+     * subscription is also stored on the subscription row.
      */
     suspend fun refreshSubscription(subscriptionId: Long): SyncResult = withContext(Dispatchers.IO) {
         val subscription = icsSubscriptionsDao.getById(subscriptionId)
@@ -247,11 +214,8 @@ class IcsSubscriptionRepository @Inject constructor(
         Log.d(TAG, "Refreshing subscription: ${subscription.name}")
 
         try {
-            // Self-heal stuck subscriptions (#219 follow-up): if we hold
-            // conditional headers but have zero events stored locally, the
-            // local interpretation must have failed at some point (parser
-            // regression, schema reset, etc.). Drop the conditionals so the
-            // server returns 200 + body and we re-parse from scratch.
+            // Cached validators with zero stored events means an earlier parse or store
+            // failed (#219). Drop the validators so the server returns the body again.
             val hasCachedConditionals = subscription.etag != null || subscription.lastModified != null
             val isStuckWithStaleConditionals = hasCachedConditionals && !eventsDao.anyByCalendarIdAndCaldavUrlPrefix(
                 calendarId = subscription.calendarId,
@@ -264,12 +228,11 @@ class IcsSubscriptionRepository @Inject constructor(
                 subscription
             }
 
-            // Fetch ICS content
             val fetchResult = fetchIcsContent(effectiveSubscription)
 
             when (fetchResult) {
                 is FetchResult.NotModified -> {
-                    // Content unchanged, update last sync time
+                    // Unchanged: record the sync time, keep the stored validators.
                     icsSubscriptionsDao.updateSyncSuccess(
                         id = subscriptionId,
                         timestamp = System.currentTimeMillis(),
@@ -280,18 +243,15 @@ class IcsSubscriptionRepository @Inject constructor(
                 }
 
                 is FetchResult.Success -> {
-                    // Parse ICS content
                     val events = IcsParserService.parseIcsContent(
                         content = fetchResult.content,
                         calendarId = subscription.calendarId,
                         subscriptionId = subscriptionId
                     )
 
-                    // Don't cache the ETag for a parse failure (#219 follow-up,
-                    // durable fix). If the feed has BEGIN:VEVENT lines but our
-                    // parser returned zero events, we have a parser regression
-                    // — caching the ETag would make the next refresh hit 304
-                    // and never retry. Surface as an error instead.
+                    // Zero events from a feed with VEVENT lines is a parse failure (#219), or a
+                    // feed whose events are all CANCELLED. Caching the ETag would make every
+                    // later refresh a 304 that never re-parses, so report an error instead.
                     if (events.isEmpty() && fetchResult.content.contains("BEGIN:VEVENT")) {
                         val message = "Parsed 0 events from non-empty feed"
                         Log.w(TAG, "$message: ${subscription.name}")
@@ -299,10 +259,9 @@ class IcsSubscriptionRepository @Inject constructor(
                         return@withContext SyncResult.Error(message)
                     }
 
-                    // Get calendar for color (needed for reminders)
+                    // Calendar color for reminder notifications.
                     val calendar = calendarsDao.getById(subscription.calendarId)
 
-                    // Sync events to database
                     val syncCount = syncEventsToDatabase(
                         events = events,
                         calendarId = subscription.calendarId,
@@ -310,7 +269,6 @@ class IcsSubscriptionRepository @Inject constructor(
                         calendarColor = calendar?.color ?: subscription.color
                     )
 
-                    // Update subscription sync status
                     icsSubscriptionsDao.updateSyncSuccess(
                         id = subscriptionId,
                         timestamp = System.currentTimeMillis(),
@@ -328,10 +286,9 @@ class IcsSubscriptionRepository @Inject constructor(
                 }
             }
         } catch (e: CancellationException) {
-            // A stopped refresh is not a failed one. Swallowing this would log an
-            // error against a named feed for a fetch that was merely cut short, and
-            // would let the caller's loop carry on to the next feed on a coroutine
-            // that is already cancelled.
+            // A stopped refresh isn't a failed one. Swallowing this would log an error
+            // against a feed whose fetch was cut short, and let the caller's loop carry on
+            // to the next feed on a cancelled coroutine.
             throw e
         } catch (e: Exception) {
             Log.e(TAG, "Error refreshing subscription: ${subscription.name}", e)
@@ -341,9 +298,7 @@ class IcsSubscriptionRepository @Inject constructor(
         }
     }
 
-    /**
-     * Refresh all enabled subscriptions that are due for sync.
-     */
+    /** Refreshes the enabled subscriptions that are due ([IcsSubscription.isDueForSync]). */
     suspend fun refreshAllDueSubscriptions(): List<SyncResult> = withContext(Dispatchers.IO) {
         val subscriptions = icsSubscriptionsDao.getEnabled()
         val results = mutableListOf<SyncResult>()
@@ -357,9 +312,7 @@ class IcsSubscriptionRepository @Inject constructor(
         results
     }
 
-    /**
-     * Force refresh all enabled subscriptions.
-     */
+    /** Refreshes every enabled subscription, due or not. */
     suspend fun forceRefreshAll(): List<SyncResult> = withContext(Dispatchers.IO) {
         val subscriptions = icsSubscriptionsDao.getEnabled()
         subscriptions.map { refreshSubscription(it.id) }
@@ -367,10 +320,7 @@ class IcsSubscriptionRepository @Inject constructor(
 
     // ========== Private Helper Methods ==========
 
-    /**
-     * Ensure ICS provider account exists, create if not.
-     * Returns the account ID.
-     */
+    /** Returns the ICS account's id, creating the account if it doesn't exist. */
     private suspend fun ensureIcsAccountExists(): Long {
         val existing = accountRepository.getAccountByProviderAndEmail(
             AccountProvider.ICS,
@@ -381,7 +331,6 @@ class IcsSubscriptionRepository @Inject constructor(
             return existing.id
         }
 
-        // Create ICS account
         val account = Account(
             provider = AccountProvider.ICS,
             email = IcsSubscription.ACCOUNT_EMAIL,
@@ -394,10 +343,7 @@ class IcsSubscriptionRepository @Inject constructor(
         return accountId
     }
 
-    /**
-     * Fetch ICS content from URL with conditional request support.
-     * Delegates to injected IcsFetcher for testability.
-     */
+    /** Fetches through the injected [IcsFetcher], which tests replace. */
     private suspend fun fetchIcsContent(subscription: IcsSubscription): FetchResult {
         return when (val result = icsFetcher.fetch(subscription)) {
             is IcsFetcher.FetchResult.Success -> FetchResult.Success(
@@ -411,40 +357,17 @@ class IcsSubscriptionRepository @Inject constructor(
     }
 
     /**
-     * Sync parsed events to database with atomic transaction.
+     * Writes a feed's parsed events to its calendar in one transaction and returns the counts.
      *
-     * Pipeline:
-     * - Pre-pass: disambiguate duplicate-UID master groups (issue #227 Bug
-     *   B — Google's private ICS export sometimes emits two non-exception
-     *   VEVENTs sharing a UID, which would trip the master-uniqueness
-     *   trigger). Mutates uid/importId/caldavUrl for affected rows and
-     *   stashes the original UID in extraProperties.
-     * - Inside the transaction:
-     *   - Synthesize one placeholder master per orphan UID (issue #227 Bug
-     *     A — feed contains exceptions whose master VEVENT is sliced out
-     *     of the export window). Synthetic masters have rrule=null,
-     *     status=CANCELLED, importId=uid, zero duration, and are tagged
-     *     with [SYNTHETIC_MASTER_EXTRA_KEY] in extraProperties. They exist
-     *     solely as FK targets so orphan exceptions can link to a master
-     *     row and the master-uniqueness trigger sees only one master per
-     *     (uid, calendar) combination. Synthetic masters never call
-     *     `regenerateOccurrences` or `scheduleRemindersForEvent`.
-     *   - Orphan-cleanup sweep deletes existing rows whose importIds are
-     *     not in the union of (real importIds, synthetic importIds).
-     *   - PASS 1: process master events. Sweeps legacy `:RECID:`-marked
-     *     standalone rows from prior versions (pre-synthesis builds) when
-     *     a real master arrives.
-     *   - PASS 2: process exception events, linking each to its master via
-     *     `masterIdByUid` (now populated for every UID in the feed).
-     *
-     * Per RFC 5545, exception events share the same UID as their master
-     * but differ by RECURRENCE-ID. We use importId (which includes
-     * RECURRENCE-ID) for unique identification.
-     *
-     * Self-heal: when a real master later arrives in the feed for a UID
-     * that previously had only orphan exceptions, the upsert path matches
-     * the existing synthetic by `existingByImportId[uid]` and mutates the
-     * row in place into a real master — exception FK references survive.
+     * Exceptions share their master's UID and differ by RECURRENCE-ID (RFC 5545), so rows are
+     * matched by importId, which includes the RECURRENCE-ID. In order:
+     * - Rename duplicate-UID masters ([disambiguateDuplicateUidMasters]).
+     * - In the transaction, build a synthetic master for each UID with exceptions but no master
+     *   ([synthesizeMastersForOrphanUids]).
+     * - Delete stored rows whose importId is in neither the feed nor the synthetic masters.
+     * - Write the synthetic masters, then the real masters (PASS 1), then the exceptions linked to
+     *   their master (PASS 2). Each master first sweeps legacy standalone rows for its UID
+     *   ([sweepLegacyOrphanStandalones]).
      */
     private suspend fun syncEventsToDatabase(
         events: List<Event>,
@@ -456,10 +379,6 @@ class IcsSubscriptionRepository @Inject constructor(
         var updated = 0
         var deleted = 0
 
-        // Pre-pass: disambiguate duplicate-UID masters before they enter
-        // the transaction. Google's private ICS export sometimes emits two
-        // non-exception VEVENTs sharing the same UID; without this, the
-        // second master's INSERT would trip trigger_master_event_unique_insert.
         val disambiguatedEvents = disambiguateDuplicateUidMasters(events, subscriptionId)
 
         database.runInTransaction {
@@ -469,19 +388,14 @@ class IcsSubscriptionRepository @Inject constructor(
                 urlPrefix = sourcePrefix
             )
 
-            // Mutable so the master-pass orphan sweep can invalidate stale
-            // entries; without this Pass 2 would update a deleted row id
-            // (silent no-op) and the new exception would never be written.
+            // Mutable so the sweeps can remove what they delete; otherwise PASS 2 would update
+            // a deleted row id (a silent no-op) and never write the new exception.
             val existingByImportId = existingEvents
                 .associateBy { extractImportIdFromSource(it.caldavUrl) }
                 .toMutableMap()
 
-            // Synthesize one placeholder master per orphan UID (no master in
-            // the feed, no master in DB). Must run inside the transaction:
-            // we depend on `existingByImportId` (built here) and the inserts
-            // must roll back atomically on failure. Must run BEFORE
-            // `newImportIds` is computed so synthetic importIds are folded
-            // in and the orphan-cleanup sweep doesn't immediately delete them.
+            // Must run before `newImportIds` is computed, so synthetic importIds are in it and
+            // the orphan sweep below doesn't delete them.
             val syntheticMasters = synthesizeMastersForOrphanUids(
                 feedEvents = disambiguatedEvents,
                 existingByImportId = existingByImportId,
@@ -493,7 +407,7 @@ class IcsSubscriptionRepository @Inject constructor(
                     syntheticMasters.map { it.importId }
                 ).toSet()
 
-            // Delete orphaned events (cancel reminders first!)
+            // Delete rows gone from the feed, cancelling their reminders first.
             val orphanedImportIds = existingByImportId.keys - newImportIds
             for (importId in orphanedImportIds) {
                 val existingEvent = existingByImportId[importId] ?: continue
@@ -503,34 +417,28 @@ class IcsSubscriptionRepository @Inject constructor(
                 deleted++
             }
 
-            // Track master IDs for exception linking. Pre-populated from
-            // synthesis so PASS 2 finds a master for every orphan UID.
+            // Master row id by UID, for PASS 2 to link exceptions.
             val masterIdByUid = mutableMapOf<String, Long>()
 
-            // Insert synthetic masters first so their row ids are recorded
-            // in masterIdByUid before PASS 2 looks them up.
+            // Synthetic masters first, so their row ids are in masterIdByUid before PASS 2.
             for (synthetic in syntheticMasters) {
                 deleted += sweepLegacyOrphanStandalones(synthetic.uid, existingByImportId)
                 val existingEvent = existingByImportId[synthetic.importId]
                 val (eventId, isNew) = upsertEvent(synthetic, existingEvent)
                 masterIdByUid[synthetic.uid] = eventId
                 if (isNew) added++ else updated++
-                // Synthetic masters intentionally skip both
-                // `regenerateOccurrences` and `scheduleRemindersForEvent`:
-                // they have no occurrences (no rrule, status=CANCELLED) and
-                // no reminders to schedule.
+                // No regenerateOccurrences or scheduleRemindersForEvent: a synthetic master
+                // has no occurrences and no reminders.
             }
 
             val realMasters = disambiguatedEvents.filter { it.originalInstanceTime == null }
             val exceptions = disambiguatedEvents.filter { it.originalInstanceTime != null }
 
-            // PASS 1: Process real masters
+            // PASS 1: real masters.
             for (event in realMasters) {
                 try {
-                    // Sweep previously-promoted standalone orphans with this
-                    // UID before inserting the master — otherwise the master's
-                    // INSERT trips trigger_master_event_unique_insert on the
-                    // (uid, calendar_id, original_event_id IS NULL) collision.
+                    // Before the insert, or it trips trigger_master_event_unique_insert (see
+                    // [sweepLegacyOrphanStandalones]).
                     deleted += sweepLegacyOrphanStandalones(event.uid, existingByImportId)
 
                     val existingEvent = existingByImportId[event.importId]
@@ -543,9 +451,9 @@ class IcsSubscriptionRepository @Inject constructor(
 
                     if (isNew) added++ else updated++
                 } catch (e: Exception) {
-                    // Most often this is the master-uniqueness trigger
-                    // aborting on a degenerate same-UID-same-DTSTART input
-                    // that survived the disambiguation pre-pass (issue #227).
+                    // For example the master-uniqueness trigger on two masters with the same
+                    // UID and DTSTART, which disambiguation renames alike (#227). The rest of
+                    // the sync goes on.
                     Log.w(
                         TAG,
                         "Master insert aborted: uid=${event.uid.maskUid()} startTs=${event.startTs} cause=${e.message}"
@@ -553,14 +461,10 @@ class IcsSubscriptionRepository @Inject constructor(
                 }
             }
 
-            // Also include existing masters for exceptions referencing
-            // pre-existing masters. Two shapes qualify: real recurring
-            // masters (rrule != null) and synthetic placeholders inserted
-            // by a prior sync (rrule == null, sentinel set). Including the
-            // synthetic shape is what makes idempotent re-syncs of an
-            // orphan-only feed work: synthesis short-circuits when the
-            // synthetic already exists, so PASS 2 must find its id here
-            // or it would skip every exception.
+            // Also map UIDs to stored masters not written above: recurring masters
+            // (rrule != null) and synthetic ones. A synthetic master from a prior sync is
+            // normally mapped already, by the synthetic loop or, once its real master is in the
+            // feed, by PASS 1; putIfAbsent keeps that id.
             for (existingEvent in existingEvents) {
                 if (existingEvent.originalEventId == null &&
                     (existingEvent.rrule != null ||
@@ -570,11 +474,9 @@ class IcsSubscriptionRepository @Inject constructor(
                 }
             }
 
-            // PASS 2: Process exceptions with master linkage. Every UID has
-            // a master after synthesis, so the standalone-fallback path is
-            // gone — `masterIdByUid[event.uid]` is always non-null here
-            // unless something pathological happened (e.g. synthesis aborted
-            // at the trigger), in which case we log + skip.
+            // PASS 2: exceptions, linked to their master. After synthesis a UID lacks a master
+            // only when, for example, its master insert failed in PASS 1; the exception is
+            // then logged and skipped.
             for (event in exceptions) {
                 try {
                     val masterId = masterIdByUid[event.uid]
@@ -609,15 +511,13 @@ class IcsSubscriptionRepository @Inject constructor(
     }
 
     /**
-     * Sweep legacy `:RECID:`-marked standalone rows for [uid] from
-     * [existingByImportId]. These are rows from older builds (v23.7.45 and
-     * earlier) that promoted orphan exceptions to standalone events with
-     * importId `{uid}:RECID:{datetime}`. When a master arrives — real or
-     * synthetic — those legacy rows must be deleted before the master
-     * inserts, otherwise the master's INSERT trips the master-uniqueness
-     * trigger on the (uid, calendar_id, original_event_id IS NULL) collision.
+     * Deletes legacy standalone rows for [uid] and removes them from [existingByImportId];
+     * returns how many.
      *
-     * Returns the count of rows swept (for the deletion total).
+     * Builds up to v23.7.45 stored an exception with no master as a standalone event (no
+     * original_event_id) with importId `{uid}:RECID:{datetime}`. Such a row must go before a
+     * master for [uid] is inserted, or the insert trips the master-uniqueness trigger on the
+     * (uid, calendar_id, original_event_id IS NULL) collision.
      */
     private suspend fun sweepLegacyOrphanStandalones(
         uid: String,
@@ -644,32 +544,21 @@ class IcsSubscriptionRepository @Inject constructor(
     }
 
     /**
-     * Build synthetic placeholder masters for orphan-exception UIDs.
+     * Returns one synthetic master per UID that has exceptions but no master in the feed or the
+     * database, plus any stored synthetic master still needed. Writes nothing.
      *
-     * Issue #227 Bug A: Google's private ICS export emits exception VEVENTs
-     * (UID + RECURRENCE-ID) whose master VEVENT is sliced out of the
-     * export window. Pre-fix, only the first orphan per UID survived (the
-     * second-and-subsequent orphan-promote-to-standalone INSERTs tripped
-     * `trigger_master_event_unique_insert`). Now we synthesize one master
-     * per orphan UID up front, exceptions link to it via the existing
-     * PASS 2 path, and the trigger sees exactly one master per (uid,
-     * calendar) combination — the trigger has nothing to fire on.
+     * Google's private ICS export emits exception VEVENTs (UID + RECURRENCE-ID) whose master is
+     * outside the export window (#227). The synthetic master gives them an FK target, so none is
+     * stored as a standalone master and the master-uniqueness trigger sees one master per
+     * (uid, calendar). The row is inert:
+     * - status CANCELLED (RFC 5545 §3.8.1.11)
+     * - rrule null
+     * - start and end at the earliest RECURRENCE-ID, so zero duration
+     * - [SYNTHETIC_MASTER_EXTRA_KEY] set to "true"
      *
-     * Synthesis is purely additive: only kicks in for UIDs that have
-     * exception events but no master in either the new feed or the
-     * existing DB rows. The master row itself is "inert":
-     * - status = "CANCELLED" (semantically inactive per RFC 5545 §3.8.1.11)
-     * - rrule = null (not recurring)
-     * - dtstart == dtend == earliestRecurrenceId (zero duration; produces
-     *   no occurrences)
-     * - extraProperties[SYNTHETIC_MASTER_EXTRA_KEY] = "true" (sentinel for
-     *   future code to identify these rows)
-     *
-     * Self-heal: when a real master later arrives in the feed for a UID
-     * that previously had only orphan exceptions, the upsert path matches
-     * the existing synthetic at `existingByImportId[uid]` and mutates the
-     * row in place — rrule populates, status flips to CONFIRMED, sentinel
-     * clears, exception FK references survive.
+     * When the real master later arrives, it has the synthetic's importId (the UID), so the
+     * upsert updates that row in place: the real master's rrule and status replace the
+     * placeholder's, the sentinel is gone, and the exceptions' FK references survive.
      */
     private fun synthesizeMastersForOrphanUids(
         feedEvents: List<Event>,
@@ -692,15 +581,13 @@ class IcsSubscriptionRepository @Inject constructor(
         return orphansByUid.mapNotNull { (uid, orphans) ->
             // Skip UIDs that already have a master in this feed.
             if (uid in mastersInFeedByUid) return@mapNotNull null
-            // If a master already exists in the DB for this UID, branch:
-            // - real master (rrule != null OR not our sentinel): synthesis
-            //   isn't needed — exceptions will link to it via the master
-            //   backfill below.
-            // - synthetic from a prior sync (sentinel set): return the
-            //   existing row unchanged so its importId flows into
-            //   `newImportIds` and the orphan-cleanup sweep doesn't delete
-            //   it (which would CASCADE-delete every linked exception).
-            //   The synthesis loop then no-op-updates the row in place.
+            // A master already stored for this UID:
+            // - without the sentinel: no synthesis; the master mapping in
+            //   syncEventsToDatabase maps the UID to that row if it is recurring.
+            // - a synthetic from a prior sync: return it unchanged so its importId is in
+            //   `newImportIds` and the orphan sweep doesn't delete it (which would
+            //   cascade-delete every linked exception). The synthesis loop re-writes it
+            //   unchanged.
             val existingForUid = existingByImportId[uid]
             if (existingForUid != null && existingForUid.originalEventId == null) {
                 return@mapNotNull if (
@@ -708,10 +595,8 @@ class IcsSubscriptionRepository @Inject constructor(
                 ) existingForUid else null
             }
 
-            // Deterministic seed: the orphan with the earliest
-            // RECURRENCE-ID. `orphans.first()` would be deterministic too
-            // (parser preserves feed order) but a feed reorder would shift
-            // the seed; minBy here pins it to a feed-intrinsic value.
+            // Seed from the earliest RECURRENCE-ID. `orphans.first()` follows feed order
+            // (the parser keeps it), so a reordered feed would shift the seed.
             val seedOrphan = orphans.minBy { it.originalInstanceTime!! }
             val earliestRecurrenceId = seedOrphan.originalInstanceTime!!
 
@@ -726,9 +611,7 @@ class IcsSubscriptionRepository @Inject constructor(
                 status = "CANCELLED",
                 rrule = null,
                 caldavUrl = "$sourcePrefix$uid",
-                // Synthetic placeholder is local-only; no upstream server
-                // exists for it (ICS subscriptions are read-only). SYNCED
-                // is the correct steady-state value.
+                // Nothing upstream to push to (ICS subscriptions are read-only), so SYNCED.
                 syncStatus = SyncStatus.SYNCED,
                 extraProperties = mapOf(SYNTHETIC_MASTER_EXTRA_KEY to "true")
             )
@@ -736,19 +619,14 @@ class IcsSubscriptionRepository @Inject constructor(
     }
 
     /**
-     * Disambiguate duplicate-UID master events from a parsed feed.
+     * Renames masters that share a UID to `{uid}#dup={startTs}`, with a matching importId and
+     * caldavUrl; returns [events] unchanged when no UID repeats.
      *
-     * Issue #227: Google's private ICS export sometimes emits two
-     * non-exception VEVENTs sharing the same UID. RFC 5545 §3.8.4.7 says
-     * UID should be unique per calendar; Google's feed violates that, but
-     * `trigger_master_event_unique_insert` enforces it at the DB layer
-     * (added in MIGRATION_8_9 to prevent CalDAV-sync duplicates from issue
-     * #36). Without disambiguation the second master's INSERT would be
-     * caught silently and the user would see only one of the two events.
-     *
-     * The disambiguator is `event.startTs` — event-intrinsic, deterministic
-     * across syncs. The original UID is preserved in extraProperties under
-     * [ORIGINAL_UID_EXTRA_KEY] so a future export-fidelity PR can restore it.
+     * Google's private ICS export sometimes emits two non-exception VEVENTs with one UID (#227),
+     * against RFC 5545 §3.8.4.7. `trigger_master_event_unique_insert` (MIGRATION_6_7, against
+     * duplicate CalDAV-sync masters, #36) would abort the second master's insert, which the sync
+     * catches, so only one of the two events would show. `startTs` belongs to the event, so the
+     * name is the same on every sync. The original UID goes in [ORIGINAL_UID_EXTRA_KEY].
      */
     internal fun disambiguateDuplicateUidMasters(
         events: List<Event>,
@@ -781,11 +659,7 @@ class IcsSubscriptionRepository @Inject constructor(
         }
     }
 
-    /**
-     * Insert or update an event.
-     *
-     * @return Pair of (event ID, isNew)
-     */
+    /** Updates [existingEvent]'s row with [event], or inserts it; returns (row id, isNew). */
     private suspend fun upsertEvent(event: Event, existingEvent: Event?): Pair<Long, Boolean> {
         return if (existingEvent != null) {
             eventsDao.update(event.copy(id = existingEvent.id))
@@ -796,33 +670,31 @@ class IcsSubscriptionRepository @Inject constructor(
     }
 
     /**
-     * Schedule reminders for a synced event.
+     * Schedules reminders for a synced event's occurrences in the reminder window.
      *
-     * @param event The event to schedule reminders for
-     * @param calendarColor Calendar color for notification
-     * @param isModified If true, cancels existing reminders first (handles time changes)
+     * An exception gets its one linked occurrence. Failures are logged and don't fail the sync.
+     *
+     * @param isModified cancels the event's existing reminders first, so a time change doesn't
+     *   leave the old alarms.
      */
     private suspend fun scheduleRemindersForEvent(
         event: Event,
         calendarColor: Int,
         isModified: Boolean
     ) {
-        // Skip events without reminders
         if (event.reminders.isNullOrEmpty()) return
 
         try {
-            // For modified events, cancel existing reminders first (handles time changes)
             if (isModified) {
                 reminderScheduler.cancelRemindersForEvent(event.id)
             }
 
-            // Get occurrences - handle exception events specially
             val occurrences = if (event.originalEventId != null) {
-                // Exception event - get the linked occurrence by exception event ID
                 listOfNotNull(eventReader.getOccurrenceByExceptionEventId(event.id))
             } else {
-                // Regular/master event - get all occurrences in schedule window
-                eventReader.getOccurrencesForEventInScheduleWindow(event.id)
+                eventReader.getOccurrencesForEventInScheduleWindow(
+                    event.id, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+                )
             }
 
             if (occurrences.isEmpty()) return
@@ -833,18 +705,15 @@ class IcsSubscriptionRepository @Inject constructor(
                 calendarColor = calendarColor
             )
         } catch (e: Exception) {
-            // Log but don't fail sync for reminder scheduling errors
             Log.e(TAG, "Failed to schedule reminders for event ${event.id}: ${e.message}")
         }
     }
 
     /**
-     * Extract importId from caldavUrl.
+     * Returns the importId from a caldavUrl `ics_subscription:{subscriptionId}:{importId}`
+     * ([IcsSubscription.eventSourcePrefix]), or null for null or a value with under three parts.
      *
-     * Format: "ics_subscription:{subscriptionId}:{importId}"
-     * ImportId format: "{uid}" or "{uid}:RECID:{timestamp}"
-     *
-     * Uses limit=3 to preserve colons within the importId itself.
+     * An importId is `{uid}` or `{uid}:RECID:{datetime}`; limit = 3 keeps its colons.
      */
     private fun extractImportIdFromSource(source: String?): String? {
         if (source == null) return null
@@ -852,13 +721,11 @@ class IcsSubscriptionRepository @Inject constructor(
         return if (parts.size >= 3) parts[2] else null
     }
 
-    /**
-     * Normalize URL (webcal:// → https://).
-     */
+    /** Trims [url] and rewrites a leading webcal:// or webcals:// to https://. */
     private fun normalizeUrl(url: String): String {
         val trimmed = url.trim()
-        // Rewrite only the leading scheme, not every occurrence, so a webcal://
-        // literal inside a query param (e.g. ?redirect=webcal://…) is left intact.
+        // Only the leading scheme, so a webcal:// inside a query param
+        // (e.g. ?redirect=webcal://…) stays intact.
         return when {
             trimmed.startsWith("webcal://") -> "https://" + trimmed.removePrefix("webcal://")
             trimmed.startsWith("webcals://") -> "https://" + trimmed.removePrefix("webcals://")
@@ -873,9 +740,8 @@ class IcsSubscriptionRepository @Inject constructor(
         data class Error(
             val message: String,
             /**
-             * True when the URL is already subscribed. Lets the UI distinguish
-             * "duplicate" from generic errors and show a localized message
-             * without parsing [message] (which is internal English text).
+             * True when the URL is already subscribed, so the UI can show a localized message
+             * without parsing [message], which is internal English text.
              */
             val isDuplicate: Boolean = false
         ) : SubscriptionResult()

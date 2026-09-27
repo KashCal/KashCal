@@ -12,12 +12,12 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Verifies the chooser-intent shape used by the Share Availability flow:
- * ACTION_SEND with text/plain and EXTRA_TEXT, wrapped in a chooser. The
- * Activity-level glue (collecting the lambda from the sheet, calling
- * startActivity) is a thin wrapper around this builder; testing the builder
- * directly is the right grain because it's the only piece with logic and it
- * runs cleanly on the JVM.
+ * Checks the Share Availability chooser intent: ACTION_SEND with text/plain and EXTRA_TEXT,
+ * wrapped in a chooser with a title.
+ *
+ * MainActivity's `onShare` lambda passes this intent to `startActivity` and shows a snackbar when
+ * no activity can take it, so the builder is the piece with logic and is tested directly on the
+ * JVM.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -31,7 +31,6 @@ class HomeScreenShareIntentTest {
 
         val chooser = buildShareAvailabilityChooserIntent(context, previewText)
 
-        // Outer intent is ACTION_CHOOSER.
         assertEquals(Intent.ACTION_CHOOSER, chooser.action)
 
         val inner = chooser.getParcelableExtra<Intent>(Intent.EXTRA_INTENT)
@@ -45,7 +44,7 @@ class HomeScreenShareIntentTest {
     fun `chooser intent has a non-blank chooser title`() {
         val chooser = buildShareAvailabilityChooserIntent(context, "anything")
         val title = chooser.getCharSequenceExtra(Intent.EXTRA_TITLE)
-        // Title is supplied via createChooser's title arg — it ends up in EXTRA_TITLE on the chooser intent.
+        // createChooser's title argument lands in EXTRA_TITLE on the chooser intent.
         assertTrue("Chooser title must be present", title != null && title.isNotBlank())
     }
 }

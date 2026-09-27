@@ -9,19 +9,12 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Real-world ICS variation tests.
+ * Tests [IcsParserService.parseIcsContent] on hand-written feeds shaped like the exports of
+ * common calendar producers (Google Calendar, Outlook, iCloud, Nextcloud, public webcal feeds,
+ * TeamUp, Fastmail, Thunderbird), plus escaping, DURATION, VALARM, RRULE and status variations.
  *
- * Tests cover actual ICS formats exported from:
- * - Google Calendar
- * - Microsoft Outlook (365/Desktop)
- * - Apple iCloud
- * - Nextcloud Calendar
- * - iCal.com/webcal subscriptions
- * - Fastmail Calendar
- * - Mozilla Thunderbird
- *
- * Each provider has quirks that deviate from strict RFC 5545.
- * These tests ensure KashCal handles real-world calendar data correctly.
+ * Several producers stray from strict RFC 5545. Most tests assert the event count and one or
+ * two fields.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -36,7 +29,7 @@ class RealWorldIcsVariationTest {
 
     @Test
     fun `Google Calendar export with 75-char line folding`() {
-        // Google folds lines at exactly 75 characters
+        // Google folds long lines at 75 characters; the description here is folded.
         val ics = """
             BEGIN:VCALENDAR
             PRODID:-//Google Inc//Google Calendar 70.9054//EN
@@ -72,7 +65,7 @@ class RealWorldIcsVariationTest {
 
     @Test
     fun `Google Calendar recurring with EXDATE list format`() {
-        // Google uses comma-separated EXDATE list
+        // Google writes EXDATE as one comma-separated list.
         val ics = """
             BEGIN:VCALENDAR
             PRODID:-//Google Inc//Google Calendar 70.9054//EN
@@ -90,11 +83,11 @@ class RealWorldIcsVariationTest {
 
         val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
         assertEquals(1, events.size)
-        // RRULE format may vary between parsers, check key components
+        // Part order in the RRULE string can vary, so check the parts.
         val rrule = events[0].rrule
         assertTrue("RRULE should contain FREQ=WEEKLY", rrule?.contains("FREQ=WEEKLY") == true)
         assertTrue("RRULE should contain COUNT=20", rrule?.contains("COUNT=20") == true)
-        // EXDATE is stored as comma-separated timestamps by ICalEventMapper
+        // ICalEventMapper stores EXDATE as comma-separated epoch ms.
         assertTrue("EXDATE should be preserved", events[0].exdate?.isNotBlank() == true)
     }
 
@@ -145,7 +138,7 @@ class RealWorldIcsVariationTest {
 
     @Test
     fun `Outlook 365 export with Windows timezone IDs`() {
-        // Outlook uses Windows timezone names instead of IANA
+        // Outlook writes Windows timezone names, not IANA ones.
         val ics = """
             BEGIN:VCALENDAR
             PRODID:-//Microsoft Corporation//Outlook 16.0 MIMEDIR//EN
@@ -182,12 +175,13 @@ class RealWorldIcsVariationTest {
         val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
         assertEquals(1, events.size)
         assertEquals("Outlook Meeting", events[0].title)
-        // Timezone may be parsed as system default if Windows name not recognized
+        // The timezone isn't asserted: an unrecognized Windows name may fall back to the
+        // system default.
     }
 
     @Test
     fun `Outlook with quoted TZID parameter`() {
-        // Outlook quotes TZID with spaces
+        // Outlook quotes a TZID that contains spaces.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -207,7 +201,7 @@ class RealWorldIcsVariationTest {
 
     @Test
     fun `Outlook with X-ALT-DESC HTML description`() {
-        // Outlook includes HTML description in X-ALT-DESC
+        // Outlook puts an HTML description in X-ALT-DESC; the plain DESCRIPTION is kept.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -365,7 +359,7 @@ class RealWorldIcsVariationTest {
 
     @Test
     fun `Nextcloud recurring task-like event with VTODO properties`() {
-        // Some Nextcloud exports include VTODO-like properties in VEVENTs
+        // Some Nextcloud exports put VTODO properties such as PERCENT-COMPLETE in a VEVENT.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -461,7 +455,7 @@ class RealWorldIcsVariationTest {
 
     @Test
     fun `ICS with quoted-printable encoding`() {
-        // Some older tools use quoted-printable for special characters
+        // Some older tools write non-ASCII text as quoted-printable.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -476,13 +470,13 @@ class RealWorldIcsVariationTest {
 
         val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
         assertEquals(1, events.size)
-        // Title may contain encoded characters or be decoded
+        // The title isn't asserted; it may stay encoded or be decoded.
     }
 
     @Test
     fun `ICS with backslash-escaped semicolons in SUMMARY`() {
-        // RFC 5545 requires escaping: \ ; , and newlines
-        // Colons (:) are NOT escaped in TEXT values
+        // RFC 5545 §3.3.11 escapes backslash, semicolon, comma and newline in TEXT values; a
+        // colon SHALL NOT be escaped.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -561,7 +555,7 @@ class RealWorldIcsVariationTest {
         val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
         assertEquals(1, events.size)
         val durationMs = events[0].endTs - events[0].startTs
-        // Allow for adjustment of endTs for all-day events
+        // An all-day endTs is stored 1 ms before the exclusive end, so this is a lower bound.
         assertTrue("Duration should be ~3 days", durationMs > 2 * 24 * 3600 * 1000L)
     }
 
@@ -618,7 +612,7 @@ class RealWorldIcsVariationTest {
 
         val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
         assertEquals(1, events.size)
-        // ICalEventMapper limits to 3 reminders (RfcIcsParser limited to 2)
+        // ICalEventMapper keeps up to 5 reminders; the test asserts at least one and at most 3.
         val reminders = events[0].reminders
         assertTrue("Should have reminders", reminders?.isNotEmpty() == true)
         assertTrue("Should have max 3 reminders", (reminders?.size ?: 0) <= 3)
@@ -650,7 +644,7 @@ class RealWorldIcsVariationTest {
 
     @Test
     fun `Complex RRULE with BYSETPOS from Outlook`() {
-        // Second-to-last Friday of every month (common payroll schedule)
+        // The second-to-last Friday of every month.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -666,7 +660,7 @@ class RealWorldIcsVariationTest {
 
         val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
         assertEquals(1, events.size)
-        // RRULE format may vary between parsers, check key components
+        // Part order in the RRULE string can vary, so check the parts.
         val rrule = events[0].rrule
         assertTrue("RRULE should contain FREQ=MONTHLY", rrule?.contains("FREQ=MONTHLY") == true)
         assertTrue("RRULE should contain BYSETPOS=-2", rrule?.contains("BYSETPOS=-2") == true)
@@ -695,7 +689,7 @@ class RealWorldIcsVariationTest {
 
     @Test
     fun `RRULE with BYMONTH and BYMONTHDAY`() {
-        // Quarterly reviews on the 15th of Jan, Apr, Jul, Oct
+        // The 15th of January, April, July and October.
         val ics = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -782,7 +776,7 @@ class RealWorldIcsVariationTest {
         val events = IcsParserService.parseIcsContent(ics, CALENDAR_ID, SUBSCRIPTION_ID)
         assertEquals(1, events.size)
         assertTrue(events[0].isAllDay)
-        // EXDATE is stored as comma-separated timestamps by ICalEventMapper
+        // ICalEventMapper stores EXDATE as comma-separated epoch ms.
         assertTrue("EXDATE should be preserved", events[0].exdate?.isNotBlank() == true)
     }
 
@@ -855,7 +849,7 @@ class RealWorldIcsVariationTest {
 
     @Test
     fun `Large batch of events from subscription feed`() {
-        // Simulate a subscription feed with many events
+        // A feed of 50 events.
         val eventBlocks = (1..50).joinToString("\n") { i ->
             val hour = i % 24
             val endHour = (hour + 1) % 24

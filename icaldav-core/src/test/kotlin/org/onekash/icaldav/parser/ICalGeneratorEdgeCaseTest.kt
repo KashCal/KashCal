@@ -18,13 +18,15 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Edge case tests for ICalGenerator.
- *
- * Tests:
- * - Line folding with multi-byte characters
- * - Unicode handling
- * - Required field generation
- * - Special character escaping
+ * Tests ICalGenerator edge cases:
+ * - line folding by octets, with multi-byte characters and emoji
+ * - Unicode preservation
+ * - text escaping in event and VALARM properties, backslash first, with CR and CRLF
+ *   written as an escaped newline
+ * - the fields always written: CALSCALE, STATUS, SEQUENCE, UTC DTSTAMP, UID, PRODID,
+ *   VERSION, and METHOD only when requested
+ * - RECURRENCE-ID on an exception, which drops RRULE
+ * - UTC, DATE and TZID date formats, and VALARM generation
  */
 @DisplayName("ICalGenerator Edge Cases")
 class ICalGeneratorEdgeCaseTest {
@@ -37,27 +39,25 @@ class ICalGeneratorEdgeCaseTest {
 
         @Test
         fun `line folding counts octets not characters - ASCII`() {
-            // 80 ASCII characters should trigger folding at 75 octets
+            // 80 ASCII characters must fold at 75 octets.
             val longSummary = "A".repeat(80)
             val event = createEvent(summary = longSummary)
             val ical = generator.generate(event, method = null)
 
-            // Check that folding occurred (line break followed by space)
+            // A fold is a line break followed by a space.
             assertTrue(ical.contains("\r\n ") || ical.contains("\n "),
                 "Long ASCII line should be folded")
         }
 
         @Test
         fun `line folding handles Chinese characters correctly`() {
-            // Chinese characters are 3 bytes each in UTF-8
-            // 25 Chinese characters = 75 bytes, should be at the limit
+            // Each Chinese character is 3 bytes in UTF-8, so 25 are 75 bytes.
             val chineseText = "\u4e2d".repeat(26) // 26 * 3 = 78 bytes, exceeds 75
             val event = createEvent(summary = chineseText)
             val ical = generator.generate(event, method = null)
 
-            // Should be folded
             val summaryLine = ical.lines().find { it.startsWith("SUMMARY:") }
-            // Folded lines start with space on continuation
+            // A continuation line starts with a space.
             val hasFolding = ical.contains("SUMMARY:") &&
                     ical.lines().any { it.startsWith(" ") && it.contains("\u4e2d") }
 
@@ -72,19 +72,18 @@ class ICalGeneratorEdgeCaseTest {
             val event = createEvent(summary = "Meeting $emojiText")
             val ical = generator.generate(event, method = null)
 
-            // Should not corrupt emoji
+            // The emoji survives.
             assertTrue(ical.contains("\uD83D\uDCC5"), "Emoji should be preserved")
         }
 
         @Test
         fun `line folding does not split multi-byte character`() {
-            // Create a string that would cause split in middle of UTF-8 sequence
-            // if we counted characters instead of bytes
+            // Counting characters instead of bytes would split a UTF-8 sequence here.
             val mixed = "A".repeat(73) + "\u4e2d\u4e2d" // 73 ASCII + 2 Chinese (6 bytes)
             val event = createEvent(summary = mixed)
             val ical = generator.generate(event, method = null)
 
-            // Parse back and verify integrity
+            // Only checks that the characters survive; the fold point isn't asserted.
             assertTrue(ical.contains("\u4e2d"), "Chinese characters should be preserved")
         }
 
@@ -94,7 +93,7 @@ class ICalGeneratorEdgeCaseTest {
             val event = createEvent(description = longDesc)
             val ical = generator.generate(event, method = null)
 
-            // Should have multiple fold points
+            // More than five folds.
             val foldCount = ical.windowed(2).count { it == "\n " }
             assertTrue(foldCount > 5, "Long description should have multiple folds")
         }
@@ -105,7 +104,7 @@ class ICalGeneratorEdgeCaseTest {
             val event = createEvent(location = location)
             val ical = generator.generate(event, method = null)
 
-            // Unfold and check content is preserved
+            // Content survives unfolding.
             val unfolded = ical.replace("\r\n ", "").replace("\n ", "")
             assertTrue(unfolded.contains("Caf\u00e9"), "German umlaut should be preserved")
             assertTrue(unfolded.contains("\u5317\u4eac"), "Chinese characters should be preserved")
@@ -152,18 +151,18 @@ class ICalGeneratorEdgeCaseTest {
 
         @Test
         fun `escaping order is correct - backslash first`() {
-            // If we escape \n before \\, then "test\\nvalue" becomes "test\nvalue"
+            // Escaping \n before \\ would turn "test\\nvalue" into "test\nvalue".
             val event = createEvent(summary = "test\\nvalue")
             val ical = generator.generate(event, method = null)
 
-            // Should contain \\n (escaped backslash followed by n), not \n
+            // Expects \\n (an escaped backslash, then n), not \n.
             assertTrue(ical.contains("\\\\n"), "Backslash-n should become escaped backslash followed by n")
         }
 
         @Test
         fun `carriage returns do not leak into text values`() {
-            // Pasted Windows/web text carries CRLF. A bare CR is a control char
-            // excluded from RFC 5545 §3.1 VALUE-CHAR; it must not survive raw.
+            // Pasted text can carry CRLF. A bare CR is a CONTROL character, outside
+            // RFC 5545 §3.1 VALUE-CHAR, so it must not survive raw.
             val event = createEvent(description = "Line 1\r\nLine 2\rLine 3")
             val ical = generator.generate(event, method = null)
 
@@ -217,8 +216,8 @@ class ICalGeneratorEdgeCaseTest {
 
         @Test
         fun `VALARM related-to escapes special characters`() {
-            // RELATED-TO is TEXT-typed (§3.8.4.5); an opaque UID could carry a
-            // separator char that must be escaped so re-parse doesn't mis-split it.
+            // RELATED-TO is TEXT (RFC 5545 §3.8.4.5); a separator in an opaque UID must be
+            // escaped so a re-parse doesn't split it.
             val event = createEvent(
                 alarms = listOf(
                     ICalAlarm(
@@ -360,7 +359,7 @@ class ICalGeneratorEdgeCaseTest {
             val event = createEvent(recurrenceId = recurrenceId, rrule = rrule)
             val ical = generator.generate(event, method = null)
 
-            // Modified instances should NOT have RRULE even if passed
+            // An exception never gets RRULE, even when the model has one.
             assertFalse(ical.contains("RRULE:"))
             assertTrue(ical.contains("RECURRENCE-ID:"))
         }

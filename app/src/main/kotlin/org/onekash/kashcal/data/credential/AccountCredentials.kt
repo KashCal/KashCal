@@ -1,18 +1,14 @@
 package org.onekash.kashcal.data.credential
 
 /**
- * Complete credential model supporting both iCloud and CalDAV providers.
+ * Holds one account's stored credentials, for iCloud and CalDAV alike.
  *
- * Unified storage format:
- * - iCloud: appleId stored in username field, serverUrl uses ICLOUD_DEFAULT_SERVER_URL
- * - CalDAV: email/username stored in username field, serverUrl is user-provided
- *
- * @property username Apple ID for iCloud, email/username for CalDAV
- * @property password App-specific password
- * @property serverUrl CalDAV server URL (iCloud uses default)
- * @property trustInsecure Allow self-signed certificates (CalDAV only)
- * @property principalUrl Discovered CalDAV principal URL
- * @property calendarHomeSet Primary (first) discovered CalDAV calendar home set URL
+ * @property username the Apple ID for iCloud; the email or username for CalDAV
+ * @property password app-specific password
+ * @property serverUrl user-provided for CalDAV; [ICLOUD_DEFAULT_SERVER_URL] for iCloud
+ * @property trustInsecure allows self-signed certificates (CalDAV only)
+ * @property principalUrl discovered CalDAV principal URL
+ * @property calendarHomeSet first discovered CalDAV calendar home set URL
  */
 data class AccountCredentials(
     val username: String,
@@ -23,7 +19,6 @@ data class AccountCredentials(
     val calendarHomeSet: String? = null
 ) {
     companion object {
-        /** Default iCloud CalDAV server URL */
         const val ICLOUD_DEFAULT_SERVER_URL = "https://caldav.icloud.com"
     }
 }

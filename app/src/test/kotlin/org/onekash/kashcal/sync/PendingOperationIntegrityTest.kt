@@ -29,17 +29,13 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 /**
- * PendingOperation integrity tests.
- *
- * Tests verify:
- * - Orphaned operations after event hard-delete
- * - Operations with null/deleted events
- * - Retry exhaustion handling
- * - Operations stuck in IN_PROGRESS state
- * - Queue consistency during failures
- * - Operation coalescing correctness
- *
- * These tests ensure sync queue reliability.
+ * Integrity tests for the pending_operations queue:
+ * - Ops outlive a hard-deleted or missing event (no foreign key ties them to it)
+ * - Delete paths for never-synced and SYNCED events
+ * - Retry exhaustion at, above and below maxRetries
+ * - Ops stuck IN_PROGRESS and their recovery
+ * - Queue order, single deletes, and ops queued back to back for one event
+ * - MOVE context surviving status updates
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -130,9 +126,8 @@ class PendingOperationIntegrityTest {
 
     @Test
     fun `soft delete event with isLocal true performs hard delete for PENDING_CREATE`() = runTest {
-        // Note: EventWriter.deleteEvent with isLocal=true does HARD DELETE when
-        // event status is PENDING_CREATE (never synced). This is by design - no need
-        // to sync delete for events that never made it to server.
+        // EventWriter.deleteEvent hard-deletes a local or PENDING_CREATE event: it never
+        // reached the server, so there is no delete to sync.
         val event = createAndInsertEvent("Soft Delete Event")
         val eventId = event.id
 
@@ -158,7 +153,7 @@ class PendingOperationIntegrityTest {
 
     @Test
     fun `soft delete SYNCED event should mark for deletion`() = runTest {
-        // When event is SYNCED, deleteEvent should soft-delete (mark PENDING_DELETE)
+        // A SYNCED event is soft-deleted: marked PENDING_DELETE with a DELETE queued
         val event = createAndInsertEvent("Synced Event")
         val eventId = event.id
 
@@ -168,7 +163,7 @@ class PendingOperationIntegrityTest {
             caldavUrl = "https://test.com/cal/event.ics"
         ))
 
-        // Soft delete via EventWriter (should mark as PENDING_DELETE for sync)
+        // Soft delete via EventWriter
         eventWriter.deleteEvent(eventId, isLocal = false)
 
         // Event should be marked for deletion
@@ -393,7 +388,7 @@ class PendingOperationIntegrityTest {
             )
         )
 
-        // When EventWriter updates, it should recognize CREATE exists
+        // No UPDATE is queued here; EventWriter would fold one into this pending CREATE
         val ops = database.pendingOperationsDao().getForEvent(event.id)
 
         // Should have CREATE (UPDATE is redundant for unsynced event)
@@ -415,13 +410,12 @@ class PendingOperationIntegrityTest {
             )
         )
 
-        // Now delete via EventWriter (should cancel CREATE)
+        // Delete via EventWriter: a hard delete, since the event is local
         eventWriter.deleteEvent(event.id, isLocal = true)
 
-        // CREATE should be removed (no need to sync event that was never on server)
+        // The hard delete removes only the event row; the queued CREATE stays (no foreign key).
+        // The check covers the event only.
         val createOp = database.pendingOperationsDao().getById(createOpId)
-        // Either CREATE is deleted, or both CREATE and DELETE exist
-        // Implementation may vary - verify at least event is marked for deletion
         val deletedEvent = database.eventsDao().getById(event.id)
         assertTrue(
             "Event should be deleted or marked PENDING_DELETE",
@@ -450,7 +444,7 @@ class PendingOperationIntegrityTest {
         val ops = database.pendingOperationsDao().getForEvent(event.id)
             .filter { it.operation == PendingOperation.OPERATION_UPDATE }
 
-        // Implementation may coalesce or keep all - verify at least one exists
+        // Direct DAO inserts keep all three; EventWriter's folding isn't exercised here
         assertTrue("Should have at least one UPDATE operation", ops.isNotEmpty())
     }
 

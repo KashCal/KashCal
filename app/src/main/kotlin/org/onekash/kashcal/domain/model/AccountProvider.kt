@@ -1,19 +1,16 @@
 package org.onekash.kashcal.domain.model
 
 /**
- * Enum representing calendar account providers.
+ * Identifies an account's provider and the capabilities that follow from it.
  *
- * Provides type-safe provider identification with associated capabilities.
- * Replaces string-based provider detection throughout the codebase.
- *
- * @property displayName Human-readable name for UI
- * @property requiresNetwork Whether sync requires network connectivity
- * @property supportsCalDAV Whether provider uses CalDAV protocol
- * @property supportsCardDAV Whether provider can sync contacts via CardDAV
- * @property supportsIncrementalSync Whether provider supports sync-token/ctag
- * @property supportsReminders Whether provider supports VALARM reminders
- * @property supportsPush Whether provider supports push notifications
- * @property maxSyncRangeMonths Maximum months to sync (0 = unlimited)
+ * @property displayName name shown when the account has none of its own.
+ * @property requiresNetwork whether sync needs network connectivity.
+ * @property supportsCalDAV whether the provider syncs calendars over CalDAV.
+ * @property supportsCardDAV whether the provider can sync contacts over CardDAV.
+ * @property supportsIncrementalSync whether the provider supports sync-token or ctag.
+ * @property supportsReminders whether the provider supports VALARM reminders.
+ * @property supportsPush whether the provider supports push notifications.
+ * @property maxSyncRangeMonths maximum months to sync; 0 means unlimited.
  */
 enum class AccountProvider(
     val displayName: String,
@@ -76,19 +73,17 @@ enum class AccountProvider(
         maxSyncRangeMonths = 0
     );
 
-    /** Whether this provider syncs to a remote server */
+    /** True for every provider except [LOCAL], including [CONTACTS], which has no server. */
     val requiresSync: Boolean get() = this != LOCAL
 
-    /** Whether this provider is pull-only (no push) */
+    /** Whether this provider only pulls and never pushes. */
     val pullOnly: Boolean get() = this == ICS
 
     companion object {
         /**
-         * Convert database string to enum.
+         * Returns the provider for a stored value such as "icloud" or "local", ignoring case.
          *
-         * @param value The stored string value (e.g., "icloud", "local")
-         * @return The corresponding AccountProvider
-         * @throws IllegalArgumentException if value is unknown (fail-fast on data corruption)
+         * @throws IllegalArgumentException if [value] is unknown, to fail fast on corrupt data.
          */
         fun fromString(value: String): AccountProvider = when (value.lowercase()) {
             "local" -> LOCAL

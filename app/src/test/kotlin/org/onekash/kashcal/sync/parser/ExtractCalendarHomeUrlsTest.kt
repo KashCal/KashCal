@@ -10,14 +10,14 @@ import org.xmlpull.v1.XmlPullParserFactory
 import java.io.StringReader
 
 /**
- * Standalone test for the proposed extractCalendarHomeUrls() pattern.
+ * Tests an inlined copy of the calendar-home-set loop in
+ * [CalDavXmlParser.extractCalendarHomeUrls]. The copy:
+ * 1. Returns the single href of each single-home-set server fixture.
+ * 2. Returns every href for multi-home-set servers (SOGo, cal.aegee.org).
+ * 3. Handles edge cases (empty XML, malformed, empty href).
  *
- * Validates that the new multi-URL parsing logic:
- * 1. Returns all <href> values from all existing server fixtures (backward compat)
- * 2. Returns multiple <href> values for multi-home-set servers (SOGo/AEGEE)
- * 3. Handles edge cases (empty XML, malformed, empty href)
- *
- * This test does NOT modify production code — the parser logic is inlined here.
+ * The fixture checks compare the copy's first result with the production parser's
+ * [CalDavXmlParser.extractCalendarHomeUrl]; the other tests exercise only the copy.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -27,7 +27,7 @@ class ExtractCalendarHomeUrlsTest {
         isNamespaceAware = true
     }
 
-    // ===== Proposed new method (inlined for testing without touching production code) =====
+    // ===== Copy of CalDavXmlParser.extractCalendarHomeUrls, without the log =====
 
     private fun extractCalendarHomeUrls(xml: String): List<String> {
         if (xml.isBlank()) return emptyList()
@@ -66,7 +66,7 @@ class ExtractCalendarHomeUrlsTest {
         }
     }
 
-    // Backward compat wrapper
+    // Same as CalDavXmlParser.extractCalendarHomeUrl
     private fun extractCalendarHomeUrl(xml: String): String? =
         extractCalendarHomeUrls(xml).firstOrNull()
 
@@ -75,7 +75,7 @@ class ExtractCalendarHomeUrlsTest {
             ?.bufferedReader()?.readText()
             ?: throw IllegalArgumentException("Resource not found: $path")
 
-    // ==================== Backward Compatibility: Existing Single-Home-Set Servers ====================
+    // ==================== Single-Home-Set Servers ====================
 
     @Test
     fun `iCloud - single home set - returns list of 1`() {
@@ -156,12 +156,12 @@ class ExtractCalendarHomeUrlsTest {
         assertEquals("/caldav/testuser@mailbox.org/", extractCalendarHomeUrl(xml))
     }
 
-    // ==================== New: Multi-Home-Set Servers ====================
+    // ==================== Multi-Home-Set Servers ====================
 
     @Test
     fun `SOGo - three home sets in single calendar-home-set element - returns all 3`() {
-        // SOGo returns multiple <href> inside a single <calendar-home-set>
-        // This is the pattern reported by the cal.aegee.org user (Issue #70)
+        // SOGo returns three <href> inside one <calendar-home-set>, the pattern the
+        // cal.aegee.org user reported (Issue #70)
         val xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
@@ -209,13 +209,13 @@ class ExtractCalendarHomeUrlsTest {
             </D:multistatus>
         """.trimIndent()
 
-        // Old behavior: only first URL
+        // The single-URL form returns only the first
         assertEquals("/SOGo/dav/aaa/Calendar/", extractCalendarHomeUrl(xml))
     }
 
     @Test
     fun `Cyrus IMAP - two home sets - returns both`() {
-        // Cyrus IMAP can return personal + shared calendar home sets
+        // Cyrus IMAP can return personal and shared calendar home sets
         val xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav">
@@ -342,12 +342,12 @@ class ExtractCalendarHomeUrlsTest {
         assertEquals(null, extractCalendarHomeUrl("<response><href>/test</href></response>"))
     }
 
-    // ==================== Verify All Existing Fixtures Match Production ====================
+    // ==================== Fixtures Match the Production Parser ====================
 
     @Test
     fun `all existing fixtures - extractCalendarHomeUrls firstOrNull matches extractCalendarHomeUrl`() {
-        // This is the critical backward-compat check: for every existing fixture,
-        // the new method's first result must match the old method's result exactly.
+        // For each single-home-set fixture, the copy's first result must equal the
+        // production extractCalendarHomeUrl.
         val existingParser = CalDavXmlParser()
 
         val fixtures = listOf(
@@ -444,7 +444,7 @@ class ExtractCalendarHomeUrlsTest {
 
     @Test
     fun `single home set still works - no regression`() {
-        // Sanity: the most common case (1 href) still returns a list of 1
+        // The common case, one href, returns a list of 1
         val xml = """
             <?xml version="1.0" encoding="UTF-8"?>
             <d:multistatus xmlns:d="DAV:" xmlns:cal="urn:ietf:params:xml:ns:caldav">
@@ -463,7 +463,7 @@ class ExtractCalendarHomeUrlsTest {
         val urls = extractCalendarHomeUrls(xml)
         assertEquals(1, urls.size)
         assertEquals("/dav/calendars/user/", urls[0])
-        // Backward compat
+        // The single-URL form
         assertEquals("/dav/calendars/user/", extractCalendarHomeUrl(xml))
     }
 

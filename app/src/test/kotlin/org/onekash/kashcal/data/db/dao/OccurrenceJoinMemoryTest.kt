@@ -15,12 +15,10 @@ import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Regression test for OOM fix (KashCal/KashCal#140).
+ * Guards the OOM fix for #140: the [OccurrencesDao] join queries select `raw_ical` as NULL, so
+ * a large ICS blob isn't copied into every occurrence row of its event.
  *
- * Verifies that the OccurrencesDao JOIN queries exclude raw_ical to prevent
- * memory waste from duplicating large ICS blobs across occurrence rows.
- *
- * Dataset matches issue conditions: 11 calendars, ~495 events, many recurring.
+ * The dataset matches the issue's scale: 11 calendars of 25 one-off and 20 weekly events each.
  */
 class OccurrenceJoinMemoryTest : BaseDaoTest() {
 
@@ -31,7 +29,7 @@ class OccurrenceJoinMemoryTest : BaseDaoTest() {
 
     private val calendarIds = mutableListOf<Long>()
 
-    // Simulate issue #140: 11 calendars, ~495 events (reported ~493)
+    // Issue #140's scale: 11 calendars, 495 events (the report had about 493)
     private val numCalendars = 11
     private val singleEventsPerCalendar = 25
     private val recurringEventsPerCalendar = 20
@@ -68,7 +66,7 @@ class OccurrenceJoinMemoryTest : BaseDaoTest() {
         // Dataset produces thousands of occurrences
         assertTrue("Expected >1000 rows, got ${results.size}", results.size > 1000)
 
-        // Every row must have null rawIcal (the fix)
+        // Every row must have null rawIcal
         val nonNullCount = results.count { it.event.rawIcal != null }
         assertEquals("All rows must have null rawIcal", 0, nonNullCount)
 
@@ -168,9 +166,9 @@ class OccurrenceJoinMemoryTest : BaseDaoTest() {
             )
         ))
 
-        // All three JOIN projections must carry these fields through (they were silently
-        // dropped to null before the e_end_timezone / e_organizer_sent_by /
-        // e_organizer_schedule_status aliases were added).
+        // All three join projections must alias these columns (e_end_timezone,
+        // e_organizer_sent_by, e_organizer_schedule_status); a missing alias silently leaves
+        // the field null.
         val rangeEvent = occurrencesDao.getOccurrencesWithEventsInRange(
             now - 1000, now + 7200_000
         ).first().single().event
@@ -187,19 +185,19 @@ class OccurrenceJoinMemoryTest : BaseDaoTest() {
         }
     }
 
-    /** Uses raw SQL to measure what the old query (with e.raw_ical) would have loaded. */
+    /** Measures with raw SQL what the join would load if it selected e.raw_ical. */
     @Test
     fun `fix eliminates rawIcal payload duplication`() = runTest {
         setupRealisticDataset()
 
-        // Fixed DAO query: 0 bytes rawIcal
+        // DAO query: 0 bytes of rawIcal
         val fixedResults = occurrencesDao.getOccurrencesWithEventsInRange(
             windowStart, windowEnd
         ).first()
         val fixedRawIcalBytes = fixedResults.sumOf { it.event.rawIcal?.length?.toLong() ?: 0L }
         assertEquals("Fixed query must have 0 rawIcal bytes", 0L, fixedRawIcalBytes)
 
-        // Measure what the OLD query would have loaded via raw SQL
+        // The same join selecting e.raw_ical, measured with raw SQL
         val oldSql = """
             SELECT SUM(LENGTH(e.raw_ical)) as total_bytes,
                    COUNT(*) as row_count

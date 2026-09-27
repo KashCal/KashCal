@@ -12,14 +12,13 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
 /**
- * Edge case tests for CalendarProvider-related logic.
+ * Edge cases around device-calendar data: `DateTimeUtils.isEventPast` for all-day and timed
+ * events, `eventTsToDayCode` zones, `spansMultipleDays` and `calculateTotalDays` boundaries,
+ * [DeviceCalendarInstance] field preservation, and the [DeviceCalendar.isWritable] access-level
+ * boundary.
  *
- * Tests DateTimeUtils.isEventPast() with all-day vs timed events,
- * eventTsToDayCode() timezone handling, spansMultipleDays/calculateTotalDays
- * boundaries, and DeviceCalendarInstance field preservation.
- *
- * Complements AndroidCalendarProviderRepositoryTest (10 tests),
- * DeviceCalendarTest (10 tests), CalendarProviderManagerTest (7 tests).
+ * Complements [AndroidCalendarProviderRepositoryTest], [DeviceCalendarTest] and
+ * [CalendarProviderManagerTest].
  */
 class CalendarProviderEdgeCaseTest {
 
@@ -29,7 +28,7 @@ class CalendarProviderEdgeCaseTest {
     fun `isEventPast all-day event ending today is not past`() {
         val todayDayCode = 20260215
         val isPast = DateTimeUtils.isEventPast(
-            endTs = 0L, // Ignored for all-day
+            endTs = 0L, // ignored for all-day
             endDay = 20260215,
             isAllDay = true,
             nowMs = System.currentTimeMillis(),
@@ -66,21 +65,19 @@ class CalendarProviderEdgeCaseTest {
 
     @Test
     fun `isEventPast all-day uses day code not timestamp`() {
-        // Scenario:
-        // UTC-6 at 6 PM = UTC Jan 16 00:00
-        // All-day event ends Jan 15 (endTs = Jan 15 23:59:59.999 UTC)
-        // Bug: endTs < nowUtc → true (incorrectly past)
-        // Fix: endDay (20260115) < todayDayCode (20260115) → false (correctly not past)
+        // 6 PM on Jan 15 in UTC-6 is Jan 16 00:00 UTC. An all-day event ending Jan 15
+        // (endTs = Jan 15 23:59:59.999 UTC) would read as past by timestamp
+        // (endTs < now), but endDay 20260115 < todayDayCode 20260115 is false: not past.
 
         val jan15EndTs = ZonedDateTime.of(2026, 1, 15, 23, 59, 59, 999_000_000, ZoneOffset.UTC)
             .toInstant().toEpochMilli()
         val nowUtcJan16 = ZonedDateTime.of(2026, 1, 16, 0, 0, 0, 0, ZoneOffset.UTC)
             .toInstant().toEpochMilli()
 
-        // If we wrongly used timestamp comparison, event would appear past
+        // A timestamp comparison would call the event past.
         assertTrue("Timestamp comparison would incorrectly say past", jan15EndTs < nowUtcJan16)
 
-        // But isEventPast uses day code comparison for all-day events
+        // isEventPast compares day codes for all-day events.
         val isPast = DateTimeUtils.isEventPast(
             endTs = jan15EndTs,
             endDay = 20260115,
@@ -127,7 +124,7 @@ class CalendarProviderEdgeCaseTest {
             nowMs = 1000L,
             todayDayCode = 20260215
         )
-        // endTs < nowMs → 1000 < 1000 → false
+        // endTs < nowMs: 1000 < 1000 is false.
         assertFalse("Timed event ending exactly now should not be past", isPast)
     }
 
@@ -135,7 +132,7 @@ class CalendarProviderEdgeCaseTest {
 
     @Test
     fun `eventTsToDayCode all-day event uses UTC zone`() {
-        // Feb 15 00:00 UTC → day code 20260215 regardless of local timezone
+        // Feb 15 00:00 UTC is day code 20260215 in any local zone.
         val feb15Utc = LocalDate.of(2026, 2, 15).atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
 
@@ -145,7 +142,7 @@ class CalendarProviderEdgeCaseTest {
 
     @Test
     fun `eventTsToDayCode all-day end of day still same day in UTC`() {
-        // Feb 15 23:59:59.999 UTC → still day code 20260215
+        // Feb 15 23:59:59.999 UTC is still day code 20260215.
         val feb15EndUtc = ZonedDateTime.of(2026, 2, 15, 23, 59, 59, 999_000_000, ZoneOffset.UTC)
             .toInstant().toEpochMilli()
 
@@ -155,7 +152,7 @@ class CalendarProviderEdgeCaseTest {
 
     @Test
     fun `eventTsToDayCode timed event uses specified zone`() {
-        // Midnight UTC = Feb 14 in UTC-8 (Pacific)
+        // Midnight UTC on Feb 15 is still Feb 14 in UTC-8.
         val feb15MidnightUtc = LocalDate.of(2026, 2, 15).atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
 
@@ -164,19 +161,19 @@ class CalendarProviderEdgeCaseTest {
             isAllDay = false,
             localZone = ZoneId.of("US/Pacific") // UTC-8
         )
-        // At midnight UTC, it's still Feb 14 in Pacific time
+        // Still Feb 14 in UTC-8.
         assertEquals("Timed event should use local zone", 20260214, dayCodePacific)
     }
 
     @Test
     fun `eventTsToDayCode year boundary`() {
-        // Dec 31 23:59:59.999 UTC → day code 20251231
+        // Dec 31 23:59:59.999 UTC is day code 20251231.
         val dec31End = ZonedDateTime.of(2025, 12, 31, 23, 59, 59, 999_000_000, ZoneOffset.UTC)
             .toInstant().toEpochMilli()
         val dayCode = DateTimeUtils.eventTsToDayCode(dec31End, isAllDay = true)
         assertEquals(20251231, dayCode)
 
-        // Jan 1 00:00:00 UTC → day code 20260101
+        // Jan 1 00:00:00 UTC is day code 20260101.
         val jan1Start = LocalDate.of(2026, 1, 1).atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
         val dayCode2 = DateTimeUtils.eventTsToDayCode(jan1Start, isAllDay = true)
@@ -235,10 +232,10 @@ class CalendarProviderEdgeCaseTest {
 
     @Test
     fun `calculateTotalDays 3-day event returns 3`() {
-        // Feb 15-17 all-day (3 days)
+        // All-day Feb 15-17 (3 days).
         val start = LocalDate.of(2026, 2, 15).atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
-        // Using end = Feb 17 23:59:59.999 (inclusive end)
+        // Inclusive end: Feb 17 23:59:59.999.
         val end = ZonedDateTime.of(2026, 2, 17, 23, 59, 59, 999_000_000, ZoneOffset.UTC)
             .toInstant().toEpochMilli()
 
@@ -251,7 +248,7 @@ class CalendarProviderEdgeCaseTest {
 
     @Test
     fun `calculateTotalDays crossing month boundary`() {
-        // Jan 30 - Feb 2 = 4 days
+        // Jan 30 to Feb 2 is 4 days.
         val start = LocalDate.of(2026, 1, 30).atStartOfDay(ZoneOffset.UTC)
             .toInstant().toEpochMilli()
         val end = ZonedDateTime.of(2026, 2, 2, 23, 59, 59, 999_000_000, ZoneOffset.UTC)
@@ -359,7 +356,7 @@ class CalendarProviderEdgeCaseTest {
 
         assertEquals("Modified", modified.title)
         assertTrue(modified.isWritable)
-        // All other fields preserved
+        // The other fields are unchanged.
         assertEquals(original.instanceId, modified.instanceId)
         assertEquals(original.eventId, modified.eventId)
         assertEquals(original.description, modified.description)

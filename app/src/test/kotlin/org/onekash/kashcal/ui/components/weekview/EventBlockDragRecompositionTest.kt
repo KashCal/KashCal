@@ -23,12 +23,12 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 /**
- * Regression guard for EventBlock's recomposition contract, related to #319.
- * When the same EventBlock node is recomposed with a fresh callback that closes
- * over a different DisplayEvent (as happens when a day re-sorts and a positional
- * slot is rebound), a tap or long-press must invoke the *current* callback, not
- * one captured at first composition. This isolates that contract to EventBlock;
- * the end-to-end list-identity fix lives in DayColumn's keyed slots.
+ * Checks EventBlock's recomposition contract, related to #319. When the same [EventBlock] node
+ * is recomposed with a fresh callback that closes over a different DisplayEvent, as when a
+ * position is rebound after a day re-sorts, a tap or long-press must invoke the current
+ * callback, not one captured at first composition. This covers EventBlock alone; [DayColumn]
+ * keys its blocks by event, so a re-sort moves each node with its event, as
+ * `DayColumnReorderDragTest` checks.
  *
  * Runs under Robolectric in the unit source set (no emulator).
  */
@@ -51,10 +51,9 @@ class EventBlockDragRecompositionTest {
 
         composeTestRule.setContent {
             MaterialTheme {
-                // Mirror DayColumn: read the slot's current event as a plain
-                // value, then build a fresh lambda that captures it. The captured
-                // value differs each recomposition — a stale gesture coroutine
-                // would keep firing the first one.
+                // Read the slot's current event as a plain value and build a fresh lambda that
+                // captures it, as DayColumn does. The captured value differs each
+                // recomposition; a stale gesture coroutine would keep firing the first one.
                 val current = slotEventId
                 EventBlock(
                     displayEvent = displayEvent(current, "Event $current"),
@@ -67,7 +66,7 @@ class EventBlockDragRecompositionTest {
             }
         }
 
-        // Reschedule re-sorts the day: this slot now holds a different event.
+        // A reschedule re-sorts the day: this slot now holds a different event.
         slotEventId = 2L
         composeTestRule.waitForIdle()
 

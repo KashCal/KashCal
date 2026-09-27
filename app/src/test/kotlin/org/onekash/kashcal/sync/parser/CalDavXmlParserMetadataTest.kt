@@ -14,12 +14,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for [CalDavXmlParser.extractCalendarMetadata], the Depth:0-response
- * parser powering the calendar-metadata refresh on every PullStrategy.pull().
+ * Tests [CalDavXmlParser.extractCalendarMetadata], which parses the Depth:0 ctag probe that
+ * `PullStrategy.pull` also uses to refresh calendar metadata.
  *
- * Null semantics differ from [CalDavXmlParser.extractCalendars]: this helper
- * must return isReadOnly=null when the server omits the privilege-set element
- * so the refresh path preserves local state.
+ * Unlike [CalDavXmlParser.extractCalendars], it must return isReadOnly=null when the server omits
+ * the privilege-set element, so the refresh keeps the local value.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -222,8 +221,8 @@ class CalDavXmlParserMetadataTest {
 
     @Test
     fun `privilege-set with all aggregate privilege yields isReadOnly false`() {
-        // RFC 3744 §3.11/§3.12: DAV:all aggregates DAV:write aggregates
-        // DAV:write-content. Xandikos reports <all> rather than leaf privileges.
+        // RFC 3744 §3.11/§3.12: DAV:all contains DAV:write, which contains
+        // DAV:write-content. Xandikos reports <all>, not the leaf privileges.
         val xml = ctagPlusPrivileges(
             "<d:privilege><d:all/></d:privilege>"
         )
@@ -232,7 +231,7 @@ class CalDavXmlParserMetadataTest {
 
     @Test
     fun `privilege-set with read and write-properties only yields isReadOnly true`() {
-        // write-properties modifies dead properties, not content — not writable.
+        // write-properties covers dead properties, not content, so it isn't writable.
         val xml = ctagPlusPrivileges(
             """
                 <d:privilege><d:read/></d:privilege>

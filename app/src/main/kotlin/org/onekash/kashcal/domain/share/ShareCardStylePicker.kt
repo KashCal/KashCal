@@ -3,12 +3,9 @@ package org.onekash.kashcal.domain.share
 import java.util.Locale
 
 /**
- * Auto-picks a [ShareCardStyle] from an event title.
- *
- * Returns [ShareCardStyle.Celebration] when the title contains a celebration
- * emoji or a celebration keyword on a word boundary; [ShareCardStyle.Standard]
- * otherwise. Pure function, no side effects, locale-independent (uses
- * [Locale.ROOT] for case folding to avoid the Turkish-i pitfall).
+ * Picks a [ShareCardStyle] from an event title: [ShareCardStyle.Celebration] when the title has a
+ * celebration emoji or starts a word with a celebration keyword, else [ShareCardStyle.Standard].
+ * Case folding uses [Locale.ROOT], so the result doesn't depend on the device locale.
  */
 object ShareCardStylePicker {
 
@@ -35,22 +32,18 @@ object ShareCardStylePicker {
         "housewarming",
     )
 
-    /** Word-boundary regex per keyword. Pre-compiled at class-load time. */
+    /** One regex per keyword, anchored at the start of a word. */
     private val KEYWORD_PATTERNS: List<Regex> = CELEBRATION_KEYWORDS.map { keyword ->
-        // \b matches Unicode word boundaries via the (?U) flag — but Kotlin
-        // Regex on JVM uses java.util.regex which interprets \b as a *word*
-        // boundary (transition between \w and \W). For ASCII keywords this
-        // is sufficient. Anchor to start-of-word; allow any trailing chars
-        // (matches "partygoers" → starts with "party") but not preceding
-        // word chars (rejects "antiparty", "unbirthday").
+        // \b is a word boundary (between \w and \W), which is enough for these ASCII keywords.
+        // Only the start is anchored: "partygoers" matches, "antiparty"
+        // and "unbirthday" don't.
         Regex("""\b${Regex.escape(keyword)}""", RegexOption.IGNORE_CASE)
     }
 
     fun autoPickFor(title: String?): ShareCardStyle {
         if (title.isNullOrBlank()) return ShareCardStyle.Standard
 
-        // Lowercase via Locale.ROOT so Turkish-i case folding doesn't break
-        // English keyword matching (BIRTHDAY → birthday, not bırthday).
+        // Locale.ROOT keeps "BIRTHDAY" from folding to a dotless "bırthday" in Turkish.
         val rooted = title.lowercase(Locale.ROOT)
 
         if (CELEBRATION_EMOJIS.any { title.contains(it) }) {

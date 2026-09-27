@@ -20,24 +20,21 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Live reproduction of issue #333 against the Radicale test server.
+ * Reproduces #333 live against the Radicale test server.
  *
- * The bug: KashCal builds a resource URL from the event UID (which contains a
- * literal '@', e.g. "<uuid>@kashcal.onekash.org") and stores that literal-'@'
- * URL as caldav_url. When another client deletes the resource, Radicale echoes
- * the deleted href in the sync-collection REPORT with the '@' percent-encoded
- * as %40. Strict string equality on caldav_url then misses the local row and
- * the deletion is silently skipped.
+ * KashCal builds a resource URL from the event UID, which has a literal '@'
+ * ("<uuid>@kashcal.onekash.org"), and stores it as caldav_url. When another client deletes
+ * the resource, Radicale echoes the deleted href in the sync-collection REPORT with '@'
+ * encoded as %40, so a plain string compare on caldav_url misses the row and the deletion is
+ * silently skipped.
  *
- * This test exercises the real wire behavior — create with a literal-'@' UID,
- * delete server-side, run sync-collection — and asserts that:
- *  (a) Radicale really does re-encode '@' -> %40 in the echoed deletion href
- *      (the precondition for the bug; if a future Radicale stops doing this the
- *      test degrades to a no-op via assumeTrue rather than a false failure), and
- *  (b) the production reconciliation key derivation (DefaultQuirks.buildEventUrl
- *      + CaldavUrlNormalizer.canonicalize) maps that re-encoded href back to the
- *      same canonical value as the stored literal-'@' URL — i.e. the fix makes
- *      them match, where a raw string compare (the pre-fix behavior) does not.
+ * The test creates an event with such a UID, deletes it on the server, runs sync-collection,
+ * and asserts that:
+ *  (a) Radicale re-encodes '@' as %40 in the deleted href. This is the precondition; when a
+ *      Radicale version doesn't, assumeTrue skips the test instead of failing it.
+ *  (b) The pull's key derivation (DefaultQuirks.buildEventUrl, then
+ *      CaldavUrlNormalizer.canonicalize) maps the re-encoded href to the same canonical value
+ *      as the stored URL, while the raw strings differ.
  *
  * Run: ./gradlew :app:testDebugUnitTest -Pintegration --tests "*RadicaleDeletedEventReencodeTest*"
  * Prereqs: Radicale at localhost:5232 + RADICALE_* creds in local.properties
@@ -130,7 +127,7 @@ class RadicaleDeletedEventReencodeTest {
         val calendarUrl = discoverCalendar()
         assumeTrue("No calendar found", calendarUrl != null)
 
-        // UID shaped exactly like KashCal's own: a literal '@' in the filename.
+        // A UID shaped like KashCal's own, with a literal '@' in the filename.
         val uid = "${UUID.randomUUID()}@kashcal.onekash.org"
         val ics = """
 BEGIN:VCALENDAR
@@ -146,7 +143,7 @@ END:VEVENT
 END:VCALENDAR
         """.trimIndent()
 
-        // 1. Create — this is the path that stores caldav_url with a literal '@'.
+        // 1. Create: the path that stores caldav_url with a literal '@'.
         val createResult = client.createEvent(calendarUrl!!, uid, ics)
         assert(createResult.isSuccess()) {
             "Failed to create event: ${(createResult as? CalDavResult.Error)?.message}"
@@ -172,7 +169,7 @@ END:VCALENDAR
         }
         createdEventUrl = null // deleted; nothing to clean up
 
-        // 3. sync-collection REPORT — how the next KashCal pull learns of the deletion.
+        // 3. sync-collection REPORT: how the next pull learns of the deletion.
         val reportResult = client.syncCollection(calendarUrl, tokenBefore)
         assert(reportResult.isSuccess()) {
             "sync-collection failed: ${(reportResult as? CalDavResult.Error)?.message}"
@@ -192,26 +189,25 @@ END:VCALENDAR
         )
         println("Matched deleted href: $deletedHref")
 
-        // (a) Precondition: Radicale re-encodes '@' as %40 in the echoed href.
-        // If a future Radicale stops doing this, the bug can't occur — skip rather
-        // than fail, so this test never flaps on benign server-behavior changes.
+        // (a) Precondition: Radicale re-encodes '@' as %40 in the echoed href. Without it the
+        // bug can't occur, so skip; a server change never fails this test.
         assumeTrue(
             "Radicale did not re-encode '@' as %40 in this run; #333 precondition absent",
             deletedHref!!.contains("%40")
         )
 
-        // (b) The fix: production key derivation reconciles the re-encoded href
-        // with the stored literal-'@' URL. buildEventUrl mirrors the pull path.
+        // (b) The pull's key derivation reconciles the re-encoded href with the stored URL;
+        // the pull also builds the URL with buildEventUrl.
         val reportedUrl = quirks.buildEventUrl(deletedHref, calendarUrl)
         val canonicalReported = CaldavUrlNormalizer.canonicalize(reportedUrl) ?: reportedUrl
         val canonicalStored = CaldavUrlNormalizer.canonicalize(storedUrl) ?: storedUrl
 
-        // Pre-fix control: a raw compare misses (this is exactly the silent skip).
+        // Control: a raw compare misses, which is the silent skip.
         assert(reportedUrl != storedUrl) {
             "Expected raw URLs to differ by encoding (else there is nothing to fix): " +
                 "reported=$reportedUrl stored=$storedUrl"
         }
-        // Post-fix: canonical compare matches -> the local row is found and deleted.
+        // A canonical compare matches, so the pull finds and deletes the row.
         assert(canonicalReported == canonicalStored) {
             "Canonicalized URLs should match so the deletion reconciles:\n" +
                 "  reported=$reportedUrl -> $canonicalReported\n" +

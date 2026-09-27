@@ -17,10 +17,9 @@ import org.robolectric.annotation.Config
 /**
  * Tests for [SystemAccountRegistrar].
  *
- * NOTE: Robolectric's AccountManager/ContentResolver shadows may not perfectly
- * replicate device behavior for setIsSyncable/getSyncAutomatically. Sync state
- * tests verify the calls are made correctly; actual device behavior must be
- * verified manually via the adb commands in the plan.
+ * Robolectric's AccountManager and ContentResolver shadows may not match a device for
+ * setIsSyncable and getSyncAutomatically, so the sync-state tests check the calls are made;
+ * device behavior must be verified manually.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [31])
@@ -35,11 +34,10 @@ class SystemAccountRegistrarTest {
         context = ApplicationProvider.getApplicationContext()
         accountManager = AccountManager.get(context)
 
-        // AccountManager is a process-wide singleton that Robolectric does not
-        // reset between test classes in the same JVM fork. Clear any leftover
-        // KashCal accounts so each test starts from a known-empty state.
-        // (App-boot no longer races us: KashCalApplication.onCreate skips its
-        // background account registration under unit tests.)
+        // Robolectric doesn't reset the process-wide AccountManager between test classes in
+        // one JVM fork, so clear leftover KashCal accounts first. App boot doesn't race this:
+        // KashCalApplication.onCreate skips its background account registration under unit
+        // tests.
         accountManager.getAccountsByType(KashCalAuthenticator.ACCOUNT_TYPE)
             .forEach { accountManager.removeAccountExplicitly(it) }
 
@@ -79,14 +77,14 @@ class SystemAccountRegistrarTest {
         assertFalse(ContentResolver.getSyncAutomatically(account, "com.android.calendar"))
     }
 
-    // setIsSyncable/getIsSyncable not fully shadowed by Robolectric — verify on device via:
+    // Robolectric doesn't fully shadow setIsSyncable and getIsSyncable; verify on a device with:
     // adb shell content query --uri content://com.android.calendar/calendars
 
     @Test
     fun `ensureAccount recreates account after manual removal`() {
         registrar.ensureAccount()
 
-        // Simulate user removing account from Settings > Accounts
+        // The user removes the account in Settings > Accounts
         val account = accountManager.getAccountsByType(KashCalAuthenticator.ACCOUNT_TYPE)[0]
         accountManager.removeAccountExplicitly(account)
         assertEquals(0, accountManager.getAccountsByType(KashCalAuthenticator.ACCOUNT_TYPE).size)

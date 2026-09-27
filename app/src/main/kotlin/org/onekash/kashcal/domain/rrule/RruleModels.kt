@@ -4,34 +4,27 @@ import androidx.compose.runtime.Immutable
 import java.time.DayOfWeek
 
 /**
- * Domain models for RFC 5545 RRULE recurrence rules.
- *
- * These models represent the parsed state of recurrence rules
- * for UI display and manipulation.
+ * Domain models for the parsed state of an RFC 5545 RRULE, for display and editing in the UI.
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc5545#section-3.3.10">RFC 5545 RRULE</a>
  */
 
-/**
- * Recurrence frequency options.
- */
+/** Frequency of a recurrence rule. */
 enum class RecurrenceFrequency {
-    /** No recurrence - single event */
+    /** No recurrence: a single event. */
     NONE,
-    /** Daily recurrence */
     DAILY,
-    /** Weekly recurrence (may include BYDAY) */
+    /** May include BYDAY. */
     WEEKLY,
-    /** Monthly recurrence (may include BYMONTHDAY or BYDAY) */
+    /** May include BYMONTHDAY or BYDAY. */
     MONTHLY,
-    /** Yearly recurrence */
     YEARLY,
-    /** Complex rule that doesn't fit simple categories */
+    /** A rule that doesn't fit the simple frequencies. */
     CUSTOM
 }
 
 /**
- * Monthly pattern options for recurring events.
+ * Day within the month of a monthly rule.
  *
  * Examples:
  * - SameDay(15) -> BYMONTHDAY=15 (15th of each month)
@@ -42,67 +35,50 @@ enum class RecurrenceFrequency {
 @Immutable
 sealed class MonthlyPattern {
     /**
-     * Same day of month (e.g., 15th).
-     * @property dayOfMonth Day of month (1-31)
+     * The same day of each month (e.g. the 15th).
+     * @property dayOfMonth 1-31 from the picker; a parsed BYMONTHDAY other than -1 is kept as
+     *   written, so it can be negative.
      */
     data class SameDay(val dayOfMonth: Int) : MonthlyPattern()
 
-    /**
-     * Last day of month.
-     * Generates BYMONTHDAY=-1
-     */
+    /** The last day of the month (BYMONTHDAY=-1). */
     data object LastDay : MonthlyPattern()
 
     /**
-     * Nth weekday of month (e.g., "2nd Tuesday").
-     * @property ordinal 1-4 for 1st-4th, -1 for last
-     * @property weekday The day of week
+     * The nth weekday of the month (e.g. the 2nd Tuesday).
+     * @property ordinal 1-4 for 1st-4th, -1 for last; a parsed BYDAY ordinal is kept as written.
      */
     data class NthWeekday(val ordinal: Int, val weekday: DayOfWeek) : MonthlyPattern()
 }
 
-/**
- * End condition for recurring events.
- */
+/** End of a recurrence rule. */
 @Immutable
 sealed class EndCondition {
-    /** Repeats forever (no COUNT or UNTIL) */
+    /** Repeats forever (no COUNT or UNTIL). */
     data object Never : EndCondition()
 
-    /**
-     * Ends after N occurrences.
-     * @property count Number of occurrences (COUNT=N)
-     */
+    /** Ends after [count] occurrences (COUNT). */
     data class Count(val count: Int) : EndCondition()
 
-    /**
-     * Ends on or before a specific date.
-     * @property dateMillis End date timestamp in milliseconds (UNTIL=...)
-     */
+    /** Ends on or before [dateMillis], an epoch-millisecond UNTIL. */
     data class Until(val dateMillis: Long) : EndCondition()
 }
 
 /**
- * Parsed recurrence state from RRULE string.
+ * Holds the recurrence options [RruleBuilder.parseRrule] extracts from an RRULE.
  *
- * Represents all configurable recurrence options extracted from
- * an RRULE for display and editing in the UI.
- *
- * @property frequency Base frequency (DAILY, WEEKLY, etc.)
- * @property interval Interval between occurrences (INTERVAL=N, default 1)
- * @property weekdays Selected days for weekly recurrence (BYDAY)
- * @property monthlyPattern Pattern for monthly recurrence
- * @property endCondition How the recurrence ends
- * @property wkst Week-start day (WKST=XX) when present in the rule, else null.
- *   Preserved across no-op edits so a CalDAV-pulled rule with `WKST=SU` doesn't
- *   silently rewrite to the device's wkst on Save. The builder's emission gate
- *   ([RruleBuilder.weekly]) drops it when it has no semantic effect.
- * @property extraTokens RRULE parts the picker doesn't model directly
- *   (BYMONTH, BYWEEKNO, BYYEARDAY, BYSETPOS) captured verbatim from the inbound
- *   rule. Re-appended on emission so a CalDAV-pulled rule like
- *   `FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15` round-trips intact instead of
- *   degrading to `FREQ=YEARLY` on a no-op save. Routes through `frequency =
- *   RecurrenceFrequency.CUSTOM` so the picker stays in verbatim-emit mode.
+ * @property interval INTERVAL, default 1.
+ * @property weekdays BYDAY days, for a weekly rule.
+ * @property wkst WKST when the rule has one, else null. Kept across no-op edits so a
+ *   CalDAV-pulled `WKST=SU` doesn't silently become the device's week start on save;
+ *   [RruleBuilder.weekly] drops it when it has no effect.
+ * @property extraTokens BY* parts the picker doesn't model for this frequency, captured
+ *   verbatim: BYMONTH, BYWEEKNO, BYYEARDAY, BYSETPOS, and BYDAY or BYMONTHDAY where the picker
+ *   doesn't show them. Re-appended on emission so a CalDAV-pulled rule like
+ *   `FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15` survives a no-op save instead of degrading to
+ *   `FREQ=YEARLY`. Any extra opens the picker on [FrequencyOption.CUSTOM]
+ *   (`selectInitialFrequencyOption`), so the rule is rebuilt from its unit and interval, not
+ *   coerced to a preset.
  */
 @Immutable
 data class ParsedRecurrence(
@@ -116,15 +92,11 @@ data class ParsedRecurrence(
 )
 
 /**
- * Frequency option for the chip selector in UI.
+ * Names a chip of the recurrence picker's frequency selector.
  *
- * Layout pairs with a 3+3 chip grid:
- * row 1 = NEVER / DAILY / WEEKLY, row 2 = MONTHLY / YEARLY / CUSTOM.
- *
- * CUSTOM is a UI-only marker; consumers map the option to a concrete
- * [RecurrenceFrequency] via [toFrequency], which returns null for
- * NEVER and CUSTOM. NEVER builds no RRULE; CUSTOM dispatches on the
- * picker's separate unit/interval/weekday/monthly state.
+ * The picker lays them out in two rows of three: NEVER, DAILY, WEEKLY, then MONTHLY, YEARLY,
+ * CUSTOM. NEVER builds no RRULE; CUSTOM is a UI-only marker that builds from the picker's
+ * separate unit, interval, weekday and monthly state.
  */
 enum class FrequencyOption(val label: String) {
     NEVER("Never"),
@@ -135,11 +107,7 @@ enum class FrequencyOption(val label: String) {
     CUSTOM("Custom")
 }
 
-/**
- * Concrete frequency for the option, or null when no direct mapping
- * applies (NEVER builds no RRULE; CUSTOM defers to the picker's
- * unit/interval state).
- */
+/** Returns the option's frequency, or null for NEVER and CUSTOM, which map to none. */
 fun FrequencyOption.toFrequency(): RecurrenceFrequency? = when (this) {
     FrequencyOption.NEVER -> null
     FrequencyOption.DAILY -> RecurrenceFrequency.DAILY

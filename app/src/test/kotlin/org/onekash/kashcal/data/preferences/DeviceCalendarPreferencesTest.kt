@@ -25,10 +25,9 @@ import org.robolectric.annotation.Config
 import java.io.File
 
 /**
- * Unit tests for device calendar preferences in KashCalDataStore.
- *
- * Tests default values, enable/disable toggle, and Set<Long> <-> Set<String> round-trip
- * for enabledDeviceCalendarIds.
+ * Tests the device calendar preferences in [KashCalDataStore]: the enable toggle, and the
+ * enabled and hidden calendar id sets (defaults, Set<Long> to stored Set<String> round-trips,
+ * and hidden-id toggle and remove).
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)

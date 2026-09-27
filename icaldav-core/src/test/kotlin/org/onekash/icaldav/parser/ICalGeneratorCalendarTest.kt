@@ -22,14 +22,14 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * Tests for ICalGenerator.generate(ICalCalendar) — the symmetric counterpart
- * to ICalParser.parse(String): ParseResult<ICalCalendar>.
+ * Tests ICalGenerator.generate(ICalCalendar), the counterpart to ICalParser.parse.
  *
- * Covers calendar-level metadata emission (NAME, SOURCE, COLOR, REFRESH-INTERVAL,
- * X-WR-CALNAME, X-APPLE-CALENDAR-COLOR, IMAGE, METHOD), mixed-component bundling
- * (VEVENT + VTODO + VJOURNAL), VTIMEZONE collection across all component types,
- * PRODID precedence, property emission order, escaping/folding, and generateBatch
- * back-compat guarantee.
+ * Covers calendar-level properties (NAME, SOURCE, COLOR, REFRESH-INTERVAL, X-WR-CALNAME,
+ * X-APPLE-CALENDAR-COLOR, IMAGE, METHOD), PRODID precedence, property order and the CALSCALE
+ * default, empty and mixed VEVENT, VTODO and VJOURNAL calendars, VTIMEZONE collection across
+ * every component type, escaping and folding, and generateBatch: its METHOD, CALSCALE,
+ * VTIMEZONE dedup and include flags, output equal to generate for the same calendar, and a
+ * pinned snapshot.
  */
 @DisplayName("ICalGenerator calendar-level emission")
 class ICalGeneratorCalendarTest {
@@ -249,7 +249,7 @@ class ICalGeneratorCalendarTest {
 
         @Test
         fun `CALSCALE defaults to GREGORIAN when not specified`() {
-            val cal = ICalCalendar(prodId = "-//Cal//EN") // calscale defaults to "GREGORIAN" in data class
+            val cal = ICalCalendar(prodId = "-//Cal//EN") // calscale defaults to GREGORIAN
             val ics = generator.generate(cal)
             assertTrue(ics.contains("CALSCALE:GREGORIAN"))
         }
@@ -425,12 +425,12 @@ class ICalGeneratorCalendarTest {
             val ics = generator.generate(cal)
 
             val nameLine = ics.lineSequence().dropWhile { !it.startsWith("NAME:") }.first()
-            // Folded lines have been split; the first physical line carrying NAME: must be <= 75 bytes
+            // The first physical line carrying NAME: must be at most 75 octets.
             assertTrue(
                 nameLine.toByteArray(Charsets.UTF_8).size <= 75,
                 "First physical line of NAME exceeds 75 octets: ${nameLine.toByteArray(Charsets.UTF_8).size}"
             )
-            // At least one continuation line exists starting with a space
+            // At least one continuation line starts with a space.
             val foldedLine = ics.lineSequence().firstOrNull { it.startsWith(" ") && it.length > 1 }
             assertTrue(foldedLine != null, "No continuation line with space prefix found for folded NAME")
         }
@@ -457,7 +457,7 @@ class ICalGeneratorCalendarTest {
                 ICalCalendar(prodId = "-//Test//Default//EN", method = "PUBLISH", events = events)
             )
 
-            // Both must contain METHOD:PUBLISH exactly once
+            // Both contain METHOD:PUBLISH, the same number of times.
             assertEquals(
                 batchOutput.split("METHOD:PUBLISH").size - 1,
                 calOutput.split("METHOD:PUBLISH").size - 1
@@ -498,9 +498,9 @@ class ICalGeneratorCalendarTest {
 
         @Test
         fun `generateBatch output equals generate(ICalCalendar) for the equivalent calendar`() {
-            // The delegation contract: generateBatch(events, includeMethod, includeVTimezone) must
-            // produce byte-identical output to generate(ICalCalendar(prodId=null, method=..., events)).
-            // DTSTAMP is normalized because it's regenerated from Instant.now() on each call.
+            // generateBatch delegates to generate(ICalCalendar(prodId = null, method, events)), so
+            // the output must be byte-identical. DTSTAMP is normalized because each call takes it
+            // from Instant.now().
             val gen = ICalGenerator(prodId = "-//Snapshot//Fixed//EN")
             val events = listOf(newYorkEvent("snap-1"))
 
@@ -531,9 +531,9 @@ class ICalGeneratorCalendarTest {
             val actual = gen.generateBatch(events, includeMethod = true, includeVTimezone = true)
             val normalized = actual.replace(Regex("DTSTAMP:\\d{8}T\\d{6}Z"), "DTSTAMP:NORMALIZED")
 
-            // Header + VTIMEZONE body is generated from ZoneRules at runtime; assert only that
-            // the outer envelope (header properties in order, VTIMEZONE placement, VEVENT body)
-            // is what we expect. VTIMEZONE inner lines are covered by VTimezoneGeneratorTest.
+            // The VTIMEZONE body comes from ZoneRules at runtime, so only the envelope is
+            // asserted: header order, VTIMEZONE placement and the VEVENT body.
+            // VTimezoneGeneratorTest covers the VTIMEZONE lines.
             val lines = normalized.lineSequence().toList()
             val prefixOrder = listOf(
                 "BEGIN:VCALENDAR",
@@ -545,7 +545,7 @@ class ICalGeneratorCalendarTest {
             )
             val headerIndices = prefixOrder.map { prefix -> lines.indexOfFirst { it == prefix } }
             assertTrue(headerIndices.none { it == -1 }, "Missing expected header line(s): $prefixOrder; got first 8 lines: ${lines.take(8)}")
-            // Header lines must appear in order, contiguously starting at 0
+            // The first five header lines are lines 0 to 4, in order.
             assertEquals(listOf(0, 1, 2, 3, 4), headerIndices.take(5), "First 5 header lines out of order or non-contiguous")
             // VTIMEZONE starts after METHOD
             assertTrue(headerIndices[5] > 4, "VTIMEZONE should come after METHOD")
@@ -555,7 +555,7 @@ class ICalGeneratorCalendarTest {
             val beginVevent = lines.indexOfFirst { it == "BEGIN:VEVENT" }
             assertTrue(endVtimezone in 0 until beginVevent, "VEVENT must follow END:VTIMEZONE")
 
-            // Event body pins the fields we emit
+            // The event lines the generator writes.
             assertTrue(lines.contains("UID:snap-pin"))
             assertTrue(lines.contains("DTSTAMP:NORMALIZED"))
             assertTrue(lines.contains("DTSTART;TZID=America/New_York:20240306T120000"))

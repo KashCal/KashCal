@@ -33,19 +33,18 @@ import java.util.Calendar
 import java.util.Locale
 
 /**
- * Accessibility contract for the single-select picker bottom sheets in Settings.
+ * Pins the accessibility contract of the Settings single-select picker sheets.
  *
- * Each option row must expose itself to TalkBack as a radio button carrying its
- * selected/unselected state, and the option list must be a selectable group so the
- * reader can convey "N of M" — replacing the earlier bare tappable row whose only
- * selection cue was a trailing checkmark. This pins that contract at the surface the
- * user navigates, across every distinct sheet composable (including both list bodies
- * of the two files that host two sheets each), so a dropped group modifier or a
- * missed row is caught rather than passing on code review alone.
+ * Each option row must expose itself to TalkBack as a radio button carrying its selected state, and
+ * the option list must be a selectable group so the reader can convey "N of M". A checkmark alone
+ * gives TalkBack no selection cue. Covered: [TimeFormatSheet], [FirstDayOfWeekSheet], [ThemeSheet]
+ * (its [SelectableOptionSheet] body is shared with [WidgetThemeSheet]), [AppIconSheet],
+ * [SyncFrequencySheet], [SyncLookbackSheet], both sheets of DisplayOptionsSheet.kt and both of
+ * AlertsSheet.kt. Each test also taps an option and checks the value callback.
  *
- * Runs under Robolectric; run the class in isolation given the repo's multi-class
- * native-crash flake. Each @Test renders exactly one sheet (fresh compose rule per
- * method) to keep within-class composition state lean.
+ * Runs under Robolectric; run the class in isolation given the repo's multi-class native-crash
+ * flake. Each @Test renders one sheet (fresh compose rule per method) to keep within-class
+ * composition state lean.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h9999dp-mdpi")
@@ -81,7 +80,7 @@ class PickerSheetSelectableSemanticsTest {
         radioCount: Int,
     ) {
         with(composeTestRule) {
-            // Only the option rows are radios — no toggle/footer/nav row leaked in.
+            // Only the option rows are radios; no toggle, footer or nav row leaked in.
             onAllNodes(isRadioButton()).assertCountEquals(radioCount)
 
             onNodeWithText(selectedLabel)
@@ -179,8 +178,8 @@ class PickerSheetSelectableSemanticsTest {
                 )
             }
         }
-        // radioCount = 3 asserts the "Support KashCal" footer (a Role.Button action row)
-        // and the info note were NOT converted to radios.
+        // radioCount = 3 asserts the "Support KashCal" footer (a Role.Button action row) and
+        // the info note aren't radios.
         assertRadioGroupSemantics(selectedLabel = "Default", unselectedLabel = "Supporter", radioCount = 3)
         composeTestRule.onNodeWithText("Support KashCal")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
@@ -230,7 +229,7 @@ class PickerSheetSelectableSemanticsTest {
         assertEquals(Int.MAX_VALUE, picked)
     }
 
-    // ==================== Default event length (DisplayOptionsSheet) ====================
+    // ==================== Default event length (DisplayOptionsSheet.kt) ====================
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Test
@@ -251,7 +250,7 @@ class PickerSheetSelectableSemanticsTest {
         assertEquals(60, picked)
     }
 
-    // ==================== Widget event limit (DisplayOptionsSheet, second Column) ====================
+    // ==================== Widget event limit (DisplayOptionsSheet.kt) ====================
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Test
@@ -300,9 +299,9 @@ class PickerSheetSelectableSemanticsTest {
         }
         // 3 presets + the Custom row = 4 radios (Custom is a selectable group member too).
         assertRadioGroupSemantics(selectedLabel = "15 minutes before", unselectedLabel = "1 hour before", radioCount = 4)
-        // The Custom row is a radio member but unselected (current value is a preset).
-        // Its tap opens the wheel rather than firing onSelect, so it is asserted for
-        // membership only — not tapped for a value callback.
+        // The Custom row is a radio member but unselected (current value is a preset). Its
+        // tap opens the wheel instead of firing onSelect, so it is asserted for membership
+        // only, not tapped for a value callback.
         composeTestRule.onNodeWithText("Custom")
             .assert(isRadioButton())
             .assertIsNotSelected()
@@ -311,7 +310,7 @@ class PickerSheetSelectableSemanticsTest {
         assertEquals(60, picked)
     }
 
-    // ==================== Default alert: SingleAlertPickerSheet (second Column in AlertsSheet) ====================
+    // ==================== Default alert: SingleAlertPickerSheet ====================
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Test

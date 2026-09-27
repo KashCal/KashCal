@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Δεν βρέθηκαν ημερολόγια σε αυτόν τον διακομιστή.</string>
     <string name="caldav_error_unexpected">Απρόσμενο σφάλμα. Δοκιμάστε ξανά.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nΑν πρόκειται για διακομιστή στο τοπικό σας δίκτυο, επιτρέψτε την πρόσβαση στο τοπικό δίκτυο για να συνδεθείτε.</string>
+    <string name="caldav_error_connection_refused_insecure">Ο διακομιστής ανακατεύθυνε τη σύνδεση σε σημείο που το KashCal δεν ακολουθεί (μη κρυπτογραφημένη διεύθυνση ή βρόχο ανακατευθύνσεων), οπότε το KashCal σταμάτησε πριν στείλει τον κωδικό σας. Ελέγξτε τη διεύθυνση του διακομιστή.</string>
     <string name="local_network_banner_title">Απαιτείται πρόσβαση στο τοπικό δίκτυο</string>
     <string name="local_network_banner_body">Αυτός ο διακομιστής φαίνεται να βρίσκεται στο τοπικό σας δίκτυο. Επιτρέψτε την πρόσβαση στο τοπικό δίκτυο ώστε το KashCal να μπορεί να συνδεθεί σε αυτόν.</string>
     <string name="local_network_banner_allow">Να επιτραπεί η πρόσβαση</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Αποθήκευση αλλαγών σε</string>
     <string name="dialog_delete_recurring_title">Διαγραφή</string>
     <string name="dialog_move_recurring_title">Μετακίνηση</string>
+    <string name="snackbar_event_rescheduled">Το συμβάν μετακινήθηκε</string>
+    <string name="snackbar_reschedule_failed">Δεν ήταν δυνατή η μετακίνηση του συμβάντος</string>
     <string name="recurring_this_event">Αυτό το συμβάν</string>
     <string name="recurring_all_events">Όλα τα συμβάντα</string>
 

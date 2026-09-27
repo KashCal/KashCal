@@ -47,7 +47,8 @@ class ICalGeneratorTest {
         assertTrue(icalString.contains("VERSION:2.0"))
         assertTrue(icalString.contains("PRODID:"))
         assertTrue(icalString.contains("CALSCALE:GREGORIAN"))
-        // METHOD is excluded by default for CalDAV PUT (some servers reject it)
+        // No METHOD on a CalDAV PUT: RFC 4791 §4.1 forbids it in a stored resource, and some
+        // servers reject it.
         assertFalse(icalString.contains("METHOD:PUBLISH"))
         assertTrue(icalString.contains("SEQUENCE:"))
         assertTrue(icalString.contains("STATUS:"))
@@ -68,7 +69,7 @@ class ICalGeneratorTest {
 
         val icalString = generator.generate(event, method = null)
 
-        // All-day events should use VALUE=DATE format
+        // All-day events use VALUE=DATE.
         assertTrue(icalString.contains("DTSTART;VALUE=DATE:"))
     }
 
@@ -78,7 +79,7 @@ class ICalGeneratorTest {
 
         val icalString = generator.generate(event, method = null)
 
-        // Timed events should have DTSTART
+        // Only checks that DTSTART is written.
         assertTrue(icalString.contains("DTSTART"))
     }
 
@@ -146,8 +147,7 @@ class ICalGeneratorTest {
         val valarm = generator.generate(event, method = null)
             .substringAfter("BEGIN:VALARM").substringBefore("END:VALARM")
 
-        // Both are REQUIRED for EMAIL, so the generator must emit them even
-        // when the model left them null.
+        // Both are required for EMAIL, so the generator must write them even when null.
         assertTrue(valarm.contains("DESCRIPTION:"), "expected a DESCRIPTION in: $valarm")
         assertTrue(valarm.contains("SUMMARY:"), "expected a SUMMARY in: $valarm")
     }
@@ -205,7 +205,7 @@ class ICalGeneratorTest {
 
         val icalString = generator.generate(event, method = null)
 
-        // iCal should have proper line endings
+        // Only checks that the output has a line break.
         assertTrue(icalString.contains("\n"))
     }
 
@@ -293,7 +293,7 @@ class ICalGeneratorTest {
 
         val icalString = generator.generateBatch(listOf(event1, event2))
 
-        // Should only have one VTIMEZONE for America/New_York even with two events
+        // One VTIMEZONE for America/New_York across both events.
         val vtimezoneCount = icalString.split("TZID:America/New_York").size - 1
         assertEquals(1, vtimezoneCount)
     }
@@ -309,7 +309,7 @@ class ICalGeneratorTest {
         assertTrue(icalString.contains("TZID:Asia/Tokyo"))
     }
 
-    // Apple VALARM extension tests
+    // VALARM UID, X-WR-ALARMUID and X-APPLE-DEFAULT-ALARM tests
 
     @Test
     fun `generate includes Apple VALARM extensions by default`() {
@@ -359,7 +359,6 @@ class ICalGeneratorTest {
 
         val icalString = generator.generate(event, method = null)
 
-        // Should have UID in VALARM
         val valarmSection = icalString.substringAfter("BEGIN:VALARM").substringBefore("END:VALARM")
         assertTrue(valarmSection.contains("UID:"))
     }
@@ -396,7 +395,7 @@ class ICalGeneratorTest {
 
         val icalString = generator.generate(event, method = null)
 
-        // Should have X-WR-ALARMUID but NOT X-APPLE-DEFAULT-ALARM:FALSE
+        // X-WR-ALARMUID is written, X-APPLE-DEFAULT-ALARM:FALSE isn't.
         assertTrue(icalString.contains("X-WR-ALARMUID:"))
         assertFalse(icalString.contains("X-APPLE-DEFAULT-ALARM:FALSE"))
     }
@@ -455,7 +454,7 @@ class ICalGeneratorTest {
 
         val icalString = generator.generate(event, method = null)
 
-        // Priority 0 means undefined, should not be output
+        // RFC 5545 §3.8.1.9: 0 is an undefined priority, so PRIORITY is omitted.
         assertFalse(icalString.contains("PRIORITY:"))
     }
 

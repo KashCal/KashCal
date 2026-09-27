@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Launcher icon background -->
-    <color name="ic_launcher_background">#0E1116</color>
+    <color name="ic_launcher_background">#3A2140</color>
 
     <!--
         Colors for the widget placeholder layout. That layout is plain RemoteViews, so it

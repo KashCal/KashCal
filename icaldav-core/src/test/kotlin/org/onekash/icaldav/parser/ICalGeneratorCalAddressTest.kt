@@ -15,15 +15,14 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 /**
- * RFC 5545 §3.3.3: a CAL-ADDRESS is any URI, not only `mailto:`. Servers emit
- * `urn:uuid:...` and principal hrefs (`/.../principal/`) as ORGANIZER/ATTENDEE
- * values. The parser strips a leading `mailto:` and stores the value bare, so
- * the generator must re-prepend `mailto:` ONLY for mailbox-shaped values and
- * pass any other URI form through verbatim.
+ * Tests that the generator adds `mailto:` only to a bare mailbox and writes any other
+ * CAL-ADDRESS verbatim (RFC 5545 §3.3.3 allows any URI); the rule lives on
+ * [org.onekash.icaldav.util.CalAddress].
  *
- * Without that guard a `urn:uuid:` attendee round-trips to the invalid
- * `mailto:urn:uuid:...`, which strict servers reject and which never matches
- * the original principal on the next pull.
+ * Covered: `urn:uuid:` attendee and organizer, a principal-href attendee, a plain email, an
+ * already-prefixed value, and a `urn:uuid:` attendee through parse and generate. Without the
+ * rule a `urn:uuid:` attendee round-trips to the invalid `mailto:urn:uuid:...`, which strict
+ * servers reject and which never matches the original principal on the next pull.
  */
 class ICalGeneratorCalAddressTest {
 
@@ -158,8 +157,7 @@ class ICalGeneratorCalAddressTest {
 
     @Test
     fun `an already-mailto-prefixed value is not double-prefixed`() {
-        // Defensive: a caller that stored the value with its scheme intact must
-        // not get mailto:mailto:.
+        // A caller that stored the value with its scheme must not get mailto:mailto:.
         val ics = generator.generate(
             eventWith(
                 organizer = Organizer(email = "boss@example.test", name = "Boss", sentBy = null),

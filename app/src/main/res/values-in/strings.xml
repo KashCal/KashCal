@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Tidak ada kalender ditemukan di server ini.</string>
     <string name="caldav_error_unexpected">Kesalahan tak terduga. Silakan coba lagi.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nKalau ini server di jaringan lokalmu, izinkan akses jaringan lokal untuk terhubung.</string>
+    <string name="caldav_error_connection_refused_insecure">Server mengalihkan koneksi ke tempat yang tidak diikuti KashCal (alamat tanpa enkripsi, atau pengalihan berulang), jadi KashCal berhenti sebelum mengirim kata sandi Anda. Periksa alamat server.</string>
     <string name="local_network_banner_title">Perlu akses jaringan lokal</string>
     <string name="local_network_banner_body">Server ini sepertinya ada di jaringan lokalmu. Izinkan akses jaringan lokal agar KashCal bisa terhubung ke server ini.</string>
     <string name="local_network_banner_allow">Izinkan akses</string>
@@ -792,6 +793,8 @@
     <string name="dialog_edit_recurring_title">Simpan perubahan ke</string>
     <string name="dialog_delete_recurring_title">Hapus</string>
     <string name="dialog_move_recurring_title">Pindahkan</string>
+    <string name="snackbar_event_rescheduled">Acara dijadwalkan ulang</string>
+    <string name="snackbar_reschedule_failed">Tidak dapat menjadwalkan ulang acara</string>
     <string name="recurring_this_event">Acara ini</string>
     <string name="recurring_all_events">Semua acara</string>
 

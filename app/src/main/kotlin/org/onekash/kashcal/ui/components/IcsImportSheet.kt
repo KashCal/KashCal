@@ -68,18 +68,14 @@ import org.onekash.kashcal.util.DateTimeUtils
 const val ICS_IMPORT_BUTTON_TAG = "ics_import_button"
 
 /**
- * Bottom sheet for importing ICS file events.
+ * Shows the events parsed from an ICS file, a target calendar picker (Room or device) and the
+ * Import action.
  *
- * Shows event preview list, calendar picker, and import action.
- * Supports both Room and device calendars as import targets.
- *
- * @param events List of events parsed from ICS file
- * @param calendars Available Room calendars (read-only calendars are filtered out)
- * @param defaultCalendarId Default Room calendar to select
- * @param deviceCalendarGroups Device calendars grouped by account (writable only)
- * @param defaultDeviceCalendarId Default device calendar to select
- * @param onDismiss Called when sheet is dismissed
- * @param onImport Called with selected calendar ID, events, and whether target is a device calendar
+ * @param calendars Room calendars; the sheet offers only the writable ones.
+ * @param deviceCalendarGroups device calendars by account; the sheet offers only the writable
+ *   ones.
+ * @param onImport called once with the target calendar ID, the events and whether the target
+ *   is a device calendar.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,35 +90,31 @@ fun IcsImportSheet(
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    // Filter to writable calendars only
     val writableCalendars = remember(calendars) {
         calendars.filter { !it.isReadOnly }
     }
 
-    // All writable device calendars from groups
     val writableDeviceCalendars = remember(deviceCalendarGroups) {
         deviceCalendarGroups.flatMap { group ->
             group.pickerCalendars.filter { it.isWritable }
         }
     }
 
-    // Resolve default selection: prefer Room default, fall back to device default
+    // Initial target: the Room default, the device default, the first writable Room
+    // calendar, then the first writable device calendar; 0 when none is writable.
     val (initialCalendarId, initialIsDevice) = remember(
         defaultCalendarId, defaultDeviceCalendarId, writableCalendars, writableDeviceCalendars
     ) {
-        // Try Room default first
         val roomDefault = defaultCalendarId?.takeIf { id ->
             writableCalendars.any { it.id == id }
         }
         if (roomDefault != null) return@remember roomDefault to false
 
-        // Try device default
         val deviceDefault = defaultDeviceCalendarId?.takeIf { id ->
             writableDeviceCalendars.any { it.id == id }
         }
         if (deviceDefault != null) return@remember deviceDefault to true
 
-        // Fall back to first writable Room calendar, then first writable device
         val firstRoom = writableCalendars.firstOrNull()?.id
         if (firstRoom != null) return@remember firstRoom to false
 
@@ -135,9 +127,9 @@ fun IcsImportSheet(
     var selectedCalendarId by remember { mutableLongStateOf(initialCalendarId) }
     var selectedIsDevice by remember { mutableStateOf(initialIsDevice) }
 
-    // A large import runs for several seconds while the sheet stays open; latch on the
-    // first tap so repeat taps can't enqueue duplicate imports. The sheet is recreated
-    // on next open, so this resets on its own.
+    // A large import runs for seconds while the sheet stays open, so the first tap latches
+    // and repeat taps can't queue duplicate imports. The sheet is recreated on next open,
+    // which resets it.
     var isImporting by remember { mutableStateOf(false) }
 
     val (selectedCalendarName, selectedCalendarColor) = if (selectedIsDevice) {
@@ -213,7 +205,6 @@ fun IcsImportSheet(
                     }
                 )
             } else {
-                // No writable calendars warning
                 Text(
                     text = stringResource(R.string.status_no_writable_calendars),
                     style = MaterialTheme.typography.bodyMedium,
@@ -234,10 +225,9 @@ fun IcsImportSheet(
                 Spacer(modifier = Modifier.width(8.dp))
                 Button(
                     onClick = {
-                        // The !isImporting guard here is the actual dedup latch; the
-                        // button stays visually enabled during import so its spinner
-                        // renders in the full-contrast onPrimary color, not the faded
-                        // disabled-content color.
+                        // The !isImporting check is the latch. The button stays enabled
+                        // during import so its spinner draws in full-contrast onPrimary,
+                        // not the faded disabled color.
                         if (selectedCalendarId > 0 && !isImporting) {
                             isImporting = true
                             onImport(selectedCalendarId, events, selectedIsDevice)
@@ -263,9 +253,7 @@ fun IcsImportSheet(
     }
 }
 
-/**
- * Preview item for a single event in the import list.
- */
+/** Shows one event's title, date and time, and location in the preview list. */
 @Composable
 private fun IcsEventPreviewItem(event: Event) {
     Column(
@@ -298,9 +286,7 @@ private fun IcsEventPreviewItem(event: Event) {
     HorizontalDivider()
 }
 
-/**
- * Format event date/time for preview display.
- */
+/** Formats an event's date and time for the preview list. */
 private fun formatEventDateTime(event: Event, resources: android.content.res.Resources): String {
     val startDateStr = DateTimeUtils.formatEventDateShort(event.startTs, event.isAllDay)
 
@@ -319,10 +305,7 @@ private fun formatEventDateTime(event: Event, resources: android.content.res.Res
     }
 }
 
-/**
- * Calendar picker for import target selection.
- * Supports both Room and device calendars.
- */
+/** Shows the expandable import target picker: writable Room calendars, then device calendars. */
 @Composable
 private fun ImportCalendarPicker(
     selectedCalendarId: Long,
@@ -449,9 +432,7 @@ private fun ImportCalendarPicker(
     }
 }
 
-/**
- * Individual calendar item in the import picker list.
- */
+/** Shows one calendar row in the import picker. */
 @Composable
 private fun ImportCalendarItem(
     name: String,

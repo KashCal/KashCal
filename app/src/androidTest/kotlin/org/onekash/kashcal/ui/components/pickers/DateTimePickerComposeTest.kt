@@ -27,12 +27,11 @@ import org.onekash.kashcal.R
 import java.util.Calendar as JavaCalendar
 
 /**
- * Compose UI tests for DateTimeDisplayRow focus behavior.
+ * Compose UI tests for [DateTimeDisplayRow] focus and [DateTimeSheet]'s Done commit.
  *
- * Regression guard for the keyboard-flicker bug: when a sibling TextField has
- * IME focus, tapping the start/end row must clear focus before the picker
- * sheet opens. Otherwise the keyboard dismisses just as the ModalBottomSheet
- * animates in, causing a visible flicker.
+ * When a sibling TextField has IME focus, tapping the start or end row must clear focus before
+ * the picker sheet opens. Otherwise the keyboard dismisses as the ModalBottomSheet animates in,
+ * a visible flicker.
  */
 @RunWith(AndroidJUnit4::class)
 class DateTimePickerComposeTest {
@@ -106,17 +105,14 @@ class DateTimePickerComposeTest {
     }.timeInMillis
 
     /**
-     * Issue #238: tapping Done before the wheel fling settles must commit the
-     * value visually centered at tap time, not the previously-stationary one.
+     * Checks that tapping Done before the wheel fling settles commits the value centered at tap
+     * time, not the one centered before the swipe (#238).
      *
-     * Drives the user-observable surface (DateTimeSheet) rather than the
-     * VerticalWheelPicker building block, because the bug lives in the
-     * settle-only callback contract between the picker and the sheet's
-     * buffered localHour/localMinute.
+     * Drives [DateTimeSheet], not the `VerticalWheelPicker` building block, because the rule
+     * spans the callback from the wheel to the sheet's buffered localHour and localMinute.
      *
-     * Uses manual clock control so the snap-fling animation is still in
-     * progress when Done is tapped — the autoAdvance default would settle
-     * the fling during waitForIdle and mask the pre-fix bug.
+     * The clock is manual so the snap-fling is still running when Done is tapped; with
+     * autoAdvance, waitForIdle would settle the fling first and the test couldn't fail.
      */
     @Test
     fun datetimeSheet_done_mid_fling_commits_centered_hour() {
@@ -141,15 +137,14 @@ class DateTimePickerComposeTest {
 
         composeTestRule.mainClock.autoAdvance = false
 
-        // Hour wheel renders 24 options with the picker's content description.
+        // The hour wheel's content description names its 24 options.
         composeTestRule.onNodeWithContentDescription("Wheel picker with 24 options")
             .performTouchInput {
                 swipeUp(startY = centerY, endY = centerY - 200f, durationMillis = 80)
             }
 
-        // Advance enough frames for centerIndex to move off initialHour but
-        // not enough for the snap-fling to settle. ~80ms is well inside the
-        // typical 250-400ms snap animation.
+        // Advance enough for centerIndex to move off initialHour but not for the snap-fling
+        // to settle. 80ms is well inside the typical 250-400ms snap animation.
         composeTestRule.mainClock.advanceTimeBy(80)
 
         // Tap Done while the fling is still mid-flight.
@@ -160,9 +155,8 @@ class DateTimePickerComposeTest {
         composeTestRule.mainClock.autoAdvance = true
         composeTestRule.waitForIdle()
 
-        // The committed hour must reflect what was visually centered when Done
-        // was tapped, not the pre-swipe initialHour. Pre-fix, this was always
-        // initialHour (10); post-fix, it must have advanced.
+        // The committed hour is what was centered when Done was tapped, so it has moved off
+        // the pre-swipe initialHour (10).
         assertNotEquals(
             "DateTimeSheet committed pre-swipe hour — mid-fling Done dropped the new value",
             initialHour,

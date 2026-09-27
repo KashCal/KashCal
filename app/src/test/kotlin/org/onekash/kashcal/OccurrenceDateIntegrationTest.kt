@@ -17,14 +17,12 @@ import java.util.Properties
 import java.util.concurrent.TimeUnit
 
 /**
- * Integration test to verify occurrence date handling with iCloud CalDAV.
+ * Probes the iCloud CalDAV connection and illustrates the rule that editing one occurrence
+ * starts the form at its occurrenceTs, not the master's startTs, keeping the master's duration.
  *
- * This test verifies:
- * 1. iCloud CalDAV connection works
- * 2. The occurrence timestamp calculation logic is correct
- * 3. When editing a single occurrence, we use occurrenceTs (not master startTs)
- *
- * To run the iCloud connection test, create local.properties with:
+ * The occurrence tests compute the timestamps locally and call no production code. The iCloud
+ * test is `@Ignore`d; it sends a PROPFIND for current-user-principal and expects a 2xx. To run
+ * it, remove the `@Ignore` and put in local.properties:
  *   ICLOUD_USERNAME=your_apple_id@icloud.com
  *   ICLOUD_APP_PASSWORD=xxxx-xxxx-xxxx-xxxx
  */
@@ -55,7 +53,7 @@ class OccurrenceDateIntegrationTest {
             }
             .build()
 
-        // Test PROPFIND to principal URL
+        // PROPFIND to the principal URL
         val propfindBody = """
             <?xml version="1.0" encoding="UTF-8"?>
             <d:propfind xmlns:d="DAV:">
@@ -86,8 +84,7 @@ class OccurrenceDateIntegrationTest {
 
     @Test
     fun `verify occurrence date calculation logic`() {
-        // Simulate the bug scenario:
-        // Master event: Dec 25, 2024 at 10:00 AM - 11:00 AM (1 hour)
+        // Master event: Dec 25, 2024, 10:00 to 11:00 AM (1 hour).
         // User taps occurrence on Jan 1, 2025 at 10:00 AM
 
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
@@ -105,13 +102,13 @@ class OccurrenceDateIntegrationTest {
 
         println("\nUser tapped occurrence: ${dateFormat.format(Date(occurrenceTs))}")
 
-        // BUG (old behavior): Form would show master event date
+        // Wrong: the form shows the master's date
         println("\n❌ OLD BUG behavior:")
         println("   Form would show: ${dateFormat.format(Date(masterStart))}")
         println("   This is WRONG - should show the occurrence date!")
 
-        // FIX (new behavior): Form shows occurrence date
-        val actualStartTs = occurrenceTs  // Use occurrenceTs, not masterStart
+        // Right: the form shows the occurrence's date
+        val actualStartTs = occurrenceTs  // occurrenceTs, not masterStart
         val actualEndTs = actualStartTs + masterDuration
 
         println("\n✅ FIXED behavior:")
@@ -131,7 +128,7 @@ class OccurrenceDateIntegrationTest {
     fun `verify weekly recurrence occurrence timestamps`() {
         val dateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US)
 
-        // Master event: Weekly on Wednesdays starting Dec 25, 2024
+        // Master event: weekly on Wednesdays from Dec 25, 2024
         val masterStart = dateFormat.parse("2024-12-25 14:00:00")!!.time
         val masterEnd = dateFormat.parse("2024-12-25 15:30:00")!!.time
         val duration = masterEnd - masterStart
@@ -141,7 +138,7 @@ class OccurrenceDateIntegrationTest {
         println("RRULE: FREQ=WEEKLY;BYDAY=WE")
         println()
 
-        // Simulate occurrences (what RRULE generates)
+        // Five weekly occurrences, stepped by Calendar (no RRULE expansion)
         val cal = Calendar.getInstance().apply { timeInMillis = masterStart }
 
         println("Generated occurrences:")
@@ -150,8 +147,8 @@ class OccurrenceDateIntegrationTest {
             val occEnd = occStart + duration
             println("  Week $i: ${dateFormat.format(Date(occStart))} - ${dateFormat.format(Date(occEnd))}")
 
-            // Verify: If user edits this occurrence, form should show THIS date
-            val formStartTs = occStart  // NOT masterStart!
+            // Editing this occurrence shows its own date in the form
+            val formStartTs = occStart  // not masterStart
             val formEndTs = formStartTs + duration
 
             assert(formStartTs == occStart) { "Form should show occurrence $i date" }

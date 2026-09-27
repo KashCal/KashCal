@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Ezen a kiszolgálón nem található naptár.</string>
     <string name="caldav_error_unexpected">Váratlan hiba. Próbáld újra.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nHa ez egy szerver a helyi hálózatodon, engedélyezd a helyi hálózati hozzáférést a csatlakozáshoz.</string>
+    <string name="caldav_error_connection_refused_insecure">A szerver olyan helyre irányította át a kapcsolatot, ahová a KashCal nem követi (titkosítatlan címre vagy átirányítási hurokba), ezért a KashCal leállt, mielőtt elküldte volna a jelszavadat. Ellenőrizd a szerver címét.</string>
     <string name="local_network_banner_title">Helyi hálózati hozzáférés szükséges</string>
     <string name="local_network_banner_body">Úgy tűnik, ez a szerver a helyi hálózatodon van. Engedélyezd a helyi hálózati hozzáférést, hogy a KashCal csatlakozhasson hozzá.</string>
     <string name="local_network_banner_allow">Hozzáférés engedélyezése</string>
@@ -824,6 +825,8 @@
     <string name="dialog_edit_recurring_title">Módosítások mentése</string>
     <string name="dialog_delete_recurring_title">Törlés</string>
     <string name="dialog_move_recurring_title">Áthelyezés</string>
+    <string name="snackbar_event_rescheduled">Esemény átütemezve</string>
+    <string name="snackbar_reschedule_failed">Nem sikerült átütemezni az eseményt</string>
     <string name="recurring_this_event">Ez az esemény</string>
     <string name="recurring_all_events">Összes esemény</string>
 

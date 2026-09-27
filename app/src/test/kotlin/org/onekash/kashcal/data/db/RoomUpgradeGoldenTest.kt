@@ -21,21 +21,15 @@ import org.robolectric.annotation.Config
 import java.util.UUID
 
 /**
- * Pre-upgrade golden test for Room 2.6.1 → 2.8.x migration.
- *
- * This test captures baseline behavior for:
+ * Pins the Room behavior the app relies on, so a Room upgrade that changes it fails here.
+ * Written against Room 2.6.1 before the move to 2.8.x. Covers:
  * 1. FTS4 full-text search
- * 2. TypeConverters (List<String>, Map<String, String>)
+ * 2. TypeConverters (SyncStatus, List<String>, Map<String, String>)
  * 3. Flow queries and emissions
- * 4. @Transaction operations
+ * 4. `runInTransaction` rollback and commit
  * 5. Edge cases and null handling
  * 6. RFC 5545/7986 fields (categories, color, url, priority, geo)
- * 7. Database build + TypeConverter validation (Room 2.7.1 fix for b/409804755)
- *
- * Run BEFORE upgrade to establish baseline.
- * Run AFTER upgrade to verify no regressions.
- *
- * Created: 2026-01-25 (Room 2.6.1)
+ * 7. Database build and TypeConverter validation (Room 2.7.1 fix for b/409804755)
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -126,7 +120,7 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
 
         val results = eventsDao.search("Meet*")
 
-        // "Meet*" matches "Meeting" and "Meet", but NOT "Meditation" (Med != Meet)
+        // "Meet*" matches "Meeting" and "Meet", not "Meditation".
         assertEquals(2, results.size)
     }
 
@@ -172,12 +166,11 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
 
     @Test
     fun `golden - null categories becomes empty list`() = runTest {
-        // TypeConverter returns empty list for null (see toStringList)
+        // Null is stored as NULL and read back as [] (Converters.toStringList).
         val id = eventsDao.insert(createEvent(categories = null))
 
         val retrieved = eventsDao.getById(id)
 
-        // Converter returns List<String> (non-nullable), so null becomes []
         assertTrue(retrieved?.categories?.isEmpty() ?: true)
     }
 
@@ -203,11 +196,9 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
 
     @Test
     fun `golden - priority edge cases`() = runTest {
-        // Priority 0 = undefined
+        // RFC 5545 PRIORITY: 0 undefined, 1 highest, 9 lowest.
         val id0 = eventsDao.insert(createEvent(priority = 0, title = "P0"))
-        // Priority 1 = highest
         val id1 = eventsDao.insert(createEvent(priority = 1, title = "P1"))
-        // Priority 9 = lowest
         val id9 = eventsDao.insert(createEvent(priority = 9, title = "P9"))
 
         assertEquals(0, eventsDao.getById(id0)?.priority)
@@ -325,7 +316,6 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
     fun `golden - Flow emits on update`() = runTest {
         val id = eventsDao.insert(createEvent(title = "Original"))
 
-        // Update
         val original = eventsDao.getById(id)!!
         eventsDao.update(original.copy(title = "Updated"))
 
@@ -348,11 +338,11 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
                 throw RuntimeException("Simulated failure")
             }
         } catch (e: RuntimeException) {
-            // Expected
+            // The simulated failure.
         }
 
         val eventsAfter = eventsDao.getByCalendarId(testCalendarId).first()
-        // Should be empty - transaction rolled back
+        // Rolled back: nothing was inserted.
         assertTrue(eventsAfter.isEmpty())
     }
 
@@ -378,7 +368,7 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
             startTs = System.currentTimeMillis(),
             endTs = System.currentTimeMillis() + 3600000,
             dtstamp = System.currentTimeMillis(),
-            // All nullable fields default to null
+            // Every nullable field left at its null default.
         )
         val id = eventsDao.insert(event)
 
@@ -387,13 +377,13 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
         assertNotNull(retrieved)
         assertNull(retrieved?.location)
         assertNull(retrieved?.description)
-        // Categories TypeConverter returns empty list for null
+        // The categories converter reads null as [].
         assertTrue(retrieved?.categories?.isEmpty() ?: true)
         assertNull(retrieved?.color)
         assertNull(retrieved?.url)
         assertNull(retrieved?.geoLat)
         assertNull(retrieved?.geoLon)
-        assertEquals(0, retrieved?.priority) // Default, not null
+        assertEquals(0, retrieved?.priority) // non-null, defaults to 0
     }
 
     @Test
@@ -448,7 +438,7 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
         assertEquals(listOf("工作", "重要", "🔴"), retrieved?.categories)
     }
 
-    // ==================== Index Usage Golden Tests ====================
+    // ==================== Sync Status and Range Search Golden Tests ====================
 
     @Test
     fun `golden - sync status round-trip`() = runTest {
@@ -491,18 +481,14 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
     }
 
     // ==================== Database Build + TypeConverter Validation ====================
-    // Tests for Room 2.7.1 fix (b/409804755) - IndexOutOfBoundsException during
-    // TypeConverter validation. While KashCal uses standard @TypeConverters (not
-    // @ProvidedTypeConverter), this test explicitly verifies database initialization.
+    // Room 2.7.1 fixed an IndexOutOfBoundsException during TypeConverter validation
+    // (b/409804755). The app uses plain @TypeConverters, not @ProvidedTypeConverter, but these
+    // tests check the database builds and the events-table converters work through Room.
 
     @Test
     fun `golden - database builds without IndexOutOfBoundsException`() {
-        // This test explicitly verifies Room's validateTypeConverters() succeeds.
-        // Room 2.7.1 fixed IndexOutOfBoundsException during converter validation.
-        //
-        // The database is built in BaseDaoTest.setup(), so if we reach here,
-        // TypeConverter validation succeeded. This test makes that implicit
-        // coverage explicit.
+        // BaseDaoTest.setup() builds the database, so reaching here means Room's
+        // TypeConverter validation passed; this makes that implicit coverage explicit.
         assertTrue("Database should be open", database.isOpen)
         assertNotNull("AccountsDao should be accessible", database.accountsDao())
         assertNotNull("CalendarsDao should be accessible", database.calendarsDao())
@@ -512,11 +498,11 @@ class RoomUpgradeGoldenTest : BaseDaoTest() {
 
     @Test
     fun `golden - all TypeConverters work through Room integration`() = runTest {
-        // Exercises all 4 TypeConverter types through actual Room operations:
-        // 1. SyncStatus enum (fromSyncStatus/toSyncStatus)
-        // 2. ReminderStatus enum (fromReminderStatus/toReminderStatus) - via ScheduledReminder
-        // 3. List<String> (fromStringList/toStringList) - via categories, reminders
-        // 4. Map<String, String> (fromStringMap/toStringMap) - via extraProperties
+        // Asserts three converters through Room on the events table:
+        // 1. SyncStatus (fromSyncStatus/toSyncStatus)
+        // 2. List<String> (fromStringList/toStringList), via categories and reminders
+        // 3. Map<String, String> (fromStringMap/toStringMap), via extraProperties
+        // The ReminderStatus converter isn't exercised; AccountProvider only by the setup insert.
 
         // SyncStatus converter
         val eventWithStatus = createEvent(title = "Status Test").copy(

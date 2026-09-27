@@ -315,6 +315,7 @@
     <string name="caldav_error_no_calendars">Ingen kalendere fundet på denne server.</string>
     <string name="caldav_error_unexpected">Uventet fejl. Prøv igen.</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\nHvis dette er en server på dit lokale netværk, skal du tillade adgang til det lokale netværk for at oprette forbindelse.</string>
+    <string name="caldav_error_connection_refused_insecure">Serveren omdirigerede forbindelsen et sted hen, KashCal ikke følger (en ukrypteret adresse eller en omdirigeringsløkke), så KashCal stoppede, før din adgangskode blev sendt. Tjek serveradressen.</string>
     <string name="local_network_banner_title">Adgang til lokalt netværk kræves</string>
     <string name="local_network_banner_body">Denne server ser ud til at være på dit lokale netværk. Tillad adgang til det lokale netværk, så KashCal kan oprette forbindelse til den.</string>
     <string name="local_network_banner_allow">Tillad adgang</string>
@@ -823,6 +824,8 @@
     <string name="dialog_edit_recurring_title">Gem ændringer i</string>
     <string name="dialog_delete_recurring_title">Slet</string>
     <string name="dialog_move_recurring_title">Flyt</string>
+    <string name="snackbar_event_rescheduled">Begivenheden er flyttet</string>
+    <string name="snackbar_reschedule_failed">Kunne ikke flytte begivenheden</string>
     <string name="recurring_this_event">Denne begivenhed</string>
     <string name="recurring_all_events">Alle begivenheder</string>
 

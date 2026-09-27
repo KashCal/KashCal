@@ -6,9 +6,9 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.junit.Test
 
 /**
- * Pure unit tests for the theme face model: [ThemeMode] mapping and light/dark face resolution.
- * The accent color scheme's WCAG contrast is proven separately in [AccentSchemeTest]; the
- * retired-teal migration is covered in [ColorSourceTest].
+ * Tests the theme face model [ThemeMode]: its stored-value mapping, light and dark face
+ * resolution, the forcedDark pin, and its label and description resources. The accent scheme's
+ * WCAG contrast is tested in [AccentSchemeTest]; the retired-teal migration in [ColorSourceTest].
  */
 class ThemeModeTest {
 
@@ -31,7 +31,7 @@ class ThemeModeTest {
     @Test
     fun `fromPrefValue falls back to SYSTEM for unknown or null`() {
         // The retired "teal" theme string is unknown to the face model and falls back to SYSTEM;
-        // its brand color is preserved separately via the accent seed (see ColorSourceTest).
+        // its brand color is kept through the accent seed (ColorSourceTest).
         assertEquals(ThemeMode.SYSTEM, ThemeMode.fromPrefValue(KashCalDataStore.THEME_TEAL))
         assertEquals(ThemeMode.SYSTEM, ThemeMode.fromPrefValue("teal-neon-2099"))
         assertEquals(ThemeMode.SYSTEM, ThemeMode.fromPrefValue(""))

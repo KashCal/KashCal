@@ -60,16 +60,16 @@ import org.onekash.kashcal.ui.components.category.toMessageRes
 import org.onekash.kashcal.ui.components.pickers.ColorPaletteSheet
 import org.onekash.kashcal.ui.viewmodels.TagUiItem
 
-/**
- * Tag-management detail screen. Lists every tag the user has, each with a
- * colored swatch, and lets them recolor, rename, or delete it. Fully
- * stateless / param-driven — the caller owns the tag list and the three actions.
- *
- * The active per-tag action sheet is local UI state; which tag it targets is
- * held alongside it so the sheet survives a config change with the same tag.
- */
+/** The per-tag action sheet currently open on [TagsScreen]. */
 private enum class TagSheet { NONE, COLOR, RENAME }
 
+/**
+ * Shows the tag-management screen: every tag with a colored swatch, each of which the user can
+ * recolor, rename or delete. The caller owns the tag list and the three actions.
+ *
+ * The open action sheet and the name of the tag it targets are both saved, so the sheet
+ * survives a configuration change on the same tag.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TagsScreen(
@@ -83,8 +83,8 @@ fun TagsScreen(
     var targetName by rememberSaveable { mutableStateOf("") }
     var syncInfoExpanded by rememberSaveable { mutableStateOf(false) }
 
-    // Resolve the live row for the targeted tag so a rename/color that
-    // changes the list updates or dismisses the sheet rather than acting stale.
+    // Resolve the live row for the targeted tag, so a change to the list updates the sheet, or
+    // closes it when the tag is gone, instead of acting on a stale row.
     val target = remember(targetName, tags) { tags.find { it.name == targetName } }
 
     Scaffold(
@@ -93,8 +93,8 @@ fun TagsScreen(
                 title = stringResource(R.string.tags_screen_title),
                 onNavigateBack = onNavigateBack,
                 backContentDescription = stringResource(R.string.subscriptions_cd_back),
-                // Reached from the account hub, not a calendar view — a today
-                // shortcut would be off-context here.
+                // Reached from the account hub, not a calendar view, so a jump-to-today logo
+                // would be off-context here.
                 showLogo = false,
             )
         }
@@ -111,8 +111,7 @@ fun TagsScreen(
                     expanded = syncInfoExpanded,
                     onToggleInfo = { syncInfoExpanded = !syncInfoExpanded },
                 )
-                // Full-width rule below the guidance so the tag list visibly
-                // starts here, distinct from the header note above.
+                // Full-width rule so the tag list visibly starts below the guidance.
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
             }
             if (tags.isEmpty()) {
@@ -172,10 +171,9 @@ fun TagsScreen(
 }
 
 /**
- * Top-of-screen guidance. Always shows a short intro to the tag actions. A
- * trailing info button expands the detail inline (removal is local, events keep
- * their labels, how tags travel over sync) rather than in a dialog, in keeping
- * with the app's inline-over-modal UX.
+ * Shows the top-of-screen guidance: a short intro to the tag actions, always visible, and an
+ * info button that expands the detail inline (removal is local, events keep their labels, how
+ * tags travel over sync) rather than in a dialog, keeping with the app's inline-over-modal UX.
  */
 @Composable
 private fun ManageNote(
@@ -199,8 +197,7 @@ private fun ManageNote(
             }
         }
         AnimatedVisibility(visible = expanded) {
-            // Tonal callout so the sync detail reads as its own info box, set off
-            // from the plain note above it.
+            // Tonal callout so the sync detail reads as its own info box, apart from the note.
             Surface(
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.secondaryContainer,
@@ -229,10 +226,9 @@ private fun TagRow(
     val actionsDesc = stringResource(R.string.tags_actions_content_desc, tag.name)
 
     Box {
-        // The whole row is the tap target — tapping anywhere opens the actions
-        // menu — with the trailing glyph as its affordance. The row carries the
-        // "actions for <tag>" label; the swatch keeps its own so TalkBack still
-        // announces the color separately.
+        // Tapping anywhere on the row opens the actions menu; the trailing glyph is the
+        // affordance. The row carries the "actions for <tag>" label and the swatch keeps its
+        // own, so TalkBack still announces the color separately.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -278,9 +274,8 @@ private fun TagRow(
 }
 
 /**
- * Rename sheet: pre-fills the current name, disables Save for a blank name or
- * one unchanged from the current. Mirrors the account rename sheet; no
- * imePadding — Material3 handles IME insets for the modal sheet.
+ * Shows the rename sheet, pre-filled with the current name, laid out like [RenameAccountSheet].
+ * No imePadding: Material3 handles IME insets for the modal sheet.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -293,11 +288,11 @@ private fun RenameTagSheet(
     var name by remember { mutableStateOf(currentName) }
     val focusRequester = remember { FocusRequester() }
 
-    // Run the same name rules as every other tag entry point (comma/length/blank),
-    // so a rename can't slip an invalid name past the shared validator. An invalid
-    // name shows inline (no blocking dialog) and disables Save; a true no-op (the
-    // exact same string) also disables it. A case-only change ("work" -> "Work")
-    // is a real edit and stays enabled — the rename cascade restamps the casing.
+    // Run the same name rules as every other tag entry point (blank, comma, length), so a
+    // rename can't slip an invalid name past the shared validator. An invalid name shows
+    // inline and disables Save; so does a name that validates to the current one. A
+    // case-only change ("work" -> "Work") is a real edit and stays enabled: the rename
+    // restamps the casing.
     val outcome = CategoryNameValidator.validate(name)
     val valid = outcome as? CategoryName.Valid
     val errorRes = (outcome as? CategoryName.Invalid)?.error?.toMessageRes()

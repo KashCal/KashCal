@@ -20,14 +20,14 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for SyncLogsDao - sync operation logging for diagnostics.
+ * Tests [SyncLogsDao], the sync diagnostics log.
  *
- * Critical for ensuring:
- * - Sync logs are properly inserted and retrieved
- * - Filtering by calendar, event, result type works
- * - Cleanup operations (deleteOldLogs, trimToCount) work correctly
- * - Range queries return correct results
- * - Log ordering (most recent first) is correct
+ * Covers:
+ * - Insert and retrieval, newest first, with limits
+ * - Filtering by calendar, event and result type
+ * - Time-range queries and counts
+ * - Cleanup (deleteOldLogs, deleteLogsForCalendar, deleteAll, trimToCount)
+ * - The SyncLog success and error factories
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -279,14 +279,14 @@ class SyncLogsDaoTest {
         val oneHourAgo = now - 3600000
         val twoHoursAgo = now - 7200000
 
-        // Errors after cutoff
+        // One error after the cutoff, one a second before it (not counted)
         syncLogsDao.insert(createLog(timestamp = now, result = SyncLog.RESULT_ERROR_NETWORK))
         syncLogsDao.insert(createLog(timestamp = oneHourAgo - 1000, result = SyncLog.RESULT_ERROR_AUTH))
 
-        // Success (shouldn't count)
+        // Success (not counted)
         syncLogsDao.insert(createLog(timestamp = now, result = SyncLog.RESULT_SUCCESS))
 
-        // Error before cutoff (shouldn't count)
+        // Error before the cutoff (not counted)
         syncLogsDao.insert(createLog(timestamp = twoHoursAgo, result = SyncLog.RESULT_ERROR_PARSE))
 
         val errorCount = syncLogsDao.getErrorCountSince(oneHourAgo)
@@ -488,7 +488,7 @@ class SyncLogsDaoTest {
 
         val errors = syncLogsDao.getErrorLogs()
 
-        // SKIPPED is not SUCCESS, so should be included
+        // SKIPPED is not SUCCESS, so it's included
         assertEquals(1, errors.size)
         assertEquals(SyncLog.RESULT_SKIPPED, errors.first().result)
     }

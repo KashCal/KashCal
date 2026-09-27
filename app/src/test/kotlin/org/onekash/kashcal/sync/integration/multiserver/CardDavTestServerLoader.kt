@@ -5,18 +5,17 @@ import org.onekash.kashcal.sync.carddav.CardDavClient
 import org.onekash.kashcal.sync.carddav.OkHttpCardDavClientFactory
 
 /**
- * Loads CardDAV test server credentials and builds read-path clients.
+ * Loads CardDAV test server credentials and builds CardDAV clients.
  *
- * Credential *values* are read through [CalDavTestServerLoader.property] so both
- * protocols share one local.properties parse (and one set of secrets). Only the
- * client construction — via [OkHttpCardDavClientFactory] and the CardDAV
- * quirks — is specific here.
+ * Values are read through [CalDavTestServerLoader.property], so both protocols share one
+ * local.properties parse. Only the client construction, through [OkHttpCardDavClientFactory]
+ * and the CardDAV quirks, is specific here.
  */
 object CardDavTestServerLoader {
 
     /**
-     * Resolve credentials for a CardDAV server config, or null when any required
-     * key is absent.
+     * Loads credentials for [config], or null when the username, the password or a server URL
+     * is missing.
      */
     fun loadCredentials(config: CardDavServerConfig): ServerCredentials? {
         val username = CalDavTestServerLoader.property(config.usernameKey) ?: return null
@@ -42,10 +41,7 @@ object CardDavTestServerLoader {
         )
     }
 
-    /**
-     * Build a [CardDavClient] for a server config, or null when credentials are
-     * unavailable.
-     */
+    /** Creates a [CardDavClient] for [config], or null when [loadCredentials] returns null. */
     fun createClient(config: CardDavServerConfig): Pair<CardDavClient, ServerCredentials>? {
         val creds = loadCredentials(config) ?: return null
         val quirks = config.quirksFactory(creds.serverUrl)
@@ -58,8 +54,7 @@ object CardDavTestServerLoader {
         return factory.createClient(credentials, quirks) to creds
     }
 
-    /** Reachability probe — the CardDAV endpoint is a plain URL, so the CalDAV
-     *  loader's OPTIONS probe applies unchanged. */
+    /** Delegates to [CalDavTestServerLoader.isServerReachable]: the endpoint is a plain URL. */
     fun isServerReachable(url: String): Boolean =
         CalDavTestServerLoader.isServerReachable(url)
 }

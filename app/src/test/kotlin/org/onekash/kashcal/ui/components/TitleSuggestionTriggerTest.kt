@@ -5,16 +5,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Tests for [shouldShowTitleSuggestions], the pure predicate that decides
- * whether the autocomplete dropdown should trigger.
+ * Tests [shouldShowTitleSuggestions], which decides whether the title field queries
+ * autocomplete suggestions:
+ * - the 3-character minimum, at and around the boundary,
+ * - edit mode: a pre-filled title must not query until the user changes it,
+ * - clearing to empty doesn't query (the length check catches it).
  *
- * Covers:
- * - 3-character minimum (boundary)
- * - Edit mode: pre-filled title must not trigger until user changes it
- * - Clearing to empty hides dropdown (handled by the threshold)
- *
- * The feature-enabled preference is NOT checked here — it's enforced upstream
- * by the ViewModel returning an empty suggestion list when disabled.
+ * The title-suggestions preference isn't checked here: `HomeViewModel.suggestTitles` returns
+ * an empty list when it's off.
  */
 class TitleSuggestionTriggerTest {
 
@@ -37,7 +35,7 @@ class TitleSuggestionTriggerTest {
 
     @Test
     fun `returns false in edit mode when text matches initial value`() {
-        // Sheet loaded an existing event — user hasn't changed anything yet.
+        // The sheet loaded an existing event and the user hasn't changed anything yet.
         assertFalse(shouldShowTitleSuggestions(currentText = "Lunch", initialText = "Lunch"))
     }
 

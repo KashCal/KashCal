@@ -12,9 +12,13 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository
+import org.onekash.kashcal.data.calendar_provider.deviceChangeNotifier
+import org.onekash.kashcal.data.calendar_provider.deviceEventReader
+import org.onekash.kashcal.data.calendar_provider.deviceEventWriter
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
@@ -23,19 +27,25 @@ import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
+import org.onekash.kashcal.ui.components.EventFormState
 
 /**
- * Pins the immediate-refresh contract for device-calendar writes.
+ * Tests the immediate-refresh contract for device-calendar writes.
  *
  * Device events live in Android's CalendarProvider, not Room, so the reactive
  * views only re-query them when [DisplayEventRepository.deviceCalendarChangeSignal]
- * emits. That signal is normally driven by a debounced ContentObserver, which
- * left the calendar view stale for up to the debounce window after the app's
- * own create/edit/delete. Each device write must therefore explicitly request
- * an immediate device-view refresh so the change appears without lag.
+ * emits. The provider's ContentObserver drives that signal too, but it is
+ * debounced, so the device writer bumps it after each successful write and the
+ * change shows without lag. A create, edit, delete and ICS import each send it
+ * once; an import that creates nothing and a Room-event write send none. The
+ * import test also checks the count and default reminders. These tests drive
+ * the real ViewModel and writer over [FakeCalendarProviderRepository].
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class HomeViewModelDeviceViewRefreshTest {
+
+    /** Receives the device change signal the writer sends after each successful write. */
+    private val deviceManager = deviceChangeNotifier()
 
     private val testDispatcher = StandardTestDispatcher()
 
@@ -97,7 +107,8 @@ class HomeViewModelDeviceViewRefreshTest {
         accountRepository = accountRepository,
         syncScheduler = syncScheduler,
         networkMonitor = networkMonitor,
-        calendarProviderRepository = fakeCalendarProviderRepository,
+        deviceEventReader = fakeCalendarProviderRepository.deviceEventReader(),
+        deviceEventWriter = fakeCalendarProviderRepository.deviceEventWriter(dataStore, deviceManager),
         attendeeBackfill = mockk(relaxed = true),
         contactEmailReader = mockk(relaxed = true),
         context = mockk(relaxed = true),
@@ -109,21 +120,12 @@ class HomeViewModelDeviceViewRefreshTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.createDeviceEvent(
-            calendarId = 1L,
-            title = "Lunch",
-            description = null,
-            location = null,
-            startTs = 1_000L,
-            endTs = 2_000L,
-            isAllDay = false,
-            rrule = null,
-            timezone = "UTC",
-            reminders = emptyList(),
+        viewModel.saveDeviceEvent(
+            EventFormState(title = "Lunch", selectedCalendarId = 1L, timezone = "UTC", isDeviceCalendar = true)
         )
         advanceUntilIdle()
 
-        verify { displayEventRepository.notifyDeviceCalendarChanged() }
+        verify(exactly = 1) { deviceManager.notifyDeviceCalendarChanged() }
     }
 
     @Test
@@ -131,21 +133,19 @@ class HomeViewModelDeviceViewRefreshTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.updateDeviceEvent(
-            eventId = 42L,
-            title = "Lunch (moved)",
-            description = null,
-            location = null,
-            startTs = 1_000L,
-            endTs = 2_000L,
-            isAllDay = false,
-            rrule = null,
-            timezone = "UTC",
-            reminders = emptyList(),
+        viewModel.saveDeviceEvent(
+            EventFormState(
+                title = "Lunch (moved)",
+                selectedCalendarId = 1L,
+                timezone = "UTC",
+                isDeviceCalendar = true,
+                editingDeviceEventId = 42L,
+            )
         )
         advanceUntilIdle()
 
-        verify { displayEventRepository.notifyDeviceCalendarChanged() }
+        assertEquals(listOf(42L), fakeCalendarProviderRepository.updatedEventIds)
+        verify(exactly = 1) { deviceManager.notifyDeviceCalendarChanged() }
     }
 
     @Test
@@ -156,7 +156,7 @@ class HomeViewModelDeviceViewRefreshTest {
         viewModel.deleteDeviceEvent(42L)
         advanceUntilIdle()
 
-        verify { displayEventRepository.notifyDeviceCalendarChanged() }
+        verify(exactly = 1) { deviceManager.notifyDeviceCalendarChanged() }
     }
 
     @Test
@@ -180,7 +180,51 @@ class HomeViewModelDeviceViewRefreshTest {
         )
         advanceUntilIdle()
 
-        verify { displayEventRepository.notifyDeviceCalendarChanged() }
+        verify(exactly = 1) { deviceManager.notifyDeviceCalendarChanged() }
+    }
+
+    private fun importedEvent(uid: String, isAllDay: Boolean = false) =
+        org.onekash.kashcal.data.db.entity.Event(
+            id = 0L,
+            calendarId = 0L,
+            uid = uid,
+            title = "Imported $uid",
+            startTs = 1_000L,
+            endTs = 2_000L,
+            dtstamp = 0L,
+            isAllDay = isAllDay,
+        )
+
+    @Test
+    fun `importing ICS events into a device calendar returns the count and applies default reminders`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val count = viewModel.importIcsToDeviceCalendar(
+            events = listOf(importedEvent("timed"), importedEvent("all-day", isAllDay = true)),
+            calendarId = 5L,
+        )
+        advanceUntilIdle()
+
+        assertEquals(2, count)
+        val created = fakeCalendarProviderRepository.createdEvents
+        assertEquals(listOf(5L, 5L), created.map { it.calendarId })
+        assertEquals("timed default", listOf(15), created[0].reminders)
+        assertEquals("all-day default", listOf(1440), created[1].reminders)
+    }
+
+    @Test
+    fun `an ICS import that creates nothing does not poke the device change signal`() = runTest {
+        fakeCalendarProviderRepository.writeFailure =
+            org.onekash.kashcal.error.CalendarError.DeviceCalendar.WriteFailed("boom")
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        val count = viewModel.importIcsToDeviceCalendar(listOf(importedEvent("x")), calendarId = 5L)
+        advanceUntilIdle()
+
+        assertEquals(0, count)
+        verify(exactly = 0) { deviceManager.notifyDeviceCalendarChanged() }
     }
 
     @Test
@@ -188,12 +232,12 @@ class HomeViewModelDeviceViewRefreshTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Room events live in Room's reactive Flow, so their refresh must NOT
-        // bump the device signal — doing so would blank and rebuild the month
-        // dot cache (a visible flicker) on every Room edit and background sync.
+        // Room events live in Room's reactive Flow, so their refresh must not bump
+        // the device signal, which blanks and rebuilds the month dot cache (a
+        // visible flicker) on every Room edit and background sync.
         viewModel.deleteEvent(99L)
         advanceUntilIdle()
 
-        verify(exactly = 0) { displayEventRepository.notifyDeviceCalendarChanged() }
+        verify(exactly = 0) { deviceManager.notifyDeviceCalendarChanged() }
     }
 }

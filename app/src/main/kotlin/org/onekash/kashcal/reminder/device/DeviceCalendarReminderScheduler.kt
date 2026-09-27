@@ -6,33 +6,30 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository
 import org.onekash.kashcal.data.calendar_provider.UpcomingDeviceReminder
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.util.AlarmArming
 import org.onekash.kashcal.util.maskEventId
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.abs
 
 /**
- * Schedules reminders for device calendar events using AlarmManager.
+ * Arms AlarmManager alarms for device event reminders.
  *
- * Key design:
- * - **Single next-upcoming alarm model**: Only one alarm is active at a time.
- *   After it fires, reschedule for the next reminder.
- * - **Uses (eventId, occurrenceStartTs) as stable composite key** (not instanceId)
- * - **Ephemeral**: No Room storage; all context is in intent extras
+ * - One reminder alarm at a time: the next upcoming reminder. After it fires, the next is
+ *   queried and armed. Snooze alarms are separate, one per occurrence.
+ * - An occurrence is keyed by (eventId, occurrence start), not the provider's instance ID.
+ * - Nothing is stored in Room; the alarm's intent extras carry the whole event.
  *
- * Per Android best practices:
- * - Uses setExactAndAllowWhileIdle() for exact timing in Doze
- * - Falls back to setAndAllowWhileIdle() if exact alarms not available
- * - Checks READ_CALENDAR permission before querying
+ * Alarms go through [AlarmArming.setAllowWhileIdle]: exact when exact alarms are allowed,
+ * otherwise inexact.
  *
- * @see DeviceCalendarAlarmReceiver for alarm handling
+ * @see DeviceCalendarAlarmReceiver
  */
 @Singleton
 class DeviceCalendarReminderScheduler @Inject constructor(
@@ -43,10 +40,9 @@ class DeviceCalendarReminderScheduler @Inject constructor(
     companion object {
         private const val TAG = "DeviceCalReminderSched"
 
-        /** Intent action for device calendar reminder alarm */
         const val ACTION_DEVICE_REMINDER_ALARM = "org.onekash.kashcal.DEVICE_REMINDER_ALARM"
 
-        // Intent extras - stored for notification display and event identification
+        // Same keys as DeviceCalendarReminderNotificationManager's extras.
         const val EXTRA_EVENT_ID = "device_event_id"
         const val EXTRA_OCCURRENCE_TS = "device_occurrence_ts"
         const val EXTRA_TITLE = "device_title"
@@ -56,19 +52,16 @@ class DeviceCalendarReminderScheduler @Inject constructor(
         const val EXTRA_CALENDAR_ID = "device_calendar_id"
         const val EXTRA_TRIGGER_TIME = "device_trigger_time"
 
-        /** Single request code - only one alarm is active at a time */
+        /** Request code of the one reminder alarm; re-arming replaces it. */
         private const val REQUEST_CODE = 5001
 
-        /** Request code base for snooze alarms (supports multiple snoozed events) */
+        /** Base of the per-occurrence snooze request codes, so several snoozes coexist. */
         private const val SNOOZE_REQUEST_CODE_BASE = 6000
 
-        /** Bucket range for snooze request codes. 100K buckets gives <0.01% collision at 5 events. */
+        /** Snooze request code buckets; 100K gives <0.01% collision odds at 5 events. */
         const val SNOOZE_REQUEST_CODE_RANGE = 100_000
 
-        /**
-         * Compute snooze alarm request code from event identity.
-         * Public for testability — used internally by [createSnoozePendingIntent].
-         */
+        /** Returns the snooze alarm's request code for an occurrence. Public for tests. */
         fun computeSnoozeRequestCode(eventId: Long, occurrenceTs: Long): Int {
             return SNOOZE_REQUEST_CODE_BASE + abs((eventId xor occurrenceTs) % SNOOZE_REQUEST_CODE_RANGE).toInt()
         }
@@ -79,38 +72,31 @@ class DeviceCalendarReminderScheduler @Inject constructor(
     }
 
     /**
-     * Schedule the next upcoming device calendar reminder.
+     * Arms the alarm for the next upcoming reminder in the enabled device calendars.
      *
-     * Checks:
-     * 1. Feature is enabled (deviceCalendarRemindersEnabled)
-     * 2. Device calendars are enabled
-     * 3. READ_CALENDAR permission is granted
-     * 4. There are enabled device calendar IDs
-     * 5. There is an upcoming reminder
+     * Cancels the pending reminder alarm instead when device reminders or device calendars are
+     * off, READ_CALENDAR isn't granted, no device calendar is enabled, or no reminder is upcoming.
+     * Snooze alarms are left alone.
      */
     suspend fun scheduleNextReminder() {
-        // Check if feature is enabled
         if (!dataStore.getDeviceCalendarRemindersEnabled()) {
             Log.d(TAG, "Device calendar reminders disabled, cancelling any pending alarm")
             cancelPendingAlarm()
             return
         }
 
-        // Check if device calendars are enabled
         if (!dataStore.getDeviceCalendarsEnabled()) {
             Log.d(TAG, "Device calendars disabled, cancelling any pending alarm")
             cancelPendingAlarm()
             return
         }
 
-        // Check READ_CALENDAR permission
         if (!hasReadCalendarPermission()) {
             Log.w(TAG, "READ_CALENDAR permission not granted, cancelling any pending alarm")
             cancelPendingAlarm()
             return
         }
 
-        // Get enabled calendar IDs
         val enabledCalendarIds = dataStore.getEnabledDeviceCalendarIds()
         if (enabledCalendarIds.isEmpty()) {
             Log.d(TAG, "No enabled device calendars, cancelling any pending alarm")
@@ -118,7 +104,6 @@ class DeviceCalendarReminderScheduler @Inject constructor(
             return
         }
 
-        // Query for next upcoming reminder
         val nextReminder = calendarProviderRepository.getNextUpcomingReminder(enabledCalendarIds)
         if (nextReminder == null) {
             Log.d(TAG, "No upcoming device calendar reminders found, cancelling any pending alarm")
@@ -129,19 +114,16 @@ class DeviceCalendarReminderScheduler @Inject constructor(
         scheduleAlarm(nextReminder)
     }
 
-    /**
-     * Reschedule after the current alarm fires.
-     * Re-queries for the next upcoming reminder.
-     */
+    /** Arms the next reminder after one fired; same as [scheduleNextReminder]. */
     suspend fun rescheduleAfterFire() {
         scheduleNextReminder()
     }
 
     /**
-     * Gate for [DeviceCalendarAlarmReceiver] before showing a notification:
-     * intent extras are baked in at schedule time, so the user may have
-     * deleted the event (soft-delete — `DELETED = 1`), disabled the feature,
-     * or revoked permission between then and when the alarm fires.
+     * Returns whether a fired alarm for [eventId] may still notify. The intent extras are fixed
+     * when the alarm is armed; since then the event may have been deleted (`DELETED = 1` counts),
+     * device reminders or device calendars turned off, every device calendar disabled, or
+     * READ_CALENDAR revoked.
      */
     suspend fun shouldFireReminder(eventId: Long): Boolean {
         if (!dataStore.getDeviceCalendarRemindersEnabled()) return false
@@ -152,16 +134,10 @@ class DeviceCalendarReminderScheduler @Inject constructor(
     }
 
     /**
-     * Schedule a snooze alarm for a device calendar event.
+     * Arms a snooze alarm [snoozeDurationMinutes] from now for one occurrence, replacing an
+     * earlier snooze of the same occurrence.
      *
-     * @param eventId Device calendar event ID
-     * @param occurrenceTs Original occurrence start timestamp
-     * @param title Event title
-     * @param location Event location (optional)
-     * @param isAllDay Whether this is an all-day event
-     * @param calendarColor Calendar color
-     * @param calendarId Calendar ID
-     * @param snoozeDurationMinutes How long to snooze (default 15 minutes)
+     * @param occurrenceTs the occurrence's start, not the snooze time
      */
     fun scheduleSnooze(
         eventId: Long,
@@ -187,78 +163,43 @@ class DeviceCalendarReminderScheduler @Inject constructor(
             calendarId = calendarId
         )
 
-        // Use a different request code for snooze to not conflict with regular alarms
+        // A request code of its own, so the snooze doesn't replace the reminder alarm.
         val pendingIntent = createSnoozePendingIntent(snoozedReminder)
 
-        try {
-            if (canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
-            } else {
-                alarmManager.setAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    triggerTime,
-                    pendingIntent
-                )
-            }
-            Log.d(TAG, "Scheduled snooze for event ${eventId.maskEventId()} in $snoozeDurationMinutes minutes")
-        } catch (e: SecurityException) {
-            Log.e(TAG, "Cannot schedule snooze alarm", e)
-        }
+        // A SecurityException on the exact set is logged, not retried as an inexact alarm.
+        AlarmArming.setAllowWhileIdle(
+            alarmManager = alarmManager,
+            triggerTime = triggerTime,
+            pendingIntent = pendingIntent,
+            tag = TAG,
+            label = "Device snooze for event ${eventId.maskEventId()} in $snoozeDurationMinutes min",
+            inexactFallback = false
+        )
     }
 
-    /**
-     * Cancel any pending device calendar reminder alarm.
-     */
+    /** Cancels the pending reminder alarm; snooze alarms stay armed. */
     fun cancelPendingAlarm() {
         val pendingIntent = createAlarmPendingIntent(null)
         alarmManager.cancel(pendingIntent)
         Log.d(TAG, "Cancelled pending device calendar reminder alarm")
     }
 
-    /**
-     * Schedule an alarm for a reminder.
-     */
     private fun scheduleAlarm(reminder: UpcomingDeviceReminder) {
         val pendingIntent = createAlarmPendingIntent(reminder)
 
-        try {
-            if (canScheduleExactAlarms()) {
-                alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    reminder.triggerTime,
-                    pendingIntent
-                )
-                Log.d(TAG, "Scheduled exact device reminder for event ${reminder.eventId.maskEventId()} at ${reminder.triggerTime}")
-            } else {
-                alarmManager.setAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    reminder.triggerTime,
-                    pendingIntent
-                )
-                Log.d(TAG, "Scheduled inexact device reminder (may drift 5-15 min)")
-            }
-        } catch (e: SecurityException) {
-            Log.w(TAG, "SecurityException scheduling alarm, trying inexact", e)
-            try {
-                alarmManager.setAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    reminder.triggerTime,
-                    pendingIntent
-                )
-            } catch (e2: SecurityException) {
-                Log.e(TAG, "Cannot schedule any alarm for device reminder", e2)
-            }
-        }
+        AlarmArming.setAllowWhileIdle(
+            alarmManager = alarmManager,
+            triggerTime = reminder.triggerTime,
+            pendingIntent = pendingIntent,
+            tag = TAG,
+            label = "Device reminder for event ${reminder.eventId.maskEventId()}"
+        )
     }
 
     /**
-     * Create PendingIntent for device calendar reminder alarm.
+     * Creates the reminder alarm's PendingIntent.
      *
-     * @param reminder The reminder data to store in extras, or null for cancel operation
+     * @param reminder the extras to carry, or null to build one for cancelling
      */
     private fun createAlarmPendingIntent(reminder: UpcomingDeviceReminder?): PendingIntent {
         val intent = Intent(context, DeviceCalendarAlarmReceiver::class.java).apply {
@@ -283,10 +224,7 @@ class DeviceCalendarReminderScheduler @Inject constructor(
         )
     }
 
-    /**
-     * Create PendingIntent for snooze alarm.
-     * Uses a unique request code per event to allow multiple snoozed events.
-     */
+    /** Creates a snooze alarm's PendingIntent, with a request code per occurrence. */
     private fun createSnoozePendingIntent(reminder: UpcomingDeviceReminder): PendingIntent {
         val intent = Intent(context, DeviceCalendarAlarmReceiver::class.java).apply {
             action = ACTION_DEVICE_REMINDER_ALARM
@@ -310,25 +248,10 @@ class DeviceCalendarReminderScheduler @Inject constructor(
         )
     }
 
-    /**
-     * Check if READ_CALENDAR permission is granted.
-     */
     private fun hasReadCalendarPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             context,
             Manifest.permission.READ_CALENDAR
         ) == PackageManager.PERMISSION_GRANTED
-    }
-
-    /**
-     * Check if we can schedule exact alarms.
-     * For Android 12+, USE_EXACT_ALARM is auto-granted for calendar apps.
-     */
-    private fun canScheduleExactAlarms(): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            alarmManager.canScheduleExactAlarms()
-        } else {
-            true
-        }
     }
 }

@@ -1,40 +1,30 @@
 package org.onekash.kashcal.sync.scheduler
 
 /**
- * Narrow scheduler for ICS subscription periodic refresh. Sibling to
- * [SyncScheduler] (main CalDAV sync).
+ * Schedules the periodic ICS subscription refresh; the ICS counterpart of [SyncScheduler].
  *
- * Exists so callers can depend on an injectable seam instead of holding a
- * `Context` to call a worker companion directly.
- *
- * Deliberately only two methods. The refresh job used to have a single arming
- * call site that ran once per install, which left feeds that were never armed
- * with no way back. There is now exactly one component that decides the period
- * ([IcsRefreshScheduleReconciler]) and this seam is what it drives, so a second
- * arming path with its own idea of the interval cannot reappear.
+ * An injectable seam, so callers don't hold a `Context` to call the worker companion. It has
+ * two methods on purpose: [IcsRefreshScheduleReconciler] is the one component that decides
+ * the period and drives this seam, so no second arming path with its own interval appears.
  */
 interface IcsScheduler {
 
     /**
-     * Bring the periodic refresh job in line with [intervalHours]: arm it if it
-     * is missing, move its period if it differs, otherwise leave it alone.
+     * Brings the periodic refresh job in line with [intervalHours]: arms it if missing, moves
+     * its period if it differs, otherwise leaves it alone.
      *
-     * Idempotent by design — this runs on every app start as well as on every
-     * feed mutation, so it must be cheap and safe to call repeatedly.
-     *
-     * Takes no default interval on purpose: the caller always derives one from
-     * the feeds in the database, so a forgotten argument should be a compile
-     * error rather than a silent fallback to some fixed period.
+     * Must be idempotent and cheap: it runs on every app start and every feed mutation. There
+     * is no default interval, so a forgotten argument is a compile error, not a silent fixed
+     * period; the caller always derives it from the feeds in the database.
      */
     suspend fun ensurePeriodicRefresh(intervalHours: Long)
 
     /**
-     * Stop the periodic refresh job.
+     * Stops the periodic refresh job, suspending until the cancellation is committed.
      *
-     * Suspends until the cancellation has been committed. Cancelling is
-     * asynchronous underneath, and returning early would let a caller that arms
-     * the job straight afterwards (feed toggled off, then back on) read the
-     * about-to-die spec as live and leave the job cancelled with a feed enabled.
+     * Cancelling is asynchronous underneath. Returning early would let a caller that arms
+     * the job straight afterwards (feed toggled off, then on) read the dying spec as live and
+     * leave the job cancelled with a feed enabled.
      */
     suspend fun cancelPeriodicRefresh()
 }

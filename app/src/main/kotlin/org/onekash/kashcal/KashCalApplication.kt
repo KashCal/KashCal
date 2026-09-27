@@ -31,15 +31,11 @@ import java.time.ZoneId
 import javax.inject.Inject
 
 /**
- * Application class with Hilt dependency injection and WorkManager integration.
+ * Runs app-start setup and supplies WorkManager's configuration.
  *
- * Implements Configuration.Provider to use HiltWorkerFactory for injecting
- * dependencies into WorkManager workers (like CalDavSyncWorker).
- *
- * Features:
- * - Network monitoring for offline-first architecture
- * - Automatic sync trigger when network is restored
- * - WorkManager integration with Hilt
+ * As a `Configuration.Provider` it hands WorkManager the [HiltWorkerFactory], so workers such as
+ * `CalDavSyncWorker` get their dependencies injected. On start it also requests a sync whenever
+ * the network comes back.
  */
 @HiltAndroidApp
 class KashCalApplication : Application(), Configuration.Provider {
@@ -49,12 +45,10 @@ class KashCalApplication : Application(), Configuration.Provider {
         const val PREFS_NAME = "kashcal_upgrade"
         const val KEY_LAST_VERSION = "last_version_code"
         /**
-         * Previous versionCode captured by [handleAppUpgrade] before
-         * [KEY_LAST_VERSION] is overwritten on each app start. 0 means
-         * either fresh install or prior to this key being introduced.
-         * Used as the seed signal for the What's New sheet so existing
-         * users from before the feature shipped don't fall through the
-         * "DataStore default 0 = silent fresh install" trap.
+         * Holds the versionCode [handleAppUpgrade] read before overwriting [KEY_LAST_VERSION]
+         * on a version change. 0 means a fresh install or an install older than this key.
+         * It seeds the What's New sheet, so users who predate the feature aren't treated as a
+         * silent fresh install by the DataStore default of 0.
          */
         const val KEY_PREVIOUS_VERSION = "previous_version_code"
     }
@@ -108,57 +102,50 @@ class KashCalApplication : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
 
-        // Set Windows timezone resolver using Android ICU (CLDR-maintained).
-        // Primary resolver for names like "Eastern Standard Time" → America/New_York.
-        // Properties file in icaldav library serves as fallback for JVM/non-Android.
+        // Resolve Windows zone names ("Eastern Standard Time" to America/New_York) with Android
+        // ICU, which follows CLDR. The icaldav library's properties file is the JVM fallback.
         ICalDateTime.customTimezoneResolver = { tzid ->
             android.icu.util.TimeZone.getIDForWindowsID(tzid, null)
                 ?.let { try { ZoneId.of(it) } catch (_: Exception) { null } }
         }
 
-        // Handle app upgrade - cancel stale sync work to prevent crashes
         handleAppUpgrade()
 
-        // Migrate credentials from old format to unified format (one-time)
         migrateCredentialsIfNeeded()
 
-        // Check if parser version changed - clear etags to force re-parse
         checkParserVersionAndClearEtags()
 
-        // Create notification channels at app startup
         notificationChannels.createChannels()
         reminderNotificationChannels.createChannels()
         inviteNotificationChannels.createChannels()
 
-        // Long-lived background registrations (network callbacks, WorkManager
-        // and AlarmManager scheduling, content observers, the account-
-        // registration coroutine) are skipped under unit tests. In Robolectric
-        // these fire real side effects into process-global singletons
-        // (ShadowAccountManager, ShadowAlarmManager, WorkManager) that aren't
-        // reset between test classes sharing a JVM fork, leaking nondeterministic
-        // state into unrelated tests. Device/instrumented runs are unaffected.
+        // Long-lived background registrations (network callbacks, WorkManager and AlarmManager
+        // scheduling, content observers, the startup coroutines below) are skipped under unit
+        // tests. In Robolectric they fire real side effects into process-global singletons
+        // (ShadowAccountManager, ShadowAlarmManager, WorkManager) that aren't reset between test
+        // classes sharing a JVM fork, leaking nondeterministic state into unrelated tests.
         if (!isUnitTestEnvironment()) {
-            // Start network monitoring with sync trigger on restore
             networkMonitor.startMonitoring {
                 Log.d(TAG, "Network restored, triggering sync")
                 syncScheduler.requestImmediateSync()
             }
 
-            // Schedule widget updates (periodic + midnight)
-            widgetUpdateManager.schedulePeriodicUpdates()
-            widgetUpdateManager.scheduleMidnightUpdate()
+            // Periodic and midnight widget updates.
+            widgetUpdateManager.scheduleUpdates()
 
-            // Initialize contact event observers (birthdays and anniversaries, if enabled)
+            // When birthdays or anniversaries are on, registers the contacts observer and syncs
+            // them; without READ_CONTACTS it turns both features off instead.
             contactEventManager.initialize()
 
-            // Initialize device calendar observer (if enabled)
+            // When device calendars are on, registers their observer; without READ_CALENDAR it
+            // turns the feature off instead.
             calendarProviderManager.initialize()
 
-            // Schedule periodic reminder refresh (catches events entering window)
+            // Daily refresh that arms reminders that entered the scheduling window.
             ReminderRefreshWorker.schedule(this)
 
-            // Register KashCal account for CalendarProvider intent routing (#76).
-            // Runs on IO thread to avoid blocking startup (AccountManager is IPC).
+            // Register the KashCal account for CalendarProvider intent routing (#76). Off the
+            // main thread, since AccountManager is IPC.
             applicationScope.launch {
                 SystemAccountRegistrar(this@KashCalApplication).ensureAccount()
             }
@@ -174,24 +161,18 @@ class KashCalApplication : Application(), Configuration.Provider {
                 )
             }
 
-            // Bring the ICS feed refresh job in line with the feeds in the
-            // database. Startup is where this heals itself: WorkManager's database
-            // lives in the no-backup directory, so a job lost to a force-stop, an
-            // OEM task killer, or a device restored from a backup is gone for
-            // good, and until now nothing re-armed it — feeds then only ever
-            // updated when the user pulled to refresh.
-            // No try/catch here on purpose: the reconciler already catches and logs,
-            // so a wrapper would be dead code.
+            // Bring the ICS feed refresh job in line with the feeds in the database. WorkManager's
+            // database lives in the no-backup directory, so a job lost to a force-stop, an OEM
+            // task killer or a backup restore is gone for good; without this re-arm, feeds would
+            // update only on pull to refresh. No try/catch: the reconciler catches and logs.
             applicationScope.launch {
                 icsRefreshScheduleReconciler.reconcile()
             }
 
-            // Re-arm the periodic contact-sync job from the accounts in the
-            // database. Startup is where this heals: a login enrolled before
-            // contact sync shipped never had the recurring job armed, and an
-            // install whose spec was lost (force-stop, task killer, backup restore)
-            // has no other way back. The reconciler catches and logs on its own, so
-            // a wrapper here would be dead code.
+            // Re-arm the periodic contact-sync job from the accounts in the database. A login
+            // enrolled before contact sync shipped never had the job armed, and a spec lost to a
+            // force-stop, task killer or backup restore has no other way back. No try/catch: the
+            // reconciler catches and logs.
             applicationScope.launch {
                 contactSyncScheduleReconciler.reconcile()
             }
@@ -201,23 +182,20 @@ class KashCalApplication : Application(), Configuration.Provider {
     }
 
     /**
-     * True when running under Robolectric/JVM unit tests, where the
-     * application is instantiated to obtain a context but must not start
-     * real background work. Robolectric sets Build.FINGERPRINT to
-     * "robolectric"; device and instrumented builds never do.
+     * Returns true under Robolectric unit tests, which create the application for a context but
+     * must not start real background work. Robolectric sets `Build.FINGERPRINT` to "robolectric";
+     * device and instrumented builds never do.
      */
     private fun isUnitTestEnvironment(): Boolean =
         "robolectric".equals(android.os.Build.FINGERPRINT, ignoreCase = true)
 
     /**
-     * Handle app upgrade by clearing stale WorkManager jobs.
+     * Cancels legacy sync work and records the version change whenever the versionCode differs
+     * from the stored one, a fresh install included.
      *
-     * This prevents crashes when upgrading from older versions (e.g., v20.11.7)
-     * where the sync code has changed significantly (icaldav library migration).
-     *
-     * On upgrade:
-     * - Cancel all pending sync work (will be re-scheduled by user action)
-     * - Store current version to detect future upgrades
+     * The cancelled tags and unique names are the ones used before the icaldav library migration
+     * (for example v20.11.7); [SyncScheduler] schedules under other names, so its work survives.
+     * Left queued, the old work can crash against the changed sync code.
      */
     private fun handleAppUpgrade() {
         val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -229,8 +207,7 @@ class KashCalApplication : Application(), Configuration.Provider {
                 Log.i(TAG, "App upgrade detected: $lastVersion → $currentVersion")
             }
 
-            // Cancel all sync-related work to prevent crashes from stale code
-            // This runs on upgrade AND fresh install (clears any stale work from previous installs)
+            // Runs on a fresh install too, clearing work left by a previous install.
             try {
                 val workManager = WorkManager.getInstance(this)
                 workManager.cancelAllWorkByTag("caldav_sync")
@@ -245,9 +222,7 @@ class KashCalApplication : Application(), Configuration.Provider {
             }
         }
 
-        // Store current version, capturing the previous value first so
-        // downstream features (e.g. What's New) can tell a real upgrade
-        // from a fresh install.
+        // Keep the previous value so What's New can tell an upgrade from a fresh install.
         if (lastVersion != currentVersion) {
             prefs.edit()
                 .putInt(KEY_PREVIOUS_VERSION, lastVersion)
@@ -258,14 +233,9 @@ class KashCalApplication : Application(), Configuration.Provider {
     }
 
     /**
-     * Migrate credentials from old format to unified format.
-     *
-     * This is a one-time migration that runs on app launch. It migrates:
-     * - iCloud: Single-key format → account-keyed format
-     * - CalDAV: Old caldav_credentials → unified_credentials
-     *
-     * The migration is idempotent (DataStore flag) and non-destructive
-     * (old credentials preserved until explicitly deleted).
+     * Copies old iCloud and CalDAV credentials into the unified format in the background, through
+     * [CredentialMigration], whose class doc says when it runs and retries. Logs the result and
+     * never throws.
      */
     private fun migrateCredentialsIfNeeded() {
         applicationScope.launch {
@@ -290,13 +260,9 @@ class KashCalApplication : Application(), Configuration.Provider {
     }
 
     /**
-     * Check if parser version changed and clear all etags if so.
-     *
-     * When iCalendar parsing logic changes (e.g., timezone handling), we need to
-     * force all events to be re-parsed on next sync, even if their server etags
-     * haven't changed. Clearing etags achieves this.
-     *
-     * @see KashCalDataStore.CURRENT_PARSER_VERSION for version history
+     * Clears every event etag when the stored parser version is below
+     * [KashCalDataStore.CURRENT_PARSER_VERSION], so the next sync re-parses every event even
+     * though its server etag hasn't changed. The version history is on that constant.
      */
     private fun checkParserVersionAndClearEtags() {
         applicationScope.launch {

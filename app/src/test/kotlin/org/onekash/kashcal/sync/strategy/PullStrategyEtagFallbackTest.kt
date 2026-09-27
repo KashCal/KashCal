@@ -31,11 +31,14 @@ import org.onekash.kashcal.sync.provider.icloud.ICloudQuirks
 import org.onekash.kashcal.sync.session.SyncSessionStore
 
 /**
- * Tests for PullStrategy etag-based fallback sync (v16.9.0).
+ * Tests PullStrategy's etag fallback (v16.9.0) after sync-collection rejects the sync-token
+ * with 403 or 410.
  *
- * When sync-token expires (403/410), instead of pulling all events (~834KB),
- * etag fallback fetches only etags (~33KB), compares with local, and multigets
- * only changed events. Saves ~96% bandwidth.
+ * Instead of a full pull (~834KB), the fallback lists only etags (~33KB), diffs them with Room
+ * and multigets only new and changed events, saving ~96% bandwidth. It hands over to the full
+ * pull when Room has no etags for the window or the etag listing fails. Also covered: pending
+ * and recently pushed events aren't deleted, percent-encoding differences in hrefs, the sync
+ * lookback window and a relative href against a canonical iCloud URL.
  */
 class PullStrategyEtagFallbackTest {
 
@@ -68,7 +71,7 @@ class PullStrategyEtagFallbackTest {
     fun setup() {
         MockKAnnotations.init(this, relaxed = true)
 
-        // Mock database.runInTransaction to execute the block directly
+        // runInTransaction runs the block directly.
         coEvery {
             database.runInTransaction(any<suspend () -> Any>())
         } coAnswers {
@@ -77,18 +80,19 @@ class PullStrategyEtagFallbackTest {
             block()
         }
 
-        // Default: UID lookup returns null, so tests fall back to caldavUrl lookup
+        // No master by UID, so lookups fall through to caldavUrl.
         coEvery { eventsDao.getMasterByUidAndCalendar(any(), any()) } returns null
 
-        // Default: sync status returns SYNCED (matching createEvent default).
+        // SYNCED, the Event default, so the pull's re-read before the upsert sees no pending
+        // edit.
         coEvery { eventsDao.getSyncStatus(any()) } returns SyncStatus.SYNCED
 
-        // Default: "All" lookback routes to existing getEtagsByCalendarId() (unfiltered).
-        // Tests that verify time-filtered behavior override this with a specific day count.
+        // The "All" lookback reads local etags with the unfiltered getEtagsByCalendarId. Tests
+        // of the time-filtered query override this with a day count.
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
-        // Default: PROPFIND Depth:1 not supported — forces fallback to calendar-query.
-        // All tests here use non-null syncToken so this is bypassed, but added for future-proofing.
+        // PROPFIND Depth:1 fails with 501. pullFull tries it only for a calendar without a
+        // sync-token, and every calendar here has one.
         coEvery { client.fetchAllEtags(any()) } returns CalDavResult.error(501, "Not supported")
 
         pullStrategy = PullStrategy(
@@ -110,7 +114,7 @@ class PullStrategyEtagFallbackTest {
         unmockkAll()
     }
 
-    // ========== Etag Fallback Trigger Tests ==========
+    // ========== Fallback trigger ==========
 
     @Test
     fun `etag fallback triggered on 403 sync token expired`() = runTest {
@@ -118,33 +122,33 @@ class PullStrategyEtagFallbackTest {
         val eventHref = "/calendars/home/event1.ics"
         val eventUrl = "https://caldav.example.com$eventHref"
 
-        // ctag changed (triggers sync)
+        // The ctag changed, so the calendar syncs.
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
 
-        // sync-collection returns 403 (token expired)
+        // sync-collection rejects the token with 403.
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // Local has events with etags
+        // Room has an event with an etag.
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
             EtagEntry(eventUrl, "etag-1")
         )
 
-        // Server returns same event with same etag (no changes)
+        // The server lists it with the same etag: no change.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(
                 Pair(eventHref, "etag-1")
             ))
 
-        // Get sync token for result
+        // The new sync-token for the result.
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
 
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Verify etag fallback was used (fetchEtagsInRange called)
+        // The fallback listed etags.
         coVerify { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
-        // Verify pullFull was NOT reached (no multiget for full sync)
+        // Nothing changed, so no multiget.
         coVerify(exactly = 0) { client.fetchEventsByHref(any(), any()) }
     }
 
@@ -171,7 +175,7 @@ class PullStrategyEtagFallbackTest {
         coVerify { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
     }
 
-    // ========== Fallthrough to pullFull Tests ==========
+    // ========== Handing over to pullFull ==========
 
     @Test
     fun `falls through to pullFull when no local events`() = runTest {
@@ -181,10 +185,10 @@ class PullStrategyEtagFallbackTest {
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // No local events (first sync or empty calendar)
+        // No local etags (a first sync or an empty calendar).
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns emptyList()
 
-        // pullFull will be called
+        // pullFull's listing.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(emptyList())
         coEvery { eventsDao.getByCalendarIdInRange(calendar.id, any(), any()) } returns emptyList()
@@ -193,9 +197,9 @@ class PullStrategyEtagFallbackTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Verify etag fallback tried but fell through
+        // The fallback read local etags and handed over.
         coVerify { eventsDao.getEtagsByCalendarId(calendar.id) }
-        // Verify pullFull was called
+        // pullFull listed etags; the fallback returns before listing when Room has none.
         coVerify { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
     }
 
@@ -209,12 +213,12 @@ class PullStrategyEtagFallbackTest {
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // Local has events
+        // Room has an event.
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
             EtagEntry(eventUrl, "etag-1")
         )
 
-        // Server etag fetch fails first (etag comparison), then succeeds (pullFull)
+        // The fallback's etag listing fails; pullFull's succeeds.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returnsMany listOf(
             CalDavResult.error(500, "Server error"),
             CalDavResult.success(emptyList())
@@ -226,11 +230,11 @@ class PullStrategyEtagFallbackTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Verify fetchEtagsInRange was called twice (once for etag comparison, once for pullFull)
+        // Two listings: the fallback's and pullFull's.
         coVerify(exactly = 2) { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) }
     }
 
-    // ========== Change Detection Tests ==========
+    // ========== Change detection ==========
 
     @Test
     fun `fetches events with different etags (changed)`() = runTest {
@@ -242,16 +246,16 @@ class PullStrategyEtagFallbackTest {
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // Local event with old etag
+        // The local event has the old etag.
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
             EtagEntry(eventUrl, "old-etag")
         )
 
-        // Server has new etag (event changed)
+        // The server has a new etag: the event changed.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(eventHref, "new-etag")))
 
-        // Multiget for changed event
+        // Multiget of the changed event.
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
             CalDavResult.success(listOf(
                 CalDavEvent(
@@ -271,14 +275,13 @@ class PullStrategyEtagFallbackTest {
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsUpdated)
-        // Verify only changed event was fetched
+        // Only the changed event is fetched.
         coVerify { client.fetchEventsByHref(calendar.caldavUrl, match { it.size == 1 }) }
     }
 
     @Test
     fun `fetches new events not present locally`() = runTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
-        // Use full URLs with calendar path for consistency
         val existingHref = "/calendars/home/existing.ics"
         val newHref = "/calendars/home/new.ics"
         val existingUrl = "https://caldav.example.com$existingHref"
@@ -288,19 +291,19 @@ class PullStrategyEtagFallbackTest {
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // Local has one event
+        // Room has one event.
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
             EtagEntry(existingUrl, "etag-1")
         )
 
-        // Server has two events (one new)
+        // The server has two, one new.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(
-                Pair(existingHref, "etag-1"),  // Unchanged
-                Pair(newHref, "etag-new")      // New
+                Pair(existingHref, "etag-1"),  // unchanged
+                Pair(newHref, "etag-new")      // new
             ))
 
-        // Multiget for new event only
+        // Multiget of the new event only.
         coEvery { client.fetchEventsByHref(calendar.caldavUrl, any()) } returns
             CalDavResult.success(listOf(
                 CalDavEvent(
@@ -319,14 +322,14 @@ class PullStrategyEtagFallbackTest {
 
         assertTrue(result is PullResult.Success)
         assertEquals(1, (result as PullResult.Success).eventsAdded)
-        // Verify only new event was fetched (not the unchanged one)
+        // Only the new event is fetched, not the unchanged one.
         coVerify { client.fetchEventsByHref(calendar.caldavUrl, match { it.size == 1 && newHref in it }) }
     }
 
     @Test
     fun `skips events with matching etags`() = runTest {
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
-        // Use full href path that matches the local URL structure
+        // The href resolves to the stored URL.
         val eventHref = "/calendars/home/event1.ics"
         val eventUrl = "https://caldav.example.com$eventHref"
 
@@ -334,12 +337,12 @@ class PullStrategyEtagFallbackTest {
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // Local event with same etag as server
+        // The local etag matches the server's.
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
             EtagEntry(eventUrl, "same-etag")
         )
 
-        // Server has same etag (no change) - href matches local URL structure
+        // The server lists the same etag: no change.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(eventHref, "same-etag")))
 
@@ -350,11 +353,11 @@ class PullStrategyEtagFallbackTest {
         assertTrue(result is PullResult.Success)
         assertEquals(0, (result as PullResult.Success).eventsAdded)
         assertEquals(0, result.eventsUpdated)
-        // No multiget should be called - no changes
+        // Nothing changed, so no multiget.
         coVerify(exactly = 0) { client.fetchEventsByHref(any(), any()) }
     }
 
-    // ========== Deletion Tests ==========
+    // ========== Deletion ==========
 
     @Test
     fun `deletes events not on server`() = runTest {
@@ -366,12 +369,12 @@ class PullStrategyEtagFallbackTest {
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // Local has event that's not on server anymore
+        // Room has an event the server no longer lists.
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
             EtagEntry(deletedUrl, "etag-deleted")
         )
 
-        // Server returns empty (event deleted)
+        // The server lists nothing: the event was deleted.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(emptyList())
 
@@ -396,16 +399,16 @@ class PullStrategyEtagFallbackTest {
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // Local has event with pending update
+        // Room has an event with a pending update.
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
             EtagEntry(pendingUrl, "etag-pending")
         )
 
-        // Server doesn't have this event (deleted on server)
+        // The server no longer lists it.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(emptyList())
 
-        // Event has pending local changes - should NOT be deleted
+        // It has pending local changes, so it must not be deleted.
         val pendingEvent = createEvent(id = 100L, caldavUrl = pendingUrl)
             .copy(syncStatus = SyncStatus.PENDING_UPDATE)
         coEvery { eventsDao.getByCaldavUrl(pendingUrl) } returns pendingEvent
@@ -415,17 +418,16 @@ class PullStrategyEtagFallbackTest {
 
         assertTrue(result is PullResult.Success)
         assertEquals(0, (result as PullResult.Success).eventsDeleted)
-        // Should NOT have deleted the pending event
+        // The pending event is kept.
         coVerify(exactly = 0) { eventsDao.deleteById(100L) }
     }
 
     @Test
     fun `etag fallback does not false-delete when server encodes at-sign differently`() = runTest {
-        // Regression for issue #333 (etag-fallback path): the local row stores a
-        // literal-'@' url; the server (Radicale) reports the SAME resource with the
-        // '@' percent-encoded as %40 and an unchanged etag. Before the fix the
-        // set-difference classified the still-present event as BOTH deleted and new
-        // (a destructive delete + churny re-fetch). It must be recognized as unchanged.
+        // #333 on the etag-fallback path: the stored URL has a literal '@'; the server
+        // (Radicale) lists the same resource with '@' encoded as %40 and an unchanged etag. A
+        // plain set difference would class it as both deleted and new (a delete plus a
+        // re-fetch); it must read as unchanged.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
         val storedUrl = "https://caldav.example.com/calendars/home/uuid@kashcal.onekash.org.ics"
         val serverHref = "/calendars/home/uuid%40kashcal.onekash.org.ics"
@@ -434,16 +436,17 @@ class PullStrategyEtagFallbackTest {
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // Local stored the literal-'@' url.
+        // The stored URL has a literal '@'.
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
             EtagEntry(storedUrl, "etag-1")
         )
-        // Server reports the same resource with %40 and the SAME etag.
+        // The server lists the same resource with %40 and the same etag.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(serverHref, "etag-1")))
 
         val storedEvent = createEvent(id = 55L, caldavUrl = storedUrl)
-        // Exact-match DB semantics for the deletion-fallback path.
+        // getByCaldavUrl matches exactly, as the database does; the canonical fallback reads
+        // getEventsWithCaldavUrl.
         coEvery { eventsDao.getByCaldavUrl(any()) } returns null
         coEvery { eventsDao.getByCaldavUrl(storedUrl) } returns storedEvent
         coEvery { eventsDao.getEventsWithCaldavUrl(calendar.id) } returns listOf(storedEvent)
@@ -452,17 +455,17 @@ class PullStrategyEtagFallbackTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Not deleted...
+        // Not deleted,
         assertEquals(0, (result as PullResult.Success).eventsDeleted)
         coVerify(exactly = 0) { eventsDao.deleteById(55L) }
-        // ...and not re-fetched as new/changed (no multiget for the %40 href).
+        // and not re-fetched as new or changed (no multiget for the %40 href).
         coVerify(exactly = 0) { client.fetchEventsByHref(any(), any()) }
     }
 
     @Test
     fun `etag fallback still fetches a genuinely changed at-sign event`() = runTest {
-        // Guards against over-canonicalizing: a real content change to an '@'-in-name
-        // event (etag differs) must still be fetched, using the server's exact href.
+        // Canonicalizing only the comparison: a changed etag on an event with '@' in its name
+        // is still fetched, with the server's exact href.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
         val storedUrl = "https://caldav.example.com/calendars/home/uuid@kashcal.onekash.org.ics"
         val serverHref = "/calendars/home/uuid%40kashcal.onekash.org.ics"
@@ -475,7 +478,7 @@ class PullStrategyEtagFallbackTest {
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
             EtagEntry(storedUrl, "etag-old")
         )
-        // Same resource, DIFFERENT etag -> changed.
+        // The same resource with a different etag: changed.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(serverHref, "etag-new")))
 
@@ -492,7 +495,7 @@ class PullStrategyEtagFallbackTest {
         assertTrue(result is PullResult.Success)
         // Not treated as a deletion.
         coVerify(exactly = 0) { eventsDao.deleteById(55L) }
-        // Fetched via multiget using the server's exact (encoded) href, not a rewritten one.
+        // The multiget uses the server's encoded href, not a rewritten one.
         coVerify { client.fetchEventsByHref(calendar.caldavUrl, match { hrefs -> hrefs.any { it.contains("%40") } }) }
     }
 
@@ -502,19 +505,19 @@ class PullStrategyEtagFallbackTest {
         val eventHref = "/calendars/home/event1.ics"
         val eventUrl = "https://caldav.example.com$eventHref"
 
-        // Configure "All" lookback (Int.MAX_VALUE)
+        // "All" lookback (Int.MAX_VALUE).
         every { dataStore.syncPastDays } returns flowOf(Int.MAX_VALUE)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // Local has event
+        // Room has an event.
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
             EtagEntry(eventUrl, "etag-1")
         )
 
-        // Server returns same event (no changes)
+        // The server lists it unchanged.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(eventHref, "etag-1")))
         coEvery { client.getSyncToken(calendar.caldavUrl) } returns CalDavResult.success("new-token")
@@ -522,34 +525,34 @@ class PullStrategyEtagFallbackTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // "All" should use unfiltered getEtagsByCalendarId, NOT getEtagsByCalendarIdInRange
+        // "All" reads the unfiltered getEtagsByCalendarId, not getEtagsByCalendarIdInRange.
         coVerify { eventsDao.getEtagsByCalendarId(calendar.id) }
         coVerify(exactly = 0) { eventsDao.getEtagsByCalendarIdInRange(any(), any(), any()) }
     }
 
     @Test
     fun `etag fallback does not delete events outside sync window`() = runTest {
-        // Issue #87 Bug 2: When sync lookback is bounded (e.g., 180 days), local events
-        // outside that window should NOT be deleted just because the server's time-range
-        // REPORT didn't return them. The time-filtered DAO query excludes them from comparison.
+        // #87: with a bounded lookback (here 180 days), a local event outside the window must
+        // not be deleted because the server's time-range REPORT didn't list it. The
+        // time-filtered DAO query leaves it out of the comparison.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
         val recentHref = "/calendars/home/recent.ics"
         val recentUrl = "https://caldav.example.com$recentHref"
         val oldUrl = "https://caldav.example.com/calendars/home/old.ics"
 
-        // Configure 180-day lookback
+        // 180-day lookback.
         every { dataStore.syncPastDays } returns flowOf(180)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // Time-filtered local etags: only the recent event (old one excluded by DAO)
+        // The time-filtered local etags hold only the recent event; the DAO leaves out the old.
         coEvery { eventsDao.getEtagsByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(
             EtagEntry(recentUrl, "etag-recent")
         )
 
-        // Server returns empty (recent event deleted on server)
+        // The server lists nothing: the recent event was deleted there.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(emptyList())
 
@@ -560,37 +563,36 @@ class PullStrategyEtagFallbackTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Recent event deleted (it's in the window and not on server)
+        // The recent event is deleted: in the window and not on the server.
         assertEquals(1, (result as PullResult.Success).eventsDeleted)
         coVerify { eventsDao.deleteById(10L) }
-        // Old event was never considered for deletion (excluded by time-filtered DAO query)
-        // Verify time-filtered query was used, NOT unfiltered
+        // The old event was never compared: the time-filtered query ran, not the unfiltered one.
         coVerify { eventsDao.getEtagsByCalendarIdInRange(calendar.id, any(), any()) }
         coVerify(exactly = 0) { eventsDao.getEtagsByCalendarId(any()) }
     }
 
     @Test
     fun `etag fallback preserves recurring events outside time window`() = runTest {
-        // Recurring events' start_ts/end_ts represent only the first occurrence.
-        // The DAO query includes them via "rrule IS NOT NULL" bypass.
+        // A recurring event's start_ts and end_ts are its first occurrence's, so the DAO query
+        // keeps a row with `rrule IS NOT NULL` whatever its times.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
         val recurringHref = "/calendars/home/weekly.ics"
         val recurringUrl = "https://caldav.example.com$recurringHref"
 
-        // Configure 180-day lookback
+        // 180-day lookback.
         every { dataStore.syncPastDays } returns flowOf(180)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // Time-filtered DAO returns recurring event (rrule IS NOT NULL bypass includes it
-        // even though first occurrence is outside window)
+        // The time-filtered query returns the recurring event although its first occurrence
+        // is outside the window.
         coEvery { eventsDao.getEtagsByCalendarIdInRange(calendar.id, any(), any()) } returns listOf(
             EtagEntry(recurringUrl, "etag-recurring")
         )
 
-        // Server's time-range filter expands recurrences and returns the event
+        // The server's time-range filter expands recurrences and lists it.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(Pair(recurringHref, "etag-recurring")))
 
@@ -599,20 +601,19 @@ class PullStrategyEtagFallbackTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Recurring event NOT deleted (both local and server have it)
+        // Not deleted: both sides have it.
         assertEquals(0, (result as PullResult.Success).eventsDeleted)
         coVerify(exactly = 0) { eventsDao.deleteById(any()) }
     }
 
     @Test
     fun `etag fallback uses configurable sync lookback from preferences`() = runTest {
-        // Verify that fetchEtagsInRange is called with start time ~180 days ago
-        // when dataStore.syncPastDays = 180
+        // With syncPastDays = 180, fetchEtagsInRange starts about 180 days ago.
         val calendar = createCalendar(ctag = "old-ctag", syncToken = "expired-token")
         val eventHref = "/calendars/home/event1.ics"
         val eventUrl = "https://caldav.example.com$eventHref"
 
-        // Configure 180-day lookback
+        // 180-day lookback.
         every { dataStore.syncPastDays } returns flowOf(180)
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
@@ -629,7 +630,7 @@ class PullStrategyEtagFallbackTest {
 
         pullStrategy.pull(calendar, client = client)
 
-        // Verify fetchEtagsInRange was called with start time ~180 days ago
+        // A start about 180 days ago.
         val expectedPastMs = 180L * 24 * 60 * 60 * 1000
         coVerify {
             client.fetchEtagsInRange(
@@ -637,19 +638,19 @@ class PullStrategyEtagFallbackTest {
                 match { startMs ->
                     val now = System.currentTimeMillis()
                     val expected = now - expectedPastMs
-                    // Allow 5-second tolerance for test execution time
+                    // 5 seconds of slack for the test's run time
                     kotlin.math.abs(startMs - expected) < 5000
                 },
                 any()
             )
         }
-        // Should use time-filtered DAO query, not unfiltered
+        // The time-filtered DAO query, not the unfiltered one.
         coVerify { eventsDao.getEtagsByCalendarIdInRange(calendar.id, any(), any()) }
         coVerify(exactly = 0) { eventsDao.getEtagsByCalendarId(any()) }
     }
 
-    // ========== Recently Pushed Event Deletion Protection (v23.2.1) ==========
-    // RFC 4791 does not guarantee immediate visibility after PUT.
+    // ========== Recently pushed events aren't deleted (v23.2.1) ==========
+    // RFC 4791 doesn't require a server to list an event right after its PUT.
 
     @Test
     fun `etag fallback does not delete recently pushed event`() = runTest {
@@ -661,12 +662,12 @@ class PullStrategyEtagFallbackTest {
         coEvery { client.syncCollection(calendar.caldavUrl, "expired-token") } returns
             CalDavResult.error(403, "Sync token invalid")
 
-        // Local has event that was just pushed
+        // Room has an event pushed earlier in this sync.
         coEvery { eventsDao.getEtagsByCalendarId(calendar.id) } returns listOf(
             EtagEntry(pushedUrl, "etag-from-put")
         )
 
-        // Server doesn't have it yet (not indexed)
+        // The server doesn't list it yet.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(emptyList())
 
@@ -701,7 +702,7 @@ class PullStrategyEtagFallbackTest {
             EtagEntry(staleUrl, "etag-stale")
         )
 
-        // Server doesn't have this event
+        // The server doesn't list this event.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(emptyList())
 
@@ -712,7 +713,7 @@ class PullStrategyEtagFallbackTest {
         val result = pullStrategy.pull(
             calendar,
             client = client,
-            recentlyPushedEventIds = setOf(42L)  // Different ID
+            recentlyPushedEventIds = setOf(42L)  // a different id
         )
 
         assertTrue(result is PullResult.Success)
@@ -720,18 +721,18 @@ class PullStrategyEtagFallbackTest {
         coVerify(exactly = 1) { eventsDao.deleteById(99L) }
     }
 
-    // ========== URL Normalization Tests ==========
+    // ========== URL normalization ==========
 
     @Test
     fun `handles URL normalization for hostname changes`() = runTest {
-        // After iCloud URL migration, all URLs are canonical (caldav.icloud.com)
-        // This test verifies etag comparison works with canonical URLs
+        // Stored iCloud URLs use the canonical caldav.icloud.com host. A relative server href,
+        // built against the calendar URL, must match the stored URL.
         val calendar = createCalendar(
             ctag = "old-ctag",
             syncToken = "expired-token",
             caldavUrl = "https://caldav.icloud.com/123/calendars/home/"
         )
-        // Local event stored with canonical URL (after migration)
+        // The stored URL is canonical.
         val localUrl = "https://caldav.icloud.com/123/calendars/home/event1.ics"
 
         coEvery { client.getCtag(calendar.caldavUrl) } returns CalDavResult.success(CalendarMetadataProbe(ctag = "new-ctag", displayName = null, color = null, isReadOnly = null))
@@ -742,7 +743,7 @@ class PullStrategyEtagFallbackTest {
             EtagEntry(localUrl, "same-etag")
         )
 
-        // Server returns href (relative path) that will be normalized to canonical form
+        // The server lists a relative href.
         coEvery { client.fetchEtagsInRange(calendar.caldavUrl, any(), any()) } returns
             CalDavResult.success(listOf(
                 Pair("/123/calendars/home/event1.ics", "same-etag")
@@ -753,13 +754,13 @@ class PullStrategyEtagFallbackTest {
         val result = pullStrategy.pull(calendar, client = client)
 
         assertTrue(result is PullResult.Success)
-        // Should match - both local and server URLs are canonical
+        // They match: no add, update or delete.
         assertEquals(0, (result as PullResult.Success).eventsAdded)
         assertEquals(0, result.eventsUpdated)
         assertEquals(0, result.eventsDeleted)
     }
 
-    // ========== Helper Methods ==========
+    // ========== Helpers ==========
 
     private fun createCalendar(
         id: Long = 1,

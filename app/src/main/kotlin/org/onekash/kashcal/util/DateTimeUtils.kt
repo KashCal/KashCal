@@ -21,14 +21,11 @@ import java.util.Calendar
 import java.util.Locale
 
 /**
- * Central date/time utilities for event handling.
+ * Date and time helpers for events.
  *
- * Key principle: All-day events are stored as UTC midnight and must use UTC
- * for date calculations to preserve the calendar date.
- *
- * Example: Jan 6 00:00 UTC in America/New_York (UTC-5):
- * - Local TZ: Jan 5 19:00 EST → Jan 5 (WRONG)
- * - UTC: Jan 6 00:00 UTC → Jan 6 (CORRECT)
+ * All-day events are stored as UTC midnight, so their date calculations must use UTC to keep
+ * the calendar date. Jan 6 00:00 UTC read in America/New_York (UTC-5) is Jan 5 19:00, the
+ * wrong day; read in UTC it is Jan 6.
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc5545#section-3.3.4">RFC 5545 DATE</a>
  */
@@ -40,12 +37,12 @@ object DateTimeUtils {
         DateFormat.getBestDateTimePattern(locale, skeleton)
 
     /**
-     * Returns true if the given locale orders day before month in its short-form date pattern.
-     * Consults [DateTimeFormatterBuilder.getLocalizedDateTimePattern] (e.g., "dd/MM/yyyy" → DMY,
-     * "M/d/yyyy" → MDY, "y/MM/dd" → MDY).
+     * Returns true if [locale] orders day before month in its short date pattern from
+     * [DateTimeFormatterBuilder.getLocalizedDateTimePattern] ("dd/MM/yyyy" is DMY; "M/d/yyyy"
+     * and "y/MM/dd" are MDY).
      *
-     * Returns false (MDY) when neither 'd' nor 'M' appears — unrecognized pattern falls back
-     * to the safer MDY interpretation rather than failing.
+     * Returns false (MDY) when the pattern lacks 'd' or 'M' or the lookup throws
+     * IllegalArgumentException, so an unrecognized pattern falls back to MDY without failing.
      */
     fun isDayFirstLocale(locale: Locale = Locale.getDefault()): Boolean {
         val pattern = try {
@@ -62,9 +59,8 @@ object DateTimeUtils {
     }
 
     /**
-     * Returns true if the locale renders year before month in its full month-year form
-     * (e.g., ja/zh/ko/hu produce "2026年5月", "2026. május"). Inspects the localized
-     * `yMMMM` skeleton and compares the position of 'y' vs 'M'.
+     * Returns true if [locale] puts the year before the month in its localized `yMMMM` pattern
+     * (ja, zh, ko and hu give "2026年5月", "2026. május"), or has a year and no 'M'.
      */
     fun isYearFirstLocale(locale: Locale = Locale.getDefault()): Boolean {
         val pattern = DateFormat.getBestDateTimePattern(locale, "yMMMM")
@@ -77,7 +73,8 @@ object DateTimeUtils {
     // ==================== Time Format Preference ====================
 
     /**
-     * Time format preference enum for type-safe handling.
+     * The stored time format setting. [fromString] maps "12h" and "24h"; any other value is
+     * SYSTEM.
      */
     enum class TimeFormatPreference {
         SYSTEM,
@@ -94,11 +91,10 @@ object DateTimeUtils {
     }
 
     /**
-     * Get the appropriate time pattern based on user preference and device setting.
+     * Returns the DateTimeFormatter pattern, "h:mm a" or "HH:mm", for [preference], deferring
+     * to the device under SYSTEM.
      *
-     * @param preference User's stored preference
-     * @param is24HourDevice Result of DateFormat.is24HourFormat(context)
-     * @return Pattern string for DateTimeFormatter ("h:mm a" or "HH:mm")
+     * @param is24HourDevice the result of `DateFormat.is24HourFormat(context)`
      */
     fun getTimePattern(preference: TimeFormatPreference, is24HourDevice: Boolean): String {
         return when (preference) {
@@ -108,19 +104,14 @@ object DateTimeUtils {
         }
     }
 
-    /**
-     * Convenience overload that takes string preference directly.
-     */
+    /** Returns the pattern for a stored preference string ("system", "12h" or "24h"). */
     fun getTimePattern(preferenceString: String, is24HourDevice: Boolean): String {
         return getTimePattern(TimeFormatPreference.fromString(preferenceString), is24HourDevice)
     }
 
     /**
-     * Determine if 24-hour format should be used based on preference and device setting.
-     *
-     * @param timeFormat Time format preference string ("system", "12h", or "24h")
-     * @param is24HourDevice Whether the device is set to 24-hour format
-     * @return True if 24-hour format should be used
+     * Returns true when [timeFormat] ("system", "12h" or "24h") calls for 24-hour time,
+     * deferring to [is24HourDevice] under "system".
      */
     fun isUse24Hour(timeFormat: String, is24HourDevice: Boolean): Boolean {
         return when (TimeFormatPreference.fromString(timeFormat)) {
@@ -133,10 +124,10 @@ object DateTimeUtils {
     // ==================== First Day of Week Preference ====================
 
     /**
-     * Get ordered days of week starting from the specified first day.
+     * Returns the seven days in display order, starting from [firstDayOfWeek].
      *
-     * @param firstDayOfWeek Calendar constant (SUNDAY=1, MONDAY=2, SATURDAY=7) or 0 for system default
-     * @return List of DayOfWeek in display order (7 elements)
+     * @param firstDayOfWeek a Calendar constant (SUNDAY=1, MONDAY=2, SATURDAY=7) or 0 for the
+     *   locale default; any other value starts on Sunday
      */
     fun getOrderedDaysOfWeek(firstDayOfWeek: Int): List<DayOfWeek> {
         val effectiveFirst = resolveFirstDayOfWeek(firstDayOfWeek)
@@ -153,37 +144,35 @@ object DateTimeUtils {
                 DayOfWeek.SATURDAY, DayOfWeek.SUNDAY, DayOfWeek.MONDAY,
                 DayOfWeek.TUESDAY, DayOfWeek.WEDNESDAY, DayOfWeek.THURSDAY, DayOfWeek.FRIDAY
             )
-            else -> getOrderedDaysOfWeek(Calendar.SUNDAY) // Fallback
+            else -> getOrderedDaysOfWeek(Calendar.SUNDAY)
         }
     }
 
     /**
-     * Resolve first day preference to actual Calendar constant.
+     * Resolves the first-day-of-week preference to a Calendar constant.
      *
-     * @param preference User preference: 0 = system default, or Calendar.SUNDAY/MONDAY/SATURDAY
-     * @return Resolved Calendar constant (SUNDAY=1, MONDAY=2, or SATURDAY=7)
+     * @param preference 0 for the locale default, else Calendar.SUNDAY, MONDAY or SATURDAY;
+     *   any nonzero value is returned unchanged
+     * @return for 0, SUNDAY (1), MONDAY (2) or SATURDAY (7); a locale that starts on another
+     *   day resolves to SUNDAY
      */
     fun resolveFirstDayOfWeek(preference: Int): Int {
         return if (preference == 0) {
-            // Use java.time.temporal.WeekFields for locale-aware detection
             val localeFirstDay = WeekFields.of(Locale.getDefault()).firstDayOfWeek
             when (localeFirstDay) {
                 DayOfWeek.SUNDAY -> Calendar.SUNDAY
                 DayOfWeek.MONDAY -> Calendar.MONDAY
                 DayOfWeek.SATURDAY -> Calendar.SATURDAY
-                else -> Calendar.SUNDAY // Rare cases (Friday-first in some locales)
+                else -> Calendar.SUNDAY // e.g. Friday-first locales
             }
         } else {
-            preference // User explicitly chose
+            preference
         }
     }
 
     /**
-     * Get locale-aware WeekFields for week number calculation.
-     * Combines the user's first-day-of-week preference with the locale's minimalDaysInFirstWeek.
-     *
-     * @param firstDayOfWeek User preference: 0 = system default, or Calendar.SUNDAY/MONDAY/SATURDAY
-     * @return WeekFields configured for locale-aware week numbering
+     * Returns WeekFields for week numbers: the resolved [firstDayOfWeek] preference (see
+     * [resolveFirstDayOfWeek]) with the locale's minimalDaysInFirstWeek.
      */
     fun getLocaleWeekFields(firstDayOfWeek: Int): WeekFields {
         val resolved = resolveFirstDayOfWeek(firstDayOfWeek)
@@ -203,31 +192,26 @@ object DateTimeUtils {
     }
 
     /**
-     * Resolve the user's first-day-of-week preference to a DayOfWeek, snapping
-     * unsupported locales via [calendarConstantToDayOfWeek]. Used as the WKST
-     * source for biweekly RRULEs (issue #214).
+     * Resolves the first-day-of-week preference to a DayOfWeek, snapping unsupported locales
+     * via [calendarConstantToDayOfWeek]. The WKST source for biweekly RRULEs (issue #214).
      */
     fun resolveFirstDayOfWeekAsDow(preference: Int): DayOfWeek =
         calendarConstantToDayOfWeek(resolveFirstDayOfWeek(preference))
 
     /**
-     * Get the locale's default first day of week.
+     * Returns the default locale's first day of week.
      *
-     * NOTE: Do NOT wrap calls to this in remember{} - must respond to system locale changes.
-     * (Same pattern as is24HourDevice fix in commit afd7a76)
-     *
-     * @return DayOfWeek representing the locale's first day
+     * Don't wrap calls in `remember {}`: the result must follow system locale changes.
      */
     fun getLocaleFirstDayOfWeek(): DayOfWeek {
         return WeekFields.of(Locale.getDefault()).firstDayOfWeek
     }
 
     /**
-     * Calculate grid offset for month 1st day placement.
+     * Returns the grid column (0-6) of the month's first day.
      *
-     * @param calendar Calendar instance set to the 1st of the month
-     * @param firstDayOfWeek Calendar constant or 0 for system default
-     * @return Offset (0-6) for where day 1 should appear in the grid
+     * @param calendar set to the 1st of the month
+     * @param firstDayOfWeek a Calendar constant or 0 for the locale default
      */
     fun getFirstDayOffset(calendar: Calendar, firstDayOfWeek: Int): Int {
         val effectiveFirst = resolveFirstDayOfWeek(firstDayOfWeek)
@@ -237,12 +221,10 @@ object DateTimeUtils {
     }
 
     /**
-     * Calculate days since the specified first day of week.
-     * Used by DateFilter for "This Week"/"Next Week" calculations.
+     * Returns how many days [date] is past the start of its week: 0 on the first day, 6 on the
+     * last. Used for week starts, such as DateFilter's "This Week" and "Next Week".
      *
-     * @param date The date to check
-     * @param firstDayOfWeek Calendar constant or 0 for system default
-     * @return 0 for first day of week, 6 for last day
+     * @param firstDayOfWeek a Calendar constant or 0 for the locale default
      */
     fun getDayOfWeekOffset(date: LocalDate, firstDayOfWeek: Int): Int {
         val effectiveFirst = resolveFirstDayOfWeek(firstDayOfWeek)
@@ -259,14 +241,8 @@ object DateTimeUtils {
     // ==================== Date Conversion Functions ====================
 
     /**
-     * Convert event timestamp to LocalDate.
-     *
-     * For all-day events: Uses UTC to preserve calendar date
-     * For timed events: Uses local timezone for user's perspective
-     *
-     * @param timestampMs Timestamp in milliseconds
-     * @param isAllDay Whether this is an all-day event
-     * @param localZone Timezone for timed events (default: system)
+     * Converts an event timestamp to its date: in UTC for an all-day event, which keeps the
+     * calendar date, else in [localZone].
      */
     fun eventTsToLocalDate(
         timestampMs: Long,
@@ -278,14 +254,8 @@ object DateTimeUtils {
     }
 
     /**
-     * Convert event timestamp to ZonedDateTime.
-     *
-     * For all-day events: Returns UTC ZonedDateTime
-     * For timed events: Returns local ZonedDateTime
-     *
-     * @param timestampMs Timestamp in milliseconds
-     * @param isAllDay Whether this is an all-day event
-     * @param localZone Timezone for timed events (default: system)
+     * Converts an event timestamp to a ZonedDateTime: in UTC for an all-day event, else in
+     * [localZone].
      */
     fun eventTsToZonedDateTime(
         timestampMs: Long,
@@ -297,14 +267,14 @@ object DateTimeUtils {
     }
 
     /**
-     * Relative whole-day count from when an all-day reminder fires to the event's date,
-     * for the notification subtitle ("Today" / "Tomorrow" / "In N days").
+     * Returns the whole days from an all-day reminder's firing to the event's date, for the
+     * notification subtitle ("Today", "Tomorrow", "In N days").
      *
-     * Computed as a calendar-date difference (event local date minus fire-day local date),
-     * NOT a raw millisecond duration — so it is timezone-stable and does not sign-flip.
+     * It is a calendar-date difference (event date minus the fire day's local date), not a
+     * millisecond duration, so it is timezone-stable and doesn't flip sign.
      *
-     * @return 0 = fires on the event's own date ("Today"); 1 = the day before ("Tomorrow");
-     *         N = N days before ("In N days"). Clamps at 0 for same-day-or-later firing.
+     * @return 0 when it fires on the event's date ("Today"), 1 the day before ("Tomorrow"), N
+     *   for N days before; a reminder firing after the event's date also returns 0.
      */
     fun allDayRelativeDays(
         occurrenceTimeUtcMidnight: Long,
@@ -317,11 +287,8 @@ object DateTimeUtils {
     }
 
     /**
-     * The event's LOCAL-midnight start instant (epoch ms).
-     *
-     * All-day events are stored as UTC midnight; this resolves the calendar date
-     * (in UTC, preserving the date) and re-anchors it to 00:00 in the user's local
-     * zone — the instant the all-day event actually begins for the user.
+     * Returns the instant (epoch ms) an all-day event begins for the user: its stored
+     * UTC-midnight date read in UTC, re-anchored to 00:00 in [localZone].
      */
     fun allDayLocalMidnightMs(
         occurrenceTimeUtcMidnight: Long,
@@ -332,19 +299,17 @@ object DateTimeUtils {
     }
 
     /**
-     * Trigger instant for an all-day reminder under the signed-offset model.
+     * Returns the trigger instant of an all-day reminder: [allDayLocalMidnightMs] plus
+     * [signedOffsetMs].
      *
-     * trigger = localMidnight(eventDate) + signedOffsetMs, where the offset is the
-     * RFC 5545 VALARM relative trigger relative to the event's (midnight) start:
-     * negative = before, positive = after (e.g. PT9H = 9 AM on the event day).
+     * The offset is the RFC 5545 VALARM relative trigger from the event's midnight start,
+     * negative before and positive after (PT9H is 9 AM on the event day). It is applied as an
+     * exact duration (stored == fired == sent), matching the platform, so on a DST transition
+     * day the wall-clock time shifts by the transition amount. RFC 5545 §3.3.6 makes days and
+     * weeks nominal, but the offset here is exact milliseconds, so a day-based offset such as
+     * -P1D lands an hour off its RFC wall-clock time across a DST change.
      *
-     * The offset is applied as an exact duration (stored == fired == sent), matching
-     * RFC 5545 and the platform. On a DST transition day the wall-clock therefore
-     * shifts by the transition amount; on ordinary days it equals the intended wall-clock.
-     *
-     * @param occurrenceTimeUtcMidnight The event's start, stored as UTC midnight
-     * @param signedOffsetMs Reminder offset in ms (negative = before start, positive = after)
-     * @param localZone The user's timezone (default: system)
+     * @param occurrenceTimeUtcMidnight the event's start, stored as UTC midnight
      */
     fun allDayReminderTriggerTime(
         occurrenceTimeUtcMidnight: Long,
@@ -355,15 +320,8 @@ object DateTimeUtils {
     }
 
     /**
-     * Convert timestamp to day code (YYYYMMDD format).
-     *
-     * For all-day events: Uses UTC
-     * For timed events: Uses local timezone
-     *
-     * @param timestampMs Timestamp in milliseconds
-     * @param isAllDay Whether this is an all-day event
-     * @param localZone Timezone for timed events (default: system)
-     * @return Day code as Int (e.g., 20260106 for Jan 6, 2026)
+     * Converts a timestamp to a YYYYMMDD day code (20260106 for Jan 6, 2026), in UTC for an
+     * all-day event, else in [localZone].
      */
     fun eventTsToDayCode(
         timestampMs: Long,
@@ -375,15 +333,12 @@ object DateTimeUtils {
     }
 
     /**
-     * Derive the day code of the last calendar day an event *occupies*, per RFC 5545 §3.6.1.
+     * Returns the day code of the last calendar day an event occupies, per RFC 5545 §3.6.1.
      *
-     * DTSTART is inclusive; DTEND is non-inclusive. A timed event [startTs, endTs) whose
-     * endTs lands at exactly 00:00:00.000 local-zone belongs on the prior calendar day —
-     * the midnight boundary is excluded. Without this helper, a 20:00→00:00 event would
-     * appear to span two days (issue #209).
-     *
-     * All-day events are unchanged: ingestion already subtracts 1 ms to convert the
-     * RFC-exclusive DTEND into an inclusive last-instant before storage.
+     * DTEND is non-inclusive, so a timed event whose endTs is 00:00:00.000 in [localZone] ends
+     * on the prior day; otherwise a 20:00 to 00:00 event would span two days (issue #209). An
+     * all-day event, or one with endTs at or before startTs, uses endTs's own day: an all-day
+     * end is stored as the inclusive last millisecond, 1 ms before the exclusive DTEND.
      */
     fun eventTsToEndDayCode(
         endTs: Long,
@@ -404,12 +359,10 @@ object DateTimeUtils {
     }
 
     /**
-     * Does the event occupy more than one calendar day per RFC 5545 §3.6.1?
+     * Returns true if the event occupies more than one calendar day per RFC 5545 §3.6.1.
      *
-     * DTEND is non-inclusive, so a timed event whose endTs lands exactly at
-     * local midnight belongs on the prior day only (09:00 → next-day 00:00 is
-     * single-day). Delegates to [eventTsToEndDayCode] so this matches every
-     * other endDay derivation in the codebase.
+     * 09:00 to next-day 00:00 is one day: the end day comes from [eventTsToEndDayCode], which
+     * owns the non-inclusive DTEND rule.
      */
     fun spansMultipleDays(
         startTs: Long,
@@ -423,9 +376,9 @@ object DateTimeUtils {
     }
 
     /**
-     * How many calendar days the event occupies per RFC 5545 §3.6.1.
-     * Returns 1 for single-day events, including 09:00 → next-day 00:00.
-     * Delegates to [eventTsToEndDayCode] for the non-inclusive DTEND rule.
+     * Returns how many calendar days the event occupies per RFC 5545 §3.6.1: 1 for a
+     * single-day event, 09:00 to next-day 00:00 included. The end day comes from
+     * [eventTsToEndDayCode].
      */
     fun calculateTotalDays(
         startTs: Long,
@@ -441,15 +394,7 @@ object DateTimeUtils {
     private fun dayCodeToLocalDate(dayCode: Int): LocalDate =
         LocalDate.of(dayCode / 10000, (dayCode % 10000) / 100, dayCode % 100)
 
-    /**
-     * Calculate which day number the selected date is within a multi-day event.
-     *
-     * @param startTs Event start timestamp in milliseconds
-     * @param selectedTs Selected date timestamp in milliseconds
-     * @param isAllDay Whether this is an all-day event
-     * @param localZone Timezone for timed events (default: system)
-     * @return Day number (1-based, e.g., "Day 1", "Day 2")
-     */
+    /** Returns the 1-based day ("Day 2") of a multi-day event that [selectedTs] falls on. */
     fun calculateCurrentDay(
         startTs: Long,
         selectedTs: Long,
@@ -464,19 +409,11 @@ object DateTimeUtils {
     // ==================== Formatting Functions ====================
 
     /**
-     * Format event date for display.
+     * Formats an event's date, in UTC for an all-day event, else in [localZone].
      *
-     * For all-day events: Uses UTC to preserve the calendar date.
-     * For timed events: Uses local timezone for user's perspective.
+     * Format event dates with this, not SimpleDateFormat, so all-day dates don't shift a day.
      *
-     * This is the canonical way to format event dates in KashCal.
-     * Use this instead of SimpleDateFormat to ensure timezone correctness.
-     *
-     * @param timestampMs Timestamp in milliseconds
-     * @param isAllDay Whether this is an all-day event
-     * @param pattern DateTimeFormatter pattern (default: "EEE, MMM d, yyyy")
-     * @param localZone Timezone for timed events (default: system)
-     * @return Formatted date string
+     * @param pattern a DateTimeFormatter pattern; defaults to the locale's `yEEEMMMd` pattern
      */
     fun formatEventDate(
         timestampMs: Long,
@@ -489,15 +426,7 @@ object DateTimeUtils {
         return date.format(formatter)
     }
 
-    /**
-     * Format event date with short pattern (e.g., "Thu, Dec 25").
-     * Convenience wrapper for common use case.
-     *
-     * @param timestampMs Timestamp in milliseconds
-     * @param isAllDay Whether this is an all-day event
-     * @param localZone Timezone for timed events (default: system)
-     * @return Formatted date string
-     */
+    /** Formats an event's date with the locale's `EEEMMMd` pattern ("Thu, Dec 25" in en-US). */
     fun formatEventDateShort(
         timestampMs: Long,
         isAllDay: Boolean,
@@ -506,18 +435,7 @@ object DateTimeUtils {
         return formatEventDate(timestampMs, isAllDay, localizedPattern("EEEMMMd"), localZone)
     }
 
-    /**
-     * Format event time for display.
-     *
-     * For all-day events: Returns empty string (no time component)
-     * For timed events: Returns formatted time in local timezone
-     *
-     * @param timestampMs Timestamp in milliseconds
-     * @param isAllDay Whether this is an all-day event
-     * @param pattern DateTimeFormatter pattern (default: "h:mm a")
-     * @param localZone Timezone for timed events (default: system)
-     * @return Formatted time string, or empty for all-day events
-     */
+    /** Formats a timed event's time in [localZone] with [pattern]; an all-day event returns "". */
     fun formatEventTime(
         timestampMs: Long,
         isAllDay: Boolean,
@@ -533,89 +451,61 @@ object DateTimeUtils {
     // ==================== Conversion Functions ====================
 
     /**
-     * Convert a local date (from UI picker) to UTC midnight timestamp.
+     * Converts a date picker's local-midnight timestamp to UTC midnight of the same date.
      *
-     * This is used when creating/editing all-day events. The UI date picker
-     * returns a local time (e.g., Jan 6 00:00 local), but all-day events
-     * must be stored as UTC midnight (Jan 6 00:00 UTC) for consistency
-     * with iCal/CalDAV parsing.
+     * All-day events are stored as UTC midnight (Jan 6 00:00 UTC for a picked Jan 6 00:00
+     * local), matching iCal/CalDAV parsing.
      *
-     * @param localDateMillis Timestamp from date picker (local midnight)
-     * @param localZone Timezone of the date picker (default: system)
-     * @return UTC midnight timestamp in milliseconds
+     * @param localZone the date picker's zone
      */
     fun localDateToUtcMidnight(
         localDateMillis: Long,
         localZone: ZoneId = ZoneId.systemDefault()
     ): Long {
-        // Parse local timestamp to get the calendar date in local timezone
         val localDate = Instant.ofEpochMilli(localDateMillis).atZone(localZone).toLocalDate()
-        // Convert that date to UTC midnight
         return localDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
     }
 
     /**
-     * Convert UTC midnight timestamp to local date representation.
-     *
-     * This is the inverse of localDateToUtcMidnight(). Used when loading
-     * an all-day event for editing - converts the stored UTC midnight
-     * back to the local date for display in the date picker.
-     *
-     * @param utcMidnightMillis UTC midnight timestamp in milliseconds
-     * @param localZone Target timezone for display (default: system)
-     * @return Local midnight timestamp in the target timezone
+     * Converts a stored UTC-midnight timestamp to local midnight of the same date in
+     * [localZone], the inverse of [localDateToUtcMidnight]. Used to show an all-day event's
+     * dates in the form's date picker.
      */
     fun utcMidnightToLocalDate(
         utcMidnightMillis: Long,
         localZone: ZoneId = ZoneId.systemDefault()
     ): Long {
-        // Get the date in UTC (this is the canonical calendar date)
         val utcDate = Instant.ofEpochMilli(utcMidnightMillis).atZone(ZoneOffset.UTC).toLocalDate()
-        // Return midnight in local timezone for that same calendar date
         return utcDate.atStartOfDay(localZone).toInstant().toEpochMilli()
     }
 
     /**
-     * Get the end-of-day timestamp for an all-day event.
-     *
-     * For single-day all-day events, endTs should be 23:59:59.999 UTC
-     * of the same day. This ensures the event spans the correct day.
-     *
-     * @param utcMidnightMillis UTC midnight timestamp (start of day)
-     * @return UTC end-of-day timestamp (23:59:59.999)
+     * Returns 23:59:59.999 UTC of the day starting at [utcMidnightMillis], the stored endTs of
+     * a single-day all-day event.
      */
     fun utcMidnightToEndOfDay(utcMidnightMillis: Long): Long {
-        // Add 24 hours minus 1 millisecond to get end of day
         return utcMidnightMillis + (24 * 60 * 60 * 1000) - 1
     }
 
     // ==================== UTC Midnight Normalization ====================
 
     /**
-     * Normalize a UTC timestamp to midnight of the same UTC day.
-     * Used for CalendarProvider all-day event ORIGINAL_INSTANCE_TIME normalization.
-     *
-     * @param utcMillis Timestamp in milliseconds (UTC)
-     * @return UTC midnight of the same day in milliseconds
+     * Returns UTC midnight of [utcMillis]'s UTC day. Used on all-day device events'
+     * occurrence times (ORIGINAL_INSTANCE_TIME, a this-and-future split point).
      */
     fun normalizeToUtcMidnight(utcMillis: Long): Long = (utcMillis / 86_400_000L) * 86_400_000L
 
     // ==================== RFC 5545 Duration Parsing ====================
 
     /**
-     * Parse an RFC 5545 duration string to milliseconds.
+     * Parses an RFC 5545 duration ("P1W", "P1D", "P2DT1H", "PT1H30M") to milliseconds.
      *
-     * CalendarProvider stores duration instead of endTs for recurring events.
-     * Format: P[n]W or P[n]D or PT[n]H[n]M[n]S
+     * CalendarProvider stores DURATION instead of an end time for recurring events. Hours,
+     * minutes and seconds are read only after a `T`.
      *
-     * Examples:
-     * - "P1D" → 86,400,000 ms (1 day)
-     * - "P1W" → 604,800,000 ms (1 week)
-     * - "PT1H30M" → 5,400,000 ms (1.5 hours)
-     * - "PT30M" → 1,800,000 ms (30 minutes)
-     *
-     * @param duration RFC 5545 duration string (e.g., "PT1H30M", "P1D")
-     * @return Duration in milliseconds, or null if null/invalid
+     * @return the duration, or null when [duration] is null or empty, doesn't start with `P`,
+     *   has no digit, or overflows a Long; any other string yields whatever parts matched,
+     *   possibly 0
      */
     fun parseDurationToMillis(duration: String?): Long? {
         if (duration.isNullOrEmpty()) return null
@@ -623,13 +513,12 @@ object DateTimeUtils {
 
         try {
             var totalMs = 0L
-            var remaining = duration.substring(1) // Remove 'P'
+            var remaining = duration.substring(1)
 
             // Use exact arithmetic throughout: an absurd (malformed) magnitude
             // must overflow into an exception the catch below turns into null,
             // never silently wrap to a garbage negative duration.
 
-            // Handle weeks (P1W)
             val weekMatch = Regex("(\\d+)W").find(remaining)
             if (weekMatch != null) {
                 val weeks = weekMatch.groupValues[1].toLong()
@@ -637,7 +526,6 @@ object DateTimeUtils {
                 remaining = remaining.replace(weekMatch.value, "")
             }
 
-            // Handle days (P1D or P2DT...)
             val dayMatch = Regex("(\\d+)D").find(remaining)
             if (dayMatch != null) {
                 val days = dayMatch.groupValues[1].toLong()
@@ -645,11 +533,9 @@ object DateTimeUtils {
                 remaining = remaining.replace(dayMatch.value, "")
             }
 
-            // Handle time component (T...)
             if (remaining.startsWith("T")) {
-                remaining = remaining.substring(1) // Remove 'T'
+                remaining = remaining.substring(1)
 
-                // Hours
                 val hourMatch = Regex("(\\d+)H").find(remaining)
                 if (hourMatch != null) {
                     val hours = hourMatch.groupValues[1].toLong()
@@ -657,7 +543,6 @@ object DateTimeUtils {
                     remaining = remaining.replace(hourMatch.value, "")
                 }
 
-                // Minutes
                 val minMatch = Regex("(\\d+)M").find(remaining)
                 if (minMatch != null) {
                     val minutes = minMatch.groupValues[1].toLong()
@@ -665,7 +550,6 @@ object DateTimeUtils {
                     remaining = remaining.replace(minMatch.value, "")
                 }
 
-                // Seconds
                 val secMatch = Regex("(\\d+)S").find(remaining)
                 if (secMatch != null) {
                     val seconds = secMatch.groupValues[1].toLong()
@@ -673,9 +557,8 @@ object DateTimeUtils {
                 }
             }
 
-            // If we parsed nothing, return null
+            // A zero total is kept when the string has any digit; only a digitless one is null.
             if (totalMs == 0L && duration != "PT0M" && duration != "PT0S" && duration != "P0D") {
-                // Check if this is actually a valid zero-duration
                 if (!duration.contains(Regex("\\d"))) return null
             }
 
@@ -688,11 +571,8 @@ object DateTimeUtils {
     // ==================== UI Display Formatters ====================
 
     /**
-     * Format timestamp as relative time (e.g., "5 minutes ago", "2 days ago").
-     * Used in settings to show last sync time.
-     *
-     * @param timestampMs Timestamp in milliseconds
-     * @return Human-readable relative time string
+     * Formats [timestampMs] relative to [now] ("5 minutes ago", "2 days ago"), for each session
+     * in the sync history sheet.
      */
     fun formatRelativeTime(timestampMs: Long, now: Long = System.currentTimeMillis()): String {
         return DateUtils.getRelativeTimeSpanString(
@@ -705,10 +585,8 @@ object DateTimeUtils {
 
 
     /**
-     * Format sync interval for display.
-     *
-     * @param intervalMs Sync interval in milliseconds
-     * @return Human-readable interval (e.g., "1 hour", "Manual only")
+     * Formats a sync interval ("15 minutes", "1 hour", "1h 30m"); Long.MAX_VALUE is "Manual
+     * only".
      */
     fun formatSyncInterval(intervalMs: Long, resources: Resources): String {
         if (intervalMs == Long.MAX_VALUE) return resources.getString(R.string.sync_manual_only)
@@ -728,21 +606,11 @@ object DateTimeUtils {
     }
 
     /**
-     * Format event date and time for display in quick view and lists.
-     *
-     * Uses correct timezone handling:
-     * - All-day events: UTC to preserve calendar date
-     * - Timed events: Local timezone for user's perspective
-     *
-     * Output format:
-     * - All-day single day: "Thu, Dec 25 · All day"
-     * - All-day multi-day: "Thu, Dec 25 → Fri, Dec 26 · All day"
-     * - Timed: "Thu, Dec 25 · 2:00 PM - 3:00 PM"
-     *
-     * @param startTs Start timestamp in milliseconds
-     * @param endTs End timestamp in milliseconds
-     * @param isAllDay Whether this is an all-day event
-     * @return Formatted date/time string
+     * Formats an event's date and time on one line, all-day dates in UTC and timed ones in
+     * the system zone:
+     * - all-day single day: "Thu, Dec 25 · All day"
+     * - all-day multi-day: "Thu, Dec 25 → Fri, Dec 26 · All day"
+     * - timed: "Thu, Dec 25 · 2:00 PM - 3:00 PM"
      */
     fun formatEventDateTime(startTs: Long, endTs: Long, isAllDay: Boolean, resources: Resources): String {
         val startDateStr = formatEventDateShort(startTs, isAllDay)
@@ -763,14 +631,7 @@ object DateTimeUtils {
         }
     }
 
-    /**
-     * Format time from hour and minute values.
-     * Used in form displays and pickers.
-     *
-     * @param hour Hour (0-23)
-     * @param minute Minute (0-59)
-     * @return Formatted time string (e.g., "2:30 PM")
-     */
+    /** Formats [hour] (0-23) and [minute] with [pattern] ("2:30 PM"), for the date-time pickers. */
     fun formatTime(hour: Int, minute: Int, pattern: String = "h:mm a"): String {
         val localTime = java.time.LocalTime.of(hour, minute)
         val formatter = DateTimeFormatter.ofPattern(pattern, Locale.getDefault())
@@ -780,20 +641,13 @@ object DateTimeUtils {
     // ==================== Event Past Check ====================
 
     /**
-     * Determine if an event/occurrence has passed.
+     * Returns true if an occurrence has ended: a timed one when [endTs] is before [nowMs], an
+     * all-day one only once [todayDayCode] (local) is past [endDay].
      *
-     * For all-day events: Uses day code comparison (local calendar date).
-     * This fixes the bug where all-day events were grayed out at 6 PM for UTC-6 users
-     * because endTs (UTC midnight) < current UTC time, even though locally it's still "today".
+     * An all-day endTs is the end of its UTC day, which a UTC-6 user reaches at 6 PM local,
+     * so comparing it with the clock would gray out today's all-day events in the evening.
      *
-     * For timed events: Uses timestamp comparison (actual moment in time).
-     *
-     * @param endTs End timestamp of the occurrence in milliseconds
-     * @param endDay End day code (YYYYMMDD) of the occurrence
-     * @param isAllDay Whether this is an all-day event
-     * @param nowMs Current time in milliseconds (injectable for testing)
-     * @param todayDayCode Today's day code in local timezone (injectable for testing)
-     * @return true if the event has passed, false otherwise
+     * @param endDay the occurrence's end day code (YYYYMMDD)
      */
     fun isEventPast(
         endTs: Long,
@@ -803,11 +657,8 @@ object DateTimeUtils {
         todayDayCode: Int = eventTsToDayCode(System.currentTimeMillis(), isAllDay = false)
     ): Boolean {
         return if (isAllDay) {
-            // All-day events: compare calendar dates (endDay is already in correct format)
-            // Event is past only when local calendar date has moved past the event's end date
             endDay < todayDayCode
         } else {
-            // Timed events: compare exact timestamps
             endTs < nowMs
         }
     }

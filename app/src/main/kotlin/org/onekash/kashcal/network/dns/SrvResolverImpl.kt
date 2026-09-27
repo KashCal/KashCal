@@ -1,17 +1,14 @@
 package org.onekash.kashcal.network.dns
 
 /**
- * The default [SrvResolver]: issues a TYPE 33 (SRV) query through [channel], decodes
- * the bytes with [SrvWireParser], and orders any records with [SrvSelection].
+ * Issues a TYPE 33 (SRV) query through [channel], decodes it with [SrvWireParser] and orders
+ * any records in RFC 2782 order with [SrvSelection]; the default [SrvResolver].
  *
- * The three collaborators keep their single responsibilities: [channel] does the
- * (untestable) IO, [SrvWireParser] turns bytes into a typed result, [SrvSelection]
- * imposes RFC 2782 connection order. This class only sequences them and folds a
- * thrown/empty channel response into [SrvResult.Error] — so it is fully unit-tested
- * with a fake channel, no network.
+ * This class only sequences the three and turns a throwing channel into [SrvResult.Error]
+ * (an empty body fails in the parser), so it is unit-tested with a fake channel.
  *
- * @param rng the weighted-selection source handed to [SrvSelection]; injected so
- *   tests can make ordering deterministic. Defaults to [Math.random].
+ * @param rng the weighted-selection source handed to [SrvSelection]; injected so tests can
+ *   make ordering deterministic. Defaults to [Math.random].
  */
 class SrvResolverImpl(
     private val channel: RawDnsChannel,

@@ -10,7 +10,7 @@ class BackupFilenameTest {
 
     @Test
     fun `generate returns ISO 8601 with colons replaced by dashes`() {
-        // 2026-04-23 14:30:05 UTC -> in UTC zone: 2026-04-23T14-30
+        // 2026-04-23 14:30:05 UTC in the UTC zone: 2026-04-23T14-30
         val instant = Instant.parse("2026-04-23T14:30:05Z")
         val filename = BackupFilename.generate(instant, ZoneId.of("UTC"))
 
@@ -19,7 +19,7 @@ class BackupFilenameTest {
 
     @Test
     fun `generate uses local zone for the filename`() {
-        // 2026-04-23 23:45 UTC -> UTC+5 -> 2026-04-24T04-45
+        // 2026-04-23 23:45 UTC at UTC+5 is 2026-04-24T04-45.
         val instant = Instant.parse("2026-04-23T23:45:00Z")
         val filename = BackupFilename.generate(instant, ZoneId.of("+05:00"))
 
@@ -36,14 +36,13 @@ class BackupFilenameTest {
 
     @Test
     fun `generate handles DST boundary correctly`() {
-        // US Eastern spring-forward 2026-03-08: local jumps 02:00 -> 03:00.
-        // 06:30 UTC on that date -> America/New_York 02:30 AM is invalid, jumps to 03:30.
+        // US Eastern springs forward on 2026-03-08: local 02:00 EST (07:00 UTC) jumps to
+        // 03:00 EDT. 06:30 UTC is 01:30 EST, half an hour before the jump.
         val instant = Instant.parse("2026-03-08T06:30:00Z")
         val filename = BackupFilename.generate(instant, ZoneId.of("America/New_York"))
 
-        // 06:30 UTC - 4h (EDT active after spring-forward) = 02:30... but 02:30 didn't exist.
-        // JVM zone rules resolve 06:30 UTC = 02:30 EDT (already on EDT by 06:30 UTC).
-        // Either way, the result must contain "2026-03-08T" and end with ".json".
+        // An instant always maps to a valid local time; the asserts check only the date
+        // prefix and the ".json" suffix.
         assertTrue(filename.startsWith("kashcal-backup-2026-03-08T"))
         assertTrue(filename.endsWith(".json"))
     }
@@ -58,7 +57,7 @@ class BackupFilenameTest {
 
     @Test
     fun `generateIsoUtc normalizes fractional seconds away`() {
-        // Instants can carry nanoseconds; keep the format stable to seconds precision.
+        // Instants can carry nanoseconds; the format stays at seconds precision.
         val instant = Instant.parse("2026-04-23T14:30:05.123456789Z")
         val iso = BackupFilename.generateIsoUtc(instant)
 

@@ -13,8 +13,8 @@ import java.io.File
 import java.util.Properties
 
 /**
- * Diagnostic test to isolate iCloud 400 error.
- * Tests each CalDAV operation individually against real iCloud.
+ * Isolates an iCloud 400 error by running each discovery and pull step on its own against
+ * live iCloud and printing the result. It asserts nothing past the credential check.
  *
  * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*ICloudDiagnosticTest*"
  */
@@ -53,7 +53,7 @@ class ICloudDiagnosticTest {
     fun `step-by-step iCloud pull diagnosis`() = runBlocking {
         val serverUrl = "https://caldav.icloud.com"
 
-        // Step 1: Discovery
+        // Step 1: principal discovery
         println("=== Step 1: discoverPrincipal ===")
         val principalResult = client.discoverPrincipal(serverUrl)
         println("Principal: success=${principalResult.isSuccess()}, value=${principalResult.getOrNull()}")
@@ -84,7 +84,7 @@ class ICloudDiagnosticTest {
         println("Found ${calendars.size} calendars:")
         calendars.forEach { println("  - ${it.displayName} at ${it.url}") }
 
-        // Use first VEVENT calendar
+        // The first listed calendar, whatever its component set
         val cal = calendars.first()
         val calUrl = cal.url
         println("\nUsing calendar: ${cal.displayName} at $calUrl")
@@ -103,7 +103,7 @@ class ICloudDiagnosticTest {
         val now = System.currentTimeMillis()
         val pastWindow = 365L * 24 * 60 * 60 * 1000
         val startMs = now - pastWindow
-        val endMs = 4102444800000L  // Jan 1, 2100 UTC (same as PullStrategy.FUTURE_END_MS)
+        val endMs = 4102444800000L  // Jan 1, 2100 UTC, same as PullStrategy's `FUTURE_END_MS`
         val startDate = quirks.formatDateForQuery(startMs)
         val endDate = quirks.formatDateForQuery(endMs)
         println("Time range: $startDate to $endDate")
@@ -130,7 +130,7 @@ class ICloudDiagnosticTest {
                 println("ERROR: code=${err.code}, message=${err.message}")
             }
 
-            // Step 7: fetchEventsByHref (batch of 50)
+            // Step 7: fetchEventsByHref, up to 50 hrefs
             println("\n=== Step 7: fetchEventsByHref (50 hrefs) ===")
             val batchHrefs = hrefs.take(50).map { it.first }
             val batchResult = client.fetchEventsByHref(calUrl, batchHrefs)

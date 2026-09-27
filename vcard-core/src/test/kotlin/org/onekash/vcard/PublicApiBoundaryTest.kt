@@ -7,10 +7,13 @@ import kotlin.test.assertTrue
 import kotlin.test.fail
 
 /**
- * The vCard library must stay behind the module's compile boundary: the public
- * API returns only the neutral model, so callers never need ez-vcard on their
- * classpath. This scans every public signature reachable from [VCardParser] and
- * the [Contact] model and fails on any `ezvcard.*` type.
+ * Keeps ez-vcard behind the module's compile boundary: the public API speaks only the neutral
+ * model, so callers never need ez-vcard on their classpath.
+ *
+ * Fails on any `ezvcard.*` return or parameter type among the public methods declared by
+ * [VCardParser], [VCardWriter], [ImageFormat] and its companion, and on any such type among the
+ * declared fields and public methods of the model classes in [modelClasses]. A last test checks
+ * the matcher flags a real ez-vcard type.
  */
 class PublicApiBoundaryTest {
 
@@ -74,7 +77,7 @@ class PublicApiBoundaryTest {
 
     @Test
     fun `boundary check is not a no-op`() {
-        // Sanity: the matcher actually flags an ez-vcard type when one is present.
+        // The matcher flags an ez-vcard type when one is present.
         val method = ezvcard.Ezvcard::class.java.methods.first { it.name == "parse" }
         assertTrue(
             method.returnType.name.startsWith(forbiddenPrefix) || leaksIn(method).isNotEmpty(),

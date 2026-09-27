@@ -12,14 +12,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests the share intent builder used by [ShareCardSheet]'s Send handler.
+ * Tests [ShareCardIntentBuilder.buildPayload], which ShareCardSheet's Send handler calls.
  *
- * When both PNG and ICS are available, the builder produces a single
- * `ACTION_SEND_MULTIPLE` intent with both URIs and ClipData so receivers
- * across separate processes/tasks see the URI grants.
- *
- * When only the PNG is available (ICS export failed), the builder falls
- * back to plain `ACTION_SEND` of just the image.
+ * With both URIs: one `ACTION_SEND_MULTIPLE` with both in `EXTRA_STREAM` and in ClipData, the
+ * wildcard type and the read grant flag. With only the PNG (the ICS export failed): a plain
+ * `ACTION_SEND` of the image as `image/png`, the grant flag and no ClipData.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34])
@@ -48,8 +45,8 @@ class ShareCardIntentBuilderTest {
     @Test
     fun `with both URIs, type is mixed-bag wildcard`() {
         val intent = ShareCardIntentBuilder.buildPayload(pngUri = pngUri, icsUri = icsUri)
-        // SEND_MULTIPLE with mixed image/png + text/calendar uses */*
-        // (or a common-prefix). We use */* so all receivers accept.
+        // image/png and text/calendar share no type prefix, so the wildcard type lets every
+        // receiver accept the pair.
         assertEquals("*/*", intent.type)
     }
 

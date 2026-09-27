@@ -19,15 +19,12 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import java.util.concurrent.TimeUnit
 
 /**
- * WorkManager worker for contact event sync (birthdays + anniversaries).
+ * Syncs whichever of the birthday and anniversary calendars is enabled from the phone's
+ * contacts.
  *
- * Handles:
- * - Syncing birthdays from phone contacts (if enabled)
- * - Syncing anniversaries from phone contacts (if enabled)
- * - Triggered by ContentObserver when contacts change
- * - One-shot sync for user-initiated actions
- *
- * Uses Hilt for dependency injection.
+ * Enqueued by [ContactEventManager] when a feature is enabled and on each contacts change. A
+ * failed sync, an error result or an exception, retries up to [MAX_RETRY_ATTEMPTS] times,
+ * then fails with [KEY_ERROR_MESSAGE]; a [SecurityException] fails at once.
  */
 @HiltWorker
 class ContactEventSyncWorker @AssistedInject constructor(
@@ -41,7 +38,6 @@ class ContactEventSyncWorker @AssistedInject constructor(
     companion object {
         private const val TAG = "ContactEventSyncWorker"
 
-        // Work names
         const val SYNC_WORK = "contact_event_sync"
 
         // Output data keys - birthdays
@@ -56,19 +52,11 @@ class ContactEventSyncWorker @AssistedInject constructor(
 
         const val KEY_ERROR_MESSAGE = "error_message"
 
-        // Tags
         const val TAG_CONTACT_EVENT = "contact_event"
 
-        // Retry
         private const val MAX_RETRY_ATTEMPTS = 3
 
-        /**
-         * Request immediate sync of contact events (birthdays + anniversaries).
-         *
-         * Used when:
-         * - User enables contact birthdays or anniversaries
-         * - ContentObserver detects contact changes
-         */
+        /** Enqueues a sync, replacing any queued or running one, and returns the request ID. */
         fun requestImmediateSync(context: Context): java.util.UUID {
             Log.i(TAG, "Requesting immediate contact event sync")
 
@@ -90,9 +78,7 @@ class ContactEventSyncWorker @AssistedInject constructor(
             return work.id
         }
 
-        /**
-         * Cancel any pending contact event sync work.
-         */
+        /** Cancels queued or running contact event sync work. */
         fun cancelSync(context: Context) {
             Log.i(TAG, "Cancelling contact event sync")
             WorkManager.getInstance(context).cancelUniqueWork(SYNC_WORK)
@@ -105,7 +91,6 @@ class ContactEventSyncWorker @AssistedInject constructor(
         val birthdaysEnabled = dataStore.getContactBirthdaysEnabled()
         val anniversariesEnabled = dataStore.getContactAnniversariesEnabled()
 
-        // Check if either feature is enabled
         if (!birthdaysEnabled && !anniversariesEnabled) {
             Log.i(TAG, "Both contact features disabled, skipping sync")
             return@withContext Result.success()
@@ -116,7 +101,6 @@ class ContactEventSyncWorker @AssistedInject constructor(
             var hasError = false
             var errorMessage: String? = null
 
-            // Sync birthdays if enabled
             if (birthdaysEnabled) {
                 when (val result = birthdayRepository.syncEvents()) {
                     is ContactEventSyncResult.Success -> {
@@ -135,7 +119,6 @@ class ContactEventSyncWorker @AssistedInject constructor(
                 }
             }
 
-            // Sync anniversaries if enabled
             if (anniversariesEnabled) {
                 when (val result = anniversaryRepository.syncEvents()) {
                     is ContactEventSyncResult.Success -> {

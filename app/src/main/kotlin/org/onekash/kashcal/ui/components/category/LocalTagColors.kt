@@ -3,29 +3,23 @@ package org.onekash.kashcal.ui.components.category
 import androidx.compose.runtime.staticCompositionLocalOf
 
 /**
- * Per-tag custom colors, keyed by tag name (a null value means "no custom color
- * chosen"). Provided at screen roots from `CategoryRepository.observeColors()`
- * so chips repaint when the user recolors a tag, without threading the color
- * through the event/occurrence stream (which would re-materialize it on every
- * recolor).
+ * Holds per-tag custom colors by tag name, null for no custom color.
  *
- * The default is an empty map: any composable rendered without a provider
- * (previews, tests) simply falls back to the hash-derived color.
+ * `MainActivity` provides it from HomeViewModel's `tagColors`, fed by
+ * `EventReader.observeTagColors()`, so chips repaint on a recolor without threading the color
+ * through the event and occurrence streams (which would re-materialize it on every recolor).
+ * Without a provider (previews, tests) the map is empty and every tag gets its hash color.
  */
 val LocalTagColors = staticCompositionLocalOf<Map<String, Int?>> { emptyMap() }
 
 /**
- * Resolve the display color for tag [name]: the user's chosen color if the map
- * carries a non-null entry for it, otherwise the deterministic hash color. Pure
- * ARGB Int math so it is plain-JVM unit-testable independent of Compose.
+ * Returns tag [name]'s display color: the non-null entry in [customColors], else [colorForTag].
+ * ARGB Int math, so it is plain-JVM unit-testable.
  *
- * The lookup is case-insensitive to match the rest of the tag system (the
- * metadata row's name is `COLLATE NOCASE`). The map is keyed by the row's
- * stored casing, but a chip resolves against its event's category string, whose
- * casing can differ (a migration backfill or server pull may keep a different
- * first-seen casing) — an exact-case-only lookup would silently miss the custom
- * color and fall back to the hash. A case-insensitive PK guarantees at most one
- * matching entry, so the scan is unambiguous.
+ * The lookup is case-insensitive because the map is keyed by the metadata row's stored casing
+ * while a chip passes its event's category string, whose casing can differ (a migration backfill
+ * or server pull may keep another first-seen casing). An exact-case lookup would silently miss
+ * the custom color. The row's `COLLATE NOCASE` primary key allows at most one match.
  */
 fun colorFor(customColors: Map<String, Int?>, name: String): Int {
     val custom = customColors.entries

@@ -9,14 +9,9 @@ import org.onekash.kashcal.sync.parser.icaldav.RawIcsParser
 import java.time.ZoneId
 
 /**
- * Unit tests for ReminderScheduler reminder offset parsing.
- *
- * Tests verify:
- * - ISO 8601 duration parsing (time-based, day-based, week-based, combined)
- * - Edge cases (zero duration, invalid formats, negative offsets)
- * - iCal VALARM format compatibility
- *
- * Reference: RFC 5545 Section 3.3.6 (Duration)
+ * Tests the reminder offset parsing: [parseIsoDuration] on time, day, week and combined
+ * ISO 8601 durations (RFC 5545 §3.3.6), [parseReminderOffset] on signed offsets and common CalDAV
+ * reminder values, trigger arithmetic on a timed start, and zero, blank and malformed input.
  */
 class ReminderSchedulerTest {
 
@@ -268,12 +263,12 @@ class ReminderSchedulerTest {
 
     @Test
     fun `trigger time calculation - 15 minutes before event`() {
-        val eventStartTs = 1704067200000L // Jan 1, 2024 12:00 UTC
+        val eventStartTs = 1704067200000L // Jan 1, 2024 00:00 UTC
         val offset = parseReminderOffset("-PT15M")!!
 
         val triggerTime = eventStartTs + offset
 
-        // Trigger should be at 11:45
+        // Dec 31, 2023 23:45 UTC
         assertEquals(eventStartTs - (15 * 60 * 1000), triggerTime)
     }
 
@@ -289,12 +284,12 @@ class ReminderSchedulerTest {
 
     @Test
     fun `trigger time calculation - 1 day before event`() {
-        val eventStartTs = 1704067200000L // Jan 1, 2024 12:00 UTC
+        val eventStartTs = 1704067200000L // Jan 1, 2024 00:00 UTC
         val offset = parseReminderOffset("-P1D")!!
 
         val triggerTime = eventStartTs + offset
 
-        // Trigger should be Dec 31, 2023 12:00 UTC
+        // Dec 31, 2023 00:00 UTC
         assertEquals(eventStartTs - (24 * 60 * 60 * 1000), triggerTime)
     }
 
@@ -304,15 +299,14 @@ class ReminderSchedulerTest {
     fun `parseIsoDuration handles P0D - zero days`() {
         val result = parseIsoDuration("P0D")
 
-        assertNull(result) // Zero with no explicit 0M/0S should return null
+        assertNull(result) // Zero is only PT0M or PT0S; any other zero is null
     }
 
     @Test
     fun `parseReminderOffset handles double negative gracefully`() {
-        // This shouldn't happen in practice, but test robustness
+        // Malformed input: only one leading minus is stripped, and the rest doesn't parse.
         val result = parseReminderOffset("--PT15M")
 
-        // Expected: parsing should fail (invalid format)
         assertNull(result)
     }
 
@@ -320,20 +314,27 @@ class ReminderSchedulerTest {
     fun `parseIsoDuration handles P1DT0H0M - day with zero time`() {
         val result = parseIsoDuration("P1DT0H0M")
 
-        // Should still parse the day part
+        // The day part still counts.
         assertEquals(24 * 60 * 60 * 1000L, result)
     }
 }
 
-/**
- * Integration tests for ReminderScheduler constants and configuration.
- */
+/** Tests the [ReminderScheduler] window lengths and the alarm action and extra key. */
 class ReminderSchedulerConstantsTest {
 
     @Test
-    fun `schedule window is 30 days`() {
-        // Extended from 7 to 30 days in v16.5.6 to catch far-future events
-        assertEquals(30, ReminderScheduler.SCHEDULE_WINDOW_DAYS)
+    fun `reminders are armed seven days ahead`() {
+        // Android caps an app at 500 pending alarms; arming a month ahead can reach it
+        assertEquals(7, ReminderScheduler.SCHEDULE_WINDOW_DAYS)
+    }
+
+    @Test
+    fun `occurrences are read far enough ahead for a reminder set weeks before its event`() {
+        assertEquals(
+            ReminderScheduler.SCHEDULE_WINDOW_DAYS + ReminderScheduler.MAX_REMINDER_LEAD_DAYS,
+            ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS
+        )
+        assertEquals(30, ReminderScheduler.MAX_REMINDER_LEAD_DAYS)
     }
 
     @Test
@@ -348,20 +349,20 @@ class ReminderSchedulerConstantsTest {
 }
 
 /**
- * Unit tests for calculateAllDayTriggerTime() — signed-offset-from-local-midnight model.
+ * Tests [calculateAllDayTriggerTime]: the trigger is the event's local midnight plus the signed
+ * offset.
  *
- * Model: trigger = eventLocalMidnight + signedOffsetMs.
- * - Negative offset = before the event's local-midnight start (e.g. -PT15H = 9 AM the day before).
- * - Positive offset = after the start (e.g. PT9H = 9 AM on the event day).
- * - PT0M = midnight (start of the event day).
+ * - A negative offset is before the event's local-midnight start (-PT15H is 9 AM the day
+ *   before), a positive one after it (PT9H is 9 AM on the event day), and PT0M is midnight.
+ * - The anchor is the event's local midnight, its date read from the stored UTC midnight, so the
+ *   wall-clock fire time is the same in every timezone on a day without a DST change.
+ * - Offsets are exact durations (RFC 5545 VALARM relative trigger; matches the platform and
+ *   other clients), so on a DST transition day the wall-clock time shifts by the transition
+ *   amount. This is deliberate: what is stored is what fires and what is sent, and a fixed
+ *   duration can't also hold the wall-clock time across a DST change.
+ * - Offsets outside the chip set, such as -P1D and -PT9H, are read the same way.
  *
- * Anchor is the event's LOCAL midnight (event date derived from the stored UTC midnight),
- * so wall-clock fire time is timezone-stable on non-DST days. Offsets are applied as exact
- * durations (RFC 5545 VALARM relative-trigger semantics; matches the platform and other clients), so on a DST
- * transition day the wall-clock shifts by the transition amount — this is intentional
- * (stored == fired == sent; wall-clock stability is impossible with duration-based storage).
- *
- * Chip offsets under this model: 9AM = PT9H, 1d = -PT15H, 2d = -PT39H, 1w = -PT159H.
+ * Chip offsets: 9AM = PT9H, 1d = -PT15H, 2d = -PT39H, 1w = -PT159H.
  */
 class CalculateAllDayTriggerTimeTest {
 
@@ -448,7 +449,7 @@ class CalculateAllDayTriggerTimeTest {
         assertEquals(1736150400000L, result)
     }
 
-    // ==================== Timezone stability: same offset -> same local wall-clock ====================
+    // ==================== Timezone stability: same offset, same wall-clock ====================
 
     @Test
     fun `PT9H fires at 09 00 local in every timezone`() {
@@ -490,7 +491,7 @@ class CalculateAllDayTriggerTimeTest {
         val result = calculateAllDayTriggerTime(marchUtcMidnight, offset, ZoneId.of("America/Los_Angeles"))
 
         // local midnight March 9 PST (= March 9 08:00 UTC) + exactly 9h = March 9 17:00 UTC.
-        // Because 02:00-03:00 was skipped, 9 elapsed hours after midnight is 10:00 wall-clock PDT.
+        // 02:00-03:00 is skipped, so 9 elapsed hours after midnight is 10:00 wall-clock PDT.
         assertEquals(1741539600000L, result)
         val local = java.time.Instant.ofEpochMilli(result).atZone(ZoneId.of("America/Los_Angeles"))
         assertEquals(10, local.hour)
@@ -498,7 +499,7 @@ class CalculateAllDayTriggerTimeTest {
 
     @Test
     fun `non-DST day PT9H lands exactly 9 AM wall-clock`() {
-        // Sanity: on an ordinary day, exact-duration == wall-clock 9 AM.
+        // On a day without a DST change, the exact duration lands on wall-clock 9 AM.
         val utcMidnight = 1736121600000L // Jan 6
         val offset = parseReminderOffset("PT9H")!!
 
@@ -509,7 +510,7 @@ class CalculateAllDayTriggerTimeTest {
         assertEquals(0, local.minute)
     }
 
-    // ==================== Legacy reinterpretation (no migration) ====================
+    // ==================== Offsets outside the chip set ====================
 
     @Test
     fun `legacy -P1D now fires at local midnight the day before (was 9 AM)`() {
@@ -518,8 +519,8 @@ class CalculateAllDayTriggerTimeTest {
 
         val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
 
-        // local midnight Jan 6 PST - 24h = Jan 5 00:00 PST = Jan 5 08:00 UTC.
-        // (Old behavior fired this at 9 AM the day before; reinterpreted in place.)
+        // local midnight Jan 6 PST - 24h = Jan 5 00:00 PST = Jan 5 08:00 UTC: midnight the
+        // day before, not 9 AM.
         assertEquals(1736064000000L, result)
     }
 
@@ -530,21 +531,20 @@ class CalculateAllDayTriggerTimeTest {
 
         val result = calculateAllDayTriggerTime(utcMidnight, offset, ZoneId.of("America/Los_Angeles"))
 
-        // local midnight Jan 6 PST - 9h = Jan 5 15:00 PST = Jan 5 23:00 UTC.
-        // (Old behavior fired -PT9H at 9 AM day-of; the 9AM chip now stores PT9H instead.)
+        // local midnight Jan 6 PST - 9h = Jan 5 15:00 PST = Jan 5 23:00 UTC. The 9AM chip
+        // stores PT9H, not -PT9H.
         assertEquals(1736118000000L, result)
     }
 }
 
 /**
- * Tests for alarmCount > 3 optimization in ReminderScheduler.
+ * Tests the rawIcal alarm read the scheduler uses for an event with more than 3 alarms.
  *
- * When an event has more than 3 alarms, the scheduler should use RawIcsParser
- * to extract all alarm triggers from rawIcal, rather than only using the first 3
- * stored in event.reminders.
- *
- * This verifies the fix for the regression where events with 4+ alarms (synced from
- * iCloud/Google) would only have the first 3 alarms scheduled.
+ * For an event whose alarmCount is over 3, the scheduler reads every VALARM trigger from rawIcal
+ * with [RawIcsParser.getAllAlarmTriggers], not only
+ * [org.onekash.kashcal.data.db.entity.Event.reminders], which keeps at most 5. These tests cover
+ * that parser on 5 alarms, null and invalid input, and that each trigger it returns parses to an
+ * offset; they don't run the scheduler.
  */
 class AlarmCountOptimizationTest {
 
@@ -651,13 +651,13 @@ class AlarmCountOptimizationTest {
 
         val triggers = RawIcsParser.getAllAlarmTriggers(ics)
 
-        // Verify all triggers can be parsed by the scheduler
+        // Every trigger parses to an offset.
         for (trigger in triggers) {
             val offsetMs = parseReminderOffset(trigger)
             assertNotNull("Trigger '$trigger' should be parseable", offsetMs)
         }
 
-        // Verify specific values
+        // The offsets for each trigger.
         assertEquals(-15 * 60 * 1000L, parseReminderOffset("-PT15M"))
         assertEquals(-30 * 60 * 1000L, parseReminderOffset("-PT30M"))
         assertEquals(-60 * 60 * 1000L, parseReminderOffset("-PT1H"))

@@ -25,9 +25,8 @@ object TopBarTitleFormatter {
             }
             ViewMode.YEAR -> yearLabel
             ViewMode.WEEK -> {
-                // Month/year only — consistent with the other views. The week number
-                // lives in the week grid's own header corner (left of the day strip),
-                // not the top bar, so the top bar isn't crowded.
+                // Month and year only; the week number is in the week grid's header corner so
+                // the top bar isn't crowded.
                 val centerDate = WeekViewUtils.weekPageToStartDate(
                     weekViewPagerPosition,
                     firstDayOfWeek,

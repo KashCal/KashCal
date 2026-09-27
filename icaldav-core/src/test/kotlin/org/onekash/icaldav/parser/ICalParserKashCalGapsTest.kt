@@ -14,17 +14,14 @@ import java.time.ZonedDateTime
 import java.util.TimeZone
 
 /**
- * Tests to identify gaps between KashCal and iCalDAV library.
+ * Tests parser and [RRuleExpander] behavior the app depends on:
+ * 1. An all-day RRULE expands to the same dates in UTC+12 and UTC-10 device zones.
+ * 2. CLASS parses to [Classification].
+ * 3. X- properties are kept in rawProperties.
+ * 4. VALARM triggers: minutes, days, an absolute DATE-TIME, and more than one alarm.
+ * 5. RECURRENCE-ID as UTC, as a local time with TZID, and as VALUE=DATE.
  *
- * These tests document expected behavior based on KashCal's production-tested
- * implementations. Failures indicate features that need to be ported.
- *
- * Gap Categories:
- * 1. All-day UTC handling in RRULE expansion
- * 2. CLASS property parsing
- * 3. X-* property preservation
- * 4. VALARM improvements
- * 5. RECURRENCE-ID format handling
+ * The last two tests generate and re-parse an X- property and CLASS.
  */
 @DisplayName("KashCal Gap Analysis Tests")
 class ICalParserKashCalGapsTest {
@@ -36,11 +33,10 @@ class ICalParserKashCalGapsTest {
 
     @Test
     fun `all-day recurring event in UTC+12 timezone should not shift dates`() {
-        // Critical test: All-day event starting Jan 1 should stay Jan 1
-        // regardless of device timezone
+        // An all-day event starting Jan 1 must stay on Jan 1 in any device zone.
         val originalTz = TimeZone.getDefault()
         try {
-            // Set device to Auckland (UTC+12/+13)
+            // Device zone Auckland (UTC+12, +13 in summer)
             TimeZone.setDefault(TimeZone.getTimeZone("Pacific/Auckland"))
 
             val ics = """
@@ -62,7 +58,7 @@ class ICalParserKashCalGapsTest {
             assertTrue(result is ParseResult.Success)
             val event = (result as ParseResult.Success).value.first()
 
-            // Expand for 5 years
+            // A window covering all 5 occurrences
             val range = TimeRange(
                 ZonedDateTime.of(2025, 12, 1, 0, 0, 0, 0, ZoneId.of("UTC")).toInstant(),
                 ZonedDateTime.of(2031, 12, 31, 0, 0, 0, 0, ZoneId.of("UTC")).toInstant()
@@ -72,7 +68,7 @@ class ICalParserKashCalGapsTest {
 
             assertEquals(5, occurrences.size, "Should have 5 yearly occurrences")
 
-            // Critical: Each occurrence should be on Jan 1, not Dec 31 (shifted)
+            // Each occurrence is on Jan 1, not shifted to Dec 31
             val dayCodes = occurrences.map { it.dtStart.toDayCode() }
             assertTrue(dayCodes.all { it.endsWith("0101") },
                 "All occurrences should be Jan 1, got: $dayCodes")
@@ -86,7 +82,7 @@ class ICalParserKashCalGapsTest {
     fun `all-day recurring event in UTC-10 timezone should not shift dates`() {
         val originalTz = TimeZone.getDefault()
         try {
-            // Set device to Honolulu (UTC-10)
+            // Device zone Honolulu (UTC-10)
             TimeZone.setDefault(TimeZone.getTimeZone("Pacific/Honolulu"))
 
             val ics = """
@@ -115,7 +111,7 @@ class ICalParserKashCalGapsTest {
 
             val occurrences = expander.expand(event, range)
 
-            // Should be March 15, April 15, May 15
+            // Mar 15, Apr 15 and May 15; each is asserted to fall on the 15th.
             val dayCodes = occurrences.map { it.dtStart.toDayCode() }
             assertTrue(dayCodes.all { it.endsWith("15") },
                 "All occurrences should be on 15th, got: $dayCodes")
@@ -148,7 +144,7 @@ class ICalParserKashCalGapsTest {
         assertTrue(result is ParseResult.Success)
         val event = (result as ParseResult.Success).value.first()
 
-        // Check if CLASS is parsed into classification field
+        // CLASS parses into the classification field
         assertEquals(Classification.PUBLIC, event.classification,
             "CLASS:PUBLIC should be parsed into classification field")
     }
@@ -227,7 +223,7 @@ class ICalParserKashCalGapsTest {
         assertTrue(result is ParseResult.Success)
         val event = (result as ParseResult.Success).value.first()
 
-        // X-* properties should be preserved for round-trip
+        // X- properties are kept in rawProperties for the round trip
         assertTrue(event.rawProperties.any { it.key.startsWith("X-APPLE") },
             "X-APPLE-STRUCTURED-LOCATION should be preserved in rawProperties")
     }
@@ -285,7 +281,7 @@ class ICalParserKashCalGapsTest {
         assertEquals(3, xProps.size, "Should preserve all 3 X-* properties")
     }
 
-    // ==================== 4. VALARM Improvements ====================
+    // ==================== 4. VALARM Triggers ====================
 
     @Test
     fun `parse VALARM with PT duration trigger`() {

@@ -1,18 +1,20 @@
 package org.onekash.kashcal.domain.rrule
 
 import org.onekash.kashcal.util.DateTimeUtils
+import org.onekash.kashcal.util.TimezoneUtils
 import java.time.DayOfWeek
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.TextStyle
 import java.util.Locale
 
 /**
- * Localized strings for [RruleBuilder.formatForDisplay].
- * Constructed from Android string resources by composable callers.
+ * Holds the localized strings for [RruleBuilder.formatForDisplay]; `rememberRruleDisplayStrings`
+ * builds them from string resources, and [english] gives the English defaults.
  */
 data class RruleDisplayStrings(
     val doesNotRepeat: String,
@@ -61,18 +63,13 @@ data class RruleDisplayStrings(
 }
 
 /**
- * RRULE builder utility for creating and parsing RFC 5545 recurrence rules.
- *
- * This object provides methods to:
- * - Build RRULE strings from components
- * - Parse RRULE strings to components for UI display
- * - Format RRULE strings for human-readable display
+ * Builds RFC 5545 RRULE strings from components, parses them back for the picker, and formats
+ * them for display.
  *
  * @see <a href="https://datatracker.ietf.org/doc/html/rfc5545#section-3.3.10">RFC 5545 RRULE</a>
  */
 object RruleBuilder {
 
-    /** RFC 5545 day abbreviations */
     private val DAY_ABBREV = mapOf(
         DayOfWeek.SUNDAY to "SU",
         DayOfWeek.MONDAY to "MO",
@@ -83,10 +80,9 @@ object RruleBuilder {
         DayOfWeek.SATURDAY to "SA"
     )
 
-    /** Reverse mapping for parsing */
     private val ABBREV_TO_DAY = DAY_ABBREV.entries.associate { (day, abbrev) -> abbrev to day }
 
-    /** Day order for consistent BYDAY output (Monday first) */
+    /** BYDAY output order, Monday first. */
     private val DAY_ORDER = listOf(
         DayOfWeek.MONDAY,
         DayOfWeek.TUESDAY,
@@ -107,11 +103,8 @@ object RruleBuilder {
     private val WKST_REGEX = Regex("WKST=([A-Z]{2})")
 
     /**
-     * BY* token names the picker UI consumes for a given frequency. Anything
-     * else (BYMONTH/BYWEEKNO/BYYEARDAY/BYSETPOS, plus BYMONTHDAY/BYDAY on
-     * frequencies where the picker doesn't render them) gets captured as an
-     * extra and re-appended on emission so CalDAV-pulled rules like "every
-     * Jan 15" (FREQ=YEARLY;BYMONTH=1;BYMONTHDAY=15) round-trip a no-op save.
+     * BY* parts the picker models, per frequency. Every other BY* part becomes a
+     * [ParsedRecurrence.extraTokens] entry.
      */
     private val CONSUMED_BY_TOKENS_BY_FREQ = mapOf(
         RecurrenceFrequency.WEEKLY to setOf("BYDAY"),
@@ -120,29 +113,20 @@ object RruleBuilder {
 
     // ==================== Building RRULE Strings ====================
 
-    /**
-     * Convert DayOfWeek to RFC 5545 abbreviation.
-     */
+    /** Returns the RFC 5545 abbreviation of [day]. */
     fun toDayAbbrev(day: DayOfWeek): String = DAY_ABBREV[day] ?: "MO"
 
-    /**
-     * Build a daily recurrence rule.
-     *
-     * @param interval Days between occurrences (default 1)
-     * @return RRULE string like "FREQ=DAILY" or "FREQ=DAILY;INTERVAL=2"
-     */
+    /** Builds a daily rule, like "FREQ=DAILY" or "FREQ=DAILY;INTERVAL=2". */
     fun daily(interval: Int = 1): String {
         return if (interval == 1) "FREQ=DAILY"
         else "FREQ=DAILY;INTERVAL=$interval"
     }
 
     /**
-     * Build a weekly recurrence rule.
+     * Builds a weekly rule, like "FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,TU,TH;WKST=SU".
      *
-     * @param wkst Week-start day. Emitted only when `interval >= 2 && days.size >= 2`
-     *   per RFC 5545 §3.3.10 (WKST has no effect on interval=1 or single-day weekly
-     *   rules). Issue #214.
-     * @return RRULE string like "FREQ=WEEKLY;INTERVAL=2;BYDAY=SU,TU,TH;WKST=SU"
+     * @param wkst week start, emitted only when `interval >= 2 && days.size >= 2`: per RFC 5545
+     *   §3.3.10 WKST has no effect on an interval-1 or single-day weekly rule (#214).
      */
     fun weekly(
         interval: Int = 1,
@@ -162,11 +146,9 @@ object RruleBuilder {
     }
 
     /**
-     * Build a monthly recurrence rule on a specific day of month.
+     * Builds a monthly rule on a day of the month, like "FREQ=MONTHLY;BYMONTHDAY=15".
      *
-     * @param interval Months between occurrences (default 1)
-     * @param dayOfMonth Day of month (1-31, null = same as start date)
-     * @return RRULE string like "FREQ=MONTHLY;BYMONTHDAY=15"
+     * @param dayOfMonth 1-31, or null for no BYMONTHDAY (the start date's day).
      */
     fun monthly(interval: Int = 1, dayOfMonth: Int? = null): String {
         val parts = mutableListOf("FREQ=MONTHLY")
@@ -175,12 +157,7 @@ object RruleBuilder {
         return parts.joinToString(";")
     }
 
-    /**
-     * Build a monthly recurrence rule on the last day of month.
-     *
-     * @param interval Months between occurrences (default 1)
-     * @return RRULE string like "FREQ=MONTHLY;BYMONTHDAY=-1"
-     */
+    /** Builds a monthly rule on the last day of the month, like "FREQ=MONTHLY;BYMONTHDAY=-1". */
     fun monthlyLastDay(interval: Int = 1): String {
         val parts = mutableListOf("FREQ=MONTHLY")
         if (interval > 1) parts.add("INTERVAL=$interval")
@@ -189,12 +166,9 @@ object RruleBuilder {
     }
 
     /**
-     * Build a monthly recurrence rule on Nth weekday (e.g., "2nd Tuesday").
+     * Builds a monthly rule on the nth weekday, like "FREQ=MONTHLY;BYDAY=2TU".
      *
-     * @param ordinal 1-4 for 1st-4th, -1 for last
-     * @param weekday The day of week
-     * @param interval Months between occurrences (default 1)
-     * @return RRULE string like "FREQ=MONTHLY;BYDAY=2TU"
+     * @param ordinal 1-4 for 1st-4th, -1 for last.
      */
     fun monthlyNthWeekday(ordinal: Int, weekday: DayOfWeek, interval: Int = 1): String {
         val parts = mutableListOf("FREQ=MONTHLY")
@@ -204,35 +178,18 @@ object RruleBuilder {
         return parts.joinToString(";")
     }
 
-    /**
-     * Build a yearly recurrence rule.
-     *
-     * @param interval Years between occurrences (default 1)
-     * @return RRULE string like "FREQ=YEARLY"
-     */
+    /** Builds a yearly rule, like "FREQ=YEARLY" or "FREQ=YEARLY;INTERVAL=2". */
     fun yearly(interval: Int = 1): String {
         return if (interval == 1) "FREQ=YEARLY"
         else "FREQ=YEARLY;INTERVAL=$interval"
     }
 
-    /**
-     * Add occurrence count to an RRULE.
-     *
-     * @param rrule Base RRULE string
-     * @param count Number of occurrences
-     * @return RRULE with COUNT appended
-     */
+    /** Returns [rrule] with a COUNT of [count] appended. */
     fun withCount(rrule: String, count: Int): String {
         return "$rrule;COUNT=$count"
     }
 
-    /**
-     * Add end date (UNTIL) to an RRULE.
-     *
-     * @param rrule Base RRULE string
-     * @param untilMillis End date timestamp in milliseconds
-     * @return RRULE with UNTIL appended in UTC format
-     */
+    /** Returns [rrule] with [untilMillis] appended as a UTC date-time UNTIL. */
     fun withUntil(rrule: String, untilMillis: Long): String {
         val instant = Instant.ofEpochMilli(untilMillis)
         val utc = instant.atZone(ZoneOffset.UTC)
@@ -243,16 +200,12 @@ object RruleBuilder {
     // ==================== Parsing RRULE Strings ====================
 
     /**
-     * Parse RRULE string to determine frequency category.
-     * Returns CUSTOM for complex rules (interval > 1, COUNT, UNTIL, BYSETPOS).
-     *
-     * @param rrule RRULE string to parse
-     * @return Detected [RecurrenceFrequency]
+     * Returns the frequency of [rrule]: NONE for null or blank, CUSTOM for any INTERVAL, COUNT,
+     * UNTIL or BYSETPOS part or an unknown FREQ.
      */
     fun parseFrequency(rrule: String?): RecurrenceFrequency {
         if (rrule.isNullOrBlank()) return RecurrenceFrequency.NONE
 
-        // Check for complexity markers that make it "custom"
         if (rrule.contains("INTERVAL=") ||
             rrule.contains("COUNT=") ||
             rrule.contains("UNTIL=") ||
@@ -270,13 +223,13 @@ object RruleBuilder {
     }
 
     /**
-     * Parse RRULE string to components for UI state.
+     * Parses [rrule] into the picker's [ParsedRecurrence]; an unknown FREQ parses as NONE.
      *
-     * @param rrule RRULE string to parse
-     * @param defaultWeekday Default weekday for monthly NthWeekday pattern
-     * @param defaultDayOfMonth Default day for monthly SameDay pattern
-     * @param defaultOrdinal Default ordinal for NthWeekday (1-4 or -1)
-     * @return [ParsedRecurrence] with extracted values
+     * @param defaultWeekday weekday for an NthWeekday pattern whose day can't be read.
+     * @param defaultDayOfMonth day for a monthly rule with neither an nth-weekday BYDAY nor a
+     *   readable BYMONTHDAY.
+     * @param defaultOrdinal ordinal (1-4 or -1) for an NthWeekday pattern whose ordinal can't be
+     *   read.
      */
     fun parseRrule(
         rrule: String?,
@@ -288,7 +241,6 @@ object RruleBuilder {
 
         val tokens = rrule.split(";").map { it.trim() }.filter { it.isNotEmpty() }
 
-        // Parse frequency
         val frequency = when {
             rrule.contains("FREQ=DAILY") -> RecurrenceFrequency.DAILY
             rrule.contains("FREQ=WEEKLY") -> RecurrenceFrequency.WEEKLY
@@ -297,21 +249,16 @@ object RruleBuilder {
             else -> RecurrenceFrequency.NONE
         }
 
-        // Capture any BY* token the picker doesn't model for this frequency.
-        // selectInitialFrequencyOption routes any rule with extras to
-        // FrequencyOption.CUSTOM so emission goes through the unit-keyed
-        // builder + extras append, not a preset coercion.
+        // How extras are kept on save: [ParsedRecurrence.extraTokens].
         val consumed = CONSUMED_BY_TOKENS_BY_FREQ[frequency].orEmpty()
         val extraTokens = tokens.filter { token ->
             val name = token.substringBefore('=')
             name.startsWith("BY") && name !in consumed
         }
 
-        // Parse interval
         val intervalMatch = INTERVAL_REGEX.find(rrule)
         val interval = intervalMatch?.groupValues?.get(1)?.toIntOrNull() ?: 1
 
-        // Parse weekdays (for weekly)
         val bydayMatch = BYDAY_LIST_REGEX.find(rrule)
         val weekdays = if (bydayMatch != null) {
             bydayMatch.groupValues[1].split(",")
@@ -321,7 +268,6 @@ object RruleBuilder {
             emptySet()
         }
 
-        // Parse monthly pattern
         val monthlyPattern: MonthlyPattern? = if (frequency == RecurrenceFrequency.MONTHLY) {
             val nthWeekdayMatch = BYDAY_NTH_REGEX.find(rrule)
             val byMonthdayMatch = BYMONTHDAY_REGEX.find(rrule)
@@ -341,7 +287,6 @@ object RruleBuilder {
             }
         } else null
 
-        // Parse end condition
         val countMatch = COUNT_REGEX.find(rrule)
         val untilFullMatch = UNTIL_FULL_REGEX.find(rrule)
         val untilDateMatch = if (untilFullMatch == null) UNTIL_DATE_REGEX.find(rrule) else null
@@ -364,8 +309,8 @@ object RruleBuilder {
                 }
             }
             untilDateMatch != null -> {
-                // RFC 5545 §3.3.10 date-value UNTIL (valid when DTSTART is VALUE=DATE).
-                // Anchor to end-of-day UTC so the bound includes the named day.
+                // A date UNTIL (RFC 5545 §3.3.10, for a VALUE=DATE DTSTART). End of day UTC, so
+                // the bound includes the named day.
                 try {
                     val dateStr = untilDateMatch.groupValues[1]
                     val date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("yyyyMMdd"))
@@ -380,9 +325,9 @@ object RruleBuilder {
             else -> EndCondition.Never
         }
 
-        // Parse WKST. RFC 5545 §3.3.10 default is MO; we represent absence as
-        // null so callers can tell "rule omitted WKST" from "rule said WKST=MO".
-        // Picker uses null-means-fallback-to-device on emit.
+        // The RFC 5545 §3.3.10 default is MO; an absent WKST stays null so callers can tell it
+        // from an explicit WKST=MO. On emit the picker falls back to the device's week start
+        // only for a new rule.
         val wkst = WKST_REGEX.find(rrule)
             ?.groupValues?.get(1)
             ?.let { ABBREV_TO_DAY[it] }
@@ -406,16 +351,16 @@ object RruleBuilder {
     }
 
     /**
-     * Format RRULE for human-readable display using English defaults.
-     * Day names are locale-aware via java.time; all other labels are English.
-     * Use the overload with [RruleDisplayStrings] for full localization.
+     * Formats [rrule] for display with [RruleDisplayStrings.english]. Day names and the UNTIL
+     * date follow the device locale; other labels are English.
      */
     fun formatForDisplay(rrule: String?): String {
         return formatForDisplay(rrule, RruleDisplayStrings.english())
     }
 
     /**
-     * Format RRULE for human-readable display with localized strings.
+     * Formats [rrule] for display with [strings]. A UTC date-time UNTIL shows as its date in
+     * [untilZone] (see [untilZoneFor]), or as its UTC date when null.
      *
      * Examples:
      * - "FREQ=DAILY" -> "Daily"
@@ -423,12 +368,8 @@ object RruleBuilder {
      * - "FREQ=WEEKLY;BYDAY=MO,WE,FR" -> "Weekly on Mon, Wed, Fri"
      * - "FREQ=MONTHLY;BYDAY=2TU" -> "Monthly on 2nd Tue"
      * - "FREQ=MONTHLY;BYMONTHDAY=-1" -> "Monthly on last day"
-     *
-     * @param rrule RRULE string to format
-     * @param strings Localized display strings
-     * @return Human-readable description
      */
-    fun formatForDisplay(rrule: String?, strings: RruleDisplayStrings): String {
+    fun formatForDisplay(rrule: String?, strings: RruleDisplayStrings, untilZone: ZoneId? = null): String {
         if (rrule.isNullOrBlank()) return strings.doesNotRepeat
 
         val intervalMatch = INTERVAL_REGEX.find(rrule)
@@ -498,16 +439,15 @@ object RruleBuilder {
                 strings.countSuffix(count)
             }
             untilMatch != null -> {
-                val dateStr = untilMatch.groupValues[1]
-                val untilDate = LocalDate.of(
-                    dateStr.substring(0, 4).toInt(),
-                    dateStr.substring(4, 6).toInt(),
-                    dateStr.substring(6, 8).toInt()
-                )
-                val currentYear = LocalDate.now().year
-                val pattern = if (untilDate.year == currentYear) DateTimeUtils.localizedPattern("MMMd") else DateTimeUtils.localizedPattern("yMMMd")
-                val formatted = untilDate.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
-                String.format(Locale.getDefault(), strings.untilSuffix, formatted)
+                val untilDate = untilDisplayDate(rrule, untilZone)
+                if (untilDate == null) {
+                    ""
+                } else {
+                    val currentYear = LocalDate.now().year
+                    val pattern = if (untilDate.year == currentYear) DateTimeUtils.localizedPattern("MMMd") else DateTimeUtils.localizedPattern("yMMMd")
+                    val formatted = untilDate.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))
+                    String.format(Locale.getDefault(), strings.untilSuffix, formatted)
+                }
             }
             else -> ""
         }
@@ -516,27 +456,53 @@ object RruleBuilder {
     }
 
     /**
-     * Format RRULE for display, returning frequency and end condition as separate parts.
-     * Uses English defaults. Use the overload with [RruleDisplayStrings] for full localization.
+     * Returns the date an RRULE's UNTIL names. A date UNTIL is taken as written. A UTC date-time
+     * UNTIL is an instant (RFC 5545 section 3.3.10); with [untilZone] it is shown as the date it
+     * falls on in that zone (the event's), otherwise as its UTC date. Callers pass null for
+     * all-day events, which live in UTC ([untilZoneFor]). Second 60 (a leap second) is read as
+     * 59 (RFC 5545 section 3.3.12); any other time that can't be read falls back to the date as
+     * written, and a date that can't exist gives null.
      */
+    private fun untilDisplayDate(rrule: String, untilZone: ZoneId?): LocalDate? {
+        val full = UNTIL_FULL_REGEX.find(rrule)?.groupValues?.get(1)
+        if (untilZone != null && full != null && full.endsWith("Z")) {
+            val readable = if (full.substring(13, 15) == "60") full.replaceRange(13, 15, "59") else full
+            try {
+                // Strict, so a date that can't exist is rejected, not moved to the month's end
+                val strict = DateTimeFormatter.ofPattern("uuuuMMdd'T'HHmmss'Z'").withResolverStyle(java.time.format.ResolverStyle.STRICT)
+                val utc = LocalDateTime.parse(readable, strict)
+                return utc.atZone(ZoneOffset.UTC).withZoneSameInstant(untilZone).toLocalDate()
+            } catch (_: java.time.format.DateTimeParseException) {
+                // fall through to the date as written
+            }
+        }
+        val dateStr = UNTIL_DATE_REGEX.find(rrule)!!.groupValues[1]
+        return try {
+            LocalDate.of(dateStr.substring(0, 4).toInt(), dateStr.substring(4, 6).toInt(), dateStr.substring(6, 8).toInt())
+        } catch (_: java.time.DateTimeException) {
+            null // a date that can't exist: the summary leaves the end out
+        }
+    }
+
+    /** Returns the zone a repeat end date is shown in: the event's, or null (UTC) if all-day. */
+    fun untilZoneFor(isAllDay: Boolean, timezone: String?): ZoneId? =
+        if (isAllDay) null else TimezoneUtils.resolveZone(timezone)
+
+    /** Formats [rrule] like [formatForDisplayParts] with [RruleDisplayStrings.english]. */
     fun formatForDisplayParts(rrule: String?): Pair<String, String?> {
         return formatForDisplayParts(rrule, RruleDisplayStrings.english())
     }
 
     /**
-     * Format RRULE for display, returning frequency and end condition as separate parts.
-     * Enables callers to insert content between them (e.g., series start date).
-     *
-     * @param rrule RRULE string to format
-     * @param strings Localized display strings
-     * @return Pair of (frequency text, end suffix or null)
+     * Formats [rrule] like [formatForDisplay] but returns the frequency text and the end suffix
+     * (or null) apart, so callers can insert content between them (e.g. the series start date).
      */
-    fun formatForDisplayParts(rrule: String?, strings: RruleDisplayStrings): Pair<String, String?> {
+    fun formatForDisplayParts(rrule: String?, strings: RruleDisplayStrings, untilZone: ZoneId? = null): Pair<String, String?> {
         if (rrule.isNullOrBlank()) return strings.doesNotRepeat to null
 
         val countMatch = COUNT_REGEX.find(rrule)
         val untilMatch = UNTIL_DATE_REGEX.find(rrule)
-        val full = formatForDisplay(rrule, strings)
+        val full = formatForDisplay(rrule, strings, untilZone)
 
         return when {
             countMatch != null -> {
@@ -546,12 +512,7 @@ object RruleBuilder {
                 freq to suffix
             }
             untilMatch != null -> {
-                val dateStr = untilMatch.groupValues[1]
-                val untilDate = LocalDate.of(
-                    dateStr.substring(0, 4).toInt(),
-                    dateStr.substring(4, 6).toInt(),
-                    dateStr.substring(6, 8).toInt()
-                )
+                val untilDate = untilDisplayDate(rrule, untilZone) ?: return full to null
                 val currentYear = LocalDate.now().year
                 val pattern = if (untilDate.year == currentYear) DateTimeUtils.localizedPattern("MMMd") else DateTimeUtils.localizedPattern("yMMMd")
                 val formatted = untilDate.format(DateTimeFormatter.ofPattern(pattern, Locale.getDefault()))

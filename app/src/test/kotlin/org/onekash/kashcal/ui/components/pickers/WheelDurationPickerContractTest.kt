@@ -13,18 +13,18 @@ import org.robolectric.annotation.Config
 import java.util.Locale
 
 /**
- * Pins the cross-component contract that [org.onekash.kashcal.ui.screens.settings.AlertPickerSheet]
- * relies on for its "keep the current setting" behavior: when the wheel is opened on a
- * negative seed and the user taps Done WITHOUT dialing, the wheel hands that exact seed
- * back — it does not coerce it to 0 or decompose it.
+ * Pins the contract [org.onekash.kashcal.ui.screens.settings.AlertPickerSheet] relies on to keep
+ * the current setting: when [WheelDurationPicker] opens on a negative seed and the user taps Done
+ * without dialing, it hands that exact seed back, neither coerced to 0 nor decomposed.
  *
- * AlertPickerSheet seeds a negative sentinel for values the wheel can't represent (all-day
- * 9-AM offsets, off-grid customs) and treats "sentinel handed back" as "user didn't dial,
- * preserve currentValue". If a future change to WheelDurationPicker clamps an untouched
- * negative seed to 0, that preserve path would silently break and un-scrolled Done would
- * reset the alert. This test fails first if that contract regresses.
+ * AlertPickerSheet seeds the sentinel `WHEEL_KEEP_CURRENT` (Int.MIN_VALUE) unless the current
+ * value is a custom one the wheel can represent: so for None, a preset, or a custom value that
+ * isn't positive, isn't on the 5-minute grid or runs past 30 days. It reads the sentinel handed
+ * back as "keep currentValue". If the wheel clamped an untouched negative seed to 0, Done without
+ * scrolling would silently reset the alert.
  *
- * Runs under Robolectric; run in isolation given the repo's multi-class native-crash flake.
+ * Runs under Robolectric; run in isolation, since Robolectric runs of more than one class hit a
+ * native crash.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [34], qualifiers = "w360dp-h9999dp-mdpi")

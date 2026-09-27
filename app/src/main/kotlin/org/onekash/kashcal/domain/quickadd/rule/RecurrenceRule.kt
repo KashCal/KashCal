@@ -19,24 +19,23 @@ object RecurrenceRule : ParseRule {
         DayOfWeek.THURSDAY, DayOfWeek.FRIDAY
     )
 
-    // Compact weekday shorthands: "MWF" → Mon/Wed/Fri, "TTh" → Tue/Thu.
-    // Matched case-insensitively against the lowercased normalized token text.
+    // Weekday shorthands, matched against the lowercased token text: "MWF" is Monday,
+    // Wednesday and Friday, "TTh" Tuesday and Thursday.
     private val weekdayShorthands = mapOf(
         "mwf" to setOf(DayOfWeek.MONDAY, DayOfWeek.WEDNESDAY, DayOfWeek.FRIDAY),
         "tth" to setOf(DayOfWeek.TUESDAY, DayOfWeek.THURSDAY),
     )
 
-    // Ordinal words that stay UNKNOWN after tokenization. Note "second" is a UNIT
-    // (ChronoUnit.SECONDS) and "last" is a KEYWORD, so they're handled separately
-    // in ordinalValue(); only these four fall through to UNKNOWN.
+    // Ordinal words that tokenize as UNKNOWN. "second" is a UNIT (ChronoUnit.SECONDS) and
+    // "last" a KEYWORD, so ordinalValue handles those two separately.
     private val ordinalWords = mapOf(
         "first" to 1, "third" to 3, "fourth" to 4, "fifth" to 5,
     )
 
     override fun apply(tokens: List<Token>, context: ParseContext) {
-        // Monthly "… of (the|every) month" patterns must be claimed before the main
-        // loop, or the generic EVERY + UNIT branch would grab a bare "month" as a
-        // plain FREQ=MONTHLY and drop the ordinal/day-of-month detail.
+        // "… of the/every/this month" must be claimed before the loop, or the EVERY + UNIT
+        // branch would read "every month" as a plain FREQ=MONTHLY and drop the ordinal or
+        // day of month.
         var found = tryMonthlyOfPattern(tokens, context)
 
         if (!found) for ((index, token) in tokens.withIndex()) {
@@ -81,25 +80,26 @@ object RecurrenceRule : ParseRule {
     }
 
     /**
-     * Monthly recurrence anchored by a trailing "of (the|every) month" phrase where
+     * Claims a phrase ending in "of the month", "of every month" or "of this month", where
      * "month" is a UNIT(MONTHS) token:
-     * - <ordinal> WEEKDAY of (the|every) month → BYDAY=<n><day>  ("first Monday of the month")
-     * - <ordinal-number> of (the|every) month → BYMONTHDAY=<n>   ("15th of every month")
+     * - last day of … month: BYMONTHDAY=-1 ("last day of the month").
+     * - <ordinal> WEEKDAY of … month: BYDAY=<n><day> ("first Monday of the month").
+     * - <number> of … month: BYMONTHDAY=<n> ("15th of every month").
+     * - "of this month" sets a single date in the current month instead of a rule, and also
+     *   consumes a bare ordinal ("first of this month") without setting a date.
      *
-     * The trailing "month" anchor is required so we never steal a one-off date like
-     * "15th of March" (where "March" is a MONTH token, not the "month" UNIT).
+     * Requiring the "month" unit keeps a one-off date like "15th of March" (a MONTH token)
+     * for [AbsoluteDateRule].
      */
     private fun tryMonthlyOfPattern(tokens: List<Token>, context: ParseContext): Boolean {
-        // Locate an unconsumed "of" (KEYWORD OF) immediately followed by an optional
-        // (the|every) and then the "month" UNIT.
+        // An unconsumed "of", an optional the/every/this, then the "month" UNIT.
         for (ofIndex in tokens.indices) {
             if (context.isConsumed(ofIndex)) continue
             val ofToken = tokens[ofIndex]
             if (ofToken.type != TokenType.KEYWORD || ofToken.value != "OF") continue
 
-            // Optional connective before "month": "the"/"every" mean a recurring
-            // rule; "this" means a single occurrence in the CURRENT month (not a
-            // recurrence). Capture which so the cases below can branch on it.
+            // "the" and "every" mean a recurring rule; "this" means one date in the current
+            // month.
             var cursor = ofIndex + 1
             var thisMonth = false
             if (cursor < tokens.size) {
@@ -112,22 +112,18 @@ object RecurrenceRule : ParseRule {
                 }
             }
 
-            // Must land on the "month" UNIT (ChronoUnit.MONTHS)
             if (cursor >= tokens.size) continue
             val monthToken = tokens[cursor]
             if (monthToken.type != TokenType.UNIT || monthToken.value != ChronoUnit.MONTHS) continue
             val monthUnitIndex = cursor
             val connectiveIndices = (ofIndex + 1 until monthUnitIndex).toList()
 
-            // Now classify what precedes "of": last-day, ordinal[+weekday], or
-            // ordinal-number.
+            // Classify what precedes "of": last day, ordinal and weekday, or a number.
             val beforeIndex = ofIndex - 1
             if (beforeIndex < 0) continue
 
-            // Case D: LAST "day" of ... month → BYMONTHDAY=-1 ("last day of the month").
-            // "day" is a UNIT(DAYS) token preceded by the LAST keyword. Only "last"
-            // qualifies; "first day"/"second day" carry a different ordinal and fall
-            // through (there is no BYMONTHDAY for a non-last ordinal day-of-month).
+            // "last day of … month": BYMONTHDAY=-1. Only "last" qualifies; "first day" and
+            // the like aren't modeled.
             if (tokens[beforeIndex].type == TokenType.UNIT &&
                 tokens[beforeIndex].value == ChronoUnit.DAYS
             ) {
@@ -135,9 +131,8 @@ object RecurrenceRule : ParseRule {
                 val isLast = ordinalIndex >= 0 && !context.isConsumed(ordinalIndex) &&
                     ordinalValue(tokens[ordinalIndex]) == -1
                 if (isLast) {
-                    // Both readings anchor on the reference month's last day (always
-                    // on/after the reference). "of this month" is a single occurrence;
-                    // "of the/every month" also carries the recurring BYMONTHDAY=-1.
+                    // Both readings start on the reference month's last day, never before
+                    // the reference; only "the" and "every" add the rule.
                     context.weekdayDate = YearMonth.from(context.reference.toLocalDate())
                         .atEndOfMonth()
                     context.dateSet = true
@@ -146,33 +141,28 @@ object RecurrenceRule : ParseRule {
                     context.consume(connectiveIndices)
                     return true
                 }
-                // A non-last "<ordinal> day of … month" isn't a rule we model; leave
-                // it unclaimed so downstream rules / the title keep the tokens.
+                // Left unclaimed, so later rules and the title keep the tokens.
                 continue
             }
 
-            // Case A: <ordinal> WEEKDAY of ... month → BYDAY=<n><day>
+            // "<ordinal> WEEKDAY of … month": BYDAY=<n><day>.
             if (tokens[beforeIndex].type == TokenType.WEEKDAY) {
                 val weekday = tokens[beforeIndex].value as? DayOfWeek ?: continue
                 val ordinalIndex = beforeIndex - 1
                 if (ordinalIndex < 0 || context.isConsumed(ordinalIndex)) continue
                 val ordinal = ordinalValue(tokens[ordinalIndex]) ?: continue
                 if (thisMonth) {
-                    // "of this month": a single occurrence in the current month, not
-                    // a recurrence. Anchor to that month's Nth weekday; if the month
-                    // has no such occurrence (e.g. no 5th Friday), clamp to the last
-                    // occurrence of that weekday so the date stays IN the current
-                    // month rather than rolling forward — "this month" must mean this
-                    // month. (The recurring path skips such months; a one-off can't.)
+                    // One date: this month's Nth weekday. A month without one (no 5th
+                    // Friday) clamps to its last such weekday, so "this month" stays this
+                    // month; the recurring path skips such months instead.
                     val currentMonth = YearMonth.from(context.reference.toLocalDate())
                     context.weekdayDate = ordinalWeekdayIn(currentMonth, ordinal, weekday)
                         ?: currentMonth.atDay(1).with(TemporalAdjusters.lastInMonth(weekday))
                     context.dateSet = true
                 } else {
                     context.rrule = RruleBuilder.monthlyNthWeekday(ordinal, weekday)
-                    // Anchor DTSTART on the first month whose Nth (or last) weekday falls
-                    // on/after the reference date, so the start lands on a day the rule
-                    // actually recurs on rather than defaulting to the reference itself.
+                    // Start on the first Nth (or last) weekday on or after the reference,
+                    // so DTSTART is a day the rule recurs on.
                     context.weekdayDate = firstOrdinalWeekdayOnOrAfter(
                         context.reference.toLocalDate(), ordinal, weekday
                     )
@@ -183,17 +173,14 @@ object RecurrenceRule : ParseRule {
                 return true
             }
 
-            // Case B: <ordinal-number> of ... month → BYMONTHDAY=<n>
+            // "<number> of … month": BYMONTHDAY=<n>.
             if (tokens[beforeIndex].type == TokenType.NUMBER) {
                 val dayOfMonth = tokens[beforeIndex].value as? Int ?: continue
                 val validDay = dayOfMonth in 1..31
                 if (thisMonth) {
-                    // "the Nth of this month": a single occurrence in the current
-                    // month. A valid day clamps to the month (e.g. the 31st in
-                    // February → Feb 28) so the date stays in the current month
-                    // rather than rolling forward. An out-of-range day (0th, 32nd)
-                    // sets no date. Either way the phrase is consumed below so it
-                    // never leaks into the title.
+                    // One date in the current month: a day from 1 to 31 clamps to the
+                    // month (the 31st in February is Feb 28); any other day sets no date.
+                    // The phrase is consumed either way, so it never leaks into the title.
                     if (validDay) {
                         val currentMonth = YearMonth.from(context.reference.toLocalDate())
                         val day = minOf(dayOfMonth, currentMonth.lengthOfMonth())
@@ -201,13 +188,11 @@ object RecurrenceRule : ParseRule {
                         context.dateSet = true
                     }
                 } else {
-                    // Recurring "the Nth of every month": an out-of-range day isn't a
-                    // valid rule, so leave the phrase unclaimed (unchanged behavior).
+                    // A day outside 1..31 makes no rule; the phrase stays unclaimed.
                     if (!validDay) continue
                     context.rrule = RruleBuilder.monthly(dayOfMonth = dayOfMonth)
-                    // Anchor DTSTART on the first month (on/after the reference) that
-                    // actually has this day-of-month, skipping short months rather than
-                    // clamping (e.g. day 31 skips Feb/Apr; day 30 skips Feb).
+                    // Start on the first month on or after the reference that has this day,
+                    // skipping short months (day 31 skips Feb and Apr) instead of clamping.
                     context.weekdayDate = firstDayOfMonthOnOrAfter(
                         context.reference.toLocalDate(), dayOfMonth
                     )
@@ -218,11 +203,10 @@ object RecurrenceRule : ParseRule {
                 return true
             }
 
-            // Case C (this-month only): a recognized ordinal word with no weekday,
-            // e.g. "first of this month". It's ambiguous (1st day vs 1st weekday),
-            // so we decline to guess a date — but still consume the phrase so it
-            // doesn't leak into the title. Only recognized ordinals are consumed;
-            // an unrelated word like "best of this month" is left as title text.
+            // "<ordinal> of this month" without a weekday ("first of this month") is
+            // ambiguous (day or weekday), so no date is set, but the phrase is consumed so it
+            // doesn't leak into the title. Only a recognized ordinal counts: "best of this
+            // month" stays title text.
             if (thisMonth && ordinalValue(tokens[beforeIndex]) != null) {
                 context.consume(listOf(beforeIndex, ofIndex, monthUnitIndex))
                 context.consume(connectiveIndices)
@@ -233,9 +217,8 @@ object RecurrenceRule : ParseRule {
     }
 
     /**
-     * Map an ordinal token to its numeric value for BYDAY (1-5, or -1 for "last").
-     * "second" is a UNIT(SECONDS) token and "last" is a KEYWORD; the remaining
-     * ordinals ("first", "third", "fourth", "fifth") stay UNKNOWN.
+     * Returns an ordinal token's value, 1 to 5 or -1 for "last", or null if it isn't one.
+     * [ordinalWords] notes which token type each ordinal word has.
      */
     private fun ordinalValue(token: Token): Int? {
         return when {
@@ -248,10 +231,13 @@ object RecurrenceRule : ParseRule {
     }
 
     /**
-     * Parse patterns starting with EVERY:
-     * - EVERY + WEEKDAY → weekly with BYDAY
-     * - EVERY + UNIT → frequency from unit
-     * - EVERY + NUMBER + UNIT [+ ON + WEEKDAY] → frequency with interval, optional BYDAY
+     * Parses a phrase starting with "every":
+     * - "other" + UNIT or WEEKDAY: INTERVAL=2 ("every other week", "every other Friday").
+     * - WEEKDAY, with more joined by "and" or adjacent: weekly with BYDAY.
+     * - "weekday" or "weekdays": weekly Monday to Friday; "weekend": weekly Saturday and Sunday.
+     * - UNIT: that frequency ("every day").
+     * - NUMBER + UNIT [+ "on" WEEKDAY]: that interval; the weekday adds BYDAY and WKST only
+     *   for weeks ("every 2 weeks on Friday").
      */
     private fun parseEveryPattern(tokens: List<Token>, everyIndex: Int, context: ParseContext): Boolean {
         val nextIndex = everyIndex + 1
@@ -259,7 +245,6 @@ object RecurrenceRule : ParseRule {
         val next = tokens[nextIndex]
         if (context.isConsumed(nextIndex)) return false
 
-        // EVERY + "other" + (UNIT | WEEKDAY) → "every other week", "every other Friday" (INTERVAL=2)
         if (next.type == TokenType.UNKNOWN && next.text.lowercase() == "other") {
             val targetIndex = nextIndex + 1
             if (targetIndex < tokens.size && !context.isConsumed(targetIndex)) {
@@ -285,20 +270,19 @@ object RecurrenceRule : ParseRule {
             }
         }
 
-        // EVERY + WEEKDAY [and/, WEEKDAY]* → "every Monday", "every Monday and Wednesday"
         if (next.type == TokenType.WEEKDAY) {
             val firstDay = next.value as? DayOfWeek ?: return false
             val days = linkedSetOf(firstDay)
             val consumed = mutableListOf(everyIndex, nextIndex)
 
-            // Greedily collect further weekdays joined by "and" or bare adjacency
-            // (commas normalize to spaces upstream). Skip a connecting "and".
+            // Collect further weekdays joined by "and" or adjacent (normalizing turns commas
+            // into spaces).
             var scan = nextIndex + 1
             while (scan < tokens.size) {
                 if (context.isConsumed(scan)) break
                 val tok = tokens[scan]
                 if (tok.type == TokenType.UNKNOWN && tok.text.lowercase() == "and") {
-                    // A trailing "and" only counts if a weekday actually follows.
+                    // An "and" counts only if a weekday follows.
                     val after = scan + 1
                     if (after < tokens.size && !context.isConsumed(after) &&
                         tokens[after].type == TokenType.WEEKDAY
@@ -320,9 +304,8 @@ object RecurrenceRule : ParseRule {
             }
 
             context.rrule = RruleBuilder.weekly(days = days)
-            // Anchor the first occurrence on the earliest upcoming selected weekday
-            // so DTSTART lands on a day the rule actually recurs on (RFC 5545 leaves
-            // a DTSTART that doesn't match the BYDAY set undefined).
+            // Start on the earliest upcoming selected weekday: RFC 5545 leaves a DTSTART
+            // outside the BYDAY set undefined.
             val refDate = context.reference.toLocalDate()
             context.weekdayDate = days.minOf { resolveBareWeekday(refDate, it) }
             context.dateSet = true
@@ -330,7 +313,6 @@ object RecurrenceRule : ParseRule {
             return true
         }
 
-        // EVERY + "weekday"/"weekdays" → "every weekday" (MO-FR)
         if (next.type == TokenType.UNKNOWN && next.text.lowercase() in listOf("weekday", "weekdays")) {
             context.rrule = RruleBuilder.weekly(days = WEEKDAYS)
             context.consume(everyIndex)
@@ -338,7 +320,6 @@ object RecurrenceRule : ParseRule {
             return true
         }
 
-        // EVERY + "weekend" → weekly on Saturday + Sunday
         if (next.type == TokenType.DATE_KEYWORD && next.value == "weekend") {
             context.rrule = RruleBuilder.weekly(days = setOf(DayOfWeek.SATURDAY, DayOfWeek.SUNDAY))
             context.consume(everyIndex)
@@ -346,7 +327,6 @@ object RecurrenceRule : ParseRule {
             return true
         }
 
-        // EVERY + UNIT → "every day", "every week", etc.
         if (next.type == TokenType.UNIT) {
             val rrule = unitToRrule(next.value as? ChronoUnit ?: return false, 1) ?: return false
             context.rrule = rrule
@@ -355,7 +335,6 @@ object RecurrenceRule : ParseRule {
             return true
         }
 
-        // EVERY + NUMBER + UNIT [+ ON + WEEKDAY] → "every 2 weeks", "every 2 weeks on Friday"
         if (next.type == TokenType.NUMBER) {
             val interval = next.value as? Int ?: return false
             val unitIndex = nextIndex + 1
@@ -367,7 +346,6 @@ object RecurrenceRule : ParseRule {
             val rrule = unitToRrule(unitToken.value as? ChronoUnit ?: return false, interval) ?: return false
             val consumed = mutableListOf(everyIndex, nextIndex, unitIndex)
 
-            // Check for optional ON + WEEKDAY
             val onIndex = unitIndex + 1
             if (onIndex < tokens.size && !context.isConsumed(onIndex)) {
                 val onToken = tokens[onIndex]
@@ -378,7 +356,7 @@ object RecurrenceRule : ParseRule {
                         if (weekdayToken.type == TokenType.WEEKDAY) {
                             val day = weekdayToken.value as? DayOfWeek
                             if (day != null) {
-                                // Rebuild rrule with BYDAY for weekly
+                                // Only a weekly rule takes the weekday as BYDAY.
                                 val unit = unitToken.value as ChronoUnit
                                 val rruleWithDay = if (unit == ChronoUnit.WEEKS) {
                                     val wkstDow = DateTimeUtils.resolveFirstDayOfWeekAsDow(context.firstDayOfWeek)
@@ -448,7 +426,7 @@ object RecurrenceRule : ParseRule {
                     context.rrule = RruleBuilder.withCount(rrule, count)
                     context.consume(index)
                     context.consume(prevIdx)
-                    // Also consume "for" before the number if present
+                    // "for 5 times" also consumes the "for".
                     if (prevIdx > 0 && !context.isConsumed(prevIdx - 1)) {
                         val forToken = tokens[prevIdx - 1]
                         if (forToken.type == TokenType.KEYWORD && forToken.value == "FOR") {
@@ -493,10 +471,9 @@ object RecurrenceRule : ParseRule {
     }
 
     /**
-     * First date matching "<ordinal> <weekday> of the month" that falls on or after
-     * [refDate], scanning forward month by month. [ordinal] is 1-5 for 1st-5th or -1
-     * for "last". Months that lack the requested ordinal (e.g. a 5th Friday) are
-     * skipped rather than allowed to spill into the next month.
+     * Returns the first [ordinal] [weekday] of a month on or after [refDate], or [refDate] if
+     * none is found within [MAX_MONTH_SCAN] months. [ordinal] is 1 to 5, or -1 for "last". A
+     * month without that ordinal (no 5th Friday) is skipped.
      */
     private fun firstOrdinalWeekdayOnOrAfter(
         refDate: LocalDate,
@@ -513,9 +490,9 @@ object RecurrenceRule : ParseRule {
     }
 
     /**
-     * The [ordinal]-th [weekday] within [ym], or null when the month has no such
-     * occurrence (only happens for ordinal 5). `dayOfWeekInMonth` spills into a later
-     * month when the count is too high, so we reject any candidate that left [ym].
+     * Returns the [ordinal]-th [weekday] in [ym], or null when the month has none (only for
+     * ordinal 5). `dayOfWeekInMonth` spills into the next month when the count is too high,
+     * so a candidate outside [ym] is rejected.
      */
     private fun ordinalWeekdayIn(ym: YearMonth, ordinal: Int, weekday: DayOfWeek): LocalDate? {
         val anchor = ym.atDay(1)
@@ -528,9 +505,9 @@ object RecurrenceRule : ParseRule {
     }
 
     /**
-     * First date matching "<n>th of the month" that falls on or after [refDate],
-     * scanning forward month by month. Months too short for [dayOfMonth] (e.g. day 31
-     * in April, day 30 in February) are skipped rather than clamped.
+     * Returns the first [dayOfMonth] of a month on or after [refDate], or [refDate] if none is
+     * found within [MAX_MONTH_SCAN] months. A month too short for it (day 31 in April) is
+     * skipped, not clamped.
      */
     private fun firstDayOfMonthOnOrAfter(refDate: LocalDate, dayOfMonth: Int): LocalDate {
         var ym = YearMonth.from(refDate)
@@ -544,7 +521,7 @@ object RecurrenceRule : ParseRule {
         return refDate
     }
 
-    // Upper bound on the forward month scan. A day-of-month/ordinal-weekday always
-    // recurs within a 12-month window; the extra headroom is a cheap safety net.
+    // Bound on the forward month scan. A day of month or ordinal weekday always occurs within
+    // 12 months; the rest is headroom.
     private const val MAX_MONTH_SCAN = 24
 }

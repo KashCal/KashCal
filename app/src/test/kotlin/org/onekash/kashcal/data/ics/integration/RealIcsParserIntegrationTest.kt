@@ -13,21 +13,19 @@ import org.onekash.kashcal.data.ics.IcsParserService
 import java.util.concurrent.TimeUnit
 
 /**
- * Integration tests for IcsParserService with real Thunderbird holiday calendars.
+ * Runs [IcsParserService] against 25 public holiday ICS feeds fetched live (list in
+ * [THUNDERBIRD_CALENDARS], index at https://www.thunderbird.net/en-US/calendar/holidays/).
  *
- * Tests the parser against 25+ real-world ICS feeds from:
- * https://www.thunderbird.net/en-US/calendar/holidays/
+ * The per-country tests assert each feed fetches, is valid ICS and yields at least one event.
+ * The batch test needs at least 80% of feeds to parse and every parsed feed to yield an event.
+ * The USA feed is checked for required fields, all-day events and unique UIDs, and three feeds
+ * for a calendar name.
  *
- * These tests:
- * - Verify parser handles real-world ICS format variations
- * - Test timezone handling across different countries
- * - Ensure parser doesn't crash on real data
- * - Validate event extraction from production feeds
+ * Needs network access. The per-country and batch tests skip when the host HEAD probe fails;
+ * the others pass without asserting when their fetch fails.
  *
- * NOTE: These tests require network access. They will be skipped
- * if network is unavailable.
- *
- * Run manually with: ./gradlew :app:testDebugUnitTest --tests "*RealIcsParserIntegrationTest*"
+ * Lives under `integration/`, so it runs only with `-Pintegration`:
+ * `./gradlew :app:testDebugUnitTest -Pintegration --tests "*RealIcsParserIntegrationTest*"`
  */
 class RealIcsParserIntegrationTest {
 
@@ -37,9 +35,7 @@ class RealIcsParserIntegrationTest {
         private const val CALENDAR_ID = 1L
         private const val SUBSCRIPTION_ID = 1L
 
-        // Thunderbird holiday calendar URLs to test (2025 URL format)
-        // Selected for geographic diversity and format variations
-        // Source: https://www.thunderbird.net/calendar/holidays/
+        // Holiday feed URLs (2025 URL format), picked for geographic spread.
         private val THUNDERBIRD_CALENDARS = listOf(
             // Americas
             "USA" to "https://www.thunderbird.net/media/caldata/autogen/USHolidays.ics",
@@ -87,7 +83,7 @@ class RealIcsParserIntegrationTest {
             .readTimeout(60, TimeUnit.SECONDS)
             .build()
 
-        // Check if network is available by trying to reach Thunderbird
+        // A failed HEAD to the feed host makes the tests calling assumeNetworkAvailable skip.
         networkAvailable = try {
             val request = Request.Builder()
                 .url("https://www.thunderbird.net")
@@ -179,7 +175,7 @@ class RealIcsParserIntegrationTest {
             }
         }
 
-        // Report results
+        // Printed per feed for inspection.
         println("\n===== Thunderbird Calendar Parse Results =====")
         results.forEach { (country, result) ->
             when (result) {
@@ -191,7 +187,6 @@ class RealIcsParserIntegrationTest {
         }
         println("==============================================\n")
 
-        // Assert at least 80% success rate
         val successCount = results.values.count { it is ParseResult.Success }
         val totalCount = results.size
         val successRate = successCount.toDouble() / totalCount
@@ -203,7 +198,7 @@ class RealIcsParserIntegrationTest {
             successRate >= 0.8
         )
 
-        // Assert all successful parses have events
+        // Every feed that parsed must yield at least one event.
         results.values.filterIsInstance<ParseResult.Success>().forEach { result ->
             assertTrue("Calendar should have at least 1 event", result.eventCount > 0)
         }
@@ -211,7 +206,7 @@ class RealIcsParserIntegrationTest {
 
     @Test
     fun `all parsed events have required fields`() = runBlocking {
-        // Use USA calendar as a well-maintained reference
+        // The USA feed is the reference; a failed fetch passes without asserting.
         val content = fetchIcsContent(THUNDERBIRD_CALENDARS.first { it.first == "USA" }.second)
             ?: return@runBlocking
 
@@ -220,7 +215,6 @@ class RealIcsParserIntegrationTest {
         assertTrue("Should have events", events.isNotEmpty())
 
         events.forEach { event ->
-            // Required fields
             assertNotNull("Event should have UID", event.uid)
             assertTrue("UID should not be blank", event.uid.isNotBlank())
             assertNotNull("Event should have title", event.title)
@@ -230,7 +224,7 @@ class RealIcsParserIntegrationTest {
             assertNotNull("Event should have calendar ID", event.calendarId)
             assertEquals("Calendar ID should match", CALENDAR_ID, event.calendarId)
 
-            // Holiday events should be all-day
+            // Every event in a holiday feed is expected to be all-day.
             assertTrue("Holiday events should be all-day: ${event.title}", event.isAllDay)
         }
     }
@@ -249,7 +243,8 @@ class RealIcsParserIntegrationTest {
 
             println("$country calendar name: $calendarName")
 
-            // Should have some name (either X-WR-CALNAME or PRODID)
+            // A feed that fails to fetch is skipped. getCalendarName takes NAME or X-WR-CALNAME,
+            // else a non-blank PRODID.
             assertNotNull("$country should have calendar name", calendarName)
         }
     }
@@ -272,7 +267,7 @@ class RealIcsParserIntegrationTest {
 
     @Test
     fun `recurring events have RRULE`() = runBlocking {
-        // Some holiday calendars use RRULE for recurring holidays
+        // Print-only: logs any RRULE events in the first 10 feeds and asserts nothing.
         var foundRecurring = false
 
         for ((country, url) in THUNDERBIRD_CALENDARS.take(10)) {
@@ -289,7 +284,6 @@ class RealIcsParserIntegrationTest {
             }
         }
 
-        // Not all calendars use RRULE, so just log if we found any
         println("Found recurring events: $foundRecurring")
     }
 
@@ -309,7 +303,6 @@ class RealIcsParserIntegrationTest {
         assertTrue("$country should have at least 1 event", events.isNotEmpty())
         println("$country: Parsed ${events.size} events")
 
-        // Print first few events for inspection
         events.take(5).forEach { event ->
             println("  - ${event.title} (${if (event.isAllDay) "all-day" else "timed"})")
         }

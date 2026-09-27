@@ -9,11 +9,10 @@ import org.onekash.kashcal.sync.provider.icloud.ICloudAccountDiscoveryService
 import javax.inject.Singleton
 
 /**
- * Hilt module for calendar provider registration.
- *
- * With the AccountProvider enum refactor, provider lookup is now
- * handled directly by ProviderRegistry using the enum.
- * No more @IntoSet pattern needed.
+ * Binds the account discovery service. Provider-specific quirks and credentials aren't Hilt
+ * bindings: [org.onekash.kashcal.sync.provider.ProviderRegistry] looks them up by
+ * [org.onekash.kashcal.domain.model.AccountProvider], and generic CalDAV quirks by the
+ * account's server URL.
  *
  * @see org.onekash.kashcal.sync.provider.ProviderRegistry
  * @see org.onekash.kashcal.domain.model.AccountProvider
@@ -23,10 +22,9 @@ import javax.inject.Singleton
 abstract class ProviderModule {
 
     /**
-     * Bind AccountDiscoveryService interface to iCloud implementation.
-     *
-     * Currently only iCloud is supported. When more providers are added,
-     * this could be changed to use @IntoSet or a discovery registry pattern.
+     * Binds [AccountDiscoveryService] to the iCloud implementation. Generic CalDAV discovery,
+     * [org.onekash.kashcal.sync.provider.caldav.CalDavAccountDiscoveryService], doesn't
+     * implement the interface and is injected by its class.
      */
     @Binds
     @Singleton

@@ -15,8 +15,9 @@ import org.robolectric.RobolectricTestRunner
 import java.time.DayOfWeek
 
 /**
- * Unit tests for RecurrencePicker component.
- * Tests RRULE building logic and frequency option mapping.
+ * Tests the recurrence model behind the picker: `FrequencyOption.toFrequency()`, the
+ * [MonthlyPattern] and [EndCondition] types, and [RruleBuilder]'s building, COUNT and UNTIL,
+ * parsing, round trips and English display text. No test renders [RecurrencePickerRow].
  */
 @RunWith(RobolectricTestRunner::class)
 class RecurrencePickerTest {

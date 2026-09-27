@@ -3,27 +3,28 @@ package org.onekash.kashcal.util
 import org.onekash.icaldav.util.CalAddress
 
 /**
- * Canonicalize a CAL-ADDRESS (RFC 5545 §3.3.3) for compare-time equality.
+ * Canonicalizes a CAL-ADDRESS (RFC 5545 §3.3.3) for compare-time equality.
  *
- * `mailto:` is case-insensitive on prefix, local-part, and domain.
- * `urn:`, HTTP, and principal-relative forms compare byte-equal — server
- * casing is authoritative. Storage stays raw; canonicalization only
- * happens at lookup time.
+ * Mailboxes compare case-insensitively on local-part and domain, whether written as `mailto:`
+ * or bare (the iCalendar parser strips the prefix, so a pulled ORGANIZER is stored bare).
+ * RFC 5321 §2.4 keeps domains case-insensitive and discourages relying on local-part case, so
+ * "Alice@Example.com" and "mailto:alice@example.com" are the same calendar user. `urn:`, HTTP
+ * and principal-relative forms compare byte-equal: the server's casing is authoritative.
+ * Storage stays raw and canonicalization happens only at lookup time, so addresses sent to
+ * servers keep their casing.
  */
 object AddressNormalizer {
 
-    // Mailbox shape: local@domain.tld. Rejects bare logins ("alice"), dotless
-    // internal hosts ("user@localhost"), and non-mailto CAL-ADDRESS forms
-    // (urn:uuid:, principal paths — including a principal path whose login
-    // segment is itself an email, which a "/"-permissive char class would wrongly
-    // match). Reuses the CAL-ADDRESS mailbox pattern that the ICS parser/generator
-    // already share, so the store-side and wire-side decisions cannot diverge.
+    // Mailbox shape: local@domain.tld. Rejects bare logins ("alice"), dotless internal hosts
+    // ("user@localhost") and non-mailto CAL-ADDRESS forms: urn:uuid: and principal paths,
+    // including one whose login segment is itself an email, which a "/"-permissive class
+    // would match. It is the pattern the ICS parser and generator share, so the store-side
+    // and wire-side decisions can't diverge.
     private val EMAIL_SHAPE = CalAddress.mailtoShape
 
     /**
-     * True when [raw] (after any `mailto:` strip) is email-shaped — i.e. safe
-     * to emit as a `mailto:` CAL-ADDRESS. A principal path / urn:uuid / bare
-     * login returns false.
+     * Returns true when [raw], after any `mailto:` strip, is email-shaped and so safe to emit
+     * as a `mailto:` CAL-ADDRESS. A principal path, urn:uuid or bare login returns false.
      */
     fun isEmailShaped(raw: String): Boolean = EMAIL_SHAPE.matches(stripMailto(raw))
 
@@ -32,17 +33,19 @@ object AddressNormalizer {
         return when {
             trimmed.startsWith("mailto:", ignoreCase = true) ->
                 trimmed.substring("mailto:".length).trim().lowercase()
+            // A bare mailbox: has an '@' but no scheme (':') or path ('/'), so
+            // urn:, http(s): and principal paths that embed an email stay exact.
+            '@' in trimmed && ':' !in trimmed && '/' !in trimmed -> trimmed.lowercase()
             else -> trimmed
         }
     }
 
     /**
-     * Strip a leading `mailto:` (case-insensitive) without lowercasing the
-     * remaining local part. Used by paths that need the bare email/URI but
-     * must preserve the server-supplied casing for round-trips (Outlook
-     * retains attendee-address casing, breaking byte-equality comparisons
-     * if we lowercase here). For lookup-time identity matching, use
-     * [canonical] instead.
+     * Strips a leading `mailto:` (case-insensitive) and keeps the rest's casing.
+     *
+     * For paths that need the bare email or URI but must round-trip the server-supplied
+     * casing: Outlook keeps attendee-address casing, so lowercasing here breaks byte-equal
+     * comparisons. For lookup-time identity matching, use [canonical].
      */
     fun stripMailto(raw: String): String {
         val trimmed = raw.trim()

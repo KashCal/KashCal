@@ -138,10 +138,10 @@ class InviteNotifierTest {
 
     @Test
     fun `notifyNew does not re-fire on stale-pull (dedup via merge-preserve)`() = runTest {
-        // Simulates the race fix: user RSVPed ACCEPTED → optimistic write
-        // set notified_at. Next pull race-returns NEEDS-ACTION; replaceForEvent's
-        // merge-preserve kept notifiedAt non-null. notifier sees the row,
-        // partstat=NEEDS-ACTION, but notified_at is set → no re-fire.
+        // The invite already fired (notified_at set) and the user RSVPed ACCEPTED. A pull that
+        // races the server's REPLY queue returns NEEDS-ACTION, and replaceForEvent keeps the
+        // prior notified_at, so the notifier sees NEEDS-ACTION with notified_at set and
+        // doesn't re-fire.
         coEvery { attendeesDao.getForEventOnce(event.id) } returns listOf(
             selfRow(notifiedAt = 1_500_000L, partstat = "NEEDS-ACTION")
         )

@@ -24,14 +24,12 @@ import javax.inject.Singleton
 import kotlin.math.abs
 
 /**
- * Builds and shows notifications for device calendar reminders.
+ * Builds and shows reminder notifications for device events.
  *
- * Uses the same notification channel as Room reminders but different notification ID range
- * to avoid collisions:
- * - Room reminders: 2000-11999
- * - Device calendar reminders: 20000-29999
+ * Shares the Room reminders' channel ([ReminderNotificationChannels.CHANNEL_REMINDERS]) but not
+ * their notification IDs: Room reminders use 2000-11999, device reminders 20000-29999.
  *
- * @see ReminderNotificationManager for Room reminder notifications
+ * @see org.onekash.kashcal.reminder.notification.ReminderNotificationManager
  */
 @Singleton
 class DeviceCalendarReminderNotificationManager @Inject constructor(
@@ -40,15 +38,13 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
     private val dataStore: KashCalDataStore
 ) {
     companion object {
-        // Notification ID base - separate range from Room reminders (2000-11999)
         const val NOTIFICATION_ID_BASE = 20000
 
-        // Intent actions for device calendar reminders
         const val ACTION_DEVICE_SNOOZE = "org.onekash.kashcal.DEVICE_SNOOZE_REMINDER"
         const val ACTION_DEVICE_DISMISS = "org.onekash.kashcal.DEVICE_DISMISS_REMINDER"
         const val ACTION_DEVICE_SHOW_EVENT = "org.onekash.kashcal.DEVICE_SHOW_EVENT"
 
-        // Intent extras
+        // Same keys as DeviceCalendarReminderScheduler's extras.
         const val EXTRA_EVENT_ID = "device_event_id"
         const val EXTRA_OCCURRENCE_TS = "device_occurrence_ts"
         const val EXTRA_CALENDAR_ID = "device_calendar_id"
@@ -58,12 +54,10 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
         const val EXTRA_IS_ALL_DAY = "device_is_all_day"
         const val EXTRA_CALENDAR_COLOR = "device_calendar_color"
 
-        // Default snooze duration
         const val DEFAULT_SNOOZE_MINUTES = 15
 
-        // Request code ranges for non-overlapping PendingIntents.
-        // Each range has 100K buckets with 100K spacing between bases.
-        // (Room reminders use 0-2.1B range partitioned by action type with different components.)
+        // One non-overlapping range of REQUEST_CODE_RANGE codes per action. Room reminder
+        // PendingIntents can reuse these codes; their actions differ, so they stay distinct.
         private const val REQUEST_CODE_OPEN = 200_000
         private const val REQUEST_CODE_SNOOZE = 300_000
         private const val REQUEST_CODE_DISMISS = 400_000
@@ -85,17 +79,11 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
     }
 
     /**
-     * Show notification for a device calendar reminder.
+     * Shows the reminder for one occurrence of a device event and returns its notification ID.
      *
-     * @param eventId Device calendar event ID
-     * @param occurrenceTs Event occurrence start timestamp
-     * @param title Event title
-     * @param location Event location (optional)
-     * @param isAllDay Whether this is an all-day event
-     * @param calendarColor Calendar color for notification accent
-     * @param calendarId Calendar ID (for deep linking)
-     * @param triggerTime When the reminder was scheduled to fire
-     * @return The notification ID used
+     * @param occurrenceTs the occurrence's start
+     * @param calendarColor the notification's accent color
+     * @param triggerTime when the reminder was scheduled to fire
      */
     suspend fun showNotification(
         eventId: Long,
@@ -127,9 +115,7 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
         return notificationId
     }
 
-    /**
-     * Build a notification for a device calendar reminder.
-     */
+    /** Builds the reminder notification with Snooze and Dismiss actions. */
     @VisibleForTesting
     internal suspend fun buildNotification(
         eventId: Long,
@@ -155,11 +141,9 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
             .setColor(calendarColor)
             .setContentIntent(createOpenAppIntent(eventId, occurrenceTs, calendarId))
 
-        // All-day events store occurrenceTs as UTC midnight; rendering it in the
-        // notification header shows a misleading timezone-shifted clock time. The
-        // body already carries a relative-day subtitle (Today / Tomorrow / In N days),
-        // so suppress the header timestamp for all-day reminders. Timed reminders keep
-        // it as a live countdown to the event start.
+        // An all-day occurrenceTs is UTC midnight, which the header would show as a
+        // zone-shifted clock time, so all-day reminders hide it and the body's relative day
+        // stands alone. Timed reminders show it as a countdown to the start.
         if (!isAllDay) {
             builder
                 .setWhen(occurrenceTs + 30_000L)
@@ -168,12 +152,10 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
             builder.setShowWhen(false)
         }
 
-        // Add location if available
         if (!location.isNullOrBlank()) {
             builder.setSubText(location)
         }
 
-        // Add Snooze action
         builder.addAction(
             android.R.drawable.ic_popup_reminder,
             context.getString(R.string.action_snooze),
@@ -189,7 +171,6 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
             )
         )
 
-        // Add Dismiss action
         builder.addAction(
             android.R.drawable.ic_menu_close_clear_cancel,
             context.getString(R.string.action_dismiss),
@@ -200,10 +181,9 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
     }
 
     /**
-     * Format the notification content text.
-     *
-     * For timed events: shows absolute event start time.
-     * For all-day events: shows relative duration.
+     * Formats the body. A timed event shows its start time, with "Tomorrow" or the date when it
+     * isn't today, or "Starting now" when the reminder is due at or after the start. An all-day
+     * event shows the relative day.
      */
     private suspend fun formatNotificationContent(
         occurrenceTs: Long,
@@ -214,8 +194,7 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
 
         return when {
             isAllDay -> {
-                // All-day events have no clock-time start; show a relative-day subtitle
-                // (Today / Tomorrow / In N days) based on the event's local date.
+                // Today, Tomorrow or In N days, from the event's date.
                 when (val days = DateTimeUtils.allDayRelativeDays(occurrenceTs, triggerTime)) {
                     0 -> context.getString(R.string.label_today)
                     1 -> context.getString(R.string.label_tomorrow)
@@ -247,19 +226,16 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
     }
 
     /**
-     * Generate unique notification ID from event ID and occurrence timestamp.
-     * Uses composite key to support multiple reminders for same event (different occurrences).
+     * Returns the notification ID for one occurrence, in 20000-29999. Keyed on the occurrence
+     * so reminders for different occurrences of one event don't replace each other; distinct
+     * occurrences can still share an ID.
      */
     fun getNotificationId(eventId: Long, occurrenceTs: Long): Int {
-        // Combine eventId and occurrenceTs for uniqueness, keep within 10000 range
         val combined = (eventId xor (occurrenceTs / 60000)) % 10000
         return (NOTIFICATION_ID_BASE + combined).toInt()
     }
 
-    /**
-     * Create pending intent to open the app when notification is tapped.
-     * Note: Deep linking to device calendar events is limited - opens app at current day.
-     */
+    /** Creates the tap intent, which opens the device event's quick view in MainActivity. */
     private fun createOpenAppIntent(eventId: Long, occurrenceTs: Long, calendarId: Long): PendingIntent {
         val intent = Intent(context, MainActivity::class.java).apply {
             action = ACTION_DEVICE_SHOW_EVENT
@@ -278,10 +254,7 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
         )
     }
 
-    /**
-     * Create pending intent for Snooze action.
-     * Includes all event data so the snoozed reminder can be rescheduled with correct info.
-     */
+    /** Creates the Snooze intent; it carries the whole event, which the snooze alarm needs. */
     private fun createSnoozeIntent(
         eventId: Long,
         occurrenceTs: Long,
@@ -313,9 +286,6 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
         )
     }
 
-    /**
-     * Create pending intent for Dismiss action.
-     */
     private fun createDismissIntent(notificationId: Int): PendingIntent {
         val intent = Intent(context, DeviceCalendarReminderActionReceiver::class.java).apply {
             action = ACTION_DEVICE_DISMISS
@@ -331,16 +301,11 @@ class DeviceCalendarReminderNotificationManager @Inject constructor(
         )
     }
 
-    /**
-     * Cancel a notification by ID.
-     */
     fun cancelNotification(notificationId: Int) {
         channels.cancel(notificationId)
     }
 
-    /**
-     * Check if notifications are enabled.
-     */
+    /** Returns true when app notifications and the reminders channel are both enabled. */
     fun areNotificationsEnabled(): Boolean {
         return channels.areNotificationsEnabled() && channels.isChannelEnabled()
     }

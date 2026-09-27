@@ -1,12 +1,8 @@
 package org.onekash.kashcal.sync.session
 
 /**
- * Builder for constructing SyncSession during a sync operation.
- *
- * Usage:
- * 1. Create at start of sync: SyncSessionBuilder(calendar, syncType, trigger)
- * 2. Call setters as sync progresses
- * 3. Call build() at end to get final SyncSession
+ * Accumulates one calendar's sync counts as the sync runs; [build] returns the [SyncSession].
+ * The duration is measured from construction to [build].
  */
 class SyncSessionBuilder(
     private val calendarId: Long,
@@ -16,14 +12,14 @@ class SyncSessionBuilder(
 ) {
     private val startTime = System.currentTimeMillis()
 
-    // Pipeline numbers
+    // Pipeline counts
     private var hrefsReported = 0
     private var eventsFetched = 0
     private var eventsWritten = 0
     private var eventsUpdated = 0
     private var eventsDeleted = 0
 
-    // Push statistics
+    // Push counts
     private var eventsPushedCreated = 0
     private var eventsPushedUpdated = 0
     private var eventsPushedDeleted = 0
@@ -36,35 +32,29 @@ class SyncSessionBuilder(
     private var skippedAlreadySynced = 0
     private var skippedRecentlyPushed = 0
 
-    // Diagnostic warnings (capped to prevent unbounded growth)
+    // Capped at maxWarnings; later warnings are dropped.
     private val warnings = mutableListOf<String>()
     private val maxWarnings = 20
 
-    // Token tracking
     private var tokenAdvanced = true
 
-    // Error info
     private var errorType: ErrorType? = null
     private var errorStage: String? = null
 
-    // Pipeline setters
     fun setHrefsReported(count: Int) = apply { hrefsReported = count }
     fun setEventsFetched(count: Int) = apply { eventsFetched = count }
 
-    // Increment methods for processing loop
     fun incrementWritten() = apply { eventsWritten++ }
     fun incrementUpdated() = apply { eventsUpdated++ }
     fun incrementDeleted() = apply { eventsDeleted++ }
     fun addDeleted(count: Int) = apply { eventsDeleted += count }
 
-    // Push statistics setter
     fun setPushStats(created: Int, updated: Int, deleted: Int) = apply {
         eventsPushedCreated = created
         eventsPushedUpdated = updated
         eventsPushedDeleted = deleted
     }
 
-    // Skip reason tracking
     fun incrementSkipParseError() = apply { skippedParseError++ }
     fun incrementSkipPendingLocal() = apply { skippedPendingLocal++ }
     fun incrementSkipEtagUnchanged() = apply { skippedEtagUnchanged++ }
@@ -72,10 +62,10 @@ class SyncSessionBuilder(
     fun incrementSkipAlreadySynced() = apply { skippedAlreadySynced++ }
     fun incrementSkipRecentlyPushed() = apply { skippedRecentlyPushed++ }
 
-    // Accessor for parse error count (for retry logic)
+    // Read by the pull's parse-failure retry to decide whether to hold the sync-token.
     fun getSkippedParseError(): Int = skippedParseError
 
-    // Warning accumulation (synchronized for concurrent fetch coroutines)
+    // Synchronized: the concurrent multiget fetch coroutines add warnings in parallel.
     fun addWarning(message: String) = apply {
         synchronized(warnings) {
             if (warnings.size < maxWarnings) {
@@ -84,11 +74,9 @@ class SyncSessionBuilder(
         }
     }
 
-    // Parse failure retry tracking (v16.7.0)
     private var abandonedParseErrors = 0
     fun setAbandonedParseErrors(count: Int) = apply { abandonedParseErrors = count }
 
-    // Token and error
     fun setTokenAdvanced(advanced: Boolean) = apply { tokenAdvanced = advanced }
     fun setError(type: ErrorType, stage: String, message: String? = null) = apply {
         errorType = type
@@ -96,17 +84,13 @@ class SyncSessionBuilder(
         errorMessage = message
     }
 
-    // Error message (v16.8.0)
     private var errorMessage: String? = null
 
-    // RFC 6578 Section 3.6: Server truncated results (507)
+    // Sync-collection reply truncated with 507 (RFC 6578 §3.6)
     private var truncated = false
     fun setTruncated(value: Boolean) = apply { truncated = value }
 
-    /**
-     * Build the final SyncSession.
-     * Call this at the end of sync operation.
-     */
+    /** Builds the session; call once at the end of the sync, since it stamps the duration. */
     fun build(): SyncSession {
         val missingCount = (hrefsReported - eventsFetched).coerceAtLeast(0)
         return SyncSession(

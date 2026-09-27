@@ -6,10 +6,12 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 /**
- * Sync operation log for debugging and diagnostics.
+ * Stores a sync log row for debugging.
  *
- * Records all sync operations with results for troubleshooting.
- * Old logs are periodically cleaned up to manage database size.
+ * The sync engine writes one row per calendar sync, with action "SYNC_COMPLETE" and result
+ * "SUCCESS" or "ERROR". No screen shows the rows: `AccountSettingsViewModel.loadSyncLogs`,
+ * which reads them through [org.onekash.kashcal.domain.reader.SyncLogReader], has no caller.
+ * The sync worker deletes rows past their retention.
  */
 @Entity(
     tableName = "sync_logs",
@@ -23,47 +25,30 @@ data class SyncLog(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
 
-    /**
-     * When the sync operation occurred.
-     */
     @ColumnInfo(name = "timestamp")
     val timestamp: Long = System.currentTimeMillis(),
 
-    /**
-     * Calendar involved in sync (nullable for account-level ops).
-     */
+    /** Calendar synced, or null for an account-level row. */
     @ColumnInfo(name = "calendar_id")
     val calendarId: Long? = null,
 
-    /**
-     * Event UID involved (nullable for calendar-level ops).
-     */
+    /** Event UID, or null for a calendar-level row. */
     @ColumnInfo(name = "event_uid")
     val eventUid: String? = null,
 
-    /**
-     * Type of sync action performed.
-     * Values: "PULL", "PUSH_CREATE", "PUSH_UPDATE", "PUSH_DELETE", "CONFLICT", "DISCOVERY"
-     */
+    /** Sync action: the ACTION_ constants, or the engine's "SYNC_COMPLETE". */
     @ColumnInfo(name = "action")
     val action: String,
 
-    /**
-     * Result of the sync operation.
-     * Values: "SUCCESS", "ERROR_412" (conflict), "ERROR_NETWORK", "ERROR_PARSE", "ERROR_AUTH", "SKIPPED"
-     */
+    /** Outcome: the RESULT_ constants, or the engine's "ERROR". */
     @ColumnInfo(name = "result")
     val result: String,
 
-    /**
-     * Additional details or error message.
-     */
+    /** Details or error message. */
     @ColumnInfo(name = "details")
     val details: String? = null,
 
-    /**
-     * HTTP status code if applicable.
-     */
+    /** HTTP status code, when there is one. */
     @ColumnInfo(name = "http_status")
     val httpStatus: Int? = null
 ) {
@@ -84,9 +69,7 @@ data class SyncLog(
         const val RESULT_ERROR_AUTH = "ERROR_AUTH"
         const val RESULT_SKIPPED = "SKIPPED"
 
-        /**
-         * Create a success log entry.
-         */
+        /** Returns a [RESULT_SUCCESS] row. */
         fun success(
             action: String,
             calendarId: Long? = null,
@@ -102,9 +85,7 @@ data class SyncLog(
             httpStatus = httpStatus
         )
 
-        /**
-         * Create an error log entry.
-         */
+        /** Returns a row with the error [result]. */
         fun error(
             action: String,
             result: String,

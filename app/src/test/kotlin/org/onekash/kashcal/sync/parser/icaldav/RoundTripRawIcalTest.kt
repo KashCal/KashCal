@@ -14,20 +14,16 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Comprehensive round-trip tests for rawIcal preservation.
+ * Tests that server ICS is stored in rawIcal on pull, kept through local edits and moves, and
+ * used by IcsPatcher on push to keep alarms, attendees and X-properties.
  *
- * These tests verify that server-originated ICS data is correctly:
- * 1. Stored in rawIcal during PULL
- * 2. Preserved during local edits (UI operations)
- * 3. Used by IcsPatcher to preserve alarms, attendees, X-properties during PUSH
- * 4. Handled correctly in MOVE operations
- *
- * Test categories:
- * - PULL: Server → rawIcal storage
- * - UPDATE: rawIcal preservation during edits
- * - MOVE: rawIcal behavior when changing calendars
- * - EXCEPTION: rawIcal handling for recurring event exceptions
- * - EDGE CASES: Invalid rawIcal, null rawIcal, corrupted data
+ * Sections:
+ * - PULL: server ICS into rawIcal
+ * - UPDATE: rawIcal kept through edits
+ * - MOVE: rawIcal when changing calendars
+ * - EXCEPTION: rawIcal for recurring event exceptions
+ * - EDGE CASES: corrupted, empty and mismatched rawIcal, timezone, all-day
+ * - Full round-trip: pull, edit, push
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -40,7 +36,7 @@ class RoundTripRawIcalTest {
         parser = ICalParser()
     }
 
-    // ==================== PULL: Server → rawIcal Storage ====================
+    // ==================== PULL: Server ICS into rawIcal ====================
 
     @Test
     fun `ICalEventMapper stores rawIcal from server response`() {
@@ -49,16 +45,16 @@ class RoundTripRawIcalTest {
         // Parse server response
         val parsed = parser.parseAllEvents(serverIcs).getOrNull()!!.first()
 
-        // Map to entity (simulating PullStrategy)
+        // Map to entity, as PullStrategy does
         val entity = ICalEventMapper.toEntity(
             icalEvent = parsed,
-            rawIcal = serverIcs,  // This is what PullStrategy passes
+            rawIcal = serverIcs,  // what PullStrategy passes
             calendarId = 1L,
             caldavUrl = "https://caldav.example.com/event.ics",
             etag = "\"abc123\""
         ).event
 
-        // Verify rawIcal is stored
+        // rawIcal is stored
         assertNotNull("rawIcal should be stored", entity.rawIcal)
         assertEquals("rawIcal should match server response", serverIcs, entity.rawIcal)
     }
@@ -92,7 +88,7 @@ class RoundTripRawIcalTest {
             etag = null
         ).event
 
-        // Verify extraProperties captured X-* properties
+        // extraProperties captured the X-* properties
         assertNotNull("extraProperties should be present", entity.extraProperties)
         assertTrue(
             "Should have X-APPLE-STRUCTURED-LOCATION",
@@ -107,7 +103,7 @@ class RoundTripRawIcalTest {
         val originalRawIcal = createRichServerIcs()
         val entity = createEventWithRawIcal(originalRawIcal)
 
-        // Simulate UI edit - copy with only changed fields
+        // A UI edit: copy with only the changed fields
         val edited = entity.copy(
             title = "Updated Title",
             location = "New Location",
@@ -115,7 +111,7 @@ class RoundTripRawIcalTest {
             updatedAt = System.currentTimeMillis()
         )
 
-        // rawIcal should be preserved
+        // rawIcal is kept
         assertEquals(
             "rawIcal should be preserved after copy",
             originalRawIcal,
@@ -131,13 +127,13 @@ class RoundTripRawIcalTest {
         )
         val entity = createEventWithExtras(extraProps)
 
-        // Simulate UI edit
+        // A UI edit
         val edited = entity.copy(
             title = "Updated Title",
             startTs = entity.startTs + 3600000
         )
 
-        // extraProperties should be preserved
+        // extraProperties are kept
         assertEquals(
             "extraProperties should be preserved after copy",
             extraProps,
@@ -187,16 +183,16 @@ class RoundTripRawIcalTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Entity only stores first 3 reminders (per KashCal design)
+        // The user kept 3 of the 5 reminders
         val entity = createEventWithRawIcal(serverIcs).copy(
             uid = "multi-alarm@test.com",
             title = "Updated Title",  // User changed title
             reminders = listOf("-PT5M", "-PT15M", "-PT30M")  // Only first 3
         )
 
-        // Patch uses rawIcal for non-alarm preservation, but the reminder list is
-        // authoritative for the displayed window: all 5 originals were displayed
-        // (index < 5), the user kept 3, so the other 2 are deleted — not re-added.
+        // The patch keeps rawIcal's other properties, but the reminder list is the source of
+        // truth for the displayed window: all 5 originals were displayed (index < 5) and the
+        // user kept 3, so the other 2 are deleted and not re-added.
         val patched = IcsPatcher.patch(serverIcs, entity)
 
         // Parse result
@@ -276,7 +272,7 @@ class RoundTripRawIcalTest {
         val patched = IcsPatcher.patch(serverIcs, entity)
         val result = parser.parseAllEvents(patched).getOrNull()!!.first()
 
-        // Verify X-APPLE properties preserved
+        // X-APPLE properties are kept
         assertTrue(
             "Should preserve X-APPLE-STRUCTURED-LOCATION",
             result.rawProperties.keys.any { it.contains("X-APPLE-STRUCTURED-LOCATION") }
@@ -291,7 +287,7 @@ class RoundTripRawIcalTest {
 
     @Test
     fun `MOVE scenario - rawIcal preserved after calendar change allows round-trip`() {
-        // Simulate: Event from Server (Calendar A) → Moved to Calendar B → Pushed to Server
+        // An event from the server in calendar A, moved to calendar B, pushed to the server
         val originalServerIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -327,27 +323,27 @@ class RoundTripRawIcalTest {
             reminders = listOf("-PT15M", "-PT1H")
         )
 
-        // MOVE operation clears caldavUrl but preserves rawIcal (current behavior)
+        // A move clears caldavUrl and etag but keeps rawIcal, as EventWriter's move does
         val eventAfterMove = eventInCalendarA.copy(
             calendarId = 2L,  // Calendar B
-            caldavUrl = null,  // Cleared - will get new URL
-            etag = null,  // Cleared
+            caldavUrl = null,  // cleared; the push sets the new URL
+            etag = null,  // cleared
             syncStatus = SyncStatus.PENDING_CREATE
-            // rawIcal is NOT cleared in current implementation
+            // rawIcal is not cleared
         )
 
-        // Verify rawIcal is preserved after move
+        // rawIcal is kept after the move
         assertEquals(
             "rawIcal should be preserved after MOVE",
             originalServerIcs,
             eventAfterMove.rawIcal
         )
 
-        // When pushed to Calendar B, IcsPatcher should use preserved rawIcal
+        // Pushed to calendar B, IcsPatcher patches the kept rawIcal
         val pushIcs = IcsPatcher.serialize(eventAfterMove)
         val pushParsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
 
-        // Both alarms should be preserved
+        // Both alarms are kept
         assertEquals(
             "Alarms should be preserved via rawIcal after MOVE",
             2,
@@ -357,7 +353,7 @@ class RoundTripRawIcalTest {
 
     @Test
     fun `MOVE scenario - old calendar X-properties preserved in rawIcal affect new calendar`() {
-        // This documents potential issue: Calendar A-specific properties go to Calendar B
+        // Documents that calendar A's own properties go to calendar B
         val calendarASpecificIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -379,7 +375,7 @@ class RoundTripRawIcalTest {
             calendarId = 1L
         )
 
-        // After MOVE (rawIcal preserved)
+        // After the move, rawIcal kept
         val eventAfterMove = eventInCalendarA.copy(
             calendarId = 2L,
             caldavUrl = null,
@@ -387,12 +383,12 @@ class RoundTripRawIcalTest {
             syncStatus = SyncStatus.PENDING_CREATE
         )
 
-        // Serialize for Calendar B
+        // Serialize for calendar B
         val pushIcs = IcsPatcher.serialize(eventAfterMove)
         val pushParsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
 
-        // Calendar A-specific properties are still there!
-        // This documents current behavior - may or may not be desired
+        // Calendar A's properties are still there. This documents current behavior, which may
+        // or may not be desired.
         assertTrue(
             "Calendar A properties preserved after MOVE (current behavior)",
             pushParsed.rawProperties.keys.any { it.contains("X-CALENDAR-A") }
@@ -401,7 +397,7 @@ class RoundTripRawIcalTest {
 
     @Test
     fun `MOVE scenario with null rawIcal uses generateFresh`() {
-        // Event created locally (no rawIcal) then moved
+        // Event created locally (no rawIcal), then moved
         val localEvent = Event(
             uid = "local-move@test.com",
             calendarId = 1L,
@@ -409,53 +405,53 @@ class RoundTripRawIcalTest {
             startTs = 1735120800000L,
             endTs = 1735124400000L,
             reminders = listOf("-PT15M", "-PT30M"),
-            rawIcal = null,  // Locally created - no server ICS
+            rawIcal = null,  // created locally, no server ICS
             syncStatus = SyncStatus.PENDING_CREATE,
             dtstamp = System.currentTimeMillis(),
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
         )
 
-        // After MOVE
+        // After the move
         val eventAfterMove = localEvent.copy(
             calendarId = 2L,
             caldavUrl = null,
             etag = null
         )
 
-        // Serialize - should use generateFresh() since rawIcal is null
+        // With rawIcal null, serialize uses generateFresh()
         val pushIcs = IcsPatcher.serialize(eventAfterMove)
         val pushParsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
 
         assertEquals("Local Event", pushParsed.summary)
-        assertEquals(2, pushParsed.alarms.size)  // Both reminders preserved via generateFresh
+        assertEquals(2, pushParsed.alarms.size)  // both reminders, via generateFresh
     }
 
     @Test
     fun `MOVE with cleared rawIcal forces generateFresh`() {
-        // Test what happens if we explicitly clear rawIcal during MOVE
+        // A move that clears rawIcal
         val originalServerIcs = createRichServerIcs()
 
         val eventInCalendarA = createEventWithRawIcal(originalServerIcs).copy(
             uid = "clear-test@test.com",
             calendarId = 1L,
-            reminders = listOf("-PT15M")  // Only 1 reminder stored in entity
+            reminders = listOf("-PT15M")  // only 1 reminder on the entity
         )
 
-        // MOVE with explicit rawIcal clear
+        // Move with rawIcal cleared
         val eventAfterMove = eventInCalendarA.copy(
             calendarId = 2L,
             caldavUrl = null,
             etag = null,
-            rawIcal = null,  // EXPLICITLY CLEARED
+            rawIcal = null,  // cleared
             syncStatus = SyncStatus.PENDING_CREATE
         )
 
-        // Serialize - should use generateFresh()
+        // Serialize falls back to generateFresh()
         val pushIcs = IcsPatcher.serialize(eventAfterMove)
         val pushParsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
 
-        // Only entity's reminders used (not 5 from original server ICS)
+        // Only the entity's reminder, not the 5 alarms of the server ICS
         assertEquals(
             "Only entity reminders when rawIcal cleared",
             1,
@@ -493,19 +489,19 @@ class RoundTripRawIcalTest {
             reminders = listOf("-PT15M")
         )
 
-        // Exception created locally - NO rawIcal
+        // Exception created locally, with no rawIcal
         val exception = Event(
-            uid = "recurring-master@test.com",  // Same UID as master
+            uid = "recurring-master@test.com",  // same UID as master
             importId = "recurring-master@test.com:RECID:1735725600000",
             calendarId = 1L,
             title = "Weekly Meeting - MODIFIED",
-            startTs = 1735725600000L + 3600000,  // Moved 1 hour
+            startTs = 1735725600000L + 3600000,  // moved 1 hour
             endTs = 1735725600000L + 7200000,
             originalEventId = 1L,
             originalInstanceTime = 1735725600000L,
-            reminders = listOf("-PT30M"),  // Different reminder
-            rawIcal = null,  // Exception has no rawIcal
-            rrule = null,  // Exceptions don't have RRULE
+            reminders = listOf("-PT30M"),  // different reminder
+            rawIcal = null,  // exception has no rawIcal
+            rrule = null,  // exceptions have no RRULE
             syncStatus = SyncStatus.SYNCED,
             dtstamp = System.currentTimeMillis(),
             createdAt = System.currentTimeMillis(),
@@ -521,10 +517,10 @@ class RoundTripRawIcalTest {
         val parsedMaster = parsed.find { it.recurrenceId == null }!!
         val parsedException = parsed.find { it.recurrenceId != null }!!
 
-        // Master preserves its 1 alarm from rawIcal
+        // Master keeps its 1 alarm from rawIcal
         assertEquals(1, parsedMaster.alarms.size)
 
-        // Exception uses its own reminders (via generateException)
+        // Exception uses its own reminders, rebuilt by EventToICalEventMapper.toICalEvent
         assertEquals(1, parsedException.alarms.size)
         assertEquals("Weekly Meeting - MODIFIED", parsedException.summary)
     }
@@ -582,8 +578,8 @@ class RoundTripRawIcalTest {
 
         val parsedMaster = parsed.find { it.recurrenceId == null }!!
 
-        // All 4 master alarms were displayed (index < 5); the user kept 3, so the
-        // 4th (-PT1H) was deleted and must not be re-added.
+        // All 4 master alarms were displayed (index < 5); the user kept 3, so the 4th (-PT1H)
+        // was deleted and must not be re-added.
         assertEquals(
             "Deleted displayed alarm dropped; 3 kept",
             3,
@@ -618,7 +614,7 @@ class RoundTripRawIcalTest {
             updatedAt = System.currentTimeMillis()
         )
 
-        // Should fall back to generateFresh
+        // Falls back to generateFresh
         val result = IcsPatcher.serialize(entity)
         val parsed = parser.parseAllEvents(result).getOrNull()
 
@@ -651,8 +647,7 @@ class RoundTripRawIcalTest {
 
     @Test
     fun `patch with rawIcal containing different UID still works`() {
-        // Edge case: rawIcal has different UID than entity
-        // (shouldn't happen in practice, but test robustness)
+        // rawIcal has a different UID from the entity; not expected in practice
         val rawIcsWithDifferentUid = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -668,7 +663,7 @@ class RoundTripRawIcalTest {
         """.trimIndent()
 
         val entity = Event(
-            uid = "different-uid@test.com",  // Different from rawIcal!
+            uid = "different-uid@test.com",  // differs from rawIcal
             calendarId = 1L,
             title = "Updated Event",
             startTs = 1735120800000L,
@@ -680,12 +675,10 @@ class RoundTripRawIcalTest {
             updatedAt = System.currentTimeMillis()
         )
 
-        // Patch uses entity's values for everything IcsPatcher manages
+        // The patch writes the entity's values, UID included, for every field IcsPatcher manages
         val result = IcsPatcher.patch(rawIcsWithDifferentUid, entity)
         val parsed = parser.parseAllEvents(result).getOrNull()!!.first()
 
-        // Note: Current implementation patches onto original, so UID from original is preserved
-        // This is actually correct - the parsed event in IcsPatcher.patch() has the original UID
         assertEquals("Updated Event", parsed.summary)
     }
 
@@ -729,7 +722,7 @@ class RoundTripRawIcalTest {
 
         val result = IcsPatcher.serialize(entity)
 
-        // Should contain VTIMEZONE
+        // Includes a VTIMEZONE or a TZID reference
         assertTrue(
             "Should include VTIMEZONE",
             result.contains("BEGIN:VTIMEZONE") || result.contains("TZID=America/New_York")
@@ -770,7 +763,7 @@ class RoundTripRawIcalTest {
 
     @Test
     fun `full round-trip - server to local to server preserves all properties`() {
-        // Step 1: Receive from server
+        // Step 1: receive from the server
         val serverIcs = """
             BEGIN:VCALENDAR
             VERSION:2.0
@@ -816,10 +809,10 @@ class RoundTripRawIcalTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // Parse as if received from server
+        // Parse as if received from the server
         val serverParsed = parser.parseAllEvents(serverIcs).getOrNull()!!.first()
 
-        // Map to entity (simulating PullStrategy)
+        // Map to entity, as PullStrategy does
         val entityFromServer = ICalEventMapper.toEntity(
             icalEvent = serverParsed,
             rawIcal = serverIcs,
@@ -828,17 +821,17 @@ class RoundTripRawIcalTest {
             etag = "\"v3\""
         ).event
 
-        // Step 2: Local edit (change title and add location detail)
+        // Step 2: local edit of title, location and description
         val editedEntity = entityFromServer.copy(
             title = "Important Meeting - RESCHEDULED",
-            location = "Conference Room B",  // Changed
+            location = "Conference Room B",  // changed
             description = "Quarterly review meeting - moved to new room"
         )
 
-        // Step 3: Push back to server
+        // Step 3: push back to the server
         val pushIcs = IcsPatcher.serialize(editedEntity)
 
-        // Step 4: Verify all properties preserved
+        // Step 4: every property survives
         val pushParsed = parser.parseAllEvents(pushIcs).getOrNull()!!.first()
 
         // Updated properties
@@ -846,18 +839,16 @@ class RoundTripRawIcalTest {
         assertEquals("Conference Room B", pushParsed.location)
         assertTrue(pushParsed.description!!.contains("moved to new room"))
 
-        // Preserved properties
+        // Kept properties
         assertEquals("Should preserve 4 alarms", 4, pushParsed.alarms.size)
         assertEquals("Should preserve 2 attendees", 2, pushParsed.attendees.size)
         assertNotNull("Should preserve organizer", pushParsed.organizer)
         assertEquals("boss@company.com", pushParsed.organizer?.email)
-        // SEQUENCE is serialized verbatim by the patcher; the bump decision
-        // lives upstream in EventWriter (SequenceBumper), which this test
-        // bypasses by calling IcsPatcher directly. The edit here is title/
-        // location/description-only, so EventWriter would not have bumped it.
-        assertEquals(3, pushParsed.sequence)  // Preserved (patcher does not bump)
+        // The patcher writes SEQUENCE verbatim. EventWriter decides the bump (SequenceBumper,
+        // which bumps for this title and location change); this test calls IcsPatcher directly.
+        assertEquals(3, pushParsed.sequence)  // kept; the patcher doesn't bump
 
-        // Preserved X-properties
+        // Kept X-properties
         assertTrue(
             "Should preserve X-APPLE property",
             pushParsed.rawProperties.keys.any { it.contains("X-APPLE") }

@@ -4,9 +4,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Sealed type carrying a typed preference value in the backup JSON.
- *
- * The discriminator is `type` (see BackupJson.classDiscriminator).
+ * A typed preference value in the backup JSON, tagged by the `type` discriminator set in
+ * [BackupJson].
  */
 @Serializable
 sealed class BackupPreferenceValue {

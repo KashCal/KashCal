@@ -26,12 +26,12 @@ import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.shared.EventColorPalette
 
 /**
- * Accent color picker for the app theme. Reuses the grid + 92-color wheel layout of
- * [EventColorSheet], but every selection is a concrete color (there is no "calendar default"
- * null): the first cell commits the brand-teal default seed instead.
+ * Picks the app theme's accent color, with the grid and 92-color wheel of [EventColorSheet].
+ * Every selection is a concrete color: where the event sheet's first cell means "calendar
+ * default" (null), this one commits the brand-teal default seed.
  *
- * The offered palette is the same read-only [EventColorPalette] used for events — any of its
- * colors is a valid accent, because the generated scheme keeps WCAG AA for any seed.
+ * It offers the same [EventColorPalette] as events. Any of its colors is a valid accent,
+ * because the generated scheme keeps WCAG AA for any seed.
  *
  * @param selectedArgb the current accent seed ARGB; the matching swatch shows selected.
  * @param useDynamic whether the app is currently on the automatic (Material You) source, so the
@@ -78,7 +78,7 @@ fun AccentColorSheet(
                 )
             } else {
                 Column {
-                    // Return to Material You / wallpaper colors.
+                    // Returns to Material You wallpaper colors.
                     ListItem(
                         headlineContent = { Text(stringResource(R.string.settings_accent_color_dynamic)) },
                         supportingContent = { Text(stringResource(R.string.settings_accent_color_dynamic_desc)) },
@@ -93,8 +93,6 @@ fun AccentColorSheet(
                         modifier = Modifier.clickable { onUseDynamic() },
                     )
 
-                    // First cell commits the brand-teal default seed (not null): the accent always
-                    // resolves to a concrete color when a swatch is chosen.
                     val defaultCell: @Composable () -> Unit = {
                         SwatchCell(
                             color = Color(defaultSeed),
@@ -114,9 +112,8 @@ fun AccentColorSheet(
                                 )
                             }
                         }
-                    // Label the current selection. In Automatic mode no swatch is active, so name
-                    // the source ("Automatic") rather than a color that isn't in effect. Brand teal
-                    // isn't a CSS3 palette entry (would read as "Custom"), so label it explicitly.
+                    // In Automatic mode no swatch is in effect, so the label names the source.
+                    // Brand teal isn't a CSS3 palette entry and would read as "Custom".
                     val labelRes = when {
                         useDynamic -> R.string.settings_accent_color_dynamic
                         selectedArgb == defaultSeed -> R.string.settings_accent_color_brand

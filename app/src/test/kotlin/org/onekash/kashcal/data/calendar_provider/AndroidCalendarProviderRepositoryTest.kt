@@ -8,13 +8,12 @@ import java.time.ZoneId
 import java.util.TimeZone
 
 /**
- * Unit tests for AndroidCalendarProviderRepository helper functions.
+ * Tests the pure helpers behind [AndroidCalendarProviderRepository]: day-code conversion, the
+ * exclusive-to-inclusive end conversion, duration parsing, and calendar-id filtering (the last
+ * filters a list in the test itself).
  *
- * Tests day code conversion, enabledCalendarIds filtering,
- * and SecurityException handling patterns.
- *
- * Note: Actual ContentResolver queries cannot be unit tested (need instrumented tests).
- * These tests cover the pure logic functions exposed as internal/package-private.
+ * Queries and batches against real SQL run through [SqliteCalendarProvider]
+ * (`AndroidCalendarProviderRepositoryExceptionWriteTest`, [CalendarProviderExceptionContractTest]).
  */
 class AndroidCalendarProviderRepositoryTest {
 
@@ -31,7 +30,7 @@ class AndroidCalendarProviderRepositoryTest {
             .toLocalDate()
         assertEquals(LocalDate.of(2026, 2, 15), date)
 
-        // Verify it's at midnight
+        // At midnight.
         val time = java.time.Instant.ofEpochMilli(ms)
             .atZone(ZoneId.systemDefault())
             .toLocalTime()
@@ -90,7 +89,7 @@ class AndroidCalendarProviderRepositoryTest {
         val startMs = dayCodeToStartOfDayMs(originalDayCode)
         val endMs = dayCodeToEndOfDayMs(originalDayCode)
 
-        // Both should resolve to the same date
+        // Both resolve to the same date.
         val startDate = java.time.Instant.ofEpochMilli(startMs)
             .atZone(ZoneId.systemDefault()).toLocalDate()
         val endDate = java.time.Instant.ofEpochMilli(endMs)
@@ -117,14 +116,14 @@ class AndroidCalendarProviderRepositoryTest {
 
     @Test
     fun `all-day event exclusive end is adjusted to inclusive day code`() {
-        // CalendarProvider: 1-day all-day event on Feb 15
-        // BEGIN = Feb 15 00:00 UTC, END = Feb 16 00:00 UTC (exclusive)
+        // A 1-day all-day event on Feb 15 in CalendarProvider:
+        // BEGIN = Feb 15 00:00 UTC, END = Feb 16 00:00 UTC (exclusive).
         val beginMs = LocalDate.of(2026, 2, 15).atStartOfDay(java.time.ZoneOffset.UTC)
             .toInstant().toEpochMilli()
         val endMs = LocalDate.of(2026, 2, 16).atStartOfDay(java.time.ZoneOffset.UTC)
             .toInstant().toEpochMilli()
 
-        // Subtracting 1ms from exclusive end → Feb 15 23:59:59.999 UTC → day code 20260215
+        // 1 ms before the exclusive end is Feb 15 23:59:59.999 UTC, day code 20260215.
         val adjustedEndMs = endMs - 1
         val endDay = org.onekash.kashcal.util.DateTimeUtils.eventTsToDayCode(adjustedEndMs, true)
         assertEquals(20260215, endDay)
@@ -132,8 +131,8 @@ class AndroidCalendarProviderRepositoryTest {
 
     @Test
     fun `multi-day all-day event exclusive end is adjusted correctly`() {
-        // CalendarProvider: 3-day all-day event Feb 15-17
-        // BEGIN = Feb 15 00:00 UTC, END = Feb 18 00:00 UTC (exclusive)
+        // A 3-day all-day event Feb 15-17 in CalendarProvider:
+        // BEGIN = Feb 15 00:00 UTC, END = Feb 18 00:00 UTC (exclusive).
         val beginMs = LocalDate.of(2026, 2, 15).atStartOfDay(java.time.ZoneOffset.UTC)
             .toInstant().toEpochMilli()
         val endMs = LocalDate.of(2026, 2, 18).atStartOfDay(java.time.ZoneOffset.UTC)
@@ -158,7 +157,7 @@ class AndroidCalendarProviderRepositoryTest {
             val endMs = LocalDate.of(2026, 5, 5).atStartOfDay(java.time.ZoneOffset.UTC)
                 .toInstant().toEpochMilli()
 
-            // Timed events do NOT get -1ms in inclusiveEndMs; endDay adjustment is via helper.
+            // A timed end isn't moved back 1 ms; eventTsToEndDayCode derives the end day.
             val inclusiveEndMs = endMs
             val endDay = org.onekash.kashcal.util.DateTimeUtils.eventTsToEndDayCode(
                 endTs = inclusiveEndMs,
@@ -215,16 +214,14 @@ class AndroidCalendarProviderRepositoryTest {
 
     // ========== mapToDeviceEvent inclusive-end conversion ==========
     //
-    // The Events-table read path (used by getDeviceEvent/getDeviceEventWithExceptions
-    // for editing) must apply the same exclusive→inclusive conversion the Instances
-    // path applies in mapToInstances. Otherwise the edit form receives DTEND
-    // (next-day midnight UTC) and the date picker shows one day later than the user
-    // sees on the calendar grid.
+    // The Events-table read (getDeviceEvent, getDeviceEventWithExceptions), which feeds the
+    // edit form, must apply the same exclusive-to-inclusive conversion as mapToInstances.
+    // Otherwise the form gets DTEND (next-day midnight UTC) and the date picker shows one
+    // day later than the calendar grid.
 
     @Test
     fun `inclusiveEndForDeviceEvent converts all-day exclusive DTEND to inclusive end`() {
-        // 1-day all-day event on Feb 15
-        // CalendarProvider DTEND = Feb 16 00:00:00 UTC (exclusive)
+        // A 1-day all-day event on Feb 15: DTEND = Feb 16 00:00:00 UTC (exclusive).
         val dtstart = LocalDate.of(2026, 2, 15).atStartOfDay(java.time.ZoneOffset.UTC)
             .toInstant().toEpochMilli()
         val dtend = LocalDate.of(2026, 2, 16).atStartOfDay(java.time.ZoneOffset.UTC)
@@ -232,14 +229,13 @@ class AndroidCalendarProviderRepositoryTest {
 
         val inclusive = inclusiveEndForDeviceEvent(dtend, dtstart, isAllDay = true)
 
-        // Inclusive end is last ms of Feb 15 (23:59:59.999 UTC)
+        // The inclusive end is the last ms of Feb 15 (23:59:59.999 UTC).
         assertEquals(dtend - 1, inclusive)
     }
 
     @Test
     fun `inclusiveEndForDeviceEvent converts multi-day all-day exclusive DTEND to inclusive end`() {
-        // 3-day all-day event Feb 15-17
-        // DTEND = Feb 18 00:00 UTC (exclusive)
+        // A 3-day all-day event Feb 15-17: DTEND = Feb 18 00:00 UTC (exclusive).
         val dtstart = LocalDate.of(2026, 2, 15).atStartOfDay(java.time.ZoneOffset.UTC)
             .toInstant().toEpochMilli()
         val dtend = LocalDate.of(2026, 2, 18).atStartOfDay(java.time.ZoneOffset.UTC)
@@ -247,7 +243,7 @@ class AndroidCalendarProviderRepositoryTest {
 
         val inclusive = inclusiveEndForDeviceEvent(dtend, dtstart, isAllDay = true)
 
-        // Inclusive end is last ms of Feb 17
+        // The inclusive end is the last ms of Feb 17.
         assertEquals(dtend - 1, inclusive)
     }
 
@@ -268,16 +264,15 @@ class AndroidCalendarProviderRepositoryTest {
         val dtstart = LocalDate.of(2026, 2, 15).atStartOfDay(java.time.ZoneOffset.UTC)
             .toInstant().toEpochMilli()
 
-        // Recurring all-day events use DURATION, not DTEND — endTs is null on read
+        // A series stores DURATION, not DTEND, so the end reads as null.
         assertEquals(null, inclusiveEndForDeviceEvent(null, dtstart, isAllDay = true))
         assertEquals(null, inclusiveEndForDeviceEvent(null, dtstart, isAllDay = false))
     }
 
     @Test
     fun `inclusiveEndForDeviceEvent leaves degenerate all-day end equal to start unchanged`() {
-        // Defensive: a malformed all-day event with DTEND == DTSTART (zero-length)
-        // shouldn't go negative. mapToInstances guards on endMs > beginMs;
-        // mirror that here.
+        // A malformed zero-length all-day event (DTEND == DTSTART) must not end before it
+        // starts. Same `endMs > beginMs` guard as mapToInstances.
         val dtstart = LocalDate.of(2026, 2, 15).atStartOfDay(java.time.ZoneOffset.UTC)
             .toInstant().toEpochMilli()
 
@@ -316,9 +311,9 @@ class AndroidCalendarProviderRepositoryTest {
 
     @Test
     fun `parseDurationMs returns default on overflow, not a garbage negative`() {
-        // An absurd week/day count whose millisecond total overflows Long must
-        // fall back to the default duration rather than silently wrapping to a
-        // negative value that would place DTEND before DTSTART on a write.
+        // A week or day count whose millisecond total overflows Long must fall back to the
+        // default duration, not wrap to a negative value that would put DTEND before DTSTART
+        // on a write.
         assertEquals(86_400_000L, parseDurationMs("P999999999999W", true))
         assertEquals(3_600_000L, parseDurationMs("P100000000000000D", false))
     }

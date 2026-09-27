@@ -10,22 +10,19 @@ object SharedTextNormalizer {
     private const val SHORT_LIMIT = 500
     private const val TITLE_CAP = 80
 
-    // Scheme-required URL regex. android.util.Patterns.WEB_URL would match
-    // "notes.txt" and "example.com", which are not links the user intends
-    // as a meeting URL.
+    // Requires a scheme: android.util.Patterns.WEB_URL would match "notes.txt" and
+    // "example.com", which aren't links the user means as a meeting URL.
     private val URL_REGEX = Regex("""https?://\S+""")
 
-    // Punctuation that natural-language framings put right after a URL but
-    // that the URL grammar would not include. Kept conservative — `/` and
-    // `=` and `?` are valid URL chars and never trimmed.
+    // Punctuation prose puts right after a URL, trimmed from its end. `/` and `=` are never
+    // trimmed; a trailing `?` is.
     private val URL_TRAILING_TRIM = ".,;:!?)\"]}>'"
 
     fun normalize(input: String): NormalizedShareText {
         val rawUrl = URL_REGEX.find(input)?.value
         val firstUrl = rawUrl?.let { trimTrailingPunctuation(it) }
-        // The matched span we need to strip from the body — including any
-        // trailing punctuation we just trimmed off the URL — so the title
-        // doesn't grow stray characters where the URL used to be.
+        // The short text and the long title strip the whole match, trimmed punctuation
+        // included, so no stray characters are left where the URL was.
         val urlSpan = rawUrl
         val joined = input.replace(Regex("""\r?\n"""), " ")
 

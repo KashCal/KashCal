@@ -11,22 +11,19 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Repository for fetching widget data.
+ * Reads events for the Agenda, Week, Month and Upcoming widgets from visible calendars, Room and
+ * device calendars merged by [DisplayEventRepository].
  *
- * Queries today's events for the agenda widget, respecting calendar visibility.
- * Events are sorted with all-day events first, then timed events by start time.
- * Past events are marked for visual differentiation (grayed/strikethrough).
- *
- * Uses [DisplayEventRepository] to merge Room + device calendar events.
+ * Every method sorts a day's events all-day first, then by start time, and marks past events
+ * ([WidgetEvent.isPast]): Agenda and Week rows render them grayed and struck through, and the
+ * Upcoming widget hides them.
  */
 @Singleton
 class WidgetDataRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val displayEventRepository: DisplayEventRepository
 ) {
-    /**
-     * Data class representing an event for widget display.
-     */
+    /** One event occurrence as a widget renders it. */
     data class WidgetEvent(
         val eventId: Long,
         val occurrenceStartTs: Long,
@@ -49,12 +46,7 @@ class WidgetDataRepository @Inject constructor(
         val spanKey: String get() = "$eventId:$occurrenceStartTs"
     }
 
-    /**
-     * Get today's events for the widget.
-     *
-     * @return List of events for today, sorted with all-day events first, then by start time.
-     *         Past events are marked with isPast=true.
-     */
+    /** Returns today's events, for the Agenda widget. */
     suspend fun getTodayEvents(): List<WidgetEvent> {
         val now = System.currentTimeMillis()
         val todayCode = DateTimeUtils.eventTsToDayCode(now, isAllDay = false)
@@ -67,16 +59,12 @@ class WidgetDataRepository @Inject constructor(
     }
 
     /**
-     * Get events for the next 7 days (today + 6 days).
-     *
-     * Multi-day events appear on each day they span within the 7-day window.
-     * Events are sorted within each day: all-day events first, then timed by start time.
-     *
-     * @return Map of dayCode (YYYYMMDD) to list of events for that day.
-     *         Always returns exactly 7 entries, one for each day.
+     * Returns the events of the 7 days from today, for the Week widget, keyed by dayCode
+     * (YYYYMMDD). Always exactly 7 entries, empty days included. A multi-day event appears on
+     * each day it spans within the window.
      */
     suspend fun getWeekEvents(): Map<Int, List<WidgetEvent>> {
-        // Generate 7 day codes: today, tomorrow, ..., +6 days
+        // today, tomorrow, ..., today + 6
         val dayCodes = (0..6).map { offset ->
             val date = LocalDate.now().plusDays(offset.toLong())
             date.year * 10000 + date.monthValue * 100 + date.dayOfMonth
@@ -87,7 +75,7 @@ class WidgetDataRepository @Inject constructor(
 
         val eventsMap = displayEventRepository.getDisplayEventsGroupedByDayOnce(startDayCode, endDayCode)
 
-        // Build result with exactly 7 entries, sorted within each day
+        // Every day gets an entry, even with no events.
         return dayCodes.associateWith { dayCode ->
             eventsMap[dayCode].orEmpty()
                 .map { toWidgetEvent(it) }
@@ -96,15 +84,9 @@ class WidgetDataRepository @Inject constructor(
     }
 
     /**
-     * Get events for an arbitrary day code range.
-     *
-     * Used by MonthWidget to fetch events for the full calendar grid range
-     * (computed via [MonthGrid.toDayCodeRange]).
-     *
-     * @param startDayCode Start of range in YYYYMMDD format
-     * @param endDayCode End of range in YYYYMMDD format
-     * @return Map of dayCode to list of events for that day.
-     *         Only days with events are included (no empty-day entries).
+     * Returns the events from [startDayCode] to [endDayCode] (YYYYMMDD, inclusive), keyed by
+     * dayCode, for the Month widget's grid range and the Upcoming widget's horizon. Only days
+     * with events have an entry.
      */
     suspend fun getEventsInRange(startDayCode: Int, endDayCode: Int): Map<Int, List<WidgetEvent>> {
         val eventsMap = displayEventRepository.getDisplayEventsGroupedByDayOnce(startDayCode, endDayCode)
@@ -117,7 +99,8 @@ class WidgetDataRepository @Inject constructor(
     }
 
     /**
-     * Convert a [DisplayEvent] to a [WidgetEvent] for widget rendering.
+     * Maps a [DisplayEvent] to a [WidgetEvent]. A set event color wins over the calendar color;
+     * when the winner is 0, [DEFAULT_CALENDAR_COLOR] is used.
      */
     private fun toWidgetEvent(displayEvent: DisplayEvent): WidgetEvent {
         return WidgetEvent(
@@ -146,7 +129,7 @@ class WidgetDataRepository @Inject constructor(
     }
 
     companion object {
-        /** Default calendar color (Material Blue 500) */
+        /** Material Blue 500. */
         private const val DEFAULT_CALENDAR_COLOR = 0xFF2196F3.toInt()
     }
 }

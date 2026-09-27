@@ -25,15 +25,11 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 /**
- * Tests for EventWriter transaction behavior and error handling.
- *
- * Tests verify:
- * - Atomic transactions (all-or-nothing)
- * - Proper rollback on failures
- * - Concurrent modification handling
- * - Edge cases in event operations
- *
- * These scenarios are critical for data integrity in an offline-first calendar app.
+ * Tests [EventWriter] create, update and delete bookkeeping over an in-memory Room database: a
+ * create writes the event, its occurrences and a pending operation; sync status and timestamps per
+ * path; an update of a missing event throws; hard versus soft delete; recurring occurrence counts
+ * and spacing; occurrence references to their event and calendar; and generated UIDs. No test here
+ * forces a failure or rollback.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -54,7 +50,6 @@ class EventWriterTransactionTest {
         occurrenceGenerator = OccurrenceGenerator(database, database.occurrencesDao(), database.eventsDao(), TestDataStoreFactory.createDefault())
         eventWriter = EventWriter(database, occurrenceGenerator)
 
-        // Setup test calendar
         val accountId = database.accountsDao().insert(
             Account(provider = AccountProvider.LOCAL, email = "test@test.com")
         )
@@ -73,7 +68,7 @@ class EventWriterTransactionTest {
         database.close()
     }
 
-    // ==================== Transaction Atomicity Tests ====================
+    // ==================== Create Event Tests ====================
 
     @Test
     fun `createEvent creates event and occurrences atomically`() = runTest {
@@ -81,14 +76,11 @@ class EventWriterTransactionTest {
 
         val created = eventWriter.createEvent(event, isLocal = false)
 
-        // Event should be created
         assertNotNull(database.eventsDao().getById(created.id))
 
-        // Occurrences should be created
         val occurrences = database.occurrencesDao().getForEvent(created.id)
         assertTrue("Occurrences should exist", occurrences.isNotEmpty())
 
-        // Pending operation should be queued
         val pendingOps = database.pendingOperationsDao().getAll()
         assertTrue("Pending operation should exist", pendingOps.any { it.eventId == created.id })
     }
@@ -105,11 +97,11 @@ class EventWriterTransactionTest {
 
     @Test
     fun `createEvent sets correct sync status`() = runTest {
-        // Non-local event should be PENDING_CREATE
+        // A non-local event starts PENDING_CREATE.
         val syncedEvent = eventWriter.createEvent(createTestEvent("Synced"), isLocal = false)
         assertEquals(SyncStatus.PENDING_CREATE, syncedEvent.syncStatus)
 
-        // Local event should be SYNCED (no sync needed)
+        // A local event is SYNCED: there is nothing to push.
         val localEvent = eventWriter.createEvent(createTestEvent("Local"), isLocal = true)
         assertEquals(SyncStatus.SYNCED, localEvent.syncStatus)
     }
@@ -159,7 +151,7 @@ class EventWriterTransactionTest {
         val original = eventWriter.createEvent(createTestEvent("Original"), isLocal = false)
         val originalModifiedAt = original.localModifiedAt!!
 
-        // Wall-clock delay to ensure localModifiedAt advances (uses System.currentTimeMillis())
+        // A wall-clock sleep: localModifiedAt comes from System.currentTimeMillis().
         Thread.sleep(50)
 
         val updated = eventWriter.updateEvent(
@@ -177,7 +169,7 @@ class EventWriterTransactionTest {
 
     @Test
     fun `deleteEvent soft deletes synced event for sync`() = runTest {
-        // Create event and mark as SYNCED (simulating server sync completion)
+        // Mark the event SYNCED, as after a completed sync.
         val event = eventWriter.createEvent(createTestEvent("To Delete"), isLocal = false)
         val syncedEvent = event.copy(syncStatus = SyncStatus.SYNCED)
         database.eventsDao().update(syncedEvent)
@@ -191,7 +183,7 @@ class EventWriterTransactionTest {
 
     @Test
     fun `deleteEvent hard deletes PENDING_CREATE event`() = runTest {
-        // Event that was never synced (PENDING_CREATE) can be hard deleted
+        // A never-synced (PENDING_CREATE) event is removed outright.
         val event = eventWriter.createEvent(createTestEvent("Never Synced"), isLocal = false)
         assertEquals(SyncStatus.PENDING_CREATE, event.syncStatus)
 
@@ -249,7 +241,7 @@ class EventWriterTransactionTest {
         val occurrences = database.occurrencesDao().getForEvent(created.id)
         assertEquals(4, occurrences.size)
 
-        // Verify 7-day gap between occurrences
+        // Occurrences are 7 days apart.
         val sortedOccs = occurrences.sortedBy { it.startTs }
         for (i in 1 until sortedOccs.size) {
             val gap = sortedOccs[i].startTs - sortedOccs[i - 1].startTs
@@ -295,7 +287,7 @@ class EventWriterTransactionTest {
         }
     }
 
-    // ==================== Concurrent Operation Tests ====================
+    // ==================== Sequential Create and Update Tests ====================
 
     @Test
     fun `multiple events can be created sequentially`() = runTest {
@@ -349,7 +341,7 @@ class EventWriterTransactionTest {
             isLocal = false
         )
 
-        // UID should be UUID@domain format
+        // The writer generates `<uuid>@kashcal.onekash.org`; this checks the two-part shape.
         assertTrue("UID should contain @", event.uid.contains("@"))
         val parts = event.uid.split("@")
         assertEquals("UID should have two parts", 2, parts.size)

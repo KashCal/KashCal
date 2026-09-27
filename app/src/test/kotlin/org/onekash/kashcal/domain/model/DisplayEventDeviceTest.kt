@@ -7,7 +7,8 @@ import org.junit.Test
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendarInstance
 
 /**
- * Tests for DisplayEvent.Device rrule and reminders properties.
+ * Tests that [DisplayEvent.Device]'s rrule, reminders and categories come from its instance, and
+ * that a filter on `categories` keeps a tagged device event and drops an untagged one.
  */
 class DisplayEventDeviceTest {
 
@@ -83,9 +84,9 @@ class DisplayEventDeviceTest {
 
     @Test
     fun `an in-memory tag filter includes device events by the same predicate as room events`() {
-        // A DisplayEvent tag filter operates over the shared `categories`
-        // surface with no source-specific branch. A mixed list must partition
-        // by tag membership identically for Room and Device.
+        // A DisplayEvent tag filter reads the shared `categories` property with no
+        // source-specific branch, so a device event must be kept or dropped by tag
+        // membership the same way a Room event is. Only device events are filtered here.
         val taggedDevice: DisplayEvent = DisplayEvent.Device(createInstance(categories = listOf("Work")))
         val untaggedDevice: DisplayEvent = DisplayEvent.Device(createInstance(categories = emptyList()))
 

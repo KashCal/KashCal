@@ -217,7 +217,7 @@ class QuickAddParserTest {
     @Test
     fun `February 30 does not crash and falls back to reference`() {
         val result = parse("February 30")
-        // Invalid date falls back to reference
+        // A date that doesn't exist sets nothing, so the date is the reference date.
         assertEquals(reference.toLocalDate(), result.startDate)
     }
 
@@ -304,7 +304,7 @@ class QuickAddParserTest {
             QuickAddParser.parse("meeting 5.10.2026", reference, Locale.UK).startDate)
     }
 
-    // ==================== Orphaned tokens preserved in title (issue #194 follow-up Bug D) ====================
+    // ==================== Unclaimed tokens stay in the title (issue #194) ====================
 
     @Test
     fun `unclaimed MONTH appears in title`() {
@@ -350,12 +350,9 @@ class QuickAddParserTest {
 
     @Test
     fun `unclaimed WEEKDAY appears in title`() {
-        // "Friday" in a non-date position — if no other date reference is present,
-        // WeekdayRule will claim it as a date, so it should NOT leak. But for a
-        // construction like "Happy Friday" (typo/name), the WEEKDAY is consumed.
-        // This test documents the consumption invariant.
+        // WeekdayRule claims a bare weekday as the date, so "Friday" leaves the title even in a
+        // phrase like "Happy Friday".
         val result = parse("Happy Friday")
-        // WeekdayRule consumes Friday as the bare weekday date
         assertEquals("Happy", result.title)
     }
 
@@ -385,7 +382,7 @@ class QuickAddParserTest {
         assertTrue(result.isAllDay)
     }
 
-    // ==================== P2: Duration ====================
+    // ==================== Duration ====================
 
     @Test
     fun `Meeting tomorrow at 2pm for 90 minutes`() {
@@ -418,7 +415,7 @@ class QuickAddParserTest {
         assertNull(result.endTime)
     }
 
-    // ==================== P2: Time ranges ====================
+    // ==================== Time ranges ====================
 
     @Test
     fun `Meeting 2-3pm`() {
@@ -452,7 +449,7 @@ class QuickAddParserTest {
         assertEquals(LocalTime.of(18, 0), result.endTime)
     }
 
-    // ==================== P2: Location ====================
+    // ==================== Location ====================
 
     @Test
     fun `Coffee at Blue Bottle tomorrow at 3pm`() {
@@ -477,7 +474,7 @@ class QuickAddParserTest {
         assertNull(result.location)
     }
 
-    // ==================== P2: Combined features ====================
+    // ==================== Combined features ====================
 
     @Test
     fun `full pipeline - duration plus location`() {
@@ -508,7 +505,7 @@ class QuickAddParserTest {
         assertEquals("The Grand", result.location)
     }
 
-    // ==================== P3: Recurrence ====================
+    // ==================== Recurrence ====================
 
     @Test
     fun `Team standup every Monday at 10am`() {
@@ -518,7 +515,7 @@ class QuickAddParserTest {
         assertNotNull(result.rrule)
         assertTrue(result.rrule!!.contains("FREQ=WEEKLY"))
         assertTrue(result.rrule!!.contains("BYDAY=MO"))
-        // Next Monday from April 13 (Monday) is April 20
+        // The reference is Monday April 13, so the first Monday after it is April 20.
         assertEquals(LocalDate.of(2026, 4, 20), result.startDate)
     }
 
@@ -596,8 +593,8 @@ class QuickAddParserTest {
         val result = parse("book club first Monday of the month")
         assertEquals("book club", result.title)
         assertEquals("FREQ=MONTHLY;BYDAY=1MO", result.rrule)
-        // April's 1st Monday (Apr 6) is past the reference Mon Apr 13, so the start
-        // date anchors on May's 1st Monday, May 4 — not today.
+        // April's 1st Monday (Apr 6) is before the reference Mon Apr 13, so the start date is
+        // May's 1st Monday, May 4, not today.
         assertEquals(LocalDate.of(2026, 5, 4), result.startDate)
     }
 
@@ -630,9 +627,9 @@ class QuickAddParserTest {
 
     @Test
     fun `rent last Friday of this month - one-off in current month with clean title`() {
-        // "of this month" (not "the"/"every") means a single occurrence in the
-        // current month, NOT a recurrence — and the phrase must be fully consumed
-        // so "month" doesn't leak into the title.
+        // "of this month", unlike "of the" or "of every" month, is one occurrence in the current
+        // month, not a recurrence. The whole phrase is consumed, so "month" stays out of the
+        // title.
         val result = parse("rent last Friday of this month")
         assertEquals("rent", result.title)
         assertNull(result.rrule)
@@ -649,9 +646,8 @@ class QuickAddParserTest {
 
     @Test
     fun `pay rent 31st of this month clamps to month end with a clean title`() {
-        // February 2026 has 28 days: "31st of this month" must stay in the month
-        // (clamp to Feb 28), not roll forward, and must not leak "of this month"
-        // into the title.
+        // February 2026 has 28 days: "31st of this month" clamps to Feb 28 instead of rolling
+        // into March, and "of this month" stays out of the title.
         val febRef = LocalDateTime.of(2026, 2, 10, 10, 0)
         val result = QuickAddParser.parse("pay rent 31st of this month", febRef)
         assertEquals("pay rent", result.title)
@@ -749,7 +745,7 @@ class QuickAddParserTest {
 
     @Test
     fun `lunch in a couple hours - fuzzy forward offset`() {
-        // Reference Monday April 13, 10:00 → +2h = 12:00.
+        // Reference Monday April 13, 10:00, plus 2h is 12:00.
         val result = parse("lunch in a couple hours")
         assertEquals(LocalTime.of(12, 0), result.startTime)
     }
@@ -791,7 +787,7 @@ class QuickAddParserTest {
         assertTrue(result.rrule!!.contains("INTERVAL=2"))
     }
 
-    // ==================== P3: Emoji ====================
+    // ==================== Emoji ====================
 
     @Test
     fun `Coffee with Sarah tomorrow at 3pm has coffee emoji`() {
@@ -805,7 +801,7 @@ class QuickAddParserTest {
         assertNull(result.emoji)
     }
 
-    // ==================== P3: Combined P2 + P3 ====================
+    // ==================== Emoji with duration, location and recurrence ====================
 
     @Test
     fun `Coffee every Monday at 3pm for 1 hour at Blue Bottle`() {
@@ -820,7 +816,7 @@ class QuickAddParserTest {
         assertEquals("\u2615", result.emoji) // ☕
     }
 
-    // ==================== P4: Quarter/half time ====================
+    // ==================== Quarter past, half past, quarter to ====================
 
     @Test
     fun `meeting quarter past 3 pm`() {
@@ -843,7 +839,7 @@ class QuickAddParserTest {
         assertEquals(LocalTime.of(3, 45), result.startTime)
     }
 
-    // ==================== P4: All day keyword ====================
+    // ==================== All day keyword ====================
 
     @Test
     fun `Team outing all day`() {
@@ -868,7 +864,7 @@ class QuickAddParserTest {
         assertTrue(result.isAllDay)
     }
 
-    // ==================== P4: Fuzzy time keywords ====================
+    // ==================== Fuzzy time keywords ====================
 
     @Test
     fun `meeting morning`() {
@@ -906,7 +902,7 @@ class QuickAddParserTest {
         assertEquals(LocalTime.of(20, 0), result.startTime)
     }
 
-    // ==================== P4: Every weekday ====================
+    // ==================== Every weekday ====================
 
     @Test
     fun `standup every weekday`() {
@@ -950,7 +946,7 @@ class QuickAddParserTest {
     fun `Trip Monday to Wednesday`() {
         val result = parse("Trip Monday to Wednesday")
         assertEquals("Trip", result.title)
-        // Monday Apr 13 → next Monday Apr 20 (bare weekday same-day advances 7)
+        // Monday Apr 13 → next Monday Apr 20 (a bare weekday on the same day is a week later)
         assertEquals(LocalDate.of(2026, 4, 20), result.startDate)
         assertEquals(LocalDate.of(2026, 4, 22), result.endDate)
     }
@@ -1008,10 +1004,9 @@ class QuickAddParserTest {
     }
 
     // ==================== Non-English input fallback ====================
-    // Parser is English-only. Non-English input degrades gracefully:
-    // unrecognized words become the title, date falls back to reference.
-    // English keywords (dates, times, structured dates) still parse when
-    // mixed with non-English text.
+    // The parser is English-only. Unrecognized words become the title and the date is the
+    // reference date. English dates, times and structured dates still parse when mixed with
+    // non-English text.
 
     @Test
     fun `German input falls back to title`() {
@@ -1073,13 +1068,14 @@ class QuickAddParserTest {
     }
 
     // ==================== Non-English adverse: keyword collisions ====================
-    // English keywords that are real words in other languages get consumed,
-    // corrupting titles. These tests document current (known-imperfect) behavior.
+    // English words that are also words in other languages can change titles:
+    // NumberWordNormalizer turns "a" and "an" into 1. These tests pin the current,
+    // known-imperfect behavior.
 
     @Test
     fun `Hungarian article a is replaced with 1 by NumberWordNormalizer`() {
         // Hungarian: "a megbeszélés" = "the meeting"
-        // NumberWordNormalizer maps standalone "a" → "1"
+        // NumberWordNormalizer maps a standalone "a" to "1"
         val result = parse("a megbeszélés")
         assertEquals("1 megbeszélés", result.title)
         assertEquals(ParseConfidence.LOW, result.confidence)
@@ -1109,24 +1105,24 @@ class QuickAddParserTest {
     @Test
     fun `Norwegian for consumed as duration keyword`() {
         // Norwegian: "møte for teamet" = "meeting for the team"
-        // "for" is a keyword (FOR), consumed by DurationRule or left as keyword
+        // "for" is a KEYWORD. DurationRule takes it only before a number and a unit, so it
+        // stays in the title (not asserted here).
         val result = parse("møte for teamet")
-        // "for" gets consumed as KEYWORD, title drops leading/trailing keywords
         assertTrue(result.title.contains("møte"))
     }
 
     @Test
     fun `English in consumed as keyword from mixed input`() {
-        // "in" is keyword IN, consumed by RelativeOffsetRule
+        // "in" is a KEYWORD. RelativeOffsetRule takes it only before a number and a unit, so
+        // the title keeps "in" and "Berlin" (not asserted here).
         val result = parse("Termin in Berlin")
-        // "in" consumed as keyword, "Berlin" may become part of title
         assertNotNull(result.title)
         assertTrue(result.title.isNotEmpty())
     }
 
     // ==================== Non-English adverse: non-ASCII digit systems ====================
-    // \d in regex only matches ASCII 0-9. Non-ASCII digits are preserved by \p{N}
-    // in CHAR_CLEANUP but treated as UNKNOWN tokens, not parsed as numbers/times.
+    // \d matches only ASCII 0-9. CHAR_CLEANUP keeps other digits (\p{N}), but they tokenize as
+    // UNKNOWN, never as numbers or times.
 
     private fun assertNonAsciiDigitNotParsedAsTime(input: String, digit: String) {
         val result = parse(input)
@@ -1170,10 +1166,10 @@ class QuickAddParserTest {
     @Test
     fun `decomposed unicode accent stripped by CHAR_CLEANUP`() {
         // NFD: "café" as "cafe" + U+0301 (combining acute)
-        // CHAR_CLEANUP strips combining marks (\p{Mn} not in keep-list)
+        // CHAR_CLEANUP replaces combining marks (\p{Mn}, not in its keep set) with a space.
         val decomposed = "cafe\u0301 tomorrow"
         val result = parse(decomposed)
-        // Accent is lost — title becomes "cafe"
+        // The accent is lost: the title is "cafe"
         assertEquals("cafe", result.title)
         assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
     }
@@ -1189,7 +1185,7 @@ class QuickAddParserTest {
 
     @Test
     fun `Vietnamese diacritics preserved when composed`() {
-        // Vietnamese: "họp" (meeting) — composed form
+        // Vietnamese: "họp" (meeting), composed form
         val result = parse("họp ngày mai")
         assertTrue(result.title.contains("họp"))
     }
@@ -1212,16 +1208,16 @@ class QuickAddParserTest {
 
     @Test
     fun `zero-width joiner stripped between emoji`() {
-        // ZWJ (U+200D) is \p{Cf}, stripped by CHAR_CLEANUP
+        // ZWJ (U+200D) is \p{Cf}, which CHAR_CLEANUP replaces with a space.
         val input = "👨\u200D💼 meeting tomorrow"
         val result = parse(input)
-        // ZWJ stripped, emoji may split but are preserved individually
+        // The two emoji become separate words (not asserted here).
         assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
     }
 
     @Test
     fun `right-to-left mark stripped`() {
-        // RLM (U+200F) is \p{Cf}, stripped by CHAR_CLEANUP
+        // RLM (U+200F) is \p{Cf}, which CHAR_CLEANUP replaces with a space.
         val result = parse("meeting\u200F tomorrow")
         assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
         assertTrue(result.title.contains("meeting"))
@@ -1236,7 +1232,7 @@ class QuickAddParserTest {
     @Test
     fun `null byte in input does not crash`() {
         val result = parse("meeting\u0000tomorrow")
-        // Null byte (U+0000) is \p{Cc}, stripped by CHAR_CLEANUP → space
+        // Null byte (U+0000) is \p{Cc}, which CHAR_CLEANUP replaces with a space.
         assertNotNull(result)
     }
 
@@ -1250,7 +1246,7 @@ class QuickAddParserTest {
 
     @Test
     fun `soft hyphen stripped`() {
-        // Soft hyphen U+00AD is \p{Cf}, stripped
+        // Soft hyphen U+00AD is \p{Cf}, which CHAR_CLEANUP replaces with a space.
         val result = parse("meet\u00ADing tomorrow")
         assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
     }
@@ -1284,7 +1280,7 @@ class QuickAddParserTest {
     fun `guillemets stripped from French text`() {
         // « » are not in \p{L}\p{N}\p{So}\s or allowed punctuation
         val result = parse("«Réunion» tomorrow")
-        // Guillemets stripped, accents preserved
+        // The guillemets go and the accents stay.
         assertTrue(result.title.contains("Réunion"))
         assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
     }
@@ -1298,7 +1294,7 @@ class QuickAddParserTest {
 
     @Test
     fun `comma stripped but words preserved`() {
-        // Japanese: "明日、会議です" — comma is Japanese U+3001
+        // Japanese: "明日、会議です"; the comma is the ideographic comma U+3001.
         val result = parse("明日、会議です")
         assertNotNull(result.title)
         assertTrue(result.title.isNotEmpty())
@@ -1357,7 +1353,7 @@ class QuickAddParserTest {
 
     @Test
     fun `repeated hyphens in compound word do not cause ReDoS`() {
-        // Adversarial: tries to trigger backtracking in NumberWordNormalizer compoundRegex
+        // Tries to trigger backtracking in NumberWordNormalizer's compoundRegex.
         val input = "twenty-" + "e".repeat(10000)
         val start = System.nanoTime()
         val result = parse(input)
@@ -1377,7 +1373,7 @@ class QuickAddParserTest {
     @Test
     fun `only punctuation returns empty title`() {
         val result = parse("!@#\$%^&*()")
-        // All stripped by CHAR_CLEANUP → empty after whitespace trim
+        // CHAR_CLEANUP replaces them all with spaces, which the whitespace trim removes.
         assertEquals("", result.title)
         assertEquals(ParseConfidence.LOW, result.confidence)
     }
@@ -1400,23 +1396,22 @@ class QuickAddParserTest {
 
     @Test
     fun `ten is replaced in non-English context`() {
-        // NumberWordNormalizer replaces "ten" → "10"
-        // Could match in words like "often" — but \b prevents mid-word match
+        // NumberWordNormalizer replaces "ten" with "10", but \b stops a match inside a word
+        // like "often".
         val result = parse("Often meeting tomorrow")
         assertTrue(result.title.contains("Often"))
-        // "ten" inside "Often" should NOT be replaced due to \b word boundary
     }
 
     @Test
     fun `four not replaced inside fourteen`() {
-        // "fourteen" → "14" (entire word match), not "4teen"
+        // "fourteen" becomes "14" as a whole word, not "4teen"
         val result = parse("fourteen people tomorrow")
         assertTrue(result.title.contains("14"))
     }
 
     @Test
     fun `number word replacement does not corrupt am in word`() {
-        // "a.m." should not become "1.m." due to negative lookahead (?![.])
+        // The (?![.]) lookahead keeps "a.m." from becoming "1.m.".
         val result = parse("meeting at 3 a.m. tomorrow")
         assertEquals(LocalTime.of(3, 0), result.startTime)
     }
@@ -1497,7 +1492,7 @@ class QuickAddParserTest {
         assertEquals("Standup", result.title)
         assertEquals(LocalDate.of(2026, 4, 14), result.startDate)
         assertEquals(LocalTime.of(9, 0), result.startTime)
-        // The note's "Friday"/"5pm" must NOT have hijacked the date/time.
+        // The note's "Friday" and "5pm" don't change the date or time.
         assertEquals("remind him about Friday at 5pm", result.note)
     }
 

@@ -40,10 +40,9 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.model.AccountProvider
 
 /**
- * Bottom sheet for changing an account's password.
- *
- * Shows provider-appropriate label (App-Specific Password for iCloud, Password for CalDAV).
- * Displays validation errors and loading state during credential check.
+ * Shows the sheet for changing an account's password, labeled "App-Specific Password" for
+ * iCloud and "Password" for other providers, with [error] under the field. While
+ * [isValidating] the controls are disabled and a dismiss request is ignored.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

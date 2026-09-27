@@ -19,20 +19,14 @@ import java.util.TimeZone
 import java.util.UUID
 
 /**
- * Integration test for SOGo CalDAV server.
- *
- * SOGo is a groupware server with CalDAV support. This test verifies:
- * 1. Calendar discovery via DefaultQuirks (standard CalDAV)
- * 2. Event CRUD operations
- * 3. Recurring events with exceptions (RECURRENCE-ID)
- * 4. Cancelled occurrences (EXDATE)
- * 5. Sync-collection delta sync
+ * Runs the CalDAV client with [DefaultQuirks] against a SOGo groupware server: discovery and
+ * the connection check, event create, update and delete, a recurring event with an exception
+ * (RECURRENCE-ID), a cancelled occurrence (EXDATE), and reading the sync-token or, failing
+ * that, the ctag.
  *
  * Run: ./gradlew testDebugUnitTest -Pintegration --tests "*SoGoCalDavIntegrationTest*"
  *
- * Prerequisites:
- * - SOGo server running (docker/sogo/)
- * - Credentials in local.properties:
+ * Needs a SOGo server (docker/sogo/) and these keys in local.properties:
  *   SOGO_SERVER=http://localhost:8084
  *   SOGO_USERNAME=testuser1
  *   SOGO_PASSWORD=testpass1
@@ -49,7 +43,7 @@ class SoGoCalDavIntegrationTest {
     private var password: String? = null
     private val factory = OkHttpCalDavClientFactory()
 
-    // Test state
+    // The discovered calendar and the event the running test created, which cleanup deletes.
     private var calendarUrl: String? = null
     private var testEventUrl: String? = null
     private var testEventEtag: String? = null
@@ -130,13 +124,14 @@ class SoGoCalDavIntegrationTest {
     }
 
     private suspend fun discoverCalendar(): String? {
-        // SOGo well-known discovery: serverUrl -> principal -> calendar-home -> calendars
+        // Starts from SOGo's per-user DAV URL, then principal, calendar home and calendars.
         val davUrl = "$serverUrl/SOGo/dav/$username/"
         val principal = client.discoverPrincipal(davUrl).getOrNull() ?: return null
         val home = client.discoverCalendarHome(principal).getOrNull()?.firstOrNull() ?: return null
         val calendars = client.listCalendars(home).getOrNull() ?: return null
 
-        // SOGo creates a default "Personal Calendar" at .../Calendar/personal/
+        // SOGo creates a default "Personal Calendar" at .../Calendar/personal/. This takes the
+        // first calendar that isn't the scheduling inbox or outbox.
         return calendars.firstOrNull { cal ->
             !cal.url.contains("inbox") && !cal.url.contains("outbox")
         }?.url
@@ -244,7 +239,6 @@ END:VCALENDAR
         testEventUrl = url
         testEventEtag = etag
 
-        // Verify by fetching
         val fetchResult = client.fetchEvent(url)
         assert(fetchResult.isSuccess()) { "Failed to fetch created event" }
         val fetchedIcs = fetchResult.getOrNull()!!.icalData
@@ -424,7 +418,7 @@ END:VCALENDAR
         println("Fetched ICS:\n${fetched.icalData}\n")
         assert(fetched.icalData.contains("RRULE:")) { "Should have RRULE" }
 
-        // Step 3: Create exception
+        // Step 3: add an exception moving the second occurrence to 14:00
         println("=== STEP 3: Create Exception ===\n")
         val exceptionIcs = """
 BEGIN:VCALENDAR
@@ -546,14 +540,14 @@ END:VCALENDAR
         assumeTrue("No calendar found", calendarUrl != null)
 
         val result = client.getSyncToken(calendarUrl!!)
-        // SOGo may or may not support sync-collection; test what we get
+        // getSyncToken is a PROPFIND for the sync-token property, which SOGo may not return.
         if (result.isSuccess()) {
             val token = result.getOrNull()!!
             println("SOGo sync token: $token")
             assert(token.isNotEmpty()) { "Sync token should not be empty" }
         } else {
             println("SOGo does not support sync-collection (this is expected for some versions)")
-            // Try ctag as fallback
+            // Prints the ctag instead; a failed ctag read doesn't fail the test.
             val ctagResult = client.getCtag(calendarUrl!!)
             if (ctagResult.isSuccess()) {
                 println("SOGo ctag: ${ctagResult.getOrNull()?.ctag}")

@@ -31,60 +31,54 @@ import org.robolectric.annotation.Config
 import java.time.LocalDate
 
 /**
- * Live per-field write round-trip driven through the *full application push
- * reconcile* — one mapped [Contact] field at a time, across every configured
- * CardDAV server.
+ * Round-trips one mapped [Contact] field at a time through the full application push
+ * reconcile, live against every configured CardDAV server.
  *
  * ## What this adds over the siblings
  *
- * - [MultiServerCardDavFieldFidelityTest] seeds a rich card via a raw authenticated
- *   PUT (test setup that BYPASSES the serializer) to prove a server stores and
- *   re-serves the wire bytes the reader parses.
- * - [MultiServerCardDavWriteRoundTripTest] drives the app's low-level
- *   [CardDavClient.putContact] verb directly for a handful of basic fields.
+ * - [MultiServerCardDavFieldFidelityTest] seeds a rich card with a raw authenticated PUT,
+ *   bypassing the serializer, to prove a server stores and re-serves the wire bytes the
+ *   reader parses.
+ * - [MultiServerCardDavWriteRoundTripTest] calls the low-level [CardDavClient.putContact]
+ *   directly for a handful of basic fields.
  *
- * This test closes the remaining gap: it drives the **real
- * [ContactPushStrategy.push] reconcile** — the exact path the sync worker runs —
- * so [org.onekash.vcard.VCardWriter] serializes the field, the production
- * [CardDavClient] PUTs it, the server stores it, and the production
- * [CardDavContactReader] reads it back into the neutral model. A serialization or
- * reconcile-routing regression for any single field surfaces here as a lost or
- * mangled field on read-back, where neither sibling would catch it.
+ * This test drives the real [ContactPushStrategy.push], the path the sync worker runs:
+ * [org.onekash.vcard.VCardWriter] serializes the field, the production [CardDavClient] PUTs
+ * it, the server stores it, and the production [CardDavContactReader] reads it back into the
+ * neutral model. A serialization or reconcile-routing regression for any single field shows
+ * up here as a lost or mangled field on read-back, which neither sibling would catch.
  *
- * The device-provider I/O seam (Android Contacts Provider) is the ONLY faked part:
- * Robolectric's `ShadowContentResolver` cannot execute Contacts Provider writes, so
- * the pending edit set is supplied through the canonical
- * [FakeContactsProviderRepository]. Everything downstream of the provider —
- * serialize, PUT, store, read-back — is live.
+ * Only the Android Contacts Provider is faked: Robolectric's `ShadowContentResolver` can't
+ * execute Contacts Provider writes, so the pending edit set comes from the canonical
+ * [FakeContactsProviderRepository]. Serialize, PUT, store and read-back are all live.
  *
- * ## Re-serialize on every run (no silent-pass hazard)
+ * ## Re-serialize on every run
  *
- * Each field uses its own DISTINCT stable synthetic UID; the test DELETEs any
- * pre-existing resource for that UID before pushing, then creates it fresh
- * (blank-href edit → the create path, which serializes through the writer and PUTs
- * `If-None-Match: *`), asserts on read-back, and DELETEs it again in a finally.
- * Without the delete-before + finally-delete, a crashed prior run's resource would
- * make the create's precondition fail and the reconcile would adopt the stale
- * resource WITHOUT re-serializing — so a later writer regression would read back the
- * old correct body and pass green. Deleting first guarantees the writer runs every
- * time and no per-field resource is left persisted.
+ * Each field has its own stable synthetic UID. The test deletes any existing resource for
+ * that UID, creates it through the create path (a blank-href edit, serialized by the writer
+ * and PUT with `If-None-Match: *`), asserts on read-back, and deletes it again in a finally.
+ * Without both deletes, a crashed prior run's resource would fail the create's precondition
+ * and the reconcile would adopt it without re-serializing, so a later writer regression
+ * would read back the old correct body and pass. Deleting first makes the writer run every
+ * time, and no per-field resource is left behind.
  *
  * ## Conformant refusal vs. lost field
  *
- * A server that conformantly REFUSES the write (the create is deferred and no
- * resource is confirmed — e.g. a strict server rejecting an Apple X-idiom body) is a
- * per-(server, field) `assumeTrue` skip: characterized, never a build failure. Only a
- * field that was accepted but comes back LOST or mangled FAILs.
+ * A server that refuses the write (the create is deferred and no resource is confirmed, e.g.
+ * a strict server rejecting an Apple X-idiom body) is a per-(server, field) `assumeTrue`
+ * skip, never a build failure. Only a field that was accepted but comes back lost or mangled
+ * fails.
  *
- * Photos are NOT covered here — [MultiServerCardDavPhotoPushProbeTest] covers the
- * photo push path comprehensively; PHOTO is excluded from the field matrix.
+ * PHOTO is excluded from the field matrix; [MultiServerCardDavPhotoPushProbeTest] covers the
+ * photo push path.
  *
- * All seed data is synthetic: RFC 6761 reserved `@example.test` addresses, an
- * unassigned `+1-555-01xx` number, and `example.test` URLs — no real person is
- * contacted or exposed. Only exception TYPES are logged; no href, email, phone, UID,
- * or body reaches a log or assertion message beyond the synthetic values themselves.
+ * All seed data is synthetic: RFC 6761 reserved `@example.test` addresses, an unassigned
+ * `+1-555-01xx` number and `example.test` URLs, so no real person is contacted or exposed.
+ * Logs and assertion messages carry only the server name, the field label, the book's
+ * display name, the vCard version and synthetic values (the seed fields and UIDs); never an
+ * href or a body.
  *
- * Skips (never fails) a server without credentials, unreachable, or with no writable
+ * Skips, never fails, a server without credentials, unreachable, or with no writable
  * address book.
  *
  * Run:
@@ -98,7 +92,7 @@ class MultiServerContactPushReconcileTest(
     private val field: FieldCase,
 ) {
     companion object {
-        /** Cross-product: every server × every mapped field is its own test instance. */
+        /** Every server × every mapped field is its own test instance. */
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0} · {1}")
         fun cases(): List<Array<Any>> =
@@ -160,8 +154,9 @@ class MultiServerContactPushReconcileTest(
                     assertEquals("$m N middle", "Quincy", n.middle)
                     assertEquals("$m N prefix", "Dr.", n.prefix)
                     assertEquals("$m N suffix", "Jr.", n.suffix)
-                    // phoneticMiddle is print-only (Apple exposes only first/last phonetics),
-                    // so it is intentionally NOT asserted — matching the field-fidelity sibling.
+                    // phoneticMiddle is neither set nor asserted: Apple exposes only first
+                    // and last phonetics, the same reason the field-fidelity sibling only
+                    // prints it.
                     assertEquals("$m X-PHONETIC-FIRST-NAME", "kyashikaru", n.phoneticGiven)
                     assertEquals("$m X-PHONETIC-LAST-NAME", "rekonsairu", n.phoneticFamily)
                 },
@@ -337,9 +332,9 @@ class MultiServerContactPushReconcileTest(
                 },
             ),
             FieldCase(
-                // KIND is pinned to a NON-group value: the reader deliberately drops a
-                // KIND:group card (a distribution list, not a person), which would come
-                // back as nothing and be misread as a lost field.
+                // KIND is pinned to a non-group value: the reader drops a KIND:group card
+                // (a distribution list, not a person), which would come back as nothing and
+                // be misread as a lost field.
                 "KIND",
                 "kind",
                 { it.copy(kind = "org") },
@@ -385,12 +380,11 @@ class MultiServerContactPushReconcileTest(
         val uid = "kashcal-reconcile-${field.uidSlug}"
         val resourceUrl = book!!.url.trimEnd('/') + "/" + contactResourceName(uid)
 
-        // Re-serialize every run: clear any resource a crashed prior run left behind, so
-        // the create path always runs through VCardWriter rather than adopting a stale
-        // resource (the 412 adopt path re-reads the old body without re-serializing, which
-        // would let a later writer regression pass green). Best-effort delete can fail, so
-        // confirm the slate is actually clean before trusting the create to serialize; a
-        // lingering resource is a per-(server, field) skip, not a false pass.
+        // Clear any resource a crashed prior run left, so the create runs through
+        // VCardWriter instead of the 412 adopt path, which keeps the old body and would let a
+        // writer regression pass (see the class doc). The delete is best-effort, so confirm
+        // nothing is listed before trusting the create; a lingering resource is a
+        // per-(server, field) skip, not a false pass.
         deleteIfPresent(c, book.url, resourceUrl)
         assumeTrue(
             "${config.name}: a pre-existing '$field' resource survived the delete-before; " +
@@ -407,15 +401,15 @@ class MultiServerContactPushReconcileTest(
         )
         provider.markNewUploadedCalls.clear()
 
-        // The push and the refusal-skip live inside the try so the finally-delete runs even
-        // when the create's fate is ambiguous — a code-0 transport failure may have committed
-        // the resource server-side without a confirmed write-back, and it must not linger.
+        // The push and the refusal skip sit inside the try so the finally-delete runs even
+        // when the create's fate is unknown: a code-0 transport failure may have committed
+        // the resource without a confirmed write-back, and it must not linger.
         try {
             strategy.push(ACCOUNT, listOf(book), c)
 
-            // A confirmed create writes its server href back by _ID (markNewContactUploaded);
-            // its absence means the server refused the create (deferred, nothing persisted) —
-            // a conformant refusal, characterized and skipped, not a lost field.
+            // A confirmed create writes its server href back by _ID (markNewContactUploaded).
+            // No write-back means the server refused the create (deferred, nothing persisted):
+            // a conformant refusal, skipped, not a lost field.
             assumeTrue(
                 "${config.name}: server did not persist a '$field' contact (conformant refusal / deferred)",
                 provider.markNewUploadedCalls.isNotEmpty(),
@@ -431,10 +425,10 @@ class MultiServerContactPushReconcileTest(
                 readBack,
             )
             println("=== ${config.name} push reconcile '$field' (book='${book.displayName}', version=${readBack!!.version}) ===")
-            // Some servers accept a contact but silently drop a specific property by
-            // policy (not a client regression — it survives the identical push path
-            // on conformant servers). Characterize those as a per-(server, field)
-            // skip rather than a lost-field failure. Open-Xchange drops vCard KIND.
+            // Some servers accept a contact but silently drop a specific property by policy;
+            // the same push keeps it on conformant servers, so it isn't a client regression.
+            // Those are a per-(server, field) skip, not a lost-field failure. Open-Xchange
+            // drops vCard KIND ([CardDavServerConfig.dropsKind]).
             assumeTrue(
                 "${config.name}: '$field' is a documented server-side drop on this provider " +
                     "(accepted on write, not persisted) — characterized, not a client regression",
@@ -447,18 +441,16 @@ class MultiServerContactPushReconcileTest(
     }
 
     /**
-     * The net-new create path, left persisted on purpose. A single fixed-UID contact is
-     * created once through the same [ContactPushStrategy.push] reconcile and NOT cleaned up,
-     * so a maintainer inspecting a server after a run always finds a recognizable synthetic
-     * card ("have one from the last run"). It is deliberately NOT a per-field fidelity
-     * resource: on a repeat run the create hits `If-None-Match: *` → 412 and the reconcile
-     * adopts the existing resource without re-serializing, which is exactly why it is kept
-     * separate from the per-field cases (those must re-serialize every run).
+     * Pushes one fixed-UID contact through the net-new create path of
+     * [ContactPushStrategy.push] and leaves it on the server on purpose, so a maintainer
+     * inspecting a server after a run finds a recognizable synthetic card. It isn't a
+     * per-field fidelity resource: on a repeat run the create hits `If-None-Match: *` and a
+     * 412, and the reconcile adopts the existing resource without re-serializing. That is why
+     * it stays separate from the per-field cases, which must re-serialize every run.
      *
-     * Idempotent across runs and across the field parameterization: a confirmed persist —
-     * first-run create OR repeat-run adopt — both write the server href back
-     * (markNewContactUploaded), so the assertion holds every invocation without leaving
-     * duplicates.
+     * Idempotent across runs and across the field parameterization: a first-run create and a
+     * repeat-run adopt both write the server href back (markNewContactUploaded), so the check
+     * holds every time without leaving duplicates.
      */
     @Test
     fun `net-new create path leaves a persistent inspection contact`() = runBlocking {
@@ -487,8 +479,8 @@ class MultiServerContactPushReconcileTest(
 
         strategy.push(ACCOUNT, listOf(book), c)
 
-        // No finally-delete: the resource is meant to persist. A confirmed create or a
-        // repeat-run adopt both write the href back; absence means a conformant refusal.
+        // No finally-delete: the resource is meant to persist. No href write-back means a
+        // conformant refusal.
         assumeTrue(
             "${config.name}: server did not persist the inspection contact (conformant refusal)",
             provider.markNewUploadedCalls.isNotEmpty(),
@@ -504,12 +496,12 @@ class MultiServerContactPushReconcileTest(
         rawVCard = "",
     )
 
-    /** Best-effort conditional delete of [resourceUrl] if the server still lists it. */
+    /** Deletes [resourceUrl] with its listed etag if the server still lists it; best-effort. */
     private suspend fun deleteIfPresent(c: CardDavClient, bookUrl: String, resourceUrl: String) {
         currentEtag(c, bookUrl, resourceUrl)?.let { c.deleteContact(resourceUrl, it) }
     }
 
-    /** Discover the login's first writable address book, or null if none is writable. */
+    /** Returns the login's first writable address book, or null if none is writable. */
     private suspend fun resolveWritableBook(c: CardDavClient, cr: ServerCredentials): CardDavAddressBook? {
         val root = if (config.usesWellKnownDiscovery) {
             c.discoverWellKnown(cr.serverUrl).getOrNull() ?: cr.serverUrl
@@ -523,14 +515,20 @@ class MultiServerContactPushReconcileTest(
         return books.firstOrNull { !it.isReadOnly }
     }
 
-    /** The current server ETag for [resourceUrl] in [bookUrl], or null if not listed. */
+    /**
+     * Returns the server ETag of the [bookUrl] member whose last path segment matches
+     * [resourceUrl]'s, or null if none is listed or the listing fails.
+     */
     private suspend fun currentEtag(c: CardDavClient, bookUrl: String, resourceUrl: String): String? {
         val listed = (c.listAllContactHrefs(bookUrl) as? CalDavResult.Success)?.data.orEmpty()
         val name = resourceUrl.substringAfterLast('/')
         return listed.firstOrNull { it.first.substringAfterLast('/') == name }?.second
     }
 
-    /** Read hrefs via sync-collection when available, else the full PROPFIND listing. */
+    /**
+     * Returns the book's hrefs from sync-collection, or from the PROPFIND listing when that
+     * fails or lists none.
+     */
     private suspend fun collectHrefs(c: CardDavClient, bookUrl: String): List<String> {
         (c.syncCollection(bookUrl, null) as? CalDavResult.Success)?.data?.let { report ->
             if (report.changed.isNotEmpty()) return report.changed.map { it.href }

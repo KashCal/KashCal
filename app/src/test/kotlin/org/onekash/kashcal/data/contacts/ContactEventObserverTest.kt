@@ -10,11 +10,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/**
- * Unit tests for ContactEventObserver.
- *
- * Tests debounce behavior and callback dispatching.
- */
+/** Tests [ContactEventObserver]'s debounce, cancelPending and selfChange handling. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ContactEventObserverTest {
 
@@ -52,7 +48,7 @@ class ContactEventObserverTest {
             onContactsChanged = { callCount++ }
         )
 
-        // Simulate rapid changes (one per field edit)
+        // A burst of changes, as one per edited field.
         observer.onChange(false)
         advanceTimeBy(100)
         observer.onChange(false)
@@ -61,7 +57,7 @@ class ContactEventObserverTest {
         advanceTimeBy(100)
         observer.onChange(false)
 
-        // Still within debounce of last call
+        // Still within the debounce of the last change.
         advanceTimeBy(400)
         assertEquals("Should not fire during debounce", 0, callCount)
 

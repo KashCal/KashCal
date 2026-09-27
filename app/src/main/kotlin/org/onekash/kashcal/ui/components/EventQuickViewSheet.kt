@@ -80,27 +80,19 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 /**
- * Lightweight preview sheet for quick event viewing.
- * Shows event details with Edit/Delete/More actions.
+ * Shows a Room event's details in a bottom sheet, with Edit, Delete and More actions, or
+ * Duplicate and Share on a read-only calendar.
  *
- * @param event The event to display
- * @param calendarColor Calendar color for the event
- * @param calendarName Calendar name for display
- * @param occurrenceTs The occurrence timestamp (for recurring events, used for birthday age calculation)
- * @param onDismiss Called when sheet is dismissed
- * @param onEdit Called to edit the event (for single events or all occurrences)
- * @param onEditOccurrence Called to edit just this occurrence (recurring events)
- * @param onDeleteSingle Called to delete the event (non-recurring),
- *   the exception (modified occurrence), or to open the scope sheet
- *   (recurring master) — branches per the loaded event's shape.
- * @param onDuplicate Called to duplicate the event
- * @param onShare Called to share the event as text
- * @param onExportIcs Called to export the event as .ics file
- * @param onShareAsCard Called to open the share-as-card sheet (top-right icon)
- * @param showShareCardTooltip True on first appearance to display the
- *   one-shot coach mark on the Share icon. Caller persists dismissal.
- * @param onShareCardTooltipDismissed Invoked when the tooltip should be
- *   marked as displayed (after first show or first tap on the Share icon).
+ * @param occurrenceTs start of the tapped occurrence; the sheet shows its date and time and
+ *   computes a birthday's age from it. Null shows the event's own start.
+ * @param onEditOccurrence never called by the sheet.
+ * @param onDeleteSingle called at once for a recurring master (the host opens the scope sheet)
+ *   and after the inline confirm for a one-off event or an exception.
+ * @param onShareAsCard opens the share-as-card sheet from the top-right icon.
+ * @param showShareCardTooltip shows the one-shot coach mark on the Share icon; the caller
+ *   persists its dismissal.
+ * @param onShareCardTooltipDismissed called when the tooltip counts as shown: after its first
+ *   display or the first tap on the Share icon.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,14 +121,10 @@ fun EventQuickViewSheet(
     val you = attendees.firstOrNull { it.isYou }
     val currentUserPartstat = you?.status
     val isCurrentUserOrganizer = you?.isOrganizer == true
-    // When the current user is on the attendee list but isn't the
-    // organizer, the form sheet will render in read-only mode — flip the
-    // Edit button label to "Open" so the user knows what to expect.
+    // A guest who isn't the organizer gets a read-only form, so Edit reads "Open".
     val canEditAsOrganizer = you == null || you.isOrganizer
-    // Compute expandable content FIRST - determines sheet behavior.
-    // Attendee lists count as expandable: an attendee event with no
-    // description/URL would otherwise lock at partial height even when
-    // the chip row + Respond section take meaningful vertical space.
+    // Decides whether the sheet opens expanded. Attendees count: an event with guests but no
+    // description or URL would otherwise stay at partial height under the guest section.
     val hasAttendees = attendees.isNotEmpty()
     val hasExpandableContent = remember(event.description, event.url, hasAttendees) {
         !event.description.isNullOrBlank() ||
@@ -144,7 +132,7 @@ fun EventQuickViewSheet(
             hasAttendees
     }
 
-    // Skip partial view and open expanded directly if there's content to show
+    // Open expanded when there's content below the header.
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = hasExpandableContent
     )
@@ -153,7 +141,6 @@ fun EventQuickViewSheet(
     var showDeleteConfirmation by remember { mutableStateOf(false) }
     var showAttendeeSheet by remember { mutableStateOf(false) }
 
-    // Compute time pattern from preference
     val context = LocalContext.current
     val resources = LocalResources.current
     val is24HourDevice = DateFormat.is24HourFormat(context)
@@ -161,20 +148,17 @@ fun EventQuickViewSheet(
         DateTimeUtils.getTimePattern(timeFormat, is24HourDevice)
     }
 
-    // Detect recurring events: master events have rrule, exception events have originalEventId.
-    // Both flag as "recurring" for the repeat icon/copy in the header.
+    // A master (RRULE) and an exception (originalEventId) both get the repeat line.
     val isRecurring = event.isRecurring || event.isException
-    // RSVP write path only mutates the event passed in — for an exception
-    // it's a per-occurrence write, so the "applies to the whole series"
-    // disclosure only holds for master events with a live RRULE.
+    // An RSVP writes only the event shown, so on an exception it covers one occurrence and
+    // the "applies to the whole series" disclosure fits only a master.
     val rsvpAppliesToSeries = event.isRecurring && !event.isException
 
-    // Format title with age for birthday events and optional emoji
+    // Adds a birthday's age and the optional emoji.
     val displayTitle = remember(event, occurrenceTs, showEventEmojis) {
         formatEventTitle(event, occurrenceTs, showEventEmojis, resources)
     }
 
-    // Cache URL validation
     val validEventUrl = remember(event.url) {
         event.url?.takeIf { isValidUrl(it) }
     }
@@ -187,8 +171,7 @@ fun EventQuickViewSheet(
         sheetState = sheetState,
         dragHandle = { BottomSheetDefaults.DragHandle() }
     ) {
-        // Untitled events render a blank title, so fall back to a generic name
-        // for the pane announcement rather than announcing an empty pane.
+        // An untitled event has a blank title, so the pane announces a generic name.
         val paneTitleText = displayTitle.ifBlank { stringResource(R.string.cd_event_untitled) }
         Column(
             modifier = Modifier
@@ -197,10 +180,7 @@ fun EventQuickViewSheet(
                 // Announce the sheet (by the event title) when it opens.
                 .semantics { paneTitle = paneTitleText }
         ) {
-            // Top row beneath the drag handle: calendar dot+name pill on the
-            // left, Share-as-card icon on the right. The pill was relocated
-            // from its previous in-body position so this row reads as a
-            // header strip (calendar identity + share affordance).
+            // Header strip under the drag handle: calendar pill left, share-as-card icon right.
             ShareAsCardTopRow(
                 calendarColor = calendarColor,
                 calendarName = calendarName,
@@ -249,8 +229,7 @@ fun EventQuickViewSheet(
 
                         Spacer(modifier = Modifier.height(4.dp))
 
-                        // Date and time - use occurrence timestamp for recurring events
-                        // to show the date the user tapped (not master event's original date)
+                        // The tapped occurrence's date and time, not the master's first one.
                         val displayStartTs = occurrenceTs ?: event.startTs
                         val duration = event.endTs - event.startTs
                         val displayEndTs = if (occurrenceTs != null) occurrenceTs + duration else event.endTs
@@ -329,7 +308,11 @@ fun EventQuickViewSheet(
                         if (isRecurring) {
                             val rruleStrings = rememberRruleDisplayStrings()
                             val repeatText = if (event.rrule != null) {
-                                val (freq, endSuffix) = RruleBuilder.formatForDisplayParts(event.rrule, rruleStrings)
+                                val (freq, endSuffix) = RruleBuilder.formatForDisplayParts(
+                                    event.rrule,
+                                    rruleStrings,
+                                    RruleBuilder.untilZoneFor(event.isAllDay, event.timezone),
+                                )
                                 val isContactEvent = ContactEventType.fromCaldavUrl(event.caldavUrl) != null
                                 val hasSyntheticStart = isContactEvent && ContactEventUtils.decodeEventYear(event.description) == null
                                 val startDate = if (!hasSyntheticStart) formatSeriesStartDateStr(event.startTs, event.isAllDay) else null
@@ -351,9 +334,6 @@ fun EventQuickViewSheet(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-
-                        // Calendar dot + name was relocated to the top row
-                        // (see ShareAsCardTopRow) so it reads as a header strip.
                     }
                 }
             }
@@ -380,7 +360,7 @@ fun EventQuickViewSheet(
                 )
             }
 
-            // Expanded content section - shown immediately when sheet opens expanded
+            // URL, notes and reminders.
             if (hasExpandableContent) {
                 ExpandedContentSection(
                     event = event,
@@ -400,7 +380,7 @@ fun EventQuickViewSheet(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (isReadOnlyCalendar) {
-                    // Read-only calendar: show Duplicate and Share (matching Edit/Delete style)
+                    // Read-only calendar: Duplicate and Share in place of Edit and Delete.
                     FilledTonalButton(
                         onClick = onDuplicate,
                         modifier = Modifier.weight(1f)
@@ -420,13 +400,10 @@ fun EventQuickViewSheet(
                         )
                     }
                 } else {
-                    // Editable calendar: Edit, Delete, More menu.
-                    // Recurring events route through the scope sheet
-                    // at the host (the scope sheet itself serves as
-                    // confirmation — picking a scope is deliberate);
-                    // non-recurring events go through an inline two-tap
-                    // confirmation, since the host commits the delete
-                    // immediately.
+                    // Editable calendar: Edit, Delete, More. Delete on a one-off
+                    // event or an exception commits at once in the host, so it
+                    // takes an inline two-tap confirm; a master's scope sheet is
+                    // its own confirmation.
                     if (!showDeleteConfirmation) {
                         FilledTonalButton(
                             onClick = onEdit,
@@ -443,14 +420,8 @@ fun EventQuickViewSheet(
 
                         FilledTonalButton(
                             onClick = {
-                                // Skip the inline two-tap step ONLY when
-                                // the host will surface a scope sheet
-                                // (recurring master) — that deliberate
-                                // pick is the confirmation. Non-recurring
-                                // events AND exception events route
-                                // straight through to a destructive write
-                                // with no scope sheet, so they need the
-                                // inline confirmation guard.
+                                // Only a master gets the scope sheet;
+                                // everything else confirms inline.
                                 if (event.isRecurring && !event.isException) {
                                     onDeleteSingle()
                                 } else {
@@ -562,11 +533,8 @@ fun EventQuickViewSheet(
 }
 
 /**
- * Format date and time for display.
- *
- * Uses DateTimeUtils for correct timezone handling:
- * - All-day events: UTC to preserve calendar date
- * - Timed events: Local timezone for user's perspective
+ * Formats the date and time line: all-day dates in UTC so the calendar date holds, timed
+ * events in the device zone.
  *
  * @see DateTimeUtils.formatEventDateShort
  * @see DateTimeUtils.formatEventTime
@@ -578,7 +546,6 @@ private fun formatEventDateTime(
     resources: android.content.res.Resources,
     timePattern: String = "h:mm a"
 ): String {
-    // Use DateTimeUtils for correct timezone handling (UTC for all-day, local for timed)
     val startDateStr = DateTimeUtils.formatEventDateShort(startTs, isAllDay)
     val endDateStr = DateTimeUtils.formatEventDateShort(endTs, isAllDay)
     val isMultiDay = DateTimeUtils.spansMultipleDays(startTs, endTs, isAllDay)
@@ -602,10 +569,8 @@ private fun formatEventDateTime(
 }
 
 /**
- * Format the series start date string for recurring events (date only, no prefix).
- *
- * Same year: "Jan 15"
- * Different year: "Jan 15, 2023"
+ * Formats a series' start date with no prefix: "Jan 15" in the current year, else
+ * "Jan 15, 2023".
  */
 internal fun formatSeriesStartDateStr(
     seriesStartTs: Long,
@@ -618,9 +583,7 @@ internal fun formatSeriesStartDateStr(
     return DateTimeUtils.formatEventDate(seriesStartTs, isAllDay, pattern, localZone)
 }
 
-/**
- * Expanded content section showing URL, notes, and reminders.
- */
+/** Shows the event's URL, notes and reminders in a scrolling section. */
 @Composable
 private fun ExpandedContentSection(
     event: Event,
@@ -644,7 +607,6 @@ private fun ExpandedContentSection(
                 modifier = Modifier.padding(vertical = 4.dp)
             )
 
-            // URL field (if event has a valid URL)
             if (validEventUrl != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -682,7 +644,7 @@ private fun ExpandedContentSection(
                 }
             }
 
-            // Notes section (with linkified text)
+            // Notes, with links made tappable.
             if (!event.description.isNullOrBlank()) {
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
@@ -701,7 +663,6 @@ private fun ExpandedContentSection(
                 }
             }
 
-            // Reminders section
             if (formattedReminders != null) {
                 Row(
                     verticalAlignment = Alignment.CenterVertically

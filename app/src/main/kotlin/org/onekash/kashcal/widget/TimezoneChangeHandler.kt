@@ -6,10 +6,10 @@ import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import javax.inject.Inject
 
 /**
- * Handles widget updates and reminder rescheduling after timezone or time changes.
+ * Updates widgets and reschedules reminders after a timezone or clock change.
  *
- * Extracted from TimezoneChangeReceiver to enable unit testing without
- * Hilt injection or Android framework dependencies.
+ * Kept apart from [TimezoneChangeReceiver] so it can be unit-tested without Hilt injection or
+ * the Android framework.
  */
 class TimezoneChangeHandler @Inject constructor(
     private val widgetUpdateManager: WidgetUpdateManager,
@@ -21,9 +21,12 @@ class TimezoneChangeHandler @Inject constructor(
     }
 
     /**
-     * Update widgets and reschedule reminders for the new timezone/time.
+     * Updates every widget but DateWidget, then reschedules Room and device calendar reminders.
      *
-     * @param reason "timezone_changed" or "time_changed" — passed through to widget update
+     * Widget and device calendar failures are logged and swallowed; a Room reschedule failure
+     * propagates.
+     *
+     * @param reason "timezone_changed" or "time_changed", passed through to the widget update.
      */
     suspend fun handleChange(reason: String) {
         widgetUpdateManager.updateAllWidgets(reason = reason)
