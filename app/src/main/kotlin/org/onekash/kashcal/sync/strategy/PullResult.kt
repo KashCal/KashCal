@@ -11,7 +11,7 @@ sealed class PullResult {
         val eventsDeleted: Int,
         val newSyncToken: String?,
         val newCtag: String?,
-        /** Per-event changes for the sync-changes snackbar and bottom sheet. */
+        /** Per-event changes, for reminder scheduling and the Recent changes log. */
         val changes: List<SyncChange> = emptyList()
     ) : PullResult() {
         val totalChanges: Int

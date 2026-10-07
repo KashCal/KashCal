@@ -4609,6 +4609,36 @@ class PullStrategyTest {
     }
 
     @Test
+    fun `hasContentChanged treats unset and empty reminders, extra properties and categories as equal`() {
+        // Room reads a stored null back as empty; the mapper gives null.
+        val stored = createEvent().copy(reminders = emptyList(), extraProperties = emptyMap(), categories = emptyList())
+        val mapped = createEvent().copy(reminders = null, extraProperties = null, categories = null)
+        assertFalse(PullStrategy.hasContentChanged(stored, mapped))
+        assertFalse(PullStrategy.hasContentChanged(mapped, stored))
+    }
+
+    @Test
+    fun `hasContentChanged returns true when reminders go from empty to set`() {
+        val existing = createEvent().copy(reminders = emptyList())
+        val incoming = createEvent().copy(reminders = listOf("-PT15M"))
+        assertTrue(PullStrategy.hasContentChanged(existing, incoming))
+    }
+
+    @Test
+    fun `hasContentChanged returns true when extra properties go from empty to set`() {
+        val existing = createEvent().copy(extraProperties = emptyMap())
+        val incoming = createEvent().copy(extraProperties = mapOf("X-APPLE-TRAVEL-ADVISORY-BEHAVIOR" to "AUTOMATIC"))
+        assertTrue(PullStrategy.hasContentChanged(existing, incoming))
+    }
+
+    @Test
+    fun `hasContentChanged returns true when categories go from empty to set`() {
+        val existing = createEvent().copy(categories = emptyList())
+        val incoming = createEvent().copy(categories = listOf("Work"))
+        assertTrue(PullStrategy.hasContentChanged(existing, incoming))
+    }
+
+    @Test
     fun `hasContentChanged returns false when only sync metadata differs`() {
         val existing = createEvent().copy(
             dtstamp = 1000L,

@@ -11,11 +11,15 @@ import kotlinx.coroutines.flow.map
 import org.onekash.kashcal.data.db.KashCalDatabase
 import org.onekash.kashcal.data.db.dao.EventWithNextOccurrence
 import org.onekash.kashcal.data.db.dao.EventWithOccurrenceAndColor
+import org.onekash.kashcal.data.db.dao.OccurrencesDao
+import org.onekash.kashcal.data.db.dao.RecentChangeWithCalendar
 import org.onekash.kashcal.data.db.dao.TitleSuggestion
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
+import org.onekash.kashcal.domain.changes.RecentChangeItem
+import org.onekash.kashcal.domain.changes.RecentChangesRecorder
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -36,6 +40,8 @@ class EventReader @Inject constructor(
     private val attendeesDao by lazy { database.attendeesDao() }
 
     private val categoryDao by lazy { database.categoryDao() }
+
+    private val recentChangesDao by lazy { database.recentChangesDao() }
 
     companion object {
         /** Cap on tag suggestions so the autocomplete popup stays scannable. */
@@ -76,6 +82,31 @@ class EventReader @Inject constructor(
         categoryDao.observeAll()
             .map { rows -> rows.associate { it.name to it.color } }
             .distinctUntilChanged()
+
+    /**
+     * Emits the Recent changes rows not dismissed that arrived within
+     * [RecentChangesRecorder.RETENTION_MS] of [now], newest first. The window is fixed at
+     * subscription, so a sheet left open past a row's expiry still shows it until reopened.
+     */
+    fun observeRecentChanges(now: Long = System.currentTimeMillis()): Flow<List<RecentChangeItem>> =
+        recentChangesDao.observeVisible(now - RecentChangesRecorder.RETENTION_MS)
+            .map { rows -> rows.map { it.toItem() } }
+            .distinctUntilChanged()
+
+    private fun RecentChangeWithCalendar.toItem() = RecentChangeItem(
+        id = change.id, calendarId = change.calendarId, eventUid = change.eventUid,
+        instanceTs = change.instanceTs, eventId = change.eventId,
+        changeType = change.changeType, title = change.title,
+        startTs = change.startTs, endTs = change.endTs, isAllDay = change.isAllDay,
+        isRecurring = change.isRecurring, detectedAt = change.detectedAt,
+        changedFields = change.changedFields,
+        previousStartTs = change.previousStartTs, previousIsAllDay = change.previousIsAllDay,
+        calendarName = calendarName, calendarColor = calendarColor
+    )
+
+    /** Returns [eventId]'s next occurrence not yet ended ([OccurrencesDao.getNextOccurrence]). */
+    suspend fun getNextOccurrence(eventId: Long, now: Long = System.currentTimeMillis()): Occurrence? =
+        occurrencesDao.getNextOccurrence(eventId, now)
 
     suspend fun getEventById(eventId: Long): Event? {
         return eventsDao.getById(eventId)

@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Gan seisiúin sioncronúithe fós.\n\nTarraing anuas chun athnuachan a dhéanamh ar an amharc féilire.</string>
     <string name="status_no_writable_calendars">Níl aon fhéilire inscríofa ar fáil</string>
     <string name="status_events_count">%1$d Imeacht</string>
-    <string name="status_sync_changes">Athruithe Sioncronúithe</string>
     <string name="status_sync_history">Stair Sioncronúithe</string>
     <string name="status_parse_failures">Teipeanna Parsála</string>
     <string name="status_error">Earráid</string>
@@ -1087,11 +1086,6 @@
     <string name="rrule_starting">%1$s ag tosú %2$s%3$s</string>
     <string name="rrule_since">%1$s · ó %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d nua</string>
-    <string name="sync_summary_updated">%1$d nuashonraithe</string>
-    <string name="sync_summary_removed">%1$d bainte</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Scrolú ciorclach cumasaithe</string>
 
@@ -1217,6 +1211,13 @@
         <item quantity="many">%1$d n-imeacht bainte</item>
         <item quantity="other">%1$d imeacht bainte</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d tarlú curtha ar ceal</item>
+        <item quantity="two">%1$d tharlú curtha ar ceal</item>
+        <item quantity="few">%1$d tharlú curtha ar ceal</item>
+        <item quantity="many">%1$d dtarlú curtha ar ceal</item>
+        <item quantity="other">%1$d tarlú curtha ar ceal</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d nuashonrú féilire</item>
         <item quantity="two">%1$d nuashonrú féilire</item>
@@ -1224,6 +1225,23 @@
         <item quantity="many">%1$d nuashonrú féilire</item>
         <item quantity="other">%1$d nuashonrú féilire</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Athruithe le déanaí</string>
+    <string name="recent_changes_empty">Níl aon athruithe le déanaí</string>
+    <string name="recent_changes_clear_all">Glan gach rud</string>
+    <string name="recent_changes_cleared">Glanadh na hathruithe le déanaí</string>
+    <string name="recent_changes_dismiss">Díláithrigh</string>
+    <string name="recent_changes_moved_from">Bogtha ó %1$s</string>
+    <string name="recent_changes_time_changed">Athraíodh an t-am</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Athraíodh an suíomh</string>
+    <string name="recent_changes_title_changed">Athraíodh an teideal</string>
+    <string name="recent_changes_repeat_changed">Athraíodh an t-athfhilleadh</string>
+    <string name="recent_changes_cancelled">Cealaithe</string>
+    <string name="cd_recent_change_new">Imeacht nua</string>
+    <string name="cd_recent_change_updated">Nuashonraithe</string>
+    <string name="cd_recent_change_removed">Bainte</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Lá %1$d as %2$d</string>

@@ -16,28 +16,30 @@ class SyncChangeTest {
         eventId: Long? = 1L,
         isFromInitialSync: Boolean = false
     ) = SyncChange(
+        calendarId = 1L,
+        eventEndTs = 0L,
+        eventUid = "uid",
         type = type,
         eventId = eventId,
         eventTitle = "Test Event",
         eventStartTs = System.currentTimeMillis(),
         isAllDay = false,
         isRecurring = false,
-        calendarName = "Test Calendar",
-        calendarColor = 0xFF2196F3.toInt(),
         isFromInitialSync = isFromInitialSync
     )
 
     @Test
     fun `isFromInitialSync defaults to false`() {
         val change = SyncChange(
+            calendarId = 1L,
+            eventEndTs = 0L,
+            eventUid = "uid",
             type = ChangeType.NEW,
             eventId = 1L,
             eventTitle = "Test Event",
             eventStartTs = System.currentTimeMillis(),
             isAllDay = false,
-            isRecurring = false,
-            calendarName = "Test Calendar",
-            calendarColor = 0xFF2196F3.toInt()
+            isRecurring = false
             // isFromInitialSync omitted, so its default applies
         )
 

@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Sünkroonimise seansse veel pole.\n\nTõmba kalendrivaates alla, et alustada sünkroonimist.</string>
     <string name="status_no_writable_calendars">Kirjutatavaid kalendreid pole saadaval</string>
     <string name="status_events_count">%1$d sündmust</string>
-    <string name="status_sync_changes">Sünkroonimise muudatused</string>
     <string name="status_sync_history">Sünkroonimise ajalugu</string>
     <string name="status_parse_failures">Parsimise vead</string>
     <string name="status_error">Viga</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s alates %2$s%3$s</string>
     <string name="rrule_since">%1$s · alates %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d uut</string>
-    <string name="sync_summary_updated">%1$d uuendatud</string>
-    <string name="sync_summary_removed">%1$d eemaldatud</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Ringikujuline kerimine lubatud</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d sündmus eemaldatud</item>
         <item quantity="other">%1$d sündmust eemaldatud</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d kordus tühistatud</item>
+        <item quantity="other">%1$d kordust tühistatud</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d kalendri uuendus</item>
         <item quantity="other">%1$d kalendri uuendust</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Viimased muudatused</string>
+    <string name="recent_changes_empty">Viimaseid muudatusi pole</string>
+    <string name="recent_changes_clear_all">Tühjenda kõik</string>
+    <string name="recent_changes_cleared">Viimased muudatused tühjendatud</string>
+    <string name="recent_changes_dismiss">Peida</string>
+    <string name="recent_changes_moved_from">Teisaldatud ajalt %1$s</string>
+    <string name="recent_changes_time_changed">Aeg muudetud</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Asukoht muudetud</string>
+    <string name="recent_changes_title_changed">Pealkiri muudetud</string>
+    <string name="recent_changes_repeat_changed">Kordus muudetud</string>
+    <string name="recent_changes_cancelled">Tühistatud</string>
+    <string name="cd_recent_change_new">Uus sündmus</string>
+    <string name="cd_recent_change_updated">Uuendatud</string>
+    <string name="cd_recent_change_removed">Eemaldatud</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Päev %1$d/%2$d</string>

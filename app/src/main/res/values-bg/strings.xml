@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Все още няма сесии за синхронизиране.\n\nПлъзни надолу в изгледа на календара, за да започнеш синхронизиране.</string>
     <string name="status_no_writable_calendars">Няма налични редактируеми календари</string>
     <string name="status_events_count">%1$d събития</string>
-    <string name="status_sync_changes">Промени при синхронизиране</string>
     <string name="status_sync_history">Хронология на синхронизациите</string>
     <string name="status_parse_failures">Грешки при обработка</string>
     <string name="status_error">Грешка</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s започвайки от %2$s%3$s</string>
     <string name="rrule_since">%1$s · от %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d нови</string>
-    <string name="sync_summary_updated">%1$d обновени</string>
-    <string name="sync_summary_removed">%1$d премахнати</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Кръгово превъртане включено</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d събитие премахнато</item>
         <item quantity="other">%1$d събития премахнати</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d поява отменена</item>
+        <item quantity="other">%1$d появи отменени</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d актуализация на календар</item>
         <item quantity="other">%1$d актуализации на календар</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Последни промени</string>
+    <string name="recent_changes_empty">Няма последни промени</string>
+    <string name="recent_changes_clear_all">Изчисти всички</string>
+    <string name="recent_changes_cleared">Последните промени са изчистени</string>
+    <string name="recent_changes_dismiss">Отхвърли</string>
+    <string name="recent_changes_moved_from">Преместено от %1$s</string>
+    <string name="recent_changes_time_changed">Часът е променен</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Местоположението е променено</string>
+    <string name="recent_changes_title_changed">Заглавието е променено</string>
+    <string name="recent_changes_repeat_changed">Повторението е променено</string>
+    <string name="recent_changes_cancelled">Отменено</string>
+    <string name="cd_recent_change_new">Ново събитие</string>
+    <string name="cd_recent_change_updated">Обновено</string>
+    <string name="cd_recent_change_removed">Премахнато</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Ден %1$d от %2$d</string>

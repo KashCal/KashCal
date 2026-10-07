@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Zatím žádné relace synchronizace.\n\nSpusťte synchronizaci potažením dolů v zobrazení kalendáře.</string>
     <string name="status_no_writable_calendars">Žádné zapisovatelné kalendáře</string>
     <string name="status_events_count">%1$d událostí</string>
-    <string name="status_sync_changes">Změny synchronizace</string>
     <string name="status_sync_history">Historie synchronizace</string>
     <string name="status_parse_failures">Chyby parsování</string>
     <string name="status_error">Chyba</string>
@@ -1048,11 +1047,6 @@
     <string name="rrule_starting">%1$s počínaje %2$s%3$s</string>
     <string name="rrule_since">%1$s · od %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d nových</string>
-    <string name="sync_summary_updated">%1$d aktualizováno</string>
-    <string name="sync_summary_removed">%1$d odstraněno</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Cyklické posouvání povoleno</string>
 
@@ -1170,12 +1164,35 @@
         <item quantity="many">%1$d událostí odstraněno</item>
         <item quantity="other">%1$d událostí odstraněno</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d výskyt zrušen</item>
+        <item quantity="few">%1$d výskyty zrušeny</item>
+        <item quantity="many">%1$d výskytu zrušeno</item>
+        <item quantity="other">%1$d výskytů zrušeno</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d aktualizace kalendáře</item>
         <item quantity="few">%1$d aktualizace kalendáře</item>
         <item quantity="many">%1$d aktualizací kalendáře</item>
         <item quantity="other">%1$d aktualizací kalendáře</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Nedávné změny</string>
+    <string name="recent_changes_empty">Žádné nedávné změny</string>
+    <string name="recent_changes_clear_all">Vymazat vše</string>
+    <string name="recent_changes_cleared">Nedávné změny vymazány</string>
+    <string name="recent_changes_dismiss">Zavřít</string>
+    <string name="recent_changes_moved_from">Přesunuto z %1$s</string>
+    <string name="recent_changes_time_changed">Změněn čas</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Změněno místo</string>
+    <string name="recent_changes_title_changed">Změněn název</string>
+    <string name="recent_changes_repeat_changed">Změněno opakování</string>
+    <string name="recent_changes_cancelled">Zrušeno</string>
+    <string name="cd_recent_change_new">Nová událost</string>
+    <string name="cd_recent_change_updated">Aktualizováno</string>
+    <string name="cd_recent_change_removed">Odstraněno</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Den %1$d z %2$d</string>

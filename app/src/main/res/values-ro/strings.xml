@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Nicio sesiune de sincronizare încă.\n\nDeclanșează o sincronizare trăgând în jos pe vizualizarea calendarului.</string>
     <string name="status_no_writable_calendars">Niciun calendar editabil disponibil</string>
     <string name="status_events_count">%1$d evenimente</string>
-    <string name="status_sync_changes">Modificări sincronizare</string>
     <string name="status_sync_history">Istoric sincronizări</string>
     <string name="status_parse_failures">Erori de procesare</string>
     <string name="status_error">Eroare</string>
@@ -1009,11 +1008,6 @@
     <string name="rrule_starting">%1$s începând din %2$s%3$s</string>
     <string name="rrule_since">%1$s · din %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d noi</string>
-    <string name="sync_summary_updated">%1$d actualizate</string>
-    <string name="sync_summary_removed">%1$d eliminate</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Derulare circulară activată</string>
 
@@ -1123,11 +1117,33 @@
         <item quantity="few">%1$d evenimente eliminate</item>
         <item quantity="other">%1$d de evenimente eliminate</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d apariție anulată</item>
+        <item quantity="few">%1$d apariții anulate</item>
+        <item quantity="other">%1$d de apariții anulate</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d actualizare calendar</item>
         <item quantity="few">%1$d actualizări calendar</item>
         <item quantity="other">%1$d de actualizări calendar</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Modificări recente</string>
+    <string name="recent_changes_empty">Nicio modificare recentă</string>
+    <string name="recent_changes_clear_all">Șterge tot</string>
+    <string name="recent_changes_cleared">Modificările recente au fost șterse</string>
+    <string name="recent_changes_dismiss">Respinge</string>
+    <string name="recent_changes_moved_from">Mutat de la %1$s</string>
+    <string name="recent_changes_time_changed">Ora modificată</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Locație modificată</string>
+    <string name="recent_changes_title_changed">Titlu modificat</string>
+    <string name="recent_changes_repeat_changed">Repetare modificată</string>
+    <string name="recent_changes_cancelled">Anulat</string>
+    <string name="cd_recent_change_new">Eveniment nou</string>
+    <string name="cd_recent_change_updated">Actualizat</string>
+    <string name="cd_recent_change_removed">Eliminat</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Ziua %1$d din %2$d</string>

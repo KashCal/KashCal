@@ -18,6 +18,7 @@ import org.onekash.kashcal.data.db.dao.IcsSubscriptionsDao
 import org.onekash.kashcal.data.db.dao.OccurrencesDao
 import org.onekash.kashcal.data.db.dao.PendingCancelsDao
 import org.onekash.kashcal.data.db.dao.PendingOperationsDao
+import org.onekash.kashcal.data.db.dao.RecentChangesDao
 import org.onekash.kashcal.data.db.dao.ScheduledRemindersDao
 import org.onekash.kashcal.data.db.dao.SyncLogsDao
 import org.onekash.kashcal.data.db.entity.Account
@@ -31,6 +32,7 @@ import org.onekash.kashcal.data.db.entity.IcsSubscription
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.data.db.entity.PendingCancel
 import org.onekash.kashcal.data.db.entity.PendingOperation
+import org.onekash.kashcal.data.db.entity.RecentChange
 import org.onekash.kashcal.data.db.entity.ScheduledReminder
 import org.onekash.kashcal.data.db.entity.SyncLog
 
@@ -51,6 +53,7 @@ import org.onekash.kashcal.data.db.entity.SyncLog
  * - occurrences: materialized RRULE expansions
  * - pending_cancels: removed attendees awaiting an iTIP CANCEL
  * - pending_operations: sync queue
+ * - recent_changes: what CalDAV and iCloud pulls changed, for the Recent changes sheet
  * - scheduled_reminders: alarms scheduled for reminder notifications
  * - sync_logs: sync debug and audit trail
  *
@@ -69,10 +72,11 @@ import org.onekash.kashcal.data.db.entity.SyncLog
         Occurrence::class,
         PendingCancel::class,
         PendingOperation::class,
+        RecentChange::class,
         ScheduledReminder::class,
         SyncLog::class
     ],
-    version = 24,
+    version = 25,
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 3, to = 4)
@@ -104,6 +108,8 @@ abstract class KashCalDatabase : RoomDatabase() {
     abstract fun scheduledRemindersDao(): ScheduledRemindersDao
 
     abstract fun categoryDao(): CategoryDao
+
+    abstract fun recentChangesDao(): RecentChangesDao
 
     /**
      * Runs [block] in a transaction and returns its result.

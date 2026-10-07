@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Wala pang sync session.\n\nMag-trigger ng sync sa pamamagitan ng pag-pull down para mag-refresh sa kalendaryo view.</string>
     <string name="status_no_writable_calendars">Walang writable na kalendaryo</string>
     <string name="status_events_count">%1$d Event</string>
-    <string name="status_sync_changes">Mga Pagbabago sa Sync</string>
     <string name="status_sync_history">Kasaysayan ng Sync</string>
     <string name="status_parse_failures">Mga Parse Failure</string>
     <string name="status_error">Error</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s nagsisimula %2$s%3$s</string>
     <string name="rrule_since">%1$s · mula %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d bago</string>
-    <string name="sync_summary_updated">%1$d na-update</string>
-    <string name="sync_summary_removed">%1$d inalis</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Naka-enable ang circular scrolling</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d kaganapang inalis</item>
         <item quantity="other">%1$d kaganapang inalis</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d occurrence ang kinansela</item>
+        <item quantity="other">%1$d occurrence ang kinansela</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d update sa kalendaryo</item>
         <item quantity="other">%1$d update sa kalendaryo</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Mga kamakailang pagbabago</string>
+    <string name="recent_changes_empty">Walang kamakailang pagbabago</string>
+    <string name="recent_changes_clear_all">Burahin lahat</string>
+    <string name="recent_changes_cleared">Binura ang mga kamakailang pagbabago</string>
+    <string name="recent_changes_dismiss">Alisin</string>
+    <string name="recent_changes_moved_from">Inilipat mula %1$s</string>
+    <string name="recent_changes_time_changed">Binago ang oras</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Binago ang lokasyon</string>
+    <string name="recent_changes_title_changed">Binago ang pamagat</string>
+    <string name="recent_changes_repeat_changed">Binago ang pag-ulit</string>
+    <string name="recent_changes_cancelled">Kinansela</string>
+    <string name="cd_recent_change_new">Bagong kaganapan</string>
+    <string name="cd_recent_change_updated">Na-update</string>
+    <string name="cd_recent_change_removed">Inalis</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Araw %1$d ng %2$d</string>

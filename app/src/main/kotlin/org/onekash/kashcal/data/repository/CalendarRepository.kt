@@ -61,6 +61,9 @@ interface CalendarRepository {
     /** Stores [Calendar.autoScheduleSupported] (RFC 6638 §2); its tri-state is documented there. */
     suspend fun updateAutoScheduleSupported(calendarId: Long, supported: Boolean?)
 
+    /** Records that a pull of the calendar succeeded ([Calendar.initialPullDone]). */
+    suspend fun markInitialPullDone(calendarId: Long)
+
     /**
      * Updates color, display name and read-only flag in one statement; a null argument leaves
      * that column unchanged, so a server that returns no RFC 7986 color or omits the

@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Encara no hi ha sessions de sincronització.\n\nArrossega cap avall per actualitzar a la vista del calendari.</string>
     <string name="status_no_writable_calendars">No hi ha calendaris editables disponibles</string>
     <string name="status_events_count">%1$d esdeveniments</string>
-    <string name="status_sync_changes">Canvis de sincronització</string>
     <string name="status_sync_history">Historial de sincronització</string>
     <string name="status_parse_failures">Errors d\'anàlisi</string>
     <string name="status_error">Error</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s des de %2$s%3$s</string>
     <string name="rrule_since">%1$s · des de %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d nous</string>
-    <string name="sync_summary_updated">%1$d actualitzats</string>
-    <string name="sync_summary_removed">%1$d eliminats</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Desplaçament circular activat</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d esdeveniment eliminat</item>
         <item quantity="other">%1$d esdeveniments eliminats</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d ocurrència cancel·lada</item>
+        <item quantity="other">%1$d ocurrències cancel·lades</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d actualització de calendari</item>
         <item quantity="other">%1$d actualitzacions de calendari</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Canvis recents</string>
+    <string name="recent_changes_empty">No hi ha canvis recents</string>
+    <string name="recent_changes_clear_all">Esborra-ho tot</string>
+    <string name="recent_changes_cleared">Canvis recents esborrats</string>
+    <string name="recent_changes_dismiss">Descartar</string>
+    <string name="recent_changes_moved_from">Mogut des de %1$s</string>
+    <string name="recent_changes_time_changed">Hora canviada</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Ubicació canviada</string>
+    <string name="recent_changes_title_changed">Títol canviat</string>
+    <string name="recent_changes_repeat_changed">Repetició canviada</string>
+    <string name="recent_changes_cancelled">Cancel·lat</string>
+    <string name="cd_recent_change_new">Nou esdeveniment</string>
+    <string name="cd_recent_change_updated">Actualitzat</string>
+    <string name="cd_recent_change_removed">Eliminat</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Dia %1$d de %2$d</string>

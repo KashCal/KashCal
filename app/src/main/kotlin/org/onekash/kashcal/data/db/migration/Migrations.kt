@@ -1308,6 +1308,131 @@ object Migrations {
         }
     }
 
+    private val RECENT_CHANGES_COLUMNS = listOf(
+        "id", "calendar_id", "event_uid", "instance_ts", "event_id", "change_type", "title",
+        "start_ts", "end_ts", "is_all_day", "is_recurring", "detected_at", "changed_fields",
+        "previous_start_ts", "previous_is_all_day", "dismissed_at"
+    )
+
+    private val RECENT_CHANGES_INDEXES = listOf(
+        "index_recent_changes_calendar_id",
+        "index_recent_changes_event_id",
+        "index_recent_changes_detected_at",
+        "index_recent_changes_calendar_id_event_uid_instance_ts"
+    )
+
+    /**
+     * Migrates 24 to 25: adds the `recent_changes` log and `calendars.initial_pull_done`.
+     *
+     * Same transaction, idempotency and validation as [MIGRATION_16_17], with a shape check
+     * first, as in [MIGRATION_17_18]:
+     * - An `initial_pull_done` column of another type throws: [addColumnIfNotExists] would skip
+     *   it and Room's validation would reject the upgrade anyway.
+     * - A `recent_changes` table missing any column (a partial or hand-edited state) is dropped
+     *   and rebuilt. Its rows are a derived log, so nothing the user made is lost.
+     *
+     * The table and index SQL is copied from Room's v25 schema export. A calendar with a stored
+     * sync-token or ctag gets `initial_pull_done = 1`, so the first sync after the upgrade records
+     * its changes. Every other calendar keeps 0 and its next pull records nothing: one never
+     * pulled, and also one already pulled from a server that gives neither a sync-token nor a
+     * ctag, since nothing stored tells it apart.
+     */
+    val MIGRATION_24_25 = object : Migration(24, 25) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.beginTransaction()
+            try {
+                // 1. Pre-migration shape check
+                val flagType = columnTypeOf(db, "calendars", "initial_pull_done")
+                if (flagType != null && flagType != "INTEGER") {
+                    throw IllegalStateException(
+                        "MIGRATION_24_25 pre-migration shape check failed: " +
+                            "calendars.initial_pull_done expected INTEGER but found $flagType. " +
+                            "Reinstall the app to clear the local DB."
+                    )
+                }
+                if (tableExists(db, "recent_changes") &&
+                    !tableColumns(db, "recent_changes").containsAll(RECENT_CHANGES_COLUMNS)
+                ) {
+                    Log.w(TAG, "MIGRATION_24_25: rebuilding recent_changes with a stale shape")
+                    RECENT_CHANGES_INDEXES.forEach { dropIndexIfExists(db, it) }
+                    db.execSQL("DROP TABLE recent_changes")
+                }
+
+                // 2. Table and indexes
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS `recent_changes` (" +
+                        "`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                        "`calendar_id` INTEGER NOT NULL, `event_uid` TEXT NOT NULL, " +
+                        "`instance_ts` INTEGER NOT NULL, `event_id` INTEGER, " +
+                        "`change_type` TEXT NOT NULL, `title` TEXT NOT NULL, " +
+                        "`start_ts` INTEGER NOT NULL, `end_ts` INTEGER NOT NULL, " +
+                        "`is_all_day` INTEGER NOT NULL, `is_recurring` INTEGER NOT NULL, " +
+                        "`detected_at` INTEGER NOT NULL, " +
+                        "`changed_fields` TEXT NOT NULL DEFAULT '', " +
+                        "`previous_start_ts` INTEGER, `previous_is_all_day` INTEGER, " +
+                        "`dismissed_at` INTEGER, " +
+                        "FOREIGN KEY(`calendar_id`) REFERENCES `calendars`(`id`) " +
+                        "ON UPDATE NO ACTION ON DELETE CASCADE , " +
+                        "FOREIGN KEY(`event_id`) REFERENCES `events`(`id`) " +
+                        "ON UPDATE NO ACTION ON DELETE SET NULL )"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_recent_changes_calendar_id` " +
+                        "ON `recent_changes` (`calendar_id`)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_recent_changes_event_id` " +
+                        "ON `recent_changes` (`event_id`)"
+                )
+                db.execSQL(
+                    "CREATE INDEX IF NOT EXISTS `index_recent_changes_detected_at` " +
+                        "ON `recent_changes` (`detected_at`)"
+                )
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS " +
+                        "`index_recent_changes_calendar_id_event_uid_instance_ts` " +
+                        "ON `recent_changes` (`calendar_id`, `event_uid`, `instance_ts`)"
+                )
+
+                // 3. Column add and backfill
+                addColumnIfNotExists(
+                    db,
+                    "calendars",
+                    "initial_pull_done",
+                    "INTEGER NOT NULL DEFAULT 0"
+                )
+                db.execSQL(
+                    "UPDATE calendars SET initial_pull_done = 1 " +
+                        "WHERE sync_token IS NOT NULL OR ctag IS NOT NULL"
+                )
+
+                // 4. Validation, before setTransactionSuccessful() so a throw rolls back
+                val missing = buildList {
+                    if (!tableExists(db, "recent_changes")) {
+                        add("recent_changes (table)")
+                    } else {
+                        val columns = tableColumns(db, "recent_changes")
+                        RECENT_CHANGES_COLUMNS.filterNot { it in columns }
+                            .forEach { add("recent_changes.$it") }
+                    }
+                    RECENT_CHANGES_INDEXES.filterNot { indexExists(db, it) }.forEach { add(it) }
+                    if (!columnExists(db, "calendars", "initial_pull_done")) {
+                        add("calendars.initial_pull_done")
+                    }
+                }
+                if (missing.isNotEmpty()) {
+                    throw IllegalStateException(
+                        "MIGRATION_24_25 post-migration validation failed: missing $missing"
+                    )
+                }
+
+                db.setTransactionSuccessful()
+            } finally {
+                db.endTransaction()
+            }
+        }
+    }
+
     /** Lists every manual migration in order; add each new one here. */
     val ALL_MIGRATIONS = arrayOf(
         MIGRATION_1_2,
@@ -1331,6 +1456,7 @@ object Migrations {
         MIGRATION_20_21,
         MIGRATION_21_22,
         MIGRATION_22_23,
-        MIGRATION_23_24
+        MIGRATION_23_24,
+        MIGRATION_24_25
     )
 }

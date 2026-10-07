@@ -177,14 +177,18 @@ internal fun isUserDrivenScroll(source: NestedScrollSource): Boolean =
 
 /**
  * Whether a scroll dismisses the keyboard: only a user-driven scroll with a finger
- * pressed. When a field gains focus, the animating IME inset fires a scroll that is
- * also dispatched as [NestedScrollSource.UserInput]; it has no finger down (the tap
- * has released), so the finger check keeps the keyboard the user just raised.
+ * pressed, in a gesture that didn't start inside a text field. When a field gains focus,
+ * the animating IME inset fires a scroll that is also dispatched as
+ * [NestedScrollSource.UserInput]; it has no finger down (the tap has released), so the
+ * finger check keeps the keyboard the user just raised. A drag that starts in a field is
+ * the user selecting or editing text, and a slip past touch slop there scrolls the form
+ * (#384), so it never dismisses; [textFieldGestureMarker] marks those fields.
  */
 internal fun shouldDismissKeyboardOnScroll(
     source: NestedScrollSource,
     isFingerDown: Boolean,
-): Boolean = isUserDrivenScroll(source) && isFingerDown
+    startedInTextField: Boolean,
+): Boolean = isUserDrivenScroll(source) && isFingerDown && !startedInTextField
 
 /**
  * Space above and below the section dividers, so it doesn't depend on which row
@@ -1183,8 +1187,11 @@ fun EventFormContent(
     val titleFocusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    // Whether a finger is pressed on the form; see [shouldDismissKeyboardOnScroll].
+    // Whether a finger is pressed on the form, and whether the current gesture's first
+    // press landed in a text field; see [shouldDismissKeyboardOnScroll].
     val isFingerDown = remember { mutableStateOf(false) }
+    val gestureStartedInTextField = remember { mutableStateOf(false) }
+    val fieldGestureMarker = remember { textFieldGestureMarker(gestureStartedInTextField) }
 
     // Focus the title and raise the keyboard once, when a new blank event opens.
     // Skipped for edits, for events that open with a title (duplicate, share, Quick
@@ -1204,11 +1211,16 @@ fun EventFormContent(
 
     // A user swipe clears focus and lowers the keyboard so the fields below aren't
     // hidden behind it; [shouldDismissKeyboardOnScroll] tells a swipe from the scroll
-    // the IME inset fires when a field gains focus.
+    // the IME inset fires when a field gains focus and from a drag inside a field.
     val dismissKeyboardOnUserScroll = remember(focusManager, keyboardController) {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (shouldDismissKeyboardOnScroll(source, isFingerDown.value)) {
+                if (shouldDismissKeyboardOnScroll(
+                        source,
+                        isFingerDown.value,
+                        gestureStartedInTextField.value,
+                    )
+                ) {
                     focusManager.clearFocus()
                     keyboardController?.hide()
                 }
@@ -1822,17 +1834,23 @@ fun EventFormContent(
                 CircularProgressIndicator()
             }
         } else {
+            CompositionLocalProvider(LocalTextFieldGestureMarker provides fieldGestureMarker) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
                     // Observes pointer presses without consuming them, for the
-                    // dismiss-on-scroll check.
+                    // dismiss-on-scroll check. A gesture's first press clears the
+                    // text-field flag before a marked descendant field sets it.
                     .pointerInput(Unit) {
                         awaitPointerEventScope {
                             while (true) {
                                 val event = awaitPointerEvent(PointerEventPass.Initial)
-                                isFingerDown.value = event.changes.any { it.pressed }
+                                val pressed = event.changes.any { it.pressed }
+                                if (pressed && !isFingerDown.value) {
+                                    gestureStartedInTextField.value = false
+                                }
+                                isFingerDown.value = pressed
                             }
                         }
                     }
@@ -1910,7 +1928,7 @@ fun EventFormContent(
                             }
                         },
                         placeholder = { Text(stringResource(R.string.label_event_title), style = MaterialTheme.typography.headlineSmall) },
-                        modifier = Modifier
+                        modifier = fieldGestureMarker
                             .fillMaxWidth()
                             .testTag(TAG_TITLE_FIELD)
                             .focusRequester(titleFocusRequester)
@@ -2039,7 +2057,7 @@ fun EventFormContent(
                                 }
                             },
                             placeholder = { Text(stringResource(R.string.label_location_hint)) },
-                            modifier = Modifier
+                            modifier = fieldGestureMarker
                                 .fillMaxWidth()
                                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable),
                             // Wraps a long address to a second line.
@@ -2364,7 +2382,7 @@ fun EventFormContent(
                         value = state.description,
                         onValueChange = { state = state.copy(description = it) },
                         placeholder = { Text(stringResource(R.string.label_notes)) },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = fieldGestureMarker.fillMaxWidth(),
                         minLines = 2,
                         maxLines = 4,
                         enabled = !isReadOnly,
@@ -2754,6 +2772,7 @@ fun EventFormContent(
                 }
 
                 Spacer(modifier = Modifier.height(32.dp))
+            }
             }
 
             // Sticky bottom Save. Its own top divider ends the scroll content, so

@@ -1,34 +1,51 @@
 package org.onekash.kashcal.ui.components
 
+import android.content.res.Resources
+import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
+import org.junit.runner.RunWith
+import org.onekash.kashcal.domain.changes.RecentChangeEntry
 import org.onekash.kashcal.sync.model.ChangeType
-import org.onekash.kashcal.sync.model.SyncChange
+import org.robolectric.RobolectricTestRunner
 
 /**
- * Tests the English [generateSnackbarMessage] (the overload without resources): null for no
- * changes, the title for one new event (cut at 30 characters, special and emoji characters
- * kept), a count for more than one of a kind, singular for one update or deletion, and a total
- * for any mix.
+ * Tests [generateSnackbarMessage] over the recorded Recent changes entries, with the app's
+ * English resources: null for none, the title for one new event (cut at 30 characters, special
+ * and emoji characters kept), a count for more than one of a kind, singular for one update or
+ * deletion, cancelled occurrences told apart from removed events, and a total for any mix.
  */
+@RunWith(RobolectricTestRunner::class)
 class GenerateSnackbarMessageTest {
+
+    private val resources: Resources =
+        ApplicationProvider.getApplicationContext<android.content.Context>().resources
+
+    private fun generateSnackbarMessage(changes: List<RecentChangeEntry>) =
+        generateSnackbarMessage(changes, resources)
 
     private fun createChange(
         type: ChangeType,
         title: String = "Test Event",
         eventId: Long? = 1L,
         isAllDay: Boolean = false,
-        isRecurring: Boolean = false
-    ) = SyncChange(
-        type = type,
+        isRecurring: Boolean = false,
+        instanceTs: Long = 0
+    ) = RecentChangeEntry(
+        calendarId = 1L,
+        eventUid = title,
+        instanceTs = instanceTs,
         eventId = eventId,
-        eventTitle = title,
-        eventStartTs = System.currentTimeMillis(),
+        type = type,
+        title = title,
+        startTs = System.currentTimeMillis(),
+        endTs = System.currentTimeMillis(),
         isAllDay = isAllDay,
         isRecurring = isRecurring,
-        calendarName = "Test Calendar",
-        calendarColor = 0xFF2196F3.toInt()
+        changedFields = emptySet(),
+        previousStartTs = null,
+        previousIsAllDay = null
     )
 
     @Test
@@ -139,6 +156,26 @@ class GenerateSnackbarMessageTest {
         )
         val result = generateSnackbarMessage(changes)
         assertEquals("2 calendar updates", result)
+    }
+
+    private fun cancelled(title: String = "Standup", instance: Long = 1_800_000_000_000L) =
+        createChange(ChangeType.DELETED, title, eventId = null, isRecurring = true, instanceTs = instance)
+
+    @Test
+    fun `one cancelled occurrence says cancelled, as the sheet does`() {
+        assertEquals("1 occurrence cancelled", generateSnackbarMessage(listOf(cancelled())))
+    }
+
+    @Test
+    fun `several cancelled occurrences show a count`() {
+        val changes = listOf(cancelled(instance = 1L), cancelled(instance = 2L), cancelled("Gym", 3L))
+        assertEquals("3 occurrences cancelled", generateSnackbarMessage(changes))
+    }
+
+    @Test
+    fun `cancellations with removed events show the total`() {
+        val changes = listOf(cancelled(), createChange(ChangeType.DELETED, "Old event", eventId = null))
+        assertEquals("2 calendar updates", generateSnackbarMessage(changes))
     }
 
     @Test

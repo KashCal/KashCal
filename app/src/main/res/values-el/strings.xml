@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Δεν υπάρχουν ακόμα συνεδρίες συγχρονισμού.\n\nΣύρετε προς τα κάτω στην προβολή ημερολογίου για να ξεκινήσετε συγχρονισμό.</string>
     <string name="status_no_writable_calendars">Δεν υπάρχουν διαθέσιμα εγγράψιμα ημερολόγια</string>
     <string name="status_events_count">%1$d Συμβάντα</string>
-    <string name="status_sync_changes">Αλλαγές συγχρονισμού</string>
     <string name="status_sync_history">Ιστορικό συγχρονισμού</string>
     <string name="status_parse_failures">Αποτυχίες ανάλυσης</string>
     <string name="status_error">Σφάλμα</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s ξεκινώντας από %2$s%3$s</string>
     <string name="rrule_since">%1$s · από %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d νέα</string>
-    <string name="sync_summary_updated">%1$d ενημερωμένα</string>
-    <string name="sync_summary_removed">%1$d αφαιρέθηκαν</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Κυκλική κύλιση ενεργοποιημένη</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d συμβάν αφαιρέθηκε</item>
         <item quantity="other">%1$d συμβάντα αφαιρέθηκαν</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d εμφάνιση ακυρώθηκε</item>
+        <item quantity="other">%1$d εμφανίσεις ακυρώθηκαν</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d ενημέρωση ημερολογίου</item>
         <item quantity="other">%1$d ενημερώσεις ημερολογίου</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Πρόσφατες αλλαγές</string>
+    <string name="recent_changes_empty">Δεν υπάρχουν πρόσφατες αλλαγές</string>
+    <string name="recent_changes_clear_all">Εκκαθάριση όλων</string>
+    <string name="recent_changes_cleared">Οι πρόσφατες αλλαγές εκκαθαρίστηκαν</string>
+    <string name="recent_changes_dismiss">Παράβλεψη</string>
+    <string name="recent_changes_moved_from">Μετακινήθηκε από %1$s</string>
+    <string name="recent_changes_time_changed">Η ώρα άλλαξε</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Η τοποθεσία άλλαξε</string>
+    <string name="recent_changes_title_changed">Ο τίτλος άλλαξε</string>
+    <string name="recent_changes_repeat_changed">Η επανάληψη άλλαξε</string>
+    <string name="recent_changes_cancelled">Ακυρώθηκε</string>
+    <string name="cd_recent_change_new">Νέο συμβάν</string>
+    <string name="cd_recent_change_updated">Ενημερώθηκε</string>
+    <string name="cd_recent_change_removed">Αφαιρέθηκε</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Ημέρα %1$d από %2$d</string>

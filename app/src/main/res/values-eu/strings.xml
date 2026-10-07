@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Oraindik sinkronizazio-saiorik ez.\n\nArrastatu behera egutegiaren ikuspegian eguneratzeko.</string>
     <string name="status_no_writable_calendars">Ez dago egutegi idazgarririk</string>
     <string name="status_events_count">%1$d gertaera</string>
-    <string name="status_sync_changes">Sinkronizazio-aldaketak</string>
     <string name="status_sync_history">Sinkronizazio-historia</string>
     <string name="status_parse_failures">Analisi-erroreak</string>
     <string name="status_error">Errorea</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s %2$s-(e)tik%3$s</string>
     <string name="rrule_since">%1$s · %2$s-(e)tik</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d berri</string>
-    <string name="sync_summary_updated">%1$d eguneratuta</string>
-    <string name="sync_summary_removed">%1$d kenduta</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Korrimen zirkularra gaituta</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d gertaera kenduta</item>
         <item quantity="other">%1$d gertaera kenduta</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d agerpen bertan behera utzita</item>
+        <item quantity="other">%1$d agerpen bertan behera utzita</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d egutegi-eguneratze</item>
         <item quantity="other">%1$d egutegi-eguneratze</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Azken aldaketak</string>
+    <string name="recent_changes_empty">Ez dago azken aldaketarik</string>
+    <string name="recent_changes_clear_all">Garbitu dena</string>
+    <string name="recent_changes_cleared">Azken aldaketak garbitu dira</string>
+    <string name="recent_changes_dismiss">Baztertu</string>
+    <string name="recent_changes_moved_from">Lehen: %1$s</string>
+    <string name="recent_changes_time_changed">Ordua aldatu da</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Kokapena aldatu da</string>
+    <string name="recent_changes_title_changed">Izenburua aldatu da</string>
+    <string name="recent_changes_repeat_changed">Errepikapena aldatu da</string>
+    <string name="recent_changes_cancelled">Bertan behera utzita</string>
+    <string name="cd_recent_change_new">Gertaera berria</string>
+    <string name="cd_recent_change_updated">Eguneratuta</string>
+    <string name="cd_recent_change_removed">Kenduta</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">%2$d/%1$d eguna</string>

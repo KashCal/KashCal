@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Chưa có phiên đồng bộ nào.\n\nKéo xuống để làm mới trên màn hình lịch để bắt đầu đồng bộ.</string>
     <string name="status_no_writable_calendars">Không có lịch nào cho phép ghi</string>
     <string name="status_events_count">%1$d sự kiện</string>
-    <string name="status_sync_changes">Thay đổi từ đồng bộ</string>
     <string name="status_sync_history">Lịch sử đồng bộ</string>
     <string name="status_parse_failures">Lỗi phân tích</string>
     <string name="status_error">Lỗi</string>
@@ -931,11 +930,6 @@
     <string name="rrule_starting">%1$s bắt đầu %2$s%3$s</string>
     <string name="rrule_since">%1$s · kể từ %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d mới</string>
-    <string name="sync_summary_updated">%1$d đã cập nhật</string>
-    <string name="sync_summary_removed">%1$d đã xóa</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Đã bật cuộn vòng</string>
 
@@ -1029,9 +1023,29 @@
     <plurals name="sync_snackbar_events_removed">
         <item quantity="other">%1$d sự kiện đã xóa</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="other">Đã hủy %1$d lần lặp lại</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="other">%1$d cập nhật lịch</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Thay đổi gần đây</string>
+    <string name="recent_changes_empty">Không có thay đổi gần đây</string>
+    <string name="recent_changes_clear_all">Xóa tất cả</string>
+    <string name="recent_changes_cleared">Đã xóa thay đổi gần đây</string>
+    <string name="recent_changes_dismiss">Bỏ qua</string>
+    <string name="recent_changes_moved_from">Đã dời từ %1$s</string>
+    <string name="recent_changes_time_changed">Đã đổi thời gian</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Đã đổi địa điểm</string>
+    <string name="recent_changes_title_changed">Đã đổi tên</string>
+    <string name="recent_changes_repeat_changed">Đã đổi lặp lại</string>
+    <string name="recent_changes_cancelled">Đã hủy</string>
+    <string name="cd_recent_change_new">Sự kiện mới</string>
+    <string name="cd_recent_change_updated">Đã cập nhật</string>
+    <string name="cd_recent_change_removed">Đã xóa</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Ngày %1$d/%2$d</string>

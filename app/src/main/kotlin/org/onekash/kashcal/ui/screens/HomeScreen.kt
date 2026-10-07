@@ -250,6 +250,8 @@ fun HomeScreen(
     pendingInvitesCount: Int = 0,
     pendingInvitations: List<org.onekash.kashcal.domain.reader.PendingInvitation> = emptyList(),
     onOpenInvitationInbox: () -> Unit = {},
+    // Recent changes: the sheet itself is hosted by MainActivity
+    onOpenRecentChanges: () -> Unit = {},
     onDismissInvitationInbox: () -> Unit = {},
     onRsvpFromInbox: (Long, org.onekash.kashcal.ui.components.attendees.AttendeeStatus) -> Unit = { _, _ -> },
     // Drawer
@@ -1170,6 +1172,7 @@ fun HomeScreen(
                 // and dismissing the destination returns to the hub. Only Jump to date
                 // changes the calendar; the hub closes when a date is picked (above).
                 onInvitesClick = onOpenInvitationInbox,
+                onRecentChangesClick = onOpenRecentChanges,
                 onJumpToDateClick = { showJumpToDatePicker = true },
                 onShareAvailabilityClick = onShareAvailabilityClick,
                 onTagsClick = onTagsClick,

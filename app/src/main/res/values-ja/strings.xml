@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">同期セッションはまだありません。\n\nカレンダー画面で下にスワイプして同期を開始してください。</string>
     <string name="status_no_writable_calendars">書き込み可能なカレンダーがありません</string>
     <string name="status_events_count">%1$d件の予定</string>
-    <string name="status_sync_changes">同期の変更</string>
     <string name="status_sync_history">同期履歴</string>
     <string name="status_parse_failures">解析エラー</string>
     <string name="status_error">エラー</string>
@@ -931,11 +930,6 @@
     <string name="rrule_starting">%1$s %2$s開始%3$s</string>
     <string name="rrule_since">%1$s · %2$s以降</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d件の新規</string>
-    <string name="sync_summary_updated">%1$d件の更新</string>
-    <string name="sync_summary_removed">%1$d件の削除</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">循環スクロールが有効</string>
 
@@ -1029,9 +1023,29 @@
     <plurals name="sync_snackbar_events_removed">
         <item quantity="other">%1$d件の予定を削除</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="other">%1$d回分の予定をキャンセル</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="other">%1$d件のカレンダー更新</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">最近の変更</string>
+    <string name="recent_changes_empty">最近の変更はありません</string>
+    <string name="recent_changes_clear_all">すべて消去</string>
+    <string name="recent_changes_cleared">最近の変更を消去しました</string>
+    <string name="recent_changes_dismiss">閉じる</string>
+    <string name="recent_changes_moved_from">%1$s から移動</string>
+    <string name="recent_changes_time_changed">時間が変更されました</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">場所が変更されました</string>
+    <string name="recent_changes_title_changed">タイトルが変更されました</string>
+    <string name="recent_changes_repeat_changed">繰り返しが変更されました</string>
+    <string name="recent_changes_cancelled">中止</string>
+    <string name="cd_recent_change_new">新しい予定</string>
+    <string name="cd_recent_change_updated">更新</string>
+    <string name="cd_recent_change_removed">削除</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">%2$d日中%1$d日目</string>

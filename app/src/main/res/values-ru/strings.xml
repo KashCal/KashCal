@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Нет сеансов синхронизации.\n\nПотяните вниз на экране календаря, чтобы запустить синхронизацию.</string>
     <string name="status_no_writable_calendars">Нет доступных для записи календарей</string>
     <string name="status_events_count">Событий: %1$d</string>
-    <string name="status_sync_changes">Изменения синхронизации</string>
     <string name="status_sync_history">История синхронизации</string>
     <string name="status_parse_failures">Ошибки разбора</string>
     <string name="status_error">Ошибка</string>
@@ -1048,11 +1047,6 @@
     <string name="rrule_starting">%1$s начиная с %2$s%3$s</string>
     <string name="rrule_since">%1$s · с %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d новых</string>
-    <string name="sync_summary_updated">%1$d обновлено</string>
-    <string name="sync_summary_removed">%1$d удалено</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Циклическая прокрутка включена</string>
 
@@ -1170,12 +1164,35 @@
         <item quantity="many">%1$d событий удалено</item>
         <item quantity="other">%1$d событий удалено</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d повторение отменено</item>
+        <item quantity="few">%1$d повторения отменены</item>
+        <item quantity="many">%1$d повторений отменено</item>
+        <item quantity="other">%1$d повторений отменено</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d обновление календаря</item>
         <item quantity="few">%1$d обновления календаря</item>
         <item quantity="many">%1$d обновлений календаря</item>
         <item quantity="other">%1$d обновлений календаря</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Последние изменения</string>
+    <string name="recent_changes_empty">Нет последних изменений</string>
+    <string name="recent_changes_clear_all">Очистить всё</string>
+    <string name="recent_changes_cleared">Последние изменения очищены</string>
+    <string name="recent_changes_dismiss">Скрыть</string>
+    <string name="recent_changes_moved_from">Перенесено с %1$s</string>
+    <string name="recent_changes_time_changed">Время изменено</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Место изменено</string>
+    <string name="recent_changes_title_changed">Название изменено</string>
+    <string name="recent_changes_repeat_changed">Повторение изменено</string>
+    <string name="recent_changes_cancelled">Отменено</string>
+    <string name="cd_recent_change_new">Новое событие</string>
+    <string name="cd_recent_change_updated">Обновлено</string>
+    <string name="cd_recent_change_removed">Удалено</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">День %1$d из %2$d</string>

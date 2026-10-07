@@ -70,7 +70,7 @@ import org.onekash.kashcal.ui.components.OnboardingBanner
 import org.onekash.kashcal.ui.components.WhatsNewBanner
 import org.onekash.kashcal.ui.components.QuickAddDialog
 import org.onekash.kashcal.ui.components.ShareAvailabilitySheet
-import org.onekash.kashcal.ui.components.SyncChangesBottomSheet
+import org.onekash.kashcal.ui.components.RecentChangesSheet
 import org.onekash.kashcal.ui.permission.AppPermissionKind
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager
 import org.onekash.kashcal.ui.permission.NotificationPermissionManager.PermissionState
@@ -732,6 +732,7 @@ class MainActivity : FragmentActivity() {
                     pendingInvitesCount = pendingInvitesCount,
                     pendingInvitations = pendingInvitations,
                     onOpenInvitationInbox = { homeViewModel.openInvitationInbox() },
+                    onOpenRecentChanges = { homeViewModel.openRecentChanges() },
                     onDismissInvitationInbox = { homeViewModel.dismissInvitationInbox() },
                     onRsvpFromInbox = { eventId, status -> homeViewModel.replyRsvp(eventId, status) }
                 )
@@ -1597,18 +1598,28 @@ class MainActivity : FragmentActivity() {
                     )
                 }
 
-                // Sync Changes Bottom Sheet
-                if (uiState.showSyncChangesSheet) {
-                    SyncChangesBottomSheet(
-                        changes = uiState.syncChanges,
-                        onDismiss = { homeViewModel.dismissSyncChangesSheet() },
-                        onEventClick = { eventId ->
-                            homeViewModel.dismissSyncChangesSheet()
+                // Recent changes sheet
+                if (uiState.isRecentChangesOpen) {
+                    val is24Hour = android.text.format.DateFormat.is24HourFormat(this@MainActivity)
+                    val recentTimePattern = remember(uiState.timeFormat, is24Hour) {
+                        DateTimeUtils.getTimePattern(uiState.timeFormat, is24Hour)
+                    }
+                    RecentChangesSheet(
+                        items = uiState.recentChanges,
+                        timePattern = recentTimePattern,
+                        clearedIds = uiState.recentChangesClearedIds,
+                        onDismissRow = { homeViewModel.dismissRecentChange(it) },
+                        onClearAll = { homeViewModel.clearAllRecentChanges() },
+                        onUndoClear = { homeViewModel.undoClearRecentChanges() },
+                        onUndoShown = { homeViewModel.onRecentChangesUndoShown() },
+                        onDismiss = { homeViewModel.closeRecentChanges() },
+                        onOpen = { item ->
                             coroutineScope.launch {
-                                val event = homeViewModel.getEventForEdit(eventId)
-                                if (event != null) {
-                                    quickViewEvent = event
-                                    quickViewOccurrenceTs = null
+                                val target = homeViewModel.resolveRecentChangeTarget(item)
+                                homeViewModel.closeRecentChanges()
+                                if (target != null) {
+                                    quickViewEvent = target.event
+                                    quickViewOccurrenceTs = target.occurrenceTs
                                     showQuickViewSheet = true
                                 }
                             }

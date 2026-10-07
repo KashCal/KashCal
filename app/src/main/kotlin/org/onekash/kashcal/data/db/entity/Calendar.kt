@@ -104,5 +104,14 @@ data class Calendar(
      * at runtime.
      */
     @ColumnInfo(name = "auto_schedule_supported")
-    val autoScheduleSupported: Boolean? = null
+    val autoScheduleSupported: Boolean? = null,
+
+    /**
+     * Whether a pull of this calendar has succeeded once. The first pull lists every event the
+     * server has, so its changes stay out of Recent changes; PullStrategy sets this after it.
+     * The upgrade to schema 25 sets it only where a sync-token or ctag was stored
+     * ([org.onekash.kashcal.data.db.migration.Migrations.MIGRATION_24_25]).
+     */
+    @ColumnInfo(name = "initial_pull_done", defaultValue = "0")
+    val initialPullDone: Boolean = false
 )

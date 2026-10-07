@@ -22,10 +22,10 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 /**
- * Runs the manual KashCalDatabase migrations from 1→2 to 22→23 against an in-memory SQLite
+ * Runs the manual KashCalDatabase migrations from 1→2 to 24→25 against an in-memory SQLite
  * database (through Robolectric) and checks tables, columns, indexes, triggers and data. The 3→4
- * AutoMigration and 23→24 aren't run here; [MigrationHashValidationTest] and the Room test in
- * [MigrationGoldenTest] run them.
+ * AutoMigration isn't run here; [MigrationHashValidationTest] and the Room test in
+ * [MigrationGoldenTest] run it.
  *
  * Each test builds the schema the migration needs, runs `migrate(db)` and inspects the result
  * through `sqlite_master`, PRAGMA and queries. The registry tests at the end check
@@ -1952,11 +1952,219 @@ class MigrationTest {
         assertTrue(tableExists("attendees"))
     }
 
+    // ==================== Migration 24 to 25 ====================
+
+    private fun migrateUpToV24() {
+        migrateUpToV22()
+        Migrations.MIGRATION_22_23.migrate(db)
+        Migrations.MIGRATION_23_24.migrate(db)
+    }
+
+    private fun intColumn(sql: String): Int =
+        db.query(sql).use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            cursor.getInt(0)
+        }
+
+    private fun seedV24Calendars() {
+        db.execSQL("INSERT INTO accounts (id, provider, email, created_at) VALUES (1, 'CALDAV', 'a@example.test', 0)")
+        db.execSQL(
+            "INSERT INTO calendars (id, account_id, caldav_url, display_name, color, sync_token, ctag) " +
+                "VALUES (1, 1, 'https://x/token/', 'Token', 11, 'tok', NULL)"
+        )
+        db.execSQL(
+            "INSERT INTO calendars (id, account_id, caldav_url, display_name, color, sync_token, ctag) " +
+                "VALUES (2, 1, 'https://x/ctag/', 'Ctag', 22, NULL, 'ct')"
+        )
+        db.execSQL(
+            "INSERT INTO calendars (id, account_id, caldav_url, display_name, color, sync_token, ctag) " +
+                "VALUES (3, 1, 'https://x/never/', 'Never', 33, NULL, NULL)"
+        )
+    }
+
+    private fun insertRecentChange(id: Long, calendarId: Long, uid: String, instanceTs: Long, eventId: Long?) {
+        db.execSQL(
+            "INSERT INTO recent_changes (id, calendar_id, event_uid, instance_ts, event_id, change_type, " +
+                "title, start_ts, end_ts, is_all_day, is_recurring, detected_at) " +
+                "VALUES ($id, $calendarId, '$uid', $instanceTs, ${eventId ?: "NULL"}, 'NEW', 'T', 0, 0, 0, 0, 0)"
+        )
+    }
+
+    @Test
+    fun `migration 24 to 25 creates recent_changes with every column and index`() {
+        migrateUpToV24()
+
+        Migrations.MIGRATION_24_25.migrate(db)
+
+        assertTrue(tableExists("recent_changes"))
+        for (col in listOf(
+            "id", "calendar_id", "event_uid", "instance_ts", "event_id", "change_type", "title",
+            "start_ts", "end_ts", "is_all_day", "is_recurring", "detected_at", "changed_fields",
+            "previous_start_ts", "previous_is_all_day", "dismissed_at"
+        )) {
+            assertTrue("recent_changes.$col", columnExists("recent_changes", col))
+        }
+        for (index in listOf(
+            "index_recent_changes_calendar_id",
+            "index_recent_changes_event_id",
+            "index_recent_changes_detected_at",
+            "index_recent_changes_calendar_id_event_uid_instance_ts"
+        )) {
+            assertTrue(index, indexExists(index))
+        }
+        assertTrue(columnExists("calendars", "initial_pull_done"))
+    }
+
+    @Test
+    fun `migration 24 to 25 marks only already-pulled calendars and keeps their other columns`() {
+        migrateUpToV24()
+        seedV24Calendars()
+
+        Migrations.MIGRATION_24_25.migrate(db)
+
+        db.query("SELECT id, initial_pull_done, display_name, color, sync_token, ctag FROM calendars ORDER BY id").use { c ->
+            assertTrue(c.moveToNext())
+            assertEquals(1, c.getInt(1)); assertEquals("Token", c.getString(2)); assertEquals(11, c.getInt(3))
+            assertEquals("tok", c.getString(4))
+            assertTrue(c.moveToNext())
+            assertEquals(1, c.getInt(1)); assertEquals("Ctag", c.getString(2)); assertEquals("ct", c.getString(5))
+            assertTrue(c.moveToNext())
+            assertEquals("a calendar never pulled stays 0", 0, c.getInt(1))
+            assertEquals("Never", c.getString(2))
+        }
+    }
+
+    @Test
+    fun `migration 24 to 25 keeps existing events`() {
+        migrateUpToV24()
+        seedV24Calendars()
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) " +
+                "VALUES (9, 'keep', 1, 'Kept', 100, 200, 'UTC', 0, 0, 0)"
+        )
+
+        Migrations.MIGRATION_24_25.migrate(db)
+
+        db.query("SELECT uid, title, start_ts, end_ts FROM events WHERE id = 9").use { c ->
+            assertTrue(c.moveToFirst())
+            assertEquals("keep", c.getString(0)); assertEquals("Kept", c.getString(1))
+            assertEquals(100L, c.getLong(2)); assertEquals(200L, c.getLong(3))
+        }
+    }
+
+    @Test
+    fun `migration 24 to 25 is idempotent`() {
+        migrateUpToV24()
+        seedV24Calendars()
+
+        Migrations.MIGRATION_24_25.migrate(db)
+        insertRecentChange(1, 1, "u", 0, null)
+        Migrations.MIGRATION_24_25.migrate(db)
+
+        assertTrue(tableExists("recent_changes"))
+        assertEquals("a re-run keeps the rows of a well-formed table", 1, intColumn("SELECT COUNT(*) FROM recent_changes"))
+        assertEquals(2, intColumn("SELECT COUNT(*) FROM calendars WHERE initial_pull_done = 1"))
+    }
+
+    @Test
+    fun `migration 24 to 25 rebuilds a recent_changes table with a stale shape`() {
+        migrateUpToV24()
+        db.execSQL("CREATE TABLE recent_changes (id INTEGER PRIMARY KEY, calendar_id INTEGER, title TEXT)")
+        db.execSQL("CREATE INDEX index_recent_changes_calendar_id ON recent_changes (calendar_id)")
+
+        Migrations.MIGRATION_24_25.migrate(db)
+
+        assertTrue(columnExists("recent_changes", "event_uid"))
+        assertTrue(columnExists("recent_changes", "dismissed_at"))
+        assertTrue(indexExists("index_recent_changes_calendar_id_event_uid_instance_ts"))
+    }
+
+    @Test
+    fun `migration 24 to 25 skips an existing flag column and still backfills`() {
+        migrateUpToV24()
+        seedV24Calendars()
+        db.execSQL("ALTER TABLE calendars ADD COLUMN initial_pull_done INTEGER NOT NULL DEFAULT 0")
+
+        Migrations.MIGRATION_24_25.migrate(db)
+
+        assertEquals(2, intColumn("SELECT COUNT(*) FROM calendars WHERE initial_pull_done = 1"))
+    }
+
+    @Test
+    fun `migration 24 to 25 refuses a mistyped flag column and leaves the v24 schema`() {
+        migrateUpToV24()
+        db.execSQL("ALTER TABLE calendars ADD COLUMN initial_pull_done TEXT")
+
+        var threw = false
+        try {
+            Migrations.MIGRATION_24_25.migrate(db)
+        } catch (e: IllegalStateException) {
+            threw = true
+        }
+
+        assertTrue("a TEXT initial_pull_done must fail the shape check", threw)
+        // The shape check throws before any table is created.
+        assertFalse("no recent_changes table is created", tableExists("recent_changes"))
+    }
+
+    @Test
+    fun `migration 24 to 25 cascades on calendar delete and nulls event_id on event delete`() {
+        migrateUpToV24()
+        seedV24Calendars()
+        Migrations.MIGRATION_24_25.migrate(db)
+        db.execSQL("PRAGMA foreign_keys = ON")
+        db.execSQL(
+            "INSERT INTO events (id, uid, calendar_id, title, start_ts, end_ts, timezone, dtstamp, created_at, updated_at) " +
+                "VALUES (7, 'u7', 1, 'E', 0, 0, 'UTC', 0, 0, 0)"
+        )
+        insertRecentChange(1, 1, "u7", 0, 7)
+        insertRecentChange(2, 2, "u8", 0, null)
+
+        db.execSQL("DELETE FROM events WHERE id = 7")
+        db.query("SELECT event_id FROM recent_changes WHERE id = 1").use { c ->
+            assertTrue(c.moveToFirst())
+            assertTrue("deleting the event keeps the row with event_id null", c.isNull(0))
+        }
+
+        db.execSQL("DELETE FROM calendars WHERE id = 2")
+        assertEquals(0, intColumn("SELECT COUNT(*) FROM recent_changes WHERE id = 2"))
+        assertEquals(1, intColumn("SELECT COUNT(*) FROM recent_changes WHERE id = 1"))
+    }
+
+    @Test
+    fun `migration 24 to 25 enforces one row per calendar, uid and instance`() {
+        migrateUpToV24()
+        seedV24Calendars()
+        Migrations.MIGRATION_24_25.migrate(db)
+        insertRecentChange(1, 1, "same", 0, null)
+        insertRecentChange(2, 2, "same", 0, null) // same UID in another calendar is allowed
+        insertRecentChange(3, 1, "same", 1000, null) // a changed occurrence of it is allowed
+
+        var threw = false
+        try {
+            insertRecentChange(4, 1, "same", 0, null)
+        } catch (e: SQLiteConstraintException) {
+            threw = true
+        }
+        assertTrue("a duplicate (calendar_id, event_uid, instance_ts) must be refused", threw)
+    }
+
+    @Test
+    fun `full migration chain 1 to 25 executes without error`() {
+        migrateUpToV24()
+
+        Migrations.MIGRATION_24_25.migrate(db)
+
+        assertTrue(tableExists("recent_changes"))
+        assertTrue(tableExists("address_books"))
+        assertTrue(columnExists("accounts", "contact_sync_enabled"))
+    }
+
     // ==================== Migration Chain/Registry Tests ====================
 
     @Test
     fun `all migrations array contains expected migrations`() {
-        assertEquals(22, Migrations.ALL_MIGRATIONS.size)
+        assertEquals(23, Migrations.ALL_MIGRATIONS.size)
     }
 
     @Test
@@ -2007,12 +2215,14 @@ class MigrationTest {
         assertEquals(23, migrations[20].endVersion)
         assertEquals(23, migrations[21].startVersion)
         assertEquals(24, migrations[21].endVersion)
+        assertEquals(24, migrations[22].startVersion)
+        assertEquals(25, migrations[22].endVersion)
     }
 
     @Test
     fun `migration versions form valid chain with gaps`() {
         val migrations = Migrations.ALL_MIGRATIONS.toList()
-        // Manual: 1→2, 2→3, then 4→5 through 23→24 (3→4 is the AutoMigration)
+        // Manual: 1→2, 2→3, then 4→5 through 24→25 (3→4 is the AutoMigration)
         assertTrue(migrations[0].endVersion == migrations[1].startVersion) // 2
         assertTrue(migrations[2].startVersion == 4) // gap at 3→4
         for (i in 2 until migrations.size - 1) {

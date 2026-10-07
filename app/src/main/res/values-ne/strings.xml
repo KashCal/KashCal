@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">अहिलेसम्म कुनै सिंक सत्र छैन।\n\nक्यालेन्डर दृश्यमा तल तानेर रिफ्रेस गर्नुहोस्।</string>
     <string name="status_no_writable_calendars">लेख्न मिल्ने क्यालेन्डर उपलब्ध छैन</string>
     <string name="status_events_count">%1$d कार्यक्रम</string>
-    <string name="status_sync_changes">सिंक परिवर्तनहरू</string>
     <string name="status_sync_history">सिंक इतिहास</string>
     <string name="status_parse_failures">पार्स विफलताहरू</string>
     <string name="status_error">त्रुटि</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s %2$s देखि सुरु%3$s</string>
     <string name="rrule_since">%1$s · %2$s देखि</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d नयाँ</string>
-    <string name="sync_summary_updated">%1$d अद्यावधिक</string>
-    <string name="sync_summary_removed">%1$d हटाइयो</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">वृत्ताकार स्क्रोलिङ सक्षम</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d कार्यक्रम हटाइयो</item>
         <item quantity="other">%1$d कार्यक्रमहरू हटाइयो</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d घटना रद्द गरियो</item>
+        <item quantity="other">%1$d घटनाहरू रद्द गरिए</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d क्यालेन्डर अद्यावधिक</item>
         <item quantity="other">%1$d क्यालेन्डर अद्यावधिकहरू</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">हालका परिवर्तनहरू</string>
+    <string name="recent_changes_empty">हालका कुनै परिवर्तन छैनन्</string>
+    <string name="recent_changes_clear_all">सबै खाली गर्नुहोस्</string>
+    <string name="recent_changes_cleared">हालका परिवर्तनहरू खाली गरियो</string>
+    <string name="recent_changes_dismiss">हटाउनुहोस्</string>
+    <string name="recent_changes_moved_from">%1$s बाट सारियो</string>
+    <string name="recent_changes_time_changed">समय परिवर्तन गरियो</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">स्थान परिवर्तन गरियो</string>
+    <string name="recent_changes_title_changed">शीर्षक परिवर्तन गरियो</string>
+    <string name="recent_changes_repeat_changed">दोहोर्याइ परिवर्तन गरियो</string>
+    <string name="recent_changes_cancelled">रद्द गरियो</string>
+    <string name="cd_recent_change_new">नयाँ कार्यक्रम</string>
+    <string name="cd_recent_change_updated">अद्यावधिक गरियो</string>
+    <string name="cd_recent_change_removed">हटाइयो</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">दिन %1$d / %2$d</string>

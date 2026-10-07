@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">No sync sessions yet.\n\nTrigger a sync by pulling down to refresh on the calendar view.</string>
     <string name="status_no_writable_calendars">No writable calendars available</string>
     <string name="status_events_count">%1$d Events</string>
-    <string name="status_sync_changes">Sync Changes</string>
     <string name="status_sync_history">Sync History</string>
     <string name="status_parse_failures">Parse Failures</string>
     <string name="status_error">Error</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s starting %2$s%3$s</string>
     <string name="rrule_since">%1$s · since %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d new</string>
-    <string name="sync_summary_updated">%1$d updated</string>
-    <string name="sync_summary_removed">%1$d removed</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Circular scrolling enabled</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d event removed</item>
         <item quantity="other">%1$d events removed</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d occurrence cancelled</item>
+        <item quantity="other">%1$d occurrences cancelled</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d calendar update</item>
         <item quantity="other">%1$d calendar updates</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Recent changes</string>
+    <string name="recent_changes_empty">No recent changes</string>
+    <string name="recent_changes_clear_all">Clear all</string>
+    <string name="recent_changes_cleared">Recent changes cleared</string>
+    <string name="recent_changes_dismiss">Dismiss</string>
+    <string name="recent_changes_moved_from">Moved from %1$s</string>
+    <string name="recent_changes_time_changed">Time changed</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Location changed</string>
+    <string name="recent_changes_title_changed">Title changed</string>
+    <string name="recent_changes_repeat_changed">Repeat changed</string>
+    <string name="recent_changes_cancelled">Cancelled</string>
+    <string name="cd_recent_change_new">New event</string>
+    <string name="cd_recent_change_updated">Updated</string>
+    <string name="cd_recent_change_removed">Removed</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Day %1$d of %2$d</string>

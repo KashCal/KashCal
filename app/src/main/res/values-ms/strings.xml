@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Belum ada sesi segerak.\n\nTarik ke bawah untuk muat semula pada paparan kalendar untuk memulakan segerak.</string>
     <string name="status_no_writable_calendars">Tiada kalendar yang boleh ditulis</string>
     <string name="status_events_count">%1$d Acara</string>
-    <string name="status_sync_changes">Perubahan Segerak</string>
     <string name="status_sync_history">Sejarah Segerak</string>
     <string name="status_parse_failures">Kegagalan Menghurai</string>
     <string name="status_error">Ralat</string>
@@ -931,11 +930,6 @@
     <string name="rrule_starting">%1$s bermula %2$s%3$s</string>
     <string name="rrule_since">%1$s · sejak %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d baharu</string>
-    <string name="sync_summary_updated">%1$d dikemaskini</string>
-    <string name="sync_summary_removed">%1$d dibuang</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Tatal bulat didayakan</string>
 
@@ -1029,9 +1023,29 @@
     <plurals name="sync_snackbar_events_removed">
         <item quantity="other">%1$d acara dipadamkan</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="other">%1$d kejadian dibatalkan</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="other">%1$d kemas kini kalendar</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Perubahan terkini</string>
+    <string name="recent_changes_empty">Tiada perubahan terkini</string>
+    <string name="recent_changes_clear_all">Kosongkan semua</string>
+    <string name="recent_changes_cleared">Perubahan terkini dikosongkan</string>
+    <string name="recent_changes_dismiss">Abaikan</string>
+    <string name="recent_changes_moved_from">Dialih dari %1$s</string>
+    <string name="recent_changes_time_changed">Masa diubah</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Lokasi diubah</string>
+    <string name="recent_changes_title_changed">Tajuk diubah</string>
+    <string name="recent_changes_repeat_changed">Ulangan diubah</string>
+    <string name="recent_changes_cancelled">Dibatalkan</string>
+    <string name="cd_recent_change_new">Acara baharu</string>
+    <string name="cd_recent_change_updated">Dikemas kini</string>
+    <string name="cd_recent_change_removed">Dipadamkan</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Hari %1$d daripada %2$d</string>

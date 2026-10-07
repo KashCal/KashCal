@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">尚無同步紀錄。\n\n在行事曆畫面下拉重新整理以觸發同步。</string>
     <string name="status_no_writable_calendars">沒有可寫入的行事曆</string>
     <string name="status_events_count">%1$d 個事件</string>
-    <string name="status_sync_changes">同步變更</string>
     <string name="status_sync_history">同步紀錄</string>
     <string name="status_parse_failures">解析失敗</string>
     <string name="status_error">錯誤</string>
@@ -931,11 +930,6 @@
     <string name="rrule_starting">%1$s從%2$s開始%3$s</string>
     <string name="rrule_since">%1$s · 自%2$s起</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d 個新增</string>
-    <string name="sync_summary_updated">%1$d 個更新</string>
-    <string name="sync_summary_removed">%1$d 個刪除</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">循環捲動已啟用</string>
 
@@ -1029,9 +1023,29 @@
     <plurals name="sync_snackbar_events_removed">
         <item quantity="other">%1$d個事件已移除</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="other">已取消%1$d個重複事件</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="other">%1$d項行事曆更新</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">最近變更</string>
+    <string name="recent_changes_empty">沒有最近變更</string>
+    <string name="recent_changes_clear_all">全部清除</string>
+    <string name="recent_changes_cleared">已清除最近變更</string>
+    <string name="recent_changes_dismiss">關閉</string>
+    <string name="recent_changes_moved_from">原定時間：%1$s</string>
+    <string name="recent_changes_time_changed">時間已變更</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">地點已變更</string>
+    <string name="recent_changes_title_changed">標題已變更</string>
+    <string name="recent_changes_repeat_changed">重複規則已變更</string>
+    <string name="recent_changes_cancelled">已取消</string>
+    <string name="cd_recent_change_new">新事件</string>
+    <string name="cd_recent_change_updated">已更新</string>
+    <string name="cd_recent_change_removed">已移除</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">第%1$d天（共%2$d天）</string>

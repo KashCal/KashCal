@@ -5,6 +5,8 @@ import kotlinx.serialization.json.Json
 import org.onekash.kashcal.data.db.entity.ReminderStatus
 import org.onekash.kashcal.data.db.entity.SyncStatus
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.sync.model.ChangeType
+import org.onekash.kashcal.sync.model.ChangedField
 
 /** Converts enums, lists and maps to the TEXT columns Room stores them in. */
 class Converters {
@@ -56,6 +58,26 @@ class Converters {
     fun toAccountProvider(value: String): AccountProvider {
         return AccountProvider.fromString(value)
     }
+
+    // ========== Recent changes ==========
+
+    @TypeConverter
+    fun fromChangeType(type: ChangeType): String = type.name
+
+    /** Falls back to MODIFIED for an unknown value. */
+    @TypeConverter
+    fun toChangeType(value: String): ChangeType =
+        ChangeType.entries.firstOrNull { it.name == value } ?: ChangeType.MODIFIED
+
+    /** Stores change categories as a comma-separated list in declaration order. */
+    @TypeConverter
+    fun fromChangedFields(fields: Set<ChangedField>): String =
+        ChangedField.entries.filter { it in fields }.joinToString(",") { it.name }
+
+    /** Skips names this version doesn't know. */
+    @TypeConverter
+    fun toChangedFields(value: String): Set<ChangedField> =
+        value.split(",").mapNotNull { name -> ChangedField.entries.firstOrNull { it.name == name.trim() } }.toSet()
 
     // ========== List<String> as a JSON array (for example reminders, categories) ==========
 

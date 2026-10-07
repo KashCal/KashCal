@@ -22,6 +22,7 @@ import org.onekash.kashcal.data.db.entity.PendingOperation
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.data.repository.CalendarRepository
+import org.onekash.kashcal.domain.changes.RecentChangesRecorder
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.client.CalDavClientFactory
@@ -49,8 +50,9 @@ import java.util.concurrent.TimeUnit
  *
  * Input data picks the scope (all accounts, one account, one calendar) and whether the run is
  * user-visible; only a user-visible run goes foreground with a progress notification. After the
- * sync it refreshes widgets when anything changed, schedules reminders for synced events and
- * prunes old sync logs. Results go to WorkManager output data and [SyncScheduler.setSyncChanges].
+ * sync it refreshes widgets when anything changed, schedules reminders for synced events, records
+ * them in Recent changes ([RecentChangesRecorder]) and prunes old sync logs. Results go to
+ * WorkManager output data; the recorded entries go to [SyncScheduler.setSyncChanges].
  * The worker adds its own sync-history entries ([SyncSessionStore]) only for a throw, an account
  * it couldn't set up, or no account to sync. A periodic run (always the all-accounts scope) never
  * returns failure, which would stop the periodic spec for good; the catch in [doWork] says why.
@@ -74,7 +76,8 @@ class CalDavSyncWorker @AssistedInject constructor(
     private val syncLogsDao: SyncLogsDao,
     private val iCloudUrlMigration: ICloudUrlMigration,
     private val eventsDao: EventsDao,
-    private val dataStore: KashCalDataStore
+    private val dataStore: KashCalDataStore,
+    private val recentChangesRecorder: RecentChangesRecorder
 ) : CoroutineWorker(context, params) {
 
     companion object {
@@ -289,7 +292,7 @@ class CalDavSyncWorker @AssistedInject constructor(
                 widgetUpdateManager.updateAllWidgets()
             }
 
-            // Schedule reminders for NEW and MODIFIED synced events.
+            // Reminders and the Recent changes log take the pulled changes of a successful sync.
             val changes = when (syncResult) {
                 is SyncResult.Success -> syncResult.changes
                 is SyncResult.PartialSuccess -> syncResult.changes
@@ -297,6 +300,7 @@ class CalDavSyncWorker @AssistedInject constructor(
             }
             if (changes.isNotEmpty()) {
                 scheduleRemindersForSyncedEvents(changes)
+                recordRecentChanges(changes)
             }
 
             // Delete sync logs past the 7-day retention; a cleanup failure doesn't fail the sync.
@@ -780,18 +784,11 @@ class CalDavSyncWorker @AssistedInject constructor(
         return when (syncResult) {
             is SyncResult.Success -> {
                 Log.i(TAG, "Sync SUCCESS: ${syncResult.totalChanges} changes in ${syncResult.durationMs}ms")
-                // Publishes the changes for the in-app snackbar and bottom sheet.
-                if (syncResult.changes.isNotEmpty()) {
-                    syncScheduler.setSyncChanges(syncResult.changes)
-                }
                 Result.success(createSuccessOutput(syncResult))
             }
             is SyncResult.PartialSuccess -> {
                 Log.w(TAG, "Sync PARTIAL: ${syncResult.totalChanges} changes, ${syncResult.errors.size} errors")
                 // The error count goes in the output data.
-                if (syncResult.changes.isNotEmpty()) {
-                    syncScheduler.setSyncChanges(syncResult.changes)
-                }
                 Result.success(createPartialOutput(syncResult))
             }
             is SyncResult.AuthError -> {
@@ -808,6 +805,22 @@ class CalDavSyncWorker @AssistedInject constructor(
                 }
             }
         }
+    }
+
+    /**
+     * Records [changes] in the Recent changes log and publishes what was recorded for the sync
+     * snackbar. A failure is logged and skipped; it never fails the sync.
+     */
+    private suspend fun recordRecentChanges(changes: List<SyncChange>) {
+        val recorded = try {
+            recentChangesRecorder.record(changes)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Recording recent changes failed, continuing", e)
+            return
+        }
+        if (recorded.isNotEmpty()) syncScheduler.setSyncChanges(recorded)
     }
 
     /**

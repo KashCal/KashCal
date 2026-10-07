@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">இன்னும் ஒத்திசைவு அமர்வுகள் இல்லை.\n\nநாட்காட்டிக் காட்சியில் கீழே இழுத்து புதுப்பிக்கவும்.</string>
     <string name="status_no_writable_calendars">எழுதக்கூடிய நாட்காட்டிகள் இல்லை</string>
     <string name="status_events_count">%1$d நிகழ்வுகள்</string>
-    <string name="status_sync_changes">ஒத்திசைவு மாற்றங்கள்</string>
     <string name="status_sync_history">ஒத்திசைவு வரலாறு</string>
     <string name="status_parse_failures">பாகுபடுத்தல் தோல்விகள்</string>
     <string name="status_error">பிழை</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s %2$s இலிருந்து தொடங்குகிறது%3$s</string>
     <string name="rrule_since">%1$s · %2$s முதல்</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d புதிய</string>
-    <string name="sync_summary_updated">%1$d புதுப்பிக்கப்பட்டது</string>
-    <string name="sync_summary_removed">%1$d நீக்கப்பட்டது</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">வட்ட உருளல் இயக்கப்பட்டது</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d நிகழ்வு நீக்கப்பட்டது</item>
         <item quantity="other">%1$d நிகழ்வுகள் நீக்கப்பட்டன</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d மறுநிகழ்வு ரத்து செய்யப்பட்டது</item>
+        <item quantity="other">%1$d மறுநிகழ்வுகள் ரத்து செய்யப்பட்டன</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d நாட்காட்டி புதுப்பிப்பு</item>
         <item quantity="other">%1$d நாட்காட்டி புதுப்பிப்புகள்</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">சமீபத்திய மாற்றங்கள்</string>
+    <string name="recent_changes_empty">சமீபத்திய மாற்றங்கள் இல்லை</string>
+    <string name="recent_changes_clear_all">அனைத்தையும் அழி</string>
+    <string name="recent_changes_cleared">சமீபத்திய மாற்றங்கள் அழிக்கப்பட்டன</string>
+    <string name="recent_changes_dismiss">நிராகரி</string>
+    <string name="recent_changes_moved_from">%1$s இலிருந்து நகர்த்தப்பட்டது</string>
+    <string name="recent_changes_time_changed">நேரம் மாற்றப்பட்டது</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">இடம் மாற்றப்பட்டது</string>
+    <string name="recent_changes_title_changed">தலைப்பு மாற்றப்பட்டது</string>
+    <string name="recent_changes_repeat_changed">மறுநிகழ்வு மாற்றப்பட்டது</string>
+    <string name="recent_changes_cancelled">ரத்துசெய்யப்பட்டது</string>
+    <string name="cd_recent_change_new">புதிய நிகழ்வு</string>
+    <string name="cd_recent_change_updated">புதுப்பிக்கப்பட்டது</string>
+    <string name="cd_recent_change_removed">நீக்கப்பட்டது</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">நாள் %1$d / %2$d</string>

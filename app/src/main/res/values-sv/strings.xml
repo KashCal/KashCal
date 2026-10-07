@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Inga synk-sessioner ännu.\n\nDra nedåt i kalendervyn för att starta en synkronisering.</string>
     <string name="status_no_writable_calendars">Inga skrivbara kalendrar tillgängliga</string>
     <string name="status_events_count">%1$d händelser</string>
-    <string name="status_sync_changes">Synk-ändringar</string>
     <string name="status_sync_history">Synkhistorik</string>
     <string name="status_parse_failures">Tolkningsfel</string>
     <string name="status_error">Fel</string>
@@ -969,11 +968,6 @@
     <string name="rrule_starting">%1$s från %2$s%3$s</string>
     <string name="rrule_since">%1$s · sedan %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d nya</string>
-    <string name="sync_summary_updated">%1$d uppdaterade</string>
-    <string name="sync_summary_removed">%1$d borttagna</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Cirkulär rullning aktiverad</string>
 
@@ -1075,10 +1069,31 @@
         <item quantity="one">%1$d händelse borttagen</item>
         <item quantity="other">%1$d händelser borttagna</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d förekomst inställd</item>
+        <item quantity="other">%1$d förekomster inställda</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d kalenderuppdatering</item>
         <item quantity="other">%1$d kalenderuppdateringar</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Senaste ändringar</string>
+    <string name="recent_changes_empty">Inga senaste ändringar</string>
+    <string name="recent_changes_clear_all">Rensa alla</string>
+    <string name="recent_changes_cleared">Senaste ändringar rensade</string>
+    <string name="recent_changes_dismiss">Avfärda</string>
+    <string name="recent_changes_moved_from">Flyttad från %1$s</string>
+    <string name="recent_changes_time_changed">Tid ändrad</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Plats ändrad</string>
+    <string name="recent_changes_title_changed">Titel ändrad</string>
+    <string name="recent_changes_repeat_changed">Upprepning ändrad</string>
+    <string name="recent_changes_cancelled">Inställd</string>
+    <string name="cd_recent_change_new">Ny händelse</string>
+    <string name="cd_recent_change_updated">Uppdaterad</string>
+    <string name="cd_recent_change_removed">Borttagen</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Dag %1$d av %2$d</string>

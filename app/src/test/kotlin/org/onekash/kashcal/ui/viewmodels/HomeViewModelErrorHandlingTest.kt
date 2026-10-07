@@ -334,7 +334,7 @@ class HomeViewModelErrorHandlingTest {
         viewModel.handleErrorAction(ErrorActionCallback.ViewSyncDetails)
         advanceUntilIdle()
 
-        assertTrue(viewModel.uiState.value.showSyncChangesSheet)
+        assertTrue(viewModel.uiState.value.isRecentChangesOpen)
         assertNull(viewModel.uiState.value.currentError)
     }
 

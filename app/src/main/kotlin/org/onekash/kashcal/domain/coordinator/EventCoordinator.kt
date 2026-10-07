@@ -530,6 +530,14 @@ class EventCoordinator @Inject constructor(
         eventWriter.recordCategoryUsage(tags)
     }
 
+    // ========== Recent changes ==========
+
+    /** Hides the Recent changes rows [ids] (a swipe, or the rows Clear all takes). */
+    suspend fun dismissRecentChanges(ids: List<Long>) = eventWriter.dismissRecentChanges(ids)
+
+    /** Shows the Recent changes rows [ids] again (Clear all's undo). */
+    suspend fun restoreRecentChanges(ids: List<Long>) = eventWriter.restoreRecentChanges(ids)
+
     // ========== Read Operations (Delegated to EventReader) ==========
 
     suspend fun getEventById(eventId: Long): Event? {

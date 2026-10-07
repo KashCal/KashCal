@@ -6,6 +6,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.data.db.entity.SyncStatus
+import org.onekash.kashcal.sync.model.ChangeType
+import org.onekash.kashcal.sync.model.ChangedField
 
 /**
  * Tests the Room [Converters] for [SyncStatus], `List<String>` and `Map<String, String>`. The
@@ -204,5 +206,24 @@ class ConvertersTest {
         val stored = converters.fromStringMap(original)
         val restored = converters.toStringMap(stored)
         assertEquals(original, restored)
+    }
+
+    // ==================== Recent changes ====================
+
+    @Test
+    fun `change type round-trips and an unknown value reads as MODIFIED`() {
+        for (type in ChangeType.entries) {
+            assertEquals(type, converters.toChangeType(converters.fromChangeType(type)))
+        }
+        assertEquals(ChangeType.MODIFIED, converters.toChangeType("RENAMED"))
+    }
+
+    @Test
+    fun `changed fields round-trip, empty is empty, unknown names are skipped`() {
+        val fields = setOf(ChangedField.TITLE, ChangedField.TIME)
+        assertEquals("TIME,TITLE", converters.fromChangedFields(fields))
+        assertEquals(fields, converters.toChangedFields(converters.fromChangedFields(fields)))
+        assertEquals(emptySet<ChangedField>(), converters.toChangedFields(""))
+        assertEquals(setOf(ChangedField.TIME), converters.toChangedFields("TIME,BOGUS"))
     }
 }

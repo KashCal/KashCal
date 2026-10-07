@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">ఇంకా సింక్ సెషన్‌లు లేవు.\n\nక్యాలెండర్ వీక్షణలో కిందకు లాగి రిఫ్రెష్ చేయండి.</string>
     <string name="status_no_writable_calendars">వ్రాయగల క్యాలెండర్లు అందుబాటులో లేవు</string>
     <string name="status_events_count">%1$d ఈవెంట్‌లు</string>
-    <string name="status_sync_changes">సింక్ మార్పులు</string>
     <string name="status_sync_history">సింక్ చరిత్ర</string>
     <string name="status_parse_failures">పార్స్ విఫలాలు</string>
     <string name="status_error">లోపం</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s %2$s నుండి ప్రారంభమవుతోంది%3$s</string>
     <string name="rrule_since">%1$s · %2$s నుండి</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d కొత్తవి</string>
-    <string name="sync_summary_updated">%1$d అప్‌డేట్ చేయబడ్డాయి</string>
-    <string name="sync_summary_removed">%1$d తొలగించబడ్డాయి</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">సర్క్యులర్ స్క్రోలింగ్ ఆన్ చేయబడింది</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d ఈవెంట్ తొలగించబడింది</item>
         <item quantity="other">%1$d ఈవెంట్‌లు తొలగించబడ్డాయి</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d పునరావృతం రద్దు చేయబడింది</item>
+        <item quantity="other">%1$d పునరావృతాలు రద్దు చేయబడ్డాయి</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d క్యాలెండర్ అప్‌డేట్</item>
         <item quantity="other">%1$d క్యాలెండర్ అప్‌డేట్‌లు</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">ఇటీవలి మార్పులు</string>
+    <string name="recent_changes_empty">ఇటీవలి మార్పులు లేవు</string>
+    <string name="recent_changes_clear_all">అన్నీ క్లియర్ చేయి</string>
+    <string name="recent_changes_cleared">ఇటీవలి మార్పులు క్లియర్ చేయబడ్డాయి</string>
+    <string name="recent_changes_dismiss">తీసివేయి</string>
+    <string name="recent_changes_moved_from">%1$s నుండి తరలించబడింది</string>
+    <string name="recent_changes_time_changed">సమయం మార్చబడింది</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">ప్రదేశం మార్చబడింది</string>
+    <string name="recent_changes_title_changed">శీర్షిక మార్చబడింది</string>
+    <string name="recent_changes_repeat_changed">పునరావృతం మార్చబడింది</string>
+    <string name="recent_changes_cancelled">రద్దు చేయబడింది</string>
+    <string name="cd_recent_change_new">కొత్త ఈవెంట్</string>
+    <string name="cd_recent_change_updated">అప్‌డేట్ చేయబడింది</string>
+    <string name="cd_recent_change_removed">తొలగించబడింది</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">రోజు %1$d / %2$d</string>

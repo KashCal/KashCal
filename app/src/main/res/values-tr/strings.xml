@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Henüz eşitleme oturumu yok.\n\nTakvim görünümünde aşağı çekerek eşitlemeyi başlat.</string>
     <string name="status_no_writable_calendars">Yazılabilir takvim yok</string>
     <string name="status_events_count">%1$d Etkinlik</string>
-    <string name="status_sync_changes">Eşitleme Değişiklikleri</string>
     <string name="status_sync_history">Eşitleme Geçmişi</string>
     <string name="status_parse_failures">Ayrıştırma Hataları</string>
     <string name="status_error">Hata</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%2$s%3$s tarihinden başlayarak %1$s</string>
     <string name="rrule_since">%1$s · %2$s tarihinden itibaren</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d yeni</string>
-    <string name="sync_summary_updated">%1$d güncellendi</string>
-    <string name="sync_summary_removed">%1$d kaldırıldı</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Döngüsel kaydırma etkin</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d etkinlik kaldırıldı</item>
         <item quantity="other">%1$d etkinlik kaldırıldı</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d tekrar iptal edildi</item>
+        <item quantity="other">%1$d tekrar iptal edildi</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d takvim güncellemesi</item>
         <item quantity="other">%1$d takvim güncellemesi</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Son değişiklikler</string>
+    <string name="recent_changes_empty">Son değişiklik yok</string>
+    <string name="recent_changes_clear_all">Tümünü temizle</string>
+    <string name="recent_changes_cleared">Son değişiklikler temizlendi</string>
+    <string name="recent_changes_dismiss">Kapat</string>
+    <string name="recent_changes_moved_from">Taşındı (önceki: %1$s)</string>
+    <string name="recent_changes_time_changed">Zaman değişti</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Konum değişti</string>
+    <string name="recent_changes_title_changed">Başlık değişti</string>
+    <string name="recent_changes_repeat_changed">Tekrar değişti</string>
+    <string name="recent_changes_cancelled">İptal edildi</string>
+    <string name="cd_recent_change_new">Yeni etkinlik</string>
+    <string name="cd_recent_change_updated">Güncellendi</string>
+    <string name="cd_recent_change_removed">Kaldırıldı</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Gün %1$d / %2$d</string>

@@ -98,6 +98,10 @@ class CalendarRepositoryImpl @Inject constructor(
         calendarsDao.updateAutoScheduleSupported(calendarId, supported)
     }
 
+    override suspend fun markInitialPullDone(calendarId: Long) {
+        calendarsDao.markInitialPullDone(calendarId)
+    }
+
     override suspend fun updateMetadata(
         calendarId: Long,
         color: Int?,

@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Dim sesiynau cysoni eto.\n\nDechreuwch gysoni trwy dynnu i lawr i adnewyddu ar y golwg calendr.</string>
     <string name="status_no_writable_calendars">Dim calendrau y gellir ysgrifennu iddynt ar gael</string>
     <string name="status_events_count">%1$d Digwyddiad</string>
-    <string name="status_sync_changes">Newidiadau Cysoni</string>
     <string name="status_sync_history">Hanes Cysoni</string>
     <string name="status_parse_failures">Methiannau Dosrannu</string>
     <string name="status_error">Gwall</string>
@@ -1126,11 +1125,6 @@
     <string name="rrule_starting">%1$s yn dechrau %2$s%3$s</string>
     <string name="rrule_since">%1$s · ers %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d newydd</string>
-    <string name="sync_summary_updated">%1$d wedi\'u diweddaru</string>
-    <string name="sync_summary_removed">%1$d wedi\'u dileu</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Sgrolio cylchol wedi\'i alluogi</string>
 
@@ -1264,6 +1258,14 @@
         <item quantity="many">%1$d nigwyddiad wedi\'u dileu</item>
         <item quantity="other">%1$d digwyddiad wedi\'u dileu</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="zero">%1$d achlysur wedi\'u canslo</item>
+        <item quantity="one">%1$d achlysur wedi\'i ganslo</item>
+        <item quantity="two">%1$d achlysur wedi\'u canslo</item>
+        <item quantity="few">%1$d achlysur wedi\'u canslo</item>
+        <item quantity="many">%1$d achlysur wedi\'u canslo</item>
+        <item quantity="other">%1$d achlysur wedi\'u canslo</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="zero">%1$d diweddariad calendr</item>
         <item quantity="one">%1$d diweddariad calendr</item>
@@ -1272,6 +1274,23 @@
         <item quantity="many">%1$d niweddariad calendr</item>
         <item quantity="other">%1$d diweddariad calendr</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Newidiadau diweddar</string>
+    <string name="recent_changes_empty">Dim newidiadau diweddar</string>
+    <string name="recent_changes_clear_all">Clirio\'r cyfan</string>
+    <string name="recent_changes_cleared">Newidiadau diweddar wedi\'u clirio</string>
+    <string name="recent_changes_dismiss">Diystyru</string>
+    <string name="recent_changes_moved_from">Symudwyd o %1$s</string>
+    <string name="recent_changes_time_changed">Amser wedi newid</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Lleoliad wedi newid</string>
+    <string name="recent_changes_title_changed">Teitl wedi newid</string>
+    <string name="recent_changes_repeat_changed">Ailadrodd wedi newid</string>
+    <string name="recent_changes_cancelled">Wedi\'i ganslo</string>
+    <string name="cd_recent_change_new">Digwyddiad newydd</string>
+    <string name="cd_recent_change_updated">Wedi\'i ddiweddaru</string>
+    <string name="cd_recent_change_removed">Wedi\'i ddileu</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Diwrnod %1$d o %2$d</string>

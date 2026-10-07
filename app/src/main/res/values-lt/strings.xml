@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Sinchronizavimo seansų nėra.\n\nNutempkite žemyn kalendoriaus rodinyje, kad pradėtumėte sinchronizavimą.</string>
     <string name="status_no_writable_calendars">Nėra rašomų kalendorių</string>
     <string name="status_events_count">Įvykių: %1$d</string>
-    <string name="status_sync_changes">Sinchronizavimo pakeitimai</string>
     <string name="status_sync_history">Sinchronizavimo istorija</string>
     <string name="status_parse_failures">Apdorojimo klaidos</string>
     <string name="status_error">Klaida</string>
@@ -1048,11 +1047,6 @@
     <string name="rrule_starting">%1$s pradedant %2$s%3$s</string>
     <string name="rrule_since">%1$s · nuo %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d naujų</string>
-    <string name="sync_summary_updated">%1$d atnaujinta</string>
-    <string name="sync_summary_removed">%1$d pašalinta</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Ciklinis slinkimas įjungtas</string>
 
@@ -1170,12 +1164,35 @@
         <item quantity="many">%1$d įvykio pašalinta</item>
         <item quantity="other">%1$d įvykių pašalinta</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d kartojimas atšauktas</item>
+        <item quantity="few">%1$d kartojimai atšaukti</item>
+        <item quantity="many">%1$d kartojimo atšaukta</item>
+        <item quantity="other">%1$d kartojimų atšaukta</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d kalendoriaus atnaujinimas</item>
         <item quantity="few">%1$d kalendorių atnaujinimai</item>
         <item quantity="many">%1$d kalendoriaus atnaujinimo</item>
         <item quantity="other">%1$d kalendorių atnaujinimų</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Naujausi pakeitimai</string>
+    <string name="recent_changes_empty">Naujausių pakeitimų nėra</string>
+    <string name="recent_changes_clear_all">Išvalyti viską</string>
+    <string name="recent_changes_cleared">Naujausi pakeitimai išvalyti</string>
+    <string name="recent_changes_dismiss">Paslėpti</string>
+    <string name="recent_changes_moved_from">Perkelta iš %1$s</string>
+    <string name="recent_changes_time_changed">Laikas pakeistas</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Vieta pakeista</string>
+    <string name="recent_changes_title_changed">Pavadinimas pakeistas</string>
+    <string name="recent_changes_repeat_changed">Kartojimas pakeistas</string>
+    <string name="recent_changes_cancelled">Atšauktas</string>
+    <string name="cd_recent_change_new">Naujas įvykis</string>
+    <string name="cd_recent_change_updated">Atnaujintas</string>
+    <string name="cd_recent_change_removed">Pašalintas</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Diena %1$d iš %2$d</string>

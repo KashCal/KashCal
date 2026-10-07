@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Ei synkronointiistuntoja vielä.\n\nVedä alas kalenterinäkymässä aloittaaksesi synkronoinnin.</string>
     <string name="status_no_writable_calendars">Ei muokattavia kalentereita saatavilla</string>
     <string name="status_events_count">%1$d tapahtumaa</string>
-    <string name="status_sync_changes">Synkronointimuutokset</string>
     <string name="status_sync_history">Synkronointihistoria</string>
     <string name="status_parse_failures">Jäsennysvirheet</string>
     <string name="status_error">Virhe</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s alkaen %2$s%3$s</string>
     <string name="rrule_since">%1$s · lähtien %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d uutta</string>
-    <string name="sync_summary_updated">%1$d päivitetty</string>
-    <string name="sync_summary_removed">%1$d poistettu</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Pyöreä vieritys käytössä</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d tapahtuma poistettu</item>
         <item quantity="other">%1$d tapahtumaa poistettu</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d toisto peruttu</item>
+        <item quantity="other">%1$d toistoa peruttu</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d kalenteripäivitys</item>
         <item quantity="other">%1$d kalenteripäivitystä</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Viimeisimmät muutokset</string>
+    <string name="recent_changes_empty">Ei viimeaikaisia muutoksia</string>
+    <string name="recent_changes_clear_all">Tyhjennä kaikki</string>
+    <string name="recent_changes_cleared">Viimeisimmät muutokset tyhjennetty</string>
+    <string name="recent_changes_dismiss">Ohita</string>
+    <string name="recent_changes_moved_from">Siirretty ajasta %1$s</string>
+    <string name="recent_changes_time_changed">Aika muuttunut</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Paikka muuttunut</string>
+    <string name="recent_changes_title_changed">Otsikko muuttunut</string>
+    <string name="recent_changes_repeat_changed">Toisto muuttunut</string>
+    <string name="recent_changes_cancelled">Peruttu</string>
+    <string name="cd_recent_change_new">Uusi tapahtuma</string>
+    <string name="cd_recent_change_updated">Päivitetty</string>
+    <string name="cd_recent_change_removed">Poistettu</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Päivä %1$d/%2$d</string>

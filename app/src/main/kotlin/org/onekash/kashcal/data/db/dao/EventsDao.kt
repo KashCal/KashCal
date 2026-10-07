@@ -75,6 +75,10 @@ interface EventsDao {
     @Query("SELECT * FROM events WHERE id IN (:ids)")
     suspend fun getByIds(ids: List<Long>): List<Event>
 
+    /** Returns which of [ids] still exist. */
+    @Query("SELECT id FROM events WHERE id IN (:ids)")
+    suspend fun existingIds(ids: List<Long>): List<Long>
+
     @Query("SELECT * FROM events WHERE id = :id")
     fun getByIdFlow(id: Long): Flow<Event?>
 

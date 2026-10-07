@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Azikho izinhlelo zokuvumelanisa okwamanje.\n\nQalisa ukuvumelanisa ngokudonsela phansi ukuze uvuselele ekubukeni kwekhalenda.</string>
     <string name="status_no_writable_calendars">Awekho amakhalenda abhalekayo atholakalayo</string>
     <string name="status_events_count">Imicimbi engu-%1$d</string>
-    <string name="status_sync_changes">Izinguquko Zokuvumelanisa</string>
     <string name="status_sync_history">Umlando Wokuvumelanisa</string>
     <string name="status_parse_failures">Amaphutha Okuhlaziya</string>
     <string name="status_error">Iphutha</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s kuqala ngo-%2$s%3$s</string>
     <string name="rrule_since">%1$s · kusukela ngo-%2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d okusha</string>
-    <string name="sync_summary_updated">%1$d okubuyekezwe</string>
-    <string name="sync_summary_removed">%1$d okususwe</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Ukuskrola okuyisiyingelezi kunikwe amandla</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">Umcimbi ongu-%1$d ususwe</item>
         <item quantity="other">Imicimbi engu-%1$d isiswe</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">Isenzakalo esingu-%1$d sikhanselwe</item>
+        <item quantity="other">Izenzakalo ezingu-%1$d zikhanselwe</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">Ukubuyekezwa kwekhalenda okungu-%1$d</item>
         <item quantity="other">Ukubuyekezwa kwamakhalenda okungu-%1$d</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Izinguquko zakamuva</string>
+    <string name="recent_changes_empty">Azikho izinguquko zakamuva</string>
+    <string name="recent_changes_clear_all">Sula konke</string>
+    <string name="recent_changes_cleared">Izinguquko zakamuva zisuliwe</string>
+    <string name="recent_changes_dismiss">Chitha</string>
+    <string name="recent_changes_moved_from">Kuhanjisiwe kusuka ku-%1$s</string>
+    <string name="recent_changes_time_changed">Isikhathi sishintshile</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Indawo ishintshile</string>
+    <string name="recent_changes_title_changed">Isihloko sishintshile</string>
+    <string name="recent_changes_repeat_changed">Ukuphinda kushintshile</string>
+    <string name="recent_changes_cancelled">Kukhanseliwe</string>
+    <string name="cd_recent_change_new">Umcimbi omusha</string>
+    <string name="cd_recent_change_updated">Kubuyekeziwe</string>
+    <string name="cd_recent_change_removed">Kususiwe</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Usuku %1$d ku-%2$d</string>

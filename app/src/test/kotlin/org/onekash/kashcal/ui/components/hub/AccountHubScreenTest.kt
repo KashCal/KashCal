@@ -3,6 +3,7 @@ package org.onekash.kashcal.ui.components.hub
 import androidx.compose.material3.Text
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -60,17 +62,19 @@ class AccountHubScreenTest {
         var initials: String? = null
         var appLockToggled: Boolean? = null
         var appPermissions = 0
+        var recentChanges = 0
     }
 
     private fun render(
         userInitials: String = "KC",
+        pendingInvitesCount: Int = 0,
         appLockEnabled: Boolean = false,
         callbacks: Callbacks = Callbacks(),
     ) {
         composeTestRule.setContent {
             KashCalTheme {
                 AccountHubScreen(
-                    pendingInvitesCount = 0,
+                    pendingInvitesCount = pendingInvitesCount,
                     userInitials = userInitials,
                     onInitialsChange = { callbacks.initials = it },
                     onInvitesClick = { callbacks.invites++ },
@@ -83,6 +87,7 @@ class AccountHubScreenTest {
                     appLockEnabled = appLockEnabled,
                     onToggleAppLock = { callbacks.appLockToggled = it },
                     onAppPermissionsClick = { callbacks.appPermissions++ },
+                    onRecentChangesClick = { callbacks.recentChanges++ },
                     // Stub the VM-backed personalization slot so no Hilt graph is needed.
                     makeItYours = { Text("make-it-yours-stub") },
                 )
@@ -113,9 +118,25 @@ class AccountHubScreenTest {
         composeTestRule.onNodeWithText("About").performClick()
         assertEquals(1, cb.about)
 
+        composeTestRule.onNodeWithText("Recent changes").performClick()
+        assertEquals(1, cb.recentChanges)
+
         // No row's tap fired a sibling's callback.
         assertEquals(1, cb.invites)
         assertEquals(0, cb.back)
+    }
+
+    @Test
+    fun `recent changes sits directly below invites with no count badge`() {
+        render(pendingInvitesCount = 3)
+
+        val invites = composeTestRule.onNodeWithText("Invites").getUnclippedBoundsInRoot()
+        val recent = composeTestRule.onNodeWithText("Recent changes").getUnclippedBoundsInRoot()
+        val goToDate = composeTestRule.onNodeWithText("Go to date").getUnclippedBoundsInRoot()
+        assertTrue("below Invites", recent.top > invites.top)
+        assertTrue("above Go to date", recent.top < goToDate.top)
+        // Invites shows its count; Recent changes adds no second badge.
+        composeTestRule.onAllNodesWithText("3").assertCountEquals(1)
     }
 
     @Test

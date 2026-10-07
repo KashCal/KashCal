@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Gun seiseanan sioncronachaidh fhathast.\n\nTarraing sìos gus ath-nuadhachadh air an t-sealladh mìosachain.</string>
     <string name="status_no_writable_calendars">Chan eil mìosachain sgrìobhaidh ri fhaighinn</string>
     <string name="status_events_count">%1$d Tachartas</string>
-    <string name="status_sync_changes">Atharrachaidhean Sioncronachaidh</string>
     <string name="status_sync_history">Eachdraidh Sioncronachaidh</string>
     <string name="status_parse_failures">Fàilligidhean Parsaidh</string>
     <string name="status_error">Mearachd</string>
@@ -1048,11 +1047,6 @@
     <string name="rrule_starting">%1$s a\' tòiseachadh %2$s%3$s</string>
     <string name="rrule_since">%1$s · bho %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d ùr</string>
-    <string name="sync_summary_updated">%1$d air ùrachadh</string>
-    <string name="sync_summary_removed">%1$d air an toirt air falbh</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Sgrolladh cearcallach air a chur an comas</string>
 
@@ -1170,12 +1164,35 @@
         <item quantity="few">%1$d tachartasan air an toirt air falbh</item>
         <item quantity="other">%1$d tachartas air an toirt air falbh</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d thachartas air a chur dheth</item>
+        <item quantity="two">%1$d thachartas air an cur dheth</item>
+        <item quantity="few">%1$d tachartasan air an cur dheth</item>
+        <item quantity="other">%1$d tachartas air an cur dheth</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d ùrachadh mìosachain</item>
         <item quantity="two">%1$d ùrachadh mìosachain</item>
         <item quantity="few">%1$d ùrachaidhean mìosachain</item>
         <item quantity="other">%1$d ùrachadh mìosachain</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Atharraichean o chionn ghoirid</string>
+    <string name="recent_changes_empty">Chan eil atharraichean o chionn ghoirid ann</string>
+    <string name="recent_changes_clear_all">Glan na h-uile</string>
+    <string name="recent_changes_cleared">Chaidh na h-atharraichean a ghlanadh</string>
+    <string name="recent_changes_dismiss">Leig seachad</string>
+    <string name="recent_changes_moved_from">Air a ghluasad o %1$s</string>
+    <string name="recent_changes_time_changed">Dh\'atharraich an t-àm</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Dh\'atharraich an t-àite</string>
+    <string name="recent_changes_title_changed">Dh\'atharraich an tiotal</string>
+    <string name="recent_changes_repeat_changed">Dh\'atharraich an ath-thachartas</string>
+    <string name="recent_changes_cancelled">Air a chur dheth</string>
+    <string name="cd_recent_change_new">Tachartas ùr</string>
+    <string name="cd_recent_change_updated">Air ùrachadh</string>
+    <string name="cd_recent_change_removed">Air a thoirt air falbh</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Là %1$d à %2$d</string>

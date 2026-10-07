@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Nog geen sync-sessies.\n\nVervers door op de agendaweergave naar beneden te trekken.</string>
     <string name="status_no_writable_calendars">Geen beschrijfbare agenda\'s beschikbaar</string>
     <string name="status_events_count">%1$d afspraken</string>
-    <string name="status_sync_changes">Sync-wijzigingen</string>
     <string name="status_sync_history">Synchronisatiegeschiedenis</string>
     <string name="status_parse_failures">Verwerkingsfouten</string>
     <string name="status_error">Fout</string>
@@ -969,11 +968,6 @@
     <string name="rrule_starting">%1$s vanaf %2$s%3$s</string>
     <string name="rrule_since">%1$s · sinds %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d nieuw</string>
-    <string name="sync_summary_updated">%1$d bijgewerkt</string>
-    <string name="sync_summary_removed">%1$d verwijderd</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Circulair scrollen ingeschakeld</string>
 
@@ -1075,10 +1069,31 @@
         <item quantity="one">%1$d afspraak verwijderd</item>
         <item quantity="other">%1$d afspraken verwijderd</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d herhaling geannuleerd</item>
+        <item quantity="other">%1$d herhalingen geannuleerd</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d agenda-update</item>
         <item quantity="other">%1$d agenda-updates</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Recente wijzigingen</string>
+    <string name="recent_changes_empty">Geen recente wijzigingen</string>
+    <string name="recent_changes_clear_all">Alles wissen</string>
+    <string name="recent_changes_cleared">Recente wijzigingen gewist</string>
+    <string name="recent_changes_dismiss">Verbergen</string>
+    <string name="recent_changes_moved_from">Verplaatst van %1$s</string>
+    <string name="recent_changes_time_changed">Tijd gewijzigd</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Locatie gewijzigd</string>
+    <string name="recent_changes_title_changed">Titel gewijzigd</string>
+    <string name="recent_changes_repeat_changed">Herhaling gewijzigd</string>
+    <string name="recent_changes_cancelled">Geannuleerd</string>
+    <string name="cd_recent_change_new">Nieuwe afspraak</string>
+    <string name="cd_recent_change_updated">Bijgewerkt</string>
+    <string name="cd_recent_change_removed">Verwijderd</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Dag %1$d van %2$d</string>

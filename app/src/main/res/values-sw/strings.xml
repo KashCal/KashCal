@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Hakuna vipindi vya kusawazisha bado.\n\nVuta chini ili kusawazisha kwenye mtazamo wa kalenda.</string>
     <string name="status_no_writable_calendars">Hakuna kalenda zinazoweza kuandikwa</string>
     <string name="status_events_count">Matukio %1$d</string>
-    <string name="status_sync_changes">Mabadiliko ya Kusawazisha</string>
     <string name="status_sync_history">Historia ya Kusawazisha</string>
     <string name="status_parse_failures">Hitilafu za Uchambuzi</string>
     <string name="status_error">Hitilafu</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s kuanzia %2$s%3$s</string>
     <string name="rrule_since">%1$s · tangu %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d mpya</string>
-    <string name="sync_summary_updated">%1$d iliyosasishwa</string>
-    <string name="sync_summary_removed">%1$d iliyoondolewa</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Kusogeza kwa mzunguko kumewashwa</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">Tukio %1$d limeondolewa</item>
         <item quantity="other">Matukio %1$d yameondolewa</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">Tukio %1$d limeghairiwa</item>
+        <item quantity="other">Matukio %1$d yameghairiwa</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">Sasisha %1$d la kalenda</item>
         <item quantity="other">Sasisha %1$d za kalenda</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Mabadiliko ya hivi karibuni</string>
+    <string name="recent_changes_empty">Hakuna mabadiliko ya hivi karibuni</string>
+    <string name="recent_changes_clear_all">Futa yote</string>
+    <string name="recent_changes_cleared">Mabadiliko ya hivi karibuni yamefutwa</string>
+    <string name="recent_changes_dismiss">Ondoa</string>
+    <string name="recent_changes_moved_from">Imehamishwa kutoka %1$s</string>
+    <string name="recent_changes_time_changed">Muda umebadilishwa</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Mahali pamebadilishwa</string>
+    <string name="recent_changes_title_changed">Kichwa kimebadilishwa</string>
+    <string name="recent_changes_repeat_changed">Marudio yamebadilishwa</string>
+    <string name="recent_changes_cancelled">Imeghairiwa</string>
+    <string name="cd_recent_change_new">Tukio jipya</string>
+    <string name="cd_recent_change_updated">Imesasishwa</string>
+    <string name="cd_recent_change_removed">Imeondolewa</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Siku %1$d ya %2$d</string>

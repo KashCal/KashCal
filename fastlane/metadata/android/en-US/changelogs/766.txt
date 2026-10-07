@@ -1,0 +1,3 @@
+• Recent changes: a week of what changed in your iCloud and CalDAV calendars, in the account hub
+• Sync: unchanged events are no longer reported as updated
+• Event form: dragging inside a text field keeps the keyboard up (#384)

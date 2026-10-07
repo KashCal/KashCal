@@ -4,7 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,14 +24,14 @@ import org.onekash.kashcal.ui.components.attendees.AttendeeStatus
 import org.onekash.kashcal.ui.util.DayPagerUtils
 
 /**
- * Lists pending CalDAV invitations across the user's accounts in a sheet that opens partially
- * expanded; the default drag handle expands it to full height.
+ * Lists pending CalDAV invitations across the user's accounts in a sheet that always opens at
+ * full height, so it never resizes as cards load or go; the list scrolls inside it.
  *
  * Cards are keyed by `event.id`, so each keeps its identity when sync changes the list; no item
  * animation is applied.
  *
  * With no invitations left, an "All caught up" message shows, and tapping it dismisses the sheet
- * (as does tapping outside or dragging down).
+ * (as do back, a drag down, or a tap beside the sheet on a wide screen).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,7 +41,7 @@ fun InvitationInboxSheet(
     onRsvp: (Long, AttendeeStatus) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val todayDayCode = DayPagerUtils.msToDayCode(System.currentTimeMillis())
     val tomorrowDayCode = run {
         val tomorrow = DayPagerUtils.dayCodeToLocalDate(todayDayCode).plusDays(1)
@@ -54,13 +54,13 @@ fun InvitationInboxSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
-        sheetState = sheetState
+        sheetState = sheetState,
+        modifier = Modifier.fillMaxHeight(),
     ) {
         if (invitations.isEmpty()) {
             Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.5f)
+                    .fillMaxSize()
                     .clickable(onClick = onDismiss)
                     .padding(horizontal = 16.dp, vertical = 48.dp),
                 contentAlignment = Alignment.Center
@@ -75,7 +75,7 @@ fun InvitationInboxSheet(
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .fillMaxSize()
                     .padding(horizontal = 16.dp)
                     .padding(bottom = 16.dp)
             ) {

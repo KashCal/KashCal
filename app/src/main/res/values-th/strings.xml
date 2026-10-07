@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">ยังไม่มีเซสชันการซิงค์\n\nเลื่อนลงเพื่อรีเฟรชบนหน้าปฏิทินเพื่อเริ่มซิงค์</string>
     <string name="status_no_writable_calendars">ไม่มีปฏิทินที่เขียนได้</string>
     <string name="status_events_count">%1$d กิจกรรม</string>
-    <string name="status_sync_changes">การเปลี่ยนแปลงจากซิงค์</string>
     <string name="status_sync_history">ประวัติการซิงค์</string>
     <string name="status_parse_failures">การแยกวิเคราะห์ล้มเหลว</string>
     <string name="status_error">ข้อผิดพลาด</string>
@@ -931,11 +930,6 @@
     <string name="rrule_starting">%1$s เริ่ม%2$s%3$s</string>
     <string name="rrule_since">%1$s · ตั้งแต่%2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d ใหม่</string>
-    <string name="sync_summary_updated">%1$d อัปเดต</string>
-    <string name="sync_summary_removed">%1$d ลบ</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">เปิดการเลื่อนวนรอบ</string>
 
@@ -1029,9 +1023,29 @@
     <plurals name="sync_snackbar_events_removed">
         <item quantity="other">%1$d กิจกรรมถูกลบ</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="other">ยกเลิก %1$d รายการที่เกิดซ้ำ</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="other">%1$d การอัปเดตปฏิทิน</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">การเปลี่ยนแปลงล่าสุด</string>
+    <string name="recent_changes_empty">ไม่มีการเปลี่ยนแปลงล่าสุด</string>
+    <string name="recent_changes_clear_all">ล้างทั้งหมด</string>
+    <string name="recent_changes_cleared">ล้างการเปลี่ยนแปลงล่าสุดแล้ว</string>
+    <string name="recent_changes_dismiss">ปิด</string>
+    <string name="recent_changes_moved_from">ย้ายจาก %1$s</string>
+    <string name="recent_changes_time_changed">เปลี่ยนเวลาแล้ว</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">เปลี่ยนสถานที่แล้ว</string>
+    <string name="recent_changes_title_changed">เปลี่ยนชื่อแล้ว</string>
+    <string name="recent_changes_repeat_changed">เปลี่ยนการเกิดซ้ำแล้ว</string>
+    <string name="recent_changes_cancelled">ยกเลิกแล้ว</string>
+    <string name="cd_recent_change_new">กิจกรรมใหม่</string>
+    <string name="cd_recent_change_updated">อัปเดตแล้ว</string>
+    <string name="cd_recent_change_removed">ถูกลบ</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">วันที่ %1$d จาก %2$d</string>

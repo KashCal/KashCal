@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Әзірге синхрондау сеанстары жоқ.\n\nСинхрондауды бастау үшін күнтізбе көрінісінде төмен қарай сүйреңіз.</string>
     <string name="status_no_writable_calendars">Жазуға болатын күнтізбелер жоқ</string>
     <string name="status_events_count">%1$d оқиға</string>
-    <string name="status_sync_changes">Синхрондау өзгерістері</string>
     <string name="status_sync_history">Синхрондау тарихы</string>
     <string name="status_parse_failures">Талдау қателері</string>
     <string name="status_error">Қате</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s %2$s%3$s бастап</string>
     <string name="rrule_since">%1$s · %2$s бастап</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d жаңа</string>
-    <string name="sync_summary_updated">%1$d жаңартылды</string>
-    <string name="sync_summary_removed">%1$d жойылды</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Дөңгелек айналдыру қосулы</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d оқиға жойылды</item>
         <item quantity="other">%1$d оқиға жойылды</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d қайталау болдырылмады</item>
+        <item quantity="other">%1$d қайталау болдырылмады</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d күнтізбе жаңартуы</item>
         <item quantity="other">%1$d күнтізбе жаңартуы</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Соңғы өзгерістер</string>
+    <string name="recent_changes_empty">Соңғы өзгерістер жоқ</string>
+    <string name="recent_changes_clear_all">Барлығын тазалау</string>
+    <string name="recent_changes_cleared">Соңғы өзгерістер тазаланды</string>
+    <string name="recent_changes_dismiss">Жабу</string>
+    <string name="recent_changes_moved_from">Бұрынғы уақыты: %1$s</string>
+    <string name="recent_changes_time_changed">Уақыты өзгерді</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Орны өзгерді</string>
+    <string name="recent_changes_title_changed">Атауы өзгерді</string>
+    <string name="recent_changes_repeat_changed">Қайталауы өзгерді</string>
+    <string name="recent_changes_cancelled">Болдырылмады</string>
+    <string name="cd_recent_change_new">Жаңа оқиға</string>
+    <string name="cd_recent_change_updated">Жаңартылды</string>
+    <string name="cd_recent_change_removed">Жойылды</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">%2$d ішінен %1$d-күн</string>

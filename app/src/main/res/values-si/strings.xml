@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">තවම සමමුහුර්ත සැසි නැත.\n\nදින දර්ශන දසුනේ පහළට අදින්න නැවුම් කිරීමට.</string>
     <string name="status_no_writable_calendars">ලිවිය හැකි දින දර්ශන නොමැත</string>
     <string name="status_events_count">සිදුවීම් %1$d</string>
-    <string name="status_sync_changes">සමමුහුර්ත වෙනස්කම්</string>
     <string name="status_sync_history">සමමුහුර්ත ඉතිහාසය</string>
     <string name="status_parse_failures">විග්‍රහ අසාර්ථකත්ව</string>
     <string name="status_error">දෝෂය</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s %2$s සිට ආරම්භ වෙමින්%3$s</string>
     <string name="rrule_since">%1$s · %2$s සිට</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d නව</string>
-    <string name="sync_summary_updated">%1$d යාවත්කාලීන</string>
-    <string name="sync_summary_removed">%1$d ඉවත් කළ</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">රවුම් අනුචලනය සක්‍රියයි</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">සිදුවීම් %1$d ක් ඉවත් විය</item>
         <item quantity="other">සිදුවීම් %1$d ක් ඉවත් විය</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">අවස්ථා %1$d ක් අවලංගු විය</item>
+        <item quantity="other">අවස්ථා %1$d ක් අවලංගු විය</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">දින දර්ශන යාවත්කාලීන %1$d ක්</item>
         <item quantity="other">දින දර්ශන යාවත්කාලීන %1$d ක්</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">මෑත වෙනස්කම්</string>
+    <string name="recent_changes_empty">මෑත වෙනස්කම් නැත</string>
+    <string name="recent_changes_clear_all">සියල්ල හිස් කරන්න</string>
+    <string name="recent_changes_cleared">මෑත වෙනස්කම් හිස් කරන ලදී</string>
+    <string name="recent_changes_dismiss">ඉවත් කරන්න</string>
+    <string name="recent_changes_moved_from">%1$s සිට ගෙන යන ලදී</string>
+    <string name="recent_changes_time_changed">වේලාව වෙනස් විය</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">ස්ථානය වෙනස් විය</string>
+    <string name="recent_changes_title_changed">මාතෘකාව වෙනස් විය</string>
+    <string name="recent_changes_repeat_changed">පුනරාවර්තනය වෙනස් විය</string>
+    <string name="recent_changes_cancelled">අවලංගු කරන ලදී</string>
+    <string name="cd_recent_change_new">නව සිදුවීම</string>
+    <string name="cd_recent_change_updated">යාවත්කාලීන විය</string>
+    <string name="cd_recent_change_removed">ඉවත් විය</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">දින %1$d / %2$d</string>

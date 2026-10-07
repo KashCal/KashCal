@@ -779,6 +779,59 @@ class OccurrencesDaoTest {
         assertFalse("Event with occurrences should be excluded", result.contains(recurringEventId))
     }
 
+    // ==================== Next occurrence ====================
+
+    @Test
+    fun `getNextOccurrence returns the first occurrence not yet ended`() = runTest {
+        val now = 10_000_000L
+        occurrencesDao.insertAll(listOf(
+            createOccurrence(startTs = now - 7_200_000, endTs = now - 3_600_000, startDay = 20260101),
+            createOccurrence(startTs = now - 600_000, endTs = now + 600_000, startDay = 20260102),
+            createOccurrence(startTs = now + 3_600_000, startDay = 20260103),
+        ))
+
+        assertEquals("one in progress counts as next", now - 600_000, occurrencesDao.getNextOccurrence(eventId, now)?.startTs)
+    }
+
+    @Test
+    fun `getNextOccurrence skips cancelled occurrences`() = runTest {
+        val now = 10_000_000L
+        occurrencesDao.insertAll(listOf(
+            createOccurrence(startTs = now + 1_000, startDay = 20260102, isCancelled = true),
+            createOccurrence(startTs = now + 3_600_000, startDay = 20260103),
+        ))
+
+        assertEquals(now + 3_600_000, occurrencesDao.getNextOccurrence(eventId, now)?.startTs)
+    }
+
+    @Test
+    fun `getNextOccurrence carries the changed occurrence linked to the slot`() = runTest {
+        val now = 10_000_000L
+        val exceptionId = eventsDao.insert(
+            org.onekash.kashcal.data.db.entity.Event(
+                uid = "u", calendarId = calendarId, title = "Moved", startTs = now + 7_200_000,
+                endTs = now + 10_800_000, timezone = "UTC", dtstamp = 0, originalEventId = eventId,
+                originalInstanceTime = now + 3_600_000
+            )
+        )
+        occurrencesDao.insertAll(listOf(
+            createOccurrence(startTs = now + 7_200_000, startDay = 20260103, exceptionEventId = exceptionId),
+            createOccurrence(startTs = now + 86_400_000, startDay = 20260104),
+        ))
+
+        val next = occurrencesDao.getNextOccurrence(eventId, now)!!
+        assertEquals(now + 7_200_000, next.startTs)
+        assertEquals(exceptionId, next.exceptionEventId)
+    }
+
+    @Test
+    fun `getNextOccurrence is null for an ended series`() = runTest {
+        val now = 10_000_000L
+        occurrencesDao.insertAll(listOf(createOccurrence(startTs = now - 7_200_000, endTs = now - 3_600_000, startDay = 20260101)))
+
+        assertNull(occurrencesDao.getNextOccurrence(eventId, now)?.startTs)
+    }
+
     // ==================== Helper Functions ====================
 
     private fun createOccurrence(

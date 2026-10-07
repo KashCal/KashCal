@@ -404,14 +404,15 @@ class CalDavSyncWorkerDefaultReminderTest {
         isAllDay: Boolean = false,
         isFromInitialSync: Boolean = false
     ) = SyncChange(
+        calendarId = 1L,
+        eventEndTs = 0L,
+        eventUid = "uid",
         type = type,
         eventId = eventId,
         eventTitle = "Test Event",
         eventStartTs = System.currentTimeMillis(),
         isAllDay = isAllDay,
         isRecurring = false,
-        calendarName = "Test Calendar",
-        calendarColor = 0xFF2196F3.toInt(),
         isFromInitialSync = isFromInitialSync
     )
 }

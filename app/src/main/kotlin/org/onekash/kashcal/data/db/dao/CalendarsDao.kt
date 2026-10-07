@@ -99,6 +99,13 @@ interface CalendarsDao {
     @Query("UPDATE calendars SET auto_schedule_supported = :supported WHERE id = :id")
     suspend fun updateAutoScheduleSupported(id: Long, supported: Boolean?)
 
+    /**
+     * Sets [Calendar.initialPullDone]. Writes only this column, so it can't overwrite others with a
+     * stale copy; a whole-row update from a copy read before it can still reset the flag.
+     */
+    @Query("UPDATE calendars SET initial_pull_done = 1 WHERE id = :id")
+    suspend fun markInitialPullDone(id: Long)
+
     // ========== Display Settings ==========
 
     @Query("UPDATE calendars SET is_visible = :visible WHERE id = :id")

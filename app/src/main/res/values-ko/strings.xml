@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">아직 동기화 기록이 없어요.\n\n캘린더 화면에서 아래로 당겨서 동기화를 시작하세요.</string>
     <string name="status_no_writable_calendars">쓰기 가능한 캘린더가 없어요</string>
     <string name="status_events_count">일정 %1$d개</string>
-    <string name="status_sync_changes">동기화 변경 사항</string>
     <string name="status_sync_history">동기화 기록</string>
     <string name="status_parse_failures">파싱 오류</string>
     <string name="status_error">오류</string>
@@ -931,11 +930,6 @@
     <string name="rrule_starting">%1$s %2$s부터 시작%3$s</string>
     <string name="rrule_since">%1$s · %2$s부터</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d개 새로 추가</string>
-    <string name="sync_summary_updated">%1$d개 업데이트</string>
-    <string name="sync_summary_removed">%1$d개 삭제</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">순환 스크롤 활성화됨</string>
 
@@ -1029,9 +1023,29 @@
     <plurals name="sync_snackbar_events_removed">
         <item quantity="other">%1$d건 일정 삭제됨</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="other">%1$d회 일정 취소됨</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="other">%1$d건 캘린더 업데이트</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">최근 변경 사항</string>
+    <string name="recent_changes_empty">최근 변경 사항이 없어요</string>
+    <string name="recent_changes_clear_all">모두 지우기</string>
+    <string name="recent_changes_cleared">최근 변경 사항을 지웠어요</string>
+    <string name="recent_changes_dismiss">닫기</string>
+    <string name="recent_changes_moved_from">%1$s에서 이동됨</string>
+    <string name="recent_changes_time_changed">시간 변경됨</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">장소 변경됨</string>
+    <string name="recent_changes_title_changed">제목 변경됨</string>
+    <string name="recent_changes_repeat_changed">반복 변경됨</string>
+    <string name="recent_changes_cancelled">취소됨</string>
+    <string name="cd_recent_change_new">새 일정</string>
+    <string name="cd_recent_change_updated">업데이트됨</string>
+    <string name="cd_recent_change_removed">삭제됨</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">%2$d일 중 %1$d일째</string>

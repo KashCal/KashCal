@@ -11,10 +11,10 @@ import kotlinx.collections.immutable.persistentSetOf
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
 import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.preferences.DefaultCalendar
+import org.onekash.kashcal.domain.changes.RecentChangeItem
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
 import org.onekash.kashcal.error.ErrorPresentation
-import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.ui.components.SyncBannerState
 import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.util.CalendarIntentData
@@ -160,10 +160,12 @@ data class HomeUiState(
     val showShareAvailabilitySheet: Boolean = false,
     /** Whether the invitation inbox sheet shows. */
     val isInvitationInboxOpen: Boolean = false,
-    /** Whether the sync changes sheet shows. */
-    val showSyncChangesSheet: Boolean = false,
-    /** Changes from the latest sync that reported any, for the sync changes sheet. */
-    val syncChanges: ImmutableList<SyncChange> = persistentListOf(),
+    /** Whether the Recent changes sheet shows. */
+    val isRecentChangesOpen: Boolean = false,
+    /** The Recent changes rows, read only while the sheet shows. */
+    val recentChanges: ImmutableList<RecentChangeItem> = persistentListOf(),
+    /** The rows the last Clear all hid, while its undo is on offer; empty otherwise. */
+    val recentChangesClearedIds: ImmutableList<Long> = persistentListOf(),
     /** Current calendar view. */
     val viewMode: ViewMode = ViewMode.MONTH,
     /**
@@ -530,3 +532,10 @@ sealed interface PendingDelete {
         override val isAllDay: Boolean,
     ) : PendingDelete
 }
+
+/** Where a Recent changes row opens: the event, at [occurrenceTs] when set. */
+data class RecentChangeTarget(
+    val event: org.onekash.kashcal.data.db.entity.Event,
+    /** The occurrence to show; null opens the event at its own start. */
+    val occurrenceTs: Long?
+)

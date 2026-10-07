@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Noch keine Sync-Sitzungen.\n\nZiehe auf der Kalenderansicht nach unten, um eine Synchronisierung auszulösen.</string>
     <string name="status_no_writable_calendars">Keine beschreibbaren Kalender verfügbar</string>
     <string name="status_events_count">%1$d Termine</string>
-    <string name="status_sync_changes">Sync-Änderungen</string>
     <string name="status_sync_history">Sync-Verlauf</string>
     <string name="status_parse_failures">Analysefehler</string>
     <string name="status_error">Fehler</string>
@@ -969,11 +968,6 @@
     <string name="rrule_starting">%1$s ab %2$s%3$s</string>
     <string name="rrule_since">%1$s · seit %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d neu</string>
-    <string name="sync_summary_updated">%1$d aktualisiert</string>
-    <string name="sync_summary_removed">%1$d entfernt</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Endlos-Scrolling aktiviert</string>
 
@@ -1075,10 +1069,31 @@
         <item quantity="one">%1$d Termin entfernt</item>
         <item quantity="other">%1$d Termine entfernt</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d Wiederholung abgesagt</item>
+        <item quantity="other">%1$d Wiederholungen abgesagt</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d Kalenderaktualisierung</item>
         <item quantity="other">%1$d Kalenderaktualisierungen</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Letzte Änderungen</string>
+    <string name="recent_changes_empty">Keine letzten Änderungen</string>
+    <string name="recent_changes_clear_all">Alle entfernen</string>
+    <string name="recent_changes_cleared">Letzte Änderungen entfernt</string>
+    <string name="recent_changes_dismiss">Ausblenden</string>
+    <string name="recent_changes_moved_from">Verschoben von %1$s</string>
+    <string name="recent_changes_time_changed">Uhrzeit geändert</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Ort geändert</string>
+    <string name="recent_changes_title_changed">Titel geändert</string>
+    <string name="recent_changes_repeat_changed">Wiederholung geändert</string>
+    <string name="recent_changes_cancelled">Abgesagt</string>
+    <string name="cd_recent_change_new">Neuer Termin</string>
+    <string name="cd_recent_change_updated">Aktualisiert</string>
+    <string name="cd_recent_change_removed">Entfernt</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Tag %1$d von %2$d</string>

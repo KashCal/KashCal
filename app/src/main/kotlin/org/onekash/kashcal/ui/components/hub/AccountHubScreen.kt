@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.AppShortcut
 import androidx.compose.material.icons.filled.BrightnessMedium
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LocalOffer
 import androidx.compose.material.icons.filled.Lock
@@ -129,6 +130,8 @@ fun AccountHubScreen(
     // App permissions opens as a full-screen destination above the hub, so this is a plain
     // navigation row; the host owns the destination and its permission launchers.
     onAppPermissionsClick: () -> Unit = {},
+    // Recent changes opens a sheet over the hub, like Invites.
+    onRecentChangesClick: () -> Unit = {},
     // A slot so tests can stub it: the real section gets an AppearanceViewModel through
     // hiltViewModel(), which a plain Compose test has no graph for.
     makeItYours: @Composable () -> Unit = { MakeItYoursSection() },
@@ -203,6 +206,12 @@ fun AccountHubScreen(
                 icon = Icons.Default.MailOutline,
                 onClick = onInvitesClick,
                 badge = { formatBadgeCount(pendingInvitesCount)?.let { Badge { Text(it) } } },
+            )
+            // No count badge: rows stay for days, so a count would sit unchanged.
+            HubDrawerItem(
+                label = stringResource(R.string.recent_changes_title),
+                icon = Icons.Default.History,
+                onClick = onRecentChangesClick,
             )
             HubDrawerItem(
                 label = stringResource(R.string.jump_to_date),

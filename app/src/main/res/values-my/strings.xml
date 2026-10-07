@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">ချိန်ကိုက်စက်ရှင် မရှိသေးပါ။\n\nပြက္ခဒိန်အမြင်တွင် အောက်သို့ ဆွဲချ၍ ချိန်ကိုက်ပါ။</string>
     <string name="status_no_writable_calendars">ရေးသားနိုင်သော ပြက္ခဒိန် မရှိပါ</string>
     <string name="status_events_count">ပွဲ %1$d ခု</string>
-    <string name="status_sync_changes">ချိန်ကိုက် ပြောင်းလဲမှုများ</string>
     <string name="status_sync_history">ချိန်ကိုက် မှတ်တမ်း</string>
     <string name="status_parse_failures">ခွဲခြမ်းစိတ်ဖြာ ကျရှုံးမှုများ</string>
     <string name="status_error">အမှား</string>
@@ -931,11 +930,6 @@
     <string name="rrule_starting">%1$s %2$s စတင်သည်%3$s</string>
     <string name="rrule_since">%1$s · %2$s ကတည်းက</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d အသစ်</string>
-    <string name="sync_summary_updated">%1$d အပ်ဒိတ်ပြီး</string>
-    <string name="sync_summary_removed">%1$d ဖယ်ရှားပြီး</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">စက်ဝိုင်း လှိမ့်ခြင်း ဖွင့်ထား</string>
 
@@ -1030,9 +1024,29 @@
     <plurals name="sync_snackbar_events_removed">
         <item quantity="other">ပွဲ %1$d ခုဖယ်ရှားပြီး</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="other">ထပ်တလဲလဲ ဖြစ်ရပ် %1$d ခု ပယ်ဖျက်ပြီး</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="other">ပြက္ခဒိန်အပ်ဒိတ် %1$d ခု</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">မကြာသေးမီ ပြောင်းလဲမှုများ</string>
+    <string name="recent_changes_empty">မကြာသေးမီ ပြောင်းလဲမှု မရှိပါ</string>
+    <string name="recent_changes_clear_all">အားလုံး ရှင်း</string>
+    <string name="recent_changes_cleared">မကြာသေးမီ ပြောင်းလဲမှုများ ရှင်းပြီး</string>
+    <string name="recent_changes_dismiss">ပယ်</string>
+    <string name="recent_changes_moved_from">%1$s မှ ရွှေ့ထားသည်</string>
+    <string name="recent_changes_time_changed">အချိန် ပြောင်းထားသည်</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">တည်နေရာ ပြောင်းထားသည်</string>
+    <string name="recent_changes_title_changed">ခေါင်းစဉ် ပြောင်းထားသည်</string>
+    <string name="recent_changes_repeat_changed">ထပ်ခါတလဲလဲ ပြောင်းထားသည်</string>
+    <string name="recent_changes_cancelled">ပယ်ဖျက်လိုက်သည်</string>
+    <string name="cd_recent_change_new">ပွဲအသစ်</string>
+    <string name="cd_recent_change_updated">အပ်ဒိတ်ပြီး</string>
+    <string name="cd_recent_change_removed">ဖယ်ရှားပြီး</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">ရက် %1$d / %2$d</string>

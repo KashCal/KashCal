@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Még nincs szinkronizálási munkamenet.\n\nIndíts szinkronizálást a naptárnézetben lefelé húzással.</string>
     <string name="status_no_writable_calendars">Nincs írható naptár</string>
     <string name="status_events_count">%1$d esemény</string>
-    <string name="status_sync_changes">Szinkronizálási változások</string>
     <string name="status_sync_history">Szinkronizálási előzmények</string>
     <string name="status_parse_failures">Feldolgozási hibák</string>
     <string name="status_error">Hiba</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s kezdve: %2$s%3$s</string>
     <string name="rrule_since">%1$s · óta: %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d új</string>
-    <string name="sync_summary_updated">%1$d frissítve</string>
-    <string name="sync_summary_removed">%1$d eltávolítva</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Körkörös görgetés engedélyezve</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d esemény eltávolítva</item>
         <item quantity="other">%1$d esemény eltávolítva</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d előfordulás törölve</item>
+        <item quantity="other">%1$d előfordulás törölve</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d naptárfrissítés</item>
         <item quantity="other">%1$d naptárfrissítés</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Legutóbbi változások</string>
+    <string name="recent_changes_empty">Nincsenek legutóbbi változások</string>
+    <string name="recent_changes_clear_all">Összes törlése</string>
+    <string name="recent_changes_cleared">Legutóbbi változások törölve</string>
+    <string name="recent_changes_dismiss">Elrejtés</string>
+    <string name="recent_changes_moved_from">Áthelyezve, korábban: %1$s</string>
+    <string name="recent_changes_time_changed">Időpont módosult</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Helyszín módosult</string>
+    <string name="recent_changes_title_changed">Cím módosult</string>
+    <string name="recent_changes_repeat_changed">Ismétlés módosult</string>
+    <string name="recent_changes_cancelled">Lemondva</string>
+    <string name="cd_recent_change_new">Új esemény</string>
+    <string name="cd_recent_change_updated">Frissítve</string>
+    <string name="cd_recent_change_removed">Eltávolítva</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">%1$d. nap / %2$d</string>

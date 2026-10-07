@@ -66,6 +66,20 @@ class CalendarsDaoTest : BaseDaoTest() {
     }
 
     @Test
+    fun `initial_pull_done starts false and markInitialPullDone sets only that calendar`() = runTest {
+        val id = calendarsDao.insert(createCalendar(displayName = "First"))
+        val other = calendarsDao.insert(createCalendar(displayName = "Other"))
+        assertEquals(false, calendarsDao.getById(id)!!.initialPullDone)
+
+        calendarsDao.markInitialPullDone(id)
+
+        val marked = calendarsDao.getById(id)!!
+        assertEquals(true, marked.initialPullDone)
+        assertEquals("the targeted write leaves other columns alone", "First", marked.displayName)
+        assertEquals(false, calendarsDao.getById(other)!!.initialPullDone)
+    }
+
+    @Test
     fun `auto_schedule_supported defaults to null then round-trips tri-state`() = runTest {
         val id = calendarsDao.insert(createCalendar())
         assertNull(calendarsDao.getById(id)!!.autoScheduleSupported)

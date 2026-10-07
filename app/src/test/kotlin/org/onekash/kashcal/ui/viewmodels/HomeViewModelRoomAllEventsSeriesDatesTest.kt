@@ -363,6 +363,20 @@ class HomeViewModelRoomAllEventsSeriesDatesTest {
         assertEquals(wednesday, occurrenceStarts(id).first())
     }
 
+    @Test
+    fun `moving the first occurrence a week later moves the series to the same time a week on`() = runTest(dispatcher) {
+        // Another device pulling this edit sees the series start move by whole weeks at the same
+        // local time, the case Recent changes words with dates rather than the time of day.
+        val id = seedTimedSeries()
+        val opened = openForm(id, occurrence(1))
+        val moved = opened.withTimedStart(opened.dateMillis + 7 * DAY_MS, 10, 0, defaultDurationMinutes = 60)
+
+        assertTrue(saveAllEvents(moved).isSuccess)
+
+        // 12 Mar is after the change to EDT: same 10:00 local, one hour less than 7 x 24 h.
+        assertEquals(newYork(LocalDate.of(2024, 3, 12), 10, 0), event(id).startTs)
+    }
+
     // ---- dates are read in the event's zone ----
 
     @Test

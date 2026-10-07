@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Vēl nav sinhronizācijas sesiju.\n\nVelciet uz leju kalendāra skatā, lai sāktu sinhronizāciju.</string>
     <string name="status_no_writable_calendars">Nav pieejamu rediģējamu kalendāru</string>
     <string name="status_events_count">%1$d notikumi</string>
-    <string name="status_sync_changes">Sinhronizācijas izmaiņas</string>
     <string name="status_sync_history">Sinhronizācijas vēsture</string>
     <string name="status_parse_failures">Parsēšanas kļūdas</string>
     <string name="status_error">Kļūda</string>
@@ -1009,11 +1008,6 @@
     <string name="rrule_starting">%1$s sākot ar %2$s%3$s</string>
     <string name="rrule_since">%1$s · kopš %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d jauni</string>
-    <string name="sync_summary_updated">%1$d atjaunināti</string>
-    <string name="sync_summary_removed">%1$d noņemti</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Apļveida ritināšana iespējota</string>
 
@@ -1123,11 +1117,33 @@
         <item quantity="one">%1$d notikums noņemts</item>
         <item quantity="other">%1$d notikumi noņemti</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="zero">%1$d atkārtojumu atcelti</item>
+        <item quantity="one">%1$d atkārtojums atcelts</item>
+        <item quantity="other">%1$d atkārtojumi atcelti</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="zero">%1$d kalendāra atjauninājumu</item>
         <item quantity="one">%1$d kalendāra atjauninājums</item>
         <item quantity="other">%1$d kalendāra atjauninājumi</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Nesenās izmaiņas</string>
+    <string name="recent_changes_empty">Nav nesenu izmaiņu</string>
+    <string name="recent_changes_clear_all">Notīrīt visu</string>
+    <string name="recent_changes_cleared">Nesenās izmaiņas notīrītas</string>
+    <string name="recent_changes_dismiss">Noraidīt</string>
+    <string name="recent_changes_moved_from">Pārcelts no %1$s</string>
+    <string name="recent_changes_time_changed">Laiks mainīts</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Vieta mainīta</string>
+    <string name="recent_changes_title_changed">Nosaukums mainīts</string>
+    <string name="recent_changes_repeat_changed">Atkārtošana mainīta</string>
+    <string name="recent_changes_cancelled">Atcelts</string>
+    <string name="cd_recent_change_new">Jauns notikums</string>
+    <string name="cd_recent_change_updated">Atjaunināts</string>
+    <string name="cd_recent_change_removed">Noņemts</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Diena %1$d no %2$d</string>

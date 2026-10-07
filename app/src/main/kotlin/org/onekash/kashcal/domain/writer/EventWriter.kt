@@ -42,6 +42,7 @@ class EventWriter @Inject constructor(
     private val pendingCancelsDao by lazy { database.pendingCancelsDao() }
     private val categoryDao by lazy { database.categoryDao() }
     private val calendarsDao by lazy { database.calendarsDao() }
+    private val recentChangesDao by lazy { database.recentChangesDao() }
 
     /**
      * Records each of an event's [categories] as used at [now], for the recency-ordered tag
@@ -1212,6 +1213,22 @@ class EventWriter @Inject constructor(
             ) {
                 eventsDao.deleteById(exception.id)
             }
+        }
+    }
+
+    /** Hides exactly the Recent changes rows [ids], in one transaction. */
+    suspend fun dismissRecentChanges(ids: List<Long>, at: Long = System.currentTimeMillis()) {
+        if (ids.isEmpty()) return
+        database.runInTransaction {
+            ids.chunked(SQL_IN_CHUNK).forEach { recentChangesDao.dismiss(it, at) }
+        }
+    }
+
+    /** Shows the Recent changes rows [ids] again, for Clear all's undo. */
+    suspend fun restoreRecentChanges(ids: List<Long>) {
+        if (ids.isEmpty()) return
+        database.runInTransaction {
+            ids.chunked(SQL_IN_CHUNK).forEach { recentChangesDao.restore(it) }
         }
     }
 

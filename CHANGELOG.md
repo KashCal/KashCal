@@ -1,3 +1,20 @@
+## [2026.10.07]
+
+Shared calendars change behind your back. Someone moves Thursday's meeting, cancels one week of the book club, renames the trip, and the only sign is that your week looks slightly different from the one you remember.
+
+Meet the change detector. Each time KashCal syncs your iCloud and CalDAV calendars, it now notices what changed elsewhere, on another device or by someone you share with, and writes it down: a new event, an occurrence moved from Tuesday, one date of a series cancelled, a new place to be. Open the account hub and tap Recent changes to read the past week, grouped by the day each change arrived. Tap a row to open the event, swipe it away once you have seen it, or clear the lot. It speaks up only for real changes, so an event a server merely re-stamped stays quiet.
+
+The detector watches iCloud and CalDAV calendars. Device calendars and ICS subscriptions aren't part of it.
+
+Your calendar still changes when you are not looking. Now it leaves a note.
+
+### Everything in this release
+
+- Added Recent changes to the account hub, below Invites: a week of what iCloud and CalDAV sync added, changed, moved or cancelled, grouped by the day it arrived, with swipe to dismiss and `Clear all` with Undo; device calendars and ICS subscriptions aren't included
+- Changed the after-sync message to match the Recent changes list, including cancelled occurrences, and translated it into every language
+- Fixed sync reporting events as updated when nothing in them had changed, such as the rest of a series after one occurrence moved
+- Fixed a drag that starts in an event form text field hiding the keyboard while you select or edit text, #384
+
 ## [2026.09.27]
 
 ### Everything in this release

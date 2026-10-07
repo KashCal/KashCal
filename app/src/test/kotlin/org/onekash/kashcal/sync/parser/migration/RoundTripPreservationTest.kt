@@ -59,7 +59,8 @@ class RoundTripPreservationTest {
             END:VCALENDAR
         """.trimIndent()
 
-        // What the app stores after the first pull.
+        // What the mapper returns on the first pull. The stored row comes back through Room,
+        // which this test skips; PullStrategyUnchangedEventReportTest covers that round trip.
         val stored = ICalEventMapper.toEntity(
             parser.parseAllEvents(icloudMasterIcal).getOrNull()!![0],
             icloudMasterIcal, 1L, null, null

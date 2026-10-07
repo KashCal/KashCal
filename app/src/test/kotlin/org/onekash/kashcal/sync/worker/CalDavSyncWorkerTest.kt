@@ -89,6 +89,7 @@ class CalDavSyncWorkerTest {
     private lateinit var iCloudUrlMigration: ICloudUrlMigration
     private lateinit var eventsDao: org.onekash.kashcal.data.db.dao.EventsDao
     private lateinit var dataStore: org.onekash.kashcal.data.preferences.KashCalDataStore
+    private lateinit var recentChangesRecorder: org.onekash.kashcal.domain.changes.RecentChangesRecorder
     private lateinit var worker: CalDavSyncWorker
 
     @Before
@@ -121,6 +122,9 @@ class CalDavSyncWorkerTest {
         iCloudUrlMigration = mockk(relaxed = true)
         eventsDao = mockk(relaxed = true)
         dataStore = mockk(relaxed = true)
+        // Strict: record() returns what the worker publishes, so each test stubs it.
+        recentChangesRecorder = mockk()
+        coEvery { recentChangesRecorder.record(any(), any()) } returns emptyList()
 
         // Default reminder settings: 15 minutes for timed events, 720 for all-day.
         coEvery { dataStore.defaultReminderMinutes } returns kotlinx.coroutines.flow.flowOf(15)
@@ -186,7 +190,8 @@ class CalDavSyncWorkerTest {
             syncLogsDao = syncLogsDao,
             iCloudUrlMigration = iCloudUrlMigration,
             eventsDao = eventsDao,
-            dataStore = dataStore
+            dataStore = dataStore,
+            recentChangesRecorder = recentChangesRecorder
         )
     }
 
@@ -1444,15 +1449,99 @@ class CalDavSyncWorkerTest {
     private fun createTestSyncChange(type: ChangeType, eventId: Long): SyncChange {
         val now = System.currentTimeMillis()
         return SyncChange(
+            calendarId = 1L,
+            eventEndTs = 0L,
+            eventUid = "uid",
             type = type,
             eventId = eventId,
             eventTitle = "Test Event",
             eventStartTs = now + 3600_000,
             isAllDay = false,
             isRecurring = false,
-            calendarName = "Home",
-            calendarColor = 0xFF0000
         )
+    }
+
+    // ==================== Recent changes ====================
+
+    private fun recordedEntry(eventId: Long) = org.onekash.kashcal.domain.changes.RecentChangeEntry(
+        calendarId = 1L, eventUid = "uid-$eventId", instanceTs = 0, eventId = eventId,
+        type = ChangeType.NEW, title = "Test Event", startTs = 0, endTs = 0, isAllDay = false,
+        isRecurring = false, changedFields = emptySet(), previousStartTs = null, previousIsAllDay = null
+    )
+
+    /** Runs one sync that returns [result] carrying [raw], and checks it records and publishes. */
+    private suspend fun assertRecordsAndPublishes(raw: SyncChange, result: SyncResult) {
+        val worker = createWorker(CalDavSyncWorker.createFullSyncInput())
+        val testAccount = createTestAccount()
+        val recorded = listOf(recordedEntry(100L))
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns result
+        coEvery { recentChangesRecorder.record(listOf(raw), any()) } returns recorded
+
+        worker.doWork()
+
+        coVerify(exactly = 1) { recentChangesRecorder.record(listOf(raw), any()) }
+        verify(exactly = 1) { syncScheduler.setSyncChanges(recorded) }
+    }
+
+    @Test
+    fun `sync records the raw changes and publishes what the recorder returned`() = runTest {
+        val raw = createTestSyncChange(ChangeType.NEW, 100L)
+        assertRecordsAndPublishes(
+            raw,
+            SyncResult.Success(calendarsSynced = 1, eventsPulledAdded = 1, durationMs = 1, changes = listOf(raw))
+        )
+    }
+
+    @Test
+    fun `a partly failed sync still records its changes and publishes what was recorded`() = runTest {
+        val raw = createTestSyncChange(ChangeType.NEW, 100L)
+        assertRecordsAndPublishes(
+            raw,
+            SyncResult.PartialSuccess(
+                calendarsSynced = 1, eventsPulledAdded = 1, durationMs = 1,
+                errors = listOf(SyncError(phase = SyncPhase.PULL, calendarId = 2L, message = "Network timeout")),
+                changes = listOf(raw)
+            )
+        )
+    }
+
+    @Test
+    fun `a sync whose changes were all skipped publishes nothing`() = runTest {
+        val worker = createWorker(CalDavSyncWorker.createFullSyncInput())
+        val testAccount = createTestAccount()
+        val raw = createTestSyncChange(ChangeType.MODIFIED, 100L)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns
+            SyncResult.Success(calendarsSynced = 1, eventsPulledUpdated = 1, durationMs = 1, changes = listOf(raw))
+        coEvery { recentChangesRecorder.record(listOf(raw), any()) } returns emptyList()
+
+        worker.doWork()
+
+        verify(exactly = 0) { syncScheduler.setSyncChanges(any()) }
+    }
+
+    @Test
+    fun `a recorder failure neither fails the sync nor skips reminders`() = runTest {
+        val worker = createWorker(CalDavSyncWorker.createFullSyncInput())
+        val testAccount = createTestAccount()
+        val eventId = 100L
+        val raw = createTestSyncChange(ChangeType.NEW, eventId)
+        val testEvent = createTestEvent(eventId, 1L, reminders = listOf("-PT15M"))
+        val testOccurrence = createTestOccurrence(eventId, 1L)
+        coEvery { accountRepository.getEnabledAccounts() } returns listOf(testAccount)
+        coEvery { syncEngine.syncAccountWithQuirks(testAccount, any(), false, any(), any(), any()) } returns
+            SyncResult.Success(calendarsSynced = 1, eventsPulledAdded = 1, durationMs = 1, changes = listOf(raw))
+        coEvery { eventReader.getEventById(eventId) } returns testEvent
+        coEvery { eventReader.getCalendarById(1L) } returns createTestCalendar(1L)
+        coEvery { eventReader.getOccurrencesForEventInScheduleWindow(eventId, ReminderScheduler.OCCURRENCE_LOOKAHEAD_DAYS) } returns listOf(testOccurrence)
+        coEvery { recentChangesRecorder.record(any(), any()) } throws IllegalStateException("db locked")
+
+        val result = worker.doWork()
+
+        assertTrue("the sync still succeeds, got $result", result is androidx.work.ListenableWorker.Result.Success)
+        coVerify { reminderScheduler.scheduleRemindersForEvent(testEvent, listOf(testOccurrence), any()) }
+        verify(exactly = 0) { syncScheduler.setSyncChanges(any()) }
     }
 
     // ==================== Stale IN_PROGRESS Recovery Tests ====================

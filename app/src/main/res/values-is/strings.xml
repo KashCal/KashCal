@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Engar samstillingarlotur ennþá.\n\nDragðu niður í dagatalsyfirlitinu til að hefja samstillingu.</string>
     <string name="status_no_writable_calendars">Engin skrifanleg dagatöl tiltæk</string>
     <string name="status_events_count">%1$d viðburðir</string>
-    <string name="status_sync_changes">Samstillingarbreytingar</string>
     <string name="status_sync_history">Samstillingarsaga</string>
     <string name="status_parse_failures">Þáttunarvilla</string>
     <string name="status_error">Villa</string>
@@ -969,11 +968,6 @@
     <string name="rrule_starting">%1$s frá %2$s%3$s</string>
     <string name="rrule_since">%1$s · síðan %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d nýir</string>
-    <string name="sync_summary_updated">%1$d uppfærðir</string>
-    <string name="sync_summary_removed">%1$d fjarlægðir</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Hringlaga flettun virk</string>
 
@@ -1075,10 +1069,31 @@
         <item quantity="one">%1$d viðburður fjarlægður</item>
         <item quantity="other">%1$d viðburðir fjarlægðir</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d tilvik fellt niður</item>
+        <item quantity="other">%1$d tilvik felld niður</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d dagatalappdatering</item>
         <item quantity="other">%1$d dagatalappdateringar</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Nýlegar breytingar</string>
+    <string name="recent_changes_empty">Engar nýlegar breytingar</string>
+    <string name="recent_changes_clear_all">Hreinsa allt</string>
+    <string name="recent_changes_cleared">Nýlegar breytingar hreinsaðar</string>
+    <string name="recent_changes_dismiss">Hunsa</string>
+    <string name="recent_changes_moved_from">Fært frá %1$s</string>
+    <string name="recent_changes_time_changed">Tíma breytt</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Staðsetningu breytt</string>
+    <string name="recent_changes_title_changed">Titli breytt</string>
+    <string name="recent_changes_repeat_changed">Endurtekningu breytt</string>
+    <string name="recent_changes_cancelled">Aflýst</string>
+    <string name="cd_recent_change_new">Nýr viðburður</string>
+    <string name="cd_recent_change_updated">Uppfært</string>
+    <string name="cd_recent_change_removed">Fjarlægt</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Dagur %1$d af %2$d</string>

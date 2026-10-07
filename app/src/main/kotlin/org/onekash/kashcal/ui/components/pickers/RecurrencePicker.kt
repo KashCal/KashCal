@@ -59,6 +59,7 @@ import org.onekash.kashcal.domain.rrule.FrequencyOption
 import org.onekash.kashcal.domain.rrule.MonthlyPattern
 import org.onekash.kashcal.domain.rrule.RruleBuilder
 import org.onekash.kashcal.domain.rrule.RruleDisplayStrings
+import org.onekash.kashcal.ui.components.LocalTextFieldGestureMarker
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.DayOfWeek
 import java.time.Instant
@@ -893,9 +894,11 @@ fun EndConditionSelector(
                 }
             }
             Text(stringResource(R.string.label_recurrence_after), style = MaterialTheme.typography.bodyMedium)
+            val countEditable = endCondition is EndCondition.Count
+            val countGestureMarker = if (countEditable) LocalTextFieldGestureMarker.current else Modifier
             BasicTextField(
                 state = countTextFieldState,
-                modifier = Modifier
+                modifier = countGestureMarker
                     .width(60.dp)
                     .border(
                         width = 1.dp,

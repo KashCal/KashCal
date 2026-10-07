@@ -47,6 +47,7 @@ import org.onekash.kashcal.R
 import org.onekash.kashcal.domain.category.CategoryName
 import org.onekash.kashcal.domain.category.CategoryNameError
 import org.onekash.kashcal.domain.category.CategoryNameValidator
+import org.onekash.kashcal.ui.components.LocalTextFieldGestureMarker
 
 /**
  * Shows the event's tags and lets the user add or remove them.
@@ -172,7 +173,7 @@ fun TagChipRow(
                 isError = errorRes != null,
                 placeholder = { Text(addLabel) },
                 supportingText = errorRes?.let { res -> { Text(stringResource(res)) } },
-                modifier = Modifier.fillMaxWidth(),
+                modifier = LocalTextFieldGestureMarker.current.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = { commit(draft) }),
             )

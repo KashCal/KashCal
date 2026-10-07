@@ -289,6 +289,17 @@ interface OccurrencesDao {
     """)
     suspend fun getOccurrenceNearTime(eventId: Long, occurrenceTime: Long): Occurrence?
 
+    /**
+     * Returns [eventId]'s first occurrence not ended at [now], cancelled ones skipped, or null
+     * when none is left. A changed occurrence is the master's row with `exception_event_id` set.
+     */
+    @Query("""
+        SELECT * FROM occurrences
+        WHERE event_id = :eventId AND end_ts >= :now AND is_cancelled = 0
+        ORDER BY start_ts LIMIT 1
+    """)
+    suspend fun getNextOccurrence(eventId: Long, now: Long): Occurrence?
+
     // ========== Write Operations ==========
 
     /** Inserts [occurrence], replacing a row with the same id or (event_id, start_ts). */

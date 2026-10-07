@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">Ni sej sinhronizacije.\n\nSprožite sinhronizacijo s povlekom navzdol na pogledu koledarja.</string>
     <string name="status_no_writable_calendars">Ni koledarjev za pisanje</string>
     <string name="status_events_count">%1$d dogodkov</string>
-    <string name="status_sync_changes">Spremembe sinhronizacije</string>
     <string name="status_sync_history">Zgodovina sinhronizacije</string>
     <string name="status_parse_failures">Napake razčlenjevanja</string>
     <string name="status_error">Napaka</string>
@@ -1048,11 +1047,6 @@
     <string name="rrule_starting">%1$s začenši %2$s%3$s</string>
     <string name="rrule_since">%1$s · od %2$s</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d novih</string>
-    <string name="sync_summary_updated">%1$d posodobljenih</string>
-    <string name="sync_summary_removed">%1$d odstranjenih</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">Krožno drsenje omogočeno</string>
 
@@ -1170,12 +1164,35 @@
         <item quantity="few">%1$d dogodki odstranjeni</item>
         <item quantity="other">%1$d dogodkov odstranjenih</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d pojavitev preklicana</item>
+        <item quantity="two">%1$d pojavitvi preklicani</item>
+        <item quantity="few">%1$d pojavitve preklicane</item>
+        <item quantity="other">%1$d pojavitev preklicanih</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d posodobitev koledarja</item>
         <item quantity="two">%1$d posodobitvi koledarja</item>
         <item quantity="few">%1$d posodobitve koledarja</item>
         <item quantity="other">%1$d posodobitev koledarja</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">Nedavne spremembe</string>
+    <string name="recent_changes_empty">Ni nedavnih sprememb</string>
+    <string name="recent_changes_clear_all">Počisti vse</string>
+    <string name="recent_changes_cleared">Nedavne spremembe počiščene</string>
+    <string name="recent_changes_dismiss">Opusti</string>
+    <string name="recent_changes_moved_from">Premaknjeno s %1$s</string>
+    <string name="recent_changes_time_changed">Čas spremenjen</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">Lokacija spremenjena</string>
+    <string name="recent_changes_title_changed">Naziv spremenjen</string>
+    <string name="recent_changes_repeat_changed">Ponavljanje spremenjeno</string>
+    <string name="recent_changes_cancelled">Preklicano</string>
+    <string name="cd_recent_change_new">Nov dogodek</string>
+    <string name="cd_recent_change_updated">Posodobljeno</string>
+    <string name="cd_recent_change_removed">Odstranjeno</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">Dan %1$d od %2$d</string>

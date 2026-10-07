@@ -269,7 +269,6 @@
     <string name="status_no_sync_sessions">ምንም የማመሳሰል ክፍለ ጊዜዎች እስካሁን የሉም።\n\nበቀን መቁጠሪያ እይታ ላይ ወደ ታች በመሳብ ማመሳሰልን ያስጀምሩ።</string>
     <string name="status_no_writable_calendars">ሊፃፍባቸው የሚችሉ ቀን መቁጠሪያዎች የሉም</string>
     <string name="status_events_count">%1$d ክስተቶች</string>
-    <string name="status_sync_changes">የማመሳሰል ለውጦች</string>
     <string name="status_sync_history">የማመሳሰል ታሪክ</string>
     <string name="status_parse_failures">የመተንተን ስህተቶች</string>
     <string name="status_error">ስህተት</string>
@@ -970,11 +969,6 @@
     <string name="rrule_starting">%1$s %2$s%3$s ጀምሮ</string>
     <string name="rrule_since">%1$s · ከ%2$s ጀምሮ</string>
 
-    <!-- ==================== Sync Summary ==================== -->
-    <string name="sync_summary_new">%1$d አዲስ</string>
-    <string name="sync_summary_updated">%1$d ተዘምኗል</string>
-    <string name="sync_summary_removed">%1$d ተወግዷል</string>
-
     <!-- ==================== Additional Content Descriptions ==================== -->
     <string name="cd_circular_scrolling">ክብ ማሸብለል ነቅቷል</string>
 
@@ -1076,10 +1070,31 @@
         <item quantity="one">%1$d ክስተት ተወግዷል</item>
         <item quantity="other">%1$d ክስተቶች ተወግደዋል</item>
     </plurals>
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d ክስተት ተሰርዟል</item>
+        <item quantity="other">%1$d ክስተቶች ተሰርዘዋል</item>
+    </plurals>
     <plurals name="sync_snackbar_calendar_updates">
         <item quantity="one">%1$d የቀን መቁጠሪያ ዝማኔ</item>
         <item quantity="other">%1$d የቀን መቁጠሪያ ዝማኔዎች</item>
     </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <string name="recent_changes_title">የቅርብ ጊዜ ለውጦች</string>
+    <string name="recent_changes_empty">ምንም የቅርብ ጊዜ ለውጦች የሉም</string>
+    <string name="recent_changes_clear_all">ሁሉንም አጽዳ</string>
+    <string name="recent_changes_cleared">የቅርብ ጊዜ ለውጦች ጸድተዋል</string>
+    <string name="recent_changes_dismiss">አሰናብት</string>
+    <string name="recent_changes_moved_from">ከ%1$s ተዛውሯል</string>
+    <string name="recent_changes_time_changed">ሰዓት ተቀይሯል</string>
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <string name="recent_changes_location_changed">ስፍራ ተቀይሯል</string>
+    <string name="recent_changes_title_changed">ርዕስ ተቀይሯል</string>
+    <string name="recent_changes_repeat_changed">ድግግሞሽ ተቀይሯል</string>
+    <string name="recent_changes_cancelled">ተሰርዟል</string>
+    <string name="cd_recent_change_new">አዲስ ክስተት</string>
+    <string name="cd_recent_change_updated">ተዘምኗል</string>
+    <string name="cd_recent_change_removed">ተወግዷል</string>
 
     <!-- ==================== i18n: HomeScreen Day View ==================== -->
     <string name="day_x_of_y">ቀን %1$d ከ%2$d</string>

@@ -30,6 +30,7 @@ import org.onekash.kashcal.sync.client.model.CalDavResult
 import org.onekash.kashcal.sync.client.model.CalendarMetadataProbe
 import org.onekash.kashcal.sync.client.model.SyncItemStatus
 import org.onekash.kashcal.sync.model.ChangeType
+import org.onekash.kashcal.sync.model.ChangedField
 import org.onekash.kashcal.sync.model.SyncChange
 import org.onekash.kashcal.sync.parser.ServerColorParser
 import org.onekash.kashcal.sync.parser.icaldav.EventToICalEventMapper
@@ -161,11 +162,21 @@ class PullStrategy @Inject constructor(
          * Reports whether [incoming] differs from [existing] beyond sync metadata. CalDAV has one
          * etag per .ics resource, so a change to any VEVENT in a series changes the etag of all
          * of them; an unchanged VEVENT is still upserted (new etag) but raises no UI notification.
+         *
+         * Unset and empty reminders, extra properties and categories compare equal: [existing]
+         * comes back from Room, whose converters read a stored null as empty
+         * ([org.onekash.kashcal.data.db.converter.Converters.toStringList],
+         * [org.onekash.kashcal.data.db.converter.Converters.toStringMap]), while the mapper
+         * gives null. Without that, every etag change would report any event that leaves one of
+         * them unset (PullStrategyUnchangedEventReportTest).
          */
         internal fun hasContentChanged(existing: Event, incoming: Event): Boolean =
             stripSyncMetadata(existing) != stripSyncMetadata(incoming)
 
         private fun stripSyncMetadata(e: Event): Event = e.copy(
+            reminders = e.reminders?.takeIf { it.isNotEmpty() },
+            extraProperties = e.extraProperties?.takeIf { it.isNotEmpty() },
+            categories = e.categories?.takeIf { it.isNotEmpty() },
             id = 0, etag = null, syncStatus = SyncStatus.SYNCED,
             caldavUrl = null, rawIcal = null, dtstamp = 0,
             importId = null, originalEventId = null, originalInstanceTime = null,
@@ -338,9 +349,14 @@ class PullStrategy @Inject constructor(
                     syncToken = result.newSyncToken ?: calendar.syncToken,
                     ctag = result.newCtag ?: serverCtag
                 )
+                if (!calendar.initialPullDone) calendarRepository.markInitialPullDone(calendar.id)
+                // Flags every change for the Recent changes log, which skips a first pull's.
+                result.copy(changes = result.changes.map {
+                    it.copy(isFirstPull = !calendar.initialPullDone, isForcedPull = forceFullSync)
+                })
+            } else {
+                result
             }
-
-            result
         } catch (e: SocketTimeoutException) {
             Log.e(TAG, "Pull timed out: ${e.message}", e)
             PullResult.Error(
@@ -367,6 +383,20 @@ class PullStrategy @Inject constructor(
             )
         }
     }
+
+    /** Reports a server-side deletion of [event]; its row is deleted right after. */
+    private fun deletedChange(event: Event, calendar: Calendar) = SyncChange(
+        type = ChangeType.DELETED,
+        eventId = null,
+        eventTitle = event.title,
+        eventStartTs = event.startTs,
+        isAllDay = event.isAllDay,
+        isRecurring = !event.rrule.isNullOrBlank(),
+        calendarId = calendar.id,
+        eventEndTs = event.endTs,
+        eventUid = event.uid,
+        instanceTs = event.originalInstanceTime ?: 0L
+    )
 
     /**
      * Builds a resolver from a server-reported resource URL to the local event whose stored
@@ -470,16 +500,7 @@ class PullStrategy @Inject constructor(
                         else "recently pushed in this sync cycle")
                     continue
                 }
-                deletedChanges.add(SyncChange(
-                    type = ChangeType.DELETED,
-                    eventId = null, // the row is deleted below
-                    eventTitle = event.title,
-                    eventStartTs = event.startTs,
-                    isAllDay = event.isAllDay,
-                    isRecurring = !event.rrule.isNullOrBlank(),
-                    calendarName = calendar.displayName,
-                    calendarColor = calendar.color
-                ))
+                deletedChanges.add(deletedChange(event, calendar))
                 eventsDao.deleteById(event.id)
                 deleted++
             } else {
@@ -684,16 +705,7 @@ class PullStrategy @Inject constructor(
             val toDelete = localEvents.filter { it.isStaleOnServer() }
             for (event in toDelete) {
                 Log.d(TAG, "Deleting stale event: ${event.caldavUrl}")
-                deletedChanges.add(SyncChange(
-                    type = ChangeType.DELETED,
-                    eventId = null,
-                    eventTitle = event.title,
-                    eventStartTs = event.startTs,
-                    isAllDay = event.isAllDay,
-                    isRecurring = !event.rrule.isNullOrBlank(),
-                    calendarName = calendar.displayName,
-                    calendarColor = calendar.color
-                ))
+                deletedChanges.add(deletedChange(event, calendar))
                 eventsDao.deleteById(event.id)
                 deleted++
             }
@@ -865,16 +877,7 @@ class PullStrategy @Inject constructor(
                         else "recently pushed in this sync cycle")
                     continue
                 }
-                deletedChanges.add(SyncChange(
-                    type = ChangeType.DELETED,
-                    eventId = null,
-                    eventTitle = event.title,
-                    eventStartTs = event.startTs,
-                    isAllDay = event.isAllDay,
-                    isRecurring = !event.rrule.isNullOrBlank(),
-                    calendarName = calendar.displayName,
-                    calendarColor = calendar.color
-                ))
+                deletedChanges.add(deletedChange(event, calendar))
                 eventsDao.deleteById(event.id)
                 deleted++
             } else {
@@ -1295,6 +1298,8 @@ class PullStrategy @Inject constructor(
                 Log.d(TAG, "Updated event: ${savedEvent.title} with etag='${savedEvent.etag}'")
             }
 
+            // A synthetic placeholder has nothing the user saw, so nothing to compare with.
+            val priorSeries = existingEvent?.takeUnless { it.isPullSyntheticMaster }
             changes.add(SyncChange(
                 type = changeType,
                 eventId = savedEvent.id,
@@ -1302,9 +1307,16 @@ class PullStrategy @Inject constructor(
                 eventStartTs = savedEvent.startTs,
                 isAllDay = savedEvent.isAllDay,
                 isRecurring = !savedEvent.rrule.isNullOrBlank(),
-                calendarName = calendar.displayName,
-                calendarColor = calendar.color,
-                isFromInitialSync = isInitialSync
+                isFromInitialSync = isInitialSync,
+                calendarId = calendar.id,
+                eventEndTs = savedEvent.endTs,
+                eventUid = savedEvent.uid,
+                changedFields = priorSeries?.let { ChangedField.between(it, savedEvent) }.orEmpty(),
+                previousStartTs = priorSeries?.startTs?.takeIf { it != savedEvent.startTs },
+                previousIsAllDay = priorSeries?.takeIf { it.startTs != savedEvent.startTs }?.isAllDay,
+                cancelledInstances = priorSeries?.let { ChangedField.cancelledInstances(it, savedEvent) }
+                    .orEmpty(),
+                replacedPlaceholder = existingEvent?.isPullSyntheticMaster == true
             ))
         }
 
@@ -1565,6 +1577,23 @@ class PullStrategy @Inject constructor(
                 sessionBuilder?.incrementUpdated()
             }
 
+            // A first-time changed occurrence is compared with the series slot it replaces,
+            // since that slot is what the user saw; a placeholder series has no slot to show.
+            val seriesIsPlaceholder = existingException == null && masterEvent.isPullSyntheticMaster
+            val instanceTime = savedExceptionEvent.originalInstanceTime
+            val prior: Event? = when {
+                existingException != null -> existingException
+                seriesIsPlaceholder || instanceTime == null -> null
+                // Color is left out on purpose: a series color kept only locally (the server
+                // sends none) isn't on the occurrence, so a first-time occurrence's color
+                // difference isn't reported, even one a client set.
+                else -> masterEvent.copy(
+                    startTs = instanceTime,
+                    endTs = instanceTime + (masterEvent.endTs - masterEvent.startTs),
+                    rrule = null, rdate = null, exdate = null,
+                    color = savedExceptionEvent.color
+                )
+            }
             changes.add(SyncChange(
                 type = changeType,
                 eventId = savedExceptionEvent.id,
@@ -1572,9 +1601,15 @@ class PullStrategy @Inject constructor(
                 eventStartTs = savedExceptionEvent.startTs,
                 isAllDay = savedExceptionEvent.isAllDay,
                 isRecurring = true, // an exception always belongs to a series
-                calendarName = calendar.displayName,
-                calendarColor = calendar.color,
-                isFromInitialSync = isInitialSync
+                isFromInitialSync = isInitialSync,
+                calendarId = calendar.id,
+                eventEndTs = savedExceptionEvent.endTs,
+                eventUid = savedExceptionEvent.uid,
+                instanceTs = instanceTime ?: 0L,
+                changedFields = prior?.let { ChangedField.between(it, savedExceptionEvent) }.orEmpty(),
+                previousStartTs = prior?.startTs?.takeIf { it != savedExceptionEvent.startTs },
+                previousIsAllDay = prior?.takeIf { it.startTs != savedExceptionEvent.startTs }?.isAllDay,
+                seriesIsPlaceholder = seriesIsPlaceholder
             ))
         }
 
@@ -1641,9 +1676,11 @@ class PullStrategy @Inject constructor(
                     eventStartTs = ex.startTs,
                     isAllDay = ex.isAllDay,
                     isRecurring = true,
-                    calendarName = calendar.displayName,
-                    calendarColor = calendar.color,
-                    isFromInitialSync = isInitialSync
+                    isFromInitialSync = isInitialSync,
+                    calendarId = calendar.id,
+                    eventEndTs = ex.endTs,
+                    eventUid = uid,
+                    instanceTs = instance
                 ))
                 sessionBuilder?.addDeleted(1)
             }

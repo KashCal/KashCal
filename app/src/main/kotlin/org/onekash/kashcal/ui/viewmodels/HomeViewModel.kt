@@ -52,6 +52,9 @@ import org.onekash.kashcal.domain.identity.canEditAsOrganizer
 import org.onekash.kashcal.domain.identity.effectiveAddresses
 import org.onekash.kashcal.data.repository.AccountRepository
 import org.onekash.kashcal.di.IoDispatcher
+import org.onekash.kashcal.domain.changes.RecentChangeItem
+import org.onekash.kashcal.domain.changes.isSeriesRow
+import org.onekash.kashcal.domain.changes.opens
 import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.rrule.RruleShift
 import org.onekash.kashcal.domain.model.DisplayEvent
@@ -676,6 +679,9 @@ class HomeViewModel(
     // Debounced search; cancelled when a new query arrives.
     private var searchJob: Job? = null
 
+    // Reads the Recent changes log while its sheet shows.
+    private var recentChangesJob: Job? = null
+
     /** Checks which series scopes a staged cross-day drop may offer. */
     private var dragAvailabilityJob: Job? = null
 
@@ -998,21 +1004,18 @@ class HomeViewModel(
     }
 
     /**
-     * Shows a snackbar for every worker sync that reports changes, whatever triggered it, with a
-     * "View" action that opens the sync-changes sheet. The changes are cleared once handled.
+     * Shows a snackbar for every worker sync that recorded Recent changes, whatever triggered it,
+     * with a "View" action that opens the Recent changes sheet. The published entries are
+     * cleared once shown, so a later ViewModel doesn't show them again; the log stays in Room.
      */
     private fun observeSyncChanges() {
         viewModelScope.launch {
             syncScheduler.lastSyncChanges.collect { changes ->
                 if (changes.isNotEmpty()) {
-                    val message = generateSnackbarMessage(changes)
+                    val message = generateSnackbarMessage(changes, context.resources)
                     if (message != null) {
-                        Log.d(TAG, "Sync changes notification: $message (${changes.size} changes)")
-                        // Kept for the sheet.
-                        _uiState.update { it.copy(syncChanges = changes.toPersistentList()) }
-                        showSnackbar(message) {
-                            _uiState.update { it.copy(showSyncChangesSheet = true) }
-                        }
+                        Log.d(TAG, "Sync changes notification: ${changes.size} changes")
+                        showSnackbar(message) { openRecentChanges() }
                     }
                     syncScheduler.clearSyncChanges()
                 }
@@ -2417,18 +2420,77 @@ class HomeViewModel(
         }
     }
 
-    fun toggleSyncChangesSheet() {
-        _uiState.update { it.copy(showSyncChangesSheet = !it.showSyncChangesSheet) }
+    /**
+     * Opens the Recent changes sheet and reads the log while it shows. The expiry window
+     * ([EventReader.observeRecentChanges]) starts from now each time the sheet opens.
+     */
+    fun openRecentChanges() {
+        _uiState.update { it.copy(isRecentChangesOpen = true) }
+        recentChangesJob?.cancel()
+        recentChangesJob = viewModelScope.launch {
+            eventReader.observeRecentChanges(System.currentTimeMillis()).collect { items ->
+                _uiState.update { it.copy(recentChanges = items.toPersistentList()) }
+            }
+        }
     }
 
-    /** Closes the sync-changes sheet and clears its changes. */
-    fun dismissSyncChangesSheet() {
+    /** Closes the Recent changes sheet and stops reading the log; the rows stay stored. */
+    fun closeRecentChanges() {
+        recentChangesJob?.cancel()
+        recentChangesJob = null
         _uiState.update {
             it.copy(
-                showSyncChangesSheet = false,
-                syncChanges = persistentListOf()
+                isRecentChangesOpen = false,
+                recentChanges = persistentListOf(),
+                recentChangesClearedIds = persistentListOf()
             )
         }
+    }
+
+    /** Hides one Recent changes row (a swipe). A log row isn't an event, so there is no undo. */
+    fun dismissRecentChange(id: Long) {
+        viewModelScope.launch { eventCoordinator.dismissRecentChanges(listOf(id)) }
+    }
+
+    /**
+     * Hides every row the sheet shows and offers one undo for them. Only the shown rows: one a
+     * sync adds meanwhile stays.
+     */
+    fun clearAllRecentChanges() {
+        val ids = _uiState.value.recentChanges.map { it.id }
+        if (ids.isEmpty()) return
+        _uiState.update { it.copy(recentChangesClearedIds = ids.toPersistentList()) }
+        viewModelScope.launch { eventCoordinator.dismissRecentChanges(ids) }
+    }
+
+    /** Brings back the rows the last Clear all hid, while its undo is on offer. */
+    fun undoClearRecentChanges() {
+        val ids = _uiState.value.recentChangesClearedIds
+        if (ids.isEmpty()) return
+        _uiState.update { it.copy(recentChangesClearedIds = persistentListOf()) }
+        viewModelScope.launch { eventCoordinator.restoreRecentChanges(ids) }
+    }
+
+    /** Ends Clear all's undo offer once the sheet's Undo row has timed out. */
+    fun onRecentChangesUndoShown() {
+        _uiState.update { it.copy(recentChangesClearedIds = persistentListOf()) }
+    }
+
+    /**
+     * Returns where a Recent changes row opens, or null for a deleted row or one whose event is
+     * gone or waiting to be deleted. A series row opens at its next occurrence, since its stored
+     * start is the first one, possibly months back; when that occurrence was changed on its own,
+     * the changed occurrence opens instead, and with none left the series opens at its start.
+     */
+    suspend fun resolveRecentChangeTarget(item: RecentChangeItem): RecentChangeTarget? {
+        val eventId = item.eventId?.takeIf { item.opens } ?: return null
+        val event = getEventForEdit(eventId)?.takeUnless { it.isPendingDelete }
+            ?: return null
+        if (!item.isSeriesRow) return RecentChangeTarget(event, null)
+        val next = withContext(ioDispatcher) { eventReader.getNextOccurrence(eventId, System.currentTimeMillis()) }
+            ?: return RecentChangeTarget(event, null)
+        val changed = next.exceptionEventId?.let { getEventForEdit(it) }
+        return if (changed != null) RecentChangeTarget(changed, null) else RecentChangeTarget(event, next.startTs)
     }
 
     /**
@@ -4049,7 +4111,7 @@ class HomeViewModel(
 
     /**
      * Runs the action of an error presentation's button, then clears the error. Retry syncs,
-     * ForceFullSync forces a full sync, ViewSyncDetails opens the sync-changes sheet, OpenUrl
+     * ForceFullSync forces a full sync, ViewSyncDetails opens Recent changes, OpenUrl
      * queues the URL for HomeScreen to open, and Custom runs its action. OpenSettings also
      * clears the snackbar; the other variants only clear the error.
      */
@@ -4085,7 +4147,7 @@ class HomeViewModel(
             is ErrorActionCallback.ViewSyncDetails -> {
                 Log.d(TAG, "Error action: ViewSyncDetails")
                 clearError()
-                _uiState.update { it.copy(showSyncChangesSheet = true) }
+                openRecentChanges()
             }
             is ErrorActionCallback.Dismiss -> {
                 Log.d(TAG, "Error action: Dismiss")

@@ -284,7 +284,8 @@ class HomeViewModelTest {
     private fun createViewModel(
         dayCodeSequence: MutableList<Int>? = null,
         calendarProviderRepository: org.onekash.kashcal.data.calendar_provider.CalendarProviderRepository =
-            org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository()
+            org.onekash.kashcal.data.calendar_provider.FakeCalendarProviderRepository(),
+        context: android.content.Context = io.mockk.mockk(relaxed = true)
     ): HomeViewModel {
         val provider: () -> Int = if (dayCodeSequence != null) {
             { dayCodeSequence.removeAt(0) }
@@ -303,10 +304,90 @@ class HomeViewModelTest {
             deviceEventWriter = calendarProviderRepository.deviceEventWriter(dataStore),
             attendeeBackfill = io.mockk.mockk(relaxed = true),
             contactEmailReader = io.mockk.mockk(relaxed = true),
-            context = io.mockk.mockk(relaxed = true),
+            context = context,
             ioDispatcher = testDispatcher,
             currentDayCodeProvider = provider
         )
+    }
+
+    // ==================== Sync changes snackbar ====================
+
+    private fun recordedEntry(
+        type: org.onekash.kashcal.sync.model.ChangeType,
+        title: String,
+        uid: String = title,
+    ) = org.onekash.kashcal.domain.changes.RecentChangeEntry(
+        calendarId = 1L, eventUid = uid, instanceTs = 0, eventId = 1L, type = type, title = title,
+        startTs = 0, endTs = 0, isAllDay = false, isRecurring = false, changedFields = emptySet(),
+        previousStartTs = null, previousIsAllDay = null
+    )
+
+    /** Stubs the scheduler's published entries the way SyncScheduler behaves: clear empties it. */
+    private fun publish(entries: List<org.onekash.kashcal.domain.changes.RecentChangeEntry>):
+        MutableStateFlow<List<org.onekash.kashcal.domain.changes.RecentChangeEntry>> {
+        val flow = MutableStateFlow(entries)
+        every { syncScheduler.lastSyncChanges } returns flow
+        every { syncScheduler.clearSyncChanges() } answers { flow.value = emptyList() }
+        return flow
+    }
+
+    @Test
+    @org.robolectric.annotation.Config(qualifiers = "de")
+    fun `recorded sync changes show a snackbar in the user's language`() = runTest {
+        publish(listOf(recordedEntry(org.onekash.kashcal.sync.model.ChangeType.NEW, "Zahnarzt")))
+
+        val viewModel = createViewModel(context = androidx.test.core.app.ApplicationProvider.getApplicationContext())
+        advanceUntilIdle()
+
+        assertEquals("Neuer Termin: Zahnarzt", viewModel.uiState.value.pendingSnackbarMessage)
+    }
+
+    @Test
+    @org.robolectric.annotation.Config(qualifiers = "de")
+    fun `several updates use the localized plural`() = runTest {
+        publish(listOf(
+            recordedEntry(org.onekash.kashcal.sync.model.ChangeType.MODIFIED, "A"),
+            recordedEntry(org.onekash.kashcal.sync.model.ChangeType.MODIFIED, "B"),
+        ))
+
+        val viewModel = createViewModel(context = androidx.test.core.app.ApplicationProvider.getApplicationContext())
+        advanceUntilIdle()
+
+        assertEquals("2 Termine aktualisiert", viewModel.uiState.value.pendingSnackbarMessage)
+    }
+
+    @Test
+    fun `nothing recorded shows no snackbar`() = runTest {
+        publish(emptyList())
+
+        val viewModel = createViewModel(context = androidx.test.core.app.ApplicationProvider.getApplicationContext())
+        advanceUntilIdle()
+
+        assertNull(viewModel.uiState.value.pendingSnackbarMessage)
+    }
+
+    @Test
+    fun `the snackbar's View action opens the recent changes sheet`() = runTest {
+        publish(listOf(recordedEntry(org.onekash.kashcal.sync.model.ChangeType.NEW, "Dentist")))
+
+        val viewModel = createViewModel(context = androidx.test.core.app.ApplicationProvider.getApplicationContext())
+        advanceUntilIdle()
+        viewModel.uiState.value.pendingSnackbarAction!!.invoke()
+
+        assertTrue(viewModel.uiState.value.isRecentChangesOpen)
+    }
+
+    @Test
+    fun `a view model created after the snackbar showed doesn't show it again`() = runTest {
+        publish(listOf(recordedEntry(org.onekash.kashcal.sync.model.ChangeType.NEW, "Dentist")))
+        val context: android.content.Context = androidx.test.core.app.ApplicationProvider.getApplicationContext()
+        createViewModel(context = context)
+        advanceUntilIdle()
+
+        val later = createViewModel(context = context)
+        advanceUntilIdle()
+
+        assertNull(later.uiState.value.pendingSnackbarMessage)
     }
 
     // ==================== Initial State Tests ====================
