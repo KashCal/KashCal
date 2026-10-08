@@ -176,6 +176,7 @@
     <string name="app_icon_default">デフォルト</string>
     <string name="app_icon_supporter">サポーター</string>
     <string name="app_icon_supporter_calendar">サポーター（表示名は「カレンダー」）</string>
+    <string name="app_icon_todays_date">今日の日付</string>
     <string name="app_icon_label_calendar">カレンダー</string>
     <string name="app_icon_support_cta">KashCal を支援</string>
     <string name="app_icon_switch_note">アイコンを変更するとアプリが再起動することがあります。通知では常にデフォルトのアイコンと名前が使用されます。</string>

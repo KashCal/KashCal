@@ -176,6 +176,7 @@
     <string name="app_icon_default">Standard</string>
     <string name="app_icon_supporter">Støttespelar</string>
     <string name="app_icon_supporter_calendar">Støttespelar, kalla Kalender</string>
+    <string name="app_icon_todays_date">Dagens dato</string>
     <string name="app_icon_label_calendar">Kalender</string>
     <string name="app_icon_support_cta">Støtt KashCal</string>
     <string name="app_icon_switch_note">Å endre ikonet kan starte appen på nytt. Varsel brukar alltid standardikonet og standardnamnet.</string>

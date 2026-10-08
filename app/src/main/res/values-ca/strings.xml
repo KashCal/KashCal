@@ -176,6 +176,7 @@
     <string name="app_icon_default">Predeterminat</string>
     <string name="app_icon_supporter">Col·laborador</string>
     <string name="app_icon_supporter_calendar">Col·laborador, amb el nom Calendari</string>
+    <string name="app_icon_todays_date">Data d\'avui</string>
     <string name="app_icon_label_calendar">Calendari</string>
     <string name="app_icon_support_cta">Dona suport a KashCal</string>
     <string name="app_icon_switch_note">Canviar-la pot reiniciar l\'aplicació. Les notificacions sempre utilitzen la icona i el nom predeterminats.</string>

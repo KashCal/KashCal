@@ -176,6 +176,7 @@
     <string name="app_icon_default">Standard</string>
     <string name="app_icon_supporter">Supporter</string>
     <string name="app_icon_supporter_calendar">Supporter, kallad Kalender</string>
+    <string name="app_icon_todays_date">Dagens datum</string>
     <string name="app_icon_label_calendar">Kalender</string>
     <string name="app_icon_support_cta">Stöd KashCal</string>
     <string name="app_icon_switch_note">Att ändra ikonen kan starta om appen. Aviseringar använder alltid standardikonen och standardnamnet.</string>

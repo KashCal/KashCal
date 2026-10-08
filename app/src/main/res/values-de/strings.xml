@@ -176,6 +176,7 @@
     <string name="app_icon_default">Standard</string>
     <string name="app_icon_supporter">Unterstützer</string>
     <string name="app_icon_supporter_calendar">Unterstützer, benannt Kalender</string>
+    <string name="app_icon_todays_date">Heutiges Datum</string>
     <string name="app_icon_label_calendar">Kalender</string>
     <string name="app_icon_support_cta">KashCal unterstützen</string>
     <string name="app_icon_switch_note">Das Ändern des Symbols kann die App neu starten. Benachrichtigungen verwenden immer das Standardsymbol und den Standardnamen.</string>

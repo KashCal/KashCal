@@ -176,6 +176,7 @@
     <string name="app_icon_default">ነባሪ</string>
     <string name="app_icon_supporter">ደጋፊ</string>
     <string name="app_icon_supporter_calendar">ደጋፊ፣ ቀን መቁጠሪያ ተብሎ የተሰየመ</string>
+    <string name="app_icon_todays_date">የዛሬ ቀን</string>
     <string name="app_icon_label_calendar">ቀን መቁጠሪያ</string>
     <string name="app_icon_support_cta">KashCal ይደግፉ</string>
     <string name="app_icon_switch_note">አዶውን መቀየር መተግበሪያውን እንደገና ሊያስጀምረው ይችላል። ማሳወቂያዎች ሁልጊዜ ነባሪውን አዶና ስም ይጠቀማሉ።</string>

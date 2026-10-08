@@ -176,6 +176,7 @@
     <string name="app_icon_default">Mặc định</string>
     <string name="app_icon_supporter">Người ủng hộ</string>
     <string name="app_icon_supporter_calendar">Người ủng hộ (nhãn là Lịch)</string>
+    <string name="app_icon_todays_date">Ngày hôm nay</string>
     <string name="app_icon_label_calendar">Lịch</string>
     <string name="app_icon_support_cta">Ủng hộ KashCal</string>
     <string name="app_icon_switch_note">Việc thay đổi biểu tượng có thể khiến ứng dụng khởi động lại. Thông báo luôn dùng biểu tượng và tên mặc định.</string>

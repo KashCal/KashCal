@@ -59,6 +59,7 @@ import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.rrule.RruleShift
 import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.domain.model.SearchResult
+import org.onekash.kashcal.domain.model.toEventForDuplicate
 import org.onekash.kashcal.domain.reader.DeviceEventReader
 import org.onekash.kashcal.domain.reader.DisplayEventRepository
 import org.onekash.kashcal.domain.reader.EventReader
@@ -2491,6 +2492,27 @@ class HomeViewModel(
             ?: return RecentChangeTarget(event, null)
         val changed = next.exceptionEventId?.let { getEventForEdit(it) }
         return if (changed != null) RecentChangeTarget(changed, null) else RecentChangeTarget(event, next.startTs)
+    }
+
+    /**
+     * Returns the source the duplicate form copies for [event] opened at [occurrenceTs]: the
+     * occurrence's own row when it is a changed one, else [event], built with
+     * [toEventForDuplicate].
+     *
+     * Search opens a series row with the start of its next occurrence, which can be a moved
+     * one, so the row behind the occurrence is looked up here. With no occurrence at exactly
+     * [occurrenceTs] the copy is built from [event].
+     */
+    suspend fun duplicateSourceFor(
+        event: org.onekash.kashcal.data.db.entity.Event,
+        occurrenceTs: Long?,
+    ): org.onekash.kashcal.data.db.entity.Event {
+        val shown = if (occurrenceTs != null && event.isRecurring && !event.isException) {
+            withContext(ioDispatcher) { eventReader.getOccurrenceWithEvent(event.id, occurrenceTs) }?.event
+        } else {
+            null
+        }
+        return (shown ?: event).toEventForDuplicate(occurrenceTs)
     }
 
     /**

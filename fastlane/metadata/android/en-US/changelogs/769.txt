@@ -1,0 +1,4 @@
+• App icon: new opt-in "Today's date" icon shows the day of the month (account hub → App Icon)
+• Duplicate keeps a repeating event's repeat rule (#381)
+• Navy app icon background
+• Event titles: the title field grows to four lines

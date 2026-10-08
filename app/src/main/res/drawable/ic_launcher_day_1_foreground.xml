@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generated launcher foreground for day 1; artwork from images/adaptive-foreground.svg. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="88"
+    android:viewportHeight="88">
+    <group android:translateX="44" android:translateY="44" android:rotation="8">
+        <path android:fillColor="#F2C14E" android:pathData="M-12,-21H12A6,6 0 0 1 18,-15V15A6,6 0 0 1 12,21H-12A6,6 0 0 1 -18,15V-15A6,6 0 0 1 -12,-21Z" />
+    </group>
+    <group android:translateX="44" android:translateY="44" android:rotation="-7">
+        <path android:fillColor="#4A9BDC" android:pathData="M-12,-21H12A6,6 0 0 1 18,-15V15A6,6 0 0 1 12,21H-12A6,6 0 0 1 -18,15V-15A6,6 0 0 1 -12,-21Z" />
+    </group>
+    <group android:translateX="44" android:translateY="44" android:rotation="-2">
+        <path android:fillColor="#2A8A7A" android:pathData="M-12,-21H12A6,6 0 0 1 18,-15V15A6,6 0 0 1 12,21H-12A6,6 0 0 1 -18,15V-15A6,6 0 0 1 -12,-21Z" />
+        <path android:fillColor="#0D9488" android:pathData="M-12,-21H12A6,6 0 0 1 18,-15V-18A6,6 0 0 1 12,-12H-12A6,6 0 0 1 -18,-18V-15A6,6 0 0 1 -12,-21Z" />
+        <path android:fillColor="#2A8A7A" android:pathData="M-18,-16H18V-11H-18Z" />
+        <path android:fillColor="#FDF8EC" android:pathData="M2.794 9H-0.528V-0.086Q-0.528 -0.46 -0.517 -1.01Q-0.506 -1.56 -0.484 -2.154Q-0.462 -2.748 -0.44 -3.21Q-0.55 -3.078 -0.913 -2.737Q-1.276 -2.396 -1.584 -2.132L-3.388 -0.68L-4.994 -2.682L0.066 -6.708H2.794Z" />
+        <path android:fillColor="#E85D75" android:pathData="M9,-17A4,4 0 1 1 17,-17A4,4 0 1 1 9,-17Z" />
+    </group>
+</vector>

@@ -176,6 +176,7 @@
     <string name="app_icon_default">Әдепкі</string>
     <string name="app_icon_supporter">Қолдаушы</string>
     <string name="app_icon_supporter_calendar">Қолдаушы, Күнтізбе деп аталған</string>
+    <string name="app_icon_todays_date">Бүгінгі күн</string>
     <string name="app_icon_label_calendar">Күнтізбе</string>
     <string name="app_icon_support_cta">KashCal қолдау</string>
     <string name="app_icon_switch_note">Белгішені өзгерту қолданбаны қайта іске қосуы мүмкін. Хабарландырулар әрқашан әдепкі белгіше мен атауды пайдаланады.</string>

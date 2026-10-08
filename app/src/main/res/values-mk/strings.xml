@@ -176,6 +176,7 @@
     <string name="app_icon_default">Стандардно</string>
     <string name="app_icon_supporter">Поддржувач</string>
     <string name="app_icon_supporter_calendar">Поддржувач, со ознака Календар</string>
+    <string name="app_icon_todays_date">Денешен датум</string>
     <string name="app_icon_label_calendar">Календар</string>
     <string name="app_icon_support_cta">Поддржете го KashCal</string>
     <string name="app_icon_switch_note">Менувањето на иконата може да ја рестартира апликацијата. Известувањата секогаш ја користат стандардната икона и име.</string>

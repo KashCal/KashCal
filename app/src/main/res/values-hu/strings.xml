@@ -176,6 +176,7 @@
     <string name="app_icon_default">Alapértelmezett</string>
     <string name="app_icon_supporter">Támogató</string>
     <string name="app_icon_supporter_calendar">Támogató, Naptár néven</string>
+    <string name="app_icon_todays_date">Mai dátum</string>
     <string name="app_icon_label_calendar">Naptár</string>
     <string name="app_icon_support_cta">KashCal támogatása</string>
     <string name="app_icon_switch_note">Az ikon módosítása újraindíthatja az alkalmazást. Az értesítések mindig az alapértelmezett ikont és nevet használják.</string>

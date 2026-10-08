@@ -507,8 +507,9 @@ private fun MakeItYoursSection() {
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
             currentPreset = currentAppIcon,
             onPresetSelect = { preset ->
-                // Re-toggling the active alias refreshes the launcher for nothing and can
-                // briefly restart the app.
+                // Re-picking the active icon does nothing: a re-toggle would only reload the
+                // launcher icon, and for a date icon left on yesterday it would disable the alias
+                // this task was launched from and close the app; leaving the app catches it up.
                 if (preset != currentAppIcon) {
                     appIconUtility.setAppIcon(preset)
                     currentAppIcon = preset

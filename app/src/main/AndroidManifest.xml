@@ -88,9 +88,16 @@
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize"
             android:windowSoftInputMode="adjustResize">
 
-            <!-- The launcher + APP_CALENDAR entry lives on the activity-aliases below so the
-                 app icon can be swapped by enabling exactly one alias at a time. MainActivity
-                 keeps the file/text-share filters. -->
+            <!-- The launcher entry lives on the activity-aliases below so the app icon can be
+                 swapped by enabling exactly one alias at a time. The calendar entry
+                 (ACTION_MAIN + APP_CALENDAR, the notification-shade date tap, #129) stays here:
+                 a user's "Always" choice names the component it resolved to, and the platform
+                 stops applying it once that component is disabled. -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.APP_CALENDAR" />
+            </intent-filter>
 
             <!-- Handle .ics file imports (MIME type) -->
             <intent-filter tools:ignore="AppLinkUrlError">
@@ -234,8 +241,10 @@
         <!-- App-icon aliases. Exactly one is enabled at a time; switching the icon enables the
              chosen alias and disables the others (see AppIconUtility). The default alias is the
              only one enabled at install; the supporter variants share one gold icon and differ
-             only in the launcher label. Each alias carries the LAUNCHER/APP_CALENDAR filter and
-             the dynamic-shortcuts meta-data so shortcuts survive an icon swap. -->
+             only in the launcher label. Each alias carries the LAUNCHER filter and the
+             app-shortcuts meta-data so shortcuts survive an icon swap. Each targets MainActivity
+             directly: Android 12+ keeps a root activity alive on Back only when the launcher
+             started it. When a background date switch may run: DateIconRefresher. -->
         <activity-alias
             android:name=".MainActivityDefault"
             android:exported="true"
@@ -244,7 +253,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.APP_CALENDAR" />
             </intent-filter>
             <meta-data
                 android:name="android.app.shortcuts"
@@ -261,7 +269,6 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.APP_CALENDAR" />
             </intent-filter>
             <meta-data
                 android:name="android.app.shortcuts"
@@ -279,7 +286,506 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.LAUNCHER" />
-                <category android:name="android.intent.category.APP_CALENDAR" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <!-- Date icon aliases, one per day of the month, all disabled at install. The date icon
+             keeps exactly one enabled: today's (AppIconUtility.refreshDateIcon). Each shows its
+             day's number (DayIcons) and, like the aliases above, keeps the app label, the
+             LAUNCHER filter and the app-shortcuts meta-data. -->
+        <activity-alias
+            android:name=".MainActivityDay1"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_1"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay2"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_2"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay3"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_3"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay4"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_4"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay5"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_5"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay6"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_6"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay7"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_7"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay8"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_8"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay9"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_9"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay10"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_10"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay11"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_11"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay12"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_12"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay13"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_13"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay14"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_14"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay15"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_15"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay16"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_16"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay17"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_17"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay18"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_18"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay19"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_19"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay20"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_20"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay21"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_21"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay22"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_22"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay23"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_23"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay24"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_24"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay25"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_25"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay26"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_26"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay27"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_27"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay28"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_28"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay29"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_29"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay30"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_30"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts"/>
+        </activity-alias>
+
+        <activity-alias
+            android:name=".MainActivityDay31"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_day_31"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             <meta-data
                 android:name="android.app.shortcuts"
@@ -367,7 +873,8 @@
             </intent-filter>
         </receiver>
 
-        <!-- Timezone change receiver: update widget when timezone or time changes -->
+        <!-- Timezone and clock change receiver: moves the date icon, re-arms the midnight alarm,
+             updates widgets and reschedules reminders -->
         <receiver
             android:name=".widget.TimezoneChangeReceiver"
             android:exported="false">
@@ -377,9 +884,9 @@
             </intent-filter>
         </receiver>
 
-        <!-- Midnight widget rollover: triggered by explicit PendingIntent from AlarmManager
-             (setExactAndAllowWhileIdle), so no intent-filter needed. Uses AlarmManager
-             instead of WorkManager so day-rollover fires through Doze. -->
+        <!-- Midnight rollover of the widgets and the date icon: triggered by explicit
+             PendingIntent from AlarmManager (setExactAndAllowWhileIdle), so no intent-filter
+             needed. Uses AlarmManager instead of WorkManager so day-rollover fires through Doze. -->
         <receiver
             android:name=".widget.MidnightWidgetUpdateReceiver"
             android:exported="false" />

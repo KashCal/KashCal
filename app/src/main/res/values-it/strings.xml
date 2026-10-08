@@ -176,6 +176,7 @@
     <string name="app_icon_default">Predefinito</string>
     <string name="app_icon_supporter">Sostenitore</string>
     <string name="app_icon_supporter_calendar">Sostenitore, con nome Calendario</string>
+    <string name="app_icon_todays_date">Data di oggi</string>
     <string name="app_icon_label_calendar">Calendario</string>
     <string name="app_icon_support_cta">Sostieni KashCal</string>
     <string name="app_icon_switch_note">Cambiare l\'icona potrebbe riavviare l\'app. Le notifiche usano sempre l\'icona e il nome predefiniti.</string>

@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -34,6 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.appicon.AppIconPreset
 
 /**
  * Draws the full-screen branded veil shown while the app is locked.
@@ -55,9 +57,9 @@ fun AppLockVeil(
             // Swallows taps and gestures so the veiled calendar can't be touched.
             .pointerInput(Unit) {}
             .background(
-                // Plum shades darker than [iconBackground], so the icon tile stands out.
+                // Navy shades darker than [iconBackground], so the icon tile stands out.
                 Brush.radialGradient(
-                    colors = listOf(Color(0xFF2C1932), Color(0xFF201225), Color(0xFF170C1A)),
+                    colors = listOf(Color(0xFF01051E), Color(0xFF010316), Color(0xFF00020E)),
                 )
             )
             .systemBarsPadding(),
@@ -83,7 +85,9 @@ fun AppLockVeil(
                     painter = painterResource(id = R.mipmap.ic_launcher_foreground),
                     contentDescription = null,
                     tint = Color.Unspecified,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .scale(AppIconPreset.PREVIEW_FOREGROUND_SCALE),
                 )
             }
 

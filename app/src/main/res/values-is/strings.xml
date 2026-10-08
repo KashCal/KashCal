@@ -176,6 +176,7 @@
     <string name="app_icon_default">Sjálfgefið</string>
     <string name="app_icon_supporter">Stuðningsaðili</string>
     <string name="app_icon_supporter_calendar">Stuðningsaðili, kallað Dagatal</string>
+    <string name="app_icon_todays_date">Dagsetning dagsins</string>
     <string name="app_icon_label_calendar">Dagatal</string>
     <string name="app_icon_support_cta">Styðja KashCal</string>
     <string name="app_icon_switch_note">Að breyta tákninu getur endurræst forritið. Tilkynningar nota alltaf sjálfgefna táknið og heitið.</string>

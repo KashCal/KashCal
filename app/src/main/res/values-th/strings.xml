@@ -176,6 +176,7 @@
     <string name="app_icon_default">ค่าเริ่มต้น</string>
     <string name="app_icon_supporter">ผู้สนับสนุน</string>
     <string name="app_icon_supporter_calendar">ผู้สนับสนุน (ป้ายชื่อว่าปฏิทิน)</string>
+    <string name="app_icon_todays_date">วันที่วันนี้</string>
     <string name="app_icon_label_calendar">ปฏิทิน</string>
     <string name="app_icon_support_cta">สนับสนุน KashCal</string>
     <string name="app_icon_switch_note">การเปลี่ยนไอคอนอาจทำให้แอปรีสตาร์ท การแจ้งเตือนจะใช้ไอคอนและชื่อเริ่มต้นเสมอ</string>

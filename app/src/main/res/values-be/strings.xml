@@ -176,6 +176,7 @@
     <string name="app_icon_default">Па змаўчанні</string>
     <string name="app_icon_supporter">Прыхільнік</string>
     <string name="app_icon_supporter_calendar">Прыхільнік, з назвай Каляндар</string>
+    <string name="app_icon_todays_date">Сённяшняя дата</string>
     <string name="app_icon_label_calendar">Каляндар</string>
     <string name="app_icon_support_cta">Падтрымаць KashCal</string>
     <string name="app_icon_switch_note">Змена значка можа перазапусціць праграму. Апавяшчэнні заўсёды выкарыстоўваюць значок і назву па змаўчанні.</string>

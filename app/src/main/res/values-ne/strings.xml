@@ -176,6 +176,7 @@
     <string name="app_icon_default">पूर्वनिर्धारित</string>
     <string name="app_icon_supporter">समर्थक</string>
     <string name="app_icon_supporter_calendar">समर्थक, पात्रो लेबल गरिएको</string>
+    <string name="app_icon_todays_date">आजको मिति</string>
     <string name="app_icon_label_calendar">पात्रो</string>
     <string name="app_icon_support_cta">KashCal लाई समर्थन गर्नुहोस्</string>
     <string name="app_icon_switch_note">आइकन बदल्दा एप पुनः सुरु हुन सक्छ। सूचनाहरूले सधैं पूर्वनिर्धारित आइकन र नाम प्रयोग गर्छन्।</string>

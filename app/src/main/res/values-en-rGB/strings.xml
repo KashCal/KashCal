@@ -176,6 +176,7 @@
     <string name="app_icon_default">Default</string>
     <string name="app_icon_supporter">Supporter</string>
     <string name="app_icon_supporter_calendar">Supporter, labelled Calendar</string>
+    <string name="app_icon_todays_date">Today\'s date</string>
     <string name="app_icon_label_calendar">Calendar</string>
     <string name="app_icon_support_cta">Support KashCal</string>
     <string name="app_icon_switch_note">Changing the icon may restart the app. Notifications always use the default icon and name.</string>

@@ -176,6 +176,7 @@
     <string name="app_icon_default">မူရင်း</string>
     <string name="app_icon_supporter">ပံ့ပိုးသူ</string>
     <string name="app_icon_supporter_calendar">ပံ့ပိုးသူ၊ ပြက္ခဒိန်ဟု အမည်တပ်ထားသည်</string>
+    <string name="app_icon_todays_date">ယနေ့ ရက်စွဲ</string>
     <string name="app_icon_label_calendar">ပြက္ခဒိန်</string>
     <string name="app_icon_support_cta">KashCal ကို ပံ့ပိုးပါ</string>
     <string name="app_icon_switch_note">အိုင်ကွန်ပြောင်းလဲခြင်းသည် အက်ပ်ကို ပြန်စတင်စေနိုင်သည်။ အကြောင်းကြားချက်များသည် မူရင်း အိုင်ကွန်နှင့် အမည်ကို အမြဲ အသုံးပြုသည်။</string>

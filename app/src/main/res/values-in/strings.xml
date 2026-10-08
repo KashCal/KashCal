@@ -176,6 +176,7 @@
     <string name="app_icon_default">Bawaan</string>
     <string name="app_icon_supporter">Pendukung</string>
     <string name="app_icon_supporter_calendar">Pendukung, berlabel Kalender</string>
+    <string name="app_icon_todays_date">Tanggal hari ini</string>
     <string name="app_icon_label_calendar">Kalender</string>
     <string name="app_icon_support_cta">Dukung KashCal</string>
     <string name="app_icon_switch_note">Mengubah ikon dapat memulai ulang aplikasi. Notifikasi selalu menggunakan ikon dan nama bawaan.</string>

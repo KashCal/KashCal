@@ -176,6 +176,7 @@
     <string name="app_icon_default">Predeterminado</string>
     <string name="app_icon_supporter">Colaborador</string>
     <string name="app_icon_supporter_calendar">Colaborador, con el nombre Calendario</string>
+    <string name="app_icon_todays_date">Fecha de hoy</string>
     <string name="app_icon_label_calendar">Calendario</string>
     <string name="app_icon_support_cta">Apoyar KashCal</string>
     <string name="app_icon_switch_note">Cambiar el icono puede reiniciar la aplicación. Las notificaciones usan siempre el icono y el nombre predeterminados.</string>

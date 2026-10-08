@@ -176,6 +176,7 @@
     <string name="app_icon_default">Lalai</string>
     <string name="app_icon_supporter">Penyokong</string>
     <string name="app_icon_supporter_calendar">Penyokong (berlabel Kalendar)</string>
+    <string name="app_icon_todays_date">Tarikh hari ini</string>
     <string name="app_icon_label_calendar">Kalendar</string>
     <string name="app_icon_support_cta">Sokong KashCal</string>
     <string name="app_icon_switch_note">Menukar ikon mungkin memulakan semula apl. Pemberitahuan sentiasa menggunakan ikon dan nama lalai.</string>

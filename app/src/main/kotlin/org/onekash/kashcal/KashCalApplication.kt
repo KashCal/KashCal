@@ -8,6 +8,7 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.onekash.icaldav.model.ICalDateTime
 import org.onekash.kashcal.data.calendar_provider.CalendarProviderManager
@@ -25,6 +26,8 @@ import org.onekash.kashcal.sync.notification.SyncNotificationChannels
 import org.onekash.kashcal.sync.scheduler.ContactSyncScheduleReconciler
 import org.onekash.kashcal.sync.scheduler.IcsRefreshScheduleReconciler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
+import org.onekash.kashcal.ui.appicon.DateIconRefresher
+import org.onekash.kashcal.ui.appicon.ForegroundActivityTracker
 import org.onekash.kashcal.widget.WidgetPreviewRegistrar
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import java.time.ZoneId
@@ -42,6 +45,9 @@ class KashCalApplication : Application(), Configuration.Provider {
 
     companion object {
         private const val TAG = "KashCalApplication"
+
+        /** How long after the last screen stops the deferred date-icon switch is retried. */
+        private const val DATE_ICON_SETTLE_MS = 3_000L
         const val PREFS_NAME = "kashcal_upgrade"
         const val KEY_LAST_VERSION = "last_version_code"
         /**
@@ -73,6 +79,12 @@ class KashCalApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var widgetUpdateManager: WidgetUpdateManager
+
+    @Inject
+    lateinit var foregroundActivityTracker: ForegroundActivityTracker
+
+    @Inject
+    lateinit var dateIconRefresher: DateIconRefresher
 
     @Inject
     lateinit var contactEventManager: ContactEventManager
@@ -132,6 +144,17 @@ class KashCalApplication : Application(), Configuration.Provider {
 
             // Periodic and midnight widget updates.
             widgetUpdateManager.scheduleUpdates()
+
+            // Counts started screens so a background date-icon switch can't close one in use, and
+            // catches a deferred switch up after the last screen stops. The short wait lets a quick
+            // return (unlock, app switch) start a screen again first, so the switch keeps waiting.
+            foregroundActivityTracker.register(this)
+            foregroundActivityTracker.onLastStop = {
+                applicationScope.launch {
+                    delay(DATE_ICON_SETTLE_MS)
+                    dateIconRefresher.refresh()
+                }
+            }
 
             // When birthdays or anniversaries are on, registers the contacts observer and syncs
             // them; without READ_CONTACTS it turns both features off instead.

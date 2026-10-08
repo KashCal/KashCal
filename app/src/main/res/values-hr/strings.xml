@@ -176,6 +176,7 @@
     <string name="app_icon_default">Zadano</string>
     <string name="app_icon_supporter">Podupiratelj</string>
     <string name="app_icon_supporter_calendar">Podupiratelj, s nazivom Kalendar</string>
+    <string name="app_icon_todays_date">Današnji datum</string>
     <string name="app_icon_label_calendar">Kalendar</string>
     <string name="app_icon_support_cta">Podrži KashCal</string>
     <string name="app_icon_switch_note">Promjena ikone može ponovno pokrenuti aplikaciju. Obavijesti uvijek koriste zadanu ikonu i naziv.</string>

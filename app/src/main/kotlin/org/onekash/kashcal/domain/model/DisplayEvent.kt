@@ -134,6 +134,13 @@ sealed interface DisplayEvent {
 /**
  * Builds an unsaved [Event] copy of this device event for the duplicate form.
  *
+ * The copy starts on this instance and carries the event's zone for a timed event (the
+ * provider keeps all-day events in UTC). It carries the series' RRULE unless the instance is
+ * a changed occurrence; the copy has no `originalEventId`, so the form can't tell it was one
+ * and this is the only place that drops the rule. An instance can't tell whether it exists
+ * only through RDATE, so such an occurrence copies the rule too, unlike the Room
+ * [Event.toEventForDuplicate].
+ *
  * `calendarId` is 0 because device calendar ids aren't Room ids; the form picks the calendar
  * from the source device calendar id, falling back to the default if it isn't writable.
  */
@@ -146,6 +153,8 @@ fun DisplayEvent.Device.toEventForDuplicate(): Event = Event(
     startTs = startTs,
     endTs = endTs,
     isAllDay = isAllDay,
+    timezone = instance.timezone.takeUnless { isAllDay },
+    rrule = rrule.takeIf { instance.originalId == null },
     dtstamp = System.currentTimeMillis(),
     transp = availabilityIntToTransp(instance.availability),
     categories = categories

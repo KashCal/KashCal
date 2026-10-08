@@ -27,6 +27,7 @@ import org.onekash.kashcal.reminder.ReminderAlarmFixture.Companion.MINUTE
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.receiver.BootRecoveryHandler
 import org.onekash.kashcal.util.DateTimeUtils
+import org.onekash.kashcal.ui.appicon.DateIconRefresher
 import org.onekash.kashcal.widget.TimezoneChangeHandler
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import org.robolectric.RobolectricTestRunner
@@ -327,7 +328,8 @@ class ReminderArmingWindowTest {
         TimezoneChangeHandler(
             mockk<WidgetUpdateManager>(relaxed = true),
             scheduler,
-            mockk<DeviceCalendarReminderScheduler>(relaxed = true)
+            mockk<DeviceCalendarReminderScheduler>(relaxed = true),
+            mockk<DateIconRefresher>(relaxed = true),
         ).handleChange("timezone_changed")
 
         val tokyo = ZoneId.of("Asia/Tokyo")

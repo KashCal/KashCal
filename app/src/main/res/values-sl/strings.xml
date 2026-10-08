@@ -176,6 +176,7 @@
     <string name="app_icon_default">Privzeto</string>
     <string name="app_icon_supporter">Podpornik</string>
     <string name="app_icon_supporter_calendar">Podpornik, z imenom Koledar</string>
+    <string name="app_icon_todays_date">Današnji datum</string>
     <string name="app_icon_label_calendar">Koledar</string>
     <string name="app_icon_support_cta">Podpri KashCal</string>
     <string name="app_icon_switch_note">Sprememba ikone lahko znova zažene aplikacijo. Obvestila vedno uporabljajo privzeto ikono in ime.</string>

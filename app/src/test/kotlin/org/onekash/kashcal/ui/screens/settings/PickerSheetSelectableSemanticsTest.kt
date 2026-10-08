@@ -178,13 +178,33 @@ class PickerSheetSelectableSemanticsTest {
                 )
             }
         }
-        // radioCount = 3 asserts the "Support KashCal" footer (a Role.Button action row) and
-        // the info note aren't radios.
-        assertRadioGroupSemantics(selectedLabel = "Default", unselectedLabel = "Supporter", radioCount = 3)
+        // radioCount = 4 (the four icon rows) asserts the "Support KashCal" footer (a Role.Button
+        // action row) and the info note aren't radios.
+        assertRadioGroupSemantics(selectedLabel = "Default", unselectedLabel = "Supporter", radioCount = 4)
         composeTestRule.onNodeWithText("Support KashCal")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button))
         composeTestRule.onNodeWithText("Supporter").performClick()
         assertEquals(AppIconPreset.SUPPORTER, picked)
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Test
+    fun `the date icon is a radio row that reports its preset and shows as selected`() {
+        var picked: AppIconPreset? = null
+        composeTestRule.setContent {
+            MaterialTheme {
+                AppIconSheet(
+                    sheetState = rememberModalBottomSheetState(),
+                    currentPreset = AppIconPreset.TODAYS_DATE,
+                    onPresetSelect = { picked = it },
+                    onSupportClick = {},
+                    onDismiss = {},
+                )
+            }
+        }
+        assertRadioGroupSemantics(selectedLabel = "Today's date", unselectedLabel = "Default", radioCount = 4)
+        composeTestRule.onNodeWithText("Today's date").performClick()
+        assertEquals(AppIconPreset.TODAYS_DATE, picked)
     }
 
     // ==================== Sync frequency ====================

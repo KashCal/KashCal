@@ -176,6 +176,7 @@
     <string name="app_icon_default">Rhagosodedig</string>
     <string name="app_icon_supporter">Cefnogwr</string>
     <string name="app_icon_supporter_calendar">Cefnogwr, o\'r enw Calendr</string>
+    <string name="app_icon_todays_date">Dyddiad heddiw</string>
     <string name="app_icon_label_calendar">Calendr</string>
     <string name="app_icon_support_cta">Cefnogi KashCal</string>
     <string name="app_icon_switch_note">Gall newid ailgychwyn yr ap. Mae hysbysiadau bob amser yn defnyddio\'r eicon a\'r enw rhagosodedig.</string>

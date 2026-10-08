@@ -137,9 +137,10 @@ class WidgetUpdateManager @Inject constructor(
      * allowed ([AlarmArming.setAllowWhileIdle]), so the day rollover fires through Doze, for
      * example with the phone in airplane mode overnight.
      *
-     * Called at app startup and re-armed by [MidnightWidgetUpdateReceiver] and by
+     * Called at app startup and re-armed by [MidnightWidgetUpdateReceiver], by
      * `BootRecoveryHandler` after a boot or an app update, since a reboot clears AlarmManager
-     * alarms.
+     * alarms, and by [TimezoneChangeHandler], since the alarm is set for midnight in the zone
+     * that was current when it was armed.
      */
     fun scheduleMidnightUpdate() {
         val now = System.currentTimeMillis()
@@ -149,8 +150,8 @@ class WidgetUpdateManager @Inject constructor(
             .toEpochMilli()
         Log.d(TAG, "Scheduling midnight widget update in ${(midnight - now) / 1000 / 60} minutes")
 
-        // Startup, the midnight receiver and boot recovery all run this where an
-        // exception would crash, so a refusal must skip the alarm, not throw.
+        // Startup, the midnight receiver, boot recovery and the timezone/clock handler all run
+        // this where an exception would crash, so a refusal must skip the alarm, not throw.
         AlarmArming.setAllowWhileIdle(
             alarmManager = alarmManager,
             triggerTime = midnight,

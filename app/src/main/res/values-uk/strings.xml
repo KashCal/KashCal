@@ -176,6 +176,7 @@
     <string name="app_icon_default">За замовчуванням</string>
     <string name="app_icon_supporter">Прихильник</string>
     <string name="app_icon_supporter_calendar">Прихильник, з назвою Календар</string>
+    <string name="app_icon_todays_date">Сьогоднішня дата</string>
     <string name="app_icon_label_calendar">Календар</string>
     <string name="app_icon_support_cta">Підтримати KashCal</string>
     <string name="app_icon_switch_note">Зміна значка може перезапустити додаток. Сповіщення завжди використовують значок і назву за замовчуванням.</string>

@@ -176,6 +176,7 @@
     <string name="app_icon_default">По умолчанию</string>
     <string name="app_icon_supporter">Сторонник</string>
     <string name="app_icon_supporter_calendar">Сторонник, с названием Календарь</string>
+    <string name="app_icon_todays_date">Сегодняшняя дата</string>
     <string name="app_icon_label_calendar">Календарь</string>
     <string name="app_icon_support_cta">Поддержать KashCal</string>
     <string name="app_icon_switch_note">Смена значка может перезапустить приложение. Уведомления всегда используют значок и название по умолчанию.</string>

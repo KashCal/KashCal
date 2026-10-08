@@ -176,6 +176,7 @@
     <string name="app_icon_default">Réamhshocrú</string>
     <string name="app_icon_supporter">Tacadóir</string>
     <string name="app_icon_supporter_calendar">Tacadóir, darb ainm Féilire</string>
+    <string name="app_icon_todays_date">Dáta an lae inniu</string>
     <string name="app_icon_label_calendar">Féilire</string>
     <string name="app_icon_support_cta">Tacaigh le KashCal</string>
     <string name="app_icon_switch_note">D\'fhéadfadh athrú an aip a atosú. Úsáideann fógraí an deilbhín agus an t-ainm réamhshocraithe i gcónaí.</string>

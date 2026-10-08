@@ -1,3 +1,21 @@
+## [2026.10.08]
+
+A calendar has one fact it should never get wrong. KashCal's icon said 31 every single day, which is right about seven days a year.
+
+What kind of calendar doesn't know what day it is? Not this one, not any more. In the account hub, open App Icon and pick Today's date. The home-screen icon now shows today's number on the same card artwork and turns the page on its own: at midnight, when you change the clock, after a restart. You don't have to open the app for any of it.
+
+Today's date is opt-in, so if you've grown fond of the 31, it keeps its job until you say otherwise, and it's one tap away in the same list if you ever want it back. Themed icons keep the plain calendar glyph.
+
+The 31 is down to seven days a year.
+
+### Everything in this release
+
+- Added `Today's date` to App Icon in the account hub: the home-screen icon shows today's day of the month and changes on its own at midnight, after a clock change and after a restart; off by default, and themed icons keep the undated glyph
+- Changed `Duplicate` on a repeating event to copy its repeat rule, starting from the occurrence you tapped; a changed occurrence still duplicates as a single event, #381
+- Changed the app icon background to navy, with the store and in-app icons cropped to match the launcher
+- Improved the event title field, which now grows to four lines before scrolling
+- Changed how KashCal registers for the notification-shade date tap, so a saved `Always` choice survives an app icon change; Android may ask once more after this update
+
 ## [2026.10.07]
 
 Shared calendars change behind your back. Someone moves Thursday's meeting, cancels one week of the book club, renames the trip, and the only sign is that your week looks slightly different from the one you remember.

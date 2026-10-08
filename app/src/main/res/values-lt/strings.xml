@@ -176,6 +176,7 @@
     <string name="app_icon_default">Numatytoji</string>
     <string name="app_icon_supporter">Rėmėjas</string>
     <string name="app_icon_supporter_calendar">Rėmėjas, pavadinimu Kalendorius</string>
+    <string name="app_icon_todays_date">Šiandienos data</string>
     <string name="app_icon_label_calendar">Kalendorius</string>
     <string name="app_icon_support_cta">Paremti KashCal</string>
     <string name="app_icon_switch_note">Piktogramos keitimas gali paleisti programėlę iš naujo. Pranešimuose visada naudojama numatytoji piktograma ir pavadinimas.</string>

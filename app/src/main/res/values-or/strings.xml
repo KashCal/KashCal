@@ -176,6 +176,7 @@
     <string name="app_icon_default">ଡିଫଲ୍ଟ</string>
     <string name="app_icon_supporter">ସମର୍ଥକ</string>
     <string name="app_icon_supporter_calendar">ସମର୍ଥକ, ନାମ କ୍ୟାଲେଣ୍ଡର</string>
+    <string name="app_icon_todays_date">ଆଜିର ତାରିଖ</string>
     <string name="app_icon_label_calendar">କ୍ୟାଲେଣ୍ଡର</string>
     <string name="app_icon_support_cta">KashCal କୁ ସମର୍ଥନ କରନ୍ତୁ</string>
     <string name="app_icon_switch_note">ଆଇକନ ବଦଳାଇଲେ ଆପ ପୁନଃ ଆରମ୍ଭ ହୋଇପାରେ। ବିଜ୍ଞପ୍ତି ସର୍ବଦା ଡିଫଲ୍ଟ ଆଇକନ ଓ ନାମ ବ୍ୟବହାର କରେ।</string>

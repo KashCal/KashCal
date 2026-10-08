@@ -176,6 +176,7 @@
     <string name="app_icon_default">Domyślny</string>
     <string name="app_icon_supporter">Wspierający</string>
     <string name="app_icon_supporter_calendar">Wspierający, o nazwie Kalendarz</string>
+    <string name="app_icon_todays_date">Dzisiejsza data</string>
     <string name="app_icon_label_calendar">Kalendarz</string>
     <string name="app_icon_support_cta">Wesprzyj KashCal</string>
     <string name="app_icon_switch_note">Zmiana ikony może zrestartować aplikację. Powiadomienia zawsze używają domyślnej ikony i nazwy.</string>

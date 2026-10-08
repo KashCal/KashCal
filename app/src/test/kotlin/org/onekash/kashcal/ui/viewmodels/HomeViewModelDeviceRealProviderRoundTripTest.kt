@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
@@ -39,9 +40,11 @@ import org.onekash.kashcal.data.calendar_provider.SqliteCalendarProvider
 import org.onekash.kashcal.data.db.entity.Attendee
 import org.onekash.kashcal.domain.mapper.toFormState
 import org.onekash.kashcal.domain.model.DisplayEvent
+import org.onekash.kashcal.domain.model.toEventForDuplicate
 import org.onekash.kashcal.domain.writer.DeviceEventDraft
 import org.onekash.kashcal.testutil.phoneMidnight
 import org.onekash.kashcal.ui.components.EventFormState
+import org.onekash.kashcal.ui.components.withDuplicateOf
 import org.onekash.kashcal.ui.components.withAllDay
 import org.onekash.kashcal.ui.components.withTimezone
 import org.robolectric.RobolectricTestRunner
@@ -530,6 +533,55 @@ class HomeViewModelDeviceRealProviderRoundTripTest {
 
         assertEquals("FREQ=WEEKLY;BYDAY=TU;COUNT=4", f.eventRow(id)!![Events.RRULE])
         assertEquals((0..3).map(::occ), march().map { it.startTs })
+    }
+
+    /**
+     * The form for a duplicate of [instance], as MainActivity builds the source and
+     * [withDuplicateOf] loads it, on the source's device calendar.
+     */
+    private fun duplicateForm(instance: DisplayEvent.Device): EventFormState {
+        val source = instance.toEventForDuplicate()
+        return EventFormState().withDuplicateOf(source).copy(
+            selectedCalendarId = instance.instance.calendarId,
+            isDeviceCalendar = true,
+        )
+    }
+
+    @Test
+    fun `duplicating a later occurrence of a series stores an independent series from it`() = runTest {
+        val id = createSyncedSeries()
+        val before = snapshot(id)
+        val third = DisplayEvent.Device(march()[2])
+
+        val copyId = vm.saveDeviceEvent(duplicateForm(third)).getOrThrow()
+
+        val row = f.eventRow(copyId)!!
+        assertEquals("FREQ=WEEKLY;BYDAY=TU;COUNT=4", row[Events.RRULE])
+        assertEquals(EVENT_ZONE, row[Events.EVENT_TIMEZONE])
+        assertNull(row[Events.DTEND])
+        assertNotNull(row[Events.DURATION])
+        // COUNT restarts from the copy's start.
+        assertEquals((2..5).map(::occ), f.inMarchAndApril().filter { it.eventId == copyId }.map { it.startTs })
+        assertEquals(before, snapshot(id))
+        assertEquals((0..3).map(::occ), shownStarts(id))
+    }
+
+    @Test
+    fun `duplicating a changed occurrence stores a one-off`() = runTest {
+        val id = createSyncedSeries()
+        f.writer.editSingleOccurrence(
+            id, occ(1),
+            f.draft(title = "Standup (moved)", startTs = occ(1) + 2 * HOUR, endTs = occ(1) + 3 * HOUR, reminders = listOf(10)),
+        )
+        val changed = DisplayEvent.Device(march()[1])
+        assertTrue(changed.instance.originalId != null)
+
+        val copyId = vm.saveDeviceEvent(duplicateForm(changed)).getOrThrow()
+
+        val row = f.eventRow(copyId)!!
+        assertNull(row[Events.RRULE])
+        assertEquals((occ(1) + 3 * HOUR).toString(), row[Events.DTEND])
+        assertEquals(listOf(occ(1) + 2 * HOUR), f.inMarchAndApril().filter { it.eventId == copyId }.map { it.startTs })
     }
 
     // ---- form scoped saves ----

@@ -29,9 +29,11 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
@@ -42,6 +44,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.ui.appicon.AppIconPreset
+import java.time.LocalDate
 
 /** The heart color of the supporter launcher icon, reused for the donate cue in the sheet. */
 private val SupporterHeartRed = Color(0xFFD6304A)
@@ -62,6 +65,8 @@ fun AppIconSheet(
     onSupportClick: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    // The date icon's row previews today's number; read once for the sheet's lifetime.
+    val today = remember { LocalDate.now() }
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
@@ -87,6 +92,7 @@ fun AppIconSheet(
             AppIconPreset.entries.forEach { preset ->
                 AppIconOptionRow(
                     preset = preset,
+                    today = today,
                     isSelected = currentPreset == preset,
                     onSelect = {
                         onPresetSelect(preset)
@@ -165,6 +171,7 @@ fun AppIconSheet(
 @Composable
 private fun AppIconOptionRow(
     preset: AppIconPreset,
+    today: LocalDate,
     isSelected: Boolean,
     onSelect: () -> Unit,
 ) {
@@ -196,9 +203,11 @@ private fun AppIconOptionRow(
                 contentAlignment = Alignment.Center,
             ) {
                 Image(
-                    painter = painterResource(preset.previewForegroundRes),
+                    painter = painterResource(preset.previewForegroundFor(today)),
                     contentDescription = null,
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .scale(AppIconPreset.PREVIEW_FOREGROUND_SCALE),
                 )
             }
             Spacer(modifier = Modifier.width(16.dp))

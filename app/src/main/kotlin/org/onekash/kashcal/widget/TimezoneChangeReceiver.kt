@@ -14,8 +14,9 @@ import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
 import javax.inject.Inject
 
 /**
- * Updates widgets and reschedules reminders when the device timezone or clock changes, so event
- * times and reminders follow the new local time after travel or DST transitions.
+ * Moves the date icon, re-arms the midnight alarm, updates widgets and reschedules reminders when
+ * the device timezone or clock changes, so the icon, event times and reminders follow the new
+ * local time after travel or DST transitions.
  *
  * [TimezoneChangeHandler] runs under goAsync() with a 9 s timeout, inside the broadcast's 10 s
  * limit. The receiver also starts [ReminderRefreshWorker], which creates missing ScheduledReminder

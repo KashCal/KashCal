@@ -176,6 +176,7 @@
     <string name="app_icon_default">Standaard</string>
     <string name="app_icon_supporter">Donateur</string>
     <string name="app_icon_supporter_calendar">Donateur, genaamd Agenda</string>
+    <string name="app_icon_todays_date">Datum van vandaag</string>
     <string name="app_icon_label_calendar">Agenda</string>
     <string name="app_icon_support_cta">Steun KashCal</string>
     <string name="app_icon_switch_note">Het wijzigen van het pictogram kan de app opnieuw starten. Meldingen gebruiken altijd het standaardpictogram en de standaardnaam.</string>

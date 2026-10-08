@@ -176,6 +176,7 @@
     <string name="app_icon_default">ডিফল্ট</string>
     <string name="app_icon_supporter">সমর্থক</string>
     <string name="app_icon_supporter_calendar">সমর্থক, নাম ক্যালেন্ডার</string>
+    <string name="app_icon_todays_date">আজকের তারিখ</string>
     <string name="app_icon_label_calendar">ক্যালেন্ডার</string>
     <string name="app_icon_support_cta">KashCal-কে সমর্থন করুন</string>
     <string name="app_icon_switch_note">আইকন পরিবর্তন করলে অ্যাপটি পুনরায় চালু হতে পারে। বিজ্ঞপ্তি সবসময় ডিফল্ট আইকন ও নাম ব্যবহার করে।</string>

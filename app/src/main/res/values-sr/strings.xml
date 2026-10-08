@@ -176,6 +176,7 @@
     <string name="app_icon_default">Podrazumevano</string>
     <string name="app_icon_supporter">Podržavalac</string>
     <string name="app_icon_supporter_calendar">Podržavalac, s nazivom Kalendar</string>
+    <string name="app_icon_todays_date">Današnji datum</string>
     <string name="app_icon_label_calendar">Kalendar</string>
     <string name="app_icon_support_cta">Podrži KashCal</string>
     <string name="app_icon_switch_note">Promena ikone može ponovo pokrenuti aplikaciju. Obaveštenja uvek koriste podrazumevanu ikonu i naziv.</string>

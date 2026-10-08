@@ -11,6 +11,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.onekash.kashcal.reminder.worker.ReminderRefreshWorker
+import org.onekash.kashcal.ui.appicon.DateIconRefresher
 import javax.inject.Inject
 
 /**
@@ -25,6 +26,9 @@ import javax.inject.Inject
  * 2. [ReminderRefreshWorker.runNow] creates the rows missing for reminders now due within the
  *    window and re-arms the existing ones there. It runs in WorkManager, outside the receiver's
  *    10-second limit.
+ *
+ * Before phase 1 it moves the date launcher icon to today, since a phone that was off over
+ * midnight missed the rollover alarm.
  */
 @AndroidEntryPoint
 class BootCompletedReceiver : BroadcastReceiver() {
@@ -36,6 +40,9 @@ class BootCompletedReceiver : BroadcastReceiver() {
 
     @Inject
     lateinit var handler: BootRecoveryHandler
+
+    @Inject
+    lateinit var dateIconRefresher: DateIconRefresher
 
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
@@ -54,6 +61,11 @@ class BootCompletedReceiver : BroadcastReceiver() {
         val pendingResult = goAsync()
 
         CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            try {
+                dateIconRefresher.refresh()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error refreshing the date icon after boot", e)
+            }
             try {
                 val completed = withTimeoutOrNull(GOASYNC_TIMEOUT_MS) {
                     handler.rescheduleReminders()

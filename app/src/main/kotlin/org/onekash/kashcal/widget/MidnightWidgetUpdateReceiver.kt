@@ -11,14 +11,16 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
+import org.onekash.kashcal.ui.appicon.DateIconRefresher
 import javax.inject.Inject
 
 /**
- * Receives the midnight widget refresh alarm.
+ * Receives the midnight rollover alarm: moves the date launcher icon to the new day and refreshes
+ * the widgets.
  *
  * AlarmManager.setExactAndAllowWhileIdle() fires through Doze, unlike WorkManager, which is
- * deferred until the next maintenance window. This alarm is what rolls the Agenda widget over
- * to the new day when the phone sat idle overnight, for example in airplane mode.
+ * deferred until the next maintenance window. This alarm is what rolls the Agenda widget and the
+ * date icon over to the new day when the phone sat idle overnight, for example in airplane mode.
  */
 @AndroidEntryPoint
 class MidnightWidgetUpdateReceiver : BroadcastReceiver() {
@@ -31,18 +33,24 @@ class MidnightWidgetUpdateReceiver : BroadcastReceiver() {
     @Inject
     lateinit var widgetUpdateManager: WidgetUpdateManager
 
+    @Inject
+    lateinit var dateIconRefresher: DateIconRefresher
+
     override fun onReceive(context: Context, intent: Intent?) {
-        handleMidnight(widgetUpdateManager, goAsync())
+        handleMidnight(widgetUpdateManager, dateIconRefresher, goAsync())
     }
 
     /**
-     * Re-arms tomorrow's alarm, then refreshes the widgets in the background.
+     * Re-arms tomorrow's alarm, then moves the date icon and refreshes the widgets in the
+     * background. The icon step runs before, and outside, the widget timeout, so a slow widget
+     * refresh can't cut it short, and a failure there doesn't stop the widgets.
      *
      * Takes its collaborators explicitly because the generated Hilt onReceive re-injects fields
      * on every dispatch, and goAsync() is null when a test calls onReceive directly.
      */
     internal fun handleMidnight(
         widgetUpdateManager: WidgetUpdateManager,
+        dateIconRefresher: DateIconRefresher,
         pendingResult: PendingResult?
     ): Job {
         Log.d(TAG, "Midnight alarm fired, refreshing widgets")
@@ -51,6 +59,11 @@ class MidnightWidgetUpdateReceiver : BroadcastReceiver() {
         widgetUpdateManager.scheduleMidnightUpdate()
 
         return CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
+            try {
+                dateIconRefresher.refresh()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error refreshing the date icon at midnight", e)
+            }
             try {
                 val completed = withTimeoutOrNull(GOASYNC_TIMEOUT_MS) {
                     widgetUpdateManager.updateAllWidgets("midnight")

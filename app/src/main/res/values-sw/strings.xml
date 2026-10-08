@@ -176,6 +176,7 @@
     <string name="app_icon_default">Chaguo-msingi</string>
     <string name="app_icon_supporter">Mfadhili</string>
     <string name="app_icon_supporter_calendar">Mfadhili, yenye lebo Kalenda</string>
+    <string name="app_icon_todays_date">Tarehe ya leo</string>
     <string name="app_icon_label_calendar">Kalenda</string>
     <string name="app_icon_support_cta">Saidia KashCal</string>
     <string name="app_icon_switch_note">Kubadilisha aikoni kunaweza kuanzisha upya programu. Arifa hutumia aikoni na jina la chaguo-msingi kila wakati.</string>

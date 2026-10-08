@@ -16,6 +16,7 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -37,10 +38,12 @@ import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.generator.OccurrenceGenerator
 import org.onekash.kashcal.domain.initializer.LocalCalendarInitializer
 import org.onekash.kashcal.domain.model.AccountProvider
+import org.onekash.kashcal.domain.model.toEventForDuplicate
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.writer.EventWriter
 import org.onekash.kashcal.testutil.TestDataStoreFactory
 import org.onekash.kashcal.ui.components.EventFormState
+import org.onekash.kashcal.ui.components.withDuplicateOf
 import org.onekash.kashcal.ui.components.parseIso8601DurationToMinutes
 import org.onekash.kashcal.ui.components.toFormDateFields
 import org.onekash.kashcal.ui.components.withAllDay
@@ -76,6 +79,9 @@ import java.util.TimeZone
  * (19 Mar), where the form is opened, is on the other side of a DST change from
  * the first. The all-day tests use a weekly COUNT=4 all-day series from the
  * same date.
+ *
+ * A duplicate opened on that third occurrence is the opposite case: it saves a
+ * new series that starts there, and the source series is left as it was.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(RobolectricTestRunner::class)
@@ -477,6 +483,91 @@ class HomeViewModelRoomAllEventsSeriesDatesTest {
         occurrenceTs: Long,
     ): Map<EditScope, Boolean> = optionsFor(requestSave(form, occurrenceTs, event(id), isDetachedException = false))
 
+    // ---- duplicate of a later occurrence ----
+
+    @Test
+    fun `duplicating a later occurrence saves an independent series from that occurrence`() = runTest(dispatcher) {
+        val masterId = seed(timedSeriesEvent().copy(exdate = "${occurrence(2)}"))
+        val masterBefore = event(masterId)
+        val masterOccurrencesBefore = occurrenceStarts(masterId)
+        // The phone is in another zone than the series.
+        pinPhoneZone("Europe/London")
+        val form = duplicateForm(masterId, occurrence(3))
+
+        val result = viewModel.saveEvent(form)
+        advanceUntilIdle()
+
+        val newId = result.getOrThrow().id
+        val copy = event(newId)
+        assertFalse(copy.uid.isBlank())
+        assertNotEquals(masterBefore.uid, copy.uid)
+        assertEquals("FREQ=WEEKLY;COUNT=4", copy.rrule)
+        assertEquals(NEW_YORK, copy.timezone)
+        assertNull(copy.exdate)
+        assertNull(copy.rdate)
+        assertNull(copy.originalEventId)
+        // COUNT restarts from the copy's start, and every occurrence stays at 10:00 New York.
+        val week = { n: Int -> newYork(LocalDate.of(2024, 3, 19).plusWeeks(n - 1L), 10, 0) }
+        assertEquals(listOf(week(1), week(2), week(3), week(4)), occurrenceStarts(newId))
+        assertEquals(listOf(PendingOperation.OPERATION_CREATE), operations(newId))
+
+        assertEquals(masterBefore, event(masterId))
+        assertEquals(masterOccurrencesBefore, occurrenceStarts(masterId))
+        assertEquals(emptyList<String>(), operations(masterId))
+    }
+
+    @Test
+    fun `duplicating a moved occurrence found by search saves a one-off at the moved time`() = runTest(dispatcher) {
+        val id = seedTimedSeries()
+        val opened = openForm(id, occurrence(3))
+        val moved = opened.withTimedStart(opened.dateMillis + DAY_MS, 10, 0, defaultDurationMinutes = 60)
+        assertTrue(viewModel.saveEvent(moved, EditScope.THIS_EVENT).isSuccess)
+        val movedStart = newYork(LocalDate.of(2024, 3, 20), 10, 0)
+
+        // Search pairs the series row with its next occurrence's start, here the moved one.
+        val hit = reader.searchEventsInRangeWithNextOccurrence(
+            "Standup", occurrence(2) + HOUR_MS + 1, occurrence(4) + HOUR_MS,
+        ).single { it.event.id == id }
+        assertEquals(movedStart, hit.nextOccurrenceTs)
+
+        val source = viewModel.duplicateSourceFor(hit.event, hit.nextOccurrenceTs)
+
+        assertNull(source.rrule)
+        assertEquals(movedStart, source.startTs)
+        assertEquals(movedStart + HOUR_MS, source.endTs)
+        assertEquals(id, source.originalEventId)
+    }
+
+    @Test
+    fun `duplicate source for an unchanged occurrence starts there with the rule`() = runTest(dispatcher) {
+        val id = seedTimedSeries()
+
+        val source = viewModel.duplicateSourceFor(event(id), occurrence(3))
+
+        assertEquals(occurrence(3), source.startTs)
+        assertEquals("FREQ=WEEKLY;COUNT=4", source.rrule)
+    }
+
+    @Test
+    fun `duplicate source falls back to the event when no occurrence starts at that time`() = runTest(dispatcher) {
+        val id = seedTimedSeries()
+        val offGrid = occurrence(3) + 17_000L
+
+        val source = viewModel.duplicateSourceFor(event(id), offGrid)
+
+        assertEquals(offGrid, source.startTs)
+        assertEquals("FREQ=WEEKLY;COUNT=4", source.rrule)
+    }
+
+    /**
+     * The form as the event form fills it for a duplicate of [id] opened on [occurrenceTs]: the
+     * source [HomeViewModel.duplicateSourceFor] returns, loaded with [withDuplicateOf].
+     */
+    private suspend fun duplicateForm(id: Long, occurrenceTs: Long): EventFormState {
+        val source = viewModel.duplicateSourceFor(event(id), occurrenceTs)
+        return EventFormState().withDuplicateOf(source).copy(selectedCalendarId = source.calendarId)
+    }
+
     /** Stages the save the way the event form does for a Room event it loaded as [loaded]. */
     private fun TestScope.requestSave(
         form: EventFormState,
@@ -516,14 +607,14 @@ class HomeViewModelRoomAllEventsSeriesDatesTest {
     private fun allDayOccurrence(n: Int): Long =
         LocalDate.of(2024, 3, 5).plusWeeks(n - 1L).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
-    private suspend fun seedTimedSeries(uid: String = "series@example.test"): Long = seed(
-        Event(
-            uid = uid, calendarId = calendarId, title = "Standup",
-            location = "Room 4", description = "notes", reminders = listOf("-PT15M"), alarmCount = 1,
-            categories = listOf("Team"), color = 0xFF0000FF.toInt(),
-            startTs = occurrence(1), endTs = occurrence(1) + HOUR_MS, timezone = NEW_YORK,
-            rrule = "FREQ=WEEKLY;COUNT=4", dtstamp = 1, createdAt = 1, updatedAt = 1,
-        )
+    private suspend fun seedTimedSeries(uid: String = "series@example.test"): Long = seed(timedSeriesEvent(uid))
+
+    private fun timedSeriesEvent(uid: String = "series@example.test") = Event(
+        uid = uid, calendarId = calendarId, title = "Standup",
+        location = "Room 4", description = "notes", reminders = listOf("-PT15M"), alarmCount = 1,
+        categories = listOf("Team"), color = 0xFF0000FF.toInt(),
+        startTs = occurrence(1), endTs = occurrence(1) + HOUR_MS, timezone = NEW_YORK,
+        rrule = "FREQ=WEEKLY;COUNT=4", dtstamp = 1, createdAt = 1, updatedAt = 1,
     )
 
     private suspend fun seedAllDaySeries(days: Int): Long {

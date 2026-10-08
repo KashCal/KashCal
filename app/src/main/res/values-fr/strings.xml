@@ -176,6 +176,7 @@
     <string name="app_icon_default">Par défaut</string>
     <string name="app_icon_supporter">Soutien</string>
     <string name="app_icon_supporter_calendar">Soutien, nommé Agenda</string>
+    <string name="app_icon_todays_date">Date du jour</string>
     <string name="app_icon_label_calendar">Agenda</string>
     <string name="app_icon_support_cta">Soutenir KashCal</string>
     <string name="app_icon_switch_note">Changer l\'icône peut redémarrer l\'application. Les notifications utilisent toujours l\'icône et le nom par défaut.</string>

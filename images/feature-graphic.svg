@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="500" viewBox="0 0 1024 500">
-  <rect width="1024" height="500" fill="#3a2140"/>
+  <rect width="1024" height="500" fill="#020727"/>
 
   <!-- Logo cards (new deck-of-cards mark, 88-unit space centered at 44,44),
        scaled to a ~320px area centered around (220, 250) -->

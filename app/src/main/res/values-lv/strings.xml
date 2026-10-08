@@ -176,6 +176,7 @@
     <string name="app_icon_default">Noklusējums</string>
     <string name="app_icon_supporter">Atbalstītājs</string>
     <string name="app_icon_supporter_calendar">Atbalstītājs, ar nosaukumu Kalendārs</string>
+    <string name="app_icon_todays_date">Šodienas datums</string>
     <string name="app_icon_label_calendar">Kalendārs</string>
     <string name="app_icon_support_cta">Atbalstīt KashCal</string>
     <string name="app_icon_switch_note">Ikonas maiņa var restartēt lietotni. Paziņojumos vienmēr tiek izmantota noklusējuma ikona un nosaukums.</string>

@@ -176,6 +176,7 @@
     <string name="app_icon_default">Výchozí</string>
     <string name="app_icon_supporter">Podporovatel</string>
     <string name="app_icon_supporter_calendar">Podporovatel, s názvem Kalendář</string>
+    <string name="app_icon_todays_date">Dnešní datum</string>
     <string name="app_icon_label_calendar">Kalendář</string>
     <string name="app_icon_support_cta">Podpořit KashCal</string>
     <string name="app_icon_switch_note">Změna ikony může restartovat aplikaci. Oznámení vždy používají výchozí ikonu a název.</string>

@@ -176,6 +176,7 @@
     <string name="app_icon_default">Προεπιλογή</string>
     <string name="app_icon_supporter">Υποστηρικτής</string>
     <string name="app_icon_supporter_calendar">Υποστηρικτής, με ετικέτα Ημερολόγιο</string>
+    <string name="app_icon_todays_date">Σημερινή ημερομηνία</string>
     <string name="app_icon_label_calendar">Ημερολόγιο</string>
     <string name="app_icon_support_cta">Υποστηρίξτε το KashCal</string>
     <string name="app_icon_switch_note">Η αλλαγή του εικονιδίου μπορεί να επανεκκινήσει την εφαρμογή. Οι ειδοποιήσεις χρησιμοποιούν πάντα το προεπιλεγμένο εικονίδιο και όνομα.</string>

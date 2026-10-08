@@ -176,6 +176,7 @@
     <string name="app_icon_default">Predeterminado</string>
     <string name="app_icon_supporter">Colaborador</string>
     <string name="app_icon_supporter_calendar">Colaborador, chamado Calendario</string>
+    <string name="app_icon_todays_date">Data de hoxe</string>
     <string name="app_icon_label_calendar">Calendario</string>
     <string name="app_icon_support_cta">Apoiar KashCal</string>
     <string name="app_icon_switch_note">Cambiala pode reiniciar a aplicación. As notificacións sempre usan a icona e o nome predeterminados.</string>

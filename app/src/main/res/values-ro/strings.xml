@@ -176,6 +176,7 @@
     <string name="app_icon_default">Implicit</string>
     <string name="app_icon_supporter">Susținător</string>
     <string name="app_icon_supporter_calendar">Susținător, etichetat Calendar</string>
+    <string name="app_icon_todays_date">Data de azi</string>
     <string name="app_icon_label_calendar">Calendar</string>
     <string name="app_icon_support_cta">Susține KashCal</string>
     <string name="app_icon_switch_note">Schimbarea pictogramei poate reporni aplicația. Notificările folosesc întotdeauna pictograma și numele implicite.</string>

@@ -176,6 +176,7 @@
     <string name="app_icon_default">Lehenetsia</string>
     <string name="app_icon_supporter">Laguntzaile</string>
     <string name="app_icon_supporter_calendar">Laguntzaile, Egutegia izenekoa</string>
+    <string name="app_icon_todays_date">Gaurko data</string>
     <string name="app_icon_label_calendar">Egutegia</string>
     <string name="app_icon_support_cta">Lagundu KashCal</string>
     <string name="app_icon_switch_note">Aldatzeak aplikazioa berrabiaraz dezake. Jakinarazpenek beti erabiltzen dute ikono eta izen lehenetsia.</string>

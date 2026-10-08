@@ -176,6 +176,7 @@
     <string name="app_icon_default">Defaŭlta</string>
     <string name="app_icon_supporter">Subtenanto</string>
     <string name="app_icon_supporter_calendar">Subtenanto, etikedita Kalendaro</string>
+    <string name="app_icon_todays_date">Hodiaŭa dato</string>
     <string name="app_icon_label_calendar">Kalendaro</string>
     <string name="app_icon_support_cta">Subteni KashCal</string>
     <string name="app_icon_switch_note">Ŝanĝo povas restartigi la aplikaĵon. Sciigoj ĉiam uzas la defaŭltan piktogramon kaj nomon.</string>

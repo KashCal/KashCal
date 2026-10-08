@@ -3,6 +3,7 @@ package org.onekash.kashcal.domain.model
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,7 +26,9 @@ class DeviceEventActionsTest {
         hasRrule: Boolean = false,
         rrule: String? = null,
         reminders: List<Int> = emptyList(),
-        categories: List<String> = emptyList()
+        categories: List<String> = emptyList(),
+        originalId: Long? = null,
+        timezone: String? = "America/New_York",
     ) = DeviceCalendarInstance(
         instanceId = 1L,
         eventId = 100L,
@@ -49,9 +52,9 @@ class DeviceEventActionsTest {
         hasAlarm = false,
         selfAttendeeStatus = 0,
         isWritable = true,
-        originalId = null,
-        originalInstanceTime = null,
-        timezone = "America/New_York",
+        originalId = originalId,
+        originalInstanceTime = originalId?.let { startTs },
+        timezone = timezone,
         eventStartTs = startTs,
         categories = categories,
     )
@@ -120,6 +123,42 @@ class DeviceEventActionsTest {
             "categories should be null or empty when the source carries none",
             event.categories.isNullOrEmpty()
         )
+    }
+
+    @Test
+    fun `toEventForDuplicate copies the rule and zone of a timed series occurrence`() {
+        val device = DisplayEvent.Device(createTestInstance(
+            hasRrule = true,
+            rrule = "FREQ=WEEKLY;BYDAY=TU",
+            timezone = "America/New_York",
+        ))
+
+        val event = device.toEventForDuplicate()
+
+        assertEquals("FREQ=WEEKLY;BYDAY=TU", event.rrule)
+        assertEquals("America/New_York", event.timezone)
+    }
+
+    @Test
+    fun `toEventForDuplicate drops the rule of a changed occurrence`() {
+        val device = DisplayEvent.Device(createTestInstance(
+            rrule = "FREQ=WEEKLY;BYDAY=TU",
+            originalId = 5L,
+        ))
+
+        val event = device.toEventForDuplicate()
+
+        assertNull(event.rrule)
+        assertEquals("America/New_York", event.timezone)
+    }
+
+    @Test
+    fun `toEventForDuplicate leaves the zone null for an all-day event`() {
+        val device = DisplayEvent.Device(createTestInstance(isAllDay = true, timezone = "UTC"))
+
+        val event = device.toEventForDuplicate()
+
+        assertNull(event.timezone)
     }
 
     // ========== buildShareText ==========

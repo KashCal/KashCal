@@ -836,15 +836,19 @@ class MainActivity : FragmentActivity() {
                             }
                         },
                         onDuplicate = {
+                            val occurrenceTs = quickViewOccurrenceTs
                             showQuickViewSheet = false
-                            editingEventId = null
-                            newEventStartTs = event.startTs
-                            eventOccurrenceTs = null
-                            duplicateFromEvent = event
-                            duplicateFromDeviceCalendarId = null
                             quickViewEvent = null
                             quickViewOccurrenceTs = null
-                            showEventFormSheet = true
+                            coroutineScope.launch {
+                                val source = homeViewModel.duplicateSourceFor(event, occurrenceTs)
+                                editingEventId = null
+                                newEventStartTs = source.startTs
+                                eventOccurrenceTs = null
+                                duplicateFromEvent = source
+                                duplicateFromDeviceCalendarId = null
+                                showEventFormSheet = true
+                            }
                         },
                         onShare = {
                             val shareText = buildString {

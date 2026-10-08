@@ -1,11 +1,14 @@
 package org.onekash.kashcal
 
+import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.onekash.kashcal.ui.appicon.LauncherAliases
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
@@ -25,8 +28,8 @@ class MainActivityIntentFilterTest {
     private val pm: PackageManager = RuntimeEnvironment.getApplication().packageManager
 
     private companion object {
-        // The launcher and calendar filters live on the default activity-alias, which targets
-        // MainActivity, so the app icon can be swapped. Either name resolving is correct.
+        // The launcher filter lives on the default activity-alias, which targets MainActivity, so
+        // the app icon can be swapped. Either name resolving is correct.
         val LAUNCHER_COMPONENT_NAMES = setOf(
             "org.onekash.kashcal.MainActivity",
             "org.onekash.kashcal.MainActivityDefault",
@@ -34,17 +37,21 @@ class MainActivityIntentFilterTest {
     }
 
     @Test
-    fun `resolves ACTION_MAIN with CATEGORY_APP_CALENDAR`() {
+    fun `resolves ACTION_MAIN with CATEGORY_APP_CALENDAR to MainActivity itself`() {
+        // The calendar entry sits on MainActivity, not on an icon alias: a user's "Always"
+        // choice names the component it resolved to, and the platform stops applying it once
+        // that component is disabled, which an icon switch does to the old alias.
         val intent = Intent(Intent.ACTION_MAIN).apply {
             addCategory(Intent.CATEGORY_APP_CALENDAR)
         }
-        val resolved = pm.queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY)
-        val match = resolved.any {
-            it.activityInfo.name in LAUNCHER_COMPONENT_NAMES
-        }
-        assertTrue(
-            "A launcher entry must resolve ACTION_MAIN + CATEGORY_APP_CALENDAR (issue #129)",
-            match
+        val resolved = pm.queryIntentActivities(
+            intent,
+            PackageManager.MATCH_DEFAULT_ONLY or PackageManager.MATCH_DISABLED_COMPONENTS,
+        ).filter { it.activityInfo.packageName == RuntimeEnvironment.getApplication().packageName }
+        assertEquals(
+            "exactly MainActivity must resolve ACTION_MAIN + CATEGORY_APP_CALENDAR (issue #129)",
+            listOf("org.onekash.kashcal.MainActivity"),
+            resolved.map { it.activityInfo.name },
         )
     }
 
@@ -101,6 +108,24 @@ class MainActivityIntentFilterTest {
             "MainActivity must resolve ACTION_VIEW on a content://com.android.calendar URI",
             match
         )
+    }
+
+    @Test
+    fun `every launcher alias targets MainActivity directly`() {
+        // The launcher must start MainActivity itself: Android 12+ keeps a root activity alive on
+        // Back only when the home screen launched it, which an in-app hop would undo.
+        val pkg = RuntimeEnvironment.getApplication().packageName
+        LauncherAliases.ALL.forEach { suffix ->
+            val info = pm.getActivityInfo(
+                ComponentName(pkg, pkg + suffix),
+                PackageManager.MATCH_DISABLED_COMPONENTS,
+            )
+            assertEquals(
+                "$suffix must target MainActivity",
+                "org.onekash.kashcal.MainActivity",
+                info.targetActivity,
+            )
+        }
     }
 
     @Test

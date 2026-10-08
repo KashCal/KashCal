@@ -176,6 +176,7 @@
     <string name="app_icon_default">පෙරනිමිය</string>
     <string name="app_icon_supporter">අනුග්‍රාහක</string>
     <string name="app_icon_supporter_calendar">අනුග්‍රාහක, දින දර්ශනය ලෙස ලේබල් කළ</string>
+    <string name="app_icon_todays_date">අද දිනය</string>
     <string name="app_icon_label_calendar">දින දර්ශනය</string>
     <string name="app_icon_support_cta">KashCal ට සහාය වන්න</string>
     <string name="app_icon_switch_note">නිරූපකය වෙනස් කිරීමෙන් යෙදුම යළි ආරම්භ විය හැක. දැනුම්දීම් සැමවිටම පෙරනිමි නිරූපකය සහ නම භාවිත කරයි.</string>

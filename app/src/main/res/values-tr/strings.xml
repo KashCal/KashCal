@@ -176,6 +176,7 @@
     <string name="app_icon_default">Varsayılan</string>
     <string name="app_icon_supporter">Destekçi</string>
     <string name="app_icon_supporter_calendar">Destekçi, Takvim adıyla</string>
+    <string name="app_icon_todays_date">Bugünün tarihi</string>
     <string name="app_icon_label_calendar">Takvim</string>
     <string name="app_icon_support_cta">KashCal\'ı Destekle</string>
     <string name="app_icon_switch_note">Simgeyi değiştirmek uygulamayı yeniden başlatabilir. Bildirimler her zaman varsayılan simgeyi ve adı kullanır.</string>

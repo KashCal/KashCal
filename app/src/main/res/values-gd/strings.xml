@@ -176,6 +176,7 @@
     <string name="app_icon_default">Bunaiteach</string>
     <string name="app_icon_supporter">Neach-taic</string>
     <string name="app_icon_supporter_calendar">Neach-taic, leis an ainm Mìosachan</string>
+    <string name="app_icon_todays_date">Ceann-latha an-diugh</string>
     <string name="app_icon_label_calendar">Mìosachan</string>
     <string name="app_icon_support_cta">Cuir taic ri KashCal</string>
     <string name="app_icon_switch_note">Faodaidh atharrachadh an aplacaid ath-thòiseachadh. Bidh brathan an-còmhnaidh a\' cleachdadh na h-ìomhaigheige is an ainm bhunaitich.</string>

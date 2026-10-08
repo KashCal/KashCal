@@ -176,6 +176,7 @@
     <string name="app_icon_default">இயல்புநிலை</string>
     <string name="app_icon_supporter">ஆதரவாளர்</string>
     <string name="app_icon_supporter_calendar">ஆதரவாளர், பெயர் நாட்காட்டி</string>
+    <string name="app_icon_todays_date">இன்றைய தேதி</string>
     <string name="app_icon_label_calendar">நாட்காட்டி</string>
     <string name="app_icon_support_cta">KashCal-ஐ ஆதரிக்கவும்</string>
     <string name="app_icon_switch_note">ஐகானை மாற்றும்போது ஆப்ப் மறுதொடக்கம் ஆகலாம். அறிவிப்புகள் எப்போதும் இயல்புநிலை ஐகான் மற்றும் பெயரைப் பயன்படுத்தும்.</string>

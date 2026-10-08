@@ -176,6 +176,7 @@
     <string name="app_icon_default">Default</string>
     <string name="app_icon_supporter">Tagasuporta</string>
     <string name="app_icon_supporter_calendar">Tagasuporta, may etiketang Kalendaryo</string>
+    <string name="app_icon_todays_date">Petsa ngayong araw</string>
     <string name="app_icon_label_calendar">Kalendaryo</string>
     <string name="app_icon_support_cta">Suportahan ang KashCal</string>
     <string name="app_icon_switch_note">Maaaring i-restart ng pagpapalit ng icon ang app. Palaging ginagamit ng mga notification ang default na icon at pangalan.</string>

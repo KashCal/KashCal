@@ -176,6 +176,7 @@
     <string name="app_icon_default">ഡിഫോൾട്ട്</string>
     <string name="app_icon_supporter">പിന്തുണക്കാരൻ</string>
     <string name="app_icon_supporter_calendar">പിന്തുണക്കാരൻ, പേര് കലണ്ടർ</string>
+    <string name="app_icon_todays_date">ഇന്നത്തെ തീയതി</string>
     <string name="app_icon_label_calendar">കലണ്ടർ</string>
     <string name="app_icon_support_cta">KashCal-നെ പിന്തുണയ്ക്കുക</string>
     <string name="app_icon_switch_note">ഐക്കൺ മാറ്റുമ്പോൾ ആപ്പ് പുനരാരംഭിച്ചേക്കാം. അറിയിപ്പുകൾ എപ്പോഴും ഡിഫോൾട്ട് ഐക്കണും പേരും ഉപയോഗിക്കുന്നു.</string>

@@ -176,6 +176,7 @@
     <string name="app_icon_default">기본</string>
     <string name="app_icon_supporter">후원자</string>
     <string name="app_icon_supporter_calendar">후원자(라벨은 캘린더)</string>
+    <string name="app_icon_todays_date">오늘 날짜</string>
     <string name="app_icon_label_calendar">캘린더</string>
     <string name="app_icon_support_cta">KashCal 후원하기</string>
     <string name="app_icon_switch_note">아이콘을 변경하면 앱이 다시 시작될 수 있어요. 알림은 항상 기본 아이콘과 이름을 사용해요.</string>

@@ -176,6 +176,7 @@
     <string name="app_icon_default">Oletus</string>
     <string name="app_icon_supporter">Tukija</string>
     <string name="app_icon_supporter_calendar">Tukija, nimellä Kalenteri</string>
+    <string name="app_icon_todays_date">Tämän päivän päivämäärä</string>
     <string name="app_icon_label_calendar">Kalenteri</string>
     <string name="app_icon_support_cta">Tue KashCalia</string>
     <string name="app_icon_switch_note">Kuvakkeen vaihtaminen voi käynnistää sovelluksen uudelleen. Ilmoitukset käyttävät aina oletuskuvaketta ja -nimeä.</string>

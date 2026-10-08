@@ -176,6 +176,7 @@
     <string name="app_icon_default">Vaikimisi</string>
     <string name="app_icon_supporter">Toetaja</string>
     <string name="app_icon_supporter_calendar">Toetaja, nimega Kalender</string>
+    <string name="app_icon_todays_date">Tänane kuupäev</string>
     <string name="app_icon_label_calendar">Kalender</string>
     <string name="app_icon_support_cta">Toeta KashCali</string>
     <string name="app_icon_switch_note">Ikooni muutmine võib rakenduse taaskäivitada. Teavitused kasutavad alati vaikimisi ikooni ja nime.</string>

@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 88 88">
-  <rect width="88" height="88" rx="20" fill="#3a2140"/>
-  <g transform="translate(44 44) rotate(8)">
-    <rect x="-18" y="-21" width="36" height="42" rx="6" fill="#f2c14e"/>
-  </g>
-  <g transform="translate(44 44) rotate(-7)">
-    <rect x="-18" y="-21" width="36" height="42" rx="6" fill="#4a9bdc"/>
-  </g>
-  <g transform="translate(44 44) rotate(-2)">
-    <rect x="-18" y="-21" width="36" height="42" rx="6" fill="#2a8a7a"/>
-    <rect x="-18" y="-21" width="36" height="9" rx="6" fill="#0d9488"/>
-    <rect x="-18" y="-16" width="36" height="5" fill="#2a8a7a"/>
-    <text x="0" y="9" text-anchor="middle" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="22" font-weight="700" fill="#fdf8ec">31</text>
-    <circle cx="13" cy="-17" r="4" fill="#e85d75"/>
+  <rect width="88" height="88" rx="20" fill="#020727"/>
+  <!-- Scaled to the share of the tile a launcher mask gives the adaptive foreground. -->
+  <g transform="translate(44 44) scale(1.5) translate(-44 -44)">
+    <g transform="translate(44 44) rotate(8)">
+      <rect x="-18" y="-21" width="36" height="42" rx="6" fill="#f2c14e"/>
+    </g>
+    <g transform="translate(44 44) rotate(-7)">
+      <rect x="-18" y="-21" width="36" height="42" rx="6" fill="#4a9bdc"/>
+    </g>
+    <g transform="translate(44 44) rotate(-2)">
+      <rect x="-18" y="-21" width="36" height="42" rx="6" fill="#2a8a7a"/>
+      <rect x="-18" y="-21" width="36" height="9" rx="6" fill="#0d9488"/>
+      <rect x="-18" y="-16" width="36" height="5" fill="#2a8a7a"/>
+      <text x="0" y="9" text-anchor="middle" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="22" font-weight="700" fill="#fdf8ec">31</text>
+      <circle cx="13" cy="-17" r="4" fill="#e85d75"/>
+    </g>
   </g>
 </svg>

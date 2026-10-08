@@ -176,6 +176,7 @@
     <string name="app_icon_default">डिफ़ॉल्ट</string>
     <string name="app_icon_supporter">समर्थक</string>
     <string name="app_icon_supporter_calendar">समर्थक, नाम कैलेंडर</string>
+    <string name="app_icon_todays_date">आज की तारीख</string>
     <string name="app_icon_label_calendar">कैलेंडर</string>
     <string name="app_icon_support_cta">KashCal का समर्थन करें</string>
     <string name="app_icon_switch_note">आइकन बदलने पर ऐप पुनः आरंभ हो सकता है। सूचनाएँ हमेशा डिफ़ॉल्ट आइकन और नाम का उपयोग करती हैं।</string>

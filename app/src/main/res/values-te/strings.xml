@@ -176,6 +176,7 @@
     <string name="app_icon_default">డీఫాల్ట్</string>
     <string name="app_icon_supporter">మద్దతుదారు</string>
     <string name="app_icon_supporter_calendar">మద్దతుదారు, పేరు క్యాలెండర్</string>
+    <string name="app_icon_todays_date">నేటి తేదీ</string>
     <string name="app_icon_label_calendar">క్యాలెండర్</string>
     <string name="app_icon_support_cta">KashCal కి మద్దతు ఇవ్వండి</string>
     <string name="app_icon_switch_note">ఐకాన్‌ను మార్చినప్పుడు యాప్ పునఃప్రారంభం కావచ్చు. నోటిఫికేషన్‌లు ఎల్లప్పుడూ డీఫాల్ట్ ఐకాన్ మరియు పేరును ఉపయోగిస్తాయి.</string>

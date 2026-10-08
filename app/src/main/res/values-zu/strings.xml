@@ -176,6 +176,7 @@
     <string name="app_icon_default">Okuzenzakalelayo</string>
     <string name="app_icon_supporter">Umsekeli</string>
     <string name="app_icon_supporter_calendar">Umsekeli, obizwa ngokuthi Ikhalenda</string>
+    <string name="app_icon_todays_date">Usuku lwanamuhla</string>
     <string name="app_icon_label_calendar">Ikhalenda</string>
     <string name="app_icon_support_cta">Sekela KashCal</string>
     <string name="app_icon_switch_note">Ukushintsha isithonjana kungase kuqale kabusha uhlelo lokusebenza. Izaziso zihlala zisebenzisa isithonjana negama okuzenzakalelayo.</string>
