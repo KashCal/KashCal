@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">KashCal</string>
+    <string name="app_name">開序曆</string>
 
     <!-- ==================== Widget ==================== -->
     <string name="widget_name">今日行程</string>
@@ -160,7 +160,7 @@
     <string name="settings_theme_light_desc">一律淺色</string>
     <string name="settings_theme_dark_desc">一律深色</string>
     <string name="settings_accent_color">強調色</string>
-    <string name="settings_accent_color_brand">KashCal 青色</string>
+    <string name="settings_accent_color_brand">開序曆青色</string>
     <string name="settings_accent_color_dynamic">自動</string>
     <string name="settings_accent_color_dynamic_desc">跟隨裝置的 Material You 配色</string>
     <string name="settings_widgets_section">小工具</string>
@@ -178,7 +178,7 @@
     <string name="app_icon_supporter_calendar">支持者（標示為「行事曆」）</string>
     <string name="app_icon_todays_date">今日日期</string>
     <string name="app_icon_label_calendar">行事曆</string>
-    <string name="app_icon_support_cta">支持 KashCal</string>
+    <string name="app_icon_support_cta">支持開序曆</string>
     <string name="app_icon_switch_note">變更圖示可能會重新啟動應用程式。通知一律使用預設圖示與名稱。</string>
     <string name="settings_time_format">時間格式</string>
     <string name="settings_start_week_on">每週開始於</string>
@@ -200,21 +200,21 @@
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">應用程式鎖</string>
-    <string name="settings_app_lock_info">開啟 KashCal 需要進行裝置驗證。</string>
+    <string name="settings_app_lock_info">開啟開序曆需要進行裝置驗證。</string>
     <string name="app_lock_veil_locked">已鎖定</string>
     <string name="app_lock_veil_unlock">解鎖</string>
     <string name="app_lock_veil_footnote">指紋、臉部或螢幕鎖</string>
     <string name="app_lock_prompt_title">解鎖以查看你的活動</string>
     <string name="app_lock_enroll_message">請在系統設定中設定指紋、臉部或螢幕鎖，以使用應用程式鎖。</string>
     <string name="app_lock_unsupported_message">此裝置無法使用應用程式鎖。</string>
-    <string name="app_lock_enabled_message">應用程式鎖已開啟。下次開啟 KashCal 時會要求你驗證身分。</string>
+    <string name="app_lock_enabled_message">應用程式鎖已開啟。下次開啟開序曆時會要求你驗證身分。</string>
     <string name="app_lock_disable_prompt_title">解鎖以關閉應用程式鎖</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">備份設定</string>
-    <string name="backup_settings_subtitle">將 KashCal 設定儲存為 JSON 檔案</string>
+    <string name="backup_settings_subtitle">將開序曆設定儲存為 JSON 檔案</string>
     <string name="restore_settings_label">還原設定</string>
-    <string name="restore_settings_subtitle">從備份檔案還原 KashCal 設定</string>
+    <string name="restore_settings_subtitle">從備份檔案還原開序曆設定</string>
     <string name="restore_confirm_title">要還原備份嗎？</string>
     <string name="restore_confirm_from">來自 KashCal %1$s 的備份，%2$s</string>
     <string name="restore_confirm_message_prefs_only">將匯入您的偏好設定。</string>
@@ -223,7 +223,7 @@
     <string name="restore_success_message_prefs_only">已匯入偏好設定。</string>
     <string name="restore_success_device_calendars_note">若您使用裝置行事曆功能，請重新選擇。</string>
     <string name="restore_error_title">還原失敗</string>
-    <string name="restore_error_version_too_new">此備份是由較新版本的 KashCal 建立的。請更新 KashCal 後再試一次。</string>
+    <string name="restore_error_version_too_new">此備份是由較新版本的開序曆建立的。請更新開序曆後再試一次。</string>
     <string name="restore_error_malformed_json">此檔案不是有效的 KashCal 備份。</string>
     <string name="restore_error_invalid_value">此備份檔案含有無效資料，無法還原。</string>
     <string name="restore_error_apply_failure">套用備份時發生問題。未儲存任何變更。</string>
@@ -242,7 +242,7 @@
     <string name="whats_new_v598_body">Google 正在改變你在裝置上安裝應用程式的方式。我們需要你的協助。</string>
     <string name="whats_new_v598_action_label">前往 keepandroidopen.org</string>
     <string name="whats_new_v732_title">長久的謝意</string>
-    <string name="whats_new_v732_body">這次更新獻給 KashCal 的支持者。一份小小的心意，卻能帶來源源不絕的回饋。</string>
+    <string name="whats_new_v732_body">這次更新獻給開序曆的支持者。一份小小的心意，卻能帶來源源不絕的回饋。</string>
     <string name="whats_new_v732_caption">還不是支持者嗎？</string>
     <string name="whats_new_v732_action_label">加入你的計畫</string>
 
@@ -315,15 +315,15 @@
     <string name="caldav_error_no_calendars">在此伺服器上找不到行事曆。</string>
     <string name="caldav_error_unexpected">意外錯誤。請重試。</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\n如果這是本機網路上的伺服器，請允許存取本機網路以進行連線。</string>
-    <string name="caldav_error_connection_refused_insecure">伺服器將連線重新導向到 KashCal 不會跟隨的位置（未加密的位址或重新導向迴圈），因此 KashCal 在傳送你的密碼前就已停止。請檢查伺服器位址。</string>
+    <string name="caldav_error_connection_refused_insecure">伺服器將連線重新導向到開序曆不會跟隨的位置（未加密的位址或重新導向迴圈），因此 KashCal 在傳送你的密碼前就已停止。請檢查伺服器位址。</string>
     <string name="local_network_banner_title">需要存取本機網路</string>
-    <string name="local_network_banner_body">此伺服器似乎位於您的本機網路中。請允許存取本機網路，讓 KashCal 可以連線至它。</string>
+    <string name="local_network_banner_body">此伺服器似乎位於您的本機網路中。請允許存取本機網路，讓開序曆可以連線至它。</string>
     <string name="local_network_banner_allow">允許存取</string>
     <string name="local_network_banner_dismiss">暫不</string>
     <string name="hub_app_permissions">應用程式權限</string>
     <string name="status_allowed">已允許</string>
     <string name="permission_name_notifications">通知</string>
-    <string name="permission_why_notifications">讓 KashCal 提醒你即將到來的事件。若未授予，提醒將不會發出提示音。</string>
+    <string name="permission_why_notifications">讓開序曆提醒你即將到來的事件。若未授予，提醒將不會發出提示音。</string>
     <string name="permission_name_contacts">聯絡人</string>
     <string name="permission_why_contacts">在你為事件新增人員時建議賓客，並顯示聯絡人生日。你的聯絡人會保留在裝置上。</string>
     <string name="permission_name_calendars">行事曆</string>
@@ -350,9 +350,9 @@
     <string name="error_migration_title">更新錯誤</string>
     <string name="error_migration_failed">應用程式資料更新失敗。請重新安裝應用程式。</string>
     <string name="error_permission_notification_title">啟用通知？</string>
-    <string name="error_permission_notification">KashCal 需要通知權限以提醒你即將到來的事件。</string>
+    <string name="error_permission_notification">開序曆需要通知權限以提醒你即將到來的事件。</string>
     <string name="error_permission_alarm_title">啟用精確鬧鐘？</string>
-    <string name="error_permission_alarm">KashCal 需要精確鬧鐘權限以提供準確的提醒。</string>
+    <string name="error_permission_alarm">開序曆需要精確鬧鐘權限以提供準確的提醒。</string>
     <string name="error_permission_storage">匯入/匯出需要儲存權限。</string>
     <string name="error_device_calendar_title">行事曆錯誤</string>
     <string name="error_device_calendar_write_failed">無法儲存至裝置行事曆。請重試。</string>
@@ -464,7 +464,7 @@
     <string name="help_app_password_step_5">5. 點選產生並複製到此處</string>
 
     <!-- ==================== Notification Permission Dialog ==================== -->
-    <string name="dialog_notification_permission_message">KashCal 需要通知權限以提醒你即將到來的事件。</string>
+    <string name="dialog_notification_permission_message">開序曆需要通知權限以提醒你即將到來的事件。</string>
     <string name="dialog_notification_permission_settings_hint">你可以稍後在設定中變更。</string>
 
     <!-- ==================== Accounts Screen ==================== -->
@@ -564,8 +564,8 @@
     <string name="change_password_label_default">密碼</string>
 
     <!-- ==================== System Account ==================== -->
-    <string name="kashcal_account_label">KashCal</string>
-    <string name="kashcal_contacts_account_label">KashCal 聯絡人</string>
+    <string name="kashcal_account_label">開序曆</string>
+    <string name="kashcal_contacts_account_label">開序曆聯絡人</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">裝置行事曆</string>
