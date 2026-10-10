@@ -216,7 +216,7 @@
     <string name="restore_settings_label">恢复设置</string>
     <string name="restore_settings_subtitle">从备份文件恢复开序历配置</string>
     <string name="restore_confirm_title">恢复备份？</string>
-    <string name="restore_confirm_from">来自开序历 %1$s 的备份，%2$s</string>
+    <string name="restore_confirm_from">来自 KashCal %1$s 的备份，%2$s</string>
     <string name="restore_confirm_message_prefs_only">将导入您的偏好设置。</string>
     <string name="action_restore">恢复</string>
     <string name="restore_success_title">恢复完成</string>
@@ -224,7 +224,7 @@
     <string name="restore_success_device_calendars_note">如果您使用设备日历功能，请重新选择。</string>
     <string name="restore_error_title">恢复失败</string>
     <string name="restore_error_version_too_new">此备份是由更高版本的开序历创建的。请更新开序历后重试。</string>
-    <string name="restore_error_malformed_json">此文件不是有效的开序历备份。</string>
+    <string name="restore_error_malformed_json">此文件不是有效的 KashCal 备份。</string>
     <string name="restore_error_invalid_value">此备份文件包含无效数据，无法恢复。</string>
     <string name="restore_error_apply_failure">应用备份时出现问题。未保存任何更改。</string>
     <string name="backup_error_build_failed">备份失败</string>
@@ -276,7 +276,7 @@
     <string name="status_failed_to_parse">⚠ %1$d 个解析失败</string>
     <string name="status_built_with_love">用心打造</string>
     <string name="status_in_austin">在 Austin</string>
-    <string name="status_version">开序历 v%1$s</string>
+    <string name="status_version">KashCal v%1$s</string>
 
     <!-- ==================== Success Messages ==================== -->
     <string name="success_sync_complete">同步完成</string>
@@ -389,7 +389,7 @@
     <string name="cd_time_entry_keyboard">输入精确时间</string>
     <string name="time_entry_dialog_title">输入时间</string>
     <string name="time_entry_tap_to_edit">点按以编辑</string>
-    <string name="cd_version_info">开序历版本 %1$s。长按打开调试选项。</string>
+    <string name="cd_version_info">KashCal 版本 %1$s。长按打开调试选项。</string>
     <string name="cd_about_setting">关于%1$s</string>
     <string name="cd_color_slider">颜色滑块，当前为 %1$s</string>
     <string name="cd_color_slider_state">%1$s，%2$d 度</string>
