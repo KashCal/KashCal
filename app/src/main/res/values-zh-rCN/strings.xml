@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">KashCal</string>
+    <string name="app_name">开序历</string>
 
     <!-- ==================== Widget ==================== -->
     <string name="widget_name">今日日程</string>
@@ -160,7 +160,7 @@
     <string name="settings_theme_light_desc">始终浅色</string>
     <string name="settings_theme_dark_desc">始终深色</string>
     <string name="settings_accent_color">强调色</string>
-    <string name="settings_accent_color_brand">KashCal 青色</string>
+    <string name="settings_accent_color_brand">开序历青色</string>
     <string name="settings_accent_color_dynamic">自动</string>
     <string name="settings_accent_color_dynamic_desc">跟随设备的 Material You 配色</string>
     <string name="settings_widgets_section">小部件</string>
@@ -178,7 +178,7 @@
     <string name="app_icon_supporter_calendar">支持者（标为“日历”）</string>
     <string name="app_icon_todays_date">今天的日期</string>
     <string name="app_icon_label_calendar">日历</string>
-    <string name="app_icon_support_cta">支持 KashCal</string>
+    <string name="app_icon_support_cta">支持开序历</string>
     <string name="app_icon_switch_note">更改图标可能会重启应用。通知始终使用默认图标和名称。</string>
     <string name="settings_time_format">时间格式</string>
     <string name="settings_start_week_on">每周开始于</string>
@@ -200,31 +200,31 @@
 
     <!-- ==================== App Lock (Privacy) ==================== -->
     <string name="app_lock_label">应用锁</string>
-    <string name="settings_app_lock_info">打开 KashCal 需要进行设备身份验证。</string>
+    <string name="settings_app_lock_info">打开开序历需要进行设备身份验证。</string>
     <string name="app_lock_veil_locked">已锁定</string>
     <string name="app_lock_veil_unlock">解锁</string>
     <string name="app_lock_veil_footnote">指纹、面容或屏幕锁</string>
     <string name="app_lock_prompt_title">解锁以查看你的活动</string>
     <string name="app_lock_enroll_message">请在系统设置中设置指纹、面容或屏幕锁，以使用应用锁。</string>
     <string name="app_lock_unsupported_message">此设备无法使用应用锁。</string>
-    <string name="app_lock_enabled_message">应用锁已开启。下次打开 KashCal 时会要求你验证身份。</string>
+    <string name="app_lock_enabled_message">应用锁已开启。下次打开开序历时会要求你验证身份。</string>
     <string name="app_lock_disable_prompt_title">解锁以关闭应用锁</string>
 
     <!-- ==================== Backup &amp; Restore Settings ==================== -->
     <string name="backup_settings_label">备份设置</string>
-    <string name="backup_settings_subtitle">将 KashCal 配置保存为 JSON 文件</string>
+    <string name="backup_settings_subtitle">将开序历配置保存为 JSON 文件</string>
     <string name="restore_settings_label">恢复设置</string>
-    <string name="restore_settings_subtitle">从备份文件恢复 KashCal 配置</string>
+    <string name="restore_settings_subtitle">从备份文件恢复开序历配置</string>
     <string name="restore_confirm_title">恢复备份？</string>
-    <string name="restore_confirm_from">来自 KashCal %1$s 的备份，%2$s</string>
+    <string name="restore_confirm_from">来自开序历 %1$s 的备份，%2$s</string>
     <string name="restore_confirm_message_prefs_only">将导入您的偏好设置。</string>
     <string name="action_restore">恢复</string>
     <string name="restore_success_title">恢复完成</string>
     <string name="restore_success_message_prefs_only">已导入偏好设置。</string>
     <string name="restore_success_device_calendars_note">如果您使用设备日历功能，请重新选择。</string>
     <string name="restore_error_title">恢复失败</string>
-    <string name="restore_error_version_too_new">此备份是由更高版本的 KashCal 创建的。请更新 KashCal 后重试。</string>
-    <string name="restore_error_malformed_json">此文件不是有效的 KashCal 备份。</string>
+    <string name="restore_error_version_too_new">此备份是由更高版本的开序历创建的。请更新开序历后重试。</string>
+    <string name="restore_error_malformed_json">此文件不是有效的开序历备份。</string>
     <string name="restore_error_invalid_value">此备份文件包含无效数据，无法恢复。</string>
     <string name="restore_error_apply_failure">应用备份时出现问题。未保存任何更改。</string>
     <string name="backup_error_build_failed">备份失败</string>
@@ -242,7 +242,7 @@
     <string name="whats_new_v598_body">Google 正在改变你在设备上安装应用的方式。我们需要你的帮助。</string>
     <string name="whats_new_v598_action_label">访问 keepandroidopen.org</string>
     <string name="whats_new_v732_title">长久的感谢</string>
-    <string name="whats_new_v732_body">本次更新献给 KashCal 的支持者。小小的付出，却能带来长久的回报。</string>
+    <string name="whats_new_v732_body">本次更新献给开序历的支持者。小小的付出，却能带来长久的回报。</string>
     <string name="whats_new_v732_caption">还不是支持者吗？</string>
     <string name="whats_new_v732_action_label">加入你的计划</string>
 
@@ -276,7 +276,7 @@
     <string name="status_failed_to_parse">⚠ %1$d 个解析失败</string>
     <string name="status_built_with_love">用心打造</string>
     <string name="status_in_austin">在 Austin</string>
-    <string name="status_version">KashCal v%1$s</string>
+    <string name="status_version">开序历 v%1$s</string>
 
     <!-- ==================== Success Messages ==================== -->
     <string name="success_sync_complete">同步完成</string>
@@ -315,15 +315,15 @@
     <string name="caldav_error_no_calendars">在此服务器上找不到日历。</string>
     <string name="caldav_error_unexpected">意外错误。请重试。</string>
     <string name="caldav_error_with_lan_hint">%1$s\n\n如果这是本地网络上的服务器，请允许访问本地网络以进行连接。</string>
-    <string name="caldav_error_connection_refused_insecure">服务器将连接重定向到了 KashCal 不会跟随的地方（未加密的地址或重定向循环），因此 KashCal 在发送你的密码之前已停止。请检查服务器地址。</string>
+    <string name="caldav_error_connection_refused_insecure">服务器将连接重定向到了开序历不会跟随的地方（未加密的地址或重定向循环），因此 KashCal 在发送你的密码之前已停止。请检查服务器地址。</string>
     <string name="local_network_banner_title">需要访问本地网络</string>
-    <string name="local_network_banner_body">此服务器似乎位于您的本地网络中。请允许访问本地网络，以便 KashCal 可以连接到它。</string>
+    <string name="local_network_banner_body">此服务器似乎位于您的本地网络中。请允许访问本地网络，以便开序历可以连接到它。</string>
     <string name="local_network_banner_allow">允许访问</string>
     <string name="local_network_banner_dismiss">暂不</string>
     <string name="hub_app_permissions">应用权限</string>
     <string name="status_allowed">已允许</string>
     <string name="permission_name_notifications">通知</string>
-    <string name="permission_why_notifications">让 KashCal 提醒你即将到来的事件。若未授予，提醒将不会发出提示音。</string>
+    <string name="permission_why_notifications">让开序历提醒你即将到来的事件。若未授予，提醒将不会发出提示音。</string>
     <string name="permission_name_contacts">联系人</string>
     <string name="permission_why_contacts">在你为事件添加人员时推荐嘉宾，并显示联系人生日。你的联系人始终保留在设备上。</string>
     <string name="permission_name_calendars">日历</string>
@@ -350,9 +350,9 @@
     <string name="error_migration_title">更新错误</string>
     <string name="error_migration_failed">应用数据更新失败。请重新安装应用。</string>
     <string name="error_permission_notification_title">启用通知？</string>
-    <string name="error_permission_notification">KashCal 需要通知权限以提醒你即将到来的事件。</string>
+    <string name="error_permission_notification">开序历需要通知权限以提醒你即将到来的事件。</string>
     <string name="error_permission_alarm_title">启用精确闹钟？</string>
-    <string name="error_permission_alarm">KashCal 需要精确闹钟权限以提供准确的提醒。</string>
+    <string name="error_permission_alarm">开序历需要精确闹钟权限以提供准确的提醒。</string>
     <string name="error_permission_storage">导入/导出需要存储权限。</string>
     <string name="error_device_calendar_title">日历错误</string>
     <string name="error_device_calendar_write_failed">保存到设备日历失败。请重试。</string>
@@ -389,7 +389,7 @@
     <string name="cd_time_entry_keyboard">输入精确时间</string>
     <string name="time_entry_dialog_title">输入时间</string>
     <string name="time_entry_tap_to_edit">点按以编辑</string>
-    <string name="cd_version_info">KashCal 版本 %1$s。长按打开调试选项。</string>
+    <string name="cd_version_info">开序历版本 %1$s。长按打开调试选项。</string>
     <string name="cd_about_setting">关于%1$s</string>
     <string name="cd_color_slider">颜色滑块，当前为 %1$s</string>
     <string name="cd_color_slider_state">%1$s，%2$d 度</string>
@@ -464,7 +464,7 @@
     <string name="help_app_password_step_5">5. 点击生成并复制到此处</string>
 
     <!-- ==================== Notification Permission Dialog ==================== -->
-    <string name="dialog_notification_permission_message">KashCal 需要通知权限以提醒你即将到来的事件。</string>
+    <string name="dialog_notification_permission_message">开序历需要通知权限以提醒你即将到来的事件。</string>
     <string name="dialog_notification_permission_settings_hint">你可以稍后在设置中更改。</string>
 
     <!-- ==================== Accounts Screen ==================== -->
@@ -564,8 +564,8 @@
     <string name="change_password_label_default">密码</string>
 
     <!-- ==================== System Account ==================== -->
-    <string name="kashcal_account_label">KashCal</string>
-    <string name="kashcal_contacts_account_label">KashCal 联系人</string>
+    <string name="kashcal_account_label">开序历</string>
+    <string name="kashcal_contacts_account_label">开序历联系人</string>
 
     <!-- ==================== Settings Screen ==================== -->
     <string name="settings_device_calendars">设备日历</string>
