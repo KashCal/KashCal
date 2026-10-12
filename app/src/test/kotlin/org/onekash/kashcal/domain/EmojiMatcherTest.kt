@@ -324,6 +324,7 @@ class EmojiMatcherTest {
             "Divorce mediation",
             "Custody hearing",
             "Layoff meeting",
+            "Anniversary of Death", // "anniversary" would match without suppression (#389)
         )
         for (title in suppressed) {
             assertNull("\"$title\" must not be decorated", EmojiMatcher.getEmoji(title))
