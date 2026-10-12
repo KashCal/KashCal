@@ -165,7 +165,7 @@ object EmojiMatcher {
      */
     private val suppressWords = setOf(
         "funeral", "memorial", "hospice",
-        "surgery", "biopsy", "chemo",
+        "surgery", "biopsy", "chemo", "death",
         "divorce", "custody", "hearing", "layoff",
     )
 
