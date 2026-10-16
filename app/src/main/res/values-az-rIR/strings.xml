@@ -1,0 +1,1974 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Brand name: keep "KashCal" in every locale except zh-rCN (开序历) and zh-rTW (開序曆) -->
+    <string name="app_name">KashCal</string>
+
+    <!-- ==================== Widget ==================== -->
+    <!-- Widget names/descriptions shown in Android's widget picker -->
+    <string name="widget_name">بو گونون گۆندَلی</string>
+    <string name="widget_description">بو گونون تقویم حادیثه‌لرینی گؤستریر</string>
+    <string name="week_widget_name">هفته گؤرونوشو</string>
+    <string name="week_widget_description">گله‌ن ۷ گونون تقویم حادیثه‌لرینی گؤستریر</string>
+    <string name="month_widget_name">آی گؤرونوشو</string>
+    <string name="month_widget_description">حادیثه نشانه نوقطه‌لری ایله تام آی تقویم شبکه‌سینی گؤستریر</string>
+    <string name="date_widget_name">تاریخ</string>
+    <string name="date_widget_description">بو گونون تاریخینی تطبیق آیکونو کیمی گؤستریر</string>
+    <string name="upcoming_widget_name">گله‌ن</string>
+    <string name="upcoming_widget_description">گله‌ن ۱۰ گونون حادیثه‌لرینی گؤستریر، بوش گونلری آتلیار</string>
+    <!-- Day header showing a relative label with its date, e.g. "Today (Tue, Apr 28)". %1$s = Today/Tomorrow, %2$s = formatted date -->
+    <string name="upcoming_widget_day_with_date">%1$s (%2$s)</string>
+    <string name="widget_loading_upcoming">گله‌ن حادیثه‌لر یوکلنیر…</string>
+    <string name="widget_error_load_events">حادیثه‌لر یوکله‌نیله‌medi، آچماق اوچون وورون</string>
+    <!-- Widget content -->
+    <string name="widget_no_events_today">بو گون حادیثه یوخدور</string>
+    <string name="widget_add_event">+ حادیثه آرتیر</string>
+    <string name="widget_no_events">حادیثه یوخدور</string>
+    <string name="widget_no_upcoming_events">گله‌ن حادیثه یوخدور</string>
+    <!--
+        Sample event titles shown only in the system widget picker preview, never in a
+        real widget. Deliberately generic so they read as placeholder examples in any
+        locale rather than looking like the user's own events.
+    -->
+    <string name="widget_preview_event_standup">تیم گؤروشو</string>
+    <string name="widget_preview_event_lunch">ناهار آراسی</string>
+    <string name="widget_preview_event_review">دیزاین یوخلاماسی</string>
+    <string name="widget_preview_event_gym">ایدمان زالی</string>
+    <string name="widget_preview_event_birthday">آد گونو</string>
+    <string name="widget_preview_event_trip">هفته‌سونو سفری</string>
+    <string name="widget_preview_event_dentist">دیش حکیمی</string>
+    <string name="widget_preview_event_call">پروژه زنگی</string>
+    <!-- Widget content descriptions (accessibility) -->
+    <string name="cd_widget_calendar">تقویم</string>
+    <string name="cd_widget_add_event">حادیثه آرتیر</string>
+    <string name="cd_widget_refresh">یئنیله</string>
+    <!-- %1$s = "month day", %2$s = event count text (from plurals or cd_widget_no_events) -->
+    <string name="cd_widget_day_cell">%1$s، %2$s</string>
+    <string name="cd_widget_no_events">حادیثه یوخدور</string>
+    <!-- Accessibility label for a cancelled event row in a widget: "<time>, <title>, cancelled" -->
+    <string name="cd_widget_event_cancelled">%1$s، %2$s، لغو اولونموش</string>
+
+    <!-- Notification channel names/descriptions (shown in Android Settings) -->
+    <string name="channel_event_reminders">حادیثه خاطیرلاتمالاری</string>
+    <string name="channel_event_reminders_desc">گله‌ن تقویم حادیثه‌لری اوچون بیلدیریشلر</string>
+    <string name="channel_sync_progress">همزمانلاشدیرما پیشرفتی</string>
+    <string name="channel_sync_progress_desc">تقویم‌لر همزمانلاشدیریلارکن پیشرفتی گؤستریر</string>
+    <string name="channel_sync_status">همزمانلاشدیرما دورومو</string>
+    <string name="channel_sync_status_desc">همزمانلاشدیرما تاماملانماسی و خطالار باره‌ده بیلدیریشلر</string>
+    <string name="channel_event_invitations">حادیثه دعوتلری</string>
+    <string name="channel_event_invitations_desc">یئنی تقویم دعوتی آلدیغینیزدا بیلدیریشلر</string>
+    <!-- Notification channel for calendar changes found by a background sync; also the lock-screen text of those notifications -->
+    <string name="channel_calendar_updates">تقویم یئنیله‌مه‌لری</string>
+    <!-- Body of the invite notification. %1$s is the organizer's email or name. -->
+    <string name="invite_notification_body">%1$s دن · جواب وئرمک اوچون وورون</string>
+
+    <!-- ==================== App Shortcuts ==================== -->
+    <string name="shortcut_new_event">یئنی حادیثه</string>
+    <string name="shortcut_new_event_long">یئنی حادیثه یارات</string>
+    <string name="shortcut_today">بو گون</string>
+    <string name="shortcut_today_long">بو گونه گئت</string>
+    <string name="shortcut_search">آختار</string>
+    <string name="shortcut_search_long">حادیثه‌لری آختار</string>
+
+    <!-- ==================== Common Actions ==================== -->
+    <!-- All action_ strings are button labels. Use imperative/infinitive form. -->
+    <!-- Button: retry a failed operation -->
+    <string name="action_retry">تکرار ائت</string>
+    <string name="action_try_again">یئنی‌دن جهد ائت</string>
+    <!-- Button: abort and discard changes -->
+    <string name="action_cancel">لغو ائت</string>
+    <!-- Button: close a sheet/dialog (no discard implied) -->
+    <string name="action_close">باغلا</string>
+    <string name="action_ok">اولدو</string>
+    <!-- Button: decline a prompt, do it later -->
+    <string name="action_not_now">ایندی یوخ</string>
+    <!-- Button: grant a permission (fires the system permission dialog) -->
+    <string name="action_allow">ایجازه وئر</string>
+    <!-- Button: softly decline a permission offer for good -->
+    <string name="action_no_thanks">یوخ، ساغ اول</string>
+    <string name="action_sign_in">داخیل اول</string>
+    <!-- Button: confirm a picker selection -->
+    <string name="action_select">سئچ</string>
+    <string name="action_show_password">پارولی گؤستر</string>
+    <string name="action_hide_password">پارولی گیزلت</string>
+    <string name="action_sign_out">چیخیش ائت</string>
+    <string name="action_learn_more">داها چوخ اؤیرن</string>
+    <!-- Button: opens appleid.apple.com in browser. Keep "Apple ID" untranslated. -->
+    <string name="action_open_apple_id">Apple ID آچ</string>
+    <!-- Button: opens Android system settings -->
+    <string name="action_open_settings">تنظیماتلاری آچ</string>
+    <!-- Button: re-download all calendar data -->
+    <string name="action_force_sync">زورلا همزمانلاشدیر</string>
+    <!-- Button: trigger immediate sync -->
+    <string name="action_sync_now">ایندی همزمانلاشدیر</string>
+    <!-- Button: show more details about an item -->
+    <string name="action_details">تفصیلات</string>
+    <!-- Button: begin account setup flow -->
+    <string name="action_set_up">قور</string>
+    <string name="action_report_issue">مشکل بیلدیر</string>
+    <!-- Button: view item details (verb, not noun) -->
+    <string name="action_view">باخ</string>
+    <!-- Button: turn on a feature -->
+    <string name="action_enable">فعال ائت</string>
+    <!-- Button: dismiss/finish current screen (not "completed") -->
+    <string name="action_done">تمام</string>
+    <!-- Button: go back to the previous view within a sheet -->
+    <string name="action_back">گئری</string>
+    <!-- Button: save event to calendar -->
+    <string name="action_save">ساخلa</string>
+    <!-- Button: add a new item -->
+    <string name="action_add">آرتیر</string>
+    <string name="action_edit">دَییشدیر</string>
+    <!-- Button: open an event in read-only view (used when user is an attendee, not the organizer) -->
+    <string name="action_open">آچ</string>
+    <string name="action_delete">سیل</string>
+    <!-- Button: confirm a destructive action -->
+    <string name="action_confirm">تصدیق ائت</string>
+    <!-- Button: throw away unsaved changes -->
+    <string name="action_discard">آت</string>
+    <!-- Button: confirm throwing away unsaved changes; shown after the first Cancel/back tap. Keep it a short question. -->
+    <string name="action_discard_confirm">آت؟</string>
+    <!-- Button: dismiss a notification or alert -->
+    <string name="action_dismiss">ردد ائت</string>
+    <string name="action_show_all">هامیسینی گؤستر</string>
+    <!-- Button: connect to a server account -->
+    <string name="action_connect">باغلان</string>
+    <string name="action_duplicate">کؤچور</string>
+    <string name="action_share">پایلاش</string>
+    <string name="action_share_as_text">متن کیمی پایلاش</string>
+    <string name="action_export_ics">.ics کیمی ائکسپورت ائت</string>
+    <string name="action_confirm_delete">سیلمه‌نی تصدیق ائت</string>
+    <string name="action_delete_event">حادیثه‌نی سیل</string>
+
+    <!-- ==================== RSVP Actions ==================== -->
+    <!-- Button: accept a meeting invitation -->
+    <!-- Button: tentatively accept a meeting invitation -->
+    <!-- Button: decline a meeting invitation -->
+    <!-- Caption shown under the RSVP buttons on a recurring event. Series-level RSVP is the only
+         supported mode, so this disclosure prevents the surprise of "I declined Friday and now every
+         Friday is gone from my calendar." -->
+    <string name="rsvp_series_disclosure">جوابینیز بوتون سلسله‌یه شامیل اولور.</string>
+    <!-- Under the RSVP section of an imported invitation: what the server reported for the user's reply. -->
+    <string name="rsvp_receipt_pending">جواب گؤزله‌نیلیر</string>
+    <string name="rsvp_receipt_sent">جواب گؤندریلدی</string>
+    <string name="rsvp_receipt_not_delivered">جواب چاتدیریلmadi</string>
+    <!-- Snackbar shown when an RSVP write is rejected because the organizer concurrently edited the event. %1$s is the event title. -->
+
+    <!-- ==================== Recurring Event Actions ==================== -->
+    <!-- Dialog options when editing/deleting a recurring (repeating) event -->
+    <string name="recurring_this_and_future">بو و بوتون گله‌جک</string>
+
+    <!-- ==================== Form Labels ==================== -->
+    <!-- Form field labels for event creation/editing -->
+    <string name="label_event_title">حادیثه باشلیغی</string>
+    <string name="label_location">مکان</string>
+    <!-- Hint text inside empty location field -->
+    <string name="label_location_hint">آدرس یا لینک</string>
+    <!-- Form field: event description/notes (noun, not verb) -->
+    <string name="label_notes">قئیدلر</string>
+    <!-- Form field: event tags/categories (UI says "Tags"; RFC 5545 CATEGORIES under the hood) -->
+    <string name="label_categories">اِتیتلر</string>
+    <!-- Placeholder in the inline add-a-tag text field -->
+    <string name="tags_new">یئنی اِتیت</string>
+    <!-- Inline error: tag name was blank -->
+    <string name="tags_empty_reject">اِتیت آدی یاز</string>
+    <!-- Inline error: tag name exceeds the length limit -->
+    <string name="tags_too_long">اِتیت چوخ اوزوندور</string>
+    <!-- Inline error: tag name contained a comma -->
+    <string name="tags_comma_reject">اِتیتلر ویرگول داخیل اده بیلمز</string>
+    <!-- Overflow badge on cards, e.g. "+2 more" tags; %1$d is the hidden count -->
+    <string name="tags_hint_n_more">+%1$d داها</string>
+    <!-- Autocomplete row that creates a brand-new tag; %1$s is the typed name -->
+    <string name="tags_autocomplete_create_new">\"%1$s\" یارات</string>
+    <!-- Accessibility label for a tag chip; %1$s is the tag name -->
+    <string name="cd_tag">اِتیت: %1$s</string>
+    <!-- Accessibility label for the overflow button that moves the tag row -->
+    <string name="cd_tags_move_menu">اِتیتلری کؤچور</string>
+    <!-- Menu action: move the tag row above the notes and attendees -->
+    <string name="tags_move_above_notes">قئیدلرین اوستونه کؤچور</string>
+    <!-- Menu action: move the tag row below the notes and attendees -->
+    <string name="tags_move_below_notes">قئیدلرین آلتینا کؤچور</string>
+    <!-- Account-hub row that opens the tag-management screen -->
+    <string name="tags_row_label">اِتیتلری ایداره ائت</string>
+    <!-- Short intro shown at the top of the tag-management screen, above the tag list. -->
+    <string name="tags_manage_note">اِتیتلرینیزه رنک وئرین، آدینی دَییشدیرین یا سیلین.</string>
+    <!-- Accessibility label for the info button that reveals the tag sync details -->
+    <string name="tags_info_content_desc">اِتیتلر و همزمانلاشدیرما حاقدا</string>
+    <!-- Expandable detail shown when the info button on the tag-management screen is tapped. Explains that removing a tag here is a local change (events keep their labels), that tags travel with CalDAV sync and reinstalls, but that some device calendars may not preserve them. -->
+    <string name="tags_device_interop_note">بورادا اِتیتی سیلمک اونو یالنیز بو سیاهدەن تمیزلیر؛ حادیثه‌لرینیز اؤز اِتیتلرینی ساخلاییر. اِتیتلر CalDAV حساب‌لاریندا دیگر جیهازلارینیزا همزمانلاشیر، آنجاق بعضی جیهاز تقویم‌لری اونلاری ساخلایا بیلمز.</string>
+    <!-- Title of the tag-management screen -->
+    <string name="tags_screen_title">اِتیتلر</string>
+    <!-- Empty state on the tag-management screen when the user has no tags yet -->
+    <string name="tags_screen_empty">حادیثه‌لره آرتیردیغینیز اِتیتلر بورادا گؤرونور. هر بیرینه رنک وئره، آدینی دَییشدیره یا سیلə بیlersiniz.</string>
+    <!-- Accessibility label for a tag\'s color swatch; %1$s is the tag name -->
+    <string name="tags_swatch_content_desc">%1$s اوچون رنک</string>
+    <!-- Overflow action: change a tag\'s color -->
+    <string name="tags_action_color">رنگی دَییشدیر</string>
+    <!-- Overflow action: rename a tag -->
+    <string name="tags_action_rename">آدینی دَییشدیر</string>
+    <!-- Overflow action: delete a tag -->
+    <string name="tags_action_delete">سیل</string>
+    <!-- Accessibility label for a tag row\'s overflow menu button; %1$s is the tag name -->
+    <string name="tags_actions_content_desc">%1$s اوچون عمل‌لر</string>
+    <!-- Title of the rename-tag sheet -->
+    <string name="tags_rename_title">اِتیتین آدینی دَییشدیر</string>
+    <!-- Placeholder in the rename-tag text field -->
+    <string name="tags_rename_hint">اِتیت آدی</string>
+    <!-- Snackbar after deleting a tag; %1$s is the tag name -->
+    <string name="tags_deleted">\"%1$s\" سیلindi</string>
+    <!-- Snackbar action to undo a tag delete -->
+    <string name="tags_delete_undo">گئری آل</string>
+    <!-- Form field: event start time -->
+    <string name="label_starts">باشلاییر</string>
+    <!-- Keep "Apple ID" untranslated -->
+    <string name="label_apple_id">Apple ID</string>
+    <!-- Keep "App-Specific Password" concept — Apple's term for third-party app passwords -->
+    <string name="label_app_password">تطبیقه خاص پارول</string>
+    <!-- Placeholder showing expected format -->
+    <string name="placeholder_email" translatable="false">email@icloud.com</string>
+    <!-- Placeholder showing expected format -->
+    <string name="placeholder_password" translatable="false">xxxx-xxxx-xxxx-xxxx</string>
+    <!-- Hint for app-specific password format -->
+    <string name="label_password_hint">۱۶ کاراکتر، تیره‌لر ایختیاری</string>
+    <!-- Keep "URL" untranslated -->
+    <string name="label_calendar_url">تقویم URL</string>
+    <!-- Placeholder for URL input -->
+    <string name="placeholder_url" translatable="false">https://...</string>
+    <string name="label_calendar_name">تقویم آدی</string>
+    <!-- Generic name input field -->
+    <string name="label_name">آد</string>
+    <!-- Keep "Hex" untranslated if no standard local equivalent -->
+    <string name="label_hex_color">هگز رنگی</string>
+    <!-- Keep hex format references (0–9, A–F) untranslated -->
+    <string name="label_enter_hex">۶ هگز کاراکتری داخیل ائدین (0–9, A–F)</string>
+
+    <!-- ==================== View Labels ==================== -->
+    <!-- Tab/filter: show all calendars (not "everything") -->
+    <string name="view_all">هامی</string>
+    <string name="view_week">هفته</string>
+    <string name="view_month">آی</string>
+    <!-- Event property: spans entire day, no specific start/end time -->
+    <string name="label_all_day">بوتون گون</string>
+    <!-- Navigation label: today's date -->
+    <string name="label_today">بو گون</string>
+    <!-- Agenda day-group header combining a relative word and the date, e.g. "Today · Saturday, July 18". %1$s is the relative word (Today/Tomorrow), %2$s the full date. Translators may localize the middot separator. -->
+    <string name="agenda_header_relative_with_date">%1$s · %2$s</string>
+    <string name="label_go_to_date">تاریخه گئت</string>
+    <!-- Top-bar prefix for week view week-of-year label, e.g. "W21". Single letter so the label fits next to the month/year title (e.g. "May 2026 · W21"). -->
+    <string name="label_week">ه</string>
+    <!-- Combined month/year and week label in WEEK view header, e.g. "May 2026 · Week 21". The ⁨ (FSI) and ⁩ (PDI) bidi isolates wrap each parameter so mixed-script content renders correctly in RTL locales. Translators may localize the separator. -->
+    <!-- ==================== Settings ==================== -->
+    <!-- Settings screen labels. Match Android system Settings terminology where possible. -->
+    <string name="settings_title">تنظیمات</string>
+    <string name="settings_theme">تم</string>
+    <string name="settings_theme_system_desc">تلفونونوزون آچیق یا تیره تنظیمینی ایزلیین</string>
+    <string name="settings_theme_light_desc">همیشه آچیق</string>
+    <string name="settings_theme_dark_desc">همیشه تیره</string>
+    <string name="settings_accent_color">رنگ تاکید</string>
+    <string name="settings_accent_color_brand">KashCal فیروزه‌ای</string>
+    <string name="settings_accent_color_dynamic">اوتوماتیک</string>
+    <string name="settings_accent_color_dynamic_desc">جیهازینیزین Material You رنگلرینی ایزلیین</string>
+    <string name="settings_widgets_section">ویجت‌لر</string>
+    <string name="settings_widget_theme">تم</string>
+    <string name="settings_widget_accent_color">تاکید</string>
+    <!-- Account hub row labels: the "Widget" prefix distinguishes these from the app appearance rows above them in the same list (the picker-sheet titles above stay short since the sheet is already about widgets) -->
+    <string name="hub_widget_theme">ویجت تمی</string>
+    <string name="hub_widget_accent">ویجت تاکیدی</string>
+    <string name="settings_widget_color_follow_app">تطبیقی ایزله</string>
+    <string name="settings_widget_color_follow_app_desc">تطبیقین تاکید رنگی و منبعینی ایستفاده ائت</string>
+    <string name="settings_widget_theme_follow_app">تطبیقی ایزله</string>
+    <string name="settings_widget_theme_follow_app_desc">تطبیقین آچیق یا تیره گؤرونوشونه اویغونلاش</string>
+    <string name="settings_app_icon">تطبیق آیکونو</string>
+    <string name="app_icon_default">پیش‌فرض</string>
+    <string name="app_icon_supporter">دستکچی</string>
+    <string name="app_icon_supporter_calendar">دستکچی، تقویم آدلی</string>
+    <string name="app_icon_todays_date">بو گونون تاریخی</string>
+    <string name="app_icon_label_calendar">تقویم</string>
+    <string name="app_icon_support_cta">KashCal-ی دستکله</string>
+    <string name="app_icon_switch_note">آیکونو دَییشمک تطبیقی یئنی‌دن باشلادا بیلر. بیلدیریشلر همیشه پیش‌فرض آیکون و آدی ایستفاده ائدیر.</string>
+    <string name="settings_time_format">وقت فورماتی</string>
+    <string name="settings_start_week_on">هفته باشلانغیجی</string>
+    <string name="settings_event_emojis">حادیثه اموجی‌لری</string>
+    <!-- Tooltip explaining the Event emojis toggle -->
+    <string name="settings_event_emojis_info">باشلیغا گؤره حادیثه‌لره اموجی آرتیریر، مثلاً \"آد گونو\" اوچون 🎂.</string>
+    <!-- "Force Full Sync" = re-download everything from server -->
+    <string name="settings_force_sync">تام همزمانلاشدیرمایا زورلا</string>
+    <string name="settings_force_sync_subtitle">بوتون تقویم وئری‌لرینی یئنی‌دن یوکله</string>
+    <string name="settings_sync_history">همزمانلاشدیرما تاریخی</string>
+    <string name="settings_sync_history_subtitle">همزمانلاشدیرما سئشنلرینه باخ (سون ۴۸ ساعت)</string>
+    <!-- Keep ".ics" untranslated (file extension) -->
+    <string name="settings_import_subtitle">ICS فایلین‌دان هرتقویمه حادیثه‌لر آرتیر</string>
+    <!-- Keep ".ics" untranslated -->
+    <string name="settings_export_subtitle">حادیثه‌لری ICS فایلینه ساخلa</string>
+    <string name="settings_birthday_reminder">آد گونو خاطیرلاتماسی</string>
+    <string name="settings_use_device_timezone">جیهاز ساعات قورشاغینی ایستفاده ائت</string>
+    <!-- Section headers in Settings screen -->
+    <string name="settings_section_calendars">تقویم‌لر و حساب‌لار</string>
+    <string name="settings_section_appearance">گؤرونوش</string>
+    <string name="settings_section_creating_events">حادیثه ترجیحلری</string>
+    <!-- "sync" = synchronize calendar data. Use your platform's standard sync term. -->
+    <string name="settings_section_sync">همزمانلاشدیرما</string>
+    <string name="settings_section_data">یِدک و برپا ائتمه</string>
+
+    <!-- ==================== App Lock (Privacy) ==================== -->
+    <!-- Settings toggle. Keep "KashCal" untranslated. -->
+    <string name="app_lock_label">تطبیق قیفلی</string>
+    <!-- Tooltip explaining the App lock toggle -->
+    <string name="settings_app_lock_info">KashCal-ی آچماق اوچون جیهاز تصدیقی طلب اولونور.</string>
+    <!-- Branded lock screen (veil) shown over the app while locked. -->
+    <string name="app_lock_veil_locked">قیفلی</string>
+    <string name="app_lock_veil_unlock">قیفلی آچ</string>
+    <string name="app_lock_veil_footnote">بارماق ایزی، اوز یا صفحه قیفلی</string>
+    <!-- System biometric prompt title (required by the OS). Short; no app name. -->
+    <string name="app_lock_prompt_title">حادیثه‌لرینیزه باخماق اوچون قیفلی آچین</string>
+    <!-- Shown when the user enables the lock but has no biometric or screen lock set up. -->
+    <string name="app_lock_enroll_message">تطبیق قیفلینی ایستفاده ائتمک اوچون سیستم تنظیماتلاریندا بارماق ایزی، اوز یا صفحه قیفلی قورون.</string>
+    <!-- Shown when the device has no hardware/software capable of authenticating. -->
+    <string name="app_lock_unsupported_message">بو جیهاز تطبیق قیفلینی ایستفاده اده بیلمز.</string>
+    <!-- Inline confirmation after enabling the lock. Keep "KashCal" untranslated. -->
+    <string name="app_lock_enabled_message">تطبیق قیفلی آچیقدیر. KashCal گله‌ن دفعه آچدیغینیزدا تصدیق ایسته‌یه‌جک.</string>
+    <!-- System biometric prompt title shown when turning the lock OFF (required by the OS). Short; no app name. -->
+    <string name="app_lock_disable_prompt_title">تطبیق قیفلینی سؤندورمک اوچون قیفلی آچین</string>
+
+    <!-- ==================== Backup &amp; Restore Settings ==================== -->
+    <!-- Row labels in the Backup &amp; Restore section. Keep "KashCal" and "JSON" untranslated. -->
+    <string name="backup_settings_label">تنظیماتلاری یِدکله</string>
+    <string name="backup_settings_subtitle">KashCal کونفیقوراسیونونو JSON فایلینه ساخلa</string>
+    <string name="restore_settings_label">تنظیماتلاری برپا ائت</string>
+    <string name="restore_settings_subtitle">KashCal کونفیقوراسیونونو یِدک فایلین‌دان برپا ائت</string>
+    <!-- Restore confirmation dialog. %1$s = app version, %2$s = ISO-8601 timestamp. Keep "KashCal" untranslated. -->
+    <string name="restore_confirm_title">یِدک برپا ائدیلسین؟</string>
+    <string name="restore_confirm_from">KashCal %1$s، %2$s دن یِدک</string>
+    <!-- Shown in the confirm dialog when the backup has no subscriptions. -->
+    <string name="restore_confirm_message_prefs_only">بو ترجیحلرینیزینو ایمپورت ائده‌جک.</string>
+    <string name="action_restore">برپا ائت</string>
+    <!-- Post-restore success dialog. -->
+    <string name="restore_success_title">برپا ائتمه تاماملاندی</string>
+    <!-- Shown in the success dialog when no subscriptions were restored. -->
+    <string name="restore_success_message_prefs_only">ترجیحلرینیز ایمپورت ائدیلدی.</string>
+    <!-- Shown only if the backup enabled device calendars. -->
+    <string name="restore_success_device_calendars_note">اگر بو اؤزللیغی ایستفاده ائدیرسینیز، جیهاز تقویم‌لرینیزین یئنی‌دن سئچین.</string>
+    <!-- Restore error dialog variants. Keep "KashCal" and "JSON" untranslated. -->
+    <string name="restore_error_title">برپا ائتمه اوغورسوز اولدو</string>
+    <string name="restore_error_version_too_new">بو یِدک KashCal-ین داها یئنی بیر نوسخه‌سی ایله یارادیلیب. لطفاً KashCal-ی یئنی‌له‌یین و یئنی‌دن جهد ائدین.</string>
+    <string name="restore_error_malformed_json">بو فایل کئچرلی بیر KashCal یِدکی دئییل.</string>
+    <string name="restore_error_invalid_value">بو یِدک فایلی کئچرسز وئری‌لر ایحتیوا ائدیر و برپا ائدیله بیلمز.</string>
+    <string name="restore_error_apply_failure">یِدکی تطبیق ائدرکن بیر شئی یانلیش گئتدی. هئچ بیر دَییشیکلیک ساخلانمادی.</string>
+    <!-- Backup/restore error snackbars shown from the Activity. -->
+    <string name="backup_error_build_failed">یِدکله‌مه اوغورسوز اولدو</string>
+    <string name="backup_error_write_failed">یِدکله‌مه اوغورسوز اولدو. فایله یازا بیلمدی.</string>
+    <string name="backup_error_read_failed">فایل اوخونا بیلمدی</string>
+
+    <!-- ==================== Onboarding ==================== -->
+    <!-- First-run screen. Casual/friendly tone. Keep "iCloud" untranslated. -->
+    <string name="onboarding_apple_calendar">Apple تقویمی؟</string>
+    <!-- Casual reassurance — informal tone -->
+    <string name="onboarding_got_you">سنی توتدوخ.</string>
+    <!-- Keep "iCloud" untranslated -->
+    <string name="onboarding_connect_prompt">حادیثه‌لرینیزه بورادا باخماق اوچون iCloud-ا باغلانین</string>
+
+    <!-- ==================== What\'s New ==================== -->
+    <!-- Top-right button on the post-update pager; closes it without reading the rest. -->
+    <string name="whats_new_skip">آتلا</string>
+    <!-- Bottom button on the post-update pager; goes to the next page. -->
+    <string name="whats_new_next">سونراکی</string>
+    <!-- Spoken position of the post-update pager's page dots. %1$d = this page, %2$d = number of pages. -->
+    <string name="whats_new_page_of">صفحه %1$d / %2$d</string>
+    <!-- Label above a menu path (for example "Make it yours > App Icon") telling the user where an option lives. -->
+    <string name="whats_new_find_it_in">بورادا تاپ</string>
+
+    <!-- v23.7.80 release-note: signal-boost for the keep-Android-open campaign. -->
+    <!-- Section title. "Android" is a brand name; keep untranslated. -->
+    <string name="whats_new_v598_title">Android-ی آچیق ساخلاماغا کؤمک ائدین</string>
+    <!-- Section body. "Google" and "Android" are brand names; keep untranslated. -->
+    <string name="whats_new_v598_body">Google جیهازینیزدا تطبیق‌لری قورما اوصولونو دَییشدیریر. سیزین کؤمگینیزه احتیاجیمیز وار.</string>
+    <!-- CTA button label. Domain "keepandroidopen.org" must not be translated. -->
+    <string name="whats_new_v598_action_label">keepandroidopen.org-ا باش چکین</string>
+    <!-- URL the CTA opens. Don\'t translate. -->
+    <string name="whats_new_v598_action_url" translatable="false">https://keepandroidopen.org/</string>
+
+    <!-- Release-note dedicating the release to the app\'s financial supporters. -->
+    <!-- Section heading (a warm, standing thank-you). -->
+    <string name="whats_new_v732_title">بیر دایمی تشککور</string>
+    <!-- Section body. "KashCal" is a brand name; keep untranslated. -->
+    <string name="whats_new_v732_body">بو بوراخیلیش KashCal-ین دستکچیلرینه حصر اولونوب. کیچیک بیر گیریش، بؤیوک بیر تکرارلانان فایده.</string>
+    <!-- Small caption shown above the support button, inviting non-supporters. -->
+    <string name="whats_new_v732_caption">هله دستکچی دئییلسینیز؟</string>
+    <!-- Support call-to-action button label. -->
+    <string name="whats_new_v732_action_label">بیزی پلانلارینیزا آرتیرین</string>
+    <!-- URL the support button opens. Don\'t translate. -->
+    <string name="whats_new_v732_action_url" translatable="false">https://kashcal.onekash.org/donate/</string>
+
+    <!-- Release-note pages announcing three features; each page also shows the menu path to the option. -->
+    <!-- Page heading for the launcher icon that shows the day of the month. -->
+    <string name="whats_new_v772_icon_title">آیکونونوز تاریخی بیلیر</string>
+    <!-- Page body. "Today's date" is the icon option's name: use the same words as app_icon_todays_date. "KashCal" is a brand name; keep untranslated. -->
+    <string name="whats_new_v772_icon_body">\"بو گونون تاریخی\" آیکونونو سئچین و KashCal صفحه‌اینده آیین گونونو گؤستریر. هر گئجه اؤز-اؤزونه دؤنور.</string>
+    <!-- Page heading for the Recent changes list. -->
+    <string name="whats_new_v772_changes_title">نه دَییشدیگینه باخین</string>
+    <!-- Page body. "Recent changes" is the list's name: use the same words as recent_changes_title. Keep "iCloud" and "CalDAV" untranslated. -->
+    <string name="whats_new_v772_changes_body">iCloud و CalDAV تقویم‌لرینیزدن یئنی، دَییشدیریلمیش و سیلینمیش حادیثه‌لر ۷ گون عرضینده \"سون دَییشیکلیکلر\"ده توپلانیر. آچماق اوچون بیرینه وورون.</string>
+    <!-- Page body for the Change notifications setting (the page heading is settings_change_notifications). Keep "iCloud" and "CalDAV" untranslated. -->
+    <string name="whats_new_v772_notifications_body">آرخا پلان همزمانلاشدیرما iCloud یا CalDAV حادیثه‌لرینیزده دَییشیکلیک تاپدیغیندا بیلدیریش آلین. سیز یاندیرانا قدر سؤنولو قالیر.</string>
+    <!-- Sample event names shown in an illustration of the Recent changes list and a notification; they are not the user's events. Translate as ordinary event titles. -->
+    <string name="whats_new_hero_sample_lunch">تیم ناهاری</string>
+    <string name="whats_new_hero_sample_review">دیزاین یوخلاماسی</string>
+    <string name="whats_new_hero_sample_book_club">کیتاب کلوبو</string>
+    <!-- Sample calendar name in the same illustration. -->
+    <string name="whats_new_hero_sample_calendar">ایش</string>
+    <!-- Time label in an illustrated notification's header, as Android shows a notification that just arrived. -->
+    <string name="whats_new_hero_now">ایندی</string>
+    
+<!-- ==================== Sign-In Sheets ==================== -->
+    <!-- Keep "iCloud" and "CalDAV" untranslated -->
+    <string name="signin_icloud_title">iCloud-ا باغلان</string>
+    <string name="signin_caldav_title">CalDAV حسابی آرتیر</string>
+    <!-- %1$s = provider name (e.g., "iCloud", "Nextcloud") -->
+    <string name="signin_connected_to">%1$s-ا باغلاندی</string>
+
+    <!-- ==================== Dialogs ==================== -->
+    <!-- Dialog titles and messages -->
+    <string name="dialog_new_event_title">یئنی حادیثه</string>
+    <string name="dialog_edit_event_title">حادیثه‌نی دَییشدیر</string>
+    <string name="dialog_force_sync_title">تام همزمانلاشدیرمایا زورلا؟</string>
+    <!-- Confirmation dialog body for force sync -->
+    <string name="dialog_force_sync_message">بو سرورdan بوتون تقویم وئری‌لرینی یئنی‌دن یوکله‌یه‌جک. یئرلی دَییشیکلیکلر ساخلاناجاق.</string>
+    <!-- Match Android system "Notifications" terminology -->
+    <string name="dialog_enable_notifications">بیلدیریشلری فعال ائدسین؟</string>
+    <!-- %1$s = event title -->
+    <!-- %1$s = event title -->
+    <string name="dialog_action_required">دوام ائتمک اوچون بو عمل لازیمدیر.</string>
+    <!-- "calendar" = the container, not the grid view -->
+    <string name="dialog_add_to_calendar">تقویمه آرتیر</string>
+    <string name="dialog_select_calendar">تقویم سئچ</string>
+    <string name="dialog_choose_color">رنگ سئچ</string>
+    <!-- "Subscription" = ICS calendar feed (read-only), not a paid subscription -->
+    <string name="dialog_add_subscription">آبونه آرتیر</string>
+    <string name="dialog_edit_subscription">آبونه‌نی دَییشدیر</string>
+
+    <!-- ==================== Status Messages ==================== -->
+    <string name="status_no_events_week">بو هفته حادیثه یوخدور</string>
+    <!-- %1$d = number of additional events (for week view overflow) -->
+    <string name="status_more_events">+%1$d داها</string>
+    <!-- Compact overflow badge for the all-day strip in week/3-day view; just "+N" (e.g. +2). Number only, no words to translate. -->
+    <string name="status_more_events_compact" translatable="false">+%1$d</string>
+    <string name="status_no_sync_sessions">هله همزمانلاشدیرما سئشنسی یوخدور.\n\nتقویم گؤرونوشونده آشاغی چکیب یئنیله‌یه‌رک همزمانلاشدیرما باشلادین.</string>
+    <string name="status_no_writable_calendars">یازیلa بیلن تقویم یوخدور</string>
+    <!-- %1$d = number of events -->
+    <string name="status_events_count">%1$d حادیثه</string>
+    <string name="status_sync_history">همزمانلاشدیرما تاریخی</string>
+    <string name="status_parse_failures">پارس خطالاری</string>
+    <string name="status_error">خطا</string>
+    <!-- %1$d = number of failed parses -->
+    <string name="status_failed_to_parse">⚠ %1$d پارس ائدیله بیلمدی</string>
+    <!-- About/credits footer — casual, warm tone -->
+    <string name="status_built_with_love">سِوگی ایله یارادیلیب</string>
+    <!-- City name: Austin, Texas. Keep "Austin" untranslated. Translate "in" only. -->
+    <string name="status_in_austin">Austin-دا</string>
+    <!-- %1$s = version number. Keep "KashCal" and "v" untranslated. -->
+    <string name="status_version">KashCal v%1$s</string>
+
+    <!-- ==================== Success Messages ==================== -->
+    <string name="success_sync_complete">همزمانلاشدیرما تاماملاندی</string>
+
+    <!-- ==================== Error Messages ==================== -->
+    <!-- Keep "iCloud", "Apple ID", "CalDAV" untranslated in all error messages. -->
+
+    <!-- Auth Errors -->
+    <string name="error_auth_title">داخیل اولما اوغورسوز اولدو</string>
+    <!-- Keep "Apple ID" and "app-specific password" as-is or use Apple's official localized term -->
+    <string name="error_auth_invalid_credentials">کئچرسز Apple ID یا تطبیقه خاص پارول. لطفاً معلوماتلارینیزین یوخ‌لایین و یئنی‌دن جهد ائدین.</string>
+    <!-- Keep "iCloud", "Apple ID" untranslated -->
+    <string name="error_auth_app_specific_password_required">iCloud تطبیقه خاص پارول طلب ائدیر. عادی Apple ID پارولونوز بورادا ایشله‌مز.</string>
+    <string name="error_auth_session_expired_title">سئشنین واختی گئدیب</string>
+    <string name="error_auth_session_expired">iCloud سئشنینیزین واختی گئدیب. همزمانلاشدیرمایا دوام ائتمک اوچون یئنی‌دن داخیل اولون.</string>
+    <!-- Keep "Apple ID" and "appleid.apple.com" untranslated -->
+    <string name="error_auth_account_locked">Apple ID-ینیز قیفلیدی. آچماق اوچون appleid.apple.com-ا باش چکین.</string>
+
+    <!-- Network Errors — keep friendly, non-technical tone -->
+    <string name="error_network_offline">آفلاینسینیز. آنلاین اولدوقدا دَییشیکلیکلر همزمانلاشاجاق.</string>
+    <string name="error_network_timeout">باغلانتی واختی کئچدی. لطفاً اینترنتینیزین یوخ‌لایین و یئنی‌دن جهد ائدین.</string>
+    <string name="error_network_ssl">گوونلی باغلانتی اوغورسوز اولدو. لطفاً شبکه تنظیماتلارینیزین یوخ‌لایین.</string>
+    <!-- Keep "iCloud" untranslated -->
+    <string name="error_network_unknown_host">iCloud-ا چاتا بیلمدی. لطفاً اینترنت باغلانتینیزین یوخ‌لایین.</string>
+    <string name="error_network_connection_failed">باغلانتی اوغورسوز اولدو. لطفاً یئنی‌دن جهد ائدین.</string>
+
+    <!-- Server Errors — keep "iCloud" untranslated -->
+    <string name="error_server_unavailable">iCloud موقتاً الده یوخدور. لطفاً سونرا یئنی‌دن جهد ائدین.</string>
+    <string name="error_server_rate_limited">چوخ طلب وار. لطفاً بیر آز گؤزله‌یین و یئنی‌دن جهد ائدین.</string>
+    <string name="error_server_forbidden">گیریش ردد ائدیلدی. بو تقویم اوچون ایجازه‌نیز اولمایا بیلر.</string>
+    <string name="error_server_not_found">طلب اولونان عونصر سروردا تاپیلمادی.</string>
+    <string name="error_conflict_title">همزمانلاشدیرما تضادی</string>
+    <string name="error_conflict_generic">بو حادیثه باشقا جیهازدا دَییشدیریلیب. ان سون نوسخه‌نی آلماق اوچون زورلا همزمانلاشدیرین.</string>
+    <!-- %1$s = event title -->
+    <string name="error_conflict_with_event">\"%1$s\" باشقا جیهازدا دَییشدیریلیب. ان سون نوسخه‌نی آلماق اوچون زورلا همزمانلاشدیرین.</string>
+    <string name="error_sync_token_expired">همزمانلاشدیرما وئری‌لری‌نین واختی گئدیب. تام همزمانلاشدیرما آپاریلیر…</string>
+
+    <!-- Event Errors -->
+    <string name="error_event_not_found">حادیثه تاپیلمادی.</string>
+    <string name="error_calendar_not_found">تقویم تاپیلمادی.</string>
+    <!-- %1$s = calendar name -->
+    <string name="error_calendar_read_only">\"%1$s\"-ده حادیثه‌لری دَییشدیره بیلمزسینیز (یالنیز اوخونا بیله‌ن تقویم).</string>
+    <string name="error_event_invalid_data">کئچرسز حادیثه وئری‌لری. لطفاً باشلانغیج و سون واختلارینی یوخ‌لایین.</string>
+    <string name="error_event_invalid_recurrence">کئچرسز تکرارلانما الگوییشی.</string>
+
+    <!-- Account Errors -->
+    <!-- %1$s = display name -->
+    <string name="error_display_name_exists">\"%1$s\" آدلی بیر حساب آرتیق وار.</string>
+    <!-- Keep "Apple ID" untranslated -->
+    <string name="icloud_error_credentials_required">Apple ID و پارول لازیمدیر</string>
+    <string name="icloud_error_connection_timeout">باغلانتی واختی کئچدی. لطفاً یئنی‌دن جهد ائدین.</string>
+    <!-- CalDAV sign-in errors -->
+    <string name="caldav_error_display_name_required">گؤرونن آد لازیمدیر</string>
+    <string name="caldav_error_credentials_required">سرور URL، ایستفاده‌چی آدی و پارول لازیمدیر</string>
+    <string name="caldav_error_connection_timeout">باغلانتی واختی کئچدی. لطفاً یئنی‌دن جهد ائدین.</string>
+    <string name="caldav_error_no_calendars">بو سروردا تقویم تاپیلمادی.</string>
+    <string name="caldav_error_unexpected">گؤزله‌نیلمه‌ین خطا. لطفاً یئنی‌دن جهد ائدین.</string>
+    <!-- Appended to a connection failure (arg %1$s is the underlying error) when local-network access may be blocked on Android 17+. -->
+    <string name="caldav_error_with_lan_hint">%1$s\n\nاگر بو یئرلی شبکه‌نیزده بیر سروردورسا، باغلانماق اوچون یئرلی شبکه گیریشینه ایجازه وئرین.</string>
+    <!-- Shown inline in sign-in, Discover calendars and password change when KashCal refused a connection: the server redirected to plain http on another host, an https account was pointed at plain http, or the server kept redirecting. The password was not sent. -->
+    <string name="caldav_error_connection_refused_insecure">سرور باغلانتی‌نی KashCal-ین ایزله‌مه‌یه‌جگی بیر یئره یؤنلندیردی (شيفرله‌نمه‌میش بیر آدرس یا دؤنگو یؤنلندیرمه)، بو سبب‌دن KashCal پارولونوزو گؤندرمه‌دن دایاندی. سرور آدرسینی یوخ‌لایین.</string>
+
+    <!-- Local-network permission banner in CalDAV sign-in (Android 17+) -->
+    <string name="local_network_banner_title">یئرلی شبکه گیریشی لازیمدیر</string>
+    <string name="local_network_banner_body">بو سرور یئرلی شبکه‌نیزده کیمی گؤرونور. KashCal-ین باغلانا بیلمه‌سی اوچون یئرلی شبکه گیریشینه ایجازه وئرین.</string>
+    <string name="local_network_banner_allow">گیریشه ایجازه وئر</string>
+    <string name="local_network_banner_dismiss">ایندی یوخ</string>
+
+    <!-- App permissions sheet: title (also the hub row that opens it) and the quiet granted-state label -->
+    <string name="hub_app_permissions">تطبیق ایجازه‌لری</string>
+    <string name="status_allowed">ایجازه وئریلیب</string>
+
+    <!-- App permissions sheet: row names and "why we ask" tooltip text, one pair per runtime permission -->
+    <string name="permission_name_notifications">بیلدیریشلر</string>
+    <string name="permission_why_notifications">KashCal-ین سیزی حادیثه‌لرینیز باره‌ده خاطیرلادا بیلمه‌سی اوچون. اولمادا، خاطیرلاتمالار سس‌سیز قالار.</string>
+    <string name="permission_name_contacts">کونٹاکتلار</string>
+    <string name="permission_why_contacts">حادیثه‌یه آدام آرتیرارکن قوناق‌لار پیشنهاد ائدیر و کونٹاکت آد گونلرینی گؤستریر. کونٹاکتلارینیز جیهازینیزدا قالیر.</string>
+    <string name="permission_name_calendars">تقویم‌لر</string>
+    <string name="permission_why_calendars">جیهازینیزداکی دیگر تقویم‌لردن حادیثه‌لری اؤزونوزون یانیندا گؤستریر.</string>
+    <string name="permission_name_local_network">یئرلی شبکه</string>
+    <string name="permission_why_local_network">ائو یا ایش شبکه‌نیزده بیر تقویم سرورونا چاتیر. Android 17 بونو اینترنت گیریشیندن آیریجا طلب ائدیر.</string>
+
+    <!-- Errors shown when changing the password on an existing account -->
+    <string name="password_change_error_account_not_found">حساب تاپیلمادی</string>
+    <string name="password_change_error_no_credentials">مؤوجود معلومات یوخدور</string>
+    <string name="password_change_error_unsupported_provider">بو تدارکچی پارول دَییشدیرمگی دستکلمیر</string>
+    <string name="password_change_error_invalid">کئچرسز پارول</string>
+    <string name="password_change_error_network">شبکه خطاسی، لطفاً یئنی‌دن جهد ائدین</string>
+
+    <!-- Import/Export Errors — "import" = load events from .ics file -->
+    <string name="error_import_file_not_found">فایل تاپیلمادی یا اوخونا بیلمز.</string>
+    <string name="error_import_invalid_format">کئچرسز تقویم فایل فورماتی.</string>
+    <string name="error_import_no_events">فایلدا حادیثه تاپیلمادی</string>
+    <string name="error_import_failed">ایمپورت اوغورسوز اولدو</string>
+    <!-- %1$d = successful imports, %2$d = failed imports -->
+    <string name="error_import_partial">%1$d حادیثه ایمپورت ائدیلدی، %2$d اوغورسوز اولدو.</string>
+    <string name="error_export_failed">حادیثه‌لری ائکسپورت ائتمک اوغورسوز اولدو.</string>
+    <string name="error_export_no_events">ائکسپورت ائدیله‌جک حادیثه یوخدور.</string>
+    <string name="error_end_before_start">سون واخت باشلانغیج واختین‌دان سونرا اولمالیدیر</string>
+
+    <!-- Storage Errors -->
+    <string name="error_storage_full_title">یaddaş doludur</string>
+    <string name="error_storage_full">کیفایت قدر یaddaş یوخدور. لطفاً بیر آز یer بوşaldین و یئنی‌دن جهد ائدین.</string>
+    <string name="error_database_corruption_title">وئری خطاسی</string>
+    <string name="error_database_corruption">تقویم وئری‌لرینیز زده‌لنmiş اولا بیلر. لطفاً دستک ایله علاقه ساخلایین.</string>
+    <string name="error_migration_title">یئنیله‌مه خطاسی</string>
+    <string name="error_migration_failed">تطبیق وئری‌لرینی یئنیله‌مک اوغورسوز اولدو. لطفاً تطبیقی یئنی‌دن قورون.</string>
+
+    <!-- Permission Errors — keep "KashCal" untranslated -->
+    <string name="error_permission_notification_title">بیلدیریشلری فعال ائدسین؟</string>
+    <string name="error_permission_notification">KashCal-ین سیزی گله‌ن حادیثه‌لر باره‌ده خاطیرلادا بیلمه‌سی اوچون بیلدیریش ایجازه‌سی لازیمدیر.</string>
+    <string name="error_permission_alarm_title">دقیق زنگلری فعال ائدسین؟</string>
+    <string name="error_permission_alarm">KashCal-ین دقیق خاطیرلاتمالار اوچون دقیق زنگ ایجازه‌سی لازیمدیر.</string>
+    <string name="error_permission_storage">ایمپورت/ائکسپورت اوچون یaddaş ایجازه‌سی لازیمدیر.</string>
+
+    <!-- Device Calendar Errors -->
+    <string name="error_device_calendar_title">تقویم خطاسی</string>
+    <string name="error_device_calendar_write_failed">جیهاز تقویمینه ساخلamaq اوغورسوز اولدو. لطفاً یئنی‌دن جهد ائدین.</string>
+    <string name="error_device_calendar_permission">تقویم یازma ایجازه‌سی لازیمدیر. لطفاً تنظیماتلاردا ایجازه وئرین.</string>
+    <string name="error_device_calendar_permission_denied">یازma گیریشی وئرمک اوچون تنظیماتلاردا تقویم ایجازه‌سینی سؤندوروب یاندیرین</string>
+    <string name="error_device_calendar_not_found">تقویم تاپیلمادی. سیلیندیb اولا بیلر.</string>
+    <string name="error_device_event_not_found">حادیثه تاپیلمادی. سیلیندیb اولا بیلر.</string>
+    <string name="error_device_calendar_read_only">بو تقویم یالنیز اوخونا بیله‌ن‌دیر.</string>
+
+    <!-- Sync Errors — keep "iCloud" untranslated -->
+    <string name="error_sync_no_accounts">iCloud حسابی قورولماییب. تقویم‌لرینیزین همزمانلاشدیریلماسی اوچون iCloud-ا قورون.</string>
+    <!-- %1$d = successful syncs, %2$d = failed syncs -->
+    <string name="error_sync_partial">%1$d تقویم همزمانلاشدیریلدی، %2$d اوغورسوز اولدو.</string>
+
+    <!-- Generic -->
+    <string name="error_unknown">بیر شئی یانلیش گئتدی. لطفاً یئنی‌دن جهد ائدین.</string>
+<!-- ==================== Content Descriptions (Accessibility) ==================== -->
+    <!-- All cd_ strings are screen reader accessibility labels -->
+    <!-- State: item is currently selected (past participle/adjective) -->
+    <string name="cd_selected">سئچیلمیش</string>
+    <string name="cd_back">گئری</string>
+    <!-- Announced after a link's label to signal it leaves the app for a web browser -->
+    <string name="cd_opens_in_browser">تاراییدا آچیلیر</string>
+    <string name="cd_search">آختار</string>
+    <string name="cd_create_event">حادیثه یارات</string>
+    <string name="cd_delete">سیل</string>
+    <string name="cd_refresh">یئنیله</string>
+    <string name="cd_more_options">داها چوخ سئچنک</string>
+    <string name="cd_duplicate">کؤچور</string>
+    <string name="cd_share">پایلاش</string>
+    <string name="cd_export_ics">ICS کیمی ائکسپورت ائت</string>
+    <string name="cd_open_link">لینکی آچ</string>
+    <string name="cd_open_maps">خریطه‌ده آچ</string>
+    <string name="cd_copy_clipboard">کلیپبوردا کؤچور</string>
+    <string name="cd_clear_history">تاریخی تمیزله</string>
+    <!-- Adjective: event repeats on a schedule -->
+    <string name="cd_recurring">تکرارلانان</string>
+    <!-- State: feature is turned on (past participle/adjective) -->
+    <string name="cd_enabled">فعال</string>
+    <string name="cd_sync_error">همزمانلاشدیرما خطاسی</string>
+    <!-- %1$s = label name (e.g., "date", "time") -->
+    <string name="cd_select_label">%1$s سئچ</string>
+    <!-- %1$d = number of options -->
+    <string name="cd_wheel_picker">%1$d سئچنکلی چرخ سئچیجی</string>
+    <string name="cd_time_entry_keyboard">دقیق واختی داخیل ائت</string>
+    <string name="time_entry_dialog_title">واخت داخیل ائت</string>
+    <string name="time_entry_tap_to_edit">دَییشدیرمک اوچون وور</string>
+    <!-- %1$s = version name -->
+    <string name="cd_version_info">KashCal نوسخه‌سی %1$s. دیباگ سئچنکلری اوچون اوزون باس.</string>
+    <!-- Accessibility label for the info (ⓘ) button next to a setting. %1$s = setting name -->
+    <string name="cd_about_setting">%1$s حاقدا</string>
+    <!-- %1$s = color name (e.g., "Red", "Blue") -->
+    <string name="cd_color_slider">رنگ سوروشر، حاضیردا %1$s</string>
+    <!-- %1$s = color name, %2$d = hue degrees -->
+    <string name="cd_color_slider_state">%1$s، %2$d درجه</string>
+
+    <!-- ==================== Form Labels (Additional) ==================== -->
+    <!-- "Calendar" = the container for events (Work, Personal), not the grid view -->
+    <string name="label_calendar">تقویم</string>
+    <string name="label_color">رنگ:</string>
+    <!-- Event form: recurrence setting -->
+    <string name="label_repeat">تکرار</string>
+    <string name="label_sync_interval">همزمانلاشدیرما آرالیغی:</string>
+    <!-- Section header: events with specific times (as opposed to all-day) -->
+    <!-- Section header: events spanning entire day -->
+    <!-- CalDAV account form — keep "URL" and "CalDAV" untranslated -->
+    <string name="label_server_url">سرور URL</string>
+    <string name="label_username">ایستفاده‌چی آدی</string>
+    <string name="label_password">پارول</string>
+    <string name="label_display_name_optional">گؤرونن آد</string>
+
+    <!-- ==================== Placeholders (Additional) ==================== -->
+    <!-- Placeholder showing expected format -->
+    <string name="placeholder_server_url" translatable="false">nextcloud.example.com</string>
+    <!-- Placeholder showing expected format -->
+    <string name="placeholder_username" translatable="false">user@example.com</string>
+    <string name="placeholder_search_events">حادیثه‌لری آختار…</string>
+
+    <!-- ==================== Hints ==================== -->
+    <!-- Keep "https://" untranslated -->
+    <string name="hint_https_default">اگر بیلدییریلمه‌سه، https://-ا پیش‌فرض اولور</string>
+    <string name="hint_name_shown_in_settings">تنظیماتلاردا گؤرونن آد</string>
+    <!-- Technical setting for advanced users — keep "HTTP" untranslated -->
+    <string name="caldav_trust_insecure_subtitle">اؤز-اؤزونه ایمضالانمیش سرتیفیکات‌لار یا یئرلی HTTP سرورلاری اوچون</string>
+
+    <!-- ==================== Recurrence ==================== -->
+    <!-- Recurrence end condition: "After N occurrences" -->
+    <string name="label_recurrence_after">سونرا</string>
+    <!-- Unit label: "N occurrences" (noun, lowercase) -->
+    <string name="label_recurrence_occurrences">دفعه</string>
+    <!-- Recurrence end condition: "On date" (end on specific date) -->
+    <string name="label_recurrence_on_date">تاریخده</string>
+
+    <!-- ==================== Settings (Additional) ==================== -->
+    <string name="settings_visible_calendars">گؤرونن تقویم‌لر</string>
+    <!-- "Default calendar" = where new events are created by default -->
+    <string name="settings_default_calendar">پیش‌فرض تقویم</string>
+    <string name="settings_default_event_length">پیش‌فرض حادیثه اوزونلوغو</string>
+    <!-- Subtitle hint at the top of the default event length sheet -->
+    <string name="settings_default_event_length_hint">یئنی حادیثه‌لر اوچون پیش‌فرض اوزونلوق</string>
+    <!-- "Alert" = reminder notification. Row for timed (non-all-day) events. -->
+    <string name="settings_timed_event_alert">واختلی حادیثه خاطیرلاتماسی</string>
+    <!-- Row for all-day event reminders -->
+    <string name="settings_all_day_event_alert">بوتون گون حادیثه خاطیرلاتماسی</string>
+    <!-- "Custom" alert row label when a custom duration is set. %1$s = the duration, e.g. "45 minutes before" -->
+    <string name="settings_custom_alert_value">خاص (%1$s)</string>
+    <!-- Match Android system "Notifications" terminology -->
+    <string name="settings_notifications">بیلدیریشلر</string>
+
+    <!-- ==================== Settings Options ==================== -->
+    <!-- Setting value: use the device's default setting -->
+    <string name="option_system_default">سیستم پیش‌فرضی</string>
+    <string name="option_light">آچیق</string>
+    <string name="option_dark">تیره</string>
+    <string name="option_12_hour">۱۲-ساعت</string>
+    <string name="option_24_hour">۲۴-ساعت</string>
+    <string name="option_sunday">بازار</string>
+    <string name="option_monday">دوشنبه</string>
+    <string name="option_saturday">شنبه</string>
+
+    <!-- ==================== Empty States ==================== -->
+    <string name="empty_no_events_found">حادیثه تاپیلمادی</string>
+    <string name="empty_no_upcoming_events">گله‌ن حادیثه یوخدور</string>
+    <string name="empty_no_calendars">تقویم الده یوخدور</string>
+
+    <!-- ==================== Status (Additional) ==================== -->
+    <string name="status_connecting">باغلانیر…</string>
+    <string name="status_fetching">گتیریلیر…</string>
+
+    <!-- ==================== Actions (Additional) ==================== -->
+    <string name="action_fetch_calendar">تقویمی گتیر</string>
+    <string name="action_import_from_file">فایل‌دان حادیثه‌لری ایمپورت ائت</string>
+    <string name="action_export_local_calendar">یئرلی تقویمی ائکسپورت ائت</string>
+
+    <!-- ==================== Providers ==================== -->
+    <string name="provider_icloud">iCloud</string>
+
+    <!-- ==================== Help Text ==================== -->
+    <!-- iCloud App-Specific Password instructions. Keep "Apple ID", "appleid.apple.com" untranslated. -->
+    <string name="help_app_password_description">تطبیقه خاص پاروللار اساس Apple ID پارولونوزو پایلاشmadan اۆچونجو طرف تطبیق‌لره داخیل اولmağınıza ایمکان وئریر.</string>
+    <string name="help_app_password_steps_header">یاراتماق اوچون:</string>
+    <!-- Keep "appleid.apple.com" untranslated (URL) -->
+    <string name="help_app_password_step_1">۱. appleid.apple.com-ا گئدین</string>
+    <!-- Keep "Apple ID" untranslated -->
+    <string name="help_app_password_step_2">۲. Apple ID-ینیزله داخیل اولون</string>
+    <string name="help_app_password_step_3">۳. داخیل اولما و گوونلییه گئدین</string>
+    <string name="help_app_password_step_4">۴. تطبیقه خاص پاروللارا کلیک ائدین</string>
+    <string name="help_app_password_step_5">۵. یاراتا کلیک ائدین و بورایا کؤچورون</string>
+
+    <!-- ==================== Notification Permission Dialog ==================== -->
+    <string name="dialog_notification_permission_message">KashCal-ین سیزی گله‌ن حادیثه‌لر باره‌ده خاطیرلادا بیلمه‌سی اوچون بیلدیریش ایجازه‌سی لازیمدیر.</string>
+    <string name="dialog_notification_permission_settings_hint">بونو سونرا تنظیماتلاردا دَییشدیره بیlersiniz.</string>
+
+    <!-- ==================== Accounts Screen ==================== -->
+    <!-- "Account" = server login (iCloud, CalDAV). Keep brand names untranslated. -->
+    <string name="accounts_title">حساب‌لار</string>
+    <string name="accounts_section_connected">باغلانمیش</string>
+    <string name="accounts_section_add">حساب آرتیر</string>
+    <!-- accounts_count_one/other removed — use R.plurals.accounts_count -->
+    <string name="accounts_empty_title">باغلانمیش حساب یوخدور</string>
+    <string name="accounts_empty_subtitle">تقویم‌لرینیزین جیهازلار آراسیندا همزمانلاشدیریلماسی اوچون بیر حساب آرتیرین</string>
+    <!-- Keep "iCloud", "Nextcloud", "Fastmail", "CalDAV" untranslated -->
+    <string name="accounts_row_label">تقویم حساب‌لاری</string>
+    <!-- Subtitle shown on the Settings row when no accounts are connected; descriptive hint for what users can connect. Keep brand names untranslated. -->
+    <string name="accounts_row_hint">مثلاً iCloud، Nextcloud، Fastmail</string>
+    <string name="accounts_add_icloud">iCloud آرتیر</string>
+    <string name="accounts_add_caldav">CalDAV آرتیر</string>
+    <string name="accounts_add_caldav_subtitle">Nextcloud، Fastmail و داها چوخو</string>
+    <!-- Keep "CalDAV" untranslated -->
+    <string name="accounts_caldav_help_title">CalDAV نهدیر؟</string>
+    <string name="accounts_caldav_help_description">CalDAV تقویم‌لری همزمانلاشدیرماق اوچون آچیق بیر استاندارت‌دیر. دستکلینن‌لر:</string>
+    <string name="accounts_caldav_help_more">و داها چوخو</string>
+    <string name="accounts_calendars_syncing">همزمانلاشدیریلیر…</string>
+    <!-- accounts_calendar_count_one/other removed — use R.plurals.accounts_calendar_count -->
+    <!-- Content descriptions -->
+    <string name="accounts_cd_icloud_icon">iCloud حسابی</string>
+    <string name="accounts_cd_caldav_icon">CalDAV حسابی</string>
+    <string name="accounts_cd_back">گئری گئت</string>
+    <string name="accounts_sync_issue">همزمانلاشدیرما problemi</string>
+    <string name="accounts_cd_sync_warning">همزمانلاشدیرما خبَردارلیغی</string>
+
+    <!-- ==================== Subscriptions Screen ==================== -->
+    <!-- "Calendar feeds" = read-only ICS calendar feeds (like holidays), NOT paid subscriptions -->
+    <string name="subscriptions_title">تقویم فیدلری</string>
+    <string name="subscriptions_section_add">آرتیر</string>
+    <!-- Keep "ICS" untranslated -->
+    <string name="subscriptions_empty_ics">ICS آبونه‌لیگی یوخدور</string>
+    <string name="subscriptions_empty_ics_hint">حادیثه‌لری گؤرمک اوچون بیر تقویم فیدی آرتیرین</string>
+    <string name="subscriptions_add_ics">ICS تقویمی آرتیر</string>
+    <!-- Quick Settings tile (shade pulldown): taps to open Quick Add event capture -->
+    <string name="qs_tile_label">حادیثه آرتیر</string>
+    <!-- Settings row that offers to add the Quick Settings tile -->
+    <!-- Shown on Android 12 and older, where the one-tap add prompt is unavailable -->
+    <!-- Holiday calendar catalog: one-tap subscribe to a country's public holidays -->
+    <string name="holiday_catalog_add">تعطیلات تقویمی آرتیر</string>
+    <string name="holiday_catalog_search_label">آختار</string>
+    <!-- Shown next to a country already in the user's feeds; it cannot be added twice -->
+    <string name="holiday_catalog_already_added">آرتیریلدی</string>
+    <string name="holiday_catalog_empty">اؤلکه تاپیلمادی</string>
+    <string name="holiday_catalog_empty_hint">فرقلی بیر آد جهد ائدین</string>
+    <!-- Shown when a tapped holiday feed can't be reached or isn't a valid calendar -->
+    <string name="holiday_catalog_validate_error">بو تقویمه چاتا بیلمدی. باغلانتینیزین یوخ‌لایین و یئنی‌دن جهد ائدین.</string>
+    <!-- Attribution required by the data license. "Mozilla Thunderbird" and "CC BY-SA 3.0" are proper nouns; keep them as-is. %1$s is the linked license name. -->
+    <string name="holiday_catalog_attribution">Mozilla Thunderbird-دان تعطیلات تقویم‌لری، %1$s آلتیندا لیسانس‌لانمیش.</string>
+    <string name="holiday_catalog_attribution_license" translatable="false">CC BY-SA 3.0</string>
+    <!-- subscriptions_count_one/other removed — use R.plurals.subscriptions_count -->
+    <!-- Summary row for Settings screen. Keep "ICS" untranslated (file format). -->
+    <string name="subscriptions_row_label">تقویم فیدلری (ICS)</string>
+    <!-- Subtitle shown on the Settings row when no subscriptions exist; descriptive hint for what users can subscribe to. -->
+    <string name="subscriptions_row_hint">مثلاً تعطیلات، ایدمان، مکتب</string>
+
+    <!-- ==================== Birthdays & Anniversaries ==================== -->
+    <string name="birthdays_anniversaries_row_label">آد گونلری و ایل‌دؤنوملری</string>
+    <!-- Subtitle shown on the Settings row when no birthdays or anniversaries exist; provenance hint for where the data comes from. -->
+    <string name="birthdays_anniversaries_row_hint">تلفون کونٹاکتلارینیزدان</string>
+    <string name="birthdays_section_title">آد گونلری</string>
+    <string name="anniversaries_section_title">ایل‌دؤنوملری</string>
+    <string name="settings_contact_birthdays">کونٹاکت آد گونلری</string>
+    <string name="settings_contact_birthdays_description">تلفون کونٹاکتلارینیزدان آد گونلرینی بوتون گون تقویم حادیثه‌لری کیمی گؤستر.</string>
+    <string name="settings_contact_anniversaries">کونٹاکت ایل‌دؤنوملری</string>
+    <string name="settings_contact_anniversaries_description">تلفون کونٹاکتلارینیزدان ایل‌دؤنوملرینی بوتون گون تقویم حادیثه‌لری کیمی گؤستر.</string>
+    <string name="settings_anniversary_reminder">ایل‌دؤنومو خاطیرلاتماسی</string>
+    <string name="settings_calendar_color">تقویم رنگی</string>
+    <string name="settings_default_reminder">پیش‌فرض خاطیرلاتما</string>
+    <string name="action_change">دَییشدیر</string>
+    <string name="settings_contacts_footer">جیهاز کونٹاکتلارینیزدان اوخویور. کونٹاکت ایجازه‌سی طلب ائدیر.</string>
+    <string name="settings_contacts_permission_required">کونٹاکت ایجازه‌سی لازیمدیر</string>
+    <!-- Content descriptions -->
+    <string name="subscriptions_cd_back">گئری گئت</string>
+    <string name="subscriptions_cd_add">آبونه آرتیر</string>
+    <!-- Snackbar shown after the user swipes to remove an ICS subscription. -->
+    <string name="snackbar_subscription_removed">آبونه سیلیندی</string>
+    <!-- Action label on the subscription-removed snackbar that cancels the deletion. -->
+    <string name="snackbar_action_undo">گئری آل</string>
+    <!-- Snackbar shown when the user tries to add an ICS subscription whose URL is already subscribed. -->
+    <string name="snackbar_subscription_already_exists">بو URL-ا آرتیق آبونه‌سینیز</string>
+
+    <!-- ==================== Account Detail Sheet ==================== -->
+    <!-- Section headers (uppercase convention — translate word, keep uppercase if locale uses it) -->
+    <string name="account_detail_section_sync">همزمانلاشدیرما</string>
+    <string name="account_detail_section_calendars">تقویم‌لر</string>
+    <string name="account_detail_section_account">حساب</string>
+    <!-- Toggle label: enable/disable automatic sync -->
+    <string name="account_detail_enabled">فعال</string>
+    <string name="account_detail_enabled_subtitle">بو حسابی اوتوماتیک همزمانلاشدیر</string>
+    <!-- Toggle labels for what an account syncs: calendars and contacts -->
+    <string name="account_detail_sync_calendar">تقویم</string>
+    <string name="account_detail_sync_calendar_subtitle">بو حسابین تقویم‌لرینی همزمانلاشدیر</string>
+    <string name="account_detail_sync_contacts">کونٹاکتلار</string>
+    <string name="account_detail_sync_contacts_subtitle">بو حسابین کونٹاکتلارینی همزمانلاشدیر</string>
+    <!-- Inline banner shown when contact sync is on but the Contacts permission was revoked -->
+    <string name="account_detail_contacts_permission_needed">کونٹاکت ایجازه‌سی سؤنولو. کونٹاکتلارین همزمانلاشدیریلماسینا دوام ائتمک اوچون گیریش وئرین.</string>
+    <string name="account_detail_contacts_grant">گیریش وئر</string>
+    <!-- Inline confirmation shown in the account sheet right after enabling contact sync; %1$s is the account email -->
+    <string name="contact_sync_enabled_for">%1$s اوچون کونٹاکتلار همزمانلاشدیریلیر</string>
+    <!-- Inline confirmation shown in the account sheet right after disabling contact sync; %1$s is the account email -->
+    <string name="contact_sync_disabled_for">%1$s اوچون جیهاز کونٹاکتلاری سیلیندی</string>
+    <!-- Inline confirmation when contact sync was turned off but contacts stay because another login with the same email still syncs them; %1$s is the account email -->
+    <string name="contact_sync_disabled_kept">%1$s اوچون کونٹاکت همزمانلاشدیرما سؤنولو. کونٹاکتلار قالیر چونکی باشقا بیر گیریش هله‌ده اونلاری همزمانلاشدیریر.</string>
+    <!-- Inline warning when disabling contact sync could not confirm the device contacts were removed (e.g. Contacts permission is off); %1$s is the account email -->
+    <string name="contact_sync_disabled_incomplete">%1$s اوچون کونٹاکت همزمانلاشدیرما سؤنولو، آنجاق بعضی جیهاز کونٹاکتلاری قالا بیلر. کونٹاکت ایجازه‌سینی یوخ‌لایین.</string>
+    <string name="account_detail_sync_now">ایندی همزمانلاشدیر</string>
+    <string name="account_detail_syncing">همزمانلاشدیریلیر…</string>
+    <string name="account_detail_discovering">کشف ائدیلیر…</string>
+    <string name="account_detail_discover_calendars">یئنی تقویم‌لری کشف ائت</string>
+    <string name="account_detail_change_password">پارولی دَییشدیر</string>
+    <string name="account_detail_sign_out">چیخیش ائت</string>
+    <string name="account_detail_never_synced">هئچ واخت همزمانلاشدیریلماییب</string>
+    <string name="account_detail_last_success">سون اوغور: %1$s</string>
+    <!-- account_detail_failure/calendar_count one/other/new removed — use R.plurals equivalents -->
+    <!-- Content descriptions -->
+    <string name="account_detail_cd_rename">آدینی دَییشدیر</string>
+    <string name="account_detail_cd_show_password">پارولی گؤستر</string>
+    <string name="account_detail_cd_hide_password">پارولی گیزلت</string>
+
+    <!-- ==================== Rename Account Sheet ==================== -->
+    <string name="rename_account_title">حسابین آدینی دَییشدیر</string>
+    <string name="rename_account_label">حساب آدی</string>
+
+    <!-- ==================== Change Password Sheet ==================== -->
+    <string name="change_password_title">پارولی دَییشدیر</string>
+    <string name="change_password_label_icloud">تطبیقه خاص پارول</string>
+    <string name="change_password_label_default">پارول</string>
+
+    <!-- ==================== System Account ==================== -->
+    <!-- System account label: the brand name, localised only in zh-rCN and zh-rTW -->
+    <string name="kashcal_account_label">KashCal</string>
+    <!-- Contacts source account label: the brand name, localised only in zh-rCN and zh-rTW -->
+    <string name="kashcal_contacts_account_label">KashCal Contacts</string>
+
+    <!-- ==================== Settings Screen ==================== -->
+    <!-- "Device calendars" = calendars from other apps on this phone -->
+    <string name="settings_device_calendars">جیهاز تقویم‌لری</string>
+    <!-- Subtitle shown on the Settings row when device calendars are not enabled; provenance hint for where the data comes from. -->
+    <string name="settings_device_calendars_hint">دیگر تطبیق‌لردن تقویم‌لر</string>
+    <!-- Settings row: enables natural-language event entry ("Lunch with Sam Friday 1pm") -->
+    <string name="settings_quick_event_add">آکیللی حادیثه آرتیرما</string>
+    <!-- Tooltip explaining the Smart event add toggle -->
+    <string name="settings_quick_event_add_info">طبیعی یازاراق حادیثه‌لر یارادین. \"Sam ایله جمعه ۱-ده ناهار\" باشلیغی، تاریخی و واختی سیزین اوچون دولدورور.</string>
+    <!-- Settings row: enables autocomplete dropdown of prior event titles in the event form -->
+    <string name="settings_suggest_titles">حادیثه باشلیقلارینی پیشنهاد ائت</string>
+    <!-- Tooltip explaining the Suggest event titles toggle -->
+    <string name="settings_suggest_titles_info">یئنی حادیثه‌یه آد وئررکن، اؤنجه ایستفاده ائتدیگینیز باشلیقلاری پیشنهاد ائدیر، بئله‌لیکله تکرار حادیثه‌لر بیر وورماق‌دیر. نه قدر تئز-تئز و نه قدر یاخیندا ایستفاده ائتدیگینیزه گؤره سیرالانیر.</string>
+    <string name="settings_week_numbers">هفته نومره‌لرینی گؤستر</string>
+    <!-- Settings row: toggles whether multi-day timed events appear in the all-day strip -->
+    <string name="settings_multiday_in_allday_strip">بوتون گون زولاغیندا چوخ‌گونلو حادیثه‌لر</string>
+    <!-- Tooltip explaining the Multi-day events in all-day strip toggle -->
+    <string name="settings_multiday_in_allday_strip_info">بیر گوندان چوخ چکن واختلی حادیثه‌لری هفته گؤرونوشونون اوستونده‌کی بوتون گون زولاغیندا گؤستر، واختلی شبکه‌ده اولماسین‌دان. هر گون واختلی شبکه‌ده ساخلانمالاری اوچون سؤندورون.</string>
+    <!-- Display preference: when off, calendar events the user has declined are hidden across all views.
+         When on, declined events appear with a strikethrough title and dimmed appearance. -->
+    <string name="settings_show_declined">ردد ائدیلmiş حادیثه‌لری گؤستر</string>
+    <!-- "Widget" = Android home screen widget. Use platform's standard widget term. -->
+    <string name="settings_widget_event_limit">ویجت حادیثه محدودیتی</string>
+    <!-- Subtitle hint under the Widget event limit row -->
+    <string name="settings_widget_event_limit_hint">ویجت‌لرده گونده ان چوخ گؤستریله‌ن حادیثه‌لر</string>
+    <!-- "Widget" = Android home screen widget. Toggle: compact single-line rows vs detailed two-line rows. -->
+    <string name="settings_detailed_widget_rows">تفصیللی ویجت سیرالاری</string>
+    <!-- Info tooltip explaining the Detailed widget rows toggle -->
+    <string name="settings_detailed_widget_rows_info">ییغجام تک سیرا، یا سون واختی ایله تفصیللی ایکی سیرا.</string>
+    <!-- "Lookback" = how far back in time to sync -->
+    <string name="settings_sync_lookback">همزمانلاشدیرما گئری باخیشی</string>
+    <!-- Subtitle hint under the Sync lookback row -->
+    <string name="settings_sync_lookback_hint">حادیثه‌لرین نه قدر گئرییه همزمانلاشدیریلماسی</string>
+    <!-- Settings toggle: post a system notification when a background sync finds calendar changes -->
+    <string name="settings_change_notifications">دَییشیکلیک بیلدیریشلری</string>
+    <!-- Info tooltip for the Change notifications toggle; also the description of its notification channel -->
+    <string name="settings_change_notifications_info">آرخا پلان همزمانلاشدیرما حادیثه‌لرینیزده دَییشیکلیک تاپدیغیندا بیلدیریش گؤندریر. iCloud و CalDAV تقویم‌لری اوچون ایشله‌ییر.</string>
+    <!-- Settings row in "Calendars & accounts" and the title of the sheet it opens, where each calendar has an on/off switch for its notifications -->
+    <string name="settings_calendar_notifications">تقویم بیلدیریشلری</string>
+    <!-- Subtitle of the Calendar notifications row when no calendar is muted -->
+    <string name="settings_calendar_notifications_all">بوتون تقویم‌لر</string>
+    <!-- Subtitle of the Calendar notifications row: how many calendars have their notifications turned off -->
+    <plurals name="settings_calendar_notifications_muted_count">
+        <item quantity="one">%d سؤنولو</item>
+        <item quantity="other">%d سؤنولو</item>
+    </plurals>
+    <!-- Always-visible line under the Calendar notifications sheet title saying what the sheet is for; each calendar has an on/off switch for its notifications -->
+    <string name="calendar_notifications_intro">هانسی تقویم‌لرین سیزه بیلدیریش وئره بیله‌جگینی سئچین.</string>
+    <!-- Detail shown inline when the info button next to the Calendar notifications intro is tapped: a calendar whose switch is off (muted) is still shown and synced, it just sends no notifications -->
+    <string name="calendar_notifications_info">سؤنولو تقویم‌لر هله‌ده گؤرونور و همزمانلاشیر، آنجاق سیزه بیلدیریش وئرمیر.</string>
+    <!-- Read by TalkBack for the info button next to the Calendar notifications intro; tapping it shows or hides what muting a calendar does -->
+    <string name="cd_calendar_notifications_info">سؤنولو تقویم‌لر حاقدا</string>
+    <!-- Read by TalkBack after a button's label when the detail it shows is open (lowercase state word, not an action) -->
+    <string name="cd_state_expanded">آچیق</string>
+    <!-- Read by TalkBack after a button's label when the detail it shows is closed (lowercase state word, not an action) -->
+    <string name="cd_state_collapsed">باغلی</string>
+    <!-- Detail shown inline when the info button next to the "Device calendars" heading in the Calendar notifications sheet is tapped; that heading has a switch that turns KashCal's reminders off for every device calendar (calendars from other apps on the phone) -->
+    <string name="calendar_notifications_device_info">بوتون جیهاز تقویم‌لرینی سس‌سیز ائتمک اوچون سؤندورون، سونرا آرتیردیغینیزلار دا داخیل.</string>
+    <!-- Read by TalkBack for the info button next to the "Device calendars" heading in the Calendar notifications sheet -->
+    <string name="cd_calendar_notifications_device_info">جیهاز تقویم بیلدیریشلری حاقدا</string>
+    <!-- Read by TalkBack for the switch next to the "Device calendars" heading in the Calendar notifications sheet; it turns KashCal's reminders on or off for every device calendar -->
+    <string name="cd_device_calendar_notifications">جیهاز تقویم بیلدیریشلری</string>
+    <!-- Second line of a calendar row in the Calendar notifications sheet: the calendar is hidden from the calendar views (hiding doesn't change its notifications) -->
+    <string name="calendar_notifications_hidden">گیزلی</string>
+    <!-- Banner at the top of the Calendar notifications sheet when KashCal's notifications are turned off in Android's system settings; its button opens those settings -->
+    <string name="calendar_notifications_app_off">سیستم تنظیماتلاریندا KashCal اوچون بیلدیریشلر سؤنولودور، بو سبب‌دن هئچ بیر تقویم سیزه بیلدیریش وئره بیلمز.</string>
+    <!-- Banner at the top of the Calendar notifications sheet when only the Event Reminders notification channel is turned off in Android's system settings; its button opens that channel's settings -->
+    <string name="calendar_notifications_reminders_off">سیستم تنظیماتلاریندا حادیثه خاطیرلاتمالاری سؤنولودور، بو سبب‌دن هئچ بیر خاطیرلاتما گؤرونه بیلمز.</string>
+    <!-- Read by TalkBack after a calendar's name in the drawer when that calendar's notifications are muted -->
+    <string name="cd_notifications_off">بیلدیریشلر سؤنولو</string>
+    <string name="settings_not_set">قورولماییب</string>
+    <!-- Toggle state: feature is turned on -->
+    <string name="settings_on">آچیق</string>
+    <!-- Toggle state: feature is turned off -->
+    <string name="settings_off">باغلی</string>
+    <string name="settings_tap_to_enable">فعال ائتمک اوچون وور</string>
+    <!-- %1$d = number of enabled device calendars -->
+    <string name="settings_device_calendars_enabled">%1$d فعال</string>
+    <!-- %1$d = event limit per day -->
+    <string name="settings_per_day">گونده %1$d</string>
+    <!-- ==================== Sign-In / Account ==================== -->
+    <!-- Keep "app-specific password" as-is or use Apple's official localized term -->
+    <string name="signin_icloud_help_question">تطبیقه خاص پارول نهدیر؟</string>
+    <!-- Advanced setting — "insecure" = not HTTPS -->
+    <string name="caldav_trust_insecure_label">گوونسیز باغلانتی‌یه اعتماد ائت</string>
+    <string name="action_add_another">باشقا بیرینی آرتیر</string>
+    <!-- %1$d = calendar count, %2$s = masked email -->
+    <string name="account_connected_found_calendars">%2$s اوچون %1$d تقویم تاپیلدی.</string>
+    <string name="account_connected_syncing_hint">همزمانلاشدیرما داوام ائدیر. حادیثه‌لر تئزلیکله گؤرونه‌جک.</string>
+    <!-- %1$s = time example -->
+    <string name="settings_time_format_currently_24h">حاضیردا: ۲۴-ساعت (%1$s)</string>
+    <!-- %1$s = time example -->
+    <string name="settings_time_format_currently_12h">حاضیردا: ۱۲-ساعت (%1$s)</string>
+    <!-- %1$s = time example -->
+    <string name="settings_time_format_example">نومونه: %1$s</string>
+    <!-- %1$s = resolved day name -->
+    <string name="settings_system_default_with_value">سیستم پیش‌فرضی (%1$s)</string>
+    <!-- Reminder option: no reminder set -->
+    <string name="alert_none">یوخ</string>
+    <string name="cd_collapse">ییغ</string>
+    <string name="cd_expand">آچ</string>
+    <string name="cd_hide_calendar">تقویمی گیزلت</string>
+    <string name="cd_show_calendar">تقویمی گؤستر</string>
+    <string name="cd_pick_month_year">آی و ایل سئچ</string>
+    <string name="cd_previous_month">اؤنجه‌کی آی</string>
+    <string name="cd_next_month">سونراکی آی</string>
+    <string name="cd_month_year_picker">آی و ایل سئچیجی</string>
+    <string name="cd_remove_alert">خاطیرلاتمانی سیل</string>
+    <string name="cd_warning">خبَردارلیق</string>
+    <string name="cd_refresh_calendars">تقویم‌لری یئنیله</string>
+    <!-- %1$s = timezone abbreviation -->
+    <!-- %1$d = day of month, %2$d = event count -->
+
+    <!-- ==================== i18n: Device Calendars Sheet ==================== -->
+    <!-- "Device calendars" = calendars from other apps on this phone, not KashCal's own calendars -->
+    <string name="device_calendars_description">جیهازینیزداکی دیگر تقویم تطبیق‌لریندن حادیثه‌لری گؤستر (همزمانلاشدیرما آداپتورلاری، یئرلی تقویم‌لر).</string>
+    <string name="device_calendars_permission_required">تقویم ایجازه‌سی لازیمدیر. گیریش وئرمک اوچون فعال ائت-ه وورون.</string>
+    <string name="device_calendars_read_only_access">یالنیز اوخوما گیریشی</string>
+    <string name="device_calendars_grant_write">جیهاز تقویم حادیثه‌لرینی دَییشدیرمک اوچون یازما ایجازه‌سی وئرین</string>
+    <string name="device_calendars_grant">وئر</string>
+    <string name="device_calendars_none_found">جیهاز تقویمی تاپیلمادی.</string>
+    <string name="device_calendars_local">یئرلی</string>
+    <string name="device_calendars_read_only_no_write">یالنیز اوخوما (یازما ایجازه‌سی یوخدور)</string>
+    <string name="device_calendars_read_only_calendar">یالنیز اوخوما (تقویم یالنیز اوخونا بیله‌ن‌دیر)</string>
+
+    <string name="settings_developer_options">گلیشتیریجی سئچنکلری</string>
+    <string name="settings_sync_frequency">همزمانلاشدیرما تئزلیگی</string>
+    <string name="settings_sync_frequency_hint">آرخا پلاندا نه قدر تئز-تئز همزمانلاشدیریلماسی</string>
+    <!-- Section header: feature is in preview/beta (uppercase label) -->
+    <!-- %1$d = event count, used when not default -->
+    <!-- %1$d = event count, used when default -->
+
+    <!-- ==================== i18n: Drawer ==================== -->
+    <!-- Navigation drawer items -->
+    <string name="drawer_calendars">تقویم‌لر</string>
+    <string name="drawer_contacts">کونٹاکتلار</string>
+    <string name="drawer_device_calendars">جیهاز تقویم‌لری</string>
+    <!-- Account header in drawer for events that aren't synced to any server -->
+    <string name="drawer_account_offline">آفلاین</string>
+    <!-- Display name of the built-in on-device calendar, shown in the calendar picker and elsewhere -->
+    <string name="calendar_local">یئرلی</string>
+    <string name="drawer_share_feedback">کؤمک و سندلر</string>
+
+    <!-- Fallback title shown when an event has no title (e.g., re-snoozed reminder where the title was lost). -->
+    <string name="event_title_fallback">حادیثه</string>
+
+    <!-- ==================== i18n: App Info / About ==================== -->
+    <!-- Privacy tagline in about screen — short, punchy -->
+    <string name="status_privacy_tagline">سیزین اوچون، وئری‌لرینیز اوچون دئییل.</string>
+    <!-- Button below privacy tagline — links to support/donate -->
+    <string name="action_keep_it_that_way">بئله قالسین</string>
+
+    <!-- ==================== i18n: Sync History ==================== -->
+    <!-- Sync history details — technical but user-facing. "Sync" = synchronize data. -->
+    <string name="status_already_synced">آرتیق همزمانلاشدیریلیب</string>
+    <string name="status_warnings">خبَردارلیقلار</string>
+    <string name="sync_history_events_failed">حادیثه‌لر اوغورسوز اولدو</string>
+    <string name="sync_history_abandoned_max_retries">ترک ائدیلدی (ان چوخ جهد)</string>
+    <string name="sync_history_events_skipped">حادیثه‌لر آتلاندی</string>
+    <!-- "Duration" = how long the sync took -->
+    <string name="sync_history_duration">مۆدت</string>
+    <!-- %1$d = skipped-already-synced count -->
+    <string name="sync_history_already_synced_count">%1$d آرتیق همزمانلاشدیریلیب</string>
+
+    <!-- ==================== i18n: Day Events Sheet ==================== -->
+    <string name="day_events_no_events">حادیثه یوخدور</string>
+
+    <!-- ==================== i18n: Error / Offline ==================== -->
+    <string name="status_youre_offline">آفلاینسینیز</string>
+
+    <!-- ==================== i18n: Sign Out ==================== -->
+    <!-- %1$s = provider name (e.g., "iCloud") -->
+    <string name="dialog_sign_out_title">%1$s-دان چیخیش ائدسین؟</string>
+    <!-- %1$s = email address -->
+    <string name="dialog_sign_out_message">%1$s کیمی داخیل اولmusunuz. چیخیش ائتمک همزمانلاشدیریلمیش تقویم‌لری بو جیهازدان سیله‌جک.</string>
+
+    <!-- ==================== Plural Resources ==================== -->
+    <!-- IMPORTANT: Each language needs the correct plural quantity forms per CLDR. -->
+
+    <!-- Existing string pair conversions -->
+    <plurals name="accounts_count">
+        <item quantity="one">%1$d حساب</item>
+        <item quantity="other">%1$d حساب</item>
+    </plurals>
+    <plurals name="accounts_calendar_count">
+        <item quantity="one">%1$s · ۱ تقویم</item>
+        <item quantity="other">%1$s · %2$d تقویم</item>
+    </plurals>
+    <plurals name="subscriptions_count">
+        <item quantity="one">%1$d فید</item>
+        <item quantity="other">%1$d فید</item>
+    </plurals>
+    <!-- Restore confirmation dialog body when the backup has at least one ICS feed. %1$d = feed count. -->
+    <plurals name="restore_confirm_message_with_subs">
+        <item quantity="one">بو %1$d فید و ترجیحلرینیزینو ایمپورت ائده‌جک.</item>
+        <item quantity="other">بو %1$d فید و ترجیحلرینیزینو ایمپورت ائده‌جک.</item>
+    </plurals>
+    <!-- Restore success dialog body when at least one ICS feed was restored. %1$d = feed count. -->
+    <plurals name="restore_success_message_with_subs">
+        <item quantity="one">%1$d فید و ترجیحلرینیز ایمپورت ائدیلدی.</item>
+        <item quantity="other">%1$d فید و ترجیحلرینیز ایمپورت ائدیلدی.</item>
+    </plurals>
+    <plurals name="account_detail_failure">
+        <item quantity="one">همزمانلاشدیرما اوغورسوز اولدو (%1$d جهد)</item>
+        <item quantity="other">همزمانلاشدیرما اوغورسوز اولدو (%1$d جهد)</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count">
+        <item quantity="one">%1$d تقویم</item>
+        <item quantity="other">%1$d تقویم</item>
+    </plurals>
+    <plurals name="account_detail_calendar_count_new">
+        <item quantity="one">%1$d تقویم (%2$d یئنی)</item>
+        <item quantity="other">%1$d تقویم (%2$d یئنی)</item>
+    </plurals>
+    <plurals name="widget_event_count_plural">
+        <item quantity="one">%1$d حادیثه</item>
+        <item quantity="other">%1$d حادیثه</item>
+    </plurals>
+    <plurals name="upcoming_widget_more_days">
+        <item quantity="one">%1$d گون داها</item>
+        <item quantity="other">%1$d گون داها</item>
+    </plurals>
+    <string name="upcoming_widget_open_calendar">تقویمی آچ</string>
+
+    <!-- Birthday/Anniversary Plurals -->
+    <plurals name="birthday_count">
+        <item quantity="one">%1$d آد گونو</item>
+        <item quantity="other">%1$d آد گونو</item>
+    </plurals>
+    <plurals name="anniversary_count">
+        <item quantity="one">%1$d ایل‌دؤنومو</item>
+        <item quantity="other">%1$d ایل‌دؤنومو</item>
+    </plurals>
+    <plurals name="more_items">
+        <item quantity="one">+ %1$d داها</item>
+        <item quantity="other">+ %1$d داها</item>
+    </plurals>
+    <plurals name="import_events_title">
+        <item quantity="one">حادیثه آرتیر</item>
+        <item quantity="other">%1$d حادیثه ایمپورت ائت</item>
+    </plurals>
+    <plurals name="import_events_button">
+        <item quantity="one">آرتیر</item>
+        <item quantity="other">ایمپورت ائت</item>
+    </plurals>
+    <string name="importing_events">ایمپورت ائدیلیر…</string>
+    <plurals name="ics_remaining_events">
+        <item quantity="one">…و %1$d داها</item>
+        <item quantity="other">…و %1$d داها</item>
+    </plurals>
+    <plurals name="imported_events">
+        <item quantity="one">%1$d حادیثه ایمپورت ائدیلدی</item>
+        <item quantity="other">%1$d حادیثه ایمپورت ائدیلدی</item>
+    </plurals>
+    <!-- Import sheet, before the tap: what importing this file into the chosen calendar does. -->
+    <string name="ics_import_preview_loading">بو تقویم یوخ‌لانیر…</string>
+    <string name="ics_import_preview_failed">بو حادیثه‌لر اوچون بو تقویم یوخ‌لانا بیلمدی. هله‌ده ایمپورت ائده بیlersiniz.</string>
+    <!-- %1$s is the event title, %2$s the organizer's address. -->
+    <string name="ics_import_will_cancel">بو %1$s-ی لغو ائدیر، تشکیلاتچی: %2$s</string>
+    <!-- %1$s is the event title. -->
+    <string name="ics_import_will_cancel_no_organizer">بو %1$s-ی لغو ائدیر</string>
+    <!-- %1$s is the event title. -->
+    <string name="ics_import_will_update">بو %1$s-ی یئنیله‌ییر</string>
+    <plurals name="ics_import_preview_up_to_date">
+        <item quantity="one">%1$d حادیثه آرتیق گۆنجل‌دیر</item>
+        <item quantity="other">%1$d حادیثه آرتیق گۆنجل‌دیر</item>
+    </plurals>
+    <!-- %1$d is how many events the import leaves out, %2$s the reason (one of the ics_import_reason_* strings). -->
+    <plurals name="ics_import_preview_skipped">
+        <item quantity="one">%1$d آتلاندی: %2$s</item>
+        <item quantity="other">%1$d آتلاندی: %2$s</item>
+    </plurals>
+    <string name="ics_import_reason_reply">بو بیر دعوته جواب‌دیر، تقویمینیزه هئچ نه آرتیرمیر</string>
+    <string name="ics_import_reason_unsupported">بو نوع دعوت مساژی دستکلنمیر</string>
+    <string name="ics_import_reason_organizer_mismatch">گؤروشون تشکیلاتچی‌سین‌دان باشقا بیرین‌دن گلیر</string>
+    <string name="ics_import_reason_cancel_no_match">لغو ائدیلmiş گؤروش بو تقویمده یوخدور</string>
+    <string name="ics_import_reason_cancel_not_for_you">لغو دیگر قوناق‌لار اوچون‌دور</string>
+    <string name="ics_import_reason_deletion_pending">حادیثه سیلینیر</string>
+    <string name="ics_import_reason_cancelled_in_file">فایلدا آرتیق لغو ائدیلیب</string>
+    <string name="ics_import_reason_this_and_future">بو و سونراکی دفعه‌لره دَییشیکلیکلر دستکلنمیر</string>
+    <string name="ics_import_reason_own_cancel">سیز بو گؤروشو تشکیلاتچی‌سیز، اونا گؤره حادیثه‌دن لغو ائدین</string>
+    <string name="ics_import_reason_on_another_calendar">بو حسابین باشقا بیر تقویمین‌ده آرتیق وار</string>
+    <!-- Inline notices in the import sheet; each can be dismissed. -->
+    <string name="ics_import_notice_unverified">دعوت فایلینین گؤندerenی تصدیق ائدیله بیلمز. تشکیلاتچی‌دان گلدیگینی یوخ‌لایین.</string>
+    <string name="ics_import_notice_answer_notifies">بو دعوته جواب وئرمک تشکیلاتچینی بیلدیره بیلر.</string>
+    <string name="ics_import_notice_guests_again">سیز تشکیلاتچی‌سینیز، اونا گؤره قوناق‌لار بو دعوتی یئنی‌دن آلا بیلر.</string>
+    <string name="cd_dismiss_notice">بیلدیریشی ردد ائت</string>
+    <!-- Snackbar after an import: the ics_import_summary_* parts joined with ics_import_summary_separator. -->
+    <plurals name="ics_import_summary_created">
+        <item quantity="one">%1$d آرتیریلدی</item>
+        <item quantity="other">%1$d آرتیریلدی</item>
+    </plurals>
+    <plurals name="ics_import_summary_updated">
+        <item quantity="one">%1$d یئنیله‌ندی</item>
+        <item quantity="other">%1$d یئنیله‌ندی</item>
+    </plurals>
+    <plurals name="ics_import_summary_cancelled">
+        <item quantity="one">%1$d لغو ائدیلدی</item>
+        <item quantity="other">%1$d لغو ائدیلدی</item>
+    </plurals>
+    <plurals name="ics_import_summary_up_to_date">
+        <item quantity="one">%1$d آرتیق گۆنجل</item>
+        <item quantity="other">%1$d آرتیق گۆنجل</item>
+    </plurals>
+    <plurals name="ics_import_summary_skipped">
+        <item quantity="one">%1$d آتلاندی</item>
+        <item quantity="other">%1$d آتلاندی</item>
+    </plurals>
+    <plurals name="ics_import_summary_failed">
+        <item quantity="one">%1$d اوغورسوز اولدو</item>
+        <item quantity="other">%1$d اوغورسوز اولدو</item>
+    </plurals>
+    <string name="ics_import_summary_separator">", "</string>
+    <string name="ics_import_summary_nothing">ایمپورت ائدیله‌جک بیر شئی یوخدور</string>
+    <plurals name="exported_events">
+        <item quantity="one">%1$d حادیثه ائکسپورت ائدیلدی</item>
+        <item quantity="other">%1$d حادیثه ائکسپورت ائدیلدی</item>
+    </plurals>
+    <plurals name="event_count">
+        <item quantity="one">%1$d حادیثه</item>
+        <item quantity="other">%1$d حادیثه</item>
+    </plurals>
+    <plurals name="calendar_count">
+        <item quantity="one">%1$d تقویم</item>
+        <item quantity="other">%1$d تقویم</item>
+    </plurals>
+
+    <!-- Time unit plurals -->
+    <plurals name="time_minutes">
+        <item quantity="one">%1$d دقیقه</item>
+        <item quantity="other">%1$d دقیقه</item>
+    </plurals>
+    <plurals name="time_minutes_short">
+        <item quantity="one">%1$d دق</item>
+        <item quantity="other">%1$d دق</item>
+    </plurals>
+    <plurals name="time_hours">
+        <item quantity="one">%1$d ساعت</item>
+        <item quantity="other">%1$d ساعت</item>
+    </plurals>
+    <plurals name="time_days">
+        <item quantity="one">%1$d گون</item>
+        <item quantity="other">%1$d گون</item>
+    </plurals>
+    <plurals name="time_weeks">
+        <item quantity="one">%1$d هفته</item>
+        <item quantity="other">%1$d هفته</item>
+    </plurals>
+    <plurals name="time_months">
+        <item quantity="one">%1$d آی</item>
+        <item quantity="other">%1$d آی</item>
+    </plurals>
+    <plurals name="time_years">
+        <item quantity="one">%1$d ایل</item>
+        <item quantity="other">%1$d ایل</item>
+    </plurals>
+    <plurals name="time_seconds">
+        <item quantity="one">%1$d ثانیه</item>
+        <item quantity="other">%1$d ثانیه</item>
+    </plurals>
+
+    <!-- Duration-with-context plurals -->
+    <plurals name="reminder_minutes_before">
+        <item quantity="one">%1$d دقیقه اؤنجه</item>
+        <item quantity="other">%1$d دقیقه اؤنجه</item>
+    </plurals>
+    <plurals name="reminder_hours_before">
+        <item quantity="one">%1$d ساعت اؤنجه</item>
+        <item quantity="other">%1$d ساعت اؤنجه</item>
+    </plurals>
+    <plurals name="reminder_days_before">
+        <item quantity="one">%1$d گون اؤنجه</item>
+        <item quantity="other">%1$d گون اؤنجه</item>
+    </plurals>
+    <plurals name="reminder_weeks_before">
+        <item quantity="one">%1$d هفته اؤنجه</item>
+        <item quantity="other">%1$d هفته اؤنجه</item>
+    </plurals>
+
+    <!-- ==================== i18n: HomeScreen ==================== -->
+    <!-- Title shown above the recurring-scope sheet's three cards (form save flow). Kept short — acts as the question. -->
+    <string name="dialog_edit_recurring_title">دَییشیکلیکلری ساخلa</string>
+    <!-- Title shown above the recurring-scope sheet's three cards (delete flow). One verb. -->
+    <string name="dialog_delete_recurring_title">سیل</string>
+    <!-- Title shown above the recurring-scope sheet's two cards (drag-reschedule flow). One verb. -->
+    <string name="dialog_move_recurring_title">کؤچور</string>
+    <!-- Snackbar after an event is dragged to a new time and the change is saved. -->
+    <string name="snackbar_event_rescheduled">حادیثه یئنی‌دن واختلان‌دیریلدی</string>
+    <!-- Snackbar when dragging an event to a new time fails to save. -->
+    <string name="snackbar_reschedule_failed">حادیثه یئنی‌دن واختلان‌دیرila بیلمدی</string>
+    <string name="recurring_this_event">بو حادیثه</string>
+    <string name="recurring_all_events">بوتون حادیثه‌لر</string>
+
+    <!-- ==================== i18n: Invitees + RSVP ==================== -->
+    <!-- Title of the full attendee list sheet, opened by tapping the caret on the InviteesBlock. -->
+    <string name="attendee_sheet_title">ایشتیراکچیلار</string>
+    <!-- Plural in the sheet's header counter, e.g. "12 invited" — the "invited" half. -->
+    <!-- Placeholder shown inside the search field above the attendee list. -->
+    <string name="attendee_search_hint">آختار</string>
+    <!-- Empty state when the search query matches no attendee in the sheet. -->
+    <string name="attendee_search_no_matches">اویغون‌لوق یوخدور</string>
+    <!-- Title of the attendee picker sheet (organizer adds/removes invitees). -->
+    <string name="attendee_picker_title">ایشتیراکچیلار آرتیر</string>
+    <!-- Placeholder on the form\'s Attendees row before anyone is added. The leading group icon names the row, so this doubles as the field label. -->
+    <string name="attendee_pick_add_people">ایشتیراکچیلار آرتیر</string>
+    <!-- Placeholder in the picker's search field; the user can also type a full email. Kept short so it doesn't wrap. -->
+    <string name="attendee_pick_from_contacts">آد یا ایمیل</string>
+    <!-- Overflow count after the previewed attendee chips on the event form, e.g. "+3 more". -->
+    <plurals name="attendee_overflow_count">
+        <item quantity="one">+%1$d داها</item>
+        <item quantity="other">+%1$d داها</item>
+    </plurals>
+    <!-- Title of the inline card in the picker offering to read contacts for suggestions. -->
+    <string name="attendee_contacts_permission_rationale">کونٹاکتلارینیزدان آدام‌لار پیشنهاد ائت</string>
+    <!-- Shown under a typed string that isn\'t yet a valid email address. -->
+    <string name="attendee_invalid_email">تام بیر ایمیل آدرسی داخیل ائدین</string>
+    <!-- Row label that adds the typed address as an attendee, e.g. Add "sam@vendor.com". -->
+    <string name="attendee_add_typed">\"%1$s\" آرتیر</string>
+    <!-- Inline notice when the signed-in account can\'t send invitations. -->
+    <string name="attendee_scheduling_unavailable">بو حسابدا آدام‌لاری دعوت ائتمک الده یوخدور</string>
+    <!-- Inline notice on a local device calendar: guests can be added but no invitation is sent. -->
+    <string name="device_attendee_local_no_delivery">بو تقویم دعوت گؤندره بیلمز. قوناق‌لار ساخلانیر آنجاق بیلدیریش وئریلمز.</string>
+    <!-- Save action relabeled when saving will notify attendees of a scheduling change. -->
+    <string name="action_save_and_notify">ساخلa و بیلدیر</string>
+    <!-- Section header above the group of attendees who accepted. -->
+    <string name="attendee_section_going">گئدیر</string>
+    <!-- Section header above the group of attendees who marked tentative. -->
+    <string name="attendee_section_maybe">بلکی</string>
+    <!-- Section header above the group of attendees who haven't responded yet. -->
+    <string name="attendee_section_pending">گؤزله‌نیلیر</string>
+    <!-- Section header above the group of attendees who declined. -->
+    <string name="attendee_section_declined">ردد ائتدی</string>
+    <!-- Section header above the group of attendees who delegated to someone else. -->
+    <string name="attendee_section_delegated">وکیل ائتدی</string>
+    <!-- Tag shown next to the organizer's name in the invitees summary. Short, all-caps small. -->
+    <string name="invitees_host_tag">سahib</string>
+    <!-- Summary line variants for the InviteesBlock — single-line "who's here" descriptor above the RSVP cards or collapsed band. -->
+    <!-- Standalone: "You" — when the user is the only attendee. -->
+    <string name="invitees_summary_you_alone">سیز</string>
+    <!-- User is organizing with N other invitees: "You · 11 invited". %d is the invitee count excluding you. -->
+    <plurals name="invitees_summary_you_organizing">
+        <item quantity="one">سیز · %d دعوت ائدیلدی</item>
+        <item quantity="other">سیز · %d دعوت ائدیلدی</item>
+    </plurals>
+    <!-- Off-list with no organizer surfaced: "12 invited". -->
+    <plurals name="invitees_summary_off_list_total">
+        <item quantity="one">%d دعوت ائدیلدی</item>
+        <item quantity="other">%d دعوت ائدیلدی</item>
+    </plurals>
+    <!-- Off-list with organizer: "12 invited · Maria Chen hosting". %1$s is the count phrase, %2$s is the organizer name. -->
+    <string name="invitees_summary_off_list_with_host">%1$s · %2$s سahibliyinde</string>
+    <!-- On-list event organized by someone else, only You + organizer: "Maria Chen (Host) · You". %1$s = host name, %2$s = host tag (e.g. "Host"). -->
+    <string name="invitees_summary_organizer_plus_you">%1$s (%2$s) · سیز</string>
+    <!-- On-list event organized by someone else with You + N other invitees: "Maria Chen (Host) · You + 4". %1$s = host name, %2$s = host tag, %3$d = other count (excluding host and You). -->
+    <plurals name="invitees_summary_organizer_plus_you_plus_n">
+        <item quantity="one">%1$s (%2$s) · سیز + %3$d</item>
+        <item quantity="other">%1$s (%2$s) · سیز + %3$d</item>
+    </plurals>
+    <!-- On-list event with no surfaced organizer, You + N: "You + 4". -->
+    <plurals name="invitees_summary_you_plus_n">
+        <item quantity="one">سیز + %d</item>
+        <item quantity="other">سیز + %d</item>
+    </plurals>
+    <!-- Off-list-but-marked-on-list edge case: "Maria Chen · 4 more". %1$s = host name, %2$d = others count. -->
+    <plurals name="invitees_summary_organizer_other_more">
+        <item quantity="one">%1$s · %2$d داها</item>
+        <item quantity="other">%1$s · %2$d داها</item>
+    </plurals>
+    <!-- TalkBack action label for the collapsed RSVP band — what tapping it does. Phrase as a verb action. -->
+    <string name="rsvp_action_change_a11y">RSVP-نی دَییشدیر</string>
+    <!-- Question above the RSVP cards in pre-response state. One word + question mark; treat as the question being asked. -->
+    <string name="rsvp_question_going">گئدیرسینیز؟</string>
+    <!-- RSVP card labels — one word each. -->
+    <string name="rsvp_action_yes">بلی</string>
+    <string name="rsvp_action_maybe">بلکی</string>
+    <string name="rsvp_action_no">یوخ</string>
+    <!-- Collapsed-state band labels after the user has responded (QuickView only — form keeps cards always visible). -->
+    <string name="rsvp_state_going">گئدیرسینیز</string>
+    <string name="rsvp_state_maybe">بلکی</string>
+    <string name="rsvp_state_not_going">گئتمیرسینیز</string>
+    <!-- Affordance on the right of the collapsed band — re-expands the cards inline. -->
+    <string name="rsvp_action_change">دَییشدیر</string>
+
+    <!-- Empty state: playful/casual — shown when no day is selected. Keep the playful tone. -->
+    <string name="empty_pick_a_day">بیر گون سئچ. توت.</string>
+    <!-- Content description for the energetic icon on the pick-a-day empty state. -->
+    <string name="cd_empty_pick_a_day">بیر گون سئچ</string>
+    <!-- Empty state: playful/casual — shown when the selected day has no events. One is chosen
+         per day so it varies. Keep the informal, gently playful tone; translate by meaning. -->
+    <string name="empty_no_events_day_1">آچیق بیر گون. کائنات ایصرار ائدیر دینجلنسین.</string>
+    <string name="empty_no_events_day_2">پلان یوخدور. پلان دا بودور.</string>
+    <string name="empty_no_events_day_3">بیر هدیه: بوش بیر گون.</string>
+    <string name="empty_no_events_day_4">تقویم دورومو: شان‌لی شکیلده بوش.</string>
+    <string name="empty_no_events_day_5">هئچ نه پلانلانماییب. صاکین‌لیگین دادینی چیخار.</string>
+    <!-- Content description for the meditation icon on the empty-day state. -->
+    <string name="cd_empty_no_events_day">صاکین گون، هئچ نه پلانلانماییب</string>
+    <!-- Search filter chip: filter by date (noun, not verb) -->
+    <string name="filter_date">تاریخ</string>
+    <string name="label_select_date">بیر تاریخ سئچ</string>
+    <string name="hint_tap_date_range">تک گون اوچون عینی تاریخی، آرالیق اوچون باشقا تاریخی وورون</string>
+
+    <!-- Content Descriptions (HomeScreen / ViewPicker / YearOverlay) -->
+    <string name="cd_clear">تمیزله</string>
+    <string name="cd_offline">آفلاین</string>
+    <!-- Event state announced to screen readers (otherwise shown only by dimming/strikethrough) -->
+    <string name="cd_event_state_cancelled">لغو ائدیلیب</string>
+    <string name="cd_event_state_declined">ردد ائدیلیب</string>
+    <string name="cd_event_state_past">کئچmiş حادیثه</string>
+    <string name="cd_loading_events">حادیثه‌لر یوکلنیر</string>
+    <!-- Accessibility label for the Agenda top-bar title button when the week bar is shown (tap collapses it) -->
+    <string name="cd_collapse_week_bar">هفته زولاغینی گیزلت</string>
+    <!-- Accessibility label for the Agenda top-bar title button when the week bar is hidden (tap expands it) -->
+    <string name="cd_expand_week_bar">هفته زولاغینی گؤستر</string>
+    <!-- Accessibility label for the all-day strip chevron in day/3-day/week views when collapsed (tap expands to more rows) -->
+    <string name="cd_expand_all_day_rows">داها چوخ بوتون گون حادیثه‌لری گؤستر</string>
+    <!-- Accessibility label for the all-day strip chevron in day/3-day/week views when expanded (tap collapses to one row) -->
+    <string name="cd_collapse_all_day_rows">داها آز بوتون گون حادیثه‌لری گؤستر</string>
+    <!-- Screen-reader fallback name for the event detail sheet when the event has no title -->
+    <string name="cd_event_untitled">آدسیز حادیثه</string>
+    <string name="cd_open_drawer">چکمه‌نی آچ</string>
+    <string name="cd_close_drawer">چکمه‌نی باغلا</string>
+    <!-- Content description for the AppBar rail toggle when the rail is closed -->
+    <!-- Content description for the AppBar rail toggle when the rail is open -->
+    <string name="cd_calendar_view">تقویم گؤرونوشو</string>
+    <string name="cd_active_view">فعال گؤرونوش</string>
+
+    <!-- View Picker Labels -->
+    <string name="view_agenda">گۆندَلی</string>
+    <string name="view_month_full">آی (تام)</string>
+    <string name="view_planner">پلانلاییجی</string>
+    <string name="planner_free_day">بوش گون</string>
+    <!-- Screen-reader action on a Planner event row or the space beside it: opens a sheet listing that day's events. -->
+    <string name="cd_planner_show_day_events">بو گونون حادیثه‌لرینی گؤستر</string>
+    <string name="planner_different_this_week">بو هفته فرقلی</string>
+    <string name="planner_usual_week">عادت‌دکی هفته.</string>
+    <string name="planner_moved_was">%1$s ایدی</string>
+    <string name="planner_day_range">%1$s–%2$s</string>
+    <!-- A Planner row's time range, start and end, e.g. "4:30–6 pm". Use the same joiner as planner_day_range. -->
+    <string name="planner_time_range">%1$s–%2$s</string>
+    <string name="view_day">گون</string>
+    <string name="view_three_days">۳ گون</string>
+    <string name="view_year">ایل</string>
+    <string name="view_insights">ایچگؤرۆلر</string>
+
+    <!-- YearOverlay -->
+    <string name="label_go_to_month">آیا گئت</string>
+
+    <!-- QuickAddDialog -->
+    <string name="action_more_options">داها چوخ سئچنک</string>
+    <string name="quick_add_save_failed">حادیثه ساخلانا بیلمدی</string>
+    <!-- Character counter under the Quick Add field near the length cap; %1$d = current count, %2$d = maximum -->
+    <string name="quick_add_char_counter">%1$d/%2$d</string>
+
+    <!-- Duration wheel picker labels — abbreviated, lowercase -->
+    <string name="label_duration_days">گون</string>
+    <string name="label_duration_hrs">ساعت</string>
+    <string name="label_duration_min">دقیقه</string>
+
+    <!-- ==================== RecurrencePicker ==================== -->
+    <!-- Monthly recurrence patterns — format specifier order can be changed for grammar -->
+    <!-- %1$d = day of month -->
+    <string name="recurrence_on_day">گون %1$d-ده</string>
+    <string name="recurrence_on_last_day">آیین سون گونونده</string>
+    <!-- %1$s = ordinal (1st, 2nd, etc.), %2$s = weekday name -->
+    <string name="recurrence_on_nth_weekday">%1$s %2$s-ده</string>
+    <!-- Caption above the ordinal chip row (1st/2nd/3rd/4th/Last) in the monthly nth-weekday selector -->
+    <string name="recurrence_which">هانسی</string>
+    <!-- Caption above the weekday circle row in the monthly nth-weekday selector -->
+    <string name="recurrence_weekday">هفته گونو</string>
+    <!-- Ordinal numbers — localize to your language's ordinal system -->
+    <string name="ordinal_1st">۱-جی</string>
+    <string name="ordinal_2nd">۲-جی</string>
+    <string name="ordinal_3rd">۳-جو</string>
+    <string name="ordinal_4th">۴-جو</string>
+    <!-- %1$d = ordinal number, fallback for 5th+ -->
+    <string name="ordinal_nth">%1$d-جی</string>
+
+    <!-- ==================== RRULE Display (formatForDisplay) ==================== -->
+    <!-- Frequency labels — standalone words shown in recurrence summary -->
+    <string name="rrule_does_not_repeat">تکرارلانمیر</string>
+    <string name="rrule_freq_daily">گونلوک</string>
+    <string name="rrule_freq_weekly">هفته‌لیک</string>
+    <string name="rrule_freq_monthly">آیلیق</string>
+    <string name="rrule_freq_yearly">ایللیک</string>
+    <string name="rrule_repeats">تکرارلانیر</string>
+    <!-- Interval patterns — %1$d = interval number -->
+    <string name="rrule_every_n_days">هر %1$d گونده</string>
+    <string name="rrule_every_n_weeks">هر %1$d هفته‌ده</string>
+    <string name="rrule_every_n_months">هر %1$d آی‌دا</string>
+    <string name="rrule_every_n_years">هر %1$d ایلده</string>
+    <!-- Composite: frequency + day list — %1$s = frequency base, %2$s = comma-separated day names -->
+    <string name="rrule_freq_on_days">%1$s %2$s-ده</string>
+    <!-- Composite: frequency + ordinal weekday — %1$s = frequency base, %2$s = ordinal, %3$s = day name -->
+    <string name="rrule_freq_on_ordinal_day">%1$s %2$s %3$s-ده</string>
+    <!-- Composite: frequency + "on last day" — %1$s = frequency base -->
+    <string name="rrule_freq_on_last_day">%1$s سون گونده</string>
+    <!-- Composite: frequency + "on day N" — %1$s = frequency base, %2$d = day number -->
+    <string name="rrule_freq_on_day_n">%1$s گون %2$d-ده</string>
+    <!-- "last" ordinal for "last Friday" etc. -->
+    <string name="rrule_ordinal_last">سون</string>
+    <!-- End condition: count — uses Android plurals for "N time(s)" -->
+    <plurals name="rrule_count_suffix">
+        <item quantity="one">، %1$d دفعه</item>
+        <item quantity="other">، %1$d دفعه</item>
+    </plurals>
+    <!-- End condition: until date — %1$s = formatted date -->
+    <string name="rrule_until_suffix">، %1$s-ا قدر</string>
+    <!-- FrequencyOption chip label for "Never" (no recurrence) -->
+    <string name="rrule_freq_never">هئچ واخت</string>
+    <!-- FrequencyOption chip label for "Custom" — opens the interval stepper + Day/Week/Month/Year segmented control -->
+    <string name="rrule_freq_custom">خاص</string>
+    <!-- Label above the interval stepper in the Custom recurrence builder -->
+    <string name="label_repeat_every">هر تکرار</string>
+    <!-- Day/Week/Month/Year segmented unit labels for the Custom recurrence builder -->
+    <string name="rrule_unit_day">گون</string>
+    <string name="rrule_unit_week">هفته</string>
+    <string name="rrule_unit_month">آی</string>
+    <string name="rrule_unit_year">ایل</string>
+    <!-- Content descriptions for the Custom recurrence stepper buttons -->
+    <string name="cd_decrease_interval">آرالیغی آزالت</string>
+    <string name="cd_increase_interval">آرالیغی آرتیر</string>
+    <!-- Series start date composites for quick view — %1$s = freq, %2$s = date, %3$s = end suffix -->
+    <string name="rrule_starting">%1$s، %2$s-دان باشلایاراق%3$s</string>
+    <!-- "since" variant (no end suffix) — %1$s = freq, %2$s = date -->
+    <string name="rrule_since">%1$s · %2$s-دان بری</string>
+
+    <!-- ==================== Additional Content Descriptions ==================== -->
+    <string name="cd_circular_scrolling">دایروی سوروشدورما فعال‌دیر</string>
+
+    <!-- ==================== i18n: Reminder / Time Labels ==================== -->
+    <!-- Reminder picker options (used in DateTimeUtils, FormConstants, ReminderFormatter) -->
+    <string name="reminder_none">خاطیرلاتما یوخدور</string>
+    <string name="reminder_at_time_of_event">حادیثه واختین‌دا</string>
+    <!-- %1$s = formatted duration (e.g., "15 min", "1 hour 30 min") -->
+    <string name="reminder_time_before">%1$s اؤنجه</string>
+    <string name="reminder_time_after">%1$s سونرا</string>
+    <!-- All-day event reminder: "9 AM day of event" / "09:00 day of event" -->
+    <string name="reminder_day_of_event_12h">حادیثه گونو ۹-دا</string>
+    <string name="reminder_day_of_event_24h">حادیثه گونو ۰۹:۰۰</string>
+    <!-- Terse all-day day-of option label (Settings/Birthday/Anniversary sheets show
+         a "fire at 9 AM" hint, so the label omits the time) -->
+    <string name="reminder_day_of_event">حادیثه گونو</string>
+    <!-- All-day reminder with days before: "%1$s before at 9 AM" / "%1$s before at 09:00" -->
+    <!-- %1$s = duration (e.g., "1 day", "2 days") -->
+    <string name="reminder_before_at_12h">%1$s اؤنجه ۹-دا</string>
+    <string name="reminder_before_at_24h">%1$s اؤنجه ۰۹:۰۰-دا</string>
+    <!-- Short/compact reminder labels (used in chips and summaries) -->
+    <string name="reminder_short_off">باغلی</string>
+    <string name="reminder_short_at_event">حادیثه‌ده</string>
+    <string name="reminder_short_9am_12h">۹</string>
+    <string name="reminder_short_9am_24h">۰۹:۰۰</string>
+    <string name="reminder_short_minutes">%1$d دق</string>
+    <string name="reminder_short_hours">%1$d س</string>
+    <string name="reminder_short_days">%1$d گ</string>
+    <string name="reminder_short_weeks">%1$d ه</string>
+    <!-- Medium-length duration units for Settings row values (abbreviated words).
+         %1$d = the number. "min" = minutes, "hr" = hours, "wk" = weeks. -->
+    <string name="reminder_med_minutes">%1$d دق</string>
+    <string name="reminder_med_hours">%1$d س</string>
+    <string name="reminder_med_weeks">%1$d ه</string>
+    <!-- "day"/"days" needs a plural for the number -->
+    <plurals name="reminder_med_days">
+        <item quantity="one">%1$d گون</item>
+        <item quantity="other">%1$d گون</item>
+    </plurals>
+    <!-- All-day alert row value (Settings), day-of-event case; terse, no 9 AM -->
+    <string name="reminder_med_day_of">حادیثه گونو</string>
+    <!-- Hint at the top of the all-day alert sheet: all its options fire at 9 AM.
+         Shows both 12h and 24h forms so it's unambiguous regardless of device format. -->
+    <string name="all_day_alert_9am_hint">بوتون گون خاطیرلاتمالاری ۹-دا (۰۹:۰۰) ایشه دۆشر.</string>
+    <string name="reminder_summary_none">یوخ</string>
+    <!-- Duration display with mixed units — %1$d = hours, %2$d = minutes -->
+    <string name="duration_compact">%1$d س %2$d دق</string>
+    <string name="duration_compact_short">%1$dس%2$dدق</string>
+
+    <!-- Sync interval options -->
+    <string name="sync_manual_only">یالنیز ال ایله</string>
+    <!-- Sync lookback options -->
+    <string name="sync_lookback_all">بوتون حادیثه‌لر</string>
+
+    <!-- ==================== i18n: Notification Strings ==================== -->
+    <!-- Notification action buttons -->
+    <string name="action_snooze">تأخیره سال</string>
+    <!-- Reminder notification content -->
+    <string name="notification_starting_now">ایندی باشلاییر</string>
+    <!-- All-day reminder notification subtitle: %1$d = number of days until the event (2 or more) -->
+    <plurals name="reminder_in_days">
+        <item quantity="one">%1$d گون‌دا</item>
+        <item quantity="other">%1$d گون‌دا</item>
+    </plurals>
+    <!-- %1$s = formatted time (e.g., "10:30 AM") -->
+    <string name="notification_tomorrow_time">صاباح، %1$s</string>
+    <!-- %1$s = formatted date (e.g., "Wed Jan 15"), %2$s = formatted time -->
+    <string name="notification_date_time">%1$s، %2$s</string>
+    <!-- Sync notification titles -->
+    <string name="sync_notification_complete">همزمانلاشدیرما تاماملاندی</string>
+    <string name="sync_notification_partial">همزمانلاشدیرما قیسمن تاماملاندی</string>
+    <string name="sync_notification_auth_failed">همزمانلاشدیرما تصدیقی اوغورسوز اولدو</string>
+    <string name="sync_notification_auth_reauth">لطفاً حسابینیزین یئنی‌دن تصدیق ائدین</string>
+    <string name="sync_notification_failed">همزمانلاشدیرما اوغورسوز اولدو</string>
+    <string name="sync_notification_parse_title">بعضی حادیثه‌لر همزمانلاشدیریلا بیلمدی</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_parse_content">%2$s-دا %1$s همزمانلاشدیریلا بیلمدی. تنظیماتلاردا زورلا همزمانلاشدیرما جهد ائدین.</string>
+    <string name="sync_notification_conflict_title">همزمانلاشدیرما تضادی حل ائدیلدی</string>
+    <!-- %1$s = event title -->
+    <string name="sync_notification_conflict_single">\"%1$s\"-ا یئرلی دَییشیکلیکلر همزمانلاشدیرما تضادی سببی‌ایله ایتیریلدی. سرور نوسخه‌سی ایستفاده ائدیله‌جک.</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_conflict_multi">%1$s-ا یئرلی دَییشیکلیکلر همزمانلاشدیرما تضادلاری سببی‌ایله ایتیریلدی. سرور نوسخه‌لری ایستفاده ائدیله‌جک.</string>
+    <string name="sync_notification_expired_title">همزمانلاشدیرما دَییشیکلیکلری‌نین واختی گئدیب</string>
+    <!-- %1$s = event count text (e.g., "3 events") -->
+    <string name="sync_notification_expired_content">%1$s ۳۰ گوندان سونرا همزمانلاشدیریلا بیلمدی. سرور نوسخه‌سی ایستفاده ائدیله‌جک. یئنی‌دن جهد اوچون زورلا همزمانلاشدیرین.</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar name -->
+    <string name="sync_notification_expired_content_calendar">%2$s-دا %1$s ۳۰ گوندان سونرا همزمانلاشدیریلا بیلمدی. سرور نوسخه‌سی ایستفاده ائدیله‌جک. یئنی‌دن جهد اوچون زورلا همزمانلاشدیرین.</string>
+    <!-- %1$s = event count text (e.g., "3 events"), %2$s = calendar count text (e.g., "3 calendars") -->
+    <string name="sync_notification_expired_content_calendars">%2$s عرضینده %1$s ۳۰ گوندان سونرا همزمانلاشدیریلا بیلمدی. سرور نوسخه‌سی ایستفاده ائدیله‌جک. یئنی‌دن جهد اوچون زورلا همزمانلاشدیرین.</string>
+    <!-- Sync notification content — %1$d = calendar count -->
+    <plurals name="sync_notification_calendars">
+        <item quantity="one">%1$d تقویم همزمانلاشدیریلدی</item>
+        <item quantity="other">%1$d تقویم همزمانلاشدیریلدی</item>
+    </plurals>
+    <plurals name="sync_notification_changes">
+        <item quantity="one">، %1$d دَییشیکلیک</item>
+        <item quantity="other">، %1$d دَییشیکلیک</item>
+    </plurals>
+    <plurals name="sync_notification_errors">
+        <item quantity="one">، %1$d خطا</item>
+        <item quantity="other">، %1$d خطا</item>
+    </plurals>
+
+    <!-- ==================== i18n: Contact Event Titles ==================== -->
+    <!-- Contact birthday title — %1$s = contact name, %2$s = ordinal age (e.g., "30th") -->
+    <string name="contact_birthday_with_age">%1$s-ین %2$s آد گونو</string>
+    <!-- Contact birthday title (no age) — %1$s = contact name -->
+    <string name="contact_birthday">%1$s-ین آد گونو</string>
+    <!-- Contact anniversary title — %1$s = contact name, %2$s = ordinal years (e.g., "10th") -->
+    <string name="contact_anniversary_with_age">%1$s-ین %2$s ایل‌دؤنومو</string>
+    <!-- Contact anniversary title (no age) — %1$s = contact name -->
+    <string name="contact_anniversary">%1$s-ین ایل‌دؤنومو</string>
+    <!-- Ordinal suffixes for numbers (1st, 2nd, 3rd, 4th, etc.) — rephrase freely for your language -->
+    <string name="ordinal_suffix_st">%1$d-جی</string>
+    <string name="ordinal_suffix_nd">%1$d-جی</string>
+    <string name="ordinal_suffix_rd">%1$d-جو</string>
+    <string name="ordinal_suffix_th">%1$d-جو</string>
+
+    <!-- ==================== i18n: Sync Banner / Snackbar ==================== -->
+    <!-- Home screen sync banner messages -->
+    <string name="sync_banner_syncing">تقویم‌لر همزمانلاشدیریلیر…</string>
+    <string name="sync_banner_preparing">همزمانلاشدیرمایا حاضیرلانیر…</string>
+    <string name="sync_banner_complete_errors">همزمانلاشدیرما خطالارلا تاماملاندی</string>
+    <!-- %1$s = error message -->
+    <string name="sync_banner_failed">همزمانلاشدیرما اوغورسوز اولدو: %1$s</string>
+    <string name="error_unknown_error">بیلینمه‌ین خطا</string>
+
+    <!-- Sync change snackbar messages -->
+    <!-- %1$s = event title (truncated) -->
+    <string name="sync_snackbar_new_event">یئنی حادیثه: %1$s</string>
+    <plurals name="sync_snackbar_new_events">
+        <item quantity="one">%1$d یئنی حادیثه</item>
+        <item quantity="other">%1$d یئنی حادیثه</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_updated">
+        <item quantity="one">%1$d حادیثه یئنیله‌ندی</item>
+        <item quantity="other">%1$d حادیثه یئنیله‌ندی</item>
+    </plurals>
+    <plurals name="sync_snackbar_events_removed">
+        <item quantity="one">%1$d حادیثه سیلindi</item>
+        <item quantity="other">%1$d حادیثه سیلindi</item>
+    </plurals>
+    <!-- %1$d = number of single occurrences of repeating events cancelled -->
+    <plurals name="sync_snackbar_occurrences_cancelled">
+        <item quantity="one">%1$d دفعه لغو ائدیلدی</item>
+        <item quantity="other">%1$d دفعه لغو ائدیلدی</item>
+    </plurals>
+    <!-- %1$d = total change count -->
+    <plurals name="sync_snackbar_calendar_updates">
+        <item quantity="one">%1$d تقویم یئنیله‌مه‌سی</item>
+        <item quantity="other">%1$d تقویم یئنیله‌مه‌سی</item>
+    </plurals>
+
+    <!-- ==================== Recent changes ==================== -->
+    <!-- Account hub row and sheet title for the list of changes sync brought in -->
+    <string name="recent_changes_title">سون دَییشیکلیکلر</string>
+    <string name="recent_changes_empty">سون دَییشیکلیک یوخدور</string>
+    <string name="recent_changes_clear_all">هامیسینی تمیزله</string>
+    <string name="recent_changes_cleared">سون دَییشیکلیکلر تمیزلندی</string>
+    <!-- Accessibility action that does what swiping a row away does -->
+    <string name="recent_changes_dismiss">ردد ائت</string>
+    <!-- %1$s = the earlier date and/or time, e.g. "Tue, Sep 29, 2:00 PM" or "2:00 PM" -->
+    <string name="recent_changes_moved_from">%1$s-دان کؤچورولدو</string>
+    <string name="recent_changes_time_changed">واخت دَییشدی</string>
+    <!-- %1$s = start, %2$s = end, e.g. "Tue, Oct 6, 2:00 PM – 3:30 PM" -->
+    <string name="recent_changes_time_range">%1$s – %2$s</string>
+    <!-- Joins the change descriptions of one row, e.g. "Moved from 2:00 PM · Location changed" -->
+    <string name="recent_changes_detail_separator" translatable="false">" · "</string>
+    <string name="recent_changes_location_changed">مکان دَییشدی</string>
+    <string name="recent_changes_title_changed">باشلیق دَییشدی</string>
+    <string name="recent_changes_repeat_changed">تکرار دَییشدی</string>
+    <!-- A single occurrence of a repeating event was cancelled -->
+    <string name="recent_changes_cancelled">لغو ائدیلدی</string>
+    <string name="cd_recent_change_new">یئنی حادیثه</string>
+    <string name="cd_recent_change_updated">یئنیله‌ندی</string>
+    <string name="cd_recent_change_removed">سیلindi</string>
+
+    <!-- ==================== i18n: HomeScreen Day View ==================== -->
+    <!-- Multi-day event indicators — %1$d = current day, %2$d = total days -->
+    <string name="day_x_of_y">%2$d-دان %1$d-جی گون</string>
+    <!-- Multi-day first day — %1$d = total days, %2$s = start time -->
+    <string name="day_starts">%1$d-دان ۱-جی گون · %2$s-دا باشلاییر</string>
+    <!-- Multi-day last day — %1$d = current day, %2$d = total days, %3$s = end time -->
+    <string name="day_ends">%2$d-دان %1$d-جی گون · %3$s-دا بیتیر</string>
+    <!-- Quick view date+all day patterns — %1$s = start date, %2$s = end date -->
+    <string name="event_date_range_all_day">%1$s → %2$s · بوتون گون</string>
+    <string name="event_date_all_day">%1$s · بوتون گون</string>
+    <!-- ICS import date+all day patterns -->
+    <string name="event_date_range_all_day_parens">%1$s - %2$s (بوتون گون)</string>
+    <string name="event_date_all_day_parens">%1$s (بوتون گون)</string>
+
+    <!-- ==================== i18n: Round 2 audit gaps ==================== -->
+    <!-- Save button for event form -->
+    <string name="action_save_event">حادیثه‌نی ساخلa</string>
+    <!-- Badges -->
+    <string name="badge_beta">بتا</string>
+    <string name="badge_new">یئنی</string>
+    <!-- Color names for accessibility -->
+    <string name="color_red">قیرمیزی</string>
+    <string name="color_orange">نارینجی</string>
+    <string name="color_yellow">ساری</string>
+    <string name="color_green">یاشیل</string>
+    <string name="color_cyan">فیروزه‌ای</string>
+    <string name="color_blue">ماوی</string>
+    <string name="color_purple">بنفش</string>
+    <!-- Accessibility: link types -->
+    <string name="cd_meeting_link">گؤروش لینکی: %1$s</string>
+    <string name="cd_phone_number">تلفون نومره‌سی</string>
+    <string name="cd_email_link">ایمیل: %1$s</string>
+    <string name="cd_web_link">لینک: %1$s</string>
+    <string name="cd_text_with_links">%1$d لینکلی متن: %2$s</string>
+    <string name="cd_text_with_link">۱ لینکلی متن: %1$s</string>
+    <!-- Multi-day event: all-day indicator with day number -->
+    <string name="day_x_of_y_all_day">%2$d-دان %1$d-جی گون (بوتون گون)</string>
+    <!-- Sync history stats header — %1$d = total syncs, %2$d = pushed, %3$d = pulled -->
+    <string name="sync_history_stats">%1$d همزمانلاشدیرما   ↑%2$d گؤندریلدی   ↓%3$d چکیلدی</string>
+    <string name="sync_history_stats_issues">%1$d همزمانلاشدیرما   ↑%2$d گؤندریلدی   ↓%3$d چکیلدی   ⚠ %4$d problem</string>
+    <string name="sync_history_failed">اوغورسوز اولدو</string>
+    <!-- ICS subscription sync intervals -->
+    <string name="ics_sync_every_hour">هر ساعت</string>
+    <string name="ics_sync_every_n_hours">هر %1$d ساعتدا</string>
+    <string name="ics_sync_daily">گونلوک</string>
+    <string name="ics_sync_weekly">هفته‌لیک</string>
+    <!-- Default name pre-filled for a subscribed feed that provides no calendar name -->
+    <string name="default_calendar_name">تقویم</string>
+    <!-- ICS subscription URL validation -->
+    <string name="ics_url_required">URL لازیمدیر</string>
+    <string name="ics_url_invalid_scheme">URL http://، https:// یا webcal:// ایله باشلامالیدیر</string>
+    <!-- ICS feed fetch errors (shown when validating a subscription URL) -->
+    <!-- %1$d = HTTP status code, e.g. 404 -->
+    <string name="ics_fetch_error_http">سرور بیر خطا قایتاردی (%1$d). لطفاً URL-ی یوخ‌لایین.</string>
+    <string name="ics_fetch_error_empty">تقویم فیدی بوشدور.</string>
+    <string name="ics_fetch_error_not_calendar">او URL تقویم فیدینه بنزمیر.</string>
+    <!-- Insights -->
+    <string name="insights_title">ایچگؤرۆلر</string>
+    <string name="insights_period_this_week">هفته</string>
+    <string name="insights_period_last_week">کئچن هفته</string>
+    <string name="insights_period_this_month">آی</string>
+    <string name="insights_empty_state">بو هفته حادیثه پلانلانماییب</string>
+    <plurals name="insights_all_day_count">
+        <item quantity="one">%d بوتون گون حادیثه</item>
+        <item quantity="other">%d بوتون گون حادیثه</item>
+    </plurals>
+
+    <!-- Insight text: Busiest Day -->
+    <string name="insight_busiest_day_future">%1$s ان ایشلی گونونوزدور (%2$s)</string>
+    <string name="insight_busiest_day_past">%1$s ان ایشلی گونونوز ایدی (%2$s)</string>
+    <!-- Insight text: Lightest Day -->
+    <string name="insight_lightest_day_future">%1$s ان یونگول گونونوزدور (%2$s)</string>
+    <string name="insight_lightest_day_past">%1$s ان یونگول گونونوز ایدی (%2$s)</string>
+    <!-- Insight text: Longest Free Block -->
+    <string name="insight_longest_free_future">ان اوزون بوش بلوک: %1$s %2$s–%3$s (%4$s)</string>
+    <string name="insight_longest_free_past">ان اوزون بوش بلوک %1$s %2$s–%3$s ایدی (%4$s)</string>
+    <!-- Insight text: Weekend Load -->
+    <string name="insight_weekend_load_clear_future">هفته‌سونونوز بوشدور</string>
+    <string name="insight_weekend_load_clear_past">هفته‌سونونوز بوش ایدی</string>
+    <string name="insight_weekend_load_light_future">هفته‌سونونده %1$s پلانلانیب</string>
+    <string name="insight_weekend_load_light_past">هفته‌سونونده %1$s پلانلانمیشدی</string>
+    <string name="insight_weekend_load_busy_future">هفته‌سونونده %1$s پلانلانیب</string>
+    <string name="insight_weekend_load_busy_past">هفته‌سونونده %1$s پلانلانمیشدی</string>
+    <!-- Insight text: Back to Back -->
+    <string name="insight_back_to_back_future">%1$d آرخا-آرخا گؤروش</string>
+    <string name="insight_back_to_back_past">%1$d آرخا-آرخا گؤروشونوز وار ایدی</string>
+    <!-- Insight text: Calendar Dominant -->
+    <string name="insight_calendar_dominant_future">%1$s پلانلانمیش واختینیزین %2$d%%-دیر</string>
+    <string name="insight_calendar_dominant_past">%1$s پلانلانمیش واختینیزین %2$d%% ایدی</string>
+    <!-- Insight text: Early/Late Bounds -->
+    <string name="insight_early_bounds_future">پلانینیز %1$d گون ۸-دن اؤنجه باشلاییر</string>
+    <string name="insight_early_bounds_past">پلانینیز %1$d گون ۸-دن اؤنجه باشلاییردی</string>
+    <string name="insight_late_bounds_future">%1$d گون ۷-دن سونرا حادیثه‌لر</string>
+    <string name="insight_late_bounds_past">%1$d گون ۷-دن سونرا حادیثه‌لر وار ایدی</string>
+    <!-- Insight text: Meeting-Free Days -->
+    <string name="insight_meeting_free_days_future">%1$d گؤروشسوز گونونوز وار</string>
+    <string name="insight_meeting_free_days_past">%1$d گؤروشسوز گونونوز وار ایدی</string>
+    <!-- Insight text: Tomorrow Preview (forward-only) -->
+    <string name="insight_tomorrow_preview">صاباح: %1$s پلانلانیب، %2$s-دا باشلاییر</string>
+    <string name="insight_tomorrow_preview_no_start">صاباح: %1$s پلانلانیب</string>
+    <!-- Insight text: Heaviest Upcoming (forward-only) -->
+    <string name="insight_heaviest_upcoming">%1$s ان آغیر گله‌ن گونونوزدور (%2$s)</string>
+    <!-- Insight text: Next Free Block (forward-only) -->
+    <string name="insight_next_free_block">سونراکی بوش بلوک: %1$s %2$s–%3$s (%4$s)</string>
+    <!-- Insight accessibility -->
+    <string name="insights_cd_daily_chart">گونلوک پایلانما: ان ایشلی گون %1$s</string>
+
+    <!-- ==================== Event Form Redesign ==================== -->
+    <string name="label_availability">الده اولما</string>
+    <string name="label_busy">مشغول</string>
+    <string name="label_free">بوش</string>
+    <string name="label_event_color">حادیثه رنگی</string>
+    <string name="label_calendar_default">تقویم پیش‌فرضی</string>
+    <string name="label_custom">خاص</string>
+
+    <string name="cd_checkmark">سئچیلمیش</string>
+
+    <!-- ==================== Event Color Palette (CSS3) ==================== -->
+    <string name="color_saddlebrown">قیرمیزی قهوه‌یی</string>
+    <string name="color_tomato">پومیدور</string>
+    <string name="color_darkorange">توند نارینجی</string>
+    <string name="color_gold">قیزیل</string>
+    <string name="color_yellowgreen">ساری-یاشیل</string>
+    <string name="color_limegreen">لیمو-یاشیل</string>
+    <string name="color_lightseagreen">آچیق دنیز یاشیلی</string>
+    <string name="color_dodgerblue">دوجر ماوی‌سی</string>
+    <string name="color_royalblue">کرال ماوی‌سی</string>
+    <string name="color_mediumorchid">اورتا اورکیده</string>
+    <string name="color_hotpink">ایستی پمبی</string>
+    <string name="color_dimgray">توتقون بوْز</string>
+    <!-- ==================== Color Wheel Picker ==================== -->
+    <!-- Hue family labels for the "More colors" wheel picker -->
+    <string name="hue_red">قیرمیزی</string>
+    <string name="hue_orange">نارینجی</string>
+    <string name="hue_yellow">ساری</string>
+    <string name="hue_green">یاشیل</string>
+    <string name="hue_teal">فیروزه‌ای</string>
+    <string name="hue_blue">ماوی</string>
+    <string name="hue_purple">بنفش</string>
+    <string name="hue_pink">پمبی</string>
+    <string name="hue_brown">قهوه‌یی</string>
+    <string name="hue_neutral">نئوترال</string>
+    <!-- Action: open the full CSS3 color browser from the grid -->
+    <string name="label_more_colors">داها چوخ رنگ</string>
+    <!-- Action: return from the wheel picker to the main color grid -->
+    <string name="label_back_to_grid">گئری</string>
+
+    <!-- ========== B4-read: attendee chip surfaces ========== -->
+    <!-- Section header on EventFormSheet for the read-only attendee list -->
+    <string name="label_attendees">ایشتیراکچیلار</string>
+    <!-- Label that replaces the current user's display name on their own attendee chip — i.e., the chip reads "You" instead of their email/CN. Capitalize per locale conventions; do NOT include parentheses. -->
+    <string name="attendee_you_marker">سیز</string>
+    <!-- Pill shown on the organizer's chip; precedes their name -->
+    <!-- Disclosure button on a collapsed chip row when there are more attendees than visible -->
+    <!-- Lavender count chip rendered when the user is not on the attendee list -->
+    <!-- Compact day-card status — user accepted the invite -->
+    <string name="attendee_card_going">گئدیر</string>
+    <!-- Compact day-card status — user has not responded yet -->
+    <string name="attendee_card_pending">گؤزله‌نیلیر</string>
+    <!-- Compact day-card status — user declined the invite -->
+    <string name="attendee_card_declined">ردد ائتدی</string>
+    <!-- Compact day-card status — user marked tentative -->
+    <string name="attendee_card_tentative">بلکی</string>
+    <!-- Compact day-card status — user is the organizer (hosting the event) -->
+    <string name="attendee_card_hosting">سahibliyinde</string>
+    <!-- Inline action revealed when user taps a chip -->
+    <string name="attendee_action_copy">ایمیلی کؤچور</string>
+    <!-- Inline action revealed when user taps a chip; opens compose mail intent -->
+    <string name="attendee_action_email">ایمیل گؤندر</string>
+    <!-- Spoken description for the attendee chip group icon -->
+
+    <!-- ========== v23.7.17 chip polish ========== -->
+    <!-- Toast shown after the user taps Copy on an attendee chip -->
+    <string name="attendee_email_copied">ایمیل کؤچورولدو</string>
+    <!-- Toast shown when the user taps Email but no mail app is installed -->
+    <string name="attendee_no_email_app">ایمیل تطبیقی قورولماییب</string>
+    <!-- "Show less" disclosure that collapses an expanded chip row back to 3 chips -->
+    <!-- Talkback action label spoken when the lavender count chip is focused (e.g., "5 attendees, double-tap to show all attendees"). The visible chip text remains the count; this string only names the action verb. Phrase as a verb action, not a noun phrase. -->
+    <string name="attendee_show_all">بوتون ایشتیراکچیلاری گؤستر</string>
+    <!-- Talkback status label for an attendee who accepted the invite -->
+    <string name="attendee_status_accepted">قبول ائتدی</string>
+    <!-- Talkback status label for an attendee who declined the invite -->
+    <string name="attendee_status_declined">ردد ائتدی</string>
+    <!-- Talkback status label for an attendee who is tentatively attending -->
+    <string name="attendee_status_tentative">بلکی</string>
+    <!-- Talkback status label for an attendee who delegated their seat -->
+    <string name="attendee_status_delegated">وکیل ائتدی</string>
+    <!-- Talkback status label for an attendee who has not yet responded -->
+    <string name="attendee_status_pending">گؤزله‌نیلیر</string>
+
+    <!-- Invitation Inbox -->
+    <!-- Empty state message when there are no pending invitations -->
+    <string name="inbox_empty_caught_up">هامیسی تامامدیر</string>
+    <!-- Suffix added after the organizer's name on an invitation card -->
+    <string name="inbox_organizer_suffix">(تشکیلاتچی)</string>
+    <!-- Menu item label for the invitation inbox -->
+    <string name="menu_invites">دعوتلر</string>
+    <!-- Right rail item label that opens a date picker to navigate to a specific day -->
+    <string name="jump_to_date">تاریخه گئت</string>
+    <!-- Right rail item label that opens the app information dialog (version, links, credits) -->
+    <string name="menu_about">حاقدا</string>
+    <!-- Content description for the AppBar rail toggle when there are no pending invites -->
+    <string name="menu_more">داها منیو</string>
+    <!-- Content description for the AppBar rail toggle when invites are pending -->
+    <plurals name="menu_more_with_invites">
+        <item quantity="one">داها منیو، %d دعوت گؤزله‌نیلیر</item>
+        <item quantity="other">داها منیو، %d دعوت گؤزله‌نیلیر</item>
+    </plurals>
+    <!-- Menu item label that opens the privacy & security policy page in a browser -->
+    <string name="menu_privacy_security">محریملیق و گوونلیک</string>
+    <!-- Content description for the hero avatar in the account hub; tapping it edits initials -->
+    <string name="cd_edit_initials">باش حرفلرینیزین دَییشدیرین</string>
+    <!-- Helper text under the avatar prompting the user to personalize it -->
+    <string name="hub_initials_hint">باش حرفلرینizi قورماق اوچون وورون</string>
+    <!-- Label/hint for the two-letter initials text field -->
+    <string name="hub_initials_field_label">باش حرفلر</string>
+    <!-- Button that saves the edited initials -->
+    <string name="hub_initials_save">ساخلa</string>
+    <!-- Button that discards the edited initials -->
+    <string name="hub_initials_cancel">لغو ائت</string>
+    <!-- Section header in the account hub grouping personalization (theme, accent color, app icon) -->
+    <string name="hub_section_make_it_yours">اؤزونیزه ائت</string>
+    <!-- Account hub section header over the calendar-workflow rows (invites, jump to date, etc.) -->
+    <string name="hub_section_own_your_calendar">تقویمینیزه sahib olun</string>
+    <!-- Account hub Privacy &amp; security row: link to the data-ownership policy -->
+    <string name="hub_privacy_data_ownership">وئری‌لرینیز نئجه سیزین قالیر</string>
+    <!-- Account hub row opening the settings screen, whose top section holds accounts and calendars -->
+    <string name="hub_accounts_and_settings">حساب‌لار و تنظیماتلار</string>
+
+    <!-- ==================== Share Availability ==================== -->
+    <!-- Right rail item label that opens the share-availability sheet -->
+    <string name="share_availability_rail_label">الده اولماغی پایلاش</string>
+    <!-- Title at the top of the share-availability bottom sheet -->
+    <string name="share_availability_sheet_title">الده اولماغی پایلاش</string>
+    <!-- Slider label for the number of days to share. %1$d is the day count. -->
+    <plurals name="share_availability_days_label">
+        <item quantity="one">گله‌ن %1$d گون</item>
+        <item quantity="other">گله‌ن %1$d گون</item>
+    </plurals>
+    <!-- Range slider label for working hours window. %1$s = start time, %2$s = end time (locale-formatted). -->
+    <string name="share_availability_hours_label">ایش واختلاری: %1$s – %2$s</string>
+    <!-- Toggle title for treating all-day events as busy in the share-availability sheet -->
+    <string name="share_availability_all_day_toggle_title">بوتون گون حادیثه‌لر مشغول کیمی</string>
+    <!-- Filled tonal share button label inside the sheet -->
+    <string name="share_availability_share_button">پایلاش</string>
+    <!-- Header line above the per-day list. %1$d = day count, %2$s = work-start, %3$s = work-end. -->
+    <plurals name="share_availability_header">
+        <item quantity="one">گله‌ن %1$d گون عرضینده بوش (%2$s – %3$s):</item>
+        <item quantity="other">گله‌ن %1$d گون عرضینده بوش (%2$s – %3$s):</item>
+    </plurals>
+    <!-- Per-day line. %1$s = day-of-week + short date, %2$s = comma-separated time ranges. -->
+    <string name="share_availability_day_line">%1$s: %2$s</string>
+    <!-- Separator joining multiple time ranges on the same day -->
+    <string name="share_availability_block_separator">، </string>
+    <!-- Time range within a day line. %1$s = start time, %2$s = end time. -->
+    <string name="share_availability_time_range">%1$s – %2$s</string>
+    <!-- Empty-state message shown when no qualifying free block was found -->
+    <string name="share_availability_empty">سئچیلمیش آرالیق‌دا ان آز بیر ساعتیک بوش بلوک یوخدور.</string>
+    <!-- Footer line appended to share text from event share, device event share, and availability share. Keep "KashCal" untranslated. -->
+    <string name="share_from_kashcal_footer">KashCal-دان پایلاشیلدی</string>
+    <!-- Title shown in the Android share chooser -->
+    <string name="share_availability_chooser_title">الده اولماغی پایلاش</string>
+    <!-- Snackbar shown if no app is available to receive the shared text -->
+    <string name="share_availability_share_failed">پایلاشماق اوچون تطبیق الده یوخدور</string>
+    <!-- Section heading above the days slider in the share-availability sheet -->
+    <string name="share_availability_window_section">پنجره</string>
+    <!-- Section heading above the working-hours range slider in the share-availability sheet -->
+    <string name="share_availability_hours_section">ایش واختلاری</string>
+    <!-- Plural form for the hero number above the days slider. %1$d = day count. -->
+    <plurals name="share_availability_days_hero">
+        <item quantity="one">%1$d گون</item>
+        <item quantity="other">%1$d گون</item>
+    </plurals>
+    <!-- Caption below the days slider showing the resolved end date. %1$s = formatted date (e.g. "Wed, Jun 4"). -->
+    <string name="share_availability_days_through">%1$s-ا قدر</string>
+    <!-- Caption below the working-hours strip showing the window length (e.g. "8 hour window", "1.5 hour window"). %1$s = formatted hours. -->
+    <string name="share_availability_window_duration">%1$s ساعتلیق پنجره</string>
+
+    <!-- Share-as-card feature: top-right Share icon action label and tooltip -->
+    <string name="share_as_card_action">کارت کیمی پایلاش</string>
+    <!-- Title of the bottom sheet that previews the card before sharing -->
+    <!-- Section heading above the style chips in the share-as-card sheet -->
+    <!-- Style chip label for the calm default presentation -->
+    <string name="share_as_card_chip_standard">استاندارت</string>
+    <!-- Style chip label for the festive presentation (parties, birthdays, weddings) -->
+    <string name="share_as_card_chip_celebration">جشن</string>
+    <!-- Send button label in the share-as-card sheet -->
+    <string name="share_as_card_send">گؤندر</string>
+    <!-- Attribution at the bottom-right of the rendered share card. Keep "KashCal" untranslated. -->
+    <string name="share_as_card_attribution">KashCal ایله حاضیرلانیب</string>
+    <!-- All-day label shown on the share card when the event has no specific time -->
+    <string name="share_as_card_all_day">بوتون گون</string>
+    <!-- System chooser title shown when the user taps Send on a share card -->
+    <string name="share_as_card_chooser_title">حادیثه‌نی پایلاش</string>
+    <!-- Toast shown when sharing the card fails (no app to handle, render error) -->
+    <string name="share_as_card_share_failed">کارت پایلاشیلa بیلمدی</string>
+
+</resources>
