@@ -606,6 +606,13 @@ class EventCoordinator @Inject constructor(
     /** Writes the calendar's visible flag, the source of truth for which calendars show. */
     suspend fun setCalendarVisibility(calendarId: Long, visible: Boolean) {
         eventReader.setCalendarVisibility(calendarId, visible)
+        triggerWidgetUpdate()
+    }
+
+    /** Device-calendar visibility is local to the app, but widgets share the same filter. */
+    suspend fun toggleDeviceCalendarVisibility(calendarId: Long) {
+        dataStore.toggleDeviceCalendarHidden(calendarId)
+        triggerWidgetUpdate()
     }
 
     /**

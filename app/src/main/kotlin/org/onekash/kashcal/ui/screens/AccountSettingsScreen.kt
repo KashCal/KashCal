@@ -89,6 +89,8 @@ import org.onekash.kashcal.ui.screens.settings.SyncFrequencySheet
 import org.onekash.kashcal.ui.screens.settings.SyncLookbackSheet
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
+import org.onekash.kashcal.ui.screens.settings.MonthWidgetWeeksSheet
+import org.onekash.kashcal.ui.screens.settings.monthWidgetWeeksLabel
 import org.onekash.kashcal.ui.screens.settings.WidgetEventLimitSheet
 import org.onekash.kashcal.ui.shared.formatReminderMedium
 import org.onekash.kashcal.ui.shared.getAllDayReminderOptions
@@ -276,6 +278,8 @@ fun AccountSettingsScreen(
     onShowWeekNumbersChange: (Boolean) -> Unit = {},
     showMultiDayTimedInAllDayStrip: Boolean = PreferencesKeys.DEFAULT_SHOW_MULTIDAY_TIMED_IN_ALLDAY_STRIP,
     onShowMultiDayTimedInAllDayStripChange: (Boolean) -> Unit = {},
+    monthWidgetWeeks: Int = 0,
+    onMonthWidgetWeeksChange: (Int) -> Unit = {},
     widgetMaxEventsPerDay: Int = 5,
     onWidgetMaxEventsPerDayChange: (Int) -> Unit = {},
     widgetDetailedRows: Boolean = false,
@@ -340,6 +344,7 @@ fun AccountSettingsScreen(
                 var showTimeFormatSheet by remember { mutableStateOf(false) }
                 var showFirstDayOfWeekSheet by remember { mutableStateOf(false) }
                 var showEventDurationSheet by remember { mutableStateOf(false) }
+                var showMonthWidgetWeeksSheet by remember { mutableStateOf(false) }
                 var showWidgetEventLimitSheet by remember { mutableStateOf(false) }
                 var showDebugMenu by remember { mutableStateOf(false) }
                 var showAppInfoSheet by remember { mutableStateOf(false) }
@@ -548,6 +553,19 @@ fun AccountSettingsScreen(
                                 label = stringResource(R.string.settings_start_week_on),
                                 value = firstDaySubtitle,
                                 onClick = { showFirstDayOfWeekSheet = true },
+                                showChevron = false,
+                                showDivider = false,
+                                searchQuery = searchQuery
+                            )
+                        }
+
+                        val widgetWeeksValue = monthWidgetWeeksLabel(monthWidgetWeeks, firstDayOfWeek)
+                        row(label = stringResource(R.string.settings_month_widget_weeks), subtitle = widgetWeeksValue, id = "month-widget-weeks") {
+                            SettingsRow(
+                                icon = Icons.Default.ViewWeek,
+                                label = stringResource(R.string.settings_month_widget_weeks),
+                                value = widgetWeeksValue,
+                                onClick = { showMonthWidgetWeeksSheet = true },
                                 showChevron = false,
                                 showDivider = false,
                                 searchQuery = searchQuery
@@ -931,6 +949,15 @@ fun AccountSettingsScreen(
                         defaultEventDuration = defaultEventDuration,
                         onEventDurationChange = onDefaultEventDurationChange,
                         onDismiss = { showEventDurationSheet = false }
+                    )
+                }
+
+                if (showMonthWidgetWeeksSheet) {
+                    MonthWidgetWeeksSheet(
+                        currentWeeks = monthWidgetWeeks,
+                        firstDayOfWeek = firstDayOfWeek,
+                        onSelect = onMonthWidgetWeeksChange,
+                        onDismiss = { showMonthWidgetWeeksSheet = false }
                     )
                 }
 

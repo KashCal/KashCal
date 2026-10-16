@@ -928,6 +928,12 @@
             <meta-data
                 android:name="android.appwidget.provider"
                 android:resource="@xml/month_widget_info" />
+            <meta-data android:name="org.onekash.kashcal.MONTH_WEEKS_1" android:resource="@xml/month_widget_info_1" />
+            <meta-data android:name="org.onekash.kashcal.MONTH_WEEKS_2" android:resource="@xml/month_widget_info_2" />
+            <meta-data android:name="org.onekash.kashcal.MONTH_WEEKS_3" android:resource="@xml/month_widget_info_3" />
+            <meta-data android:name="org.onekash.kashcal.MONTH_WEEKS_4" android:resource="@xml/month_widget_info_4" />
+            <meta-data android:name="org.onekash.kashcal.MONTH_WEEKS_5" android:resource="@xml/month_widget_info_5" />
+            <meta-data android:name="org.onekash.kashcal.MONTH_WEEKS_6" android:resource="@xml/month_widget_info_6" />
         </receiver>
 
         <!-- Date widget receiver (icon-like, shows today's date) -->

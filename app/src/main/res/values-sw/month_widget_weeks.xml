@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Wiki za kalenda zinazoonekana</string>
+    <string name="month_widget_weeks_auto">Kiotomatiki (mwezi mzima)</string>
+    <string name="month_widget_weeks_description">Wiki katika wijeti zote za mwezi. Kiotomatiki huonyesha mwezi mzima; mwonekano mfupi huacha wiki ya sasa ionekane.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">Wiki %1$d</item>
+        <item quantity="other">Wiki %1$d</item>
+    </plurals>
+</resources>

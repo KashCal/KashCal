@@ -1481,7 +1481,7 @@ class HomeViewModel(
      */
     fun toggleDeviceCalendarVisibility(calendarId: Long) {
         viewModelScope.launch {
-            dataStore.toggleDeviceCalendarHidden(calendarId)
+            eventCoordinator.toggleDeviceCalendarVisibility(calendarId)
             reloadCurrentView()
         }
     }

@@ -24,6 +24,9 @@ object PreferencesKeys {
      */
     val FIRST_DAY_OF_WEEK = intPreferencesKey("first_day_of_week")
 
+    /** Month-widget rows: 0 = whole month, 1..5 = maximum rows. */
+    val MONTH_WIDGET_WEEKS = intPreferencesKey("month_widget_weeks")
+
     /** Shows week numbers in the calendar views. */
     val SHOW_WEEK_NUMBERS = booleanPreferencesKey("show_week_numbers")
 

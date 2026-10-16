@@ -57,14 +57,21 @@ internal data class MonthWidgetWeekRender(
  * @param eventsByDay events by day code, as fetched for the whole grid range
  * @param maxSlots maximum slot rows below the day-number row; what doesn't fit collapses into
  *   [MonthWidgetSlot.Overflow]
+ * @param maxEventsPerDay shared widget limit, including multi-day bars in each covered day
  */
 internal fun computeMonthWidgetWeekRender(
     weekDayCodes: List<Int>,
     eventsByDay: Map<Int, List<WidgetEvent>>,
-    maxSlots: Int
+    maxSlots: Int,
+    maxEventsPerDay: Int = Int.MAX_VALUE,
 ): MonthWidgetWeekRender {
     require(weekDayCodes.size == 7) { "weekDayCodes must have 7 entries" }
     if (maxSlots <= 0) return MonthWidgetWeekRender(emptyList())
+
+    val eventLimit = maxEventsPerDay.coerceAtLeast(1)
+    // The limit counts events, not the optional overflow marker. Never allocate more rows
+    // than the available height/view budget, even when the user chooses fifteen events.
+    val slotCount = minOf(maxSlots.toLong(), eventLimit.toLong() + 1).toInt()
 
     val weekStart = weekDayCodes.first()
     val weekEnd = weekDayCodes.last()
@@ -107,7 +114,7 @@ internal fun computeMonthWidgetWeekRender(
         val laneIndex = lanes.indexOfFirst { lane -> lane.last().endCol < span.startCol }
         when {
             laneIndex >= 0 -> lanes[laneIndex].add(span)
-            lanes.size < maxSlots -> lanes.add(mutableListOf(span))
+            lanes.size < minOf(slotCount, eventLimit) -> lanes.add(mutableListOf(span))
             // The span overflows the lane budget and is dropped: at its start column every lane
             // is a bar, so there is no row for it or a "+n" marker (lanes win). It takes more
             // overlapping multi-day events in one week than rows.
@@ -116,7 +123,7 @@ internal fun computeMonthWidgetWeekRender(
     }
 
     // 4. Bars occupy their lane's columns; cell events fill what remains.
-    val grid: Array<Array<MonthWidgetSlot>> = Array(maxSlots) { Array(7) { MonthWidgetSlot.Empty } }
+    val grid: Array<Array<MonthWidgetSlot>> = Array(slotCount) { Array(7) { MonthWidgetSlot.Empty } }
     for ((laneIndex, lane) in lanes.withIndex()) {
         for (span in lane) {
             for (col in span.startCol..span.endCol) {
@@ -129,35 +136,22 @@ internal fun computeMonthWidgetWeekRender(
         val cellEvents = eventsByDay[weekDayCodes[col]].orEmpty()
             .filter { !it.isMultiDay }
             .sortedWith(compareBy<WidgetEvent> { eventOrderRank(it) }.thenBy { it.startTs })
-
-        val freeSlots = (0 until maxSlots).filter { grid[it][col] === MonthWidgetSlot.Empty }
-        when {
-            cellEvents.size <= freeSlots.size -> {
-                for ((i, event) in cellEvents.withIndex()) {
-                    grid[freeSlots[i]][col] = MonthWidgetSlot.CellEvent(event)
-                }
-            }
-            freeSlots.isEmpty() -> {
-                // Every row of this column is a bar, so its single-day events, and any span
-                // that overflowed the lane budget here, drop with no "+n" (lanes win).
-            }
-            maxSlots == 1 -> {
-                // One row for the whole week: a "+n" there would show a bare count with no event
-                // name, worse than the dots. Show the top event's title and hide the rest
-                // silently, as the dots cap at three without showing the overflow.
-                grid[freeSlots[0]][col] = MonthWidgetSlot.CellEvent(cellEvents[0])
-            }
-            else -> {
-                // More events than free slots: show what fits and collapse the rest into a "+n"
-                // in the last free slot, as the in-app month view does. With one free slot (bars
-                // fill the others) no event shows and the marker reports the day's full count.
-                val visibleCount = (freeSlots.size - 1).coerceAtLeast(0)
-                for (i in 0 until visibleCount) {
-                    grid[freeSlots[i]][col] = MonthWidgetSlot.CellEvent(cellEvents[i])
-                }
-                grid[freeSlots[freeSlots.size - 1]][col] =
-                    MonthWidgetSlot.Overflow(cellEvents.size - visibleCount)
-            }
+        val freeSlots = (0 until slotCount).filter { grid[it][col] === MonthWidgetSlot.Empty }
+        val shownBars = (0 until slotCount).count { grid[it][col] is MonthWidgetSlot.BarSegment }
+        val totalBars = spans.count { col in it.startCol..it.endCol }
+        val remainingLimit = (eventLimit - shownBars).coerceAtLeast(0)
+        val possibleCells = minOf(cellEvents.size, freeSlots.size, remainingLimit)
+        val hiddenAtCapacity = totalBars - shownBars + cellEvents.size - possibleCells
+        val showOverflow = hiddenAtCapacity > 0 && freeSlots.isNotEmpty() && slotCount > 1
+        val visibleCells = minOf(cellEvents.size, remainingLimit,
+            (freeSlots.size - if (showOverflow) 1 else 0).coerceAtLeast(0))
+        for (i in 0 until visibleCells) {
+            grid[freeSlots[i]][col] = MonthWidgetSlot.CellEvent(cellEvents[i])
+        }
+        if (showOverflow) {
+            grid[freeSlots.last()][col] = MonthWidgetSlot.Overflow(
+                totalBars - shownBars + cellEvents.size - visibleCells
+            )
         }
     }
 

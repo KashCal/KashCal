@@ -240,6 +240,20 @@ class MonthWidgetContentTest {
         assertEquals("March 15, no events", desc)
     }
 
+    @Test
+    fun `large widgets with fewer weeks show more events within the total row budget`() {
+        assertEquals(9, maxEventRows(400f, weekCount = 2))
+        assertEquals(18, maxEventRows(800f, weekCount = 1))
+        assertEquals(3, maxEventRows(400f, weekCount = 6))
+        for (weeks in 1..6) {
+            assertTrue(monthWidgetRowBudget(weeks) * weeks <= 18)
+        }
+        assertEquals(0, maxEventRows(20f, weekCount = 1))
+        assertEquals(1, maxEventRows(36f, weekCount = 2))
+        assertTrue(maxEventRows(180f, fontScale = 1.5f, weekCount = 2) <
+            maxEventRows(180f, fontScale = 1f, weekCount = 2))
+    }
+
     // ==================== maxEventRows ====================
 
     @Test
@@ -279,17 +293,17 @@ class MonthWidgetContentTest {
 
     @Test
     fun `minWidgetHeightForTitlesDp derives the one-row threshold from real element heights`() {
-        // Header 40 + day-of-week 21 + 6 weeks * (19 number + 1 * (16 row + 1 gap)) = 277dp,
+        // Header 48 + day-of-week 21 + 6 weeks * (19 number + 1 * (16 row + 1 gap)) = 285dp,
         // the height a 6-week one-row grid renders at, so a widget at the threshold fits its row
         // unclipped. It is under the placed 4x4 default (304dp), so a newly placed widget shows
         // titles and only the smallest resizes fall to dots.
-        assertEquals(277f, minWidgetHeightForTitlesDp(TITLES_MIN_ROWS), 0.001f)
+        assertEquals(285f, minWidgetHeightForTitlesDp(TITLES_MIN_ROWS), 0.001f)
     }
 
     @Test
     fun `minWidgetHeightForTitlesDp for two rows still matches the six-week two-row height`() {
-        // Checks the formula apart from TITLES_MIN_ROWS: 40 + 21 + 6 * (19 + 2*17).
-        assertEquals(379f, minWidgetHeightForTitlesDp(2), 0.001f)
+        // Checks the formula apart from TITLES_MIN_ROWS: 48 + 21 + 6 * (19 + 2*17).
+        assertEquals(387f, minWidgetHeightForTitlesDp(2), 0.001f)
     }
 
     @Test
@@ -435,6 +449,59 @@ class MonthWidgetContentTest {
         ActionParameters.Key<String>(EXTRA_ACTION) to ACTION_GO_TO_DATE,
         ActionParameters.Key<Int>(EXTRA_DAY_CODE) to dayCode
     )
+
+    @Test
+    fun `two-week widget renders six titles instead of hiding the last four behind a counter`() =
+        runGlanceAppWidgetUnitTest {
+            setContext(ApplicationProvider.getApplicationContext())
+            setAppWidgetSize(DpSize(400.dp, 600.dp))
+            val events = (1..6).map { i -> createWidgetEvent().copy(
+                eventId = i.toLong(), occurrenceStartTs = i.toLong(), title = "Task$i",
+                startDay = 20261016, endDay = 20261016
+            ) }
+            provideComposable {
+                MonthWidgetContent(
+                    monthGrid = MonthGrid.compute(2026, 9, Calendar.MONDAY),
+                    monthEvents = mapOf(20261016 to events), monthOffset = 0,
+                    targetYear = 2026, targetMonth0 = 9, firstDayOfWeek = Calendar.MONDAY,
+                    today = LocalDate.of(2026, 10, 16), weekCount = 2, maxEventsPerDay = 15
+                )
+            }
+            for (i in 1..6) onAllNodes(hasTextEqualTo("Task$i")).assertCountEquals(1)
+        }
+
+    @Test
+    fun `large month widget applies the configured daily limit with a correct overflow count`() =
+        runGlanceAppWidgetUnitTest {
+            setContext(ApplicationProvider.getApplicationContext())
+            setAppWidgetSize(DpSize(400.dp, 600.dp))
+            val events = (1..10).map { i -> createWidgetEvent().copy(
+                eventId = i.toLong(), occurrenceStartTs = i.toLong(), title = "Task$i",
+                startDay = 20261016, endDay = 20261016
+            ) }
+            provideComposable {
+                MonthWidgetContent(
+                    monthGrid = MonthGrid.compute(2026, 9, Calendar.MONDAY),
+                    monthEvents = mapOf(20261016 to events), monthOffset = 0,
+                    targetYear = 2026, targetMonth0 = 9, firstDayOfWeek = Calendar.MONDAY,
+                    today = LocalDate.of(2026, 10, 16), weekCount = 2, maxEventsPerDay = 3
+                )
+            }
+            for (i in 1..3) onAllNodes(hasTextEqualTo("Task$i")).assertCountEquals(1)
+            for (i in 4..10) onAllNodes(hasTextEqualTo("Task$i")).assertCountEquals(0)
+            onAllNodes(hasTextEqualTo(resources.getString(R.string.status_more_events_compact, 7))).assertCountEquals(1)
+        }
+
+    @Test
+    fun `minimum height grows only with the configured week count`() {
+        assertEquals(240, monthWidgetMinHeightDp(0))
+        for (weeks in 1..6) {
+            val height = monthWidgetMinHeightDp(weeks)
+            assertTrue(monthWidgetGridHeightDp(height.toFloat()) / weeks >= MONTH_MIN_WEEK_HEIGHT_DP)
+            assertEquals(100 + (weeks - 1) * 28, height)
+        }
+        assertEquals(monthWidgetMinHeightDp(6), monthWidgetMinHeightDp(0))
+    }
 
     private fun renderTapFixture(block: GlanceAppWidgetUnitTest.() -> Unit) =
         runGlanceAppWidgetUnitTest {

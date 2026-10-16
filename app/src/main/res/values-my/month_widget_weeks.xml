@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">မြင်ရသော ပြက္ခဒိန် ရက်သတ္တပတ်များ</string>
+    <string name="month_widget_weeks_auto">အလိုအလျောက် (တစ်လလုံး)</string>
+    <string name="month_widget_weeks_description">လစဉ်ဝစ်ဂျက်အားလုံးတွင် ပြသမည့် ရက်သတ္တပတ်များ။ အလိုအလျောက်စနစ်က တစ်လလုံးကို ပြသပြီး အတိုချုံးမြင်ကွင်းတွင် ယခုရက်သတ္တပတ်ကို မြင်ရဆဲဖြစ်သည်။</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d ပတ်</item>
+        <item quantity="other">%1$d ပတ်</item>
+    </plurals>
+</resources>

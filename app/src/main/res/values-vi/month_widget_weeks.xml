@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Các tuần lịch hiển thị</string>
+    <string name="month_widget_weeks_auto">Tự động (cả tháng)</string>
+    <string name="month_widget_weeks_description">Các tuần trong mọi tiện ích tháng. Tự động hiển thị cả tháng; chế độ xem ngắn hơn vẫn hiển thị tuần hiện tại.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d tuần</item>
+        <item quantity="other">%1$d tuần</item>
+    </plurals>
+</resources>

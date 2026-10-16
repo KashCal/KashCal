@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Seachtainí féilire le feiceáil</string>
+    <string name="month_widget_weeks_auto">Uathoibríoch (an mhí iomlán)</string>
+    <string name="month_widget_weeks_description">Seachtainí i ngach giuirléid mhíosúil. Taispeánann an mód uathoibríoch an mhí iomlán; coinníonn radhairc níos giorra an tseachtain reatha le feiceáil.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d seachtain</item>
+        <item quantity="two">%1$d sheachtain</item>
+        <item quantity="few">%1$d seachtaine</item>
+        <item quantity="many">%1$d seachtaine</item>
+        <item quantity="other">%1$d seachtain</item>
+    </plurals>
+</resources>
