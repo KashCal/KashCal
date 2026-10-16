@@ -140,7 +140,7 @@ fun WidgetEventLimitSheet(
 
 /** Draws one radio row of these sheets, tinted with a check icon when selected. */
 @Composable
-private fun OptionRow(
+internal fun OptionRow(
     label: String,
     isSelected: Boolean,
     onSelect: () -> Unit

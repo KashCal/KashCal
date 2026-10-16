@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Näkyvät kalenteriviikot</string>
+    <string name="month_widget_weeks_auto">Automaattinen (koko kuukausi)</string>
+    <string name="month_widget_weeks_description">Viikot kaikissa kuukausiwidgeteissä. Automaattinen näyttää koko kuukauden; lyhyemmät näkymät pitävät nykyisen viikon näkyvissä.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d viikko</item>
+        <item quantity="other">%1$d viikkoa</item>
+    </plurals>
+</resources>

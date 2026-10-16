@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">표시할 달력 주 수</string>
+    <string name="month_widget_weeks_auto">자동 (전체 월)</string>
+    <string name="month_widget_weeks_description">모든 월별 위젯에 표시할 주 수입니다. 자동은 전체 월을 표시하며, 짧은 보기에서도 현재 주가 표시됩니다.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d주</item>
+        <item quantity="other">%1$d주</item>
+    </plurals>
+</resources>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">የሚታዩ የቀን መቁጠሪያ ሳምንታት</string>
+    <string name="month_widget_weeks_auto">ራስ-ሰር (ሙሉ ወር)</string>
+    <string name="month_widget_weeks_description">በሁሉም የወር መግብሮች የሚታዩ ሳምንታት። ራስ-ሰር ሙሉውን ወር ያሳያል፤ አጭር እይታዎች የአሁኑን ሳምንት ያሳያሉ።</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d ሳምንት</item>
+        <item quantity="other">%1$d ሳምንታት</item>
+    </plurals>
+</resources>

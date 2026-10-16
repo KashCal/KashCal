@@ -180,7 +180,7 @@ abstract class MonthWidgetTranslationCases {
         endDay = endDay
     )
 
-    protected fun render(fixture: MonthFixture, size: DpSize) = runBlocking {
+    protected fun render(fixture: MonthFixture, size: DpSize, weekCount: Int = 0, eventLimit: Int = 5) = runBlocking {
         GlanceRemoteViews().compose(context = context, size = size) {
             GlanceTheme {
                 MonthWidgetContent(
@@ -191,8 +191,61 @@ abstract class MonthWidgetTranslationCases {
                     targetMonth0 = fixture.month0,
                     firstDayOfWeek = fixture.firstDayOfWeek,
                     showWeekNumbers = fixture.showWeekNumbers,
-                    today = fixture.today
+                    today = fixture.today,
+                    weekCount = weekCount,
+                    maxEventsPerDay = eventLimit,
                 )
+            }
+        }
+    }
+
+    @Test
+    fun `one-week RemoteViews retain titles after the ninth event row`() {
+        val grid = MonthGrid.compute(2026, 9, Calendar.MONDAY)
+        val events = (0..19).map { event(it.toLong(), 20261016, 20261016).copy(title = "Item$it") }
+        val fixture = MonthFixture(grid, 2026, 9, Calendar.MONDAY,
+            mapOf(20261016 to events), false, LocalDate.of(2026, 10, 16))
+        val result = render(fixture, DpSize(400.dp, 700.dp), weekCount = 1, eventLimit = 15)
+        val root = result.remoteViews.apply(context, android.widget.FrameLayout(context))
+        val texts = mutableListOf<String>()
+        fun collect(view: android.view.View) {
+            if (view is android.widget.TextView) texts += view.text.toString()
+            if (view is android.view.ViewGroup) for (i in 0 until view.childCount) collect(view.getChildAt(i))
+        }
+        collect(root)
+        assertTrue("Late rows must survive RemoteViews translation: $texts", "Item14" in texts)
+    }
+
+    @Test
+    fun `minimum resized widgets translate without scrolling`() {
+        val grid = MonthGrid.compute(2026, 9, Calendar.MONDAY)
+        val fixture = MonthFixture(grid, 2026, 9, Calendar.MONDAY, emptyMap(), true, LocalDate.of(2026, 10, 16))
+        for (weeks in 0..6) {
+            for (height in listOf(monthWidgetMinHeightDp(weeks), 304)) {
+                val result = render(fixture, DpSize(250.dp, height.dp), weekCount = weeks)
+                val context = ApplicationProvider.getApplicationContext<Context>()
+                val root = result.remoteViews.apply(context, android.widget.FrameLayout(context))
+                fun checkFixed(view: android.view.View) {
+                    assertTrue("Month grid must not scroll", view !is android.widget.AbsListView && view !is android.widget.ScrollView)
+                    if (view is android.view.ViewGroup) for (i in 0 until view.childCount) checkFixed(view.getChildAt(i))
+                }
+                checkFixed(root)
+            }
+        }
+    }
+
+    @Test
+    fun `reduced week layouts use extra event rows without overflowing real RemoteViews`() {
+        val grid = MonthGrid.compute(2026, 9, Calendar.MONDAY)
+        val codes = grid.weeks.flatten().map { MonthGrid.computeDayCodeForCell(it, 2026, 9) }
+        for (weeks in 1..6) {
+            for (kind in 0..2) {
+                val events = codes.associateWith { code ->
+                    (0..19).map { index -> event(code.toLong() * 100 + index, code, code, kind) }
+                }
+                val fixture = MonthFixture(grid, 2026, 9, Calendar.MONDAY, events, true, LocalDate.of(2026, 10, 16))
+                val result = render(fixture, DpSize(400.dp, 700.dp), weekCount = weeks)
+                assertNotNull(result.remoteViews)
             }
         }
     }

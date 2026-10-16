@@ -21,7 +21,7 @@ import javax.inject.Inject
  *
  * The activities theme themselves from the same preferences through their own ViewModels
  * (HomeViewModel, AccountSettingsViewModel), so a change here recolors the running app.
- * [setAccentSeed] and [setColorSource] also refresh widgets; [setThemeMode] doesn't.
+ * [setAccentSeed], [setColorSource] and [setThemeMode] also refresh widgets that follow the app.
  *
  * The widget half ([widgetThemeSource], [widgetColorSource], [widgetAccentSeed]) is independent
  * of the app face but can follow it. The app never reads it; the Glance widgets do, through
@@ -43,7 +43,10 @@ class AppearanceViewModel @Inject constructor(
 
     /** Persists the theme face; the activities recolor from the same preference. */
     fun setThemeMode(mode: ThemeMode) {
-        viewModelScope.launch { dataStore.setTheme(mode.prefValue) }
+        viewModelScope.launch {
+            dataStore.setTheme(mode.prefValue)
+            widgetUpdateManager.updateAllWidgetsForColorChange("theme_changed")
+        }
     }
 
     /** Stores an accent seed, switches to [ColorSource.SEED] and refreshes widgets. */

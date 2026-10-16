@@ -8,6 +8,7 @@ import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.appwidget.updateAll
 import androidx.glance.state.PreferencesGlanceStateDefinition
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -95,6 +96,7 @@ internal suspend fun refreshAllWidgets(
     context: Context,
     includeDateWidget: Boolean = false,
 ): Unit = coroutineScope {
+    updateMonthWidgetSizing(context, org.onekash.kashcal.data.preferences.KashCalDataStore(context).monthWidgetWeeks.first())
     val widgets = buildList {
         add(AgendaWidget::class.java to AgendaWidget())
         add(WeekWidget::class.java to WeekWidget())

@@ -14,6 +14,43 @@ import java.util.Calendar
 class MonthWidgetVisibleWeeksTest {
 
     @Test
+    fun `fixed counts render exactly the requested rows and include today`() {
+        for (firstDay in listOf(Calendar.SUNDAY, Calendar.MONDAY, Calendar.SATURDAY)) {
+            for (month in 1..12) {
+                val grid = MonthGrid.compute(2026, month - 1, firstDay)
+                for (day in 1..java.time.YearMonth.of(2026, month).lengthOfMonth()) {
+                    val today = java.time.LocalDate.of(2026, month, day)
+                    for (count in 1..6) {
+                        val rows = visibleWeeks(grid, count, today)
+                        val expectedCount = minOf(count, visibleWeeks(grid).size)
+                        assertEquals(expectedCount, rows.size)
+                        assertTrue(rows.flatten().any {
+                            it.position == MonthGrid.DayPosition.MonthDate && it.dayOfMonth == day
+                        })
+                        assertEquals(grid.weeks.indexOf(rows.first()) + expectedCount - 1, grid.weeks.indexOf(rows.last()))
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `other months start at the first row and stop at the month boundary`() {
+        val grid = MonthGrid.compute(2026, 1, Calendar.SUNDAY)
+        val today = java.time.LocalDate.of(2026, 10, 16)
+        for (count in 1..6) {
+            assertEquals(visibleWeeks(grid).take(count), visibleWeeks(grid, count, today))
+        }
+    }
+
+    @Test
+    fun `invalid counts fall back to automatic`() {
+        val grid = MonthGrid.compute(2026, 1, Calendar.SUNDAY)
+        assertEquals(visibleWeeks(grid), visibleWeeks(grid, -1))
+        assertEquals(visibleWeeks(grid), visibleWeeks(grid, 7))
+    }
+
+    @Test
     fun `keeps all 6 weeks for a month that spans six`() {
         // May 2026 spans 6 weeks.
         val grid = MonthGrid.compute(2026, 4, Calendar.SUNDAY)
