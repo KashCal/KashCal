@@ -112,6 +112,13 @@ class KashCalDataStore(
         setPreference(PreferencesKeys.FIRST_DAY_OF_WEEK, day)
     }
 
+    val monthWidgetWeeks: Flow<Int>
+        get() = getPreference(PreferencesKeys.MONTH_WIDGET_WEEKS, 0).map { it.takeIf { count -> count in 1..5 } ?: 0 }
+
+    suspend fun setMonthWidgetWeeks(weeks: Int) {
+        setPreference(PreferencesKeys.MONTH_WIDGET_WEEKS, weeks.takeIf { it in 1..5 } ?: 0)
+    }
+
     val showWeekNumbers: Flow<Boolean>
         get() = getPreference(PreferencesKeys.SHOW_WEEK_NUMBERS, false)
 
@@ -414,15 +421,14 @@ class KashCalDataStore(
     }
 
     /**
-     * Maximum events per day in the Agenda and Week widgets. Default 5; the setter stores any
+     * Maximum events per day in the Agenda, Week and Month widgets. Default 5; the setter stores any
      * value other than 3, 5, 8, 10 or 15 as 5.
      */
     val widgetMaxEventsPerDay: Flow<Int>
-        get() = getPreference(PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY, 5)
+        get() = getPreference(PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY, 5).map { normalizeWidgetEventLimit(it) }
 
     suspend fun setWidgetMaxEventsPerDay(count: Int) {
-        val validOptions = setOf(3, 5, 8, 10, 15)
-        val safeCount = if (count in validOptions) count else 5
+        val safeCount = normalizeWidgetEventLimit(count)
         setPreference(PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY, safeCount)
     }
 
@@ -946,6 +952,9 @@ class KashCalDataStore(
     }
 
     companion object {
+        private fun normalizeWidgetEventLimit(count: Int): Int =
+            count.takeIf { it in setOf(3, 5, 8, 10, 15) } ?: 5
+
         const val REMINDER_OFF = -1  // no reminder set
         const val DEFAULT_REMINDER_MINUTES = 15
         // Signed minutes before start (the Android CalendarProvider convention): positive =

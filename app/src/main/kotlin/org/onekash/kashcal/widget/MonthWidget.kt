@@ -16,7 +16,6 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.flow.first
 import org.onekash.kashcal.data.preferences.KashCalDataStore
 import org.onekash.kashcal.ui.model.MonthGrid
 import java.time.YearMonth
@@ -63,8 +62,8 @@ class MonthWidget : GlanceAppWidget() {
         // start day and week-number column. These are initial values only; the produceState calls
         // below re-read them on each refresh stamp.
         val dataStore = KashCalDataStore(context)
-        val initialFirstDayOfWeek = dataStore.getFirstDayOfWeek()
-        val initialShowWeekNumbers = dataStore.showWeekNumbers.first()
+        val initialSettings = fetchMonthWidgetSettings(dataStore)
+        updateMonthWidgetSizing(context, initialSettings.weekCount)
         // Resolve the accent before provideContent so the first RemoteViews carry the picked seed.
         // Seeding produceState with null renders a frame on the platform dynamic palette, and a
         // host that snapshots it then leaves a seed user on wallpaper colors. Null colors mean the
@@ -81,14 +80,12 @@ class MonthWidget : GlanceAppWidget() {
             // Re-read the first-day-of-week and week-number settings on each refresh stamp, which
             // toggling either one bumps through WidgetUpdateManager. Read only outside
             // provideContent, they would stay frozen until the widget was removed and re-added.
-            val firstDayOfWeek by produceState(initialValue = initialFirstDayOfWeek, key1 = refreshStamp) {
-                value = dataStore.getFirstDayOfWeek()
+            val settings by produceState(initialValue = initialSettings, key1 = refreshStamp) {
+                value = fetchMonthWidgetSettings(dataStore)
             }
-            val showWeekNumbers by produceState(initialValue = initialShowWeekNumbers, key1 = refreshStamp) {
-                value = dataStore.showWeekNumbers.first()
-            }
+            val firstDayOfWeek = settings.firstDayOfWeek
 
-            val targetMonth = remember(monthOffset) {
+            val targetMonth = remember(monthOffset, refreshStamp) {
                 YearMonth.now().plusMonths(monthOffset.toLong())
             }
             val monthGrid = remember(targetMonth, firstDayOfWeek) {
@@ -117,7 +114,10 @@ class MonthWidget : GlanceAppWidget() {
                     targetYear = targetMonth.year,
                     targetMonth0 = targetMonth.monthValue - 1,
                     firstDayOfWeek = firstDayOfWeek,
-                    showWeekNumbers = showWeekNumbers,
+                    showWeekNumbers = settings.showWeekNumbers,
+                    weekCount = settings.weekCount,
+                    maxEventsPerDay = settings.maxEventsPerDay,
+                    showEventEmojis = settings.showEventEmojis,
                     forcedDark = colorConfig.forcedDark
                 )
             }

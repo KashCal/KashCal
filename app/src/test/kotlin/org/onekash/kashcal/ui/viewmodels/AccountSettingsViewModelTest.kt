@@ -202,6 +202,7 @@ class AccountSettingsViewModelTest {
         calendarProviderManager = settingsManagerMock()
         calendarProviderRepository = FakeCalendarProviderRepository()
         dataStore = mockk(relaxed = true)
+        every { dataStore.monthWidgetWeeks } returns MutableStateFlow(0)
         widgetUpdateManager = mockk(relaxed = true)
         deviceCalendarReminderScheduler = mockk(relaxed = true)
         backupExporter = mockk(relaxed = true)
@@ -327,6 +328,18 @@ class AccountSettingsViewModelTest {
     }
 
     // ==================== Initial State Tests ====================
+
+    @Test
+    fun `changing visible weeks persists the count and refreshes widgets`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.setMonthWidgetWeeks(2)
+        advanceUntilIdle()
+        coVerifyOrder {
+            dataStore.setMonthWidgetWeeks(2)
+            widgetUpdateManager.updateAllWidgets("month_widget_weeks_changed")
+        }
+    }
 
     @Test
     fun `initial state is Loading`() = runTest {
@@ -1949,6 +1962,7 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         coVerify { dataStore.setShowEventEmojis(true) }
+        coVerify { widgetUpdateManager.updateAllWidgets("event_emojis_changed") }
     }
 
     @Test
@@ -1960,6 +1974,7 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         coVerify { dataStore.setShowEventEmojis(false) }
+        coVerify { widgetUpdateManager.updateAllWidgets("event_emojis_changed") }
     }
 
     @Test
@@ -3530,6 +3545,7 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { calendarProviderManager.onDeviceCalendarSettingsChanged() }
+        coVerify { widgetUpdateManager.updateAllWidgets("device_calendar_selection_changed") }
         verify(exactly = 0) { calendarProviderManager.onEnabled() }
         verify(exactly = 0) { calendarProviderManager.notifyDeviceCalendarChanged() }
     }
@@ -3543,6 +3559,7 @@ class AccountSettingsViewModelTest {
         advanceUntilIdle()
 
         coVerify(exactly = 1) { calendarProviderManager.onDeviceCalendarSettingsChanged() }
+        coVerify { widgetUpdateManager.updateAllWidgets("declined_events_changed") }
         verify(exactly = 0) { calendarProviderManager.onEnabled() }
         verify(exactly = 0) { calendarProviderManager.notifyDeviceCalendarChanged() }
     }

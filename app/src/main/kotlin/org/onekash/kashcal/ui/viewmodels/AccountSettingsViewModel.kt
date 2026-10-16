@@ -419,6 +419,17 @@ class AccountSettingsViewModel @Inject constructor(
      */
     private var changeNotificationsPendingEnable = false
 
+    val monthWidgetWeeks = dataStore.monthWidgetWeeks.stateIn(
+        viewModelScope, SharingStarted.WhileSubscribed(5_000), 0
+    )
+
+    fun setMonthWidgetWeeks(weeks: Int) {
+        viewModelScope.launch {
+            dataStore.setMonthWidgetWeeks(weeks)
+            widgetUpdateManager.updateAllWidgets("month_widget_weeks_changed")
+        }
+    }
+
     private val _widgetMaxEventsPerDay = MutableStateFlow(5)
     val widgetMaxEventsPerDay: StateFlow<Int> = _widgetMaxEventsPerDay.asStateFlow()
 
@@ -809,6 +820,7 @@ class AccountSettingsViewModel @Inject constructor(
     fun setShowEventEmojis(show: Boolean) {
         viewModelScope.launch {
             dataStore.setShowEventEmojis(show)
+            widgetUpdateManager.updateAllWidgets("event_emojis_changed")
         }
     }
 
@@ -1982,12 +1994,14 @@ class AccountSettingsViewModel @Inject constructor(
                 calendarProviderManager.onDisabled()
                 _deviceCalendars.value = emptyList()
             }
+            widgetUpdateManager.updateAllWidgets("device_calendars_changed")
         }
     }
 
     fun onToggleShowDeclinedEvents(show: Boolean) {
         viewModelScope.launch {
             dataStore.setShowDeclinedEvents(show)
+            widgetUpdateManager.updateAllWidgets("declined_events_changed")
             // Re-query device events so views refresh with the updated filter
             calendarProviderManager.onDeviceCalendarSettingsChanged()
         }
@@ -2026,6 +2040,7 @@ class AccountSettingsViewModel @Inject constructor(
             // Re-query device events so the calendar views refresh
             calendarProviderManager.onDeviceCalendarSettingsChanged()
             if (!enabled) deviceCalendarReminderScheduler.scheduleNextReminder()
+            widgetUpdateManager.updateAllWidgets("device_calendar_selection_changed")
         }
     }
 

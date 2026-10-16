@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">ദൃശ്യമാകുന്ന കലണ്ടർ ആഴ്ചകൾ</string>
+    <string name="month_widget_weeks_auto">സ്വയമേവ (മുഴുവൻ മാസം)</string>
+    <string name="month_widget_weeks_description">എല്ലാ മാസ വിജറ്റുകളിലും കാണിക്കുന്ന ആഴ്ചകൾ. സ്വയമേവ മുഴുവൻ മാസവും കാണിക്കുന്നു; ചുരുക്കിയ കാഴ്ചയിലും നിലവിലെ ആഴ്ച ദൃശ്യമായി തുടരും.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d ആഴ്ച</item>
+        <item quantity="other">%1$d ആഴ്ചകൾ</item>
+    </plurals>
+</resources>
