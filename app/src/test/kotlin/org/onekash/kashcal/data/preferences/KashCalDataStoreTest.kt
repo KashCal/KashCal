@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.core.app.ApplicationProvider
 import app.cash.turbine.test
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -61,6 +62,48 @@ class KashCalDataStoreTest {
         dataStoreScope.cancel()
         Dispatchers.resetMain()
         testDataStoreFile.delete()
+    }
+
+    @Test
+    fun `widget limit accepts every offered value and normalizes invalid backup values`() = runTest {
+        for (limit in listOf(3, 5, 8, 10, 15)) {
+            dataStore.setWidgetMaxEventsPerDay(limit)
+            dataStore.widgetMaxEventsPerDay.test {
+                assertEquals(limit, awaitItem())
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+        dataStore.setPreference(PreferencesKeys.WIDGET_MAX_EVENTS_PER_DAY, -1)
+        dataStore.widgetMaxEventsPerDay.test {
+            assertEquals(5, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `legacy six week preference reads as whole month`() = runTest {
+        dataStore.setPreference(PreferencesKeys.MONTH_WIDGET_WEEKS, 6)
+        assertEquals(0, dataStore.monthWidgetWeeks.first())
+    }
+
+    @Test
+    fun `month widget weeks persist and clamp without changing the app week settings`() = runTest {
+        dataStore.monthWidgetWeeks.test {
+            assertEquals(0, awaitItem())
+            dataStore.setMonthWidgetWeeks(3)
+            assertEquals(3, awaitItem())
+            dataStore.setMonthWidgetWeeks(6)
+            assertEquals(0, awaitItem())
+            dataStore.setMonthWidgetWeeks(2)
+            assertEquals(2, awaitItem())
+            dataStore.setMonthWidgetWeeks(-1)
+            assertEquals(0, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
+        dataStore.showWeekNumbers.test {
+            assertEquals(false, awaitItem())
+            cancelAndIgnoreRemainingEvents()
+        }
     }
 
     // ==================== getPreference Tests ====================

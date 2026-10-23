@@ -2,6 +2,7 @@ package org.onekash.kashcal.ui.viewmodels
 
 import app.cash.turbine.test
 import io.mockk.coVerify
+import io.mockk.coVerifyOrder
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
@@ -80,10 +81,13 @@ class AppearanceViewModelTest {
     }
 
     @Test
-    fun `setThemeMode persists the mode pref value`() = runTest {
+    fun `setThemeMode persists the mode before refreshing widgets that follow the app`() = runTest {
         vm().setThemeMode(ThemeMode.LIGHT)
         testDispatcher.scheduler.advanceUntilIdle()
-        coVerify { dataStore.setTheme(ThemeMode.LIGHT.prefValue) }
+        coVerifyOrder {
+            dataStore.setTheme(ThemeMode.LIGHT.prefValue)
+            widgetUpdateManager.updateAllWidgetsForColorChange("theme_changed")
+        }
     }
 
     @Test

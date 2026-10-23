@@ -760,6 +760,16 @@ class HomeViewModelTest {
     // ==================== Calendar Visibility Tests ====================
 
     @Test
+    fun `device visibility uses coordinator so widgets share the updated filter`() = runTest {
+        coEvery { eventCoordinator.toggleDeviceCalendarVisibility(any()) } returns Unit
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+        viewModel.toggleDeviceCalendarVisibility(42L)
+        advanceUntilIdle()
+        coVerify { eventCoordinator.toggleDeviceCalendarVisibility(42L) }
+    }
+
+    @Test
     fun `toggleCalendarVisibility calls eventCoordinator setCalendarVisibility`() = runTest {
         coEvery { eventCoordinator.setCalendarVisibility(any(), any()) } returns Unit
 

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Бачныя тыдні календара</string>
+    <string name="month_widget_weeks_auto">Аўтаматычна (увесь месяц)</string>
+    <string name="month_widget_weeks_description">Тыдні ва ўсіх віджэтах месяца. Аўтаматычны рэжым паказвае ўвесь месяц; скарочаны выгляд пакідае бягучы тыдзень бачным.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d тыдзень</item>
+        <item quantity="few">%1$d тыдні</item>
+        <item quantity="many">%1$d тыдняў</item>
+        <item quantity="other">%1$d тыдня</item>
+    </plurals>
+</resources>

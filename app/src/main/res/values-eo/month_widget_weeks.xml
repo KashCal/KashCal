@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Videblaj kalendaraj semajnoj</string>
+    <string name="month_widget_weeks_auto">Aŭtomate (tuta monato)</string>
+    <string name="month_widget_weeks_description">Semajnoj en ĉiuj monataj fenestraĵoj. Aŭtomate montras la tutan monaton; pli mallongaj vidoj konservas la nunan semajnon videbla.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d semajno</item>
+        <item quantity="other">%1$d semajnoj</item>
+    </plurals>
+</resources>

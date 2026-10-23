@@ -88,6 +88,7 @@ class AccountSettingsScreenComposeTest {
      */
     private class Rec {
         // (Int) -> Unit cluster
+        var weeks: Int? = null
         var widget: Int? = null
         var duration: Int? = null
         var timed: Int? = null
@@ -145,6 +146,8 @@ class AccountSettingsScreenComposeTest {
                     titleSuggestionsEnabled = true,
                     showEventEmojis = true,
                     // (Int) cluster, plus the (Long) sync frequency
+                    monthWidgetWeeks = 2,
+                    onMonthWidgetWeeksChange = { rec.weeks = it },
                     onWidgetMaxEventsPerDayChange = { rec.widget = it },
                     onDefaultEventDurationChange = { rec.duration = it },
                     onDefaultReminderTimedChange = { rec.timed = it },
@@ -180,6 +183,7 @@ class AccountSettingsScreenComposeTest {
     /** Asserts the named (Int) callback fired with [expected] and every sibling stayed null. */
     private fun assertOnlyInt(rec: Rec, fired: String, expected: Int) {
         val all = linkedMapOf(
+            "weeks" to rec.weeks,
             "widget" to rec.widget,
             "duration" to rec.duration,
             "timed" to rec.timed,
@@ -201,6 +205,7 @@ class AccountSettingsScreenComposeTest {
     private fun assertOnlySyncInterval(rec: Rec, expected: Long) {
         assertEquals("syncInterval should fire with $expected", expected, rec.syncInterval)
         val ints = linkedMapOf(
+            "weeks" to rec.weeks,
             "widget" to rec.widget,
             "duration" to rec.duration,
             "timed" to rec.timed,
@@ -311,6 +316,18 @@ class AccountSettingsScreenComposeTest {
     }
 
     // ==================== (Int) cluster: fired-with-value + siblings silent ====================
+
+    @Test
+    fun `visible calendar weeks picker fires only its callback and dismisses`() {
+        val rec = Rec()
+        render(rec)
+        composeTestRule.onNodeWithText("Visible calendar weeks").performClick()
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("3 weeks").performClick()
+        assertOnlyInt(rec, fired = "weeks", expected = 3)
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("3 weeks").assertDoesNotExist()
+    }
 
     @Test
     fun `widget event limit row fires only its callback with the picked value`() {

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_month_widget_weeks">Көрінетін күнтізбе апталары</string>
+    <string name="month_widget_weeks_auto">Автоматты (толық ай)</string>
+    <string name="month_widget_weeks_description">Барлық айлық виджеттердегі апталар. Автоматты режим толық айды көрсетеді; қысқа көріністе ағымдағы апта көрініп тұрады.</string>
+    <plurals name="month_widget_weeks_count">
+        <item quantity="one">%1$d апта</item>
+        <item quantity="other">%1$d апта</item>
+    </plurals>
+</resources>
