@@ -158,7 +158,7 @@ class DayIconsTest {
         }.toList()
 
     @Test
-    fun `every day foreground is three cards side by side, the shape the onboarding hero animates`() {
+    fun `every day foreground is three cards side by side`() {
         days.forEach { day ->
             val parser = context.resources.getXml(DayIcons.foregroundFor(day))
             var topLevelGroups = 0

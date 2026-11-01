@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Koristi kalendar van mreže</string>
     <string name="onboarding_trust">Otvoreni kod. Bez reklama. Bez praćenja.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Podsetnici su isključeni</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d događaj ove nedelje ima podsetnik.</item>
@@ -276,6 +276,8 @@
     <string name="reminders_off_not_now">Ne sada</string>
     <string name="reminders_off_turn_on">Uključi</string>
     <string name="reminders_on_snackbar">Podsetnici su uključeni</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Svi tvoji kalendari u jednoj privatnoj aplikaciji.</string>
     <string name="about_help_title">Pomoć i vodiči</string>
     <string name="about_help_detail">Podešavanje, sinhronizacija i pitanja</string>
@@ -286,6 +288,8 @@
     <string name="about_link_failed">Nijedna aplikacija ne može da otvori ovaj link.</string>
     <string name="about_built_in_austin">Napravljeno sa ❤️ u gradu Austin</string>
     <string name="about_version">Verzija %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Preskoči</string>
     <string name="whats_new_next">Dalje</string>
     <string name="whats_new_page_of">Stranica %1$d od %2$d</string>
@@ -661,9 +665,9 @@
     <string name="settings_device_calendars">Kalendari uređaja</string>
     <string name="settings_device_calendars_hint">Kalendari iz drugih aplikacija</string>
     <string name="offline_calendars_row_label">Kalendari van mreže</string>
-    <string name="offline_calendars_row_hint">Kalendari koji ostaju na ovom telefonu</string>
+    <string name="offline_calendars_row_hint">Kalendari koji ostaju na ovom uređaju</string>
     <string name="offline_calendars_manage_note">Prevuci kalendar da ga obrišeš.</string>
-    <string name="offline_calendars_info">Čuvaju se samo na ovom telefonu i nikad se ne sinhronizuju. Rezervne kopije ne uključuju događaje, pa izvezi kalendar ako želiš da sačuvaš kopiju.</string>
+    <string name="offline_calendars_info">Čuvaju se na ovom uređaju i nikad se ne sinhronizuju.</string>
     <string name="offline_calendars_info_cd">O kalendarima van mreže</string>
     <string name="offline_calendar_default_state">Podrazumevani</string>
     <string name="offline_calendar_new">Novi kalendar</string>
@@ -863,6 +867,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Prikaži kalendare iz Google, Outlook i aplikacija za sinhronizaciju na ovom uređaju.</string>
     <string name="device_calendars_show_switch">Prikaži kalendare uređaja</string>
+    <string name="device_calendars_access_off">Pristup kalendaru za KashCal je isključen.</string>
     <string name="device_calendars_pick_hint">Izaberi kalendare za prikaz.</string>
     <string name="device_calendars_empty">Nije pronađen nijedan kalendar.</string>
     <string name="device_calendars_local">Lokalni</string>
@@ -1202,7 +1207,6 @@
     <string name="empty_no_events_day_3">Poklon: prazan dan.</string>
     <string name="empty_no_events_day_4">Stanje kalendara: predivno prazno.</string>
     <string name="empty_no_events_day_5">Ništa u planu. Uživaj u miru.</string>
-    <string name="cd_empty_no_events_day">Miran dan, ništa na rasporedu</string>
     <string name="filter_date">Datum</string>
     <string name="label_select_date">Izaberi datum</string>
     <string name="hint_tap_date_range">Dodirni isti datum za jedan dan ili drugi za raspon</string>

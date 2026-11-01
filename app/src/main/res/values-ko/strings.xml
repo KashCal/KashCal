@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">오프라인 캘린더 사용</string>
     <string name="onboarding_trust">오픈 소스. 광고 없음. 추적 없음.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">알림이 꺼져 있어요</string>
     <plurals name="reminders_off_body">
         <item quantity="other">이번 주 일정 %d개에 알림이 설정되어 있어요.</item>
@@ -274,6 +274,8 @@
     <string name="reminders_off_not_now">나중에</string>
     <string name="reminders_off_turn_on">켜기</string>
     <string name="reminders_on_snackbar">알림이 켜졌어요</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">모든 캘린더를 하나의 프라이빗 앱에서.</string>
     <string name="about_help_title">도움말 및 가이드</string>
     <string name="about_help_detail">설정, 동기화 및 질문</string>
@@ -284,6 +286,8 @@
     <string name="about_link_failed">이 링크를 열 수 있는 앱이 없어요.</string>
     <string name="about_built_in_austin">Austin에서 ❤️을 담아 만들었어요</string>
     <string name="about_version">버전 %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">건너뛰기</string>
     <string name="whats_new_next">다음</string>
     <string name="whats_new_page_of">%2$d페이지 중 %1$d페이지</string>
@@ -659,9 +663,9 @@
     <string name="settings_device_calendars">기기 캘린더</string>
     <string name="settings_device_calendars_hint">다른 앱의 캘린더</string>
     <string name="offline_calendars_row_label">오프라인 캘린더</string>
-    <string name="offline_calendars_row_hint">이 휴대폰에만 저장되는 캘린더</string>
+    <string name="offline_calendars_row_hint">이 기기에 저장되는 캘린더</string>
     <string name="offline_calendars_manage_note">캘린더를 스와이프하면 삭제할 수 있어요.</string>
-    <string name="offline_calendars_info">이 휴대폰에만 저장되고 동기화되지 않아요. 백업에는 일정이 포함되지 않으니 사본을 남기려면 캘린더를 내보내세요.</string>
+    <string name="offline_calendars_info">이 기기에 저장되고 동기화되지 않아요.</string>
     <string name="offline_calendars_info_cd">오프라인 캘린더 정보</string>
     <string name="offline_calendar_default_state">기본</string>
     <string name="offline_calendar_new">새 캘린더</string>
@@ -841,6 +845,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">이 기기의 Google, Outlook 및 동기화 앱 캘린더를 표시합니다.</string>
     <string name="device_calendars_show_switch">기기 캘린더 표시</string>
+    <string name="device_calendars_access_off">KashCal의 캘린더 접근 권한이 꺼져 있어요.</string>
     <string name="device_calendars_pick_hint">표시할 캘린더를 선택하세요.</string>
     <string name="device_calendars_empty">캘린더를 찾지 못했어요.</string>
     <string name="device_calendars_local">로컬</string>
@@ -1090,7 +1095,6 @@
     <string name="empty_no_events_day_3">선물이에요: 텅 빈 하루.</string>
     <string name="empty_no_events_day_4">캘린더 상태: 완벽하게 비었어요.</string>
     <string name="empty_no_events_day_5">예정된 일이 없어요. 여유를 즐기세요.</string>
-    <string name="cd_empty_no_events_day">한가한 하루, 일정 없음</string>
     <string name="filter_date">날짜</string>
     <string name="label_select_date">날짜 선택</string>
     <string name="hint_tap_date_range">같은 날짜를 탭하면 하루, 다른 날짜를 탭하면 범위 선택</string>

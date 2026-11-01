@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Naudoti kalendorių be ryšio</string>
     <string name="onboarding_trust">Atvirasis kodas. Be reklamų. Be sekimo.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Priminimai išjungti</string>
     <plurals name="reminders_off_body">
         <item quantity="one">Šią savaitę %d įvykis turi priminimą.</item>
@@ -277,6 +277,8 @@
     <string name="reminders_off_not_now">Ne dabar</string>
     <string name="reminders_off_turn_on">Įjungti</string>
     <string name="reminders_on_snackbar">Priminimai įjungti</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Visi tavo kalendoriai vienoje privačioje programėlėje.</string>
     <string name="about_help_title">Pagalba ir vadovai</string>
     <string name="about_help_detail">Sąranka, sinchronizavimas ir klausimai</string>
@@ -287,6 +289,8 @@
     <string name="about_link_failed">Nėra programėlės, kuri galėtų atidaryti šią nuorodą.</string>
     <string name="about_built_in_austin">Sukurta su ❤️ mieste Austin</string>
     <string name="about_version">Versija %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Praleisti</string>
     <string name="whats_new_next">Toliau</string>
     <string name="whats_new_page_of">Puslapis %1$d iš %2$d</string>
@@ -662,9 +666,9 @@
     <string name="settings_device_calendars">Įrenginio kalendoriai</string>
     <string name="settings_device_calendars_hint">Kalendoriai iš kitų programų</string>
     <string name="offline_calendars_row_label">Kalendoriai be ryšio</string>
-    <string name="offline_calendars_row_hint">Kalendoriai, kurie lieka šiame telefone</string>
+    <string name="offline_calendars_row_hint">Kalendoriai, kurie lieka šiame įrenginyje</string>
     <string name="offline_calendars_manage_note">Perbrauk kalendorių, kad jį ištrintum.</string>
-    <string name="offline_calendars_info">Laikomi tik šiame telefone ir niekada nesinchronizuojami. Atsarginės kopijos neapima įvykių, todėl eksportuok kalendorių, kad turėtum kopiją.</string>
+    <string name="offline_calendars_info">Laikomi šiame įrenginyje ir niekada nesinchronizuojami.</string>
     <string name="offline_calendars_info_cd">Apie kalendorius be ryšio</string>
     <string name="offline_calendar_default_state">Numatytasis</string>
     <string name="offline_calendar_new">Naujas kalendorius</string>
@@ -874,6 +878,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Rodyk Google, Outlook ir sinchronizavimo programų kalendorius šiame įrenginyje.</string>
     <string name="device_calendars_show_switch">Rodyti įrenginio kalendorius</string>
+    <string name="device_calendars_access_off">KashCal prieiga prie kalendoriaus išjungta.</string>
     <string name="device_calendars_pick_hint">Pasirink, kuriuos kalendorius rodyti.</string>
     <string name="device_calendars_empty">Kalendorių nerasta.</string>
     <string name="device_calendars_local">Vietinis</string>
@@ -1258,7 +1263,6 @@
     <string name="empty_no_events_day_3">Dovana: tuščia diena.</string>
     <string name="empty_no_events_day_4">Kalendoriaus būsena: nuostabiai tuščia.</string>
     <string name="empty_no_events_day_5">Nieko nesuplanuota. Mėgaukis ramybe.</string>
-    <string name="cd_empty_no_events_day">Rami diena, nieko nesuplanuota</string>
     <string name="filter_date">Data</string>
     <string name="label_select_date">Pasirinkti datą</string>
     <string name="hint_tap_date_range">Bakstelėkite tą pačią datą vienai dienai arba kitą datą intervalui</string>

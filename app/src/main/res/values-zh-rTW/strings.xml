@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">使用離線行事曆</string>
     <string name="onboarding_trust">開放原始碼。無廣告。無追蹤。</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">提醒已關閉</string>
     <plurals name="reminders_off_body">
         <item quantity="other">本週有 %d 個事件設有提醒。</item>
@@ -274,6 +274,8 @@
     <string name="reminders_off_not_now">稍後再說</string>
     <string name="reminders_off_turn_on">開啟</string>
     <string name="reminders_on_snackbar">提醒已開啟</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">你的所有行事曆，盡在一個私密的應用程式。</string>
     <string name="about_help_title">說明與指南</string>
     <string name="about_help_detail">設定、同步與常見問題</string>
@@ -284,6 +286,8 @@
     <string name="about_link_failed">沒有可以開啟這個連結的應用程式。</string>
     <string name="about_built_in_austin">在 Austin 用 ❤️ 打造</string>
     <string name="about_version">版本 %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">略過</string>
     <string name="whats_new_next">下一步</string>
     <string name="whats_new_page_of">第 %1$d 頁，共 %2$d 頁</string>
@@ -659,9 +663,9 @@
     <string name="settings_device_calendars">裝置行事曆</string>
     <string name="settings_device_calendars_hint">其他應用程式的行事曆</string>
     <string name="offline_calendars_row_label">離線行事曆</string>
-    <string name="offline_calendars_row_hint">只存放在這支手機上的行事曆</string>
+    <string name="offline_calendars_row_hint">存放在此裝置上的行事曆</string>
     <string name="offline_calendars_manage_note">滑動行事曆即可刪除。</string>
-    <string name="offline_calendars_info">只存放在這支手機上，永不同步。備份不含事件，請匯出行事曆以保留副本。</string>
+    <string name="offline_calendars_info">存放在此裝置上，永不同步。</string>
     <string name="offline_calendars_info_cd">關於離線行事曆</string>
     <string name="offline_calendar_default_state">預設</string>
     <string name="offline_calendar_new">新增行事曆</string>
@@ -841,6 +845,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">顯示此裝置上來自 Google、Outlook 和同步應用程式的行事曆。</string>
     <string name="device_calendars_show_switch">顯示裝置行事曆</string>
+    <string name="device_calendars_access_off">開序曆的行事曆存取權已關閉。</string>
     <string name="device_calendars_pick_hint">選擇要顯示的行事曆。</string>
     <string name="device_calendars_empty">找不到行事曆。</string>
     <string name="device_calendars_local">本機</string>
@@ -1090,7 +1095,6 @@
     <string name="empty_no_events_day_3">一份禮物：空蕩蕩的一天。</string>
     <string name="empty_no_events_day_4">行事曆狀態：空得恰到好處。</string>
     <string name="empty_no_events_day_5">沒有安排，好好享受這份寧靜吧。</string>
-    <string name="cd_empty_no_events_day">悠閒的一天，沒有安排</string>
     <string name="filter_date">日期</string>
     <string name="label_select_date">選擇日期</string>
     <string name="hint_tap_date_range">點選同一日期選擇單天，或點選另一日期選擇範圍</string>

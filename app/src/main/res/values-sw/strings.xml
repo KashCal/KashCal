@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Tumia kalenda ya nje ya mtandao</string>
     <string name="onboarding_trust">Chanzo huria. Hakuna matangazo. Hakuna ufuatiliaji.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Vikumbusho vimezimwa</string>
     <plurals name="reminders_off_body">
         <item quantity="one">Tukio %d wiki hii lina kikumbusho.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Si Sasa</string>
     <string name="reminders_off_turn_on">Washa</string>
     <string name="reminders_on_snackbar">Vikumbusho vimewashwa</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Kalenda zako zote katika programu moja ya faragha.</string>
     <string name="about_help_title">Usaidizi na miongozo</string>
     <string name="about_help_detail">Usanidi, kusawazisha na maswali</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Hakuna programu inayoweza kufungua kiungo hiki.</string>
     <string name="about_built_in_austin">Imejengwa kwa ❤️ huko Austin</string>
     <string name="about_version">Toleo %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Ruka</string>
     <string name="whats_new_next">Endelea</string>
     <string name="whats_new_page_of">Ukurasa %1$d kati ya %2$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Kalenda za Kifaa</string>
     <string name="settings_device_calendars_hint">Kalenda kutoka kwa programu zingine</string>
     <string name="offline_calendars_row_label">Kalenda za nje ya mtandao</string>
-    <string name="offline_calendars_row_hint">Kalenda zinazobaki kwenye simu hii</string>
+    <string name="offline_calendars_row_hint">Kalenda zinazobaki kwenye kifaa hiki</string>
     <string name="offline_calendars_manage_note">Telezesha kalenda ili kuifuta.</string>
-    <string name="offline_calendars_info">Huhifadhiwa kwenye simu hii pekee na hazisawazishwi kamwe. Nakala rudufu hazijumuishi matukio, kwa hivyo hamisha kalenda ili kuhifadhi nakala.</string>
+    <string name="offline_calendars_info">Huhifadhiwa kwenye kifaa hiki na hazisawazishwi kamwe.</string>
     <string name="offline_calendars_info_cd">Kuhusu kalenda za nje ya mtandao</string>
     <string name="offline_calendar_default_state">Chaguomsingi</string>
     <string name="offline_calendar_new">Kalenda mpya</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Onyesha kalenda kutoka Google, Outlook na programu za kusawazisha kwenye kifaa hiki.</string>
     <string name="device_calendars_show_switch">Onyesha kalenda za kifaa</string>
+    <string name="device_calendars_access_off">Ufikiaji wa kalenda umezimwa kwa KashCal.</string>
     <string name="device_calendars_pick_hint">Chagua kalenda za kuonyesha.</string>
     <string name="device_calendars_empty">Hakuna kalenda zilizopatikana.</string>
     <string name="device_calendars_local">Ndani</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">Zawadi: siku tupu.</string>
     <string name="empty_no_events_day_4">Hali ya kalenda: tupu kwa fahari.</string>
     <string name="empty_no_events_day_5">Hakuna kilichopangwa. Furahia utulivu.</string>
-    <string name="cd_empty_no_events_day">Siku tulivu, hakuna kilichoratibiwa</string>
     <string name="filter_date">Tarehe</string>
     <string name="label_select_date">Chagua tarehe</string>
     <string name="hint_tap_date_range">Gusa tarehe hiyo hiyo kwa siku moja, au tarehe nyingine kwa kipindi</string>

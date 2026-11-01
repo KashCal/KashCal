@@ -1,6 +1,11 @@
 package org.onekash.kashcal.ui.components
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.Easing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,24 +29,78 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.onekash.kashcal.R
 
-// The rows rise in after the icon cards have mostly settled, one after another.
+// The rows rise in one after another, starting half a second in so the sheet's hero shows first.
 private const val ROWS_DELAY_MS = 520L
 private const val ROW_STAGGER_MS = 60L
 private const val ROW_DURATION_MS = 420
 private const val ROW_RISE_DP = 14f
+
+/** The sheets' entrance curve: a quick start that eases gently into place. */
+internal val SheetEntranceEasing = CubicBezierEasing(0.2f, 0.8f, 0.2f, 1f)
+
+/**
+ * Returns where an entrance starts, from [initialHeroPhase]: at the beginning, or with motion off
+ * already at rest.
+ */
+internal fun entranceStartProgress(motionEnabled: Boolean): Float =
+    if (initialHeroPhase(motionEnabled) == HeroPhase.END) 1f else 0f
+
+/**
+ * Returns one progress value per entry of [delaysMs], each going from 0 to 1 over [durationMs]
+ * after its delay, along [easing]. It plays once per sheet: a rotation mid-entrance shows the end,
+ * not a replay, and with motion off every value starts at 1.
+ */
+@Composable
+internal fun rememberEntranceProgress(
+    delaysMs: List<Long>,
+    durationMs: Int,
+    motionEnabled: Boolean,
+    easing: Easing = SheetEntranceEasing,
+): List<Animatable<Float, AnimationVector1D>> {
+    var played by rememberSaveable { mutableStateOf(false) }
+    val start = if (played) 1f else entranceStartProgress(motionEnabled)
+    val progress = remember { List(delaysMs.size) { Animatable(start) } }
+    LaunchedEffect(Unit) {
+        if (played || !motionEnabled) return@LaunchedEffect
+        played = true
+        progress.forEachIndexed { index, value ->
+            launch {
+                delay(delaysMs[index])
+                value.animateTo(1f, tween(durationMs, easing = easing))
+            }
+        }
+    }
+    return progress
+}
+
+/** Returns whether entrances move, read once: false with "Remove animations" on. */
+@Composable
+internal fun rememberHeroMotionEnabled(): Boolean {
+    val resolver = LocalContext.current.contentResolver
+    return remember(resolver) { heroMotionEnabled(resolver) }
+}
 
 /**
  * Lays out a full-height sheet the way the first-run sheet does: [body] as one group centered in

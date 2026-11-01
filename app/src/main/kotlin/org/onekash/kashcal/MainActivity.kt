@@ -293,8 +293,8 @@ class MainActivity : FragmentActivity() {
                 // Share-as-card sheet state
                 var showShareCardSheet by remember { mutableStateOf(false) }
                 var shareCardEvent by remember { mutableStateOf<Event?>(null) }
-                // Whether shareCardEvent was built from a device-calendar event, whose zone the
-                // shared file writes as the device calendar holds it (IcsExporter.exportShareCopy).
+                // Whether shareCardEvent was built from a device-calendar event, which has no
+                // stored copy to patch (IcsExporter.exportShareCopy).
                 var shareCardFromDevice by remember { mutableStateOf(false) }
                 // One-shot share-as-card coach mark, shared by the Room and device-event quick
                 // views: whichever shows it first dismisses it, so it appears once per install.

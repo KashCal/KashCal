@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Kasuta võrguühenduseta kalendrit</string>
     <string name="onboarding_trust">Avatud lähtekood. Reklaamideta. Jälgimiseta.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Meeldetuletused on väljas</string>
     <plurals name="reminders_off_body">
         <item quantity="one">Sel nädalal on %d sündmusel meeldetuletus.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Mitte praegu</string>
     <string name="reminders_off_turn_on">Lülita sisse</string>
     <string name="reminders_on_snackbar">Meeldetuletused sees</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Kõik su kalendrid ühes privaatses rakenduses.</string>
     <string name="about_help_title">Abi ja juhendid</string>
     <string name="about_help_detail">Seadistamine, sünkroonimine ja küsimused</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Ükski rakendus ei saa seda linki avada.</string>
     <string name="about_built_in_austin">Loodud ❤️-ga Austinis</string>
     <string name="about_version">Versioon %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Jäta vahele</string>
     <string name="whats_new_next">Edasi</string>
     <string name="whats_new_page_of">Leht %1$d %2$d-st</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Seadme kalendrid</string>
     <string name="settings_device_calendars_hint">Kalendrid teistest rakendustest</string>
     <string name="offline_calendars_row_label">Võrguühenduseta kalendrid</string>
-    <string name="offline_calendars_row_hint">Kalendrid, mis jäävad sellesse telefoni</string>
+    <string name="offline_calendars_row_hint">Kalendrid, mis jäävad sellesse seadmesse</string>
     <string name="offline_calendars_manage_note">Pühi kalendrit, et see kustutada.</string>
-    <string name="offline_calendars_info">Hoitakse ainult selles telefonis ja neid ei sünkroonita kunagi. Varukoopiad ei sisalda sündmusi, seega ekspordi kalender, et koopia alles jääks.</string>
+    <string name="offline_calendars_info">Hoitakse selles seadmes ja neid ei sünkroonita kunagi.</string>
     <string name="offline_calendars_info_cd">Teave võrguühenduseta kalendrite kohta</string>
     <string name="offline_calendar_default_state">Vaikimisi</string>
     <string name="offline_calendar_new">Uus kalender</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Näita selles seadmes olevaid kalendreid: Google, Outlook ja sünkroonimisrakendused.</string>
     <string name="device_calendars_show_switch">Näita seadme kalendreid</string>
+    <string name="device_calendars_access_off">Rakenduse KashCal kalendriligipääs on välja lülitatud.</string>
     <string name="device_calendars_pick_hint">Vali kalendrid, mida näidata.</string>
     <string name="device_calendars_empty">Kalendreid ei leitud.</string>
     <string name="device_calendars_local">Kohalik</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">Kingitus: tühi päev.</string>
     <string name="empty_no_events_day_4">Kalendri seis: imeliselt tühi.</string>
     <string name="empty_no_events_day_5">Midagi pole plaanis. Naudi rahu.</string>
-    <string name="cd_empty_no_events_day">Rahulik päev, midagi pole plaanis</string>
     <string name="filter_date">Kuupäev</string>
     <string name="label_select_date">Vali kuupäev</string>
     <string name="hint_tap_date_range">Puudutage sama kuupäeva ühe päeva jaoks või teist kuupäeva vahemiku jaoks</string>

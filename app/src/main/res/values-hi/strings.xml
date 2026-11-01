@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">ऑफ़लाइन कैलेंडर इस्तेमाल करें</string>
     <string name="onboarding_trust">ओपन सोर्स। कोई विज्ञापन नहीं। कोई ट्रैकिंग नहीं।</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">रिमाइंडर बंद हैं</string>
     <plurals name="reminders_off_body">
         <item quantity="one">इस सप्ताह %d इवेंट में रिमाइंडर है।</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">अभी नहीं</string>
     <string name="reminders_off_turn_on">चालू करें</string>
     <string name="reminders_on_snackbar">रिमाइंडर चालू</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">आपके सभी कैलेंडर, एक निजी ऐप में।</string>
     <string name="about_help_title">मदद और गाइड</string>
     <string name="about_help_detail">सेटअप, सिंक और सवाल</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">कोई भी ऐप यह लिंक नहीं खोल सकता।</string>
     <string name="about_built_in_austin">Austin में ❤️ से बनाया गया</string>
     <string name="about_version">संस्करण %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">छोड़ें</string>
     <string name="whats_new_next">आगे</string>
     <string name="whats_new_page_of">%2$d में से पेज %1$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">डिवाइस कैलेंडर</string>
     <string name="settings_device_calendars_hint">अन्य ऐप्स के कैलेंडर</string>
     <string name="offline_calendars_row_label">ऑफ़लाइन कैलेंडर</string>
-    <string name="offline_calendars_row_hint">इस फ़ोन पर रहने वाले कैलेंडर</string>
+    <string name="offline_calendars_row_hint">इस डिवाइस पर रहने वाले कैलेंडर</string>
     <string name="offline_calendars_manage_note">हटाने के लिए कैलेंडर को स्वाइप करें।</string>
-    <string name="offline_calendars_info">केवल इस फ़ोन पर रखे जाते हैं और कभी सिंक नहीं होते। बैकअप में इवेंट शामिल नहीं होते, इसलिए कॉपी रखने के लिए कैलेंडर निर्यात करें।</string>
+    <string name="offline_calendars_info">इस डिवाइस पर रखे जाते हैं और कभी सिंक नहीं होते।</string>
     <string name="offline_calendars_info_cd">ऑफ़लाइन कैलेंडर के बारे में</string>
     <string name="offline_calendar_default_state">डिफ़ॉल्ट</string>
     <string name="offline_calendar_new">नया कैलेंडर</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">इस डिवाइस पर Google, Outlook और सिंक ऐप्स के कैलेंडर दिखाएँ।</string>
     <string name="device_calendars_show_switch">डिवाइस कैलेंडर दिखाएँ</string>
+    <string name="device_calendars_access_off">KashCal के लिए कैलेंडर एक्सेस बंद है।</string>
     <string name="device_calendars_pick_hint">दिखाने के लिए कैलेंडर चुनें।</string>
     <string name="device_calendars_empty">कोई कैलेंडर नहीं मिला।</string>
     <string name="device_calendars_local">स्थानीय</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">एक तोहफा: एक खाली दिन।</string>
     <string name="empty_no_events_day_4">कैलेंडर की स्थिति: बिल्कुल खाली, वाह!</string>
     <string name="empty_no_events_day_5">कुछ तय नहीं है। सुकून का आनंद लें।</string>
-    <string name="cd_empty_no_events_day">शांत दिन, कुछ भी तय नहीं</string>
     <string name="filter_date">तारीख</string>
     <string name="label_select_date">तारीख चुनें</string>
     <string name="hint_tap_date_range">एक दिन के लिए वही तारीख टैप करें, या सीमा के लिए कोई अन्य तारीख</string>

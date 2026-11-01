@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">အော့ဖ်လိုင်း ပြက္ခဒိန် သုံး</string>
     <string name="onboarding_trust">ပွင့်လင်းအရင်းအမြစ်။ ကြော်ငြာ မရှိ။ ခြေရာခံမှု မရှိ။</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">သတိပေးချက်များ ပိတ်ထားသည်</string>
     <plurals name="reminders_off_body">
         <item quantity="other">ဤအပတ်တွင် ပွဲ %d ခုတွင် သတိပေးချက် ရှိသည်။</item>
@@ -274,6 +274,8 @@
     <string name="reminders_off_not_now">အခုမဟုတ်သေးပါ</string>
     <string name="reminders_off_turn_on">ဖွင့်</string>
     <string name="reminders_on_snackbar">သတိပေးချက်များ ဖွင့်ထားသည်</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">သင့်ပြက္ခဒိန်အားလုံး သီးသန့်အက်ပ်တစ်ခုတည်းတွင်။</string>
     <string name="about_help_title">အကူအညီနှင့် လမ်းညွှန်များ</string>
     <string name="about_help_detail">စနစ်ထည့်သွင်းခြင်း၊ ချိန်ကိုက်ခြင်းနှင့် မေးခွန်းများ</string>
@@ -284,6 +286,8 @@
     <string name="about_link_failed">ဤလင့်ခ်ကို ဖွင့်နိုင်သည့် အက်ပ် မရှိပါ။</string>
     <string name="about_built_in_austin">Austin တွင် ❤️ ဖြင့် တည်ဆောက်ထားသည်</string>
     <string name="about_version">ဗားရှင်း %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">ကျော်</string>
     <string name="whats_new_next">ရှေ့သို့</string>
     <string name="whats_new_page_of">စာမျက်နှာ %2$d ခုအနက် %1$d</string>
@@ -659,9 +663,9 @@
     <string name="settings_device_calendars">စက် ပြက္ခဒိန်များ</string>
     <string name="settings_device_calendars_hint">အခြားအက်ပ်များမှ ပြက္ခဒိန်များ</string>
     <string name="offline_calendars_row_label">အော့ဖ်လိုင်း ပြက္ခဒိန်များ</string>
-    <string name="offline_calendars_row_hint">ဤဖုန်းပေါ်တွင်သာ ရှိနေသော ပြက္ခဒိန်များ</string>
+    <string name="offline_calendars_row_hint">ဤစက်ပေါ်တွင် ရှိနေသော ပြက္ခဒိန်များ</string>
     <string name="offline_calendars_manage_note">ဖျက်ရန် ပြက္ခဒိန်ကို ပွတ်ဆွဲပါ။</string>
-    <string name="offline_calendars_info">ဤဖုန်းပေါ်တွင်သာ သိမ်းထားပြီး ဘယ်တော့မှ ချိန်ကိုက်မည်မဟုတ်ပါ။ အရန်သိမ်းဆည်းမှုများတွင် ပွဲများ မပါဝင်သဖြင့် မိတ္တူတစ်ခု ထားရှိရန် ပြက္ခဒိန်ကို ထုတ်ယူပါ။</string>
+    <string name="offline_calendars_info">ဤစက်ပေါ်တွင် သိမ်းထားပြီး ဘယ်တော့မှ ချိန်ကိုက်မည်မဟုတ်ပါ။</string>
     <string name="offline_calendars_info_cd">အော့ဖ်လိုင်း ပြက္ခဒိန်များ အကြောင်း</string>
     <string name="offline_calendar_default_state">မူရင်း</string>
     <string name="offline_calendar_new">ပြက္ခဒိန် အသစ်</string>
@@ -841,6 +845,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">ဤစက်ပေါ်ရှိ Google၊ Outlook နှင့် ချိန်ကိုက်အက်ပ်များမှ ပြက္ခဒိန်များကို ပြပါ။</string>
     <string name="device_calendars_show_switch">စက် ပြက္ခဒိန်များ ပြ</string>
+    <string name="device_calendars_access_off">KashCal အတွက် ပြက္ခဒိန် ဝင်ရောက်ခွင့် ပိတ်ထားသည်။</string>
     <string name="device_calendars_pick_hint">ပြရန် ပြက္ခဒိန်များ ရွေးပါ။</string>
     <string name="device_calendars_empty">ပြက္ခဒိန် မတွေ့ပါ။</string>
     <string name="device_calendars_local">ဒေသဆိုင်ရာ</string>
@@ -1090,7 +1095,6 @@
     <string name="empty_no_events_day_3">လက်ဆောင်တစ်ခု— ဘာမှမရှိတဲ့နေ့။</string>
     <string name="empty_no_events_day_4">ပြက္ခဒိန်အခြေအနေ— သာယာလှပစွာ ဗလာ။</string>
     <string name="empty_no_events_day_5">အစီအစဉ်ဘာမှမရှိ။ ငြိမ်းချမ်းမှုကို ခံစားပါ။</string>
-    <string name="cd_empty_no_events_day">ငြိမ်းချမ်းတဲ့နေ့၊ ဘာမှ မစီစဉ်ထားပါ</string>
     <string name="filter_date">ရက်စွဲ</string>
     <string name="label_select_date">ရက်စွဲ ရွေးချယ်ပါ</string>
     <string name="hint_tap_date_range">ရက်တစ်ရက်အတွက် တူညီသောရက်ကို နှိပ်ပါ သို့မဟုတ် အကွာအဝေးအတွက် အခြားရက်ကို နှိပ်ပါ</string>

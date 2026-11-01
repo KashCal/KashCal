@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Nota ónettengt dagatal</string>
     <string name="onboarding_trust">Opinn hugbúnaður. Engar auglýsingar. Engin rakning.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Slökkt er á áminningum</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d viðburður í þessari viku er með áminningu.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Ekki núna</string>
     <string name="reminders_off_turn_on">Kveikja</string>
     <string name="reminders_on_snackbar">Kveikt á áminningum</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Öll dagatölin þín í einu einkaforriti.</string>
     <string name="about_help_title">Hjálp og leiðbeiningar</string>
     <string name="about_help_detail">Uppsetning, samstilling og spurningar</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Ekkert forrit getur opnað þennan tengil.</string>
     <string name="about_built_in_austin">Búið til með ❤️ í Austin</string>
     <string name="about_version">Útgáfa %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Sleppa</string>
     <string name="whats_new_next">Áfram</string>
     <string name="whats_new_page_of">Síða %1$d af %2$d</string>
@@ -659,9 +663,9 @@
     <string name="settings_device_calendars">Dagatöl tækis</string>
     <string name="settings_device_calendars_hint">Dagatöl úr öðrum forritum</string>
     <string name="offline_calendars_row_label">Ónettengd dagatöl</string>
-    <string name="offline_calendars_row_hint">Dagatöl sem eru bara í þessum síma</string>
+    <string name="offline_calendars_row_hint">Dagatöl sem eru í þessu tæki</string>
     <string name="offline_calendars_manage_note">Strjúktu dagatal til að eyða því.</string>
-    <string name="offline_calendars_info">Geymt eingöngu í þessum síma og aldrei samstillt. Öryggisafrit innihalda ekki viðburði, svo fluttu dagatal út til að eiga afrit.</string>
+    <string name="offline_calendars_info">Geymt í þessu tæki og aldrei samstillt.</string>
     <string name="offline_calendars_info_cd">Um ónettengd dagatöl</string>
     <string name="offline_calendar_default_state">Sjálfgefið</string>
     <string name="offline_calendar_new">Nýtt dagatal</string>
@@ -851,6 +855,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Sýna dagatöl tækisins: Google, Outlook og samstillingarforrit.</string>
     <string name="device_calendars_show_switch">Sýna dagatöl tækis</string>
+    <string name="device_calendars_access_off">Slökkt er á aðgangi KashCal að dagatali.</string>
     <string name="device_calendars_pick_hint">Veldu dagatöl til að sýna.</string>
     <string name="device_calendars_empty">Engin dagatöl fundust.</string>
     <string name="device_calendars_local">Staðbundið</string>
@@ -1145,7 +1150,6 @@
     <string name="empty_no_events_day_3">Gjöf: auður dagur.</string>
     <string name="empty_no_events_day_4">Staða dagatals: dásamlega auð.</string>
     <string name="empty_no_events_day_5">Ekkert á dagskrá. Njóttu kyrrðarinnar.</string>
-    <string name="cd_empty_no_events_day">Rólegur dagur, ekkert á dagskrá</string>
     <string name="filter_date">Dagsetning</string>
     <string name="label_select_date">Velja dagsetningu</string>
     <string name="hint_tap_date_range">Ýttu á sömu dagsetningu fyrir einn dag, eða aðra dagsetningu fyrir tímabil</string>

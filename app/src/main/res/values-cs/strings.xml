@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Použít offline kalendář</string>
     <string name="onboarding_trust">Open source. Bez reklam. Bez sledování.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Připomínky jsou vypnuté</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d událost tento týden má připomínku.</item>
@@ -277,6 +277,8 @@
     <string name="reminders_off_not_now">Teď ne</string>
     <string name="reminders_off_turn_on">Zapnout</string>
     <string name="reminders_on_snackbar">Připomínky zapnuty</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Všechny vaše kalendáře v jedné soukromé aplikaci.</string>
     <string name="about_help_title">Nápověda a návody</string>
     <string name="about_help_detail">Nastavení, synchronizace a dotazy</string>
@@ -287,6 +289,8 @@
     <string name="about_link_failed">Tento odkaz nemůže otevřít žádná aplikace.</string>
     <string name="about_built_in_austin">Vytvořeno s ❤️ v Austinu</string>
     <string name="about_version">Verze %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Přeskočit</string>
     <string name="whats_new_next">Další</string>
     <string name="whats_new_page_of">Stránka %1$d z %2$d</string>
@@ -662,9 +666,9 @@
     <string name="settings_device_calendars">Kalendáře zařízení</string>
     <string name="settings_device_calendars_hint">Kalendáře z jiných aplikací</string>
     <string name="offline_calendars_row_label">Offline kalendáře</string>
-    <string name="offline_calendars_row_hint">Kalendáře, které zůstávají v tomto telefonu</string>
+    <string name="offline_calendars_row_hint">Kalendáře, které zůstávají v tomto zařízení</string>
     <string name="offline_calendars_manage_note">Přejetím po kalendáři ho smažete.</string>
-    <string name="offline_calendars_info">Uloženo jen v tomto telefonu a nikdy se nesynchronizuje. Zálohy nezahrnují události, proto kalendář exportujte, abyste si uchovali kopii.</string>
+    <string name="offline_calendars_info">Uloženo v tomto zařízení a nikdy se nesynchronizuje.</string>
     <string name="offline_calendars_info_cd">O offline kalendářích</string>
     <string name="offline_calendar_default_state">Výchozí</string>
     <string name="offline_calendar_new">Nový kalendář</string>
@@ -874,6 +878,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Zobrazit kalendáře v tomto zařízení: Google, Outlook a synchronizační aplikace.</string>
     <string name="device_calendars_show_switch">Zobrazit kalendáře zařízení</string>
+    <string name="device_calendars_access_off">Přístup ke kalendáři je pro KashCal vypnutý.</string>
     <string name="device_calendars_pick_hint">Vyberte kalendáře k zobrazení.</string>
     <string name="device_calendars_empty">Nebyly nalezeny žádné kalendáře.</string>
     <string name="device_calendars_local">Místní</string>
@@ -1258,7 +1263,6 @@
     <string name="empty_no_events_day_3">Dárek: prázdný den.</string>
     <string name="empty_no_events_day_4">Stav kalendáře: nádherně prázdný.</string>
     <string name="empty_no_events_day_5">Nic v plánu. Užijte si klid.</string>
-    <string name="cd_empty_no_events_day">Klidný den, nic naplánováno</string>
     <string name="filter_date">Datum</string>
     <string name="label_select_date">Vyberte datum</string>
     <string name="hint_tap_date_range">Klepněte na stejné datum pro jeden den, nebo na jiné pro rozsah</string>

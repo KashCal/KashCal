@@ -538,8 +538,8 @@ class EventQuickViewSheetTest {
     // ========== Expandable Content Detection Tests ==========
 
     // A local predicate modeled on the sheet's hasExpandableContent, which decides whether the
-    // sheet opens expanded and shows the URL, notes and reminders section. The sheet checks
-    // description, URL and attendees; this copy checks reminders in place of attendees.
+    // sheet shows the URL, notes and reminders section. The sheet checks description, URL and
+    // attendees; this copy checks reminders in place of attendees.
 
     private fun hasExpandableContent(event: Event): Boolean {
         return !event.description.isNullOrBlank() ||

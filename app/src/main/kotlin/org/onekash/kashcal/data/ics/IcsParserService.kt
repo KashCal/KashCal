@@ -129,7 +129,6 @@ object IcsParserService {
                         )
                     },
                     thisAndFuture = recurrenceDigits != null && "$uid|$recurrenceDigits" in thisAndFuture,
-                    writtenZone = icalEvent.dtStart.timezone?.id,
                 )
             }
             ImportGroup(

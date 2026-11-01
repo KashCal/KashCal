@@ -2353,14 +2353,18 @@ class AccountSettingsViewModel @Inject constructor(
         }
     }
 
-    /** Turns device calendar reminders on (schedules the next one) or off (cancels its alarm). */
+    /**
+     * Turns device calendar reminders on (schedules the next one and the calendar-change job) or
+     * off (cancels both), through [CalendarProviderManager.onRemindersEnabled] and
+     * [CalendarProviderManager.onRemindersDisabled].
+     */
     fun onToggleDeviceCalendarReminders(enabled: Boolean) {
         viewModelScope.launch {
             dataStore.setDeviceCalendarRemindersEnabled(enabled)
             if (enabled) {
-                deviceCalendarReminderScheduler.scheduleNextReminder()
+                calendarProviderManager.onRemindersEnabled()
             } else {
-                deviceCalendarReminderScheduler.cancelPendingAlarm()
+                calendarProviderManager.onRemindersDisabled()
             }
         }
     }
@@ -2369,8 +2373,9 @@ class AccountSettingsViewModel @Inject constructor(
      * Ticks or unticks one device calendar. Ticking makes it visible in the provider; unticking
      * also drops it from the hidden and muted sets, so it comes back visible and notifying if
      * ticked again, and re-picks the device reminder, whose one alarm may belong to this
-     * calendar. If leaving Settings cancels the re-pick, that alarm is dropped when it fires
-     * ([DeviceCalendarReminderScheduler.shouldFireReminder]) and the next one is armed.
+     * calendar (here, and through [CalendarProviderManager.onDeviceCalendarSettingsChanged] when
+     * device calendars are on). An alarm still armed for an unticked calendar is dropped when it
+     * fires ([DeviceCalendarReminderScheduler.shouldFireReminder]) and the next one is armed.
      */
     fun onToggleDeviceCalendar(calendarId: Long, enabled: Boolean) {
         viewModelScope.launch {
@@ -2390,8 +2395,9 @@ class AccountSettingsViewModel @Inject constructor(
     }
 
     /**
-     * Records that the Device calendars switch sent the user to Android's app settings, so the
-     * first [refreshCalendarPermission] that sees calendar read access turns device calendars on.
+     * Records that a Device calendars request (its switch or its access note's Allow) sent the
+     * user to Android's app settings, so the first [refreshCalendarPermission] that sees calendar
+     * read access turns device calendars on.
      * Kept in the saved state, so it outlasts a process death while the user is in settings.
      */
     fun markDeviceCalendarsPendingSettings() {

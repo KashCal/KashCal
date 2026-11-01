@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">ଅଫଲାଇନ କ୍ୟାଲେଣ୍ଡର ବ୍ୟବହାର କରନ୍ତୁ</string>
     <string name="onboarding_trust">ଓପନ ସୋର୍ସ। କୌଣସି ବିଜ୍ଞାପନ ନାହିଁ। କୌଣସି ଟ୍ରାକିଂ ନାହିଁ।</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">ରିମାଇଣ୍ଡର ବନ୍ଦ ଅଛି</string>
     <plurals name="reminders_off_body">
         <item quantity="one">ଏହି ସପ୍ତାହରେ %d ଇଭେଣ୍ଟରେ ରିମାଇଣ୍ଡର ଅଛି।</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">ଏବେ ନୁହେଁ</string>
     <string name="reminders_off_turn_on">ଚାଲୁ କରନ୍ତୁ</string>
     <string name="reminders_on_snackbar">ରିମାଇଣ୍ଡର ଚାଲୁ ଅଛି</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">ଆପଣଙ୍କ ସମସ୍ତ କ୍ୟାଲେଣ୍ଡର ଗୋଟିଏ ବ୍ୟକ୍ତିଗତ ଆପରେ।</string>
     <string name="about_help_title">ସହାୟତା ଏବଂ ଗାଇଡ୍</string>
     <string name="about_help_detail">ସେଟଅପ୍, ସିଙ୍କ ଏବଂ ପ୍ରଶ୍ନ</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">ଏହି ଲିଙ୍କ ଖୋଲିପାରୁଥିବା କୌଣସି ଆପ ନାହିଁ।</string>
     <string name="about_built_in_austin">Austin ରେ ❤️ ସହିତ ତିଆରି</string>
     <string name="about_version">ସଂସ୍କରଣ %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">ଛାଡ଼ନ୍ତୁ</string>
     <string name="whats_new_next">ପରବର୍ତ୍ତୀ</string>
     <string name="whats_new_page_of">%2$d ମଧ୍ୟରୁ ପୃଷ୍ଠା %1$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">ଡିଭାଇସ କ୍ୟାଲେଣ୍ଡର</string>
     <string name="settings_device_calendars_hint">ଅନ୍ୟ ଆପରୁ କ୍ୟାଲେଣ୍ଡର</string>
     <string name="offline_calendars_row_label">ଅଫଲାଇନ କ୍ୟାଲେଣ୍ଡର</string>
-    <string name="offline_calendars_row_hint">ଏହି ଫୋନରେ ରହୁଥିବା କ୍ୟାଲେଣ୍ଡର</string>
+    <string name="offline_calendars_row_hint">ଏହି ଡିଭାଇସରେ ରହୁଥିବା କ୍ୟାଲେଣ୍ଡର</string>
     <string name="offline_calendars_manage_note">ଡିଲିଟ କରିବାକୁ କ୍ୟାଲେଣ୍ଡରକୁ ସ୍ୱାଇପ କରନ୍ତୁ।</string>
-    <string name="offline_calendars_info">କେବଳ ଏହି ଫୋନରେ ରଖାଯାଏ ଏବଂ କେବେ ସିଙ୍କ ହୁଏ ନାହିଁ। ବ୍ୟାକଅପରେ ଇଭେଣ୍ଟ ଅନ୍ତର୍ଭୁକ୍ତ ନୁହେଁ, ତେଣୁ ଏକ କପି ରଖିବାକୁ କ୍ୟାଲେଣ୍ଡର ରପ୍ତାନୀ କରନ୍ତୁ।</string>
+    <string name="offline_calendars_info">ଏହି ଡିଭାଇସରେ ରଖାଯାଏ ଏବଂ କେବେ ସିଙ୍କ ହୁଏ ନାହିଁ।</string>
     <string name="offline_calendars_info_cd">ଅଫଲାଇନ କ୍ୟାଲେଣ୍ଡର ବିଷୟରେ</string>
     <string name="offline_calendar_default_state">ଡିଫଲ୍ଟ</string>
     <string name="offline_calendar_new">ନୂଆ କ୍ୟାଲେଣ୍ଡର</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">ଏହି ଡିଭାଇସରେ ଥିବା Google, Outlook ଏବଂ ସିଙ୍କ ଆପରୁ କ୍ୟାଲେଣ୍ଡର ଦେଖାନ୍ତୁ।</string>
     <string name="device_calendars_show_switch">ଡିଭାଇସ କ୍ୟାଲେଣ୍ଡର ଦେଖାନ୍ତୁ</string>
+    <string name="device_calendars_access_off">KashCal ପାଇଁ କ୍ୟାଲେଣ୍ଡର ଆକ୍ସେସ ବନ୍ଦ ଅଛି।</string>
     <string name="device_calendars_pick_hint">ଦେଖାଇବାକୁ କ୍ୟାଲେଣ୍ଡର ବାଛନ୍ତୁ।</string>
     <string name="device_calendars_empty">କୌଣସି କ୍ୟାଲେଣ୍ଡର ମିଳିଲା ନାହିଁ।</string>
     <string name="device_calendars_local">ସ୍ଥାନୀୟ</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">ଏକ ଉପହାର: ଏକ ଖାଲି ଦିନ।</string>
     <string name="empty_no_events_day_4">କ୍ୟାଲେଣ୍ଡର ସ୍ଥିତି: ସୁନ୍ଦର ଭାବେ ଖାଲି।</string>
     <string name="empty_no_events_day_5">କିଛି ନିର୍ଧାରିତ ନାହିଁ। ଶାନ୍ତିକୁ ଉପଭୋଗ କରନ୍ତୁ।</string>
-    <string name="cd_empty_no_events_day">ଶାନ୍ତ ଦିନ, କିଛି ନିର୍ଧାରିତ ନାହିଁ</string>
     <string name="filter_date">ତାରିଖ</string>
     <string name="label_select_date">ତାରିଖ ବାଛନ୍ତୁ</string>
     <string name="hint_tap_date_range">ଏକ ଦିନ ପାଇଁ ସେହି ତାରିଖ ଟ୍ୟାପ କରନ୍ତୁ, ବା ପରିସର ପାଇଁ ଅନ୍ୟ ତାରିଖ</string>

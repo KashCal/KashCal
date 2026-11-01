@@ -29,24 +29,21 @@ object EventToICalEventMapper {
      * The one source of this conversion, so serialization here and RECURRENCE-ID value-type
      * normalization on pull and push agree byte for byte.
      */
-    fun dtStartOf(event: Event, utcAsZ: Boolean = true): ICalDateTime =
-        ICalDateTime.fromTimestamp(event.startTs, writeZone(event, utcAsZ), event.isAllDay)
+    fun dtStartOf(event: Event): ICalDateTime =
+        ICalDateTime.fromTimestamp(event.startTs, writeZone(event), event.isAllDay)
 
     /**
      * Returns the zone [event]'s times are written in; null writes UTC times (`...Z`).
      *
      * A row holding exactly [ICalEventMapper.UTC_SERIES_ZONE] is written in UTC form, so a series
-     * stored in UTC ([ICalEventMapper.storedZoneOf]) and every row made from it (a changed or
-     * shared occurrence, a copy turned into a one-off) write the same text as with no zone. A
-     * TZID=UTC line would also go out without a VTIMEZONE, which the generator never writes for
-     * UTC. Any other zone resolves with [resolveZone].
-     *
-     * @param utcAsZ false resolves "UTC" like any other zone, writing TZID=UTC; a device event's
-     *   rows pass it ([org.onekash.kashcal.util.IcsExporter.serializeDeviceEvent]), since their
-     *   zone is the device calendar's own value.
+     * stored in UTC ([ICalEventMapper.storedZoneOf]), every row made from it (a changed or shared
+     * occurrence, a copy turned into a one-off) and a device event in UTC write the same text as
+     * with no zone. A TZID=UTC line would go out without a VTIMEZONE, which the generator never
+     * writes for UTC, and the parser reads such a line as a floating time in the phone's zone.
+     * Any other zone resolves with [resolveZone].
      */
-    fun writeZone(event: Event, utcAsZ: Boolean = true): ZoneId? {
-        if (utcAsZ && event.timezone == ICalEventMapper.UTC_SERIES_ZONE) return null
+    fun writeZone(event: Event): ZoneId? {
+        if (event.timezone == ICalEventMapper.UTC_SERIES_ZONE) return null
         return resolveZone(event.timezone)
     }
 
@@ -57,14 +54,12 @@ object EventToICalEventMapper {
      * master-context overloads.
      *
      * @param attendees Room rows to emit as ATTENDEE properties; empty emits none.
-     * @param utcAsZ see [writeZone]
      */
     fun toICalEvent(
         event: Event,
         attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList(),
-        utcAsZ: Boolean = true,
     ): ICalEvent {
-        val zone = writeZone(event, utcAsZ)
+        val zone = writeZone(event)
         val endZone = resolveZone(event.endTimezone) ?: zone
         val endTs = exclusiveEndTs(event)
         // RFC 5545 §3.6.1 permits DTEND or DURATION, never both. Always emit DTEND, as the
@@ -77,7 +72,7 @@ object EventToICalEventMapper {
             summary = event.title,
             description = event.description,
             location = event.location,
-            dtStart = dtStartOf(event, utcAsZ),
+            dtStart = dtStartOf(event),
             dtEnd = ICalDateTime.fromTimestamp(endTs, endZone, event.isAllDay),
             duration = null,
             isAllDay = event.isAllDay,
@@ -114,23 +109,20 @@ object EventToICalEventMapper {
      *
      * @param attendees the exception's own ATTENDEE rows; the push path passes them so each
      *   exception keeps its attendee state. Empty emits none.
-     * @param utcAsZ see [writeZone]
      */
     fun toICalEvent(
         master: Event,
         exception: Event,
         attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList(),
-        utcAsZ: Boolean = true,
-    ): ICalEvent = toICalEvent(masterUid = master.uid, exception = exception, attendees = attendees, utcAsZ = utcAsZ)
+    ): ICalEvent = toICalEvent(masterUid = master.uid, exception = exception, attendees = attendees)
 
     /** Maps an exception when only the master UID is known; see the overload above. */
     fun toICalEvent(
         masterUid: String,
         exception: Event,
         attendees: List<org.onekash.kashcal.data.db.entity.Attendee> = emptyList(),
-        utcAsZ: Boolean = true,
     ): ICalEvent {
-        val zone = writeZone(exception, utcAsZ)
+        val zone = writeZone(exception)
         val endZone = resolveZone(exception.endTimezone) ?: zone
         val recurrenceId = exception.originalInstanceTime?.let {
             ICalDateTime.fromTimestamp(it, zone, exception.isAllDay)

@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Sebenzisa ikhalenda engaphandle kwe-inthanethi</string>
     <string name="onboarding_trust">Umthombo ovulekile. Azikho izikhangiso. Akukho ukulandelela.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Izikhumbuzi zivaliwe</string>
     <plurals name="reminders_off_body">
         <item quantity="one">Umcimbi o-%d kuleli sonto unesikhumbuzi.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Hhayi Manje</string>
     <string name="reminders_off_turn_on">Vula</string>
     <string name="reminders_on_snackbar">Izikhumbuzi zivuliwe</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Wonke amakhalenda akho ohlelweni lokusebenza olulodwa oluyimfihlo.</string>
     <string name="about_help_title">Usizo nemihlahlandlela</string>
     <string name="about_help_detail">Ukusetha, ukuvumelanisa nemibuzo</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Alukho uhlelo lokusebenza olungavula lesi sixhumanisi.</string>
     <string name="about_built_in_austin">Kwakhiwe nge-❤️ e-Austin</string>
     <string name="about_version">Inguqulo %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Yeqa</string>
     <string name="whats_new_next">Okulandelayo</string>
     <string name="whats_new_page_of">Ikhasi %1$d kwangu-%2$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Amakhalenda Edivayisi</string>
     <string name="settings_device_calendars_hint">Amakhalenda asuka kwezinye izinhlelo</string>
     <string name="offline_calendars_row_label">Amakhalenda angaphandle kwe-inthanethi</string>
-    <string name="offline_calendars_row_hint">Amakhalenda ahlala kule foni</string>
+    <string name="offline_calendars_row_hint">Amakhalenda ahlala kule divayisi</string>
     <string name="offline_calendars_manage_note">Swayipha ikhalenda ukuze uyisuse.</string>
-    <string name="offline_calendars_info">Agcinwa kule foni kuphela futhi awalokothi avumelaniswe. Izipele azifaki imicimbi, ngakho thumela ikhalenda ukuze ugcine ikhophi.</string>
+    <string name="offline_calendars_info">Agcinwa kule divayisi futhi awalokothi avumelaniswe.</string>
     <string name="offline_calendars_info_cd">Mayelana namakhalenda angaphandle kwe-inthanethi</string>
     <string name="offline_calendar_default_state">Okuzenzakalelayo</string>
     <string name="offline_calendar_new">Ikhalenda elisha</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Bonisa amakhalenda avela ku-Google, Outlook, nama-app okuvumelanisa kule divayisi.</string>
     <string name="device_calendars_show_switch">Bonisa amakhalenda edivayisi</string>
+    <string name="device_calendars_access_off">Ukufinyelela kwekhalenda kuvaliwe ku-KashCal.</string>
     <string name="device_calendars_pick_hint">Khetha amakhalenda ozowabonisa.</string>
     <string name="device_calendars_empty">Awekho amakhalenda atholakele.</string>
     <string name="device_calendars_local">Okwangakini</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">Isipho: usuku olungenalutho.</string>
     <string name="empty_no_events_day_4">Isimo sekhalenda: singenalutho ngendlela emnandi.</string>
     <string name="empty_no_events_day_5">Akukho okuhleliwe. Jabulela ukuthula.</string>
-    <string name="cd_empty_no_events_day">Usuku oluthulile, akukho okuhleliwe</string>
     <string name="filter_date">Usuku</string>
     <string name="label_select_date">Khetha usuku</string>
     <string name="hint_tap_date_range">Thepha usuku olufanayo losuku olulodwa, noma olunye usuku lebanga</string>

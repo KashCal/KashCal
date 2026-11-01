@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">オフラインカレンダーを使う</string>
     <string name="onboarding_trust">オープンソース。広告なし。トラッキングなし。</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">リマインダーがオフです</string>
     <plurals name="reminders_off_body">
         <item quantity="other">今週%d件の予定にリマインダーがあります。</item>
@@ -274,6 +274,8 @@
     <string name="reminders_off_not_now">後で</string>
     <string name="reminders_off_turn_on">オンにする</string>
     <string name="reminders_on_snackbar">リマインダーをオンにしました</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">すべてのカレンダーを、ひとつのプライベートなアプリで。</string>
     <string name="about_help_title">ヘルプとガイド</string>
     <string name="about_help_detail">設定、同期、よくある質問</string>
@@ -284,6 +286,8 @@
     <string name="about_link_failed">このリンクを開けるアプリがありません。</string>
     <string name="about_built_in_austin">Austin で ❤️ を込めて開発</string>
     <string name="about_version">バージョン%1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">スキップ</string>
     <string name="whats_new_next">次へ</string>
     <string name="whats_new_page_of">%2$dページ中%1$dページ目</string>
@@ -659,9 +663,9 @@
     <string name="settings_device_calendars">デバイスカレンダー</string>
     <string name="settings_device_calendars_hint">他のアプリのカレンダー</string>
     <string name="offline_calendars_row_label">オフラインカレンダー</string>
-    <string name="offline_calendars_row_hint">このスマートフォンだけに保存するカレンダー</string>
+    <string name="offline_calendars_row_hint">このデバイスに保存するカレンダー</string>
     <string name="offline_calendars_manage_note">カレンダーをスワイプすると削除できます。</string>
-    <string name="offline_calendars_info">このスマートフォンだけに保存され、同期されません。バックアップには予定が含まれないため、コピーを残すにはカレンダーをエクスポートしてください。</string>
+    <string name="offline_calendars_info">このデバイスに保存され、同期されません。</string>
     <string name="offline_calendars_info_cd">オフラインカレンダーについて</string>
     <string name="offline_calendar_default_state">デフォルト</string>
     <string name="offline_calendar_new">新しいカレンダー</string>
@@ -841,6 +845,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">このデバイスのGoogle、Outlook、同期アプリのカレンダーを表示します。</string>
     <string name="device_calendars_show_switch">デバイスカレンダーを表示</string>
+    <string name="device_calendars_access_off">KashCalのカレンダーへのアクセスがオフになっています。</string>
     <string name="device_calendars_pick_hint">表示するカレンダーを選んでください。</string>
     <string name="device_calendars_empty">カレンダーが見つかりませんでした。</string>
     <string name="device_calendars_local">ローカル</string>
@@ -1090,7 +1095,6 @@
     <string name="empty_no_events_day_3">贈り物です。何もない一日。</string>
     <string name="empty_no_events_day_4">カレンダーの状態：見事に空っぽです。</string>
     <string name="empty_no_events_day_5">予定はありません。この静けさを楽しみましょう。</string>
-    <string name="cd_empty_no_events_day">穏やかな一日、予定なし</string>
     <string name="filter_date">日付</string>
     <string name="label_select_date">日付を選択</string>
     <string name="hint_tap_date_range">同じ日付をタップで1日、別の日付で範囲を選択</string>

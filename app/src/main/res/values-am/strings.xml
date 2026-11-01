@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">ከመስመር ውጭ የቀን መቁጠሪያ ይጠቀሙ</string>
     <string name="onboarding_trust">ክፍት ምንጭ። ማስታወቂያ የለም። ክትትል የለም።</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">አስታዋሾች ጠፍተዋል</string>
     <plurals name="reminders_off_body">
         <item quantity="one">በዚህ ሳምንት %d ክስተት አስታዋሽ አለው።</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">አሁን አይደለም</string>
     <string name="reminders_off_turn_on">አብራ</string>
     <string name="reminders_on_snackbar">አስታዋሾች በርተዋል</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">ሁሉም የቀን መቁጠሪያዎችዎ በአንድ የግል መተግበሪያ ውስጥ።</string>
     <string name="about_help_title">እገዛ እና መመሪያዎች</string>
     <string name="about_help_detail">ማዋቀር፣ ማመሳሰል እና ጥያቄዎች</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">ይህን አገናኝ ሊከፍት የሚችል መተግበሪያ የለም።</string>
     <string name="about_built_in_austin">በ Austin በ❤️ የተሰራ</string>
     <string name="about_version">ስሪት %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">ዝለል</string>
     <string name="whats_new_next">ቀጣይ</string>
     <string name="whats_new_page_of">ገጽ %1$d ከ%2$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">የመሳሪያ ቀን መቁጠሪያዎች</string>
     <string name="settings_device_calendars_hint">ከሌሎች መተግበሪያዎች የቀን መቁጠሪያዎች</string>
     <string name="offline_calendars_row_label">ከመስመር ውጭ የቀን መቁጠሪያዎች</string>
-    <string name="offline_calendars_row_hint">በዚህ ስልክ ላይ የሚቆዩ የቀን መቁጠሪያዎች</string>
+    <string name="offline_calendars_row_hint">በዚህ መሳሪያ ላይ የሚቆዩ የቀን መቁጠሪያዎች</string>
     <string name="offline_calendars_manage_note">ለመሰረዝ የቀን መቁጠሪያውን ያንሸራትቱ።</string>
-    <string name="offline_calendars_info">በዚህ ስልክ ላይ ብቻ ይቀመጣሉ፣ በጭራሽ አይሰምሩም። ምትኬዎች ክስተቶችን አያካትቱም፣ ስለዚህ ቅጂ ለማስቀመጥ የቀን መቁጠሪያውን ይላኩ።</string>
+    <string name="offline_calendars_info">በዚህ መሳሪያ ላይ ይቀመጣሉ፣ በጭራሽ አይሰምሩም።</string>
     <string name="offline_calendars_info_cd">ስለ ከመስመር ውጭ የቀን መቁጠሪያዎች</string>
     <string name="offline_calendar_default_state">ነባሪ</string>
     <string name="offline_calendar_new">አዲስ የቀን መቁጠሪያ</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">በዚህ መሳሪያ ላይ ካሉ Google፣ Outlook እና የማመሳሰያ መተግበሪያዎች የቀን መቁጠሪያዎችን አሳይ።</string>
     <string name="device_calendars_show_switch">የመሳሪያ ቀን መቁጠሪያዎችን አሳይ</string>
+    <string name="device_calendars_access_off">ለKashCal የቀን መቁጠሪያ መዳረሻ ጠፍቷል።</string>
     <string name="device_calendars_pick_hint">የሚታዩ የቀን መቁጠሪያዎችን ይምረጡ።</string>
     <string name="device_calendars_empty">ምንም የቀን መቁጠሪያ አልተገኘም።</string>
     <string name="device_calendars_local">አካባቢያዊ</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">ስጦታ፦ ባዶ ቀን።</string>
     <string name="empty_no_events_day_4">የቀን መቁጠሪያ ሁኔታ፦ በሚያምር ሁኔታ ባዶ።</string>
     <string name="empty_no_events_day_5">ምንም አልታቀደም። መረጋጋቱን ይደሰቱበት።</string>
-    <string name="cd_empty_no_events_day">የተረጋጋ ቀን፣ ምንም አልታቀደም</string>
     <string name="filter_date">ቀን</string>
     <string name="label_select_date">ቀን ምረጥ</string>
     <string name="hint_tap_date_range">ለአንድ ቀን ተመሳሳይ ቀን ይንኩ፣ ወይም ለክልል ሌላ ቀን</string>

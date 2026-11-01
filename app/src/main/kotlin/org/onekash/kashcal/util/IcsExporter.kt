@@ -78,20 +78,19 @@ class IcsExporter @Inject constructor() {
         if (fromDevice) serializeDeviceEvent(event, emptyList()) else IcsPatcher.serializeWithExceptions(event, null, emptyList())
 
     /**
-     * Returns the file text for rows built from a device event, with each zone written as the
-     * device calendar holds it: a "UTC" zone stays TZID=UTC
-     * ([EventToICalEventMapper.writeZone] with the rule off). Such rows carry no stored copy and
-     * no attendee rows, so this is the text [IcsPatcher.serializeWithExceptions] builds from
-     * their fields: one VEVENT alone, or the series followed by its exceptions.
+     * Returns the file text for rows built from a device event, each zone written by
+     * [EventToICalEventMapper.writeZone] as for a Room row. Such rows carry no stored
+     * copy and no attendee rows, so this is the text [IcsPatcher.serializeWithExceptions] builds
+     * from their fields: one VEVENT alone, or the series followed by its exceptions.
      */
     internal fun serializeDeviceEvent(master: Event, exceptions: List<Event>): String {
-        val series = EventToICalEventMapper.toICalEvent(master, emptyList(), utcAsZ = false)
+        val series = EventToICalEventMapper.toICalEvent(master, emptyList())
         if (exceptions.isEmpty()) return generator.generate(series, method = null, includeVTimezone = true)
         return generator.generate(
             ICalCalendar(
                 prodId = null,
                 events = listOf(series) + exceptions.map {
-                    EventToICalEventMapper.toICalEvent(master, it, emptyList(), utcAsZ = false)
+                    EventToICalEventMapper.toICalEvent(master, it, emptyList())
                 },
             ),
             includeVTimezone = true,

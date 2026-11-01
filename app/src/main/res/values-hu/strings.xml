@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Offline naptár használata</string>
     <string name="onboarding_trust">Nyílt forráskód. Nincs reklám. Nincs követés.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Az emlékeztetők ki vannak kapcsolva</string>
     <plurals name="reminders_off_body">
         <item quantity="one">Ezen a héten %d eseményhez tartozik emlékeztető.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Most nem</string>
     <string name="reminders_off_turn_on">Bekapcsolás</string>
     <string name="reminders_on_snackbar">Emlékeztetők bekapcsolva</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Az összes naptárad egyetlen privát alkalmazásban.</string>
     <string name="about_help_title">Súgó és útmutatók</string>
     <string name="about_help_detail">Beállítás, szinkronizálás és kérdések</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Egyetlen alkalmazás sem tudja megnyitni ezt a linket.</string>
     <string name="about_built_in_austin">❤️-vel készült Austinban</string>
     <string name="about_version">Verzió %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Kihagyás</string>
     <string name="whats_new_next">Tovább</string>
     <string name="whats_new_page_of">%1$d. oldal / %2$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Eszköz naptárak</string>
     <string name="settings_device_calendars_hint">Naptárak más alkalmazásokból</string>
     <string name="offline_calendars_row_label">Offline naptárak</string>
-    <string name="offline_calendars_row_hint">A telefonon maradó naptárak</string>
+    <string name="offline_calendars_row_hint">Ezen az eszközön maradó naptárak</string>
     <string name="offline_calendars_manage_note">Húzd el a naptárt a törléséhez.</string>
-    <string name="offline_calendars_info">Csak ezen a telefonon tárolódik, és soha nem szinkronizálódik. A biztonsági mentések nem tartalmazzák az eseményeket, ezért exportáld a naptárat, ha másolatot szeretnél.</string>
+    <string name="offline_calendars_info">Ezen az eszközön tárolódik, és soha nem szinkronizálódik.</string>
     <string name="offline_calendars_info_cd">Az offline naptárakról</string>
     <string name="offline_calendar_default_state">Alapértelmezett</string>
     <string name="offline_calendar_new">Új naptár</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Jelenítsd meg az eszköz naptárait: Google, Outlook és szinkronizáló alkalmazások.</string>
     <string name="device_calendars_show_switch">Eszköz naptárak megjelenítése</string>
+    <string name="device_calendars_access_off">A KashCal naptárhozzáférése ki van kapcsolva.</string>
     <string name="device_calendars_pick_hint">Válaszd ki a megjelenítendő naptárakat.</string>
     <string name="device_calendars_empty">Nem található naptár.</string>
     <string name="device_calendars_local">Helyi</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">Egy ajándék: egy üres nap.</string>
     <string name="empty_no_events_day_4">Naptár állapota: gyönyörűen üres.</string>
     <string name="empty_no_events_day_5">Semmi sincs tervezve. Élvezd a nyugalmat.</string>
-    <string name="cd_empty_no_events_day">Nyugodt nap, semmi sincs betervezve</string>
     <string name="filter_date">Dátum</string>
     <string name="label_select_date">Válassz dátumot</string>
     <string name="hint_tap_date_range">Egy naphoz koppints ugyanarra, időszakhoz másik dátumra</string>

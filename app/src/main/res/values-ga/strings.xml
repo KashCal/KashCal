@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Úsáid féilire as líne</string>
     <string name="onboarding_trust">Foinse oscailte. Gan fógraí. Gan rianú.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Tá meabhrúcháin as</string>
     <plurals name="reminders_off_body">
         <item quantity="one">Tá meabhrúchán ag %d imeacht an tseachtain seo.</item>
@@ -278,6 +278,8 @@
     <string name="reminders_off_not_now">Ní anois</string>
     <string name="reminders_off_turn_on">Cuir ar siúl</string>
     <string name="reminders_on_snackbar">Meabhrúcháin ar siúl</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">D\'fhéilirí go léir in aon aip phríobháideach amháin.</string>
     <string name="about_help_title">Cabhair agus treoracha</string>
     <string name="about_help_detail">Socrú, sioncronú agus ceisteanna</string>
@@ -288,6 +290,8 @@
     <string name="about_link_failed">Ní féidir le haon aip an nasc seo a oscailt.</string>
     <string name="about_built_in_austin">Tógtha le ❤️ in Austin</string>
     <string name="about_version">Leagan %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Scipeáil</string>
     <string name="whats_new_next">Ar aghaidh</string>
     <string name="whats_new_page_of">Leathanach %1$d de %2$d</string>
@@ -663,9 +667,9 @@
     <string name="settings_device_calendars">Féilirí na Gléine</string>
     <string name="settings_device_calendars_hint">Féilirí ó aipeanna eile</string>
     <string name="offline_calendars_row_label">Féilirí as líne</string>
-    <string name="offline_calendars_row_hint">Féilirí a fhanann ar an bhfón seo</string>
+    <string name="offline_calendars_row_hint">Féilirí a fhanann ar an ngléas seo</string>
     <string name="offline_calendars_manage_note">Svaidhpeáil féilire chun é a scriosadh.</string>
-    <string name="offline_calendars_info">Ní choinnítear iad ach ar an bhfón seo agus ní shioncronaítear riamh iad. Ní chuimsíonn cúltacaí imeachtaí, mar sin easpórtáil féilire chun cóip a choinneáil.</string>
+    <string name="offline_calendars_info">Coinnítear iad ar an ngléas seo agus ní shioncronaítear riamh iad.</string>
     <string name="offline_calendars_info_cd">Faoi fhéilirí as líne</string>
     <string name="offline_calendar_default_state">Réamhshocrú</string>
     <string name="offline_calendar_new">Féilire nua</string>
@@ -885,6 +889,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Taispeáin féilirí ó Google, Outlook agus aipeanna sioncronaithe ar an ngléas seo.</string>
     <string name="device_calendars_show_switch">Taispeáin féilirí na gléine</string>
+    <string name="device_calendars_access_off">Tá rochtain ar an bhféilire as do KashCal.</string>
     <string name="device_calendars_pick_hint">Roghnaigh féilirí le taispeáint.</string>
     <string name="device_calendars_empty">Níor aimsíodh aon fhéilire.</string>
     <string name="device_calendars_local">Áitiúil</string>
@@ -1314,7 +1319,6 @@
     <string name="empty_no_events_day_3">Bronntanas: lá folamh.</string>
     <string name="empty_no_events_day_4">Stádas an fhéilire: folamh go hálainn.</string>
     <string name="empty_no_events_day_5">Faic beartaithe. Bain sult as an suaimhneas.</string>
-    <string name="cd_empty_no_events_day">Lá ciúin, faic sceidealta</string>
     <string name="filter_date">Dáta</string>
     <string name="label_select_date">Roghnaigh dáta</string>
     <string name="hint_tap_date_range">Tapáil an dáta céanna le haghaidh lá amháin, nó dáta eile le haghaidh raon</string>

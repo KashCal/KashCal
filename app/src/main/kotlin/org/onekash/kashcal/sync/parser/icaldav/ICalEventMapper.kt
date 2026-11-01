@@ -37,8 +37,8 @@ data class MappedEntity(
 object ICalEventMapper {
 
     /**
-     * The zone stored for a timed series whose DTSTART is a UTC time. Room rows holding it are
-     * written back in UTC form ([EventToICalEventMapper.writeZone]).
+     * The zone stored for a timed series whose DTSTART is a UTC time. Rows holding it, Room and
+     * device alike, are written in UTC form ([EventToICalEventMapper.writeZone]).
      */
     const val UTC_SERIES_ZONE = "UTC"
 

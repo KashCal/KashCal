@@ -56,6 +56,7 @@ import org.onekash.kashcal.domain.model.LocalCalendarSummary
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.reader.SyncLogReader
 import org.onekash.kashcal.domain.writer.EventWriter
+import org.onekash.kashcal.reminder.device.DeviceCalendarChangeWatcher
 import org.onekash.kashcal.reminder.receiver.ReminderAlarmReceiver
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
@@ -195,7 +196,7 @@ class AccountSettingsOfflineCalendarsTest {
 
     private fun viewModel(): AccountSettingsViewModel {
         val repo = FakeCalendarProviderRepository()
-        val manager = CalendarProviderManager(context, dataStore, mockk(relaxed = true), widgetUpdateManager)
+        val manager = CalendarProviderManager(context, dataStore, mockk(relaxed = true), widgetUpdateManager, DeviceCalendarChangeWatcher(context, dataStore))
         val syncLogReader = mockk<SyncLogReader> {
             every { getRecentLogs(any()) } returns MutableStateFlow(emptyList())
         }

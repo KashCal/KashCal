@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Uzi eksterretan kalendaron</string>
     <string name="onboarding_trust">Malferma kodo. Sen reklamoj. Sen spurado.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Memorigoj estas malŝaltitaj</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d evento ĉi-semajne havas memorigon.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Ne nun</string>
     <string name="reminders_off_turn_on">Ŝalti</string>
     <string name="reminders_on_snackbar">Memorigoj ŝaltitaj</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Ĉiuj viaj kalendaroj en unu privata aplikaĵo.</string>
     <string name="about_help_title">Helpo kaj gvidiloj</string>
     <string name="about_help_detail">Agordo, sinkronigo kaj demandoj</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Neniu aplikaĵo povas malfermi ĉi tiun ligilon.</string>
     <string name="about_built_in_austin">Farita kun ❤️ en Austin</string>
     <string name="about_version">Versio %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Preterlasi</string>
     <string name="whats_new_next">Sekva</string>
     <string name="whats_new_page_of">Paĝo %1$d el %2$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Aparataj kalendaroj</string>
     <string name="settings_device_calendars_hint">Kalendaroj el aliaj aplikaĵoj</string>
     <string name="offline_calendars_row_label">Eksterretaj kalendaroj</string>
-    <string name="offline_calendars_row_hint">Kalendaroj, kiuj restas en ĉi tiu telefono</string>
+    <string name="offline_calendars_row_hint">Kalendaroj, kiuj restas en ĉi tiu aparato</string>
     <string name="offline_calendars_manage_note">Ŝovu kalendaron por forigi ĝin.</string>
-    <string name="offline_calendars_info">Konservataj nur en ĉi tiu telefono kaj neniam sinkronigataj. Savkopioj ne inkluzivas eventojn, do eksportu kalendaron por konservi kopion.</string>
+    <string name="offline_calendars_info">Konservataj en ĉi tiu aparato kaj neniam sinkronigataj.</string>
     <string name="offline_calendars_info_cd">Pri eksterretaj kalendaroj</string>
     <string name="offline_calendar_default_state">Defaŭlta</string>
     <string name="offline_calendar_new">Nova kalendaro</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Montri kalendarojn de Google, Outlook kaj sinkronigaj aplikaĵoj en ĉi tiu aparato.</string>
     <string name="device_calendars_show_switch">Montri aparatajn kalendarojn</string>
+    <string name="device_calendars_access_off">Aliro al kalendaro estas malŝaltita por KashCal.</string>
     <string name="device_calendars_pick_hint">Elektu kalendarojn por montri.</string>
     <string name="device_calendars_empty">Neniu kalendaro troviĝis.</string>
     <string name="device_calendars_local">Loka</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">Donaco: malplena tago.</string>
     <string name="empty_no_events_day_4">Stato de la kalendaro: bele malplena.</string>
     <string name="empty_no_events_day_5">Nenio planita. Ĝuu la trankvilon.</string>
-    <string name="cd_empty_no_events_day">Trankvila tago, nenio planita</string>
     <string name="filter_date">Dato</string>
     <string name="label_select_date">Elektu daton</string>
     <string name="hint_tap_date_range">Tuŝu la saman daton por unu tago, aŭ alian daton por intervalo</string>

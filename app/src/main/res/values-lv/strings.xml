@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Lietot bezsaistes kalendāru</string>
     <string name="onboarding_trust">Atvērtais kods. Bez reklāmām. Bez izsekošanas.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Atgādinājumi ir izslēgti</string>
     <plurals name="reminders_off_body">
         <item quantity="zero">Šonedēļ %d notikumiem ir atgādinājumi.</item>
@@ -276,6 +276,8 @@
     <string name="reminders_off_not_now">Ne tagad</string>
     <string name="reminders_off_turn_on">Ieslēgt</string>
     <string name="reminders_on_snackbar">Atgādinājumi ieslēgti</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Visi tavi kalendāri vienā privātā lietotnē.</string>
     <string name="about_help_title">Palīdzība un ceļveži</string>
     <string name="about_help_detail">Iestatīšana, sinhronizācija un jautājumi</string>
@@ -286,6 +288,8 @@
     <string name="about_link_failed">Neviena lietotne nevar atvērt šo saiti.</string>
     <string name="about_built_in_austin">Veidots ar ❤️ pilsētā Austin</string>
     <string name="about_version">Versija %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Izlaist</string>
     <string name="whats_new_next">Tālāk</string>
     <string name="whats_new_page_of">Lapa %1$d no %2$d</string>
@@ -661,9 +665,9 @@
     <string name="settings_device_calendars">Ierīces kalendāri</string>
     <string name="settings_device_calendars_hint">Kalendāri no citām lietotnēm</string>
     <string name="offline_calendars_row_label">Bezsaistes kalendāri</string>
-    <string name="offline_calendars_row_hint">Kalendāri, kas paliek šajā tālrunī</string>
+    <string name="offline_calendars_row_hint">Kalendāri, kas paliek šajā ierīcē</string>
     <string name="offline_calendars_manage_note">Pavelc kalendāru, lai to dzēstu.</string>
-    <string name="offline_calendars_info">Tiek glabāti tikai šajā tālrunī un nekad netiek sinhronizēti. Dublējumos nav iekļauti notikumi, tāpēc eksportē kalendāru, lai saglabātu kopiju.</string>
+    <string name="offline_calendars_info">Tiek glabāti šajā ierīcē un nekad netiek sinhronizēti.</string>
     <string name="offline_calendars_info_cd">Par bezsaistes kalendāriem</string>
     <string name="offline_calendar_default_state">Noklusējuma</string>
     <string name="offline_calendar_new">Jauns kalendārs</string>
@@ -863,6 +867,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Rādi Google, Outlook un sinhronizācijas lietotņu kalendārus šajā ierīcē.</string>
     <string name="device_calendars_show_switch">Rādīt ierīces kalendārus</string>
+    <string name="device_calendars_access_off">KashCal piekļuve kalendāram ir izslēgta.</string>
     <string name="device_calendars_pick_hint">Izvēlies, kurus kalendārus rādīt.</string>
     <string name="device_calendars_empty">Kalendāri netika atrasti.</string>
     <string name="device_calendars_local">Lokāls</string>
@@ -1202,7 +1207,6 @@
     <string name="empty_no_events_day_3">Dāvana: tukša diena.</string>
     <string name="empty_no_events_day_4">Kalendāra statuss: brīnišķīgi tukšs.</string>
     <string name="empty_no_events_day_5">Nekas nav ieplānots. Baudi mieru.</string>
-    <string name="cd_empty_no_events_day">Mierīga diena, nekas nav ieplānots</string>
     <string name="filter_date">Datums</string>
     <string name="label_select_date">Izvēlēties datumu</string>
     <string name="hint_tap_date_range">Pieskarieties tam pašam datumam vienai dienai vai citam datumam diapazonam</string>

@@ -10,6 +10,7 @@ import android.provider.CalendarContract
 import android.util.Log
 import androidx.core.content.ContextCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -19,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.onekash.kashcal.data.preferences.KashCalDataStore
+import org.onekash.kashcal.reminder.device.DeviceCalendarChangeWatcher
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.widget.WidgetUpdateManager
 import javax.inject.Inject
@@ -28,10 +30,12 @@ import javax.inject.Singleton
  * Registers and unregisters the CalendarProvider observer and exposes [changeSignal] for
  * device-event re-queries.
  *
- * The observer callback is the one place every device-calendar change arrives, whether KashCal
- * wrote it or another app or sync adapter did, so it also reschedules device reminders and
- * refreshes the home-screen widgets. Keep that fan-out here, so no consumer has to register its
- * own observer.
+ * While the process runs, the observer callback is the one place every device-calendar change
+ * arrives, whether KashCal wrote it or another app or sync adapter did, so it also reschedules
+ * device reminders and refreshes the home-screen widgets. Keep that fan-out here, so no consumer
+ * has to register its own observer. Changes made while the process is dead reach device
+ * reminders through the job [DeviceCalendarChangeWatcher] keeps scheduled, which this class
+ * brings in step with the switches.
  *
  * Unlike [org.onekash.kashcal.data.contacts.ContactEventManager], it runs no sync worker and
  * writes nothing to Room.
@@ -41,7 +45,8 @@ class CalendarProviderManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val dataStore: KashCalDataStore,
     private val deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler,
-    private val widgetUpdateManager: WidgetUpdateManager
+    private val widgetUpdateManager: WidgetUpdateManager,
+    private val changeWatcher: DeviceCalendarChangeWatcher,
 ) {
     companion object {
         private const val TAG = "CalProviderManager"
@@ -65,8 +70,12 @@ class CalendarProviderManager @Inject constructor(
     val changeSignal: StateFlow<Int> = _changeSignal.asStateFlow()
 
     /**
-     * Registers the observer at app startup when device calendars are on. If READ_CALENDAR was
-     * revoked since, switches the feature off instead.
+     * Runs at every process start. When device calendars are on, registers the observer,
+     * re-picks the next device reminder (which arms one for a change made while the process was
+     * dead) and then replaces the calendar-change job ([DeviceCalendarChangeWatcher.refresh]).
+     * The observer, registered first, sees changes between the two. If READ_CALENDAR was revoked
+     * since, switches the feature off instead. When device calendars are off, cancels a leftover
+     * calendar-change job. A failing re-pick still leaves the job scheduled.
      */
     fun initialize() {
         scope.launch {
@@ -75,33 +84,60 @@ class CalendarProviderManager @Inject constructor(
                 if (!hasPermission()) {
                     Log.w(TAG, "READ_CALENDAR permission revoked, auto-disabling device calendars")
                     dataStore.setDeviceCalendarsEnabled(false)
+                    changeWatcher.refresh()
                     return@launch
                 }
                 Log.d(TAG, "Device calendars enabled on startup, registering observer")
                 registerObserver()
+                repickNextReminder("at startup")
+                changeWatcher.refresh()
+            } else {
+                changeWatcher.refresh()
             }
         }
     }
 
     /**
-     * Starts observing and re-queries once device calendars are switched on. Without
-     * READ_CALENDAR it switches the feature back off instead of observing.
+     * Starts observing, re-picks the next device reminder, schedules the calendar-change job and
+     * re-queries once device calendars are switched on. The re-pick re-arms the reminder that
+     * [onDisabled] cancelled. Without READ_CALENDAR it switches the feature back off instead of
+     * observing, and the re-pick arms nothing.
+     *
+     * The re-pick and the job reconcile run in that order in one coroutine: a failing re-pick
+     * still reconciles the job, a hanging one delays it.
      */
     fun onEnabled() {
         registerObserver()
         _changeSignal.value++
+        scope.launch {
+            repickNextReminder("after enabling")
+            changeWatcher.reconcile()
+        }
+    }
+
+    /** Re-picks the next device reminder, logging a failure ([whenText] names the caller). */
+    private suspend fun repickNextReminder(whenText: String) {
+        try {
+            deviceCalendarReminderScheduler.scheduleNextReminder()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.e(TAG, "Couldn't re-pick the next device reminder $whenText", e)
+        }
     }
 
     /**
-     * Stops observing, cancels the pending device reminder alarm and re-queries once device
-     * calendars are switched off, by the user or by a settings restore
-     * ([applyDeviceCalendarsSetting]). Device events disappear because DisplayEventRepository
+     * Stops observing, cancels the pending device reminder alarm and the calendar-change job, and
+     * re-queries once device calendars are switched off, by the user or by a settings restore
+     * ([applyDeviceCalendarsSetting]). The caller stores the switch first: the job is cancelled
+     * because the stored setting reads off. Device events disappear because DisplayEventRepository
      * checks the enabled preference.
      */
     fun onDisabled() {
         unregisterObserver()
         deviceCalendarReminderScheduler.cancelPendingAlarm()
         _changeSignal.value++  // Re-query so device events leave the UI
+        scope.launch { changeWatcher.reconcile() }
     }
 
     /**
@@ -122,8 +158,9 @@ class CalendarProviderManager @Inject constructor(
      * ticked or unticked, declined events shown or hidden).
      *
      * When device calendars are on it goes through [onEnabled], so a stored "on" that isn't
-     * observed yet is healed. When they are off it only re-queries: the provider is observed only
-     * while the feature is on.
+     * observed yet is healed and the next device reminder is re-picked (a newly ticked calendar's
+     * reminder is armed without waiting for the provider write to reach the observer). When they
+     * are off it only re-queries: the provider is observed only while the feature is on.
      */
     suspend fun onDeviceCalendarSettingsChanged() {
         if (dataStore.deviceCalendarsEnabled.first()) {
@@ -136,26 +173,29 @@ class CalendarProviderManager @Inject constructor(
     /**
      * Makes observing match the stored device-calendars switch after something other than the
      * switch changed it (restoring a settings backup): on runs [onEnabled], off [onDisabled].
-     * Safe when already in step: it then re-queries, and when off cancels the pending device
-     * reminder alarm again, which is harmless.
+     * Safe when already in step: it then re-queries, and re-picks the next device reminder when on
+     * or cancels the pending alarm again when off, both harmless.
      */
     suspend fun applyDeviceCalendarsSetting() {
         if (dataStore.deviceCalendarsEnabled.first()) onEnabled() else onDisabled()
     }
 
     /**
-     * Cancels the pending device reminder alarm but keeps observing. Nothing in the app calls it
-     * today; only tests do.
+     * Cancels the pending device reminder alarm and the calendar-change job after device calendar
+     * reminders were switched off and stored; keeps observing, since device events still show.
      */
-    fun onRemindersDisabled() {
+    suspend fun onRemindersDisabled() {
         deviceCalendarReminderScheduler.cancelPendingAlarm()
+        changeWatcher.reconcile()
     }
 
-    /** Schedules the next device reminder. Nothing in the app calls it today; only tests do. */
-    fun onRemindersEnabled() {
-        scope.launch {
-            deviceCalendarReminderScheduler.scheduleNextReminder()
-        }
+    /**
+     * Schedules the calendar-change job and the next device reminder after device calendar
+     * reminders were switched on and stored.
+     */
+    suspend fun onRemindersEnabled() {
+        changeWatcher.reconcile()
+        deviceCalendarReminderScheduler.scheduleNextReminder()
     }
 
     private fun hasPermission(): Boolean =

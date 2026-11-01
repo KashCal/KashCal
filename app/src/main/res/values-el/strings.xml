@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Χρήση ημερολογίου εκτός σύνδεσης</string>
     <string name="onboarding_trust">Ανοιχτός κώδικας. Χωρίς διαφημίσεις. Χωρίς παρακολούθηση.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Οι υπενθυμίσεις είναι απενεργοποιημένες</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d συμβάν αυτής της εβδομάδας έχει υπενθύμιση.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Όχι τώρα</string>
     <string name="reminders_off_turn_on">Ενεργοποίηση</string>
     <string name="reminders_on_snackbar">Οι υπενθυμίσεις ενεργοποιήθηκαν</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Όλα τα ημερολόγιά σας σε μία ιδιωτική εφαρμογή.</string>
     <string name="about_help_title">Βοήθεια και οδηγοί</string>
     <string name="about_help_detail">Ρύθμιση, συγχρονισμός και ερωτήσεις</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Καμία εφαρμογή δεν μπορεί να ανοίξει αυτόν τον σύνδεσμο.</string>
     <string name="about_built_in_austin">Φτιαγμένο με ❤️ στο Austin</string>
     <string name="about_version">Έκδοση %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Παράλειψη</string>
     <string name="whats_new_next">Επόμενο</string>
     <string name="whats_new_page_of">Σελίδα %1$d από %2$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Ημερολόγια συσκευής</string>
     <string name="settings_device_calendars_hint">Ημερολόγια από άλλες εφαρμογές</string>
     <string name="offline_calendars_row_label">Ημερολόγια εκτός σύνδεσης</string>
-    <string name="offline_calendars_row_hint">Ημερολόγια που μένουν σε αυτό το τηλέφωνο</string>
+    <string name="offline_calendars_row_hint">Ημερολόγια που μένουν σε αυτή τη συσκευή</string>
     <string name="offline_calendars_manage_note">Σύρετε ένα ημερολόγιο για να το διαγράψετε.</string>
-    <string name="offline_calendars_info">Διατηρούνται μόνο σε αυτό το τηλέφωνο και δεν συγχρονίζονται ποτέ. Τα αντίγραφα ασφαλείας δεν περιλαμβάνουν συμβάντα, οπότε εξαγάγετε ένα ημερολόγιο για να κρατήσετε αντίγραφο.</string>
+    <string name="offline_calendars_info">Διατηρούνται σε αυτή τη συσκευή και δεν συγχρονίζονται ποτέ.</string>
     <string name="offline_calendars_info_cd">Σχετικά με τα ημερολόγια εκτός σύνδεσης</string>
     <string name="offline_calendar_default_state">Προεπιλογή</string>
     <string name="offline_calendar_new">Νέο ημερολόγιο</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Εμφάνιση ημερολογίων από Google, Outlook και εφαρμογές συγχρονισμού σε αυτή τη συσκευή.</string>
     <string name="device_calendars_show_switch">Εμφάνιση ημερολογίων συσκευής</string>
+    <string name="device_calendars_access_off">Η πρόσβαση στο ημερολόγιο είναι απενεργοποιημένη για το KashCal.</string>
     <string name="device_calendars_pick_hint">Επιλέξτε ημερολόγια για εμφάνιση.</string>
     <string name="device_calendars_empty">Δεν βρέθηκαν ημερολόγια.</string>
     <string name="device_calendars_local">Τοπικό</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">Ένα δώρο: μια άδεια μέρα.</string>
     <string name="empty_no_events_day_4">Κατάσταση ημερολογίου: υπέροχα άδειο.</string>
     <string name="empty_no_events_day_5">Τίποτα προγραμματισμένο. Απολαύστε την ηρεμία.</string>
-    <string name="cd_empty_no_events_day">Ήρεμη μέρα, τίποτα προγραμματισμένο</string>
     <string name="filter_date">Ημερομηνία</string>
     <string name="label_select_date">Επιλέξτε ημερομηνία</string>
     <string name="hint_tap_date_range">Πατήστε την ίδια ημερομηνία για μία ημέρα ή άλλη για εύρος</string>

@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">ใช้ปฏิทินออฟไลน์</string>
     <string name="onboarding_trust">โอเพนซอร์ส ไม่มีโฆษณา ไม่มีการติดตาม</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">การเตือนปิดอยู่</string>
     <plurals name="reminders_off_body">
         <item quantity="other">สัปดาห์นี้มี %d กิจกรรมที่ตั้งการเตือนไว้</item>
@@ -274,6 +274,8 @@
     <string name="reminders_off_not_now">ไว้ทีหลัง</string>
     <string name="reminders_off_turn_on">เปิด</string>
     <string name="reminders_on_snackbar">เปิดการเตือนแล้ว</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">ปฏิทินทั้งหมดของคุณในแอปส่วนตัวแอปเดียว</string>
     <string name="about_help_title">ความช่วยเหลือและคู่มือ</string>
     <string name="about_help_detail">การตั้งค่า การซิงค์ และคำถาม</string>
@@ -284,6 +286,8 @@
     <string name="about_link_failed">ไม่มีแอปที่เปิดลิงก์นี้ได้</string>
     <string name="about_built_in_austin">สร้างด้วย ❤️ ใน Austin</string>
     <string name="about_version">เวอร์ชัน %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">ข้าม</string>
     <string name="whats_new_next">ถัดไป</string>
     <string name="whats_new_page_of">หน้า %1$d จาก %2$d</string>
@@ -659,9 +663,9 @@
     <string name="settings_device_calendars">ปฏิทินอุปกรณ์</string>
     <string name="settings_device_calendars_hint">ปฏิทินจากแอปอื่น</string>
     <string name="offline_calendars_row_label">ปฏิทินออฟไลน์</string>
-    <string name="offline_calendars_row_hint">ปฏิทินที่เก็บไว้ในโทรศัพท์เครื่องนี้</string>
+    <string name="offline_calendars_row_hint">ปฏิทินที่เก็บไว้ในอุปกรณ์นี้</string>
     <string name="offline_calendars_manage_note">ปัดปฏิทินเพื่อลบ</string>
-    <string name="offline_calendars_info">เก็บไว้ในโทรศัพท์เครื่องนี้เท่านั้นและไม่ซิงค์ การสำรองข้อมูลไม่รวมกิจกรรม ส่งออกปฏิทินเพื่อเก็บสำเนาไว้</string>
+    <string name="offline_calendars_info">เก็บไว้ในอุปกรณ์นี้และไม่ซิงค์</string>
     <string name="offline_calendars_info_cd">เกี่ยวกับปฏิทินออฟไลน์</string>
     <string name="offline_calendar_default_state">ค่าเริ่มต้น</string>
     <string name="offline_calendar_new">ปฏิทินใหม่</string>
@@ -841,6 +845,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">แสดงปฏิทินจาก Google, Outlook และแอปซิงค์ในอุปกรณ์นี้</string>
     <string name="device_calendars_show_switch">แสดงปฏิทินอุปกรณ์</string>
+    <string name="device_calendars_access_off">สิทธิ์เข้าถึงปฏิทินของ KashCal ปิดอยู่</string>
     <string name="device_calendars_pick_hint">เลือกปฏิทินที่จะแสดง</string>
     <string name="device_calendars_empty">ไม่พบปฏิทิน</string>
     <string name="device_calendars_local">ในเครื่อง</string>
@@ -1090,7 +1095,6 @@
     <string name="empty_no_events_day_3">ของขวัญ: วันว่าง ๆ หนึ่งวัน</string>
     <string name="empty_no_events_day_4">สถานะปฏิทิน: ว่างสุด ๆ อย่างน่ายินดี</string>
     <string name="empty_no_events_day_5">ไม่มีอะไรต้องทำ เพลิดเพลินกับความสงบเถอะ</string>
-    <string name="cd_empty_no_events_day">วันสบาย ๆ ไม่มีนัดหมาย</string>
     <string name="filter_date">วันที่</string>
     <string name="label_select_date">เลือกวันที่</string>
     <string name="hint_tap_date_range">แตะวันเดียวกันสำหรับวันเดียว หรือแตะวันอื่นสำหรับช่วงเวลา</string>

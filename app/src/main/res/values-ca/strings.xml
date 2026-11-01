@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Usa el calendari fora de línia</string>
     <string name="onboarding_trust">Codi obert. Sense anuncis. Sense seguiment.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Els recordatoris estan desactivats</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d esdeveniment d\'aquesta setmana té un recordatori.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Ara no</string>
     <string name="reminders_off_turn_on">Activa</string>
     <string name="reminders_on_snackbar">Recordatoris activats</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Tots els teus calendaris en una aplicació privada.</string>
     <string name="about_help_title">Ajuda i guies</string>
     <string name="about_help_detail">Configuració, sincronització i preguntes</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Cap aplicació no pot obrir aquest enllaç.</string>
     <string name="about_built_in_austin">Fet amb ❤️ a Austin</string>
     <string name="about_version">Versió %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Omet</string>
     <string name="whats_new_next">Següent</string>
     <string name="whats_new_page_of">Pàgina %1$d de %2$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Calendaris del dispositiu</string>
     <string name="settings_device_calendars_hint">Calendaris d\'altres aplicacions</string>
     <string name="offline_calendars_row_label">Calendaris fora de línia</string>
-    <string name="offline_calendars_row_hint">Calendaris que es queden en aquest telèfon</string>
+    <string name="offline_calendars_row_hint">Calendaris que es queden en aquest dispositiu</string>
     <string name="offline_calendars_manage_note">Llisca un calendari per eliminar-lo.</string>
-    <string name="offline_calendars_info">Només es desen en aquest telèfon i no se sincronitzen mai. Les còpies de seguretat no inclouen els esdeveniments, així que exporta un calendari per conservar-ne una còpia.</string>
+    <string name="offline_calendars_info">Es desen en aquest dispositiu i no se sincronitzen mai.</string>
     <string name="offline_calendars_info_cd">Quant als calendaris fora de línia</string>
     <string name="offline_calendar_default_state">Predeterminat</string>
     <string name="offline_calendar_new">Calendari nou</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Mostra els calendaris de Google, Outlook i aplicacions de sincronització en aquest dispositiu.</string>
     <string name="device_calendars_show_switch">Mostra els calendaris del dispositiu</string>
+    <string name="device_calendars_access_off">L\'accés al calendari de KashCal està desactivat.</string>
     <string name="device_calendars_pick_hint">Tria els calendaris que vols mostrar.</string>
     <string name="device_calendars_empty">No s\'ha trobat cap calendari.</string>
     <string name="device_calendars_local">Local</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">Un regal: un dia buit.</string>
     <string name="empty_no_events_day_4">Estat del calendari: meravellosament buit.</string>
     <string name="empty_no_events_day_5">Res planejat. Gaudeix de la calma.</string>
-    <string name="cd_empty_no_events_day">Dia tranquil, res programat</string>
     <string name="filter_date">Data</string>
     <string name="label_select_date">Selecciona una data</string>
     <string name="hint_tap_date_range">Toca la mateixa data per un sol dia, o una altra data per un rang</string>

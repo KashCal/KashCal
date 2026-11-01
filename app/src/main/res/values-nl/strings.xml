@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Offline agenda gebruiken</string>
     <string name="onboarding_trust">Open source. Geen advertenties. Geen tracking.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Herinneringen staan uit</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d afspraak deze week heeft een herinnering.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Niet nu</string>
     <string name="reminders_off_turn_on">Aanzetten</string>
     <string name="reminders_on_snackbar">Herinneringen staan aan</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Al je agenda\'s in één privé-app.</string>
     <string name="about_help_title">Hulp en handleidingen</string>
     <string name="about_help_detail">Instellen, synchronisatie en vragen</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Er is geen app die deze link kan openen.</string>
     <string name="about_built_in_austin">Gemaakt met ❤️ in Austin</string>
     <string name="about_version">Versie %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Overslaan</string>
     <string name="whats_new_next">Volgende</string>
     <string name="whats_new_page_of">Pagina %1$d van %2$d</string>
@@ -659,9 +663,9 @@
     <string name="settings_device_calendars">Apparaatagenda\'s</string>
     <string name="settings_device_calendars_hint">Agenda\'s uit andere apps</string>
     <string name="offline_calendars_row_label">Offline agenda\'s</string>
-    <string name="offline_calendars_row_hint">Agenda\'s die op deze telefoon blijven</string>
+    <string name="offline_calendars_row_hint">Agenda\'s die op dit apparaat blijven</string>
     <string name="offline_calendars_manage_note">Veeg over een agenda om hem te verwijderen.</string>
-    <string name="offline_calendars_info">Alleen op deze telefoon bewaard en nooit gesynchroniseerd. Back-ups bevatten geen afspraken, dus exporteer een agenda om een kopie te bewaren.</string>
+    <string name="offline_calendars_info">Op dit apparaat bewaard en nooit gesynchroniseerd.</string>
     <string name="offline_calendars_info_cd">Over offline agenda\'s</string>
     <string name="offline_calendar_default_state">Standaard</string>
     <string name="offline_calendar_new">Nieuwe agenda</string>
@@ -851,6 +855,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Agenda\'s van Google, Outlook en sync-apps op dit apparaat tonen.</string>
     <string name="device_calendars_show_switch">Apparaatagenda\'s tonen</string>
+    <string name="device_calendars_access_off">Agendatoegang staat uit voor KashCal.</string>
     <string name="device_calendars_pick_hint">Kies agenda\'s om te tonen.</string>
     <string name="device_calendars_empty">Geen agenda\'s gevonden.</string>
     <string name="device_calendars_local">Lokaal</string>
@@ -1145,7 +1150,6 @@
     <string name="empty_no_events_day_3">Een cadeautje: een lege dag.</string>
     <string name="empty_no_events_day_4">Agendastatus: heerlijk leeg.</string>
     <string name="empty_no_events_day_5">Niets gepland. Geniet van de rust.</string>
-    <string name="cd_empty_no_events_day">Rustige dag, niets gepland</string>
     <string name="filter_date">Datum</string>
     <string name="label_select_date">Selecteer een datum</string>
     <string name="hint_tap_date_range">Tik dezelfde datum voor één dag, of een andere datum voor een bereik</string>

@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Context
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.test.core.app.ApplicationProvider
+import io.mockk.clearMocks
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
@@ -51,6 +52,7 @@ import org.onekash.kashcal.domain.coordinator.EventCoordinator
 import org.onekash.kashcal.domain.feeds.noFeedAccountsServerCalendarFeeds
 import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.SyncLogReader
+import org.onekash.kashcal.reminder.device.DeviceCalendarChangeWatcher
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.ui.permission.FakePermissionChecker
 import org.onekash.kashcal.ui.screens.BackupRestoreUiState
@@ -95,7 +97,7 @@ class AccountSettingsDeviceObserverLifecycleTest {
         // Unit-returning side-effect collaborators, so relaxed is allowed.
         widgetUpdateManager = mockk(relaxed = true)
         reminderScheduler = mockk(relaxed = true)
-        manager = CalendarProviderManager(context, dataStore, reminderScheduler, widgetUpdateManager)
+        manager = CalendarProviderManager(context, dataStore, reminderScheduler, widgetUpdateManager, DeviceCalendarChangeWatcher(context, dataStore))
         permissionChecker = FakePermissionChecker().apply {
             calendarRead = true
             calendarWrite = true
@@ -281,6 +283,10 @@ class AccountSettingsDeviceObserverLifecycleTest {
         restore(viewModel, deviceCalendarsEnabled = true)
 
         assertEquals(1, observerCount())
+        // The restore turned device calendars on, which re-picks once; clear it so the count
+        // below is the observer's alone.
+        coVerify(exactly = 1) { reminderScheduler.scheduleNextReminder() }
+        clearMocks(reminderScheduler, answers = false)
         notifyProviderChange()
         passDebounce()
         coVerify(exactly = 1) { widgetUpdateManager.updateAllWidgets("device_calendar_changed") }

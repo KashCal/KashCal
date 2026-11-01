@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Cleachd mìosachan far loidhne</string>
     <string name="onboarding_trust">Còd fosgailte. Gun sanasan. Gun tracadh.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Tha cuimhneachain dheth</string>
     <plurals name="reminders_off_body">
         <item quantity="one">Tha cuimhneachan aig %d tachartas an t-seachdain seo.</item>
@@ -277,6 +277,8 @@
     <string name="reminders_off_not_now">Chan ann an-dràsta</string>
     <string name="reminders_off_turn_on">Cuir air</string>
     <string name="reminders_on_snackbar">Cuimhneachain air</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Do mhìosachain uile ann an aon aplacaid phrìobhaideach.</string>
     <string name="about_help_title">Cobhair is treòraichean</string>
     <string name="about_help_detail">Suidheachadh, sioncronachadh is ceistean</string>
@@ -287,6 +289,8 @@
     <string name="about_link_failed">Chan urrainn do dh\'aplacaid sam bith an ceangal seo fhosgladh.</string>
     <string name="about_built_in_austin">Air a thogail le ❤️ ann an Austin</string>
     <string name="about_version">Tionndadh %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Leum seachad</string>
     <string name="whats_new_next">Air adhart</string>
     <string name="whats_new_page_of">Duilleag %1$d à %2$d</string>
@@ -662,9 +666,9 @@
     <string name="settings_device_calendars">Mìosachain an Uidheim</string>
     <string name="settings_device_calendars_hint">Mìosachain bho aplacaidean eile</string>
     <string name="offline_calendars_row_label">Mìosachain far loidhne</string>
-    <string name="offline_calendars_row_hint">Mìosachain a dh\'fhanas air an fhòn seo</string>
+    <string name="offline_calendars_row_hint">Mìosachain a dh\'fhanas air an uidheam seo</string>
     <string name="offline_calendars_manage_note">Grad-shlaighd mìosachan gus a sguabadh às.</string>
-    <string name="offline_calendars_info">Cha tèid an cumail ach air an fhòn seo is cha tèid an sioncronachadh idir. Chan eil tachartasan sna lethbhreacan-glèidhidh, mar sin às-phortaich mìosachan airson lethbhreac a chumail.</string>
+    <string name="offline_calendars_info">Thèid an cumail air an uidheam seo is cha tèid an sioncronachadh idir.</string>
     <string name="offline_calendars_info_cd">Mu na mìosachain far loidhne</string>
     <string name="offline_calendar_default_state">Bunaiteach</string>
     <string name="offline_calendar_new">Mìosachan ùr</string>
@@ -874,6 +878,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Seall mìosachain o Google, Outlook is aplacaidean sioncronachaidh air an uidheam seo.</string>
     <string name="device_calendars_show_switch">Seall mìosachain an uidheim</string>
+    <string name="device_calendars_access_off">Tha cothrom air a’ mhìosachan dheth airson KashCal.</string>
     <string name="device_calendars_pick_hint">Tagh mìosachain airson an sealltainn.</string>
     <string name="device_calendars_empty">Cha deach mìosachan a lorg.</string>
     <string name="device_calendars_local">Ionadail</string>
@@ -1258,7 +1263,6 @@
     <string name="empty_no_events_day_3">Tiodhlac: là falamh.</string>
     <string name="empty_no_events_day_4">Inbhe a\' mhìosachain: àlainn falamh.</string>
     <string name="empty_no_events_day_5">Chan eil dad air a phlanadh. Gabh tlachd às an t-sàmhchair.</string>
-    <string name="cd_empty_no_events_day">Là sàmhach, chan eil dad clàraichte</string>
     <string name="filter_date">Ceann-là</string>
     <string name="label_select_date">Tagh ceann-là</string>
     <string name="hint_tap_date_range">Thoir gnogag air an aon cheann-là airson aon là, no ceann-là eile airson raon</string>

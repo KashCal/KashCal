@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Gamitin ang offline na kalendaryo</string>
     <string name="onboarding_trust">Open source. Walang ads. Walang pag-track.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Naka-off ang mga paalala</string>
     <plurals name="reminders_off_body">
         <item quantity="one">May paalala ang %d event ngayong linggo.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Hindi ngayon</string>
     <string name="reminders_off_turn_on">I-on</string>
     <string name="reminders_on_snackbar">Naka-on ang mga paalala</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Lahat ng iyong kalendaryo sa iisang pribadong app.</string>
     <string name="about_help_title">Tulong at mga gabay</string>
     <string name="about_help_detail">Pag-setup, pag-sync at mga tanong</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Walang app na makakapagbukas ng link na ito.</string>
     <string name="about_built_in_austin">Ginawa nang may ❤️ sa Austin</string>
     <string name="about_version">Bersyon %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Laktawan</string>
     <string name="whats_new_next">Susunod</string>
     <string name="whats_new_page_of">Pahina %1$d ng %2$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Mga Device Calendar</string>
     <string name="settings_device_calendars_hint">Mga kalendaryo mula sa ibang app</string>
     <string name="offline_calendars_row_label">Mga offline na kalendaryo</string>
-    <string name="offline_calendars_row_hint">Mga kalendaryong nananatili sa phone na ito</string>
+    <string name="offline_calendars_row_hint">Mga kalendaryong nananatili sa device na ito</string>
     <string name="offline_calendars_manage_note">I-swipe ang kalendaryo para burahin ito.</string>
-    <string name="offline_calendars_info">Nakatago lang sa phone na ito at hindi kailanman sini-sync. Hindi kasama ang mga event sa mga backup, kaya i-export ang kalendaryo para magkaroon ng kopya.</string>
+    <string name="offline_calendars_info">Nakatago sa device na ito at hindi kailanman sini-sync.</string>
     <string name="offline_calendars_info_cd">Tungkol sa mga offline na kalendaryo</string>
     <string name="offline_calendar_default_state">Default</string>
     <string name="offline_calendar_new">Bagong kalendaryo</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Ipakita ang mga kalendaryo mula sa Google, Outlook, at mga sync app sa device na ito.</string>
     <string name="device_calendars_show_switch">Ipakita ang mga device calendar</string>
+    <string name="device_calendars_access_off">Naka-off ang access sa kalendaryo para sa KashCal.</string>
     <string name="device_calendars_pick_hint">Pumili ng mga kalendaryong ipapakita.</string>
     <string name="device_calendars_empty">Walang nahanap na kalendaryo.</string>
     <string name="device_calendars_local">Lokal</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">Isang regalo: isang walang lamang araw.</string>
     <string name="empty_no_events_day_4">Status ng kalendaryo: maluwalhating walang laman.</string>
     <string name="empty_no_events_day_5">Walang nakaplanong gawain. Tamasahin ang katahimikan.</string>
-    <string name="cd_empty_no_events_day">Tahimik na araw, walang nakatakda</string>
     <string name="filter_date">Petsa</string>
     <string name="label_select_date">Pumili ng petsa</string>
     <string name="hint_tap_date_range">I-tap ang parehong petsa para sa isang araw, o ibang petsa para sa saklaw</string>

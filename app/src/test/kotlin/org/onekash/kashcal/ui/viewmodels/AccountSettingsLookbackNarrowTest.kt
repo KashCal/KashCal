@@ -53,6 +53,7 @@ import org.onekash.kashcal.domain.model.AccountProvider
 import org.onekash.kashcal.domain.reader.EventReader
 import org.onekash.kashcal.domain.reader.SyncLogReader
 import org.onekash.kashcal.domain.writer.EventWriter
+import org.onekash.kashcal.reminder.device.DeviceCalendarChangeWatcher
 import org.onekash.kashcal.sync.auth.Credentials
 import org.onekash.kashcal.sync.client.CalDavClient
 import org.onekash.kashcal.sync.client.OkHttpCalDavClientFactory
@@ -344,7 +345,7 @@ class AccountSettingsLookbackNarrowTest {
 
     private fun viewModel(): AccountSettingsViewModel {
         val repo = FakeCalendarProviderRepository()
-        val manager = CalendarProviderManager(context, dataStore, mockk(relaxed = true), widgetUpdateManager)
+        val manager = CalendarProviderManager(context, dataStore, mockk(relaxed = true), widgetUpdateManager, DeviceCalendarChangeWatcher(context, dataStore))
         val syncLogReader = mockk<SyncLogReader> {
             every { getRecentLogs(any()) } returns MutableStateFlow(emptyList())
         }

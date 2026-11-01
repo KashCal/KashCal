@@ -28,7 +28,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +47,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.components.InlineNote
 import org.onekash.kashcal.ui.permission.ChangeNotificationsStep
 
 /**
@@ -145,8 +145,9 @@ internal fun CalendarNotificationsContent(
                 text = stringResource(banner.first),
                 action = stringResource(banner.second),
                 onAction = onFixNotifications,
-                container = MaterialTheme.colorScheme.errorContainer,
-                content = MaterialTheme.colorScheme.onErrorContainer,
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
             )
         }
         LazyColumn(modifier = Modifier.fillMaxWidth().weight(1f)) {
@@ -302,30 +303,5 @@ private fun CalendarNotificationRowItem(
         }
         // The row handles the tap; a null callback keeps the switch from being a second target.
         Switch(checked = row.notifies, onCheckedChange = null, enabled = enabled)
-    }
-}
-
-/** An inline note with one action, shown in place of a dialog. */
-@Composable
-private fun InlineNote(
-    text: String,
-    action: String,
-    onAction: () -> Unit,
-    container: Color,
-    content: Color,
-) {
-    Surface(
-        color = container,
-        contentColor = content,
-        shape = RoundedCornerShape(16.dp),
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 4.dp, bottom = 4.dp),
-        ) {
-            Text(text = text, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-            TextButton(onClick = onAction) { Text(action) }
-        }
     }
 }

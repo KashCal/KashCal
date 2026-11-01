@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">ಆಫ್‌ಲೈನ್ ಕ್ಯಾಲೆಂಡರ್ ಬಳಸಿ</string>
     <string name="onboarding_trust">ಓಪನ್ ಸೋರ್ಸ್. ಜಾಹೀರಾತುಗಳಿಲ್ಲ. ಟ್ರ್ಯಾಕಿಂಗ್ ಇಲ್ಲ.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">ರಿಮೈಂಡರ್‌ಗಳು ಆಫ್ ಆಗಿವೆ</string>
     <plurals name="reminders_off_body">
         <item quantity="one">ಈ ವಾರ %d ಈವೆಂಟ್‌ಗೆ ರಿಮೈಂಡರ್ ಇದೆ.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">ಈಗ ಬೇಡ</string>
     <string name="reminders_off_turn_on">ಆನ್ ಮಾಡಿ</string>
     <string name="reminders_on_snackbar">ರಿಮೈಂಡರ್‌ಗಳು ಆನ್ ಆಗಿವೆ</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">ನಿಮ್ಮ ಎಲ್ಲಾ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು ಒಂದೇ ಖಾಸಗಿ ಆ್ಯಪ್‌ನಲ್ಲಿ.</string>
     <string name="about_help_title">ಸಹಾಯ ಮತ್ತು ಮಾರ್ಗದರ್ಶಿಗಳು</string>
     <string name="about_help_detail">ಸೆಟಪ್, ಸಿಂಕ್ ಮತ್ತು ಪ್ರಶ್ನೆಗಳು</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">ಈ ಲಿಂಕ್ ತೆರೆಯಲು ಯಾವುದೇ ಆ್ಯಪ್ ಇಲ್ಲ.</string>
     <string name="about_built_in_austin">Austin ನಲ್ಲಿ ❤️ ನಿಂದ ನಿರ್ಮಿಸಲಾಗಿದೆ</string>
     <string name="about_version">ಆವೃತ್ತಿ %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">ಬಿಟ್ಟುಬಿಡಿ</string>
     <string name="whats_new_next">ಮುಂದೆ</string>
     <string name="whats_new_page_of">%2$d ರಲ್ಲಿ ಪುಟ %1$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">ಸಾಧನ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
     <string name="settings_device_calendars_hint">ಇತರ ಆ್ಯಪ್‌ಗಳಿಂದ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
     <string name="offline_calendars_row_label">ಆಫ್‌ಲೈನ್ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
-    <string name="offline_calendars_row_hint">ಈ ಫೋನ್‌ನಲ್ಲೇ ಉಳಿಯುವ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
+    <string name="offline_calendars_row_hint">ಈ ಸಾಧನದಲ್ಲಿ ಉಳಿಯುವ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</string>
     <string name="offline_calendars_manage_note">ಅಳಿಸಲು ಕ್ಯಾಲೆಂಡರ್ ಅನ್ನು ಸ್ವೈಪ್ ಮಾಡಿ.</string>
-    <string name="offline_calendars_info">ಈ ಫೋನ್‌ನಲ್ಲಿ ಮಾತ್ರ ಇರಿಸಲಾಗುತ್ತದೆ ಮತ್ತು ಎಂದಿಗೂ ಸಿಂಕ್ ಆಗುವುದಿಲ್ಲ. ಬ್ಯಾಕಪ್‌ಗಳಲ್ಲಿ ಈವೆಂಟ್‌ಗಳು ಸೇರಿರುವುದಿಲ್ಲ, ಆದ್ದರಿಂದ ಪ್ರತಿಯನ್ನು ಇರಿಸಿಕೊಳ್ಳಲು ಕ್ಯಾಲೆಂಡರ್ ಅನ್ನು ರಫ್ತು ಮಾಡಿ.</string>
+    <string name="offline_calendars_info">ಈ ಸಾಧನದಲ್ಲಿ ಇರಿಸಲಾಗುತ್ತದೆ ಮತ್ತು ಎಂದಿಗೂ ಸಿಂಕ್ ಆಗುವುದಿಲ್ಲ.</string>
     <string name="offline_calendars_info_cd">ಆಫ್‌ಲೈನ್ ಕ್ಯಾಲೆಂಡರ್‌ಗಳ ಬಗ್ಗೆ</string>
     <string name="offline_calendar_default_state">ಡೀಫಾಲ್ಟ್</string>
     <string name="offline_calendar_new">ಹೊಸ ಕ್ಯಾಲೆಂಡರ್</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">ಈ ಸಾಧನದಲ್ಲಿರುವ Google, Outlook ಮತ್ತು ಸಿಂಕ್ ಆ್ಯಪ್‌ಗಳ ಕ್ಯಾಲೆಂಡರ್‌ಗಳನ್ನು ತೋರಿಸಿ.</string>
     <string name="device_calendars_show_switch">ಸಾಧನ ಕ್ಯಾಲೆಂಡರ್‌ಗಳನ್ನು ತೋರಿಸಿ</string>
+    <string name="device_calendars_access_off">KashCal ಗಾಗಿ ಕ್ಯಾಲೆಂಡರ್ ಪ್ರವೇಶ ಆಫ್ ಆಗಿದೆ.</string>
     <string name="device_calendars_pick_hint">ತೋರಿಸಬೇಕಾದ ಕ್ಯಾಲೆಂಡರ್‌ಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ.</string>
     <string name="device_calendars_empty">ಯಾವುದೇ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು ಕಂಡುಬಂದಿಲ್ಲ.</string>
     <string name="device_calendars_local">ಸ್ಥಳೀಯ</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">ಒಂದು ಕೊಡುಗೆ: ಬಿಡುವಿನ ಒಂದು ದಿನ.</string>
     <string name="empty_no_events_day_4">ಕ್ಯಾಲೆಂಡರ್ ಸ್ಥಿತಿ: ಸೊಗಸಾಗಿ ಖಾಲಿ.</string>
     <string name="empty_no_events_day_5">ಏನೂ ನಿಗದಿಯಾಗಿಲ್ಲ. ನೆಮ್ಮದಿಯನ್ನು ಆನಂದಿಸಿ.</string>
-    <string name="cd_empty_no_events_day">ಶಾಂತ ದಿನ, ಏನೂ ನಿಗದಿಯಾಗಿಲ್ಲ</string>
     <string name="filter_date">ದಿನಾಂಕ</string>
     <string name="label_select_date">ದಿನಾಂಕ ಆಯ್ಕೆಮಾಡಿ</string>
     <string name="hint_tap_date_range">ಒಂದು ದಿನಕ್ಕೆ ಅದೇ ದಿನಾಂಕ ಟ್ಯಾಪ್ ಮಾಡಿ, ಅಥವಾ ವ್ಯಾಪ್ತಿಗೆ ಬೇರೆ ದಿನಾಂಕ</string>

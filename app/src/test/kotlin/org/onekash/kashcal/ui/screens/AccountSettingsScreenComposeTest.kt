@@ -535,14 +535,14 @@ class AccountSettingsScreenComposeTest {
     @Test
     fun `with only the built-in calendar the row shows the hint`() {
         render(offlineCalendarCount = 1)
-        composeTestRule.onNodeWithText("Calendars that stay on this phone").assertExists()
+        composeTestRule.onNodeWithText("Calendars that stay on this device").assertExists()
     }
 
     @Test
     fun `once a calendar is added the row shows how many there are`() {
         render(offlineCalendarCount = 3)
         composeTestRule.onNodeWithText("3 calendars").assertExists()
-        composeTestRule.onNodeWithText("Calendars that stay on this phone").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Calendars that stay on this device").assertDoesNotExist()
     }
 
     @Test

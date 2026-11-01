@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Çevrimdışı takvim kullan</string>
     <string name="onboarding_trust">Açık kaynak. Reklam yok. İzleme yok.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Hatırlatıcılar kapalı</string>
     <plurals name="reminders_off_body">
         <item quantity="one">Bu hafta %d etkinliğin hatırlatıcısı var.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Şimdi Değil</string>
     <string name="reminders_off_turn_on">Aç</string>
     <string name="reminders_on_snackbar">Hatırlatıcılar açık</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Tüm takvimlerin, gizlilik odaklı tek bir uygulamada.</string>
     <string name="about_help_title">Yardım ve kılavuzlar</string>
     <string name="about_help_detail">Kurulum, eşitleme ve sorular</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Bu bağlantıyı açabilecek bir uygulama yok.</string>
     <string name="about_built_in_austin">Austin\'de ❤️ ile yapıldı</string>
     <string name="about_version">Sürüm %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Atla</string>
     <string name="whats_new_next">İleri</string>
     <string name="whats_new_page_of">Sayfa %1$d / %2$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Cihaz Takvimleri</string>
     <string name="settings_device_calendars_hint">Diğer uygulamalardaki takvimler</string>
     <string name="offline_calendars_row_label">Çevrimdışı takvimler</string>
-    <string name="offline_calendars_row_hint">Bu telefonda kalan takvimler</string>
+    <string name="offline_calendars_row_hint">Bu cihazda kalan takvimler</string>
     <string name="offline_calendars_manage_note">Silmek için bir takvimi kaydır.</string>
-    <string name="offline_calendars_info">Yalnızca bu telefonda tutulur ve asla eşitlenmez. Yedeklemeler etkinlikleri içermez; bir kopya saklamak için takvimi dışa aktar.</string>
+    <string name="offline_calendars_info">Bu cihazda tutulur ve asla eşitlenmez.</string>
     <string name="offline_calendars_info_cd">Çevrimdışı takvimler hakkında</string>
     <string name="offline_calendar_default_state">Varsayılan</string>
     <string name="offline_calendar_new">Yeni takvim</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Bu cihazdaki Google, Outlook ve eşitleme uygulamalarının takvimlerini göster.</string>
     <string name="device_calendars_show_switch">Cihaz takvimlerini göster</string>
+    <string name="device_calendars_access_off">KashCal için takvim erişimi kapalı.</string>
     <string name="device_calendars_pick_hint">Gösterilecek takvimleri seç.</string>
     <string name="device_calendars_empty">Takvim bulunamadı.</string>
     <string name="device_calendars_local">Yerel</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">Bir hediye: boş bir gün.</string>
     <string name="empty_no_events_day_4">Takvim durumu: harika şekilde boş.</string>
     <string name="empty_no_events_day_5">Hiç planın yok. Sakinliğin tadını çıkar.</string>
-    <string name="cd_empty_no_events_day">Sakin gün, hiçbir şey planlanmadı</string>
     <string name="filter_date">Tarih</string>
     <string name="label_select_date">Tarih seç</string>
     <string name="hint_tap_date_range">Tek gün için aynı tarihe, aralık için başka tarihe dokun</string>

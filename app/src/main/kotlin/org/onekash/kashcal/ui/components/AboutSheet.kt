@@ -34,16 +34,18 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.components.kash.KashArt
+import org.onekash.kashcal.ui.components.kash.KashPose
 import org.onekash.kashcal.util.ExternalLinks
 
 /**
- * Shows About KashCal at full height: the first-run sheet's card stack, the app name and what it
+ * Shows About KashCal at full height: Kash with an armful of calendars, the app name and what it
  * is, rows that open the help pages, the source code and the donate page, and a footer with the
  * installed [versionName]. Swiping it down, tapping outside it or Back calls [onDismiss].
  *
  * [onOpenLink] opens a link with [ExternalLinks.openUrl] unless a caller passes its own, and
- * returns false when no app opens it; a line under the rows then says so until a link opens. With
- * "Remove animations" on, nothing moves.
+ * returns false when no app opens it; a line under the rows then says so until a link opens. The
+ * rows rise in; with "Remove animations" on, nothing moves.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,7 +94,7 @@ fun AboutSheet(
                 }
             },
         ) {
-            OnboardingHero(motionEnabled = motionEnabled, modifier = Modifier.size(160.dp))
+            KashArt(KashPose.ARMFUL, Modifier.size(160.dp))
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = stringResource(R.string.app_name),

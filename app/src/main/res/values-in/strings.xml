@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Gunakan kalender offline</string>
     <string name="onboarding_trust">Sumber terbuka. Tanpa iklan. Tanpa pelacakan.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Pengingat nonaktif</string>
     <plurals name="reminders_off_body">
         <item quantity="other">%d acara minggu ini memiliki pengingat.</item>
@@ -274,6 +274,8 @@
     <string name="reminders_off_not_now">Nanti saja</string>
     <string name="reminders_off_turn_on">Aktifkan</string>
     <string name="reminders_on_snackbar">Pengingat aktif</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Semua kalender Anda dalam satu aplikasi pribadi.</string>
     <string name="about_help_title">Bantuan dan panduan</string>
     <string name="about_help_detail">Penyiapan, sinkronisasi, dan pertanyaan</string>
@@ -284,6 +286,8 @@
     <string name="about_link_failed">Tidak ada aplikasi yang dapat membuka tautan ini.</string>
     <string name="about_built_in_austin">Dibuat dengan ❤️ di Austin</string>
     <string name="about_version">Versi %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Lewati</string>
     <string name="whats_new_next">Berikutnya</string>
     <string name="whats_new_page_of">Halaman %1$d dari %2$d</string>
@@ -659,9 +663,9 @@
     <string name="settings_device_calendars">Kalender Perangkat</string>
     <string name="settings_device_calendars_hint">Kalender dari aplikasi lain</string>
     <string name="offline_calendars_row_label">Kalender offline</string>
-    <string name="offline_calendars_row_hint">Kalender yang tetap di ponsel ini</string>
+    <string name="offline_calendars_row_hint">Kalender yang tetap di perangkat ini</string>
     <string name="offline_calendars_manage_note">Geser kalender untuk menghapusnya.</string>
-    <string name="offline_calendars_info">Hanya disimpan di ponsel ini dan tidak pernah disinkronkan. Cadangan tidak menyertakan acara, jadi ekspor kalender untuk menyimpan salinannya.</string>
+    <string name="offline_calendars_info">Disimpan di perangkat ini dan tidak pernah disinkronkan.</string>
     <string name="offline_calendars_info_cd">Tentang kalender offline</string>
     <string name="offline_calendar_default_state">Default</string>
     <string name="offline_calendar_new">Kalender baru</string>
@@ -841,6 +845,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Tampilkan kalender dari Google, Outlook, dan aplikasi sinkronisasi di perangkat ini.</string>
     <string name="device_calendars_show_switch">Tampilkan kalender perangkat</string>
+    <string name="device_calendars_access_off">Akses kalender nonaktif untuk KashCal.</string>
     <string name="device_calendars_pick_hint">Pilih kalender untuk ditampilkan.</string>
     <string name="device_calendars_empty">Kalender tidak ditemukan.</string>
     <string name="device_calendars_local">Lokal</string>
@@ -1090,7 +1095,6 @@
     <string name="empty_no_events_day_3">Hadiah: hari yang kosong.</string>
     <string name="empty_no_events_day_4">Status kalender: kosong melompong.</string>
     <string name="empty_no_events_day_5">Nggak ada agenda. Nikmati ketenangannya.</string>
-    <string name="cd_empty_no_events_day">Hari tenang, tidak ada jadwal</string>
     <string name="filter_date">Tanggal</string>
     <string name="label_select_date">Pilih tanggal</string>
     <string name="hint_tap_date_range">Ketuk tanggal yang sama untuk satu hari, atau tanggal lain untuk rentang</string>

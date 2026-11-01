@@ -4088,6 +4088,24 @@ class AccountSettingsViewModelTest {
     }
 
     @Test
+    fun `the device reminders switch goes through the provider manager`() = runTest {
+        val viewModel = createViewModel()
+        advanceUntilIdle()
+
+        viewModel.onToggleDeviceCalendarReminders(true)
+        advanceUntilIdle()
+        viewModel.onToggleDeviceCalendarReminders(false)
+        advanceUntilIdle()
+
+        coVerifyOrder {
+            dataStore.setDeviceCalendarRemindersEnabled(true)
+            calendarProviderManager.onRemindersEnabled()
+            dataStore.setDeviceCalendarRemindersEnabled(false)
+            calendarProviderManager.onRemindersDisabled()
+        }
+    }
+
+    @Test
     fun `calendar notifications show as blocked when the reminder channel or permission is off`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()

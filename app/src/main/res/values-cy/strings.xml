@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Defnyddio calendr all-lein</string>
     <string name="onboarding_trust">Cod agored. Dim hysbysebion. Dim tracio.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Mae atgofion i ffwrdd</string>
     <plurals name="reminders_off_body">
         <item quantity="zero">Mae gan %d digwyddiad yr wythnos hon atgofion.</item>
@@ -279,6 +279,8 @@
     <string name="reminders_off_not_now">Dim nawr</string>
     <string name="reminders_off_turn_on">Troi ymlaen</string>
     <string name="reminders_on_snackbar">Atgofion ymlaen</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Eich holl galendrau mewn un ap preifat.</string>
     <string name="about_help_title">Help a chanllawiau</string>
     <string name="about_help_detail">Gosod, cydamseru a chwestiynau</string>
@@ -289,6 +291,8 @@
     <string name="about_link_failed">Does dim ap a all agor y ddolen hon.</string>
     <string name="about_built_in_austin">Wedi\'i adeiladu gyda ❤️ yn Austin</string>
     <string name="about_version">Fersiwn %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Hepgor</string>
     <string name="whats_new_next">Nesaf</string>
     <string name="whats_new_page_of">Tudalen %1$d o %2$d</string>
@@ -664,9 +668,9 @@
     <string name="settings_device_calendars">Calendrau\'r Ddyfais</string>
     <string name="settings_device_calendars_hint">Calendrau o apiau eraill</string>
     <string name="offline_calendars_row_label">Calendrau all-lein</string>
-    <string name="offline_calendars_row_hint">Calendrau sy\'n aros ar y ffôn hwn</string>
+    <string name="offline_calendars_row_hint">Calendrau sy\'n aros ar y ddyfais hon</string>
     <string name="offline_calendars_manage_note">Llithrwch galendr i\'w ddileu.</string>
-    <string name="offline_calendars_info">Yn cael eu cadw ar y ffôn hwn yn unig a byth yn cael eu cysoni. Nid yw copïau wrth gefn yn cynnwys digwyddiadau, felly allforiwch galendr i gadw copi.</string>
+    <string name="offline_calendars_info">Yn cael eu cadw ar y ddyfais hon a byth yn cael eu cysoni.</string>
     <string name="offline_calendars_info_cd">Am galendrau all-lein</string>
     <string name="offline_calendar_default_state">Rhagosodedig</string>
     <string name="offline_calendar_new">Calendr newydd</string>
@@ -896,6 +900,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Dangos calendrau o Google, Outlook ac apiau cysoni ar y ddyfais hon.</string>
     <string name="device_calendars_show_switch">Dangos calendrau\'r ddyfais</string>
+    <string name="device_calendars_access_off">Mae mynediad at galendr i ffwrdd i KashCal.</string>
     <string name="device_calendars_pick_hint">Dewiswch galendrau i\'w dangos.</string>
     <string name="device_calendars_empty">Heb ddod o hyd i galendrau.</string>
     <string name="device_calendars_local">Lleol</string>
@@ -1370,7 +1375,6 @@
     <string name="empty_no_events_day_3">Anrheg: diwrnod gwag.</string>
     <string name="empty_no_events_day_4">Statws y calendr: hyfryd o wag.</string>
     <string name="empty_no_events_day_5">Dim byd wedi\'i gynllunio. Mwynhewch y llonydd.</string>
-    <string name="cd_empty_no_events_day">Diwrnod tawel, dim byd wedi\'i drefnu</string>
     <string name="filter_date">Dyddiad</string>
     <string name="label_select_date">Dewiswch ddyddiad</string>
     <string name="hint_tap_date_range">Tapiwch yr un dyddiad am un diwrnod, neu ddyddiad arall am ystod</string>

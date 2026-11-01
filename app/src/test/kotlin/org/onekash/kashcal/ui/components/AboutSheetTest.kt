@@ -129,4 +129,10 @@ class AboutSheetTest {
         composeTestRule.onNodeWithText("Support KashCal").performScrollTo().assertIsDisplayed()
         composeTestRule.onNodeWithText("Version 2026.10.30-2").assertIsDisplayed()
     }
+
+    @Test
+    fun `Kash adds nothing for TalkBack to read`() {
+        show()
+        composeTestRule.assertNoImageForTalkBack()
+    }
 }

@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Guna kalendar luar talian</string>
     <string name="onboarding_trust">Sumber terbuka. Tiada iklan. Tiada penjejakan.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Peringatan dimatikan</string>
     <plurals name="reminders_off_body">
         <item quantity="other">%d acara minggu ini mempunyai peringatan.</item>
@@ -274,6 +274,8 @@
     <string name="reminders_off_not_now">Bukan Sekarang</string>
     <string name="reminders_off_turn_on">Hidupkan</string>
     <string name="reminders_on_snackbar">Peringatan dihidupkan</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Semua kalendar anda dalam satu apl peribadi.</string>
     <string name="about_help_title">Bantuan dan panduan</string>
     <string name="about_help_detail">Persediaan, penyegerakan dan soalan</string>
@@ -284,6 +286,8 @@
     <string name="about_link_failed">Tiada apl yang boleh membuka pautan ini.</string>
     <string name="about_built_in_austin">Dibina dengan ❤️ di Austin</string>
     <string name="about_version">Versi %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Langkau</string>
     <string name="whats_new_next">Seterusnya</string>
     <string name="whats_new_page_of">Halaman %1$d daripada %2$d</string>
@@ -659,9 +663,9 @@
     <string name="settings_device_calendars">Kalendar Peranti</string>
     <string name="settings_device_calendars_hint">Kalendar dari aplikasi lain</string>
     <string name="offline_calendars_row_label">Kalendar luar talian</string>
-    <string name="offline_calendars_row_hint">Kalendar yang kekal pada telefon ini</string>
+    <string name="offline_calendars_row_hint">Kalendar yang kekal pada peranti ini</string>
     <string name="offline_calendars_manage_note">Leret kalendar untuk memadamkannya.</string>
-    <string name="offline_calendars_info">Disimpan hanya pada telefon ini dan tidak pernah disegerakkan. Sandaran tidak termasuk acara, jadi eksport kalendar untuk menyimpan salinan.</string>
+    <string name="offline_calendars_info">Disimpan pada peranti ini dan tidak pernah disegerakkan.</string>
     <string name="offline_calendars_info_cd">Perihal kalendar luar talian</string>
     <string name="offline_calendar_default_state">Lalai</string>
     <string name="offline_calendar_new">Kalendar baharu</string>
@@ -841,6 +845,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Tunjukkan kalendar daripada Google, Outlook dan aplikasi penyegerakan pada peranti ini.</string>
     <string name="device_calendars_show_switch">Tunjukkan kalendar peranti</string>
+    <string name="device_calendars_access_off">Akses kalendar dimatikan untuk KashCal.</string>
     <string name="device_calendars_pick_hint">Pilih kalendar untuk ditunjukkan.</string>
     <string name="device_calendars_empty">Tiada kalendar ditemui.</string>
     <string name="device_calendars_local">Tempatan</string>
@@ -1090,7 +1095,6 @@
     <string name="empty_no_events_day_3">Satu hadiah: hari yang kosong.</string>
     <string name="empty_no_events_day_4">Status kalendar: kosong yang indah.</string>
     <string name="empty_no_events_day_5">Tiada apa dirancang. Nikmati ketenangan.</string>
-    <string name="cd_empty_no_events_day">Hari santai, tiada jadual</string>
     <string name="filter_date">Tarikh</string>
     <string name="label_select_date">Pilih tarikh</string>
     <string name="hint_tap_date_range">Ketik tarikh sama untuk satu hari, atau tarikh lain untuk julat</string>

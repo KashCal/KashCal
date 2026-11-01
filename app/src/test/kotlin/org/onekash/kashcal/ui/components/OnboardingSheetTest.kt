@@ -102,4 +102,11 @@ class OnboardingSheetTest {
                 SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Button)
         ).assertExists()
     }
+
+    @Test
+    fun `Kash adds nothing for TalkBack to read`() {
+        show(motionEnabled = true)
+        composeTestRule.onNodeWithText("Where are your calendars?").assertExists()
+        composeTestRule.assertNoImageForTalkBack()
+    }
 }

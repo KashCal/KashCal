@@ -43,18 +43,11 @@ data class ImportedAttendee(
  *
  * @param thisAndFuture true when its RECURRENCE-ID carries RANGE=THISANDFUTURE, which import
  *   doesn't apply.
- * @param writtenZone the zone of DTSTART as the file wrote it: its TZID, the device zone for a
- *   floating time, null for a UTC or DATE start. A device calendar import writes this one (the
- *   device zone when null); [event] holds the zone Room stores
- *   ([org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper.storedZoneOf]), which differs for
- *   a series whose start is in UTC. The default, [event]'s zone, is for a component built from
- *   an event rather than parsed from a file.
  */
 data class ImportedComponent(
     val event: Event,
     val attendees: List<ImportedAttendee>,
     val thisAndFuture: Boolean = false,
-    val writtenZone: String? = event.timezone,
 ) {
     val isCancelled: Boolean get() = event.status == STATUS_CANCELLED
     val isInstance: Boolean get() = event.originalInstanceTime != null

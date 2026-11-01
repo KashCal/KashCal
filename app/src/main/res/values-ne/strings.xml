@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">अफलाइन क्यालेन्डर प्रयोग गर्नुहोस्</string>
     <string name="onboarding_trust">खुला स्रोत। विज्ञापन छैन। ट्र्याकिङ छैन।</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">सम्झनाहरू बन्द छन्</string>
     <plurals name="reminders_off_body">
         <item quantity="one">यो हप्ता %d कार्यक्रममा सम्झना छ।</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">अहिले होइन</string>
     <string name="reminders_off_turn_on">अन गर्नुहोस्</string>
     <string name="reminders_on_snackbar">सम्झनाहरू अन छन्</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">तपाईंका सबै क्यालेन्डरहरू एउटै निजी एपमा।</string>
     <string name="about_help_title">सहायता र गाइडहरू</string>
     <string name="about_help_detail">सेटअप, सिंक र प्रश्नहरू</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">यो लिंक खोल्न सक्ने कुनै एप छैन।</string>
     <string name="about_built_in_austin">Austin मा ❤️ ले बनाइएको</string>
     <string name="about_version">संस्करण %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">छोड्नुहोस्</string>
     <string name="whats_new_next">अर्को</string>
     <string name="whats_new_page_of">%2$d मध्ये पृष्ठ %1$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">उपकरण क्यालेन्डरहरू</string>
     <string name="settings_device_calendars_hint">अन्य एपहरूका क्यालेन्डरहरू</string>
     <string name="offline_calendars_row_label">अफलाइन क्यालेन्डरहरू</string>
-    <string name="offline_calendars_row_hint">यस फोनमा मात्र रहने क्यालेन्डरहरू</string>
+    <string name="offline_calendars_row_hint">यस उपकरणमा रहने क्यालेन्डरहरू</string>
     <string name="offline_calendars_manage_note">मेटाउन क्यालेन्डरलाई स्वाइप गर्नुहोस्।</string>
-    <string name="offline_calendars_info">यस फोनमा मात्र राखिन्छ र कहिल्यै सिंक हुँदैन। ब्याकअपमा कार्यक्रमहरू समावेश हुँदैनन्, त्यसैले प्रतिलिपि राख्न क्यालेन्डर निर्यात गर्नुहोस्।</string>
+    <string name="offline_calendars_info">यस उपकरणमा राखिन्छ र कहिल्यै सिंक हुँदैन।</string>
     <string name="offline_calendars_info_cd">अफलाइन क्यालेन्डरहरूबारे</string>
     <string name="offline_calendar_default_state">पूर्वनिर्धारित</string>
     <string name="offline_calendar_new">नयाँ क्यालेन्डर</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">यो उपकरणमा भएका Google, Outlook र सिंक एपहरूका क्यालेन्डरहरू देखाउनुहोस्।</string>
     <string name="device_calendars_show_switch">उपकरण क्यालेन्डरहरू देखाउनुहोस्</string>
+    <string name="device_calendars_access_off">KashCal का लागि क्यालेन्डर पहुँच बन्द छ।</string>
     <string name="device_calendars_pick_hint">देखाउन क्यालेन्डरहरू छान्नुहोस्।</string>
     <string name="device_calendars_empty">कुनै क्यालेन्डर फेला परेन।</string>
     <string name="device_calendars_local">स्थानीय</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">एउटा उपहार: खाली दिन।</string>
     <string name="empty_no_events_day_4">पात्रोको अवस्था: शानदार रूपमा खाली।</string>
     <string name="empty_no_events_day_5">केही योजना छैन। शान्तिको आनन्द लिनुहोस्।</string>
-    <string name="cd_empty_no_events_day">शान्त दिन, केही निर्धारित छैन</string>
     <string name="filter_date">मिति</string>
     <string name="label_select_date">मिति चयन गर्नुहोस्</string>
     <string name="hint_tap_date_range">एक दिनको लागि उही मिति ट्याप गर्नुहोस्, वा दायराको लागि अर्को मिति</string>

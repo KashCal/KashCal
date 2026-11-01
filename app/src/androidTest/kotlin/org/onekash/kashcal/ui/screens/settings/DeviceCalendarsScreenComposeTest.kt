@@ -71,6 +71,7 @@ class DeviceCalendarsScreenComposeTest {
                     onNavigateBack = {},
                     onToggle = {},
                     onToggleCalendar = { _, _ -> },
+                    onAllowCalendarAccess = {},
                 )
             }
         }
@@ -90,6 +91,7 @@ class DeviceCalendarsScreenComposeTest {
                     onNavigateBack = {},
                     onToggle = {},
                     onToggleCalendar = { _, _ -> },
+                    onAllowCalendarAccess = {},
                 )
             }
         }
@@ -109,6 +111,7 @@ class DeviceCalendarsScreenComposeTest {
                     onNavigateBack = { backInvoked = true },
                     onToggle = {},
                     onToggleCalendar = { _, _ -> },
+                    onAllowCalendarAccess = {},
                 )
             }
         }
@@ -128,6 +131,7 @@ class DeviceCalendarsScreenComposeTest {
                     onNavigateBack = {},
                     onToggle = {},
                     onToggleCalendar = { _, _ -> },
+                    onAllowCalendarAccess = {},
                 )
             }
         }
@@ -146,6 +150,7 @@ class DeviceCalendarsScreenComposeTest {
                     onNavigateBack = {},
                     onToggle = {},
                     onToggleCalendar = { _, _ -> },
+                    onAllowCalendarAccess = {},
                 )
             }
         }
@@ -165,6 +170,7 @@ class DeviceCalendarsScreenComposeTest {
                     onNavigateBack = {},
                     onToggle = {},
                     onToggleCalendar = { _, _ -> },
+                    onAllowCalendarAccess = {},
                     onRefresh = { refreshInvoked = true }
                 )
             }
@@ -186,6 +192,7 @@ class DeviceCalendarsScreenComposeTest {
                     onNavigateBack = {},
                     onToggle = { toggledTo = it },
                     onToggleCalendar = { _, _ -> },
+                    onAllowCalendarAccess = {},
                 )
             }
         }
@@ -209,6 +216,7 @@ class DeviceCalendarsScreenComposeTest {
                     onNavigateBack = {},
                     onToggle = {},
                     onToggleCalendar = { id, enabled -> lastToggle = id to enabled },
+                    onAllowCalendarAccess = {},
                 )
             }
         }
@@ -229,6 +237,7 @@ class DeviceCalendarsScreenComposeTest {
                     onNavigateBack = {},
                     onToggle = {},
                     onToggleCalendar = { _, _ -> },
+                    onAllowCalendarAccess = {},
                 )
             }
         }

@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Bruk frakoblet kalender</string>
     <string name="onboarding_trust">Åpen kildekode. Ingen reklame. Ingen sporing.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Påminnelser er slått av</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d hendelse denne uken har en påminnelse.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Ikke nå</string>
     <string name="reminders_off_turn_on">Slå på</string>
     <string name="reminders_on_snackbar">Påminnelser er på</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Alle kalenderne dine i én privat app.</string>
     <string name="about_help_title">Hjelp og veiledninger</string>
     <string name="about_help_detail">Oppsett, synkronisering og spørsmål</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Ingen app kan åpne denne lenken.</string>
     <string name="about_built_in_austin">Laget med ❤️ i Austin</string>
     <string name="about_version">Versjon %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Hopp over</string>
     <string name="whats_new_next">Neste</string>
     <string name="whats_new_page_of">Side %1$d av %2$d</string>
@@ -659,9 +663,9 @@
     <string name="settings_device_calendars">Enhetskalendere</string>
     <string name="settings_device_calendars_hint">Kalendere fra andre apper</string>
     <string name="offline_calendars_row_label">Frakoblede kalendere</string>
-    <string name="offline_calendars_row_hint">Kalendere som blir på denne telefonen</string>
+    <string name="offline_calendars_row_hint">Kalendere som blir på denne enheten</string>
     <string name="offline_calendars_manage_note">Sveip en kalender for å slette den.</string>
-    <string name="offline_calendars_info">Lagres bare på denne telefonen og synkroniseres aldri. Sikkerhetskopier inneholder ikke hendelser, så eksporter en kalender for å beholde en kopi.</string>
+    <string name="offline_calendars_info">Lagres på denne enheten og synkroniseres aldri.</string>
     <string name="offline_calendars_info_cd">Om frakoblede kalendere</string>
     <string name="offline_calendar_default_state">Standard</string>
     <string name="offline_calendar_new">Ny kalender</string>
@@ -851,6 +855,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Vis kalendere fra Google, Outlook og synkroniseringsapper på denne enheten.</string>
     <string name="device_calendars_show_switch">Vis enhetskalendere</string>
+    <string name="device_calendars_access_off">Kalendertilgang er slått av for KashCal.</string>
     <string name="device_calendars_pick_hint">Velg kalendere som skal vises.</string>
     <string name="device_calendars_empty">Fant ingen kalendere.</string>
     <string name="device_calendars_local">Lokal</string>
@@ -1145,7 +1150,6 @@
     <string name="empty_no_events_day_3">En gave: en tom dag.</string>
     <string name="empty_no_events_day_4">Kalenderstatus: herlig tom.</string>
     <string name="empty_no_events_day_5">Ingenting planlagt. Nyt roen.</string>
-    <string name="cd_empty_no_events_day">Rolig dag, ingenting planlagt</string>
     <string name="filter_date">Dato</string>
     <string name="label_select_date">Velg en dato</string>
     <string name="hint_tap_date_range">Trykk samme dato for en dag, eller en annen dato for et intervall</string>

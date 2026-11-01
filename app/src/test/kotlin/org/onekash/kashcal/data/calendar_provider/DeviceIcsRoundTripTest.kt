@@ -81,16 +81,6 @@ class DeviceIcsRoundTripTest {
     // ---- one-off ----
 
     @Test
-    fun `a device series in UTC exports with its own TZID=UTC`() = runTest {
-        val id = create(f.draft(rrule = "FREQ=DAILY;COUNT=3", timezone = "UTC"))
-
-        val starts = exportIcs(id).replace(Regex("\r?\n[ \t]"), "").lines().filter { it.startsWith("DTSTART") }
-
-        assertEquals(1, starts.size)
-        assertTrue(starts.toString(), starts.single().startsWith("DTSTART;TZID=UTC:"))
-    }
-
-    @Test
     fun `a one-off event comes back with its times, zone, text and reminders`() = runTest {
         val id = create(f.draft(reminders = listOf(10, 60)))
 

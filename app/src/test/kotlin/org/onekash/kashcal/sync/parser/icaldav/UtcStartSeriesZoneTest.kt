@@ -140,17 +140,6 @@ class UtcStartSeriesZoneTest {
     }
 
     @Test
-    fun `a file import keeps the zone the file wrote for a device calendar`() {
-        val file = IcsParserService.parseForImport(ics(utcSeries))!!
-        // Null: the device import writes the device zone for it.
-        assertNull(file.groups.single().masters.single().writtenZone)
-        val berlin = IcsParserService.parseForImport(ics(listOf(
-            "DTSTART;TZID=Europe/Berlin:20270308T150000", "DTEND;TZID=Europe/Berlin:20270308T160000", "RRULE:FREQ=WEEKLY;COUNT=2",
-        )))!!
-        assertEquals("Europe/Berlin", berlin.groups.single().masters.single().writtenZone)
-    }
-
-    @Test
     fun `a server-change merge over a row stored with no zone takes the UTC zone and changes nothing else`() {
         val body = ics(utcSeries)
         val storedBeforeFix = map(body).copy(id = 5L, timezone = null)
@@ -252,7 +241,7 @@ class UtcStartSeriesZoneTest {
     }
 
     @Test
-    fun `a device calendar series export keeps TZID=UTC`() {
+    fun `a device calendar series export writes UTC form`() {
         // The export of a device event builds an unsaved row from the device fields
         // (DeviceEventMapper.toExportEvent), with each zone as the device calendar holds it.
         val device = Event(
@@ -261,6 +250,6 @@ class UtcStartSeriesZoneTest {
             timezone = "UTC", rrule = "FREQ=WEEKLY;COUNT=4", dtstamp = 0L,
         )
         val exported = org.onekash.kashcal.util.IcsExporter().serializeDeviceEvent(device, emptyList())
-        assertNotNull(exported.lines().firstOrNull { it == "DTSTART;TZID=UTC:20270308T150000" })
+        assertNotNull(exported.lines().firstOrNull { it == "DTSTART:20270308T150000Z" })
     }
 }

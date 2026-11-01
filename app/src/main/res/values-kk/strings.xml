@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Желіден тыс күнтізбені пайдалану</string>
     <string name="onboarding_trust">Ашық бастапқы код. Жарнама жоқ. Бақылау жоқ.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Еске салулар өшірулі</string>
     <plurals name="reminders_off_body">
         <item quantity="one">Осы аптада %d оқиғада еске салу бар.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Қазір емес</string>
     <string name="reminders_off_turn_on">Қосу</string>
     <string name="reminders_on_snackbar">Еске салулар қосулы</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Барлық күнтізбеңіз бір жеке қолданбада.</string>
     <string name="about_help_title">Анықтама және нұсқаулықтар</string>
     <string name="about_help_detail">Баптау, синхрондау және сұрақтар</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Бұл сілтемені аша алатын қолданба жоқ.</string>
     <string name="about_built_in_austin">Austin-да ❤️-пен жасалды</string>
     <string name="about_version">Нұсқа %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Өткізу</string>
     <string name="whats_new_next">Келесі</string>
     <string name="whats_new_page_of">%1$d-бет, барлығы %2$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Құрылғы күнтізбелері</string>
     <string name="settings_device_calendars_hint">Басқа қолданбалардан күнтізбелер</string>
     <string name="offline_calendars_row_label">Желіден тыс күнтізбелер</string>
-    <string name="offline_calendars_row_hint">Осы телефонда қалатын күнтізбелер</string>
+    <string name="offline_calendars_row_hint">Осы құрылғыда қалатын күнтізбелер</string>
     <string name="offline_calendars_manage_note">Жою үшін күнтізбені сырғытыңыз.</string>
-    <string name="offline_calendars_info">Тек осы телефонда сақталады және ешқашан синхрондалмайды. Сақтық көшірмелерге оқиғалар кірмейді, сондықтан көшірмесін сақтау үшін күнтізбені экспорттаңыз.</string>
+    <string name="offline_calendars_info">Осы құрылғыда сақталады және ешқашан синхрондалмайды.</string>
     <string name="offline_calendars_info_cd">Желіден тыс күнтізбелер туралы</string>
     <string name="offline_calendar_default_state">Әдепкі</string>
     <string name="offline_calendar_new">Жаңа күнтізбе</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Осы құрылғыдағы Google, Outlook және синхрондау қолданбаларының күнтізбелерін көрсету.</string>
     <string name="device_calendars_show_switch">Құрылғы күнтізбелерін көрсету</string>
+    <string name="device_calendars_access_off">KashCal үшін күнтізбеге кіру рұқсаты өшірулі.</string>
     <string name="device_calendars_pick_hint">Көрсетілетін күнтізбелерді таңдаңыз.</string>
     <string name="device_calendars_empty">Күнтізбелер табылмады.</string>
     <string name="device_calendars_local">Жергілікті</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">Сыйлық: бос күн.</string>
     <string name="empty_no_events_day_4">Күнтізбе күйі: керемет бос.</string>
     <string name="empty_no_events_day_5">Ештеңе жоспарланбаған. Тыныштықтан ләззат алыңыз.</string>
-    <string name="cd_empty_no_events_day">Тыныш күн, ештеңе жоспарланбаған</string>
     <string name="filter_date">Күн</string>
     <string name="label_select_date">Күн таңдаңыз</string>
     <string name="hint_tap_date_range">Бір күн үшін сол күнді, ауқым үшін басқа күнді түртіңіз</string>

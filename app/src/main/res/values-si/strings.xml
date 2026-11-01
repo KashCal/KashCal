@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">මාර්ගගත නැති දින දර්ශනය භාවිත කරන්න</string>
     <string name="onboarding_trust">විවෘත මූලාශ්‍ර. දැන්වීම් නැත. ලුහුබැඳීම් නැත.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">මතක් කිරීම් අක්‍රියයි</string>
     <plurals name="reminders_off_body">
         <item quantity="one">මෙම සතියේ සිදුවීම %d කට මතක් කිරීමක් ඇත.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">දැන් නොවේ</string>
     <string name="reminders_off_turn_on">සක්‍රිය කරන්න</string>
     <string name="reminders_on_snackbar">මතක් කිරීම් සක්‍රියයි</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">ඔබේ සියලු දින දර්ශන එක් පෞද්ගලික යෙදුමක.</string>
     <string name="about_help_title">උදව් සහ මාර්ගෝපදේශ</string>
     <string name="about_help_detail">පිහිටුවීම, සමමුහුර්තය සහ ප්‍රශ්න</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">මෙම සබැඳිය විවෘත කළ හැකි යෙදුමක් නැත.</string>
     <string name="about_built_in_austin">Austin හි ❤️ සමඟ සාදන ලදි</string>
     <string name="about_version">අනුවාදය %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">මඟ හරින්න</string>
     <string name="whats_new_next">ඊළඟ</string>
     <string name="whats_new_page_of">%2$d න් %1$d වන පිටුව</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">උපාංග දින දර්ශන</string>
     <string name="settings_device_calendars_hint">වෙනත් යෙදුම්වල දින දර්ශන</string>
     <string name="offline_calendars_row_label">මාර්ගගත නැති දින දර්ශන</string>
-    <string name="offline_calendars_row_hint">මෙම දුරකථනයේම රැඳෙන දින දර්ශන</string>
+    <string name="offline_calendars_row_hint">මෙම උපාංගයේ රැඳෙන දින දර්ශන</string>
     <string name="offline_calendars_manage_note">මැකීමට දින දර්ශනය ස්වයිප් කරන්න.</string>
-    <string name="offline_calendars_info">මෙම දුරකථනයේ පමණක් තබා ඇති අතර කිසිදා සමමුහුර්ත නොවේ. උපස්ථවලට සිදුවීම් ඇතුළත් නොවන බැවින්, පිටපතක් තබා ගැනීමට දින දර්ශනයක් නිර්යාත කරන්න.</string>
+    <string name="offline_calendars_info">මෙම උපාංගයේ තබා ඇති අතර කිසිදා සමමුහුර්ත නොවේ.</string>
     <string name="offline_calendars_info_cd">මාර්ගගත නැති දින දර්ශන ගැන</string>
     <string name="offline_calendar_default_state">පෙරනිමිය</string>
     <string name="offline_calendar_new">නව දින දර්ශනය</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">මෙම උපාංගයේ ඇති Google, Outlook සහ සමමුහුර්ත යෙදුම් වලින් දින දර්ශන පෙන්වන්න.</string>
     <string name="device_calendars_show_switch">උපාංග දින දර්ශන පෙන්වන්න</string>
+    <string name="device_calendars_access_off">KashCal සඳහා දින දර්ශන ප්‍රවේශය අක්‍රියයි.</string>
     <string name="device_calendars_pick_hint">පෙන්වීමට දින දර්ශන තෝරන්න.</string>
     <string name="device_calendars_empty">දින දර්ශන හමු නොවීය.</string>
     <string name="device_calendars_local">දේශීය</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">තෑග්ගක්: හිස් දිනයක්.</string>
     <string name="empty_no_events_day_4">දින දර්ශන තත්ත්වය: අපූරුවට හිස්.</string>
     <string name="empty_no_events_day_5">කිසිවක් සැලසුම් කර නැත. නිස්කලංකභාවය භුක්ති විඳින්න.</string>
-    <string name="cd_empty_no_events_day">සන්සුන් දිනයක්, කිසිවක් උපලේඛනගත කර නැත</string>
     <string name="filter_date">දිනය</string>
     <string name="label_select_date">දිනයක් තෝරන්න</string>
     <string name="hint_tap_date_range">එක් දිනක් සඳහා එකම දිනය තට්ටු කරන්න, හෝ පරාසයක් සඳහා වෙනත් දිනයක්</string>

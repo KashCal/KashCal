@@ -85,8 +85,8 @@ object DayIcons {
     fun mipmapFor(day: Int): Int = MIPMAPS[index(day)]
 
     /**
-     * Returns the icon's foreground layer for [day], for drawing it in the app (the icon picker,
-     * What's New and the onboarding hero); throws outside 1..31.
+     * Returns the icon's foreground layer for [day], for drawing it in the app (the icon picker
+     * and What's New); throws outside 1..31.
      */
     @DrawableRes
     fun foregroundFor(day: Int): Int = FOREGROUNDS[index(day)]

@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Використати календар без мережі</string>
     <string name="onboarding_trust">Відкритий код. Без реклами. Без стеження.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Нагадування вимкнено</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d подія цього тижня має нагадування.</item>
@@ -277,6 +277,8 @@
     <string name="reminders_off_not_now">Не зараз</string>
     <string name="reminders_off_turn_on">Увімкнути</string>
     <string name="reminders_on_snackbar">Нагадування увімкнено</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Усі твої календарі в одному приватному застосунку.</string>
     <string name="about_help_title">Довідка й посібники</string>
     <string name="about_help_detail">Налаштування, синхронізація та питання</string>
@@ -287,6 +289,8 @@
     <string name="about_link_failed">Немає застосунку, який може відкрити це посилання.</string>
     <string name="about_built_in_austin">Зроблено з ❤️ в Austin</string>
     <string name="about_version">Версія %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Пропустити</string>
     <string name="whats_new_next">Далі</string>
     <string name="whats_new_page_of">Сторінка %1$d з %2$d</string>
@@ -662,9 +666,9 @@
     <string name="settings_device_calendars">Календарі пристрою</string>
     <string name="settings_device_calendars_hint">Календарі з інших застосунків</string>
     <string name="offline_calendars_row_label">Календарі без мережі</string>
-    <string name="offline_calendars_row_hint">Календарі, що зберігаються на цьому телефоні</string>
+    <string name="offline_calendars_row_hint">Календарі, що зберігаються на цьому пристрої</string>
     <string name="offline_calendars_manage_note">Проведи по календарю, щоб видалити його.</string>
-    <string name="offline_calendars_info">Зберігаються лише на цьому телефоні й ніколи не синхронізуються. Резервні копії не містять подій, тож експортуй календар, щоб зберегти копію.</string>
+    <string name="offline_calendars_info">Зберігаються на цьому пристрої й ніколи не синхронізуються.</string>
     <string name="offline_calendars_info_cd">Про календарі без мережі</string>
     <string name="offline_calendar_default_state">За замовчуванням</string>
     <string name="offline_calendar_new">Новий календар</string>
@@ -874,6 +878,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Показувати календарі з Google, Outlook і застосунків синхронізації на цьому пристрої.</string>
     <string name="device_calendars_show_switch">Показувати календарі пристрою</string>
+    <string name="device_calendars_access_off">Доступ до календаря для KashCal вимкнено.</string>
     <string name="device_calendars_pick_hint">Вибери календарі для показу.</string>
     <string name="device_calendars_empty">Календарі не знайдено.</string>
     <string name="device_calendars_local">Локальний</string>
@@ -1258,7 +1263,6 @@
     <string name="empty_no_events_day_3">Подарунок: порожній день.</string>
     <string name="empty_no_events_day_4">Статус календаря: чудово порожньо.</string>
     <string name="empty_no_events_day_5">Нічого не заплановано. Насолоджуйся спокоєм.</string>
-    <string name="cd_empty_no_events_day">Спокійний день, нічого не заплановано</string>
     <string name="filter_date">Дата</string>
     <string name="label_select_date">Вибрати дату</string>
     <string name="hint_tap_date_range">Натисніть на ту саму дату для одного дня або на іншу для діапазону</string>

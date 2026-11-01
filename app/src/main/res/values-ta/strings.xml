@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">ஆஃப்லைன் நாட்காட்டியைப் பயன்படுத்து</string>
     <string name="onboarding_trust">திறந்த மூலம். விளம்பரங்கள் இல்லை. கண்காணிப்பு இல்லை.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">நினைவூட்டல்கள் ஆஃபில் உள்ளன</string>
     <plurals name="reminders_off_body">
         <item quantity="one">இந்த வாரம் %d நிகழ்வுக்கு நினைவூட்டல் உள்ளது.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">இப்போது வேண்டாம்</string>
     <string name="reminders_off_turn_on">இயக்கு</string>
     <string name="reminders_on_snackbar">நினைவூட்டல்கள் இயக்கப்பட்டன</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">உங்கள் எல்லா நாட்காட்டிகளும் ஒரே தனிப்பட்ட ஆப்பில்.</string>
     <string name="about_help_title">உதவி மற்றும் வழிகாட்டிகள்</string>
     <string name="about_help_detail">அமைப்பு, ஒத்திசைவு மற்றும் கேள்விகள்</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">இந்த இணைப்பைத் திறக்கக்கூடிய ஆப் எதுவும் இல்லை.</string>
     <string name="about_built_in_austin">Austin-இல் ❤️ உடன் உருவாக்கப்பட்டது</string>
     <string name="about_version">பதிப்பு %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">தவிர்</string>
     <string name="whats_new_next">அடுத்து</string>
     <string name="whats_new_page_of">%2$d இல் பக்கம் %1$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">சாதன நாட்காட்டிகள்</string>
     <string name="settings_device_calendars_hint">பிற ஆப்ப்களின் நாட்காட்டிகள்</string>
     <string name="offline_calendars_row_label">ஆஃப்லைன் நாட்காட்டிகள்</string>
-    <string name="offline_calendars_row_hint">இந்தத் தொலைபேசியில் மட்டும் இருக்கும் நாட்காட்டிகள்</string>
+    <string name="offline_calendars_row_hint">இந்தச் சாதனத்தில் இருக்கும் நாட்காட்டிகள்</string>
     <string name="offline_calendars_manage_note">நீக்க நாட்காட்டியை ஸ்வைப் செய்யவும்.</string>
-    <string name="offline_calendars_info">இந்தத் தொலைபேசியில் மட்டுமே வைக்கப்படும், ஒருபோதும் ஒத்திசைக்கப்படாது. காப்புப்பிரதிகளில் நிகழ்வுகள் சேர்க்கப்படாது, எனவே ஒரு நகலை வைத்திருக்க நாட்காட்டியை ஏற்றுமதி செய்யவும்.</string>
+    <string name="offline_calendars_info">இந்தச் சாதனத்தில் வைக்கப்படும், ஒருபோதும் ஒத்திசைக்கப்படாது.</string>
     <string name="offline_calendars_info_cd">ஆஃப்லைன் நாட்காட்டிகள் பற்றி</string>
     <string name="offline_calendar_default_state">இயல்புநிலை</string>
     <string name="offline_calendar_new">புதிய நாட்காட்டி</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">இந்தச் சாதனத்தில் உள்ள Google, Outlook மற்றும் ஒத்திசைவு ஆப்ப்களின் நாட்காட்டிகளைக் காட்டு.</string>
     <string name="device_calendars_show_switch">சாதன நாட்காட்டிகளைக் காட்டு</string>
+    <string name="device_calendars_access_off">KashCal-க்கான நாட்காட்டி அணுகல் ஆஃபில் உள்ளது.</string>
     <string name="device_calendars_pick_hint">காட்ட வேண்டிய நாட்காட்டிகளைத் தேர்ந்தெடுக்கவும்.</string>
     <string name="device_calendars_empty">நாட்காட்டிகள் எதுவும் கிடைக்கவில்லை.</string>
     <string name="device_calendars_local">உள்ளூர்</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">ஒரு பரிசு: காலியான ஒரு நாள்.</string>
     <string name="empty_no_events_day_4">காலெண்டர் நிலை: அற்புதமாக காலி.</string>
     <string name="empty_no_events_day_5">எதுவும் திட்டமிடப்படவில்லை. அமைதியை ரசியுங்கள்.</string>
-    <string name="cd_empty_no_events_day">அமைதியான நாள், எதுவும் திட்டமிடப்படவில்லை</string>
     <string name="filter_date">தேதி</string>
     <string name="label_select_date">தேதி தேர்வுசெய்</string>
     <string name="hint_tap_date_range">ஒரு நாளுக்கு அதே தேதியைத் தட்டவும், அல்லது வரம்புக்கு வேறு தேதியைத் தட்டவும்</string>

@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Folosește calendarul offline</string>
     <string name="onboarding_trust">Cod sursă deschis. Fără reclame. Fără urmărire.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Mementourile sunt oprite</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d eveniment din această săptămână are un memento.</item>
@@ -276,6 +276,8 @@
     <string name="reminders_off_not_now">Nu acum</string>
     <string name="reminders_off_turn_on">Activează</string>
     <string name="reminders_on_snackbar">Mementouri activate</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Toate calendarele tale într-o singură aplicație privată.</string>
     <string name="about_help_title">Ajutor și ghiduri</string>
     <string name="about_help_detail">Configurare, sincronizare și întrebări</string>
@@ -286,6 +288,8 @@
     <string name="about_link_failed">Nicio aplicație nu poate deschide acest link.</string>
     <string name="about_built_in_austin">Făcut cu ❤️ în Austin</string>
     <string name="about_version">Versiunea %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Omite</string>
     <string name="whats_new_next">Înainte</string>
     <string name="whats_new_page_of">Pagina %1$d din %2$d</string>
@@ -661,9 +665,9 @@
     <string name="settings_device_calendars">Calendare dispozitiv</string>
     <string name="settings_device_calendars_hint">Calendare din alte aplicații</string>
     <string name="offline_calendars_row_label">Calendare offline</string>
-    <string name="offline_calendars_row_hint">Calendare care rămân pe acest telefon</string>
+    <string name="offline_calendars_row_hint">Calendare care rămân pe acest dispozitiv</string>
     <string name="offline_calendars_manage_note">Glisează un calendar pentru a-l șterge.</string>
-    <string name="offline_calendars_info">Păstrate doar pe acest telefon și niciodată sincronizate. Copiile de rezervă nu includ evenimentele, așa că exportă un calendar ca să păstrezi o copie.</string>
+    <string name="offline_calendars_info">Păstrate pe acest dispozitiv și niciodată sincronizate.</string>
     <string name="offline_calendars_info_cd">Despre calendarele offline</string>
     <string name="offline_calendar_default_state">Implicit</string>
     <string name="offline_calendar_new">Calendar nou</string>
@@ -863,6 +867,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Afișează calendarele din Google, Outlook și aplicațiile de sincronizare de pe acest dispozitiv.</string>
     <string name="device_calendars_show_switch">Afișează calendarele dispozitivului</string>
+    <string name="device_calendars_access_off">Accesul la calendar este oprit pentru KashCal.</string>
     <string name="device_calendars_pick_hint">Alege calendarele de afișat.</string>
     <string name="device_calendars_empty">Nu s-au găsit calendare.</string>
     <string name="device_calendars_local">Local</string>
@@ -1202,7 +1207,6 @@
     <string name="empty_no_events_day_3">Un cadou: o zi goală.</string>
     <string name="empty_no_events_day_4">Starea calendarului: minunat de gol.</string>
     <string name="empty_no_events_day_5">Nimic planificat. Bucură-te de liniște.</string>
-    <string name="cd_empty_no_events_day">Zi liniștită, nimic programat</string>
     <string name="filter_date">Dată</string>
     <string name="label_select_date">Selectează o dată</string>
     <string name="hint_tap_date_range">Apasă aceeași dată pentru o singură zi, sau altă dată pentru interval</string>

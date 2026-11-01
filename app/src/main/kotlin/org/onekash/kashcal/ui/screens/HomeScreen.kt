@@ -54,7 +54,6 @@ import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SelfImprovement
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
@@ -1996,43 +1995,11 @@ private fun DayEventsPage(
             }
         }
         events.isEmpty() -> {
-            // Rotate the empty-day line per calendar day, so it varies between days but is
-            // stable across recomposition. Keyed on the epoch day, so it cycles without repeats
-            // at month or year boundaries.
-            val emptyDayPhrases = remember {
-                intArrayOf(
-                    R.string.empty_no_events_day_1,
-                    R.string.empty_no_events_day_2,
-                    R.string.empty_no_events_day_3,
-                    R.string.empty_no_events_day_4,
-                    R.string.empty_no_events_day_5,
-                )
-            }
             val epochDay = Instant.ofEpochMilli(dateMs)
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate()
                 .toEpochDay()
-            val phraseRes = emptyDayPhrases[Math.floorMod(epochDay, emptyDayPhrases.size.toLong()).toInt()]
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.SelfImprovement,
-                    contentDescription = stringResource(R.string.cd_empty_no_events_day),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(48.dp)
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(
-                    stringResource(phraseRes),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center
-                )
-            }
+            EmptyDayState(epochDay)
         }
         else -> {
             Column(

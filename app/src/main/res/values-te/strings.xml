@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">ఆఫ్‌లైన్ క్యాలెండర్ ఉపయోగించు</string>
     <string name="onboarding_trust">ఓపెన్ సోర్స్. ప్రకటనలు లేవు. ట్రాకింగ్ లేదు.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">రిమైండర్‌లు ఆఫ్‌లో ఉన్నాయి</string>
     <plurals name="reminders_off_body">
         <item quantity="one">ఈ వారం %d ఈవెంట్‌కు రిమైండర్ ఉంది.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">ఇప్పుడు కాదు</string>
     <string name="reminders_off_turn_on">ఆన్ చేయి</string>
     <string name="reminders_on_snackbar">రిమైండర్‌లు ఆన్ అయ్యాయి</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">మీ అన్ని క్యాలెండర్లు ఒకే ప్రైవేట్ యాప్‌లో.</string>
     <string name="about_help_title">సహాయం మరియు గైడ్‌లు</string>
     <string name="about_help_detail">సెటప్, సింక్ మరియు ప్రశ్నలు</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">ఈ లింక్‌ను తెరవగల యాప్ ఏదీ లేదు.</string>
     <string name="about_built_in_austin">Austin లో ❤️ తో రూపొందించబడింది</string>
     <string name="about_version">సంస్కరణ %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">దాటవేయి</string>
     <string name="whats_new_next">తదుపరి</string>
     <string name="whats_new_page_of">%2$dలో పేజీ %1$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">పరికర క్యాలెండర్లు</string>
     <string name="settings_device_calendars_hint">ఇతర యాప్‌ల నుండి క్యాలెండర్లు</string>
     <string name="offline_calendars_row_label">ఆఫ్‌లైన్ క్యాలెండర్‌లు</string>
-    <string name="offline_calendars_row_hint">ఈ ఫోన్‌లోనే ఉండే క్యాలెండర్‌లు</string>
+    <string name="offline_calendars_row_hint">ఈ పరికరంలో ఉండే క్యాలెండర్‌లు</string>
     <string name="offline_calendars_manage_note">తొలగించడానికి క్యాలెండర్‌ను స్వైప్ చేయండి.</string>
-    <string name="offline_calendars_info">ఈ ఫోన్‌లో మాత్రమే ఉంచబడతాయి, ఎప్పుడూ సింక్ కావు. బ్యాకప్‌లలో ఈవెంట్‌లు ఉండవు, కాబట్టి కాపీ ఉంచుకోవడానికి క్యాలెండర్‌ను ఎగుమతి చేయండి.</string>
+    <string name="offline_calendars_info">ఈ పరికరంలో ఉంచబడతాయి, ఎప్పుడూ సింక్ కావు.</string>
     <string name="offline_calendars_info_cd">ఆఫ్‌లైన్ క్యాలెండర్‌ల గురించి</string>
     <string name="offline_calendar_default_state">డీఫాల్ట్</string>
     <string name="offline_calendar_new">కొత్త క్యాలెండర్</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">ఈ పరికరంలోని Google, Outlook మరియు సింక్ యాప్‌ల నుండి క్యాలెండర్లను చూపించు.</string>
     <string name="device_calendars_show_switch">పరికర క్యాలెండర్లను చూపించు</string>
+    <string name="device_calendars_access_off">KashCal కోసం క్యాలెండర్ యాక్సెస్ ఆఫ్‌లో ఉంది.</string>
     <string name="device_calendars_pick_hint">చూపించాల్సిన క్యాలెండర్లను ఎంచుకోండి.</string>
     <string name="device_calendars_empty">క్యాలెండర్లు ఏవీ కనుగొనబడలేదు.</string>
     <string name="device_calendars_local">స్థానికం</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">ఒక కానుక: ఖాళీ రోజు.</string>
     <string name="empty_no_events_day_4">క్యాలెండర్ స్థితి: అద్భుతంగా ఖాళీ.</string>
     <string name="empty_no_events_day_5">ఏమీ షెడ్యూల్ కాలేదు. ప్రశాంతతను ఆస్వాదించండి.</string>
-    <string name="cd_empty_no_events_day">ప్రశాంత రోజు, ఏమీ షెడ్యూల్ కాలేదు</string>
     <string name="filter_date">తేదీ</string>
     <string name="label_select_date">తేదీ ఎంచుకో</string>
     <string name="hint_tap_date_range">ఒక రోజు కోసం అదే తేదీ ట్యాప్ చేయి, లేదా పరిధి కోసం మరొక తేదీ</string>

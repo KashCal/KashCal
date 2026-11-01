@@ -29,10 +29,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
+import org.onekash.kashcal.ui.components.kash.KashWaveEntrance
 
 /**
- * Shows the first-launch "Where are your calendars?" sheet: the icon-card hero, three rows that
- * each open an existing Settings screen, and "Use offline calendar".
+ * Shows the first-launch "Where are your calendars?" sheet: Kash settling in and waving, three
+ * rows that each open an existing Settings screen, and "Use offline calendar".
  *
  * Full height and opened expanded. Every way out is an answer: each row, the button, and swiping
  * the sheet down, tapping outside it or Back ([onDismiss]); the host records the sheet as
@@ -88,7 +89,7 @@ fun OnboardingSheet(
                 }
             },
         ) {
-            OnboardingHero(motionEnabled = motionEnabled, modifier = Modifier.size(160.dp))
+            KashWaveEntrance(motionEnabled = motionEnabled, modifier = Modifier.size(160.dp))
             Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = stringResource(R.string.onboarding_title),

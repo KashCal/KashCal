@@ -39,6 +39,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import org.onekash.kashcal.R
 import org.onekash.kashcal.data.calendar_provider.DeviceCalendar
+import org.onekash.kashcal.ui.components.InlineNote
 import org.onekash.kashcal.ui.components.SettingsTopAppBar
 
 /** Test tag of the "Show device calendars" switch. */
@@ -49,6 +50,10 @@ const val DEVICE_CALENDARS_SWITCH_TAG = "device_calendars_switch"
  * SettingsActivity) owns the permission launcher, so turning the switch on without calendar
  * access through [onToggle] asks for it, and the host turns the feature on once read access is
  * granted. The switch shows on only while the feature is on and read access is held.
+ *
+ * Without read access a note above the switch says calendar access is off, whatever the feature
+ * setting; its Allow calls [onAllowCalendarAccess], which the host wires to the same request as
+ * the switch. The note has no dismiss: it leaves once read access is held.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,6 +65,7 @@ fun DeviceCalendarsScreen(
     onNavigateBack: () -> Unit,
     onToggle: (Boolean) -> Unit,
     onToggleCalendar: (Long, Boolean) -> Unit,
+    onAllowCalendarAccess: () -> Unit,
     onRefresh: () -> Unit = {}
 ) {
     // On only while the feature is on and read access is held.
@@ -112,6 +118,20 @@ fun DeviceCalendarsScreen(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            AnimatedVisibility(
+                visible = !hasReadPermission,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                InlineNote(
+                    text = stringResource(R.string.device_calendars_access_off),
+                    action = stringResource(R.string.action_allow),
+                    onAction = onAllowCalendarAccess,
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+            }
 
             // The label and switch form one control, so a tap on either toggles it and TalkBack
             // reads them together.

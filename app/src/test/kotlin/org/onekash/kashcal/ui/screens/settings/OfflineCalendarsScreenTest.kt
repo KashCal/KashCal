@@ -46,7 +46,7 @@ class OfflineCalendarsScreenTest {
     @Before
     fun pinLocale() = Locale.setDefault(Locale.US)
 
-    private val info = "Kept only on this phone and never synced. Backups don't include events, so export a calendar to keep a copy."
+    private val info = "Kept on this device and never synced."
 
     private fun calendar(id: Long, name: String, builtIn: Boolean = false) = Calendar(
         id = id,

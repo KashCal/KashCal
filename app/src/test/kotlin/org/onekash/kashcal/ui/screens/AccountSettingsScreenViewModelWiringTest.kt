@@ -1,5 +1,8 @@
 package org.onekash.kashcal.ui.screens
 
+import android.Manifest
+import androidx.activity.ComponentActivity
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -11,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -32,6 +36,7 @@ import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
 import org.onekash.kashcal.ui.viewmodels.AccountSettingsViewModel
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import java.util.Locale
 
@@ -41,7 +46,10 @@ import java.util.Locale
  * that:
  *  - a flow value set on the VM reaches the visible row (the widget limit), and
  *  - driving the row calls its VM setter with the picked value while the listed sibling setters
- *    stay silent (widget limit, show week numbers, detailed widget rows, sync frequency).
+ *    stay silent (widget limit, show week numbers, detailed widget rows, sync frequency), and
+ *  - a permission control on the route launches its request (Device calendars Allow asks for
+ *    read and write calendar access, read back from the host activity's requested permissions;
+ *    Robolectric never answers, so the result handling is not exercised here).
  *
  * Because the route's binding block runs here, a swap inside it (wiring the widget-limit row to
  * `setShowWeekNumbers`) is caught. The data-bearing flow getters are stubbed explicitly so a wrong
@@ -63,6 +71,9 @@ class AccountSettingsScreenViewModelWiringTest {
     private val context = org.robolectric.RuntimeEnvironment.getApplication()
 
     private var originalLocale: Locale? = null
+
+    /** The activity hosting the route, read for the permissions its launchers request. */
+    private lateinit var hostActivity: ComponentActivity
 
     @Before
     fun pinLocale() {
@@ -164,6 +175,7 @@ class AccountSettingsScreenViewModelWiringTest {
         onFinish: () -> Unit = {},
     ) {
         composeTestRule.setContent {
+            hostActivity = LocalContext.current as ComponentActivity
             SettingsRoute(
                 viewModel = vm,
                 initialThemeMode = ThemeMode.SYSTEM,
@@ -198,6 +210,23 @@ class AccountSettingsScreenViewModelWiringTest {
         composeTestRule.waitForIdle()
 
         assertEquals(1, finishes)
+    }
+
+    @Test
+    fun `Allow on Device calendars requests read and write calendar access through the route's launcher`() {
+        val vm = mockVm(widget = 8, weekNumbers = false)
+        setRoute(vm, openDeviceCalendarsInitially = true)
+
+        composeTestRule.onNodeWithText(context.getString(R.string.action_allow)).performClick()
+        composeTestRule.waitForIdle()
+
+        val requested = Shadows.shadowOf(hostActivity).lastRequestedPermission
+        assertNotNull("Allow should request a permission", requested)
+        assertEquals(
+            setOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR),
+            requested!!.requestedPermissions.toSet(),
+        )
+        verify(exactly = 0) { vm.onToggleDeviceCalendars(any()) }
     }
 
     @Test

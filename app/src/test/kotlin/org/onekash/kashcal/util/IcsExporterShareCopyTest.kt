@@ -9,8 +9,7 @@ import org.robolectric.annotation.Config
 
 /**
  * The share card sends one occurrence as a file ([IcsExporter.exportShareCopy]). A Room event's
- * copy writes a stored "UTC" zone in UTC form like every Room upload; a device event's copy
- * writes the zone as the device calendar holds it.
+ * copy and a device event's copy both write a "UTC" zone in UTC form, as every Room upload does.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(manifest = Config.NONE, sdk = [33])
@@ -31,8 +30,8 @@ class IcsExporterShareCopyTest {
     }
 
     @Test
-    fun `a device event's copy keeps TZID=UTC`() {
+    fun `a device event's copy writes UTC form`() {
         val lines = IcsExporter().shareCopyText(copy(calendarId = 0), fromDevice = true).lines()
-        assertTrue(lines.toString(), "DTSTART;TZID=UTC:20270308T150000" in lines)
+        assertTrue(lines.toString(), "DTSTART:20270308T150000Z" in lines)
     }
 }

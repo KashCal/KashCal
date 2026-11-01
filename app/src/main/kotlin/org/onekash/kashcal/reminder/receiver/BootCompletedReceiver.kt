@@ -21,7 +21,8 @@ import javax.inject.Inject
  * Recovery has two phases:
  * 1. Inside the broadcast, under goAsync() and a 9-second timeout,
  *    [BootRecoveryHandler.rescheduleReminders] re-arms the existing ScheduledReminder rows due
- *    within the scheduler's window, the device calendar reminder and the widget midnight alarm.
+ *    within the scheduler's window, the calendar-change job, the device calendar reminder and the
+ *    widget midnight alarm.
  *    Rows further out are armed once they come into the window.
  * 2. [ReminderRefreshWorker.runNow] creates the rows missing for reminders now due within the
  *    window and re-arms the existing ones there. It runs in WorkManager, outside the receiver's

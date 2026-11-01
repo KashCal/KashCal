@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Usa calendario offline</string>
     <string name="onboarding_trust">Open source. Niente pubblicità. Nessun tracciamento.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Promemoria disattivati</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d evento questa settimana ha un promemoria.</item>
@@ -276,6 +276,8 @@
     <string name="reminders_off_not_now">Non ora</string>
     <string name="reminders_off_turn_on">Attiva</string>
     <string name="reminders_on_snackbar">Promemoria attivati</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Tutti i tuoi calendari in un\'unica app privata.</string>
     <string name="about_help_title">Aiuto e guide</string>
     <string name="about_help_detail">Configurazione, sincronizzazione e domande</string>
@@ -286,6 +288,8 @@
     <string name="about_link_failed">Nessuna app può aprire questo link.</string>
     <string name="about_built_in_austin">Fatto con ❤️ ad Austin</string>
     <string name="about_version">Versione %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Salta</string>
     <string name="whats_new_next">Avanti</string>
     <string name="whats_new_page_of">Pagina %1$d di %2$d</string>
@@ -661,9 +665,9 @@
     <string name="settings_device_calendars">Calendari del dispositivo</string>
     <string name="settings_device_calendars_hint">Calendari da altre app</string>
     <string name="offline_calendars_row_label">Calendari offline</string>
-    <string name="offline_calendars_row_hint">Calendari che restano su questo telefono</string>
+    <string name="offline_calendars_row_hint">Calendari che restano su questo dispositivo</string>
     <string name="offline_calendars_manage_note">Scorri un calendario per eliminarlo.</string>
-    <string name="offline_calendars_info">Salvati solo su questo telefono e mai sincronizzati. I backup non includono gli eventi, quindi esporta un calendario per conservarne una copia.</string>
+    <string name="offline_calendars_info">Salvati su questo dispositivo e mai sincronizzati.</string>
     <string name="offline_calendars_info_cd">Informazioni sui calendari offline</string>
     <string name="offline_calendar_default_state">Predefinito</string>
     <string name="offline_calendar_new">Nuovo calendario</string>
@@ -855,6 +859,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Mostra i calendari di Google, Outlook e app di sincronizzazione su questo dispositivo.</string>
     <string name="device_calendars_show_switch">Mostra calendari del dispositivo</string>
+    <string name="device_calendars_access_off">L\'accesso al calendario è disattivato per KashCal.</string>
     <string name="device_calendars_pick_hint">Scegli i calendari da mostrare.</string>
     <string name="device_calendars_empty">Nessun calendario trovato.</string>
     <string name="device_calendars_local">Locale</string>
@@ -1178,7 +1183,6 @@
     <string name="empty_no_events_day_3">Un regalo: una giornata vuota.</string>
     <string name="empty_no_events_day_4">Stato del calendario: splendidamente vuoto.</string>
     <string name="empty_no_events_day_5">Niente in programma. Goditi la calma.</string>
-    <string name="cd_empty_no_events_day">Giornata tranquilla, niente in programma</string>
     <string name="filter_date">Data</string>
     <string name="label_select_date">Seleziona una data</string>
     <string name="hint_tap_date_range">Tocca la stessa data per un giorno, o un\'altra per un intervallo</string>

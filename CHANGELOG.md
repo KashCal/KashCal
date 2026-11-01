@@ -1,3 +1,48 @@
+## [2026.11.01]
+
+Meet Kash.
+
+Back in 2024 and 2025, while we were building KashCal, we noticed a little teal dot on an empty day. We didn't think much of it. A week later it was back. Then it came back again, and soon we were clearing our schedules just to see it.
+
+It loved free weekends. It loved cancelled meetings even more. Each one made it a little rounder, and by 2026 it had ear tufts, a belly shaped like a calendar card, and strong opinions about naps.
+
+It landed on Halloween night, which was good timing. Everyone thought it was a costume.
+
+Today it moved onto your device, and hopefully into your heart too.
+
+<img src="https://kashcal.onekash.org/img/kash/kash-wave.png" alt="Kash waving" width="160">
+
+| | |
+|---|---|
+| Name | Kash |
+| Species | Fluffball, the first of its kind |
+| Arrived | Halloween night, 2026 |
+| Weight | 230 KB, all fluff |
+| Height | 120 dp, 160 dp on special occasions |
+| Diet | Free days |
+| Data collected | None |
+
+You've asked why a calendar app is called KashCal. Some say the app is named after Kash. Others say it's the other way around. Kash isn't saying.
+
+Kash keeps to itself, like the rest of KashCal: no account, no followers, and your plans stay between the two of you. It shows up on the days you don't have to.
+
+Confirmed sightings:
+- Month view: tap a free day. Five lines, five poses.
+- First launch: Kash waves hello.
+- Your avatar > About: Kash with an armful of calendars.
+
+Free up a day. Kash will find it.
+
+### Everything in this release
+
+- Added Kash to empty days in the Month view, the first-run sheet, and `About`
+- Fixed phone-calendar reminders not ringing for events added while KashCal wasn't running (#417)
+- Fixed a phone-calendar reminder being missed after turning `Device calendars` back on
+- Added a note with `Allow` in `Settings > Device calendars` when calendar access is off
+- Fixed `Edit` and `Delete` falling off the quick view for long titles (#418)
+- Fixed repeating `.ics` events with a UTC start showing an hour off in device calendars (#410)
+- Changed the `Offline calendars` note to "Kept on this device and never synced."
+
 ## [2026.10.30]
 
 Pick a time without a fight, keep calendars that never leave your phone, and put your week on the fridge.
@@ -38,6 +83,9 @@ Pick a time without a fight, keep calendars that never leave your phone, and put
 - Shared availability gets back the space after its comma.
 - The Device calendars switch opens Android settings when Android stops asking.
 - Odia and Tamil fixes.
+
+### Privacy policy
+- Updated for automatic calendar backup: it is off by default, and files you back up or export stay in the folder you chose.
 
 ## [2026.10.26]
 

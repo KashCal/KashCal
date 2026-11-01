@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">使用离线日历</string>
     <string name="onboarding_trust">开源。无广告。无跟踪。</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">提醒已关闭</string>
     <plurals name="reminders_off_body">
         <item quantity="other">本周有 %d 个事件设有提醒。</item>
@@ -274,6 +274,8 @@
     <string name="reminders_off_not_now">以后再说</string>
     <string name="reminders_off_turn_on">开启</string>
     <string name="reminders_on_snackbar">提醒已开启</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">你的所有日历，尽在一款私密应用。</string>
     <string name="about_help_title">帮助和指南</string>
     <string name="about_help_detail">设置、同步和常见问题</string>
@@ -284,6 +286,8 @@
     <string name="about_link_failed">没有可以打开此链接的应用。</string>
     <string name="about_built_in_austin">在 Austin 用 ❤️ 打造</string>
     <string name="about_version">版本 %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">跳过</string>
     <string name="whats_new_next">下一步</string>
     <string name="whats_new_page_of">第 %1$d 页，共 %2$d 页</string>
@@ -659,9 +663,9 @@
     <string name="settings_device_calendars">设备日历</string>
     <string name="settings_device_calendars_hint">其他应用的日历</string>
     <string name="offline_calendars_row_label">离线日历</string>
-    <string name="offline_calendars_row_hint">仅保存在这部手机上的日历</string>
+    <string name="offline_calendars_row_hint">保存在此设备上的日历</string>
     <string name="offline_calendars_manage_note">滑动日历即可删除。</string>
-    <string name="offline_calendars_info">仅保存在这部手机上，从不同步。备份不包含事件，请导出日历以保留副本。</string>
+    <string name="offline_calendars_info">保存在此设备上，从不同步。</string>
     <string name="offline_calendars_info_cd">关于离线日历</string>
     <string name="offline_calendar_default_state">默认</string>
     <string name="offline_calendar_new">新建日历</string>
@@ -841,6 +845,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">显示此设备上来自 Google、Outlook 和同步应用的日历。</string>
     <string name="device_calendars_show_switch">显示设备日历</string>
+    <string name="device_calendars_access_off">开序历的日历访问权限已关闭。</string>
     <string name="device_calendars_pick_hint">选择要显示的日历。</string>
     <string name="device_calendars_empty">未找到日历。</string>
     <string name="device_calendars_local">本地</string>
@@ -1090,7 +1095,6 @@
     <string name="empty_no_events_day_3">一份礼物：空空的一天。</string>
     <string name="empty_no_events_day_4">日历状态：空得妙不可言。</string>
     <string name="empty_no_events_day_5">没有安排，享受这份宁静吧。</string>
-    <string name="cd_empty_no_events_day">悠闲的一天，没有安排</string>
     <string name="filter_date">日期</string>
     <string name="label_select_date">选择日期</string>
     <string name="hint_tap_date_range">点击同一日期选择单天，或点击另一日期选择范围</string>

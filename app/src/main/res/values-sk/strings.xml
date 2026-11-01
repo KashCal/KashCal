@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Použiť offline kalendár</string>
     <string name="onboarding_trust">Open source. Bez reklám. Bez sledovania.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Pripomienky sú vypnuté</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d udalosť tento týždeň má pripomienku.</item>
@@ -277,6 +277,8 @@
     <string name="reminders_off_not_now">Teraz nie</string>
     <string name="reminders_off_turn_on">Zapnúť</string>
     <string name="reminders_on_snackbar">Pripomienky sú zapnuté</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Všetky vaše kalendáre v jednej súkromnej aplikácii.</string>
     <string name="about_help_title">Pomoc a návody</string>
     <string name="about_help_detail">Nastavenie, synchronizácia a otázky</string>
@@ -287,6 +289,8 @@
     <string name="about_link_failed">Tento odkaz nedokáže otvoriť žiadna aplikácia.</string>
     <string name="about_built_in_austin">Vytvorené s ❤️ v meste Austin</string>
     <string name="about_version">Verzia %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Preskočiť</string>
     <string name="whats_new_next">Ďalej</string>
     <string name="whats_new_page_of">Strana %1$d z %2$d</string>
@@ -662,9 +666,9 @@
     <string name="settings_device_calendars">Kalendáre zariadenia</string>
     <string name="settings_device_calendars_hint">Kalendáre z iných aplikácií</string>
     <string name="offline_calendars_row_label">Offline kalendáre</string>
-    <string name="offline_calendars_row_hint">Kalendáre, ktoré zostávajú v tomto telefóne</string>
+    <string name="offline_calendars_row_hint">Kalendáre, ktoré zostávajú v tomto zariadení</string>
     <string name="offline_calendars_manage_note">Potiahnutím kalendára ho zmažete.</string>
-    <string name="offline_calendars_info">Uložené len v tomto telefóne a nikdy sa nesynchronizujú. Zálohy nezahŕňajú udalosti, preto kalendár exportujte, ak si chcete uchovať kópiu.</string>
+    <string name="offline_calendars_info">Uložené v tomto zariadení a nikdy sa nesynchronizujú.</string>
     <string name="offline_calendars_info_cd">O offline kalendároch</string>
     <string name="offline_calendar_default_state">Predvolený</string>
     <string name="offline_calendar_new">Nový kalendár</string>
@@ -874,6 +878,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Zobraziť kalendáre z Google, Outlook a synchronizačných aplikácií v tomto zariadení.</string>
     <string name="device_calendars_show_switch">Zobraziť kalendáre zariadenia</string>
+    <string name="device_calendars_access_off">Prístup ku kalendáru je pre KashCal vypnutý.</string>
     <string name="device_calendars_pick_hint">Vyberte kalendáre na zobrazenie.</string>
     <string name="device_calendars_empty">Nenašli sa žiadne kalendáre.</string>
     <string name="device_calendars_local">Miestne</string>
@@ -1258,7 +1263,6 @@
     <string name="empty_no_events_day_3">Darček: prázdny deň.</string>
     <string name="empty_no_events_day_4">Stav kalendára: nádherne prázdny.</string>
     <string name="empty_no_events_day_5">Nič v pláne. Užite si pokoj.</string>
-    <string name="cd_empty_no_events_day">Pokojný deň, nič naplánované</string>
     <string name="filter_date">Dátum</string>
     <string name="label_select_date">Vyberte dátum</string>
     <string name="hint_tap_date_range">Ťuknite na rovnaký dátum pre jeden deň, alebo na iný pre rozsah</string>

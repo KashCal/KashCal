@@ -126,7 +126,7 @@ private fun mapReminders(reminders: List<Int>): Pair<List<Int>, Int> {
  *
  * The [Event] is never persisted. It feeds
  * [org.onekash.kashcal.util.IcsExporter.exportDeviceEvent], which writes it as Room events are
- * written but with each zone as the device calendar holds it
+ * written, in the zone the device calendar holds
  * ([org.onekash.kashcal.util.IcsExporter.serializeDeviceEvent]).
  *
  * - UID is `device-{masterId}@kashcal` with `masterId = originalId ?: id`, so an exception

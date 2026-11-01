@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Gebruik vanlyn-kalender</string>
     <string name="onboarding_trust">Oopbron. Geen advertensies nie. Geen dophou nie.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Herinneringe is af</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d gebeurtenis hierdie week het \'n herinnering.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Nie nou nie</string>
     <string name="reminders_off_turn_on">Skakel aan</string>
     <string name="reminders_on_snackbar">Herinneringe aan</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Al jou kalenders in een privaat program.</string>
     <string name="about_help_title">Hulp en gidse</string>
     <string name="about_help_detail">Opstelling, sinkronisasie en vrae</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Geen program kan hierdie skakel oopmaak nie.</string>
     <string name="about_built_in_austin">Met ❤️ in Austin gebou</string>
     <string name="about_version">Weergawe %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Slaan oor</string>
     <string name="whats_new_next">Volgende</string>
     <string name="whats_new_page_of">Bladsy %1$d van %2$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Toestelkalenders</string>
     <string name="settings_device_calendars_hint">Kalenders vanuit ander programme</string>
     <string name="offline_calendars_row_label">Vanlyn-kalenders</string>
-    <string name="offline_calendars_row_hint">Kalenders wat op hierdie foon bly</string>
+    <string name="offline_calendars_row_hint">Kalenders wat op hierdie toestel bly</string>
     <string name="offline_calendars_manage_note">Swiep \'n kalender om dit te verwyder.</string>
-    <string name="offline_calendars_info">Word net op hierdie foon gehou en nooit gesinkroniseer nie. Rugsteune sluit nie gebeurtenisse in nie, so voer \'n kalender uit om \'n kopie te hou.</string>
+    <string name="offline_calendars_info">Word op hierdie toestel gehou en nooit gesinkroniseer nie.</string>
     <string name="offline_calendars_info_cd">Oor vanlyn-kalenders</string>
     <string name="offline_calendar_default_state">Verstek</string>
     <string name="offline_calendar_new">Nuwe kalender</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Wys kalenders van Google, Outlook en sinkroniseerprogramme op hierdie toestel.</string>
     <string name="device_calendars_show_switch">Wys toestelkalenders</string>
+    <string name="device_calendars_access_off">Kalendertoegang is af vir KashCal.</string>
     <string name="device_calendars_pick_hint">Kies kalenders om te wys.</string>
     <string name="device_calendars_empty">Geen kalenders gevind nie.</string>
     <string name="device_calendars_local">Plaaslik</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">\'n Geskenk: \'n leë dag.</string>
     <string name="empty_no_events_day_4">Kalenderstatus: heerlik leeg.</string>
     <string name="empty_no_events_day_5">Niks beplan nie. Geniet die kalmte.</string>
-    <string name="cd_empty_no_events_day">Kalm dag, niks geskeduleer nie</string>
     <string name="filter_date">Datum</string>
     <string name="label_select_date">Kies \'n datum</string>
     <string name="hint_tap_date_range">Tik dieselfde datum vir \'n enkele dag, of \'n ander datum vir reeks</string>

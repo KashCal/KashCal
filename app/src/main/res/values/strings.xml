@@ -333,7 +333,7 @@
     <string name="debug_report_failed">Couldn\'t create the debug report</string>
 
     <!-- ==================== App Lock (Privacy) ==================== -->
-    <!-- Settings toggle. Keep "KashCal" untranslated. -->
+    <!-- Settings toggle. Write the app name as this locale writes it elsewhere. -->
     <string name="app_lock_label">App lock</string>
     <!-- Tooltip explaining the App lock toggle -->
     <string name="settings_app_lock_info">Require device authentication to open KashCal.</string>
@@ -347,7 +347,7 @@
     <string name="app_lock_enroll_message">Set up a fingerprint, face, or screen lock in system settings to use App lock.</string>
     <!-- Shown when the device has no hardware/software capable of authenticating. -->
     <string name="app_lock_unsupported_message">This device can\'t use App lock.</string>
-    <!-- Inline confirmation after enabling the lock. Keep "KashCal" untranslated. -->
+    <!-- Inline confirmation after enabling the lock. Write the app name as this locale writes it elsewhere. -->
     <string name="app_lock_enabled_message">App lock on. KashCal will ask you to authenticate next time you open it.</string>
     <!-- System biometric prompt title shown when turning the lock OFF (required by the OS). Short; no app name. -->
     <string name="app_lock_disable_prompt_title">Unlock to turn off App lock</string>
@@ -358,7 +358,7 @@
     <string name="backup_settings_subtitle">Save KashCal configuration to a JSON file</string>
     <string name="restore_settings_label">Restore settings</string>
     <string name="restore_settings_subtitle">Restore KashCal configuration from a backup file</string>
-    <!-- Restore confirmation dialog. %1$s = app version, %2$s = ISO-8601 timestamp. Keep "KashCal" untranslated. -->
+    <!-- Restore confirmation dialog. %1$s = app version, %2$s = ISO-8601 timestamp. Write the app name as this locale writes it elsewhere. -->
     <string name="restore_confirm_title">Restore backup?</string>
     <string name="restore_confirm_from">Backup from KashCal %1$s, %2$s</string>
     <!-- Shown in the confirm dialog when the backup has no subscriptions. -->
@@ -992,9 +992,9 @@
     <!-- Subtitle shown on the Settings row when device calendars are not enabled; provenance hint for where the data comes from. -->
     <string name="settings_device_calendars_hint">Calendars from other apps</string>
     <string name="offline_calendars_row_label">Offline calendars</string>
-    <string name="offline_calendars_row_hint">Calendars that stay on this phone</string>
+    <string name="offline_calendars_row_hint">Calendars that stay on this device</string>
     <string name="offline_calendars_manage_note">Swipe a calendar to delete it.</string>
-    <string name="offline_calendars_info">Kept only on this phone and never synced. Backups don\'t include events, so export a calendar to keep a copy.</string>
+    <string name="offline_calendars_info">Kept on this device and never synced.</string>
     <string name="offline_calendars_info_cd">About offline calendars</string>
     <!-- TalkBack state of the row of the calendar new events go to by default. -->
     <string name="offline_calendar_default_state">Default</string>
@@ -1262,6 +1262,8 @@
     <string name="device_calendars_intro">Show calendars from Google, Outlook, and sync apps on this device.</string>
     <!-- Label of the switch that turns device calendars on or off -->
     <string name="device_calendars_show_switch">Show device calendars</string>
+    <!-- Note above the switch on the Device calendars screen while KashCal can't read the phone's calendars (never asked or refused); its button reuses action_allow. Kept short on purpose: the intro just above says what the screen shows. Write the app name as this locale writes it elsewhere. -->
+    <string name="device_calendars_access_off">Calendar access is off for KashCal.</string>
     <!-- Shown under the switch while it is on and no calendar is picked yet -->
     <string name="device_calendars_pick_hint">Pick calendars to show.</string>
     <!-- Shown when the phone returned no calendars: the app looked and found none -->
@@ -1639,8 +1641,6 @@
     <string name="empty_no_events_day_3">A gift: an empty day.</string>
     <string name="empty_no_events_day_4">Calendar status: gloriously empty.</string>
     <string name="empty_no_events_day_5">Nothing planned. Enjoy the calm.</string>
-    <!-- Content description for the meditation icon on the empty-day state. -->
-    <string name="cd_empty_no_events_day">Calm day, nothing scheduled</string>
     <!-- Search filter chip: filter by date (noun, not verb) -->
     <string name="filter_date">Date</string>
     <string name="label_select_date">Select a date</string>
@@ -2213,7 +2213,7 @@
     <string name="share_availability_time_range">%1$s – %2$s</string>
     <!-- Empty-state message shown when no qualifying free block was found -->
     <string name="share_availability_empty">No free blocks of at least an hour in the selected range.</string>
-    <!-- Footer line appended to share text from event share, device event share, and availability share. Keep "KashCal" untranslated. -->
+    <!-- Footer line appended to share text from event share, device event share, and availability share. Write the app name as this locale writes it elsewhere. -->
     <string name="share_from_kashcal_footer">Shared from KashCal</string>
     <!-- Title shown in the Android share chooser -->
     <string name="share_availability_chooser_title">Share availability</string>
@@ -2243,7 +2243,7 @@
     <string name="share_as_card_chip_celebration">Celebration</string>
     <!-- Send button label in the share-as-card sheet -->
     <string name="share_as_card_send">Send</string>
-    <!-- Attribution at the bottom-right of the rendered share card. Keep "KashCal" untranslated. -->
+    <!-- Attribution at the bottom-right of the rendered share card. Write the app name as this locale writes it elsewhere. -->
     <string name="share_as_card_attribution">Made with KashCal</string>
     <!-- All-day label shown on the share card when the event has no specific time -->
     <string name="share_as_card_all_day">All day</string>

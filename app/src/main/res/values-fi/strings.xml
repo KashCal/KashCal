@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Käytä offline-kalenteria</string>
     <string name="onboarding_trust">Avoin lähdekoodi. Ei mainoksia. Ei seurantaa.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Muistutukset ovat pois päältä</string>
     <plurals name="reminders_off_body">
         <item quantity="one">%d tapahtumalla tällä viikolla on muistutus.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Ei nyt</string>
     <string name="reminders_off_turn_on">Ota käyttöön</string>
     <string name="reminders_on_snackbar">Muistutukset päällä</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Kaikki kalenterisi yhdessä yksityisessä sovelluksessa.</string>
     <string name="about_help_title">Ohjeet ja oppaat</string>
     <string name="about_help_detail">Käyttöönotto, synkronointi ja kysymykset</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Mikään sovellus ei voi avata tätä linkkiä.</string>
     <string name="about_built_in_austin">Tehty ❤️:llä Austinissa</string>
     <string name="about_version">Versio %1$s</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Ohita</string>
     <string name="whats_new_next">Seuraava</string>
     <string name="whats_new_page_of">Sivu %1$d/%2$d</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Laitteen kalenterit</string>
     <string name="settings_device_calendars_hint">Muiden sovellusten kalenterit</string>
     <string name="offline_calendars_row_label">Offline-kalenterit</string>
-    <string name="offline_calendars_row_hint">Kalenterit, jotka pysyvät tässä puhelimessa</string>
+    <string name="offline_calendars_row_hint">Kalenterit, jotka pysyvät tällä laitteella</string>
     <string name="offline_calendars_manage_note">Pyyhkäise kalenteria poistaaksesi sen.</string>
-    <string name="offline_calendars_info">Säilytetään vain tässä puhelimessa, eikä niitä koskaan synkronoida. Varmuuskopiot eivät sisällä tapahtumia, joten vie kalenteri, jos haluat säilyttää kopion.</string>
+    <string name="offline_calendars_info">Säilytetään tällä laitteella, eikä niitä koskaan synkronoida.</string>
     <string name="offline_calendars_info_cd">Tietoja offline-kalentereista</string>
     <string name="offline_calendar_default_state">Oletus</string>
     <string name="offline_calendar_new">Uusi kalenteri</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Näytä tämän laitteen kalenterit: Google, Outlook ja synkronointisovellukset.</string>
     <string name="device_calendars_show_switch">Näytä laitteen kalenterit</string>
+    <string name="device_calendars_access_off">Sovelluksen KashCal kalenterin käyttöoikeus on pois päältä.</string>
     <string name="device_calendars_pick_hint">Valitse näytettävät kalenterit.</string>
     <string name="device_calendars_empty">Kalentereita ei löytynyt.</string>
     <string name="device_calendars_local">Paikallinen</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">Lahja: tyhjä päivä.</string>
     <string name="empty_no_events_day_4">Kalenterin tila: ihanan tyhjä.</string>
     <string name="empty_no_events_day_5">Mitään ei ole suunniteltu. Nauti rauhasta.</string>
-    <string name="cd_empty_no_events_day">Rauhallinen päivä, ei mitään suunniteltua</string>
     <string name="filter_date">Päivämäärä</string>
     <string name="label_select_date">Valitse päivämäärä</string>
     <string name="hint_tap_date_range">Napauta samaa päivää yhden päivän valintaan tai toista päivää ajanjaksolle</string>

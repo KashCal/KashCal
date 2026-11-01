@@ -50,6 +50,10 @@ suspend fun planDeviceImport(
  * occurrences import as standalone events, and cancelled ones are left out. A group whose
  * shape isn't one master (plus exceptions of a series) imports event by event.
  *
+ * Each event is written in the zone Room stores for it
+ * ([org.onekash.kashcal.sync.parser.icaldav.ICalEventMapper.storedZoneOf]), the phone's zone
+ * when that is null (an all-day event is stored in UTC by the repository), so a file shows the
+ * same times in a device and a KashCal calendar.
  * A recurring event is written with a DURATION and no end time. An invitation gets the user's
  * default reminders instead of the organizer's VALARMs; a plain event keeps its VALARMs and
  * takes the default only when it has none. A failed write is counted and skipped; cancellation
@@ -239,7 +243,7 @@ private suspend fun createPlain(
         isAllDay = event.isAllDay,
         rrule = event.rrule,
         duration = if (isRecurring) event.duration ?: computeDurationString(event.startTs, event.endTs, event.isAllDay) else null,
-        timezone = component.writtenZone ?: java.util.TimeZone.getDefault().id,
+        timezone = component.event.timezone ?: java.util.TimeZone.getDefault().id,
         reminders = remindersFor(event, defaults, isInvitation),
         uid = uid,
     )
@@ -266,7 +270,7 @@ private suspend fun createInvitation(
         isAllDay = event.isAllDay,
         rrule = event.rrule,
         duration = if (isRecurring) event.duration ?: computeDurationString(event.startTs, event.endTs, event.isAllDay) else null,
-        timezone = master.writtenZone ?: java.util.TimeZone.getDefault().id,
+        timezone = master.event.timezone ?: java.util.TimeZone.getDefault().id,
         reminders = remindersFor(event, defaults, isInvitation = true),
         uid = uid,
         organizer = organizer,

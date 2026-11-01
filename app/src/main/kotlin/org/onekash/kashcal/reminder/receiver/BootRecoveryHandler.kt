@@ -1,6 +1,7 @@
 package org.onekash.kashcal.reminder.receiver
 
 import android.util.Log
+import org.onekash.kashcal.reminder.device.DeviceCalendarChangeWatcher
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.widget.WidgetUpdateManager
@@ -15,7 +16,8 @@ import javax.inject.Inject
 class BootRecoveryHandler @Inject constructor(
     private val reminderScheduler: ReminderScheduler,
     private val deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler,
-    private val widgetUpdateManager: WidgetUpdateManager
+    private val widgetUpdateManager: WidgetUpdateManager,
+    private val deviceCalendarChangeWatcher: DeviceCalendarChangeWatcher,
 ) {
     companion object {
         private const val TAG = "BootRecoveryHandler"
@@ -26,9 +28,11 @@ class BootRecoveryHandler @Inject constructor(
      *
      * Re-arms the existing Room reminder rows due within the scheduler's window
      * ([ReminderScheduler.rescheduleAllPending]) and deletes old fired and dismissed rows, then
-     * schedules the next device calendar reminder (one alarm at a time) and the widget
-     * day-rollover alarm. A device calendar failure is logged and skipped; a Room failure throws
-     * before the device calendar and widget alarms are set.
+     * schedules the next device calendar reminder (one alarm at a time), replaces the
+     * calendar-change job ([DeviceCalendarChangeWatcher.refresh]; boot clears it, since
+     * content-triggered jobs can't be persisted) and sets the widget day-rollover alarm. A device
+     * calendar failure is logged and skipped; a Room failure throws before the device calendar
+     * step and the widget alarm.
      */
     suspend fun rescheduleReminders() {
         // Room reminders: reschedule from database
@@ -36,13 +40,15 @@ class BootRecoveryHandler @Inject constructor(
         reminderScheduler.cleanupOldReminders()
         Log.d(TAG, "Successfully rescheduled Room reminders")
 
-        // Device calendar reminders: re-query and schedule next
+        // Device calendar reminders: re-query and schedule next, then replace the
+        // calendar-change job (logs its own failures)
         try {
             deviceCalendarReminderScheduler.scheduleNextReminder()
             Log.d(TAG, "Successfully rescheduled device calendar reminders")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to reschedule device calendar reminders", e)
         }
+        deviceCalendarChangeWatcher.refresh()
 
         // Widget midnight alarm
         widgetUpdateManager.scheduleMidnightUpdate()

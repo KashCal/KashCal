@@ -147,9 +147,10 @@ fun SettingsRoute(
     isNotificationPermissionPermanentlyDenied: suspend () -> Boolean = { false },
     openNotificationSettings: (channelId: String?) -> Unit = {},
     onExportDebugReport: () -> Unit = {},
-    // Device calendars switch: whether Android would still explain the calendar permission
-    // (needs the activity), and opening the app's settings page, returning whether it opened.
-    // The defaults read as "can ask again" and "no settings screen", which leave the switch off.
+    // Device calendars request (its switch and its access note's Allow): whether Android would
+    // still explain the calendar permission (needs the activity), and opening the app's settings
+    // page, returning whether it opened. The defaults read as "can ask again" and "no settings
+    // screen", which leave the switch off.
     shouldShowCalendarRationale: () -> Boolean = { true },
     openAppDetailsSettings: () -> Boolean = { false },
 ) {
@@ -314,9 +315,10 @@ fun SettingsRoute(
             viewModel.updateLocalNetworkPermissionState(resolveLanPermissionState())
         }
 
-        // Calendar permission launcher for the Device calendars switch. Requests READ and WRITE
-        // together so users can also create and edit device events; with READ already held,
-        // Android grants WRITE from the same group without a dialog.
+        // Calendar permission launcher for the Device calendars switch and its access note's
+        // Allow, both through `requestCalendarAccess` below. Requests READ and WRITE together so
+        // users can also create and edit device events; with READ already held, Android grants
+        // WRITE from the same group without a dialog.
         val calendarPermissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestMultiplePermissions()
         ) { permissions ->
@@ -331,6 +333,12 @@ fun SettingsRoute(
                     if (openAppDetailsSettings()) viewModel.markDeviceCalendarsPendingSettings()
                 DeviceCalendarsPermissionOutcome.NONE -> Unit
             }
+        }
+        val requestCalendarAccess = {
+            calendarPermissionLauncher.launch(arrayOf(
+                android.Manifest.permission.READ_CALENDAR,
+                android.Manifest.permission.WRITE_CALENDAR
+            ))
         }
 
         val coroutineScope = rememberCoroutineScope()
@@ -731,15 +739,13 @@ fun SettingsRoute(
                             onNavigateBack = closeDeviceCalendars,
                             onToggle = { enabled ->
                                 if (enabled && !(hasReadCalendarPermission && hasWriteCalendarPermission)) {
-                                    calendarPermissionLauncher.launch(arrayOf(
-                                        android.Manifest.permission.READ_CALENDAR,
-                                        android.Manifest.permission.WRITE_CALENDAR
-                                    ))
+                                    requestCalendarAccess()
                                 } else {
                                     viewModel.onToggleDeviceCalendars(enabled)
                                 }
                             },
                             onToggleCalendar = viewModel::onToggleDeviceCalendar,
+                            onAllowCalendarAccess = requestCalendarAccess,
                             onRefresh = viewModel::refreshDeviceCalendars
                         )
                     }

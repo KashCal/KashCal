@@ -107,7 +107,7 @@ class DeviceUntickReminderTest {
         alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
         shadowOf(alarmManager).scheduledAlarms.mapNotNull { it.operation }.forEach { alarmManager.cancel(it) }
         scheduler = DeviceCalendarReminderScheduler(context, repository, dataStore)
-        manager = CalendarProviderManager(context, dataStore, scheduler, mockk(relaxed = true))
+        manager = CalendarProviderManager(context, dataStore, scheduler, mockk(relaxed = true), DeviceCalendarChangeWatcher(context, dataStore))
     }
 
     @After
@@ -241,6 +241,22 @@ class DeviceUntickReminderTest {
 
     private fun recordingNotifications() = mockk<DeviceCalendarReminderNotificationManager> {
         coEvery { showNotification(any(), any(), any(), any(), any(), any(), any(), any()) } returns 1
+    }
+
+    @Test
+    fun `switching device calendars off and back on re-arms the next reminder`() = runTest(testDispatcher) {
+        // Off cancels the armed alarm. Nothing else changes in the provider, so only the switch
+        // turning back on can arm the reminder again before it is due.
+        val event = eventWithReminder(CAL_A, start = now + 2 * HOUR)
+        scheduler.scheduleNextReminder()
+        assertEquals(listOf(event to now + HOUR), deviceAlarms())
+        val viewModel = createViewModel()
+
+        viewModel.onToggleDeviceCalendars(false)
+        awaitUntil("the switch-off to cancel the alarm") { deviceAlarms().isEmpty() }
+        viewModel.onToggleDeviceCalendars(true)
+
+        awaitUntil("the switch-on to re-arm the reminder") { deviceAlarms() == listOf(event to now + HOUR) }
     }
 
     @Test

@@ -266,7 +266,7 @@
     <string name="onboarding_use_offline">Erabili lineaz kanpoko egutegia</string>
     <string name="onboarding_trust">Kode irekia. Iragarkirik ez. Jarraipenik ez.</string>
 
-    <!-- ==================== What\'s New ==================== -->
+    <!-- ==================== Reminders are off ==================== -->
     <string name="reminders_off_title">Oroigarriak desaktibatuta daude</string>
     <plurals name="reminders_off_body">
         <item quantity="one">Aste honetan %d gertaerak oroigarri bat du.</item>
@@ -275,6 +275,8 @@
     <string name="reminders_off_not_now">Orain ez</string>
     <string name="reminders_off_turn_on">Aktibatu</string>
     <string name="reminders_on_snackbar">Oroigarriak aktibatuta</string>
+
+    <!-- ==================== About ==================== -->
     <string name="about_tagline">Zure egutegi guztiak aplikazio pribatu bakarrean.</string>
     <string name="about_help_title">Laguntza eta gidak</string>
     <string name="about_help_detail">Konfigurazioa, sinkronizazioa eta galderak</string>
@@ -285,6 +287,8 @@
     <string name="about_link_failed">Ez dago esteka hau ireki dezakeen aplikaziorik.</string>
     <string name="about_built_in_austin">❤️-z egina Austinen</string>
     <string name="about_version">%1$s bertsioa</string>
+
+    <!-- ==================== What\'s New ==================== -->
     <string name="whats_new_skip">Saltatu</string>
     <string name="whats_new_next">Hurrengoa</string>
     <string name="whats_new_page_of">%1$d. orria, %2$d guztira</string>
@@ -660,9 +664,9 @@
     <string name="settings_device_calendars">Gailuko egutegiak</string>
     <string name="settings_device_calendars_hint">Beste aplikazioetako egutegiak</string>
     <string name="offline_calendars_row_label">Lineaz kanpoko egutegiak</string>
-    <string name="offline_calendars_row_hint">Telefono honetan geratzen diren egutegiak</string>
+    <string name="offline_calendars_row_hint">Gailu honetan geratzen diren egutegiak</string>
     <string name="offline_calendars_manage_note">Irristatu egutegi bat ezabatzeko.</string>
-    <string name="offline_calendars_info">Telefono honetan bakarrik gordetzen dira eta ez dira inoiz sinkronizatzen. Babeskopiek ez dituzte gertaerak barne hartzen; beraz, esportatu egutegi bat kopia bat gordetzeko.</string>
+    <string name="offline_calendars_info">Gailu honetan gordetzen dira eta ez dira inoiz sinkronizatzen.</string>
     <string name="offline_calendars_info_cd">Lineaz kanpoko egutegiei buruz</string>
     <string name="offline_calendar_default_state">Lehenetsia</string>
     <string name="offline_calendar_new">Egutegi berria</string>
@@ -852,6 +856,7 @@
     <!-- ==================== i18n: Device Calendars Sheet ==================== -->
     <string name="device_calendars_intro">Erakutsi gailu honetako egutegiak: Google, Outlook eta sinkronizazio-aplikazioak.</string>
     <string name="device_calendars_show_switch">Erakutsi gailuko egutegiak</string>
+    <string name="device_calendars_access_off">KashCal-en egutegirako sarbidea desaktibatuta dago.</string>
     <string name="device_calendars_pick_hint">Aukeratu erakutsi nahi dituzun egutegiak.</string>
     <string name="device_calendars_empty">Ez da egutegirik aurkitu.</string>
     <string name="device_calendars_local">Lokala</string>
@@ -1146,7 +1151,6 @@
     <string name="empty_no_events_day_3">Opari bat: egun huts bat.</string>
     <string name="empty_no_events_day_4">Egutegiaren egoera: zoragarriro hutsik.</string>
     <string name="empty_no_events_day_5">Ezer planeatu gabe. Gozatu lasaitasunaz.</string>
-    <string name="cd_empty_no_events_day">Egun lasaia, ezer antolatu gabe</string>
     <string name="filter_date">Data</string>
     <string name="label_select_date">Hautatu data bat</string>
     <string name="hint_tap_date_range">Sakatu data berdina egun baterako, edo beste data bat tarte baterako</string>
