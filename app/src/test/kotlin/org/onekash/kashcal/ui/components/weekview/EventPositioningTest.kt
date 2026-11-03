@@ -943,4 +943,20 @@ class EventPositioningTest {
         assertEquals(1, positioned.size)
         assertEquals("Exception Event", positioned[0].displayEvent.title)
     }
+
+    @Test
+    fun `minutes are read in the zone passed`() {
+        // 2026-11-04T01:00Z is 10:00 in Tokyo and 06:30 in Kolkata.
+        val date = LocalDate.of(2026, 11, 4)
+        val tokyo = ZoneId.of("Asia/Tokyo")
+        val event = roomDisplayEvent(id = 1L, title = "Standup", date = date, hour = 10, zone = tokyo)
+
+        val inTokyo = WeekViewUtils.positionEventsForDay(listOf(event), date, dayIndex = 0, zone = tokyo)
+        val inKolkata = WeekViewUtils.positionEventsForDay(
+            listOf(event), date, dayIndex = 0, zone = ZoneId.of("Asia/Kolkata")
+        )
+
+        assertEquals(10 * 60, inTokyo.single().startMinutes)
+        assertEquals(6 * 60 + 30, inKolkata.single().startMinutes)
+    }
 }

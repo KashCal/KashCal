@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Başlığa göre etkinliklere bir emoji ekler, örneğin \"Doğum günü\" için 🎂.</string>
     <string name="settings_force_sync">Tam eşitlemeyi zorla</string>
     <string name="settings_force_sync_subtitle">Tüm takvim verilerini yeniden indir</string>
+    <string name="settings_force_sync_no_account">Eşitleme hesabı kurulmamış</string>
+    <string name="force_sync_confirm">%2$s %1$s yeniden indir. Henüz eşitlenmemiş değişiklikler korunur.</string>
+    <string name="action_start">Başlat</string>
     <string name="settings_sync_history">Eşitleme geçmişi</string>
     <string name="settings_sync_history_subtitle">Eşitleme oturumlarını görüntüle (son 48 saat)</string>
     <string name="settings_import_subtitle">Bir ICS dosyasından etkinlikleri herhangi bir takvime ekle</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Yeni Etkinlik</string>
     <string name="dialog_edit_event_title">Etkinliği Düzenle</string>
-    <string name="dialog_force_sync_title">Tam Eşitleme Yapılsın mı?</string>
-    <string name="dialog_force_sync_message">Bu işlem tüm takvim verilerini sunucudan yeniden indirecek. Yerel değişiklikler korunacak.</string>
     <string name="dialog_enable_notifications">Bildirimler Etkinleştirilsin mi?</string>
     <string name="dialog_action_required">Devam etmek için bu işlem gerekli.</string>
     <string name="dialog_add_to_calendar">Takvime ekle</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Bu hafta etkinlik yok</string>
     <string name="status_more_events">+%1$d daha</string>
     <string name="status_no_sync_sessions">Henüz eşitleme oturumu yok.\n\nTakvim görünümünde aşağı çekerek eşitlemeyi başlat.</string>
+    <string name="status_no_sync_account">Eşitleme hesabı kurulmamış. Çevrimdışı takvimler bu cihazda kalır; cihaz takvimleri kendi hesapları üzerinden eşitlenir.</string>
     <string name="status_no_writable_calendars">Yazılabilir takvim yok</string>
     <string name="status_events_count">%1$d Etkinlik</string>
     <string name="status_sync_history">Eşitleme Geçmişi</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d etkinlik</item>
         <item quantity="other">%1$d etkinlik</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d takvimi</item>
+        <item quantity="other">%1$d takvimi</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d hesaptan</item>
+        <item quantity="other">%1$d hesaptan</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d takvim</item>

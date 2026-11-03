@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Fügt Terminen basierend auf dem Titel ein Emoji hinzu, wie 🎂 für \"Geburtstag\".</string>
     <string name="settings_force_sync">Vollständige Synchronisierung</string>
     <string name="settings_force_sync_subtitle">Alle Kalenderdaten erneut herunterladen</string>
+    <string name="settings_force_sync_no_account">Kein Sync-Konto eingerichtet</string>
+    <string name="force_sync_confirm">%1$s von %2$s erneut herunterladen. Noch nicht synchronisierte Änderungen bleiben erhalten.</string>
+    <string name="action_start">Starten</string>
     <string name="settings_sync_history">Sync-Verlauf</string>
     <string name="settings_sync_history_subtitle">Sync-Sitzungen anzeigen (letzte 48 Stunden)</string>
     <string name="settings_import_subtitle">Termine aus einer ICS-Datei in einen beliebigen Kalender hinzufügen</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Neuer Termin</string>
     <string name="dialog_edit_event_title">Termin bearbeiten</string>
-    <string name="dialog_force_sync_title">Vollständige Synchronisierung?</string>
-    <string name="dialog_force_sync_message">Alle Kalenderdaten werden vom Server erneut heruntergeladen. Lokale Änderungen bleiben erhalten.</string>
     <string name="dialog_enable_notifications">Benachrichtigungen aktivieren?</string>
     <string name="dialog_action_required">Diese Aktion ist erforderlich, um fortzufahren.</string>
     <string name="dialog_add_to_calendar">Zum Kalender hinzufügen</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Keine Termine diese Woche</string>
     <string name="status_more_events">+%1$d weitere</string>
     <string name="status_no_sync_sessions">Noch keine Sync-Sitzungen.\n\nZiehe auf der Kalenderansicht nach unten, um eine Synchronisierung auszulösen.</string>
+    <string name="status_no_sync_account">Kein Sync-Konto eingerichtet. Offline-Kalender bleiben auf diesem Gerät; Gerätekalender werden über ihr eigenes Konto synchronisiert.</string>
     <string name="status_no_writable_calendars">Keine beschreibbaren Kalender verfügbar</string>
     <string name="status_events_count">%1$d Termine</string>
     <string name="status_sync_history">Sync-Verlauf</string>
@@ -1022,6 +1024,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d Termin</item>
         <item quantity="other">%1$d Termine</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d Kalender</item>
+        <item quantity="other">%1$d Kalender</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d Konto</item>
+        <item quantity="other">%1$d Konten</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d Kalender</item>

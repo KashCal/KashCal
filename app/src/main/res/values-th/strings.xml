@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">เพิ่มอีโมจิให้กิจกรรมตามชื่อเรื่อง เช่น 🎂 สำหรับ \"วันเกิด\"</string>
     <string name="settings_force_sync">ซิงค์ทั้งหมด</string>
     <string name="settings_force_sync_subtitle">ดาวน์โหลดข้อมูลปฏิทินทั้งหมดใหม่</string>
+    <string name="settings_force_sync_no_account">ยังไม่ได้ตั้งค่าบัญชีซิงค์</string>
+    <string name="force_sync_confirm">ดาวน์โหลด%1$sจาก%2$sใหม่ การเปลี่ยนแปลงที่ยังไม่ซิงค์จะยังอยู่</string>
+    <string name="action_start">เริ่ม</string>
     <string name="settings_sync_history">ประวัติการซิงค์</string>
     <string name="settings_sync_history_subtitle">ดูเซสชันการซิงค์ (48 ชั่วโมงล่าสุด)</string>
     <string name="settings_import_subtitle">เพิ่มกิจกรรมจากไฟล์ ICS ไปยังปฏิทินใดก็ได้</string>
@@ -330,8 +333,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">กิจกรรมใหม่</string>
     <string name="dialog_edit_event_title">แก้ไขกิจกรรม</string>
-    <string name="dialog_force_sync_title">ซิงค์ทั้งหมด?</string>
-    <string name="dialog_force_sync_message">จะดาวน์โหลดข้อมูลปฏิทินทั้งหมดจากเซิร์ฟเวอร์ใหม่ การเปลี่ยนแปลงในเครื่องจะถูกเก็บไว้</string>
     <string name="dialog_enable_notifications">เปิดการแจ้งเตือน?</string>
     <string name="dialog_action_required">จำเป็นต้องทำสิ่งนี้เพื่อดำเนินการต่อ</string>
     <string name="dialog_add_to_calendar">เพิ่มลงปฏิทิน</string>
@@ -344,6 +345,7 @@
     <string name="status_no_events_week">สัปดาห์นี้ไม่มีกิจกรรม</string>
     <string name="status_more_events">+%1$d เพิ่มเติม</string>
     <string name="status_no_sync_sessions">ยังไม่มีเซสชันการซิงค์\n\nเลื่อนลงเพื่อรีเฟรชบนหน้าปฏิทินเพื่อเริ่มซิงค์</string>
+    <string name="status_no_sync_account">ยังไม่ได้ตั้งค่าบัญชีซิงค์ ปฏิทินออฟไลน์จะเก็บไว้ในอุปกรณ์นี้ ส่วนปฏิทินอุปกรณ์ซิงค์ผ่านบัญชีของตัวเอง</string>
     <string name="status_no_writable_calendars">ไม่มีปฏิทินที่เขียนได้</string>
     <string name="status_events_count">%1$d กิจกรรม</string>
     <string name="status_sync_history">ประวัติการซิงค์</string>
@@ -986,6 +988,12 @@
     <string name="ics_import_summary_nothing">ไม่มีอะไรให้นำเข้า</string>
     <plurals name="event_count">
         <item quantity="other">%1$d กิจกรรม</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="other">%1$dปฏิทิน</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="other">%1$dบัญชี</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="other">%1$d ปฏิทิน</item>

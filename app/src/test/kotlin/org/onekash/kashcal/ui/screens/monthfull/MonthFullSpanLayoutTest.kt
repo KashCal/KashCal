@@ -9,6 +9,7 @@ import org.onekash.kashcal.data.db.entity.Calendar
 import org.onekash.kashcal.data.db.entity.Event
 import org.onekash.kashcal.data.db.entity.Occurrence
 import org.onekash.kashcal.domain.model.DisplayEvent
+import java.time.ZoneOffset
 
 class MonthFullSpanLayoutTest {
 
@@ -33,14 +34,23 @@ class MonthFullSpanLayoutTest {
         eventColor: Int? = null,
         occStartTs: Long = 1_700_000_000_000L + id * 1000,
     ): DisplayEvent.Room {
+        // A timed event's days come from its instants, so put it on [startDay] at 09:00 UTC plus
+        // the sub-hour part of [occStartTs] (which orders events) and end it on [endDay]. All-day
+        // events keep their stored codes and take [occStartTs] as is.
+        val start = if (isAllDay) occStartTs else utcMidnight(startDay) + 9 * HOUR + occStartTs % HOUR
+        val end = when {
+            isAllDay -> occStartTs + HOUR
+            endDay > startDay -> utcMidnight(endDay) + 10 * HOUR
+            else -> start + HOUR
+        }
         val event = Event(
             id = id,
             uid = "uid-$id",
             calendarId = 10L,
             title = "E$id",
-            startTs = occStartTs,
-            endTs = occStartTs + 3_600_000L,
-            dtstamp = occStartTs,
+            startTs = start,
+            endTs = end,
+            dtstamp = start,
             isAllDay = isAllDay,
             transp = transp,
             color = eventColor,
@@ -49,13 +59,19 @@ class MonthFullSpanLayoutTest {
             id = 1000L + id,
             eventId = id,
             calendarId = 10L,
-            startTs = occStartTs,
-            endTs = occStartTs + 3_600_000L,
+            startTs = start,
+            endTs = end,
             startDay = startDay,
             endDay = endDay,
         )
-        return DisplayEvent.Room(event, occ, cal)
+        return DisplayEvent.Room(event, occ, cal, zone = ZoneOffset.UTC)
     }
+
+    private fun utcMidnight(dayCode: Int): Long =
+        java.time.LocalDate.of(dayCode / 10000, dayCode / 100 % 100, dayCode % 100)
+            .atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+
+    private val HOUR = 3_600_000L
 
     /** Sun..Sat dayCodes for the week of 2026-03-08. */
     private val weekSunToSat = listOf(20260308, 20260309, 20260310, 20260311, 20260312, 20260313, 20260314)

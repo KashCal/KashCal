@@ -9,6 +9,7 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -56,12 +57,14 @@ import org.onekash.kashcal.sync.session.SyncStatus
 
 /**
  * Shows the sync session history as a bottom sheet: a summary line, then one expandable card per
- * session, with actions to copy the history to the clipboard or clear it.
+ * session, with actions to copy the history to the clipboard or clear it. [hasSyncAccount] picks
+ * the empty text (see [SyncHistoryList]).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SyncHistorySheet(
     syncSessionStore: SyncSessionStore,
+    hasSyncAccount: Boolean,
     onDismiss: () -> Unit
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
@@ -118,29 +121,41 @@ fun SyncHistorySheet(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if (sessions.isEmpty()) {
-                Text(
-                    text = stringResource(R.string.status_no_sync_sessions),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(vertical = 32.dp)
-                )
-            } else {
-                LazyColumn(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f, fill = false),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    items(sessions, key = { it.id }) { session ->
-                        Column(modifier = Modifier.animateItem()) {
-                            SyncSessionCard(session = session)
-                        }
-                    }
-                }
-            }
+            SyncHistoryList(sessions = sessions, hasSyncAccount = hasSyncAccount)
 
             Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+/**
+ * Shows one card per session, or with none an empty text: the pull-to-refresh hint when
+ * [hasSyncAccount], else why nothing syncs. Stored sessions show either way, so entries from
+ * before the last sync account went away stay readable until they age out.
+ */
+@Composable
+internal fun ColumnScope.SyncHistoryList(sessions: List<SyncSession>, hasSyncAccount: Boolean) {
+    if (sessions.isEmpty()) {
+        Text(
+            text = stringResource(
+                if (hasSyncAccount) R.string.status_no_sync_sessions else R.string.status_no_sync_account
+            ),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(vertical = 32.dp)
+        )
+    } else {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(sessions, key = { it.id }) { session ->
+                Column(modifier = Modifier.animateItem()) {
+                    SyncSessionCard(session = session)
+                }
+            }
         }
     }
 }

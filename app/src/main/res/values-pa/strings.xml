@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">ਸਿਰਲੇਖ ਦੇ ਆਧਾਰ \'ਤੇ ਸਮਾਗਮਾਂ ਵਿੱਚ ਇਮੋਜੀ ਜੋੜਦਾ ਹੈ, ਜਿਵੇਂ \"ਜਨਮਦਿਨ\" ਲਈ 🎂।</string>
     <string name="settings_force_sync">ਪੂਰਾ ਜ਼ਬਰਦਸਤੀ ਸਿੰਕ</string>
     <string name="settings_force_sync_subtitle">ਸਰਵਰ ਤੋਂ ਸਾਰਾ ਕੈਲੰਡਰ ਡਾਟਾ ਦੁਬਾਰਾ ਡਾਊਨਲੋਡ ਕਰੋ</string>
+    <string name="settings_force_sync_no_account">ਕੋਈ ਸਿੰਕ ਖਾਤਾ ਸੈੱਟ ਅੱਪ ਨਹੀਂ ਹੈ</string>
+    <string name="force_sync_confirm">%2$s ਤੋਂ %1$s ਦੁਬਾਰਾ ਡਾਊਨਲੋਡ ਕਰੋ। ਅਜੇ ਸਿੰਕ ਨਾ ਕੀਤੀਆਂ ਤਬਦੀਲੀਆਂ ਰੱਖੀਆਂ ਜਾਂਦੀਆਂ ਹਨ।</string>
+    <string name="action_start">ਸ਼ੁਰੂ ਕਰੋ</string>
     <string name="settings_sync_history">ਸਿੰਕ ਇਤਿਹਾਸ</string>
     <string name="settings_sync_history_subtitle">ਸਿੰਕ ਸੈਸ਼ਨ ਦੇਖੋ (ਪਿਛਲੇ 48 ਘੰਟੇ)</string>
     <string name="settings_import_subtitle">ICS ਫ਼ਾਈਲ ਤੋਂ ਕਿਸੇ ਵੀ ਕੈਲੰਡਰ ਵਿੱਚ ਘਟਨਾਵਾਂ ਸ਼ਾਮਲ ਕਰੋ</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">ਨਵੀਂ ਘਟਨਾ</string>
     <string name="dialog_edit_event_title">ਘਟਨਾ ਸੰਪਾਦਨ</string>
-    <string name="dialog_force_sync_title">ਪੂਰਾ ਜ਼ਬਰਦਸਤੀ ਸਿੰਕ?</string>
-    <string name="dialog_force_sync_message">ਇਹ ਸਰਵਰ ਤੋਂ ਸਾਰਾ ਕੈਲੰਡਰ ਡਾਟਾ ਦੁਬਾਰਾ ਡਾਊਨਲੋਡ ਕਰੇਗਾ। ਸਥਾਨਕ ਬਦਲਾਅ ਸੁਰੱਖਿਅਤ ਰਹਿਣਗੇ।</string>
     <string name="dialog_enable_notifications">ਸੂਚਨਾਵਾਂ ਚਾਲੂ ਕਰੋ?</string>
     <string name="dialog_action_required">ਜਾਰੀ ਰੱਖਣ ਲਈ ਇਹ ਕਾਰਵਾਈ ਲੋੜੀਂਦੀ ਹੈ।</string>
     <string name="dialog_add_to_calendar">ਕੈਲੰਡਰ ਵਿੱਚ ਜੋੜੋ</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">ਇਸ ਹਫ਼ਤੇ ਕੋਈ ਘਟਨਾ ਨਹੀਂ</string>
     <string name="status_more_events">+%1$d ਹੋਰ</string>
     <string name="status_no_sync_sessions">ਅਜੇ ਕੋਈ ਸਿੰਕ ਸੈਸ਼ਨ ਨਹੀਂ।\n\nਕੈਲੰਡਰ ਵਿਊ \'ਤੇ ਹੇਠਾਂ ਖਿੱਚ ਕੇ ਰਿਫ਼ਰੈਸ਼ ਕਰੋ।</string>
+    <string name="status_no_sync_account">ਕੋਈ ਸਿੰਕ ਖਾਤਾ ਸੈੱਟ ਅੱਪ ਨਹੀਂ ਹੈ। ਆਫ਼ਲਾਈਨ ਕੈਲੰਡਰ ਇਸ ਡਿਵਾਈਸ ਤੇ ਰਹਿੰਦੇ ਹਨ; ਡਿਵਾਈਸ ਦੇ ਕੈਲੰਡਰ ਆਪਣੇ ਖਾਤੇ ਰਾਹੀਂ ਸਿੰਕ ਹੁੰਦੇ ਹਨ।</string>
     <string name="status_no_writable_calendars">ਕੋਈ ਲਿਖਣਯੋਗ ਕੈਲੰਡਰ ਉਪਲਬਧ ਨਹੀਂ</string>
     <string name="status_events_count">%1$d ਘਟਨਾਵਾਂ</string>
     <string name="status_sync_history">ਸਿੰਕ ਇਤਿਹਾਸ</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d ਘਟਨਾ</item>
         <item quantity="other">%1$d ਘਟਨਾਵਾਂ</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d ਕੈਲੰਡਰ</item>
+        <item quantity="other">%1$d ਕੈਲੰਡਰ</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d ਖਾਤਾ</item>
+        <item quantity="other">%1$d ਖਾਤੇ</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d ਕੈਲੰਡਰ</item>

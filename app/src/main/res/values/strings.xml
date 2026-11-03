@@ -295,6 +295,12 @@
     <!-- "Force full sync" = re-download everything from server -->
     <string name="settings_force_sync">Force full sync</string>
     <string name="settings_force_sync_subtitle">Re-download all calendar data</string>
+    <!-- Subtitle of the greyed-out Force full sync row when no iCloud or CalDAV account is set up or all are set to Sync off -->
+    <string name="settings_force_sync_no_account">No sync account set up</string>
+    <!-- Checkbox text of the inline Force full sync confirm. %1$s is force_sync_confirm_calendars ("6 calendars"), %2$s is force_sync_confirm_accounts ("2 accounts"). Unsynced local changes are not lost. -->
+    <string name="force_sync_confirm">Re-download %1$s from %2$s. Changes not yet synced are kept.</string>
+    <!-- Button that starts the force full sync after the box is ticked -->
+    <string name="action_start">Start</string>
     <string name="settings_sync_history">Sync history</string>
     <string name="settings_sync_history_subtitle">View sync sessions (last 48 hours)</string>
     <!-- Keep ".ics" untranslated (file extension) -->
@@ -519,9 +525,6 @@
     <!-- Dialog titles and messages -->
     <string name="dialog_new_event_title">New Event</string>
     <string name="dialog_edit_event_title">Edit Event</string>
-    <string name="dialog_force_sync_title">Force Full Sync?</string>
-    <!-- Confirmation dialog body for force sync -->
-    <string name="dialog_force_sync_message">This will re-download all calendar data from the server. Local changes will be preserved.</string>
     <!-- Match Android system "Notifications" terminology -->
     <string name="dialog_enable_notifications">Enable Notifications?</string>
     <!-- %1$s = event title -->
@@ -542,6 +545,8 @@
     <!-- Compact overflow badge for the all-day strip in week/3-day view; just "+N" (e.g. +2). Number only, no words to translate. -->
     <string name="status_more_events_compact" translatable="false">+%1$d</string>
     <string name="status_no_sync_sessions">No sync sessions yet.\n\nTrigger a sync by pulling down to refresh on the calendar view.</string>
+    <!-- Sync History empty text when no iCloud or CalDAV account is set up, or all are set to Sync off. Offline calendars are KashCal's local calendars; device calendars are synced by the account that owns them (Google, Samsung, ...). -->
+    <string name="status_no_sync_account">No sync account set up. Offline calendars stay on this device; device calendars sync through their own account.</string>
     <string name="status_no_writable_calendars">No writable calendars available</string>
     <!-- %1$d = number of events -->
     <string name="status_events_count">%1$d Events</string>
@@ -1462,6 +1467,16 @@
     <plurals name="event_count">
         <item quantity="one">%1$d event</item>
         <item quantity="other">%1$d events</item>
+    </plurals>
+    <!-- First slot of force_sync_confirm: the object of "Re-download". Inflect it for that position if your language needs it. -->
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d calendar</item>
+        <item quantity="other">%1$d calendars</item>
+    </plurals>
+    <!-- Second slot of force_sync_confirm: the source after "from". Inflect it for that position if your language needs it. -->
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d account</item>
+        <item quantity="other">%1$d accounts</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d calendar</item>

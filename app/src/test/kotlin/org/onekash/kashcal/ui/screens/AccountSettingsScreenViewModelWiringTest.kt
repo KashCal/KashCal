@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.mockk.every
@@ -31,6 +32,7 @@ import org.onekash.kashcal.ui.model.CalendarGroup
 import org.onekash.kashcal.ui.permission.LocalNetworkPermissionState
 import org.onekash.kashcal.ui.screens.settings.AccountFeedsSheetState
 import org.onekash.kashcal.ui.screens.settings.IcsSubscriptionUiModel
+import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
 import org.onekash.kashcal.ui.theme.ColorSource
 import org.onekash.kashcal.ui.theme.ThemeMode
@@ -99,9 +101,14 @@ class AccountSettingsScreenViewModelWiringTest {
      * Builds a VM mockk with every flow getter the route reads stubbed explicitly and Unit setters
      * relaxed. [AccountSettingsViewModel.widgetMaxEventsPerDay] and
      * [AccountSettingsViewModel.showWeekNumbers] come from the arguments; the rest carry fixed
-     * values so the screen renders normally.
+     * values so the screen renders normally. [calDavAccounts] seeds the settings state, so a test
+     * can give the screen a sync account.
      */
-    private fun mockVm(widget: Int, weekNumbers: Boolean): AccountSettingsViewModel {
+    private fun mockVm(
+        widget: Int,
+        weekNumbers: Boolean,
+        calDavAccounts: List<CalDavAccountUiModel> = emptyList(),
+    ): AccountSettingsViewModel {
         val vm = mockk<AccountSettingsViewModel>(relaxUnitFun = true)
         // Theme flows (cold Flow, seeded with initialValue in the route).
         every { vm.themeMode } returns flowOf(ThemeMode.SYSTEM)
@@ -109,7 +116,10 @@ class AccountSettingsScreenViewModelWiringTest {
         every { vm.accentSeed } returns flowOf(0)
         // UI-state flows.
         every { vm.uiState } returns MutableStateFlow(
-            AccountSettingsUiState(iCloudState = ICloudConnectionState.NotConnected())
+            AccountSettingsUiState(
+                iCloudState = ICloudConnectionState.NotConnected(),
+                calDavAccounts = calDavAccounts,
+            )
         )
         every { vm.calendars } returns MutableStateFlow(listOf(localCalendar))
         every { vm.calendarGroups } returns MutableStateFlow(emptyList<CalendarGroup>())
@@ -262,15 +272,34 @@ class AccountSettingsScreenViewModelWiringTest {
 
     @Test
     fun `force full sync confirm drives the VM once`() {
-        val vm = mockVm(widget = 8, weekNumbers = false)
+        val account = CalDavAccountUiModel(
+            id = 1, email = "user@example.test", displayName = "Work", calendarCount = 3,
+        )
+        val vm = mockVm(widget = 8, weekNumbers = false, calDavAccounts = listOf(account))
         setRoute(vm)
 
         composeTestRule.onNodeWithText("Force full sync").performClick()
         composeTestRule.waitForIdle()
-        composeTestRule.onNodeWithText("Sync Now").performClick()
+        composeTestRule.onNodeWithText(
+            "Re-download 3 calendars from 1 account. Changes not yet synced are kept."
+        ).performClick()
+        composeTestRule.onNodeWithText("Start").performClick()
         composeTestRule.waitForIdle()
 
         verify(exactly = 1) { vm.forceFullSync() }
+    }
+
+    @Test
+    fun `force full sync with no sync account in the VM state is greyed and never drives the VM`() {
+        val vm = mockVm(widget = 8, weekNumbers = false)
+        setRoute(vm)
+
+        composeTestRule.onNodeWithText("No sync account set up").assertExists()
+        composeTestRule.onNodeWithText("Force full sync").assertIsNotEnabled().performClick()
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Start").assertDoesNotExist()
+        verify(exactly = 0) { vm.forceFullSync() }
     }
 
     @Test

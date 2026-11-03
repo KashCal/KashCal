@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Cuiridh e emoji ri tachartasan a rèir an tiotail, mar 🎂 airson \"Co-là-breith\".</string>
     <string name="settings_force_sync">Sioncronaich slàn le èiginn</string>
     <string name="settings_force_sync_subtitle">Ath-luchdaich an dàta mìosachain uile</string>
+    <string name="settings_force_sync_no_account">Cha deach cunntas sioncronachaidh a shuidheachadh</string>
+    <string name="force_sync_confirm">Ath-luchdaich %1$s o %2$s. Thèid atharrachaidhean nach deach a shioncronachadh fhathast a chumail.</string>
+    <string name="action_start">Tòisich</string>
     <string name="settings_sync_history">Eachdraidh sioncronachaidh</string>
     <string name="settings_sync_history_subtitle">Seall seiseanan sioncronachaidh (48 uairean mu dheireadh)</string>
     <string name="settings_import_subtitle">Cuir tachartasan bho fhaidhle ICS ri mìosachan sam bith</string>
@@ -333,8 +336,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Tachartas Ùr</string>
     <string name="dialog_edit_event_title">Deasaich Tachartas</string>
-    <string name="dialog_force_sync_title">Sioncronaich Slàn le Èiginn?</string>
-    <string name="dialog_force_sync_message">Ath-luchdaichidh seo an dàta mìosachain uile bhon fhrithealaiche. Thèid atharrachaidhean ionadail a ghlèidheadh.</string>
     <string name="dialog_enable_notifications">Cuir Brathan an Comas?</string>
     <string name="dialog_action_required">Tha an gnìomh seo riatanach gus leantainn air adhart.</string>
     <string name="dialog_add_to_calendar">Cuir ri mìosachan</string>
@@ -347,6 +348,7 @@
     <string name="status_no_events_week">Gun tachartasan an t-seachdain seo</string>
     <string name="status_more_events">+%1$d a bharrachd</string>
     <string name="status_no_sync_sessions">Gun seiseanan sioncronachaidh fhathast.\n\nTarraing sìos gus ath-nuadhachadh air an t-sealladh mìosachain.</string>
+    <string name="status_no_sync_account">Cha deach cunntas sioncronachaidh a shuidheachadh. Fanaidh mìosachain far loidhne air an uidheam seo; bidh mìosachain na h-uidheim a\' sioncronachadh tron chunntas aca fhèin.</string>
     <string name="status_no_writable_calendars">Chan eil mìosachain sgrìobhaidh ri fhaighinn</string>
     <string name="status_events_count">%1$d Tachartas</string>
     <string name="status_sync_history">Eachdraidh Sioncronachaidh</string>
@@ -1097,6 +1099,18 @@
         <item quantity="two">%1$d thachartas</item>
         <item quantity="few">%1$d tachartasan</item>
         <item quantity="other">%1$d tachartas</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d mhìosachan</item>
+        <item quantity="two">%1$d mhìosachan</item>
+        <item quantity="few">%1$d mìosachain</item>
+        <item quantity="other">%1$d mìosachan</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d chunntas</item>
+        <item quantity="two">%1$d chunntas</item>
+        <item quantity="few">%1$d cunntasan</item>
+        <item quantity="other">%1$d cunntas</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d mhìosachan</item>

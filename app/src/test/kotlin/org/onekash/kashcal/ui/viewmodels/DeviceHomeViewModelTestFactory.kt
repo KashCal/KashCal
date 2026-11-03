@@ -23,6 +23,7 @@ import org.onekash.kashcal.network.NetworkMonitor
 import org.onekash.kashcal.sync.scheduler.SyncScheduler
 import org.onekash.kashcal.sync.scheduler.SyncStatus
 import org.onekash.kashcal.testutil.TestDataStoreFactory
+import org.onekash.kashcal.util.ZoneSource
 
 /**
  * A [HomeViewModel] for device-calendar tests, wired to the device reader and
@@ -106,6 +107,7 @@ class DeviceHomeViewModelTestFactory(
         // A drag's save runs here; the default isn't tied to the ViewModel, so it outlives
         // onCleared the way the app scope does.
         applicationScope: CoroutineScope = CoroutineScope(SupervisorJob()),
+        zoneSource: ZoneSource = ZoneSource(),
     ): HomeViewModel = HomeViewModel(
         eventCoordinator = eventCoordinator,
         eventReader = eventReader,
@@ -122,6 +124,7 @@ class DeviceHomeViewModelTestFactory(
         context = context,
         ioDispatcher = ioDispatcher,
         applicationScope = applicationScope,
+        zoneSource = zoneSource,
     )
 
     companion object {

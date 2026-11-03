@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Προσθέτει ένα emoji στα συμβάντα με βάση τον τίτλο, όπως 🎂 για \"Γενέθλια\".</string>
     <string name="settings_force_sync">Αναγκαστικός πλήρης συγχρονισμός</string>
     <string name="settings_force_sync_subtitle">Εκ νέου λήψη όλων των δεδομένων ημερολογίου</string>
+    <string name="settings_force_sync_no_account">Δεν έχει ρυθμιστεί λογαριασμός συγχρονισμού</string>
+    <string name="force_sync_confirm">Εκ νέου λήψη %1$s από %2$s. Οι μη συγχρονισμένες αλλαγές διατηρούνται.</string>
+    <string name="action_start">Έναρξη</string>
     <string name="settings_sync_history">Ιστορικό συγχρονισμού</string>
     <string name="settings_sync_history_subtitle">Προβολή συνεδριών συγχρονισμού (τελευταίες 48 ώρες)</string>
     <string name="settings_import_subtitle">Προσθήκη συμβάντων από αρχείο ICS σε οποιοδήποτε ημερολόγιο</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Νέο συμβάν</string>
     <string name="dialog_edit_event_title">Επεξεργασία συμβάντος</string>
-    <string name="dialog_force_sync_title">Αναγκαστικός πλήρης συγχρονισμός;</string>
-    <string name="dialog_force_sync_message">Αυτό θα κατεβάσει εκ νέου όλα τα δεδομένα ημερολογίου από τον διακομιστή. Οι τοπικές αλλαγές θα διατηρηθούν.</string>
     <string name="dialog_enable_notifications">Ενεργοποίηση ειδοποιήσεων;</string>
     <string name="dialog_action_required">Αυτή η ενέργεια είναι απαραίτητη για να συνεχίσετε.</string>
     <string name="dialog_add_to_calendar">Προσθήκη στο ημερολόγιο</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Δεν υπάρχουν συμβάντα αυτή την εβδομάδα</string>
     <string name="status_more_events">+%1$d ακόμα</string>
     <string name="status_no_sync_sessions">Δεν υπάρχουν ακόμα συνεδρίες συγχρονισμού.\n\nΣύρετε προς τα κάτω στην προβολή ημερολογίου για να ξεκινήσετε συγχρονισμό.</string>
+    <string name="status_no_sync_account">Δεν έχει ρυθμιστεί λογαριασμός συγχρονισμού. Τα ημερολόγια εκτός σύνδεσης παραμένουν στη συσκευή· τα ημερολόγια της συσκευής συγχρονίζονται μέσω του δικού τους λογαριασμού.</string>
     <string name="status_no_writable_calendars">Δεν υπάρχουν διαθέσιμα εγγράψιμα ημερολόγια</string>
     <string name="status_events_count">%1$d Συμβάντα</string>
     <string name="status_sync_history">Ιστορικό συγχρονισμού</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d συμβάν</item>
         <item quantity="other">%1$d συμβάντα</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d ημερολόγιο</item>
+        <item quantity="other">%1$d ημερολόγια</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d λογαριασμό</item>
+        <item quantity="other">%1$d λογαριασμούς</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d ημερολόγιο</item>

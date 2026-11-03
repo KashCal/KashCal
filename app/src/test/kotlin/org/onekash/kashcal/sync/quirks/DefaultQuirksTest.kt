@@ -227,6 +227,55 @@ class DefaultQuirksTest {
         assertNull(outbox)
     }
 
+    /** A Radicale-shaped calendar-home listing holding one collection at [href]. */
+    private fun radicaleListing(href: String, components: List<String>): String = """
+        <?xml version="1.0" encoding="UTF-8"?>
+        <D:multistatus xmlns:D="DAV:" xmlns:C="urn:ietf:params:xml:ns:caldav">
+            <D:response>
+                <D:href>$href</D:href>
+                <D:propstat>
+                    <D:prop>
+                        <D:resourcetype><C:calendar /><D:collection /></D:resourcetype>
+                        <D:displayname>Tasks</D:displayname>
+                        <C:supported-calendar-component-set>
+                            ${components.joinToString("") { "<C:comp name=\"$it\" />" }}
+                        </C:supported-calendar-component-set>
+                    </D:prop>
+                    <D:status>HTTP/1.1 200 OK</D:status>
+                </D:propstat>
+            </D:response>
+        </D:multistatus>
+    """.trimIndent()
+
+    @Test
+    fun `extractCalendars keeps an events calendar whose path ends in Tasks`() {
+        // The reply Radicale 3 gives for a VEVENT calendar created at /<user>/Tasks/ (#421).
+        for (href in listOf("/testuser1/Tasks/", "/calendars/user/tasks/", "/calendars/user/TASKS/")) {
+            val calendars = quirks.extractCalendars(
+                radicaleListing(href, listOf("VEVENT")),
+                "http://localhost:5232",
+            )
+            assertEquals(href, listOf(href), calendars.map { it.href })
+        }
+    }
+
+    @Test
+    fun `classifyCalendarProbe answers true for an events calendar whose path ends in Tasks`() {
+        // The probe of a stored calendar must agree with the listing, or a calendar the listing
+        // shows would be treated as gone.
+        val path = "/testuser1/Tasks/"
+        assertEquals(true, quirks.classifyCalendarProbe(radicaleListing(path, listOf("VEVENT")), path))
+    }
+
+    @Test
+    fun `extractCalendars leaves out a task-only list at a tasks path`() {
+        val calendars = quirks.extractCalendars(
+            radicaleListing("/calendars/user/tasks/", listOf("VTODO")),
+            "http://localhost:5232",
+        )
+        assertTrue(calendars.isEmpty())
+    }
+
     // ========== Component-based filtering tests ==========
 
     @Test
@@ -654,17 +703,14 @@ END:VCALENDAR</cal:calendar-data>
     }
 
     @Test
-    fun `shouldSkipCalendar returns true for tasks by href`() {
-        assertTrue(quirks.shouldSkipCalendar("/calendars/user/tasks/", null))
-    }
-
-    @Test
-    fun `shouldSkipCalendar matches tasks terminal segment only WITH a trailing slash`() {
-        // The terminal `tasks` skip requires the trailing-slash form (`.../tasks/`). A href
-        // without the slash is kept here; a VTODO-only tasks list is still dropped by the
-        // VEVENT component gate in extractCalendars when the server advertises the set.
-        assertTrue(quirks.shouldSkipCalendar("/calendars/user/tasks/", null))
+    fun `shouldSkipCalendar keeps a calendar whose path ends in tasks`() {
+        // A server may name a collection's path after what the creating client chose, so an
+        // events calendar can live at `.../Tasks/` (#421, Radicale). A task list is told apart
+        // by its component set in extractCalendars, never by its path.
+        assertFalse(quirks.shouldSkipCalendar("/calendars/user/tasks/", null))
         assertFalse(quirks.shouldSkipCalendar("/calendars/user/tasks", null))
+        assertFalse(quirks.shouldSkipCalendar("/calendars/user/TASKS/", "Tasks"))
+        assertFalse(quirks.shouldSkipCalendar("/testuser1/Tasks/", "Tasks"))
     }
 
     @Test
@@ -686,10 +732,7 @@ END:VCALENDAR</cal:calendar-data>
     }
 
     @Test
-    fun `shouldSkipCalendar matches tasks only as the final path segment`() {
-        // The task-list skip fires only for a terminal `.../tasks/` segment, so an account
-        // whose username segment is "tasks" keeps all its calendars.
-        assertTrue(quirks.shouldSkipCalendar("/calendars/user/tasks/", null))
+    fun `shouldSkipCalendar keeps calendars of an account whose username segment is tasks`() {
         assertFalse(quirks.shouldSkipCalendar("/calendars/tasks/personal/", "Personal"))
         assertFalse(quirks.shouldSkipCalendar("/calendars/tasks/work/", "Work"))
     }

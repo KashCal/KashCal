@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">በርዕሱ ላይ ተመስርቶ ለክስተቶች ኢሞጂ ያክላል፣ ለምሳሌ ለ\"የልደት ቀን\" 🎂።</string>
     <string name="settings_force_sync">ሙሉ ማመሳሰል አስገድድ</string>
     <string name="settings_force_sync_subtitle">ሁሉንም የቀን መቁጠሪያ ውሂብ እንደገና አውርድ</string>
+    <string name="settings_force_sync_no_account">ምንም የማመሳሰል መለያ አልተዋቀረም</string>
+    <string name="force_sync_confirm">%1$sን ከ%2$s እንደገና አውርድ። እስካሁን ያልተመሳሰሉ ለውጦች ይጠበቃሉ።</string>
+    <string name="action_start">ጀምር</string>
     <string name="settings_sync_history">የማመሳሰል ታሪክ</string>
     <string name="settings_sync_history_subtitle">የማመሳሰል ክፍለ ጊዜዎችን ተመልከት (ባለፉት 48 ሰዓታት)</string>
     <string name="settings_import_subtitle">ከ ICS ፋይል ወደ ማንኛውም ቀን መቁጠሪያ ክስተቶችን ጨምር</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">አዲስ ክስተት</string>
     <string name="dialog_edit_event_title">ክስተት አርትዕ</string>
-    <string name="dialog_force_sync_title">ሙሉ ማመሳሰል ያስገድዱ?</string>
-    <string name="dialog_force_sync_message">ይህ ሁሉንም የቀን መቁጠሪያ ውሂብ ከአገልጋዩ እንደገና ያወርዳል። የአካባቢ ለውጦች ይጠበቃሉ።</string>
     <string name="dialog_enable_notifications">ማሳወቂያዎችን ያንቁ?</string>
     <string name="dialog_action_required">ለመቀጠል ይህ እርምጃ ያስፈልጋል።</string>
     <string name="dialog_add_to_calendar">ወደ ቀን መቁጠሪያ አክል</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">በዚህ ሳምንት ምንም ክስተቶች የሉም</string>
     <string name="status_more_events">+%1$d ተጨማሪ</string>
     <string name="status_no_sync_sessions">ምንም የማመሳሰል ክፍለ ጊዜዎች እስካሁን የሉም።\n\nበቀን መቁጠሪያ እይታ ላይ ወደ ታች በመሳብ ማመሳሰልን ያስጀምሩ።</string>
+    <string name="status_no_sync_account">ምንም የማመሳሰል መለያ አልተዋቀረም። ከመስመር ውጭ የቀን መቁጠሪያዎች በዚህ መሳሪያ ላይ ይቆያሉ፤ የመሳሪያ ቀን መቁጠሪያዎች በራሳቸው መለያ ይመሳሰላሉ።</string>
     <string name="status_no_writable_calendars">ሊፃፍባቸው የሚችሉ ቀን መቁጠሪያዎች የሉም</string>
     <string name="status_events_count">%1$d ክስተቶች</string>
     <string name="status_sync_history">የማመሳሰል ታሪክ</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d ክስተት</item>
         <item quantity="other">%1$d ክስተቶች</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d ቀን መቁጠሪያ</item>
+        <item quantity="other">%1$d ቀን መቁጠሪያዎች</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d መለያ</item>
+        <item quantity="other">%1$d መለያዎች</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d ቀን መቁጠሪያ</item>

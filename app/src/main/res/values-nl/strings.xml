@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Voegt een emoji toe aan afspraken op basis van de titel, zoals 🎂 voor \"Verjaardag\".</string>
     <string name="settings_force_sync">Volledige synchronisatie</string>
     <string name="settings_force_sync_subtitle">Alle agendagegevens opnieuw downloaden</string>
+    <string name="settings_force_sync_no_account">Geen synchronisatieaccount ingesteld</string>
+    <string name="force_sync_confirm">%1$s van %2$s opnieuw downloaden. Nog niet gesynchroniseerde wijzigingen blijven behouden.</string>
+    <string name="action_start">Starten</string>
     <string name="settings_sync_history">Synchronisatiegeschiedenis</string>
     <string name="settings_sync_history_subtitle">Sync-sessies bekijken (afgelopen 48 uur)</string>
     <string name="settings_import_subtitle">Afspraken vanuit een ICS-bestand aan een agenda toevoegen</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Nieuwe afspraak</string>
     <string name="dialog_edit_event_title">Afspraak bewerken</string>
-    <string name="dialog_force_sync_title">Volledige synchronisatie?</string>
-    <string name="dialog_force_sync_message">Alle agendagegevens worden opnieuw gedownload van de server. Lokale wijzigingen blijven behouden.</string>
     <string name="dialog_enable_notifications">Meldingen inschakelen?</string>
     <string name="dialog_action_required">Deze actie is vereist om door te gaan.</string>
     <string name="dialog_add_to_calendar">Toevoegen aan agenda</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Geen afspraken deze week</string>
     <string name="status_more_events">+%1$d meer</string>
     <string name="status_no_sync_sessions">Nog geen sync-sessies.\n\nVervers door op de agendaweergave naar beneden te trekken.</string>
+    <string name="status_no_sync_account">Geen synchronisatieaccount ingesteld. Offline agenda\'s blijven op dit apparaat; apparaatagenda\'s synchroniseren via hun eigen account.</string>
     <string name="status_no_writable_calendars">Geen beschrijfbare agenda\'s beschikbaar</string>
     <string name="status_events_count">%1$d afspraken</string>
     <string name="status_sync_history">Synchronisatiegeschiedenis</string>
@@ -1022,6 +1024,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d afspraak</item>
         <item quantity="other">%1$d afspraken</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d agenda</item>
+        <item quantity="other">%1$d agenda\'s</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d account</item>
+        <item quantity="other">%1$d accounts</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d agenda</item>

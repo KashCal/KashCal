@@ -12,6 +12,7 @@ import org.onekash.kashcal.domain.mapper.availabilityIntToTransp
 import org.onekash.kashcal.domain.mapper.statusIntToString
 import org.onekash.kashcal.util.DateTimeUtils
 import java.text.SimpleDateFormat
+import java.time.ZoneId
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
@@ -71,13 +72,21 @@ sealed interface DisplayEvent {
      */
     val stableKey: String
 
-    /** An occurrence of a Room event. */
+    /**
+     * An occurrence of a Room event.
+     *
+     * [startDay] and [endDay] are computed once, in [zone], by
+     * [DateTimeUtils.occurrenceStartDay] and [DateTimeUtils.occurrenceEndDay] (#422). [zone]
+     * takes part in equality, so a list rebuilt after a zone change differs from the old one
+     * and a StateFlow re-emits it.
+     */
     @Immutable
     data class Room(
         val event: Event,
         val occurrence: Occurrence,
         val calendar: Calendar?,
-        override val isDeclinedByMe: Boolean = false
+        override val isDeclinedByMe: Boolean = false,
+        val zone: ZoneId = ZoneId.systemDefault(),
     ) : DisplayEvent {
         override val title get() = event.title
         override val description get() = event.description
@@ -85,8 +94,12 @@ sealed interface DisplayEvent {
         override val categories get() = event.categories.orEmpty()
         override val startTs get() = occurrence.startTs
         override val endTs get() = occurrence.endTs
-        override val startDay get() = occurrence.startDay
-        override val endDay get() = occurrence.endDay
+        override val startDay: Int = DateTimeUtils.occurrenceStartDay(
+            occurrence.startTs, occurrence.startDay, event.isAllDay, zone
+        )
+        override val endDay: Int = DateTimeUtils.occurrenceEndDay(
+            occurrence.startTs, occurrence.endTs, occurrence.endDay, event.isAllDay, zone
+        )
         override val isAllDay get() = event.isAllDay
         override val hasRrule get() = event.rrule != null
         override val calendarColor get() = calendar?.color ?: 0

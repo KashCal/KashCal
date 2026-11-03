@@ -31,8 +31,8 @@ import org.robolectric.annotation.Config
  *
  * The test calls the shipped predicates (`DefaultQuirks.shouldSkipCalendar`,
  * `ICloudQuirks.shouldSkipCalendar`, `DefaultCardDavQuirks.shouldSkipAddressBook`) through
- * [CollectionResourceTypeProof], never a copy, so a regression in the production filter (a
- * revert to substring matching, a change to tasks or reminders handling) fails it.
+ * [CollectionResourceTypeProof], never a copy, so the proof can't drift from the production
+ * filter.
  *
  * Two captured server behaviours are pinned as named cases because a naive gate gets them
  * wrong:

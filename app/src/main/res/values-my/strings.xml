@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">\"မွေးနေ့\" အတွက် 🎂 ကဲ့သို့ ခေါင်းစဉ်ပေါ်မူတည်၍ ပွဲများသို့ အီမိုဂျီ ထည့်ပေးသည်။</string>
     <string name="settings_force_sync">အပြည့်အဝ အတင်းချိန်ကိုက်</string>
     <string name="settings_force_sync_subtitle">ပြက္ခဒိန်ဒေတာ အားလုံး ပြန်ဒေါင်းလုဒ်</string>
+    <string name="settings_force_sync_no_account">ချိန်ကိုက် အကောင့် မသတ်မှတ်ထားပါ</string>
+    <string name="force_sync_confirm">%2$s မှ %1$s ကို ပြန်ဒေါင်းလုပ်။ မချိန်ကိုက်ရသေးသော ပြောင်းလဲမှုများ ထိန်းသိမ်းထားသည်။</string>
+    <string name="action_start">စတင်</string>
     <string name="settings_sync_history">ချိန်ကိုက်မှတ်တမ်း</string>
     <string name="settings_sync_history_subtitle">ချိန်ကိုက်စက်ရှင်များ ကြည့်ရန် (နောက်ဆုံး ၄၈ နာရီ)</string>
     <string name="settings_import_subtitle">မည်သည့် ပြက္ခဒိန်သို့မဆို ICS ဖိုင်မှ ပွဲများ ထည့်ပါ</string>
@@ -330,8 +333,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">ပွဲအသစ်</string>
     <string name="dialog_edit_event_title">ပွဲ ပြင်ဆင်</string>
-    <string name="dialog_force_sync_title">အပြည့်အဝ အတင်းချိန်ကိုက်မလား?</string>
-    <string name="dialog_force_sync_message">ဆာဗာမှ ပြက္ခဒိန်ဒေတာ အားလုံးကို ပြန်ဒေါင်းလုဒ်လုပ်ပါမည်။ ဒေသဆိုင်ရာ ပြောင်းလဲမှုများ ထိန်းသိမ်းထားပါမည်။</string>
     <string name="dialog_enable_notifications">အကြောင်းကြားချက်များ ဖွင့်မလား?</string>
     <string name="dialog_action_required">ဆက်လုပ်ရန် ဤလုပ်ဆောင်ချက် လိုအပ်ပါသည်။</string>
     <string name="dialog_add_to_calendar">ပြက္ခဒိန်သို့ ထည့်</string>
@@ -344,6 +345,7 @@
     <string name="status_no_events_week">ဤအပတ် ပွဲများ မရှိပါ</string>
     <string name="status_more_events">+%1$d ထပ်ရှိ</string>
     <string name="status_no_sync_sessions">ချိန်ကိုက်စက်ရှင် မရှိသေးပါ။\n\nပြက္ခဒိန်အမြင်တွင် အောက်သို့ ဆွဲချ၍ ချိန်ကိုက်ပါ။</string>
+    <string name="status_no_sync_account">ချိန်ကိုက် အကောင့် မသတ်မှတ်ထားပါ။ အော့ဖ်လိုင်း ပြက္ခဒိန်များသည် ဤစက်တွင် ကျန်ရှိသည်; စက်၏ ပြက္ခဒိန်များသည် ၎င်းတို့ပိုင် အကောင့်မှ ချိန်ကိုက်သည်။</string>
     <string name="status_no_writable_calendars">ရေးသားနိုင်သော ပြက္ခဒိန် မရှိပါ</string>
     <string name="status_events_count">ပွဲ %1$d ခု</string>
     <string name="status_sync_history">ချိန်ကိုက် မှတ်တမ်း</string>
@@ -986,6 +988,12 @@
     <string name="ics_import_summary_nothing">တင်သွင်းစရာ မရှိပါ</string>
     <plurals name="event_count">
         <item quantity="other">ပွဲ %1$d ခု</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="other">ပြက္ခဒိန် %1$d ခု</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="other">အကောင့် %1$d ခု</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="other">ပြက္ခဒိန် %1$d ခု</item>

@@ -557,8 +557,14 @@ class HomeScreenComposeTest {
                 (today.get(JavaCalendar.MONTH) + 1) * 100 +
                 today.get(JavaCalendar.DAY_OF_MONTH)
 
-        // Two of today's occurrences, one per test event.
-        val nowMs = System.currentTimeMillis()
+        // Two of today's occurrences, one per test event, at 10:00 and 12:00 so neither crosses
+        // midnight: a timed event's day comes from its instants.
+        val nowMs = (today.clone() as JavaCalendar).apply {
+            set(JavaCalendar.HOUR_OF_DAY, 10)
+            set(JavaCalendar.MINUTE, 0)
+            set(JavaCalendar.SECOND, 0)
+            set(JavaCalendar.MILLISECOND, 0)
+        }.timeInMillis
         val testOccurrences = persistentListOf<DisplayEvent>(
             DisplayEvent.Room(
                 occurrence = Occurrence(

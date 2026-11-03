@@ -90,6 +90,12 @@ object CalDavTestServerLoader {
         return Pair(client, creds)
     }
 
+    /** Returns whether [url] points at a local Docker server (loopback or a private LAN host). */
+    fun isLocalServer(url: String): Boolean {
+        val host = runCatching { java.net.URI(url).host }.getOrNull() ?: return false
+        return host == "localhost" || host == "127.0.0.1" || host.startsWith("10.") || host.startsWith("192.168.")
+    }
+
     /**
      * Returns whether [url] answers OPTIONS with an accepted code. Redirects aren't followed;
      * connect and read each time out after 2 seconds.

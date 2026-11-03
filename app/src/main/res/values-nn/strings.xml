@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Legg til ein emoji på hendingar basert på tittelen, som 🎂 for \"Bursdag\".</string>
     <string name="settings_force_sync">Fullstendig synkronisering</string>
     <string name="settings_force_sync_subtitle">Last ned all kalenderdata på nytt</string>
+    <string name="settings_force_sync_no_account">Ingen synkroniseringskonto sett opp</string>
+    <string name="force_sync_confirm">Last ned %1$s frå %2$s på nytt. Endringar som ikkje er synkroniserte enno, blir behaldne.</string>
+    <string name="action_start">Start</string>
     <string name="settings_sync_history">Synkroniseringshistorikk</string>
     <string name="settings_sync_history_subtitle">Vis synkroniseringsøkter (siste 48 timar)</string>
     <string name="settings_import_subtitle">Legg til hendingar frå ei ICS-fil i ein valfri kalender</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Ny hending</string>
     <string name="dialog_edit_event_title">Rediger hending</string>
-    <string name="dialog_force_sync_title">Fullstendig synkronisering?</string>
-    <string name="dialog_force_sync_message">All kalenderdata vert lasta ned på nytt frå serveren. Lokale endringar vert bevarte.</string>
     <string name="dialog_enable_notifications">Aktivere varsel?</string>
     <string name="dialog_action_required">Denne handlinga er naudsynt for å halde fram.</string>
     <string name="dialog_add_to_calendar">Legg til i kalender</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Ingen hendingar denne veka</string>
     <string name="status_more_events">+%1$d til</string>
     <string name="status_no_sync_sessions">Ingen synkroniseringsøkter endå.\n\nDra ned i kalendervisa for å starte ei synkronisering.</string>
+    <string name="status_no_sync_account">Ingen synkroniseringskonto sett opp. Fråkopla kalendrar blir på denne eininga; einingskalendrar synkroniserer via sin eigen konto.</string>
     <string name="status_no_writable_calendars">Ingen skrivbare kalendrar tilgjengelege</string>
     <string name="status_events_count">%1$d hendingar</string>
     <string name="status_sync_history">Synkroniseringshistorikk</string>
@@ -1022,6 +1024,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d hending</item>
         <item quantity="other">%1$d hendingar</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalender</item>
+        <item quantity="other">%1$d kalendrar</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d konto</item>
+        <item quantity="other">%1$d kontoar</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalender</item>

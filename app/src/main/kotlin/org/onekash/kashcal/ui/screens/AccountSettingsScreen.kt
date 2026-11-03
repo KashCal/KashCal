@@ -42,6 +42,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,7 +70,7 @@ import org.onekash.kashcal.ui.screens.settings.AccountDetailDiscoverStatus
 import org.onekash.kashcal.ui.screens.settings.CalendarNotificationSource
 import org.onekash.kashcal.ui.screens.settings.CalendarNotificationsSheet
 import org.onekash.kashcal.ui.screens.settings.DebugReportSheet
-import org.onekash.kashcal.ui.screens.settings.ForceFullSyncDialog
+import org.onekash.kashcal.ui.screens.settings.ForceFullSyncConfirm
 import org.onekash.kashcal.ui.screens.settings.buildCalendarNotificationSections
 import org.onekash.kashcal.ui.screens.settings.mutedCalendarCount
 import org.onekash.kashcal.ui.screens.settings.ContactSyncConfirmation
@@ -93,6 +94,7 @@ import org.onekash.kashcal.ui.screens.settings.SettingsRow
 import org.onekash.kashcal.ui.screens.settings.SettingsRowInfo
 import org.onekash.kashcal.ui.screens.settings.SettingsToggleRow
 import org.onekash.kashcal.ui.screens.settings.SyncFrequencySheet
+import org.onekash.kashcal.ui.screens.settings.syncScopeOf
 import org.onekash.kashcal.ui.screens.settings.SyncLookbackSheet
 import org.onekash.kashcal.ui.screens.settings.TimeFormatSheet
 import org.onekash.kashcal.ui.screens.settings.VersionFooter
@@ -349,7 +351,7 @@ fun AccountSettingsScreen(
                 var showFirstDayOfWeekSheet by remember { mutableStateOf(false) }
                 var showEventDurationSheet by remember { mutableStateOf(false) }
                 var showWidgetEventLimitSheet by remember { mutableStateOf(false) }
-                var showForceFullSyncDialog by remember { mutableStateOf(false) }
+                var forceFullSyncConfirmOpen by remember { mutableStateOf(false) }
                 var showDebugReportSheet by remember { mutableStateOf(false) }
                 var showAppInfoSheet by remember { mutableStateOf(false) }
                 var showAddSubscriptionDialog by remember { mutableStateOf(false) }
@@ -882,16 +884,38 @@ fun AccountSettingsScreen(
                                 searchQuery = searchQuery
                             )
                         }
-                        row(label = stringResource(R.string.settings_force_sync), subtitle = stringResource(R.string.settings_force_sync_subtitle), id = "force-full-sync") {
-                            SettingsRow(
-                                icon = Icons.Default.Sync,
-                                label = stringResource(R.string.settings_force_sync),
-                                subtitle = stringResource(R.string.settings_force_sync_subtitle),
-                                onClick = { showForceFullSyncDialog = true },
-                                showChevron = false,
-                                showDivider = false,
-                                searchQuery = searchQuery
-                            )
+                        val syncScope = syncScopeOf(uiState.iCloudState, uiState.calDavAccounts)
+                        val canForceSync = syncScope.hasSyncAccount
+                        // Closes the confirm when the last sync account goes away, so it can't
+                        // reopen by itself when one comes back.
+                        LaunchedEffect(canForceSync) {
+                            if (!canForceSync) forceFullSyncConfirmOpen = false
+                        }
+                        val forceSyncSubtitle = stringResource(
+                            if (canForceSync) R.string.settings_force_sync_subtitle else R.string.settings_force_sync_no_account
+                        )
+                        row(label = stringResource(R.string.settings_force_sync), subtitle = forceSyncSubtitle, id = "force-full-sync") {
+                            if (forceFullSyncConfirmOpen && canForceSync) {
+                                ForceFullSyncConfirm(
+                                    scope = syncScope,
+                                    onCancel = { forceFullSyncConfirmOpen = false },
+                                    onStart = {
+                                        forceFullSyncConfirmOpen = false
+                                        onForceFullSync()
+                                    },
+                                )
+                            } else {
+                                SettingsRow(
+                                    icon = Icons.Default.Sync,
+                                    label = stringResource(R.string.settings_force_sync),
+                                    subtitle = forceSyncSubtitle,
+                                    onClick = { forceFullSyncConfirmOpen = true },
+                                    enabled = canForceSync,
+                                    showChevron = false,
+                                    showDivider = false,
+                                    searchQuery = searchQuery
+                                )
+                            }
                         }
                         row(label = stringResource(R.string.debug_report_row_label), subtitle = stringResource(R.string.debug_report_row_subtitle), id = "debug-report") {
                             SettingsRow(
@@ -1051,13 +1075,6 @@ fun AccountSettingsScreen(
                 // App Info Sheet (tap on version footer)
                 if (showAppInfoSheet) {
                     AppInfoSheet(onDismiss = { showAppInfoSheet = false })
-                }
-
-                if (showForceFullSyncDialog) {
-                    ForceFullSyncDialog(
-                        onConfirm = onForceFullSync,
-                        onDismiss = { showForceFullSyncDialog = false }
-                    )
                 }
 
                 if (showDebugReportSheet) {

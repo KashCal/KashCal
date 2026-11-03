@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Дадае да падзей эмодзі паводле назвы, напрыклад 🎂 для \"Дзень нараджэння\".</string>
     <string name="settings_force_sync">Поўная сінхранізацыя</string>
     <string name="settings_force_sync_subtitle">Перазагрузіць усе дадзеныя</string>
+    <string name="settings_force_sync_no_account">Не наладжаны акаўнт сінхранізацыі</string>
+    <string name="force_sync_confirm">Загрузіць наноў %1$s з %2$s. Несінхранізаваныя змены захаваюцца.</string>
+    <string name="action_start">Пачаць</string>
     <string name="settings_sync_history">Гісторыя сінхранізацыі</string>
     <string name="settings_sync_history_subtitle">Прагляд сеансаў сінхранізацыі (за 48 гадзін)</string>
     <string name="settings_import_subtitle">Дадаць падзеі з файла ICS у любы каляндар</string>
@@ -333,8 +336,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Новая падзея</string>
     <string name="dialog_edit_event_title">Рэдагаванне падзеі</string>
-    <string name="dialog_force_sync_title">Поўная сінхранізацыя?</string>
-    <string name="dialog_force_sync_message">Усе дадзеныя будуць перазагружаны з сервера. Лакальныя змены захаваюцца.</string>
     <string name="dialog_enable_notifications">Уключыць апавяшчэнні?</string>
     <string name="dialog_action_required">Гэта дзеянне неабходнае для працягу.</string>
     <string name="dialog_add_to_calendar">Дадаць у каляндар</string>
@@ -347,6 +348,7 @@
     <string name="status_no_events_week">Няма падзей на гэтым тыдні</string>
     <string name="status_more_events">+%1$d яшчэ</string>
     <string name="status_no_sync_sessions">Няма сеансаў сінхранізацыі.\n\nПацягніце ўніз на экране календара, каб запусціць сінхранізацыю.</string>
+    <string name="status_no_sync_account">Не наладжаны акаўнт сінхранізацыі. Календары без сеткі застаюцца на гэтай прыладзе; календары прылады сінхранізуюцца праз уласны акаўнт.</string>
     <string name="status_no_writable_calendars">Няма даступных для запісу календароў</string>
     <string name="status_events_count">Падзей: %1$d</string>
     <string name="status_sync_history">Гісторыя сінхранізацыі</string>
@@ -1097,6 +1099,18 @@
         <item quantity="few">%1$d падзеі</item>
         <item quantity="many">%1$d падзей</item>
         <item quantity="other">%1$d падзей</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d каляндар</item>
+        <item quantity="few">%1$d календары</item>
+        <item quantity="many">%1$d календароў</item>
+        <item quantity="other">%1$d календара</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d акаўнта</item>
+        <item quantity="few">%1$d акаўнтаў</item>
+        <item quantity="many">%1$d акаўнтаў</item>
+        <item quantity="other">%1$d акаўнта</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d каляндар</item>

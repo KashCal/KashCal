@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Yn ychwanegu emoji at ddigwyddiadau yn ôl y teitl, fel 🎂 ar gyfer \"Pen-blwydd\".</string>
     <string name="settings_force_sync">Gorfodi cysoni llawn</string>
     <string name="settings_force_sync_subtitle">Ail-lwytho\'r holl ddata calendr</string>
+    <string name="settings_force_sync_no_account">Dim cyfrif cysoni wedi\'i osod</string>
+    <string name="force_sync_confirm">Ail-lwytho %1$s o %2$s. Mae newidiadau heb eu cysoni\'n cael eu cadw.</string>
+    <string name="action_start">Dechrau</string>
     <string name="settings_sync_history">Hanes cysoni</string>
     <string name="settings_sync_history_subtitle">Gweld sesiynau cysoni (48 awr diwethaf)</string>
     <string name="settings_import_subtitle">Ychwanegu digwyddiadau o ffeil ICS at unrhyw galendr</string>
@@ -335,8 +338,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Digwyddiad Newydd</string>
     <string name="dialog_edit_event_title">Golygu Digwyddiad</string>
-    <string name="dialog_force_sync_title">Gorfodi Cysoni Llawn?</string>
-    <string name="dialog_force_sync_message">Bydd hyn yn ail-lwytho\'r holl ddata calendr o\'r gweinydd. Bydd newidiadau lleol yn cael eu cadw.</string>
     <string name="dialog_enable_notifications">Galluogi Hysbysiadau?</string>
     <string name="dialog_action_required">Mae\'r weithred hon yn ofynnol i barhau.</string>
     <string name="dialog_add_to_calendar">Ychwanegu at galendr</string>
@@ -349,6 +350,7 @@
     <string name="status_no_events_week">Dim digwyddiadau yr wythnos hon</string>
     <string name="status_more_events">+%1$d mwy</string>
     <string name="status_no_sync_sessions">Dim sesiynau cysoni eto.\n\nDechreuwch gysoni trwy dynnu i lawr i adnewyddu ar y golwg calendr.</string>
+    <string name="status_no_sync_account">Dim cyfrif cysoni wedi\'i osod. Mae calendrau all-lein yn aros ar y ddyfais hon; mae calendrau\'r ddyfais yn cysoni trwy eu cyfrif eu hunain.</string>
     <string name="status_no_writable_calendars">Dim calendrau y gellir ysgrifennu iddynt ar gael</string>
     <string name="status_events_count">%1$d Digwyddiad</string>
     <string name="status_sync_history">Hanes Cysoni</string>
@@ -1171,6 +1173,22 @@
         <item quantity="few">%1$d digwyddiad</item>
         <item quantity="many">%1$d digwyddiad</item>
         <item quantity="other">%1$d digwyddiad</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="zero">%1$d calendr</item>
+        <item quantity="one">%1$d calendr</item>
+        <item quantity="two">%1$d galendr</item>
+        <item quantity="few">%1$d chalendr</item>
+        <item quantity="many">%1$d chalendr</item>
+        <item quantity="other">%1$d calendr</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="zero">%1$d cyfrif</item>
+        <item quantity="one">%1$d cyfrif</item>
+        <item quantity="two">%1$d gyfrif</item>
+        <item quantity="few">%1$d chyfrif</item>
+        <item quantity="many">%1$d chyfrif</item>
+        <item quantity="other">%1$d cyfrif</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="zero">%1$d calendr</item>

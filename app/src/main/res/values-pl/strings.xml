@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Dodaje emoji do wydarzeń na podstawie tytułu, na przykład 🎂 dla \"Urodziny\".</string>
     <string name="settings_force_sync">Wymuś pełną synchronizację</string>
     <string name="settings_force_sync_subtitle">Pobierz ponownie wszystkie dane kalendarza</string>
+    <string name="settings_force_sync_no_account">Brak konta synchronizacji</string>
+    <string name="force_sync_confirm">Ponownie pobierz %1$s z %2$s. Niesynchronizowane zmiany są zachowane.</string>
+    <string name="action_start">Rozpocznij</string>
     <string name="settings_sync_history">Historia synchronizacji</string>
     <string name="settings_sync_history_subtitle">Pokaż sesje synchronizacji (ostatnie 48 godzin)</string>
     <string name="settings_import_subtitle">Dodaj wydarzenia z pliku ICS do dowolnego kalendarza</string>
@@ -333,8 +336,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Nowe wydarzenie</string>
     <string name="dialog_edit_event_title">Edytuj wydarzenie</string>
-    <string name="dialog_force_sync_title">Wymusić pełną synchronizację?</string>
-    <string name="dialog_force_sync_message">Spowoduje to ponowne pobranie wszystkich danych kalendarza z serwera. Lokalne zmiany zostaną zachowane.</string>
     <string name="dialog_enable_notifications">Włączyć powiadomienia?</string>
     <string name="dialog_action_required">Ta czynność jest wymagana, aby kontynuować.</string>
     <string name="dialog_add_to_calendar">Dodaj do kalendarza</string>
@@ -347,6 +348,7 @@
     <string name="status_no_events_week">Brak wydarzeń w tym tygodniu</string>
     <string name="status_more_events">+%1$d więcej</string>
     <string name="status_no_sync_sessions">Brak sesji synchronizacji.\n\nWymuś synchronizację, przeciągając w dół widok kalendarza.</string>
+    <string name="status_no_sync_account">Brak konta synchronizacji. Kalendarze offline pozostają na tym urządzeniu; kalendarze urządzenia synchronizują się przez własne konto.</string>
     <string name="status_no_writable_calendars">Brak kalendarzy z możliwością zapisu</string>
     <string name="status_events_count">%1$d wydarzeń</string>
     <string name="status_sync_history">Historia synchronizacji</string>
@@ -1097,6 +1099,18 @@
         <item quantity="few">%1$d wydarzenia</item>
         <item quantity="many">%1$d wydarzeń</item>
         <item quantity="other">%1$d wydarzenia</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalendarz</item>
+        <item quantity="few">%1$d kalendarze</item>
+        <item quantity="many">%1$d kalendarzy</item>
+        <item quantity="other">%1$d kalendarza</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d konta</item>
+        <item quantity="few">%1$d kont</item>
+        <item quantity="many">%1$d kont</item>
+        <item quantity="other">%1$d konta</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalendarz</item>

@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Dodaje emodži događajima na osnovu naslova, na primer 🎂 za \"Rođendan\".</string>
     <string name="settings_force_sync">Prinudna potpuna sinhronizacija</string>
     <string name="settings_force_sync_subtitle">Ponovo preuzmi sve podatke kalendara</string>
+    <string name="settings_force_sync_no_account">Nije podešen nalog za sinhronizaciju</string>
+    <string name="force_sync_confirm">Ponovo preuzmi %1$s sa %2$s. Promene koje još nisu sinhronizovane se zadržavaju.</string>
+    <string name="action_start">Pokreni</string>
     <string name="settings_sync_history">Istorija sinhronizacije</string>
     <string name="settings_sync_history_subtitle">Prikaži sesije sinhronizacije (poslednjih 48 sati)</string>
     <string name="settings_import_subtitle">Dodaj događaje iz ICS fajla u bilo koji kalendar</string>
@@ -332,8 +335,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Novi događaj</string>
     <string name="dialog_edit_event_title">Izmeni događaj</string>
-    <string name="dialog_force_sync_title">Prinudna potpuna sinhronizacija?</string>
-    <string name="dialog_force_sync_message">Ovo će ponovo preuzeti sve podatke kalendara sa servera. Lokalne izmene biće sačuvane.</string>
     <string name="dialog_enable_notifications">Omogućiti obaveštenja?</string>
     <string name="dialog_action_required">Ova radnja je neophodna za nastavak.</string>
     <string name="dialog_add_to_calendar">Dodaj u kalendar</string>
@@ -346,6 +347,7 @@
     <string name="status_no_events_week">Nema događaja ove nedelje</string>
     <string name="status_more_events">+%1$d više</string>
     <string name="status_no_sync_sessions">Nema sesija sinhronizacije.\n\nPokreni sinhronizaciju prevlačenjem nadole na prikazu kalendara.</string>
+    <string name="status_no_sync_account">Nije podešen nalog za sinhronizaciju. Kalendari van mreže ostaju na ovom uređaju; kalendari uređaja sinhronizuju se preko vlastitog naloga.</string>
     <string name="status_no_writable_calendars">Nema kalendara za pisanje</string>
     <string name="status_events_count">%1$d događaja</string>
     <string name="status_sync_history">Istorija sinhronizacije</string>
@@ -1060,6 +1062,16 @@
         <item quantity="one">%1$d događaj</item>
         <item quantity="few">%1$d događaja</item>
         <item quantity="other">%1$d događaja</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalendar</item>
+        <item quantity="few">%1$d kalendara</item>
+        <item quantity="other">%1$d kalendara</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d naloga</item>
+        <item quantity="few">%1$d naloga</item>
+        <item quantity="other">%1$d naloga</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalendar</item>

@@ -1,3 +1,20 @@
+## [2026.11.03]
+
+### Time zones (#422)
+- Fixed timed events showing on the wrong day, or not at all, after the phone's time zone changed; events made before this update are fixed too
+- Fixed the week view drawing such an event from its start to midnight in the old day's column
+- Changed open screens to update when the time zone changes, without a restart
+
+### Sync (#417, #421)
+- Fixed `Sync History` filling with failures when only offline and phone calendars are set up; nothing is recorded when there is nothing to sync
+- Changed `Force full sync` to be greyed out with "No sync account set up" when no iCloud or CalDAV account syncs
+- Changed `Force full sync` to confirm in place, naming what it re-downloads and keeping changes not yet synced, instead of a dialog
+- Changed an empty `Sync History` with no sync account to say why nothing syncs
+- Fixed a CalDAV events calendar whose path ends in `/Tasks/` not being listed, for example on Radicale (#421)
+
+### Readability (#419)
+- Changed text on mid-tone calendar colors such as blue and red to white once white reaches 3:1 contrast, on event chips, the month widget, the event form's `Save` button, guest avatars and the color check mark
+
 ## [2026.11.01]
 
 Meet Kash.

@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">शीर्षकको आधारमा घटनाहरूमा इमोजी थप्छ, जस्तै \"जन्मदिन\" का लागि 🎂।</string>
     <string name="settings_force_sync">पूर्ण बलपूर्वक सिंक</string>
     <string name="settings_force_sync_subtitle">सबै क्यालेन्डर डेटा पुन: डाउनलोड गर्नुहोस्</string>
+    <string name="settings_force_sync_no_account">कुनै सिंक खाता सेटअप गरिएको छैन</string>
+    <string name="force_sync_confirm">%2$s बाट %1$s पुन: डाउनलोड गर्नुहोस्। अझै सिंक नगरिएका परिवर्तनहरू राखिन्छन्।</string>
+    <string name="action_start">सुरु गर्नुहोस्</string>
     <string name="settings_sync_history">सिंक इतिहास</string>
     <string name="settings_sync_history_subtitle">सिंक सत्रहरू हेर्नुहोस् (पछिल्लो ४८ घण्टा)</string>
     <string name="settings_import_subtitle">ICS फाइलबाट कुनै पनि क्यालेन्डरमा कार्यक्रम थप्नुहोस्</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">नयाँ कार्यक्रम</string>
     <string name="dialog_edit_event_title">कार्यक्रम सम्पादन</string>
-    <string name="dialog_force_sync_title">पूर्ण बलपूर्वक सिंक?</string>
-    <string name="dialog_force_sync_message">यसले सर्भरबाट सबै क्यालेन्डर डेटा पुन: डाउनलोड गर्नेछ। स्थानीय परिवर्तनहरू सुरक्षित रहनेछन्।</string>
     <string name="dialog_enable_notifications">सूचनाहरू सक्षम गर्ने?</string>
     <string name="dialog_action_required">जारी राख्न यो कार्य आवश्यक छ।</string>
     <string name="dialog_add_to_calendar">क्यालेन्डरमा थप्नुहोस्</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">यो हप्ता कुनै कार्यक्रम छैन</string>
     <string name="status_more_events">+%1$d थप</string>
     <string name="status_no_sync_sessions">अहिलेसम्म कुनै सिंक सत्र छैन।\n\nक्यालेन्डर दृश्यमा तल तानेर रिफ्रेस गर्नुहोस्।</string>
+    <string name="status_no_sync_account">कुनै सिंक खाता सेटअप गरिएको छैन। अफलाइन क्यालेन्डरहरू यस उपकरणमा रहन्छन्; उपकरणका क्यालेन्डरहरू आफ्नै खाता मार्फत सिंक हुन्छन्।</string>
     <string name="status_no_writable_calendars">लेख्न मिल्ने क्यालेन्डर उपलब्ध छैन</string>
     <string name="status_events_count">%1$d कार्यक्रम</string>
     <string name="status_sync_history">सिंक इतिहास</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d कार्यक्रम</item>
         <item quantity="other">%1$d कार्यक्रम</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d क्यालेन्डर</item>
+        <item quantity="other">%1$d क्यालेन्डरहरू</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d खाता</item>
+        <item quantity="other">%1$d खाताहरू</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d क्यालेन्डर</item>

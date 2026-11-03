@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Додає до подій емодзі за назвою, наприклад 🎂 для \"День народження\".</string>
     <string name="settings_force_sync">Повна синхронізація</string>
     <string name="settings_force_sync_subtitle">Перезавантажити всі дані</string>
+    <string name="settings_force_sync_no_account">Не налаштовано акаунт синхронізації</string>
+    <string name="force_sync_confirm">Завантажити знову %1$s з %2$s. Несинхронізовані зміни збережуться.</string>
+    <string name="action_start">Почати</string>
     <string name="settings_sync_history">Історія синхронізації</string>
     <string name="settings_sync_history_subtitle">Переглянути сеанси синхронізації (за 48 годин)</string>
     <string name="settings_import_subtitle">Додати події з файлу ICS у будь-який календар</string>
@@ -333,8 +336,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Нова подія</string>
     <string name="dialog_edit_event_title">Редагування події</string>
-    <string name="dialog_force_sync_title">Повна синхронізація?</string>
-    <string name="dialog_force_sync_message">Усі дані буде перезавантажено з сервера. Локальні зміни збережуться.</string>
     <string name="dialog_enable_notifications">Увімкнути сповіщення?</string>
     <string name="dialog_action_required">Ця дія необхідна для продовження.</string>
     <string name="dialog_add_to_calendar">Додати до календаря</string>
@@ -347,6 +348,7 @@
     <string name="status_no_events_week">Немає подій цього тижня</string>
     <string name="status_more_events">+%1$d ще</string>
     <string name="status_no_sync_sessions">Немає сеансів синхронізації.\n\nПотягніть вниз на екрані календаря, щоб запустити синхронізацію.</string>
+    <string name="status_no_sync_account">Не налаштовано акаунт синхронізації. Календарі без мережі залишаються на цьому пристрої; календарі пристрою синхронізуються через власний акаунт.</string>
     <string name="status_no_writable_calendars">Немає доступних для запису календарів</string>
     <string name="status_events_count">Подій: %1$d</string>
     <string name="status_sync_history">Історія синхронізації</string>
@@ -1097,6 +1099,18 @@
         <item quantity="few">%1$d події</item>
         <item quantity="many">%1$d подій</item>
         <item quantity="other">%1$d подій</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d календар</item>
+        <item quantity="few">%1$d календарі</item>
+        <item quantity="many">%1$d календарів</item>
+        <item quantity="other">%1$d календаря</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d акаунта</item>
+        <item quantity="few">%1$d акаунтів</item>
+        <item quantity="many">%1$d акаунтів</item>
+        <item quantity="other">%1$d акаунта</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d календар</item>

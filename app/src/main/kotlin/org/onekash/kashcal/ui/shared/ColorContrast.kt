@@ -35,12 +35,20 @@ fun contrastRatio(a: Color, b: Color): Double {
     return (lighter + 0.05) / (darker + 0.05)
 }
 
+/** WCAG 2 contrast at which white text or icons go on a solid color: the large-text level. */
+private const val WHITE_FOREGROUND_MIN_RATIO = 3.0
+
 /**
- * Returns black or white, whichever has the higher WCAG contrast ratio on [background]. For any
- * opaque background the winner is at least ~4.58:1, so it always clears WCAG AA for normal text.
+ * Returns white for text or icons on an opaque [background] when white reaches
+ * [WHITE_FOREGROUND_MIN_RATIO] on it, else black.
+ *
+ * Picking whichever of the two has the higher WCAG 2 ratio puts black on mid-tones such as
+ * dodgerblue or red, where white reads better (#419). With this rule every pick still
+ * reaches 3:1, but white on a mid-tone can be below the 4.5:1 that WCAG AA asks for normal text.
+ * `ColorContrastTest` checks that no white pick reads worse than black under APCA.
  */
 fun contrastForegroundOn(background: Color): Color =
-    if (contrastRatio(Color.White, background) >= contrastRatio(Color.Black, background)) {
+    if (contrastRatio(Color.White, background) >= WHITE_FOREGROUND_MIN_RATIO) {
         Color.White
     } else {
         Color.Black

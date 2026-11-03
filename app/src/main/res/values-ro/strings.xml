@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Adaugă un emoji la evenimente pe baza titlului, de exemplu 🎂 pentru \"Zi de naștere\".</string>
     <string name="settings_force_sync">Sincronizare completă forțată</string>
     <string name="settings_force_sync_subtitle">Redescarcă toate datele calendarului</string>
+    <string name="settings_force_sync_no_account">Niciun cont de sincronizare configurat</string>
+    <string name="force_sync_confirm">Redescarcă %1$s de la %2$s. Modificările nesincronizate încă sunt păstrate.</string>
+    <string name="action_start">Începe</string>
     <string name="settings_sync_history">Istoric sincronizări</string>
     <string name="settings_sync_history_subtitle">Vizualizează sesiunile de sincronizare (ultimele 48 de ore)</string>
     <string name="settings_import_subtitle">Adaugă evenimente dintr-un fișier ICS în orice calendar</string>
@@ -332,8 +335,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Eveniment nou</string>
     <string name="dialog_edit_event_title">Editează eveniment</string>
-    <string name="dialog_force_sync_title">Sincronizare completă forțată?</string>
-    <string name="dialog_force_sync_message">Aceasta va redescărca toate datele calendarului de pe server. Modificările locale vor fi păstrate.</string>
     <string name="dialog_enable_notifications">Activezi notificările?</string>
     <string name="dialog_action_required">Această acțiune este necesară pentru a continua.</string>
     <string name="dialog_add_to_calendar">Adaugă în calendar</string>
@@ -346,6 +347,7 @@
     <string name="status_no_events_week">Niciun eveniment săptămâna aceasta</string>
     <string name="status_more_events">+%1$d mai multe</string>
     <string name="status_no_sync_sessions">Nicio sesiune de sincronizare încă.\n\nDeclanșează o sincronizare trăgând în jos pe vizualizarea calendarului.</string>
+    <string name="status_no_sync_account">Niciun cont de sincronizare configurat. Calendarele offline rămân pe acest dispozitiv; calendarele dispozitivului se sincronizează prin contul lor.</string>
     <string name="status_no_writable_calendars">Niciun calendar editabil disponibil</string>
     <string name="status_events_count">%1$d evenimente</string>
     <string name="status_sync_history">Istoric sincronizări</string>
@@ -1060,6 +1062,16 @@
         <item quantity="one">%1$d eveniment</item>
         <item quantity="few">%1$d evenimente</item>
         <item quantity="other">%1$d de evenimente</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d calendar</item>
+        <item quantity="few">%1$d calendare</item>
+        <item quantity="other">%1$d de calendare</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d cont</item>
+        <item quantity="few">%1$d conturi</item>
+        <item quantity="other">%1$d de conturi</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d calendar</item>

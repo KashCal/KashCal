@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Emoji bat gehitzen die gertaerei izenburuaren arabera, adibidez 🎂 \"Urtebetetzea\" izenerako.</string>
     <string name="settings_force_sync">Sinkronizazio osoa behartu</string>
     <string name="settings_force_sync_subtitle">Egutegiko datu guztiak berriro jaitsi</string>
+    <string name="settings_force_sync_no_account">Sinkronizazio-konturik ez dago konfiguratuta</string>
+    <string name="force_sync_confirm">Berriro jaitsi %1$s %2$s. Sinkronizatu gabeko aldaketak gordetzen dira.</string>
+    <string name="action_start">Hasi</string>
     <string name="settings_sync_history">Sinkronizazio-historia</string>
     <string name="settings_sync_history_subtitle">Sinkronizazio-saioak ikusi (azken 48 orduak)</string>
     <string name="settings_import_subtitle">Gehitu ICS fitxategi bateko ekitaldiak edozein egutegitara</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Gertaera berria</string>
     <string name="dialog_edit_event_title">Gertaera editatu</string>
-    <string name="dialog_force_sync_title">Sinkronizazio osoa behartu?</string>
-    <string name="dialog_force_sync_message">Honek egutegiko datu guztiak zerbitzaritik berriro jaitsiko ditu. Tokiko aldaketak gordeko dira.</string>
     <string name="dialog_enable_notifications">Jakinarazpenak gaitu?</string>
     <string name="dialog_action_required">Ekintza hau beharrezkoa da jarraitzeko.</string>
     <string name="dialog_add_to_calendar">Egutegira gehitu</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Gertaerarik ez aste honetan</string>
     <string name="status_more_events">+%1$d gehiago</string>
     <string name="status_no_sync_sessions">Oraindik sinkronizazio-saiorik ez.\n\nArrastatu behera egutegiaren ikuspegian eguneratzeko.</string>
+    <string name="status_no_sync_account">Sinkronizazio-konturik ez dago konfiguratuta. Lineaz kanpoko egutegiak gailu honetan geratzen dira; gailuko egutegiak bere kontu propioen bidez sinkronizatzen dira.</string>
     <string name="status_no_writable_calendars">Ez dago egutegi idazgarririk</string>
     <string name="status_events_count">%1$d gertaera</string>
     <string name="status_sync_history">Sinkronizazio-historia</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">gertaera %1$d</item>
         <item quantity="other">%1$d gertaera</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">egutegi %1$d</item>
+        <item quantity="other">%1$d egutegi</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d kontutik</item>
+        <item quantity="other">%1$d kontutatik</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">egutegi %1$d</item>

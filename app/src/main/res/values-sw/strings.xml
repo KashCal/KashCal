@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Huongeza emoji kwenye matukio kulingana na kichwa, kama 🎂 kwa \"Siku ya kuzaliwa\".</string>
     <string name="settings_force_sync">Sawazisha kamili kwa nguvu</string>
     <string name="settings_force_sync_subtitle">Pakua upya data yote ya kalenda</string>
+    <string name="settings_force_sync_no_account">Hakuna akaunti ya usawazishaji iliyosanidiwa</string>
+    <string name="force_sync_confirm">Pakua upya %1$s kutoka %2$s. Mabadiliko ambayo hayajasawazishwa yanawekwa.</string>
+    <string name="action_start">Anza</string>
     <string name="settings_sync_history">Historia ya kusawazisha</string>
     <string name="settings_sync_history_subtitle">Tazama vipindi vya kusawazisha (saa 48 zilizopita)</string>
     <string name="settings_import_subtitle">Ongeza matukio kutoka faili ya ICS kwenye kalenda yoyote</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Tukio Jipya</string>
     <string name="dialog_edit_event_title">Hariri Tukio</string>
-    <string name="dialog_force_sync_title">Sawazisha Kamili kwa Nguvu?</string>
-    <string name="dialog_force_sync_message">Hii itapakua upya data yote ya kalenda kutoka kwa seva. Mabadiliko ya ndani yatahifadhiwa.</string>
     <string name="dialog_enable_notifications">Washa Arifa?</string>
     <string name="dialog_action_required">Kitendo hiki kinahitajika kuendelea.</string>
     <string name="dialog_add_to_calendar">Ongeza kwenye kalenda</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Hakuna matukio wiki hii</string>
     <string name="status_more_events">+%1$d zaidi</string>
     <string name="status_no_sync_sessions">Hakuna vipindi vya kusawazisha bado.\n\nVuta chini ili kusawazisha kwenye mtazamo wa kalenda.</string>
+    <string name="status_no_sync_account">Hakuna akaunti ya usawazishaji iliyosanidiwa. Kalenda za nje ya mtandao zinabaki kwenye kifaa hiki; kalenda za kifaa zinasawazishwa kupitia akaunti zao wenyewe.</string>
     <string name="status_no_writable_calendars">Hakuna kalenda zinazoweza kuandikwa</string>
     <string name="status_events_count">Matukio %1$d</string>
     <string name="status_sync_history">Historia ya Kusawazisha</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">Tukio %1$d</item>
         <item quantity="other">Matukio %1$d</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">kalenda %1$d</item>
+        <item quantity="other">kalenda %1$d</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">akaunti %1$d</item>
+        <item quantity="other">akaunti %1$d</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">Kalenda %1$d</item>

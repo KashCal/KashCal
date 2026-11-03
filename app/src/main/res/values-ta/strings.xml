@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">தலைப்பின் அடிப்படையில் நிகழ்வுகளுக்கு ஒரு எமோஜியைச் சேர்க்கிறது, எடுத்துக்காட்டாக \"பிறந்தநாள்\" க்கு 🎂.</string>
     <string name="settings_force_sync">கட்டாய முழு ஒத்திசைவு</string>
     <string name="settings_force_sync_subtitle">சேவையகத்திலிருந்து அனைத்து நாட்காட்டி தரவையும் மீண்டும் பதிவிறக்கு</string>
+    <string name="settings_force_sync_no_account">ஒத்திசைவு கணக்கு எதுவும் அமைக்கப்படவில்லை</string>
+    <string name="force_sync_confirm">%2$s இலிருந்து %1$s ஐ மீண்டும் பதிவிறக்கவும். இன்னும் ஒத்திசைக்கப்படாத மாற்றங்கள் பாதுகாக்கப்படும்.</string>
+    <string name="action_start">தொடங்கு</string>
     <string name="settings_sync_history">ஒத்திசைவு வரலாறு</string>
     <string name="settings_sync_history_subtitle">ஒத்திசைவு அமர்வுகளைக் காண் (கடந்த 48 மணி)</string>
     <string name="settings_import_subtitle">ICS கோப்பிலிருந்து நிகழ்வுகளை எந்த நாட்காட்டியிலும் சேர்</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">புதிய நிகழ்வு</string>
     <string name="dialog_edit_event_title">நிகழ்வைத் திருத்து</string>
-    <string name="dialog_force_sync_title">கட்டாய முழு ஒத்திசைவா?</string>
-    <string name="dialog_force_sync_message">இது சேவையகத்திலிருந்து அனைத்து நாட்காட்டி தரவையும் மீண்டும் பதிவிறக்கும். உள்ளூர் மாற்றங்கள் பாதுகாக்கப்படும்.</string>
     <string name="dialog_enable_notifications">அறிவிப்புகளை இயக்கவா?</string>
     <string name="dialog_action_required">தொடர இந்தச் செயல் தேவை.</string>
     <string name="dialog_add_to_calendar">நாட்காட்டியில் சேர்</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">இந்த வாரம் நிகழ்வுகள் இல்லை</string>
     <string name="status_more_events">+%1$d மேலும்</string>
     <string name="status_no_sync_sessions">இன்னும் ஒத்திசைவு அமர்வுகள் இல்லை.\n\nநாட்காட்டிக் காட்சியில் கீழே இழுத்து புதுப்பிக்கவும்.</string>
+    <string name="status_no_sync_account">ஒத்திசைவு கணக்கு எதுவும் அமைக்கப்படவில்லை. ஆஃப்லைன் நாட்காட்டிகள் இந்தச் சாதனத்திலேயே இருக்கும்; சாதன நாட்காட்டிகள் அவற்றின் சொந்தக் கணக்கு மூலம் ஒத்திசைக்கப்படும்.</string>
     <string name="status_no_writable_calendars">எழுதக்கூடிய நாட்காட்டிகள் இல்லை</string>
     <string name="status_events_count">%1$d நிகழ்வுகள்</string>
     <string name="status_sync_history">ஒத்திசைவு வரலாறு</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d நிகழ்வு</item>
         <item quantity="other">%1$d நிகழ்வுகள்</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d நாட்காட்டி</item>
+        <item quantity="other">%1$d நாட்காட்டிகள்</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d கணக்கு</item>
+        <item quantity="other">%1$d கணக்குகள்</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d நாட்காட்டி</item>

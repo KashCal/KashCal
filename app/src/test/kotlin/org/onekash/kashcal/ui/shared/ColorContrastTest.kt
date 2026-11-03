@@ -4,6 +4,8 @@ import androidx.compose.ui.graphics.Color
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import kotlin.math.abs
+import kotlin.math.pow
 
 class ColorContrastTest {
 
@@ -43,59 +45,108 @@ class ColorContrastTest {
         assertEquals(contrastRatio(fg, bg), contrastRatio(bg, fg), 1e-9)
     }
 
-    // ========== contrastForegroundOn picks the higher-contrast option ==========
+    // ========== contrastForegroundOn: white whenever it reaches 3:1 ==========
 
-    @Test
-    fun `foreground is black on a light background`() {
-        assertEquals(Color.Black, contrastForegroundOn(Color(0xFFFFD700.toInt()))) // gold
+    /** The 12 grid colors, the 92 wheel colors, and every 8th RGB channel level plus 255. */
+    private val allColors: List<Pair<String, Color>> by lazy {
+        val named = EventColorPalette.entries.map { it.name to Color(it.argb) } +
+            EventColorPalette.allCss3Colors.map { it.name to Color(it.argb) }
+        val steps = (0..255 step 8) + 255
+        val cube = steps.flatMap { r ->
+            steps.flatMap { g -> steps.map { b -> "rgb($r,$g,$b)" to Color(r, g, b) } }
+        }
+        named + cube
     }
 
     @Test
-    fun `foreground is white on a dark background`() {
-        assertEquals(Color.White, contrastForegroundOn(Color(0xFF4169E1.toInt()))) // royalblue
-    }
-
-    @Test
-    fun `chosen foreground always beats the other choice`() {
-        // On each grid color, the returned foreground must have at least the contrast of the
-        // other black/white option.
-        for (entry in EventColorPalette.entries) {
-            val bg = Color(entry.argb)
-            val chosen = contrastForegroundOn(bg)
-            val other = if (chosen == Color.Black) Color.White else Color.Black
-            assertTrue(
-                "chosen fg for ${entry.name} should beat the alternative",
-                contrastRatio(chosen, bg) >= contrastRatio(other, bg),
-            )
+    fun `foreground is white exactly when white reaches 3 to 1`() {
+        for ((name, bg) in allColors) {
+            val expected = if (contrastRatio(Color.White, bg) >= 3.0) Color.White else Color.Black
+            assertEquals(name, expected, contrastForegroundOn(bg))
         }
     }
 
     @Test
-    fun `every palette entry meets WCAG AA for normal text against its chosen foreground`() {
-        // The better of black and white against a solid color is at least 4.58:1 in the worst
-        // case, so AA (4.5:1) must always hold.
-        for (entry in EventColorPalette.entries) {
-            val bg = Color(entry.argb)
-            val ratio = contrastRatio(contrastForegroundOn(bg), bg)
-            assertTrue(
-                "${entry.name} contrast $ratio should be >= 4.5",
-                ratio >= 4.5,
-            )
+    fun `mid-tone colors from the issue 419 screenshot get white`() {
+        assertEquals(Color.White, contrastForegroundOn(Color(0xFFFF0026.toInt())))
+        assertEquals(Color.White, contrastForegroundOn(Color(0xFF007EFF.toInt())))
+    }
+
+    @Test
+    fun `named picks match the 3 to 1 rule`() {
+        val white = mapOf(
+            "dodgerblue" to 0xFF1E90FF, "red" to 0xFFFF0000, "mediumorchid" to 0xFFBA55D3,
+            "steelblue" to 0xFF4682B4, "royalblue" to 0xFF4169E1,
+        )
+        val black = mapOf(
+            "tomato" to 0xFFFF6347, "hotpink" to 0xFFFF69B4, "lightseagreen" to 0xFF20B2AA,
+            "peru" to 0xFFCD853F, "cornflowerblue" to 0xFF6495ED, "orchid" to 0xFFDA70D6,
+            "rosybrown" to 0xFFBC8F8F, "mediumseagreen" to 0xFF3CB371, "lightcoral" to 0xFFF08080,
+            "gold" to 0xFFFFD700,
+        )
+        for ((name, argb) in white) {
+            assertEquals(name, Color.White, contrastForegroundOn(Color(argb.toInt())))
+        }
+        for ((name, argb) in black) {
+            assertEquals(name, Color.Black, contrastForegroundOn(Color(argb.toInt())))
         }
     }
 
     @Test
-    fun `every wheel color meets WCAG AA against its chosen foreground`() {
-        // contrastForegroundOn serves the 92-color wheel palette and arbitrary user hex, not
-        // only the 12-color grid, so exercise the whole wheel set to back the "any solid color
-        // clears AA" claim.
-        for (entry in EventColorPalette.allCss3Colors) {
-            val bg = Color(entry.argb)
+    fun `every grid and wheel color reaches 3 to 1 against its chosen foreground`() {
+        // Black is picked only where white is under 3:1, and black is above 7:1 there, so this
+        // can fail only if the white threshold drops below 3:1.
+        val offered = EventColorPalette.entries.map { it.name to it.argb } +
+            EventColorPalette.allCss3Colors.map { it.name to it.argb }
+        for ((name, argb) in offered) {
+            val bg = Color(argb)
             val ratio = contrastRatio(contrastForegroundOn(bg), bg)
-            assertTrue(
-                "${entry.name} contrast $ratio should be >= 4.5",
-                ratio >= 4.5,
-            )
+            assertTrue("$name contrast $ratio should be >= 3.0", ratio >= 3.0)
+        }
+    }
+
+    // ========== APCA cross-check (test-only reference, not shipped) ==========
+
+    // APCA 0.0.98G-4g lightness contrast, the perceptual method in the WCAG 3 draft. It exists
+    // here only to check that the 3:1 rule never trades black for a white that reads worse; the
+    // app itself uses WCAG 2 ratios.
+    private fun apcaY(c: Color): Double =
+        0.2126729 * c.red.toDouble().pow(2.4) +
+            0.7151522 * c.green.toDouble().pow(2.4) +
+            0.0721750 * c.blue.toDouble().pow(2.4)
+
+    private fun apcaClamp(y: Double) = if (y > 0.022) y else y + (0.022 - y).pow(1.414)
+
+    /** Returns APCA Lc for [text] on [bg]: positive for dark text on light, negative otherwise. */
+    private fun apca(text: Color, bg: Color): Double {
+        val t = apcaClamp(apcaY(text))
+        val b = apcaClamp(apcaY(bg))
+        return if (b > t) {
+            val s = (b.pow(0.56) - t.pow(0.57)) * 1.14
+            if (s < 0.1) 0.0 else (s - 0.027) * 100
+        } else {
+            val s = (b.pow(0.65) - t.pow(0.62)) * 1.14
+            if (s > -0.1) 0.0 else (s + 0.027) * 100
+        }
+    }
+
+    @Test
+    fun `apca helper matches the published reference values`() {
+        assertEquals(63.1, apca(Color(0xFF888888), Color.White), 0.1)
+        assertEquals(-68.5, apca(Color.White, Color(0xFF888888)), 0.1)
+        assertEquals(58.1, apca(Color.Black, Color(0xFFAAAAAA)), 0.1)
+        assertEquals(91.7, apca(Color(0xFF112233), Color(0xFFDDEEFF)), 0.1)
+    }
+
+    @Test
+    fun `white is never picked where it reads worse than black under APCA`() {
+        // White at 3:1 or more always has at least black's APCA contrast, so no color gets
+        // white where black would read better.
+        for ((name, bg) in allColors) {
+            if (contrastForegroundOn(bg) != Color.White) continue
+            val white = abs(apca(Color.White, bg))
+            val black = abs(apca(Color.Black, bg))
+            assertTrue("$name: white Lc $white should be >= black Lc $black", white >= black)
         }
     }
 }

@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Prideda prie įvykių jaustuką pagal pavadinimą, pavyzdžiui, 🎂 „Gimtadieniui“.</string>
     <string name="settings_force_sync">Pilnas sinchronizavimas</string>
     <string name="settings_force_sync_subtitle">Iš naujo atsisiųsti visus duomenis</string>
+    <string name="settings_force_sync_no_account">Nenustatyta sinchronizavimo paskyra</string>
+    <string name="force_sync_confirm">Iš naujo atsisiųsti %1$s iš %2$s. Nesinchronizuoti pakeitimai išliks.</string>
+    <string name="action_start">Pradėti</string>
     <string name="settings_sync_history">Sinchronizavimo istorija</string>
     <string name="settings_sync_history_subtitle">Peržiūrėti sinchronizavimo seansus (per 48 val.)</string>
     <string name="settings_import_subtitle">Pridėti įvykius iš ICS failo į bet kurį kalendorių</string>
@@ -333,8 +336,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Naujas įvykis</string>
     <string name="dialog_edit_event_title">Redaguoti įvykį</string>
-    <string name="dialog_force_sync_title">Pilnas sinchronizavimas?</string>
-    <string name="dialog_force_sync_message">Visi duomenys bus iš naujo atsisiųsti iš serverio. Vietiniai pakeitimai bus išsaugoti.</string>
     <string name="dialog_enable_notifications">Įjungti pranešimus?</string>
     <string name="dialog_action_required">Šis veiksmas reikalingas norint tęsti.</string>
     <string name="dialog_add_to_calendar">Pridėti į kalendorių</string>
@@ -347,6 +348,7 @@
     <string name="status_no_events_week">Šią savaitę įvykių nėra</string>
     <string name="status_more_events">+%1$d daugiau</string>
     <string name="status_no_sync_sessions">Sinchronizavimo seansų nėra.\n\nNutempkite žemyn kalendoriaus rodinyje, kad pradėtumėte sinchronizavimą.</string>
+    <string name="status_no_sync_account">Nenustatyta sinchronizavimo paskyra. Kalendoriai be ryšio lieka šiame įrenginyje; įrenginio kalendorius sinchronizuoja jų paskyra.</string>
     <string name="status_no_writable_calendars">Nėra rašomų kalendorių</string>
     <string name="status_events_count">Įvykių: %1$d</string>
     <string name="status_sync_history">Sinchronizavimo istorija</string>
@@ -1097,6 +1099,18 @@
         <item quantity="few">%1$d įvykiai</item>
         <item quantity="many">%1$d įvykio</item>
         <item quantity="other">%1$d įvykių</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalendorių</item>
+        <item quantity="few">%1$d kalendorius</item>
+        <item quantity="many">%1$d kalendoriaus</item>
+        <item quantity="other">%1$d kalendorių</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d paskyros</item>
+        <item quantity="few">%1$d paskyrų</item>
+        <item quantity="many">%1$d paskyros</item>
+        <item quantity="other">%1$d paskyrų</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalendorius</item>

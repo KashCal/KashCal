@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Thêm biểu tượng cảm xúc vào sự kiện dựa trên tiêu đề, như 🎂 cho \"Sinh nhật\".</string>
     <string name="settings_force_sync">Đồng bộ toàn bộ</string>
     <string name="settings_force_sync_subtitle">Tải lại toàn bộ dữ liệu lịch</string>
+    <string name="settings_force_sync_no_account">Chưa thiết lập tài khoản đồng bộ</string>
+    <string name="force_sync_confirm">Tải lại %1$s từ %2$s. Các thay đổi chưa đồng bộ vẫn giữ nguyên.</string>
+    <string name="action_start">Bắt đầu</string>
     <string name="settings_sync_history">Lịch sử đồng bộ</string>
     <string name="settings_sync_history_subtitle">Xem phiên đồng bộ (48 giờ gần nhất)</string>
     <string name="settings_import_subtitle">Thêm sự kiện từ tệp ICS vào bất kỳ lịch nào</string>
@@ -330,8 +333,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Sự kiện mới</string>
     <string name="dialog_edit_event_title">Sửa sự kiện</string>
-    <string name="dialog_force_sync_title">Đồng bộ toàn bộ?</string>
-    <string name="dialog_force_sync_message">Thao tác này sẽ tải lại toàn bộ dữ liệu lịch từ máy chủ. Thay đổi cục bộ sẽ được giữ nguyên.</string>
     <string name="dialog_enable_notifications">Bật thông báo?</string>
     <string name="dialog_action_required">Cần thực hiện thao tác này để tiếp tục.</string>
     <string name="dialog_add_to_calendar">Thêm vào lịch</string>
@@ -344,6 +345,7 @@
     <string name="status_no_events_week">Tuần này không có sự kiện</string>
     <string name="status_more_events">+%1$d nữa</string>
     <string name="status_no_sync_sessions">Chưa có phiên đồng bộ nào.\n\nKéo xuống để làm mới trên màn hình lịch để bắt đầu đồng bộ.</string>
+    <string name="status_no_sync_account">Chưa thiết lập tài khoản đồng bộ. Lịch ngoại tuyến lưu trên thiết bị này; lịch thiết bị đồng bộ qua tài khoản của chúng.</string>
     <string name="status_no_writable_calendars">Không có lịch nào cho phép ghi</string>
     <string name="status_events_count">%1$d sự kiện</string>
     <string name="status_sync_history">Lịch sử đồng bộ</string>
@@ -986,6 +988,12 @@
     <string name="ics_import_summary_nothing">Không có gì để nhập</string>
     <plurals name="event_count">
         <item quantity="other">%1$d sự kiện</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="other">%1$d lịch</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="other">%1$d tài khoản</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="other">%1$d lịch</item>

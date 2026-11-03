@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">शीर्षक के आधार पर इवेंट में इमोजी जोड़ता है, जैसे \"जन्मदिन\" के लिए 🎂.</string>
     <string name="settings_force_sync">फ़ोर्स फ़ुल सिंक</string>
     <string name="settings_force_sync_subtitle">सर्वर से सभी कैलेंडर डेटा फिर से डाउनलोड करें</string>
+    <string name="settings_force_sync_no_account">कोई सिंक खाता सेटअप नहीं है</string>
+    <string name="force_sync_confirm">%2$s से %1$s को फिर से डाउनलोड करें। जो बदलाव अभी सिंक नहीं हुए हैं, वे सुरक्षित रहेंगे।</string>
+    <string name="action_start">शुरू करें</string>
     <string name="settings_sync_history">सिंक इतिहास</string>
     <string name="settings_sync_history_subtitle">सिंक सत्र देखें (पिछले 48 घंटे)</string>
     <string name="settings_import_subtitle">किसी भी कैलेंडर में ICS फ़ाइल से इवेंट जोड़ें</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">नया इवेंट</string>
     <string name="dialog_edit_event_title">इवेंट संपादित करें</string>
-    <string name="dialog_force_sync_title">फ़ोर्स फ़ुल सिंक?</string>
-    <string name="dialog_force_sync_message">इससे सर्वर से सभी कैलेंडर डेटा फिर से डाउनलोड होगा। स्थानीय बदलाव सुरक्षित रहेंगे।</string>
     <string name="dialog_enable_notifications">सूचनाएँ चालू करें?</string>
     <string name="dialog_action_required">जारी रखने के लिए यह कार्रवाई आवश्यक है।</string>
     <string name="dialog_add_to_calendar">कैलेंडर में जोड़ें</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">इस सप्ताह कोई इवेंट नहीं</string>
     <string name="status_more_events">+%1$d और</string>
     <string name="status_no_sync_sessions">अभी तक कोई सिंक सत्र नहीं।\n\nकैलेंडर दृश्य पर नीचे खींचकर रिफ़्रेश करें।</string>
+    <string name="status_no_sync_account">कोई सिंक खाता सेटअप नहीं है। ऑफ़लाइन कैलेंडर इस डिवाइस पर रहते हैं; डिवाइस कैलेंडर अपने खाते से सिंक होते हैं।</string>
     <string name="status_no_writable_calendars">कोई लिखने योग्य कैलेंडर उपलब्ध नहीं</string>
     <string name="status_events_count">%1$d इवेंट</string>
     <string name="status_sync_history">सिंक इतिहास</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d इवेंट</item>
         <item quantity="other">%1$d इवेंट</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d कैलेंडर</item>
+        <item quantity="other">%1$d कैलेंडर</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d खाते</item>
+        <item quantity="other">%1$d खातों</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d कैलेंडर</item>

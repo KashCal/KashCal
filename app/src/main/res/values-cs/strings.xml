@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Přidá k událostem emoji podle názvu, například 🎂 pro \"Narozeniny\".</string>
     <string name="settings_force_sync">Vynutit úplnou synchronizaci</string>
     <string name="settings_force_sync_subtitle">Znovu stáhnout všechna data kalendáře</string>
+    <string name="settings_force_sync_no_account">Není nastavený účet synchronizace</string>
+    <string name="force_sync_confirm">Znovu stáhnout %1$s z %2$s. Dosud nesynchronizované změny jsou zachovány.</string>
+    <string name="action_start">Spustit</string>
     <string name="settings_sync_history">Historie synchronizace</string>
     <string name="settings_sync_history_subtitle">Zobrazit relace synchronizace (posledních 48 hodin)</string>
     <string name="settings_import_subtitle">Přidat události ze souboru ICS do libovolného kalendáře</string>
@@ -333,8 +336,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Nová událost</string>
     <string name="dialog_edit_event_title">Upravit událost</string>
-    <string name="dialog_force_sync_title">Vynutit úplnou synchronizaci?</string>
-    <string name="dialog_force_sync_message">Znovu se stáhnou všechna data kalendáře ze serveru. Místní změny budou zachovány.</string>
     <string name="dialog_enable_notifications">Povolit oznámení?</string>
     <string name="dialog_action_required">Tato akce je nutná pro pokračování.</string>
     <string name="dialog_add_to_calendar">Přidat do kalendáře</string>
@@ -347,6 +348,7 @@
     <string name="status_no_events_week">Tento týden žádné události</string>
     <string name="status_more_events">+%1$d dalších</string>
     <string name="status_no_sync_sessions">Zatím žádné relace synchronizace.\n\nSpusťte synchronizaci potažením dolů v zobrazení kalendáře.</string>
+    <string name="status_no_sync_account">Není nastavený účet synchronizace. Offline kalendáře zůstávají v tomto zařízení; kalendáře zařízení se synchronizují přes vlastní účet.</string>
     <string name="status_no_writable_calendars">Žádné zapisovatelné kalendáře</string>
     <string name="status_events_count">%1$d událostí</string>
     <string name="status_sync_history">Historie synchronizace</string>
@@ -1097,6 +1099,18 @@
         <item quantity="few">%1$d události</item>
         <item quantity="many">%1$d událostí</item>
         <item quantity="other">%1$d událostí</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalendář</item>
+        <item quantity="few">%1$d kalendáře</item>
+        <item quantity="many">%1$d kalendářů</item>
+        <item quantity="other">%1$d kalendářů</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d účtu</item>
+        <item quantity="few">%1$d účtů</item>
+        <item quantity="many">%1$d účtů</item>
+        <item quantity="other">%1$d účtů</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalendář</item>

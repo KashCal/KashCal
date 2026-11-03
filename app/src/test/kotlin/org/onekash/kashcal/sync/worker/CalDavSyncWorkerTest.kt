@@ -306,7 +306,7 @@ class CalDavSyncWorkerTest {
     }
 
     @Test
-    fun `full sync with no accounts returns success with zero calendars`() = runTest {
+    fun `full sync with no accounts succeeds and records no sync history session`() = runTest {
         // Given
         val inputData = CalDavSyncWorker.createFullSyncInput()
         val worker = createWorker(inputData)
@@ -319,6 +319,21 @@ class CalDavSyncWorkerTest {
         // Then
         assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
         coVerify(exactly = 0) { syncEngine.syncAccountWithQuirks(any(), any(), any(), any(), any(), any()) }
+        coVerify(exactly = 0) { syncSessionStore.add(any()) }
+    }
+
+    @Test
+    fun `full sync with only a local account succeeds and records no sync history session`() = runTest {
+        // Offline calendars sit under a LOCAL account, which needs no network: nothing to sync.
+        val worker = createWorker(CalDavSyncWorker.createFullSyncInput())
+        coEvery { accountRepository.getEnabledAccounts() } returns
+            listOf(createTestAccount().copy(provider = AccountProvider.LOCAL))
+
+        val result = worker.doWork()
+
+        assertEquals(ListenableWorker.Result.success().javaClass, result.javaClass)
+        coVerify(exactly = 0) { syncEngine.syncAccountWithQuirks(any(), any(), any(), any(), any(), any()) }
+        coVerify(exactly = 0) { syncSessionStore.add(any()) }
     }
 
     // ==================== Calendar Sync Tests ====================

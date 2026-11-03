@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">\"උපන්දිනය\" සඳහා 🎂 වැනි, මාතෘකාව මත පදනම්ව සිදුවීම්වලට ඉමෝජියක් එක් කරයි.</string>
     <string name="settings_force_sync">සම්පූර්ණ බලෙන් සමමුහුර්තය</string>
     <string name="settings_force_sync_subtitle">සේවාදායකයෙන් සියලු දින දර්ශන දත්ත නැවත බාගන්න</string>
+    <string name="settings_force_sync_no_account">සමමුහුර්ත ගිණුමක් පිහිටුවා නැත</string>
+    <string name="force_sync_confirm">%2$s වෙතින් %1$s නැවත බාගන්න. තවමත් සමමුහුර්ත නොකළ වෙනස්කම් තබා ගනී.</string>
+    <string name="action_start">ආරම්භ කරන්න</string>
     <string name="settings_sync_history">සමමුහුර්ත ඉතිහාසය</string>
     <string name="settings_sync_history_subtitle">සමමුහුර්ත සැසි බලන්න (පසුගිය පැය 48)</string>
     <string name="settings_import_subtitle">ICS ගොනුවකින් ඕනෑම දින දර්ශනයකට සිදුවීම් එකතු කරන්න</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">නව සිදුවීම</string>
     <string name="dialog_edit_event_title">සිදුවීම සංස්කරණය</string>
-    <string name="dialog_force_sync_title">සම්පූර්ණ බලෙන් සමමුහුර්තය?</string>
-    <string name="dialog_force_sync_message">මෙය සේවාදායකයෙන් සියලු දින දර්ශන දත්ත නැවත බාගනු ඇත. දේශීය වෙනස්කම් ආරක්ෂිතව පවතිනු ඇත.</string>
     <string name="dialog_enable_notifications">දැනුම්දීම් සක්‍රිය කරන්නද?</string>
     <string name="dialog_action_required">ඉදිරියට යාමට මෙම ක්‍රියාව අවශ්‍යයි.</string>
     <string name="dialog_add_to_calendar">දින දර්ශනයට එකතු කරන්න</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">මෙම සතියේ සිදුවීම් නැත</string>
     <string name="status_more_events">+%1$d තව</string>
     <string name="status_no_sync_sessions">තවම සමමුහුර්ත සැසි නැත.\n\nදින දර්ශන දසුනේ පහළට අදින්න නැවුම් කිරීමට.</string>
+    <string name="status_no_sync_account">සමමුහුර්ත ගිණුමක් පිහිටුවා නැත. මාර්ගගත නැති දින දර්ශන මෙම උපාංගයේ රැඳී සිටී; උපාංග දින දර්ශන ඔවුන්ගේම ගිණුම හරහා සමමුහුර්ත වේ.</string>
     <string name="status_no_writable_calendars">ලිවිය හැකි දින දර්ශන නොමැත</string>
     <string name="status_events_count">සිදුවීම් %1$d</string>
     <string name="status_sync_history">සමමුහුර්ත ඉතිහාසය</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">සිදුවීම %1$d</item>
         <item quantity="other">සිදුවීම් %1$d</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">දින දර්ශන %1$d</item>
+        <item quantity="other">දින දර්ශන %1$d</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">ගිණුම් %1$d</item>
+        <item quantity="other">ගිණුම් %1$d</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">දින දර්ශන %1$d</item>

@@ -34,6 +34,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -62,6 +63,7 @@ import org.onekash.kashcal.ui.util.text.highlighted
  *   highlighted
  * @param subtitleColor the subtitle's color, such as the error color for a problem; unspecified
  *   keeps the usual secondary text color
+ * @param enabled false dims the row, ignores taps and announces it as disabled
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -79,6 +81,7 @@ fun SettingsRow(
     showDivider: Boolean = true,
     searchQuery: String = "",
     subtitleColor: Color = Color.Unspecified,
+    enabled: Boolean = true,
 ) {
     val subtitleTint = subtitleColor.takeOrElse { MaterialTheme.colorScheme.onSurfaceVariant }
     Column(modifier = modifier) {
@@ -86,9 +89,11 @@ fun SettingsRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .combinedClickable(
+                    enabled = enabled,
                     onClick = onClick,
                     onLongClick = null
                 )
+                .alpha(if (enabled) 1f else DISABLED_ROW_ALPHA)
                 .padding(horizontal = 16.dp, vertical = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -429,3 +434,6 @@ internal fun settingsSearchHighlightStyle(): SpanStyle = SpanStyle(
     background = MaterialTheme.colorScheme.primaryContainer,
     color = MaterialTheme.colorScheme.onPrimaryContainer
 )
+
+/** Material's opacity for disabled content. */
+private const val DISABLED_ROW_ALPHA = 0.38f

@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Afegeix un emoji als esdeveniments segons el títol, com 🎂 per a \"Aniversari\".</string>
     <string name="settings_force_sync">Forçar sincronització completa</string>
     <string name="settings_force_sync_subtitle">Tornar a baixar totes les dades del calendari</string>
+    <string name="settings_force_sync_no_account">No hi ha cap compte de sincronització configurat</string>
+    <string name="force_sync_confirm">Tornar a baixar %1$s de %2$s. Es conserven els canvis sense sincronitzar.</string>
+    <string name="action_start">Iniciar</string>
     <string name="settings_sync_history">Historial de sincronització</string>
     <string name="settings_sync_history_subtitle">Veure sessions de sincronització (últimes 48 hores)</string>
     <string name="settings_import_subtitle">Afegeix esdeveniments d\'un fitxer ICS a qualsevol calendari</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Nou esdeveniment</string>
     <string name="dialog_edit_event_title">Editar esdeveniment</string>
-    <string name="dialog_force_sync_title">Forçar sincronització completa?</string>
-    <string name="dialog_force_sync_message">Això tornarà a baixar totes les dades del calendari des del servidor. Els canvis locals es conservaran.</string>
     <string name="dialog_enable_notifications">Activar notificacions?</string>
     <string name="dialog_action_required">Aquesta acció és necessària per continuar.</string>
     <string name="dialog_add_to_calendar">Afegir al calendari</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Cap esdeveniment aquesta setmana</string>
     <string name="status_more_events">+%1$d més</string>
     <string name="status_no_sync_sessions">Encara no hi ha sessions de sincronització.\n\nArrossega cap avall per actualitzar a la vista del calendari.</string>
+    <string name="status_no_sync_account">No hi ha cap compte de sincronització configurat. Els calendaris fora de línia resten en aquest dispositiu; els calendaris del dispositiu se sincronitzen a través del seu propi compte.</string>
     <string name="status_no_writable_calendars">No hi ha calendaris editables disponibles</string>
     <string name="status_events_count">%1$d esdeveniments</string>
     <string name="status_sync_history">Historial de sincronització</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d esdeveniment</item>
         <item quantity="other">%1$d esdeveniments</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d calendari</item>
+        <item quantity="other">%1$d calendaris</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d compte</item>
+        <item quantity="other">%1$d comptes</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d calendari</item>

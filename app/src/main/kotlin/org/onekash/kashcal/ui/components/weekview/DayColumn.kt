@@ -33,6 +33,7 @@ import org.onekash.kashcal.domain.model.DisplayEvent
 import org.onekash.kashcal.ui.components.AgendaWeekBarLogic
 import org.onekash.kashcal.util.DateTimeUtils
 import java.time.LocalDate
+import org.onekash.kashcal.ui.util.LocalDisplayZone
 
 /**
  * Displays one day column of the time grid, placing timed events by start time and duration.
@@ -86,7 +87,12 @@ fun DayColumn(
     } else {
         WeekViewUtils.OverlapLayout.SideBySide
     }
-    val positionedEvents = remember(events, date, startHour, hourHeight, maxVisibleOverlap, overlapLayout) {
+    // The layout reads the device zone; the zone key re-runs it when the zone changes and the
+    // events are equal (a device event's equality doesn't follow the zone).
+    val zone = LocalDisplayZone.current
+    val positionedEvents = remember(
+        events, date, startHour, hourHeight, maxVisibleOverlap, overlapLayout, zone
+    ) {
         val dayIndex = date.dayOfWeek.value % 7  // 0=Sunday
         WeekViewUtils.positionEventsForDay(
             events, date, dayIndex, hourHeight, startHour, endHour, maxVisibleOverlap, overlapLayout

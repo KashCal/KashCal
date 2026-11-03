@@ -458,15 +458,6 @@ class OkHttpCalDavClientCalendarProbeTest {
     }
 
     @Test
-    fun `skip rules judge the stored path, not the reply's spelling of the href`() = runTest {
-        // Stored without the trailing slash, so the listing's reserved "tasks/" rule never applied.
-        val stored = "/calendars/user/tasks"
-        enqueue207(multistatus(response(href = "$stored/")))
-
-        assertEquals(CalDavResult.Success(true), client.probeCalendarCollection(url(stored)))
-    }
-
-    @Test
     fun `malformed percent escape in the href does not match`() = runTest {
         enqueue207(multistatus(response(href = "/calendars/user/w%-1rk/")))
 

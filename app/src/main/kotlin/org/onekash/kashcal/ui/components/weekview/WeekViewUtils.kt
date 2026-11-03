@@ -76,17 +76,15 @@ object WeekViewUtils {
 
     // ==================== Day Pager Functions ====================
 
-    /** Returns the date of day-pager [page]; [CENTER_DAY_PAGE] is today. */
-    fun pageToDate(page: Int): LocalDate {
-        val today = LocalDate.now()
+    /** Returns the date of day-pager [page]; [CENTER_DAY_PAGE] is [referenceDate], today. */
+    fun pageToDate(page: Int, referenceDate: LocalDate = LocalDate.now()): LocalDate {
         val dayOffset = page.toLong() - CENTER_DAY_PAGE.toLong()
-        return today.plusDays(dayOffset)
+        return referenceDate.plusDays(dayOffset)
     }
 
     /** Returns the day-pager page of [date]; the inverse of [pageToDate]. */
-    fun dateToPage(date: LocalDate): Int {
-        val today = LocalDate.now()
-        val dayOffset = ChronoUnit.DAYS.between(today, date)
+    fun dateToPage(date: LocalDate, referenceDate: LocalDate = LocalDate.now()): Int {
+        val dayOffset = ChronoUnit.DAYS.between(referenceDate, date)
         return (CENTER_DAY_PAGE.toLong() + dayOffset).toInt()
     }
 
@@ -627,6 +625,7 @@ object WeekViewUtils {
      * outside [startHour]..[endHour] is dropped.
      *
      * @param dayIndex copied into each [PositionedEvent].
+     * @param zone the zone the event's minutes are read in, the device zone in the app.
      */
     fun positionEventsForDay(
         events: List<DisplayEvent>,
@@ -637,6 +636,7 @@ object WeekViewUtils {
         endHour: Int = END_HOUR,
         maxVisibleOverlap: Int = MAX_VISIBLE_OVERLAP,
         overlapLayout: OverlapLayout = OverlapLayout.SideBySide,
+        zone: ZoneId = ZoneId.systemDefault(),
     ): List<PositionedEvent> {
         if (events.isEmpty()) return emptyList()
 
@@ -663,8 +663,8 @@ object WeekViewUtils {
 
         // Step 2: convert to time spans, clamping cross-midnight events to this date.
         val timeSpans = sorted.map { displayEvent ->
-            val start = Instant.ofEpochMilli(displayEvent.startTs).atZone(ZoneId.systemDefault())
-            val end = Instant.ofEpochMilli(displayEvent.endTs).atZone(ZoneId.systemDefault())
+            val start = Instant.ofEpochMilli(displayEvent.startTs).atZone(zone)
+            val end = Instant.ofEpochMilli(displayEvent.endTs).atZone(zone)
             val eventStartDate = start.toLocalDate()
             val eventEndDate = end.toLocalDate()
 

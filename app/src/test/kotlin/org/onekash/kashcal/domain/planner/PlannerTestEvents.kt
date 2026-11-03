@@ -86,7 +86,9 @@ internal object PlannerTestEvents {
             isCancelled = false,
             exceptionEventId = if (isException) id else null,
         )
-        return DisplayEvent.Room(event = event, occurrence = occ, calendar = calendar, isDeclinedByMe = declined)
+        return DisplayEvent.Room(
+            event = event, occurrence = occ, calendar = calendar, isDeclinedByMe = declined, zone = zone,
+        )
     }
 
     /** A device instance; non-null [originalInstanceTime] makes it an exception of [originalId]. */

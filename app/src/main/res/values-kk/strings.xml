@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Тақырыпқа сәйкес оқиғаларға эмодзи қосады, мысалы \"Туған күн\" үшін 🎂.</string>
     <string name="settings_force_sync">Мәжбүрлі толық синхрондау</string>
     <string name="settings_force_sync_subtitle">Барлық күнтізбе деректерін қайта жүктеу</string>
+    <string name="settings_force_sync_no_account">Синхрондау есептік жазбасы конфигурацияланбаған</string>
+    <string name="force_sync_confirm">%2$s ішінен %1$s қайта жүктеу. Әлі синхрондалмаған өзгерістер сақталады.</string>
+    <string name="action_start">Бастау</string>
     <string name="settings_sync_history">Синхрондау тарихы</string>
     <string name="settings_sync_history_subtitle">Синхрондау сеанстарын көру (соңғы 48 сағат)</string>
     <string name="settings_import_subtitle">ICS файлынан оқиғаларды кез келген күнтізбеге қосу</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Жаңа оқиға</string>
     <string name="dialog_edit_event_title">Оқиғаны өңдеу</string>
-    <string name="dialog_force_sync_title">Мәжбүрлі толық синхрондау?</string>
-    <string name="dialog_force_sync_message">Бұл серверден барлық күнтізбе деректерін қайта жүктейді. Жергілікті өзгерістер сақталады.</string>
     <string name="dialog_enable_notifications">Хабарландыруларды қосу керек пе?</string>
     <string name="dialog_action_required">Жалғастыру үшін бұл әрекет қажет.</string>
     <string name="dialog_add_to_calendar">Күнтізбеге қосу</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Осы аптада оқиғалар жоқ</string>
     <string name="status_more_events">+%1$d тағы</string>
     <string name="status_no_sync_sessions">Әзірге синхрондау сеанстары жоқ.\n\nСинхрондауды бастау үшін күнтізбе көрінісінде төмен қарай сүйреңіз.</string>
+    <string name="status_no_sync_account">Синхрондау есептік жазбасы конфигурацияланбаған. Желіден тыс күнтізбелер осы құрылғыда қалады; құрылғы күнтізбелері өз есептік жазбалары арқылы синхрондалады.</string>
     <string name="status_no_writable_calendars">Жазуға болатын күнтізбелер жоқ</string>
     <string name="status_events_count">%1$d оқиға</string>
     <string name="status_sync_history">Синхрондау тарихы</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d оқиға</item>
         <item quantity="other">%1$d оқиға</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d күнтізбені</item>
+        <item quantity="other">%1$d күнтізбені</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d есептік жазба</item>
+        <item quantity="other">%1$d есептік жазба</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d күнтізбе</item>

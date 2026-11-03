@@ -10,19 +10,24 @@ import io.mockk.mockkStatic
 import io.mockk.unmockkAll
 import kotlinx.coroutines.test.runTest
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.onekash.kashcal.reminder.device.DeviceCalendarReminderScheduler
 import org.onekash.kashcal.reminder.scheduler.ReminderScheduler
 import org.onekash.kashcal.ui.appicon.DateIconRefresher
+import org.onekash.kashcal.util.ZoneSource
+import java.time.ZoneId
+import java.util.TimeZone
 
 /**
  * Tests [TimezoneChangeHandler], the timezone and clock change steps [TimezoneChangeReceiver]
- * delegates to: the date icon refreshes first, the midnight alarm is re-armed for the new zone,
- * widgets update with the reason, then Room reminders reschedule, and an exception out of the
- * widget update propagates before the reschedule. The real [WidgetUpdateManager.updateAllWidgets]
- * catches its own failures except cancellation. The device calendar reminder step isn't asserted
- * here. Plain JUnit with mocks; only `Log` is mocked statically.
+ * delegates to: the app zone and then the date icon refresh first, the midnight alarm is
+ * re-armed for the new zone, widgets update with the reason, then Room reminders reschedule,
+ * and an exception out of the widget update propagates before the reschedule. The real
+ * [WidgetUpdateManager.updateAllWidgets] catches its own failures except cancellation. The
+ * device calendar reminder step isn't asserted here. Plain JUnit with mocks; only `Log` is
+ * mocked statically.
  */
 class TimezoneChangeHandlerTest {
 
@@ -30,6 +35,8 @@ class TimezoneChangeHandlerTest {
     private lateinit var reminderScheduler: ReminderScheduler
     private lateinit var deviceCalendarReminderScheduler: DeviceCalendarReminderScheduler
     private lateinit var dateIconRefresher: DateIconRefresher
+    private lateinit var zoneSource: ZoneSource
+    private lateinit var savedZone: TimeZone
     private lateinit var handler: TimezoneChangeHandler
 
     @Before
@@ -42,17 +49,43 @@ class TimezoneChangeHandlerTest {
         reminderScheduler = mockk(relaxed = true)
         deviceCalendarReminderScheduler = mockk(relaxed = true)
         dateIconRefresher = mockk(relaxed = true)
+        savedZone = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("America/Los_Angeles"))
+        zoneSource = ZoneSource()
         handler = TimezoneChangeHandler(
             widgetUpdateManager,
             reminderScheduler,
             deviceCalendarReminderScheduler,
             dateIconRefresher,
+            zoneSource,
         )
     }
 
     @After
     fun tearDown() {
+        TimeZone.setDefault(savedZone)
         unmockkAll()
+    }
+
+    @Test
+    fun `handleChange refreshes the app zone on a timezone change, before the date icon`() = runTest {
+        var zoneAtIcon: ZoneId? = null
+        every { dateIconRefresher.refresh(any()) } answers { zoneAtIcon = zoneSource.zone.value }
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"))
+
+        handler.handleChange("timezone_changed")
+
+        assertEquals(ZoneId.of("Asia/Tokyo"), zoneSource.zone.value)
+        assertEquals(ZoneId.of("Asia/Tokyo"), zoneAtIcon)
+    }
+
+    @Test
+    fun `handleChange refreshes the app zone on a clock change`() = runTest {
+        TimeZone.setDefault(TimeZone.getTimeZone("Asia/Tokyo"))
+
+        handler.handleChange("time_changed")
+
+        assertEquals(ZoneId.of("Asia/Tokyo"), zoneSource.zone.value)
     }
 
     @Test

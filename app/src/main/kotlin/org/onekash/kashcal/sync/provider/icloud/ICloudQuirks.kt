@@ -152,9 +152,8 @@ class ICloudQuirks @Inject constructor() : CalDavQuirks {
 
     override fun shouldSkipCalendar(href: String, displayName: String?): Boolean {
         // Reserved words match only as whole path segments ([matchesReservedCollection]).
-        // iCloud has no tasks path-segment skip: its `/calendars/tasks/` ("Reminders") is a
-        // real <calendar> that is VTODO-only, so the VEVENT component gate in [isListable],
-        // not a display-name match, keeps it hidden.
+        // iCloud's `/calendars/tasks/` ("Reminders") is a VTODO-only <calendar>; the VEVENT
+        // component gate in [isListable] hides it, not its path or name.
         return matchesReservedCollection(href = href)
     }
 

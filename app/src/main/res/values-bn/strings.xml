@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">শিরোনামের উপর ভিত্তি করে ইভেন্টে একটি ইমোজি যোগ করে, যেমন \"জন্মদিন\"-এর জন্য 🎂.</string>
     <string name="settings_force_sync">ফোর্স ফুল সিংক</string>
     <string name="settings_force_sync_subtitle">সার্ভার থেকে সব ক্যালেন্ডার ডেটা পুনরায় ডাউনলোড করুন</string>
+    <string name="settings_force_sync_no_account">কোনো সিংক অ্যাকাউন্ট সেটআপ করা নেই</string>
+    <string name="force_sync_confirm">%2$s থেকে %1$s পুনরায় ডাউনলোড করুন। যে পরিবর্তনগুলো এখনো সিংক হয়নি সেগুলো সংরক্ষিত থাকবে।</string>
+    <string name="action_start">শুরু</string>
     <string name="settings_sync_history">সিংক ইতিহাস</string>
     <string name="settings_sync_history_subtitle">সিংক সেশন দেখুন (গত ৪৮ ঘণ্টা)</string>
     <string name="settings_import_subtitle">যেকোনো ক্যালেন্ডারে ICS ফাইল থেকে ইভেন্ট যোগ করুন</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">নতুন ইভেন্ট</string>
     <string name="dialog_edit_event_title">ইভেন্ট সম্পাদনা করুন</string>
-    <string name="dialog_force_sync_title">ফোর্স ফুল সিংক?</string>
-    <string name="dialog_force_sync_message">এটি সার্ভার থেকে সব ক্যালেন্ডার ডেটা পুনরায় ডাউনলোড করবে। স্থানীয় পরিবর্তন সংরক্ষিত থাকবে।</string>
     <string name="dialog_enable_notifications">বিজ্ঞপ্তি সক্রিয় করবেন?</string>
     <string name="dialog_action_required">চালিয়ে যেতে এই পদক্ষেপ প্রয়োজন।</string>
     <string name="dialog_add_to_calendar">ক্যালেন্ডারে যোগ করুন</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">এই সপ্তাহে কোনো ইভেন্ট নেই</string>
     <string name="status_more_events">+%1$d আরও</string>
     <string name="status_no_sync_sessions">এখনও কোনো সিংক সেশন নেই।\n\nক্যালেন্ডার ভিউতে নিচে টেনে রিফ্রেশ করুন।</string>
+    <string name="status_no_sync_account">কোনো সিংক অ্যাকাউন্ট সেটআপ করা নেই। অফলাইন ক্যালেন্ডার এই ডিভাইসে থাকে; ডিভাইস ক্যালেন্ডার নিজস্ব অ্যাকাউন্ট দিয়ে সিংক হয়।</string>
     <string name="status_no_writable_calendars">কোনো লেখাযোগ্য ক্যালেন্ডার নেই</string>
     <string name="status_events_count">%1$d ইভেন্ট</string>
     <string name="status_sync_history">সিংক ইতিহাস</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d ইভেন্ট</item>
         <item quantity="other">%1$d ইভেন্ট</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d ক্যালেন্ডার</item>
+        <item quantity="other">%1$d ক্যালেন্ডার</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d অ্যাকাউন্ট</item>
+        <item quantity="other">%1$d অ্যাকাউন্ট</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d ক্যালেন্ডার</item>

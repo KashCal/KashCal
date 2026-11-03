@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">శీర్షిక ఆధారంగా ఈవెంట్‌లకు ఒక ఇమోజీని జోడిస్తుంది, ఉదాహరణకు \"పుట్టినరోజు\" కోసం 🎂.</string>
     <string name="settings_force_sync">ఫోర్స్ ఫుల్ సింక్</string>
     <string name="settings_force_sync_subtitle">సర్వర్ నుండి మొత్తం క్యాలెండర్ డేటా మళ్ళీ డౌన్‌లోడ్ చేయి</string>
+    <string name="settings_force_sync_no_account">సింక్ ఖాతా సెటప్ చేయలేదు</string>
+    <string name="force_sync_confirm">%2$s నుండి %1$s మళ్ళీ డౌన్‌లోడ్ చేయండి. ఇంకా సింక్ కాని మార్పులు భద్రంగా ఉంటాయి.</string>
+    <string name="action_start">ప్రారంభించు</string>
     <string name="settings_sync_history">సింక్ చరిత్ర</string>
     <string name="settings_sync_history_subtitle">సింక్ సెషన్‌లు చూడు (గత 48 గంటలు)</string>
     <string name="settings_import_subtitle">ICS ఫైల్ నుండి ఈవెంట్‌లను ఏదైనా క్యాలెండర్‌కు జోడించండి</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">కొత్త ఈవెంట్</string>
     <string name="dialog_edit_event_title">ఈవెంట్ మార్చు</string>
-    <string name="dialog_force_sync_title">ఫోర్స్ ఫుల్ సింక్?</string>
-    <string name="dialog_force_sync_message">ఇది సర్వర్ నుండి మొత్తం క్యాలెండర్ డేటాను మళ్ళీ డౌన్‌లోడ్ చేస్తుంది. స్థానిక మార్పులు భద్రంగా ఉంటాయి.</string>
     <string name="dialog_enable_notifications">నోటిఫికేషన్‌లు ఆన్ చేయాలా?</string>
     <string name="dialog_action_required">కొనసాగించడానికి ఈ చర్య అవసరం.</string>
     <string name="dialog_add_to_calendar">క్యాలెండర్‌కి జోడించు</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">ఈ వారం ఈవెంట్‌లు లేవు</string>
     <string name="status_more_events">+%1$d మరిన్ని</string>
     <string name="status_no_sync_sessions">ఇంకా సింక్ సెషన్‌లు లేవు.\n\nక్యాలెండర్ వీక్షణలో కిందకు లాగి రిఫ్రెష్ చేయండి.</string>
+    <string name="status_no_sync_account">సింక్ ఖాతా సెటప్ చేయలేదు. ఆఫ్‌లైన్ క్యాలెండర్‌లు ఈ పరికరంలోనే ఉంటాయి; పరికర క్యాలెండర్‌లు వాటి సొంత ఖాతా ద్వారా సింక్ అవుతాయి.</string>
     <string name="status_no_writable_calendars">వ్రాయగల క్యాలెండర్లు అందుబాటులో లేవు</string>
     <string name="status_events_count">%1$d ఈవెంట్‌లు</string>
     <string name="status_sync_history">సింక్ చరిత్ర</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d ఈవెంట్</item>
         <item quantity="other">%1$d ఈవెంట్‌లు</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d క్యాలెండర్</item>
+        <item quantity="other">%1$d క్యాలెండర్‌లు</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d ఖాతా</item>
+        <item quantity="other">%1$d ఖాతాలు</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d క్యాలెండర్</item>

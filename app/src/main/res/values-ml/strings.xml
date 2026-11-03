@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">ശീർഷകത്തിന്റെ അടിസ്ഥാനത്തിൽ ഇവന്റുകളിലേക്ക് ഒരു ഇമോജി ചേർക്കുന്നു, ഉദാഹരണത്തിന് \"ജന്മദിനം\" എന്നതിന് 🎂.</string>
     <string name="settings_force_sync">ഫോഴ്സ് ഫുൾ സിങ്ക്</string>
     <string name="settings_force_sync_subtitle">സർവറിൽ നിന്ന് എല്ലാ കലണ്ടർ ഡാറ്റയും വീണ്ടും ഡൗൺലോഡ് ചെയ്യുക</string>
+    <string name="settings_force_sync_no_account">സിങ്ക് അക്കൗണ്ട് സജ്ജീകരിച്ചിട്ടില്ല</string>
+    <string name="force_sync_confirm">%2$s ൽ നിന്ന് %1$s വീണ്ടും ഡൗൺലോഡ് ചെയ്യുക. ഇതുവരെ സിങ്ക് ചെയ്യാത്ത മാറ്റങ്ങൾ സൂക്ഷിക്കപ്പെടും.</string>
+    <string name="action_start">ആരംഭിക്കുക</string>
     <string name="settings_sync_history">സിങ്ക് ചരിത്രം</string>
     <string name="settings_sync_history_subtitle">സിങ്ക് സെഷനുകൾ കാണുക (കഴിഞ്ഞ 48 മണിക്കൂർ)</string>
     <string name="settings_import_subtitle">ICS ഫയലിൽ നിന്നുള്ള ഇവന്റുകൾ ഏത് കലണ്ടറിലേക്കും ചേർക്കുക</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">പുതിയ ഇവന്റ്</string>
     <string name="dialog_edit_event_title">ഇവന്റ് തിരുത്തുക</string>
-    <string name="dialog_force_sync_title">ഫോഴ്സ് ഫുൾ സിങ്ക്?</string>
-    <string name="dialog_force_sync_message">ഇത് സർവറിൽ നിന്ന് എല്ലാ കലണ്ടർ ഡാറ്റയും വീണ്ടും ഡൗൺലോഡ് ചെയ്യും. ലോക്കൽ മാറ്റങ്ങൾ സുരക്ഷിതമായി നിലനിൽക്കും.</string>
     <string name="dialog_enable_notifications">അറിയിപ്പുകൾ ഓൺ ആക്കണോ?</string>
     <string name="dialog_action_required">തുടരാൻ ഈ നടപടി ആവശ്യമാണ്.</string>
     <string name="dialog_add_to_calendar">കലണ്ടറിൽ ചേർക്കുക</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">ഈ ആഴ്ച ഇവന്റുകൾ ഇല്ല</string>
     <string name="status_more_events">+%1$d കൂടി</string>
     <string name="status_no_sync_sessions">ഇതുവരെ സിങ്ക് സെഷനുകൾ ഇല്ല.\n\nകലണ്ടർ വ്യൂവിൽ താഴേക്ക് വലിച്ച് റിഫ്രഷ് ചെയ്യുക.</string>
+    <string name="status_no_sync_account">സിങ്ക് അക്കൗണ്ട് സജ്ജീകരിച്ചിട്ടില്ല. ഓഫ്‌ലൈൻ കലണ്ടറുകൾ ഈ ഉപകരണത്തിൽത്തന്നെ നിൽക്കും; ഉപകരണ കലണ്ടറുകൾ അവയുടെ സ്വന്തം അക്കൗണ്ട് വഴി സിങ്ക് ചെയ്യുന്നു.</string>
     <string name="status_no_writable_calendars">എഴുതാവുന്ന കലണ്ടറുകൾ ലഭ്യമല്ല</string>
     <string name="status_events_count">%1$d ഇവന്റുകൾ</string>
     <string name="status_sync_history">സിങ്ക് ചരിത്രം</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d ഇവന്റ്</item>
         <item quantity="other">%1$d ഇവന്റുകൾ</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d കലണ്ടർ</item>
+        <item quantity="other">%1$d കലണ്ടറുകൾ</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d അക്കൗണ്ട്</item>
+        <item quantity="other">%1$d അക്കൗണ്ടുകൾ</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d കലണ്ടർ</item>

@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Voeg \'n emoji by gebeurtenisse gebaseer op die titel, soos 🎂 vir \"Verjaarsdag\".</string>
     <string name="settings_force_sync">Forseer volle sinkronisering</string>
     <string name="settings_force_sync_subtitle">Herlaai alle kalenderdata</string>
+    <string name="settings_force_sync_no_account">Geen sinkronisasierekening opgestel nie</string>
+    <string name="force_sync_confirm">Herlaai %1$s vanaf %2$s af. Veranderinge wat nog nie gesinkroniseer is nie word behou.</string>
+    <string name="action_start">Begin</string>
     <string name="settings_sync_history">Sinkroniseringsgeskiedenis</string>
     <string name="settings_sync_history_subtitle">Bekyk sinkroniseringsessies (laaste 48 uur)</string>
     <string name="settings_import_subtitle">Voeg gebeurtenisse vanaf \'n ICS-lêer by enige kalender</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Nuwe Gebeurtenis</string>
     <string name="dialog_edit_event_title">Wysig Gebeurtenis</string>
-    <string name="dialog_force_sync_title">Forseer Volle Sinkronisering?</string>
-    <string name="dialog_force_sync_message">Dit sal alle kalenderdata van die bediener herlaai. Plaaslike veranderinge sal behoue bly.</string>
     <string name="dialog_enable_notifications">Aktiveer Kennisgewings?</string>
     <string name="dialog_action_required">Hierdie aksie is nodig om voort te gaan.</string>
     <string name="dialog_add_to_calendar">Voeg by kalender</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Geen gebeurtenisse hierdie week nie</string>
     <string name="status_more_events">+%1$d meer</string>
     <string name="status_no_sync_sessions">Nog geen sinkroniseringsessies nie.\n\nBegin \'n sinkronisering deur af te trek om te herlaai op die kalenderaansig.</string>
+    <string name="status_no_sync_account">Geen sinkronisasierekening opgestel nie. Vanlyn-kalenders bly op hierdie toestel; toestelkalenders sinkroniseer deur hul eie rekening.</string>
     <string name="status_no_writable_calendars">Geen skryfbare kalenders beskikbaar nie</string>
     <string name="status_events_count">%1$d Gebeurtenisse</string>
     <string name="status_sync_history">Sinkroniseringsgeskiedenis</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d gebeurtenis</item>
         <item quantity="other">%1$d gebeurtenisse</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalender</item>
+        <item quantity="other">%1$d kalenders</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d rekening</item>
+        <item quantity="other">%1$d rekeninge</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalender</item>

@@ -590,6 +590,36 @@ class InsightsRepositoryTest {
         assertTrue(stats.dailyBreakdown.all { it.calendars.isEmpty() })
     }
 
+    // A row generated in another zone stores that zone's day; Insights counts the day its instant
+    // falls on in the zone it is asked for (#422).
+    @Test
+    fun `timed occurrence days come from the instants, not the stored codes`() =
+        runTest(testDispatcher) {
+        val tokyo = ZoneId.of("Asia/Tokyo")
+        // Monday 20:00 UTC is Tuesday 05:00 in Tokyo.
+        val startTs = monday.atTime(20, 0).atZone(zone).toInstant().toEpochMilli()
+        val endTs = startTs + 2 * 60 * 60 * 1000L
+        val eventId = database.eventsDao().insert(
+            Event(
+                uid = "stale-day@test.com", calendarId = calendarId1, title = "Stale day",
+                startTs = startTs, endTs = endTs, dtstamp = 0L,
+            )
+        )
+        database.occurrencesDao().insert(
+            Occurrence(
+                eventId = eventId, calendarId = calendarId1, startTs = startTs, endTs = endTs,
+                startDay = dayCode(monday), endDay = dayCode(monday),
+            )
+        )
+
+        val rangeStart = monday.atStartOfDay(tokyo).toInstant().toEpochMilli()
+        val weekMs = 7 * 24 * 60 * 60 * 1000L
+        val occs = repository.getOccurrencesForRange(rangeStart, rangeStart + weekMs, tokyo)
+
+        assertEquals(listOf(dayCode(monday.plusDays(1))), occs.map { it.startDay })
+        assertEquals(listOf(dayCode(monday.plusDays(1))), occs.map { it.endDay })
+    }
+
     // ==================== Helper Functions ====================
 
     private fun dayOf(stats: PeriodStats, date: LocalDate): DayHours =

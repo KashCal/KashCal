@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Lisab sündmustele pealkirja põhjal emoji, näiteks 🎂 pealkirjale \"Sünnipäev\".</string>
     <string name="settings_force_sync">Sundige täielik sünkroonimine</string>
     <string name="settings_force_sync_subtitle">Laadi kõik kalendriandmed uuesti alla</string>
+    <string name="settings_force_sync_no_account">Sünkroonimiskontot pole seadistatud</string>
+    <string name="force_sync_confirm">Laadi uuesti alla %1$s %2$s. Sünkroonimata muudatused jäävad alles.</string>
+    <string name="action_start">Alusta</string>
     <string name="settings_sync_history">Sünkroonimise ajalugu</string>
     <string name="settings_sync_history_subtitle">Vaata sünkroonimise seansse (viimased 48 tundi)</string>
     <string name="settings_import_subtitle">Lisa sündmusi ICS-failist mis tahes kalendrisse</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Uus sündmus</string>
     <string name="dialog_edit_event_title">Muuda sündmust</string>
-    <string name="dialog_force_sync_title">Sundige täielik sünkroonimine?</string>
-    <string name="dialog_force_sync_message">See laadib kõik kalendriandmed serverist uuesti alla. Kohalikud muudatused säilitatakse.</string>
     <string name="dialog_enable_notifications">Luba teavitused?</string>
     <string name="dialog_action_required">See toiming on jätkamiseks vajalik.</string>
     <string name="dialog_add_to_calendar">Lisa kalendrisse</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Sel nädalal sündmusi pole</string>
     <string name="status_more_events">+%1$d veel</string>
     <string name="status_no_sync_sessions">Sünkroonimise seansse veel pole.\n\nTõmba kalendrivaates alla, et alustada sünkroonimist.</string>
+    <string name="status_no_sync_account">Sünkroonimiskontot pole seadistatud. Võrguühenduseta kalendrid jäävad sellesse seadmesse; seadme kalendreid sünkroonib nende konto.</string>
     <string name="status_no_writable_calendars">Kirjutatavaid kalendreid pole saadaval</string>
     <string name="status_events_count">%1$d sündmust</string>
     <string name="status_sync_history">Sünkroonimise ajalugu</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d sündmus</item>
         <item quantity="other">%1$d sündmust</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalender</item>
+        <item quantity="other">%1$d kalendrit</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d kontost</item>
+        <item quantity="other">%1$d kontost</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalender</item>

@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Cuireann sé emoji le himeachtaí de réir an teidil, cosúil le 🎂 do \"Breithlá\".</string>
     <string name="settings_force_sync">Sioncronú iomláin éigeantach</string>
     <string name="settings_force_sync_subtitle">Ath-íoslódáil gach sonraí féilire</string>
+    <string name="settings_force_sync_no_account">Níl cuntas sioncronúithe socraithe</string>
+    <string name="force_sync_confirm">Ath-íoslódáil %1$s ó %2$s. Coinníonn sé athruithe nach bhfuil sioncronaithe fós.</string>
+    <string name="action_start">Tosaigh</string>
     <string name="settings_sync_history">Stair sioncronúithe</string>
     <string name="settings_sync_history_subtitle">Féach ar sheisiúin sioncronúithe (48 uair an chloig siar)</string>
     <string name="settings_import_subtitle">Cuir imeachtaí ó chomhad ICS le haon fhéilire</string>
@@ -334,8 +337,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Imeacht Nua</string>
     <string name="dialog_edit_event_title">Cuir Imeacht in Eagar</string>
-    <string name="dialog_force_sync_title">Sioncronú Iomláin Éigeantach?</string>
-    <string name="dialog_force_sync_message">Ath-íoslódálfaidh sé seo gach sonraí féilire ón bhfreastalaí. Coinneofar athruithe áitiúla.</string>
     <string name="dialog_enable_notifications">Cumasaigh Fógraí?</string>
     <string name="dialog_action_required">Tá an gníomh seo riachtanach chun leanúint ar aghaidh.</string>
     <string name="dialog_add_to_calendar">Cuir le féilire</string>
@@ -348,6 +349,7 @@
     <string name="status_no_events_week">Gan imeachtaí an tseachtain seo</string>
     <string name="status_more_events">+%1$d eile</string>
     <string name="status_no_sync_sessions">Gan seisiúin sioncronúithe fós.\n\nTarraing anuas chun athnuachan a dhéanamh ar an amharc féilire.</string>
+    <string name="status_no_sync_account">Níl cuntas sioncronúithe socraithe. Fanann féilirí as líne ar an ngléas seo; sioncronaíonn féilirí na gléine trína gcuntas féin.</string>
     <string name="status_no_writable_calendars">Níl aon fhéilire inscríofa ar fáil</string>
     <string name="status_events_count">%1$d Imeacht</string>
     <string name="status_sync_history">Stair Sioncronúithe</string>
@@ -1134,6 +1136,20 @@
         <item quantity="few">%1$d imeacht</item>
         <item quantity="many">%1$d n-imeacht</item>
         <item quantity="other">%1$d imeacht</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d fhéilire</item>
+        <item quantity="two">%1$d fhéilire</item>
+        <item quantity="few">%1$d fhéilire</item>
+        <item quantity="many">%1$d bhféilire</item>
+        <item quantity="other">%1$d féilire</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d chuntas</item>
+        <item quantity="two">%1$d chuntas</item>
+        <item quantity="few">%1$d chuntas</item>
+        <item quantity="many">%1$d gcuntas</item>
+        <item quantity="other">%1$d cuntas</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d fhéilire</item>

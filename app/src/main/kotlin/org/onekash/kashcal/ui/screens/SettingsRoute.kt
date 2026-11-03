@@ -69,6 +69,7 @@ import org.onekash.kashcal.ui.screens.settings.DeviceCalendarsScreen
 import org.onekash.kashcal.ui.screens.settings.OfflineCalendarsScreen
 import org.onekash.kashcal.ui.screens.settings.toAccountUiModel
 import org.onekash.kashcal.ui.screens.settings.ICloudConnectionState
+import org.onekash.kashcal.ui.screens.settings.syncScopeOf
 import org.onekash.kashcal.ui.screens.settings.RestoreConfirmationDialog
 import org.onekash.kashcal.ui.screens.settings.SettingsDestination
 import org.onekash.kashcal.ui.permission.DeviceCalendarsPermissionOutcome
@@ -982,6 +983,7 @@ fun SettingsRoute(
             if (showDebugLogSheet) {
                 SyncHistorySheet(
                     syncSessionStore = syncSessionStore,
+                    hasSyncAccount = syncScopeOf(uiState.iCloudState, uiState.calDavAccounts).hasSyncAccount,
                     onDismiss = { showDebugLogSheet = false }
                 )
             }

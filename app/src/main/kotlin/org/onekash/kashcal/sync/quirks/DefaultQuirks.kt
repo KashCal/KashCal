@@ -64,9 +64,9 @@ class DefaultQuirks(
         !shouldSkipCalendar(href, displayName) &&
             // Skip calendars that support only non-VEVENT components (VTODO-only, VJOURNAL-only).
             // An empty set means the server advertised no component set, so it's kept. A
-            // VTODO-only list therefore surfaces on a server that omits the set; name matching
-            // isn't used to hide it, because an events calendar the user named "Tasks" must
-            // never drop.
+            // VTODO-only list therefore surfaces on a server that omits the set. Neither its
+            // name nor its path is used to hide it: the creating client can pick both, so an events
+            // calendar can be named "Tasks" or sit at `.../Tasks/` (#421).
             (supportedComponents.isEmpty() || "VEVENT" in supportedComponents)
 
     override fun extractICalData(responseBody: String): List<CalDavQuirks.ParsedEventData> {
@@ -142,15 +142,9 @@ class DefaultQuirks(
 
     override fun shouldSkipCalendar(href: String, displayName: String?): Boolean {
         // Skips the scheduling (inbox, outbox) and notification collections a server may
-        // expose beside real calendars, plus a generic server's task list. The task list
-        // matches only as the final segment in its trailing-slash form (`.../tasks/`), so a
-        // server whose account segment is "tasks" keeps its calendars, and an events
-        // calendar the user named "Tasks" isn't dropped on its name alone. Segment matching
-        // is described on [matchesReservedCollection].
-        return matchesReservedCollection(
-            href = href,
-            terminalSegments = setOf("tasks"),
-        )
+        // expose beside real calendars. Task lists are left to the component gate in
+        // [isListable].
+        return matchesReservedCollection(href = href)
     }
 
     override fun formatDateForQuery(epochMillis: Long): String {
@@ -168,9 +162,9 @@ class DefaultQuirks(
 
 /**
  * Path segments of the scheduling and notification collections a CalDAV server exposes
- * beside real calendars (RFC 6638 §2.1). "tasks" is left out on purpose: iCloud exposes a
- * real VTODO calendar at `/calendars/tasks/` with the `<calendar>` resourcetype, so the
- * tasks skip applies only to generic servers, through [DefaultQuirks]' `terminalSegments`.
+ * beside real calendars (RFC 6638 §2.1). "tasks" isn't one of them: a task list is told apart
+ * by its component set, not its path, because an events calendar can sit at `.../Tasks/`
+ * (#421).
  */
 internal val RESERVED_CALENDAR_SEGMENTS =
     setOf("inbox", "outbox", "notification", "notifications")
@@ -183,21 +177,8 @@ internal val RESERVED_CALENDAR_SEGMENTS =
  *
  * The display name is never a discriminator: this runs only on collections that passed the
  * `<calendar>` or `<addressbook>` resourcetype gate, so a name match could only drop a real
- * collection the user named "Tasks", "Reminders" or "Inbox". A VTODO-only task list is
- * excluded by the VEVENT component gate instead.
- *
- * @param terminalSegments extra words matched only as the final segment in its trailing-slash
- *   form (`.../tasks/`), so a calendar at `.../tasks` without the slash, or an account whose
- *   username segment is "tasks", is kept. Checked in addition to [RESERVED_CALENDAR_SEGMENTS].
+ * collection the user named "Tasks", "Reminders" or "Inbox". A CalDAV task list is left to
+ * the component gate in [DefaultQuirks.isListable].
  */
-internal fun matchesReservedCollection(
-    href: String,
-    terminalSegments: Set<String> = emptySet(),
-): Boolean {
-    val lower = href.lowercase()
-    val segments = lower.split('/').filter { it.isNotEmpty() }
-
-    if (segments.any { it in RESERVED_CALENDAR_SEGMENTS }) return true
-    // Only the last path component qualifies, and it must be followed by `/` in the href.
-    return terminalSegments.any { lower.endsWith("/$it/") }
-}
+internal fun matchesReservedCollection(href: String): Boolean =
+    href.lowercase().split('/').any { it in RESERVED_CALENDAR_SEGMENTS }

@@ -143,8 +143,8 @@ interface OccurrencesDao {
     /**
      * Observes the [getOccurrencesWithEventsInRange] rows that span [day] (YYYYMMDD).
      *
-     * Matches on the precomputed `start_day`/`end_day` codes, which already carry the
-     * all-day timezone handling, instead of timestamps.
+     * Matches on the stored `start_day`/`end_day` codes ([Occurrence.startDay]: UTC for an
+     * all-day row, the generating device zone for a timed one), not on timestamps.
      */
     @Query("""
         SELECT o.id, o.event_id, o.exception_event_id, o.calendar_id,
@@ -176,7 +176,10 @@ interface OccurrencesDao {
     """)
     fun getOccurrencesWithEventsForDay(day: Int): Flow<List<OccurrenceWithEventData>>
 
-    /** Observes the non-cancelled occurrences spanning [day] (YYYYMMDD). */
+    /**
+     * Observes the non-cancelled occurrences whose stored codes ([Occurrence.startDay]) span
+     * [day].
+     */
     @Query("""
         SELECT * FROM occurrences
         WHERE start_day <= :day AND end_day >= :day
@@ -185,7 +188,10 @@ interface OccurrencesDao {
     """)
     fun getForDay(day: Int): Flow<List<Occurrence>>
 
-    /** Returns the non-cancelled occurrences spanning [day] (YYYYMMDD). */
+    /**
+     * Returns the non-cancelled occurrences whose stored codes ([Occurrence.startDay]) span
+     * [day].
+     */
     @Query("""
         SELECT * FROM occurrences
         WHERE start_day <= :day AND end_day >= :day
@@ -194,7 +200,10 @@ interface OccurrencesDao {
     """)
     suspend fun getForDayOnce(day: Int): List<Occurrence>
 
-    /** Returns [calendarId]'s non-cancelled occurrences spanning [day] (YYYYMMDD). */
+    /**
+     * Returns [calendarId]'s non-cancelled occurrences whose stored codes span [day]; see
+     * [getForDayOnce].
+     */
     @Query("""
         SELECT * FROM occurrences
         WHERE calendar_id = :calendarId

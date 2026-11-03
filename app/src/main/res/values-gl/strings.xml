@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Engade un emoji aos eventos segundo o título, como 🎂 para \"Aniversario\".</string>
     <string name="settings_force_sync">Forzar sincronización completa</string>
     <string name="settings_force_sync_subtitle">Volver descargar todos os datos do calendario</string>
+    <string name="settings_force_sync_no_account">Non hai ningunha conta de sincronización configurada</string>
+    <string name="force_sync_confirm">Volver descargar %1$s de %2$s. Consérvanse os cambios sen sincronizar.</string>
+    <string name="action_start">Iniciar</string>
     <string name="settings_sync_history">Historial de sincronización</string>
     <string name="settings_sync_history_subtitle">Ver sesións de sincronización (últimas 48 horas)</string>
     <string name="settings_import_subtitle">Engade eventos dun ficheiro ICS a calquera calendario</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Novo evento</string>
     <string name="dialog_edit_event_title">Editar evento</string>
-    <string name="dialog_force_sync_title">Forzar sincronización completa?</string>
-    <string name="dialog_force_sync_message">Isto volverá descargar todos os datos do calendario dende o servidor. Os cambios locais conservaranse.</string>
     <string name="dialog_enable_notifications">Activar notificacións?</string>
     <string name="dialog_action_required">Esta acción é necesaria para continuar.</string>
     <string name="dialog_add_to_calendar">Engadir ao calendario</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Ningún evento esta semana</string>
     <string name="status_more_events">+%1$d máis</string>
     <string name="status_no_sync_sessions">Aínda non hai sesións de sincronización.\n\nArrastra cara abaixo para actualizar na vista do calendario.</string>
+    <string name="status_no_sync_account">Non hai ningunha conta de sincronización configurada. Os calendarios sen conexión permanecen neste dispositivo; os calendarios do dispositivo sincronízanse a través da súa propia conta.</string>
     <string name="status_no_writable_calendars">Non hai calendarios editables dispoñibles</string>
     <string name="status_events_count">%1$d eventos</string>
     <string name="status_sync_history">Historial de sincronización</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d evento</item>
         <item quantity="other">%1$d eventos</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d calendario</item>
+        <item quantity="other">%1$d calendarios</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d conta</item>
+        <item quantity="other">%1$d contas</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d calendario</item>

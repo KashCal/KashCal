@@ -759,11 +759,15 @@ class EventCoordinator @Inject constructor(
         return eventReader.getVisibleOccurrencesInRange(startTs, endTs)
     }
 
-    /** Emits the occurrences on [day], a YYYYMMDD code. */
+    /**
+     * Emits the occurrences whose stored codes span [day]; see
+     * [EventReader.getOccurrencesForDay].
+     */
     fun getOccurrencesForDay(day: Int): Flow<List<Occurrence>> {
         return eventReader.getOccurrencesForDay(day)
     }
 
+    /** Returns the occurrences whose stored codes span [dayCode]; see [EventReader]. */
     suspend fun getEventsForDay(dayCode: Int): List<OccurrenceWithEvent> {
         return eventReader.getEventsForDay(dayCode)
     }
@@ -790,6 +794,7 @@ class EventCoordinator @Inject constructor(
         return eventReader.getOccurrenceWithEvent(eventId, occurrenceTimeMs)
     }
 
+    /** Returns a month's stored start days; see [EventReader.getDaysWithEventsInMonth]. */
     suspend fun getDaysWithEventsInMonth(year: Int, month: Int): Set<Int> {
         return eventReader.getDaysWithEventsInMonth(year, month)
     }

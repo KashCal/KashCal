@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">ଶୀର୍ଷକ ଆଧାରରେ ଇଭେଣ୍ଟରେ ଏକ ଇମୋଜି ଯୋଡ଼େ, ଯେପରି \"ଜନ୍ମଦିନ\" ପାଇଁ 🎂.</string>
     <string name="settings_force_sync">ଫୋର୍ସ ଫୁଲ ସିଙ୍କ</string>
     <string name="settings_force_sync_subtitle">ସର୍ଭରଠାରୁ ସମସ୍ତ କ୍ୟାଲେଣ୍ଡର ଡାଟା ପୁଣି ଡାଉନଲୋଡ କରନ୍ତୁ</string>
+    <string name="settings_force_sync_no_account">କୌଣସି ସିଙ୍କ ଆକାଉଣ୍ଟ ସେଟଅପ ନାହିଁ</string>
+    <string name="force_sync_confirm">%2$s ରୁ %1$s ପୁନର୍ବାର ଡାଉନଲୋଡ କରନ୍ତୁ। ଏପର୍ଯ୍ୟନ୍ତ ସିଙ୍କ ହୋଇନଥିବା ପରିବର୍ତ୍ତନ ସୁରକ୍ଷିତ ରହିବ।</string>
+    <string name="action_start">ଆରମ୍ଭ କରନ୍ତୁ</string>
     <string name="settings_sync_history">ସିଙ୍କ ଇତିହାସ</string>
     <string name="settings_sync_history_subtitle">ସିଙ୍କ ସେସନଗୁଡ଼ିକ ଦେଖନ୍ତୁ (ଶେଷ 48 ଘଣ୍ଟା)</string>
     <string name="settings_import_subtitle">ICS ଫାଇଲରୁ ଇଭେଣ୍ଟଗୁଡ଼ିକୁ ଯେକୌଣସି କ୍ୟାଲେଣ୍ଡରରେ ଯୋଡ଼ନ୍ତୁ</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">ନୂଆ ଇଭେଣ୍ଟ</string>
     <string name="dialog_edit_event_title">ଇଭେଣ୍ଟ ସମ୍ପାଦନା</string>
-    <string name="dialog_force_sync_title">ଫୋର୍ସ ଫୁଲ ସିଙ୍କ?</string>
-    <string name="dialog_force_sync_message">ଏହା ସର୍ଭରଠାରୁ ସମସ୍ତ କ୍ୟାଲେଣ୍ଡର ଡାଟା ପୁଣି ଡାଉନଲୋଡ କରିବ। ସ୍ଥାନୀୟ ପରିବର୍ତ୍ତନ ସୁରକ୍ଷିତ ରହିବ।</string>
     <string name="dialog_enable_notifications">ବିଜ୍ଞପ୍ତି ଚାଲୁ କରିବେ?</string>
     <string name="dialog_action_required">ଜାରି ରଖିବା ପାଇଁ ଏହି କାର୍ଯ୍ୟ ଆବଶ୍ୟକ।</string>
     <string name="dialog_add_to_calendar">କ୍ୟାଲେଣ୍ଡରରେ ଯୋଡ଼ନ୍ତୁ</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">ଏହି ସପ୍ତାହରେ କୌଣସି ଇଭେଣ୍ଟ ନାହିଁ</string>
     <string name="status_more_events">+%1$d ଆଉ</string>
     <string name="status_no_sync_sessions">ଏଯାଏ ସିଙ୍କ ସେସନ ନାହିଁ।\n\nକ୍ୟାଲେଣ୍ଡର ଦୃଶ୍ୟରେ ତଳକୁ ଟାଣି ରିଫ୍ରେସ କରନ୍ତୁ।</string>
+    <string name="status_no_sync_account">କୌଣସି ସିଙ୍କ ଆକାଉଣ୍ଟ ସେଟଅପ ନାହିଁ। ଅଫଲାଇନ କ୍ୟାଲେଣ୍ଡର ଏହି ଡିଭାଇସରେ ହିଁ ରହେ; ଡିଭାଇସ କ୍ୟାଲେଣ୍ଡର ନିଜସ୍ୱ ଆକାଉଣ୍ଟ ମାଧ୍ୟମରେ ସିଙ୍କ ହୁଏ।</string>
     <string name="status_no_writable_calendars">ଲେଖିବାଯୋଗ୍ୟ କ୍ୟାଲେଣ୍ଡର ଉପଲବ୍ଧ ନାହିଁ</string>
     <string name="status_events_count">%1$d ଇଭେଣ୍ଟ</string>
     <string name="status_sync_history">ସିଙ୍କ ଇତିହାସ</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d ଇଭେଣ୍ଟ</item>
         <item quantity="other">%1$d ଇଭେଣ୍ଟ</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d କ୍ୟାଲେଣ୍ଡର</item>
+        <item quantity="other">%1$d କ୍ୟାଲେଣ୍ଡର</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d ଆକାଉଣ୍ଟ</item>
+        <item quantity="other">%1$d ଆକାଉଣ୍ଟ</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d କ୍ୟାଲେଣ୍ଡର</item>

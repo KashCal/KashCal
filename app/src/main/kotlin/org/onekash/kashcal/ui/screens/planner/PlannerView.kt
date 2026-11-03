@@ -87,6 +87,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import org.onekash.kashcal.ui.util.LocalDisplayZone
 
 /**
  * Draws the Planner: one week as seven day boxes plus a "Different this week" box, paged
@@ -225,7 +226,8 @@ private fun PlannerWeekPage(
     onDayHeaderClick: (LocalDate) -> Unit,
 ) {
     val days = remember(weekStart) { (0..6).map { weekStart.plusDays(it.toLong()) } }
-    val model = remember(plannerState, days, todayDayCode) {
+    // The moved cues and the week summary read the device zone; the key re-runs them on a change.
+    val model = remember(plannerState, days, todayDayCode, LocalDisplayZone.current) {
         val dayCodes = days.map(DayPagerUtils::localDateToDayCode)
         if (plannerState == null || !dayCodes.all { plannerState.covers(it) }) {
             PlannerPageModel(dayCodes, loaded = false, summary = emptyList(), cues = emptyMap())
@@ -552,7 +554,9 @@ private fun PlannerEventRow(
     val resources = LocalResources.current
     val title = remember(event, showEventEmojis) { formatDisplayEventTitle(event, showEventEmojis, resources) }
     val rangeTemplate = stringResource(R.string.planner_time_range)
-    val time = remember(event, dayMs, timePattern, rangeTemplate, formats, oneLine) {
+    // The block reads the device zone; the key re-runs it when the zone changes.
+    val zone = LocalDisplayZone.current
+    val time = remember(event, dayMs, timePattern, rangeTemplate, formats, oneLine, zone) {
         if (oneLine) {
             if (event.startDay == DayPagerUtils.msToDayCode(dayMs)) {
                 plannerTime(event.startTs, timePattern, formats.locale, ZoneId.systemDefault())

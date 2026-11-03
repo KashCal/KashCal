@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Yengeza i-emoji emicimbini ngokusekelwe kusihloko, njenge 🎂 ku-\"Usuku lokuzalwa\".</string>
     <string name="settings_force_sync">Phoqelela ukuvumelanisa okugcwele</string>
     <string name="settings_force_sync_subtitle">Landa kabusha yonke idatha yekhalenda</string>
+    <string name="settings_force_sync_no_account">Ayikho i-akhawunti yokuvumelanisa ehlelwe</string>
+    <string name="force_sync_confirm">Landa kabusha %1$s kusuka ku-%2$s. Izinguquko ezingakavumelaniselwa ziyagcinwa.</string>
+    <string name="action_start">Qala</string>
     <string name="settings_sync_history">Umlando wokuvumelanisa</string>
     <string name="settings_sync_history_subtitle">Buka izinhlelo zokuvumelanisa (amahora angama-48 edlule)</string>
     <string name="settings_import_subtitle">Engeza imicimbi esuka efayeleni le-ICS kunoma yiliphi ikhalenda</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Umcimbi Omusha</string>
     <string name="dialog_edit_event_title">Hlela Umcimbi</string>
-    <string name="dialog_force_sync_title">Phoqelela Ukuvumelanisa Okugcwele?</string>
-    <string name="dialog_force_sync_message">Lokhu kuzolanda kabusha yonke idatha yekhalenda kusuka kuseva. Izinguquko zangakini zizogcinwa.</string>
     <string name="dialog_enable_notifications">Nika Amandla Izaziso?</string>
     <string name="dialog_action_required">Lesi senzo siyadingeka ukuze uqhubeke.</string>
     <string name="dialog_add_to_calendar">Engeza ekhalendeni</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Ayikho imicimbi kuleli sonto</string>
     <string name="status_more_events">+%1$d okunye</string>
     <string name="status_no_sync_sessions">Azikho izinhlelo zokuvumelanisa okwamanje.\n\nQalisa ukuvumelanisa ngokudonsela phansi ukuze uvuselele ekubukeni kwekhalenda.</string>
+    <string name="status_no_sync_account">Ayikho i-akhawunti yokuvumelanisa ehlelwe. Amakhalenda angaphandle kwe-inthanethi ahlala kule divayisi; amakhalenda edivayisi avumelaniswa nge-akhawunti yawo.</string>
     <string name="status_no_writable_calendars">Awekho amakhalenda abhalekayo atholakalayo</string>
     <string name="status_events_count">Imicimbi engu-%1$d</string>
     <string name="status_sync_history">Umlando Wokuvumelanisa</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d umcimbi</item>
         <item quantity="other">%1$d imicimbi</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d ikhalenda</item>
+        <item quantity="other">%1$d amakhalenda</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d i-akhawunti</item>
+        <item quantity="other">%1$d ama-akhawunti</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d ikhalenda</item>

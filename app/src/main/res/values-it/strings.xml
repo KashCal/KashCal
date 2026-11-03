@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Aggiunge un emoji agli eventi in base al titolo, come 🎂 per \"Compleanno\".</string>
     <string name="settings_force_sync">Forza sincronizzazione completa</string>
     <string name="settings_force_sync_subtitle">Riscarica tutti i dati del calendario</string>
+    <string name="settings_force_sync_no_account">Nessun account di sincronizzazione configurato</string>
+    <string name="force_sync_confirm">Scaricare di nuovo %1$s da %2$s. Le modifiche non ancora sincronizzate vengono mantenute.</string>
+    <string name="action_start">Avvia</string>
     <string name="settings_sync_history">Cronologia sincronizzazione</string>
     <string name="settings_sync_history_subtitle">Visualizza le sessioni di sincronizzazione (ultime 48 ore)</string>
     <string name="settings_import_subtitle">Aggiungi eventi da un file ICS a qualsiasi calendario</string>
@@ -332,8 +335,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Nuovo evento</string>
     <string name="dialog_edit_event_title">Modifica evento</string>
-    <string name="dialog_force_sync_title">Forzare la sincronizzazione completa?</string>
-    <string name="dialog_force_sync_message">Verranno riscaricati tutti i dati del calendario dal server. Le modifiche locali saranno conservate.</string>
     <string name="dialog_enable_notifications">Attivare le notifiche?</string>
     <string name="dialog_action_required">Questa azione è necessaria per continuare.</string>
     <string name="dialog_add_to_calendar">Aggiungi al calendario</string>
@@ -346,6 +347,7 @@
     <string name="status_no_events_week">Nessun evento questa settimana</string>
     <string name="status_more_events">+%1$d altri</string>
     <string name="status_no_sync_sessions">Nessuna sessione di sincronizzazione.\n\nTira verso il basso nella vista calendario per avviare una sincronizzazione.</string>
+    <string name="status_no_sync_account">Nessun account di sincronizzazione configurato. I calendari offline restano su questo dispositivo; i calendari del dispositivo si sincronizzano tramite il proprio account.</string>
     <string name="status_no_writable_calendars">Nessun calendario modificabile disponibile</string>
     <string name="status_events_count">%1$d eventi</string>
     <string name="status_sync_history">Cronologia sincronizzazione</string>
@@ -1043,6 +1045,14 @@
         <item quantity="one">%1$d evento</item>
         <item quantity="many">%1$d eventi</item>
         <item quantity="other">%1$d eventi</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d calendario</item>
+        <item quantity="other">%1$d calendari</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d account</item>
+        <item quantity="other">%1$d account</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d calendario</item>

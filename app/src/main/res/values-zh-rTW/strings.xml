@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">根據標題為活動加入表情符號，例如為\"生日\"加入 🎂。</string>
     <string name="settings_force_sync">完整同步</string>
     <string name="settings_force_sync_subtitle">重新下載所有行事曆資料</string>
+    <string name="settings_force_sync_no_account">未設定同步帳戶</string>
+    <string name="force_sync_confirm">從%2$s重新下載%1$s。尚未同步的變更將保留。</string>
+    <string name="action_start">開始</string>
     <string name="settings_sync_history">同步紀錄</string>
     <string name="settings_sync_history_subtitle">查看同步工作階段（過去48小時）</string>
     <string name="settings_import_subtitle">從 ICS 檔案將事件加入任一行事曆</string>
@@ -330,8 +333,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">新事件</string>
     <string name="dialog_edit_event_title">編輯事件</string>
-    <string name="dialog_force_sync_title">執行完整同步？</string>
-    <string name="dialog_force_sync_message">將從伺服器重新下載所有行事曆資料。本機變更將被保留。</string>
     <string name="dialog_enable_notifications">啟用通知？</string>
     <string name="dialog_action_required">需要執行此操作才能繼續。</string>
     <string name="dialog_add_to_calendar">加入行事曆</string>
@@ -344,6 +345,7 @@
     <string name="status_no_events_week">本週沒有事件</string>
     <string name="status_more_events">+%1$d 個</string>
     <string name="status_no_sync_sessions">尚無同步紀錄。\n\n在行事曆畫面下拉重新整理以觸發同步。</string>
+    <string name="status_no_sync_account">未設定同步帳戶。離線行事曆儲存在此裝置，裝置行事曆透過其所屬帳戶同步。</string>
     <string name="status_no_writable_calendars">沒有可寫入的行事曆</string>
     <string name="status_events_count">%1$d 個事件</string>
     <string name="status_sync_history">同步紀錄</string>
@@ -986,6 +988,12 @@
     <string name="ics_import_summary_nothing">沒有可匯入的項目</string>
     <plurals name="event_count">
         <item quantity="other">%1$d 個事件</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="other">%1$d個行事曆</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="other">%1$d個帳戶</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="other">%1$d 個行事曆</item>

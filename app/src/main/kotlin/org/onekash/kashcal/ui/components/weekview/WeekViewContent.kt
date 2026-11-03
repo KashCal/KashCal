@@ -128,6 +128,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlin.math.abs
+import org.onekash.kashcal.ui.util.LocalDisplayZone
 
 private const val TAG = "WeekViewContent"
 
@@ -516,7 +517,8 @@ private fun UnifiedTimeGrid(
 
     // The current page's dates, shared by the headers, the week label, the all-day strip and
     // drag targeting.
-    val visibleDates by remember(visibleDays, firstDayOfWeek) {
+    // Pages count from today, so the zone is a key: a zone change can move today.
+    val visibleDates by remember(visibleDays, firstDayOfWeek, LocalDisplayZone.current) {
         derivedStateOf {
             if (visibleDays == 7) {
                 val weekStart = WeekViewUtils.weekPageToStartDate(pagerState.currentPage, firstDayOfWeek)

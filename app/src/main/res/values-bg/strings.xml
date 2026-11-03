@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Добавя емоджи към събитията въз основа на заглавието, например 🎂 за \"Рожден ден\".</string>
     <string name="settings_force_sync">Принудително пълно синхронизиране</string>
     <string name="settings_force_sync_subtitle">Повторно изтегляне на всички данни от календара</string>
+    <string name="settings_force_sync_no_account">Няма настроен профил за синхронизиране</string>
+    <string name="force_sync_confirm">Повторно изтегляне на %1$s от %2$s. Промените, които все още не са синхронизирани, се запазват.</string>
+    <string name="action_start">Започни</string>
     <string name="settings_sync_history">Хронология на синхронизациите</string>
     <string name="settings_sync_history_subtitle">Преглед на сесиите за синхронизиране (последните 48 часа)</string>
     <string name="settings_import_subtitle">Добави събития от ICS файл към произволен календар</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Ново събитие</string>
     <string name="dialog_edit_event_title">Редактирай събитие</string>
-    <string name="dialog_force_sync_title">Принудително пълно синхронизиране?</string>
-    <string name="dialog_force_sync_message">Това ще изтегли повторно всички данни от календара от сървъра. Локалните промени ще бъдат запазени.</string>
     <string name="dialog_enable_notifications">Включи известията?</string>
     <string name="dialog_action_required">Това действие е необходимо, за да продължите.</string>
     <string name="dialog_add_to_calendar">Добави в календара</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Няма събития тази седмица</string>
     <string name="status_more_events">+%1$d още</string>
     <string name="status_no_sync_sessions">Все още няма сесии за синхронизиране.\n\nПлъзни надолу в изгледа на календара, за да започнеш синхронизиране.</string>
+    <string name="status_no_sync_account">Няма настроен профил за синхронизиране. Офлайн календарите остават на това устройство; календарите на устройството се синхронизират чрез собствения си профил.</string>
     <string name="status_no_writable_calendars">Няма налични редактируеми календари</string>
     <string name="status_events_count">%1$d събития</string>
     <string name="status_sync_history">Хронология на синхронизациите</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d събитие</item>
         <item quantity="other">%1$d събития</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d календар</item>
+        <item quantity="other">%1$d календара</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d профил</item>
+        <item quantity="other">%1$d профила</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d календар</item>

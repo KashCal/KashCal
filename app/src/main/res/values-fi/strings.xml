@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Lisää tapahtumiin emojin otsikon perusteella, esimerkiksi 🎂 otsikolle \"Syntymäpäivä\".</string>
     <string name="settings_force_sync">Pakota täysi synkronointi</string>
     <string name="settings_force_sync_subtitle">Lataa kaikki kalenteritiedot uudelleen</string>
+    <string name="settings_force_sync_no_account">Synkronointitiliä ei määritetty</string>
+    <string name="force_sync_confirm">Lataa uudelleen %1$s %2$s. Synkronoimattomat muutokset säilyvät.</string>
+    <string name="action_start">Aloita</string>
     <string name="settings_sync_history">Synkronointihistoria</string>
     <string name="settings_sync_history_subtitle">Näytä synkronointiistunnot (viimeiset 48 tuntia)</string>
     <string name="settings_import_subtitle">Lisää tapahtumia ICS-tiedostosta mihin tahansa kalenteriin</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Uusi tapahtuma</string>
     <string name="dialog_edit_event_title">Muokkaa tapahtumaa</string>
-    <string name="dialog_force_sync_title">Pakota täysi synkronointi?</string>
-    <string name="dialog_force_sync_message">Tämä lataa kaikki kalenteritiedot palvelimelta uudelleen. Paikalliset muutokset säilytetään.</string>
     <string name="dialog_enable_notifications">Ota ilmoitukset käyttöön?</string>
     <string name="dialog_action_required">Tämä toiminto on pakollinen jatkaaksesi.</string>
     <string name="dialog_add_to_calendar">Lisää kalenteriin</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Ei tapahtumia tällä viikolla</string>
     <string name="status_more_events">+%1$d lisää</string>
     <string name="status_no_sync_sessions">Ei synkronointiistuntoja vielä.\n\nVedä alas kalenterinäkymässä aloittaaksesi synkronoinnin.</string>
+    <string name="status_no_sync_account">Synkronointitiliä ei määritetty. Offline-kalenterit pysyvät tällä laitteella; laitteen kalenterit synkronoi niiden tili.</string>
     <string name="status_no_writable_calendars">Ei muokattavia kalentereita saatavilla</string>
     <string name="status_events_count">%1$d tapahtumaa</string>
     <string name="status_sync_history">Synkronointihistoria</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d tapahtuma</item>
         <item quantity="other">%1$d tapahtumaa</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalenteri</item>
+        <item quantity="other">%1$d kalenteria</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d tilistä</item>
+        <item quantity="other">%1$d tilistä</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalenteri</item>

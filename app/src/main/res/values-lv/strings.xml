@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Pievieno notikumiem emocijzīmi pēc nosaukuma, piemēram, 🎂 nosaukumam \"Dzimšanas diena\".</string>
     <string name="settings_force_sync">Piespiedu pilna sinhronizācija</string>
     <string name="settings_force_sync_subtitle">Lejupielādēt visus kalendāra datus no jauna</string>
+    <string name="settings_force_sync_no_account">Nav iestatīts sinhronizācijas konts</string>
+    <string name="force_sync_confirm">Lejupielādēt no jauna %1$s no %2$s. Nesinhronizētās izmaiņas paliek.</string>
+    <string name="action_start">Sākt</string>
     <string name="settings_sync_history">Sinhronizācijas vēsture</string>
     <string name="settings_sync_history_subtitle">Skatīt sinhronizācijas sesijas (pēdējās 48 stundas)</string>
     <string name="settings_import_subtitle">Pievienot notikumus no ICS faila jebkuram kalendāram</string>
@@ -332,8 +335,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Jauns notikums</string>
     <string name="dialog_edit_event_title">Rediģēt notikumu</string>
-    <string name="dialog_force_sync_title">Piespiedu pilna sinhronizācija?</string>
-    <string name="dialog_force_sync_message">Tiks lejupielādēti visi kalendāra dati no servera. Lokālās izmaiņas tiks saglabātas.</string>
     <string name="dialog_enable_notifications">Iespējot paziņojumus?</string>
     <string name="dialog_action_required">Šī darbība ir nepieciešama, lai turpinātu.</string>
     <string name="dialog_add_to_calendar">Pievienot kalendāram</string>
@@ -346,6 +347,7 @@
     <string name="status_no_events_week">Šonedēļ nav notikumu</string>
     <string name="status_more_events">+%1$d vēl</string>
     <string name="status_no_sync_sessions">Vēl nav sinhronizācijas sesiju.\n\nVelciet uz leju kalendāra skatā, lai sāktu sinhronizāciju.</string>
+    <string name="status_no_sync_account">Nav iestatīts sinhronizācijas konts. Bezsaistes kalendāri paliek šajā ierīcē; ierīces kalendārus sinhronizē to konts.</string>
     <string name="status_no_writable_calendars">Nav pieejamu rediģējamu kalendāru</string>
     <string name="status_events_count">%1$d notikumi</string>
     <string name="status_sync_history">Sinhronizācijas vēsture</string>
@@ -1060,6 +1062,16 @@
         <item quantity="zero">%1$d notikumu</item>
         <item quantity="one">%1$d notikums</item>
         <item quantity="other">%1$d notikumi</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="zero">%1$d kalendārus</item>
+        <item quantity="one">%1$d kalendāru</item>
+        <item quantity="other">%1$d kalendārus</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="zero">%1$d kontiem</item>
+        <item quantity="one">%1$d konta</item>
+        <item quantity="other">%1$d kontiem</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="zero">%1$d kalendāru</item>

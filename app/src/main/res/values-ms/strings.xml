@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Menambah emoji pada acara berdasarkan tajuk, seperti 🎂 untuk \"Hari lahir\".</string>
     <string name="settings_force_sync">Segerak penuh</string>
     <string name="settings_force_sync_subtitle">Muat turun semula semua data kalendar</string>
+    <string name="settings_force_sync_no_account">Tiada akaun segerak disediakan</string>
+    <string name="force_sync_confirm">Muat turun semula %1$s daripada %2$s. Perubahan yang belum disegerakkan akan dikekalkan.</string>
+    <string name="action_start">Mula</string>
     <string name="settings_sync_history">Sejarah segerak</string>
     <string name="settings_sync_history_subtitle">Lihat sesi segerak (48 jam lepas)</string>
     <string name="settings_import_subtitle">Tambah acara daripada fail ICS ke mana-mana kalendar</string>
@@ -330,8 +333,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Acara Baharu</string>
     <string name="dialog_edit_event_title">Edit Acara</string>
-    <string name="dialog_force_sync_title">Segerak Penuh?</string>
-    <string name="dialog_force_sync_message">Ini akan memuat turun semula semua data kalendar dari pelayan. Perubahan setempat akan dikekalkan.</string>
     <string name="dialog_enable_notifications">Dayakan Pemberitahuan?</string>
     <string name="dialog_action_required">Tindakan ini diperlukan untuk meneruskan.</string>
     <string name="dialog_add_to_calendar">Tambah ke kalendar</string>
@@ -344,6 +345,7 @@
     <string name="status_no_events_week">Tiada acara minggu ini</string>
     <string name="status_more_events">+%1$d lagi</string>
     <string name="status_no_sync_sessions">Belum ada sesi segerak.\n\nTarik ke bawah untuk muat semula pada paparan kalendar untuk memulakan segerak.</string>
+    <string name="status_no_sync_account">Tiada akaun segerak disediakan. Kalendar luar talian kekal pada peranti ini; kalendar peranti disegerakkan melalui akaun masing-masing.</string>
     <string name="status_no_writable_calendars">Tiada kalendar yang boleh ditulis</string>
     <string name="status_events_count">%1$d Acara</string>
     <string name="status_sync_history">Sejarah Segerak</string>
@@ -986,6 +988,12 @@
     <string name="ics_import_summary_nothing">Tiada apa-apa untuk diimport</string>
     <plurals name="event_count">
         <item quantity="other">%1$d acara</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="other">%1$d kalendar</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="other">%1$d akaun</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="other">%1$d kalendar</item>

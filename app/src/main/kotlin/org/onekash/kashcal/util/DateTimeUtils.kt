@@ -359,6 +359,36 @@ object DateTimeUtils {
     }
 
     /**
+     * Returns the day code an occurrence starts on for display: from [startTs] in [zone] for a
+     * timed occurrence, whose stored code may be from another zone
+     * ([org.onekash.kashcal.data.db.entity.Occurrence.startDay]), and [storedStartDay] (its UTC
+     * code) for an all-day one.
+     */
+    fun occurrenceStartDay(
+        startTs: Long,
+        storedStartDay: Int,
+        isAllDay: Boolean,
+        zone: ZoneId,
+    ): Int = if (isAllDay) {
+        storedStartDay
+    } else {
+        eventTsToDayCode(startTs, isAllDay = false, localZone = zone)
+    }
+
+    /** Returns the last day code an occurrence occupies for display; see [occurrenceStartDay]. */
+    fun occurrenceEndDay(
+        startTs: Long,
+        endTs: Long,
+        storedEndDay: Int,
+        isAllDay: Boolean,
+        zone: ZoneId,
+    ): Int = if (isAllDay) {
+        storedEndDay
+    } else {
+        eventTsToEndDayCode(endTs, startTs, isAllDay = false, localZone = zone)
+    }
+
+    /**
      * Returns true if the event occupies more than one calendar day per RFC 5545 §3.6.1.
      *
      * 09:00 to next-day 00:00 is one day: the end day comes from [eventTsToEndDayCode], which

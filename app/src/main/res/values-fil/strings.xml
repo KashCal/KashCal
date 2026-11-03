@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Nagdaragdag ng emoji sa mga kaganapan batay sa pamagat, tulad ng 🎂 para sa \"Kaarawan\".</string>
     <string name="settings_force_sync">Force full sync</string>
     <string name="settings_force_sync_subtitle">I-download muli ang lahat ng data ng kalendaryo</string>
+    <string name="settings_force_sync_no_account">Walang naka-set up na sync account</string>
+    <string name="force_sync_confirm">I-download muli ang %1$s mula sa %2$s. Pinapanatili ang mga pagbabagong hindi pa naka-sync.</string>
+    <string name="action_start">Simulan</string>
     <string name="settings_sync_history">Kasaysayan ng sync</string>
     <string name="settings_sync_history_subtitle">Tingnan ang mga sync session (huling 48 oras)</string>
     <string name="settings_import_subtitle">Magdagdag ng mga event mula sa ICS file sa anumang kalendaryo</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Bagong Event</string>
     <string name="dialog_edit_event_title">I-edit ang Event</string>
-    <string name="dialog_force_sync_title">Force Full Sync?</string>
-    <string name="dialog_force_sync_message">Ido-download muli nito ang lahat ng data ng kalendaryo mula sa server. Ang mga lokal na pagbabago ay mananatili.</string>
     <string name="dialog_enable_notifications">I-enable ang Mga Notification?</string>
     <string name="dialog_action_required">Kailangan ang aksyon na ito para magpatuloy.</string>
     <string name="dialog_add_to_calendar">Idagdag sa kalendaryo</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Walang event ngayong linggo</string>
     <string name="status_more_events">+%1$d pa</string>
     <string name="status_no_sync_sessions">Wala pang sync session.\n\nMag-trigger ng sync sa pamamagitan ng pag-pull down para mag-refresh sa kalendaryo view.</string>
+    <string name="status_no_sync_account">Walang naka-set up na sync account. Nananatili sa device na ito ang mga offline na kalendaryo; nagsi-sync ang mga kalendaryo ng device sa pamamagitan ng sarili nilang account.</string>
     <string name="status_no_writable_calendars">Walang writable na kalendaryo</string>
     <string name="status_events_count">%1$d Event</string>
     <string name="status_sync_history">Kasaysayan ng Sync</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d event</item>
         <item quantity="other">%1$d event</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalendaryo</item>
+        <item quantity="other">%1$d kalendaryo</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d account</item>
+        <item quantity="other">%1$d account</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalendaryo</item>

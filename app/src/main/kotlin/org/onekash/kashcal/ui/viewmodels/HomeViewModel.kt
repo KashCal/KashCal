@@ -115,6 +115,7 @@ import org.onekash.kashcal.BuildConfig
 import org.onekash.kashcal.KashCalApplication
 import org.onekash.kashcal.util.DateTimeUtils
 import org.onekash.kashcal.util.TimezoneUtils
+import org.onekash.kashcal.util.ZoneSource
 import java.text.SimpleDateFormat
 import java.time.Instant
 import java.time.LocalDate
@@ -142,11 +143,17 @@ private data class CalendarsSnapshot(
 )
 
 /**
- * A range in epoch millis that keys the time-grid and agenda event StateFlows. The query treats
- * both ends as inclusive ([DisplayEventRepository.getDisplayEventsForRange]). A null key keeps
- * the derived Flow idle.
+ * A range in epoch millis that keys the agenda event StateFlow. The query treats both ends as
+ * inclusive ([DisplayEventRepository.getDisplayEventsForRange]). A null key keeps the derived
+ * Flow idle.
  */
 data class EpochRange(val startMs: Long, val endMs: Long)
+
+/**
+ * The time grid's loaded dates, both inclusive, that key [HomeViewModel.weekEvents]. Dates, not
+ * millis, so the query bounds can be taken in the zone current when it runs.
+ */
+private data class TimeGridDates(val start: LocalDate, val endInclusive: LocalDate)
 
 /** UI state for the week, 3-day and day grids: timed and all-day events, each sorted by start. */
 data class WeekEventsUiState(
@@ -293,7 +300,9 @@ class HomeViewModel(
     @IoDispatcher private val ioDispatcher: CoroutineDispatcher,
     /** Runs a drag's save, which must finish even when this ViewModel is cleared. */
     private val applicationScope: CoroutineScope,
-    private val currentDayCodeProvider: () -> Int
+    private val currentDayCodeProvider: () -> Int,
+    /** Hilt passes the app's singleton; the default is for tests that build the ViewModel. */
+    private val zoneSource: ZoneSource = ZoneSource(),
 ) : ViewModel() {
 
     @Inject
@@ -312,6 +321,7 @@ class HomeViewModel(
         @ApplicationContext context: Context,
         @IoDispatcher ioDispatcher: CoroutineDispatcher,
         @ApplicationScope applicationScope: CoroutineScope,
+        zoneSource: ZoneSource = ZoneSource(),
     ) : this(
         eventCoordinator,
         eventReader,
@@ -327,11 +337,27 @@ class HomeViewModel(
         context,
         ioDispatcher,
         applicationScope,
-        { DayPagerUtils.msToDayCode(System.currentTimeMillis()) }
+        { DayPagerUtils.msToDayCode(System.currentTimeMillis()) },
+        zoneSource,
     )
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    // The zone the stored dates and the reads are in; [handleZoneChange] moves both to a new one.
+    private var lastHandledZone: ZoneId = ZoneId.systemDefault()
+
+    private val _displayZone = MutableStateFlow(lastHandledZone)
+
+    /**
+     * The device zone the home screen is laid out in. It changes after [handleZoneChange] has
+     * moved the stored dates; the reactive views below restart their reads on it
+     * ([restartOnZoneChange]).
+     */
+    val displayZone: StateFlow<ZoneId> = _displayZone.asStateFlow()
+
+    /** Emits each key again when [displayZone] changes, so a `flatMapLatest` re-runs its read. */
+    private fun <K> Flow<K>.restartOnZoneChange(): Flow<K> = combine(this, _displayZone) { key, _ -> key }
 
     /** The drag waiting out its Undo window, or being saved; see [savePendingMove]. */
     private val _pendingMove = MutableStateFlow<PendingMove?>(null)
@@ -585,15 +611,16 @@ class HomeViewModel(
         dayVisibleEventIds.value = ids
     }
 
-    // Time-grid (week, 3-day, day) events. The visible date range is the only key: navigation
-    // sets it, and [weekEvents] re-queries when the key or the data changes. A create, edit,
-    // delete or sync shows up without a manual reload because
-    // [DisplayEventRepository.getDisplayEventsForRange] is reactive (#297). The key is null, and
-    // the upstream Flow idle, only until the first time-grid load; leaving the view keeps it.
-    private val timeGridRange = MutableStateFlow<EpochRange?>(null)
+    // Time-grid (week, 3-day, day) events. The visible dates and [displayZone] are the keys:
+    // navigation sets the dates, and [weekEvents] re-queries when a key or the data changes. A
+    // create, edit, delete or sync shows up without a manual reload because
+    // [DisplayEventRepository.getDisplayEventsForRange] is reactive (#297). The dates are null,
+    // and the upstream Flow idle, only until the first time-grid load; leaving the view keeps
+    // them.
+    private val timeGridRange = MutableStateFlow<TimeGridDates?>(null)
 
     /** Sets the visible time-grid range; no caller passes null. */
-    private fun setTimeGridRange(range: EpochRange?) {
+    private fun setTimeGridRange(range: TimeGridDates?) {
         timeGridRange.value = range
     }
 
@@ -608,12 +635,15 @@ class HomeViewModel(
      */
     @Suppress("OPT_IN_USAGE")
     val weekEvents: StateFlow<WeekEventsUiState> =
-        timeGridRange
+        timeGridRange.restartOnZoneChange()
             .flatMapLatest { range ->
                 if (range == null) {
                     flowOf(RawWeekEvents.EMPTY)
                 } else {
-                    displayEventRepository.getDisplayEventsForRange(range.startMs, range.endMs)
+                    // The dates' midnights in the current zone, so a zone change re-reads them.
+                    val startMs = WeekViewUtils.dateToEpochMs(range.start)
+                    val endMs = WeekViewUtils.dateToEpochMs(range.endInclusive.plusDays(1))
+                    displayEventRepository.getDisplayEventsForRange(startMs, endMs)
                         .map { events -> RawWeekEvents(events) }
                         .catch { e ->
                             if (e is CancellationException) throw e
@@ -640,8 +670,8 @@ class HomeViewModel(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WeekEventsUiState.EMPTY)
 
-    // Agenda events: the same range key as the time grid, a [AGENDA_WINDOW_MS] window set on
-    // entering the agenda and nulled on leaving, so the upstream Flow and its device-calendar
+    // Agenda events, keyed by an [EpochRange]: a [AGENDA_WINDOW_MS] window set on entering the
+    // agenda and nulled on leaving, so the upstream Flow and its device-calendar
     // queries go idle while the agenda isn't shown.
     private val agendaRange = MutableStateFlow<EpochRange?>(null)
 
@@ -657,7 +687,7 @@ class HomeViewModel(
      */
     @Suppress("OPT_IN_USAGE")
     val agendaEvents: StateFlow<AgendaUiState> =
-        agendaRange
+        agendaRange.restartOnZoneChange()
             .flatMapLatest { range ->
                 if (range == null) {
                     flowOf(AgendaUiState.EMPTY)
@@ -691,7 +721,7 @@ class HomeViewModel(
      */
     @Suppress("OPT_IN_USAGE")
     val monthEvents: StateFlow<ImmutableMap<Int, ImmutableList<DisplayEvent>>> =
-        monthGridKey
+        monthGridKey.restartOnZoneChange()
             .flatMapLatest { key ->
                 if (key == null) {
                     flowOf(persistentMapOf())
@@ -721,7 +751,7 @@ class HomeViewModel(
      */
     @Suppress("OPT_IN_USAGE")
     val plannerState: StateFlow<PlannerWeekState?> =
-        plannerWeekKey
+        plannerWeekKey.restartOnZoneChange()
             .flatMapLatest { weekStartDayCode ->
                 if (weekStartDayCode == null) {
                     flowOf(null)
@@ -902,6 +932,10 @@ class HomeViewModel(
 
         // Device calendar changes, which invalidate the event dots.
         observeDeviceCalendarChanges()
+
+        // Zone changes, which move the stored dates and re-read the home views.
+        zoneSource.refresh()
+        observeZoneChanges()
 
         // Persists the settled pinch-zoom level across restarts.
         observeHourHeightPersistence()
@@ -1425,6 +1459,72 @@ class HomeViewModel(
                         )
                     }
                 }
+        }
+    }
+
+    /** Handles each device zone [ZoneSource] reports; see [handleZoneChange]. */
+    private fun observeZoneChanges() {
+        viewModelScope.launch {
+            zoneSource.zone.collect { handleZoneChange(it) }
+        }
+    }
+
+    /**
+     * Moves the home screen to [newZone] when it differs from the zone last handled; a zone
+     * already handled (the collector after [onAppResume], or the first emission) does nothing.
+     *
+     * The dates kept as local midnights move to the same date's midnight in [newZone] (the day
+     * sheet's date keeps its time of day too), the cached dots are dropped with them, and the
+     * time-grid pager, whose pages count from today, moves to the page of the date it showed.
+     * Then [displayZone] changes, which restarts the reactive reads, the dots and the day pager
+     * cache are rebuilt ([reloadCurrentView]), and an open search runs again.
+     */
+    private fun handleZoneChange(newZone: ZoneId) {
+        val oldZone = lastHandledZone
+        if (newZone == oldZone) return
+        lastHandledZone = newZone
+        Log.d(TAG, "Zone changed from $oldZone to $newZone")
+
+        val oldToday = LocalDate.now(oldZone)
+        val newToday = LocalDate.now(newZone)
+        val state = _uiState.value
+        val newPagerPosition = rezonePagerPosition(
+            state.weekViewPagerPosition, state.viewMode, state.firstDayOfWeek, oldToday, newToday
+        )
+        _uiState.update {
+            it.copy(
+                selectedDate = rezoneMidnight(it.selectedDate, oldZone, newZone),
+                cacheRangeCenter = rezoneMidnight(it.cacheRangeCenter, oldZone, newZone),
+                // The day sheet holds the tapped day at a time of day, which seeds "+".
+                dayDetailDate = rezoneLocalDateTime(it.dayDetailDate, oldZone, newZone),
+                searchDateRangeStart = it.searchDateRangeStart
+                    ?.let { ms -> rezoneMidnight(ms, oldZone, newZone) },
+                searchDateFilter = rezoneDateFilter(it.searchDateFilter, oldZone, newZone),
+                loadedMonths = persistentSetOf(),
+                loadedYears = persistentSetOf(),
+                eventDots = persistentMapOf(),
+            )
+        }
+        if (newPagerPosition != state.weekViewPagerPosition) {
+            if (state.viewMode.isTimeGrid) {
+                _uiState.update { it.copy(pendingWeekViewPagerPosition = newPagerPosition) }
+                onDayPagerPageChanged(newPagerPosition)
+            } else {
+                _uiState.update { it.copy(weekViewPagerPosition = newPagerPosition) }
+            }
+        }
+        _displayZone.value = newZone
+        reloadCurrentView()
+        // reloadCurrentView leaves the day pager cache alone in MONTH_FULL, but the Month view
+        // comes back to it, and its old job would write the old zone's center back.
+        val center = _uiState.value.cacheRangeCenter
+        if (_uiState.value.viewMode == ViewMode.MONTH_FULL && center != 0L) {
+            loadEventsForDayPagerRange(center)
+        }
+        // Search results hold the old zone's ranges and day codes.
+        val query = _uiState.value.searchQuery
+        if (_uiState.value.isSearchActive && query.length >= 2) {
+            performSearch(query)
         }
     }
 
@@ -2191,10 +2291,7 @@ class HomeViewModel(
      * the loading.
      */
     private fun loadEventsForDateRange(startDate: LocalDate, endDate: LocalDate) {
-        val startMs = WeekViewUtils.dateToEpochMs(startDate)
-        val endMs = WeekViewUtils.dateToEpochMs(endDate.plusDays(1)) // exclusive end
-
-        setTimeGridRange(EpochRange(startMs, endMs))
+        setTimeGridRange(TimeGridDates(startDate, endDate))
     }
 
     /**
@@ -3207,10 +3304,16 @@ class HomeViewModel(
     // ==================== Refresh ====================
 
     /**
-     * Snaps to today when the calendar day has changed since the previous resume. Events need
-     * no reload here: the range-keyed StateFlows and the day pager cache follow the data.
+     * Handles a zone change whose broadcast was missed ([handleZoneChange], which reloads), then
+     * snaps to today when the calendar day has changed since the previous resume. Otherwise
+     * events need no reload here: the range-keyed StateFlows and the day pager cache follow the
+     * data.
      */
     fun onAppResume() {
+        // A zone change whose broadcast was missed, handled before the day check so a snap to
+        // today works on dates already in the new zone.
+        zoneSource.refresh()
+        handleZoneChange(zoneSource.zone.value)
         val currentDayCode = currentDayCodeProvider()
         val previous = lastResumeDayCode
         if (previous != null && previous != currentDayCode) {
@@ -3697,7 +3800,8 @@ class HomeViewModel(
                     endTs = newEndTs,
                     startDay = Occurrence.toDayFormat(newStartTs, isAllDay),
                     endDay = endDay,
-                )
+                ),
+                zone = ZoneId.systemDefault(),
             )
             is DisplayEvent.Device -> copy(
                 instance = instance.copy(
@@ -5176,3 +5280,58 @@ data class FormAttendeeContext(
     val account: org.onekash.kashcal.data.db.entity.Account?,
     val isSchedulable: Boolean
 )
+
+/** Returns the midnight of [ms]'s [oldZone] date in [newZone]; 0, "no date", stays 0. */
+internal fun rezoneMidnight(ms: Long, oldZone: ZoneId, newZone: ZoneId): Long {
+    if (ms == 0L) return 0L
+    return Instant.ofEpochMilli(ms).atZone(oldZone).toLocalDate()
+        .atStartOfDay(newZone).toInstant().toEpochMilli()
+}
+
+/**
+ * Returns the time-grid page that shows, against [newToday], the date [position] showed
+ * against [oldToday]. A day page is told from a week page by its scale
+ * ([WeekViewUtils.isSettledDayPage]); a week page is only moved in WEEK, the mode it belongs
+ * to.
+ */
+internal fun rezonePagerPosition(
+    position: Int,
+    mode: ViewMode,
+    firstDayOfWeek: Int,
+    oldToday: LocalDate,
+    newToday: LocalDate,
+): Int {
+    if (oldToday == newToday) return position
+    return when {
+        WeekViewUtils.isSettledDayPage(position) -> WeekViewUtils.dateToPage(
+            WeekViewUtils.pageToDate(position, oldToday), newToday
+        )
+        mode == ViewMode.WEEK -> WeekViewUtils.dateToWeekPage(
+            WeekViewUtils.weekPageToStartDate(position, firstDayOfWeek, oldToday),
+            firstDayOfWeek,
+            newToday,
+        )
+        else -> position
+    }
+}
+
+/** Returns the instant in [newZone] at [ms]'s local date and time in [oldZone]; 0 stays 0. */
+internal fun rezoneLocalDateTime(ms: Long, oldZone: ZoneId, newZone: ZoneId): Long {
+    if (ms == 0L) return 0L
+    return Instant.ofEpochMilli(ms).atZone(oldZone).toLocalDateTime()
+        .atZone(newZone).toInstant().toEpochMilli()
+}
+
+/**
+ * Returns [filter] with the dates a picked day or range holds as local midnights moved to the
+ * same dates in [newZone]; the relative filters (Upcoming, This week and the like) are kept.
+ */
+internal fun rezoneDateFilter(filter: DateFilter, oldZone: ZoneId, newZone: ZoneId): DateFilter =
+    when (filter) {
+        is DateFilter.SingleDay -> DateFilter.SingleDay(rezoneMidnight(filter.dateMs, oldZone, newZone))
+        is DateFilter.CustomRange -> DateFilter.CustomRange(
+            rezoneMidnight(filter.startMs, oldZone, newZone),
+            rezoneMidnight(filter.endMs, oldZone, newZone),
+        )
+        else -> filter
+    }

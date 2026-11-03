@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Додава емоџи на настаните врз основа на насловот, како 🎂 за \"Роденден\".</string>
     <string name="settings_force_sync">Принудна целосна синхронизација</string>
     <string name="settings_force_sync_subtitle">Повторно преземање на сите податоци од календарот</string>
+    <string name="settings_force_sync_no_account">Нема поставено сметка за синхронизација</string>
+    <string name="force_sync_confirm">Повторно преземање на %1$s од %2$s. Промените што сè уште не се синхронизирани се чуваат.</string>
+    <string name="action_start">Започни</string>
     <string name="settings_sync_history">Историја на синхронизација</string>
     <string name="settings_sync_history_subtitle">Преглед на сесии за синхронизација (последни 48 часа)</string>
     <string name="settings_import_subtitle">Додај настани од ICS датотека во кој било календар</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Нов настан</string>
     <string name="dialog_edit_event_title">Уреди настан</string>
-    <string name="dialog_force_sync_title">Принудна целосна синхронизација?</string>
-    <string name="dialog_force_sync_message">Ова повторно ќе ги преземе сите податоци од календарот од серверот. Локалните промени ќе бидат зачувани.</string>
     <string name="dialog_enable_notifications">Овозможи известувања?</string>
     <string name="dialog_action_required">Оваа акција е потребна за да продолжите.</string>
     <string name="dialog_add_to_calendar">Додај во календар</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Нема настани оваа недела</string>
     <string name="status_more_events">+%1$d повеќе</string>
     <string name="status_no_sync_sessions">Сè уште нема сесии за синхронизација.\n\nПовлечете надолу на приказот на календарот за да започнете синхронизација.</string>
+    <string name="status_no_sync_account">Нема поставено сметка за синхронизација. Офлајн календарите остануваат на овој уред; календарите на уредот се синхронизираат преку нивната сопствена сметка.</string>
     <string name="status_no_writable_calendars">Нема достапни календари за запишување</string>
     <string name="status_events_count">%1$d настани</string>
     <string name="status_sync_history">Историја на синхронизација</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d настан</item>
         <item quantity="other">%1$d настани</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d календар</item>
+        <item quantity="other">%1$d календари</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d сметка</item>
+        <item quantity="other">%1$d сметки</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d календар</item>

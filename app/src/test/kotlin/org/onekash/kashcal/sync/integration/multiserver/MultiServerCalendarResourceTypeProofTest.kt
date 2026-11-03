@@ -16,8 +16,7 @@ import org.robolectric.annotation.Config
  * redundant with the resourcetype and component gates.
  *
  * The generic and iCloud quirks drop scheduling and notification collections (inbox, outbox,
- * notification), and the generic quirks a final `/tasks/` segment, with a reserved-word filter
- * matched on whole path segments
+ * notification) with a reserved-word filter matched on whole path segments
  * ([org.onekash.kashcal.sync.quirks.DefaultQuirks.shouldSkipCalendar],
  * [org.onekash.kashcal.sync.provider.icloud.ICloudQuirks.shouldSkipCalendar]). A substring match
  * silently hides a real collection whose path merely contains the letters ("my-inbox-friends", or

@@ -96,11 +96,6 @@ class MultiServerCalendarRemovalProbeTest(
     private fun cloudCalendarWrites(): Set<String> =
         System.getenv("KASHCAL_CLOUD_CALENDAR_WRITES").orEmpty().split(',').map { it.trim() }.filter { it.isNotEmpty() }.toSet()
 
-    private fun isLocalServer(): Boolean {
-        val host = runCatching { URI(creds!!.davEndpoint).host }.getOrNull() ?: return false
-        return host == "localhost" || host == "127.0.0.1" || host.startsWith("10.") || host.startsWith("192.168.")
-    }
-
     @Test
     fun `every listed calendar probes as still a calendar`() = runBlocking {
         assumeReady()
@@ -149,7 +144,7 @@ class MultiServerCalendarRemovalProbeTest(
         // servers named in KASHCAL_CLOUD_CALENDAR_WRITES (e.g. "Zoho,Mailbox"), and deleted again.
         assumeTrue(
             "${config.name}: cloud account stays read-only (set KASHCAL_CLOUD_CALENDAR_WRITES to opt in)",
-            isLocalServer() || config.name in cloudCalendarWrites(),
+            CalDavTestServerLoader.isLocalServer(creds!!.davEndpoint) || config.name in cloudCalendarWrites(),
         )
         val home = calendarHome()
         // What the account holds before this test touches it; checked again at the end.

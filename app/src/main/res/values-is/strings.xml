@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Bætir emoji við viðburði út frá heitinu, eins og 🎂 fyrir \"Afmæli\".</string>
     <string name="settings_force_sync">Fullkomin samstilling</string>
     <string name="settings_force_sync_subtitle">Hlaða niður öllum dagatalsupplýsingum aftur</string>
+    <string name="settings_force_sync_no_account">Enginn samstillingarreikningur settur upp</string>
+    <string name="force_sync_confirm">Hlaða niður %1$s aftur frá %2$s. Breytingar sem ekki hafa verið samstilltar eru varðveittar.</string>
+    <string name="action_start">Byrja</string>
     <string name="settings_sync_history">Samstillingarsaga</string>
     <string name="settings_sync_history_subtitle">Skoða samstillingarlotur (síðustu 48 klukkustundir)</string>
     <string name="settings_import_subtitle">Bæta viðburðum úr ICS-skrá við hvaða dagatal sem er</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Nýr viðburður</string>
     <string name="dialog_edit_event_title">Breyta viðburði</string>
-    <string name="dialog_force_sync_title">Fullkomin samstilling?</string>
-    <string name="dialog_force_sync_message">Allar dagatalsupplýsingar verða hlaðnar niður aftur af þjóninum. Staðbundnar breytingar verða varðveittar.</string>
     <string name="dialog_enable_notifications">Virkja tilkynningar?</string>
     <string name="dialog_action_required">Þessi aðgerð er nauðsynleg til að halda áfram.</string>
     <string name="dialog_add_to_calendar">Bæta í dagatal</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Engir viðburðir þessa viku</string>
     <string name="status_more_events">+%1$d í viðbót</string>
     <string name="status_no_sync_sessions">Engar samstillingarlotur ennþá.\n\nDragðu niður í dagatalsyfirlitinu til að hefja samstillingu.</string>
+    <string name="status_no_sync_account">Enginn samstillingarreikningur settur upp. Ónettengd dagatöl eru í þessu tæki; dagatöl tækis samstillast í gegnum sinn eigin reikning.</string>
     <string name="status_no_writable_calendars">Engin skrifanleg dagatöl tiltæk</string>
     <string name="status_events_count">%1$d viðburðir</string>
     <string name="status_sync_history">Samstillingarsaga</string>
@@ -1022,6 +1024,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d viðburður</item>
         <item quantity="other">%1$d viðburðir</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d dagatal</item>
+        <item quantity="other">%1$d dagatöl</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d reikning</item>
+        <item quantity="other">%1$d reikninga</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d dagatal</item>

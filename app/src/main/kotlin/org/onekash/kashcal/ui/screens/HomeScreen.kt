@@ -202,6 +202,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Date
 import java.util.Locale
 import java.util.Calendar as JavaCalendar
+import org.onekash.kashcal.ui.util.LocalDisplayZone
 
 /**
  * Shows the main calendar screen: every [ViewMode], search, the calendar drawer, the account hub
@@ -366,7 +367,9 @@ fun HomeScreen(
 
     HomeStopEffect(onStop = onHomeStop)
 
-    // Today's date, re-read on resume through refreshKey
+    // Today's date, re-read on resume through refreshKey. Not on a zone change: the month pager
+    // counts pages from this month, so moving it would change what an open page shows.
+    val zone = LocalDisplayZone.current
     val todayCal = remember(refreshKey) { JavaCalendar.getInstance() }
     val todayYear = todayCal.get(JavaCalendar.YEAR)
     val todayMonth = todayCal.get(JavaCalendar.MONTH)
@@ -374,7 +377,7 @@ fun HomeScreen(
     // Wall-clock snapshot for past-event dimming in the day-events pager, the Planner and the
     // full-height month view. Re-read on resume so an event that ended while the app was in the
     // background dims when the user returns, without a sync write or a swipe.
-    val (nowMs, todayDayCode) = remember(refreshKey) {
+    val (nowMs, todayDayCode) = remember(refreshKey, zone) {
         val now = System.currentTimeMillis()
         now to DateTimeUtils.eventTsToDayCode(now, isAllDay = false)
     }
@@ -393,8 +396,8 @@ fun HomeScreen(
     // the topmost visible agenda item. Falls back to today's month when the list is empty or
     // the key doesn't parse.
     val agendaListState = rememberLazyListState()
-    val agendaTitleMonth by remember(refreshKey) {
-        // Fallback date captured per refreshKey, like the top bar's `today`, so an empty
+    val agendaTitleMonth by remember(refreshKey, zone) {
+        // Fallback date captured per refreshKey and zone, like the top bar's `today`, so an empty
         // agenda's title matches the rest of the bar.
         val fallbackDate = LocalDate.now()
         derivedStateOf {
@@ -417,7 +420,7 @@ fun HomeScreen(
     // peek into it, so the anchor skips peekers; otherwise tapping a week's first day snaps the
     // bar to the week before. Read from AGENDA_CONTENT_PADDING so it matches the list's inset.
     val agendaContentPaddingTopPx = with(LocalDensity.current) { AGENDA_CONTENT_PADDING.roundToPx() }
-    val agendaWeekDates by remember(refreshKey, uiState.firstDayOfWeek) {
+    val agendaWeekDates by remember(refreshKey, zone, uiState.firstDayOfWeek) {
         val fallbackDate = LocalDate.now()
         derivedStateOf {
             val visible = agendaListState.layoutInfo.visibleItemsInfo.map {
@@ -538,10 +541,10 @@ fun HomeScreen(
     val hubFullyHidden = hubTransition.isIdle && !hubTransition.currentState
 
     // View mode and date captured before Jump to date or a week/3-day day-header drill-in
-    // navigates, so a back press restores both. Null when nothing is pending; cleared once
-    // consumed.
+    // navigates, so a back press restores both. Null (0 for the date) when nothing is pending;
+    // cleared once consumed. The date is a day code, so a zone change in between can't move it.
     var preJumpViewMode by rememberSaveable { mutableStateOf<ViewMode?>(null) }
-    var preJumpDate by rememberSaveable { mutableStateOf(0L) }
+    var preJumpDayCode by rememberSaveable { mutableStateOf(0) }
 
     ModalNavigationDrawer(
         drawerState = drawerState ?: rememberDrawerState(DrawerValue.Closed),
@@ -586,7 +589,7 @@ fun HomeScreen(
                 uiState = uiState,
                 isOnline = isOnline,
                 searchFocusRequester = searchFocusRequester,
-                today = remember(refreshKey) { LocalDate.now() },
+                today = remember(refreshKey, zone) { LocalDate.now() },
                 agendaTitleMonth = agendaTitleMonth,
                 drawerState = drawerState,
                 onSearchClick = onSearchClick,
@@ -807,7 +810,7 @@ fun HomeScreen(
                                             // redone on unrelated recompositions (event loads,
                                             // scroll). A plain remember: unlike the agenda bar's
                                             // anchor, it doesn't depend on layout.
-                                            val shownDate = remember(uiState.weekViewPagerPosition) {
+                                            val shownDate = remember(uiState.weekViewPagerPosition, zone) {
                                                 WeekViewUtils.pageToDate(uiState.weekViewPagerPosition)
                                             }
                                             DayViewWeekStrip(
@@ -883,7 +886,7 @@ fun HomeScreen(
                                                 } else {
                                                     WeekViewUtils.pageToDate(uiState.weekViewPagerPosition)
                                                 }
-                                                preJumpDate = WeekViewUtils.dateToEpochMs(shownDate)
+                                                preJumpDayCode = DayPagerUtils.localDateToDayCode(shownDate)
                                                 onWeekDayHeaderClick(date)
                                             },
                                             modifier = Modifier.fillMaxSize()
@@ -915,7 +918,7 @@ fun HomeScreen(
                                     // Back from the Day view returns to the week the Planner
                                     // showed.
                                     preJumpViewMode = ViewMode.PLANNER
-                                    preJumpDate = plannerWeekStartMs ?: 0L
+                                    preJumpDayCode = plannerWeekStartMs?.let { DayPagerUtils.msToDayCode(it) } ?: 0
                                     onWeekDayHeaderClick(date)
                                 },
                                 onZoomChange = onPlannerZoomChange,
@@ -1000,7 +1003,7 @@ fun HomeScreen(
 
                             // Day pager state sits above the landscape/portrait branch so it
                             // survives orientation changes.
-                            val dayPagerTodayMs = remember { DayPagerUtils.getTodayMidnightMs() }
+                            val dayPagerTodayMs = remember(zone) { DayPagerUtils.getTodayMidnightMs() }
                             val dayPagerInitialPage = if (uiState.selectedDate != 0L) {
                                 DayPagerUtils.dateToPage(uiState.selectedDate, dayPagerTodayMs)
                             } else {
@@ -1164,7 +1167,8 @@ fun HomeScreen(
                 ?: uiState.selectedDate.takeIf { it != 0L } ?: System.currentTimeMillis(),
             onDateSelected = { dateMs ->
                 preJumpViewMode = uiState.viewMode
-                preJumpDate = plannerWeekStartMs ?: uiState.selectedDate
+                preJumpDayCode = (plannerWeekStartMs ?: uiState.selectedDate)
+                    .let { if (it == 0L) 0 else DayPagerUtils.msToDayCode(it) }
                 onViewSelect(ViewMode.DAY)
                 onWeekDateSelected(dateMs)
                 showJumpToDatePicker = false
@@ -1182,9 +1186,11 @@ fun HomeScreen(
     val pending = preJumpViewMode
     BackHandler(enabled = pending != null && !showJumpToDatePicker && !showHub) {
         onViewSelect(pending!!)
-        if (preJumpDate != 0L) onWeekDateSelected(preJumpDate)
+        if (preJumpDayCode != 0) {
+            onWeekDateSelected(DayPagerUtils.dayCodeToMs(preJumpDayCode))
+        }
         preJumpViewMode = null
-        preJumpDate = 0L
+        preJumpDayCode = 0
     }
 
     // The account hub: a full-screen destination drawn as an opaque overlay above the
@@ -1692,7 +1698,7 @@ private fun CalendarGrid(
     val monthKey = remember(year, month) { String.format(java.util.Locale.ROOT, "%04d-%02d", year, month + 1) }
     val monthDots = remember(eventDots, monthKey) { eventDots[monthKey].orEmpty() }
 
-    val today = remember(refreshKey) { JavaCalendar.getInstance() }
+    val today = remember(refreshKey, LocalDisplayZone.current) { JavaCalendar.getInstance() }
     val selectedCal = JavaCalendar.getInstance().apply { timeInMillis = selectedDate }
     val selectedInThisMonth = selectedCal.get(JavaCalendar.MONTH) == month &&
                                selectedCal.get(JavaCalendar.YEAR) == year
@@ -1891,8 +1897,9 @@ private fun ColumnScope.DayEventsPager(
     }
 
     // selectedDate changed (a grid tap, for example): jump the day pager, without animation so it
-    // can't race the settle effect above
-    LaunchedEffect(uiState.selectedDate) {
+    // can't race the settle effect above. Keyed on todayMs too: a zone change moves both, and
+    // they can arrive a frame apart.
+    LaunchedEffect(uiState.selectedDate, todayMs) {
         if (uiState.selectedDate != 0L) {
             val targetPage = DayPagerUtils.dateToPage(uiState.selectedDate, todayMs)
             if (targetPage != dayPagerState.currentPage) {
@@ -2057,7 +2064,7 @@ private fun SearchResultCard(
     val fillAlpha = displayEvent.cardFillAlpha()
 
     // For a Room recurring event, show "Next: date" from displayTs
-    val dateString = remember(searchResult, timePattern) {
+    val dateString = remember(searchResult, timePattern, LocalDisplayZone.current) {
         when (displayEvent) {
             is DisplayEvent.Room -> {
                 // displayTs differs from the event start for a recurring event with a later

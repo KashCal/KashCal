@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">ಶೀರ್ಷಿಕೆಯ ಆಧಾರದ ಮೇಲೆ ಈವೆಂಟ್‌ಗಳಿಗೆ ಎಮೋಜಿ ಸೇರಿಸುತ್ತದೆ, ಉದಾಹರಣೆಗೆ \"ಹುಟ್ಟುಹಬ್ಬ\"ಕ್ಕೆ 🎂.</string>
     <string name="settings_force_sync">ಫೋರ್ಸ್ ಫುಲ್ ಸಿಂಕ್</string>
     <string name="settings_force_sync_subtitle">ಸರ್ವರ್‌ನಿಂದ ಎಲ್ಲಾ ಕ್ಯಾಲೆಂಡರ್ ಡೇಟಾ ಮರು-ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ</string>
+    <string name="settings_force_sync_no_account">ಸಿಂಕ್ ಖಾತೆ ಸೆಟಪ್ ಆಗಿಲ್ಲ</string>
+    <string name="force_sync_confirm">%2$s ನಿಂದ %1$s ಮರು-ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ. ಇನ್ನೂ ಸಿಂಕ್ ಆಗದ ಬದಲಾವಣೆಗಳು ಸುರಕ್ಷಿತವಾಗಿರುತ್ತವೆ.</string>
+    <string name="action_start">ಪ್ರಾರಂಭಿಸಿ</string>
     <string name="settings_sync_history">ಸಿಂಕ್ ಇತಿಹಾಸ</string>
     <string name="settings_sync_history_subtitle">ಸಿಂಕ್ ಸೆಷನ್‌ಗಳನ್ನು ನೋಡಿ (ಕೊನೆಯ 48 ಗಂಟೆಗಳು)</string>
     <string name="settings_import_subtitle">ICS ಫೈಲ್‌ನಿಂದ ಈವೆಂಟ್‌ಗಳನ್ನು ಯಾವುದೇ ಕ್ಯಾಲೆಂಡರ್‌ಗೆ ಸೇರಿಸಿ</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">ಹೊಸ ಈವೆಂಟ್</string>
     <string name="dialog_edit_event_title">ಈವೆಂಟ್ ಬದಲಾಯಿಸಿ</string>
-    <string name="dialog_force_sync_title">ಫೋರ್ಸ್ ಫುಲ್ ಸಿಂಕ್?</string>
-    <string name="dialog_force_sync_message">ಇದು ಸರ್ವರ್‌ನಿಂದ ಎಲ್ಲಾ ಕ್ಯಾಲೆಂಡರ್ ಡೇಟಾವನ್ನು ಮರು-ಡೌನ್‌ಲೋಡ್ ಮಾಡುತ್ತದೆ. ಸ್ಥಳೀಯ ಬದಲಾವಣೆಗಳು ಸುರಕ್ಷಿತವಾಗಿರುತ್ತವೆ.</string>
     <string name="dialog_enable_notifications">ಅಧಿಸೂಚನೆಗಳನ್ನು ಆನ್ ಮಾಡಬೇಕೇ?</string>
     <string name="dialog_action_required">ಮುಂದುವರಿಯಲು ಈ ಕ್ರಿಯೆ ಅಗತ್ಯ.</string>
     <string name="dialog_add_to_calendar">ಕ್ಯಾಲೆಂಡರ್‌ಗೆ ಸೇರಿಸಿ</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">ಈ ವಾರ ಈವೆಂಟ್‌ಗಳಿಲ್ಲ</string>
     <string name="status_more_events">+%1$d ಇನ್ನಷ್ಟು</string>
     <string name="status_no_sync_sessions">ಇನ್ನೂ ಸಿಂಕ್ ಸೆಷನ್‌ಗಳಿಲ್ಲ.\n\nಕ್ಯಾಲೆಂಡರ್ ವೀಕ್ಷಣೆಯಲ್ಲಿ ಕೆಳಕ್ಕೆ ಎಳೆದು ರಿಫ್ರೆಶ್ ಮಾಡಿ.</string>
+    <string name="status_no_sync_account">ಸಿಂಕ್ ಖಾತೆ ಸೆಟಪ್ ಆಗಿಲ್ಲ. ಆಫ್‌ಲೈನ್ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು ಈ ಸಾಧನದಲ್ಲಿಯೇ ಉಳಿಯುತ್ತವೆ; ಸಾಧನದ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು ತಮ್ಮ ಸ್ವಂತ ಖಾತೆಯ ಮೂಲಕ ಸಿಂಕ್ ಆಗುತ್ತವೆ.</string>
     <string name="status_no_writable_calendars">ಬರೆಯಬಹುದಾದ ಕ್ಯಾಲೆಂಡರ್‌ಗಳು ಲಭ್ಯವಿಲ್ಲ</string>
     <string name="status_events_count">%1$d ಈವೆಂಟ್‌ಗಳು</string>
     <string name="status_sync_history">ಸಿಂಕ್ ಇತಿಹಾಸ</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d ಈವೆಂಟ್</item>
         <item quantity="other">%1$d ಈವೆಂಟ್‌ಗಳು</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d ಕ್ಯಾಲೆಂಡರ್</item>
+        <item quantity="other">%1$d ಕ್ಯಾಲೆಂಡರ್‌ಗಳು</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d ಖಾತೆ</item>
+        <item quantity="other">%1$d ಖಾತೆಗಳು</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d ಕ್ಯಾಲೆಂಡರ್</item>

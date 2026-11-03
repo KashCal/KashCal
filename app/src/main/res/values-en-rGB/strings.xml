@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Adds an emoji to events based on the title, like 🎂 for \"Birthday\".</string>
     <string name="settings_force_sync">Force full sync</string>
     <string name="settings_force_sync_subtitle">Re-download all calendar data</string>
+    <string name="settings_force_sync_no_account">No sync account set up</string>
+    <string name="force_sync_confirm">Re-download %1$s from %2$s. Changes not yet synced are kept.</string>
+    <string name="action_start">Start</string>
     <string name="settings_sync_history">Sync history</string>
     <string name="settings_sync_history_subtitle">View sync sessions (last 48 hours)</string>
     <string name="settings_import_subtitle">Add events from an ICS file to any calendar</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">New Event</string>
     <string name="dialog_edit_event_title">Edit Event</string>
-    <string name="dialog_force_sync_title">Force Full Sync?</string>
-    <string name="dialog_force_sync_message">This will re-download all calendar data from the server. Local changes will be preserved.</string>
     <string name="dialog_enable_notifications">Enable Notifications?</string>
     <string name="dialog_action_required">This action is required to continue.</string>
     <string name="dialog_add_to_calendar">Add to calendar</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">No events this week</string>
     <string name="status_more_events">+%1$d more</string>
     <string name="status_no_sync_sessions">No sync sessions yet.\n\nTrigger a sync by pulling down to refresh on the calendar view.</string>
+    <string name="status_no_sync_account">No sync account set up. Offline calendars stay on this device; device calendars sync through their own account.</string>
     <string name="status_no_writable_calendars">No writable calendars available</string>
     <string name="status_events_count">%1$d Events</string>
     <string name="status_sync_history">Sync History</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d event</item>
         <item quantity="other">%1$d events</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d calendar</item>
+        <item quantity="other">%1$d calendars</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d account</item>
+        <item quantity="other">%1$d accounts</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d calendar</item>

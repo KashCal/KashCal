@@ -366,11 +366,15 @@ class EventReader @Inject constructor(
         return occurrencesDao.getForCalendarInRange(calendarId, startTs, endTs)
     }
 
-    /** Observes the non-cancelled occurrences spanning [day] (YYYYMMDD). */
+    /**
+     * Observes the non-cancelled occurrences whose stored codes ([Occurrence.startDay]) span
+     * [day].
+     */
     fun getOccurrencesForDay(day: Int): Flow<List<Occurrence>> {
         return occurrencesDao.getForDay(day)
     }
 
+    /** Returns the non-cancelled occurrences whose stored codes span [day] at once. */
     suspend fun getOccurrencesForDayOnce(day: Int): List<Occurrence> {
         return occurrencesDao.getForDayOnce(day)
     }
@@ -398,8 +402,8 @@ class EventReader @Inject constructor(
     }
 
     /**
-     * Observes the occurrences on [day] (YYYYMMDD, e.g. 20241225) in visible calendars, each
-     * with its event and calendar.
+     * Observes the occurrences whose stored codes ([Occurrence.startDay]) span [day] (YYYYMMDD,
+     * e.g. 20241225) in visible calendars, each with its event and calendar.
      *
      * The query joins events, so Room re-emits when an event's title or location changes, not
      * only its occurrences. `debounce(50)` batches the burst of updates during a sync.
@@ -544,8 +548,8 @@ class EventReader @Inject constructor(
     // ========== Day/Week/Month View Helpers ==========
 
     /**
-     * Returns the non-cancelled occurrences spanning [dayCode] with their events and calendars,
-     * by start time, in three queries.
+     * Returns the non-cancelled occurrences whose stored codes ([Occurrence.startDay]) span
+     * [dayCode] with their events and calendars, by start time, in three queries.
      */
     suspend fun getEventsForDay(dayCode: Int): List<OccurrenceWithEvent> {
         val occurrences = occurrencesDao.getForDayOnce(dayCode)
@@ -565,15 +569,19 @@ class EventReader @Inject constructor(
         }.sortedBy { it.occurrence.startTs }
     }
 
-    /** Returns true if a non-cancelled occurrence spans [dayCode]. */
+    /**
+     * Returns true if a non-cancelled occurrence's stored codes ([Occurrence.startDay]) span
+     * [dayCode].
+     */
     suspend fun hasEventsOnDay(dayCode: Int): Boolean {
         val occurrences = occurrencesDao.getForDayOnce(dayCode)
         return occurrences.isNotEmpty()
     }
 
     /**
-     * Returns the start day (YYYYMMDD) of each non-cancelled occurrence overlapping [month] of
-     * [year] (1-based), in the device's default zone.
+     * Returns the stored start day ([Occurrence.startDay]) of each non-cancelled occurrence
+     * overlapping [month]
+     * of [year] (1-based); the month's bounds are in the device's default zone.
      */
     suspend fun getDaysWithEventsInMonth(year: Int, month: Int): Set<Int> {
         val calendar = java.util.Calendar.getInstance()

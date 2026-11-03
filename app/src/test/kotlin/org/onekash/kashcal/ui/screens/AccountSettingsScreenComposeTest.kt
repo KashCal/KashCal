@@ -1,6 +1,11 @@
 package org.onekash.kashcal.ui.screens
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.runtime.MutableState
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOff
+import org.onekash.kashcal.ui.screens.settings.CalDavAccountUiModel
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.SemanticsMatcher
@@ -132,12 +137,14 @@ class AccountSettingsScreenComposeTest {
         offlineCalendarCount: Int = 1,
         backupSubtitle: String? = null,
         backupProblem: Boolean = false,
+        calDavAccounts: MutableState<List<CalDavAccountUiModel>> = mutableStateOf(emptyList()),
     ) {
         composeTestRule.setContent {
             KashCalTheme {
                 AccountSettingsScreen(
                     uiState = AccountSettingsUiState(
                         iCloudState = ICloudConnectionState.NotConnected(),
+                        calDavAccounts = calDavAccounts.value,
                     ),
                     calendars = listOf(localCalendar),
                     // Each sentinel differs from its seed, so a fired callback can't be a
@@ -654,29 +661,110 @@ class AccountSettingsScreenComposeTest {
         assertOnlyTroubleshooting(rec, fired = "syncHistory")
     }
 
+    private fun syncAccount(id: Long, calendars: Int, enabled: Boolean = true) = CalDavAccountUiModel(
+        id = id,
+        email = "user$id@example.test",
+        displayName = "Account $id",
+        calendarCount = calendars,
+        isEnabled = enabled,
+    )
+
+    private val twoAccounts = listOf(syncAccount(1, 4), syncAccount(2, 2))
+
+    private val confirmText =
+        "Re-download 6 calendars from 2 accounts. Changes not yet synced are kept."
+
     @Test
-    fun `force full sync asks first and fires once on Sync Now`() {
+    fun `force full sync is greyed out with no sync account and a tap fires nothing`() {
         val rec = Rec()
-        render(rec)
-        composeTestRule.onNodeWithText("Force full sync").performClick()
-        composeTestRule.onNodeWithText("Force Full Sync?").assertExists()
-        assertEquals(0, rec.forceFullSync)
+        render(rec, calDavAccounts = mutableStateOf(listOf(syncAccount(1, 3, enabled = false))))
+        composeTestRule.onNodeWithText("No sync account set up").assertExists()
+        composeTestRule.onNodeWithText("Re-download all calendar data").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Force full sync").assertIsNotEnabled()
+            .performClick()
 
-        composeTestRule.onNodeWithText("Sync Now").performClick()
-
-        assertOnlyTroubleshooting(rec, fired = "forceFullSync")
-        composeTestRule.onNodeWithText("Force Full Sync?").assertDoesNotExist()
+        composeTestRule.onNodeWithText(confirmText).assertDoesNotExist()
+        assertOnlyTroubleshooting(rec, fired = "forceFullSync", expected = 0)
     }
 
     @Test
-    fun `force full sync cancel fires nothing`() {
+    fun `force full sync opens an inline confirm with the counts and Start waits for the tick`() {
         val rec = Rec()
-        render(rec)
+        render(rec, calDavAccounts = mutableStateOf(twoAccounts))
+        composeTestRule.onNodeWithText("Re-download all calendar data").assertExists()
         composeTestRule.onNodeWithText("Force full sync").performClick()
+
+        assertTrue("no dialog", ShadowDialog.getShownDialogs().none { it.isShowing })
+        composeTestRule.onNodeWithText(confirmText).assertExists()
+        composeTestRule.onNodeWithText("Force full sync").assertDoesNotExist()
+        composeTestRule.onNode(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Checkbox))
+            .assertIsOff()
+        composeTestRule.onNodeWithText("Start").assertIsNotEnabled().performClick()
+        assertEquals(0, rec.forceFullSync)
+
+        composeTestRule.onNodeWithText(confirmText).performClick()
+        composeTestRule.onNodeWithText("Start").assertIsEnabled().performClick()
+
+        assertOnlyTroubleshooting(rec, fired = "forceFullSync")
+        composeTestRule.onNodeWithText(confirmText).assertDoesNotExist()
+        composeTestRule.onNodeWithText("Force full sync").assertExists()
+    }
+
+    @Test
+    fun `force full sync cancel restores the row, fires nothing, and the box starts unticked again`() {
+        val rec = Rec()
+        render(rec, calDavAccounts = mutableStateOf(twoAccounts))
+        composeTestRule.onNodeWithText("Force full sync").performClick()
+        composeTestRule.onNodeWithText(confirmText).performClick()
         composeTestRule.onNodeWithText("Cancel").performClick()
 
         assertOnlyTroubleshooting(rec, fired = "forceFullSync", expected = 0)
-        composeTestRule.onNodeWithText("Force Full Sync?").assertDoesNotExist()
+        composeTestRule.onNodeWithText(confirmText).assertDoesNotExist()
+
+        composeTestRule.onNodeWithText("Force full sync").performClick()
+        composeTestRule.onNode(SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.Checkbox))
+            .assertIsOff()
+        composeTestRule.onNodeWithText("Start").assertIsNotEnabled()
+    }
+
+    @Test
+    fun `force full sync stays available for a sync account with no calendars`() {
+        val rec = Rec()
+        render(rec, calDavAccounts = mutableStateOf(listOf(syncAccount(1, 0))))
+        composeTestRule.onNodeWithText("Force full sync").performClick()
+        composeTestRule
+            .onNodeWithText("Re-download 0 calendars from 1 account. Changes not yet synced are kept.")
+            .assertExists()
+    }
+
+    @Test
+    fun `the confirm closes to the greyed row when the last sync account goes away`() {
+        val rec = Rec()
+        val accounts = mutableStateOf(listOf(syncAccount(1, 4)))
+        render(rec, calDavAccounts = accounts)
+        composeTestRule.onNodeWithText("Force full sync").performClick()
+        composeTestRule.onNodeWithText(
+            "Re-download 4 calendars from 1 account. Changes not yet synced are kept."
+        ).performClick()
+
+        accounts.value = listOf(syncAccount(1, 4, enabled = false))
+        composeTestRule.waitForIdle()
+
+        composeTestRule.onNodeWithText("Start").assertDoesNotExist()
+        composeTestRule.onNodeWithText("No sync account set up").assertExists()
+
+        // The confirm stays closed when the account comes back; only a tap opens it.
+        accounts.value = listOf(syncAccount(1, 4))
+        composeTestRule.waitForIdle()
+        composeTestRule.onNodeWithText("Start").assertDoesNotExist()
+        composeTestRule.onNodeWithText("Force full sync").assertIsEnabled()
+        assertEquals(0, rec.forceFullSync)
+    }
+
+    @Test
+    fun `settings search finds force full sync by its greyed subtitle`() {
+        render(searchQuery = "sync account")
+        composeTestRule.onNodeWithText("Force full sync").assertExists()
     }
 
     @Test

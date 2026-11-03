@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Aldonas emoĝion al eventoj laŭ la titolo, kiel 🎂 por \"Naskiĝtago\".</string>
     <string name="settings_force_sync">Devigi plenan sinkronigon</string>
     <string name="settings_force_sync_subtitle">Re-elŝuti ĉiujn kalendarajn datumojn</string>
+    <string name="settings_force_sync_no_account">Neniu sinkroniga konto agordita</string>
+    <string name="force_sync_confirm">Re-elŝuti %1$s de %2$s. Ankoraŭ ne sinkronigitaj ŝanĝoj estas konservataj.</string>
+    <string name="action_start">Komenci</string>
     <string name="settings_sync_history">Sinkroniga historio</string>
     <string name="settings_sync_history_subtitle">Vidi sinkronigajn seancojn (lastaj 48 horoj)</string>
     <string name="settings_import_subtitle">Aldoni eventojn el ICS-dosiero al iu ajn kalendaro</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Nova evento</string>
     <string name="dialog_edit_event_title">Redakti eventon</string>
-    <string name="dialog_force_sync_title">Devigi plenan sinkronigon?</string>
-    <string name="dialog_force_sync_message">Ĉi tio re-elŝutos ĉiujn kalendarajn datumojn de la servilo. Lokaj ŝanĝoj estos konservitaj.</string>
     <string name="dialog_enable_notifications">Ŝalti sciigojn?</string>
     <string name="dialog_action_required">Ĉi tiu ago estas necesa por daŭrigi.</string>
     <string name="dialog_add_to_calendar">Aldoni al kalendaro</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Neniuj eventoj ĉi-semajne</string>
     <string name="status_more_events">+%1$d pliaj</string>
     <string name="status_no_sync_sessions">Ankaŭ neniuj sinkronigaj seancoj.\n\nTiru malsupren por aktualigi ĉe la kalendara vido.</string>
+    <string name="status_no_sync_account">Neniu sinkroniga konto agordita. Eksterretaj kalendaroj restas en ĉi tiu aparato; aparataj kalendaroj sinkroniĝas per sia propra konto.</string>
     <string name="status_no_writable_calendars">Neniuj skribeblaj kalendaroj disponeblaj</string>
     <string name="status_events_count">%1$d eventoj</string>
     <string name="status_sync_history">Sinkroniga historio</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d evento</item>
         <item quantity="other">%1$d eventoj</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalendaron</item>
+        <item quantity="other">%1$d kalendarojn</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d konto</item>
+        <item quantity="other">%1$d kontoj</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalendaro</item>

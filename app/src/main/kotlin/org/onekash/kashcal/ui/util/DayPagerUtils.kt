@@ -31,7 +31,8 @@ object DayPagerUtils {
     /**
      * Returns the start of today in the system time zone, in epoch milliseconds.
      *
-     * Callers take it once and keep it as the stable reference for page conversions.
+     * Callers keep it as the stable reference for page conversions, and take it again when the
+     * zone changes ([LocalDisplayZone]).
      */
     fun getTodayMidnightMs(): Long {
         return LocalDate.now()

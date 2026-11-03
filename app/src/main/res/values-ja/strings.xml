@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">「誕生日」に 🎂 を付けるなど、タイトルに基づいて予定に絵文字を追加します。</string>
     <string name="settings_force_sync">フル同期を実行</string>
     <string name="settings_force_sync_subtitle">すべてのカレンダーデータを再ダウンロード</string>
+    <string name="settings_force_sync_no_account">同期アカウントが未設定</string>
+    <string name="force_sync_confirm">%2$sから%1$sを再ダウンロードします。未同期の変更は保持されます。</string>
+    <string name="action_start">開始</string>
     <string name="settings_sync_history">同期履歴</string>
     <string name="settings_sync_history_subtitle">同期セッションを表示（過去48時間）</string>
     <string name="settings_import_subtitle">ICSファイルの予定を任意のカレンダーに追加します</string>
@@ -330,8 +333,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">新しい予定</string>
     <string name="dialog_edit_event_title">予定を編集</string>
-    <string name="dialog_force_sync_title">フル同期を実行しますか？</string>
-    <string name="dialog_force_sync_message">サーバーからすべてのカレンダーデータを再ダウンロードします。ローカルの変更は保持されます。</string>
     <string name="dialog_enable_notifications">通知を有効にしますか？</string>
     <string name="dialog_action_required">続行するにはこの操作が必要です。</string>
     <string name="dialog_add_to_calendar">カレンダーに追加</string>
@@ -344,6 +345,7 @@
     <string name="status_no_events_week">今週の予定はありません</string>
     <string name="status_more_events">+%1$d件</string>
     <string name="status_no_sync_sessions">同期セッションはまだありません。\n\nカレンダー画面で下にスワイプして同期を開始してください。</string>
+    <string name="status_no_sync_account">同期アカウントが未設定です。オフラインカレンダーはこのデバイスに保存されます。デバイスカレンダーは各アカウントで同期されます。</string>
     <string name="status_no_writable_calendars">書き込み可能なカレンダーがありません</string>
     <string name="status_events_count">%1$d件の予定</string>
     <string name="status_sync_history">同期履歴</string>
@@ -986,6 +988,12 @@
     <string name="ics_import_summary_nothing">インポートするものはありません</string>
     <plurals name="event_count">
         <item quantity="other">%1$d件の予定</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="other">%1$d件のカレンダー</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="other">%1$d件のアカウント</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="other">%1$d件のカレンダー</item>

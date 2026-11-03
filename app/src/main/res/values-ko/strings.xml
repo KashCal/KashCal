@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">제목에 따라 일정에 이모지를 추가합니다. 예를 들어 \"생일\"에는 🎂를 붙여요.</string>
     <string name="settings_force_sync">전체 동기화</string>
     <string name="settings_force_sync_subtitle">모든 캘린더 데이터를 다시 다운로드</string>
+    <string name="settings_force_sync_no_account">동기화 계정 없음</string>
+    <string name="force_sync_confirm">%2$s에서 %1$s을(를) 다시 다운로드해요. 아직 동기화되지 않은 변경 사항은 유지돼요.</string>
+    <string name="action_start">시작</string>
     <string name="settings_sync_history">동기화 기록</string>
     <string name="settings_sync_history_subtitle">동기화 세션 보기 (최근 48시간)</string>
     <string name="settings_import_subtitle">ICS 파일의 일정을 원하는 캘린더에 추가해요</string>
@@ -330,8 +333,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">새 일정</string>
     <string name="dialog_edit_event_title">일정 편집</string>
-    <string name="dialog_force_sync_title">전체 동기화를 할까요?</string>
-    <string name="dialog_force_sync_message">서버에서 모든 캘린더 데이터를 다시 다운로드해요. 로컬 변경 사항은 유지돼요.</string>
     <string name="dialog_enable_notifications">알림을 활성화할까요?</string>
     <string name="dialog_action_required">계속하려면 이 작업이 필요해요.</string>
     <string name="dialog_add_to_calendar">캘린더에 추가</string>
@@ -344,6 +345,7 @@
     <string name="status_no_events_week">이번 주 일정이 없어요</string>
     <string name="status_more_events">+%1$d개 더</string>
     <string name="status_no_sync_sessions">아직 동기화 기록이 없어요.\n\n캘린더 화면에서 아래로 당겨서 동기화를 시작하세요.</string>
+    <string name="status_no_sync_account">동기화 계정이 없어요. 오프라인 캘린더는 이 기기에 보관되고, 기기 캘린더는 자신의 계정으로 동기화돼요.</string>
     <string name="status_no_writable_calendars">쓰기 가능한 캘린더가 없어요</string>
     <string name="status_events_count">일정 %1$d개</string>
     <string name="status_sync_history">동기화 기록</string>
@@ -986,6 +988,12 @@
     <string name="ics_import_summary_nothing">가져올 항목이 없어요</string>
     <plurals name="event_count">
         <item quantity="other">일정 %1$d개</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="other">캘린더 %1$d개</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="other">계정 %1$d개</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="other">캘린더 %1$d개</item>

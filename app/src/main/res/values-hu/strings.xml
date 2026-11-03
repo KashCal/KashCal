@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">A cím alapján emojit ad az eseményekhez, például 🎂 a \"Születésnap\" esetében.</string>
     <string name="settings_force_sync">Teljes szinkronizálás kényszerítése</string>
     <string name="settings_force_sync_subtitle">Összes naptáradat újratöltése</string>
+    <string name="settings_force_sync_no_account">Nincs szinkronizálási fiók beállítva</string>
+    <string name="force_sync_confirm">%1$s újratöltése %2$s. A még nem szinkronizált változtatások megmaradnak.</string>
+    <string name="action_start">Indítás</string>
     <string name="settings_sync_history">Szinkronizálási előzmények</string>
     <string name="settings_sync_history_subtitle">Szinkronizálási munkamenetek megtekintése (utolsó 48 óra)</string>
     <string name="settings_import_subtitle">Események hozzáadása ICS fájlból bármelyik naptárhoz</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Új esemény</string>
     <string name="dialog_edit_event_title">Esemény szerkesztése</string>
-    <string name="dialog_force_sync_title">Teljes szinkronizálás?</string>
-    <string name="dialog_force_sync_message">Ez az összes naptáradatot újratölti a szerverről. A helyi módosítások megmaradnak.</string>
     <string name="dialog_enable_notifications">Értesítések engedélyezése?</string>
     <string name="dialog_action_required">Ez a művelet szükséges a folytatáshoz.</string>
     <string name="dialog_add_to_calendar">Hozzáadás a naptárhoz</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Nincs esemény ezen a héten</string>
     <string name="status_more_events">+%1$d további</string>
     <string name="status_no_sync_sessions">Még nincs szinkronizálási munkamenet.\n\nIndíts szinkronizálást a naptárnézetben lefelé húzással.</string>
+    <string name="status_no_sync_account">Nincs szinkronizálási fiók beállítva. Az offline naptárak ezen az eszközön maradnak; az eszköz naptárait a saját fiókjuk szinkronizálja.</string>
     <string name="status_no_writable_calendars">Nincs írható naptár</string>
     <string name="status_events_count">%1$d esemény</string>
     <string name="status_sync_history">Szinkronizálási előzmények</string>
@@ -1023,6 +1025,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d esemény</item>
         <item quantity="other">%1$d esemény</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d naptár</item>
+        <item quantity="other">%1$d naptár</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d fiókból</item>
+        <item quantity="other">%1$d fiókból</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d naptár</item>

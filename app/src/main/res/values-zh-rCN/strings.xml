@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">根据标题为活动添加表情符号，例如为\"生日\"添加 🎂。</string>
     <string name="settings_force_sync">完全同步</string>
     <string name="settings_force_sync_subtitle">重新下载所有日历数据</string>
+    <string name="settings_force_sync_no_account">未设置同步账户</string>
+    <string name="force_sync_confirm">从%2$s重新下载%1$s。未同步的更改将保留。</string>
+    <string name="action_start">开始</string>
     <string name="settings_sync_history">同步历史</string>
     <string name="settings_sync_history_subtitle">查看同步会话（过去48小时）</string>
     <string name="settings_import_subtitle">从 ICS 文件将事件添加到任意日历</string>
@@ -330,8 +333,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">新建事件</string>
     <string name="dialog_edit_event_title">编辑事件</string>
-    <string name="dialog_force_sync_title">执行完全同步？</string>
-    <string name="dialog_force_sync_message">将从服务器重新下载所有日历数据。本地更改将被保留。</string>
     <string name="dialog_enable_notifications">启用通知？</string>
     <string name="dialog_action_required">需要执行此操作才能继续。</string>
     <string name="dialog_add_to_calendar">添加到日历</string>
@@ -344,6 +345,7 @@
     <string name="status_no_events_week">本周没有事件</string>
     <string name="status_more_events">+%1$d 个</string>
     <string name="status_no_sync_sessions">暂无同步记录。\n\n在日历视图下拉刷新以触发同步。</string>
+    <string name="status_no_sync_account">未设置同步账户。离线日历保存在此设备，设备日历通过其所属账户同步。</string>
     <string name="status_no_writable_calendars">没有可写入的日历</string>
     <string name="status_events_count">%1$d 个事件</string>
     <string name="status_sync_history">同步历史</string>
@@ -986,6 +988,12 @@
     <string name="ics_import_summary_nothing">没有可导入的内容</string>
     <plurals name="event_count">
         <item quantity="other">%1$d 个事件</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="other">%1$d个日历</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="other">%1$d个账户</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="other">%1$d 个日历</item>

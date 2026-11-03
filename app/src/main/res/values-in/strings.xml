@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Menambahkan emoji ke acara berdasarkan judulnya, seperti 🎂 untuk \"Ulang tahun\".</string>
     <string name="settings_force_sync">Sinkronisasi paksa penuh</string>
     <string name="settings_force_sync_subtitle">Unduh ulang semua data kalender</string>
+    <string name="settings_force_sync_no_account">Tidak ada akun sinkronisasi yang diatur</string>
+    <string name="force_sync_confirm">Unduh ulang %1$s dari %2$s. Perubahan yang belum disinkronkan tetap disimpan.</string>
+    <string name="action_start">Mulai</string>
     <string name="settings_sync_history">Riwayat sinkronisasi</string>
     <string name="settings_sync_history_subtitle">Lihat sesi sinkronisasi (48 jam terakhir)</string>
     <string name="settings_import_subtitle">Tambahkan acara dari file ICS ke kalender mana pun</string>
@@ -330,8 +333,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Acara Baru</string>
     <string name="dialog_edit_event_title">Edit Acara</string>
-    <string name="dialog_force_sync_title">Sinkronisasi Paksa Penuh?</string>
-    <string name="dialog_force_sync_message">Ini akan mengunduh ulang semua data kalender dari server. Perubahan lokal akan dipertahankan.</string>
     <string name="dialog_enable_notifications">Aktifkan Notifikasi?</string>
     <string name="dialog_action_required">Tindakan ini diperlukan untuk melanjutkan.</string>
     <string name="dialog_add_to_calendar">Tambah ke kalender</string>
@@ -344,6 +345,7 @@
     <string name="status_no_events_week">Tidak ada acara minggu ini</string>
     <string name="status_more_events">+%1$d lagi</string>
     <string name="status_no_sync_sessions">Belum ada sesi sinkronisasi.\n\nPicu sinkronisasi dengan menarik ke bawah untuk memuat ulang pada tampilan kalender.</string>
+    <string name="status_no_sync_account">Tidak ada akun sinkronisasi yang diatur. Kalender offline tetap di perangkat ini; kalender perangkat disinkronkan melalui akun mereka sendiri.</string>
     <string name="status_no_writable_calendars">Tidak ada kalender yang dapat ditulis</string>
     <string name="status_events_count">%1$d Acara</string>
     <string name="status_sync_history">Riwayat Sinkronisasi</string>
@@ -986,6 +988,12 @@
     <string name="ics_import_summary_nothing">Tidak ada yang perlu diimpor</string>
     <plurals name="event_count">
         <item quantity="other">%1$d acara</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="other">%1$d kalender</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="other">%1$d akun</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="other">%1$d kalender</item>

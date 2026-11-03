@@ -114,6 +114,7 @@ import org.onekash.kashcal.util.ShareIntentRouter
 import org.onekash.kashcal.util.IcsFileReader
 import org.onekash.kashcal.util.buildShareAvailabilityChooserIntent
 import org.onekash.kashcal.util.location.LocationSuggestionService
+import org.onekash.kashcal.ui.util.LocalDisplayZone
 import java.time.LocalTime
 import javax.inject.Inject
 
@@ -194,6 +195,7 @@ class MainActivity : FragmentActivity() {
                 val agendaEvents by homeViewModel.agendaEvents.collectAsStateWithLifecycle()
                 val monthEvents by homeViewModel.monthEvents.collectAsStateWithLifecycle()
                 val plannerState by homeViewModel.plannerState.collectAsStateWithLifecycle()
+                val displayZone by homeViewModel.displayZone.collectAsStateWithLifecycle()
                 val isOnline by homeViewModel.isOnline.collectAsStateWithLifecycle()
                 val appLockEnabled by appLockViewModel.appLockEnabled.collectAsStateWithLifecycle()
                 val defaultReminderTimed by homeViewModel.defaultReminderTimed.collectAsStateWithLifecycle()
@@ -563,8 +565,12 @@ class MainActivity : FragmentActivity() {
 
                 // Publish per-tag custom colors to every chip below (home views, form, quick view,
                 // week blocks) so recoloring a tag repaints its chips without threading color
-                // through the occurrence stream.
-                CompositionLocalProvider(LocalTagColors provides uiState.tagColors) {
+                // through the occurrence stream. The zone lets open screens re-lay out when it
+                // changes.
+                CompositionLocalProvider(
+                    LocalTagColors provides uiState.tagColors,
+                    LocalDisplayZone provides displayZone,
+                ) {
 
                 HomeScreen(
                     uiState = uiState,

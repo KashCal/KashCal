@@ -191,6 +191,9 @@
     <string name="settings_event_emojis_info">Lägger till en emoji till händelser baserat på titeln, som 🎂 för \"Födelsedag\".</string>
     <string name="settings_force_sync">Fullständig synkronisering</string>
     <string name="settings_force_sync_subtitle">Ladda ner all kalenderdata igen</string>
+    <string name="settings_force_sync_no_account">Inget synkroniseringskonto inställt</string>
+    <string name="force_sync_confirm">Ladda ner %1$s från %2$s igen. Ändringar som inte synkroniserats än behålls.</string>
+    <string name="action_start">Starta</string>
     <string name="settings_sync_history">Synkhistorik</string>
     <string name="settings_sync_history_subtitle">Visa synk-sessioner (senaste 48 timmarna)</string>
     <string name="settings_import_subtitle">Lägg till händelser från en ICS-fil till valfri kalender</string>
@@ -331,8 +334,6 @@
     <!-- ==================== Dialogs ==================== -->
     <string name="dialog_new_event_title">Ny händelse</string>
     <string name="dialog_edit_event_title">Redigera händelse</string>
-    <string name="dialog_force_sync_title">Fullständig synkronisering?</string>
-    <string name="dialog_force_sync_message">All kalenderdata laddas ner igen från servern. Lokala ändringar bevaras.</string>
     <string name="dialog_enable_notifications">Aktivera aviseringar?</string>
     <string name="dialog_action_required">Denna åtgärd krävs för att fortsätta.</string>
     <string name="dialog_add_to_calendar">Lägg till i kalender</string>
@@ -345,6 +346,7 @@
     <string name="status_no_events_week">Inga händelser denna vecka</string>
     <string name="status_more_events">+%1$d till</string>
     <string name="status_no_sync_sessions">Inga synk-sessioner ännu.\n\nDra nedåt i kalendervyn för att starta en synkronisering.</string>
+    <string name="status_no_sync_account">Inget synkroniseringskonto inställt. Offlinekalendrar stannar på den här enheten; enhetskalendrar synkroniseras via sitt eget konto.</string>
     <string name="status_no_writable_calendars">Inga skrivbara kalendrar tillgängliga</string>
     <string name="status_events_count">%1$d händelser</string>
     <string name="status_sync_history">Synkhistorik</string>
@@ -1022,6 +1024,14 @@
     <plurals name="event_count">
         <item quantity="one">%1$d händelse</item>
         <item quantity="other">%1$d händelser</item>
+    </plurals>
+    <plurals name="force_sync_confirm_calendars">
+        <item quantity="one">%1$d kalender</item>
+        <item quantity="other">%1$d kalendrar</item>
+    </plurals>
+    <plurals name="force_sync_confirm_accounts">
+        <item quantity="one">%1$d konto</item>
+        <item quantity="other">%1$d konton</item>
     </plurals>
     <plurals name="calendar_count">
         <item quantity="one">%1$d kalender</item>
